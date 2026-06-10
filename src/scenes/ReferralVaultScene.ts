@@ -1,6 +1,16 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
+import {
+  addDocumentPoints,
+  addInventoryItem,
+  addVolumeFragment,
+  awardProcessStamp,
+  gameState,
+  setObjective,
+  setSceneState,
+  setVisibleEntities,
+  setVisibleThreats
+} from "../game/state";
 import type { ChoiceOption } from "../game/types";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { HistorianNPC } from "../entities/HistorianNPC";
@@ -178,6 +188,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     ];
     this.choice.show("STATECHAT GENERATED A BATCH MANIFEST.\n\nWHO DECIDES?", options, (option) => {
       if (option.value === "checked" && this.correctMatches === this.matches.length) {
+        addInventoryItem("Concurrence Slip");
+        addDocumentPoints(8, "agency concurrence checked");
         adjustReliability(7, "manifest confirmed by human review");
         this.reliability.update();
         this.showExcisionChoice();
@@ -199,6 +211,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.choice.show("EXCISION REQUIRED.\nFRUS DOES NOT SILENTLY ERASE WITHHELD MATERIAL.\n\nWHAT PRINTS?", options, (option) => {
       if (option.value === "visible") {
         awardProcessStamp("referral");
+        addVolumeFragment("Referral Fragment");
+        addDocumentPoints(12, "visible withholding language printed");
         retroAudio.stamp();
         adjustReliability(8, "visible withholding language used");
         this.reliability.update();

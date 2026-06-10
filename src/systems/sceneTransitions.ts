@@ -53,7 +53,7 @@ function drawAdventureHud(scene: Phaser.Scene, title: string, accent: string) {
   }).setDepth(802);
   drawHudIcon(scene, 141, 16, "B", PALETTE.terminalCyan);
   drawHudIcon(scene, 160, 16, "A", PALETTE.goldStamp);
-  scene.add.text(188, 5, "-LIFE-", {
+  scene.add.text(184, 5, "-CONF-", {
     fontFamily: "monospace",
     fontSize: "7px",
     color: PALETTE.buckramHighlight

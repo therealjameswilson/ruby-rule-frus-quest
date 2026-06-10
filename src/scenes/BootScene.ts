@@ -57,6 +57,9 @@ export class BootScene extends Phaser.Scene {
     }
     this.makeManuscriptTextureIfMissing();
     this.makeVolumeTextureIfMissing();
+    this.makeCitationStampTextureIfMissing();
+    this.makeVolumeFragmentTextureIfMissing();
+    this.makeArchiveColleagueTextureIfMissing();
     this.makeBureaucraticWallTextureIfMissing();
     this.makeTileTextureIfMissing("office-tiles", PALETTE.creamPaper, PALETTE.archiveAmber);
     this.makeTileTextureIfMissing("archive-tiles", PALETTE.archiveAmber, PALETTE.sepiaInk);
@@ -78,6 +81,9 @@ export class BootScene extends Phaser.Scene {
       ["player-editor", "player-editor.svg", 16, 16],
       ["player-declass-reviewer", "player-declass-reviewer.svg", 16, 16],
       ["player-source-note-specialist", "player-source-note-specialist.svg", 16, 16],
+      ["archive-colleague", "archive-colleague.svg", 16, 16],
+      ["citation-stamp", "citation-stamp.svg", 18, 18],
+      ["volume-fragment", "volume-fragment.svg", 20, 18],
       ["bureaucratic-wall", "bureaucratic-wall.svg", 36, 32],
       ["manuscript", "manuscript.svg", 18, 18],
       ["frus-volume", "frus-volume.svg", 52, 42]
@@ -146,6 +152,70 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(14, 18, 20, 2);
     g.fillRect(12, 25, 24, 2);
     g.generateTexture("frus-volume", 52, 42);
+    g.destroy();
+  }
+
+  private makeCitationStampTextureIfMissing() {
+    if (this.textures.exists("citation-stamp")) return;
+    const g = this.add.graphics();
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(4, 4, 12, 13);
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(3, 2, 12, 13);
+    g.fillStyle(color(PALETTE.buckramRed));
+    g.fillRect(6, 0, 6, 4);
+    g.fillStyle(color(PALETTE.deepRuby));
+    g.fillRect(5, 6, 8, 2);
+    g.fillRect(5, 9, 8, 1);
+    g.fillRect(6, 12, 6, 1);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(4, 15, 10, 2);
+    g.generateTexture("citation-stamp", 18, 18);
+    g.destroy();
+  }
+
+  private makeVolumeFragmentTextureIfMissing() {
+    if (this.textures.exists("volume-fragment")) return;
+    const g = this.add.graphics();
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(5, 3, 13, 14);
+    g.fillStyle(color(PALETTE.buckramRed));
+    g.fillRect(2, 1, 14, 14);
+    g.fillStyle(color(PALETTE.deepRuby));
+    g.fillRect(5, 4, 8, 8);
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(6, 6, 6, 1);
+    g.fillRect(7, 9, 4, 1);
+    g.fillStyle(color(PALETTE.sepiaInk));
+    g.fillRect(2, 1, 3, 14);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(13, 13, 4, 3);
+    g.generateTexture("volume-fragment", 20, 18);
+    g.destroy();
+  }
+
+  private makeArchiveColleagueTextureIfMissing() {
+    if (this.textures.exists("archive-colleague")) return;
+    const g = this.add.graphics();
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(5, 1, 6, 3);
+    g.fillRect(4, 8, 8, 7);
+    g.fillStyle(color(PALETTE.creamPaper));
+    g.fillRect(5, 4, 6, 5);
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(6, 5, 1, 1);
+    g.fillRect(9, 5, 1, 1);
+    g.fillStyle(color(PALETTE.deepRuby));
+    g.fillRect(3, 9, 10, 6);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(4, 10, 2, 4);
+    g.fillRect(10, 10, 2, 4);
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(8, 10, 5, 4);
+    g.fillStyle(color(PALETTE.sepiaInk));
+    g.fillRect(5, 14, 2, 2);
+    g.fillRect(9, 14, 2, 2);
+    g.generateTexture("archive-colleague", 16, 16);
     g.destroy();
   }
 

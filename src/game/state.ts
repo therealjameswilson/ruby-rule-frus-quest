@@ -7,7 +7,9 @@ interface GameState {
   mode: GameMode;
   objective: string;
   reliability: number;
+  documentPoints: number;
   inventory: string[];
+  volumeFragments: string[];
   latestMessage: string;
   activeDialog: { speaker: string; text: string } | null;
   currentChoice: { title: string; options: ChoiceOption[] } | null;
@@ -29,7 +31,9 @@ export const gameState: GameState = {
   mode: "boot",
   objective: "",
   reliability: 80,
+  documentPoints: 0,
   inventory: [],
+  volumeFragments: [],
   latestMessage: "",
   activeDialog: null,
   currentChoice: null,
@@ -56,7 +60,9 @@ export function resetGameState() {
   gameState.mode = "title";
   gameState.objective = "Press start to verify.";
   gameState.reliability = 80;
+  gameState.documentPoints = 0;
   gameState.inventory = [];
+  gameState.volumeFragments = [];
   gameState.latestMessage = "";
   gameState.activeDialog = null;
   gameState.currentChoice = null;
@@ -110,6 +116,19 @@ export function addInventoryItem(label: string) {
   }
 }
 
+export function addDocumentPoints(amount: number, reason: string) {
+  gameState.documentPoints = Math.max(0, gameState.documentPoints + amount);
+  const sign = amount >= 0 ? "+" : "";
+  setLatestMessage(`${sign}${amount} document points: ${reason}`);
+}
+
+export function addVolumeFragment(label: string) {
+  if (!gameState.volumeFragments.includes(label)) {
+    gameState.volumeFragments.push(label);
+    setLatestMessage(`FRUS fragment found: ${label}`);
+  }
+}
+
 export function setNearestInteractable(label: string | null) {
   gameState.nearestInteractable = label;
 }
@@ -144,6 +163,11 @@ export function awardProcessStamp(stampId: ProcessStampId) {
 }
 
 export function seedProgressForScene(sceneName: string) {
+  if (["OfficeScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+    addInventoryItem("Citation Stamp");
+    addVolumeFragment("Front Matter Fragment");
+    gameState.documentPoints = Math.max(gameState.documentPoints, 15);
+  }
   if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("rule");
   }
@@ -153,16 +177,27 @@ export function seedProgressForScene(sceneName: string) {
     for (const item of ["Telegram", "Source Note", "Cross-Ref"]) {
       addInventoryItem(item);
     }
+    addVolumeFragment("Source Note Fragment");
+    gameState.documentPoints = Math.max(gameState.documentPoints, 30);
   }
   if (["ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("network");
     gameState.reliability = Math.max(gameState.reliability, 100);
+    addInventoryItem("Clearance Token");
+    addVolumeFragment("Routing Fragment");
+    gameState.documentPoints = Math.max(gameState.documentPoints, 45);
   }
   if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("referral");
+    addInventoryItem("Concurrence Slip");
+    addVolumeFragment("Referral Fragment");
+    gameState.documentPoints = Math.max(gameState.documentPoints, 60);
   }
   if (sceneName === "EndingScene") {
     awardProcessStamp("proof");
+    addInventoryItem("Red Pencil Mark");
+    addVolumeFragment("Proof Fragment");
+    gameState.documentPoints = Math.max(gameState.documentPoints, 80);
   }
 }
 
@@ -196,8 +231,10 @@ export function renderGameToText() {
       mode: gameState.mode,
       objective: gameState.objective,
       reliability: gameState.reliability,
+      documentPoints: gameState.documentPoints,
       playerProfile: gameState.playerProfile,
       processStamps: gameState.processStamps,
+      volumeFragments: gameState.volumeFragments,
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,
       inventory: gameState.inventory,

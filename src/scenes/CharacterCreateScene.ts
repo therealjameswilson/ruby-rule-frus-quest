@@ -148,6 +148,6 @@ export class CharacterCreateScene extends Phaser.Scene {
     const displayName = cleanedName.charAt(0).toUpperCase() + cleanedName.slice(1);
     retroAudio.confirm();
     setPlayerProfile(displayName, role);
-    transitionTo(this, "OfficeScene");
+    transitionTo(this, "GuideScene");
   }
 }

@@ -4,6 +4,7 @@ import { ArchiveScene } from "../scenes/ArchiveScene";
 import { BootScene } from "../scenes/BootScene";
 import { CharacterCreateScene } from "../scenes/CharacterCreateScene";
 import { EndingScene } from "../scenes/EndingScene";
+import { GuideScene } from "../scenes/GuideScene";
 import { NetworkScene } from "../scenes/NetworkScene";
 import { OfficeScene } from "../scenes/OfficeScene";
 import { ReferralVaultScene } from "../scenes/ReferralVaultScene";
@@ -27,6 +28,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     BootScene,
     TitleScene,
     CharacterCreateScene,
+    GuideScene,
     OfficeScene,
     ArchiveScene,
     NetworkScene,

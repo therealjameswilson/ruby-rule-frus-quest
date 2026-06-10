@@ -41,7 +41,10 @@ export class InventoryOverlay {
     const items = gameState.inventory.length
       ? gameState.inventory.map((item) => `- ${item}`).join("\n")
       : "- No manuscript pieces yet.";
-    this.body.setText(items);
+    const fragments = gameState.volumeFragments.length
+      ? gameState.volumeFragments.map((item) => `* ${item}`).join("\n")
+      : "* No FRUS fragments yet.";
+    this.body.setText([`DOCUMENT POINTS: ${gameState.documentPoints}`, "", "TOOLS / TOKENS", items, "", "FRUS VOLUME PARTS", fragments].join("\n"));
     this.container.setVisible(true);
   }
 }

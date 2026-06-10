@@ -44,16 +44,21 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.openNetGreen
     });
+    this.add.text(82, 53, `FRAGMENTS ${gameState.volumeFragments.length}/5  DOC PTS ${gameState.documentPoints}`, {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    });
 
-    this.add.rectangle(128, 71, 236, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp));
+    this.add.rectangle(128, 77, 236, 31, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp));
     PROCESS_STAMPS.forEach((stamp, index) => {
       const earned = gameState.processStamps.includes(stamp.id);
-      this.add.text(24 + index * 43, 62, stamp.label, {
+      this.add.text(24 + index * 43, 68, stamp.label, {
         fontFamily: "monospace",
         fontSize: stamp.label.length > 3 ? "6px" : "8px",
         color: earned ? PALETTE.goldStamp : PALETTE.sepiaInk
       });
-      this.add.text(24 + index * 43, 74, earned ? "OK" : "--", {
+      this.add.text(24 + index * 43, 80, earned ? "OK" : "--", {
         fontFamily: "monospace",
         fontSize: "7px",
         color: earned ? PALETTE.openNetGreen : PALETTE.sepiaInk
@@ -67,7 +72,7 @@ export class EndingScene extends Phaser.Scene {
       `${gameState.playerProfile.displayName.toUpperCase()}: ${gameState.playerProfile.ability.toUpperCase()}`
     ];
     lines.forEach((line, index) => {
-      this.add.text(14, 96 + index * 11, line, {
+      this.add.text(14, 102 + index * 11, line, {
         fontFamily: "monospace",
         fontSize: "7px",
         color: PALETTE.creamPaper

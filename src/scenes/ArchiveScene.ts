@@ -2,6 +2,8 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import {
   addInventoryItem,
+  addDocumentPoints,
+  addVolumeFragment,
   awardProcessStamp,
   gameState,
   setNearestInteractable,
@@ -153,6 +155,7 @@ export class ArchiveScene extends Phaser.Scene {
     document.collect();
     retroAudio.confirm();
     addInventoryItem(document.label);
+    addDocumentPoints(2, `${document.label} collected`);
     this.interactables = this.interactables.filter((item) => item.id !== document.id);
     if (this.collected.size < 3) {
       setObjective(`Collect document tiles: ${this.collected.size}/3.`);
@@ -232,6 +235,9 @@ export class ArchiveScene extends Phaser.Scene {
     this.choice.show("STATECHAT FLAG:\nSOURCE NOTE 47 REPOSITORY NOT SPECIFIED.\n\nWHAT DO YOU DO?", options, (option) => {
       if (option.value === "research") {
         awardProcessStamp("archive");
+        addInventoryItem("FRUS Fragment: Source Note");
+        addVolumeFragment("Source Note Fragment");
+        addDocumentPoints(12, "source note provenance verified");
         retroAudio.stamp();
         adjustReliability(10, "provenance verified by a human");
         this.reliability.update();

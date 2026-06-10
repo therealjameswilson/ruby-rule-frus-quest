@@ -1,6 +1,16 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
+import {
+  addDocumentPoints,
+  addInventoryItem,
+  addVolumeFragment,
+  awardProcessStamp,
+  gameState,
+  setObjective,
+  setSceneState,
+  setVisibleEntities,
+  setVisibleThreats
+} from "../game/state";
 import type { ChoiceOption, RouteItem } from "../game/types";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { HistorianNPC } from "../entities/HistorianNPC";
@@ -185,6 +195,9 @@ export class NetworkScene extends Phaser.Scene {
     this.routingActive = false;
     if (this.correctRoutes === this.routeItems.length) {
       awardProcessStamp("network");
+      addInventoryItem("Clearance Token");
+      addVolumeFragment("Routing Fragment");
+      addDocumentPoints(14, "OpenNet/ClassNet routes cleared");
       retroAudio.stamp();
       this.dialog.show("MARCUS", [
         "Good routing.",

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities } from "../game/state";
+import { addDocumentPoints, addInventoryItem, addVolumeFragment, awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities } from "../game/state";
 import type { ChoiceOption } from "../game/types";
 import { HistorianNPC } from "../entities/HistorianNPC";
 import { Player } from "../entities/Player";
@@ -128,6 +128,9 @@ export class SilentReadScene extends Phaser.Scene {
     this.choice.show("STATECHAT FLAGS MECHANICAL TYPOS.\nONE FACTUAL ERROR REMAINS.\n\nWHAT DO YOU CATCH?", options, (option) => {
       if (option.value === "date") {
         awardProcessStamp("proof");
+        addInventoryItem("Red Pencil Mark");
+        addVolumeFragment("Proof Fragment");
+        addDocumentPoints(16, "factual discrepancy caught");
         retroAudio.stamp();
         adjustReliability(12, "human caught factual discrepancy");
         this.reliability.update();

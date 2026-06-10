@@ -108,6 +108,7 @@ export type ProcessStampId = (typeof PROCESS_STAMPS)[number]["id"];
 export const SCENE_ORDER = [
   "TitleScene",
   "CharacterCreateScene",
+  "GuideScene",
   "OfficeScene",
   "ArchiveScene",
   "NetworkScene",

@@ -60,8 +60,22 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - contact knocks the player back and reduces reliability
   - nearby `Space`/`Enter` verification cracks and clears a wall
   - `render_game_to_text()` now reports `visibleThreats` with stonewall labels and coordinates
+- Added NES cave/dialogue-inspired `GuideScene` with original Ruby Rule art:
+  - equal-rank Archive Colleague NPC
+  - archive lamp props
+  - Citation Stamp pickup
+  - first FRUS volume fragment pickup
+  - Verification Gate into the Office hub
+  - visible 30-Year Line and DANN-E Queue antagonists
+- Added document points and FRUS volume fragments to global state, inventory, `render_game_to_text()`, direct-scene seeding, and the ending recap.
+- Recast Zelda-like symbols into FRUS production equivalents: citation stamp, clearance token, concurrence slip, red pencil mark, source-note/document points, confidence status, and FRUS volume fragments.
+- Updated the archive-room tutorial for equal-rank framing:
+  - uses an Archive Colleague as a peer NPC
+  - uses Archive Room as the visible room title
+  - verified the citation-stamp pickup after the rename
 
 ## TODO
 
 - Improve full end-to-end traversal coverage from TitleScene to EndingScene; direct scene QA now covers the later scenes reliably.
 - Consider a later non-combat `B` item such as a source-note stamp or routing card for clearing stonewalls at range.
+- Add a dedicated locked-room puzzle chamber that requires a clearance token or concurrence slip before entering the Referral Vault.

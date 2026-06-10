@@ -37,7 +37,7 @@ export class TitleScene extends Phaser.Scene {
       fontSize: "6px",
       color: PALETTE.goldStamp
     });
-    this.add.text(188, 7, "-LIFE-", {
+    this.add.text(184, 7, "-CONF-", {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.buckramHighlight
