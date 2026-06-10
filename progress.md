@@ -133,6 +133,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - added distinct 24x24 pixel silhouettes for citation stamp, FRUS volume fragment, telegram, source note, cross-reference, OpenNet terminal, ClassNet terminal, proof page, red pencil, and concurrence slip
   - preserved existing labels as secondary reinforcement while making the objects readable by shape and palette at native game scale
   - updated loader dimensions, fallback stamp/book textures, debug comparison metadata, and terminal/document entity texture selection
+- Added role-specific character cue and animation polish:
+  - updated the five selectable role sprites with cardigan/folder/glasses, mug/clipboard, pencil-behind-ear, two-page stack, and citation-stamp satchel cues
+  - renamed the visible declassification role label to Declass Coordinator while preserving the existing internal role id
+  - added pixel-snapped idle cues for folder checking, mug steam, pencil tapping, proof page reading, and stamp bouncing
+  - expanded the shared `E` ability into visible role-specific bursts for Archive Sense, Equity Map, Red Pencil, Silent Read, and Provenance Check
 
 ## TODO
 

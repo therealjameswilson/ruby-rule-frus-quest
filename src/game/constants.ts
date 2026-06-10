@@ -77,7 +77,7 @@ export const PROCESS_ROLES = [
   },
   {
     id: "declass_reviewer",
-    label: "Declass Reviewer",
+    label: "Declass Coordinator",
     ability: "Equity Map",
     remit: "Route classified equities.",
     color: "classNetRed",
