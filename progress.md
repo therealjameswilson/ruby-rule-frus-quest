@@ -103,6 +103,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - replaced soft SVG text/circle/stroke elements with rect-only pixel forms
   - added `public/assets/asset_improvement_report.md`
   - added `public/assets/asset_debug.html` for original/current comparisons
+- Added `scripts/improve-existing-assets.py` for future PNG cleanup:
+  - walks `public/assets/` while excluding `_originals`
+  - backs up PNGs under `public/assets/_originals/`
+  - thresholds alpha, quantizes visible pixels to the Ruby Rule PNG palette, and writes `asset_improvement_report.md`
+  - package script added as requested: `npm run improve:assets`
 
 ## TODO
 
