@@ -159,6 +159,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Source Note 47 now receives its citation stamp only after human provenance verification
   - changed Office terminal dialog labels so StateChat remains terminal-only rather than a speech-bubble speaker
   - added exact feedback messages for human verification, mechanical acceptance, evidence-bound checks, wrong network, and provenance guessing
+- Added mobile-friendly play support:
+  - added safe-area viewport handling and a responsive game shell that reserves space for touch controls
+  - added a pixel-styled on-screen D-pad plus A/E/M/R/N buttons for act, ability, inventory, reliability, and sound
+  - bridged touch buttons into Phaser key codes while preserving keyboard controls
+  - kept player movement pixel-snapped by feeding D-pad state into the existing player movement code
+  - verified `npm run build`, the required web-game Playwright client, mobile portrait touch movement, mobile landscape layout, and a mobile title/character-create flow
 
 ## TODO
 

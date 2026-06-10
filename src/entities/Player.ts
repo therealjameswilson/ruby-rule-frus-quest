@@ -113,10 +113,13 @@ export class Player {
       setPlayerPosition(this.position);
       return;
     }
-    const left = this.keys.left.isDown || this.keys.a.isDown;
-    const right = this.keys.right.isDown || this.keys.d.isDown;
-    const up = this.keys.up.isDown || this.keys.w.isDown;
-    const down = this.keys.down.isDown || this.keys.s.isDown;
+    const touchState = typeof window === "undefined"
+      ? undefined
+      : (window as Window & { rubyRuleTouchState?: Record<string, boolean> }).rubyRuleTouchState;
+    const left = this.keys.left.isDown || this.keys.a.isDown || !!touchState?.left;
+    const right = this.keys.right.isDown || this.keys.d.isDown || !!touchState?.right;
+    const up = this.keys.up.isDown || this.keys.w.isDown || !!touchState?.up;
+    const down = this.keys.down.isDown || this.keys.s.isDown || !!touchState?.down;
     let dx = Number(right) - Number(left);
     let dy = Number(down) - Number(up);
     if (dx !== 0 && dy !== 0) {
