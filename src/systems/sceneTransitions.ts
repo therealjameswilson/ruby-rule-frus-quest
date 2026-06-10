@@ -65,13 +65,17 @@ function drawAdventureHud(scene: Phaser.Scene, title: string, accent: string) {
 }
 
 function drawHudIcon(scene: Phaser.Scene, x: number, y: number, label: string, accent: string) {
+  scene.add.rectangle(x + 1, y + 1, 14, 20, color(PALETTE.stoneDark)).setDepth(801);
   scene.add.rectangle(x, y, 14, 20, color(PALETTE.black)).setStrokeStyle(2, color(accent)).setDepth(802);
+  scene.add.rectangle(x, y - 3, 8, 1, color(PALETTE.creamPaper)).setDepth(803);
   scene.add.text(x, y - 7, label, {
     fontFamily: "monospace",
     fontSize: "6px",
     color: PALETTE.creamPaper
   }).setOrigin(0.5).setDepth(803);
-  scene.add.rectangle(x, y + 3, 5, 8, color(accent)).setDepth(803);
+  scene.add.rectangle(x - 1, y + 4, 7, 9, color(PALETTE.black)).setDepth(803);
+  scene.add.rectangle(x, y + 3, 6, 8, color(accent)).setDepth(804);
+  scene.add.rectangle(x + 2, y + 1, 2, 2, color(PALETTE.creamPaper)).setDepth(805);
 }
 
 function drawDungeonWalls(scene: Phaser.Scene, accent: string) {
@@ -92,10 +96,11 @@ function drawDungeonWalls(scene: Phaser.Scene, accent: string) {
 }
 
 function drawStoneBlock(scene: Phaser.Scene, x: number, y: number, accent: string) {
-  scene.add.rectangle(x, y, 16, 16, color(PALETTE.stoneDark)).setDepth(40);
-  scene.add.rectangle(x - 1, y - 1, 13, 13, color(PALETTE.stoneGray)).setDepth(41);
-  scene.add.rectangle(x - 4, y - 4, 5, 5, color(PALETTE.stoneLight)).setDepth(42);
-  scene.add.rectangle(x + 3, y + 5, 7, 2, color(accent), 0.65).setDepth(42);
+  scene.add.rectangle(x, y, 16, 16, color(PALETTE.black)).setDepth(40);
+  scene.add.rectangle(x - 1, y - 1, 13, 13, color(PALETTE.stoneDark)).setDepth(41);
+  scene.add.rectangle(x - 4, y - 4, 5, 5, color(PALETTE.stoneGray)).setDepth(42);
+  scene.add.rectangle(x + 3, y + 5, 7, 2, color(accent)).setDepth(42);
+  scene.add.rectangle(x - 1, y + 6, 10, 1, color(PALETTE.black)).setDepth(43);
 }
 
 export function addObjectiveText(scene: Phaser.Scene) {

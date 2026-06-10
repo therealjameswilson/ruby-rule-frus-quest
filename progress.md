@@ -122,6 +122,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - strengthened implied outlines and contrast without adding characters, frames, or animation states
   - rebuilt `public/assets/asset_debug.html` as a sprite-only before/after viewer with originals from `_originals/sprites/`, current sprites at 4x, and a checkerboard toggle
   - verified CharacterCreateScene, GuideScene, EndingScene, and the comparison page with browser/Playwright screenshots
+- Improved existing tilesets and HUD icons without changing meanings:
+  - preserved the four 16x16 tile texture files and the three 32x16 UI/HUD SVG paths
+  - cleaned tile/UI colors to the Ruby Rule project palette, with no opacity attributes or non-rect primitives
+  - made office/archive/network/vault walkable floor repeats quieter while keeping crisp 16x16 boundaries
+  - made the procedural HUD item boxes and dungeon blocking blocks read with stronger silhouettes at native scale
+  - confirmed the repo still uses direct SVG texture keys and no atlas/tilemap ID references
+  - verified OfficeScene, ArchiveScene, NetworkScene, and ReferralVaultScene with Playwright screenshots/state plus an in-app browser canvas/log check
 
 ## TODO
 
