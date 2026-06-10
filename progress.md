@@ -150,6 +150,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - added `heldItem` and `productionHud` to `render_game_to_text()`
   - Archive Source Note 47 now sets held item and the objective `Verify provenance at research table.`
   - verified Archive and SilentReadScene HUD screenshots/state with Playwright and no console errors
+- Improved sprites, art readability, and verification gameplay:
+  - added original 24x24 agency equity seal, referral manifest, and excision bracket marker SVG sprites
+  - added subtle 2x2 buckram texture to FRUS volume covers and ruby vault tiles
+  - replaced referral-room label-only seal/manifest placeholders with loaded sprite silhouettes
+  - added a two-step walk cue and role-ability pose pulse to the player sprite system
+  - converted Archive Source Note 47 into a physical carry, route, verify, stamp loop at the research table
+  - Source Note 47 now receives its citation stamp only after human provenance verification
+  - changed Office terminal dialog labels so StateChat remains terminal-only rather than a speech-bubble speaker
+  - added exact feedback messages for human verification, mechanical acceptance, evidence-bound checks, wrong network, and provenance guessing
 
 ## TODO
 

@@ -373,6 +373,7 @@ export class SilentReadScene extends Phaser.Scene {
       addInventoryItem("AI Annotation Review Log");
       addDocumentPoints(8, "mechanical StateChat proposal routed to human review");
       adjustReliability(8, "AI checker output kept inside SOP");
+      setLatestMessage("MECHANICAL FIX ACCEPTED");
       return;
     }
     if (flag.id === "proof-date") {

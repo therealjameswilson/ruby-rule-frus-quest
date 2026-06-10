@@ -27,24 +27,36 @@ interface IdlePart {
   depthOffset: number;
 }
 
+interface WalkPart {
+  rect: Phaser.GameObjects.Rectangle;
+  ox: number;
+  oy: number;
+  side: -1 | 1;
+}
+
 export class Player {
   readonly sprite: Phaser.GameObjects.Image;
   private readonly keys: KeyboardMap;
   private readonly speed = 58;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly idleParts: IdlePart[] = [];
+  private readonly walkParts: WalkPart[] = [];
   private walkClock = 0;
   private idleClock = 0;
+  private abilityFrameUntil = 0;
   private isMoving = false;
   private logicalX: number;
   private logicalY: number;
+  private readonly scene: Phaser.Scene;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
+    this.scene = scene;
     this.logicalX = x;
     this.logicalY = y;
     this.shadow = scene.add.ellipse(snapPixel(x), snapPixel(y + 8), 12, 4, 0x050505, 0.35).setDepth(snapPixel(y - 1));
     this.sprite = scene.add.image(snapPixel(x), snapPixel(y), gameState.playerProfile.spriteKey).setDepth(snapPixel(y));
     this.createIdleCue(scene);
+    this.createWalkCycleCue(scene);
     this.keys = scene.input.keyboard!.addKeys({
       up: Phaser.Input.Keyboard.KeyCodes.UP,
       down: Phaser.Input.Keyboard.KeyCodes.DOWN,
@@ -63,6 +75,10 @@ export class Player {
       r: Phaser.Input.Keyboard.KeyCodes.R,
       f: Phaser.Input.Keyboard.KeyCodes.F
     }) as KeyboardMap;
+    scene.events.on("role-ability-frame", this.playAbilityFrame, this);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      scene.events.off("role-ability-frame", this.playAbilityFrame, this);
+    });
     this.syncRenderPosition();
     setPlayerPosition(this.position);
   }
@@ -92,6 +108,7 @@ export class Player {
       this.isMoving = false;
       this.sprite.setAngle(0);
       this.sprite.setScale(1);
+      if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
       this.syncRenderPosition();
       setPlayerPosition(this.position);
       return;
@@ -119,9 +136,15 @@ export class Player {
     this.isMoving = moving;
     this.sprite.setAngle(0);
     this.sprite.setScale(1);
+    if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
     this.shadow.setScale(1);
     this.syncRenderPosition();
     setPlayerPosition(this.position);
+  }
+
+  private playAbilityFrame() {
+    this.abilityFrameUntil = this.scene.time.now + 420;
+    this.sprite.setTint(color(PALETTE.goldStamp));
   }
 
   private syncRenderPosition() {
@@ -132,6 +155,12 @@ export class Player {
     this.shadow.setDepth(renderY - 1);
     this.sprite.setDepth(renderY);
     this.syncIdleCue(renderX, renderY);
+    this.syncWalkCycleCue(renderX, renderY);
+  }
+
+  private createWalkCycleCue(scene: Phaser.Scene) {
+    this.addWalkRect(scene, -4, 14, -1);
+    this.addWalkRect(scene, 8, 14, 1);
   }
 
   private createIdleCue(scene: Phaser.Scene) {
@@ -178,11 +207,17 @@ export class Player {
     this.idleParts.push({ rect, ox, oy, tag, depthOffset: 1 });
   }
 
+  private addWalkRect(scene: Phaser.Scene, ox: number, oy: number, side: -1 | 1) {
+    const rect = scene.add.rectangle(0, 0, 4, 2, color(PALETTE.black)).setOrigin(0, 0).setVisible(false);
+    this.walkParts.push({ rect, ox, oy, side });
+  }
+
   private syncIdleCue(renderX: number, renderY: number) {
     if (!this.idleParts.length) return;
     const tick = Math.floor(this.idleClock / 360) % 4;
     const fastTick = Math.floor(this.idleClock / 180) % 4;
-    const hideAnimatedCue = this.isMoving;
+    const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+    const hideAnimatedCue = this.isMoving && !abilityActive;
     for (const part of this.idleParts) {
       let x = renderX + part.ox;
       let y = renderY + part.oy;
@@ -198,10 +233,24 @@ export class Player {
       if (part.tag === "proof-pages") x += tick === 1 ? -1 : tick === 3 ? 1 : 0;
       if (part.tag === "proof-line") visible = !hideAnimatedCue && tick % 2 === 0;
       if (part.tag === "source-stamp") y += tick % 2 === 0 ? -1 : 0;
+      if (abilityActive) {
+        visible = true;
+        y -= 1;
+      }
 
       part.rect.setVisible(visible);
       setPixelPosition(part.rect, x, y);
       part.rect.setDepth(renderY + part.depthOffset);
+    }
+  }
+
+  private syncWalkCycleCue(renderX: number, renderY: number) {
+    const frame = Math.floor(this.walkClock / 140) % 2;
+    for (const part of this.walkParts) {
+      const stride = this.isMoving ? (frame === 0 ? part.side : -part.side) : 0;
+      part.rect.setVisible(this.isMoving);
+      setPixelPosition(part.rect, renderX + part.ox + stride, renderY + part.oy);
+      part.rect.setDepth(renderY + 1);
     }
   }
 }

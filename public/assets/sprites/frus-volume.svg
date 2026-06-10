@@ -4,6 +4,11 @@
   <rect x="0" y="2" width="48" height="34" fill="#7A1020"/>
   <rect x="0" y="2" width="4" height="34" fill="#B89A5A"/>
   <rect x="4" y="6" width="40" height="26" fill="#3A0710"/>
+  <rect x="8" y="8" width="2" height="2" fill="#7A1020"/>
+  <rect x="18" y="12" width="2" height="2" fill="#7A1020"/>
+  <rect x="31" y="8" width="2" height="2" fill="#7A1020"/>
+  <rect x="11" y="28" width="2" height="2" fill="#7A1020"/>
+  <rect x="34" y="27" width="2" height="2" fill="#7A1020"/>
   <rect x="7" y="9" width="34" height="2" fill="#D6A23A"/>
   <rect x="8" y="13" width="32" height="1" fill="#B82030"/>
   <rect x="13" y="18" width="22" height="2" fill="#D6A23A"/>

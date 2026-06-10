@@ -6,6 +6,7 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  setLatestMessage,
   setObjective,
   setSceneState,
   setVisibleEntities,
@@ -180,6 +181,7 @@ export class NetworkScene extends Phaser.Scene {
     } else {
       const leakWarning = destination === "OpenNet" && item.network === "ClassNet";
       adjustReliability(leakWarning ? -18 : -8, leakWarning ? "closed material sent to OpenNet" : "network routing mismatch");
+      setLatestMessage("WRONG NETWORK");
       this.routeText.setText(leakWarning ? "WARNING\nOPENNET LEAK RISK" : "WARNING\nWRONG ROOM");
     }
     this.reliability.update();

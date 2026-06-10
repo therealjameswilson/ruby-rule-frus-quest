@@ -59,7 +59,17 @@ export class ReferralVaultScene extends Phaser.Scene {
   create() {
     setSceneState("ReferralVaultScene", "explore", "Match documents to agency equities.");
     retroAudio.startMusic("ReferralVaultScene");
-    setVisibleEntities(["Marcus", "StateChat terminal", "CIA seal", "DOD seal", "NSC seal", "Concurrence Slip", "Stone Wall: Referral delay"]);
+    setVisibleEntities([
+      "Marcus",
+      "StateChat terminal",
+      "CIA equity seal",
+      "DOD equity seal",
+      "NSC equity seal",
+      "Referral Manifest",
+      "Concurrence Slip",
+      "Excision Bracket Marker",
+      "Stone Wall: Referral delay"
+    ]);
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     drawTiledFloor(this, "vault-tiles");
     drawRoomFrame(this, "REFERRAL VAULT");
@@ -74,7 +84,9 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.syncThreatState();
     new HistorianNPC(this, "marcus", 42, 58);
     new Terminal(this, 214, 58, "StateChat");
-    this.add.image(130, 112, "concurrence-slip").setDepth(120);
+    this.add.image(114, 112, "referral-manifest").setDepth(120);
+    this.add.image(136, 112, "concurrence-slip").setDepth(120);
+    this.add.image(158, 112, "excision-bracket-marker").setDepth(120);
     this.addSeal(70, 132, "CIA");
     this.addSeal(128, 132, "DOD");
     this.addSeal(186, 132, "NSC");
@@ -130,11 +142,13 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   private addSeal(x: number, y: number, label: string) {
     this.add.rectangle(x, y, 38, 30, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp));
+    this.add.image(x, y - 1, "agency-equity-seal").setDepth(120);
     this.add.text(x, y - 5, label, {
       fontFamily: "monospace",
-      fontSize: "10px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5);
+      fontSize: "6px",
+      color: PALETTE.black,
+      backgroundColor: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(121);
   }
 
   private syncThreatState() {

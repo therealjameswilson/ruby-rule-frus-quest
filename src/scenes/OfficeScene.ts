@@ -175,7 +175,7 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private inspectOpenNet() {
-    this.dialog.show("STATECHAT / OPENNET", [
+    this.dialog.show("OPENNET TERMINAL", [
       "READY",
       "OPEN SOURCE CHECKS ONLY.",
       "NO CLASSIFIED MATERIAL HERE."
@@ -184,10 +184,10 @@ export class OfficeScene extends Phaser.Scene {
 
   private inspectClassNet() {
     if (gameState.sceneProgress.office < 2) {
-      this.dialog.show("STATECHAT / CLASSNET", "Read the Golden Rule before the closed room opens.");
+      this.dialog.show("CLASSNET TERMINAL", "Read the Golden Rule before the closed room opens.");
       return;
     }
-    this.dialog.show("STATECHAT / CLASSNET", [
+    this.dialog.show("CLASSNET TERMINAL", [
       "PRE-SUBMISSION REVIEW",
       "AI ANNO TOOL QUEUED",
       "COMMENT-ONLY GATES ON"

@@ -35,6 +35,7 @@ export function activateRoleAbility(scene: Phaser.Scene) {
   const hint = abilityHint();
   setLatestAbility(hint);
   setLatestMessage(hint);
+  scene.events.emit("role-ability-frame");
   const abilityVisual = createAbilityVisual(scene);
 
   const banner = scene.add.container(128, 40).setDepth(1200);
