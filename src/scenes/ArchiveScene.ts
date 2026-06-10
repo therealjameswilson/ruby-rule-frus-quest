@@ -5,13 +5,14 @@ import type { ChoiceOption, Interactable } from "../game/types";
 import { HistorianNPC } from "../entities/HistorianNPC";
 import { Manuscript } from "../entities/Manuscript";
 import { Player } from "../entities/Player";
+import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
-import { addArchiveShelves, addDocumentStack, addRubyVolumeStack, addTinySparkle } from "../systems/roomDressing";
+import { addArchiveShelves, addDocumentStack, addRubyVolumeStack, addTinySparkle, addWallMap } from "../systems/roomDressing";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
 import { ChoicePrompt } from "../systems/verification";
 
@@ -25,6 +26,7 @@ export class ArchiveScene extends Phaser.Scene {
   private hintText!: Phaser.GameObjects.Text;
   private interactables: Interactable[] = [];
   private collected = new Set<string>();
+  private bureaucraticWalls: BureaucraticWall[] = [];
 
   constructor() {
     super("ArchiveScene");
@@ -37,6 +39,7 @@ export class ArchiveScene extends Phaser.Scene {
     drawTiledFloor(this, "archive-tiles");
     drawRoomFrame(this, "ARCHIVE");
     addArchiveShelves(this);
+    addWallMap(this, 128, 60, "NA MAP");
     addDocumentStack(this, 74, 68, true);
     addRubyVolumeStack(this, 178, 171, 4);
     addTinySparkle(this, 128, 90, PALETTE.terminalCyan);
@@ -67,18 +70,32 @@ export class ArchiveScene extends Phaser.Scene {
       new Manuscript(this, "source-note", "Source Note", 128, 104),
       new Manuscript(this, "cross-reference", "Cross-Ref", 188, 124)
     ];
-    this.interactables = documents.map((document) => ({
+    this.bureaucraticWalls = [
+      new BureaucraticWall(this, "repo-wall", "NO REPO", 100, 148),
+      new BureaucraticWall(this, "memo-wall", "PENDING", 158, 148)
+    ];
+    const documentInteractables = documents.map((document) => ({
       id: document.id,
       label: document.label,
       x: document.x,
       y: document.y,
       kind: "document",
       onInteract: () => this.collect(document)
-    }));
+    }) satisfies Interactable);
+    const wallInteractables = this.bureaucraticWalls.map((wall) => ({
+      id: wall.id,
+      label: `Stone Wall: ${wall.label}`,
+      x: wall.x,
+      y: wall.y,
+      radius: 30,
+      kind: "enemy",
+      onInteract: () => this.clearBureaucraticWall(wall)
+    }) satisfies Interactable);
+    this.interactables = [...documentInteractables, ...wallInteractables];
     setVisibleEntities(["Elena", "StateChat terminal", ...this.interactables.map((item) => item.label)]);
     this.dialog.show("ELENA", [
       "A compiler reads the trail.",
-      "Collect the pieces. Then test the source note."
+      "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving."
     ]);
   }
 
@@ -107,6 +124,7 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
+    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now));
     this.player.update(delta, true);
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
@@ -136,6 +154,24 @@ export class ArchiveScene extends Phaser.Scene {
       "SOURCE NOTE 47 REPOSITORY NOT SPECIFIED.",
       "CANNOT PROPOSE. ARCHIVAL QUESTION REQUIRES COMPILER."
     ], () => this.showVerification());
+  }
+
+  private clearBureaucraticWall(wall: BureaucraticWall) {
+    if (wall.isCleared) return;
+    wall.markHit();
+    retroAudio.warning();
+    adjustReliability(2, `${wall.label} stonewall challenged with source evidence`);
+    this.reliability.update();
+    this.dialog.show("BUREAUCRATIC WALL", [
+      `${wall.label} is not a monster with claws.`,
+      "It is paperwork turned to stone.",
+      "A named source note cracks it."
+    ], () => {
+      wall.clear();
+      retroAudio.stamp();
+      this.interactables = this.interactables.filter((item) => item.id !== wall.id);
+      setVisibleEntities(["Elena", "StateChat terminal", ...this.interactables.map((item) => item.label)]);
+    });
   }
 
   private showVerification() {

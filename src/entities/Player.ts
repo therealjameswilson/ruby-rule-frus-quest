@@ -62,7 +62,7 @@ export class Player {
     const moving = dx !== 0 || dy !== 0;
     const dt = deltaMs / 1000;
     this.sprite.x = Phaser.Math.Clamp(this.sprite.x + dx * this.speed * dt, 14, GAME_WIDTH - 14);
-    this.sprite.y = Phaser.Math.Clamp(this.sprite.y + dy * this.speed * dt, 24, GAME_HEIGHT - 20);
+    this.sprite.y = Phaser.Math.Clamp(this.sprite.y + dy * this.speed * dt, 42, GAME_HEIGHT - 20);
     if (moving) {
       this.walkClock += deltaMs;
       this.sprite.setFlipX(dx < 0);

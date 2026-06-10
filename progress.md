@@ -45,8 +45,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Added player shadow, facing flip, and simple walk-bob movement polish.
 - Dressed the Office, Archive, Network, Referral Vault, and Silent Read scenes with workflow-specific visual cues.
 - Verified dressed OfficeScene, NetworkScene, and SilentReadScene with Playwright screenshots/state.
+- Added a stronger ruby-red FRUS buckram/NES adventure aesthetic:
+  - top HUD band with minimap, item boxes, and life markers
+  - one-screen dungeon wall framing around playable rooms
+  - richer 16x16 tile SVGs for office, archive, network, and vault rooms
+  - parchment wall maps as room dressing
+  - title-screen HUD/map/stone-frame treatment
+- Added original `bureaucratic-wall` enemy sprite plus Phaser fallback texture.
+- Added literal stone bureaucracy enemies in Archive, Network, and Referral Vault rooms; archive walls can be cracked and cleared by interaction.
+- Downloaded public-domain MIDI source clips into `public/assets/audio/midi/` and added `public/assets/audio/ATTRIBUTION.md`.
+- Reworked scene music to use short Web Audio motifs derived from the public-domain Bach/Satie MIDI clips.
 
 ## TODO
 
 - Improve full end-to-end traversal coverage from TitleScene to EndingScene; direct scene QA now covers the later scenes reliably.
-- Continue art polish beyond the first room-dressing pass, especially animation frames and a stronger title/opening sequence.
+- Add full collision/knockback behavior for stone-wall enemies if the game moves beyond MVP interaction enemies.

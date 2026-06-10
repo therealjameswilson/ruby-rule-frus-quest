@@ -28,29 +28,29 @@ export class ReliabilityHud {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    scene.add.rectangle(50, 11, 82, 10, 0x050505, 0.85).setDepth(800);
-    scene.add.rectangle(50, 11, 82, 10).setStrokeStyle(1, 0xd6a84f).setDepth(801);
-    this.fill = scene.add.rectangle(10, 11, 78, 6, 0x4cff6b).setOrigin(0, 0.5).setDepth(802);
-    this.label = scene.add.text(94, 6, "", {
+    scene.add.rectangle(88, 24, 64, 8, 0x050505, 0.85).setDepth(800);
+    scene.add.rectangle(88, 24, 64, 8).setStrokeStyle(1, 0xd6a84f).setDepth(801);
+    this.fill = scene.add.rectangle(58, 24, 60, 4, 0x4cff6b).setOrigin(0, 0.5).setDepth(802);
+    this.label = scene.add.text(122, 20, "", {
       fontFamily: "monospace",
-      fontSize: "8px",
+      fontSize: "6px",
       color: PALETTE.creamPaper
     }).setDepth(802);
-    this.roleLabel = scene.add.text(156, 6, "", {
+    this.roleLabel = scene.add.text(96, 5, "", {
       fontFamily: "monospace",
-      fontSize: "7px",
+      fontSize: "6px",
       color: PALETTE.goldStamp
     }).setDepth(802);
-    this.soundLabel = scene.add.text(10, 18, "", {
+    this.soundLabel = scene.add.text(58, 13, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
     }).setDepth(802);
     PROCESS_STAMPS.forEach((stamp, index) => {
-      const stampText = scene.add.text(160 + index * 18, 18, stamp.label, {
+      const stampText = scene.add.text(174 + index * 13, 23, stamp.label.slice(0, 3), {
         fontFamily: "monospace",
-        fontSize: stamp.label.length > 3 ? "5px" : "6px",
+        fontSize: "5px",
         color: PALETTE.sepiaInk,
         backgroundColor: PALETTE.black
       }).setDepth(802);
@@ -79,7 +79,7 @@ export class ReliabilityHud {
 
   update() {
     const value = gameState.reliability;
-    this.fill.width = Math.max(1, Math.round((78 * value) / 100));
+    this.fill.width = Math.max(1, Math.round((60 * value) / 100));
     const color = value < 35 ? 0xff3b3b : value < 70 ? 0xd6a84f : 0x4cff6b;
     this.fill.setFillStyle(color);
     this.label.setText(`REL ${value}`);

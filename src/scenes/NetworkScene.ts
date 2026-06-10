@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities } from "../game/state";
 import type { ChoiceOption, RouteItem } from "../game/types";
+import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { HistorianNPC } from "../entities/HistorianNPC";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/Terminal";
@@ -10,7 +11,7 @@ import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
-import { addNetworkCables, addTinySparkle } from "../systems/roomDressing";
+import { addNetworkCables, addTinySparkle, addWallMap } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
 import { ChoicePrompt } from "../systems/verification";
 
@@ -29,6 +30,7 @@ export class NetworkScene extends Phaser.Scene {
   private currentRoute = 0;
   private correctRoutes = 0;
   private routingActive = false;
+  private bureaucraticWalls: BureaucraticWall[] = [];
 
   private readonly routeItems: RouteItem[] = [
     { label: "Published FRUS cross-reference research", network: "OpenNet", classification: "unclassified" },
@@ -47,13 +49,18 @@ export class NetworkScene extends Phaser.Scene {
   create() {
     setSceneState("NetworkScene", "explore", "Learn the network split from Marcus.");
     retroAudio.startMusic("NetworkScene");
-    setVisibleEntities(["Marcus", "OpenNet door", "ClassNet door", "Routing sorter"]);
+    setVisibleEntities(["Marcus", "OpenNet door", "ClassNet door", "Routing sorter", "Stone Wall: Firewall"]);
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawTiledFloor(this, "network-tiles");
     drawRoomFrame(this, "NETWORK");
     addNetworkCables(this);
+    addWallMap(this, 128, 66, "NET MAP");
     addTinySparkle(this, 60, 108, PALETTE.openNetGreen);
     addTinySparkle(this, 196, 108, PALETTE.classNetRed);
+    this.bureaucraticWalls = [
+      new BureaucraticWall(this, "firewall-open", "FIREWALL", 96, 152),
+      new BureaucraticWall(this, "firewall-class", "FORM 32", 160, 152)
+    ];
     new HistorianNPC(this, "marcus", 128, 54);
     new Terminal(this, 60, 124, "OpenNet");
     new Terminal(this, 196, 124, "ClassNet");
@@ -95,6 +102,7 @@ export class NetworkScene extends Phaser.Scene {
 
   update(_: number, delta: number) {
     const keys = this.player.inputKeys;
+    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now));
     if (Phaser.Input.Keyboard.JustDown(keys.f)) this.scale.toggleFullscreen();
     if (Phaser.Input.Keyboard.JustDown(keys.m)) this.inventory.toggle();
     if (Phaser.Input.Keyboard.JustDown(keys.n)) {

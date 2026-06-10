@@ -11,7 +11,7 @@ import { nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
-import { addBookcase, addDesk, addDocumentStack, addRubyVolumeStack, addTinySparkle } from "../systems/roomDressing";
+import { addBookcase, addDesk, addDocumentStack, addRubyVolumeStack, addTinySparkle, addWallMap } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
 
 function color(hex: string) {
@@ -46,6 +46,7 @@ export class OfficeScene extends Phaser.Scene {
     }).setOrigin(0.5);
     addBookcase(this, 25, 55, 30, 38);
     addBookcase(this, 231, 55, 30, 38);
+    addWallMap(this, 128, 96, "FRUS MAP");
     addDesk(this, 58, 105, "SRC");
     addDesk(this, 198, 110, "NET");
     addRubyVolumeStack(this, 112, 154, 3);

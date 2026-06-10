@@ -23,8 +23,33 @@ export class TitleScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
     for (let y = 0; y < GAME_HEIGHT; y += 8) {
       for (let x = (y / 8) % 2 === 0 ? 0 : 8; x < GAME_WIDTH; x += 16) {
-        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramRed), 0.55);
+        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramHighlight), 0.45);
       }
+    }
+    this.add.rectangle(128, 15, 256, 30, color(PALETTE.black), 0.95);
+    this.add.rectangle(128, 30, 256, 2, color(PALETTE.goldStamp));
+    this.add.rectangle(28, 15, 42, 20, color(PALETTE.stoneGray)).setStrokeStyle(1, color(PALETTE.creamPaper));
+    this.add.rectangle(20, 14, 6, 5, color(PALETTE.goldStamp));
+    this.add.rectangle(29, 14, 5, 5, color(PALETTE.stoneLight));
+    this.add.rectangle(38, 14, 5, 5, color(PALETTE.buckramHighlight));
+    this.add.text(58, 7, "FRUS MAP", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp
+    });
+    this.add.text(188, 7, "-LIFE-", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.buckramHighlight
+    });
+    for (let i = 0; i < 5; i += 1) {
+      this.add.rectangle(214 + i * 7, 21, 5, 5, color(PALETTE.buckramHighlight));
+    }
+    for (let x = 8; x <= 248; x += 16) {
+      this.add.rectangle(x, 42, 16, 16, color(PALETTE.stoneDark));
+      this.add.rectangle(x - 2, 40, 11, 11, color(PALETTE.stoneGray));
+      this.add.rectangle(x, 218, 16, 16, color(PALETTE.stoneDark));
+      this.add.rectangle(x - 2, 216, 11, 11, color(PALETTE.stoneGray));
     }
 
     const volume = this.add.image(128, 94, "frus-volume").setScale(1.4);

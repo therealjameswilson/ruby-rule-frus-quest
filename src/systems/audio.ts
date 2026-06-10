@@ -2,6 +2,45 @@ import { setAudioStatus } from "../game/state";
 
 type Wave = OscillatorType;
 
+interface MidiTheme {
+  title: string;
+  source: string;
+  stepMs: number;
+  notes: Array<number | null>;
+  bass?: number[];
+  wave?: Wave;
+}
+
+const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
+  title: {
+    title: "Bach Contrapunctus I",
+    source: "Mutopia public-domain MIDI",
+    stepMs: 300,
+    notes: [50, 57, 53, 50, 49, 50, 52, 53, 55, 57, 53, 52, 50, null, 45, 50],
+    bass: [38, 38, 41, 45]
+  },
+  archive: {
+    title: "Bach Chromatic Fantasy",
+    source: "Mutopia public-domain MIDI",
+    stepMs: 180,
+    notes: [64, 65, 66, 67, 68, 69, 70, 71, 72, 71, 70, 69, 68, 67, 66, 65],
+    bass: [40, 43, 45, 47],
+    wave: "square"
+  },
+  satie: {
+    title: "Satie Ogive No. 2",
+    source: "Wikimedia Commons public-domain MIDI",
+    stepMs: 520,
+    notes: [48, 55, 60, 64, 67, 64, 60, 55, 50, 57, 62, 65, 69, 65, 62, 57],
+    bass: [36, 36, 38, 38],
+    wave: "triangle"
+  }
+};
+
+function midiToFrequency(note: number) {
+  return 440 * 2 ** ((note - 69) / 12);
+}
+
 class RetroAudio {
   private context: AudioContext | null = null;
   private enabled = true;
@@ -53,23 +92,30 @@ class RetroAudio {
   startMusic(sceneKey: string) {
     if (!this.enabled || typeof window === "undefined") return;
     this.stopMusic();
-    const patterns: Record<string, number[]> = {
-      TitleScene: [196, 196, 262, 294, 330, 294, 262, 196],
-      OfficeScene: [262, 330, 392, 330, 294, 330, 262, 196],
-      ArchiveScene: [220, 262, 330, 262, 196, 220, 262, 330],
-      NetworkScene: [147, 196, 294, 196, 147, 220, 294, 220],
-      ReferralVaultScene: [196, 233, 294, 233, 196, 262, 330, 262],
-      SilentReadScene: [247, 294, 330, 294, 247, 262, 330, 392],
-      EndingScene: [262, 330, 392, 523, 392, 330, 392, 523]
+    const themes: Record<string, MidiTheme> = {
+      TitleScene: PUBLIC_DOMAIN_MIDI_THEMES.title,
+      CharacterCreateScene: PUBLIC_DOMAIN_MIDI_THEMES.title,
+      OfficeScene: PUBLIC_DOMAIN_MIDI_THEMES.title,
+      ArchiveScene: PUBLIC_DOMAIN_MIDI_THEMES.archive,
+      NetworkScene: PUBLIC_DOMAIN_MIDI_THEMES.archive,
+      ReferralVaultScene: PUBLIC_DOMAIN_MIDI_THEMES.archive,
+      SilentReadScene: PUBLIC_DOMAIN_MIDI_THEMES.satie,
+      EndingScene: PUBLIC_DOMAIN_MIDI_THEMES.satie
     };
-    const pattern = patterns[sceneKey] ?? patterns.OfficeScene;
-    setAudioStatus(`music ${sceneKey}`);
+    const theme = themes[sceneKey] ?? PUBLIC_DOMAIN_MIDI_THEMES.title;
+    setAudioStatus(`pd midi ${theme.title}`);
     this.musicStep = 0;
     this.musicTimer = window.setInterval(() => {
-      const note = pattern[this.musicStep % pattern.length];
-      this.tone(note, 0.045, 0.012, "square");
+      const note = theme.notes[this.musicStep % theme.notes.length];
+      if (note !== null) {
+        this.tone(midiToFrequency(note), Math.min(0.16, (theme.stepMs / 1000) * 0.68), 0.012, theme.wave ?? "square");
+      }
+      if (theme.bass && this.musicStep % 4 === 0) {
+        const bass = theme.bass[Math.floor(this.musicStep / 4) % theme.bass.length];
+        this.tone(midiToFrequency(bass), Math.min(0.18, (theme.stepMs / 1000) * 0.85), 0.008, "triangle");
+      }
       this.musicStep += 1;
-    }, 520);
+    }, theme.stepMs);
   }
 
   stopMusic() {

@@ -25,7 +25,7 @@ export interface Interactable {
   x: number;
   y: number;
   radius?: number;
-  kind: "npc" | "terminal" | "poster" | "document" | "door" | "manuscript";
+  kind: "npc" | "terminal" | "poster" | "document" | "door" | "manuscript" | "enemy";
   onInteract: () => void;
 }
 

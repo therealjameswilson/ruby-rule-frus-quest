@@ -57,6 +57,7 @@ export class BootScene extends Phaser.Scene {
     }
     this.makeManuscriptTextureIfMissing();
     this.makeVolumeTextureIfMissing();
+    this.makeBureaucraticWallTextureIfMissing();
     this.makeTileTextureIfMissing("office-tiles", PALETTE.creamPaper, PALETTE.archiveAmber);
     this.makeTileTextureIfMissing("archive-tiles", PALETTE.archiveAmber, PALETTE.sepiaInk);
     this.makeTileTextureIfMissing("network-tiles", PALETTE.shadowNavy, PALETTE.terminalCyan);
@@ -77,6 +78,7 @@ export class BootScene extends Phaser.Scene {
       ["player-editor", "player-editor.svg", 16, 16],
       ["player-declass-reviewer", "player-declass-reviewer.svg", 16, 16],
       ["player-source-note-specialist", "player-source-note-specialist.svg", 16, 16],
+      ["bureaucratic-wall", "bureaucratic-wall.svg", 36, 32],
       ["manuscript", "manuscript.svg", 18, 18],
       ["frus-volume", "frus-volume.svg", 52, 42]
     ];
@@ -144,6 +146,34 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(14, 18, 20, 2);
     g.fillRect(12, 25, 24, 2);
     g.generateTexture("frus-volume", 52, 42);
+    g.destroy();
+  }
+
+  private makeBureaucraticWallTextureIfMissing() {
+    if (this.textures.exists("bureaucratic-wall")) return;
+    const g = this.add.graphics();
+    g.fillStyle(color(PALETTE.black), 0);
+    g.fillRect(0, 0, 36, 32);
+    g.fillStyle(color(PALETTE.stoneDark));
+    g.fillRect(3, 6, 30, 22);
+    g.fillStyle(color(PALETTE.stoneGray));
+    g.fillRect(5, 4, 26, 20);
+    g.fillStyle(color(PALETTE.stoneLight));
+    g.fillRect(6, 5, 10, 7);
+    g.fillRect(19, 6, 11, 6);
+    g.fillRect(9, 15, 9, 8);
+    g.fillRect(21, 16, 8, 7);
+    g.fillStyle(color(PALETTE.buckramRed));
+    g.fillRect(2, 12, 32, 4);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(4, 13, 28, 1);
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(11, 11, 3, 3);
+    g.fillRect(22, 11, 3, 3);
+    g.fillRect(14, 22, 8, 2);
+    g.lineStyle(1, color(PALETTE.black), 0.65);
+    g.lineBetween(17, 5, 20, 23);
+    g.generateTexture("bureaucratic-wall", 36, 32);
     g.destroy();
   }
 

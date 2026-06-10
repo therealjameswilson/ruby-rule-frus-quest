@@ -35,7 +35,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 
 ## MVP Features
 
-- NES-style title screen with a ruby buckram FRUS volume.
+- NES-style title screen with a ruby buckram FRUS volume, top HUD band, tiny map, and stone dungeon framing.
 - Character crafting with actual FRUS production roles:
   - Proofreader
   - Compiler
@@ -47,12 +47,14 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - OpenNet/ClassNet routing puzzle.
 - Referral, agency-equity, manifest, and visible-excision puzzle.
 - Silent-read proofing puzzle where StateChat catches mechanical issues and the player catches the factual date error.
-- Room-specific pixel dressing: desks, shelves, document stacks, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
+- Room-specific pixel dressing: desks, shelves, document stacks, wall maps, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
+- One-screen room composition with a minimap/status HUD, 16x16 tile-feeling floors, stone borders, and clear blocked/walkable space.
+- Bureaucratic wall enemies: literal stone walls labeled with process blockers like `NO REPO`, `PENDING`, `FIREWALL`, `WAIT`, and `HOLD`.
 - Player shadow, facing flip, and walk-bob movement polish.
 - Reliability Meter and `window.render_game_to_text()` for automated testing.
 - Process stamps that show the FRUS production path: Rule, Source, Network, Referral, Read.
 - Role-specific ability hints that reinforce what each production role contributes.
-- Generated 8-bit chiptune music, decision chimes, warning tones, process-stamp jingles, and an ending fanfare.
+- Public-domain MIDI-derived 8-bit music motifs, decision chimes, warning tones, process-stamp jingles, and an ending fanfare.
 - Final completion card summarizing the production skills practiced.
 
 ## Development Shortcuts
@@ -67,6 +69,10 @@ Direct scene starts are supported for QA:
 
 These seed earlier process stamps and inventory so later mechanics can be tested without replaying the full quest.
 
+## Audio Sources
+
+Raw public-domain MIDI source clips are checked in under `public/assets/audio/midi/`, with rights notes in `public/assets/audio/ATTRIBUTION.md`. The browser plays short Web Audio square-wave arrangements derived from those clips for reliable GitHub Pages deployment.
+
 ## Asset Policy
 
-Sprites, tiles, and UI textures are original repository-local SVG pixel assets in `public/assets`, with Phaser-generated fallbacks in `BootScene` if an asset is missing. Audio is generated in code with Web Audio oscillators. Later original PNG or audio replacements can be checked in without changing the deployment model.
+Sprites, tiles, enemy art, and UI textures are original repository-local SVG pixel assets in `public/assets`, with Phaser-generated fallbacks in `BootScene` if an asset is missing. Audio playback is generated in code with Web Audio oscillators. Later original PNG or cleared audio replacements can be checked in without changing the deployment model.

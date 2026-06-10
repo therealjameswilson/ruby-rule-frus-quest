@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities } from "../game/state";
 import type { ChoiceOption } from "../game/types";
+import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { HistorianNPC } from "../entities/HistorianNPC";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/Terminal";
@@ -10,7 +11,7 @@ import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
-import { addDocumentStack, addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
+import { addDocumentStack, addTinySparkle, addVaultBlocks, addWallMap } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
 import { ChoicePrompt } from "../systems/verification";
 
@@ -33,6 +34,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private vaultText!: Phaser.GameObjects.Text;
   private matchIndex = 0;
   private correctMatches = 0;
+  private bureaucraticWalls: BureaucraticWall[] = [];
 
   private readonly matches: EquityMatch[] = [
     { label: "Intelligence annex", agency: "CIA" },
@@ -47,13 +49,18 @@ export class ReferralVaultScene extends Phaser.Scene {
   create() {
     setSceneState("ReferralVaultScene", "explore", "Match documents to agency equities.");
     retroAudio.startMusic("ReferralVaultScene");
-    setVisibleEntities(["Marcus", "StateChat terminal", "CIA seal", "DOD seal", "NSC seal"]);
+    setVisibleEntities(["Marcus", "StateChat terminal", "CIA seal", "DOD seal", "NSC seal", "Stone Wall: Referral delay"]);
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     drawTiledFloor(this, "vault-tiles");
     drawRoomFrame(this, "REFERRAL VAULT");
     addVaultBlocks(this);
+    addWallMap(this, 128, 60, "EQUITY MAP");
     addDocumentStack(this, 214, 116, true);
     addTinySparkle(this, 128, 120, PALETTE.goldStamp);
+    this.bureaucraticWalls = [
+      new BureaucraticWall(this, "cia-delay-wall", "WAIT", 44, 160),
+      new BureaucraticWall(this, "nsc-delay-wall", "HOLD", 212, 160)
+    ];
     new HistorianNPC(this, "marcus", 42, 58);
     new Terminal(this, 214, 58, "StateChat");
     this.addSeal(70, 132, "CIA");
@@ -81,6 +88,7 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   update(_: number, delta: number) {
     const keys = this.player.inputKeys;
+    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now));
     if (Phaser.Input.Keyboard.JustDown(keys.f)) this.scale.toggleFullscreen();
     if (Phaser.Input.Keyboard.JustDown(keys.m)) this.inventory.toggle();
     if (Phaser.Input.Keyboard.JustDown(keys.n)) {
