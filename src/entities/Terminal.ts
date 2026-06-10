@@ -14,15 +14,16 @@ export class Terminal {
     this.x = x;
     this.y = y;
     const border = label === "OpenNet" ? PALETTE.openNetGreen : label === "ClassNet" ? PALETTE.classNetRed : PALETTE.terminalCyan;
-    const screen = scene.add.rectangle(0, 0, 34, 22, color(PALETTE.black)).setStrokeStyle(2, color(border));
-    const keys = scene.add.rectangle(0, 16, 28, 8, color(PALETTE.sepiaInk));
+    const texture = label === "OpenNet" ? "opennet-terminal" : label === "ClassNet" ? "classnet-terminal" : "terminal-panel";
+    const screen = scene.add.image(0, 0, texture);
+    const plate = scene.add.rectangle(0, 17, 34, 8, color(PALETTE.black)).setStrokeStyle(1, color(border));
     const text = scene.add
-      .text(0, -4, label.toUpperCase(), {
+      .text(0, 15, label.toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: label === "ClassNet" ? PALETTE.classNetRed : label === "OpenNet" ? PALETTE.openNetGreen : PALETTE.terminalCyan
       })
       .setOrigin(0.5);
-    this.container = scene.add.container(x, y, [screen, keys, text]).setDepth(y);
+    this.container = scene.add.container(x, y, [screen, plate, text]).setDepth(y);
   }
 }

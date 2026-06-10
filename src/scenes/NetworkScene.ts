@@ -59,7 +59,7 @@ export class NetworkScene extends Phaser.Scene {
   create() {
     setSceneState("NetworkScene", "explore", "Learn the network split from Marcus.");
     retroAudio.startMusic("NetworkScene");
-    setVisibleEntities(["Marcus", "OpenNet door", "ClassNet door", "Routing sorter", "Stone Wall: Firewall"]);
+    setVisibleEntities(["Marcus", "OpenNet terminal", "ClassNet terminal", "Routing sorter", "Stone Wall: Firewall"]);
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawTiledFloor(this, "network-tiles");
     drawRoomFrame(this, "NETWORK");

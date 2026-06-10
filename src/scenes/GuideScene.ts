@@ -56,8 +56,8 @@ export class GuideScene extends Phaser.Scene {
     this.drawAntagonistPlaque(58, 164, "30-YEAR\nLINE", PALETTE.classNetRed);
     this.drawAntagonistPlaque(198, 164, "DANN-E\nQUEUE", PALETTE.terminalCyan);
     const colleague = this.add.image(128, 87, "archive-colleague").setScale(2).setDepth(90);
-    this.stampIcon = this.add.image(96, 132, "citation-stamp").setScale(2).setDepth(120);
-    this.fragmentIcon = this.add.image(160, 132, "volume-fragment").setScale(2).setDepth(120);
+    this.stampIcon = this.add.image(96, 132, "citation-stamp").setDepth(120);
+    this.fragmentIcon = this.add.image(160, 132, "volume-fragment").setDepth(120);
     this.tweens.add({ targets: colleague, y: 86, duration: 560, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { colleague.y = snapPixel(colleague.y); } });
     this.tweens.add({ targets: this.stampIcon, y: 130, duration: 460, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.stampIcon.y = snapPixel(this.stampIcon.y); } });
     this.tweens.add({ targets: this.fragmentIcon, y: 130, duration: 580, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.fragmentIcon.y = snapPixel(this.fragmentIcon.y); } });

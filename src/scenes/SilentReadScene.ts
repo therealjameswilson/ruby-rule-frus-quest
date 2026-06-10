@@ -32,7 +32,7 @@ export class SilentReadScene extends Phaser.Scene {
   create() {
     setSceneState("SilentReadScene", "explore", "Run AI annotation review SOP.");
     retroAudio.startMusic("SilentReadScene");
-    setVisibleEntities(["Priya", "Manuscript page", "Typeset proof", "AI Annotation Review terminal"]);
+    setVisibleEntities(["Priya", "Manuscript page", "Typeset proof", "Proof page icon", "Red pencil", "AI Annotation Review terminal"]);
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
     this.add.rectangle(128, 120, 256, 240, color(PALETTE.sepiaInk));
     this.add.rectangle(128, 120, 248, 232, color(PALETTE.creamPaper));
@@ -52,6 +52,8 @@ export class SilentReadScene extends Phaser.Scene {
       "The record said",
       "\"publish fully."
     ]);
+    this.add.image(177, 162, "proof-page").setDepth(165);
+    this.add.image(128, 163, "red-pencil").setDepth(166);
     addTerminalPanel(this, 128, 44, [
       "AI ANNO REVIEW",
       "SCHEMA: OK",

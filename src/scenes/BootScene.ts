@@ -83,8 +83,16 @@ export class BootScene extends Phaser.Scene {
       ["player-declass-reviewer", "player-declass-reviewer.svg", 16, 16],
       ["player-source-note-specialist", "player-source-note-specialist.svg", 16, 16],
       ["archive-colleague", "archive-colleague.svg", 16, 16],
-      ["citation-stamp", "citation-stamp.svg", 18, 18],
-      ["volume-fragment", "volume-fragment.svg", 20, 18],
+      ["citation-stamp", "citation-stamp.svg", 24, 24],
+      ["volume-fragment", "volume-fragment.svg", 24, 24],
+      ["telegram", "telegram.svg", 24, 24],
+      ["source-note", "source-note.svg", 24, 24],
+      ["cross-reference", "cross-reference.svg", 24, 24],
+      ["opennet-terminal", "opennet-terminal.svg", 24, 24],
+      ["classnet-terminal", "classnet-terminal.svg", 24, 24],
+      ["proof-page", "proof-page.svg", 24, 24],
+      ["red-pencil", "red-pencil.svg", 24, 24],
+      ["concurrence-slip", "concurrence-slip.svg", 24, 24],
       ["bureaucratic-wall", "bureaucratic-wall.svg", 36, 32],
       ["manuscript", "manuscript.svg", 18, 18],
       ["frus-volume", "frus-volume.svg", 52, 42],
@@ -218,22 +226,28 @@ export class BootScene extends Phaser.Scene {
     if (this.textures.exists("citation-stamp")) return;
     const g = this.add.graphics();
     g.fillStyle(color(PALETTE.black));
-    g.fillRect(4, 4, 12, 13);
-    g.fillStyle(color(PALETTE.goldStamp));
-    g.fillRect(3, 2, 12, 13);
+    g.fillRect(7, 3, 10, 3);
+    g.fillRect(6, 6, 12, 4);
+    g.fillRect(5, 9, 14, 8);
+    g.fillRect(4, 16, 16, 5);
+    g.fillRect(3, 20, 18, 2);
     g.fillStyle(color(PALETTE.buckramRed));
-    g.fillRect(6, 0, 6, 4);
+    g.fillRect(8, 1, 8, 5);
     g.fillStyle(color(PALETTE.buckramHighlight));
-    g.fillRect(7, 1, 4, 1);
+    g.fillRect(9, 2, 6, 1);
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(7, 6, 10, 3);
+    g.fillStyle(color(PALETTE.sepiaInk));
+    g.fillRect(6, 10, 12, 6);
     g.fillStyle(color(PALETTE.creamPaper));
-    g.fillRect(4, 4, 10, 1);
+    g.fillRect(7, 11, 10, 1);
     g.fillStyle(color(PALETTE.deepRuby));
-    g.fillRect(5, 6, 8, 2);
-    g.fillRect(5, 9, 8, 1);
-    g.fillRect(6, 12, 6, 1);
+    g.fillRect(7, 14, 10, 1);
     g.fillStyle(color(PALETTE.buckramHighlight));
-    g.fillRect(4, 15, 10, 2);
-    g.generateTexture("citation-stamp", 18, 18);
+    g.fillRect(5, 17, 14, 3);
+    g.fillStyle(color(PALETTE.deepRuby));
+    g.fillRect(6, 18, 12, 1);
+    g.generateTexture("citation-stamp", 24, 24);
     g.destroy();
   }
 
@@ -241,23 +255,26 @@ export class BootScene extends Phaser.Scene {
     if (this.textures.exists("volume-fragment")) return;
     const g = this.add.graphics();
     g.fillStyle(color(PALETTE.black));
-    g.fillRect(5, 3, 13, 14);
+    g.fillRect(6, 3, 14, 18);
     g.fillStyle(color(PALETTE.buckramRed));
-    g.fillRect(2, 1, 14, 14);
-    g.fillStyle(color(PALETTE.deepRuby));
-    g.fillRect(5, 4, 8, 8);
-    g.fillStyle(color(PALETTE.buckramHighlight));
-    g.fillRect(6, 5, 6, 1);
-    g.fillStyle(color(PALETTE.goldStamp));
-    g.fillRect(6, 7, 6, 1);
-    g.fillRect(7, 10, 4, 1);
+    g.fillRect(3, 2, 15, 18);
     g.fillStyle(color(PALETTE.sepiaInk));
-    g.fillRect(2, 1, 3, 14);
+    g.fillRect(3, 2, 4, 18);
+    g.fillStyle(color(PALETTE.deepRuby));
+    g.fillRect(7, 5, 9, 12);
     g.fillStyle(color(PALETTE.buckramHighlight));
-    g.fillRect(13, 13, 4, 3);
+    g.fillRect(8, 6, 7, 1);
     g.fillStyle(color(PALETTE.goldStamp));
-    g.fillRect(16, 15, 2, 2);
-    g.generateTexture("volume-fragment", 20, 18);
+    g.fillRect(8, 9, 7, 1);
+    g.fillRect(8, 12, 6, 1);
+    g.fillRect(8, 16, 7, 1);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(20, 8, 1, 11);
+    g.fillStyle(color(PALETTE.buckramRed));
+    g.fillRect(17, 7, 2, 12);
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(18, 18, 3, 3);
+    g.generateTexture("volume-fragment", 24, 24);
     g.destroy();
   }
 

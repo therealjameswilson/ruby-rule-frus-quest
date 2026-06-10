@@ -59,7 +59,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   create() {
     setSceneState("ReferralVaultScene", "explore", "Match documents to agency equities.");
     retroAudio.startMusic("ReferralVaultScene");
-    setVisibleEntities(["Marcus", "StateChat terminal", "CIA seal", "DOD seal", "NSC seal", "Stone Wall: Referral delay"]);
+    setVisibleEntities(["Marcus", "StateChat terminal", "CIA seal", "DOD seal", "NSC seal", "Concurrence Slip", "Stone Wall: Referral delay"]);
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     drawTiledFloor(this, "vault-tiles");
     drawRoomFrame(this, "REFERRAL VAULT");
@@ -74,6 +74,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.syncThreatState();
     new HistorianNPC(this, "marcus", 42, 58);
     new Terminal(this, 214, 58, "StateChat");
+    this.add.image(130, 112, "concurrence-slip").setDepth(120);
     this.addSeal(70, 132, "CIA");
     this.addSeal(128, 132, "DOD");
     this.addSeal(186, 132, "NSC");

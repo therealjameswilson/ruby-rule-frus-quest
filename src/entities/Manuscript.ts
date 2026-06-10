@@ -2,6 +2,12 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { snapPixel } from "../systems/pixelPerfect";
 
+const DOCUMENT_TEXTURES: Record<string, string> = {
+  telegram: "telegram",
+  "source-note": "source-note",
+  "cross-reference": "cross-reference"
+};
+
 export class Manuscript {
   readonly container: Phaser.GameObjects.Container;
   readonly id: string;
@@ -14,9 +20,9 @@ export class Manuscript {
     this.label = label;
     this.x = x;
     this.y = y;
-    const image = scene.add.image(0, 0, "manuscript");
+    const image = scene.add.image(0, 0, DOCUMENT_TEXTURES[id] ?? "manuscript");
     const text = scene.add
-      .text(0, 12, label.toUpperCase(), {
+      .text(0, 15, label.toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: PALETTE.creamPaper,

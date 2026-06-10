@@ -129,6 +129,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - made the procedural HUD item boxes and dungeon blocking blocks read with stronger silhouettes at native scale
   - confirmed the repo still uses direct SVG texture keys and no atlas/tilemap ID references
   - verified OfficeScene, ArchiveScene, NetworkScene, and ReferralVaultScene with Playwright screenshots/state plus an in-app browser canvas/log check
+- Improved interactable object readability:
+  - added distinct 24x24 pixel silhouettes for citation stamp, FRUS volume fragment, telegram, source note, cross-reference, OpenNet terminal, ClassNet terminal, proof page, red pencil, and concurrence slip
+  - preserved existing labels as secondary reinforcement while making the objects readable by shape and palette at native game scale
+  - updated loader dimensions, fallback stamp/book textures, debug comparison metadata, and terminal/document entity texture selection
 
 ## TODO
 
