@@ -8,6 +8,14 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
+const COVER_PIECES = [
+  { fragment: "Front Matter Fragment", label: "TITLE", x: 10, y: 10, width: 56, height: 24 },
+  { fragment: "Source Note Fragment", label: "DATES", x: 10, y: 34, width: 56, height: 19 },
+  { fragment: "Routing Fragment", label: "START", x: 10, y: 53, width: 56, height: 32 },
+  { fragment: "Referral Fragment", label: "SEAL", x: 10, y: 85, width: 56, height: 15 },
+  { fragment: "Proof Fragment", label: "READ", x: 10, y: 100, width: 56, height: 7 }
+] as const;
+
 export class EndingScene extends Phaser.Scene {
   private canRestart = false;
 
@@ -19,7 +27,7 @@ export class EndingScene extends Phaser.Scene {
     setSceneState("EndingScene", "ending", "Team sign-off complete.");
     retroAudio.startMusic("EndingScene");
     retroAudio.ending();
-    setVisibleEntities(["Elena", "Marcus", "Priya", gameState.playerProfile.displayName, "FRUS volume"]);
+    setVisibleEntities(["Elena", "Marcus", "Priya", gameState.playerProfile.displayName, "FRUS cover prize"]);
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
     for (let y = 0; y < GAME_HEIGHT; y += 8) {
@@ -28,38 +36,38 @@ export class EndingScene extends Phaser.Scene {
       }
     }
 
-    this.add.image(33, 35, "frus-volume").setScale(0.85);
-    this.add.text(82, 13, "FRUS QUEST COMPLETE", {
+    this.drawAssembledPrize(128, 72, 0.74);
+    this.add.text(128, 8, "FRUS QUEST COMPLETE", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: PALETTE.goldStamp
-    });
-    this.add.text(82, 29, `${gameState.playerProfile.displayName.toUpperCase()} / ${gameState.playerProfile.roleLabel.toUpperCase()}`, {
+    }).setOrigin(0.5);
+    this.add.text(128, 20, `${gameState.playerProfile.displayName.toUpperCase()} / ${gameState.playerProfile.roleLabel.toUpperCase()}`, {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.creamPaper
-    });
-    this.add.text(82, 41, `RELIABILITY ${gameState.reliability}/100`, {
+    }).setOrigin(0.5);
+    this.add.text(128, 128, `COVER PIECES ${gameState.volumeFragments.length}/5`, {
       fontFamily: "monospace",
       fontSize: "8px",
-      color: PALETTE.openNetGreen
-    });
-    this.add.text(82, 53, `FRAGMENTS ${gameState.volumeFragments.length}/5  DOC PTS ${gameState.documentPoints}`, {
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5);
+    this.add.text(128, 139, `RELIABILITY ${gameState.reliability}/100  DOC PTS ${gameState.documentPoints}`, {
       fontFamily: "monospace",
       fontSize: "7px",
-      color: PALETTE.goldStamp
-    });
+      color: PALETTE.openNetGreen
+    }).setOrigin(0.5);
 
-    this.add.rectangle(128, 77, 236, 31, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp));
+    this.add.rectangle(128, 158, 236, 31, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp));
     PROCESS_STAMPS.forEach((stamp, index) => {
       const earned = gameState.processStamps.includes(stamp.id);
       const x = 15 + index * 39;
-      this.add.text(x, 68, stamp.label, {
+      this.add.text(x, 149, stamp.label, {
         fontFamily: "monospace",
         fontSize: stamp.label.length > 3 ? "6px" : "8px",
         color: earned ? PALETTE.goldStamp : PALETTE.sepiaInk
       });
-      this.add.text(x, 80, earned ? "OK" : "--", {
+      this.add.text(x, 161, earned ? "OK" : "--", {
         fontFamily: "monospace",
         fontSize: "7px",
         color: earned ? PALETTE.openNetGreen : PALETTE.sepiaInk
@@ -69,44 +77,32 @@ export class EndingScene extends Phaser.Scene {
     const lines = [
       "ELENA: SELECTION COMPLETE",
       "MARCUS: REFERRALS CLOSED",
-      "PRIYA: QUERIES RESOLVED",
-      `${gameState.playerProfile.displayName.toUpperCase()}: ${gameState.playerProfile.ability.toUpperCase()}`
+      "PRIYA: QUERIES RESOLVED"
     ];
     lines.forEach((line, index) => {
-      this.add.text(14, 102 + index * 11, line, {
+      this.add.text(14, 178 + index * 8, line, {
         fontFamily: "monospace",
-        fontSize: "7px",
+        fontSize: "6px",
         color: PALETTE.creamPaper
       });
     });
 
-    this.add.rectangle(128, 160, 236, 48, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.terminalCyan));
+    this.add.rectangle(128, 210, 236, 34, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.terminalCyan));
     const practiced = [
       "SOURCE NOTES NEED PROVENANCE.",
       "OPENNET AND CLASSNET STAY SEPARATE.",
       "REFERRALS LEAVE A VISIBLE TRACE.",
-      "AI REVIEW TOOLS PROPOSE; HUMANS DECIDE.",
-      "PROOFREADERS CATCH FACTS, NOT JUST TYPOS."
+      "AI TOOLS PROPOSE; HUMANS DECIDE."
     ];
     practiced.forEach((line, index) => {
-      this.add.text(16, 141 + index * 8, line, {
+      this.add.text(16, 198 + index * 7, line, {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.terminalCyan
       });
     });
 
-    this.add.text(128, 194, "EVERY PROPOSAL REVIEWED", {
-      fontFamily: "monospace",
-      fontSize: "9px",
-      color: PALETTE.terminalCyan
-    }).setOrigin(0.5);
-    this.add.text(128, 208, "EVERY DECISION HUMAN", {
-      fontFamily: "monospace",
-      fontSize: "9px",
-      color: PALETTE.terminalCyan
-    }).setOrigin(0.5);
-    this.add.text(128, 223, "THE RECORD ENDURES", {
+    this.add.text(128, 231, "THE RECORD ENDURES", {
       fontFamily: "monospace",
       fontSize: "10px",
       color: PALETTE.goldStamp
@@ -123,5 +119,38 @@ export class EndingScene extends Phaser.Scene {
   private restart() {
     if (!this.canRestart) return;
     transitionTo(this, "TitleScene");
+  }
+
+  private drawAssembledPrize(x: number, y: number, scale: number) {
+    this.add.rectangle(x + 4, y + 5, 80 * scale, 120 * scale, color(PALETTE.black), 0.55);
+    this.add.image(x, y, "frus-prize-cover").setScale(scale);
+
+    const left = x - (80 * scale) / 2;
+    const top = y - (120 * scale) / 2;
+    COVER_PIECES.forEach((piece) => {
+      const earned = gameState.volumeFragments.includes(piece.fragment);
+      const pieceX = left + (piece.x + piece.width / 2) * scale;
+      const pieceY = top + (piece.y + piece.height / 2) * scale;
+      const pieceWidth = piece.width * scale;
+      const pieceHeight = piece.height * scale;
+      this.add.rectangle(pieceX, pieceY, pieceWidth, pieceHeight)
+        .setStrokeStyle(1, color(earned ? PALETTE.goldStamp : PALETTE.sepiaInk), earned ? 0.9 : 0.4);
+      if (!earned) {
+        this.add.rectangle(pieceX, pieceY, pieceWidth, pieceHeight, color(PALETTE.black), 0.75);
+        this.add.text(pieceX, pieceY - 3, piece.label, {
+          fontFamily: "monospace",
+          fontSize: "5px",
+          color: PALETTE.sepiaInk
+        }).setOrigin(0.5);
+      }
+    });
+
+    this.add.rectangle(x, y + 50, 68, 10, color(PALETTE.black), 0.7)
+      .setStrokeStyle(1, color(PALETTE.goldStamp), 0.7);
+    this.add.text(x, y + 47, "ASSEMBLED FRUS", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5, 0);
   }
 }

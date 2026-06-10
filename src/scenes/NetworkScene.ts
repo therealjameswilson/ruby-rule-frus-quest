@@ -201,7 +201,8 @@ export class NetworkScene extends Phaser.Scene {
       retroAudio.stamp();
       this.dialog.show("MARCUS", [
         "Good routing.",
-        "The open world stays open. The closed world stays closed."
+        "The open world stays open. The closed world stays closed.",
+        "The START band has a clean path onto the cover."
       ], () => transitionTo(this, "ReferralVaultScene"));
       return;
     }

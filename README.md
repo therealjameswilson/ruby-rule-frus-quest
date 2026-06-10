@@ -60,6 +60,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
   - quest relics become FRUS volume fragments
   - tools become a citation stamp, red pencil mark, and review folder logic
   - antagonists include the 30-year line and DANN-E queue
+- Final prize: an original ruby-and-gold FRUS cover inspired by official volume design. The player earns five cover pieces across the process path, then sees them assembled on the ending screen.
 - Player shadow, facing flip, and walk-bob movement polish.
 - Reliability Meter and `window.render_game_to_text()` for automated testing.
 - `render_game_to_text()` includes active stonewall threat positions for accessible play and QA.
@@ -68,7 +69,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - SOP stamp for the AI annotation review tool: mechanical fixes may auto-apply, but provenance, classification, publication-status, and meaning decisions stay human.
 - Role-specific ability hints that reinforce what each production role contributes.
 - Public-domain MIDI-derived 8-bit music motifs, decision chimes, warning tones, process-stamp jingles, and an ending fanfare.
-- Final completion card summarizing the production skills practiced.
+- Final completion card summarizing the production skills practiced and the assembled FRUS cover prize.
 
 ## Development Shortcuts
 

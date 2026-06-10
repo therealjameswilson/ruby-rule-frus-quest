@@ -57,6 +57,7 @@ export class BootScene extends Phaser.Scene {
     }
     this.makeManuscriptTextureIfMissing();
     this.makeVolumeTextureIfMissing();
+    this.makeFrusPrizeCoverTextureIfMissing();
     this.makeCitationStampTextureIfMissing();
     this.makeVolumeFragmentTextureIfMissing();
     this.makeArchiveColleagueTextureIfMissing();
@@ -86,7 +87,8 @@ export class BootScene extends Phaser.Scene {
       ["volume-fragment", "volume-fragment.svg", 20, 18],
       ["bureaucratic-wall", "bureaucratic-wall.svg", 36, 32],
       ["manuscript", "manuscript.svg", 18, 18],
-      ["frus-volume", "frus-volume.svg", 52, 42]
+      ["frus-volume", "frus-volume.svg", 52, 42],
+      ["frus-prize-cover", "frus-prize-cover.svg", 80, 120]
     ];
     for (const [key, file, width, height] of sprites) {
       this.load.svg(key, `assets/sprites/${file}`, { width, height });
@@ -172,6 +174,43 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(color(PALETTE.creamPaper));
     g.fillRect(47, 7, 2, 29);
     g.generateTexture("frus-volume", 52, 42);
+    g.destroy();
+  }
+
+  private makeFrusPrizeCoverTextureIfMissing() {
+    if (this.textures.exists("frus-prize-cover")) return;
+    const g = this.add.graphics();
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(5, 7, 70, 108);
+    g.fillStyle(color(PALETTE.buckramRed));
+    g.fillRect(2, 3, 70, 108);
+    g.fillStyle(color(PALETTE.sepiaInk));
+    g.fillRect(2, 3, 7, 108);
+    g.fillStyle(color(PALETTE.deepRuby));
+    g.fillRect(9, 8, 58, 98);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(10, 9, 56, 1);
+    g.fillRect(10, 105, 56, 1);
+    g.fillStyle(color(PALETTE.goldStamp));
+    for (const y of [31, 51, 86, 104]) {
+      g.fillRect(15, y, 46, 1);
+    }
+    g.fillRect(20, 17, 36, 2);
+    g.fillRect(22, 25, 32, 2);
+    g.fillRect(25, 43, 26, 2);
+    g.fillRect(25, 68, 26, 3);
+    g.fillRect(22, 76, 32, 2);
+    g.lineStyle(1, color(PALETTE.goldStamp));
+    g.strokeCircle(38, 94, 8);
+    g.fillRect(35, 90, 6, 8);
+    g.fillRect(32, 93, 3, 2);
+    g.fillRect(41, 93, 3, 2);
+    g.fillRect(36, 88, 4, 2);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(64, 12, 2, 89);
+    g.fillStyle(color(PALETTE.creamPaper));
+    g.fillRect(69, 13, 2, 96);
+    g.generateTexture("frus-prize-cover", 80, 120);
     g.destroy();
   }
 

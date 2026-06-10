@@ -237,6 +237,12 @@ export function renderGameToText() {
       playerProfile: gameState.playerProfile,
       processStamps: gameState.processStamps,
       volumeFragments: gameState.volumeFragments,
+      frusPrize: {
+        cover: "ruby FRUS cover",
+        piecesEarned: gameState.volumeFragments.length,
+        piecesTotal: 5,
+        assembled: gameState.volumeFragments.length >= 5
+      },
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,
       inventory: gameState.inventory,

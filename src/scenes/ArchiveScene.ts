@@ -243,7 +243,8 @@ export class ArchiveScene extends Phaser.Scene {
         this.reliability.update();
         this.dialog.show("ELENA", [
           "Good. The source note needs a repository.",
-          "A flag is not a fact until a compiler can defend it."
+          "A flag is not a fact until a compiler can defend it.",
+          "That provenance panel locks into the final cover."
         ], () => transitionTo(this, "NetworkScene"));
         return;
       }

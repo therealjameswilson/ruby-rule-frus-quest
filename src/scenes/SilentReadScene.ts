@@ -166,7 +166,8 @@ export class SilentReadScene extends Phaser.Scene {
         this.reliability.update();
         this.dialog.show(gameState.playerProfile.displayName.toUpperCase(), [
           "Gotcha.",
-          "Both years are plausible. Only one is true."
+          "Both years are plausible. Only one is true.",
+          "The final read panel completes the ruby volume."
         ], () => transitionTo(this, "EndingScene"));
         return;
       }

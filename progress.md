@@ -86,6 +86,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - the AI tool returns a schema-style review plan, not a publication decision
   - mechanical issues can auto-apply, while source/status/provenance/classification claims route comment-only to human review
   - added a `SOP` process stamp, inventory log, README coverage, and ending recap language
+- Added a final FRUS cover prize system:
+  - created an original ruby-and-gold cover sprite inspired by FRUS volume design
+  - mapped the five existing FRUS fragments to cover regions
+  - updated the ending scene so the earned fragments assemble into the final cover prize
+  - added `render_game_to_text().frusPrize` for QA and accessibility
+- Verified the FRUS cover prize:
+  - `npm run build` passed with the existing Phaser chunk-size warning
+  - Playwright direct `EndingScene` screenshot showed the assembled cover and all process stamps
+  - `state-0.json` reported `frusPrize.assembled: true` with five earned pieces
+  - in-app browser screenshot rendered the local ending page without console errors
 
 ## TODO
 

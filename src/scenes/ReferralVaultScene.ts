@@ -218,7 +218,8 @@ export class ReferralVaultScene extends Phaser.Scene {
         this.reliability.update();
         this.dialog.show("MARCUS", [
           "Correct.",
-          "The reader sees the withholding. The record does not pretend."
+          "The reader sees the withholding. The record does not pretend.",
+          "The clearance seal is ready for the cover."
         ], () => transitionTo(this, "SilentReadScene"));
         return;
       }

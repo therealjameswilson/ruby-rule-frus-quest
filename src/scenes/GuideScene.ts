@@ -176,7 +176,7 @@ export class GuideScene extends Phaser.Scene {
     retroAudio.stamp();
     setObjective("Open the Verification Gate.");
     this.gateGlow.setFillStyle(color(PALETTE.openNetGreen), 0.32);
-    this.dialog.show("FRUS FRAGMENT", "One piece of the volume is real because the chain is visible.");
+    this.dialog.show("FRUS FRAGMENT", "The ruby cover gains its title plate because the chain is visible.");
     this.syncVisibleState();
   }
 
