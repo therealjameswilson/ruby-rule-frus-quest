@@ -73,6 +73,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - uses an Archive Colleague as a peer NPC
   - uses Archive Room as the visible room title
   - verified the citation-stamp pickup after the rename
+- Sharpened the human character sprite set with more expressive 16x16 pixel portraits:
+  - added clearer hairlines, face detail, arms, shoes, and role props
+  - refined Sam, Elena, Marcus, Priya, all selectable player-role sprites, and the Archive Colleague
+  - updated BootScene fallback character textures to match the more detailed silhouette
+  - slightly enlarged role-card previews in the character creator so the refined sprites read at game scale
 
 ## TODO
 

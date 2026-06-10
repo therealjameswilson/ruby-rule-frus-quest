@@ -84,7 +84,7 @@ export class CharacterCreateScene extends Phaser.Scene {
       const x = startX + index * 51;
       const box = this.add.rectangle(0, 0, 44, 42, color(PALETTE.black), 0.9);
       const border = this.add.rectangle(0, 0, 44, 42).setStrokeStyle(1, color(PALETTE.sepiaInk));
-      const icon = this.add.image(0, -10, role.spriteKey);
+      const icon = this.add.image(0, -11, role.spriteKey).setScale(1.25);
       const label = this.add.text(0, 7, role.label.toUpperCase().replace(" ", "\n"), {
         fontFamily: "monospace",
         fontSize: "5px",
