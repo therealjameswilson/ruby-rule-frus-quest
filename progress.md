@@ -96,6 +96,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Playwright direct `EndingScene` screenshot showed the assembled cover and all process stamps
   - `state-0.json` reported `frusPrize.assembled: true` with five earned pieces
   - in-app browser screenshot rendered the local ending page without console errors
+- Added an asset-cleanup pass for the existing SVG image set:
+  - confirmed there are no PNG assets in the current game art set
+  - backed up current SVG sprites, tiles, and UI panels to `public/assets/_originals/`
+  - snapped off-palette SVG colors back to the existing game palette
+  - replaced soft SVG text/circle/stroke elements with rect-only pixel forms
+  - added `public/assets/asset_improvement_report.md`
+  - added `public/assets/asset_debug.html` for original/current comparisons
 
 ## TODO
 

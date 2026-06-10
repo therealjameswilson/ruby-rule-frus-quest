@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ruby Rule Asset Debug</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --ruby: #4a0712;
+        --buckram: #7a1020;
+        --gold: #d6a84f;
+        --cream: #f2e4c8;
+        --slate: #101820;
+        --cyan: #45f3ff;
+        --black: #050505;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--slate);
+        color: var(--cream);
+        font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      }
+      header {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        padding: 16px 20px;
+        border-bottom: 2px solid var(--gold);
+        background: var(--ruby);
+      }
+      h1 {
+        margin: 0 0 4px;
+        color: var(--gold);
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0;
+      }
+      p {
+        margin: 0;
+      }
+      main {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 12px;
+        padding: 12px;
+      }
+      article {
+        border: 2px solid var(--buckram);
+        background: var(--black);
+      }
+      h2 {
+        margin: 0;
+        padding: 8px;
+        border-bottom: 1px solid var(--buckram);
+        color: var(--gold);
+        font-size: 12px;
+        letter-spacing: 0;
+      }
+      .pair {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+      .panel {
+        min-height: 132px;
+        padding: 8px;
+        border-right: 1px solid var(--buckram);
+      }
+      .panel:last-child {
+        border-right: 0;
+      }
+      .label {
+        margin-bottom: 8px;
+        color: var(--cyan);
+        font-size: 11px;
+      }
+      .preview {
+        display: grid;
+        min-height: 96px;
+        place-items: center;
+        background:
+          linear-gradient(45deg, #101820 25%, transparent 25%),
+          linear-gradient(-45deg, #101820 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, #101820 75%),
+          linear-gradient(-45deg, transparent 75%, #101820 75%);
+        background-color: #050505;
+        background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+        background-size: 16px 16px;
+      }
+      img {
+        max-width: min(180px, 100%);
+        max-height: 180px;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      .meta {
+        padding: 6px 8px 8px;
+        color: var(--cream);
+        font-size: 11px;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Ruby Rule Asset Debug</h1>
+      <p>Original backups on the left, current cleaned assets on the right.</p>
+    </header>
+    <main id="asset-grid"></main>
+    <script>
+      const assets = [
+        ["sprites/archive-colleague.svg", "16x16"],
+        ["sprites/bureaucratic-wall.svg", "36x32"],
+        ["sprites/citation-stamp.svg", "18x18"],
+        ["sprites/elena.svg", "16x16"],
+        ["sprites/frus-prize-cover.svg", "80x120"],
+        ["sprites/frus-volume.svg", "52x42"],
+        ["sprites/manuscript.svg", "18x18"],
+        ["sprites/marcus.svg", "16x16"],
+        ["sprites/player-compiler.svg", "16x16"],
+        ["sprites/player-declass-reviewer.svg", "16x16"],
+        ["sprites/player-editor.svg", "16x16"],
+        ["sprites/player-proofreader.svg", "16x16"],
+        ["sprites/player-source-note-specialist.svg", "16x16"],
+        ["sprites/priya.svg", "16x16"],
+        ["sprites/sam.svg", "16x16"],
+        ["sprites/volume-fragment.svg", "20x18"],
+        ["tiles/archive-tiles.svg", "16x16"],
+        ["tiles/network-tiles.svg", "16x16"],
+        ["tiles/office-tiles.svg", "16x16"],
+        ["tiles/vault-tiles.svg", "16x16"],
+        ["ui/dialog-box.svg", "32x16"],
+        ["ui/reliability-meter.svg", "32x16"],
+        ["ui/terminal-panel.svg", "32x16"]
+      ];
+
+      const grid = document.querySelector("#asset-grid");
+      for (const [asset, size] of assets) {
+        const card = document.createElement("article");
+        card.innerHTML = `
+          <h2>${asset}</h2>
+          <div class="pair">
+            <section class="panel">
+              <div class="label">ORIGINAL</div>
+              <div class="preview"><img src="_originals/${asset}" alt="Original ${asset}" /></div>
+            </section>
+            <section class="panel">
+              <div class="label">CURRENT</div>
+              <div class="preview"><img src="${asset}" alt="Current ${asset}" /></div>
+            </section>
+          </div>
+          <div class="meta">Dimensions preserved: ${size}</div>
+        `;
+        grid.append(card);
+      }
+    </script>
+  </body>
+</html>
