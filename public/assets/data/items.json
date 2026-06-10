@@ -1,0 +1,32 @@
+[
+  {
+    "id": "telegram_001",
+    "label": "Telegram",
+    "classification": "unclassified",
+    "network": "OpenNet",
+    "requiresHumanJudgment": false
+  },
+  {
+    "id": "sbu_annotation_001",
+    "label": "SBU Annotation Sheet",
+    "classification": "sbu",
+    "network": "ClassNet",
+    "requiresHumanJudgment": true
+  },
+  {
+    "id": "source_note_047",
+    "label": "Source Note 47",
+    "classification": "classified",
+    "network": "ClassNet",
+    "requiresHumanJudgment": true,
+    "problem": "repository_not_specified"
+  },
+  {
+    "id": "proof_page_412",
+    "label": "Proof Page 412",
+    "classification": "unclassified",
+    "network": "OpenNet",
+    "requiresHumanJudgment": true,
+    "problem": "transposed_date"
+  }
+]

@@ -1,0 +1,94 @@
+import Phaser from "phaser";
+import { CONTROLS_TEXT, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { resetGameState, setSceneState } from "../game/state";
+import { retroAudio } from "../systems/audio";
+import { transitionTo } from "../systems/sceneTransitions";
+
+function color(hex: string) {
+  return Phaser.Display.Color.HexStringToColor(hex).color;
+}
+
+export class TitleScene extends Phaser.Scene {
+  private started = false;
+
+  constructor() {
+    super("TitleScene");
+  }
+
+  create() {
+    setSceneState("TitleScene", "title", "Press start to verify.");
+    this.started = false;
+    retroAudio.startMusic("TitleScene");
+    this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
+    for (let y = 0; y < GAME_HEIGHT; y += 8) {
+      for (let x = (y / 8) % 2 === 0 ? 0 : 8; x < GAME_WIDTH; x += 16) {
+        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramRed), 0.55);
+      }
+    }
+
+    const volume = this.add.image(128, 94, "frus-volume").setScale(1.4);
+    const lid = this.add.rectangle(128, 70, 74, 9, color(PALETTE.goldStamp));
+    this.tweens.add({
+      targets: lid,
+      y: 60,
+      angle: -9,
+      duration: 780,
+      yoyo: true,
+      repeat: -1,
+      ease: "Stepped"
+    });
+    this.tweens.add({
+      targets: volume,
+      y: 99,
+      duration: 780,
+      yoyo: true,
+      repeat: -1,
+      ease: "Stepped"
+    });
+
+    this.add.text(128, 126, "RUBY RULE", {
+      fontFamily: "monospace",
+      fontSize: "24px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5);
+    this.add.text(128, 151, "THE FRUS QUEST", {
+      fontFamily: "monospace",
+      fontSize: "10px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5);
+    this.add.text(128, 178, "PRESS START TO VERIFY", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5);
+    this.add.text(128, 216, CONTROLS_TEXT, {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5);
+
+    this.input.keyboard?.on("keydown-SPACE", this.start, this);
+    this.input.keyboard?.on("keydown-ENTER", this.start, this);
+    this.input.keyboard?.on("keydown-N", this.toggleAudio, this);
+    this.input.on("pointerdown", this.start, this);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off("keydown-SPACE", this.start, this);
+      this.input.keyboard?.off("keydown-ENTER", this.start, this);
+      this.input.keyboard?.off("keydown-N", this.toggleAudio, this);
+      this.input.off("pointerdown", this.start, this);
+    });
+  }
+
+  private toggleAudio() {
+    retroAudio.toggle();
+  }
+
+  private start() {
+    if (this.started) return;
+    this.started = true;
+    retroAudio.confirm();
+    resetGameState();
+    transitionTo(this, "CharacterCreateScene");
+  }
+}

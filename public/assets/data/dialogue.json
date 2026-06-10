@@ -1,0 +1,30 @@
+{
+  "office": {
+    "elena": [
+      "The machine proposes.",
+      "We decide.",
+      "Nothing reaches print on its word alone."
+    ],
+    "marcus": [
+      "OpenNet is the open world.",
+      "ClassNet is where the sharp edges live."
+    ],
+    "priya": [
+      "Style can be checked.",
+      "Meaning has to be read."
+    ]
+  },
+  "terminal": {
+    "classnet": [
+      "STATECHAT / CLASSNET INSTANCE",
+      "READY",
+      "PRE-SUBMISSION REVIEW",
+      "3 CHECKS QUEUED"
+    ],
+    "opennet": [
+      "STATECHAT / OPENNET INSTANCE",
+      "READY",
+      "OPEN-SOURCE CHECKS ONLY"
+    ]
+  }
+}

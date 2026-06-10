@@ -1,0 +1,25 @@
+{
+  "title": {
+    "title": "RUBY RULE",
+    "subtitle": "THE FRUS QUEST",
+    "prompt": "PRESS START TO VERIFY"
+  },
+  "characterCreate": {
+    "objective": "Craft your FRUS production character.",
+    "roles": ["Proofreader", "Compiler", "Editor", "Declass Reviewer", "Source Note Specialist"]
+  },
+  "office": {
+    "objectiveChain": [
+      "Talk to Elena.",
+      "Read the Golden Rule poster.",
+      "Inspect the ClassNet terminal."
+    ]
+  },
+  "ending": {
+    "messages": [
+      "EVERY PROPOSAL REVIEWED",
+      "EVERY DECISION HUMAN",
+      "THE RECORD ENDURES"
+    ]
+  }
+}
