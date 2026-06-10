@@ -8,6 +8,7 @@ import { GuideScene } from "../scenes/GuideScene";
 import { NetworkScene } from "../scenes/NetworkScene";
 import { OfficeScene } from "../scenes/OfficeScene";
 import { ReferralVaultScene } from "../scenes/ReferralVaultScene";
+import { RenderDebugScene } from "../scenes/RenderDebugScene";
 import { SilentReadScene } from "../scenes/SilentReadScene";
 import { TitleScene } from "../scenes/TitleScene";
 
@@ -17,12 +18,21 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
   pixelArt: true,
+  antialias: false,
+  antialiasGL: false,
   roundPixels: true,
   zoom: 3,
   backgroundColor: "#101820",
+  render: {
+    pixelArt: true,
+    antialias: false,
+    antialiasGL: false,
+    roundPixels: true
+  },
   scale: {
     mode: Phaser.Scale.FIT,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    autoRound: true
   },
   scene: [
     BootScene,
@@ -34,6 +44,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     NetworkScene,
     ReferralVaultScene,
     SilentReadScene,
-    EndingScene
+    EndingScene,
+    RenderDebugScene
   ]
 };

@@ -115,7 +115,8 @@ export const SCENE_ORDER = [
   "NetworkScene",
   "ReferralVaultScene",
   "SilentReadScene",
-  "EndingScene"
+  "EndingScene",
+  "RenderDebugScene"
 ] as const;
 
 export const CONTROLS_TEXT = "ARROWS/WASD MOVE  SPACE/ENTER ACT  E ABILITY  M INV  R REL  N SOUND";

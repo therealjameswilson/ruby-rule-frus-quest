@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { CHARACTERS, PALETTE } from "../game/constants";
 import type { CharacterId } from "../game/types";
+import { snapPixel } from "../systems/pixelPerfect";
 
 export class HistorianNPC {
   readonly sprite: Phaser.GameObjects.Image;
@@ -11,17 +12,17 @@ export class HistorianNPC {
   constructor(scene: Phaser.Scene, id: CharacterId, x: number, y: number) {
     const character = CHARACTERS[id];
     this.id = id;
-    this.shadow = scene.add.ellipse(x, y + 8, 12, 4, 0x050505, 0.28).setDepth(y - 1);
-    this.sprite = scene.add.image(x, y, id).setDepth(y);
+    this.shadow = scene.add.ellipse(snapPixel(x), snapPixel(y + 8), 12, 4, 0x050505, 0.28).setDepth(snapPixel(y - 1));
+    this.sprite = scene.add.image(snapPixel(x), snapPixel(y), id).setDepth(snapPixel(y));
     this.label = scene.add
-      .text(x, y + 12, character.displayName.toUpperCase(), {
+      .text(snapPixel(x), snapPixel(y + 12), character.displayName.toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.creamPaper,
         backgroundColor: PALETTE.black
       })
       .setOrigin(0.5, 0)
-      .setDepth(y + 1);
+      .setDepth(snapPixel(y + 1));
     const delay = id.charCodeAt(0) * 45;
     scene.tweens.add({
       targets: [this.sprite, this.label],
@@ -30,11 +31,14 @@ export class HistorianNPC {
       delay,
       yoyo: true,
       repeat: -1,
-      ease: "Stepped"
+      ease: "Stepped",
+      onUpdate: () => {
+        this.sprite.y = snapPixel(this.sprite.y);
+        this.label.y = snapPixel(this.label.y);
+      }
     });
     scene.tweens.add({
       targets: this.shadow,
-      scaleX: 0.86,
       alpha: 0.2,
       duration: 520,
       delay,

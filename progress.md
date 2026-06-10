@@ -108,6 +108,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - backs up PNGs under `public/assets/_originals/`
   - thresholds alpha, quantizes visible pixels to the Ruby Rule PNG palette, and writes `asset_improvement_report.md`
   - package script added as requested: `npm run improve:assets`
+- Audited and fixed existing image rendering:
+  - made Phaser pixel-art settings explicit with antialiasing disabled and rounded pixels
+  - constrained the game shell to whole-number display scaling when the viewport allows it
+  - rounded sprite/container render positions and removed fractional sprite scale animations
+  - expanded CSS pixel-rendering coverage for canvas, images, game containers, `#game`, and `#app`
+  - added `RenderDebugScene` at `?scene=RenderDebugScene` with live canvas/scale metrics and 1x/2x/3x/4x samples
+  - verified the debug scene in the in-app browser at 256x240 internal resolution displayed at a clean 3x integer scale
 
 ## TODO
 

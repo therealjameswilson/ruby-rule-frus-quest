@@ -12,7 +12,7 @@ export type ProposalKind =
   | "provenance"
   | "publication_status";
 
-export type GameMode = "boot" | "title" | "explore" | "dialog" | "choice" | "pause" | "ending";
+export type GameMode = "boot" | "title" | "explore" | "dialog" | "choice" | "pause" | "ending" | "debug";
 
 export interface Position {
   x: number;

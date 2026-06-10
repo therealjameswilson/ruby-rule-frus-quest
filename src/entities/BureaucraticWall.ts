@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import type { Position } from "../game/types";
+import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -73,8 +74,10 @@ export class BureaucraticWall {
     this.currentX = Phaser.Math.Linear(this.currentX, desiredX, Phaser.Math.Clamp(speed, 0.02, 0.22));
     this.currentY = Phaser.Math.Linear(this.currentY, desiredY, Phaser.Math.Clamp(speed, 0.02, 0.22));
     const bob = Math.sin((timeMs + this.wobbleOffset) / 180) * 1.3;
-    this.container.setPosition(this.currentX, this.currentY + bob);
-    this.container.setDepth(this.currentY + bob);
+    const renderX = snapPixel(this.currentX);
+    const renderY = snapPixel(this.currentY + bob);
+    setPixelPosition(this.container, renderX, renderY);
+    this.container.setDepth(renderY);
     this.stone.setTint(timeMs < this.alertUntil ? color(PALETTE.buckramHighlight) : 0xffffff);
   }
 
@@ -98,8 +101,6 @@ export class BureaucraticWall {
     this.container.scene.tweens.add({
       targets: this.container,
       alpha: 0,
-      scaleX: 1.18,
-      scaleY: 0.68,
       duration: 260,
       ease: "Stepped",
       onComplete: () => this.container.destroy()

@@ -52,7 +52,7 @@ export class TitleScene extends Phaser.Scene {
       this.add.rectangle(x - 2, 216, 11, 11, color(PALETTE.stoneGray));
     }
 
-    const volume = this.add.image(128, 94, "frus-volume").setScale(1.4);
+    const volume = this.add.image(128, 94, "frus-volume").setScale(1);
     const lid = this.add.rectangle(128, 70, 74, 9, color(PALETTE.goldStamp));
     this.tweens.add({
       targets: lid,
@@ -61,7 +61,10 @@ export class TitleScene extends Phaser.Scene {
       duration: 780,
       yoyo: true,
       repeat: -1,
-      ease: "Stepped"
+      ease: "Stepped",
+      onUpdate: () => {
+        volume.y = Math.round(volume.y);
+      }
     });
     this.tweens.add({
       targets: volume,

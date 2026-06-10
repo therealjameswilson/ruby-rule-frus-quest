@@ -13,16 +13,22 @@ body {
   place-items: center;
 }
 
+canvas,
+img,
+.game-container,
+#game,
+#app,
 #game-shell {
-  width: min(100vw, calc(100vh * 256 / 240));
-  height: min(100vh, calc(100vw * 240 / 256));
   image-rendering: pixelated;
   image-rendering: crisp-edges;
+}
+
+#game-shell {
+  width: 768px;
+  height: 720px;
 }
 
 canvas {
   display: block;
   margin: 0 auto;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
 }

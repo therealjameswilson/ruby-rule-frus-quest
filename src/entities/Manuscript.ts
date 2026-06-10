@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
+import { snapPixel } from "../systems/pixelPerfect";
 
 export class Manuscript {
   readonly container: Phaser.GameObjects.Container;
@@ -29,7 +30,10 @@ export class Manuscript {
       duration: 620,
       yoyo: true,
       repeat: -1,
-      ease: "Stepped"
+      ease: "Stepped",
+      onUpdate: () => {
+        image.y = snapPixel(image.y);
+      }
     });
   }
 
