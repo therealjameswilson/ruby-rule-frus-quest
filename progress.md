@@ -78,6 +78,9 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - refined Sam, Elena, Marcus, Priya, all selectable player-role sprites, and the Archive Colleague
   - updated BootScene fallback character textures to match the more detailed silhouette
   - slightly enlarged role-card previews in the character creator so the refined sprites read at game scale
+- Added a second sprite polish pass:
+  - sharpened manuscript, citation stamp, volume fragment, FRUS volume, and bureaucratic-wall SVGs
+  - added stepped idle bob/shadow motion to NPCs, manuscript pickups, the Archive Colleague, and guide-room collectibles
 
 ## TODO
 

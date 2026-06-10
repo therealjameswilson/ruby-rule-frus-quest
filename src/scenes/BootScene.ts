@@ -135,15 +135,20 @@ export class BootScene extends Phaser.Scene {
     if (this.textures.exists("manuscript")) return;
     const g = this.add.graphics();
     g.fillStyle(color(PALETTE.black));
-    g.fillRect(2, 1, 14, 16);
-    g.fillStyle(color(PALETTE.creamPaper));
+    g.fillRect(3, 2, 13, 15);
+    g.fillStyle(color(PALETTE.white));
     g.fillRect(1, 0, 14, 16);
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(12, 0, 3, 3);
     g.fillStyle(color(PALETTE.sepiaInk));
     g.fillRect(4, 4, 8, 1);
-    g.fillRect(4, 7, 7, 1);
-    g.fillRect(4, 10, 9, 1);
+    g.fillRect(4, 6, 6, 1);
+    g.fillRect(4, 8, 9, 1);
+    g.fillRect(4, 11, 7, 1);
     g.fillStyle(color(PALETTE.classNetRed));
     g.fillRect(1, 0, 2, 16);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(11, 13, 2, 1);
     g.generateTexture("manuscript", 18, 18);
     g.destroy();
   }
@@ -161,6 +166,11 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(8, 10, 32, 2);
     g.fillRect(14, 18, 20, 2);
     g.fillRect(12, 25, 24, 2);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(8, 13, 32, 1);
+    g.fillRect(43, 7, 2, 24);
+    g.fillStyle(color(PALETTE.creamPaper));
+    g.fillRect(47, 7, 2, 29);
     g.generateTexture("frus-volume", 52, 42);
     g.destroy();
   }
@@ -174,6 +184,10 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(3, 2, 12, 13);
     g.fillStyle(color(PALETTE.buckramRed));
     g.fillRect(6, 0, 6, 4);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(7, 1, 4, 1);
+    g.fillStyle(color(PALETTE.creamPaper));
+    g.fillRect(4, 4, 10, 1);
     g.fillStyle(color(PALETTE.deepRuby));
     g.fillRect(5, 6, 8, 2);
     g.fillRect(5, 9, 8, 1);
@@ -193,13 +207,17 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(2, 1, 14, 14);
     g.fillStyle(color(PALETTE.deepRuby));
     g.fillRect(5, 4, 8, 8);
+    g.fillStyle(color(PALETTE.buckramHighlight));
+    g.fillRect(6, 5, 6, 1);
     g.fillStyle(color(PALETTE.goldStamp));
-    g.fillRect(6, 6, 6, 1);
-    g.fillRect(7, 9, 4, 1);
+    g.fillRect(6, 7, 6, 1);
+    g.fillRect(7, 10, 4, 1);
     g.fillStyle(color(PALETTE.sepiaInk));
     g.fillRect(2, 1, 3, 14);
     g.fillStyle(color(PALETTE.buckramHighlight));
     g.fillRect(13, 13, 4, 3);
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(16, 15, 2, 2);
     g.generateTexture("volume-fragment", 20, 18);
     g.destroy();
   }
@@ -248,6 +266,10 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(19, 6, 11, 6);
     g.fillRect(9, 15, 9, 8);
     g.fillRect(21, 16, 8, 7);
+    g.fillStyle(color(PALETTE.stoneDark));
+    g.fillRect(5, 3, 5, 3);
+    g.fillRect(14, 2, 7, 3);
+    g.fillRect(27, 3, 4, 3);
     g.fillStyle(color(PALETTE.buckramRed));
     g.fillRect(2, 12, 32, 4);
     g.fillStyle(color(PALETTE.buckramHighlight));
@@ -255,7 +277,11 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(color(PALETTE.black));
     g.fillRect(11, 11, 3, 3);
     g.fillRect(22, 11, 3, 3);
+    g.fillRect(10, 10, 5, 1);
+    g.fillRect(21, 10, 5, 1);
     g.fillRect(14, 22, 8, 2);
+    g.fillRect(12, 23, 3, 1);
+    g.fillRect(21, 23, 3, 1);
     g.lineStyle(1, color(PALETTE.black), 0.65);
     g.lineBetween(17, 5, 20, 23);
     g.generateTexture("bureaucratic-wall", 36, 32);

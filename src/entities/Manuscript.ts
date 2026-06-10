@@ -23,6 +23,14 @@ export class Manuscript {
       })
       .setOrigin(0.5, 0);
     this.container = scene.add.container(x, y, [image, text]).setDepth(y);
+    scene.tweens.add({
+      targets: image,
+      y: -1,
+      duration: 620,
+      yoyo: true,
+      repeat: -1,
+      ease: "Stepped"
+    });
   }
 
   collect() {
