@@ -81,6 +81,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Added a second sprite polish pass:
   - sharpened manuscript, citation stamp, volume fragment, FRUS volume, and bureaucratic-wall SVGs
   - added stepped idle bob/shadow motion to NPCs, manuscript pickups, the Archive Colleague, and guide-room collectibles
+- Added the new FRUS production SOP around an AI annotation review tool:
+  - introduced an in-game SOP gate in `SilentReadScene`
+  - the AI tool returns a schema-style review plan, not a publication decision
+  - mechanical issues can auto-apply, while source/status/provenance/classification claims route comment-only to human review
+  - added a `SOP` process stamp, inventory log, README coverage, and ending recap language
 
 ## TODO
 

@@ -53,12 +53,13 @@ export class EndingScene extends Phaser.Scene {
     this.add.rectangle(128, 77, 236, 31, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp));
     PROCESS_STAMPS.forEach((stamp, index) => {
       const earned = gameState.processStamps.includes(stamp.id);
-      this.add.text(24 + index * 43, 68, stamp.label, {
+      const x = 15 + index * 39;
+      this.add.text(x, 68, stamp.label, {
         fontFamily: "monospace",
         fontSize: stamp.label.length > 3 ? "6px" : "8px",
         color: earned ? PALETTE.goldStamp : PALETTE.sepiaInk
       });
-      this.add.text(24 + index * 43, 80, earned ? "OK" : "--", {
+      this.add.text(x, 80, earned ? "OK" : "--", {
         fontFamily: "monospace",
         fontSize: "7px",
         color: earned ? PALETTE.openNetGreen : PALETTE.sepiaInk
@@ -84,10 +85,11 @@ export class EndingScene extends Phaser.Scene {
       "SOURCE NOTES NEED PROVENANCE.",
       "OPENNET AND CLASSNET STAY SEPARATE.",
       "REFERRALS LEAVE A VISIBLE TRACE.",
+      "AI REVIEW TOOLS PROPOSE; HUMANS DECIDE.",
       "PROOFREADERS CATCH FACTS, NOT JUST TYPOS."
     ];
     practiced.forEach((line, index) => {
-      this.add.text(16, 143 + index * 9, line, {
+      this.add.text(16, 141 + index * 8, line, {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.terminalCyan

@@ -48,7 +48,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - Archive provenance puzzle.
 - OpenNet/ClassNet routing puzzle.
 - Referral, agency-equity, manifest, and visible-excision puzzle.
-- Silent-read proofing puzzle where StateChat catches mechanical issues and the player catches the factual date error.
+- Silent-read proofing puzzle where the AI annotation review tool checks mechanical/schema issues, evidence-bound findings route to human review/comment-only, and the player catches the factual date error.
 - Room-specific pixel dressing: desks, shelves, document stacks, wall maps, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
 - One-screen room composition with a minimap/status HUD, 16x16 tile-feeling floors, stone borders, and clear blocked/walkable space.
 - Bureaucratic wall enemies: literal stone walls labeled with process blockers like `NO REPO`, `PENDING`, `FIREWALL`, `WAIT`, and `HOLD`.
@@ -65,6 +65,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - `render_game_to_text()` includes active stonewall threat positions for accessible play and QA.
 - `render_game_to_text()` also reports document points and earned FRUS volume fragments.
 - Process stamps that show the FRUS production path: Rule, Source, Network, Referral, Read.
+- SOP stamp for the AI annotation review tool: mechanical fixes may auto-apply, but provenance, classification, publication-status, and meaning decisions stay human.
 - Role-specific ability hints that reinforce what each production role contributes.
 - Public-domain MIDI-derived 8-bit music motifs, decision chimes, warning tones, process-stamp jingles, and an ending fanfare.
 - Final completion card summarizing the production skills practiced.

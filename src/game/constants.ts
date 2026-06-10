@@ -100,6 +100,7 @@ export const PROCESS_STAMPS = [
   { id: "archive", label: "SRC", title: "Source provenance verified" },
   { id: "network", label: "NET", title: "Network routing cleared" },
   { id: "referral", label: "REF", title: "Referrals and excision visible" },
+  { id: "sop", label: "SOP", title: "AI annotation review routed" },
   { id: "proof", label: "READ", title: "Silent read complete" }
 ] as const;
 

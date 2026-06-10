@@ -30,9 +30,9 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("SilentReadScene", "explore", "Catch the factual discrepancy StateChat missed.");
+    setSceneState("SilentReadScene", "explore", "Run AI annotation review SOP.");
     retroAudio.startMusic("SilentReadScene");
-    setVisibleEntities(["Priya", "Manuscript page", "Typeset proof", "StateChat terminal"]);
+    setVisibleEntities(["Priya", "Manuscript page", "Typeset proof", "AI Annotation Review terminal"]);
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
     this.add.rectangle(128, 120, 256, 240, color(PALETTE.sepiaInk));
     this.add.rectangle(128, 120, 248, 232, color(PALETTE.creamPaper));
@@ -53,11 +53,11 @@ export class SilentReadScene extends Phaser.Scene {
       "\"publish fully."
     ]);
     addTerminalPanel(this, 128, 44, [
-      "STATECHAT",
-      "MECH FLAGS:",
-      "DUPLICATE WORD",
-      "MISSING QUOTE",
-      `AUTO: ${canAutoApplyProposal("mechanical") ? "YES" : "NO"}`
+      "AI ANNO REVIEW",
+      "SCHEMA: OK",
+      `MECH AUTO: ${canAutoApplyProposal("mechanical") ? "YES" : "NO"}`,
+      "EVIDENCE: COMMENT",
+      "HUMAN TRIAGE"
     ]);
 
     this.player = new Player(this, 128, 202);
@@ -67,9 +67,9 @@ export class SilentReadScene extends Phaser.Scene {
     this.reliability = new ReliabilityHud(this);
     this.objectiveText = addObjectiveText(this);
     this.dialog.show("PRIYA", [
-      "StateChat found the mechanical slips.",
-      "Now read for meaning. Plausible is not enough."
-    ], () => this.showSilentReadChoice());
+      "Run the AI annotation review tool first.",
+      "It returns a JSON plan, not a final decision."
+    ], () => this.showAnnotationReviewChoice());
   }
 
   update(_: number, delta: number) {
@@ -118,6 +118,36 @@ export class SilentReadScene extends Phaser.Scene {
     });
   }
 
+  private showAnnotationReviewChoice() {
+    setObjective("Route the AI annotation review output under the SOP.");
+    const options: ChoiceOption[] = [
+      { key: "A", label: "Auto-apply every AI redline", value: "auto_all" },
+      { key: "B", label: "Apply mechanical; comment-only evidence-bound issues", value: "sop" },
+      { key: "C", label: "Ignore the checker output", value: "ignore" }
+    ];
+    this.choice.show("AI ANNOTATION REVIEW:\nJSON SCHEMA OK.\nMECHANICAL TYPOS FOUND.\nSOURCE-STATUS CLAIM NEEDS EVIDENCE.\n\nFOLLOW SOP?", options, (option) => {
+      if (option.value === "sop") {
+        awardProcessStamp("sop");
+        addInventoryItem("AI Annotation Review Log");
+        addDocumentPoints(8, "AI annotation review routed by SOP");
+        retroAudio.stamp();
+        adjustReliability(8, "AI checker output routed to human review");
+        this.reliability.update();
+        this.dialog.show("PRIYA", [
+          "Good. The checker is a spellcheck, not a judge.",
+          "Mechanical fixes may apply. Evidence-bound claims stay comment-only until verified."
+        ], () => this.showSilentReadChoice());
+        return;
+      }
+      adjustReliability(-12, "AI checker used outside SOP");
+      this.reliability.update();
+      this.dialog.show("PRIYA", [
+        "New SOP: the AI tool proposes a review plan.",
+        "Humans decide provenance, status, classification, and meaning."
+      ], () => this.showAnnotationReviewChoice());
+    });
+  }
+
   private showSilentReadChoice() {
     setObjective("Select the factual error StateChat missed.");
     const options: ChoiceOption[] = [
@@ -125,7 +155,7 @@ export class SilentReadScene extends Phaser.Scene {
       { key: "B", label: "Missing closing quote", value: "quote" },
       { key: "C", label: "1974 should be 1947", value: "date" }
     ];
-    this.choice.show("STATECHAT FLAGS MECHANICAL TYPOS.\nONE FACTUAL ERROR REMAINS.\n\nWHAT DO YOU CATCH?", options, (option) => {
+    this.choice.show("AI TOOL CLEARED MECHANICAL TYPOS.\nONE FACTUAL ERROR REMAINS.\n\nWHAT DO YOU CATCH?", options, (option) => {
       if (option.value === "date") {
         awardProcessStamp("proof");
         addInventoryItem("Red Pencil Mark");

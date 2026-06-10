@@ -194,6 +194,8 @@ export function seedProgressForScene(sceneName: string) {
     gameState.documentPoints = Math.max(gameState.documentPoints, 60);
   }
   if (sceneName === "EndingScene") {
+    awardProcessStamp("sop");
+    addInventoryItem("AI Annotation Review Log");
     awardProcessStamp("proof");
     addInventoryItem("Red Pencil Mark");
     addVolumeFragment("Proof Fragment");

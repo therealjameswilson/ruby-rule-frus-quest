@@ -135,7 +135,8 @@ export class OfficeScene extends Phaser.Scene {
     if (gameState.sceneProgress.office === 0) {
       this.dialog.show("ELENA", [
         "The machine proposes.\nWe decide.",
-        "Nothing reaches print on its word alone."
+        "Nothing reaches print on its word alone.",
+        "The AI annotation review tool can flag patterns; it cannot settle evidence."
       ], () => {
         gameState.sceneProgress.office = 1;
         this.updateOfficeObjective();
@@ -188,8 +189,8 @@ export class OfficeScene extends Phaser.Scene {
     }
     this.dialog.show("STATECHAT / CLASSNET", [
       "PRE-SUBMISSION REVIEW",
-      "3 CHECKS QUEUED",
-      "ARCHIVE SCAN READY."
+      "AI ANNO TOOL QUEUED",
+      "COMMENT-ONLY GATES ON"
     ], () => transitionTo(this, "ArchiveScene"));
   }
 

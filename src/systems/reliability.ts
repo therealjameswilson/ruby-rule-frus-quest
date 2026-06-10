@@ -100,9 +100,10 @@ export class ReliabilityHud {
     this.detailsText.setText(
       [
         `RELIABILITY ${gameState.reliability}/100`,
+        "AI ANNOTATION REVIEW: TOOL ONLY",
         "MECHANICAL: MAY AUTO-APPLY",
         "PROVENANCE, CLASSIFICATION, STATUS:",
-        "HUMANS DECIDE",
+        "COMMENT-ONLY UNTIL HUMAN REVIEW",
         `ROLE: ${gameState.playerProfile.roleLabel}`,
         `ABILITY: ${gameState.playerProfile.ability}`,
         `AUDIO: ${gameState.audioStatus}`,
