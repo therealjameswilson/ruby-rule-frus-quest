@@ -24,6 +24,7 @@ interface GameState {
   latestAbility: string;
   audioStatus: string;
   physicalVerification: PhysicalVerificationState | null;
+  roomTraversal: RoomTraversalState | null;
 }
 
 const defaultRole = PROCESS_ROLES[0];
@@ -41,6 +42,13 @@ export interface PhysicalVerificationState {
     destination: string;
     status: "waiting" | "carried" | "routed" | "verified" | "stamped";
   }>;
+}
+
+export interface RoomTraversalState {
+  currentRoomId: string;
+  roomTitle: string;
+  visitedRoomIds: string[];
+  exits: Partial<Record<"north" | "south" | "west" | "east", string>>;
 }
 
 export const gameState: GameState = {
@@ -71,7 +79,8 @@ export const gameState: GameState = {
   processStamps: [],
   latestAbility: "",
   audioStatus: "audio ready",
-  physicalVerification: null
+  physicalVerification: null,
+  roomTraversal: null
 };
 
 export function resetGameState() {
@@ -94,6 +103,7 @@ export function resetGameState() {
   gameState.processStamps = [];
   gameState.latestAbility = "";
   gameState.physicalVerification = null;
+  gameState.roomTraversal = null;
   setPlayerProfile("Sam", defaultRole);
 }
 
@@ -108,6 +118,7 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.activeDialog = null;
   gameState.currentChoice = null;
   gameState.physicalVerification = null;
+  gameState.roomTraversal = null;
 }
 
 export function setObjective(objective: string) {
@@ -132,6 +143,15 @@ export function setAudioStatus(message: string) {
 
 export function setPhysicalVerificationState(state: PhysicalVerificationState | null) {
   gameState.physicalVerification = state;
+}
+
+export function setRoomTraversalState(state: RoomTraversalState | null) {
+  gameState.roomTraversal = state
+    ? {
+        ...state,
+        visitedRoomIds: [...state.visitedRoomIds]
+      }
+    : null;
 }
 
 export function setPlayerPosition(position: Position) {
@@ -330,6 +350,7 @@ export function renderGameToText() {
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,
       physicalVerification: gameState.physicalVerification,
+      roomTraversal: gameState.roomTraversal,
       inventory: gameState.inventory,
       latestMessage: gameState.latestMessage,
       player: gameState.player,

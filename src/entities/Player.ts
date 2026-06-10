@@ -4,6 +4,18 @@ import { gameState, setPlayerPosition } from "../game/state";
 import type { KeyboardMap, Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 
+interface MoveBounds {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+}
+
+interface PlayerMoveOptions {
+  bounds?: MoveBounds;
+  solids?: Phaser.Geom.Rectangle[];
+}
+
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
@@ -48,6 +60,7 @@ export class Player {
   private logicalX: number;
   private logicalY: number;
   private readonly scene: Phaser.Scene;
+  private lastMoveAxis: "x" | "y" = "y";
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
@@ -91,6 +104,15 @@ export class Player {
     return { x: this.sprite.x, y: this.sprite.y };
   }
 
+  setPosition(x: number, y: number) {
+    this.logicalX = x;
+    this.logicalY = y;
+    this.isMoving = false;
+    this.walkClock = 0;
+    this.syncRenderPosition();
+    setPlayerPosition(this.position);
+  }
+
   pushAwayFrom(source: Position, distance = 12) {
     const dx = this.logicalX - source.x;
     const dy = this.logicalY - source.y;
@@ -102,7 +124,7 @@ export class Player {
     setPlayerPosition(this.position);
   }
 
-  update(deltaMs: number, canMove: boolean) {
+  update(deltaMs: number, canMove: boolean, options: PlayerMoveOptions = {}) {
     this.idleClock += deltaMs;
     if (!canMove) {
       this.isMoving = false;
@@ -123,13 +145,20 @@ export class Player {
     let dx = Number(right) - Number(left);
     let dy = Number(down) - Number(up);
     if (dx !== 0 && dy !== 0) {
-      dx *= Math.SQRT1_2;
-      dy *= Math.SQRT1_2;
+      if (this.lastMoveAxis === "x") dy = 0;
+      else dx = 0;
+    } else if (dx !== 0) {
+      this.lastMoveAxis = "x";
+    } else if (dy !== 0) {
+      this.lastMoveAxis = "y";
     }
     const moving = dx !== 0 || dy !== 0;
     const dt = deltaMs / 1000;
-    this.logicalX = Phaser.Math.Clamp(this.logicalX + dx * this.speed * dt, 14, GAME_WIDTH - 14);
-    this.logicalY = Phaser.Math.Clamp(this.logicalY + dy * this.speed * dt, 42, GAME_HEIGHT - 20);
+    const bounds = options.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
+    const nextX = Phaser.Math.Clamp(this.logicalX + dx * this.speed * dt, bounds.left, bounds.right);
+    const nextY = Phaser.Math.Clamp(this.logicalY + dy * this.speed * dt, bounds.top, bounds.bottom);
+    if (dx !== 0 && !this.collidesAt(nextX, this.logicalY, options.solids ?? [])) this.logicalX = nextX;
+    if (dy !== 0 && !this.collidesAt(this.logicalX, nextY, options.solids ?? [])) this.logicalY = nextY;
     if (moving) {
       this.walkClock += deltaMs;
       this.sprite.setFlipX(dx < 0);
@@ -143,6 +172,12 @@ export class Player {
     this.shadow.setScale(1);
     this.syncRenderPosition();
     setPlayerPosition(this.position);
+  }
+
+  private collidesAt(x: number, y: number, solids: Phaser.Geom.Rectangle[]) {
+    if (!solids.length) return false;
+    const footBox = new Phaser.Geom.Rectangle(x - 5, y + 2, 10, 10);
+    return solids.some((solid) => Phaser.Geom.Intersects.RectangleToRectangle(footBox, solid));
   }
 
   private playAbilityFrame() {

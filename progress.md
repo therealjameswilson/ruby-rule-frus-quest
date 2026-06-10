@@ -165,6 +165,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - bridged touch buttons into Phaser key codes while preserving keyboard controls
   - kept player movement pixel-snapped by feeding D-pad state into the existing player movement code
   - verified `npm run build`, the required web-game Playwright client, mobile portrait touch movement, mobile landscape layout, and a mobile title/character-create flow
+- Refactored Archive movement and traversal toward NES-style one-screen rooms:
+  - made player movement cardinal-only with no diagonal vector normalization
+  - added optional tile-aligned solid rectangles for smoother movement with tile-feeling collision
+  - converted ArchiveScene into a 2x2 room graph with stable room IDs `A1`, `A2`, `B1`, and `B2`
+  - added fixed-HUD room labels and a small visited-room minimap that reveals rooms after entry
+  - added edge exits at the room borders with hard-cut/fade transitions and no scrolling camera
+  - preserved the Source Note 47 human verification loop in `A1`
+  - verified `npm run build`, required web-game smoke, `A1 -> A2`, `A1 -> B1`, cardinal-only input, tile blocker collision, minimap visited-state, and Source Note 47 stamping
 
 ## TODO
 

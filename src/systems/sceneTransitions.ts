@@ -112,7 +112,7 @@ export function addObjectiveText(scene: Phaser.Scene) {
   }).setDepth(810);
 }
 
-export function addTerminalPanel(scene: Phaser.Scene, x: number, y: number, lines: string[], border = PALETTE.terminalCyan) {
+export function addTerminalPanel(scene: Phaser.Scene, x: number, y: number, lines: string[], border: string = PALETTE.terminalCyan) {
   const box = scene.add.rectangle(x, y, 92, 70, color(PALETTE.black), 0.94).setStrokeStyle(2, color(border));
   const text = scene.add.text(x - 40, y - 27, lines.join("\n"), {
     fontFamily: "monospace",

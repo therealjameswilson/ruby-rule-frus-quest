@@ -107,6 +107,10 @@ export class BureaucraticWall {
     });
   }
 
+  destroy() {
+    this.container.destroy();
+  }
+
   isTouching(position: Position, radius = 20) {
     if (this.cleared) return false;
     return Phaser.Math.Distance.Between(this.currentX, this.currentY, position.x, position.y) <= radius;

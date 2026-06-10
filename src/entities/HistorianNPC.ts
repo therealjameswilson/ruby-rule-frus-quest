@@ -55,4 +55,10 @@ export class HistorianNPC {
   get y() {
     return this.sprite.y;
   }
+
+  destroy() {
+    this.shadow.destroy();
+    this.sprite.destroy();
+    this.label.destroy();
+  }
 }
