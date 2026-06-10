@@ -14,6 +14,7 @@ interface GameState {
   player: Position;
   nearestInteractable: string | null;
   visibleEntities: string[];
+  visibleThreats: Array<{ label: string; x: number; y: number }>;
   sceneProgress: Record<string, number>;
   playerProfile: PlayerProfile;
   processStamps: ProcessStampId[];
@@ -35,6 +36,7 @@ export const gameState: GameState = {
   player: { x: 128, y: 160 },
   nearestInteractable: null,
   visibleEntities: [],
+  visibleThreats: [],
   sceneProgress: {},
   playerProfile: {
     displayName: "Sam",
@@ -61,6 +63,7 @@ export function resetGameState() {
   gameState.player = { x: 128, y: 160 };
   gameState.nearestInteractable = null;
   gameState.visibleEntities = [];
+  gameState.visibleThreats = [];
   gameState.sceneProgress = {};
   gameState.processStamps = [];
   gameState.latestAbility = "";
@@ -73,6 +76,7 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.objective = objective;
   gameState.nearestInteractable = null;
   gameState.visibleEntities = [];
+  gameState.visibleThreats = [];
   gameState.activeDialog = null;
   gameState.currentChoice = null;
 }
@@ -112,6 +116,14 @@ export function setNearestInteractable(label: string | null) {
 
 export function setVisibleEntities(labels: string[]) {
   gameState.visibleEntities = labels;
+}
+
+export function setVisibleThreats(threats: Array<{ label: string; x: number; y: number }>) {
+  gameState.visibleThreats = threats.map((threat) => ({
+    label: threat.label,
+    x: Math.round(threat.x),
+    y: Math.round(threat.y)
+  }));
 }
 
 export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLES)[number]) {
@@ -193,6 +205,7 @@ export function renderGameToText() {
       player: gameState.player,
       nearestInteractable: gameState.nearestInteractable,
       visibleEntities: gameState.visibleEntities,
+      visibleThreats: gameState.visibleThreats,
       dialog: gameState.activeDialog,
       choice: gameState.currentChoice
     },

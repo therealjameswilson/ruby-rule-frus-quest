@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";
 import { gameState, setPlayerPosition } from "../game/state";
-import type { KeyboardMap } from "../game/types";
+import type { KeyboardMap, Position } from "../game/types";
 
 export class Player {
   readonly sprite: Phaser.GameObjects.Image;
@@ -40,6 +40,18 @@ export class Player {
 
   get position() {
     return { x: this.sprite.x, y: this.sprite.y };
+  }
+
+  pushAwayFrom(source: Position, distance = 12) {
+    const dx = this.sprite.x - source.x;
+    const dy = this.sprite.y - source.y;
+    const length = Math.max(1, Math.hypot(dx, dy));
+    this.sprite.x = Phaser.Math.Clamp(this.sprite.x + (dx / length) * distance, 14, GAME_WIDTH - 14);
+    this.sprite.y = Phaser.Math.Clamp(this.sprite.y + (dy / length) * distance, 42, GAME_HEIGHT - 20);
+    this.shadow.setPosition(this.sprite.x, this.sprite.y + 8);
+    this.shadow.setDepth(this.sprite.y - 1);
+    this.sprite.setDepth(this.sprite.y);
+    setPlayerPosition(this.position);
   }
 
   update(deltaMs: number, canMove: boolean) {

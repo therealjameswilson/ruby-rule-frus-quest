@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
+import type { Position } from "../game/types";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -15,12 +16,17 @@ export class BureaucraticWall {
   private readonly crack: Phaser.GameObjects.Rectangle;
   private cleared = false;
   private wobbleOffset: number;
+  private currentX: number;
+  private currentY: number;
+  private alertUntil = 0;
 
   constructor(scene: Phaser.Scene, id: string, label: string, x: number, y: number) {
     this.id = id;
     this.label = label;
     this.x = x;
     this.y = y;
+    this.currentX = x;
+    this.currentY = y;
     this.wobbleOffset = Phaser.Math.Between(0, 360);
     const shadow = scene.add.ellipse(0, 15, 36, 8, color(PALETTE.black), 0.38);
     this.stone = scene.add.image(0, 0, "bureaucratic-wall");
@@ -41,14 +47,39 @@ export class BureaucraticWall {
     return this.cleared;
   }
 
-  update(timeMs: number) {
+  get position(): Position {
+    return { x: this.currentX, y: this.currentY };
+  }
+
+  update(timeMs: number, deltaMs = 16, target?: Position) {
     if (this.cleared) return;
-    const bob = Math.sin((timeMs + this.wobbleOffset) / 440) * 1.5;
-    this.container.setY(this.y + bob);
-    this.container.setDepth(this.y + bob);
+    const homeX = this.x + Math.sin((timeMs + this.wobbleOffset) / 720) * 7;
+    const homeY = this.y + Math.cos((timeMs + this.wobbleOffset) / 860) * 4;
+    let desiredX = homeX;
+    let desiredY = homeY;
+    if (target) {
+      const dx = target.x - this.currentX;
+      const dy = target.y - this.currentY;
+      const distance = Math.hypot(dx, dy);
+      if (distance < 62 && distance > 1) {
+        desiredX += (dx / distance) * 12;
+        desiredY += (dy / distance) * 9;
+      }
+    }
+    const maxDrift = 18;
+    desiredX = Phaser.Math.Clamp(desiredX, this.x - maxDrift, this.x + maxDrift);
+    desiredY = Phaser.Math.Clamp(desiredY, this.y - maxDrift, this.y + maxDrift);
+    const speed = (timeMs < this.alertUntil ? 32 : 14) * (deltaMs / 1000);
+    this.currentX = Phaser.Math.Linear(this.currentX, desiredX, Phaser.Math.Clamp(speed, 0.02, 0.22));
+    this.currentY = Phaser.Math.Linear(this.currentY, desiredY, Phaser.Math.Clamp(speed, 0.02, 0.22));
+    const bob = Math.sin((timeMs + this.wobbleOffset) / 180) * 1.3;
+    this.container.setPosition(this.currentX, this.currentY + bob);
+    this.container.setDepth(this.currentY + bob);
+    this.stone.setTint(timeMs < this.alertUntil ? color(PALETTE.buckramHighlight) : 0xffffff);
   }
 
   markHit() {
+    this.alertUntil = this.container.scene.time.now + 700;
     this.crack.setVisible(true);
     this.container.scene.tweens.add({
       targets: this.container,
@@ -73,5 +104,10 @@ export class BureaucraticWall {
       ease: "Stepped",
       onComplete: () => this.container.destroy()
     });
+  }
+
+  isTouching(position: Position, radius = 20) {
+    if (this.cleared) return false;
+    return Phaser.Math.Distance.Between(this.currentX, this.currentY, position.x, position.y) <= radius;
   }
 }

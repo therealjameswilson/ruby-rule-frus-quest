@@ -1,6 +1,15 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { addInventoryItem, awardProcessStamp, gameState, setNearestInteractable, setObjective, setSceneState, setVisibleEntities } from "../game/state";
+import {
+  addInventoryItem,
+  awardProcessStamp,
+  gameState,
+  setNearestInteractable,
+  setObjective,
+  setSceneState,
+  setVisibleEntities,
+  setVisibleThreats
+} from "../game/state";
 import type { ChoiceOption, Interactable } from "../game/types";
 import { HistorianNPC } from "../entities/HistorianNPC";
 import { Manuscript } from "../entities/Manuscript";
@@ -27,6 +36,7 @@ export class ArchiveScene extends Phaser.Scene {
   private interactables: Interactable[] = [];
   private collected = new Set<string>();
   private bureaucraticWalls: BureaucraticWall[] = [];
+  private wallContactCooldown = 0;
 
   constructor() {
     super("ArchiveScene");
@@ -92,10 +102,11 @@ export class ArchiveScene extends Phaser.Scene {
       onInteract: () => this.clearBureaucraticWall(wall)
     }) satisfies Interactable);
     this.interactables = [...documentInteractables, ...wallInteractables];
-    setVisibleEntities(["Elena", "StateChat terminal", ...this.interactables.map((item) => item.label)]);
+    this.syncWallState();
     this.dialog.show("ELENA", [
       "A compiler reads the trail.",
-      "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving."
+      "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving.",
+      "Do not fight it. Verify it."
     ]);
   }
 
@@ -124,8 +135,8 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
-    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now));
     this.player.update(delta, true);
+    this.updateBureaucraticWalls(delta);
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
@@ -170,8 +181,46 @@ export class ArchiveScene extends Phaser.Scene {
       wall.clear();
       retroAudio.stamp();
       this.interactables = this.interactables.filter((item) => item.id !== wall.id);
-      setVisibleEntities(["Elena", "StateChat terminal", ...this.interactables.map((item) => item.label)]);
+      this.syncWallState();
     });
+  }
+
+  private updateBureaucraticWalls(delta: number) {
+    for (const wall of this.bureaucraticWalls) {
+      wall.update(this.time.now, delta, this.player.position);
+    }
+    this.syncWallInteractables();
+    this.syncWallState();
+    const activeWall = this.bureaucraticWalls.find((wall) => wall.isTouching(this.player.position, 19));
+    if (!activeWall || this.time.now < this.wallContactCooldown) return;
+    this.wallContactCooldown = this.time.now + 1200;
+    activeWall.markHit();
+    this.player.pushAwayFrom(activeWall.position, 15);
+    adjustReliability(-4, `${activeWall.label} stonewall delayed source work`);
+    this.reliability.update();
+    setObjective("Clear stonewalls with evidence, then collect document tiles.");
+  }
+
+  private syncWallInteractables() {
+    for (const item of this.interactables) {
+      if (item.kind !== "enemy") continue;
+      const wall = this.bureaucraticWalls.find((candidate) => candidate.id === item.id);
+      if (!wall || wall.isCleared) continue;
+      item.x = wall.position.x;
+      item.y = wall.position.y;
+    }
+  }
+
+  private syncWallState() {
+    const activeThreats = this.bureaucraticWalls
+      .filter((wall) => !wall.isCleared)
+      .map((wall) => ({
+        label: `Stone Wall: ${wall.label}`,
+        x: wall.position.x,
+        y: wall.position.y
+      }));
+    setVisibleThreats(activeThreats);
+    setVisibleEntities(["Elena", "StateChat terminal", ...this.interactables.map((item) => item.label)]);
   }
 
   private showVerification() {

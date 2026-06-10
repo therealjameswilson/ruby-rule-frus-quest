@@ -50,8 +50,10 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - Room-specific pixel dressing: desks, shelves, document stacks, wall maps, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
 - One-screen room composition with a minimap/status HUD, 16x16 tile-feeling floors, stone borders, and clear blocked/walkable space.
 - Bureaucratic wall enemies: literal stone walls labeled with process blockers like `NO REPO`, `PENDING`, `FIREWALL`, `WAIT`, and `HOLD`.
+- Archive stonewalls now patrol toward the player, reduce reliability on contact, knock the player back, and can be cleared by verifying them with `Space`/`Enter` nearby.
 - Player shadow, facing flip, and walk-bob movement polish.
 - Reliability Meter and `window.render_game_to_text()` for automated testing.
+- `render_game_to_text()` includes active stonewall threat positions for accessible play and QA.
 - Process stamps that show the FRUS production path: Rule, Source, Network, Referral, Read.
 - Role-specific ability hints that reinforce what each production role contributes.
 - Public-domain MIDI-derived 8-bit music motifs, decision chimes, warning tones, process-stamp jingles, and an ending fanfare.

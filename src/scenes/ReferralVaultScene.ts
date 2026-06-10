@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities } from "../game/state";
+import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
 import type { ChoiceOption } from "../game/types";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { HistorianNPC } from "../entities/HistorianNPC";
@@ -61,6 +61,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       new BureaucraticWall(this, "cia-delay-wall", "WAIT", 44, 160),
       new BureaucraticWall(this, "nsc-delay-wall", "HOLD", 212, 160)
     ];
+    this.syncThreatState();
     new HistorianNPC(this, "marcus", 42, 58);
     new Terminal(this, 214, 58, "StateChat");
     this.addSeal(70, 132, "CIA");
@@ -88,7 +89,8 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   update(_: number, delta: number) {
     const keys = this.player.inputKeys;
-    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now));
+    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
+    this.syncThreatState();
     if (Phaser.Input.Keyboard.JustDown(keys.f)) this.scale.toggleFullscreen();
     if (Phaser.Input.Keyboard.JustDown(keys.m)) this.inventory.toggle();
     if (Phaser.Input.Keyboard.JustDown(keys.n)) {
@@ -122,6 +124,16 @@ export class ReferralVaultScene extends Phaser.Scene {
       fontSize: "10px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
+  }
+
+  private syncThreatState() {
+    setVisibleThreats(
+      this.bureaucraticWalls.map((wall) => ({
+        label: `Stone Wall: ${wall.label}`,
+        x: wall.position.x,
+        y: wall.position.y
+      }))
+    );
   }
 
   private startMatching() {

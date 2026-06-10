@@ -55,8 +55,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Added literal stone bureaucracy enemies in Archive, Network, and Referral Vault rooms; archive walls can be cracked and cleared by interaction.
 - Downloaded public-domain MIDI source clips into `public/assets/audio/midi/` and added `public/assets/audio/ATTRIBUTION.md`.
 - Reworked scene music to use short Web Audio motifs derived from the public-domain Bach/Satie MIDI clips.
+- Added active stonewall pressure mechanics:
+  - archive bureaucratic walls patrol toward the player when nearby
+  - contact knocks the player back and reduces reliability
+  - nearby `Space`/`Enter` verification cracks and clears a wall
+  - `render_game_to_text()` now reports `visibleThreats` with stonewall labels and coordinates
 
 ## TODO
 
 - Improve full end-to-end traversal coverage from TitleScene to EndingScene; direct scene QA now covers the later scenes reliably.
-- Add full collision/knockback behavior for stone-wall enemies if the game moves beyond MVP interaction enemies.
+- Consider a later non-combat `B` item such as a source-note stamp or routing card for clearing stonewalls at range.

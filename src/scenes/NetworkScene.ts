@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities } from "../game/state";
+import { awardProcessStamp, gameState, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
 import type { ChoiceOption, RouteItem } from "../game/types";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { HistorianNPC } from "../entities/HistorianNPC";
@@ -61,6 +61,7 @@ export class NetworkScene extends Phaser.Scene {
       new BureaucraticWall(this, "firewall-open", "FIREWALL", 96, 152),
       new BureaucraticWall(this, "firewall-class", "FORM 32", 160, 152)
     ];
+    this.syncThreatState();
     new HistorianNPC(this, "marcus", 128, 54);
     new Terminal(this, 60, 124, "OpenNet");
     new Terminal(this, 196, 124, "ClassNet");
@@ -102,7 +103,8 @@ export class NetworkScene extends Phaser.Scene {
 
   update(_: number, delta: number) {
     const keys = this.player.inputKeys;
-    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now));
+    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
+    this.syncThreatState();
     if (Phaser.Input.Keyboard.JustDown(keys.f)) this.scale.toggleFullscreen();
     if (Phaser.Input.Keyboard.JustDown(keys.m)) this.inventory.toggle();
     if (Phaser.Input.Keyboard.JustDown(keys.n)) {
@@ -135,6 +137,16 @@ export class NetworkScene extends Phaser.Scene {
     this.routingActive = true;
     setObjective("Route each item to OpenNet or ClassNet.");
     this.showRouteChoice();
+  }
+
+  private syncThreatState() {
+    setVisibleThreats(
+      this.bureaucraticWalls.map((wall) => ({
+        label: `Stone Wall: ${wall.label}`,
+        x: wall.position.x,
+        y: wall.position.y
+      }))
+    );
   }
 
   private showRouteChoice() {
