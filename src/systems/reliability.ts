@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { PALETTE, PROCESS_STAMPS } from "../game/constants";
-import { gameState, setLatestMessage } from "../game/state";
+import { PALETTE } from "../game/constants";
+import { gameState, getProductionStatusReadout, setLatestMessage } from "../game/state";
 import type { ProposalKind } from "../game/types";
 import { retroAudio } from "./audio";
 
@@ -18,43 +18,21 @@ export function adjustReliability(amount: number, reason: string) {
 
 export class ReliabilityHud {
   private readonly scene: Phaser.Scene;
-  private readonly fill: Phaser.GameObjects.Rectangle;
-  private readonly label: Phaser.GameObjects.Text;
-  private readonly roleLabel: Phaser.GameObjects.Text;
-  private readonly soundLabel: Phaser.GameObjects.Text;
-  private readonly stampTexts: Phaser.GameObjects.Text[] = [];
+  private readonly statusLines: Phaser.GameObjects.Text[] = [];
   private readonly details: Phaser.GameObjects.Container;
   private readonly detailsText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    scene.add.rectangle(88, 24, 64, 8, 0x050505, 0.85).setDepth(800);
-    scene.add.rectangle(88, 24, 64, 8).setStrokeStyle(1, 0xd6a84f).setDepth(801);
-    this.fill = scene.add.rectangle(58, 24, 60, 4, 0x4cff6b).setOrigin(0, 0.5).setDepth(802);
-    this.label = scene.add.text(122, 20, "", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.creamPaper
-    }).setDepth(802);
-    this.roleLabel = scene.add.text(96, 5, "", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp
-    }).setDepth(802);
-    this.soundLabel = scene.add.text(58, 13, "", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.terminalCyan,
-      backgroundColor: PALETTE.black
-    }).setDepth(802);
-    PROCESS_STAMPS.forEach((stamp, index) => {
-      const stampText = scene.add.text(174 + index * 13, 23, stamp.label.slice(0, 3), {
+    scene.add.rectangle(152, 16, 204, 30, 0x050505, 0.92).setDepth(860);
+    scene.add.rectangle(152, 16, 204, 30).setStrokeStyle(1, 0xd6a84f).setDepth(861);
+    [3, 13, 23].forEach((y, index) => {
+      const line = scene.add.text(52, y, "", {
         fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.sepiaInk,
-        backgroundColor: PALETTE.black
-      }).setDepth(802);
-      this.stampTexts.push(stampText);
+        fontSize: index === 0 ? "6px" : "5px",
+        color: index === 0 ? PALETTE.goldStamp : PALETTE.creamPaper
+      }).setDepth(862);
+      this.statusLines.push(line);
     });
 
     const box = scene.add.rectangle(128, 77, 224, 86, 0x050505, 0.97);
@@ -78,18 +56,9 @@ export class ReliabilityHud {
   }
 
   update() {
-    const value = gameState.reliability;
-    this.fill.width = Math.max(1, Math.round((60 * value) / 100));
-    const color = value < 35 ? 0xff3b3b : value < 70 ? 0xd6a84f : 0x4cff6b;
-    this.fill.setFillStyle(color);
-    this.label.setText(`REL ${value}`);
-    this.soundLabel.setText(gameState.audioStatus.includes("muted") ? "SND OFF" : "SND ON");
-    this.roleLabel.setText(gameState.playerProfile.roleLabel.toUpperCase().slice(0, 12));
-    for (const [index, stamp] of PROCESS_STAMPS.entries()) {
-      const earned = gameState.processStamps.includes(stamp.id);
-      this.stampTexts[index].setColor(earned ? PALETTE.goldStamp : PALETTE.sepiaInk);
-      this.stampTexts[index].setAlpha(earned ? 1 : 0.6);
-    }
+    getProductionStatusReadout().forEach((line, index) => {
+      this.statusLines[index].setText(line);
+    });
   }
 
   toggleDetails() {
@@ -99,6 +68,7 @@ export class ReliabilityHud {
     }
     this.detailsText.setText(
       [
+        ...getProductionStatusReadout(),
         `RELIABILITY ${gameState.reliability}/100`,
         "AI ANNOTATION REVIEW: TOOL ONLY",
         "MECHANICAL: MAY AUTO-APPLY",

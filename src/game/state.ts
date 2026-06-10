@@ -1,4 +1,4 @@
-import { PROCESS_ROLES } from "./constants";
+import { PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
 import type { ProcessStampId } from "./constants";
 import type { ChoiceOption, GameMode, PlayerProfile, Position } from "./types";
 
@@ -7,6 +7,7 @@ interface GameState {
   mode: GameMode;
   objective: string;
   reliability: number;
+  heldItem: string | null;
   documentPoints: number;
   inventory: string[];
   volumeFragments: string[];
@@ -47,6 +48,7 @@ export const gameState: GameState = {
   mode: "boot",
   objective: "",
   reliability: 80,
+  heldItem: null,
   documentPoints: 0,
   inventory: [],
   volumeFragments: [],
@@ -77,6 +79,7 @@ export function resetGameState() {
   gameState.mode = "title";
   gameState.objective = "Press start to verify.";
   gameState.reliability = 80;
+  gameState.heldItem = null;
   gameState.documentPoints = 0;
   gameState.inventory = [];
   gameState.volumeFragments = [];
@@ -98,6 +101,7 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.currentScene = sceneName;
   gameState.mode = mode;
   gameState.objective = objective;
+  gameState.heldItem = null;
   gameState.nearestInteractable = null;
   gameState.visibleEntities = [];
   gameState.visibleThreats = [];
@@ -108,6 +112,10 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
 
 export function setObjective(objective: string) {
   gameState.objective = objective;
+}
+
+export function setHeldItem(label: string | null) {
+  gameState.heldItem = label;
 }
 
 export function setLatestMessage(message: string) {
@@ -185,6 +193,57 @@ export function awardProcessStamp(stampId: ProcessStampId) {
   }
 }
 
+const HUD_STAMP_LABELS: Record<ProcessStampId, string> = {
+  rule: "RULE",
+  archive: "SOURCE",
+  network: "NET",
+  referral: "REF",
+  sop: "SOP",
+  proof: "READ"
+};
+
+function compactHudText(text: string, maxLength: number) {
+  const normalized = text
+    .replace(/^FRUS Fragment:\s*/i, "")
+    .replace(/\.$/, "")
+    .trim()
+    .toUpperCase();
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxLength - 1))}.`;
+}
+
+function compactHeldItem(label: string | null) {
+  if (!label) return "NONE";
+  if (/mechanical/i.test(label)) return "MECH FIX";
+  if (/opennet|cross-reference/i.test(label)) return "OPEN NOTE";
+  if (/classnet/i.test(label)) return "CLASS NOTE";
+  if (/referral|equity/i.test(label)) return "REF SLIP";
+  if (/proof date/i.test(label)) return "PROOF DATE";
+  return compactHudText(label, 18);
+}
+
+function reliabilityBlocks() {
+  const filled = Math.round((Math.max(0, Math.min(100, gameState.reliability)) / 100) * 8);
+  return `${"█".repeat(filled)}${"░".repeat(8 - filled)}`;
+}
+
+function stampReadout() {
+  const earned = gameState.processStamps.map((stampId) => HUD_STAMP_LABELS[stampId]);
+  return earned.length ? earned.join(" ") : "NONE";
+}
+
+export function getProductionStatusReadout() {
+  const carriedItem = gameState.physicalVerification?.carriedItem ?? gameState.heldItem;
+  const role = compactHudText(gameState.playerProfile.roleLabel, 12);
+  const held = compactHeldItem(carriedItem);
+  const objective = compactHudText(gameState.objective || "VERIFY", 42);
+  return [
+    `ROLE: ${role.padEnd(12, " ")} RELIABILITY ${reliabilityBlocks()}`,
+    `HELD: ${held.padEnd(15, " ")} STAMPS: ${stampReadout()}`,
+    `OBJECTIVE: ${objective}`
+  ];
+}
+
 export function seedProgressForScene(sceneName: string) {
   if (["OfficeScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     addInventoryItem("Citation Stamp");
@@ -256,6 +315,8 @@ export function renderGameToText() {
       mode: gameState.mode,
       objective: gameState.objective,
       reliability: gameState.reliability,
+      productionHud: getProductionStatusReadout(),
+      heldItem: gameState.heldItem,
       documentPoints: gameState.documentPoints,
       playerProfile: gameState.playerProfile,
       processStamps: gameState.processStamps,

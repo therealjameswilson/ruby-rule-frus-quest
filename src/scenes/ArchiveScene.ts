@@ -6,6 +6,7 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  setHeldItem,
   setNearestInteractable,
   setObjective,
   setSceneState,
@@ -155,6 +156,7 @@ export class ArchiveScene extends Phaser.Scene {
     document.collect();
     retroAudio.confirm();
     addInventoryItem(document.label);
+    setHeldItem(document.id === "source-note" ? "Source Note 47" : document.label);
     addDocumentPoints(2, `${document.label} collected`);
     this.interactables = this.interactables.filter((item) => item.id !== document.id);
     if (this.collected.size < 3) {
@@ -162,7 +164,8 @@ export class ArchiveScene extends Phaser.Scene {
       this.dialog.show("ARCHIVE", `${document.label} filed.`);
       return;
     }
-    setObjective("Verify Source Note 47.");
+    setHeldItem("Source Note 47");
+    setObjective("Verify provenance at research table.");
     this.dialog.show("STATECHAT / CLASSNET", [
       "FLAG:",
       "SOURCE NOTE 47 REPOSITORY NOT SPECIFIED.",
@@ -237,6 +240,7 @@ export class ArchiveScene extends Phaser.Scene {
         awardProcessStamp("archive");
         addInventoryItem("FRUS Fragment: Source Note");
         addVolumeFragment("Source Note Fragment");
+        setHeldItem(null);
         addDocumentPoints(12, "source note provenance verified");
         retroAudio.stamp();
         adjustReliability(10, "provenance verified by a human");

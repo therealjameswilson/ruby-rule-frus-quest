@@ -144,6 +144,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - flags must be carried to OpenNet, ClassNet, editor desk, referral tray, or proof table before human verification and visible process stamping
   - `render_game_to_text()` now reports physical verification verb, carried item, nearest station, completion count, and per-flag status
   - verified with Playwright: direct SilentReadScene smoke test shows the CARRY state, and full route test stamped all five flags with no console errors
+- Added a production status HUD:
+  - top-right HUD now renders `ROLE`, block-style `RELIABILITY`, `HELD`, `STAMPS`, and `OBJECTIVE` lines
+  - process stamps display as RULE, SOURCE, NET, REF, SOP, and READ
+  - added `heldItem` and `productionHud` to `render_game_to_text()`
+  - Archive Source Note 47 now sets held item and the objective `Verify provenance at research table.`
+  - verified Archive and SilentReadScene HUD screenshots/state with Playwright and no console errors
 
 ## TODO
 

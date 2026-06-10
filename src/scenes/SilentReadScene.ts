@@ -6,6 +6,7 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  setHeldItem,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -310,6 +311,7 @@ export class SilentReadScene extends Phaser.Scene {
         return;
       }
       activeFlag.status = "carried";
+      setHeldItem(activeFlag.label);
       setLatestMessage(`CARRY: ${activeFlag.label}.`);
       setObjective(`ROUTE: place ${activeFlag.shortLabel} on ${this.stationFor(activeFlag.destination).label}.`);
       retroAudio.blip();
@@ -332,6 +334,7 @@ export class SilentReadScene extends Phaser.Scene {
 
     if (activeFlag.status === "carried") {
       activeFlag.status = "routed";
+      setHeldItem(null);
       activeFlag.routedStation = nearestStation.id;
       activeFlag.x = nearestStation.x;
       activeFlag.y = nearestStation.y - 17;
