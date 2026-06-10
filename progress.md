@@ -115,6 +115,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - expanded CSS pixel-rendering coverage for canvas, images, game containers, `#game`, and `#app`
   - added `RenderDebugScene` at `?scene=RenderDebugScene` with live canvas/scale metrics and 1x/2x/3x/4x samples
   - verified the debug scene in the in-app browser at 256x240 internal resolution displayed at a clean 3x integer scale
+- Improved the existing sprite sheets only:
+  - treated each SVG loaded in `BootScene.preloadSvgAssets()` as a one-frame sheet and preserved every frame size/order
+  - normalized all used sprite colors to the Ruby Rule project palette
+  - removed off-palette colors and confirmed no semi-transparent sprite pixels/opacity attributes remain
+  - strengthened implied outlines and contrast without adding characters, frames, or animation states
+  - rebuilt `public/assets/asset_debug.html` as a sprite-only before/after viewer with originals from `_originals/sprites/`, current sprites at 4x, and a checkerboard toggle
+  - verified CharacterCreateScene, GuideScene, EndingScene, and the comparison page with browser/Playwright screenshots
 
 ## TODO
 

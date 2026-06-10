@@ -3,158 +3,213 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Ruby Rule Asset Debug</title>
+    <title>Ruby Rule Sprite Sheet Compare</title>
     <style>
       :root {
         color-scheme: dark;
-        --ruby: #4a0712;
-        --buckram: #7a1020;
-        --gold: #d6a84f;
-        --cream: #f2e4c8;
-        --slate: #101820;
-        --cyan: #45f3ff;
-        --black: #050505;
+        --ruby: #7a1020;
+        --deep-ruby: #3a0710;
+        --bright-ruby: #b82030;
+        --gold: #d6a23a;
+        --cream: #e8d8a8;
+        --white: #f8f0d8;
+        --slate: #304860;
+        --cyan: #68c0c0;
+        --black: #0f0f0f;
       }
+
       * {
         box-sizing: border-box;
       }
+
       body {
         margin: 0;
-        background: var(--slate);
+        background: var(--black);
         color: var(--cream);
         font: 14px/1.4 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
       }
+
       header {
         position: sticky;
         top: 0;
         z-index: 2;
-        padding: 16px 20px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 14px 18px;
         border-bottom: 2px solid var(--gold);
-        background: var(--ruby);
+        background: var(--deep-ruby);
       }
+
       h1 {
-        margin: 0 0 4px;
+        margin: 0;
         color: var(--gold);
-        font-size: 18px;
+        font-size: 17px;
         font-weight: 700;
         letter-spacing: 0;
       }
-      p {
-        margin: 0;
+
+      label {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--white);
+        font-size: 12px;
       }
+
+      input {
+        accent-color: var(--gold);
+      }
+
       main {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-start;
         gap: 12px;
         padding: 12px;
       }
+
       article {
-        border: 2px solid var(--buckram);
+        flex: 0 0 auto;
+        max-width: 100%;
+        border: 2px solid var(--ruby);
         background: var(--black);
       }
+
       h2 {
         margin: 0;
         padding: 8px;
-        border-bottom: 1px solid var(--buckram);
+        border-bottom: 1px solid var(--ruby);
         color: var(--gold);
         font-size: 12px;
         letter-spacing: 0;
       }
+
       .pair {
         display: grid;
-        grid-template-columns: 1fr 1fr;
+        grid-template-columns: max-content max-content;
+        max-width: 100%;
+        overflow: auto;
       }
+
       .panel {
-        min-height: 132px;
         padding: 8px;
-        border-right: 1px solid var(--buckram);
+        border-right: 1px solid var(--ruby);
       }
+
       .panel:last-child {
         border-right: 0;
       }
+
       .label {
         margin-bottom: 8px;
         color: var(--cyan);
         font-size: 11px;
       }
+
       .preview {
         display: grid;
-        min-height: 96px;
+        min-height: 144px;
         place-items: center;
+        overflow: auto;
+        background: var(--black);
+      }
+
+      body.checkerboard .preview {
         background:
-          linear-gradient(45deg, #101820 25%, transparent 25%),
-          linear-gradient(-45deg, #101820 25%, transparent 25%),
-          linear-gradient(45deg, transparent 75%, #101820 75%),
-          linear-gradient(-45deg, transparent 75%, #101820 75%);
-        background-color: #050505;
+          linear-gradient(45deg, var(--slate) 25%, transparent 25%),
+          linear-gradient(-45deg, var(--slate) 25%, transparent 25%),
+          linear-gradient(45deg, transparent 75%, var(--slate) 75%),
+          linear-gradient(-45deg, transparent 75%, var(--slate) 75%);
+        background-color: var(--black);
         background-position: 0 0, 0 8px, 8px -8px, -8px 0;
         background-size: 16px 16px;
       }
+
       img {
-        max-width: min(180px, 100%);
-        max-height: 180px;
+        flex: 0 0 auto;
         image-rendering: pixelated;
         image-rendering: crisp-edges;
       }
+
       .meta {
-        padding: 6px 8px 8px;
-        color: var(--cream);
+        padding: 7px 8px 9px;
+        color: var(--white);
         font-size: 11px;
       }
     </style>
   </head>
-  <body>
+  <body class="checkerboard">
     <header>
-      <h1>Ruby Rule Asset Debug</h1>
-      <p>Original backups on the left, current cleaned assets on the right.</p>
+      <h1>Sprite Sheet Before / After</h1>
+      <label>
+        <input id="checker-toggle" type="checkbox" checked />
+        transparent checkerboard
+      </label>
     </header>
     <main id="asset-grid"></main>
     <script>
-      const assets = [
-        ["sprites/archive-colleague.svg", "16x16"],
-        ["sprites/bureaucratic-wall.svg", "36x32"],
-        ["sprites/citation-stamp.svg", "18x18"],
-        ["sprites/elena.svg", "16x16"],
-        ["sprites/frus-prize-cover.svg", "80x120"],
-        ["sprites/frus-volume.svg", "52x42"],
-        ["sprites/manuscript.svg", "18x18"],
-        ["sprites/marcus.svg", "16x16"],
-        ["sprites/player-compiler.svg", "16x16"],
-        ["sprites/player-declass-reviewer.svg", "16x16"],
-        ["sprites/player-editor.svg", "16x16"],
-        ["sprites/player-proofreader.svg", "16x16"],
-        ["sprites/player-source-note-specialist.svg", "16x16"],
-        ["sprites/priya.svg", "16x16"],
-        ["sprites/sam.svg", "16x16"],
-        ["sprites/volume-fragment.svg", "20x18"],
-        ["tiles/archive-tiles.svg", "16x16"],
-        ["tiles/network-tiles.svg", "16x16"],
-        ["tiles/office-tiles.svg", "16x16"],
-        ["tiles/vault-tiles.svg", "16x16"],
-        ["ui/dialog-box.svg", "32x16"],
-        ["ui/reliability-meter.svg", "32x16"],
-        ["ui/terminal-panel.svg", "32x16"]
+      const sprites = [
+        ["sam", "sam.svg", 16, 16],
+        ["elena", "elena.svg", 16, 16],
+        ["marcus", "marcus.svg", 16, 16],
+        ["priya", "priya.svg", 16, 16],
+        ["player-proofreader", "player-proofreader.svg", 16, 16],
+        ["player-compiler", "player-compiler.svg", 16, 16],
+        ["player-editor", "player-editor.svg", 16, 16],
+        ["player-declass-reviewer", "player-declass-reviewer.svg", 16, 16],
+        ["player-source-note-specialist", "player-source-note-specialist.svg", 16, 16],
+        ["archive-colleague", "archive-colleague.svg", 16, 16],
+        ["citation-stamp", "citation-stamp.svg", 18, 18],
+        ["volume-fragment", "volume-fragment.svg", 20, 18],
+        ["bureaucratic-wall", "bureaucratic-wall.svg", 36, 32],
+        ["manuscript", "manuscript.svg", 18, 18],
+        ["frus-volume", "frus-volume.svg", 52, 42],
+        ["frus-prize-cover", "frus-prize-cover.svg", 80, 120]
       ];
 
       const grid = document.querySelector("#asset-grid");
-      for (const [asset, size] of assets) {
+      const scale = 4;
+
+      function imageFor(src, label, width, height) {
+        const image = document.createElement("img");
+        image.src = src;
+        image.alt = label;
+        image.width = width;
+        image.height = height;
+        image.style.width = `${width * scale}px`;
+        image.style.height = `${height * scale}px`;
+        return image;
+      }
+
+      for (const [key, file, width, height] of sprites) {
+        const asset = `sprites/${file}`;
+        const original = `_originals/${asset}`;
         const card = document.createElement("article");
         card.innerHTML = `
           <h2>${asset}</h2>
           <div class="pair">
             <section class="panel">
               <div class="label">ORIGINAL</div>
-              <div class="preview"><img src="_originals/${asset}" alt="Original ${asset}" /></div>
+              <div class="preview" data-side="original"></div>
             </section>
             <section class="panel">
               <div class="label">CURRENT</div>
-              <div class="preview"><img src="${asset}" alt="Current ${asset}" /></div>
+              <div class="preview" data-side="current"></div>
             </section>
           </div>
-          <div class="meta">Dimensions preserved: ${size}</div>
+          <div class="meta">Key ${key} | frame ${width}x${height} | sheet 1 frame | display 4x</div>
         `;
+        card.querySelector('[data-side="original"]').append(imageFor(original, `Original ${asset}`, width, height));
+        card.querySelector('[data-side="current"]').append(imageFor(asset, `Current ${asset}`, width, height));
         grid.append(card);
       }
+
+      document.querySelector("#checker-toggle").addEventListener("change", (event) => {
+        document.body.classList.toggle("checkerboard", event.target.checked);
+      });
     </script>
   </body>
 </html>
