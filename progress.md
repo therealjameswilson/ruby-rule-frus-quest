@@ -138,6 +138,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - renamed the visible declassification role label to Declass Coordinator while preserving the existing internal role id
   - added pixel-snapped idle cues for folder checking, mug steam, pencil tapping, proof page reading, and stamp bouncing
   - expanded the shared `E` ability into visible role-specific bursts for Archive Sense, Equity Map, Red Pencil, Silent Read, and Provenance Check
+- Added physical verification loops in `SilentReadScene`:
+  - replaced the old multiple-choice SOP/proof gates with CARRY, ROUTE, VERIFY, and STAMP interactions
+  - StateChat now emits one mechanical proposal plus four evidence-bound physical flags
+  - flags must be carried to OpenNet, ClassNet, editor desk, referral tray, or proof table before human verification and visible process stamping
+  - `render_game_to_text()` now reports physical verification verb, carried item, nearest station, completion count, and per-flag status
+  - verified with Playwright: direct SilentReadScene smoke test shows the CARRY state, and full route test stamped all five flags with no console errors
 
 ## TODO
 

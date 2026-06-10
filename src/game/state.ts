@@ -22,9 +22,25 @@ interface GameState {
   processStamps: ProcessStampId[];
   latestAbility: string;
   audioStatus: string;
+  physicalVerification: PhysicalVerificationState | null;
 }
 
 const defaultRole = PROCESS_ROLES[0];
+
+export interface PhysicalVerificationState {
+  verb: "CARRY" | "ROUTE" | "VERIFY" | "STAMP" | "DONE";
+  carriedItem: string | null;
+  nearestStation: string | null;
+  completed: number;
+  total: number;
+  flags: Array<{
+    id: string;
+    label: string;
+    kind: string;
+    destination: string;
+    status: "waiting" | "carried" | "routed" | "verified" | "stamped";
+  }>;
+}
 
 export const gameState: GameState = {
   currentScene: "BootScene",
@@ -52,7 +68,8 @@ export const gameState: GameState = {
   },
   processStamps: [],
   latestAbility: "",
-  audioStatus: "audio ready"
+  audioStatus: "audio ready",
+  physicalVerification: null
 };
 
 export function resetGameState() {
@@ -73,6 +90,7 @@ export function resetGameState() {
   gameState.sceneProgress = {};
   gameState.processStamps = [];
   gameState.latestAbility = "";
+  gameState.physicalVerification = null;
   setPlayerProfile("Sam", defaultRole);
 }
 
@@ -85,6 +103,7 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.visibleThreats = [];
   gameState.activeDialog = null;
   gameState.currentChoice = null;
+  gameState.physicalVerification = null;
 }
 
 export function setObjective(objective: string) {
@@ -101,6 +120,10 @@ export function setLatestAbility(message: string) {
 
 export function setAudioStatus(message: string) {
   gameState.audioStatus = message;
+}
+
+export function setPhysicalVerificationState(state: PhysicalVerificationState | null) {
+  gameState.physicalVerification = state;
 }
 
 export function setPlayerPosition(position: Position) {
@@ -245,6 +268,7 @@ export function renderGameToText() {
       },
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,
+      physicalVerification: gameState.physicalVerification,
       inventory: gameState.inventory,
       latestMessage: gameState.latestMessage,
       player: gameState.player,
