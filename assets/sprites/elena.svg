@@ -4,18 +4,18 @@
   <rect x="3" y="3" width="2" height="5" fill="#0F0F0F"/>
   <rect x="11" y="3" width="2" height="5" fill="#0F0F0F"/>
   <rect x="5" y="3" width="6" height="6" fill="#E8D8A8"/>
-  <rect x="5" y="3" width="2" height="1" fill="#F8F0D8"/>
+  <rect x="5" y="3" width="2" height="1" fill="#E8D8A8"/>
   <rect x="6" y="5" width="1" height="1" fill="#0F0F0F"/>
   <rect x="9" y="5" width="1" height="1" fill="#0F0F0F"/>
-  <rect x="8" y="6" width="1" height="1" fill="#7A1020"/>
-  <rect x="7" y="8" width="3" height="1" fill="#7A1020"/>
+  <rect x="8" y="6" width="1" height="1" fill="#0F0F0F"/>
+  <rect x="7" y="8" width="3" height="1" fill="#0F0F0F"/>
   <rect x="3" y="9" width="10" height="5" fill="#0F0F0F"/>
-  <rect x="4" y="9" width="8" height="5" fill="#B89A5A"/>
+  <rect x="4" y="9" width="8" height="5" fill="#D6A23A"/>
   <rect x="4" y="10" width="8" height="1" fill="#D6A23A"/>
   <rect x="2" y="10" width="2" height="4" fill="#E8D8A8"/>
   <rect x="12" y="10" width="2" height="4" fill="#E8D8A8"/>
   <rect x="10" y="11" width="3" height="3" fill="#E8D8A8"/>
-  <rect x="11" y="12" width="2" height="1" fill="#7A1020"/>
+  <rect x="11" y="12" width="2" height="1" fill="#0F0F0F"/>
   <rect x="3" y="14" width="4" height="2" fill="#0F0F0F"/>
   <rect x="9" y="14" width="4" height="2" fill="#0F0F0F"/>
 </svg>
