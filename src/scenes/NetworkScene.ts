@@ -458,6 +458,7 @@ export class NetworkScene extends Phaser.Scene {
           label: `Stone Wall: ${wall.label}`,
           x: wall.position.x,
           y: wall.position.y,
+          spriteKey: wall.spriteKey,
           behavior: "blocks terminal door",
           defeatMethod: "Use correct OpenNet/ClassNet routing",
           status: this.routingComplete ? "cleared" : "active"

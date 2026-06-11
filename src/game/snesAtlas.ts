@@ -71,8 +71,67 @@ export const SNES_AREA_MAP_ASSETS = [
   }
 ] as const;
 
+export const SNES_BUREAUCRATIC_WALL_ASSETS = [
+  {
+    type: "NO REPO",
+    key: "snes-wall-no-repo",
+    path: "assets/sprites/snes-wall-no-repo.svg",
+    behavior: "slow-chase",
+    silhouette: "missing repository shelf, gold citation crack"
+  },
+  {
+    type: "FIREWALL",
+    key: "snes-wall-firewall",
+    path: "assets/sprites/snes-wall-firewall.svg",
+    behavior: "horizontal-patrol",
+    silhouette: "terminal gate with red-green routing bars"
+  },
+  {
+    type: "PENDING",
+    key: "snes-wall-pending",
+    path: "assets/sprites/snes-wall-pending.svg",
+    behavior: "wander",
+    silhouette: "wandering manifest stack and loose slip"
+  },
+  {
+    type: "WAIT",
+    key: "snes-wall-wait",
+    path: "assets/sprites/snes-wall-wait.svg",
+    behavior: "freeze",
+    silhouette: "hourglass and frozen exit pins"
+  },
+  {
+    type: "HOLD",
+    key: "snes-wall-hold",
+    path: "assets/sprites/snes-wall-hold.svg",
+    behavior: "block",
+    silhouette: "locked bracket marker across stone"
+  },
+  {
+    type: "AMBIGUOUS",
+    key: "snes-wall-ambiguous",
+    path: "assets/sprites/snes-wall-ambiguous.svg",
+    behavior: "splitter",
+    silhouette: "split flag face with two direction tabs"
+  },
+  {
+    type: "DANN-E QUEUE",
+    key: "snes-wall-danne-queue",
+    path: "assets/sprites/snes-wall-danne-queue.svg",
+    behavior: "push",
+    silhouette: "queue pusher slab with conveyor arrows"
+  }
+] as const;
+
 export const SNES_VISUAL_ASSETS = [
   ...SNES_AREA_MAP_ASSETS,
+  ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => ({
+    key: wall.key,
+    path: wall.path,
+    kind: "bureaucratic-wall-sprite",
+    enemyType: wall.type,
+    dimensions: { width: 32, height: 32 }
+  })),
   {
     key: "snes-workflow-tools",
     path: "assets/sprites/snes-workflow-tools.svg",
@@ -115,6 +174,12 @@ export function getSnesAtlasReadout() {
       hudSlot: item.hudSlot,
       function: item.zeldaFunction,
       frusMeaning: item.frusMeaning
+    })),
+    bureaucraticWallSprites: SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => ({
+      type: wall.type,
+      texture: wall.key,
+      behavior: wall.behavior,
+      silhouette: wall.silhouette
     }))
   };
 }

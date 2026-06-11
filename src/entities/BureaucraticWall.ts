@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
+import { SNES_BUREAUCRATIC_WALL_ASSETS } from "../game/snesAtlas";
 import type { Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 
@@ -12,6 +13,7 @@ export type BureaucraticWallBehavior = "slow-chase" | "wander" | "horizontal-pat
 interface BureaucraticWallOptions {
   behavior?: BureaucraticWallBehavior;
   accent?: string;
+  textureKey?: string;
 }
 
 export class BureaucraticWall {
@@ -19,6 +21,7 @@ export class BureaucraticWall {
   readonly label: string;
   readonly x: number;
   readonly y: number;
+  readonly spriteKey: string;
   private readonly container: Phaser.GameObjects.Container;
   private readonly stone: Phaser.GameObjects.Image;
   private readonly crack: Phaser.GameObjects.Rectangle;
@@ -42,9 +45,10 @@ export class BureaucraticWall {
     this.wobbleOffset = Phaser.Math.Between(0, 360);
     this.behavior = options.behavior ?? "slow-chase";
     this.accent = options.accent ?? PALETTE.buckramHighlight;
+    this.spriteKey = wallSpriteKey(label, this.behavior, options.textureKey);
     this.wanderTarget = { x, y };
     const shadow = scene.add.ellipse(0, 15, 36, 8, color(PALETTE.black));
-    this.stone = scene.add.image(0, 0, "bureaucratic-wall");
+    this.stone = scene.add.image(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : "bureaucratic-wall");
     const labelText = scene.add
       .text(0, 1, label.toUpperCase(), {
         fontFamily: "monospace",
@@ -149,4 +153,18 @@ export class BureaucraticWall {
     if (this.cleared) return false;
     return Phaser.Math.Distance.Between(this.currentX, this.currentY, position.x, position.y) <= radius;
   }
+}
+
+function wallSpriteKey(label: string, behavior: BureaucraticWallBehavior, override?: string) {
+  if (override) return override;
+  const normalized = label.replace(/\s+/g, " ").toUpperCase();
+  if (normalized.includes("NO REPO")) return "snes-wall-no-repo";
+  if (normalized.includes("FIREWALL") || normalized.includes("FORM")) return "snes-wall-firewall";
+  if (normalized.includes("PENDING")) return "snes-wall-pending";
+  if (normalized.includes("WAIT")) return "snes-wall-wait";
+  if (normalized.includes("HOLD")) return "snes-wall-hold";
+  if (normalized.includes("AMBIG")) return "snes-wall-ambiguous";
+  if (normalized.includes("DANN-E")) return "snes-wall-danne-queue";
+  const behaviorMatch = SNES_BUREAUCRATIC_WALL_ASSETS.find((asset) => asset.behavior === behavior);
+  return behaviorMatch?.key ?? "bureaucratic-wall";
 }

@@ -121,8 +121,8 @@ export class EndingScene extends Phaser.Scene {
     addSnesWorldMap(this, 50, 78, "G1 GATE", "buckram-gate-map");
     addSnesWorkflowRelicRack(this, 184, 78);
 
-    this.drawStoneBureaucracyWall(74, 130, "30-YR", ready);
-    this.drawStoneBureaucracyWall(182, 130, "DANN-E", ready);
+    this.drawStoneBureaucracyWall(74, 130, "30-YR", ready, "snes-wall-hold");
+    this.drawStoneBureaucracyWall(182, 130, "DANN-E", ready, "snes-wall-danne-queue");
 
     this.add.rectangle(128, 89, 104, 90, color(PALETTE.black)).setStrokeStyle(2, color(ready ? PALETTE.goldStamp : PALETTE.classNetRed)).setDepth(94);
     this.add.rectangle(128, 55, 72, 8, color(PALETTE.deepRuby)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(95);
@@ -206,13 +206,19 @@ export class EndingScene extends Phaser.Scene {
     }).setDepth(157);
   }
 
-  private drawStoneBureaucracyWall(x: number, y: number, label: string, cleared: boolean) {
+  private drawStoneBureaucracyWall(x: number, y: number, label: string, cleared: boolean, textureKey: string) {
     const fill = cleared ? PALETTE.stoneGray : PALETTE.stoneDark;
-    this.add.rectangle(x, y, 38, 26, color(PALETTE.black)).setDepth(110);
-    this.add.rectangle(x - 1, y - 1, 34, 22, color(fill)).setStrokeStyle(2, color(cleared ? PALETTE.goldStamp : PALETTE.classNetRed)).setDepth(111);
-    for (let ix = -13; ix <= 13; ix += 13) {
-      for (let iy = -7; iy <= 7; iy += 7) {
-        this.add.rectangle(x + ix, y + iy, 8, 5, color(cleared ? PALETTE.creamPaper : PALETTE.black)).setDepth(112);
+    this.add.ellipse(x, y + 15, 36, 8, color(PALETTE.black)).setDepth(109);
+    if (this.textures.exists(textureKey)) {
+      const image = this.add.image(x, y, textureKey).setDepth(111);
+      if (cleared) image.setTint(color(PALETTE.stoneLight));
+    } else {
+      this.add.rectangle(x, y, 38, 26, color(PALETTE.black)).setDepth(110);
+      this.add.rectangle(x - 1, y - 1, 34, 22, color(fill)).setStrokeStyle(2, color(cleared ? PALETTE.goldStamp : PALETTE.classNetRed)).setDepth(111);
+      for (let ix = -13; ix <= 13; ix += 13) {
+        for (let iy = -7; iy <= 7; iy += 7) {
+          this.add.rectangle(x + ix, y + iy, 8, 5, color(cleared ? PALETTE.creamPaper : PALETTE.black)).setDepth(112);
+        }
       }
     }
     this.add.text(x, y - 5, label, {
@@ -333,6 +339,7 @@ export class EndingScene extends Phaser.Scene {
         label: "30-YEAR LINE",
         x: 74,
         y: 130,
+        spriteKey: "snes-wall-hold",
         behavior: "blocks publication gate until checklist is complete",
         defeatMethod: "complete FRUS workflow and certify at human publication table",
         status
@@ -341,6 +348,7 @@ export class EndingScene extends Phaser.Scene {
         label: "DANN-E QUEUE",
         x: 182,
         y: 130,
+        spriteKey: "snes-wall-danne-queue",
         behavior: "pushes against publication with unresolved final assembly",
         defeatMethod: "use human decision at Golden Rule gate",
         status

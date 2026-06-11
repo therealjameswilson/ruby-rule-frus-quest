@@ -302,6 +302,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - changed direct `?scene=EndingScene` seeding to proofed/final-assembly documents instead of pre-published documents, preserving the QA shortcut while requiring the final Space/Enter certification action
   - publishing now records the final human certification, marks selected workflow documents as `published`, adds a `Published FRUS Cover` inventory prize, and then shows the ruby-and-gold completion card
   - verified `npm run build`, `git diff --check`, direct EndingScene ready and publish states/screenshots, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
+- Upgraded bureaucratic wall enemies into distinct 16-bit sprites:
+  - added seven original 32x32 SVG wall sprites for NO REPO, FIREWALL, PENDING, WAIT, HOLD, AMBIGUOUS, and DANN-E QUEUE using the existing NES/SNES palette and no external assets
+  - registered the wall sprite set in the SNES atlas readout and BootScene preload/fallback pipeline
+  - changed `BureaucraticWall` to select the correct sprite by label/behavior while preserving the existing movement, pushback, and defeat loops
+  - exposed `spriteKey` on active `visibleThreats` so `render_game_to_text()` proves which blocker sprite is currently on screen
+  - added a seven-sprite wall rack to `RenderDebugScene` for stable visual QA
+  - verified `npm run build`, `git diff --check`, Archive/Network/Ending wall screenshots, RenderDebugScene wall-rack screenshot, and all ten `?scene=` deep links
 
 ## TODO
 

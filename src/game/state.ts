@@ -31,6 +31,7 @@ interface VisibleThreat {
   label: string;
   x: number;
   y: number;
+  spriteKey?: string;
   behavior?: string;
   defeatMethod?: string;
   status?: string;
@@ -483,6 +484,7 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     label: threat.label,
     x: Math.round(threat.x),
     y: Math.round(threat.y),
+    spriteKey: threat.spriteKey,
     behavior: threat.behavior,
     defeatMethod: threat.defeatMethod,
     status: threat.status

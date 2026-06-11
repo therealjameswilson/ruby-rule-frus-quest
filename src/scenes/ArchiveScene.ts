@@ -1099,6 +1099,7 @@ export class ArchiveScene extends Phaser.Scene {
           label: definition?.type ?? `Stone Wall: ${wall.label}`,
           x: wall.position.x,
           y: wall.position.y,
+          spriteKey: wall.spriteKey,
           behavior: definition?.behaviorText,
           defeatMethod: definition?.defeatMethod,
           status: this.enemyStatus(definition)

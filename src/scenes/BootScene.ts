@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
-import { SNES_AREA_MAP_ASSETS } from "../game/snesAtlas";
+import { SNES_AREA_MAP_ASSETS, SNES_BUREAUCRATIC_WALL_ASSETS } from "../game/snesAtlas";
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 
 function color(hex: string) {
@@ -63,6 +63,9 @@ export class BootScene extends Phaser.Scene {
     this.makeVolumeFragmentTextureIfMissing();
     this.makeArchiveColleagueTextureIfMissing();
     this.makeBureaucraticWallTextureIfMissing();
+    for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
+      this.makeSnesWallTextureIfMissing(wallAsset.key);
+    }
     for (const mapAsset of SNES_AREA_MAP_ASSETS) {
       this.makeSnesMapTextureIfMissing(mapAsset.key);
     }
@@ -120,6 +123,9 @@ export class BootScene extends Phaser.Scene {
     ];
     for (const [key, file, width, height] of sprites) {
       this.load.svg(key, `assets/sprites/${file}`, { width, height });
+    }
+    for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
+      this.load.svg(wallAsset.key, wallAsset.path, { width: 32, height: 32 });
     }
     for (const mapAsset of SNES_AREA_MAP_ASSETS) {
       this.load.svg(mapAsset.key, mapAsset.path, { width: mapAsset.dimensions.width, height: mapAsset.dimensions.height });
@@ -429,6 +435,65 @@ export class BootScene extends Phaser.Scene {
       g.fillRect(23, 22, 6, 4);
       g.fillStyle(color(PALETTE.buckramHighlight));
       g.fillRect(24, 23, 4, 1);
+    }
+    g.generateTexture(key, 32, 32);
+    g.destroy();
+  }
+
+  private makeSnesWallTextureIfMissing(key: string) {
+    if (this.textures.exists(key)) return;
+    const g = this.add.graphics();
+    const accent = key.includes("firewall") || key.includes("danne")
+      ? PALETTE.classNetRed
+      : key.includes("wait")
+        ? PALETTE.terminalCyan
+        : key.includes("pending") || key.includes("ambiguous")
+          ? PALETTE.goldStamp
+          : PALETTE.buckramHighlight;
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(2, 7, 28, 21);
+    g.fillStyle(color(PALETTE.stoneDark));
+    g.fillRect(4, 5, 24, 20);
+    g.fillStyle(color(PALETTE.stoneGray));
+    g.fillRect(5, 6, 9, 6);
+    g.fillRect(16, 7, 11, 5);
+    g.fillRect(8, 15, 8, 7);
+    g.fillRect(18, 16, 8, 6);
+    g.fillStyle(color(accent));
+    g.fillRect(6, 12, 20, 3);
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(10, 10, 3, 2);
+    g.fillRect(20, 10, 3, 2);
+    g.fillRect(13, 23, 7, 2);
+    if (key.includes("no-repo")) {
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(9, 17, 7, 1);
+      g.fillRect(15, 18, 1, 5);
+    } else if (key.includes("firewall")) {
+      g.fillStyle(color(PALETTE.openNetGreen));
+      g.fillRect(8, 17, 4, 5);
+      g.fillStyle(color(PALETTE.classNetRed));
+      g.fillRect(20, 17, 4, 5);
+    } else if (key.includes("pending")) {
+      g.fillStyle(color(PALETTE.creamPaper));
+      g.fillRect(18, 3, 8, 6);
+    } else if (key.includes("wait")) {
+      g.fillStyle(color(PALETTE.terminalCyan));
+      g.fillRect(14, 16, 5, 7);
+    } else if (key.includes("hold")) {
+      g.fillStyle(color(PALETTE.classNetRed));
+      g.fillRect(8, 17, 16, 2);
+      g.fillRect(8, 19, 2, 4);
+      g.fillRect(22, 19, 2, 4);
+    } else if (key.includes("ambiguous")) {
+      g.fillStyle(color(PALETTE.terminalCyan));
+      g.fillRect(7, 17, 7, 5);
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(19, 17, 7, 5);
+    } else if (key.includes("danne")) {
+      g.fillStyle(color(PALETTE.classNetRed));
+      g.fillRect(6, 18, 20, 2);
+      g.fillRect(18, 15, 4, 8);
     }
     g.generateTexture(key, 32, 32);
     g.destroy();

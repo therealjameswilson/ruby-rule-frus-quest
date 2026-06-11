@@ -349,6 +349,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         label: `Stone Wall: ${wall.label}`,
         x: wall.position.x,
         y: wall.position.y,
+        spriteKey: wall.spriteKey,
         behavior: wall.label === "WAIT" ? "freezes exits temporarily" : "blocks referral gate",
         defeatMethod: "Resolve agency response timer and visible referral review",
         status: this.referralGateOpen ? "cleared" : "active"
