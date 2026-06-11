@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import type { Direction } from "../game/constants";
+import { beginSnesTransition, completeSnesTransition } from "../game/state";
 import { retroAudio } from "./audio";
 
 function color(hex: string) {
@@ -8,9 +10,167 @@ function color(hex: string) {
 
 export function transitionTo(scene: Phaser.Scene, target: string) {
   retroAudio.transition();
-  scene.cameras.main.fadeOut(180, 5, 5, 5);
-  scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-    scene.scene.start(target);
+  beginSnesTransition({
+    fromScene: scene.scene.key,
+    toScene: target,
+    label: sceneLabel(target)
+  });
+  playRubyMosaicTransition(scene, {
+    label: sceneLabel(target),
+    onCovered: () => {
+      completeSnesTransition();
+      scene.scene.start(target);
+    }
+  });
+}
+
+interface RubyMosaicTransitionOptions {
+  label: string;
+  direction?: Direction;
+  fromRoomId?: string;
+  toRoomId?: string;
+  onCovered: () => void;
+  revealAfterCovered?: boolean;
+  onComplete?: () => void;
+}
+
+function sceneLabel(target: string) {
+  return target
+    .replace("Scene", "")
+    .replace(/([a-z])([A-Z])/g, "$1 $2")
+    .toUpperCase();
+}
+
+function transitionOrder(cells: Phaser.GameObjects.Rectangle[], direction?: Direction) {
+  const keyed = cells.map((cell) => ({ cell, x: cell.x, y: cell.y }));
+  if (direction === "east") return keyed.sort((a, b) => b.x - a.x || a.y - b.y).map((item) => item.cell);
+  if (direction === "west") return keyed.sort((a, b) => a.x - b.x || a.y - b.y).map((item) => item.cell);
+  if (direction === "north") return keyed.sort((a, b) => a.y - b.y || a.x - b.x).map((item) => item.cell);
+  if (direction === "south") return keyed.sort((a, b) => b.y - a.y || a.x - b.x).map((item) => item.cell);
+  const centerX = GAME_WIDTH / 2;
+  const centerY = GAME_HEIGHT / 2;
+  return keyed
+    .sort((a, b) => Math.abs(a.x - centerX) + Math.abs(a.y - centerY) - (Math.abs(b.x - centerX) + Math.abs(b.y - centerY)))
+    .map((item) => item.cell);
+}
+
+export function playRubyMosaicTransition(scene: Phaser.Scene, options: RubyMosaicTransitionOptions) {
+  const overlay = scene.add.container(0, 0).setDepth(5000);
+  const cells: Phaser.GameObjects.Rectangle[] = [];
+  const palette = [PALETTE.black, PALETTE.deepRuby, PALETTE.buckramRed, PALETTE.black];
+  const cellSize = 16;
+  for (let y = 0; y < GAME_HEIGHT; y += cellSize) {
+    for (let x = 0; x < GAME_WIDTH; x += cellSize) {
+      const fill = palette[((x / cellSize) + (y / cellSize)) % palette.length];
+      const cell = scene.add.rectangle(x, y, cellSize, cellSize, color(fill)).setOrigin(0, 0).setVisible(false);
+      cells.push(cell);
+      overlay.add(cell);
+    }
+  }
+
+  const plateShadow = scene.add.rectangle(130, 122, 150, 38, color(PALETTE.black)).setVisible(false);
+  const plate = scene.add.rectangle(128, 119, 150, 38, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setVisible(false);
+  const title = scene.add.text(128, 107, options.label.slice(0, 24), {
+    fontFamily: "monospace",
+    fontSize: "8px",
+    color: PALETTE.creamPaper
+  }).setOrigin(0.5, 0).setVisible(false);
+  const subtitle = scene.add.text(
+    128,
+    123,
+    options.fromRoomId && options.toRoomId ? `${options.fromRoomId} -> ${options.toRoomId}` : "FRUS QUEST ROUTE",
+    {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp
+    }
+  ).setOrigin(0.5, 0).setVisible(false);
+  const stitchA = scene.add.rectangle(75, 134, 58, 2, color(PALETTE.goldStamp)).setVisible(false);
+  const stitchB = scene.add.rectangle(181, 134, 58, 2, color(PALETTE.goldStamp)).setVisible(false);
+  overlay.add([plateShadow, plate, title, subtitle, stitchA, stitchB]);
+
+  const ordered = transitionOrder(cells, options.direction);
+  const showPlate = (visible: boolean) => {
+    plateShadow.setVisible(visible);
+    plate.setVisible(visible);
+    title.setVisible(visible);
+    subtitle.setVisible(visible);
+    stitchA.setVisible(visible);
+    stitchB.setVisible(visible);
+  };
+  const reveal = () => {
+    showPlate(false);
+    const reversed = [...ordered].reverse();
+    let index = 0;
+    let event: Phaser.Time.TimerEvent;
+    event = scene.time.addEvent({
+      delay: 8,
+      loop: true,
+      callback: () => {
+        for (let i = 0; i < 14 && index < reversed.length; i += 1) {
+          reversed[index].setVisible(false);
+          index += 1;
+        }
+        if (index >= reversed.length) {
+          event.remove(false);
+          overlay.destroy();
+          options.onComplete?.();
+        }
+      }
+    });
+  };
+  let index = 0;
+  let event: Phaser.Time.TimerEvent;
+  event = scene.time.addEvent({
+    delay: 10,
+    loop: true,
+    callback: () => {
+      for (let i = 0; i < 12 && index < ordered.length; i += 1) {
+        ordered[index].setVisible(true);
+        index += 1;
+      }
+      if (index >= ordered.length) {
+        event.remove(false);
+        showPlate(true);
+        scene.time.delayedCall(80, () => {
+          options.onCovered();
+          if (options.revealAfterCovered) scene.time.delayedCall(40, reveal);
+        });
+      }
+    }
+  });
+}
+
+export function transitionArchiveRoom(
+  scene: Phaser.Scene,
+  options: {
+    fromRoomId: string;
+    toRoomId: string;
+    direction: Direction;
+    label: string;
+    onCovered: () => void;
+    onComplete: () => void;
+  }
+) {
+  retroAudio.transition();
+  beginSnesTransition({
+    fromScene: scene.scene.key,
+    fromRoomId: options.fromRoomId,
+    toRoomId: options.toRoomId,
+    direction: options.direction,
+    label: options.label
+  });
+  playRubyMosaicTransition(scene, {
+    label: options.label,
+    direction: options.direction,
+    fromRoomId: options.fromRoomId,
+    toRoomId: options.toRoomId,
+    revealAfterCovered: true,
+    onCovered: options.onCovered,
+    onComplete: () => {
+      completeSnesTransition();
+      options.onComplete();
+    }
   });
 }
 

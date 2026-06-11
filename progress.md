@@ -272,6 +272,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - resized the player shadow, walk feet, and role idle cue overlays for the larger sprites while keeping the existing 16x16 fallback path intact
   - exposed `render_game_to_text().activePlayerSprite` with the SNES texture, fallback texture, dimensions, logical anchor, and collision-box summary
   - verified `git diff --check`, `npm run build`, bundled web-game screenshots for Office/Archive/Network/Silent Read, a `role=compiler` deep-link probe showing `snes-player-compiler`, and all ten configured `?scene=` shortcuts with no console errors and 13 SNES assets reported
+- Added an authored SNES-style transition layer:
+  - replaced plain camera fades with a fully opaque 16x16 ruby/black mosaic wipe and compact gold transition card for scene changes
+  - reused the same transition system for Archive Cavern room exits so A1 -> A2 and other doorway cuts feel like a 16-bit adventure screen change rather than a generic fade
+  - added `snesTransition` to `render_game_to_text()` with active/current/last transition metadata, including scene, room IDs, direction, label, style, and cell size
+  - kept direct `?scene=` QA starts stable by completing transition state before scene handoff and preserving direct boot behavior
+  - verified `npm run build`, Archive A1 -> A2 movement with the bundled web-game client, title-to-character transition screenshots showing the mosaic/card, all ten configured scene deep links, and an in-app browser local load with no console errors
 
 ## TODO
 

@@ -72,6 +72,7 @@ interface GameState {
   audioStatus: string;
   physicalVerification: PhysicalVerificationState | null;
   roomTraversal: RoomTraversalState | null;
+  snesTransition: SnesTransitionState;
 }
 
 const defaultRole = PROCESS_ROLES[0];
@@ -100,6 +101,23 @@ export interface RoomTraversalState {
   exits: Partial<Record<Direction, string>>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, string>>;
+}
+
+export interface SnesTransitionRecord {
+  style: "ruby_mosaic";
+  fromScene: string;
+  toScene?: string;
+  fromRoomId?: string;
+  toRoomId?: string;
+  direction?: Direction;
+  label: string;
+  cellSize: number;
+}
+
+export interface SnesTransitionState {
+  active: boolean;
+  current: SnesTransitionRecord | null;
+  last: SnesTransitionRecord | null;
 }
 
 export const gameState: GameState = {
@@ -151,7 +169,12 @@ export const gameState: GameState = {
   latestAbility: "",
   audioStatus: "audio ready",
   physicalVerification: null,
-  roomTraversal: null
+  roomTraversal: null,
+  snesTransition: {
+    active: false,
+    current: null,
+    last: null
+  }
 };
 
 export function resetGameState() {
@@ -179,6 +202,7 @@ export function resetGameState() {
   gameState.latestAbility = "";
   gameState.physicalVerification = null;
   gameState.roomTraversal = null;
+  gameState.snesTransition = { active: false, current: null, last: null };
   setPlayerProfile("Sam", defaultRole);
   refreshQuestWorkflowState();
 }
@@ -234,6 +258,26 @@ export function setRoomTraversalState(state: RoomTraversalState | null) {
       }
     : null;
   refreshQuestWorkflowState();
+}
+
+export function beginSnesTransition(record: Omit<SnesTransitionRecord, "style" | "cellSize">) {
+  gameState.snesTransition = {
+    active: true,
+    current: {
+      style: "ruby_mosaic",
+      cellSize: 16,
+      ...record
+    },
+    last: gameState.snesTransition.last
+  };
+}
+
+export function completeSnesTransition() {
+  gameState.snesTransition = {
+    active: false,
+    current: null,
+    last: gameState.snesTransition.current ?? gameState.snesTransition.last
+  };
 }
 
 export function setPlayerPosition(position: Position) {
@@ -851,6 +895,7 @@ export function renderGameToText() {
       audioStatus: gameState.audioStatus,
       physicalVerification: gameState.physicalVerification,
       roomTraversal: gameState.roomTraversal,
+      snesTransition: gameState.snesTransition,
       inventory: gameState.inventory,
       latestMessage: gameState.latestMessage,
       player: gameState.player,

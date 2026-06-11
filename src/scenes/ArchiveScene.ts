@@ -34,7 +34,7 @@ import { nearestWorkflowInteraction } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
-import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
+import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer } from "../systems/snesPixelArt";
 
 function color(hex: string) {
@@ -397,7 +397,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.objectiveText.setText(gameState.objective);
   }
 
-  private enterRoom(roomId: ArchiveRoomId, spawn: { x: number; y: number }, wipe = true) {
+  private enterRoom(roomId: ArchiveRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
     const applyRoom = () => {
       this.currentRoomId = roomId;
       this.visitedRoomIds.add(roomId);
@@ -406,21 +406,25 @@ export class ArchiveScene extends Phaser.Scene {
       this.player.setPosition(spawn.x, spawn.y);
       this.syncRoomTraversalState();
       this.updateVisitedMinimap();
-      this.roomTransitionLocked = false;
       this.exitCooldownUntil = this.time.now + 280;
     };
 
     if (!wipe) {
       applyRoom();
+      this.roomTransitionLocked = false;
       return;
     }
 
     this.roomTransitionLocked = true;
-    retroAudio.transition();
-    this.cameras.main.fadeOut(90, 5, 5, 5);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      applyRoom();
-      this.cameras.main.fadeIn(90, 5, 5, 5);
+    transitionArchiveRoom(this, {
+      fromRoomId: this.currentRoomId,
+      toRoomId: roomId,
+      direction,
+      label: ARCHIVE_ROOMS[roomId].title.toUpperCase(),
+      onCovered: applyRoom,
+      onComplete: () => {
+        this.roomTransitionLocked = false;
+      }
     });
   }
 
@@ -1372,7 +1376,7 @@ export class ArchiveScene extends Phaser.Scene {
       return false;
     }
 
-    this.enterRoom(target, EXIT_SPAWNS[direction]);
+    this.enterRoom(target, EXIT_SPAWNS[direction], true, direction);
     return true;
   }
 
