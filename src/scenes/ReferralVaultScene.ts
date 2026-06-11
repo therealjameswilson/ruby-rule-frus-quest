@@ -6,6 +6,8 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  setAgencyEquityResponse,
+  setDocumentWorkflowState,
   setLatestMessage,
   setObjective,
   setSceneState,
@@ -205,6 +207,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     ];
     this.choice.show("STATECHAT GENERATED A BATCH MANIFEST.\n\nWHO DECIDES?", options, (option) => {
       if (option.value === "checked" && this.correctMatches === this.matches.length) {
+        setDocumentWorkflowState("source_note_047", "referred");
+        setDocumentWorkflowState("sbu_annotation_001", "referred");
         addProcessItem("concurrence_slip");
         addDocumentPoints(8, "agency concurrence checked");
         setLatestMessage("Concurrence Slip opens referral gates.");
@@ -229,6 +233,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.choice.show("EXCISION REQUIRED.\nFRUS DOES NOT SILENTLY ERASE WITHHELD MATERIAL.\n\nWHAT PRINTS?", options, (option) => {
       if (option.value === "visible") {
         awardProcessStamp("referral");
+        setDocumentWorkflowState("source_note_047", "cleared");
+        setDocumentWorkflowState("cross_reference_001", "cleared");
+        setDocumentWorkflowState("sbu_annotation_001", "excised");
+        setAgencyEquityResponse("sbu_annotation_001", "agency-cyan", "cleared");
+        setAgencyEquityResponse("sbu_annotation_001", "agency-red", "excised");
         addVolumeFragment("Referral Fragment");
         addDocumentPoints(12, "visible withholding language printed");
         retroAudio.stamp();

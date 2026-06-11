@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
-import { addProcessItem, gameState, getFinalGateReadiness, setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
+import { addProcessItem, gameState, getFinalGateReadiness, setDocumentWorkflowState, setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 
@@ -31,6 +31,9 @@ export class EndingScene extends Phaser.Scene {
       return;
     }
     addProcessItem("buckram_key");
+    ["telegram_001", "source_note_047", "cross_reference_001", "sbu_annotation_001", "proof_page_412"].forEach((documentId) => {
+      setDocumentWorkflowState(documentId, "published");
+    });
     retroAudio.startMusic("EndingScene");
     retroAudio.ending();
     setVisibleEntities(["Elena", "Marcus", "Priya", gameState.playerProfile.displayName, "Buckram Key", "FRUS cover prize"]);

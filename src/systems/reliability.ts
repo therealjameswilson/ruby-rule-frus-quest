@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { gameState, getCurrentAreaReadout, getProcessItemReadout, getProductionStatusReadout, setLatestMessage } from "../game/state";
+import { gameState, getCurrentAreaReadout, getProcessItemReadout, getProductionStatusReadout, refreshQuestWorkflowState, setLatestMessage } from "../game/state";
 import type { ProposalKind } from "../game/types";
 import { retroAudio } from "./audio";
 
@@ -16,6 +16,7 @@ export function adjustReliability(amount: number, reason: string) {
   gameState.reliability = Phaser.Math.Clamp(gameState.reliability + amount, 0, 100);
   const sign = amount >= 0 ? "+" : "";
   setLatestMessage(`${sign}${amount} reliability: ${reason}`);
+  refreshQuestWorkflowState();
   if (amount >= 0) retroAudio.confirm();
   else retroAudio.warning();
 }

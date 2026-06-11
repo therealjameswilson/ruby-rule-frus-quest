@@ -6,10 +6,13 @@ import {
   addDocumentPoints,
   addProcessItem,
   addVolumeFragment,
+  advanceDocumentWorkflow,
   awardProcessStamp,
+  getAvailableWorkflowTools,
   gameState,
   hasProcessItem,
   setHeldItem,
+  setDocumentWorkflowState,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -27,7 +30,7 @@ import { BureaucraticWall } from "../entities/BureaucraticWall";
 import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
-import { nearestInteractable } from "../systems/interaction";
+import { nearestWorkflowInteraction } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
@@ -382,9 +385,11 @@ export class ArchiveScene extends Phaser.Scene {
     }
     this.updateBureaucraticWalls(delta);
     this.reliability.update();
-    const nearest = nearestInteractable(this.player.position, this.interactables);
+    const workflowInteraction = nearestWorkflowInteraction(this.player.position, this.interactables, getAvailableWorkflowTools());
+    const nearest = workflowInteraction.interactable;
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? nearest.label.toUpperCase() : this.exitHint());
+    const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
+    this.hintText.setText(nearest ? `${toolCue}${nearest.label.toUpperCase()}` : this.exitHint());
     if ((Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) && nearest) {
       nearest.onInteract();
     }
@@ -838,6 +843,7 @@ export class ArchiveScene extends Phaser.Scene {
     addInventoryItem(document.label);
     setHeldItem(document.id === "source-note" ? "Source Note 47" : document.label);
     addDocumentPoints(2, `${document.label} collected`);
+    this.advanceCollectedDocument(document.id);
     this.interactables = this.interactables.filter((item) => item.id !== document.id);
     if (document.id === "source-note") {
       this.startSourceNoteVerification();
@@ -1111,6 +1117,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private startSourceNoteVerification() {
     this.sourceNoteStatus = "carried";
+    setDocumentWorkflowState("source_note_047", "source_note_needed");
     setHeldItem("Source Note 47");
     setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
     setObjective("ROUTE: carry Source Note 47 to research table.");
@@ -1172,6 +1179,7 @@ export class ArchiveScene extends Phaser.Scene {
     }
     if (this.sourceNoteStatus === "routed") {
       this.sourceNoteStatus = "verified";
+      setDocumentWorkflowState("source_note_047", "citation_verified");
       this.addVerificationGlow();
       setLatestMessage("VERIFIED BY HUMAN REVIEW");
       retroAudio.confirm();
@@ -1198,6 +1206,7 @@ export class ArchiveScene extends Phaser.Scene {
   private applySourceNoteStamp() {
     this.drawSourceNoteStampMark();
     awardProcessStamp("archive");
+    setDocumentWorkflowState("source_note_047", "annotation_needed");
     addProcessItem("citation_stamp");
     addInventoryItem("Source Note 47 Citation Stamp");
     addInventoryItem("FRUS Fragment: Source Note");
@@ -1278,11 +1287,29 @@ export class ArchiveScene extends Phaser.Scene {
       ]);
       return;
     }
+    setDocumentWorkflowState("telegram_001", "selected");
+    setDocumentWorkflowState("cross_reference_001", "selected");
+    setDocumentWorkflowState("source_note_047", "ready_for_review");
     this.dialog.show("ELENA", [
       "Good. The source note now has a repository trail.",
       "A flag is not a fact until a compiler can defend it.",
       "That citation-stamped panel locks into the final cover."
     ], () => transitionTo(this, "NetworkScene"));
+  }
+
+  private advanceCollectedDocument(documentId: string) {
+    if (documentId === "telegram") {
+      advanceDocumentWorkflow("telegram_001", "evaluate");
+      return;
+    }
+    if (documentId === "cross-reference") {
+      advanceDocumentWorkflow("cross_reference_001", "evaluate");
+      return;
+    }
+    if (documentId === "source-note") {
+      setDocumentWorkflowState("source_note_047", "selected");
+      setDocumentWorkflowState("source_note_047", "source_note_needed");
+    }
   }
 
   private checkRoomExit() {

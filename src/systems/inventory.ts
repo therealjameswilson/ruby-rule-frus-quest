@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { gameState, getAreaProgressReadout, getProcessItemReadout } from "../game/state";
+import { gameState, getAreaProgressReadout, getDocumentWorkflowReadout, getWorkflowToolReadout } from "../game/state";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -8,10 +8,11 @@ function color(hex: string) {
 
 const COMPACT_TOOL_LINES: Record<string, string> = {
   citation_stamp: "source locks = provenance",
+  source_note_card: "repository trail = source note",
+  cross_reference_thread: "published status = x-ref",
+  referral_manifest: "agency equities = referral queue",
+  excision_bracket_marker: "withheld text = visible bracket",
   red_pencil: "unsupported text = editor judgment",
-  review_folder: "unresolved issues = human queue",
-  clearance_token: "red vault doors = declass access",
-  concurrence_slip: "referral gates = agency complete",
   proof_lens: "tiny discrepancies = silent read",
   buckram_key: "publication gate = certified"
 };
@@ -52,8 +53,8 @@ export class InventoryOverlay {
       this.container.setVisible(false);
       return;
     }
-    const items = getProcessItemReadout()
-      .map((item) => `${item.acquired ? "OK" : "--"} ${item.shortLabel}: ${COMPACT_TOOL_LINES[item.id]}`)
+    const tools = getWorkflowToolReadout()
+      .map((tool) => `${tool.acquired ? "OK" : "--"} ${tool.shortLabel}: ${COMPACT_TOOL_LINES[tool.id]}`)
       .join("\n");
     const areas = getAreaProgressReadout()
       .map((area) => {
@@ -62,6 +63,11 @@ export class InventoryOverlay {
         return `${marker}${status} ${area.displayName}: ${area.reward}`;
       })
       .join("\n");
+    const documents = getDocumentWorkflowReadout()
+      .filter((document) => document.selected || document.state !== "found")
+      .slice(0, 5)
+      .map((document) => `${document.selected ? "OK" : "--"} ${document.id.replace(/_001|_047|_412/g, "").toUpperCase()}: ${document.state}`)
+      .join("\n") || "-- NO DOCUMENTS ROUTED";
     this.body.setText([
       `DOCUMENT POINTS: ${gameState.documentPoints}`,
       `FRUS VOLUME PARTS: ${gameState.volumeFragments.length}/5`,
@@ -69,8 +75,11 @@ export class InventoryOverlay {
       "QUEST ROUTE",
       areas,
       "",
-      "FRUS TOOLBELT",
-      items
+      "DOCUMENT FLOW",
+      documents,
+      "",
+      "WORKFLOW TOOLS",
+      tools
     ].join("\n"));
     this.container.setVisible(true);
   }

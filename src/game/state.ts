@@ -1,6 +1,30 @@
 import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
-import type { ChoiceOption, GameMode, PlayerProfile, Position } from "./types";
+import {
+  applyAgencyEquityResponse,
+  applyDocumentWorkflowAction,
+  applyDocumentWorkflowState,
+  cloneDocumentCandidate,
+  cloneInitialDocumentCandidates,
+  documentToWorkflowDocument
+} from "./documentWorkflow";
+import type { DocumentWorkflowAction } from "./documentWorkflow";
+import { deriveWorkflowSnapshot, getQuestArchitectureReadout } from "./questArchitecture";
+import type { QuestArchitectureContext } from "./questArchitecture";
+import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
+import type {
+  ChoiceOption,
+  DocumentCandidate,
+  DocumentWorkflowState,
+  GameMode,
+  PlayerProfile,
+  Position,
+  ReviewStatus,
+  VolumeMetrics,
+  VolumeWorkflowState,
+  WorkflowTool,
+  WorkflowDocument
+} from "./types";
 
 interface VisibleThreat {
   label: string;
@@ -15,6 +39,18 @@ interface GameState {
   currentScene: string;
   mode: GameMode;
   objective: string;
+  volumeWorkflowState: VolumeWorkflowState;
+  documentCandidates: DocumentCandidate[];
+  documentWorkflow: WorkflowDocument[];
+  documentWorkflowLog: string[];
+  volumeMetrics: VolumeMetrics;
+  questCounters: {
+    documents: number;
+    stamps: number;
+    fragments: number;
+    verifiedFlags: number;
+    clearedBlockers: number;
+  };
   reliability: number;
   heldItem: string | null;
   documentPoints: number;
@@ -69,6 +105,24 @@ export const gameState: GameState = {
   currentScene: "BootScene",
   mode: "boot",
   objective: "",
+  volumeWorkflowState: "charter",
+  documentCandidates: cloneInitialDocumentCandidates(),
+  documentWorkflow: cloneInitialDocumentCandidates().map(documentToWorkflowDocument),
+  documentWorkflowLog: [],
+  volumeMetrics: {
+    scholarlyReliability: 80,
+    readerClarity: 30,
+    clearanceProgress: 0,
+    publicationReadiness: 0,
+    delayPressure: 80
+  },
+  questCounters: {
+    documents: 0,
+    stamps: 0,
+    fragments: 0,
+    verifiedFlags: 0,
+    clearedBlockers: 0
+  },
   reliability: 80,
   heldItem: null,
   documentPoints: 0,
@@ -103,6 +157,9 @@ export function resetGameState() {
   gameState.mode = "title";
   gameState.objective = "Press start to verify.";
   gameState.reliability = 80;
+  gameState.documentCandidates = cloneInitialDocumentCandidates();
+  gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
+  gameState.documentWorkflowLog = [];
   gameState.heldItem = null;
   gameState.documentPoints = 0;
   gameState.inventory = [];
@@ -121,6 +178,7 @@ export function resetGameState() {
   gameState.physicalVerification = null;
   gameState.roomTraversal = null;
   setPlayerProfile("Sam", defaultRole);
+  refreshQuestWorkflowState();
 }
 
 export function setSceneState(sceneName: string, mode: GameMode, objective: string) {
@@ -135,14 +193,17 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.currentChoice = null;
   gameState.physicalVerification = null;
   gameState.roomTraversal = null;
+  refreshQuestWorkflowState();
 }
 
 export function setObjective(objective: string) {
   gameState.objective = objective;
+  refreshQuestWorkflowState();
 }
 
 export function setHeldItem(label: string | null) {
   gameState.heldItem = label;
+  refreshQuestWorkflowState();
 }
 
 export function setLatestMessage(message: string) {
@@ -159,6 +220,7 @@ export function setAudioStatus(message: string) {
 
 export function setPhysicalVerificationState(state: PhysicalVerificationState | null) {
   gameState.physicalVerification = state;
+  refreshQuestWorkflowState();
 }
 
 export function setRoomTraversalState(state: RoomTraversalState | null) {
@@ -169,6 +231,7 @@ export function setRoomTraversalState(state: RoomTraversalState | null) {
         revealedRoomIds: [...(state.revealedRoomIds ?? state.visitedRoomIds)]
       }
     : null;
+  refreshQuestWorkflowState();
 }
 
 export function setPlayerPosition(position: Position) {
@@ -185,6 +248,7 @@ export function setPlayerFacing(direction: Direction) {
 export function addInventoryItem(label: string) {
   if (!gameState.inventory.includes(label)) {
     gameState.inventory.push(label);
+    refreshQuestWorkflowState();
   }
 }
 
@@ -319,12 +383,14 @@ export function addDocumentPoints(amount: number, reason: string) {
   gameState.documentPoints = Math.max(0, gameState.documentPoints + amount);
   const sign = amount >= 0 ? "+" : "";
   setLatestMessage(`${sign}${amount} document points: ${reason}`);
+  refreshQuestWorkflowState();
 }
 
 export function addVolumeFragment(label: string) {
   if (!gameState.volumeFragments.includes(label)) {
     gameState.volumeFragments.push(label);
     setLatestMessage(`FRUS fragment found: ${label}`);
+    refreshQuestWorkflowState();
   }
 }
 
@@ -345,6 +411,169 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     defeatMethod: threat.defeatMethod,
     status: threat.status
   }));
+  refreshQuestWorkflowState();
+}
+
+function getQuestArchitectureContext(): QuestArchitectureContext {
+  return {
+    currentScene: gameState.currentScene,
+    objective: gameState.objective,
+    reliability: gameState.reliability,
+    heldItem: gameState.heldItem,
+    player: { ...gameState.player },
+    playerFacing: gameState.playerFacing,
+    documentCandidates: gameState.documentCandidates.map(cloneDocumentCandidate),
+    documentPoints: gameState.documentPoints,
+    inventory: [...gameState.inventory],
+    volumeFragments: [...gameState.volumeFragments],
+    processStamps: [...gameState.processStamps],
+    visibleThreats: gameState.visibleThreats.map((threat) => ({ status: threat.status })),
+    physicalVerification: gameState.physicalVerification
+      ? {
+          completed: gameState.physicalVerification.completed,
+          total: gameState.physicalVerification.total,
+          flags: gameState.physicalVerification.flags.map((flag) => ({
+            id: flag.id,
+            status: flag.status
+          }))
+        }
+      : null,
+    roomTraversal: gameState.roomTraversal
+      ? {
+          currentRoomId: gameState.roomTraversal.currentRoomId,
+          visitedRoomIds: [...gameState.roomTraversal.visitedRoomIds],
+          revealedRoomIds: [...(gameState.roomTraversal.revealedRoomIds ?? [])]
+        }
+      : null
+  };
+}
+
+export function refreshQuestWorkflowState() {
+  const snapshot = deriveWorkflowSnapshot(getQuestArchitectureContext());
+  gameState.volumeWorkflowState = snapshot.volumeWorkflowState;
+  gameState.documentWorkflow = snapshot.documentWorkflow.length
+    ? snapshot.documentWorkflow
+    : gameState.documentCandidates.map(documentToWorkflowDocument);
+  gameState.volumeMetrics = snapshot.volumeMetrics;
+  gameState.questCounters = snapshot.questCounters;
+}
+
+export function getDocumentCandidateReadout() {
+  return gameState.documentCandidates.map(cloneDocumentCandidate);
+}
+
+export function getDocumentWorkflowReadout() {
+  refreshQuestWorkflowState();
+  return gameState.documentWorkflow.map((document) => ({ ...document }));
+}
+
+export function advanceDocumentWorkflow(documentId: string, action: DocumentWorkflowAction, reason?: string) {
+  const changed = updateDocumentCandidate(documentId, (document) => applyDocumentWorkflowAction(document, action), reason);
+  return changed?.workflowState ?? null;
+}
+
+export function setDocumentWorkflowState(documentId: string, workflowState: DocumentWorkflowState, reason?: string) {
+  const changed = updateDocumentCandidate(documentId, (document) => applyDocumentWorkflowState(document, workflowState), reason);
+  return changed?.workflowState ?? null;
+}
+
+export function setAgencyEquityResponse(documentId: string, agencyId: string, response: ReviewStatus, reason?: string) {
+  const changed = updateDocumentCandidate(documentId, (document) => applyAgencyEquityResponse(document, agencyId, response), reason);
+  return changed?.reviewStatus ?? null;
+}
+
+export function markAsCandidate(documentId: string): void {
+  setDocumentWorkflowState(documentId, "candidate", "marked as candidate");
+}
+
+export function selectDocument(documentId: string): void {
+  setDocumentWorkflowState(documentId, "selected", "selected for volume");
+}
+
+export function verifyCitation(documentId: string): void {
+  setDocumentWorkflowState(documentId, "citation_verified", "citation verified");
+}
+
+export function addAnnotation(documentId: string): void {
+  setDocumentWorkflowState(documentId, "ready_for_review", "annotation added");
+}
+
+export function submitForReview(documentId: string): void {
+  setDocumentWorkflowState(documentId, "submitted_for_review", "submitted for review");
+}
+
+export function routeReferral(documentId: string, agencyId: string): void {
+  setDocumentWorkflowState(documentId, "referred", `routed to ${agencyId}`);
+  setAgencyEquityResponse(documentId, agencyId, "referred");
+}
+
+export function resolveReview(documentId: string, result: ReviewStatus): void {
+  if (result === "cleared" || result === "excised" || result === "denied" || result === "appeal_needed") {
+    setDocumentWorkflowState(documentId, result, `review ${result}`);
+    return;
+  }
+  if (result === "resolved") {
+    setDocumentWorkflowState(documentId, "ready_for_proof", "review resolved");
+    return;
+  }
+  if (result === "submitted") {
+    setDocumentWorkflowState(documentId, "submitted_for_review", "review submitted");
+    return;
+  }
+  if (result === "referred") {
+    setDocumentWorkflowState(documentId, "referred", "review referred");
+    return;
+  }
+  setDocumentWorkflowState(documentId, "ready_for_review", "review reset");
+}
+
+export function markReadyForProof(documentId: string): void {
+  setDocumentWorkflowState(documentId, "ready_for_proof", "ready for proof");
+}
+
+export function proofDocument(documentId: string): void {
+  setDocumentWorkflowState(documentId, "proofed", "proofed");
+}
+
+export function publishDocument(documentId: string): void {
+  setDocumentWorkflowState(documentId, "published", "published");
+}
+
+function updateDocumentCandidate(documentId: string, updater: (document: DocumentCandidate) => DocumentCandidate, reason?: string): DocumentCandidate | null {
+  let changed: DocumentCandidate | null = null;
+  const nextDocuments: DocumentCandidate[] = [];
+  for (const document of gameState.documentCandidates) {
+    if (document.id !== documentId) {
+      nextDocuments.push(document);
+      continue;
+    }
+    changed = updater(document);
+    nextDocuments.push(changed);
+  }
+  gameState.documentCandidates = nextDocuments;
+  if (changed && reason) {
+    const message = `${changed.title}: ${reason} -> ${changed.workflowState}`;
+    gameState.documentWorkflowLog.push(message);
+    gameState.documentWorkflowLog = gameState.documentWorkflowLog.slice(-12);
+    setLatestMessage(message);
+  }
+  refreshQuestWorkflowState();
+  return changed;
+}
+
+export function getQuestWorkflowReadout() {
+  refreshQuestWorkflowState();
+  const context = getQuestArchitectureContext();
+  return {
+    volumeState: gameState.volumeWorkflowState,
+    candidates: getDocumentCandidateReadout(),
+    documents: gameState.documentWorkflow,
+    eventLog: [...gameState.documentWorkflowLog],
+    workflowTools: getWorkflowToolReadout(),
+    metrics: gameState.volumeMetrics,
+    counters: gameState.questCounters,
+    architecture: getQuestArchitectureReadout(context)
+  };
 }
 
 export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLES)[number]) {
@@ -356,11 +585,13 @@ export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLE
     remit: role.remit,
     spriteKey: role.spriteKey
   };
+  refreshQuestWorkflowState();
 }
 
 export function awardProcessStamp(stampId: ProcessStampId) {
   if (!gameState.processStamps.includes(stampId)) {
     gameState.processStamps.push(stampId);
+    refreshQuestWorkflowState();
   }
 }
 
@@ -432,6 +663,44 @@ export function getProcessItemReadout() {
   });
 }
 
+export function hasWorkflowTool(toolId: WorkflowTool) {
+  if (toolId === "citation_stamp") return hasProcessItem("citation_stamp");
+  if (toolId === "source_note_card") {
+    return Boolean(gameState.heldItem?.toLowerCase().includes("source note"))
+      || gameState.inventory.some((item) => /source note/i.test(item))
+      || gameState.documentCandidates.some((document) => document.id === "source_note_047" && document.workflowState !== "found");
+  }
+  if (toolId === "cross_reference_thread") {
+    return gameState.inventory.some((item) => /cross-ref|cross-reference/i.test(item))
+      || gameState.documentCandidates.some((document) => document.id === "cross_reference_001" && document.workflowState !== "found");
+  }
+  if (toolId === "referral_manifest") {
+    return gameState.currentScene === "ReferralVaultScene"
+      || gameState.documentCandidates.some((document) => document.reviewStatus === "referred" || document.workflowState === "referred")
+      || hasProcessItem("concurrence_slip");
+  }
+  if (toolId === "excision_bracket_marker") {
+    return gameState.currentScene === "ReferralVaultScene"
+      || gameState.processStamps.includes("referral")
+      || gameState.documentCandidates.some((document) => document.workflowState === "excised");
+  }
+  if (toolId === "red_pencil") return hasProcessItem("red_pencil");
+  if (toolId === "proof_lens") return hasProcessItem("proof_lens");
+  return hasProcessItem("buckram_key");
+}
+
+export function getAvailableWorkflowTools() {
+  return WORKFLOW_TOOL_PRIORITY.filter((toolId) => hasWorkflowTool(toolId));
+}
+
+export function getWorkflowToolReadout() {
+  const availableTools = new Set(getAvailableWorkflowTools());
+  return WORKFLOW_TOOL_REGISTRY.map((tool) => ({
+    ...tool,
+    acquired: availableTools.has(tool.id)
+  }));
+}
+
 export function getProductionStatusReadout() {
   const role = compactHudText(gameState.playerProfile.roleLabel, 12);
   const selectedItem = selectedItemReadout();
@@ -449,6 +718,9 @@ export function seedProgressForScene(sceneName: string) {
     addProcessItem("citation_stamp");
     addVolumeFragment("Front Matter Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 15);
+    setDocumentWorkflowState("telegram_001", "selected");
+    setDocumentWorkflowState("source_note_047", "citation_verified");
+    setDocumentWorkflowState("cross_reference_001", "selected");
   }
   if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("rule");
@@ -461,6 +733,8 @@ export function seedProgressForScene(sceneName: string) {
     }
     addVolumeFragment("Source Note Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 30);
+    setDocumentWorkflowState("source_note_047", "ready_for_review");
+    setDocumentWorkflowState("cross_reference_001", "submitted_for_review");
   }
   if (["ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("network");
@@ -468,6 +742,8 @@ export function seedProgressForScene(sceneName: string) {
     addProcessItem("clearance_token");
     addVolumeFragment("Routing Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 45);
+    setDocumentWorkflowState("source_note_047", "submitted_for_review");
+    setDocumentWorkflowState("sbu_annotation_001", "referred");
   }
   if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("referral");
@@ -475,6 +751,9 @@ export function seedProgressForScene(sceneName: string) {
     addProcessItem("review_folder");
     addVolumeFragment("Referral Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 60);
+    setDocumentWorkflowState("source_note_047", "cleared");
+    setDocumentWorkflowState("sbu_annotation_001", "excised");
+    setDocumentWorkflowState("proof_page_412", "ready_for_proof");
   }
   if (sceneName === "EndingScene") {
     awardProcessStamp("sop");
@@ -485,7 +764,13 @@ export function seedProgressForScene(sceneName: string) {
     addProcessItem("buckram_key");
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);
+    setDocumentWorkflowState("telegram_001", "published");
+    setDocumentWorkflowState("source_note_047", "published");
+    setDocumentWorkflowState("cross_reference_001", "published");
+    setDocumentWorkflowState("sbu_annotation_001", "published");
+    setDocumentWorkflowState("proof_page_412", "published");
   }
+  refreshQuestWorkflowState();
 }
 
 export function setDialogState(speaker: string, text: string) {
@@ -511,12 +796,20 @@ export function clearChoiceState(nextMode: GameMode = "explore") {
 }
 
 export function renderGameToText() {
+  const questWorkflow = getQuestWorkflowReadout();
   return JSON.stringify(
     {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
       scene: gameState.currentScene,
       mode: gameState.mode,
       objective: gameState.objective,
+      volumeWorkflowState: gameState.volumeWorkflowState,
+      documentCandidates: getDocumentCandidateReadout(),
+      documentWorkflow: gameState.documentWorkflow,
+      documentWorkflowLog: gameState.documentWorkflowLog,
+      volumeMetrics: gameState.volumeMetrics,
+      questCounters: gameState.questCounters,
+      questWorkflow,
       reliability: gameState.reliability,
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,
@@ -524,6 +817,7 @@ export function renderGameToText() {
       playerProfile: gameState.playerProfile,
       processStamps: gameState.processStamps,
       processItems: getProcessItemReadout(),
+      workflowTools: getWorkflowToolReadout(),
       areaProgress: getAreaProgressReadout(),
       currentArea: getCurrentAreaReadout(),
       roomGraph: getRoomGraphReadout(),

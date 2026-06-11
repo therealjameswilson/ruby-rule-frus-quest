@@ -213,6 +213,45 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - removed old hardcoded `0x` color literals and partial-alpha generated fills from shared UI/entity drawing paths
   - replaced the fractional-scale HUD item sprites with native pixel text markers so sprite rendering stays integer-scaled
   - verified SVG discipline, `git diff --check`, `npm run build`, all ten `?scene=` deep links, and the required web-game client Archive screenshot/state
+- Implemented a compact Zelda-style FRUS Quest architecture layer:
+  - added explicit volume/document workflow states, volume metrics, fixed object slots, tile-grid room definitions, NPC behavior states, tool-priority rules, and quest milestone counters
+  - exposed the architecture through `render_game_to_text()` as additive `volumeWorkflowState`, `documentWorkflow`, `volumeMetrics`, `questCounters`, and `questWorkflow` fields without removing existing keys
+  - kept the current scene art/mechanics intact while making the existing room graph, item gating, physical verification loops, and StateChat terminal rules inspectable as data
+  - added half-tile movement correction for cardinal player movement when the player catches a solid edge
+  - verified `npm run build`, the bundled web-game Playwright client on ArchiveScene, and all ten `?scene=` deep links with no console errors
+- Refined the architecture object registry around a fixed `GameObjectSlot` union:
+  - added named screen slots for player, four NPCs, active/secondary tools, five document slots, room rewards/gates, terminal, manuscript, transition marker, UI prompt, and reserved capacity
+  - changed quest object registry rows from numeric slots to named slot assignments while preserving object kind, room, position, rewards, and gate metadata
+  - updated `render_game_to_text().questWorkflow.architecture.objectRegistry` to report per-screen slot occupancy, slot order, catalog size, and active room slots
+- Added a lightweight runtime `QuestObject` shape:
+  - includes `id`, named `slot`, `kind`, pixel `x/y`, optional four-way `facing`, optional `state`, and active/interactable booleans
+  - derives `activeQuestObjects` from the architecture registry plus live player position/facing for `render_game_to_text()` consumers
+  - verified `npm run build`, `git diff --check`, and an ArchiveScene browser text-state probe
+- Built a data-driven FRUS document workflow state machine:
+  - added `ReviewStatus`, `AgencyEquity`, and `DocumentCandidate` types plus a transition table covering found, candidate, selected, source-note, citation, annotation, review, referral, clearance/excision/denial/appeal, proof, and publication states
+  - added `src/game/documentWorkflow.ts` with five seeded FRUS-like document candidates and reducer helpers for workflow actions, direct state transitions, and agency equity responses
+  - made `gameState.documentCandidates` the source of truth for `documentWorkflow`, volume metrics, counters, and `render_game_to_text().questWorkflow`
+  - wired Archive pickup/provenance, Network routing, Referral equity/excision, Silent Read proofing, and Ending publication into the workflow helpers
+  - expanded `public/assets/data/items.json` to mirror the document-candidate metadata loaded by BootScene
+  - added exact `TILE_SIZE`, `HALF_TILE`, and `PLAYER_GRID_CORRECTION` exports to the quest architecture layer
+  - verified `npm run build`, `git diff --check`, direct scene text-state probes, and the bundled web-game Playwright client with screenshot inspection
+- Added a sixth seeded document candidate:
+  - inserted `doc-001`, a fictional 1969 memorandum of conversation on alliance consultation, into `src/game/documentWorkflow.ts` and `public/assets/data/items.json`
+  - mapped it to Archive A1 as a found, unselected candidate with incomplete citation, annotation needed, low sensitivity risk, and a fictional defense equity response pending
+  - verified `npm run build`, `git diff --check`, and an ArchiveScene browser text-state probe showing six document candidates
+- Added named document workflow API helpers:
+  - exported `markAsCandidate`, `selectDocument`, `verifyCitation`, `addAnnotation`, `submitForReview`, `routeReferral`, `resolveReview`, `markReadyForProof`, `proofDocument`, and `publishDocument` from `src/game/state.ts`
+  - kept the functions thin over the reducer-backed state machine so callers update document candidates, workflow readouts, metrics, and event logs consistently
+  - changed ready-for-review transitions to clear `annotationNeeded`, matching `addAnnotation()` semantics
+  - verified `npm run build` and `git diff --check`
+- Converted interaction tools into prioritized FRUS workflow tools:
+  - added the `WorkflowTool` union for Citation Stamp, Source Note Card, Cross-Reference Thread, Referral Manifest, Excision Bracket Marker, Red Pencil, Proof Lens, and Buckram Key
+  - added `src/game/workflowTools.ts` with the fixed priority order, display metadata, target kinds, and an interaction resolver
+  - replaced architecture tool-priority rules with the eight scholarly workflow tools in priority order
+  - exposed `workflowTools` in `render_game_to_text()` and `questWorkflow`, including acquired/locked status
+  - updated the inventory overlay to show `WORKFLOW TOOLS` instead of older process-item/gate rewards
+  - switched ArchiveScene's interaction loop to resolve the nearest interaction through the workflow-tool priority order and show the selected tool cue
+  - verified `npm run build`, `git diff --check`, direct browser state probe for the exact priority order, and the bundled web-game client with screenshot inspection
 
 ## TODO
 

@@ -1,5 +1,5 @@
 import type Phaser from "phaser";
-import type { CHARACTERS, PROCESS_ROLES } from "./constants";
+import type { AreaId, CHARACTERS, Direction, PROCESS_ROLES, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 
 export type CharacterId = keyof typeof CHARACTERS;
 export type ProcessRole = (typeof PROCESS_ROLES)[number];
@@ -17,6 +17,208 @@ export type GameMode = "boot" | "title" | "explore" | "dialog" | "choice" | "pau
 export interface Position {
   x: number;
   y: number;
+}
+
+export type VolumeWorkflowState =
+  | "charter"
+  | "research"
+  | "candidate_selection"
+  | "source_note_verification"
+  | "annotation"
+  | "declassification_review"
+  | "referral_resolution"
+  | "editing"
+  | "proofing"
+  | "final_assembly"
+  | "published";
+
+export type DocumentWorkflowState =
+  | "found"
+  | "candidate"
+  | "selected"
+  | "source_note_needed"
+  | "citation_verified"
+  | "annotation_needed"
+  | "ready_for_review"
+  | "submitted_for_review"
+  | "referred"
+  | "cleared"
+  | "excised"
+  | "denied"
+  | "appeal_needed"
+  | "ready_for_proof"
+  | "proofed"
+  | "published";
+
+export type ReviewStatus =
+  | "not_submitted"
+  | "submitted"
+  | "referred"
+  | "cleared"
+  | "excised"
+  | "denied"
+  | "appeal_needed"
+  | "resolved";
+
+export type AgencyEquity = {
+  agencyId: string;
+  fictionalName: string;
+  issueType: "intelligence" | "military" | "diplomatic" | "foreign_government" | "privacy";
+  response: ReviewStatus;
+};
+
+export type DocumentCandidate = {
+  id: string;
+  title: string;
+  date: string;
+  type: "telegram" | "memorandum" | "memorandum_of_conversation" | "airgram" | "letter" | "briefing_paper" | "editorial_note";
+  repository: string;
+  collection: string;
+  folder: string;
+  policyTheme: string;
+  significance: number;
+  uniqueness: number;
+  citationComplete: boolean;
+  annotationNeeded: boolean;
+  sensitivityRisk: number;
+  selected: boolean;
+  workflowState: DocumentWorkflowState;
+  reviewStatus: ReviewStatus;
+  equities: AgencyEquity[];
+};
+
+export type WorkflowTool =
+  | "citation_stamp"
+  | "source_note_card"
+  | "cross_reference_thread"
+  | "referral_manifest"
+  | "excision_bracket_marker"
+  | "red_pencil"
+  | "proof_lens"
+  | "buckram_key";
+
+export interface VolumeMetrics {
+  scholarlyReliability: number;
+  readerClarity: number;
+  clearanceProgress: number;
+  publicationReadiness: number;
+  delayPressure: number;
+}
+
+export type QuestObjectSlotKind =
+  | "player"
+  | "document"
+  | "npc"
+  | "workstation"
+  | "terminal"
+  | "blocker"
+  | "reward"
+  | "gate";
+
+export type GameObjectSlot =
+  | "player"
+  | "npc_1"
+  | "npc_2"
+  | "npc_3"
+  | "npc_4"
+  | "tool_active"
+  | "tool_secondary"
+  | "document_1"
+  | "document_2"
+  | "document_3"
+  | "document_4"
+  | "document_5"
+  | "room_reward"
+  | "room_gate"
+  | "terminal"
+  | "manuscript"
+  | "transition_marker"
+  | "ui_prompt"
+  | "reserved";
+
+export interface QuestObjectSlot {
+  slot: GameObjectSlot;
+  id: string;
+  displayName: string;
+  kind: QuestObjectSlotKind;
+  roomId: string;
+  grid: Position;
+  pixel: Position;
+  activeWhen?: string;
+  documentState?: DocumentWorkflowState;
+  requiredTool?: ProcessItemId;
+  rewardItem?: ProcessItemId;
+  rewardStamp?: ProcessStampId;
+}
+
+export type QuestObject = {
+  id: string;
+  slot: GameObjectSlot;
+  kind: string;
+  x: number;
+  y: number;
+  facing?: "up" | "down" | "left" | "right";
+  state?: string;
+  active: boolean;
+  interactable: boolean;
+};
+
+export interface TileGridRoomDefinition {
+  id: string;
+  area: AreaId;
+  title: string;
+  roomType: RoomType;
+  grid: Position;
+  tileSize: number;
+  widthTiles: number;
+  heightTiles: number;
+  hudRows: number;
+  layout: string[];
+  exits: Partial<Record<Direction, string>>;
+  lockedExits: Partial<Record<Direction, string>>;
+  requiredItems: Partial<Record<Direction, ProcessItemId>>;
+  objectSlotIds: string[];
+}
+
+export type NpcBehaviorState = "idle" | "patrol" | "hint" | "blocking" | "reward" | "done";
+
+export interface NpcBehaviorDefinition {
+  npcId: string;
+  roomId: string;
+  state: NpcBehaviorState;
+  cue: string;
+}
+
+export interface ToolPriorityRule {
+  id: string;
+  priority: number;
+  verb: "inspect" | "carry" | "route" | "verify" | "stamp" | "use-tool" | "talk";
+  targetKind: QuestObjectSlotKind | "any";
+  toolId?: WorkflowTool;
+  resolvesState?: DocumentWorkflowState;
+  message: string;
+}
+
+export interface QuestMilestone {
+  id: string;
+  counter: "documents" | "stamps" | "fragments" | "verifiedFlags" | "clearedBlockers";
+  threshold: number;
+  rewardItem?: ProcessItemId;
+  rewardStamp?: ProcessStampId;
+  volumeState: VolumeWorkflowState;
+}
+
+export interface WorkflowDocument {
+  id: string;
+  displayName: string;
+  state: DocumentWorkflowState;
+  roomId: string;
+  needsHumanReview: boolean;
+  reviewStatus?: ReviewStatus;
+  selected?: boolean;
+  citationComplete?: boolean;
+  annotationNeeded?: boolean;
+  sensitivityRisk?: number;
 }
 
 export interface Interactable {

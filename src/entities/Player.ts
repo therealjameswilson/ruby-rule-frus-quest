@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
+import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
 import { gameState, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { KeyboardMap, Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
@@ -183,10 +184,23 @@ export class Player {
     const moving = dx !== 0 || dy !== 0;
     const dt = deltaMs / 1000;
     const bounds = options.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
+    const solids = options.solids ?? [];
     const nextX = Phaser.Math.Clamp(this.logicalX + dx * this.speed * dt, bounds.left, bounds.right);
     const nextY = Phaser.Math.Clamp(this.logicalY + dy * this.speed * dt, bounds.top, bounds.bottom);
-    if (dx !== 0 && !this.collidesAt(nextX, this.logicalY, options.solids ?? [])) this.logicalX = nextX;
-    if (dy !== 0 && !this.collidesAt(this.logicalX, nextY, options.solids ?? [])) this.logicalY = nextY;
+    if (dx !== 0) {
+      if (!this.collidesAt(nextX, this.logicalY, solids)) {
+        this.logicalX = nextX;
+      } else {
+        this.applyHalfTileCorrection(this.facing, bounds, solids);
+      }
+    }
+    if (dy !== 0) {
+      if (!this.collidesAt(this.logicalX, nextY, solids)) {
+        this.logicalY = nextY;
+      } else {
+        this.applyHalfTileCorrection(this.facing, bounds, solids);
+      }
+    }
     if (moving) {
       this.walkClock += deltaMs;
       this.sprite.setFlipX(dx < 0);
@@ -207,6 +221,18 @@ export class Player {
     if (!solids.length) return false;
     const footBox = new Phaser.Geom.Rectangle(x - 5, y + 2, 10, 10);
     return solids.some((solid) => Phaser.Geom.Intersects.RectangleToRectangle(footBox, solid));
+  }
+
+  private applyHalfTileCorrection(direction: Direction, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[]) {
+    if (!solids.length) return;
+    const corrected = applyHalfTileMovementCorrection({
+      position: { x: this.logicalX, y: this.logicalY },
+      direction,
+      bounds,
+      canOccupy: (position) => !this.collidesAt(position.x, position.y, solids)
+    });
+    this.logicalX = corrected.x;
+    this.logicalY = corrected.y;
   }
 
   private playAbilityFrame() {

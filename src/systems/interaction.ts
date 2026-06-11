@@ -1,4 +1,6 @@
 import type { Interactable, Position } from "../game/types";
+import type { WorkflowTool } from "../game/types";
+import { selectWorkflowToolForInteractable } from "../game/workflowTools";
 
 export function nearestInteractable(
   player: Position,
@@ -18,4 +20,17 @@ export function nearestInteractable(
     }
   }
   return nearest;
+}
+
+export function nearestWorkflowInteraction(
+  player: Position,
+  interactables: Interactable[],
+  availableTools: readonly WorkflowTool[],
+  maxDistance = 24
+) {
+  const interactable = nearestInteractable(player, interactables, maxDistance);
+  return {
+    interactable,
+    tool: selectWorkflowToolForInteractable(availableTools, interactable)
+  };
 }

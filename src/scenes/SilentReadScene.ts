@@ -8,6 +8,7 @@ import {
   awardProcessStamp,
   gameState,
   setHeldItem,
+  setDocumentWorkflowState,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -276,6 +277,7 @@ export class SilentReadScene extends Phaser.Scene {
 
   private startPhysicalVerificationLoop() {
     addProcessItem("review_folder");
+    setDocumentWorkflowState("proof_page_412", "selected");
     this.physicalFlags = PHYSICAL_FLAGS.map((flag, index) => {
       const physicalFlag: PhysicalFlag = {
         ...flag,
@@ -394,6 +396,7 @@ export class SilentReadScene extends Phaser.Scene {
   private applyFlagReward(flag: PhysicalFlag) {
     if (flag.id === "mechanical-fix") {
       awardProcessStamp("sop");
+      setDocumentWorkflowState("source_note_047", "ready_for_proof");
       addInventoryItem("AI Annotation Review Log");
       addProcessItem("red_pencil");
       addDocumentPoints(8, "mechanical StateChat proposal routed to human review");
@@ -403,12 +406,20 @@ export class SilentReadScene extends Phaser.Scene {
     }
     if (flag.id === "proof-date") {
       awardProcessStamp("proof");
+      setDocumentWorkflowState("proof_page_412", "proofed");
       addProcessItem("proof_lens");
       addVolumeFragment("Proof Fragment");
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");
       setLatestMessage("VERIFIED BY HUMAN REVIEW - PROOF LENS EARNED");
       return;
+    }
+    if (flag.id === "public-crossref") {
+      setDocumentWorkflowState("cross_reference_001", "ready_for_proof");
+    } else if (flag.id === "classified-source") {
+      setDocumentWorkflowState("source_note_047", "ready_for_proof");
+    } else if (flag.id === "referral-equity") {
+      setDocumentWorkflowState("sbu_annotation_001", "ready_for_proof");
     }
     addDocumentPoints(5, `${flag.shortLabel} verified at ${this.stationFor(flag.destination).label}`);
     adjustReliability(3, `${flag.shortLabel} routed to human workstation`);
@@ -418,6 +429,10 @@ export class SilentReadScene extends Phaser.Scene {
     this.syncVisibleEntities();
     const nextFlag = this.getActiveFlag();
     if (!nextFlag) {
+      setDocumentWorkflowState("telegram_001", "proofed");
+      setDocumentWorkflowState("source_note_047", "proofed");
+      setDocumentWorkflowState("cross_reference_001", "proofed");
+      setDocumentWorkflowState("sbu_annotation_001", "proofed");
       addProcessItem("buckram_key");
       setObjective("STAMP: all physical verification loops complete.");
       setLatestMessage("Buckram Key opens the final publication gate.");

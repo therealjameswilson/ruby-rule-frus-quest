@@ -7,6 +7,7 @@ import {
   awardProcessStamp,
   gameState,
   setLatestMessage,
+  setDocumentWorkflowState,
   setObjective,
   setSceneState,
   setVisibleEntities,
@@ -197,6 +198,9 @@ export class NetworkScene extends Phaser.Scene {
     this.routingActive = false;
     if (this.correctRoutes === this.routeItems.length) {
       awardProcessStamp("network");
+      setDocumentWorkflowState("source_note_047", "submitted_for_review");
+      setDocumentWorkflowState("cross_reference_001", "submitted_for_review");
+      setDocumentWorkflowState("sbu_annotation_001", "referred");
       addProcessItem("clearance_token");
       addVolumeFragment("Routing Fragment");
       addDocumentPoints(14, "OpenNet/ClassNet routes cleared");
