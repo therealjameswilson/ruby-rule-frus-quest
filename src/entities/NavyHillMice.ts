@@ -8,47 +8,47 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-export class HacMember {
-  readonly label = "HAC member";
-  readonly spriteKey = "snes-hac-member";
+export class NavyHillMice {
+  readonly label = "Navy Hill mice";
+  readonly spriteKey = "snes-navy-hill-mice";
   private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
   private readonly sprite: Phaser.GameObjects.Image;
   private readonly cue: Phaser.GameObjects.Text;
   private readonly waypoints: Position[] = [
-    { x: 88, y: 174 },
-    { x: 176, y: 174 },
-    { x: 214, y: 132 },
-    { x: 176, y: 88 },
-    { x: 82, y: 88 },
-    { x: 42, y: 134 }
+    { x: 39, y: 132 },
+    { x: 64, y: 124 },
+    { x: 82, y: 143 },
+    { x: 68, y: 160 },
+    { x: 41, y: 156 },
+    { x: 30, y: 141 }
   ];
   private waypointIndex = 0;
   private currentX: number;
   private currentY: number;
   private velocityX = 0;
   private velocityY = 0;
-  private nextDistractionAt = 0;
-  private distractingUntil = 0;
+  private nextScatterAt = 0;
+  private scatteringUntil = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
     this.currentX = x;
     this.currentY = y;
     this.waypoints[0] = { x, y };
-    const shadow = scene.add.ellipse(0, 15, 18, 6, color(PALETTE.black));
-    this.sprite = scene.add.image(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : "marcus");
-    const tag = scene.add.text(0, 17, "HAC", {
+    const shadow = scene.add.ellipse(0, 12, 18, 5, color(PALETTE.black));
+    this.sprite = scene.add.image(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : "source-note");
+    const tag = scene.add.text(0, 15, "MICE", {
       fontFamily: "monospace",
       fontSize: "5px",
-      color: PALETTE.goldStamp,
-      backgroundColor: PALETTE.black
+      color: PALETTE.black,
+      backgroundColor: PALETTE.creamPaper
     }).setOrigin(0.5);
-    this.cue = scene.add.text(0, -22, "DISTRACT", {
+    this.cue = scene.add.text(0, -20, "SCATTER", {
       fontFamily: "monospace",
       fontSize: "6px",
-      color: PALETTE.classNetRed,
-      backgroundColor: PALETTE.black
+      color: PALETTE.creamPaper,
+      backgroundColor: PALETTE.deepRuby
     }).setOrigin(0.5).setVisible(false);
     this.container = scene.add.container(x, y, [shadow, this.sprite, tag, this.cue]).setDepth(y);
   }
@@ -57,42 +57,47 @@ export class HacMember {
     return { x: snapPixel(this.currentX), y: snapPixel(this.currentY) };
   }
 
-  update(timeMs: number, deltaMs: number, player: Position, canDistract: boolean) {
-    this.walk(deltaMs);
+  update(timeMs: number, deltaMs: number, player: Position, canScatter: boolean) {
+    this.scurry(deltaMs);
     const distance = Phaser.Math.Distance.Between(this.currentX, this.currentY, player.x, player.y);
-    const triggered = canDistract && distance <= 25 && timeMs >= this.nextDistractionAt;
+    const triggered = canScatter && distance <= 23 && timeMs >= this.nextScatterAt;
     if (triggered) {
-      this.nextDistractionAt = timeMs + 3400;
-      this.distractingUntil = timeMs + 1050;
+      this.nextScatterAt = timeMs + 3600;
+      this.scatteringUntil = timeMs + 950;
       this.scene.tweens.add({
         targets: this.container,
-        x: snapPixel(this.currentX + 2),
-        duration: 45,
+        x: snapPixel(this.currentX - 3),
+        duration: 40,
         yoyo: true,
-        repeat: 3,
+        repeat: 5,
         ease: "Stepped"
       });
     }
-    this.cue.setVisible(timeMs < this.distractingUntil);
-    if (timeMs < this.distractingUntil) this.sprite.setTint(color(PALETTE.classNetRed));
+
+    const active = timeMs < this.scatteringUntil;
+    this.cue.setVisible(active);
+    if (active && Math.floor(timeMs / 90) % 2 === 0) this.sprite.setTint(color(PALETTE.creamPaper));
+    else if (active) this.sprite.setTint(color(PALETTE.goldStamp));
     else this.sprite.clearTint();
-    const bob = Math.sin(timeMs / 230) * 0.8;
-    const renderX = snapPixel(this.currentX);
-    const renderY = snapPixel(this.currentY + bob);
+
+    const wiggleX = Math.sin(timeMs / 110) * 0.7;
+    const wiggleY = Math.cos(timeMs / 145) * 0.5;
+    const renderX = snapPixel(this.currentX + wiggleX);
+    const renderY = snapPixel(this.currentY + wiggleY);
     setPixelPosition(this.container, renderX, renderY);
     this.container.setDepth(renderY);
     return triggered;
   }
 
   status(timeMs: number) {
-    return timeMs < this.distractingUntil ? "distracting" : "roaming";
+    return timeMs < this.scatteringUntil ? "scattering source notes" : "scurrying";
   }
 
   destroy() {
     this.container.destroy();
   }
 
-  private walk(deltaMs: number) {
+  private scurry(deltaMs: number) {
     const target = this.waypoints[this.waypointIndex];
     const dx = target.x - this.currentX;
     const dy = target.y - this.currentY;
@@ -102,10 +107,10 @@ export class HacMember {
       return;
     }
     const dt = frameDeltaSeconds(deltaMs);
-    const targetVelocityX = (dx / Math.max(1, distance)) * 24;
-    const targetVelocityY = (dy / Math.max(1, distance)) * 24;
-    this.velocityX = approach(this.velocityX, targetVelocityX, 80 * dt);
-    this.velocityY = approach(this.velocityY, targetVelocityY, 80 * dt);
+    const targetVelocityX = (dx / Math.max(1, distance)) * 26;
+    const targetVelocityY = (dy / Math.max(1, distance)) * 26;
+    this.velocityX = approach(this.velocityX, targetVelocityX, 88 * dt);
+    this.velocityY = approach(this.velocityY, targetVelocityY, 88 * dt);
     this.currentX += this.velocityX * dt;
     this.currentY += this.velocityY * dt;
     this.sprite.setFlipX(this.velocityX < -0.5);

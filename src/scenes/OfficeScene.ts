@@ -2,9 +2,12 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { awardProcessStamp, gameState, setNearestInteractable, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
 import type { Interactable } from "../game/types";
+import { BeeSwarm } from "../entities/BeeSwarm";
+import { FederalShutdown } from "../entities/FederalShutdown";
 import { HacMember } from "../entities/HacMember";
-import { HistorianNPC } from "../entities/HistorianNPC";
+import { NavyHillMice } from "../entities/NavyHillMice";
 import { Player } from "../entities/Player";
+import { ProductionColleague } from "../entities/ProductionColleague";
 import { Terminal } from "../entities/Terminal";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
@@ -28,6 +31,9 @@ export class OfficeScene extends Phaser.Scene {
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
   private hacMember!: HacMember;
+  private federalShutdown!: FederalShutdown;
+  private beeSwarm!: BeeSwarm;
+  private navyHillMice!: NavyHillMice;
   private interactables: Interactable[] = [];
 
   constructor() {
@@ -50,17 +56,40 @@ export class OfficeScene extends Phaser.Scene {
     }).setOrigin(0.5);
     addBookcase(this, 25, 55, 30, 38);
     addBookcase(this, 231, 55, 30, 38);
-    addSnesWorldMap(this, 128, 96, "OFFICE MAP", "office-hub-map");
+    addSnesWorldMap(this, 128, 98, "DISTRICT MAP", "frus-snes-atlas", undefined, {
+      viewportWidth: 170,
+      viewportHeight: 106,
+      cropX: 35,
+      cropY: 37
+    });
     addDesk(this, 58, 105, "SRC");
     addDesk(this, 198, 110, "NET");
+    this.add.rectangle(40, 126, 36, 20, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.terminalCyan));
+    this.add.rectangle(40, 131, 26, 9, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk));
+    this.add.text(40, 118, "NAVY\nHILL", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper,
+      align: "center"
+    }).setOrigin(0.5);
+    this.add.text(40, 130, "NOTES", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.deepRuby
+    }).setOrigin(0.5);
     addRubyVolumeStack(this, 112, 154, 3);
     addDocumentStack(this, 151, 157);
     addTinySparkle(this, 128, 50, PALETTE.goldStamp);
 
-    const elena = new HistorianNPC(this, "elena", 58, 78);
-    const marcus = new HistorianNPC(this, "marcus", 198, 82);
-    const priya = new HistorianNPC(this, "priya", 136, 132);
+    const elena = new ProductionColleague(this, "compiler", 58, 78, { label: "ELENA", pose: "work" });
+    const marcus = new ProductionColleague(this, "declass_coordinator", 198, 82, { label: "MARCUS", pose: "work" });
+    const priya = new ProductionColleague(this, "editor", 136, 132, { label: "PRIYA", pose: "work" });
+    const reviewer = new ProductionColleague(this, "reviewer", 86, 134, { label: "REVIEW", pose: "work" });
+    const reviewSpecialist = new ProductionColleague(this, "review_specialist", 224, 128, { label: "STAMP", pose: "work" });
     this.hacMember = new HacMember(this, 88, 174);
+    this.federalShutdown = new FederalShutdown(this, 214, 176);
+    this.beeSwarm = new BeeSwarm(this, 162, 166);
+    this.navyHillMice = new NavyHillMice(this, 39, 132);
     const openNet = new Terminal(this, 50, 150, "OpenNet");
     const classNet = new Terminal(this, 206, 150, "ClassNet");
     this.add.rectangle(128, 66, 38, 26, color(PALETTE.goldStamp)).setStrokeStyle(2, color(PALETTE.sepiaInk));
@@ -87,6 +116,8 @@ export class OfficeScene extends Phaser.Scene {
       { id: "elena", label: "Elena", x: elena.x, y: elena.y, kind: "npc", onInteract: () => this.talkElena() },
       { id: "marcus", label: "Marcus", x: marcus.x, y: marcus.y, kind: "npc", onInteract: () => this.talkMarcus() },
       { id: "priya", label: "Priya", x: priya.x, y: priya.y, kind: "npc", onInteract: () => this.talkPriya() },
+      { id: "reviewer", label: "Reviewer", x: reviewer.x, y: reviewer.y, kind: "npc", onInteract: () => this.talkReviewer() },
+      { id: "review-specialist", label: "Review Specialist", x: reviewSpecialist.x, y: reviewSpecialist.y, kind: "npc", onInteract: () => this.talkReviewSpecialist() },
       { id: "poster", label: "Golden Rule", x: 128, y: 66, kind: "poster", onInteract: () => this.readPoster() },
       { id: "opennet", label: "OpenNet terminal", x: openNet.x, y: openNet.y, kind: "terminal", onInteract: () => this.inspectOpenNet() },
       { id: "classnet", label: "ClassNet terminal", x: classNet.x, y: classNet.y, kind: "terminal", onInteract: () => this.inspectClassNet() }
@@ -114,11 +145,17 @@ export class OfficeScene extends Phaser.Scene {
     if (this.dialog.active) {
       if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) this.dialog.advance();
       this.updateHacMember(delta, false);
+      this.updateFederalShutdown(delta, false);
+      this.updateBeeSwarm(delta, false);
+      this.updateNavyHillMice(delta, false);
       this.player.update(delta, false);
       return;
     }
     if (this.inventory.active || this.reliability.active) {
       this.updateHacMember(delta, false);
+      this.updateFederalShutdown(delta, false);
+      this.updateBeeSwarm(delta, false);
+      this.updateNavyHillMice(delta, false);
       this.player.update(delta, false);
       return;
     }
@@ -127,8 +164,11 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
 
-    this.player.update(delta, true);
-    this.updateHacMember(delta, true);
+    const shutdown = this.updateFederalShutdown(delta, true);
+    this.player.update(delta, !shutdown.stopWorkActive);
+    this.updateHacMember(delta, !shutdown.stopWorkActive);
+    this.updateBeeSwarm(delta, !shutdown.stopWorkActive);
+    this.updateNavyHillMice(delta, !shutdown.stopWorkActive);
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
@@ -163,6 +203,14 @@ export class OfficeScene extends Phaser.Scene {
 
   private talkPriya() {
     this.dialog.show("PRIYA", "Style can be checked. Meaning has to be read.");
+  }
+
+  private talkReviewer() {
+    this.dialog.show("REVIEWER", "A human review pass keeps the evidence, context, and process in the same room.");
+  }
+
+  private talkReviewSpecialist() {
+    this.dialog.show("REVIEW SPECIALIST", "No rank settles the record. The stamp follows review, not the other way around.");
   }
 
   private readPoster() {
@@ -217,9 +265,45 @@ export class OfficeScene extends Phaser.Scene {
     this.syncOfficeVisibility();
   }
 
+  private updateFederalShutdown(delta: number, canImpede: boolean) {
+    const shutdown = this.federalShutdown.update(this.time.now, delta, this.player.position, canImpede);
+    if (shutdown.triggered) {
+      adjustReliability(-2, "federal shutdown stop-work order delayed FRUS production");
+    }
+    this.syncOfficeVisibility();
+    return shutdown;
+  }
+
+  private updateBeeSwarm(delta: number, canBuzz: boolean) {
+    const buzzed = this.beeSwarm.update(this.time.now, delta, this.player.position, canBuzz);
+    if (buzzed) {
+      adjustReliability(-1, "bee swarm forced a detour around the FRUS production floor");
+    }
+    this.syncOfficeVisibility();
+  }
+
+  private updateNavyHillMice(delta: number, canScatter: boolean) {
+    const scattered = this.navyHillMice.update(this.time.now, delta, this.player.position, canScatter);
+    if (scattered) {
+      adjustReliability(-1, "Navy Hill mice scattered source notes across the FRUS floor");
+    }
+    this.syncOfficeVisibility();
+  }
+
   private syncOfficeVisibility() {
-    setVisibleEntities([...this.interactables.map((item) => item.label), "HAC member"]);
+    setVisibleEntities([
+      ...this.interactables.map((item) => item.label),
+      "Main game map",
+      "Navy Hill",
+      "HAC member",
+      "Federal government shutdown",
+      "Bees",
+      "Navy Hill mice"
+    ]);
     const hacPosition = this.hacMember.position;
+    const shutdownPosition = this.federalShutdown.position;
+    const beePosition = this.beeSwarm.position;
+    const micePosition = this.navyHillMice.position;
     setVisibleThreats([
       {
         label: "HAC member",
@@ -229,6 +313,33 @@ export class OfficeScene extends Phaser.Scene {
         behavior: "roams around causing distractions",
         defeatMethod: "Keep focus on the Golden Rule and continue human review.",
         status: this.hacMember.status(this.time.now)
+      },
+      {
+        label: "Federal government shutdown",
+        x: shutdownPosition.x,
+        y: shutdownPosition.y,
+        spriteKey: this.federalShutdown.spriteKey,
+        behavior: "roams around posting stop-work closure notices",
+        defeatMethod: "Wait out the shutdown notice, keep records queued, and resume FRUS production.",
+        status: this.federalShutdown.status(this.time.now)
+      },
+      {
+        label: "Bees",
+        x: beePosition.x,
+        y: beePosition.y,
+        spriteKey: this.beeSwarm.spriteKey,
+        behavior: "swarm around the Office Hub and disrupt concentration if the player gets too close",
+        defeatMethod: "Avoid the swarm and continue routing FRUS work through human review.",
+        status: this.beeSwarm.status(this.time.now)
+      },
+      {
+        label: "Navy Hill mice",
+        x: micePosition.x,
+        y: micePosition.y,
+        spriteKey: this.navyHillMice.spriteKey,
+        behavior: "scurry around Navy Hill and scatter source notes if the player gets too close",
+        defeatMethod: "Skirt the Navy Hill landmark and keep source notes routed through human review.",
+        status: this.navyHillMice.status(this.time.now)
       }
     ]);
   }

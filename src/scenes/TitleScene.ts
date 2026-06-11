@@ -52,7 +52,12 @@ export class TitleScene extends Phaser.Scene {
       this.add.rectangle(x, 218, 16, 16, color(PALETTE.stoneDark));
       this.add.rectangle(x - 2, 216, 11, 11, color(PALETTE.stoneGray));
     }
-    addSnesWorldMap(this, 54, 90, "FRUS ATLAS");
+    addSnesWorldMap(this, 58, 92, "WEST MAP", "frus-snes-atlas", undefined, {
+      viewportWidth: 100,
+      viewportHeight: 78,
+      cropX: 0,
+      cropY: 24
+    });
 
     const volume = this.add.image(160, 92, "frus-volume").setScale(1);
     const lid = this.add.rectangle(160, 68, 74, 9, color(PALETTE.goldStamp));

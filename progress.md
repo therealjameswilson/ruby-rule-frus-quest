@@ -330,6 +330,53 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - registered the HAC sprite in the SNES atlas readout and BootScene preload/fallback pipeline
   - exposed the HAC member through `visibleThreats` with sprite key, behavior, counterplay, and roaming/distracting status
   - verified `npm run build`, `git diff --check`, OfficeScene distraction state/screenshot, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
+- Introduced a federal government shutdown antagonist in the Office Hub:
+  - added an original 32x32 `snes-federal-shutdown.svg` stop-work barricade sprite with no external assets
+  - added `FederalShutdown` as a waypoint-roaming antagonist that posts a short closure notice and briefly halts player movement when it catches the player
+  - registered the shutdown sprite in the SNES atlas readout and BootScene preload/fallback pipeline
+  - exposed the shutdown through `visibleThreats` with sprite key, behavior, counterplay, and roaming/stop-work status
+- Populated the Office Hub with a full equal-rank FRUS production cast inspired by the supplied character sheet:
+  - added original 32x32 repository-local SVG sprites for Compiler, Declass Coordinator, Reviewer, Editor, and Review Specialist using only the project palette and no raster imports
+  - intentionally translated the reference's hierarchical "Senior Reviewer" cue into equal-rank `Review Specialist` naming
+  - added `ProductionColleague` for role-cue room population while preserving existing named NPC dialog roles
+  - registered the production-colleague sprite set in the SNES atlas readout, BootScene preload/fallback pipeline, OfficeScene, and RenderDebugScene
+  - verified `npm run build`, `git diff --check`, OfficeScene and RenderDebugScene screenshots/state, all ten `?scene=` deep links, and in-app browser local rendering
+- Added bees as an Office Hub avoidance antagonist:
+  - created an original 32x32 `snes-frus-bees.svg` swarm sprite and BootScene fallback texture with no external assets
+  - added `BeeSwarm` as a buzzing waypoint hazard that briefly disrupts concentration if the player gets too close
+  - registered the swarm in the SNES atlas readout, OfficeScene threat loop, `visibleThreats`, and RenderDebugScene
+- Smoothed character and roaming-antagonist movement:
+  - added shared `approach()` / frame-delta helpers for integer-rendered but less abrupt movement
+  - gave the player short acceleration/deceleration while preserving four-direction-only movement and no diagonal drift
+  - eased HAC member, federal shutdown, and bee swarm waypoint steering to reduce turn jitter while keeping pixel-perfect render positions
+  - verified `npm run build`, `git diff --check`, OfficeScene movement screenshot/state, direct position samples, and all ten `?scene=` deep links
+- Added Navy Hill mice as an Office Hub antagonist:
+  - created an original 32x32 `snes-navy-hill-mice.svg` patrol sprite with hard-edged palette-safe rectangles and no external assets
+  - added a compact Navy Hill landmark on the Office production floor and a source-note-scattering mouse patrol around it
+  - registered the mice in the SNES atlas readout, BootScene preload/fallback pipeline, OfficeScene visible-threat loop, and RenderDebugScene antagonist rack
+- Incorporated the supplied main-map concept as an original repository-local SVG:
+  - redrew `public/assets/maps/frus-snes-atlas.svg` as a large 240x168 regional main game map with Navy Hill, NARA I/II, Foggy Bottom, Capitol Hill, White House, Newington, Little Rock, Springfield, Potomac River, and an undisclosed locked location
+  - added `SNES_MAIN_MAP_ASSET` metadata and landmark readouts to the SNES atlas state for accessible QA
+  - explicitly preloaded the main map in BootScene and added a matching fallback texture path
+  - added 1x viewport support to the SNES map renderer so larger maps can be cropped into room panels without compressing the whole district into one tiny view
+  - changed TitleScene to show a western `WEST MAP` excerpt and the Office Hub to show a larger central `DISTRICT MAP` excerpt
+  - verified SVG palette/opacity discipline, `git diff --check`, `npm run build`, Office/Title screenshots, and all ten `?scene=` direct links on the local dev server
+- Incorporated the supplied production-character sprite-sheet concept as original SVG frames:
+  - added `public/assets/sprites/snes-production-colleague-frames.svg` with six 32x32 poses per equal-rank production role: front, back, side, walk, workstation, and approval
+  - kept the hierarchy-free naming by translating the supplied "Senior Reviewer" row into the existing equal-rank `Review Specialist`
+  - registered the sheet as `SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET`, exposed it through `render_game_to_text().snesAtlas`, and added a BootScene fallback/registration path
+  - updated OfficeScene colleagues to use the new workstation frames while preserving the earlier single-role SVGs as fallback textures
+  - updated RenderDebugScene to show the new frame-sheet work poses for visual QA
+- Integrated the supplied in-play Compiler sprite-sheet concept into the live playable Compiler frame strip:
+  - redrew `public/assets/sprites/snes-player-compiler-frames.svg` in place as an original SVG with gray suit, blue tie, brown briefcase, front/side/back walking, idle, and document-reading poses
+  - preserved the existing 608x48 strip dimensions, 32x48 frame size, filename, texture key, and all 19 frame names used by Player and BootScene
+  - updated the SNES atlas compiler frame cue so `render_game_to_text()` describes the new in-play art
+  - verified palette/opacity discipline, `npm run build`, OfficeScene movement/ability screenshot/state, and RenderDebugScene frame samples
+- Integrated the supplied in-play Editor sprite-sheet concept into a live playable Editor frame strip:
+  - added `public/assets/sprites/snes-player-editor-frames.svg` as original repository-local SVG art with glasses, proof pages, red pencil, front/side/back walking, idle, and document-marking poses
+  - generalized the player frame-strip pipeline from compiler-only to role-frame sheets while preserving the same 608x48 dimensions, 32x48 frame size, and 19 frame names
+  - exposed the Editor sheet through the SNES atlas readout, BootScene loading/registration, `render_game_to_text().activePlayerSprite`, and RenderDebugScene samples
+  - verified SVG opacity/raster discipline, `git diff --check`, `npm run build`, OfficeScene free movement, Red Pencil ability pose, RenderDebugScene samples, and all ten direct `?scene=` links with the editor role
 
 ## TODO
 

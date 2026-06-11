@@ -2,10 +2,11 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
-import { SNES_COMPILER_FRAME_SHEET } from "../game/snesAtlas";
+import { getSnesRoleFrameSheet } from "../game/snesAtlas";
 import { gameState, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { KeyboardMap, Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
+import { approach, frameDeltaSeconds } from "../systems/smoothMovement";
 
 interface MoveBounds {
   left: number;
@@ -49,14 +50,19 @@ interface WalkPart {
   side: -1 | 1;
 }
 
+type SnesRoleFrameSheet = NonNullable<ReturnType<typeof getSnesRoleFrameSheet>>;
+
 export class Player {
   readonly sprite: Phaser.GameObjects.Image;
   private readonly keys: KeyboardMap;
   private readonly speed = 58;
+  private readonly acceleration = 720;
+  private readonly deceleration = 900;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
-  private readonly spriteMode: "snes16" | "snes16Compiler48" | "nes8";
+  private readonly spriteMode: "snes16" | "snesRoleFrame48" | "nes8";
+  private readonly roleFrameSheet: SnesRoleFrameSheet | null;
   private readonly shadowOffsetY: number;
   private readonly shadowDepthOffset: number;
   private walkClock = 0;
@@ -65,6 +71,8 @@ export class Player {
   private isMoving = false;
   private logicalX: number;
   private logicalY: number;
+  private velocityX = 0;
+  private velocityY = 0;
   private readonly scene: Phaser.Scene;
   private facing: Direction = "south";
   private readonly previousDirectionDown: Record<Direction, boolean> = {
@@ -78,31 +86,32 @@ export class Player {
     this.scene = scene;
     this.logicalX = x;
     this.logicalY = y;
-    this.spriteMode = this.hasCompilerFrameSheet(scene)
-      ? "snes16Compiler48"
+    this.roleFrameSheet = this.getAvailableRoleFrameSheet(scene);
+    this.spriteMode = this.roleFrameSheet
+      ? "snesRoleFrame48"
       : scene.textures.exists(gameState.playerProfile.snesSpriteKey)
         ? "snes16"
         : "nes8";
-    const isSnesScale = this.spriteMode === "snes16" || this.spriteMode === "snes16Compiler48";
+    const isSnesScale = this.spriteMode === "snes16" || this.spriteMode === "snesRoleFrame48";
     this.shadowOffsetY = isSnesScale ? 9 : 8;
     this.shadowDepthOffset = isSnesScale ? 2 : 1;
     this.shadow = scene.add
       .ellipse(
         snapPixel(x),
         snapPixel(y + this.shadowOffsetY),
-        this.spriteMode === "snes16Compiler48" ? 20 : this.spriteMode === "snes16" ? 18 : 12,
+        this.spriteMode === "snesRoleFrame48" ? 20 : this.spriteMode === "snes16" ? 18 : 12,
         isSnesScale ? 6 : 4,
         color(PALETTE.black)
       )
       .setDepth(snapPixel(y - this.shadowDepthOffset));
-    const textureKey = this.spriteMode === "snes16Compiler48"
-      ? SNES_COMPILER_FRAME_SHEET.key
+    const textureKey = this.spriteMode === "snesRoleFrame48"
+      ? this.roleFrameSheet?.key ?? gameState.playerProfile.snesSpriteKey
       : this.spriteMode === "snes16"
         ? gameState.playerProfile.snesSpriteKey
         : gameState.playerProfile.spriteKey;
     this.sprite = scene.add
-      .image(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snes16Compiler48" ? "idle-0" : undefined)
-      .setOrigin(0.5, this.spriteMode === "snes16Compiler48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
+      .image(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
+      .setOrigin(0.5, this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
       .setDepth(snapPixel(y));
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);
@@ -170,6 +179,8 @@ export class Player {
     this.idleClock += deltaMs;
     if (!canMove) {
       this.isMoving = false;
+      this.velocityX = 0;
+      this.velocityY = 0;
       this.sprite.setAngle(0);
       this.sprite.setScale(1);
       if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
@@ -209,29 +220,43 @@ export class Player {
     this.previousDirectionDown.east = directionDown.east;
     this.previousDirectionDown.north = directionDown.north;
     this.previousDirectionDown.south = directionDown.south;
-    const moving = dx !== 0 || dy !== 0;
-    const dt = deltaMs / 1000;
+    const inputMoving = dx !== 0 || dy !== 0;
+    const dt = frameDeltaSeconds(deltaMs);
+    if (dx !== 0) this.velocityY = 0;
+    if (dy !== 0) this.velocityX = 0;
+    const targetVelocityX = dx * this.speed;
+    const targetVelocityY = dy * this.speed;
+    const velocityRate = inputMoving ? this.acceleration : this.deceleration;
+    this.velocityX = approach(this.velocityX, targetVelocityX, velocityRate * dt);
+    this.velocityY = approach(this.velocityY, targetVelocityY, velocityRate * dt);
+    const moving = Math.abs(this.velocityX) > 0.1 || Math.abs(this.velocityY) > 0.1;
     const bounds = options.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
     const solids = options.solids ?? [];
-    const nextX = Phaser.Math.Clamp(this.logicalX + dx * this.speed * dt, bounds.left, bounds.right);
-    const nextY = Phaser.Math.Clamp(this.logicalY + dy * this.speed * dt, bounds.top, bounds.bottom);
-    if (dx !== 0) {
+    const attemptedX = this.logicalX + this.velocityX * dt;
+    const attemptedY = this.logicalY + this.velocityY * dt;
+    const nextX = Phaser.Math.Clamp(attemptedX, bounds.left, bounds.right);
+    const nextY = Phaser.Math.Clamp(attemptedY, bounds.top, bounds.bottom);
+    if (Math.abs(this.velocityX) > 0.01) {
       if (!this.collidesAt(nextX, this.logicalY, solids)) {
         this.logicalX = nextX;
+        if (nextX !== attemptedX) this.velocityX = 0;
       } else {
+        this.velocityX = 0;
         this.applyHalfTileCorrection(this.facing, bounds, solids);
       }
     }
-    if (dy !== 0) {
+    if (Math.abs(this.velocityY) > 0.01) {
       if (!this.collidesAt(this.logicalX, nextY, solids)) {
         this.logicalY = nextY;
+        if (nextY !== attemptedY) this.velocityY = 0;
       } else {
+        this.velocityY = 0;
         this.applyHalfTileCorrection(this.facing, bounds, solids);
       }
     }
     if (moving) {
       this.walkClock += deltaMs;
-      this.sprite.setFlipX(this.spriteMode !== "snes16Compiler48" && dx < 0);
+      this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && dx < 0);
     } else {
       this.walkClock = 0;
     }
@@ -265,9 +290,9 @@ export class Player {
 
   private playAbilityFrame() {
     this.abilityFrameUntil = this.scene.time.now + 420;
-    if (this.spriteMode === "snes16Compiler48") {
+    if (this.spriteMode === "snesRoleFrame48") {
       this.sprite.clearTint();
-      this.updateCompilerFrame();
+      this.updateRoleFrame();
       return;
     }
     this.sprite.setTint(color(PALETTE.goldStamp));
@@ -276,7 +301,7 @@ export class Player {
   private syncRenderPosition() {
     const renderX = snapPixel(this.logicalX);
     const renderY = snapPixel(this.logicalY);
-    this.updateCompilerFrame();
+    this.updateRoleFrame();
     setPixelPosition(this.sprite, renderX, renderY);
     setPixelPosition(this.shadow, renderX, renderY + this.shadowOffsetY);
     this.shadow.setDepth(renderY - this.shadowDepthOffset);
@@ -286,7 +311,7 @@ export class Player {
   }
 
   private createWalkCycleCue(scene: Phaser.Scene) {
-    if (this.spriteMode === "snes16Compiler48") return;
+    if (this.spriteMode === "snesRoleFrame48") return;
     if (this.spriteMode === "snes16") {
       this.addWalkRect(scene, -8, 8, -1, 5, 3);
       this.addWalkRect(scene, 8, 8, 1, 5, 3);
@@ -297,7 +322,7 @@ export class Player {
   }
 
   private createIdleCue(scene: Phaser.Scene) {
-    if (this.spriteMode === "snes16Compiler48") return;
+    if (this.spriteMode === "snesRoleFrame48") return;
     if (this.spriteMode === "snes16") {
       this.createSnesIdleCue(scene);
       return;
@@ -431,17 +456,15 @@ export class Player {
     }
   }
 
-  private hasCompilerFrameSheet(scene: Phaser.Scene) {
-    return (
-      gameState.playerProfile.roleId === "compiler" &&
-      scene.textures.exists(SNES_COMPILER_FRAME_SHEET.key) &&
-      scene.textures.get(SNES_COMPILER_FRAME_SHEET.key).has("idle-0")
-    );
+  private getAvailableRoleFrameSheet(scene: Phaser.Scene): SnesRoleFrameSheet | null {
+    const sheet = getSnesRoleFrameSheet(gameState.playerProfile.roleId);
+    if (!sheet || !scene.textures.exists(sheet.key)) return null;
+    return scene.textures.get(sheet.key).has("idle-0") ? sheet : null;
   }
 
-  private updateCompilerFrame() {
-    if (this.spriteMode !== "snes16Compiler48") return;
-    const texture = this.scene.textures.get(SNES_COMPILER_FRAME_SHEET.key);
+  private updateRoleFrame() {
+    if (this.spriteMode !== "snesRoleFrame48" || !this.roleFrameSheet) return;
+    const texture = this.scene.textures.get(this.roleFrameSheet.key);
     const abilityActive = this.scene.time.now < this.abilityFrameUntil;
     const directionFrames: Record<Direction, string> = {
       north: "walk-up",
@@ -456,7 +479,7 @@ export class Player {
         : `idle-${Math.floor(this.idleClock / 520) % 2}`;
 
     if (texture.has(frameName) && String(this.sprite.frame.name) !== frameName) {
-      this.sprite.setTexture(SNES_COMPILER_FRAME_SHEET.key, frameName);
+      this.sprite.setTexture(this.roleFrameSheet.key, frameName);
     }
   }
 }

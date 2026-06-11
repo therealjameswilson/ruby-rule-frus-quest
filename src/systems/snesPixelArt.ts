@@ -11,6 +11,13 @@ interface SnesRoomLayerOptions {
   track?: TrackFn;
 }
 
+interface SnesWorldMapOptions {
+  viewportWidth?: number;
+  viewportHeight?: number;
+  cropX?: number;
+  cropY?: number;
+}
+
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
@@ -81,15 +88,44 @@ export function addSnesRoomLayer(scene: Phaser.Scene, options: SnesRoomLayerOpti
   }
 }
 
-export function addSnesWorldMap(scene: Phaser.Scene, x: number, y: number, label = "FRUS ATLAS", textureKey = "frus-snes-atlas", track?: TrackFn) {
-  keep(scene.add.rectangle(x + 3, y + 4, 90, 66, color(PALETTE.black)).setDepth(68), track);
-  keep(scene.add.rectangle(x, y, 88, 64, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(69), track);
-  const atlas = scene.textures.exists(textureKey)
-    ? scene.add.image(x, y - 2, textureKey).setDepth(70)
-    : scene.add.rectangle(x, y - 2, 80, 56, color(PALETTE.creamPaper)).setDepth(70);
-  keep(atlas, track);
-  keep(scene.add.rectangle(x, y + 31, 72, 8, color(PALETTE.black)).setDepth(71), track);
-  keep(scene.add.text(x, y + 28, label, {
+export function addSnesWorldMap(
+  scene: Phaser.Scene,
+  x: number,
+  y: number,
+  label = "FRUS ATLAS",
+  textureKey = "frus-snes-atlas",
+  track?: TrackFn,
+  options: SnesWorldMapOptions = {}
+) {
+  const viewportWidth = options.viewportWidth ?? 80;
+  const viewportHeight = options.viewportHeight ?? 56;
+  const cropX = options.cropX ?? 0;
+  const cropY = options.cropY ?? 0;
+  keep(scene.add.rectangle(x + 3, y + 4, viewportWidth + 10, viewportHeight + 10, color(PALETTE.black)).setDepth(68), track);
+  keep(scene.add.rectangle(x, y, viewportWidth + 8, viewportHeight + 8, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(69), track);
+  if (scene.textures.exists(textureKey)) {
+    const texture = scene.textures.get(textureKey);
+    const source = texture.getSourceImage() as { width?: number; height?: number };
+    const sourceWidth = source.width ?? viewportWidth;
+    const sourceHeight = source.height ?? viewportHeight;
+    const left = x - viewportWidth / 2;
+    const top = y - viewportHeight / 2;
+    const atlas = scene.add
+      .image(
+        Math.round(left - cropX + sourceWidth / 2),
+        Math.round(top - cropY + sourceHeight / 2),
+        textureKey
+      )
+      .setDepth(70);
+    const maskRect = scene.add.rectangle(x, y, viewportWidth, viewportHeight, color(PALETTE.black)).setVisible(false);
+    atlas.setMask(maskRect.createGeometryMask());
+    keep(maskRect, track);
+    keep(atlas, track);
+  } else {
+    keep(scene.add.rectangle(x, y, viewportWidth, viewportHeight, color(PALETTE.creamPaper)).setDepth(70), track);
+  }
+  keep(scene.add.rectangle(x, y + viewportHeight / 2 - 3, Math.max(72, viewportWidth - 8), 8, color(PALETTE.black)).setDepth(71), track);
+  keep(scene.add.text(x, y + viewportHeight / 2 - 6, label, {
     fontFamily: "monospace",
     fontSize: "5px",
     color: PALETTE.goldStamp

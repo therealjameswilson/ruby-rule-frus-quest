@@ -3,8 +3,10 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   SNES_ANTAGONIST_ASSETS,
   SNES_BUREAUCRATIC_WALL_ASSETS,
-  SNES_COMPILER_FRAME_SHEET,
-  SNES_NPC_ASSETS
+  SNES_NPC_ASSETS,
+  SNES_PRODUCTION_COLLEAGUE_ASSETS,
+  SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET,
+  SNES_ROLE_FRAME_SHEETS
 } from "../game/snesAtlas";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { isIntegerScale } from "../systems/pixelPerfect";
@@ -27,9 +29,13 @@ export class RenderDebugScene extends Phaser.Scene {
       "sample sprite 2x",
       "sample sprite 3x",
       "sample sprite 4x",
-      "compiler idle frame",
-      "compiler reading frame",
+      ...SNES_ROLE_FRAME_SHEETS.flatMap((sheet) => [
+        `${sheet.displayName} idle frame`,
+        `${sheet.displayName} ability frame`
+      ]),
+      "production colleague frame sheet",
       ...SNES_NPC_ASSETS.map((npc) => `${npc.displayName} SNES sprite`),
+      ...SNES_PRODUCTION_COLLEAGUE_ASSETS.map((asset) => `${asset.displayName} production colleague sprite`),
       ...SNES_ANTAGONIST_ASSETS.map((asset) => `${asset.displayName} antagonist sprite`),
       ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => `${wall.type} wall sprite`)
     ]);
@@ -65,26 +71,55 @@ export class RenderDebugScene extends Phaser.Scene {
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(2);
 
-    if (this.textures.exists("snes-hac-member")) {
-      this.add.image(229, 64, "snes-hac-member").setDepth(2);
-      this.add.text(229, 80, "HAC", {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.classNetRed,
-        backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(2);
-    }
-
-    if (this.textures.exists(SNES_COMPILER_FRAME_SHEET.key)) {
-      this.add.image(168, 84, SNES_COMPILER_FRAME_SHEET.key, "idle-0").setOrigin(0.5, 1).setDepth(2);
-      this.add.image(198, 84, SNES_COMPILER_FRAME_SHEET.key, "read").setOrigin(0.5, 1).setDepth(2);
-      this.add.text(183, 88, "COMPILER FRAMES", {
+    SNES_PRODUCTION_COLLEAGUE_ASSETS.forEach((asset, index) => {
+      const x = 30 + index * 28;
+      const frameName = `${asset.id}-work`;
+      const hasFrame = this.textures.exists(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key)
+        && this.textures.get(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key).has(frameName);
+      this.add.image(
+        x,
+        83,
+        hasFrame ? SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key : asset.key,
+        hasFrame ? frameName : undefined
+      ).setDepth(2);
+      this.add.text(x, 97, asset.shortLabel, {
         fontFamily: "monospace",
         fontSize: "5px",
         color: PALETTE.goldStamp,
         backgroundColor: PALETTE.black
       }).setOrigin(0.5).setDepth(2);
-    }
+    });
+
+    SNES_ANTAGONIST_ASSETS.forEach((asset, index) => {
+      if (!this.textures.exists(asset.key)) return;
+      const x = 177 + index * 21;
+      const label = asset.displayName
+        .replace("Federal Government Shutdown", "SHUT")
+        .replace("Navy Hill Mice", "MICE")
+        .replace("HAC Member", "HAC")
+        .replace("Bees", "BEES")
+        .slice(0, 5);
+      this.add.image(x, 64, asset.key).setDepth(2);
+      this.add.text(x, 80, label, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.goldStamp,
+        backgroundColor: PALETTE.black
+      }).setOrigin(0.5).setDepth(2);
+    });
+
+    SNES_ROLE_FRAME_SHEETS.forEach((sheet, index) => {
+      if (!this.textures.exists(sheet.key)) return;
+      const x = 168 + index * 42;
+      this.add.image(x, 84, sheet.key, "idle-0").setOrigin(0.5, 1).setDepth(2);
+      this.add.image(x + 18, 84, sheet.key, "read").setOrigin(0.5, 1).setDepth(2);
+      this.add.text(x + 9, 88, `${sheet.roleId.slice(0, 4).toUpperCase()} FR`, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.goldStamp,
+        backgroundColor: PALETTE.black
+      }).setOrigin(0.5).setDepth(2);
+    });
 
     this.add.rectangle(128, 191, 232, 64, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(1);
     [1, 2, 3, 4].forEach((scale, index) => {

@@ -35,7 +35,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 
 ## MVP Features
 
-- NES-style title screen with a ruby buckram FRUS volume, top HUD band, tiny map, and stone dungeon framing.
+- NES-style title screen with a ruby buckram FRUS volume, top HUD band, regional map viewport, and stone dungeon framing.
 - Character crafting with actual FRUS production roles:
   - Proofreader
   - Compiler
@@ -45,14 +45,19 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - Equal-rank Archive Colleague room inspired by NES cave/dialogue composition, translated into a FRUS archive chamber with original art.
 - Verification gate tutorial: citation stamp first, then a FRUS volume fragment, then the Office hub opens.
 - Office hub with Elena, Marcus, Priya, the Golden Rule poster, and OpenNet/ClassNet terminals.
+- Office hub production floor populated with original equal-rank Compiler, Declass Coordinator, Reviewer, Editor, and Review Specialist sprites inspired by supplied character-role cues.
 - Archive provenance puzzle.
 - Two-room OpenNet/ClassNet routing dungeon where clean routing opens the ClassNet Vault and a physical Clearance Token reward.
 - Two-room Referral Vault dungeon where equity matching and visible excision open the Concurrence Chamber, then the player physically collects the Concurrence Slip.
 - Two-room Editor's Labyrinth / Silent Read Tower sequence where the AI annotation review tool checks mechanical/schema issues, the Red Pencil opens the tower, evidence-bound findings route to human workstations, and the player earns the Proof Lens and Buckram Key.
 - Room-specific pixel dressing: desks, shelves, document stacks, wall maps, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
+- Original large regional main game map with numbered FRUS Quest locations including Navy Hill, NARA I/II, Foggy Bottom, Capitol Hill, the White House, Newington, Little Rock, Springfield, the Potomac, and a locked undisclosed location, shown through fixed 1x viewports instead of being compressed into one tiny panel.
 - One-screen room composition with a minimap/status HUD, 16x16 tile-feeling floors, stone borders, and clear blocked/walkable space.
 - Bureaucratic wall enemies: literal stone walls labeled with process blockers like `NO REPO`, `PENDING`, `FIREWALL`, `WAIT`, and `HOLD`, now backed by distinct original 32x32 SNES-style blocker sprites.
 - Roaming HAC member antagonist in the Office hub who wanders through the room and causes brief focus-distraction reliability hits if the player gets too close.
+- Federal government shutdown antagonist in the Office hub: a roaming stop-work closure notice that briefly freezes movement and raises production-delay pressure when it catches the player.
+- Bee swarm antagonist in the Office hub: a buzzing avoidance hazard that disrupts concentration if the player gets too close while producing FRUS.
+- Navy Hill mice antagonist in the Office hub: a small source-note-scattering patrol around the Navy Hill landmark that players must skirt while keeping the workflow moving.
 - Archive stonewalls now patrol toward the player, reduce reliability on contact, knock the player back, and can be cleared by verifying them with `Space`/`Enter` nearby.
 - Zelda-like symbols translated into FRUS production terms:
   - keys become citation stamps, clearance tokens, and concurrence slips
@@ -64,6 +69,8 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - Final Buckram Gate: the player earns five cover pieces and the Buckram Key, enters a physical final room, certifies the volume at a human publication table, and only then publishes the assembled FRUS cover.
 - Player shadow, facing flip, and walk-bob movement polish.
 - Larger 32x32 SNES-style player and human specialist sprites with readable FRUS production props.
+- Playable Compiler and Editor in-play sprite strips with four-direction walk frames, idle frames, and role-ability document review poses.
+- Multi-pose equal-rank production colleague sprite sheet with front, back, side, walk, workstation, and approval poses for Compiler, Editor, Declass Coordinator, Reviewer, and Review Specialist roles.
 - Reliability Meter and `window.render_game_to_text()` for automated testing.
 - `render_game_to_text()` includes active stonewall threat positions for accessible play and QA.
 - `render_game_to_text()` also reports document points and earned FRUS volume fragments.
