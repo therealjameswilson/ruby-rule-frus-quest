@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { gameState, setPlayerPosition } from "../game/state";
+import type { Direction } from "../game/constants";
+import { gameState, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { KeyboardMap, Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 
@@ -60,7 +61,13 @@ export class Player {
   private logicalX: number;
   private logicalY: number;
   private readonly scene: Phaser.Scene;
-  private lastMoveAxis: "x" | "y" = "y";
+  private facing: Direction = "south";
+  private readonly previousDirectionDown: Record<Direction, boolean> = {
+    north: false,
+    south: false,
+    west: false,
+    east: false
+  };
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
@@ -104,6 +111,10 @@ export class Player {
     return { x: this.sprite.x, y: this.sprite.y };
   }
 
+  get facingDirection() {
+    return this.facing;
+  }
+
   setPosition(x: number, y: number) {
     this.logicalX = x;
     this.logicalY = y;
@@ -111,6 +122,7 @@ export class Player {
     this.walkClock = 0;
     this.syncRenderPosition();
     setPlayerPosition(this.position);
+    setPlayerFacing(this.facing);
   }
 
   pushAwayFrom(source: Position, distance = 12) {
@@ -122,6 +134,7 @@ export class Player {
     this.isMoving = false;
     this.syncRenderPosition();
     setPlayerPosition(this.position);
+    setPlayerFacing(this.facing);
   }
 
   update(deltaMs: number, canMove: boolean, options: PlayerMoveOptions = {}) {
@@ -133,25 +146,40 @@ export class Player {
       if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
       this.syncRenderPosition();
       setPlayerPosition(this.position);
+      setPlayerFacing(this.facing);
       return;
     }
     const touchState = typeof window === "undefined"
       ? undefined
       : (window as Window & { rubyRuleTouchState?: Record<string, boolean> }).rubyRuleTouchState;
-    const left = this.keys.left.isDown || this.keys.a.isDown || !!touchState?.left;
-    const right = this.keys.right.isDown || this.keys.d.isDown || !!touchState?.right;
-    const up = this.keys.up.isDown || this.keys.w.isDown || !!touchState?.up;
-    const down = this.keys.down.isDown || this.keys.s.isDown || !!touchState?.down;
-    let dx = Number(right) - Number(left);
-    let dy = Number(down) - Number(up);
-    if (dx !== 0 && dy !== 0) {
-      if (this.lastMoveAxis === "x") dy = 0;
-      else dx = 0;
-    } else if (dx !== 0) {
-      this.lastMoveAxis = "x";
-    } else if (dy !== 0) {
-      this.lastMoveAxis = "y";
+    const directionDown: Record<Direction, boolean> = {
+      west: this.keys.left.isDown || this.keys.a.isDown || !!touchState?.left,
+      east: this.keys.right.isDown || this.keys.d.isDown || !!touchState?.right,
+      north: this.keys.up.isDown || this.keys.w.isDown || !!touchState?.up,
+      south: this.keys.down.isDown || this.keys.s.isDown || !!touchState?.down
+    };
+    const justPressed: Direction[] = [];
+    if (Phaser.Input.Keyboard.JustDown(this.keys.left) || Phaser.Input.Keyboard.JustDown(this.keys.a) || (directionDown.west && !this.previousDirectionDown.west)) justPressed.push("west");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.right) || Phaser.Input.Keyboard.JustDown(this.keys.d) || (directionDown.east && !this.previousDirectionDown.east)) justPressed.push("east");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.up) || Phaser.Input.Keyboard.JustDown(this.keys.w) || (directionDown.north && !this.previousDirectionDown.north)) justPressed.push("north");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.down) || Phaser.Input.Keyboard.JustDown(this.keys.s) || (directionDown.south && !this.previousDirectionDown.south)) justPressed.push("south");
+    if (justPressed.length) this.facing = justPressed[justPressed.length - 1];
+    if (!directionDown[this.facing]) {
+      const fallback = (["west", "east", "north", "south"] as Direction[]).find((direction) => directionDown[direction]);
+      if (fallback) this.facing = fallback;
     }
+    let dx = 0;
+    let dy = 0;
+    if (directionDown[this.facing]) {
+      if (this.facing === "west") dx = -1;
+      else if (this.facing === "east") dx = 1;
+      else if (this.facing === "north") dy = -1;
+      else dy = 1;
+    }
+    this.previousDirectionDown.west = directionDown.west;
+    this.previousDirectionDown.east = directionDown.east;
+    this.previousDirectionDown.north = directionDown.north;
+    this.previousDirectionDown.south = directionDown.south;
     const moving = dx !== 0 || dy !== 0;
     const dt = deltaMs / 1000;
     const bounds = options.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
@@ -172,6 +200,7 @@ export class Player {
     this.shadow.setScale(1);
     this.syncRenderPosition();
     setPlayerPosition(this.position);
+    setPlayerFacing(this.facing);
   }
 
   private collidesAt(x: number, y: number, solids: Phaser.Geom.Rectangle[]) {

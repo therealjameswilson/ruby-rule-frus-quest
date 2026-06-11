@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import type { ProcessItemId, RoomType } from "../game/constants";
 import {
   addInventoryItem,
   addDocumentPoints,
@@ -7,6 +8,7 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  hasProcessItem,
   setHeldItem,
   setLatestMessage,
   setNearestInteractable,
@@ -37,14 +39,17 @@ function color(hex: string) {
 
 type SourceNoteStatus = "inactive" | "carried" | "routed" | "verified" | "stamped";
 type Direction = "north" | "south" | "west" | "east";
-type ArchiveRoomId = "A1" | "A2" | "B1" | "B2";
-type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "AMBIGUOUS" | "DANN-E QUEUE";
+type ArchiveRoomId = "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
+type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "HOLD" | "AMBIGUOUS" | "DANN-E QUEUE";
 
 interface ArchiveRoom {
   id: ArchiveRoomId;
   title: string;
   grid: { x: number; y: number };
   exits: Partial<Record<Direction, ArchiveRoomId>>;
+  lockedExits?: Partial<Record<Direction, string>>;
+  requiredItems?: Partial<Record<Direction, ProcessItemId>>;
+  roomType: RoomType;
 }
 
 interface ArchiveEnemyDefinition {
@@ -72,25 +77,95 @@ const ARCHIVE_ROOMS: Record<ArchiveRoomId, ArchiveRoom> = {
     id: "A1",
     title: "SOURCE ROOM",
     grid: { x: 0, y: 0 },
-    exits: { east: "A2", south: "B1" }
+    exits: { east: "A2", south: "B1" },
+    roomType: "normal"
   },
   A2: {
     id: "A2",
     title: "OPENNET ANNEX",
     grid: { x: 1, y: 0 },
-    exits: { west: "A1", south: "B2" }
+    exits: { west: "A1", east: "A3", south: "B2" },
+    lockedExits: { south: "CLASSNET SEAL" },
+    requiredItems: { south: "clearance_token" },
+    roomType: "puzzle"
+  },
+  A3: {
+    id: "A3",
+    title: "HINT ALCOVE",
+    grid: { x: 2, y: 0 },
+    exits: { west: "A2", south: "B3" },
+    roomType: "hint"
   },
   B1: {
     id: "B1",
     title: "STACKS",
     grid: { x: 0, y: 1 },
-    exits: { north: "A1", east: "B2" }
+    exits: { north: "A1", east: "B2", south: "C1" },
+    lockedExits: { east: "REFERRAL GATE" },
+    requiredItems: { east: "concurrence_slip" },
+    roomType: "puzzle"
   },
   B2: {
     id: "B2",
     title: "PROOF CHAMBER",
     grid: { x: 1, y: 1 },
-    exits: { north: "A2", west: "B1" }
+    exits: { north: "A2", west: "B1", east: "B3", south: "C2" },
+    lockedExits: { south: "REVIEW FOLDER GATE" },
+    requiredItems: { south: "review_folder" },
+    roomType: "normal"
+  },
+  B3: {
+    id: "B3",
+    title: "GREEN RED HINT",
+    grid: { x: 2, y: 1 },
+    exits: { north: "A3", west: "B2", south: "C3" },
+    roomType: "hint"
+  },
+  C1: {
+    id: "C1",
+    title: "CRACKED WALL",
+    grid: { x: 0, y: 2 },
+    exits: { north: "B1", east: "C2", south: "D1" },
+    roomType: "puzzle"
+  },
+  C2: {
+    id: "C2",
+    title: "DATE MISMATCH",
+    grid: { x: 1, y: 2 },
+    exits: { north: "B2", west: "C1", east: "C3", south: "D2" },
+    lockedExits: { east: "SILENT-READ LENS MARK" },
+    requiredItems: { east: "proof_lens" },
+    roomType: "puzzle"
+  },
+  C3: {
+    id: "C3",
+    title: "HIDDEN SOURCE CACHE",
+    grid: { x: 2, y: 2 },
+    exits: { north: "B3", west: "C2", south: "D3" },
+    roomType: "secret"
+  },
+  D1: {
+    id: "D1",
+    title: "STAMP ROOM",
+    grid: { x: 0, y: 3 },
+    exits: { north: "C1", east: "D2" },
+    roomType: "reward"
+  },
+  D2: {
+    id: "D2",
+    title: "HIDDEN WELL",
+    grid: { x: 1, y: 3 },
+    exits: { north: "C2", west: "D1", east: "D3" },
+    lockedExits: { east: "BUCKRAM LOCK" },
+    requiredItems: { east: "buckram_key" },
+    roomType: "secret"
+  },
+  D3: {
+    id: "D3",
+    title: "QUEUE BOSS GATE",
+    grid: { x: 2, y: 3 },
+    exits: { north: "C3", west: "D2" },
+    roomType: "boss"
   }
 };
 
@@ -121,10 +196,22 @@ const ARCHIVE_ENEMIES: ArchiveEnemyDefinition[] = [
     roomId: "A2",
     x: 128,
     y: 194,
-    behavior: "block",
-    behaviorText: "blocks terminal door",
+    behavior: "horizontal-patrol",
+    behaviorText: "patrols the terminal door horizontally",
     defeatMethod: "Use correct OpenNet/ClassNet routing",
     accent: PALETTE.openNetGreen
+  },
+  {
+    id: "hold-door",
+    type: "HOLD",
+    label: "HOLD",
+    roomId: "C1",
+    x: 128,
+    y: 164,
+    behavior: "block",
+    behaviorText: "blocks a cracked source-note doorway",
+    defeatMethod: "Use citation stamp on cracked source-note wall",
+    accent: PALETTE.buckramHighlight
   },
   {
     id: "pending-manifest",
@@ -206,6 +293,7 @@ export class ArchiveScene extends Phaser.Scene {
   private mapLabels = new Map<ArchiveRoomId, Phaser.GameObjects.Text>();
   private roomTransitionLocked = false;
   private exitCooldownUntil = 0;
+  private revealedSecretIds = new Set<ArchiveRoomId>();
   private networkRoutingResolved = false;
   private referralManifestDelivered = false;
   private agencyTimerResolved = false;
@@ -358,8 +446,13 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawRoomExits(room);
     if (room.id === "A1") this.renderSourceRoom();
     else if (room.id === "A2") this.renderOpenNetAnnex();
+    else if (room.id === "A3" || room.id === "B3") this.renderHintRoom(room);
     else if (room.id === "B1") this.renderStacksRoom();
-    else this.renderProofChamber();
+    else if (room.id === "B2") this.renderProofChamber();
+    else if (room.id === "C1" || room.id === "C2") this.renderPuzzleRoom(room);
+    else if (room.id === "C3" || room.id === "D2") this.renderSecretRoom(room);
+    else if (room.id === "D1") this.renderRewardRoom();
+    else this.renderBossGateRoom();
     this.refreshRoomObjective();
     this.syncWallState();
   }
@@ -483,6 +576,167 @@ export class ArchiveScene extends Phaser.Scene {
       kind: "door",
       onInteract: () => this.useGoldenRuleGate()
     });
+  }
+
+  private renderHintRoom(room: ArchiveRoom) {
+    this.drawBookcase(48, 78, 42, 54);
+    this.drawBookcase(208, 78, 42, 54);
+    this.drawWallMap(128, 58, room.id);
+    const lines = room.id === "A3"
+      ? ["THE BOX WITHOUT", "A NUMBER HOLDS", "NO PROVENANCE."]
+      : ["GREEN IS OPEN.", "RED HAS TEETH.", "READ THE GATE."];
+    this.track(addTerminalPanel(this, 128, 112, ["ARCHIVE COLLEAGUE", ...lines], PALETTE.goldStamp));
+    this.drawDocumentStack(88, 166, true);
+    this.drawRubyVolumeStack(178, 166, 2);
+    this.interactables.push({
+      id: `${room.id}-suspicious-shelf`,
+      label: room.id === "A3" ? "Suspicious shelf" : "Cryptic hint shelf",
+      x: room.id === "A3" ? 48 : 208,
+      y: 78,
+      radius: 34,
+      kind: "document",
+      onInteract: () => {
+        if (room.id === "A3") this.revealSecretRoom("C3", "A shelf slides aside. Hidden Source Cache revealed.");
+        else this.dialog.show("MARCUS", ["GREEN IS OPEN.", "RED HAS TEETH."]);
+      }
+    });
+  }
+
+  private renderPuzzleRoom(room: ArchiveRoom) {
+    this.drawDesk(128, 128, room.id === "C1" ? "CRACK" : "DATE");
+    this.drawBookcase(38, 90, 30, 56);
+    this.drawBookcase(218, 90, 30, 56);
+    if (room.id === "C1") {
+      this.track(this.add.rectangle(128, 169, 54, 28, color(PALETTE.stoneDark)).setStrokeStyle(2, color(PALETTE.buckramHighlight)).setDepth(82));
+      this.track(this.add.rectangle(124, 162, 2, 24, color(PALETTE.black), 0.72).setAngle(18).setDepth(83));
+      this.track(this.add.text(128, 159, "CRACKED\nSOURCE WALL", {
+        fontFamily: "monospace",
+        fontSize: "6px",
+        color: PALETTE.creamPaper,
+        align: "center"
+      }).setOrigin(0.5).setDepth(84));
+      this.addRoomEnemy("hold-door");
+      this.interactables.push({
+        id: "cracked-source-wall",
+        label: "Cracked source-note wall",
+        x: 128,
+        y: 164,
+        radius: 34,
+        kind: "door",
+        onInteract: () => {
+          if (!hasProcessItem("citation_stamp")) {
+            this.dialog.show("CRACKED WALL", "A citation stamp fits the crack, but you do not carry one yet.");
+            setLatestMessage("Citation Stamp required.");
+            return;
+          }
+          this.revealSecretRoom("D2", "Citation stamp opens a hidden reliability well.");
+          this.clearEnemyById("hold-door", "HOLD cleared by citation stamp on the cracked wall.");
+        }
+      });
+      return;
+    }
+
+    this.track(this.add.image(118, 126, "proof-page").setDepth(86));
+    this.track(this.add.text(148, 118, "1947\n1974", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.classNetRed,
+      align: "center",
+      backgroundColor: PALETTE.black
+    }).setOrigin(0.5).setDepth(87));
+    this.interactables.push({
+      id: "mismatched-date-tile",
+      label: "Mismatched date tile",
+      x: 148,
+      y: 126,
+      radius: 34,
+      kind: "document",
+      onInteract: () => {
+        if (!hasProcessItem("proof_lens")) {
+          this.dialog.show("DATE TILE", ["A tiny discrepancy glints.", "The proof lens would reveal the hidden seam."]);
+          setLatestMessage("Proof Lens required.");
+          return;
+        }
+        this.revealSecretRoom("D2", "Proof Lens reveals the Hidden Reliability Well.");
+      }
+    });
+  }
+
+  private renderSecretRoom(room: ArchiveRoom) {
+    this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
+    this.drawRubyVolumeStack(78, 130, 4);
+    this.drawDocumentStack(170, 118, true);
+    this.drawSparkle(128, 92, PALETTE.goldStamp);
+    this.track(addTerminalPanel(this, 128, 62, [
+      room.id === "C3" ? "HIDDEN CACHE" : "RELIABILITY WELL",
+      "NOT ON FIRST MAP",
+      "FOUND BY READING",
+      "NOT BY GUESSING"
+    ], PALETTE.goldStamp));
+    this.interactables.push({
+      id: `${room.id}-secret-reward`,
+      label: room.id === "C3" ? "Lore card" : "Reliability refill",
+      x: 128,
+      y: 132,
+      radius: 42,
+      kind: "document",
+      onInteract: () => {
+        const key = `secret-${room.id}`;
+        if (this.collected.has(key)) {
+          this.dialog.show("SECRET", "This hidden room has already yielded its clue.");
+          return;
+        }
+        this.collected.add(key);
+        addDocumentPoints(room.id === "C3" ? 10 : 6, room.id === "C3" ? "hidden source cache" : "hidden reliability well");
+        if (room.id === "D2") adjustReliability(8, "hidden reliability refill");
+        else addVolumeFragment("Hidden Cache Fragment");
+        retroAudio.confirm();
+        this.dialog.show("SECRET", room.id === "C3" ? "A cover fragment was filed where only a careful reader would look." : "The well restores confidence because the check was physical.");
+      }
+    });
+  }
+
+  private renderRewardRoom() {
+    this.drawRubyVolumeStack(128, 116, 5);
+    this.track(this.add.image(128, 88, "citation-stamp").setDepth(110));
+    this.track(this.add.rectangle(128, 150, 100, 26, color(PALETTE.black), 0.88).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(111));
+    this.track(this.add.text(128, 142, "STAMP REWARD ROOM\nSOURCE STAMP: HUMAN VERIFIED", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp,
+      align: "center"
+    }).setOrigin(0.5).setDepth(112));
+  }
+
+  private renderBossGateRoom() {
+    this.drawGoldenRuleGate();
+    this.track(addTerminalPanel(this, 128, 68, [
+      "DANN-E QUEUE",
+      "BOSS GATE",
+      "STATECHAT CHECKLIST",
+      "HUMAN OPENS"
+    ], PALETTE.classNetRed));
+    this.addRoomEnemy("danne-queue");
+    this.interactables.push({
+      id: "boss-golden-rule-gate",
+      label: "Golden Rule boss gate",
+      x: 128,
+      y: 199,
+      radius: 34,
+      kind: "door",
+      onInteract: () => this.useGoldenRuleGate()
+    });
+  }
+
+  private revealSecretRoom(roomId: ArchiveRoomId, message: string) {
+    if (!ARCHIVE_ROOMS[roomId] || ARCHIVE_ROOMS[roomId].roomType !== "secret") return;
+    this.revealedSecretIds.add(roomId);
+    addDocumentPoints(3, `${roomId} secret revealed`);
+    setLatestMessage(message);
+    retroAudio.confirm();
+    this.dialog.show("SECRET", message);
+    this.updateVisitedMinimap();
+    this.syncRoomTraversalState();
   }
 
   private drawGoldenRuleGate() {
@@ -649,6 +903,21 @@ export class ArchiveScene extends Phaser.Scene {
     if (definition.type === "WAIT") {
       this.agencyTimerResolved = true;
       this.clearEnemy(definition, wall, "WAIT cleared after agency response timer resolution.");
+      return;
+    }
+
+    if (definition.type === "HOLD") {
+      if (hasProcessItem("citation_stamp")) {
+        this.revealSecretRoom("D2", "Citation stamp opens a hidden reliability well.");
+        this.clearEnemy(definition, wall, "HOLD cleared by citation stamp on the cracked wall.");
+        return;
+      }
+      retroAudio.warning();
+      this.dialog.show("HOLD", [
+        "This wall holds a cracked source-note seam.",
+        "Use the citation stamp after provenance is verified."
+      ]);
+      setLatestMessage("HOLD needs Citation Stamp.");
       return;
     }
 
@@ -1035,20 +1304,40 @@ export class ArchiveScene extends Phaser.Scene {
       return false;
     }
 
-    if (this.currentRoomId === "A2" && direction === "south" && this.activeEnemyWalls.has("firewall-door") && !this.networkRoutingResolved) {
-      setLatestMessage("WRONG NETWORK");
-      setObjective("Use correct OpenNet/ClassNet routing to clear FIREWALL.");
-      this.exitCooldownUntil = this.time.now + 500;
-      this.player.setPosition(128, 208);
-      return false;
-    }
-
-    const target = ARCHIVE_ROOMS[this.currentRoomId].exits[direction];
+    const currentRoom = ARCHIVE_ROOMS[this.currentRoomId];
+    const target = currentRoom.exits[direction];
     if (!target) {
       setLatestMessage(`No ${direction} route from room ${this.currentRoomId}`);
       this.exitCooldownUntil = this.time.now + 360;
       return false;
     }
+
+    const targetRoom = ARCHIVE_ROOMS[target];
+    if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) {
+      setLatestMessage("A hidden wall has not been revealed.");
+      setObjective("Find a secret trigger before entering that room.");
+      this.exitCooldownUntil = this.time.now + 500;
+      this.player.setPosition(position.x, position.y);
+      return false;
+    }
+
+    const requiredItem = currentRoom.requiredItems?.[direction];
+    if (requiredItem && !hasProcessItem(requiredItem)) {
+      const lockLabel = currentRoom.lockedExits?.[direction] ?? "locked door";
+      setLatestMessage(`${lockLabel} requires ${requiredItem.replace(/_/g, " ").toUpperCase()}.`);
+      setObjective(`Use the required item to open ${lockLabel}.`);
+      this.exitCooldownUntil = this.time.now + 500;
+      const push = direction === "north"
+        ? { x: position.x, y: PLAY_BOUNDS.top + 18 }
+        : direction === "south"
+          ? { x: position.x, y: PLAY_BOUNDS.bottom - 18 }
+          : direction === "west"
+            ? { x: PLAY_BOUNDS.left + 18, y: position.y }
+            : { x: PLAY_BOUNDS.right - 18, y: position.y };
+      this.player.setPosition(push.x, push.y);
+      return false;
+    }
+
     this.enterRoom(target, EXIT_SPAWNS[direction]);
     return true;
   }
@@ -1081,18 +1370,27 @@ export class ArchiveScene extends Phaser.Scene {
     setRoomTraversalState({
       currentRoomId: room.id,
       roomTitle: room.title,
+      roomType: room.roomType,
       visitedRoomIds: [...this.visitedRoomIds],
-      exits: room.exits
+      revealedRoomIds: [
+        ...Object.values(ARCHIVE_ROOMS)
+          .filter((candidate) => candidate.roomType !== "secret")
+          .map((candidate) => candidate.id),
+        ...this.revealedSecretIds
+      ],
+      exits: room.exits,
+      lockedExits: room.lockedExits,
+      requiredItems: room.requiredItems
     });
   }
 
   private drawVisitedMinimap() {
-    this.add.rectangle(26, 16, 42, 20, color(PALETTE.black), 0.35).setDepth(878);
+    this.add.rectangle(26, 16, 42, 27, color(PALETTE.black), 0.35).setDepth(878);
     for (const room of Object.values(ARCHIVE_ROOMS)) {
-      const cell = this.add.rectangle(18 + room.grid.x * 14, 12 + room.grid.y * 8, 10, 6, color(PALETTE.black))
+      const cell = this.add.rectangle(14 + room.grid.x * 12, 8 + room.grid.y * 6, 8, 5, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.stoneLight))
         .setDepth(879);
-      const label = this.add.text(18 + room.grid.x * 14, 9 + room.grid.y * 8, "", {
+      const label = this.add.text(14 + room.grid.x * 12, 5 + room.grid.y * 6, "", {
         fontFamily: "monospace",
         fontSize: "4px",
         color: PALETTE.black
@@ -1105,18 +1403,29 @@ export class ArchiveScene extends Phaser.Scene {
   private updateVisitedMinimap() {
     for (const room of Object.values(ARCHIVE_ROOMS)) {
       const visited = this.visitedRoomIds.has(room.id);
+      const revealed = room.roomType !== "secret" || this.revealedSecretIds.has(room.id) || visited;
       const current = room.id === this.currentRoomId;
-      this.mapCells.get(room.id)?.setFillStyle(color(current ? PALETTE.goldStamp : visited ? PALETTE.stoneLight : PALETTE.black));
-      this.mapLabels.get(room.id)?.setText(visited ? room.id : "").setColor(current ? PALETTE.black : PALETTE.shadowNavy);
+      this.mapCells.get(room.id)?.setFillStyle(color(current ? PALETTE.goldStamp : visited ? PALETTE.stoneLight : revealed ? PALETTE.stoneDark : PALETTE.black));
+      this.mapLabels.get(room.id)?.setText(visited ? room.id : revealed && room.roomType === "secret" ? "?" : "").setColor(current ? PALETTE.black : PALETTE.shadowNavy);
     }
   }
 
   private drawRoomExits(room: ArchiveRoom) {
     const exits = room.exits;
-    this.drawGate("north", !!exits.north);
-    this.drawGate("south", !!exits.south);
-    this.drawGate("west", !!exits.west);
-    this.drawGate("east", !!exits.east);
+    (["north", "south", "west", "east"] as Direction[]).forEach((direction) => {
+      const hasExit = !!exits[direction];
+      this.drawGate(direction, hasExit);
+      if (hasExit && !this.exitIsOpen(room, direction)) this.drawLockSeal(direction, room.requiredItems?.[direction]);
+    });
+  }
+
+  private exitIsOpen(room: ArchiveRoom, direction: Direction) {
+    const target = room.exits[direction];
+    if (!target) return false;
+    const targetRoom = ARCHIVE_ROOMS[target];
+    if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) return false;
+    const requiredItem = room.requiredItems?.[direction];
+    return !requiredItem || hasProcessItem(requiredItem);
   }
 
   private drawGate(direction: Direction, open: boolean) {
@@ -1139,6 +1448,23 @@ export class ArchiveScene extends Phaser.Scene {
       this.track(this.add.rectangle(243, 120, 2, 26, color(accent)).setDepth(62));
       if (!open) this.addSolid(240, 104, 16, 32);
     }
+  }
+
+  private drawLockSeal(direction: Direction, requiredItem?: ProcessItemId) {
+    const label = requiredItem ? requiredItem.split("_")[0].slice(0, 4).toUpperCase() : "LOCK";
+    const positions: Record<Direction, { x: number; y: number }> = {
+      north: { x: 128, y: 45 },
+      south: { x: 128, y: 211 },
+      west: { x: 18, y: 120 },
+      east: { x: 238, y: 120 }
+    };
+    const { x, y } = positions[direction];
+    this.track(this.add.rectangle(x, y, 22, 10, color(PALETTE.black), 0.9).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(170));
+    this.track(this.add.text(x, y - 3, label, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.classNetRed
+    }).setOrigin(0.5, 0).setDepth(171));
   }
 
   private drawBookcase(x: number, y: number, width = 34, height = 34) {

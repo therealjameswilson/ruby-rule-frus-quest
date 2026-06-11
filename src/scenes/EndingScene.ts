@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
-import { addProcessItem, gameState, setSceneState, setVisibleEntities } from "../game/state";
+import { addProcessItem, gameState, getFinalGateReadiness, setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 
@@ -25,6 +25,11 @@ export class EndingScene extends Phaser.Scene {
 
   create() {
     setSceneState("EndingScene", "ending", "Buckram Gate: published FRUS cover complete.");
+    const readiness = getFinalGateReadiness();
+    if (!readiness.ready) {
+      this.drawLockedGate(readiness);
+      return;
+    }
     addProcessItem("buckram_key");
     retroAudio.startMusic("EndingScene");
     retroAudio.ending();
@@ -132,6 +137,41 @@ export class EndingScene extends Phaser.Scene {
   private restart() {
     if (!this.canRestart) return;
     transitionTo(this, "TitleScene");
+  }
+
+  private drawLockedGate(readiness: ReturnType<typeof getFinalGateReadiness>) {
+    setLatestMessage("Buckram Gate locked: human readiness checklist incomplete.");
+    retroAudio.warning();
+    setVisibleEntities(["Buckram Gate", "StateChat readiness checklist"]);
+    this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
+    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
+    this.add.text(128, 18, "BUCKRAM GATE LOCKED", {
+      fontFamily: "monospace",
+      fontSize: "11px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5);
+    this.add.image(128, 82, "buckram-key").setDepth(30).setScale(2);
+    const lines = [
+      "STATECHAT READINESS CHECKLIST",
+      `MISSING STAMPS: ${readiness.missingStamps.length ? readiness.missingStamps.join(" ") : "NONE"}`,
+      `FRAGMENTS: ${readiness.fragmentsCollected}/${readiness.fragmentsNeeded}`,
+      `RELIABILITY: ${readiness.reliability}/${readiness.reliabilityMinimum}`,
+      "STATECHAT MAY NOT OPEN THE GATE.",
+      "HUMAN CERTIFICATION REQUIRED."
+    ];
+    this.add.rectangle(128, 152, 226, 78, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.terminalCyan));
+    lines.forEach((line, index) => {
+      this.add.text(20, 119 + index * 11, line, {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: index === 0 ? PALETTE.terminalCyan : PALETTE.creamPaper
+      });
+    });
+    this.time.delayedCall(350, () => {
+      this.canRestart = true;
+    });
+    this.input.keyboard?.on("keydown-ENTER", () => this.restart());
+    this.input.keyboard?.on("keydown-SPACE", () => this.restart());
   }
 
   private drawAssembledPrize(x: number, y: number, scale: number) {

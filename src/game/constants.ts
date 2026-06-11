@@ -306,6 +306,184 @@ export const AREA_REGISTRY = [
 
 export type AreaId = (typeof AREA_REGISTRY)[number]["id"];
 
+export type Direction = "north" | "south" | "east" | "west";
+export type RoomType = "normal" | "hint" | "puzzle" | "reward" | "boss" | "secret";
+
+export interface RoomDefinition {
+  id: string;
+  area: AreaId;
+  title: string;
+  grid: { x: number; y: number };
+  exits: Partial<Record<Direction, string>>;
+  lockedExits?: Partial<Record<Direction, string>>;
+  requiredItems?: Partial<Record<Direction, ProcessItemId>>;
+  roomType: RoomType;
+}
+
+export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
+  {
+    id: "O1",
+    area: "office_hub",
+    title: "Office Hub",
+    grid: { x: -1, y: 0 },
+    exits: { east: "A1" },
+    lockedExits: { east: "Golden Rule door" },
+    roomType: "hint"
+  },
+  {
+    id: "A1",
+    area: "archive_cavern",
+    title: "Source Entry",
+    grid: { x: 0, y: 0 },
+    exits: { east: "A2", south: "B1" },
+    roomType: "normal"
+  },
+  {
+    id: "A2",
+    area: "archive_cavern",
+    title: "OpenNet Annex",
+    grid: { x: 1, y: 0 },
+    exits: { west: "A1", east: "A3", south: "B2" },
+    lockedExits: { south: "ClassNet seal" },
+    requiredItems: { south: "clearance_token" },
+    roomType: "puzzle"
+  },
+  {
+    id: "A3",
+    area: "archive_cavern",
+    title: "Hint Alcove",
+    grid: { x: 2, y: 0 },
+    exits: { west: "A2", south: "B3" },
+    roomType: "hint"
+  },
+  {
+    id: "B1",
+    area: "archive_cavern",
+    title: "Referral Stacks",
+    grid: { x: 0, y: 1 },
+    exits: { north: "A1", east: "B2", south: "C1" },
+    lockedExits: { east: "Referral gate" },
+    requiredItems: { east: "concurrence_slip" },
+    roomType: "puzzle"
+  },
+  {
+    id: "B2",
+    area: "archive_cavern",
+    title: "Proof Chamber",
+    grid: { x: 1, y: 1 },
+    exits: { north: "A2", west: "B1", east: "B3", south: "C2" },
+    lockedExits: { south: "Review folder gate" },
+    requiredItems: { south: "review_folder" },
+    roomType: "normal"
+  },
+  {
+    id: "B3",
+    area: "archive_cavern",
+    title: "Marcus Hint Room",
+    grid: { x: 2, y: 1 },
+    exits: { north: "A3", west: "B2", south: "C3" },
+    roomType: "hint"
+  },
+  {
+    id: "C1",
+    area: "archive_cavern",
+    title: "Cracked Wall",
+    grid: { x: 0, y: 2 },
+    exits: { north: "B1", east: "C2", south: "D1" },
+    roomType: "puzzle"
+  },
+  {
+    id: "C2",
+    area: "archive_cavern",
+    title: "Date Mismatch",
+    grid: { x: 1, y: 2 },
+    exits: { north: "B2", west: "C1", east: "C3", south: "D2" },
+    lockedExits: { east: "Silent-read lens mark" },
+    requiredItems: { east: "proof_lens" },
+    roomType: "puzzle"
+  },
+  {
+    id: "C3",
+    area: "archive_cavern",
+    title: "Hidden Source Cache",
+    grid: { x: 2, y: 2 },
+    exits: { north: "B3", west: "C2", south: "D3" },
+    roomType: "secret"
+  },
+  {
+    id: "D1",
+    area: "archive_cavern",
+    title: "Stamp Reward Room",
+    grid: { x: 0, y: 3 },
+    exits: { north: "C1", east: "D2" },
+    roomType: "reward"
+  },
+  {
+    id: "D2",
+    area: "archive_cavern",
+    title: "Hidden Reliability Well",
+    grid: { x: 1, y: 3 },
+    exits: { north: "C2", west: "D1", east: "D3" },
+    lockedExits: { east: "Buckram gate lock" },
+    requiredItems: { east: "buckram_key" },
+    roomType: "secret"
+  },
+  {
+    id: "D3",
+    area: "archive_cavern",
+    title: "Queue Boss Gate",
+    grid: { x: 2, y: 3 },
+    exits: { north: "C3", west: "D2" },
+    roomType: "boss"
+  },
+  {
+    id: "N1",
+    area: "two_networks",
+    title: "Network Split",
+    grid: { x: 4, y: 0 },
+    exits: { east: "N2" },
+    lockedExits: { east: "ClassNet vault door" },
+    requiredItems: { east: "clearance_token" },
+    roomType: "puzzle"
+  },
+  {
+    id: "N2",
+    area: "two_networks",
+    title: "ClassNet Vault",
+    grid: { x: 5, y: 0 },
+    exits: { west: "N1" },
+    roomType: "reward"
+  },
+  {
+    id: "R1",
+    area: "referral_vault",
+    title: "Equity Gate",
+    grid: { x: 4, y: 1 },
+    exits: { east: "R2" },
+    lockedExits: { east: "Referral gate" },
+    requiredItems: { east: "concurrence_slip" },
+    roomType: "reward"
+  },
+  {
+    id: "R2",
+    area: "referral_vault",
+    title: "Concurrence Chamber",
+    grid: { x: 5, y: 1 },
+    exits: { west: "R1" },
+    roomType: "reward"
+  },
+  {
+    id: "G1",
+    area: "buckram_gate",
+    title: "Buckram Gate",
+    grid: { x: 4, y: 3 },
+    exits: {},
+    lockedExits: { north: "Publication gate" },
+    requiredItems: { north: "buckram_key" },
+    roomType: "boss"
+  }
+] as const;
+
 export const SCENE_ORDER = [
   "TitleScene",
   "CharacterCreateScene",

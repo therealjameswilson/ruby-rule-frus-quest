@@ -1,5 +1,5 @@
-import { AREA_REGISTRY, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
-import type { AreaId, ProcessItemId, ProcessStampId } from "./constants";
+import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
+import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import type { ChoiceOption, GameMode, PlayerProfile, Position } from "./types";
 
 interface VisibleThreat {
@@ -24,6 +24,7 @@ interface GameState {
   activeDialog: { speaker: string; text: string } | null;
   currentChoice: { title: string; options: ChoiceOption[] } | null;
   player: Position;
+  playerFacing: Direction;
   nearestInteractable: string | null;
   visibleEntities: string[];
   visibleThreats: VisibleThreat[];
@@ -56,8 +57,12 @@ export interface PhysicalVerificationState {
 export interface RoomTraversalState {
   currentRoomId: string;
   roomTitle: string;
+  roomType?: RoomType;
   visitedRoomIds: string[];
-  exits: Partial<Record<"north" | "south" | "west" | "east", string>>;
+  revealedRoomIds?: string[];
+  exits: Partial<Record<Direction, string>>;
+  lockedExits?: Partial<Record<Direction, string>>;
+  requiredItems?: Partial<Record<Direction, string>>;
 }
 
 export const gameState: GameState = {
@@ -73,6 +78,7 @@ export const gameState: GameState = {
   activeDialog: null,
   currentChoice: null,
   player: { x: 128, y: 160 },
+  playerFacing: "south",
   nearestInteractable: null,
   visibleEntities: [],
   visibleThreats: [],
@@ -105,6 +111,7 @@ export function resetGameState() {
   gameState.activeDialog = null;
   gameState.currentChoice = null;
   gameState.player = { x: 128, y: 160 };
+  gameState.playerFacing = "south";
   gameState.nearestInteractable = null;
   gameState.visibleEntities = [];
   gameState.visibleThreats = [];
@@ -158,7 +165,8 @@ export function setRoomTraversalState(state: RoomTraversalState | null) {
   gameState.roomTraversal = state
     ? {
         ...state,
-        visitedRoomIds: [...state.visitedRoomIds]
+        visitedRoomIds: [...state.visitedRoomIds],
+        revealedRoomIds: [...(state.revealedRoomIds ?? state.visitedRoomIds)]
       }
     : null;
 }
@@ -168,6 +176,10 @@ export function setPlayerPosition(position: Position) {
     x: Math.round(position.x),
     y: Math.round(position.y)
   };
+}
+
+export function setPlayerFacing(direction: Direction) {
+  gameState.playerFacing = direction;
 }
 
 export function addInventoryItem(label: string) {
@@ -248,6 +260,59 @@ export function getAreaProgressReadout() {
 
 export function getCurrentAreaReadout() {
   return getAreaProgressReadout().find((area) => area.active) ?? getAreaProgressReadout()[0];
+}
+
+export function getRoomGraphReadout() {
+  const visitedRoomIds = new Set(gameState.roomTraversal?.visitedRoomIds ?? []);
+  const revealedRoomIds = new Set(gameState.roomTraversal?.revealedRoomIds ?? []);
+  if (gameState.currentScene === "OfficeScene") {
+    visitedRoomIds.add("O1");
+    revealedRoomIds.add("O1");
+  }
+  if (gameState.currentScene === "NetworkScene") {
+    visitedRoomIds.add("N1");
+    revealedRoomIds.add("N1");
+  }
+  if (gameState.currentScene === "ReferralVaultScene") {
+    visitedRoomIds.add("R1");
+    revealedRoomIds.add("R1");
+  }
+  if (gameState.currentScene === "EndingScene") {
+    visitedRoomIds.add("G1");
+    revealedRoomIds.add("G1");
+  }
+  return FRUS_ROOM_GRAPH.map((room) => ({
+    id: room.id,
+    area: room.area,
+    title: room.title,
+    exits: room.exits,
+    lockedExits: room.lockedExits ?? {},
+    requiredItems: room.requiredItems ?? {},
+    roomType: room.roomType,
+    visited: visitedRoomIds.has(room.id),
+    revealed: revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret"
+  }));
+}
+
+export function getFinalGateReadiness() {
+  const requiredStamps: ProcessStampId[] = ["rule", "archive", "network", "referral", "proof"];
+  const missingStamps = requiredStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const fragmentsNeeded = 5;
+  const reliabilityMinimum = 70;
+  const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
+  const reliabilityReady = gameState.reliability >= reliabilityMinimum;
+  return {
+    requiredStamps,
+    missingStamps,
+    fragmentsCollected: gameState.volumeFragments.length,
+    fragmentsNeeded,
+    missingFragments,
+    reliability: gameState.reliability,
+    reliabilityMinimum,
+    reliabilityReady,
+    stateChatMayOpenGate: false,
+    ready: missingStamps.length === 0 && missingFragments === 0 && reliabilityReady
+  };
 }
 
 export function addDocumentPoints(amount: number, reason: string) {
@@ -339,6 +404,13 @@ function stampReadout() {
   return earned.length ? earned.join(" ") : "NONE";
 }
 
+function selectedItemReadout() {
+  const held = compactHeldItem(gameState.physicalVerification?.carriedItem ?? gameState.heldItem);
+  if (held !== "NONE") return held;
+  const acquired = getProcessItemReadout().filter((item) => item.acquired);
+  return acquired.at(-1)?.shortLabel ?? "NONE";
+}
+
 export function getProcessItemReadout() {
   return [...ITEM_REGISTRY].sort((a, b) => a.hudSlot - b.hudSlot).map((item) => {
     const acquired = hasProcessItem(item.id);
@@ -361,14 +433,14 @@ export function getProcessItemReadout() {
 }
 
 export function getProductionStatusReadout() {
-  const carriedItem = gameState.physicalVerification?.carriedItem ?? gameState.heldItem;
   const role = compactHudText(gameState.playerProfile.roleLabel, 12);
-  const held = compactHeldItem(carriedItem);
-  const objective = compactHudText(gameState.objective || "VERIFY", 42);
+  const selectedItem = selectedItemReadout();
+  const room = gameState.roomTraversal?.currentRoomId ?? getCurrentAreaReadout().displayName.toUpperCase();
+  const objective = compactHudText(gameState.objective || "VERIFY", 32);
   return [
-    `ROLE: ${role.padEnd(12, " ")} RELIABILITY ${reliabilityBlocks()}`,
-    `HELD: ${held.padEnd(15, " ")} STAMPS: ${stampReadout()}`,
-    `OBJECTIVE: ${objective}`
+    `ROLE ${role.padEnd(12, " ")} REL ${reliabilityBlocks()} DOC ${String(gameState.documentPoints).padStart(2, "0")}`,
+    `ITEM ${selectedItem.padEnd(10, " ")} STAMPS ${stampReadout()}`,
+    `MAP ${compactHudText(room, 8).padEnd(8, " ")} FRAG ${gameState.volumeFragments.length}/5 ${objective}`
   ];
 }
 
@@ -454,6 +526,7 @@ export function renderGameToText() {
       processItems: getProcessItemReadout(),
       areaProgress: getAreaProgressReadout(),
       currentArea: getCurrentAreaReadout(),
+      roomGraph: getRoomGraphReadout(),
       volumeFragments: gameState.volumeFragments,
       frusPrize: {
         cover: "ruby FRUS cover",
@@ -461,6 +534,7 @@ export function renderGameToText() {
         piecesTotal: 5,
         assembled: gameState.volumeFragments.length >= 5
       },
+      finalGate: getFinalGateReadiness(),
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,
       physicalVerification: gameState.physicalVerification,
@@ -468,6 +542,7 @@ export function renderGameToText() {
       inventory: gameState.inventory,
       latestMessage: gameState.latestMessage,
       player: gameState.player,
+      playerFacing: gameState.playerFacing,
       nearestInteractable: gameState.nearestInteractable,
       visibleEntities: gameState.visibleEntities,
       visibleThreats: gameState.visibleThreats,

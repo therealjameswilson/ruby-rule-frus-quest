@@ -198,9 +198,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - moved Red Pencil and Proof Lens from pre-granted Silent Read tools into earned dungeon rewards
   - exposed `areaProgress` and `currentArea` through `render_game_to_text()` and added a compact quest-route readout to the inventory overlay
   - verified `npm run build`, required web-game client OfficeScene screenshot/state, and a direct Playwright probe covering route order, direct-scene seeding, reward gating, and Buckram Gate completion
+- Refined the NES-style dungeon grammar:
+  - added a shared FRUS room graph with stable room IDs, room types, locked exits, required items, secret rooms, and Buckram Gate metadata
+  - expanded Archive Cavern into a 12-room one-screen dungeon with hint rooms, puzzle chambers, reward rooms, two hidden rooms, and a DANN-E Queue boss gate
+  - updated player movement so keyboard and touch input are four-direction-only, prefer the newest held direction, and expose a facing direction in text state
+  - made FIREWALL a horizontal patrol and added a HOLD doorway blocker, while preserving existing wall enemy identities
+  - changed the production HUD toward NES grammar with role, reliability, document points, selected item, stamps, room/map, fragments, and objective
+  - added final Buckram Gate readiness checks for required stamps, five FRUS fragments, and reliability, with StateChat limited to a checklist
+  - verified `git diff --check`, `npm run build`, the required web-game client smoke, Archive screenshot/state, and direct EndingScene readiness screenshot/state
 
 ## TODO
 
 - Improve full end-to-end traversal coverage from TitleScene to EndingScene; direct scene QA now covers the later scenes reliably.
 - Consider a later non-combat `B` item such as a source-note stamp or routing card for clearing stonewalls at range.
-- Add a dedicated locked-room puzzle chamber that requires a clearance token or concurrence slip before entering the Referral Vault.
+- Add full manual route QA for every new Archive Cavern room once the public build is deployed.

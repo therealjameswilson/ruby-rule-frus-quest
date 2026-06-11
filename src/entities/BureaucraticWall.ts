@@ -7,7 +7,7 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-export type BureaucraticWallBehavior = "slow-chase" | "wander" | "block" | "freeze" | "splitter" | "push";
+export type BureaucraticWallBehavior = "slow-chase" | "wander" | "horizontal-patrol" | "block" | "freeze" | "splitter" | "push";
 
 interface BureaucraticWallOptions {
   behavior?: BureaucraticWallBehavior;
@@ -75,7 +75,10 @@ export class BureaucraticWall {
     let desiredX = homeX;
     let desiredY = homeY;
 
-    if (this.behavior === "wander") {
+    if (this.behavior === "horizontal-patrol") {
+      desiredX = this.x + Math.sin((timeMs + this.wobbleOffset) / 520) * 28;
+      desiredY = this.y;
+    } else if (this.behavior === "wander") {
       if (timeMs >= this.retargetAt) {
         this.retargetAt = timeMs + Phaser.Math.Between(900, 1600);
         this.wanderTarget = {
@@ -96,10 +99,10 @@ export class BureaucraticWall {
         desiredY += (dy / distance) * Math.max(8, pressure - 3);
       }
     }
-    const maxDrift = this.behavior === "wander" ? 34 : this.behavior === "block" || this.behavior === "freeze" || this.behavior === "splitter" ? 3 : 18;
+    const maxDrift = this.behavior === "wander" || this.behavior === "horizontal-patrol" ? 34 : this.behavior === "block" || this.behavior === "freeze" || this.behavior === "splitter" ? 3 : 18;
     desiredX = Phaser.Math.Clamp(desiredX, this.x - maxDrift, this.x + maxDrift);
     desiredY = Phaser.Math.Clamp(desiredY, this.y - maxDrift, this.y + maxDrift);
-    const baseSpeed = this.behavior === "slow-chase" ? 10 : this.behavior === "wander" ? 16 : this.behavior === "push" ? 18 : 7;
+    const baseSpeed = this.behavior === "slow-chase" ? 10 : this.behavior === "wander" ? 16 : this.behavior === "horizontal-patrol" ? 20 : this.behavior === "push" ? 18 : 7;
     const speed = (timeMs < this.alertUntil ? 32 : baseSpeed) * (deltaMs / 1000);
     this.currentX = Phaser.Math.Linear(this.currentX, desiredX, Phaser.Math.Clamp(speed, 0.02, 0.22));
     this.currentY = Phaser.Math.Linear(this.currentY, desiredY, Phaser.Math.Clamp(speed, 0.02, 0.22));
