@@ -179,7 +179,7 @@ export class GuideScene extends Phaser.Scene {
     addDocumentPoints(10, "front matter fragment secured");
     retroAudio.stamp();
     setObjective("Archive Cavern: open the Verification Gate.");
-    this.gateGlow.setFillStyle(color(PALETTE.openNetGreen), 0.32);
+    this.gateGlow.setFillStyle(color(PALETTE.openNetGreen));
     this.dialog.show("FRUS FRAGMENT", "The ruby cover gains its title plate because the chain is visible.");
     this.syncVisibleState();
   }
@@ -231,7 +231,7 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private drawAntagonistPlaque(x: number, y: number, label: string, accent: string) {
-    this.add.rectangle(x, y, 50, 26, color(PALETTE.black), 0.92).setStrokeStyle(2, color(accent)).setDepth(60);
+    this.add.rectangle(x, y, 50, 26, color(PALETTE.black)).setStrokeStyle(2, color(accent)).setDepth(60);
     this.add.text(x, y - 7, label, {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -241,8 +241,8 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private drawVerificationGate() {
-    this.gateGlow = this.add.rectangle(128, 198, 54, 24, color(PALETTE.classNetRed), 0.18).setDepth(55);
-    this.add.rectangle(128, 198, 54, 24, color(PALETTE.black), 0.82).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(56);
+    this.gateGlow = this.add.rectangle(128, 198, 54, 24, color(PALETTE.classNetRed)).setDepth(55);
+    this.add.rectangle(128, 198, 54, 24, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(56);
     this.add.text(128, 190, "VERIFY\nGATE", {
       fontFamily: "monospace",
       fontSize: "7px",

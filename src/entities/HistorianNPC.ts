@@ -3,6 +3,10 @@ import { CHARACTERS, PALETTE } from "../game/constants";
 import type { CharacterId } from "../game/types";
 import { snapPixel } from "../systems/pixelPerfect";
 
+function color(hex: string) {
+  return Phaser.Display.Color.HexStringToColor(hex).color;
+}
+
 export class HistorianNPC {
   readonly sprite: Phaser.GameObjects.Image;
   readonly label: Phaser.GameObjects.Text;
@@ -12,7 +16,7 @@ export class HistorianNPC {
   constructor(scene: Phaser.Scene, id: CharacterId, x: number, y: number) {
     const character = CHARACTERS[id];
     this.id = id;
-    this.shadow = scene.add.ellipse(snapPixel(x), snapPixel(y + 8), 12, 4, 0x050505, 0.28).setDepth(snapPixel(y - 1));
+    this.shadow = scene.add.ellipse(snapPixel(x), snapPixel(y + 8), 12, 4, color(PALETTE.black)).setDepth(snapPixel(y - 1));
     this.sprite = scene.add.image(snapPixel(x), snapPixel(y), id).setDepth(snapPixel(y));
     this.label = scene.add
       .text(snapPixel(x), snapPixel(y + 12), character.displayName.toUpperCase(), {
@@ -36,15 +40,6 @@ export class HistorianNPC {
         this.sprite.y = snapPixel(this.sprite.y);
         this.label.y = snapPixel(this.label.y);
       }
-    });
-    scene.tweens.add({
-      targets: this.shadow,
-      alpha: 0.2,
-      duration: 520,
-      delay,
-      yoyo: true,
-      repeat: -1,
-      ease: "Stepped"
     });
   }
 

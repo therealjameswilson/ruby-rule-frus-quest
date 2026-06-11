@@ -6,6 +6,10 @@ import { retroAudio } from "./audio";
 
 type ChoiceCallback = (option: ChoiceOption) => void;
 
+function color(hex: string) {
+  return Phaser.Display.Color.HexStringToColor(hex).color;
+}
+
 export class ChoicePrompt {
   private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
@@ -16,8 +20,8 @@ export class ChoicePrompt {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    const box = scene.add.rectangle(128, 132, 238, 126, 0x050505, 0.97);
-    const border = scene.add.rectangle(128, 132, 238, 126).setStrokeStyle(2, 0x45f3ff);
+    const box = scene.add.rectangle(128, 132, 238, 126, color(PALETTE.black));
+    const border = scene.add.rectangle(128, 132, 238, 126).setStrokeStyle(2, color(PALETTE.terminalCyan));
     this.titleText = scene.add.text(16, 76, "", {
       fontFamily: "monospace",
       fontSize: "8px",
@@ -53,7 +57,7 @@ export class ChoicePrompt {
 
     options.forEach((option, index) => {
       const row = this.scene.add
-        .rectangle(128, 120 + index * 18, 216, 15, 0x050505, 0.01)
+        .rectangle(128, 120 + index * 18, 216, 15, color(PALETTE.black))
         .setInteractive({ useHandCursor: true })
         .on("pointerdown", () => this.choose(option.key));
       const optionText = this.scene.add

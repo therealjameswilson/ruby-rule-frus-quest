@@ -39,7 +39,7 @@ export function activateRoleAbility(scene: Phaser.Scene) {
   const abilityVisual = createAbilityVisual(scene);
 
   const banner = scene.add.container(128, 40).setDepth(1200);
-  const box = scene.add.rectangle(0, 0, 230, 34, color(PALETTE.black), 0.96).setStrokeStyle(2, color(PALETTE.goldStamp));
+  const box = scene.add.rectangle(0, 0, 230, 34, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp));
   const text = scene.add.text(0, -10, hint, {
     fontFamily: "monospace",
     fontSize: "7px",

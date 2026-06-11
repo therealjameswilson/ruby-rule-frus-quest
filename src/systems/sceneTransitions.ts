@@ -30,7 +30,7 @@ export function drawRoomFrame(scene: Phaser.Scene, title: string, accent: string
 }
 
 function drawAdventureHud(scene: Phaser.Scene, title: string, accent: string) {
-  scene.add.rectangle(GAME_WIDTH / 2, 16, GAME_WIDTH, 32, color(PALETTE.black), 0.96).setDepth(760);
+  scene.add.rectangle(GAME_WIDTH / 2, 16, GAME_WIDTH, 32, color(PALETTE.black)).setDepth(760);
   scene.add.rectangle(GAME_WIDTH / 2, 31, GAME_WIDTH, 2, color(PALETTE.buckramRed)).setDepth(761);
   scene.add.rectangle(26, 16, 42, 20, color(PALETTE.stoneGray)).setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(762);
   scene.add.rectangle(26, 16, 34, 12, color(PALETTE.stoneDark)).setDepth(763);
@@ -91,8 +91,8 @@ function drawDungeonWalls(scene: Phaser.Scene, accent: string) {
     drawStoneBlock(scene, 8, y, accent);
     drawStoneBlock(scene, GAME_WIDTH - 8, y, accent);
   }
-  scene.add.rectangle(128, 220, 30, 8, color(PALETTE.black), 0.82).setDepth(43);
-  scene.add.rectangle(128, 36, 30, 8, color(PALETTE.black), 0.82).setDepth(43);
+  scene.add.rectangle(128, 220, 30, 8, color(PALETTE.black)).setDepth(43);
+  scene.add.rectangle(128, 36, 30, 8, color(PALETTE.black)).setDepth(43);
 }
 
 function drawStoneBlock(scene: Phaser.Scene, x: number, y: number, accent: string) {
@@ -113,7 +113,7 @@ export function addObjectiveText(scene: Phaser.Scene) {
 }
 
 export function addTerminalPanel(scene: Phaser.Scene, x: number, y: number, lines: string[], border: string = PALETTE.terminalCyan) {
-  const box = scene.add.rectangle(x, y, 92, 70, color(PALETTE.black), 0.94).setStrokeStyle(2, color(border));
+  const box = scene.add.rectangle(x, y, 92, 70, color(PALETTE.black)).setStrokeStyle(2, color(border));
   const text = scene.add.text(x - 40, y - 27, lines.join("\n"), {
     fontFamily: "monospace",
     fontSize: "7px",

@@ -73,7 +73,7 @@ export class Player {
     this.scene = scene;
     this.logicalX = x;
     this.logicalY = y;
-    this.shadow = scene.add.ellipse(snapPixel(x), snapPixel(y + 8), 12, 4, 0x050505, 0.35).setDepth(snapPixel(y - 1));
+    this.shadow = scene.add.ellipse(snapPixel(x), snapPixel(y + 8), 12, 4, color(PALETTE.black)).setDepth(snapPixel(y - 1));
     this.sprite = scene.add.image(snapPixel(x), snapPixel(y), gameState.playerProfile.spriteKey).setDepth(snapPixel(y));
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);

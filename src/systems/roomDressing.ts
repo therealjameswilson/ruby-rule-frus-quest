@@ -38,7 +38,7 @@ export function addRubyVolumeStack(scene: Phaser.Scene, x: number, y: number, co
 }
 
 export function addWallMap(scene: Phaser.Scene, x: number, y: number, label = "MAP") {
-  scene.add.rectangle(x + 2, y + 3, 48, 30, color(PALETTE.black), 0.35).setDepth(y - 3);
+  scene.add.rectangle(x + 2, y + 3, 48, 30, color(PALETTE.black)).setDepth(y - 3);
   scene.add.rectangle(x, y, 48, 30, color(PALETTE.creamPaper)).setStrokeStyle(2, color(PALETTE.sepiaInk)).setDepth(y - 2);
   scene.add.rectangle(x - 16, y - 7, 12, 7, color(PALETTE.mapWater)).setDepth(y - 1);
   scene.add.rectangle(x - 2, y - 3, 18, 3, color(PALETTE.archiveAmber)).setDepth(y - 1);
@@ -86,7 +86,7 @@ export function addVaultBlocks(scene: Phaser.Scene) {
   for (let x = 18; x <= 238; x += 22) {
     scene.add.rectangle(x, 42, 14, 10, color(PALETTE.stoneGray)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(0);
   }
-  scene.add.rectangle(128, 193, 160, 12, color(PALETTE.black), 0.5).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(2);
+  scene.add.rectangle(128, 193, 160, 12, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(2);
   scene.add.text(128, 188, "VISIBLE WITHHOLDINGS ARE PART OF THE RECORD", {
     fontFamily: "monospace",
     fontSize: "6px",
@@ -109,6 +109,6 @@ export function addTinySparkle(scene: Phaser.Scene, x: number, y: number, tint: 
     scene.add.rectangle(-3, 0, 3, 1, color(tint)),
     scene.add.rectangle(3, 0, 3, 1, color(tint))
   ]);
-  scene.tweens.add({ targets: sparkle, alpha: 0.2, duration: 360, yoyo: true, repeat: -1, ease: "Stepped" });
+  scene.tweens.add({ targets: sparkle, y: y - 1, duration: 360, yoyo: true, repeat: -1, ease: "Stepped" });
   return sparkle;
 }

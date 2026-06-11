@@ -318,8 +318,6 @@ export class BootScene extends Phaser.Scene {
   private makeBureaucraticWallTextureIfMissing() {
     if (this.textures.exists("bureaucratic-wall")) return;
     const g = this.add.graphics();
-    g.fillStyle(color(PALETTE.black), 0);
-    g.fillRect(0, 0, 36, 32);
     g.fillStyle(color(PALETTE.stoneDark));
     g.fillRect(3, 6, 30, 22);
     g.fillStyle(color(PALETTE.stoneGray));
@@ -345,7 +343,7 @@ export class BootScene extends Phaser.Scene {
     g.fillRect(14, 22, 8, 2);
     g.fillRect(12, 23, 3, 1);
     g.fillRect(21, 23, 3, 1);
-    g.lineStyle(1, color(PALETTE.black), 0.65);
+    g.lineStyle(1, color(PALETTE.black));
     g.lineBetween(17, 5, 20, 23);
     g.generateTexture("bureaucratic-wall", 36, 32);
     g.destroy();
@@ -356,10 +354,10 @@ export class BootScene extends Phaser.Scene {
     const g = this.add.graphics();
     g.fillStyle(color(baseHex));
     g.fillRect(0, 0, 16, 16);
-    g.fillStyle(color(accentHex), 0.6);
+    g.fillStyle(color(accentHex));
     g.fillRect(0, 0, 16, 1);
     g.fillRect(0, 0, 1, 16);
-    g.fillStyle(color(PALETTE.black), 0.18);
+    g.fillStyle(color(PALETTE.black));
     g.fillRect(8, 8, 2, 2);
     g.generateTexture(key, 16, 16);
     g.destroy();

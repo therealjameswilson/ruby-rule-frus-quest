@@ -238,8 +238,8 @@ export class SilentReadScene extends Phaser.Scene {
 
   private drawWorkstations() {
     for (const station of WORKSTATIONS) {
-      this.add.rectangle(station.x, station.y + 1, 40, 18, color(PALETTE.black), 0.88).setDepth(150);
-      this.add.rectangle(station.x, station.y, 38, 16, color(PALETTE.deepRuby), 0.92).setStrokeStyle(2, color(station.accent)).setDepth(151);
+      this.add.rectangle(station.x, station.y + 1, 40, 18, color(PALETTE.black)).setDepth(150);
+      this.add.rectangle(station.x, station.y, 38, 16, color(PALETTE.deepRuby)).setStrokeStyle(2, color(station.accent)).setDepth(151);
       this.add.image(station.x - 11, station.y, station.texture).setDepth(152);
       this.add.rectangle(station.x + 9, station.y - 2, 13, 5, color(station.accent)).setDepth(153);
       this.add.rectangle(station.x + 9, station.y + 4, 13, 2, color(PALETTE.creamPaper)).setDepth(153);
@@ -249,7 +249,7 @@ export class SilentReadScene extends Phaser.Scene {
         color: station.accent
       }).setOrigin(0.5).setDepth(154);
     }
-    this.add.rectangle(this.outbox.x, this.outbox.y, 44, 16, color(PALETTE.black), 0.82).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(149);
+    this.add.rectangle(this.outbox.x, this.outbox.y, 44, 16, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(149);
     this.add.text(this.outbox.x, this.outbox.y + 12, "STATECHAT OUTBOX", {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -264,7 +264,7 @@ export class SilentReadScene extends Phaser.Scene {
       { x: 164, y: 72, key: "red-pencil", label: "PENCIL", color: PALETTE.buckramHighlight }
     ];
     for (const tool of tools) {
-      this.add.rectangle(tool.x, tool.y, 28, 22, color(PALETTE.black), 0.86).setStrokeStyle(1, color(tool.color)).setDepth(146);
+      this.add.rectangle(tool.x, tool.y, 28, 22, color(PALETTE.black)).setStrokeStyle(1, color(tool.color)).setDepth(146);
       this.add.image(tool.x, tool.y - 3, tool.key).setDepth(147);
       this.add.text(tool.x, tool.y + 9, tool.label, {
         fontFamily: "monospace",
@@ -440,10 +440,10 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private addVerificationMark(station: Workstation) {
-    const glow = this.add.rectangle(station.x, station.y - 18, 24, 4, color(PALETTE.terminalCyan), 0.92).setDepth(245);
+    const glow = this.add.rectangle(station.x, station.y - 18, 24, 4, color(PALETTE.terminalCyan)).setDepth(245);
     this.tweens.add({
       targets: glow,
-      alpha: 0.25,
+      y: glow.y - 1,
       duration: 260,
       yoyo: true,
       repeat: 2
@@ -461,8 +461,8 @@ export class SilentReadScene extends Phaser.Scene {
       fontSize: "4px",
       color: PALETTE.black
     }).setOrigin(0.5).setDepth(248);
-    flag.icon?.setAlpha(0.74);
-    flag.labelText?.setAlpha(0.74);
+    flag.icon?.setTint(color(PALETTE.stoneGray));
+    flag.labelText?.setColor(PALETTE.stoneGray);
     setLatestMessage(`STAMP: ${flag.shortLabel} human review recorded.`);
   }
 

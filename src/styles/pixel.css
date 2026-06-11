@@ -3,8 +3,8 @@ body {
   margin: 0;
   width: 100%;
   min-height: 100%;
-  background: #101820;
-  color: #f2e4c8;
+  background: #3a0710;
+  color: #e8d8a8;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
   overflow: hidden;
   overscroll-behavior: none;
@@ -72,9 +72,9 @@ canvas {
 }
 
 .touch-button {
-  border: 2px solid #d6a84f;
-  background: #050505;
-  color: #f2e4c8;
+  border: 2px solid #d6a23a;
+  background: #0f0f0f;
+  color: #e8d8a8;
   min-width: 42px;
   min-height: 42px;
   border-radius: 4px;
@@ -86,7 +86,7 @@ canvas {
 
 .touch-button:active {
   background: #7a1020;
-  color: #d6a84f;
+  color: #d6a23a;
   transform: translateY(1px);
 }
 
@@ -112,7 +112,7 @@ canvas {
 
 .dpad-up::before {
   border-width: 0 9px 13px 9px;
-  border-color: transparent transparent #f2e4c8 transparent;
+  border-color: transparent transparent #e8d8a8 transparent;
 }
 
 .dpad-left {
@@ -122,7 +122,7 @@ canvas {
 
 .dpad-left::before {
   border-width: 9px 13px 9px 0;
-  border-color: transparent #f2e4c8 transparent transparent;
+  border-color: transparent #e8d8a8 transparent transparent;
 }
 
 .dpad-down {
@@ -132,7 +132,7 @@ canvas {
 
 .dpad-down::before {
   border-width: 13px 9px 0 9px;
-  border-color: #f2e4c8 transparent transparent transparent;
+  border-color: #e8d8a8 transparent transparent transparent;
 }
 
 .dpad-right {
@@ -142,7 +142,7 @@ canvas {
 
 .dpad-right::before {
   border-width: 9px 0 9px 13px;
-  border-color: transparent transparent transparent #f2e4c8;
+  border-color: transparent transparent transparent #e8d8a8;
 }
 
 .action-primary {

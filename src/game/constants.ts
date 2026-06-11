@@ -1,24 +1,43 @@
+import {
+  NES_ARCHIVE_AMBER,
+  NES_ARCHIVE_GRAY,
+  NES_BLACK,
+  NES_BRIGHT_RUBY,
+  NES_BUCKRAM_RUBY,
+  NES_CLASSNET_RED,
+  NES_CREAM_PAPER,
+  NES_DARK_MAROON,
+  NES_DEEP_RUBY,
+  NES_GOLD,
+  NES_OPENNET_GREEN,
+  NES_AGED_PAPER_SHADOW,
+  NES_SLATE_BLUE,
+  NES_STONE_LIGHT,
+  NES_TERMINAL_CYAN,
+  NES_WHITE_HIGHLIGHT
+} from "../art/palette";
+
 export const GAME_WIDTH = 256;
 export const GAME_HEIGHT = 240;
 
 export const PALETTE = {
-  buckramRed: "#7A1020",
-  deepRuby: "#4A0712",
-  buckramHighlight: "#B42335",
-  goldStamp: "#D6A84F",
-  creamPaper: "#F2E4C8",
-  sepiaInk: "#5A3B25",
-  archiveAmber: "#C68642",
-  stoneLight: "#A8A79E",
-  stoneGray: "#6F716D",
-  stoneDark: "#3C4142",
-  mapWater: "#44637A",
-  terminalCyan: "#45F3FF",
-  openNetGreen: "#4CFF6B",
-  classNetRed: "#FF3B3B",
-  shadowNavy: "#101820",
-  black: "#050505",
-  white: "#F8F8F8"
+  buckramRed: NES_BUCKRAM_RUBY,
+  deepRuby: NES_DARK_MAROON,
+  buckramHighlight: NES_BRIGHT_RUBY,
+  goldStamp: NES_GOLD,
+  creamPaper: NES_CREAM_PAPER,
+  sepiaInk: NES_AGED_PAPER_SHADOW,
+  archiveAmber: NES_ARCHIVE_AMBER,
+  stoneLight: NES_STONE_LIGHT,
+  stoneGray: NES_ARCHIVE_GRAY,
+  stoneDark: NES_SLATE_BLUE,
+  mapWater: NES_SLATE_BLUE,
+  terminalCyan: NES_TERMINAL_CYAN,
+  openNetGreen: NES_OPENNET_GREEN,
+  classNetRed: NES_CLASSNET_RED,
+  shadowNavy: NES_DEEP_RUBY,
+  black: NES_BLACK,
+  white: NES_WHITE_HIGHLIGHT
 } as const;
 
 export type PaletteKey = keyof typeof PALETTE;

@@ -33,7 +33,7 @@ export class RenderDebugScene extends Phaser.Scene {
       lineSpacing: 3
     }).setDepth(5);
 
-    this.add.rectangle(128, 165, 232, 82, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(1);
+    this.add.rectangle(128, 165, 232, 82, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(1);
     [1, 2, 3, 4].forEach((scale, index) => {
       const x = 34 + index * 62;
       this.add.image(x, 187, "sam").setScale(scale).setOrigin(0.5, 1).setDepth(2);

@@ -38,7 +38,7 @@ export class EndingScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
     for (let y = 0; y < GAME_HEIGHT; y += 8) {
       for (let x = (y / 8) % 2 === 0 ? 2 : 10; x < GAME_WIDTH; x += 16) {
-        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramRed), 0.7);
+        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramRed));
       }
     }
 
@@ -76,7 +76,7 @@ export class EndingScene extends Phaser.Scene {
       align: "center"
     }).setOrigin(0.5);
 
-    this.add.rectangle(128, 170, 236, 29, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp));
+    this.add.rectangle(128, 170, 236, 29, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp));
     PROCESS_STAMPS.forEach((stamp, index) => {
       const earned = gameState.processStamps.includes(stamp.id);
       const x = 15 + index * 39;
@@ -105,7 +105,7 @@ export class EndingScene extends Phaser.Scene {
       });
     });
 
-    this.add.rectangle(128, 213, 236, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.terminalCyan));
+    this.add.rectangle(128, 213, 236, 28, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan));
     const practiced = [
       "SOURCE NOTES NEED PROVENANCE.",
       "OPENNET AND CLASSNET STAY SEPARATE.",
@@ -159,7 +159,7 @@ export class EndingScene extends Phaser.Scene {
       "STATECHAT MAY NOT OPEN THE GATE.",
       "HUMAN CERTIFICATION REQUIRED."
     ];
-    this.add.rectangle(128, 152, 226, 78, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.terminalCyan));
+    this.add.rectangle(128, 152, 226, 78, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan));
     lines.forEach((line, index) => {
       this.add.text(20, 119 + index * 11, line, {
         fontFamily: "monospace",
@@ -175,7 +175,7 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private drawAssembledPrize(x: number, y: number, scale: number) {
-    this.add.rectangle(x + 4, y + 5, 80 * scale, 120 * scale, color(PALETTE.black), 0.55);
+    this.add.rectangle(x + 4, y + 5, 80 * scale, 120 * scale, color(PALETTE.black));
     this.add.image(x, y, "frus-prize-cover").setScale(scale);
 
     const left = x - (80 * scale) / 2;
@@ -189,7 +189,7 @@ export class EndingScene extends Phaser.Scene {
       this.add.rectangle(pieceX, pieceY, pieceWidth, pieceHeight)
         .setStrokeStyle(1, color(earned ? PALETTE.goldStamp : PALETTE.sepiaInk), earned ? 0.9 : 0.4);
       if (!earned) {
-        this.add.rectangle(pieceX, pieceY, pieceWidth, pieceHeight, color(PALETTE.black), 0.75);
+        this.add.rectangle(pieceX, pieceY, pieceWidth, pieceHeight, color(PALETTE.black));
         this.add.text(pieceX, pieceY - 3, piece.label, {
           fontFamily: "monospace",
           fontSize: "5px",
@@ -198,8 +198,8 @@ export class EndingScene extends Phaser.Scene {
       }
     });
 
-    this.add.rectangle(x, y + 50, 68, 10, color(PALETTE.black), 0.7)
-      .setStrokeStyle(1, color(PALETTE.goldStamp), 0.7);
+    this.add.rectangle(x, y + 50, 68, 10, color(PALETTE.black))
+      .setStrokeStyle(1, color(PALETTE.goldStamp));
     this.add.text(x, y + 47, "ASSEMBLED FRUS", {
       fontFamily: "monospace",
       fontSize: "6px",

@@ -608,7 +608,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawBookcase(218, 90, 30, 56);
     if (room.id === "C1") {
       this.track(this.add.rectangle(128, 169, 54, 28, color(PALETTE.stoneDark)).setStrokeStyle(2, color(PALETTE.buckramHighlight)).setDepth(82));
-      this.track(this.add.rectangle(124, 162, 2, 24, color(PALETTE.black), 0.72).setAngle(18).setDepth(83));
+      this.track(this.add.rectangle(124, 162, 2, 24, color(PALETTE.black)).setAngle(18).setDepth(83));
       this.track(this.add.text(128, 159, "CRACKED\nSOURCE WALL", {
         fontFamily: "monospace",
         fontSize: "6px",
@@ -699,7 +699,7 @@ export class ArchiveScene extends Phaser.Scene {
   private renderRewardRoom() {
     this.drawRubyVolumeStack(128, 116, 5);
     this.track(this.add.image(128, 88, "citation-stamp").setDepth(110));
-    this.track(this.add.rectangle(128, 150, 100, 26, color(PALETTE.black), 0.88).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(111));
+    this.track(this.add.rectangle(128, 150, 100, 26, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(111));
     this.track(this.add.text(128, 142, "STAMP REWARD ROOM\nSOURCE STAMP: HUMAN VERIFIED", {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -740,7 +740,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawGoldenRuleGate() {
-    this.track(this.add.rectangle(128, 202, 72, 18, color(PALETTE.black), 0.88).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(155));
+    this.track(this.add.rectangle(128, 202, 72, 18, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(155));
     this.track(this.add.rectangle(101, 202, 8, 14, color(PALETTE.buckramRed)).setDepth(156));
     this.track(this.add.rectangle(155, 202, 8, 14, color(PALETTE.buckramRed)).setDepth(156));
     this.track(this.add.rectangle(128, 198, 38, 3, color(PALETTE.goldStamp)).setDepth(157));
@@ -758,7 +758,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private drawSplitFlag(x: number, y: number, label: string, accent: string) {
     const flagParts = [
-      this.track(this.add.rectangle(x, y, 15, 18, color(PALETTE.black), 0.9).setStrokeStyle(1, color(accent)).setDepth(170)),
+      this.track(this.add.rectangle(x, y, 15, 18, color(PALETTE.black)).setStrokeStyle(1, color(accent)).setDepth(170)),
       this.track(this.add.rectangle(x - 3, y - 2, 2, 20, color(PALETTE.creamPaper)).setDepth(171)),
       this.track(this.add.rectangle(x + 2, y - 5, 10, 8, color(accent)).setDepth(172)),
       this.track(this.add.rectangle(x + 4, y + 4, 8, 2, color(PALETTE.creamPaper)).setDepth(172)),
@@ -772,7 +772,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawResearchTable() {
-    this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y, 68, 24, color(PALETTE.black), 0.88).setDepth(70));
+    this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y, 68, 24, color(PALETTE.black)).setDepth(70));
     this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y - 1, 64, 20, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(71));
     this.track(this.add.image(this.researchTable.x - 20, this.researchTable.y - 3, "source-note").setDepth(72));
     this.track(this.add.image(this.researchTable.x + 17, this.researchTable.y - 4, "citation-stamp").setDepth(72));
@@ -1224,10 +1224,10 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private addVerificationGlow() {
-    const glow = this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y - 18, 34, 4, color(PALETTE.terminalCyan), 0.92).setDepth(247));
+    const glow = this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y - 18, 34, 4, color(PALETTE.terminalCyan)).setDepth(247));
     this.tweens.add({
       targets: glow,
-      alpha: 0.25,
+      y: glow.y - 1,
       duration: 260,
       yoyo: true,
       repeat: 2
@@ -1385,7 +1385,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawVisitedMinimap() {
-    this.add.rectangle(26, 16, 42, 27, color(PALETTE.black), 0.35).setDepth(878);
+    this.add.rectangle(26, 16, 42, 27, color(PALETTE.black)).setDepth(878);
     for (const room of Object.values(ARCHIVE_ROOMS)) {
       const cell = this.add.rectangle(14 + room.grid.x * 12, 8 + room.grid.y * 6, 8, 5, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.stoneLight))
@@ -1432,19 +1432,19 @@ export class ArchiveScene extends Phaser.Scene {
     const fill = open ? PALETTE.black : PALETTE.stoneDark;
     const accent = open ? PALETTE.goldStamp : PALETTE.stoneGray;
     if (direction === "north") {
-      this.track(this.add.rectangle(128, 36, 34, 8, color(fill), open ? 0.88 : 1).setDepth(61));
+      this.track(this.add.rectangle(128, 36, 34, 8, color(fill)).setDepth(61));
       this.track(this.add.rectangle(128, 41, 26, 2, color(accent)).setDepth(62));
       if (!open) this.addSolid(112, 32, 32, 16);
     } else if (direction === "south") {
-      this.track(this.add.rectangle(128, 220, 34, 8, color(fill), open ? 0.88 : 1).setDepth(61));
+      this.track(this.add.rectangle(128, 220, 34, 8, color(fill)).setDepth(61));
       this.track(this.add.rectangle(128, 215, 26, 2, color(accent)).setDepth(62));
       if (!open) this.addSolid(112, 208, 32, 16);
     } else if (direction === "west") {
-      this.track(this.add.rectangle(8, 120, 8, 34, color(fill), open ? 0.88 : 1).setDepth(61));
+      this.track(this.add.rectangle(8, 120, 8, 34, color(fill)).setDepth(61));
       this.track(this.add.rectangle(13, 120, 2, 26, color(accent)).setDepth(62));
       if (!open) this.addSolid(0, 104, 16, 32);
     } else {
-      this.track(this.add.rectangle(248, 120, 8, 34, color(fill), open ? 0.88 : 1).setDepth(61));
+      this.track(this.add.rectangle(248, 120, 8, 34, color(fill)).setDepth(61));
       this.track(this.add.rectangle(243, 120, 2, 26, color(accent)).setDepth(62));
       if (!open) this.addSolid(240, 104, 16, 32);
     }
@@ -1459,7 +1459,7 @@ export class ArchiveScene extends Phaser.Scene {
       east: { x: 238, y: 120 }
     };
     const { x, y } = positions[direction];
-    this.track(this.add.rectangle(x, y, 22, 10, color(PALETTE.black), 0.9).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(170));
+    this.track(this.add.rectangle(x, y, 22, 10, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(170));
     this.track(this.add.text(x, y - 3, label, {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -1496,7 +1496,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawWallMap(x: number, y: number, label = "MAP") {
-    this.track(this.add.rectangle(x + 2, y + 3, 48, 30, color(PALETTE.black), 0.35).setDepth(y - 3));
+    this.track(this.add.rectangle(x + 2, y + 3, 48, 30, color(PALETTE.black)).setDepth(y - 3));
     this.track(this.add.rectangle(x, y, 48, 30, color(PALETTE.creamPaper)).setStrokeStyle(2, color(PALETTE.sepiaInk)).setDepth(y - 2));
     this.track(this.add.rectangle(x - 16, y - 7, 12, 7, color(PALETTE.mapWater)).setDepth(y - 1));
     this.track(this.add.rectangle(x - 2, y - 3, 18, 3, color(PALETTE.archiveAmber)).setDepth(y - 1));
@@ -1535,7 +1535,7 @@ export class ArchiveScene extends Phaser.Scene {
       this.add.rectangle(3, 0, 3, 1, color(tint))
     ]);
     this.track(sparkle);
-    this.tweens.add({ targets: sparkle, alpha: 0.2, duration: 360, yoyo: true, repeat: -1, ease: "Stepped" });
+    this.tweens.add({ targets: sparkle, y: y - 1, duration: 360, yoyo: true, repeat: -1, ease: "Stepped" });
   }
 
   private addSolid(x: number, y: number, width: number, height: number) {

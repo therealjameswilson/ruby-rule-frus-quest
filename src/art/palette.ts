@@ -1,0 +1,121 @@
+export const NES_BLACK = "#0F0F0F";
+export const NES_DEEP_INDIGO = "#2F243F";
+export const NES_DEEP_TEAL = "#004057";
+export const NES_DEEP_GREEN = "#003C19";
+export const NES_FOREST_SHADOW = "#003300";
+export const NES_DEEP_BROWN = "#4A2A00";
+export const NES_DEEP_RUBY = "#4A0712";
+export const NES_DARK_MAROON = "#3A0710";
+export const NES_DEEP_MAGENTA = "#4A003C";
+export const NES_NIGHT_BLUE = "#24243F";
+export const NES_DARK_GRAY = "#202020";
+export const NES_CHARCOAL = "#303030";
+export const NES_ARCHIVE_GRAY = "#707070";
+export const NES_AGED_PAPER_SHADOW = "#B89A5A";
+
+export const NES_SLATE_BLUE = "#304860";
+export const NES_MEDIUM_BLUE = "#005F8F";
+export const NES_MEDIUM_TEAL = "#007078";
+export const NES_MEDIUM_GREEN = "#007F30";
+export const NES_MOSS_GREEN = "#2F7F20";
+export const NES_BRONZE = "#806020";
+export const NES_BUCKRAM_RUBY = "#7A1020";
+export const NES_MUTED_RUBY = "#8F2030";
+export const NES_MUTED_PLUM = "#802050";
+export const NES_PURPLE = "#604080";
+export const NES_MEDIUM_GRAY = "#505050";
+export const NES_STONE_GRAY = "#686868";
+export const NES_STONE_LIGHT = "#A8A79E";
+export const NES_ARCHIVE_AMBER = "#C68642";
+
+export const NES_TERMINAL_CYAN = "#68C0C0";
+export const NES_SKY_BLUE = "#00A8F0";
+export const NES_BRIGHT_TEAL = "#00B0B0";
+export const NES_OPENNET_GREEN = "#4CFF6B";
+export const NES_BRIGHT_GREEN = "#70C040";
+export const NES_GOLD = "#D6A23A";
+export const NES_BRIGHT_RUBY = "#B82030";
+export const NES_CLASSNET_RED = "#FF3B3B";
+export const NES_ROSE = "#D06080";
+export const NES_LAVENDER = "#9080D0";
+export const NES_LIGHT_GRAY = "#909090";
+export const NES_PALE_GRAY = "#B0B0B0";
+export const NES_CREAM_PAPER = "#E8D8A8";
+export const NES_OLD_GOLD = "#D6A84F";
+
+export const NES_WHITE_HIGHLIGHT = "#F8F0D8";
+export const NES_PALE_CYAN = "#80E0FF";
+export const NES_PALE_TEAL = "#90F0F0";
+export const NES_PALE_GREEN = "#A0F0A0";
+export const NES_PALE_LIME = "#C0F080";
+export const NES_PALE_GOLD = "#F0D060";
+export const NES_PALE_RED = "#F08080";
+export const NES_PALE_CORAL = "#F8A0A0";
+export const NES_PALE_ROSE = "#F0A0C0";
+export const NES_PALE_LAVENDER = "#C0B0F0";
+export const NES_SILVER = "#D0D0D0";
+export const NES_WHITE = "#F8F8F8";
+export const NES_LEGACY_CREAM = "#F2E4C8";
+export const NES_LEGACY_RUBY_HIGHLIGHT = "#B42335";
+
+export const NES_MASTER_PALETTE = {
+  NES_BLACK,
+  NES_DEEP_INDIGO,
+  NES_DEEP_TEAL,
+  NES_DEEP_GREEN,
+  NES_FOREST_SHADOW,
+  NES_DEEP_BROWN,
+  NES_DEEP_RUBY,
+  NES_DARK_MAROON,
+  NES_DEEP_MAGENTA,
+  NES_NIGHT_BLUE,
+  NES_DARK_GRAY,
+  NES_CHARCOAL,
+  NES_ARCHIVE_GRAY,
+  NES_AGED_PAPER_SHADOW,
+  NES_SLATE_BLUE,
+  NES_MEDIUM_BLUE,
+  NES_MEDIUM_TEAL,
+  NES_MEDIUM_GREEN,
+  NES_MOSS_GREEN,
+  NES_BRONZE,
+  NES_BUCKRAM_RUBY,
+  NES_MUTED_RUBY,
+  NES_MUTED_PLUM,
+  NES_PURPLE,
+  NES_MEDIUM_GRAY,
+  NES_STONE_GRAY,
+  NES_STONE_LIGHT,
+  NES_ARCHIVE_AMBER,
+  NES_TERMINAL_CYAN,
+  NES_SKY_BLUE,
+  NES_BRIGHT_TEAL,
+  NES_OPENNET_GREEN,
+  NES_BRIGHT_GREEN,
+  NES_GOLD,
+  NES_BRIGHT_RUBY,
+  NES_CLASSNET_RED,
+  NES_ROSE,
+  NES_LAVENDER,
+  NES_LIGHT_GRAY,
+  NES_PALE_GRAY,
+  NES_CREAM_PAPER,
+  NES_OLD_GOLD,
+  NES_WHITE_HIGHLIGHT,
+  NES_PALE_CYAN,
+  NES_PALE_TEAL,
+  NES_PALE_GREEN,
+  NES_PALE_LIME,
+  NES_PALE_GOLD,
+  NES_PALE_RED,
+  NES_PALE_CORAL,
+  NES_PALE_ROSE,
+  NES_PALE_LAVENDER,
+  NES_SILVER,
+  NES_WHITE,
+  NES_LEGACY_CREAM,
+  NES_LEGACY_RUBY_HIGHLIGHT
+} as const;
+
+export type NesPaletteName = keyof typeof NES_MASTER_PALETTE;
+export type NesPaletteColor = (typeof NES_MASTER_PALETTE)[NesPaletteName];

@@ -8,6 +8,10 @@ export function canAutoApplyProposal(kind: ProposalKind): boolean {
   return kind === "mechanical";
 }
 
+function color(hex: string) {
+  return Phaser.Display.Color.HexStringToColor(hex).color;
+}
+
 export function adjustReliability(amount: number, reason: string) {
   gameState.reliability = Phaser.Math.Clamp(gameState.reliability + amount, 0, 100);
   const sign = amount >= 0 ? "+" : "";
@@ -22,15 +26,15 @@ export class ReliabilityHud {
   private readonly itemSlots: Array<{
     id: string;
     box: Phaser.GameObjects.Rectangle;
-    icon: Phaser.GameObjects.Image;
+    label: Phaser.GameObjects.Text;
   }> = [];
   private readonly details: Phaser.GameObjects.Container;
   private readonly detailsText: Phaser.GameObjects.Text;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    scene.add.rectangle(152, 20, 204, 38, 0x050505, 0.92).setDepth(860);
-    scene.add.rectangle(152, 20, 204, 38).setStrokeStyle(1, 0xd6a84f).setDepth(861);
+    scene.add.rectangle(152, 20, 204, 38, color(PALETTE.black)).setDepth(860);
+    scene.add.rectangle(152, 20, 204, 38).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(861);
     [3, 13, 23].forEach((y, index) => {
       const line = scene.add.text(52, y, "", {
         fontFamily: "monospace",
@@ -41,8 +45,8 @@ export class ReliabilityHud {
     });
     this.createItemStrip();
 
-    const box = scene.add.rectangle(128, 77, 224, 86, 0x050505, 0.97);
-    const border = scene.add.rectangle(128, 77, 224, 86).setStrokeStyle(2, 0xd6a84f);
+    const box = scene.add.rectangle(128, 77, 224, 86, color(PALETTE.black));
+    const border = scene.add.rectangle(128, 77, 224, 86).setStrokeStyle(2, color(PALETTE.goldStamp));
     this.detailsText = scene.add.text(23, 42, "", {
       fontFamily: "monospace",
       fontSize: "8px",
@@ -69,11 +73,9 @@ export class ReliabilityHud {
     for (const slot of this.itemSlots) {
       const item = readout.find((candidate) => candidate.id === slot.id);
       const acquired = Boolean(item?.acquired);
-      slot.box.setFillStyle(acquired ? 0x3a0710 : 0x050505, acquired ? 0.95 : 0.68);
-      slot.box.setStrokeStyle(1, acquired ? 0xd6a23a : 0x707070);
-      slot.icon.setAlpha(acquired ? 1 : 0.22);
-      slot.icon.clearTint();
-      if (!acquired) slot.icon.setTint(0x707070);
+      slot.box.setFillStyle(color(acquired ? PALETTE.deepRuby : PALETTE.black));
+      slot.box.setStrokeStyle(1, color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
+      slot.label.setColor(acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
     }
   }
 
@@ -109,16 +111,15 @@ export class ReliabilityHud {
       const x = 183 + item.hudSlot * 10;
       const y = 34;
       const box = this.scene.add
-        .rectangle(x, y, 9, 9, 0x050505, 0.68)
-        .setStrokeStyle(1, 0x707070)
+        .rectangle(x, y, 9, 9, color(PALETTE.black))
+        .setStrokeStyle(1, color(PALETTE.stoneGray))
         .setDepth(863);
-      const icon = this.scene.add
-        .image(x, y, item.icon)
-        .setScale(1 / 3)
-        .setDepth(864)
-        .setAlpha(0.22)
-        .setTint(0x707070);
-      this.itemSlots.push({ id: item.id, box, icon });
+      const label = this.scene.add.text(x - 2, y - 4, item.shortLabel.slice(0, 1), {
+        fontFamily: "monospace",
+        fontSize: "6px",
+        color: PALETTE.stoneGray
+      }).setDepth(864);
+      this.itemSlots.push({ id: item.id, box, label });
     }
   }
 }

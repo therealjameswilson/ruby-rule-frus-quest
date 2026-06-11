@@ -23,10 +23,10 @@ export class TitleScene extends Phaser.Scene {
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
     for (let y = 0; y < GAME_HEIGHT; y += 8) {
       for (let x = (y / 8) % 2 === 0 ? 0 : 8; x < GAME_WIDTH; x += 16) {
-        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramHighlight), 0.45);
+        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramHighlight));
       }
     }
-    this.add.rectangle(128, 15, 256, 30, color(PALETTE.black), 0.95);
+    this.add.rectangle(128, 15, 256, 30, color(PALETTE.black));
     this.add.rectangle(128, 30, 256, 2, color(PALETTE.goldStamp));
     this.add.rectangle(28, 15, 42, 20, color(PALETTE.stoneGray)).setStrokeStyle(1, color(PALETTE.creamPaper));
     this.add.rectangle(20, 14, 6, 5, color(PALETTE.goldStamp));

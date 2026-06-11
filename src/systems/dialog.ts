@@ -5,6 +5,10 @@ import { retroAudio } from "./audio";
 
 type CompleteCallback = () => void;
 
+function color(hex: string) {
+  return Phaser.Display.Color.HexStringToColor(hex).color;
+}
+
 export class DialogBox {
   private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
@@ -17,8 +21,8 @@ export class DialogBox {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    const box = scene.add.rectangle(128, 204, 244, 64, 0x050505, 0.96);
-    const border = scene.add.rectangle(128, 204, 244, 64).setStrokeStyle(2, 0xf2e4c8);
+    const box = scene.add.rectangle(128, 204, 244, 64, color(PALETTE.black));
+    const border = scene.add.rectangle(128, 204, 244, 64).setStrokeStyle(2, color(PALETTE.creamPaper));
     this.speakerText = scene.add.text(14, 176, "", {
       fontFamily: "monospace",
       fontSize: "8px",

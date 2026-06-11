@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { GAME_HEIGHT, GAME_WIDTH } from "./constants";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { ArchiveScene } from "../scenes/ArchiveScene";
 import { BootScene } from "../scenes/BootScene";
 import { CharacterCreateScene } from "../scenes/CharacterCreateScene";
@@ -22,7 +22,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   antialiasGL: false,
   roundPixels: true,
   zoom: 3,
-  backgroundColor: "#101820",
+  backgroundColor: PALETTE.shadowNavy,
   render: {
     pixelArt: true,
     antialias: false,

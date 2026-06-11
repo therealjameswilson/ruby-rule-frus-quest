@@ -206,6 +206,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - changed the production HUD toward NES grammar with role, reliability, document points, selected item, stamps, room/map, fragments, and objective
   - added final Buckram Gate readiness checks for required stamps, five FRUS fragments, and reliability, with StateChat limited to a checklist
   - verified `git diff --check`, `npm run build`, the required web-game client smoke, Archive screenshot/state, and direct EndingScene readiness screenshot/state
+- Enforced stricter NES visual discipline:
+  - added `src/art/palette.ts` as a single 56-color NES-style master palette and wired the semantic game palette to it
+  - remapped every SVG under `public/assets` to master-palette colors, with sprite SVGs capped at 3 visible colors plus transparency and 16x16 tile SVGs capped at 4 visible colors
+  - removed SVG gradient/opacity risk and flattened BootScene fallback fills/strokes to fully opaque master-palette colors
+  - removed old hardcoded `0x` color literals and partial-alpha generated fills from shared UI/entity drawing paths
+  - replaced the fractional-scale HUD item sprites with native pixel text markers so sprite rendering stays integer-scaled
+  - verified SVG discipline, `git diff --check`, `npm run build`, all ten `?scene=` deep links, and the required web-game client Archive screenshot/state
 
 ## TODO
 

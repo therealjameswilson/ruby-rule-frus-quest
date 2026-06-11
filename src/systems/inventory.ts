@@ -2,6 +2,10 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { gameState, getAreaProgressReadout, getProcessItemReadout } from "../game/state";
 
+function color(hex: string) {
+  return Phaser.Display.Color.HexStringToColor(hex).color;
+}
+
 const COMPACT_TOOL_LINES: Record<string, string> = {
   citation_stamp: "source locks = provenance",
   red_pencil: "unsupported text = editor judgment",
@@ -19,8 +23,8 @@ export class InventoryOverlay {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    const box = scene.add.rectangle(128, 104, 236, 168, 0x050505, 0.97);
-    const border = scene.add.rectangle(128, 104, 236, 168).setStrokeStyle(2, 0xd6a84f);
+    const box = scene.add.rectangle(128, 104, 236, 168, color(PALETTE.black));
+    const border = scene.add.rectangle(128, 104, 236, 168).setStrokeStyle(2, color(PALETTE.goldStamp));
     const title = scene.add.text(16, 25, "MANUSCRIPT INVENTORY", {
       fontFamily: "monospace",
       fontSize: "8px",

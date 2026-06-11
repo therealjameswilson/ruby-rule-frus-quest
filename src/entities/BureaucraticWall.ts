@@ -43,7 +43,7 @@ export class BureaucraticWall {
     this.behavior = options.behavior ?? "slow-chase";
     this.accent = options.accent ?? PALETTE.buckramHighlight;
     this.wanderTarget = { x, y };
-    const shadow = scene.add.ellipse(0, 15, 36, 8, color(PALETTE.black), 0.38);
+    const shadow = scene.add.ellipse(0, 15, 36, 8, color(PALETTE.black));
     this.stone = scene.add.image(0, 0, "bureaucratic-wall");
     const labelText = scene.add
       .text(0, 1, label.toUpperCase(), {
@@ -54,7 +54,7 @@ export class BureaucraticWall {
         wordWrap: { width: 31, useAdvancedWrap: true }
       })
       .setOrigin(0.5);
-    this.crack = scene.add.rectangle(9, -2, 1, 20, color(PALETTE.black), 0.45).setAngle(18).setVisible(false);
+    this.crack = scene.add.rectangle(9, -2, 1, 20, color(PALETTE.black)).setAngle(18).setVisible(false);
     const behaviorPip = scene.add.rectangle(-12, -14, 6, 4, color(this.accent)).setStrokeStyle(1, color(PALETTE.black));
     this.container = scene.add.container(x, y, [shadow, this.stone, labelText, behaviorPip, this.crack]).setDepth(y);
   }
@@ -111,7 +111,8 @@ export class BureaucraticWall {
     const renderY = snapPixel(this.currentY + bob);
     setPixelPosition(this.container, renderX, renderY);
     this.container.setDepth(renderY);
-    this.stone.setTint(timeMs < this.alertUntil ? color(this.accent) : 0xffffff);
+    if (timeMs < this.alertUntil) this.stone.setTint(color(this.accent));
+    else this.stone.clearTint();
   }
 
   markHit() {
