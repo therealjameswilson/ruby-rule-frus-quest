@@ -252,9 +252,30 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - updated the inventory overlay to show `WORKFLOW TOOLS` instead of older process-item/gate rewards
   - switched ArchiveScene's interaction loop to resolve the nearest interaction through the workflow-tool priority order and show the selected tool cue
   - verified `npm run build`, `git diff --check`, direct browser state probe for the exact priority order, and the bundled web-game client with screenshot inspection
+- Began the SNES/16-bit FRUS Quest visual upgrade while preserving the static Phaser/Vite workflow architecture:
+  - added original local SVG assets for a compact FRUS world atlas, a workflow-tool relic strip, and five 32x32 role portrait sprites
+  - added `src/game/snesAtlas.ts` so `render_game_to_text()` reports the SNES art-direction constraints, role portrait sprites, map areas, and workflow relics
+  - added `src/systems/snesPixelArt.ts` for raised floor layers, room shadows, buckram texture, atlas panels, and workflow relic displays drawn with crisp pixel geometry
+  - wired the new 32x32 role portraits into character creation while keeping existing 16x16 gameplay sprites and animation cues intact
+  - added the FRUS atlas/tool display to the title screen and richer 16-bit room layers to Office Hub, Archive Cavern, Two Networks, Referral Vault, and Silent Read
+  - added explicit `E1` Editor's Labyrinth and `S1` Silent Read Tower map nodes so every named quest area has atlas room IDs
+  - verified `npm run build`, `git diff --check`, title/character/room screenshots through the bundled web-game Playwright client, and all ten `?scene=` deep links with no console errors
+- Expanded the SNES/16-bit map pass with area-specific production maps:
+  - added original 80x56 SVG panels for Office Hub, Two Networks, Referral Vault, Editor's Labyrinth, Silent Read Tower, and Buckram Gate
+  - promoted those maps into the SNES atlas registry so `render_game_to_text().snesAtlas.maps` reports a `mapTexture` for every named FRUS quest area
+  - updated BootScene to preload every map panel and generate palette-safe fallback textures if any SVG is missing
+  - wired visible area maps into Office Hub, Two Networks, Referral Vault, and the Buckram Gate lock screen while leaving the dense Silent Read proof pages uncluttered
+  - verified `git diff --check`, `npm run build`, web-game screenshots for Office/Network/Referral/Silent Read, an in-app browser no-console-error canvas check, and all ten `?scene=` deep links with 13 SNES assets and seven map textures reported
+- Promoted the larger SNES role sprites into live gameplay:
+  - added `snesSpriteKey` to the player profile and made query-selected roles preserve both the 16x16 fallback key and the 32x32 SNES role key
+  - switched the Player renderer to use the 32x32 SNES role sprite when available, with a foot-point origin so movement, collision, interaction, and text-state coordinates keep the existing logical anchor
+  - resized the player shadow, walk feet, and role idle cue overlays for the larger sprites while keeping the existing 16x16 fallback path intact
+  - exposed `render_game_to_text().activePlayerSprite` with the SNES texture, fallback texture, dimensions, logical anchor, and collision-box summary
+  - verified `git diff --check`, `npm run build`, bundled web-game screenshots for Office/Archive/Network/Silent Read, a `role=compiler` deep-link probe showing `snes-player-compiler`, and all ten configured `?scene=` shortcuts with no console errors and 13 SNES assets reported
 
 ## TODO
 
 - Improve full end-to-end traversal coverage from TitleScene to EndingScene; direct scene QA now covers the later scenes reliably.
 - Consider a later non-combat `B` item such as a source-note stamp or routing card for clearing stonewalls at range.
 - Add full manual route QA for every new Archive Cavern room once the public build is deployed.
+- Continue the SNES upgrade with larger original in-game sprite sheets, richer non-Archive room graphs/transitions, and more authored room-to-room transition visuals, while keeping StateChat terminal-only and the FRUS workflow as the win path.

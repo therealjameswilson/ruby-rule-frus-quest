@@ -10,6 +10,7 @@ import {
 } from "./documentWorkflow";
 import type { DocumentWorkflowAction } from "./documentWorkflow";
 import { deriveWorkflowSnapshot, getQuestArchitectureReadout } from "./questArchitecture";
+import { getSnesAtlasReadout } from "./snesAtlas";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import type {
@@ -143,7 +144,8 @@ export const gameState: GameState = {
     roleLabel: defaultRole.label,
     ability: defaultRole.ability,
     remit: defaultRole.remit,
-    spriteKey: defaultRole.spriteKey
+    spriteKey: defaultRole.spriteKey,
+    snesSpriteKey: defaultRole.snesSpriteKey
   },
   processStamps: [],
   latestAbility: "",
@@ -340,6 +342,12 @@ export function getRoomGraphReadout() {
   if (gameState.currentScene === "ReferralVaultScene") {
     visitedRoomIds.add("R1");
     revealedRoomIds.add("R1");
+  }
+  if (gameState.currentScene === "SilentReadScene") {
+    visitedRoomIds.add("E1");
+    revealedRoomIds.add("E1");
+    revealedRoomIds.add("S1");
+    if (hasProcessItem("proof_lens")) visitedRoomIds.add("S1");
   }
   if (gameState.currentScene === "EndingScene") {
     visitedRoomIds.add("G1");
@@ -583,7 +591,8 @@ export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLE
     roleLabel: role.label,
     ability: role.ability,
     remit: role.remit,
-    spriteKey: role.spriteKey
+    spriteKey: role.spriteKey,
+    snesSpriteKey: role.snesSpriteKey
   };
   refreshQuestWorkflowState();
 }
@@ -810,11 +819,20 @@ export function renderGameToText() {
       volumeMetrics: gameState.volumeMetrics,
       questCounters: gameState.questCounters,
       questWorkflow,
+      snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,
       documentPoints: gameState.documentPoints,
       playerProfile: gameState.playerProfile,
+      activePlayerSprite: {
+        mode: "snes16",
+        texture: gameState.playerProfile.snesSpriteKey,
+        fallbackTexture: gameState.playerProfile.spriteKey,
+        dimensions: { width: 32, height: 32 },
+        logicalAnchor: "foot/interaction point",
+        collisionBox: { width: 10, height: 10, offsetY: 2 }
+      },
       processStamps: gameState.processStamps,
       processItems: getProcessItemReadout(),
       workflowTools: getWorkflowToolReadout(),

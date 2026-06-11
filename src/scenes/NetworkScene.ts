@@ -23,8 +23,9 @@ import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
-import { addNetworkCables, addTinySparkle, addWallMap } from "../systems/roomDressing";
+import { addNetworkCables, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
+import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
 
 function color(hex: string) {
@@ -65,8 +66,9 @@ export class NetworkScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawTiledFloor(this, "network-tiles");
     drawRoomFrame(this, "TWO NETWORKS");
+    addSnesRoomLayer(this, { roomId: "N1", roomType: "puzzle", theme: "network" });
     addNetworkCables(this);
-    addWallMap(this, 128, 66, "NET MAP");
+    addSnesWorldMap(this, 128, 66, "NET MAP", "two-networks-map");
     addTinySparkle(this, 60, 108, PALETTE.openNetGreen);
     addTinySparkle(this, 196, 108, PALETTE.classNetRed);
     this.bureaucraticWalls = [

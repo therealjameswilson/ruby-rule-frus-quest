@@ -689,6 +689,7 @@ function sceneDefaultRoom(sceneName: string) {
   if (sceneName === "GuideScene" || sceneName === "ArchiveScene") return "A1";
   if (sceneName === "NetworkScene") return "N1";
   if (sceneName === "ReferralVaultScene") return "R1";
+  if (sceneName === "SilentReadScene") return "E1";
   if (sceneName === "EndingScene") return "G1";
   return null;
 }

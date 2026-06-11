@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
 import { addProcessItem, gameState, getFinalGateReadiness, setDocumentWorkflowState, setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { retroAudio } from "../systems/audio";
+import { addSnesWorldMap } from "../systems/snesPixelArt";
 import { transitionTo } from "../systems/sceneTransitions";
 
 function color(hex: string) {
@@ -153,7 +154,8 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "11px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
-    this.add.image(128, 82, "buckram-key").setDepth(30).setScale(2);
+    addSnesWorldMap(this, 54, 82, "GATE MAP", "buckram-gate-map");
+    this.add.image(146, 82, "buckram-key").setDepth(30).setScale(2);
     const lines = [
       "STATECHAT READINESS CHECKLIST",
       `MISSING STAMPS: ${readiness.missingStamps.length ? readiness.missingStamps.join(" ") : "NONE"}`,

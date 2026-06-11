@@ -55,6 +55,9 @@ export class Player {
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
+  private readonly spriteMode: "snes16" | "nes8";
+  private readonly shadowOffsetY: number;
+  private readonly shadowDepthOffset: number;
   private walkClock = 0;
   private idleClock = 0;
   private abilityFrameUntil = 0;
@@ -74,8 +77,22 @@ export class Player {
     this.scene = scene;
     this.logicalX = x;
     this.logicalY = y;
-    this.shadow = scene.add.ellipse(snapPixel(x), snapPixel(y + 8), 12, 4, color(PALETTE.black)).setDepth(snapPixel(y - 1));
-    this.sprite = scene.add.image(snapPixel(x), snapPixel(y), gameState.playerProfile.spriteKey).setDepth(snapPixel(y));
+    this.spriteMode = scene.textures.exists(gameState.playerProfile.snesSpriteKey) ? "snes16" : "nes8";
+    this.shadowOffsetY = this.spriteMode === "snes16" ? 9 : 8;
+    this.shadowDepthOffset = this.spriteMode === "snes16" ? 2 : 1;
+    this.shadow = scene.add
+      .ellipse(
+        snapPixel(x),
+        snapPixel(y + this.shadowOffsetY),
+        this.spriteMode === "snes16" ? 18 : 12,
+        this.spriteMode === "snes16" ? 6 : 4,
+        color(PALETTE.black)
+      )
+      .setDepth(snapPixel(y - this.shadowDepthOffset));
+    this.sprite = scene.add
+      .image(snapPixel(x), snapPixel(y), this.spriteMode === "snes16" ? gameState.playerProfile.snesSpriteKey : gameState.playerProfile.spriteKey)
+      .setOrigin(0.5, this.spriteMode === "snes16" ? 0.75 : 0.5)
+      .setDepth(snapPixel(y));
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);
     this.keys = scene.input.keyboard!.addKeys({
@@ -109,7 +126,7 @@ export class Player {
   }
 
   get position() {
-    return { x: this.sprite.x, y: this.sprite.y };
+    return { x: snapPixel(this.logicalX), y: snapPixel(this.logicalY) };
   }
 
   get facingDirection() {
@@ -244,19 +261,28 @@ export class Player {
     const renderX = snapPixel(this.logicalX);
     const renderY = snapPixel(this.logicalY);
     setPixelPosition(this.sprite, renderX, renderY);
-    setPixelPosition(this.shadow, renderX, renderY + 8);
-    this.shadow.setDepth(renderY - 1);
+    setPixelPosition(this.shadow, renderX, renderY + this.shadowOffsetY);
+    this.shadow.setDepth(renderY - this.shadowDepthOffset);
     this.sprite.setDepth(renderY);
     this.syncIdleCue(renderX, renderY);
     this.syncWalkCycleCue(renderX, renderY);
   }
 
   private createWalkCycleCue(scene: Phaser.Scene) {
-    this.addWalkRect(scene, -4, 14, -1);
-    this.addWalkRect(scene, 8, 14, 1);
+    if (this.spriteMode === "snes16") {
+      this.addWalkRect(scene, -8, 8, -1, 5, 3);
+      this.addWalkRect(scene, 8, 8, 1, 5, 3);
+      return;
+    }
+    this.addWalkRect(scene, -4, 14, -1, 4, 2);
+    this.addWalkRect(scene, 8, 14, 1, 4, 2);
   }
 
   private createIdleCue(scene: Phaser.Scene) {
+    if (this.spriteMode === "snes16") {
+      this.createSnesIdleCue(scene);
+      return;
+    }
     const role = gameState.playerProfile.roleId;
     if (role === "compiler") {
       this.addIdleRect(scene, -5, 3, 7, 4, PALETTE.goldStamp, "compiler-folder");
@@ -300,8 +326,47 @@ export class Player {
     this.idleParts.push({ rect, ox, oy, tag, depthOffset: 1 });
   }
 
-  private addWalkRect(scene: Phaser.Scene, ox: number, oy: number, side: -1 | 1) {
-    const rect = scene.add.rectangle(0, 0, 4, 2, color(PALETTE.black)).setOrigin(0, 0).setVisible(false);
+  private createSnesIdleCue(scene: Phaser.Scene) {
+    const role = gameState.playerProfile.roleId;
+    if (role === "compiler") {
+      this.addIdleRect(scene, -11, -5, 8, 5, PALETTE.goldStamp, "compiler-folder");
+      this.addIdleRect(scene, -10, -4, 6, 1, PALETTE.creamPaper, "compiler-folder");
+      this.addIdleRect(scene, -4, -14, 1, 1, PALETTE.white, "compiler-glint");
+      this.addIdleRect(scene, 5, -14, 1, 1, PALETTE.white, "compiler-glint");
+      return;
+    }
+    if (role === "declass_reviewer") {
+      this.addIdleRect(scene, -12, -6, 5, 5, PALETTE.creamPaper, "declass-mug");
+      this.addIdleRect(scene, -11, -5, 3, 1, PALETTE.classNetRed, "declass-mug");
+      this.addIdleRect(scene, -11, -11, 1, 1, PALETTE.creamPaper, "declass-steam");
+      this.addIdleRect(scene, -9, -13, 1, 1, PALETTE.creamPaper, "declass-steam");
+      this.addIdleRect(scene, 9, -7, 5, 7, PALETTE.sepiaInk, "declass-mug");
+      this.addIdleRect(scene, 10, -6, 3, 5, PALETTE.creamPaper, "declass-mug");
+      return;
+    }
+    if (role === "editor") {
+      this.addIdleRect(scene, 6, -21, 1, 6, PALETTE.goldStamp, "editor-pencil");
+      this.addIdleRect(scene, 7, -19, 1, 5, PALETTE.buckramHighlight, "editor-pencil");
+      this.addIdleRect(scene, 8, -17, 1, 4, PALETTE.buckramRed, "editor-pencil");
+      return;
+    }
+    if (role === "proofreader") {
+      this.addIdleRect(scene, -13, -5, 6, 7, PALETTE.creamPaper, "proof-pages");
+      this.addIdleRect(scene, -7, -4, 5, 6, PALETTE.white, "proof-pages");
+      this.addIdleRect(scene, -12, -2, 4, 1, PALETTE.buckramHighlight, "proof-line");
+      this.addIdleRect(scene, -6, -1, 3, 1, PALETTE.buckramRed, "proof-line");
+      return;
+    }
+    if (role === "source_note_specialist") {
+      this.addIdleRect(scene, -13, -4, 5, 5, PALETTE.buckramRed, "source-satchel");
+      this.addIdleRect(scene, -12, -3, 3, 1, PALETTE.goldStamp, "source-satchel");
+      this.addIdleRect(scene, 9, -4, 6, 5, PALETTE.goldStamp, "source-stamp");
+      this.addIdleRect(scene, 10, -3, 4, 1, PALETTE.buckramRed, "source-stamp");
+    }
+  }
+
+  private addWalkRect(scene: Phaser.Scene, ox: number, oy: number, side: -1 | 1, width: number, height: number) {
+    const rect = scene.add.rectangle(0, 0, width, height, color(PALETTE.black)).setOrigin(0, 0).setVisible(false);
     this.walkParts.push({ rect, ox, oy, side });
   }
 

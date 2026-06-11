@@ -250,6 +250,7 @@ export interface PlayerProfile {
   ability: string;
   remit: string;
   spriteKey: string;
+  snesSpriteKey: string;
 }
 
 export interface KeyboardMap {

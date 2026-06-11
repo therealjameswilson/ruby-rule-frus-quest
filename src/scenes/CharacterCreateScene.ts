@@ -35,8 +35,8 @@ export class CharacterCreateScene extends Phaser.Scene {
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
 
-    this.sprite = this.add.image(128, 54, PROCESS_ROLES[this.roleIndex].spriteKey).setScale(2);
-    this.nameText = this.add.text(128, 80, "", {
+    this.sprite = this.add.image(128, 55, PROCESS_ROLES[this.roleIndex].snesSpriteKey);
+    this.nameText = this.add.text(128, 81, "", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper
@@ -129,7 +129,7 @@ export class CharacterCreateScene extends Phaser.Scene {
 
   private renderSelection() {
     const role = PROCESS_ROLES[this.roleIndex];
-    this.sprite.setTexture(role.spriteKey);
+    this.sprite.setTexture(role.snesSpriteKey);
     this.nameText.setText(`NAME: ${this.displayName || "Historian"}`);
     this.roleText.setText(role.label.toUpperCase());
     this.remitText.setText(`${role.ability}: ${role.remit}`);

@@ -24,8 +24,9 @@ import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
-import { addDocumentStack, addTinySparkle, addVaultBlocks, addWallMap } from "../systems/roomDressing";
+import { addDocumentStack, addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
+import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
 
 function color(hex: string) {
@@ -76,8 +77,9 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     drawTiledFloor(this, "vault-tiles");
     drawRoomFrame(this, "REFERRAL VAULT");
+    addSnesRoomLayer(this, { roomId: "R1", roomType: "reward", theme: "vault" });
     addVaultBlocks(this);
-    addWallMap(this, 128, 60, "EQUITY MAP");
+    addSnesWorldMap(this, 128, 60, "EQUITY MAP", "referral-vault-map");
     addDocumentStack(this, 214, 116, true);
     addTinySparkle(this, 128, 120, PALETTE.goldStamp);
     this.bureaucraticWalls = [

@@ -11,8 +11,9 @@ import { nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
-import { addBookcase, addDesk, addDocumentStack, addRubyVolumeStack, addTinySparkle, addWallMap } from "../systems/roomDressing";
+import { addBookcase, addDesk, addDocumentStack, addRubyVolumeStack, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
+import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -38,6 +39,7 @@ export class OfficeScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
     drawTiledFloor(this, "office-tiles");
     drawRoomFrame(this, "OFFICE HUB");
+    addSnesRoomLayer(this, { roomId: "O1", roomType: "hint", theme: "office" });
     this.add.rectangle(GAME_WIDTH / 2, 35, 166, 18, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp));
     this.add.text(128, 30, "OFFICE OF THE HISTORIAN", {
       fontFamily: "monospace",
@@ -46,7 +48,7 @@ export class OfficeScene extends Phaser.Scene {
     }).setOrigin(0.5);
     addBookcase(this, 25, 55, 30, 38);
     addBookcase(this, 231, 55, 30, 38);
-    addWallMap(this, 128, 96, "FRUS MAP");
+    addSnesWorldMap(this, 128, 96, "OFFICE MAP", "office-hub-map");
     addDesk(this, 58, 105, "SRC");
     addDesk(this, 198, 110, "NET");
     addRubyVolumeStack(this, 112, 154, 3);

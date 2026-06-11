@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
+import { SNES_AREA_MAP_ASSETS } from "../game/snesAtlas";
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 
 function color(hex: string) {
@@ -62,6 +63,13 @@ export class BootScene extends Phaser.Scene {
     this.makeVolumeFragmentTextureIfMissing();
     this.makeArchiveColleagueTextureIfMissing();
     this.makeBureaucraticWallTextureIfMissing();
+    for (const mapAsset of SNES_AREA_MAP_ASSETS) {
+      this.makeSnesMapTextureIfMissing(mapAsset.key);
+    }
+    this.makeSnesWorkflowToolsTextureIfMissing();
+    for (const role of PROCESS_ROLES) {
+      this.makeSnesRoleTextureIfMissing(role.snesSpriteKey, PALETTE[role.color], role.id);
+    }
     this.makeTileTextureIfMissing("office-tiles", PALETTE.creamPaper, PALETTE.archiveAmber);
     this.makeTileTextureIfMissing("archive-tiles", PALETTE.archiveAmber, PALETTE.sepiaInk);
     this.makeTileTextureIfMissing("network-tiles", PALETTE.shadowNavy, PALETTE.terminalCyan);
@@ -82,6 +90,11 @@ export class BootScene extends Phaser.Scene {
       ["player-editor", "player-editor.svg", 16, 16],
       ["player-declass-reviewer", "player-declass-reviewer.svg", 16, 16],
       ["player-source-note-specialist", "player-source-note-specialist.svg", 16, 16],
+      ["snes-player-proofreader", "snes-player-proofreader.svg", 32, 32],
+      ["snes-player-compiler", "snes-player-compiler.svg", 32, 32],
+      ["snes-player-editor", "snes-player-editor.svg", 32, 32],
+      ["snes-player-declass-reviewer", "snes-player-declass-reviewer.svg", 32, 32],
+      ["snes-player-source-note-specialist", "snes-player-source-note-specialist.svg", 32, 32],
       ["archive-colleague", "archive-colleague.svg", 16, 16],
       ["citation-stamp", "citation-stamp.svg", 24, 24],
       ["volume-fragment", "volume-fragment.svg", 24, 24],
@@ -108,6 +121,10 @@ export class BootScene extends Phaser.Scene {
     for (const [key, file, width, height] of sprites) {
       this.load.svg(key, `assets/sprites/${file}`, { width, height });
     }
+    for (const mapAsset of SNES_AREA_MAP_ASSETS) {
+      this.load.svg(mapAsset.key, mapAsset.path, { width: mapAsset.dimensions.width, height: mapAsset.dimensions.height });
+    }
+    this.load.svg("snes-workflow-tools", "assets/sprites/snes-workflow-tools.svg", { width: 128, height: 32 });
 
     for (const key of ["office-tiles", "archive-tiles", "network-tiles", "vault-tiles"]) {
       this.load.svg(key, `assets/tiles/${key}.svg`, { width: 16, height: 16 });
@@ -346,6 +363,151 @@ export class BootScene extends Phaser.Scene {
     g.lineStyle(1, color(PALETTE.black));
     g.lineBetween(17, 5, 20, 23);
     g.generateTexture("bureaucratic-wall", 36, 32);
+    g.destroy();
+  }
+
+  private makeSnesRoleTextureIfMissing(key: string, bodyHex: string, roleId: string) {
+    if (this.textures.exists(key)) return;
+    const g = this.add.graphics();
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(10, 2, 12, 2);
+    g.fillRect(8, 4, 16, 5);
+    g.fillRect(10, 9, 12, 8);
+    g.fillRect(8, 17, 17, 11);
+    g.fillRect(5, 18, 6, 10);
+    g.fillRect(21, 18, 6, 10);
+    g.fillRect(7, 28, 7, 3);
+    g.fillRect(18, 28, 7, 3);
+    g.fillStyle(color(bodyHex));
+    g.fillRect(9, 5, 14, 5);
+    g.fillRect(9, 18, 15, 9);
+    g.fillRect(6, 19, 5, 8);
+    g.fillRect(21, 19, 5, 8);
+    g.fillStyle(color(PALETTE.creamPaper));
+    g.fillRect(11, 9, 10, 8);
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(12, 11, 2, 1);
+    g.fillRect(18, 11, 2, 1);
+    g.fillRect(14, 15, 5, 1);
+    g.fillStyle(color(PALETTE.deepRuby));
+    g.fillRect(12, 19, 8, 7);
+    g.fillStyle(color(PALETTE.goldStamp));
+    if (roleId === "compiler") {
+      g.fillRect(5, 20, 7, 5);
+      g.fillStyle(color(PALETTE.creamPaper));
+      g.fillRect(6, 21, 5, 1);
+      g.fillStyle(color(PALETTE.white));
+      g.fillRect(13, 12, 1, 1);
+      g.fillRect(19, 12, 1, 1);
+    } else if (roleId === "declass_reviewer") {
+      g.fillStyle(color(PALETTE.creamPaper));
+      g.fillRect(5, 20, 5, 5);
+      g.fillStyle(color(PALETTE.classNetRed));
+      g.fillRect(6, 21, 3, 2);
+      g.fillStyle(color(PALETTE.creamPaper));
+      g.fillRect(24, 19, 4, 7);
+      g.fillStyle(color(PALETTE.shadowNavy));
+      g.fillRect(25, 20, 2, 4);
+    } else if (roleId === "editor") {
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(21, 3, 1, 8);
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(22, 4, 1, 7);
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(5, 24, 9, 2);
+    } else if (roleId === "proofreader") {
+      g.fillStyle(color(PALETTE.white));
+      g.fillRect(5, 21, 5, 6);
+      g.fillRect(10, 22, 4, 5);
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(6, 23, 3, 1);
+    } else {
+      g.fillStyle(color(PALETTE.buckramRed));
+      g.fillRect(5, 22, 5, 5);
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(6, 23, 3, 1);
+      g.fillRect(23, 22, 6, 4);
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(24, 23, 4, 1);
+    }
+    g.generateTexture(key, 32, 32);
+    g.destroy();
+  }
+
+  private makeSnesMapTextureIfMissing(key: string) {
+    if (this.textures.exists(key)) return;
+    const g = this.add.graphics();
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(0, 0, 80, 56);
+    const base = key.includes("network") ? PALETTE.shadowNavy : key.includes("vault") || key.includes("buckram") ? PALETTE.deepRuby : PALETTE.creamPaper;
+    const accent = key.includes("network") ? PALETTE.terminalCyan : key.includes("vault") || key.includes("buckram") ? PALETTE.classNetRed : PALETTE.goldStamp;
+    g.fillStyle(color(base));
+    g.fillRect(4, 4, 72, 48);
+    g.fillStyle(color(PALETTE.buckramRed));
+    if (key === "frus-snes-atlas") {
+      for (let row = 0; row < 4; row += 1) {
+        for (let col = 0; col < 3; col += 1) {
+          g.fillRect(22 + col * 9, 10 + row * 8, 8, 6);
+        }
+      }
+    } else if (key.includes("network")) {
+      g.fillRect(8, 9, 24, 34);
+      g.fillRect(48, 9, 24, 34);
+      g.fillStyle(color(PALETTE.terminalCyan));
+      g.fillRect(12, 13, 16, 4);
+      g.fillStyle(color(PALETTE.classNetRed));
+      g.fillRect(52, 13, 16, 4);
+    } else if (key.includes("referral")) {
+      for (let x = 14; x <= 56; x += 21) {
+        g.fillStyle(color(PALETTE.goldStamp));
+        g.fillRect(x, 20, 10, 10);
+      }
+    } else if (key.includes("editor") || key.includes("silent")) {
+      g.fillStyle(color(PALETTE.white));
+      g.fillRect(16, 18, 18, 22);
+      g.fillRect(46, 18, 18, 22);
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(36, 26, 8, 3);
+    } else if (key.includes("buckram")) {
+      g.fillStyle(color(PALETTE.buckramRed));
+      g.fillRect(28, 16, 24, 24);
+    } else {
+      g.fillRect(12, 14, 14, 10);
+      g.fillRect(54, 14, 14, 10);
+      g.fillRect(32, 34, 16, 8);
+    }
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(31, 18, 8, 6);
+    g.fillRect(36, 45, 8, 3);
+    g.fillStyle(color(accent));
+    g.fillRect(6, 7, 68, 3);
+    g.generateTexture(key, 80, 56);
+    g.destroy();
+  }
+
+  private makeSnesWorkflowToolsTextureIfMissing() {
+    if (this.textures.exists("snes-workflow-tools")) return;
+    const g = this.add.graphics();
+    const colors = [
+      PALETTE.goldStamp,
+      PALETTE.creamPaper,
+      PALETTE.terminalCyan,
+      PALETTE.classNetRed,
+      PALETTE.buckramHighlight,
+      PALETTE.white,
+      PALETTE.sepiaInk,
+      PALETTE.buckramRed
+    ];
+    colors.forEach((fill, index) => {
+      const x = 4 + index * 15;
+      g.fillStyle(color(PALETTE.black));
+      g.fillRect(x, 6, 12, 18);
+      g.fillStyle(color(fill));
+      g.fillRect(x + 2, 8, 8, 14);
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(x + 3, 11, 6, 2);
+    });
+    g.generateTexture("snes-workflow-tools", 128, 32);
     g.destroy();
   }
 

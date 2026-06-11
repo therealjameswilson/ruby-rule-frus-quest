@@ -76,7 +76,8 @@ export const PROCESS_ROLES = [
     ability: "Silent Read",
     remit: "Compare manuscript and proof.",
     color: "creamPaper",
-    spriteKey: "player-proofreader"
+    spriteKey: "player-proofreader",
+    snesSpriteKey: "snes-player-proofreader"
   },
   {
     id: "compiler",
@@ -84,7 +85,8 @@ export const PROCESS_ROLES = [
     ability: "Archive Sense",
     remit: "Verify selection and provenance.",
     color: "archiveAmber",
-    spriteKey: "player-compiler"
+    spriteKey: "player-compiler",
+    snesSpriteKey: "snes-player-compiler"
   },
   {
     id: "editor",
@@ -92,7 +94,8 @@ export const PROCESS_ROLES = [
     ability: "Red Pencil",
     remit: "Resolve style, meaning, and queries.",
     color: "goldStamp",
-    spriteKey: "player-editor"
+    spriteKey: "player-editor",
+    snesSpriteKey: "snes-player-editor"
   },
   {
     id: "declass_reviewer",
@@ -100,7 +103,8 @@ export const PROCESS_ROLES = [
     ability: "Equity Map",
     remit: "Route classified equities.",
     color: "classNetRed",
-    spriteKey: "player-declass-reviewer"
+    spriteKey: "player-declass-reviewer",
+    snesSpriteKey: "snes-player-declass-reviewer"
   },
   {
     id: "source_note_specialist",
@@ -108,7 +112,8 @@ export const PROCESS_ROLES = [
     ability: "Provenance Check",
     remit: "Make source notes publication-ready.",
     color: "terminalCyan",
-    spriteKey: "player-source-note-specialist"
+    spriteKey: "player-source-note-specialist",
+    snesSpriteKey: "snes-player-source-note-specialist"
   }
 ] as const;
 
@@ -489,6 +494,26 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     title: "Concurrence Chamber",
     grid: { x: 5, y: 1 },
     exits: { west: "R1" },
+    roomType: "reward"
+  },
+  {
+    id: "E1",
+    area: "editors_labyrinth",
+    title: "Editor's Labyrinth",
+    grid: { x: 4, y: 2 },
+    exits: { east: "S1" },
+    lockedExits: { east: "Silent-read tower lens gate" },
+    requiredItems: { east: "proof_lens" },
+    roomType: "puzzle"
+  },
+  {
+    id: "S1",
+    area: "silent_read_tower",
+    title: "Silent Read Tower",
+    grid: { x: 5, y: 2 },
+    exits: { west: "E1" },
+    lockedExits: { west: "Red-pencil query gate" },
+    requiredItems: { west: "red_pencil" },
     roomType: "reward"
   },
   {

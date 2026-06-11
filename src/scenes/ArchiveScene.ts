@@ -35,6 +35,7 @@ import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
+import { addSnesRoomLayer } from "../systems/snesPixelArt";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -449,6 +450,12 @@ export class ArchiveScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(this.currentRoomId === "A2" || this.currentRoomId === "B2" ? PALETTE.shadowNavy : PALETTE.archiveAmber);
     this.roomTitleText.setText(`${room.id} ${room.title}`);
     this.drawRoomExits(room);
+    addSnesRoomLayer(this, {
+      roomId: room.id,
+      roomType: room.roomType,
+      theme: this.currentRoomId === "A2" ? "network" : this.currentRoomId === "B2" ? "proof" : "archive",
+      track: (object) => this.track(object)
+    });
     if (room.id === "A1") this.renderSourceRoom();
     else if (room.id === "A2") this.renderOpenNetAnnex();
     else if (room.id === "A3" || room.id === "B3") this.renderHintRoom(room);

@@ -3,6 +3,7 @@ import { CONTROLS_TEXT, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constan
 import { resetGameState, setSceneState } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
+import { addSnesWorkflowRelicRack, addSnesWorldMap } from "../systems/snesPixelArt";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -51,9 +52,10 @@ export class TitleScene extends Phaser.Scene {
       this.add.rectangle(x, 218, 16, 16, color(PALETTE.stoneDark));
       this.add.rectangle(x - 2, 216, 11, 11, color(PALETTE.stoneGray));
     }
+    addSnesWorldMap(this, 54, 90, "FRUS ATLAS");
 
-    const volume = this.add.image(128, 94, "frus-volume").setScale(1);
-    const lid = this.add.rectangle(128, 70, 74, 9, color(PALETTE.goldStamp));
+    const volume = this.add.image(160, 92, "frus-volume").setScale(1);
+    const lid = this.add.rectangle(160, 68, 74, 9, color(PALETTE.goldStamp));
     this.tweens.add({
       targets: lid,
       y: 60,
@@ -85,7 +87,8 @@ export class TitleScene extends Phaser.Scene {
       fontSize: "10px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
-    this.add.text(128, 178, "PRESS START TO VERIFY", {
+    addSnesWorkflowRelicRack(this, 128, 169);
+    this.add.text(128, 197, "PRESS START TO VERIFY", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.terminalCyan

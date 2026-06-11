@@ -25,6 +25,7 @@ import { adjustReliability, canAutoApplyProposal, ReliabilityHud } from "../syst
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addProofingTable, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
+import { addSnesRoomLayer } from "../systems/snesPixelArt";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -142,6 +143,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.add.rectangle(128, 120, 256, 240, color(PALETTE.sepiaInk));
     this.add.rectangle(128, 120, 248, 232, color(PALETTE.creamPaper));
     drawRoomFrame(this, "EDITOR LABYRINTH", PALETTE.deepRuby);
+    addSnesRoomLayer(this, { roomId: "E1", roomType: "puzzle", theme: "proof" });
     addProofingTable(this, 128, 172);
     addTinySparkle(this, 178, 87, PALETTE.classNetRed);
     new HistorianNPC(this, "priya", 28, 52);
