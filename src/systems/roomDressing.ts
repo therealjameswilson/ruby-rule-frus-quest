@@ -100,11 +100,11 @@ export function addVaultBlocks(scene: Phaser.Scene, track?: TrackFn) {
   }).setOrigin(0.5).setDepth(3), track);
 }
 
-export function addProofingTable(scene: Phaser.Scene, x: number, y: number) {
-  scene.add.rectangle(x, y, 224, 18, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.deepRuby)).setDepth(y - 3);
-  scene.add.rectangle(x - 84, y - 4, 18, 6, color(PALETTE.goldStamp)).setDepth(y - 2);
-  scene.add.rectangle(x + 82, y - 4, 18, 6, color(PALETTE.terminalCyan)).setDepth(y - 2);
-  scene.add.rectangle(x, y - 8, 5, 18, color(PALETTE.black)).setDepth(y - 1);
+export function addProofingTable(scene: Phaser.Scene, x: number, y: number, track?: TrackFn) {
+  keep(scene.add.rectangle(x, y, 224, 18, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.deepRuby)).setDepth(y - 3), track);
+  keep(scene.add.rectangle(x - 84, y - 4, 18, 6, color(PALETTE.goldStamp)).setDepth(y - 2), track);
+  keep(scene.add.rectangle(x + 82, y - 4, 18, 6, color(PALETTE.terminalCyan)).setDepth(y - 2), track);
+  keep(scene.add.rectangle(x, y - 8, 5, 18, color(PALETTE.black)).setDepth(y - 1), track);
 }
 
 export function addTinySparkle(scene: Phaser.Scene, x: number, y: number, tint: string = PALETTE.goldStamp) {

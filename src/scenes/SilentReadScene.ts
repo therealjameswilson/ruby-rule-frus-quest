@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
+import type { Direction, RoomType } from "../game/constants";
 import {
   addDocumentPoints,
   addInventoryItem,
@@ -7,12 +8,14 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  hasProcessItem,
   setHeldItem,
   setDocumentWorkflowState,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
   setPhysicalVerificationState,
+  setRoomTraversalState,
   setSceneState,
   setVisibleEntities
 } from "../game/state";
@@ -24,7 +27,7 @@ import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addProofingTable, addTinySparkle } from "../systems/roomDressing";
-import { addObjectiveText, addTerminalPanel, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
+import { addObjectiveText, addTerminalPanel, drawRoomFrame, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer } from "../systems/snesPixelArt";
 
 function color(hex: string) {
@@ -33,6 +36,7 @@ function color(hex: string) {
 
 type WorkstationId = "opennet" | "classnet" | "editor-desk" | "referral-tray" | "proof-table";
 type PhysicalFlagStatus = "waiting" | "carried" | "routed" | "verified" | "stamped";
+type ProofRoomId = "E1" | "S1";
 
 interface Workstation {
   id: WorkstationId;
@@ -58,12 +62,47 @@ interface PhysicalFlag {
   routedStation?: WorkstationId;
 }
 
+interface ProofRoom {
+  id: ProofRoomId;
+  title: string;
+  roomType: RoomType;
+  exits: Partial<Record<Direction, ProofRoomId | "EndingScene">>;
+  lockedExits?: Partial<Record<Direction, string>>;
+}
+
+const PROOF_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
+const DOOR_Y_MIN = 100;
+const DOOR_Y_MAX = 150;
+const EXIT_SPAWNS: Record<Direction, { x: number; y: number }> = {
+  north: { x: 128, y: 58 },
+  south: { x: 128, y: 204 },
+  east: { x: 30, y: 124 },
+  west: { x: 226, y: 124 }
+};
+
+const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
+  E1: {
+    id: "E1",
+    title: "Editor's Labyrinth",
+    roomType: "puzzle",
+    exits: { east: "S1" },
+    lockedExits: { east: "Red Pencil query gate" }
+  },
+  S1: {
+    id: "S1",
+    title: "Silent Read Tower",
+    roomType: "reward",
+    exits: { west: "E1", east: "EndingScene" },
+    lockedExits: { east: "Buckram publication gate" }
+  }
+};
+
 const WORKSTATIONS: Workstation[] = [
-  { id: "opennet", label: "OpenNet", x: 42, y: 190, accent: PALETTE.openNetGreen, texture: "opennet-terminal" },
-  { id: "classnet", label: "ClassNet", x: 214, y: 190, accent: PALETTE.classNetRed, texture: "classnet-terminal" },
-  { id: "editor-desk", label: "Editor Desk", x: 78, y: 176, accent: PALETTE.buckramHighlight, texture: "red-pencil" },
-  { id: "referral-tray", label: "Referral Tray", x: 178, y: 176, accent: PALETTE.goldStamp, texture: "concurrence-slip" },
-  { id: "proof-table", label: "Proof Table", x: 128, y: 188, accent: PALETTE.terminalCyan, texture: "proof-page" }
+  { id: "opennet", label: "OpenNet", x: 42, y: 184, accent: PALETTE.openNetGreen, texture: "opennet-terminal" },
+  { id: "classnet", label: "ClassNet", x: 214, y: 184, accent: PALETTE.classNetRed, texture: "classnet-terminal" },
+  { id: "editor-desk", label: "Editor Desk", x: 128, y: 176, accent: PALETTE.buckramHighlight, texture: "red-pencil" },
+  { id: "referral-tray", label: "Referral Tray", x: 76, y: 160, accent: PALETTE.goldStamp, texture: "concurrence-slip" },
+  { id: "proof-table", label: "Proof Table", x: 180, y: 160, accent: PALETTE.terminalCyan, texture: "proof-page" }
 ];
 
 const PHYSICAL_FLAGS: Array<Omit<PhysicalFlag, "status" | "x" | "y" | "icon" | "labelText" | "routedStation">> = [
@@ -109,6 +148,14 @@ const PHYSICAL_FLAGS: Array<Omit<PhysicalFlag, "status" | "x" | "y" | "icon" | "
   }
 ];
 
+function stationRoom(id: WorkstationId): ProofRoomId {
+  return id === "editor-desk" ? "E1" : "S1";
+}
+
+function flagRoom(flag: PhysicalFlag): ProofRoomId {
+  return stationRoom(flag.destination);
+}
+
 export class SilentReadScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
@@ -116,6 +163,15 @@ export class SilentReadScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
+  private roomTitleText!: Phaser.GameObjects.Text;
+  private currentRoomId: ProofRoomId = "E1";
+  private visitedRoomIds = new Set<ProofRoomId>();
+  private roomObjects: Phaser.GameObjects.GameObject[] = [];
+  private roomCleanups: Array<() => void> = [];
+  private mapCells = new Map<ProofRoomId, Phaser.GameObjects.Rectangle>();
+  private mapLabels = new Map<ProofRoomId, Phaser.GameObjects.Text>();
+  private roomTransitionLocked = false;
+  private exitCooldownUntil = 0;
   private physicalFlags: PhysicalFlag[] = [];
   private readonly outbox = { x: 128, y: 202 };
 
@@ -126,50 +182,17 @@ export class SilentReadScene extends Phaser.Scene {
   create() {
     setSceneState("SilentReadScene", "explore", "Editor's Labyrinth: earn the Red Pencil.");
     retroAudio.startMusic("SilentReadScene");
-    setVisibleEntities([
-      "Priya",
-      "Manuscript page",
-      "Typeset proof",
-      "Proof page icon",
-      "Red pencil",
-      "Review Folder",
-      "Proof Lens",
-      "Editor's Labyrinth",
-      "Silent Read Tower",
-      "AI Annotation Review terminal",
-      ...WORKSTATIONS.map((station) => station.label)
-    ]);
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
     this.add.rectangle(128, 120, 256, 240, color(PALETTE.sepiaInk));
     this.add.rectangle(128, 120, 248, 232, color(PALETTE.creamPaper));
-    drawRoomFrame(this, "EDITOR LABYRINTH", PALETTE.deepRuby);
-    addSnesRoomLayer(this, { roomId: "E1", roomType: "puzzle", theme: "proof" });
-    addProofingTable(this, 128, 172);
-    addTinySparkle(this, 178, 87, PALETTE.classNetRed);
-    new HistorianNPC(this, "priya", 28, 52);
-    this.drawPage(78, 114, "MANUSCRIPT", [
-      "The office office",
-      "opened in 1947.",
-      "The record said",
-      "\"publish fully."
-    ]);
-    this.drawPage(178, 114, "TYPESET PROOF", [
-      "The office",
-      "opened in 1974.",
-      "The record said",
-      "\"publish fully."
-    ]);
-    this.add.image(177, 162, "proof-page").setDepth(165);
-    this.add.image(128, 163, "red-pencil").setDepth(166);
-    addTerminalPanel(this, 128, 44, [
-      "AI ANNO REVIEW",
-      "SCHEMA: OK",
-      `MECH AUTO: ${canAutoApplyProposal("mechanical") ? "YES" : "NO"}`,
-      "EVIDENCE: COMMENT",
-      "HUMAN TRIAGE"
-    ]);
-    this.drawWorkstations();
-    this.drawToolbeltIcons();
+    drawRoomFrame(this, "EDITOR / READ", PALETTE.deepRuby);
+    this.drawProofMinimap();
+    this.roomTitleText = this.add.text(128, 33, "", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper,
+      backgroundColor: PALETTE.black
+    }).setOrigin(0.5).setDepth(902);
 
     this.player = new Player(this, 128, 202);
     this.dialog = new DialogBox(this);
@@ -182,10 +205,11 @@ export class SilentReadScene extends Phaser.Scene {
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
     }).setDepth(811);
+    this.enterRoom("E1", { x: 128, y: 202 }, false);
     this.dialog.show("PRIYA", [
       "Run the AI annotation review tool first.",
       "It returns a JSON plan, not a final decision.",
-      "Carry each flag to a workstation, verify it, then stamp the human review."
+      "The Red Pencil opens the proof tower. Then every evidence flag moves by hand."
     ], () => this.startPhysicalVerificationLoop());
   }
 
@@ -199,6 +223,10 @@ export class SilentReadScene extends Phaser.Scene {
     }
     if (Phaser.Input.Keyboard.JustDown(keys.r)) this.reliability.toggleDetails();
     if (Phaser.Input.Keyboard.JustDown(keys.e)) activateRoleAbility(this);
+    if (this.roomTransitionLocked) {
+      this.player.update(delta, false);
+      return;
+    }
     if (this.dialog.active) {
       if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) this.dialog.advance();
       this.player.update(delta, false);
@@ -212,52 +240,204 @@ export class SilentReadScene extends Phaser.Scene {
       this.dialog.show("PAUSED", "The page waits.");
       return;
     }
-    this.player.update(delta, true);
+    this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS });
     this.updatePhysicalVerification();
     if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) {
       this.handlePhysicalAction();
     }
+    if (this.checkRoomExit()) return;
     this.reliability.update();
     this.objectiveText.setText(gameState.objective);
   }
 
+  private track<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.roomObjects.push(object);
+    return object;
+  }
+
+  private enterRoom(roomId: ProofRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    const applyRoom = () => {
+      this.currentRoomId = roomId;
+      this.visitedRoomIds.add(roomId);
+      this.clearRoom();
+      this.renderCurrentRoom();
+      this.player.setPosition(spawn.x, spawn.y);
+      this.positionActiveWaitingFlagForRoom();
+      this.syncRoomTraversalState();
+      this.updateProofMinimap();
+      this.updatePhysicalVerification();
+      this.exitCooldownUntil = this.time.now + 280;
+    };
+
+    if (!wipe) {
+      applyRoom();
+      this.roomTransitionLocked = false;
+      return;
+    }
+
+    this.roomTransitionLocked = true;
+    transitionArchiveRoom(this, {
+      fromRoomId: this.currentRoomId,
+      toRoomId: roomId,
+      direction,
+      label: PROOF_ROOMS[roomId].title.toUpperCase(),
+      onCovered: applyRoom,
+      onComplete: () => {
+        this.roomTransitionLocked = false;
+      }
+    });
+  }
+
+  private clearRoom() {
+    for (const cleanup of this.roomCleanups) cleanup();
+    for (const object of this.roomObjects) {
+      if (object.active) object.destroy();
+    }
+    this.roomCleanups = [];
+    this.roomObjects = [];
+    setNearestInteractable(null);
+  }
+
+  private renderCurrentRoom() {
+    const room = PROOF_ROOMS[this.currentRoomId];
+    this.roomTitleText.setText(`${room.id} ${room.title}`);
+    addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "proof", track: (object) => this.track(object) });
+    this.drawRoomDoors();
+    if (room.id === "E1") this.renderEditorsLabyrinth();
+    else this.renderSilentReadTower();
+    this.syncVisibleEntities();
+  }
+
+  private drawRoomDoors() {
+    const room = PROOF_ROOMS[this.currentRoomId];
+    if (room.exits.west) {
+      this.track(this.add.rectangle(11, 124, 9, 36, color(PALETTE.black)).setDepth(65));
+      this.track(this.add.rectangle(16, 124, 3, 26, color(PALETTE.buckramHighlight)).setDepth(66));
+    }
+    if (room.exits.east) {
+      const open = this.currentRoomId === "E1" ? hasProcessItem("red_pencil") : hasProcessItem("buckram_key");
+      const accent = open ? PALETTE.goldStamp : PALETTE.classNetRed;
+      this.track(this.add.rectangle(245, 124, 9, 36, color(PALETTE.black)).setDepth(65));
+      this.track(this.add.rectangle(240, 124, 3, 26, color(accent)).setDepth(66));
+      if (!open) this.track(this.add.rectangle(242, 124, 2, 30, color(PALETTE.classNetRed)).setDepth(67));
+    }
+  }
+
+  private renderEditorsLabyrinth() {
+    this.track(addTerminalPanel(this, 128, 48, [
+      "AI ANNO REVIEW",
+      "SCHEMA: OK",
+      `MECH AUTO: ${canAutoApplyProposal("mechanical") ? "YES" : "NO"}`,
+      "EVIDENCE: COMMENT",
+      "HUMAN TRIAGE"
+    ]));
+    const priya = new HistorianNPC(this, "priya", 28, 52);
+    this.roomCleanups.push(() => priya.destroy());
+    this.drawPage(76, 118, "DRAFT QUERY", [
+      "Unsupported",
+      "claim marked",
+      "for editor",
+      "judgment."
+    ]);
+    this.drawPage(180, 118, "STYLE FILE", [
+      "StateChat may",
+      "propose text.",
+      "Editor decides",
+      "meaning."
+    ]);
+    this.track(this.add.image(128, 150, "red-pencil").setDepth(166));
+    this.track(addTinySparkle(this, 128, 138, PALETTE.buckramHighlight));
+    this.drawWorkstations();
+    this.drawOutbox("STATECHAT OUTBOX");
+    this.drawToolbeltIcons();
+    if (hasProcessItem("red_pencil")) {
+      this.track(this.add.rectangle(128, 84, 104, 10, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(170));
+      this.track(this.add.text(128, 80, "RED PENCIL EARNED - EAST", {
+        fontFamily: "monospace",
+        fontSize: "6px",
+        color: PALETTE.goldStamp
+      }).setOrigin(0.5, 0).setDepth(171));
+      setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
+    } else {
+      setObjective("Editor's Labyrinth: route the mechanical flag to the editor desk.");
+    }
+  }
+
+  private renderSilentReadTower() {
+    this.drawPage(76, 110, "MANUSCRIPT", [
+      "The office office",
+      "opened in 1947.",
+      "The record said",
+      "\"publish fully."
+    ]);
+    this.drawPage(180, 110, "TYPESET PROOF", [
+      "The office",
+      "opened in 1974.",
+      "The record said",
+      "\"publish fully."
+    ]);
+    this.track(this.add.image(180, 158, "proof-page").setDepth(165));
+    this.track(this.add.image(128, 82, "proof-lens").setDepth(166));
+    this.track(addTinySparkle(this, 178, 87, PALETTE.classNetRed));
+    this.track(addTerminalPanel(this, 128, 48, [
+      "SILENT READ",
+      "EVIDENCE FLAGS",
+      "OPEN / CLASS / REF",
+      "PROOF DATE",
+      "HUMAN STAMPS"
+    ], PALETTE.goldStamp));
+    addProofingTable(this, 128, 172, (object) => this.track(object));
+    this.drawWorkstations();
+    this.drawOutbox("REVIEW OUTBOX");
+    this.drawToolbeltIcons();
+    if (hasProcessItem("buckram_key")) {
+      this.track(this.add.image(128, 126, "buckram-key").setDepth(250));
+      setObjective("Silent Read Tower: exit east with Buckram Key.");
+    } else {
+      setObjective("Silent Read Tower: carry next evidence flag.");
+    }
+  }
+
   private drawPage(x: number, y: number, title: string, lines: string[]) {
-    this.add.rectangle(x, y, 86, 112, color(PALETTE.white)).setStrokeStyle(2, color(PALETTE.sepiaInk));
-    this.add.rectangle(x - 38, y, 3, 104, color(PALETTE.classNetRed));
-    this.add.text(x, y - 49, title, {
+    this.track(this.add.rectangle(x, y, 86, 112, color(PALETTE.white)).setStrokeStyle(2, color(PALETTE.sepiaInk)));
+    this.track(this.add.rectangle(x - 38, y, 3, 104, color(PALETTE.classNetRed)));
+    this.track(this.add.text(x, y - 49, title, {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.deepRuby
-    }).setOrigin(0.5);
+    }).setOrigin(0.5));
     lines.forEach((line, index) => {
       const isDate = line.includes("1974") || line.includes("1947");
-      this.add.text(x - 34, y - 31 + index * 16, line, {
+      this.track(this.add.text(x - 34, y - 31 + index * 16, line, {
         fontFamily: "monospace",
         fontSize: "7px",
         color: isDate ? PALETTE.classNetRed : PALETTE.sepiaInk
-      });
+      }));
     });
   }
 
   private drawWorkstations() {
-    for (const station of WORKSTATIONS) {
-      this.add.rectangle(station.x, station.y + 1, 40, 18, color(PALETTE.black)).setDepth(150);
-      this.add.rectangle(station.x, station.y, 38, 16, color(PALETTE.deepRuby)).setStrokeStyle(2, color(station.accent)).setDepth(151);
-      this.add.image(station.x - 11, station.y, station.texture).setDepth(152);
-      this.add.rectangle(station.x + 9, station.y - 2, 13, 5, color(station.accent)).setDepth(153);
-      this.add.rectangle(station.x + 9, station.y + 4, 13, 2, color(PALETTE.creamPaper)).setDepth(153);
-      this.add.text(station.x, station.y + 12, station.label.toUpperCase(), {
+    for (const station of WORKSTATIONS.filter((candidate) => stationRoom(candidate.id) === this.currentRoomId)) {
+      this.track(this.add.rectangle(station.x, station.y + 1, 40, 18, color(PALETTE.black)).setDepth(150));
+      this.track(this.add.rectangle(station.x, station.y, 38, 16, color(PALETTE.deepRuby)).setStrokeStyle(2, color(station.accent)).setDepth(151));
+      this.track(this.add.image(station.x - 11, station.y, station.texture).setDepth(152));
+      this.track(this.add.rectangle(station.x + 9, station.y - 2, 13, 5, color(station.accent)).setDepth(153));
+      this.track(this.add.rectangle(station.x + 9, station.y + 4, 13, 2, color(PALETTE.creamPaper)).setDepth(153));
+      this.track(this.add.text(station.x, station.y + 12, station.label.toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: station.accent
-      }).setOrigin(0.5).setDepth(154);
+      }).setOrigin(0.5).setDepth(154));
     }
-    this.add.rectangle(this.outbox.x, this.outbox.y, 44, 16, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(149);
-    this.add.text(this.outbox.x, this.outbox.y + 12, "STATECHAT OUTBOX", {
+  }
+
+  private drawOutbox(label: string) {
+    this.track(this.add.rectangle(this.outbox.x, this.outbox.y, 52, 16, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(149));
+    this.track(this.add.text(this.outbox.x, this.outbox.y + 12, label, {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.terminalCyan
-    }).setOrigin(0.5).setDepth(154);
+    }).setOrigin(0.5).setDepth(154));
   }
 
   private drawToolbeltIcons() {
@@ -267,47 +447,113 @@ export class SilentReadScene extends Phaser.Scene {
       { x: 164, y: 72, key: "red-pencil", label: "PENCIL", color: PALETTE.buckramHighlight }
     ];
     for (const tool of tools) {
-      this.add.rectangle(tool.x, tool.y, 28, 22, color(PALETTE.black)).setStrokeStyle(1, color(tool.color)).setDepth(146);
-      this.add.image(tool.x, tool.y - 3, tool.key).setDepth(147);
-      this.add.text(tool.x, tool.y + 9, tool.label, {
+      this.track(this.add.rectangle(tool.x, tool.y, 28, 22, color(PALETTE.black)).setStrokeStyle(1, color(tool.color)).setDepth(146));
+      this.track(this.add.image(tool.x, tool.y - 3, tool.key).setDepth(147));
+      this.track(this.add.text(tool.x, tool.y + 9, tool.label, {
         fontFamily: "monospace",
         fontSize: "5px",
         color: tool.color
-      }).setOrigin(0.5).setDepth(148);
+      }).setOrigin(0.5).setDepth(148));
     }
+  }
+
+  private drawProofMinimap() {
+    (["E1", "S1"] as ProofRoomId[]).forEach((roomId, index) => {
+      const x = 16 + index * 11;
+      const cell = this.add.rectangle(x, 16, 8, 7, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(805);
+      const label = this.add.text(x, 12, roomId, {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: PALETTE.creamPaper
+      }).setOrigin(0.5, 0).setDepth(806);
+      this.mapCells.set(roomId, cell);
+      this.mapLabels.set(roomId, label);
+    });
+  }
+
+  private updateProofMinimap() {
+    for (const [roomId, cell] of this.mapCells) {
+      const active = roomId === this.currentRoomId;
+      const visited = this.visitedRoomIds.has(roomId);
+      cell.setFillStyle(color(active ? PALETTE.goldStamp : visited ? PALETTE.terminalCyan : PALETTE.stoneDark));
+      this.mapLabels.get(roomId)?.setColor(active ? PALETTE.black : PALETTE.creamPaper);
+    }
+  }
+
+  private syncRoomTraversalState() {
+    const room = PROOF_ROOMS[this.currentRoomId];
+    const lockedExits: Partial<Record<Direction, string>> = {};
+    const requiredItems: Partial<Record<Direction, "red_pencil" | "buckram_key">> = {};
+    if (room.id === "E1" && !hasProcessItem("red_pencil")) {
+      lockedExits.east = room.lockedExits?.east;
+      requiredItems.east = "red_pencil";
+    }
+    if (room.id === "S1" && !hasProcessItem("buckram_key")) {
+      lockedExits.east = room.lockedExits?.east;
+      requiredItems.east = "buckram_key";
+    }
+    setRoomTraversalState({
+      currentRoomId: room.id,
+      roomTitle: room.title,
+      roomType: room.roomType,
+      visitedRoomIds: [...this.visitedRoomIds],
+      revealedRoomIds: hasProcessItem("red_pencil") || this.currentRoomId === "S1" ? ["E1", "S1"] : ["E1"],
+      exits: room.exits,
+      lockedExits,
+      requiredItems
+    });
   }
 
   private startPhysicalVerificationLoop() {
     addProcessItem("review_folder");
     setDocumentWorkflowState("proof_page_412", "selected");
-    this.physicalFlags = PHYSICAL_FLAGS.map((flag, index) => {
+    this.physicalFlags = PHYSICAL_FLAGS.map((flag) => {
       const physicalFlag: PhysicalFlag = {
         ...flag,
         status: "waiting",
         x: this.outbox.x,
         y: this.outbox.y - 10
       };
-      physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture).setDepth(240).setVisible(index === 0);
+      physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture).setDepth(240).setVisible(false);
       physicalFlag.labelText = this.add.text(physicalFlag.x, physicalFlag.y + 14, flag.shortLabel, {
         fontFamily: "monospace",
         fontSize: "5px",
         color: flag.kind === "mechanical" ? PALETTE.goldStamp : PALETTE.terminalCyan,
         backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(241).setVisible(index === 0);
+      }).setOrigin(0.5).setDepth(241).setVisible(false);
       return physicalFlag;
     });
+    this.positionActiveWaitingFlagForRoom();
     setLatestMessage("Review Folder carries unresolved issues through human review.");
-    setObjective("Editor's Labyrinth: carry the first StateChat flag.");
+    setObjective("Editor's Labyrinth: carry the StateChat mechanical flag.");
     this.syncVisibleEntities();
     this.updatePhysicalVerification();
+  }
+
+  private positionActiveWaitingFlagForRoom() {
+    const activeFlag = this.getActiveFlag();
+    if (!activeFlag || flagRoom(activeFlag) !== this.currentRoomId || activeFlag.status !== "waiting") return;
+    activeFlag.x = this.outbox.x;
+    activeFlag.y = this.outbox.y - 10;
+    activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y);
+    activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14);
   }
 
   private updatePhysicalVerification() {
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) {
-      this.actionHint.setText("DONE: verification loop stamped.");
+      this.actionHint.setText("DONE: exit east with the Buckram Key.");
       setNearestInteractable(null);
       this.syncPhysicalState("DONE", null);
+      return;
+    }
+
+    if (flagRoom(activeFlag) !== this.currentRoomId) {
+      this.updateFlagVisibility();
+      const target = PROOF_ROOMS[flagRoom(activeFlag)].title;
+      this.actionHint.setText(`NEXT: enter ${target.toUpperCase()}.`);
+      setNearestInteractable(null);
+      this.syncPhysicalState("ROUTE", null);
       return;
     }
 
@@ -331,6 +577,11 @@ export class SilentReadScene extends Phaser.Scene {
   private handlePhysicalAction() {
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) return;
+    if (flagRoom(activeFlag) !== this.currentRoomId) {
+      retroAudio.warning();
+      setLatestMessage(`Enter ${PROOF_ROOMS[flagRoom(activeFlag)].title} to continue.`);
+      return;
+    }
 
     if (activeFlag.status === "waiting") {
       if (!this.isNear(activeFlag.x, activeFlag.y, 24)) {
@@ -429,6 +680,8 @@ export class SilentReadScene extends Phaser.Scene {
 
   private advanceAfterStamp() {
     this.syncVisibleEntities();
+    this.syncRoomTraversalState();
+    this.updateProofMinimap();
     const nextFlag = this.getActiveFlag();
     if (!nextFlag) {
       setDocumentWorkflowState("telegram_001", "proofed");
@@ -436,24 +689,78 @@ export class SilentReadScene extends Phaser.Scene {
       setDocumentWorkflowState("cross_reference_001", "proofed");
       setDocumentWorkflowState("sbu_annotation_001", "proofed");
       addProcessItem("buckram_key");
-      setObjective("STAMP: all physical verification loops complete.");
+      setObjective("Silent Read Tower: exit east with Buckram Key.");
       setLatestMessage("Buckram Key opens the final publication gate.");
-      this.add.image(this.outbox.x, this.outbox.y - 24, "buckram-key").setDepth(250);
-      this.actionHint.setText("DONE: all StateChat flags verified and stamped.");
+      this.track(this.add.image(this.outbox.x, this.outbox.y - 24, "buckram-key").setDepth(250));
+      this.actionHint.setText("DONE: all flags verified. Exit east.");
       this.reliability.update();
       this.dialog.show(gameState.playerProfile.displayName.toUpperCase(), [
         "Every evidence-bound flag became a physical object.",
         "Mechanical fixes proposed; human workstations verified.",
-        "The final read panel completes the ruby volume."
-      ], () => transitionTo(this, "EndingScene"));
+        "Take the Buckram Key east to certify the ruby volume."
+      ]);
       return;
     }
+
+    if (flagRoom(nextFlag) !== this.currentRoomId) {
+      this.renderCurrentRoom();
+      this.positionActiveWaitingFlagForRoom();
+      setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
+      this.dialog.show("PRIYA", [
+        "Red Pencil earned.",
+        "The mechanical proposal is handled.",
+        "Now enter the tower and route the evidence-bound flags by hand."
+      ]);
+      return;
+    }
+
     nextFlag.x = this.outbox.x;
     nextFlag.y = this.outbox.y - 10;
     nextFlag.icon?.setPosition(nextFlag.x, nextFlag.y).setVisible(true);
     nextFlag.labelText?.setPosition(nextFlag.x, nextFlag.y + 14).setVisible(true);
-    const phase = nextFlag.id === "mechanical-fix" ? "Editor's Labyrinth" : "Silent Read Tower";
-    setObjective(`${phase}: carry ${nextFlag.shortLabel} from the StateChat outbox.`);
+    setObjective(`Silent Read Tower: carry ${nextFlag.shortLabel} from the review outbox.`);
+  }
+
+  private checkRoomExit() {
+    if (this.time.now < this.exitCooldownUntil) return false;
+    const position = this.player.position;
+    let direction: Direction | null = null;
+    if (position.x >= PROOF_PLAY_BOUNDS.right - 4 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
+    else if (position.x <= PROOF_PLAY_BOUNDS.left + 4 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
+    if (!direction) return false;
+
+    if (this.currentRoomId === "E1" && direction === "east") {
+      if (!hasProcessItem("red_pencil")) {
+        setLatestMessage("Red Pencil required before the Silent Read Tower.");
+        setObjective("Route and stamp the mechanical proposal at the editor desk.");
+        this.player.setPosition(PROOF_PLAY_BOUNDS.right - 18, position.y);
+        this.exitCooldownUntil = this.time.now + 500;
+        return false;
+      }
+      this.enterRoom("S1", EXIT_SPAWNS.east, true, "east");
+      return true;
+    }
+
+    if (this.currentRoomId === "S1" && direction === "west") {
+      this.enterRoom("E1", EXIT_SPAWNS.west, true, "west");
+      return true;
+    }
+
+    if (this.currentRoomId === "S1" && direction === "east") {
+      if (!hasProcessItem("buckram_key")) {
+        setLatestMessage("Buckram Key required before publication gate.");
+        setObjective("Finish flags before Buckram Gate.");
+        this.player.setPosition(PROOF_PLAY_BOUNDS.right - 18, position.y);
+        this.exitCooldownUntil = this.time.now + 500;
+        return false;
+      }
+      this.roomTransitionLocked = true;
+      transitionTo(this, "EndingScene");
+      return true;
+    }
+
+    this.exitCooldownUntil = this.time.now + 360;
+    return false;
   }
 
   private addVerificationMark(station: Workstation) {
@@ -490,7 +797,7 @@ export class SilentReadScene extends Phaser.Scene {
     if (flag.status === "waiting") {
       const nearFlag = this.isNear(flag.x, flag.y, 24);
       setNearestInteractable(nearFlag ? `CARRY ${flag.shortLabel}` : null);
-      this.actionHint.setText(`CARRY ${flag.shortLabel}: press Space at StateChat outbox.`);
+      this.actionHint.setText(`CARRY ${flag.shortLabel}: press Space at outbox.`);
       return;
     }
     if (flag.status === "carried") {
@@ -510,7 +817,8 @@ export class SilentReadScene extends Phaser.Scene {
   private updateFlagVisibility() {
     const activeFlag = this.getActiveFlag();
     for (const flag of this.physicalFlags) {
-      const visible = flag === activeFlag || flag.status === "stamped";
+      const inRoom = flagRoom(flag) === this.currentRoomId;
+      const visible = inRoom && (flag === activeFlag || flag.status === "stamped");
       flag.icon?.setVisible(visible);
       flag.labelText?.setVisible(visible && flag.status !== "carried");
     }
@@ -536,18 +844,14 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private syncVisibleEntities() {
+    const roomLabels = this.currentRoomId === "E1"
+      ? ["Priya", "AI Annotation Review terminal", "StateChat outbox", "Editor Desk", "Red Pencil"]
+      : ["Manuscript page", "Typeset proof", "Review outbox", "Proof Lens", "OpenNet", "ClassNet", "Referral Tray", "Proof Table"];
     setVisibleEntities([
-      "Priya",
-      "Manuscript page",
-      "Typeset proof",
-      "AI Annotation Review terminal",
-      "StateChat outbox",
+      ...roomLabels,
       "Review Folder",
-      "Proof Lens",
-      "Red Pencil",
-      ...WORKSTATIONS.map((station) => station.label),
       ...this.physicalFlags
-        .filter((flag) => flag.status !== "stamped")
+        .filter((flag) => flag.status !== "stamped" && flagRoom(flag) === this.currentRoomId)
         .map((flag) => flag.label)
     ]);
   }
@@ -570,10 +874,12 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private findNearestWorkstation(maxDistance = 24) {
-    const nearest = WORKSTATIONS.map((station) => ({
-      station,
-      distance: Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, station.x, station.y)
-    })).sort((a, b) => a.distance - b.distance)[0];
+    const nearest = WORKSTATIONS
+      .filter((station) => stationRoom(station.id) === this.currentRoomId)
+      .map((station) => ({
+        station,
+        distance: Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, station.x, station.y)
+      })).sort((a, b) => a.distance - b.distance)[0];
     return nearest && nearest.distance <= maxDistance ? nearest.station : null;
   }
 

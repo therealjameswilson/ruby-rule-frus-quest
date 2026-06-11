@@ -503,8 +503,8 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     title: "Editor's Labyrinth",
     grid: { x: 4, y: 2 },
     exits: { east: "S1" },
-    lockedExits: { east: "Silent-read tower lens gate" },
-    requiredItems: { east: "proof_lens" },
+    lockedExits: { east: "Red-pencil query gate" },
+    requiredItems: { east: "red_pencil" },
     roomType: "puzzle"
   },
   {
@@ -512,9 +512,9 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "silent_read_tower",
     title: "Silent Read Tower",
     grid: { x: 5, y: 2 },
-    exits: { west: "E1" },
-    lockedExits: { west: "Red-pencil query gate" },
-    requiredItems: { west: "red_pencil" },
+    exits: { west: "E1", east: "G1" },
+    lockedExits: { east: "Buckram publication gate" },
+    requiredItems: { east: "buckram_key" },
     roomType: "reward"
   },
   {

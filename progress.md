@@ -290,6 +290,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - made the Concurrence Slip a physical R2 reward that the player must stand near and pick up after human referral review, then use to exit east to Silent Read Tower
   - made vault room dressing trackable so R1 and R2 redraw cleanly during room transitions
   - verified `npm run build`, required web-game client R1 smoke, and a full Playwright route covering R1 puzzle -> R2 transition -> Concurrence Slip pickup -> SilentReadScene handoff with screenshot inspection and no console errors
+- Split the late-game proofing flow into a two-room SNES dungeon sequence:
+  - refactored `SilentReadScene` into `E1 Editor's Labyrinth` and `S1 Silent Read Tower` with fixed room IDs, a two-cell minimap, room traversal state, and ruby-mosaic doorway transitions
+  - made the first mechanical StateChat proposal resolve at the E1 editor desk, awarding the Red Pencil before the east tower gate opens
+  - moved the evidence-bound OpenNet, ClassNet, referral, and proof-date flags into S1, where the player routes, verifies, and stamps each physical object at the correct human workstation
+  - changed completion from an automatic jump to an earned Buckram Key gate: after the Proof Lens/Buckram Key rewards, the player exits east to the Buckram Gate/EndingScene
+  - verified `git diff --check`, `npm run build`, required web-game client SilentReadScene smoke, all ten `?scene=` deep links, an in-app browser local canvas/error smoke, and a full Playwright route covering E1 Red Pencil -> S1 evidence flags -> Proof Lens -> Buckram Key -> EndingScene
 
 ## TODO
 

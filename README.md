@@ -48,7 +48,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - Archive provenance puzzle.
 - Two-room OpenNet/ClassNet routing dungeon where clean routing opens the ClassNet Vault and a physical Clearance Token reward.
 - Two-room Referral Vault dungeon where equity matching and visible excision open the Concurrence Chamber, then the player physically collects the Concurrence Slip.
-- Silent-read proofing puzzle where the AI annotation review tool checks mechanical/schema issues, evidence-bound findings route to human review/comment-only, and the player catches the factual date error.
+- Two-room Editor's Labyrinth / Silent Read Tower sequence where the AI annotation review tool checks mechanical/schema issues, the Red Pencil opens the tower, evidence-bound findings route to human workstations, and the player earns the Proof Lens and Buckram Key.
 - Room-specific pixel dressing: desks, shelves, document stacks, wall maps, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
 - One-screen room composition with a minimap/status HUD, 16x16 tile-feeling floors, stone borders, and clear blocked/walkable space.
 - Bureaucratic wall enemies: literal stone walls labeled with process blockers like `NO REPO`, `PENDING`, `FIREWALL`, `WAIT`, and `HOLD`.
