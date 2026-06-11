@@ -71,7 +71,40 @@ Guard each tilemap build with `this.textures.exists("pack-tiles-...")`; if absen
 
 ---
 
+## PART C — Extras (portraits, item icons, effects/stamps, UI kit)
+
+All extras are in `manifest.json` under the top-level `extras` object. Grid sheets give `columns`/`rows`/`cellWidth`/`cellHeight` for simple division-slicing; free-layout sheets list `elements` you slice by hand. Load every extra under `pack-` keys in BootScene and guard usage with `this.textures.exists(key)`.
+
+### Extras facts (READ from manifest.json `extras`, never hardcode)
+- `portraits_cast` — 1536x1024, 3x2 grid (cellW 512, cellH 512). `portraitOrder`: senior_editor, compiler, declassification_reviewer, archivist, security_officer, records_officer. Transparent. Style matches `dann_e_boss_portrait`.
+- `items_collectibles` — 1024x1024, ~6x4 grid (cellW 170, cellH 256). Loosely gridded item icons. Transparent.
+- `effects_stamps` — 1024x1024, 5x4 grid (cellW 204, cellH 256). Effects + emotes. Transparent.
+- `stamps_text` — 1536x1024, 2x2 grid (cellW 768, cellH 512). `stampOrder`: CONFIDENTIAL, TOP SECRET, DECLASSIFIED, APPROVED. Transparent.
+- `ui_kit` — 1536x1024, FREE LAYOUT (no fixed grid). `elements`: dialogue_box_frame, menu_box_frame, cursor_arrow_right, continue_arrow_down, progress_meter_empty, progress_meter_red_filled, hp_ruby_gem, button_a, button_b, button_start, scroll_banner, heart, star, coin, corner_flourish. Transparent.
+
+### C1 — Load
+In BootScene preload: load `portraits_cast`, `items_collectibles`, `effects_stamps`, `stamps_text` as SPRITESHEETS using their cellWidth/cellHeight from the manifest (e.g. `this.load.spritesheet("pack-portraits", path, { frameWidth: 512, frameHeight: 512 })`). Load `ui_kit` as a single IMAGE (`this.load.image("pack-ui-kit", path)`). Extend `artPack.ts` with an `ART_PACK_EXTRAS` map and helpers `portraitIndex(roleId)` and `stampIndex(name)` derived from portraitOrder/stampOrder.
+
+### C2 — Portraits into the dialogue system
+Find the existing dialogue/textbox code (GuideScene and whatever renders NPC/role conversations). When a line is spoken by one of the six cast roles, draw the matching portrait frame from `pack-portraits` as a bust beside the dialogue box (scale to fit, e.g. 48-64px). Map roleId -> portrait via `portraitOrder`. For DANN-E lines, keep using `pack-dann_e_boss_portrait`. Guard with `textures.exists`; if missing, render dialogue with no portrait (current behavior).
+
+### C3 — UI kit as 9-slice dialogue/menu frames
+Slice `dialogue_box_frame` and `menu_box_frame` from `pack-ui-kit` and render them as Phaser NineSlice game objects (or `nineslice` via `this.add.nineslice`) so they stretch to any size without distorting the ornate corners. Replace the current programmatic/rectangle dialogue box with the dialogue_box_frame ninslice; put dialogue text inside its padded interior. Use `cursor_arrow_right` for menu selection highlight, `continue_arrow_down` as the "press to continue" blink indicator, `progress_meter_empty` + `progress_meter_red_filled` for any progress/HP bar (clip the filled version by a mask to show percentage), `hp_ruby_gem` as a status icon, and `heart`/`star`/`coin` for HUD counters. Because ui_kit is free-layout, hardcode the source rectangles for each element ONCE in artPack.ts as a `UI_KIT_RECTS` lookup (you determine the pixel rects by inspecting the image), and document them. Guard everything with `textures.exists`; fall back to the existing rectangle UI.
+
+### C4 — Item icons into inventory / pickups
+Use `pack-items_collectibles` frames for inventory entries and world pickups (the FRUS documents, ruby, keys, etc.). Map game item ids to frame indices in an `ITEM_ICON_FRAMES` lookup in artPack.ts. Since the grid is loose, verify each index visually and trim/pad as needed; if an icon doesn't line up cleanly, fall back to the existing `items_icons_16x16` sheet. Use the ruby icon for the quest's ruby objective and the document/folder icons for FRUS collectibles.
+
+### C5 — Effects, emotes, and stamps as overlays
+- Use `pack-effects_stamps` frames for transient feedback: sparkle/impact on pickups, dust on movement/landing, the `+` heal symbol on restores, `!`/`?` emote bubbles over NPCs/enemies (DANN-E shows `!` when it starts a push), the check mark on completing a production step, the explosion on clearing DANN-E. Play them as short one-shot sprites that auto-destroy.
+- Use `pack-stamps_text` frames (CONFIDENTIAL / TOP SECRET / DECLASSIFIED / APPROVED) as overlays stamped onto document sprites or shown in dialogue when the player processes a document: e.g. animate a DECLASSIFIED stamp slamming down (scale-in + fade) when a FRUS doc is cleared, APPROVED on a successful review, CONFIDENTIAL/TOP SECRET on locked content. Tie these to the existing declassification/production events.
+
+### C6 — Fallback + safety
+Every extra usage guards with `this.textures.exists(key)` and falls back to current behavior (no portrait, rectangle UI, old icon sheet, no effect). Never remove existing fallbacks.
+
+---
+
 ## Verification (run after BOTH parts)
 - `npm run dev`: title screen shows new art; player role sprite animates with 32x48 frames at native scale (no blur, not 8x-too-large); DANN-E QUEUE renders with the robot sprite and menace/attack/defeated fire; each scene renders new tiles crisply at the 256x240 scale; walls collide, floors don't; objects layer correctly above/below player; the FRUS production win condition still works.
+- Extras: cast portraits appear beside dialogue for the right roles; the 9-slice dialogue/menu frames render without corner distortion; item icons show in inventory/pickups; effect one-shots and DECLASSIFIED/APPROVED stamps play on the right events.
 - `npm run build` must pass with no TS errors. Do not commit anything that breaks the build.
 - Report: files changed, the texture-key naming scheme, the per-tileset index maps used, and any sheet whose frameOrder didn't cleanly map to an existing entity.
