@@ -33,8 +33,8 @@ True, gap-free, grid-aligned tilesets repacked onto an exact 16px grid. Each `*.
 
 | Filename | Dimensions | Grid | Native | Intended use | Transparency |
 |---|---|---|---|---|---|
-| `gameplay/tileset_overworld_16x16.png` | 768×768 | 6×6 (128px cells) | 96×96 | Overworld: grass, dirt path, stone/cobble, brick, water + shorelines, river bends, dock, hedge, flowers, fences, lamp post, dirt-ground fills | No |
-| `gameplay/tileset_interiors_16x16.png` | 768×640 | 6×5 (128px cells) | 96×80 | Office/archive interiors: tiling floors & walls (rows 1–2) + single-tile furniture/objects — desk, chair, safe, bookshelf, CRT terminal, banker lamp, doors, world-map wall, elevator, book (rows 3–5) | Yes (objects) |
+| `gameplay/tileset_overworld_16x16.png` | 1024×1024 | 8×8 (128px cells) | 128×128 | Overworld (v2): grass, dirt path/edge, gravel, sand, cobblestone, stone-brick, brick, sidewalk, marble step, wood plank, water + shorelines, river bends, dock, hedge, flowers, tree, fences, lamp post, signpost; rows 5-8 seamless grass/dirt fills | No |
+| `gameplay/tileset_interiors_16x16.png` | 1024×1024 | 8×8 (128px cells) | 128×128 | Office/archive interiors (v2): tiling floors & walls (rows 1–2) + centered furniture/objects — desk, chair, filing cabinet, bookshelf, document box, banker lamp, CRT terminal, safe, doors (closed/open), world-map wall, bulletin board, lectern, elevator (rows 3–4); rows 5-8 seamless floor fills | No |
 | `gameplay/tileset_archive_dungeon_16x16.png` | 896×896 | 7×7 (128px cells) | 112×112 | Archive-dungeon (v2, cleaner centered objects): stone floors/walls, doorway, arches, pit, rubble, column, carved face, bookshelf, iron grate, torch, brazier, iron door, ruby pedestal, red button panel, treasure chest; rows 5-7 seamless floor fills | No |
 
 ### 2b. Original concept sheets — REFERENCE ONLY (`tilesets/concept/`)
