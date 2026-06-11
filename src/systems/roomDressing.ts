@@ -5,6 +5,12 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
+type TrackFn = <T extends Phaser.GameObjects.GameObject>(object: T) => T;
+
+function keep<T extends Phaser.GameObjects.GameObject>(object: T, track?: TrackFn) {
+  return track ? track(object) : object;
+}
+
 export function addDesk(scene: Phaser.Scene, x: number, y: number, label?: string) {
   scene.add.rectangle(x, y, 38, 20, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(y - 2);
   scene.add.rectangle(x - 12, y - 4, 10, 6, color(PALETTE.creamPaper)).setDepth(y - 1);
@@ -69,16 +75,16 @@ export function addArchiveShelves(scene: Phaser.Scene) {
   addBookcase(scene, 232, 158, 32, 52);
 }
 
-export function addNetworkCables(scene: Phaser.Scene) {
+export function addNetworkCables(scene: Phaser.Scene, track?: TrackFn) {
   const cyan = color(PALETTE.terminalCyan);
   const green = color(PALETTE.openNetGreen);
   const red = color(PALETTE.classNetRed);
-  scene.add.line(0, 0, 60, 124, 102, 100, cyan).setLineWidth(2).setDepth(2);
-  scene.add.line(0, 0, 196, 124, 154, 100, cyan).setLineWidth(2).setDepth(2);
-  scene.add.line(0, 0, 60, 142, 60, 182, green).setLineWidth(3).setDepth(2);
-  scene.add.line(0, 0, 196, 142, 196, 182, red).setLineWidth(3).setDepth(2);
+  keep(scene.add.line(0, 0, 60, 124, 102, 100, cyan).setLineWidth(2).setDepth(2), track);
+  keep(scene.add.line(0, 0, 196, 124, 154, 100, cyan).setLineWidth(2).setDepth(2), track);
+  keep(scene.add.line(0, 0, 60, 142, 60, 182, green).setLineWidth(3).setDepth(2), track);
+  keep(scene.add.line(0, 0, 196, 142, 196, 182, red).setLineWidth(3).setDepth(2), track);
   for (let i = 0; i < 9; i += 1) {
-    scene.add.rectangle(42 + i * 22, 102, 4, 4, i % 2 === 0 ? green : red).setDepth(3);
+    keep(scene.add.rectangle(42 + i * 22, 102, 4, 4, i % 2 === 0 ? green : red).setDepth(3), track);
   }
 }
 

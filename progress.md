@@ -278,6 +278,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - added `snesTransition` to `render_game_to_text()` with active/current/last transition metadata, including scene, room IDs, direction, label, style, and cell size
   - kept direct `?scene=` QA starts stable by completing transition state before scene handoff and preserving direct boot behavior
   - verified `npm run build`, Archive A1 -> A2 movement with the bundled web-game client, title-to-character transition screenshots showing the mosaic/card, all ten configured scene deep links, and an in-app browser local load with no console errors
+- Expanded Two Networks into a two-room SNES dungeon slice:
+  - refactored `NetworkScene` into `N1 Network Split` and `N2 ClassNet Vault` rooms with fixed room IDs, a two-cell minimap, room traversal state, and ruby-mosaic doorway transitions
+  - preserved the OpenNet/ClassNet routing puzzle in N1 while changing the successful outcome to clear the FIREWALL and open the east vault door instead of immediately jumping scenes
+  - made the Clearance Token a physical N2 vault reward that the player must stand near and pick up after correct routing, then use to exit east to Referral Vault
+  - made network cable dressing trackable so N1 art clears cleanly when N2 renders
+  - verified `npm run build`, `git diff --check`, N1 routing -> N2 transition screenshots, N2 token pickup screenshot/state, full N2 -> ReferralVaultScene handoff, all ten configured `?scene=` deep links, and an in-app browser local load with no console errors
 
 ## TODO
 
