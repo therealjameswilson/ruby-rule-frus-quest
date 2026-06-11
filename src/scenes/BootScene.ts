@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
-import { SNES_AREA_MAP_ASSETS, SNES_BUREAUCRATIC_WALL_ASSETS, SNES_NPC_ASSETS } from "../game/snesAtlas";
+import { SNES_ANTAGONIST_ASSETS, SNES_AREA_MAP_ASSETS, SNES_BUREAUCRATIC_WALL_ASSETS, SNES_NPC_ASSETS } from "../game/snesAtlas";
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 
 function color(hex: string) {
@@ -64,6 +64,9 @@ export class BootScene extends Phaser.Scene {
     this.makeArchiveColleagueTextureIfMissing();
     for (const npcAsset of SNES_NPC_ASSETS) {
       this.makeSnesNpcTextureIfMissing(npcAsset.key, npcAsset.characterId);
+    }
+    for (const antagonistAsset of SNES_ANTAGONIST_ASSETS) {
+      this.makeSnesAntagonistTextureIfMissing(antagonistAsset.key);
     }
     this.makeBureaucraticWallTextureIfMissing();
     for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
@@ -129,6 +132,9 @@ export class BootScene extends Phaser.Scene {
     }
     for (const npcAsset of SNES_NPC_ASSETS) {
       this.load.svg(npcAsset.key, npcAsset.path, { width: 32, height: 32 });
+    }
+    for (const antagonistAsset of SNES_ANTAGONIST_ASSETS) {
+      this.load.svg(antagonistAsset.key, antagonistAsset.path, { width: 32, height: 32 });
     }
     for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
       this.load.svg(wallAsset.key, wallAsset.path, { width: 32, height: 32 });
@@ -513,6 +519,42 @@ export class BootScene extends Phaser.Scene {
       g.fillStyle(color(PALETTE.buckramHighlight));
       g.fillRect(22, 20, 5, 5);
     }
+    g.generateTexture(key, 32, 32);
+    g.destroy();
+  }
+
+  private makeSnesAntagonistTextureIfMissing(key: string) {
+    if (this.textures.exists(key)) return;
+    const g = this.add.graphics();
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(10, 2, 12, 2);
+    g.fillRect(8, 4, 16, 5);
+    g.fillRect(10, 9, 12, 8);
+    g.fillRect(7, 17, 18, 11);
+    g.fillRect(4, 13, 9, 7);
+    g.fillRect(21, 18, 8, 10);
+    g.fillRect(7, 28, 7, 3);
+    g.fillRect(18, 28, 7, 3);
+    g.fillStyle(color(PALETTE.sepiaInk));
+    g.fillRect(9, 5, 14, 5);
+    g.fillStyle(color(PALETTE.creamPaper));
+    g.fillRect(11, 9, 10, 8);
+    g.fillStyle(color(PALETTE.stoneDark));
+    g.fillRect(8, 18, 16, 9);
+    g.fillStyle(color(PALETTE.buckramRed));
+    g.fillRect(12, 18, 8, 9);
+    g.fillStyle(color(PALETTE.white));
+    g.fillRect(5, 14, 7, 5);
+    g.fillStyle(color(PALETTE.goldStamp));
+    g.fillRect(13, 22, 6, 3);
+    g.fillRect(22, 19, 6, 8);
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(12, 11, 2, 1);
+    g.fillRect(18, 11, 2, 1);
+    g.fillRect(13, 15, 6, 1);
+    g.fillRect(14, 23, 1, 1);
+    g.fillRect(16, 23, 1, 1);
+    g.fillRect(18, 23, 1, 1);
     g.generateTexture(key, 32, 32);
     g.destroy();
   }

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { SNES_BUREAUCRATIC_WALL_ASSETS, SNES_NPC_ASSETS } from "../game/snesAtlas";
+import { SNES_ANTAGONIST_ASSETS, SNES_BUREAUCRATIC_WALL_ASSETS, SNES_NPC_ASSETS } from "../game/snesAtlas";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { isIntegerScale } from "../systems/pixelPerfect";
 
@@ -23,6 +23,7 @@ export class RenderDebugScene extends Phaser.Scene {
       "sample sprite 3x",
       "sample sprite 4x",
       ...SNES_NPC_ASSETS.map((npc) => `${npc.displayName} SNES sprite`),
+      ...SNES_ANTAGONIST_ASSETS.map((asset) => `${asset.displayName} antagonist sprite`),
       ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => `${wall.type} wall sprite`)
     ]);
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
@@ -56,6 +57,16 @@ export class RenderDebugScene extends Phaser.Scene {
       fontSize: "7px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(2);
+
+    if (this.textures.exists("snes-hac-member")) {
+      this.add.image(229, 64, "snes-hac-member").setDepth(2);
+      this.add.text(229, 80, "HAC", {
+        fontFamily: "monospace",
+        fontSize: "6px",
+        color: PALETTE.classNetRed,
+        backgroundColor: PALETTE.black
+      }).setOrigin(0.5).setDepth(2);
+    }
 
     this.add.rectangle(128, 191, 232, 64, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(1);
     [1, 2, 3, 4].forEach((scale, index) => {

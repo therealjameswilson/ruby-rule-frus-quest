@@ -320,6 +320,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - added SNES NPC metadata to the atlas readout, BootScene preload/fallback generation, and RenderDebugScene visible-entity reporting
   - changed `HistorianNPC` and GuideScene to prefer the new SNES textures while keeping the old 16x16 assets as fallback paths
   - verified `npm run build`, `git diff --check`, bundled web-game screenshots for Office/Guide/Network/Referral/Silent Read, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
+- Introduced a roaming HAC member antagonist in the Office Hub:
+  - added an original 32x32 `snes-hac-member.svg` sprite with committee paper/badge cues and no external assets
+  - added `HacMember` as a waypoint-roaming antagonist that displays a distraction cue and lightly reduces reliability when the player gets too close
+  - registered the HAC sprite in the SNES atlas readout and BootScene preload/fallback pipeline
+  - exposed the HAC member through `visibleThreats` with sprite key, behavior, counterplay, and roaming/distracting status
+  - verified `npm run build`, `git diff --check`, OfficeScene distraction state/screenshot, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
 
 ## TODO
 

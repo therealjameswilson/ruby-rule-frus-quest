@@ -124,6 +124,19 @@ export function getSnesNpcTextureKey(characterId: string) {
   return SNES_NPC_ASSETS.find((asset) => asset.characterId === characterId)?.key ?? characterId;
 }
 
+export const SNES_ANTAGONIST_ASSETS = [
+  {
+    id: "hac_member",
+    key: "snes-hac-member",
+    path: "assets/sprites/snes-hac-member.svg",
+    kind: "roaming-antagonist-sprite",
+    displayName: "HAC Member",
+    behavior: "roams the Office Hub causing short focus distractions",
+    counterplay: "Keep moving through the FRUS workflow and refocus at human workstations",
+    dimensions: { width: 32, height: 32 }
+  }
+] as const;
+
 export const SNES_BUREAUCRATIC_WALL_ASSETS = [
   {
     type: "NO REPO",
@@ -179,6 +192,7 @@ export const SNES_BUREAUCRATIC_WALL_ASSETS = [
 export const SNES_VISUAL_ASSETS = [
   ...SNES_AREA_MAP_ASSETS,
   ...SNES_NPC_ASSETS,
+  ...SNES_ANTAGONIST_ASSETS,
   ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => ({
     key: wall.key,
     path: wall.path,
@@ -226,6 +240,14 @@ export function getSnesAtlasReadout() {
       displayName: asset.displayName,
       texture: asset.key,
       cue: asset.roleCue,
+      dimensions: { ...asset.dimensions }
+    })),
+    roamingAntagonists: SNES_ANTAGONIST_ASSETS.map((asset) => ({
+      id: asset.id,
+      displayName: asset.displayName,
+      texture: asset.key,
+      behavior: asset.behavior,
+      counterplay: asset.counterplay,
       dimensions: { ...asset.dimensions }
     })),
     workflowRelics: ITEM_REGISTRY.map((item) => ({

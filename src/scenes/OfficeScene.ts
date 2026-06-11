@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { awardProcessStamp, gameState, setNearestInteractable, setObjective, setSceneState, setVisibleEntities } from "../game/state";
+import { awardProcessStamp, gameState, setNearestInteractable, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
 import type { Interactable } from "../game/types";
+import { HacMember } from "../entities/HacMember";
 import { HistorianNPC } from "../entities/HistorianNPC";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/Terminal";
@@ -9,7 +10,7 @@ import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
-import { ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addBookcase, addDesk, addDocumentStack, addRubyVolumeStack, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
@@ -26,6 +27,7 @@ export class OfficeScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
+  private hacMember!: HacMember;
   private interactables: Interactable[] = [];
 
   constructor() {
@@ -58,6 +60,7 @@ export class OfficeScene extends Phaser.Scene {
     const elena = new HistorianNPC(this, "elena", 58, 78);
     const marcus = new HistorianNPC(this, "marcus", 198, 82);
     const priya = new HistorianNPC(this, "priya", 136, 132);
+    this.hacMember = new HacMember(this, 88, 174);
     const openNet = new Terminal(this, 50, 150, "OpenNet");
     const classNet = new Terminal(this, 206, 150, "ClassNet");
     this.add.rectangle(128, 66, 38, 26, color(PALETTE.goldStamp)).setStrokeStyle(2, color(PALETTE.sepiaInk));
@@ -88,7 +91,7 @@ export class OfficeScene extends Phaser.Scene {
       { id: "opennet", label: "OpenNet terminal", x: openNet.x, y: openNet.y, kind: "terminal", onInteract: () => this.inspectOpenNet() },
       { id: "classnet", label: "ClassNet terminal", x: classNet.x, y: classNet.y, kind: "terminal", onInteract: () => this.inspectClassNet() }
     ];
-    setVisibleEntities(this.interactables.map((item) => item.label));
+    this.syncOfficeVisibility();
     this.updateOfficeObjective();
 
     this.dialog.show("PRIYA", [
@@ -110,10 +113,12 @@ export class OfficeScene extends Phaser.Scene {
 
     if (this.dialog.active) {
       if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) this.dialog.advance();
+      this.updateHacMember(delta, false);
       this.player.update(delta, false);
       return;
     }
     if (this.inventory.active || this.reliability.active) {
+      this.updateHacMember(delta, false);
       this.player.update(delta, false);
       return;
     }
@@ -123,6 +128,7 @@ export class OfficeScene extends Phaser.Scene {
     }
 
     this.player.update(delta, true);
+    this.updateHacMember(delta, true);
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
@@ -201,5 +207,29 @@ export class OfficeScene extends Phaser.Scene {
     if (stage <= 0) setObjective("Office Hub: talk to Elena.");
     else if (stage === 1) setObjective("Office Hub: read the Golden Rule poster.");
     else setObjective("Office Hub: inspect ClassNet to open Archive Cavern.");
+  }
+
+  private updateHacMember(delta: number, canDistract: boolean) {
+    const distracted = this.hacMember.update(this.time.now, delta, this.player.position, canDistract);
+    if (distracted) {
+      adjustReliability(-1, "HAC distraction pulled focus from FRUS workflow");
+    }
+    this.syncOfficeVisibility();
+  }
+
+  private syncOfficeVisibility() {
+    setVisibleEntities([...this.interactables.map((item) => item.label), "HAC member"]);
+    const hacPosition = this.hacMember.position;
+    setVisibleThreats([
+      {
+        label: "HAC member",
+        x: hacPosition.x,
+        y: hacPosition.y,
+        spriteKey: this.hacMember.spriteKey,
+        behavior: "roams around causing distractions",
+        defeatMethod: "Keep focus on the Golden Rule and continue human review.",
+        status: this.hacMember.status(this.time.now)
+      }
+    ]);
   }
 }
