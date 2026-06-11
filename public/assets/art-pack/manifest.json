@@ -400,6 +400,91 @@
       "note": "7x7 packed grid (v2, cleaner centered objects). Row1 floors; Row2 walls + doorway/arches + brick + gold panel; Row3 pit/rubble/column/carved-face/bookshelf/grate; Row4 torch/brazier/iron-door/ruby-pedestal/button-panel/treasure-chest; Rows5-7 seamless stone-floor fills."
     }
   },
+  "extras": {
+    "_note": "Additional art added after the base pack. Grid sheets give columns/rows/cellW/cellH for simple division-slicing. Free-layout sheets are single images with loosely-placed elements; slice by hand or use as-is.",
+    "portraits_cast": {
+      "path": "assets/art-pack/portraits/portraits_cast.png",
+      "imageWidth": 1536,
+      "imageHeight": 1024,
+      "columns": 3,
+      "rows": 2,
+      "cellWidth": 512,
+      "cellHeight": 512,
+      "transparent": true,
+      "kind": "portrait-sheet",
+      "portraitOrder": [
+        "senior_editor",
+        "compiler",
+        "declassification_reviewer",
+        "archivist",
+        "security_officer",
+        "records_officer"
+      ],
+      "note": "3x2 dialogue-portrait busts matching the cast roles. Use beside the dialogue box. Style matches dann_e_boss_portrait."
+    },
+    "items_collectibles": {
+      "path": "assets/art-pack/icons/items_collectibles.png",
+      "imageWidth": 1024,
+      "imageHeight": 1024,
+      "columns": 6,
+      "rows": 4,
+      "cellWidth": 170,
+      "cellHeight": 256,
+      "transparent": true,
+      "kind": "item-sheet",
+      "note": "Collectible item icons (documents, envelope, wax seal, scroll, book, ruby, keys, locks, magnifier, pen, ink, stamps, film reels, floppy, badge, mug, phone, chest, redaction bar). Loosely gridded ~6x4; slice by division or trim per-icon."
+    },
+    "effects_stamps": {
+      "path": "assets/art-pack/effects/effects_stamps.png",
+      "imageWidth": 1024,
+      "imageHeight": 1024,
+      "columns": 5,
+      "rows": 4,
+      "cellWidth": 204,
+      "cellHeight": 256,
+      "transparent": true,
+      "kind": "effect-sheet",
+      "note": "5x4 effects + emotes: sparkle, impact, dust, smoke, splash, ! bubble, ? bubble, anger, heal +, sleep Z, aura ring, explosion, speed lines, sparkle dots, down arrow, red/green/blue stamp frames, seal emblem, check mark."
+    },
+    "stamps_text": {
+      "path": "assets/art-pack/effects/stamps_text.png",
+      "imageWidth": 1536,
+      "imageHeight": 1024,
+      "columns": 2,
+      "rows": 2,
+      "cellWidth": 768,
+      "cellHeight": 512,
+      "transparent": true,
+      "kind": "stamp-sheet",
+      "stampOrder": ["CONFIDENTIAL", "TOP SECRET", "DECLASSIFIED", "APPROVED"],
+      "note": "2x2 document stamp marks with correct spelled text. Overlay on document sprites/dialogue for the declassification theme."
+    },
+    "ui_kit": {
+      "path": "assets/art-pack/ui/ui_kit.png",
+      "imageWidth": 1536,
+      "imageHeight": 1024,
+      "transparent": true,
+      "kind": "ui-freelayout",
+      "elements": [
+        "dialogue_box_frame",
+        "menu_box_frame",
+        "cursor_arrow_right",
+        "continue_arrow_down",
+        "progress_meter_empty",
+        "progress_meter_red_filled",
+        "hp_ruby_gem",
+        "button_a",
+        "button_b",
+        "button_start",
+        "scroll_banner",
+        "heart",
+        "star",
+        "coin",
+        "corner_flourish"
+      ],
+      "note": "Free-layout UI kit in the ruby-red/gold parchment aesthetic (matches title screen). Slice elements by hand; positions are not on a fixed grid. 9-slice the dialogue/menu frames for arbitrary sizes."
+    }
+  },
   "images": {
     "items_icons_16x16": {
       "path": "assets/art-pack/icons/items_icons_16x16.png",

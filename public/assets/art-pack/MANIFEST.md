@@ -107,6 +107,18 @@ All humanoid sheets share a consistent **32×48 frame size**, laid out 4 frames 
 | `bg_federal_exterior.png` | 1536×1024 | Federal-building exterior establishing backdrop | No |
 | `bg_ruby_buckram_pattern.png` | 1254×1254 | Seamless ruby buckram pattern for menus/cutscenes (tileable) | No |
 
+## 8. Extras (portraits, items, effects, UI kit)
+
+Added after the base pack. See `manifest.json` → `extras` for grid metadata. Grid sheets slice by simple division (`cellW = imageWidth / columns`); free-layout sheets are sliced by hand.
+
+| Filename | Dimensions | Layout | Intended use | Transparency |
+|---|---|---|---|---|
+| `portraits/portraits_cast.png` | 1536×1024 | 3×2 grid | Dialogue-portrait busts for the 6 cast roles (senior editor, compiler, declassification reviewer, archivist, security officer, records officer); matches `dann_e_boss_portrait` style | Yes |
+| `icons/items_collectibles.png` | 1024×1024 | ~6×4 grid | Collectible item icons: documents, envelope, wax seal, scroll, book, ruby, keys, locks, magnifier, pen, ink, film reels, floppy, badge, mug, phone, chest, redaction bar | Yes |
+| `effects/effects_stamps.png` | 1024×1024 | 5×4 grid | Effects + emotes: sparkle, impact, dust, smoke, splash, !/? bubbles, anger, heal +, sleep Z, aura ring, explosion, speed lines, arrows, colored stamp frames, seal emblem, check | Yes |
+| `effects/stamps_text.png` | 1536×1024 | 2×2 grid | Document stamp marks with correct text: CONFIDENTIAL, TOP SECRET, DECLASSIFIED, APPROVED — overlay for the declassification theme | Yes |
+| `ui/ui_kit.png` | 1536×1024 | free layout | UI kit (ruby-red/gold parchment): dialogue/menu box frames (9-slice), cursor + continue arrows, progress meters, HP ruby gem, A/B/START buttons, scroll banner, heart/star/coin, corner flourishes | Yes |
+
 ---
 
 ## Engine / integration notes (Phaser)
