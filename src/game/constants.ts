@@ -484,16 +484,17 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     title: "Equity Gate",
     grid: { x: 4, y: 1 },
     exits: { east: "R2" },
-    lockedExits: { east: "Referral gate" },
-    requiredItems: { east: "concurrence_slip" },
-    roomType: "reward"
+    lockedExits: { east: "Visible-excision gate" },
+    roomType: "puzzle"
   },
   {
     id: "R2",
     area: "referral_vault",
     title: "Concurrence Chamber",
     grid: { x: 5, y: 1 },
-    exits: { west: "R1" },
+    exits: { west: "R1", east: "S1" },
+    lockedExits: { east: "Silent Read handoff" },
+    requiredItems: { east: "concurrence_slip" },
     roomType: "reward"
   },
   {

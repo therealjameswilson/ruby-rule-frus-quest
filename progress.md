@@ -284,6 +284,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - made the Clearance Token a physical N2 vault reward that the player must stand near and pick up after correct routing, then use to exit east to Referral Vault
   - made network cable dressing trackable so N1 art clears cleanly when N2 renders
   - verified `npm run build`, `git diff --check`, N1 routing -> N2 transition screenshots, N2 token pickup screenshot/state, full N2 -> ReferralVaultScene handoff, all ten configured `?scene=` deep links, and an in-app browser local load with no console errors
+- Expanded Referral Vault into a two-room SNES dungeon slice:
+  - refactored `ReferralVaultScene` into `R1 Equity Gate` and `R2 Concurrence Chamber` with fixed room IDs, a two-cell minimap, room traversal state, and ruby-mosaic doorway transitions
+  - preserved the agency-equity matching, StateChat manifest confirmation, and visible-excision puzzle in R1 while changing the outcome to open the east concurrence gate instead of jumping directly to Silent Read
+  - made the Concurrence Slip a physical R2 reward that the player must stand near and pick up after human referral review, then use to exit east to Silent Read Tower
+  - made vault room dressing trackable so R1 and R2 redraw cleanly during room transitions
+  - verified `npm run build`, required web-game client R1 smoke, and a full Playwright route covering R1 puzzle -> R2 transition -> Concurrence Slip pickup -> SilentReadScene handoff with screenshot inspection and no console errors
 
 ## TODO
 

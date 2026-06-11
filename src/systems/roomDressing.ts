@@ -58,13 +58,13 @@ export function addWallMap(scene: Phaser.Scene, x: number, y: number, label = "M
   }).setOrigin(0.5).setDepth(y + 1);
 }
 
-export function addDocumentStack(scene: Phaser.Scene, x: number, y: number, flagged = false) {
+export function addDocumentStack(scene: Phaser.Scene, x: number, y: number, flagged = false, track?: TrackFn) {
   for (let i = 0; i < 4; i += 1) {
-    scene.add.rectangle(x + i, y - i * 3, 20, 12, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(y + i);
-    scene.add.rectangle(x - 5 + i, y - 2 - i * 3, 9, 1, color(PALETTE.sepiaInk)).setDepth(y + i + 1);
+    keep(scene.add.rectangle(x + i, y - i * 3, 20, 12, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(y + i), track);
+    keep(scene.add.rectangle(x - 5 + i, y - 2 - i * 3, 9, 1, color(PALETTE.sepiaInk)).setDepth(y + i + 1), track);
   }
   if (flagged) {
-    scene.add.rectangle(x - 12, y - 9, 3, 22, color(PALETTE.classNetRed)).setDepth(y + 6);
+    keep(scene.add.rectangle(x - 12, y - 9, 3, 22, color(PALETTE.classNetRed)).setDepth(y + 6), track);
   }
 }
 
@@ -88,16 +88,16 @@ export function addNetworkCables(scene: Phaser.Scene, track?: TrackFn) {
   }
 }
 
-export function addVaultBlocks(scene: Phaser.Scene) {
+export function addVaultBlocks(scene: Phaser.Scene, track?: TrackFn) {
   for (let x = 18; x <= 238; x += 22) {
-    scene.add.rectangle(x, 42, 14, 10, color(PALETTE.stoneGray)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(0);
+    keep(scene.add.rectangle(x, 42, 14, 10, color(PALETTE.stoneGray)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(0), track);
   }
-  scene.add.rectangle(128, 193, 160, 12, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(2);
-  scene.add.text(128, 188, "VISIBLE WITHHOLDINGS ARE PART OF THE RECORD", {
+  keep(scene.add.rectangle(128, 193, 160, 12, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(2), track);
+  keep(scene.add.text(128, 188, "VISIBLE WITHHOLDINGS ARE PART OF THE RECORD", {
     fontFamily: "monospace",
     fontSize: "6px",
     color: PALETTE.goldStamp
-  }).setOrigin(0.5).setDepth(3);
+  }).setOrigin(0.5).setDepth(3), track);
 }
 
 export function addProofingTable(scene: Phaser.Scene, x: number, y: number) {

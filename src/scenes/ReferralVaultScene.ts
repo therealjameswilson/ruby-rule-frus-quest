@@ -1,20 +1,24 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
+import type { Direction, RoomType } from "../game/constants";
 import {
   addDocumentPoints,
   addProcessItem,
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  hasProcessItem,
   setAgencyEquityResponse,
   setDocumentWorkflowState,
   setLatestMessage,
+  setNearestInteractable,
   setObjective,
+  setRoomTraversalState,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
-import type { ChoiceOption } from "../game/types";
+import type { ChoiceOption, KeyboardMap } from "../game/types";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { HistorianNPC } from "../entities/HistorianNPC";
 import { Player } from "../entities/Player";
@@ -25,7 +29,7 @@ import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addDocumentStack, addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
-import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionTo } from "../systems/sceneTransitions";
+import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
 
@@ -38,6 +42,43 @@ interface EquityMatch {
   agency: "CIA" | "DOD" | "NSC";
 }
 
+type ReferralRoomId = "R1" | "R2";
+
+interface ReferralRoom {
+  id: ReferralRoomId;
+  title: string;
+  roomType: RoomType;
+  exits: Partial<Record<Direction, ReferralRoomId | "SilentReadScene">>;
+  lockedExits?: Partial<Record<Direction, string>>;
+}
+
+const REFERRAL_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
+const DOOR_Y_MIN = 100;
+const DOOR_Y_MAX = 150;
+const EXIT_SPAWNS: Record<Direction, { x: number; y: number }> = {
+  north: { x: 128, y: 58 },
+  south: { x: 128, y: 204 },
+  east: { x: 30, y: 124 },
+  west: { x: 226, y: 124 }
+};
+
+const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
+  R1: {
+    id: "R1",
+    title: "Equity Gate",
+    roomType: "puzzle",
+    exits: { east: "R2" },
+    lockedExits: { east: "Visible excision gate" }
+  },
+  R2: {
+    id: "R2",
+    title: "Concurrence Chamber",
+    roomType: "reward",
+    exits: { west: "R1", east: "SilentReadScene" },
+    lockedExits: { east: "Concurrence Slip handoff" }
+  }
+};
+
 export class ReferralVaultScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
@@ -48,6 +89,18 @@ export class ReferralVaultScene extends Phaser.Scene {
   private vaultText!: Phaser.GameObjects.Text;
   private matchIndex = 0;
   private correctMatches = 0;
+  private referralGateOpen = false;
+  private concurrenceSlipCollected = false;
+  private currentRoomId: ReferralRoomId = "R1";
+  private visitedRoomIds = new Set<ReferralRoomId>();
+  private roomObjects: Phaser.GameObjects.GameObject[] = [];
+  private roomCleanups: Array<() => void> = [];
+  private mapCells = new Map<ReferralRoomId, Phaser.GameObjects.Rectangle>();
+  private mapLabels = new Map<ReferralRoomId, Phaser.GameObjects.Text>();
+  private roomTitleText!: Phaser.GameObjects.Text;
+  private roomTransitionLocked = false;
+  private exitCooldownUntil = 0;
+  private concurrenceSlipIcon?: Phaser.GameObjects.Image;
   private bureaucraticWalls: BureaucraticWall[] = [];
 
   private readonly matches: EquityMatch[] = [
@@ -63,45 +116,24 @@ export class ReferralVaultScene extends Phaser.Scene {
   create() {
     setSceneState("ReferralVaultScene", "explore", "Referral Vault: earn the Concurrence Slip.");
     retroAudio.startMusic("ReferralVaultScene");
-    setVisibleEntities([
-      "Marcus",
-      "StateChat terminal",
-      "CIA equity seal",
-      "DOD equity seal",
-      "NSC equity seal",
-      "Referral Manifest",
-      "Concurrence Slip",
-      "Excision Bracket Marker",
-      "Stone Wall: Referral delay"
-    ]);
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     drawTiledFloor(this, "vault-tiles");
     drawRoomFrame(this, "REFERRAL VAULT");
-    addSnesRoomLayer(this, { roomId: "R1", roomType: "reward", theme: "vault" });
-    addVaultBlocks(this);
-    addSnesWorldMap(this, 128, 60, "EQUITY MAP", "referral-vault-map");
-    addDocumentStack(this, 214, 116, true);
-    addTinySparkle(this, 128, 120, PALETTE.goldStamp);
-    this.bureaucraticWalls = [
-      new BureaucraticWall(this, "cia-delay-wall", "WAIT", 44, 160),
-      new BureaucraticWall(this, "nsc-delay-wall", "HOLD", 212, 160)
-    ];
-    this.syncThreatState();
-    new HistorianNPC(this, "marcus", 42, 58);
-    new Terminal(this, 214, 58, "StateChat");
-    this.add.image(114, 112, "referral-manifest").setDepth(120);
-    this.add.image(136, 112, "concurrence-slip").setDepth(120);
-    this.add.image(158, 112, "excision-bracket-marker").setDepth(120);
-    this.addSeal(70, 132, "CIA");
-    this.addSeal(128, 132, "DOD");
-    this.addSeal(186, 132, "NSC");
+    this.drawReferralMinimap();
+    this.roomTitleText = this.add.text(128, 33, "", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper,
+      backgroundColor: PALETTE.black
+    }).setOrigin(0.5).setDepth(902);
+
     this.vaultText = this.add.text(128, 88, "BATCH MANIFEST\nPENDING HUMAN CHECK", {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black,
       align: "center"
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(820);
 
     this.player = new Player(this, 128, 192);
     this.dialog = new DialogBox(this);
@@ -109,11 +141,16 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.objectiveText = addObjectiveText(this);
+    this.referralGateOpen = gameState.processStamps.includes("referral");
+    this.concurrenceSlipCollected = hasProcessItem("concurrence_slip");
+    this.enterRoom("R1", { x: 128, y: 192 }, false);
     this.dialog.show("MARCUS", [
       "Referral means agency equity.",
       "Your clearance token opens this red vault door.",
-      "StateChat can draft a manifest. You confirm it."
-    ], () => this.startMatching());
+      "StateChat can draft a manifest. You confirm it, then take the slip by hand."
+    ], () => {
+      if (!this.referralGateOpen) this.startMatching();
+    });
   }
 
   update(_: number, delta: number) {
@@ -128,6 +165,10 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
     if (Phaser.Input.Keyboard.JustDown(keys.r)) this.reliability.toggleDetails();
     if (Phaser.Input.Keyboard.JustDown(keys.e)) activateRoleAbility(this);
+    if (this.roomTransitionLocked) {
+      this.player.update(delta, false);
+      return;
+    }
     if (this.dialog.active) {
       if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) this.dialog.advance();
       this.player.update(delta, false);
@@ -141,30 +182,305 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.dialog.show("PAUSED", "The vault waits.");
       return;
     }
-    this.player.update(delta, true);
+    this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS });
+    if (this.handleConcurrenceSlipAction(keys)) {
+      this.reliability.update();
+      this.objectiveText.setText(gameState.objective);
+      return;
+    }
+    if (this.checkRoomExit()) return;
     this.reliability.update();
     this.objectiveText.setText(gameState.objective);
   }
 
+  private track<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.roomObjects.push(object);
+    return object;
+  }
+
+  private enterRoom(roomId: ReferralRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    const applyRoom = () => {
+      this.currentRoomId = roomId;
+      this.visitedRoomIds.add(roomId);
+      this.clearRoom();
+      this.renderCurrentRoom();
+      this.player.setPosition(spawn.x, spawn.y);
+      this.syncRoomTraversalState();
+      this.updateReferralMinimap();
+      this.exitCooldownUntil = this.time.now + 280;
+    };
+
+    if (!wipe) {
+      applyRoom();
+      this.roomTransitionLocked = false;
+      return;
+    }
+
+    this.roomTransitionLocked = true;
+    transitionArchiveRoom(this, {
+      fromRoomId: this.currentRoomId,
+      toRoomId: roomId,
+      direction,
+      label: REFERRAL_ROOMS[roomId].title.toUpperCase(),
+      onCovered: applyRoom,
+      onComplete: () => {
+        this.roomTransitionLocked = false;
+      }
+    });
+  }
+
+  private clearRoom() {
+    for (const cleanup of this.roomCleanups) cleanup();
+    for (const object of this.roomObjects) {
+      if (object.active) object.destroy();
+    }
+    for (const wall of this.bureaucraticWalls) wall.destroy();
+    this.roomCleanups = [];
+    this.roomObjects = [];
+    this.bureaucraticWalls = [];
+    this.concurrenceSlipIcon = undefined;
+    setNearestInteractable(null);
+  }
+
+  private renderCurrentRoom() {
+    const room = REFERRAL_ROOMS[this.currentRoomId];
+    this.roomTitleText.setText(`${room.id} ${room.title}`);
+    addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "vault", track: (object) => this.track(object) });
+    this.drawRoomDoors();
+    if (room.id === "R1") this.renderEquityGate();
+    else this.renderConcurrenceChamber();
+    this.syncRoomTraversalState();
+    this.syncThreatState();
+  }
+
+  private drawRoomDoors() {
+    const room = REFERRAL_ROOMS[this.currentRoomId];
+    if (room.exits.west) {
+      this.track(this.add.rectangle(11, 124, 9, 36, color(PALETTE.black)).setDepth(65));
+      this.track(this.add.rectangle(16, 124, 3, 26, color(PALETTE.goldStamp)).setDepth(66));
+    }
+    if (room.exits.east) {
+      const open = this.currentRoomId === "R1" ? this.referralGateOpen : this.concurrenceSlipCollected;
+      const accent = open ? PALETTE.goldStamp : PALETTE.classNetRed;
+      this.track(this.add.rectangle(245, 124, 9, 36, color(PALETTE.black)).setDepth(65));
+      this.track(this.add.rectangle(240, 124, 3, 26, color(accent)).setDepth(66));
+      if (!open) this.track(this.add.rectangle(242, 124, 2, 30, color(PALETTE.classNetRed)).setDepth(67));
+    }
+  }
+
+  private renderEquityGate() {
+    setVisibleEntities([
+      "Marcus",
+      "StateChat terminal",
+      "CIA equity seal",
+      "DOD equity seal",
+      "NSC equity seal",
+      "Referral Manifest",
+      "Excision Bracket Marker",
+      "Stone Wall: Referral delay"
+    ]);
+    addVaultBlocks(this, (object) => this.track(object));
+    addSnesWorldMap(this, 128, 62, "EQUITY MAP", "referral-vault-map", (object) => this.track(object));
+    addDocumentStack(this, 214, 116, true, (object) => this.track(object));
+    this.track(addTinySparkle(this, 128, 120, PALETTE.goldStamp));
+    const marcus = new HistorianNPC(this, "marcus", 42, 58);
+    this.roomCleanups.push(() => marcus.destroy());
+    this.track(new Terminal(this, 214, 58, "StateChat").container);
+    this.track(this.add.image(114, 112, "referral-manifest").setDepth(120));
+    this.track(this.add.image(158, 112, "excision-bracket-marker").setDepth(120));
+    this.addSeal(70, 132, "CIA");
+    this.addSeal(128, 132, "DOD");
+    this.addSeal(186, 132, "NSC");
+    if (!this.referralGateOpen) {
+      this.bureaucraticWalls = [
+        new BureaucraticWall(this, "cia-delay-wall", "WAIT", 44, 160, { behavior: "freeze", accent: PALETTE.goldStamp }),
+        new BureaucraticWall(this, "nsc-delay-wall", "HOLD", 212, 160, { behavior: "block", accent: PALETTE.classNetRed })
+      ];
+      this.vaultText.setText("BATCH MANIFEST\nPENDING HUMAN CHECK");
+      setObjective("Referral Vault: match each document to its agency equity.");
+    } else {
+      this.vaultText.setText("REFERRAL GATE OPEN\nEAST: CONCURRENCE");
+      setObjective("Referral Vault: enter R2 and collect the Concurrence Slip.");
+    }
+  }
+
+  private renderConcurrenceChamber() {
+    setVisibleEntities(["Concurrence Slip pedestal", "Agency concurrence chamber", "Silent Read handoff gate"]);
+    addVaultBlocks(this, (object) => this.track(object));
+    this.track(this.add.rectangle(128, 76, 172, 28, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(76));
+    this.track(this.add.text(128, 67, "CONCURRENCE CHAMBER", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(78));
+    for (let x = 62; x <= 194; x += 33) {
+      this.track(this.add.rectangle(x, 104, 24, 20, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(95));
+      this.track(this.add.image(x, 101, "agency-equity-seal").setScale(0.7).setDepth(96));
+    }
+    this.track(this.add.rectangle(128, 145, 78, 32, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(138));
+    this.track(this.add.rectangle(128, 156, 96, 7, color(PALETTE.deepRuby)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(139));
+    if (!this.concurrenceSlipCollected) {
+      this.concurrenceSlipIcon = this.track(this.add.image(128, 132, "concurrence-slip").setDepth(155));
+      this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
+      setObjective("Referral Vault: collect the Concurrence Slip in R2.");
+    } else {
+      this.track(this.add.image(128, 132, "concurrence-slip").setTint(color(PALETTE.goldStamp)).setDepth(155));
+      this.vaultText.setText("SLIP EARNED\nEAST: SILENT READ");
+      setObjective("Referral Vault: exit east to Silent Read Tower.");
+    }
+  }
+
   private addSeal(x: number, y: number, label: string) {
-    this.add.rectangle(x, y, 38, 30, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp));
-    this.add.image(x, y - 1, "agency-equity-seal").setDepth(120);
-    this.add.text(x, y - 5, label, {
+    const container = this.track(this.add.container(x, y).setDepth(120));
+    const plate = this.add.rectangle(0, 0, 38, 30, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp));
+    const seal = this.add.image(0, -1, "agency-equity-seal");
+    const text = this.add.text(0, -5, label, {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.black,
       backgroundColor: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(121);
+    }).setOrigin(0.5);
+    container.add([plate, seal, text]);
   }
 
   private syncThreatState() {
     setVisibleThreats(
-      this.bureaucraticWalls.map((wall) => ({
+      this.bureaucraticWalls.filter((wall) => !wall.isCleared).map((wall) => ({
         label: `Stone Wall: ${wall.label}`,
         x: wall.position.x,
-        y: wall.position.y
+        y: wall.position.y,
+        behavior: wall.label === "WAIT" ? "freezes exits temporarily" : "blocks referral gate",
+        defeatMethod: "Resolve agency response timer and visible referral review",
+        status: this.referralGateOpen ? "cleared" : "active"
       }))
     );
+  }
+
+  private drawReferralMinimap() {
+    (["R1", "R2"] as ReferralRoomId[]).forEach((roomId, index) => {
+      const x = 16 + index * 11;
+      const cell = this.add.rectangle(x, 16, 8, 7, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(805);
+      const label = this.add.text(x, 12, roomId, {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: PALETTE.creamPaper
+      }).setOrigin(0.5, 0).setDepth(806);
+      this.mapCells.set(roomId, cell);
+      this.mapLabels.set(roomId, label);
+    });
+  }
+
+  private updateReferralMinimap() {
+    for (const [roomId, cell] of this.mapCells) {
+      const active = roomId === this.currentRoomId;
+      const visited = this.visitedRoomIds.has(roomId);
+      cell.setFillStyle(color(active ? PALETTE.goldStamp : visited ? PALETTE.terminalCyan : PALETTE.stoneDark));
+      this.mapLabels.get(roomId)?.setColor(active ? PALETTE.black : PALETTE.creamPaper);
+    }
+  }
+
+  private syncRoomTraversalState() {
+    const room = REFERRAL_ROOMS[this.currentRoomId];
+    const lockedExits: Partial<Record<Direction, string>> = {};
+    const requiredItems: Partial<Record<Direction, "concurrence_slip">> = {};
+    if (room.id === "R1" && !this.referralGateOpen) lockedExits.east = room.lockedExits?.east;
+    if (room.id === "R2" && !this.concurrenceSlipCollected) {
+      lockedExits.east = room.lockedExits?.east;
+      requiredItems.east = "concurrence_slip";
+    }
+    setRoomTraversalState({
+      currentRoomId: room.id,
+      roomTitle: room.title,
+      roomType: room.roomType,
+      visitedRoomIds: [...this.visitedRoomIds],
+      revealedRoomIds: this.referralGateOpen || this.concurrenceSlipCollected ? ["R1", "R2"] : ["R1"],
+      exits: room.exits,
+      lockedExits,
+      requiredItems
+    });
+  }
+
+  private handleConcurrenceSlipAction(keys: KeyboardMap) {
+    if (this.currentRoomId !== "R2") {
+      setNearestInteractable(null);
+      return false;
+    }
+    if (this.concurrenceSlipCollected) {
+      setNearestInteractable(null);
+      this.vaultText.setText("SLIP EARNED\nEAST: SILENT READ");
+      return false;
+    }
+    const nearSlip = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) <= 32;
+    if (!nearSlip) {
+      setNearestInteractable(null);
+      this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
+      return false;
+    }
+    setNearestInteractable("Concurrence Slip");
+    this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
+    if (!Phaser.Input.Keyboard.JustDown(keys.space) && !Phaser.Input.Keyboard.JustDown(keys.enter)) return false;
+    this.collectConcurrenceSlip();
+    return true;
+  }
+
+  private collectConcurrenceSlip() {
+    if (this.concurrenceSlipCollected) return;
+    this.concurrenceSlipCollected = true;
+    addProcessItem("concurrence_slip");
+    setLatestMessage("Concurrence Slip opens referral gates.");
+    setObjective("Referral Vault: exit east to Silent Read Tower.");
+    this.vaultText.setText("SLIP EARNED\nEAST: SILENT READ");
+    this.concurrenceSlipIcon?.setTint(color(PALETTE.goldStamp));
+    retroAudio.stamp();
+    this.syncRoomTraversalState();
+    this.updateReferralMinimap();
+    this.dialog.show("MARCUS", [
+      "Concurrence logged after human review.",
+      "The slip is process evidence, not a machine decision.",
+      "Carry it east to the proof tower."
+    ]);
+  }
+
+  private checkRoomExit() {
+    if (this.time.now < this.exitCooldownUntil) return false;
+    const position = this.player.position;
+    let direction: Direction | null = null;
+    if (position.x >= REFERRAL_PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
+    else if (position.x <= REFERRAL_PLAY_BOUNDS.left + 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
+    if (!direction) return false;
+
+    if (this.currentRoomId === "R1" && direction === "east") {
+      if (!this.referralGateOpen) {
+        setLatestMessage("Referral gate waits for visible excision review.");
+        setObjective("Resolve agency equity and visible withholding language before entering R2.");
+        this.player.setPosition(REFERRAL_PLAY_BOUNDS.right - 18, position.y);
+        this.exitCooldownUntil = this.time.now + 500;
+        return false;
+      }
+      this.enterRoom("R2", EXIT_SPAWNS.east, true, "east");
+      return true;
+    }
+
+    if (this.currentRoomId === "R2" && direction === "west") {
+      this.enterRoom("R1", EXIT_SPAWNS.west, true, "west");
+      return true;
+    }
+
+    if (this.currentRoomId === "R2" && direction === "east") {
+      if (!this.concurrenceSlipCollected) {
+        setLatestMessage("Referral handoff requires the Concurrence Slip.");
+        setObjective("Collect the Concurrence Slip before leaving the chamber.");
+        this.player.setPosition(REFERRAL_PLAY_BOUNDS.right - 18, position.y);
+        this.exitCooldownUntil = this.time.now + 500;
+        return false;
+      }
+      this.roomTransitionLocked = true;
+      transitionTo(this, "SilentReadScene");
+      return true;
+    }
+
+    this.exitCooldownUntil = this.time.now + 360;
+    return false;
   }
 
   private startMatching() {
@@ -211,9 +527,8 @@ export class ReferralVaultScene extends Phaser.Scene {
       if (option.value === "checked" && this.correctMatches === this.matches.length) {
         setDocumentWorkflowState("source_note_047", "referred");
         setDocumentWorkflowState("sbu_annotation_001", "referred");
-        addProcessItem("concurrence_slip");
         addDocumentPoints(8, "agency concurrence checked");
-        setLatestMessage("Concurrence Slip opens referral gates.");
+        setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
         adjustReliability(7, "manifest confirmed by human review");
         this.reliability.update();
         this.showExcisionChoice();
@@ -245,11 +560,18 @@ export class ReferralVaultScene extends Phaser.Scene {
         retroAudio.stamp();
         adjustReliability(8, "visible withholding language used");
         this.reliability.update();
+        this.referralGateOpen = true;
+        this.bureaucraticWalls.forEach((wall) => wall.clear());
+        this.clearRoom();
+        this.renderCurrentRoom();
+        this.player.setPosition(128, 178);
+        this.syncRoomTraversalState();
+        this.updateReferralMinimap();
         this.dialog.show("MARCUS", [
           "Correct.",
           "The reader sees the withholding. The record does not pretend.",
-          "The clearance seal is ready for the cover."
-        ], () => transitionTo(this, "SilentReadScene"));
+          "The Concurrence Chamber is open. Take the slip by hand."
+        ]);
         return;
       }
       adjustReliability(-10, "withholding was hidden or unclear");

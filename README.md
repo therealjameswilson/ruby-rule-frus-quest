@@ -47,7 +47,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - Office hub with Elena, Marcus, Priya, the Golden Rule poster, and OpenNet/ClassNet terminals.
 - Archive provenance puzzle.
 - Two-room OpenNet/ClassNet routing dungeon where clean routing opens the ClassNet Vault and a physical Clearance Token reward.
-- Referral, agency-equity, manifest, and visible-excision puzzle.
+- Two-room Referral Vault dungeon where equity matching and visible excision open the Concurrence Chamber, then the player physically collects the Concurrence Slip.
 - Silent-read proofing puzzle where the AI annotation review tool checks mechanical/schema issues, evidence-bound findings route to human review/comment-only, and the player catches the factual date error.
 - Room-specific pixel dressing: desks, shelves, document stacks, wall maps, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
 - One-screen room composition with a minimap/status HUD, 16x16 tile-feeling floors, stone borders, and clear blocked/walkable space.
