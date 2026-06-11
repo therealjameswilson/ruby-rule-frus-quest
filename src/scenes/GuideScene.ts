@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { getSnesNpcTextureKey } from "../game/snesAtlas";
 import {
   addProcessItem,
   addDocumentPoints,
@@ -57,7 +58,9 @@ export class GuideScene extends Phaser.Scene {
     this.drawArchiveLamp(170, 88);
     this.drawAntagonistPlaque(58, 164, "30-YEAR\nLINE", PALETTE.classNetRed);
     this.drawAntagonistPlaque(198, 164, "DANN-E\nQUEUE", PALETTE.terminalCyan);
-    const colleague = this.add.image(128, 87, "archive-colleague").setScale(2).setDepth(90);
+    const colleagueTexture = this.textures.exists(getSnesNpcTextureKey("archive-colleague")) ? getSnesNpcTextureKey("archive-colleague") : "archive-colleague";
+    const colleague = this.add.image(128, 87, colleagueTexture).setDepth(90);
+    if (colleagueTexture === "archive-colleague") colleague.setScale(2);
     this.stampIcon = this.add.image(96, 132, "citation-stamp").setDepth(120);
     this.fragmentIcon = this.add.image(160, 132, "volume-fragment").setDepth(120);
     this.tweens.add({ targets: colleague, y: 86, duration: 560, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { colleague.y = snapPixel(colleague.y); } });

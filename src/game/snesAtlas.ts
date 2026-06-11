@@ -12,6 +12,7 @@ export const SNES_ART_DIRECTION = {
   visualGoals: [
     "larger role portraits with readable FRUS props",
     "larger 32x32 playable role sprites with grounded foot-point movement",
+    "larger human specialist sprites with readable production tools",
     "richer room depth through raised floors, shadows, and buckram texture",
     "compact world atlas connecting Office Hub, Archive Cavern, networks, referrals, proofing, and Buckram Gate",
     "area-specific map panels for the FRUS production dungeons",
@@ -71,6 +72,58 @@ export const SNES_AREA_MAP_ASSETS = [
   }
 ] as const;
 
+export const SNES_NPC_ASSETS = [
+  {
+    characterId: "sam",
+    key: "snes-npc-sam",
+    path: "assets/sprites/snes-npc-sam.svg",
+    kind: "npc-sprite",
+    displayName: "Sam",
+    roleCue: "proofreader with two proof pages",
+    dimensions: { width: 32, height: 32 }
+  },
+  {
+    characterId: "elena",
+    key: "snes-npc-elena",
+    path: "assets/sprites/snes-npc-elena.svg",
+    kind: "npc-sprite",
+    displayName: "Elena",
+    roleCue: "compiler with folder and glasses glint",
+    dimensions: { width: 32, height: 32 }
+  },
+  {
+    characterId: "marcus",
+    key: "snes-npc-marcus",
+    path: "assets/sprites/snes-npc-marcus.svg",
+    kind: "npc-sprite",
+    displayName: "Marcus",
+    roleCue: "declass coordinator with clipboard and ClassNet red",
+    dimensions: { width: 32, height: 32 }
+  },
+  {
+    characterId: "priya",
+    key: "snes-npc-priya",
+    path: "assets/sprites/snes-npc-priya.svg",
+    kind: "npc-sprite",
+    displayName: "Priya",
+    roleCue: "editor with red pencil cue",
+    dimensions: { width: 32, height: 32 }
+  },
+  {
+    characterId: "archive-colleague",
+    key: "snes-npc-archive-colleague",
+    path: "assets/sprites/snes-npc-archive-colleague.svg",
+    kind: "npc-sprite",
+    displayName: "Archive Colleague",
+    roleCue: "equal-rank archive guide with folder and citation stamp",
+    dimensions: { width: 32, height: 32 }
+  }
+] as const;
+
+export function getSnesNpcTextureKey(characterId: string) {
+  return SNES_NPC_ASSETS.find((asset) => asset.characterId === characterId)?.key ?? characterId;
+}
+
 export const SNES_BUREAUCRATIC_WALL_ASSETS = [
   {
     type: "NO REPO",
@@ -125,6 +178,7 @@ export const SNES_BUREAUCRATIC_WALL_ASSETS = [
 
 export const SNES_VISUAL_ASSETS = [
   ...SNES_AREA_MAP_ASSETS,
+  ...SNES_NPC_ASSETS,
   ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => ({
     key: wall.key,
     path: wall.path,
@@ -166,6 +220,13 @@ export function getSnesAtlasReadout() {
       portraitSprite: role.snesSpriteKey,
       ability: role.ability,
       cue: role.remit
+    })),
+    npcSprites: SNES_NPC_ASSETS.map((asset) => ({
+      characterId: asset.characterId,
+      displayName: asset.displayName,
+      texture: asset.key,
+      cue: asset.roleCue,
+      dimensions: { ...asset.dimensions }
     })),
     workflowRelics: ITEM_REGISTRY.map((item) => ({
       id: item.id,

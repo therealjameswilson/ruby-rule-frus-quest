@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
-import { SNES_AREA_MAP_ASSETS, SNES_BUREAUCRATIC_WALL_ASSETS } from "../game/snesAtlas";
+import { SNES_AREA_MAP_ASSETS, SNES_BUREAUCRATIC_WALL_ASSETS, SNES_NPC_ASSETS } from "../game/snesAtlas";
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 
 function color(hex: string) {
@@ -62,6 +62,9 @@ export class BootScene extends Phaser.Scene {
     this.makeCitationStampTextureIfMissing();
     this.makeVolumeFragmentTextureIfMissing();
     this.makeArchiveColleagueTextureIfMissing();
+    for (const npcAsset of SNES_NPC_ASSETS) {
+      this.makeSnesNpcTextureIfMissing(npcAsset.key, npcAsset.characterId);
+    }
     this.makeBureaucraticWallTextureIfMissing();
     for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
       this.makeSnesWallTextureIfMissing(wallAsset.key);
@@ -123,6 +126,9 @@ export class BootScene extends Phaser.Scene {
     ];
     for (const [key, file, width, height] of sprites) {
       this.load.svg(key, `assets/sprites/${file}`, { width, height });
+    }
+    for (const npcAsset of SNES_NPC_ASSETS) {
+      this.load.svg(npcAsset.key, npcAsset.path, { width: 32, height: 32 });
     }
     for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
       this.load.svg(wallAsset.key, wallAsset.path, { width: 32, height: 32 });
@@ -435,6 +441,77 @@ export class BootScene extends Phaser.Scene {
       g.fillRect(23, 22, 6, 4);
       g.fillStyle(color(PALETTE.buckramHighlight));
       g.fillRect(24, 23, 4, 1);
+    }
+    g.generateTexture(key, 32, 32);
+    g.destroy();
+  }
+
+  private makeSnesNpcTextureIfMissing(key: string, characterId: string) {
+    if (this.textures.exists(key)) return;
+    const g = this.add.graphics();
+    const bodyHex = characterId === "marcus"
+      ? PALETTE.classNetRed
+      : characterId === "priya"
+        ? PALETTE.goldStamp
+        : characterId === "sam"
+          ? PALETTE.creamPaper
+          : characterId === "archive-colleague"
+            ? PALETTE.buckramRed
+            : PALETTE.archiveAmber;
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(10, 2, 12, 2);
+    g.fillRect(8, 4, 16, 5);
+    g.fillRect(10, 9, 12, 8);
+    g.fillRect(8, 17, 17, 11);
+    g.fillRect(5, 18, 7, 10);
+    g.fillRect(21, 18, 7, 10);
+    g.fillRect(7, 28, 7, 3);
+    g.fillRect(18, 28, 7, 3);
+    g.fillStyle(color(PALETTE.sepiaInk));
+    g.fillRect(9, 5, 14, 5);
+    g.fillStyle(color(PALETTE.creamPaper));
+    g.fillRect(11, 9, 10, 8);
+    g.fillStyle(color(bodyHex));
+    g.fillRect(9, 18, 15, 9);
+    g.fillRect(6, 19, 5, 8);
+    g.fillRect(21, 19, 5, 8);
+    g.fillStyle(color(PALETTE.black));
+    g.fillRect(12, 11, 2, 1);
+    g.fillRect(18, 11, 2, 1);
+    g.fillRect(14, 15, 5, 1);
+    if (characterId === "sam") {
+      g.fillStyle(color(PALETTE.white));
+      g.fillRect(5, 20, 8, 7);
+      g.fillRect(20, 19, 8, 8);
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(6, 22, 5, 1);
+      g.fillRect(22, 21, 5, 1);
+    } else if (characterId === "elena") {
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(5, 20, 8, 6);
+      g.fillStyle(color(PALETTE.white));
+      g.fillRect(13, 12, 1, 1);
+      g.fillRect(19, 12, 1, 1);
+    } else if (characterId === "marcus") {
+      g.fillStyle(color(PALETTE.shadowNavy));
+      g.fillRect(22, 19, 6, 8);
+      g.fillStyle(color(PALETTE.terminalCyan));
+      g.fillRect(23, 20, 4, 1);
+      g.fillStyle(color(PALETTE.creamPaper));
+      g.fillRect(6, 20, 5, 5);
+    } else if (characterId === "priya") {
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(4, 24, 10, 2);
+      g.fillRect(22, 4, 1, 8);
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(23, 5, 1, 7);
+    } else {
+      g.fillStyle(color(PALETTE.creamPaper));
+      g.fillRect(5, 19, 8, 8);
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(6, 21, 6, 1);
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(22, 20, 5, 5);
     }
     g.generateTexture(key, 32, 32);
     g.destroy();

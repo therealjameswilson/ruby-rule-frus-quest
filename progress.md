@@ -314,6 +314,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - changed the SNES atlas registry so Archive Cavern reports `archive-cavern-map` instead of the generic world atlas
   - added a BootScene fallback renderer for the Archive Cavern map so fallback textures keep working if the SVG fails to load
   - placed the map as a visible A1 room panel while preserving the existing Source Note 47 verification loop and room traversal
+- Upgraded human specialist NPCs into true 32x32 SNES-style sprites:
+  - added original rect-only SVG sprites for Sam, Elena, Marcus, Priya, and the equal-rank Archive Colleague
+  - preserved existing NPC identities while adding readable proof pages, compiler folder/glasses, declass clipboard/ClassNet red, editor red pencil, and citation-stamp guide cues
+  - added SNES NPC metadata to the atlas readout, BootScene preload/fallback generation, and RenderDebugScene visible-entity reporting
+  - changed `HistorianNPC` and GuideScene to prefer the new SNES textures while keeping the old 16x16 assets as fallback paths
+  - verified `npm run build`, `git diff --check`, bundled web-game screenshots for Office/Guide/Network/Referral/Silent Read, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
 
 ## TODO
 

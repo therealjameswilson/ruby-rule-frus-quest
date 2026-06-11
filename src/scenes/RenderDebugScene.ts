@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { SNES_BUREAUCRATIC_WALL_ASSETS } from "../game/snesAtlas";
+import { SNES_BUREAUCRATIC_WALL_ASSETS, SNES_NPC_ASSETS } from "../game/snesAtlas";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { isIntegerScale } from "../systems/pixelPerfect";
 
@@ -22,6 +22,7 @@ export class RenderDebugScene extends Phaser.Scene {
       "sample sprite 2x",
       "sample sprite 3x",
       "sample sprite 4x",
+      ...SNES_NPC_ASSETS.map((npc) => `${npc.displayName} SNES sprite`),
       ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => `${wall.type} wall sprite`)
     ]);
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);

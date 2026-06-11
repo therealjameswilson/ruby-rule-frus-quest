@@ -62,6 +62,7 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
   - antagonists include the 30-year line and DANN-E queue
 - Final Buckram Gate: the player earns five cover pieces and the Buckram Key, enters a physical final room, certifies the volume at a human publication table, and only then publishes the assembled FRUS cover.
 - Player shadow, facing flip, and walk-bob movement polish.
+- Larger 32x32 SNES-style player and human specialist sprites with readable FRUS production props.
 - Reliability Meter and `window.render_game_to_text()` for automated testing.
 - `render_game_to_text()` includes active stonewall threat positions for accessible play and QA.
 - `render_game_to_text()` also reports document points and earned FRUS volume fragments.

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { CHARACTERS, PALETTE } from "../game/constants";
 import type { CharacterId } from "../game/types";
+import { getSnesNpcTextureKey } from "../game/snesAtlas";
 import { snapPixel } from "../systems/pixelPerfect";
 
 function color(hex: string) {
@@ -11,15 +12,21 @@ export class HistorianNPC {
   readonly sprite: Phaser.GameObjects.Image;
   readonly label: Phaser.GameObjects.Text;
   readonly id: CharacterId;
+  readonly textureKey: string;
   private readonly shadow: Phaser.GameObjects.Ellipse;
 
   constructor(scene: Phaser.Scene, id: CharacterId, x: number, y: number) {
     const character = CHARACTERS[id];
     this.id = id;
-    this.shadow = scene.add.ellipse(snapPixel(x), snapPixel(y + 8), 12, 4, color(PALETTE.black)).setDepth(snapPixel(y - 1));
-    this.sprite = scene.add.image(snapPixel(x), snapPixel(y), id).setDepth(snapPixel(y));
+    const snesTexture = getSnesNpcTextureKey(id);
+    const usesSnesTexture = scene.textures.exists(snesTexture);
+    this.textureKey = usesSnesTexture ? snesTexture : id;
+    this.shadow = scene.add
+      .ellipse(snapPixel(x), snapPixel(y + (usesSnesTexture ? 14 : 8)), usesSnesTexture ? 18 : 12, usesSnesTexture ? 6 : 4, color(PALETTE.black))
+      .setDepth(snapPixel(y - 1));
+    this.sprite = scene.add.image(snapPixel(x), snapPixel(y), this.textureKey).setDepth(snapPixel(y));
     this.label = scene.add
-      .text(snapPixel(x), snapPixel(y + 12), character.displayName.toUpperCase(), {
+      .text(snapPixel(x), snapPixel(y + (usesSnesTexture ? 18 : 12)), character.displayName.toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.creamPaper,
@@ -39,6 +46,7 @@ export class HistorianNPC {
       onUpdate: () => {
         this.sprite.y = snapPixel(this.sprite.y);
         this.label.y = snapPixel(this.label.y);
+        this.shadow.y = snapPixel(this.shadow.y);
       }
     });
   }
