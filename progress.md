@@ -296,6 +296,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - moved the evidence-bound OpenNet, ClassNet, referral, and proof-date flags into S1, where the player routes, verifies, and stamps each physical object at the correct human workstation
   - changed completion from an automatic jump to an earned Buckram Key gate: after the Proof Lens/Buckram Key rewards, the player exits east to the Buckram Gate/EndingScene
   - verified `git diff --check`, `npm run build`, required web-game client SilentReadScene smoke, all ten `?scene=` deep links, an in-app browser local canvas/error smoke, and a full Playwright route covering E1 Red Pencil -> S1 evidence flags -> Proof Lens -> Buckram Key -> EndingScene
+- Made the Buckram Gate into a playable final SNES room:
+  - replaced the immediate EndingScene completion card with a walkable `G1 Buckram Gate` room, final minimap/readiness panels, a human publication table, and literal stone blockers for the 30-year line and DANN-E queue
+  - added `finalGateCertification` state so `render_game_to_text()` distinguishes locked/ready/published gate states; ready assembled volumes now report `final_assembly` until the player certifies at the table
+  - changed direct `?scene=EndingScene` seeding to proofed/final-assembly documents instead of pre-published documents, preserving the QA shortcut while requiring the final Space/Enter certification action
+  - publishing now records the final human certification, marks selected workflow documents as `published`, adds a `Published FRUS Cover` inventory prize, and then shows the ruby-and-gold completion card
+  - verified `npm run build`, `git diff --check`, direct EndingScene ready and publish states/screenshots, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
 
 ## TODO
 

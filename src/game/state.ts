@@ -73,6 +73,7 @@ interface GameState {
   physicalVerification: PhysicalVerificationState | null;
   roomTraversal: RoomTraversalState | null;
   snesTransition: SnesTransitionState;
+  finalGateCertification: FinalGateCertificationState | null;
 }
 
 const defaultRole = PROCESS_ROLES[0];
@@ -118,6 +119,15 @@ export interface SnesTransitionState {
   active: boolean;
   current: SnesTransitionRecord | null;
   last: SnesTransitionRecord | null;
+}
+
+export interface FinalGateCertificationState {
+  status: "locked" | "ready" | "published";
+  nearestGate: boolean;
+  checklistComplete: boolean;
+  certifiedBy: string | null;
+  requiredItem: "Buckram Key";
+  message: string;
 }
 
 export const gameState: GameState = {
@@ -174,7 +184,8 @@ export const gameState: GameState = {
     active: false,
     current: null,
     last: null
-  }
+  },
+  finalGateCertification: null
 };
 
 export function resetGameState() {
@@ -203,6 +214,7 @@ export function resetGameState() {
   gameState.physicalVerification = null;
   gameState.roomTraversal = null;
   gameState.snesTransition = { active: false, current: null, last: null };
+  gameState.finalGateCertification = null;
   setPlayerProfile("Sam", defaultRole);
   refreshQuestWorkflowState();
 }
@@ -219,6 +231,7 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.currentChoice = null;
   gameState.physicalVerification = null;
   gameState.roomTraversal = null;
+  gameState.finalGateCertification = null;
   refreshQuestWorkflowState();
 }
 
@@ -246,6 +259,17 @@ export function setAudioStatus(message: string) {
 
 export function setPhysicalVerificationState(state: PhysicalVerificationState | null) {
   gameState.physicalVerification = state;
+  refreshQuestWorkflowState();
+}
+
+export function setFinalGateCertificationState(state: FinalGateCertificationState | null) {
+  gameState.finalGateCertification = state;
+  refreshQuestWorkflowState();
+}
+
+export function setGameMode(mode: GameMode, objective?: string) {
+  gameState.mode = mode;
+  if (objective) gameState.objective = objective;
   refreshQuestWorkflowState();
 }
 
@@ -340,7 +364,7 @@ function areaRewardEarned(area: (typeof AREA_REGISTRY)[number]) {
   if (area.rewardType === "item") {
     return hasProcessItem(area.rewardId as ProcessItemId);
   }
-  return gameState.currentScene === "EndingScene" && gameState.volumeFragments.length >= 5;
+  return gameState.finalGateCertification?.status === "published";
 }
 
 function currentAreaId(): AreaId {
@@ -480,6 +504,7 @@ function getQuestArchitectureContext(): QuestArchitectureContext {
     volumeFragments: [...gameState.volumeFragments],
     processStamps: [...gameState.processStamps],
     visibleThreats: gameState.visibleThreats.map((threat) => ({ status: threat.status })),
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
     physicalVerification: gameState.physicalVerification
       ? {
           completed: gameState.physicalVerification.completed,
@@ -817,11 +842,11 @@ export function seedProgressForScene(sceneName: string) {
     addProcessItem("buckram_key");
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);
-    setDocumentWorkflowState("telegram_001", "published");
-    setDocumentWorkflowState("source_note_047", "published");
-    setDocumentWorkflowState("cross_reference_001", "published");
-    setDocumentWorkflowState("sbu_annotation_001", "published");
-    setDocumentWorkflowState("proof_page_412", "published");
+    setDocumentWorkflowState("telegram_001", "proofed");
+    setDocumentWorkflowState("source_note_047", "proofed");
+    setDocumentWorkflowState("cross_reference_001", "proofed");
+    setDocumentWorkflowState("sbu_annotation_001", "proofed");
+    setDocumentWorkflowState("proof_page_412", "proofed");
   }
   refreshQuestWorkflowState();
 }
@@ -891,6 +916,7 @@ export function renderGameToText() {
         assembled: gameState.volumeFragments.length >= 5
       },
       finalGate: getFinalGateReadiness(),
+      finalGateCertification: gameState.finalGateCertification,
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,
       physicalVerification: gameState.physicalVerification,

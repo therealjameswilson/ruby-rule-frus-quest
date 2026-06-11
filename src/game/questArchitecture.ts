@@ -74,6 +74,7 @@ export interface QuestArchitectureContext {
   volumeFragments: string[];
   processStamps: ProcessStampId[];
   visibleThreats: Array<{ status?: string }>;
+  finalGatePublished?: boolean;
   physicalVerification: {
     completed: number;
     total: number;
@@ -550,7 +551,9 @@ function getActiveQuestObjects(context: QuestArchitectureContext, activeSlots: r
 
 function deriveVolumeWorkflowState(context: QuestArchitectureContext): VolumeWorkflowState {
   const states = context.documentCandidates.map((document) => document.workflowState);
+  if (context.finalGatePublished) return "published";
   if (states.some((state) => state === "published")) return "published";
+  if (hasItem(context, "buckram_key") || context.volumeFragments.length >= 5) return "final_assembly";
   if (states.some((state) => state === "proofed") || states.some((state) => state === "ready_for_proof")) return "proofing";
   if (states.some((state) => state === "cleared" || state === "excised" || state === "denied" || state === "appeal_needed")) return "referral_resolution";
   if (states.some((state) => state === "referred" || state === "submitted_for_review")) return "declassification_review";
@@ -558,8 +561,6 @@ function deriveVolumeWorkflowState(context: QuestArchitectureContext): VolumeWor
   if (states.some((state) => state === "citation_verified")) return "annotation";
   if (states.some((state) => state === "source_note_needed")) return "source_note_verification";
   if (states.some((state) => state === "selected" || state === "candidate")) return "candidate_selection";
-  if (context.currentScene === "EndingScene" && hasItem(context, "buckram_key") && context.volumeFragments.length >= 5) return "published";
-  if (hasItem(context, "buckram_key") || context.volumeFragments.length >= 5) return "final_assembly";
   if (context.processStamps.includes("proof") || hasItem(context, "proof_lens")) return "proofing";
   if (hasItem(context, "red_pencil") || context.processStamps.includes("sop")) return "editing";
   if (context.processStamps.includes("referral") || hasItem(context, "concurrence_slip")) return "referral_resolution";
@@ -575,7 +576,7 @@ function deriveDocumentWorkflow(context: QuestArchitectureContext): WorkflowDocu
   if (context.documentCandidates.length) return context.documentCandidates.map(documentToWorkflowDocument);
 
   const sourceState = deriveSourceNoteState(context);
-  const proofState: DocumentWorkflowState = context.currentScene === "EndingScene" && context.volumeFragments.length >= 5
+  const proofState: DocumentWorkflowState = context.finalGatePublished
     ? "published"
     : context.processStamps.includes("proof")
       ? "proofed"
@@ -616,7 +617,7 @@ function deriveDocumentWorkflow(context: QuestArchitectureContext): WorkflowDocu
 }
 
 function deriveSourceNoteState(context: QuestArchitectureContext): DocumentWorkflowState {
-  if (context.currentScene === "EndingScene" && context.volumeFragments.length >= 5) return "published";
+  if (context.finalGatePublished) return "published";
   if (context.processStamps.includes("proof")) return "ready_for_proof";
   if (context.processStamps.includes("referral")) return "cleared";
   if (context.processStamps.includes("network")) return "submitted_for_review";
