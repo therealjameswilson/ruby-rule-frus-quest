@@ -173,6 +173,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - added edge exits at the room borders with hard-cut/fade transitions and no scrolling camera
   - preserved the Source Note 47 human verification loop in `A1`
   - verified `npm run build`, required web-game smoke, `A1 -> A2`, `A1 -> B1`, cardinal-only input, tile blocker collision, minimap visited-state, and Source Note 47 stamping
+- Added process-wall enemy archetypes and defeat loops:
+  - implemented NO REPO, FIREWALL, PENDING, WAIT, AMBIGUOUS, and DANN-E QUEUE as named bureaucratic stone-wall threats
+  - added per-enemy behaviors: slow chase, terminal-door block, random wander, temporary exit freeze, split flags, and backward push
+  - wired defeat methods to existing human-process stations: source table/citation stamp, OpenNet routing, referral tray, human specialist, and Golden Rule gate
+  - extended `render_game_to_text()` threat output with behavior, defeat method, and status fields
+  - fixed Archive room traversal blockers so A1 east, B1 north/center, A2 south, and B2 north lanes stay playable
+  - verified with `npm run build`, required web-game client smoke, and a custom Playwright route probe covering all six enemy loops with screenshot inspection
 
 ## TODO
 

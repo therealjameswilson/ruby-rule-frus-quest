@@ -2,6 +2,15 @@ import { PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
 import type { ProcessStampId } from "./constants";
 import type { ChoiceOption, GameMode, PlayerProfile, Position } from "./types";
 
+interface VisibleThreat {
+  label: string;
+  x: number;
+  y: number;
+  behavior?: string;
+  defeatMethod?: string;
+  status?: string;
+}
+
 interface GameState {
   currentScene: string;
   mode: GameMode;
@@ -17,7 +26,7 @@ interface GameState {
   player: Position;
   nearestInteractable: string | null;
   visibleEntities: string[];
-  visibleThreats: Array<{ label: string; x: number; y: number }>;
+  visibleThreats: VisibleThreat[];
   sceneProgress: Record<string, number>;
   playerProfile: PlayerProfile;
   processStamps: ProcessStampId[];
@@ -188,11 +197,14 @@ export function setVisibleEntities(labels: string[]) {
   gameState.visibleEntities = labels;
 }
 
-export function setVisibleThreats(threats: Array<{ label: string; x: number; y: number }>) {
+export function setVisibleThreats(threats: VisibleThreat[]) {
   gameState.visibleThreats = threats.map((threat) => ({
     label: threat.label,
     x: Math.round(threat.x),
-    y: Math.round(threat.y)
+    y: Math.round(threat.y),
+    behavior: threat.behavior,
+    defeatMethod: threat.defeatMethod,
+    status: threat.status
   }));
 }
 

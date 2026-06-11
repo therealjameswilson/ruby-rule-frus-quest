@@ -21,6 +21,7 @@ import { HistorianNPC } from "../entities/HistorianNPC";
 import { Manuscript } from "../entities/Manuscript";
 import { Player } from "../entities/Player";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
+import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { nearestInteractable } from "../systems/interaction";
@@ -36,12 +37,27 @@ function color(hex: string) {
 type SourceNoteStatus = "inactive" | "carried" | "routed" | "verified" | "stamped";
 type Direction = "north" | "south" | "west" | "east";
 type ArchiveRoomId = "A1" | "A2" | "B1" | "B2";
+type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "AMBIGUOUS" | "DANN-E QUEUE";
 
 interface ArchiveRoom {
   id: ArchiveRoomId;
   title: string;
   grid: { x: number; y: number };
   exits: Partial<Record<Direction, ArchiveRoomId>>;
+}
+
+interface ArchiveEnemyDefinition {
+  id: string;
+  type: ArchiveEnemyType;
+  label: string;
+  roomId: ArchiveRoomId;
+  x: number;
+  y: number;
+  behavior: BureaucraticWallBehavior;
+  behaviorText: string;
+  defeatMethod: string;
+  accent: string;
+  radius?: number;
 }
 
 const PLAY_BOUNDS = { left: 8, right: GAME_WIDTH - 8, top: 40, bottom: GAME_HEIGHT - 20 };
@@ -84,6 +100,82 @@ const EXIT_SPAWNS: Record<Direction, { x: number; y: number }> = {
   east: { x: 24, y: 120 }
 };
 
+const ARCHIVE_ENEMIES: ArchiveEnemyDefinition[] = [
+  {
+    id: "repo-wall",
+    type: "NO REPO",
+    label: "NO REPO",
+    roomId: "A1",
+    x: 102,
+    y: 149,
+    behavior: "slow-chase",
+    behaviorText: "moves slowly toward player",
+    defeatMethod: "Use citation stamp after checking source table",
+    accent: PALETTE.goldStamp
+  },
+  {
+    id: "firewall-door",
+    type: "FIREWALL",
+    label: "FIREWALL",
+    roomId: "A2",
+    x: 128,
+    y: 194,
+    behavior: "block",
+    behaviorText: "blocks terminal door",
+    defeatMethod: "Use correct OpenNet/ClassNet routing",
+    accent: PALETTE.openNetGreen
+  },
+  {
+    id: "pending-manifest",
+    type: "PENDING",
+    label: "PENDING",
+    roomId: "B1",
+    x: 190,
+    y: 162,
+    behavior: "wander",
+    behaviorText: "wanders randomly",
+    defeatMethod: "Deliver manifest to referral tray",
+    accent: PALETTE.archiveAmber
+  },
+  {
+    id: "wait-timer",
+    type: "WAIT",
+    label: "WAIT",
+    roomId: "B1",
+    x: 68,
+    y: 162,
+    behavior: "freeze",
+    behaviorText: "freezes exits temporarily",
+    defeatMethod: "Resolve agency response timer",
+    accent: PALETTE.terminalCyan
+  },
+  {
+    id: "ambiguous-flag",
+    type: "AMBIGUOUS",
+    label: "AMBIG.",
+    roomId: "B2",
+    x: 94,
+    y: 164,
+    behavior: "splitter",
+    behaviorText: "splits into two flags",
+    defeatMethod: "Bring to correct human specialist",
+    accent: PALETTE.goldStamp
+  },
+  {
+    id: "danne-queue",
+    type: "DANN-E QUEUE",
+    label: "DANN-E\nQUEUE",
+    roomId: "B2",
+    x: 178,
+    y: 166,
+    behavior: "push",
+    behaviorText: "pushes player backward",
+    defeatMethod: "Use human decision at Golden Rule gate",
+    accent: PALETTE.classNetRed,
+    radius: 26
+  }
+];
+
 export class ArchiveScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
@@ -104,12 +196,21 @@ export class ArchiveScene extends Phaser.Scene {
   private currentRoomId: ArchiveRoomId = "A1";
   private visitedRoomIds = new Set<ArchiveRoomId>();
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
+  private ambiguousFlagObjects: Phaser.GameObjects.GameObject[] = [];
   private roomCleanups: Array<() => void> = [];
   private roomSolids: Phaser.Geom.Rectangle[] = [];
+  private activeEnemyDefs = new Map<string, ArchiveEnemyDefinition>();
+  private activeEnemyWalls = new Map<string, BureaucraticWall>();
   private mapCells = new Map<ArchiveRoomId, Phaser.GameObjects.Rectangle>();
   private mapLabels = new Map<ArchiveRoomId, Phaser.GameObjects.Text>();
   private roomTransitionLocked = false;
   private exitCooldownUntil = 0;
+  private networkRoutingResolved = false;
+  private referralManifestDelivered = false;
+  private agencyTimerResolved = false;
+  private ambiguousSplit = false;
+  private specialistDecisionMade = false;
+  private goldenRuleDecisionMade = false;
 
   constructor() {
     super("ArchiveScene");
@@ -235,9 +336,12 @@ export class ArchiveScene extends Phaser.Scene {
     }
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.ambiguousFlagObjects = [];
     this.roomSolids = [];
     this.interactables = [];
     this.bureaucraticWalls = [];
+    this.activeEnemyDefs.clear();
+    this.activeEnemyWalls.clear();
     if (this.sourceNoteStatus !== "carried") {
       if (this.sourceNoteIcon?.active) this.sourceNoteIcon.destroy();
       if (this.sourceNoteLabel?.active) this.sourceNoteLabel.destroy();
@@ -280,7 +384,7 @@ export class ArchiveScene extends Phaser.Scene {
     ]));
 
     this.addDocumentInteractables();
-    this.addBureaucraticWalls();
+    this.addRoomEnemy("repo-wall");
     if (this.sourceNoteStatus === "routed" || this.sourceNoteStatus === "verified" || this.sourceNoteStatus === "stamped") {
       this.drawRoutedSourceNote();
     }
@@ -301,6 +405,9 @@ export class ArchiveScene extends Phaser.Scene {
     this.addSolid(48, 88, 48, 40);
     this.addSolid(144, 40, 88, 72);
     this.addSolid(56, 136, 48, 32);
+    if (!this.clearedWallIds.has("firewall-door")) {
+      this.addRoomEnemy("firewall-door");
+    }
     this.interactables.push({
       id: "opennet-annex-terminal",
       label: "OpenNet terminal",
@@ -308,33 +415,31 @@ export class ArchiveScene extends Phaser.Scene {
       y: 105,
       radius: 34,
       kind: "terminal",
-      onInteract: () => this.dialog.show("OPENNET TERMINAL", [
-        "Publication status lives on the network.",
-        "StateChat can point to a manifest, but a person verifies the citation."
-      ])
+      onInteract: () => this.resolveNetworkRouting()
     });
   }
 
   private renderStacksRoom() {
-    for (let x = 54; x <= 202; x += 37) this.drawBookcase(x, 86, 26, 52);
+    for (let x = 54; x <= 202; x += 37) {
+      if (x === 128) continue;
+      this.drawBookcase(x, 86, 26, 52);
+    }
     this.drawDocumentStack(62, 159, false);
     this.drawDocumentStack(124, 166, true);
     this.drawDocumentStack(188, 159, false);
     this.drawDesk(128, 138, "TRAY");
     this.track(this.add.image(128, 119, "referral-manifest").setDepth(140));
-    this.addSolid(40, 56, 176, 56);
     this.addSolid(96, 128, 64, 28);
+    this.addRoomEnemy("pending-manifest");
+    this.addRoomEnemy("wait-timer");
     this.interactables.push({
       id: "stacks-manifest",
-      label: "Referral manifest",
+      label: "Referral tray",
       x: 128,
       y: 122,
       radius: 34,
       kind: "document",
-      onInteract: () => this.dialog.show("REFERRAL MANIFEST", [
-        "A room can be mapped without solving every equity.",
-        "The path is physical: carry, route, verify, stamp."
-      ])
+      onInteract: () => this.deliverReferralManifest()
     });
   }
 
@@ -351,21 +456,64 @@ export class ArchiveScene extends Phaser.Scene {
       "HARD CUT"
     ], PALETTE.classNetRed));
     this.drawRubyVolumeStack(128, 173, 3);
+    this.drawGoldenRuleGate();
+    this.addRoomEnemy("ambiguous-flag");
+    this.addRoomEnemy("danne-queue");
+    if (this.ambiguousSplit && !this.clearedWallIds.has("ambiguous-flag")) this.drawAmbiguousFlags();
     this.addSolid(34, 104, 80, 36);
     this.addSolid(142, 104, 80, 36);
-    this.addSolid(84, 40, 88, 68);
+    this.addSolid(84, 40, 24, 68);
+    this.addSolid(148, 40, 24, 68);
     this.interactables.push({
       id: "proof-chamber-table",
-      label: "Proof table",
+      label: "Human specialist",
       x: 74,
       y: 118,
       radius: 34,
       kind: "document",
-      onInteract: () => this.dialog.show("PROOF TABLE", [
-        "This room proves traversal, not a new puzzle.",
-        "The HUD stays fixed while the room hard-cuts around you."
-      ])
+      onInteract: () => this.resolveAmbiguousWithSpecialist()
     });
+    this.interactables.push({
+      id: "golden-rule-gate",
+      label: "Golden Rule gate",
+      x: 128,
+      y: 199,
+      radius: 34,
+      kind: "door",
+      onInteract: () => this.useGoldenRuleGate()
+    });
+  }
+
+  private drawGoldenRuleGate() {
+    this.track(this.add.rectangle(128, 202, 72, 18, color(PALETTE.black), 0.88).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(155));
+    this.track(this.add.rectangle(101, 202, 8, 14, color(PALETTE.buckramRed)).setDepth(156));
+    this.track(this.add.rectangle(155, 202, 8, 14, color(PALETTE.buckramRed)).setDepth(156));
+    this.track(this.add.rectangle(128, 198, 38, 3, color(PALETTE.goldStamp)).setDepth(157));
+    this.track(this.add.text(128, 200, "GOLDEN RULE", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(158));
+  }
+
+  private drawAmbiguousFlags() {
+    this.drawSplitFlag(83, 136, "A", PALETTE.terminalCyan);
+    this.drawSplitFlag(105, 136, "B", PALETTE.goldStamp);
+  }
+
+  private drawSplitFlag(x: number, y: number, label: string, accent: string) {
+    const flagParts = [
+      this.track(this.add.rectangle(x, y, 15, 18, color(PALETTE.black), 0.9).setStrokeStyle(1, color(accent)).setDepth(170)),
+      this.track(this.add.rectangle(x - 3, y - 2, 2, 20, color(PALETTE.creamPaper)).setDepth(171)),
+      this.track(this.add.rectangle(x + 2, y - 5, 10, 8, color(accent)).setDepth(172)),
+      this.track(this.add.rectangle(x + 4, y + 4, 8, 2, color(PALETTE.creamPaper)).setDepth(172)),
+      this.track(this.add.text(x + 2, y - 4, label, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.black
+      }).setOrigin(0.5, 0).setDepth(173))
+    ];
+    this.ambiguousFlagObjects.push(...flagParts);
   }
 
   private drawResearchTable() {
@@ -405,26 +553,26 @@ export class ArchiveScene extends Phaser.Scene {
     }
   }
 
-  private addBureaucraticWalls() {
-    const wallData = [
-      { id: "repo-wall", label: "NO REPO", x: 100, y: 148 },
-      { id: "memo-wall", label: "PENDING", x: 158, y: 148 }
-    ];
-    this.bureaucraticWalls = wallData
-      .filter((wall) => !this.clearedWallIds.has(wall.id))
-      .map((wall) => new BureaucraticWall(this, wall.id, wall.label, wall.x, wall.y));
-    for (const wall of this.bureaucraticWalls) {
-      this.roomCleanups.push(() => wall.destroy());
-      this.interactables.push({
-        id: wall.id,
-        label: `Stone Wall: ${wall.label}`,
-        x: wall.x,
-        y: wall.y,
-        radius: 30,
-        kind: "enemy",
-        onInteract: () => this.clearBureaucraticWall(wall)
-      });
-    }
+  private addRoomEnemy(enemyId: string) {
+    const definition = ARCHIVE_ENEMIES.find((enemy) => enemy.id === enemyId);
+    if (!definition || this.clearedWallIds.has(definition.id)) return;
+    const wall = new BureaucraticWall(this, definition.id, definition.label, definition.x, definition.y, {
+      behavior: definition.behavior,
+      accent: definition.accent
+    });
+    this.bureaucraticWalls.push(wall);
+    this.activeEnemyDefs.set(wall.id, definition);
+    this.activeEnemyWalls.set(wall.id, wall);
+    this.roomCleanups.push(() => wall.destroy());
+    this.interactables.push({
+      id: wall.id,
+      label: `${definition.type}: ${definition.defeatMethod}`,
+      x: wall.x,
+      y: wall.y,
+      radius: definition.radius ?? 30,
+      kind: "enemy",
+      onInteract: () => this.handleEnemyInteract(definition, wall)
+    });
   }
 
   private collect(document: Manuscript) {
@@ -448,30 +596,182 @@ export class ArchiveScene extends Phaser.Scene {
     this.finishArchiveIfReady();
   }
 
-  private clearBureaucraticWall(wall: BureaucraticWall) {
+  private handleEnemyInteract(definition: ArchiveEnemyDefinition, wall: BureaucraticWall) {
     if (wall.isCleared) return;
     wall.markHit();
-    retroAudio.warning();
-    adjustReliability(2, `${wall.label} stonewall challenged with source evidence`);
+
+    if (definition.type === "NO REPO") {
+      if (this.sourceNoteStatus === "stamped") {
+        this.clearEnemy(definition, wall, "NO REPO cleared with citation stamp after source-table verification.");
+        return;
+      }
+      retroAudio.warning();
+      this.dialog.show("NO REPO", [
+        "This wall wants a real repository trail.",
+        "Check Source Note 47 at the research table first.",
+        "Only the citation stamp can crack it."
+      ]);
+      setLatestMessage("NO REPO needs source-table verification.");
+      return;
+    }
+
+    if (definition.type === "FIREWALL") {
+      if (this.networkRoutingResolved) {
+        this.clearEnemy(definition, wall, "FIREWALL cleared by correct OpenNet/ClassNet routing.");
+        return;
+      }
+      retroAudio.warning();
+      this.dialog.show("FIREWALL", [
+        "Wrong network, wrong door.",
+        "Use the OpenNet terminal to route public-status work.",
+        "ClassNet remains for classified equities."
+      ]);
+      setLatestMessage("WRONG NETWORK");
+      return;
+    }
+
+    if (definition.type === "PENDING") {
+      if (this.referralManifestDelivered) {
+        this.clearEnemy(definition, wall, "PENDING cleared after referral manifest delivery.");
+        return;
+      }
+      retroAudio.warning();
+      this.dialog.show("PENDING", [
+        "Pending does not fall to a guess.",
+        "Carry the manifest to the referral tray.",
+        "A routed slip moves the process."
+      ]);
+      setLatestMessage("PENDING needs referral manifest delivery.");
+      return;
+    }
+
+    if (definition.type === "WAIT") {
+      this.agencyTimerResolved = true;
+      this.clearEnemy(definition, wall, "WAIT cleared after agency response timer resolution.");
+      return;
+    }
+
+    if (definition.type === "AMBIGUOUS") {
+      if (this.specialistDecisionMade) {
+        this.clearEnemy(definition, wall, "AMBIGUOUS cleared by human specialist review.");
+        return;
+      }
+      this.splitAmbiguousFlag();
+      return;
+    }
+
+    if (definition.type === "DANN-E QUEUE") {
+      if (this.goldenRuleDecisionMade) {
+        this.clearEnemy(definition, wall, "DANN-E QUEUE cleared by a human decision at the Golden Rule gate.");
+        return;
+      }
+      retroAudio.warning();
+      this.dialog.show("DANN-E QUEUE", [
+        "The queue can push work backward.",
+        "It cannot make the final call.",
+        "Use the Golden Rule gate for a human decision."
+      ]);
+      setLatestMessage("DANN-E QUEUE needs a human decision.");
+    }
+  }
+
+  private clearEnemy(definition: ArchiveEnemyDefinition, wall: BureaucraticWall, message: string) {
+    if (wall.isCleared) return;
+    this.clearedWallIds.add(definition.id);
+    this.activeEnemyWalls.delete(definition.id);
+    this.activeEnemyDefs.delete(definition.id);
+    if (definition.type === "AMBIGUOUS") this.clearAmbiguousFlags();
+    wall.clear();
+    retroAudio.stamp();
+    addDocumentPoints(3, `${definition.type} process wall cleared`);
+    adjustReliability(2, message);
+    setLatestMessage(message);
     this.reliability.update();
-    this.dialog.show("BUREAUCRATIC WALL", [
-      `${wall.label} is not a monster with claws.`,
-      "It is paperwork turned to stone.",
-      "A named source note cracks it."
-    ], () => {
-      this.clearedWallIds.add(wall.id);
-      wall.clear();
-      retroAudio.stamp();
-      this.interactables = this.interactables.filter((item) => item.id !== wall.id);
-      this.syncWallState();
-    });
+    this.interactables = this.interactables.filter((item) => item.id !== definition.id);
+    this.syncWallState();
+  }
+
+  private clearEnemyById(enemyId: string, message: string) {
+    const definition = this.activeEnemyDefs.get(enemyId);
+    const wall = this.activeEnemyWalls.get(enemyId);
+    if (definition && wall) this.clearEnemy(definition, wall, message);
+  }
+
+  private resolveNetworkRouting() {
+    this.networkRoutingResolved = true;
+    this.dialog.show("OPENNET TERMINAL", [
+      "Route public-status work through OpenNet.",
+      "Keep classified equities on ClassNet.",
+      "The FIREWALL loses its door claim."
+    ]);
+    this.clearEnemyById("firewall-door", "FIREWALL cleared by correct OpenNet/ClassNet routing.");
+    setObjective("Routing correct. The south terminal door is open.");
+  }
+
+  private deliverReferralManifest() {
+    this.referralManifestDelivered = true;
+    this.agencyTimerResolved = true;
+    this.dialog.show("REFERRAL TRAY", [
+      "Manifest delivered.",
+      "Agency response timer resolved.",
+      "Pending work can move again."
+    ]);
+    this.clearEnemyById("pending-manifest", "PENDING cleared after manifest delivery to the referral tray.");
+    this.clearEnemyById("wait-timer", "WAIT cleared after agency response timer resolution.");
+    setObjective("Referral manifest delivered; exits unfrozen.");
+  }
+
+  private splitAmbiguousFlag() {
+    if (!this.ambiguousSplit) {
+      this.ambiguousSplit = true;
+      this.drawAmbiguousFlags();
+    }
+    retroAudio.warning();
+    this.dialog.show("AMBIGUOUS", [
+      "The flag splits into two plausible readings.",
+      "Plausible is not enough.",
+      "Bring both flags to the human specialist."
+    ]);
+    setLatestMessage("AMBIGUOUS split into two flags.");
+    setObjective("Bring split flags to the human specialist.");
+    this.syncWallState();
+  }
+
+  private clearAmbiguousFlags() {
+    this.ambiguousSplit = false;
+    for (const object of this.ambiguousFlagObjects) {
+      if (object.active) object.destroy();
+    }
+    this.ambiguousFlagObjects = [];
+  }
+
+  private resolveAmbiguousWithSpecialist() {
+    if (!this.ambiguousSplit && !this.activeEnemyWalls.has("ambiguous-flag")) {
+      this.dialog.show("HUMAN SPECIALIST", "No ambiguous flags are waiting.");
+      return;
+    }
+    this.specialistDecisionMade = true;
+    this.dialog.show("HUMAN SPECIALIST", [
+      "Two flags reviewed.",
+      "Meaning is resolved by human judgment.",
+      "The ambiguity wall is cleared."
+    ]);
+    this.clearEnemyById("ambiguous-flag", "AMBIGUOUS cleared by the correct human specialist.");
+    setObjective("Ambiguous flags resolved by human review.");
+  }
+
+  private useGoldenRuleGate() {
+    this.goldenRuleDecisionMade = true;
+    this.dialog.show("GOLDEN RULE GATE", [
+      "AI queues may assist.",
+      "They do not decide source meaning.",
+      "Human decision recorded at the gate."
+    ]);
+    this.clearEnemyById("danne-queue", "DANN-E QUEUE cleared by a human decision at the Golden Rule gate.");
+    setObjective("Golden Rule decision recorded.");
   }
 
   private updateBureaucraticWalls(delta: number) {
-    if (this.currentRoomId !== "A1") {
-      setVisibleThreats([]);
-      return;
-    }
     for (const wall of this.bureaucraticWalls) {
       wall.update(this.time.now, delta, this.player.position);
     }
@@ -481,10 +781,13 @@ export class ArchiveScene extends Phaser.Scene {
     if (!activeWall || this.time.now < this.wallContactCooldown) return;
     this.wallContactCooldown = this.time.now + 1200;
     activeWall.markHit();
-    this.player.pushAwayFrom(activeWall.position, 15);
-    adjustReliability(-4, `${activeWall.label} stonewall delayed source work`);
+    const definition = this.activeEnemyDefs.get(activeWall.id);
+    this.player.pushAwayFrom(activeWall.position, definition?.type === "DANN-E QUEUE" ? 22 : 15);
+    adjustReliability(definition?.type === "DANN-E QUEUE" ? -3 : -2, `${definition?.type ?? activeWall.label} process wall delayed source work`);
     this.reliability.update();
-    setObjective("Clear stonewalls with evidence, then collect document tiles.");
+    if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");
+    else if (definition?.type === "WAIT") setObjective("Resolve the agency response timer at the referral tray.");
+    else setObjective("Clear stonewalls with the matching human process.");
   }
 
   private syncWallInteractables() {
@@ -498,22 +801,39 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private syncWallState() {
-    const activeThreats = this.currentRoomId === "A1"
-      ? this.bureaucraticWalls
-        .filter((wall) => !wall.isCleared)
-        .map((wall) => ({
-          label: `Stone Wall: ${wall.label}`,
+    const activeThreats = this.bureaucraticWalls
+      .filter((wall) => !wall.isCleared)
+      .map((wall) => {
+        const definition = this.activeEnemyDefs.get(wall.id);
+        return {
+          label: definition?.type ?? `Stone Wall: ${wall.label}`,
           x: wall.position.x,
-          y: wall.position.y
-        }))
-      : [];
+          y: wall.position.y,
+          behavior: definition?.behaviorText,
+          defeatMethod: definition?.defeatMethod,
+          status: this.enemyStatus(definition)
+        };
+      });
     setVisibleThreats(activeThreats);
     setVisibleEntities([
       `Room ${this.currentRoomId}`,
       ...this.interactables.map((item) => item.label),
       ...(this.currentRoomId === "A1" ? ["Elena", "StateChat terminal", "Research Table"] : []),
+      ...(this.currentRoomId === "B2" && this.ambiguousSplit && !this.clearedWallIds.has("ambiguous-flag") ? ["Split ambiguity flag A", "Split ambiguity flag B"] : []),
       ...(this.sourceNoteStatus !== "inactive" ? ["Source Note 47 verification object"] : [])
     ]);
+  }
+
+  private enemyStatus(definition?: ArchiveEnemyDefinition) {
+    if (!definition) return "active";
+    if (this.clearedWallIds.has(definition.id)) return "cleared";
+    if (definition.type === "NO REPO") return this.sourceNoteStatus === "stamped" ? "citation stamp ready" : "needs source table";
+    if (definition.type === "FIREWALL") return this.networkRoutingResolved ? "routing ready" : "wrong network blocks door";
+    if (definition.type === "PENDING") return this.referralManifestDelivered ? "manifest delivered" : "awaiting manifest";
+    if (definition.type === "WAIT") return this.agencyTimerResolved ? "timer resolved" : "exits frozen";
+    if (definition.type === "AMBIGUOUS") return this.specialistDecisionMade ? "specialist ready" : this.ambiguousSplit ? "split flags waiting" : "unsplit";
+    if (definition.type === "DANN-E QUEUE") return this.goldenRuleDecisionMade ? "human decision ready" : "pushing backward";
+    return "active";
   }
 
   private startSourceNoteVerification() {
@@ -701,6 +1021,23 @@ export class ArchiveScene extends Phaser.Scene {
     else if (position.x >= PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     if (!direction) return false;
 
+    if (this.currentRoomId === "B1" && this.activeEnemyWalls.has("wait-timer") && !this.agencyTimerResolved) {
+      setLatestMessage("WAIT freezes exits until the agency response timer is resolved.");
+      setObjective("Resolve agency response timer at the referral tray.");
+      this.exitCooldownUntil = this.time.now + 500;
+      const push = direction === "north" ? { x: 128, y: 58 } : direction === "east" ? { x: 228, y: 120 } : { x: 128, y: 120 };
+      this.player.setPosition(push.x, push.y);
+      return false;
+    }
+
+    if (this.currentRoomId === "A2" && direction === "south" && this.activeEnemyWalls.has("firewall-door") && !this.networkRoutingResolved) {
+      setLatestMessage("WRONG NETWORK");
+      setObjective("Use correct OpenNet/ClassNet routing to clear FIREWALL.");
+      this.exitCooldownUntil = this.time.now + 500;
+      this.player.setPosition(128, 208);
+      return false;
+    }
+
     const target = ARCHIVE_ROOMS[this.currentRoomId].exits[direction];
     if (!target) {
       setLatestMessage(`No ${direction} route from room ${this.currentRoomId}`);
@@ -809,7 +1146,9 @@ export class ArchiveScene extends Phaser.Scene {
         this.track(this.add.rectangle(x - width / 2 + 6 + i * 5, shelfY, 3, 7, color(bookColor)).setDepth(y - 1));
       }
     }
-    this.addSolid(Math.round((x - width / 2) / 8) * 8, Math.round((y - height / 2) / 8) * 8, width, height);
+    const solidX = Math.round((x - width / 2) / 8) * 8;
+    const solidY = Math.round((y - height / 2) / 8) * 8;
+    this.addSolid(solidX + 4, solidY + 4, Math.max(8, width - 8), Math.max(8, height - 8));
   }
 
   private drawDesk(x: number, y: number, label?: string) {
