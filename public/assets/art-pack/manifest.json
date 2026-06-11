@@ -385,19 +385,19 @@
     "tileset_archive_dungeon_16x16": {
       "path": "assets/art-pack/tilesets/gameplay/tileset_archive_dungeon_16x16.png",
       "nativePath": "assets/art-pack/tilesets/gameplay/tileset_archive_dungeon_16x16_native.png",
-      "conceptPath": "assets/art-pack/tilesets/concept/tileset_archive_dungeon_concept.png",
-      "imageWidth": 768,
-      "imageHeight": 768,
-      "columns": 6,
-      "rows": 6,
+      "conceptPath": "assets/art-pack/tilesets/concept/tileset_archive_dungeon_concept_v2.png",
+      "imageWidth": 896,
+      "imageHeight": 896,
+      "columns": 7,
+      "rows": 7,
       "nativeTileSize": 16,
       "displayCellPx": 128,
-      "nativeImageWidth": 96,
-      "nativeImageHeight": 96,
+      "nativeImageWidth": 112,
+      "nativeImageHeight": 112,
       "transparent": false,
       "kind": "tileset-packed",
       "theme": "archive-dungeon",
-      "note": "6x6 packed grid. Tiles: stone floors/walls, doorways, arches, pit, stairs, torches/brazier, locked door, ruby pedestal, red button panel, treasure chest, bookshelf wall, iron grate."
+      "note": "7x7 packed grid (v2, cleaner centered objects). Row1 floors; Row2 walls + doorway/arches + brick + gold panel; Row3 pit/rubble/column/carved-face/bookshelf/grate; Row4 torch/brazier/iron-door/ruby-pedestal/button-panel/treasure-chest; Rows5-7 seamless stone-floor fills."
     }
   },
   "images": {

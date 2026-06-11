@@ -35,7 +35,7 @@ True, gap-free, grid-aligned tilesets repacked onto an exact 16px grid. Each `*.
 |---|---|---|---|---|---|
 | `gameplay/tileset_overworld_16x16.png` | 768×768 | 6×6 (128px cells) | 96×96 | Overworld: grass, dirt path, stone/cobble, brick, water + shorelines, river bends, dock, hedge, flowers, fences, lamp post, dirt-ground fills | No |
 | `gameplay/tileset_interiors_16x16.png` | 768×640 | 6×5 (128px cells) | 96×80 | Office/archive interiors: tiling floors & walls (rows 1–2) + single-tile furniture/objects — desk, chair, safe, bookshelf, CRT terminal, banker lamp, doors, world-map wall, elevator, book (rows 3–5) | Yes (objects) |
-| `gameplay/tileset_archive_dungeon_16x16.png` | 768×768 | 6×6 (128px cells) | 96×96 | Archive-dungeon: stone floors/walls, doorways, arches, pit, stairs, columns, torches/brazier, locked door, ruby pedestal, red button panel, treasure chest, bookshelf wall, iron grate | No |
+| `gameplay/tileset_archive_dungeon_16x16.png` | 896×896 | 7×7 (128px cells) | 112×112 | Archive-dungeon (v2, cleaner centered objects): stone floors/walls, doorway, arches, pit, rubble, column, carved face, bookshelf, iron grate, torch, brazier, iron door, ruby pedestal, red button panel, treasure chest; rows 5-7 seamless floor fills | No |
 
 ### 2b. Original concept sheets — REFERENCE ONLY (`tilesets/concept/`)
 
