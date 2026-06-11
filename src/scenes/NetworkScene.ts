@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import {
   addDocumentPoints,
-  addInventoryItem,
+  addProcessItem,
   addVolumeFragment,
   awardProcessStamp,
   gameState,
@@ -197,7 +197,7 @@ export class NetworkScene extends Phaser.Scene {
     this.routingActive = false;
     if (this.correctRoutes === this.routeItems.length) {
       awardProcessStamp("network");
-      addInventoryItem("Clearance Token");
+      addProcessItem("clearance_token");
       addVolumeFragment("Routing Fragment");
       addDocumentPoints(14, "OpenNet/ClassNet routes cleared");
       setLatestMessage("Clearance Token opens red vault doors.");

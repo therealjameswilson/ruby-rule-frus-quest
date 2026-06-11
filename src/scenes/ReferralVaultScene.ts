@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import {
   addDocumentPoints,
-  addInventoryItem,
+  addProcessItem,
   addVolumeFragment,
   awardProcessStamp,
   gameState,
@@ -205,7 +205,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     ];
     this.choice.show("STATECHAT GENERATED A BATCH MANIFEST.\n\nWHO DECIDES?", options, (option) => {
       if (option.value === "checked" && this.correctMatches === this.matches.length) {
-        addInventoryItem("Concurrence Slip");
+        addProcessItem("concurrence_slip");
         addDocumentPoints(8, "agency concurrence checked");
         setLatestMessage("Concurrence Slip opens referral gates.");
         adjustReliability(7, "manifest confirmed by human review");

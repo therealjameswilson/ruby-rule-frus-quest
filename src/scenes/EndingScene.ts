@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
-import { addInventoryItem, gameState, setSceneState, setVisibleEntities } from "../game/state";
+import { addProcessItem, gameState, setSceneState, setVisibleEntities } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 
@@ -25,7 +25,7 @@ export class EndingScene extends Phaser.Scene {
 
   create() {
     setSceneState("EndingScene", "ending", "Team sign-off complete.");
-    addInventoryItem("Buckram Key");
+    addProcessItem("buckram_key");
     retroAudio.startMusic("EndingScene");
     retroAudio.ending();
     setVisibleEntities(["Elena", "Marcus", "Priya", gameState.playerProfile.displayName, "Buckram Key", "FRUS cover prize"]);

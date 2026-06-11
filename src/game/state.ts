@@ -1,5 +1,5 @@
-import { PROCESS_ITEMS, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
-import type { ProcessStampId } from "./constants";
+import { ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
+import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { ChoiceOption, GameMode, PlayerProfile, Position } from "./types";
 
 interface VisibleThreat {
@@ -176,6 +176,41 @@ export function addInventoryItem(label: string) {
   }
 }
 
+function processItemDefinition(itemId: ProcessItemId) {
+  return ITEM_REGISTRY.find((item) => item.id === itemId);
+}
+
+export function hasProcessItem(itemId: ProcessItemId) {
+  const item = processItemDefinition(itemId);
+  if (!item) return false;
+  return (
+    gameState.inventory.includes(item.displayName) ||
+    gameState.inventory.includes(item.label) ||
+    item.aliases.some((alias) => gameState.inventory.includes(alias))
+  );
+}
+
+export function addProcessItem(itemId: ProcessItemId) {
+  const item = processItemDefinition(itemId);
+  if (!item) return;
+  addInventoryItem(item.displayName);
+}
+
+export function getProcessItemDefinition(itemId: ProcessItemId) {
+  return processItemDefinition(itemId);
+}
+
+export function getProcessItemGateReadout(itemId: ProcessItemId) {
+  const item = processItemDefinition(itemId);
+  if (!item) return null;
+  return {
+    id: item.id,
+    displayName: item.displayName,
+    roomUnlocks: [...item.roomUnlocks],
+    blockerWeaknesses: [...item.blockerWeaknesses]
+  };
+}
+
 export function addDocumentPoints(amount: number, reason: string) {
   gameState.documentPoints = Math.max(0, gameState.documentPoints + amount);
   const sign = amount >= 0 ? "+" : "";
@@ -266,15 +301,21 @@ function stampReadout() {
 }
 
 export function getProcessItemReadout() {
-  return PROCESS_ITEMS.map((item) => {
-    const acquired = gameState.inventory.includes(item.label) || item.aliases.some((alias) => gameState.inventory.includes(alias));
+  return [...ITEM_REGISTRY].sort((a, b) => a.hudSlot - b.hudSlot).map((item) => {
+    const acquired = hasProcessItem(item.id);
     return {
       id: item.id,
-      label: item.label,
+      displayName: item.displayName,
+      label: item.displayName,
       shortLabel: item.shortLabel,
+      icon: item.icon,
+      texture: item.icon,
+      roomUnlocks: [...item.roomUnlocks],
+      blockerWeaknesses: [...item.blockerWeaknesses],
+      pickupDialog: [...item.pickupDialog],
+      hudSlot: item.hudSlot,
       zeldaFunction: item.zeldaFunction,
       frusMeaning: item.frusMeaning,
-      texture: item.texture,
       acquired
     };
   });
@@ -294,7 +335,7 @@ export function getProductionStatusReadout() {
 
 export function seedProgressForScene(sceneName: string) {
   if (["OfficeScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
-    addInventoryItem("Citation Stamp");
+    addProcessItem("citation_stamp");
     addVolumeFragment("Front Matter Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 15);
   }
@@ -313,16 +354,16 @@ export function seedProgressForScene(sceneName: string) {
   if (["ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("network");
     gameState.reliability = Math.max(gameState.reliability, 100);
-    addInventoryItem("Clearance Token");
+    addProcessItem("clearance_token");
     addVolumeFragment("Routing Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 45);
   }
   if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("referral");
-    addInventoryItem("Concurrence Slip");
-    addInventoryItem("Red Pencil");
-    addInventoryItem("Review Folder");
-    addInventoryItem("Proof Lens");
+    addProcessItem("concurrence_slip");
+    addProcessItem("red_pencil");
+    addProcessItem("review_folder");
+    addProcessItem("proof_lens");
     addVolumeFragment("Referral Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 60);
   }
@@ -330,7 +371,7 @@ export function seedProgressForScene(sceneName: string) {
     awardProcessStamp("sop");
     addInventoryItem("AI Annotation Review Log");
     awardProcessStamp("proof");
-    addInventoryItem("Buckram Key");
+    addProcessItem("buckram_key");
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);
   }

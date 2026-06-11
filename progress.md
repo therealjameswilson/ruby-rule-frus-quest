@@ -187,6 +187,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - changed the inventory overlay into a compact FRUS toolbelt readout with acquired/locked item states
   - wired item acquisition to existing loops: source-note locks, network/vault access, referral gates, Silent Read review routing, and final publication certification
   - verified `npm run build`, required web-game smoke, Silent Read carry state (`Review Folder: MECH FIX`), inventory overlay screenshot, direct scene item progression, and EndingScene Buckram Key rendering
+- Added Zelda-like item gating metadata:
+  - promoted the seven FRUS tools into an item registry with `displayName`, `icon`, `roomUnlocks`, `blockerWeaknesses`, `pickupDialog`, and `hudSlot`
+  - added registered item award/readout helpers so the text renderer exposes unlock and blocker-weakness data
+  - wired the fixed top HUD to show a compact collected-item strip across scenes
+  - verified `npm run build`, required web-game client SilentReadScene screenshot/state, and a direct Playwright probe checking all seven registry entries, unique HUD slots, and EndingScene Buckram Key acquisition
 
 ## TODO
 

@@ -3,6 +3,7 @@ import { PALETTE } from "../game/constants";
 import {
   addDocumentPoints,
   addInventoryItem,
+  addProcessItem,
   addVolumeFragment,
   awardProcessStamp,
   gameState,
@@ -272,9 +273,9 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private startPhysicalVerificationLoop() {
-    addInventoryItem("Review Folder");
-    addInventoryItem("Proof Lens");
-    addInventoryItem("Red Pencil");
+    addProcessItem("review_folder");
+    addProcessItem("proof_lens");
+    addProcessItem("red_pencil");
     this.physicalFlags = PHYSICAL_FLAGS.map((flag, index) => {
       const physicalFlag: PhysicalFlag = {
         ...flag,
@@ -394,7 +395,7 @@ export class SilentReadScene extends Phaser.Scene {
     if (flag.id === "mechanical-fix") {
       awardProcessStamp("sop");
       addInventoryItem("AI Annotation Review Log");
-      addInventoryItem("Red Pencil");
+      addProcessItem("red_pencil");
       addDocumentPoints(8, "mechanical StateChat proposal routed to human review");
       adjustReliability(8, "AI checker output kept inside SOP");
       setLatestMessage("MECHANICAL FIX ACCEPTED");
@@ -402,7 +403,7 @@ export class SilentReadScene extends Phaser.Scene {
     }
     if (flag.id === "proof-date") {
       awardProcessStamp("proof");
-      addInventoryItem("Proof Lens");
+      addProcessItem("proof_lens");
       addVolumeFragment("Proof Fragment");
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");
@@ -416,7 +417,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.syncVisibleEntities();
     const nextFlag = this.getActiveFlag();
     if (!nextFlag) {
-      addInventoryItem("Buckram Key");
+      addProcessItem("buckram_key");
       setObjective("STAMP: all physical verification loops complete.");
       setLatestMessage("Buckram Key opens the final publication gate.");
       this.add.image(this.outbox.x, this.outbox.y - 24, "buckram-key").setDepth(250);

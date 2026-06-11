@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   addInventoryItem,
   addDocumentPoints,
+  addProcessItem,
   addVolumeFragment,
   awardProcessStamp,
   gameState,
@@ -699,6 +700,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private resolveNetworkRouting() {
     this.networkRoutingResolved = true;
+    addProcessItem("clearance_token");
     this.dialog.show("OPENNET TERMINAL", [
       "Route public-status work through OpenNet.",
       "Keep classified equities on ClassNet.",
@@ -711,6 +713,7 @@ export class ArchiveScene extends Phaser.Scene {
   private deliverReferralManifest() {
     this.referralManifestDelivered = true;
     this.agencyTimerResolved = true;
+    addProcessItem("concurrence_slip");
     this.dialog.show("REFERRAL TRAY", [
       "Manifest delivered.",
       "Agency response timer resolved.",
@@ -724,6 +727,7 @@ export class ArchiveScene extends Phaser.Scene {
   private splitAmbiguousFlag() {
     if (!this.ambiguousSplit) {
       this.ambiguousSplit = true;
+      addProcessItem("review_folder");
       this.drawAmbiguousFlags();
     }
     retroAudio.warning();
@@ -925,6 +929,7 @@ export class ArchiveScene extends Phaser.Scene {
   private applySourceNoteStamp() {
     this.drawSourceNoteStampMark();
     awardProcessStamp("archive");
+    addProcessItem("citation_stamp");
     addInventoryItem("Source Note 47 Citation Stamp");
     addInventoryItem("FRUS Fragment: Source Note");
     addVolumeFragment("Source Note Fragment");

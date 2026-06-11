@@ -106,72 +106,136 @@ export const PROCESS_STAMPS = [
 
 export type ProcessStampId = (typeof PROCESS_STAMPS)[number]["id"];
 
-export const PROCESS_ITEMS = [
+export const ITEM_REGISTRY = [
   {
     id: "citation_stamp",
+    displayName: "Citation Stamp",
     label: "Citation Stamp",
     shortLabel: "CITE",
+    icon: "citation-stamp",
+    texture: "citation-stamp",
+    roomUnlocks: ["GuideScene Verification Gate", "Archive A1 source-note lock"],
+    blockerWeaknesses: ["NO REPO", "source-note lock"],
+    pickupDialog: [
+      "Citation Stamp acquired.",
+      "Opens source-note locks only after provenance is verified by human review."
+    ],
+    hudSlot: 0,
     zeldaFunction: "Opens source-note locks",
     frusMeaning: "Provenance verified",
-    texture: "citation-stamp",
     aliases: ["Source Note 47 Citation Stamp"]
   },
   {
     id: "red_pencil",
+    displayName: "Red Pencil",
     label: "Red Pencil",
     shortLabel: "PENCIL",
+    icon: "red-pencil",
+    texture: "red-pencil",
+    roomUnlocks: ["SilentReadScene editor desk"],
+    blockerWeaknesses: ["MECHANICAL FIX", "UNSUPPORTED TEXT"],
+    pickupDialog: [
+      "Red Pencil acquired.",
+      "Marks unsupported text after editor judgment."
+    ],
+    hudSlot: 1,
     zeldaFunction: "Marks unsupported text",
     frusMeaning: "Editor judgment",
-    texture: "red-pencil",
     aliases: ["Red Pencil Mark"]
   },
   {
     id: "review_folder",
+    displayName: "Review Folder",
     label: "Review Folder",
     shortLabel: "FOLDER",
+    icon: "review-folder",
+    texture: "review-folder",
+    roomUnlocks: ["SilentReadScene StateChat outbox"],
+    blockerWeaknesses: ["AMBIGUOUS", "EVIDENCE-BOUND FLAGS"],
+    pickupDialog: [
+      "Review Folder acquired.",
+      "Carry unresolved issues to the correct human workstation."
+    ],
+    hudSlot: 2,
     zeldaFunction: "Carries unresolved issues",
     frusMeaning: "Human review queue",
-    texture: "review-folder",
     aliases: []
   },
   {
     id: "clearance_token",
+    displayName: "Clearance Token",
     label: "Clearance Token",
     shortLabel: "CLEAR",
+    icon: "clearance-token",
+    texture: "clearance-token",
+    roomUnlocks: ["ReferralVaultScene red vault doors", "Archive A2 terminal door"],
+    blockerWeaknesses: ["FIREWALL"],
+    pickupDialog: [
+      "Clearance Token acquired.",
+      "Opens red vault doors after correct OpenNet/ClassNet routing."
+    ],
+    hudSlot: 3,
     zeldaFunction: "Opens red vault doors",
     frusMeaning: "ClassNet/declass access",
-    texture: "clearance-token",
     aliases: []
   },
   {
     id: "concurrence_slip",
+    displayName: "Concurrence Slip",
     label: "Concurrence Slip",
     shortLabel: "CONCUR",
+    icon: "concurrence-slip",
+    texture: "concurrence-slip",
+    roomUnlocks: ["ReferralVaultScene referral gates", "Archive B1 referral lane"],
+    blockerWeaknesses: ["PENDING", "WAIT"],
+    pickupDialog: [
+      "Concurrence Slip acquired.",
+      "Opens referral gates after agency response is complete."
+    ],
+    hudSlot: 4,
     zeldaFunction: "Opens referral gates",
     frusMeaning: "Agency response complete",
-    texture: "concurrence-slip",
     aliases: []
   },
   {
     id: "proof_lens",
+    displayName: "Proof Lens",
     label: "Proof Lens",
     shortLabel: "LENS",
+    icon: "proof-lens",
+    texture: "proof-lens",
+    roomUnlocks: ["SilentReadScene proof table", "Archive B2 proof chamber"],
+    blockerWeaknesses: ["PROOF DATE", "tiny discrepancy"],
+    pickupDialog: [
+      "Proof Lens acquired.",
+      "Reveals tiny discrepancies during silent read."
+    ],
+    hudSlot: 5,
     zeldaFunction: "Reveals tiny discrepancies",
     frusMeaning: "Silent read ability",
-    texture: "proof-lens",
     aliases: []
   },
   {
     id: "buckram_key",
+    displayName: "Buckram Key",
     label: "Buckram Key",
     shortLabel: "KEY",
+    icon: "buckram-key",
+    texture: "buckram-key",
+    roomUnlocks: ["EndingScene final publication gate"],
+    blockerWeaknesses: ["DANN-E QUEUE", "publication gate"],
+    pickupDialog: [
+      "Buckram Key acquired.",
+      "Opens the final publication gate after the volume is certified."
+    ],
+    hudSlot: 6,
     zeldaFunction: "Opens final publication gate",
     frusMeaning: "Volume certified",
-    texture: "buckram-key",
     aliases: []
   }
 ] as const;
 
+export const PROCESS_ITEMS = ITEM_REGISTRY;
 export type ProcessItemId = (typeof PROCESS_ITEMS)[number]["id"];
 
 export const SCENE_ORDER = [

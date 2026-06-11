@@ -1,9 +1,11 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
+  addProcessItem,
   addDocumentPoints,
   addInventoryItem,
   addVolumeFragment,
+  getProcessItemDefinition,
   gameState,
   setNearestInteractable,
   setObjective,
@@ -152,11 +154,12 @@ export class GuideScene extends Phaser.Scene {
     }
     this.hasStamp = true;
     this.stampIcon.setVisible(false);
-    addInventoryItem("Citation Stamp");
+    addProcessItem("citation_stamp");
     addDocumentPoints(5, "citation stamp claimed");
     retroAudio.confirm();
     setObjective("Claim the first FRUS volume fragment.");
-    this.dialog.show("CITATION STAMP", "A source note is not magic. It is a claim you can defend.");
+    const pickupDialog = getProcessItemDefinition("citation_stamp")?.pickupDialog;
+    this.dialog.show("CITATION STAMP", pickupDialog ? [...pickupDialog] : "A source note is not magic. It is a claim you can defend.");
     this.syncVisibleState();
   }
 
