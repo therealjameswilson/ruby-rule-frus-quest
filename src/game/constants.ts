@@ -106,6 +106,74 @@ export const PROCESS_STAMPS = [
 
 export type ProcessStampId = (typeof PROCESS_STAMPS)[number]["id"];
 
+export const PROCESS_ITEMS = [
+  {
+    id: "citation_stamp",
+    label: "Citation Stamp",
+    shortLabel: "CITE",
+    zeldaFunction: "Opens source-note locks",
+    frusMeaning: "Provenance verified",
+    texture: "citation-stamp",
+    aliases: ["Source Note 47 Citation Stamp"]
+  },
+  {
+    id: "red_pencil",
+    label: "Red Pencil",
+    shortLabel: "PENCIL",
+    zeldaFunction: "Marks unsupported text",
+    frusMeaning: "Editor judgment",
+    texture: "red-pencil",
+    aliases: ["Red Pencil Mark"]
+  },
+  {
+    id: "review_folder",
+    label: "Review Folder",
+    shortLabel: "FOLDER",
+    zeldaFunction: "Carries unresolved issues",
+    frusMeaning: "Human review queue",
+    texture: "review-folder",
+    aliases: []
+  },
+  {
+    id: "clearance_token",
+    label: "Clearance Token",
+    shortLabel: "CLEAR",
+    zeldaFunction: "Opens red vault doors",
+    frusMeaning: "ClassNet/declass access",
+    texture: "clearance-token",
+    aliases: []
+  },
+  {
+    id: "concurrence_slip",
+    label: "Concurrence Slip",
+    shortLabel: "CONCUR",
+    zeldaFunction: "Opens referral gates",
+    frusMeaning: "Agency response complete",
+    texture: "concurrence-slip",
+    aliases: []
+  },
+  {
+    id: "proof_lens",
+    label: "Proof Lens",
+    shortLabel: "LENS",
+    zeldaFunction: "Reveals tiny discrepancies",
+    frusMeaning: "Silent read ability",
+    texture: "proof-lens",
+    aliases: []
+  },
+  {
+    id: "buckram_key",
+    label: "Buckram Key",
+    shortLabel: "KEY",
+    zeldaFunction: "Opens final publication gate",
+    frusMeaning: "Volume certified",
+    texture: "buckram-key",
+    aliases: []
+  }
+] as const;
+
+export type ProcessItemId = (typeof PROCESS_ITEMS)[number]["id"];
+
 export const SCENE_ORDER = [
   "TitleScene",
   "CharacterCreateScene",

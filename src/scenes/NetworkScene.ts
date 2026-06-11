@@ -200,11 +200,13 @@ export class NetworkScene extends Phaser.Scene {
       addInventoryItem("Clearance Token");
       addVolumeFragment("Routing Fragment");
       addDocumentPoints(14, "OpenNet/ClassNet routes cleared");
+      setLatestMessage("Clearance Token opens red vault doors.");
+      this.add.image(128, 166, "clearance-token").setDepth(180);
       retroAudio.stamp();
       this.dialog.show("MARCUS", [
         "Good routing.",
         "The open world stays open. The closed world stays closed.",
-        "The START band has a clean path onto the cover."
+        "The clearance token opens the red vault doors."
       ], () => transitionTo(this, "ReferralVaultScene"));
       return;
     }

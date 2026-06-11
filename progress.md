@@ -180,6 +180,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - extended `render_game_to_text()` threat output with behavior, defeat method, and status fields
   - fixed Archive room traversal blockers so A1 east, B1 north/center, A2 south, and B2 north lanes stay playable
   - verified with `npm run build`, required web-game client smoke, and a custom Playwright route probe covering all six enemy loops with screenshot inspection
+- Added FRUS process item toolbelt:
+  - added a shared seven-item catalog for Citation Stamp, Red Pencil, Review Folder, Clearance Token, Concurrence Slip, Proof Lens, and Buckram Key
+  - exposed each item's Zelda-like function and FRUS meaning in `render_game_to_text()`
+  - added new original 24x24 SVG sprites for Review Folder, Clearance Token, Proof Lens, and Buckram Key
+  - changed the inventory overlay into a compact FRUS toolbelt readout with acquired/locked item states
+  - wired item acquisition to existing loops: source-note locks, network/vault access, referral gates, Silent Read review routing, and final publication certification
+  - verified `npm run build`, required web-game smoke, Silent Read carry state (`Review Folder: MECH FIX`), inventory overlay screenshot, direct scene item progression, and EndingScene Buckram Key rendering
 
 ## TODO
 

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
-import { gameState, setSceneState, setVisibleEntities } from "../game/state";
+import { addInventoryItem, gameState, setSceneState, setVisibleEntities } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 
@@ -25,9 +25,10 @@ export class EndingScene extends Phaser.Scene {
 
   create() {
     setSceneState("EndingScene", "ending", "Team sign-off complete.");
+    addInventoryItem("Buckram Key");
     retroAudio.startMusic("EndingScene");
     retroAudio.ending();
-    setVisibleEntities(["Elena", "Marcus", "Priya", gameState.playerProfile.displayName, "FRUS cover prize"]);
+    setVisibleEntities(["Elena", "Marcus", "Priya", gameState.playerProfile.displayName, "Buckram Key", "FRUS cover prize"]);
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
     for (let y = 0; y < GAME_HEIGHT; y += 8) {
@@ -56,6 +57,13 @@ export class EndingScene extends Phaser.Scene {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.openNetGreen
+    }).setOrigin(0.5);
+    this.add.image(218, 145, "buckram-key").setDepth(40);
+    this.add.text(218, 157, "BUCKRAM\nKEY", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp,
+      align: "center"
     }).setOrigin(0.5);
 
     this.add.rectangle(128, 170, 236, 29, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp));

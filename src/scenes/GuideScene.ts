@@ -141,7 +141,7 @@ export class GuideScene extends Phaser.Scene {
     this.dialog.show("ARCHIVE COLLEAGUE", [
       "The 30-year line is a deadline, not a decision-maker.",
       "DANN-E can queue a task. It cannot own judgment.",
-      "Our tools are citations, concurrence, clearance, and reading."
+      "Our toolbelt: stamp, pencil, folder, token, slip, lens, and buckram key."
     ]);
   }
 

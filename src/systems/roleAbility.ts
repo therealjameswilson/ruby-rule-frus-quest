@@ -27,7 +27,7 @@ function abilityHint() {
     if (scene === "ArchiveScene") return "PROVENANCE CHECK: No repository means not ready.";
     return "PROVENANCE CHECK: A visible source note must carry the trail.";
   }
-  if (scene === "SilentReadScene") return "SILENT READ: StateChat flags mechanics. You catch facts.";
+  if (scene === "SilentReadScene") return "PROOF LENS: StateChat flags mechanics. You catch tiny discrepancies.";
   return "SILENT READ: Compare line by line. Plausible can still be wrong.";
 }
 
@@ -151,6 +151,7 @@ function drawRedPencil(scene: Phaser.Scene, container: Phaser.GameObjects.Contai
 function drawSilentRead(scene: Phaser.Scene, container: Phaser.GameObjects.Container) {
   addRect(scene, container, -31, -18, 62, 31, PALETTE.black);
   addImage(scene, container, -11, -4, "proof-page");
+  addImage(scene, container, 18, -4, "proof-lens");
   addRect(scene, container, -21, -9, 15, 2, PALETTE.sepiaInk);
   addRect(scene, container, 5, -9, 15, 2, PALETTE.sepiaInk);
   addRect(scene, container, 4, -2, 17, 4, PALETTE.terminalCyan);

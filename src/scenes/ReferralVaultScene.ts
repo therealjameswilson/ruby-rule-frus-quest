@@ -6,6 +6,7 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  setLatestMessage,
   setObjective,
   setSceneState,
   setVisibleEntities,
@@ -106,6 +107,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.objectiveText = addObjectiveText(this);
     this.dialog.show("MARCUS", [
       "Referral means agency equity.",
+      "Your clearance token opens this red vault door.",
       "StateChat can draft a manifest. You confirm it."
     ], () => this.startMatching());
   }
@@ -205,6 +207,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       if (option.value === "checked" && this.correctMatches === this.matches.length) {
         addInventoryItem("Concurrence Slip");
         addDocumentPoints(8, "agency concurrence checked");
+        setLatestMessage("Concurrence Slip opens referral gates.");
         adjustReliability(7, "manifest confirmed by human review");
         this.reliability.update();
         this.showExcisionChoice();

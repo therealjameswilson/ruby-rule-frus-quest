@@ -1,6 +1,16 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { gameState } from "../game/state";
+import { gameState, getProcessItemReadout } from "../game/state";
+
+const COMPACT_TOOL_LINES: Record<string, string> = {
+  citation_stamp: "source locks = provenance",
+  red_pencil: "unsupported text = editor judgment",
+  review_folder: "unresolved issues = human queue",
+  clearance_token: "red vault doors = declass access",
+  concurrence_slip: "referral gates = agency complete",
+  proof_lens: "tiny discrepancies = silent read",
+  buckram_key: "publication gate = certified"
+};
 
 export class InventoryOverlay {
   private readonly scene: Phaser.Scene;
@@ -9,19 +19,19 @@ export class InventoryOverlay {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    const box = scene.add.rectangle(128, 92, 220, 124, 0x050505, 0.97);
-    const border = scene.add.rectangle(128, 92, 220, 124).setStrokeStyle(2, 0xd6a84f);
-    const title = scene.add.text(26, 38, "MANUSCRIPT INVENTORY", {
+    const box = scene.add.rectangle(128, 104, 236, 168, 0x050505, 0.97);
+    const border = scene.add.rectangle(128, 104, 236, 168).setStrokeStyle(2, 0xd6a84f);
+    const title = scene.add.text(16, 25, "MANUSCRIPT INVENTORY", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.goldStamp
     });
-    this.body = scene.add.text(26, 58, "", {
+    this.body = scene.add.text(16, 42, "", {
       fontFamily: "monospace",
-      fontSize: "8px",
+      fontSize: "6px",
       color: PALETTE.creamPaper,
-      wordWrap: { width: 204, useAdvancedWrap: true },
-      lineSpacing: 3
+      wordWrap: { width: 224, useAdvancedWrap: true },
+      lineSpacing: 1
     });
     this.container = scene.add
       .container(0, 0, [box, border, title, this.body])
@@ -38,13 +48,13 @@ export class InventoryOverlay {
       this.container.setVisible(false);
       return;
     }
-    const items = gameState.inventory.length
-      ? gameState.inventory.map((item) => `- ${item}`).join("\n")
-      : "- No manuscript pieces yet.";
+    const items = getProcessItemReadout()
+      .map((item) => `${item.acquired ? "OK" : "--"} ${item.shortLabel}: ${COMPACT_TOOL_LINES[item.id]}`)
+      .join("\n");
     const fragments = gameState.volumeFragments.length
       ? gameState.volumeFragments.map((item) => `* ${item}`).join("\n")
       : "* No FRUS fragments yet.";
-    this.body.setText([`DOCUMENT POINTS: ${gameState.documentPoints}`, "", "TOOLS / TOKENS", items, "", "FRUS VOLUME PARTS", fragments].join("\n"));
+    this.body.setText([`DOCUMENT POINTS: ${gameState.documentPoints}`, "", "FRUS TOOLBELT", items, "", "FRUS VOLUME PARTS", fragments].join("\n"));
     this.container.setVisible(true);
   }
 }

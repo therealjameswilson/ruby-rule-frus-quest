@@ -129,6 +129,8 @@ export class SilentReadScene extends Phaser.Scene {
       "Typeset proof",
       "Proof page icon",
       "Red pencil",
+      "Review Folder",
+      "Proof Lens",
       "AI Annotation Review terminal",
       ...WORKSTATIONS.map((station) => station.label)
     ]);
@@ -161,6 +163,7 @@ export class SilentReadScene extends Phaser.Scene {
       "HUMAN TRIAGE"
     ]);
     this.drawWorkstations();
+    this.drawToolbeltIcons();
 
     this.player = new Player(this, 128, 202);
     this.dialog = new DialogBox(this);
@@ -251,7 +254,27 @@ export class SilentReadScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(154);
   }
 
+  private drawToolbeltIcons() {
+    const tools = [
+      { x: 92, y: 72, key: "review-folder", label: "FOLDER", color: PALETTE.goldStamp },
+      { x: 128, y: 72, key: "proof-lens", label: "LENS", color: PALETTE.terminalCyan },
+      { x: 164, y: 72, key: "red-pencil", label: "PENCIL", color: PALETTE.buckramHighlight }
+    ];
+    for (const tool of tools) {
+      this.add.rectangle(tool.x, tool.y, 28, 22, color(PALETTE.black), 0.86).setStrokeStyle(1, color(tool.color)).setDepth(146);
+      this.add.image(tool.x, tool.y - 3, tool.key).setDepth(147);
+      this.add.text(tool.x, tool.y + 9, tool.label, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: tool.color
+      }).setOrigin(0.5).setDepth(148);
+    }
+  }
+
   private startPhysicalVerificationLoop() {
+    addInventoryItem("Review Folder");
+    addInventoryItem("Proof Lens");
+    addInventoryItem("Red Pencil");
     this.physicalFlags = PHYSICAL_FLAGS.map((flag, index) => {
       const physicalFlag: PhysicalFlag = {
         ...flag,
@@ -268,7 +291,7 @@ export class SilentReadScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(241).setVisible(index === 0);
       return physicalFlag;
     });
-    setLatestMessage("StateChat produced one mechanical proposal and four evidence-bound flags.");
+    setLatestMessage("Review Folder carries unresolved issues; Proof Lens reveals discrepancies.");
     setObjective("CARRY: pick up the first StateChat flag.");
     this.syncVisibleEntities();
     this.updatePhysicalVerification();
@@ -311,7 +334,7 @@ export class SilentReadScene extends Phaser.Scene {
         return;
       }
       activeFlag.status = "carried";
-      setHeldItem(activeFlag.label);
+      setHeldItem(`Review Folder: ${activeFlag.shortLabel}`);
       setLatestMessage(`CARRY: ${activeFlag.label}.`);
       setObjective(`ROUTE: place ${activeFlag.shortLabel} on ${this.stationFor(activeFlag.destination).label}.`);
       retroAudio.blip();
@@ -371,6 +394,7 @@ export class SilentReadScene extends Phaser.Scene {
     if (flag.id === "mechanical-fix") {
       awardProcessStamp("sop");
       addInventoryItem("AI Annotation Review Log");
+      addInventoryItem("Red Pencil");
       addDocumentPoints(8, "mechanical StateChat proposal routed to human review");
       adjustReliability(8, "AI checker output kept inside SOP");
       setLatestMessage("MECHANICAL FIX ACCEPTED");
@@ -378,7 +402,7 @@ export class SilentReadScene extends Phaser.Scene {
     }
     if (flag.id === "proof-date") {
       awardProcessStamp("proof");
-      addInventoryItem("Red Pencil Mark");
+      addInventoryItem("Proof Lens");
       addVolumeFragment("Proof Fragment");
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");
@@ -392,8 +416,10 @@ export class SilentReadScene extends Phaser.Scene {
     this.syncVisibleEntities();
     const nextFlag = this.getActiveFlag();
     if (!nextFlag) {
+      addInventoryItem("Buckram Key");
       setObjective("STAMP: all physical verification loops complete.");
-      setLatestMessage("Physical verification loop complete.");
+      setLatestMessage("Buckram Key opens the final publication gate.");
+      this.add.image(this.outbox.x, this.outbox.y - 24, "buckram-key").setDepth(250);
       this.actionHint.setText("DONE: all StateChat flags verified and stamped.");
       this.reliability.update();
       this.dialog.show(gameState.playerProfile.displayName.toUpperCase(), [
@@ -475,7 +501,7 @@ export class SilentReadScene extends Phaser.Scene {
     const carried = this.physicalFlags.find((flag) => flag.status === "carried");
     setPhysicalVerificationState({
       verb,
-      carriedItem: carried?.label ?? null,
+      carriedItem: carried ? `Review Folder: ${carried.shortLabel}` : null,
       nearestStation: nearestStation?.label ?? null,
       completed,
       total: this.physicalFlags.length,
@@ -496,6 +522,9 @@ export class SilentReadScene extends Phaser.Scene {
       "Typeset proof",
       "AI Annotation Review terminal",
       "StateChat outbox",
+      "Review Folder",
+      "Proof Lens",
+      "Red Pencil",
       ...WORKSTATIONS.map((station) => station.label),
       ...this.physicalFlags
         .filter((flag) => flag.status !== "stamped")

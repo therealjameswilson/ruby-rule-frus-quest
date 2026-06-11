@@ -1,4 +1,4 @@
-import { PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
+import { PROCESS_ITEMS, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
 import type { ProcessStampId } from "./constants";
 import type { ChoiceOption, GameMode, PlayerProfile, Position } from "./types";
 
@@ -246,6 +246,7 @@ function compactHudText(text: string, maxLength: number) {
 
 function compactHeldItem(label: string | null) {
   if (!label) return "NONE";
+  if (/review folder/i.test(label)) return compactHudText(label, 18);
   if (/mechanical/i.test(label)) return "MECH FIX";
   if (/opennet|cross-reference/i.test(label)) return "OPEN NOTE";
   if (/classnet/i.test(label)) return "CLASS NOTE";
@@ -262,6 +263,21 @@ function reliabilityBlocks() {
 function stampReadout() {
   const earned = gameState.processStamps.map((stampId) => HUD_STAMP_LABELS[stampId]);
   return earned.length ? earned.join(" ") : "NONE";
+}
+
+export function getProcessItemReadout() {
+  return PROCESS_ITEMS.map((item) => {
+    const acquired = gameState.inventory.includes(item.label) || item.aliases.some((alias) => gameState.inventory.includes(alias));
+    return {
+      id: item.id,
+      label: item.label,
+      shortLabel: item.shortLabel,
+      zeldaFunction: item.zeldaFunction,
+      frusMeaning: item.frusMeaning,
+      texture: item.texture,
+      acquired
+    };
+  });
 }
 
 export function getProductionStatusReadout() {
@@ -304,6 +320,9 @@ export function seedProgressForScene(sceneName: string) {
   if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("referral");
     addInventoryItem("Concurrence Slip");
+    addInventoryItem("Red Pencil");
+    addInventoryItem("Review Folder");
+    addInventoryItem("Proof Lens");
     addVolumeFragment("Referral Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 60);
   }
@@ -311,7 +330,7 @@ export function seedProgressForScene(sceneName: string) {
     awardProcessStamp("sop");
     addInventoryItem("AI Annotation Review Log");
     awardProcessStamp("proof");
-    addInventoryItem("Red Pencil Mark");
+    addInventoryItem("Buckram Key");
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);
   }
@@ -352,6 +371,7 @@ export function renderGameToText() {
       documentPoints: gameState.documentPoints,
       playerProfile: gameState.playerProfile,
       processStamps: gameState.processStamps,
+      processItems: getProcessItemReadout(),
       volumeFragments: gameState.volumeFragments,
       frusPrize: {
         cover: "ruby FRUS cover",
