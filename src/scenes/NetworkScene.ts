@@ -58,12 +58,12 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("NetworkScene", "explore", "Learn the network split from Marcus.");
+    setSceneState("NetworkScene", "explore", "Two Networks: earn the Clearance Token.");
     retroAudio.startMusic("NetworkScene");
     setVisibleEntities(["Marcus", "OpenNet terminal", "ClassNet terminal", "Routing sorter", "Stone Wall: Firewall"]);
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawTiledFloor(this, "network-tiles");
-    drawRoomFrame(this, "NETWORK");
+    drawRoomFrame(this, "TWO NETWORKS");
     addNetworkCables(this);
     addWallMap(this, 128, 66, "NET MAP");
     addTinySparkle(this, 60, 108, PALETTE.openNetGreen);
@@ -146,7 +146,7 @@ export class NetworkScene extends Phaser.Scene {
     this.currentRoute = 0;
     this.correctRoutes = 0;
     this.routingActive = true;
-    setObjective("Route each item to OpenNet or ClassNet.");
+    setObjective("Two Networks: route each item to OpenNet or ClassNet.");
     this.showRouteChoice();
   }
 

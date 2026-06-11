@@ -192,6 +192,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - added registered item award/readout helpers so the text renderer exposes unlock and blocker-weakness data
   - wired the fixed top HUD to show a compact collected-item strip across scenes
   - verified `npm run build`, required web-game client SilentReadScene screenshot/state, and a direct Playwright probe checking all seven registry entries, unique HUD slots, and EndingScene Buckram Key acquisition
+- Added Zelda-like area progression:
+  - added an area registry for Office Hub, Archive Cavern, Two Networks, Referral Vault, Editor's Labyrinth, Silent Read Tower, and Buckram Gate with Zelda-role and reward metadata
+  - changed the start flow to Character Create -> Office Hub -> Archive Cavern -> Archive rooms, matching the requested progression
+  - moved Red Pencil and Proof Lens from pre-granted Silent Read tools into earned dungeon rewards
+  - exposed `areaProgress` and `currentArea` through `render_game_to_text()` and added a compact quest-route readout to the inventory overlay
+  - verified `npm run build`, required web-game client OfficeScene screenshot/state, and a direct Playwright probe covering route order, direct-scene seeding, reward gating, and Buckram Gate completion
 
 ## TODO
 

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { gameState, getProcessItemReadout, getProductionStatusReadout, setLatestMessage } from "../game/state";
+import { gameState, getCurrentAreaReadout, getProcessItemReadout, getProductionStatusReadout, setLatestMessage } from "../game/state";
 import type { ProposalKind } from "../game/types";
 import { retroAudio } from "./audio";
 
@@ -82,9 +82,13 @@ export class ReliabilityHud {
       this.details.setVisible(false);
       return;
     }
+    const area = getCurrentAreaReadout();
     this.detailsText.setText(
       [
         ...getProductionStatusReadout(),
+        `AREA: ${area.displayName}`,
+        `ROLE: ${area.zeldaRole}`,
+        `REWARD: ${area.reward}`,
         `RELIABILITY ${gameState.reliability}/100`,
         "AI ANNOTATION REVIEW: TOOL ONLY",
         "MECHANICAL: MAY AUTO-APPLY",

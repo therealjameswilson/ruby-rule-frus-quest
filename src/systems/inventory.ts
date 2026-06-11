@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { gameState, getProcessItemReadout } from "../game/state";
+import { gameState, getAreaProgressReadout, getProcessItemReadout } from "../game/state";
 
 const COMPACT_TOOL_LINES: Record<string, string> = {
   citation_stamp: "source locks = provenance",
@@ -51,10 +51,23 @@ export class InventoryOverlay {
     const items = getProcessItemReadout()
       .map((item) => `${item.acquired ? "OK" : "--"} ${item.shortLabel}: ${COMPACT_TOOL_LINES[item.id]}`)
       .join("\n");
-    const fragments = gameState.volumeFragments.length
-      ? gameState.volumeFragments.map((item) => `* ${item}`).join("\n")
-      : "* No FRUS fragments yet.";
-    this.body.setText([`DOCUMENT POINTS: ${gameState.documentPoints}`, "", "FRUS TOOLBELT", items, "", "FRUS VOLUME PARTS", fragments].join("\n"));
+    const areas = getAreaProgressReadout()
+      .map((area) => {
+        const marker = area.active ? ">" : " ";
+        const status = area.completed ? "OK" : "--";
+        return `${marker}${status} ${area.displayName}: ${area.reward}`;
+      })
+      .join("\n");
+    this.body.setText([
+      `DOCUMENT POINTS: ${gameState.documentPoints}`,
+      `FRUS VOLUME PARTS: ${gameState.volumeFragments.length}/5`,
+      "",
+      "QUEST ROUTE",
+      areas,
+      "",
+      "FRUS TOOLBELT",
+      items
+    ].join("\n"));
     this.container.setVisible(true);
   }
 }

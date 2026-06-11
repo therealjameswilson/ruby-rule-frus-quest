@@ -218,11 +218,11 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("ArchiveScene", "explore", "Explore Archive room A1.");
+    setSceneState("ArchiveScene", "explore", "Archive Cavern: explore room A1.");
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.archiveAmber);
     drawTiledFloor(this, "archive-tiles");
-    drawRoomFrame(this, "ARCHIVE");
+    drawRoomFrame(this, "ARCHIVE CAVERN");
     this.drawVisitedMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
       fontFamily: "monospace",
@@ -998,7 +998,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private finishArchiveIfReady() {
     if (this.sourceNoteStatus !== "stamped") {
-      setObjective("Pick up Source Note 47 in A1 and verify provenance.");
+      setObjective("Archive Cavern: pick up Source Note 47 in A1.");
       return;
     }
     if (this.collected.size < 3) {
@@ -1065,7 +1065,7 @@ export class ArchiveScene extends Phaser.Scene {
         return;
       }
       if (this.sourceNoteStatus !== "stamped") {
-        setObjective("Collect Source Note 47 in A1; use edge gates to map rooms.");
+        setObjective("Archive Cavern: collect Source Note 47 in A1.");
         return;
       }
       if (this.collected.size < 3) {

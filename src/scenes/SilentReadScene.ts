@@ -122,7 +122,7 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("SilentReadScene", "explore", "Run AI annotation review SOP.");
+    setSceneState("SilentReadScene", "explore", "Editor's Labyrinth: earn the Red Pencil.");
     retroAudio.startMusic("SilentReadScene");
     setVisibleEntities([
       "Priya",
@@ -132,13 +132,15 @@ export class SilentReadScene extends Phaser.Scene {
       "Red pencil",
       "Review Folder",
       "Proof Lens",
+      "Editor's Labyrinth",
+      "Silent Read Tower",
       "AI Annotation Review terminal",
       ...WORKSTATIONS.map((station) => station.label)
     ]);
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
     this.add.rectangle(128, 120, 256, 240, color(PALETTE.sepiaInk));
     this.add.rectangle(128, 120, 248, 232, color(PALETTE.creamPaper));
-    drawRoomFrame(this, "SILENT READ", PALETTE.deepRuby);
+    drawRoomFrame(this, "EDITOR LABYRINTH", PALETTE.deepRuby);
     addProofingTable(this, 128, 172);
     addTinySparkle(this, 178, 87, PALETTE.classNetRed);
     new HistorianNPC(this, "priya", 28, 52);
@@ -274,8 +276,6 @@ export class SilentReadScene extends Phaser.Scene {
 
   private startPhysicalVerificationLoop() {
     addProcessItem("review_folder");
-    addProcessItem("proof_lens");
-    addProcessItem("red_pencil");
     this.physicalFlags = PHYSICAL_FLAGS.map((flag, index) => {
       const physicalFlag: PhysicalFlag = {
         ...flag,
@@ -292,8 +292,8 @@ export class SilentReadScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(241).setVisible(index === 0);
       return physicalFlag;
     });
-    setLatestMessage("Review Folder carries unresolved issues; Proof Lens reveals discrepancies.");
-    setObjective("CARRY: pick up the first StateChat flag.");
+    setLatestMessage("Review Folder carries unresolved issues through human review.");
+    setObjective("Editor's Labyrinth: carry the first StateChat flag.");
     this.syncVisibleEntities();
     this.updatePhysicalVerification();
   }
@@ -398,7 +398,7 @@ export class SilentReadScene extends Phaser.Scene {
       addProcessItem("red_pencil");
       addDocumentPoints(8, "mechanical StateChat proposal routed to human review");
       adjustReliability(8, "AI checker output kept inside SOP");
-      setLatestMessage("MECHANICAL FIX ACCEPTED");
+      setLatestMessage("MECHANICAL FIX ACCEPTED - RED PENCIL EARNED");
       return;
     }
     if (flag.id === "proof-date") {
@@ -407,6 +407,7 @@ export class SilentReadScene extends Phaser.Scene {
       addVolumeFragment("Proof Fragment");
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");
+      setLatestMessage("VERIFIED BY HUMAN REVIEW - PROOF LENS EARNED");
       return;
     }
     addDocumentPoints(5, `${flag.shortLabel} verified at ${this.stationFor(flag.destination).label}`);
@@ -434,7 +435,8 @@ export class SilentReadScene extends Phaser.Scene {
     nextFlag.y = this.outbox.y - 10;
     nextFlag.icon?.setPosition(nextFlag.x, nextFlag.y).setVisible(true);
     nextFlag.labelText?.setPosition(nextFlag.x, nextFlag.y + 14).setVisible(true);
-    setObjective(`CARRY: pick up ${nextFlag.shortLabel} from the StateChat outbox.`);
+    const phase = nextFlag.id === "mechanical-fix" ? "Editor's Labyrinth" : "Silent Read Tower";
+    setObjective(`${phase}: carry ${nextFlag.shortLabel} from the StateChat outbox.`);
   }
 
   private addVerificationMark(station: Workstation) {

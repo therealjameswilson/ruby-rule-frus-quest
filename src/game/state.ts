@@ -1,5 +1,5 @@
-import { ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
-import type { ProcessItemId, ProcessStampId } from "./constants";
+import { AREA_REGISTRY, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
+import type { AreaId, ProcessItemId, ProcessStampId } from "./constants";
 import type { ChoiceOption, GameMode, PlayerProfile, Position } from "./types";
 
 interface VisibleThreat {
@@ -211,6 +211,45 @@ export function getProcessItemGateReadout(itemId: ProcessItemId) {
   };
 }
 
+function areaRewardEarned(area: (typeof AREA_REGISTRY)[number]) {
+  if (area.rewardType === "stamp") {
+    return gameState.processStamps.includes(area.rewardId as ProcessStampId);
+  }
+  if (area.rewardType === "item") {
+    return hasProcessItem(area.rewardId as ProcessItemId);
+  }
+  return gameState.currentScene === "EndingScene" && gameState.volumeFragments.length >= 5;
+}
+
+function currentAreaId(): AreaId {
+  if (gameState.currentScene === "SilentReadScene") {
+    return hasProcessItem("red_pencil") ? "silent_read_tower" : "editors_labyrinth";
+  }
+  if (gameState.currentScene === "EndingScene") return "buckram_gate";
+  const area = AREA_REGISTRY.find((candidate) => candidate.scenes.some((scene) => scene === gameState.currentScene));
+  return area?.id ?? "office_hub";
+}
+
+export function getAreaProgressReadout() {
+  const activeAreaId = currentAreaId();
+  return AREA_REGISTRY.map((area, index) => ({
+    id: area.id,
+    displayName: area.displayName,
+    zeldaRole: area.zeldaRole,
+    reward: area.reward,
+    rewardType: area.rewardType,
+    rewardId: area.rewardId,
+    scenes: [...area.scenes],
+    order: index,
+    active: area.id === activeAreaId,
+    completed: areaRewardEarned(area)
+  }));
+}
+
+export function getCurrentAreaReadout() {
+  return getAreaProgressReadout().find((area) => area.active) ?? getAreaProgressReadout()[0];
+}
+
 export function addDocumentPoints(amount: number, reason: string) {
   gameState.documentPoints = Math.max(0, gameState.documentPoints + amount);
   const sign = amount >= 0 ? "+" : "";
@@ -334,12 +373,12 @@ export function getProductionStatusReadout() {
 }
 
 export function seedProgressForScene(sceneName: string) {
-  if (["OfficeScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+  if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     addProcessItem("citation_stamp");
     addVolumeFragment("Front Matter Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 15);
   }
-  if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+  if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("rule");
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
@@ -361,16 +400,16 @@ export function seedProgressForScene(sceneName: string) {
   if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("referral");
     addProcessItem("concurrence_slip");
-    addProcessItem("red_pencil");
     addProcessItem("review_folder");
-    addProcessItem("proof_lens");
     addVolumeFragment("Referral Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 60);
   }
   if (sceneName === "EndingScene") {
     awardProcessStamp("sop");
     addInventoryItem("AI Annotation Review Log");
+    addProcessItem("red_pencil");
     awardProcessStamp("proof");
+    addProcessItem("proof_lens");
     addProcessItem("buckram_key");
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);
@@ -413,6 +452,8 @@ export function renderGameToText() {
       playerProfile: gameState.playerProfile,
       processStamps: gameState.processStamps,
       processItems: getProcessItemReadout(),
+      areaProgress: getAreaProgressReadout(),
+      currentArea: getCurrentAreaReadout(),
       volumeFragments: gameState.volumeFragments,
       frusPrize: {
         cover: "ruby FRUS cover",

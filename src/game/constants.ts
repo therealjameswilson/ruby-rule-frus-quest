@@ -238,11 +238,79 @@ export const ITEM_REGISTRY = [
 export const PROCESS_ITEMS = ITEM_REGISTRY;
 export type ProcessItemId = (typeof PROCESS_ITEMS)[number]["id"];
 
+export const AREA_REGISTRY = [
+  {
+    id: "office_hub",
+    displayName: "Office Hub",
+    zeldaRole: "Overworld start",
+    reward: "Golden Rule",
+    rewardType: "stamp",
+    rewardId: "rule",
+    scenes: ["OfficeScene"]
+  },
+  {
+    id: "archive_cavern",
+    displayName: "Archive Cavern",
+    zeldaRole: "Dungeon 1",
+    reward: "Citation Stamp",
+    rewardType: "item",
+    rewardId: "citation_stamp",
+    scenes: ["GuideScene", "ArchiveScene"]
+  },
+  {
+    id: "two_networks",
+    displayName: "Two Networks",
+    zeldaRole: "Dungeon 2",
+    reward: "Clearance Token",
+    rewardType: "item",
+    rewardId: "clearance_token",
+    scenes: ["NetworkScene"]
+  },
+  {
+    id: "referral_vault",
+    displayName: "Referral Vault",
+    zeldaRole: "Dungeon 3",
+    reward: "Concurrence Slip",
+    rewardType: "item",
+    rewardId: "concurrence_slip",
+    scenes: ["ReferralVaultScene"]
+  },
+  {
+    id: "editors_labyrinth",
+    displayName: "Editor's Labyrinth",
+    zeldaRole: "Dungeon 4",
+    reward: "Red Pencil",
+    rewardType: "item",
+    rewardId: "red_pencil",
+    scenes: ["SilentReadScene"]
+  },
+  {
+    id: "silent_read_tower",
+    displayName: "Silent Read Tower",
+    zeldaRole: "Dungeon 5",
+    reward: "Proof Lens",
+    rewardType: "item",
+    rewardId: "proof_lens",
+    scenes: ["SilentReadScene"]
+  },
+  {
+    id: "buckram_gate",
+    displayName: "Buckram Gate",
+    zeldaRole: "Final dungeon",
+    reward: "Published FRUS cover",
+    rewardType: "finalPrize",
+    rewardId: "published_frus_cover",
+    scenes: ["EndingScene"]
+  }
+] as const;
+
+export type AreaId = (typeof AREA_REGISTRY)[number]["id"];
+
 export const SCENE_ORDER = [
   "TitleScene",
   "CharacterCreateScene",
-  "GuideScene",
   "OfficeScene",
+  "GuideScene",
   "ArchiveScene",
   "NetworkScene",
   "ReferralVaultScene",

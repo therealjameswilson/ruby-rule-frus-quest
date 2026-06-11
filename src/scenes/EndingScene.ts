@@ -24,7 +24,7 @@ export class EndingScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("EndingScene", "ending", "Team sign-off complete.");
+    setSceneState("EndingScene", "ending", "Buckram Gate: published FRUS cover complete.");
     addProcessItem("buckram_key");
     retroAudio.startMusic("EndingScene");
     retroAudio.ending();
@@ -38,14 +38,19 @@ export class EndingScene extends Phaser.Scene {
     }
 
     this.drawAssembledPrize(128, 78, 1);
-    this.add.text(128, 5, "FRUS QUEST COMPLETE", {
+    this.add.text(128, 5, "BUCKRAM GATE CLEARED", {
       fontFamily: "monospace",
       fontSize: "11px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
-    this.add.text(128, 16, `${gameState.playerProfile.displayName.toUpperCase()} / ${gameState.playerProfile.roleLabel.toUpperCase()}`, {
+    this.add.text(128, 16, "PUBLISHED FRUS COVER", {
       fontFamily: "monospace",
       fontSize: "7px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5);
+    this.add.text(128, 25, `${gameState.playerProfile.displayName.toUpperCase()} / ${gameState.playerProfile.roleLabel.toUpperCase()}`, {
+      fontFamily: "monospace",
+      fontSize: "6px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
     this.add.text(128, 140, `COVER PIECES ${gameState.volumeFragments.length}/5`, {

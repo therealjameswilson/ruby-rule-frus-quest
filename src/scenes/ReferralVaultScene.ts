@@ -58,7 +58,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("ReferralVaultScene", "explore", "Match documents to agency equities.");
+    setSceneState("ReferralVaultScene", "explore", "Referral Vault: earn the Concurrence Slip.");
     retroAudio.startMusic("ReferralVaultScene");
     setVisibleEntities([
       "Marcus",
@@ -166,7 +166,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private startMatching() {
     this.matchIndex = 0;
     this.correctMatches = 0;
-    setObjective("Match each document to its agency equity.");
+    setObjective("Referral Vault: match each document to its agency equity.");
     this.showMatchChoice();
   }
 

@@ -32,7 +32,7 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("OfficeScene", "explore", "Talk to Elena.");
+    setSceneState("OfficeScene", "explore", "Office Hub: learn the Golden Rule.");
     retroAudio.startMusic("OfficeScene");
     gameState.sceneProgress.office ??= 0;
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
@@ -190,14 +190,14 @@ export class OfficeScene extends Phaser.Scene {
     this.dialog.show("CLASSNET TERMINAL", [
       "PRE-SUBMISSION REVIEW",
       "AI ANNO TOOL QUEUED",
-      "COMMENT-ONLY GATES ON"
-    ], () => transitionTo(this, "ArchiveScene"));
+      "ARCHIVE CAVERN UNLOCKED"
+    ], () => transitionTo(this, "GuideScene"));
   }
 
   private updateOfficeObjective() {
     const stage = gameState.sceneProgress.office;
-    if (stage <= 0) setObjective("Talk to Elena.");
-    else if (stage === 1) setObjective("Read the Golden Rule poster.");
-    else setObjective("Inspect the ClassNet terminal.");
+    if (stage <= 0) setObjective("Office Hub: talk to Elena.");
+    else if (stage === 1) setObjective("Office Hub: read the Golden Rule poster.");
+    else setObjective("Office Hub: inspect ClassNet to open Archive Cavern.");
   }
 }

@@ -47,11 +47,11 @@ export class GuideScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("GuideScene", "explore", "Compare notes with an Archive Colleague.");
+    setSceneState("GuideScene", "explore", "Archive Cavern: claim the Citation Stamp.");
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-30);
-    drawRoomFrame(this, "ARCHIVE ROOM", PALETTE.goldStamp);
+    drawRoomFrame(this, "ARCHIVE CAVERN", PALETTE.goldStamp);
     this.drawCaveInterior();
     this.drawArchiveLamp(86, 88);
     this.drawArchiveLamp(170, 88);
@@ -100,7 +100,7 @@ export class GuideScene extends Phaser.Scene {
       `Good to compare notes, ${gameState.playerProfile.displayName}.`,
       "Same rank, same burden: make the volume reliable.",
       "Take the citation stamp. Find the fragments. Let no delay decide for us."
-    ], () => setObjective("Take the Citation Stamp."));
+    ], () => setObjective("Archive Cavern: take the Citation Stamp."));
   }
 
   update(_: number, delta: number) {
@@ -157,7 +157,7 @@ export class GuideScene extends Phaser.Scene {
     addProcessItem("citation_stamp");
     addDocumentPoints(5, "citation stamp claimed");
     retroAudio.confirm();
-    setObjective("Claim the first FRUS volume fragment.");
+    setObjective("Archive Cavern: claim the first FRUS volume fragment.");
     const pickupDialog = getProcessItemDefinition("citation_stamp")?.pickupDialog;
     this.dialog.show("CITATION STAMP", pickupDialog ? [...pickupDialog] : "A source note is not magic. It is a claim you can defend.");
     this.syncVisibleState();
@@ -178,7 +178,7 @@ export class GuideScene extends Phaser.Scene {
     addVolumeFragment("Front Matter Fragment");
     addDocumentPoints(10, "front matter fragment secured");
     retroAudio.stamp();
-    setObjective("Open the Verification Gate.");
+    setObjective("Archive Cavern: open the Verification Gate.");
     this.gateGlow.setFillStyle(color(PALETTE.openNetGreen), 0.32);
     this.dialog.show("FRUS FRAGMENT", "The ruby cover gains its title plate because the chain is visible.");
     this.syncVisibleState();
@@ -192,7 +192,7 @@ export class GuideScene extends Phaser.Scene {
     this.dialog.show("VERIFICATION GATE", [
       "Citation accepted.",
       "Confidence carries forward."
-    ], () => transitionTo(this, "OfficeScene"));
+    ], () => transitionTo(this, "ArchiveScene"));
   }
 
   private syncVisibleState() {
