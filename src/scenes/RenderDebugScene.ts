@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { SNES_ANTAGONIST_ASSETS, SNES_BUREAUCRATIC_WALL_ASSETS, SNES_NPC_ASSETS } from "../game/snesAtlas";
+import {
+  SNES_ANTAGONIST_ASSETS,
+  SNES_BUREAUCRATIC_WALL_ASSETS,
+  SNES_COMPILER_FRAME_SHEET,
+  SNES_NPC_ASSETS
+} from "../game/snesAtlas";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { isIntegerScale } from "../systems/pixelPerfect";
 
@@ -22,6 +27,8 @@ export class RenderDebugScene extends Phaser.Scene {
       "sample sprite 2x",
       "sample sprite 3x",
       "sample sprite 4x",
+      "compiler idle frame",
+      "compiler reading frame",
       ...SNES_NPC_ASSETS.map((npc) => `${npc.displayName} SNES sprite`),
       ...SNES_ANTAGONIST_ASSETS.map((asset) => `${asset.displayName} antagonist sprite`),
       ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => `${wall.type} wall sprite`)
@@ -64,6 +71,17 @@ export class RenderDebugScene extends Phaser.Scene {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.classNetRed,
+        backgroundColor: PALETTE.black
+      }).setOrigin(0.5).setDepth(2);
+    }
+
+    if (this.textures.exists(SNES_COMPILER_FRAME_SHEET.key)) {
+      this.add.image(168, 84, SNES_COMPILER_FRAME_SHEET.key, "idle-0").setOrigin(0.5, 1).setDepth(2);
+      this.add.image(198, 84, SNES_COMPILER_FRAME_SHEET.key, "read").setOrigin(0.5, 1).setDepth(2);
+      this.add.text(183, 88, "COMPILER FRAMES", {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.goldStamp,
         backgroundColor: PALETTE.black
       }).setOrigin(0.5).setDepth(2);
     }

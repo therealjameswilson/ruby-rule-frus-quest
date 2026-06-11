@@ -124,6 +124,42 @@ export function getSnesNpcTextureKey(characterId: string) {
   return SNES_NPC_ASSETS.find((asset) => asset.characterId === characterId)?.key ?? characterId;
 }
 
+export const SNES_COMPILER_FRAME_NAMES = [
+  "idle-0",
+  "idle-1",
+  "walk-down-0",
+  "walk-down-1",
+  "walk-down-2",
+  "walk-down-3",
+  "walk-up-0",
+  "walk-up-1",
+  "walk-up-2",
+  "walk-up-3",
+  "walk-left-0",
+  "walk-left-1",
+  "walk-left-2",
+  "walk-left-3",
+  "walk-right-0",
+  "walk-right-1",
+  "walk-right-2",
+  "walk-right-3",
+  "read"
+] as const;
+
+export type SnesCompilerFrameName = (typeof SNES_COMPILER_FRAME_NAMES)[number];
+
+export const SNES_COMPILER_FRAME_SHEET = {
+  roleId: "compiler",
+  key: "snes-player-compiler-frames",
+  path: "assets/sprites/snes-player-compiler-frames.svg",
+  kind: "role-animation-strip",
+  displayName: "Compiler animation frame set",
+  frameCue: "glasses, cardigan jacket, carried folder, document reading pose",
+  dimensions: { width: 608, height: 48 },
+  frame: { width: 32, height: 48 },
+  frames: SNES_COMPILER_FRAME_NAMES
+} as const;
+
 export const SNES_ANTAGONIST_ASSETS = [
   {
     id: "hac_member",
@@ -192,6 +228,7 @@ export const SNES_BUREAUCRATIC_WALL_ASSETS = [
 export const SNES_VISUAL_ASSETS = [
   ...SNES_AREA_MAP_ASSETS,
   ...SNES_NPC_ASSETS,
+  SNES_COMPILER_FRAME_SHEET,
   ...SNES_ANTAGONIST_ASSETS,
   ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => ({
     key: wall.key,
@@ -235,6 +272,14 @@ export function getSnesAtlasReadout() {
       ability: role.ability,
       cue: role.remit
     })),
+    compilerFrameSet: {
+      texture: SNES_COMPILER_FRAME_SHEET.key,
+      dimensions: { ...SNES_COMPILER_FRAME_SHEET.dimensions },
+      frame: { ...SNES_COMPILER_FRAME_SHEET.frame },
+      frameCount: SNES_COMPILER_FRAME_SHEET.frames.length,
+      frames: [...SNES_COMPILER_FRAME_SHEET.frames],
+      cue: SNES_COMPILER_FRAME_SHEET.frameCue
+    },
     npcSprites: SNES_NPC_ASSETS.map((asset) => ({
       characterId: asset.characterId,
       displayName: asset.displayName,

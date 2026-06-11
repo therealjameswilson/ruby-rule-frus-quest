@@ -10,7 +10,7 @@ import {
 } from "./documentWorkflow";
 import type { DocumentWorkflowAction } from "./documentWorkflow";
 import { deriveWorkflowSnapshot, getQuestArchitectureReadout } from "./questArchitecture";
-import { getSnesAtlasReadout } from "./snesAtlas";
+import { getSnesAtlasReadout, SNES_COMPILER_FRAME_SHEET } from "./snesAtlas";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import type {
@@ -877,6 +877,7 @@ export function clearChoiceState(nextMode: GameMode = "explore") {
 
 export function renderGameToText() {
   const questWorkflow = getQuestWorkflowReadout();
+  const compilerFrameSetActive = gameState.playerProfile.roleId === "compiler";
   return JSON.stringify(
     {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
@@ -897,10 +898,18 @@ export function renderGameToText() {
       documentPoints: gameState.documentPoints,
       playerProfile: gameState.playerProfile,
       activePlayerSprite: {
-        mode: "snes16",
-        texture: gameState.playerProfile.snesSpriteKey,
+        mode: compilerFrameSetActive ? "snes16Compiler48" : "snes16",
+        texture: compilerFrameSetActive ? SNES_COMPILER_FRAME_SHEET.key : gameState.playerProfile.snesSpriteKey,
+        frameSet: compilerFrameSetActive
+          ? {
+              frameWidth: SNES_COMPILER_FRAME_SHEET.frame.width,
+              frameHeight: SNES_COMPILER_FRAME_SHEET.frame.height,
+              frameCount: SNES_COMPILER_FRAME_SHEET.frames.length,
+              frames: [...SNES_COMPILER_FRAME_SHEET.frames]
+            }
+          : null,
         fallbackTexture: gameState.playerProfile.spriteKey,
-        dimensions: { width: 32, height: 32 },
+        dimensions: compilerFrameSetActive ? { width: 32, height: 48 } : { width: 32, height: 32 },
         logicalAnchor: "foot/interaction point",
         collisionBox: { width: 10, height: 10, offsetY: 2 }
       },

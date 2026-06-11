@@ -218,7 +218,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - exposed the architecture through `render_game_to_text()` as additive `volumeWorkflowState`, `documentWorkflow`, `volumeMetrics`, `questCounters`, and `questWorkflow` fields without removing existing keys
   - kept the current scene art/mechanics intact while making the existing room graph, item gating, physical verification loops, and StateChat terminal rules inspectable as data
   - added half-tile movement correction for cardinal player movement when the player catches a solid edge
-  - verified `npm run build`, the bundled web-game Playwright client on ArchiveScene, and all ten `?scene=` deep links with no console errors
+- Incorporated a dedicated Compiler animation strip:
+  - added an original repository-local 32x48 SVG frame set for idle, four-direction walking, and document reading
+  - registered named compiler frames at boot while preserving the existing 32x32 role sprite and generated fallback path
+  - updated the player renderer so only the Compiler role swaps to the taller frame set, with `render_game_to_text()` reporting the active frame metadata
+  - verified `npm run build`, compiler OfficeScene movement screenshots/state, the document-reading ability frame, RenderDebugScene samples, all ten `?scene=` deep links, and the in-app browser local smoke view
 - Refined the architecture object registry around a fixed `GameObjectSlot` union:
   - added named screen slots for player, four NPCs, active/secondary tools, five document slots, room rewards/gates, terminal, manuscript, transition marker, UI prompt, and reserved capacity
   - changed quest object registry rows from numeric slots to named slot assignments while preserving object kind, room, position, rewards, and gate metadata

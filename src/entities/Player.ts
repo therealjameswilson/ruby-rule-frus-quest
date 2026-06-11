@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
+import { SNES_COMPILER_FRAME_SHEET } from "../game/snesAtlas";
 import { gameState, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { KeyboardMap, Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
@@ -55,7 +56,7 @@ export class Player {
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
-  private readonly spriteMode: "snes16" | "nes8";
+  private readonly spriteMode: "snes16" | "snes16Compiler48" | "nes8";
   private readonly shadowOffsetY: number;
   private readonly shadowDepthOffset: number;
   private walkClock = 0;
@@ -77,21 +78,31 @@ export class Player {
     this.scene = scene;
     this.logicalX = x;
     this.logicalY = y;
-    this.spriteMode = scene.textures.exists(gameState.playerProfile.snesSpriteKey) ? "snes16" : "nes8";
-    this.shadowOffsetY = this.spriteMode === "snes16" ? 9 : 8;
-    this.shadowDepthOffset = this.spriteMode === "snes16" ? 2 : 1;
+    this.spriteMode = this.hasCompilerFrameSheet(scene)
+      ? "snes16Compiler48"
+      : scene.textures.exists(gameState.playerProfile.snesSpriteKey)
+        ? "snes16"
+        : "nes8";
+    const isSnesScale = this.spriteMode === "snes16" || this.spriteMode === "snes16Compiler48";
+    this.shadowOffsetY = isSnesScale ? 9 : 8;
+    this.shadowDepthOffset = isSnesScale ? 2 : 1;
     this.shadow = scene.add
       .ellipse(
         snapPixel(x),
         snapPixel(y + this.shadowOffsetY),
-        this.spriteMode === "snes16" ? 18 : 12,
-        this.spriteMode === "snes16" ? 6 : 4,
+        this.spriteMode === "snes16Compiler48" ? 20 : this.spriteMode === "snes16" ? 18 : 12,
+        isSnesScale ? 6 : 4,
         color(PALETTE.black)
       )
       .setDepth(snapPixel(y - this.shadowDepthOffset));
+    const textureKey = this.spriteMode === "snes16Compiler48"
+      ? SNES_COMPILER_FRAME_SHEET.key
+      : this.spriteMode === "snes16"
+        ? gameState.playerProfile.snesSpriteKey
+        : gameState.playerProfile.spriteKey;
     this.sprite = scene.add
-      .image(snapPixel(x), snapPixel(y), this.spriteMode === "snes16" ? gameState.playerProfile.snesSpriteKey : gameState.playerProfile.spriteKey)
-      .setOrigin(0.5, this.spriteMode === "snes16" ? 0.75 : 0.5)
+      .image(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snes16Compiler48" ? "idle-0" : undefined)
+      .setOrigin(0.5, this.spriteMode === "snes16Compiler48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
       .setDepth(snapPixel(y));
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);
@@ -220,7 +231,7 @@ export class Player {
     }
     if (moving) {
       this.walkClock += deltaMs;
-      this.sprite.setFlipX(dx < 0);
+      this.sprite.setFlipX(this.spriteMode !== "snes16Compiler48" && dx < 0);
     } else {
       this.walkClock = 0;
     }
@@ -254,12 +265,18 @@ export class Player {
 
   private playAbilityFrame() {
     this.abilityFrameUntil = this.scene.time.now + 420;
+    if (this.spriteMode === "snes16Compiler48") {
+      this.sprite.clearTint();
+      this.updateCompilerFrame();
+      return;
+    }
     this.sprite.setTint(color(PALETTE.goldStamp));
   }
 
   private syncRenderPosition() {
     const renderX = snapPixel(this.logicalX);
     const renderY = snapPixel(this.logicalY);
+    this.updateCompilerFrame();
     setPixelPosition(this.sprite, renderX, renderY);
     setPixelPosition(this.shadow, renderX, renderY + this.shadowOffsetY);
     this.shadow.setDepth(renderY - this.shadowDepthOffset);
@@ -269,6 +286,7 @@ export class Player {
   }
 
   private createWalkCycleCue(scene: Phaser.Scene) {
+    if (this.spriteMode === "snes16Compiler48") return;
     if (this.spriteMode === "snes16") {
       this.addWalkRect(scene, -8, 8, -1, 5, 3);
       this.addWalkRect(scene, 8, 8, 1, 5, 3);
@@ -279,6 +297,7 @@ export class Player {
   }
 
   private createIdleCue(scene: Phaser.Scene) {
+    if (this.spriteMode === "snes16Compiler48") return;
     if (this.spriteMode === "snes16") {
       this.createSnesIdleCue(scene);
       return;
@@ -409,6 +428,35 @@ export class Player {
       part.rect.setVisible(this.isMoving);
       setPixelPosition(part.rect, renderX + part.ox + stride, renderY + part.oy);
       part.rect.setDepth(renderY + 1);
+    }
+  }
+
+  private hasCompilerFrameSheet(scene: Phaser.Scene) {
+    return (
+      gameState.playerProfile.roleId === "compiler" &&
+      scene.textures.exists(SNES_COMPILER_FRAME_SHEET.key) &&
+      scene.textures.get(SNES_COMPILER_FRAME_SHEET.key).has("idle-0")
+    );
+  }
+
+  private updateCompilerFrame() {
+    if (this.spriteMode !== "snes16Compiler48") return;
+    const texture = this.scene.textures.get(SNES_COMPILER_FRAME_SHEET.key);
+    const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+    const directionFrames: Record<Direction, string> = {
+      north: "walk-up",
+      south: "walk-down",
+      west: "walk-left",
+      east: "walk-right"
+    };
+    const frameName = abilityActive
+      ? "read"
+      : this.isMoving
+        ? `${directionFrames[this.facing]}-${Math.floor(this.walkClock / 110) % 4}`
+        : `idle-${Math.floor(this.idleClock / 520) % 2}`;
+
+    if (texture.has(frameName) && String(this.sprite.frame.name) !== frameName) {
+      this.sprite.setTexture(SNES_COMPILER_FRAME_SHEET.key, frameName);
     }
   }
 }

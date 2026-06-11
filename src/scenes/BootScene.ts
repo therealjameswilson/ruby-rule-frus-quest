@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
-import { SNES_ANTAGONIST_ASSETS, SNES_AREA_MAP_ASSETS, SNES_BUREAUCRATIC_WALL_ASSETS, SNES_NPC_ASSETS } from "../game/snesAtlas";
+import {
+  SNES_ANTAGONIST_ASSETS,
+  SNES_AREA_MAP_ASSETS,
+  SNES_BUREAUCRATIC_WALL_ASSETS,
+  SNES_COMPILER_FRAME_SHEET,
+  SNES_NPC_ASSETS
+} from "../game/snesAtlas";
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 
 function color(hex: string) {
@@ -79,6 +85,7 @@ export class BootScene extends Phaser.Scene {
     for (const role of PROCESS_ROLES) {
       this.makeSnesRoleTextureIfMissing(role.snesSpriteKey, PALETTE[role.color], role.id);
     }
+    this.registerSnesCompilerFrameSheet();
     this.makeTileTextureIfMissing("office-tiles", PALETTE.creamPaper, PALETTE.archiveAmber);
     this.makeTileTextureIfMissing("archive-tiles", PALETTE.archiveAmber, PALETTE.sepiaInk);
     this.makeTileTextureIfMissing("network-tiles", PALETTE.shadowNavy, PALETTE.terminalCyan);
@@ -133,6 +140,10 @@ export class BootScene extends Phaser.Scene {
     for (const npcAsset of SNES_NPC_ASSETS) {
       this.load.svg(npcAsset.key, npcAsset.path, { width: 32, height: 32 });
     }
+    this.load.svg(SNES_COMPILER_FRAME_SHEET.key, SNES_COMPILER_FRAME_SHEET.path, {
+      width: SNES_COMPILER_FRAME_SHEET.dimensions.width,
+      height: SNES_COMPILER_FRAME_SHEET.dimensions.height
+    });
     for (const antagonistAsset of SNES_ANTAGONIST_ASSETS) {
       this.load.svg(antagonistAsset.key, antagonistAsset.path, { width: 32, height: 32 });
     }
@@ -742,6 +753,17 @@ export class BootScene extends Phaser.Scene {
     });
     g.generateTexture("snes-workflow-tools", 128, 32);
     g.destroy();
+  }
+
+  private registerSnesCompilerFrameSheet() {
+    if (!this.textures.exists(SNES_COMPILER_FRAME_SHEET.key)) return;
+    const texture = this.textures.get(SNES_COMPILER_FRAME_SHEET.key);
+    const { width, height } = SNES_COMPILER_FRAME_SHEET.frame;
+    SNES_COMPILER_FRAME_SHEET.frames.forEach((frameName, index) => {
+      if (!texture.has(frameName)) {
+        texture.add(frameName, 0, index * width, 0, width, height);
+      }
+    });
   }
 
   private makeTileTextureIfMissing(key: string, baseHex: string, accentHex: string) {
