@@ -35,7 +35,7 @@ import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesRoomLayer } from "../systems/snesPixelArt";
+import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -478,8 +478,8 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawBookcase(232, 82, 32, 58);
     this.drawBookcase(24, 158, 32, 52);
     this.drawBookcase(232, 158, 32, 52);
-    this.drawWallMap(128, 60, "A1 MAP");
-    this.drawDocumentStack(74, 68, true);
+    addSnesWorldMap(this, 128, 74, "ARCHIVE MAP", "archive-cavern-map", (object) => this.track(object));
+    this.drawDocumentStack(74, 96, true);
     this.drawResearchTable();
     this.drawRubyVolumeStack(178, 171, 4);
     this.drawSparkle(128, 90, PALETTE.terminalCyan);

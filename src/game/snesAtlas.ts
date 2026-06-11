@@ -29,8 +29,8 @@ export const SNES_AREA_MAP_ASSETS = [
   },
   {
     areaId: "archive_cavern",
-    key: "frus-snes-atlas",
-    path: "assets/maps/frus-snes-atlas.svg",
+    key: "archive-cavern-map",
+    path: "assets/maps/archive-cavern-map.svg",
     kind: "area-map",
     dimensions: { width: 80, height: 56 }
   },

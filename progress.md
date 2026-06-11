@@ -309,6 +309,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - exposed `spriteKey` on active `visibleThreats` so `render_game_to_text()` proves which blocker sprite is currently on screen
   - added a seven-sprite wall rack to `RenderDebugScene` for stable visual QA
   - verified `npm run build`, `git diff --check`, Archive/Network/Ending wall screenshots, RenderDebugScene wall-rack screenshot, and all ten `?scene=` deep links
+- Added a dedicated SNES-style Archive Cavern dungeon map:
+  - created `public/assets/maps/archive-cavern-map.svg` as an original 80x56 palette-safe one-screen dungeon map for the 12-room Archive Cavern
+  - changed the SNES atlas registry so Archive Cavern reports `archive-cavern-map` instead of the generic world atlas
+  - added a BootScene fallback renderer for the Archive Cavern map so fallback textures keep working if the SVG fails to load
+  - placed the map as a visible A1 room panel while preserving the existing Source Note 47 verification loop and room traversal
 
 ## TODO
 

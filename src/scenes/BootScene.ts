@@ -509,7 +509,56 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(color(base));
     g.fillRect(4, 4, 72, 48);
     g.fillStyle(color(PALETTE.buckramRed));
-    if (key === "frus-snes-atlas") {
+    if (key === "archive-cavern-map") {
+      g.fillStyle(color(PALETTE.sepiaInk));
+      g.fillRect(4, 4, 72, 48);
+      g.fillStyle(color(PALETTE.buckramRed));
+      g.fillRect(5, 5, 70, 3);
+      g.fillRect(5, 48, 70, 3);
+      const rooms = [
+        [PALETTE.goldStamp, PALETTE.buckramRed, PALETTE.buckramRed],
+        [PALETTE.buckramRed, PALETTE.shadowNavy, PALETTE.buckramRed],
+        [PALETTE.buckramRed, PALETTE.buckramRed, PALETTE.black],
+        [PALETTE.goldStamp, PALETTE.black, PALETTE.buckramHighlight]
+      ];
+      rooms.forEach((row, rowIndex) => {
+        row.forEach((fill, colIndex) => {
+          const x = 8 + colIndex * 18;
+          const y = [11, 22, 33, 43][rowIndex];
+          g.fillStyle(color(fill));
+          g.fillRect(x, y, 12, rowIndex === 3 ? 5 : 7);
+          g.fillStyle(color(PALETTE.black));
+          g.fillRect(x + 3, y + 2, 6, 1);
+        });
+      });
+      g.fillStyle(color(PALETTE.black));
+      for (let row = 0; row < 3; row += 1) {
+        g.fillRect(20, 14 + row * 11, 6, 1);
+        g.fillRect(38, 14 + row * 11, 6, 1);
+        g.fillRect(14, 18 + row * 11, 1, 4);
+        g.fillRect(32, 18 + row * 11, 1, 4);
+        g.fillRect(50, 18 + row * 11, 1, 4);
+      }
+      g.fillStyle(color(PALETTE.shadowNavy));
+      g.fillRect(61, 10, 11, 7);
+      g.fillStyle(color(PALETTE.terminalCyan));
+      g.fillRect(63, 12, 7, 3);
+      g.fillStyle(color(PALETTE.buckramRed));
+      g.fillRect(61, 20, 11, 7);
+      g.fillStyle(color(PALETTE.classNetRed));
+      g.fillRect(63, 22, 7, 3);
+      g.fillStyle(color(PALETTE.black));
+      g.fillRect(61, 30, 11, 7);
+      g.fillStyle(color(PALETTE.goldStamp));
+      g.fillRect(63, 32, 7, 3);
+      g.fillStyle(color(PALETTE.buckramRed));
+      g.fillRect(61, 40, 11, 7);
+      g.fillStyle(color(PALETTE.buckramHighlight));
+      g.fillRect(63, 42, 7, 3);
+      g.generateTexture(key, 80, 56);
+      g.destroy();
+      return;
+    } else if (key === "frus-snes-atlas") {
       for (let row = 0; row < 4; row += 1) {
         for (let col = 0; col < 3; col += 1) {
           g.fillRect(22 + col * 9, 10 + row * 8, 8, 6);
