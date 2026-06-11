@@ -27,11 +27,25 @@ facilities, black redaction bars, brass plaques, manila folders, document boxes.
 
 ## 2. Tilesets (16×16 grid)
 
-| Filename | Dimensions | Tile size | Intended use | Transparency |
-|---|---|---|---|---|
-| `tileset_overworld_16x16.png` | 1536×1024 | 16×16 | Top-down overworld tiles (grass, paths, water, bridges, trees, fences, federal walls/roofs, doors, windows, steps, plaques, lamps, courtyards, memorial stone, security gate, redaction barrier, archive entrance, signpost, hatch) | Yes |
-| `tileset_interiors_16x16.png` | 1024×1024 | 16×16 | Office/archive/reading-room/secure interiors (floors, walls, shelves, cabinets, document boxes, desks, chairs, lamps, terminals, StateChat terminal, safe, doors, elevator, stairs, boards, map wall, redaction wall, glass partition, review table, lectern) | Yes |
-| `tileset_archive_dungeon_16x16.png` | 1536×1024 | 16×16 | Darker archive-dungeon / classified spaces (vault floors, concrete walls, classification gates, referral doors, pedestals, hidden/cracked walls, document cart, pressure plate, switch, brass security beam, sealed cabinet, key pedestal, boss floor/wall, shortcut stairs, hidden basement entrance) | Yes |
+### 2a. Gameplay-ready packed tilesets — USE THESE (`tilesets/gameplay/`)
+
+True, gap-free, grid-aligned tilesets repacked onto an exact 16px grid. Each `*.png` is an 8× crisp (nearest-neighbor) upscale of the matching `*_native.png` (which is the exact 16px-per-tile source). Slice with `cellW = imageWidth / columns`, `cellH = imageHeight / rows`. See `manifest.json` → `tilesets` for full metadata.
+
+| Filename | Dimensions | Grid | Native | Intended use | Transparency |
+|---|---|---|---|---|---|
+| `gameplay/tileset_overworld_16x16.png` | 768×768 | 6×6 (128px cells) | 96×96 | Overworld: grass, dirt path, stone/cobble, brick, water + shorelines, river bends, dock, hedge, flowers, fences, lamp post, dirt-ground fills | No |
+| `gameplay/tileset_interiors_16x16.png` | 768×640 | 6×5 (128px cells) | 96×80 | Office/archive interiors: tiling floors & walls (rows 1–2) + single-tile furniture/objects — desk, chair, safe, bookshelf, CRT terminal, banker lamp, doors, world-map wall, elevator, book (rows 3–5) | Yes (objects) |
+| `gameplay/tileset_archive_dungeon_16x16.png` | 768×768 | 6×6 (128px cells) | 96×96 | Archive-dungeon: stone floors/walls, doorways, arches, pit, stairs, columns, torches/brazier, locked door, ruby pedestal, red button panel, treasure chest, bookshelf wall, iron grate | No |
+
+### 2b. Original concept sheets — REFERENCE ONLY (`tilesets/concept/`)
+
+The first-pass AI concept art. Beautiful mood/reference, but tiles are irregular sizes with gaps and are **not** on a packable grid. Kept for reference; do not load as live tilemap tilesets.
+
+| Filename | Dimensions | Intended use |
+|---|---|---|
+| `concept/tileset_overworld_concept.png` | 1536×1024 | Overworld concept reference (trees, buildings, lamps, signpost, plaques, etc.) |
+| `concept/tileset_interiors_concept.png` | 1024×1024 | Interiors concept reference (desks, terminals, doors, map wall, lectern, etc.) |
+| `concept/tileset_archive_dungeon_concept.png` | 1536×1024 | Archive-dungeon concept reference (vault doors, pedestals, switches, boss walls, etc.) |
 
 ## 3. Concept maps
 

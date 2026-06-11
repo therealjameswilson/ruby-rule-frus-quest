@@ -346,34 +346,61 @@
       "note": "StateChat is a tool, not a character."
     }
   },
-  "images": {
+  "tilesets": {
+    "_note": "GAMEPLAY-READY packed tilesets on an exact 16px grid. Slice with cellW = imageWidth/columns, cellH = imageHeight/rows. The display PNG is an 8x crisp (nearest-neighbor) upscale of the native PNG; either can be loaded into Phaser as a tilemap tileset. Use tileWidth/tileHeight = displayCellPx when loading the display PNG, or 16 when loading the *_native PNG. The original AI concept sheets are preserved under tilesets/concept/ for reference only.",
     "tileset_overworld_16x16": {
-      "path": "assets/art-pack/tilesets/tileset_overworld_16x16.png",
-      "imageWidth": 1536,
-      "imageHeight": 1024,
-      "tileSize": 16,
-      "transparent": true,
-      "kind": "tileset",
-      "note": "Tiles are visually arranged but not on a perfectly packed 16px grid; recommend slicing manually or using as reference until repacked."
+      "path": "assets/art-pack/tilesets/gameplay/tileset_overworld_16x16.png",
+      "nativePath": "assets/art-pack/tilesets/gameplay/tileset_overworld_16x16_native.png",
+      "conceptPath": "assets/art-pack/tilesets/concept/tileset_overworld_concept.png",
+      "imageWidth": 768,
+      "imageHeight": 768,
+      "columns": 6,
+      "rows": 6,
+      "nativeTileSize": 16,
+      "displayCellPx": 128,
+      "nativeImageWidth": 96,
+      "nativeImageHeight": 96,
+      "transparent": false,
+      "kind": "tileset-packed",
+      "theme": "overworld",
+      "note": "6x6 packed grid. Tiles: grass/dirt/stone/water/dirt-path/hedge/fence/lamp etc. Bottom rows are dirt-ground fills."
     },
     "tileset_interiors_16x16": {
-      "path": "assets/art-pack/tilesets/tileset_interiors_16x16.png",
-      "imageWidth": 1024,
-      "imageHeight": 1024,
-      "tileSize": 16,
+      "path": "assets/art-pack/tilesets/gameplay/tileset_interiors_16x16.png",
+      "nativePath": "assets/art-pack/tilesets/gameplay/tileset_interiors_16x16_native.png",
+      "conceptPath": "assets/art-pack/tilesets/concept/tileset_interiors_concept.png",
+      "imageWidth": 768,
+      "imageHeight": 640,
+      "columns": 6,
+      "rows": 5,
+      "nativeTileSize": 16,
+      "displayCellPx": 128,
+      "nativeImageWidth": 96,
+      "nativeImageHeight": 80,
       "transparent": true,
-      "kind": "tileset",
-      "note": "Tiles are visually arranged but not on a perfectly packed 16px grid; recommend slicing manually or using as reference until repacked."
+      "kind": "tileset-packed",
+      "theme": "interiors",
+      "note": "6x5 packed grid. Rows 1-2 are tiling floors/walls; rows 3-5 are single-tile furniture/objects (desk, chair, safe, bookshelf, terminal, lamp, doors, map, elevator, book) with transparency."
     },
     "tileset_archive_dungeon_16x16": {
-      "path": "assets/art-pack/tilesets/tileset_archive_dungeon_16x16.png",
-      "imageWidth": 1536,
-      "imageHeight": 1024,
-      "tileSize": 16,
-      "transparent": true,
-      "kind": "tileset",
-      "note": "Tiles are visually arranged but not on a perfectly packed 16px grid; recommend slicing manually or using as reference until repacked."
-    },
+      "path": "assets/art-pack/tilesets/gameplay/tileset_archive_dungeon_16x16.png",
+      "nativePath": "assets/art-pack/tilesets/gameplay/tileset_archive_dungeon_16x16_native.png",
+      "conceptPath": "assets/art-pack/tilesets/concept/tileset_archive_dungeon_concept.png",
+      "imageWidth": 768,
+      "imageHeight": 768,
+      "columns": 6,
+      "rows": 6,
+      "nativeTileSize": 16,
+      "displayCellPx": 128,
+      "nativeImageWidth": 96,
+      "nativeImageHeight": 96,
+      "transparent": false,
+      "kind": "tileset-packed",
+      "theme": "archive-dungeon",
+      "note": "6x6 packed grid. Tiles: stone floors/walls, doorways, arches, pit, stairs, torches/brazier, locked door, ruby pedestal, red button panel, treasure chest, bookshelf wall, iron grate."
+    }
+  },
+  "images": {
     "items_icons_16x16": {
       "path": "assets/art-pack/icons/items_icons_16x16.png",
       "imageWidth": 1024,
