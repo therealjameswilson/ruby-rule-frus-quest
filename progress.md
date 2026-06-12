@@ -274,6 +274,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - verified local preview mobile profiles for iPhone 14 Pro and Pixel 7 portrait/landscape; all reported 256x240 CSS canvas, 256x240 backing store, computed zoom 1.000, integer zoom true, and zero console errors
   - verified the in-app browser at a desktop-style viewport reports a 512x480 canvas for a 2x shell with the proof overlay visible
   - verified `npm run build`; only the existing Phaser chunk-size warning remains
+- Completed `feature/mobile-snes-quality` Phase 2 mobile shell:
+  - updated viewport/PWA meta tags, black theme color, Apple status-bar behavior, and telephone-format detection
+  - moved the outer shell to black `100dvw`/`100dvh` with hidden overflow, no overscroll, no selection, no tap highlight, and safe-area padding
+  - added dynamic viewport CSS vars, debounced resize/orientation refresh, and visualViewport resize handling before reapplying the integer zoom guard
+  - added canvas-only `touchmove` prevention while leaving body touchmove uncanceled by JavaScript
+  - added a dismissible iOS Add-to-Home hint and Android/Chrome fullscreen affordance
+  - verified iPhone 14 Pro and Pixel 7 portrait/landscape profiles: integer zoom stayed true, iOS hint appeared only on iPhone profiles, fullscreen affordance appeared only on Pixel profiles and hid after tap, canvas touchmove was prevented, body touchmove was not, and console errors stayed at zero
+  - verified the in-app browser reports the updated viewport meta, hidden overflow, `touch-action: none`, and a clean 2x integer shell
   - added exact `TILE_SIZE`, `HALF_TILE`, and `PLAYER_GRID_CORRECTION` exports to the quest architecture layer
   - verified `npm run build`, `git diff --check`, direct scene text-state probes, and the bundled web-game Playwright client with screenshot inspection
 - Added a sixth seeded document candidate:

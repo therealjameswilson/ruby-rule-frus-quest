@@ -33,6 +33,10 @@ interface MobileDebugMetrics {
   firstFrameMs: number | null;
 }
 
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
+
 window.render_game_to_text = renderGameToText;
 window.advanceTime = (ms: number) =>
   new Promise((resolve) => {
@@ -264,6 +268,96 @@ function setupMobileControls() {
   });
 }
 
+function isTouchCapable() {
+  return "ontouchstart" in window || navigator.maxTouchPoints > 0;
+}
+
+function isIosLike() {
+  const navigatorWithStandalone = navigator as NavigatorWithStandalone;
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1 && navigatorWithStandalone.standalone !== undefined);
+}
+
+function isStandaloneDisplay() {
+  const navigatorWithStandalone = navigator as NavigatorWithStandalone;
+  return Boolean(navigatorWithStandalone.standalone) || window.matchMedia("(display-mode: standalone)").matches;
+}
+
+function localStorageGet(key: string) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function localStorageSet(key: string, value: string) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Private browsing can reject storage writes; the affordance remains dismissible for the session.
+  }
+}
+
+function updateViewportCssVars() {
+  document.documentElement.style.setProperty("--ruby-rule-vh", `${window.innerHeight}px`);
+  document.documentElement.style.setProperty("--ruby-rule-vw", `${window.innerWidth}px`);
+}
+
+function installCanvasTouchLock() {
+  const canvas = getGameCanvas();
+  if (!canvas) {
+    window.requestAnimationFrame(installCanvasTouchLock);
+    return;
+  }
+  canvas.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+}
+
+function createDismissButton(target: HTMLElement, storageKey: string) {
+  const button = document.createElement("button");
+  button.type = "button";
+  button.textContent = "X";
+  button.setAttribute("aria-label", "Dismiss");
+  button.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    localStorageSet(storageKey, "1");
+    target.hidden = true;
+  });
+  target.appendChild(button);
+}
+
+function installMobileShellAffordances() {
+  if (!isTouchCapable()) return;
+
+  if (isIosLike() && !isStandaloneDisplay() && localStorageGet("rubyRuleDismissedIosInstallHint") !== "1") {
+    const hint = document.createElement("aside");
+    hint.id = "ios-install-hint";
+    hint.textContent = "ADD TO HOME SCREEN FOR BEST MOBILE PLAY";
+    createDismissButton(hint, "rubyRuleDismissedIosInstallHint");
+    document.body.appendChild(hint);
+  }
+
+  const fullscreenCapable = typeof document.documentElement.requestFullscreen === "function";
+  if (!isIosLike() && fullscreenCapable && localStorageGet("rubyRuleDismissedFullscreenHint") !== "1") {
+    const button = document.createElement("button");
+    button.id = "fullscreen-affordance";
+    button.type = "button";
+    button.textContent = "FULL SCREEN";
+    button.setAttribute("aria-label", "Request fullscreen");
+    button.addEventListener("pointerdown", async (event) => {
+      event.preventDefault();
+      try {
+        if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
+      } catch {
+        // Fullscreen can fail outside a trusted gesture or in restricted browser contexts.
+      }
+      localStorageSet("rubyRuleDismissedFullscreenHint", "1");
+      button.hidden = true;
+      scheduleIntegerScaleRefresh();
+    });
+    document.body.appendChild(button);
+  }
+}
+
 function calculateIntegerGameShellScale() {
   const shell = document.getElementById("game-shell");
   const controls = document.getElementById("mobile-controls");
@@ -315,9 +409,20 @@ function enforceIntegerCanvasScale() {
 }
 
 function refreshIntegerScale() {
+  updateViewportCssVars();
   configureIntegerGameShellScale();
   phaserGame?.scale.refresh();
   window.requestAnimationFrame(enforceIntegerCanvasScale);
+}
+
+let resizeRefreshTimer: number | undefined;
+function scheduleIntegerScaleRefresh() {
+  updateViewportCssVars();
+  if (resizeRefreshTimer !== undefined) window.clearTimeout(resizeRefreshTimer);
+  resizeRefreshTimer = window.setTimeout(() => {
+    resizeRefreshTimer = undefined;
+    refreshIntegerScale();
+  }, 100);
 }
 
 function drawPixelProof(canvas: HTMLCanvasElement) {
@@ -377,14 +482,18 @@ function installPixelProofOverlay() {
 }
 
 setupMobileControls();
+updateViewportCssVars();
+installMobileShellAffordances();
 installMobileDebugHud();
 configureIntegerGameShellScale();
-window.addEventListener("resize", refreshIntegerScale);
-window.addEventListener("orientationchange", refreshIntegerScale);
+window.addEventListener("resize", scheduleIntegerScaleRefresh);
+window.addEventListener("orientationchange", scheduleIntegerScaleRefresh);
+window.visualViewport?.addEventListener("resize", scheduleIntegerScaleRefresh);
 
 const game = new Phaser.Game(gameConfig);
 phaserGame = game;
 installPixelProofOverlay();
+installCanvasTouchLock();
 refreshIntegerScale();
 game.scale.on("resize", () => window.requestAnimationFrame(enforceIntegerCanvasScale));
 
