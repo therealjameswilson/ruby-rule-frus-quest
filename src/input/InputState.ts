@@ -69,8 +69,26 @@ interface InputCallbacks {
   handlePauseTouch?: (point: { x: number; y: number }) => boolean;
 }
 
-type InputGestureKind = "keyboard" | "pointer";
+type InputGestureKind = "keyboard" | "pointer" | "gamepad";
 type InputGestureCallback = (kind: InputGestureKind) => void;
+type GamepadConnectionCallback = (connected: boolean, label: string | null) => void;
+
+interface GamepadSnapshot {
+  connected: boolean;
+  index: number | null;
+  id: string | null;
+  direction: CardinalDirection | null;
+  buttons: Set<number>;
+}
+
+export interface GamepadDebugState {
+  connected: boolean;
+  index: number | null;
+  id: string | null;
+  direction: CardinalDirection | null;
+  pressedButtons: number[];
+  lastEvent: string;
+}
 
 const emptyState: InputState = {
   dir: { x: 0, y: 0 },
@@ -123,9 +141,20 @@ const pendingTypedCharacters: string[] = [];
 const pendingPointerStarts: Array<{ x: number; y: number }> = [];
 const activePointerIds = new Set<number>();
 const inputGestureCallbacks = new Set<InputGestureCallback>();
+const gamepadConnectionCallbacks = new Set<GamepadConnectionCallback>();
 let lastDirection: CardinalDirection = "down";
 let initialized = false;
 let callbacks: InputCallbacks = {};
+let gamepadConnected = false;
+let lastGamepadLabel: string | null = null;
+let lastGamepadEvent = "idle";
+let gamepadSnapshot: GamepadSnapshot = {
+  connected: false,
+  index: null,
+  id: null,
+  direction: null,
+  buttons: new Set()
+};
 
 const directionKeyMap: Record<string, CardinalDirection | undefined> = {
   ArrowLeft: "left",
@@ -150,31 +179,98 @@ function isTouchDown(...keys: TouchControlKey[]) {
   return keys.some((key) => touchDown.has(key));
 }
 
-function isGamepadButtonDown(indexes: number[]) {
-  if (!("getGamepads" in navigator)) return false;
-  for (const pad of navigator.getGamepads()) {
-    if (!pad) continue;
-    if (indexes.some((index) => pad.buttons[index]?.pressed)) return true;
-  }
-  return false;
+function getConnectedGamepads() {
+  if (!("getGamepads" in navigator)) return [];
+  return Array.from(navigator.getGamepads()).filter((pad): pad is Gamepad => Boolean(pad?.connected));
 }
 
-function gamepadDirectionDown(direction: CardinalDirection) {
-  if (!("getGamepads" in navigator)) return false;
-  for (const pad of navigator.getGamepads()) {
-    if (!pad) continue;
-    const x = pad.axes[0] ?? 0;
-    const y = pad.axes[1] ?? 0;
-    const left = pad.buttons[14]?.pressed || x < -0.45;
-    const right = pad.buttons[15]?.pressed || x > 0.45;
-    const up = pad.buttons[12]?.pressed || y < -0.45;
-    const down = pad.buttons[13]?.pressed || y > 0.45;
-    if (direction === "left" && left) return true;
-    if (direction === "right" && right) return true;
-    if (direction === "up" && up) return true;
-    if (direction === "down" && down) return true;
+function snapStickToCardinal(x: number, y: number): CardinalDirection | null {
+  const magnitude = Math.hypot(x, y);
+  if (magnitude < 0.35) return null;
+  const absX = Math.abs(x);
+  const absY = Math.abs(y);
+  const dominance = 1.35;
+  if (absX > absY * dominance) return x < 0 ? "left" : "right";
+  if (absY > absX * dominance) return y < 0 ? "up" : "down";
+  return lastDirection;
+}
+
+function readGamepadSnapshot(): GamepadSnapshot {
+  const pads = getConnectedGamepads();
+  const pad = pads[0];
+  if (!pad) {
+    return {
+      connected: false,
+      index: null,
+      id: null,
+      direction: null,
+      buttons: new Set()
+    };
   }
-  return false;
+  const buttons = new Set<number>();
+  pad.buttons.forEach((button, index) => {
+    if (button?.pressed) buttons.add(index);
+  });
+  let direction: CardinalDirection | null = null;
+  if (buttons.has(14)) direction = "left";
+  else if (buttons.has(15)) direction = "right";
+  else if (buttons.has(12)) direction = "up";
+  else if (buttons.has(13)) direction = "down";
+  else direction = snapStickToCardinal(pad.axes[0] ?? 0, pad.axes[1] ?? 0);
+  return {
+    connected: true,
+    index: pad.index,
+    id: pad.id,
+    direction,
+    buttons
+  };
+}
+
+function syncGamepadConnection(snapshot = readGamepadSnapshot()) {
+  const connected = snapshot.connected;
+  const label = snapshot.id;
+  if (connected === gamepadConnected && label === lastGamepadLabel) return;
+  gamepadConnected = connected;
+  lastGamepadLabel = label;
+  lastGamepadEvent = connected ? "connected" : "disconnected";
+  for (const callback of [...gamepadConnectionCallbacks]) callback(connected, label);
+}
+
+function isGamepadButtonDown(indexes: number[], snapshot = gamepadSnapshot) {
+  if (!snapshot.connected) return false;
+  return indexes.some((index) => snapshot.buttons.has(index));
+}
+
+function gamepadDirectionDown(direction: CardinalDirection, snapshot = gamepadSnapshot) {
+  return snapshot.direction === direction;
+}
+
+function anyGamepadButtonPressed(snapshot = gamepadSnapshot) {
+  return snapshot.buttons.size > 0;
+}
+
+function installGamepadListeners() {
+  window.addEventListener("gamepadconnected", (event) => {
+    const gamepad = (event as GamepadEvent).gamepad;
+    gamepadSnapshot = readGamepadSnapshot();
+    gamepadConnected = gamepadSnapshot.connected || Boolean(gamepad?.connected);
+    lastGamepadLabel = gamepad?.id ?? gamepadSnapshot.id;
+    lastGamepadEvent = "connected";
+    for (const callback of [...gamepadConnectionCallbacks]) callback(gamepadConnected, lastGamepadLabel);
+  });
+  window.addEventListener("gamepaddisconnected", () => {
+    gamepadSnapshot = readGamepadSnapshot();
+    gamepadConnected = gamepadSnapshot.connected;
+    lastGamepadLabel = gamepadSnapshot.id;
+    lastGamepadEvent = gamepadConnected ? "connected" : "disconnected";
+    for (const callback of [...gamepadConnectionCallbacks]) callback(gamepadConnected, lastGamepadLabel);
+  });
+}
+
+function notifyGamepadGestureIfNeeded(snapshot: GamepadSnapshot) {
+  if (anyGamepadButtonPressed(snapshot)) {
+    notifyInputGesture("gamepad");
+  }
 }
 
 function computeAxis(left: boolean, right: boolean, up: boolean, down: boolean) {
@@ -293,6 +389,8 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) resetInput();
   });
+  installGamepadListeners();
+  syncGamepadConnection();
 }
 
 export function updateInputCallbacks(nextCallbacks: InputCallbacks) {
@@ -312,27 +410,47 @@ export function addInputGestureListener(callback: InputGestureCallback) {
   return () => inputGestureCallbacks.delete(callback);
 }
 
+export function addGamepadConnectionListener(callback: GamepadConnectionCallback) {
+  gamepadConnectionCallbacks.add(callback);
+  return () => gamepadConnectionCallbacks.delete(callback);
+}
+
+export function getGamepadDebugState(): GamepadDebugState {
+  return {
+    connected: gamepadConnected,
+    index: gamepadSnapshot.index,
+    id: lastGamepadLabel,
+    direction: gamepadSnapshot.direction,
+    pressedButtons: [...gamepadSnapshot.buttons].sort((a, b) => a - b),
+    lastEvent: lastGamepadEvent
+  };
+}
+
 export function isTouchInputCapable() {
   return typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 }
 
 export function tickInput() {
   previousState = cloneState(currentState);
+  gamepadSnapshot = readGamepadSnapshot();
+  syncGamepadConnection(gamepadSnapshot);
+  notifyGamepadGestureIfNeeded(gamepadSnapshot);
 
-  const left = isKeyboardDown("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left");
-  const right = isKeyboardDown("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right");
-  const up = isKeyboardDown("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up");
-  const down = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down");
+  const left = isKeyboardDown("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
+  const right = isKeyboardDown("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
+  const up = isKeyboardDown("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
+  const down = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
   const dir = computeAxis(left, right, up, down);
-  const navLeft = isKeyboardDown("ArrowLeft") || isTouchDown("left") || gamepadDirectionDown("left");
-  const navRight = isKeyboardDown("ArrowRight") || isTouchDown("right") || gamepadDirectionDown("right");
+  if (gamepadSnapshot.direction) lastDirection = gamepadSnapshot.direction;
+  const navLeft = isKeyboardDown("ArrowLeft") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
+  const navRight = isKeyboardDown("ArrowRight") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
 
-  const a = isKeyboardDown("Space", "Enter") || isTouchDown("space") || isGamepadButtonDown([0]);
-  const b = isKeyboardDown("ShiftLeft", "ShiftRight") || isTouchDown("b") || isGamepadButtonDown([1]);
-  const start = isKeyboardDown("Enter") || isTouchDown("start") || isGamepadButtonDown([9]);
-  const select = isKeyboardDown("Tab") || isTouchDown("select") || isGamepadButtonDown([8]);
-  const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2]);
-  const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start");
+  const a = isKeyboardDown("Space", "Enter") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
+  const b = isKeyboardDown("ShiftLeft", "ShiftRight") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
+  const start = isKeyboardDown("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
+  const select = isKeyboardDown("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
+  const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2], gamepadSnapshot);
+  const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
   const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
   const sound = isKeyboardDown("KeyN") || isTouchDown("n");
   const fullscreen = isKeyboardDown("KeyF");

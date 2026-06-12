@@ -5,6 +5,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
 import { gameState, renderGameToText, setLatestMessage } from "./game/state";
 import {
   bindDomPointerDown,
+  getGamepadDebugState,
   initializeInput,
   updateInputCallbacks
 } from "./input/InputState";
@@ -19,6 +20,7 @@ declare global {
     rubyRuleResetPerformanceMetrics?: () => void;
     rubyRuleAudioDebug?: () => AudioDebugState;
     rubyRuleSaveDebug?: () => ReturnType<typeof getSaveDebugState>;
+    rubyRuleGamepadDebug?: () => ReturnType<typeof getGamepadDebugState>;
   }
 }
 
@@ -61,6 +63,7 @@ interface NavigatorWithStandalone extends Navigator {
 window.render_game_to_text = renderGameToText;
 window.rubyRuleAudioDebug = () => retroAudio.getDebugState();
 window.rubyRuleSaveDebug = () => getSaveDebugState();
+window.rubyRuleGamepadDebug = () => getGamepadDebugState();
 window.advanceTime = (ms: number) =>
   new Promise((resolve) => {
     window.setTimeout(resolve, Math.max(0, ms));
@@ -214,11 +217,13 @@ function installMobileDebugHud() {
     updateMobileCanvasMetrics();
     if (visible) {
       const histogram = metrics.frameHistogram;
+      const gamepad = window.rubyRuleGamepadDebug?.();
       hud.textContent =
         `FPS now ${metrics.fpsCurrent.toFixed(1)} | 1s ${metrics.fpsAvg1s.toFixed(1)} | 10s min ${metrics.fpsMin10s.toFixed(1)}\n`
         + `FRAME ${metrics.frameMsCurrent.toFixed(2)}ms | p99 ${metrics.frameMsP99.toFixed(1)}ms | max ${metrics.frameMsMax10s.toFixed(1)}ms | samples ${metrics.frameSampleCount}\n`
         + `HIST <=16.7 ${histogram.under16} | <=20 ${histogram.under20} | <=33.4 ${histogram.under33} | >33.4 ${histogram.over33}\n`
         + `INPUT ${metrics.lastInputLatencyMs === null ? "--" : `${metrics.lastInputLatencyMs.toFixed(1)}ms`} | POINTERS ${metrics.activePointerCount}\n`
+        + `GAMEPAD ${gamepad?.connected ? gamepad.id ?? "connected" : "none"} | DIR ${gamepad?.direction ?? "--"} | BTN ${gamepad?.pressedButtons.join(",") || "--"}\n`
         + `DPR ${metrics.dpr.toFixed(2)} | ZOOM ${metrics.computedZoom.toFixed(3)} ${metrics.integerZoom ? "INT" : "FRAC"} | TARGET ${metrics.integerZoomTarget}x\n`
         + `CSS ${metrics.canvasCssWidth.toFixed(1)}x${metrics.canvasCssHeight.toFixed(1)} | BUFFER ${metrics.canvasBackingWidth}x${metrics.canvasBackingHeight}\n`
         + `GUARD ${metrics.scaleGuardAdjustments} | PROOF ${metrics.pixelProofVisible ? "ON" : "OFF"}\n`

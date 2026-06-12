@@ -529,3 +529,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Autosaves now run on scene transitions, every 30 seconds during active play, `visibilitychange -> hidden`, and `pagehide`.
 - Added a Continue/New Game boot choice when a save exists, plus a tap-to-resume overlay after backgrounding.
 - Verified Continue restores scene/profile/inventory/stamps/document points, non-default Archive position/facing, New Game save clearing, and tap-to-resume behavior with Playwright probes.
+
+## 2026-06-12 Mobile SNES Quality Phase 9
+
+- Added Bluetooth gamepad support through the unified input state, mapping D-pad/stick, A, B, ability, Start, and Select without direct gameplay reads outside `src/input/`.
+- Added gamepad connect/disconnect listeners so the touch overlay fades away when a controller is active and returns when it disconnects.
+- Added a small controller toast plus `window.rubyRuleGamepadDebug()` and mobile debug HUD readout for QA.
+- Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.

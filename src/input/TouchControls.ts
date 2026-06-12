@@ -27,6 +27,8 @@ type TouchDebugWindow = Window & {
     forceVisible: boolean;
     dpadPointerId: number | null;
     dpadDirection: CardinalDirection | null;
+    gamepadSuppressed: boolean;
+    overlayAlpha: number;
     pressedButtons: TouchControlKey[];
     lastEvent: string;
   };
@@ -60,6 +62,9 @@ export class TouchControls {
   private dialogFastForwardTimer?: Phaser.Time.TimerEvent;
   private dialogReleaseTimer?: Phaser.Time.TimerEvent;
   private lastEvent = "idle";
+  private gamepadSuppressed = false;
+  private overlayAlpha = 1;
+  private overlayFade?: Phaser.Tweens.Tween;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -71,7 +76,7 @@ export class TouchControls {
 
   setForceVisible(forceVisible: boolean) {
     this.forceVisible = forceVisible;
-    this.setEnabled(isTouchCapable() || this.forceVisible);
+    this.setEnabled(!this.gamepadSuppressed && (isTouchCapable() || this.forceVisible));
   }
 
   get isForceVisible() {
@@ -90,13 +95,32 @@ export class TouchControls {
     this.redraw();
   }
 
+  setGamepadSuppressed(suppressed: boolean) {
+    if (this.gamepadSuppressed === suppressed) return;
+    this.gamepadSuppressed = suppressed;
+    this.overlayFade?.stop();
+    this.overlayFade = undefined;
+    if (suppressed) {
+      this.releaseAll();
+      this.fadeOverlay(0, () => this.setEnabled(false));
+    } else {
+      this.overlayAlpha = 0;
+      this.setEnabled(isTouchCapable() || this.forceVisible);
+      this.fadeOverlay(1);
+    }
+    this.updateDebug();
+  }
+
   refreshForScene(activeSceneKey: string | null) {
     const hiddenScene = activeSceneKey === "TapToStartScene" || activeSceneKey === "RenderDebugScene" || activeSceneKey === "SpriteGallery";
-    this.setEnabled(!hiddenScene && (isTouchCapable() || this.forceVisible));
+    const shouldShow = !hiddenScene && !this.gamepadSuppressed && (isTouchCapable() || this.forceVisible);
+    if (shouldShow && !this.overlayFade && this.overlayAlpha <= 0) this.overlayAlpha = 1;
+    this.setEnabled(shouldShow);
   }
 
   destroy() {
     this.releaseAll();
+    this.overlayFade?.stop();
     this.removePointerEvents();
     this.graphics.destroy();
     for (const button of this.buttons) button.text.destroy();
@@ -386,6 +410,7 @@ export class TouchControls {
 
   private redraw() {
     this.graphics.clear();
+    this.graphics.setAlpha(this.overlayAlpha);
     this.updateDebug();
     if (!this.enabled) return;
     if (gameState.mode === "pause") {
@@ -403,9 +428,31 @@ export class TouchControls {
       forceVisible: this.forceVisible,
       dpadPointerId: this.dpadPointerId,
       dpadDirection: this.dpadDirection,
+      gamepadSuppressed: this.gamepadSuppressed,
+      overlayAlpha: Number(this.overlayAlpha.toFixed(2)),
       pressedButtons: this.buttons.filter((button) => button.pointerId !== null).map((button) => button.key),
       lastEvent: this.lastEvent
     };
+  }
+
+  private fadeOverlay(targetAlpha: number, onComplete?: () => void) {
+    const tweenState = { alpha: this.overlayAlpha };
+    this.overlayFade = this.scene.tweens.add({
+      targets: tweenState,
+      alpha: targetAlpha,
+      duration: 200,
+      ease: "Linear",
+      onUpdate: () => {
+        this.overlayAlpha = Phaser.Math.Clamp(tweenState.alpha, 0, 1);
+        this.redraw();
+      },
+      onComplete: () => {
+        this.overlayAlpha = targetAlpha;
+        this.overlayFade = undefined;
+        this.redraw();
+        onComplete?.();
+      }
+    });
   }
 
   private drawButtons() {
@@ -427,7 +474,7 @@ export class TouchControls {
         this.graphics.fillRect(Math.round(button.x - width / 2), Math.round(button.y - height / 2), width, height);
         this.graphics.strokeRect(Math.round(button.x - width / 2), Math.round(button.y - height / 2), width, height);
       }
-      button.text.setAlpha(pressed ? 0.9 : 0.48);
+      button.text.setAlpha((pressed ? 0.9 : 0.48) * this.overlayAlpha);
       button.text.setPosition(button.x, button.y - (button.kind === "circle" ? 4 : 2));
     }
   }

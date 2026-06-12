@@ -34,7 +34,8 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     powerPreference: "high-performance"
   },
   input: {
-    activePointers: 4
+    activePointers: 4,
+    gamepad: true
   },
   audio: {
     disableWebAudio: false
