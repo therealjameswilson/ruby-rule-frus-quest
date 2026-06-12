@@ -410,3 +410,8 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Quarantined the dirty overworld/art-pack working tree under `experiments/overworld-wip/`, including untracked source/assets plus copies and a binary patch for dirty tracked files.
 - Restored the runnable source tree to the Phase 7 branch state so incomplete `WorldScene`, art-pack, screen-manager, interior-map, and tilemap experiments no longer affect the cleanup branch.
 - Added experiment README guardrails for promoting quarantined work back into `src/` or `public/` only as focused, buildable commits.
+
+## 2026-06-12 Cleanup branch Phase 9
+
+- Updated `README.md` with current cleanup scope, Phaser 3 engine rationale, controls, pillar status, experiment quarantine notes, and a roadmap tied to the LttP cleanup rubric.
+- Kept the active docs honest that the large overworld/art-pack work is preserved under `experiments/overworld-wip/` but is not live game code.
