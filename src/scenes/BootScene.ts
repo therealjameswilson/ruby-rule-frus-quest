@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
   SNES_ANTAGONIST_ASSETS,
@@ -25,6 +26,8 @@ export class BootScene extends Phaser.Scene {
     this.load.json("items", "assets/data/items.json");
     this.load.json("dialogue", "assets/data/dialogue.json");
     this.load.json("scenes", "assets/data/scenes.json");
+    preloadCharacters(this);
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
     this.preloadSvgAssets();
   }
 

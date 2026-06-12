@@ -188,6 +188,8 @@ Authoritative frame index map from `MANIFEST.md`:
 
 Important integration note: the manifest lists a logical frame size of 32x48, while the files on disk are 1024x1536. That dimension implies the PNGs are 8x display exports of a 4-column by 4-row logical 32x48 sheet. Phase 1 should either locate/add native 128x192 sheets or create a guarded native-runtime texture path before relying on Phaser's `frameWidth: 32, frameHeight: 48` against the 1024x1536 display PNGs.
 
+Phase 1 follow-up: native 128x192 sheets were generated under `public/assets/art-pack/sprites/native/` so Phaser can load the canonical character keys with `frameWidth: 32` and `frameHeight: 48` without slicing the 1024x1536 display exports incorrectly.
+
 ## Diff
 
 Needed path/key changes:
