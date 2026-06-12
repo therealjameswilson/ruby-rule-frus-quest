@@ -41,13 +41,14 @@ export class ProductionColleague {
     const hasFrameSheet = !hasArtPackTexture
       && scene.textures.exists(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key)
       && scene.textures.get(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key).has(desiredFrame);
+    const fallbackCharacterKey = scene.textures.exists("reviewer") ? "reviewer" : "sam";
     this.spriteKey = hasArtPackTexture
       ? artPackTexture
       : hasFrameSheet
       ? SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key
       : scene.textures.exists(asset.key)
         ? asset.key
-        : "sam";
+        : fallbackCharacterKey;
     this.frameName = hasFrameSheet ? desiredFrame : null;
     this.sprite = scene.add
       .sprite(0, 0, this.spriteKey, hasArtPackTexture ? 0 : this.frameName ?? undefined)

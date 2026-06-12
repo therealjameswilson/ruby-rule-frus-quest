@@ -436,3 +436,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 - Updated `README.md` with current cleanup scope, Phaser 3 engine rationale, controls, pillar status, experiment quarantine notes, and a roadmap tied to the LttP cleanup rubric.
 - Kept the active docs honest that the large overworld/art-pack work is preserved under `experiments/overworld-wip/` but is not live game code.
+
+## 2026-06-12 16-bit sprite wiring Phase 3
+
+- Swapped the character creator's main preview and role cards from old role SVG keys to the centralized 32x48 art-pack character sheets.
+- Swapped the GuideScene Archive Colleague from the old still-image fallback to the `archivist` 32x48 sheet and updated its interaction point for the taller sprite.
+- Reworked RenderDebugScene's character racks to sample the canonical `CHARACTER_KEYS` sheets and animations instead of the old role/NPC SVG frame systems.
+- Tightened the production-colleague final fallback so it prefers a canonical `reviewer` sheet when available.
+- Verified `npm run build` and captured Phase 3 screenshots for CharacterCreateScene, the current OfficeScene->GuideScene path, NetworkScene interior, and a before/after comparison sheet.
+- Note: current `main` has no live Navy Hill/WorldScene path after the cleanup quarantine; OfficeScene routes to GuideScene, so Phase 3 visual QA uses that live office path plus NetworkScene as the interior sample.

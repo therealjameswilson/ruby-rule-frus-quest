@@ -192,6 +192,8 @@ Phase 1 follow-up: native 128x192 sheets were generated under `public/assets/art
 
 Phase 2 follow-up: `src/art/character_anims.ts` now generates the manifest idle/walk/interact/reading/approval animations for every canonical character key. `Player`, `HistorianNPC`, and `ProductionColleague` now prefer those 32x48 sheets and fall back to the older SVG textures only if the centralized art-pack texture is unavailable.
 
+Phase 3 follow-up: `CharacterCreateScene`, `GuideScene`, and `RenderDebugScene` now construct live character displays from the centralized 32x48 character keys and animation helpers instead of the older role/NPC SVG texture keys. BootScene still loads and generates the legacy SVG textures as guarded fallbacks so missing art-pack textures do not break the game.
+
 ## Diff
 
 Needed path/key changes:

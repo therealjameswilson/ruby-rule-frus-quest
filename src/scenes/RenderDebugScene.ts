@@ -1,12 +1,10 @@
 import Phaser from "phaser";
+import { characterAnimKey } from "../art/character_anims";
+import { CHARACTER_KEYS } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   SNES_ANTAGONIST_ASSETS,
-  SNES_BUREAUCRATIC_WALL_ASSETS,
-  SNES_NPC_ASSETS,
-  SNES_PRODUCTION_COLLEAGUE_ASSETS,
-  SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET,
-  SNES_ROLE_FRAME_SHEETS
+  SNES_BUREAUCRATIC_WALL_ASSETS
 } from "../game/snesAtlas";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { isIntegerScale } from "../systems/pixelPerfect";
@@ -29,13 +27,7 @@ export class RenderDebugScene extends Phaser.Scene {
       "sample sprite 2x",
       "sample sprite 3x",
       "sample sprite 4x",
-      ...SNES_ROLE_FRAME_SHEETS.flatMap((sheet) => [
-        `${sheet.displayName} idle frame`,
-        `${sheet.displayName} ability frame`
-      ]),
-      "production colleague frame sheet",
-      ...SNES_NPC_ASSETS.map((npc) => `${npc.displayName} SNES sprite`),
-      ...SNES_PRODUCTION_COLLEAGUE_ASSETS.map((asset) => `${asset.displayName} production colleague sprite`),
+      ...CHARACTER_KEYS.map((key) => `${key} 32x48 art-pack sheet`),
       ...SNES_ANTAGONIST_ASSETS.map((asset) => `${asset.displayName} antagonist sprite`),
       ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => `${wall.type} wall sprite`)
     ]);
@@ -71,18 +63,10 @@ export class RenderDebugScene extends Phaser.Scene {
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(2);
 
-    SNES_PRODUCTION_COLLEAGUE_ASSETS.forEach((asset, index) => {
-      const x = 30 + index * 28;
-      const frameName = `${asset.id}-work`;
-      const hasFrame = this.textures.exists(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key)
-        && this.textures.get(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key).has(frameName);
-      this.add.image(
-        x,
-        83,
-        hasFrame ? SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key : asset.key,
-        hasFrame ? frameName : undefined
-      ).setDepth(2);
-      this.add.text(x, 97, asset.shortLabel, {
+    CHARACTER_KEYS.slice(0, 5).forEach((key, index) => {
+      const x = 28 + index * 26;
+      this.add.sprite(x, 84, key).setOrigin(0.5, 0.9).setScale(0.7).play(characterAnimKey(key, index % 2 === 0 ? "idle-down" : "reading")).setDepth(2);
+      this.add.text(x, 98, key.split("_")[0].slice(0, 4).toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: PALETTE.goldStamp,
@@ -108,12 +92,10 @@ export class RenderDebugScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(2);
     });
 
-    SNES_ROLE_FRAME_SHEETS.forEach((sheet, index) => {
-      if (!this.textures.exists(sheet.key)) return;
-      const x = 168 + index * 42;
-      this.add.image(x, 84, sheet.key, "idle-0").setOrigin(0.5, 1).setDepth(2);
-      this.add.image(x + 18, 84, sheet.key, "read").setOrigin(0.5, 1).setDepth(2);
-      this.add.text(x + 9, 88, `${sheet.roleId.slice(0, 4).toUpperCase()} FR`, {
+    CHARACTER_KEYS.slice(5).forEach((key, index) => {
+      const x = 30 + index * 30;
+      this.add.sprite(x, 165, key).setOrigin(0.5, 0.9).setScale(0.75).play(characterAnimKey(key, index % 2 === 0 ? "walk-down" : "approval")).setDepth(2);
+      this.add.text(x, 181, key.split("_")[0].slice(0, 4).toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: PALETTE.goldStamp,
@@ -124,7 +106,7 @@ export class RenderDebugScene extends Phaser.Scene {
     this.add.rectangle(128, 191, 232, 64, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(1);
     [1, 2, 3, 4].forEach((scale, index) => {
       const x = 34 + index * 62;
-      this.add.image(x, 216, "sam").setScale(scale).setOrigin(0.5, 1).setDepth(2);
+      this.add.sprite(x, 225, "compiler").setScale(scale).setOrigin(0.5, 1).play(characterAnimKey("compiler", "idle-down")).setDepth(2);
       this.add.text(x, 226, `${scale}X`, {
         fontFamily: "monospace",
         fontSize: "7px",
