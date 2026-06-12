@@ -8,12 +8,14 @@ import {
   initializeInput,
   updateInputCallbacks
 } from "./input/InputState";
+import { retroAudio, type AudioDebugState } from "./systems/audio";
 
 declare global {
   interface Window {
     render_game_to_text?: () => string;
     advanceTime?: (ms: number) => Promise<void>;
     rubyRuleMobileMetrics?: MobileDebugMetrics;
+    rubyRuleAudioDebug?: () => AudioDebugState;
   }
 }
 
@@ -42,6 +44,7 @@ interface NavigatorWithStandalone extends Navigator {
 }
 
 window.render_game_to_text = renderGameToText;
+window.rubyRuleAudioDebug = () => retroAudio.getDebugState();
 window.advanceTime = (ms: number) =>
   new Promise((resolve) => {
     window.setTimeout(resolve, Math.max(0, ms));

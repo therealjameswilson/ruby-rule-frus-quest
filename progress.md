@@ -508,3 +508,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Reworked the manuscript inventory into a pause-mode modal with tappable tool slots, a 44px-class close target, outside-dismiss behavior, and locked/equipped tool feedback.
 - Fixed HUD, dialogue, inventory, and objective overlays to the camera so mobile scaling and scene movement do not drag UI with the map.
 - Verified the phase with touch probes, the web-game Playwright client, and iPhone 14 Pro / Pixel 7 portrait and landscape viewport screenshots.
+
+## 2026-06-12 Mobile SNES Quality Phase 6
+
+- Hardened the oscillator-only Web Audio path with first-gesture unlock/prewarm, queued score start for direct scene links, same-theme music continuity, and a shared master gain node.
+- Added visibility/page lifecycle handling so backgrounding suspends audio and foregrounding resumes the active score with a short fade-in.
+- Added context state-change handling for iOS-style audio interruptions plus a `window.rubyRuleAudioDebug()` QA readout.
+- Verified the phase with an audio lifecycle probe, the standard web-game client, Playwright iPhone/Pixel device-profile screenshots, and an in-app browser console-error smoke.

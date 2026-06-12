@@ -13,6 +13,7 @@ import {
   SNES_ROLE_FRAME_SHEETS
 } from "../game/snesAtlas";
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
+import { retroAudio } from "../systems/audio";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -34,6 +35,7 @@ export class BootScene extends Phaser.Scene {
 
   create() {
     setSceneState("BootScene", "boot", "Loading original pixel assets.");
+    retroAudio.prepare();
     this.createTextures();
     registerCharacterAnims(this);
     const startScene = this.getStartScene();

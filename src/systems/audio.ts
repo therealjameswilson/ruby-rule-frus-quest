@@ -1,6 +1,8 @@
 import { setAudioStatus } from "../game/state";
+import { addInputGestureListener } from "../input/InputState";
 
 type Wave = OscillatorType;
+type RuntimeAudioState = AudioContextState | "interrupted" | "unavailable" | "uncreated";
 
 interface MidiTheme {
   title: string;
@@ -9,6 +11,30 @@ interface MidiTheme {
   notes: Array<number | null>;
   bass?: number[];
   wave?: Wave;
+}
+
+interface ResolvedTheme {
+  key: keyof typeof PUBLIC_DOMAIN_MIDI_THEMES;
+  theme: MidiTheme;
+}
+
+export interface AudioDebugState {
+  enabled: boolean;
+  prepared: boolean;
+  unlocked: boolean;
+  contextState: RuntimeAudioState;
+  currentSceneKey: string | null;
+  currentThemeKey: string | null;
+  currentThemeTitle: string | null;
+  pendingSceneKey: string | null;
+  musicTimerActive: boolean;
+  musicStep: number;
+  resumePending: boolean;
+  hiddenPaused: boolean;
+  firstUnlockMs: number | null;
+  lastFirstSampleMs: number | null;
+  lastVisibilityEvent: string | null;
+  lastInterruptionEvent: string | null;
 }
 
 const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
@@ -41,18 +67,49 @@ function midiToFrequency(note: number) {
   return 440 * 2 ** ((note - 69) / 12);
 }
 
+function nowMs() {
+  return typeof performance === "undefined" ? Date.now() : performance.now();
+}
+
 class RetroAudio {
   private context: AudioContext | null = null;
+  private masterGain: GainNode | null = null;
   private enabled = true;
+  private prepared = false;
+  private unlocked = false;
   private musicTimer: number | null = null;
   private musicStep = 0;
+  private currentSceneKey: string | null = null;
+  private currentThemeKey: string | null = null;
+  private currentTheme: MidiTheme | null = null;
+  private pendingSceneKey: string | null = null;
+  private removeGestureResumeListener?: () => void;
+  private lifecycleInstalled = false;
+  private stateListenerInstalled = false;
+  private resumePending = false;
+  private hiddenPaused = false;
+  private firstUnlockMs: number | null = null;
+  private lastFirstSampleMs: number | null = null;
+  private lastVisibilityEvent: string | null = null;
+  private lastInterruptionEvent: string | null = null;
+  private lastContextState: RuntimeAudioState = "uncreated";
+
+  prepare() {
+    if (typeof window === "undefined" || this.prepared) return;
+    this.prepared = true;
+    this.installLifecycleListeners();
+    setAudioStatus("oscillator score prepared");
+  }
 
   toggle() {
     this.enabled = !this.enabled;
     if (!this.enabled) {
       this.stopMusic();
+      setAudioStatus("audio muted");
+      return this.enabled;
     }
-    setAudioStatus(this.enabled ? "audio on" : "audio muted");
+    setAudioStatus("audio on");
+    void this.resumeAfterGesture();
     return this.enabled;
   }
 
@@ -62,18 +119,33 @@ class RetroAudio {
 
   async unlock() {
     if (!this.enabled || typeof window === "undefined") return false;
+    this.prepare();
+    const startedAt = nowMs();
     const context = this.getContext();
-    if (!context) return false;
-    if (context.state === "suspended") await context.resume();
-    const source = context.createBufferSource();
-    const gain = context.createGain();
-    source.buffer = context.createBuffer(1, 1, context.sampleRate);
-    gain.gain.setValueAtTime(0.0001, context.currentTime);
-    source.connect(gain);
-    gain.connect(context.destination);
-    source.start();
-    source.stop(context.currentTime + 0.01);
-    setAudioStatus("audio unlocked");
+    if (!context) {
+      setAudioStatus("audio unavailable");
+      return false;
+    }
+
+    await this.resumeContext(context);
+    if (context.state !== "running") {
+      this.resumePending = true;
+      this.installGestureResume();
+      setAudioStatus("audio resume pending");
+      return false;
+    }
+
+    this.unlocked = true;
+    this.resumePending = false;
+    this.ensureMasterGain(context);
+    this.prewarmWithSilentBuffer(context);
+    this.prewarmWithSilentOscillator(context);
+    this.firstUnlockMs = Math.max(0, nowMs() - startedAt);
+    this.lastFirstSampleMs = this.firstUnlockMs;
+    setAudioStatus("audio unlocked + prewarmed");
+
+    const pending = this.pendingSceneKey;
+    if (pending) this.startMusic(pending, { forceRestart: true });
     return true;
   }
 
@@ -106,33 +178,44 @@ class RetroAudio {
     this.sequence([392, 523, 659, 784, 1046, 784, 1046], 0.12, 0.09, 0.045);
   }
 
-  startMusic(sceneKey: string) {
+  startMusic(sceneKey: string, options: { forceRestart?: boolean } = {}) {
     if (!this.enabled || typeof window === "undefined") return;
+    this.prepare();
+    const { key, theme } = this.resolveTheme(sceneKey);
+    this.currentSceneKey = sceneKey;
+    this.currentTheme = theme;
+
+    if (!this.unlocked) {
+      this.pendingSceneKey = sceneKey;
+      this.resumePending = true;
+      this.installGestureResume();
+      setAudioStatus(`audio pending ${theme.title}`);
+      return;
+    }
+
+    const context = this.getContext();
+    if (!context || context.state !== "running") {
+      this.pendingSceneKey = sceneKey;
+      this.resumePending = true;
+      this.installGestureResume();
+      setAudioStatus(`audio pending ${theme.title}`);
+      return;
+    }
+
+    this.pendingSceneKey = null;
+    this.resumePending = false;
+    if (this.musicTimer !== null && this.currentThemeKey === key && !options.forceRestart) {
+      setAudioStatus(`pd midi ${theme.title}`);
+      return;
+    }
+
     this.stopMusic();
-    const themes: Record<string, MidiTheme> = {
-      TitleScene: PUBLIC_DOMAIN_MIDI_THEMES.title,
-      CharacterCreateScene: PUBLIC_DOMAIN_MIDI_THEMES.title,
-      OfficeScene: PUBLIC_DOMAIN_MIDI_THEMES.title,
-      ArchiveScene: PUBLIC_DOMAIN_MIDI_THEMES.archive,
-      NetworkScene: PUBLIC_DOMAIN_MIDI_THEMES.archive,
-      ReferralVaultScene: PUBLIC_DOMAIN_MIDI_THEMES.archive,
-      SilentReadScene: PUBLIC_DOMAIN_MIDI_THEMES.satie,
-      EndingScene: PUBLIC_DOMAIN_MIDI_THEMES.satie
-    };
-    const theme = themes[sceneKey] ?? PUBLIC_DOMAIN_MIDI_THEMES.title;
-    setAudioStatus(`pd midi ${theme.title}`);
+    this.currentThemeKey = key;
     this.musicStep = 0;
-    this.musicTimer = window.setInterval(() => {
-      const note = theme.notes[this.musicStep % theme.notes.length];
-      if (note !== null) {
-        this.tone(midiToFrequency(note), Math.min(0.16, (theme.stepMs / 1000) * 0.68), 0.012, theme.wave ?? "square");
-      }
-      if (theme.bass && this.musicStep % 4 === 0) {
-        const bass = theme.bass[Math.floor(this.musicStep / 4) % theme.bass.length];
-        this.tone(midiToFrequency(bass), Math.min(0.18, (theme.stepMs / 1000) * 0.85), 0.008, "triangle");
-      }
-      this.musicStep += 1;
-    }, theme.stepMs);
+    this.fadeMasterGain(0.85, 0.2);
+    this.playMusicStep(theme);
+    this.musicTimer = window.setInterval(() => this.playMusicStep(theme), theme.stepMs);
+    setAudioStatus(`pd midi ${theme.title}`);
   }
 
   stopMusic() {
@@ -142,7 +225,57 @@ class RetroAudio {
     }
   }
 
+  getDebugState(): AudioDebugState {
+    return {
+      enabled: this.enabled,
+      prepared: this.prepared,
+      unlocked: this.unlocked,
+      contextState: this.getContextState(),
+      currentSceneKey: this.currentSceneKey,
+      currentThemeKey: this.currentThemeKey,
+      currentThemeTitle: this.currentTheme?.title ?? null,
+      pendingSceneKey: this.pendingSceneKey,
+      musicTimerActive: this.musicTimer !== null,
+      musicStep: this.musicStep,
+      resumePending: this.resumePending,
+      hiddenPaused: this.hiddenPaused,
+      firstUnlockMs: this.firstUnlockMs,
+      lastFirstSampleMs: this.lastFirstSampleMs,
+      lastVisibilityEvent: this.lastVisibilityEvent,
+      lastInterruptionEvent: this.lastInterruptionEvent
+    };
+  }
+
+  private resolveTheme(sceneKey: string): ResolvedTheme {
+    const themeMap: Record<string, keyof typeof PUBLIC_DOMAIN_MIDI_THEMES> = {
+      TitleScene: "title",
+      CharacterCreateScene: "title",
+      OfficeScene: "title",
+      GuideScene: "archive",
+      ArchiveScene: "archive",
+      NetworkScene: "archive",
+      ReferralVaultScene: "archive",
+      SilentReadScene: "satie",
+      EndingScene: "satie"
+    };
+    const key = themeMap[sceneKey] ?? "title";
+    return { key, theme: PUBLIC_DOMAIN_MIDI_THEMES[key] };
+  }
+
+  private playMusicStep(theme: MidiTheme) {
+    const note = theme.notes[this.musicStep % theme.notes.length];
+    if (note !== null) {
+      this.tone(midiToFrequency(note), Math.min(0.16, (theme.stepMs / 1000) * 0.68), 0.012, theme.wave ?? "square");
+    }
+    if (theme.bass && this.musicStep % 4 === 0) {
+      const bass = theme.bass[Math.floor(this.musicStep / 4) % theme.bass.length];
+      this.tone(midiToFrequency(bass), Math.min(0.18, (theme.stepMs / 1000) * 0.85), 0.008, "triangle");
+    }
+    this.musicStep += 1;
+  }
+
   private sequence(notes: number[], duration: number, gap: number, gain: number, wave: Wave = "square") {
+    if (typeof window === "undefined") return;
     notes.forEach((note, index) => {
       window.setTimeout(() => this.tone(note, duration, gain, wave), index * (duration + gap) * 1000);
     });
@@ -152,9 +285,12 @@ class RetroAudio {
     if (!this.enabled || typeof window === "undefined") return;
     const context = this.getContext();
     if (!context) return;
-    if (context.state === "suspended") {
-      void context.resume();
+    if (!this.unlocked || context.state !== "running") {
+      this.resumePending = true;
+      this.installGestureResume();
+      return;
     }
+    const output = this.ensureMasterGain(context);
     const osc = context.createOscillator();
     const gain = context.createGain();
     osc.type = wave;
@@ -163,15 +299,162 @@ class RetroAudio {
     gain.gain.exponentialRampToValueAtTime(gainValue, context.currentTime + 0.006);
     gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
     osc.connect(gain);
-    gain.connect(context.destination);
+    gain.connect(output);
     osc.start();
     osc.stop(context.currentTime + duration + 0.02);
   }
 
+  private prewarmWithSilentBuffer(context: AudioContext) {
+    const output = this.ensureMasterGain(context);
+    const source = context.createBufferSource();
+    const gain = context.createGain();
+    source.buffer = context.createBuffer(1, 1, context.sampleRate);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    source.connect(gain);
+    gain.connect(output);
+    source.start();
+    source.stop(context.currentTime + 0.01);
+  }
+
+  private prewarmWithSilentOscillator(context: AudioContext) {
+    const output = this.ensureMasterGain(context);
+    const osc = context.createOscillator();
+    const gain = context.createGain();
+    osc.type = "square";
+    osc.frequency.value = 440;
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.012);
+    osc.connect(gain);
+    gain.connect(output);
+    osc.start();
+    osc.stop(context.currentTime + 0.015);
+  }
+
+  private ensureMasterGain(context: AudioContext) {
+    if (!this.masterGain) {
+      this.masterGain = context.createGain();
+      this.masterGain.gain.setValueAtTime(0.85, context.currentTime);
+      this.masterGain.connect(context.destination);
+    }
+    return this.masterGain;
+  }
+
+  private fadeMasterGain(target: number, seconds: number) {
+    const context = this.getContext();
+    if (!context || !this.masterGain) return;
+    const gain = this.masterGain.gain;
+    gain.cancelScheduledValues(context.currentTime);
+    gain.setTargetAtTime(target, context.currentTime, Math.max(0.01, seconds / 4));
+  }
+
+  private installGestureResume() {
+    if (this.removeGestureResumeListener || typeof window === "undefined") return;
+    this.removeGestureResumeListener = addInputGestureListener(() => {
+      void this.resumeAfterGesture();
+    });
+  }
+
+  private async resumeAfterGesture() {
+    if (!this.enabled) return false;
+    const unlocked = await this.unlock();
+    if (unlocked && this.currentSceneKey) this.startMusic(this.currentSceneKey);
+    if (unlocked) {
+      this.removeGestureResumeListener?.();
+      this.removeGestureResumeListener = undefined;
+    }
+    return unlocked;
+  }
+
+  private installLifecycleListeners() {
+    if (this.lifecycleInstalled || typeof document === "undefined") return;
+    this.lifecycleInstalled = true;
+    document.addEventListener("visibilitychange", () => {
+      if (document.hidden) {
+        this.handleHidden();
+      } else {
+        void this.handleVisible();
+      }
+    });
+    window.addEventListener("pagehide", () => this.handleHidden());
+    window.addEventListener("pageshow", () => {
+      if (!document.hidden) void this.handleVisible();
+    });
+  }
+
+  private handleHidden() {
+    this.lastVisibilityEvent = "hidden";
+    this.hiddenPaused = this.musicTimer !== null || this.hiddenPaused;
+    this.stopMusic();
+    if (this.context?.state === "running") {
+      void this.context.suspend();
+    }
+    if (this.hiddenPaused) {
+      this.resumePending = true;
+      setAudioStatus("audio paused for background");
+    }
+  }
+
+  private async handleVisible() {
+    this.lastVisibilityEvent = "visible";
+    if (!this.enabled || !this.hiddenPaused) return;
+    const context = this.getContext();
+    if (!context) return;
+    await this.resumeContext(context);
+    if (context.state === "running") {
+      this.unlocked = true;
+      this.resumePending = false;
+      this.hiddenPaused = false;
+      if (this.currentSceneKey && this.musicTimer === null) this.startMusic(this.currentSceneKey, { forceRestart: true });
+      this.fadeMasterGain(0.85, 0.2);
+      return;
+    }
+    this.installGestureResume();
+    setAudioStatus("tap to resume audio");
+  }
+
+  private handleContextStateChange() {
+    const state = this.getContextState();
+    const previous = this.lastContextState;
+    this.lastContextState = state;
+    if (state === "interrupted") {
+      this.lastInterruptionEvent = "interrupted";
+      this.stopMusic();
+      this.resumePending = true;
+      setAudioStatus("audio interrupted");
+      return;
+    }
+    if (state === "running" && (previous === "interrupted" || this.resumePending)) {
+      this.lastInterruptionEvent = `${previous}->running`;
+      this.resumePending = false;
+      this.unlocked = true;
+      if (this.currentSceneKey) this.startMusic(this.currentSceneKey, { forceRestart: true });
+      this.fadeMasterGain(0.85, 0.2);
+    }
+  }
+
+  private async resumeContext(context: AudioContext) {
+    try {
+      if (context.state !== "running") await context.resume();
+    } catch {
+      // Mobile browsers can reject resume outside a trusted gesture; the next input gesture retries.
+    }
+  }
+
+  private getContextState(): RuntimeAudioState {
+    if (!this.context) return "uncreated";
+    return this.context.state as RuntimeAudioState;
+  }
+
   private getContext() {
+    if (typeof window === "undefined") return null;
     const AudioCtor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtor) return null;
     this.context ??= new AudioCtor();
+    if (!this.stateListenerInstalled) {
+      this.stateListenerInstalled = true;
+      this.lastContextState = this.context.state as RuntimeAudioState;
+      this.context.addEventListener("statechange", () => this.handleContextStateChange());
+    }
     return this.context;
   }
 }

@@ -36,6 +36,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   input: {
     activePointers: 4
   },
+  audio: {
+    disableWebAudio: false
+  },
   scale: {
     parent: "game-shell",
     mode: Phaser.Scale.FIT,
