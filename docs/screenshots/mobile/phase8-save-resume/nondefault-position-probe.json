@@ -1,0 +1,42 @@
+{
+  "scene": "ArchiveScene",
+  "player": {
+    "x": 166,
+    "y": 177
+  },
+  "facing": "east",
+  "room": {
+    "currentRoomId": "A1",
+    "roomTitle": "SOURCE ROOM",
+    "roomType": "normal",
+    "visitedRoomIds": [
+      "A1"
+    ],
+    "revealedRoomIds": [
+      "A1",
+      "A2",
+      "A3",
+      "B1",
+      "B2",
+      "B3",
+      "C1",
+      "C2",
+      "D1",
+      "D3"
+    ],
+    "exits": {
+      "east": "A2",
+      "south": "B1"
+    }
+  },
+  "profile": {
+    "displayName": "Ruby",
+    "roleId": "compiler",
+    "roleLabel": "Compiler",
+    "ability": "Archive Sense",
+    "remit": "Verify selection and provenance.",
+    "spriteKey": "player-compiler",
+    "snesSpriteKey": "snes-player-compiler"
+  },
+  "errors": []
+}

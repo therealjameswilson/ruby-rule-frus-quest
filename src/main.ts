@@ -2,13 +2,14 @@ import Phaser from "phaser";
 import "./styles/pixel.css";
 import { gameConfig } from "./game/config";
 import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
-import { renderGameToText } from "./game/state";
+import { gameState, renderGameToText, setLatestMessage } from "./game/state";
 import {
   bindDomPointerDown,
   initializeInput,
   updateInputCallbacks
 } from "./input/InputState";
 import { retroAudio, type AudioDebugState } from "./systems/audio";
+import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
 
 declare global {
   interface Window {
@@ -17,6 +18,7 @@ declare global {
     rubyRuleMobileMetrics?: MobileDebugMetrics;
     rubyRuleResetPerformanceMetrics?: () => void;
     rubyRuleAudioDebug?: () => AudioDebugState;
+    rubyRuleSaveDebug?: () => ReturnType<typeof getSaveDebugState>;
   }
 }
 
@@ -58,6 +60,7 @@ interface NavigatorWithStandalone extends Navigator {
 
 window.render_game_to_text = renderGameToText;
 window.rubyRuleAudioDebug = () => retroAudio.getDebugState();
+window.rubyRuleSaveDebug = () => getSaveDebugState();
 window.advanceTime = (ms: number) =>
   new Promise((resolve) => {
     window.setTimeout(resolve, Math.max(0, ms));
@@ -326,6 +329,54 @@ function installMobileShellAffordances() {
   }
 }
 
+function installTapToResumeOverlay(game: Phaser.Game) {
+  const overlay = document.createElement("button");
+  overlay.id = "tap-resume-overlay";
+  overlay.type = "button";
+  overlay.textContent = "TAP TO RESUME";
+  overlay.setAttribute("aria-label", "Tap to resume Ruby Rule");
+  overlay.hidden = true;
+  document.body.appendChild(overlay);
+
+  let pausedSceneKey: string | null = null;
+
+  const pauseForBackground = (reason: "visibility" | "pagehide") => {
+    saveGameNow(reason);
+    const sceneKey = gameState.currentScene;
+    if (sceneKey && sceneKey !== "BootScene" && sceneKey !== "TapToStartScene") {
+      pausedSceneKey = sceneKey;
+      if (game.scene.isActive(sceneKey)) game.scene.pause(sceneKey);
+    }
+  };
+
+  const showResumeOverlay = () => {
+    if (!pausedSceneKey) return;
+    overlay.hidden = false;
+    setLatestMessage("Paused for mobile resume.");
+  };
+
+  bindDomPointerDown(overlay, async (event) => {
+    event.preventDefault();
+    overlay.hidden = true;
+    if (pausedSceneKey && game.scene.isPaused(pausedSceneKey)) game.scene.resume(pausedSceneKey);
+    pausedSceneKey = null;
+    await retroAudio.unlock();
+    refreshIntegerScale();
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) {
+      pauseForBackground("visibility");
+      return;
+    }
+    showResumeOverlay();
+  });
+  window.addEventListener("pagehide", () => pauseForBackground("pagehide"));
+  window.addEventListener("pageshow", () => {
+    if (!document.hidden) showResumeOverlay();
+  });
+}
+
 function calculateIntegerGameShellScale() {
   const shell = document.getElementById("game-shell");
   const bodyStyle = window.getComputedStyle(document.body);
@@ -448,6 +499,8 @@ window.visualViewport?.addEventListener("resize", scheduleIntegerScaleRefresh);
 
 const game = new Phaser.Game(gameConfig);
 phaserGame = game;
+installAutosaveLifecycle();
+installTapToResumeOverlay(game);
 const togglePixelProof = installPixelProofOverlay();
 updateInputCallbacks({
   togglePixelProof,

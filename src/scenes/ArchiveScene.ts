@@ -311,6 +311,16 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   create() {
+    const restoringArchive = gameState.currentScene === "ArchiveScene";
+    const candidateRestoredRoomId = gameState.roomTraversal?.currentRoomId as ArchiveRoomId | undefined;
+    const restoredRoomId = restoringArchive && candidateRestoredRoomId && ARCHIVE_ROOMS[candidateRestoredRoomId]
+      ? candidateRestoredRoomId
+      : restoringArchive
+        ? "A1"
+        : null;
+    const restoredPlayer = restoringArchive
+      ? { ...gameState.player }
+      : null;
     setSceneState("ArchiveScene", "explore", "Archive Cavern: explore room A1.");
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.archiveAmber);
@@ -336,12 +346,14 @@ export class ArchiveScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(810);
     this.player = new Player(this, 128, 184);
 
-    this.enterRoom("A1", { x: 128, y: 184 }, false);
-    this.dialog.show("ELENA", [
-      "A compiler reads the trail.",
-      "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving.",
-      "Use the edge gates to map each room, but verify Source Note 47 here."
-    ]);
+    this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
+    if (!restoredPlayer) {
+      this.dialog.show("ELENA", [
+        "A compiler reads the trail.",
+        "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving.",
+        "Use the edge gates to map each room, but verify Source Note 47 here."
+      ]);
+    }
   }
 
   update(_: number, delta: number) {

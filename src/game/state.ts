@@ -1,5 +1,5 @@
 import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
-import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
+import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import {
   applyAgencyEquityResponse,
@@ -41,7 +41,7 @@ interface VisibleThreat {
   status?: string;
 }
 
-interface GameState {
+export interface GameState {
   currentScene: string;
   mode: GameMode;
   objective: string;
@@ -85,6 +85,53 @@ interface GameState {
 }
 
 const defaultRole = PROCESS_ROLES[0];
+const TRANSIENT_SAVE_SCENES = new Set(["BootScene", "TapToStartScene", "RenderDebugScene", "SpriteGallery"]);
+
+export const SAVE_SCHEMA_VERSION = 1;
+
+export interface GameSaveData {
+  version: number;
+  savedAt: string;
+  state: GameState;
+}
+
+export interface GameSaveSummary {
+  version: number;
+  savedAt: string;
+  currentScene: string;
+  objective: string;
+  displayName: string;
+  roleLabel: string;
+  player: Position;
+  processStamps: ProcessStampId[];
+  inventoryCount: number;
+  documentPoints: number;
+}
+
+type GameStateChangeReason = "reset" | "scene" | "restore";
+type GameStateChangeListener = (reason: GameStateChangeReason) => void;
+
+const gameStateChangeListeners = new Set<GameStateChangeListener>();
+let resumeSpawn: { scene: string; player: Position; facing: Direction } | null = null;
+
+function notifyGameStateChange(reason: GameStateChangeReason) {
+  for (const listener of [...gameStateChangeListeners]) listener(reason);
+}
+
+function cloneJson<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function normalizeSaveMode(scene: string, mode: GameMode): GameMode {
+  if (scene === "TitleScene" || scene === "TapToStartScene") return "title";
+  if (scene === "EndingScene") return "ending";
+  if (mode === "dialog" || mode === "choice" || mode === "pause" || mode === "debug" || mode === "boot") return "explore";
+  return mode;
+}
+
+function isRestorableScene(scene: string) {
+  return SCENE_ORDER.includes(scene as (typeof SCENE_ORDER)[number]) && !TRANSIENT_SAVE_SCENES.has(scene);
+}
 
 export interface PhysicalVerificationState {
   verb: "CARRY" | "ROUTE" | "VERIFY" | "STAMP" | "DONE";
@@ -245,6 +292,7 @@ export function resetGameState() {
   gameState.finalGateCertification = null;
   setPlayerProfile("Sam", defaultRole);
   refreshQuestWorkflowState();
+  notifyGameStateChange("reset");
 }
 
 export function setSceneState(sceneName: string, mode: GameMode, objective: string) {
@@ -261,6 +309,85 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.roomTraversal = null;
   gameState.finalGateCertification = null;
   refreshQuestWorkflowState();
+  notifyGameStateChange("scene");
+}
+
+export function addGameStateChangeListener(listener: GameStateChangeListener) {
+  gameStateChangeListeners.add(listener);
+  return () => gameStateChangeListeners.delete(listener);
+}
+
+export function createGameSaveData(): GameSaveData {
+  const state = cloneJson(gameState);
+  state.mode = normalizeSaveMode(state.currentScene, state.mode);
+  state.activeDialog = null;
+  state.currentChoice = null;
+  state.snesTransition = {
+    active: false,
+    current: null,
+    last: state.snesTransition.last
+  };
+  return {
+    version: SAVE_SCHEMA_VERSION,
+    savedAt: new Date().toISOString(),
+    state
+  };
+}
+
+export function getGameSaveSummary(save: GameSaveData): GameSaveSummary {
+  return {
+    version: save.version,
+    savedAt: save.savedAt,
+    currentScene: save.state.currentScene,
+    objective: save.state.objective,
+    displayName: save.state.playerProfile.displayName,
+    roleLabel: save.state.playerProfile.roleLabel,
+    player: { ...save.state.player },
+    processStamps: [...save.state.processStamps],
+    inventoryCount: save.state.inventory.length,
+    documentPoints: save.state.documentPoints
+  };
+}
+
+export function restoreGameSaveData(save: GameSaveData) {
+  if (!save?.state?.currentScene || !isRestorableScene(save.state.currentScene)) return null;
+  const restored = cloneJson(save.state);
+  restored.mode = normalizeSaveMode(restored.currentScene, restored.mode);
+  restored.activeDialog = null;
+  restored.currentChoice = null;
+  restored.visibleEntities = [];
+  restored.visibleThreats = [];
+  restored.nearestInteractable = null;
+  restored.physicalVerification = null;
+  restored.finalGateCertification = null;
+  restored.snesTransition = {
+    active: false,
+    current: null,
+    last: restored.snesTransition?.last ?? null
+  };
+  Object.assign(gameState, restored);
+  resumeSpawn = {
+    scene: gameState.currentScene,
+    player: { ...gameState.player },
+    facing: gameState.playerFacing
+  };
+  refreshQuestWorkflowState();
+  notifyGameStateChange("restore");
+  return gameState.currentScene;
+}
+
+export function consumeResumePlayerSpawn(sceneKey: string) {
+  if (!resumeSpawn || resumeSpawn.scene !== sceneKey) return null;
+  const spawn = {
+    player: { ...resumeSpawn.player },
+    facing: resumeSpawn.facing
+  };
+  resumeSpawn = null;
+  return spawn;
+}
+
+export function isSaveableGameScene(sceneName = gameState.currentScene) {
+  return isRestorableScene(sceneName) && sceneName !== "TitleScene" && sceneName !== "CharacterCreateScene";
 }
 
 export function setObjective(objective: string) {

@@ -522,3 +522,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Reworked the frame sampler to avoid per-frame array filter/map/reduce allocations while measuring the game.
 - Added `npm run perf:profile` for repeatable local/deployed browser performance sampling with JSON output and optional screenshots.
 - Verified the phase with `npm run build`, local 60 FPS profile artifacts, Playwright iPhone/Pixel device-profile screenshots, and an in-app browser load/log check.
+
+## 2026-06-12 Mobile SNES Quality Phase 8
+
+- Added versioned save/resume state with localStorage primary persistence and sessionStorage fallback.
+- Autosaves now run on scene transitions, every 30 seconds during active play, `visibilitychange -> hidden`, and `pagehide`.
+- Added a Continue/New Game boot choice when a save exists, plus a tap-to-resume overlay after backgrounding.
+- Verified Continue restores scene/profile/inventory/stamps/document points, non-default Archive position/facing, New Game save clearing, and tap-to-resume behavior with Playwright probes.

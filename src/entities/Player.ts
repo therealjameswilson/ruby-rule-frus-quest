@@ -5,7 +5,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
-import { gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
+import { consumeResumePlayerSpawn, gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
 import { getInput } from "../input/InputState";
 import {
@@ -100,8 +100,10 @@ export class Player {
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
-    this.logicalX = x;
-    this.logicalY = y;
+    const resumeSpawn = consumeResumePlayerSpawn(scene.scene.key);
+    this.logicalX = resumeSpawn?.player.x ?? x;
+    this.logicalY = resumeSpawn?.player.y ?? y;
+    this.facing = resumeSpawn?.facing ?? this.facing;
     const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId);
     this.characterKey = scene.textures.exists(preferredCharacterKey) ? preferredCharacterKey : null;
     this.roleFrameSheet = this.characterKey ? null : this.getAvailableRoleFrameSheet(scene);
@@ -117,13 +119,13 @@ export class Player {
     this.shadowDepthOffset = isSnesScale ? 2 : 1;
     this.shadow = scene.add
       .ellipse(
-        snapPixel(x),
-        snapPixel(y + this.shadowOffsetY),
+        snapPixel(this.logicalX),
+        snapPixel(this.logicalY + this.shadowOffsetY),
         this.spriteMode === "artPack32x48" || this.spriteMode === "snesRoleFrame48" ? 20 : this.spriteMode === "snes16" ? 18 : 12,
         isSnesScale ? 6 : 4,
         color(PALETTE.black)
       )
-      .setDepth(snapPixel(y - this.shadowDepthOffset));
+      .setDepth(snapPixel(this.logicalY - this.shadowDepthOffset));
     const textureKey = this.spriteMode === "artPack32x48"
       ? this.characterKey ?? gameState.playerProfile.snesSpriteKey
       : this.spriteMode === "snesRoleFrame48"
@@ -132,14 +134,14 @@ export class Player {
         ? gameState.playerProfile.snesSpriteKey
         : gameState.playerProfile.spriteKey;
     this.sprite = scene.add
-      .sprite(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
+      .sprite(snapPixel(this.logicalX), snapPixel(this.logicalY), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
       .setOrigin(0.5, this.spriteMode === "artPack32x48" ? 0.9 : this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
-      .setDepth(snapPixel(y));
+      .setDepth(snapPixel(this.logicalY));
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
       this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));
     }
     this.actionHitboxVisual = scene.add
-      .rectangle(snapPixel(x), snapPixel(y), 18, 18)
+      .rectangle(snapPixel(this.logicalX), snapPixel(this.logicalY), 18, 18)
       .setOrigin(0, 0)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(899)

@@ -166,6 +166,33 @@ canvas {
   display: none;
 }
 
+#tap-resume-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  width: 100dvw;
+  height: 100dvh;
+  border: 0;
+  background: rgba(15, 15, 15, 0.88);
+  color: #d6a23a;
+  font: 700 18px/1 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  letter-spacing: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#tap-resume-overlay::after {
+  content: "SAVE READY";
+  display: block;
+  margin-top: 12px;
+  color: #e8d8a8;
+  font-size: 8px;
+}
+
+#tap-resume-overlay[hidden] {
+  display: none;
+}
+
 @media (max-width: 760px), (pointer: coarse) {
   body {
     justify-content: center;
