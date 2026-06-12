@@ -218,6 +218,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - changed the start flow to Character Create -> Office Hub -> Archive Cavern -> Archive rooms, matching the requested progression
   - moved Red Pencil and Proof Lens from pre-granted Silent Read tools into earned dungeon rewards
   - exposed `areaProgress` and `currentArea` through `render_game_to_text()` and added a compact quest-route readout to the inventory overlay
+- Completed mobile Phase 3 input architecture:
+  - added `src/input/InputState.ts` as the single keyboard/touch/pointer/gamepad input adapter
+  - moved gameplay scenes to `tickInput()` plus `getInput()` at the top of `update()`
+  - removed direct `input.keyboard`, `Phaser.Input.Keyboard`, `KeyboardMap`, and pointer event reads outside `src/input/`
+  - rewired touch buttons away from synthetic `KeyboardEvent`s and into shared touch state
+  - preserved character-name typing by separating role-card navigation from WASD letter typing
+  - verified `npm run build`, required web-game client input bursts, GuideScene movement/pickup, in-app browser canvas load, and iPhone/Pixel portrait/landscape screenshots
   - verified `npm run build`, required web-game client OfficeScene screenshot/state, and a direct Playwright probe covering route order, direct-scene seeding, reward gating, and Buckram Gate completion
 - Refined the NES-style dungeon grammar:
   - added a shared FRUS room graph with stable room IDs, room types, locked exits, required items, secret rooms, and Buckram Gate metadata

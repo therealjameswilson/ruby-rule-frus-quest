@@ -16,6 +16,7 @@ import {
   setVisibleThreats
 } from "../game/state";
 import type { Interactable } from "../game/types";
+import { getInput, tickInput } from "../input/InputState";
 import { Player } from "../entities/Player";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
@@ -111,18 +112,19 @@ export class GuideScene extends Phaser.Scene {
   }
 
   update(_: number, delta: number) {
-    const keys = this.player.inputKeys;
-    if (Phaser.Input.Keyboard.JustDown(keys.f)) this.scale.toggleFullscreen();
-    if (Phaser.Input.Keyboard.JustDown(keys.m)) this.inventory.toggle();
-    if (Phaser.Input.Keyboard.JustDown(keys.n)) {
+    tickInput();
+    const input = getInput();
+    if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (input.menuJustPressed) this.inventory.toggle();
+    if (input.soundJustPressed) {
       retroAudio.toggle();
       this.reliability.update();
     }
-    if (Phaser.Input.Keyboard.JustDown(keys.r)) this.reliability.toggleDetails();
-    if (Phaser.Input.Keyboard.JustDown(keys.e)) activateRoleAbility(this);
+    if (input.reliabilityJustPressed) this.reliability.toggleDetails();
+    if (input.abilityJustPressed) activateRoleAbility(this);
 
     if (this.dialog.active) {
-      if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) this.dialog.advance();
+      if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       return;
     }
@@ -130,7 +132,7 @@ export class GuideScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (Phaser.Input.Keyboard.JustDown(keys.esc)) {
+    if (input.pauseJustPressed) {
       this.dialog.show("PAUSED", "Your colleague waits.");
       return;
     }
@@ -140,7 +142,7 @@ export class GuideScene extends Phaser.Scene {
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
     this.hintText.setText(nearest ? nearest.label.toUpperCase() : "");
-    if ((Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) && nearest) {
+    if (input.aJustPressed && nearest) {
       nearest.onInteract();
     }
     this.objectiveText.setText(gameState.objective);

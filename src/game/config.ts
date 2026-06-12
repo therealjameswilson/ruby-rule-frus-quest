@@ -31,6 +31,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     roundPixels: true,
     powerPreference: "high-performance"
   },
+  input: {
+    activePointers: 4
+  },
   scale: {
     parent: "game-shell",
     mode: Phaser.Scale.FIT,

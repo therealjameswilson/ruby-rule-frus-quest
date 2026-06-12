@@ -308,22 +308,3 @@ export interface PlayerProfile {
   spriteKey: string;
   snesSpriteKey: string;
 }
-
-export interface KeyboardMap {
-  up: Phaser.Input.Keyboard.Key;
-  down: Phaser.Input.Keyboard.Key;
-  left: Phaser.Input.Keyboard.Key;
-  right: Phaser.Input.Keyboard.Key;
-  w: Phaser.Input.Keyboard.Key;
-  a: Phaser.Input.Keyboard.Key;
-  s: Phaser.Input.Keyboard.Key;
-  d: Phaser.Input.Keyboard.Key;
-  e: Phaser.Input.Keyboard.Key;
-  space: Phaser.Input.Keyboard.Key;
-  enter: Phaser.Input.Keyboard.Key;
-  esc: Phaser.Input.Keyboard.Key;
-  m: Phaser.Input.Keyboard.Key;
-  n: Phaser.Input.Keyboard.Key;
-  r: Phaser.Input.Keyboard.Key;
-  f: Phaser.Input.Keyboard.Key;
-}

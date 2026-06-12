@@ -3,12 +3,18 @@ import "./styles/pixel.css";
 import { gameConfig } from "./game/config";
 import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
 import { renderGameToText } from "./game/state";
+import {
+  bindDomPointerDown,
+  bindTouchButton,
+  initializeInput,
+  updateInputCallbacks,
+  type TouchControlKey
+} from "./input/InputState";
 
 declare global {
   interface Window {
     render_game_to_text?: () => string;
     advanceTime?: (ms: number) => Promise<void>;
-    rubyRuleTouchState?: Record<string, boolean>;
     rubyRuleMobileMetrics?: MobileDebugMetrics;
   }
 }
@@ -42,7 +48,6 @@ window.advanceTime = (ms: number) =>
   new Promise((resolve) => {
     window.setTimeout(resolve, Math.max(0, ms));
   });
-window.rubyRuleTouchState = {};
 window.rubyRuleMobileMetrics = {
   fpsCurrent: 0,
   fpsAvg1s: 0,
@@ -64,7 +69,6 @@ window.rubyRuleMobileMetrics = {
 };
 
 const mobileDebugFrames: Array<{ time: number; fps: number }> = [];
-const mobileDebugPointers = new Set<number>();
 let phaserGame: Phaser.Game | undefined;
 
 function getGameCanvas() {
@@ -103,29 +107,6 @@ function installMobileDebugHud() {
     hud.hidden = !visible;
   };
 
-  window.addEventListener("keydown", (event) => {
-    if (event.key !== "F11" || event.repeat) return;
-    event.preventDefault();
-    setVisible(!visible);
-  });
-
-  window.addEventListener("pointerdown", (event) => {
-    const pointerTime = performance.now();
-    mobileDebugPointers.add(event.pointerId);
-    metrics.activePointerCount = mobileDebugPointers.size;
-    metrics.lastPointerDownAt = pointerTime;
-    requestAnimationFrame((frameTime) => {
-      metrics.lastInputLatencyMs = Math.max(0, frameTime - pointerTime);
-    });
-  }, { capture: true, passive: true });
-
-  const clearPointer = (event: PointerEvent) => {
-    mobileDebugPointers.delete(event.pointerId);
-    metrics.activePointerCount = mobileDebugPointers.size;
-  };
-  window.addEventListener("pointerup", clearPointer, { capture: true, passive: true });
-  window.addEventListener("pointercancel", clearPointer, { capture: true, passive: true });
-
   let lastFrame = performance.now();
   const update = (time: number) => {
     const delta = Math.max(0.001, time - lastFrame);
@@ -158,34 +139,7 @@ function installMobileDebugHud() {
     requestAnimationFrame(update);
   };
   requestAnimationFrame(update);
-}
-
-const TOUCH_KEYS: Record<string, { code: string; key: string; keyCode: number; state?: string }> = {
-  up: { code: "ArrowUp", key: "ArrowUp", keyCode: 38, state: "up" },
-  down: { code: "ArrowDown", key: "ArrowDown", keyCode: 40, state: "down" },
-  left: { code: "ArrowLeft", key: "ArrowLeft", keyCode: 37, state: "left" },
-  right: { code: "ArrowRight", key: "ArrowRight", keyCode: 39, state: "right" },
-  space: { code: "Space", key: " ", keyCode: 32 },
-  e: { code: "KeyE", key: "e", keyCode: 69 },
-  m: { code: "KeyM", key: "m", keyCode: 77 },
-  r: { code: "KeyR", key: "r", keyCode: 82 },
-  n: { code: "KeyN", key: "n", keyCode: 78 }
-};
-
-function sendKey(type: "keydown" | "keyup", touchKey: string) {
-  const keyInfo = TOUCH_KEYS[touchKey];
-  if (!keyInfo) return;
-  const event = new KeyboardEvent(type, {
-    key: keyInfo.key,
-    code: keyInfo.code,
-    bubbles: true,
-    cancelable: true
-  });
-  Object.defineProperties(event, {
-    keyCode: { get: () => keyInfo.keyCode },
-    which: { get: () => keyInfo.keyCode }
-  });
-  window.dispatchEvent(event);
+  return () => setVisible(!visible);
 }
 
 function setupMobileControls() {
@@ -209,62 +163,10 @@ function setupMobileControls() {
   `;
   document.body.appendChild(controls);
 
-  const activeKeys = new Set<string>();
-  const releaseTimers = new Map<string, number>();
-  const endPress = (touchKey: string) => {
-    const keyInfo = TOUCH_KEYS[touchKey];
-    if (!keyInfo) return;
-    if (keyInfo.state) window.rubyRuleTouchState![keyInfo.state] = false;
-    if (!activeKeys.has(touchKey)) return;
-    activeKeys.delete(touchKey);
-    sendKey("keyup", touchKey);
-  };
-
   controls.querySelectorAll<HTMLButtonElement>("[data-touch-key]").forEach((button) => {
-    const touchKey = button.dataset.touchKey ?? "";
-    const keyInfo = TOUCH_KEYS[touchKey];
-    if (!keyInfo) return;
-
-    const start = (event: PointerEvent) => {
-      event.preventDefault();
-      try {
-        button.setPointerCapture?.(event.pointerId);
-      } catch {
-        // Synthetic or interrupted mobile pointer events can lack an active capture target.
-      }
-      const pendingRelease = releaseTimers.get(touchKey);
-      if (pendingRelease) window.clearTimeout(pendingRelease);
-      if (keyInfo.state) window.rubyRuleTouchState![keyInfo.state] = true;
-      if (!activeKeys.has(touchKey)) {
-        activeKeys.add(touchKey);
-        sendKey("keydown", touchKey);
-      }
-    };
-    const end = (event: PointerEvent) => {
-      event.preventDefault();
-      if (keyInfo.state) window.rubyRuleTouchState![keyInfo.state] = false;
-      const timer = window.setTimeout(() => {
-        releaseTimers.delete(touchKey);
-        endPress(touchKey);
-      }, keyInfo.state ? 25 : 90);
-      releaseTimers.set(touchKey, timer);
-    };
-
-    button.addEventListener("pointerdown", start);
-    button.addEventListener("pointerup", end);
-    button.addEventListener("pointercancel", end);
-    button.addEventListener("lostpointercapture", () => {
-      if (keyInfo.state) window.rubyRuleTouchState![keyInfo.state] = false;
-    });
-  });
-
-  const clearAll = () => {
-    for (const key of Object.keys(window.rubyRuleTouchState!)) window.rubyRuleTouchState![key] = false;
-    for (const touchKey of [...activeKeys]) endPress(touchKey);
-  };
-  window.addEventListener("blur", clearAll);
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) clearAll();
+    const touchKey = button.dataset.touchKey as TouchControlKey | undefined;
+    if (!touchKey) return;
+    bindTouchButton(button, touchKey);
   });
 }
 
@@ -317,7 +219,7 @@ function createDismissButton(target: HTMLElement, storageKey: string) {
   button.type = "button";
   button.textContent = "X";
   button.setAttribute("aria-label", "Dismiss");
-  button.addEventListener("pointerdown", (event) => {
+  bindDomPointerDown(button, (event) => {
     event.preventDefault();
     localStorageSet(storageKey, "1");
     target.hidden = true;
@@ -343,7 +245,7 @@ function installMobileShellAffordances() {
     button.type = "button";
     button.textContent = "FULL SCREEN";
     button.setAttribute("aria-label", "Request fullscreen");
-    button.addEventListener("pointerdown", async (event) => {
+    bindDomPointerDown(button, async (event) => {
       event.preventDefault();
       try {
         if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
@@ -456,7 +358,7 @@ function drawPixelProof(canvas: HTMLCanvasElement) {
 
 function installPixelProofOverlay() {
   const shell = document.getElementById("game-shell");
-  if (!shell || document.getElementById("pixel-proof-overlay")) return;
+  if (!shell || document.getElementById("pixel-proof-overlay")) return undefined;
   const proof = document.createElement("canvas");
   proof.id = "pixel-proof-overlay";
   proof.width = GAME_WIDTH;
@@ -473,18 +375,14 @@ function installPixelProofOverlay() {
     window.rubyRuleMobileMetrics!.pixelProofVisible = visible;
   };
   setVisible(visible);
-
-  window.addEventListener("keydown", (event) => {
-    if (event.key !== "F8" || event.repeat) return;
-    event.preventDefault();
-    setVisible(!visible);
-  });
+  return () => setVisible(!visible);
 }
 
 setupMobileControls();
 updateViewportCssVars();
 installMobileShellAffordances();
-installMobileDebugHud();
+const toggleMobileDebug = installMobileDebugHud();
+initializeInput({ toggleMobileDebug });
 configureIntegerGameShellScale();
 window.addEventListener("resize", scheduleIntegerScaleRefresh);
 window.addEventListener("orientationchange", scheduleIntegerScaleRefresh);
@@ -492,14 +390,13 @@ window.visualViewport?.addEventListener("resize", scheduleIntegerScaleRefresh);
 
 const game = new Phaser.Game(gameConfig);
 phaserGame = game;
-installPixelProofOverlay();
+const togglePixelProof = installPixelProofOverlay();
+updateInputCallbacks({
+  togglePixelProof,
+  openSpriteGallery: () => {
+    if (game.scene.getScene("SpriteGallery")) game.scene.start("SpriteGallery");
+  }
+});
 installCanvasTouchLock();
 refreshIntegerScale();
 game.scale.on("resize", () => window.requestAnimationFrame(enforceIntegerCanvasScale));
-
-window.addEventListener("keydown", (event) => {
-  if (event.key !== "F9" || event.repeat) return;
-  event.preventDefault();
-  if (!game.scene.getScene("SpriteGallery")) return;
-  game.scene.start("SpriteGallery");
-});

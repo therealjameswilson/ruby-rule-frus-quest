@@ -3,6 +3,7 @@ import { characterAnimKey } from "../art/character_anims";
 import { CHARACTER_KEYS, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
+import { getInput, tickInput } from "../input/InputState";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -76,9 +77,13 @@ export class SpriteGallery extends Phaser.Scene {
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
 
-    this.input.keyboard?.on("keydown-ESC", () => this.scene.start("TitleScene"));
     this.playCycle();
     this.time.addEvent({ delay: 1500, loop: true, callback: () => this.advanceCycle() });
+  }
+
+  update() {
+    tickInput();
+    if (getInput().pauseJustPressed) this.scene.start("TitleScene");
   }
 
   private advanceCycle() {

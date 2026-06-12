@@ -18,7 +18,8 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
-import type { ChoiceOption, KeyboardMap } from "../game/types";
+import type { ChoiceOption } from "../game/types";
+import { getInput, tickInput, type InputState } from "../input/InputState";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
@@ -154,36 +155,38 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   update(_: number, delta: number) {
-    const keys = this.player.inputKeys;
+    tickInput();
+    const input = getInput();
     this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
     this.syncThreatState();
-    if (Phaser.Input.Keyboard.JustDown(keys.f)) this.scale.toggleFullscreen();
-    if (Phaser.Input.Keyboard.JustDown(keys.m)) this.inventory.toggle();
-    if (Phaser.Input.Keyboard.JustDown(keys.n)) {
+    if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (input.menuJustPressed) this.inventory.toggle();
+    if (input.soundJustPressed) {
       retroAudio.toggle();
       this.reliability.update();
     }
-    if (Phaser.Input.Keyboard.JustDown(keys.r)) this.reliability.toggleDetails();
-    if (Phaser.Input.Keyboard.JustDown(keys.e)) activateRoleAbility(this);
+    if (input.reliabilityJustPressed) this.reliability.toggleDetails();
+    if (input.abilityJustPressed) activateRoleAbility(this);
     if (this.roomTransitionLocked) {
       this.player.update(delta, false);
       return;
     }
     if (this.dialog.active) {
-      if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) this.dialog.advance();
+      if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       return;
     }
     if (this.choice.active || this.inventory.active || this.reliability.active) {
+      this.choice.updateInput();
       this.player.update(delta, false);
       return;
     }
-    if (Phaser.Input.Keyboard.JustDown(keys.esc)) {
+    if (input.pauseJustPressed) {
       this.dialog.show("PAUSED", "The vault waits.");
       return;
     }
     this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS });
-    if (this.handleConcurrenceSlipAction(keys)) {
+    if (this.handleConcurrenceSlipAction(input)) {
       this.reliability.update();
       this.objectiveText.setText(gameState.objective);
       return;
@@ -401,7 +404,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     });
   }
 
-  private handleConcurrenceSlipAction(keys: KeyboardMap) {
+  private handleConcurrenceSlipAction(input: Readonly<InputState>) {
     if (this.currentRoomId !== "R2") {
       setNearestInteractable(null);
       return false;
@@ -419,7 +422,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
     setNearestInteractable("Concurrence Slip");
     this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
-    if (!Phaser.Input.Keyboard.JustDown(keys.space) && !Phaser.Input.Keyboard.JustDown(keys.enter)) return false;
+    if (!input.aJustPressed) return false;
     this.collectConcurrenceSlip();
     return true;
   }
