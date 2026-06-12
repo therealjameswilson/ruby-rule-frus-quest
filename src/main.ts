@@ -26,7 +26,10 @@ interface MobileDebugMetrics {
   canvasBackingWidth: number;
   canvasBackingHeight: number;
   computedZoom: number;
+  integerZoomTarget: number;
   integerZoom: boolean;
+  scaleGuardAdjustments: number;
+  pixelProofVisible: boolean;
   firstFrameMs: number | null;
 }
 
@@ -49,21 +52,32 @@ window.rubyRuleMobileMetrics = {
   canvasBackingWidth: 0,
   canvasBackingHeight: 0,
   computedZoom: 0,
+  integerZoomTarget: 1,
   integerZoom: false,
+  scaleGuardAdjustments: 0,
+  pixelProofVisible: false,
   firstFrameMs: null
 };
 
 const mobileDebugFrames: Array<{ time: number; fps: number }> = [];
 const mobileDebugPointers = new Set<number>();
+let phaserGame: Phaser.Game | undefined;
+
+function getGameCanvas() {
+  return (
+    document.querySelector<HTMLCanvasElement>("#game-shell canvas:not(#pixel-proof-overlay)")
+    ?? document.querySelector<HTMLCanvasElement>("canvas:not(#pixel-proof-overlay)")
+  );
+}
 
 function updateMobileCanvasMetrics() {
   const metrics = window.rubyRuleMobileMetrics!;
-  const canvas = document.querySelector("canvas");
+  const canvas = getGameCanvas();
   metrics.dpr = window.devicePixelRatio || 1;
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
-  metrics.canvasCssWidth = Math.round(rect.width);
-  metrics.canvasCssHeight = Math.round(rect.height);
+  metrics.canvasCssWidth = rect.width;
+  metrics.canvasCssHeight = rect.height;
   metrics.canvasBackingWidth = canvas.width;
   metrics.canvasBackingHeight = canvas.height;
   metrics.computedZoom = rect.width / GAME_WIDTH;
@@ -131,8 +145,9 @@ function installMobileDebugHud() {
       hud.textContent = [
         `FPS now ${metrics.fpsCurrent.toFixed(1)} | 1s ${metrics.fpsAvg1s.toFixed(1)} | 10s min ${metrics.fpsMin10s.toFixed(1)}`,
         `INPUT ${metrics.lastInputLatencyMs === null ? "--" : `${metrics.lastInputLatencyMs.toFixed(1)}ms`} | POINTERS ${metrics.activePointerCount}`,
-        `DPR ${metrics.dpr.toFixed(2)} | ZOOM ${metrics.computedZoom.toFixed(3)} ${metrics.integerZoom ? "INT" : "FRAC"}`,
-        `CSS ${metrics.canvasCssWidth}x${metrics.canvasCssHeight} | BUFFER ${metrics.canvasBackingWidth}x${metrics.canvasBackingHeight}`,
+        `DPR ${metrics.dpr.toFixed(2)} | ZOOM ${metrics.computedZoom.toFixed(3)} ${metrics.integerZoom ? "INT" : "FRAC"} | TARGET ${metrics.integerZoomTarget}x`,
+        `CSS ${metrics.canvasCssWidth.toFixed(1)}x${metrics.canvasCssHeight.toFixed(1)} | BUFFER ${metrics.canvasBackingWidth}x${metrics.canvasBackingHeight}`,
+        `GUARD ${metrics.scaleGuardAdjustments} | PROOF ${metrics.pixelProofVisible ? "ON" : "OFF"}`,
         `FIRST FRAME ${metrics.firstFrameMs === null ? "--" : `${metrics.firstFrameMs.toFixed(1)}ms`}`
       ].join("\n");
     }
@@ -249,9 +264,8 @@ function setupMobileControls() {
   });
 }
 
-function configureIntegerGameShellScale() {
+function calculateIntegerGameShellScale() {
   const shell = document.getElementById("game-shell");
-  if (!shell) return;
   const controls = document.getElementById("mobile-controls");
   const controlsVisible = !!controls && window.getComputedStyle(controls).display !== "none";
   const isLandscape = window.innerWidth > window.innerHeight;
@@ -264,21 +278,115 @@ function configureIntegerGameShellScale() {
   const availableWidth = Math.max(160, window.innerWidth - reservedWidth - paddingX);
   const availableHeight = Math.max(160, window.innerHeight - reservedHeight - paddingY);
   const rawScale = Math.min(availableWidth / GAME_WIDTH, availableHeight / GAME_HEIGHT);
-  const scale = rawScale >= 2 ? Math.floor(rawScale) : rawScale;
+  const scale = Math.max(1, Math.floor(rawScale));
+  return { shell, controlsVisible, rawScale, scale };
+}
+
+function configureIntegerGameShellScale() {
+  const { shell, controlsVisible, rawScale, scale } = calculateIntegerGameShellScale();
+  if (!shell) return scale;
   shell.style.width = `${Math.max(1, Math.floor(GAME_WIDTH * scale))}px`;
   shell.style.height = `${Math.max(1, Math.floor(GAME_HEIGHT * scale))}px`;
-  shell.dataset.scale = scale.toFixed(3);
-  shell.dataset.integerScale = Number.isInteger(scale) ? "true" : "false";
+  shell.dataset.scale = String(scale);
+  shell.dataset.rawScale = rawScale.toFixed(3);
+  shell.dataset.integerScale = "true";
   shell.dataset.mobileControls = controlsVisible ? "true" : "false";
+  window.rubyRuleMobileMetrics!.integerZoomTarget = scale;
+  return scale;
+}
+
+function enforceIntegerCanvasScale() {
+  const scale = configureIntegerGameShellScale();
+  const canvas = getGameCanvas();
+  if (!canvas) return;
+  const targetWidth = GAME_WIDTH * scale;
+  const targetHeight = GAME_HEIGHT * scale;
+  const rect = canvas.getBoundingClientRect();
+  const zoomDrift = Math.max(
+    Math.abs(rect.width / GAME_WIDTH - scale),
+    Math.abs(rect.height / GAME_HEIGHT - scale)
+  );
+  if (zoomDrift > 0.001) {
+    canvas.style.width = `${targetWidth}px`;
+    canvas.style.height = `${targetHeight}px`;
+    window.rubyRuleMobileMetrics!.scaleGuardAdjustments += 1;
+  }
+  updateMobileCanvasMetrics();
+}
+
+function refreshIntegerScale() {
+  configureIntegerGameShellScale();
+  phaserGame?.scale.refresh();
+  window.requestAnimationFrame(enforceIntegerCanvasScale);
+}
+
+function drawPixelProof(canvas: HTMLCanvasElement) {
+  const context = canvas.getContext("2d");
+  if (!context) return;
+  context.imageSmoothingEnabled = false;
+  context.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let y = 0; y < 32; y += 1) {
+    for (let x = 0; x < 32; x += 1) {
+      context.fillStyle = (x + y) % 2 === 0 ? "#f8f0d8" : "#0f0f0f";
+      context.fillRect(8 + x, 38 + y, 1, 1);
+    }
+  }
+
+  context.fillStyle = "#68c0c0";
+  for (let i = 0; i < 80; i += 1) {
+    context.fillRect(54 + i, 38 + i, 1, 1);
+  }
+
+  context.fillStyle = "#d6a23a";
+  for (let x = 150; x < 206; x += 2) context.fillRect(x, 38, 1, 32);
+  for (let y = 38; y < 70; y += 2) context.fillRect(150, y, 56, 1);
+
+  context.fillStyle = "#b82030";
+  context.fillRect(7, 37, 200, 1);
+  context.fillRect(7, 117, 200, 1);
+  context.fillRect(7, 37, 1, 81);
+  context.fillRect(206, 37, 1, 81);
+}
+
+function installPixelProofOverlay() {
+  const shell = document.getElementById("game-shell");
+  if (!shell || document.getElementById("pixel-proof-overlay")) return;
+  const proof = document.createElement("canvas");
+  proof.id = "pixel-proof-overlay";
+  proof.width = GAME_WIDTH;
+  proof.height = GAME_HEIGHT;
+  proof.setAttribute("aria-label", "Pixel proof checkerboard and diagonal overlay");
+  drawPixelProof(proof);
+  shell.appendChild(proof);
+
+  const params = new URLSearchParams(window.location.search);
+  let visible = params.get("pixelProof") === "1";
+  const setVisible = (nextVisible: boolean) => {
+    visible = nextVisible;
+    proof.hidden = !visible;
+    window.rubyRuleMobileMetrics!.pixelProofVisible = visible;
+  };
+  setVisible(visible);
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key !== "F8" || event.repeat) return;
+    event.preventDefault();
+    setVisible(!visible);
+  });
 }
 
 setupMobileControls();
 installMobileDebugHud();
 configureIntegerGameShellScale();
-window.addEventListener("resize", configureIntegerGameShellScale);
-window.addEventListener("orientationchange", configureIntegerGameShellScale);
+window.addEventListener("resize", refreshIntegerScale);
+window.addEventListener("orientationchange", refreshIntegerScale);
 
 const game = new Phaser.Game(gameConfig);
+phaserGame = game;
+installPixelProofOverlay();
+refreshIntegerScale();
+game.scale.on("resize", () => window.requestAnimationFrame(enforceIntegerCanvasScale));
 
 window.addEventListener("keydown", (event) => {
   if (event.key !== "F9" || event.repeat) return;

@@ -28,10 +28,14 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     pixelArt: true,
     antialias: false,
     antialiasGL: false,
-    roundPixels: true
+    roundPixels: true,
+    powerPreference: "high-performance"
   },
   scale: {
+    parent: "game-shell",
     mode: Phaser.Scale.FIT,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     autoRound: true
   },

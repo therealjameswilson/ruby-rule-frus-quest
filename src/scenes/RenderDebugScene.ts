@@ -65,7 +65,7 @@ export class RenderDebugScene extends Phaser.Scene {
 
     CHARACTER_KEYS.slice(0, 5).forEach((key, index) => {
       const x = 28 + index * 26;
-      this.add.sprite(x, 84, key).setOrigin(0.5, 0.9).setScale(0.7).play(characterAnimKey(key, index % 2 === 0 ? "idle-down" : "reading")).setDepth(2);
+      this.add.sprite(x, 84, key).setOrigin(0.5, 0.9).setScale(1).play(characterAnimKey(key, index % 2 === 0 ? "idle-down" : "reading")).setDepth(2);
       this.add.text(x, 98, key.split("_")[0].slice(0, 4).toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "5px",
@@ -94,7 +94,7 @@ export class RenderDebugScene extends Phaser.Scene {
 
     CHARACTER_KEYS.slice(5).forEach((key, index) => {
       const x = 30 + index * 30;
-      this.add.sprite(x, 165, key).setOrigin(0.5, 0.9).setScale(0.75).play(characterAnimKey(key, index % 2 === 0 ? "walk-down" : "approval")).setDepth(2);
+      this.add.sprite(x, 165, key).setOrigin(0.5, 0.9).setScale(1).play(characterAnimKey(key, index % 2 === 0 ? "walk-down" : "approval")).setDepth(2);
       this.add.text(x, 181, key.split("_")[0].slice(0, 4).toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "5px",

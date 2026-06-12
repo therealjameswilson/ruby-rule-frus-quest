@@ -315,7 +315,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(78));
     for (let x = 62; x <= 194; x += 33) {
       this.track(this.add.rectangle(x, 104, 24, 20, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(95));
-      this.track(this.add.image(x, 101, "agency-equity-seal").setScale(0.7).setDepth(96));
+      this.track(this.add.image(x, 101, "agency-equity-seal").setScale(1).setDepth(96));
     }
     this.track(this.add.rectangle(128, 145, 78, 32, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(138));
     this.track(this.add.rectangle(128, 156, 96, 7, color(PALETTE.deepRuby)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(139));

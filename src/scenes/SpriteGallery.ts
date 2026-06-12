@@ -59,7 +59,7 @@ export class SpriteGallery extends Phaser.Scene {
       const x = 27 + column * 50;
       const y = row === 0 ? 86 : 174;
       this.add.ellipse(x, y + 1, 20, 5, color(PALETTE.black), 0.86);
-      const sprite = this.add.sprite(x, y, key).setOrigin(0.5, 0.9).setScale(0.72);
+      const sprite = this.add.sprite(x, y, key).setOrigin(0.5, 0.9).setScale(1);
       this.sprites.push({ key, sprite });
       this.add.text(x, y + 8, shortName(key), {
         fontFamily: "monospace",
