@@ -39,6 +39,37 @@ export interface PlayerCombatReadout {
   } | null;
 }
 
+export interface AdventureHudItemSlot {
+  id: ProcessItemId;
+  displayName: string;
+  shortLabel: string;
+  hudSlot: number;
+  acquired: boolean;
+  equipped: boolean;
+}
+
+export interface AdventureHudReadout {
+  confidence: {
+    current: number;
+    max: number;
+    meter: string;
+  };
+  clarity: {
+    current: number;
+    max: number;
+    meter: string;
+  };
+  documentPoints: number;
+  equippedItem: AdventureHudItemSlot | null;
+  secondarySlotLabel: string;
+  inventoryStrip: AdventureHudItemSlot[];
+  stamps: string;
+  fragments: {
+    current: number;
+    total: number;
+  };
+}
+
 export interface Position {
   x: number;
   y: number;

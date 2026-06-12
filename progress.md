@@ -399,3 +399,8 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 - Added a shared enemy base for coherent roaming hazards with waypoint movement, damage, knockback, and death hooks.
 - Retained the existing patrol-style HAC member, shutdown, bee swarm, and Navy Hill mice hazards while leaving specialized bureaucratic stonewalls in their process-gate class.
+
+## 2026-06-11 Cleanup branch Phase 7
+
+- Added a typed adventure HUD readout that maps FRUS confidence, clarity, document points, stamps, fragments, and process tools onto a compact action-adventure status model.
+- Added an equipped secondary process-item slot and highlighted it in both the top HUD strip and manuscript inventory without changing existing pickup or gate mechanics.

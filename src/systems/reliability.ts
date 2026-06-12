@@ -1,6 +1,14 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { gameState, getCurrentAreaReadout, getProcessItemReadout, getProductionStatusReadout, refreshQuestWorkflowState, setLatestMessage } from "../game/state";
+import {
+  gameState,
+  getAdventureHudReadout,
+  getCurrentAreaReadout,
+  getProcessItemReadout,
+  getProductionStatusReadout,
+  refreshQuestWorkflowState,
+  setLatestMessage
+} from "../game/state";
 import type { ProposalKind } from "../game/types";
 import { retroAudio } from "./audio";
 
@@ -70,13 +78,15 @@ export class ReliabilityHud {
     getProductionStatusReadout().forEach((line, index) => {
       this.statusLines[index].setText(line);
     });
-    const readout = getProcessItemReadout();
+    const hud = getAdventureHudReadout();
+    const readout = hud.inventoryStrip;
     for (const slot of this.itemSlots) {
       const item = readout.find((candidate) => candidate.id === slot.id);
       const acquired = Boolean(item?.acquired);
-      slot.box.setFillStyle(color(acquired ? PALETTE.deepRuby : PALETTE.black));
-      slot.box.setStrokeStyle(1, color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
-      slot.label.setColor(acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
+      const equipped = Boolean(item?.equipped);
+      slot.box.setFillStyle(color(equipped ? PALETTE.goldStamp : acquired ? PALETTE.deepRuby : PALETTE.black));
+      slot.box.setStrokeStyle(1, color(equipped ? PALETTE.white : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
+      slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
     }
   }
 
@@ -86,13 +96,16 @@ export class ReliabilityHud {
       return;
     }
     const area = getCurrentAreaReadout();
+    const hud = getAdventureHudReadout();
     this.detailsText.setText(
       [
         ...getProductionStatusReadout(),
         `AREA: ${area.displayName}`,
         `ROLE: ${area.zeldaRole}`,
         `REWARD: ${area.reward}`,
-        `RELIABILITY ${gameState.reliability}/100`,
+        `CONFIDENCE ${hud.confidence.meter} ${hud.confidence.current}/100`,
+        `CLARITY ${hud.clarity.meter} ${hud.clarity.current}/100`,
+        `EQUIPPED: ${hud.equippedItem?.displayName ?? "None"}`,
         "AI ANNOTATION REVIEW: TOOL ONLY",
         "MECHANICAL: MAY AUTO-APPLY",
         "PROVENANCE, CLASSIFICATION, STATUS:",
