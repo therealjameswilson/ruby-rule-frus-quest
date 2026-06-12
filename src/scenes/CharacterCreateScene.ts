@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { characterAnimKey } from "../art/character_anims";
+import { getCharacterKeyForProcessRole } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_ROLES } from "../game/constants";
 import { setLatestMessage, setPlayerProfile, setSceneState, setVisibleEntities } from "../game/state";
 import { retroAudio } from "../systems/audio";
@@ -14,7 +16,7 @@ export class CharacterCreateScene extends Phaser.Scene {
   private nameText!: Phaser.GameObjects.Text;
   private roleText!: Phaser.GameObjects.Text;
   private remitText!: Phaser.GameObjects.Text;
-  private sprite!: Phaser.GameObjects.Image;
+  private sprite!: Phaser.GameObjects.Sprite;
   private cards: Phaser.GameObjects.Container[] = [];
   private locked = false;
 
@@ -35,18 +37,20 @@ export class CharacterCreateScene extends Phaser.Scene {
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
 
-    this.sprite = this.add.image(128, 55, PROCESS_ROLES[this.roleIndex].snesSpriteKey);
-    this.nameText = this.add.text(128, 81, "", {
+    this.sprite = this.add
+      .sprite(128, 70, getCharacterKeyForProcessRole(PROCESS_ROLES[this.roleIndex].id))
+      .setOrigin(0.5, 0.9);
+    this.nameText = this.add.text(128, 94, "", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
-    this.roleText = this.add.text(128, 96, "", {
+    this.roleText = this.add.text(128, 108, "", {
       fontFamily: "monospace",
       fontSize: "10px",
       color: PALETTE.terminalCyan
     }).setOrigin(0.5);
-    this.remitText = this.add.text(128, 110, "", {
+    this.remitText = this.add.text(128, 122, "", {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.creamPaper,
@@ -84,7 +88,11 @@ export class CharacterCreateScene extends Phaser.Scene {
       const x = startX + index * 51;
       const box = this.add.rectangle(0, 0, 44, 42, color(PALETTE.black));
       const border = this.add.rectangle(0, 0, 44, 42).setStrokeStyle(1, color(PALETTE.sepiaInk));
-      const icon = this.add.image(0, -11, role.spriteKey).setScale(2);
+      const icon = this.add
+        .sprite(0, 1, getCharacterKeyForProcessRole(role.id))
+        .setOrigin(0.5, 0.9)
+        .setScale(0.65);
+      icon.play(characterAnimKey(getCharacterKeyForProcessRole(role.id), "idle-down"));
       const label = this.add.text(0, 7, role.label.toUpperCase().replace(" ", "\n"), {
         fontFamily: "monospace",
         fontSize: "5px",
@@ -129,7 +137,9 @@ export class CharacterCreateScene extends Phaser.Scene {
 
   private renderSelection() {
     const role = PROCESS_ROLES[this.roleIndex];
-    this.sprite.setTexture(role.snesSpriteKey);
+    const characterKey = getCharacterKeyForProcessRole(role.id);
+    this.sprite.setTexture(characterKey);
+    this.sprite.play(characterAnimKey(characterKey, "idle-down"), true);
     this.nameText.setText(`NAME: ${this.displayName || "Historian"}`);
     this.roleText.setText(role.label.toUpperCase());
     this.remitText.setText(`${role.ability}: ${role.remit}`);

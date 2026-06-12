@@ -79,6 +79,14 @@ All humanoid sheets share a consistent **32×48 frame size**, laid out 4 frames 
 | `sprite_statechat_terminal.png` | 1024×1536 | 32×48 | StateChat Terminal (stationary object, blinking screen; not humanoid — frames are idle/blink/data-stream/state animation states) | Yes |
 | `sprite_dann_e.png` | 1024×1536 | 32×48 | DANN-E — robotic villain/boss (bully, menace). Chrome bald dome, red-glowing black rectangular visor, gray armor over dark chassis, glowing red chest core. Row 4 villain frames = menace pose, attack pose (red energy blast), defeated/short-circuit. | Yes |
 
+### Runtime character sheets
+
+For Phaser runtime loading, the ten non-boss character sheets above also have
+native 1× derivatives under `sprites/native/` using the same filenames. These
+runtime sheets are 128×192 images arranged as a 4×4 grid of 32×48 frames, and
+are the paths used by `src/art/characters.ts` for `this.load.spritesheet(...)`.
+The larger 1024×1536 sheets remain the display/master exports.
+
 ### Boss art
 
 | Filename | Dimensions | Intended use | Transparency |

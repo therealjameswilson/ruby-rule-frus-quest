@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { characterAnimKey } from "../../art/character_anims";
+import { getCharacterKeyForNpcId } from "../../art/characters";
 import { CHARACTERS, PALETTE } from "../../game/constants";
 import type { CharacterId } from "../../game/types";
 import { getSnesNpcTextureKey } from "../../game/snesAtlas";
@@ -9,7 +11,7 @@ function color(hex: string) {
 }
 
 export class HistorianNPC {
-  readonly sprite: Phaser.GameObjects.Image;
+  readonly sprite: Phaser.GameObjects.Sprite;
   readonly label: Phaser.GameObjects.Text;
   readonly id: CharacterId;
   readonly textureKey: string;
@@ -18,15 +20,25 @@ export class HistorianNPC {
   constructor(scene: Phaser.Scene, id: CharacterId, x: number, y: number) {
     const character = CHARACTERS[id];
     this.id = id;
+    const artPackTexture = getCharacterKeyForNpcId(id);
+    const usesArtPackTexture = scene.textures.exists(artPackTexture);
     const snesTexture = getSnesNpcTextureKey(id);
-    const usesSnesTexture = scene.textures.exists(snesTexture);
-    this.textureKey = usesSnesTexture ? snesTexture : id;
+    const usesSnesTexture = !usesArtPackTexture && scene.textures.exists(snesTexture);
+    this.textureKey = usesArtPackTexture ? artPackTexture : usesSnesTexture ? snesTexture : id;
+    const shadowOffsetY = usesArtPackTexture ? 5 : usesSnesTexture ? 14 : 8;
     this.shadow = scene.add
-      .ellipse(snapPixel(x), snapPixel(y + (usesSnesTexture ? 14 : 8)), usesSnesTexture ? 18 : 12, usesSnesTexture ? 6 : 4, color(PALETTE.black))
+      .ellipse(snapPixel(x), snapPixel(y + shadowOffsetY), usesArtPackTexture ? 20 : usesSnesTexture ? 18 : 12, usesArtPackTexture || usesSnesTexture ? 6 : 4, color(PALETTE.black))
       .setDepth(snapPixel(y - 1));
-    this.sprite = scene.add.image(snapPixel(x), snapPixel(y), this.textureKey).setDepth(snapPixel(y));
+    this.sprite = scene.add
+      .sprite(snapPixel(x), snapPixel(y), this.textureKey, usesArtPackTexture ? 0 : undefined)
+      .setOrigin(0.5, usesArtPackTexture ? 0.9 : 0.5)
+      .setDepth(snapPixel(y));
+    if (usesArtPackTexture) {
+      const animKey = characterAnimKey(artPackTexture, "walk-down");
+      if (scene.anims.exists(animKey)) this.sprite.play(animKey);
+    }
     this.label = scene.add
-      .text(snapPixel(x), snapPixel(y + (usesSnesTexture ? 18 : 12)), character.displayName.toUpperCase(), {
+      .text(snapPixel(x), snapPixel(y + (usesArtPackTexture ? 8 : usesSnesTexture ? 18 : 12)), character.displayName.toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.creamPaper,

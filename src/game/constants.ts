@@ -539,7 +539,8 @@ export const SCENE_ORDER = [
   "ReferralVaultScene",
   "SilentReadScene",
   "EndingScene",
-  "RenderDebugScene"
+  "RenderDebugScene",
+  "SpriteGallery"
 ] as const;
 
 export const CONTROLS_TEXT = "ARROWS/WASD MOVE  SPACE/ENTER ACT  E ABILITY  M INV  R REL  N SOUND";

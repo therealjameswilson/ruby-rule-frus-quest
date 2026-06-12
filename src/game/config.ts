@@ -10,6 +10,7 @@ import { OfficeScene } from "../scenes/OfficeScene";
 import { ReferralVaultScene } from "../scenes/ReferralVaultScene";
 import { RenderDebugScene } from "../scenes/RenderDebugScene";
 import { SilentReadScene } from "../scenes/SilentReadScene";
+import { SpriteGallery } from "../scenes/SpriteGallery";
 import { TitleScene } from "../scenes/TitleScene";
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
@@ -45,6 +46,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     ReferralVaultScene,
     SilentReadScene,
     EndingScene,
-    RenderDebugScene
+    RenderDebugScene,
+    SpriteGallery
   ]
 };

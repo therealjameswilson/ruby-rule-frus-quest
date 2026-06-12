@@ -2,6 +2,27 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Started `feature/wire-16bit-sprites` Phase 0 from `main`.
+- Audited current character sprite wiring against `public/assets/art-pack/MANIFEST.md`:
+  - all ten canonical 16-bit character PNG sheets exist under `public/assets/art-pack/sprites/`
+  - live code still loads/renderers character art through SVG stills and manual texture-frame registration
+  - no direct `this.load.image/spritesheet/atlas(...)` or `anims.create(...)` calls currently exist for character art in `src/`
+  - documented the required path, key, frame, and entity wiring changes in `docs/art/sprite_audit.md`
+  - verified `npm run build` and captured the current baseline at `docs/screenshots/16bit-wire-phase0.png`
+- Completed `feature/wire-16bit-sprites` Phase 1 central loading:
+  - generated native 128x192 versions of all ten art-pack character sheets under `public/assets/art-pack/sprites/native/`
+  - added `src/art/characters.ts` with the canonical character key registry and `CHARACTER_FRAME` set to 32x48
+  - called `preloadCharacters(this)` from `BootScene` and logged each loaded texture's source size and frame size on loader completion
+  - confirmed all ten logs report `source 128x192; frame 32x48`
+  - found no old placeholder character PNGs outside the art pack to move; SVG fallbacks remain for later phases until entity constructors are swapped
+  - verified `npm run build` and captured `docs/screenshots/16bit-wire-phase1.png`
+- Completed `feature/wire-16bit-sprites` Phase 2 animation centralization:
+  - added `src/art/character_anims.ts` with the manifest frame-order map and generated idle/walk/interact/reading/approval animations for all ten canonical character keys
+  - registered character animations from `BootScene` after textures are available
+  - updated `Player`, `HistorianNPC`, and `ProductionColleague` to prefer the art-pack 32x48 spritesheets while retaining SVG fallbacks
+  - updated the player foot collision readout/box to a small 16x8 bottom-foot area for the taller sheet
+  - updated `render_game_to_text()` so `activePlayerSprite` reports `mode: artPack32x48`, the canonical texture key, and 32x48 frame metadata
+  - verified `npm run build` and captured `docs/screenshots/16bit-wire-phase2.png`
 - Scaffolded a Vite + TypeScript + Phaser 3 app in `ruby-rule-frus-quest`.
 - Added a role-crafting flow so players can choose a FRUS production role before entering the office.
 - Added generated placeholder pixel textures for characters, tiles, UI panels, documents, and the FRUS volume.
@@ -415,3 +436,30 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 - Updated `README.md` with current cleanup scope, Phaser 3 engine rationale, controls, pillar status, experiment quarantine notes, and a roadmap tied to the LttP cleanup rubric.
 - Kept the active docs honest that the large overworld/art-pack work is preserved under `experiments/overworld-wip/` but is not live game code.
+
+## 2026-06-12 16-bit sprite wiring Phase 3
+
+- Swapped the character creator's main preview and role cards from old role SVG keys to the centralized 32x48 art-pack character sheets.
+- Swapped the GuideScene Archive Colleague from the old still-image fallback to the `archivist` 32x48 sheet and updated its interaction point for the taller sprite.
+- Reworked RenderDebugScene's character racks to sample the canonical `CHARACTER_KEYS` sheets and animations instead of the old role/NPC SVG frame systems.
+- Tightened the production-colleague final fallback so it prefers a canonical `reviewer` sheet when available.
+- Verified `npm run build` and captured Phase 3 screenshots for CharacterCreateScene, the current OfficeScene->GuideScene path, NetworkScene interior, and a before/after comparison sheet.
+- Note: current `main` has no live Navy Hill/WorldScene path after the cleanup quarantine; OfficeScene routes to GuideScene, so Phase 3 visual QA uses that live office path plus NetworkScene as the interior sample.
+
+## 2026-06-12 16-bit sprite wiring Phase 4
+
+- Added `SpriteGallery`, a hidden visual-QA scene that renders all ten canonical 32x48 character sheets in a grid.
+- The gallery cycles through idle, walk, interact/use-tool, reading, and approval animations every 1.5 seconds.
+- Registered `SpriteGallery` in the Phaser scene list and `SCENE_ORDER` so `?scene=SpriteGallery` works for deep-link QA.
+- Added a global F9 shortcut from `main.ts` to open the gallery from normal game flow.
+- Captured `docs/screenshots/16bit-wire-gallery.png`, `docs/screenshots/16bit-wire-phase4.png`, and an F9 shortcut screenshot.
+- Ran `npm run palette:check --if-present`; no palette script is configured, so `tools/palette_report.md` records the skipped check and follow-up.
+
+## 2026-06-12 16-bit sprite wiring Phase 5
+
+- Confirmed there is no `experiments/old-8bit/` directory in this branch, so there were no old placeholder PNG files to delete.
+- Updated the art-pack manifest with the native 128x192 runtime-sheet note for the ten canonical 32x48 character sprites.
+- Added `docs/art/16bit_sprite_wiring_final_report.md` with branch log, cleanup result, centralized loading confirmation, frame-order result, screenshot evidence, validation notes, and PR status.
+- Verified that character spritesheet loading is centralized through `src/art/characters.ts` and `BootScene.preloadCharacters(this)`.
+- Pushed `feature/wire-16bit-sprites` to origin.
+- PR creation is blocked locally because `gh` is not installed and the GitHub connector returned `token_expired`; the PR creation URL and requested title are recorded in the final report.

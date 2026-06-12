@@ -1,6 +1,7 @@
 import Phaser from "phaser";
+import { characterAnimKey } from "../art/character_anims";
+import { getCharacterKeyForNpcId } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { getSnesNpcTextureKey } from "../game/snesAtlas";
 import {
   addProcessItem,
   addDocumentPoints,
@@ -58,12 +59,15 @@ export class GuideScene extends Phaser.Scene {
     this.drawArchiveLamp(170, 88);
     this.drawAntagonistPlaque(58, 164, "30-YEAR\nLINE", PALETTE.classNetRed);
     this.drawAntagonistPlaque(198, 164, "DANN-E\nQUEUE", PALETTE.terminalCyan);
-    const colleagueTexture = this.textures.exists(getSnesNpcTextureKey("archive-colleague")) ? getSnesNpcTextureKey("archive-colleague") : "archive-colleague";
-    const colleague = this.add.image(128, 87, colleagueTexture).setDepth(90);
-    if (colleagueTexture === "archive-colleague") colleague.setScale(2);
+    const colleagueTexture = getCharacterKeyForNpcId("archive-colleague");
+    const colleague = this.add
+      .sprite(128, 104, colleagueTexture)
+      .setOrigin(0.5, 0.9)
+      .setDepth(104);
+    colleague.play(characterAnimKey(colleagueTexture, "idle-down"));
     this.stampIcon = this.add.image(96, 132, "citation-stamp").setDepth(120);
     this.fragmentIcon = this.add.image(160, 132, "volume-fragment").setDepth(120);
-    this.tweens.add({ targets: colleague, y: 86, duration: 560, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { colleague.y = snapPixel(colleague.y); } });
+    this.tweens.add({ targets: colleague, y: 103, duration: 560, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { colleague.y = snapPixel(colleague.y); } });
     this.tweens.add({ targets: this.stampIcon, y: 130, duration: 460, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.stampIcon.y = snapPixel(this.stampIcon.y); } });
     this.tweens.add({ targets: this.fragmentIcon, y: 130, duration: 580, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.fragmentIcon.y = snapPixel(this.fragmentIcon.y); } });
     this.add.text(96, 148, "CITE", {
@@ -93,7 +97,7 @@ export class GuideScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(810);
 
     this.interactables = [
-      { id: "colleague", label: "Archive Colleague", x: 128, y: 87, radius: 24, kind: "npc", onInteract: () => this.talkColleague() },
+      { id: "colleague", label: "Archive Colleague", x: 128, y: 104, radius: 28, kind: "npc", onInteract: () => this.talkColleague() },
       { id: "stamp", label: "Citation Stamp", x: 96, y: 132, radius: 30, kind: "document", onInteract: () => this.takeStamp() },
       { id: "fragment", label: "FRUS Volume Fragment", x: 160, y: 132, radius: 30, kind: "document", onInteract: () => this.takeFragment() },
       { id: "gate", label: "Verification Gate", x: 128, y: 198, radius: 30, kind: "door", onInteract: () => this.openGate() }
