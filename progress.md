@@ -461,4 +461,5 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Updated the art-pack manifest with the native 128x192 runtime-sheet note for the ten canonical 32x48 character sprites.
 - Added `docs/art/16bit_sprite_wiring_final_report.md` with branch log, cleanup result, centralized loading confirmation, frame-order result, screenshot evidence, validation notes, and PR status.
 - Verified that character spritesheet loading is centralized through `src/art/characters.ts` and `BootScene.preloadCharacters(this)`.
-- PR creation is blocked locally because `gh` is not installed; the requested PR title is recorded in the final report.
+- Pushed `feature/wire-16bit-sprites` to origin.
+- PR creation is blocked locally because `gh` is not installed and the GitHub connector returned `token_expired`; the PR creation URL and requested title are recorded in the final report.

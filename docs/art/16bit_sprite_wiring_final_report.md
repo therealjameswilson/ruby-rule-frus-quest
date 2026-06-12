@@ -75,4 +75,12 @@ Requested PR title:
 Wire up 16-bit character sprites (32x48) across all scenes
 ```
 
-PR creation is blocked in this local environment because `gh` is not installed. The branch is locally complete and ready to push/open once GitHub CLI or connector PR creation is available.
+Branch push status: pushed to `origin/feature/wire-16bit-sprites`.
+
+PR creation URL:
+
+```text
+https://github.com/therealjameswilson/ruby-rule-frus-quest/pull/new/feature/wire-16bit-sprites
+```
+
+PR creation was attempted through the GitHub connector after push, but the connector returned `token_expired`. The local GitHub CLI fallback is also unavailable because `gh` is not installed. The branch is ready for PR creation once GitHub auth is refreshed.
