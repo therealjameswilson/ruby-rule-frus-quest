@@ -445,3 +445,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Tightened the production-colleague final fallback so it prefers a canonical `reviewer` sheet when available.
 - Verified `npm run build` and captured Phase 3 screenshots for CharacterCreateScene, the current OfficeScene->GuideScene path, NetworkScene interior, and a before/after comparison sheet.
 - Note: current `main` has no live Navy Hill/WorldScene path after the cleanup quarantine; OfficeScene routes to GuideScene, so Phase 3 visual QA uses that live office path plus NetworkScene as the interior sample.
+
+## 2026-06-12 16-bit sprite wiring Phase 4
+
+- Added `SpriteGallery`, a hidden visual-QA scene that renders all ten canonical 32x48 character sheets in a grid.
+- The gallery cycles through idle, walk, interact/use-tool, reading, and approval animations every 1.5 seconds.
+- Registered `SpriteGallery` in the Phaser scene list and `SCENE_ORDER` so `?scene=SpriteGallery` works for deep-link QA.
+- Added a global F9 shortcut from `main.ts` to open the gallery from normal game flow.
+- Captured `docs/screenshots/16bit-wire-gallery.png`, `docs/screenshots/16bit-wire-phase4.png`, and an F9 shortcut screenshot.
+- Ran `npm run palette:check --if-present`; no palette script is configured, so `tools/palette_report.md` records the skipped check and follow-up.
