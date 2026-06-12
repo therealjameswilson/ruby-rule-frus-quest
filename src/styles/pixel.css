@@ -99,6 +99,26 @@ canvas {
   display: none;
 }
 
+#performance-overlay {
+  position: fixed;
+  z-index: 9999;
+  right: max(6px, env(safe-area-inset-right));
+  top: max(6px, env(safe-area-inset-top));
+  margin: 0;
+  padding: 4px 6px;
+  border: 1px solid #d6a23a;
+  background: rgba(15, 15, 15, 0.76);
+  color: #f8f0d8;
+  font: 700 8px/1.2 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  pointer-events: none;
+  white-space: pre;
+  image-rendering: pixelated;
+}
+
+#performance-overlay[hidden] {
+  display: none;
+}
+
 #ios-install-hint,
 #fullscreen-affordance {
   position: fixed;

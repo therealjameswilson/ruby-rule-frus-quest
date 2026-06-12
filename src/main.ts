@@ -15,6 +15,7 @@ declare global {
     render_game_to_text?: () => string;
     advanceTime?: (ms: number) => Promise<void>;
     rubyRuleMobileMetrics?: MobileDebugMetrics;
+    rubyRuleResetPerformanceMetrics?: () => void;
     rubyRuleAudioDebug?: () => AudioDebugState;
   }
 }
@@ -23,6 +24,11 @@ interface MobileDebugMetrics {
   fpsCurrent: number;
   fpsAvg1s: number;
   fpsMin10s: number;
+  frameMsCurrent: number;
+  frameMsP99: number;
+  frameMsMax10s: number;
+  frameSampleCount: number;
+  frameHistogram: FrameHistogram;
   lastInputLatencyMs: number | null;
   lastPointerDownAt: number | null;
   activePointerCount: number;
@@ -39,6 +45,13 @@ interface MobileDebugMetrics {
   firstFrameMs: number | null;
 }
 
+interface FrameHistogram {
+  under16: number;
+  under20: number;
+  under33: number;
+  over33: number;
+}
+
 interface NavigatorWithStandalone extends Navigator {
   standalone?: boolean;
 }
@@ -53,6 +66,11 @@ window.rubyRuleMobileMetrics = {
   fpsCurrent: 0,
   fpsAvg1s: 0,
   fpsMin10s: 0,
+  frameMsCurrent: 0,
+  frameMsP99: 0,
+  frameMsMax10s: 0,
+  frameSampleCount: 0,
+  frameHistogram: { under16: 0, under20: 0, under33: 0, over33: 0 },
   lastInputLatencyMs: null,
   lastPointerDownAt: null,
   activePointerCount: 0,
@@ -69,8 +87,27 @@ window.rubyRuleMobileMetrics = {
   firstFrameMs: null
 };
 
-const mobileDebugFrames: Array<{ time: number; fps: number }> = [];
+const mobileDebugFrames: Array<{ time: number; fps: number; ms: number }> = [];
 let phaserGame: Phaser.Game | undefined;
+
+function resetMobilePerformanceMetrics() {
+  const metrics = window.rubyRuleMobileMetrics;
+  if (!metrics) return;
+  mobileDebugFrames.length = 0;
+  metrics.fpsCurrent = 0;
+  metrics.fpsAvg1s = 0;
+  metrics.fpsMin10s = 0;
+  metrics.frameMsCurrent = 0;
+  metrics.frameMsP99 = 0;
+  metrics.frameMsMax10s = 0;
+  metrics.frameSampleCount = 0;
+  metrics.frameHistogram.under16 = 0;
+  metrics.frameHistogram.under20 = 0;
+  metrics.frameHistogram.under33 = 0;
+  metrics.frameHistogram.over33 = 0;
+}
+
+window.rubyRuleResetPerformanceMetrics = resetMobilePerformanceMetrics;
 
 function getGameCanvas() {
   return (
@@ -99,13 +136,69 @@ function installMobileDebugHud() {
   hud.id = "mobile-debug-hud";
   hud.setAttribute("aria-label", "Mobile performance debug HUD");
   document.body.appendChild(hud);
+
+  const performanceHud = document.createElement("pre");
+  performanceHud.id = "performance-overlay";
+  performanceHud.setAttribute("aria-label", "Frame performance overlay");
+  document.body.appendChild(performanceHud);
+
   const params = new URLSearchParams(window.location.search);
   let visible = params.get("mobileDebug") === "1";
+  let performanceVisible = params.get("fps") === "1" || params.get("perf") === "1";
   hud.hidden = !visible;
+  performanceHud.hidden = !performanceVisible;
 
   const setVisible = (nextVisible: boolean) => {
     visible = nextVisible;
     hud.hidden = !visible;
+  };
+
+  const setPerformanceVisible = (nextVisible: boolean) => {
+    performanceVisible = nextVisible;
+    performanceHud.hidden = !performanceVisible;
+  };
+
+  const updateFrameMetrics = (time: number, fps: number, ms: number) => {
+    metrics.frameMsCurrent = ms;
+    metrics.fpsCurrent = fps;
+    mobileDebugFrames.push({ time, fps, ms });
+    while (mobileDebugFrames.length && time - mobileDebugFrames[0].time > 10000) {
+      mobileDebugFrames.shift();
+    }
+
+    let fps1sTotal = 0;
+    let fps1sCount = 0;
+    let fpsMin10s = Number.POSITIVE_INFINITY;
+    let maxMs10s = 0;
+    const histogram = metrics.frameHistogram;
+    histogram.under16 = 0;
+    histogram.under20 = 0;
+    histogram.under33 = 0;
+    histogram.over33 = 0;
+
+    for (const frame of mobileDebugFrames) {
+      if (time - frame.time <= 1000) {
+        fps1sTotal += frame.fps;
+        fps1sCount += 1;
+      }
+      if (frame.fps < fpsMin10s) fpsMin10s = frame.fps;
+      if (frame.ms > maxMs10s) maxMs10s = frame.ms;
+      if (frame.ms <= 16.7) histogram.under16 += 1;
+      else if (frame.ms <= 20) histogram.under20 += 1;
+      else if (frame.ms <= 33.4) histogram.under33 += 1;
+      else histogram.over33 += 1;
+    }
+
+    const sampleCount = mobileDebugFrames.length;
+    const p99TailCount = Math.max(1, Math.ceil(sampleCount * 0.01));
+    metrics.frameSampleCount = sampleCount;
+    metrics.fpsAvg1s = fps1sCount ? fps1sTotal / fps1sCount : fps;
+    metrics.fpsMin10s = Number.isFinite(fpsMin10s) ? fpsMin10s : fps;
+    metrics.frameMsMax10s = maxMs10s || ms;
+    if (histogram.over33 >= p99TailCount) metrics.frameMsP99 = metrics.frameMsMax10s;
+    else if (histogram.over33 + histogram.under33 >= p99TailCount) metrics.frameMsP99 = 33.4;
+    else if (histogram.over33 + histogram.under33 + histogram.under20 >= p99TailCount) metrics.frameMsP99 = 20;
+    else metrics.frameMsP99 = 16.7;
   };
 
   let lastFrame = performance.now();
@@ -114,33 +207,33 @@ function installMobileDebugHud() {
     lastFrame = time;
     if (metrics.firstFrameMs === null) metrics.firstFrameMs = time;
     const fps = 1000 / delta;
-    metrics.fpsCurrent = fps;
-    mobileDebugFrames.push({ time, fps });
-    while (mobileDebugFrames.length && time - mobileDebugFrames[0].time > 10000) {
-      mobileDebugFrames.shift();
-    }
-    const recent1s = mobileDebugFrames.filter((frame) => time - frame.time <= 1000);
-    metrics.fpsAvg1s = recent1s.length
-      ? recent1s.reduce((sum, frame) => sum + frame.fps, 0) / recent1s.length
-      : fps;
-    metrics.fpsMin10s = mobileDebugFrames.length
-      ? Math.min(...mobileDebugFrames.map((frame) => frame.fps))
-      : fps;
+    updateFrameMetrics(time, fps, delta);
     updateMobileCanvasMetrics();
     if (visible) {
-      hud.textContent = [
-        `FPS now ${metrics.fpsCurrent.toFixed(1)} | 1s ${metrics.fpsAvg1s.toFixed(1)} | 10s min ${metrics.fpsMin10s.toFixed(1)}`,
-        `INPUT ${metrics.lastInputLatencyMs === null ? "--" : `${metrics.lastInputLatencyMs.toFixed(1)}ms`} | POINTERS ${metrics.activePointerCount}`,
-        `DPR ${metrics.dpr.toFixed(2)} | ZOOM ${metrics.computedZoom.toFixed(3)} ${metrics.integerZoom ? "INT" : "FRAC"} | TARGET ${metrics.integerZoomTarget}x`,
-        `CSS ${metrics.canvasCssWidth.toFixed(1)}x${metrics.canvasCssHeight.toFixed(1)} | BUFFER ${metrics.canvasBackingWidth}x${metrics.canvasBackingHeight}`,
-        `GUARD ${metrics.scaleGuardAdjustments} | PROOF ${metrics.pixelProofVisible ? "ON" : "OFF"}`,
-        `FIRST FRAME ${metrics.firstFrameMs === null ? "--" : `${metrics.firstFrameMs.toFixed(1)}ms`}`
-      ].join("\n");
+      const histogram = metrics.frameHistogram;
+      hud.textContent =
+        `FPS now ${metrics.fpsCurrent.toFixed(1)} | 1s ${metrics.fpsAvg1s.toFixed(1)} | 10s min ${metrics.fpsMin10s.toFixed(1)}\n`
+        + `FRAME ${metrics.frameMsCurrent.toFixed(2)}ms | p99 ${metrics.frameMsP99.toFixed(1)}ms | max ${metrics.frameMsMax10s.toFixed(1)}ms | samples ${metrics.frameSampleCount}\n`
+        + `HIST <=16.7 ${histogram.under16} | <=20 ${histogram.under20} | <=33.4 ${histogram.under33} | >33.4 ${histogram.over33}\n`
+        + `INPUT ${metrics.lastInputLatencyMs === null ? "--" : `${metrics.lastInputLatencyMs.toFixed(1)}ms`} | POINTERS ${metrics.activePointerCount}\n`
+        + `DPR ${metrics.dpr.toFixed(2)} | ZOOM ${metrics.computedZoom.toFixed(3)} ${metrics.integerZoom ? "INT" : "FRAC"} | TARGET ${metrics.integerZoomTarget}x\n`
+        + `CSS ${metrics.canvasCssWidth.toFixed(1)}x${metrics.canvasCssHeight.toFixed(1)} | BUFFER ${metrics.canvasBackingWidth}x${metrics.canvasBackingHeight}\n`
+        + `GUARD ${metrics.scaleGuardAdjustments} | PROOF ${metrics.pixelProofVisible ? "ON" : "OFF"}\n`
+        + `FIRST FRAME ${metrics.firstFrameMs === null ? "--" : `${metrics.firstFrameMs.toFixed(1)}ms`}`;
+    }
+    if (performanceVisible) {
+      performanceHud.textContent =
+        `FPS ${Math.round(metrics.fpsAvg1s)}\n`
+        + `p99 ${metrics.frameMsP99.toFixed(0)}ms\n`
+        + `min ${Math.round(metrics.fpsMin10s)}`;
     }
     requestAnimationFrame(update);
   };
   requestAnimationFrame(update);
-  return () => setVisible(!visible);
+  return {
+    toggleMobileDebug: () => setVisible(!visible),
+    togglePerformanceOverlay: () => setPerformanceVisible(!performanceVisible)
+  };
 }
 
 function isTouchCapable() {
@@ -346,8 +439,8 @@ function installPixelProofOverlay() {
 
 updateViewportCssVars();
 installMobileShellAffordances();
-const toggleMobileDebug = installMobileDebugHud();
-initializeInput({ toggleMobileDebug });
+const performanceToggles = installMobileDebugHud();
+initializeInput(performanceToggles);
 configureIntegerGameShellScale();
 window.addEventListener("resize", scheduleIntegerScaleRefresh);
 window.addEventListener("orientationchange", scheduleIntegerScaleRefresh);

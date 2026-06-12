@@ -61,6 +61,7 @@ export interface InputState {
 
 interface InputCallbacks {
   toggleMobileDebug?: () => void;
+  togglePerformanceOverlay?: () => void;
   togglePixelProof?: () => void;
   toggleTouchOverlay?: () => void;
   openSpriteGallery?: () => void;
@@ -231,6 +232,11 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
     if (event.key === "F11" && !event.repeat) {
       event.preventDefault();
       callbacks.toggleMobileDebug?.();
+      return;
+    }
+    if (event.key === "F7" && !event.repeat) {
+      event.preventDefault();
+      callbacks.togglePerformanceOverlay?.();
       return;
     }
     if (event.key === "F8" && !event.repeat) {

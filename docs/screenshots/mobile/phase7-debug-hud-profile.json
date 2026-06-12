@@ -1,0 +1,311 @@
+{
+  "url": "http://127.0.0.1:5194/?mobileDebug=1",
+  "seconds": 2,
+  "warmupMs": 1000,
+  "generatedAt": "2026-06-12T21:54:11.337Z",
+  "summary": {
+    "sampleCount": 8,
+    "avgFps": 60.01239717915296,
+    "minFps": 59.9987913904422,
+    "maxSampledFrameP99Ms": 20,
+    "finalFrameP99Ms": 20,
+    "finalFrameMaxMs": 16.800000000000182,
+    "lastInputLatencyMs": 1.8000000357627641,
+    "consoleWarningsOrErrors": 1,
+    "pageErrors": 0
+  },
+  "finalMetrics": {
+    "fpsCurrent": 60.24096385542202,
+    "fpsAvg1s": 60.00484570206668,
+    "fpsMin10s": 59.52380952380888,
+    "frameMsCurrent": 16.59999999999991,
+    "frameMsP99": 20,
+    "frameMsMax10s": 16.800000000000182,
+    "frameSampleCount": 128,
+    "frameHistogram": {
+      "under16": 88,
+      "under20": 40,
+      "under33": 0,
+      "over33": 0
+    },
+    "lastInputLatencyMs": 1.8000000357627641,
+    "lastPointerDownAt": 900.0999999642372,
+    "activePointerCount": 0,
+    "dpr": 2,
+    "canvasCssWidth": 768,
+    "canvasCssHeight": 720,
+    "canvasBackingWidth": 256,
+    "canvasBackingHeight": 240,
+    "computedZoom": 3,
+    "integerZoomTarget": 3,
+    "integerZoom": true,
+    "scaleGuardAdjustments": 0,
+    "pixelProofVisible": false,
+    "firstFrameMs": 152.028
+  },
+  "consoleMessages": [
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x124004d4e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    }
+  ],
+  "pageErrors": [],
+  "samples": [
+    {
+      "elapsedMs": 1,
+      "metrics": {
+        "fpsCurrent": 60.24096385542119,
+        "fpsAvg1s": 60.06060168818983,
+        "fpsMin10s": 59.88023952095792,
+        "frameMsCurrent": 16.600000000000136,
+        "frameMsP99": 20,
+        "frameMsMax10s": 16.700000000000045,
+        "frameSampleCount": 6,
+        "frameHistogram": {
+          "under16": 3,
+          "under20": 3,
+          "under33": 0,
+          "over33": 0
+        },
+        "lastInputLatencyMs": 1.8000000357627641,
+        "lastPointerDownAt": 900.0999999642372,
+        "activePointerCount": 0,
+        "dpr": 2,
+        "canvasCssWidth": 768,
+        "canvasCssHeight": 720,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 3,
+        "integerZoomTarget": 3,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 152.028
+      }
+    },
+    {
+      "elapsedMs": 252,
+      "metrics": {
+        "fpsCurrent": 59.880239520957105,
+        "fpsAvg1s": 60.01827550983969,
+        "fpsMin10s": 59.52380952380888,
+        "frameMsCurrent": 16.700000000000273,
+        "frameMsP99": 20,
+        "frameMsMax10s": 16.800000000000182,
+        "frameSampleCount": 21,
+        "frameHistogram": {
+          "under16": 13,
+          "under20": 8,
+          "under33": 0,
+          "over33": 0
+        },
+        "lastInputLatencyMs": 1.8000000357627641,
+        "lastPointerDownAt": 900.0999999642372,
+        "activePointerCount": 0,
+        "dpr": 2,
+        "canvasCssWidth": 768,
+        "canvasCssHeight": 720,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 3,
+        "integerZoomTarget": 3,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 152.028
+      }
+    },
+    {
+      "elapsedMs": 506,
+      "metrics": {
+        "fpsCurrent": 60.24096385542202,
+        "fpsAvg1s": 60.007562929430016,
+        "fpsMin10s": 59.52380952380888,
+        "frameMsCurrent": 16.59999999999991,
+        "frameMsP99": 20,
+        "frameMsMax10s": 16.800000000000182,
+        "frameSampleCount": 37,
+        "frameHistogram": {
+          "under16": 24,
+          "under20": 13,
+          "under33": 0,
+          "over33": 0
+        },
+        "lastInputLatencyMs": 1.8000000357627641,
+        "lastPointerDownAt": 900.0999999642372,
+        "activePointerCount": 0,
+        "dpr": 2,
+        "canvasCssWidth": 768,
+        "canvasCssHeight": 720,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 3,
+        "integerZoomTarget": 3,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 152.028
+      }
+    },
+    {
+      "elapsedMs": 759,
+      "metrics": {
+        "fpsCurrent": 59.88023952095874,
+        "fpsAvg1s": 60.00560263870988,
+        "fpsMin10s": 59.52380952380888,
+        "frameMsCurrent": 16.699999999999818,
+        "frameMsP99": 20,
+        "frameMsMax10s": 16.800000000000182,
+        "frameSampleCount": 52,
+        "frameHistogram": {
+          "under16": 34,
+          "under20": 18,
+          "under33": 0,
+          "over33": 0
+        },
+        "lastInputLatencyMs": 1.8000000357627641,
+        "lastPointerDownAt": 900.0999999642372,
+        "activePointerCount": 0,
+        "dpr": 2,
+        "canvasCssWidth": 768,
+        "canvasCssHeight": 720,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 3,
+        "integerZoomTarget": 3,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 152.028
+      }
+    },
+    {
+      "elapsedMs": 1012,
+      "metrics": {
+        "fpsCurrent": 59.88023952095874,
+        "fpsAvg1s": 59.998933468368264,
+        "fpsMin10s": 59.52380952380888,
+        "frameMsCurrent": 16.699999999999818,
+        "frameMsP99": 20,
+        "frameMsMax10s": 16.800000000000182,
+        "frameSampleCount": 67,
+        "frameHistogram": {
+          "under16": 44,
+          "under20": 23,
+          "under33": 0,
+          "over33": 0
+        },
+        "lastInputLatencyMs": 1.8000000357627641,
+        "lastPointerDownAt": 900.0999999642372,
+        "activePointerCount": 0,
+        "dpr": 2,
+        "canvasCssWidth": 768,
+        "canvasCssHeight": 720,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 3,
+        "integerZoomTarget": 3,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 152.028
+      }
+    },
+    {
+      "elapsedMs": 1264,
+      "metrics": {
+        "fpsCurrent": 59.52380952381049,
+        "fpsAvg1s": 59.99879139044221,
+        "fpsMin10s": 59.52380952380888,
+        "frameMsCurrent": 16.799999999999727,
+        "frameMsP99": 20,
+        "frameMsMax10s": 16.800000000000182,
+        "frameSampleCount": 82,
+        "frameHistogram": {
+          "under16": 54,
+          "under20": 28,
+          "under33": 0,
+          "over33": 0
+        },
+        "lastInputLatencyMs": 1.8000000357627641,
+        "lastPointerDownAt": 900.0999999642372,
+        "activePointerCount": 0,
+        "dpr": 2,
+        "canvasCssWidth": 768,
+        "canvasCssHeight": 720,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 3,
+        "integerZoomTarget": 3,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 152.028
+      }
+    },
+    {
+      "elapsedMs": 1517,
+      "metrics": {
+        "fpsCurrent": 60.24096385542202,
+        "fpsAvg1s": 60.010618417801645,
+        "fpsMin10s": 59.52380952380888,
+        "frameMsCurrent": 16.59999999999991,
+        "frameMsP99": 20,
+        "frameMsMax10s": 16.800000000000182,
+        "frameSampleCount": 97,
+        "frameHistogram": {
+          "under16": 64,
+          "under20": 33,
+          "under33": 0,
+          "over33": 0
+        },
+        "lastInputLatencyMs": 1.8000000357627641,
+        "lastPointerDownAt": 900.0999999642372,
+        "activePointerCount": 0,
+        "dpr": 2,
+        "canvasCssWidth": 768,
+        "canvasCssHeight": 720,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 3,
+        "integerZoomTarget": 3,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 152.028
+      }
+    },
+    {
+      "elapsedMs": 1770,
+      "metrics": {
+        "fpsCurrent": 59.52380952381049,
+        "fpsAvg1s": 59.9987913904422,
+        "fpsMin10s": 59.52380952380888,
+        "frameMsCurrent": 16.799999999999727,
+        "frameMsP99": 20,
+        "frameMsMax10s": 16.800000000000182,
+        "frameSampleCount": 112,
+        "frameHistogram": {
+          "under16": 76,
+          "under20": 36,
+          "under33": 0,
+          "over33": 0
+        },
+        "lastInputLatencyMs": 1.8000000357627641,
+        "lastPointerDownAt": 900.0999999642372,
+        "activePointerCount": 0,
+        "dpr": 2,
+        "canvasCssWidth": 768,
+        "canvasCssHeight": 720,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 3,
+        "integerZoomTarget": 3,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 152.028
+      }
+    }
+  ]
+}

@@ -515,3 +515,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Added visibility/page lifecycle handling so backgrounding suspends audio and foregrounding resumes the active score with a short fade-in.
 - Added context state-change handling for iOS-style audio interruptions plus a `window.rubyRuleAudioDebug()` QA readout.
 - Verified the phase with an audio lifecycle probe, the standard web-game client, Playwright iPhone/Pixel device-profile screenshots, and an in-app browser console-error smoke.
+
+## 2026-06-12 Mobile SNES Quality Phase 7
+
+- Added a tiny `F7` / `?fps=1` performance overlay and expanded the `F11` mobile debug HUD with frame p99, max frame time, sample count, and histogram buckets.
+- Reworked the frame sampler to avoid per-frame array filter/map/reduce allocations while measuring the game.
+- Added `npm run perf:profile` for repeatable local/deployed browser performance sampling with JSON output and optional screenshots.
+- Verified the phase with `npm run build`, local 60 FPS profile artifacts, Playwright iPhone/Pixel device-profile screenshots, and an in-app browser load/log check.
