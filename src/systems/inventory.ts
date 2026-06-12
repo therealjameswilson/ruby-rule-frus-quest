@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
-import { gameState, getAreaProgressReadout, getDocumentWorkflowReadout, getWorkflowToolReadout } from "../game/state";
+import {
+  gameState,
+  getAdventureHudReadout,
+  getAreaProgressReadout,
+  getDocumentWorkflowReadout,
+  getWorkflowToolReadout
+} from "../game/state";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -68,9 +74,12 @@ export class InventoryOverlay {
       .slice(0, 5)
       .map((document) => `${document.selected ? "OK" : "--"} ${document.id.replace(/_001|_047|_412/g, "").toUpperCase()}: ${document.state}`)
       .join("\n") || "-- NO DOCUMENTS ROUTED";
+    const hud = getAdventureHudReadout();
     this.body.setText([
       `DOCUMENT POINTS: ${gameState.documentPoints}`,
       `FRUS VOLUME PARTS: ${gameState.volumeFragments.length}/5`,
+      `EQUIPPED TOOL: ${hud.equippedItem?.displayName ?? "NONE"}`,
+      `CONF ${hud.confidence.meter}  CLAR ${hud.clarity.meter}`,
       "",
       "QUEST ROUTE",
       areas,

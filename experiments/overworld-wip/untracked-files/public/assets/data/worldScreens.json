@@ -1,0 +1,1407 @@
+{
+  "id": "frus-overworld-screens",
+  "displayName": "FRUS Overworld Screen Grid",
+  "tileSize": 16,
+  "screenWidthTiles": 16,
+  "screenHeightTiles": 14,
+  "gridWidth": 5,
+  "gridHeight": 4,
+  "viewport": {
+    "width": 256,
+    "height": 224,
+    "hudHeight": 16
+  },
+  "startScreenId": "navy-hill",
+  "startSpawn": "center",
+  "tileLegend": {
+    "g": {
+      "name": "grass",
+      "solid": false,
+      "palette": "openNetGreen"
+    },
+    ",": {
+      "name": "grass fleck",
+      "solid": false,
+      "palette": "archiveAmber"
+    },
+    "p": {
+      "name": "path",
+      "solid": false,
+      "palette": "creamPaper"
+    },
+    "o": {
+      "name": "office floor",
+      "solid": false,
+      "palette": "terminalCyan"
+    },
+    "r": {
+      "name": "wall",
+      "solid": true,
+      "palette": "buckramRed"
+    },
+    "w": {
+      "name": "water",
+      "solid": true,
+      "palette": "mapWater"
+    },
+    "t": {
+      "name": "trees",
+      "solid": true,
+      "palette": "openNetGreen"
+    },
+    "f": {
+      "name": "fence",
+      "solid": true,
+      "palette": "stoneGray"
+    },
+    "d": {
+      "name": "door",
+      "solid": false,
+      "palette": "goldStamp"
+    },
+    "a": {
+      "name": "archive shelf",
+      "solid": true,
+      "palette": "archiveAmber"
+    },
+    "s": {
+      "name": "security gate",
+      "solid": true,
+      "palette": "classNetRed"
+    },
+    "m": {
+      "name": "document table",
+      "solid": true,
+      "palette": "goldStamp"
+    },
+    "b": {
+      "name": "bridge",
+      "solid": false,
+      "palette": "archiveAmber"
+    },
+    "q": {
+      "name": "file box",
+      "solid": true,
+      "palette": "archiveAmber"
+    },
+    "i": {
+      "name": "file cabinet",
+      "solid": true,
+      "palette": "stoneGray"
+    },
+    "u": {
+      "name": "reading table",
+      "solid": true,
+      "palette": "creamPaper"
+    },
+    "c": {
+      "name": "document cart",
+      "solid": true,
+      "palette": "archiveAmber"
+    },
+    "l": {
+      "name": "locked door",
+      "solid": true,
+      "palette": "classNetRed"
+    },
+    "x": {
+      "name": "terminal",
+      "solid": true,
+      "palette": "terminalCyan"
+    },
+    "n": {
+      "name": "document stack",
+      "solid": true,
+      "palette": "creamPaper"
+    },
+    "z": {
+      "name": "redaction barrier",
+      "solid": true,
+      "palette": "black"
+    }
+  },
+  "screens": [
+    {
+      "id": "archive-grove",
+      "regionName": "Archive Grove",
+      "areaId": "archive_cavern",
+      "gridX": 0,
+      "gridY": 0,
+      "tileLayout": [
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg",
+        "ggg,,,,,,,,,,ggg",
+        "ggppppppppppppgg",
+        "gppppppppppppppg",
+        "pppppppppppppppp",
+        "pppppppppppppppp",
+        "gppppppppppppppg",
+        "ggppppppppppppgg",
+        "ggg,,,,,,,,,,ggg",
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg"
+      ],
+      "exits": {
+        "east": "nara-ii",
+        "south": "navy-hill"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        },
+        "south": {
+          "x": 128,
+          "y": 210
+        }
+      },
+      "interactables": [
+        {
+          "id": "archive_grove_index",
+          "label": "Index marker",
+          "kind": "document",
+          "x": 72,
+          "y": 116,
+          "texture": "source-note",
+          "dialog": [
+            "ARCHIVE GROVE",
+            "A quiet edge of the archive campus. One path leads east."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "nara-ii",
+      "regionName": "NARA II",
+      "areaId": "archive_cavern",
+      "gridX": 1,
+      "gridY": 0,
+      "tileLayout": [
+        "ttttpppppppptttt",
+        "tttppppppppppttt",
+        "ttppaaaaaaaaaatt",
+        "ttppaaqqddnnappt",
+        "ttppaaapppaaappt",
+        "ttppaaaaaaaaaatt",
+        "tppppppppppppppt",
+        "tppggggggggggppt",
+        "tppgggg,,ggggppt",
+        "tppggggggggggppt",
+        "tppppppppppppppt",
+        "tttttppppppttttt",
+        "tttttppppppttttt",
+        "gggggppppppggggg"
+      ],
+      "exits": {
+        "west": "archive-grove",
+        "east": "records-quad"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "nara2_finding_aid",
+          "label": "Finding aid cart",
+          "kind": "document",
+          "x": 94,
+          "y": 82,
+          "texture": "review-folder",
+          "solid": false,
+          "grantsItem": "finding_aid",
+          "grantsFlag": "hasFindingAid",
+          "successDialog": [
+            "FINDING AID CART",
+            "Finding Aid acquired.",
+            "The records route now has a defensible box and folder trail."
+          ],
+          "dialog": [
+            "FINDING AID CART",
+            "The finding aid is already copied into your working notes."
+          ]
+        },
+        {
+          "id": "nara2_stacks",
+          "label": "NARA II stacks",
+          "kind": "document",
+          "x": 174,
+          "y": 82,
+          "texture": "source-note",
+          "dialog": [
+            "NARA II STACKS",
+            "Expanded archive shelves line the north campus."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "records-quad",
+      "regionName": "Records Quad",
+      "areaId": "archive_cavern",
+      "gridX": 2,
+      "gridY": 0,
+      "tileLayout": [
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg",
+        "ggg,,,,,,,,,,ggg",
+        "ggppppppppppppgg",
+        "gppppppppppppppg",
+        "pppppppppppppppp",
+        "pppppppppppppppp",
+        "gppppppppppppppg",
+        "ggppppppppppppgg",
+        "ggg,,,,,,,,,,ggg",
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg"
+      ],
+      "exits": {
+        "west": "nara-ii",
+        "east": "nara-i"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "records_quad_table",
+          "label": "Record pull table",
+          "kind": "document",
+          "x": 128,
+          "y": 120,
+          "texture": "source-note",
+          "dialog": [
+            "RECORD PULL TABLE",
+            "Candidate records rest in small batches, not piles."
+          ]
+        }
+      ],
+      "npcs": [],
+      "exitRequirements": {
+        "east": [
+          "hasFindingAid"
+        ]
+      }
+    },
+    {
+      "id": "nara-i",
+      "regionName": "NARA I",
+      "areaId": "archive_cavern",
+      "gridX": 3,
+      "gridY": 0,
+      "tileLayout": [
+        "ttttpppppppptttt",
+        "tttppppppppppttt",
+        "ttppaaaaaaaaaatt",
+        "ttppaaaaddaaappt",
+        "ttppaaapppaaappt",
+        "ttppaaaaaaaaaatt",
+        "tppppppppppppppt",
+        "tppggggggggggppt",
+        "tppgggg,,ggggppt",
+        "tppggggggggggppt",
+        "tppppppppppppppt",
+        "tttttppppppttttt",
+        "tttttppppppttttt",
+        "gggggppppppggggg"
+      ],
+      "exits": {
+        "west": "records-quad",
+        "east": "north-fence"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "nara1_public_room",
+          "label": "Public room desk",
+          "kind": "document",
+          "x": 84,
+          "y": 88,
+          "texture": "source-note",
+          "dialog": [
+            "NARA I",
+            "Open research begins with a readable trail."
+          ]
+        },
+        {
+          "id": "nara1_holdings",
+          "label": "Holdings shelf",
+          "kind": "document",
+          "x": 174,
+          "y": 90,
+          "texture": "source-note",
+          "dialog": [
+            "HOLDINGS SHELF",
+            "Use the finding aid before crossing deeper into records."
+          ]
+        }
+      ],
+      "npcs": [],
+      "exitRequirements": {
+        "east": [
+          "hasDocumentSet"
+        ]
+      }
+    },
+    {
+      "id": "north-fence",
+      "regionName": "North Fence",
+      "areaId": "archive_cavern",
+      "gridX": 4,
+      "gridY": 0,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "ggppffffffffffgg",
+        "ggppfssssssfppgg",
+        "ggppfsoooosfppgg",
+        "ggppfsoxzmsfppgg",
+        "ggppfsoooosfppgg",
+        "pppppppddppppppp",
+        "ggppffffffffffgg",
+        "ggppgggppgggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg"
+      ],
+      "exits": {
+        "west": "nara-i",
+        "south": "undisclosed-location"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "south": {
+          "x": 128,
+          "y": 210
+        }
+      },
+      "interactables": [
+        {
+          "id": "north_fence_notice",
+          "label": "Fence notice",
+          "kind": "document",
+          "x": 128,
+          "y": 112,
+          "texture": "source-note",
+          "dialog": [
+            "NORTH FENCE",
+            "A controlled route bends south. The gate expects a declassification stamp."
+          ]
+        }
+      ],
+      "npcs": [],
+      "exitRequirements": {
+        "south": [
+          "hasDeclassificationStamp"
+        ]
+      }
+    },
+    {
+      "id": "navy-hill",
+      "regionName": "Navy Hill",
+      "areaId": "office_hub",
+      "gridX": 0,
+      "gridY": 1,
+      "tileLayout": [
+        "ggggggppgggggggg",
+        "gttgggppggggttgg",
+        "ggggggppgggggggg",
+        "gg,,,,pp,,,,,,gg",
+        "gggppppppppppggg",
+        "gggppppppppppggg",
+        "pppppppppppppppp",
+        "pppppppppppppppp",
+        "gggppppppppppggg",
+        "gggppppppppppggg",
+        "gg,,,,pp,,,,,,gg",
+        "ggggggppgggggggg",
+        "gttgggppggggttgg",
+        "ggggggppgggggggg"
+      ],
+      "exits": {
+        "north": "archive-grove",
+        "east": "mall-path",
+        "south": "little-rock"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        },
+        "north": {
+          "x": 128,
+          "y": 18
+        },
+        "south": {
+          "x": 128,
+          "y": 210
+        }
+      },
+      "interactables": [
+        {
+          "id": "navy_hill_notes",
+          "label": "Navy Hill source notes",
+          "kind": "document",
+          "x": 82,
+          "y": 118,
+          "texture": "source-note",
+          "dialog": [
+            "NAVY HILL",
+            "Start here. East and south paths are open; the archive route north needs the assignment memo."
+          ]
+        },
+        {
+          "id": "navy_hill_directory",
+          "label": "District directory",
+          "kind": "document",
+          "x": 158,
+          "y": 96,
+          "texture": "source-note",
+          "dialog": [
+            "DISTRICT DIRECTORY",
+            "The Compiler Office holds the assignment memo. It opens the NARA archive path north."
+          ]
+        }
+      ],
+      "npcs": [],
+      "exitRequirements": {
+        "north": [
+          "hasAssignmentMemo"
+        ]
+      }
+    },
+    {
+      "id": "mall-path",
+      "regionName": "Mall Path",
+      "areaId": "office_hub",
+      "gridX": 1,
+      "gridY": 1,
+      "tileLayout": [
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg",
+        "ggg,,,,,,,,,,ggg",
+        "ggppppppppppppgg",
+        "gppppppppppppppg",
+        "pppppppppppppppp",
+        "pppppppppppppppp",
+        "gppppppppppppppg",
+        "ggppppppppppppgg",
+        "ggg,,,,,,,,,,ggg",
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg"
+      ],
+      "exits": {
+        "west": "navy-hill",
+        "east": "white-house"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "mall_path_sign",
+          "label": "Mall path sign",
+          "kind": "document",
+          "x": 128,
+          "y": 112,
+          "texture": "source-note",
+          "dialog": [
+            "MALL PATH",
+            "A spacious route keeps the district readable one screen at a time."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "white-house",
+      "regionName": "White House",
+      "areaId": "office_hub",
+      "gridX": 2,
+      "gridY": 1,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "ggppppppppppppgg",
+        "gppprrrrrrrrpppg",
+        "gppproooooorpppg",
+        "gppprommmmoorppg",
+        "gppproooooorpppg",
+        "pppppppddppppppp",
+        "ggppppppppppppgg",
+        "ggppgggppgggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "ggppppppppppppgg",
+        "ggppggggggggppgg",
+        "ggggppppppppgggg"
+      ],
+      "exits": {
+        "west": "mall-path",
+        "east": "declass-court"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "golden_rule",
+          "label": "Golden Rule poster",
+          "kind": "poster",
+          "x": 128,
+          "y": 76,
+          "texture": "frus-volume",
+          "dialog": [
+            "GOLDEN RULE",
+            "STATECHAT PROPOSES. HUMANS DECIDE. PUBLISHED FRUS IS THE RECORD."
+          ]
+        },
+        {
+          "id": "review_memo",
+          "label": "Review memo desk",
+          "kind": "document",
+          "x": 88,
+          "y": 142,
+          "texture": "proof-page",
+          "dialog": [
+            "REVIEW ROOM NOTICE",
+            "Reviewer approval is issued inside, after the source note packet is complete."
+          ]
+        },
+        {
+          "id": "classnet",
+          "label": "ClassNet terminal",
+          "kind": "terminal",
+          "x": 188,
+          "y": 142,
+          "texture": "classnet-terminal",
+          "dialog": [
+            "CLASSNET TERMINAL",
+            "AI ANNO TOOL QUEUED. ARCHIVE CAVERN UNLOCKED."
+          ]
+        }
+      ],
+      "npcs": [],
+      "exitRequirements": {
+        "east": [
+          "hasReviewerApproval"
+        ]
+      }
+    },
+    {
+      "id": "declass-court",
+      "regionName": "Declass Court",
+      "areaId": "declassification_review",
+      "gridX": 3,
+      "gridY": 1,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "ggppffffffffffgg",
+        "ggppfssssssfppgg",
+        "ggppfsoooosfppgg",
+        "ggppfsommmsfppgg",
+        "ggppfsoooosfppgg",
+        "pppppppddppppppp",
+        "ggppffffffffffgg",
+        "ggppgggppgggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg"
+      ],
+      "exits": {
+        "west": "white-house",
+        "east": "undisclosed-location"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "declass_gate_log",
+          "label": "Gate log",
+          "kind": "document",
+          "x": 94,
+          "y": 120,
+          "texture": "source-note",
+          "dialog": [
+            "DECLASS COURT",
+            "The hidden eastern route requires a declassification stamp."
+          ]
+        },
+        {
+          "id": "equity_seal",
+          "label": "Agency equity seal",
+          "kind": "document",
+          "x": 164,
+          "y": 112,
+          "texture": "source-note",
+          "dialog": [
+            "AGENCY EQUITY",
+            "Equities are tracked before any final gate opens."
+          ]
+        }
+      ],
+      "npcs": [],
+      "exitRequirements": {
+        "east": [
+          "hasDeclassificationStamp"
+        ]
+      }
+    },
+    {
+      "id": "undisclosed-location",
+      "regionName": "Undisclosed Location",
+      "areaId": "buckram_gate",
+      "gridX": 4,
+      "gridY": 1,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "rrsssssrrsssssrr",
+        "rsrrrrrrrrrrrrsr",
+        "rsrooooooooorrsr",
+        "rsrommmmmmmoorsr",
+        "rsrooooooooorrsr",
+        "pppdddlllldddppp",
+        "rsrooooooooorrsr",
+        "rsrommmmmmmoorsr",
+        "rsrrrrrrrrrrrrsr",
+        "rrssssssssssssrr",
+        "rrrrrrpppprrrrrr",
+        "rrrrrrpppprrrrrr",
+        "ggggggppppgggggg"
+      ],
+      "exits": {
+        "west": "declass-court",
+        "north": "north-fence"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "north": {
+          "x": 128,
+          "y": 18
+        }
+      },
+      "interactables": [
+        {
+          "id": "undisclosed_gate",
+          "label": "Undisclosed gate",
+          "kind": "door",
+          "x": 128,
+          "y": 88,
+          "texture": "buckram-key",
+          "dialog": [
+            "UNDISCLOSED GATE",
+            "Final publication remains locked until the Buckram Key is earned."
+          ]
+        }
+      ],
+      "npcs": [],
+      "requiredFlags": [
+        "hasDeclassificationStamp"
+      ]
+    },
+    {
+      "id": "little-rock",
+      "regionName": "Little Rock",
+      "areaId": "referral_vault",
+      "gridX": 0,
+      "gridY": 2,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "gggppppppppppggg",
+        "ggppppppppppppgg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "pppppppppppppppp",
+        "wwwwwwbbbbwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww"
+      ],
+      "exits": {
+        "north": "navy-hill",
+        "east": "potomac-bend"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 92
+        },
+        "east": {
+          "x": 238,
+          "y": 88
+        },
+        "north": {
+          "x": 128,
+          "y": 18
+        }
+      },
+      "interactables": [
+        {
+          "id": "little_rock_manifest",
+          "label": "Referral manifest",
+          "kind": "document",
+          "x": 92,
+          "y": 84,
+          "texture": "source-note",
+          "dialog": [
+            "REFERRAL MANIFEST",
+            "Agency response complete means the route can continue."
+          ]
+        },
+        {
+          "id": "library_table",
+          "label": "Library table",
+          "kind": "document",
+          "x": 154,
+          "y": 92,
+          "texture": "source-note",
+          "dialog": [
+            "LIBRARY TABLE",
+            "A presidential library zone with room to breathe."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "potomac-bend",
+      "regionName": "Potomac Bend",
+      "areaId": "office_hub",
+      "gridX": 1,
+      "gridY": 2,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "gggppppppppppggg",
+        "ggppppppppppppgg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "pppppppppppppppp",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww"
+      ],
+      "exits": {
+        "west": "little-rock",
+        "east": "newington"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 92
+        },
+        "west": {
+          "x": 18,
+          "y": 88
+        },
+        "east": {
+          "x": 238,
+          "y": 88
+        }
+      },
+      "interactables": [
+        {
+          "id": "clearance_badge",
+          "label": "Clearance badge",
+          "kind": "document",
+          "x": 128,
+          "y": 82,
+          "texture": "clearance-token",
+          "solid": false,
+          "grantsFlag": "hasClearanceBadge",
+          "successDialog": [
+            "CLEARANCE BADGE",
+            "Clearance Badge acquired.",
+            "Secure records at Newington can now issue the Redaction Lens."
+          ],
+          "dialog": [
+            "CLEARANCE BADGE",
+            "Your route badge is already clipped to the review packet."
+          ]
+        }
+      ],
+      "npcs": [],
+      "exitRequirements": {
+        "east": [
+          "hasClearanceBadge"
+        ]
+      }
+    },
+    {
+      "id": "newington",
+      "regionName": "Newington",
+      "areaId": "silent_read_tower",
+      "gridX": 2,
+      "gridY": 2,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "ggppffffffffffgg",
+        "ggppfssssssfppgg",
+        "ggppfsoooosfppgg",
+        "ggppfsolxmsfppgg",
+        "ggppfsoooosfppgg",
+        "pppppppddppppppp",
+        "ggppffffffffffgg",
+        "pppppppppppppppp",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg"
+      ],
+      "exits": {
+        "west": "potomac-bend",
+        "east": "review-field"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "newington_secure_desk",
+          "label": "Secure desk",
+          "kind": "document",
+          "x": 128,
+          "y": 88,
+          "texture": "source-note",
+          "dialog": [
+            "NEWINGTON",
+            "A secure facility screen with a clear central lane."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "review-field",
+      "regionName": "Review Field",
+      "areaId": "editors_labyrinth",
+      "gridX": 3,
+      "gridY": 2,
+      "tileLayout": [
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg",
+        "ggg,,,,,,,,,,ggg",
+        "ggppppppppppppgg",
+        "gppppppppppppppg",
+        "pppppppppppppppp",
+        "pppppppppppppppp",
+        "gppppppppppppppg",
+        "ggppppppppppppgg",
+        "ggg,,,,,,,,,,ggg",
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg"
+      ],
+      "exits": {
+        "west": "newington",
+        "east": "springfield"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "review_field_table",
+          "label": "Review table",
+          "kind": "document",
+          "x": 112,
+          "y": 118,
+          "texture": "source-note",
+          "dialog": [
+            "REVIEW FIELD",
+            "Draft issues move east only after human review."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "springfield",
+      "regionName": "Springfield",
+      "areaId": "editors_labyrinth",
+      "gridX": 4,
+      "gridY": 2,
+      "tileLayout": [
+        "ttttpppppppptttt",
+        "tttppppppppppttt",
+        "ttppaaaaaaaaaatt",
+        "ttppaaaaddaaappt",
+        "ttppaaapppaaappt",
+        "ttppaaaaaaaaaatt",
+        "tppppppppppppppt",
+        "tppggggggggggppt",
+        "tppgggg,,ggggppt",
+        "tppggggggggggppt",
+        "tppppppppppppppt",
+        "tttttppppppttttt",
+        "tttttppppppttttt",
+        "gggggppppppggggg"
+      ],
+      "exits": {
+        "west": "review-field",
+        "south": "gate-shadow"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "south": {
+          "x": 128,
+          "y": 210
+        }
+      },
+      "interactables": [
+        {
+          "id": "declass_stamp",
+          "label": "Declass stamp desk",
+          "kind": "document",
+          "x": 122,
+          "y": 82,
+          "texture": "citation-stamp",
+          "dialog": [
+            "DECLASS STAMP DESK",
+            "The live declassification stamp is controlled at the NARA II Classification Gate."
+          ]
+        },
+        {
+          "id": "springfield_boxes",
+          "label": "Field archive boxes",
+          "kind": "document",
+          "x": 176,
+          "y": 118,
+          "texture": "source-note",
+          "dialog": [
+            "FIELD ARCHIVE",
+            "Sparse boxes, wide paths, and one route south."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "gate-shadow",
+      "regionName": "Gate Shadow",
+      "areaId": "buckram_gate",
+      "gridX": 4,
+      "gridY": 3,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "ggppffffffffffgg",
+        "ggppfssssssfppgg",
+        "ggppfsoooosfppgg",
+        "ggppfsommmsfppgg",
+        "ggppfsoooosfppgg",
+        "pppppppddppppppp",
+        "ggppffffffffffgg",
+        "ggppgggppgggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg"
+      ],
+      "exits": {
+        "north": "springfield",
+        "west": "document-farm"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "north": {
+          "x": 128,
+          "y": 18
+        }
+      },
+      "interactables": [
+        {
+          "id": "gate_shadow_marker",
+          "label": "Gate shadow marker",
+          "kind": "document",
+          "x": 128,
+          "y": 112,
+          "texture": "source-note",
+          "dialog": [
+            "GATE SHADOW",
+            "The final path bends west before it can return to publication."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "document-farm",
+      "regionName": "Document Farm",
+      "areaId": "editors_labyrinth",
+      "gridX": 3,
+      "gridY": 3,
+      "tileLayout": [
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg",
+        "ggg,,,,,,,,,,ggg",
+        "ggppppppppppppgg",
+        "gppppppppppppppg",
+        "pppppppppppppppp",
+        "pppppppppppppppp",
+        "gppppppppppppppg",
+        "ggppppppppppppgg",
+        "ggg,,,,,,,,,,ggg",
+        "gggggggggggggggg",
+        "gttggggggggggttg",
+        "gggggggggggggggg"
+      ],
+      "exits": {
+        "east": "gate-shadow",
+        "west": "secure-approach"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "document_farm_rows",
+          "label": "Document rows",
+          "kind": "document",
+          "x": 128,
+          "y": 112,
+          "texture": "source-note",
+          "dialog": [
+            "DOCUMENT FARM",
+            "Small document rows prevent the overworld from becoming a poster."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "secure-approach",
+      "regionName": "Secure Approach",
+      "areaId": "declassification_review",
+      "gridX": 2,
+      "gridY": 3,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "ggppffffffffffgg",
+        "ggppfssssssfppgg",
+        "ggppfsoooosfppgg",
+        "ggppfsommmsfppgg",
+        "ggppfsoooosfppgg",
+        "pppppppddppppppp",
+        "ggppffffffffffgg",
+        "ggppgggppgggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg"
+      ],
+      "exits": {
+        "east": "document-farm",
+        "west": "referral-dock"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 160
+        },
+        "west": {
+          "x": 18,
+          "y": 128
+        },
+        "east": {
+          "x": 238,
+          "y": 128
+        }
+      },
+      "interactables": [
+        {
+          "id": "secure_approach_gate",
+          "label": "Approach gate",
+          "kind": "document",
+          "x": 128,
+          "y": 112,
+          "texture": "source-note",
+          "dialog": [
+            "SECURE APPROACH",
+            "A calm route toward referral and review traffic."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "referral-dock",
+      "regionName": "Referral Dock",
+      "areaId": "referral_vault",
+      "gridX": 1,
+      "gridY": 3,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "gggppppppppppggg",
+        "ggppppppppppppgg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "pppppppppppppppp",
+        "wwwwwwbbbbwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww"
+      ],
+      "exits": {
+        "east": "secure-approach",
+        "west": "library-landing"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 92
+        },
+        "west": {
+          "x": 18,
+          "y": 88
+        },
+        "east": {
+          "x": 238,
+          "y": 88
+        }
+      },
+      "interactables": [
+        {
+          "id": "referral_dock_slip",
+          "label": "Concurrence slip",
+          "kind": "document",
+          "x": 138,
+          "y": 86,
+          "texture": "source-note",
+          "dialog": [
+            "CONCURRENCE SLIP",
+            "Responses move by route, not guesswork."
+          ]
+        }
+      ],
+      "npcs": []
+    },
+    {
+      "id": "library-landing",
+      "regionName": "Library Landing",
+      "areaId": "referral_vault",
+      "gridX": 0,
+      "gridY": 3,
+      "tileLayout": [
+        "ggggppppppppgggg",
+        "gggppppppppppggg",
+        "ggppppppppppppgg",
+        "ggppggggggggppgg",
+        "ggppppppppppppgg",
+        "ggggppppppppgggg",
+        "pppppppppppppppp",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww",
+        "wwwwwwwwwwwwwwww"
+      ],
+      "exits": {
+        "east": "referral-dock"
+      },
+      "spawnPoints": {
+        "center": {
+          "x": 128,
+          "y": 92
+        },
+        "east": {
+          "x": 238,
+          "y": 88
+        }
+      },
+      "interactables": [
+        {
+          "id": "library_landing_marker",
+          "label": "Landing marker",
+          "kind": "document",
+          "x": 116,
+          "y": 86,
+          "texture": "source-note",
+          "dialog": [
+            "LIBRARY LANDING",
+            "A quiet western endpoint for the first overworld draft."
+          ]
+        }
+      ],
+      "npcs": []
+    }
+  ],
+  "questFlags": {
+    "goldenRuleRead": false,
+    "archiveGateOpen": false,
+    "hasAssignmentMemo": false,
+    "hasFindingAid": false,
+    "hasDocumentSet": false,
+    "hasSourceNote": false,
+    "hasClearanceBadge": false,
+    "hasReviewMemo": false,
+    "hasDeclassificationStamp": false,
+    "hasReviewerApproval": false,
+    "hasGeneralEditorSignoff": false
+  }
+}

@@ -1,8 +1,23 @@
 # Ruby Rule: The FRUS Quest
 
-First playable prototype of a browser-based NES-style FRUS production game.
+Browser-based NES-style FRUS production game prototype built with Phaser 3, TypeScript, and Vite.
 
 StateChat proposes. Humans decide. Published FRUS is the record.
+
+The current cleanup branch keeps the runnable game focused on the existing scene/dungeon flow while preserving larger overworld and art-pack experiments under `experiments/overworld-wip/` for later promotion.
+
+## Scope
+
+This project is a static web game intended for GitHub Pages. The active mainline is a compact top-down FRUS production quest with title, character creation, guide/tutorial, archive, network, referral, proofing, and publication-gate scenes.
+
+The cleanup target is SNES action-adventure craft, translated into FRUS workflow language:
+
+- tight pixel-snapped movement and collision
+- readable one-screen rooms and workflow gates
+- FRUS tools instead of fantasy weapons
+- confidence, process stamps, document points, and equipped workflow items in the HUD
+- original local assets and Web Audio oscillator sound
+- human-centered verification rules, with StateChat limited to terminal/panel output
 
 ## Run Locally
 
@@ -21,6 +36,18 @@ npm run build
 
 The static build is emitted to `dist/` and is ready for GitHub Pages.
 
+## Engine Rationale
+
+The repo is intentionally staying on Phaser 3 rather than moving engines during this cleanup pass. Phaser 3 is a good fit for an LttP-caliber browser game because it already supports:
+
+- Arcade Physics for AABB collision and knockback
+- Tilemap layers and collision for future overworld/dungeon promotion
+- crisp WebGL or Canvas pixel rendering with `pixelArt` and `roundPixels`
+- deterministic keyboard input and scene transitions
+- static deployment through Vite and GitHub Pages
+
+The target is classic 16-bit action-adventure feel, not a Nintendo clone. All art, code, text, and audio must stay original or repository-local.
+
 ## Controls
 
 - Arrow keys or WASD: move
@@ -32,6 +59,21 @@ The static build is emitted to `dist/` and is ready for GitHub Pages.
 - R: reliability details
 - Esc: pause
 - F: fullscreen
+
+## Current Cleanup Status
+
+The `cleanup/lttp-bar` branch has landed these cleanup phases:
+
+| Pillar | Current Status |
+| --- | --- |
+| 1. Tight movement | Player controller refactored toward 8-direction input, pixel-snapped positions, and exposed movement state. |
+| 2. Tile-based overworld | Incomplete overworld, screen-manager, tile registry, interiors, and art-pack work is quarantined under `experiments/overworld-wip/`. It is preserved but not live. |
+| 3. Collision | Player/action collision and process-gate blockers use Arcade-style AABB patterns; terrain/tile collision remains a next promotion target. |
+| 4. Sword + secondary item system | FRUS action hitbox and equipped secondary workflow item HUD are in place. |
+| 5. Enemy AI | Coherent patrol-style hazards and blocker enemies are retained; half-wired variants are quarantined. |
+| 6. HUD | Top HUD shows role, reliability/confidence, document points, equipped process item, stamps, fragments, and status details. |
+| 7. Cohesive presentation | 256x240 pixel canvas, original repository-local SVG assets, Phaser fallbacks, and Web Audio tones remain the active discipline. |
+| 8. Room and dungeon scaffolding | Existing FRUS dungeon/room scenes, gates, rewards, and final certification room remain runnable; save/load remains future work. |
 
 ## MVP Features
 
@@ -93,6 +135,15 @@ Direct scene starts are supported for QA:
 
 These seed earlier process stamps and inventory so later mechanics can be tested without replaying the full quest.
 
+## Experiments
+
+Promising but incomplete work is preserved under `experiments/`:
+
+- `experiments/duplicate-assets/`: Finder-style duplicate SVG assets retained from repo hygiene.
+- `experiments/overworld-wip/`: dirty overworld, art-pack, interior-map, screen-manager, and tilemap work quarantined during Phase 8.
+
+Do not move the whole WIP folder back into the live game at once. Promote one subsystem at a time, behind fallbacks, with `npm run build` and direct `?scene=` QA.
+
 ## Audio Sources
 
 Raw public-domain MIDI source clips are checked in under `public/assets/audio/midi/`, with rights notes in `public/assets/audio/ATTRIBUTION.md`. The browser plays short Web Audio square-wave arrangements derived from those clips for reliable GitHub Pages deployment.
@@ -100,3 +151,14 @@ Raw public-domain MIDI source clips are checked in under `public/assets/audio/mi
 ## Asset Policy
 
 Sprites, tiles, enemy art, and UI textures are original repository-local SVG pixel assets in `public/assets`, with Phaser-generated fallbacks in `BootScene` if an asset is missing. Audio playback is generated in code with Web Audio oscillators. Later original PNG or cleared audio replacements can be checked in without changing the deployment model.
+
+## Roadmap
+
+1. Pillars 1 and 3: tighten the player body, foot collision box, knockback, and i-frame timing against all room blockers.
+2. Pillar 2: promote the quarantined tile registry and screen-manager work in small, buildable steps.
+3. Pillar 2: replace poster-like room composition with validated Phaser tilemap layers only after fallbacks and `?scene=` links survive.
+4. Pillar 4: turn workflow tools into a true equipped-use state machine with clear active frames and cooldowns.
+5. Pillar 5: standardize enemy base behavior for patrol, chase, and projectile-like FRUS hazards.
+6. Pillar 6: add a minimal minimap/status panel that stays readable at native resolution.
+7. Pillar 7: enforce one active palette/scale path for all live sprites and tiles before promoting art-pack PNGs.
+8. Pillar 8: add local save/load for room state, collected rewards, process stamps, and publication progress.

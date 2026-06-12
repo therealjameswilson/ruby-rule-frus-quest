@@ -1,0 +1,474 @@
+Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title Ruby Rule: The FRUS Quest.
+
+## Progress
+
+- Scaffolded a Vite + TypeScript + Phaser 3 app in `ruby-rule-frus-quest`.
+- Added a role-crafting flow so players can choose a FRUS production role before entering the office.
+- Added generated placeholder pixel textures for characters, tiles, UI panels, documents, and the FRUS volume.
+- Implemented title, character creation, office hub, archive verification, network routing, referral vault, silent read, and ending scenes.
+- Adjusted the character creator so typed names can use all letters while role selection stays on Left/Right.
+- Ran `npm install` successfully; npm reported two moderate audit findings in dependencies.
+- Ran `npm run build` successfully; Vite reported a large Phaser chunk warning only.
+- Switched Phaser to the Canvas renderer after Playwright showed black WebGL canvas captures.
+- Fixed title-screen start handling so early key presses are not consumed.
+- Verified with Playwright screenshots/state:
+  - title to character creator
+  - default role confirmation into OfficeScene
+  - custom role/name confirmation into OfficeScene
+  - office interaction chain into ArchiveScene
+  - archive document collection and Source Note 47 verification, raising reliability from 80 to 90
+- Added process stamps for Rule, Source, Network, Referral, and Read milestones.
+- Added role-specific `E` abilities with visible NES-style hint banners.
+- Added direct scene-start query parameters for QA, with seeded prior progress.
+- Improved choice prompts with full-row click targets.
+- Verified direct scene starts with Playwright screenshots/state:
+  - NetworkScene routing clears and awards the Network stamp.
+  - ReferralVaultScene equity matching, human manifest confirmation, and visible excision award the Referral stamp.
+  - SilentReadScene factual-date catch awards the Proof/Read stamp.
+  - Declass Reviewer `E` ability displays an Equity Map hint and updates `render_game_to_text`.
+- Added generated Web Audio chiptune music and feedback:
+  - scene background patterns
+  - dialog blips
+  - decision confirm chimes
+  - warning tones
+  - process-stamp jingles
+  - ending fanfare
+- Reworked EndingScene into a completion card showing role, reliability, process stamps, team sign-off, and the core FRUS production lessons practiced.
+- Verified the EndingScene recap with Playwright screenshot/state; `audioStatus` reported `ending fanfare`.
+- Re-verified NetworkScene routing after audio integration; `audioStatus` reported `process stamp chime`.
+- Added original repository-local SVG pixel assets for player roles, NPCs, manuscript, FRUS volume, room tiles, and UI panels.
+- Updated BootScene to load SVG assets first and fall back to generated textures if an asset is missing.
+- Added `N` sound toggle during title/gameplay/ending screens, plus an `SND ON/OFF` HUD label.
+- Verified OfficeScene renders the SVG assets in Playwright; state reported `audioStatus: music OfficeScene`.
+- Verified `N` toggle in NetworkScene; HUD showed `SND OFF` and state reported `audioStatus: audio muted`.
+- Added reusable room-dressing helpers for desks, bookcases, document stacks, ruby FRUS volume stacks, archive shelves, network cables, vault blocks, proofing tables, and small sparkle effects.
+- Added player shadow, facing flip, and simple walk-bob movement polish.
+- Dressed the Office, Archive, Network, Referral Vault, and Silent Read scenes with workflow-specific visual cues.
+- Verified dressed OfficeScene, NetworkScene, and SilentReadScene with Playwright screenshots/state.
+- Added a stronger ruby-red FRUS buckram/NES adventure aesthetic:
+  - top HUD band with minimap, item boxes, and life markers
+  - one-screen dungeon wall framing around playable rooms
+  - richer 16x16 tile SVGs for office, archive, network, and vault rooms
+  - parchment wall maps as room dressing
+  - title-screen HUD/map/stone-frame treatment
+- Added original `bureaucratic-wall` enemy sprite plus Phaser fallback texture.
+- Added literal stone bureaucracy enemies in Archive, Network, and Referral Vault rooms; archive walls can be cracked and cleared by interaction.
+- Downloaded public-domain MIDI source clips into `public/assets/audio/midi/` and added `public/assets/audio/ATTRIBUTION.md`.
+- Reworked scene music to use short Web Audio motifs derived from the public-domain Bach/Satie MIDI clips.
+- Added active stonewall pressure mechanics:
+  - archive bureaucratic walls patrol toward the player when nearby
+  - contact knocks the player back and reduces reliability
+  - nearby `Space`/`Enter` verification cracks and clears a wall
+  - `render_game_to_text()` now reports `visibleThreats` with stonewall labels and coordinates
+- Added NES cave/dialogue-inspired `GuideScene` with original Ruby Rule art:
+  - equal-rank Archive Colleague NPC
+  - archive lamp props
+  - Citation Stamp pickup
+  - first FRUS volume fragment pickup
+  - Verification Gate into the Office hub
+  - visible 30-Year Line and DANN-E Queue antagonists
+- Added document points and FRUS volume fragments to global state, inventory, `render_game_to_text()`, direct-scene seeding, and the ending recap.
+- Recast Zelda-like symbols into FRUS production equivalents: citation stamp, clearance token, concurrence slip, red pencil mark, source-note/document points, confidence status, and FRUS volume fragments.
+- Updated the archive-room tutorial for equal-rank framing:
+  - uses an Archive Colleague as a peer NPC
+  - uses Archive Room as the visible room title
+  - verified the citation-stamp pickup after the rename
+- Sharpened the human character sprite set with more expressive 16x16 pixel portraits:
+  - added clearer hairlines, face detail, arms, shoes, and role props
+  - refined Sam, Elena, Marcus, Priya, all selectable player-role sprites, and the Archive Colleague
+  - updated BootScene fallback character textures to match the more detailed silhouette
+  - slightly enlarged role-card previews in the character creator so the refined sprites read at game scale
+- Added a second sprite polish pass:
+  - sharpened manuscript, citation stamp, volume fragment, FRUS volume, and bureaucratic-wall SVGs
+  - added stepped idle bob/shadow motion to NPCs, manuscript pickups, the Archive Colleague, and guide-room collectibles
+- Added the new FRUS production SOP around an AI annotation review tool:
+  - introduced an in-game SOP gate in `SilentReadScene`
+  - the AI tool returns a schema-style review plan, not a publication decision
+  - mechanical issues can auto-apply, while source/status/provenance/classification claims route comment-only to human review
+  - added a `SOP` process stamp, inventory log, README coverage, and ending recap language
+- Added a final FRUS cover prize system:
+  - created an original ruby-and-gold cover sprite inspired by FRUS volume design
+  - mapped the five existing FRUS fragments to cover regions
+  - updated the ending scene so the earned fragments assemble into the final cover prize
+  - added `render_game_to_text().frusPrize` for QA and accessibility
+- Verified the FRUS cover prize:
+  - `npm run build` passed with the existing Phaser chunk-size warning
+  - Playwright direct `EndingScene` screenshot showed the assembled cover and all process stamps
+  - `state-0.json` reported `frusPrize.assembled: true` with five earned pieces
+  - in-app browser screenshot rendered the local ending page without console errors
+- Added an asset-cleanup pass for the existing SVG image set:
+  - confirmed there are no PNG assets in the current game art set
+  - backed up current SVG sprites, tiles, and UI panels to `public/assets/_originals/`
+  - snapped off-palette SVG colors back to the existing game palette
+  - replaced soft SVG text/circle/stroke elements with rect-only pixel forms
+  - added `public/assets/asset_improvement_report.md`
+  - added `public/assets/asset_debug.html` for original/current comparisons
+- Added `scripts/improve-existing-assets.py` for future PNG cleanup:
+  - walks `public/assets/` while excluding `_originals`
+  - backs up PNGs under `public/assets/_originals/`
+  - thresholds alpha, quantizes visible pixels to the Ruby Rule PNG palette, and writes `asset_improvement_report.md`
+  - package script added as requested: `npm run improve:assets`
+- Audited and fixed existing image rendering:
+  - made Phaser pixel-art settings explicit with antialiasing disabled and rounded pixels
+  - constrained the game shell to whole-number display scaling when the viewport allows it
+  - rounded sprite/container render positions and removed fractional sprite scale animations
+  - expanded CSS pixel-rendering coverage for canvas, images, game containers, `#game`, and `#app`
+  - added `RenderDebugScene` at `?scene=RenderDebugScene` with live canvas/scale metrics and 1x/2x/3x/4x samples
+  - verified the debug scene in the in-app browser at 256x240 internal resolution displayed at a clean 3x integer scale
+- Improved the existing sprite sheets only:
+  - treated each SVG loaded in `BootScene.preloadSvgAssets()` as a one-frame sheet and preserved every frame size/order
+  - normalized all used sprite colors to the Ruby Rule project palette
+  - removed off-palette colors and confirmed no semi-transparent sprite pixels/opacity attributes remain
+  - strengthened implied outlines and contrast without adding characters, frames, or animation states
+  - rebuilt `public/assets/asset_debug.html` as a sprite-only before/after viewer with originals from `_originals/sprites/`, current sprites at 4x, and a checkerboard toggle
+  - verified CharacterCreateScene, GuideScene, EndingScene, and the comparison page with browser/Playwright screenshots
+- Improved existing tilesets and HUD icons without changing meanings:
+  - preserved the four 16x16 tile texture files and the three 32x16 UI/HUD SVG paths
+  - cleaned tile/UI colors to the Ruby Rule project palette, with no opacity attributes or non-rect primitives
+  - made office/archive/network/vault walkable floor repeats quieter while keeping crisp 16x16 boundaries
+  - made the procedural HUD item boxes and dungeon blocking blocks read with stronger silhouettes at native scale
+  - confirmed the repo still uses direct SVG texture keys and no atlas/tilemap ID references
+  - verified OfficeScene, ArchiveScene, NetworkScene, and ReferralVaultScene with Playwright screenshots/state plus an in-app browser canvas/log check
+- Improved interactable object readability:
+  - added distinct 24x24 pixel silhouettes for citation stamp, FRUS volume fragment, telegram, source note, cross-reference, OpenNet terminal, ClassNet terminal, proof page, red pencil, and concurrence slip
+  - preserved existing labels as secondary reinforcement while making the objects readable by shape and palette at native game scale
+  - updated loader dimensions, fallback stamp/book textures, debug comparison metadata, and terminal/document entity texture selection
+- Added role-specific character cue and animation polish:
+  - updated the five selectable role sprites with cardigan/folder/glasses, mug/clipboard, pencil-behind-ear, two-page stack, and citation-stamp satchel cues
+  - renamed the visible declassification role label to Declass Coordinator while preserving the existing internal role id
+  - added pixel-snapped idle cues for folder checking, mug steam, pencil tapping, proof page reading, and stamp bouncing
+  - expanded the shared `E` ability into visible role-specific bursts for Archive Sense, Equity Map, Red Pencil, Silent Read, and Provenance Check
+- Added physical verification loops in `SilentReadScene`:
+  - replaced the old multiple-choice SOP/proof gates with CARRY, ROUTE, VERIFY, and STAMP interactions
+  - StateChat now emits one mechanical proposal plus four evidence-bound physical flags
+  - flags must be carried to OpenNet, ClassNet, editor desk, referral tray, or proof table before human verification and visible process stamping
+  - `render_game_to_text()` now reports physical verification verb, carried item, nearest station, completion count, and per-flag status
+  - verified with Playwright: direct SilentReadScene smoke test shows the CARRY state, and full route test stamped all five flags with no console errors
+- Added a production status HUD:
+  - top-right HUD now renders `ROLE`, block-style `RELIABILITY`, `HELD`, `STAMPS`, and `OBJECTIVE` lines
+  - process stamps display as RULE, SOURCE, NET, REF, SOP, and READ
+  - added `heldItem` and `productionHud` to `render_game_to_text()`
+  - Archive Source Note 47 now sets held item and the objective `Verify provenance at research table.`
+  - verified Archive and SilentReadScene HUD screenshots/state with Playwright and no console errors
+- Improved sprites, art readability, and verification gameplay:
+  - added original 24x24 agency equity seal, referral manifest, and excision bracket marker SVG sprites
+  - added subtle 2x2 buckram texture to FRUS volume covers and ruby vault tiles
+  - replaced referral-room label-only seal/manifest placeholders with loaded sprite silhouettes
+  - added a two-step walk cue and role-ability pose pulse to the player sprite system
+  - converted Archive Source Note 47 into a physical carry, route, verify, stamp loop at the research table
+  - Source Note 47 now receives its citation stamp only after human provenance verification
+  - changed Office terminal dialog labels so StateChat remains terminal-only rather than a speech-bubble speaker
+- Integrated the repository-local PNG art pack from `public/assets/art-pack/manifest.json`:
+  - added `src/game/artPack.ts` as the single pack-key/frame/tile-index registry with `pack-` texture keys
+  - BootScene now loads pack sprite sheets, screens, backgrounds, packed tilesets, portraits, item icons, effects, stamps, and UI kit assets while keeping all SVG/procedural fallbacks
+  - player and character-create previews prefer pack role sheets at native 32x48 display scale, with old SNES/SVG role art as fallback
+  - NPCs, interactable object icons, DANN-E queue visuals, title art, dialogue portraits, UI-kit frames, and stamp/check effects now use pack art when textures exist
+  - ScreenManager and legacy room scenes build real Phaser tilemap layers from the packed overworld/interior/archive-dungeon tilesets, while existing glyph collision remains authoritative
+  - verified with Playwright screenshots for title, WorldScene, GuideScene, and ArchiveScene; `npm run build` passes with only the existing Phaser chunk-size warning
+  - added exact feedback messages for human verification, mechanical acceptance, evidence-bound checks, wrong network, and provenance guessing
+- Added mobile-friendly play support:
+  - added safe-area viewport handling and a responsive game shell that reserves space for touch controls
+  - added a pixel-styled on-screen D-pad plus A/E/M/R/N buttons for act, ability, inventory, reliability, and sound
+  - bridged touch buttons into Phaser key codes while preserving keyboard controls
+  - kept player movement pixel-snapped by feeding D-pad state into the existing player movement code
+  - verified `npm run build`, the required web-game Playwright client, mobile portrait touch movement, mobile landscape layout, and a mobile title/character-create flow
+- Refactored Archive movement and traversal toward NES-style one-screen rooms:
+  - made player movement cardinal-only with no diagonal vector normalization
+  - added optional tile-aligned solid rectangles for smoother movement with tile-feeling collision
+  - converted ArchiveScene into a 2x2 room graph with stable room IDs `A1`, `A2`, `B1`, and `B2`
+  - added fixed-HUD room labels and a small visited-room minimap that reveals rooms after entry
+  - added edge exits at the room borders with hard-cut/fade transitions and no scrolling camera
+  - preserved the Source Note 47 human verification loop in `A1`
+  - verified `npm run build`, required web-game smoke, `A1 -> A2`, `A1 -> B1`, cardinal-only input, tile blocker collision, minimap visited-state, and Source Note 47 stamping
+- Added process-wall enemy archetypes and defeat loops:
+  - implemented NO REPO, FIREWALL, PENDING, WAIT, AMBIGUOUS, and DANN-E QUEUE as named bureaucratic stone-wall threats
+  - added per-enemy behaviors: slow chase, terminal-door block, random wander, temporary exit freeze, split flags, and backward push
+  - wired defeat methods to existing human-process stations: source table/citation stamp, OpenNet routing, referral tray, human specialist, and Golden Rule gate
+  - extended `render_game_to_text()` threat output with behavior, defeat method, and status fields
+  - fixed Archive room traversal blockers so A1 east, B1 north/center, A2 south, and B2 north lanes stay playable
+  - verified with `npm run build`, required web-game client smoke, and a custom Playwright route probe covering all six enemy loops with screenshot inspection
+- Added FRUS process item toolbelt:
+  - added a shared seven-item catalog for Citation Stamp, Red Pencil, Review Folder, Clearance Token, Concurrence Slip, Proof Lens, and Buckram Key
+  - exposed each item's Zelda-like function and FRUS meaning in `render_game_to_text()`
+  - added new original 24x24 SVG sprites for Review Folder, Clearance Token, Proof Lens, and Buckram Key
+  - changed the inventory overlay into a compact FRUS toolbelt readout with acquired/locked item states
+  - wired item acquisition to existing loops: source-note locks, network/vault access, referral gates, Silent Read review routing, and final publication certification
+  - verified `npm run build`, required web-game smoke, Silent Read carry state (`Review Folder: MECH FIX`), inventory overlay screenshot, direct scene item progression, and EndingScene Buckram Key rendering
+- Added Zelda-like item gating metadata:
+  - promoted the seven FRUS tools into an item registry with `displayName`, `icon`, `roomUnlocks`, `blockerWeaknesses`, `pickupDialog`, and `hudSlot`
+  - added registered item award/readout helpers so the text renderer exposes unlock and blocker-weakness data
+  - wired the fixed top HUD to show a compact collected-item strip across scenes
+  - verified `npm run build`, required web-game client SilentReadScene screenshot/state, and a direct Playwright probe checking all seven registry entries, unique HUD slots, and EndingScene Buckram Key acquisition
+- Added Zelda-like area progression:
+  - added an area registry for Office Hub, Archive Cavern, Two Networks, Referral Vault, Editor's Labyrinth, Silent Read Tower, and Buckram Gate with Zelda-role and reward metadata
+  - changed the start flow to Character Create -> Office Hub -> Archive Cavern -> Archive rooms, matching the requested progression
+  - moved Red Pencil and Proof Lens from pre-granted Silent Read tools into earned dungeon rewards
+  - exposed `areaProgress` and `currentArea` through `render_game_to_text()` and added a compact quest-route readout to the inventory overlay
+  - verified `npm run build`, required web-game client OfficeScene screenshot/state, and a direct Playwright probe covering route order, direct-scene seeding, reward gating, and Buckram Gate completion
+- Refined the NES-style dungeon grammar:
+  - added a shared FRUS room graph with stable room IDs, room types, locked exits, required items, secret rooms, and Buckram Gate metadata
+  - expanded Archive Cavern into a 12-room one-screen dungeon with hint rooms, puzzle chambers, reward rooms, two hidden rooms, and a DANN-E Queue boss gate
+  - updated player movement so keyboard and touch input are four-direction-only, prefer the newest held direction, and expose a facing direction in text state
+  - made FIREWALL a horizontal patrol and added a HOLD doorway blocker, while preserving existing wall enemy identities
+  - changed the production HUD toward NES grammar with role, reliability, document points, selected item, stamps, room/map, fragments, and objective
+  - added final Buckram Gate readiness checks for required stamps, five FRUS fragments, and reliability, with StateChat limited to a checklist
+  - verified `git diff --check`, `npm run build`, the required web-game client smoke, Archive screenshot/state, and direct EndingScene readiness screenshot/state
+- Enforced stricter NES visual discipline:
+  - added `src/art/palette.ts` as a single 56-color NES-style master palette and wired the semantic game palette to it
+  - remapped every SVG under `public/assets` to master-palette colors, with sprite SVGs capped at 3 visible colors plus transparency and 16x16 tile SVGs capped at 4 visible colors
+  - removed SVG gradient/opacity risk and flattened BootScene fallback fills/strokes to fully opaque master-palette colors
+  - removed old hardcoded `0x` color literals and partial-alpha generated fills from shared UI/entity drawing paths
+  - replaced the fractional-scale HUD item sprites with native pixel text markers so sprite rendering stays integer-scaled
+  - verified SVG discipline, `git diff --check`, `npm run build`, all ten `?scene=` deep links, and the required web-game client Archive screenshot/state
+- Implemented a compact Zelda-style FRUS Quest architecture layer:
+  - added explicit volume/document workflow states, volume metrics, fixed object slots, tile-grid room definitions, NPC behavior states, tool-priority rules, and quest milestone counters
+  - exposed the architecture through `render_game_to_text()` as additive `volumeWorkflowState`, `documentWorkflow`, `volumeMetrics`, `questCounters`, and `questWorkflow` fields without removing existing keys
+  - kept the current scene art/mechanics intact while making the existing room graph, item gating, physical verification loops, and StateChat terminal rules inspectable as data
+  - added half-tile movement correction for cardinal player movement when the player catches a solid edge
+- Refactored overworld NPC placement into a screen registry:
+  - added `public/assets/data/npcs.json` with role, sprite, home screen, tile position, facing, dialogue, and quest-flag fields
+  - spread Compiler, Editor, Declass Coordinator, Reviewer, Senior Reviewer, General Editor, Archivist, Records Officer, Security Officer, and StateChat Terminal across logical overworld screens
+  - removed always-visible NPC name plates so dialogue opens only through one-tile facing interaction prompts
+  - kept StateChat as a terminal interactable with terminal text, not as a character
+  - verified `npm run build`, `git diff --check`, all eleven `?scene=` deep links, required web-game smoke, Navy Hill readability, White House traversal, General Editor interaction, and Golden Rule objective advancement
+- Added Zelda-like building doors and one-screen interiors:
+  - added `public/assets/data/interiors.json` with eight exterior door definitions and eight separate interior screen maps
+  - wired door interactables to hard-cut into Navy Hill Compiler Office, White House Review Room, NARA I Reading Room, NARA II Declassification Floor, Little Rock Library, Springfield Field Office, Newington Secure Records Room, and Undisclosed Location Vault
+  - added return-door loops back to overworld `return` spawn points so buildings behave like separate rooms instead of compressed map details
+  - made interior entry cards show `INTERIOR MAP` and kept interior screens off the tiny overworld HUD minimap
+  - verified interior map validation, `npm run build`, `git diff --check`, all eleven `?scene=` deep links, Navy Hill enter/exit, White House enter/exit, Little Rock enter/exit, and an interior screenshot/state check
+- Incorporated a dedicated Compiler animation strip:
+  - added an original repository-local 32x48 SVG frame set for idle, four-direction walking, and document reading
+  - registered named compiler frames at boot while preserving the existing 32x32 role sprite and generated fallback path
+  - updated the player renderer so only the Compiler role swaps to the taller frame set, with `render_game_to_text()` reporting the active frame metadata
+  - verified `npm run build`, compiler OfficeScene movement screenshots/state, the document-reading ability frame, RenderDebugScene samples, all ten `?scene=` deep links, and the in-app browser local smoke view
+- Refined the architecture object registry around a fixed `GameObjectSlot` union:
+  - added named screen slots for player, four NPCs, active/secondary tools, five document slots, room rewards/gates, terminal, manuscript, transition marker, UI prompt, and reserved capacity
+  - changed quest object registry rows from numeric slots to named slot assignments while preserving object kind, room, position, rewards, and gate metadata
+  - updated `render_game_to_text().questWorkflow.architecture.objectRegistry` to report per-screen slot occupancy, slot order, catalog size, and active room slots
+- Added a lightweight runtime `QuestObject` shape:
+  - includes `id`, named `slot`, `kind`, pixel `x/y`, optional four-way `facing`, optional `state`, and active/interactable booleans
+  - derives `activeQuestObjects` from the architecture registry plus live player position/facing for `render_game_to_text()` consumers
+  - verified `npm run build`, `git diff --check`, and an ArchiveScene browser text-state probe
+- Built a data-driven FRUS document workflow state machine:
+  - added `ReviewStatus`, `AgencyEquity`, and `DocumentCandidate` types plus a transition table covering found, candidate, selected, source-note, citation, annotation, review, referral, clearance/excision/denial/appeal, proof, and publication states
+  - added `src/game/documentWorkflow.ts` with five seeded FRUS-like document candidates and reducer helpers for workflow actions, direct state transitions, and agency equity responses
+  - made `gameState.documentCandidates` the source of truth for `documentWorkflow`, volume metrics, counters, and `render_game_to_text().questWorkflow`
+  - wired Archive pickup/provenance, Network routing, Referral equity/excision, Silent Read proofing, and Ending publication into the workflow helpers
+  - expanded `public/assets/data/items.json` to mirror the document-candidate metadata loaded by BootScene
+  - added exact `TILE_SIZE`, `HALF_TILE`, and `PLAYER_GRID_CORRECTION` exports to the quest architecture layer
+  - verified `npm run build`, `git diff --check`, direct scene text-state probes, and the bundled web-game Playwright client with screenshot inspection
+- Added a sixth seeded document candidate:
+  - inserted `doc-001`, a fictional 1969 memorandum of conversation on alliance consultation, into `src/game/documentWorkflow.ts` and `public/assets/data/items.json`
+  - mapped it to Archive A1 as a found, unselected candidate with incomplete citation, annotation needed, low sensitivity risk, and a fictional defense equity response pending
+  - verified `npm run build`, `git diff --check`, and an ArchiveScene browser text-state probe showing six document candidates
+- Added named document workflow API helpers:
+  - exported `markAsCandidate`, `selectDocument`, `verifyCitation`, `addAnnotation`, `submitForReview`, `routeReferral`, `resolveReview`, `markReadyForProof`, `proofDocument`, and `publishDocument` from `src/game/state.ts`
+  - kept the functions thin over the reducer-backed state machine so callers update document candidates, workflow readouts, metrics, and event logs consistently
+  - changed ready-for-review transitions to clear `annotationNeeded`, matching `addAnnotation()` semantics
+  - verified `npm run build` and `git diff --check`
+- Converted interaction tools into prioritized FRUS workflow tools:
+  - added the `WorkflowTool` union for Citation Stamp, Source Note Card, Cross-Reference Thread, Referral Manifest, Excision Bracket Marker, Red Pencil, Proof Lens, and Buckram Key
+  - added `src/game/workflowTools.ts` with the fixed priority order, display metadata, target kinds, and an interaction resolver
+  - replaced architecture tool-priority rules with the eight scholarly workflow tools in priority order
+  - exposed `workflowTools` in `render_game_to_text()` and `questWorkflow`, including acquired/locked status
+  - updated the inventory overlay to show `WORKFLOW TOOLS` instead of older process-item/gate rewards
+  - switched ArchiveScene's interaction loop to resolve the nearest interaction through the workflow-tool priority order and show the selected tool cue
+  - verified `npm run build`, `git diff --check`, direct browser state probe for the exact priority order, and the bundled web-game client with screenshot inspection
+- Began the SNES/16-bit FRUS Quest visual upgrade while preserving the static Phaser/Vite workflow architecture:
+  - added original local SVG assets for a compact FRUS world atlas, a workflow-tool relic strip, and five 32x32 role portrait sprites
+  - added `src/game/snesAtlas.ts` so `render_game_to_text()` reports the SNES art-direction constraints, role portrait sprites, map areas, and workflow relics
+  - added `src/systems/snesPixelArt.ts` for raised floor layers, room shadows, buckram texture, atlas panels, and workflow relic displays drawn with crisp pixel geometry
+  - wired the new 32x32 role portraits into character creation while keeping existing 16x16 gameplay sprites and animation cues intact
+  - added the FRUS atlas/tool display to the title screen and richer 16-bit room layers to Office Hub, Archive Cavern, Two Networks, Referral Vault, and Silent Read
+  - added explicit `E1` Editor's Labyrinth and `S1` Silent Read Tower map nodes so every named quest area has atlas room IDs
+  - verified `npm run build`, `git diff --check`, title/character/room screenshots through the bundled web-game Playwright client, and all ten `?scene=` deep links with no console errors
+- Expanded the SNES/16-bit map pass with area-specific production maps:
+  - added original 80x56 SVG panels for Office Hub, Two Networks, Referral Vault, Editor's Labyrinth, Silent Read Tower, and Buckram Gate
+  - promoted those maps into the SNES atlas registry so `render_game_to_text().snesAtlas.maps` reports a `mapTexture` for every named FRUS quest area
+  - updated BootScene to preload every map panel and generate palette-safe fallback textures if any SVG is missing
+  - wired visible area maps into Office Hub, Two Networks, Referral Vault, and the Buckram Gate lock screen while leaving the dense Silent Read proof pages uncluttered
+  - verified `git diff --check`, `npm run build`, web-game screenshots for Office/Network/Referral/Silent Read, an in-app browser no-console-error canvas check, and all ten `?scene=` deep links with 13 SNES assets and seven map textures reported
+- Promoted the larger SNES role sprites into live gameplay:
+  - added `snesSpriteKey` to the player profile and made query-selected roles preserve both the 16x16 fallback key and the 32x32 SNES role key
+  - switched the Player renderer to use the 32x32 SNES role sprite when available, with a foot-point origin so movement, collision, interaction, and text-state coordinates keep the existing logical anchor
+  - resized the player shadow, walk feet, and role idle cue overlays for the larger sprites while keeping the existing 16x16 fallback path intact
+  - exposed `render_game_to_text().activePlayerSprite` with the SNES texture, fallback texture, dimensions, logical anchor, and collision-box summary
+  - verified `git diff --check`, `npm run build`, bundled web-game screenshots for Office/Archive/Network/Silent Read, a `role=compiler` deep-link probe showing `snes-player-compiler`, and all ten configured `?scene=` shortcuts with no console errors and 13 SNES assets reported
+- Added an authored SNES-style transition layer:
+  - replaced plain camera fades with a fully opaque 16x16 ruby/black mosaic wipe and compact gold transition card for scene changes
+  - reused the same transition system for Archive Cavern room exits so A1 -> A2 and other doorway cuts feel like a 16-bit adventure screen change rather than a generic fade
+  - added `snesTransition` to `render_game_to_text()` with active/current/last transition metadata, including scene, room IDs, direction, label, style, and cell size
+  - kept direct `?scene=` QA starts stable by completing transition state before scene handoff and preserving direct boot behavior
+  - verified `npm run build`, Archive A1 -> A2 movement with the bundled web-game client, title-to-character transition screenshots showing the mosaic/card, all ten configured scene deep links, and an in-app browser local load with no console errors
+- Expanded Two Networks into a two-room SNES dungeon slice:
+  - refactored `NetworkScene` into `N1 Network Split` and `N2 ClassNet Vault` rooms with fixed room IDs, a two-cell minimap, room traversal state, and ruby-mosaic doorway transitions
+  - preserved the OpenNet/ClassNet routing puzzle in N1 while changing the successful outcome to clear the FIREWALL and open the east vault door instead of immediately jumping scenes
+  - made the Clearance Token a physical N2 vault reward that the player must stand near and pick up after correct routing, then use to exit east to Referral Vault
+  - made network cable dressing trackable so N1 art clears cleanly when N2 renders
+  - verified `npm run build`, `git diff --check`, N1 routing -> N2 transition screenshots, N2 token pickup screenshot/state, full N2 -> ReferralVaultScene handoff, all ten configured `?scene=` deep links, and an in-app browser local load with no console errors
+- Expanded Referral Vault into a two-room SNES dungeon slice:
+  - refactored `ReferralVaultScene` into `R1 Equity Gate` and `R2 Concurrence Chamber` with fixed room IDs, a two-cell minimap, room traversal state, and ruby-mosaic doorway transitions
+  - preserved the agency-equity matching, StateChat manifest confirmation, and visible-excision puzzle in R1 while changing the outcome to open the east concurrence gate instead of jumping directly to Silent Read
+  - made the Concurrence Slip a physical R2 reward that the player must stand near and pick up after human referral review, then use to exit east to Silent Read Tower
+  - made vault room dressing trackable so R1 and R2 redraw cleanly during room transitions
+  - verified `npm run build`, required web-game client R1 smoke, and a full Playwright route covering R1 puzzle -> R2 transition -> Concurrence Slip pickup -> SilentReadScene handoff with screenshot inspection and no console errors
+- Split the late-game proofing flow into a two-room SNES dungeon sequence:
+  - refactored `SilentReadScene` into `E1 Editor's Labyrinth` and `S1 Silent Read Tower` with fixed room IDs, a two-cell minimap, room traversal state, and ruby-mosaic doorway transitions
+  - made the first mechanical StateChat proposal resolve at the E1 editor desk, awarding the Red Pencil before the east tower gate opens
+  - moved the evidence-bound OpenNet, ClassNet, referral, and proof-date flags into S1, where the player routes, verifies, and stamps each physical object at the correct human workstation
+  - changed completion from an automatic jump to an earned Buckram Key gate: after the Proof Lens/Buckram Key rewards, the player exits east to the Buckram Gate/EndingScene
+  - verified `git diff --check`, `npm run build`, required web-game client SilentReadScene smoke, all ten `?scene=` deep links, an in-app browser local canvas/error smoke, and a full Playwright route covering E1 Red Pencil -> S1 evidence flags -> Proof Lens -> Buckram Key -> EndingScene
+- Made the Buckram Gate into a playable final SNES room:
+  - replaced the immediate EndingScene completion card with a walkable `G1 Buckram Gate` room, final minimap/readiness panels, a human publication table, and literal stone blockers for the 30-year line and DANN-E queue
+  - added `finalGateCertification` state so `render_game_to_text()` distinguishes locked/ready/published gate states; ready assembled volumes now report `final_assembly` until the player certifies at the table
+  - changed direct `?scene=EndingScene` seeding to proofed/final-assembly documents instead of pre-published documents, preserving the QA shortcut while requiring the final Space/Enter certification action
+  - publishing now records the final human certification, marks selected workflow documents as `published`, adds a `Published FRUS Cover` inventory prize, and then shows the ruby-and-gold completion card
+  - verified `npm run build`, `git diff --check`, direct EndingScene ready and publish states/screenshots, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
+- Upgraded bureaucratic wall enemies into distinct 16-bit sprites:
+  - added seven original 32x32 SVG wall sprites for NO REPO, FIREWALL, PENDING, WAIT, HOLD, AMBIGUOUS, and DANN-E QUEUE using the existing NES/SNES palette and no external assets
+  - registered the wall sprite set in the SNES atlas readout and BootScene preload/fallback pipeline
+  - changed `BureaucraticWall` to select the correct sprite by label/behavior while preserving the existing movement, pushback, and defeat loops
+  - exposed `spriteKey` on active `visibleThreats` so `render_game_to_text()` proves which blocker sprite is currently on screen
+  - added a seven-sprite wall rack to `RenderDebugScene` for stable visual QA
+  - verified `npm run build`, `git diff --check`, Archive/Network/Ending wall screenshots, RenderDebugScene wall-rack screenshot, and all ten `?scene=` deep links
+- Added a dedicated SNES-style Archive Cavern dungeon map:
+  - created `public/assets/maps/archive-cavern-map.svg` as an original 80x56 palette-safe one-screen dungeon map for the 12-room Archive Cavern
+  - changed the SNES atlas registry so Archive Cavern reports `archive-cavern-map` instead of the generic world atlas
+  - added a BootScene fallback renderer for the Archive Cavern map so fallback textures keep working if the SVG fails to load
+  - placed the map as a visible A1 room panel while preserving the existing Source Note 47 verification loop and room traversal
+- Upgraded human specialist NPCs into true 32x32 SNES-style sprites:
+  - added original rect-only SVG sprites for Sam, Elena, Marcus, Priya, and the equal-rank Archive Colleague
+  - preserved existing NPC identities while adding readable proof pages, compiler folder/glasses, declass clipboard/ClassNet red, editor red pencil, and citation-stamp guide cues
+  - added SNES NPC metadata to the atlas readout, BootScene preload/fallback generation, and RenderDebugScene visible-entity reporting
+  - changed `HistorianNPC` and GuideScene to prefer the new SNES textures while keeping the old 16x16 assets as fallback paths
+  - verified `npm run build`, `git diff --check`, bundled web-game screenshots for Office/Guide/Network/Referral/Silent Read, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
+- Introduced a roaming HAC member antagonist in the Office Hub:
+  - added an original 32x32 `snes-hac-member.svg` sprite with committee paper/badge cues and no external assets
+  - added `HacMember` as a waypoint-roaming antagonist that displays a distraction cue and lightly reduces reliability when the player gets too close
+  - registered the HAC sprite in the SNES atlas readout and BootScene preload/fallback pipeline
+  - exposed the HAC member through `visibleThreats` with sprite key, behavior, counterplay, and roaming/distracting status
+  - verified `npm run build`, `git diff --check`, OfficeScene distraction state/screenshot, all ten `?scene=` deep links, and an in-app browser local canvas/error smoke
+- Introduced a federal government shutdown antagonist in the Office Hub:
+  - added an original 32x32 `snes-federal-shutdown.svg` stop-work barricade sprite with no external assets
+  - added `FederalShutdown` as a waypoint-roaming antagonist that posts a short closure notice and briefly halts player movement when it catches the player
+  - registered the shutdown sprite in the SNES atlas readout and BootScene preload/fallback pipeline
+  - exposed the shutdown through `visibleThreats` with sprite key, behavior, counterplay, and roaming/stop-work status
+- Populated the Office Hub with a full equal-rank FRUS production cast inspired by the supplied character sheet:
+  - added original 32x32 repository-local SVG sprites for Compiler, Declass Coordinator, Reviewer, Editor, and Review Specialist using only the project palette and no raster imports
+  - intentionally translated the reference's hierarchical "Senior Reviewer" cue into equal-rank `Review Specialist` naming
+  - added `ProductionColleague` for role-cue room population while preserving existing named NPC dialog roles
+  - registered the production-colleague sprite set in the SNES atlas readout, BootScene preload/fallback pipeline, OfficeScene, and RenderDebugScene
+  - verified `npm run build`, `git diff --check`, OfficeScene and RenderDebugScene screenshots/state, all ten `?scene=` deep links, and in-app browser local rendering
+- Added bees as an Office Hub avoidance antagonist:
+  - created an original 32x32 `snes-frus-bees.svg` swarm sprite and BootScene fallback texture with no external assets
+  - added `BeeSwarm` as a buzzing waypoint hazard that briefly disrupts concentration if the player gets too close
+  - registered the swarm in the SNES atlas readout, OfficeScene threat loop, `visibleThreats`, and RenderDebugScene
+- Smoothed character and roaming-antagonist movement:
+  - added shared `approach()` / frame-delta helpers for integer-rendered but less abrupt movement
+  - gave the player short acceleration/deceleration while preserving four-direction-only movement and no diagonal drift
+  - eased HAC member, federal shutdown, and bee swarm waypoint steering to reduce turn jitter while keeping pixel-perfect render positions
+  - verified `npm run build`, `git diff --check`, OfficeScene movement screenshot/state, direct position samples, and all ten `?scene=` deep links
+- Added Navy Hill mice as an Office Hub antagonist:
+  - created an original 32x32 `snes-navy-hill-mice.svg` patrol sprite with hard-edged palette-safe rectangles and no external assets
+  - added a compact Navy Hill landmark on the Office production floor and a source-note-scattering mouse patrol around it
+  - registered the mice in the SNES atlas readout, BootScene preload/fallback pipeline, OfficeScene visible-threat loop, and RenderDebugScene antagonist rack
+- Incorporated the supplied main-map concept as an original repository-local SVG:
+  - redrew `public/assets/maps/frus-snes-atlas.svg` as a large 240x168 regional main game map with Navy Hill, NARA I/II, Foggy Bottom, Capitol Hill, White House, Newington, Little Rock, Springfield, Potomac River, and an undisclosed locked location
+  - added `SNES_MAIN_MAP_ASSET` metadata and landmark readouts to the SNES atlas state for accessible QA
+  - explicitly preloaded the main map in BootScene and added a matching fallback texture path
+  - added 1x viewport support to the SNES map renderer so larger maps can be cropped into room panels without compressing the whole district into one tiny view
+  - changed TitleScene to show a western `WEST MAP` excerpt and the Office Hub to show a larger central `DISTRICT MAP` excerpt
+  - verified SVG palette/opacity discipline, `git diff --check`, `npm run build`, Office/Title screenshots, and all ten `?scene=` direct links on the local dev server
+- Incorporated the supplied production-character sprite-sheet concept as original SVG frames:
+  - added `public/assets/sprites/snes-production-colleague-frames.svg` with six 32x32 poses per equal-rank production role: front, back, side, walk, workstation, and approval
+  - kept the hierarchy-free naming by translating the supplied "Senior Reviewer" row into the existing equal-rank `Review Specialist`
+  - registered the sheet as `SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET`, exposed it through `render_game_to_text().snesAtlas`, and added a BootScene fallback/registration path
+  - updated OfficeScene colleagues to use the new workstation frames while preserving the earlier single-role SVGs as fallback textures
+  - updated RenderDebugScene to show the new frame-sheet work poses for visual QA
+- Integrated the supplied in-play Compiler sprite-sheet concept into the live playable Compiler frame strip:
+  - redrew `public/assets/sprites/snes-player-compiler-frames.svg` in place as an original SVG with gray suit, blue tie, brown briefcase, front/side/back walking, idle, and document-reading poses
+  - preserved the existing 608x48 strip dimensions, 32x48 frame size, filename, texture key, and all 19 frame names used by Player and BootScene
+  - updated the SNES atlas compiler frame cue so `render_game_to_text()` describes the new in-play art
+  - verified palette/opacity discipline, `npm run build`, OfficeScene movement/ability screenshot/state, and RenderDebugScene frame samples
+- Integrated the supplied in-play Editor sprite-sheet concept into a live playable Editor frame strip:
+  - added `public/assets/sprites/snes-player-editor-frames.svg` as original repository-local SVG art with glasses, proof pages, red pencil, front/side/back walking, idle, and document-marking poses
+  - generalized the player frame-strip pipeline from compiler-only to role-frame sheets while preserving the same 608x48 dimensions, 32x48 frame size, and 19 frame names
+  - exposed the Editor sheet through the SNES atlas readout, BootScene loading/registration, `render_game_to_text().activePlayerSprite`, and RenderDebugScene samples
+  - verified SVG opacity/raster discipline, `git diff --check`, `npm run build`, OfficeScene free movement, Red Pencil ability pose, RenderDebugScene samples, and all ten direct `?scene=` links with the editor role
+- Refactored the Office/map start into a Zelda-like tile overworld architecture:
+  - added `public/assets/data/world.json` as a data-driven 3x3 FRUS District overworld with 16x14-tile screens, a tile legend, interactables, NPCs, and quest flags
+  - added `src/game/world.ts` and central `gameState.overworld` tracking current region, current screen coordinates, player position, inventory, active tool, quest flags, and the 256x224 viewport under a fixed 16px HUD
+  - added `WorldScene` with separate terrain, object, collision, NPC, fixed HUD, and dialogue-overlay layers; the camera hard-cuts one playable screen at a time instead of showing a compressed map illustration
+  - changed CharacterCreateScene to enter `WorldScene` and kept `OfficeScene` as a compatibility redirect so old `?scene=OfficeScene` URLs still boot into the overworld
+  - made shared dialogue, inventory, and objective overlays fixed to the camera for scrolling/tilemap scenes
+  - verified `npm run build`, the existing title/start flow landing in `WorldScene`, the OfficeScene deep link redirecting into `WorldScene`, the 256x224 overworld state in `render_game_to_text()`, an edge transition from Office Hub to Undisclosed, and Elena interaction with a fixed dialogue overlay
+- Implemented explicit Zelda-like overworld screen regions:
+  - replaced the experimental `world.json` source with `public/assets/data/worldScreens.json`, defining eight initial 16x14-tile screens: Navy Hill, White House, NARA I, NARA II, Little Rock, Springfield, Newington, and Undisclosed Location
+  - added `ScreenManager` to load and clear one active screen at a time from data, including terrain, collision, interactables, NPCs, exits, spawn points, and required flags
+  - refactored `WorldScene` so edge crossing fades briefly, loads the adjacent screen by id, and places the player at the opposite edge spawn instead of scrolling around a pre-rendered world
+  - kept movement four-directional and bounded to the 256x224 play viewport below the fixed ruby HUD
+  - verified `worldScreens.json` dimensions/exits, `git diff --check`, `npm run build`, all direct `?scene=` links, and White House <-> Navy Hill edge traversal with Playwright screenshots/state
+- Added a Zelda-like overworld camera controller:
+  - kept the existing 256x240 canvas required by the repo while making the overworld camera/readout expose a 256x224 logical viewport under the fixed HUD
+  - added `CameraController` for camera clamping, hard-cut transitions, optional smooth pan transitions, transition-state input lockout, and transition-complete events
+  - added `?camera=pan` and `P` as optional smooth-pan mode controls while preserving hard transitions as the default
+  - added `G` debug overlay for the screen grid, collision boxes, current screen ID, region name, camera mode, and viewport size
+- Built the first spacious FRUS overworld layout:
+  - expanded `worldScreens.json` to a 5x4 connected screen grid with 20 screens, starting at Navy Hill and routing through Mall Path, White House, Little Rock, Potomac Bend, Newington, NARA I/II, Springfield, and a gated Undisclosed Location
+  - added placeholder tile vocabulary for grass, path, office floor, wall, water, trees, fence, door, archive shelf, security gate, and document table
+  - kept every screen to 1-2 exits, 0-3 NPCs, and 1-3 interactables so the map reads as spacious one-screen regions rather than one dense poster
+  - added flag-gated exits for `hasFindingAid`, `hasClearanceBadge`, `hasReviewMemo`, and `hasDeclassificationStamp`, plus interactables that can grant those flags
+  - added region title popups on entry and verified Navy Hill start, Navy Hill -> Mall Path -> White House, Navy Hill -> Little Rock -> Potomac Bend, the Clearance Badge gate, and Potomac Bend -> Newington after badge pickup
+- Added an original 16-bit-style FRUS overworld tileset system:
+  - created `TileRegistry` as a procedural 16x16 tile generator for grass, paths, office floors, ruby walls, reflecting pools, bridges, trees, archive shelves, desks, file boxes, doors, locked doors, terminals, document stacks, redaction barriers, fences, and security checkpoints
+  - moved overworld tile rendering and collision from ad hoc screen rectangles to reusable tile metadata with `walkable`, `interactable`, and optional `transitionTarget` fields
+  - extended `worldScreens.json` tile glyph support so new screens can be authored from reusable map characters without drawing one giant image
+  - exposed `render_game_to_text().tileRegistry` for QA and accessibility checks of tile IDs, glyphs, texture keys, and metadata
+- Implemented Zelda-like overworld movement controls:
+  - added explicit player animation state labels for `idle_down`, `idle_up`, `idle_left`, `idle_right`, `walk_down`, `walk_up`, `walk_left`, and `walk_right`
+  - kept overworld movement four-directional and smooth while preserving tile-aware collision against blocked tiles, interactable objects, and NPC bodies
+  - changed overworld interaction from nearest-radius pickup to facing-direction checks so `Z`/`Space` talks, reads, or opens the adjacent faced target
+  - added `X`/`Shift` as a tool/action button for cite, inspect, unlock, or stamp-style feedback, while preserving `E` for existing role ability compatibility
+  - changed `Enter` to open the menu while exploring and kept it as dialog advance while dialog is active
+- Added a Zelda-like overworld pause map:
+  - added `PauseMapOverlay` as a UI-only 5x4 district overview that uses the compressed main-map concept as a pause screen rather than the active playfield
+  - mapped Navy Hill, White House, NARA I, NARA II, Little Rock, Springfield, Newington, and Undisclosed Location to discovered-region plates with document, stamp, pen, and seal task icons
+  - persisted discovered screen IDs and region names in `gameState.overworld`, with `?debugRevealMap=1` revealing undiscovered labels for QA
+  - marked the current screen with a cyan player marker and locked regions with redaction styling
+  - changed overworld `M`/`Tab` to open the pause map while leaving active gameplay screen-by-screen
+
+## TODO
+
+- Improve full end-to-end traversal coverage from TitleScene to EndingScene; direct scene QA now covers the later scenes reliably.
+- Consider a later non-combat `B` item such as a source-note stamp or routing card for clearing stonewalls at range.
+- Add full manual route QA for every new Archive Cavern room once the public build is deployed.
+- Continue the SNES upgrade with larger original in-game sprite sheets, richer non-Archive room graphs/transitions, and more authored room-to-room transition visuals, while keeping StateChat terminal-only and the FRUS workflow as the win path.
+
+## 2026-06-11 FRUS workflow overworld gates
+
+- Added a compact overworld quest-item registry for Finding Aid, Document Cart, Citation Pen, Redaction Lens, Declassification Stamp, Review Memo, and Bound FRUS Volume.
+- Extended `WorldScene` interactables with item/flag requirements, locked-dialog feedback, and physical item rewards while preserving the existing screen-manager flag gates.
+- Reworked the first overworld progression so the Navy Hill archive route north requires the assignment memo, Records Quad requires the Finding Aid, NARA I east requires the pulled document set, White House east requires reviewer approval, and final publication requires review plus declassification.
+- Added physical workstation loops: Document Box -> Document Cart/Assignment Memo, Cable Folder -> Document Set, Source Note Table -> Citation Pen/Source Note, Review Desk -> Review Memo/Reviewer Approval, Redaction Lens Case -> Redaction Lens, Classification Gate -> Declassification Stamp, Publication Lectern -> Bound FRUS Volume/General Editor Signoff.
+- Added optional nonblocking world interactables so close-range pickup/workstation objects do not trap the player at interior spawn points.
+- Preserved the `OfficeScene` QA shortcut by importing the existing compatibility redirect from `OfficeScene 2.ts`, because the expected filename kept being removed by an external rename/copy artifact during testing.
+- Verified `npm run build`, `?scene=OfficeScene` -> `WorldScene`, `?scene=WorldScene`, a web-game-client blocked-path probe showing `Required: ASSIGNMENT MEMO`, and a Playwright pickup probe showing `Document Cart + Assignment Memo acquired` with `hasAssignmentMemo: true`.
+
+## 2026-06-11 Multi-region overworld route pass
+
+- Loosened Navy Hill's opening routes so east to Mall Path and south to Little Rock are open from the start while the north Archive Grove route remains gated by `hasAssignmentMemo`.
+- Updated Navy Hill directory/source-note dialogue to explain the open district paths versus the gated archive route.
+- Widened Newington's west-east through-lane and moved the existing Reviewer NPC off the transit path so the screen remains a secure-records stop without blocking traversal.
+- Revalidated `worldScreens.json`: 20 overworld screens, all 16x14 tiles, all connected from Navy Hill, with 1-3 exits and 1-4 interactables per screen.
+- Verified `npm run build`, required web-game-client smoke movement into Little Rock/Potomac Bend, and a six-screen Playwright route: Navy Hill -> Little Rock -> Potomac Bend -> Newington -> Review Field -> Springfield after picking up the Clearance Badge.
+
+## 2026-06-11 Cleanup branch Phase 3
+
+- Reorganized clean entity files into `src/entities/enemies/`, `src/entities/npcs/`, and `src/entities/items/` while leaving dirty player and BureaucraticWall WIP in place for later phases.
+- Updated scene imports for the moved NPC, document, and terminal entities without changing gameplay behavior.
+
+## 2026-06-11 Cleanup branch Phase 4
+
+- Refactored the player movement resolver toward LttP-style 8-direction input while keeping cardinal facing/animation labels and pixel-snapped rendering.
+- Added `playerAnimationState` to the text-state readout so movement QA can confirm idle/walk direction without relying only on screenshots.

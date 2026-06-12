@@ -3,8 +3,15 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
-import { gameState, setPlayerFacing, setPlayerPosition } from "../game/state";
-import type { KeyboardMap, Position } from "../game/types";
+import { gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
+import type { KeyboardMap, PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
+import {
+  buildDirectionalHitbox,
+  PLAYER_ACTION_HITBOX_MS,
+  PLAYER_HURT_MS,
+  PLAYER_IFRAME_MS,
+  toHitboxReadout
+} from "../systems/combat";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 import { approach, frameDeltaSeconds } from "../systems/smoothMovement";
 
@@ -52,6 +59,13 @@ interface WalkPart {
 
 type SnesRoleFrameSheet = NonNullable<ReturnType<typeof getSnesRoleFrameSheet>>;
 
+interface MovementInput {
+  x: number;
+  y: number;
+  moving: boolean;
+  facing: Direction;
+}
+
 export class Player {
   readonly sprite: Phaser.GameObjects.Image;
   private readonly keys: KeyboardMap;
@@ -59,6 +73,7 @@ export class Player {
   private readonly acceleration = 720;
   private readonly deceleration = 900;
   private readonly shadow: Phaser.GameObjects.Ellipse;
+  private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
   private readonly spriteMode: "snes16" | "snesRoleFrame48" | "nes8";
@@ -68,7 +83,11 @@ export class Player {
   private walkClock = 0;
   private idleClock = 0;
   private abilityFrameUntil = 0;
+  private actionActiveUntil = 0;
+  private invulnerableUntil = 0;
+  private hurtUntil = 0;
   private isMoving = false;
+  private controlState: PlayerControlState = "idle";
   private logicalX: number;
   private logicalY: number;
   private velocityX = 0;
@@ -113,6 +132,12 @@ export class Player {
       .image(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
       .setOrigin(0.5, this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
       .setDepth(snapPixel(y));
+    this.actionHitboxVisual = scene.add
+      .rectangle(snapPixel(x), snapPixel(y), 18, 18)
+      .setOrigin(0, 0)
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(899)
+      .setVisible(false);
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);
     this.keys = scene.input.keyboard!.addKeys({
@@ -153,6 +178,43 @@ export class Player {
     return this.facing;
   }
 
+  get animationState(): PlayerAnimationState {
+    const prefix = this.isMoving ? "walk" : "idle";
+    const suffix = this.facing === "north"
+      ? "up"
+      : this.facing === "south"
+        ? "down"
+        : this.facing === "west"
+          ? "left"
+          : "right";
+    return `${prefix}_${suffix}` as PlayerAnimationState;
+  }
+
+  get isActionActive() {
+    return this.scene.time.now < this.actionActiveUntil;
+  }
+
+  get activeActionHitbox() {
+    return this.isActionActive ? this.getFacingActionHitbox() : null;
+  }
+
+  get isInvulnerable() {
+    return this.scene.time.now < this.invulnerableUntil;
+  }
+
+  get combatReadout(): PlayerCombatReadout {
+    const now = this.scene.time.now;
+    const hitbox = this.activeActionHitbox;
+    return {
+      state: this.currentControlState(now),
+      actionActive: this.isActionActive,
+      actionMsRemaining: Math.max(0, Math.round(this.actionActiveUntil - now)),
+      invulnerable: this.isInvulnerable,
+      invulnerableMsRemaining: Math.max(0, Math.round(this.invulnerableUntil - now)),
+      hitbox: toHitboxReadout(hitbox)
+    };
+  }
+
   setPosition(x: number, y: number) {
     this.logicalX = x;
     this.logicalY = y;
@@ -175,15 +237,37 @@ export class Player {
     setPlayerFacing(this.facing);
   }
 
+  startAction() {
+    this.actionActiveUntil = this.scene.time.now + PLAYER_ACTION_HITBOX_MS;
+    this.controlState = "attack";
+    this.abilityFrameUntil = Math.max(this.abilityFrameUntil, this.scene.time.now + PLAYER_ACTION_HITBOX_MS);
+    this.syncRenderPosition();
+  }
+
+  getFacingActionHitbox() {
+    return buildDirectionalHitbox(this.position, this.facing);
+  }
+
+  takeHit(source: Position, distance = 14, invulnerabilityMs = PLAYER_IFRAME_MS) {
+    if (this.isInvulnerable) return false;
+    this.invulnerableUntil = this.scene.time.now + invulnerabilityMs;
+    this.hurtUntil = this.scene.time.now + PLAYER_HURT_MS;
+    this.controlState = "hurt";
+    this.pushAwayFrom(source, distance);
+    this.syncRenderPosition();
+    return true;
+  }
+
   update(deltaMs: number, canMove: boolean, options: PlayerMoveOptions = {}) {
     this.idleClock += deltaMs;
+    const now = this.scene.time.now;
     if (!canMove) {
       this.isMoving = false;
       this.velocityX = 0;
       this.velocityY = 0;
       this.sprite.setAngle(0);
       this.sprite.setScale(1);
-      if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
+      if (now >= this.abilityFrameUntil && !this.isInvulnerable) this.sprite.clearTint();
       this.syncRenderPosition();
       setPlayerPosition(this.position);
       setPlayerFacing(this.facing);
@@ -198,32 +282,16 @@ export class Player {
       north: this.keys.up.isDown || this.keys.w.isDown || !!touchState?.up,
       south: this.keys.down.isDown || this.keys.s.isDown || !!touchState?.down
     };
-    const justPressed: Direction[] = [];
-    if (Phaser.Input.Keyboard.JustDown(this.keys.left) || Phaser.Input.Keyboard.JustDown(this.keys.a) || (directionDown.west && !this.previousDirectionDown.west)) justPressed.push("west");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.right) || Phaser.Input.Keyboard.JustDown(this.keys.d) || (directionDown.east && !this.previousDirectionDown.east)) justPressed.push("east");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.up) || Phaser.Input.Keyboard.JustDown(this.keys.w) || (directionDown.north && !this.previousDirectionDown.north)) justPressed.push("north");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.down) || Phaser.Input.Keyboard.JustDown(this.keys.s) || (directionDown.south && !this.previousDirectionDown.south)) justPressed.push("south");
-    if (justPressed.length) this.facing = justPressed[justPressed.length - 1];
-    if (!directionDown[this.facing]) {
-      const fallback = (["west", "east", "north", "south"] as Direction[]).find((direction) => directionDown[direction]);
-      if (fallback) this.facing = fallback;
-    }
-    let dx = 0;
-    let dy = 0;
-    if (directionDown[this.facing]) {
-      if (this.facing === "west") dx = -1;
-      else if (this.facing === "east") dx = 1;
-      else if (this.facing === "north") dy = -1;
-      else dy = 1;
-    }
+    const movementInput = this.resolveMovementInput(directionDown);
+    this.facing = movementInput.facing;
+    const dx = movementInput.x;
+    const dy = movementInput.y;
     this.previousDirectionDown.west = directionDown.west;
     this.previousDirectionDown.east = directionDown.east;
     this.previousDirectionDown.north = directionDown.north;
     this.previousDirectionDown.south = directionDown.south;
-    const inputMoving = dx !== 0 || dy !== 0;
+    const inputMoving = movementInput.moving;
     const dt = frameDeltaSeconds(deltaMs);
-    if (dx !== 0) this.velocityY = 0;
-    if (dy !== 0) this.velocityX = 0;
     const targetVelocityX = dx * this.speed;
     const targetVelocityY = dy * this.speed;
     const velocityRate = inputMoving ? this.acceleration : this.deceleration;
@@ -261,9 +329,10 @@ export class Player {
       this.walkClock = 0;
     }
     this.isMoving = moving;
+    if (now >= this.hurtUntil && now >= this.actionActiveUntil) this.controlState = moving ? "walk" : "idle";
     this.sprite.setAngle(0);
     this.sprite.setScale(1);
-    if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
+    if (now >= this.abilityFrameUntil && !this.isInvulnerable) this.sprite.clearTint();
     this.shadow.setScale(1);
     this.syncRenderPosition();
     setPlayerPosition(this.position);
@@ -290,12 +359,39 @@ export class Player {
 
   private playAbilityFrame() {
     this.abilityFrameUntil = this.scene.time.now + 420;
+    this.controlState = "use_item";
     if (this.spriteMode === "snesRoleFrame48") {
       this.sprite.clearTint();
       this.updateRoleFrame();
       return;
     }
     this.sprite.setTint(color(PALETTE.goldStamp));
+  }
+
+  private resolveMovementInput(directionDown: Record<Direction, boolean>): MovementInput {
+    const justPressed: Direction[] = [];
+    if (Phaser.Input.Keyboard.JustDown(this.keys.left) || Phaser.Input.Keyboard.JustDown(this.keys.a) || (directionDown.west && !this.previousDirectionDown.west)) justPressed.push("west");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.right) || Phaser.Input.Keyboard.JustDown(this.keys.d) || (directionDown.east && !this.previousDirectionDown.east)) justPressed.push("east");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.up) || Phaser.Input.Keyboard.JustDown(this.keys.w) || (directionDown.north && !this.previousDirectionDown.north)) justPressed.push("north");
+    if (Phaser.Input.Keyboard.JustDown(this.keys.down) || Phaser.Input.Keyboard.JustDown(this.keys.s) || (directionDown.south && !this.previousDirectionDown.south)) justPressed.push("south");
+
+    let facing = justPressed.length ? justPressed[justPressed.length - 1] : this.facing;
+    const horizontal = (directionDown.west ? -1 : 0) + (directionDown.east ? 1 : 0);
+    const vertical = (directionDown.north ? -1 : 0) + (directionDown.south ? 1 : 0);
+    const moving = horizontal !== 0 || vertical !== 0;
+
+    if (moving && !directionDown[facing]) {
+      if (horizontal < 0) facing = "west";
+      else if (horizontal > 0) facing = "east";
+      else if (vertical < 0) facing = "north";
+      else facing = "south";
+    }
+
+    if (horizontal !== 0 && vertical !== 0) {
+      const diagonal = Math.SQRT1_2;
+      return { x: horizontal * diagonal, y: vertical * diagonal, moving, facing };
+    }
+    return { x: horizontal, y: vertical, moving, facing };
   }
 
   private syncRenderPosition() {
@@ -308,6 +404,41 @@ export class Player {
     this.sprite.setDepth(renderY);
     this.syncIdleCue(renderX, renderY);
     this.syncWalkCycleCue(renderX, renderY);
+    this.syncActionHitbox();
+    this.syncInvulnerabilityBlink();
+    setPlayerAnimationState(this.animationState);
+    setPlayerCombat(this.combatReadout);
+  }
+
+  private currentControlState(now = this.scene.time.now): PlayerControlState {
+    if (now < this.hurtUntil) return "hurt";
+    if (now < this.actionActiveUntil) return "attack";
+    if (this.controlState === "hurt" || this.controlState === "attack") return this.isMoving ? "walk" : "idle";
+    return this.controlState;
+  }
+
+  private syncActionHitbox() {
+    const hitbox = this.activeActionHitbox;
+    if (!hitbox) {
+      this.actionHitboxVisual.setVisible(false);
+      return;
+    }
+    this.actionHitboxVisual
+      .setVisible(true)
+      .setSize(hitbox.width, hitbox.height)
+      .setPosition(snapPixel(hitbox.x), snapPixel(hitbox.y))
+      .setDepth(snapPixel(this.logicalY + 1));
+  }
+
+  private syncInvulnerabilityBlink() {
+    if (!this.isInvulnerable) {
+      this.sprite.setAlpha(1);
+      if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
+      return;
+    }
+    const blinkOn = Math.floor(this.scene.time.now / 90) % 2 === 0;
+    this.sprite.setAlpha(blinkOn ? 1 : 0.45);
+    this.sprite.setTint(color(PALETTE.classNetRed));
   }
 
   private createWalkCycleCue(scene: Phaser.Scene) {

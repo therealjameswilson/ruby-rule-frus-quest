@@ -14,10 +14,13 @@ import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import type {
+  AdventureHudReadout,
   ChoiceOption,
   DocumentCandidate,
   DocumentWorkflowState,
   GameMode,
+  PlayerAnimationState,
+  PlayerCombatReadout,
   PlayerProfile,
   Position,
   ReviewStatus,
@@ -55,6 +58,7 @@ interface GameState {
   };
   reliability: number;
   heldItem: string | null;
+  equippedProcessItem: ProcessItemId | null;
   documentPoints: number;
   inventory: string[];
   volumeFragments: string[];
@@ -63,6 +67,8 @@ interface GameState {
   currentChoice: { title: string; options: ChoiceOption[] } | null;
   player: Position;
   playerFacing: Direction;
+  playerAnimationState: PlayerAnimationState;
+  playerCombat: PlayerCombatReadout;
   nearestInteractable: string | null;
   visibleEntities: string[];
   visibleThreats: VisibleThreat[];
@@ -155,6 +161,7 @@ export const gameState: GameState = {
   },
   reliability: 80,
   heldItem: null,
+  equippedProcessItem: null,
   documentPoints: 0,
   inventory: [],
   volumeFragments: [],
@@ -163,6 +170,15 @@ export const gameState: GameState = {
   currentChoice: null,
   player: { x: 128, y: 160 },
   playerFacing: "south",
+  playerAnimationState: "idle_down",
+  playerCombat: {
+    state: "idle",
+    actionActive: false,
+    actionMsRemaining: 0,
+    invulnerable: false,
+    invulnerableMsRemaining: 0,
+    hitbox: null
+  },
   nearestInteractable: null,
   visibleEntities: [],
   visibleThreats: [],
@@ -198,6 +214,7 @@ export function resetGameState() {
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.documentWorkflowLog = [];
   gameState.heldItem = null;
+  gameState.equippedProcessItem = null;
   gameState.documentPoints = 0;
   gameState.inventory = [];
   gameState.volumeFragments = [];
@@ -206,6 +223,15 @@ export function resetGameState() {
   gameState.currentChoice = null;
   gameState.player = { x: 128, y: 160 };
   gameState.playerFacing = "south";
+  gameState.playerAnimationState = "idle_down";
+  gameState.playerCombat = {
+    state: "idle",
+    actionActive: false,
+    actionMsRemaining: 0,
+    invulnerable: false,
+    invulnerableMsRemaining: 0,
+    hitbox: null
+  };
   gameState.nearestInteractable = null;
   gameState.visibleEntities = [];
   gameState.visibleThreats = [];
@@ -316,6 +342,14 @@ export function setPlayerFacing(direction: Direction) {
   gameState.playerFacing = direction;
 }
 
+export function setPlayerAnimationState(animationState: PlayerAnimationState) {
+  gameState.playerAnimationState = animationState;
+}
+
+export function setPlayerCombat(combat: PlayerCombatReadout) {
+  gameState.playerCombat = combat;
+}
+
 export function addInventoryItem(label: string) {
   if (!gameState.inventory.includes(label)) {
     gameState.inventory.push(label);
@@ -341,10 +375,39 @@ export function addProcessItem(itemId: ProcessItemId) {
   const item = processItemDefinition(itemId);
   if (!item) return;
   addInventoryItem(item.displayName);
+  if (!gameState.equippedProcessItem) {
+    gameState.equippedProcessItem = itemId;
+    refreshQuestWorkflowState();
+  }
 }
 
 export function getProcessItemDefinition(itemId: ProcessItemId) {
   return processItemDefinition(itemId);
+}
+
+export function equipProcessItem(itemId: ProcessItemId) {
+  if (!hasProcessItem(itemId)) return false;
+  gameState.equippedProcessItem = itemId;
+  refreshQuestWorkflowState();
+  return true;
+}
+
+export function cycleEquippedProcessItem(direction = 1) {
+  const acquired = getProcessItemReadout().filter((item) => item.acquired);
+  if (!acquired.length) {
+    gameState.equippedProcessItem = null;
+    refreshQuestWorkflowState();
+    return null;
+  }
+  const currentIndex = acquired.findIndex((item) => item.id === gameState.equippedProcessItem);
+  const normalizedDirection = direction >= 0 ? 1 : -1;
+  const nextIndex = currentIndex < 0
+    ? 0
+    : (currentIndex + normalizedDirection + acquired.length) % acquired.length;
+  const next = acquired[nextIndex];
+  gameState.equippedProcessItem = next.id;
+  refreshQuestWorkflowState();
+  return next;
 }
 
 export function getProcessItemGateReadout(itemId: ProcessItemId) {
@@ -705,9 +768,10 @@ function compactHeldItem(label: string | null) {
   return compactHudText(label, 18);
 }
 
-function reliabilityBlocks() {
-  const filled = Math.round((Math.max(0, Math.min(100, gameState.reliability)) / 100) * 8);
-  return `${"█".repeat(filled)}${"░".repeat(8 - filled)}`;
+function meterBlocks(value: number, max = 100, width = 8) {
+  const bounded = Math.max(0, Math.min(max, value));
+  const filled = Math.round((bounded / max) * width);
+  return `${"█".repeat(filled)}${"░".repeat(width - filled)}`;
 }
 
 function stampReadout() {
@@ -718,8 +782,7 @@ function stampReadout() {
 function selectedItemReadout() {
   const held = compactHeldItem(gameState.physicalVerification?.carriedItem ?? gameState.heldItem);
   if (held !== "NONE") return held;
-  const acquired = getProcessItemReadout().filter((item) => item.acquired);
-  return acquired.at(-1)?.shortLabel ?? "NONE";
+  return getAdventureHudReadout().secondarySlotLabel;
 }
 
 export function getProcessItemReadout() {
@@ -738,9 +801,46 @@ export function getProcessItemReadout() {
       hudSlot: item.hudSlot,
       zeldaFunction: item.zeldaFunction,
       frusMeaning: item.frusMeaning,
-      acquired
+      acquired,
+      equipped: acquired && item.id === gameState.equippedProcessItem
     };
   });
+}
+
+export function getAdventureHudReadout(): AdventureHudReadout {
+  refreshQuestWorkflowState();
+  const inventoryStrip = getProcessItemReadout().map((item) => ({
+    id: item.id,
+    displayName: item.displayName,
+    shortLabel: item.shortLabel,
+    hudSlot: item.hudSlot,
+    acquired: item.acquired,
+    equipped: item.equipped
+  }));
+  const equippedItem = inventoryStrip.find((item) => item.equipped)
+    ?? inventoryStrip.find((item) => item.acquired)
+    ?? null;
+  return {
+    confidence: {
+      current: gameState.reliability,
+      max: 100,
+      meter: meterBlocks(gameState.reliability)
+    },
+    clarity: {
+      current: Math.round(gameState.volumeMetrics.readerClarity),
+      max: 100,
+      meter: meterBlocks(gameState.volumeMetrics.readerClarity)
+    },
+    documentPoints: gameState.documentPoints,
+    equippedItem,
+    secondarySlotLabel: equippedItem?.shortLabel ?? "NONE",
+    inventoryStrip,
+    stamps: stampReadout(),
+    fragments: {
+      current: gameState.volumeFragments.length,
+      total: 5
+    }
+  };
 }
 
 export function hasWorkflowTool(toolId: WorkflowTool) {
@@ -782,14 +882,15 @@ export function getWorkflowToolReadout() {
 }
 
 export function getProductionStatusReadout() {
+  const hud = getAdventureHudReadout();
   const role = compactHudText(gameState.playerProfile.roleLabel, 12);
   const selectedItem = selectedItemReadout();
   const room = gameState.roomTraversal?.currentRoomId ?? getCurrentAreaReadout().displayName.toUpperCase();
   const objective = compactHudText(gameState.objective || "VERIFY", 32);
   return [
-    `ROLE ${role.padEnd(12, " ")} REL ${reliabilityBlocks()} DOC ${String(gameState.documentPoints).padStart(2, "0")}`,
-    `ITEM ${selectedItem.padEnd(10, " ")} STAMPS ${stampReadout()}`,
-    `MAP ${compactHudText(room, 8).padEnd(8, " ")} FRAG ${gameState.volumeFragments.length}/5 ${objective}`
+    `ROLE ${role.padEnd(12, " ")} REL ${hud.confidence.meter} DOC ${String(hud.documentPoints).padStart(2, "0")}`,
+    `ITEM ${selectedItem.padEnd(10, " ")} STAMPS ${hud.stamps}`,
+    `MAP ${compactHudText(room, 8).padEnd(8, " ")} FRAG ${hud.fragments.current}/${hud.fragments.total} ${objective}`
   ];
 }
 
@@ -894,6 +995,7 @@ export function renderGameToText() {
       questWorkflow,
       snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
+      adventureHud: getAdventureHudReadout(),
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,
       documentPoints: gameState.documentPoints,
@@ -940,6 +1042,8 @@ export function renderGameToText() {
       latestMessage: gameState.latestMessage,
       player: gameState.player,
       playerFacing: gameState.playerFacing,
+      playerAnimationState: gameState.playerAnimationState,
+      playerCombat: gameState.playerCombat,
       nearestInteractable: gameState.nearestInteractable,
       visibleEntities: gameState.visibleEntities,
       visibleThreats: gameState.visibleThreats,

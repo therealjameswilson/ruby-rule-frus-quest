@@ -13,6 +13,62 @@ export type ProposalKind =
   | "publication_status";
 
 export type GameMode = "boot" | "title" | "explore" | "dialog" | "choice" | "pause" | "ending" | "debug";
+export type PlayerAnimationState =
+  | "idle_down"
+  | "idle_up"
+  | "idle_left"
+  | "idle_right"
+  | "walk_down"
+  | "walk_up"
+  | "walk_left"
+  | "walk_right";
+
+export type PlayerControlState = "idle" | "walk" | "attack" | "hurt" | "use_item";
+
+export interface PlayerCombatReadout {
+  state: PlayerControlState;
+  actionActive: boolean;
+  actionMsRemaining: number;
+  invulnerable: boolean;
+  invulnerableMsRemaining: number;
+  hitbox: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+}
+
+export interface AdventureHudItemSlot {
+  id: ProcessItemId;
+  displayName: string;
+  shortLabel: string;
+  hudSlot: number;
+  acquired: boolean;
+  equipped: boolean;
+}
+
+export interface AdventureHudReadout {
+  confidence: {
+    current: number;
+    max: number;
+    meter: string;
+  };
+  clarity: {
+    current: number;
+    max: number;
+    meter: string;
+  };
+  documentPoints: number;
+  equippedItem: AdventureHudItemSlot | null;
+  secondarySlotLabel: string;
+  inventoryStrip: AdventureHudItemSlot[];
+  stamps: string;
+  fragments: {
+    current: number;
+    total: number;
+  };
+}
 
 export interface Position {
   x: number;

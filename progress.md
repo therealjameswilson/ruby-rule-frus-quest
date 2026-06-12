@@ -384,3 +384,34 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Consider a later non-combat `B` item such as a source-note stamp or routing card for clearing stonewalls at range.
 - Add full manual route QA for every new Archive Cavern room once the public build is deployed.
 - Continue the SNES upgrade with larger original in-game sprite sheets, richer non-Archive room graphs/transitions, and more authored room-to-room transition visuals, while keeping StateChat terminal-only and the FRUS workflow as the win path.
+
+## 2026-06-11 Cleanup branch Phase 4
+
+- Refactored the player movement resolver toward LttP-style 8-direction input while keeping cardinal facing/animation labels and pixel-snapped rendering.
+- Added `playerAnimationState` to the text-state readout so movement QA can confirm idle/walk direction without relying only on screenshots.
+
+## 2026-06-11 Cleanup branch Phase 5
+
+- Added a compact player action-hitbox window for resolving bureaucratic wall blockers, keeping the FRUS process metaphor while matching the active-frame interaction pattern.
+- Added player i-frame and hurt-state readouts after wall contact, with knockback routed through the player controller and exposed in `render_game_to_text()`.
+
+## 2026-06-11 Cleanup branch Phase 6
+
+- Added a shared enemy base for coherent roaming hazards with waypoint movement, damage, knockback, and death hooks.
+- Retained the existing patrol-style HAC member, shutdown, bee swarm, and Navy Hill mice hazards while leaving specialized bureaucratic stonewalls in their process-gate class.
+
+## 2026-06-11 Cleanup branch Phase 7
+
+- Added a typed adventure HUD readout that maps FRUS confidence, clarity, document points, stamps, fragments, and process tools onto a compact action-adventure status model.
+- Added an equipped secondary process-item slot and highlighted it in both the top HUD strip and manuscript inventory without changing existing pickup or gate mechanics.
+
+## 2026-06-12 Cleanup branch Phase 8
+
+- Quarantined the dirty overworld/art-pack working tree under `experiments/overworld-wip/`, including untracked source/assets plus copies and a binary patch for dirty tracked files.
+- Restored the runnable source tree to the Phase 7 branch state so incomplete `WorldScene`, art-pack, screen-manager, interior-map, and tilemap experiments no longer affect the cleanup branch.
+- Added experiment README guardrails for promoting quarantined work back into `src/` or `public/` only as focused, buildable commits.
+
+## 2026-06-12 Cleanup branch Phase 9
+
+- Updated `README.md` with current cleanup scope, Phaser 3 engine rationale, controls, pillar status, experiment quarantine notes, and a roadmap tied to the LttP cleanup rubric.
+- Kept the active docs honest that the large overworld/art-pack work is preserved under `experiments/overworld-wip/` but is not live game code.

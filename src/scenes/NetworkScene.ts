@@ -18,9 +18,9 @@ import {
 } from "../game/state";
 import type { ChoiceOption, KeyboardMap, RouteItem } from "../game/types";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
-import { HistorianNPC } from "../entities/HistorianNPC";
 import { Player } from "../entities/Player";
-import { Terminal } from "../entities/Terminal";
+import { Terminal } from "../entities/items/Terminal";
+import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
