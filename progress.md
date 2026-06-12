@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Started `feature/wire-16bit-sprites` Phase 0 from `main`.
+- Audited current character sprite wiring against `public/assets/art-pack/MANIFEST.md`:
+  - all ten canonical 16-bit character PNG sheets exist under `public/assets/art-pack/sprites/`
+  - live code still loads/renderers character art through SVG stills and manual texture-frame registration
+  - no direct `this.load.image/spritesheet/atlas(...)` or `anims.create(...)` calls currently exist for character art in `src/`
+  - documented the required path, key, frame, and entity wiring changes in `docs/art/sprite_audit.md`
+  - verified `npm run build` and captured the current baseline at `docs/screenshots/16bit-wire-phase0.png`
 - Scaffolded a Vite + TypeScript + Phaser 3 app in `ruby-rule-frus-quest`.
 - Added a role-crafting flow so players can choose a FRUS production role before entering the office.
 - Added generated placeholder pixel textures for characters, tiles, UI panels, documents, and the FRUS volume.
