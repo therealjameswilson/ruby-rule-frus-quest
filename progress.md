@@ -258,6 +258,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - made `gameState.documentCandidates` the source of truth for `documentWorkflow`, volume metrics, counters, and `render_game_to_text().questWorkflow`
   - wired Archive pickup/provenance, Network routing, Referral equity/excision, Silent Read proofing, and Ending publication into the workflow helpers
   - expanded `public/assets/data/items.json` to mirror the document-candidate metadata loaded by BootScene
+- Started `feature/mobile-snes-quality` Phase 0 from updated `main`:
+  - confirmed the current base resolution remains 256x240 with Canvas renderer, `pixelArt: true`, `roundPixels: true`, antialiasing disabled, `Phaser.Scale.FIT`, and `zoom: 3`
+  - added a hidden `?mobileDebug=1` / F11 debug HUD reporting FPS, pointer latency probe, pointer count, DPR, canvas CSS/backing size, computed zoom, integer-zoom status, and first-frame timing
+  - audited direct keyboard/pointer/touch paths and recorded that input still bypasses a unified `src/input/` architecture
+  - audited fixed-pixel HUD/dialogue/menu surfaces and the current HTML/CSS mobile shell
+  - measured local Vite preview under Playwright iPhone 14 Pro and Pixel 7 portrait/landscape profiles, captured screenshots and recordings, and documented the fractional zoom failure in `docs/mobile/baseline.md`
+  - verified `npm run build` after adding the debug HUD; only the existing Phaser chunk-size warning remains
   - added exact `TILE_SIZE`, `HALF_TILE`, and `PLAYER_GRID_CORRECTION` exports to the quest architecture layer
   - verified `npm run build`, `git diff --check`, direct scene text-state probes, and the bundled web-game Playwright client with screenshot inspection
 - Added a sixth seeded document candidate:

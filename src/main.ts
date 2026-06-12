@@ -9,7 +9,25 @@ declare global {
     render_game_to_text?: () => string;
     advanceTime?: (ms: number) => Promise<void>;
     rubyRuleTouchState?: Record<string, boolean>;
+    rubyRuleMobileMetrics?: MobileDebugMetrics;
   }
+}
+
+interface MobileDebugMetrics {
+  fpsCurrent: number;
+  fpsAvg1s: number;
+  fpsMin10s: number;
+  lastInputLatencyMs: number | null;
+  lastPointerDownAt: number | null;
+  activePointerCount: number;
+  dpr: number;
+  canvasCssWidth: number;
+  canvasCssHeight: number;
+  canvasBackingWidth: number;
+  canvasBackingHeight: number;
+  computedZoom: number;
+  integerZoom: boolean;
+  firstFrameMs: number | null;
 }
 
 window.render_game_to_text = renderGameToText;
@@ -18,6 +36,110 @@ window.advanceTime = (ms: number) =>
     window.setTimeout(resolve, Math.max(0, ms));
   });
 window.rubyRuleTouchState = {};
+window.rubyRuleMobileMetrics = {
+  fpsCurrent: 0,
+  fpsAvg1s: 0,
+  fpsMin10s: 0,
+  lastInputLatencyMs: null,
+  lastPointerDownAt: null,
+  activePointerCount: 0,
+  dpr: window.devicePixelRatio || 1,
+  canvasCssWidth: 0,
+  canvasCssHeight: 0,
+  canvasBackingWidth: 0,
+  canvasBackingHeight: 0,
+  computedZoom: 0,
+  integerZoom: false,
+  firstFrameMs: null
+};
+
+const mobileDebugFrames: Array<{ time: number; fps: number }> = [];
+const mobileDebugPointers = new Set<number>();
+
+function updateMobileCanvasMetrics() {
+  const metrics = window.rubyRuleMobileMetrics!;
+  const canvas = document.querySelector("canvas");
+  metrics.dpr = window.devicePixelRatio || 1;
+  if (!canvas) return;
+  const rect = canvas.getBoundingClientRect();
+  metrics.canvasCssWidth = Math.round(rect.width);
+  metrics.canvasCssHeight = Math.round(rect.height);
+  metrics.canvasBackingWidth = canvas.width;
+  metrics.canvasBackingHeight = canvas.height;
+  metrics.computedZoom = rect.width / GAME_WIDTH;
+  metrics.integerZoom = Math.abs(metrics.computedZoom - Math.round(metrics.computedZoom)) < 0.001;
+}
+
+function installMobileDebugHud() {
+  const metrics = window.rubyRuleMobileMetrics!;
+  const hud = document.createElement("pre");
+  hud.id = "mobile-debug-hud";
+  hud.setAttribute("aria-label", "Mobile performance debug HUD");
+  document.body.appendChild(hud);
+  const params = new URLSearchParams(window.location.search);
+  let visible = params.get("mobileDebug") === "1";
+  hud.hidden = !visible;
+
+  const setVisible = (nextVisible: boolean) => {
+    visible = nextVisible;
+    hud.hidden = !visible;
+  };
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key !== "F11" || event.repeat) return;
+    event.preventDefault();
+    setVisible(!visible);
+  });
+
+  window.addEventListener("pointerdown", (event) => {
+    const pointerTime = performance.now();
+    mobileDebugPointers.add(event.pointerId);
+    metrics.activePointerCount = mobileDebugPointers.size;
+    metrics.lastPointerDownAt = pointerTime;
+    requestAnimationFrame((frameTime) => {
+      metrics.lastInputLatencyMs = Math.max(0, frameTime - pointerTime);
+    });
+  }, { capture: true, passive: true });
+
+  const clearPointer = (event: PointerEvent) => {
+    mobileDebugPointers.delete(event.pointerId);
+    metrics.activePointerCount = mobileDebugPointers.size;
+  };
+  window.addEventListener("pointerup", clearPointer, { capture: true, passive: true });
+  window.addEventListener("pointercancel", clearPointer, { capture: true, passive: true });
+
+  let lastFrame = performance.now();
+  const update = (time: number) => {
+    const delta = Math.max(0.001, time - lastFrame);
+    lastFrame = time;
+    if (metrics.firstFrameMs === null) metrics.firstFrameMs = time;
+    const fps = 1000 / delta;
+    metrics.fpsCurrent = fps;
+    mobileDebugFrames.push({ time, fps });
+    while (mobileDebugFrames.length && time - mobileDebugFrames[0].time > 10000) {
+      mobileDebugFrames.shift();
+    }
+    const recent1s = mobileDebugFrames.filter((frame) => time - frame.time <= 1000);
+    metrics.fpsAvg1s = recent1s.length
+      ? recent1s.reduce((sum, frame) => sum + frame.fps, 0) / recent1s.length
+      : fps;
+    metrics.fpsMin10s = mobileDebugFrames.length
+      ? Math.min(...mobileDebugFrames.map((frame) => frame.fps))
+      : fps;
+    updateMobileCanvasMetrics();
+    if (visible) {
+      hud.textContent = [
+        `FPS now ${metrics.fpsCurrent.toFixed(1)} | 1s ${metrics.fpsAvg1s.toFixed(1)} | 10s min ${metrics.fpsMin10s.toFixed(1)}`,
+        `INPUT ${metrics.lastInputLatencyMs === null ? "--" : `${metrics.lastInputLatencyMs.toFixed(1)}ms`} | POINTERS ${metrics.activePointerCount}`,
+        `DPR ${metrics.dpr.toFixed(2)} | ZOOM ${metrics.computedZoom.toFixed(3)} ${metrics.integerZoom ? "INT" : "FRAC"}`,
+        `CSS ${metrics.canvasCssWidth}x${metrics.canvasCssHeight} | BUFFER ${metrics.canvasBackingWidth}x${metrics.canvasBackingHeight}`,
+        `FIRST FRAME ${metrics.firstFrameMs === null ? "--" : `${metrics.firstFrameMs.toFixed(1)}ms`}`
+      ].join("\n");
+    }
+    requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
 
 const TOUCH_KEYS: Record<string, { code: string; key: string; keyCode: number; state?: string }> = {
   up: { code: "ArrowUp", key: "ArrowUp", keyCode: 38, state: "up" },
@@ -151,6 +273,7 @@ function configureIntegerGameShellScale() {
 }
 
 setupMobileControls();
+installMobileDebugHud();
 configureIntegerGameShellScale();
 window.addEventListener("resize", configureIntegerGameShellScale);
 window.addEventListener("orientationchange", configureIntegerGameShellScale);
