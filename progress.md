@@ -454,3 +454,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Added a global F9 shortcut from `main.ts` to open the gallery from normal game flow.
 - Captured `docs/screenshots/16bit-wire-gallery.png`, `docs/screenshots/16bit-wire-phase4.png`, and an F9 shortcut screenshot.
 - Ran `npm run palette:check --if-present`; no palette script is configured, so `tools/palette_report.md` records the skipped check and follow-up.
+
+## 2026-06-12 16-bit sprite wiring Phase 5
+
+- Confirmed there is no `experiments/old-8bit/` directory in this branch, so there were no old placeholder PNG files to delete.
+- Updated the art-pack manifest with the native 128x192 runtime-sheet note for the ten canonical 32x48 character sprites.
+- Added `docs/art/16bit_sprite_wiring_final_report.md` with branch log, cleanup result, centralized loading confirmation, frame-order result, screenshot evidence, validation notes, and PR status.
+- Verified that character spritesheet loading is centralized through `src/art/characters.ts` and `BootScene.preloadCharacters(this)`.
+- PR creation is blocked locally because `gh` is not installed; the requested PR title is recorded in the final report.
