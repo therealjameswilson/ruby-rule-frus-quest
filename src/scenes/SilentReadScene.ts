@@ -19,8 +19,8 @@ import {
   setSceneState,
   setVisibleEntities
 } from "../game/state";
-import { HistorianNPC } from "../entities/HistorianNPC";
 import { Player } from "../entities/Player";
+import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";

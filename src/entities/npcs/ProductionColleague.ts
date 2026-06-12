@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
-import { SNES_PRODUCTION_COLLEAGUE_ASSETS, SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET } from "../game/snesAtlas";
-import type { SnesProductionColleagueFrameName, SnesProductionColleagueId } from "../game/snesAtlas";
-import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
+import { PALETTE } from "../../game/constants";
+import { SNES_PRODUCTION_COLLEAGUE_ASSETS, SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET } from "../../game/snesAtlas";
+import type { SnesProductionColleagueFrameName, SnesProductionColleagueId } from "../../game/snesAtlas";
+import { setPixelPosition, snapPixel } from "../../systems/pixelPerfect";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;

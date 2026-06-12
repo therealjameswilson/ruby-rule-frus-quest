@@ -23,8 +23,8 @@ import {
   setVisibleThreats
 } from "../game/state";
 import type { Interactable } from "../game/types";
-import { HistorianNPC } from "../entities/HistorianNPC";
-import { Manuscript } from "../entities/Manuscript";
+import { Manuscript } from "../entities/items/Manuscript";
+import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { Player } from "../entities/Player";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";

@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
-import type { Position } from "../game/types";
-import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
-import { approach, frameDeltaSeconds } from "../systems/smoothMovement";
+import { PALETTE } from "../../game/constants";
+import type { Position } from "../../game/types";
+import { setPixelPosition, snapPixel } from "../../systems/pixelPerfect";
+import { approach, frameDeltaSeconds } from "../../systems/smoothMovement";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;

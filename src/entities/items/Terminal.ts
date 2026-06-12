@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
+import { PALETTE } from "../../game/constants";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;

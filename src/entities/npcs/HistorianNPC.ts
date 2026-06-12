@@ -1,8 +1,8 @@
 import Phaser from "phaser";
-import { CHARACTERS, PALETTE } from "../game/constants";
-import type { CharacterId } from "../game/types";
-import { getSnesNpcTextureKey } from "../game/snesAtlas";
-import { snapPixel } from "../systems/pixelPerfect";
+import { CHARACTERS, PALETTE } from "../../game/constants";
+import type { CharacterId } from "../../game/types";
+import { getSnesNpcTextureKey } from "../../game/snesAtlas";
+import { snapPixel } from "../../systems/pixelPerfect";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;

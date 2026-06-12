@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
-import { snapPixel } from "../systems/pixelPerfect";
+import { PALETTE } from "../../game/constants";
+import { snapPixel } from "../../systems/pixelPerfect";
 
 const DOCUMENT_TEXTURES: Record<string, string> = {
   telegram: "telegram",
