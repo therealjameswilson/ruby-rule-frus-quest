@@ -265,6 +265,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - audited fixed-pixel HUD/dialogue/menu surfaces and the current HTML/CSS mobile shell
   - measured local Vite preview under Playwright iPhone 14 Pro and Pixel 7 portrait/landscape profiles, captured screenshots and recordings, and documented the fractional zoom failure in `docs/mobile/baseline.md`
   - verified `npm run build` after adding the debug HUD; only the existing Phaser chunk-size warning remains
+- Completed `feature/mobile-snes-quality` Phase 1 render lock:
+  - kept the sacred 256x240 base resolution while forcing the displayed game shell to whole-number CSS zoom only
+  - added a resize/orientation guard that refreshes Phaser scale and corrects canvas CSS drift if computed zoom differs from the integer target by more than 0.001
+  - added a `?pixelProof=1` / F8 checkerboard, diagonal-line, and stripe overlay for visual pixel proof
+  - extended the debug HUD with integer target zoom, proof-overlay status, and guard correction count
+  - converted a few debug/gallery/prop fractional scales to 1x, leaving the compact character-create thumbnails for a later UI redesign
+  - verified local preview mobile profiles for iPhone 14 Pro and Pixel 7 portrait/landscape; all reported 256x240 CSS canvas, 256x240 backing store, computed zoom 1.000, integer zoom true, and zero console errors
+  - verified the in-app browser at a desktop-style viewport reports a 512x480 canvas for a 2x shell with the proof overlay visible
+  - verified `npm run build`; only the existing Phaser chunk-size warning remains
   - added exact `TILE_SIZE`, `HALF_TILE`, and `PLAYER_GRID_CORRECTION` exports to the quest architecture layer
   - verified `npm run build`, `git diff --check`, direct scene text-state probes, and the bundled web-game Playwright client with screenshot inspection
 - Added a sixth seeded document candidate:
