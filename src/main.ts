@@ -155,4 +155,11 @@ configureIntegerGameShellScale();
 window.addEventListener("resize", configureIntegerGameShellScale);
 window.addEventListener("orientationchange", configureIntegerGameShellScale);
 
-new Phaser.Game(gameConfig);
+const game = new Phaser.Game(gameConfig);
+
+window.addEventListener("keydown", (event) => {
+  if (event.key !== "F9" || event.repeat) return;
+  event.preventDefault();
+  if (!game.scene.getScene("SpriteGallery")) return;
+  game.scene.start("SpriteGallery");
+});
