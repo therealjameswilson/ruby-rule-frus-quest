@@ -60,6 +60,23 @@ class RetroAudio {
     return this.enabled;
   }
 
+  async unlock() {
+    if (!this.enabled || typeof window === "undefined") return false;
+    const context = this.getContext();
+    if (!context) return false;
+    if (context.state === "suspended") await context.resume();
+    const source = context.createBufferSource();
+    const gain = context.createGain();
+    source.buffer = context.createBuffer(1, 1, context.sampleRate);
+    gain.gain.setValueAtTime(0.0001, context.currentTime);
+    source.connect(gain);
+    gain.connect(context.destination);
+    source.start();
+    source.stop(context.currentTime + 0.01);
+    setAudioStatus("audio unlocked");
+    return true;
+  }
+
   blip() {
     this.tone(660, 0.035, 0.025, "square");
   }
@@ -133,10 +150,8 @@ class RetroAudio {
 
   private tone(frequency: number, duration: number, gainValue: number, wave: Wave = "square") {
     if (!this.enabled || typeof window === "undefined") return;
-    const AudioCtor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtor) return;
-    this.context ??= new AudioCtor();
-    const context = this.context;
+    const context = this.getContext();
+    if (!context) return;
     if (context.state === "suspended") {
       void context.resume();
     }
@@ -151,6 +166,13 @@ class RetroAudio {
     gain.connect(context.destination);
     osc.start();
     osc.stop(context.currentTime + duration + 0.02);
+  }
+
+  private getContext() {
+    const AudioCtor = window.AudioContext ?? (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioCtor) return null;
+    this.context ??= new AudioCtor();
+    return this.context;
   }
 }
 

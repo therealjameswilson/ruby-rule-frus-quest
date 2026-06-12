@@ -5,10 +5,8 @@ import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
 import { renderGameToText } from "./game/state";
 import {
   bindDomPointerDown,
-  bindTouchButton,
   initializeInput,
-  updateInputCallbacks,
-  type TouchControlKey
+  updateInputCallbacks
 } from "./input/InputState";
 
 declare global {
@@ -142,34 +140,6 @@ function installMobileDebugHud() {
   return () => setVisible(!visible);
 }
 
-function setupMobileControls() {
-  const controls = document.createElement("nav");
-  controls.id = "mobile-controls";
-  controls.setAttribute("aria-label", "Touch controls");
-  controls.innerHTML = `
-    <div class="mobile-dpad" aria-label="Move">
-      <button type="button" class="touch-button dpad-button dpad-up" data-touch-key="up" aria-label="Move up"></button>
-      <button type="button" class="touch-button dpad-button dpad-left" data-touch-key="left" aria-label="Move left"></button>
-      <button type="button" class="touch-button dpad-button dpad-down" data-touch-key="down" aria-label="Move down"></button>
-      <button type="button" class="touch-button dpad-button dpad-right" data-touch-key="right" aria-label="Move right"></button>
-    </div>
-    <div class="mobile-actions" aria-label="Actions">
-      <button type="button" class="touch-button action-button action-primary" data-touch-key="space" aria-label="Act or advance dialog">A</button>
-      <button type="button" class="touch-button action-button" data-touch-key="e" aria-label="Use role ability">E</button>
-      <button type="button" class="touch-button utility-button" data-touch-key="m" aria-label="Inventory">M</button>
-      <button type="button" class="touch-button utility-button" data-touch-key="r" aria-label="Reliability details">R</button>
-      <button type="button" class="touch-button utility-button" data-touch-key="n" aria-label="Sound toggle">N</button>
-    </div>
-  `;
-  document.body.appendChild(controls);
-
-  controls.querySelectorAll<HTMLButtonElement>("[data-touch-key]").forEach((button) => {
-    const touchKey = button.dataset.touchKey as TouchControlKey | undefined;
-    if (!touchKey) return;
-    bindTouchButton(button, touchKey);
-  });
-}
-
 function isTouchCapable() {
   return "ontouchstart" in window || navigator.maxTouchPoints > 0;
 }
@@ -262,31 +232,24 @@ function installMobileShellAffordances() {
 
 function calculateIntegerGameShellScale() {
   const shell = document.getElementById("game-shell");
-  const controls = document.getElementById("mobile-controls");
-  const controlsVisible = !!controls && window.getComputedStyle(controls).display !== "none";
-  const isLandscape = window.innerWidth > window.innerHeight;
   const bodyStyle = window.getComputedStyle(document.body);
-  const bodyGap = parseFloat(bodyStyle.gap || "0") || 0;
   const paddingX = parseFloat(bodyStyle.paddingLeft || "0") + parseFloat(bodyStyle.paddingRight || "0");
   const paddingY = parseFloat(bodyStyle.paddingTop || "0") + parseFloat(bodyStyle.paddingBottom || "0");
-  const reservedWidth = controlsVisible && isLandscape ? controls!.offsetWidth + bodyGap : 0;
-  const reservedHeight = controlsVisible && !isLandscape ? controls!.offsetHeight + bodyGap : 0;
-  const availableWidth = Math.max(160, window.innerWidth - reservedWidth - paddingX);
-  const availableHeight = Math.max(160, window.innerHeight - reservedHeight - paddingY);
+  const availableWidth = Math.max(160, window.innerWidth - paddingX);
+  const availableHeight = Math.max(160, window.innerHeight - paddingY);
   const rawScale = Math.min(availableWidth / GAME_WIDTH, availableHeight / GAME_HEIGHT);
   const scale = Math.max(1, Math.floor(rawScale));
-  return { shell, controlsVisible, rawScale, scale };
+  return { shell, rawScale, scale };
 }
 
 function configureIntegerGameShellScale() {
-  const { shell, controlsVisible, rawScale, scale } = calculateIntegerGameShellScale();
+  const { shell, rawScale, scale } = calculateIntegerGameShellScale();
   if (!shell) return scale;
   shell.style.width = `${Math.max(1, Math.floor(GAME_WIDTH * scale))}px`;
   shell.style.height = `${Math.max(1, Math.floor(GAME_HEIGHT * scale))}px`;
   shell.dataset.scale = String(scale);
   shell.dataset.rawScale = rawScale.toFixed(3);
   shell.dataset.integerScale = "true";
-  shell.dataset.mobileControls = controlsVisible ? "true" : "false";
   window.rubyRuleMobileMetrics!.integerZoomTarget = scale;
   return scale;
 }
@@ -378,7 +341,6 @@ function installPixelProofOverlay() {
   return () => setVisible(!visible);
 }
 
-setupMobileControls();
 updateViewportCssVars();
 installMobileShellAffordances();
 const toggleMobileDebug = installMobileDebugHud();

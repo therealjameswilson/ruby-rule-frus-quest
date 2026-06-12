@@ -37,7 +37,8 @@ export class BootScene extends Phaser.Scene {
     this.createTextures();
     registerCharacterAnims(this);
     const startScene = this.getStartScene();
-    if (startScene !== "TitleScene") {
+    this.scene.launch("UIScene");
+    if (startScene !== "TitleScene" && startScene !== "TapToStartScene") {
       resetGameState();
       this.applyRoleFromQuery();
       seedProgressForScene(startScene);
@@ -50,7 +51,7 @@ export class BootScene extends Phaser.Scene {
     if (requested && SCENE_ORDER.includes(requested as (typeof SCENE_ORDER)[number])) {
       return requested;
     }
-    return "TitleScene";
+    return "TapToStartScene";
   }
 
   private applyRoleFromQuery() {

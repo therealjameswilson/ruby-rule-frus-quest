@@ -225,6 +225,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - rewired touch buttons away from synthetic `KeyboardEvent`s and into shared touch state
   - preserved character-name typing by separating role-card navigation from WASD letter typing
   - verified `npm run build`, required web-game client input bursts, GuideScene movement/pickup, in-app browser canvas load, and iPhone/Pixel portrait/landscape screenshots
+- Completed mobile Phase 4 touch controls and audio start gate:
+  - added `TapToStartScene` so first tap/press unlocks and pre-warms the Web Audio context before TitleScene
+  - added `UIScene` plus `src/input/TouchControls.ts` for a canvas-drawn floating D-pad, A/B/Start/Select buttons, haptic press feedback, and F10 force-show debug toggle
+  - routed touch through direct canvas pointer listeners inside `src/input/` so D-pad and A can be held simultaneously without synthetic keyboard events
+  - kept controls semi-transparent at rest, brighter/compressed on press, and scene-independent through the overlay scene
+  - verified `npm run build`, a Playwright tap-gate/control probe, `GuideScene` A/dialog advance, D-pad movement north from `y=160` to `y=113`, held D-pad plus A state, video capture, in-app browser no-console-error smoke, and iPhone/Pixel portrait/landscape Playwright device-profile screenshots
+  - noted that real-device QA remains for Phase 10; Phase 4 artifacts are local/emulated-device verification
   - verified `npm run build`, required web-game client OfficeScene screenshot/state, and a direct Playwright probe covering route order, direct-scene seeding, reward gating, and Buckram Gate completion
 - Refined the NES-style dungeon grammar:
   - added a shared FRUS room graph with stable room IDs, room types, locked exits, required items, secret rooms, and Buckram Gate metadata

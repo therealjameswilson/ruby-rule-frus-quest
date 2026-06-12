@@ -62,8 +62,12 @@ export interface InputState {
 interface InputCallbacks {
   toggleMobileDebug?: () => void;
   togglePixelProof?: () => void;
+  toggleTouchOverlay?: () => void;
   openSpriteGallery?: () => void;
 }
+
+type InputGestureKind = "keyboard" | "pointer";
+type InputGestureCallback = (kind: InputGestureKind) => void;
 
 const emptyState: InputState = {
   dir: { x: 0, y: 0 },
@@ -115,6 +119,7 @@ const touchDown = new Set<TouchControlKey>();
 const pendingTypedCharacters: string[] = [];
 const pendingPointerStarts: Array<{ x: number; y: number }> = [];
 const activePointerIds = new Set<number>();
+const inputGestureCallbacks = new Set<InputGestureCallback>();
 let lastDirection: CardinalDirection = "down";
 let initialized = false;
 let callbacks: InputCallbacks = {};
@@ -210,12 +215,17 @@ function preventGameKeyDefault(event: KeyboardEvent) {
   }
 }
 
+function notifyInputGesture(kind: InputGestureKind) {
+  for (const callback of [...inputGestureCallbacks]) callback(kind);
+}
+
 export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   callbacks = { ...callbacks, ...nextCallbacks };
   if (initialized || typeof window === "undefined") return;
   initialized = true;
 
   window.addEventListener("keydown", (event) => {
+    if (!event.repeat) notifyInputGesture("keyboard");
     if (event.key === "F11" && !event.repeat) {
       event.preventDefault();
       callbacks.toggleMobileDebug?.();
@@ -224,6 +234,11 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
     if (event.key === "F8" && !event.repeat) {
       event.preventDefault();
       callbacks.togglePixelProof?.();
+      return;
+    }
+    if (event.key === "F10" && !event.repeat) {
+      event.preventDefault();
+      callbacks.toggleTouchOverlay?.();
       return;
     }
     if (event.key === "F9" && !event.repeat) {
@@ -245,6 +260,7 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   });
 
   window.addEventListener("pointerdown", (event) => {
+    notifyInputGesture("pointer");
     pendingPointerStarts.push({ x: event.clientX, y: event.clientY });
     const metrics = window.rubyRuleMobileMetrics;
     if (!metrics) return;
@@ -275,6 +291,11 @@ export function updateInputCallbacks(nextCallbacks: InputCallbacks) {
   callbacks = { ...callbacks, ...nextCallbacks };
 }
 
+export function addInputGestureListener(callback: InputGestureCallback) {
+  inputGestureCallbacks.add(callback);
+  return () => inputGestureCallbacks.delete(callback);
+}
+
 export function tickInput() {
   previousState = cloneState(currentState);
 
@@ -291,7 +312,7 @@ export function tickInput() {
   const start = isKeyboardDown("Enter") || isTouchDown("start") || isGamepadButtonDown([9]);
   const select = isKeyboardDown("Tab") || isTouchDown("select") || isGamepadButtonDown([8]);
   const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2]);
-  const menu = isKeyboardDown("KeyM") || isTouchDown("m");
+  const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start");
   const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
   const sound = isKeyboardDown("KeyN") || isTouchDown("n");
   const fullscreen = isKeyboardDown("KeyF");
@@ -380,26 +401,6 @@ export function setTouchControl(key: TouchControlKey, pressed: boolean) {
   } else {
     touchDown.delete(key);
   }
-}
-
-export function bindTouchButton(button: HTMLElement, touchKey: TouchControlKey) {
-  const start = (event: PointerEvent) => {
-    event.preventDefault();
-    try {
-      button.setPointerCapture?.(event.pointerId);
-    } catch {
-      // Synthetic or interrupted mobile pointer events can lack an active capture target.
-    }
-    setTouchControl(touchKey, true);
-  };
-  const end = (event: PointerEvent) => {
-    event.preventDefault();
-    setTouchControl(touchKey, false);
-  };
-  button.addEventListener("pointerdown", start);
-  button.addEventListener("pointerup", end);
-  button.addEventListener("pointercancel", end);
-  button.addEventListener("lostpointercapture", () => setTouchControl(touchKey, false));
 }
 
 export function bindPointerDown<T extends Phaser.GameObjects.GameObject>(
