@@ -1,0 +1,109 @@
+# Ruby Rule: The FRUS Quest
+
+First playable prototype of a browser-based NES-style FRUS production game.
+
+StateChat proposes. Humans decide. Published FRUS is the record.
+
+## Run Locally
+
+```bash
+npm install
+npm run dev
+```
+
+Open the Vite URL and play with keyboard controls.
+
+## Build
+
+```bash
+npm run build
+```
+
+The static build is emitted to `dist/` and is ready for GitHub Pages.
+
+## Controls
+
+- Arrow keys or WASD: four-direction movement
+- Z or Space: interact / advance dialog / confirm
+- X or Shift: tool action
+- Enter: menu
+- M or Tab: overworld pause map
+- Left or Right on the character screen: choose role
+- E: use your role ability
+- N: toggle sound
+- R: reliability details
+- G: toggle camera grid / collision debug overlay
+- P: toggle overworld hard-cut / smooth-pan camera transitions
+- Esc: pause
+- F: fullscreen
+
+## MVP Features
+
+- NES-style title screen with a ruby buckram FRUS volume, top HUD band, regional map viewport, and stone dungeon framing.
+- Character crafting with actual FRUS production roles:
+  - Proofreader
+  - Compiler
+  - Editor
+  - Declass Reviewer
+  - Source Note Specialist
+- Equal-rank Archive Colleague room inspired by NES cave/dialogue composition, translated into a FRUS archive chamber with original art.
+- Verification gate tutorial: citation stamp first, then a FRUS volume fragment, then the Office hub opens.
+- Office hub with Elena, Marcus, Priya, the Golden Rule poster, and OpenNet/ClassNet terminals.
+- Tile-based FRUS District overworld in `WorldScene`, with a fixed 16px ruby HUD, 256x224 playable viewport, a spacious 5x4 `ScreenManager` grid of 16x14-tile region screens, terrain/object/collision/NPC layers, a reusable procedural 16x16 `TileRegistry`, tile-metadata collision, region title popups, flag-gated paths, and `CameraController` hard-cut or smooth-pan screen-edge traversal.
+- Office hub production floor populated with original equal-rank Compiler, Declass Coordinator, Reviewer, Editor, and Review Specialist sprites inspired by supplied character-role cues.
+- Archive provenance puzzle.
+- Two-room OpenNet/ClassNet routing dungeon where clean routing opens the ClassNet Vault and a physical Clearance Token reward.
+- Two-room Referral Vault dungeon where equity matching and visible excision open the Concurrence Chamber, then the player physically collects the Concurrence Slip.
+- Two-room Editor's Labyrinth / Silent Read Tower sequence where the AI annotation review tool checks mechanical/schema issues, the Red Pencil opens the tower, evidence-bound findings route to human workstations, and the player earns the Proof Lens and Buckram Key.
+- Room-specific pixel dressing: desks, shelves, document stacks, wall maps, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
+- Original large regional main game map with numbered FRUS Quest locations including Navy Hill, NARA I/II, Foggy Bottom, Capitol Hill, the White House, Newington, Little Rock, Springfield, the Potomac, and a locked undisclosed location, shown through fixed 1x viewports instead of being compressed into one tiny panel.
+- One-screen room composition with a minimap/status HUD, 16x16 tile-feeling floors, stone borders, and clear blocked/walkable space.
+- The legacy `OfficeScene` shortcut now opens the tile overworld so existing QA URLs still boot while the main playfield is no longer a compressed illustration.
+- Bureaucratic wall enemies: literal stone walls labeled with process blockers like `NO REPO`, `PENDING`, `FIREWALL`, `WAIT`, and `HOLD`, now backed by distinct original 32x32 SNES-style blocker sprites.
+- Roaming HAC member antagonist in the Office hub who wanders through the room and causes brief focus-distraction reliability hits if the player gets too close.
+- Federal government shutdown antagonist in the Office hub: a roaming stop-work closure notice that briefly freezes movement and raises production-delay pressure when it catches the player.
+- Bee swarm antagonist in the Office hub: a buzzing avoidance hazard that disrupts concentration if the player gets too close while producing FRUS.
+- Navy Hill mice antagonist in the Office hub: a small source-note-scattering patrol around the Navy Hill landmark that players must skirt while keeping the workflow moving.
+- Archive stonewalls now patrol toward the player, reduce reliability on contact, knock the player back, and can be cleared by verifying them with `Space`/`Enter` nearby.
+- Zelda-like symbols translated into FRUS production terms:
+  - keys become citation stamps, clearance tokens, and concurrence slips
+  - treasure becomes document points and source-note pickups
+  - confidence status replaces hearts/life language
+  - quest relics become FRUS volume fragments
+  - tools become a citation stamp, red pencil mark, and review folder logic
+  - antagonists include the 30-year line and DANN-E queue
+- Final Buckram Gate: the player earns five cover pieces and the Buckram Key, enters a physical final room, certifies the volume at a human publication table, and only then publishes the assembled FRUS cover.
+- Player shadow, facing flip, and walk-bob movement polish.
+- Larger 32x32 SNES-style player and human specialist sprites with readable FRUS production props.
+- Playable Compiler and Editor in-play sprite strips with four-direction walk frames, idle frames, and role-ability document review poses.
+- Multi-pose equal-rank production colleague sprite sheet with front, back, side, walk, workstation, and approval poses for Compiler, Editor, Declass Coordinator, Reviewer, and Review Specialist roles.
+- Reliability Meter and `window.render_game_to_text()` for automated testing.
+- `render_game_to_text()` includes active stonewall threat positions for accessible play and QA.
+- `render_game_to_text()` also reports document points and earned FRUS volume fragments.
+- Process stamps that show the FRUS production path: Rule, Source, Network, Referral, Read.
+- SOP stamp for the AI annotation review tool: mechanical fixes may auto-apply, but provenance, classification, publication-status, and meaning decisions stay human.
+- Role-specific ability hints that reinforce what each production role contributes.
+- Public-domain MIDI-derived 8-bit music motifs, decision chimes, warning tones, process-stamp jingles, and an ending fanfare.
+- Final completion card summarizing the production skills practiced and the assembled FRUS cover prize.
+
+## Development Shortcuts
+
+Direct scene starts are supported for QA:
+
+```text
+/?scene=NetworkScene&role=declass_reviewer&name=Alex
+/?scene=WorldScene&role=compiler&name=Ruby
+/?scene=GuideScene&role=compiler&name=Ruby
+/?scene=ReferralVaultScene&role=declass_reviewer&name=Alex
+/?scene=SilentReadScene&role=proofreader&name=Sam
+```
+
+These seed earlier process stamps and inventory so later mechanics can be tested without replaying the full quest.
+
+## Audio Sources
+
+Raw public-domain MIDI source clips are checked in under `public/assets/audio/midi/`, with rights notes in `public/assets/audio/ATTRIBUTION.md`. The browser plays short Web Audio square-wave arrangements derived from those clips for reliable GitHub Pages deployment.
+
+## Asset Policy
+
+Sprites, tiles, enemy art, and UI textures are original repository-local SVG pixel assets in `public/assets`, with Phaser-generated fallbacks in `BootScene` if an asset is missing. Audio playback is generated in code with Web Audio oscillators. Later original PNG or cleared audio replacements can be checked in without changing the deployment model.

@@ -1,0 +1,24 @@
+# Diff stat before Phase 8 quarantine
+ README.md                          |  13 ++-
+ progress.md                        |  92 ++++++++++++++---
+ public/assets/data/dialogue.json   |  57 ++++++++++
+ public/assets/data/scenes.json     |  29 ++++++
+ src/entities/BureaucraticWall.ts   |  37 +++++--
+ src/entities/Player.ts             | 207 +++++++++++++++----------------------
+ src/game/config.ts                 |   2 +
+ src/game/constants.ts              |   3 +-
+ src/game/state.ts                  | 174 +++++++++++++------------------
+ src/game/types.ts                  |  51 +--------
+ src/main.ts                        |   5 +-
+ src/scenes/ArchiveScene.ts         |  32 ++----
+ src/scenes/BootScene.ts            | 103 ++++++++++++++++++
+ src/scenes/CharacterCreateScene.ts |  16 ++-
+ src/scenes/EndingScene.ts          |  10 +-
+ src/scenes/GuideScene.ts           |  12 ++-
+ src/scenes/TitleScene.ts           |  14 +++
+ src/systems/dialog.ts              |  55 +++++++++-
+ src/systems/interaction.ts         |  45 ++++++++
+ src/systems/inventory.ts           |  41 ++++++--
+ src/systems/reliability.ts         |  25 ++---
+ src/systems/sceneTransitions.ts    |   4 +-
+ 22 files changed, 661 insertions(+), 366 deletions(-)

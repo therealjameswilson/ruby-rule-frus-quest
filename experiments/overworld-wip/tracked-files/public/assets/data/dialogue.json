@@ -1,0 +1,87 @@
+{
+  "office": {
+    "elena": [
+      "The machine proposes.",
+      "We decide.",
+      "Nothing reaches print on its word alone."
+    ],
+    "marcus": [
+      "OpenNet is the open world.",
+      "ClassNet is where the sharp edges live."
+    ],
+    "priya": [
+      "Style can be checked.",
+      "Meaning has to be read."
+    ]
+  },
+  "terminal": {
+    "classnet": [
+      "STATECHAT / CLASSNET INSTANCE",
+      "READY",
+      "PRE-SUBMISSION REVIEW",
+      "3 CHECKS QUEUED"
+    ],
+    "opennet": [
+      "STATECHAT / OPENNET INSTANCE",
+      "READY",
+      "OPEN-SOURCE CHECKS ONLY"
+    ]
+  },
+  "npcs": {
+    "compiler": [
+      "COMPILER",
+      "Navy Hill starts the source trail.",
+      "Select documents only when the provenance can stand."
+    ],
+    "archivist": [
+      "ARCHIVIST",
+      "Pull the finding aid first.",
+      "Boxes, folders, and dates keep the route honest."
+    ],
+    "statechat_terminal": [
+      "STATECHAT TERMINAL",
+      "MECHANICAL REVIEW READY.",
+      "I FLAG PATTERNS. HUMAN REVIEW DECIDES."
+    ],
+    "records_officer": [
+      "RECORDS OFFICER",
+      "A public room is still a workflow space.",
+      "Record the collection before you chase the next clue."
+    ],
+    "general_editor_intro": [
+      "GENERAL EDITOR",
+      "The machine proposes.\nWe decide.",
+      "Nothing reaches print on its word alone.",
+      "The AI annotation review tool can flag patterns; it cannot settle evidence."
+    ],
+    "general_editor_repeat": [
+      "GENERAL EDITOR",
+      "Archive work begins with a source you can defend."
+    ],
+    "declassification_coordinator": [
+      "DECLASS COORDINATOR",
+      "Route the right equity to the right network.",
+      "Classification cannot be guessed."
+    ],
+    "reviewer": [
+      "REVIEWER",
+      "Read the issue, then read the evidence.",
+      "A review packet is a human decision loop."
+    ],
+    "editor": [
+      "EDITOR",
+      "Unsupported wording gets a red pencil mark.",
+      "Clarity is earned sentence by sentence."
+    ],
+    "security_officer": [
+      "SECURITY OFFICER",
+      "Clearance paths open only with the proper badge.",
+      "Wrong network, wrong door."
+    ],
+    "senior_reviewer": [
+      "SENIOR REVIEWER",
+      "At the gate, every answer needs a source.",
+      "No final sign-off comes from a machine."
+    ]
+  }
+}

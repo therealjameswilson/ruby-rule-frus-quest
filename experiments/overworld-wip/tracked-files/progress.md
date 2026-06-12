@@ -158,6 +158,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - converted Archive Source Note 47 into a physical carry, route, verify, stamp loop at the research table
   - Source Note 47 now receives its citation stamp only after human provenance verification
   - changed Office terminal dialog labels so StateChat remains terminal-only rather than a speech-bubble speaker
+- Integrated the repository-local PNG art pack from `public/assets/art-pack/manifest.json`:
+  - added `src/game/artPack.ts` as the single pack-key/frame/tile-index registry with `pack-` texture keys
+  - BootScene now loads pack sprite sheets, screens, backgrounds, packed tilesets, portraits, item icons, effects, stamps, and UI kit assets while keeping all SVG/procedural fallbacks
+  - player and character-create previews prefer pack role sheets at native 32x48 display scale, with old SNES/SVG role art as fallback
+  - NPCs, interactable object icons, DANN-E queue visuals, title art, dialogue portraits, UI-kit frames, and stamp/check effects now use pack art when textures exist
+  - ScreenManager and legacy room scenes build real Phaser tilemap layers from the packed overworld/interior/archive-dungeon tilesets, while existing glyph collision remains authoritative
+  - verified with Playwright screenshots for title, WorldScene, GuideScene, and ArchiveScene; `npm run build` passes with only the existing Phaser chunk-size warning
   - added exact feedback messages for human verification, mechanical acceptance, evidence-bound checks, wrong network, and provenance guessing
 - Added mobile-friendly play support:
   - added safe-area viewport handling and a responsive game shell that reserves space for touch controls
@@ -218,6 +225,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - exposed the architecture through `render_game_to_text()` as additive `volumeWorkflowState`, `documentWorkflow`, `volumeMetrics`, `questCounters`, and `questWorkflow` fields without removing existing keys
   - kept the current scene art/mechanics intact while making the existing room graph, item gating, physical verification loops, and StateChat terminal rules inspectable as data
   - added half-tile movement correction for cardinal player movement when the player catches a solid edge
+- Refactored overworld NPC placement into a screen registry:
+  - added `public/assets/data/npcs.json` with role, sprite, home screen, tile position, facing, dialogue, and quest-flag fields
+  - spread Compiler, Editor, Declass Coordinator, Reviewer, Senior Reviewer, General Editor, Archivist, Records Officer, Security Officer, and StateChat Terminal across logical overworld screens
+  - removed always-visible NPC name plates so dialogue opens only through one-tile facing interaction prompts
+  - kept StateChat as a terminal interactable with terminal text, not as a character
+  - verified `npm run build`, `git diff --check`, all eleven `?scene=` deep links, required web-game smoke, Navy Hill readability, White House traversal, General Editor interaction, and Golden Rule objective advancement
+- Added Zelda-like building doors and one-screen interiors:
+  - added `public/assets/data/interiors.json` with eight exterior door definitions and eight separate interior screen maps
+  - wired door interactables to hard-cut into Navy Hill Compiler Office, White House Review Room, NARA I Reading Room, NARA II Declassification Floor, Little Rock Library, Springfield Field Office, Newington Secure Records Room, and Undisclosed Location Vault
+  - added return-door loops back to overworld `return` spawn points so buildings behave like separate rooms instead of compressed map details
+  - made interior entry cards show `INTERIOR MAP` and kept interior screens off the tiny overworld HUD minimap
+  - verified interior map validation, `npm run build`, `git diff --check`, all eleven `?scene=` deep links, Navy Hill enter/exit, White House enter/exit, Little Rock enter/exit, and an interior screenshot/state check
 - Incorporated a dedicated Compiler animation strip:
   - added an original repository-local 32x48 SVG frame set for idle, four-direction walking, and document reading
   - registered named compiler frames at boot while preserving the existing 32x32 role sprite and generated fallback path
@@ -377,6 +396,47 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - generalized the player frame-strip pipeline from compiler-only to role-frame sheets while preserving the same 608x48 dimensions, 32x48 frame size, and 19 frame names
   - exposed the Editor sheet through the SNES atlas readout, BootScene loading/registration, `render_game_to_text().activePlayerSprite`, and RenderDebugScene samples
   - verified SVG opacity/raster discipline, `git diff --check`, `npm run build`, OfficeScene free movement, Red Pencil ability pose, RenderDebugScene samples, and all ten direct `?scene=` links with the editor role
+- Refactored the Office/map start into a Zelda-like tile overworld architecture:
+  - added `public/assets/data/world.json` as a data-driven 3x3 FRUS District overworld with 16x14-tile screens, a tile legend, interactables, NPCs, and quest flags
+  - added `src/game/world.ts` and central `gameState.overworld` tracking current region, current screen coordinates, player position, inventory, active tool, quest flags, and the 256x224 viewport under a fixed 16px HUD
+  - added `WorldScene` with separate terrain, object, collision, NPC, fixed HUD, and dialogue-overlay layers; the camera hard-cuts one playable screen at a time instead of showing a compressed map illustration
+  - changed CharacterCreateScene to enter `WorldScene` and kept `OfficeScene` as a compatibility redirect so old `?scene=OfficeScene` URLs still boot into the overworld
+  - made shared dialogue, inventory, and objective overlays fixed to the camera for scrolling/tilemap scenes
+  - verified `npm run build`, the existing title/start flow landing in `WorldScene`, the OfficeScene deep link redirecting into `WorldScene`, the 256x224 overworld state in `render_game_to_text()`, an edge transition from Office Hub to Undisclosed, and Elena interaction with a fixed dialogue overlay
+- Implemented explicit Zelda-like overworld screen regions:
+  - replaced the experimental `world.json` source with `public/assets/data/worldScreens.json`, defining eight initial 16x14-tile screens: Navy Hill, White House, NARA I, NARA II, Little Rock, Springfield, Newington, and Undisclosed Location
+  - added `ScreenManager` to load and clear one active screen at a time from data, including terrain, collision, interactables, NPCs, exits, spawn points, and required flags
+  - refactored `WorldScene` so edge crossing fades briefly, loads the adjacent screen by id, and places the player at the opposite edge spawn instead of scrolling around a pre-rendered world
+  - kept movement four-directional and bounded to the 256x224 play viewport below the fixed ruby HUD
+  - verified `worldScreens.json` dimensions/exits, `git diff --check`, `npm run build`, all direct `?scene=` links, and White House <-> Navy Hill edge traversal with Playwright screenshots/state
+- Added a Zelda-like overworld camera controller:
+  - kept the existing 256x240 canvas required by the repo while making the overworld camera/readout expose a 256x224 logical viewport under the fixed HUD
+  - added `CameraController` for camera clamping, hard-cut transitions, optional smooth pan transitions, transition-state input lockout, and transition-complete events
+  - added `?camera=pan` and `P` as optional smooth-pan mode controls while preserving hard transitions as the default
+  - added `G` debug overlay for the screen grid, collision boxes, current screen ID, region name, camera mode, and viewport size
+- Built the first spacious FRUS overworld layout:
+  - expanded `worldScreens.json` to a 5x4 connected screen grid with 20 screens, starting at Navy Hill and routing through Mall Path, White House, Little Rock, Potomac Bend, Newington, NARA I/II, Springfield, and a gated Undisclosed Location
+  - added placeholder tile vocabulary for grass, path, office floor, wall, water, trees, fence, door, archive shelf, security gate, and document table
+  - kept every screen to 1-2 exits, 0-3 NPCs, and 1-3 interactables so the map reads as spacious one-screen regions rather than one dense poster
+  - added flag-gated exits for `hasFindingAid`, `hasClearanceBadge`, `hasReviewMemo`, and `hasDeclassificationStamp`, plus interactables that can grant those flags
+  - added region title popups on entry and verified Navy Hill start, Navy Hill -> Mall Path -> White House, Navy Hill -> Little Rock -> Potomac Bend, the Clearance Badge gate, and Potomac Bend -> Newington after badge pickup
+- Added an original 16-bit-style FRUS overworld tileset system:
+  - created `TileRegistry` as a procedural 16x16 tile generator for grass, paths, office floors, ruby walls, reflecting pools, bridges, trees, archive shelves, desks, file boxes, doors, locked doors, terminals, document stacks, redaction barriers, fences, and security checkpoints
+  - moved overworld tile rendering and collision from ad hoc screen rectangles to reusable tile metadata with `walkable`, `interactable`, and optional `transitionTarget` fields
+  - extended `worldScreens.json` tile glyph support so new screens can be authored from reusable map characters without drawing one giant image
+  - exposed `render_game_to_text().tileRegistry` for QA and accessibility checks of tile IDs, glyphs, texture keys, and metadata
+- Implemented Zelda-like overworld movement controls:
+  - added explicit player animation state labels for `idle_down`, `idle_up`, `idle_left`, `idle_right`, `walk_down`, `walk_up`, `walk_left`, and `walk_right`
+  - kept overworld movement four-directional and smooth while preserving tile-aware collision against blocked tiles, interactable objects, and NPC bodies
+  - changed overworld interaction from nearest-radius pickup to facing-direction checks so `Z`/`Space` talks, reads, or opens the adjacent faced target
+  - added `X`/`Shift` as a tool/action button for cite, inspect, unlock, or stamp-style feedback, while preserving `E` for existing role ability compatibility
+  - changed `Enter` to open the menu while exploring and kept it as dialog advance while dialog is active
+- Added a Zelda-like overworld pause map:
+  - added `PauseMapOverlay` as a UI-only 5x4 district overview that uses the compressed main-map concept as a pause screen rather than the active playfield
+  - mapped Navy Hill, White House, NARA I, NARA II, Little Rock, Springfield, Newington, and Undisclosed Location to discovered-region plates with document, stamp, pen, and seal task icons
+  - persisted discovered screen IDs and region names in `gameState.overworld`, with `?debugRevealMap=1` revealing undiscovered labels for QA
+  - marked the current screen with a cyan player marker and locked regions with redaction styling
+  - changed overworld `M`/`Tab` to open the pause map while leaving active gameplay screen-by-screen
 
 ## TODO
 
@@ -385,28 +445,30 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Add full manual route QA for every new Archive Cavern room once the public build is deployed.
 - Continue the SNES upgrade with larger original in-game sprite sheets, richer non-Archive room graphs/transitions, and more authored room-to-room transition visuals, while keeping StateChat terminal-only and the FRUS workflow as the win path.
 
+## 2026-06-11 FRUS workflow overworld gates
+
+- Added a compact overworld quest-item registry for Finding Aid, Document Cart, Citation Pen, Redaction Lens, Declassification Stamp, Review Memo, and Bound FRUS Volume.
+- Extended `WorldScene` interactables with item/flag requirements, locked-dialog feedback, and physical item rewards while preserving the existing screen-manager flag gates.
+- Reworked the first overworld progression so the Navy Hill archive route north requires the assignment memo, Records Quad requires the Finding Aid, NARA I east requires the pulled document set, White House east requires reviewer approval, and final publication requires review plus declassification.
+- Added physical workstation loops: Document Box -> Document Cart/Assignment Memo, Cable Folder -> Document Set, Source Note Table -> Citation Pen/Source Note, Review Desk -> Review Memo/Reviewer Approval, Redaction Lens Case -> Redaction Lens, Classification Gate -> Declassification Stamp, Publication Lectern -> Bound FRUS Volume/General Editor Signoff.
+- Added optional nonblocking world interactables so close-range pickup/workstation objects do not trap the player at interior spawn points.
+- Preserved the `OfficeScene` QA shortcut by importing the existing compatibility redirect from `OfficeScene 2.ts`, because the expected filename kept being removed by an external rename/copy artifact during testing.
+- Verified `npm run build`, `?scene=OfficeScene` -> `WorldScene`, `?scene=WorldScene`, a web-game-client blocked-path probe showing `Required: ASSIGNMENT MEMO`, and a Playwright pickup probe showing `Document Cart + Assignment Memo acquired` with `hasAssignmentMemo: true`.
+
+## 2026-06-11 Multi-region overworld route pass
+
+- Loosened Navy Hill's opening routes so east to Mall Path and south to Little Rock are open from the start while the north Archive Grove route remains gated by `hasAssignmentMemo`.
+- Updated Navy Hill directory/source-note dialogue to explain the open district paths versus the gated archive route.
+- Widened Newington's west-east through-lane and moved the existing Reviewer NPC off the transit path so the screen remains a secure-records stop without blocking traversal.
+- Revalidated `worldScreens.json`: 20 overworld screens, all 16x14 tiles, all connected from Navy Hill, with 1-3 exits and 1-4 interactables per screen.
+- Verified `npm run build`, required web-game-client smoke movement into Little Rock/Potomac Bend, and a six-screen Playwright route: Navy Hill -> Little Rock -> Potomac Bend -> Newington -> Review Field -> Springfield after picking up the Clearance Badge.
+
+## 2026-06-11 Cleanup branch Phase 3
+
+- Reorganized clean entity files into `src/entities/enemies/`, `src/entities/npcs/`, and `src/entities/items/` while leaving dirty player and BureaucraticWall WIP in place for later phases.
+- Updated scene imports for the moved NPC, document, and terminal entities without changing gameplay behavior.
+
 ## 2026-06-11 Cleanup branch Phase 4
 
 - Refactored the player movement resolver toward LttP-style 8-direction input while keeping cardinal facing/animation labels and pixel-snapped rendering.
 - Added `playerAnimationState` to the text-state readout so movement QA can confirm idle/walk direction without relying only on screenshots.
-
-## 2026-06-11 Cleanup branch Phase 5
-
-- Added a compact player action-hitbox window for resolving bureaucratic wall blockers, keeping the FRUS process metaphor while matching the active-frame interaction pattern.
-- Added player i-frame and hurt-state readouts after wall contact, with knockback routed through the player controller and exposed in `render_game_to_text()`.
-
-## 2026-06-11 Cleanup branch Phase 6
-
-- Added a shared enemy base for coherent roaming hazards with waypoint movement, damage, knockback, and death hooks.
-- Retained the existing patrol-style HAC member, shutdown, bee swarm, and Navy Hill mice hazards while leaving specialized bureaucratic stonewalls in their process-gate class.
-
-## 2026-06-11 Cleanup branch Phase 7
-
-- Added a typed adventure HUD readout that maps FRUS confidence, clarity, document points, stamps, fragments, and process tools onto a compact action-adventure status model.
-- Added an equipped secondary process-item slot and highlighted it in both the top HUD strip and manuscript inventory without changing existing pickup or gate mechanics.
-
-## 2026-06-12 Cleanup branch Phase 8
-
-- Quarantined the dirty overworld/art-pack working tree under `experiments/overworld-wip/`, including untracked source/assets plus copies and a binary patch for dirty tracked files.
-- Restored the runnable source tree to the Phase 7 branch state so incomplete `WorldScene`, art-pack, screen-manager, interior-map, and tilemap experiments no longer affect the cleanup branch.
-- Added experiment README guardrails for promoting quarantined work back into `src/` or `public/` only as focused, buildable commits.

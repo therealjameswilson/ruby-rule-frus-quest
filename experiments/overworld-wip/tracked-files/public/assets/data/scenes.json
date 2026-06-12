@@ -1,0 +1,54 @@
+{
+  "title": {
+    "title": "RUBY RULE",
+    "subtitle": "THE FRUS QUEST",
+    "prompt": "PRESS START TO VERIFY"
+  },
+  "characterCreate": {
+    "objective": "Craft your FRUS production character.",
+    "roles": ["Proofreader", "Compiler", "Editor", "Declass Reviewer", "Source Note Specialist"]
+  },
+  "office": {
+    "objectiveChain": [
+      "Talk to Elena.",
+      "Read the Golden Rule poster.",
+      "Inspect the ClassNet terminal."
+    ]
+  },
+  "world": {
+    "scene": "WorldScene",
+    "architecture": "ScreenManager-loaded tile overworld with CameraController screen viewport",
+    "data": "assets/data/worldScreens.json",
+    "grid": "5x4 connected screen grid",
+    "viewport": "256x224 playable viewport below fixed HUD",
+    "screens": [
+      "Archive Grove",
+      "NARA II",
+      "Records Quad",
+      "NARA I",
+      "North Fence",
+      "Navy Hill",
+      "Mall Path",
+      "White House",
+      "Declass Court",
+      "Undisclosed Location",
+      "Little Rock",
+      "Potomac Bend",
+      "Newington",
+      "Review Field",
+      "Springfield",
+      "Gate Shadow",
+      "Document Farm",
+      "Secure Approach",
+      "Referral Dock",
+      "Library Landing"
+    ]
+  },
+  "ending": {
+    "messages": [
+      "EVERY PROPOSAL REVIEWED",
+      "EVERY DECISION HUMAN",
+      "THE RECORD ENDURES"
+    ]
+  }
+}

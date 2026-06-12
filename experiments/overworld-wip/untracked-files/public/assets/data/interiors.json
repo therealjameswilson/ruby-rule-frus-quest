@@ -1,0 +1,734 @@
+{
+  "doors": [
+    {
+      "screenId": "navy-hill",
+      "object": {
+        "id": "door_navy_hill_compiler_office",
+        "label": "Compiler office",
+        "kind": "door",
+        "x": 192,
+        "y": 126,
+        "targetScreenId": "interior-navy-hill-compiler-office",
+        "targetSpawn": "entry"
+      }
+    },
+    {
+      "screenId": "white-house",
+      "object": {
+        "id": "door_white_house_review_room",
+        "label": "Review room",
+        "kind": "door",
+        "x": 160,
+        "y": 96,
+        "targetScreenId": "interior-white-house-review-room",
+        "targetSpawn": "entry"
+      }
+    },
+    {
+      "screenId": "nara-i",
+      "object": {
+        "id": "door_nara_i_reading_room",
+        "label": "Reading room",
+        "kind": "door",
+        "x": 128,
+        "y": 112,
+        "targetScreenId": "interior-nara-i-reading-room",
+        "targetSpawn": "entry"
+      }
+    },
+    {
+      "screenId": "nara-ii",
+      "object": {
+        "id": "door_nara_ii_declass_floor",
+        "label": "Declass floor",
+        "kind": "door",
+        "x": 128,
+        "y": 112,
+        "targetScreenId": "interior-nara-ii-declassification-floor",
+        "targetSpawn": "entry"
+      }
+    },
+    {
+      "screenId": "little-rock",
+      "object": {
+        "id": "door_little_rock_library",
+        "label": "Library door",
+        "kind": "door",
+        "x": 128,
+        "y": 118,
+        "targetScreenId": "interior-little-rock-library",
+        "targetSpawn": "entry"
+      }
+    },
+    {
+      "screenId": "springfield",
+      "object": {
+        "id": "door_springfield_field_office",
+        "label": "Field office",
+        "kind": "door",
+        "x": 128,
+        "y": 140,
+        "targetScreenId": "interior-springfield-field-office",
+        "targetSpawn": "entry"
+      }
+    },
+    {
+      "screenId": "newington",
+      "object": {
+        "id": "door_newington_secure_records",
+        "label": "Secure records",
+        "kind": "door",
+        "x": 128,
+        "y": 116,
+        "targetScreenId": "interior-newington-secure-records-room",
+        "targetSpawn": "entry"
+      }
+    },
+    {
+      "screenId": "undisclosed-location",
+      "object": {
+        "id": "undisclosed_gate",
+        "label": "Vault door",
+        "kind": "door",
+        "x": 128,
+        "y": 88,
+        "targetScreenId": "interior-undisclosed-location-vault",
+        "targetSpawn": "entry"
+      }
+    }
+  ],
+  "screens": [
+    {
+      "id": "interior-navy-hill-compiler-office",
+      "regionName": "Navy Hill: Compiler Office",
+      "areaId": "office_hub",
+      "screenType": "interior",
+      "gridX": 0,
+      "gridY": 4,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "roooaoooaoooaoor",
+        "roooooooooooooor",
+        "rooiiooooccoooor",
+        "roooooooooooooor",
+        "roooouuuucooooor",
+        "roooooooooooooor",
+        "roooonooooonooor",
+        "roooooooooooooor",
+        "rooooxxxooooooor",
+        "roooooooooooooor",
+        "roooooooooooooor",
+        "rooooooodoooooor",
+        "rrrrrrrddrrrrrrr"
+      ],
+      "exits": {},
+      "spawnPoints": {
+        "entry": { "x": 128, "y": 184 },
+        "return": { "x": 128, "y": 184 },
+        "center": { "x": 128, "y": 144 }
+      },
+      "interactables": [
+        {
+          "id": "compiler_office_document_box",
+          "label": "Document box",
+          "kind": "document",
+          "x": 128,
+          "y": 164,
+          "texture": "review-folder",
+          "solid": false,
+          "grantsItem": "document_cart",
+          "grantsFlag": "hasAssignmentMemo",
+          "successDialog": [
+            "DOCUMENT BOX",
+            "Assignment memo received.",
+            "Document Cart acquired. The district routes are open."
+          ],
+          "dialog": [
+            "DOCUMENT BOX",
+            "The assignment packet is already loaded onto your cart."
+          ]
+        },
+        {
+          "id": "compiler_office_source_table",
+          "label": "Source note table",
+          "kind": "document",
+          "x": 128,
+          "y": 104,
+          "texture": "source-note",
+          "solid": false,
+          "requiresFlag": "hasDocumentSet",
+          "requiresItem": "document_cart",
+          "grantsItem": "citation_pen",
+          "grantsFlag": "hasSourceNote",
+          "lockedDialog": [
+            "SOURCE NOTE TABLE",
+            "Need: Document Set.",
+            "Pull the cable folder at NARA I before provenance can be written."
+          ],
+          "successDialog": [
+            "SOURCE NOTE TABLE",
+            "Provenance verified by human review.",
+            "Citation Pen acquired."
+          ],
+          "dialog": [
+            "SOURCE NOTE TABLE",
+            "Repository, collection, folder, and document trail are in order."
+          ]
+        },
+        {
+          "id": "exit_navy_hill_compiler_office",
+          "label": "Exit to Navy Hill",
+          "kind": "door",
+          "x": 192,
+          "y": 176,
+          "targetScreenId": "navy-hill",
+          "targetSpawn": "return"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "compiler_office_colleague",
+          "label": "Compiler colleague",
+          "role": "Compiler",
+          "x": 56,
+          "y": 132,
+          "facing": "east",
+          "texture": "snes-colleague-compiler",
+          "dialogueId": "interior_compiler_office"
+        }
+      ]
+    },
+    {
+      "id": "interior-white-house-review-room",
+      "regionName": "White House: Review Room",
+      "areaId": "office_hub",
+      "screenType": "interior",
+      "gridX": 1,
+      "gridY": 4,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "roooouuuucooooor",
+        "roooooooooooooor",
+        "roooonooooonooor",
+        "roooooooooooooor",
+        "rooiiooooiioooor",
+        "roooooooooooooor",
+        "rooooxxxooooooor",
+        "roooooooooooooor",
+        "roooouuuuoooooor",
+        "roooooooooooooor",
+        "roooooooooooooor",
+        "rooooooodoooooor",
+        "rrrrrrrddrrrrrrr"
+      ],
+      "exits": {},
+      "spawnPoints": {
+        "entry": { "x": 128, "y": 184 },
+        "return": { "x": 128, "y": 184 },
+        "center": { "x": 128, "y": 144 }
+      },
+      "interactables": [
+        {
+          "id": "review_room_packet_table",
+          "label": "Review desk",
+          "kind": "document",
+          "x": 128,
+          "y": 164,
+          "texture": "review-folder",
+          "solid": false,
+          "requiresFlag": "hasSourceNote",
+          "requiresItem": "citation_pen",
+          "grantsItem": "review_memo",
+          "grantsFlag": "hasReviewerApproval",
+          "lockedDialog": [
+            "REVIEW DESK",
+            "Need: Source Note.",
+            "A reviewer cannot approve a packet whose provenance is still guessed."
+          ],
+          "successDialog": [
+            "REVIEW DESK",
+            "Reviewer approval recorded.",
+            "Review Memo acquired."
+          ],
+          "dialog": [
+            "REVIEW DESK",
+            "The source-note packet is approved for the next gate."
+          ]
+        },
+        {
+          "id": "exit_white_house_review_room",
+          "label": "Exit to White House",
+          "kind": "door",
+          "x": 192,
+          "y": 176,
+          "targetScreenId": "white-house",
+          "targetSpawn": "return"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "review_room_colleague",
+          "label": "Review colleague",
+          "role": "Reviewer",
+          "x": 56,
+          "y": 96,
+          "facing": "east",
+          "texture": "snes-colleague-reviewer",
+          "dialogueId": "interior_review_room"
+        }
+      ]
+    },
+    {
+      "id": "interior-nara-i-reading-room",
+      "regionName": "NARA I: Reading Room",
+      "areaId": "archive_cavern",
+      "screenType": "interior",
+      "gridX": 2,
+      "gridY": 4,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "raaaaaaaaaaaaaar",
+        "roooooooooooooor",
+        "roooouuuuoooooor",
+        "roooooooooooooor",
+        "rooiiooooccoooor",
+        "roooooooooooooor",
+        "roooonooooonooor",
+        "roooooooooooooor",
+        "roooouuuucooooor",
+        "roooooooooooooor",
+        "roooooooooooooor",
+        "rooooooodoooooor",
+        "rrrrrrrddrrrrrrr"
+      ],
+      "exits": {},
+      "spawnPoints": {
+        "entry": { "x": 128, "y": 184 },
+        "return": { "x": 128, "y": 184 },
+        "center": { "x": 128, "y": 144 }
+      },
+      "interactables": [
+        {
+          "id": "nara_i_call_slips",
+          "label": "Cable folder",
+          "kind": "document",
+          "x": 128,
+          "y": 164,
+          "texture": "concurrence-slip",
+          "solid": false,
+          "requiresItem": "finding_aid",
+          "grantsFlag": "hasDocumentSet",
+          "lockedDialog": [
+            "CABLE FOLDER",
+            "Need: Finding Aid.",
+            "The folder cannot be pulled without a reliable box trail."
+          ],
+          "successDialog": [
+            "CABLE FOLDER",
+            "Document Set assembled.",
+            "Return to Navy Hill to write the source note."
+          ],
+          "dialog": [
+            "CABLE FOLDER",
+            "The selected cables are in the document set."
+          ]
+        },
+        {
+          "id": "exit_nara_i_reading_room",
+          "label": "Exit to NARA I",
+          "kind": "door",
+          "x": 192,
+          "y": 176,
+          "targetScreenId": "nara-i",
+          "targetSpawn": "return"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "reading_room_colleague",
+          "label": "Reading room colleague",
+          "role": "Archivist",
+          "x": 56,
+          "y": 132,
+          "facing": "east",
+          "texture": "snes-npc-archive-colleague",
+          "dialogueId": "interior_reading_room"
+        }
+      ]
+    },
+    {
+      "id": "interior-nara-ii-declassification-floor",
+      "regionName": "NARA II: Declassification Floor",
+      "areaId": "two_networks",
+      "screenType": "interior",
+      "gridX": 3,
+      "gridY": 4,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "rssssssssssssssr",
+        "roooooooooooooor",
+        "rooiiooooccoooor",
+        "roooooooooooooor",
+        "rooooxxxooooooor",
+        "roooooooooooooor",
+        "roooossssoooooor",
+        "roooooooooooooor",
+        "roooolllloooooor",
+        "roooooooooooooor",
+        "roooooooooooooor",
+        "rooooooodoooooor",
+        "rrrrrrrddrrrrrrr"
+      ],
+      "exits": {},
+      "spawnPoints": {
+        "entry": { "x": 128, "y": 184 },
+        "return": { "x": 128, "y": 184 },
+        "center": { "x": 128, "y": 144 }
+      },
+      "interactables": [
+        {
+          "id": "nara_ii_equity_terminal",
+          "label": "Classification gate",
+          "kind": "terminal",
+          "x": 128,
+          "y": 164,
+          "texture": "classnet-terminal",
+          "solid": false,
+          "requiresFlag": "hasClearanceBadge",
+          "requiresItem": "redaction_lens",
+          "grantsItem": "declassification_stamp",
+          "grantsFlag": "hasDeclassificationStamp",
+          "lockedDialog": [
+            "CLASSIFICATION GATE",
+            "Need: Clearance Badge and Redaction Lens.",
+            "Classification cannot be resolved by guesswork."
+          ],
+          "successDialog": [
+            "CLASSIFICATION GATE",
+            "Human declassification review complete.",
+            "Declassification Stamp acquired."
+          ],
+          "dialog": [
+            "CLASSIFICATION GATE",
+            "The controlled route has a visible declassification stamp."
+          ]
+        },
+        {
+          "id": "exit_nara_ii_declass_floor",
+          "label": "Exit to NARA II",
+          "kind": "door",
+          "x": 192,
+          "y": 176,
+          "targetScreenId": "nara-ii",
+          "targetSpawn": "return"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "declass_floor_colleague",
+          "label": "Declass colleague",
+          "role": "Declassification Coordinator",
+          "x": 56,
+          "y": 132,
+          "facing": "east",
+          "texture": "snes-colleague-declass-coordinator",
+          "dialogueId": "interior_declass_floor"
+        }
+      ]
+    },
+    {
+      "id": "interior-little-rock-library",
+      "regionName": "Little Rock: Library",
+      "areaId": "referral_vault",
+      "screenType": "interior",
+      "gridX": 4,
+      "gridY": 4,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "raaaaaaooaaaaaar",
+        "roooooooooooooor",
+        "roooouuuuoooooor",
+        "roooooooooooooor",
+        "roooocnoooocnoor",
+        "roooooooooooooor",
+        "rooiiooooiioooor",
+        "roooooooooooooor",
+        "roooouuuucooooor",
+        "roooooooooooooor",
+        "roooooooooooooor",
+        "rooooooodoooooor",
+        "rrrrrrrddrrrrrrr"
+      ],
+      "exits": {},
+      "spawnPoints": {
+        "entry": { "x": 128, "y": 184 },
+        "return": { "x": 128, "y": 184 },
+        "center": { "x": 128, "y": 144 }
+      },
+      "interactables": [
+        {
+          "id": "little_rock_library_catalog",
+          "label": "Library catalog",
+          "kind": "document",
+          "x": 128,
+          "y": 96,
+          "texture": "cross-reference",
+          "dialog": [
+            "LIBRARY CATALOG",
+            "Presidential library records add context without crowding the map."
+          ]
+        },
+        {
+          "id": "exit_little_rock_library",
+          "label": "Exit to Little Rock",
+          "kind": "door",
+          "x": 128,
+          "y": 176,
+          "targetScreenId": "little-rock",
+          "targetSpawn": "return"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "library_colleague",
+          "label": "Library colleague",
+          "role": "Records Officer",
+          "x": 56,
+          "y": 132,
+          "facing": "east",
+          "texture": "snes-colleague-review-specialist",
+          "dialogueId": "interior_little_rock_library"
+        }
+      ]
+    },
+    {
+      "id": "interior-springfield-field-office",
+      "regionName": "Springfield: Field Office",
+      "areaId": "editors_labyrinth",
+      "screenType": "interior",
+      "gridX": 5,
+      "gridY": 4,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "roooaoooaoooaoor",
+        "roooooooooooooor",
+        "rooiiooooccoooor",
+        "roooooooooooooor",
+        "roooouuuuoooooor",
+        "roooooooooooooor",
+        "roooocnoooocnoor",
+        "roooooooooooooor",
+        "roooozzzooooooor",
+        "roooooooooooooor",
+        "roooooooooooooor",
+        "rooooooodoooooor",
+        "rrrrrrrddrrrrrrr"
+      ],
+      "exits": {},
+      "spawnPoints": {
+        "entry": { "x": 128, "y": 184 },
+        "return": { "x": 128, "y": 184 },
+        "center": { "x": 128, "y": 144 }
+      },
+      "interactables": [
+        {
+          "id": "springfield_editor_table",
+          "label": "Editor table",
+          "kind": "document",
+          "x": 128,
+          "y": 96,
+          "texture": "red-pencil",
+          "dialog": [
+            "EDITOR TABLE",
+            "Field notes are shaped here before they return to the volume."
+          ]
+        },
+        {
+          "id": "exit_springfield_field_office",
+          "label": "Exit to Springfield",
+          "kind": "door",
+          "x": 128,
+          "y": 176,
+          "targetScreenId": "springfield",
+          "targetSpawn": "return"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "field_office_colleague",
+          "label": "Field office colleague",
+          "role": "Editor",
+          "x": 56,
+          "y": 132,
+          "facing": "east",
+          "texture": "snes-colleague-editor",
+          "dialogueId": "interior_field_office"
+        }
+      ]
+    },
+    {
+      "id": "interior-newington-secure-records-room",
+      "regionName": "Newington: Secure Records Room",
+      "areaId": "two_networks",
+      "screenType": "interior",
+      "gridX": 6,
+      "gridY": 4,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "rssssssssssssssr",
+        "roooooooooooooor",
+        "rooiiooooccoooor",
+        "roooooooooooooor",
+        "rooooxxxooooooor",
+        "roooooooooooooor",
+        "roooossssoooooor",
+        "roooooooooooooor",
+        "roooozzzooooooor",
+        "roooooooooooooor",
+        "roooooooooooooor",
+        "rooooooodoooooor",
+        "rrrrrrrddrrrrrrr"
+      ],
+      "exits": {},
+      "spawnPoints": {
+        "entry": { "x": 128, "y": 184 },
+        "return": { "x": 128, "y": 184 },
+        "center": { "x": 128, "y": 144 }
+      },
+      "interactables": [
+        {
+          "id": "newington_secure_terminal",
+          "label": "Redaction lens case",
+          "kind": "terminal",
+          "x": 128,
+          "y": 164,
+          "texture": "classnet-terminal",
+          "solid": false,
+          "requiresFlag": "hasClearanceBadge",
+          "grantsItem": "redaction_lens",
+          "lockedDialog": [
+            "REDACTION LENS CASE",
+            "Need: Clearance Badge.",
+            "Secure tools stay behind an access check."
+          ],
+          "successDialog": [
+            "REDACTION LENS CASE",
+            "Redaction Lens acquired.",
+            "Use it at the NARA II Classification Gate."
+          ],
+          "dialog": [
+            "REDACTION LENS CASE",
+            "The lens is already signed out on the secure log."
+          ]
+        },
+        {
+          "id": "exit_newington_secure_records",
+          "label": "Exit to Newington",
+          "kind": "door",
+          "x": 192,
+          "y": 176,
+          "targetScreenId": "newington",
+          "targetSpawn": "return"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "secure_records_colleague",
+          "label": "Secure records colleague",
+          "role": "Security Officer",
+          "x": 56,
+          "y": 132,
+          "facing": "east",
+          "texture": "snes-colleague-reviewer",
+          "dialogueId": "interior_secure_records"
+        }
+      ]
+    },
+    {
+      "id": "interior-undisclosed-location-vault",
+      "regionName": "Undisclosed Location: Vault",
+      "areaId": "buckram_gate",
+      "screenType": "interior",
+      "gridX": 7,
+      "gridY": 4,
+      "tileLayout": [
+        "rrrrrrrrrrrrrrrr",
+        "rzzzzzzllzzzzzzr",
+        "roooooooooooooor",
+        "roooossssoooooor",
+        "roooooooooooooor",
+        "rooqqxxxxiioooor",
+        "roooooooooooooor",
+        "roooouuuuoooooor",
+        "roooooooooooooor",
+        "roooozzzooooooor",
+        "roooooooooooooor",
+        "roooooooooooooor",
+        "rooooooodoooooor",
+        "rrrrrrrddrrrrrrr"
+      ],
+      "exits": {},
+      "spawnPoints": {
+        "entry": { "x": 128, "y": 184 },
+        "return": { "x": 128, "y": 184 },
+        "center": { "x": 128, "y": 144 }
+      },
+      "interactables": [
+        {
+          "id": "undisclosed_vault_table",
+          "label": "Publication lectern",
+          "kind": "document",
+          "x": 128,
+          "y": 164,
+          "texture": "buckram-key",
+          "solid": false,
+          "requiresFlags": [
+            "hasReviewerApproval",
+            "hasDeclassificationStamp"
+          ],
+          "requiresItems": [
+            "review_memo",
+            "declassification_stamp"
+          ],
+          "grantsItem": "bound_frus_volume",
+          "grantsFlag": "hasGeneralEditorSignoff",
+          "lockedDialog": [
+            "PUBLICATION LECTERN",
+            "Need: Reviewer Approval and Declassification Stamp.",
+            "A bound FRUS volume requires human signoff."
+          ],
+          "successDialog": [
+            "PUBLICATION LECTERN",
+            "General Editor signoff recorded.",
+            "Bound FRUS Volume acquired."
+          ],
+          "dialog": [
+            "PUBLICATION LECTERN",
+            "The bound FRUS volume is certified for publication."
+          ]
+        },
+        {
+          "id": "exit_undisclosed_vault",
+          "label": "Exit to gate",
+          "kind": "door",
+          "x": 192,
+          "y": 176,
+          "targetScreenId": "undisclosed-location",
+          "targetSpawn": "return"
+        }
+      ],
+      "npcs": [
+        {
+          "id": "vault_colleague",
+          "label": "Vault colleague",
+          "role": "Reviewer",
+          "x": 56,
+          "y": 132,
+          "facing": "east",
+          "texture": "snes-colleague-review-specialist",
+          "dialogueId": "interior_vault"
+        }
+      ]
+    }
+  ]
+}

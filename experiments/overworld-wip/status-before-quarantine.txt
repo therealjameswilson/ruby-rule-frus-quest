@@ -1,0 +1,41 @@
+# Status before Phase 8 quarantine
+## cleanup/lttp-bar
+ M README.md
+ M progress.md
+ M public/assets/data/dialogue.json
+ M public/assets/data/scenes.json
+ M src/entities/BureaucraticWall.ts
+ M src/entities/Player.ts
+ M src/game/config.ts
+ M src/game/constants.ts
+ M src/game/state.ts
+ M src/game/types.ts
+ M src/main.ts
+ M src/scenes/ArchiveScene.ts
+ M src/scenes/BootScene.ts
+ M src/scenes/CharacterCreateScene.ts
+ M src/scenes/EndingScene.ts
+ M src/scenes/GuideScene.ts
+ M src/scenes/TitleScene.ts
+ M src/systems/dialog.ts
+ M src/systems/interaction.ts
+ M src/systems/inventory.ts
+ M src/systems/reliability.ts
+ M src/systems/sceneTransitions.ts
+?? docs/
+?? experiments/overworld-wip/
+?? public/assets/art-pack/
+?? public/assets/data/interiors.json
+?? public/assets/data/npcs.json
+?? public/assets/data/worldScreens.json
+?? src/game/artPack.ts
+?? src/game/world.ts
+?? src/scenes/WorldScene.ts
+?? src/systems/CameraController.ts
+?? src/systems/PauseMapOverlay.ts
+?? src/systems/ScreenManager.ts
+?? src/systems/TileRegistry.ts
+?? src/systems/artPackEffects.ts
+?? src/systems/artPackUi.ts
+?? src/systems/packTilemaps.ts
+?? src/systems/worldQuestInventory.ts

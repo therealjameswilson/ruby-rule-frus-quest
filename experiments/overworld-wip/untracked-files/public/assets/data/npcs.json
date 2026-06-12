@@ -1,0 +1,112 @@
+[
+  {
+    "id": "compiler",
+    "displayName": "Compiler",
+    "role": "Compiler",
+    "spriteKey": "snes-colleague-compiler",
+    "homeScreenId": "navy-hill",
+    "position": { "tileX": 7, "tileY": 8 },
+    "facing": "south",
+    "dialogueId": "compiler",
+    "questFlags": []
+  },
+  {
+    "id": "archivist",
+    "displayName": "Archivist",
+    "role": "Archivist",
+    "spriteKey": "snes-npc-archive-colleague",
+    "homeScreenId": "nara-ii",
+    "position": { "tileX": 8, "tileY": 6 },
+    "facing": "south",
+    "dialogueId": "archivist",
+    "questFlags": []
+  },
+  {
+    "id": "statechat_terminal",
+    "displayName": "StateChat Terminal",
+    "role": "StateChat Terminal",
+    "spriteKey": "opennet-terminal",
+    "homeScreenId": "records-quad",
+    "position": { "tileX": 8, "tileY": 6 },
+    "facing": "south",
+    "dialogueId": "statechat_terminal",
+    "questFlags": []
+  },
+  {
+    "id": "records_officer",
+    "displayName": "Records Officer",
+    "role": "Records Officer",
+    "spriteKey": "snes-colleague-review-specialist",
+    "homeScreenId": "nara-i",
+    "position": { "tileX": 8, "tileY": 6 },
+    "facing": "south",
+    "dialogueId": "records_officer",
+    "questFlags": []
+  },
+  {
+    "id": "general_editor",
+    "displayName": "General Editor",
+    "role": "General Editor",
+    "spriteKey": "snes-colleague-editor",
+    "homeScreenId": "white-house",
+    "position": { "tileX": 8, "tileY": 8 },
+    "facing": "south",
+    "dialogueId": "general_editor_intro",
+    "questFlags": []
+  },
+  {
+    "id": "declassification_coordinator",
+    "displayName": "Declass Coordinator",
+    "role": "Declassification Coordinator",
+    "spriteKey": "snes-colleague-declass-coordinator",
+    "homeScreenId": "declass-court",
+    "position": { "tileX": 8, "tileY": 8 },
+    "facing": "south",
+    "dialogueId": "declassification_coordinator",
+    "questFlags": []
+  },
+  {
+    "id": "reviewer",
+    "displayName": "Reviewer",
+    "role": "Reviewer",
+    "spriteKey": "snes-colleague-reviewer",
+    "homeScreenId": "newington",
+    "position": { "tileX": 5, "tileY": 9 },
+    "facing": "north",
+    "dialogueId": "reviewer",
+    "questFlags": []
+  },
+  {
+    "id": "editor",
+    "displayName": "Editor",
+    "role": "Editor",
+    "spriteKey": "snes-colleague-editor",
+    "homeScreenId": "springfield",
+    "position": { "tileX": 2, "tileY": 8 },
+    "facing": "east",
+    "dialogueId": "editor",
+    "questFlags": []
+  },
+  {
+    "id": "security_officer",
+    "displayName": "Security Officer",
+    "role": "Security Officer",
+    "spriteKey": "snes-colleague-reviewer",
+    "homeScreenId": "secure-approach",
+    "position": { "tileX": 8, "tileY": 8 },
+    "facing": "south",
+    "dialogueId": "security_officer",
+    "questFlags": []
+  },
+  {
+    "id": "senior_reviewer",
+    "displayName": "Senior Reviewer",
+    "role": "Senior Reviewer",
+    "spriteKey": "snes-colleague-review-specialist",
+    "homeScreenId": "gate-shadow",
+    "position": { "tileX": 8, "tileY": 8 },
+    "facing": "south",
+    "dialogueId": "senior_reviewer",
+    "questFlags": []
+  }
+]

@@ -1,0 +1,286 @@
+import type Phaser from "phaser";
+import type { AreaId, CHARACTERS, Direction, PROCESS_ROLES, ProcessItemId, ProcessStampId, RoomType } from "./constants";
+
+export type CharacterId = keyof typeof CHARACTERS;
+export type ProcessRole = (typeof PROCESS_ROLES)[number];
+
+export type ProposalKind =
+  | "mechanical"
+  | "evidence_bound"
+  | "ambiguous"
+  | "classification"
+  | "provenance"
+  | "publication_status";
+
+export type GameMode = "boot" | "title" | "explore" | "dialog" | "choice" | "pause" | "ending" | "debug";
+export type PlayerAnimationState =
+  | "idle_down"
+  | "idle_up"
+  | "idle_left"
+  | "idle_right"
+  | "walk_down"
+  | "walk_up"
+  | "walk_left"
+  | "walk_right";
+
+export interface Position {
+  x: number;
+  y: number;
+}
+
+export type VolumeWorkflowState =
+  | "charter"
+  | "research"
+  | "candidate_selection"
+  | "source_note_verification"
+  | "annotation"
+  | "declassification_review"
+  | "referral_resolution"
+  | "editing"
+  | "proofing"
+  | "final_assembly"
+  | "published";
+
+export type DocumentWorkflowState =
+  | "found"
+  | "candidate"
+  | "selected"
+  | "source_note_needed"
+  | "citation_verified"
+  | "annotation_needed"
+  | "ready_for_review"
+  | "submitted_for_review"
+  | "referred"
+  | "cleared"
+  | "excised"
+  | "denied"
+  | "appeal_needed"
+  | "ready_for_proof"
+  | "proofed"
+  | "published";
+
+export type ReviewStatus =
+  | "not_submitted"
+  | "submitted"
+  | "referred"
+  | "cleared"
+  | "excised"
+  | "denied"
+  | "appeal_needed"
+  | "resolved";
+
+export type AgencyEquity = {
+  agencyId: string;
+  fictionalName: string;
+  issueType: "intelligence" | "military" | "diplomatic" | "foreign_government" | "privacy";
+  response: ReviewStatus;
+};
+
+export type DocumentCandidate = {
+  id: string;
+  title: string;
+  date: string;
+  type: "telegram" | "memorandum" | "memorandum_of_conversation" | "airgram" | "letter" | "briefing_paper" | "editorial_note";
+  repository: string;
+  collection: string;
+  folder: string;
+  policyTheme: string;
+  significance: number;
+  uniqueness: number;
+  citationComplete: boolean;
+  annotationNeeded: boolean;
+  sensitivityRisk: number;
+  selected: boolean;
+  workflowState: DocumentWorkflowState;
+  reviewStatus: ReviewStatus;
+  equities: AgencyEquity[];
+};
+
+export type WorkflowTool =
+  | "citation_stamp"
+  | "source_note_card"
+  | "cross_reference_thread"
+  | "referral_manifest"
+  | "excision_bracket_marker"
+  | "red_pencil"
+  | "proof_lens"
+  | "buckram_key";
+
+export interface VolumeMetrics {
+  scholarlyReliability: number;
+  readerClarity: number;
+  clearanceProgress: number;
+  publicationReadiness: number;
+  delayPressure: number;
+}
+
+export type QuestObjectSlotKind =
+  | "player"
+  | "document"
+  | "npc"
+  | "workstation"
+  | "terminal"
+  | "blocker"
+  | "reward"
+  | "gate";
+
+export type GameObjectSlot =
+  | "player"
+  | "npc_1"
+  | "npc_2"
+  | "npc_3"
+  | "npc_4"
+  | "tool_active"
+  | "tool_secondary"
+  | "document_1"
+  | "document_2"
+  | "document_3"
+  | "document_4"
+  | "document_5"
+  | "room_reward"
+  | "room_gate"
+  | "terminal"
+  | "manuscript"
+  | "transition_marker"
+  | "ui_prompt"
+  | "reserved";
+
+export interface QuestObjectSlot {
+  slot: GameObjectSlot;
+  id: string;
+  displayName: string;
+  kind: QuestObjectSlotKind;
+  roomId: string;
+  grid: Position;
+  pixel: Position;
+  activeWhen?: string;
+  documentState?: DocumentWorkflowState;
+  requiredTool?: ProcessItemId;
+  rewardItem?: ProcessItemId;
+  rewardStamp?: ProcessStampId;
+}
+
+export type QuestObject = {
+  id: string;
+  slot: GameObjectSlot;
+  kind: string;
+  x: number;
+  y: number;
+  facing?: "up" | "down" | "left" | "right";
+  state?: string;
+  active: boolean;
+  interactable: boolean;
+};
+
+export interface TileGridRoomDefinition {
+  id: string;
+  area: AreaId;
+  title: string;
+  roomType: RoomType;
+  grid: Position;
+  tileSize: number;
+  widthTiles: number;
+  heightTiles: number;
+  hudRows: number;
+  layout: string[];
+  exits: Partial<Record<Direction, string>>;
+  lockedExits: Partial<Record<Direction, string>>;
+  requiredItems: Partial<Record<Direction, ProcessItemId>>;
+  objectSlotIds: string[];
+}
+
+export type NpcBehaviorState = "idle" | "patrol" | "hint" | "blocking" | "reward" | "done";
+
+export interface NpcBehaviorDefinition {
+  npcId: string;
+  roomId: string;
+  state: NpcBehaviorState;
+  cue: string;
+}
+
+export interface ToolPriorityRule {
+  id: string;
+  priority: number;
+  verb: "inspect" | "carry" | "route" | "verify" | "stamp" | "use-tool" | "talk";
+  targetKind: QuestObjectSlotKind | "any";
+  toolId?: WorkflowTool;
+  resolvesState?: DocumentWorkflowState;
+  message: string;
+}
+
+export interface QuestMilestone {
+  id: string;
+  counter: "documents" | "stamps" | "fragments" | "verifiedFlags" | "clearedBlockers";
+  threshold: number;
+  rewardItem?: ProcessItemId;
+  rewardStamp?: ProcessStampId;
+  volumeState: VolumeWorkflowState;
+}
+
+export interface WorkflowDocument {
+  id: string;
+  displayName: string;
+  state: DocumentWorkflowState;
+  roomId: string;
+  needsHumanReview: boolean;
+  reviewStatus?: ReviewStatus;
+  selected?: boolean;
+  citationComplete?: boolean;
+  annotationNeeded?: boolean;
+  sensitivityRisk?: number;
+}
+
+export interface Interactable {
+  id: string;
+  label: string;
+  x: number;
+  y: number;
+  radius?: number;
+  kind: "npc" | "terminal" | "poster" | "document" | "door" | "manuscript" | "enemy";
+  onInteract: () => void;
+}
+
+export interface ChoiceOption {
+  key: "A" | "B" | "C" | "D";
+  label: string;
+  value?: string;
+}
+
+export interface RouteItem {
+  label: string;
+  network: "OpenNet" | "ClassNet";
+  classification: "unclassified" | "sbu" | "classified" | "codeword";
+}
+
+export interface PlayerProfile {
+  displayName: string;
+  roleId: ProcessRole["id"];
+  roleLabel: string;
+  ability: string;
+  remit: string;
+  spriteKey: string;
+  snesSpriteKey: string;
+}
+
+export interface KeyboardMap {
+  up: Phaser.Input.Keyboard.Key;
+  down: Phaser.Input.Keyboard.Key;
+  left: Phaser.Input.Keyboard.Key;
+  right: Phaser.Input.Keyboard.Key;
+  w: Phaser.Input.Keyboard.Key;
+  a: Phaser.Input.Keyboard.Key;
+  s: Phaser.Input.Keyboard.Key;
+  d: Phaser.Input.Keyboard.Key;
+  z: Phaser.Input.Keyboard.Key;
+  x: Phaser.Input.Keyboard.Key;
+  shift: Phaser.Input.Keyboard.Key;
+  tab: Phaser.Input.Keyboard.Key;
+  e: Phaser.Input.Keyboard.Key;
+  space: Phaser.Input.Keyboard.Key;
+  enter: Phaser.Input.Keyboard.Key;
+  esc: Phaser.Input.Keyboard.Key;
+  m: Phaser.Input.Keyboard.Key;
+  n: Phaser.Input.Keyboard.Key;
+  r: Phaser.Input.Keyboard.Key;
+  f: Phaser.Input.Keyboard.Key;
+}
