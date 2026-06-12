@@ -16,6 +16,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - confirmed all ten logs report `source 128x192; frame 32x48`
   - found no old placeholder character PNGs outside the art pack to move; SVG fallbacks remain for later phases until entity constructors are swapped
   - verified `npm run build` and captured `docs/screenshots/16bit-wire-phase1.png`
+- Completed `feature/wire-16bit-sprites` Phase 2 animation centralization:
+  - added `src/art/character_anims.ts` with the manifest frame-order map and generated idle/walk/interact/reading/approval animations for all ten canonical character keys
+  - registered character animations from `BootScene` after textures are available
+  - updated `Player`, `HistorianNPC`, and `ProductionColleague` to prefer the art-pack 32x48 spritesheets while retaining SVG fallbacks
+  - updated the player foot collision readout/box to a small 16x8 bottom-foot area for the taller sheet
+  - updated `render_game_to_text()` so `activePlayerSprite` reports `mode: artPack32x48`, the canonical texture key, and 32x48 frame metadata
+  - verified `npm run build` and captured `docs/screenshots/16bit-wire-phase2.png`
 - Scaffolded a Vite + TypeScript + Phaser 3 app in `ruby-rule-frus-quest`.
 - Added a role-crafting flow so players can choose a FRUS production role before entering the office.
 - Added generated placeholder pixel textures for characters, tiles, UI panels, documents, and the FRUS volume.

@@ -19,6 +19,30 @@ export type CharacterKey = keyof typeof CHARACTERS;
 
 export const CHARACTER_KEYS = Object.keys(CHARACTERS) as CharacterKey[];
 
+export function getCharacterKeyForProcessRole(roleId: string): CharacterKey {
+  if (roleId === "compiler") return "compiler";
+  if (roleId === "editor") return "editor";
+  if (roleId === "declass_reviewer") return "declassification_coordinator";
+  if (roleId === "source_note_specialist") return "records_officer";
+  return "reviewer";
+}
+
+export function getCharacterKeyForNpcId(npcId: string): CharacterKey {
+  if (npcId === "elena") return "compiler";
+  if (npcId === "marcus") return "declassification_coordinator";
+  if (npcId === "priya") return "general_editor";
+  if (npcId === "archive-colleague") return "archivist";
+  return "reviewer";
+}
+
+export function getCharacterKeyForProductionColleague(colleagueId: string): CharacterKey {
+  if (colleagueId === "compiler") return "compiler";
+  if (colleagueId === "editor") return "editor";
+  if (colleagueId === "declass_coordinator") return "declassification_coordinator";
+  if (colleagueId === "review_specialist") return "senior_reviewer";
+  return "reviewer";
+}
+
 export function preloadCharacters(scene: Phaser.Scene) {
   for (const key of CHARACTER_KEYS) {
     scene.load.spritesheet(key, CHARACTERS[key], {

@@ -190,6 +190,8 @@ Important integration note: the manifest lists a logical frame size of 32x48, wh
 
 Phase 1 follow-up: native 128x192 sheets were generated under `public/assets/art-pack/sprites/native/` so Phaser can load the canonical character keys with `frameWidth: 32` and `frameHeight: 48` without slicing the 1024x1536 display exports incorrectly.
 
+Phase 2 follow-up: `src/art/character_anims.ts` now generates the manifest idle/walk/interact/reading/approval animations for every canonical character key. `Player`, `HistorianNPC`, and `ProductionColleague` now prefer those 32x48 sheets and fall back to the older SVG textures only if the centralized art-pack texture is unavailable.
+
 ## Diff
 
 Needed path/key changes:

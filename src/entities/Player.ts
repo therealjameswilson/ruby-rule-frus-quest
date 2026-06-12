@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { characterAnimKey } from "../art/character_anims";
+import { getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
@@ -67,7 +69,7 @@ interface MovementInput {
 }
 
 export class Player {
-  readonly sprite: Phaser.GameObjects.Image;
+  readonly sprite: Phaser.GameObjects.Sprite;
   private readonly keys: KeyboardMap;
   private readonly speed = 58;
   private readonly acceleration = 720;
@@ -76,8 +78,9 @@ export class Player {
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
-  private readonly spriteMode: "snes16" | "snesRoleFrame48" | "nes8";
+  private readonly spriteMode: "artPack32x48" | "snes16" | "snesRoleFrame48" | "nes8";
   private readonly roleFrameSheet: SnesRoleFrameSheet | null;
+  private readonly characterKey: CharacterKey | null;
   private readonly shadowOffsetY: number;
   private readonly shadowDepthOffset: number;
   private walkClock = 0;
@@ -105,33 +108,42 @@ export class Player {
     this.scene = scene;
     this.logicalX = x;
     this.logicalY = y;
-    this.roleFrameSheet = this.getAvailableRoleFrameSheet(scene);
-    this.spriteMode = this.roleFrameSheet
+    const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId);
+    this.characterKey = scene.textures.exists(preferredCharacterKey) ? preferredCharacterKey : null;
+    this.roleFrameSheet = this.characterKey ? null : this.getAvailableRoleFrameSheet(scene);
+    this.spriteMode = this.characterKey
+      ? "artPack32x48"
+      : this.roleFrameSheet
       ? "snesRoleFrame48"
       : scene.textures.exists(gameState.playerProfile.snesSpriteKey)
         ? "snes16"
         : "nes8";
-    const isSnesScale = this.spriteMode === "snes16" || this.spriteMode === "snesRoleFrame48";
-    this.shadowOffsetY = isSnesScale ? 9 : 8;
+    const isSnesScale = this.spriteMode === "snes16" || this.spriteMode === "snesRoleFrame48" || this.spriteMode === "artPack32x48";
+    this.shadowOffsetY = this.spriteMode === "artPack32x48" ? 5 : isSnesScale ? 9 : 8;
     this.shadowDepthOffset = isSnesScale ? 2 : 1;
     this.shadow = scene.add
       .ellipse(
         snapPixel(x),
         snapPixel(y + this.shadowOffsetY),
-        this.spriteMode === "snesRoleFrame48" ? 20 : this.spriteMode === "snes16" ? 18 : 12,
+        this.spriteMode === "artPack32x48" || this.spriteMode === "snesRoleFrame48" ? 20 : this.spriteMode === "snes16" ? 18 : 12,
         isSnesScale ? 6 : 4,
         color(PALETTE.black)
       )
       .setDepth(snapPixel(y - this.shadowDepthOffset));
-    const textureKey = this.spriteMode === "snesRoleFrame48"
+    const textureKey = this.spriteMode === "artPack32x48"
+      ? this.characterKey ?? gameState.playerProfile.snesSpriteKey
+      : this.spriteMode === "snesRoleFrame48"
       ? this.roleFrameSheet?.key ?? gameState.playerProfile.snesSpriteKey
       : this.spriteMode === "snes16"
         ? gameState.playerProfile.snesSpriteKey
         : gameState.playerProfile.spriteKey;
     this.sprite = scene.add
-      .image(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
-      .setOrigin(0.5, this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
+      .sprite(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
+      .setOrigin(0.5, this.spriteMode === "artPack32x48" ? 0.9 : this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
       .setDepth(snapPixel(y));
+    if (this.spriteMode === "artPack32x48" && this.characterKey) {
+      this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));
+    }
     this.actionHitboxVisual = scene.add
       .rectangle(snapPixel(x), snapPixel(y), 18, 18)
       .setOrigin(0, 0)
@@ -324,7 +336,7 @@ export class Player {
     }
     if (moving) {
       this.walkClock += deltaMs;
-      this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && dx < 0);
+      this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && dx < 0);
     } else {
       this.walkClock = 0;
     }
@@ -341,7 +353,7 @@ export class Player {
 
   private collidesAt(x: number, y: number, solids: Phaser.Geom.Rectangle[]) {
     if (!solids.length) return false;
-    const footBox = new Phaser.Geom.Rectangle(x - 5, y + 2, 10, 10);
+    const footBox = new Phaser.Geom.Rectangle(x - 8, y - 3, 16, 8);
     return solids.some((solid) => Phaser.Geom.Intersects.RectangleToRectangle(footBox, solid));
   }
 
@@ -360,7 +372,7 @@ export class Player {
   private playAbilityFrame() {
     this.abilityFrameUntil = this.scene.time.now + 420;
     this.controlState = "use_item";
-    if (this.spriteMode === "snesRoleFrame48") {
+    if (this.spriteMode === "snesRoleFrame48" || this.spriteMode === "artPack32x48") {
       this.sprite.clearTint();
       this.updateRoleFrame();
       return;
@@ -442,6 +454,7 @@ export class Player {
   }
 
   private createWalkCycleCue(scene: Phaser.Scene) {
+    if (this.spriteMode === "artPack32x48") return;
     if (this.spriteMode === "snesRoleFrame48") return;
     if (this.spriteMode === "snes16") {
       this.addWalkRect(scene, -8, 8, -1, 5, 3);
@@ -453,6 +466,7 @@ export class Player {
   }
 
   private createIdleCue(scene: Phaser.Scene) {
+    if (this.spriteMode === "artPack32x48") return;
     if (this.spriteMode === "snesRoleFrame48") return;
     if (this.spriteMode === "snes16") {
       this.createSnesIdleCue(scene);
@@ -594,6 +608,22 @@ export class Player {
   }
 
   private updateRoleFrame() {
+    if (this.spriteMode === "artPack32x48" && this.characterKey) {
+      const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+      const directionSuffix = this.directionSuffix();
+      const suffix = abilityActive
+        ? this.isActionActive
+          ? "interact"
+          : "reading"
+        : this.isMoving
+          ? `walk-${directionSuffix}`
+          : `idle-${directionSuffix}`;
+      const animKey = characterAnimKey(this.characterKey, suffix);
+      if (this.scene.anims.exists(animKey)) {
+        this.sprite.play(animKey, true);
+      }
+      return;
+    }
     if (this.spriteMode !== "snesRoleFrame48" || !this.roleFrameSheet) return;
     const texture = this.scene.textures.get(this.roleFrameSheet.key);
     const abilityActive = this.scene.time.now < this.abilityFrameUntil;
@@ -612,5 +642,12 @@ export class Player {
     if (texture.has(frameName) && String(this.sprite.frame.name) !== frameName) {
       this.sprite.setTexture(this.roleFrameSheet.key, frameName);
     }
+  }
+
+  private directionSuffix() {
+    if (this.facing === "north") return "up";
+    if (this.facing === "south") return "down";
+    if (this.facing === "west") return "left";
+    return "right";
   }
 }

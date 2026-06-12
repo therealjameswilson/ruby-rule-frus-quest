@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { registerCharacterAnims } from "../art/character_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
@@ -34,6 +35,7 @@ export class BootScene extends Phaser.Scene {
   create() {
     setSceneState("BootScene", "boot", "Loading original pixel assets.");
     this.createTextures();
+    registerCharacterAnims(this);
     const startScene = this.getStartScene();
     if (startScene !== "TitleScene") {
       resetGameState();

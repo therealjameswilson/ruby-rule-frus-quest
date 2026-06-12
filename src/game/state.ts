@@ -1,3 +1,4 @@
+import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
 import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import {
@@ -979,7 +980,7 @@ export function clearChoiceState(nextMode: GameMode = "explore") {
 export function renderGameToText() {
   const questWorkflow = getQuestWorkflowReadout();
   const activeRoleFrameSheet = getSnesRoleFrameSheet(gameState.playerProfile.roleId);
-  const roleFrameSetActive = activeRoleFrameSheet !== null;
+  const activeCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId);
   return JSON.stringify(
     {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
@@ -1001,9 +1002,32 @@ export function renderGameToText() {
       documentPoints: gameState.documentPoints,
       playerProfile: gameState.playerProfile,
       activePlayerSprite: {
-        mode: roleFrameSetActive ? "snesRoleFrame48" : "snes16",
-        texture: activeRoleFrameSheet?.key ?? gameState.playerProfile.snesSpriteKey,
-        frameSet: activeRoleFrameSheet
+        mode: "artPack32x48",
+        texture: activeCharacterKey,
+        frameSet: {
+          roleId: gameState.playerProfile.roleId,
+          displayName: gameState.playerProfile.roleLabel,
+          frameWidth: CHARACTER_FRAME.width,
+          frameHeight: CHARACTER_FRAME.height,
+          frameCount: 15,
+          frames: [
+            "idle-down",
+            "idle-up",
+            "idle-left",
+            "idle-right",
+            "walk-down-0",
+            "walk-down-1",
+            "walk-up-0",
+            "walk-up-1",
+            "walk-left-0",
+            "walk-left-1",
+            "walk-right-0",
+            "walk-right-1",
+            "interact",
+            "read",
+            "victory"
+          ],
+          legacyFallback: activeRoleFrameSheet
           ? {
               roleId: activeRoleFrameSheet.roleId,
               displayName: activeRoleFrameSheet.displayName,
@@ -1012,11 +1036,12 @@ export function renderGameToText() {
               frameCount: activeRoleFrameSheet.frames.length,
               frames: [...activeRoleFrameSheet.frames]
             }
-          : null,
+          : null
+        },
         fallbackTexture: gameState.playerProfile.spriteKey,
-        dimensions: roleFrameSetActive ? { width: 32, height: 48 } : { width: 32, height: 32 },
+        dimensions: { width: CHARACTER_FRAME.width, height: CHARACTER_FRAME.height },
         logicalAnchor: "foot/interaction point",
-        collisionBox: { width: 10, height: 10, offsetY: 2 }
+        collisionBox: { width: 16, height: 8, offsetY: -3 }
       },
       processStamps: gameState.processStamps,
       processItems: getProcessItemReadout(),

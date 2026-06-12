@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { characterAnimKey } from "../../art/character_anims";
+import { getCharacterKeyForProductionColleague } from "../../art/characters";
 import { PALETTE } from "../../game/constants";
 import { SNES_PRODUCTION_COLLEAGUE_ASSETS, SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET } from "../../game/snesAtlas";
 import type { SnesProductionColleagueFrameName, SnesProductionColleagueId } from "../../game/snesAtlas";
@@ -21,7 +23,7 @@ export class ProductionColleague {
   readonly frameName: string | null;
   readonly displayName: string;
   private readonly shadow: Phaser.GameObjects.Ellipse;
-  private readonly sprite: Phaser.GameObjects.Image;
+  private readonly sprite: Phaser.GameObjects.Sprite;
   private readonly label: Phaser.GameObjects.Text;
   private readonly baseX: number;
   private readonly baseY: number;
@@ -32,17 +34,28 @@ export class ProductionColleague {
     this.displayName = asset.displayName;
     this.baseX = snapPixel(x);
     this.baseY = snapPixel(y);
-    this.shadow = scene.add.ellipse(0, 14, 18, 6, color(PALETTE.black));
+    const artPackTexture = getCharacterKeyForProductionColleague(asset.id);
+    const hasArtPackTexture = scene.textures.exists(artPackTexture);
+    this.shadow = scene.add.ellipse(0, hasArtPackTexture ? 5 : 14, hasArtPackTexture ? 20 : 18, 6, color(PALETTE.black));
     const desiredFrame = `${asset.id}-${options.pose ?? "front"}`;
-    const hasFrameSheet = scene.textures.exists(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key)
+    const hasFrameSheet = !hasArtPackTexture
+      && scene.textures.exists(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key)
       && scene.textures.get(SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key).has(desiredFrame);
-    this.spriteKey = hasFrameSheet
+    this.spriteKey = hasArtPackTexture
+      ? artPackTexture
+      : hasFrameSheet
       ? SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET.key
       : scene.textures.exists(asset.key)
         ? asset.key
         : "sam";
     this.frameName = hasFrameSheet ? desiredFrame : null;
-    this.sprite = scene.add.image(0, 0, this.spriteKey, this.frameName ?? undefined);
+    this.sprite = scene.add
+      .sprite(0, 0, this.spriteKey, hasArtPackTexture ? 0 : this.frameName ?? undefined)
+      .setOrigin(0.5, hasArtPackTexture ? 0.9 : 0.5);
+    if (hasArtPackTexture) {
+      const animKey = characterAnimKey(artPackTexture, this.animationForPose(options.pose));
+      if (scene.anims.exists(animKey)) this.sprite.play(animKey);
+    }
     this.label = scene.add.text(0, options.cueOffsetY ?? 18, options.label ?? asset.shortLabel, {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -76,5 +89,14 @@ export class ProductionColleague {
 
   destroy() {
     this.container.destroy();
+  }
+
+  private animationForPose(pose: SnesProductionColleagueFrameName | undefined) {
+    if (pose === "work") return "reading";
+    if (pose === "approve") return "approval";
+    if (pose === "walk") return "walk-down";
+    if (pose === "back") return "idle-up";
+    if (pose === "side") return "idle-right";
+    return "idle-down";
   }
 }
