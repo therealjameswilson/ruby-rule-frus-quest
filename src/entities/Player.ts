@@ -3,8 +3,15 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
-import { gameState, setPlayerAnimationState, setPlayerFacing, setPlayerPosition } from "../game/state";
-import type { KeyboardMap, PlayerAnimationState, Position } from "../game/types";
+import { gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
+import type { KeyboardMap, PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
+import {
+  buildDirectionalHitbox,
+  PLAYER_ACTION_HITBOX_MS,
+  PLAYER_HURT_MS,
+  PLAYER_IFRAME_MS,
+  toHitboxReadout
+} from "../systems/combat";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 import { approach, frameDeltaSeconds } from "../systems/smoothMovement";
 
@@ -51,7 +58,6 @@ interface WalkPart {
 }
 
 type SnesRoleFrameSheet = NonNullable<ReturnType<typeof getSnesRoleFrameSheet>>;
-type PlayerControlState = "idle" | "walk" | "attack" | "hurt" | "use_item";
 
 interface MovementInput {
   x: number;
@@ -67,6 +73,7 @@ export class Player {
   private readonly acceleration = 720;
   private readonly deceleration = 900;
   private readonly shadow: Phaser.GameObjects.Ellipse;
+  private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
   private readonly spriteMode: "snes16" | "snesRoleFrame48" | "nes8";
@@ -76,6 +83,9 @@ export class Player {
   private walkClock = 0;
   private idleClock = 0;
   private abilityFrameUntil = 0;
+  private actionActiveUntil = 0;
+  private invulnerableUntil = 0;
+  private hurtUntil = 0;
   private isMoving = false;
   private controlState: PlayerControlState = "idle";
   private logicalX: number;
@@ -122,6 +132,12 @@ export class Player {
       .image(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
       .setOrigin(0.5, this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
       .setDepth(snapPixel(y));
+    this.actionHitboxVisual = scene.add
+      .rectangle(snapPixel(x), snapPixel(y), 18, 18)
+      .setOrigin(0, 0)
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(899)
+      .setVisible(false);
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);
     this.keys = scene.input.keyboard!.addKeys({
@@ -174,6 +190,31 @@ export class Player {
     return `${prefix}_${suffix}` as PlayerAnimationState;
   }
 
+  get isActionActive() {
+    return this.scene.time.now < this.actionActiveUntil;
+  }
+
+  get activeActionHitbox() {
+    return this.isActionActive ? this.getFacingActionHitbox() : null;
+  }
+
+  get isInvulnerable() {
+    return this.scene.time.now < this.invulnerableUntil;
+  }
+
+  get combatReadout(): PlayerCombatReadout {
+    const now = this.scene.time.now;
+    const hitbox = this.activeActionHitbox;
+    return {
+      state: this.currentControlState(now),
+      actionActive: this.isActionActive,
+      actionMsRemaining: Math.max(0, Math.round(this.actionActiveUntil - now)),
+      invulnerable: this.isInvulnerable,
+      invulnerableMsRemaining: Math.max(0, Math.round(this.invulnerableUntil - now)),
+      hitbox: toHitboxReadout(hitbox)
+    };
+  }
+
   setPosition(x: number, y: number) {
     this.logicalX = x;
     this.logicalY = y;
@@ -196,15 +237,37 @@ export class Player {
     setPlayerFacing(this.facing);
   }
 
+  startAction() {
+    this.actionActiveUntil = this.scene.time.now + PLAYER_ACTION_HITBOX_MS;
+    this.controlState = "attack";
+    this.abilityFrameUntil = Math.max(this.abilityFrameUntil, this.scene.time.now + PLAYER_ACTION_HITBOX_MS);
+    this.syncRenderPosition();
+  }
+
+  getFacingActionHitbox() {
+    return buildDirectionalHitbox(this.position, this.facing);
+  }
+
+  takeHit(source: Position, distance = 14, invulnerabilityMs = PLAYER_IFRAME_MS) {
+    if (this.isInvulnerable) return false;
+    this.invulnerableUntil = this.scene.time.now + invulnerabilityMs;
+    this.hurtUntil = this.scene.time.now + PLAYER_HURT_MS;
+    this.controlState = "hurt";
+    this.pushAwayFrom(source, distance);
+    this.syncRenderPosition();
+    return true;
+  }
+
   update(deltaMs: number, canMove: boolean, options: PlayerMoveOptions = {}) {
     this.idleClock += deltaMs;
+    const now = this.scene.time.now;
     if (!canMove) {
       this.isMoving = false;
       this.velocityX = 0;
       this.velocityY = 0;
       this.sprite.setAngle(0);
       this.sprite.setScale(1);
-      if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
+      if (now >= this.abilityFrameUntil && !this.isInvulnerable) this.sprite.clearTint();
       this.syncRenderPosition();
       setPlayerPosition(this.position);
       setPlayerFacing(this.facing);
@@ -266,10 +329,10 @@ export class Player {
       this.walkClock = 0;
     }
     this.isMoving = moving;
-    this.controlState = moving ? "walk" : "idle";
+    if (now >= this.hurtUntil && now >= this.actionActiveUntil) this.controlState = moving ? "walk" : "idle";
     this.sprite.setAngle(0);
     this.sprite.setScale(1);
-    if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
+    if (now >= this.abilityFrameUntil && !this.isInvulnerable) this.sprite.clearTint();
     this.shadow.setScale(1);
     this.syncRenderPosition();
     setPlayerPosition(this.position);
@@ -341,7 +404,41 @@ export class Player {
     this.sprite.setDepth(renderY);
     this.syncIdleCue(renderX, renderY);
     this.syncWalkCycleCue(renderX, renderY);
+    this.syncActionHitbox();
+    this.syncInvulnerabilityBlink();
     setPlayerAnimationState(this.animationState);
+    setPlayerCombat(this.combatReadout);
+  }
+
+  private currentControlState(now = this.scene.time.now): PlayerControlState {
+    if (now < this.hurtUntil) return "hurt";
+    if (now < this.actionActiveUntil) return "attack";
+    if (this.controlState === "hurt" || this.controlState === "attack") return this.isMoving ? "walk" : "idle";
+    return this.controlState;
+  }
+
+  private syncActionHitbox() {
+    const hitbox = this.activeActionHitbox;
+    if (!hitbox) {
+      this.actionHitboxVisual.setVisible(false);
+      return;
+    }
+    this.actionHitboxVisual
+      .setVisible(true)
+      .setSize(hitbox.width, hitbox.height)
+      .setPosition(snapPixel(hitbox.x), snapPixel(hitbox.y))
+      .setDepth(snapPixel(this.logicalY + 1));
+  }
+
+  private syncInvulnerabilityBlink() {
+    if (!this.isInvulnerable) {
+      this.sprite.setAlpha(1);
+      if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
+      return;
+    }
+    const blinkOn = Math.floor(this.scene.time.now / 90) % 2 === 0;
+    this.sprite.setAlpha(blinkOn ? 1 : 0.45);
+    this.sprite.setTint(color(PALETTE.classNetRed));
   }
 
   private createWalkCycleCue(scene: Phaser.Scene) {

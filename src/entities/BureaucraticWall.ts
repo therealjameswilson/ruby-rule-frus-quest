@@ -71,6 +71,10 @@ export class BureaucraticWall {
     return { x: this.currentX, y: this.currentY };
   }
 
+  get bounds() {
+    return new Phaser.Geom.Rectangle(this.currentX - 15, this.currentY - 17, 30, 34);
+  }
+
   update(timeMs: number, deltaMs = 16, target?: Position) {
     if (this.cleared) return;
     const homeRadius = this.behavior === "block" || this.behavior === "freeze" || this.behavior === "splitter" ? 1 : 7;
@@ -152,6 +156,11 @@ export class BureaucraticWall {
   isTouching(position: Position, radius = 20) {
     if (this.cleared) return false;
     return Phaser.Math.Distance.Between(this.currentX, this.currentY, position.x, position.y) <= radius;
+  }
+
+  intersectsHitbox(hitbox: Phaser.Geom.Rectangle) {
+    if (this.cleared) return false;
+    return Phaser.Geom.Intersects.RectangleToRectangle(this.bounds, hitbox);
   }
 }
 

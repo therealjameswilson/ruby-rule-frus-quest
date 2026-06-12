@@ -23,6 +23,22 @@ export type PlayerAnimationState =
   | "walk_left"
   | "walk_right";
 
+export type PlayerControlState = "idle" | "walk" | "attack" | "hurt" | "use_item";
+
+export interface PlayerCombatReadout {
+  state: PlayerControlState;
+  actionActive: boolean;
+  actionMsRemaining: number;
+  invulnerable: boolean;
+  invulnerableMsRemaining: number;
+  hitbox: {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null;
+}
+
 export interface Position {
   x: number;
   y: number;

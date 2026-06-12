@@ -389,3 +389,8 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 - Refactored the player movement resolver toward LttP-style 8-direction input while keeping cardinal facing/animation labels and pixel-snapped rendering.
 - Added `playerAnimationState` to the text-state readout so movement QA can confirm idle/walk direction without relying only on screenshots.
+
+## 2026-06-11 Cleanup branch Phase 5
+
+- Added a compact player action-hitbox window for resolving bureaucratic wall blockers, keeping the FRUS process metaphor while matching the active-frame interaction pattern.
+- Added player i-frame and hurt-state readouts after wall contact, with knockback routed through the player controller and exposed in `render_game_to_text()`.

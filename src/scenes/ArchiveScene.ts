@@ -391,8 +391,9 @@ export class ArchiveScene extends Phaser.Scene {
     setNearestInteractable(nearest?.label ?? null);
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
     this.hintText.setText(nearest ? `${toolCue}${nearest.label.toUpperCase()}` : this.exitHint());
-    if ((Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) && nearest) {
-      nearest.onInteract();
+    if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) {
+      if (this.tryEnemyAction(nearest ?? undefined)) return;
+      if (nearest) nearest.onInteract();
     }
     this.objectiveText.setText(gameState.objective);
   }
@@ -962,6 +963,24 @@ export class ArchiveScene extends Phaser.Scene {
     }
   }
 
+  private tryEnemyAction(nearest?: Interactable) {
+    const facingHitbox = this.player.getFacingActionHitbox();
+    const facedWall = [...this.activeEnemyWalls.values()].find((wall) => wall.intersectsHitbox(facingHitbox));
+    const wall = facedWall ?? (nearest?.kind === "enemy" ? this.activeEnemyWalls.get(nearest.id) : undefined);
+    const definition = wall ? this.activeEnemyDefs.get(wall.id) : undefined;
+    if (!wall && nearest?.kind !== "enemy") return false;
+    this.player.startAction();
+    const hitbox = this.player.activeActionHitbox;
+    if (!wall || !definition || !hitbox || !wall.intersectsHitbox(hitbox)) {
+      retroAudio.warning();
+      setLatestMessage("Face the stonewall before applying the process.");
+      this.hintText.setText("FACE THE WALL");
+      return true;
+    }
+    this.handleEnemyInteract(definition, wall);
+    return true;
+  }
+
   private clearEnemy(definition: ArchiveEnemyDefinition, wall: BureaucraticWall, message: string) {
     if (wall.isCleared) return;
     this.clearedWallIds.add(definition.id);
@@ -1069,10 +1088,11 @@ export class ArchiveScene extends Phaser.Scene {
     this.syncWallState();
     const activeWall = this.bureaucraticWalls.find((wall) => wall.isTouching(this.player.position, 19));
     if (!activeWall || this.time.now < this.wallContactCooldown) return;
-    this.wallContactCooldown = this.time.now + 1200;
     activeWall.markHit();
     const definition = this.activeEnemyDefs.get(activeWall.id);
-    this.player.pushAwayFrom(activeWall.position, definition?.type === "DANN-E QUEUE" ? 22 : 15);
+    const hit = this.player.takeHit(activeWall.position, definition?.type === "DANN-E QUEUE" ? 22 : 15);
+    if (!hit) return;
+    this.wallContactCooldown = this.time.now + 1200;
     adjustReliability(definition?.type === "DANN-E QUEUE" ? -3 : -2, `${definition?.type ?? activeWall.label} process wall delayed source work`);
     this.reliability.update();
     if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");

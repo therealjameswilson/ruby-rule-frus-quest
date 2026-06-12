@@ -19,6 +19,7 @@ import type {
   DocumentWorkflowState,
   GameMode,
   PlayerAnimationState,
+  PlayerCombatReadout,
   PlayerProfile,
   Position,
   ReviewStatus,
@@ -65,6 +66,7 @@ interface GameState {
   player: Position;
   playerFacing: Direction;
   playerAnimationState: PlayerAnimationState;
+  playerCombat: PlayerCombatReadout;
   nearestInteractable: string | null;
   visibleEntities: string[];
   visibleThreats: VisibleThreat[];
@@ -166,6 +168,14 @@ export const gameState: GameState = {
   player: { x: 128, y: 160 },
   playerFacing: "south",
   playerAnimationState: "idle_down",
+  playerCombat: {
+    state: "idle",
+    actionActive: false,
+    actionMsRemaining: 0,
+    invulnerable: false,
+    invulnerableMsRemaining: 0,
+    hitbox: null
+  },
   nearestInteractable: null,
   visibleEntities: [],
   visibleThreats: [],
@@ -210,6 +220,14 @@ export function resetGameState() {
   gameState.player = { x: 128, y: 160 };
   gameState.playerFacing = "south";
   gameState.playerAnimationState = "idle_down";
+  gameState.playerCombat = {
+    state: "idle",
+    actionActive: false,
+    actionMsRemaining: 0,
+    invulnerable: false,
+    invulnerableMsRemaining: 0,
+    hitbox: null
+  };
   gameState.nearestInteractable = null;
   gameState.visibleEntities = [];
   gameState.visibleThreats = [];
@@ -322,6 +340,10 @@ export function setPlayerFacing(direction: Direction) {
 
 export function setPlayerAnimationState(animationState: PlayerAnimationState) {
   gameState.playerAnimationState = animationState;
+}
+
+export function setPlayerCombat(combat: PlayerCombatReadout) {
+  gameState.playerCombat = combat;
 }
 
 export function addInventoryItem(label: string) {
@@ -949,6 +971,7 @@ export function renderGameToText() {
       player: gameState.player,
       playerFacing: gameState.playerFacing,
       playerAnimationState: gameState.playerAnimationState,
+      playerCombat: gameState.playerCombat,
       nearestInteractable: gameState.nearestInteractable,
       visibleEntities: gameState.visibleEntities,
       visibleThreats: gameState.visibleThreats,
