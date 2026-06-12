@@ -394,3 +394,8 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 - Added a compact player action-hitbox window for resolving bureaucratic wall blockers, keeping the FRUS process metaphor while matching the active-frame interaction pattern.
 - Added player i-frame and hurt-state readouts after wall contact, with knockback routed through the player controller and exposed in `render_game_to_text()`.
+
+## 2026-06-11 Cleanup branch Phase 6
+
+- Added a shared enemy base for coherent roaming hazards with waypoint movement, damage, knockback, and death hooks.
+- Retained the existing patrol-style HAC member, shutdown, bee swarm, and Navy Hill mice hazards while leaving specialized bureaucratic stonewalls in their process-gate class.
