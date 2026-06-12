@@ -13,6 +13,15 @@ export type ProposalKind =
   | "publication_status";
 
 export type GameMode = "boot" | "title" | "explore" | "dialog" | "choice" | "pause" | "ending" | "debug";
+export type PlayerAnimationState =
+  | "idle_down"
+  | "idle_up"
+  | "idle_left"
+  | "idle_right"
+  | "walk_down"
+  | "walk_up"
+  | "walk_left"
+  | "walk_right";
 
 export interface Position {
   x: number;

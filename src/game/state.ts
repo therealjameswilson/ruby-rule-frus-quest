@@ -18,6 +18,7 @@ import type {
   DocumentCandidate,
   DocumentWorkflowState,
   GameMode,
+  PlayerAnimationState,
   PlayerProfile,
   Position,
   ReviewStatus,
@@ -63,6 +64,7 @@ interface GameState {
   currentChoice: { title: string; options: ChoiceOption[] } | null;
   player: Position;
   playerFacing: Direction;
+  playerAnimationState: PlayerAnimationState;
   nearestInteractable: string | null;
   visibleEntities: string[];
   visibleThreats: VisibleThreat[];
@@ -163,6 +165,7 @@ export const gameState: GameState = {
   currentChoice: null,
   player: { x: 128, y: 160 },
   playerFacing: "south",
+  playerAnimationState: "idle_down",
   nearestInteractable: null,
   visibleEntities: [],
   visibleThreats: [],
@@ -206,6 +209,7 @@ export function resetGameState() {
   gameState.currentChoice = null;
   gameState.player = { x: 128, y: 160 };
   gameState.playerFacing = "south";
+  gameState.playerAnimationState = "idle_down";
   gameState.nearestInteractable = null;
   gameState.visibleEntities = [];
   gameState.visibleThreats = [];
@@ -314,6 +318,10 @@ export function setPlayerPosition(position: Position) {
 
 export function setPlayerFacing(direction: Direction) {
   gameState.playerFacing = direction;
+}
+
+export function setPlayerAnimationState(animationState: PlayerAnimationState) {
+  gameState.playerAnimationState = animationState;
 }
 
 export function addInventoryItem(label: string) {
@@ -940,6 +948,7 @@ export function renderGameToText() {
       latestMessage: gameState.latestMessage,
       player: gameState.player,
       playerFacing: gameState.playerFacing,
+      playerAnimationState: gameState.playerAnimationState,
       nearestInteractable: gameState.nearestInteractable,
       visibleEntities: gameState.visibleEntities,
       visibleThreats: gameState.visibleThreats,

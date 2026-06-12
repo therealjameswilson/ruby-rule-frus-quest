@@ -384,3 +384,8 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Consider a later non-combat `B` item such as a source-note stamp or routing card for clearing stonewalls at range.
 - Add full manual route QA for every new Archive Cavern room once the public build is deployed.
 - Continue the SNES upgrade with larger original in-game sprite sheets, richer non-Archive room graphs/transitions, and more authored room-to-room transition visuals, while keeping StateChat terminal-only and the FRUS workflow as the win path.
+
+## 2026-06-11 Cleanup branch Phase 4
+
+- Refactored the player movement resolver toward LttP-style 8-direction input while keeping cardinal facing/animation labels and pixel-snapped rendering.
+- Added `playerAnimationState` to the text-state readout so movement QA can confirm idle/walk direction without relying only on screenshots.
