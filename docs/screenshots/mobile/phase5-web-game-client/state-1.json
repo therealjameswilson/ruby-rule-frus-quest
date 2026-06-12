@@ -1,0 +1,3075 @@
+{
+  "coordinateSystem": "origin top-left; x increases right; y increases down; logical canvas 256x240",
+  "scene": "GuideScene",
+  "mode": "explore",
+  "objective": "Archive Cavern: take the Citation Stamp.",
+  "volumeWorkflowState": "research",
+  "documentCandidates": [
+    {
+      "id": "doc-001",
+      "title": "Memorandum of Conversation",
+      "date": "1969-02-14",
+      "type": "memorandum_of_conversation",
+      "repository": "Fictional National Archives Collection",
+      "collection": "Office Files of the Policy Planning Staff",
+      "folder": "Alliance Consultation, February 1969",
+      "policyTheme": "Alliance consultation",
+      "significance": 5,
+      "uniqueness": 4,
+      "citationComplete": false,
+      "annotationNeeded": true,
+      "sensitivityRisk": 3,
+      "selected": false,
+      "workflowState": "found",
+      "reviewStatus": "not_submitted",
+      "equities": [
+        {
+          "agencyId": "fictional-defense-equity",
+          "fictionalName": "Defense Equity Office",
+          "issueType": "military",
+          "response": "not_submitted"
+        }
+      ]
+    },
+    {
+      "id": "telegram_001",
+      "title": "Telegram on Opening Contacts",
+      "date": "1989-02-14",
+      "type": "telegram",
+      "repository": "National Archives",
+      "collection": "Central Foreign Policy Files",
+      "folder": "OpenNet sample cable folder",
+      "policyTheme": "Diplomatic opening",
+      "significance": 62,
+      "uniqueness": 54,
+      "citationComplete": false,
+      "annotationNeeded": false,
+      "sensitivityRisk": 18,
+      "selected": false,
+      "workflowState": "found",
+      "reviewStatus": "not_submitted",
+      "equities": []
+    },
+    {
+      "id": "source_note_047",
+      "title": "Source Note 47",
+      "date": "1989-04-07",
+      "type": "editorial_note",
+      "repository": "",
+      "collection": "Compiler source-note worksheet",
+      "folder": "Repository missing until research table verification",
+      "policyTheme": "Provenance trail",
+      "significance": 84,
+      "uniqueness": 74,
+      "citationComplete": false,
+      "annotationNeeded": true,
+      "sensitivityRisk": 42,
+      "selected": false,
+      "workflowState": "found",
+      "reviewStatus": "not_submitted",
+      "equities": [
+        {
+          "agencyId": "historians-office",
+          "fictionalName": "Office Source Trail",
+          "issueType": "diplomatic",
+          "response": "not_submitted"
+        }
+      ]
+    },
+    {
+      "id": "cross_reference_001",
+      "title": "Published FRUS Cross-Reference",
+      "date": "1990-06-21",
+      "type": "editorial_note",
+      "repository": "history.state.gov",
+      "collection": "Published FRUS cross-reference check",
+      "folder": "OpenNet publication-status queue",
+      "policyTheme": "Publication status",
+      "significance": 58,
+      "uniqueness": 48,
+      "citationComplete": true,
+      "annotationNeeded": true,
+      "sensitivityRisk": 12,
+      "selected": false,
+      "workflowState": "found",
+      "reviewStatus": "not_submitted",
+      "equities": []
+    },
+    {
+      "id": "sbu_annotation_001",
+      "title": "SBU Annotation Sheet",
+      "date": "1991-01-18",
+      "type": "briefing_paper",
+      "repository": "ClassNet review packet",
+      "collection": "Declassification annotation checks",
+      "folder": "SBU annotation review tray",
+      "policyTheme": "Classified annotation",
+      "significance": 71,
+      "uniqueness": 63,
+      "citationComplete": true,
+      "annotationNeeded": true,
+      "sensitivityRisk": 76,
+      "selected": false,
+      "workflowState": "found",
+      "reviewStatus": "not_submitted",
+      "equities": [
+        {
+          "agencyId": "agency-cyan",
+          "fictionalName": "Cyan Intelligence Equity",
+          "issueType": "intelligence",
+          "response": "not_submitted"
+        },
+        {
+          "agencyId": "agency-red",
+          "fictionalName": "Red Defense Equity",
+          "issueType": "military",
+          "response": "not_submitted"
+        }
+      ]
+    },
+    {
+      "id": "proof_page_412",
+      "title": "Proof Page 412 Date Discrepancy",
+      "date": "1992-03-12",
+      "type": "editorial_note",
+      "repository": "Typeset proof packet",
+      "collection": "Silent read tower proofs",
+      "folder": "Page 412 discrepancy sheet",
+      "policyTheme": "Reader clarity",
+      "significance": 66,
+      "uniqueness": 59,
+      "citationComplete": true,
+      "annotationNeeded": false,
+      "sensitivityRisk": 9,
+      "selected": false,
+      "workflowState": "found",
+      "reviewStatus": "not_submitted",
+      "equities": []
+    }
+  ],
+  "documentWorkflow": [
+    {
+      "id": "doc-001",
+      "displayName": "Memorandum of Conversation",
+      "state": "found",
+      "roomId": "A1",
+      "needsHumanReview": true,
+      "reviewStatus": "not_submitted",
+      "selected": false,
+      "citationComplete": false,
+      "annotationNeeded": true,
+      "sensitivityRisk": 3
+    },
+    {
+      "id": "telegram_001",
+      "displayName": "Telegram on Opening Contacts",
+      "state": "found",
+      "roomId": "A1",
+      "needsHumanReview": true,
+      "reviewStatus": "not_submitted",
+      "selected": false,
+      "citationComplete": false,
+      "annotationNeeded": false,
+      "sensitivityRisk": 18
+    },
+    {
+      "id": "source_note_047",
+      "displayName": "Source Note 47",
+      "state": "found",
+      "roomId": "A1",
+      "needsHumanReview": true,
+      "reviewStatus": "not_submitted",
+      "selected": false,
+      "citationComplete": false,
+      "annotationNeeded": true,
+      "sensitivityRisk": 42
+    },
+    {
+      "id": "cross_reference_001",
+      "displayName": "Published FRUS Cross-Reference",
+      "state": "found",
+      "roomId": "A1",
+      "needsHumanReview": true,
+      "reviewStatus": "not_submitted",
+      "selected": false,
+      "citationComplete": true,
+      "annotationNeeded": true,
+      "sensitivityRisk": 12
+    },
+    {
+      "id": "sbu_annotation_001",
+      "displayName": "SBU Annotation Sheet",
+      "state": "found",
+      "roomId": "SilentReadScene",
+      "needsHumanReview": true,
+      "reviewStatus": "not_submitted",
+      "selected": false,
+      "citationComplete": true,
+      "annotationNeeded": true,
+      "sensitivityRisk": 76
+    },
+    {
+      "id": "proof_page_412",
+      "displayName": "Proof Page 412 Date Discrepancy",
+      "state": "found",
+      "roomId": "SilentReadScene",
+      "needsHumanReview": false,
+      "reviewStatus": "not_submitted",
+      "selected": false,
+      "citationComplete": true,
+      "annotationNeeded": false,
+      "sensitivityRisk": 9
+    }
+  ],
+  "documentWorkflowLog": [],
+  "volumeMetrics": {
+    "scholarlyReliability": 80,
+    "readerClarity": 40,
+    "clearanceProgress": 0,
+    "publicationReadiness": 0,
+    "delayPressure": 70
+  },
+  "questCounters": {
+    "documents": 0,
+    "stamps": 1,
+    "fragments": 0,
+    "verifiedFlags": 0,
+    "clearedBlockers": 0
+  },
+  "questWorkflow": {
+    "volumeState": "research",
+    "candidates": [
+      {
+        "id": "doc-001",
+        "title": "Memorandum of Conversation",
+        "date": "1969-02-14",
+        "type": "memorandum_of_conversation",
+        "repository": "Fictional National Archives Collection",
+        "collection": "Office Files of the Policy Planning Staff",
+        "folder": "Alliance Consultation, February 1969",
+        "policyTheme": "Alliance consultation",
+        "significance": 5,
+        "uniqueness": 4,
+        "citationComplete": false,
+        "annotationNeeded": true,
+        "sensitivityRisk": 3,
+        "selected": false,
+        "workflowState": "found",
+        "reviewStatus": "not_submitted",
+        "equities": [
+          {
+            "agencyId": "fictional-defense-equity",
+            "fictionalName": "Defense Equity Office",
+            "issueType": "military",
+            "response": "not_submitted"
+          }
+        ]
+      },
+      {
+        "id": "telegram_001",
+        "title": "Telegram on Opening Contacts",
+        "date": "1989-02-14",
+        "type": "telegram",
+        "repository": "National Archives",
+        "collection": "Central Foreign Policy Files",
+        "folder": "OpenNet sample cable folder",
+        "policyTheme": "Diplomatic opening",
+        "significance": 62,
+        "uniqueness": 54,
+        "citationComplete": false,
+        "annotationNeeded": false,
+        "sensitivityRisk": 18,
+        "selected": false,
+        "workflowState": "found",
+        "reviewStatus": "not_submitted",
+        "equities": []
+      },
+      {
+        "id": "source_note_047",
+        "title": "Source Note 47",
+        "date": "1989-04-07",
+        "type": "editorial_note",
+        "repository": "",
+        "collection": "Compiler source-note worksheet",
+        "folder": "Repository missing until research table verification",
+        "policyTheme": "Provenance trail",
+        "significance": 84,
+        "uniqueness": 74,
+        "citationComplete": false,
+        "annotationNeeded": true,
+        "sensitivityRisk": 42,
+        "selected": false,
+        "workflowState": "found",
+        "reviewStatus": "not_submitted",
+        "equities": [
+          {
+            "agencyId": "historians-office",
+            "fictionalName": "Office Source Trail",
+            "issueType": "diplomatic",
+            "response": "not_submitted"
+          }
+        ]
+      },
+      {
+        "id": "cross_reference_001",
+        "title": "Published FRUS Cross-Reference",
+        "date": "1990-06-21",
+        "type": "editorial_note",
+        "repository": "history.state.gov",
+        "collection": "Published FRUS cross-reference check",
+        "folder": "OpenNet publication-status queue",
+        "policyTheme": "Publication status",
+        "significance": 58,
+        "uniqueness": 48,
+        "citationComplete": true,
+        "annotationNeeded": true,
+        "sensitivityRisk": 12,
+        "selected": false,
+        "workflowState": "found",
+        "reviewStatus": "not_submitted",
+        "equities": []
+      },
+      {
+        "id": "sbu_annotation_001",
+        "title": "SBU Annotation Sheet",
+        "date": "1991-01-18",
+        "type": "briefing_paper",
+        "repository": "ClassNet review packet",
+        "collection": "Declassification annotation checks",
+        "folder": "SBU annotation review tray",
+        "policyTheme": "Classified annotation",
+        "significance": 71,
+        "uniqueness": 63,
+        "citationComplete": true,
+        "annotationNeeded": true,
+        "sensitivityRisk": 76,
+        "selected": false,
+        "workflowState": "found",
+        "reviewStatus": "not_submitted",
+        "equities": [
+          {
+            "agencyId": "agency-cyan",
+            "fictionalName": "Cyan Intelligence Equity",
+            "issueType": "intelligence",
+            "response": "not_submitted"
+          },
+          {
+            "agencyId": "agency-red",
+            "fictionalName": "Red Defense Equity",
+            "issueType": "military",
+            "response": "not_submitted"
+          }
+        ]
+      },
+      {
+        "id": "proof_page_412",
+        "title": "Proof Page 412 Date Discrepancy",
+        "date": "1992-03-12",
+        "type": "editorial_note",
+        "repository": "Typeset proof packet",
+        "collection": "Silent read tower proofs",
+        "folder": "Page 412 discrepancy sheet",
+        "policyTheme": "Reader clarity",
+        "significance": 66,
+        "uniqueness": 59,
+        "citationComplete": true,
+        "annotationNeeded": false,
+        "sensitivityRisk": 9,
+        "selected": false,
+        "workflowState": "found",
+        "reviewStatus": "not_submitted",
+        "equities": []
+      }
+    ],
+    "documents": [
+      {
+        "id": "doc-001",
+        "displayName": "Memorandum of Conversation",
+        "state": "found",
+        "roomId": "A1",
+        "needsHumanReview": true,
+        "reviewStatus": "not_submitted",
+        "selected": false,
+        "citationComplete": false,
+        "annotationNeeded": true,
+        "sensitivityRisk": 3
+      },
+      {
+        "id": "telegram_001",
+        "displayName": "Telegram on Opening Contacts",
+        "state": "found",
+        "roomId": "A1",
+        "needsHumanReview": true,
+        "reviewStatus": "not_submitted",
+        "selected": false,
+        "citationComplete": false,
+        "annotationNeeded": false,
+        "sensitivityRisk": 18
+      },
+      {
+        "id": "source_note_047",
+        "displayName": "Source Note 47",
+        "state": "found",
+        "roomId": "A1",
+        "needsHumanReview": true,
+        "reviewStatus": "not_submitted",
+        "selected": false,
+        "citationComplete": false,
+        "annotationNeeded": true,
+        "sensitivityRisk": 42
+      },
+      {
+        "id": "cross_reference_001",
+        "displayName": "Published FRUS Cross-Reference",
+        "state": "found",
+        "roomId": "A1",
+        "needsHumanReview": true,
+        "reviewStatus": "not_submitted",
+        "selected": false,
+        "citationComplete": true,
+        "annotationNeeded": true,
+        "sensitivityRisk": 12
+      },
+      {
+        "id": "sbu_annotation_001",
+        "displayName": "SBU Annotation Sheet",
+        "state": "found",
+        "roomId": "SilentReadScene",
+        "needsHumanReview": true,
+        "reviewStatus": "not_submitted",
+        "selected": false,
+        "citationComplete": true,
+        "annotationNeeded": true,
+        "sensitivityRisk": 76
+      },
+      {
+        "id": "proof_page_412",
+        "displayName": "Proof Page 412 Date Discrepancy",
+        "state": "found",
+        "roomId": "SilentReadScene",
+        "needsHumanReview": false,
+        "reviewStatus": "not_submitted",
+        "selected": false,
+        "citationComplete": true,
+        "annotationNeeded": false,
+        "sensitivityRisk": 9
+      }
+    ],
+    "eventLog": [],
+    "workflowTools": [
+      {
+        "id": "citation_stamp",
+        "displayName": "Citation Stamp",
+        "shortLabel": "CITE",
+        "icon": "citation-stamp",
+        "priority": 1,
+        "targetKinds": [
+          "document",
+          "manuscript",
+          "enemy",
+          "door"
+        ],
+        "use": "Verify provenance and clear source-note locks.",
+        "acquired": false
+      },
+      {
+        "id": "source_note_card",
+        "displayName": "Source Note Card",
+        "shortLabel": "SRC",
+        "icon": "source-note",
+        "priority": 2,
+        "targetKinds": [
+          "document",
+          "manuscript",
+          "terminal"
+        ],
+        "use": "Carry repository, collection, box, folder, and document trail.",
+        "acquired": false
+      },
+      {
+        "id": "cross_reference_thread",
+        "displayName": "Cross-Reference Thread",
+        "shortLabel": "XREF",
+        "icon": "cross-reference",
+        "priority": 3,
+        "targetKinds": [
+          "document",
+          "terminal"
+        ],
+        "use": "Trace published status and related FRUS references.",
+        "acquired": false
+      },
+      {
+        "id": "referral_manifest",
+        "displayName": "Referral Manifest",
+        "shortLabel": "REF",
+        "icon": "referral-manifest",
+        "priority": 4,
+        "targetKinds": [
+          "document",
+          "terminal",
+          "enemy"
+        ],
+        "use": "Route equities to the correct human referral queue.",
+        "acquired": false
+      },
+      {
+        "id": "excision_bracket_marker",
+        "displayName": "Excision Bracket Marker",
+        "shortLabel": "EXC",
+        "icon": "excision-bracket-marker",
+        "priority": 5,
+        "targetKinds": [
+          "document",
+          "manuscript"
+        ],
+        "use": "Mark withheld text visibly rather than silently erasing it.",
+        "acquired": false
+      },
+      {
+        "id": "red_pencil",
+        "displayName": "Red Pencil",
+        "shortLabel": "PENCIL",
+        "icon": "red-pencil",
+        "priority": 6,
+        "targetKinds": [
+          "document",
+          "manuscript"
+        ],
+        "use": "Apply editor judgment to unsupported or unclear text.",
+        "acquired": false
+      },
+      {
+        "id": "proof_lens",
+        "displayName": "Proof Lens",
+        "shortLabel": "LENS",
+        "icon": "proof-lens",
+        "priority": 7,
+        "targetKinds": [
+          "document",
+          "manuscript",
+          "door"
+        ],
+        "use": "Reveal tiny discrepancies during silent read.",
+        "acquired": false
+      },
+      {
+        "id": "buckram_key",
+        "displayName": "Buckram Key",
+        "shortLabel": "KEY",
+        "icon": "buckram-key",
+        "priority": 8,
+        "targetKinds": [
+          "door"
+        ],
+        "use": "Open the final publication gate once the volume is certified.",
+        "acquired": false
+      }
+    ],
+    "metrics": {
+      "scholarlyReliability": 80,
+      "readerClarity": 40,
+      "clearanceProgress": 0,
+      "publicationReadiness": 0,
+      "delayPressure": 70
+    },
+    "counters": {
+      "documents": 0,
+      "stamps": 1,
+      "fragments": 0,
+      "verifiedFlags": 0,
+      "clearedBlockers": 0
+    },
+    "architecture": {
+      "roomResolution": {
+        "width": 256,
+        "height": 240,
+        "tileSize": 16,
+        "widthTiles": 16,
+        "heightTiles": 15,
+        "hudRows": 2,
+        "scrollingCamera": false
+      },
+      "objectRegistry": {
+        "capacity": 19,
+        "catalogSize": 22,
+        "used": 6,
+        "free": 13,
+        "slotOrder": [
+          "player",
+          "npc_1",
+          "npc_2",
+          "npc_3",
+          "npc_4",
+          "tool_active",
+          "tool_secondary",
+          "document_1",
+          "document_2",
+          "document_3",
+          "document_4",
+          "document_5",
+          "room_reward",
+          "room_gate",
+          "terminal",
+          "manuscript",
+          "transition_marker",
+          "ui_prompt",
+          "reserved"
+        ],
+        "activeRoomSlotIds": [
+          "source_note_047",
+          "telegram_001",
+          "cross_reference_001",
+          "research_table",
+          "statechat_archive_terminal",
+          "no_repo_wall"
+        ],
+        "activeRoomSlots": [
+          {
+            "slot": "document_1",
+            "id": "source_note_047",
+            "kind": "document",
+            "displayName": "Source Note 47"
+          },
+          {
+            "slot": "document_2",
+            "id": "telegram_001",
+            "kind": "document",
+            "displayName": "Telegram"
+          },
+          {
+            "slot": "document_3",
+            "id": "cross_reference_001",
+            "kind": "document",
+            "displayName": "Published FRUS cross-reference"
+          },
+          {
+            "slot": "manuscript",
+            "id": "research_table",
+            "kind": "workstation",
+            "displayName": "Research Table"
+          },
+          {
+            "slot": "terminal",
+            "id": "statechat_archive_terminal",
+            "kind": "terminal",
+            "displayName": "StateChat archive terminal"
+          },
+          {
+            "slot": "room_gate",
+            "id": "no_repo_wall",
+            "kind": "blocker",
+            "displayName": "NO REPO wall"
+          }
+        ]
+      },
+      "activeQuestObjects": [
+        {
+          "id": "player",
+          "slot": "player",
+          "kind": "player",
+          "x": 128,
+          "y": 160,
+          "facing": "down",
+          "state": "idle",
+          "active": true,
+          "interactable": false
+        },
+        {
+          "id": "source_note_047",
+          "slot": "document_1",
+          "kind": "document",
+          "x": 128,
+          "y": 164,
+          "state": "source_note_needed",
+          "active": true,
+          "interactable": true
+        },
+        {
+          "id": "telegram_001",
+          "slot": "document_2",
+          "kind": "document",
+          "x": 68,
+          "y": 124,
+          "state": "found",
+          "active": true,
+          "interactable": true
+        },
+        {
+          "id": "cross_reference_001",
+          "slot": "document_3",
+          "kind": "document",
+          "x": 188,
+          "y": 124,
+          "state": "candidate",
+          "active": true,
+          "interactable": true
+        },
+        {
+          "id": "research_table",
+          "slot": "manuscript",
+          "kind": "workstation",
+          "x": 128,
+          "y": 116,
+          "active": true,
+          "interactable": true
+        },
+        {
+          "id": "statechat_archive_terminal",
+          "slot": "terminal",
+          "kind": "terminal",
+          "x": 202,
+          "y": 66,
+          "active": true,
+          "interactable": true
+        },
+        {
+          "id": "no_repo_wall",
+          "slot": "room_gate",
+          "kind": "blocker",
+          "x": 102,
+          "y": 149,
+          "state": "citation_stamp",
+          "active": true,
+          "interactable": true
+        }
+      ],
+      "activeTileRoom": {
+        "id": "A1",
+        "area": "archive_cavern",
+        "title": "Source Entry",
+        "roomType": "normal",
+        "grid": {
+          "x": 0,
+          "y": 0
+        },
+        "tileSize": 16,
+        "widthTiles": 16,
+        "heightTiles": 15,
+        "hudRows": 2,
+        "layout": [
+          "HHHHHHHHHHHHHHHH",
+          "HHHHHHHHHHHHHHHH",
+          "################",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "#..............#",
+          "################"
+        ],
+        "exits": {
+          "east": "A2",
+          "south": "B1"
+        },
+        "lockedExits": {},
+        "requiredItems": {},
+        "objectSlotIds": [
+          "source_note_047",
+          "telegram_001",
+          "cross_reference_001",
+          "research_table",
+          "statechat_archive_terminal",
+          "no_repo_wall"
+        ]
+      },
+      "toolPriorityRules": [
+        {
+          "id": "tool-01-citation-stamp",
+          "priority": 1,
+          "verb": "use-tool",
+          "targetKind": "document",
+          "toolId": "citation_stamp",
+          "resolvesState": "citation_verified",
+          "message": "Citation Stamp verifies provenance and clears source-note locks."
+        },
+        {
+          "id": "tool-02-source-note-card",
+          "priority": 2,
+          "verb": "carry",
+          "targetKind": "document",
+          "toolId": "source_note_card",
+          "resolvesState": "source_note_needed",
+          "message": "Source Note Card carries the repository trail."
+        },
+        {
+          "id": "tool-03-cross-reference-thread",
+          "priority": 3,
+          "verb": "inspect",
+          "targetKind": "document",
+          "toolId": "cross_reference_thread",
+          "resolvesState": "annotation_needed",
+          "message": "Cross-Reference Thread checks publication status and related notes."
+        },
+        {
+          "id": "tool-04-referral-manifest",
+          "priority": 4,
+          "verb": "route",
+          "targetKind": "workstation",
+          "toolId": "referral_manifest",
+          "resolvesState": "referred",
+          "message": "Referral Manifest routes agency equities to human queues."
+        },
+        {
+          "id": "tool-05-excision-bracket-marker",
+          "priority": 5,
+          "verb": "use-tool",
+          "targetKind": "document",
+          "toolId": "excision_bracket_marker",
+          "resolvesState": "excised",
+          "message": "Excision Bracket Marker makes withheld text visible."
+        },
+        {
+          "id": "tool-06-red-pencil",
+          "priority": 6,
+          "verb": "use-tool",
+          "targetKind": "document",
+          "toolId": "red_pencil",
+          "resolvesState": "ready_for_review",
+          "message": "Red Pencil applies editor judgment to unsupported text."
+        },
+        {
+          "id": "tool-07-proof-lens",
+          "priority": 7,
+          "verb": "use-tool",
+          "targetKind": "document",
+          "toolId": "proof_lens",
+          "resolvesState": "proofed",
+          "message": "Proof Lens reveals tiny discrepancies during silent read."
+        },
+        {
+          "id": "tool-08-buckram-key",
+          "priority": 8,
+          "verb": "use-tool",
+          "targetKind": "gate",
+          "toolId": "buckram_key",
+          "resolvesState": "published",
+          "message": "Buckram Key opens the publication gate after certification."
+        }
+      ],
+      "npcBehaviorStates": [
+        {
+          "npcId": "elena",
+          "roomId": "O1",
+          "state": "hint",
+          "cue": "Golden Rule reminder"
+        },
+        {
+          "npcId": "marcus",
+          "roomId": "N1",
+          "state": "blocking",
+          "cue": "Network routing check"
+        },
+        {
+          "npcId": "priya",
+          "roomId": "SilentReadScene",
+          "state": "hint",
+          "cue": "AI annotation review stays terminal-only"
+        },
+        {
+          "npcId": "human_specialist",
+          "roomId": "B2",
+          "state": "reward",
+          "cue": "Resolves ambiguous flags"
+        }
+      ],
+      "milestones": [
+        {
+          "id": "golden-rule-charter",
+          "counter": "stamps",
+          "threshold": 1,
+          "rewardStamp": "rule",
+          "volumeState": "research",
+          "progress": 1,
+          "complete": true
+        },
+        {
+          "id": "source-note-stamped",
+          "counter": "documents",
+          "threshold": 3,
+          "rewardItem": "citation_stamp",
+          "rewardStamp": "archive",
+          "volumeState": "source_note_verification",
+          "progress": 0,
+          "complete": false
+        },
+        {
+          "id": "network-route-cleared",
+          "counter": "stamps",
+          "threshold": 3,
+          "rewardItem": "clearance_token",
+          "volumeState": "declassification_review",
+          "progress": 1,
+          "complete": false
+        },
+        {
+          "id": "referral-finished",
+          "counter": "stamps",
+          "threshold": 4,
+          "rewardItem": "concurrence_slip",
+          "volumeState": "referral_resolution",
+          "progress": 1,
+          "complete": false
+        },
+        {
+          "id": "physical-flags-reviewed",
+          "counter": "verifiedFlags",
+          "threshold": 5,
+          "rewardItem": "proof_lens",
+          "rewardStamp": "proof",
+          "volumeState": "proofing",
+          "progress": 0,
+          "complete": false
+        },
+        {
+          "id": "cover-assembled",
+          "counter": "fragments",
+          "threshold": 5,
+          "rewardItem": "buckram_key",
+          "volumeState": "final_assembly",
+          "progress": 0,
+          "complete": false
+        }
+      ]
+    }
+  },
+  "snesAtlas": {
+    "label": "16-bit Ruby Rule atlas and area-map pass",
+    "source": "original repository-local SVG and Phaser rectangle art",
+    "constraints": [
+      "256x240 logical canvas preserved",
+      "no copyrighted sprites, maps, music, names, or room layouts",
+      "StateChat remains terminal-only",
+      "FRUS production workflow remains the win condition"
+    ],
+    "visualGoals": [
+      "larger role portraits with readable FRUS props",
+      "larger 32x32 playable role sprites with grounded foot-point movement",
+      "larger human specialist sprites with readable production tools",
+      "richer room depth through raised floors, shadows, and buckram texture",
+      "large regional main game map connecting Navy Hill, NARA, Foggy Bottom, Capitol Hill, White House, and final hidden gates without compressing every district into one tiny panel",
+      "compact world atlas connecting Office Hub, Archive Cavern, networks, referrals, proofing, and Buckram Gate",
+      "area-specific map panels for the FRUS production dungeons",
+      "workflow tools shown as collectible relics rather than weapons"
+    ],
+    "mainMap": {
+      "texture": "frus-snes-atlas",
+      "path": "assets/maps/frus-snes-atlas.svg",
+      "displayName": "Main Game Map",
+      "layout": "large regional atlas shown through 1x viewport panels",
+      "dimensions": {
+        "width": 240,
+        "height": 168
+      },
+      "landmarks": [
+        {
+          "number": 1,
+          "name": "Navy Hill",
+          "cue": "source-note scattering patrol zone"
+        },
+        {
+          "number": 2,
+          "name": "NARA I",
+          "cue": "open research archive"
+        },
+        {
+          "number": 3,
+          "name": "NARA II",
+          "cue": "expanded archive stacks"
+        },
+        {
+          "number": 4,
+          "name": "Little Rock",
+          "cue": "regional source cluster"
+        },
+        {
+          "number": 5,
+          "name": "Springfield",
+          "cue": "regional source cluster"
+        },
+        {
+          "number": 6,
+          "name": "Newington",
+          "cue": "workflow bridge district"
+        },
+        {
+          "number": 7,
+          "name": "Undisclosed Location",
+          "cue": "locked final gate approach"
+        },
+        {
+          "number": 8,
+          "name": "White House",
+          "cue": "central policy record route"
+        },
+        {
+          "number": 9,
+          "name": "Foggy Bottom",
+          "cue": "Office of the Historian hub"
+        },
+        {
+          "number": 10,
+          "name": "Capitol Hill",
+          "cue": "oversight landmark"
+        },
+        {
+          "number": 11,
+          "name": "Potomac River",
+          "cue": "south map boundary"
+        }
+      ]
+    },
+    "assets": [
+      {
+        "key": "frus-snes-atlas",
+        "path": "assets/maps/frus-snes-atlas.svg",
+        "kind": "main-game-map",
+        "displayName": "Main Game Map",
+        "layout": "large regional atlas shown through 1x viewport panels",
+        "dimensions": {
+          "width": 240,
+          "height": 168
+        },
+        "landmarks": [
+          {
+            "number": 1,
+            "name": "Navy Hill",
+            "cue": "source-note scattering patrol zone"
+          },
+          {
+            "number": 2,
+            "name": "NARA I",
+            "cue": "open research archive"
+          },
+          {
+            "number": 3,
+            "name": "NARA II",
+            "cue": "expanded archive stacks"
+          },
+          {
+            "number": 4,
+            "name": "Little Rock",
+            "cue": "regional source cluster"
+          },
+          {
+            "number": 5,
+            "name": "Springfield",
+            "cue": "regional source cluster"
+          },
+          {
+            "number": 6,
+            "name": "Newington",
+            "cue": "workflow bridge district"
+          },
+          {
+            "number": 7,
+            "name": "Undisclosed Location",
+            "cue": "locked final gate approach"
+          },
+          {
+            "number": 8,
+            "name": "White House",
+            "cue": "central policy record route"
+          },
+          {
+            "number": 9,
+            "name": "Foggy Bottom",
+            "cue": "Office of the Historian hub"
+          },
+          {
+            "number": 10,
+            "name": "Capitol Hill",
+            "cue": "oversight landmark"
+          },
+          {
+            "number": 11,
+            "name": "Potomac River",
+            "cue": "south map boundary"
+          }
+        ]
+      },
+      {
+        "areaId": "office_hub",
+        "key": "office-hub-map",
+        "path": "assets/maps/office-hub-map.svg",
+        "kind": "area-map",
+        "dimensions": {
+          "width": 80,
+          "height": 56
+        }
+      },
+      {
+        "areaId": "archive_cavern",
+        "key": "archive-cavern-map",
+        "path": "assets/maps/archive-cavern-map.svg",
+        "kind": "area-map",
+        "dimensions": {
+          "width": 80,
+          "height": 56
+        }
+      },
+      {
+        "areaId": "two_networks",
+        "key": "two-networks-map",
+        "path": "assets/maps/two-networks-map.svg",
+        "kind": "area-map",
+        "dimensions": {
+          "width": 80,
+          "height": 56
+        }
+      },
+      {
+        "areaId": "referral_vault",
+        "key": "referral-vault-map",
+        "path": "assets/maps/referral-vault-map.svg",
+        "kind": "area-map",
+        "dimensions": {
+          "width": 80,
+          "height": 56
+        }
+      },
+      {
+        "areaId": "editors_labyrinth",
+        "key": "editor-labyrinth-map",
+        "path": "assets/maps/editor-labyrinth-map.svg",
+        "kind": "area-map",
+        "dimensions": {
+          "width": 80,
+          "height": 56
+        }
+      },
+      {
+        "areaId": "silent_read_tower",
+        "key": "silent-read-tower-map",
+        "path": "assets/maps/silent-read-tower-map.svg",
+        "kind": "area-map",
+        "dimensions": {
+          "width": 80,
+          "height": 56
+        }
+      },
+      {
+        "areaId": "buckram_gate",
+        "key": "buckram-gate-map",
+        "path": "assets/maps/buckram-gate-map.svg",
+        "kind": "area-map",
+        "dimensions": {
+          "width": 80,
+          "height": 56
+        }
+      },
+      {
+        "characterId": "sam",
+        "key": "snes-npc-sam",
+        "path": "assets/sprites/snes-npc-sam.svg",
+        "kind": "npc-sprite",
+        "displayName": "Sam",
+        "roleCue": "proofreader with two proof pages",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "characterId": "elena",
+        "key": "snes-npc-elena",
+        "path": "assets/sprites/snes-npc-elena.svg",
+        "kind": "npc-sprite",
+        "displayName": "Elena",
+        "roleCue": "compiler with folder and glasses glint",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "characterId": "marcus",
+        "key": "snes-npc-marcus",
+        "path": "assets/sprites/snes-npc-marcus.svg",
+        "kind": "npc-sprite",
+        "displayName": "Marcus",
+        "roleCue": "declass coordinator with clipboard and ClassNet red",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "characterId": "priya",
+        "key": "snes-npc-priya",
+        "path": "assets/sprites/snes-npc-priya.svg",
+        "kind": "npc-sprite",
+        "displayName": "Priya",
+        "roleCue": "editor with red pencil cue",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "characterId": "archive-colleague",
+        "key": "snes-npc-archive-colleague",
+        "path": "assets/sprites/snes-npc-archive-colleague.svg",
+        "kind": "npc-sprite",
+        "displayName": "Archive Colleague",
+        "roleCue": "equal-rank archive guide with folder and citation stamp",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "compiler",
+        "key": "snes-colleague-compiler",
+        "path": "assets/sprites/snes-colleague-compiler.svg",
+        "kind": "production-colleague-sprite",
+        "displayName": "Compiler",
+        "shortLabel": "COMP",
+        "roleCue": "cardigan, folder, and reading-glasses glint",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "declass_coordinator",
+        "key": "snes-colleague-declass-coordinator",
+        "path": "assets/sprites/snes-colleague-declass-coordinator.svg",
+        "kind": "production-colleague-sprite",
+        "displayName": "Declass Coordinator",
+        "shortLabel": "DECL",
+        "roleCue": "archive cart, tracker clipboard, and network-routing colors",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "reviewer",
+        "key": "snes-colleague-reviewer",
+        "path": "assets/sprites/snes-colleague-reviewer.svg",
+        "kind": "production-colleague-sprite",
+        "displayName": "Reviewer",
+        "shortLabel": "REV",
+        "roleCue": "badge, briefcase, and human review stance",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "editor",
+        "key": "snes-colleague-editor",
+        "path": "assets/sprites/snes-colleague-editor.svg",
+        "kind": "production-colleague-sprite",
+        "displayName": "Editor",
+        "shortLabel": "EDIT",
+        "roleCue": "desk, proof stack, mug, and red-pencil work",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "review_specialist",
+        "key": "snes-colleague-review-specialist",
+        "path": "assets/sprites/snes-colleague-review-specialist.svg",
+        "kind": "production-colleague-sprite",
+        "displayName": "Review Specialist",
+        "shortLabel": "SPEC",
+        "roleCue": "process stamp, equal-rank coat, and review packet",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-production-colleague-frames",
+        "path": "assets/sprites/snes-production-colleague-frames.svg",
+        "kind": "production-colleague-animation-sheet",
+        "displayName": "Production colleague multi-pose sheet",
+        "frameCue": "front, back, side, walking, workstation, and approval poses for equal-rank production roles",
+        "dimensions": {
+          "width": 192,
+          "height": 160
+        },
+        "frame": {
+          "width": 32,
+          "height": 32
+        },
+        "frames": [
+          "front",
+          "back",
+          "side",
+          "walk",
+          "work",
+          "approve"
+        ],
+        "roles": [
+          "compiler",
+          "editor",
+          "declass_coordinator",
+          "reviewer",
+          "review_specialist"
+        ]
+      },
+      {
+        "roleId": "compiler",
+        "key": "snes-player-compiler-frames",
+        "path": "assets/sprites/snes-player-compiler-frames.svg",
+        "kind": "role-animation-strip",
+        "displayName": "Compiler animation frame set",
+        "frameCue": "compact in-play compiler with gray suit, blue tie, brown briefcase, four-direction walk cycle, and document reading pose",
+        "dimensions": {
+          "width": 608,
+          "height": 48
+        },
+        "frame": {
+          "width": 32,
+          "height": 48
+        },
+        "frames": [
+          "idle-0",
+          "idle-1",
+          "walk-down-0",
+          "walk-down-1",
+          "walk-down-2",
+          "walk-down-3",
+          "walk-up-0",
+          "walk-up-1",
+          "walk-up-2",
+          "walk-up-3",
+          "walk-left-0",
+          "walk-left-1",
+          "walk-left-2",
+          "walk-left-3",
+          "walk-right-0",
+          "walk-right-1",
+          "walk-right-2",
+          "walk-right-3",
+          "read"
+        ]
+      },
+      {
+        "roleId": "editor",
+        "key": "snes-player-editor-frames",
+        "path": "assets/sprites/snes-player-editor-frames.svg",
+        "kind": "role-animation-strip",
+        "displayName": "Editor animation frame set",
+        "frameCue": "compact in-play editor with glasses, red pencil, proof pages, four-direction walk cycle, and document marking pose",
+        "dimensions": {
+          "width": 608,
+          "height": 48
+        },
+        "frame": {
+          "width": 32,
+          "height": 48
+        },
+        "frames": [
+          "idle-0",
+          "idle-1",
+          "walk-down-0",
+          "walk-down-1",
+          "walk-down-2",
+          "walk-down-3",
+          "walk-up-0",
+          "walk-up-1",
+          "walk-up-2",
+          "walk-up-3",
+          "walk-left-0",
+          "walk-left-1",
+          "walk-left-2",
+          "walk-left-3",
+          "walk-right-0",
+          "walk-right-1",
+          "walk-right-2",
+          "walk-right-3",
+          "read"
+        ]
+      },
+      {
+        "id": "hac_member",
+        "key": "snes-hac-member",
+        "path": "assets/sprites/snes-hac-member.svg",
+        "kind": "roaming-antagonist-sprite",
+        "displayName": "HAC Member",
+        "behavior": "roams the Office Hub causing short focus distractions",
+        "counterplay": "Keep moving through the FRUS workflow and refocus at human workstations",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "federal_shutdown",
+        "key": "snes-federal-shutdown",
+        "path": "assets/sprites/snes-federal-shutdown.svg",
+        "kind": "roaming-antagonist-sprite",
+        "displayName": "Federal Government Shutdown",
+        "behavior": "roams the Office Hub posting short stop-work closure notices",
+        "counterplay": "Wait out the stop-work order, keep documents in human review, and resume production",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "frus_bees",
+        "key": "snes-frus-bees",
+        "path": "assets/sprites/snes-frus-bees.svg",
+        "kind": "roaming-antagonist-sprite",
+        "displayName": "Bees",
+        "behavior": "swarm through the Office Hub and interrupt concentration if the player gets too close",
+        "counterplay": "Give the swarm a wide berth while keeping the FRUS workflow moving",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "navy_hill_mice",
+        "key": "snes-navy-hill-mice",
+        "path": "assets/sprites/snes-navy-hill-mice.svg",
+        "kind": "roaming-antagonist-sprite",
+        "displayName": "Navy Hill Mice",
+        "behavior": "scurry around the Navy Hill landmark and scatter source notes if the player gets too close",
+        "counterplay": "Skirt the Navy Hill edge and keep documents moving through human review",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-wall-no-repo",
+        "path": "assets/sprites/snes-wall-no-repo.svg",
+        "kind": "bureaucratic-wall-sprite",
+        "enemyType": "NO REPO",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-wall-firewall",
+        "path": "assets/sprites/snes-wall-firewall.svg",
+        "kind": "bureaucratic-wall-sprite",
+        "enemyType": "FIREWALL",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-wall-pending",
+        "path": "assets/sprites/snes-wall-pending.svg",
+        "kind": "bureaucratic-wall-sprite",
+        "enemyType": "PENDING",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-wall-wait",
+        "path": "assets/sprites/snes-wall-wait.svg",
+        "kind": "bureaucratic-wall-sprite",
+        "enemyType": "WAIT",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-wall-hold",
+        "path": "assets/sprites/snes-wall-hold.svg",
+        "kind": "bureaucratic-wall-sprite",
+        "enemyType": "HOLD",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-wall-ambiguous",
+        "path": "assets/sprites/snes-wall-ambiguous.svg",
+        "kind": "bureaucratic-wall-sprite",
+        "enemyType": "AMBIGUOUS",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-wall-danne-queue",
+        "path": "assets/sprites/snes-wall-danne-queue.svg",
+        "kind": "bureaucratic-wall-sprite",
+        "enemyType": "DANN-E QUEUE",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-workflow-tools",
+        "path": "assets/sprites/snes-workflow-tools.svg",
+        "kind": "tool-sprite-strip",
+        "dimensions": {
+          "width": 128,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-player-proofreader",
+        "path": "assets/sprites/snes-player-proofreader.svg",
+        "kind": "role-portrait",
+        "roleId": "proofreader",
+        "roleLabel": "Proofreader",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-player-compiler",
+        "path": "assets/sprites/snes-player-compiler.svg",
+        "kind": "role-portrait",
+        "roleId": "compiler",
+        "roleLabel": "Compiler",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-player-editor",
+        "path": "assets/sprites/snes-player-editor.svg",
+        "kind": "role-portrait",
+        "roleId": "editor",
+        "roleLabel": "Editor",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-player-declass-reviewer",
+        "path": "assets/sprites/snes-player-declass-reviewer.svg",
+        "kind": "role-portrait",
+        "roleId": "declass_reviewer",
+        "roleLabel": "Declass Coordinator",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "key": "snes-player-source-note-specialist",
+        "path": "assets/sprites/snes-player-source-note-specialist.svg",
+        "kind": "role-portrait",
+        "roleId": "source_note_specialist",
+        "roleLabel": "Source Note Specialist",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      }
+    ],
+    "maps": [
+      {
+        "id": "office_hub",
+        "displayName": "Office Hub",
+        "reward": "Golden Rule",
+        "mapTexture": "office-hub-map",
+        "roomIds": [
+          "O1"
+        ]
+      },
+      {
+        "id": "archive_cavern",
+        "displayName": "Archive Cavern",
+        "reward": "Citation Stamp",
+        "mapTexture": "archive-cavern-map",
+        "roomIds": [
+          "A1",
+          "A2",
+          "A3",
+          "B1",
+          "B2",
+          "B3",
+          "C1",
+          "C2",
+          "C3",
+          "D1",
+          "D2",
+          "D3"
+        ]
+      },
+      {
+        "id": "two_networks",
+        "displayName": "Two Networks",
+        "reward": "Clearance Token",
+        "mapTexture": "two-networks-map",
+        "roomIds": [
+          "N1",
+          "N2"
+        ]
+      },
+      {
+        "id": "referral_vault",
+        "displayName": "Referral Vault",
+        "reward": "Concurrence Slip",
+        "mapTexture": "referral-vault-map",
+        "roomIds": [
+          "R1",
+          "R2"
+        ]
+      },
+      {
+        "id": "editors_labyrinth",
+        "displayName": "Editor's Labyrinth",
+        "reward": "Red Pencil",
+        "mapTexture": "editor-labyrinth-map",
+        "roomIds": [
+          "E1"
+        ]
+      },
+      {
+        "id": "silent_read_tower",
+        "displayName": "Silent Read Tower",
+        "reward": "Proof Lens",
+        "mapTexture": "silent-read-tower-map",
+        "roomIds": [
+          "S1"
+        ]
+      },
+      {
+        "id": "buckram_gate",
+        "displayName": "Buckram Gate",
+        "reward": "Published FRUS cover",
+        "mapTexture": "buckram-gate-map",
+        "roomIds": [
+          "G1"
+        ]
+      }
+    ],
+    "roleSprites": [
+      {
+        "roleId": "proofreader",
+        "displayName": "Proofreader",
+        "gameplaySprite": "player-proofreader",
+        "portraitSprite": "snes-player-proofreader",
+        "ability": "Silent Read",
+        "cue": "Compare manuscript and proof."
+      },
+      {
+        "roleId": "compiler",
+        "displayName": "Compiler",
+        "gameplaySprite": "player-compiler",
+        "portraitSprite": "snes-player-compiler",
+        "ability": "Archive Sense",
+        "cue": "Verify selection and provenance."
+      },
+      {
+        "roleId": "editor",
+        "displayName": "Editor",
+        "gameplaySprite": "player-editor",
+        "portraitSprite": "snes-player-editor",
+        "ability": "Red Pencil",
+        "cue": "Resolve style, meaning, and queries."
+      },
+      {
+        "roleId": "declass_reviewer",
+        "displayName": "Declass Coordinator",
+        "gameplaySprite": "player-declass-reviewer",
+        "portraitSprite": "snes-player-declass-reviewer",
+        "ability": "Equity Map",
+        "cue": "Route classified equities."
+      },
+      {
+        "roleId": "source_note_specialist",
+        "displayName": "Source Note Specialist",
+        "gameplaySprite": "player-source-note-specialist",
+        "portraitSprite": "snes-player-source-note-specialist",
+        "ability": "Provenance Check",
+        "cue": "Make source notes publication-ready."
+      }
+    ],
+    "compilerFrameSet": {
+      "texture": "snes-player-compiler-frames",
+      "dimensions": {
+        "width": 608,
+        "height": 48
+      },
+      "frame": {
+        "width": 32,
+        "height": 48
+      },
+      "frameCount": 19,
+      "frames": [
+        "idle-0",
+        "idle-1",
+        "walk-down-0",
+        "walk-down-1",
+        "walk-down-2",
+        "walk-down-3",
+        "walk-up-0",
+        "walk-up-1",
+        "walk-up-2",
+        "walk-up-3",
+        "walk-left-0",
+        "walk-left-1",
+        "walk-left-2",
+        "walk-left-3",
+        "walk-right-0",
+        "walk-right-1",
+        "walk-right-2",
+        "walk-right-3",
+        "read"
+      ],
+      "cue": "compact in-play compiler with gray suit, blue tie, brown briefcase, four-direction walk cycle, and document reading pose"
+    },
+    "roleFrameSets": [
+      {
+        "roleId": "compiler",
+        "displayName": "Compiler animation frame set",
+        "texture": "snes-player-compiler-frames",
+        "path": "assets/sprites/snes-player-compiler-frames.svg",
+        "dimensions": {
+          "width": 608,
+          "height": 48
+        },
+        "frame": {
+          "width": 32,
+          "height": 48
+        },
+        "frameCount": 19,
+        "frames": [
+          "idle-0",
+          "idle-1",
+          "walk-down-0",
+          "walk-down-1",
+          "walk-down-2",
+          "walk-down-3",
+          "walk-up-0",
+          "walk-up-1",
+          "walk-up-2",
+          "walk-up-3",
+          "walk-left-0",
+          "walk-left-1",
+          "walk-left-2",
+          "walk-left-3",
+          "walk-right-0",
+          "walk-right-1",
+          "walk-right-2",
+          "walk-right-3",
+          "read"
+        ],
+        "cue": "compact in-play compiler with gray suit, blue tie, brown briefcase, four-direction walk cycle, and document reading pose"
+      },
+      {
+        "roleId": "editor",
+        "displayName": "Editor animation frame set",
+        "texture": "snes-player-editor-frames",
+        "path": "assets/sprites/snes-player-editor-frames.svg",
+        "dimensions": {
+          "width": 608,
+          "height": 48
+        },
+        "frame": {
+          "width": 32,
+          "height": 48
+        },
+        "frameCount": 19,
+        "frames": [
+          "idle-0",
+          "idle-1",
+          "walk-down-0",
+          "walk-down-1",
+          "walk-down-2",
+          "walk-down-3",
+          "walk-up-0",
+          "walk-up-1",
+          "walk-up-2",
+          "walk-up-3",
+          "walk-left-0",
+          "walk-left-1",
+          "walk-left-2",
+          "walk-left-3",
+          "walk-right-0",
+          "walk-right-1",
+          "walk-right-2",
+          "walk-right-3",
+          "read"
+        ],
+        "cue": "compact in-play editor with glasses, red pencil, proof pages, four-direction walk cycle, and document marking pose"
+      }
+    ],
+    "npcSprites": [
+      {
+        "characterId": "sam",
+        "displayName": "Sam",
+        "texture": "snes-npc-sam",
+        "cue": "proofreader with two proof pages",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "characterId": "elena",
+        "displayName": "Elena",
+        "texture": "snes-npc-elena",
+        "cue": "compiler with folder and glasses glint",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "characterId": "marcus",
+        "displayName": "Marcus",
+        "texture": "snes-npc-marcus",
+        "cue": "declass coordinator with clipboard and ClassNet red",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "characterId": "priya",
+        "displayName": "Priya",
+        "texture": "snes-npc-priya",
+        "cue": "editor with red pencil cue",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "characterId": "archive-colleague",
+        "displayName": "Archive Colleague",
+        "texture": "snes-npc-archive-colleague",
+        "cue": "equal-rank archive guide with folder and citation stamp",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      }
+    ],
+    "productionColleagues": [
+      {
+        "id": "compiler",
+        "displayName": "Compiler",
+        "texture": "snes-colleague-compiler",
+        "frameSheet": "snes-production-colleague-frames",
+        "label": "COMP",
+        "cue": "cardigan, folder, and reading-glasses glint",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "declass_coordinator",
+        "displayName": "Declass Coordinator",
+        "texture": "snes-colleague-declass-coordinator",
+        "frameSheet": "snes-production-colleague-frames",
+        "label": "DECL",
+        "cue": "archive cart, tracker clipboard, and network-routing colors",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "reviewer",
+        "displayName": "Reviewer",
+        "texture": "snes-colleague-reviewer",
+        "frameSheet": "snes-production-colleague-frames",
+        "label": "REV",
+        "cue": "badge, briefcase, and human review stance",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "editor",
+        "displayName": "Editor",
+        "texture": "snes-colleague-editor",
+        "frameSheet": "snes-production-colleague-frames",
+        "label": "EDIT",
+        "cue": "desk, proof stack, mug, and red-pencil work",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "review_specialist",
+        "displayName": "Review Specialist",
+        "texture": "snes-colleague-review-specialist",
+        "frameSheet": "snes-production-colleague-frames",
+        "label": "SPEC",
+        "cue": "process stamp, equal-rank coat, and review packet",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      }
+    ],
+    "productionColleagueFrameSheet": {
+      "texture": "snes-production-colleague-frames",
+      "path": "assets/sprites/snes-production-colleague-frames.svg",
+      "dimensions": {
+        "width": 192,
+        "height": 160
+      },
+      "frame": {
+        "width": 32,
+        "height": 32
+      },
+      "roles": [
+        "compiler",
+        "editor",
+        "declass_coordinator",
+        "reviewer",
+        "review_specialist"
+      ],
+      "frames": [
+        "front",
+        "back",
+        "side",
+        "walk",
+        "work",
+        "approve"
+      ],
+      "cue": "front, back, side, walking, workstation, and approval poses for equal-rank production roles"
+    },
+    "roamingAntagonists": [
+      {
+        "id": "hac_member",
+        "displayName": "HAC Member",
+        "texture": "snes-hac-member",
+        "behavior": "roams the Office Hub causing short focus distractions",
+        "counterplay": "Keep moving through the FRUS workflow and refocus at human workstations",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "federal_shutdown",
+        "displayName": "Federal Government Shutdown",
+        "texture": "snes-federal-shutdown",
+        "behavior": "roams the Office Hub posting short stop-work closure notices",
+        "counterplay": "Wait out the stop-work order, keep documents in human review, and resume production",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "frus_bees",
+        "displayName": "Bees",
+        "texture": "snes-frus-bees",
+        "behavior": "swarm through the Office Hub and interrupt concentration if the player gets too close",
+        "counterplay": "Give the swarm a wide berth while keeping the FRUS workflow moving",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      },
+      {
+        "id": "navy_hill_mice",
+        "displayName": "Navy Hill Mice",
+        "texture": "snes-navy-hill-mice",
+        "behavior": "scurry around the Navy Hill landmark and scatter source notes if the player gets too close",
+        "counterplay": "Skirt the Navy Hill edge and keep documents moving through human review",
+        "dimensions": {
+          "width": 32,
+          "height": 32
+        }
+      }
+    ],
+    "workflowRelics": [
+      {
+        "id": "citation_stamp",
+        "displayName": "Citation Stamp",
+        "icon": "citation-stamp",
+        "hudSlot": 0,
+        "function": "Opens source-note locks",
+        "frusMeaning": "Provenance verified"
+      },
+      {
+        "id": "red_pencil",
+        "displayName": "Red Pencil",
+        "icon": "red-pencil",
+        "hudSlot": 1,
+        "function": "Marks unsupported text",
+        "frusMeaning": "Editor judgment"
+      },
+      {
+        "id": "review_folder",
+        "displayName": "Review Folder",
+        "icon": "review-folder",
+        "hudSlot": 2,
+        "function": "Carries unresolved issues",
+        "frusMeaning": "Human review queue"
+      },
+      {
+        "id": "clearance_token",
+        "displayName": "Clearance Token",
+        "icon": "clearance-token",
+        "hudSlot": 3,
+        "function": "Opens red vault doors",
+        "frusMeaning": "ClassNet/declass access"
+      },
+      {
+        "id": "concurrence_slip",
+        "displayName": "Concurrence Slip",
+        "icon": "concurrence-slip",
+        "hudSlot": 4,
+        "function": "Opens referral gates",
+        "frusMeaning": "Agency response complete"
+      },
+      {
+        "id": "proof_lens",
+        "displayName": "Proof Lens",
+        "icon": "proof-lens",
+        "hudSlot": 5,
+        "function": "Reveals tiny discrepancies",
+        "frusMeaning": "Silent read ability"
+      },
+      {
+        "id": "buckram_key",
+        "displayName": "Buckram Key",
+        "icon": "buckram-key",
+        "hudSlot": 6,
+        "function": "Opens final publication gate",
+        "frusMeaning": "Volume certified"
+      }
+    ],
+    "bureaucraticWallSprites": [
+      {
+        "type": "NO REPO",
+        "texture": "snes-wall-no-repo",
+        "behavior": "slow-chase",
+        "silhouette": "missing repository shelf, gold citation crack"
+      },
+      {
+        "type": "FIREWALL",
+        "texture": "snes-wall-firewall",
+        "behavior": "horizontal-patrol",
+        "silhouette": "terminal gate with red-green routing bars"
+      },
+      {
+        "type": "PENDING",
+        "texture": "snes-wall-pending",
+        "behavior": "wander",
+        "silhouette": "wandering manifest stack and loose slip"
+      },
+      {
+        "type": "WAIT",
+        "texture": "snes-wall-wait",
+        "behavior": "freeze",
+        "silhouette": "hourglass and frozen exit pins"
+      },
+      {
+        "type": "HOLD",
+        "texture": "snes-wall-hold",
+        "behavior": "block",
+        "silhouette": "locked bracket marker across stone"
+      },
+      {
+        "type": "AMBIGUOUS",
+        "texture": "snes-wall-ambiguous",
+        "behavior": "splitter",
+        "silhouette": "split flag face with two direction tabs"
+      },
+      {
+        "type": "DANN-E QUEUE",
+        "texture": "snes-wall-danne-queue",
+        "behavior": "push",
+        "silhouette": "queue pusher slab with conveyor arrows"
+      }
+    ]
+  },
+  "reliability": 80,
+  "adventureHud": {
+    "confidence": {
+      "current": 80,
+      "max": 100,
+      "meter": "██████░░"
+    },
+    "clarity": {
+      "current": 40,
+      "max": 100,
+      "meter": "███░░░░░"
+    },
+    "documentPoints": 0,
+    "equippedItem": null,
+    "secondarySlotLabel": "NONE",
+    "inventoryStrip": [
+      {
+        "id": "citation_stamp",
+        "displayName": "Citation Stamp",
+        "shortLabel": "CITE",
+        "hudSlot": 0,
+        "acquired": false,
+        "equipped": false
+      },
+      {
+        "id": "red_pencil",
+        "displayName": "Red Pencil",
+        "shortLabel": "PENCIL",
+        "hudSlot": 1,
+        "acquired": false,
+        "equipped": false
+      },
+      {
+        "id": "review_folder",
+        "displayName": "Review Folder",
+        "shortLabel": "FOLDER",
+        "hudSlot": 2,
+        "acquired": false,
+        "equipped": false
+      },
+      {
+        "id": "clearance_token",
+        "displayName": "Clearance Token",
+        "shortLabel": "CLEAR",
+        "hudSlot": 3,
+        "acquired": false,
+        "equipped": false
+      },
+      {
+        "id": "concurrence_slip",
+        "displayName": "Concurrence Slip",
+        "shortLabel": "CONCUR",
+        "hudSlot": 4,
+        "acquired": false,
+        "equipped": false
+      },
+      {
+        "id": "proof_lens",
+        "displayName": "Proof Lens",
+        "shortLabel": "LENS",
+        "hudSlot": 5,
+        "acquired": false,
+        "equipped": false
+      },
+      {
+        "id": "buckram_key",
+        "displayName": "Buckram Key",
+        "shortLabel": "KEY",
+        "hudSlot": 6,
+        "acquired": false,
+        "equipped": false
+      }
+    ],
+    "stamps": "RULE",
+    "fragments": {
+      "current": 0,
+      "total": 5
+    }
+  },
+  "productionHud": [
+    "ROLE COMPILER     REL ██████░░ DOC 00",
+    "ITEM NONE       STAMPS RULE",
+    "MAP ARCHIVE. FRAG 0/5 ARCHIVE CAVERN: TAKE THE CITATI."
+  ],
+  "heldItem": null,
+  "documentPoints": 0,
+  "playerProfile": {
+    "displayName": "Ruby",
+    "roleId": "compiler",
+    "roleLabel": "Compiler",
+    "ability": "Archive Sense",
+    "remit": "Verify selection and provenance.",
+    "spriteKey": "player-compiler",
+    "snesSpriteKey": "snes-player-compiler"
+  },
+  "activePlayerSprite": {
+    "mode": "artPack32x48",
+    "texture": "compiler",
+    "frameSet": {
+      "roleId": "compiler",
+      "displayName": "Compiler",
+      "frameWidth": 32,
+      "frameHeight": 48,
+      "frameCount": 15,
+      "frames": [
+        "idle-down",
+        "idle-up",
+        "idle-left",
+        "idle-right",
+        "walk-down-0",
+        "walk-down-1",
+        "walk-up-0",
+        "walk-up-1",
+        "walk-left-0",
+        "walk-left-1",
+        "walk-right-0",
+        "walk-right-1",
+        "interact",
+        "read",
+        "victory"
+      ],
+      "legacyFallback": {
+        "roleId": "compiler",
+        "displayName": "Compiler animation frame set",
+        "frameWidth": 32,
+        "frameHeight": 48,
+        "frameCount": 19,
+        "frames": [
+          "idle-0",
+          "idle-1",
+          "walk-down-0",
+          "walk-down-1",
+          "walk-down-2",
+          "walk-down-3",
+          "walk-up-0",
+          "walk-up-1",
+          "walk-up-2",
+          "walk-up-3",
+          "walk-left-0",
+          "walk-left-1",
+          "walk-left-2",
+          "walk-left-3",
+          "walk-right-0",
+          "walk-right-1",
+          "walk-right-2",
+          "walk-right-3",
+          "read"
+        ]
+      }
+    },
+    "fallbackTexture": "player-compiler",
+    "dimensions": {
+      "width": 32,
+      "height": 48
+    },
+    "logicalAnchor": "foot/interaction point",
+    "collisionBox": {
+      "width": 16,
+      "height": 8,
+      "offsetY": -3
+    }
+  },
+  "processStamps": [
+    "rule"
+  ],
+  "processItems": [
+    {
+      "id": "citation_stamp",
+      "displayName": "Citation Stamp",
+      "label": "Citation Stamp",
+      "shortLabel": "CITE",
+      "icon": "citation-stamp",
+      "texture": "citation-stamp",
+      "roomUnlocks": [
+        "GuideScene Verification Gate",
+        "Archive A1 source-note lock"
+      ],
+      "blockerWeaknesses": [
+        "NO REPO",
+        "source-note lock"
+      ],
+      "pickupDialog": [
+        "Citation Stamp acquired.",
+        "Opens source-note locks only after provenance is verified by human review."
+      ],
+      "hudSlot": 0,
+      "zeldaFunction": "Opens source-note locks",
+      "frusMeaning": "Provenance verified",
+      "acquired": false,
+      "equipped": false
+    },
+    {
+      "id": "red_pencil",
+      "displayName": "Red Pencil",
+      "label": "Red Pencil",
+      "shortLabel": "PENCIL",
+      "icon": "red-pencil",
+      "texture": "red-pencil",
+      "roomUnlocks": [
+        "SilentReadScene editor desk"
+      ],
+      "blockerWeaknesses": [
+        "MECHANICAL FIX",
+        "UNSUPPORTED TEXT"
+      ],
+      "pickupDialog": [
+        "Red Pencil acquired.",
+        "Marks unsupported text after editor judgment."
+      ],
+      "hudSlot": 1,
+      "zeldaFunction": "Marks unsupported text",
+      "frusMeaning": "Editor judgment",
+      "acquired": false,
+      "equipped": false
+    },
+    {
+      "id": "review_folder",
+      "displayName": "Review Folder",
+      "label": "Review Folder",
+      "shortLabel": "FOLDER",
+      "icon": "review-folder",
+      "texture": "review-folder",
+      "roomUnlocks": [
+        "SilentReadScene StateChat outbox"
+      ],
+      "blockerWeaknesses": [
+        "AMBIGUOUS",
+        "EVIDENCE-BOUND FLAGS"
+      ],
+      "pickupDialog": [
+        "Review Folder acquired.",
+        "Carry unresolved issues to the correct human workstation."
+      ],
+      "hudSlot": 2,
+      "zeldaFunction": "Carries unresolved issues",
+      "frusMeaning": "Human review queue",
+      "acquired": false,
+      "equipped": false
+    },
+    {
+      "id": "clearance_token",
+      "displayName": "Clearance Token",
+      "label": "Clearance Token",
+      "shortLabel": "CLEAR",
+      "icon": "clearance-token",
+      "texture": "clearance-token",
+      "roomUnlocks": [
+        "ReferralVaultScene red vault doors",
+        "Archive A2 terminal door"
+      ],
+      "blockerWeaknesses": [
+        "FIREWALL"
+      ],
+      "pickupDialog": [
+        "Clearance Token acquired.",
+        "Opens red vault doors after correct OpenNet/ClassNet routing."
+      ],
+      "hudSlot": 3,
+      "zeldaFunction": "Opens red vault doors",
+      "frusMeaning": "ClassNet/declass access",
+      "acquired": false,
+      "equipped": false
+    },
+    {
+      "id": "concurrence_slip",
+      "displayName": "Concurrence Slip",
+      "label": "Concurrence Slip",
+      "shortLabel": "CONCUR",
+      "icon": "concurrence-slip",
+      "texture": "concurrence-slip",
+      "roomUnlocks": [
+        "ReferralVaultScene referral gates",
+        "Archive B1 referral lane"
+      ],
+      "blockerWeaknesses": [
+        "PENDING",
+        "WAIT"
+      ],
+      "pickupDialog": [
+        "Concurrence Slip acquired.",
+        "Opens referral gates after agency response is complete."
+      ],
+      "hudSlot": 4,
+      "zeldaFunction": "Opens referral gates",
+      "frusMeaning": "Agency response complete",
+      "acquired": false,
+      "equipped": false
+    },
+    {
+      "id": "proof_lens",
+      "displayName": "Proof Lens",
+      "label": "Proof Lens",
+      "shortLabel": "LENS",
+      "icon": "proof-lens",
+      "texture": "proof-lens",
+      "roomUnlocks": [
+        "SilentReadScene proof table",
+        "Archive B2 proof chamber"
+      ],
+      "blockerWeaknesses": [
+        "PROOF DATE",
+        "tiny discrepancy"
+      ],
+      "pickupDialog": [
+        "Proof Lens acquired.",
+        "Reveals tiny discrepancies during silent read."
+      ],
+      "hudSlot": 5,
+      "zeldaFunction": "Reveals tiny discrepancies",
+      "frusMeaning": "Silent read ability",
+      "acquired": false,
+      "equipped": false
+    },
+    {
+      "id": "buckram_key",
+      "displayName": "Buckram Key",
+      "label": "Buckram Key",
+      "shortLabel": "KEY",
+      "icon": "buckram-key",
+      "texture": "buckram-key",
+      "roomUnlocks": [
+        "EndingScene final publication gate"
+      ],
+      "blockerWeaknesses": [
+        "DANN-E QUEUE",
+        "publication gate"
+      ],
+      "pickupDialog": [
+        "Buckram Key acquired.",
+        "Opens the final publication gate after the volume is certified."
+      ],
+      "hudSlot": 6,
+      "zeldaFunction": "Opens final publication gate",
+      "frusMeaning": "Volume certified",
+      "acquired": false,
+      "equipped": false
+    }
+  ],
+  "workflowTools": [
+    {
+      "id": "citation_stamp",
+      "displayName": "Citation Stamp",
+      "shortLabel": "CITE",
+      "icon": "citation-stamp",
+      "priority": 1,
+      "targetKinds": [
+        "document",
+        "manuscript",
+        "enemy",
+        "door"
+      ],
+      "use": "Verify provenance and clear source-note locks.",
+      "acquired": false
+    },
+    {
+      "id": "source_note_card",
+      "displayName": "Source Note Card",
+      "shortLabel": "SRC",
+      "icon": "source-note",
+      "priority": 2,
+      "targetKinds": [
+        "document",
+        "manuscript",
+        "terminal"
+      ],
+      "use": "Carry repository, collection, box, folder, and document trail.",
+      "acquired": false
+    },
+    {
+      "id": "cross_reference_thread",
+      "displayName": "Cross-Reference Thread",
+      "shortLabel": "XREF",
+      "icon": "cross-reference",
+      "priority": 3,
+      "targetKinds": [
+        "document",
+        "terminal"
+      ],
+      "use": "Trace published status and related FRUS references.",
+      "acquired": false
+    },
+    {
+      "id": "referral_manifest",
+      "displayName": "Referral Manifest",
+      "shortLabel": "REF",
+      "icon": "referral-manifest",
+      "priority": 4,
+      "targetKinds": [
+        "document",
+        "terminal",
+        "enemy"
+      ],
+      "use": "Route equities to the correct human referral queue.",
+      "acquired": false
+    },
+    {
+      "id": "excision_bracket_marker",
+      "displayName": "Excision Bracket Marker",
+      "shortLabel": "EXC",
+      "icon": "excision-bracket-marker",
+      "priority": 5,
+      "targetKinds": [
+        "document",
+        "manuscript"
+      ],
+      "use": "Mark withheld text visibly rather than silently erasing it.",
+      "acquired": false
+    },
+    {
+      "id": "red_pencil",
+      "displayName": "Red Pencil",
+      "shortLabel": "PENCIL",
+      "icon": "red-pencil",
+      "priority": 6,
+      "targetKinds": [
+        "document",
+        "manuscript"
+      ],
+      "use": "Apply editor judgment to unsupported or unclear text.",
+      "acquired": false
+    },
+    {
+      "id": "proof_lens",
+      "displayName": "Proof Lens",
+      "shortLabel": "LENS",
+      "icon": "proof-lens",
+      "priority": 7,
+      "targetKinds": [
+        "document",
+        "manuscript",
+        "door"
+      ],
+      "use": "Reveal tiny discrepancies during silent read.",
+      "acquired": false
+    },
+    {
+      "id": "buckram_key",
+      "displayName": "Buckram Key",
+      "shortLabel": "KEY",
+      "icon": "buckram-key",
+      "priority": 8,
+      "targetKinds": [
+        "door"
+      ],
+      "use": "Open the final publication gate once the volume is certified.",
+      "acquired": false
+    }
+  ],
+  "areaProgress": [
+    {
+      "id": "office_hub",
+      "displayName": "Office Hub",
+      "zeldaRole": "Overworld start",
+      "reward": "Golden Rule",
+      "rewardType": "stamp",
+      "rewardId": "rule",
+      "scenes": [
+        "OfficeScene"
+      ],
+      "order": 0,
+      "active": false,
+      "completed": true
+    },
+    {
+      "id": "archive_cavern",
+      "displayName": "Archive Cavern",
+      "zeldaRole": "Dungeon 1",
+      "reward": "Citation Stamp",
+      "rewardType": "item",
+      "rewardId": "citation_stamp",
+      "scenes": [
+        "GuideScene",
+        "ArchiveScene"
+      ],
+      "order": 1,
+      "active": true,
+      "completed": false
+    },
+    {
+      "id": "two_networks",
+      "displayName": "Two Networks",
+      "zeldaRole": "Dungeon 2",
+      "reward": "Clearance Token",
+      "rewardType": "item",
+      "rewardId": "clearance_token",
+      "scenes": [
+        "NetworkScene"
+      ],
+      "order": 2,
+      "active": false,
+      "completed": false
+    },
+    {
+      "id": "referral_vault",
+      "displayName": "Referral Vault",
+      "zeldaRole": "Dungeon 3",
+      "reward": "Concurrence Slip",
+      "rewardType": "item",
+      "rewardId": "concurrence_slip",
+      "scenes": [
+        "ReferralVaultScene"
+      ],
+      "order": 3,
+      "active": false,
+      "completed": false
+    },
+    {
+      "id": "editors_labyrinth",
+      "displayName": "Editor's Labyrinth",
+      "zeldaRole": "Dungeon 4",
+      "reward": "Red Pencil",
+      "rewardType": "item",
+      "rewardId": "red_pencil",
+      "scenes": [
+        "SilentReadScene"
+      ],
+      "order": 4,
+      "active": false,
+      "completed": false
+    },
+    {
+      "id": "silent_read_tower",
+      "displayName": "Silent Read Tower",
+      "zeldaRole": "Dungeon 5",
+      "reward": "Proof Lens",
+      "rewardType": "item",
+      "rewardId": "proof_lens",
+      "scenes": [
+        "SilentReadScene"
+      ],
+      "order": 5,
+      "active": false,
+      "completed": false
+    },
+    {
+      "id": "buckram_gate",
+      "displayName": "Buckram Gate",
+      "zeldaRole": "Final dungeon",
+      "reward": "Published FRUS cover",
+      "rewardType": "finalPrize",
+      "rewardId": "published_frus_cover",
+      "scenes": [
+        "EndingScene"
+      ],
+      "order": 6,
+      "active": false,
+      "completed": false
+    }
+  ],
+  "currentArea": {
+    "id": "archive_cavern",
+    "displayName": "Archive Cavern",
+    "zeldaRole": "Dungeon 1",
+    "reward": "Citation Stamp",
+    "rewardType": "item",
+    "rewardId": "citation_stamp",
+    "scenes": [
+      "GuideScene",
+      "ArchiveScene"
+    ],
+    "order": 1,
+    "active": true,
+    "completed": false
+  },
+  "roomGraph": [
+    {
+      "id": "O1",
+      "area": "office_hub",
+      "title": "Office Hub",
+      "exits": {
+        "east": "A1"
+      },
+      "lockedExits": {
+        "east": "Golden Rule door"
+      },
+      "requiredItems": {},
+      "roomType": "hint",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "A1",
+      "area": "archive_cavern",
+      "title": "Source Entry",
+      "exits": {
+        "east": "A2",
+        "south": "B1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "normal",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "A2",
+      "area": "archive_cavern",
+      "title": "OpenNet Annex",
+      "exits": {
+        "west": "A1",
+        "east": "A3",
+        "south": "B2"
+      },
+      "lockedExits": {
+        "south": "ClassNet seal"
+      },
+      "requiredItems": {
+        "south": "clearance_token"
+      },
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "A3",
+      "area": "archive_cavern",
+      "title": "Hint Alcove",
+      "exits": {
+        "west": "A2",
+        "south": "B3"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "hint",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "B1",
+      "area": "archive_cavern",
+      "title": "Referral Stacks",
+      "exits": {
+        "north": "A1",
+        "east": "B2",
+        "south": "C1"
+      },
+      "lockedExits": {
+        "east": "Referral gate"
+      },
+      "requiredItems": {
+        "east": "concurrence_slip"
+      },
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "B2",
+      "area": "archive_cavern",
+      "title": "Proof Chamber",
+      "exits": {
+        "north": "A2",
+        "west": "B1",
+        "east": "B3",
+        "south": "C2"
+      },
+      "lockedExits": {
+        "south": "Review folder gate"
+      },
+      "requiredItems": {
+        "south": "review_folder"
+      },
+      "roomType": "normal",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "B3",
+      "area": "archive_cavern",
+      "title": "Marcus Hint Room",
+      "exits": {
+        "north": "A3",
+        "west": "B2",
+        "south": "C3"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "hint",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "C1",
+      "area": "archive_cavern",
+      "title": "Cracked Wall",
+      "exits": {
+        "north": "B1",
+        "east": "C2",
+        "south": "D1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "C2",
+      "area": "archive_cavern",
+      "title": "Date Mismatch",
+      "exits": {
+        "north": "B2",
+        "west": "C1",
+        "east": "C3",
+        "south": "D2"
+      },
+      "lockedExits": {
+        "east": "Silent-read lens mark"
+      },
+      "requiredItems": {
+        "east": "proof_lens"
+      },
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "C3",
+      "area": "archive_cavern",
+      "title": "Hidden Source Cache",
+      "exits": {
+        "north": "B3",
+        "west": "C2",
+        "south": "D3"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "secret",
+      "visited": false,
+      "revealed": false
+    },
+    {
+      "id": "D1",
+      "area": "archive_cavern",
+      "title": "Stamp Reward Room",
+      "exits": {
+        "north": "C1",
+        "east": "D2"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "reward",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "D2",
+      "area": "archive_cavern",
+      "title": "Hidden Reliability Well",
+      "exits": {
+        "north": "C2",
+        "west": "D1",
+        "east": "D3"
+      },
+      "lockedExits": {
+        "east": "Buckram gate lock"
+      },
+      "requiredItems": {
+        "east": "buckram_key"
+      },
+      "roomType": "secret",
+      "visited": false,
+      "revealed": false
+    },
+    {
+      "id": "D3",
+      "area": "archive_cavern",
+      "title": "Queue Boss Gate",
+      "exits": {
+        "north": "C3",
+        "west": "D2"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "boss",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "N1",
+      "area": "two_networks",
+      "title": "Network Split",
+      "exits": {
+        "east": "N2"
+      },
+      "lockedExits": {
+        "east": "ClassNet vault door"
+      },
+      "requiredItems": {
+        "east": "clearance_token"
+      },
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "N2",
+      "area": "two_networks",
+      "title": "ClassNet Vault",
+      "exits": {
+        "west": "N1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "reward",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "R1",
+      "area": "referral_vault",
+      "title": "Equity Gate",
+      "exits": {
+        "east": "R2"
+      },
+      "lockedExits": {
+        "east": "Visible-excision gate"
+      },
+      "requiredItems": {},
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "R2",
+      "area": "referral_vault",
+      "title": "Concurrence Chamber",
+      "exits": {
+        "west": "R1",
+        "east": "S1"
+      },
+      "lockedExits": {
+        "east": "Silent Read handoff"
+      },
+      "requiredItems": {
+        "east": "concurrence_slip"
+      },
+      "roomType": "reward",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "E1",
+      "area": "editors_labyrinth",
+      "title": "Editor's Labyrinth",
+      "exits": {
+        "east": "S1"
+      },
+      "lockedExits": {
+        "east": "Red-pencil query gate"
+      },
+      "requiredItems": {
+        "east": "red_pencil"
+      },
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "S1",
+      "area": "silent_read_tower",
+      "title": "Silent Read Tower",
+      "exits": {
+        "west": "E1",
+        "east": "G1"
+      },
+      "lockedExits": {
+        "east": "Buckram publication gate"
+      },
+      "requiredItems": {
+        "east": "buckram_key"
+      },
+      "roomType": "reward",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "G1",
+      "area": "buckram_gate",
+      "title": "Buckram Gate",
+      "exits": {},
+      "lockedExits": {
+        "north": "Publication gate"
+      },
+      "requiredItems": {
+        "north": "buckram_key"
+      },
+      "roomType": "boss",
+      "visited": false,
+      "revealed": true
+    }
+  ],
+  "volumeFragments": [],
+  "frusPrize": {
+    "cover": "ruby FRUS cover",
+    "piecesEarned": 0,
+    "piecesTotal": 5,
+    "assembled": false
+  },
+  "finalGate": {
+    "requiredStamps": [
+      "rule",
+      "archive",
+      "network",
+      "referral",
+      "proof"
+    ],
+    "missingStamps": [
+      "archive",
+      "network",
+      "referral",
+      "proof"
+    ],
+    "fragmentsCollected": 0,
+    "fragmentsNeeded": 5,
+    "missingFragments": 5,
+    "reliability": 80,
+    "reliabilityMinimum": 70,
+    "reliabilityReady": true,
+    "stateChatMayOpenGate": false,
+    "ready": false
+  },
+  "finalGateCertification": null,
+  "latestAbility": "",
+  "audioStatus": "pd midi Bach Chromatic Fantasy",
+  "physicalVerification": null,
+  "roomTraversal": null,
+  "snesTransition": {
+    "active": false,
+    "current": null,
+    "last": null
+  },
+  "inventory": [],
+  "latestMessage": "",
+  "player": {
+    "x": 128,
+    "y": 160
+  },
+  "playerFacing": "south",
+  "playerAnimationState": "idle_down",
+  "playerCombat": {
+    "state": "idle",
+    "actionActive": false,
+    "actionMsRemaining": 0,
+    "invulnerable": false,
+    "invulnerableMsRemaining": 0,
+    "hitbox": null
+  },
+  "nearestInteractable": null,
+  "visibleEntities": [
+    "Archive Colleague",
+    "Verification Gate",
+    "30-Year Line",
+    "DANN-E Queue",
+    "Citation Stamp",
+    "FRUS Volume Fragment"
+  ],
+  "visibleThreats": [
+    {
+      "label": "30-Year Line",
+      "x": 58,
+      "y": 164
+    },
+    {
+      "label": "DANN-E Queue",
+      "x": 198,
+      "y": 164
+    }
+  ],
+  "dialog": null,
+  "choice": null
+}

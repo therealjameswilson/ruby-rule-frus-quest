@@ -64,6 +64,8 @@ interface InputCallbacks {
   togglePixelProof?: () => void;
   toggleTouchOverlay?: () => void;
   openSpriteGallery?: () => void;
+  fastForwardDialog?: () => void;
+  handlePauseTouch?: (point: { x: number; y: number }) => boolean;
 }
 
 type InputGestureKind = "keyboard" | "pointer";
@@ -291,9 +293,21 @@ export function updateInputCallbacks(nextCallbacks: InputCallbacks) {
   callbacks = { ...callbacks, ...nextCallbacks };
 }
 
+export function triggerDialogFastForward() {
+  callbacks.fastForwardDialog?.();
+}
+
+export function handlePauseTouch(point: { x: number; y: number }) {
+  return callbacks.handlePauseTouch?.(point) ?? false;
+}
+
 export function addInputGestureListener(callback: InputGestureCallback) {
   inputGestureCallbacks.add(callback);
   return () => inputGestureCallbacks.delete(callback);
+}
+
+export function isTouchInputCapable() {
+  return typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 }
 
 export function tickInput() {
@@ -409,6 +423,24 @@ export function bindPointerDown<T extends Phaser.GameObjects.GameObject>(
 ) {
   object.setInteractive({ useHandCursor: true });
   object.on("pointerdown", callback);
+  return object;
+}
+
+export function bindPointerPress<T extends Phaser.GameObjects.GameObject>(
+  object: T,
+  handlers: {
+    down?: (pointer: Phaser.Input.Pointer) => void;
+    up?: (pointer: Phaser.Input.Pointer) => void;
+    cancel?: (pointer: Phaser.Input.Pointer) => void;
+  }
+) {
+  object.setInteractive({ useHandCursor: true });
+  if (handlers.down) object.on("pointerdown", handlers.down);
+  if (handlers.up) object.on("pointerup", handlers.up);
+  if (handlers.cancel) {
+    object.on("pointerout", handlers.cancel);
+    object.on("pointerupoutside", handlers.cancel);
+  }
   return object;
 }
 

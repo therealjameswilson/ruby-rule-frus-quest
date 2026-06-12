@@ -501,3 +501,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Verified that character spritesheet loading is centralized through `src/art/characters.ts` and `BootScene.preloadCharacters(this)`.
 - Pushed `feature/wire-16bit-sprites` to origin.
 - PR creation is blocked locally because `gh` is not installed and the GitHub connector returned `token_expired`; the PR creation URL and requested title are recorded in the final report.
+
+## 2026-06-12 Mobile SNES Quality Phase 5
+
+- Added tap-to-advance and long-press fast-forward routing for dialogue through the unified input layer.
+- Reworked the manuscript inventory into a pause-mode modal with tappable tool slots, a 44px-class close target, outside-dismiss behavior, and locked/equipped tool feedback.
+- Fixed HUD, dialogue, inventory, and objective overlays to the camera so mobile scaling and scene movement do not drag UI with the map.
+- Verified the phase with touch probes, the web-game Playwright client, and iPhone 14 Pro / Pixel 7 portrait and landscape viewport screenshots.

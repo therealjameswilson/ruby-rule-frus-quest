@@ -42,31 +42,32 @@ export class ReliabilityHud {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    scene.add.rectangle(152, 20, 204, 38, color(PALETTE.black)).setDepth(860);
-    scene.add.rectangle(152, 20, 204, 38).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(861);
+    scene.add.rectangle(152, 20, 204, 38, color(PALETTE.black)).setDepth(860).setScrollFactor(0);
+    scene.add.rectangle(152, 20, 204, 38).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(861).setScrollFactor(0);
     [3, 13, 23].forEach((y, index) => {
       const line = scene.add.text(52, y, "", {
         fontFamily: "monospace",
         fontSize: index === 0 ? "6px" : "5px",
         color: index === 0 ? PALETTE.goldStamp : PALETTE.creamPaper
-      }).setDepth(862);
+      }).setDepth(862).setScrollFactor(0);
       this.statusLines.push(line);
     });
     this.createItemStrip();
 
-    const box = scene.add.rectangle(128, 77, 224, 86, color(PALETTE.black));
-    const border = scene.add.rectangle(128, 77, 224, 86).setStrokeStyle(2, color(PALETTE.goldStamp));
+    const box = scene.add.rectangle(128, 77, 224, 86, color(PALETTE.black)).setScrollFactor(0);
+    const border = scene.add.rectangle(128, 77, 224, 86).setStrokeStyle(2, color(PALETTE.goldStamp)).setScrollFactor(0);
     this.detailsText = scene.add.text(23, 42, "", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper,
       wordWrap: { width: 210, useAdvancedWrap: true },
       lineSpacing: 2
-    });
+    }).setScrollFactor(0);
     this.details = scene.add
       .container(0, 0, [box, border, this.detailsText])
       .setDepth(990)
-      .setVisible(false);
+      .setVisible(false)
+      .setScrollFactor(0);
     this.update();
   }
 
@@ -127,12 +128,13 @@ export class ReliabilityHud {
       const box = this.scene.add
         .rectangle(x, y, 9, 9, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.stoneGray))
-        .setDepth(863);
+        .setDepth(863)
+        .setScrollFactor(0);
       const label = this.scene.add.text(x - 2, y - 4, item.shortLabel.slice(0, 1), {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.stoneGray
-      }).setDepth(864);
+      }).setDepth(864).setScrollFactor(0);
       this.itemSlots.push({ id: item.id, box, label });
     }
   }

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { setTouchControl, type CardinalDirection, type TouchControlKey } from "./InputState";
+import { gameState } from "../game/state";
+import { handlePauseTouch, setTouchControl, triggerDialogFastForward, type CardinalDirection, type TouchControlKey } from "./InputState";
 
 interface ButtonSpec {
   key: TouchControlKey;
@@ -55,6 +56,9 @@ export class TouchControls {
   private dpadOrigin = new Phaser.Math.Vector2();
   private dpadCurrent = new Phaser.Math.Vector2();
   private dpadDirection: CardinalDirection | null = null;
+  private dialogPointerId: number | null = null;
+  private dialogFastForwardTimer?: Phaser.Time.TimerEvent;
+  private dialogReleaseTimer?: Phaser.Time.TimerEvent;
   private lastEvent = "idle";
 
   constructor(scene: Phaser.Scene) {
@@ -228,6 +232,23 @@ export class TouchControls {
       this.redraw();
       return true;
     }
+    if (gameState.mode === "dialog") {
+      if (this.isDialogPoint(point) && this.dialogPointerId === null) {
+        this.pressDialog(pointerId);
+        this.redraw();
+        return true;
+      }
+      this.updateDebug();
+      return false;
+    }
+    if (gameState.mode === "pause") {
+      if (handlePauseTouch({ x: point.x, y: point.y })) {
+        this.redraw();
+        return true;
+      }
+      this.updateDebug();
+      return false;
+    }
     if (point.x <= GAME_WIDTH / 3 && this.dpadPointerId === null) {
       this.dpadPointerId = pointerId;
       this.dpadOrigin.copy(point);
@@ -258,6 +279,7 @@ export class TouchControls {
 
   private releasePointer(pointerId: number, eventName: string) {
     this.lastEvent = eventName;
+    if (pointerId === this.dialogPointerId) this.releaseDialog();
     if (pointerId === this.dpadPointerId) this.releaseDpad();
     for (const button of this.buttons) {
       if (button.pointerId === pointerId) this.releaseButton(button);
@@ -310,9 +332,36 @@ export class TouchControls {
   }
 
   private releaseAll() {
+    this.releaseDialog();
     this.releaseDpad();
     for (const button of this.buttons) this.releaseButton(button);
     this.updateDebug();
+  }
+
+  private isDialogPoint(point: Phaser.Math.Vector2) {
+    return point.y >= GAME_HEIGHT - 70;
+  }
+
+  private pressDialog(pointerId: number) {
+    this.dialogReleaseTimer?.remove(false);
+    this.dialogPointerId = pointerId;
+    setTouchControl("space", true);
+    this.dialogFastForwardTimer?.remove(false);
+    this.dialogFastForwardTimer = this.scene.time.delayedCall(460, () => {
+      if (this.dialogPointerId === pointerId) triggerDialogFastForward();
+    });
+  }
+
+  private releaseDialog() {
+    if (this.dialogPointerId === null) return;
+    this.dialogPointerId = null;
+    this.dialogFastForwardTimer?.remove(false);
+    this.dialogFastForwardTimer = undefined;
+    this.dialogReleaseTimer?.remove(false);
+    this.dialogReleaseTimer = this.scene.time.delayedCall(80, () => {
+      setTouchControl("space", false);
+      this.dialogReleaseTimer = undefined;
+    });
   }
 
   private updateDpadDirection() {
@@ -339,6 +388,10 @@ export class TouchControls {
     this.graphics.clear();
     this.updateDebug();
     if (!this.enabled) return;
+    if (gameState.mode === "pause") {
+      for (const button of this.buttons) button.text.setVisible(false);
+      return;
+    }
     this.drawButtons();
     this.drawDpad();
   }
