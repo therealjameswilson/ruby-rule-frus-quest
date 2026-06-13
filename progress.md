@@ -652,3 +652,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Verified the DANN-E boss mobile simulation at iPhone-style portrait size and 320px width: letterbox bars, touch overlay, boss HUD, integer scaling, and D-pad movement all remained readable/functional.
 - Verified `npm run build`, `npm run preview`, required web-game boss smoke, and a direct scene smoke sweep with no captured page/console errors.
 - Documented Phase 10 in `docs/danne-phase10-polish.md`; captured screenshots/state under `docs/screenshots/danne-phase10-*`.
+
+## 2026-06-13 All-New-Art Integration Phase 0
+
+- Created branch `integrate/all-new-art` from fast-forwarded `main`.
+- Checked prerequisite PRs:
+  - PR #11 and PR #12 were already merged into `main`.
+  - PR #9 was still open and not mergeable on GitHub, so its asset branch was merged locally into `integrate/all-new-art` to make the required map assets available without touching `main`.
+- Verified required source asset counts:
+  - `public/assets/art-pack/overworld_maps/`: 5 files.
+  - `public/assets/art-pack/gameplay_maps/`: 8 files.
+  - `public/assets/art-pack/frus_volumes/`: 16 PNG files.
+- Added `src/assets/registry.ts` as the single source of truth for `OVERWORLD_REGIONS`, `GAMEPLAY_MAPS`, and `FRUS_VOLUMES`.
+- Wired `BootScene` to preload all three registries and log grouped registry output; exposed `window.game` so the requested dev-console texture checks work exactly.
+- Verified `npm run build`.
+- Checkpoint screenshot: `docs/screenshots/all-new-art-phase0-console.png`, showing `game.textures.exists('historian_office') === true` and `game.textures.exists('reward_legendary') === true`.

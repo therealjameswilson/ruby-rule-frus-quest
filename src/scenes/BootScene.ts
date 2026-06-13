@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
+import { ALL_NEW_ART_REGISTRIES, publicAssetPath } from "../assets/registry";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
   DANNE_BOSS_SPRITE_ASSET,
@@ -39,6 +40,7 @@ export class BootScene extends Phaser.Scene {
     preloadCharacters(this);
     this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
     this.preloadDannePack();
+    this.preloadAllNewArtPack();
     this.preloadSvgAssets();
   }
 
@@ -48,6 +50,7 @@ export class BootScene extends Phaser.Scene {
     this.createTextures();
     registerCharacterAnims(this);
     this.applyDanneTextureFilters();
+    this.applyAllNewArtTextureFilters();
     registerDanneAnims(this);
     const startScene = this.getStartScene();
     this.scene.launch("UIScene");
@@ -104,6 +107,17 @@ export class BootScene extends Phaser.Scene {
     }
   }
 
+  private preloadAllNewArtPack() {
+    for (const [registryName, registry] of Object.entries(ALL_NEW_ART_REGISTRIES)) {
+      console.group(`[Ruby Rule art registry] ${registryName}`);
+      for (const [key, path] of Object.entries(registry)) {
+        this.load.image(key, publicAssetPath(path));
+        console.log(`${key} -> ${path}`);
+      }
+      console.groupEnd();
+    }
+  }
+
   private applyDanneTextureFilters() {
     for (const asset of [
       ...DANNE_IMAGE_ASSETS,
@@ -114,6 +128,16 @@ export class BootScene extends Phaser.Scene {
     ]) {
       if (this.textures.exists(asset.key)) {
         this.textures.get(asset.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    }
+  }
+
+  private applyAllNewArtTextureFilters() {
+    for (const registry of Object.values(ALL_NEW_ART_REGISTRIES)) {
+      for (const key of Object.keys(registry)) {
+        if (this.textures.exists(key)) {
+          this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+        }
       }
     }
   }
