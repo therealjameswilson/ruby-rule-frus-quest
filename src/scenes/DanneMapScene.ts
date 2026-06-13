@@ -9,8 +9,9 @@ import type {
 } from "../game/danneSceneCollisions";
 import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
 import {
-  addInventoryItem,
+  addDanneItem,
   gameState,
+  hasDanneItem,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -132,6 +133,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
+    if (input.bJustPressed) this.useDanneItemAction();
     this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
 
     if (this.dialog.active) {
@@ -266,6 +268,31 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.dialog.show("SAVE POINT", saved ? "Record saved at the garden register." : "Save unavailable in this browser session.");
       return;
     }
+    if (definition.action === "garden-historian") {
+      gameState.sceneProgress.cherryHistorianTalked = 1;
+      retroAudio.confirm();
+      this.dialog.show("HISTORIAN", [
+        "The pen is a tool, not a verdict.",
+        "Check the provenance trail first, then open the chest."
+      ]);
+      setLatestMessage("Historian cleared the Ruby Pen chest.");
+      return;
+    }
+    if (definition.action === "ruby-pen-chest") {
+      if (!gameState.sceneProgress.cherryHistorianTalked) {
+        this.dialog.show("RUBY PEN CHEST", "A note on the latch says: talk through the provenance rule first.");
+        setLatestMessage("Ruby Pen chest needs the Historian conversation.");
+        retroAudio.warning();
+        return;
+      }
+      const added = addDanneItem("ruby-pen");
+      retroAudio.confirm();
+      this.dialog.show("RUBY PEN", added ? [
+        "Ruby Pen acquired.",
+        "Equip it in the inventory and press B for a red-ink trail."
+      ] : "Ruby Pen is already in the case.");
+      return;
+    }
     if (definition.action === "boss-trigger") {
       this.dialog.show("DANN-E CORE", [
         "The vault core is dormant.",
@@ -275,9 +302,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     if (definition.action === "witness-table") {
+      const added = addDanneItem("treaty-fragments", 1);
+      retroAudio.confirm();
       this.dialog.show("WITNESS TABLE", [
         "The record is entered without partisan flourish.",
-        "Question, answer, source, and date remain separate."
+        "Question, answer, source, and date remain separate.",
+        added ? "Treaty Fragment II is filed from the hearing record." : "Treaty Fragment II is already filed."
       ]);
       return;
     }
@@ -286,6 +316,31 @@ export abstract class DanneMapScene extends Phaser.Scene {
         "Four redactor-drone patrol routes are marked for Phase 4.",
         "Do not move boxes without a manifest."
       ]);
+      return;
+    }
+    if (definition.action === "treaty-fragment-nara") {
+      const added = addDanneItem("treaty-fragments", 0);
+      retroAudio.confirm();
+      this.dialog.show("TREATY FRAGMENT I", added
+        ? "Fragment I was filed behind the drone patrol route."
+        : "Fragment I is already in the treaty folder.");
+      return;
+    }
+    if (definition.action === "treaty-fragment-vault") {
+      if (!gameState.sceneProgress.blackVaultBossCleared) {
+        this.dialog.show("TREATY FRAGMENT III", [
+          "The final fragment is sealed by DANN-E.",
+          "Phase 7 will drop it after the boss fight."
+        ]);
+        setLatestMessage("Treaty Fragment III is locked behind the DANN-E boss.");
+        retroAudio.warning();
+        return;
+      }
+      const added = addDanneItem("treaty-fragments", 2);
+      retroAudio.confirm();
+      this.dialog.show("TREATY FRAGMENT III", added
+        ? "Fragment III drops from the cleared vault core."
+        : "Fragment III is already filed.");
       return;
     }
     if (definition.action === "cipher-machine") {
@@ -362,15 +417,44 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private applyDebugGrants() {
     if (typeof window === "undefined") return;
-    const give = new URLSearchParams(window.location.search).get("give") ?? "";
-    if (!give.split(",").some((part) => part === "declass-key" || part === "master-declass-key")) return;
-    addInventoryItem("Master Declass Key");
+    const params = new URLSearchParams(window.location.search);
+    const give = params.get("give") ?? "";
+    const grants = new Set(give.split(",").map((part) => part.trim()).filter(Boolean));
+    if (grants.has("declass-key") || grants.has("master-declass-key")) addDanneItem("master-declass-key");
+    if (grants.has("ruby-pen")) addDanneItem("ruby-pen");
+    if (grants.has("fragments")) {
+      addDanneItem("treaty-fragments", 0);
+      addDanneItem("treaty-fragments", 1);
+      addDanneItem("treaty-fragments", 2);
+    }
+    if (params.get("boss") === "defeated" || params.get("bossCleared") === "1") {
+      gameState.sceneProgress.blackVaultBossCleared = 1;
+    }
   }
 
   private hasMasterDeclassKey() {
-    return gameState.inventory.some((item) => {
-      const normalized = item.toLowerCase().replace(/[_\s]+/g, "-");
-      return normalized === "master-declass-key" || normalized === "declass-key";
+    return hasDanneItem("master-declass-key");
+  }
+
+  private useDanneItemAction() {
+    if (gameState.equippedDanneItem !== "ruby-pen" || !hasDanneItem("ruby-pen")) return;
+    this.player.startAction();
+    const hitbox = this.player.getFacingActionHitbox();
+    const trail = this.add.rectangle(
+      Math.round(hitbox.centerX),
+      Math.round(hitbox.centerY),
+      Math.max(6, Math.round(hitbox.width)),
+      Math.max(4, Math.round(hitbox.height)),
+      color(PALETTE.buckramHighlight),
+      0.82
+    ).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(Math.round(this.player.position.y + 2));
+    this.tweens.add({
+      targets: trail,
+      alpha: 0,
+      duration: 220,
+      onComplete: () => trail.destroy()
     });
+    setLatestMessage("Ruby Pen: +5 attack red-ink trail.");
+    retroAudio.confirm();
   }
 }

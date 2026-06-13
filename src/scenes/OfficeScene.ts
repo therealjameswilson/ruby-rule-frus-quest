@@ -1,6 +1,9 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
+  addDanneItem,
+  gameState,
+  hasDanneItem,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -75,6 +78,33 @@ export class OfficeScene extends Phaser.Scene {
         onInteract: () => this.talkJuniorCompiler()
       },
       {
+        id: "production-inbox",
+        label: "Production Inbox",
+        x: 60,
+        y: 154,
+        radius: 28,
+        kind: "document",
+        onInteract: () => this.handleJuniorQuestStation("inbox")
+      },
+      {
+        id: "frus-cart",
+        label: "FRUS Cart",
+        x: 128,
+        y: 132,
+        radius: 30,
+        kind: "document",
+        onInteract: () => this.handleJuniorQuestStation("cart")
+      },
+      {
+        id: "Archive Terminal",
+        label: "Archive Terminal",
+        x: 195,
+        y: 154,
+        radius: 36,
+        kind: "terminal",
+        onInteract: () => this.handleJuniorQuestStation("terminal")
+      },
+      {
         id: "archive-guide-door",
         label: "Archive Guide Door",
         x: 128,
@@ -84,7 +114,7 @@ export class OfficeScene extends Phaser.Scene {
         onInteract: () => transitionTo(this, "GuideScene")
       }
     ];
-    setVisibleEntities(["Junior Compiler", "Corner Desk", "Archive Guide Door"]);
+    setVisibleEntities(["Junior Compiler", "Production Inbox", "FRUS Cart", "Archive Terminal", "Archive Guide Door"]);
   }
 
   update(_: number, delta: number) {
@@ -128,7 +158,56 @@ export class OfficeScene extends Phaser.Scene {
 
   private talkJuniorCompiler() {
     retroAudio.confirm();
-    this.dialog.show("JUNIOR COMPILER", this.juniorCompiler.dialogLines());
+    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
+    if (hasDanneItem("master-declass-key")) {
+      this.dialog.show("JUNIOR COMPILER", [
+        "Master Declass Key is logged.",
+        "Use it only at approved classified doors.",
+        ...this.juniorCompiler.dialogLines()
+      ]);
+      return;
+    }
+    if (progress >= 3) {
+      addDanneItem("master-declass-key");
+      this.dialog.show("JUNIOR COMPILER", [
+        "Inbox, cart, and terminal agree.",
+        "Master Declass Key acquired.",
+        "Carry it to the Marine Guard for approved access."
+      ]);
+      return;
+    }
+    const next = progress === 0 ? "Production Inbox" : progress === 1 ? "FRUS Cart" : "Archive Terminal";
+    this.dialog.show("JUNIOR COMPILER", [
+      ...this.juniorCompiler.dialogLines(),
+      `Fetch check ${progress + 1}/3: inspect ${next}.`
+    ]);
+  }
+
+  private handleJuniorQuestStation(station: "inbox" | "cart" | "terminal") {
+    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
+    const expected = progress === 0 ? "inbox" : progress === 1 ? "cart" : progress === 2 ? "terminal" : "done";
+    if (expected === "done") {
+      this.dialog.show("OFFICE CHECK", "The three production checks are complete. Return to the Junior Compiler.");
+      return;
+    }
+    if (station !== expected) {
+      const next = expected === "inbox" ? "Production Inbox" : expected === "cart" ? "FRUS Cart" : "Archive Terminal";
+      retroAudio.warning();
+      this.dialog.show("OFFICE CHECK", `Check order matters: go to ${next}.`);
+      return;
+    }
+    gameState.sceneProgress.juniorCompilerFetch = progress + 1;
+    retroAudio.confirm();
+    const messages = {
+      inbox: "Inbox slip logged: unresolved clearance request found.",
+      cart: "FRUS cart checked: document packet is physically present.",
+      terminal: "Archive terminal checked: request status matches the paper trail."
+    } as const;
+    setLatestMessage(messages[station]);
+    this.dialog.show("OFFICE CHECK", [
+      messages[station],
+      progress + 1 >= 3 ? "Return to the Junior Compiler for key issuance." : "Continue the production check sequence."
+    ]);
   }
 
   private drawOfficeInterior() {

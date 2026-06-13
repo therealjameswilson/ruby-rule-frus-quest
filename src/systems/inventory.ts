@@ -1,12 +1,16 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { ProcessItemId } from "../game/constants";
+import { DANNE_ITEM_CATALOG } from "../game/danneItemCatalog";
+import type { DanneItemCatalogEntry, DanneItemId } from "../game/danneItemCatalog";
 import type { GameMode } from "../game/types";
 import {
+  equipDanneItem,
   equipProcessItem,
   gameState,
   getAdventureHudReadout,
   getAreaProgressReadout,
+  getDanneItemReadout,
   getDocumentWorkflowReadout,
   getProcessItemReadout,
   setLatestMessage,
@@ -17,6 +21,25 @@ import { retroAudio } from "./audio";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
+}
+
+function thumbnailKey(asset: DanneItemCatalogEntry) {
+  return `${asset.key}-thumb16`;
+}
+
+function ensureItemThumbnail(scene: Phaser.Scene, asset: DanneItemCatalogEntry) {
+  const key = thumbnailKey(asset);
+  if (scene.textures.exists(key)) return key;
+  if (!scene.textures.exists(asset.key)) return asset.key;
+  const source = scene.textures.get(asset.key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
+  const texture = scene.textures.createCanvas(key, 16, 16);
+  if (!texture) return asset.key;
+  const context = texture.getContext();
+  context.imageSmoothingEnabled = false;
+  context.clearRect(0, 0, 16, 16);
+  context.drawImage(source, 0, 0, 16, 16);
+  texture.refresh();
+  return key;
 }
 
 const COMPACT_TOOL_LINES: Record<string, string> = {
@@ -43,6 +66,16 @@ export class InventoryOverlay {
     box: Phaser.GameObjects.Rectangle;
     label: Phaser.GameObjects.Text;
   }> = [];
+  private readonly danneItemSlots: Array<{
+    id: DanneItemId;
+    box: Phaser.GameObjects.Rectangle;
+    image: Phaser.GameObjects.Image;
+    label: Phaser.GameObjects.Text;
+  }> = [];
+  private readonly dannePopover: Phaser.GameObjects.Container;
+  private readonly dannePopoverImage: Phaser.GameObjects.Image;
+  private readonly dannePopoverText: Phaser.GameObjects.Text;
+  private selectedDanneItemId: DanneItemId | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -76,17 +109,31 @@ export class InventoryOverlay {
       color: PALETTE.goldStamp
     }).setScrollFactor(0);
     bindPointerPress(closeHit, { down: () => this.hide() });
-    this.body = scene.add.text(16, touch ? 96 : 90, "", {
+    this.body = scene.add.text(16, touch ? 126 : 122, "", {
       fontFamily: "monospace",
-      fontSize: touch ? "7px" : "6px",
+      fontSize: touch ? "6px" : "5px",
       color: PALETTE.creamPaper,
       wordWrap: { width: 224, useAdvancedWrap: true },
-      lineSpacing: 1
+      lineSpacing: 0
     }).setScrollFactor(0);
     const slotObjects = this.createToolGrid(scene);
+    const danneObjects = this.createDanneItemGrid(scene);
+    const popoverBox = scene.add
+      .rectangle(204, 88, 80, 62, color(PALETTE.black), 0.94)
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setScrollFactor(0);
+    this.dannePopoverImage = scene.add.image(178, 82, DANNE_ITEM_CATALOG[0].key).setScrollFactor(0);
+    this.dannePopoverText = scene.add.text(198, 62, "", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.creamPaper,
+      wordWrap: { width: 42, useAdvancedWrap: true },
+      lineSpacing: 0
+    }).setScrollFactor(0);
+    this.dannePopover = scene.add.container(0, 0, [popoverBox, this.dannePopoverImage, this.dannePopoverText]).setScrollFactor(0);
     updateInputCallbacks({ handlePauseTouch: (point) => this.handlePauseTouch(point.x, point.y) });
     this.container = scene.add
-      .container(0, 0, [dim, box, border, title, closeBox, closeLabel, closeHit, ...slotObjects, this.body])
+      .container(0, 0, [dim, box, border, title, closeBox, closeLabel, closeHit, ...slotObjects, ...danneObjects, this.dannePopover, this.body])
       .setDepth(980)
       .setVisible(false)
       .setScrollFactor(0);
@@ -138,22 +185,32 @@ export class InventoryOverlay {
       .map((document) => `${document.selected ? "OK" : "--"} ${document.id.replace(/_001|_047|_412/g, "").toUpperCase()}: ${document.state}`)
       .join("\n") || "-- NO DOCUMENTS ROUTED";
     const hud = getAdventureHudReadout();
+    const danneItems = getDanneItemReadout();
+    const danneSummary = danneItems
+      .map((item) => {
+        if (item.id === "treaty-fragments") return `TREATY ${item.count}/${item.total}`;
+        return `${item.displayName.toUpperCase()}: ${item.acquired ? item.equipped ? "EQ" : "OK" : "--"}`;
+      })
+      .join("  ");
     this.body.setText([
       `DOCUMENT POINTS: ${gameState.documentPoints}`,
       `FRUS VOLUME PARTS: ${gameState.volumeFragments.length}/5`,
       `EQUIPPED TOOL: ${hud.equippedItem?.displayName ?? "NONE"}`,
+      `DANN-E ITEMS: ${danneSummary}`,
       `CONF ${hud.confidence.meter}  CLAR ${hud.clarity.meter}`,
-      "TAP A TOOL TO EQUIP. TAP X TO CLOSE.",
+      "TAP TOOL/CARD TO EQUIP OR INSPECT. X CLOSES.",
       "",
       "QUEST ROUTE",
-      areas.split("\n").slice(0, 4).join("\n"),
+      areas.split("\n").slice(0, 3).join("\n"),
       "",
       "DOCUMENT FLOW",
-      documents.split("\n").slice(0, 2).join("\n"),
-      tools ? "\nREADY TOOLS" : "",
-      tools
+      documents.split("\n").slice(0, 1).join("\n"),
+      tools ? "READY TOOLS" : "",
+      tools.split("\n").slice(0, 2).join("\n")
     ].join("\n"));
     this.renderToolGrid();
+    this.renderDanneItemGrid();
+    this.renderDannePopover();
   }
 
   private createToolGrid(scene: Phaser.Scene) {
@@ -195,6 +252,11 @@ export class InventoryOverlay {
       this.tapTool(slot.id);
       return true;
     }
+    const danneSlot = this.danneItemSlots.find((candidate) => this.hitRect(x, y, candidate.box.x, candidate.box.y, 44, 44));
+    if (danneSlot) {
+      this.tapDanneItem(danneSlot.id);
+      return true;
+    }
     if (x < MODAL_BOUNDS.left || x > MODAL_BOUNDS.right || y < MODAL_BOUNDS.top || y > MODAL_BOUNDS.bottom) {
       this.hide();
       return true;
@@ -217,6 +279,101 @@ export class InventoryOverlay {
       slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
       slot.label.setText(item?.shortLabel ?? "--");
     }
+  }
+
+  private createDanneItemGrid(scene: Phaser.Scene) {
+    const objects: Phaser.GameObjects.GameObject[] = [];
+    const title = scene.add.text(16, 91, "DANN-E ITEMS", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp
+    }).setScrollFactor(0);
+    objects.push(title);
+    DANNE_ITEM_CATALOG.forEach((asset, index) => {
+      const x = 35 + index * 47;
+      const y = 105;
+      const thumb = ensureItemThumbnail(scene, asset);
+      const hit = scene.add.rectangle(x, y, 44, 44, color(PALETTE.black), 0.01).setScrollFactor(0);
+      const box = scene.add
+        .rectangle(x, y, 24, 22, color(PALETTE.black))
+        .setStrokeStyle(1, color(PALETTE.stoneGray))
+        .setScrollFactor(0);
+      const image = scene.add.image(x, y - 2, thumb).setScrollFactor(0);
+      const label = scene.add.text(x, y + 12, asset.id === "treaty-fragments" ? "TRTY" : asset.id === "master-declass-key" ? "KEY" : "PEN", {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.stoneGray
+      }).setOrigin(0.5).setScrollFactor(0);
+      bindPointerPress(hit, { down: () => this.tapDanneItem(asset.id) });
+      hit.on("pointerover", () => {
+        this.selectedDanneItemId = asset.id;
+        this.render();
+      });
+      this.danneItemSlots.push({ id: asset.id, box, image, label });
+      objects.push(hit, box, image, label);
+    });
+    return objects;
+  }
+
+  private renderDanneItemGrid() {
+    const readout = getDanneItemReadout();
+    for (const slot of this.danneItemSlots) {
+      const item = readout.find((candidate) => candidate.id === slot.id);
+      const acquired = Boolean(item?.acquired);
+      const equipped = Boolean(item?.equipped);
+      const selected = slot.id === this.selectedDanneItemId;
+      slot.box.setFillStyle(color(equipped ? PALETTE.goldStamp : acquired ? PALETTE.deepRuby : PALETTE.black));
+      slot.box.setStrokeStyle(1, color(selected ? PALETTE.white : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
+      slot.image.setVisible(acquired);
+      slot.image.setAlpha(equipped ? 1 : acquired ? 0.88 : 0.25);
+      slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
+      if (item?.id === "treaty-fragments") slot.label.setText(`T${item.count}/${item.total}`);
+    }
+  }
+
+  private renderDannePopover() {
+    const readout = getDanneItemReadout();
+    const selected = readout.find((item) => item.id === this.selectedDanneItemId && item.acquired)
+      ?? readout.find((item) => item.acquired);
+    if (!selected) {
+      this.dannePopover.setVisible(false);
+      return;
+    }
+    this.selectedDanneItemId = selected.id;
+    const source = this.scene.textures.get(selected.key).getSourceImage() as { width?: number; height?: number };
+    const width = Math.max(1, source.width ?? 64);
+    const height = Math.max(1, source.height ?? 64);
+    const scale = Math.min(48 / width, 48 / height);
+    this.dannePopoverImage
+      .setTexture(selected.key)
+      .setScale(scale)
+      .setVisible(true);
+    this.dannePopoverText.setText([
+      selected.displayName.toUpperCase(),
+      selected.id === "ruby-pen" ? "+5 ATK" : selected.id === "treaty-fragments" ? `${selected.count}/${selected.total}` : "KEY",
+      selected.description
+    ].join("\n"));
+    this.dannePopover.setVisible(true);
+  }
+
+  private tapDanneItem(itemId: DanneItemId) {
+    this.selectedDanneItemId = itemId;
+    const item = getDanneItemReadout().find((candidate) => candidate.id === itemId);
+    if (!item?.acquired) {
+      setLatestMessage("DANN-E item not acquired.");
+      retroAudio.warning();
+      this.render();
+      return;
+    }
+    if (itemId === "ruby-pen") {
+      equipDanneItem(itemId);
+      retroAudio.confirm();
+      this.render();
+      return;
+    }
+    setLatestMessage(`${item.displayName} inspected.`);
+    retroAudio.confirm();
+    this.render();
   }
 
   private tapTool(itemId: ProcessItemId) {

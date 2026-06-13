@@ -11,7 +11,11 @@ export type DanneSceneInteractionAction =
   | "witness-table"
   | "nara-stacks-note"
   | "cipher-machine"
-  | "marine-guard";
+  | "marine-guard"
+  | "garden-historian"
+  | "ruby-pen-chest"
+  | "treaty-fragment-nara"
+  | "treaty-fragment-vault";
 
 export interface DanneRectDefinition {
   x: number;
@@ -96,6 +100,26 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.goldStamp
       },
       {
+        id: "garden-historian",
+        label: "Historian",
+        x: 96,
+        y: 134,
+        radius: 28,
+        kind: "npc",
+        action: "garden-historian",
+        accent: PALETTE.creamPaper
+      },
+      {
+        id: "ruby-pen-chest",
+        label: "Ruby Pen Chest",
+        x: 174,
+        y: 158,
+        radius: 28,
+        kind: "document",
+        action: "ruby-pen-chest",
+        accent: PALETTE.buckramHighlight
+      },
+      {
         id: "garden-return",
         label: "Return to Office",
         x: 128,
@@ -106,7 +130,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["Save Point", "Office Back Door", "Koi Pond", "Cherry Pavilion"]
+    visibleEntities: ["Save Point", "Historian", "Ruby Pen Chest", "Office Back Door", "Koi Pond", "Cherry Pavilion"]
   },
   BlackVaultLairScene: {
     sceneKey: "BlackVaultLairScene",
@@ -136,6 +160,16 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.classNetRed
       },
       {
+        id: "vault-treaty-fragment",
+        label: "Treaty Fragment III",
+        x: 128,
+        y: 156,
+        radius: 26,
+        kind: "document",
+        action: "treaty-fragment-vault",
+        accent: PALETTE.goldStamp
+      },
+      {
         id: "vault-return",
         label: "Return to Office",
         x: 128,
@@ -146,7 +180,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["DANN-E Core Trigger", "Vault Return Seal", "Obsidian Altar"]
+    visibleEntities: ["DANN-E Core Trigger", "Treaty Fragment III", "Vault Return Seal", "Obsidian Altar"]
   },
   SenateHearingChamberScene: {
     sceneKey: "SenateHearingChamberScene",
@@ -219,6 +253,16 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.terminalCyan
       },
       {
+        id: "nara-treaty-fragment",
+        label: "Treaty Fragment I",
+        x: 204,
+        y: 184,
+        radius: 26,
+        kind: "document",
+        action: "treaty-fragment-nara",
+        accent: PALETTE.goldStamp
+      },
+      {
         id: "stacks-return",
         label: "Return to Office",
         x: 128,
@@ -229,7 +273,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["Stack Control Note", "Archive Stairwell", "Patrol Route Placeholders"],
+    visibleEntities: ["Stack Control Note", "Treaty Fragment I", "Archive Stairwell", "Patrol Route Placeholders"],
     patrolRoutes: [
       { id: "drone-route-a", points: [{ x: 88, y: 92 }, { x: 168, y: 92 }] },
       { id: "drone-route-b", points: [{ x: 88, y: 152 }, { x: 168, y: 152 }] },
@@ -269,7 +313,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         label: "Marine Security Guard",
         x: 202,
         y: 156,
-        radius: 34,
+        radius: 46,
         kind: "npc",
         action: "marine-guard",
         accent: PALETTE.goldStamp

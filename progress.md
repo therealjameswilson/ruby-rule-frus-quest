@@ -586,6 +586,20 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - `render_game_to_text()` reports four Redactor Drones with `danne-runtime-redactor-drone`, two Censorship Wraiths with `danne-runtime-censorship-wraith`, and Marine Guard blocking/cleared state
   - direct route smokes passed for Warning, Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, Ending, DanneGallery, and all five DANN-E map scenes with no captured console/page errors
   - captured `docs/screenshots/danne-phase4-*.png`
+- Completed Phase 5 item integration:
+  - added a typed DANN-E item catalog for Ruby Pen, Master Declass Key, and Treaty Fragments, then derived the BootScene item asset registry from it
+  - extended game state with acquired/equipped DANN-E item readouts, Treaty Fragment counting, Ruby Pen auto-equip, and `sceneProgress` QA output
+  - added DANN-E item thumbnails and full-card popovers to the manuscript inventory overlay
+  - wired Ruby Pen through the Cherry Blossom Historian/chest loop and added a B/Shift red-ink trail action with +5 attack readout
+  - wired the Office production sequence (Production Inbox -> FRUS Cart -> Archive Terminal -> Junior Compiler) to award the Master Declass Key
+  - wired Treaty Fragments to NARA Stacks, Senate Hearing Chamber, and the Black Vault boss-cleared drop path
+  - widened the Archive Terminal and Marine Guard interaction radii after playtesting showed the art collision kept the closest walkable tile just outside range
+- Verified Phase 5:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - web-game Playwright client confirms the Cherry Blossom Historian/chest loop awards and equips Ruby Pen
+  - custom Playwright probes confirm the Ruby Pen inventory card/popover, the red-ink B/Shift trail, the Office fetch sequence, Marine Guard Master Declass Key clearance, and all three Treaty Fragment placements
+  - in-app browser local smoke reached the local game canvases with no captured console errors
+  - captured `docs/screenshots/danne-phase5-ruby-pen.png`, `docs/screenshots/danne-phase5-inventory.png`, `docs/screenshots/danne-phase5-ruby-pen-action.png`, `docs/screenshots/danne-phase5-master-key.png`, and `docs/screenshots/danne-phase5-treaty-fragments.png`
 - Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
 
 ## 2026-06-12 Mobile SNES Quality Phase 10

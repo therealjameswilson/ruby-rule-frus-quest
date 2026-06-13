@@ -1,3 +1,6 @@
+import { DANNE_ITEM_CATALOG } from "./danneItemCatalog";
+import type { DanneItemId, DanneItemTier } from "./danneItemCatalog";
+
 export const DANNE_WARNING_SCREEN_ASSET = {
   id: "warning-screen",
   key: "danne-warning-screen",
@@ -181,35 +184,15 @@ export const DANNE_RUNTIME_SPRITE_ASSETS = [
   role: DanneSpriteRole;
 }>;
 
-export type DanneItemTier = "legendary" | "key" | "collectible";
-
-export const DANNE_ITEM_ASSETS = [
-  {
-    itemId: "ruby-pen",
-    key: "danne-item-ruby-pen",
-    path: "assets/art-pack/danne-pack/items/15_item_ruby_pen.png",
-    displayName: "Ruby Pen",
-    tier: "legendary",
-    description: "Legendary red-ink tool for decisive editorial action."
-  },
-  {
-    itemId: "master-declass-key",
-    key: "danne-item-master-declass-key",
-    path: "assets/art-pack/danne-pack/items/16_item_declass_key.png",
-    displayName: "Master Declass Key",
-    tier: "key",
-    description: "Key item for approved declassification locks."
-  },
-  {
-    itemId: "treaty-fragments",
-    key: "danne-item-treaty-fragments",
-    path: "assets/art-pack/danne-pack/items/17_item_treaty_fragments.png",
-    displayName: "Treaty Fragments",
-    tier: "collectible",
-    description: "Three-part record set for the true ending branch."
-  }
-] as const satisfies ReadonlyArray<{
-  itemId: string;
+export const DANNE_ITEM_ASSETS = DANNE_ITEM_CATALOG.map((item) => ({
+  itemId: item.id,
+  key: item.key,
+  path: item.path,
+  displayName: item.displayName,
+  tier: item.tier,
+  description: item.description
+})) satisfies ReadonlyArray<{
+  itemId: DanneItemId;
   key: string;
   path: string;
   displayName: string;
@@ -348,5 +331,7 @@ export const DANNE_GALLERY_ASSETS = [
 
 export type DanneSpriteAsset = (typeof DANNE_SPRITE_ASSETS)[number];
 export type DanneRuntimeSpriteAsset = (typeof DANNE_RUNTIME_SPRITE_ASSETS)[number];
+export type DanneItemAsset = (typeof DANNE_ITEM_ASSETS)[number];
+export type { DanneItemId, DanneItemTier };
 export type DanneVfxAsset = (typeof DANNE_VFX_ASSETS)[number];
 export type DanneGalleryAsset = (typeof DANNE_GALLERY_ASSETS)[number];
