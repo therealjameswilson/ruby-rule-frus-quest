@@ -1,15 +1,20 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { ArchiveScene } from "../scenes/ArchiveScene";
+import { BlackVaultLairScene } from "../scenes/BlackVaultLairScene";
 import { BootScene } from "../scenes/BootScene";
 import { CharacterCreateScene } from "../scenes/CharacterCreateScene";
+import { CherryBlossomGardenScene } from "../scenes/CherryBlossomGardenScene";
 import { DanneGallery } from "../scenes/DanneGallery";
+import { EmbassyCableRoomScene } from "../scenes/EmbassyCableRoomScene";
 import { EndingScene } from "../scenes/EndingScene";
 import { GuideScene } from "../scenes/GuideScene";
+import { NaraStacksScene } from "../scenes/NaraStacksScene";
 import { NetworkScene } from "../scenes/NetworkScene";
 import { OfficeScene } from "../scenes/OfficeScene";
 import { ReferralVaultScene } from "../scenes/ReferralVaultScene";
 import { RenderDebugScene } from "../scenes/RenderDebugScene";
+import { SenateHearingChamberScene } from "../scenes/SenateHearingChamberScene";
 import { SilentReadScene } from "../scenes/SilentReadScene";
 import { SpriteGallery } from "../scenes/SpriteGallery";
 import { TapToStartScene } from "../scenes/TapToStartScene";
@@ -59,6 +64,11 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     GuideScene,
     OfficeScene,
     ArchiveScene,
+    CherryBlossomGardenScene,
+    BlackVaultLairScene,
+    SenateHearingChamberScene,
+    NaraStacksScene,
+    EmbassyCableRoomScene,
     NetworkScene,
     ReferralVaultScene,
     SilentReadScene,

@@ -560,6 +560,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - setting `ruby-rule.skipWarning=true` reloads directly to `TitleScene`
   - direct scene smokes passed for Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, Ending, and DanneGallery with no captured console/page errors
   - captured `docs/screenshots/danne-phase2.png` and `docs/screenshots/danne-phase2-title.png`
+- Completed Phase 3 map-scene scaffolding:
+  - added five new DANN-E pack map scenes: Cherry Blossom Garden, Black Vault Lair, Senate Hearing Chamber, NARA Stacks, and Embassy Cable Room
+  - added a shared `DanneMapScene` base that renders the registered map PNGs, uses hand-authored walkable polygons/solid rectangles, spawns the existing player, provides nearest-interaction prompts, and returns to the current OfficeScene path
+  - added `src/game/danneSceneCollisions.ts` as the scene geometry source of truth, including NARA Stacks patrol-route placeholders for Phase 4
+  - wired the Cherry Blossom Garden save point to the existing save system and added simple trigger/dialog interactions for the vault core, witness table, stacks note, and cipher machine
+  - registered all five scenes in `gameConfig.scene` and `SCENE_ORDER`
+- Verified Phase 3:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - captured each new map with the web-game Playwright client
+  - verified the garden SavePoint dialog, return-exit transition through the existing OfficeScene route, and `?debug=collision` overlays
+  - direct route smokes passed for Warning, Title, CharacterCreate, Guide, Office, Archive, all five DANN-E map scenes, Network, ReferralVault, SilentRead, Ending, and DanneGallery with no captured console/page errors
+  - captured `docs/screenshots/danne-phase3-*.png`
 - Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
 
 ## 2026-06-12 Mobile SNES Quality Phase 10
