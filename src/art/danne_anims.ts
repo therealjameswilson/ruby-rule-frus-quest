@@ -1,8 +1,10 @@
 import type Phaser from "phaser";
 import {
+  DANNE_BOSS_SPRITE_ASSET,
   DANNE_RUNTIME_SPRITE_ASSETS,
   DANNE_SPRITE_ASSETS,
   DANNE_VFX_ASSETS,
+  type DanneBossSpriteAsset,
   type DanneRuntimeSpriteAsset,
   type DanneSpriteAsset
 } from "../game/danneAtlas";
@@ -41,7 +43,7 @@ function createAnim(
   });
 }
 
-function registerSpriteSheetAnims(scene: Phaser.Scene, asset: DanneSpriteAsset | DanneRuntimeSpriteAsset) {
+function registerSpriteSheetAnims(scene: Phaser.Scene, asset: DanneSpriteAsset | DanneRuntimeSpriteAsset | DanneBossSpriteAsset) {
   for (const direction of Object.keys(DANNE_SPRITE_FRAMES.walk) as DanneDirection[]) {
     createAnim(scene, asset.key, `walk-${direction}`, DANNE_SPRITE_FRAMES.walk[direction], 6, -1);
   }
@@ -55,6 +57,7 @@ export function registerDanneAnims(scene: Phaser.Scene) {
   for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
     registerSpriteSheetAnims(scene, asset);
   }
+  registerSpriteSheetAnims(scene, DANNE_BOSS_SPRITE_ASSET);
   for (const asset of DANNE_VFX_ASSETS) {
     const frames = Array.from({ length: asset.cols * asset.rows }, (_value, index) => index);
     createAnim(scene, asset.key, "fly", frames, 10, -1);

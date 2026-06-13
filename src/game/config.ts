@@ -19,6 +19,7 @@ import { SilentReadScene } from "../scenes/SilentReadScene";
 import { SpriteGallery } from "../scenes/SpriteGallery";
 import { TapToStartScene } from "../scenes/TapToStartScene";
 import { TitleScene } from "../scenes/TitleScene";
+import { TrueEndingScene } from "../scenes/TrueEndingScene";
 import { UIScene } from "../scenes/UIScene";
 import { WarningScene } from "../scenes/WarningScene";
 
@@ -73,6 +74,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     ReferralVaultScene,
     SilentReadScene,
     EndingScene,
+    TrueEndingScene,
     RenderDebugScene,
     DanneGallery,
     SpriteGallery,

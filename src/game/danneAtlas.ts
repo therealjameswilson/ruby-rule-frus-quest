@@ -234,6 +234,26 @@ export const DANNE_VFX_ASSETS = [
   }
 ] as const;
 
+export const DANNE_BOSS_SPRITE_ASSET = {
+  entityId: "danne-boss",
+  key: "danne-boss-combat",
+  path: "assets/art-pack/sprites/sprite_dann_e.png",
+  cols: 4,
+  rows: 4,
+  frameW: 256,
+  frameH: 384,
+  role: "enemy"
+} as const satisfies {
+  entityId: string;
+  key: string;
+  path: string;
+  cols: number;
+  rows: number;
+  frameW: number;
+  frameH: number;
+  role: DanneSpriteRole;
+};
+
 export type DanneVariantPhase =
   | "reveal"
   | "prototype"
@@ -326,11 +346,13 @@ export const DANNE_GALLERY_ASSETS = [
   ...DANNE_ITEM_ASSETS.map((asset) => ({ category: "ITEM", ...asset })),
   ...DANNE_UI_ASSETS.map((asset) => ({ category: "UI", displayName: asset.id, ...asset })),
   ...DANNE_VFX_ASSETS.map((asset) => ({ category: "VFX", displayName: asset.id, ...asset })),
+  { category: "BOSS", displayName: "DANN-E Combat Sprite", ...DANNE_BOSS_SPRITE_ASSET },
   ...DANNE_VARIANT_ASSETS.map((asset) => ({ category: "VARIANT", ...asset }))
 ] as const;
 
 export type DanneSpriteAsset = (typeof DANNE_SPRITE_ASSETS)[number];
 export type DanneRuntimeSpriteAsset = (typeof DANNE_RUNTIME_SPRITE_ASSETS)[number];
+export type DanneBossSpriteAsset = typeof DANNE_BOSS_SPRITE_ASSET;
 export type DanneItemAsset = (typeof DANNE_ITEM_ASSETS)[number];
 export type { DanneItemId, DanneItemTier };
 export type DanneVfxAsset = (typeof DANNE_VFX_ASSETS)[number];

@@ -11,6 +11,7 @@ import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
 import {
   addDanneItem,
   gameState,
+  getTreatyFragmentCount,
   hasDanneItem,
   setLatestMessage,
   setNearestInteractable,
@@ -22,6 +23,7 @@ import {
 import type { Interactable, Position } from "../game/types";
 import { Player } from "../entities/Player";
 import { CensorshipWraith } from "../entities/enemies/CensorshipWraith";
+import { DanneBoss } from "../entities/enemies/DanneBoss";
 import { RedactorDrone } from "../entities/enemies/RedactorDrone";
 import { MarineSecurityGuard } from "../entities/npcs/MarineSecurityGuard";
 import { getInput, tickInput } from "../input/InputState";
@@ -80,6 +82,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private interactables: Interactable[] = [];
   private redactorDrones: RedactorDrone[] = [];
   private censorshipWraiths: CensorshipWraith[] = [];
+  private danneBoss?: DanneBoss;
   private marineGuard?: MarineSecurityGuard;
   private marineDoorCleared = false;
   private lastGoodPosition: Position;
@@ -128,6 +131,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.createDanneEntities();
     this.syncDanneReadout(this.time.now);
     this.installUiDebugHooks();
+    this.installBossDebugStart();
   }
 
   update(_: number, delta: number) {
@@ -179,7 +183,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     setNearestInteractable(nearest?.label ?? null);
     this.hintText.setText(nearest ? nearest.label.toUpperCase() : "");
     if (input.aJustPressed && nearest) nearest.onInteract();
-    setObjective(this.geometry.objective);
+    if (!this.danneBoss?.isActive) setObjective(this.geometry.objective);
     this.reliability.update();
     this.syncDanneReadout(this.time.now);
   }
@@ -311,11 +315,14 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     if (definition.action === "boss-trigger") {
-      this.dialog.show("DANN-E CORE", [
-        "The vault core is dormant.",
-        "Phase 7 will wire the boss encounter here.",
-        "For now, the trigger volume is verified."
-      ]);
+      if (gameState.sceneProgress.blackVaultBossCleared) {
+        this.dialog.show("DANN-E CORE", [
+          "The vault core is quiet.",
+          "Human review has broken the automated queue."
+        ]);
+        return;
+      }
+      this.startDanneBoss();
       return;
     }
     if (definition.action === "witness-table") {
@@ -428,9 +435,37 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
   }
 
+  private startDanneBoss() {
+    if (this.geometry.sceneKey !== "BlackVaultLairScene") return;
+    if (this.danneBoss?.isActive) {
+      this.dialog.show("DANN-E CORE", "DANN-E is already occupying the queue.");
+      return;
+    }
+    for (const wraith of this.censorshipWraiths) wraith.destroy();
+    this.censorshipWraiths = [];
+    const quickFight = this.isBossQuickDebugEnabled();
+    this.danneBoss = new DanneBoss(this, {
+      player: this.player,
+      secretAscendant: getTreatyFragmentCount() >= 3,
+      quickFight,
+      onPhaseChange: (phase) => {
+        gameState.sceneProgress.blackVaultBossPhase = phase === "defeated" ? 99 : this.phaseProgressNumber(phase);
+        setObjective(this.objectiveForBossPhase(phase));
+      },
+      onDefeated: (trueEnding) => {
+        setLatestMessage(trueEnding ? "DANN-E defeated with complete treaty record." : "DANN-E defeated.");
+        transitionTo(this, trueEnding ? "TrueEndingScene" : "EndingScene");
+      }
+    });
+    gameState.sceneProgress.blackVaultBossStarted = 1;
+    setObjective("Black Vault Lair: defeat DANN-E with human-reviewed tools.");
+    this.danneBoss.start();
+  }
+
   private updateDanneEntities(timeMs: number, deltaMs: number, canAct: boolean) {
     for (const drone of this.redactorDrones) drone.update(timeMs, deltaMs, this.player, canAct);
     for (const wraith of this.censorshipWraiths) wraith.update(timeMs, deltaMs, this.player, canAct);
+    this.danneBoss?.update(timeMs, deltaMs, canAct);
     this.marineGuard?.update(timeMs);
     this.syncDanneReadout(timeMs);
   }
@@ -439,6 +474,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const visible = [...this.geometry.visibleEntities];
     if (this.redactorDrones.length) visible.push(...this.redactorDrones.map((_drone, index) => `Redactor Drone ${index + 1}`));
     if (this.censorshipWraiths.length) visible.push(...this.censorshipWraiths.map((_wraith, index) => `Censorship Wraith ${index + 1}`));
+    if (this.danneBoss?.isActive) visible.push(`DANN-E Boss (${this.danneBoss.currentPhase})`);
     if (this.marineGuard) visible.push(this.marineDoorCleared ? "Marine Security Guard (cleared)" : "Marine Security Guard (blocking)");
     setVisibleEntities(visible);
     setVisibleThreats([
@@ -459,8 +495,38 @@ export abstract class DanneMapScene extends Phaser.Scene {
         behavior: "slow float + ink sweep",
         defeatMethod: "Keep distance until Phase 5 tools are wired.",
         status: wraith.status(timeMs)
-      }))
+      })),
+      ...(this.danneBoss?.isActive ? [this.danneBoss.readout()] : [])
     ]);
+  }
+
+  private objectiveForBossPhase(phase: string) {
+    if (phase === "colossus") return "Black Vault Lair: dodge ego bolts and strike DANN-E with the Ruby Pen.";
+    if (phase === "swarm") return "Black Vault Lair: survive the mini-DANN-E queue and keep reviewing.";
+    if (phase === "cloud") return "Black Vault Lair: cloud form takes half damage; keep pressure on the record.";
+    if (phase === "ascendant") return "Black Vault Lair: complete treaty record unlocked the secret Ascendant phase.";
+    if (phase === "defeated") return "Black Vault Lair: DANN-E defeated; route to publication.";
+    return this.geometry.objective;
+  }
+
+  private phaseProgressNumber(phase: string) {
+    if (phase === "colossus") return 1;
+    if (phase === "swarm") return 2;
+    if (phase === "cloud") return 3;
+    if (phase === "ascendant") return 4;
+    return 0;
+  }
+
+  private isBossQuickDebugEnabled() {
+    if (typeof window === "undefined") return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("bossQuick") === "1" || params.get("boss") === "quick";
+  }
+
+  private installBossDebugStart() {
+    if (this.geometry.sceneKey !== "BlackVaultLairScene") return;
+    if (!this.isBossQuickDebugEnabled()) return;
+    this.time.delayedCall(450, () => this.startDanneBoss());
   }
 
   private applyDebugGrants() {
