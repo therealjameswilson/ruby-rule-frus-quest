@@ -85,7 +85,14 @@ export interface GameState {
 }
 
 const defaultRole = PROCESS_ROLES[0];
-const TRANSIENT_SAVE_SCENES = new Set(["BootScene", "TapToStartScene", "RenderDebugScene", "DanneGallery", "SpriteGallery"]);
+const TRANSIENT_SAVE_SCENES = new Set([
+  "BootScene",
+  "TapToStartScene",
+  "WarningScene",
+  "RenderDebugScene",
+  "DanneGallery",
+  "SpriteGallery"
+]);
 
 export const SAVE_SCHEMA_VERSION = 1;
 

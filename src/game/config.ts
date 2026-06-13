@@ -15,6 +15,7 @@ import { SpriteGallery } from "../scenes/SpriteGallery";
 import { TapToStartScene } from "../scenes/TapToStartScene";
 import { TitleScene } from "../scenes/TitleScene";
 import { UIScene } from "../scenes/UIScene";
+import { WarningScene } from "../scenes/WarningScene";
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.CANVAS,
@@ -51,6 +52,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   },
   scene: [
     BootScene,
+    WarningScene,
     TapToStartScene,
     TitleScene,
     CharacterCreateScene,

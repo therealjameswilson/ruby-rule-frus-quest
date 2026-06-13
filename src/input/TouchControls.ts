@@ -85,6 +85,10 @@ export class TouchControls {
 
   setEnabled(enabled: boolean) {
     if (this.enabled === enabled) {
+      if (!enabled) {
+        this.graphics.setVisible(false);
+        for (const button of this.buttons) button.text.setVisible(false);
+      }
       this.redraw();
       return;
     }
@@ -114,6 +118,7 @@ export class TouchControls {
   refreshForScene(activeSceneKey: string | null) {
     const hiddenScene =
       activeSceneKey === "TapToStartScene"
+      || activeSceneKey === "WarningScene"
       || activeSceneKey === "RenderDebugScene"
       || activeSceneKey === "DanneGallery"
       || activeSceneKey === "SpriteGallery";
@@ -416,7 +421,10 @@ export class TouchControls {
     this.graphics.clear();
     this.graphics.setAlpha(this.overlayAlpha);
     this.updateDebug();
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      for (const button of this.buttons) button.text.setVisible(false);
+      return;
+    }
     if (gameState.mode === "pause") {
       for (const button of this.buttons) button.text.setVisible(false);
       return;

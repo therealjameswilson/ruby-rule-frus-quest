@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
+import { gameState } from "../game/state";
 import { addGamepadConnectionListener, updateInputCallbacks } from "../input/InputState";
 import { TouchControls } from "../input/TouchControls";
 
@@ -41,6 +42,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   private activeGameplaySceneKey() {
+    if (gameState.currentScene && gameState.currentScene !== this.scene.key) return gameState.currentScene;
     const activeScenes = this.scene.manager.getScenes(true)
       .filter((scene) => scene.scene.key !== this.scene.key);
     return activeScenes.at(-1)?.scene.key ?? null;

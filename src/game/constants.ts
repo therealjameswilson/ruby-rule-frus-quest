@@ -531,6 +531,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
 
 export const SCENE_ORDER = [
   "TapToStartScene",
+  "WarningScene",
   "TitleScene",
   "CharacterCreateScene",
   "OfficeScene",

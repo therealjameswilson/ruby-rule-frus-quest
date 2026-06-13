@@ -550,6 +550,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - captured and committed `docs/screenshots/danne-phase1.png`
   - `render_game_to_text()` for `DanneGallery` lists all 29 DANN-E assets in `visibleEntities`
   - direct scene smokes passed for Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, and Ending with no captured console/page errors
+- Completed Phase 2 warning-screen wiring:
+  - added `WarningScene` as the default post-boot route before `TitleScene`, using the registered DANN-E warning card on a black background with integer-fit scaling
+  - preserved `?scene=` deep links; the direct Office route still bypasses the warning and keeps its existing GuideScene handoff
+  - added the persisted `localStorage["ruby-rule.skipWarning"]` preference plus a small TitleScene checkbox/`B` toggle
+  - hid mobile touch controls while `WarningScene` is active and fixed disabled-control text persistence
+- Verified Phase 2:
+  - fresh default load reaches `WarningScene`; pressing Space/A fades to `TitleScene`
+  - setting `ruby-rule.skipWarning=true` reloads directly to `TitleScene`
+  - direct scene smokes passed for Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, Ending, and DanneGallery with no captured console/page errors
+  - captured `docs/screenshots/danne-phase2.png` and `docs/screenshots/danne-phase2-title.png`
 - Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
 
 ## 2026-06-12 Mobile SNES Quality Phase 10

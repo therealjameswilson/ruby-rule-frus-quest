@@ -49,7 +49,7 @@ export class BootScene extends Phaser.Scene {
     registerDanneAnims(this);
     const startScene = this.getStartScene();
     this.scene.launch("UIScene");
-    if (startScene !== "TitleScene" && startScene !== "TapToStartScene") {
+    if (startScene !== "TitleScene" && startScene !== "TapToStartScene" && startScene !== "WarningScene") {
       resetGameState();
       this.applyRoleFromQuery();
       seedProgressForScene(startScene);
@@ -62,7 +62,7 @@ export class BootScene extends Phaser.Scene {
     if (requested && SCENE_ORDER.includes(requested as (typeof SCENE_ORDER)[number])) {
       return requested;
     }
-    return "TapToStartScene";
+    return "WarningScene";
   }
 
   private applyRoleFromQuery() {
