@@ -1,0 +1,66 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 1536,
+  "height": 1024,
+  "tilewidth": 1,
+  "tileheight": 1,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "collisions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 1, "name": "parchment_north", "type": "solid", "x": 0, "y": 0, "width": 1536, "height": 86 },
+        { "id": 2, "name": "parchment_south", "type": "solid", "x": 0, "y": 920, "width": 1536, "height": 104 },
+        { "id": 3, "name": "parchment_west", "type": "solid", "x": 0, "y": 0, "width": 82, "height": 1024 },
+        { "id": 4, "name": "parchment_east", "type": "solid", "x": 1454, "y": 0, "width": 82, "height": 1024 },
+        { "id": 5, "name": "senator_bench", "type": "solid", "x": 480, "y": 170, "width": 580, "height": 210 },
+        { "id": 6, "name": "witness_table", "type": "solid", "x": 672, "y": 330, "width": 210, "height": 105 },
+        { "id": 7, "name": "left_gallery", "type": "solid", "x": 375, "y": 438, "width": 310, "height": 115 },
+        { "id": 8, "name": "right_gallery", "type": "solid", "x": 850, "y": 438, "width": 310, "height": 115 },
+        { "id": 9, "name": "staff_office", "type": "solid", "x": 112, "y": 115, "width": 260, "height": 335 },
+        { "id": 10, "name": "press_gallery", "type": "solid", "x": 1185, "y": 115, "width": 230, "height": 335 },
+        { "id": 11, "name": "closed_session_room", "type": "solid", "x": 98, "y": 570, "width": 300, "height": 255 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "doors",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 12, "name": "world_exit", "type": "door", "x": 705, "y": 835, "width": 130, "height": 82, "properties": [
+          { "name": "label", "type": "string", "value": "Return to World Map" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" }
+        ] }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "spawns",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 13, "name": "entry", "type": "spawn", "point": true, "x": 768, "y": 812 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "interactions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 14, "name": "witness_table", "type": "interaction", "x": 672, "y": 325, "width": 210, "height": 125, "properties": [
+          { "name": "label", "type": "string", "value": "Witness Table" },
+          { "name": "action", "type": "string", "value": "witness-table" }
+        ] },
+        { "id": 15, "name": "closed_session_vault", "type": "interaction", "x": 118, "y": 590, "width": 245, "height": 210, "properties": [
+          { "name": "label", "type": "string", "value": "Closed-Session Vault" },
+          { "name": "action", "type": "string", "value": "closed-session-vault" }
+        ] }
+      ]
+    }
+  ]
+}

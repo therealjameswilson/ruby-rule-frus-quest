@@ -1,0 +1,81 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 1536,
+  "height": 1024,
+  "tilewidth": 1,
+  "tileheight": 1,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "collisions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 1, "name": "parchment_north", "type": "solid", "x": 0, "y": 0, "width": 1536, "height": 90 },
+        { "id": 2, "name": "parchment_south", "type": "solid", "x": 0, "y": 900, "width": 1536, "height": 124 },
+        { "id": 3, "name": "parchment_west", "type": "solid", "x": 0, "y": 0, "width": 90, "height": 1024 },
+        { "id": 4, "name": "parchment_east", "type": "solid", "x": 1446, "y": 0, "width": 90, "height": 1024 },
+        { "id": 5, "name": "research_desks", "type": "solid", "x": 104, "y": 200, "width": 170, "height": 455 },
+        { "id": 6, "name": "compilation_shelves", "type": "solid", "x": 370, "y": 205, "width": 215, "height": 455 },
+        { "id": 7, "name": "declass_table", "type": "solid", "x": 675, "y": 465, "width": 210, "height": 180 },
+        { "id": 8, "name": "annotation_desks", "type": "solid", "x": 970, "y": 215, "width": 200, "height": 430 },
+        { "id": 9, "name": "publication_press", "type": "solid", "x": 1245, "y": 200, "width": 185, "height": 455 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "doors",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 10, "name": "world_exit", "type": "door", "x": 706, "y": 820, "width": 130, "height": 75, "properties": [
+          { "name": "label", "type": "string", "value": "Return to World Map" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" }
+        ] }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "spawns",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 11, "name": "entry", "type": "spawn", "point": true, "x": 768, "y": 805 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "triggers",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 12, "name": "research_phase", "type": "trigger", "x": 105, "y": 160, "width": 185, "height": 520, "properties": [
+          { "name": "label", "type": "string", "value": "Research" },
+          { "name": "action", "type": "string", "value": "room-dialog" },
+          { "name": "text", "type": "string", "value": "Research: gather documents and verify the source trail." }
+        ] },
+        { "id": 13, "name": "compilation_phase", "type": "trigger", "x": 360, "y": 160, "width": 245, "height": 520, "properties": [
+          { "name": "label", "type": "string", "value": "Compilation" },
+          { "name": "action", "type": "string", "value": "room-dialog" },
+          { "name": "text", "type": "string", "value": "Compilation: select documents that explain the policy record." }
+        ] },
+        { "id": 14, "name": "declass_phase", "type": "trigger", "x": 640, "y": 160, "width": 270, "height": 520, "properties": [
+          { "name": "label", "type": "string", "value": "Declassification Review" },
+          { "name": "action", "type": "string", "value": "room-dialog" },
+          { "name": "text", "type": "string", "value": "Declass review: route equities, record decisions, and show excisions." }
+        ] },
+        { "id": 15, "name": "annotation_phase", "type": "trigger", "x": 940, "y": 160, "width": 245, "height": 520, "properties": [
+          { "name": "label", "type": "string", "value": "Annotation" },
+          { "name": "action", "type": "string", "value": "room-dialog" },
+          { "name": "text", "type": "string", "value": "Annotation: explain references without guessing beyond the evidence." }
+        ] },
+        { "id": 16, "name": "publication_phase", "type": "trigger", "x": 1220, "y": 160, "width": 230, "height": 520, "properties": [
+          { "name": "label", "type": "string", "value": "Publication" },
+          { "name": "action", "type": "string", "value": "room-dialog" },
+          { "name": "text", "type": "string", "value": "Publication: bind the certified volume and send it to readers." }
+        ] }
+      ]
+    }
+  ]
+}

@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
-import { ALL_NEW_ART_REGISTRIES, publicAssetPath } from "../assets/registry";
+import { ALL_NEW_ART_REGISTRIES, GAMEPLAY_TILED_MAPS, gameplayTiledCacheKey, publicAssetPath } from "../assets/registry";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
   DANNE_BOSS_SPRITE_ASSET,
@@ -116,6 +116,13 @@ export class BootScene extends Phaser.Scene {
       }
       console.groupEnd();
     }
+    console.group("[Ruby Rule art registry] GAMEPLAY_TILED_MAPS");
+    for (const key of Object.keys(GAMEPLAY_TILED_MAPS) as Array<keyof typeof GAMEPLAY_TILED_MAPS>) {
+      const path = GAMEPLAY_TILED_MAPS[key];
+      this.load.json(gameplayTiledCacheKey(key), publicAssetPath(path));
+      console.log(`${gameplayTiledCacheKey(key)} -> ${path}`);
+    }
+    console.groupEnd();
   }
 
   private applyDanneTextureFilters() {

@@ -19,6 +19,17 @@ export const GAMEPLAY_MAPS = {
   capitol_hill: "art-pack/gameplay_maps/08_capitol_hill_hearing.png"
 } as const;
 
+export const GAMEPLAY_TILED_MAPS = {
+  historian_office: "tiled/historian_office.tmj",
+  nara_stacks: "tiled/nara_stacks.tmj",
+  foggy_bottom: "tiled/foggy_bottom.tmj",
+  west_wing: "tiled/west_wing.tmj",
+  black_vault: "tiled/black_vault.tmj",
+  frus_floor: "tiled/frus_floor.tmj",
+  embassy: "tiled/embassy.tmj",
+  capitol_hill: "tiled/capitol_hill.tmj"
+} as const satisfies Record<keyof typeof GAMEPLAY_MAPS, string>;
+
 export const FRUS_VOLUMES = {
   pickup_single: "art-pack/frus_volumes/01_pickup_single_volume.png",
   world_standing: "art-pack/frus_volumes/02_standing_volume_soviet_union.png",
@@ -49,6 +60,10 @@ export type GameplayMapKey = keyof typeof GAMEPLAY_MAPS;
 export type FrusVolumeKey = keyof typeof FRUS_VOLUMES;
 export type NewArtRegistryName = keyof typeof ALL_NEW_ART_REGISTRIES;
 export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey;
+
+export function gameplayTiledCacheKey(mapKey: GameplayMapKey) {
+  return `tiled-${mapKey}`;
+}
 
 export function publicAssetPath(path: string) {
   return `${PUBLIC_ASSET_ROOT}/${path}`;

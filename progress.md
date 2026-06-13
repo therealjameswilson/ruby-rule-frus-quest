@@ -678,3 +678,28 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Verified the region selector cycles through all five regions, hover overlays and tooltips work for all 40 cartouches, and destination clicks route correctly for West Berlin, Vienna, and Havana.
 - Checkpoint screenshot: `docs/screenshots/all-new-art-phase1-europe-west-berlin-tooltip.png`, showing the Europe map with the West Berlin tooltip visible and the parchment border unobstructed.
 - Phase 2 still needs true gameplay-map collision, doors, spawns, and map-specific NPC logic.
+
+## 2026-06-13 All-New-Art Integration Phase 2
+
+- Added `GAMEPLAY_TILED_MAPS` to the asset registry and BootScene JSON preload so each gameplay-map object layer is loaded from `public/assets/tiled/*.tmj`.
+- Replaced the Phase 1 preview-only `GameplayMapScene` with a playable static-map scene that:
+  - renders each gameplay PNG inside a safe rectangle without covering the parchment border;
+  - reads Tiled-style `collisions`, `doors`, `spawns`, `interactions`, `npcs`, and `triggers` object layers;
+  - maps source-pixel object coordinates into the 256x240 logical canvas;
+  - uses the existing `Player` rectangle-solid movement path;
+  - supports `?debug=collision` overlays;
+  - routes doors to `WorldMapScene` or another `GameplayMapScene` map plus spawn point;
+  - shows compact map dialogue in the bottom safe band instead of covering the map art.
+- Authored first-pass `.tmj` object maps for all eight gameplay maps:
+  - Office of the Historian
+  - NARA II Stacks
+  - Foggy Bottom Street
+  - White House West Wing
+  - Black Vault Lair
+  - FRUS Production Floor
+  - Embassy Compound
+  - Capitol Hill Hearing
+- Verified `npm run build`.
+- Verified all eight maps boot, every map has collision objects and at least one door, every door path either routes or shows its required locked dialog, and representative interactions open dialogue: Historian-in-Chief, FRUS Bookshelf, NARA Archivist, Chancery Door, and Witness Table.
+- Checkpoint screenshot: `docs/screenshots/all-new-art-phase2-historian-office.png`, showing the player in the Historian-in-Chief room.
+- The `.tmj` collision layers are intentionally broad first-pass rectangles; later Tiled refinement can add tighter chair/furniture polygons without changing the scene contract.

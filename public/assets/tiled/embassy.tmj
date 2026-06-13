@@ -1,0 +1,65 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 1536,
+  "height": 1024,
+  "tilewidth": 1,
+  "tileheight": 1,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "collisions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 1, "name": "parchment_north", "type": "solid", "x": 0, "y": 0, "width": 1536, "height": 82 },
+        { "id": 2, "name": "parchment_south", "type": "solid", "x": 0, "y": 920, "width": 1536, "height": 104 },
+        { "id": 3, "name": "parchment_west", "type": "solid", "x": 0, "y": 0, "width": 80, "height": 1024 },
+        { "id": 4, "name": "parchment_east", "type": "solid", "x": 1456, "y": 0, "width": 80, "height": 1024 },
+        { "id": 5, "name": "chancery_building", "type": "solid", "x": 560, "y": 205, "width": 405, "height": 270 },
+        { "id": 6, "name": "motor_pool", "type": "solid", "x": 195, "y": 190, "width": 260, "height": 205 },
+        { "id": 7, "name": "consular_section", "type": "solid", "x": 210, "y": 505, "width": 260, "height": 190 },
+        { "id": 8, "name": "chapel", "type": "solid", "x": 1110, "y": 325, "width": 145, "height": 130 },
+        { "id": 9, "name": "residence", "type": "solid", "x": 1080, "y": 552, "width": 255, "height": 155 },
+        { "id": 10, "name": "helipad_fence", "type": "solid", "x": 1045, "y": 125, "width": 310, "height": 190 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "doors",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 11, "name": "south_gate_exit", "type": "door", "x": 700, "y": 780, "width": 140, "height": 105, "properties": [
+          { "name": "label", "type": "string", "value": "Embassy South Gate" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" }
+        ] }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "spawns",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 12, "name": "entry", "type": "spawn", "point": true, "x": 768, "y": 805 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "interactions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 13, "name": "chancery_door", "type": "interaction", "x": 690, "y": 285, "width": 150, "height": 115, "properties": [
+          { "name": "label", "type": "string", "value": "Chancery Door" },
+          { "name": "action", "type": "string", "value": "chancery-door" }
+        ] },
+        { "id": 14, "name": "consular_queue", "type": "interaction", "x": 180, "y": 600, "width": 180, "height": 175, "properties": [
+          { "name": "label", "type": "string", "value": "Consular Queue" },
+          { "name": "text", "type": "string", "value": "The queue is orderly. Cables need a later workflow." }
+        ] }
+      ]
+    }
+  ]
+}
