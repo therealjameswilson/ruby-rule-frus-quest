@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../../game/constants";
+import { unlockCodexEntry } from "../../game/codex";
 import type { Position } from "../../game/types";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { Enemy } from "./Enemy";
@@ -9,6 +10,7 @@ export class FederalShutdown extends Enemy {
   private closureUntil = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
+    unlockCodexEntry("enemy-federal-shutdown");
     super(scene, x, y, {
       label: "Federal government shutdown",
       spriteKey: "snes-federal-shutdown",

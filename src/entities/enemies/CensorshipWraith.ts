@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { danneAnimKey } from "../../art/danne_anims";
 import { PALETTE } from "../../game/constants";
 import { DANNE_RUNTIME_SPRITE_ASSETS } from "../../game/danneAtlas";
+import { unlockCodexEntry } from "../../game/codex";
 import type { Position } from "../../game/types";
 import { Player } from "../Player";
 import { Enemy } from "./Enemy";
@@ -15,6 +16,7 @@ export class CensorshipWraith extends Enemy {
   private facing: "down" | "up" | "left" | "right" = "down";
 
   constructor(scene: Phaser.Scene, x: number, y: number, waypoints: Position[]) {
+    unlockCodexEntry("enemy-censorship-wraith");
     super(scene, x, y, {
       label: "Censorship Wraith",
       spriteKey: WRAITH_ASSET.key,

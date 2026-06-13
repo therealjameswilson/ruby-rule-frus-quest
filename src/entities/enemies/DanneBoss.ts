@@ -3,6 +3,7 @@ import { danneAnimKey } from "../../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
 import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
 import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts";
+import { unlockCodexEntry } from "../../game/codex";
 import { addDanneItem, gameState, hasDanneItem, setLatestMessage } from "../../game/state";
 import type { Position } from "../../game/types";
 import { hideBossHud, setBossHp, showBossHud } from "../../systems/bossHud";
@@ -101,6 +102,7 @@ export class DanneBoss {
       .setVisible(false);
     const animKey = danneAnimKey(this.spriteKey, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
+    unlockCodexEntry("enemy-danne-boss");
   }
 
   get isActive() {
@@ -153,6 +155,7 @@ export class DanneBoss {
 
   private async runIntro() {
     this.phaseTransitioning = true;
+    unlockCodexEntry("danne-prime-humanoid");
     await this.showPhaseCutscene("danne-prime-humanoid", "intro", "danne-portrait-archivist");
     if (this.defeated) return;
     this.beginPhase("colossus");
@@ -162,6 +165,7 @@ export class DanneBoss {
 
   private beginPhase(phase: Exclude<DanneBossPhase, "intro" | "defeated">) {
     this.phase = phase;
+    unlockCodexEntry(this.variantKeyForPhase(phase));
     this.hp = this.maxHp;
     this.nextBoltAt = this.scene.time.now + 650;
     this.nextTeleportAt = this.scene.time.now + 900;
@@ -196,6 +200,7 @@ export class DanneBoss {
     this.clearBolts();
     this.clearMinis();
     gameState.sceneProgress.blackVaultBossCleared = 1;
+    unlockCodexEntry("danne-defeated");
     addDanneItem("treaty-fragments", 2);
     if (trueEnding) {
       await this.showPhaseCutscene("danne-ascendant", "ascendant", "danne-portrait-historian", "The complete treaty record forces DANN-E back into review.");

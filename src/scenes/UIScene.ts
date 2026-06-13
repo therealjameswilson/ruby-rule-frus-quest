@@ -1,8 +1,9 @@
 import Phaser from "phaser";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState } from "../game/state";
-import { addGamepadConnectionListener, updateInputCallbacks } from "../input/InputState";
+import { addGamepadConnectionListener, getInput, updateInputCallbacks } from "../input/InputState";
 import { TouchControls } from "../input/TouchControls";
+import { openCodex } from "../systems/codexOverlay";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -37,7 +38,13 @@ export class UIScene extends Phaser.Scene {
   }
 
   update() {
+    if (this.scene.isActive("CodexScene")) {
+      this.controls.refreshForScene(null);
+      return;
+    }
     this.controls.refreshForScene(this.activeGameplaySceneKey());
+    const activeSceneKey = this.activeGameplaySceneKey();
+    if (getInput().selectJustPressed && activeSceneKey) openCodex(this, activeSceneKey);
     this.scene.bringToTop();
   }
 

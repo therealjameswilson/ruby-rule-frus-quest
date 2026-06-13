@@ -547,6 +547,7 @@ export const SCENE_ORDER = [
   "SilentReadScene",
   "EndingScene",
   "TrueEndingScene",
+  "CodexScene",
   "RenderDebugScene",
   "DanneGallery",
   "SpriteGallery"

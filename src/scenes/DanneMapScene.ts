@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { unlockCodexEntry } from "../game/codex";
 import { DANNE_MAP_ASSETS } from "../game/danneAtlas";
 import type {
   DanneMapSceneKey,
@@ -129,6 +130,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       onInteract: () => this.handleInteraction(definition)
     }));
     this.createDanneEntities();
+    this.unlockCodexForScene();
     this.syncDanneReadout(this.time.now);
     this.installUiDebugHooks();
     this.installBossDebugStart();
@@ -433,6 +435,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (this.geometry.sceneKey === "EmbassyCableRoomScene") {
       this.marineGuard = new MarineSecurityGuard(this, 202, 156);
     }
+  }
+
+  private unlockCodexForScene() {
+    if (this.geometry.sceneKey === "CherryBlossomGardenScene") unlockCodexEntry("npc-historian");
+    if (this.geometry.sceneKey === "SenateHearingChamberScene") unlockCodexEntry("npc-senator");
+    if (this.geometry.sceneKey === "NaraStacksScene") unlockCodexEntry("npc-senior-archivist");
   }
 
   private startDanneBoss() {

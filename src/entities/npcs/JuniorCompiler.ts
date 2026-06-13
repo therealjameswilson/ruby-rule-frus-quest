@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { unlockCodexEntry } from "../../game/codex";
 import { DANNE_RUNTIME_SPRITE_ASSETS } from "../../game/danneAtlas";
 import { DanneNpc } from "./DanneNpc";
 
@@ -9,6 +10,7 @@ export class JuniorCompiler extends DanneNpc {
   private reading = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
+    unlockCodexEntry("npc-junior-compiler");
     super(scene, JUNIOR_COMPILER_ASSET, "Junior Compiler", x, y, {
       label: "JR COMP",
       scale: 0.18,

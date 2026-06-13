@@ -18,6 +18,7 @@ import {
 } from "../game/state";
 import { bindPointerPress, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
+import { openCodex } from "./codexOverlay";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -55,6 +56,7 @@ const COMPACT_TOOL_LINES: Record<string, string> = {
 
 const MODAL_BOUNDS = { left: 10, right: 246, top: 20, bottom: 188 };
 const CLOSE_HIT = { x: 223, y: 35, width: 44, height: 44 };
+const CODEX_HIT = { x: 171, y: 35, width: 58, height: 44 };
 
 export class InventoryOverlay {
   private readonly scene: Phaser.Scene;
@@ -109,6 +111,19 @@ export class InventoryOverlay {
       color: PALETTE.goldStamp
     }).setScrollFactor(0);
     bindPointerPress(closeHit, { down: () => this.hide() });
+    const codexHit = scene.add
+      .rectangle(171, 35, 58, 44, color(PALETTE.black), 0.01)
+      .setScrollFactor(0);
+    const codexBox = scene.add
+      .rectangle(171, 35, 44, 16, color(PALETTE.deepRuby))
+      .setStrokeStyle(1, color(PALETTE.terminalCyan))
+      .setScrollFactor(0);
+    const codexLabel = scene.add.text(171, 31, "CODEX", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5, 0).setScrollFactor(0);
+    bindPointerPress(codexHit, { down: () => this.openCodexFromInventory() });
     this.body = scene.add.text(16, touch ? 126 : 122, "", {
       fontFamily: "monospace",
       fontSize: touch ? "6px" : "5px",
@@ -132,8 +147,27 @@ export class InventoryOverlay {
     }).setScrollFactor(0);
     this.dannePopover = scene.add.container(0, 0, [popoverBox, this.dannePopoverImage, this.dannePopoverText]).setScrollFactor(0);
     updateInputCallbacks({ handlePauseTouch: (point) => this.handlePauseTouch(point.x, point.y) });
+    scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.handleScenePointerDown, this);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      scene.input.off(Phaser.Input.Events.POINTER_DOWN, this.handleScenePointerDown, this);
+    });
     this.container = scene.add
-      .container(0, 0, [dim, box, border, title, closeBox, closeLabel, closeHit, ...slotObjects, ...danneObjects, this.dannePopover, this.body])
+      .container(0, 0, [
+        dim,
+        box,
+        border,
+        title,
+        codexBox,
+        codexLabel,
+        codexHit,
+        closeBox,
+        closeLabel,
+        closeHit,
+        ...slotObjects,
+        ...danneObjects,
+        this.dannePopover,
+        this.body
+      ])
       .setDepth(980)
       .setVisible(false)
       .setScrollFactor(0);
@@ -198,7 +232,7 @@ export class InventoryOverlay {
       `EQUIPPED TOOL: ${hud.equippedItem?.displayName ?? "NONE"}`,
       `DANN-E ITEMS: ${danneSummary}`,
       `CONF ${hud.confidence.meter}  CLAR ${hud.clarity.meter}`,
-      "TAP TOOL/CARD TO EQUIP OR INSPECT. X CLOSES.",
+      "TAP TOOL/CARD TO EQUIP OR INSPECT. TAB/CODEX NOTES.",
       "",
       "QUEST ROUTE",
       areas.split("\n").slice(0, 3).join("\n"),
@@ -247,6 +281,10 @@ export class InventoryOverlay {
       this.hide();
       return true;
     }
+    if (this.hitRect(x, y, CODEX_HIT.x, CODEX_HIT.y, CODEX_HIT.width, CODEX_HIT.height)) {
+      this.openCodexFromInventory();
+      return true;
+    }
     const slot = this.itemSlots.find((candidate) => this.hitRect(x, y, candidate.box.x, candidate.box.y, 44, 44));
     if (slot) {
       this.tapTool(slot.id);
@@ -266,6 +304,11 @@ export class InventoryOverlay {
 
   private hitRect(x: number, y: number, cx: number, cy: number, width: number, height: number) {
     return Math.abs(x - cx) <= width / 2 && Math.abs(y - cy) <= height / 2;
+  }
+
+  private handleScenePointerDown(pointer: Phaser.Input.Pointer) {
+    if (!this.active) return;
+    this.handlePauseTouch(Math.round(pointer.x), Math.round(pointer.y));
   }
 
   private renderToolGrid() {
@@ -374,6 +417,11 @@ export class InventoryOverlay {
     setLatestMessage(`${item.displayName} inspected.`);
     retroAudio.confirm();
     this.render();
+  }
+
+  private openCodexFromInventory() {
+    this.hide();
+    openCodex(this.scene);
   }
 
   private tapTool(itemId: ProcessItemId) {

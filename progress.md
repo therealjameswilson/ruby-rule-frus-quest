@@ -620,3 +620,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Proxy rows passed for integer zoom, roughly 60 FPS, sub-50ms latency where touch applies, first-gesture audio unlock, pagehide save, and zero page errors.
 - Captured Phase 10 screenshots and four short WebM recordings for iPhone/Pixel portrait and landscape.
 - Real physical-device QA is still pending and explicitly not marked as passed.
+
+## 2026-06-13 DANN-E Integration Phase 8
+
+- Added the FRUS Field Codex overlay with Enemies, NPCs, DANN-E Variants, and Items categories.
+- Stored unlock state in `localStorage["ruby-rule.codexUnlocks"]` and exposed the readout through `window.render_game_to_text()`.
+- Wired encounter unlocks for DANN-E enemies, roaming antagonists, DANN-E boss variants, DANN-E items, and new NPCs while preserving locked silhouettes for undiscovered entries.
+- Bound the Codex to Tab/Select and added a CODEX button to the inventory overlay, including a pause-touch hit test so the button works with the always-on mobile UI scene.
+- Verified `npm run build`, direct `?scene=CodexScene` loading, Tab-open from Office, inventory-button open, and Censorship Wraith encounter unlock.
+- Captured Phase 8 screenshots: `danne-phase8-codex-variants-locked.png`, `danne-phase8-codex-wraith-unlocked.png`, `danne-phase8-codex-tab-open.png`, and `danne-phase8-codex-inventory-button.png`.

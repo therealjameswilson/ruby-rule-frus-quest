@@ -1,4 +1,5 @@
 import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
+import { getCodexReadout, unlockCodexEntry } from "./codex";
 import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import {
@@ -110,6 +111,7 @@ const TRANSIENT_SAVE_SCENES = new Set([
   "TapToStartScene",
   "WarningScene",
   "RenderDebugScene",
+  "CodexScene",
   "DanneGallery",
   "SpriteGallery"
 ]);
@@ -537,6 +539,7 @@ export function addDanneItem(itemId: DanneItemId, fragmentIndex?: number) {
   const item = danneItemDefinition(itemId);
   if (!item) return false;
   if (itemId === "treaty-fragments") {
+    unlockCodexEntry("item-treaty-fragments");
     const requestedIndex = fragmentIndex ?? getTreatyFragmentCount();
     const boundedIndex = Math.max(0, Math.min(TREATY_FRAGMENT_LABELS.length - 1, requestedIndex));
     const label = TREATY_FRAGMENT_LABELS[boundedIndex];
@@ -551,6 +554,7 @@ export function addDanneItem(itemId: DanneItemId, fragmentIndex?: number) {
     return false;
   }
   const before = gameState.inventory.length;
+  unlockCodexEntry(`item-${itemId}`);
   addInventoryItem(item.displayName);
   if (itemId === "ruby-pen" && !gameState.equippedDanneItem) gameState.equippedDanneItem = itemId;
   if (gameState.inventory.length !== before) {
@@ -1287,6 +1291,7 @@ export function renderGameToText() {
       processStamps: gameState.processStamps,
       processItems: getProcessItemReadout(),
       danneItems: getDanneItemReadout(),
+      codex: getCodexReadout(),
       workflowTools: getWorkflowToolReadout(),
       areaProgress: getAreaProgressReadout(),
       currentArea: getCurrentAreaReadout(),

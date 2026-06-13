@@ -5,6 +5,7 @@ import { BlackVaultLairScene } from "../scenes/BlackVaultLairScene";
 import { BootScene } from "../scenes/BootScene";
 import { CharacterCreateScene } from "../scenes/CharacterCreateScene";
 import { CherryBlossomGardenScene } from "../scenes/CherryBlossomGardenScene";
+import { CodexScene } from "../scenes/CodexScene";
 import { DanneGallery } from "../scenes/DanneGallery";
 import { EmbassyCableRoomScene } from "../scenes/EmbassyCableRoomScene";
 import { EndingScene } from "../scenes/EndingScene";
@@ -75,6 +76,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     SilentReadScene,
     EndingScene,
     TrueEndingScene,
+    CodexScene,
     RenderDebugScene,
     DanneGallery,
     SpriteGallery,

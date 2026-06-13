@@ -77,7 +77,7 @@ export class DanneGallery extends Phaser.Scene {
       fontSize: "9px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5, 0).setScrollFactor(0).setDepth(101);
-    this.add.text(128, 25, "29 REGISTERED TEXTURES  |  WHEEL / UP / DOWN", {
+    this.add.text(128, 25, `${DANNE_GALLERY_ASSETS.length} REGISTERED TEXTURES  |  WHEEL / UP / DOWN`, {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
