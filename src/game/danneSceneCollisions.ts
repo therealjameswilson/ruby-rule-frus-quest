@@ -138,8 +138,8 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
     objective: "Black Vault Lair: inspect the dormant DANN-E core.",
     musicScene: "EndingScene",
     spawn: { x: 128, y: 202 },
-    exitTarget: "OfficeScene",
-    exitLabel: "Vault Return Seal",
+    exitTarget: "ArchiveScene",
+    exitLabel: "Archive Boss Gate",
     walkable: mapWalkable("black vault floor"),
     solids: [
       { x: 95, y: 54, width: 66, height: 50, label: "DANN-E altar" },
@@ -171,7 +171,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
       },
       {
         id: "vault-return",
-        label: "Return to Office",
+        label: "Return to Archive",
         x: 128,
         y: 220,
         radius: 24,
@@ -180,7 +180,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["DANN-E Core Trigger", "Treaty Fragment III", "Vault Return Seal", "Obsidian Altar"]
+    visibleEntities: ["DANN-E Core Trigger", "Treaty Fragment III", "Archive Boss Gate", "Obsidian Altar"]
   },
   SenateHearingChamberScene: {
     sceneKey: "SenateHearingChamberScene",
@@ -228,7 +228,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
     objective: "NARA Stacks: read the classified stack note.",
     musicScene: "ArchiveScene",
     spawn: { x: 128, y: 205 },
-    exitTarget: "OfficeScene",
+    exitTarget: "ArchiveScene",
     exitLabel: "Archive Stairwell",
     walkable: mapWalkable("classified stack aisles"),
     solids: [
@@ -264,7 +264,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
       },
       {
         id: "stacks-return",
-        label: "Return to Office",
+        label: "Return to Archive",
         x: 128,
         y: 220,
         radius: 24,
@@ -287,8 +287,8 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
     objective: "Embassy Cable Room: inspect the bronze cipher machine.",
     musicScene: "NetworkScene",
     spawn: { x: 128, y: 204 },
-    exitTarget: "OfficeScene",
-    exitLabel: "Office Cable Door",
+    exitTarget: "ArchiveScene",
+    exitLabel: "Archive Cable Door",
     walkable: mapWalkable("cable-room floor"),
     solids: [
       { x: 24, y: 58, width: 54, height: 34, label: "left teletype bank" },
@@ -320,7 +320,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
       },
       {
         id: "embassy-return",
-        label: "Return to Office",
+        label: "Return to Archive",
         x: 128,
         y: 220,
         radius: 24,
@@ -329,6 +329,6 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["Bronze Cipher Machine", "Marine Security Guard", "Office Cable Door", "Steel Door", "World Clocks"]
+    visibleEntities: ["Bronze Cipher Machine", "Marine Security Guard", "Archive Cable Door", "Steel Door", "World Clocks"]
   }
 } as const;

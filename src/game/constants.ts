@@ -270,7 +270,7 @@ export const AREA_REGISTRY = [
     reward: "Golden Rule",
     rewardType: "stamp",
     rewardId: "rule",
-    scenes: ["OfficeScene"]
+    scenes: ["OfficeScene", "CherryBlossomGardenScene", "SenateHearingChamberScene"]
   },
   {
     id: "archive_cavern",
@@ -279,7 +279,7 @@ export const AREA_REGISTRY = [
     reward: "Citation Stamp",
     rewardType: "item",
     rewardId: "citation_stamp",
-    scenes: ["GuideScene", "ArchiveScene"]
+    scenes: ["GuideScene", "ArchiveScene", "NaraStacksScene"]
   },
   {
     id: "two_networks",
@@ -288,7 +288,7 @@ export const AREA_REGISTRY = [
     reward: "Clearance Token",
     rewardType: "item",
     rewardId: "clearance_token",
-    scenes: ["NetworkScene"]
+    scenes: ["NetworkScene", "EmbassyCableRoomScene"]
   },
   {
     id: "referral_vault",
@@ -324,7 +324,7 @@ export const AREA_REGISTRY = [
     reward: "Published FRUS cover",
     rewardType: "finalPrize",
     rewardId: "published_frus_cover",
-    scenes: ["EndingScene"]
+    scenes: ["EndingScene", "BlackVaultLairScene"]
   }
 ] as const;
 
@@ -350,8 +350,24 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "office_hub",
     title: "Office Hub",
     grid: { x: -1, y: 0 },
-    exits: { east: "A1" },
+    exits: { north: "DH1", west: "DG1", east: "A1" },
     lockedExits: { east: "Golden Rule door" },
+    roomType: "hint"
+  },
+  {
+    id: "DG1",
+    area: "office_hub",
+    title: "Cherry Blossom Garden",
+    grid: { x: -2, y: 0 },
+    exits: { east: "O1" },
+    roomType: "reward"
+  },
+  {
+    id: "DH1",
+    area: "office_hub",
+    title: "Senate Hearing Chamber",
+    grid: { x: -1, y: -1 },
+    exits: { south: "O1" },
     roomType: "hint"
   },
   {
@@ -359,17 +375,34 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "Source Entry",
     grid: { x: 0, y: 0 },
-    exits: { east: "A2", south: "B1" },
+    exits: { north: "DN1", east: "A2", south: "B1" },
     roomType: "normal"
+  },
+  {
+    id: "DN1",
+    area: "archive_cavern",
+    title: "NARA Stacks",
+    grid: { x: 0, y: -1 },
+    exits: { south: "A1" },
+    roomType: "puzzle"
   },
   {
     id: "A2",
     area: "archive_cavern",
     title: "OpenNet Annex",
     grid: { x: 1, y: 0 },
-    exits: { west: "A1", east: "A3", south: "B2" },
+    exits: { north: "DE1", west: "A1", east: "A3", south: "B2" },
     lockedExits: { south: "ClassNet seal" },
     requiredItems: { south: "clearance_token" },
+    roomType: "puzzle"
+  },
+  {
+    id: "DE1",
+    area: "two_networks",
+    title: "Embassy Cable Room",
+    grid: { x: 1, y: -1 },
+    exits: { south: "A2" },
+    lockedExits: { south: "Marine security door" },
     roomType: "puzzle"
   },
   {
@@ -457,7 +490,17 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "Queue Boss Gate",
     grid: { x: 2, y: 3 },
-    exits: { north: "C3", west: "D2" },
+    exits: { north: "C3", west: "D2", south: "DV1" },
+    lockedExits: { south: "Black Vault seal" },
+    roomType: "boss"
+  },
+  {
+    id: "DV1",
+    area: "buckram_gate",
+    title: "Black Vault Lair",
+    grid: { x: 2, y: 4 },
+    exits: { north: "D3" },
+    lockedExits: { north: "Treaty fragments or Buckram Key" },
     roomType: "boss"
   },
   {

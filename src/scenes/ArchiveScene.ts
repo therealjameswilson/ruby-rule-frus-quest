@@ -9,6 +9,7 @@ import {
   advanceDocumentWorkflow,
   awardProcessStamp,
   getAvailableWorkflowTools,
+  getTreatyFragmentCount,
   gameState,
   hasProcessItem,
   setHeldItem,
@@ -46,6 +47,7 @@ type SourceNoteStatus = "inactive" | "carried" | "routed" | "verified" | "stampe
 type Direction = "north" | "south" | "west" | "east";
 type ArchiveRoomId = "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
 type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "HOLD" | "AMBIGUOUS" | "DANN-E QUEUE";
+type ArchiveDanneRoute = "NaraStacksScene" | "EmbassyCableRoomScene" | "BlackVaultLairScene";
 
 interface ArchiveRoom {
   id: ArchiveRoomId;
@@ -76,6 +78,23 @@ const DOOR_X_MIN = 112;
 const DOOR_X_MAX = 144;
 const DOOR_Y_MIN = 104;
 const DOOR_Y_MAX = 136;
+const ARCHIVE_RETURN_ROOM_CODES: Record<ArchiveRoomId, number> = {
+  A1: 1,
+  A2: 2,
+  A3: 3,
+  B1: 4,
+  B2: 5,
+  B3: 6,
+  C1: 7,
+  C2: 8,
+  C3: 9,
+  D1: 10,
+  D2: 11,
+  D3: 12
+};
+const ARCHIVE_RETURN_ROOM_BY_CODE = Object.fromEntries(
+  Object.entries(ARCHIVE_RETURN_ROOM_CODES).map(([roomId, code]) => [code, roomId])
+) as Record<number, ArchiveRoomId>;
 
 const ARCHIVE_ROOMS: Record<ArchiveRoomId, ArchiveRoom> = {
   A1: {
@@ -311,14 +330,18 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   create() {
+    const archiveReturn = this.consumeArchiveReturnSpawn();
     const restoringArchive = gameState.currentScene === "ArchiveScene";
     const candidateRestoredRoomId = gameState.roomTraversal?.currentRoomId as ArchiveRoomId | undefined;
-    const restoredRoomId = restoringArchive && candidateRestoredRoomId && ARCHIVE_ROOMS[candidateRestoredRoomId]
+    const restoredRoomId = archiveReturn?.roomId
+      ?? (restoringArchive && candidateRestoredRoomId && ARCHIVE_ROOMS[candidateRestoredRoomId]
       ? candidateRestoredRoomId
       : restoringArchive
         ? "A1"
-        : null;
-    const restoredPlayer = restoringArchive
+        : null);
+    const restoredPlayer = archiveReturn
+      ? { x: archiveReturn.x, y: archiveReturn.y }
+      : restoringArchive
       ? { ...gameState.player }
       : null;
     setSceneState("ArchiveScene", "explore", "Archive Cavern: explore room A1.");
@@ -406,7 +429,7 @@ export class ArchiveScene extends Phaser.Scene {
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
     this.hintText.setText(nearest ? `${toolCue}${nearest.label.toUpperCase()}` : this.exitHint());
     if (input.aJustPressed) {
-      if (this.tryEnemyAction(nearest ?? undefined)) return;
+      if ((nearest?.kind === "enemy" || !nearest) && this.tryEnemyAction(nearest ?? undefined)) return;
       if (nearest) nearest.onInteract();
     }
     this.objectiveText.setText(gameState.objective);
@@ -509,6 +532,16 @@ export class ArchiveScene extends Phaser.Scene {
     ]));
 
     this.addDocumentInteractables();
+    this.drawArchiveDoor(128, 201, "NARA II\nSTAIRS", PALETTE.terminalCyan);
+    this.interactables.push({
+      id: "nara-stacks-stairs",
+      label: "NARA II Stacks",
+      x: 128,
+      y: 201,
+      radius: 30,
+      kind: "door",
+      onInteract: () => this.routeToDanneMap("NaraStacksScene", "A1", 128, 188)
+    });
     this.addRoomEnemy("repo-wall");
     if (this.sourceNoteStatus === "routed" || this.sourceNoteStatus === "verified" || this.sourceNoteStatus === "stamped") {
       this.drawRoutedSourceNote();
@@ -533,6 +566,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (!this.clearedWallIds.has("firewall-door")) {
       this.addRoomEnemy("firewall-door");
     }
+    this.drawArchiveDoor(42, 188, "EMBASSY\nCABLES", PALETTE.goldStamp);
     this.interactables.push({
       id: "opennet-annex-terminal",
       label: "OpenNet terminal",
@@ -541,6 +575,15 @@ export class ArchiveScene extends Phaser.Scene {
       radius: 34,
       kind: "terminal",
       onInteract: () => this.resolveNetworkRouting()
+    });
+    this.interactables.push({
+      id: "embassy-cable-hallway",
+      label: "Embassy Cable Room",
+      x: 42,
+      y: 188,
+      radius: 30,
+      kind: "door",
+      onInteract: () => this.routeToDanneMap("EmbassyCableRoomScene", "A2", 52, 184)
     });
   }
 
@@ -747,7 +790,17 @@ export class ArchiveScene extends Phaser.Scene {
       "STATECHAT CHECKLIST",
       "HUMAN OPENS"
     ], PALETTE.classNetRed));
+    this.drawArchiveDoor(128, 154, "BLACK\nVAULT", PALETTE.classNetRed);
     this.addRoomEnemy("danne-queue");
+    this.interactables.push({
+      id: "black-vault-seal",
+      label: "Black Vault Lair",
+      x: 128,
+      y: 154,
+      radius: 32,
+      kind: "door",
+      onInteract: () => this.openBlackVaultRoute()
+    });
     this.interactables.push({
       id: "boss-golden-rule-gate",
       label: "Golden Rule boss gate",
@@ -1092,6 +1145,39 @@ export class ArchiveScene extends Phaser.Scene {
     ]);
     this.clearEnemyById("danne-queue", "DANN-E QUEUE cleared by a human decision at the Golden Rule gate.");
     setObjective("Golden Rule decision recorded.");
+  }
+
+  private consumeArchiveReturnSpawn() {
+    const roomCode = gameState.sceneProgress.archiveReturnRoom;
+    const x = gameState.sceneProgress.archiveReturnX;
+    const y = gameState.sceneProgress.archiveReturnY;
+    delete gameState.sceneProgress.archiveReturnRoom;
+    delete gameState.sceneProgress.archiveReturnX;
+    delete gameState.sceneProgress.archiveReturnY;
+    const roomId = typeof roomCode === "number" ? ARCHIVE_RETURN_ROOM_BY_CODE[roomCode] : undefined;
+    if (!roomId || typeof x !== "number" || typeof y !== "number") return null;
+    return { roomId, x, y };
+  }
+
+  private routeToDanneMap(target: ArchiveDanneRoute, roomId: ArchiveRoomId, returnX: number, returnY: number) {
+    gameState.sceneProgress.archiveReturnRoom = ARCHIVE_RETURN_ROOM_CODES[roomId];
+    gameState.sceneProgress.archiveReturnX = returnX;
+    gameState.sceneProgress.archiveReturnY = returnY;
+    transitionTo(this, target);
+  }
+
+  private openBlackVaultRoute() {
+    if (getTreatyFragmentCount() >= 3 || this.goldenRuleDecisionMade || hasProcessItem("buckram_key") || gameState.sceneProgress.blackVaultBossCleared) {
+      this.routeToDanneMap("BlackVaultLairScene", "D3", 128, 188);
+      return;
+    }
+    retroAudio.warning();
+    setLatestMessage("Black Vault seal requires Treaty Fragments or a Golden Rule gate decision.");
+    setObjective("Record the Golden Rule decision or assemble Treaty Fragments before the Black Vault.");
+    this.dialog.show("BLACK VAULT SEAL", [
+      "The route is restricted.",
+      "Record the Golden Rule gate decision, or bring the full treaty file."
+    ]);
   }
 
   private updateBureaucraticWalls(delta: number) {
@@ -1566,6 +1652,19 @@ export class ArchiveScene extends Phaser.Scene {
         color: PALETTE.black
       }).setOrigin(0.5).setDepth(y));
     }
+  }
+
+  private drawArchiveDoor(x: number, y: number, label: string, accent: string) {
+    this.track(this.add.ellipse(x + 1, y + 8, 34, 8, color(PALETTE.black), 0.48).setDepth(y - 4));
+    this.track(this.add.rectangle(x, y, 42, 18, color(PALETTE.black)).setStrokeStyle(1, color(accent)).setDepth(y - 3));
+    this.track(this.add.rectangle(x, y + 4, 30, 8, color(PALETTE.deepRuby)).setDepth(y - 2));
+    this.track(this.add.text(x, y - 8, label, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: accent,
+      align: "center",
+      backgroundColor: PALETTE.black
+    }).setOrigin(0.5).setDepth(y - 1));
   }
 
   private drawWallMap(x: number, y: number, label = "MAP") {

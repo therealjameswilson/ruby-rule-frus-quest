@@ -629,3 +629,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Bound the Codex to Tab/Select and added a CODEX button to the inventory overlay, including a pause-touch hit test so the button works with the always-on mobile UI scene.
 - Verified `npm run build`, direct `?scene=CodexScene` loading, Tab-open from Office, inventory-button open, and Censorship Wraith encounter unlock.
 - Captured Phase 8 screenshots: `danne-phase8-codex-variants-locked.png`, `danne-phase8-codex-wraith-unlocked.png`, `danne-phase8-codex-tab-open.png`, and `danne-phase8-codex-inventory-button.png`.
+
+## 2026-06-13 DANN-E Integration Phase 9
+
+- Wired the five DANN-E map scenes into the world atlas and room graph:
+  - Office Hub now routes to Cherry Blossom Garden and Senate Hearing Chamber.
+  - Archive Cavern now routes to NARA Stacks and Embassy Cable Room.
+  - Queue Boss Gate now owns the gated Black Vault Lair route.
+- Added atlas landmarks and room-graph IDs `DG1`, `DH1`, `DN1`, `DE1`, and `DV1` for the new expansion spaces.
+- Added visible door markers in OfficeScene and ArchiveScene, with return spawn preservation through `sceneProgress`.
+- Fixed Archive interaction priority so a selected door or document is not preempted by a nearby/facing process-wall enemy; this keeps the Embassy Cable Room doorway usable beside the FIREWALL.
+- Updated `docs/danne-world-routes.md` with route notes and verification steps.
+- Verified `npm run build`, the required web-game Playwright client smoke, Office routes to Cherry/Senate, Archive routes to NARA/Embassy, direct Black Vault load/return, and pagehide save preservation from NARA Stacks.
+- Captured Phase 9 screenshots and state artifacts under `docs/screenshots/danne-phase9-*`.

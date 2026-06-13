@@ -1,0 +1,56 @@
+[
+  {
+    "route": "garden",
+    "before": {
+      "scene": "OfficeScene",
+      "player": {
+        "x": 16,
+        "y": 42
+      },
+      "nearest": "Cherry Blossom Garden"
+    },
+    "target": {
+      "scene": "CherryBlossomGardenScene",
+      "player": {
+        "x": 128,
+        "y": 190
+      },
+      "nearest": null
+    },
+    "returned": {
+      "scene": "OfficeScene",
+      "player": {
+        "x": 39,
+        "y": 58
+      },
+      "nearest": "Cherry Blossom Garden"
+    }
+  },
+  {
+    "route": "senate",
+    "before": {
+      "scene": "OfficeScene",
+      "player": {
+        "x": 211,
+        "y": 42
+      },
+      "nearest": "Senate Hearing Chamber"
+    },
+    "target": {
+      "scene": "SenateHearingChamberScene",
+      "player": {
+        "x": 128,
+        "y": 205
+      },
+      "nearest": "Return to Office"
+    },
+    "returned": {
+      "scene": "OfficeScene",
+      "player": {
+        "x": 215,
+        "y": 58
+      },
+      "nearest": "Senate Hearing Chamber"
+    }
+  }
+]

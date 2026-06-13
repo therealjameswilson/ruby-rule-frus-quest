@@ -23,6 +23,8 @@ import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 
+type OfficeDanneRoute = "CherryBlossomGardenScene" | "SenateHearingChamberScene";
+
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
@@ -50,7 +52,8 @@ export class OfficeScene extends Phaser.Scene {
     drawRoomFrame(this, "OFFICE HUB", PALETTE.goldStamp);
     this.drawOfficeInterior();
 
-    this.player = new Player(this, 128, 184);
+    const returnSpawn = this.consumeOfficeReturnSpawn();
+    this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 184);
     this.juniorCompiler = new JuniorCompiler(this, 70, 116);
     this.dialog = new DialogBox(this);
     this.inventory = new InventoryOverlay(this);
@@ -112,9 +115,35 @@ export class OfficeScene extends Phaser.Scene {
         radius: 24,
         kind: "door",
         onInteract: () => transitionTo(this, "GuideScene")
+      },
+      {
+        id: "cherry-garden-door",
+        label: "Cherry Blossom Garden",
+        x: 39,
+        y: 51,
+        radius: 26,
+        kind: "door",
+        onInteract: () => this.routeToDanneMap("CherryBlossomGardenScene", 39, 58)
+      },
+      {
+        id: "senate-hearing-door",
+        label: "Senate Hearing Chamber",
+        x: 215,
+        y: 51,
+        radius: 26,
+        kind: "door",
+        onInteract: () => this.routeToDanneMap("SenateHearingChamberScene", 215, 58)
       }
     ];
-    setVisibleEntities(["Junior Compiler", "Production Inbox", "FRUS Cart", "Archive Terminal", "Archive Guide Door"]);
+    setVisibleEntities([
+      "Junior Compiler",
+      "Production Inbox",
+      "FRUS Cart",
+      "Archive Terminal",
+      "Archive Guide Door",
+      "Cherry Blossom Garden Door",
+      "Senate Hearing Chamber Door"
+    ]);
   }
 
   update(_: number, delta: number) {
@@ -210,9 +239,26 @@ export class OfficeScene extends Phaser.Scene {
     ]);
   }
 
+  private consumeOfficeReturnSpawn() {
+    const x = gameState.sceneProgress.officeReturnX;
+    const y = gameState.sceneProgress.officeReturnY;
+    delete gameState.sceneProgress.officeReturnX;
+    delete gameState.sceneProgress.officeReturnY;
+    if (typeof x !== "number" || typeof y !== "number") return null;
+    return { x, y };
+  }
+
+  private routeToDanneMap(target: OfficeDanneRoute, returnX: number, returnY: number) {
+    gameState.sceneProgress.officeReturnX = returnX;
+    gameState.sceneProgress.officeReturnY = returnY;
+    transitionTo(this, target);
+  }
+
   private drawOfficeInterior() {
     this.add.rectangle(128, 128, 210, 160, color(PALETTE.creamPaper)).setDepth(-20);
     this.add.rectangle(128, 43, 208, 12, color(PALETTE.sepiaInk)).setDepth(-15);
+    this.drawSmallDoor(39, 47, "GARDEN", PALETTE.openNetGreen);
+    this.drawSmallDoor(215, 47, "SENATE", PALETTE.goldStamp);
     this.add.rectangle(128, 219, 30, 10, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(20);
     this.add.text(128, 213, "ARCHIVE", {
       fontFamily: "monospace",
@@ -249,5 +295,16 @@ export class OfficeScene extends Phaser.Scene {
     this.drawDesk(x, y, "TERM");
     this.add.rectangle(x, y - 9, 22, 14, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(-3);
     this.add.rectangle(x, y - 9, 14, 7, color(PALETTE.terminalCyan), 0.7).setDepth(-2);
+  }
+
+  private drawSmallDoor(x: number, y: number, label: string, accent: string) {
+    this.add.rectangle(x, y, 30, 12, color(PALETTE.black)).setStrokeStyle(1, color(accent)).setDepth(16);
+    this.add.rectangle(x, y + 3, 20, 5, color(PALETTE.deepRuby)).setDepth(17);
+    this.add.text(x, y - 4, label, {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: accent,
+      backgroundColor: PALETTE.black
+    }).setOrigin(0.5).setDepth(18);
   }
 }

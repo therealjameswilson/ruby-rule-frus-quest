@@ -685,6 +685,22 @@ export function getRoomGraphReadout() {
     visitedRoomIds.add("O1");
     revealedRoomIds.add("O1");
   }
+  if (gameState.currentScene === "CherryBlossomGardenScene") {
+    visitedRoomIds.add("DG1");
+    revealedRoomIds.add("DG1");
+  }
+  if (gameState.currentScene === "SenateHearingChamberScene") {
+    visitedRoomIds.add("DH1");
+    revealedRoomIds.add("DH1");
+  }
+  if (gameState.currentScene === "NaraStacksScene") {
+    visitedRoomIds.add("DN1");
+    revealedRoomIds.add("DN1");
+  }
+  if (gameState.currentScene === "EmbassyCableRoomScene") {
+    visitedRoomIds.add("DE1");
+    revealedRoomIds.add("DE1");
+  }
   if (gameState.currentScene === "NetworkScene") {
     visitedRoomIds.add("N1");
     revealedRoomIds.add("N1");
@@ -702,6 +718,10 @@ export function getRoomGraphReadout() {
   if (gameState.currentScene === "EndingScene") {
     visitedRoomIds.add("G1");
     revealedRoomIds.add("G1");
+  }
+  if (gameState.currentScene === "BlackVaultLairScene") {
+    visitedRoomIds.add("DV1");
+    revealedRoomIds.add("DV1");
   }
   return FRUS_ROOM_GRAPH.map((room) => ({
     id: room.id,
