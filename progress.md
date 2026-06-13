@@ -218,6 +218,20 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - changed the start flow to Character Create -> Office Hub -> Archive Cavern -> Archive rooms, matching the requested progression
   - moved Red Pencil and Proof Lens from pre-granted Silent Read tools into earned dungeon rewards
   - exposed `areaProgress` and `currentArea` through `render_game_to_text()` and added a compact quest-route readout to the inventory overlay
+- Completed mobile Phase 3 input architecture:
+  - added `src/input/InputState.ts` as the single keyboard/touch/pointer/gamepad input adapter
+  - moved gameplay scenes to `tickInput()` plus `getInput()` at the top of `update()`
+  - removed direct `input.keyboard`, `Phaser.Input.Keyboard`, `KeyboardMap`, and pointer event reads outside `src/input/`
+  - rewired touch buttons away from synthetic `KeyboardEvent`s and into shared touch state
+  - preserved character-name typing by separating role-card navigation from WASD letter typing
+  - verified `npm run build`, required web-game client input bursts, GuideScene movement/pickup, in-app browser canvas load, and iPhone/Pixel portrait/landscape screenshots
+- Completed mobile Phase 4 touch controls and audio start gate:
+  - added `TapToStartScene` so first tap/press unlocks and pre-warms the Web Audio context before TitleScene
+  - added `UIScene` plus `src/input/TouchControls.ts` for a canvas-drawn floating D-pad, A/B/Start/Select buttons, haptic press feedback, and F10 force-show debug toggle
+  - routed touch through direct canvas pointer listeners inside `src/input/` so D-pad and A can be held simultaneously without synthetic keyboard events
+  - kept controls semi-transparent at rest, brighter/compressed on press, and scene-independent through the overlay scene
+  - verified `npm run build`, a Playwright tap-gate/control probe, `GuideScene` A/dialog advance, D-pad movement north from `y=160` to `y=113`, held D-pad plus A state, video capture, in-app browser no-console-error smoke, and iPhone/Pixel portrait/landscape Playwright device-profile screenshots
+  - noted that real-device QA remains for Phase 10; Phase 4 artifacts are local/emulated-device verification
   - verified `npm run build`, required web-game client OfficeScene screenshot/state, and a direct Playwright probe covering route order, direct-scene seeding, reward gating, and Buckram Gate completion
 - Refined the NES-style dungeon grammar:
   - added a shared FRUS room graph with stable room IDs, room types, locked exits, required items, secret rooms, and Buckram Gate metadata
@@ -258,6 +272,30 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - made `gameState.documentCandidates` the source of truth for `documentWorkflow`, volume metrics, counters, and `render_game_to_text().questWorkflow`
   - wired Archive pickup/provenance, Network routing, Referral equity/excision, Silent Read proofing, and Ending publication into the workflow helpers
   - expanded `public/assets/data/items.json` to mirror the document-candidate metadata loaded by BootScene
+- Started `feature/mobile-snes-quality` Phase 0 from updated `main`:
+  - confirmed the current base resolution remains 256x240 with Canvas renderer, `pixelArt: true`, `roundPixels: true`, antialiasing disabled, `Phaser.Scale.FIT`, and `zoom: 3`
+  - added a hidden `?mobileDebug=1` / F11 debug HUD reporting FPS, pointer latency probe, pointer count, DPR, canvas CSS/backing size, computed zoom, integer-zoom status, and first-frame timing
+  - audited direct keyboard/pointer/touch paths and recorded that input still bypasses a unified `src/input/` architecture
+  - audited fixed-pixel HUD/dialogue/menu surfaces and the current HTML/CSS mobile shell
+  - measured local Vite preview under Playwright iPhone 14 Pro and Pixel 7 portrait/landscape profiles, captured screenshots and recordings, and documented the fractional zoom failure in `docs/mobile/baseline.md`
+  - verified `npm run build` after adding the debug HUD; only the existing Phaser chunk-size warning remains
+- Completed `feature/mobile-snes-quality` Phase 1 render lock:
+  - kept the sacred 256x240 base resolution while forcing the displayed game shell to whole-number CSS zoom only
+  - added a resize/orientation guard that refreshes Phaser scale and corrects canvas CSS drift if computed zoom differs from the integer target by more than 0.001
+  - added a `?pixelProof=1` / F8 checkerboard, diagonal-line, and stripe overlay for visual pixel proof
+  - extended the debug HUD with integer target zoom, proof-overlay status, and guard correction count
+  - converted a few debug/gallery/prop fractional scales to 1x, leaving the compact character-create thumbnails for a later UI redesign
+  - verified local preview mobile profiles for iPhone 14 Pro and Pixel 7 portrait/landscape; all reported 256x240 CSS canvas, 256x240 backing store, computed zoom 1.000, integer zoom true, and zero console errors
+  - verified the in-app browser at a desktop-style viewport reports a 512x480 canvas for a 2x shell with the proof overlay visible
+  - verified `npm run build`; only the existing Phaser chunk-size warning remains
+- Completed `feature/mobile-snes-quality` Phase 2 mobile shell:
+  - updated viewport/PWA meta tags, black theme color, Apple status-bar behavior, and telephone-format detection
+  - moved the outer shell to black `100dvw`/`100dvh` with hidden overflow, no overscroll, no selection, no tap highlight, and safe-area padding
+  - added dynamic viewport CSS vars, debounced resize/orientation refresh, and visualViewport resize handling before reapplying the integer zoom guard
+  - added canvas-only `touchmove` prevention while leaving body touchmove uncanceled by JavaScript
+  - added a dismissible iOS Add-to-Home hint and Android/Chrome fullscreen affordance
+  - verified iPhone 14 Pro and Pixel 7 portrait/landscape profiles: integer zoom stayed true, iOS hint appeared only on iPhone profiles, fullscreen affordance appeared only on Pixel profiles and hid after tap, canvas touchmove was prevented, body touchmove was not, and console errors stayed at zero
+  - verified the in-app browser reports the updated viewport meta, hidden overflow, `touch-action: none`, and a clean 2x integer shell
   - added exact `TILE_SIZE`, `HALF_TILE`, and `PLAYER_GRID_CORRECTION` exports to the quest architecture layer
   - verified `npm run build`, `git diff --check`, direct scene text-state probes, and the bundled web-game Playwright client with screenshot inspection
 - Added a sixth seeded document candidate:
@@ -463,3 +501,46 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Verified that character spritesheet loading is centralized through `src/art/characters.ts` and `BootScene.preloadCharacters(this)`.
 - Pushed `feature/wire-16bit-sprites` to origin.
 - PR creation is blocked locally because `gh` is not installed and the GitHub connector returned `token_expired`; the PR creation URL and requested title are recorded in the final report.
+
+## 2026-06-12 Mobile SNES Quality Phase 5
+
+- Added tap-to-advance and long-press fast-forward routing for dialogue through the unified input layer.
+- Reworked the manuscript inventory into a pause-mode modal with tappable tool slots, a 44px-class close target, outside-dismiss behavior, and locked/equipped tool feedback.
+- Fixed HUD, dialogue, inventory, and objective overlays to the camera so mobile scaling and scene movement do not drag UI with the map.
+- Verified the phase with touch probes, the web-game Playwright client, and iPhone 14 Pro / Pixel 7 portrait and landscape viewport screenshots.
+
+## 2026-06-12 Mobile SNES Quality Phase 6
+
+- Hardened the oscillator-only Web Audio path with first-gesture unlock/prewarm, queued score start for direct scene links, same-theme music continuity, and a shared master gain node.
+- Added visibility/page lifecycle handling so backgrounding suspends audio and foregrounding resumes the active score with a short fade-in.
+- Added context state-change handling for iOS-style audio interruptions plus a `window.rubyRuleAudioDebug()` QA readout.
+- Verified the phase with an audio lifecycle probe, the standard web-game client, Playwright iPhone/Pixel device-profile screenshots, and an in-app browser console-error smoke.
+
+## 2026-06-12 Mobile SNES Quality Phase 7
+
+- Added a tiny `F7` / `?fps=1` performance overlay and expanded the `F11` mobile debug HUD with frame p99, max frame time, sample count, and histogram buckets.
+- Reworked the frame sampler to avoid per-frame array filter/map/reduce allocations while measuring the game.
+- Added `npm run perf:profile` for repeatable local/deployed browser performance sampling with JSON output and optional screenshots.
+- Verified the phase with `npm run build`, local 60 FPS profile artifacts, Playwright iPhone/Pixel device-profile screenshots, and an in-app browser load/log check.
+
+## 2026-06-12 Mobile SNES Quality Phase 8
+
+- Added versioned save/resume state with localStorage primary persistence and sessionStorage fallback.
+- Autosaves now run on scene transitions, every 30 seconds during active play, `visibilitychange -> hidden`, and `pagehide`.
+- Added a Continue/New Game boot choice when a save exists, plus a tap-to-resume overlay after backgrounding.
+- Verified Continue restores scene/profile/inventory/stamps/document points, non-default Archive position/facing, New Game save clearing, and tap-to-resume behavior with Playwright probes.
+
+## 2026-06-12 Mobile SNES Quality Phase 9
+
+- Added Bluetooth gamepad support through the unified input state, mapping D-pad/stick, A, B, ability, Start, and Select without direct gameplay reads outside `src/input/`.
+- Added gamepad connect/disconnect listeners so the touch overlay fades away when a controller is active and returns when it disconnects.
+- Added a small controller toast plus `window.rubyRuleGamepadDebug()` and mobile debug HUD readout for QA.
+- Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
+
+## 2026-06-12 Mobile SNES Quality Phase 10
+
+- Added `docs/mobile/qa_matrix.md` with the requested device/browser/orientation matrix.
+- Ran automated Chromium device-profile proxy checks for iPhone 14/15 Pro, iPhone SE 2, Pixel 7/8, older Android, iPad Air, and an iPhone + mocked 8BitDo controller row.
+- Proxy rows passed for integer zoom, roughly 60 FPS, sub-50ms latency where touch applies, first-gesture audio unlock, pagehide save, and zero page errors.
+- Captured Phase 10 screenshots and four short WebM recordings for iPhone/Pixel portrait and landscape.
+- Real physical-device QA is still pending and explicitly not marked as passed.

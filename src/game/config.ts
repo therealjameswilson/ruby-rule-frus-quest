@@ -11,7 +11,9 @@ import { ReferralVaultScene } from "../scenes/ReferralVaultScene";
 import { RenderDebugScene } from "../scenes/RenderDebugScene";
 import { SilentReadScene } from "../scenes/SilentReadScene";
 import { SpriteGallery } from "../scenes/SpriteGallery";
+import { TapToStartScene } from "../scenes/TapToStartScene";
 import { TitleScene } from "../scenes/TitleScene";
+import { UIScene } from "../scenes/UIScene";
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.CANVAS,
@@ -28,15 +30,27 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     pixelArt: true,
     antialias: false,
     antialiasGL: false,
-    roundPixels: true
+    roundPixels: true,
+    powerPreference: "high-performance"
+  },
+  input: {
+    activePointers: 4,
+    gamepad: true
+  },
+  audio: {
+    disableWebAudio: false
   },
   scale: {
+    parent: "game-shell",
     mode: Phaser.Scale.FIT,
+    width: GAME_WIDTH,
+    height: GAME_HEIGHT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     autoRound: true
   },
   scene: [
     BootScene,
+    TapToStartScene,
     TitleScene,
     CharacterCreateScene,
     GuideScene,
@@ -47,6 +61,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     SilentReadScene,
     EndingScene,
     RenderDebugScene,
-    SpriteGallery
+    SpriteGallery,
+    UIScene
   ]
 };

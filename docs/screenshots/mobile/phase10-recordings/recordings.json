@@ -1,0 +1,18 @@
+[
+  {
+    "id": "iphone14pro-portrait",
+    "path": "docs/screenshots/mobile/phase10-recordings/iphone14pro-portrait.webm"
+  },
+  {
+    "id": "iphone14pro-landscape",
+    "path": "docs/screenshots/mobile/phase10-recordings/iphone14pro-landscape.webm"
+  },
+  {
+    "id": "pixel7-portrait",
+    "path": "docs/screenshots/mobile/phase10-recordings/pixel7-portrait.webm"
+  },
+  {
+    "id": "pixel7-landscape",
+    "path": "docs/screenshots/mobile/phase10-recordings/pixel7-landscape.webm"
+  }
+]

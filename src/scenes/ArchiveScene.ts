@@ -23,6 +23,7 @@ import {
   setVisibleThreats
 } from "../game/state";
 import type { Interactable } from "../game/types";
+import { getInput, tickInput } from "../input/InputState";
 import { Manuscript } from "../entities/items/Manuscript";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { Player } from "../entities/Player";
@@ -310,6 +311,16 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   create() {
+    const restoringArchive = gameState.currentScene === "ArchiveScene";
+    const candidateRestoredRoomId = gameState.roomTraversal?.currentRoomId as ArchiveRoomId | undefined;
+    const restoredRoomId = restoringArchive && candidateRestoredRoomId && ARCHIVE_ROOMS[candidateRestoredRoomId]
+      ? candidateRestoredRoomId
+      : restoringArchive
+        ? "A1"
+        : null;
+    const restoredPlayer = restoringArchive
+      ? { ...gameState.player }
+      : null;
     setSceneState("ArchiveScene", "explore", "Archive Cavern: explore room A1.");
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.archiveAmber);
@@ -335,31 +346,34 @@ export class ArchiveScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(810);
     this.player = new Player(this, 128, 184);
 
-    this.enterRoom("A1", { x: 128, y: 184 }, false);
-    this.dialog.show("ELENA", [
-      "A compiler reads the trail.",
-      "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving.",
-      "Use the edge gates to map each room, but verify Source Note 47 here."
-    ]);
+    this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
+    if (!restoredPlayer) {
+      this.dialog.show("ELENA", [
+        "A compiler reads the trail.",
+        "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving.",
+        "Use the edge gates to map each room, but verify Source Note 47 here."
+      ]);
+    }
   }
 
   update(_: number, delta: number) {
-    const keys = this.player.inputKeys;
-    if (Phaser.Input.Keyboard.JustDown(keys.f)) this.scale.toggleFullscreen();
-    if (Phaser.Input.Keyboard.JustDown(keys.m)) this.inventory.toggle();
-    if (Phaser.Input.Keyboard.JustDown(keys.n)) {
+    tickInput();
+    const input = getInput();
+    if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (input.menuJustPressed) this.inventory.toggle();
+    if (input.soundJustPressed) {
       retroAudio.toggle();
       this.reliability.update();
     }
-    if (Phaser.Input.Keyboard.JustDown(keys.r)) this.reliability.toggleDetails();
-    if (Phaser.Input.Keyboard.JustDown(keys.e)) activateRoleAbility(this);
+    if (input.reliabilityJustPressed) this.reliability.toggleDetails();
+    if (input.abilityJustPressed) activateRoleAbility(this);
 
     if (this.roomTransitionLocked) {
       this.player.update(delta, false);
       return;
     }
     if (this.dialog.active) {
-      if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) this.dialog.advance();
+      if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       return;
     }
@@ -367,7 +381,7 @@ export class ArchiveScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (Phaser.Input.Keyboard.JustDown(keys.esc)) {
+    if (input.pauseJustPressed) {
       this.dialog.show("PAUSED", "The archive waits.");
       return;
     }
@@ -378,7 +392,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.sourceNoteStatus !== "inactive" && this.sourceNoteStatus !== "stamped") {
       this.updateSourceNoteVerification();
       this.reliability.update();
-      if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) {
+      if (input.aJustPressed) {
         this.handleSourceNoteAction();
       }
       this.objectiveText.setText(gameState.objective);
@@ -391,7 +405,7 @@ export class ArchiveScene extends Phaser.Scene {
     setNearestInteractable(nearest?.label ?? null);
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
     this.hintText.setText(nearest ? `${toolCue}${nearest.label.toUpperCase()}` : this.exitHint());
-    if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) {
+    if (input.aJustPressed) {
       if (this.tryEnemyAction(nearest ?? undefined)) return;
       if (nearest) nearest.onInteract();
     }

@@ -17,6 +17,7 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
+import { getInput, tickInput } from "../input/InputState";
 import { Player } from "../entities/Player";
 import { retroAudio } from "../systems/audio";
 import { InventoryOverlay } from "../systems/inventory";
@@ -79,19 +80,20 @@ export class EndingScene extends Phaser.Scene {
   }
 
   update(_: number, delta: number) {
-    const keys = this.player.inputKeys;
-    if (Phaser.Input.Keyboard.JustDown(keys.f)) this.scale.toggleFullscreen();
-    if (Phaser.Input.Keyboard.JustDown(keys.m)) this.inventory.toggle();
-    if (Phaser.Input.Keyboard.JustDown(keys.n)) {
+    tickInput();
+    const input = getInput();
+    if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (input.menuJustPressed) this.inventory.toggle();
+    if (input.soundJustPressed) {
       retroAudio.toggle();
       this.reliability.update();
     }
-    if (Phaser.Input.Keyboard.JustDown(keys.r)) this.reliability.toggleDetails();
-    if (Phaser.Input.Keyboard.JustDown(keys.e) && !this.published) activateRoleAbility(this);
+    if (input.reliabilityJustPressed) this.reliability.toggleDetails();
+    if (input.abilityJustPressed && !this.published) activateRoleAbility(this);
 
     if (this.published) {
       this.player.update(delta, false);
-      if (this.canRestart && (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter))) {
+      if (this.canRestart && input.aJustPressed) {
         this.restart();
       }
       return;
@@ -102,13 +104,13 @@ export class EndingScene extends Phaser.Scene {
       return;
     }
 
-    if (Phaser.Input.Keyboard.JustDown(keys.esc)) {
+    if (input.pauseJustPressed) {
       setLatestMessage("Buckram Gate paused. Human certification still required.");
     }
 
     this.player.update(delta, true, { bounds: GATE_PLAY_BOUNDS });
     this.updateGateReadout();
-    if (Phaser.Input.Keyboard.JustDown(keys.space) || Phaser.Input.Keyboard.JustDown(keys.enter)) {
+    if (input.aJustPressed) {
       this.handleGateAction();
     }
     this.reliability.update();

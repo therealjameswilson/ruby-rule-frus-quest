@@ -1,12 +1,19 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import type { ProcessItemId } from "../game/constants";
+import type { GameMode } from "../game/types";
 import {
+  equipProcessItem,
   gameState,
   getAdventureHudReadout,
   getAreaProgressReadout,
   getDocumentWorkflowReadout,
+  getProcessItemReadout,
+  setLatestMessage,
   getWorkflowToolReadout
 } from "../game/state";
+import { bindPointerPress, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
+import { retroAudio } from "./audio";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -23,31 +30,66 @@ const COMPACT_TOOL_LINES: Record<string, string> = {
   buckram_key: "publication gate = certified"
 };
 
+const MODAL_BOUNDS = { left: 10, right: 246, top: 20, bottom: 188 };
+const CLOSE_HIT = { x: 223, y: 35, width: 44, height: 44 };
+
 export class InventoryOverlay {
   private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
   private readonly body: Phaser.GameObjects.Text;
+  private previousMode: GameMode | null = null;
+  private readonly itemSlots: Array<{
+    id: ProcessItemId;
+    box: Phaser.GameObjects.Rectangle;
+    label: Phaser.GameObjects.Text;
+  }> = [];
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    const box = scene.add.rectangle(128, 104, 236, 168, color(PALETTE.black));
-    const border = scene.add.rectangle(128, 104, 236, 168).setStrokeStyle(2, color(PALETTE.goldStamp));
+    const touch = isTouchInputCapable();
+    const dim = scene.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black), 0.62)
+      .setScrollFactor(0);
+    bindPointerPress(dim, { down: () => this.hide() });
+    const box = scene.add
+      .rectangle(128, 104, 236, 168, color(PALETTE.black))
+      .setScrollFactor(0);
+    const border = scene.add
+      .rectangle(128, 104, 236, 168)
+      .setStrokeStyle(2, color(PALETTE.goldStamp))
+      .setScrollFactor(0);
     const title = scene.add.text(16, 25, "MANUSCRIPT INVENTORY", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.goldStamp
-    });
-    this.body = scene.add.text(16, 42, "", {
+    }).setScrollFactor(0);
+    const closeHit = scene.add
+      .rectangle(223, 35, 44, 44, color(PALETTE.black), 0.01)
+      .setScrollFactor(0);
+    const closeBox = scene.add
+      .rectangle(223, 35, 16, 16, color(PALETTE.deepRuby))
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setScrollFactor(0);
+    const closeLabel = scene.add.text(220, 29, "X", {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "8px",
+      color: PALETTE.goldStamp
+    }).setScrollFactor(0);
+    bindPointerPress(closeHit, { down: () => this.hide() });
+    this.body = scene.add.text(16, touch ? 96 : 90, "", {
+      fontFamily: "monospace",
+      fontSize: touch ? "7px" : "6px",
       color: PALETTE.creamPaper,
       wordWrap: { width: 224, useAdvancedWrap: true },
       lineSpacing: 1
-    });
+    }).setScrollFactor(0);
+    const slotObjects = this.createToolGrid(scene);
+    updateInputCallbacks({ handlePauseTouch: (point) => this.handlePauseTouch(point.x, point.y) });
     this.container = scene.add
-      .container(0, 0, [box, border, title, this.body])
+      .container(0, 0, [dim, box, border, title, closeBox, closeLabel, closeHit, ...slotObjects, this.body])
       .setDepth(980)
-      .setVisible(false);
+      .setVisible(false)
+      .setScrollFactor(0);
   }
 
   get active() {
@@ -56,11 +98,32 @@ export class InventoryOverlay {
 
   toggle() {
     if (this.active) {
-      this.container.setVisible(false);
+      this.hide();
       return;
     }
+    this.show();
+  }
+
+  hide() {
+    this.container.setVisible(false);
+    if (this.previousMode) {
+      gameState.mode = this.previousMode;
+      this.previousMode = null;
+    }
+  }
+
+  private show() {
+    this.previousMode = gameState.mode;
+    gameState.mode = "pause";
+    this.render();
+    this.container.setVisible(true);
+  }
+
+  private render() {
     const tools = getWorkflowToolReadout()
-      .map((tool) => `${tool.acquired ? "OK" : "--"} ${tool.shortLabel}: ${COMPACT_TOOL_LINES[tool.id]}`)
+      .filter((tool) => tool.acquired)
+      .slice(0, 3)
+      .map((tool) => `${tool.shortLabel}: ${COMPACT_TOOL_LINES[tool.id]}`)
       .join("\n");
     const areas = getAreaProgressReadout()
       .map((area) => {
@@ -80,16 +143,99 @@ export class InventoryOverlay {
       `FRUS VOLUME PARTS: ${gameState.volumeFragments.length}/5`,
       `EQUIPPED TOOL: ${hud.equippedItem?.displayName ?? "NONE"}`,
       `CONF ${hud.confidence.meter}  CLAR ${hud.clarity.meter}`,
+      "TAP A TOOL TO EQUIP. TAP X TO CLOSE.",
       "",
       "QUEST ROUTE",
-      areas,
+      areas.split("\n").slice(0, 4).join("\n"),
       "",
       "DOCUMENT FLOW",
-      documents,
-      "",
-      "WORKFLOW TOOLS",
+      documents.split("\n").slice(0, 2).join("\n"),
+      tools ? "\nREADY TOOLS" : "",
       tools
     ].join("\n"));
-    this.container.setVisible(true);
+    this.renderToolGrid();
+  }
+
+  private createToolGrid(scene: Phaser.Scene) {
+    const objects: Phaser.GameObjects.GameObject[] = [];
+    const items = getProcessItemReadout();
+    items.forEach((item, index) => {
+      const col = index % 4;
+      const row = Math.floor(index / 4);
+      const x = 35 + col * 47;
+      const y = 53 + row * 26;
+      const hit = scene.add
+        .rectangle(x, y, 44, 44, color(PALETTE.black), 0.01)
+        .setScrollFactor(0);
+      const box = scene.add
+        .rectangle(x, y, 34, 20, color(PALETTE.black))
+        .setStrokeStyle(1, color(PALETTE.stoneGray))
+        .setScrollFactor(0);
+      const label = scene.add.text(x, y - 4, item.shortLabel, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.stoneGray,
+        align: "center"
+      }).setOrigin(0.5).setScrollFactor(0);
+      bindPointerPress(hit, { down: () => this.tapTool(item.id as ProcessItemId) });
+      this.itemSlots.push({ id: item.id as ProcessItemId, box, label });
+      objects.push(hit, box, label);
+    });
+    return objects;
+  }
+
+  private handlePauseTouch(x: number, y: number) {
+    if (!this.active) return false;
+    if (this.hitRect(x, y, CLOSE_HIT.x, CLOSE_HIT.y, CLOSE_HIT.width, CLOSE_HIT.height)) {
+      this.hide();
+      return true;
+    }
+    const slot = this.itemSlots.find((candidate) => this.hitRect(x, y, candidate.box.x, candidate.box.y, 44, 44));
+    if (slot) {
+      this.tapTool(slot.id);
+      return true;
+    }
+    if (x < MODAL_BOUNDS.left || x > MODAL_BOUNDS.right || y < MODAL_BOUNDS.top || y > MODAL_BOUNDS.bottom) {
+      this.hide();
+      return true;
+    }
+    return true;
+  }
+
+  private hitRect(x: number, y: number, cx: number, cy: number, width: number, height: number) {
+    return Math.abs(x - cx) <= width / 2 && Math.abs(y - cy) <= height / 2;
+  }
+
+  private renderToolGrid() {
+    const readout = getProcessItemReadout();
+    for (const slot of this.itemSlots) {
+      const item = readout.find((candidate) => candidate.id === slot.id);
+      const acquired = Boolean(item?.acquired);
+      const equipped = Boolean(item?.equipped);
+      slot.box.setFillStyle(color(equipped ? PALETTE.goldStamp : acquired ? PALETTE.deepRuby : PALETTE.black));
+      slot.box.setStrokeStyle(1, color(equipped ? PALETTE.white : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
+      slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
+      slot.label.setText(item?.shortLabel ?? "--");
+    }
+  }
+
+  private tapTool(itemId: ProcessItemId) {
+    const item = getProcessItemReadout().find((candidate) => candidate.id === itemId);
+    if (!item?.acquired) {
+      setLatestMessage("Tool not in the folder yet.");
+      retroAudio.warning();
+      this.render();
+      return;
+    }
+    if (item.equipped) {
+      setLatestMessage(`${item.displayName} ready.`);
+      retroAudio.confirm();
+      this.render();
+      return;
+    }
+    equipProcessItem(itemId);
+    setLatestMessage(`${item.displayName} equipped.`);
+    retroAudio.confirm();
+    this.render();
   }
 }

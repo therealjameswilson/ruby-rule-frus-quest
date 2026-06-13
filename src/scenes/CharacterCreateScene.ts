@@ -3,6 +3,7 @@ import { characterAnimKey } from "../art/character_anims";
 import { getCharacterKeyForProcessRole } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_ROLES } from "../game/constants";
 import { setLatestMessage, setPlayerProfile, setSceneState, setVisibleEntities } from "../game/state";
+import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 
@@ -65,21 +66,17 @@ export class CharacterCreateScene extends Phaser.Scene {
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
 
-    this.input.keyboard?.on("keydown-LEFT", this.previousRole, this);
-    this.input.keyboard?.on("keydown-RIGHT", this.nextRole, this);
-    this.input.keyboard?.on("keydown-BACKSPACE", this.backspaceName, this);
-    this.input.keyboard?.on("keydown-ENTER", this.confirm, this);
-    this.input.keyboard?.on("keydown-SPACE", this.confirm, this);
-    this.input.keyboard?.on("keydown", this.handleTypedLetter, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.input.keyboard?.off("keydown-LEFT", this.previousRole, this);
-      this.input.keyboard?.off("keydown-RIGHT", this.nextRole, this);
-      this.input.keyboard?.off("keydown-BACKSPACE", this.backspaceName, this);
-      this.input.keyboard?.off("keydown-ENTER", this.confirm, this);
-      this.input.keyboard?.off("keydown-SPACE", this.confirm, this);
-      this.input.keyboard?.off("keydown", this.handleTypedLetter, this);
-    });
     this.renderSelection();
+  }
+
+  update() {
+    tickInput();
+    const input = getInput();
+    if (input.navLeftJustPressed) this.previousRole();
+    if (input.navRightJustPressed) this.nextRole();
+    if (input.backspaceJustPressed) this.backspaceName();
+    for (const letter of input.typedText) this.handleTypedLetter(letter);
+    if (input.aJustPressed || input.startJustPressed) this.confirm();
   }
 
   private createRoleCards() {
@@ -99,8 +96,8 @@ export class CharacterCreateScene extends Phaser.Scene {
         color: PALETTE.creamPaper,
         align: "center"
       }).setOrigin(0.5, 0);
-      const container = this.add.container(x, 160, [box, border, icon, label]);
-      container.setSize(44, 42).setInteractive({ useHandCursor: true }).on("pointerdown", () => {
+      const container = this.add.container(x, 160, [box, border, icon, label]).setSize(44, 42);
+      bindPointerDown(container, () => {
         this.roleIndex = index;
         this.renderSelection();
       });
@@ -126,11 +123,11 @@ export class CharacterCreateScene extends Phaser.Scene {
     this.renderSelection();
   }
 
-  private handleTypedLetter(event: KeyboardEvent) {
+  private handleTypedLetter(letter: string) {
     if (this.locked) return;
-    if (/^[a-zA-Z]$/.test(event.key) && this.displayName.length < 10) {
+    if (/^[a-zA-Z]$/.test(letter) && this.displayName.length < 10) {
       if (this.displayName === "Sam") this.displayName = "";
-      this.displayName += event.key;
+      this.displayName += letter;
       this.renderSelection();
     }
   }

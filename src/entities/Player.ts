@@ -5,8 +5,9 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
-import { gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
-import type { KeyboardMap, PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
+import { consumeResumePlayerSpawn, gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
+import type { PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
+import { getInput } from "../input/InputState";
 import {
   buildDirectionalHitbox,
   PLAYER_ACTION_HITBOX_MS,
@@ -70,7 +71,6 @@ interface MovementInput {
 
 export class Player {
   readonly sprite: Phaser.GameObjects.Sprite;
-  private readonly keys: KeyboardMap;
   private readonly speed = 58;
   private readonly acceleration = 720;
   private readonly deceleration = 900;
@@ -97,17 +97,13 @@ export class Player {
   private velocityY = 0;
   private readonly scene: Phaser.Scene;
   private facing: Direction = "south";
-  private readonly previousDirectionDown: Record<Direction, boolean> = {
-    north: false,
-    south: false,
-    west: false,
-    east: false
-  };
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     this.scene = scene;
-    this.logicalX = x;
-    this.logicalY = y;
+    const resumeSpawn = consumeResumePlayerSpawn(scene.scene.key);
+    this.logicalX = resumeSpawn?.player.x ?? x;
+    this.logicalY = resumeSpawn?.player.y ?? y;
+    this.facing = resumeSpawn?.facing ?? this.facing;
     const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId);
     this.characterKey = scene.textures.exists(preferredCharacterKey) ? preferredCharacterKey : null;
     this.roleFrameSheet = this.characterKey ? null : this.getAvailableRoleFrameSheet(scene);
@@ -123,13 +119,13 @@ export class Player {
     this.shadowDepthOffset = isSnesScale ? 2 : 1;
     this.shadow = scene.add
       .ellipse(
-        snapPixel(x),
-        snapPixel(y + this.shadowOffsetY),
+        snapPixel(this.logicalX),
+        snapPixel(this.logicalY + this.shadowOffsetY),
         this.spriteMode === "artPack32x48" || this.spriteMode === "snesRoleFrame48" ? 20 : this.spriteMode === "snes16" ? 18 : 12,
         isSnesScale ? 6 : 4,
         color(PALETTE.black)
       )
-      .setDepth(snapPixel(y - this.shadowDepthOffset));
+      .setDepth(snapPixel(this.logicalY - this.shadowDepthOffset));
     const textureKey = this.spriteMode === "artPack32x48"
       ? this.characterKey ?? gameState.playerProfile.snesSpriteKey
       : this.spriteMode === "snesRoleFrame48"
@@ -138,48 +134,26 @@ export class Player {
         ? gameState.playerProfile.snesSpriteKey
         : gameState.playerProfile.spriteKey;
     this.sprite = scene.add
-      .sprite(snapPixel(x), snapPixel(y), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
+      .sprite(snapPixel(this.logicalX), snapPixel(this.logicalY), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
       .setOrigin(0.5, this.spriteMode === "artPack32x48" ? 0.9 : this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
-      .setDepth(snapPixel(y));
+      .setDepth(snapPixel(this.logicalY));
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
       this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));
     }
     this.actionHitboxVisual = scene.add
-      .rectangle(snapPixel(x), snapPixel(y), 18, 18)
+      .rectangle(snapPixel(this.logicalX), snapPixel(this.logicalY), 18, 18)
       .setOrigin(0, 0)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(899)
       .setVisible(false);
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);
-    this.keys = scene.input.keyboard!.addKeys({
-      up: Phaser.Input.Keyboard.KeyCodes.UP,
-      down: Phaser.Input.Keyboard.KeyCodes.DOWN,
-      left: Phaser.Input.Keyboard.KeyCodes.LEFT,
-      right: Phaser.Input.Keyboard.KeyCodes.RIGHT,
-      w: Phaser.Input.Keyboard.KeyCodes.W,
-      a: Phaser.Input.Keyboard.KeyCodes.A,
-      s: Phaser.Input.Keyboard.KeyCodes.S,
-      d: Phaser.Input.Keyboard.KeyCodes.D,
-      e: Phaser.Input.Keyboard.KeyCodes.E,
-      space: Phaser.Input.Keyboard.KeyCodes.SPACE,
-      enter: Phaser.Input.Keyboard.KeyCodes.ENTER,
-      esc: Phaser.Input.Keyboard.KeyCodes.ESC,
-      m: Phaser.Input.Keyboard.KeyCodes.M,
-      n: Phaser.Input.Keyboard.KeyCodes.N,
-      r: Phaser.Input.Keyboard.KeyCodes.R,
-      f: Phaser.Input.Keyboard.KeyCodes.F
-    }) as KeyboardMap;
     scene.events.on("role-ability-frame", this.playAbilityFrame, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       scene.events.off("role-ability-frame", this.playAbilityFrame, this);
     });
     this.syncRenderPosition();
     setPlayerPosition(this.position);
-  }
-
-  get inputKeys() {
-    return this.keys;
   }
 
   get position() {
@@ -285,23 +259,10 @@ export class Player {
       setPlayerFacing(this.facing);
       return;
     }
-    const touchState = typeof window === "undefined"
-      ? undefined
-      : (window as Window & { rubyRuleTouchState?: Record<string, boolean> }).rubyRuleTouchState;
-    const directionDown: Record<Direction, boolean> = {
-      west: this.keys.left.isDown || this.keys.a.isDown || !!touchState?.left,
-      east: this.keys.right.isDown || this.keys.d.isDown || !!touchState?.right,
-      north: this.keys.up.isDown || this.keys.w.isDown || !!touchState?.up,
-      south: this.keys.down.isDown || this.keys.s.isDown || !!touchState?.down
-    };
-    const movementInput = this.resolveMovementInput(directionDown);
+    const movementInput = this.resolveMovementInput();
     this.facing = movementInput.facing;
     const dx = movementInput.x;
     const dy = movementInput.y;
-    this.previousDirectionDown.west = directionDown.west;
-    this.previousDirectionDown.east = directionDown.east;
-    this.previousDirectionDown.north = directionDown.north;
-    this.previousDirectionDown.south = directionDown.south;
     const inputMoving = movementInput.moving;
     const dt = frameDeltaSeconds(deltaMs);
     const targetVelocityX = dx * this.speed;
@@ -380,30 +341,15 @@ export class Player {
     this.sprite.setTint(color(PALETTE.goldStamp));
   }
 
-  private resolveMovementInput(directionDown: Record<Direction, boolean>): MovementInput {
-    const justPressed: Direction[] = [];
-    if (Phaser.Input.Keyboard.JustDown(this.keys.left) || Phaser.Input.Keyboard.JustDown(this.keys.a) || (directionDown.west && !this.previousDirectionDown.west)) justPressed.push("west");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.right) || Phaser.Input.Keyboard.JustDown(this.keys.d) || (directionDown.east && !this.previousDirectionDown.east)) justPressed.push("east");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.up) || Phaser.Input.Keyboard.JustDown(this.keys.w) || (directionDown.north && !this.previousDirectionDown.north)) justPressed.push("north");
-    if (Phaser.Input.Keyboard.JustDown(this.keys.down) || Phaser.Input.Keyboard.JustDown(this.keys.s) || (directionDown.south && !this.previousDirectionDown.south)) justPressed.push("south");
-
-    let facing = justPressed.length ? justPressed[justPressed.length - 1] : this.facing;
-    const horizontal = (directionDown.west ? -1 : 0) + (directionDown.east ? 1 : 0);
-    const vertical = (directionDown.north ? -1 : 0) + (directionDown.south ? 1 : 0);
-    const moving = horizontal !== 0 || vertical !== 0;
-
-    if (moving && !directionDown[facing]) {
-      if (horizontal < 0) facing = "west";
-      else if (horizontal > 0) facing = "east";
-      else if (vertical < 0) facing = "north";
-      else facing = "south";
-    }
-
-    if (horizontal !== 0 && vertical !== 0) {
-      const diagonal = Math.SQRT1_2;
-      return { x: horizontal * diagonal, y: vertical * diagonal, moving, facing };
-    }
-    return { x: horizontal, y: vertical, moving, facing };
+  private resolveMovementInput(): MovementInput {
+    const input = getInput();
+    const moving = input.dir.x !== 0 || input.dir.y !== 0;
+    let facing = this.facing;
+    if (input.dir.x < 0) facing = "west";
+    else if (input.dir.x > 0) facing = "east";
+    else if (input.dir.y < 0) facing = "north";
+    else if (input.dir.y > 0) facing = "south";
+    return { x: input.dir.x, y: input.dir.y, moving, facing };
   }
 
   private syncRenderPosition() {

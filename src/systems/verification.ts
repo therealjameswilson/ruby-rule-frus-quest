@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { clearChoiceState, setChoiceState, setLatestMessage } from "../game/state";
 import type { ChoiceOption } from "../game/types";
+import { bindPointerDown, getInput } from "../input/InputState";
 import { retroAudio } from "./audio";
 
 type ChoiceCallback = (option: ChoiceOption) => void;
@@ -30,18 +31,6 @@ export class ChoicePrompt {
       lineSpacing: 2
     });
     this.container = scene.add.container(0, 0, [box, border, this.titleText]).setDepth(950).setVisible(false);
-
-    const keyboard = scene.input.keyboard;
-    keyboard?.on("keydown-A", this.chooseA, this);
-    keyboard?.on("keydown-B", this.chooseB, this);
-    keyboard?.on("keydown-C", this.chooseC, this);
-    keyboard?.on("keydown-D", this.chooseD, this);
-    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      keyboard?.off("keydown-A", this.chooseA, this);
-      keyboard?.off("keydown-B", this.chooseB, this);
-      keyboard?.off("keydown-C", this.chooseC, this);
-      keyboard?.off("keydown-D", this.chooseD, this);
-    });
   }
 
   get active() {
@@ -57,18 +46,16 @@ export class ChoicePrompt {
 
     options.forEach((option, index) => {
       const row = this.scene.add
-        .rectangle(128, 120 + index * 18, 216, 15, color(PALETTE.black))
-        .setInteractive({ useHandCursor: true })
-        .on("pointerdown", () => this.choose(option.key));
+        .rectangle(128, 120 + index * 18, 216, 15, color(PALETTE.black));
+      bindPointerDown(row, () => this.choose(option.key));
       const optionText = this.scene.add
         .text(22, 116 + index * 18, `[ ${option.key} ] ${option.label}`, {
           fontFamily: "monospace",
           fontSize: "8px",
           color: PALETTE.creamPaper,
           wordWrap: { width: 212, useAdvancedWrap: true }
-        })
-        .setInteractive({ useHandCursor: true })
-        .on("pointerdown", () => this.choose(option.key));
+        });
+      bindPointerDown(optionText, () => this.choose(option.key));
       this.optionObjects.push(row, optionText);
       this.container.add([row, optionText]);
     });
@@ -77,15 +64,19 @@ export class ChoicePrompt {
     setChoiceState(title, options);
   }
 
+  updateInput() {
+    if (!this.active) return;
+    const input = getInput();
+    if (input.choiceAJustPressed) this.choose("A");
+    else if (input.choiceBJustPressed) this.choose("B");
+    else if (input.choiceCJustPressed) this.choose("C");
+    else if (input.choiceDJustPressed) this.choose("D");
+  }
+
   hide() {
     this.container.setVisible(false);
     clearChoiceState();
   }
-
-  private chooseA() { this.choose("A"); }
-  private chooseB() { this.choose("B"); }
-  private chooseC() { this.choose("C"); }
-  private chooseD() { this.choose("D"); }
 
   private choose(key: string) {
     const option = this.options.find((item) => item.key === key);

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { CONTROLS_TEXT, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { resetGameState, setSceneState } from "../game/state";
+import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 import { addSnesWorkflowRelicRack, addSnesWorldMap } from "../systems/snesPixelArt";
@@ -104,16 +105,13 @@ export class TitleScene extends Phaser.Scene {
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
 
-    this.input.keyboard?.on("keydown-SPACE", this.start, this);
-    this.input.keyboard?.on("keydown-ENTER", this.start, this);
-    this.input.keyboard?.on("keydown-N", this.toggleAudio, this);
-    this.input.on("pointerdown", this.start, this);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
-      this.input.keyboard?.off("keydown-SPACE", this.start, this);
-      this.input.keyboard?.off("keydown-ENTER", this.start, this);
-      this.input.keyboard?.off("keydown-N", this.toggleAudio, this);
-      this.input.off("pointerdown", this.start, this);
-    });
+  }
+
+  update() {
+    tickInput();
+    const input = getInput();
+    if (input.soundJustPressed) this.toggleAudio();
+    if (input.aJustPressed || input.startJustPressed || input.pointerPrimaryJustPressed) this.start();
   }
 
   private toggleAudio() {
