@@ -8,6 +8,7 @@ import { addDanneItem, gameState, hasDanneItem, setLatestMessage } from "../../g
 import type { Position } from "../../game/types";
 import { hideBossHud, setBossHp, showBossHud } from "../../systems/bossHud";
 import { enterCutscene, exitCutscene, playLine } from "../../systems/cutscene";
+import { retroAudio } from "../../systems/audio";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { Player } from "../Player";
 
@@ -179,6 +180,7 @@ export class DanneBoss {
     showBossHud(this.scene, "DANN-E", this.maxHp, this.phaseCount);
     setBossHp(this.hp, this.phaseIndex());
     setLatestMessage(`DANN-E ${phase} phase started.`);
+    retroAudio.dannePhaseTransition();
   }
 
   private async transitionToPhase(phase: Exclude<DanneBossPhase, "intro" | "defeated">) {
@@ -323,6 +325,7 @@ export class DanneBoss {
       expiresAt: this.scene.time.now + 2000,
       armed: true
     });
+    retroAudio.egoBoltFire();
   }
 
   private updateBolts(timeMs: number, deltaMs: number) {
@@ -337,6 +340,7 @@ export class DanneBoss {
         bolt.armed = false;
         this.player.takeHit({ x: bolt.sprite.x, y: bolt.sprite.y }, 12, 800);
         setLatestMessage("Ego bolt hit. Evidence still requires review.");
+        retroAudio.egoBoltImpact();
       }
       if (timeMs >= bolt.expiresAt || bolt.sprite.x < -20 || bolt.sprite.x > GAME_WIDTH + 20 || bolt.sprite.y < 20 || bolt.sprite.y > GAME_HEIGHT + 20) {
         bolt.sprite.destroy();
@@ -400,6 +404,7 @@ export class DanneBoss {
     if (still) {
       this.scene.tweens.add({ targets: still, alpha: 1, duration: 150 });
     }
+    retroAudio.danneBoast();
     playLine(this.scene, overrideLine ?? danneBoastForPhase(boastPhase, this.boastIndex), portraitKey);
     this.boastIndex += 1;
     await wait(this.scene, 1150);

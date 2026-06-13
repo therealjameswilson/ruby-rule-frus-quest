@@ -100,7 +100,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     setVisibleEntities([...this.geometry.visibleEntities]);
     setVisibleThreats([]);
     this.applyDebugGrants();
-    retroAudio.startMusic(this.geometry.musicScene);
+    retroAudio.startMusic(this.geometry.sceneKey);
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-100);
     this.drawMapBackground();
@@ -309,7 +309,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
         return;
       }
       const added = addDanneItem("ruby-pen");
-      retroAudio.confirm();
+      if (added) retroAudio.danneItemPickup("Ruby Pen");
+      else retroAudio.confirm();
       this.dialog.show("RUBY PEN", added ? [
         "Ruby Pen acquired.",
         "Equip it in the inventory and press B for a red-ink trail."
@@ -329,7 +330,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (definition.action === "witness-table") {
       const added = addDanneItem("treaty-fragments", 1);
-      retroAudio.confirm();
+      if (added) retroAudio.danneItemPickup("Treaty Fragment II");
+      else retroAudio.confirm();
       this.dialog.show("WITNESS TABLE", [
         "The record is entered without partisan flourish.",
         "Question, answer, source, and date remain separate.",
@@ -346,7 +348,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (definition.action === "treaty-fragment-nara") {
       const added = addDanneItem("treaty-fragments", 0);
-      retroAudio.confirm();
+      if (added) retroAudio.danneItemPickup("Treaty Fragment I");
+      else retroAudio.confirm();
       this.dialog.show("TREATY FRAGMENT I", added
         ? "Fragment I was filed behind the drone patrol route."
         : "Fragment I is already in the treaty folder.");
@@ -363,7 +366,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
         return;
       }
       const added = addDanneItem("treaty-fragments", 2);
-      retroAudio.confirm();
+      if (added) retroAudio.danneItemPickup("Treaty Fragment III");
+      else retroAudio.confirm();
       this.dialog.show("TREATY FRAGMENT III", added
         ? "Fragment III drops from the cleared vault core."
         : "Fragment III is already filed.");
@@ -467,6 +471,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     });
     gameState.sceneProgress.blackVaultBossStarted = 1;
     setObjective("Black Vault Lair: defeat DANN-E with human-reviewed tools.");
+    retroAudio.startMusic("DanneBoss", { forceRestart: true });
     this.danneBoss.start();
   }
 

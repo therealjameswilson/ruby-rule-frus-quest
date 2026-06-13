@@ -642,3 +642,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Updated `docs/danne-world-routes.md` with route notes and verification steps.
 - Verified `npm run build`, the required web-game Playwright client smoke, Office routes to Cherry/Senate, Archive routes to NARA/Embassy, direct Black Vault load/return, and pagehide save preservation from NARA Stacks.
 - Captured Phase 9 screenshots and state artifacts under `docs/screenshots/danne-phase9-*`.
+
+## 2026-06-13 DANN-E Integration Phase 10
+
+- Added dedicated procedural oscillator stems for Cherry Blossom Garden, Black Vault Lair, Senate Hearing Chamber, NARA Stacks, Embassy Cable Room, and the DANN-E boss loop.
+- Added named DANN-E SFX for ego bolt fire/impact, boast glitch, phase transition, Ruby Pen pickup, Master Declass Key pickup, and Treaty Fragment pickups.
+- Wired expansion map scenes to their own music keys and switched the boss encounter to the DANN-E boss loop when the fight starts.
+- Verified the normal WarningScene first-tap path unlocks WebAudio and starts title music in mobile simulation.
+- Verified the DANN-E boss mobile simulation at iPhone-style portrait size and 320px width: letterbox bars, touch overlay, boss HUD, integer scaling, and D-pad movement all remained readable/functional.
+- Verified `npm run build`, `npm run preview`, required web-game boss smoke, and a direct scene smoke sweep with no captured page/console errors.
+- Documented Phase 10 in `docs/danne-phase10-polish.md`; captured screenshots/state under `docs/screenshots/danne-phase10-*`.

@@ -197,7 +197,8 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     if (progress >= 3) {
-      addDanneItem("master-declass-key");
+      const added = addDanneItem("master-declass-key");
+      if (added) retroAudio.danneItemPickup("Master Declass Key");
       this.dialog.show("JUNIOR COMPILER", [
         "Inbox, cart, and terminal agree.",
         "Master Declass Key acquired.",

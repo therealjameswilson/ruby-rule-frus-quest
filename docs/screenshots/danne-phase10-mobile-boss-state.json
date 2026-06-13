@@ -1,0 +1,112 @@
+{
+  "warningAudio": {
+    "enabled": true,
+    "prepared": true,
+    "unlocked": true,
+    "contextState": "running",
+    "currentSceneKey": "TitleScene",
+    "currentThemeKey": "title",
+    "currentThemeTitle": "Bach Contrapunctus I",
+    "pendingSceneKey": null,
+    "musicTimerActive": true,
+    "musicStep": 2,
+    "resumePending": false,
+    "hiddenPaused": false,
+    "firstUnlockMs": 2.600000023841858,
+    "lastFirstSampleMs": 2.600000023841858,
+    "lastVisibilityEvent": null,
+    "lastInterruptionEvent": null
+  },
+  "bossAudio": {
+    "enabled": true,
+    "prepared": true,
+    "unlocked": true,
+    "contextState": "running",
+    "currentSceneKey": "DanneBoss",
+    "currentThemeKey": "danneBoss",
+    "currentThemeTitle": "DANN-E Boss Alert",
+    "pendingSceneKey": null,
+    "musicTimerActive": true,
+    "musicStep": 50,
+    "resumePending": false,
+    "hiddenPaused": false,
+    "firstUnlockMs": 14.700000047683716,
+    "lastFirstSampleMs": 14.700000047683716,
+    "lastVisibilityEvent": null,
+    "lastInterruptionEvent": null
+  },
+  "bossState": {
+    "scene": "BlackVaultLairScene",
+    "mode": "explore",
+    "audioStatus": "ego bolt impact",
+    "objective": "Black Vault Lair: dodge ego bolts and strike DANN-E with the Ruby Pen.",
+    "latestMessage": "Ego bolt hit. Evidence still requires review.",
+    "boss": {
+      "label": "DANN-E COLOSSUS",
+      "x": 128,
+      "y": 118,
+      "spriteKey": "danne-boss-combat",
+      "behavior": "ego-bolt cannon every 2.5s",
+      "defeatMethod": "Use the Ruby Pen, survive ego bolts, and finish the Ascendant treaty-record phase.",
+      "status": "48/48 HP; 1 ego bolts; 0 mini-DANN-Es"
+    }
+  },
+  "dpad": {
+    "before": {
+      "x": 128,
+      "y": 214
+    },
+    "after": {
+      "x": 128,
+      "y": 197
+    },
+    "moved": true
+  },
+  "metrics": {
+    "innerWidth": 393,
+    "innerHeight": 852,
+    "dpr": 3,
+    "metrics": {
+      "fpsCurrent": 59.88023952095874,
+      "fpsAvg1s": 60.177452768888415,
+      "fpsMin10s": 15.015015015015022,
+      "frameMsCurrent": 16.699999999999818,
+      "frameMsP99": 20,
+      "frameMsMax10s": 66.59999999999997,
+      "frameSampleCount": 472,
+      "frameHistogram": {
+        "under16": 286,
+        "under20": 184,
+        "under33": 0,
+        "over33": 2
+      },
+      "lastInputLatencyMs": 5.0999999284740625,
+      "lastPointerDownAt": 6634.800000071526,
+      "activePointerCount": 0,
+      "dpr": 3,
+      "canvasCssWidth": 256,
+      "canvasCssHeight": 240,
+      "canvasBackingWidth": 256,
+      "canvasBackingHeight": 240,
+      "computedZoom": 1,
+      "integerZoomTarget": 1,
+      "integerZoom": true,
+      "scaleGuardAdjustments": 0,
+      "pixelProofVisible": false,
+      "firstFrameMs": 55.1
+    },
+    "canvas": {
+      "width": 256,
+      "height": 240,
+      "clientWidth": 256,
+      "clientHeight": 240,
+      "rect": {
+        "x": 68.5,
+        "y": 306,
+        "width": 256,
+        "height": 240
+      }
+    }
+  },
+  "errors": []
+}

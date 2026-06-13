@@ -60,6 +60,54 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
     notes: [48, 55, 60, 64, 67, 64, 60, 55, 50, 57, 62, 65, 69, 65, 62, 57],
     bass: [36, 36, 38, 38],
     wave: "triangle"
+  },
+  cherryGarden: {
+    title: "Cherry Blossom Garden",
+    source: "Ruby Rule procedural oscillator stem",
+    stepMs: 360,
+    notes: [69, null, 72, 76, 74, null, 72, 69, 67, null, 69, 72, 64, null, 67, 69],
+    bass: [45, 45, 52, 50],
+    wave: "triangle"
+  },
+  blackVault: {
+    title: "Black Vault Lair",
+    source: "Ruby Rule procedural oscillator stem",
+    stepMs: 190,
+    notes: [43, 46, null, 43, 42, 43, 49, null, 43, 51, 46, null, 42, 43, null, 39],
+    bass: [31, 31, 34, 30],
+    wave: "sawtooth"
+  },
+  senate: {
+    title: "Senate Hearing Chamber",
+    source: "Ruby Rule procedural oscillator stem",
+    stepMs: 420,
+    notes: [55, 59, 62, null, 60, 59, 55, null, 52, 55, 59, 60, 62, null, 59, 55],
+    bass: [36, 43, 40, 38],
+    wave: "triangle"
+  },
+  naraStacks: {
+    title: "NARA Stacks HVAC",
+    source: "Ruby Rule procedural oscillator stem",
+    stepMs: 260,
+    notes: [48, null, 50, null, 47, null, 45, null, 48, 52, null, 50, 47, null, 45, null],
+    bass: [32, 32, 35, 35],
+    wave: "square"
+  },
+  embassyCable: {
+    title: "Embassy Cable Room",
+    source: "Ruby Rule procedural oscillator stem",
+    stepMs: 150,
+    notes: [60, null, 60, 67, null, 64, 60, null, 62, null, 62, 69, null, 65, 62, null],
+    bass: [36, 39, 36, 41],
+    wave: "square"
+  },
+  danneBoss: {
+    title: "DANN-E Boss Alert",
+    source: "Ruby Rule procedural oscillator stem",
+    stepMs: 135,
+    notes: [55, 58, 67, 58, 55, null, 70, 67, 55, 58, 67, 72, 70, 67, 58, null],
+    bass: [31, 31, 34, 30],
+    wave: "sawtooth"
   }
 };
 
@@ -178,6 +226,39 @@ class RetroAudio {
     this.sequence([392, 523, 659, 784, 1046, 784, 1046], 0.12, 0.09, 0.045);
   }
 
+  egoBoltFire() {
+    setAudioStatus("ego bolt fire");
+    this.sequence([740, 370, 555], 0.035, 0.012, 0.035, "square");
+  }
+
+  egoBoltImpact() {
+    setAudioStatus("ego bolt impact");
+    this.sequence([196, 110, 82], 0.055, 0.018, 0.05, "sawtooth");
+  }
+
+  danneBoast() {
+    setAudioStatus("DANN-E boast glitch");
+    this.sequence([123, 92, 185, 104, 156], 0.04, 0.018, 0.035, "sawtooth");
+  }
+
+  dannePhaseTransition() {
+    setAudioStatus("DANN-E phase transition");
+    this.sequence([196, 247, 294, 370, 494], 0.06, 0.035, 0.045, "square");
+  }
+
+  danneItemPickup(itemLabel: string) {
+    setAudioStatus(`DANN-E item pickup: ${itemLabel}`);
+    if (itemLabel.includes("Fragment")) {
+      this.sequence([392, 523, 659, 880], 0.065, 0.035, 0.045, "triangle");
+      return;
+    }
+    if (itemLabel.includes("Key")) {
+      this.sequence([330, 494, 659, 988], 0.07, 0.04, 0.05, "square");
+      return;
+    }
+    this.sequence([523, 784, 1046, 1175], 0.06, 0.035, 0.048, "square");
+  }
+
   startMusic(sceneKey: string, options: { forceRestart?: boolean } = {}) {
     if (!this.enabled || typeof window === "undefined") return;
     this.prepare();
@@ -251,8 +332,14 @@ class RetroAudio {
       TitleScene: "title",
       CharacterCreateScene: "title",
       OfficeScene: "title",
+      CherryBlossomGardenScene: "cherryGarden",
+      SenateHearingChamberScene: "senate",
       GuideScene: "archive",
       ArchiveScene: "archive",
+      NaraStacksScene: "naraStacks",
+      EmbassyCableRoomScene: "embassyCable",
+      BlackVaultLairScene: "blackVault",
+      DanneBoss: "danneBoss",
       NetworkScene: "archive",
       ReferralVaultScene: "archive",
       SilentReadScene: "satie",
