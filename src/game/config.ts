@@ -9,6 +9,7 @@ import { CodexScene } from "../scenes/CodexScene";
 import { DanneGallery } from "../scenes/DanneGallery";
 import { EmbassyCableRoomScene } from "../scenes/EmbassyCableRoomScene";
 import { EndingScene } from "../scenes/EndingScene";
+import { GameplayMapScene } from "../scenes/GameplayMapScene";
 import { GuideScene } from "../scenes/GuideScene";
 import { NaraStacksScene } from "../scenes/NaraStacksScene";
 import { NetworkScene } from "../scenes/NetworkScene";
@@ -23,6 +24,7 @@ import { TitleScene } from "../scenes/TitleScene";
 import { TrueEndingScene } from "../scenes/TrueEndingScene";
 import { UIScene } from "../scenes/UIScene";
 import { WarningScene } from "../scenes/WarningScene";
+import { WorldMapScene } from "../scenes/WorldMapScene";
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.CANVAS,
@@ -62,6 +64,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     WarningScene,
     TapToStartScene,
     TitleScene,
+    WorldMapScene,
     CharacterCreateScene,
     GuideScene,
     OfficeScene,
@@ -71,6 +74,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     SenateHearingChamberScene,
     NaraStacksScene,
     EmbassyCableRoomScene,
+    GameplayMapScene,
     NetworkScene,
     ReferralVaultScene,
     SilentReadScene,

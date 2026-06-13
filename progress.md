@@ -667,3 +667,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Wired `BootScene` to preload all three registries and log grouped registry output; exposed `window.game` so the requested dev-console texture checks work exactly.
 - Verified `npm run build`.
 - Checkpoint screenshot: `docs/screenshots/all-new-art-phase0-console.png`, showing `game.textures.exists('historian_office') === true` and `game.textures.exists('reward_legendary') === true`.
+
+## 2026-06-13 All-New-Art Integration Phase 1
+
+- Added `WorldMapScene` as the all-new-art region-select hub using the five overworld map assets from the registry.
+- Added `src/data/regions.ts` with all 40 district hot-zones, their source-image bounds, region labels, and initial destination mappings.
+- Added a Phase 1 `GameplayMapScene` preview shell so destination districts can route to the eight gameplay map assets before Phase 2 collision/spawn authoring.
+- Registered `WorldMapScene` and `GameplayMapScene` in `gameConfig.scene` and `SCENE_ORDER` while preserving existing debug scene routes.
+- Verified `npm run build`.
+- Verified the region selector cycles through all five regions, hover overlays and tooltips work for all 40 cartouches, and destination clicks route correctly for West Berlin, Vienna, and Havana.
+- Checkpoint screenshot: `docs/screenshots/all-new-art-phase1-europe-west-berlin-tooltip.png`, showing the Europe map with the West Berlin tooltip visible and the parchment border unobstructed.
+- Phase 2 still needs true gameplay-map collision, doors, spawns, and map-specific NPC logic.
