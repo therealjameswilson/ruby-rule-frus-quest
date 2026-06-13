@@ -26,6 +26,8 @@ import { RedactorDrone } from "../entities/enemies/RedactorDrone";
 import { MarineSecurityGuard } from "../entities/npcs/MarineSecurityGuard";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
+import { showBossHud, setBossHp } from "../systems/bossHud";
+import { drawCutsceneDebugNote, enterCutscene, exitCutscene, isCutsceneActive, playLine } from "../systems/cutscene";
 import { DialogBox } from "../systems/dialog";
 import { nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
@@ -42,6 +44,11 @@ function color(hex: string) {
 function isCollisionDebugEnabled() {
   if (typeof window === "undefined") return false;
   return new URLSearchParams(window.location.search).get("debug") === "collision";
+}
+
+function isUiDebugEnabled() {
+  if (typeof window === "undefined") return false;
+  return new URLSearchParams(window.location.search).get("debug") === "ui";
 }
 
 function reciprocalIntegerFitScale(width: number, height: number) {
@@ -120,6 +127,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }));
     this.createDanneEntities();
     this.syncDanneReadout(this.time.now);
+    this.installUiDebugHooks();
   }
 
   update(_: number, delta: number) {
@@ -133,8 +141,17 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
+    if (isUiDebugEnabled() && input.bJustPressed) this.showBossHudDebug();
     if (input.bJustPressed) this.useDanneItemAction();
     this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
+
+    if (isCutsceneActive(this)) {
+      if (input.aJustPressed) exitCutscene(this);
+      this.player.update(delta, false);
+      this.reliability.update();
+      this.syncDanneReadout(this.time.now);
+      return;
+    }
 
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
@@ -360,6 +377,37 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.dialog.show("MARINE GUARD", this.marineGuard?.blockedDialog() ?? "Classified door remains closed.");
       setLatestMessage("Marine guard blocks classified door.");
     }
+  }
+
+  private installUiDebugHooks() {
+    if (!isUiDebugEnabled()) return;
+    drawCutsceneDebugNote(this);
+    this.time.delayedCall(700, () => {
+      this.showBossHudDebug();
+      void this.showCutsceneDebug();
+    });
+    const keyboard = this.input.keyboard;
+    const showCutscene = () => void this.showCutsceneDebug();
+    const exit = () => void exitCutscene(this);
+    const showHud = () => this.showBossHudDebug();
+    keyboard?.on("keydown-H", showCutscene);
+    keyboard?.on("keydown-J", exit);
+    keyboard?.on("keydown-B", showHud);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      keyboard?.off("keydown-H", showCutscene);
+      keyboard?.off("keydown-J", exit);
+      keyboard?.off("keydown-B", showHud);
+    });
+  }
+
+  private async showCutsceneDebug() {
+    await enterCutscene(this);
+    playLine(this, "Test. DANN-E interrupts the record, but the file holds.", "danne-portrait-historian");
+  }
+
+  private showBossHudDebug() {
+    showBossHud(this, "danne", 1000, 3);
+    setBossHp(750, 0);
   }
 
   private createDanneEntities() {

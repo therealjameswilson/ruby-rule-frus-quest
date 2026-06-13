@@ -600,6 +600,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - custom Playwright probes confirm the Ruby Pen inventory card/popover, the red-ink B/Shift trail, the Office fetch sequence, Marine Guard Master Declass Key clearance, and all three Treaty Fragment placements
   - in-app browser local smoke reached the local game canvases with no captured console errors
   - captured `docs/screenshots/danne-phase5-ruby-pen.png`, `docs/screenshots/danne-phase5-inventory.png`, `docs/screenshots/danne-phase5-ruby-pen-action.png`, `docs/screenshots/danne-phase5-master-key.png`, and `docs/screenshots/danne-phase5-treaty-fragments.png`
+- Completed Phase 6 DANN-E UI integration:
+  - added `src/game/danneUiSlices.ts` to create guarded runtime slices from the DANN-E scroll-corner, letterbox, and boss-healthbar sheets while preserving rectangle fallbacks
+  - replaced the existing dialog-box chrome with the scroll-corner frame without changing dialog text flow or input handling
+  - added `src/systems/cutscene.ts` with `enterCutscene`, `exitCutscene`, and `playLine` helpers that slide in letterbox bars and lock DANN-E map player input while active
+  - added `src/systems/bossHud.ts` with `showBossHud`, `setBossHp`, and `hideBossHud`, using the DANN-E healthbar art, red fill, phase gems, and critical glow support
+  - added a `?debug=ui` route for DANN-E map scenes with H/J/B debug controls and an automatic UI preview for screenshots
+- Verified Phase 6:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - web-game Playwright screenshots confirm the scroll-corner dialog frame, cutscene letterbox with test line, and 75% DANN-E boss HUD with phase gem
+  - in-app browser local smoke reached the UI-debug route with two canvases and no captured console errors
+  - captured `docs/screenshots/danne-phase6-dialog.png`, `docs/screenshots/danne-phase6-cutscene.png`, and `docs/screenshots/danne-phase6-boss-hud.png`
 - Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
 
 ## 2026-06-12 Mobile SNES Quality Phase 10
