@@ -536,3 +536,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Added gamepad connect/disconnect listeners so the touch overlay fades away when a controller is active and returns when it disconnects.
 - Added a small controller toast plus `window.rubyRuleGamepadDebug()` and mobile debug HUD readout for QA.
 - Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
+
+## 2026-06-12 Mobile SNES Quality Phase 10
+
+- Added `docs/mobile/qa_matrix.md` with the requested device/browser/orientation matrix.
+- Ran automated Chromium device-profile proxy checks for iPhone 14/15 Pro, iPhone SE 2, Pixel 7/8, older Android, iPad Air, and an iPhone + mocked 8BitDo controller row.
+- Proxy rows passed for integer zoom, roughly 60 FPS, sub-50ms latency where touch applies, first-gesture audio unlock, pagehide save, and zero page errors.
+- Captured Phase 10 screenshots and four short WebM recordings for iPhone/Pixel portrait and landscape.
+- Real physical-device QA is still pending and explicitly not marked as passed.

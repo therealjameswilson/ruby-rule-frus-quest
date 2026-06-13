@@ -1,0 +1,593 @@
+{
+  "generatedAt": "2026-06-13T00:10:40.599Z",
+  "url": "http://127.0.0.1:5197/?scene=GuideScene&role=compiler&name=Ruby&mobileDebug=1&fps=1",
+  "note": "Automated proxy matrix only. Phase 10 physical device rows remain pending until tested on actual Safari/Chrome hardware.",
+  "rows": [
+    {
+      "id": "iphone14pro-safari-portrait",
+      "label": "iPhone 14/15 Pro Safari",
+      "orientation": "Portrait",
+      "proxyEngine": "Playwright Chromium device profile; not physical hardware",
+      "viewport": {
+        "width": 393,
+        "height": 852
+      },
+      "deviceScaleFactor": 3,
+      "avgFps": 60.00125420666608,
+      "minFps": 59.52380952380888,
+      "maxFrameP99Ms": 20,
+      "inputLatencyMs": 4.599999999999909,
+      "integerZoom": true,
+      "computedZoom": 1,
+      "audioContextStateBeforeHide": "running",
+      "firstUnlockMs": 0.40000003576278687,
+      "audioContextStateAfterHide": "suspended",
+      "saveExistsAfterHide": true,
+      "saveDebugAfterHide": {
+        "key": "rubyRuleFrusQuestSave",
+        "hasSave": true,
+        "summary": {
+          "version": 1,
+          "savedAt": "2026-06-13T00:10:13.933Z",
+          "currentScene": "GuideScene",
+          "objective": "Archive Cavern: claim the Citation Stamp.",
+          "displayName": "Ruby",
+          "roleLabel": "Compiler",
+          "player": {
+            "x": 128,
+            "y": 160
+          },
+          "processStamps": [
+            "rule"
+          ],
+          "inventoryCount": 0,
+          "documentPoints": 0
+        },
+        "storage": "localStorage",
+        "lastSaveResult": {
+          "ok": true,
+          "reason": "pagehide",
+          "storage": "localStorage",
+          "savedAt": "2026-06-13T00:10:13.933Z"
+        }
+      },
+      "gamepad": {
+        "connected": false,
+        "index": null,
+        "id": null,
+        "direction": null,
+        "pressedButtons": [],
+        "lastEvent": "idle"
+      },
+      "touch": {
+        "enabled": true,
+        "forceVisible": false,
+        "dpadPointerId": null,
+        "dpadDirection": null,
+        "gamepadSuppressed": false,
+        "overlayAlpha": 1,
+        "pressedButtons": [],
+        "lastEvent": "phaser-up"
+      },
+      "consoleMessages": [
+        {
+          "type": "warning",
+          "text": "[.WebGL-0x114004d3c00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+        }
+      ],
+      "pageErrors": [],
+      "screenshotPath": "docs/screenshots/mobile/phase10-iphone14pro-safari-portrait.png",
+      "physicalDevicePass": "PENDING_REAL_DEVICE_QA",
+      "proxyPass": true
+    },
+    {
+      "id": "iphone14pro-safari-landscape",
+      "label": "iPhone 14/15 Pro Safari",
+      "orientation": "Landscape",
+      "proxyEngine": "Playwright Chromium device profile; not physical hardware",
+      "viewport": {
+        "width": 852,
+        "height": 393
+      },
+      "deviceScaleFactor": 3,
+      "avgFps": 60.005827541872094,
+      "minFps": 59.52380952380888,
+      "maxFrameP99Ms": 20,
+      "inputLatencyMs": 12.199999988079071,
+      "integerZoom": true,
+      "computedZoom": 1,
+      "audioContextStateBeforeHide": "running",
+      "firstUnlockMs": 0.3999999761581421,
+      "audioContextStateAfterHide": "suspended",
+      "saveExistsAfterHide": true,
+      "saveDebugAfterHide": {
+        "key": "rubyRuleFrusQuestSave",
+        "hasSave": true,
+        "summary": {
+          "version": 1,
+          "savedAt": "2026-06-13T00:10:17.742Z",
+          "currentScene": "GuideScene",
+          "objective": "Archive Cavern: claim the Citation Stamp.",
+          "displayName": "Ruby",
+          "roleLabel": "Compiler",
+          "player": {
+            "x": 128,
+            "y": 160
+          },
+          "processStamps": [
+            "rule"
+          ],
+          "inventoryCount": 0,
+          "documentPoints": 0
+        },
+        "storage": "localStorage",
+        "lastSaveResult": {
+          "ok": true,
+          "reason": "pagehide",
+          "storage": "localStorage",
+          "savedAt": "2026-06-13T00:10:17.742Z"
+        }
+      },
+      "gamepad": {
+        "connected": false,
+        "index": null,
+        "id": null,
+        "direction": null,
+        "pressedButtons": [],
+        "lastEvent": "idle"
+      },
+      "touch": {
+        "enabled": true,
+        "forceVisible": false,
+        "dpadPointerId": null,
+        "dpadDirection": null,
+        "gamepadSuppressed": false,
+        "overlayAlpha": 1,
+        "pressedButtons": [],
+        "lastEvent": "phaser-up"
+      },
+      "consoleMessages": [
+        {
+          "type": "warning",
+          "text": "[.WebGL-0x134005b5400]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+        }
+      ],
+      "pageErrors": [],
+      "screenshotPath": "docs/screenshots/mobile/phase10-iphone14pro-safari-landscape.png",
+      "physicalDevicePass": "PENDING_REAL_DEVICE_QA",
+      "proxyPass": true
+    },
+    {
+      "id": "iphonese2-safari-portrait",
+      "label": "iPhone SE 2 Safari",
+      "orientation": "Portrait",
+      "proxyEngine": "Playwright Chromium device profile; not physical hardware",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "deviceScaleFactor": 2,
+      "avgFps": 60.00172380097079,
+      "minFps": 59.52380952380888,
+      "maxFrameP99Ms": 20,
+      "inputLatencyMs": 13.399999976158142,
+      "integerZoom": true,
+      "computedZoom": 1,
+      "audioContextStateBeforeHide": "running",
+      "firstUnlockMs": 0.09999996423721313,
+      "audioContextStateAfterHide": "suspended",
+      "saveExistsAfterHide": true,
+      "saveDebugAfterHide": {
+        "key": "rubyRuleFrusQuestSave",
+        "hasSave": true,
+        "summary": {
+          "version": 1,
+          "savedAt": "2026-06-13T00:10:21.507Z",
+          "currentScene": "GuideScene",
+          "objective": "Archive Cavern: claim the Citation Stamp.",
+          "displayName": "Ruby",
+          "roleLabel": "Compiler",
+          "player": {
+            "x": 128,
+            "y": 160
+          },
+          "processStamps": [
+            "rule"
+          ],
+          "inventoryCount": 0,
+          "documentPoints": 0
+        },
+        "storage": "localStorage",
+        "lastSaveResult": {
+          "ok": true,
+          "reason": "pagehide",
+          "storage": "localStorage",
+          "savedAt": "2026-06-13T00:10:21.507Z"
+        }
+      },
+      "gamepad": {
+        "connected": false,
+        "index": null,
+        "id": null,
+        "direction": null,
+        "pressedButtons": [],
+        "lastEvent": "idle"
+      },
+      "touch": {
+        "enabled": true,
+        "forceVisible": false,
+        "dpadPointerId": null,
+        "dpadDirection": null,
+        "gamepadSuppressed": false,
+        "overlayAlpha": 1,
+        "pressedButtons": [],
+        "lastEvent": "phaser-up"
+      },
+      "consoleMessages": [],
+      "pageErrors": [],
+      "screenshotPath": "docs/screenshots/mobile/phase10-iphonese2-safari-portrait.png",
+      "physicalDevicePass": "PENDING_REAL_DEVICE_QA",
+      "proxyPass": true
+    },
+    {
+      "id": "pixel7-chrome-portrait",
+      "label": "Pixel 7/8 Chrome",
+      "orientation": "Portrait",
+      "proxyEngine": "Playwright Chromium device profile; not physical hardware",
+      "viewport": {
+        "width": 412,
+        "height": 915
+      },
+      "deviceScaleFactor": 2.625,
+      "avgFps": 59.99806873294043,
+      "minFps": 59.52380952380888,
+      "maxFrameP99Ms": 20,
+      "inputLatencyMs": 10.600000000000023,
+      "integerZoom": true,
+      "computedZoom": 1,
+      "audioContextStateBeforeHide": "running",
+      "firstUnlockMs": 0.19999998807907104,
+      "audioContextStateAfterHide": "suspended",
+      "saveExistsAfterHide": true,
+      "saveDebugAfterHide": {
+        "key": "rubyRuleFrusQuestSave",
+        "hasSave": true,
+        "summary": {
+          "version": 1,
+          "savedAt": "2026-06-13T00:10:25.204Z",
+          "currentScene": "GuideScene",
+          "objective": "Archive Cavern: claim the Citation Stamp.",
+          "displayName": "Ruby",
+          "roleLabel": "Compiler",
+          "player": {
+            "x": 128,
+            "y": 160
+          },
+          "processStamps": [
+            "rule"
+          ],
+          "inventoryCount": 0,
+          "documentPoints": 0
+        },
+        "storage": "localStorage",
+        "lastSaveResult": {
+          "ok": true,
+          "reason": "pagehide",
+          "storage": "localStorage",
+          "savedAt": "2026-06-13T00:10:25.204Z"
+        }
+      },
+      "gamepad": {
+        "connected": false,
+        "index": null,
+        "id": null,
+        "direction": null,
+        "pressedButtons": [],
+        "lastEvent": "idle"
+      },
+      "touch": {
+        "enabled": true,
+        "forceVisible": false,
+        "dpadPointerId": null,
+        "dpadDirection": null,
+        "gamepadSuppressed": false,
+        "overlayAlpha": 1,
+        "pressedButtons": [],
+        "lastEvent": "phaser-up"
+      },
+      "consoleMessages": [],
+      "pageErrors": [],
+      "screenshotPath": "docs/screenshots/mobile/phase10-pixel7-chrome-portrait.png",
+      "physicalDevicePass": "PENDING_REAL_DEVICE_QA",
+      "proxyPass": true
+    },
+    {
+      "id": "pixel7-chrome-landscape",
+      "label": "Pixel 7/8 Chrome",
+      "orientation": "Landscape",
+      "proxyEngine": "Playwright Chromium device profile; not physical hardware",
+      "viewport": {
+        "width": 915,
+        "height": 412
+      },
+      "deviceScaleFactor": 2.625,
+      "avgFps": 60.00042121865701,
+      "minFps": 59.52380952380888,
+      "maxFrameP99Ms": 20,
+      "inputLatencyMs": 13.899999999999977,
+      "integerZoom": true,
+      "computedZoom": 1,
+      "audioContextStateBeforeHide": "running",
+      "firstUnlockMs": 0.10000002384185791,
+      "audioContextStateAfterHide": "suspended",
+      "saveExistsAfterHide": true,
+      "saveDebugAfterHide": {
+        "key": "rubyRuleFrusQuestSave",
+        "hasSave": true,
+        "summary": {
+          "version": 1,
+          "savedAt": "2026-06-13T00:10:28.961Z",
+          "currentScene": "GuideScene",
+          "objective": "Archive Cavern: claim the Citation Stamp.",
+          "displayName": "Ruby",
+          "roleLabel": "Compiler",
+          "player": {
+            "x": 128,
+            "y": 160
+          },
+          "processStamps": [
+            "rule"
+          ],
+          "inventoryCount": 0,
+          "documentPoints": 0
+        },
+        "storage": "localStorage",
+        "lastSaveResult": {
+          "ok": true,
+          "reason": "pagehide",
+          "storage": "localStorage",
+          "savedAt": "2026-06-13T00:10:28.961Z"
+        }
+      },
+      "gamepad": {
+        "connected": false,
+        "index": null,
+        "id": null,
+        "direction": null,
+        "pressedButtons": [],
+        "lastEvent": "idle"
+      },
+      "touch": {
+        "enabled": true,
+        "forceVisible": false,
+        "dpadPointerId": null,
+        "dpadDirection": null,
+        "gamepadSuppressed": false,
+        "overlayAlpha": 1,
+        "pressedButtons": [],
+        "lastEvent": "phaser-up"
+      },
+      "consoleMessages": [],
+      "pageErrors": [],
+      "screenshotPath": "docs/screenshots/mobile/phase10-pixel7-chrome-landscape.png",
+      "physicalDevicePass": "PENDING_REAL_DEVICE_QA",
+      "proxyPass": true
+    },
+    {
+      "id": "older-android-chrome-portrait",
+      "label": "Older Android (4GB) Chrome",
+      "orientation": "Portrait",
+      "proxyEngine": "Playwright Chromium device profile; not physical hardware",
+      "viewport": {
+        "width": 360,
+        "height": 760
+      },
+      "deviceScaleFactor": 2,
+      "avgFps": 60.002346952416886,
+      "minFps": 59.52380952380888,
+      "maxFrameP99Ms": 20,
+      "inputLatencyMs": 10.400000023841812,
+      "integerZoom": true,
+      "computedZoom": 1,
+      "audioContextStateBeforeHide": "running",
+      "firstUnlockMs": 0.40000003576278687,
+      "audioContextStateAfterHide": "suspended",
+      "saveExistsAfterHide": true,
+      "saveDebugAfterHide": {
+        "key": "rubyRuleFrusQuestSave",
+        "hasSave": true,
+        "summary": {
+          "version": 1,
+          "savedAt": "2026-06-13T00:10:32.701Z",
+          "currentScene": "GuideScene",
+          "objective": "Archive Cavern: claim the Citation Stamp.",
+          "displayName": "Ruby",
+          "roleLabel": "Compiler",
+          "player": {
+            "x": 128,
+            "y": 160
+          },
+          "processStamps": [
+            "rule"
+          ],
+          "inventoryCount": 0,
+          "documentPoints": 0
+        },
+        "storage": "localStorage",
+        "lastSaveResult": {
+          "ok": true,
+          "reason": "pagehide",
+          "storage": "localStorage",
+          "savedAt": "2026-06-13T00:10:32.701Z"
+        }
+      },
+      "gamepad": {
+        "connected": false,
+        "index": null,
+        "id": null,
+        "direction": null,
+        "pressedButtons": [],
+        "lastEvent": "idle"
+      },
+      "touch": {
+        "enabled": true,
+        "forceVisible": false,
+        "dpadPointerId": null,
+        "dpadDirection": null,
+        "gamepadSuppressed": false,
+        "overlayAlpha": 1,
+        "pressedButtons": [],
+        "lastEvent": "phaser-up"
+      },
+      "consoleMessages": [],
+      "pageErrors": [],
+      "screenshotPath": "docs/screenshots/mobile/phase10-older-android-chrome-portrait.png",
+      "physicalDevicePass": "PENDING_REAL_DEVICE_QA",
+      "proxyPass": true
+    },
+    {
+      "id": "ipadair-safari-landscape",
+      "label": "iPad Air Safari",
+      "orientation": "Landscape",
+      "proxyEngine": "Playwright Chromium device profile; not physical hardware",
+      "viewport": {
+        "width": 1180,
+        "height": 820
+      },
+      "deviceScaleFactor": 2,
+      "avgFps": 60.001778576571404,
+      "minFps": 59.52380952380888,
+      "maxFrameP99Ms": 20,
+      "inputLatencyMs": 13.800000035762764,
+      "integerZoom": true,
+      "computedZoom": 3,
+      "audioContextStateBeforeHide": "running",
+      "firstUnlockMs": 0.2999999523162842,
+      "audioContextStateAfterHide": "suspended",
+      "saveExistsAfterHide": true,
+      "saveDebugAfterHide": {
+        "key": "rubyRuleFrusQuestSave",
+        "hasSave": true,
+        "summary": {
+          "version": 1,
+          "savedAt": "2026-06-13T00:10:36.417Z",
+          "currentScene": "GuideScene",
+          "objective": "Archive Cavern: claim the Citation Stamp.",
+          "displayName": "Ruby",
+          "roleLabel": "Compiler",
+          "player": {
+            "x": 128,
+            "y": 160
+          },
+          "processStamps": [
+            "rule"
+          ],
+          "inventoryCount": 0,
+          "documentPoints": 0
+        },
+        "storage": "localStorage",
+        "lastSaveResult": {
+          "ok": true,
+          "reason": "pagehide",
+          "storage": "localStorage",
+          "savedAt": "2026-06-13T00:10:36.417Z"
+        }
+      },
+      "gamepad": {
+        "connected": false,
+        "index": null,
+        "id": null,
+        "direction": null,
+        "pressedButtons": [],
+        "lastEvent": "idle"
+      },
+      "touch": {
+        "enabled": true,
+        "forceVisible": false,
+        "dpadPointerId": null,
+        "dpadDirection": null,
+        "gamepadSuppressed": false,
+        "overlayAlpha": 1,
+        "pressedButtons": [],
+        "lastEvent": "phaser-up"
+      },
+      "consoleMessages": [],
+      "pageErrors": [],
+      "screenshotPath": "docs/screenshots/mobile/phase10-ipadair-safari-landscape.png",
+      "physicalDevicePass": "PENDING_REAL_DEVICE_QA",
+      "proxyPass": true
+    },
+    {
+      "id": "iphone14pro-8bitdo-landscape",
+      "label": "iPhone + 8BitDo Safari",
+      "orientation": "Landscape",
+      "proxyEngine": "Playwright Chromium device profile; not physical hardware",
+      "viewport": {
+        "width": 852,
+        "height": 393
+      },
+      "deviceScaleFactor": 3,
+      "avgFps": 60.00481803135948,
+      "minFps": 59.52380952380888,
+      "maxFrameP99Ms": 20,
+      "inputLatencyMs": null,
+      "integerZoom": true,
+      "computedZoom": 1,
+      "audioContextStateBeforeHide": "running",
+      "firstUnlockMs": 1.300000011920929,
+      "audioContextStateAfterHide": "suspended",
+      "saveExistsAfterHide": true,
+      "saveDebugAfterHide": {
+        "key": "rubyRuleFrusQuestSave",
+        "hasSave": true,
+        "summary": {
+          "version": 1,
+          "savedAt": "2026-06-13T00:10:40.404Z",
+          "currentScene": "GuideScene",
+          "objective": "Archive Cavern: claim the Citation Stamp.",
+          "displayName": "Ruby",
+          "roleLabel": "Compiler",
+          "player": {
+            "x": 128,
+            "y": 160
+          },
+          "processStamps": [
+            "rule"
+          ],
+          "inventoryCount": 0,
+          "documentPoints": 0
+        },
+        "storage": "localStorage",
+        "lastSaveResult": {
+          "ok": true,
+          "reason": "pagehide",
+          "storage": "localStorage",
+          "savedAt": "2026-06-13T00:10:40.404Z"
+        }
+      },
+      "gamepad": {
+        "connected": true,
+        "index": 0,
+        "id": "Mock 8BitDo SNES Controller",
+        "direction": null,
+        "pressedButtons": [],
+        "lastEvent": "connected"
+      },
+      "touch": {
+        "enabled": false,
+        "forceVisible": false,
+        "dpadPointerId": null,
+        "dpadDirection": null,
+        "gamepadSuppressed": true,
+        "overlayAlpha": 0,
+        "pressedButtons": [],
+        "lastEvent": "idle"
+      },
+      "consoleMessages": [],
+      "pageErrors": [],
+      "screenshotPath": "docs/screenshots/mobile/phase10-iphone14pro-8bitdo-landscape.png",
+      "physicalDevicePass": "PENDING_REAL_DEVICE_QA",
+      "proxyPass": true
+    }
+  ]
+}
