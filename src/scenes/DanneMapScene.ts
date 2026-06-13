@@ -9,6 +9,8 @@ import type {
 } from "../game/danneSceneCollisions";
 import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
 import {
+  addInventoryItem,
+  gameState,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -18,6 +20,9 @@ import {
 } from "../game/state";
 import type { Interactable, Position } from "../game/types";
 import { Player } from "../entities/Player";
+import { CensorshipWraith } from "../entities/enemies/CensorshipWraith";
+import { RedactorDrone } from "../entities/enemies/RedactorDrone";
+import { MarineSecurityGuard } from "../entities/npcs/MarineSecurityGuard";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
@@ -65,6 +70,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private readonly geometry: DanneSceneGeometry;
   private solids: Phaser.Geom.Rectangle[] = [];
   private interactables: Interactable[] = [];
+  private redactorDrones: RedactorDrone[] = [];
+  private censorshipWraiths: CensorshipWraith[] = [];
+  private marineGuard?: MarineSecurityGuard;
+  private marineDoorCleared = false;
   private lastGoodPosition: Position;
 
   protected constructor(sceneKey: DanneMapSceneKey) {
@@ -78,6 +87,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     setLatestMessage(`${this.geometry.displayName} loaded.`);
     setVisibleEntities([...this.geometry.visibleEntities]);
     setVisibleThreats([]);
+    this.applyDebugGrants();
     retroAudio.startMusic(this.geometry.musicScene);
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-100);
@@ -107,6 +117,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
       kind: definition.kind,
       onInteract: () => this.handleInteraction(definition)
     }));
+    this.createDanneEntities();
+    this.syncDanneReadout(this.time.now);
   }
 
   update(_: number, delta: number) {
@@ -120,6 +132,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
+    this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
 
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
@@ -149,6 +162,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (input.aJustPressed && nearest) nearest.onInteract();
     setObjective(this.geometry.objective);
     this.reliability.update();
+    this.syncDanneReadout(this.time.now);
   }
 
   private drawMapBackground() {
@@ -279,6 +293,84 @@ export abstract class DanneMapScene extends Phaser.Scene {
         "ROUTINE CABLE: punctuation survives transmission.",
         "Archivist note: verify the station slug before citation."
       ]);
+      return;
     }
+    if (definition.action === "marine-guard") {
+      if (this.hasMasterDeclassKey()) {
+        this.marineDoorCleared = true;
+        this.dialog.show("MARINE GUARD", this.marineGuard?.clearedDialog() ?? "Clearance verified.");
+        setLatestMessage("Marine guard verified Master Declass Key.");
+        return;
+      }
+      this.dialog.show("MARINE GUARD", this.marineGuard?.blockedDialog() ?? "Classified door remains closed.");
+      setLatestMessage("Marine guard blocks classified door.");
+    }
+  }
+
+  private createDanneEntities() {
+    if (this.geometry.sceneKey === "NaraStacksScene") {
+      this.redactorDrones = (this.geometry.patrolRoutes ?? []).map((route) => {
+        const [start, ...rest] = route.points;
+        return new RedactorDrone(this, start.x, start.y, [start, ...rest]);
+      });
+    }
+    if (this.geometry.sceneKey === "BlackVaultLairScene") {
+      this.censorshipWraiths = [
+        new CensorshipWraith(this, 82, 184, [{ x: 82, y: 184 }, { x: 110, y: 148 }, { x: 74, y: 126 }]),
+        new CensorshipWraith(this, 174, 184, [{ x: 174, y: 184 }, { x: 146, y: 148 }, { x: 184, y: 126 }])
+      ];
+    }
+    if (this.geometry.sceneKey === "EmbassyCableRoomScene") {
+      this.marineGuard = new MarineSecurityGuard(this, 202, 156);
+    }
+  }
+
+  private updateDanneEntities(timeMs: number, deltaMs: number, canAct: boolean) {
+    for (const drone of this.redactorDrones) drone.update(timeMs, deltaMs, this.player, canAct);
+    for (const wraith of this.censorshipWraiths) wraith.update(timeMs, deltaMs, this.player, canAct);
+    this.marineGuard?.update(timeMs);
+    this.syncDanneReadout(timeMs);
+  }
+
+  private syncDanneReadout(timeMs: number) {
+    const visible = [...this.geometry.visibleEntities];
+    if (this.redactorDrones.length) visible.push(...this.redactorDrones.map((_drone, index) => `Redactor Drone ${index + 1}`));
+    if (this.censorshipWraiths.length) visible.push(...this.censorshipWraiths.map((_wraith, index) => `Censorship Wraith ${index + 1}`));
+    if (this.marineGuard) visible.push(this.marineDoorCleared ? "Marine Security Guard (cleared)" : "Marine Security Guard (blocking)");
+    setVisibleEntities(visible);
+    setVisibleThreats([
+      ...this.redactorDrones.map((drone, index) => ({
+        label: `Redactor Drone ${index + 1}`,
+        x: drone.position.x,
+        y: drone.position.y,
+        spriteKey: drone.spriteKey,
+        behavior: "patrol + stamp drop",
+        defeatMethod: "Avoid black-bar stamps until Phase 5 tools are wired.",
+        status: drone.status(timeMs)
+      })),
+      ...this.censorshipWraiths.map((wraith, index) => ({
+        label: `Censorship Wraith ${index + 1}`,
+        x: wraith.position.x,
+        y: wraith.position.y,
+        spriteKey: wraith.spriteKey,
+        behavior: "slow float + ink sweep",
+        defeatMethod: "Keep distance until Phase 5 tools are wired.",
+        status: wraith.status(timeMs)
+      }))
+    ]);
+  }
+
+  private applyDebugGrants() {
+    if (typeof window === "undefined") return;
+    const give = new URLSearchParams(window.location.search).get("give") ?? "";
+    if (!give.split(",").some((part) => part === "declass-key" || part === "master-declass-key")) return;
+    addInventoryItem("Master Declass Key");
+  }
+
+  private hasMasterDeclassKey() {
+    return gameState.inventory.some((item) => {
+      const normalized = item.toLowerCase().replace(/[_\s]+/g, "-");
+      return normalized === "master-declass-key" || normalized === "declass-key";
+    });
   }
 }

@@ -1,5 +1,11 @@
 import type Phaser from "phaser";
-import { DANNE_SPRITE_ASSETS, DANNE_VFX_ASSETS, type DanneSpriteAsset } from "../game/danneAtlas";
+import {
+  DANNE_RUNTIME_SPRITE_ASSETS,
+  DANNE_SPRITE_ASSETS,
+  DANNE_VFX_ASSETS,
+  type DanneRuntimeSpriteAsset,
+  type DanneSpriteAsset
+} from "../game/danneAtlas";
 
 export const DANNE_SPRITE_FRAMES = {
   walk: {
@@ -35,7 +41,7 @@ function createAnim(
   });
 }
 
-function registerSpriteSheetAnims(scene: Phaser.Scene, asset: DanneSpriteAsset) {
+function registerSpriteSheetAnims(scene: Phaser.Scene, asset: DanneSpriteAsset | DanneRuntimeSpriteAsset) {
   for (const direction of Object.keys(DANNE_SPRITE_FRAMES.walk) as DanneDirection[]) {
     createAnim(scene, asset.key, `walk-${direction}`, DANNE_SPRITE_FRAMES.walk[direction], 6, -1);
   }
@@ -44,6 +50,9 @@ function registerSpriteSheetAnims(scene: Phaser.Scene, asset: DanneSpriteAsset) 
 
 export function registerDanneAnims(scene: Phaser.Scene) {
   for (const asset of DANNE_SPRITE_ASSETS) {
+    registerSpriteSheetAnims(scene, asset);
+  }
+  for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
     registerSpriteSheetAnims(scene, asset);
   }
   for (const asset of DANNE_VFX_ASSETS) {

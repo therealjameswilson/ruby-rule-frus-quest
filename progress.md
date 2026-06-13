@@ -572,6 +572,20 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - verified the garden SavePoint dialog, return-exit transition through the existing OfficeScene route, and `?debug=collision` overlays
   - direct route smokes passed for Warning, Title, CharacterCreate, Guide, Office, Archive, all five DANN-E map scenes, Network, ReferralVault, SilentRead, Ending, and DanneGallery with no captured console/page errors
   - captured `docs/screenshots/danne-phase3-*.png`
+- Completed Phase 4 enemy and ally sprite wiring:
+  - generated transparent runtime 4x4 sheets from the DANN-E source presentation art for Redactor Drone, Censorship Wraith, Junior Compiler, and Marine Security Guard
+  - added `DANNE_RUNTIME_SPRITE_ASSETS` while preserving the original source-sheet registry and gallery entries
+  - added `RedactorDrone` and `CensorshipWraith` enemies with patrol/hover behavior, black-bar stamp drops, and ink-swipe pressure
+  - added `JuniorCompiler` and `MarineSecurityGuard` NPCs with idle animation and concise FRUS workflow dialogue
+  - changed `OfficeScene` from a redirect shim into a small playable office hub with Junior Compiler dialogue and an Archive Guide door, preserving the existing guide route
+  - wired four Redactor Drone patrols into NARA Stacks, two Censorship Wraiths into Black Vault Lair, and Marine Guard blocking/cleared checks into Embassy Cable Room
+  - added the `?give=declass-key` QA grant for verifying the Marine Guard cleared branch before Phase 5 item wiring
+- Verified Phase 4:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - web-game Playwright screenshots confirm Junior Compiler dialogue, NARA drone patrols, Black Vault wraiths, and Embassy Marine Guard blocked/cleared states
+  - `render_game_to_text()` reports four Redactor Drones with `danne-runtime-redactor-drone`, two Censorship Wraiths with `danne-runtime-censorship-wraith`, and Marine Guard blocking/cleared state
+  - direct route smokes passed for Warning, Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, Ending, DanneGallery, and all five DANN-E map scenes with no captured console/page errors
+  - captured `docs/screenshots/danne-phase4-*.png`
 - Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
 
 ## 2026-06-12 Mobile SNES Quality Phase 10

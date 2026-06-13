@@ -5,6 +5,7 @@ import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/charac
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
   DANNE_IMAGE_ASSETS,
+  DANNE_RUNTIME_SPRITE_ASSETS,
   DANNE_SPRITE_ASSETS,
   DANNE_VFX_ASSETS
 } from "../game/danneAtlas";
@@ -84,6 +85,12 @@ export class BootScene extends Phaser.Scene {
         frameHeight: asset.frameH
       });
     }
+    for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
+      this.load.spritesheet(asset.key, asset.path, {
+        frameWidth: asset.frameW,
+        frameHeight: asset.frameH
+      });
+    }
     for (const asset of DANNE_VFX_ASSETS) {
       this.load.spritesheet(asset.key, asset.path, {
         frameWidth: asset.frameW,
@@ -93,7 +100,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   private applyDanneTextureFilters() {
-    for (const asset of [...DANNE_IMAGE_ASSETS, ...DANNE_SPRITE_ASSETS, ...DANNE_VFX_ASSETS]) {
+    for (const asset of [...DANNE_IMAGE_ASSETS, ...DANNE_SPRITE_ASSETS, ...DANNE_RUNTIME_SPRITE_ASSETS, ...DANNE_VFX_ASSETS]) {
       if (this.textures.exists(asset.key)) {
         this.textures.get(asset.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
       }

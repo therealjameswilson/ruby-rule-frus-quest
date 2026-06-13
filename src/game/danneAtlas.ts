@@ -124,6 +124,63 @@ export const DANNE_SPRITE_ASSETS = [
   role: DanneSpriteRole;
 }>;
 
+export const DANNE_RUNTIME_SPRITE_ASSETS = [
+  {
+    entityId: "redactor-drone",
+    key: "danne-runtime-redactor-drone",
+    path: "assets/art-pack/danne-pack/sprites/runtime/runtime_redactor_drone.png",
+    sourceKey: "danne-sprite-redactor-drone",
+    cols: 4,
+    rows: 4,
+    frameW: 235,
+    frameH: 172,
+    role: "enemy"
+  },
+  {
+    entityId: "censorship-wraith",
+    key: "danne-runtime-censorship-wraith",
+    path: "assets/art-pack/danne-pack/sprites/runtime/runtime_censorship_wraith.png",
+    sourceKey: "danne-sprite-censorship-wraith",
+    cols: 4,
+    rows: 4,
+    frameW: 215,
+    frameH: 207,
+    role: "enemy"
+  },
+  {
+    entityId: "junior-compiler",
+    key: "danne-runtime-junior-compiler",
+    path: "assets/art-pack/danne-pack/sprites/runtime/runtime_junior_compiler.png",
+    sourceKey: "danne-sprite-junior-compiler",
+    cols: 4,
+    rows: 4,
+    frameW: 211,
+    frameH: 157,
+    role: "ally"
+  },
+  {
+    entityId: "marine-guard",
+    key: "danne-runtime-marine-guard",
+    path: "assets/art-pack/danne-pack/sprites/runtime/runtime_marine_guard.png",
+    sourceKey: "danne-sprite-marine-guard",
+    cols: 4,
+    rows: 4,
+    frameW: 215,
+    frameH: 224,
+    role: "ally"
+  }
+] as const satisfies ReadonlyArray<{
+  entityId: string;
+  key: string;
+  path: string;
+  sourceKey: string;
+  cols: number;
+  rows: number;
+  frameW: number;
+  frameH: number;
+  role: DanneSpriteRole;
+}>;
+
 export type DanneItemTier = "legendary" | "key" | "collectible";
 
 export const DANNE_ITEM_ASSETS = [
@@ -290,5 +347,6 @@ export const DANNE_GALLERY_ASSETS = [
 ] as const;
 
 export type DanneSpriteAsset = (typeof DANNE_SPRITE_ASSETS)[number];
+export type DanneRuntimeSpriteAsset = (typeof DANNE_RUNTIME_SPRITE_ASSETS)[number];
 export type DanneVfxAsset = (typeof DANNE_VFX_ASSETS)[number];
 export type DanneGalleryAsset = (typeof DANNE_GALLERY_ASSETS)[number];

@@ -10,7 +10,8 @@ export type DanneSceneInteractionAction =
   | "boss-trigger"
   | "witness-table"
   | "nara-stacks-note"
-  | "cipher-machine";
+  | "cipher-machine"
+  | "marine-guard";
 
 export interface DanneRectDefinition {
   x: number;
@@ -264,6 +265,16 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.terminalCyan
       },
       {
+        id: "marine-guard",
+        label: "Marine Security Guard",
+        x: 202,
+        y: 156,
+        radius: 34,
+        kind: "npc",
+        action: "marine-guard",
+        accent: PALETTE.goldStamp
+      },
+      {
         id: "embassy-return",
         label: "Return to Office",
         x: 128,
@@ -274,6 +285,6 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["Bronze Cipher Machine", "Office Cable Door", "Steel Door", "World Clocks"]
+    visibleEntities: ["Bronze Cipher Machine", "Marine Security Guard", "Office Cable Door", "Steel Door", "World Clocks"]
   }
 } as const;
