@@ -535,6 +535,82 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Added Bluetooth gamepad support through the unified input state, mapping D-pad/stick, A, B, ability, Start, and Select without direct gameplay reads outside `src/input/`.
 - Added gamepad connect/disconnect listeners so the touch overlay fades away when a controller is active and returns when it disconnects.
 - Added a small controller toast plus `window.rubyRuleGamepadDebug()` and mobile debug HUD readout for QA.
+
+## DANN-E warning, variants, and expansion art integration
+
+- Started `feature/integrate-danne-pack` from `origin/main`, after confirming PR #7 and PR #8 assets are present on `origin/main`.
+- Completed Phase 1 asset registry and preload wiring:
+  - added `src/game/danneAtlas.ts` with typed registry entries for the DANN-E warning screen, five maps, four portraits, four 4x4 sprite sheets, three item cards, three UI sheets, the ego-bolt VFX sheet, and eight DANN-E variants
+  - added `src/art/danne_anims.ts` to register row-based DANN-E sprite walk/attack animations and an 8-frame ego-bolt fly animation
+  - added `BootScene.preloadDannePack()` and nearest-neighbor filtering for all DANN-E PNG textures
+  - added `DanneGallery` at `?scene=DanneGallery` with a scrollable labeled preview grid for all 29 registered assets
+  - registered `DanneGallery` in `gameConfig.scene`, `SCENE_ORDER`, transient-save handling, and touch-overlay hiding
+- Verified Phase 1:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - captured and committed `docs/screenshots/danne-phase1.png`
+  - `render_game_to_text()` for `DanneGallery` lists all 29 DANN-E assets in `visibleEntities`
+  - direct scene smokes passed for Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, and Ending with no captured console/page errors
+- Completed Phase 2 warning-screen wiring:
+  - added `WarningScene` as the default post-boot route before `TitleScene`, using the registered DANN-E warning card on a black background with integer-fit scaling
+  - preserved `?scene=` deep links; the direct Office route still bypasses the warning and keeps its existing GuideScene handoff
+  - added the persisted `localStorage["ruby-rule.skipWarning"]` preference plus a small TitleScene checkbox/`B` toggle
+  - hid mobile touch controls while `WarningScene` is active and fixed disabled-control text persistence
+- Verified Phase 2:
+  - fresh default load reaches `WarningScene`; pressing Space/A fades to `TitleScene`
+  - setting `ruby-rule.skipWarning=true` reloads directly to `TitleScene`
+  - direct scene smokes passed for Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, Ending, and DanneGallery with no captured console/page errors
+  - captured `docs/screenshots/danne-phase2.png` and `docs/screenshots/danne-phase2-title.png`
+- Completed Phase 3 map-scene scaffolding:
+  - added five new DANN-E pack map scenes: Cherry Blossom Garden, Black Vault Lair, Senate Hearing Chamber, NARA Stacks, and Embassy Cable Room
+  - added a shared `DanneMapScene` base that renders the registered map PNGs, uses hand-authored walkable polygons/solid rectangles, spawns the existing player, provides nearest-interaction prompts, and returns to the current OfficeScene path
+  - added `src/game/danneSceneCollisions.ts` as the scene geometry source of truth, including NARA Stacks patrol-route placeholders for Phase 4
+  - wired the Cherry Blossom Garden save point to the existing save system and added simple trigger/dialog interactions for the vault core, witness table, stacks note, and cipher machine
+  - registered all five scenes in `gameConfig.scene` and `SCENE_ORDER`
+- Verified Phase 3:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - captured each new map with the web-game Playwright client
+  - verified the garden SavePoint dialog, return-exit transition through the existing OfficeScene route, and `?debug=collision` overlays
+  - direct route smokes passed for Warning, Title, CharacterCreate, Guide, Office, Archive, all five DANN-E map scenes, Network, ReferralVault, SilentRead, Ending, and DanneGallery with no captured console/page errors
+  - captured `docs/screenshots/danne-phase3-*.png`
+- Completed Phase 4 enemy and ally sprite wiring:
+  - generated transparent runtime 4x4 sheets from the DANN-E source presentation art for Redactor Drone, Censorship Wraith, Junior Compiler, and Marine Security Guard
+  - added `DANNE_RUNTIME_SPRITE_ASSETS` while preserving the original source-sheet registry and gallery entries
+  - added `RedactorDrone` and `CensorshipWraith` enemies with patrol/hover behavior, black-bar stamp drops, and ink-swipe pressure
+  - added `JuniorCompiler` and `MarineSecurityGuard` NPCs with idle animation and concise FRUS workflow dialogue
+  - changed `OfficeScene` from a redirect shim into a small playable office hub with Junior Compiler dialogue and an Archive Guide door, preserving the existing guide route
+  - wired four Redactor Drone patrols into NARA Stacks, two Censorship Wraiths into Black Vault Lair, and Marine Guard blocking/cleared checks into Embassy Cable Room
+  - added the `?give=declass-key` QA grant for verifying the Marine Guard cleared branch before Phase 5 item wiring
+- Verified Phase 4:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - web-game Playwright screenshots confirm Junior Compiler dialogue, NARA drone patrols, Black Vault wraiths, and Embassy Marine Guard blocked/cleared states
+  - `render_game_to_text()` reports four Redactor Drones with `danne-runtime-redactor-drone`, two Censorship Wraiths with `danne-runtime-censorship-wraith`, and Marine Guard blocking/cleared state
+  - direct route smokes passed for Warning, Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, Ending, DanneGallery, and all five DANN-E map scenes with no captured console/page errors
+  - captured `docs/screenshots/danne-phase4-*.png`
+- Completed Phase 5 item integration:
+  - added a typed DANN-E item catalog for Ruby Pen, Master Declass Key, and Treaty Fragments, then derived the BootScene item asset registry from it
+  - extended game state with acquired/equipped DANN-E item readouts, Treaty Fragment counting, Ruby Pen auto-equip, and `sceneProgress` QA output
+  - added DANN-E item thumbnails and full-card popovers to the manuscript inventory overlay
+  - wired Ruby Pen through the Cherry Blossom Historian/chest loop and added a B/Shift red-ink trail action with +5 attack readout
+  - wired the Office production sequence (Production Inbox -> FRUS Cart -> Archive Terminal -> Junior Compiler) to award the Master Declass Key
+  - wired Treaty Fragments to NARA Stacks, Senate Hearing Chamber, and the Black Vault boss-cleared drop path
+  - widened the Archive Terminal and Marine Guard interaction radii after playtesting showed the art collision kept the closest walkable tile just outside range
+- Verified Phase 5:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - web-game Playwright client confirms the Cherry Blossom Historian/chest loop awards and equips Ruby Pen
+  - custom Playwright probes confirm the Ruby Pen inventory card/popover, the red-ink B/Shift trail, the Office fetch sequence, Marine Guard Master Declass Key clearance, and all three Treaty Fragment placements
+  - in-app browser local smoke reached the local game canvases with no captured console errors
+  - captured `docs/screenshots/danne-phase5-ruby-pen.png`, `docs/screenshots/danne-phase5-inventory.png`, `docs/screenshots/danne-phase5-ruby-pen-action.png`, `docs/screenshots/danne-phase5-master-key.png`, and `docs/screenshots/danne-phase5-treaty-fragments.png`
+- Completed Phase 6 DANN-E UI integration:
+  - added `src/game/danneUiSlices.ts` to create guarded runtime slices from the DANN-E scroll-corner, letterbox, and boss-healthbar sheets while preserving rectangle fallbacks
+  - replaced the existing dialog-box chrome with the scroll-corner frame without changing dialog text flow or input handling
+  - added `src/systems/cutscene.ts` with `enterCutscene`, `exitCutscene`, and `playLine` helpers that slide in letterbox bars and lock DANN-E map player input while active
+  - added `src/systems/bossHud.ts` with `showBossHud`, `setBossHp`, and `hideBossHud`, using the DANN-E healthbar art, red fill, phase gems, and critical glow support
+  - added a `?debug=ui` route for DANN-E map scenes with H/J/B debug controls and an automatic UI preview for screenshots
+- Verified Phase 6:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - web-game Playwright screenshots confirm the scroll-corner dialog frame, cutscene letterbox with test line, and 75% DANN-E boss HUD with phase gem
+  - in-app browser local smoke reached the UI-debug route with two canvases and no captured console errors
+  - captured `docs/screenshots/danne-phase6-dialog.png`, `docs/screenshots/danne-phase6-cutscene.png`, and `docs/screenshots/danne-phase6-boss-hud.png`
 - Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
 
 ## 2026-06-12 Mobile SNES Quality Phase 10
@@ -544,3 +620,35 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Proxy rows passed for integer zoom, roughly 60 FPS, sub-50ms latency where touch applies, first-gesture audio unlock, pagehide save, and zero page errors.
 - Captured Phase 10 screenshots and four short WebM recordings for iPhone/Pixel portrait and landscape.
 - Real physical-device QA is still pending and explicitly not marked as passed.
+
+## 2026-06-13 DANN-E Integration Phase 8
+
+- Added the FRUS Field Codex overlay with Enemies, NPCs, DANN-E Variants, and Items categories.
+- Stored unlock state in `localStorage["ruby-rule.codexUnlocks"]` and exposed the readout through `window.render_game_to_text()`.
+- Wired encounter unlocks for DANN-E enemies, roaming antagonists, DANN-E boss variants, DANN-E items, and new NPCs while preserving locked silhouettes for undiscovered entries.
+- Bound the Codex to Tab/Select and added a CODEX button to the inventory overlay, including a pause-touch hit test so the button works with the always-on mobile UI scene.
+- Verified `npm run build`, direct `?scene=CodexScene` loading, Tab-open from Office, inventory-button open, and Censorship Wraith encounter unlock.
+- Captured Phase 8 screenshots: `danne-phase8-codex-variants-locked.png`, `danne-phase8-codex-wraith-unlocked.png`, `danne-phase8-codex-tab-open.png`, and `danne-phase8-codex-inventory-button.png`.
+
+## 2026-06-13 DANN-E Integration Phase 9
+
+- Wired the five DANN-E map scenes into the world atlas and room graph:
+  - Office Hub now routes to Cherry Blossom Garden and Senate Hearing Chamber.
+  - Archive Cavern now routes to NARA Stacks and Embassy Cable Room.
+  - Queue Boss Gate now owns the gated Black Vault Lair route.
+- Added atlas landmarks and room-graph IDs `DG1`, `DH1`, `DN1`, `DE1`, and `DV1` for the new expansion spaces.
+- Added visible door markers in OfficeScene and ArchiveScene, with return spawn preservation through `sceneProgress`.
+- Fixed Archive interaction priority so a selected door or document is not preempted by a nearby/facing process-wall enemy; this keeps the Embassy Cable Room doorway usable beside the FIREWALL.
+- Updated `docs/danne-world-routes.md` with route notes and verification steps.
+- Verified `npm run build`, the required web-game Playwright client smoke, Office routes to Cherry/Senate, Archive routes to NARA/Embassy, direct Black Vault load/return, and pagehide save preservation from NARA Stacks.
+- Captured Phase 9 screenshots and state artifacts under `docs/screenshots/danne-phase9-*`.
+
+## 2026-06-13 DANN-E Integration Phase 10
+
+- Added dedicated procedural oscillator stems for Cherry Blossom Garden, Black Vault Lair, Senate Hearing Chamber, NARA Stacks, Embassy Cable Room, and the DANN-E boss loop.
+- Added named DANN-E SFX for ego bolt fire/impact, boast glitch, phase transition, Ruby Pen pickup, Master Declass Key pickup, and Treaty Fragment pickups.
+- Wired expansion map scenes to their own music keys and switched the boss encounter to the DANN-E boss loop when the fight starts.
+- Verified the normal WarningScene first-tap path unlocks WebAudio and starts title music in mobile simulation.
+- Verified the DANN-E boss mobile simulation at iPhone-style portrait size and 320px width: letterbox bars, touch overlay, boss HUD, integer scaling, and D-pad movement all remained readable/functional.
+- Verified `npm run build`, `npm run preview`, required web-game boss smoke, and a direct scene smoke sweep with no captured page/console errors.
+- Documented Phase 10 in `docs/danne-phase10-polish.md`; captured screenshots/state under `docs/screenshots/danne-phase10-*`.

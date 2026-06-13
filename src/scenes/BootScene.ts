@@ -1,7 +1,15 @@
 import Phaser from "phaser";
 import { registerCharacterAnims } from "../art/character_anims";
+import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
+import {
+  DANNE_BOSS_SPRITE_ASSET,
+  DANNE_IMAGE_ASSETS,
+  DANNE_RUNTIME_SPRITE_ASSETS,
+  DANNE_SPRITE_ASSETS,
+  DANNE_VFX_ASSETS
+} from "../game/danneAtlas";
 import {
   SNES_ANTAGONIST_ASSETS,
   SNES_AREA_MAP_ASSETS,
@@ -30,6 +38,7 @@ export class BootScene extends Phaser.Scene {
     this.load.json("scenes", "assets/data/scenes.json");
     preloadCharacters(this);
     this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
+    this.preloadDannePack();
     this.preloadSvgAssets();
   }
 
@@ -38,9 +47,11 @@ export class BootScene extends Phaser.Scene {
     retroAudio.prepare();
     this.createTextures();
     registerCharacterAnims(this);
+    this.applyDanneTextureFilters();
+    registerDanneAnims(this);
     const startScene = this.getStartScene();
     this.scene.launch("UIScene");
-    if (startScene !== "TitleScene" && startScene !== "TapToStartScene") {
+    if (startScene !== "TitleScene" && startScene !== "TapToStartScene" && startScene !== "WarningScene") {
       resetGameState();
       this.applyRoleFromQuery();
       seedProgressForScene(startScene);
@@ -53,7 +64,7 @@ export class BootScene extends Phaser.Scene {
     if (requested && SCENE_ORDER.includes(requested as (typeof SCENE_ORDER)[number])) {
       return requested;
     }
-    return "TapToStartScene";
+    return "WarningScene";
   }
 
   private applyRoleFromQuery() {
@@ -63,6 +74,48 @@ export class BootScene extends Phaser.Scene {
     const rawName = params.get("name")?.trim() || "Sam";
     const name = rawName.charAt(0).toUpperCase() + rawName.slice(1, 10);
     setPlayerProfile(name, role);
+  }
+
+  private preloadDannePack() {
+    for (const asset of DANNE_IMAGE_ASSETS) {
+      this.load.image(asset.key, asset.path);
+    }
+    for (const asset of DANNE_SPRITE_ASSETS) {
+      this.load.spritesheet(asset.key, asset.path, {
+        frameWidth: asset.frameW,
+        frameHeight: asset.frameH
+      });
+    }
+    for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
+      this.load.spritesheet(asset.key, asset.path, {
+        frameWidth: asset.frameW,
+        frameHeight: asset.frameH
+      });
+    }
+    this.load.spritesheet(DANNE_BOSS_SPRITE_ASSET.key, DANNE_BOSS_SPRITE_ASSET.path, {
+      frameWidth: DANNE_BOSS_SPRITE_ASSET.frameW,
+      frameHeight: DANNE_BOSS_SPRITE_ASSET.frameH
+    });
+    for (const asset of DANNE_VFX_ASSETS) {
+      this.load.spritesheet(asset.key, asset.path, {
+        frameWidth: asset.frameW,
+        frameHeight: asset.frameH
+      });
+    }
+  }
+
+  private applyDanneTextureFilters() {
+    for (const asset of [
+      ...DANNE_IMAGE_ASSETS,
+      ...DANNE_SPRITE_ASSETS,
+      ...DANNE_RUNTIME_SPRITE_ASSETS,
+      DANNE_BOSS_SPRITE_ASSET,
+      ...DANNE_VFX_ASSETS
+    ]) {
+      if (this.textures.exists(asset.key)) {
+        this.textures.get(asset.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    }
   }
 
   private createTextures() {

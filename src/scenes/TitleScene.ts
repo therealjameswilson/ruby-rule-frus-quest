@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { CONTROLS_TEXT, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { resetGameState, setSceneState } from "../game/state";
-import { getInput, tickInput } from "../input/InputState";
+import { getSkipWarningPreference, setSkipWarningPreference } from "../game/warningSettings";
+import { bindPointerPress, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 import { addSnesWorkflowRelicRack, addSnesWorldMap } from "../systems/snesPixelArt";
@@ -12,6 +13,9 @@ function color(hex: string) {
 
 export class TitleScene extends Phaser.Scene {
   private started = false;
+  private skipWarning = false;
+  private skipWarningText?: Phaser.GameObjects.Text;
+  private ignoreNextPointerStart = false;
 
   constructor() {
     super("TitleScene");
@@ -20,6 +24,8 @@ export class TitleScene extends Phaser.Scene {
   create() {
     setSceneState("TitleScene", "title", "Press start to verify.");
     this.started = false;
+    this.skipWarning = getSkipWarningPreference();
+    this.ignoreNextPointerStart = false;
     retroAudio.startMusic("TitleScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
@@ -104,6 +110,7 @@ export class TitleScene extends Phaser.Scene {
       fontSize: "6px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
+    this.createSkipWarningToggle();
 
   }
 
@@ -111,6 +118,11 @@ export class TitleScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.soundJustPressed) this.toggleAudio();
+    if (input.bJustPressed) this.toggleSkipWarning();
+    if (this.ignoreNextPointerStart && input.pointerPrimaryJustPressed) {
+      this.ignoreNextPointerStart = false;
+      return;
+    }
     if (input.aJustPressed || input.startJustPressed || input.pointerPrimaryJustPressed) this.start();
   }
 
@@ -124,5 +136,32 @@ export class TitleScene extends Phaser.Scene {
     retroAudio.confirm();
     resetGameState();
     transitionTo(this, "CharacterCreateScene");
+  }
+
+  private createSkipWarningToggle() {
+    const hit = this.add.rectangle(191, 229, 112, 12, color(PALETTE.black), 0.01);
+    bindPointerPress(hit, {
+      down: () => {
+        this.ignoreNextPointerStart = true;
+        this.toggleSkipWarning();
+      }
+    });
+    this.skipWarningText = this.add.text(191, 226, "", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5, 0);
+    this.renderSkipWarningToggle();
+  }
+
+  private toggleSkipWarning() {
+    this.skipWarning = !this.skipWarning;
+    setSkipWarningPreference(this.skipWarning);
+    this.renderSkipWarningToggle();
+  }
+
+  private renderSkipWarningToggle() {
+    const mark = this.skipWarning ? "X" : " ";
+    this.skipWarningText?.setText(`B SKIP WARNING [${mark}]`);
   }
 }

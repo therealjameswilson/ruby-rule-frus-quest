@@ -41,7 +41,7 @@ export abstract class Enemy {
   readonly spriteKey: string;
   protected readonly scene: Phaser.Scene;
   protected readonly container: Phaser.GameObjects.Container;
-  protected readonly sprite: Phaser.GameObjects.Image;
+  protected readonly sprite: Phaser.GameObjects.Sprite;
   protected readonly cue: Phaser.GameObjects.Text;
   protected readonly waypoints: Position[];
   protected waypointIndex = 0;
@@ -70,7 +70,7 @@ export abstract class Enemy {
 
     const shadowOptions = options.shadow ?? { y: 15, width: 18, height: 6 };
     const shadow = scene.add.ellipse(0, shadowOptions.y, shadowOptions.width, shadowOptions.height, color(PALETTE.black));
-    this.sprite = scene.add.image(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : options.fallbackTextureKey);
+    this.sprite = scene.add.sprite(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : options.fallbackTextureKey);
     const tag = scene.add.text(0, options.tag.y, options.tag.text, {
       fontFamily: "monospace",
       fontSize: "5px",

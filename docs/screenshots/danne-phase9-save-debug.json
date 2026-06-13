@@ -1,0 +1,26 @@
+{
+  "key": "rubyRuleFrusQuestSave",
+  "hasSave": true,
+  "summary": {
+    "version": 1,
+    "savedAt": "2026-06-13T17:55:22.933Z",
+    "currentScene": "NaraStacksScene",
+    "objective": "NARA Stacks: read the classified stack note.",
+    "displayName": "Ruby",
+    "roleLabel": "Compiler",
+    "player": {
+      "x": 128,
+      "y": 205
+    },
+    "processStamps": [],
+    "inventoryCount": 0,
+    "documentPoints": 0
+  },
+  "storage": "localStorage",
+  "lastSaveResult": {
+    "ok": true,
+    "reason": "pagehide",
+    "storage": "localStorage",
+    "savedAt": "2026-06-13T17:55:22.933Z"
+  }
+}

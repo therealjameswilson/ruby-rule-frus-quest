@@ -1,14 +1,11 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { createDanneScrollFrame } from "../game/danneUiSlices";
 import { clearDialogState, setDialogState } from "../game/state";
 import { bindPointerPress, isTouchInputCapable, setTouchControl, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
 
 type CompleteCallback = () => void;
-
-function color(hex: string) {
-  return Phaser.Display.Color.HexStringToColor(hex).color;
-}
 
 export class DialogBox {
   private readonly scene: Phaser.Scene;
@@ -28,13 +25,7 @@ export class DialogBox {
     const fontSize = touch ? 10 : 8;
     const speakerY = GAME_HEIGHT - 63;
     const bodyY = touch ? GAME_HEIGHT - 48 : GAME_HEIGHT - 52;
-    const box = scene.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 36, GAME_WIDTH - 12, 64, color(PALETTE.black))
-      .setScrollFactor(0);
-    const border = scene.add
-      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 36, GAME_WIDTH - 12, 64)
-      .setStrokeStyle(2, color(PALETTE.creamPaper))
-      .setScrollFactor(0);
+    const frame = createDanneScrollFrame(scene, 6, GAME_HEIGHT - 68, GAME_WIDTH - 12, 64);
     this.speakerText = scene.add.text(14, speakerY, "", {
       fontFamily: "monospace",
       fontSize: `${fontSize}px`,
@@ -47,14 +38,14 @@ export class DialogBox {
       wordWrap: { width: 226, useAdvancedWrap: true },
       lineSpacing: touch ? 0 : 2
     }).setScrollFactor(0);
-    bindPointerPress(box, {
+    bindPointerPress(frame.hitArea, {
       down: () => this.pressAdvance(),
       up: () => this.releaseAdvance(),
       cancel: () => this.releaseAdvance()
     });
     updateInputCallbacks({ fastForwardDialog: () => this.fastForward() });
     this.container = scene.add
-      .container(0, 0, [box, border, this.speakerText, this.bodyText])
+      .container(0, 0, [...frame.objects, this.speakerText, this.bodyText])
       .setDepth(900)
       .setVisible(false)
       .setScrollFactor(0);

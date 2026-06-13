@@ -39,7 +39,12 @@ export const SNES_MAIN_MAP_ASSET = {
     { number: 8, name: "White House", cue: "central policy record route" },
     { number: 9, name: "Foggy Bottom", cue: "Office of the Historian hub" },
     { number: 10, name: "Capitol Hill", cue: "oversight landmark" },
-    { number: 11, name: "Potomac River", cue: "south map boundary" }
+    { number: 11, name: "Potomac River", cue: "south map boundary" },
+    { number: 12, name: "Cherry Blossom Garden", cue: "quiet save garden behind the office" },
+    { number: 13, name: "Senate Hearing Chamber", cue: "story room for witness-table review" },
+    { number: 14, name: "NARA Stacks", cue: "drone-patrolled stack routes" },
+    { number: 15, name: "Embassy Cable Room", cue: "classified cable and guard checkpoint" },
+    { number: 16, name: "Black Vault Lair", cue: "restricted DANN-E boss route" }
   ]
 } as const;
 

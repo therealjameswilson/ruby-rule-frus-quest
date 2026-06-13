@@ -85,6 +85,10 @@ export class TouchControls {
 
   setEnabled(enabled: boolean) {
     if (this.enabled === enabled) {
+      if (!enabled) {
+        this.graphics.setVisible(false);
+        for (const button of this.buttons) button.text.setVisible(false);
+      }
       this.redraw();
       return;
     }
@@ -112,7 +116,12 @@ export class TouchControls {
   }
 
   refreshForScene(activeSceneKey: string | null) {
-    const hiddenScene = activeSceneKey === "TapToStartScene" || activeSceneKey === "RenderDebugScene" || activeSceneKey === "SpriteGallery";
+    const hiddenScene =
+      activeSceneKey === "TapToStartScene"
+      || activeSceneKey === "WarningScene"
+      || activeSceneKey === "RenderDebugScene"
+      || activeSceneKey === "DanneGallery"
+      || activeSceneKey === "SpriteGallery";
     const shouldShow = !hiddenScene && !this.gamepadSuppressed && (isTouchCapable() || this.forceVisible);
     if (shouldShow && !this.overlayFade && this.overlayAlpha <= 0) this.overlayAlpha = 1;
     this.setEnabled(shouldShow);
@@ -412,7 +421,10 @@ export class TouchControls {
     this.graphics.clear();
     this.graphics.setAlpha(this.overlayAlpha);
     this.updateDebug();
-    if (!this.enabled) return;
+    if (!this.enabled) {
+      for (const button of this.buttons) button.text.setVisible(false);
+      return;
+    }
     if (gameState.mode === "pause") {
       for (const button of this.buttons) button.text.setVisible(false);
       return;

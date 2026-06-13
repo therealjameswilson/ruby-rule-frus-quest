@@ -1,0 +1,43 @@
+{
+  "scene": "BlackVaultLairScene",
+  "mode": "explore",
+  "audioStatus": "ego bolt impact",
+  "boss": {
+    "label": "DANN-E COLOSSUS",
+    "x": 128,
+    "y": 118,
+    "spriteKey": "danne-boss-combat",
+    "behavior": "ego-bolt cannon every 2.5s",
+    "defeatMethod": "Use the Ruby Pen, survive ego bolts, and finish the Ascendant treaty-record phase.",
+    "status": "48/48 HP; 0 ego bolts; 0 mini-DANN-Es"
+  },
+  "metrics": {
+    "fpsCurrent": 67.11409395973318,
+    "fpsAvg1s": 60.234007467500255,
+    "fpsMin10s": 5.489317787585359,
+    "frameMsCurrent": 14.899999999999636,
+    "frameMsP99": 20,
+    "frameMsMax10s": 182.172,
+    "frameSampleCount": 411,
+    "frameHistogram": {
+      "under16": 255,
+      "under20": 153,
+      "under33": 0,
+      "over33": 3
+    },
+    "lastInputLatencyMs": 0,
+    "lastPointerDownAt": 1847.6000000238419,
+    "activePointerCount": 0,
+    "dpr": 3,
+    "canvasCssWidth": 256,
+    "canvasCssHeight": 240,
+    "canvasBackingWidth": 256,
+    "canvasBackingHeight": 240,
+    "computedZoom": 1,
+    "integerZoomTarget": 1,
+    "integerZoom": true,
+    "scaleGuardAdjustments": 0,
+    "pixelProofVisible": false,
+    "firstFrameMs": 162.528
+  }
+}

@@ -1,4 +1,5 @@
 import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
+import { getCodexReadout, unlockCodexEntry } from "./codex";
 import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import {
@@ -12,6 +13,8 @@ import {
 import type { DocumentWorkflowAction } from "./documentWorkflow";
 import { deriveWorkflowSnapshot, getQuestArchitectureReadout } from "./questArchitecture";
 import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
+import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
+import type { DanneItemId } from "./danneItemCatalog";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import type {
@@ -60,6 +63,7 @@ export interface GameState {
   reliability: number;
   heldItem: string | null;
   equippedProcessItem: ProcessItemId | null;
+  equippedDanneItem: DanneItemId | null;
   documentPoints: number;
   inventory: string[];
   volumeFragments: string[];
@@ -84,8 +88,33 @@ export interface GameState {
   finalGateCertification: FinalGateCertificationState | null;
 }
 
+export interface DanneItemReadout {
+  id: DanneItemId;
+  displayName: string;
+  key: string;
+  texture: string;
+  tier: string;
+  description: string;
+  acquired: boolean;
+  equipped: boolean;
+  count: number;
+  total: number;
+  complete: boolean;
+  fragments: string[];
+  attackBonus: number;
+  trueEndingReady: boolean;
+}
+
 const defaultRole = PROCESS_ROLES[0];
-const TRANSIENT_SAVE_SCENES = new Set(["BootScene", "TapToStartScene", "RenderDebugScene", "SpriteGallery"]);
+const TRANSIENT_SAVE_SCENES = new Set([
+  "BootScene",
+  "TapToStartScene",
+  "WarningScene",
+  "RenderDebugScene",
+  "CodexScene",
+  "DanneGallery",
+  "SpriteGallery"
+]);
 
 export const SAVE_SCHEMA_VERSION = 1;
 
@@ -210,6 +239,7 @@ export const gameState: GameState = {
   reliability: 80,
   heldItem: null,
   equippedProcessItem: null,
+  equippedDanneItem: null,
   documentPoints: 0,
   inventory: [],
   volumeFragments: [],
@@ -263,6 +293,7 @@ export function resetGameState() {
   gameState.documentWorkflowLog = [];
   gameState.heldItem = null;
   gameState.equippedProcessItem = null;
+  gameState.equippedDanneItem = null;
   gameState.documentPoints = 0;
   gameState.inventory = [];
   gameState.volumeFragments = [];
@@ -485,6 +516,65 @@ export function addInventoryItem(label: string) {
   }
 }
 
+function danneItemDefinition(itemId: DanneItemId) {
+  return DANNE_ITEM_CATALOG.find((item) => item.id === itemId);
+}
+
+export function getTreatyFragmentLabels() {
+  return [...TREATY_FRAGMENT_LABELS];
+}
+
+export function getTreatyFragmentCount() {
+  return TREATY_FRAGMENT_LABELS.filter((label) => gameState.inventory.includes(label)).length;
+}
+
+export function hasDanneItem(itemId: DanneItemId) {
+  if (itemId === "treaty-fragments") return getTreatyFragmentCount() >= TREATY_FRAGMENT_LABELS.length;
+  const item = danneItemDefinition(itemId);
+  if (!item) return false;
+  return gameState.inventory.includes(item.displayName) || gameState.inventory.includes(item.id);
+}
+
+export function addDanneItem(itemId: DanneItemId, fragmentIndex?: number) {
+  const item = danneItemDefinition(itemId);
+  if (!item) return false;
+  if (itemId === "treaty-fragments") {
+    unlockCodexEntry("item-treaty-fragments");
+    const requestedIndex = fragmentIndex ?? getTreatyFragmentCount();
+    const boundedIndex = Math.max(0, Math.min(TREATY_FRAGMENT_LABELS.length - 1, requestedIndex));
+    const label = TREATY_FRAGMENT_LABELS[boundedIndex];
+    const before = gameState.inventory.length;
+    addInventoryItem(label);
+    if (gameState.inventory.length !== before) {
+      setLatestMessage(`${label} secured.`);
+      refreshQuestWorkflowState();
+      return true;
+    }
+    setLatestMessage(`${label} already filed.`);
+    return false;
+  }
+  const before = gameState.inventory.length;
+  unlockCodexEntry(`item-${itemId}`);
+  addInventoryItem(item.displayName);
+  if (itemId === "ruby-pen" && !gameState.equippedDanneItem) gameState.equippedDanneItem = itemId;
+  if (gameState.inventory.length !== before) {
+    setLatestMessage(`${item.displayName} acquired.`);
+    refreshQuestWorkflowState();
+    return true;
+  }
+  setLatestMessage(`${item.displayName} already acquired.`);
+  refreshQuestWorkflowState();
+  return false;
+}
+
+export function equipDanneItem(itemId: DanneItemId) {
+  if (itemId !== "ruby-pen" || !hasDanneItem(itemId)) return false;
+  gameState.equippedDanneItem = itemId;
+  setLatestMessage("Ruby Pen equipped.");
+  refreshQuestWorkflowState();
+  return true;
+}
+
 function processItemDefinition(itemId: ProcessItemId) {
   return ITEM_REGISTRY.find((item) => item.id === itemId);
 }
@@ -595,6 +685,22 @@ export function getRoomGraphReadout() {
     visitedRoomIds.add("O1");
     revealedRoomIds.add("O1");
   }
+  if (gameState.currentScene === "CherryBlossomGardenScene") {
+    visitedRoomIds.add("DG1");
+    revealedRoomIds.add("DG1");
+  }
+  if (gameState.currentScene === "SenateHearingChamberScene") {
+    visitedRoomIds.add("DH1");
+    revealedRoomIds.add("DH1");
+  }
+  if (gameState.currentScene === "NaraStacksScene") {
+    visitedRoomIds.add("DN1");
+    revealedRoomIds.add("DN1");
+  }
+  if (gameState.currentScene === "EmbassyCableRoomScene") {
+    visitedRoomIds.add("DE1");
+    revealedRoomIds.add("DE1");
+  }
   if (gameState.currentScene === "NetworkScene") {
     visitedRoomIds.add("N1");
     revealedRoomIds.add("N1");
@@ -612,6 +718,10 @@ export function getRoomGraphReadout() {
   if (gameState.currentScene === "EndingScene") {
     visitedRoomIds.add("G1");
     revealedRoomIds.add("G1");
+  }
+  if (gameState.currentScene === "BlackVaultLairScene") {
+    visitedRoomIds.add("DV1");
+    revealedRoomIds.add("DV1");
   }
   return FRUS_ROOM_GRAPH.map((room) => ({
     id: room.id,
@@ -910,7 +1020,35 @@ function stampReadout() {
 function selectedItemReadout() {
   const held = compactHeldItem(gameState.physicalVerification?.carriedItem ?? gameState.heldItem);
   if (held !== "NONE") return held;
+  if (gameState.equippedDanneItem === "ruby-pen" && hasDanneItem("ruby-pen")) return "RUBY PEN";
   return getAdventureHudReadout().secondarySlotLabel;
+}
+
+export function getDanneItemReadout(): DanneItemReadout[] {
+  const fragments = TREATY_FRAGMENT_LABELS.filter((label) => gameState.inventory.includes(label));
+  const fragmentCount = fragments.length;
+  return DANNE_ITEM_CATALOG.map((item) => {
+    const acquired = item.id === "treaty-fragments"
+      ? fragmentCount > 0
+      : hasDanneItem(item.id);
+    const complete = item.id === "treaty-fragments" ? fragmentCount >= TREATY_FRAGMENT_LABELS.length : acquired;
+    return {
+      id: item.id,
+      displayName: item.displayName,
+      key: item.key,
+      texture: item.key,
+      tier: item.tier,
+      description: item.description,
+      acquired,
+      equipped: item.id === gameState.equippedDanneItem,
+      count: item.id === "treaty-fragments" ? fragmentCount : acquired ? 1 : 0,
+      total: item.id === "treaty-fragments" ? TREATY_FRAGMENT_LABELS.length : 1,
+      complete,
+      fragments: item.id === "treaty-fragments" ? fragments : [],
+      attackBonus: item.id === "ruby-pen" && acquired ? 5 : 0,
+      trueEndingReady: item.id === "treaty-fragments" && fragmentCount >= TREATY_FRAGMENT_LABELS.length
+    };
+  });
 }
 
 export function getProcessItemReadout() {
@@ -1172,6 +1310,8 @@ export function renderGameToText() {
       },
       processStamps: gameState.processStamps,
       processItems: getProcessItemReadout(),
+      danneItems: getDanneItemReadout(),
+      codex: getCodexReadout(),
       workflowTools: getWorkflowToolReadout(),
       areaProgress: getAreaProgressReadout(),
       currentArea: getCurrentAreaReadout(),
@@ -1190,6 +1330,7 @@ export function renderGameToText() {
       physicalVerification: gameState.physicalVerification,
       roomTraversal: gameState.roomTraversal,
       snesTransition: gameState.snesTransition,
+      sceneProgress: { ...gameState.sceneProgress },
       inventory: gameState.inventory,
       latestMessage: gameState.latestMessage,
       player: gameState.player,

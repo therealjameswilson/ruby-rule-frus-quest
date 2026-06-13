@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
 import { getCharacterKeyForNpcId } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { unlockCodexEntry } from "../game/codex";
 import {
   addProcessItem,
   addDocumentPoints,
@@ -51,6 +52,7 @@ export class GuideScene extends Phaser.Scene {
 
   create() {
     setSceneState("GuideScene", "explore", "Archive Cavern: claim the Citation Stamp.");
+    unlockCodexEntry("npc-senior-archivist");
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-30);
