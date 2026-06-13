@@ -535,6 +535,21 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Added Bluetooth gamepad support through the unified input state, mapping D-pad/stick, A, B, ability, Start, and Select without direct gameplay reads outside `src/input/`.
 - Added gamepad connect/disconnect listeners so the touch overlay fades away when a controller is active and returns when it disconnects.
 - Added a small controller toast plus `window.rubyRuleGamepadDebug()` and mobile debug HUD readout for QA.
+
+## DANN-E warning, variants, and expansion art integration
+
+- Started `feature/integrate-danne-pack` from `origin/main`, after confirming PR #7 and PR #8 assets are present on `origin/main`.
+- Completed Phase 1 asset registry and preload wiring:
+  - added `src/game/danneAtlas.ts` with typed registry entries for the DANN-E warning screen, five maps, four portraits, four 4x4 sprite sheets, three item cards, three UI sheets, the ego-bolt VFX sheet, and eight DANN-E variants
+  - added `src/art/danne_anims.ts` to register row-based DANN-E sprite walk/attack animations and an 8-frame ego-bolt fly animation
+  - added `BootScene.preloadDannePack()` and nearest-neighbor filtering for all DANN-E PNG textures
+  - added `DanneGallery` at `?scene=DanneGallery` with a scrollable labeled preview grid for all 29 registered assets
+  - registered `DanneGallery` in `gameConfig.scene`, `SCENE_ORDER`, transient-save handling, and touch-overlay hiding
+- Verified Phase 1:
+  - `npm run build` passes with only the existing Phaser chunk-size warning
+  - captured and committed `docs/screenshots/danne-phase1.png`
+  - `render_game_to_text()` for `DanneGallery` lists all 29 DANN-E assets in `visibleEntities`
+  - direct scene smokes passed for Title, CharacterCreate, Guide, Office, Archive, Network, ReferralVault, SilentRead, and Ending with no captured console/page errors
 - Physical iOS/Android controller testing remains for the Phase 10 device matrix; this phase uses a mocked Gamepad API probe for automated verification.
 
 ## 2026-06-12 Mobile SNES Quality Phase 10

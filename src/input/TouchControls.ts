@@ -112,7 +112,11 @@ export class TouchControls {
   }
 
   refreshForScene(activeSceneKey: string | null) {
-    const hiddenScene = activeSceneKey === "TapToStartScene" || activeSceneKey === "RenderDebugScene" || activeSceneKey === "SpriteGallery";
+    const hiddenScene =
+      activeSceneKey === "TapToStartScene"
+      || activeSceneKey === "RenderDebugScene"
+      || activeSceneKey === "DanneGallery"
+      || activeSceneKey === "SpriteGallery";
     const shouldShow = !hiddenScene && !this.gamepadSuppressed && (isTouchCapable() || this.forceVisible);
     if (shouldShow && !this.overlayFade && this.overlayAlpha <= 0) this.overlayAlpha = 1;
     this.setEnabled(shouldShow);

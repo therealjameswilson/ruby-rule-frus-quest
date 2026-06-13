@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { ArchiveScene } from "../scenes/ArchiveScene";
 import { BootScene } from "../scenes/BootScene";
 import { CharacterCreateScene } from "../scenes/CharacterCreateScene";
+import { DanneGallery } from "../scenes/DanneGallery";
 import { EndingScene } from "../scenes/EndingScene";
 import { GuideScene } from "../scenes/GuideScene";
 import { NetworkScene } from "../scenes/NetworkScene";
@@ -61,6 +62,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     SilentReadScene,
     EndingScene,
     RenderDebugScene,
+    DanneGallery,
     SpriteGallery,
     UIScene
   ]
