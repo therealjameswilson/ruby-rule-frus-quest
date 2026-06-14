@@ -46,14 +46,20 @@ img,
 }
 
 #game-shell {
-  width: 768px;
-  height: 720px;
+  width: auto;
+  height: auto;
   flex: 0 0 auto;
   max-width: 100vw;
   max-height: 100dvh;
   position: relative;
   overflow: hidden;
   background: #000;
+}
+
+#game-shell canvas {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  -ms-interpolation-mode: nearest-neighbor;
 }
 
 canvas {

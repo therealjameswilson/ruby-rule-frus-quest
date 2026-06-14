@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import { PALETTE } from "../../game/constants";
 import type { Position } from "../../game/types";
-import { setPixelPosition, snapPixel } from "../../systems/pixelPerfect";
-import { approach, frameDeltaSeconds } from "../../systems/smoothMovement";
+import { snapPixel } from "../../systems/pixelPerfect";
+import { approach, frameDeltaSeconds, setRenderedPosition, snapRenderedPosition } from "../../systems/smoothMovement";
 
 interface EnemyOptions {
   label: string;
@@ -87,7 +87,7 @@ export abstract class Enemy {
   }
 
   get position(): Position {
-    return { x: snapPixel(this.currentX), y: snapPixel(this.currentY) };
+    return snapRenderedPosition({ x: this.currentX, y: this.currentY });
   }
 
   get isDead() {
@@ -160,7 +160,7 @@ export abstract class Enemy {
   protected syncRender(timeMs: number, offsetX = 0, offsetY = 0) {
     const renderX = snapPixel(this.currentX + offsetX);
     const renderY = snapPixel(this.currentY + offsetY);
-    setPixelPosition(this.container, renderX, renderY);
+    setRenderedPosition(this.container, renderX, renderY);
     this.container.setDepth(renderY);
     return { renderX, renderY };
   }

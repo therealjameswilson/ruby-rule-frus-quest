@@ -11,6 +11,8 @@ import {
 } from "../game/state";
 import type { ProposalKind } from "../game/types";
 import { retroAudio } from "./audio";
+import { applyStandardsDamage, VIOLATION_LABEL } from "./standardsDamage";
+import type { StandardViolation } from "./standardsDamage";
 
 export function canAutoApplyProposal(kind: ProposalKind): boolean {
   return kind === "mechanical";
@@ -27,6 +29,18 @@ export function adjustReliability(amount: number, reason: string) {
   refreshQuestWorkflowState();
   if (amount >= 0) retroAudio.confirm();
   else retroAudio.warning();
+}
+
+export function applyStandardsViolation(violation: StandardViolation, context?: string) {
+  const before = gameState.reliability;
+  const after = applyStandardsDamage(before, violation);
+  gameState.reliability = after;
+  const lost = before - after;
+  const label = VIOLATION_LABEL[violation];
+  setLatestMessage(`-${lost} reliability: ${label}${context ? ` ${context}` : ""}`);
+  refreshQuestWorkflowState();
+  retroAudio.warning();
+  return { before, after, lost, label, violation };
 }
 
 export class ReliabilityHud {

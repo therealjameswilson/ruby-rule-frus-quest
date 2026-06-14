@@ -4,6 +4,7 @@ import { gameState } from "../game/state";
 import { addGamepadConnectionListener, getInput, updateInputCallbacks } from "../input/InputState";
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
+import { applyIntegerZoom } from "../systems/pixelPerfect";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -12,6 +13,7 @@ export class UIScene extends Phaser.Scene {
   private gamepadToastTimer?: Phaser.Time.TimerEvent;
   private gamepadToastTween?: Phaser.Tweens.Tween;
   private removeGamepadListener?: () => void;
+  private pixelCameraSignature = "";
 
   constructor() {
     super("UIScene");
@@ -38,6 +40,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   update() {
+    this.syncPixelCameras();
     if (this.scene.isActive("CodexScene")) {
       this.controls.refreshForScene(null);
       return;
@@ -53,6 +56,14 @@ export class UIScene extends Phaser.Scene {
     const activeScenes = this.scene.manager.getScenes(true)
       .filter((scene) => scene.scene.key !== this.scene.key);
     return activeScenes.at(-1)?.scene.key ?? null;
+  }
+
+  private syncPixelCameras() {
+    const activeSceneKeys = this.scene.manager.getScenes(true).map((scene) => scene.scene.key).join("|");
+    const signature = `${activeSceneKeys}:${this.game.canvas.width}x${this.game.canvas.height}:${this.game.scale.zoom}`;
+    if (signature === this.pixelCameraSignature) return;
+    this.pixelCameraSignature = signature;
+    applyIntegerZoom(this.game);
   }
 
   private createGamepadToast() {

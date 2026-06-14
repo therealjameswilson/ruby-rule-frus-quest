@@ -7,7 +7,10 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  getHeldProcessItemIds,
   hasProcessItem,
+  clearDocumentUndisclosedDeletion,
+  markDocumentUndisclosedDeletion,
   setAgencyEquityResponse,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -20,6 +23,7 @@ import {
 } from "../game/state";
 import type { ChoiceOption } from "../game/types";
 import { getInput, tickInput, type InputState } from "../input/InputState";
+import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
@@ -27,7 +31,7 @@ import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addDocumentStack, addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
@@ -51,6 +55,7 @@ interface ReferralRoom {
   roomType: RoomType;
   exits: Partial<Record<Direction, ReferralRoomId | "SilentReadScene">>;
   lockedExits?: Partial<Record<Direction, string>>;
+  requiredItems?: Partial<Record<Direction, "concurrence_slip">>;
 }
 
 const REFERRAL_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
@@ -76,7 +81,8 @@ const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
     title: "Concurrence Chamber",
     roomType: "reward",
     exits: { west: "R1", east: "SilentReadScene" },
-    lockedExits: { east: "Concurrence Slip handoff" }
+    lockedExits: { east: "Concurrence Slip handoff" },
+    requiredItems: { east: "concurrence_slip" }
   }
 };
 
@@ -386,21 +392,22 @@ export class ReferralVaultScene extends Phaser.Scene {
   private syncRoomTraversalState() {
     const room = REFERRAL_ROOMS[this.currentRoomId];
     const lockedExits: Partial<Record<Direction, string>> = {};
-    const requiredItems: Partial<Record<Direction, "concurrence_slip">> = {};
     if (room.id === "R1" && !this.referralGateOpen) lockedExits.east = room.lockedExits?.east;
-    if (room.id === "R2" && !this.concurrenceSlipCollected) {
+    if (room.id === "R2" && !canTraverseExit(room.id, "east", getHeldProcessItemIds())) {
       lockedExits.east = room.lockedExits?.east;
-      requiredItems.east = "concurrence_slip";
     }
     setRoomTraversalState({
       currentRoomId: room.id,
       roomTitle: room.title,
       roomType: room.roomType,
       visitedRoomIds: [...this.visitedRoomIds],
-      revealedRoomIds: this.referralGateOpen || this.concurrenceSlipCollected ? ["R1", "R2"] : ["R1"],
+      revealedRoomIds: [
+        ...(this.referralGateOpen || this.concurrenceSlipCollected ? ["R1", "R2"] : ["R1"]),
+        ...getRevealedShortcutRoomIds(getHeldProcessItemIds()).filter((roomId): roomId is ReferralRoomId => roomId in REFERRAL_ROOMS)
+      ],
       exits: room.exits,
       lockedExits,
-      requiredItems
+      requiredItems: room.requiredItems
     });
   }
 
@@ -471,9 +478,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
 
     if (this.currentRoomId === "R2" && direction === "east") {
-      if (!this.concurrenceSlipCollected) {
-        setLatestMessage("Referral handoff requires the Concurrence Slip.");
-        setObjective("Collect the Concurrence Slip before leaving the chamber.");
+      const heldItems = getHeldProcessItemIds();
+      if (!canTraverseExit(this.currentRoomId, direction, heldItems)) {
+        const prompt = blockedExitPrompt(this.currentRoomId, direction, heldItems);
+        setLatestMessage(prompt.message);
+        setObjective(prompt.objective);
         this.player.setPosition(REFERRAL_PLAY_BOUNDS.right - 18, position.y);
         this.exitCooldownUntil = this.time.now + 500;
         return false;
@@ -507,7 +516,8 @@ export class ReferralVaultScene extends Phaser.Scene {
         this.correctMatches += 1;
         adjustReliability(3, `${item.label} matched to ${item.agency}`);
       } else {
-        adjustReliability(-6, "agency equity mismatch");
+        applyStandardsViolation("omitted_material_fact", `${item.label} was sent to the wrong equity.`);
+        this.vaultText.setText("STANDARD HIT\nMATERIAL FACT RISK");
       }
       this.reliability.update();
       this.matchIndex += 1;
@@ -538,9 +548,12 @@ export class ReferralVaultScene extends Phaser.Scene {
         this.showExcisionChoice();
         return;
       }
-      adjustReliability(-14, "final referral decision ceded or unchecked");
+      const violation = applyStandardsViolation("concealed_policy_defect", "A final referral decision was ceded or unchecked.");
       this.reliability.update();
-      this.dialog.show("MARCUS", "No silent handoff. Review the equities again.", () => this.startMatching());
+      this.dialog.show("STANDARD VIOLATION", [
+        violation.label,
+        "No silent handoff. Review the equities again."
+      ], () => this.startMatching());
     });
   }
 
@@ -556,6 +569,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         awardProcessStamp("referral");
         setDocumentWorkflowState("source_note_047", "cleared");
         setDocumentWorkflowState("cross_reference_001", "cleared");
+        clearDocumentUndisclosedDeletion("sbu_annotation_001", "bracketed insertion added");
         setDocumentWorkflowState("sbu_annotation_001", "excised");
         setAgencyEquityResponse("sbu_annotation_001", "agency-cyan", "cleared");
         setAgencyEquityResponse("sbu_annotation_001", "agency-red", "excised");
@@ -578,9 +592,13 @@ export class ReferralVaultScene extends Phaser.Scene {
         ]);
         return;
       }
-      adjustReliability(-10, "withholding was hidden or unclear");
+      markDocumentUndisclosedDeletion("sbu_annotation_001", "unbracketed excision");
+      const violation = applyStandardsViolation("undisclosed_deletion", "Excision skipped the bracketed insertion.");
       this.reliability.update();
-      this.dialog.show("PRIYA", "Visible language. Never a silent gap.", () => this.showExcisionChoice());
+      this.dialog.show("STANDARD VIOLATION", [
+        violation.label,
+        "Visible language. Never a silent gap."
+      ], () => this.showExcisionChoice());
     });
   }
 }

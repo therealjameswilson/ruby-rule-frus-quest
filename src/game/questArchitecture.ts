@@ -469,6 +469,61 @@ export const TILE_GRID_ROOM_DEFINITIONS: readonly TileGridRoomDefinition[] = FRU
   objectSlotIds: QUEST_OBJECT_REGISTRY.filter((slot) => slot.roomId === room.id).map((slot) => slot.id)
 }));
 
+function roomDefinition(roomId: string) {
+  return FRUS_ROOM_GRAPH.find((room) => room.id === roomId) ?? null;
+}
+
+function processItemLabel(itemId: ProcessItemId) {
+  return ITEM_REGISTRY.find((item) => item.id === itemId)?.displayName ?? itemId.replace(/_/g, " ");
+}
+
+export function requiredItemForExit(roomId: string, direction: Direction) {
+  return roomDefinition(roomId)?.requiredItems?.[direction] ?? null;
+}
+
+export function canTraverseExit(roomId: string, direction: Direction, inventory: ReadonlySet<ProcessItemId>): boolean {
+  const room = roomDefinition(roomId);
+  if (!room || (!room.exits[direction] && !room.lockedExits?.[direction])) return false;
+  const requiredItem = requiredItemForExit(roomId, direction);
+  return !requiredItem || inventory.has(requiredItem);
+}
+
+export function blockedExitPrompt(roomId: string, direction: Direction, inventory: ReadonlySet<ProcessItemId>) {
+  const room = roomDefinition(roomId);
+  const lockLabel = room?.lockedExits?.[direction] ?? "locked route";
+  const requiredItem = requiredItemForExit(roomId, direction);
+  if (requiredItem && !inventory.has(requiredItem)) {
+    const itemLabel = processItemLabel(requiredItem);
+    return {
+      lockLabel,
+      requiredItem,
+      message: `You need the ${itemLabel}.`,
+      objective: `${itemLabel} opens ${lockLabel}.`
+    };
+  }
+  return {
+    lockLabel,
+    requiredItem,
+    message: `${lockLabel} is still sealed.`,
+    objective: `Resolve the ${lockLabel} before entering.`
+  };
+}
+
+export function getRevealedShortcutRoomIds(inventory: ReadonlySet<ProcessItemId>) {
+  const revealed = new Set<string>();
+  for (const room of FRUS_ROOM_GRAPH) {
+    for (const direction of Object.keys(room.requiredItems ?? {}) as Direction[]) {
+      const requiredItem = room.requiredItems?.[direction];
+      const targetRoomId = room.exits[direction];
+      if (requiredItem && targetRoomId && inventory.has(requiredItem)) {
+        revealed.add(room.id);
+        revealed.add(targetRoomId);
+      }
+    }
+  }
+  return [...revealed];
+}
+
 export function deriveWorkflowSnapshot(context: QuestArchitectureContext) {
   const volumeWorkflowState = deriveVolumeWorkflowState(context);
   const documentWorkflow = deriveDocumentWorkflow(context);
@@ -553,6 +608,7 @@ function deriveVolumeWorkflowState(context: QuestArchitectureContext): VolumeWor
   const states = context.documentCandidates.map((document) => document.workflowState);
   if (context.finalGatePublished) return "published";
   if (states.some((state) => state === "published")) return "published";
+  if (context.documentCandidates.some((document) => document.undisclosedDeletion)) return "editing";
   if (hasItem(context, "buckram_key") || context.volumeFragments.length >= 5) return "final_assembly";
   if (states.some((state) => state === "proofed") || states.some((state) => state === "ready_for_proof")) return "proofing";
   if (states.some((state) => state === "cleared" || state === "excised" || state === "denied" || state === "appeal_needed")) return "referral_resolution";

@@ -4,19 +4,45 @@ import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_S
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import {
   applyAgencyEquityResponse,
-  applyDocumentWorkflowAction,
   applyDocumentWorkflowState,
   cloneDocumentCandidate,
   cloneInitialDocumentCandidates,
-  documentToWorkflowDocument
+  DOCUMENT_ROOM_LOOKUP,
+  documentToWorkflowDocument,
+  tryWorkflowAction
 } from "./documentWorkflow";
 import type { DocumentWorkflowAction } from "./documentWorkflow";
-import { deriveWorkflowSnapshot, getQuestArchitectureReadout } from "./questArchitecture";
+import {
+  blockedExitPrompt,
+  canTraverseExit,
+  deriveWorkflowSnapshot,
+  getQuestArchitectureReadout,
+  getRevealedShortcutRoomIds
+} from "./questArchitecture";
 import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 import type { DanneItemId } from "./danneItemCatalog";
+import {
+  crystalsEarned,
+  EQUITY_CRYSTAL_STATUSES,
+  PENDANTS,
+  totalEquities
+} from "./frusProgression";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
+import {
+  bigKeyForArea,
+  bossStampForArea,
+  canOpenBossDoor,
+  canOpenLockedDoor,
+  createInitialDungeonStates,
+  dungeonComplete,
+  earnSmallKey,
+  isBossDoor,
+  normalizeDungeonStates,
+  useSmallKey
+} from "../systems/dungeonKeys";
+import type { DungeonStateRegistry } from "../systems/dungeonKeys";
 import type {
   AdventureHudReadout,
   ChoiceOption,
@@ -60,6 +86,7 @@ export interface GameState {
     verifiedFlags: number;
     clearedBlockers: number;
   };
+  dungeons: DungeonStateRegistry;
   reliability: number;
   heldItem: string | null;
   equippedProcessItem: ProcessItemId | null;
@@ -214,6 +241,86 @@ export interface FinalGateCertificationState {
   message: string;
 }
 
+export interface PublicationReadinessReadout {
+  pendants: {
+    collected: number;
+    required: number;
+    missing: ProcessStampId[];
+  };
+  crystals: {
+    collected: number;
+    required: number;
+    missing: number;
+  };
+  standards: {
+    unresolved: Array<{
+      id: "undisclosed_deletion";
+      label: string;
+      documentId: string;
+      title: string;
+    }>;
+    clear: boolean;
+  };
+  buckramKeyHeld: boolean;
+  buckramGateOpen: boolean;
+  completionRatio: number;
+  missingSummary: string[];
+}
+
+export interface AdventureSubscreenReadout {
+  pendants: Array<{
+    id: "objectivity" | "provenance" | "review";
+    label: string;
+    title: string;
+    stampId: ProcessStampId;
+    acquired: boolean;
+  }>;
+  crystals: {
+    earned: number;
+    total: number;
+    byDocument: Array<{
+      documentId: string;
+      title: string;
+      earned: number;
+      total: number;
+    }>;
+  };
+  equippedTool: {
+    id: ProcessItemId;
+    displayName: string;
+    shortLabel: string;
+  } | null;
+  reliabilityHearts: {
+    current: number;
+    max: number;
+    filled: number;
+    total: number;
+    meter: string;
+  };
+  dungeons: Array<{
+    areaId: AreaId;
+    displayName: string;
+    active: boolean;
+    smallKeys: number;
+    smallKeysRequired: number;
+    bigKeyHeld: boolean;
+    bossDefeated: boolean;
+    mapRevealed: boolean;
+  }>;
+  roomMap: {
+    currentAreaId: AreaId;
+    currentRoomId: string | null;
+    rooms: Array<{
+      id: string;
+      title: string;
+      grid: { x: number; y: number };
+      visited: boolean;
+      revealed: boolean;
+      roomType: RoomType;
+    }>;
+  };
+}
+
 export const gameState: GameState = {
   currentScene: "BootScene",
   mode: "boot",
@@ -236,6 +343,7 @@ export const gameState: GameState = {
     verifiedFlags: 0,
     clearedBlockers: 0
   },
+  dungeons: createInitialDungeonStates(),
   reliability: 80,
   heldItem: null,
   equippedProcessItem: null,
@@ -291,6 +399,7 @@ export function resetGameState() {
   gameState.documentCandidates = cloneInitialDocumentCandidates();
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.documentWorkflowLog = [];
+  gameState.dungeons = createInitialDungeonStates();
   gameState.heldItem = null;
   gameState.equippedProcessItem = null;
   gameState.equippedDanneItem = null;
@@ -397,6 +506,11 @@ export function restoreGameSaveData(save: GameSaveData) {
     last: restored.snesTransition?.last ?? null
   };
   Object.assign(gameState, restored);
+  gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
+  gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
+  gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
+  syncDungeonBigKeysFromInventory();
+  syncDungeonBossesFromProcessStamps();
   resumeSpawn = {
     scene: gameState.currentScene,
     player: { ...gameState.player },
@@ -460,11 +574,17 @@ export function setGameMode(mode: GameMode, objective?: string) {
 }
 
 export function setRoomTraversalState(state: RoomTraversalState | null) {
+  const revealedRoomIds = state
+    ? new Set([
+        ...(state.revealedRoomIds ?? state.visitedRoomIds),
+        ...getRevealedShortcutRoomIds(getHeldProcessItemIds())
+      ])
+    : null;
   gameState.roomTraversal = state
     ? {
         ...state,
         visitedRoomIds: [...state.visitedRoomIds],
-        revealedRoomIds: [...(state.revealedRoomIds ?? state.visitedRoomIds)]
+        revealedRoomIds: [...(revealedRoomIds ?? [])]
       }
     : null;
   refreshQuestWorkflowState();
@@ -589,14 +709,40 @@ export function hasProcessItem(itemId: ProcessItemId) {
   );
 }
 
+export function getHeldProcessItemIds() {
+  const inventory = new Set<ProcessItemId>();
+  for (const item of ITEM_REGISTRY) {
+    if (hasProcessItem(item.id)) inventory.add(item.id);
+  }
+  return inventory;
+}
+
+function markDungeonBigKeyForItem(itemId: ProcessItemId) {
+  for (const area of AREA_REGISTRY) {
+    if (bigKeyForArea(area.id) === itemId) {
+      gameState.dungeons[area.id] = {
+        ...gameState.dungeons[area.id],
+        bigKeyHeld: true,
+        mapRevealed: true
+      };
+    }
+  }
+}
+
+function syncDungeonBigKeysFromInventory() {
+  for (const itemId of getHeldProcessItemIds()) markDungeonBigKeyForItem(itemId);
+}
+
 export function addProcessItem(itemId: ProcessItemId) {
   const item = processItemDefinition(itemId);
   if (!item) return;
   addInventoryItem(item.displayName);
+  markDungeonBigKeyForItem(itemId);
   if (!gameState.equippedProcessItem) {
     gameState.equippedProcessItem = itemId;
     refreshQuestWorkflowState();
   }
+  refreshQuestWorkflowState();
 }
 
 export function getProcessItemDefinition(itemId: ProcessItemId) {
@@ -640,6 +786,7 @@ export function getProcessItemGateReadout(itemId: ProcessItemId) {
 }
 
 function areaRewardEarned(area: (typeof AREA_REGISTRY)[number]) {
+  if (dungeonComplete(gameState.dungeons[area.id])) return true;
   if (area.rewardType === "stamp") {
     return gameState.processStamps.includes(area.rewardId as ProcessStampId);
   }
@@ -681,6 +828,8 @@ export function getCurrentAreaReadout() {
 export function getRoomGraphReadout() {
   const visitedRoomIds = new Set(gameState.roomTraversal?.visitedRoomIds ?? []);
   const revealedRoomIds = new Set(gameState.roomTraversal?.revealedRoomIds ?? []);
+  const heldProcessItems = getHeldProcessItemIds();
+  for (const roomId of getRevealedShortcutRoomIds(heldProcessItems)) revealedRoomIds.add(roomId);
   if (gameState.currentScene === "OfficeScene") {
     visitedRoomIds.add("O1");
     revealedRoomIds.add("O1");
@@ -723,26 +872,59 @@ export function getRoomGraphReadout() {
     visitedRoomIds.add("DV1");
     revealedRoomIds.add("DV1");
   }
-  return FRUS_ROOM_GRAPH.map((room) => ({
-    id: room.id,
-    area: room.area,
-    title: room.title,
-    exits: room.exits,
-    lockedExits: room.lockedExits ?? {},
-    requiredItems: room.requiredItems ?? {},
-    roomType: room.roomType,
-    visited: visitedRoomIds.has(room.id),
-    revealed: revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret"
-  }));
+  return FRUS_ROOM_GRAPH.map((room) => {
+    const dungeon = gameState.dungeons[room.area];
+    const lockedExits = room.lockedExits ?? {};
+    const lockedExitState = Object.fromEntries(
+      (Object.keys(lockedExits) as Direction[]).map((direction) => {
+        const requiredItem = room.requiredItems?.[direction] ?? null;
+        const bossDoor = isBossDoor(room, direction);
+        const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
+        const canOpen = bossDoor
+          ? canOpenBossDoor(dungeon)
+          : requiredItem
+            ? canTraverseExit(room.id, direction, heldProcessItems)
+            : canOpenLockedDoor(dungeon);
+        return [direction, {
+          label: lockedExits[direction] ?? "Locked route",
+          gateType: bossDoor ? "boss" : requiredItem ? "process_item" : "small_key",
+          requiredItem,
+          requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
+          blockedMessage: canOpen ? null : prompt.message,
+          blockedObjective: canOpen ? null : prompt.objective,
+          canOpen,
+          smallKeys: dungeon.smallKeys,
+          bigKeyHeld: dungeon.bigKeyHeld
+        }];
+      })
+    );
+    return {
+      id: room.id,
+      area: room.area,
+      title: room.title,
+      exits: room.exits,
+      lockedExits,
+      lockedExitState,
+      requiredItems: room.requiredItems ?? {},
+      roomType: room.roomType,
+      visited: visitedRoomIds.has(room.id),
+      revealed: revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret" || dungeon.mapRevealed
+    };
+  });
 }
 
 export function getFinalGateReadiness() {
   const requiredStamps: ProcessStampId[] = ["rule", "archive", "network", "referral", "proof"];
   const missingStamps = requiredStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const documentsWithUndisclosedDeletion = gameState.documentCandidates
+    .filter((document) => document.undisclosedDeletion)
+    .map((document) => ({ id: document.id, title: document.title }));
   const fragmentsNeeded = 5;
   const reliabilityMinimum = 70;
   const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
   const reliabilityReady = gameState.reliability >= reliabilityMinimum;
+  const buckramKeyHeld = hasProcessItem("buckram_key");
+  const ready = missingStamps.length === 0 && missingFragments === 0 && reliabilityReady && documentsWithUndisclosedDeletion.length === 0;
   return {
     requiredStamps,
     missingStamps,
@@ -752,8 +934,51 @@ export function getFinalGateReadiness() {
     reliability: gameState.reliability,
     reliabilityMinimum,
     reliabilityReady,
+    buckramKeyHeld,
+    buckramGateOpen: ready && buckramKeyHeld,
+    documentsWithUndisclosedDeletion,
     stateChatMayOpenGate: false,
-    ready: missingStamps.length === 0 && missingFragments === 0 && reliabilityReady
+    ready
+  };
+}
+
+export function getPublicationReadinessReadout(): PublicationReadinessReadout {
+  const readiness = getFinalGateReadiness();
+  const unresolved = readiness.documentsWithUndisclosedDeletion.map((document) => ({
+    id: "undisclosed_deletion" as const,
+    label: `${document.title}: add visible bracketed insertion`,
+    documentId: document.id,
+    title: document.title
+  }));
+  const missingSummary = [
+    ...readiness.missingStamps.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
+    ...(readiness.missingFragments ? [`${readiness.missingFragments} crystal${readiness.missingFragments === 1 ? "" : "s"}`] : []),
+    ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
+    ...unresolved.map((standard) => standard.label)
+  ];
+  const requiredUnits = readiness.requiredStamps.length + readiness.fragmentsNeeded + 1;
+  const collectedUnits = (readiness.requiredStamps.length - readiness.missingStamps.length)
+    + Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded)
+    + (readiness.buckramKeyHeld ? 1 : 0);
+  return {
+    pendants: {
+      collected: readiness.requiredStamps.length - readiness.missingStamps.length,
+      required: readiness.requiredStamps.length,
+      missing: [...readiness.missingStamps]
+    },
+    crystals: {
+      collected: Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded),
+      required: readiness.fragmentsNeeded,
+      missing: readiness.missingFragments
+    },
+    standards: {
+      unresolved,
+      clear: unresolved.length === 0
+    },
+    buckramKeyHeld: readiness.buckramKeyHeld,
+    buckramGateOpen: readiness.buckramGateOpen && unresolved.length === 0,
+    completionRatio: Math.max(0, Math.min(1, collectedUnits / Math.max(1, requiredUnits))),
+    missingSummary
   };
 }
 
@@ -848,7 +1073,17 @@ export function getDocumentWorkflowReadout() {
 }
 
 export function advanceDocumentWorkflow(documentId: string, action: DocumentWorkflowAction, reason?: string) {
-  const changed = updateDocumentCandidate(documentId, (document) => applyDocumentWorkflowAction(document, action), reason);
+  const current = gameState.documentCandidates.find((document) => document.id === documentId);
+  if (!current) return null;
+  const result = tryWorkflowAction(current, action, getHeldProcessItemIds());
+  if (!result.ok) {
+    const lockedReason = result.reason ?? "Locked: matching FRUS tool required.";
+    setLatestMessage(lockedReason);
+    gameState.objective = lockedReason;
+    refreshQuestWorkflowState();
+    return null;
+  }
+  const changed = updateDocumentCandidate(documentId, () => result.document, reason);
   return changed?.workflowState ?? null;
 }
 
@@ -862,61 +1097,119 @@ export function setAgencyEquityResponse(documentId: string, agencyId: string, re
   return changed?.reviewStatus ?? null;
 }
 
+export function markDocumentUndisclosedDeletion(documentId: string, reason = "unbracketed excision") {
+  const changed = updateDocumentCandidate(documentId, (document) => ({
+    ...cloneDocumentCandidate(document),
+    undisclosedDeletion: true,
+    annotationNeeded: true
+  }), reason);
+  return changed?.undisclosedDeletion ?? false;
+}
+
+export function clearDocumentUndisclosedDeletion(documentId: string, reason = "bracketed insertion added") {
+  const changed = updateDocumentCandidate(documentId, (document) => ({
+    ...cloneDocumentCandidate(document),
+    undisclosedDeletion: false
+  }), reason);
+  return changed ? !changed.undisclosedDeletion : false;
+}
+
 export function markAsCandidate(documentId: string): void {
-  setDocumentWorkflowState(documentId, "candidate", "marked as candidate");
+  advanceDocumentWorkflow(documentId, "evaluate", "marked as candidate");
 }
 
 export function selectDocument(documentId: string): void {
-  setDocumentWorkflowState(documentId, "selected", "selected for volume");
+  advanceDocumentWorkflow(documentId, "select", "selected for volume");
 }
 
 export function verifyCitation(documentId: string): void {
-  setDocumentWorkflowState(documentId, "citation_verified", "citation verified");
+  advanceDocumentWorkflow(documentId, "verify_citation", "citation verified");
 }
 
 export function addAnnotation(documentId: string): void {
-  setDocumentWorkflowState(documentId, "ready_for_review", "annotation added");
+  advanceDocumentWorkflow(documentId, "prepare_review", "annotation added");
 }
 
 export function submitForReview(documentId: string): void {
-  setDocumentWorkflowState(documentId, "submitted_for_review", "submitted for review");
+  advanceDocumentWorkflow(documentId, "submit_review", "submitted for review");
 }
 
 export function routeReferral(documentId: string, agencyId: string): void {
-  setDocumentWorkflowState(documentId, "referred", `routed to ${agencyId}`);
-  setAgencyEquityResponse(documentId, agencyId, "referred");
+  const state = advanceDocumentWorkflow(documentId, "refer_agency", `routed to ${agencyId}`);
+  if (state === "referred") setAgencyEquityResponse(documentId, agencyId, "referred");
 }
 
 export function resolveReview(documentId: string, result: ReviewStatus): void {
   if (result === "cleared" || result === "excised" || result === "denied" || result === "appeal_needed") {
-    setDocumentWorkflowState(documentId, result, `review ${result}`);
+    const action: DocumentWorkflowAction =
+      result === "cleared" ? "clear" : result === "excised" ? "excise" : result === "denied" ? "deny" : "appeal";
+    advanceDocumentWorkflow(documentId, action, `review ${result}`);
     return;
   }
   if (result === "resolved") {
-    setDocumentWorkflowState(documentId, "ready_for_proof", "review resolved");
+    advanceDocumentWorkflow(documentId, "resolve", "review resolved");
     return;
   }
   if (result === "submitted") {
-    setDocumentWorkflowState(documentId, "submitted_for_review", "review submitted");
+    advanceDocumentWorkflow(documentId, "submit_review", "review submitted");
     return;
   }
   if (result === "referred") {
-    setDocumentWorkflowState(documentId, "referred", "review referred");
+    advanceDocumentWorkflow(documentId, "refer_agency", "review referred");
     return;
   }
   setDocumentWorkflowState(documentId, "ready_for_review", "review reset");
 }
 
 export function markReadyForProof(documentId: string): void {
-  setDocumentWorkflowState(documentId, "ready_for_proof", "ready for proof");
+  advanceDocumentWorkflow(documentId, "ready_proof", "ready for proof");
 }
 
 export function proofDocument(documentId: string): void {
-  setDocumentWorkflowState(documentId, "proofed", "proofed");
+  advanceDocumentWorkflow(documentId, "proof", "proofed");
 }
 
 export function publishDocument(documentId: string): void {
-  setDocumentWorkflowState(documentId, "published", "published");
+  advanceDocumentWorkflow(documentId, "publish", "published");
+}
+
+const SMALL_KEY_DOCUMENT_STATES = new Set<DocumentWorkflowState>(["source_note_needed", "citation_verified"]);
+
+function areaIdForDocument(document: DocumentCandidate): AreaId {
+  const roomId = DOCUMENT_ROOM_LOOKUP[document.id];
+  const graphRoom = roomId ? FRUS_ROOM_GRAPH.find((room) => room.id === roomId) : undefined;
+  if (graphRoom) return graphRoom.area;
+  const sceneArea = roomId
+    ? AREA_REGISTRY.find((area) => area.scenes.some((scene) => scene === roomId))
+    : undefined;
+  return sceneArea?.id ?? currentAreaId();
+}
+
+export function earnDungeonSmallKey(areaId: AreaId, reason = "document sub-task resolved") {
+  gameState.dungeons[areaId] = earnSmallKey(gameState.dungeons[areaId]);
+  const area = AREA_REGISTRY.find((candidate) => candidate.id === areaId);
+  setLatestMessage(`${area?.displayName ?? areaId}: small key earned (${reason}).`);
+  refreshQuestWorkflowState();
+}
+
+export function useDungeonSmallKey(areaId: AreaId, reason = "locked chapter route opened") {
+  if (!canOpenLockedDoor(gameState.dungeons[areaId])) {
+    const area = AREA_REGISTRY.find((candidate) => candidate.id === areaId);
+    setLatestMessage(`${area?.displayName ?? areaId}: locked door requires a small key.`);
+    refreshQuestWorkflowState();
+    return false;
+  }
+  gameState.dungeons[areaId] = useSmallKey(gameState.dungeons[areaId]);
+  const area = AREA_REGISTRY.find((candidate) => candidate.id === areaId);
+  setLatestMessage(`${area?.displayName ?? areaId}: small key used (${reason}).`);
+  refreshQuestWorkflowState();
+  return true;
+}
+
+function earnDungeonSmallKeyForDocument(document: DocumentCandidate, previousState: DocumentWorkflowState) {
+  if (document.workflowState === previousState || !SMALL_KEY_DOCUMENT_STATES.has(document.workflowState)) return;
+  const label = document.workflowState === "citation_verified" ? "citation verified" : "source note found";
+  earnDungeonSmallKey(areaIdForDocument(document), `${document.title} ${label}`);
 }
 
 function updateDocumentCandidate(documentId: string, updater: (document: DocumentCandidate) => DocumentCandidate, reason?: string): DocumentCandidate | null {
@@ -928,6 +1221,7 @@ function updateDocumentCandidate(documentId: string, updater: (document: Documen
       continue;
     }
     changed = updater(document);
+    earnDungeonSmallKeyForDocument(changed, document.workflowState);
     nextDocuments.push(changed);
   }
   gameState.documentCandidates = nextDocuments;
@@ -972,8 +1266,36 @@ export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLE
 export function awardProcessStamp(stampId: ProcessStampId) {
   if (!gameState.processStamps.includes(stampId)) {
     gameState.processStamps.push(stampId);
+    markDungeonBossDefeatedForStamp(stampId);
     refreshQuestWorkflowState();
   }
+}
+
+function markDungeonBossDefeated(areaId: AreaId) {
+  gameState.dungeons[areaId] = {
+    ...gameState.dungeons[areaId],
+    bossDefeated: true,
+    mapRevealed: true
+  };
+}
+
+function markDungeonBossDefeatedForStamp(stampId: ProcessStampId) {
+  for (const area of AREA_REGISTRY) {
+    if (bossStampForArea(area.id) === stampId) markDungeonBossDefeated(area.id);
+  }
+}
+
+function syncDungeonBossesFromProcessStamps() {
+  for (const stampId of gameState.processStamps) markDungeonBossDefeatedForStamp(stampId);
+}
+
+export function defeatDungeonBoss(areaId: AreaId, reason = "chapter boss review hurdle defeated") {
+  markDungeonBossDefeated(areaId);
+  const stampId = bossStampForArea(areaId);
+  if (stampId) awardProcessStamp(stampId);
+  const area = AREA_REGISTRY.find((candidate) => candidate.id === areaId);
+  setLatestMessage(`${area?.displayName ?? areaId}: ${reason}`);
+  refreshQuestWorkflowState();
 }
 
 const HUD_STAMP_LABELS: Record<ProcessStampId, string> = {
@@ -1105,6 +1427,78 @@ export function getAdventureHudReadout(): AdventureHudReadout {
     fragments: {
       current: gameState.volumeFragments.length,
       total: 5
+    }
+  };
+}
+
+export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
+  refreshQuestWorkflowState();
+  const currentArea = getCurrentAreaReadout();
+  const roomReadout = getRoomGraphReadout();
+  const equippedTool = getProcessItemReadout().find((item) => item.equipped) ?? null;
+  const crystalDocuments = gameState.documentCandidates.map((document) => {
+    const total = document.equities.length;
+    const earned = document.equities.filter((equity) => EQUITY_CRYSTAL_STATUSES.has(equity.response)).length;
+    return {
+      documentId: document.id,
+      title: document.title,
+      earned,
+      total
+    };
+  }).filter((document) => document.total > 0);
+  return {
+    pendants: PENDANTS.map((pendant) => ({
+      ...pendant,
+      acquired: gameState.processStamps.includes(pendant.stampId)
+    })),
+    crystals: {
+      earned: crystalsEarned(gameState.documentCandidates),
+      total: totalEquities(gameState.documentCandidates),
+      byDocument: crystalDocuments
+    },
+    equippedTool: equippedTool
+      ? {
+          id: equippedTool.id,
+          displayName: equippedTool.displayName,
+          shortLabel: equippedTool.shortLabel
+        }
+      : null,
+    reliabilityHearts: {
+      current: gameState.reliability,
+      max: 100,
+      filled: Math.max(0, Math.min(10, Math.ceil(gameState.reliability / 10))),
+      total: 10,
+      meter: meterBlocks(gameState.reliability, 100, 10)
+    },
+    dungeons: getAreaProgressReadout().map((area) => {
+      const dungeon = gameState.dungeons[area.id];
+      return {
+        areaId: area.id,
+        displayName: area.displayName,
+        active: area.active,
+        smallKeys: dungeon.smallKeys,
+        smallKeysRequired: dungeon.smallKeysRequired,
+        bigKeyHeld: dungeon.bigKeyHeld,
+        bossDefeated: dungeon.bossDefeated,
+        mapRevealed: dungeon.mapRevealed
+      };
+    }),
+    roomMap: {
+      currentAreaId: currentArea.id,
+      currentRoomId: gameState.roomTraversal?.currentRoomId ?? null,
+      rooms: FRUS_ROOM_GRAPH
+        .filter((room) => room.area === currentArea.id)
+        .map((room) => {
+          const readout = roomReadout.find((candidate) => candidate.id === room.id);
+          return {
+            id: room.id,
+            title: room.title,
+            grid: { ...room.grid },
+            visited: Boolean(readout?.visited),
+            revealed: Boolean(readout?.revealed),
+            roomType: room.roomType
+          };
+        })
     }
   };
 }
@@ -1258,10 +1652,12 @@ export function renderGameToText() {
       documentWorkflowLog: gameState.documentWorkflowLog,
       volumeMetrics: gameState.volumeMetrics,
       questCounters: gameState.questCounters,
+      dungeons: gameState.dungeons,
       questWorkflow,
       snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
       adventureHud: getAdventureHudReadout(),
+      adventureSubscreen: getAdventureSubscreenReadout(),
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,
       documentPoints: gameState.documentPoints,
@@ -1324,6 +1720,7 @@ export function renderGameToText() {
         assembled: gameState.volumeFragments.length >= 5
       },
       finalGate: getFinalGateReadiness(),
+      publicationReadiness: getPublicationReadinessReadout(),
       finalGateCertification: gameState.finalGateCertification,
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,

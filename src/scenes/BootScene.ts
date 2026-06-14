@@ -23,6 +23,7 @@ import {
 } from "../game/snesAtlas";
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 import { retroAudio } from "../systems/audio";
+import { ensurePixelBitmapFont, installPixelTextFactory } from "../systems/pixelFont";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -45,13 +46,16 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
+    this.cameras.main.roundPixels = true;
     setSceneState("BootScene", "boot", "Loading original pixel assets.");
     retroAudio.prepare();
+    this.installNearestTextureFilterGuard();
     this.createTextures();
+    ensurePixelBitmapFont(this);
+    installPixelTextFactory();
     registerCharacterAnims(this);
-    this.applyDanneTextureFilters();
-    this.applyAllNewArtTextureFilters();
     registerDanneAnims(this);
+    this.applyNearestTextureFilters();
     const startScene = this.getStartScene();
     this.scene.launch("UIScene");
     if (startScene !== "TitleScene" && startScene !== "TapToStartScene" && startScene !== "WarningScene") {
@@ -146,6 +150,18 @@ export class BootScene extends Phaser.Scene {
           this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
       }
+    }
+  }
+
+  private installNearestTextureFilterGuard() {
+    this.textures.on(Phaser.Textures.Events.ADD, (_key: string, texture: Phaser.Textures.Texture) => {
+      texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    });
+  }
+
+  private applyNearestTextureFilters() {
+    for (const key of this.textures.getTextureKeys()) {
+      this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
     }
   }
 

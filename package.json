@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
+    "test": "vitest run",
     "build": "tsc --noEmit && vite build",
     "improve:assets": "python scripts/improve-existing-assets.py",
     "perf:profile": "node tools/perf-profile.mjs",
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11"
+    "vite": "^5.4.11",
+    "vitest": "^4.1.8"
   }
 }

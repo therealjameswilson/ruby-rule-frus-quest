@@ -7,6 +7,7 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  getHeldProcessItemIds,
   setLatestMessage,
   setDocumentWorkflowState,
   setNearestInteractable,
@@ -18,6 +19,7 @@ import {
 } from "../game/state";
 import type { ChoiceOption, RouteItem } from "../game/types";
 import { getInput, tickInput, type InputState } from "../input/InputState";
+import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
@@ -25,7 +27,7 @@ import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addNetworkCables, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
@@ -44,6 +46,7 @@ interface NetworkRoom {
   roomType: RoomType;
   exits: Partial<Record<Direction, NetworkRoomId | "ReferralVaultScene">>;
   lockedExits?: Partial<Record<Direction, string>>;
+  requiredItems?: Partial<Record<Direction, "clearance_token">>;
 }
 
 const NETWORK_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
@@ -69,7 +72,8 @@ const NETWORK_ROOMS: Record<NetworkRoomId, NetworkRoom> = {
     title: "ClassNet Vault",
     roomType: "reward",
     exits: { west: "N1", east: "ReferralVaultScene" },
-    lockedExits: { east: "Referral handoff door" }
+    lockedExits: { east: "Red vault exit" },
+    requiredItems: { east: "clearance_token" }
   }
 };
 
@@ -356,10 +360,13 @@ export class NetworkScene extends Phaser.Scene {
       roomTitle: room.title,
       roomType: room.roomType,
       visitedRoomIds: [...this.visitedRoomIds],
-      revealedRoomIds: this.routingComplete || this.clearanceTokenCollected ? ["N1", "N2"] : ["N1"],
+      revealedRoomIds: [
+        ...(this.routingComplete || this.clearanceTokenCollected ? ["N1", "N2"] : ["N1"]),
+        ...getRevealedShortcutRoomIds(getHeldProcessItemIds()).filter((roomId): roomId is NetworkRoomId => roomId in NETWORK_ROOMS)
+      ],
       exits: room.exits,
       lockedExits: room.lockedExits,
-      requiredItems: room.id === "N2" ? { east: "clearance_token" } : undefined
+      requiredItems: room.requiredItems
     });
   }
 
@@ -429,9 +436,11 @@ export class NetworkScene extends Phaser.Scene {
     }
 
     if (this.currentRoomId === "N2" && direction === "east") {
-      if (!this.clearanceTokenCollected) {
-        setLatestMessage("Referral handoff requires the Clearance Token.");
-        setObjective("Collect the Clearance Token before leaving the vault.");
+      const heldItems = getHeldProcessItemIds();
+      if (!canTraverseExit(this.currentRoomId, direction, heldItems)) {
+        const prompt = blockedExitPrompt(this.currentRoomId, direction, heldItems);
+        setLatestMessage(prompt.message);
+        setObjective(prompt.objective);
         this.player.setPosition(NETWORK_PLAY_BOUNDS.right - 18, position.y);
         this.exitCooldownUntil = this.time.now + 500;
         return false;
@@ -489,9 +498,23 @@ export class NetworkScene extends Phaser.Scene {
       this.routeText.setText(`CORRECT\n${destination}`);
     } else {
       const leakWarning = destination === "OpenNet" && item.network === "ClassNet";
-      adjustReliability(leakWarning ? -18 : -8, leakWarning ? "closed material sent to OpenNet" : "network routing mismatch");
-      setLatestMessage("WRONG NETWORK");
+      const violation = applyStandardsViolation(
+        leakWarning ? "concealed_policy_defect" : "omitted_material_fact",
+        leakWarning ? "Closed material was sent to OpenNet." : `${item.label} was routed through the wrong network.`
+      );
+      setLatestMessage(`WRONG NETWORK - ${violation.label}`);
       this.routeText.setText(leakWarning ? "WARNING\nOPENNET LEAK RISK" : "WARNING\nWRONG ROOM");
+      this.reliability.update();
+      this.currentRoute += 1;
+      if (this.currentRoute >= this.routeItems.length) {
+        this.finishRouting();
+        return;
+      }
+      this.dialog.show("STANDARD VIOLATION", [
+        violation.label,
+        "Route the next item through the correct network."
+      ], () => this.showRouteChoice());
+      return;
     }
     this.reliability.update();
     this.currentRoute += 1;

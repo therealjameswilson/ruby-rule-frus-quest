@@ -14,10 +14,10 @@ import {
 import type { Interactable } from "../game/types";
 import { Player } from "../entities/Player";
 import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
-import { getInput, tickInput } from "../input/InputState";
+import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
-import { nearestInteractable } from "../systems/interaction";
+import { InteractionAssist, nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
@@ -36,6 +36,8 @@ export class OfficeScene extends Phaser.Scene {
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private hintText!: Phaser.GameObjects.Text;
+  private tutorialCard?: Phaser.GameObjects.Container;
+  private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
 
@@ -144,6 +146,7 @@ export class OfficeScene extends Phaser.Scene {
       "Cherry Blossom Garden Door",
       "Senate Hearing Chamber Door"
     ]);
+    if (!gameState.sceneProgress.officeTutorialSeen) this.showOfficeTutorial();
   }
 
   update(_: number, delta: number) {
@@ -158,6 +161,14 @@ export class OfficeScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     this.juniorCompiler.update(this.time.now);
+
+    if (this.tutorialCard) {
+      if (input.confirmJustPressed || input.aJustPressed || input.cancelJustPressed || input.pointerPrimaryJustPressed) {
+        this.dismissOfficeTutorial();
+      }
+      this.player.update(delta, false);
+      return;
+    }
 
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
@@ -179,8 +190,9 @@ export class OfficeScene extends Phaser.Scene {
     });
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? nearest.label.toUpperCase() : "");
-    if (input.aJustPressed && nearest) nearest.onInteract();
+    this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
+    const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
+    if (bufferedInteraction) bufferedInteraction.onInteract();
     setObjective("Office Hub: talk to the Junior Compiler or enter the Archive Guide.");
     this.reliability.update();
   }
@@ -211,6 +223,44 @@ export class OfficeScene extends Phaser.Scene {
       ...this.juniorCompiler.dialogLines(),
       `Fetch check ${progress + 1}/3: inspect ${next}.`
     ]);
+  }
+
+  private showOfficeTutorial() {
+    const shadow = this.add.rectangle(128, 126, 206, 92, color(PALETTE.black), 0.72);
+    const panel = this.add.rectangle(128, 122, 198, 86, color(PALETTE.shadowNavy), 0.96)
+      .setStrokeStyle(2, color(PALETTE.goldStamp));
+    const title = this.add.text(128, 86, "FIELD CONTROLS", {
+      fontFamily: "monospace",
+      fontSize: "9px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5);
+    const body = this.add.text(128, 105, [
+      "MOVE: ARROWS / WASD",
+      "INTERACT: ENTER / SPACE / A",
+      "CANCEL: ESC / B",
+      "CODEX/MENU: TAB / M"
+    ], {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.creamPaper,
+      align: "center",
+      lineSpacing: 2
+    }).setOrigin(0.5, 0);
+    const prompt = this.add.text(128, 162, "PRESS A / ENTER TO BEGIN", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5);
+    this.tutorialCard = this.add.container(0, 0, [shadow, panel, title, body, prompt]).setDepth(1800);
+    bindPointerDown(panel, () => this.dismissOfficeTutorial());
+  }
+
+  private dismissOfficeTutorial() {
+    if (!this.tutorialCard) return;
+    this.tutorialCard.destroy();
+    this.tutorialCard = undefined;
+    gameState.sceneProgress.officeTutorialSeen = 1;
+    setLatestMessage("Controls logged.");
   }
 
   private handleJuniorQuestStation(station: "inbox" | "cart" | "terminal") {

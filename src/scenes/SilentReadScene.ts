@@ -8,7 +8,10 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  getHeldProcessItemIds,
   hasProcessItem,
+  clearDocumentUndisclosedDeletion,
+  markDocumentUndisclosedDeletion,
   setHeldItem,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -19,17 +22,20 @@ import {
   setSceneState,
   setVisibleEntities
 } from "../game/state";
+import type { ChoiceOption } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
+import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { Player } from "../entities/Player";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, applyStandardsViolation, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addProofingTable, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer } from "../systems/snesPixelArt";
+import { ChoicePrompt } from "../systems/verification";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -69,6 +75,7 @@ interface ProofRoom {
   roomType: RoomType;
   exits: Partial<Record<Direction, ProofRoomId | "EndingScene">>;
   lockedExits?: Partial<Record<Direction, string>>;
+  requiredItems?: Partial<Record<Direction, "red_pencil" | "buckram_key">>;
 }
 
 const PROOF_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
@@ -87,14 +94,16 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
     title: "Editor's Labyrinth",
     roomType: "puzzle",
     exits: { east: "S1" },
-    lockedExits: { east: "Red Pencil query gate" }
+    lockedExits: { east: "Red Pencil query gate" },
+    requiredItems: { east: "red_pencil" }
   },
   S1: {
     id: "S1",
     title: "Silent Read Tower",
     roomType: "reward",
     exits: { west: "E1", east: "EndingScene" },
-    lockedExits: { east: "Buckram publication gate" }
+    lockedExits: { east: "Buckram publication gate" },
+    requiredItems: { east: "buckram_key" }
   }
 };
 
@@ -160,6 +169,7 @@ function flagRoom(flag: PhysicalFlag): ProofRoomId {
 export class SilentReadScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
+  private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -197,6 +207,7 @@ export class SilentReadScene extends Phaser.Scene {
 
     this.player = new Player(this, 128, 202);
     this.dialog = new DialogBox(this);
+    this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.objectiveText = addObjectiveText(this);
@@ -231,6 +242,11 @@ export class SilentReadScene extends Phaser.Scene {
     }
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
+      this.player.update(delta, false);
+      return;
+    }
+    if (this.choice.active) {
+      this.choice.updateInput();
       this.player.update(delta, false);
       return;
     }
@@ -485,24 +501,24 @@ export class SilentReadScene extends Phaser.Scene {
   private syncRoomTraversalState() {
     const room = PROOF_ROOMS[this.currentRoomId];
     const lockedExits: Partial<Record<Direction, string>> = {};
-    const requiredItems: Partial<Record<Direction, "red_pencil" | "buckram_key">> = {};
-    if (room.id === "E1" && !hasProcessItem("red_pencil")) {
+    if (room.id === "E1" && !canTraverseExit(room.id, "east", getHeldProcessItemIds())) {
       lockedExits.east = room.lockedExits?.east;
-      requiredItems.east = "red_pencil";
     }
-    if (room.id === "S1" && !hasProcessItem("buckram_key")) {
+    if (room.id === "S1" && !canTraverseExit(room.id, "east", getHeldProcessItemIds())) {
       lockedExits.east = room.lockedExits?.east;
-      requiredItems.east = "buckram_key";
     }
     setRoomTraversalState({
       currentRoomId: room.id,
       roomTitle: room.title,
       roomType: room.roomType,
       visitedRoomIds: [...this.visitedRoomIds],
-      revealedRoomIds: hasProcessItem("red_pencil") || this.currentRoomId === "S1" ? ["E1", "S1"] : ["E1"],
+      revealedRoomIds: [
+        ...(hasProcessItem("red_pencil") || this.currentRoomId === "S1" ? ["E1", "S1"] : ["E1"]),
+        ...getRevealedShortcutRoomIds(getHeldProcessItemIds()).filter((roomId): roomId is ProofRoomId => roomId in PROOF_ROOMS)
+      ],
       exits: room.exits,
       lockedExits,
-      requiredItems
+      requiredItems: room.requiredItems
     });
   }
 
@@ -641,23 +657,20 @@ export class SilentReadScene extends Phaser.Scene {
     if (activeFlag.status === "verified") {
       activeFlag.status = "stamped";
       this.addProcessStampMark(activeFlag, nearestStation);
-      this.applyFlagReward(activeFlag);
+      const shouldAdvance = this.applyFlagReward(activeFlag);
       retroAudio.stamp();
       this.updatePhysicalVerification();
-      this.advanceAfterStamp();
+      if (shouldAdvance) this.advanceAfterStamp();
     }
   }
 
   private applyFlagReward(flag: PhysicalFlag) {
     if (flag.id === "mechanical-fix") {
       awardProcessStamp("sop");
-      setDocumentWorkflowState("source_note_047", "ready_for_proof");
       addInventoryItem("AI Annotation Review Log");
       addProcessItem("red_pencil");
-      addDocumentPoints(8, "mechanical StateChat proposal routed to human review");
-      adjustReliability(8, "AI checker output kept inside SOP");
-      setLatestMessage("MECHANICAL FIX ACCEPTED - RED PENCIL EARNED");
-      return;
+      this.showRedPencilBracketChoice("source_note_047");
+      return false;
     }
     if (flag.id === "proof-date") {
       awardProcessStamp("proof");
@@ -667,7 +680,7 @@ export class SilentReadScene extends Phaser.Scene {
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");
       setLatestMessage("VERIFIED BY HUMAN REVIEW - PROOF LENS EARNED");
-      return;
+      return true;
     }
     if (flag.id === "public-crossref") {
       setDocumentWorkflowState("cross_reference_001", "ready_for_proof");
@@ -678,6 +691,35 @@ export class SilentReadScene extends Phaser.Scene {
     }
     addDocumentPoints(5, `${flag.shortLabel} verified at ${this.stationFor(flag.destination).label}`);
     adjustReliability(3, `${flag.shortLabel} routed to human workstation`);
+    return true;
+  }
+
+  private showRedPencilBracketChoice(documentId: string) {
+    setObjective("Red Pencil: add bracketed insertion before the edit can move to proof.");
+    const options: ChoiceOption[] = [
+      { key: "A", label: "[Text not declassified]", value: "bracket" },
+      { key: "B", label: "Skip bracket", value: "skip" }
+    ];
+    this.choice.show("RED PENCIL EXCISION.\nABOUT THE SERIES REQUIRES VISIBLE ALTERATION.\n\nWHAT PRINTS?", options, (option) => {
+      if (option.value === "bracket") {
+        clearDocumentUndisclosedDeletion(documentId, "bracketed insertion added");
+        setDocumentWorkflowState(documentId, "ready_for_proof");
+        addDocumentPoints(8, "mechanical StateChat proposal bracketed by editor");
+        adjustReliability(8, "AI checker output kept inside SOP with visible brackets");
+        setLatestMessage("MECHANICAL FIX ACCEPTED - BRACKETED INSERTION RECORDED");
+        this.advanceAfterStamp();
+        return;
+      }
+
+      markDocumentUndisclosedDeletion(documentId, "Red Pencil excision skipped bracketed insertion");
+      const violation = applyStandardsViolation("undisclosed_deletion", "Red Pencil excision skipped the bracketed insertion.");
+      this.reliability.update();
+      setObjective("Correct the Red Pencil edit with bracketed insertion before publication.");
+      this.dialog.show("STANDARD VIOLATION", [
+        violation.label,
+        "Add the bracketed insertion before this document can publish."
+      ], () => this.showRedPencilBracketChoice(documentId));
+    });
   }
 
   private advanceAfterStamp() {
@@ -732,9 +774,11 @@ export class SilentReadScene extends Phaser.Scene {
     if (!direction) return false;
 
     if (this.currentRoomId === "E1" && direction === "east") {
-      if (!hasProcessItem("red_pencil")) {
-        setLatestMessage("Red Pencil required before the Silent Read Tower.");
-        setObjective("Route and stamp the mechanical proposal at the editor desk.");
+      const heldItems = getHeldProcessItemIds();
+      if (!canTraverseExit(this.currentRoomId, direction, heldItems)) {
+        const prompt = blockedExitPrompt(this.currentRoomId, direction, heldItems);
+        setLatestMessage(prompt.message);
+        setObjective(prompt.objective);
         this.player.setPosition(PROOF_PLAY_BOUNDS.right - 18, position.y);
         this.exitCooldownUntil = this.time.now + 500;
         return false;
@@ -749,9 +793,11 @@ export class SilentReadScene extends Phaser.Scene {
     }
 
     if (this.currentRoomId === "S1" && direction === "east") {
-      if (!hasProcessItem("buckram_key")) {
-        setLatestMessage("Buckram Key required before publication gate.");
-        setObjective("Finish flags before Buckram Gate.");
+      const heldItems = getHeldProcessItemIds();
+      if (!canTraverseExit(this.currentRoomId, direction, heldItems)) {
+        const prompt = blockedExitPrompt(this.currentRoomId, direction, heldItems);
+        setLatestMessage(prompt.message);
+        setObjective(prompt.objective);
         this.player.setPosition(PROOF_PLAY_BOUNDS.right - 18, position.y);
         this.exitCooldownUntil = this.time.now + 500;
         return false;

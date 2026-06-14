@@ -7,15 +7,15 @@ import type { GameMode } from "../game/types";
 import {
   equipDanneItem,
   equipProcessItem,
+  getAdventureSubscreenReadout,
   gameState,
   getAdventureHudReadout,
-  getAreaProgressReadout,
   getDanneItemReadout,
-  getDocumentWorkflowReadout,
   getProcessItemReadout,
   setLatestMessage,
   getWorkflowToolReadout
 } from "../game/state";
+import type { AdventureSubscreenReadout } from "../game/state";
 import { bindPointerPress, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
 import { openCodex } from "./codexOverlay";
@@ -54,13 +54,15 @@ const COMPACT_TOOL_LINES: Record<string, string> = {
   buckram_key: "publication gate = certified"
 };
 
-const MODAL_BOUNDS = { left: 10, right: 246, top: 20, bottom: 188 };
+const MODAL_BOUNDS = { left: 8, right: 248, top: 12, bottom: 228 };
 const CLOSE_HIT = { x: 223, y: 35, width: 44, height: 44 };
 const CODEX_HIT = { x: 171, y: 35, width: 58, height: 44 };
 
 export class InventoryOverlay {
   private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
+  private readonly subscreenGraphics: Phaser.GameObjects.Graphics;
+  private readonly summary: Phaser.GameObjects.Text;
   private readonly body: Phaser.GameObjects.Text;
   private previousMode: GameMode | null = null;
   private readonly itemSlots: Array<{
@@ -87,17 +89,18 @@ export class InventoryOverlay {
       .setScrollFactor(0);
     bindPointerPress(dim, { down: () => this.hide() });
     const box = scene.add
-      .rectangle(128, 104, 236, 168, color(PALETTE.black))
+      .rectangle(128, 120, 240, 216, color(PALETTE.black))
       .setScrollFactor(0);
     const border = scene.add
-      .rectangle(128, 104, 236, 168)
+      .rectangle(128, 120, 240, 216)
       .setStrokeStyle(2, color(PALETTE.goldStamp))
       .setScrollFactor(0);
-    const title = scene.add.text(16, 25, "MANUSCRIPT INVENTORY", {
+    const title = scene.add.text(16, 18, "FRUS QUEST SUBSCREEN", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.goldStamp
     }).setScrollFactor(0);
+    this.subscreenGraphics = scene.add.graphics().setScrollFactor(0);
     const closeHit = scene.add
       .rectangle(223, 35, 44, 44, color(PALETTE.black), 0.01)
       .setScrollFactor(0);
@@ -124,11 +127,18 @@ export class InventoryOverlay {
       color: PALETTE.terminalCyan
     }).setOrigin(0.5, 0).setScrollFactor(0);
     bindPointerPress(codexHit, { down: () => this.openCodexFromInventory() });
-    this.body = scene.add.text(16, touch ? 126 : 122, "", {
+    this.summary = scene.add.text(14, 126, "", {
       fontFamily: "monospace",
-      fontSize: touch ? "6px" : "5px",
+      fontSize: "5px",
+      color: PALETTE.goldStamp,
+      wordWrap: { width: 226, useAdvancedWrap: true },
+      lineSpacing: 0
+    }).setScrollFactor(0);
+    this.body = scene.add.text(14, touch ? 151 : 147, "", {
+      fontFamily: "monospace",
+      fontSize: "5px",
       color: PALETTE.creamPaper,
-      wordWrap: { width: 224, useAdvancedWrap: true },
+      wordWrap: { width: 150, useAdvancedWrap: true },
       lineSpacing: 0
     }).setScrollFactor(0);
     const slotObjects = this.createToolGrid(scene);
@@ -157,6 +167,7 @@ export class InventoryOverlay {
         box,
         border,
         title,
+        this.subscreenGraphics,
         codexBox,
         codexLabel,
         codexHit,
@@ -166,6 +177,7 @@ export class InventoryOverlay {
         ...slotObjects,
         ...danneObjects,
         this.dannePopover,
+        this.summary,
         this.body
       ])
       .setDepth(980)
@@ -201,50 +213,142 @@ export class InventoryOverlay {
   }
 
   private render() {
+    const subscreen = getAdventureSubscreenReadout();
     const tools = getWorkflowToolReadout()
       .filter((tool) => tool.acquired)
       .slice(0, 3)
       .map((tool) => `${tool.shortLabel}: ${COMPACT_TOOL_LINES[tool.id]}`)
       .join("\n");
-    const areas = getAreaProgressReadout()
-      .map((area) => {
-        const marker = area.active ? ">" : " ";
-        const status = area.completed ? "OK" : "--";
-        return `${marker}${status} ${area.displayName}: ${area.reward}`;
+    const dungeons = subscreen.dungeons
+      .map((dungeon) => {
+        const marker = dungeon.active ? ">" : " ";
+        const label = dungeon.displayName.toUpperCase().replace(/'S/g, "").slice(0, 11).padEnd(11, " ");
+        const keyText = `${dungeon.smallKeys}/${dungeon.smallKeysRequired}`;
+        const big = dungeon.bigKeyHeld ? "BIG" : "---";
+        const map = dungeon.mapRevealed ? "MAP" : "---";
+        const boss = dungeon.bossDefeated ? "BOSS" : "----";
+        return `${marker}${label} K${keyText.padEnd(3, " ")} ${big} ${map} ${boss}`;
       })
       .join("\n");
-    const documents = getDocumentWorkflowReadout()
-      .filter((document) => document.selected || document.state !== "found")
-      .slice(0, 5)
-      .map((document) => `${document.selected ? "OK" : "--"} ${document.id.replace(/_001|_047|_412/g, "").toUpperCase()}: ${document.state}`)
-      .join("\n") || "-- NO DOCUMENTS ROUTED";
     const hud = getAdventureHudReadout();
-    const danneItems = getDanneItemReadout();
-    const danneSummary = danneItems
-      .map((item) => {
-        if (item.id === "treaty-fragments") return `TREATY ${item.count}/${item.total}`;
-        return `${item.displayName.toUpperCase()}: ${item.acquired ? item.equipped ? "EQ" : "OK" : "--"}`;
-      })
-      .join("  ");
+    const treaty = getDanneItemReadout().find((item) => item.id === "treaty-fragments");
+    const danneSummary = treaty ? `TREATY ${treaty.count}/${treaty.total}` : "TREATY 0/3";
+    const pendantSummary = subscreen.pendants
+      .map((pendant) => `${pendant.label}:${pendant.acquired ? "OK" : "--"}`)
+      .join(" ");
+    this.summary.setText([
+      `${pendantSummary}  CRYSTALS ${subscreen.crystals.earned}/${subscreen.crystals.total || 0}  HEARTS ${subscreen.reliabilityHearts.filled}/${subscreen.reliabilityHearts.total}`,
+      `TOOL ${subscreen.equippedTool?.displayName.toUpperCase() ?? hud.equippedItem?.displayName.toUpperCase() ?? "NONE"}  ${danneSummary}`
+    ].join("\n"));
     this.body.setText([
-      `DOCUMENT POINTS: ${gameState.documentPoints}`,
-      `FRUS VOLUME PARTS: ${gameState.volumeFragments.length}/5`,
-      `EQUIPPED TOOL: ${hud.equippedItem?.displayName ?? "NONE"}`,
-      `DANN-E ITEMS: ${danneSummary}`,
-      `CONF ${hud.confidence.meter}  CLAR ${hud.clarity.meter}`,
-      "TAP TOOL/CARD TO EQUIP OR INSPECT. TAB/CODEX NOTES.",
+      "DUNGEON MAP / KEYS",
+      dungeons,
       "",
-      "QUEST ROUTE",
-      areas.split("\n").slice(0, 3).join("\n"),
-      "",
-      "DOCUMENT FLOW",
-      documents.split("\n").slice(0, 1).join("\n"),
-      tools ? "READY TOOLS" : "",
+      tools ? "READY TOOLS" : "READY TOOLS --",
       tools.split("\n").slice(0, 2).join("\n")
     ].join("\n"));
+    this.renderSubscreenGraphics(subscreen);
     this.renderToolGrid();
     this.renderDanneItemGrid();
     this.renderDannePopover();
+  }
+
+  private renderSubscreenGraphics(subscreen: AdventureSubscreenReadout) {
+    const g = this.subscreenGraphics;
+    g.clear();
+    g.lineStyle(1, color(PALETTE.deepRuby), 1);
+    g.fillStyle(color(PALETTE.deepRuby), 0.45);
+    g.fillRect(14, 39, 228, 84);
+    g.strokeRect(14, 39, 228, 84);
+    g.fillStyle(color(PALETTE.black), 0.68);
+    g.fillRect(172, 42, 66, 74);
+    g.lineStyle(1, color(PALETTE.stoneGray), 1);
+    g.strokeRect(172, 42, 66, 74);
+
+    subscreen.pendants.forEach((pendant, index) => {
+      const x = 184 + index * 16;
+      const y = 55;
+      g.lineStyle(1, color(pendant.acquired ? PALETTE.white : PALETTE.stoneGray), 1);
+      g.fillStyle(color(pendant.acquired ? PALETTE.goldStamp : PALETTE.black), 1);
+      g.fillTriangle(x, y - 8, x - 7, y + 7, x + 7, y + 7);
+      g.lineBetween(x, y - 8, x - 7, y + 7);
+      g.lineBetween(x - 7, y + 7, x + 7, y + 7);
+      g.lineBetween(x + 7, y + 7, x, y - 8);
+      if (pendant.acquired) {
+        g.fillStyle(color(PALETTE.white), 1);
+        g.fillRect(x - 1, y - 2, 2, 2);
+      }
+    });
+
+    const crystalTotal = Math.max(1, subscreen.crystals.total);
+    const visibleCrystals = Math.min(8, crystalTotal);
+    for (let index = 0; index < visibleCrystals; index += 1) {
+      const x = 181 + index * 6;
+      const y = 77;
+      const acquired = index < subscreen.crystals.earned;
+      g.fillStyle(color(acquired ? PALETTE.terminalCyan : PALETTE.black), 1);
+      g.lineStyle(1, color(acquired ? PALETTE.white : PALETTE.stoneGray), 1);
+      g.fillTriangle(x, y - 5, x - 4, y, x + 4, y);
+      g.fillTriangle(x, y + 5, x - 4, y, x + 4, y);
+      g.lineBetween(x, y - 5, x - 4, y);
+      g.lineBetween(x - 4, y, x, y + 5);
+      g.lineBetween(x, y + 5, x + 4, y);
+      g.lineBetween(x + 4, y, x, y - 5);
+    }
+
+    for (let index = 0; index < subscreen.reliabilityHearts.total; index += 1) {
+      const x = 180 + (index % 5) * 10;
+      const y = 91 + Math.floor(index / 5) * 11;
+      const filled = index < subscreen.reliabilityHearts.filled;
+      g.fillStyle(color(filled ? PALETTE.classNetRed : PALETTE.black), 1);
+      g.fillRect(x + 1, y, 2, 1);
+      g.fillRect(x + 4, y, 2, 1);
+      g.fillRect(x, y + 1, 7, 3);
+      g.fillRect(x + 1, y + 4, 5, 1);
+      g.fillRect(x + 2, y + 5, 3, 1);
+      g.fillRect(x + 3, y + 6, 1, 1);
+      g.lineStyle(1, color(filled ? PALETTE.goldStamp : PALETTE.stoneGray), 0.9);
+      g.strokeRect(x, y + 1, 7, 4);
+    }
+
+    const toolColor = subscreen.equippedTool ? PALETTE.goldStamp : PALETTE.stoneGray;
+    g.lineStyle(1, color(toolColor), 1);
+    g.fillStyle(color(subscreen.equippedTool ? PALETTE.deepRuby : PALETTE.black), 1);
+    g.strokeRect(216, 48, 15, 15);
+    g.fillRect(220, 52, 7, 7);
+
+    this.renderRoomMap(g, subscreen);
+  }
+
+  private renderRoomMap(g: Phaser.GameObjects.Graphics, subscreen: AdventureSubscreenReadout) {
+    const rooms = subscreen.roomMap.rooms;
+    if (!rooms.length) return;
+    const minX = Math.min(...rooms.map((room) => room.grid.x));
+    const minY = Math.min(...rooms.map((room) => room.grid.y));
+    const cell = 7;
+    const originX = 188;
+    const originY = 151;
+    g.fillStyle(color(PALETTE.black), 0.86);
+    g.fillRect(178, 143, 61, 74);
+    g.lineStyle(1, color(PALETTE.goldStamp), 1);
+    g.strokeRect(178, 143, 61, 74);
+    for (const room of rooms) {
+      if (!room.revealed) continue;
+      const x = originX + (room.grid.x - minX) * (cell + 2);
+      const y = originY + (room.grid.y - minY) * (cell + 2);
+      const current = room.id === subscreen.roomMap.currentRoomId;
+      const fill = current
+        ? PALETTE.goldStamp
+        : room.visited
+          ? PALETTE.terminalCyan
+          : room.roomType === "boss"
+            ? PALETTE.classNetRed
+            : PALETTE.stoneGray;
+      g.fillStyle(color(fill), current ? 1 : 0.78);
+      g.fillRect(x, y, cell, cell);
+      g.lineStyle(1, color(current ? PALETTE.white : PALETTE.black), 1);
+      g.strokeRect(x, y, cell, cell);
+    }
   }
 
   private createToolGrid(scene: Phaser.Scene) {
@@ -253,13 +357,13 @@ export class InventoryOverlay {
     items.forEach((item, index) => {
       const col = index % 4;
       const row = Math.floor(index / 4);
-      const x = 35 + col * 47;
+      const x = 36 + col * 38;
       const y = 53 + row * 26;
       const hit = scene.add
-        .rectangle(x, y, 44, 44, color(PALETTE.black), 0.01)
+        .rectangle(x, y, 34, 34, color(PALETTE.black), 0.01)
         .setScrollFactor(0);
       const box = scene.add
-        .rectangle(x, y, 34, 20, color(PALETTE.black))
+        .rectangle(x, y, 30, 18, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.stoneGray))
         .setScrollFactor(0);
       const label = scene.add.text(x, y - 4, item.shortLabel, {
@@ -375,9 +479,12 @@ export class InventoryOverlay {
   }
 
   private renderDannePopover() {
+    if (!this.selectedDanneItemId) {
+      this.dannePopover.setVisible(false);
+      return;
+    }
     const readout = getDanneItemReadout();
-    const selected = readout.find((item) => item.id === this.selectedDanneItemId && item.acquired)
-      ?? readout.find((item) => item.acquired);
+    const selected = readout.find((item) => item.id === this.selectedDanneItemId && item.acquired);
     if (!selected) {
       this.dannePopover.setVisible(false);
       return;

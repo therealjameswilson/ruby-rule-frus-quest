@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { ArchiveScene } from "../scenes/ArchiveScene";
+import { BadEndingScene } from "../scenes/BadEndingScene";
 import { BlackVaultLairScene } from "../scenes/BlackVaultLairScene";
 import { BootScene } from "../scenes/BootScene";
 import { CharacterCreateScene } from "../scenes/CharacterCreateScene";
@@ -27,7 +28,7 @@ import { WarningScene } from "../scenes/WarningScene";
 import { WorldMapScene } from "../scenes/WorldMapScene";
 
 export const gameConfig: Phaser.Types.Core.GameConfig = {
-  type: Phaser.CANVAS,
+  type: Phaser.AUTO,
   parent: "game-shell",
   width: GAME_WIDTH,
   height: GAME_HEIGHT,
@@ -35,7 +36,6 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   antialias: false,
   antialiasGL: false,
   roundPixels: true,
-  zoom: 3,
   backgroundColor: PALETTE.shadowNavy,
   render: {
     pixelArt: true,
@@ -53,7 +53,8 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   },
   scale: {
     parent: "game-shell",
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.NONE,
+    zoom: 1,
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
@@ -80,6 +81,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     SilentReadScene,
     EndingScene,
     TrueEndingScene,
+    BadEndingScene,
     CodexScene,
     RenderDebugScene,
     DanneGallery,

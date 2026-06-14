@@ -2,7 +2,8 @@ import Phaser from "phaser";
 import { danneAnimKey } from "../../art/danne_anims";
 import { PALETTE } from "../../game/constants";
 import type { DanneRuntimeSpriteAsset, DanneSpriteAsset } from "../../game/danneAtlas";
-import { setPixelPosition, snapPixel } from "../../systems/pixelPerfect";
+import { snapPixel } from "../../systems/pixelPerfect";
+import { setRenderedPosition } from "../../systems/smoothMovement";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -53,8 +54,8 @@ export abstract class DanneNpc {
   }
 
   update(timeMs: number) {
-    setPixelPosition(this.container, this.baseX, this.baseY + Math.sin(timeMs / 620) * 0.45);
-    this.container.setDepth(snapPixel(this.container.y));
+    const renderPosition = setRenderedPosition(this.container, this.baseX, this.baseY + Math.sin(timeMs / 620) * 0.45);
+    this.container.setDepth(renderPosition.y);
   }
 
   play(suffix: string, loop = false) {

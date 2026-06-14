@@ -376,6 +376,16 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     title: "Source Entry",
     grid: { x: 0, y: 0 },
     exits: { north: "DN1", east: "A2", south: "B1" },
+    lockedExits: {
+      north: "NARA stacks citation lock",
+      east: "OpenNet source-note lock",
+      south: "Referral stacks citation lock"
+    },
+    requiredItems: {
+      north: "citation_stamp",
+      east: "citation_stamp",
+      south: "citation_stamp"
+    },
     roomType: "normal"
   },
   {
@@ -510,7 +520,6 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     grid: { x: 4, y: 0 },
     exits: { east: "N2" },
     lockedExits: { east: "ClassNet vault door" },
-    requiredItems: { east: "clearance_token" },
     roomType: "puzzle"
   },
   {
@@ -518,7 +527,9 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "two_networks",
     title: "ClassNet Vault",
     grid: { x: 5, y: 0 },
-    exits: { west: "N1" },
+    exits: { west: "N1", east: "R1" },
+    lockedExits: { east: "Red vault exit" },
+    requiredItems: { east: "clearance_token" },
     roomType: "reward"
   },
   {
@@ -592,6 +603,7 @@ export const SCENE_ORDER = [
   "SilentReadScene",
   "EndingScene",
   "TrueEndingScene",
+  "BadEndingScene",
   "CodexScene",
   "RenderDebugScene",
   "DanneGallery",

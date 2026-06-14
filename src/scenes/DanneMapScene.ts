@@ -11,6 +11,9 @@ import type {
 import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
 import {
   addDanneItem,
+  addProcessItem,
+  addVolumeFragment,
+  awardProcessStamp,
   gameState,
   getTreatyFragmentCount,
   hasDanneItem,
@@ -32,7 +35,7 @@ import { retroAudio } from "../systems/audio";
 import { showBossHud, setBossHp } from "../systems/bossHud";
 import { drawCutsceneDebugNote, enterCutscene, exitCutscene, isCutsceneActive, playLine } from "../systems/cutscene";
 import { DialogBox } from "../systems/dialog";
-import { nearestInteractable } from "../systems/interaction";
+import { InteractionAssist, nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
 import { ReliabilityHud } from "../systems/reliability";
@@ -81,6 +84,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private readonly geometry: DanneSceneGeometry;
   private solids: Phaser.Geom.Rectangle[] = [];
   private interactables: Interactable[] = [];
+  private readonly interactionAssist = new InteractionAssist();
   private redactorDrones: RedactorDrone[] = [];
   private censorshipWraiths: CensorshipWraith[] = [];
   private danneBoss?: DanneBoss;
@@ -159,6 +163,13 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
 
+    if (this.danneBoss?.inputLocked) {
+      this.player.update(delta, false);
+      this.reliability.update();
+      this.syncDanneReadout(this.time.now);
+      return;
+    }
+
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
@@ -183,8 +194,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? nearest.label.toUpperCase() : "");
-    if (input.aJustPressed && nearest) nearest.onInteract();
+    this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
+    const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
+    if (bufferedInteraction) bufferedInteraction.onInteract();
     if (!this.danneBoss?.isActive) setObjective(this.geometry.objective);
     this.reliability.update();
     this.syncDanneReadout(this.time.now);
@@ -467,6 +479,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
       onDefeated: (trueEnding) => {
         setLatestMessage(trueEnding ? "DANN-E defeated with complete treaty record." : "DANN-E defeated.");
         transitionTo(this, trueEnding ? "TrueEndingScene" : "EndingScene");
+      },
+      onBadEnding: () => {
+        transitionTo(this, "BadEndingScene");
       }
     });
     gameState.sceneProgress.blackVaultBossStarted = 1;
@@ -549,6 +564,13 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const grants = new Set(give.split(",").map((part) => part.trim()).filter(Boolean));
     if (grants.has("declass-key") || grants.has("master-declass-key")) addDanneItem("master-declass-key");
     if (grants.has("ruby-pen")) addDanneItem("ruby-pen");
+    if (grants.has("publication") || grants.has("buckram-gate")) {
+      (["rule", "archive", "network", "referral", "proof"] as const).forEach((stampId) => awardProcessStamp(stampId));
+      addProcessItem("buckram_key");
+      ["Cover Fragment I", "Cover Fragment II", "Cover Fragment III", "Cover Fragment IV", "Cover Fragment V"].forEach((fragment) => {
+        addVolumeFragment(fragment);
+      });
+    }
     if (grants.has("fragments")) {
       addDanneItem("treaty-fragments", 0);
       addDanneItem("treaty-fragments", 1);

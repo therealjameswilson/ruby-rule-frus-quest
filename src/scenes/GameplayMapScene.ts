@@ -7,7 +7,7 @@ import { clearDialogState, gameState, setDialogState, setLatestMessage, setNeare
 import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
-import { nearestInteractable } from "../systems/interaction";
+import { InteractionAssist, nearestInteractable } from "../systems/interaction";
 import { snapPixel } from "../systems/pixelPerfect";
 
 function color(hex: string) {
@@ -118,6 +118,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private fitRect!: FitRect;
   private solids: Phaser.Geom.Rectangle[] = [];
   private interactables: Interactable[] = [];
+  private readonly interactionAssist = new InteractionAssist();
   private doors: SceneDoor[] = [];
   private triggerZones: TriggerZone[] = [];
   private tileData!: TiledMapData;
@@ -185,8 +186,9 @@ export class GameplayMapScene extends Phaser.Scene {
     this.handleTriggers();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? nearest.label.toUpperCase() : "A INTERACT  ESC WORLD MAP");
-    if (input.aJustPressed && nearest) nearest.onInteract();
+    this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "A INTERACT  ESC WORLD MAP");
+    const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
+    if (bufferedInteraction) bufferedInteraction.onInteract();
     setObjective(MAP_OBJECTIVES[this.mapKey]);
   }
 

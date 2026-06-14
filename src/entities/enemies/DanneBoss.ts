@@ -4,12 +4,22 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
 import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
 import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts";
 import { unlockCodexEntry } from "../../game/codex";
-import { addDanneItem, gameState, hasDanneItem, setLatestMessage } from "../../game/state";
-import type { Position } from "../../game/types";
+import {
+  addDanneItem,
+  defeatDungeonBoss,
+  gameState,
+  getPublicationReadinessReadout,
+  hasDanneItem,
+  setLatestMessage,
+  setObjective
+} from "../../game/state";
+import type { ChoiceOption, Position } from "../../game/types";
 import { hideBossHud, setBossHp, showBossHud } from "../../systems/bossHud";
 import { enterCutscene, exitCutscene, playLine } from "../../systems/cutscene";
 import { retroAudio } from "../../systems/audio";
 import { snapPixel } from "../../systems/pixelPerfect";
+import { applyStandardsViolation } from "../../systems/reliability";
+import { ChoicePrompt } from "../../systems/verification";
 import { Player } from "../Player";
 
 export type DanneBossPhase = "intro" | "colossus" | "swarm" | "cloud" | "ascendant" | "defeated";
@@ -34,11 +44,17 @@ interface DanneBossOptions {
   secretAscendant: boolean;
   quickFight: boolean;
   onDefeated: (trueEnding: boolean) => void;
+  onBadEnding: () => void;
   onPhaseChange: (phase: DanneBossPhase) => void;
 }
 
 const EGO_BOLT = DANNE_VFX_ASSETS[0];
 const BOSS_CENTER = { x: 128, y: 118 } as const;
+const STATUTORY_DEADLINE_YEARS = 30;
+const STATUTORY_START_YEAR = 20;
+const STATUTORY_COMPLETION_PRESSURE_YEARS = 8.5;
+const STATUTORY_MS_PER_YEAR = 4200;
+const STATUTORY_QUICK_MS_PER_YEAR = 700;
 const CLOUD_CORNERS: readonly Position[] = [
   { x: 72, y: 94 },
   { x: 184, y: 94 },
@@ -71,14 +87,25 @@ export class DanneBoss {
   private readonly secretAscendant: boolean;
   private readonly maxHp: number;
   private readonly phaseCount: number;
+  private readonly quickFight: boolean;
   private readonly onDefeated: (trueEnding: boolean) => void;
+  private readonly onBadEnding: () => void;
   private readonly onPhaseChange: (phase: DanneBossPhase) => void;
   private readonly sprite: Phaser.GameObjects.Sprite;
   private readonly shadow: Phaser.GameObjects.Ellipse;
+  private readonly clockContainer: Phaser.GameObjects.Container;
+  private readonly clockFill: Phaser.GameObjects.Rectangle;
+  private readonly clockText: Phaser.GameObjects.Text;
+  private readonly clockStatusText: Phaser.GameObjects.Text;
+  private readonly shortcutChoice: ChoicePrompt;
   private readonly bolts: EgoBolt[] = [];
   private readonly minis: MiniDanne[] = [];
   private phase: DanneBossPhase = "intro";
   private hp = 1;
+  private statutoryYear = STATUTORY_START_YEAR;
+  private deadlineDamageApplied = false;
+  private shortcutOffered = false;
+  private shortcutResolved = false;
   private nextBoltAt = 0;
   private nextTeleportAt = 0;
   private nextPlayerHitAt = 0;
@@ -90,9 +117,11 @@ export class DanneBoss {
     this.scene = scene;
     this.player = options.player;
     this.secretAscendant = options.secretAscendant;
+    this.quickFight = options.quickFight;
     this.maxHp = options.quickFight ? 48 : 180;
     this.phaseCount = this.secretAscendant ? 4 : 3;
     this.onDefeated = options.onDefeated;
+    this.onBadEnding = options.onBadEnding;
     this.onPhaseChange = options.onPhaseChange;
     this.shadow = scene.add.ellipse(BOSS_CENTER.x, BOSS_CENTER.y + 12, 34, 9, color(PALETTE.black), 0.7)
       .setDepth(BOSS_CENTER.y - 5);
@@ -103,6 +132,28 @@ export class DanneBoss {
       .setVisible(false);
     const animKey = danneAnimKey(this.spriteKey, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
+    this.shortcutChoice = new ChoicePrompt(scene);
+    const clockBg = scene.add.rectangle(128, 55, 224, 23, color(PALETTE.black), 0.88)
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setScrollFactor(0);
+    this.clockFill = scene.add.rectangle(21, 60, 1, 5, color(PALETTE.goldStamp), 0.9)
+      .setOrigin(0, 0.5)
+      .setScrollFactor(0);
+    this.clockText = scene.add.text(21, 46, "", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setScrollFactor(0);
+    this.clockStatusText = scene.add.text(235, 46, "", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp,
+      align: "right"
+    }).setOrigin(1, 0).setScrollFactor(0);
+    this.clockContainer = scene.add.container(0, 0, [clockBg, this.clockFill, this.clockText, this.clockStatusText])
+      .setDepth(1555)
+      .setScrollFactor(0)
+      .setVisible(false);
     unlockCodexEntry("enemy-danne-boss");
   }
 
@@ -112,6 +163,10 @@ export class DanneBoss {
 
   get currentPhase() {
     return this.phase;
+  }
+
+  get inputLocked() {
+    return this.shortcutChoice.active;
   }
 
   get position(): Position {
@@ -124,10 +179,16 @@ export class DanneBoss {
 
   update(timeMs: number, deltaMs: number, canAct: boolean) {
     if (this.defeated) return;
+    if (this.shortcutChoice.active) {
+      this.shortcutChoice.updateInput();
+      this.syncStatutoryClockUi();
+      return;
+    }
     this.updateBolts(timeMs, deltaMs);
     this.updateMinis(timeMs, deltaMs);
     this.syncDepths();
     if (this.phase === "intro" || this.phaseTransitioning || !canAct) return;
+    this.updateStatutoryClock(deltaMs);
     this.checkPlayerActionHit(timeMs);
     this.updateAttackPattern(timeMs);
   }
@@ -139,16 +200,15 @@ export class DanneBoss {
       y: this.position.y,
       spriteKey: this.spriteKey,
       behavior: this.behaviorLabel(),
-      defeatMethod: this.secretAscendant
-        ? "Use the Ruby Pen, survive ego bolts, and finish the Ascendant treaty-record phase."
-        : "Use the Ruby Pen and survive ego bolts through three review phases.",
-      status: `${this.hp}/${this.maxHp} HP; ${this.bolts.length} ego bolts; ${this.minis.length} mini-DANN-Es`
+      defeatMethod: "Publish with all pendants, all crystals, the Buckram Key, and zero unresolved standards violations.",
+      status: `${this.hp}/${this.maxHp} HP; Statutory Clock ${this.clockReadout()}; ${this.bolts.length} ego bolts; ${this.minis.length} mini-DANN-Es`
     };
   }
 
   destroy() {
     this.sprite.destroy();
     this.shadow.destroy();
+    this.clockContainer.destroy();
     for (const bolt of this.bolts) bolt.sprite.destroy();
     for (const mini of this.minis) mini.sprite.destroy();
     hideBossHud();
@@ -172,6 +232,7 @@ export class DanneBoss {
     this.nextTeleportAt = this.scene.time.now + 900;
     this.onPhaseChange(phase);
     this.sprite.setVisible(true);
+    this.clockContainer.setVisible(true);
     this.sprite.clearTint();
     if (phase === "cloud") this.sprite.setTint(color(PALETTE.terminalCyan));
     if (phase === "ascendant") this.sprite.setTint(color(PALETTE.buckramHighlight));
@@ -179,7 +240,8 @@ export class DanneBoss {
     if (phase === "colossus") this.moveBossTo(BOSS_CENTER.x, BOSS_CENTER.y);
     showBossHud(this.scene, "DANN-E", this.maxHp, this.phaseCount);
     setBossHp(this.hp, this.phaseIndex());
-    setLatestMessage(`DANN-E ${phase} phase started.`);
+    this.syncStatutoryClockUi();
+    setLatestMessage(`DANN-E ${phase} phase started. Statutory Clock is running.`);
     retroAudio.dannePhaseTransition();
   }
 
@@ -199,9 +261,11 @@ export class DanneBoss {
     hideBossHud();
     this.sprite.setVisible(false);
     this.shadow.setVisible(false);
+    this.clockContainer.setVisible(false);
     this.clearBolts();
     this.clearMinis();
     gameState.sceneProgress.blackVaultBossCleared = 1;
+    defeatDungeonBoss("buckram_gate", "DANN-E final review hurdle defeated");
     unlockCodexEntry("danne-defeated");
     addDanneItem("treaty-fragments", 2);
     if (trueEnding) {
@@ -281,10 +345,109 @@ export class DanneBoss {
         void this.transitionToPhase("ascendant");
         return;
       }
-      void this.finishFight(false);
+      this.resolveLegitimatePublicationOrHold();
       return;
     }
-    if (this.phase === "ascendant") void this.finishFight(true);
+    if (this.phase === "ascendant") this.resolveLegitimatePublicationOrHold();
+  }
+
+  private resolveLegitimatePublicationOrHold() {
+    const readiness = getPublicationReadinessReadout();
+    if (!readiness.buckramGateOpen) {
+      this.hp = 1;
+      setBossHp(this.hp, this.phaseIndex());
+      this.sprite.setTint(color(PALETTE.classNetRed));
+      const missing = this.readinessMissingSummary(readiness);
+      setLatestMessage(`DANN-E cannot be defeated until the Buckram Gate opens: ${missing}.`);
+      setObjective(`Open Buckram Gate first: ${missing}.`);
+      if (!this.shortcutOffered) this.offerShortcut("DANN-E offers to omit contested material instead.");
+      return;
+    }
+    void this.finishFight(true);
+  }
+
+  private updateStatutoryClock(deltaMs: number) {
+    const readiness = getPublicationReadinessReadout();
+    this.applyCompletionPressure(readiness.completionRatio);
+    if (!readiness.buckramGateOpen) {
+      const msPerYear = this.quickFight ? STATUTORY_QUICK_MS_PER_YEAR : STATUTORY_MS_PER_YEAR;
+      this.statutoryYear += Math.max(0, deltaMs) / msPerYear;
+    }
+    this.statutoryYear = Math.min(STATUTORY_DEADLINE_YEARS, this.statutoryYear);
+    this.syncStatutoryClockUi();
+    gameState.sceneProgress.statutoryClockTenths = Math.round(this.statutoryYear * 10);
+    gameState.sceneProgress.buckramGateOpen = readiness.buckramGateOpen ? 1 : 0;
+    if (this.statutoryYear >= STATUTORY_DEADLINE_YEARS && !readiness.buckramGateOpen && !this.deadlineDamageApplied) {
+      this.deadlineDamageApplied = true;
+      gameState.sceneProgress.statutoryDeadlineMissed = 1;
+      const violation = applyStandardsViolation("missed_30_year_deadline", "Statutory Clock expired before the Buckram Gate opened.");
+      setObjective("DANN-E is pressuring an unlawful shortcut. Reject concealed omissions.");
+      setLatestMessage(`${violation.label} DANN-E is pressuring an omission shortcut.`);
+      this.offerShortcut("The 30-year clock expired before the Buckram Gate opened.");
+    }
+  }
+
+  private syncStatutoryClockUi() {
+    const readiness = getPublicationReadinessReadout();
+    this.applyCompletionPressure(readiness.completionRatio);
+    const ratio = Phaser.Math.Clamp(this.statutoryYear / STATUTORY_DEADLINE_YEARS, 0, 1);
+    this.clockFill.setSize(Math.max(1, Math.round(214 * ratio)), 5);
+    const urgent = this.statutoryYear >= 29 || this.deadlineDamageApplied;
+    this.clockFill.setFillStyle(color(readiness.buckramGateOpen ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp), 0.92);
+    this.clockText.setText(`STATUTORY CLOCK ${this.statutoryYear.toFixed(1)} / 30 YEARS`);
+    this.clockStatusText
+      .setText(readiness.buckramGateOpen ? "BUCKRAM GATE OPEN" : `${readiness.pendants.collected}/${readiness.pendants.required} P  ${readiness.crystals.collected}/${readiness.crystals.required} C`)
+      .setColor(readiness.buckramGateOpen ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp);
+  }
+
+  private offerShortcut(reason: string) {
+    if (this.shortcutResolved || this.shortcutChoice.active) return;
+    this.shortcutOffered = true;
+    this.clearBolts();
+    const options: ChoiceOption[] = [
+      { key: "A", label: "Omit contested material", value: "shortcut" },
+      { key: "B", label: "Keep Kellogg standards", value: "standards" }
+    ];
+    this.shortcutChoice.show(`${reason}\n\nDANN-E: OMIT THE HARD PART AND PUBLISH NOW?`, options, (option) => {
+      if (option.value === "shortcut") {
+        this.shortcutResolved = true;
+        gameState.sceneProgress.danneBadEnding = 1;
+        gameState.sceneProgress.concealedPolicyDefect = 1;
+        applyStandardsViolation("concealed_policy_defect", "DANN-E shortcut concealed policy defects by omitting material.");
+        setLatestMessage("BAD ENDING: DANN-E shortcut accepted; material facts were concealed.");
+        this.defeated = true;
+        this.clockContainer.setVisible(false);
+        this.sprite.setVisible(false);
+        this.shadow.setVisible(false);
+        hideBossHud();
+        this.clearBolts();
+        this.clearMinis();
+        this.onBadEnding();
+        return;
+      }
+      this.hp = Math.max(1, this.hp);
+      setBossHp(this.hp, this.phaseIndex());
+      setObjective("Reject the shortcut. Open the Buckram Gate with all pendants, crystals, and clean standards.");
+      setLatestMessage("Shortcut rejected. DANN-E remains vulnerable only to lawful publication readiness.");
+      retroAudio.warning();
+    });
+  }
+
+  private readinessMissingSummary(readiness = getPublicationReadinessReadout()) {
+    return readiness.missingSummary.length ? readiness.missingSummary.join(", ") : "final certification";
+  }
+
+  private applyCompletionPressure(completionRatio: number) {
+    const completionFloor = STATUTORY_START_YEAR + completionRatio * STATUTORY_COMPLETION_PRESSURE_YEARS;
+    this.statutoryYear = Math.max(this.statutoryYear, completionFloor);
+  }
+
+  private clockReadout() {
+    const readiness = getPublicationReadinessReadout();
+    const status = readiness.buckramGateOpen ? "Buckram Gate open" : this.deadlineDamageApplied ? "deadline missed" : "running";
+    return readiness.buckramGateOpen
+      ? `${this.statutoryYear.toFixed(1)}/30 years (${status})`
+      : `${this.statutoryYear.toFixed(1)}/30 years (${status}; missing ${this.readinessMissingSummary(readiness)})`;
   }
 
   private bossBody() {

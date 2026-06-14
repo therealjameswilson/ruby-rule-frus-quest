@@ -6,7 +6,7 @@ import {
   gameState,
   getFinalGateReadiness,
   hasProcessItem,
-  setDocumentWorkflowState,
+  publishDocument,
   setFinalGateCertificationState,
   setGameMode,
   setLatestMessage,
@@ -263,6 +263,7 @@ export class EndingScene extends Phaser.Scene {
     const missing = [
       readiness.missingStamps.length ? `stamps ${readiness.missingStamps.join(" ")}` : "",
       readiness.missingFragments ? `${readiness.missingFragments} cover pieces` : "",
+      readiness.documentsWithUndisclosedDeletion.length ? "bracketed insertion" : "",
       readiness.reliabilityReady ? "" : "reliability"
     ].filter(Boolean).join(", ");
     setObjective(`Buckram Gate locked: ${missing || "Buckram Key required"}.`);
@@ -292,7 +293,7 @@ export class EndingScene extends Phaser.Scene {
     addProcessItem("buckram_key");
     addInventoryItem("Published FRUS Cover");
     ["telegram_001", "source_note_047", "cross_reference_001", "sbu_annotation_001", "proof_page_412"].forEach((documentId) => {
-      setDocumentWorkflowState(documentId, "published");
+      publishDocument(documentId);
     });
     setGameMode("ending", "Published FRUS cover complete.");
     setFinalGateCertificationState({

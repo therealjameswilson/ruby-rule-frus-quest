@@ -4,7 +4,8 @@ import { getCharacterKeyForProductionColleague } from "../../art/characters";
 import { PALETTE } from "../../game/constants";
 import { SNES_PRODUCTION_COLLEAGUE_ASSETS, SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET } from "../../game/snesAtlas";
 import type { SnesProductionColleagueFrameName, SnesProductionColleagueId } from "../../game/snesAtlas";
-import { setPixelPosition, snapPixel } from "../../systems/pixelPerfect";
+import { snapPixel } from "../../systems/pixelPerfect";
+import { setRenderedPosition } from "../../systems/smoothMovement";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -74,8 +75,8 @@ export class ProductionColleague {
       repeat: -1,
       ease: "Stepped",
       onUpdate: () => {
-        setPixelPosition(this.container, this.baseX, this.container.y);
-        this.container.setDepth(snapPixel(this.container.y));
+        const renderPosition = setRenderedPosition(this.container, this.baseX, this.container.y);
+        this.container.setDepth(renderPosition.y);
       }
     });
   }

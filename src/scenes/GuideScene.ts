@@ -21,7 +21,7 @@ import { getInput, tickInput } from "../input/InputState";
 import { Player } from "../entities/Player";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
-import { nearestInteractable } from "../systems/interaction";
+import { InteractionAssist, nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
 import { ReliabilityHud } from "../systems/reliability";
@@ -42,6 +42,7 @@ export class GuideScene extends Phaser.Scene {
   private stampIcon!: Phaser.GameObjects.Image;
   private fragmentIcon!: Phaser.GameObjects.Image;
   private gateGlow!: Phaser.GameObjects.Rectangle;
+  private readonly interactionAssist = new InteractionAssist();
   private hasStamp = false;
   private hasFragment = false;
   private interactables: Interactable[] = [];
@@ -143,10 +144,9 @@ export class GuideScene extends Phaser.Scene {
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? nearest.label.toUpperCase() : "");
-    if (input.aJustPressed && nearest) {
-      nearest.onInteract();
-    }
+    this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
+    const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
+    if (bufferedInteraction) bufferedInteraction.onInteract();
     this.objectiveText.setText(gameState.objective);
   }
 

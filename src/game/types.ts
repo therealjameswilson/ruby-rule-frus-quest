@@ -138,6 +138,7 @@ export type DocumentCandidate = {
   annotationNeeded: boolean;
   sensitivityRisk: number;
   selected: boolean;
+  undisclosedDeletion: boolean;
   workflowState: DocumentWorkflowState;
   reviewStatus: ReviewStatus;
   equities: AgencyEquity[];
@@ -275,6 +276,7 @@ export interface WorkflowDocument {
   citationComplete?: boolean;
   annotationNeeded?: boolean;
   sensitivityRisk?: number;
+  undisclosedDeletion?: boolean;
 }
 
 export interface Interactable {

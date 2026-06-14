@@ -2,6 +2,81 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Gameplay smoothing/input pass:
+  - wired `CharacterCreateScene.confirm()` to the shared confirm edge and guarded it with the existing `locked` flag
+  - role cards now support first-click select and second-click/tap confirm, with a visible `PRESS ENTER / TAP AGAIN TO BEGIN` prompt
+  - added a name-field focus model: clicking the name field captures typed letters/backspace, Enter blurs, and an empty typed value still confirms as `Sam`
+  - expanded `InputState` with one-frame nav up/down, confirm, and cancel edges; role navigation now honors arrows and WASD
+  - added a one-frame input swallow hook for the mobile `TAP TO RESUME` overlay so the dismiss input cannot fall through into gameplay
+  - normalized diagonal movement speed, preserved acceleration/deceleration, and added a small corner nudge around solid tiles while keeping rendered positions pixel-snapped
+  - added a 120 ms action buffer and 80 ms interaction coyote helper, then wired it into Office, Guide, Archive, DANN-E map, and gameplay-map interactions with `A:` prompts
+  - added a one-time Office control card persisted via `sceneProgress.officeTutorialSeen`
+  - added deterministic Vitest coverage for input edges and CharacterCreate confirm/default-name helpers
+  - verified `npm test`: 6 files passed, 19 tests passed
+  - verified `npm run build` with the existing Vite chunk-size warning only
+  - required web-game client verified direct `CharacterCreateScene -> OfficeScene` state, though its WebGL screenshot remains black as previously documented
+  - direct Phaser renderer snapshot verified the Office control-card visual at `docs/screenshots/gameplay-smoothing-character-create/clean-held-key-phaser-snapshot.png`
+  - Playwright smoke verified second-click role-card confirmation and focused name typing (`Ruby`) into OfficeScene
+- Extended the pixel-proof debug tooling:
+  - `RenderDebugScene` now draws a 16x16 logical-pixel checkerboard at screen origin and a 1x1 red single-texel sprite at logical coordinate 0,0
+  - compact on-screen readout now reports raw/rounded DPR, canvas CSS size, backing size, internal resolution, integer zoom, expected device pixels per game pixel, backing-buffer ratio, and pass/check status
+  - F8 / `?pixelProof=1` DOM overlay now uses the same origin checkerboard and red single-texel proof mark
+  - `pixelProofVisible` is set while the proof scene/overlay is visible
+  - verified `npm test`: 4 files passed, 14 tests passed
+  - verified `npm run build` with the existing Vite chunk-size warning only
+  - required web-game client reached `RenderDebugScene` and produced valid `render_game_to_text()` state, but its WebGL screenshot remains black as in earlier local capture runs
+  - direct Playwright DPR-2 verification: CSS canvas 768x720, backing 1536x1440, computed integer zoom 3, rounded DPR 2, and the red 1x1 origin texel measured exactly 6x6 device pixels (`zoom * round(dpr)`)
+  - checkpoint screenshots: `docs/screenshots/pixel-proof-render-debug-dpr2.png`, `docs/screenshots/pixel-proof-origin-dpr2.png`
+- Added integer-zoom enforcement for the WebGL/AUTO renderer path:
+  - created `computeIntegerZoom(viewW, viewH)` and `applyIntegerZoom(game)` in `src/systems/pixelPerfect.ts`
+  - `applyIntegerZoom()` sets Phaser scale zoom, CSS canvas size, backing-buffer size using rounded DPR, WebGL viewport/projection, and active camera viewports while keeping the logical game size at 256x240
+  - wired `src/main.ts` boot, resize, orientation, and visual-viewport refresh paths to call the helper and feed `MobileDebugMetrics` (`computedZoom`, `integerZoomTarget`, `integerZoom`, DPR, CSS size, and backing size)
+  - verified `npm test`: 4 files passed, 14 tests passed
+  - verified `npm run build` with the existing Vite chunk-size warning only
+  - verified a browser smoke at `?scene=OfficeScene&role=compiler&name=Ruby`: CSS 768x720, backing 768x720 at DPR 1, logical game size 256x240, WebGL renderer, full-frame render restored after the backing-buffer change
+  - checkpoint screenshot: `docs/screenshots/integer-zoom-smoke.png`
+- Handed final shell sizing to the integer-zoom JS:
+  - changed `#game-shell` from fixed 768x720 CSS dimensions to `width: auto; height: auto`
+  - preserved `max-width: 100vw` and `max-height: 100dvh`
+  - added an explicit `#game-shell canvas` nearest-neighbor rendering rule
+  - verified `npm run build`
+  - verified direct browser metrics at `?scene=OfficeScene&role=compiler&name=Ruby`: shell and canvas settle at 768x720 CSS with 768x720 backing at DPR 1 and WebGL still renders full-frame
+- Added explicit camera/entity pixel snapping for smooth movement:
+  - set `cameras.main.roundPixels = true` in `BootScene`
+  - added `snapRenderedPosition()` and `setRenderedPosition()` to `src/systems/smoothMovement.ts`
+  - routed Player, Enemy base, DANN-E NPCs, production colleagues, and historian NPC tween updates through the render-position snapping helpers
+  - UIScene now refreshes active camera viewports through `applyIntegerZoom()` when active scene membership changes, so newly started scenes inherit integer backing-buffer camera sizes
+  - verified `npm test`: 4 files passed, 14 tests passed
+  - verified `npm run build`
+  - verified Office simultaneous Right+Down input across 36 animation frames: sprite, shadow, state, and camera coordinates stayed integer with zero fractional samples
+  - verified NARA Stacks drone diagonal/hover movement across 48 animation frames: 4 drones, zero fractional rendered coordinates, `cameraRoundPixels === true`
+  - checkpoint screenshots: `docs/screenshots/diagonal-pixel-snap-smoke.png` and `docs/screenshots/diagonal-enemy-pixel-snap-smoke.png`
+- Added Kellogg-standard damage as Zelda-like reliability heart loss:
+  - created `src/systems/standardsDamage.ts` with typed standard violations, damage values, plain-English labels, excision-specific damage, and clamped reliability math
+  - added `applyStandardsViolation()` to the reliability system so damage updates state, plays warning audio, and keeps quest readouts fresh
+  - wired standard violations into process-wall contact, unsafe network routing, unchecked referral decisions, and unbracketed excision choices
+  - surfaced standard labels in dialog for unsafe routing/referral/excision outcomes
+  - verified `npm run build` passes with the existing Vite chunk-size warning only
+  - verified with the required web-game Playwright client at `?scene=ReferralVaultScene`: unsafe manifest acceptance opens a `STANDARD VIOLATION` dialog and `render_game_to_text()` reports the concealed-policy-defect reliability debit
+- Added Zelda-like workflow action gating:
+  - extended `src/game/documentWorkflow.ts` with `ACTION_REQUIRED_ITEM`, `canPerformAction()`, and `tryWorkflowAction()`
+  - mapped citation verification, referral, clearance, excision, proofing, and publication actions to the matching FRUS process items from `ITEM_REGISTRY`
+  - routed `advanceDocumentWorkflow()` and exported workflow helper functions through `tryWorkflowAction()`
+  - missing tools now leave the document unchanged and push a locked reason into `latestMessage` and the HUD objective
+  - verified `npm run build` and a required web-game smoke at `?scene=ArchiveScene`
+- Added ALttP-style dungeon key state for FRUS chapter compilation:
+  - created `src/systems/dungeonKeys.ts` with `DungeonState`, small-key helpers, big-key/boss-door checks, and boss-completion checks
+  - persisted `Record<AreaId, DungeonState>` in `GameState`, with reset/restore normalization for old saves
+  - document sub-task state changes such as source-note discovery and citation verification now earn chapter small keys and reveal the chapter map/compass
+  - process-item rewards mark each chapter's big key, process stamps mark the matching chapter boss hurdle complete, and DANN-E defeat completes the Buckram Gate dungeon
+  - `render_game_to_text()` now exposes dungeon state and room-graph locked-exit gate status
+  - verified `npm run build` and a required web-game smoke at `?scene=ArchiveScene`; state showed `archive_cavern.smallKeys: 1` and locked-exit readiness
+- Added progressive ALttP-style overworld traversal gates:
+  - added `canTraverseExit(roomId, direction, inventory)`, `blockedExitPrompt()`, and shortcut reveal helpers to `src/game/questArchitecture.ts`
+  - updated `FRUS_ROOM_GRAPH` so Citation Stamp opens Archive source-note shortcuts, Clearance Token opens the red vault exit, Concurrence Slip opens the referral handoff, Red Pencil gates the editor/proof handoff, Proof Lens opens the proof-chamber shortcut, and Buckram Key remains the publication gate
+  - routed Archive, Network, Referral Vault, and Silent Read exits through the shared traversal helper with Zelda-style prompts such as `You need the Clearance Token.`
+  - newly acquired process tools now add their corresponding shortcut rooms to traversal reveal state and `render_game_to_text().roomGraph`
+  - verified `npm run build`, required web-game Playwright smoke at `?scene=ArchiveScene`, and in-app browser local load with no console errors; room graph reported item-gated prompts and immediate Citation Stamp shortcut readiness
 - Started `feature/wire-16bit-sprites` Phase 0 from `main`.
 - Audited current character sprite wiring against `public/assets/art-pack/MANIFEST.md`:
   - all ten canonical 16-bit character PNG sheets exist under `public/assets/art-pack/sprites/`
@@ -703,3 +778,88 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Verified all eight maps boot, every map has collision objects and at least one door, every door path either routes or shows its required locked dialog, and representative interactions open dialogue: Historian-in-Chief, FRUS Bookshelf, NARA Archivist, Chancery Door, and Witness Table.
 - Checkpoint screenshot: `docs/screenshots/all-new-art-phase2-historian-office.png`, showing the player in the Historian-in-Chief room.
 - The `.tmj` collision layers are intentionally broad first-pass rectangles; later Tiled refinement can add tighter chair/furniture polygons without changing the scene contract.
+
+## 2026-06-14 Bracketed Excision Standards Loop
+
+- Added `undisclosedDeletion` to document candidates/workflow documents and normalized the flag when loading older save data.
+- Blocked publication for any document with an undisclosed deletion; the final gate now reports the flagged document and `needsHumanReview` treats the flag as an active human-review blocker.
+- Wired Red Pencil excision in SilentReadScene to require a follow-up bracketed insertion choice.
+- If the player skips the bracket, SilentReadScene marks the document, applies `applyStandardsDamage(..., "undisclosed_deletion")` through the reliability system, shows the plain-English Kellogg/About-the-Series violation label, and reopens the bracket correction prompt.
+- Choosing the bracketed insertion clears `undisclosedDeletion`, returns the document to the proof path, and lets the physical-verification loop continue.
+- Updated ReferralVaultScene so unbracketed excision choices also set `undisclosedDeletion`, while the visible/bracketed excision choice clears it.
+- Verified `npm run build`.
+- Verified with the required web-game Playwright client:
+  - skip path: reliability debited, `source_note_047.undisclosedDeletion === true`, `needsHumanReview === true`, and the final gate is blocked;
+  - correction path: bracket choice clears `undisclosedDeletion`, removes the final-gate deletion blocker, and advances the proof route.
+
+## 2026-06-14 DANN-E Statutory Clock Reframe
+
+- Reframed `DanneBoss` around the 30-year publication deadline:
+  - added a visible `STATUTORY CLOCK` HUD row beneath the boss healthbar;
+  - the clock applies pressure based on completion readiness and advances during the fight unless the Buckram Gate is open;
+  - if the clock reaches 30 years before `buckramGateOpen`, the player takes `missed_30_year_deadline` standards damage.
+- Added a publication-readiness readout that treats process stamps as pendants, FRUS cover fragments as crystals, the Buckram Key as the gate item, and unresolved standard violations as blockers.
+- DANN-E now offers an unlawful shortcut after deadline failure or blocked defeat:
+  - accepting it applies `concealed_policy_defect` damage, records the shortcut in `sceneProgress`, and routes to `BadEndingScene`;
+  - rejecting it keeps the fight alive and tells the player to open the Buckram Gate lawfully.
+- Legitimate DANN-E defeat now requires `buckramGateOpen === true`: all required pendants, all crystals, Buckram Key, reliability readiness, and zero unresolved standards violations. Legitimate defeat routes to `TrueEndingScene`.
+- Added `BadEndingScene` for the concealed-material shortcut outcome.
+- Added a `give=publication` debug grant for QA seeding of all pendants, crystals, and the Buckram Key.
+- Verified `npm run build`.
+- Verified with the required web-game Playwright client:
+  - expired-clock path: clock reaches 30/30, reliability loses missed-deadline damage, and the shortcut A/B prompt appears;
+  - shortcut path: accepting the prompt applies concealed-policy-defect damage and loads `BadEndingScene`;
+  - lawful-readiness path: `publicationReadiness.buckramGateOpen === true`, pendants/crystals are complete, standards are clear, and the clock stays green at 28.5/30.
+
+## 2026-06-14 ALttP-Style Pause Subscreen
+
+- Added a GameState-backed adventure subscreen readout in `src/game/state.ts`.
+- The readout exposes:
+  - three research-provenance pendants from process stamps (`OBJ`, `SRC`, `SOP`);
+  - declassification crystals earned vs. total agency equities;
+  - equipped FRUS process tool;
+  - reliability as a 10-heart meter;
+  - per-area dungeon status from `dungeonKeys.ts` (`smallKeys`, required keys, big key, boss, map reveal);
+  - current-area room-map cells from `FRUS_ROOM_GRAPH`.
+- Updated `window.render_game_to_text()` to include `adventureSubscreen` for automated QA and browser inspection.
+- Reworked `InventoryOverlay` into an ALttP-style pause/map subscreen:
+  - left-side process-tool inventory strip still supports tap/click equip;
+  - right-side pendant, crystal, equipped-tool, and reliability-heart glyphs use the existing pixel palette;
+  - lower section shows dungeon key/big-key/map/boss status and a compact current-area minimap.
+- Verified `npm run build`.
+- Verified with the required web-game Playwright client after the final layout patch.
+- Verified with a direct Playwright pause capture:
+  - holding `M` opens the subscreen and sets `mode: "pause"`;
+  - `adventureSubscreen` reports pendants, crystals, equipped tool, reliability hearts, seven dungeon rows, and room-map data;
+  - no console errors were emitted.
+- Checkpoint screenshot: `docs/screenshots/alttp-subscreen-focused.png`.
+
+## 2026-06-14 FRUS/Zelda Unit Tests
+
+- Added Vitest as the deterministic unit-test runner and a `npm test` script.
+- Added `src/game/frusProgression.ts` as the pure progression helper used by tests and the pause subscreen:
+  - exports the prompt-facing `PendantId` type and `PENDANTS` registry;
+  - `compilationIsComplete()` checks the three research pendants (`rule`, `archive`, `sop`);
+  - `crystalsEarned()` and `totalEquities()` count distinct agency equities;
+  - `buckramGateOpen()` requires complete pendants and every distinct equity crystal earned.
+- Added `src/game/frusProgression.test.ts` for pendant completion, distinct-equity crystal counts, and Buckram Gate gating.
+- Added `src/systems/standardsDamage.test.ts` for all Kellogg-standard reliability debits, zero clamp behavior, and bracketed/unbracketed excision damage.
+- Added `src/game/documentWorkflow.test.ts` for gated workflow actions, locked reasons, direct-wrapper parity with `applyDocumentWorkflowAction()`, and a full found-to-published path with required tools.
+- Added `src/systems/dungeonKeys.test.ts` for small-key earn/use, locked-door behavior, boss-door big-key gating, and boss completion state.
+- Verified `npm test`: 4 files passed, 14 tests passed.
+- Verified `npm run build`.
+
+## 2026-06-14 WebGL AUTO Renderer Config
+
+- Updated `src/game/config.ts` to prefer `Phaser.AUTO` instead of forcing `Phaser.CANVAS`.
+- Removed the top-level fixed `zoom: 3`.
+- Set `scale.mode` to `Phaser.Scale.NONE` and `scale.zoom` to `1`, leaving `GAME_WIDTH`/`GAME_HEIGHT` unchanged at 256x240 so scene dimension reads stay stable.
+- Kept pixel discipline flags enabled: `pixelArt`, `antialias: false`, `antialiasGL: false`, and `roundPixels`.
+- Verified `npm test`: 4 files passed, 14 tests passed.
+- Verified `npm run build`.
+- Verified local runtime at `?scene=OfficeScene&role=compiler&name=Ruby`:
+  - Phaser reports `WebGL | Web Audio`;
+  - backing canvas remains 256x240;
+  - CSS-scaled rect remains 768x720 at 3x shell scale;
+  - Office scene renders correctly under the AUTO/WebGL path.
+- Checkpoint screenshot: `docs/screenshots/renderer-auto-smoke.png`.

@@ -7,9 +7,11 @@ import {
   bindDomPointerDown,
   getGamepadDebugState,
   initializeInput,
+  swallowNextInputFrame,
   updateInputCallbacks
 } from "./input/InputState";
 import { retroAudio, type AudioDebugState } from "./systems/audio";
+import { applyIntegerZoom, computeIntegerZoom } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
 
 declare global {
@@ -126,7 +128,7 @@ function getGameCanvas() {
 function updateMobileCanvasMetrics() {
   const metrics = window.rubyRuleMobileMetrics!;
   const canvas = getGameCanvas();
-  metrics.dpr = window.devicePixelRatio || 1;
+  metrics.dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
   metrics.canvasCssWidth = rect.width;
@@ -358,17 +360,40 @@ function installTapToResumeOverlay(game: Phaser.Game) {
   const showResumeOverlay = () => {
     if (!pausedSceneKey) return;
     overlay.hidden = false;
+    overlay.focus({ preventScroll: true });
     setLatestMessage("Paused for mobile resume.");
   };
 
-  bindDomPointerDown(overlay, async (event) => {
+  const resumeFromOverlay = async (event: Event) => {
     event.preventDefault();
+    event.stopPropagation();
+    event.stopImmediatePropagation();
     overlay.hidden = true;
     if (pausedSceneKey && game.scene.isPaused(pausedSceneKey)) game.scene.resume(pausedSceneKey);
     pausedSceneKey = null;
+    swallowNextInputFrame();
     await retroAudio.unlock();
     refreshIntegerScale();
+  };
+
+  bindDomPointerDown(overlay, (event) => {
+    void resumeFromOverlay(event);
   });
+
+  overlay.addEventListener("click", (event) => {
+    if (overlay.hidden) return;
+    void resumeFromOverlay(event);
+  }, { capture: true });
+
+  window.addEventListener("keydown", (event) => {
+    if (overlay.hidden) return;
+    void resumeFromOverlay(event);
+  }, { capture: true });
+
+  window.addEventListener("pointerdown", (event) => {
+    if (overlay.hidden) return;
+    void resumeFromOverlay(event);
+  }, { capture: true });
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
@@ -391,7 +416,7 @@ function calculateIntegerGameShellScale() {
   const availableWidth = Math.max(160, window.innerWidth - paddingX);
   const availableHeight = Math.max(160, window.innerHeight - paddingY);
   const rawScale = Math.min(availableWidth / GAME_WIDTH, availableHeight / GAME_HEIGHT);
-  const scale = Math.max(1, Math.floor(rawScale));
+  const scale = computeIntegerZoom(availableWidth, availableHeight);
   return { shell, rawScale, scale };
 }
 
@@ -408,22 +433,30 @@ function configureIntegerGameShellScale() {
 }
 
 function enforceIntegerCanvasScale() {
-  const scale = configureIntegerGameShellScale();
+  configureIntegerGameShellScale();
+  if (!phaserGame) return;
+  const beforeAdjustments = window.rubyRuleMobileMetrics!.scaleGuardAdjustments;
+  const result = applyIntegerZoom(phaserGame);
+  const metrics = window.rubyRuleMobileMetrics!;
+  metrics.computedZoom = result.computedZoom;
+  metrics.integerZoomTarget = result.integerZoomTarget;
+  metrics.integerZoom = result.integerZoom;
+  metrics.dpr = result.dpr;
+  metrics.canvasCssWidth = result.canvasCssWidth;
+  metrics.canvasCssHeight = result.canvasCssHeight;
+  metrics.canvasBackingWidth = result.canvasBackingWidth;
+  metrics.canvasBackingHeight = result.canvasBackingHeight;
   const canvas = getGameCanvas();
-  if (!canvas) return;
-  const targetWidth = GAME_WIDTH * scale;
-  const targetHeight = GAME_HEIGHT * scale;
-  const rect = canvas.getBoundingClientRect();
-  const zoomDrift = Math.max(
-    Math.abs(rect.width / GAME_WIDTH - scale),
-    Math.abs(rect.height / GAME_HEIGHT - scale)
-  );
-  if (zoomDrift > 0.001) {
-    canvas.style.width = `${targetWidth}px`;
-    canvas.style.height = `${targetHeight}px`;
-    window.rubyRuleMobileMetrics!.scaleGuardAdjustments += 1;
+  const rect = canvas?.getBoundingClientRect();
+  if (
+    rect
+    && (
+      Math.abs(rect.width - result.canvasCssWidth) > 0.001
+      || Math.abs(rect.height - result.canvasCssHeight) > 0.001
+    )
+  ) {
+    metrics.scaleGuardAdjustments = beforeAdjustments + 1;
   }
-  updateMobileCanvasMetrics();
 }
 
 function refreshIntegerScale() {
@@ -449,27 +482,18 @@ function drawPixelProof(canvas: HTMLCanvasElement) {
   context.imageSmoothingEnabled = false;
   context.clearRect(0, 0, canvas.width, canvas.height);
 
-  for (let y = 0; y < 32; y += 1) {
-    for (let x = 0; x < 32; x += 1) {
+  for (let y = 0; y < 16; y += 1) {
+    for (let x = 0; x < 16; x += 1) {
       context.fillStyle = (x + y) % 2 === 0 ? "#f8f0d8" : "#0f0f0f";
-      context.fillRect(8 + x, 38 + y, 1, 1);
+      context.fillRect(x, y, 1, 1);
     }
   }
 
   context.fillStyle = "#68c0c0";
-  for (let i = 0; i < 80; i += 1) {
-    context.fillRect(54 + i, 38 + i, 1, 1);
-  }
-
-  context.fillStyle = "#d6a23a";
-  for (let x = 150; x < 206; x += 2) context.fillRect(x, 38, 1, 32);
-  for (let y = 38; y < 70; y += 2) context.fillRect(150, y, 56, 1);
-
+  context.fillRect(0, 0, 16, 1);
+  context.fillRect(0, 0, 1, 16);
   context.fillStyle = "#b82030";
-  context.fillRect(7, 37, 200, 1);
-  context.fillRect(7, 117, 200, 1);
-  context.fillRect(7, 37, 1, 81);
-  context.fillRect(206, 37, 1, 81);
+  context.fillRect(0, 0, 1, 1);
 }
 
 function installPixelProofOverlay() {

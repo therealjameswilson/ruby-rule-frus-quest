@@ -9,6 +9,7 @@ import {
   advanceDocumentWorkflow,
   awardProcessStamp,
   getAvailableWorkflowTools,
+  getHeldProcessItemIds,
   getTreatyFragmentCount,
   gameState,
   hasProcessItem,
@@ -25,6 +26,7 @@ import {
 } from "../game/state";
 import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
+import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { Manuscript } from "../entities/items/Manuscript";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { Player } from "../entities/Player";
@@ -32,9 +34,9 @@ import { BureaucraticWall } from "../entities/BureaucraticWall";
 import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
-import { nearestWorkflowInteraction } from "../systems/interaction";
+import { InteractionAssist, nearestWorkflowInteraction } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
@@ -102,6 +104,14 @@ const ARCHIVE_ROOMS: Record<ArchiveRoomId, ArchiveRoom> = {
     title: "SOURCE ROOM",
     grid: { x: 0, y: 0 },
     exits: { east: "A2", south: "B1" },
+    lockedExits: {
+      east: "OPENNET SOURCE-NOTE LOCK",
+      south: "REFERRAL STACKS CITATION LOCK"
+    },
+    requiredItems: {
+      east: "citation_stamp",
+      south: "citation_stamp"
+    },
     roomType: "normal"
   },
   A2: {
@@ -297,6 +307,7 @@ export class ArchiveScene extends Phaser.Scene {
   private hintText!: Phaser.GameObjects.Text;
   private roomTitleText!: Phaser.GameObjects.Text;
   private interactables: Interactable[] = [];
+  private readonly interactionAssist = new InteractionAssist();
   private collected = new Set<string>();
   private clearedWallIds = new Set<string>();
   private bureaucraticWalls: BureaucraticWall[] = [];
@@ -427,10 +438,12 @@ export class ArchiveScene extends Phaser.Scene {
     const nearest = workflowInteraction.interactable;
     setNearestInteractable(nearest?.label ?? null);
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
-    this.hintText.setText(nearest ? `${toolCue}${nearest.label.toUpperCase()}` : this.exitHint());
-    if (input.aJustPressed) {
-      if ((nearest?.kind === "enemy" || !nearest) && this.tryEnemyAction(nearest ?? undefined)) return;
-      if (nearest) nearest.onInteract();
+    this.hintText.setText(nearest ? `A: ${toolCue}${nearest.label.toUpperCase()}` : this.exitHint());
+    const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
+    if (input.aJustPressed && !bufferedInteraction && this.tryEnemyAction(nearest ?? undefined)) return;
+    if (bufferedInteraction) {
+      if (bufferedInteraction.kind === "enemy" && this.tryEnemyAction(bufferedInteraction)) return;
+      bufferedInteraction.onInteract();
     }
     this.objectiveText.setText(gameState.objective);
   }
@@ -1193,7 +1206,7 @@ export class ArchiveScene extends Phaser.Scene {
     const hit = this.player.takeHit(activeWall.position, definition?.type === "DANN-E QUEUE" ? 22 : 15);
     if (!hit) return;
     this.wallContactCooldown = this.time.now + 1200;
-    adjustReliability(definition?.type === "DANN-E QUEUE" ? -3 : -2, `${definition?.type ?? activeWall.label} process wall delayed source work`);
+    applyStandardsViolation("missed_30_year_deadline", `${definition?.type ?? activeWall.label} process wall delayed source work.`);
     this.reliability.update();
     if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");
     else if (definition?.type === "WAIT") setObjective("Resolve the agency response timer at the referral tray.");
@@ -1480,11 +1493,11 @@ export class ArchiveScene extends Phaser.Scene {
       return false;
     }
 
-    const requiredItem = currentRoom.requiredItems?.[direction];
-    if (requiredItem && !hasProcessItem(requiredItem)) {
-      const lockLabel = currentRoom.lockedExits?.[direction] ?? "locked door";
-      setLatestMessage(`${lockLabel} requires ${requiredItem.replace(/_/g, " ").toUpperCase()}.`);
-      setObjective(`Use the required item to open ${lockLabel}.`);
+    const heldItems = getHeldProcessItemIds();
+    if (!canTraverseExit(currentRoom.id, direction, heldItems)) {
+      const prompt = blockedExitPrompt(currentRoom.id, direction, heldItems);
+      setLatestMessage(prompt.message);
+      setObjective(prompt.objective);
       this.exitCooldownUntil = this.time.now + 500;
       const push = direction === "north"
         ? { x: position.x, y: PLAY_BOUNDS.top + 18 }
@@ -1535,7 +1548,8 @@ export class ArchiveScene extends Phaser.Scene {
         ...Object.values(ARCHIVE_ROOMS)
           .filter((candidate) => candidate.roomType !== "secret")
           .map((candidate) => candidate.id),
-        ...this.revealedSecretIds
+        ...this.revealedSecretIds,
+        ...getRevealedShortcutRoomIds(getHeldProcessItemIds()).filter((roomId): roomId is ArchiveRoomId => roomId in ARCHIVE_ROOMS)
       ],
       exits: room.exits,
       lockedExits: room.lockedExits,
@@ -1583,8 +1597,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (!target) return false;
     const targetRoom = ARCHIVE_ROOMS[target];
     if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) return false;
-    const requiredItem = room.requiredItems?.[direction];
-    return !requiredItem || hasProcessItem(requiredItem);
+    return canTraverseExit(room.id, direction, getHeldProcessItemIds());
   }
 
   private drawGate(direction: Direction, open: boolean) {

@@ -16,7 +16,7 @@ import {
   toHitboxReadout
 } from "../systems/combat";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
-import { approach, frameDeltaSeconds } from "../systems/smoothMovement";
+import { approach, frameDeltaSeconds, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
 
 interface MoveBounds {
   left: number;
@@ -74,6 +74,7 @@ export class Player {
   private readonly speed = 58;
   private readonly acceleration = 720;
   private readonly deceleration = 900;
+  private readonly cornerNudgePixels = 3;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
   private readonly idleParts: IdlePart[] = [];
@@ -157,7 +158,7 @@ export class Player {
   }
 
   get position() {
-    return { x: snapPixel(this.logicalX), y: snapPixel(this.logicalY) };
+    return snapRenderedPosition({ x: this.logicalX, y: this.logicalY });
   }
 
   get facingDirection() {
@@ -282,8 +283,10 @@ export class Player {
         this.logicalX = nextX;
         if (nextX !== attemptedX) this.velocityX = 0;
       } else {
-        this.velocityX = 0;
-        this.applyHalfTileCorrection(this.facing, bounds, solids);
+        if (!this.tryCornerNudge("x", nextX, this.logicalY, bounds, solids)) {
+          this.velocityX = 0;
+          this.applyHalfTileCorrection(this.facing, bounds, solids);
+        }
       }
     }
     if (Math.abs(this.velocityY) > 0.01) {
@@ -291,8 +294,10 @@ export class Player {
         this.logicalY = nextY;
         if (nextY !== attemptedY) this.velocityY = 0;
       } else {
-        this.velocityY = 0;
-        this.applyHalfTileCorrection(this.facing, bounds, solids);
+        if (!this.tryCornerNudge("y", this.logicalX, nextY, bounds, solids)) {
+          this.velocityY = 0;
+          this.applyHalfTileCorrection(this.facing, bounds, solids);
+        }
       }
     }
     if (moving) {
@@ -330,6 +335,27 @@ export class Player {
     this.logicalY = corrected.y;
   }
 
+  private tryCornerNudge(axis: "x" | "y", targetX: number, targetY: number, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[]) {
+    if (!solids.length) return false;
+    const offsets = [-this.cornerNudgePixels, this.cornerNudgePixels];
+    for (const offset of offsets) {
+      const nudgedX = axis === "y"
+        ? Phaser.Math.Clamp(this.logicalX + offset, bounds.left, bounds.right)
+        : Phaser.Math.Clamp(targetX, bounds.left, bounds.right);
+      const nudgedY = axis === "x"
+        ? Phaser.Math.Clamp(this.logicalY + offset, bounds.top, bounds.bottom)
+        : Phaser.Math.Clamp(targetY, bounds.top, bounds.bottom);
+      if (!this.collidesAt(nudgedX, nudgedY, solids)) {
+        this.logicalX = nudgedX;
+        this.logicalY = nudgedY;
+        if (axis === "x") this.velocityX = 0;
+        else this.velocityY = 0;
+        return true;
+      }
+    }
+    return false;
+  }
+
   private playAbilityFrame() {
     this.abilityFrameUntil = this.scene.time.now + 420;
     this.controlState = "use_item";
@@ -349,15 +375,18 @@ export class Player {
     else if (input.dir.x > 0) facing = "east";
     else if (input.dir.y < 0) facing = "north";
     else if (input.dir.y > 0) facing = "south";
+    if (input.dir.x !== 0 && input.dir.y !== 0) {
+      const diagonalScale = Math.SQRT1_2;
+      return { x: input.dir.x * diagonalScale, y: input.dir.y * diagonalScale, moving, facing };
+    }
     return { x: input.dir.x, y: input.dir.y, moving, facing };
   }
 
   private syncRenderPosition() {
-    const renderX = snapPixel(this.logicalX);
-    const renderY = snapPixel(this.logicalY);
+    const { x: renderX, y: renderY } = snapRenderedPosition({ x: this.logicalX, y: this.logicalY });
     this.updateRoleFrame();
-    setPixelPosition(this.sprite, renderX, renderY);
-    setPixelPosition(this.shadow, renderX, renderY + this.shadowOffsetY);
+    setRenderedPosition(this.sprite, renderX, renderY);
+    setRenderedPosition(this.shadow, renderX, renderY + this.shadowOffsetY);
     this.shadow.setDepth(renderY - this.shadowDepthOffset);
     this.sprite.setDepth(renderY);
     this.syncIdleCue(renderX, renderY);

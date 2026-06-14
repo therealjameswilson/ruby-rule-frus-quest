@@ -28,6 +28,10 @@ export interface InputState {
   downJustPressed: boolean;
   navLeftJustPressed: boolean;
   navRightJustPressed: boolean;
+  navUpJustPressed: boolean;
+  navDownJustPressed: boolean;
+  confirmJustPressed: boolean;
+  cancelJustPressed: boolean;
   a: boolean;
   aJustPressed: boolean;
   aJustReleased: boolean;
@@ -102,6 +106,10 @@ const emptyState: InputState = {
   downJustPressed: false,
   navLeftJustPressed: false,
   navRightJustPressed: false,
+  navUpJustPressed: false,
+  navDownJustPressed: false,
+  confirmJustPressed: false,
+  cancelJustPressed: false,
   a: false,
   aJustPressed: false,
   aJustReleased: false,
@@ -148,6 +156,7 @@ let callbacks: InputCallbacks = {};
 let gamepadConnected = false;
 let lastGamepadLabel: string | null = null;
 let lastGamepadEvent = "idle";
+let swallowNextFrame = false;
 let gamepadSnapshot: GamepadSnapshot = {
   connected: false,
   index: null,
@@ -180,6 +189,7 @@ function isTouchDown(...keys: TouchControlKey[]) {
 }
 
 function getConnectedGamepads() {
+  if (typeof navigator === "undefined") return [];
   if (!("getGamepads" in navigator)) return [];
   return Array.from(navigator.getGamepads()).filter((pad): pad is Gamepad => Boolean(pad?.connected));
 }
@@ -274,15 +284,9 @@ function notifyGamepadGestureIfNeeded(snapshot: GamepadSnapshot) {
 }
 
 function computeAxis(left: boolean, right: boolean, up: boolean, down: boolean) {
-  if (lastDirection === "left" && left) return { x: -1 as AxisValue, y: 0 as AxisValue };
-  if (lastDirection === "right" && right) return { x: 1 as AxisValue, y: 0 as AxisValue };
-  if (lastDirection === "up" && up) return { x: 0 as AxisValue, y: -1 as AxisValue };
-  if (lastDirection === "down" && down) return { x: 0 as AxisValue, y: 1 as AxisValue };
-  if (left) return { x: -1 as AxisValue, y: 0 as AxisValue };
-  if (right) return { x: 1 as AxisValue, y: 0 as AxisValue };
-  if (up) return { x: 0 as AxisValue, y: -1 as AxisValue };
-  if (down) return { x: 0 as AxisValue, y: 1 as AxisValue };
-  return { x: 0 as AxisValue, y: 0 as AxisValue };
+  const x = left === right ? 0 : left ? -1 : 1;
+  const y = up === down ? 0 : up ? -1 : 1;
+  return { x: x as AxisValue, y: y as AxisValue };
 }
 
 function justPressed(current: boolean, previous: boolean) {
@@ -432,6 +436,24 @@ export function isTouchInputCapable() {
 
 export function tickInput() {
   previousState = cloneState(currentState);
+  if (swallowNextFrame) {
+    swallowNextFrame = false;
+    pendingTypedCharacters.length = 0;
+    pendingPointerStarts.length = 0;
+    currentState = { ...emptyState, dir: { ...emptyState.dir } };
+    previousChoiceDown.choiceA = false;
+    previousChoiceDown.choiceB = false;
+    previousChoiceDown.choiceC = false;
+    previousChoiceDown.choiceD = false;
+    previousBackspaceDown = false;
+    previousNavLeftDown = false;
+    previousNavRightDown = false;
+    previousNavUpDown = false;
+    previousNavDownDown = false;
+    previousConfirmDown = false;
+    previousCancelDown = false;
+    return;
+  }
   gamepadSnapshot = readGamepadSnapshot();
   syncGamepadConnection(gamepadSnapshot);
   notifyGamepadGestureIfNeeded(gamepadSnapshot);
@@ -442,11 +464,15 @@ export function tickInput() {
   const down = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
   const dir = computeAxis(left, right, up, down);
   if (gamepadSnapshot.direction) lastDirection = gamepadSnapshot.direction;
-  const navLeft = isKeyboardDown("ArrowLeft") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
-  const navRight = isKeyboardDown("ArrowRight") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
+  const navLeft = isKeyboardDown("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
+  const navRight = isKeyboardDown("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
+  const navUp = isKeyboardDown("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
+  const navDown = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
 
   const a = isKeyboardDown("Space", "Enter") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
   const b = isKeyboardDown("ShiftLeft", "ShiftRight") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
+  const confirm = isKeyboardDown("Enter", "Space") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
+  const cancel = isKeyboardDown("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
   const start = isKeyboardDown("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
   const select = isKeyboardDown("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
   const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2], gamepadSnapshot);
@@ -473,6 +499,10 @@ export function tickInput() {
     downJustPressed: justPressed(down, previousState.down),
     navLeftJustPressed: justPressed(navLeft, previousNavLeftDown),
     navRightJustPressed: justPressed(navRight, previousNavRightDown),
+    navUpJustPressed: justPressed(navUp, previousNavUpDown),
+    navDownJustPressed: justPressed(navDown, previousNavDownDown),
+    confirmJustPressed: justPressed(confirm, previousConfirmDown),
+    cancelJustPressed: justPressed(cancel, previousCancelDown),
     a,
     aJustPressed: justPressed(a, previousState.a),
     aJustReleased: justReleased(a, previousState.a),
@@ -510,6 +540,10 @@ export function tickInput() {
   previousBackspaceDown = backspace;
   previousNavLeftDown = navLeft;
   previousNavRightDown = navRight;
+  previousNavUpDown = navUp;
+  previousNavDownDown = navDown;
+  previousConfirmDown = confirm;
+  previousCancelDown = cancel;
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
 }
@@ -523,6 +557,10 @@ const previousChoiceDown = {
 let previousBackspaceDown = false;
 let previousNavLeftDown = false;
 let previousNavRightDown = false;
+let previousNavUpDown = false;
+let previousNavDownDown = false;
+let previousConfirmDown = false;
+let previousCancelDown = false;
 
 function isKeyboardDownFromPrevious(key: keyof typeof previousChoiceDown) {
   return previousChoiceDown[key];
@@ -539,6 +577,11 @@ export function setTouchControl(key: TouchControlKey, pressed: boolean) {
   } else {
     touchDown.delete(key);
   }
+}
+
+export function swallowNextInputFrame() {
+  swallowNextFrame = true;
+  resetInput();
 }
 
 export function bindPointerDown<T extends Phaser.GameObjects.GameObject>(
@@ -587,5 +630,14 @@ export function resetInput() {
   previousBackspaceDown = false;
   previousNavLeftDown = false;
   previousNavRightDown = false;
-  if (window.rubyRuleMobileMetrics) window.rubyRuleMobileMetrics.activePointerCount = 0;
+  previousNavUpDown = false;
+  previousNavDownDown = false;
+  previousConfirmDown = false;
+  previousCancelDown = false;
+  if (typeof window !== "undefined" && window.rubyRuleMobileMetrics) window.rubyRuleMobileMetrics.activePointerCount = 0;
+}
+
+export function setKeyboardDownForTests(codes: readonly string[]) {
+  resetInput();
+  for (const code of codes) keyboardDown.add(code);
 }

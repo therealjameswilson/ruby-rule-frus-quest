@@ -6,6 +6,7 @@ import { setLatestMessage, setPlayerProfile, setSceneState, setVisibleEntities }
 import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
+import { normalizeCharacterDisplayName, shouldConfirmCharacterCreateInput } from "./characterCreateInput";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -13,13 +14,16 @@ function color(hex: string) {
 
 export class CharacterCreateScene extends Phaser.Scene {
   private roleIndex = 0;
-  private displayName = "Sam";
+  private displayName = "";
   private nameText!: Phaser.GameObjects.Text;
+  private nameBox!: Phaser.GameObjects.Rectangle;
+  private beginPrompt!: Phaser.GameObjects.Text;
   private roleText!: Phaser.GameObjects.Text;
   private remitText!: Phaser.GameObjects.Text;
   private sprite!: Phaser.GameObjects.Sprite;
   private cards: Phaser.GameObjects.Container[] = [];
   private locked = false;
+  private nameFocused = false;
 
   constructor() {
     super("CharacterCreateScene");
@@ -46,6 +50,11 @@ export class CharacterCreateScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
+    this.nameBox = this.add.rectangle(128, 97, 118, 15, color(PALETTE.black), 0.55)
+      .setStrokeStyle(1, color(PALETTE.sepiaInk))
+      .setDepth(this.nameText.depth - 1);
+    bindPointerDown(this.nameBox, () => this.focusNameField());
+    bindPointerDown(this.nameText, () => this.focusNameField());
     this.roleText = this.add.text(128, 108, "", {
       fontFamily: "monospace",
       fontSize: "10px",
@@ -60,6 +69,11 @@ export class CharacterCreateScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     this.createRoleCards();
+    this.beginPrompt = this.add.text(128, 203, "PRESS ENTER / TAP AGAIN TO BEGIN", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5);
     this.add.text(128, 212, "TYPE NAME  LEFT/RIGHT ROLE  ENTER CONFIRMS", {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -72,11 +86,22 @@ export class CharacterCreateScene extends Phaser.Scene {
   update() {
     tickInput();
     const input = getInput();
-    if (input.navLeftJustPressed) this.previousRole();
-    if (input.navRightJustPressed) this.nextRole();
-    if (input.backspaceJustPressed) this.backspaceName();
-    for (const letter of input.typedText) this.handleTypedLetter(letter);
-    if (input.aJustPressed || input.startJustPressed) this.confirm();
+    if (this.nameFocused) {
+      if (input.confirmJustPressed) {
+        this.blurNameField();
+        return;
+      }
+      if (input.cancelJustPressed) this.blurNameField();
+      if (input.backspaceJustPressed) this.backspaceName();
+      for (const letter of input.typedText) this.handleTypedLetter(letter);
+    } else {
+      if (input.navLeftJustPressed) this.previousRole();
+      if (input.navRightJustPressed) this.nextRole();
+      if (input.navUpJustPressed) this.previousRole();
+      if (input.navDownJustPressed) this.nextRole();
+      if (shouldConfirmCharacterCreateInput(input)) this.confirm();
+    }
+    this.renderSelection();
   }
 
   private createRoleCards() {
@@ -98,6 +123,13 @@ export class CharacterCreateScene extends Phaser.Scene {
       }).setOrigin(0.5, 0);
       const container = this.add.container(x, 160, [box, border, icon, label]).setSize(44, 42);
       bindPointerDown(container, () => {
+        if (this.locked) return;
+        const alreadySelected = this.roleIndex === index;
+        this.blurNameField();
+        if (alreadySelected) {
+          this.confirm();
+          return;
+        }
         this.roleIndex = index;
         this.renderSelection();
       });
@@ -126,10 +158,20 @@ export class CharacterCreateScene extends Phaser.Scene {
   private handleTypedLetter(letter: string) {
     if (this.locked) return;
     if (/^[a-zA-Z]$/.test(letter) && this.displayName.length < 10) {
-      if (this.displayName === "Sam") this.displayName = "";
       this.displayName += letter;
       this.renderSelection();
     }
+  }
+
+  private focusNameField() {
+    if (this.locked) return;
+    this.nameFocused = true;
+    this.renderSelection();
+  }
+
+  private blurNameField() {
+    this.nameFocused = false;
+    this.renderSelection();
   }
 
   private renderSelection() {
@@ -137,7 +179,9 @@ export class CharacterCreateScene extends Phaser.Scene {
     const characterKey = getCharacterKeyForProcessRole(role.id);
     this.sprite.setTexture(characterKey);
     this.sprite.play(characterAnimKey(characterKey, "idle-down"), true);
-    this.nameText.setText(`NAME: ${this.displayName || "Historian"}`);
+    const caretVisible = this.nameFocused && Math.floor(this.time.now / 350) % 2 === 0;
+    this.nameText.setText(`NAME: ${this.displayName || "Sam"}${caretVisible ? "|" : ""}`);
+    this.nameBox.setStrokeStyle(1, color(this.nameFocused ? PALETTE.goldStamp : PALETTE.sepiaInk));
     this.roleText.setText(role.label.toUpperCase());
     this.remitText.setText(`${role.ability}: ${role.remit}`);
     this.cards.forEach((card, index) => {
@@ -145,14 +189,15 @@ export class CharacterCreateScene extends Phaser.Scene {
       border.setStrokeStyle(index === this.roleIndex ? 2 : 1, color(index === this.roleIndex ? PALETTE.goldStamp : PALETTE.sepiaInk));
       card.y = index === this.roleIndex ? 154 : 160;
     });
+    this.beginPrompt.setAlpha(this.nameFocused ? 0.45 : 1);
     setLatestMessage(`Selected ${role.label}`);
   }
 
   private confirm() {
+    if (this.locked) return;
     this.locked = true;
     const role = PROCESS_ROLES[this.roleIndex];
-    const cleanedName = this.displayName.trim() || "Historian";
-    const displayName = cleanedName.charAt(0).toUpperCase() + cleanedName.slice(1);
+    const displayName = normalizeCharacterDisplayName(this.displayName);
     retroAudio.confirm();
     setPlayerProfile(displayName, role);
     transitionTo(this, "OfficeScene");
