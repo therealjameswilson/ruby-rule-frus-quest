@@ -21,6 +21,7 @@ declare global {
     rubyRuleAudioDebug?: () => AudioDebugState;
     rubyRuleSaveDebug?: () => ReturnType<typeof getSaveDebugState>;
     rubyRuleGamepadDebug?: () => ReturnType<typeof getGamepadDebugState>;
+    game?: Phaser.Game;
   }
 }
 
@@ -503,6 +504,7 @@ window.addEventListener("orientationchange", scheduleIntegerScaleRefresh);
 window.visualViewport?.addEventListener("resize", scheduleIntegerScaleRefresh);
 
 const game = new Phaser.Game(gameConfig);
+window.game = game;
 phaserGame = game;
 installAutosaveLifecycle();
 installTapToResumeOverlay(game);

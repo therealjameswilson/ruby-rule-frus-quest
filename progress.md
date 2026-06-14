@@ -652,3 +652,54 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - Verified the DANN-E boss mobile simulation at iPhone-style portrait size and 320px width: letterbox bars, touch overlay, boss HUD, integer scaling, and D-pad movement all remained readable/functional.
 - Verified `npm run build`, `npm run preview`, required web-game boss smoke, and a direct scene smoke sweep with no captured page/console errors.
 - Documented Phase 10 in `docs/danne-phase10-polish.md`; captured screenshots/state under `docs/screenshots/danne-phase10-*`.
+
+## 2026-06-13 All-New-Art Integration Phase 0
+
+- Created branch `integrate/all-new-art` from fast-forwarded `main`.
+- Checked prerequisite PRs:
+  - PR #11 and PR #12 were already merged into `main`.
+  - PR #9 was still open and not mergeable on GitHub, so its asset branch was merged locally into `integrate/all-new-art` to make the required map assets available without touching `main`.
+- Verified required source asset counts:
+  - `public/assets/art-pack/overworld_maps/`: 5 files.
+  - `public/assets/art-pack/gameplay_maps/`: 8 files.
+  - `public/assets/art-pack/frus_volumes/`: 16 PNG files.
+- Added `src/assets/registry.ts` as the single source of truth for `OVERWORLD_REGIONS`, `GAMEPLAY_MAPS`, and `FRUS_VOLUMES`.
+- Wired `BootScene` to preload all three registries and log grouped registry output; exposed `window.game` so the requested dev-console texture checks work exactly.
+- Verified `npm run build`.
+- Checkpoint screenshot: `docs/screenshots/all-new-art-phase0-console.png`, showing `game.textures.exists('historian_office') === true` and `game.textures.exists('reward_legendary') === true`.
+
+## 2026-06-13 All-New-Art Integration Phase 1
+
+- Added `WorldMapScene` as the all-new-art region-select hub using the five overworld map assets from the registry.
+- Added `src/data/regions.ts` with all 40 district hot-zones, their source-image bounds, region labels, and initial destination mappings.
+- Added a Phase 1 `GameplayMapScene` preview shell so destination districts can route to the eight gameplay map assets before Phase 2 collision/spawn authoring.
+- Registered `WorldMapScene` and `GameplayMapScene` in `gameConfig.scene` and `SCENE_ORDER` while preserving existing debug scene routes.
+- Verified `npm run build`.
+- Verified the region selector cycles through all five regions, hover overlays and tooltips work for all 40 cartouches, and destination clicks route correctly for West Berlin, Vienna, and Havana.
+- Checkpoint screenshot: `docs/screenshots/all-new-art-phase1-europe-west-berlin-tooltip.png`, showing the Europe map with the West Berlin tooltip visible and the parchment border unobstructed.
+- Phase 2 still needs true gameplay-map collision, doors, spawns, and map-specific NPC logic.
+
+## 2026-06-13 All-New-Art Integration Phase 2
+
+- Added `GAMEPLAY_TILED_MAPS` to the asset registry and BootScene JSON preload so each gameplay-map object layer is loaded from `public/assets/tiled/*.tmj`.
+- Replaced the Phase 1 preview-only `GameplayMapScene` with a playable static-map scene that:
+  - renders each gameplay PNG inside a safe rectangle without covering the parchment border;
+  - reads Tiled-style `collisions`, `doors`, `spawns`, `interactions`, `npcs`, and `triggers` object layers;
+  - maps source-pixel object coordinates into the 256x240 logical canvas;
+  - uses the existing `Player` rectangle-solid movement path;
+  - supports `?debug=collision` overlays;
+  - routes doors to `WorldMapScene` or another `GameplayMapScene` map plus spawn point;
+  - shows compact map dialogue in the bottom safe band instead of covering the map art.
+- Authored first-pass `.tmj` object maps for all eight gameplay maps:
+  - Office of the Historian
+  - NARA II Stacks
+  - Foggy Bottom Street
+  - White House West Wing
+  - Black Vault Lair
+  - FRUS Production Floor
+  - Embassy Compound
+  - Capitol Hill Hearing
+- Verified `npm run build`.
+- Verified all eight maps boot, every map has collision objects and at least one door, every door path either routes or shows its required locked dialog, and representative interactions open dialogue: Historian-in-Chief, FRUS Bookshelf, NARA Archivist, Chancery Door, and Witness Table.
+- Checkpoint screenshot: `docs/screenshots/all-new-art-phase2-historian-office.png`, showing the player in the Historian-in-Chief room.
+- The `.tmj` collision layers are intentionally broad first-pass rectangles; later Tiled refinement can add tighter chair/furniture polygons without changing the scene contract.

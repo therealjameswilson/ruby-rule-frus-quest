@@ -1,0 +1,74 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 1254,
+  "height": 1254,
+  "tilewidth": 1,
+  "tileheight": 1,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "collisions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 1, "name": "parchment_north", "type": "solid", "x": 0, "y": 0, "width": 1254, "height": 80 },
+        { "id": 2, "name": "parchment_south", "type": "solid", "x": 0, "y": 1174, "width": 1254, "height": 80 },
+        { "id": 3, "name": "parchment_west", "type": "solid", "x": 0, "y": 0, "width": 76, "height": 1254 },
+        { "id": 4, "name": "parchment_east", "type": "solid", "x": 1178, "y": 0, "width": 76, "height": 1254 },
+        { "id": 5, "name": "obelisk_core", "type": "solid", "x": 548, "y": 450, "width": 160, "height": 210 },
+        { "id": 6, "name": "north_servers", "type": "solid", "x": 190, "y": 85, "width": 875, "height": 170 },
+        { "id": 7, "name": "west_machines", "type": "solid", "x": 80, "y": 300, "width": 180, "height": 610 },
+        { "id": 8, "name": "east_machines", "type": "solid", "x": 998, "y": 300, "width": 180, "height": 610 },
+        { "id": 9, "name": "south_console", "type": "solid", "x": 410, "y": 1010, "width": 430, "height": 120 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "doors",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 10, "name": "south_gate", "type": "door", "x": 560, "y": 1040, "width": 135, "height": 120, "properties": [
+          { "name": "label", "type": "string", "value": "South Vault Exit" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" }
+        ] },
+        { "id": 11, "name": "west_gate", "type": "door", "x": 100, "y": 540, "width": 95, "height": 130, "properties": [
+          { "name": "label", "type": "string", "value": "West Blast Door" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" },
+          { "name": "requiredFlag", "type": "string", "value": "blackVaultWestOpen" },
+          { "name": "lockedMessage", "type": "string", "value": "The west blast door is still sealed." }
+        ] },
+        { "id": 12, "name": "north_gate", "type": "door", "x": 565, "y": 150, "width": 120, "height": 100, "properties": [
+          { "name": "label", "type": "string", "value": "North Blast Door" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" },
+          { "name": "requiredFlag", "type": "string", "value": "blackVaultNorthOpen" },
+          { "name": "lockedMessage", "type": "string", "value": "The north blast door waits for the final review route." }
+        ] }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "spawns",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 13, "name": "entry", "type": "spawn", "point": true, "x": 628, "y": 1010 },
+        { "id": 14, "name": "south_gate", "type": "spawn", "point": true, "x": 628, "y": 1010 },
+        { "id": 15, "name": "west_gate", "type": "spawn", "point": true, "x": 250, "y": 615 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "interactions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 16, "name": "vault_core", "type": "interaction", "x": 535, "y": 430, "width": 190, "height": 250, "properties": [
+          { "name": "label", "type": "string", "value": "Obelisk Core" },
+          { "name": "action", "type": "string", "value": "vault-core" }
+        ] }
+      ]
+    }
+  ]
+}
