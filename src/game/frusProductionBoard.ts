@@ -1,6 +1,7 @@
 import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
+import { CHAPTER_RELEASE_STATUS_SOURCE_URL } from "./chapterReleaseStatus";
 import { DIGITAL_RELEASE_SOURCE_URL } from "./digitalRelease";
 import { EDITORIAL_TREATMENT_SOURCE_URL } from "./editorialTreatment";
 import { EO13526_REVIEW_SOURCE_URL } from "./eo13526Review";
@@ -28,6 +29,7 @@ export type FrusProductionBoardStepId =
   | "agency_referrals"
   | "advisory_monitoring"
   | "kellogg_editing"
+  | "chapter_release_status"
   | "digital_release"
   | "publication_30_year";
 
@@ -52,6 +54,7 @@ export interface FrusProductionBoardContext {
   selectionDocketComplete: boolean;
   seriesConceptComplete: boolean;
   volumeConceptComplete: boolean;
+  chapterReleaseComplete: boolean;
   digitalReleaseComplete: boolean;
 }
 
@@ -197,6 +200,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Resolve textual issues with human editorial treatment before the proof stamp can satisfy Kellogg standards."
   },
   {
+    id: "chapter_release_status",
+    label: "Chapter release ledger",
+    shortLabel: "CHP",
+    sourceBasis: "The Status page tracks Planning, Research, Clearance, and Publication stages, plus volumes published incrementally as chapters clear.",
+    sourceUrl: CHAPTER_RELEASE_STATUS_SOURCE_URL,
+    gameplayTask: "File visible chapter status: cleared chapters, outstanding chapters, and the public Publication stage."
+  },
+  {
     id: "digital_release",
     label: "Digital edition release",
     shortLabel: "WEB",
@@ -307,8 +318,10 @@ export function isFrusProductionBoardStepComplete(
       return context.hacReviewComplete || stamps.has("sop");
     case "kellogg_editing":
       return context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
+    case "chapter_release_status":
+      return context.finalGatePublished || context.chapterReleaseComplete;
     case "digital_release":
-      return context.finalGatePublished || context.digitalReleaseComplete;
+      return context.finalGatePublished || (context.chapterReleaseComplete && context.digitalReleaseComplete);
     case "publication_30_year":
       return context.finalGatePublished
         || (context.volumeWorkflowState === "published")
@@ -316,6 +329,7 @@ export function isFrusProductionBoardStepComplete(
           buckramGateOpen(context.processStamps, context.documentCandidates)
           && context.heldProcessItems.has("buckram_key")
           && context.volumeFragments.length >= 5
+          && context.chapterReleaseComplete
           && context.digitalReleaseComplete
           && noUndisclosedDeletions(context)
         );

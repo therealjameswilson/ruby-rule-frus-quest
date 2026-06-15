@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Chapter release status gameplay gate (2026-06-15):
+  - Added `src/game/chapterReleaseStatus.ts`, a Phaser-free rule module based on the history.state.gov Status of the Series page: FRUS volumes move through Planning, Research, Clearance, and Publication, and a growing number of volumes are published incrementally as chapters are cleared while outstanding chapters remain visible.
+  - Inserted `chapter_release_status` into the FRUS Production Board after editorial treatment and before the digital edition release, so a GPO-ready volume still needs a public chapter ledger before web/eBook publication.
+  - Wired `EndingScene` so GPO handoff now flows into Chapter status ledger -> Digital release manifest -> final publication. Wrong chapter-status shortcuts apply standards damage (`omitted_material_fact`, `concealed_policy_defect`, or `altered_text`); correct answers file `sceneProgress.chapterReleaseComplete`, add document points, and keep outstanding chapters visible rather than hidden.
+  - Verified focused tests: `npm test -- src/game/chapterReleaseStatus.test.ts src/game/digitalRelease.test.ts src/game/frusProductionBoard.test.ts` (3 files / 20 tests pass).
+  - Verified full `npm test`: 43 files / 215 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=EndingScene&role=compiler&name=Ruby` drove front matter -> Kellogg certification -> GPO segments -> GPO handoff -> chapter release status -> digital release, then reported `sceneProgress.chapterReleaseComplete: 1`, `chapterReleaseStep: 3`, `digitalReleaseComplete: 1`, and visible entity `"chapter release status ledger"`. No console-error artifact was produced; the generated headless WebGL screenshot remains black as previously documented.
 - Digital edition release gameplay gate (2026-06-15):
   - Added `src/game/digitalRelease.ts`, a Phaser-free rule module based on history.state.gov FRUS eBook and developer guidance: eBook citations use persistent document numbers rather than page numbers, FRUS digital masters are encoded as TEI, and the eBook catalog uses OPDS.
   - Inserted `digital_release` into the FRUS Production Board after editorial treatment and before the 30-year publication gate, so a bound/GPO-ready volume still needs a public digital manifest before the final published cover.
