@@ -1690,6 +1690,7 @@ export function getProductionBoardReadout() {
     finalGatePublished: gameState.finalGateCertification?.status === "published",
     hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
+    recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete)
   });
 }
@@ -1719,6 +1720,8 @@ export function seedProgressForScene(sceneName: string) {
   if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     gameState.sceneProgress.seriesConceptComplete = 1;
     gameState.sceneProgress.seriesConceptStep = 3;
+    gameState.sceneProgress.recordCollectionComplete = 1;
+    gameState.sceneProgress.recordCollectionStep = 3;
     awardProcessStamp("rule");
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {

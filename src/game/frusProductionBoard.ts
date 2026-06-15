@@ -2,11 +2,13 @@ import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
+import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 
 export type FrusProductionBoardStepId =
   | "series_concept"
   | "records_access"
+  | "record_collection"
   | "research_selection"
   | "source_notes"
   | "manuscript_review"
@@ -29,6 +31,7 @@ export interface FrusProductionBoardContext {
   finalGatePublished: boolean;
   hacReviewComplete: boolean;
   manuscriptReviewComplete: boolean;
+  recordCollectionComplete: boolean;
   seriesConceptComplete: boolean;
 }
 
@@ -76,6 +79,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "OH historians get full and complete access to pertinent records at 20 years.",
     sourceUrl: ABOUT_FRUS_URL,
     gameplayTask: "Accept the Golden Rule charter and begin the Office Hub route."
+  },
+  {
+    id: "record_collection",
+    label: "Collection",
+    shortLabel: "COL",
+    sourceBasis: "Compilers identify important records, search for them, and copy or note records for publication or context.",
+    sourceUrl: RECORD_COLLECTION_SOURCE_URL,
+    gameplayTask: "File the archive collection pass before choosing the final candidate set."
   },
   {
     id: "research_selection",
@@ -193,6 +204,8 @@ export function isFrusProductionBoardStepComplete(
       return context.seriesConceptComplete;
     case "records_access":
       return stamps.has("rule") || volumeAtLeast(context, "research");
+    case "record_collection":
+      return context.recordCollectionComplete;
     case "research_selection":
       return (context.documentPoints >= 12 && hasSelectedDocument(context) && researchCoverageComplete(context.documentCandidates))
         || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified"])

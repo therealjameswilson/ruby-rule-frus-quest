@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Record collection gameplay gate (2026-06-15):
+  - Added `src/game/recordCollection.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: collection is distinct from selection, requiring compilers to identify important records, search for them, and copy or note likely publication records plus contextual background records.
+  - Inserted `record_collection` into the FRUS Production Board after 20-year records access and before research/selection, so selected documents no longer stand in for the collection pass.
+  - Wired the Office Hub `Scope / Selection Desk` into a four-stage desk loop: Series Plan -> Scope Charter -> Record Collection -> Candidate Selection. Wrong collection shortcuts now apply standards damage (`omitted_material_fact`, `altered_text`, or `missed_30_year_deadline`) depending on the shortcut.
+  - Completing collection marks source-note, cross-reference, annotation, and proof-page records as candidate/context records, adds document points, and then unlocks candidate selection.
+  - Updated deep-scene QA seeding so `?scene=GuideScene` and later routes remain coherent with the expanded board.
+  - Verified focused tests: `npm test -- src/game/recordCollection.test.ts src/game/frusProductionBoard.test.ts src/game/seriesConcept.test.ts` (3 files / 20 tests pass).
+  - Verified full `npm test`: 30 files / 161 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=OfficeScene&role=compiler&name=Ruby` reports `productionBoard.total: 11` with order `series_concept -> records_access -> record_collection -> research_selection -> source_notes`, and `record_collection.sourceUrl` on the FRUS stages page. The generated headless WebGL screenshot remains black as previously documented.
 - Grand conceptualization / series architecture gate (2026-06-15):
   - Added `src/game/seriesConcept.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: grand conceptualization comes before a single volume, creates an organizational scheme for the series as a whole, fits individual volumes to that holistic vision, and reserves special editions for topics of sufficient importance.
   - Inserted `series_concept` as the first FRUS Production Board step, before 20-year records access, so a Golden Rule stamp no longer implies the whole-series plan was filed.

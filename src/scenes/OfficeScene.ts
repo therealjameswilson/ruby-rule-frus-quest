@@ -21,6 +21,12 @@ import {
 } from "../game/documentSelection";
 import { getResearchCoverageReadout } from "../game/researchCoverage";
 import {
+  evaluateRecordCollectionAnswer,
+  getRecordCollectionPrompt,
+  recordCollectionComplete,
+  RECORD_COLLECTION_PROMPTS
+} from "../game/recordCollection";
+import {
   evaluateResearchCharterAnswer,
   getResearchCharterPrompt,
   researchCharterComplete,
@@ -406,12 +412,17 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     if (gameState.processStamps.includes("rule") || gameState.sceneProgress.researchCharterComplete) {
+      if (!gameState.sceneProgress.recordCollectionComplete) {
+        this.showRecordCollectionChoice();
+        return;
+      }
       if (!gameState.sceneProgress.documentSelectionComplete) {
         this.showDocumentSelectionChoice();
         return;
       }
       this.dialog.show("SCOPE CHARTER", [
         "Golden Rule charter is already filed.",
+        "Collection notes are already logged.",
         "Candidate selection is already logged.",
         "Next: verify source notes with the Archive Guide."
       ]);
@@ -452,12 +463,12 @@ export class OfficeScene extends Phaser.Scene {
       addDocumentPoints(6, "scope charter and 20-year access plan filed");
       retroAudio.stamp();
       setLatestMessage("Golden Rule charter filed: scope, 20-year access, and Kellogg standards recorded.");
-      setObjective("Golden Rule filed. Return to the desk to select document candidates.");
+      setObjective("Golden Rule filed. Return to the desk to collect source records.");
       this.reliability.update();
       this.dialog.show("SCOPE CHARTER", [
         result.message,
         "Golden Rule filed: plan scope, use 20-year access, preserve material facts.",
-        "Next: select a balanced candidate set from the document queue."
+        "Next: collect and note the records before candidate selection."
       ]);
     });
   }
@@ -516,6 +527,10 @@ export class OfficeScene extends Phaser.Scene {
       this.dialog.show("CANDIDATE SELECTION", "File the Scope Charter before selecting documents.");
       return;
     }
+    if (!gameState.sceneProgress.recordCollectionComplete) {
+      this.dialog.show("CANDIDATE SELECTION", "Complete the collection pass before selecting documents.");
+      return;
+    }
     setObjective("Candidate Selection: choose the balanced FRUS document set.");
     this.choice.show(`${DOCUMENT_SELECTION_PROMPT.question}\n\n${DOCUMENT_SELECTION_PROMPT.sourceBasis}`, [...DOCUMENT_SELECTION_PROMPT.options], (option) => {
       const result = evaluateDocumentSelectionAnswer(option.value, gameState.documentCandidates);
@@ -545,6 +560,62 @@ export class OfficeScene extends Phaser.Scene {
         `Selected ${result.selectedDocumentIds.length} records for source-note and review work.`,
         coverage.summary,
         "Now move to the Archive Guide for provenance verification."
+      ]);
+    });
+  }
+
+  private showRecordCollectionChoice() {
+    if (!gameState.processStamps.includes("rule") && !gameState.sceneProgress.researchCharterComplete) {
+      this.dialog.show("COLLECTION", "File the Scope Charter before collecting records.");
+      return;
+    }
+    if (gameState.sceneProgress.recordCollectionComplete) {
+      this.showDocumentSelectionChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.recordCollectionStep ?? 0;
+    const prompt = getRecordCollectionPrompt(step);
+    setObjective(`Record Collection: answer ${step + 1}/${RECORD_COLLECTION_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateRecordCollectionAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Record collection shortcut: ${option.value}`);
+        this.toast.show("REVISE COLLECTION", this.player.position, "warn");
+        this.dialog.show("COLLECTION", [
+          result.message,
+          "Collect the record before narrowing it; context records matter even when they are not printed."
+        ], () => this.showRecordCollectionChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.recordCollectionStep = nextStep;
+      if (!recordCollectionComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Collection check ${nextStep}/${RECORD_COLLECTION_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("COLLECTION", [
+          result.message,
+          "Continue the collection pass before choosing the publication subset."
+        ], () => this.showRecordCollectionChoice());
+        return;
+      }
+
+      gameState.sceneProgress.recordCollectionComplete = 1;
+      gameState.sceneProgress.recordCollectionStep = RECORD_COLLECTION_PROMPTS.length;
+      for (const documentId of ["source_note_047", "cross_reference_001", "sbu_annotation_001", "proof_page_412"]) {
+        setDocumentWorkflowState(documentId, "candidate", "collection pass copied or noted record for publication/context");
+      }
+      addDocumentPoints(6, "collection pass copied records and context notes");
+      retroAudio.confirm();
+      setLatestMessage("Collection pass filed: likely documents and context records are preserved.");
+      setObjective("Collection filed. Return to the desk to select the candidate set.");
+      this.reliability.update();
+      this.dialog.show("COLLECTION", [
+        result.message,
+        "Collection filed: searched records, copies, and context notes are ready.",
+        "Next: select the subset for publication."
       ]);
     });
   }

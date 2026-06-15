@@ -21,6 +21,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     finalGatePublished: false,
     hacReviewComplete: false,
     manuscriptReviewComplete: false,
+    recordCollectionComplete: false,
     seriesConceptComplete: false,
     ...overrides
   };
@@ -38,6 +39,7 @@ describe("FRUS production board", () => {
     expect(FRUS_PRODUCTION_BOARD_STEPS.map((step) => step.id)).toEqual([
       "series_concept",
       "records_access",
+      "record_collection",
       "research_selection",
       "source_notes",
       "manuscript_review",
@@ -69,7 +71,21 @@ describe("FRUS production board", () => {
 
     expect(unplanned.nextStep?.id).toBe("series_concept");
     expect(unplanned.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
-    expect(planned.nextStep?.id).toBe("research_selection");
+    expect(planned.nextStep?.id).toBe("record_collection");
+  });
+
+  it("does not let selected documents skip the collection pass", () => {
+    const selectedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    selectedDocuments[1] = { ...selectedDocuments[1], selected: true, workflowState: "selected" };
+    const readout = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      seriesConceptComplete: true,
+      documentPoints: 20,
+      documentCandidates: selectedDocuments
+    }));
+
+    expect(readout.nextStep?.id).toBe("record_collection");
+    expect(readout.steps.find((step) => step.id === "record_collection")?.complete).toBe(false);
   });
 
   it("advances through source-backed production steps as FRUS tools and stamps are earned", () => {
@@ -93,11 +109,12 @@ describe("FRUS production board", () => {
       ]),
       documentPoints: 20,
       reliability: 90,
+      recordCollectionComplete: true,
       seriesConceptComplete: true,
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 8).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 9).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("publication_30_year");
   });
 
@@ -113,6 +130,7 @@ describe("FRUS production board", () => {
       documentCandidates: documents,
       heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
       documentPoints: 20,
+      recordCollectionComplete: true,
       seriesConceptComplete: true
     }));
     const reviewed = getFrusProductionBoardReadout(context({
@@ -120,6 +138,7 @@ describe("FRUS production board", () => {
       documentCandidates: documents,
       heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
       documentPoints: 20,
+      recordCollectionComplete: true,
       seriesConceptComplete: true,
       manuscriptReviewComplete: true
     }));
@@ -134,6 +153,7 @@ describe("FRUS production board", () => {
     const readout = getFrusProductionBoardReadout(context({
       processStamps: ["rule", "archive", "network", "referral"],
       hacReviewComplete: true,
+      recordCollectionComplete: true,
       seriesConceptComplete: true
     }));
 
@@ -144,6 +164,7 @@ describe("FRUS production board", () => {
     const charterOnly = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 6,
+      recordCollectionComplete: true,
       seriesConceptComplete: true
     }));
     const selectedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
@@ -151,6 +172,7 @@ describe("FRUS production board", () => {
     const partialSelection = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 20,
+      recordCollectionComplete: true,
       seriesConceptComplete: true,
       documentCandidates: selectedDocuments
     }));
@@ -162,6 +184,7 @@ describe("FRUS production board", () => {
     const selectedReadout = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 20,
+      recordCollectionComplete: true,
       seriesConceptComplete: true,
       documentCandidates: balancedDocuments
     }));
