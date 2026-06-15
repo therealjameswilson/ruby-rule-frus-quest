@@ -10,6 +10,7 @@ import {
   addVolumeFragment,
   getProcessItemDefinition,
   gameState,
+  setLatestMessage,
   setNearestInteractable,
   setObjective,
   setSceneState,
@@ -21,7 +22,14 @@ import { getInput, tickInput } from "../input/InputState";
 import { Player } from "../entities/Player";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
-import { InteractionAssist, nearestInteractable } from "../systems/interaction";
+import {
+  InteractionAssist,
+  decideInteractionFeedback,
+  nearestInteractable,
+  nearestInteractableHint
+} from "../systems/interaction";
+import { InteractionPrompt } from "../systems/interactionPrompt";
+import { FeedbackToast } from "../systems/feedbackToast";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
 import { ReliabilityHud } from "../systems/reliability";
@@ -40,6 +48,8 @@ export class GuideScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
+  private prompt!: InteractionPrompt;
+  private toast!: FeedbackToast;
   private stampIcon!: Phaser.GameObjects.Image;
   private fragmentIcon!: Phaser.GameObjects.Image;
   private gateGlow!: Phaser.GameObjects.Rectangle;
@@ -100,6 +110,8 @@ export class GuideScene extends Phaser.Scene {
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(810);
+    this.prompt = new InteractionPrompt(this);
+    this.toast = new FeedbackToast(this);
 
     this.interactables = [
       { id: "colleague", label: "Archive Colleague", x: 128, y: 104, radius: 28, kind: "npc", onInteract: () => this.talkColleague() },
@@ -130,10 +142,14 @@ export class GuideScene extends Phaser.Scene {
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
       return;
     }
     if (input.pauseJustPressed) {
@@ -144,11 +160,35 @@ export class GuideScene extends Phaser.Scene {
     this.player.update(delta, true);
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
+    // Show the prompt/ring from a little further out than the strict interact
+    // radius so it is impossible to miss on approach; acting still requires the
+    // strict radius (mirrors OfficeScene, live audit 2026-06-15).
+    const promptTarget = nearest ?? nearestInteractableHint(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
     this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
+    this.prompt.update(delta, promptTarget);
+    this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
-    if (bufferedInteraction) bufferedInteraction.onInteract();
+    if (bufferedInteraction) {
+      bufferedInteraction.onInteract();
+    } else if (input.aJustPressed) {
+      const feedback = decideInteractionFeedback(nearest, promptTarget);
+      if (feedback.kind === "step-closer") this.nudgeTowardTarget(feedback.target);
+      else if (feedback.kind === "nothing") this.flashNoTargetHint();
+    }
     this.objectiveText.setText(gameState.objective);
+  }
+
+  private flashNoTargetHint() {
+    retroAudio.blip();
+    this.toast.show("NOTHING TO INTERACT WITH", this.player.position, "warn");
+    setLatestMessage("Nothing to interact with here.");
+  }
+
+  private nudgeTowardTarget(target: Interactable) {
+    retroAudio.blip();
+    this.toast.show(`STEP CLOSER TO ${target.label.toUpperCase()}`, this.player.position, "info");
+    setLatestMessage(`Step closer to ${target.label}.`);
   }
 
   private talkColleague() {

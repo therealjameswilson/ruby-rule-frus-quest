@@ -17,7 +17,12 @@ import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
 import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
-import { InteractionAssist, nearestInteractable, nearestInteractableHint } from "../systems/interaction";
+import {
+  InteractionAssist,
+  decideInteractionFeedback,
+  nearestInteractable,
+  nearestInteractableHint
+} from "../systems/interaction";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { InventoryOverlay } from "../systems/inventory";
@@ -212,9 +217,13 @@ export class OfficeScene extends Phaser.Scene {
     this.prompt.update(delta, promptTarget);
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
-    if (bufferedInteraction) bufferedInteraction.onInteract();
-    else if (input.aJustPressed && !promptTarget) this.flashNoTargetHint();
-    else if (input.aJustPressed && promptTarget && !nearest) this.nudgeTowardTarget(promptTarget);
+    if (bufferedInteraction) {
+      bufferedInteraction.onInteract();
+    } else if (input.aJustPressed) {
+      const feedback = decideInteractionFeedback(nearest, promptTarget);
+      if (feedback.kind === "step-closer") this.nudgeTowardTarget(feedback.target);
+      else if (feedback.kind === "nothing") this.flashNoTargetHint();
+    }
     setObjective("Office Hub: talk to the Junior Compiler or enter the Archive Guide.");
     this.reliability.update();
   }

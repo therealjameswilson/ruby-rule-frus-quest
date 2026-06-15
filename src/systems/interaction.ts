@@ -81,6 +81,29 @@ export class InteractionAssist {
   }
 }
 
+// The outcome of pressing interact, decided purely from proximity so it can be
+// unit-tested without Phaser. `act` => something is in strict range and should
+// fire; `step-closer` => a hint target is nearby but just outside the strict
+// radius, so nudge the player in; `nothing` => no usable target or hint at all.
+export type InteractionFeedback =
+  | { kind: "act"; target: Interactable }
+  | { kind: "step-closer"; target: Interactable }
+  | { kind: "nothing" };
+
+// Decide what feedback an interact press should produce. `actable` is the target
+// inside the strict interact radius (may be null); `hint` is the closest target
+// inside the wider prompt radius (may be null). The live audit (2026-06-15) found
+// dense rooms always have a hint nearby, so `step-closer` is the common case the
+// player can verify by standing near — but not on — a target.
+export function decideInteractionFeedback(
+  actable: Interactable | null,
+  hint: Interactable | null
+): InteractionFeedback {
+  if (actable) return { kind: "act", target: actable };
+  if (hint) return { kind: "step-closer", target: hint };
+  return { kind: "nothing" };
+}
+
 export function nearestWorkflowInteraction(
   player: Position,
   interactables: Interactable[],

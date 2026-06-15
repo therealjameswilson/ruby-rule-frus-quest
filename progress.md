@@ -1012,3 +1012,16 @@ Live QA after PR #26 still failed on four interaction/feel issues. Root causes a
   - `src/input/InputState.test.ts`: Z->A/confirm and X->B mapping; a too-short tap becomes a brief visible hold then releases; WASD taps equal arrow taps.
 - Preserved all prior fixes (title art, sprite fragments, shadows, ESC overlay close) — no art or overlay code touched.
 - Verified `npm test`: 12 files, 74 tests passed. Verified `npm run build`.
+
+## Failed-interaction feedback not verifiable in live play (post PR #28)
+
+Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERACT WITH`; prompts kept attaching to nearby targets.
+
+- **Root cause:** PR #28 wired the `FeedbackToast` (STEP CLOSER / NOTHING TO INTERACT WITH) and the `radius + margin` prompt hint *only into `OfficeScene`*. The first scene a player actually explores after the title — `GuideScene` (Archive Cavern) — still used the old `nearestInteractable` + low-contrast bottom `hintText` path with no toast and no hint margin. Its four interactables (radii 28–30px) are packed in a small room, so `nearestInteractable` almost always matched and pressing A away from a target produced no observable feedback. QA started in this room, so the cue under test was unreachable.
+- **Fix:**
+  - Extracted a pure, Phaser-free `decideInteractionFeedback(actable, hint)` into `src/systems/interaction.ts` returning `act` / `step-closer` / `nothing`. Single-sourced the decision so both scenes agree and it is unit-testable.
+  - Wired `FeedbackToast` + `nearestInteractableHint` into `GuideScene`: the floating prompt now shows from `radius + 14px`, acting still requires the strict radius, and pressing A produces a prominent toast — `STEP CLOSER TO <TARGET>` when a hint is nearby but out of strict range, `NOTHING TO INTERACT WITH` when no target/hint exists. Toast keeps ticking/fading on the dialog and overlay early-return branches.
+  - Refactored `OfficeScene` to consume the same `decideInteractionFeedback` (behavior unchanged, duplicate inline logic removed).
+- **Toast spec reused from PR #28:** 1600ms hold + 400ms fade (>1.5s), depth 1200 (above HUD/world), floats above the player, clamped clear of both HUD bands.
+- **Out of scope (caveat):** `ArchiveScene`, `GameplayMapScene`, and `DanneMapScene` still use the legacy hint path. `ArchiveScene`'s interact loop is combat/workflow-aware (enemy actions, source-note verification), so reusing the simple explore decision there would risk regressions; left untouched.
+- Tests: added `src/systems/interaction.test.ts` covering the decision logic and the live-verifiable band (hint shows but cannot act just outside strict radius; acts inside; nothing beyond hint radius). `npm test`: 13 files, 83 tests passed. `npm run build` passed.
