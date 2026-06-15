@@ -126,6 +126,10 @@ export class Player {
         isSnesScale ? 6 : 4,
         color(PALETTE.black)
       )
+      // A full-black oval read as a hard pasted-on disc (live audit, 2026-06-15).
+      // Drop the alpha so the shadow grounds the sprite without punching a hole in
+      // the floor art.
+      .setAlpha(0.34)
       .setDepth(snapPixel(this.logicalY - this.shadowDepthOffset));
     const textureKey = this.spriteMode === "artPack32x48"
       ? this.characterKey ?? gameState.playerProfile.snesSpriteKey
