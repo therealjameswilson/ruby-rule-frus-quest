@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Archive source-note provenance challenge (2026-06-15):
+  - Added `src/game/sourceNoteProvenance.ts`, a tested three-step Source Note 47 verification sequence that makes the player match repository, collection, and folder evidence before human citation stamping.
+  - Wired `ArchiveScene` so the existing CARRY -> ROUTE -> VERIFY -> STAMP loop now pauses on a ChoicePrompt during VERIFY; wrong provenance shortcuts debit reliability and show `PROVENANCE CANNOT BE GUESSED`, while the final correct answer marks `source_note_047` as `citation_verified`.
+  - The source-note loop still preserves StateChat as terminal output only: StateChat flags the missing repository, but human verification at the research table earns the citation stamp.
+  - Verified `npm test`: 18 files / 105 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
 - Office Hub FRUS Production Board (2026-06-15):
   - Added `src/game/frusProductionBoard.ts`, a typed history.state.gov-backed checklist that turns real FRUS production into the next Zelda-like progression layer: 20-year records access, research/selection, source-note annotation, declassification review, agency referrals, HAC/process monitoring, Kellogg editing standards, and 30-year publication.
   - Exposed the board through `render_game_to_text().productionBoard` so QA and assistive checks can see the same production ladder that appears in-game.

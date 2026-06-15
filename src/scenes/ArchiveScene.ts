@@ -41,6 +41,13 @@ import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
+import { ChoicePrompt } from "../systems/verification";
+import {
+  evaluateSourceNoteProvenanceAnswer,
+  getSourceNoteProvenancePrompt,
+  sourceNoteProvenanceComplete,
+  SOURCE_NOTE_PROVENANCE_PROMPTS
+} from "../game/sourceNoteProvenance";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -302,6 +309,7 @@ const ARCHIVE_ENEMIES: ArchiveEnemyDefinition[] = [
 export class ArchiveScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
+  private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -370,6 +378,7 @@ export class ArchiveScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(902);
 
     this.dialog = new DialogBox(this);
+    this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.objectiveText = addObjectiveText(this);
@@ -410,6 +419,13 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
+      return;
+    }
+    if (this.choice.active) {
+      this.choice.updateInput();
+      this.player.update(delta, false);
+      this.updateSourceNoteVerification();
+      this.reliability.update();
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
@@ -1324,18 +1340,70 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (this.sourceNoteStatus === "routed") {
-      this.sourceNoteStatus = "verified";
-      setDocumentWorkflowState("source_note_047", "citation_verified");
-      this.addVerificationGlow();
-      setLatestMessage("VERIFIED BY HUMAN REVIEW");
-      retroAudio.confirm();
-      this.updateSourceNoteVerification();
+      this.showSourceNoteProvenanceChoice();
       return;
     }
     if (this.sourceNoteStatus === "verified") {
       this.sourceNoteStatus = "stamped";
       this.applySourceNoteStamp();
     }
+  }
+
+  private showSourceNoteProvenanceChoice() {
+    if (gameState.sceneProgress.sourceNoteProvenanceComplete) {
+      this.completeSourceNoteVerification("Source Note 47 provenance was already checked.");
+      return;
+    }
+
+    const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
+    const prompt = getSourceNoteProvenancePrompt(step);
+    setObjective(`VERIFY: Source Note 47 provenance ${step + 1}/${SOURCE_NOTE_PROVENANCE_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateSourceNoteProvenanceAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        adjustReliability(-2, "source-note provenance correction");
+        setLatestMessage("PROVENANCE CANNOT BE GUESSED");
+        this.reliability.update();
+        this.dialog.show("SOURCE NOTE 47", [
+          result.message,
+          "Return to the repository, collection, and folder trail before stamping."
+        ], () => this.showSourceNoteProvenanceChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.sourceNoteProvenanceStep = nextStep;
+      if (!sourceNoteProvenanceComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Source Note 47 provenance check ${nextStep}/${SOURCE_NOTE_PROVENANCE_PROMPTS.length}.`);
+        this.dialog.show("SOURCE NOTE 47", [
+          result.message,
+          "Continue the human provenance check before the citation stamp."
+        ], () => this.showSourceNoteProvenanceChoice());
+        return;
+      }
+
+      gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
+      this.completeSourceNoteVerification(result.message);
+    });
+  }
+
+  private completeSourceNoteVerification(message: string) {
+    this.sourceNoteStatus = "verified";
+    setDocumentWorkflowState("source_note_047", "citation_verified");
+    addDocumentPoints(6, "Source Note 47 provenance matched to repository, collection, and folder");
+    this.addVerificationGlow();
+    setLatestMessage("VERIFIED BY HUMAN REVIEW - SOURCE NOTE PROVENANCE");
+    setObjective("STAMP: apply citation stamp after human provenance review.");
+    retroAudio.confirm();
+    this.reliability.update();
+    this.updateSourceNoteVerification();
+    this.dialog.show("SOURCE NOTE 47", [
+      message,
+      "Repository, collection, and folder now match the evidence trail.",
+      "Apply the citation stamp to lock the source note."
+    ]);
   }
 
   private drawRoutedSourceNote() {
