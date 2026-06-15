@@ -1,6 +1,7 @@
 import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
+import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPermission";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
@@ -17,6 +18,7 @@ export type FrusProductionBoardStepId =
   | "annotation"
   | "manuscript_review"
   | "declassification_review"
+  | "foreign_permissions"
   | "agency_referrals"
   | "advisory_monitoring"
   | "kellogg_editing"
@@ -35,6 +37,7 @@ export interface FrusProductionBoardContext {
   finalGatePublished: boolean;
   hacReviewComplete: boolean;
   annotationDraftingComplete: boolean;
+  foreignGovernmentPermissionComplete: boolean;
   manuscriptReviewComplete: boolean;
   recordCollectionComplete: boolean;
   seriesConceptComplete: boolean;
@@ -141,6 +144,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "FRUS draws on records across State, Defense, CIA, NSC, and other agencies.",
     sourceUrl: ABOUT_FRUS_URL,
     gameplayTask: "Route OpenNet/ClassNet issues and earn the Clearance Token."
+  },
+  {
+    id: "foreign_permissions",
+    label: "Foreign-government permission",
+    shortLabel: "FGP",
+    sourceBasis: "Foreign-government information selected for publication may require permission before the volume proceeds.",
+    sourceUrl: FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL,
+    gameplayTask: "Flag foreign-government information and preserve a visible permission or withholding note."
   },
   {
     id: "agency_referrals",
@@ -250,6 +261,11 @@ export function isFrusProductionBoardStepComplete(
       return stamps.has("network")
         || context.heldProcessItems.has("clearance_token")
         || hasAnyEquityResponse(context, (status) => status !== "not_submitted");
+    case "foreign_permissions":
+      return context.foreignGovernmentPermissionComplete
+        || stamps.has("referral")
+        || context.heldProcessItems.has("concurrence_slip")
+        || volumeAtLeast(context, "editing");
     case "agency_referrals":
       return stamps.has("referral")
         || context.heldProcessItems.has("concurrence_slip")

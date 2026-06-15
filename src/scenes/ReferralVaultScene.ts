@@ -22,6 +22,12 @@ import {
   setVisibleThreats
 } from "../game/state";
 import type { ChoiceOption } from "../game/types";
+import {
+  evaluateForeignGovernmentPermissionAnswer,
+  foreignGovernmentPermissionComplete,
+  FOREIGN_GOVERNMENT_PERMISSION_PROMPTS,
+  getForeignGovernmentPermissionPrompt
+} from "../game/foreignGovernmentPermission";
 import { getInput, tickInput, type InputState } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
@@ -547,7 +553,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
         adjustReliability(7, "manifest confirmed by human review");
         this.reliability.update();
-        this.showExcisionChoice();
+        this.showForeignGovernmentPermissionChoice();
         return;
       }
       const violation = applyStandardsViolation("concealed_policy_defect", "A final referral decision was ceded or unchecked.");
@@ -556,6 +562,54 @@ export class ReferralVaultScene extends Phaser.Scene {
         violation.label,
         "No silent handoff. Review the equities again."
       ], () => this.startMatching());
+    });
+  }
+
+  private showForeignGovernmentPermissionChoice() {
+    if (gameState.sceneProgress.foreignGovernmentPermissionComplete) {
+      this.showExcisionChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.foreignGovernmentPermissionStep ?? 0;
+    const prompt = getForeignGovernmentPermissionPrompt(step);
+    setObjective(`Foreign-government permission: review note ${step + 1}/${FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length}.`);
+    this.vaultText.setText(`FOREIGN INFO\nPERMISSION ${step + 1}/3`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateForeignGovernmentPermissionAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Foreign-government permission shortcut: ${option.value}`);
+        this.reliability.update();
+        this.dialog.show("PERMISSION NOTE", [
+          result.message,
+          "Foreign-government information needs a visible review trail."
+        ], () => this.showForeignGovernmentPermissionChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.foreignGovernmentPermissionStep = nextStep;
+      if (!foreignGovernmentPermissionComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Foreign-government permission check ${nextStep}/${FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length}.`);
+        this.dialog.show("PERMISSION NOTE", [
+          result.message,
+          "Continue the permission note before concurrence."
+        ], () => this.showForeignGovernmentPermissionChoice());
+        return;
+      }
+
+      gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
+      gameState.sceneProgress.foreignGovernmentPermissionStep = FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length;
+      addDocumentPoints(6, "foreign-government permission note documented");
+      setLatestMessage("Foreign-government permission note documented.");
+      adjustReliability(4, "foreign-government permission trail preserved");
+      this.reliability.update();
+      this.dialog.show("PERMISSION NOTE", [
+        result.message,
+        "The packet now shows permission or withholding treatment before concurrence."
+      ], () => this.showExcisionChoice());
     });
   }
 

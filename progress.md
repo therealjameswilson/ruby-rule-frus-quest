@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Foreign-government permission gameplay gate (2026-06-15):
+  - Added `src/game/foreignGovernmentPermission.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: selected foreign-government information may require permission, and the publication packet must preserve a visible permission or withholding outcome.
+  - Inserted `foreign_permissions` into the FRUS Production Board after `declassification_review` and before `agency_referrals`, making the clearance path more faithful to the actual FRUS review sequence.
+  - Wired `ReferralVaultScene` so the StateChat-generated manifest no longer jumps straight to visible excision. After human manifest confirmation, the player now clears a three-prompt foreign-government permission note before concurrence can open.
+  - Wrong shortcuts apply standards damage (`omitted_material_fact`, `concealed_policy_defect`, or `undisclosed_deletion`); correct answers file the permission note, add document points, and continue to visible withholding language.
+  - Updated deep-scene QA seeding so `?scene=SilentReadScene` and `?scene=EndingScene` remain coherent with the expanded board.
+  - Verified focused tests: `npm test -- src/game/foreignGovernmentPermission.test.ts src/game/frusProductionBoard.test.ts` (2 files / 17 tests pass).
+  - Verified full `npm test`: 33 files / 178 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=ReferralVaultScene&role=declass_reviewer&name=Alex` reports `productionBoard.total: 14`, `declassification_review` complete, `foreign_permissions` active, and `agency_referrals` locked. The generated headless WebGL screenshot remains black as previously documented.
 - Annotation drafting gameplay gate (2026-06-15):
   - Added `src/game/annotationDrafting.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: annotation provides provenance for published documents, context about persons/events/policies/references/attachments, and helps mitigate the increasing selectivity of the series.
   - Split the Production Board's old combined source-note/annotation step into `source_notes` (Source Note 47 provenance + Citation Stamp) followed by a separate `annotation` gate before manuscript review.

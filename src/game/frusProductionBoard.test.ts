@@ -21,6 +21,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     finalGatePublished: false,
     hacReviewComplete: false,
     annotationDraftingComplete: false,
+    foreignGovernmentPermissionComplete: false,
     manuscriptReviewComplete: false,
     recordCollectionComplete: false,
     seriesConceptComplete: false,
@@ -48,6 +49,7 @@ describe("FRUS production board", () => {
       "annotation",
       "manuscript_review",
       "declassification_review",
+      "foreign_permissions",
       "agency_referrals",
       "advisory_monitoring",
       "kellogg_editing",
@@ -121,14 +123,54 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       reliability: 90,
       annotationDraftingComplete: true,
+      foreignGovernmentPermissionComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 11).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 12).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("publication_30_year");
+  });
+
+  it("requires foreign-government permission after declassification and before referral concurrence", () => {
+    const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    documents[4] = {
+      ...withEquityResolved(documents[4]),
+      workflowState: "referred"
+    };
+    const missingPermission = getFrusProductionBoardReadout(context({
+      volumeWorkflowState: "declassification_review",
+      processStamps: ["rule", "archive", "network"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp", "clearance_token"]),
+      documentPoints: 50,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true
+    }));
+    const permissionFiled = getFrusProductionBoardReadout(context({
+      volumeWorkflowState: "declassification_review",
+      processStamps: ["rule", "archive", "network"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp", "clearance_token"]),
+      documentPoints: 50,
+      annotationDraftingComplete: true,
+      foreignGovernmentPermissionComplete: true,
+      recordCollectionComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true
+    }));
+
+    expect(missingPermission.steps.find((step) => step.id === "declassification_review")?.complete).toBe(true);
+    expect(missingPermission.nextStep?.id).toBe("foreign_permissions");
+    expect(missingPermission.steps.find((step) => step.id === "advisory_monitoring")?.status).toBe("locked");
+    expect(permissionFiled.steps.find((step) => step.id === "foreign_permissions")?.complete).toBe(true);
+    expect(permissionFiled.nextStep?.id).toBe("advisory_monitoring");
   });
 
   it("requires annotation drafting after source-note provenance and before manuscript review", () => {
@@ -206,6 +248,7 @@ describe("FRUS production board", () => {
       processStamps: ["rule", "archive", "network", "referral"],
       hacReviewComplete: true,
       annotationDraftingComplete: true,
+      foreignGovernmentPermissionComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
