@@ -6,7 +6,7 @@ import { bindPointerPress, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 import { addSnesWorkflowRelicRack } from "../systems/snesPixelArt";
-import { TITLE_LAYOUT } from "./titleLayout";
+import { shouldStartTitle, TITLE_LAYOUT } from "./titleLayout";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -17,6 +17,7 @@ export class TitleScene extends Phaser.Scene {
   private skipWarning = false;
   private skipWarningText?: Phaser.GameObjects.Text;
   private ignoreNextPointerStart = false;
+  private inputReadyAt = 0;
 
   constructor() {
     super("TitleScene");
@@ -27,6 +28,13 @@ export class TitleScene extends Phaser.Scene {
     this.started = false;
     this.skipWarning = getSkipWarningPreference();
     this.ignoreNextPointerStart = false;
+    // The WarningScene advances on a *held* A/start, then hands off to the title
+    // with that key still physically down. A rising-edge-only check (aJustPressed)
+    // then never fires until the player releases and re-presses, so the title
+    // looked stuck to keyboard-only play and required a pointer click (live audit,
+    // 2026-06-15). After a short grace we also accept the held confirm, so a
+    // continuously-held key carries straight through warning -> title.
+    this.inputReadyAt = this.time.now + 350;
     retroAudio.startMusic("TitleScene");
 
     this.cameras.main.setBackgroundColor(PALETTE.black);
@@ -68,7 +76,7 @@ export class TitleScene extends Phaser.Scene {
       this.ignoreNextPointerStart = false;
       return;
     }
-    if (input.aJustPressed || input.startJustPressed || input.pointerPrimaryJustPressed) this.start();
+    if (shouldStartTitle(input, this.time.now >= this.inputReadyAt)) this.start();
   }
 
   /**

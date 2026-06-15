@@ -5,12 +5,65 @@ import {
   releaseKeyForTests,
   resetInput,
   setKeyboardDownForTests,
+  setNowProviderForTests,
   swallowNextInputFrame,
+  TAP_MOVEMENT_HOLD_MS,
+  tapDirectionForTests,
   tickInput
 } from "./InputState";
 
 describe("InputState keyboard edges", () => {
-  afterEach(() => resetInput());
+  afterEach(() => {
+    setNowProviderForTests(null);
+    resetInput();
+  });
+
+  it("maps Z to the A button and X to the B button (SNES emulator faces)", () => {
+    setKeyboardDownForTests(["KeyZ"]);
+    tickInput();
+    expect(getInput().aJustPressed).toBe(true);
+    expect(getInput().confirmJustPressed).toBe(true);
+    resetInput();
+
+    setKeyboardDownForTests(["KeyX"]);
+    tickInput();
+    expect(getInput().bJustPressed).toBe(true);
+  });
+
+  it("turns a too-short direction tap into a brief visible hold", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    // A tap that latches the keydown time but leaves no key physically held,
+    // as a cloud/automation browser's synthetic keypress would.
+    tapDirectionForTests("ArrowRight");
+    tickInput();
+    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+
+    // Still moving a frame later, inside the hold window.
+    now += TAP_MOVEMENT_HOLD_MS - 10;
+    tickInput();
+    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+
+    // After the hold window elapses, the latch releases and movement stops.
+    now += 20;
+    tickInput();
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+  });
+
+  it("keeps WASD taps equivalent to arrow taps", () => {
+    let now = 500;
+    setNowProviderForTests(() => now);
+    tapDirectionForTests("KeyD");
+    tickInput();
+    const wasd = { ...getInput().dir };
+    resetInput();
+
+    now = 500;
+    tapDirectionForTests("ArrowRight");
+    tickInput();
+    expect(getInput().dir).toEqual(wasd);
+    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+  });
 
   it("maps arrows and WASD to navigation just-pressed flags", () => {
     setKeyboardDownForTests(["ArrowLeft", "KeyD", "ArrowUp", "KeyS"]);

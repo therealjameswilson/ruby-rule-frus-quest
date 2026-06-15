@@ -980,3 +980,25 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - asserts every direction and action pose resolves to frame 0 (the clean cell);
   - decodes every shipped native PNG and asserts each referenced frame has no interior transparent row-band (`largestInteriorRowGap <= 1`), i.e. the body is one contiguous piece — failing on the detached-feet defect.
 - Did not touch TitleScene or overlay-input code. Verified `npm test`: 9 files, 50 tests passed. Verified `npm run build`.
+
+## 2026-06-15 Live-QA fix pass: title keyboard advance, tap movement, prompt reach, failed-interaction feedback
+
+Live QA after PR #26 still failed on four interaction/feel issues. Root causes and fixes:
+
+- **Title would not advance from the keyboard after the warning.** The WarningScene advances on a *held* A/start, then hands off to the title with that key still physically down. The title's rising-edge-only check (`aJustPressed`) never fired until the player released and re-pressed, so the title looked stuck and required a pointer click.
+  - Fix: extracted a Phaser-free `shouldStartTitle(input, inputReady)` into `src/scenes/titleLayout.ts`. It accepts a fresh A/start/pointer rising edge always, plus a *held* A/start once a short input-ready grace (~350ms) has elapsed, so a continuously-held key carries straight through warning -> title -> next scene. `TitleScene` sets `inputReadyAt = time.now + 350` in `create()` and calls the helper in `update()`.
+  - Added `KeyZ` (A/confirm) and `KeyX` (B) mappings in `InputState` — the classic SNES faces a browser-emulator tester reaches for first. `KeyA/KeyS` stay movement-only so WASD is unaffected.
+
+- **Short taps produced no visible movement.** A too-short tap (keydown+keyup inside one frame, or a synthetic keypress from a cloud/automation browser) is added to and removed from `keyboardDown` between two `tickInput()` samples, so the held check never saw it.
+  - Fix: `directionTapLatch` records each direction code's most-recent keydown time; new `isDirectionActive()` treats a direction as down while its latch is fresh (`TAP_MOVEMENT_HOLD_MS = 110`). Turns an imperceptible tap into a small visible nudge. Held movement and collision are unchanged (the held path still short-circuits via `isKeyboardDown`). `nav*` edges still use the strict held check, so menu navigation is unaffected. Latch is cleared in `resetInput()`.
+
+- **Office Hub proximity prompt was easy to miss.** Nothing was inside the strict interact radius during the audit, so no ring/plaque ever showed.
+  - Fix: `nearestInteractableHint()` (interaction.ts) shows the prompt from `radius + 14px`, while interaction still requires the strict radius. `OfficeScene` drives the prompt off the hint target; pressing A on a hint target just out of strict range shows a `STEP CLOSER TO <TARGET>` info toast instead of the misleading "nothing to interact with". Ring/glow enlarged and brightened in `interactionPrompt.ts`.
+
+- **Failed-interaction feedback** already meets the ~1.5s+ visible requirement (1600ms hold + 400ms fade, depth above HUD); verified and reused for the new step-closer cue.
+
+- Regression coverage:
+  - `src/scenes/TitleScene.test.ts`: `shouldStartTitle` accepts fresh edges always, held A/start only once input-ready, nothing otherwise.
+  - `src/input/InputState.test.ts`: Z->A/confirm and X->B mapping; a too-short tap becomes a brief visible hold then releases; WASD taps equal arrow taps.
+- Preserved all prior fixes (title art, sprite fragments, shadows, ESC overlay close) — no art or overlay code touched.
+- Verified `npm test`: 12 files, 74 tests passed. Verified `npm run build`.

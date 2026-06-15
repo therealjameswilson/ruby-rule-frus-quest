@@ -25,6 +25,37 @@ export function nearestInteractable(
   return nearest;
 }
 
+// Extra reach (px) added to each interactable's interact radius when deciding
+// whether to *show* its proximity prompt. The live audit (2026-06-15) could not
+// see any prompt because nothing was inside the strict interact radius; showing
+// the cue from a little further out makes the ring/plaque impossible to miss as
+// the player approaches, while interaction itself still uses the strict radius.
+export const PROMPT_HINT_MARGIN = 14;
+
+// The nearest interactable whose prompt should be shown: the closest target
+// within (radius + margin). Lets the floating "A VERB" plaque + ring appear as
+// the player nears a target, even just before they are close enough to act.
+export function nearestInteractableHint(
+  player: Position,
+  interactables: Interactable[],
+  maxDistance = 24,
+  margin = PROMPT_HINT_MARGIN
+) {
+  let nearest: Interactable | null = null;
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  for (const interactable of interactables) {
+    const dx = interactable.x - player.x;
+    const dy = interactable.y - player.y;
+    const distance = Math.hypot(dx, dy);
+    const radius = (interactable.radius ?? maxDistance) + margin;
+    if (distance <= radius && distance < nearestDistance) {
+      nearest = interactable;
+      nearestDistance = distance;
+    }
+  }
+  return nearest;
+}
+
 export class InteractionAssist {
   private bufferedUntil = 0;
   private graceUntil = 0;

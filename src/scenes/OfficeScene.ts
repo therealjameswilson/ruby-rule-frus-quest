@@ -17,7 +17,7 @@ import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
 import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
-import { InteractionAssist, nearestInteractable } from "../systems/interaction";
+import { InteractionAssist, nearestInteractable, nearestInteractableHint } from "../systems/interaction";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { InventoryOverlay } from "../systems/inventory";
@@ -204,12 +204,17 @@ export class OfficeScene extends Phaser.Scene {
       solids: this.solids
     });
     const nearest = nearestInteractable(this.player.position, this.interactables);
+    // Show the prompt/ring from a little further out than the strict interact
+    // radius so it is impossible to miss on approach, but only allow acting on a
+    // target inside the strict radius.
+    const promptTarget = nearest ?? nearestInteractableHint(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
-    this.prompt.update(delta, nearest);
+    this.prompt.update(delta, promptTarget);
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
-    else if (input.aJustPressed && !nearest) this.flashNoTargetHint();
+    else if (input.aJustPressed && !promptTarget) this.flashNoTargetHint();
+    else if (input.aJustPressed && promptTarget && !nearest) this.nudgeTowardTarget(promptTarget);
     setObjective("Office Hub: talk to the Junior Compiler or enter the Archive Guide.");
     this.reliability.update();
   }
@@ -278,6 +283,15 @@ export class OfficeScene extends Phaser.Scene {
     // swapping the low-contrast bottom hint, which the live audit could not see.
     this.toast.show("NOTHING TO INTERACT WITH", this.player.position, "warn");
     setLatestMessage("Nothing to interact with here.");
+  }
+
+  private nudgeTowardTarget(target: Interactable) {
+    // The prompt is showing because the player is in range to see the cue but a
+    // hair outside the strict interact radius. Tell them to step in instead of
+    // the misleading "nothing to interact with".
+    retroAudio.blip();
+    this.toast.show(`STEP CLOSER TO ${target.label.toUpperCase()}`, this.player.position, "info");
+    setLatestMessage(`Step closer to ${target.label}.`);
   }
 
   private dismissOfficeTutorial() {
