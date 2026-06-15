@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- GPO segment assembly publication loop (2026-06-15):
+  - Added `src/game/gpoSegmentAssembly.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: FRUS volumes can move to GPO in parts, the final segment must arrive with index/apparatus intact, and GPO binds the entire certified volume.
+  - Wired `EndingScene` so final Kellogg certification now flows into GPO segment assembly before the existing GPO handoff prompts. Wrong publication-packet shortcuts apply standards damage (`altered_text`, `omitted_material_fact`, or `concealed_policy_defect`); correct answers file `sceneProgress.gpoSegmentAssemblyComplete` and add document points.
+  - Preserved old-save compatibility by treating an already completed GPO publication as implying segment assembly complete, and `publishVolume()` now persists both flags.
+  - Fixed a real runtime error surfaced during smoke testing: the four DANN-E runtime sprite sheets now load as images and receive numeric grid frames manually in `BootScene`, avoiding Phaser's spritesheet processing failure while preserving the same texture keys and animations.
+  - Verified focused tests: `npm test -- src/game/gpoSegmentAssembly.test.ts src/game/gpoPublication.test.ts` (2 files / 6 tests pass).
+  - Verified full `npm test`: 37 files / 197 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=EndingScene&role=compiler&name=Ruby` reports a valid Buckram Gate state and, after clearing stale artifacts, no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Editorial treatment consultation gate (2026-06-15):
   - Added `src/game/editorialTreatment.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: remaining textual issues are flagged for consultation with the compiler, and editing must improve readability without altering the documentary record.
   - Reframed the Production Board's `kellogg_editing` step as `Editorial treatment`, sourced to the official stages page, and made it require `sceneProgress.editorialTreatmentComplete` plus the proof stamp, reliability, and no unresolved undisclosed deletions.

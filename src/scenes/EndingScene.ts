@@ -13,6 +13,12 @@ import {
   gpoPublicationComplete
 } from "../game/gpoPublication";
 import {
+  evaluateGpoSegmentAssemblyAnswer,
+  getGpoSegmentAssemblyPrompt,
+  GPO_SEGMENT_ASSEMBLY_PROMPTS,
+  gpoSegmentAssemblyComplete
+} from "../game/gpoSegmentAssembly";
+import {
   evaluateFrontMatterAssemblyAnswer,
   frontMatterAssemblyComplete,
   FRONT_MATTER_ASSEMBLY_PROMPTS,
@@ -278,13 +284,16 @@ export class EndingScene extends Phaser.Scene {
     const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
     const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
     const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
+    const gpoSegmentsComplete = Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete || gpoComplete);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     const status = ready ? "ready" : "locked";
     const message = ready
       ? certificationComplete
-        ? gpoComplete
-          ? "Buckram Key ready: GPO handoff complete; publish the volume."
-          : "Final certification complete: route the finished volume to GPO."
+        ? gpoSegmentsComplete
+          ? gpoComplete
+            ? "Buckram Key ready: GPO handoff complete; publish the volume."
+            : "GPO segments assembled: complete the final publication handoff."
+          : "Final certification complete: submit the GPO publication segments."
         : "Buckram Key ready: complete the final Kellogg certification."
       : canAssembleApparatus
         ? "Buckram Gate waits for front matter assembly at the human publication table."
@@ -305,16 +314,20 @@ export class EndingScene extends Phaser.Scene {
     if (ready) {
       setObjective(nearGate
         ? certificationComplete
-          ? gpoComplete
-            ? "Buckram Gate: press Space to publish the GPO-ready volume."
-            : "Buckram Gate: press Space for GPO publication handoff."
+          ? gpoSegmentsComplete
+            ? gpoComplete
+              ? "Buckram Gate: press Space to publish the GPO-ready volume."
+              : "Buckram Gate: press Space for GPO publication handoff."
+            : "Buckram Gate: press Space to assemble GPO segments."
           : "Buckram Gate: press Space for final Kellogg certification."
         : "Buckram Gate: stand at the human publication table.");
       this.actionHint.setText(nearGate
         ? certificationComplete
-          ? gpoComplete
-            ? "SPACE: PUBLISH GPO-READY VOLUME"
-            : "SPACE: GPO PUBLICATION HANDOFF"
+          ? gpoSegmentsComplete
+            ? gpoComplete
+              ? "SPACE: PUBLISH GPO-READY VOLUME"
+              : "SPACE: GPO PUBLICATION HANDOFF"
+            : "SPACE: ASSEMBLE GPO SEGMENTS"
           : "SPACE: FINAL KELLOGG CERTIFICATION"
         : "MOVE TO CERTIFICATION TABLE.");
       return;
@@ -455,7 +468,7 @@ export class EndingScene extends Phaser.Scene {
       gameState.sceneProgress.kelloggFinalCertificationStep = KELLOGG_CERTIFICATION_PROMPTS.length;
       const finalReadiness = getFinalGateReadiness();
       if (finalReadiness.ready && hasProcessItem("buckram_key")) {
-        this.startGpoPublicationHandoff();
+        this.startGpoSegmentAssembly();
         return;
       }
       setObjective("Certification repaired. Restore reliability or remaining standards blockers before publication.");
@@ -467,6 +480,10 @@ export class EndingScene extends Phaser.Scene {
   private startGpoPublicationHandoff() {
     if (gameState.sceneProgress.gpoPublicationComplete) {
       this.publishVolume();
+      return;
+    }
+    if (!gameState.sceneProgress.gpoSegmentAssemblyComplete) {
+      this.startGpoSegmentAssembly();
       return;
     }
     const currentStep = Math.max(0, Math.min(
@@ -504,6 +521,47 @@ export class EndingScene extends Phaser.Scene {
     });
   }
 
+  private startGpoSegmentAssembly() {
+    if (gameState.sceneProgress.gpoSegmentAssemblyComplete) {
+      this.startGpoPublicationHandoff();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      GPO_SEGMENT_ASSEMBLY_PROMPTS.length - 1,
+      gameState.sceneProgress.gpoSegmentAssemblyStep ?? 0
+    ));
+    gameState.sceneProgress.gpoSegmentAssemblyStep = currentStep;
+    const prompt = getGpoSegmentAssemblyPrompt(currentStep);
+    setObjective(`GPO segment assembly: ${currentStep + 1}/${GPO_SEGMENT_ASSEMBLY_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateGpoSegmentAssemblyAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.gpoSegmentAssemblyStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `GPO segment assembly: ${prompt.id}`);
+        }
+        setObjective("GPO segment assembly: correct the publication packet before GPO handoff.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.gpoSegmentAssemblyStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!gpoSegmentAssemblyComplete(nextStep)) {
+        this.startGpoSegmentAssembly();
+        return;
+      }
+      gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
+      gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
+      addDocumentPoints(6, "GPO final publication segments assembled");
+      setLatestMessage("GPO segments complete: final segment submitted for binding.");
+      setObjective("Buckram Gate: press Space for GPO publication handoff.");
+      this.updateGateReadout();
+    });
+  }
+
   private canCorrectKelloggCertification(readiness: ReturnType<typeof getFinalGateReadiness>) {
     if (!hasProcessItem("buckram_key") || !gameState.sceneProgress.kelloggFinalCertificationCorrectionNeeded) return false;
     if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
@@ -529,6 +587,8 @@ export class EndingScene extends Phaser.Scene {
   private publishVolume() {
     this.published = true;
     this.canRestart = false;
+    gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
+    gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
     gameState.sceneProgress.gpoPublicationComplete = 1;
     addProcessItem("buckram_key");
     addInventoryItem("Published FRUS Cover");

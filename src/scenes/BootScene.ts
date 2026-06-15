@@ -53,6 +53,7 @@ export class BootScene extends Phaser.Scene {
     this.createTextures();
     ensurePixelBitmapFont(this);
     installPixelTextFactory();
+    this.createManualDanneRuntimeFrames();
     registerCharacterAnims(this);
     registerDanneAnims(this);
     this.applyNearestTextureFilters();
@@ -94,10 +95,7 @@ export class BootScene extends Phaser.Scene {
       });
     }
     for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
-      this.load.spritesheet(asset.key, asset.path, {
-        frameWidth: asset.frameW,
-        frameHeight: asset.frameH
-      });
+      this.load.image(asset.key, asset.path);
     }
     this.load.spritesheet(DANNE_BOSS_SPRITE_ASSET.key, DANNE_BOSS_SPRITE_ASSET.path, {
       frameWidth: DANNE_BOSS_SPRITE_ASSET.frameW,
@@ -139,6 +137,21 @@ export class BootScene extends Phaser.Scene {
     ]) {
       if (this.textures.exists(asset.key)) {
         this.textures.get(asset.key).setFilter(Phaser.Textures.FilterMode.NEAREST);
+      }
+    }
+  }
+
+  private createManualDanneRuntimeFrames() {
+    for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
+      const texture = this.textures.get(asset.key);
+      if (!texture || texture.key === "__MISSING") continue;
+      for (let row = 0; row < asset.rows; row += 1) {
+        for (let col = 0; col < asset.cols; col += 1) {
+          const frameIndex = row * asset.cols + col;
+          const frameName = String(frameIndex);
+          if (texture.has(frameName)) continue;
+          texture.add(frameName, 0, col * asset.frameW, row * asset.frameH, asset.frameW, asset.frameH);
+        }
       }
     }
   }
