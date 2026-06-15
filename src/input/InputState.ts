@@ -157,6 +157,7 @@ let gamepadConnected = false;
 let lastGamepadLabel: string | null = null;
 let lastGamepadEvent = "idle";
 let swallowNextFrame = false;
+let suppressEscEdgesUntilRelease = false;
 let gamepadSnapshot: GamepadSnapshot = {
   connected: false,
   index: null,
@@ -365,6 +366,7 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   window.addEventListener("keyup", (event) => {
     preventGameKeyDefault(event);
     keyboardDown.delete(event.code);
+    if (event.code === "Escape") suppressEscEdgesUntilRelease = false;
   });
 
   window.addEventListener("pointerdown", (event) => {
@@ -480,7 +482,8 @@ export function tickInput() {
   const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
   const sound = isKeyboardDown("KeyN") || isTouchDown("n");
   const fullscreen = isKeyboardDown("KeyF");
-  const pause = isKeyboardDown("Escape");
+  const escDown = isKeyboardDown("Escape");
+  const pause = escDown;
   const choiceA = isKeyboardDown("KeyA");
   const choiceB = isKeyboardDown("KeyB");
   const choiceC = isKeyboardDown("KeyC");
@@ -502,7 +505,7 @@ export function tickInput() {
     navUpJustPressed: justPressed(navUp, previousNavUpDown),
     navDownJustPressed: justPressed(navDown, previousNavDownDown),
     confirmJustPressed: justPressed(confirm, previousConfirmDown),
-    cancelJustPressed: justPressed(cancel, previousCancelDown),
+    cancelJustPressed: suppressEscEdgesUntilRelease && escDown ? false : justPressed(cancel, previousCancelDown),
     a,
     aJustPressed: justPressed(a, previousState.a),
     aJustReleased: justReleased(a, previousState.a),
@@ -524,7 +527,7 @@ export function tickInput() {
     fullscreen,
     fullscreenJustPressed: justPressed(fullscreen, previousState.fullscreen),
     pause,
-    pauseJustPressed: justPressed(pause, previousState.pause),
+    pauseJustPressed: suppressEscEdgesUntilRelease && escDown ? false : justPressed(pause, previousState.pause),
     choiceAJustPressed: justPressed(choiceA, isKeyboardDownFromPrevious("choiceA")),
     choiceBJustPressed: justPressed(choiceB, isKeyboardDownFromPrevious("choiceB")),
     choiceCJustPressed: justPressed(choiceC, isKeyboardDownFromPrevious("choiceC")),
@@ -581,7 +584,14 @@ export function setTouchControl(key: TouchControlKey, pressed: boolean) {
 
 export function swallowNextInputFrame() {
   swallowNextFrame = true;
+  // The overlay-close that triggered this often comes from a still-held Escape.
+  // resetInput() zeroes currentState, so the next frame would otherwise see a
+  // false pause/cancel rising edge. Latch those edges off until Escape is released
+  // (cleared by the Escape keyup listener). Read the held state before resetInput
+  // clears it.
+  const escHeld = isKeyboardDown("Escape");
   resetInput();
+  if (escHeld) suppressEscEdgesUntilRelease = true;
 }
 
 export function bindPointerDown<T extends Phaser.GameObjects.GameObject>(
@@ -634,10 +644,20 @@ export function resetInput() {
   previousNavDownDown = false;
   previousConfirmDown = false;
   previousCancelDown = false;
+  suppressEscEdgesUntilRelease = false;
   if (typeof window !== "undefined" && window.rubyRuleMobileMetrics) window.rubyRuleMobileMetrics.activePointerCount = 0;
 }
 
 export function setKeyboardDownForTests(codes: readonly string[]) {
   resetInput();
   for (const code of codes) keyboardDown.add(code);
+}
+
+export function pressKeyForTests(code: string) {
+  keyboardDown.add(code);
+}
+
+export function releaseKeyForTests(code: string) {
+  keyboardDown.delete(code);
+  if (code === "Escape") suppressEscEdgesUntilRelease = false;
 }

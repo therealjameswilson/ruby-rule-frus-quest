@@ -12,7 +12,8 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Enlivened the Office Hub: floor checker pattern, archive runner rug, framed wall map/charts, hanging banner, stacked archive boxes, document stacks, potted plant, and a terminal desk lamp glow — all behind the player and clear of doors/interactables.
   - Incorporated the supplied DC overworld map (`public/assets/art-pack/screens/frus_world_map.jpg`, downscaled to 768x512 / ~159 KB) as a framed "FRUS PRODUCTION MAP" briefing centerpiece on the TitleScene; registered via a new `SCREENS` art registry.
   - Movement evaluated: the slow single-keypress feel is the intended hold-to-move acceleration model (speed 58, accel 720); left unchanged to avoid regressions, controls now clarify "ARROWS/WASD MOVE".
-  - Verified `npm test`: 6 files / 19 tests pass; `npm run build` passes with only the pre-existing Vite chunk-size warning.
+  - Fixed ESC-close pause-dialog regression: closing the inventory/menu with a still-held Escape no longer re-opens the pause dialog. `swallowNextInputFrame()` now latches `suppressEscEdgesUntilRelease` while Escape is physically held; the latch is cleared authoritatively by the Escape `keyup` listener (and on any `resetInput()`), so the synthetic `pause`/`cancel` rising edge created by zeroing `currentState` is suppressed until the key is released. Added `InputState` regression tests for the held-Escape-after-swallow case and the post-release fresh edge.
+  - Verified `npm test`: 6 files / 21 tests pass; `npm run build` passes with only the pre-existing Vite chunk-size warning.
 
 - Scene re-entry bug pass:
   - `WorldMapScene` now resets `numberKeysInstalled` on `SHUTDOWN` so the region `1`-`5` shortcuts keep working after returning from a gameplay map (previously they broke permanently on the first revisit because the keydown handler was removed but the install flag was never cleared)
