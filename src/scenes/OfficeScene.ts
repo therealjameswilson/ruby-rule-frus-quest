@@ -27,6 +27,12 @@ import {
   RESEARCH_CHARTER_PROMPTS
 } from "../game/researchCharter";
 import {
+  evaluateSeriesConceptAnswer,
+  getSeriesConceptPrompt,
+  seriesConceptComplete,
+  SERIES_CONCEPT_PROMPTS
+} from "../game/seriesConcept";
+import {
   evaluateManuscriptReviewAnswer,
   getManuscriptReviewPrompt,
   manuscriptReviewComplete,
@@ -395,6 +401,10 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private showResearchCharterChoice() {
+    if (!gameState.sceneProgress.seriesConceptComplete) {
+      this.showSeriesConceptChoice();
+      return;
+    }
     if (gameState.processStamps.includes("rule") || gameState.sceneProgress.researchCharterComplete) {
       if (!gameState.sceneProgress.documentSelectionComplete) {
         this.showDocumentSelectionChoice();
@@ -448,6 +458,55 @@ export class OfficeScene extends Phaser.Scene {
         result.message,
         "Golden Rule filed: plan scope, use 20-year access, preserve material facts.",
         "Next: select a balanced candidate set from the document queue."
+      ]);
+    });
+  }
+
+  private showSeriesConceptChoice() {
+    if (gameState.sceneProgress.seriesConceptComplete) {
+      this.showResearchCharterChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.seriesConceptStep ?? 0;
+    const prompt = getSeriesConceptPrompt(step);
+    setObjective(`Series Plan: answer ${step + 1}/${SERIES_CONCEPT_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateSeriesConceptAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Series conceptualization shortcut: ${option.value}`);
+        this.toast.show("REVISE SERIES PLAN", this.player.position, "warn");
+        this.dialog.show("SERIES PLAN", [
+          result.message,
+          "Build the volume inside the FRUS series architecture; shortcuts distort context."
+        ], () => this.showSeriesConceptChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.seriesConceptStep = nextStep;
+      if (!seriesConceptComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Series plan check ${nextStep}/${SERIES_CONCEPT_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("SERIES PLAN", [
+          result.message,
+          "Continue the whole-series plan before drafting the volume charter."
+        ], () => this.showSeriesConceptChoice());
+        return;
+      }
+
+      gameState.sceneProgress.seriesConceptComplete = 1;
+      gameState.sceneProgress.seriesConceptStep = SERIES_CONCEPT_PROMPTS.length;
+      addDocumentPoints(4, "whole-series FRUS architecture filed");
+      retroAudio.confirm();
+      setLatestMessage("Series architecture filed: this volume now fits the whole FRUS plan.");
+      setObjective("Series plan filed. Return to the desk to file the Scope Charter.");
+      this.reliability.update();
+      this.dialog.show("SERIES PLAN", [
+        result.message,
+        "Grand conceptualization filed: organize the series, fit this volume, and reserve special topics for sufficient importance.",
+        "Next: draft the Scope Charter."
       ]);
     });
   }
@@ -557,11 +616,13 @@ export class OfficeScene extends Phaser.Scene {
   private openProductionBoard() {
     const board = getProductionBoardReadout();
     const next = board.nextStep;
-    const statusPages = [0, 3, 6].map((start) => (
-      board.steps.slice(start, start + 3)
+    const statusPages: string[] = [];
+    for (let start = 0; start < board.steps.length; start += 3) {
+      const page = board.steps.slice(start, start + 3)
         .map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`)
-        .join("\n")
-    )).filter((page) => page.length > 0);
+        .join("\n");
+      if (page.length > 0) statusPages.push(page);
+    }
     const coveragePage = `COVERAGE: ${board.researchCoverage.completed}/${board.researchCoverage.total}\n${board.researchCoverage.summary}`;
     retroAudio.confirm();
     setLatestMessage(next ? `Production board next: ${next.label}.` : "Production board complete.");
@@ -652,26 +713,32 @@ export class OfficeScene extends Phaser.Scene {
 
   private drawProductionBoard(x: number, y: number) {
     const board = getProductionBoardReadout();
-    this.add.rectangle(x, y, 36, 30, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
-    this.add.text(x, y - 12, "FRUS", {
+    const columns = board.steps.length > 9 ? 5 : 3;
+    const rows = Math.ceil(board.steps.length / columns);
+    const boardWidth = columns * 9 + 12;
+    const boardHeight = rows * 7 + 18;
+    this.add.rectangle(x, y, boardWidth, boardHeight, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
+    this.add.text(x, y - boardHeight / 2 + 5, "FRUS", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(-13);
     board.steps.forEach((step, index) => {
-      const col = index % 3;
-      const row = Math.floor(index / 3);
+      const col = index % columns;
+      const row = Math.floor(index / columns);
+      const dotX = x - ((columns - 1) * 9) / 2 + col * 9;
+      const dotY = y - ((rows - 1) * 7) / 2 + row * 7 + 2;
       const dotColor = step.complete
         ? PALETTE.openNetGreen
         : step.status === "active"
           ? PALETTE.terminalCyan
           : PALETTE.stoneGray;
-      this.add.rectangle(x - 9 + col * 9, y - 4 + row * 7, 5, 5, color(dotColor)).setDepth(-13);
+      this.add.rectangle(dotX, dotY, 5, 5, color(dotColor)).setDepth(-13);
       if (step.status === "active") {
-        this.add.rectangle(x - 9 + col * 9, y - 4 + row * 7, 7, 7).setStrokeStyle(1, color(PALETTE.white), 0.85).setDepth(-12);
+        this.add.rectangle(dotX, dotY, 7, 7).setStrokeStyle(1, color(PALETTE.white), 0.85).setDepth(-12);
       }
     });
-    this.add.rectangle(x, y + 12, 24, 2, color(PALETTE.buckramRed)).setDepth(-13);
+    this.add.rectangle(x, y + boardHeight / 2 - 5, boardWidth - 12, 2, color(PALETTE.buckramRed)).setDepth(-13);
   }
 
   private drawOfficeProps() {

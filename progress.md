@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Grand conceptualization / series architecture gate (2026-06-15):
+  - Added `src/game/seriesConcept.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: grand conceptualization comes before a single volume, creates an organizational scheme for the series as a whole, fits individual volumes to that holistic vision, and reserves special editions for topics of sufficient importance.
+  - Inserted `series_concept` as the first FRUS Production Board step, before 20-year records access, so a Golden Rule stamp no longer implies the whole-series plan was filed.
+  - Wired the Office Hub `Scope / Selection Desk` so it first runs the three-prompt Series Plan sequence, then continues into the existing Scope Charter and balanced candidate-selection workflow. Shortcut answers apply Kellogg standards damage where they would omit context or conceal defects.
+  - Updated deep-scene QA seeding so `?scene=GuideScene` and later routes remain coherent with the expanded board.
+  - Verified focused tests: `npm test -- src/game/seriesConcept.test.ts src/game/frusProductionBoard.test.ts` (2 files / 14 tests pass).
+  - Verified full `npm test`: 29 files / 155 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=OfficeScene&role=compiler&name=Ruby` reports `productionBoard.total: 10`, `nextStep.id: "series_concept"`, source URL `https://history.state.gov/historicaldocuments/frus-history/stages`, and locked `records_access` until the series plan is filed. The generated headless WebGL screenshot remains black as previously documented.
 - GPO publication handoff (2026-06-15):
   - Added `src/game/gpoPublication.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: the Department contracts with the Government Printing Office to prepare/publish FRUS volumes, GPO binding turns final segments into the complete volume, and funding delay cannot justify cutting or uncertified publication.
   - `EndingScene` now treats publication as a three-part last mile: Buckram Gate readiness -> final Kellogg certification -> GPO publication handoff -> published FRUS cover. Completing Kellogg certification no longer publishes instantly.

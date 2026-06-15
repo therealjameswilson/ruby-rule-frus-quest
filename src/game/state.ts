@@ -1689,7 +1689,8 @@ export function getProductionBoardReadout() {
     volumeFragments: [...gameState.volumeFragments],
     finalGatePublished: gameState.finalGateCertification?.status === "published",
     hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
-    manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete)
+    manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
+    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete)
   });
 }
 
@@ -1716,6 +1717,8 @@ export function seedProgressForScene(sceneName: string) {
     setDocumentWorkflowState("cross_reference_001", "selected");
   }
   if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+    gameState.sceneProgress.seriesConceptComplete = 1;
+    gameState.sceneProgress.seriesConceptStep = 3;
     awardProcessStamp("rule");
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {

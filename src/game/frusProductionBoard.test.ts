@@ -21,6 +21,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     finalGatePublished: false,
     hacReviewComplete: false,
     manuscriptReviewComplete: false,
+    seriesConceptComplete: false,
     ...overrides
   };
 }
@@ -35,6 +36,7 @@ function withEquityResolved(document: DocumentCandidate): DocumentCandidate {
 describe("FRUS production board", () => {
   it("keeps the history.state.gov production ladder in a stable order", () => {
     expect(FRUS_PRODUCTION_BOARD_STEPS.map((step) => step.id)).toEqual([
+      "series_concept",
       "records_access",
       "research_selection",
       "source_notes",
@@ -47,13 +49,27 @@ describe("FRUS production board", () => {
     ]);
   });
 
-  it("starts with the 20-year access step active and locks later steps", () => {
+  it("starts with grand conceptualization active and locks later steps", () => {
     const readout = getFrusProductionBoardReadout(context());
 
     expect(readout.completed).toBe(0);
-    expect(readout.nextStep?.id).toBe("records_access");
+    expect(readout.nextStep?.id).toBe("series_concept");
     expect(readout.steps[0].status).toBe("active");
     expect(readout.steps[1].status).toBe("locked");
+  });
+
+  it("does not let a 20-year access stamp skip series-wide conceptualization", () => {
+    const unplanned = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"]
+    }));
+    const planned = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      seriesConceptComplete: true
+    }));
+
+    expect(unplanned.nextStep?.id).toBe("series_concept");
+    expect(unplanned.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
+    expect(planned.nextStep?.id).toBe("research_selection");
   });
 
   it("advances through source-backed production steps as FRUS tools and stamps are earned", () => {
@@ -77,10 +93,11 @@ describe("FRUS production board", () => {
       ]),
       documentPoints: 20,
       reliability: 90,
+      seriesConceptComplete: true,
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 7).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 8).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("publication_30_year");
   });
 
@@ -95,13 +112,15 @@ describe("FRUS production board", () => {
       processStamps: ["rule", "archive"],
       documentCandidates: documents,
       heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
-      documentPoints: 20
+      documentPoints: 20,
+      seriesConceptComplete: true
     }));
     const reviewed = getFrusProductionBoardReadout(context({
       processStamps: ["rule", "archive"],
       documentCandidates: documents,
       heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
       documentPoints: 20,
+      seriesConceptComplete: true,
       manuscriptReviewComplete: true
     }));
 
@@ -114,7 +133,8 @@ describe("FRUS production board", () => {
   it("can complete HAC monitoring through the hearing even before the SOP stamp", () => {
     const readout = getFrusProductionBoardReadout(context({
       processStamps: ["rule", "archive", "network", "referral"],
-      hacReviewComplete: true
+      hacReviewComplete: true,
+      seriesConceptComplete: true
     }));
 
     expect(readout.steps.find((step) => step.id === "advisory_monitoring")?.complete).toBe(true);
@@ -123,13 +143,15 @@ describe("FRUS production board", () => {
   it("does not complete research selection from charter points alone", () => {
     const charterOnly = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
-      documentPoints: 6
+      documentPoints: 6,
+      seriesConceptComplete: true
     }));
     const selectedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
     selectedDocuments[1] = { ...selectedDocuments[1], selected: true, workflowState: "selected" };
     const partialSelection = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 20,
+      seriesConceptComplete: true,
       documentCandidates: selectedDocuments
     }));
     const balancedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
@@ -140,6 +162,7 @@ describe("FRUS production board", () => {
     const selectedReadout = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 20,
+      seriesConceptComplete: true,
       documentCandidates: balancedDocuments
     }));
 

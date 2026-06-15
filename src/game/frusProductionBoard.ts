@@ -2,8 +2,10 @@ import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
+import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 
 export type FrusProductionBoardStepId =
+  | "series_concept"
   | "records_access"
   | "research_selection"
   | "source_notes"
@@ -27,6 +29,7 @@ export interface FrusProductionBoardContext {
   finalGatePublished: boolean;
   hacReviewComplete: boolean;
   manuscriptReviewComplete: boolean;
+  seriesConceptComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -58,6 +61,14 @@ const HAC_URL = "https://history.state.gov/about/hac/intro";
 const FRUS_STAGES_URL = "https://history.state.gov/historicaldocuments/frus-history/stages";
 
 export const FRUS_PRODUCTION_BOARD_STEPS = [
+  {
+    id: "series_concept",
+    label: "Grand conceptualization",
+    shortLabel: "GRD",
+    sourceBasis: "FRUS work begins with an organizational scheme for the series as a whole.",
+    sourceUrl: SERIES_CONCEPT_SOURCE_URL,
+    gameplayTask: "File the whole-series plan at the Scope / Selection Desk before drafting the volume charter."
+  },
   {
     id: "records_access",
     label: "20-year records access",
@@ -178,6 +189,8 @@ export function isFrusProductionBoardStepComplete(
 ) {
   const stamps = stampSet(context);
   switch (stepId) {
+    case "series_concept":
+      return context.seriesConceptComplete;
     case "records_access":
       return stamps.has("rule") || volumeAtLeast(context, "research");
     case "research_selection":
