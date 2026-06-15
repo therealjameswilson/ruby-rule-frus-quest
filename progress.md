@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Selection docket gameplay gate (2026-06-15):
+  - Added `src/game/selectionDocket.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: selection narrows collected records into a printed subset, and expanded annotation mitigates the increasing selectivity of the series.
+  - Reframed the Production Board's `research_selection` step as `Selection docket`, so a balanced candidate set no longer completes research/selection until the player files a visible rationale for the printed subset and an annotation bridge for nonprinted context.
+  - Wired the Office Hub `Scope / Selection Desk` into a six-stage loop: Series Plan -> Volume Concept -> Scope Charter -> Record Collection -> Candidate Selection -> Selection Docket.
+  - Wrong docket shortcuts apply standards damage (`omitted_material_fact`, `altered_text`, or `concealed_policy_defect`), including DANN-E summary and hidden-style-edit shortcuts that fail instead of laundering selection gaps.
+  - Updated deep-scene QA seeding so `?scene=GuideScene` and later routes remain coherent with the expanded Office desk chain.
+  - Verified focused tests: `npm test -- src/game/selectionDocket.test.ts src/game/frusProductionBoard.test.ts src/game/documentSelection.test.ts` (3 files / 21 tests pass).
+  - Verified full `npm test`: 39 files / 203 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=OfficeScene&role=compiler&name=Ruby` reports the Production Board `research_selection.label: "Selection docket"`, stages-page source URL, `complete: false`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Clearance procedure lane gameplay gate (2026-06-15):
   - Added `src/game/clearanceProcedure.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: declassification clearance became a distinct function from compilation/review, post-1980 clearance review uses a human reviewer lane, and documents with other agency equities require accountable routing.
   - Wired `NetworkScene` so the ClassNet Vault now requires a three-prompt clearance procedure lane before the existing Clearance Token declassification review can begin. The route text and objective now point players to `CLEARANCE LANE` until the procedure is documented.

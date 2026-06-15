@@ -19,6 +19,12 @@ import {
   DOCUMENT_SELECTION_PROMPT,
   evaluateDocumentSelectionAnswer
 } from "../game/documentSelection";
+import {
+  evaluateSelectionDocketAnswer,
+  getSelectionDocketPrompt,
+  selectionDocketComplete,
+  SELECTION_DOCKET_PROMPTS
+} from "../game/selectionDocket";
 import { getResearchCoverageReadout } from "../game/researchCoverage";
 import {
   evaluateRecordCollectionAnswer,
@@ -430,10 +436,15 @@ export class OfficeScene extends Phaser.Scene {
         this.showDocumentSelectionChoice();
         return;
       }
+      if (!gameState.sceneProgress.selectionDocketComplete) {
+        this.showSelectionDocketChoice();
+        return;
+      }
       this.dialog.show("SCOPE CHARTER", [
         "Golden Rule charter is already filed.",
         "Collection notes are already logged.",
         "Candidate selection is already logged.",
+        "Selection docket is already filed.",
         "Next: verify source notes with the Archive Guide."
       ]);
       return;
@@ -615,14 +626,70 @@ export class OfficeScene extends Phaser.Scene {
       addDocumentPoints(result.documentPoints, "balanced FRUS candidate set selected");
       const coverage = getResearchCoverageReadout(gameState.documentCandidates);
       retroAudio.confirm();
-      setObjective("Candidate set selected. Enter the Archive Guide to verify source notes.");
+      setObjective("Candidate set selected. Return to the desk to file the selection docket.");
       setLatestMessage("Balanced FRUS candidate set selected: hard evidence stays in the volume.");
       this.reliability.update();
       this.dialog.show("CANDIDATE SELECTION", [
         result.message,
         `Selected ${result.selectedDocumentIds.length} records for source-note and review work.`,
         coverage.summary,
-        "Now move to the Archive Guide for provenance verification."
+        "Next: file the selection docket so the printed subset stays transparent."
+      ]);
+    });
+  }
+
+  private showSelectionDocketChoice() {
+    if (!gameState.sceneProgress.documentSelectionComplete) {
+      this.showDocumentSelectionChoice();
+      return;
+    }
+    if (gameState.sceneProgress.selectionDocketComplete) {
+      this.dialog.show("SELECTION DOCKET", [
+        "Selection docket is already filed.",
+        "The printed subset has a visible rationale and annotation bridge."
+      ]);
+      return;
+    }
+
+    const step = gameState.sceneProgress.selectionDocketStep ?? 0;
+    const prompt = getSelectionDocketPrompt(step);
+    setObjective(`Selection Docket: answer ${step + 1}/${SELECTION_DOCKET_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateSelectionDocketAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Selection docket shortcut: ${option.value}`);
+        this.toast.show("REVISE SELECTION DOCKET", this.player.position, "warn");
+        this.dialog.show("SELECTION DOCKET", [
+          result.message,
+          "A selective printed volume still needs visible rationale and annotation context."
+        ], () => this.showSelectionDocketChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.selectionDocketStep = nextStep;
+      if (!selectionDocketComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Selection docket check ${nextStep}/${SELECTION_DOCKET_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("SELECTION DOCKET", [
+          result.message,
+          "Continue the docket before moving to source-note verification."
+        ], () => this.showSelectionDocketChoice());
+        return;
+      }
+
+      gameState.sceneProgress.selectionDocketComplete = 1;
+      gameState.sceneProgress.selectionDocketStep = SELECTION_DOCKET_PROMPTS.length;
+      addDocumentPoints(4, "selection docket and annotation bridge filed");
+      retroAudio.confirm();
+      setLatestMessage("Selection docket filed: selected subset and annotation bridge are visible.");
+      setObjective("Selection docket filed. Enter the Archive Guide to verify source notes.");
+      this.reliability.update();
+      this.dialog.show("SELECTION DOCKET", [
+        result.message,
+        "The volume can now move from selection into source-note verification.",
+        "Next: verify source notes with the Archive Guide."
       ]);
     });
   }

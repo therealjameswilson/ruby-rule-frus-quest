@@ -6,6 +6,7 @@ import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPer
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
+import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 import { VOLUME_CONCEPT_SOURCE_URL } from "./volumeConcept";
 import { WITHHOLDING_APPEAL_SOURCE_URL } from "./withholdingAppeal";
@@ -45,6 +46,7 @@ export interface FrusProductionBoardContext {
   editorialTreatmentComplete: boolean;
   manuscriptReviewComplete: boolean;
   recordCollectionComplete: boolean;
+  selectionDocketComplete: boolean;
   seriesConceptComplete: boolean;
   volumeConceptComplete: boolean;
 }
@@ -112,11 +114,11 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
   },
   {
     id: "research_selection",
-    label: "Research and selection",
+    label: "Selection docket",
     shortLabel: "SEL",
-    sourceBasis: "OH historians research across White House, NSC, State, Defense, CIA, other agency, and private-paper records.",
-    sourceUrl: ABOUT_FRUS_URL,
-    gameplayTask: "Select a balanced candidate set that covers the full FRUS research base."
+    sourceBasis: "Selection narrows collected records into a printed subset, while expanded annotation mitigates the series' selectivity.",
+    sourceUrl: SELECTION_DOCKET_SOURCE_URL,
+    gameplayTask: "Select a balanced candidate set and file the visible rationale for the printed subset."
   },
   {
     id: "source_notes",
@@ -255,7 +257,7 @@ export function isFrusProductionBoardStepComplete(
     case "record_collection":
       return context.recordCollectionComplete;
     case "research_selection":
-      return (context.documentPoints >= 12 && hasSelectedDocument(context) && researchCoverageComplete(context.documentCandidates))
+      return (context.selectionDocketComplete && context.documentPoints >= 12 && hasSelectedDocument(context) && researchCoverageComplete(context.documentCandidates))
         || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified", "annotation_needed"])
         || volumeAtLeast(context, "candidate_selection");
     case "source_notes":

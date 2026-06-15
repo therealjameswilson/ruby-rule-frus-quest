@@ -26,6 +26,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     editorialTreatmentComplete: false,
     manuscriptReviewComplete: false,
     recordCollectionComplete: false,
+    selectionDocketComplete: false,
     seriesConceptComplete: false,
     volumeConceptComplete: false,
     ...overrides
@@ -130,6 +131,7 @@ describe("FRUS production board", () => {
       withholdingAppealComplete: true,
       editorialTreatmentComplete: true,
       recordCollectionComplete: true,
+      selectionDocketComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
@@ -341,13 +343,25 @@ describe("FRUS production board", () => {
       volumeConceptComplete: true,
       documentCandidates: balancedDocuments
     }));
+    const docketReadout = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      documentPoints: 20,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      selectionDocketComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      documentCandidates: balancedDocuments
+    }));
 
     expect(charterOnly.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
     expect(charterOnly.steps.find((step) => step.id === "research_selection")?.complete).toBe(false);
     expect(partialSelection.researchCoverage.complete).toBe(false);
     expect(partialSelection.steps.find((step) => step.id === "research_selection")?.complete).toBe(false);
     expect(selectedReadout.researchCoverage.complete).toBe(true);
-    expect(selectedReadout.steps.find((step) => step.id === "research_selection")?.complete).toBe(true);
+    expect(selectedReadout.steps.find((step) => step.id === "research_selection")?.complete).toBe(false);
+    expect(docketReadout.researchCoverage.complete).toBe(true);
+    expect(docketReadout.steps.find((step) => step.id === "research_selection")?.complete).toBe(true);
   });
 
   it("blocks Kellogg completion when an unbracketed deletion remains unresolved", () => {

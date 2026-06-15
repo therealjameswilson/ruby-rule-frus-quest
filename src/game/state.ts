@@ -1696,6 +1696,7 @@ export function getProductionBoardReadout() {
     editorialTreatmentComplete: Boolean(gameState.sceneProgress.editorialTreatmentComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
+    selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
     volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete)
   });
@@ -1730,6 +1731,8 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.volumeConceptStep = 3;
     gameState.sceneProgress.recordCollectionComplete = 1;
     gameState.sceneProgress.recordCollectionStep = 3;
+    gameState.sceneProgress.selectionDocketComplete = 1;
+    gameState.sceneProgress.selectionDocketStep = 2;
     awardProcessStamp("rule");
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
