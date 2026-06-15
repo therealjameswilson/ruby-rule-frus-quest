@@ -3,13 +3,15 @@ import type Phaser from "phaser";
 export const CHARACTER_FRAME = { width: 32, height: 48 } as const;
 
 // Art-pack 32x48 sprites are drawn at scale 1 with vertical origin 0.9, so the
-// feet sit height*(origin-0.5) px below the container/world origin. Ground
-// shadows and name labels must be placed at the feet, otherwise the shadow
-// floats at the body's waist and reads as a detached oval. Exported so the
-// Player and every DanneNpc share one source of truth and cannot drift apart.
+// origin point sits 90% of the way down the sprite and the feet are only
+// height*(1-origin) = 48*0.1 ≈ 5px below the container/world origin. The ground
+// shadow must sit at the feet; placing it at height*(origin-0.5)=19 pushes it
+// ~14px below the feet, leaving a standalone black oval drifting beneath the
+// sprite (the orphan-oval defect near the JR desk). Exported so the Player and
+// every DanneNpc share one source of truth and cannot drift apart.
 export const ART_PACK_SPRITE_ORIGIN_Y = 0.9;
 export const ART_PACK_FOOT_OFFSET_Y = Math.round(
-  CHARACTER_FRAME.height * (ART_PACK_SPRITE_ORIGIN_Y - 0.5)
+  CHARACTER_FRAME.height * (1 - ART_PACK_SPRITE_ORIGIN_Y)
 );
 export const ART_PACK_LABEL_OFFSET_Y = ART_PACK_FOOT_OFFSET_Y + 3;
 

@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Office Hub orphan-oval final fix, pass 4 (2026-06-15):
+  - Live QA after PR #19 confirmed the green plant and JR sprite alignment were fixed but a standalone black oval still sat below the JR sprite, near the JR COMP/IN label, attached to nothing.
+  - Root cause: the pass-3 foot-offset formula was wrong. For a sprite with vertical origin `o`, the feet sit `height*(1-o)` below the origin, not `height*(o-0.5)`. With origin 0.9 the feet are `48*0.1 ≈ 5px` below the origin, but pass-3 computed `48*0.4 = 19` and placed the single NPC/Player ground shadow ~14px BELOW the feet. That detached shadow is the orphan oval. (Pass-2's original "5" was geometrically correct; pass-3 over-corrected it.)
+  - Fixed `ART_PACK_FOOT_OFFSET_Y` to `round(height*(1-origin)) = 5` (label `8`) in `src/art/characters.ts`; `Player` and every `DanneNpc` already consume the shared constant, so the shadow returns to the feet for the Junior Compiler, Marine Security Guard, and the player. No standalone black oval remains in the Office Hub; the only ellipses there are attached entity shadows and the intentional gold lamp-glow.
+  - Updated the regression test to assert the offset equals `height*(1-origin)=5` and added a guard that it never exceeds the feet (catching the 19-px regression). The blocky potted-plant art from pass-3 is unchanged.
+  - `npm test`: 8 files / 34 tests pass; `npm run build` (tsc + vite) passes with only the pre-existing Vite chunk-size warning.
+
 - Office Hub orphan-shadow + green-blob visual fix, pass 3 (2026-06-15):
   - Root cause of the live "detached black oval near JR" + "JR sprite looks fragmented/detached": the art-pack 32x48 sprite is drawn at scale 1 with origin (0.5, 0.9), so its feet sit `48*(0.9-0.5) = 19px` below the world origin, but `DanneNpc`/`Player` placed the ground shadow only 5px below origin. The shadow therefore floated at the body's waist and read as a standalone oval with the sprite hanging below it. Corrected the art-pack shadow offset to the feet (19) and the label to just below (22). Pass-2's "shadow y=5" was the actual bug, not a fix.
   - Extracted the geometry into shared exported constants in `src/art/characters.ts` (`ART_PACK_SPRITE_ORIGIN_Y`, `ART_PACK_FOOT_OFFSET_Y`, `ART_PACK_LABEL_OFFSET_Y`) so `Player` and every `DanneNpc` (Junior Compiler, Marine Security Guard) use one source of truth and cannot drift apart again.

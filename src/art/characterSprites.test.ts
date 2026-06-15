@@ -52,14 +52,20 @@ describe("character sprite frame layout", () => {
 });
 
 describe("art-pack ground shadow anchoring", () => {
-  // The 32x48 sprite is drawn at scale 1 with origin (0.5, 0.9), so its feet
-  // are height*(origin-0.5) px below the world origin. If the shadow offset
-  // does not match, the shadow floats up at the body's waist and reads as a
-  // detached oval (the live Office Hub "orphan shadow near JR" defect).
+  // The 32x48 sprite is drawn at scale 1 with origin (0.5, 0.9), so the origin
+  // sits 90% down the sprite and the feet are only height*(1-origin) ≈ 5px below
+  // the world origin. The shadow offset must equal that, or the shadow drops
+  // below the feet and leaves a standalone black oval drifting under the sprite
+  // (the live Office Hub "orphan shadow near JR" defect).
   it("places the foot offset at the sprite's feet", () => {
-    const expectedFeet = Math.round(CHARACTER_FRAME.height * (ART_PACK_SPRITE_ORIGIN_Y - 0.5));
+    const expectedFeet = Math.round(CHARACTER_FRAME.height * (1 - ART_PACK_SPRITE_ORIGIN_Y));
     expect(ART_PACK_FOOT_OFFSET_Y).toBe(expectedFeet);
-    expect(ART_PACK_FOOT_OFFSET_Y).toBe(19);
+    expect(ART_PACK_FOOT_OFFSET_Y).toBe(5);
+  });
+
+  it("keeps the foot offset within the sprite's lower body, not below it", () => {
+    // Guards against the regression where the offset was set to 19 (past the feet).
+    expect(ART_PACK_FOOT_OFFSET_Y).toBeLessThan(CHARACTER_FRAME.height * (1 - ART_PACK_SPRITE_ORIGIN_Y) + 2);
   });
 
   it("keeps the name label just below the feet", () => {

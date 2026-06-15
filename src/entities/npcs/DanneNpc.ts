@@ -46,13 +46,13 @@ export abstract class DanneNpc {
       ? options.characterKey
       : null;
     // The crisp 32x48 art-pack sprite is drawn at scale 1 with origin (0.5, 0.9),
-    // so its feet sit 48*(0.9-0.5) = ~19px below the container origin. The ground
-    // shadow and name label must sit at the feet, otherwise the shadow floats up at
-    // the body's waist and reads as a detached oval with the sprite hanging below it.
-    // The legacy DANN-E runtime fallback is a large photographic frame scaled to
-    // ~1/14 whose body fills a much taller region, so it needs the lower offsets the
-    // callers pass in. Choosing offsets per mode keeps the shadow attached to the
-    // feet and the label just below it in both cases.
+    // so its origin sits 90% down the sprite and its feet are only 48*(1-0.9) ≈ 5px
+    // below the container origin. The ground shadow and name label must sit at the
+    // feet (ART_PACK_FOOT_OFFSET_Y); a larger offset drops the shadow well below the
+    // feet and leaves a standalone black oval drifting under the sprite. The legacy
+    // DANN-E runtime fallback is a large photographic frame scaled to ~1/14 whose
+    // body fills a much taller region, so it needs the lower offsets the callers
+    // pass in. Choosing offsets per mode keeps the shadow attached in both cases.
     const usingArtPack = this.characterKey !== null;
     const shadowOffsetY = usingArtPack ? ART_PACK_FOOT_OFFSET_Y : options.shadowY ?? 12;
     const labelOffsetY = usingArtPack ? ART_PACK_LABEL_OFFSET_Y : options.labelY ?? 17;
