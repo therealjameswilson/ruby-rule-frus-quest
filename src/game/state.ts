@@ -1687,7 +1687,8 @@ export function getProductionBoardReadout() {
     reliability: gameState.reliability,
     volumeFragments: [...gameState.volumeFragments],
     finalGatePublished: gameState.finalGateCertification?.status === "published",
-    hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete)
+    hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
+    manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete)
   });
 }
 
@@ -1718,6 +1719,7 @@ export function seedProgressForScene(sceneName: string) {
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("archive");
+    gameState.sceneProgress.manuscriptReviewComplete = 1;
     gameState.reliability = Math.max(gameState.reliability, 90);
     for (const item of ["Telegram", "Source Note", "Cross-Ref"]) {
       addInventoryItem(item);

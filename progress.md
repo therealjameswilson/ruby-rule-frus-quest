@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Manuscript review production gate (2026-06-15):
+  - Added `src/game/manuscriptReview.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: manuscript review checks completeness, cohesion, concision, content appropriateness, and annotation accuracy, then proceeds through first-pass recommendations and a General Editor / series assessment.
+  - Inserted a first-class `manuscript_review` step into `src/game/frusProductionBoard.ts` between source notes and declassification review, so the board no longer jumps straight from provenance to clearance routing.
+  - Wired the Office Hub FRUS Cart so, after the existing Inbox -> Cart -> Terminal production check and Master Declass Key issuance, it becomes a physical manuscript-review station. Wrong shortcuts apply standards damage; correct answers move the core documents to `ready_for_review`, add document points, and persist `sceneProgress.manuscriptReviewComplete`.
+  - Later-scene QA seeds now mark manuscript review complete so `?scene=NetworkScene` and deeper debug links still boot with coherent production-board state.
+  - Verified focused tests: `npm test -- src/game/manuscriptReview.test.ts src/game/frusProductionBoard.test.ts` (2 files / 11 tests pass).
 - Publication apparatus final-assembly gate (2026-06-15):
   - Added `src/game/publicationApparatus.ts`, a Phaser-free final-assembly rule module based on the history.state.gov FRUS creation stages: preface/scope, sources consulted, persons/abbreviations, declassification accounting, and index/typeset proof check.
   - `getFinalGateReadiness()` and `getPublicationReadinessReadout()` now include `publicationApparatus`; the Buckram Gate remains locked until the apparatus is complete, in addition to stamps, fragments, reliability, standards cleanliness, and Buckram Key readiness.

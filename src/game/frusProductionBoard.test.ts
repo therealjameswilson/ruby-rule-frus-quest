@@ -20,6 +20,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     volumeFragments: [],
     finalGatePublished: false,
     hacReviewComplete: false,
+    manuscriptReviewComplete: false,
     ...overrides
   };
 }
@@ -37,6 +38,7 @@ describe("FRUS production board", () => {
       "records_access",
       "research_selection",
       "source_notes",
+      "manuscript_review",
       "declassification_review",
       "agency_referrals",
       "advisory_monitoring",
@@ -74,11 +76,39 @@ describe("FRUS production board", () => {
         "proof_lens"
       ]),
       documentPoints: 20,
-      reliability: 90
+      reliability: 90,
+      manuscriptReviewComplete: true
     }));
 
     expect(readout.steps.slice(0, 7).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("publication_30_year");
+  });
+
+  it("requires explicit manuscript review before the declassification board step opens", () => {
+    const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    documents[2] = {
+      ...documents[2],
+      workflowState: "citation_verified",
+      citationComplete: true
+    };
+    const unreviewed = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 20
+    }));
+    const reviewed = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 20,
+      manuscriptReviewComplete: true
+    }));
+
+    expect(unreviewed.nextStep?.id).toBe("manuscript_review");
+    expect(unreviewed.steps.find((step) => step.id === "declassification_review")?.status).toBe("locked");
+    expect(reviewed.steps.find((step) => step.id === "manuscript_review")?.complete).toBe(true);
+    expect(reviewed.nextStep?.id).toBe("declassification_review");
   });
 
   it("can complete HAC monitoring through the hearing even before the SOP stamp", () => {

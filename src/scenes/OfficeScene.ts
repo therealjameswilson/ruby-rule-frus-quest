@@ -26,6 +26,12 @@ import {
   researchCharterComplete,
   RESEARCH_CHARTER_PROMPTS
 } from "../game/researchCharter";
+import {
+  evaluateManuscriptReviewAnswer,
+  getManuscriptReviewPrompt,
+  manuscriptReviewComplete,
+  MANUSCRIPT_REVIEW_PROMPTS
+} from "../game/manuscriptReview";
 import type { Interactable } from "../game/types";
 import { Player } from "../entities/Player";
 import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
@@ -361,6 +367,10 @@ export class OfficeScene extends Phaser.Scene {
     const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
     const expected = progress === 0 ? "inbox" : progress === 1 ? "cart" : progress === 2 ? "terminal" : "done";
     if (expected === "done") {
+      if (station === "cart" && hasDanneItem("master-declass-key")) {
+        this.showManuscriptReviewChoice();
+        return;
+      }
       this.dialog.show("OFFICE CHECK", "The three production checks are complete. Return to the Junior Compiler.");
       return;
     }
@@ -480,13 +490,78 @@ export class OfficeScene extends Phaser.Scene {
     });
   }
 
+  private showManuscriptReviewChoice() {
+    if (!gameState.processStamps.includes("archive") && !gameState.sceneProgress.sourceNoteProvenanceComplete) {
+      retroAudio.warning();
+      this.dialog.show("MANUSCRIPT REVIEW", [
+        "The manuscript cart is not ready.",
+        "Verify source-note provenance in the Archive Guide before review."
+      ]);
+      return;
+    }
+    if (gameState.sceneProgress.manuscriptReviewComplete) {
+      this.dialog.show("MANUSCRIPT REVIEW", [
+        "Manuscript review is already filed.",
+        "Completeness, cohesion, concision, and annotation accuracy are logged.",
+        "Next: route the reviewed manuscript into declassification."
+      ]);
+      return;
+    }
+
+    const step = gameState.sceneProgress.manuscriptReviewStep ?? 0;
+    const prompt = getManuscriptReviewPrompt(step);
+    setObjective(`Manuscript Review: answer ${step + 1}/${MANUSCRIPT_REVIEW_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateManuscriptReviewAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Manuscript review shortcut: ${option.value}`);
+        this.toast.show("REVISE REVIEW", this.player.position, "warn");
+        this.dialog.show("MANUSCRIPT REVIEW", [
+          result.message,
+          "Review recommendations stay visible; DANN-E cannot launder the manuscript."
+        ], () => this.showManuscriptReviewChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.manuscriptReviewStep = nextStep;
+      if (!manuscriptReviewComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Manuscript review check ${nextStep}/${MANUSCRIPT_REVIEW_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("MANUSCRIPT REVIEW", [
+          result.message,
+          "Continue the human review before declassification routing."
+        ], () => this.showManuscriptReviewChoice());
+        return;
+      }
+
+      gameState.sceneProgress.manuscriptReviewComplete = 1;
+      gameState.sceneProgress.manuscriptReviewStep = MANUSCRIPT_REVIEW_PROMPTS.length;
+      for (const documentId of ["telegram_001", "source_note_047", "cross_reference_001", "sbu_annotation_001"]) {
+        setDocumentWorkflowState(documentId, "ready_for_review", "manuscript review checked completeness, cohesion, and annotation accuracy");
+      }
+      addDocumentPoints(10, "human manuscript review filed");
+      retroAudio.confirm();
+      setObjective("Manuscript review filed. Route the reviewed manuscript to declassification.");
+      setLatestMessage("Manuscript review filed: recommendations and series assessment complete.");
+      this.reliability.update();
+      this.dialog.show("MANUSCRIPT REVIEW", [
+        result.message,
+        "Manuscript review filed: completeness, cohesion, concision, and annotation accuracy checked.",
+        "The manuscript is ready for declassification routing."
+      ]);
+    });
+  }
+
   private openProductionBoard() {
     const board = getProductionBoardReadout();
     const next = board.nextStep;
-    const statusPages = [
-      board.steps.slice(0, 4).map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`).join("\n"),
-      board.steps.slice(4).map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`).join("\n")
-    ];
+    const statusPages = [0, 3, 6].map((start) => (
+      board.steps.slice(start, start + 3)
+        .map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`)
+        .join("\n")
+    )).filter((page) => page.length > 0);
     const coveragePage = `COVERAGE: ${board.researchCoverage.completed}/${board.researchCoverage.total}\n${board.researchCoverage.summary}`;
     retroAudio.confirm();
     setLatestMessage(next ? `Production board next: ${next.label}.` : "Production board complete.");
@@ -577,26 +652,26 @@ export class OfficeScene extends Phaser.Scene {
 
   private drawProductionBoard(x: number, y: number) {
     const board = getProductionBoardReadout();
-    this.add.rectangle(x, y, 34, 24, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
-    this.add.text(x, y - 9, "FRUS", {
+    this.add.rectangle(x, y, 36, 30, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
+    this.add.text(x, y - 12, "FRUS", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(-13);
     board.steps.forEach((step, index) => {
-      const col = index % 4;
-      const row = Math.floor(index / 4);
+      const col = index % 3;
+      const row = Math.floor(index / 3);
       const dotColor = step.complete
         ? PALETTE.openNetGreen
         : step.status === "active"
           ? PALETTE.terminalCyan
           : PALETTE.stoneGray;
-      this.add.rectangle(x - 12 + col * 8, y - 1 + row * 7, 5, 5, color(dotColor)).setDepth(-13);
+      this.add.rectangle(x - 9 + col * 9, y - 4 + row * 7, 5, 5, color(dotColor)).setDepth(-13);
       if (step.status === "active") {
-        this.add.rectangle(x - 12 + col * 8, y - 1 + row * 7, 7, 7).setStrokeStyle(1, color(PALETTE.white), 0.85).setDepth(-12);
+        this.add.rectangle(x - 9 + col * 9, y - 4 + row * 7, 7, 7).setStrokeStyle(1, color(PALETTE.white), 0.85).setDepth(-12);
       }
     });
-    this.add.rectangle(x, y + 10, 24, 2, color(PALETTE.buckramRed)).setDepth(-13);
+    this.add.rectangle(x, y + 12, 24, 2, color(PALETTE.buckramRed)).setDepth(-13);
   }
 
   private drawOfficeProps() {

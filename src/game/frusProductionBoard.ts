@@ -7,6 +7,7 @@ export type FrusProductionBoardStepId =
   | "records_access"
   | "research_selection"
   | "source_notes"
+  | "manuscript_review"
   | "declassification_review"
   | "agency_referrals"
   | "advisory_monitoring"
@@ -25,6 +26,7 @@ export interface FrusProductionBoardContext {
   volumeFragments: readonly string[];
   finalGatePublished: boolean;
   hacReviewComplete: boolean;
+  manuscriptReviewComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -53,6 +55,7 @@ export interface FrusProductionBoardReadout {
 
 const ABOUT_FRUS_URL = "https://history.state.gov/historicaldocuments/about-frus";
 const HAC_URL = "https://history.state.gov/about/hac/intro";
+const FRUS_STAGES_URL = "https://history.state.gov/historicaldocuments/frus-history/stages";
 
 export const FRUS_PRODUCTION_BOARD_STEPS = [
   {
@@ -78,6 +81,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "FRUS must be thorough, accurate, and reliable across the national security record.",
     sourceUrl: ABOUT_FRUS_URL,
     gameplayTask: "Verify Source Note 47 at the research table with the Citation Stamp."
+  },
+  {
+    id: "manuscript_review",
+    label: "Manuscript review",
+    shortLabel: "REV",
+    sourceBasis: "FRUS manuscripts receive human review for completeness, cohesion, concision, content appropriateness, and annotation accuracy.",
+    sourceUrl: FRUS_STAGES_URL,
+    gameplayTask: "Run the FRUS Cart manuscript review: first-pass recommendations, then series assessment."
   },
   {
     id: "declassification_review",
@@ -177,6 +188,10 @@ export function isFrusProductionBoardStepComplete(
       return stamps.has("archive")
         || context.heldProcessItems.has("citation_stamp")
         || hasDocumentAtOrBeyond(context, ["citation_verified", "annotation_needed", "ready_for_review"]);
+    case "manuscript_review":
+      return context.manuscriptReviewComplete
+        || hasDocumentAtOrBeyond(context, ["ready_for_review", "submitted_for_review", "referred", "cleared", "ready_for_proof", "proofed", "published"])
+        || volumeAtLeast(context, "declassification_review");
     case "declassification_review":
       return stamps.has("network")
         || context.heldProcessItems.has("clearance_token")
