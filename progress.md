@@ -16,6 +16,9 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Added persistent unresolved Kellogg-standard blockers for concealed policy defects, omitted material facts, altered text, missed 30-year deadline damage, and document-level undisclosed deletions.
   - Final Gate and `render_game_to_text()` now expose those blockers, so DANN-E shortcuts and wrong-network/referral choices cannot hide behind a simple reliability number.
   - Bracketed insertion repairs in Silent Read / Referral Vault clear the corresponding document-level standards blocker before publication.
+- Office scope charter gameplay (2026-06-15):
+  - Added a source-backed three-question scope charter at the Office Hub SCOPE desk covering volume scope/content planning, 20-year full records access, and Kellogg selection standards.
+  - Completing the charter awards the Golden Rule stamp, files candidate documents, and advances the Production Board toward source-note verification.
 
 - Post-PR27 live-QA fixes — ESC overlay close + interact feedback that the cloud browser swallowed (2026-06-15):
   - Two FAILs remained after PR #27: (1) pressing interact away from a target never visibly showed `STEP CLOSER`/`NOTHING TO INTERACT WITH`, and (2) ESC would not close the M inventory or Tab codex (their M/Tab toggles still worked). Both trace to the same root cause class PR27 fixed for *movement*, but for the discrete action/cancel keys, plus a stuck ESC-suppression latch.

@@ -1,17 +1,26 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
+  addDocumentPoints,
   addDanneItem,
+  awardProcessStamp,
   gameState,
   getProductionBoardReadout,
   hasDanneItem,
   setLatestMessage,
+  setDocumentWorkflowState,
   setNearestInteractable,
   setObjective,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
+import {
+  evaluateResearchCharterAnswer,
+  getResearchCharterPrompt,
+  researchCharterComplete,
+  RESEARCH_CHARTER_PROMPTS
+} from "../game/researchCharter";
 import type { Interactable } from "../game/types";
 import { Player } from "../entities/Player";
 import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
@@ -32,6 +41,7 @@ import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { shouldDismissControlsCard } from "../systems/tutorialDismiss";
 import { drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
+import { ChoicePrompt } from "../systems/verification";
 
 type OfficeDanneRoute = "CherryBlossomGardenScene" | "SenateHearingChamberScene";
 
@@ -43,6 +53,7 @@ export class OfficeScene extends Phaser.Scene {
   private player!: Player;
   private juniorCompiler!: JuniorCompiler;
   private dialog!: DialogBox;
+  private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private hintText!: Phaser.GameObjects.Text;
@@ -74,6 +85,7 @@ export class OfficeScene extends Phaser.Scene {
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 184);
     this.juniorCompiler = new JuniorCompiler(this, 70, 122);
     this.dialog = new DialogBox(this);
+    this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 10, this.controlsHint, {
@@ -108,6 +120,15 @@ export class OfficeScene extends Phaser.Scene {
         radius: 28,
         kind: "document",
         onInteract: () => this.handleJuniorQuestStation("inbox")
+      },
+      {
+        id: "scope-charter-desk",
+        label: "Scope Charter Desk",
+        x: 158,
+        y: 116,
+        radius: 34,
+        kind: "document",
+        onInteract: () => this.showResearchCharterChoice()
       },
       {
         id: "frus-cart",
@@ -167,6 +188,7 @@ export class OfficeScene extends Phaser.Scene {
     setVisibleEntities([
       "Junior Compiler",
       "Production Inbox",
+      "Scope Charter Desk",
       "FRUS Cart",
       "Archive Terminal",
       "FRUS Production Board",
@@ -202,6 +224,14 @@ export class OfficeScene extends Phaser.Scene {
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.toast.update(delta, this.player.position);
+      return;
+    }
+    if (this.choice.active) {
+      this.choice.updateInput();
+      this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
+      this.reliability.update();
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
@@ -349,6 +379,60 @@ export class OfficeScene extends Phaser.Scene {
     ]);
   }
 
+  private showResearchCharterChoice() {
+    if (gameState.processStamps.includes("rule") || gameState.sceneProgress.researchCharterComplete) {
+      this.dialog.show("SCOPE CHARTER", [
+        "Golden Rule charter is already filed.",
+        "Scope, records access, and Kellogg standards are on the production board.",
+        "Next: verify source notes with the Archive Guide."
+      ]);
+      return;
+    }
+
+    const step = gameState.sceneProgress.researchCharterStep ?? 0;
+    const prompt = getResearchCharterPrompt(step);
+    setObjective(`Scope Charter: answer ${step + 1}/${RESEARCH_CHARTER_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateResearchCharterAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        this.toast.show("REVISE CHARTER", this.player.position, "warn");
+        this.dialog.show("SCOPE CHARTER", [
+          result.message,
+          "A FRUS volume starts with human scope and source discipline."
+        ], () => this.showResearchCharterChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.researchCharterStep = nextStep;
+      if (!researchCharterComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Scope charter check ${nextStep}/${RESEARCH_CHARTER_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("SCOPE CHARTER", [
+          result.message,
+          "Continue the charter before opening the archive route."
+        ], () => this.showResearchCharterChoice());
+        return;
+      }
+
+      gameState.sceneProgress.researchCharterComplete = 1;
+      awardProcessStamp("rule");
+      setDocumentWorkflowState("telegram_001", "candidate", "scope charter identified first candidate set");
+      setDocumentWorkflowState("doc-001", "candidate", "scope charter identified policy record");
+      addDocumentPoints(6, "scope charter and 20-year access plan filed");
+      retroAudio.stamp();
+      setLatestMessage("Golden Rule charter filed: scope, 20-year access, and Kellogg standards recorded.");
+      setObjective("Golden Rule filed. Enter the Archive Guide to verify source notes.");
+      this.reliability.update();
+      this.dialog.show("SCOPE CHARTER", [
+        result.message,
+        "Golden Rule filed: plan scope, use 20-year access, preserve material facts.",
+        "The Office Hub route now points to source-note verification."
+      ]);
+    });
+  }
+
   private openProductionBoard() {
     const board = getProductionBoardReadout();
     const next = board.nextStep;
@@ -401,7 +485,7 @@ export class OfficeScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(21);
     this.drawDesk(70, 92, "JR");
-    this.drawDesk(186, 92, "FILES");
+    this.drawDesk(186, 92, "SCOPE");
     this.drawDesk(60, 154, "IN");
     this.drawTerminalDesk(195, 154);
     this.add.rectangle(128, 132, 40, 18, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-5);
