@@ -1013,7 +1013,8 @@ export function getFinalGateReadiness() {
     volumeFragments: gameState.volumeFragments,
     documentCandidates: gameState.documentCandidates,
     documentPoints: gameState.documentPoints,
-    typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete)
+    typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
+    frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete)
   });
   const documentsWithUndisclosedDeletion = gameState.documentCandidates
     .filter((document) => document.undisclosedDeletion)

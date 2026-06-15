@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Front matter assembly gameplay gate (2026-06-15):
+  - Added `src/game/frontMatterAssembly.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: final publication apparatus includes preface/scope framing, sources consulted, persons and abbreviations, proofed pages, and the index.
+  - Expanded `publicationApparatus` from five to six components by adding `front_matter_assembly`, so recovered fragments and proofing no longer imply the final reader apparatus has been assembled.
+  - Wired `EndingScene` so the Buckram Gate can be otherwise ready but still requires a Space-triggered front matter assembly sequence at the human publication table before Kellogg certification and GPO handoff.
+  - Wrong apparatus shortcuts apply standards damage (`omitted_material_fact`, `altered_text`, or `concealed_policy_defect`); correct answers file `sceneProgress.frontMatterAssemblyComplete` and add document points.
+  - Verified focused tests: `npm test -- src/game/frontMatterAssembly.test.ts src/game/publicationApparatus.test.ts src/game/standardsViolations.test.ts` (3 files / 16 tests pass).
+  - Verified full `npm test`: 34 files / 184 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client against production preview at `?scene=EndingScene&role=compiler&name=Ruby` reports `nearestInteractable: "ASSEMBLE FRONT MATTER"`, `publicationApparatus.completed: 5/6`, missing summary `Apparatus ASM`, and `buckramGateOpen: false`. The generated headless WebGL screenshot remains black as previously documented.
 - Foreign-government permission gameplay gate (2026-06-15):
   - Added `src/game/foreignGovernmentPermission.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: selected foreign-government information may require permission, and the publication packet must preserve a visible permission or withholding outcome.
   - Inserted `foreign_permissions` into the FRUS Production Board after `declassification_review` and before `agency_referrals`, making the clearance path more faithful to the actual FRUS review sequence.

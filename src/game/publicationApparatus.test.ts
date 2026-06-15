@@ -32,6 +32,7 @@ function context(overrides: Partial<{
   documentCandidates: DocumentCandidate[];
   documentPoints: number;
   typesetterProofComplete: boolean;
+  frontMatterAssemblyComplete: boolean;
 }> = {}) {
   return {
     processStamps: [] as ProcessStampId[],
@@ -39,6 +40,7 @@ function context(overrides: Partial<{
     documentCandidates: INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate),
     documentPoints: 0,
     typesetterProofComplete: false,
+    frontMatterAssemblyComplete: false,
     ...overrides
   };
 }
@@ -53,7 +55,8 @@ describe("publication apparatus", () => {
       "sources_consulted",
       "persons_abbreviations",
       "declassification_accounting",
-      "index_typeset_check"
+      "index_typeset_check",
+      "front_matter_assembly"
     ]);
     expect(readout.complete).toBe(false);
   });
@@ -69,7 +72,8 @@ describe("publication apparatus", () => {
       "preface_scope",
       "sources_consulted",
       "declassification_accounting",
-      "index_typeset_check"
+      "index_typeset_check",
+      "front_matter_assembly"
     ]);
   });
 
@@ -79,7 +83,8 @@ describe("publication apparatus", () => {
       volumeFragments: ALL_FRAGMENTS,
       documentCandidates: selectedBalancedDocuments(),
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
-      typesetterProofComplete: true
+      typesetterProofComplete: true,
+      frontMatterAssemblyComplete: true
     });
     const readout = getPublicationApparatusReadout(completeContext);
 
@@ -96,7 +101,8 @@ describe("publication apparatus", () => {
       volumeFragments: ALL_FRAGMENTS,
       documentCandidates: documents,
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
-      typesetterProofComplete: true
+      typesetterProofComplete: true,
+      frontMatterAssemblyComplete: true
     }));
 
     expect(readout.complete).toBe(false);
@@ -113,5 +119,18 @@ describe("publication apparatus", () => {
 
     expect(readout.complete).toBe(false);
     expect(readout.missing.map((component) => component.id)).toContain("index_typeset_check");
+  });
+
+  it("blocks publication apparatus until front matter assembly is filed", () => {
+    const readout = getPublicationApparatusReadout(context({
+      processStamps: ["rule", "referral", "proof"],
+      volumeFragments: ALL_FRAGMENTS,
+      documentCandidates: selectedBalancedDocuments(),
+      documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
+      typesetterProofComplete: true
+    }));
+
+    expect(readout.complete).toBe(false);
+    expect(readout.missing.map((component) => component.id)).toEqual(["front_matter_assembly"]);
   });
 });

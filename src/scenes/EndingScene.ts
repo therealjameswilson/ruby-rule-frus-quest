@@ -13,6 +13,13 @@ import {
   gpoPublicationComplete
 } from "../game/gpoPublication";
 import {
+  evaluateFrontMatterAssemblyAnswer,
+  frontMatterAssemblyComplete,
+  FRONT_MATTER_ASSEMBLY_PROMPTS,
+  getFrontMatterAssemblyPrompt
+} from "../game/frontMatterAssembly";
+import {
+  addDocumentPoints,
   addInventoryItem,
   addProcessItem,
   gameState,
@@ -268,6 +275,7 @@ export class EndingScene extends Phaser.Scene {
     const readiness = getFinalGateReadiness();
     const ready = readiness.ready && hasProcessItem("buckram_key");
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
+    const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
     const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
     const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
@@ -278,6 +286,8 @@ export class EndingScene extends Phaser.Scene {
           ? "Buckram Key ready: GPO handoff complete; publish the volume."
           : "Final certification complete: route the finished volume to GPO."
         : "Buckram Key ready: complete the final Kellogg certification."
+      : canAssembleApparatus
+        ? "Buckram Gate waits for front matter assembly at the human publication table."
       : canCorrectCertification
         ? "Final certification needs repair at the human publication table."
       : "Buckram Gate locked: StateChat may checklist, but humans must complete readiness.";
@@ -309,6 +319,14 @@ export class EndingScene extends Phaser.Scene {
         : "MOVE TO CERTIFICATION TABLE.");
       return;
     }
+    if (canAssembleApparatus) {
+      setNearestInteractable(nearGate ? "ASSEMBLE FRONT MATTER" : null);
+      setObjective(nearGate
+        ? "Buckram Gate: press Space to assemble front matter and reader aids."
+        : "Return to the publication table to assemble front matter.");
+      this.actionHint.setText(nearGate ? "SPACE: ASSEMBLE FRONT MATTER" : "MOVE TO PUBLICATION TABLE.");
+      return;
+    }
     if (canCorrectCertification) {
       setNearestInteractable(nearGate ? "REPAIR FINAL CERTIFICATION" : null);
       setObjective(nearGate ? "Repair final certification: press Space to rerun Kellogg checks." : "Return to the publication table to repair certification.");
@@ -332,10 +350,15 @@ export class EndingScene extends Phaser.Scene {
     const readiness = getFinalGateReadiness();
     const ready = readiness.ready && hasProcessItem("buckram_key");
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
+    const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     if (!nearGate) {
       retroAudio.warning();
       setLatestMessage("Move to the human publication table before certifying.");
+      return;
+    }
+    if (!ready && canAssembleApparatus) {
+      this.startFrontMatterAssembly();
       return;
     }
     if (!ready && !canCorrectCertification) {
@@ -352,6 +375,48 @@ export class EndingScene extends Phaser.Scene {
       return;
     }
     this.publishVolume();
+  }
+
+  private startFrontMatterAssembly() {
+    if (gameState.sceneProgress.frontMatterAssemblyComplete) {
+      this.updateGateReadout();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      FRONT_MATTER_ASSEMBLY_PROMPTS.length - 1,
+      gameState.sceneProgress.frontMatterAssemblyStep ?? 0
+    ));
+    gameState.sceneProgress.frontMatterAssemblyStep = currentStep;
+    const prompt = getFrontMatterAssemblyPrompt(currentStep);
+    setObjective(`Front matter assembly: ${currentStep + 1}/${FRONT_MATTER_ASSEMBLY_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateFrontMatterAssemblyAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.frontMatterAssemblyStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `Front matter assembly: ${prompt.id}`);
+        }
+        setObjective("Front matter assembly: correct the publication apparatus before certification.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.frontMatterAssemblyStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!frontMatterAssemblyComplete(nextStep)) {
+        this.startFrontMatterAssembly();
+        return;
+      }
+
+      gameState.sceneProgress.frontMatterAssemblyComplete = 1;
+      gameState.sceneProgress.frontMatterAssemblyStep = FRONT_MATTER_ASSEMBLY_PROMPTS.length;
+      addDocumentPoints(6, "front matter and reader aids assembled");
+      setLatestMessage("Front matter assembled: preface, sources, persons, abbreviations, and index are ready.");
+      setObjective("Buckram Gate: press Space for final Kellogg certification.");
+      this.updateGateReadout();
+    });
   }
 
   private startKelloggCertification() {
@@ -445,6 +510,14 @@ export class EndingScene extends Phaser.Scene {
     if (!readiness.reliabilityReady) return false;
     return readiness.standardsViolations.length > 0
       && readiness.standardsViolations.every((record) => record.context?.startsWith(KELLOGG_CERTIFICATION_CONTEXT_PREFIX));
+  }
+
+  private canAssembleFrontMatter(readiness: ReturnType<typeof getFinalGateReadiness>) {
+    if (!hasProcessItem("buckram_key") || gameState.sceneProgress.frontMatterAssemblyComplete) return false;
+    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
+    if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
+    return readiness.missingApparatus.length > 0
+      && readiness.missingApparatus.every((component) => component.id === "front_matter_assembly");
   }
 
   private resolveKelloggCertificationViolations() {

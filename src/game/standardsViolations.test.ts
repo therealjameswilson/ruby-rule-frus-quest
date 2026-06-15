@@ -93,6 +93,11 @@ describe("standards violation ledger", () => {
 
     gameState.sceneProgress.typesetterProofComplete = 1;
 
+    expect(getFinalGateReadiness().publicationApparatus.complete).toBe(false);
+    expect(getPublicationReadinessReadout().missingSummary).toContain("Apparatus ASM");
+
+    gameState.sceneProgress.frontMatterAssemblyComplete = 1;
+
     expect(getFinalGateReadiness().publicationApparatus.complete).toBe(true);
   });
 });
