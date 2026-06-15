@@ -40,7 +40,16 @@ export abstract class DanneNpc {
     this.characterKey = options.characterKey && scene.textures.exists(options.characterKey)
       ? options.characterKey
       : null;
-    const shadow = scene.add.ellipse(0, options.shadowY ?? 12, 20, 6, color(PALETTE.black));
+    // The crisp 32x48 art-pack sprite anchors its feet near the container origin
+    // (origin 0.5, 0.9 => feet ~5px below center), so its ground shadow and name
+    // label sit close to the body. The legacy DANN-E runtime fallback is a large
+    // photographic frame scaled to ~1/14 whose body fills a much taller region, so
+    // it needs the lower offsets the callers pass in. Choosing offsets per mode keeps
+    // the shadow attached to the feet and the label just below it in both cases.
+    const usingArtPack = this.characterKey !== null;
+    const shadowOffsetY = usingArtPack ? 5 : options.shadowY ?? 12;
+    const labelOffsetY = usingArtPack ? 8 : options.labelY ?? 17;
+    const shadow = scene.add.ellipse(0, shadowOffsetY, 20, 6, color(PALETTE.black));
     if (this.characterKey) {
       this.sprite = scene.add.sprite(0, 0, this.characterKey).setOrigin(0.5, 0.9).setScale(1);
     } else {
@@ -49,7 +58,7 @@ export abstract class DanneNpc {
         .setOrigin(0.5, 0.88)
         .setScale(options.scale ?? 1 / 14);
     }
-    const label = scene.add.text(0, options.labelY ?? 17, options.label, {
+    const label = scene.add.text(0, labelOffsetY, options.label, {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.creamPaper,

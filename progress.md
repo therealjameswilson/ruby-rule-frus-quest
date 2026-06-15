@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Character sprite verification + NPC offset fix (2026-06-15):
+  - Verified the ten native art-pack character spritesheets (`public/assets/art-pack/sprites/native/*.png`) are valid 128x192 RGBA images sliced into a clean 4x4 / 32x48 grid (16 cells, 15 used). Confirmed `character_anims.ts` frame indices (0-14) all stay in bounds, the boot loader filters every texture to NEAREST, and `config.ts` keeps `pixelArt`/`roundPixels` on — so the sprites themselves are not corrupt.
+  - Root-caused the lingering "detached shadow / mislabelled NPC" artifact: `DanneNpc` still positioned its ground shadow at `shadowY:16` and name label at `labelY:22` even when rendering the crisp 32x48 art-pack sprite (feet sit ~5px below the container origin). Those values were tuned for the legacy scaled-down DANN-E photo fallback. `DanneNpc` now picks shadow/label offsets per render mode (art-pack: shadow y=5, label y=8 — matching `Player`/`HistorianNPC`; legacy fallback keeps the caller-supplied offsets), so the Junior Compiler and Marine Security Guard shadows stay attached to their feet.
+  - `HistorianNPC` now plays `idle-down` instead of a looping `walk-down` while standing still, matching the documented idle-NPC intent.
+  - Added `src/art/characterSprites.test.ts` regression suite locking the 4x4/32x48 frame grid, in-bounds + gapless animation frame indices, and role/NPC/colleague -> character-key selection.
+  - Swept the live QA list (title/map clipping, character-create layout, control prompts, ESC/menu, boot loader, HUD/codex, scene re-entry, responsive/touch) and found them already correct; no further changes needed.
+  - Verified `npm test`: 7 files / 27 tests pass; `npm run build` (tsc + vite) passes with only the pre-existing Vite chunk-size warning.
+
 - Visual/gameplay polish + art pass (2026-06-15):
   - Fixed corrupted Office NPC rendering: `JuniorCompiler` and `MarineSecurityGuard` now use the crisp 32x48 character spritesheets via a new `characterKey` option on `DanneNpc` instead of scaling large photographic runtime PNGs down to noise; shadow/label offsets and NPC placement adjusted so sprites no longer overlap the desk.
   - HUD `REL` readout now shows a numeric `REL nnn%` value instead of the block-glyph meter that rendered as tofu boxes in the small monospace HUD font.
