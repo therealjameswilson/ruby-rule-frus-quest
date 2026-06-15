@@ -56,7 +56,7 @@ export class OfficeScene extends Phaser.Scene {
 
     const returnSpawn = this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 184);
-    this.juniorCompiler = new JuniorCompiler(this, 70, 116);
+    this.juniorCompiler = new JuniorCompiler(this, 70, 122);
     this.dialog = new DialogBox(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
@@ -307,6 +307,9 @@ export class OfficeScene extends Phaser.Scene {
 
   private drawOfficeInterior() {
     this.add.rectangle(128, 128, 210, 160, color(PALETTE.creamPaper)).setDepth(-20);
+    this.drawFloorPattern();
+    this.drawWallDressing();
+    this.drawOfficeProps();
     this.add.rectangle(128, 43, 208, 12, color(PALETTE.sepiaInk)).setDepth(-15);
     this.drawSmallDoor(39, 47, "GARDEN", PALETTE.openNetGreen);
     this.drawSmallDoor(215, 47, "SENATE", PALETTE.goldStamp);
@@ -328,6 +331,61 @@ export class OfficeScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.black
     }).setOrigin(0.5).setDepth(-3);
+  }
+
+  private drawFloorPattern() {
+    // Subtle checker tiling across the cream floor to break up the empty space.
+    for (let row = 0; row < 7; row += 1) {
+      for (let col = 0; col < 9; col += 1) {
+        if ((row + col) % 2 !== 0) continue;
+        const x = 32 + col * 24;
+        const y = 58 + row * 24;
+        this.add.rectangle(x, y, 22, 22, color(PALETTE.sepiaInk), 0.16).setDepth(-19);
+      }
+    }
+    // Central archive runner rug leading from the entrance to the FRUS cart.
+    this.add.rectangle(128, 176, 70, 78, color(PALETTE.buckramRed), 0.55).setDepth(-18);
+    this.add.rectangle(128, 176, 60, 68, color(PALETTE.deepRuby), 0.45)
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-17);
+    this.add.rectangle(128, 176, 46, 54).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-16);
+  }
+
+  private drawWallDressing() {
+    // Framed wall map and reference charts on the back wall strip (above desks).
+    this.add.rectangle(108, 60, 30, 20, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
+    this.add.rectangle(108, 60, 24, 14, color(PALETTE.mapWater)).setDepth(-13);
+    this.add.rectangle(102, 58, 6, 4, color(PALETTE.openNetGreen)).setDepth(-12);
+    this.add.rectangle(113, 62, 5, 5, color(PALETTE.archiveAmber)).setDepth(-12);
+    this.add.rectangle(148, 60, 26, 18, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-14);
+    for (let i = 0; i < 4; i += 1) {
+      this.add.rectangle(148, 55 + i * 4, 18, 1, color(PALETTE.sepiaInk), 0.7).setDepth(-13);
+    }
+    // Hanging archive banner near the senate door.
+    this.add.rectangle(128, 52, 18, 14, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
+    this.add.rectangle(128, 50, 10, 6, color(PALETTE.goldStamp)).setDepth(-13);
+  }
+
+  private drawOfficeProps() {
+    // Stacked archive boxes in the lower-left corner.
+    this.drawArchiveBox(28, 196);
+    this.drawArchiveBox(28, 182);
+    this.drawArchiveBox(40, 198);
+    // Document stacks on the floor near the FILES desk.
+    this.add.rectangle(214, 116, 12, 4, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
+    this.add.rectangle(214, 112, 11, 4, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
+    // Potted plant in the lower-right corner for warmth.
+    this.add.rectangle(228, 200, 8, 7, color(PALETTE.sepiaInk)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-6);
+    this.add.ellipse(228, 191, 14, 12, color(PALETTE.openNetGreen)).setDepth(-5);
+    this.add.ellipse(224, 188, 7, 8, color(PALETTE.openNetGreen)).setDepth(-5);
+    this.add.ellipse(232, 189, 7, 8, color(PALETTE.openNetGreen)).setDepth(-5);
+    // Desk lamp glow on the terminal desk.
+    this.add.ellipse(195, 150, 30, 16, color(PALETTE.goldStamp), 0.18).setDepth(-7);
+  }
+
+  private drawArchiveBox(x: number, y: number) {
+    this.add.rectangle(x, y, 14, 11, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
+    this.add.rectangle(x, y - 3, 14, 3, color(PALETTE.sepiaInk), 0.5).setDepth(-5);
+    this.add.rectangle(x, y + 1, 8, 3, color(PALETTE.creamPaper)).setDepth(-5);
   }
 
   private drawDesk(x: number, y: number, label: string) {

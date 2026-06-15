@@ -2,6 +2,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Visual/gameplay polish + art pass (2026-06-15):
+  - Fixed corrupted Office NPC rendering: `JuniorCompiler` and `MarineSecurityGuard` now use the crisp 32x48 character spritesheets via a new `characterKey` option on `DanneNpc` instead of scaling large photographic runtime PNGs down to noise; shadow/label offsets and NPC placement adjusted so sprites no longer overlap the desk.
+  - HUD `REL` readout now shows a numeric `REL nnn%` value instead of the block-glyph meter that rendered as tofu boxes in the small monospace HUD font.
+  - `InventoryOverlay` now closes on `ESC` (keyboard) in every scene, with a one-frame input swallow so the same press does not re-trigger pause.
+  - Title screen: split `CONTROLS_TEXT` into two centered lines and slightly reduced the `RUBY RULE` logo size so neither the logo nor the controls bar clip at the canvas edges.
+  - Character create: even 5-card layout (`startX`/`stepX`) with word-wrapped role labels, and a narrower remit wrap width so the rightmost card label ("SOURCE NOTE SPECIALIST") and descriptions no longer truncate.
+  - Added an HTML/CSS `#boot-loader` shown during initial boot and dismissed once the first non-Boot scene renders (8s fallback), replacing the blank dark-maroon canvas.
+  - Enlivened the Office Hub: floor checker pattern, archive runner rug, framed wall map/charts, hanging banner, stacked archive boxes, document stacks, potted plant, and a terminal desk lamp glow — all behind the player and clear of doors/interactables.
+  - Incorporated the supplied DC overworld map (`public/assets/art-pack/screens/frus_world_map.jpg`, downscaled to 768x512 / ~159 KB) as a framed "FRUS PRODUCTION MAP" briefing centerpiece on the TitleScene; registered via a new `SCREENS` art registry.
+  - Movement evaluated: the slow single-keypress feel is the intended hold-to-move acceleration model (speed 58, accel 720); left unchanged to avoid regressions, controls now clarify "ARROWS/WASD MOVE".
+  - Verified `npm test`: 6 files / 19 tests pass; `npm run build` passes with only the pre-existing Vite chunk-size warning.
+
 - Scene re-entry bug pass:
   - `WorldMapScene` now resets `numberKeysInstalled` on `SHUTDOWN` so the region `1`-`5` shortcuts keep working after returning from a gameplay map (previously they broke permanently on the first revisit because the keydown handler was removed but the install flag was never cleared)
   - `CharacterCreateScene.create()` now resets `roleIndex`, `displayName`, `locked`, `nameFocused`, and the `cards` array; re-entering after any ending returned the reused scene instance with `locked === true` (soft-locking confirm) and stacked duplicate role cards

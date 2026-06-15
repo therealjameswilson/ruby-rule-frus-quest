@@ -13,9 +13,9 @@ export class JuniorCompiler extends DanneNpc {
     unlockCodexEntry("npc-junior-compiler");
     super(scene, JUNIOR_COMPILER_ASSET, "Junior Compiler", x, y, {
       label: "JR COMP",
-      scale: 0.18,
-      labelY: 18,
-      shadowY: 13
+      characterKey: "compiler",
+      labelY: 22,
+      shadowY: 16
     });
   }
 

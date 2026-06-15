@@ -49,17 +49,23 @@ export const FRUS_VOLUMES = {
   interact_open_maps: "art-pack/frus_volumes/16_open_volume_with_maps.png"
 } as const;
 
+export const SCREENS = {
+  frus_world_map: "art-pack/screens/frus_world_map.jpg"
+} as const;
+
 export const ALL_NEW_ART_REGISTRIES = {
   OVERWORLD_REGIONS,
   GAMEPLAY_MAPS,
-  FRUS_VOLUMES
+  FRUS_VOLUMES,
+  SCREENS
 } as const;
 
 export type OverworldRegionKey = keyof typeof OVERWORLD_REGIONS;
 export type GameplayMapKey = keyof typeof GAMEPLAY_MAPS;
 export type FrusVolumeKey = keyof typeof FRUS_VOLUMES;
+export type ScreenKey = keyof typeof SCREENS;
 export type NewArtRegistryName = keyof typeof ALL_NEW_ART_REGISTRIES;
-export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey;
+export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey | ScreenKey;
 
 export function gameplayTiledCacheKey(mapKey: GameplayMapKey) {
   return `tiled-${mapKey}`;
