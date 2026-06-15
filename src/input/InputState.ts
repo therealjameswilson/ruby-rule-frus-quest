@@ -144,7 +144,9 @@ const emptyState: InputState = {
 let currentState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 let previousState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 const keyboardDown = new Set<string>();
+const pendingKeyPresses = new Set<string>();
 const touchDown = new Set<TouchControlKey>();
+const pendingTouchPresses = new Set<TouchControlKey>();
 const pendingTypedCharacters: string[] = [];
 const pendingPointerStarts: Array<{ x: number; y: number }> = [];
 const activePointerIds = new Set<number>();
@@ -184,8 +186,16 @@ function isKeyboardDown(...codes: string[]) {
   return codes.some((code) => keyboardDown.has(code));
 }
 
+function isKeyboardPressedThisTick(...codes: string[]) {
+  return codes.some((code) => pendingKeyPresses.has(code));
+}
+
 function isTouchDown(...keys: TouchControlKey[]) {
   return keys.some((key) => touchDown.has(key));
+}
+
+function isTouchPressedThisTick(...keys: TouchControlKey[]) {
+  return keys.some((key) => pendingTouchPresses.has(key));
 }
 
 function getConnectedGamepads() {
@@ -356,6 +366,7 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
     }
     preventGameKeyDefault(event);
     if (!event.repeat && directionKeyMap[event.code]) lastDirection = directionKeyMap[event.code]!;
+    if (!event.repeat) pendingKeyPresses.add(event.code);
     keyboardDown.add(event.code);
     if (!event.repeat && /^[a-zA-Z]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey) {
       pendingTypedCharacters.push(event.key);
@@ -440,6 +451,8 @@ export function tickInput() {
     swallowNextFrame = false;
     pendingTypedCharacters.length = 0;
     pendingPointerStarts.length = 0;
+    pendingKeyPresses.clear();
+    pendingTouchPresses.clear();
     currentState = { ...emptyState, dir: { ...emptyState.dir } };
     previousChoiceDown.choiceA = false;
     previousChoiceDown.choiceB = false;
@@ -458,34 +471,40 @@ export function tickInput() {
   syncGamepadConnection(gamepadSnapshot);
   notifyGamepadGestureIfNeeded(gamepadSnapshot);
 
-  const left = isKeyboardDown("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
-  const right = isKeyboardDown("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
-  const up = isKeyboardDown("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
-  const down = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
+  const left = isKeyboardDown("ArrowLeft", "KeyA") || isKeyboardPressedThisTick("ArrowLeft", "KeyA") || isTouchDown("left") || isTouchPressedThisTick("left") || gamepadDirectionDown("left", gamepadSnapshot);
+  const right = isKeyboardDown("ArrowRight", "KeyD") || isKeyboardPressedThisTick("ArrowRight", "KeyD") || isTouchDown("right") || isTouchPressedThisTick("right") || gamepadDirectionDown("right", gamepadSnapshot);
+  const up = isKeyboardDown("ArrowUp", "KeyW") || isKeyboardPressedThisTick("ArrowUp", "KeyW") || isTouchDown("up") || isTouchPressedThisTick("up") || gamepadDirectionDown("up", gamepadSnapshot);
+  const down = isKeyboardDown("ArrowDown", "KeyS") || isKeyboardPressedThisTick("ArrowDown", "KeyS") || isTouchDown("down") || isTouchPressedThisTick("down") || gamepadDirectionDown("down", gamepadSnapshot);
   const dir = computeAxis(left, right, up, down);
   if (gamepadSnapshot.direction) lastDirection = gamepadSnapshot.direction;
-  const navLeft = isKeyboardDown("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
-  const navRight = isKeyboardDown("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
-  const navUp = isKeyboardDown("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
-  const navDown = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
+  const navLeft = isKeyboardDown("ArrowLeft", "KeyA") || isKeyboardPressedThisTick("ArrowLeft", "KeyA") || isTouchDown("left") || isTouchPressedThisTick("left") || gamepadDirectionDown("left", gamepadSnapshot);
+  const navRight = isKeyboardDown("ArrowRight", "KeyD") || isKeyboardPressedThisTick("ArrowRight", "KeyD") || isTouchDown("right") || isTouchPressedThisTick("right") || gamepadDirectionDown("right", gamepadSnapshot);
+  const navUp = isKeyboardDown("ArrowUp", "KeyW") || isKeyboardPressedThisTick("ArrowUp", "KeyW") || isTouchDown("up") || isTouchPressedThisTick("up") || gamepadDirectionDown("up", gamepadSnapshot);
+  const navDown = isKeyboardDown("ArrowDown", "KeyS") || isKeyboardPressedThisTick("ArrowDown", "KeyS") || isTouchDown("down") || isTouchPressedThisTick("down") || gamepadDirectionDown("down", gamepadSnapshot);
 
-  const a = isKeyboardDown("Space", "Enter") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
-  const b = isKeyboardDown("ShiftLeft", "ShiftRight") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
-  const confirm = isKeyboardDown("Enter", "Space") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
-  const cancel = isKeyboardDown("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
-  const start = isKeyboardDown("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
-  const select = isKeyboardDown("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
-  const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2], gamepadSnapshot);
-  const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
-  const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
-  const sound = isKeyboardDown("KeyN") || isTouchDown("n");
-  const fullscreen = isKeyboardDown("KeyF");
-  const pause = isKeyboardDown("Escape");
-  const choiceA = isKeyboardDown("KeyA");
-  const choiceB = isKeyboardDown("KeyB");
-  const choiceC = isKeyboardDown("KeyC");
-  const choiceD = isKeyboardDown("KeyD");
-  const backspace = isKeyboardDown("Backspace");
+  const pendingA = isKeyboardPressedThisTick("Space", "Enter");
+  const pendingB = isKeyboardPressedThisTick("ShiftLeft", "ShiftRight");
+  const pendingConfirm = isKeyboardPressedThisTick("Enter", "Space");
+  const pendingCancel = isKeyboardPressedThisTick("Escape");
+  const pendingTouchA = isTouchPressedThisTick("space");
+  const pendingTouchB = isTouchPressedThisTick("b");
+  const a = isKeyboardDown("Space", "Enter") || pendingA || isTouchDown("space") || pendingTouchA || isGamepadButtonDown([0], gamepadSnapshot);
+  const b = isKeyboardDown("ShiftLeft", "ShiftRight") || pendingB || isTouchDown("b") || pendingTouchB || isGamepadButtonDown([1], gamepadSnapshot);
+  const confirm = isKeyboardDown("Enter", "Space") || pendingConfirm || isTouchDown("space") || pendingTouchA || isGamepadButtonDown([0], gamepadSnapshot);
+  const cancel = isKeyboardDown("Escape") || pendingCancel || isTouchDown("b") || pendingTouchB || isGamepadButtonDown([1], gamepadSnapshot);
+  const start = isKeyboardDown("Enter") || isKeyboardPressedThisTick("Enter") || isTouchDown("start") || isTouchPressedThisTick("start") || isGamepadButtonDown([9], gamepadSnapshot);
+  const select = isKeyboardDown("Tab") || isKeyboardPressedThisTick("Tab") || isTouchDown("select") || isTouchPressedThisTick("select") || isGamepadButtonDown([8], gamepadSnapshot);
+  const ability = isKeyboardDown("KeyE") || isKeyboardPressedThisTick("KeyE") || isTouchDown("e") || isTouchPressedThisTick("e") || isGamepadButtonDown([2], gamepadSnapshot);
+  const menu = isKeyboardDown("KeyM") || isKeyboardPressedThisTick("KeyM") || isTouchDown("m", "start") || isTouchPressedThisTick("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
+  const reliability = isKeyboardDown("KeyR") || isKeyboardPressedThisTick("KeyR") || isTouchDown("r") || isTouchPressedThisTick("r");
+  const sound = isKeyboardDown("KeyN") || isKeyboardPressedThisTick("KeyN") || isTouchDown("n") || isTouchPressedThisTick("n");
+  const fullscreen = isKeyboardDown("KeyF") || isKeyboardPressedThisTick("KeyF");
+  const pause = isKeyboardDown("Escape") || isKeyboardPressedThisTick("Escape");
+  const choiceA = isKeyboardDown("KeyA") || isKeyboardPressedThisTick("KeyA");
+  const choiceB = isKeyboardDown("KeyB") || isKeyboardPressedThisTick("KeyB");
+  const choiceC = isKeyboardDown("KeyC") || isKeyboardPressedThisTick("KeyC");
+  const choiceD = isKeyboardDown("KeyD") || isKeyboardPressedThisTick("KeyD");
+  const backspace = isKeyboardDown("Backspace") || isKeyboardPressedThisTick("Backspace");
 
   currentState = {
     dir,
@@ -493,18 +512,18 @@ export function tickInput() {
     right,
     up,
     down,
-    leftJustPressed: justPressed(left, previousState.left),
-    rightJustPressed: justPressed(right, previousState.right),
-    upJustPressed: justPressed(up, previousState.up),
-    downJustPressed: justPressed(down, previousState.down),
-    navLeftJustPressed: justPressed(navLeft, previousNavLeftDown),
-    navRightJustPressed: justPressed(navRight, previousNavRightDown),
-    navUpJustPressed: justPressed(navUp, previousNavUpDown),
-    navDownJustPressed: justPressed(navDown, previousNavDownDown),
-    confirmJustPressed: justPressed(confirm, previousConfirmDown),
-    cancelJustPressed: justPressed(cancel, previousCancelDown),
+    leftJustPressed: isKeyboardPressedThisTick("ArrowLeft", "KeyA") || isTouchPressedThisTick("left") || justPressed(left, previousState.left),
+    rightJustPressed: isKeyboardPressedThisTick("ArrowRight", "KeyD") || isTouchPressedThisTick("right") || justPressed(right, previousState.right),
+    upJustPressed: isKeyboardPressedThisTick("ArrowUp", "KeyW") || isTouchPressedThisTick("up") || justPressed(up, previousState.up),
+    downJustPressed: isKeyboardPressedThisTick("ArrowDown", "KeyS") || isTouchPressedThisTick("down") || justPressed(down, previousState.down),
+    navLeftJustPressed: isKeyboardPressedThisTick("ArrowLeft", "KeyA") || isTouchPressedThisTick("left") || justPressed(navLeft, previousNavLeftDown),
+    navRightJustPressed: isKeyboardPressedThisTick("ArrowRight", "KeyD") || isTouchPressedThisTick("right") || justPressed(navRight, previousNavRightDown),
+    navUpJustPressed: isKeyboardPressedThisTick("ArrowUp", "KeyW") || isTouchPressedThisTick("up") || justPressed(navUp, previousNavUpDown),
+    navDownJustPressed: isKeyboardPressedThisTick("ArrowDown", "KeyS") || isTouchPressedThisTick("down") || justPressed(navDown, previousNavDownDown),
+    confirmJustPressed: pendingConfirm || pendingTouchA || justPressed(confirm, previousConfirmDown),
+    cancelJustPressed: pendingCancel || pendingTouchB || justPressed(cancel, previousCancelDown),
     a,
-    aJustPressed: justPressed(a, previousState.a),
+    aJustPressed: pendingA || pendingTouchA || justPressed(a, previousState.a),
     aJustReleased: justReleased(a, previousState.a),
     b,
     bJustPressed: justPressed(b, previousState.b),
@@ -546,6 +565,8 @@ export function tickInput() {
   previousCancelDown = cancel;
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
+  pendingKeyPresses.clear();
+  pendingTouchPresses.clear();
 }
 
 const previousChoiceDown = {
@@ -573,6 +594,7 @@ export function getInput(): Readonly<InputState> {
 export function setTouchControl(key: TouchControlKey, pressed: boolean) {
   if (pressed) {
     touchDown.add(key);
+    pendingTouchPresses.add(key);
     if (key === "left" || key === "right" || key === "up" || key === "down") lastDirection = key;
   } else {
     touchDown.delete(key);
@@ -617,7 +639,9 @@ export function bindDomPointerDown(element: HTMLElement, callback: (event: Point
 
 export function resetInput() {
   keyboardDown.clear();
+  pendingKeyPresses.clear();
   touchDown.clear();
+  pendingTouchPresses.clear();
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
   activePointerIds.clear();
@@ -640,4 +664,8 @@ export function resetInput() {
 export function setKeyboardDownForTests(codes: readonly string[]) {
   resetInput();
   for (const code of codes) keyboardDown.add(code);
+}
+
+export function pressKeyboardForTests(codes: readonly string[]) {
+  for (const code of codes) pendingKeyPresses.add(code);
 }

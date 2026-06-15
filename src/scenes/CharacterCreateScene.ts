@@ -49,10 +49,12 @@ export class CharacterCreateScene extends Phaser.Scene {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setDepth(2);
     this.nameBox = this.add.rectangle(128, 97, 118, 15, color(PALETTE.black), 0.55)
       .setStrokeStyle(1, color(PALETTE.sepiaInk))
-      .setDepth(this.nameText.depth - 1);
+      .setDepth(1);
+    const nameHitZone = this.add.zone(128, 97, 126, 19).setDepth(3);
+    bindPointerDown(nameHitZone, () => this.focusNameField());
     bindPointerDown(this.nameBox, () => this.focusNameField());
     bindPointerDown(this.nameText, () => this.focusNameField());
     this.roleText = this.add.text(128, 108, "", {
@@ -69,7 +71,7 @@ export class CharacterCreateScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     this.createRoleCards();
-    this.beginPrompt = this.add.text(128, 203, "PRESS ENTER / TAP AGAIN TO BEGIN", {
+    this.beginPrompt = this.add.text(128, 203, "TAP AGAIN / PRESS ENTER TO BEGIN", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
