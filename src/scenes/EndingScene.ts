@@ -196,11 +196,12 @@ export class EndingScene extends Phaser.Scene {
     const lines = [
       `STAMPS ${readiness.missingStamps.length ? "WAIT" : "OK"}`,
       `FRAG ${readiness.fragmentsCollected}/${readiness.fragmentsNeeded}`,
+      `APP ${readiness.publicationApparatus.complete ? "OK" : `${readiness.publicationApparatus.completed}/${readiness.publicationApparatus.total} WAIT`}`,
       `REL ${readiness.reliability}/${readiness.reliabilityMinimum}`,
       `KEY ${hasProcessItem("buckram_key") ? "OK" : "--"}`,
       `CLOCK ${clock.status === "published" || clock.status === "buckram_gate_open" ? "OK" : clock.status === "deadline_missed" ? "MISS" : clock.elapsedYears.toFixed(1)}`
     ];
-    this.add.rectangle(44, 185, 68, 46, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(156);
+    this.add.rectangle(44, 185, 68, 48, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(156);
     this.add.text(14, 166, "STATECHAT\nCHECKLIST", {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -208,9 +209,9 @@ export class EndingScene extends Phaser.Scene {
       align: "left"
     }).setDepth(157);
     lines.forEach((line, index) => {
-      this.add.text(14, 184 + index * 7, line, {
+      this.add.text(14, 179 + index * 6, line, {
         fontFamily: "monospace",
-        fontSize: "6px",
+        fontSize: "5px",
         color: line.includes("WAIT") || line.includes("--") || line.includes("MISS") ? PALETTE.classNetRed : PALETTE.creamPaper
       }).setDepth(157);
     });
@@ -305,6 +306,7 @@ export class EndingScene extends Phaser.Scene {
     const missing = [
       readiness.missingStamps.length ? `stamps ${readiness.missingStamps.join(" ")}` : "",
       readiness.missingFragments ? `${readiness.missingFragments} cover pieces` : "",
+      readiness.missingApparatus.length ? `apparatus ${readiness.missingApparatus.map((component) => component.shortLabel).join("/")}` : "",
       readiness.documentsWithUndisclosedDeletion.length ? "bracketed insertion" : "",
       readiness.standardsViolations.length ? "standards violation" : "",
       readiness.reliabilityReady ? "" : "reliability"

@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Publication apparatus final-assembly gate (2026-06-15):
+  - Added `src/game/publicationApparatus.ts`, a Phaser-free final-assembly rule module based on the history.state.gov FRUS creation stages: preface/scope, sources consulted, persons/abbreviations, declassification accounting, and index/typeset proof check.
+  - `getFinalGateReadiness()` and `getPublicationReadinessReadout()` now include `publicationApparatus`; the Buckram Gate remains locked until the apparatus is complete, in addition to stamps, fragments, reliability, standards cleanliness, and Buckram Key readiness.
+  - EndingScene's StateChat checklist now includes an `APP` line, and the locked-gate objective names missing apparatus components (for example `apparatus SRC`) instead of treating cover fragments alone as final assembly.
+  - Added deterministic coverage in `src/game/publicationApparatus.test.ts` plus a state-layer regression that proves Buckram Gate stays closed when the Source Note front-matter apparatus is missing.
+  - Verified focused tests: `npm test -- src/game/publicationApparatus.test.ts src/game/standardsViolations.test.ts src/game/frusProgression.test.ts` (3 files / 13 tests pass).
+  - Verified full `npm test`: 25 files / 138 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=EndingScene&role=compiler&name=Ruby&give=publication` reports `finalGate.publicationApparatus.complete: true`, `completed: 5`, `buckramGateOpen: true`, and the 30-year clock still green at 28.5/30. The headless WebGL screenshot remains black as previously documented.
 - FRUS research repository coverage gate (2026-06-15):
   - Added `src/game/researchCoverage.ts`, a Phaser-free rule module that maps selected document candidates to the research base named on history.state.gov: White House/NSC records, State records, Defense records, CIA records, other foreign-affairs agency records, and private papers of policymakers.
   - The FRUS Production Board now exposes `researchCoverage` through `render_game_to_text()` and only lets a selected-document set complete `research_selection` when coverage is 6/6; a single selected document no longer satisfies the board by itself.

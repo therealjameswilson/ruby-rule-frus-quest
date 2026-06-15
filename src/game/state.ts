@@ -29,6 +29,7 @@ import {
   totalEquities
 } from "./frusProgression";
 import { getFrusProductionBoardReadout } from "./frusProductionBoard";
+import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
@@ -278,6 +279,7 @@ export interface PublicationReadinessReadout {
     }>;
     clear: boolean;
   };
+  apparatus: PublicationApparatusReadout;
   buckramKeyHeld: boolean;
   buckramGateOpen: boolean;
   completionRatio: number;
@@ -1006,6 +1008,12 @@ export function getRoomGraphReadout() {
 export function getFinalGateReadiness() {
   const requiredStamps: ProcessStampId[] = ["rule", "archive", "network", "referral", "proof"];
   const missingStamps = requiredStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const publicationApparatus = getPublicationApparatusReadout({
+    processStamps: gameState.processStamps,
+    volumeFragments: gameState.volumeFragments,
+    documentCandidates: gameState.documentCandidates,
+    documentPoints: gameState.documentPoints
+  });
   const documentsWithUndisclosedDeletion = gameState.documentCandidates
     .filter((document) => document.undisclosedDeletion)
     .map((document) => ({ id: document.id, title: document.title }));
@@ -1018,6 +1026,7 @@ export function getFinalGateReadiness() {
   const ready = missingStamps.length === 0
     && missingFragments === 0
     && reliabilityReady
+    && publicationApparatus.complete
     && documentsWithUndisclosedDeletion.length === 0
     && standardsViolations.length === 0;
   return {
@@ -1030,6 +1039,8 @@ export function getFinalGateReadiness() {
     reliabilityMinimum,
     reliabilityReady,
     buckramKeyHeld,
+    publicationApparatus,
+    missingApparatus: publicationApparatus.missing,
     buckramGateOpen: ready && buckramKeyHeld,
     documentsWithUndisclosedDeletion,
     standardsViolations,
@@ -1060,12 +1071,14 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
   const missingSummary = [
     ...readiness.missingStamps.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
     ...(readiness.missingFragments ? [`${readiness.missingFragments} crystal${readiness.missingFragments === 1 ? "" : "s"}`] : []),
+    ...readiness.missingApparatus.map((component) => `Apparatus ${component.shortLabel}`),
     ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
     ...unresolved.map((standard) => standard.label)
   ];
-  const requiredUnits = readiness.requiredStamps.length + readiness.fragmentsNeeded + 1;
+  const requiredUnits = readiness.requiredStamps.length + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 1;
   const collectedUnits = (readiness.requiredStamps.length - readiness.missingStamps.length)
     + Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded)
+    + readiness.publicationApparatus.completed
     + (readiness.buckramKeyHeld ? 1 : 0);
   return {
     pendants: {
@@ -1082,6 +1095,7 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
       unresolved,
       clear: unresolved.length === 0
     },
+    apparatus: readiness.publicationApparatus,
     buckramKeyHeld: readiness.buckramKeyHeld,
     buckramGateOpen: readiness.buckramGateOpen && unresolved.length === 0,
     completionRatio: Math.max(0, Math.min(1, collectedUnits / Math.max(1, requiredUnits))),

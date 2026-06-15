@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
+  addDocumentPoints,
+  addProcessItem,
+  addVolumeFragment,
+  awardProcessStamp,
   clearDocumentUndisclosedDeletion,
+  gameState,
   getFinalGateReadiness,
   getPublicationReadinessReadout,
   markDocumentUndisclosedDeletion,
@@ -54,5 +59,35 @@ describe("standards violation ledger", () => {
 
     expect(resolveStandardsViolationForDocument("source_note_047", "undisclosed_deletion")).toBe(1);
     expect(unresolvedStandardsViolations()).toHaveLength(0);
+  });
+
+  it("blocks the final gate until publication apparatus is assembled", () => {
+    resetGameState();
+    (["rule", "archive", "network", "referral", "proof"] as const).forEach((stamp) => awardProcessStamp(stamp));
+    addProcessItem("buckram_key");
+    addDocumentPoints(20, "test apparatus points");
+    for (const fragment of [
+      "Front Matter Fragment",
+      "Routing Fragment",
+      "Referral Fragment",
+      "Proof Fragment"
+    ]) {
+      addVolumeFragment(fragment);
+    }
+    for (const id of ["telegram_001", "source_note_047", "sbu_annotation_001", "proof_page_412"]) {
+      const document = gameState.documentCandidates.find((candidate) => candidate.id === id);
+      if (document) {
+        document.selected = true;
+        document.workflowState = "selected";
+      }
+    }
+
+    expect(getFinalGateReadiness().publicationApparatus.complete).toBe(false);
+    expect(getFinalGateReadiness().buckramGateOpen).toBe(false);
+    expect(getPublicationReadinessReadout().missingSummary).toContain("Apparatus SRC");
+
+    addVolumeFragment("Source Note Fragment");
+
+    expect(getFinalGateReadiness().publicationApparatus.complete).toBe(true);
   });
 });
