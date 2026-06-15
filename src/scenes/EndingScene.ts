@@ -1,6 +1,12 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
 import {
+  evaluateKelloggCertificationAnswer,
+  getKelloggCertificationPrompt,
+  KELLOGG_CERTIFICATION_PROMPTS,
+  kelloggCertificationComplete
+} from "../game/kelloggCertification";
+import {
   addInventoryItem,
   addProcessItem,
   gameState,
@@ -8,6 +14,7 @@ import {
   getStatutoryClockStateReadout,
   hasProcessItem,
   publishDocument,
+  resolveStandardsViolation,
   setFinalGateCertificationState,
   setGameMode,
   setLatestMessage,
@@ -16,17 +23,19 @@ import {
   setRoomTraversalState,
   setSceneState,
   setVisibleEntities,
-  setVisibleThreats
+  setVisibleThreats,
+  unresolvedStandardsViolations
 } from "../game/state";
 import { getInput, tickInput } from "../input/InputState";
 import { Player } from "../entities/Player";
 import { retroAudio } from "../systems/audio";
 import { InventoryOverlay } from "../systems/inventory";
-import { ReliabilityHud } from "../systems/reliability";
+import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorkflowRelicRack, addSnesWorldMap } from "../systems/snesPixelArt";
+import { ChoicePrompt } from "../systems/verification";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -42,11 +51,13 @@ const COVER_PIECES = [
 
 const GATE_PLAY_BOUNDS = { left: 16, right: 240, top: 48, bottom: 220 };
 const CERTIFICATION_TABLE = { x: 128, y: 176, radius: 30 };
+const KELLOGG_CERTIFICATION_CONTEXT_PREFIX = "Kellogg final certification";
 
 export class EndingScene extends Phaser.Scene {
   private player!: Player;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
+  private certificationPrompt!: ChoicePrompt;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private canRestart = false;
@@ -68,6 +79,7 @@ export class EndingScene extends Phaser.Scene {
     this.player = new Player(this, 128, 204);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.certificationPrompt = new ChoicePrompt(this);
     this.objectiveText = addObjectiveText(this);
     this.actionHint = this.add.text(8, 211, "", {
       fontFamily: "monospace",
@@ -98,6 +110,12 @@ export class EndingScene extends Phaser.Scene {
       if (this.canRestart && input.aJustPressed) {
         this.restart();
       }
+      return;
+    }
+
+    if (this.certificationPrompt.active) {
+      this.certificationPrompt.updateInput();
+      this.player.update(delta, false);
       return;
     }
 
@@ -242,10 +260,16 @@ export class EndingScene extends Phaser.Scene {
   private updateGateReadout() {
     const readiness = getFinalGateReadiness();
     const ready = readiness.ready && hasProcessItem("buckram_key");
+    const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
+    const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     const status = ready ? "ready" : "locked";
     const message = ready
-      ? "Buckram Key ready: human certification can publish the volume."
+      ? certificationComplete
+        ? "Buckram Key ready: human certification can publish the volume."
+        : "Buckram Key ready: complete the final Kellogg certification."
+      : canCorrectCertification
+        ? "Final certification needs repair at the human publication table."
       : "Buckram Gate locked: StateChat may checklist, but humans must complete readiness.";
 
     setFinalGateCertificationState({
@@ -259,8 +283,22 @@ export class EndingScene extends Phaser.Scene {
 
     setNearestInteractable(nearGate ? (ready ? "CERTIFY FRUS VOLUME" : "BUCKRAM GATE LOCKED") : null);
     if (ready) {
-      setObjective(nearGate ? "Buckram Gate: press Space to certify and publish." : "Buckram Gate: stand at the human publication table.");
-      this.actionHint.setText(nearGate ? "SPACE: CERTIFY FRUS VOLUME" : "MOVE TO CERTIFICATION TABLE.");
+      setObjective(nearGate
+        ? certificationComplete
+          ? "Buckram Gate: press Space to publish the certified volume."
+          : "Buckram Gate: press Space for final Kellogg certification."
+        : "Buckram Gate: stand at the human publication table.");
+      this.actionHint.setText(nearGate
+        ? certificationComplete
+          ? "SPACE: PUBLISH CERTIFIED VOLUME"
+          : "SPACE: FINAL KELLOGG CERTIFICATION"
+        : "MOVE TO CERTIFICATION TABLE.");
+      return;
+    }
+    if (canCorrectCertification) {
+      setNearestInteractable(nearGate ? "REPAIR FINAL CERTIFICATION" : null);
+      setObjective(nearGate ? "Repair final certification: press Space to rerun Kellogg checks." : "Return to the publication table to repair certification.");
+      this.actionHint.setText(nearGate ? "SPACE: REPAIR CERTIFICATION" : "MOVE TO CERTIFICATION TABLE.");
       return;
     }
 
@@ -278,18 +316,82 @@ export class EndingScene extends Phaser.Scene {
   private handleGateAction() {
     const readiness = getFinalGateReadiness();
     const ready = readiness.ready && hasProcessItem("buckram_key");
+    const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     if (!nearGate) {
       retroAudio.warning();
       setLatestMessage("Move to the human publication table before certifying.");
       return;
     }
-    if (!ready) {
+    if (!ready && !canCorrectCertification) {
       retroAudio.warning();
       setLatestMessage("PROVENANCE CANNOT BE GUESSED - complete the readiness checklist.");
       return;
     }
+    if (!gameState.sceneProgress.kelloggFinalCertificationComplete || canCorrectCertification) {
+      this.startKelloggCertification();
+      return;
+    }
     this.publishVolume();
+  }
+
+  private startKelloggCertification() {
+    const currentStep = Math.max(0, Math.min(
+      KELLOGG_CERTIFICATION_PROMPTS.length - 1,
+      gameState.sceneProgress.kelloggFinalCertificationStep ?? 0
+    ));
+    gameState.sceneProgress.kelloggFinalCertificationStep = currentStep;
+    const prompt = getKelloggCertificationPrompt(currentStep);
+    setObjective(`Final certification: ${currentStep + 1}/${KELLOGG_CERTIFICATION_PROMPTS.length}.`);
+    this.certificationPrompt.show(prompt.question, [...prompt.options], (option) => {
+      const evaluation = evaluateKelloggCertificationAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.kelloggFinalCertificationComplete = 0;
+        gameState.sceneProgress.kelloggFinalCertificationCorrectionNeeded = 1;
+        gameState.sceneProgress.kelloggFinalCertificationStep = 0;
+        const violation = evaluation.violation;
+        if (violation) {
+          applyStandardsViolation(violation, `${KELLOGG_CERTIFICATION_CONTEXT_PREFIX}: ${prompt.id}`);
+        }
+        setObjective("Repair final certification: repeat the Kellogg checks at the publication table.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.kelloggFinalCertificationStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!kelloggCertificationComplete(nextStep)) {
+        this.startKelloggCertification();
+        return;
+      }
+      this.resolveKelloggCertificationViolations();
+      gameState.sceneProgress.kelloggFinalCertificationComplete = 1;
+      gameState.sceneProgress.kelloggFinalCertificationCorrectionNeeded = 0;
+      gameState.sceneProgress.kelloggFinalCertificationStep = KELLOGG_CERTIFICATION_PROMPTS.length;
+      const finalReadiness = getFinalGateReadiness();
+      if (finalReadiness.ready && hasProcessItem("buckram_key")) {
+        this.publishVolume();
+        return;
+      }
+      setObjective("Certification repaired. Restore reliability or remaining standards blockers before publication.");
+      setLatestMessage("Certification repaired, but the Buckram Gate checklist still has blockers.");
+      this.updateGateReadout();
+    });
+  }
+
+  private canCorrectKelloggCertification(readiness: ReturnType<typeof getFinalGateReadiness>) {
+    if (!hasProcessItem("buckram_key") || !gameState.sceneProgress.kelloggFinalCertificationCorrectionNeeded) return false;
+    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
+    if (!readiness.reliabilityReady) return false;
+    return readiness.standardsViolations.length > 0
+      && readiness.standardsViolations.every((record) => record.context?.startsWith(KELLOGG_CERTIFICATION_CONTEXT_PREFIX));
+  }
+
+  private resolveKelloggCertificationViolations() {
+    for (const record of unresolvedStandardsViolations()) {
+      if (record.context?.startsWith(KELLOGG_CERTIFICATION_CONTEXT_PREFIX)) resolveStandardsViolation(record.id);
+    }
   }
 
   private publishVolume() {

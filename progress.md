@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Final Kellogg certification gate (2026-06-15):
+  - Added `src/game/kelloggCertification.ts`, a source-backed four-prompt final certification sequence for the About-FRUS/Kellogg requirements: thorough/accurate/reliable record, indicated deletions, no omission of material facts, and no concealment of policy defects.
+  - Wired `EndingScene` so pressing Space at the ready Buckram Gate now starts final human Kellogg certification instead of immediately publishing. Correct A/A/A/A answers publish the volume and record `kelloggFinalCertificationComplete`.
+  - Wrong answers apply the matching standards damage and record an unresolved standards blocker; if that final-certification blocker is the only remaining gate, the publication table reopens a repair certification loop so the player can correct the memo before publication.
+  - Verified `npm test`: 22 files / 123 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game smoke: `?scene=EndingScene&role=compiler&name=Ruby` + Space opens `FINAL CERTIFICATION: WHAT MUST THE VOLUME BE?`; Space then A/A/A/A reaches `mode: "ending"` with `PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED`; Space then B records a concealed-policy-defect blocker and reopens the repair prompt. Headless WebGL screenshot remains all black as previously documented.
 - Statutory Clock shared FRUS deadline rule (2026-06-15):
   - Added `src/game/statutoryClock.ts`, a Phaser-free rules module for the FRUS 30-year publication mandate from `https://history.state.gov/historicaldocuments/about-frus`.
   - The DANN-E boss fight now uses the shared clock helper for completion pressure, at-risk/deadline-missed status, and the concealed-policy-defect shortcut mapping instead of keeping local clock math inside the entity class.
