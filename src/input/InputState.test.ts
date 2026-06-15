@@ -7,7 +7,9 @@ import {
   setKeyboardDownForTests,
   setNowProviderForTests,
   swallowNextInputFrame,
+  TAP_ACTION_HOLD_MS,
   TAP_MOVEMENT_HOLD_MS,
+  tapActionForTests,
   tapDirectionForTests,
   tickInput
 } from "./InputState";
@@ -152,6 +154,66 @@ describe("InputState keyboard edges", () => {
     tickInput();
     expect(getInput().pauseJustPressed).toBe(false);
 
+    pressKeyForTests("Escape");
+    tickInput();
+    expect(getInput().pauseJustPressed).toBe(true);
+    expect(getInput().cancelJustPressed).toBe(true);
+  });
+
+  // A too-short A-button tap (keydown+keyup inside one rendered frame, as a
+  // cloud/automation browser produces) must still raise a single aJustPressed
+  // edge so failed-interaction feedback ("NOTHING TO INTERACT WITH") fires.
+  it("turns a too-short A tap into a single aJustPressed edge", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    tapActionForTests("KeyZ");
+    tickInput();
+    expect(getInput().aJustPressed).toBe(true);
+    expect(getInput().confirmJustPressed).toBe(true);
+
+    // Still latched a frame later (no second edge), then releases.
+    now += TAP_ACTION_HOLD_MS - 10;
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+    expect(getInput().a).toBe(true);
+
+    now += 20;
+    tickInput();
+    expect(getInput().a).toBe(false);
+    expect(getInput().aJustReleased).toBe(true);
+  });
+
+  it("turns a too-short Escape tap into a single pause/cancel edge", () => {
+    let now = 2000;
+    setNowProviderForTests(() => now);
+    tapActionForTests("Escape");
+    tickInput();
+    expect(getInput().pauseJustPressed).toBe(true);
+    expect(getInput().cancelJustPressed).toBe(true);
+
+    now += TAP_ACTION_HOLD_MS + 10;
+    tickInput();
+    expect(getInput().pause).toBe(false);
+  });
+
+  // The ESC suppression latch is normally cleared by the Escape keyup listener.
+  // A missed keyup (focus shift on overlay/scene close, or a cloud-automation
+  // event) must not leave it stuck true and silently kill every future ESC edge
+  // while M/Tab keep working (live audit, 2026-06-15). Once Escape is no longer
+  // physically held on a tick, the suppression self-heals.
+  it("self-heals the ESC suppression when a keyup is missed", () => {
+    // Close an overlay with Escape still held: arms the swallow + suppression.
+    setKeyboardDownForTests(["Escape"]);
+    swallowNextInputFrame();
+    tickInput(); // swallow frame
+    expect(getInput().pauseJustPressed).toBe(false);
+
+    // Simulate the missed keyup: the key is no longer physically down, but the
+    // Escape keyup listener never ran, so suppressEscEdgesUntilRelease is still
+    // armed. A bare tick with no Escape held must release it.
+    tickInput();
+
+    // A brand-new Escape press now produces a live edge again.
     pressKeyForTests("Escape");
     tickInput();
     expect(getInput().pauseJustPressed).toBe(true);

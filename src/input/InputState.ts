@@ -150,6 +150,27 @@ const emptyState: InputState = {
 // visible nudge without changing how held movement or collision works.
 export const TAP_MOVEMENT_HOLD_MS = 110;
 const directionTapLatch = new Map<string, number>();
+
+// Action / confirm / cancel keys suffer the same too-short-tap drop as movement
+// did (live audit, 2026-06-15): a keydown+keyup that both land between two
+// tickInput() samples is never seen as held, so the `justPressed` edge never
+// fires. That silently swallowed the A-button (no interact feedback) and Escape
+// (overlays would not close) in the cloud QA browser. Latch each action code's
+// most-recent keydown time and treat it as "down" for a short window so a too
+// short tap still produces a single rising edge. The set is intentionally
+// limited to the discrete action/menu keys — never to held movement.
+export const TAP_ACTION_HOLD_MS = 90;
+const ACTION_LATCH_CODES = new Set<string>([
+  "Space",
+  "Enter",
+  "KeyZ",
+  "KeyX",
+  "ShiftLeft",
+  "ShiftRight",
+  "Escape",
+  "Tab"
+]);
+const actionTapLatch = new Map<string, number>();
 let nowProvider: () => number = () =>
   typeof performance !== "undefined" ? performance.now() : Date.now();
 
@@ -205,6 +226,19 @@ function isDirectionActive(...codes: string[]) {
   return codes.some((code) => {
     const at = directionTapLatch.get(code);
     return at !== undefined && now - at <= TAP_MOVEMENT_HOLD_MS;
+  });
+}
+
+// True when an action code is physically held, or was tapped within the last
+// TAP_ACTION_HOLD_MS so a too-short tap still registers as a brief hold. Only
+// codes in ACTION_LATCH_CODES are ever latched.
+function isActionActive(...codes: string[]) {
+  if (isKeyboardDown(...codes)) return true;
+  const now = nowProvider();
+  return codes.some((code) => {
+    if (!ACTION_LATCH_CODES.has(code)) return false;
+    const at = actionTapLatch.get(code);
+    return at !== undefined && now - at <= TAP_ACTION_HOLD_MS;
   });
 }
 
@@ -385,6 +419,9 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
       lastDirection = directionKeyMap[event.code]!;
       directionTapLatch.set(event.code, nowProvider());
     }
+    if (!event.repeat && ACTION_LATCH_CODES.has(event.code)) {
+      actionTapLatch.set(event.code, nowProvider());
+    }
     keyboardDown.add(event.code);
     if (!event.repeat && /^[a-zA-Z]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey) {
       pendingTypedCharacters.push(event.key);
@@ -504,18 +541,29 @@ export function tickInput() {
   // Z/X/A/S at the title and getting no response, so accept Z (and Enter/Space)
   // as the A button and X as the B button. KeyA/KeyS stay movement-only to avoid
   // fighting WASD.
-  const a = isKeyboardDown("Space", "Enter", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
-  const b = isKeyboardDown("ShiftLeft", "ShiftRight", "KeyX") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
-  const confirm = isKeyboardDown("Enter", "Space", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
-  const cancel = isKeyboardDown("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
-  const start = isKeyboardDown("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
-  const select = isKeyboardDown("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
+  const a = isActionActive("Space", "Enter", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
+  const b = isActionActive("ShiftLeft", "ShiftRight", "KeyX") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
+  const confirm = isActionActive("Enter", "Space", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
+  const cancel = isActionActive("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
+  const start = isActionActive("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
+  const select = isActionActive("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
   const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2], gamepadSnapshot);
   const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
   const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
   const sound = isKeyboardDown("KeyN") || isTouchDown("n");
   const fullscreen = isKeyboardDown("KeyF");
-  const escDown = isKeyboardDown("Escape");
+  // Physically-held Escape drives the suppress-until-release bookkeeping, while
+  // the latched form drives the pause edge so a too-short ESC tap still toggles
+  // the pause/overlay-close.
+  const escHeld = isKeyboardDown("Escape");
+  const escDown = isActionActive("Escape");
+  // Self-heal the ESC suppression latch. It is normally cleared by the Escape
+  // keyup listener, but a missed keyup (focus shift on overlay/scene close, or a
+  // cloud-automation key event) would otherwise leave it stuck true and silently
+  // kill every future ESC edge while M/Tab kept working (live audit,
+  // 2026-06-15). Once Escape is no longer physically held on a tick, release the
+  // suppression here regardless of whether the keyup event arrived.
+  if (suppressEscEdgesUntilRelease && !escHeld) suppressEscEdgesUntilRelease = false;
   const pause = escDown;
   const choiceA = isKeyboardDown("KeyA");
   const choiceB = isKeyboardDown("KeyB");
@@ -662,6 +710,7 @@ export function resetInput() {
   keyboardDown.clear();
   touchDown.clear();
   directionTapLatch.clear();
+  actionTapLatch.clear();
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
   activePointerIds.clear();
@@ -691,6 +740,7 @@ export function setKeyboardDownForTests(codes: readonly string[]) {
 export function pressKeyForTests(code: string) {
   keyboardDown.add(code);
   if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
+  if (ACTION_LATCH_CODES.has(code)) actionTapLatch.set(code, nowProvider());
 }
 
 export function releaseKeyForTests(code: string) {
@@ -703,6 +753,13 @@ export function releaseKeyForTests(code: string) {
 // movement.
 export function tapDirectionForTests(code: string) {
   if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
+}
+
+// Same idea for the action/confirm/cancel keys: latch the keydown time without
+// leaving the key physically down, so a too-short A/Escape/B tap still produces
+// a single rising edge on the next tickInput().
+export function tapActionForTests(code: string) {
+  if (ACTION_LATCH_CODES.has(code)) actionTapLatch.set(code, nowProvider());
 }
 
 export function setNowProviderForTests(provider: (() => number) | null) {
