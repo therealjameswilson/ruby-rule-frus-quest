@@ -43,6 +43,12 @@ import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, tran
 import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
 import {
+  annotationDraftingComplete,
+  ANNOTATION_DRAFTING_PROMPTS,
+  evaluateAnnotationDraftingAnswer,
+  getAnnotationDraftingPrompt
+} from "../game/annotationDrafting";
+import {
   evaluateSourceNoteProvenanceAnswer,
   getSourceNoteProvenancePrompt,
   sourceNoteProvenanceComplete,
@@ -1319,6 +1325,10 @@ export class ArchiveScene extends Phaser.Scene {
     } else if (this.sourceNoteStatus === "verified") {
       this.hintText.setText("STAMP SOURCE NOTE 47");
       setObjective("STAMP: apply citation stamp after human review.");
+    } else if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
+      this.hintText.setText("DRAFT EXPANDED ANNOTATION");
+      setObjective("ANNOTATE: draft provenance and context notes at the research table.");
+      setNearestInteractable(nearResearchTable ? "DRAFT Annotation" : null);
     }
     this.syncSourceNotePhysicalState(nearResearchTable ? this.researchTable.label : null);
   }
@@ -1346,6 +1356,10 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.sourceNoteStatus === "verified") {
       this.sourceNoteStatus = "stamped";
       this.applySourceNoteStamp();
+      return;
+    }
+    if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
+      this.showAnnotationDraftingChoice();
     }
   }
 
@@ -1433,7 +1447,63 @@ export class ArchiveScene extends Phaser.Scene {
     setLatestMessage("VERIFIED BY HUMAN REVIEW");
     this.syncSourceNotePhysicalState(this.researchTable.label, "DONE");
     this.reliability.update();
-    this.finishArchiveIfReady();
+    this.showAnnotationDraftingChoice();
+  }
+
+  private showAnnotationDraftingChoice() {
+    if (!gameState.sceneProgress.sourceNoteProvenanceComplete || this.sourceNoteStatus !== "stamped") {
+      this.dialog.show("ANNOTATION", "Verify and stamp Source Note 47 before drafting annotation.");
+      return;
+    }
+    if (gameState.sceneProgress.annotationDraftingComplete) {
+      this.finishArchiveIfReady();
+      return;
+    }
+
+    const step = gameState.sceneProgress.annotationDraftingStep ?? 0;
+    const prompt = getAnnotationDraftingPrompt(step);
+    setObjective(`ANNOTATE: draft expanded annotation ${step + 1}/${ANNOTATION_DRAFTING_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateAnnotationDraftingAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Annotation drafting shortcut: ${option.value}`);
+        this.reliability.update();
+        this.dialog.show("ANNOTATION", [
+          result.message,
+          "Annotation must make provenance and context visible to the reader."
+        ], () => this.showAnnotationDraftingChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.annotationDraftingStep = nextStep;
+      if (!annotationDraftingComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Annotation drafting check ${nextStep}/${ANNOTATION_DRAFTING_PROMPTS.length}.`);
+        this.dialog.show("ANNOTATION", [
+          result.message,
+          "Continue drafting expanded annotation before manuscript review."
+        ], () => this.showAnnotationDraftingChoice());
+        return;
+      }
+
+      gameState.sceneProgress.annotationDraftingComplete = 1;
+      gameState.sceneProgress.annotationDraftingStep = ANNOTATION_DRAFTING_PROMPTS.length;
+      for (const documentId of ["source_note_047", "cross_reference_001", "sbu_annotation_001"]) {
+        setDocumentWorkflowState(documentId, "ready_for_review", "expanded annotation drafted for provenance, context, and selectivity");
+      }
+      addDocumentPoints(8, "expanded annotation drafted");
+      retroAudio.confirm();
+      setLatestMessage("Expanded annotation drafted: provenance and context notes filed.");
+      setObjective("Annotation filed. Collect remaining document tiles, then route the manuscript onward.");
+      this.reliability.update();
+      this.dialog.show("ANNOTATION", [
+        result.message,
+        "Expanded annotation now covers provenance, persons/events/policies, references, and attachments.",
+        "The manuscript can move toward human review once the room packet is complete."
+      ], () => this.finishArchiveIfReady());
+    });
   }
 
   private drawSourceNoteStampMark() {
@@ -1491,6 +1561,14 @@ export class ArchiveScene extends Phaser.Scene {
   private finishArchiveIfReady() {
     if (this.sourceNoteStatus !== "stamped") {
       setObjective("Archive Cavern: pick up Source Note 47 in A1.");
+      return;
+    }
+    if (!gameState.sceneProgress.annotationDraftingComplete) {
+      setObjective("ANNOTATE: draft expanded annotation at the research table.");
+      this.dialog.show("ELENA", [
+        "The citation stamp proves the source trail.",
+        "Now draft the annotation: provenance, context, references, and attachments."
+      ], () => this.showAnnotationDraftingChoice());
       return;
     }
     if (this.collected.size < 3) {

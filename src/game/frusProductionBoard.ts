@@ -1,5 +1,6 @@
 import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
+import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
@@ -13,6 +14,7 @@ export type FrusProductionBoardStepId =
   | "record_collection"
   | "research_selection"
   | "source_notes"
+  | "annotation"
   | "manuscript_review"
   | "declassification_review"
   | "agency_referrals"
@@ -32,6 +34,7 @@ export interface FrusProductionBoardContext {
   volumeFragments: readonly string[];
   finalGatePublished: boolean;
   hacReviewComplete: boolean;
+  annotationDraftingComplete: boolean;
   manuscriptReviewComplete: boolean;
   recordCollectionComplete: boolean;
   seriesConceptComplete: boolean;
@@ -109,11 +112,19 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
   },
   {
     id: "source_notes",
-    label: "Source notes and annotation",
+    label: "Source-note provenance",
     shortLabel: "SRC",
     sourceBasis: "FRUS must be thorough, accurate, and reliable across the national security record.",
     sourceUrl: ABOUT_FRUS_URL,
     gameplayTask: "Verify Source Note 47 at the research table with the Citation Stamp."
+  },
+  {
+    id: "annotation",
+    label: "Annotation drafting",
+    shortLabel: "ANN",
+    sourceBasis: "Annotation provides provenance plus context about persons, events, policies, references, and attachments.",
+    sourceUrl: ANNOTATION_DRAFTING_SOURCE_URL,
+    gameplayTask: "Draft expanded annotations at the research table before manuscript review."
   },
   {
     id: "manuscript_review",
@@ -221,12 +232,16 @@ export function isFrusProductionBoardStepComplete(
       return context.recordCollectionComplete;
     case "research_selection":
       return (context.documentPoints >= 12 && hasSelectedDocument(context) && researchCoverageComplete(context.documentCandidates))
-        || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified"])
+        || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified", "annotation_needed"])
         || volumeAtLeast(context, "candidate_selection");
     case "source_notes":
       return stamps.has("archive")
         || context.heldProcessItems.has("citation_stamp")
         || hasDocumentAtOrBeyond(context, ["citation_verified", "annotation_needed", "ready_for_review"]);
+    case "annotation":
+      return context.annotationDraftingComplete
+        || hasDocumentAtOrBeyond(context, ["ready_for_review", "submitted_for_review", "referred", "cleared", "ready_for_proof", "proofed", "published"])
+        || volumeAtLeast(context, "declassification_review");
     case "manuscript_review":
       return context.manuscriptReviewComplete
         || hasDocumentAtOrBeyond(context, ["ready_for_review", "submitted_for_review", "referred", "cleared", "ready_for_proof", "proofed", "published"])

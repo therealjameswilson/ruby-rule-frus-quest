@@ -1689,6 +1689,7 @@ export function getProductionBoardReadout() {
     volumeFragments: [...gameState.volumeFragments],
     finalGatePublished: gameState.finalGateCertification?.status === "published",
     hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
+    annotationDraftingComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
@@ -1729,6 +1730,8 @@ export function seedProgressForScene(sceneName: string) {
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("archive");
+    gameState.sceneProgress.annotationDraftingComplete = 1;
+    gameState.sceneProgress.annotationDraftingStep = 3;
     gameState.sceneProgress.manuscriptReviewComplete = 1;
     gameState.reliability = Math.max(gameState.reliability, 90);
     for (const item of ["Telegram", "Source Note", "Cross-Ref"]) {

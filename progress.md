@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Annotation drafting gameplay gate (2026-06-15):
+  - Added `src/game/annotationDrafting.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: annotation provides provenance for published documents, context about persons/events/policies/references/attachments, and helps mitigate the increasing selectivity of the series.
+  - Split the Production Board's old combined source-note/annotation step into `source_notes` (Source Note 47 provenance + Citation Stamp) followed by a separate `annotation` gate before manuscript review.
+  - Wired `ArchiveScene` so stamping Source Note 47 now opens a three-prompt expanded-annotation review at the research table. Wrong shortcuts apply standards damage (`omitted_material_fact`, `altered_text`, or `concealed_policy_defect`); correct answers move core documents toward `ready_for_review`.
+  - Updated deep-scene QA seeding so `?scene=NetworkScene` and later routes remain coherent with the expanded board.
+  - Verified focused tests: `npm test -- src/game/annotationDrafting.test.ts src/game/frusProductionBoard.test.ts src/game/sourceNoteProvenance.test.ts` (3 files / 20 tests pass).
+  - Verified full `npm test`: 32 files / 172 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=ArchiveScene&role=compiler&name=Ruby` reports `productionBoard.total: 13`, `source_notes` complete, `annotation` active, and `manuscript_review` locked. The generated headless WebGL screenshot remains black as previously documented.
 - Volume conceptualization gameplay gate (2026-06-15):
   - Added `src/game/volumeConcept.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: after grand conceptualization, each compiler or team defines the parameters of the individual volume, consults histories/memoirs/accounts to inform collection and selection, and covers policymaking plus implementation.
   - Inserted `volume_concept` into the FRUS Production Board after `series_concept` and before 20-year access, so whole-series planning no longer stands in for defining the actual volume remit.

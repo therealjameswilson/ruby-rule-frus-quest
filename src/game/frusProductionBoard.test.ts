@@ -20,6 +20,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     volumeFragments: [],
     finalGatePublished: false,
     hacReviewComplete: false,
+    annotationDraftingComplete: false,
     manuscriptReviewComplete: false,
     recordCollectionComplete: false,
     seriesConceptComplete: false,
@@ -44,6 +45,7 @@ describe("FRUS production board", () => {
       "record_collection",
       "research_selection",
       "source_notes",
+      "annotation",
       "manuscript_review",
       "declassification_review",
       "agency_referrals",
@@ -118,14 +120,50 @@ describe("FRUS production board", () => {
       ]),
       documentPoints: 20,
       reliability: 90,
+      annotationDraftingComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 10).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 11).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("publication_30_year");
+  });
+
+  it("requires annotation drafting after source-note provenance and before manuscript review", () => {
+    const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    documents[2] = {
+      ...documents[2],
+      workflowState: "annotation_needed",
+      citationComplete: true,
+      annotationNeeded: true
+    };
+    const notAnnotated = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 24,
+      recordCollectionComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
+    }));
+    const annotated = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 24,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
+    }));
+
+    expect(notAnnotated.steps.find((step) => step.id === "source_notes")?.complete).toBe(true);
+    expect(notAnnotated.nextStep?.id).toBe("annotation");
+    expect(notAnnotated.steps.find((step) => step.id === "manuscript_review")?.status).toBe("locked");
+    expect(annotated.steps.find((step) => step.id === "annotation")?.complete).toBe(true);
+    expect(annotated.nextStep?.id).toBe("manuscript_review");
   });
 
   it("requires explicit manuscript review before the declassification board step opens", () => {
@@ -140,6 +178,7 @@ describe("FRUS production board", () => {
       documentCandidates: documents,
       heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
       documentPoints: 20,
+      annotationDraftingComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
@@ -149,6 +188,7 @@ describe("FRUS production board", () => {
       documentCandidates: documents,
       heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
       documentPoints: 20,
+      annotationDraftingComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -165,6 +205,7 @@ describe("FRUS production board", () => {
     const readout = getFrusProductionBoardReadout(context({
       processStamps: ["rule", "archive", "network", "referral"],
       hacReviewComplete: true,
+      annotationDraftingComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
@@ -177,6 +218,7 @@ describe("FRUS production board", () => {
     const charterOnly = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 6,
+      annotationDraftingComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
@@ -186,6 +228,7 @@ describe("FRUS production board", () => {
     const partialSelection = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 20,
+      annotationDraftingComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -199,6 +242,7 @@ describe("FRUS production board", () => {
     const selectedReadout = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 20,
+      annotationDraftingComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
