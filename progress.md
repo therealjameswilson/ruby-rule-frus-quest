@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Office Hub orphan-shadow + green-blob visual fix, pass 3 (2026-06-15):
+  - Root cause of the live "detached black oval near JR" + "JR sprite looks fragmented/detached": the art-pack 32x48 sprite is drawn at scale 1 with origin (0.5, 0.9), so its feet sit `48*(0.9-0.5) = 19px` below the world origin, but `DanneNpc`/`Player` placed the ground shadow only 5px below origin. The shadow therefore floated at the body's waist and read as a standalone oval with the sprite hanging below it. Corrected the art-pack shadow offset to the feet (19) and the label to just below (22). Pass-2's "shadow y=5" was the actual bug, not a fix.
+  - Extracted the geometry into shared exported constants in `src/art/characters.ts` (`ART_PACK_SPRITE_ORIGIN_Y`, `ART_PACK_FOOT_OFFSET_Y`, `ART_PACK_LABEL_OFFSET_Y`) so `Player` and every `DanneNpc` (Junior Compiler, Marine Security Guard) use one source of truth and cannot drift apart again.
+  - Root cause of the live "green blob near TERM": `drawPottedPlant` still stacked seven green ellipses, which merge into one flat green mass at 256x240. Rebuilt it from outlined rectangles — terracotta pot body + rim, a dark soil line, and discrete angled leaf blades with sepia outlines — so it reads as an intentional NES plant prop, not a sprite-bug blob.
+  - Added regression tests in `src/art/characterSprites.test.ts` asserting the foot offset matches the sprite geometry (height*(origin-0.5)=19) and that the label sits below the feet.
+  - Preserved the pass-2 overlay/input fixes (handleOpenOverlays, Codex close swallow, REL modal, warning prompt) unchanged.
+  - `npm test`: 8 files / 33 tests pass; `npm run build` (tsc + vite) passes with only the pre-existing Vite chunk-size warning.
+
 - Live-QA overlay/input + Office art pass (2026-06-15):
   - Office Hub green-blob fix: the lower-right "potted plant" was three flat neon `openNetGreen` ellipses that read as a placeholder blob. Added shaded foliage palette entries (`plantLeaf`/`plantLeafShade`/`plantLeafDark`) and a `drawOfficeProps` → `drawPottedPlant` that draws a terracotta pot with layered shaded leaves and a couple of highlight fronds.
   - Codex / inventory / reliability close model rebuilt deterministically. Removed the racy `keydown-ESC` DOM listener on `InventoryOverlay` (it fired outside the update tick and could leak a pause edge). Added `src/systems/overlayInput.ts#handleOpenOverlays`, called from every gameplay scene's "overlay open" branch (Office, Guide, Archive, Network, Referral, SilentRead, Ending, DanneMap). ESC / B / Tab now close the inventory subscreen and the reliability detail in-loop and `swallowNextInputFrame()` so the still-held key cannot re-trigger the pause panel ("THE OFFICE ROUTE IS PAUSED.").

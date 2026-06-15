@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { FRAMES } from "./character_anims";
 import {
+  ART_PACK_FOOT_OFFSET_Y,
+  ART_PACK_LABEL_OFFSET_Y,
+  ART_PACK_SPRITE_ORIGIN_Y,
   CHARACTER_FRAME,
   CHARACTER_KEYS,
   getCharacterKeyForNpcId,
@@ -45,6 +48,22 @@ describe("character sprite frame layout", () => {
       ...Object.values(FRAMES.action)
     ].sort((a, b) => a - b);
     expect(indices).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+  });
+});
+
+describe("art-pack ground shadow anchoring", () => {
+  // The 32x48 sprite is drawn at scale 1 with origin (0.5, 0.9), so its feet
+  // are height*(origin-0.5) px below the world origin. If the shadow offset
+  // does not match, the shadow floats up at the body's waist and reads as a
+  // detached oval (the live Office Hub "orphan shadow near JR" defect).
+  it("places the foot offset at the sprite's feet", () => {
+    const expectedFeet = Math.round(CHARACTER_FRAME.height * (ART_PACK_SPRITE_ORIGIN_Y - 0.5));
+    expect(ART_PACK_FOOT_OFFSET_Y).toBe(expectedFeet);
+    expect(ART_PACK_FOOT_OFFSET_Y).toBe(19);
+  });
+
+  it("keeps the name label just below the feet", () => {
+    expect(ART_PACK_LABEL_OFFSET_Y).toBeGreaterThan(ART_PACK_FOOT_OFFSET_Y);
   });
 });
 
