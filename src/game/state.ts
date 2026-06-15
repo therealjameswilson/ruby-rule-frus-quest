@@ -1753,6 +1753,8 @@ export function seedProgressForScene(sceneName: string) {
     awardProcessStamp("network");
     gameState.sceneProgress.clearanceProcedureComplete = 1;
     gameState.sceneProgress.clearanceProcedureStep = 3;
+    gameState.sceneProgress.eo13526ReviewComplete = 1;
+    gameState.sceneProgress.eo13526ReviewStep = 3;
     gameState.sceneProgress.declassificationReviewComplete = 1;
     gameState.sceneProgress.declassificationReviewStep = 3;
     gameState.reliability = Math.max(gameState.reliability, 100);

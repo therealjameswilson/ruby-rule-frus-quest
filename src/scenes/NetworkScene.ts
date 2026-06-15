@@ -46,6 +46,12 @@ import {
   evaluateClearanceProcedureAnswer,
   getClearanceProcedurePrompt
 } from "../game/clearanceProcedure";
+import {
+  eo13526ReviewComplete,
+  EO13526_REVIEW_PROMPTS,
+  evaluateEo13526ReviewAnswer,
+  getEo13526ReviewPrompt
+} from "../game/eo13526Review";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -335,12 +341,8 @@ export class NetworkScene extends Phaser.Scene {
     this.track(this.add.rectangle(128, 151, 92, 8, color(PALETTE.deepRuby)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(139));
     if (!this.clearanceTokenCollected) {
       this.clearanceTokenIcon = this.track(this.add.image(128, 132, "clearance-token").setDepth(155));
-      this.routeText.setText(gameState.sceneProgress.clearanceProcedureComplete
-        ? "CLEARANCE TOKEN\nVERIFY AND TAKE"
-        : "CLEARANCE LANE\nVERIFY PROCEDURE");
-      setObjective(gameState.sceneProgress.clearanceProcedureComplete
-        ? "Two Networks: collect the Clearance Token in N2."
-        : "Two Networks: document the ClassNet clearance procedure before token review.");
+      this.routeText.setText(this.clearanceTokenRouteLabel(false));
+      setObjective(this.clearanceTokenObjective());
     } else {
       this.track(this.add.image(128, 132, "clearance-token").setTint(color(PALETTE.goldStamp)).setDepth(155));
       this.routeText.setText("TOKEN EARNED\nEAST: REFERRAL VAULT");
@@ -401,27 +403,48 @@ export class NetworkScene extends Phaser.Scene {
     const nearToken = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) <= 32;
     if (!nearToken) {
       setNearestInteractable(null);
-      this.routeText.setText(gameState.sceneProgress.clearanceProcedureComplete
-        ? "CLEARANCE TOKEN\nVERIFY AND TAKE"
-        : "CLEARANCE LANE\nVERIFY PROCEDURE");
+      this.routeText.setText(this.clearanceTokenRouteLabel(false));
       return false;
     }
     setNearestInteractable("Clearance Token");
-    this.routeText.setText(gameState.sceneProgress.clearanceProcedureComplete
-      ? gameState.sceneProgress.declassificationReviewComplete
-        ? "CLEARANCE TOKEN\nPRESS SPACE"
-        : "CLASSNET REVIEW\nPRESS SPACE"
-      : "CLEARANCE LANE\nPRESS SPACE");
+    this.routeText.setText(this.clearanceTokenRouteLabel(true));
     if (!input.aJustPressed) return false;
     if (!gameState.sceneProgress.clearanceProcedureComplete) this.showClearanceProcedureChoice();
+    else if (!gameState.sceneProgress.eo13526ReviewComplete) this.showEo13526ReviewChoice();
     else if (gameState.sceneProgress.declassificationReviewComplete) this.collectClearanceToken();
     else this.showDeclassificationReviewChoice();
     return true;
   }
 
+  private clearanceTokenRouteLabel(nearToken: boolean) {
+    if (!gameState.sceneProgress.clearanceProcedureComplete) {
+      return nearToken ? "CLEARANCE LANE\nPRESS SPACE" : "CLEARANCE LANE\nVERIFY PROCEDURE";
+    }
+    if (!gameState.sceneProgress.eo13526ReviewComplete) {
+      return nearToken ? "E.O. 13526\nPRESS SPACE" : "E.O. 13526\nRELEASE REVIEW";
+    }
+    if (!gameState.sceneProgress.declassificationReviewComplete) {
+      return nearToken ? "CLASSNET REVIEW\nPRESS SPACE" : "CLASSNET REVIEW\nVERIFY AND TAKE";
+    }
+    return nearToken ? "CLEARANCE TOKEN\nPRESS SPACE" : "CLEARANCE TOKEN\nVERIFY AND TAKE";
+  }
+
+  private clearanceTokenObjective() {
+    if (!gameState.sceneProgress.clearanceProcedureComplete) {
+      return "Two Networks: document the ClassNet clearance procedure before token review.";
+    }
+    if (!gameState.sceneProgress.eo13526ReviewComplete) {
+      return "Two Networks: apply the E.O. 13526 release standard before token review.";
+    }
+    if (!gameState.sceneProgress.declassificationReviewComplete) {
+      return "Two Networks: complete the ClassNet review before taking the token.";
+    }
+    return "Two Networks: collect the Clearance Token in N2.";
+  }
+
   private showClearanceProcedureChoice() {
     if (gameState.sceneProgress.clearanceProcedureComplete) {
-      this.showDeclassificationReviewChoice();
+      this.showEo13526ReviewChoice();
       return;
     }
 
@@ -463,6 +486,59 @@ export class NetworkScene extends Phaser.Scene {
       this.dialog.show("CLEARANCE PROCEDURE", [
         result.message,
         "Procedure lane filed.",
+        "Now apply the E.O. 13526 release review."
+      ], () => this.showEo13526ReviewChoice());
+    });
+  }
+
+  private showEo13526ReviewChoice() {
+    if (!gameState.sceneProgress.clearanceProcedureComplete) {
+      this.showClearanceProcedureChoice();
+      return;
+    }
+    if (gameState.sceneProgress.eo13526ReviewComplete) {
+      this.showDeclassificationReviewChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.eo13526ReviewStep ?? 0;
+    const prompt = getEo13526ReviewPrompt(step);
+    setObjective(`E.O. 13526 review: answer ${step + 1}/${EO13526_REVIEW_PROMPTS.length}.`);
+    this.routeText.setText(`E.O. 13526\n${step + 1}/${EO13526_REVIEW_PROMPTS.length}`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateEo13526ReviewAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `E.O. 13526 review shortcut: ${option.value}`);
+        this.reliability.update();
+        setLatestMessage("E.O. 13526 REVIEW FAILED - RELEASE STANDARD REQUIRED");
+        this.dialog.show("E.O. 13526 REVIEW", [
+          result.message,
+          "Release review must keep concurrence and withholding accounting visible."
+        ], () => this.showEo13526ReviewChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.eo13526ReviewStep = nextStep;
+      if (!eo13526ReviewComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`E.O. 13526 review check ${nextStep}/${EO13526_REVIEW_PROMPTS.length}.`);
+        this.dialog.show("E.O. 13526 REVIEW", [
+          result.message,
+          "Continue the release-standard review before the token moves."
+        ], () => this.showEo13526ReviewChoice());
+        return;
+      }
+
+      gameState.sceneProgress.eo13526ReviewComplete = 1;
+      gameState.sceneProgress.eo13526ReviewStep = EO13526_REVIEW_PROMPTS.length;
+      addDocumentPoints(7, "E.O. 13526 release review filed");
+      retroAudio.confirm();
+      setLatestMessage("E.O. 13526 review logged: release, concurrence, and accounting filed.");
+      this.dialog.show("E.O. 13526 REVIEW", [
+        result.message,
+        "Release standard filed.",
         "Now resolve the classified equity review."
       ], () => this.showDeclassificationReviewChoice());
     });
@@ -519,6 +595,8 @@ export class NetworkScene extends Phaser.Scene {
     if (this.clearanceTokenCollected) return;
     gameState.sceneProgress.clearanceProcedureComplete = 1;
     gameState.sceneProgress.clearanceProcedureStep = CLEARANCE_PROCEDURE_PROMPTS.length;
+    gameState.sceneProgress.eo13526ReviewComplete = 1;
+    gameState.sceneProgress.eo13526ReviewStep = EO13526_REVIEW_PROMPTS.length;
     gameState.sceneProgress.declassificationReviewComplete = 1;
     this.clearanceTokenCollected = true;
     addProcessItem("clearance_token");

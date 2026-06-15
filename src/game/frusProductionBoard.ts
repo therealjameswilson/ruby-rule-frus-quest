@@ -2,6 +2,7 @@ import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
 import { EDITORIAL_TREATMENT_SOURCE_URL } from "./editorialTreatment";
+import { EO13526_REVIEW_SOURCE_URL } from "./eo13526Review";
 import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPermission";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
@@ -148,9 +149,9 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     id: "declassification_review",
     label: "Declassification review",
     shortLabel: "DEC",
-    sourceBasis: "FRUS draws on records across State, Defense, CIA, NSC, and other agencies.",
-    sourceUrl: ABOUT_FRUS_URL,
-    gameplayTask: "Route OpenNet/ClassNet issues and earn the Clearance Token."
+    sourceBasis: "E.O. 13526 review releases all information subject only to current national security requirements, with concurrence and visible accounting.",
+    sourceUrl: EO13526_REVIEW_SOURCE_URL,
+    gameplayTask: "Route OpenNet/ClassNet issues, apply the release standard, and earn the Clearance Token."
   },
   {
     id: "foreign_permissions",

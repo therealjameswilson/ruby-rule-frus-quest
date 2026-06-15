@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- E.O. 13526 release-standard gameplay gate (2026-06-15):
+  - Added `src/game/eo13526Review.ts`, a Phaser-free rule module based on a history.state.gov FRUS preface that says E.O. 13526 reviewers aimed to release all information subject only to current national security requirements, with concurrence from appropriate bureaus/agencies/foreign governments and accounting for withheld or excised material.
+  - Wired `NetworkScene` so the ClassNet Vault now flows Clearance Procedure -> E.O. 13526 Review -> ClassNet declassification review -> Clearance Token. The new gate covers release standard, concurrence chain, and visible withholding/excision accounting before the token can move.
+  - Updated the FRUS Production Board's `declassification_review` source basis and URL to the E.O. 13526 preface source, so the board's source readout now matches the more precise declassification standard.
+  - Wrong EO review shortcuts apply standards damage (`omitted_material_fact`, `concealed_policy_defect`, `undisclosed_deletion`, or `altered_text`), including silent deletion, smooth-gap, terminal-only, and withhold-for-speed shortcuts.
+  - Updated later-scene QA seeding so `?scene=ReferralVaultScene`, `?scene=SilentReadScene`, and `?scene=EndingScene` remain coherent with the expanded ClassNet chain.
+  - Verified focused tests: `npm test -- src/game/eo13526Review.test.ts src/game/declassificationReview.test.ts src/game/clearanceProcedure.test.ts src/game/frusProductionBoard.test.ts` (4 files / 24 tests pass).
+  - Verified full `npm test`: 41 files / 209 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=NetworkScene&role=declass_reviewer&name=Alex` reports `declassification_review.sourceUrl: "https://history.state.gov/historicaldocuments/frus1969-76v22/preface"`, no EO review pre-seeded in `sceneProgress`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Typeflow order gameplay gate (2026-06-15):
   - Added `src/game/typeflowOrder.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: until the late 1970s, typesetting preceded declassification review, but since then compilations are cleared in manuscript before typesetting.
   - Wired `SilentReadScene` so completed editorial treatment now flows into a two-prompt Typeflow Order gate before the existing Typesetter Proof sequence. The Buckram Key remains downstream of correct manuscript-clearance order and page proofing.
