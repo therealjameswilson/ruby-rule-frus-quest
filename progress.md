@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- GPO publication handoff (2026-06-15):
+  - Added `src/game/gpoPublication.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: the Department contracts with the Government Printing Office to prepare/publish FRUS volumes, GPO binding turns final segments into the complete volume, and funding delay cannot justify cutting or uncertified publication.
+  - `EndingScene` now treats publication as a three-part last mile: Buckram Gate readiness -> final Kellogg certification -> GPO publication handoff -> published FRUS cover. Completing Kellogg certification no longer publishes instantly.
+  - Wrong handoff shortcuts apply standards damage (`omitted_material_fact`, `altered_text`, or `concealed_policy_defect`) and reset the GPO handoff, while correct answers persist `sceneProgress.gpoPublicationComplete` before `publishVolume()`.
+  - Verified focused tests: `npm test -- src/game/gpoPublication.test.ts src/game/kelloggCertification.test.ts` (2 files / 8 tests pass); `npm run build` passes with the existing Vite chunk-size warning.
+  - Verified full `npm test`: 28 files / 149 tests pass. Required web-game client at `?scene=EndingScene&role=compiler&name=Ruby` confirms Space now opens `Final certification: 1/4` instead of publishing immediately; headless WebGL screenshots remain black as previously documented.
 - Typesetter proof and final text check (2026-06-15):
   - Added `src/game/typesetterProof.ts`, a Phaser-free proofing rule module based on the history.state.gov FRUS creation stages: cleared text is prepared for typesetting, document notes must correctly render classification/drafting/date information, and typeset pages are compared to originals with remaining textual issues flagged for consultation.
   - The Silent Read Tower no longer awards the Buckram Key immediately after every physical evidence flag is stamped. It now opens a three-prompt TypeSetter Proof sequence; wrong shortcuts apply standards damage, while correct answers file `sceneProgress.typesetterProofComplete`, proof the core documents, add document points, and only then issue the Buckram Key.

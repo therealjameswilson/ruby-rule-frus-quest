@@ -7,6 +7,12 @@ import {
   kelloggCertificationComplete
 } from "../game/kelloggCertification";
 import {
+  evaluateGpoPublicationAnswer,
+  getGpoPublicationPrompt,
+  GPO_PUBLICATION_PROMPTS,
+  gpoPublicationComplete
+} from "../game/gpoPublication";
+import {
   addInventoryItem,
   addProcessItem,
   gameState,
@@ -263,11 +269,14 @@ export class EndingScene extends Phaser.Scene {
     const ready = readiness.ready && hasProcessItem("buckram_key");
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
     const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
+    const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     const status = ready ? "ready" : "locked";
     const message = ready
       ? certificationComplete
-        ? "Buckram Key ready: human certification can publish the volume."
+        ? gpoComplete
+          ? "Buckram Key ready: GPO handoff complete; publish the volume."
+          : "Final certification complete: route the finished volume to GPO."
         : "Buckram Key ready: complete the final Kellogg certification."
       : canCorrectCertification
         ? "Final certification needs repair at the human publication table."
@@ -286,12 +295,16 @@ export class EndingScene extends Phaser.Scene {
     if (ready) {
       setObjective(nearGate
         ? certificationComplete
-          ? "Buckram Gate: press Space to publish the certified volume."
+          ? gpoComplete
+            ? "Buckram Gate: press Space to publish the GPO-ready volume."
+            : "Buckram Gate: press Space for GPO publication handoff."
           : "Buckram Gate: press Space for final Kellogg certification."
         : "Buckram Gate: stand at the human publication table.");
       this.actionHint.setText(nearGate
         ? certificationComplete
-          ? "SPACE: PUBLISH CERTIFIED VOLUME"
+          ? gpoComplete
+            ? "SPACE: PUBLISH GPO-READY VOLUME"
+            : "SPACE: GPO PUBLICATION HANDOFF"
           : "SPACE: FINAL KELLOGG CERTIFICATION"
         : "MOVE TO CERTIFICATION TABLE.");
       return;
@@ -334,6 +347,10 @@ export class EndingScene extends Phaser.Scene {
       this.startKelloggCertification();
       return;
     }
+    if (!gameState.sceneProgress.gpoPublicationComplete) {
+      this.startGpoPublicationHandoff();
+      return;
+    }
     this.publishVolume();
   }
 
@@ -373,11 +390,51 @@ export class EndingScene extends Phaser.Scene {
       gameState.sceneProgress.kelloggFinalCertificationStep = KELLOGG_CERTIFICATION_PROMPTS.length;
       const finalReadiness = getFinalGateReadiness();
       if (finalReadiness.ready && hasProcessItem("buckram_key")) {
-        this.publishVolume();
+        this.startGpoPublicationHandoff();
         return;
       }
       setObjective("Certification repaired. Restore reliability or remaining standards blockers before publication.");
       setLatestMessage("Certification repaired, but the Buckram Gate checklist still has blockers.");
+      this.updateGateReadout();
+    });
+  }
+
+  private startGpoPublicationHandoff() {
+    if (gameState.sceneProgress.gpoPublicationComplete) {
+      this.publishVolume();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      GPO_PUBLICATION_PROMPTS.length - 1,
+      gameState.sceneProgress.gpoPublicationStep ?? 0
+    ));
+    gameState.sceneProgress.gpoPublicationStep = currentStep;
+    const prompt = getGpoPublicationPrompt(currentStep);
+    setObjective(`GPO handoff: ${currentStep + 1}/${GPO_PUBLICATION_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateGpoPublicationAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.gpoPublicationStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `GPO publication handoff: ${prompt.id}`);
+        }
+        setObjective("GPO handoff: correct the publication route before the volume can issue.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.gpoPublicationStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!gpoPublicationComplete(nextStep)) {
+        this.startGpoPublicationHandoff();
+        return;
+      }
+      gameState.sceneProgress.gpoPublicationComplete = 1;
+      gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
+      setLatestMessage("GPO handoff complete: print, bind, and publish the finished FRUS volume.");
+      setObjective("Buckram Gate: press Space to publish the GPO-ready volume.");
       this.updateGateReadout();
     });
   }
@@ -399,6 +456,7 @@ export class EndingScene extends Phaser.Scene {
   private publishVolume() {
     this.published = true;
     this.canRestart = false;
+    gameState.sceneProgress.gpoPublicationComplete = 1;
     addProcessItem("buckram_key");
     addInventoryItem("Published FRUS Cover");
     ["telegram_001", "source_note_047", "cross_reference_001", "sbu_annotation_001", "proof_page_412"].forEach((documentId) => {
