@@ -2,6 +2,19 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- TitleScene art uplift to match the embedded map (2026-06-15):
+  - The opening/title screen embeds the high-quality `frus_world_map.jpg` in a small framed panel, but the surrounding art was flat: crude header, flat dotted wallpaper, a blocky gold title colliding with the map bottom, plain relic-bar icons, and flat border tiles.
+  - Reworked `src/scenes/TitleScene.ts` to a handcrafted "mounted archival display" look using procedural Phaser graphics only (no new asset files, GitHub-Pages safe):
+    - `drawWallpaper()` bakes a single deep-ruby buckram texture with a gold damask diamond motif and weave threads, then adds a black edge vignette so the bright center reads first.
+    - `goldFrame()` draws an ornate double gold/bronze frame with a sepia reveal and corner rivets; used to mount the map, the title, and the relic shelf so the whole screen shares one frame language.
+    - `bevelPanel()` gives the header plaque and mini-map readout raised/recessed edges; the header now has a brass plaque, beveled readout screen with scanline, "ARCHIVE TERMINAL" subline, and a red classification stamp strip.
+    - `drawFilmstrip()` replaces the flat border tiles with a brass rail of beveled sprocket holes and gold trim, top and bottom.
+    - `RUBY RULE` is now a layered beveled logo (black shadow / ruby outline / gold face) on its own framed plate, and `THE FRUS QUEST` sits inside the plate.
+    - The relic rack is wrapped in a framed display case.
+  - Fixed the title/map visual collision by moving the title onto its own plate below the map. Extracted the vertical layout to `src/scenes/titleLayout.ts` (`TITLE_LAYOUT` + `framedPlateBounds()`), and added `src/scenes/TitleScene.test.ts` asserting the map/title/relic plates never overlap and stay within the filmstrip borders.
+  - Added semantic palette aliases (`bronze`, `oldGold`, `paleGold`, `mutedRuby`, `deepBrown`) in `src/game/constants.ts`.
+  - Verified `npm test` (9 files, 37 tests passed) and `npm run build`.
+
 - Office Hub orphan-oval final fix, pass 4 (2026-06-15):
   - Live QA after PR #19 confirmed the green plant and JR sprite alignment were fixed but a standalone black oval still sat below the JR sprite, near the JR COMP/IN label, attached to nothing.
   - Root cause: the pass-3 foot-offset formula was wrong. For a sprite with vertical origin `o`, the feet sit `height*(1-o)` below the origin, not `height*(o-0.5)`. With origin 0.9 the feet are `48*0.1 ≈ 5px` below the origin, but pass-3 computed `48*0.4 = 19` and placed the single NPC/Player ground shadow ~14px BELOW the feet. That detached shadow is the orphan oval. (Pass-2's original "5" was geometrically correct; pass-3 over-corrected it.)
