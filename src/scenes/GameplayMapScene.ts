@@ -8,6 +8,7 @@ import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { InteractionAssist, nearestInteractable } from "../systems/interaction";
+import { InteractionPrompt, promptVerbForKind } from "../systems/interactionPrompt";
 import { snapPixel } from "../systems/pixelPerfect";
 
 function color(hex: string) {
@@ -109,6 +110,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private districtName = "World Map";
   private spawnId = "entry";
   private player!: Player;
+  private prompt!: InteractionPrompt;
   private hintText!: Phaser.GameObjects.Text;
   private dialogSpeakerText!: Phaser.GameObjects.Text;
   private dialogBodyText!: Phaser.GameObjects.Text;
@@ -150,6 +152,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.createObjectsFromTileData();
     if (isCollisionDebugEnabled()) this.drawCollisionDebug();
     this.createHudChrome();
+    this.prompt = new InteractionPrompt(this, 880);
     const spawn = this.findSpawn(this.spawnId) ?? this.findSpawn("entry") ?? { x: this.fitRect.x + this.fitRect.width / 2, y: this.fitRect.y + this.fitRect.height - 20 };
     this.player = new Player(this, spawn.x, spawn.y);
     setVisibleEntities([
@@ -167,6 +170,7 @@ export class GameplayMapScene extends Phaser.Scene {
       if (input.aJustPressed) this.advanceMapDialog();
       if (input.bJustPressed || input.pauseJustPressed) this.clearMapDialog();
       this.player.update(delta, false);
+      this.prompt.update(delta, null);
       return;
     }
     if (input.pauseJustPressed) {
@@ -186,7 +190,12 @@ export class GameplayMapScene extends Phaser.Scene {
     this.handleTriggers();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "A INTERACT  ESC WORLD MAP");
+    this.prompt.update(delta, nearest, {
+      left: this.fitRect.x + 30,
+      right: this.fitRect.x + this.fitRect.width - 30,
+      top: TOP_SAFE_BAND + 14
+    });
+    this.hintText.setText(nearest ? `A ${promptVerbForKind(nearest.kind)} ${nearest.label.toUpperCase()}` : "A INTERACT  ESC WORLD MAP");
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
     setObjective(MAP_OBJECTIVES[this.mapKey]);

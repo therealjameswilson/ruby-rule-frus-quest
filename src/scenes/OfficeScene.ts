@@ -18,10 +18,12 @@ import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { InteractionAssist, nearestInteractable } from "../systems/interaction";
+import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
+import { shouldDismissControlsCard } from "../systems/tutorialDismiss";
 import { drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 
 type OfficeDanneRoute = "CherryBlossomGardenScene" | "SenateHearingChamberScene";
@@ -37,6 +39,8 @@ export class OfficeScene extends Phaser.Scene {
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private hintText!: Phaser.GameObjects.Text;
+  private readonly controlsHint = "A INTERACT   TAB CODEX   M MENU   ESC PAUSE";
+  private prompt!: InteractionPrompt;
   private tutorialCard?: Phaser.GameObjects.Container;
   private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
@@ -61,12 +65,13 @@ export class OfficeScene extends Phaser.Scene {
     this.dialog = new DialogBox(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
-    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 10, "", {
+    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 10, this.controlsHint, {
       fontFamily: "monospace",
-      fontSize: "7px",
+      fontSize: "6px",
       color: PALETTE.goldStamp,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(900);
+    this.prompt = new InteractionPrompt(this);
     this.solids = [
       new Phaser.Geom.Rectangle(34, 72, 72, 28),
       new Phaser.Geom.Rectangle(154, 72, 64, 28),
@@ -164,20 +169,21 @@ export class OfficeScene extends Phaser.Scene {
     this.juniorCompiler.update(this.time.now);
 
     if (this.tutorialCard) {
-      if (input.confirmJustPressed || input.aJustPressed || input.cancelJustPressed || input.pointerPrimaryJustPressed) {
-        this.dismissOfficeTutorial();
-      }
-      this.player.update(delta, false);
-      return;
+      // The card is an overlay hint, not a hard modal: the player can walk away
+      // from it. Any movement intent (or confirm/cancel/pointer) dismisses it so
+      // the first step is never swallowed and the room never feels frozen.
+      if (shouldDismissControlsCard(input)) this.dismissOfficeTutorial();
     }
 
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
+      this.prompt.update(delta, null);
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
+      this.prompt.update(delta, null);
       return;
     }
     if (input.pauseJustPressed) {
@@ -191,9 +197,10 @@ export class OfficeScene extends Phaser.Scene {
     });
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
+    this.prompt.update(delta, nearest);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
+    else if (input.aJustPressed && !nearest) this.flashNoTargetHint();
     setObjective("Office Hub: talk to the Junior Compiler or enter the Archive Guide.");
     this.reliability.update();
   }
@@ -247,13 +254,21 @@ export class OfficeScene extends Phaser.Scene {
       align: "center",
       lineSpacing: 2
     }).setOrigin(0.5, 0);
-    const prompt = this.add.text(128, 162, "PRESS A / ENTER TO BEGIN", {
+    const prompt = this.add.text(128, 162, "MOVE OR PRESS A TO BEGIN", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
     }).setOrigin(0.5);
     this.tutorialCard = this.add.container(0, 0, [shadow, panel, title, body, prompt]).setDepth(1800);
     bindPointerDown(panel, () => this.dismissOfficeTutorial());
+  }
+
+  private flashNoTargetHint() {
+    retroAudio.blip();
+    this.hintText.setText("NOTHING TO INTERACT WITH HERE");
+    this.time.delayedCall(900, () => {
+      if (this.hintText.active) this.hintText.setText(this.controlsHint);
+    });
   }
 
   private dismissOfficeTutorial() {
