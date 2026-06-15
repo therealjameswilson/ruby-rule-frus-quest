@@ -13,6 +13,12 @@ import {
   gpoPublicationComplete
 } from "../game/gpoPublication";
 import {
+  DIGITAL_RELEASE_PROMPTS,
+  digitalReleaseComplete,
+  evaluateDigitalReleaseAnswer,
+  getDigitalReleasePrompt
+} from "../game/digitalRelease";
+import {
   evaluateGpoSegmentAssemblyAnswer,
   getGpoSegmentAssemblyPrompt,
   GPO_SEGMENT_ASSEMBLY_PROMPTS,
@@ -285,13 +291,16 @@ export class EndingScene extends Phaser.Scene {
     const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
     const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
     const gpoSegmentsComplete = Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete || gpoComplete);
+    const digitalReleaseReady = Boolean(gameState.sceneProgress.digitalReleaseComplete);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     const status = ready ? "ready" : "locked";
     const message = ready
       ? certificationComplete
         ? gpoSegmentsComplete
           ? gpoComplete
-            ? "Buckram Key ready: GPO handoff complete; publish the volume."
+            ? digitalReleaseReady
+              ? "Buckram Key ready: digital release manifest complete; publish the volume."
+              : "GPO handoff complete: prepare the history.state.gov digital release manifest."
             : "GPO segments assembled: complete the final publication handoff."
           : "Final certification complete: submit the GPO publication segments."
         : "Buckram Key ready: complete the final Kellogg certification."
@@ -316,7 +325,9 @@ export class EndingScene extends Phaser.Scene {
         ? certificationComplete
           ? gpoSegmentsComplete
             ? gpoComplete
-              ? "Buckram Gate: press Space to publish the GPO-ready volume."
+              ? digitalReleaseReady
+                ? "Buckram Gate: press Space to publish the public FRUS volume."
+                : "Buckram Gate: press Space for digital release manifest."
               : "Buckram Gate: press Space for GPO publication handoff."
             : "Buckram Gate: press Space to assemble GPO segments."
           : "Buckram Gate: press Space for final Kellogg certification."
@@ -325,7 +336,9 @@ export class EndingScene extends Phaser.Scene {
         ? certificationComplete
           ? gpoSegmentsComplete
             ? gpoComplete
-              ? "SPACE: PUBLISH GPO-READY VOLUME"
+              ? digitalReleaseReady
+                ? "SPACE: PUBLISH PUBLIC FRUS VOLUME"
+                : "SPACE: DIGITAL RELEASE MANIFEST"
               : "SPACE: GPO PUBLICATION HANDOFF"
             : "SPACE: ASSEMBLE GPO SEGMENTS"
           : "SPACE: FINAL KELLOGG CERTIFICATION"
@@ -387,7 +400,56 @@ export class EndingScene extends Phaser.Scene {
       this.startGpoPublicationHandoff();
       return;
     }
+    if (!gameState.sceneProgress.digitalReleaseComplete) {
+      this.startDigitalRelease();
+      return;
+    }
     this.publishVolume();
+  }
+
+  private startDigitalRelease() {
+    if (gameState.sceneProgress.digitalReleaseComplete) {
+      this.publishVolume();
+      return;
+    }
+    if (!gameState.sceneProgress.gpoPublicationComplete) {
+      this.startGpoPublicationHandoff();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      DIGITAL_RELEASE_PROMPTS.length - 1,
+      gameState.sceneProgress.digitalReleaseStep ?? 0
+    ));
+    gameState.sceneProgress.digitalReleaseStep = currentStep;
+    const prompt = getDigitalReleasePrompt(currentStep);
+    setObjective(`Digital release: ${currentStep + 1}/${DIGITAL_RELEASE_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateDigitalReleaseAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.digitalReleaseStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `Digital release: ${prompt.id}`);
+        }
+        setObjective("Digital release: correct the public metadata before the volume can issue.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.digitalReleaseStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!digitalReleaseComplete(nextStep)) {
+        this.startDigitalRelease();
+        return;
+      }
+      gameState.sceneProgress.digitalReleaseComplete = 1;
+      gameState.sceneProgress.digitalReleaseStep = DIGITAL_RELEASE_PROMPTS.length;
+      addDocumentPoints(4, "history.state.gov digital release manifest filed");
+      setLatestMessage("Digital release complete: document-number citations, TEI master, and eBook catalog are queued.");
+      setObjective("Buckram Gate: press Space to publish the public FRUS volume.");
+      this.updateGateReadout();
+    });
   }
 
   private startFrontMatterAssembly() {
@@ -590,6 +652,8 @@ export class EndingScene extends Phaser.Scene {
     gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
     gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
     gameState.sceneProgress.gpoPublicationComplete = 1;
+    gameState.sceneProgress.digitalReleaseComplete = 1;
+    gameState.sceneProgress.digitalReleaseStep = DIGITAL_RELEASE_PROMPTS.length;
     addProcessItem("buckram_key");
     addInventoryItem("Published FRUS Cover");
     ["telegram_001", "source_note_047", "cross_reference_001", "sbu_annotation_001", "proof_page_412"].forEach((documentId) => {
@@ -634,6 +698,7 @@ export class EndingScene extends Phaser.Scene {
       "Buckram Key",
       "FRUS cover prize",
       published ? "Published FRUS Cover" : "Unpublished assembled cover",
+      "history.state.gov digital release manifest",
       "StateChat readiness checklist"
     ]);
     const status = published || (getFinalGateReadiness().ready && hasProcessItem("buckram_key")) ? "cleared" : "blocking";

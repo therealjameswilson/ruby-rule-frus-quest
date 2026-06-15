@@ -1,6 +1,7 @@
 import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
+import { DIGITAL_RELEASE_SOURCE_URL } from "./digitalRelease";
 import { EDITORIAL_TREATMENT_SOURCE_URL } from "./editorialTreatment";
 import { EO13526_REVIEW_SOURCE_URL } from "./eo13526Review";
 import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPermission";
@@ -27,6 +28,7 @@ export type FrusProductionBoardStepId =
   | "agency_referrals"
   | "advisory_monitoring"
   | "kellogg_editing"
+  | "digital_release"
   | "publication_30_year";
 
 export type FrusProductionBoardStatus = "complete" | "active" | "locked";
@@ -50,6 +52,7 @@ export interface FrusProductionBoardContext {
   selectionDocketComplete: boolean;
   seriesConceptComplete: boolean;
   volumeConceptComplete: boolean;
+  digitalReleaseComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -194,6 +197,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Resolve textual issues with human editorial treatment before the proof stamp can satisfy Kellogg standards."
   },
   {
+    id: "digital_release",
+    label: "Digital edition release",
+    shortLabel: "WEB",
+    sourceBasis: "FRUS eBooks use persistent document numbers, and the digital edition needs a TEI-backed public release path.",
+    sourceUrl: DIGITAL_RELEASE_SOURCE_URL,
+    gameplayTask: "Prepare the history.state.gov digital release manifest after GPO handoff: document numbers, TEI master, and eBook catalog."
+  },
+  {
     id: "publication_30_year",
     label: "30-year publication",
     shortLabel: "PUB",
@@ -296,6 +307,8 @@ export function isFrusProductionBoardStepComplete(
       return context.hacReviewComplete || stamps.has("sop");
     case "kellogg_editing":
       return context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
+    case "digital_release":
+      return context.finalGatePublished || context.digitalReleaseComplete;
     case "publication_30_year":
       return context.finalGatePublished
         || (context.volumeWorkflowState === "published")
@@ -303,6 +316,7 @@ export function isFrusProductionBoardStepComplete(
           buckramGateOpen(context.processStamps, context.documentCandidates)
           && context.heldProcessItems.has("buckram_key")
           && context.volumeFragments.length >= 5
+          && context.digitalReleaseComplete
           && noUndisclosedDeletions(context)
         );
   }

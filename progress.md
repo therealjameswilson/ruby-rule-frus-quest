@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Digital edition release gameplay gate (2026-06-15):
+  - Added `src/game/digitalRelease.ts`, a Phaser-free rule module based on history.state.gov FRUS eBook and developer guidance: eBook citations use persistent document numbers rather than page numbers, FRUS digital masters are encoded as TEI, and the eBook catalog uses OPDS.
+  - Inserted `digital_release` into the FRUS Production Board after editorial treatment and before the 30-year publication gate, so a bound/GPO-ready volume still needs a public digital manifest before the final published cover.
+  - Wired `EndingScene` so GPO handoff now flows into a three-prompt digital release desk before `publishVolume()`. Wrong digital shortcuts apply standards damage (`altered_text`, `omitted_material_fact`, or `concealed_policy_defect`); correct answers file `sceneProgress.digitalReleaseComplete`, add document points, and preserve old-save compatibility once the volume is published.
+  - Verified focused tests: `npm test -- src/game/digitalRelease.test.ts src/game/frusProductionBoard.test.ts src/game/gpoPublication.test.ts` (3 files / 20 tests pass).
+  - Verified full `npm test`: 42 files / 212 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=EndingScene&role=compiler&name=Ruby` drove front matter -> Kellogg certification -> GPO segments -> GPO handoff -> digital release, then reported `sceneProgress.digitalReleaseComplete: 1`, `digitalReleaseStep: 3`, `nearestInteractable: "CERTIFY FRUS VOLUME"`, and `objective: "Buckram Gate: press Space to publish the public FRUS volume."` No console-error artifact was produced; the generated headless WebGL screenshot remains black as previously documented.
 - E.O. 13526 release-standard gameplay gate (2026-06-15):
   - Added `src/game/eo13526Review.ts`, a Phaser-free rule module based on a history.state.gov FRUS preface that says E.O. 13526 reviewers aimed to release all information subject only to current national security requirements, with concurrence from appropriate bureaus/agencies/foreign governments and accounting for withheld or excised material.
   - Wired `NetworkScene` so the ClassNet Vault now flows Clearance Procedure -> E.O. 13526 Review -> ClassNet declassification review -> Clearance Token. The new gate covers release standard, concurrence chain, and visible withholding/excision accounting before the token can move.

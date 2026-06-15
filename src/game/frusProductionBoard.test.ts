@@ -29,6 +29,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     selectionDocketComplete: false,
     seriesConceptComplete: false,
     volumeConceptComplete: false,
+    digitalReleaseComplete: false,
     ...overrides
   };
 }
@@ -57,6 +58,7 @@ describe("FRUS production board", () => {
       "agency_referrals",
       "advisory_monitoring",
       "kellogg_editing",
+      "digital_release",
       "publication_30_year"
     ]);
   });
@@ -137,8 +139,8 @@ describe("FRUS production board", () => {
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 13).every((step) => step.complete)).toBe(true);
-    expect(readout.nextStep?.id).toBe("publication_30_year");
+    expect(readout.steps.slice(0, 14).every((step) => step.complete)).toBe(true);
+    expect(readout.nextStep?.id).toBe("digital_release");
   });
 
   it("requires foreign-government permission after declassification and before referral concurrence", () => {
@@ -401,7 +403,7 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("kellogg_editing", consulted)).toBe(true);
   });
 
-  it("requires Buckram Key, complete pendants, cleared equities, fragments, and publication state for the final step", () => {
+  it("requires digital release before the statutory publication step can complete", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(withEquityResolved);
     const notReady = context({
       processStamps: ["rule", "archive", "sop"],
@@ -414,8 +416,15 @@ describe("FRUS production board", () => {
       ...notReady,
       volumeFragments: ["A", "B", "C", "D", "E"]
     });
+    const digitallyReleased = context({
+      ...ready,
+      digitalReleaseComplete: true
+    });
 
     expect(isFrusProductionBoardStepComplete("publication_30_year", notReady)).toBe(false);
-    expect(isFrusProductionBoardStepComplete("publication_30_year", ready)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("digital_release", ready)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", ready)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("digital_release", digitallyReleased)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", digitallyReleased)).toBe(true);
   });
 });

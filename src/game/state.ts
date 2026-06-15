@@ -1698,7 +1698,8 @@ export function getProductionBoardReadout() {
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
     selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
-    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete)
+    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete),
+    digitalReleaseComplete: Boolean(gameState.sceneProgress.digitalReleaseComplete)
   });
 }
 
