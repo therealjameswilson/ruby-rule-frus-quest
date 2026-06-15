@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Volume conceptualization gameplay gate (2026-06-15):
+  - Added `src/game/volumeConcept.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: after grand conceptualization, each compiler or team defines the parameters of the individual volume, consults histories/memoirs/accounts to inform collection and selection, and covers policymaking plus implementation.
+  - Inserted `volume_concept` into the FRUS Production Board after `series_concept` and before 20-year access, so whole-series planning no longer stands in for defining the actual volume remit.
+  - Wired the Office Hub `Scope / Selection Desk` into a five-stage desk loop: Series Plan -> Volume Concept -> Scope Charter -> Record Collection -> Candidate Selection.
+  - Wrong volume-concept shortcuts apply standards damage (`omitted_material_fact`, `altered_text`, or `concealed_policy_defect`) depending on whether the player narrows to easy files, lets a machine claim completeness, or hides implementation defects.
+  - Updated deep-scene QA seeding so `?scene=GuideScene` and later routes remain coherent with the expanded board.
+  - Verified focused tests: `npm test -- src/game/volumeConcept.test.ts src/game/frusProductionBoard.test.ts src/game/seriesConcept.test.ts src/game/recordCollection.test.ts` (4 files / 25 tests pass).
+  - Verified full `npm test`: 31 files / 166 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=OfficeScene&role=compiler&name=Ruby` reports `productionBoard.total: 12` with order `series_concept -> volume_concept -> records_access -> record_collection -> research_selection -> source_notes`, and `volume_concept.sourceUrl` on the FRUS stages page. The generated headless WebGL screenshot remains black as previously documented.
 - Record collection gameplay gate (2026-06-15):
   - Added `src/game/recordCollection.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: collection is distinct from selection, requiring compilers to identify important records, search for them, and copy or note likely publication records plus contextual background records.
   - Inserted `record_collection` into the FRUS Production Board after 20-year records access and before research/selection, so selected documents no longer stand in for the collection pass.

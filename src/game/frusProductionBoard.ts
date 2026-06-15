@@ -4,9 +4,11 @@ import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgressio
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
+import { VOLUME_CONCEPT_SOURCE_URL } from "./volumeConcept";
 
 export type FrusProductionBoardStepId =
   | "series_concept"
+  | "volume_concept"
   | "records_access"
   | "record_collection"
   | "research_selection"
@@ -33,6 +35,7 @@ export interface FrusProductionBoardContext {
   manuscriptReviewComplete: boolean;
   recordCollectionComplete: boolean;
   seriesConceptComplete: boolean;
+  volumeConceptComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -71,6 +74,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "FRUS work begins with an organizational scheme for the series as a whole.",
     sourceUrl: SERIES_CONCEPT_SOURCE_URL,
     gameplayTask: "File the whole-series plan at the Scope / Selection Desk before drafting the volume charter."
+  },
+  {
+    id: "volume_concept",
+    label: "Volume conceptualization",
+    shortLabel: "VOL",
+    sourceBasis: "Compilers determine the parameters of the individual volume and use contextual accounts to shape collection and selection.",
+    sourceUrl: VOLUME_CONCEPT_SOURCE_URL,
+    gameplayTask: "Define the volume remit and strategy sources at the Scope / Selection Desk."
   },
   {
     id: "records_access",
@@ -202,6 +213,8 @@ export function isFrusProductionBoardStepComplete(
   switch (stepId) {
     case "series_concept":
       return context.seriesConceptComplete;
+    case "volume_concept":
+      return context.volumeConceptComplete;
     case "records_access":
       return stamps.has("rule") || volumeAtLeast(context, "research");
     case "record_collection":

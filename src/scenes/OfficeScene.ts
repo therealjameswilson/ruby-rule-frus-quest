@@ -39,6 +39,12 @@ import {
   SERIES_CONCEPT_PROMPTS
 } from "../game/seriesConcept";
 import {
+  evaluateVolumeConceptAnswer,
+  getVolumeConceptPrompt,
+  volumeConceptComplete,
+  VOLUME_CONCEPT_PROMPTS
+} from "../game/volumeConcept";
+import {
   evaluateManuscriptReviewAnswer,
   getManuscriptReviewPrompt,
   manuscriptReviewComplete,
@@ -411,6 +417,10 @@ export class OfficeScene extends Phaser.Scene {
       this.showSeriesConceptChoice();
       return;
     }
+    if (!gameState.sceneProgress.volumeConceptComplete) {
+      this.showVolumeConceptChoice();
+      return;
+    }
     if (gameState.processStamps.includes("rule") || gameState.sceneProgress.researchCharterComplete) {
       if (!gameState.sceneProgress.recordCollectionComplete) {
         this.showRecordCollectionChoice();
@@ -512,12 +522,65 @@ export class OfficeScene extends Phaser.Scene {
       addDocumentPoints(4, "whole-series FRUS architecture filed");
       retroAudio.confirm();
       setLatestMessage("Series architecture filed: this volume now fits the whole FRUS plan.");
-      setObjective("Series plan filed. Return to the desk to file the Scope Charter.");
+      setObjective("Series plan filed. Return to the desk to define the volume concept.");
       this.reliability.update();
       this.dialog.show("SERIES PLAN", [
         result.message,
         "Grand conceptualization filed: organize the series, fit this volume, and reserve special topics for sufficient importance.",
-        "Next: draft the Scope Charter."
+        "Next: define this volume's parameters."
+      ]);
+    });
+  }
+
+  private showVolumeConceptChoice() {
+    if (!gameState.sceneProgress.seriesConceptComplete) {
+      this.showSeriesConceptChoice();
+      return;
+    }
+    if (gameState.sceneProgress.volumeConceptComplete) {
+      this.showResearchCharterChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.volumeConceptStep ?? 0;
+    const prompt = getVolumeConceptPrompt(step);
+    setObjective(`Volume Concept: answer ${step + 1}/${VOLUME_CONCEPT_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateVolumeConceptAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Volume conceptualization shortcut: ${option.value}`);
+        this.toast.show("REVISE VOLUME CONCEPT", this.player.position, "warn");
+        this.dialog.show("VOLUME CONCEPT", [
+          result.message,
+          "Define the volume before research narrows the record."
+        ], () => this.showVolumeConceptChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.volumeConceptStep = nextStep;
+      if (!volumeConceptComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Volume concept check ${nextStep}/${VOLUME_CONCEPT_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("VOLUME CONCEPT", [
+          result.message,
+          "Continue defining the volume before filing the access charter."
+        ], () => this.showVolumeConceptChoice());
+        return;
+      }
+
+      gameState.sceneProgress.volumeConceptComplete = 1;
+      gameState.sceneProgress.volumeConceptStep = VOLUME_CONCEPT_PROMPTS.length;
+      addDocumentPoints(4, "individual volume concept and strategy sources filed");
+      retroAudio.confirm();
+      setLatestMessage("Volume concept filed: parameters, strategy sources, and implementation depth recorded.");
+      setObjective("Volume concept filed. Return to the desk to file the Scope Charter.");
+      this.reliability.update();
+      this.dialog.show("VOLUME CONCEPT", [
+        result.message,
+        "Volume concept filed: parameters, histories/memoirs/accounts, and implementation depth are recorded.",
+        "Next: file the Scope Charter."
       ]);
     });
   }

@@ -1691,7 +1691,8 @@ export function getProductionBoardReadout() {
     hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
-    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete)
+    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
+    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete)
   });
 }
 
@@ -1720,6 +1721,8 @@ export function seedProgressForScene(sceneName: string) {
   if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     gameState.sceneProgress.seriesConceptComplete = 1;
     gameState.sceneProgress.seriesConceptStep = 3;
+    gameState.sceneProgress.volumeConceptComplete = 1;
+    gameState.sceneProgress.volumeConceptStep = 3;
     gameState.sceneProgress.recordCollectionComplete = 1;
     gameState.sceneProgress.recordCollectionStep = 3;
     awardProcessStamp("rule");

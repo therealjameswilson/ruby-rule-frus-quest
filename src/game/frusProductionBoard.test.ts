@@ -23,6 +23,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     manuscriptReviewComplete: false,
     recordCollectionComplete: false,
     seriesConceptComplete: false,
+    volumeConceptComplete: false,
     ...overrides
   };
 }
@@ -38,6 +39,7 @@ describe("FRUS production board", () => {
   it("keeps the history.state.gov production ladder in a stable order", () => {
     expect(FRUS_PRODUCTION_BOARD_STEPS.map((step) => step.id)).toEqual([
       "series_concept",
+      "volume_concept",
       "records_access",
       "record_collection",
       "research_selection",
@@ -60,18 +62,24 @@ describe("FRUS production board", () => {
     expect(readout.steps[1].status).toBe("locked");
   });
 
-  it("does not let a 20-year access stamp skip series-wide conceptualization", () => {
+  it("does not let a 20-year access stamp skip series-wide or volume conceptualization", () => {
     const unplanned = getFrusProductionBoardReadout(context({
       processStamps: ["rule"]
     }));
-    const planned = getFrusProductionBoardReadout(context({
+    const seriesPlanned = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       seriesConceptComplete: true
+    }));
+    const volumePlanned = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
     }));
 
     expect(unplanned.nextStep?.id).toBe("series_concept");
     expect(unplanned.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
-    expect(planned.nextStep?.id).toBe("record_collection");
+    expect(seriesPlanned.nextStep?.id).toBe("volume_concept");
+    expect(volumePlanned.nextStep?.id).toBe("record_collection");
   });
 
   it("does not let selected documents skip the collection pass", () => {
@@ -80,6 +88,7 @@ describe("FRUS production board", () => {
     const readout = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       seriesConceptComplete: true,
+      volumeConceptComplete: true,
       documentPoints: 20,
       documentCandidates: selectedDocuments
     }));
@@ -111,10 +120,11 @@ describe("FRUS production board", () => {
       reliability: 90,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
+      volumeConceptComplete: true,
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 9).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 10).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("publication_30_year");
   });
 
@@ -131,7 +141,8 @@ describe("FRUS production board", () => {
       heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
       documentPoints: 20,
       recordCollectionComplete: true,
-      seriesConceptComplete: true
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
     }));
     const reviewed = getFrusProductionBoardReadout(context({
       processStamps: ["rule", "archive"],
@@ -140,6 +151,7 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
+      volumeConceptComplete: true,
       manuscriptReviewComplete: true
     }));
 
@@ -154,7 +166,8 @@ describe("FRUS production board", () => {
       processStamps: ["rule", "archive", "network", "referral"],
       hacReviewComplete: true,
       recordCollectionComplete: true,
-      seriesConceptComplete: true
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
     }));
 
     expect(readout.steps.find((step) => step.id === "advisory_monitoring")?.complete).toBe(true);
@@ -165,7 +178,8 @@ describe("FRUS production board", () => {
       processStamps: ["rule"],
       documentPoints: 6,
       recordCollectionComplete: true,
-      seriesConceptComplete: true
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
     }));
     const selectedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
     selectedDocuments[1] = { ...selectedDocuments[1], selected: true, workflowState: "selected" };
@@ -174,6 +188,7 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
+      volumeConceptComplete: true,
       documentCandidates: selectedDocuments
     }));
     const balancedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
@@ -186,6 +201,7 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
+      volumeConceptComplete: true,
       documentCandidates: balancedDocuments
     }));
 
