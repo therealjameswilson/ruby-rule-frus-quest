@@ -19,6 +19,7 @@ import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { InteractionAssist, nearestInteractable } from "../systems/interaction";
 import { InteractionPrompt } from "../systems/interactionPrompt";
+import { FeedbackToast } from "../systems/feedbackToast";
 import { InventoryOverlay } from "../systems/inventory";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
@@ -39,8 +40,12 @@ export class OfficeScene extends Phaser.Scene {
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private hintText!: Phaser.GameObjects.Text;
-  private readonly controlsHint = "A INTERACT   TAB CODEX   M MENU   ESC PAUSE";
+  // The floating proximity prompt now carries the contextual "A [verb]" cue, so
+  // the persistent bottom line drops INTERACT and trims spacing to de-clutter the
+  // bottom band (live audit, 2026-06-15).
+  private readonly controlsHint = "MOVE  ·  TAB CODEX  ·  M MENU  ·  ESC PAUSE";
   private prompt!: InteractionPrompt;
+  private toast!: FeedbackToast;
   private tutorialCard?: Phaser.GameObjects.Container;
   private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
@@ -72,6 +77,7 @@ export class OfficeScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(900);
     this.prompt = new InteractionPrompt(this);
+    this.toast = new FeedbackToast(this);
     this.solids = [
       new Phaser.Geom.Rectangle(34, 72, 72, 28),
       new Phaser.Geom.Rectangle(154, 72, 64, 28),
@@ -179,11 +185,13 @@ export class OfficeScene extends Phaser.Scene {
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       this.prompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
       this.prompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
       return;
     }
     if (input.pauseJustPressed) {
@@ -198,6 +206,7 @@ export class OfficeScene extends Phaser.Scene {
     const nearest = nearestInteractable(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
     this.prompt.update(delta, nearest);
+    this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
     else if (input.aJustPressed && !nearest) this.flashNoTargetHint();
@@ -265,10 +274,10 @@ export class OfficeScene extends Phaser.Scene {
 
   private flashNoTargetHint() {
     retroAudio.blip();
-    this.hintText.setText("NOTHING TO INTERACT WITH HERE");
-    this.time.delayedCall(900, () => {
-      if (this.hintText.active) this.hintText.setText(this.controlsHint);
-    });
+    // Float a prominent, long-lived toast above the player instead of briefly
+    // swapping the low-contrast bottom hint, which the live audit could not see.
+    this.toast.show("NOTHING TO INTERACT WITH", this.player.position, "warn");
+    setLatestMessage("Nothing to interact with here.");
   }
 
   private dismissOfficeTutorial() {

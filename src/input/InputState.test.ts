@@ -22,6 +22,29 @@ describe("InputState keyboard edges", () => {
     expect(getInput().navDownJustPressed).toBe(true);
   });
 
+  it("maps WASD and arrow keys to the identical movement axis", () => {
+    setKeyboardDownForTests(["KeyW"]);
+    tickInput();
+    const wasdUp = { ...getInput().dir };
+    resetInput();
+
+    setKeyboardDownForTests(["ArrowUp"]);
+    tickInput();
+    expect(getInput().dir).toEqual(wasdUp);
+    expect(getInput().dir).toEqual({ x: 0, y: -1 });
+    resetInput();
+
+    setKeyboardDownForTests(["KeyD"]);
+    tickInput();
+    const wasdRight = { ...getInput().dir };
+    resetInput();
+
+    setKeyboardDownForTests(["ArrowRight"]);
+    tickInput();
+    expect(getInput().dir).toEqual(wasdRight);
+    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+  });
+
   it("keeps just-pressed flags true for exactly one tick while held", () => {
     setKeyboardDownForTests(["KeyA", "Enter"]);
     tickInput();

@@ -291,6 +291,47 @@ function installCanvasTouchLock() {
   canvas.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
 }
 
+// Keyboard input is captured on `window` keydown. In a cloud browser or embedded
+// iframe the page can load without keyboard focus, so the first WASD/arrow press
+// goes nowhere and the player concludes movement is broken (live audit,
+// 2026-06-15). Make the canvas focusable and pull focus to it on load and on
+// every pointer interaction so the first key press always reaches the game
+// without an extra click.
+function installKeyboardFocusGuard() {
+  const focusCanvas = () => {
+    const canvas = getGameCanvas();
+    if (canvas) {
+      if (!canvas.hasAttribute("tabindex")) canvas.setAttribute("tabindex", "0");
+      canvas.style.outline = "none";
+      try {
+        canvas.focus({ preventScroll: true });
+      } catch {
+        canvas.focus();
+      }
+    }
+    try {
+      window.focus();
+    } catch {
+      // Some embedders block programmatic window focus; the canvas focus above still helps.
+    }
+  };
+
+  const waitForCanvasThenFocus = () => {
+    if (getGameCanvas()) {
+      focusCanvas();
+      return;
+    }
+    window.requestAnimationFrame(waitForCanvasThenFocus);
+  };
+  waitForCanvasThenFocus();
+
+  // Re-grab focus on any pointer/touch so a tap that lands on the canvas also
+  // arms the keyboard, and refocus when the tab/window regains focus.
+  window.addEventListener("pointerdown", focusCanvas, { capture: true, passive: true });
+  window.addEventListener("touchstart", focusCanvas, { capture: true, passive: true });
+  window.addEventListener("focus", focusCanvas);
+}
+
 function createDismissButton(target: HTMLElement, storageKey: string) {
   const button = document.createElement("button");
   button.type = "button";
@@ -561,5 +602,6 @@ updateInputCallbacks({
   }
 });
 installCanvasTouchLock();
+installKeyboardFocusGuard();
 refreshIntegerScale();
 game.scale.on("resize", () => window.requestAnimationFrame(enforceIntegerCanvasScale));
