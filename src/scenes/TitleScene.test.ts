@@ -1,6 +1,40 @@
 import { describe, expect, it } from "vitest";
 import { GAME_HEIGHT } from "../game/constants";
-import { TITLE_LAYOUT, framedPlateBounds } from "./titleLayout";
+import { TITLE_LAYOUT, framedPlateBounds, shouldStartTitle } from "./titleLayout";
+
+function input(overrides: Partial<Parameters<typeof shouldStartTitle>[0]> = {}) {
+  return {
+    a: false,
+    start: false,
+    aJustPressed: false,
+    startJustPressed: false,
+    pointerPrimaryJustPressed: false,
+    ...overrides
+  };
+}
+
+describe("shouldStartTitle", () => {
+  it("advances on a fresh A / start / pointer rising edge", () => {
+    expect(shouldStartTitle(input({ aJustPressed: true }), false)).toBe(true);
+    expect(shouldStartTitle(input({ startJustPressed: true }), false)).toBe(true);
+    expect(shouldStartTitle(input({ pointerPrimaryJustPressed: true }), false)).toBe(true);
+  });
+
+  it("advances on a held A/start once input is ready (key carried over from the warning)", () => {
+    // No rising edge: the key was already down when the warning handed off.
+    expect(shouldStartTitle(input({ a: true }), true)).toBe(true);
+    expect(shouldStartTitle(input({ start: true }), true)).toBe(true);
+  });
+
+  it("ignores a held key before the input-ready grace elapses", () => {
+    expect(shouldStartTitle(input({ a: true }), false)).toBe(false);
+    expect(shouldStartTitle(input({ start: true }), false)).toBe(false);
+  });
+
+  it("does not advance with no input", () => {
+    expect(shouldStartTitle(input(), true)).toBe(false);
+  });
+});
 
 describe("TitleScene layout", () => {
   it("keeps the map, title plate, and relic shelf from overlapping", () => {

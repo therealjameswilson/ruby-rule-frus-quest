@@ -37,17 +37,17 @@ export class InteractionPrompt {
     // A soft filled square behind the outlines reads as a highlight "glow" on
     // the target so the interactable visibly lights up, not just a hairline box.
     this.ringGlow = scene.add
-      .rectangle(0, 0, 22, 22, color(PALETTE.goldStamp), 0.18)
+      .rectangle(0, 0, 28, 28, color(PALETTE.goldStamp), 0.22)
       .setDepth(depth - 3)
       .setVisible(false);
     this.ring = scene.add
-      .rectangle(0, 0, 24, 24)
-      .setStrokeStyle(2, color(PALETTE.goldStamp), 1)
+      .rectangle(0, 0, 28, 28)
+      .setStrokeStyle(3, color(PALETTE.goldStamp), 1)
       .setDepth(depth - 2)
       .setVisible(false);
     this.ringInner = scene.add
-      .rectangle(0, 0, 16, 16)
-      .setStrokeStyle(1, color(PALETTE.creamPaper), 0.6)
+      .rectangle(0, 0, 18, 18)
+      .setStrokeStyle(1, color(PALETTE.creamPaper), 0.7)
       .setDepth(depth - 2)
       .setVisible(false);
     this.panel = scene.add.rectangle(0, 0, 60, 13, color(PALETTE.shadowNavy), 0.96).setOrigin(0.5);

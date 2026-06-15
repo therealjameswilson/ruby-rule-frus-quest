@@ -141,6 +141,18 @@ const emptyState: InputState = {
   typedText: ""
 };
 
+// A short tap (keydown + keyup inside one animation frame, or a synthetic
+// keypress from a cloud/automation browser) can be added to and removed from
+// `keyboardDown` between two tickInput() samples, so the held check never sees
+// it and the player visibly does not move (live audit, 2026-06-15). Latch each
+// direction code's most-recent keydown time; tickInput treats a direction as
+// "down" while its latch is fresh, turning an imperceptible tap into a small,
+// visible nudge without changing how held movement or collision works.
+export const TAP_MOVEMENT_HOLD_MS = 110;
+const directionTapLatch = new Map<string, number>();
+let nowProvider: () => number = () =>
+  typeof performance !== "undefined" ? performance.now() : Date.now();
+
 let currentState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 let previousState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 const keyboardDown = new Set<string>();
@@ -183,6 +195,17 @@ function cloneState(state: InputState): InputState {
 
 function isKeyboardDown(...codes: string[]) {
   return codes.some((code) => keyboardDown.has(code));
+}
+
+// True when a direction code is physically held, or was tapped within the last
+// TAP_MOVEMENT_HOLD_MS so a too-short tap still registers as a brief hold.
+function isDirectionActive(...codes: string[]) {
+  if (isKeyboardDown(...codes)) return true;
+  const now = nowProvider();
+  return codes.some((code) => {
+    const at = directionTapLatch.get(code);
+    return at !== undefined && now - at <= TAP_MOVEMENT_HOLD_MS;
+  });
 }
 
 function isTouchDown(...keys: TouchControlKey[]) {
@@ -312,7 +335,9 @@ function preventGameKeyDefault(event: KeyboardEvent) {
       "KeyM",
       "KeyN",
       "KeyR",
-      "KeyF"
+      "KeyF",
+      "KeyZ",
+      "KeyX"
     ].includes(event.code)
   ) {
     event.preventDefault();
@@ -356,7 +381,10 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
       return;
     }
     preventGameKeyDefault(event);
-    if (!event.repeat && directionKeyMap[event.code]) lastDirection = directionKeyMap[event.code]!;
+    if (!event.repeat && directionKeyMap[event.code]) {
+      lastDirection = directionKeyMap[event.code]!;
+      directionTapLatch.set(event.code, nowProvider());
+    }
     keyboardDown.add(event.code);
     if (!event.repeat && /^[a-zA-Z]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey) {
       pendingTypedCharacters.push(event.key);
@@ -460,10 +488,10 @@ export function tickInput() {
   syncGamepadConnection(gamepadSnapshot);
   notifyGamepadGestureIfNeeded(gamepadSnapshot);
 
-  const left = isKeyboardDown("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
-  const right = isKeyboardDown("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
-  const up = isKeyboardDown("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
-  const down = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
+  const left = isDirectionActive("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
+  const right = isDirectionActive("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
+  const up = isDirectionActive("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
+  const down = isDirectionActive("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
   const dir = computeAxis(left, right, up, down);
   if (gamepadSnapshot.direction) lastDirection = gamepadSnapshot.direction;
   const navLeft = isKeyboardDown("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
@@ -471,9 +499,14 @@ export function tickInput() {
   const navUp = isKeyboardDown("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
   const navDown = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
 
-  const a = isKeyboardDown("Space", "Enter") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
-  const b = isKeyboardDown("ShiftLeft", "ShiftRight") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
-  const confirm = isKeyboardDown("Enter", "Space") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
+  // KeyZ / KeyX are the classic SNES A / B faces most browser-emulator users
+  // reach for first. The live audit (2026-06-15) found a tester pressing
+  // Z/X/A/S at the title and getting no response, so accept Z (and Enter/Space)
+  // as the A button and X as the B button. KeyA/KeyS stay movement-only to avoid
+  // fighting WASD.
+  const a = isKeyboardDown("Space", "Enter", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
+  const b = isKeyboardDown("ShiftLeft", "ShiftRight", "KeyX") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
+  const confirm = isKeyboardDown("Enter", "Space", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
   const cancel = isKeyboardDown("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
   const start = isKeyboardDown("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
   const select = isKeyboardDown("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
@@ -628,6 +661,7 @@ export function bindDomPointerDown(element: HTMLElement, callback: (event: Point
 export function resetInput() {
   keyboardDown.clear();
   touchDown.clear();
+  directionTapLatch.clear();
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
   activePointerIds.clear();
@@ -656,9 +690,21 @@ export function setKeyboardDownForTests(codes: readonly string[]) {
 
 export function pressKeyForTests(code: string) {
   keyboardDown.add(code);
+  if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
 }
 
 export function releaseKeyForTests(code: string) {
   keyboardDown.delete(code);
   if (code === "Escape") suppressEscEdgesUntilRelease = false;
+}
+
+// Simulate a tap that is too short to be sampled while held: it latches the
+// keydown time but leaves no physical key down. Used to verify tap-buffered
+// movement.
+export function tapDirectionForTests(code: string) {
+  if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
+}
+
+export function setNowProviderForTests(provider: (() => number) | null) {
+  nowProvider = provider ?? (() => (typeof performance !== "undefined" ? performance.now() : Date.now()));
 }
