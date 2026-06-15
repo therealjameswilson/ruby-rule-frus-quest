@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- AI annotation review SOP gate (2026-06-15):
+  - Added `src/game/aiAnnotationReview.ts`, a tested three-question terminal-only SOP sequence: AI/StateChat can propose mechanical fixes, evidence-bound flags must become physical review objects, and humans own final sign-off.
+  - Wired `SilentReadScene` so the physical review-folder loop no longer starts immediately after Priya's intro; it first opens the AI Annotation Review ChoicePrompt and persists completion in `sceneProgress.aiAnnotationReviewComplete`.
+  - Wrong StateChat/DANN-E sign-off shortcuts cost reliability and re-teach the rule; the final correct answer files the review log and then starts the CARRY -> ROUTE -> VERIFY -> STAMP physical workflow.
+  - Verified `npm test`: 20 files / 113 tests pass; `npm run build` passes with the existing Vite chunk-size warning only; required web-game smoke reached `SilentReadScene` with `mode: "choice"` and objective `AI Annotation Review: answer 1/3.` (headless WebGL screenshot remains black as previously documented).
 - ClassNet declassification review gate (2026-06-15):
   - Added `src/game/declassificationReview.ts`, a tested three-question Clearance Token review that makes classified-equity routing depend on human agency review, the ClassNet channel, and a documented decision trail.
   - Wired `NetworkScene` so the ClassNet Vault pedestal no longer grants the Clearance Token as a flat pickup: if `sceneProgress.declassificationReviewComplete` is not set, pressing interact starts the review ChoicePrompt; wrong StateChat/shortcut answers cost reliability, and the final correct answer logs the human decision trail before collecting the token.

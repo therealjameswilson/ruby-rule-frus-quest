@@ -37,6 +37,12 @@ import { addProofingTable, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
+import {
+  aiAnnotationReviewComplete,
+  AI_ANNOTATION_REVIEW_PROMPTS,
+  evaluateAiAnnotationReviewAnswer,
+  getAiAnnotationReviewPrompt
+} from "../game/aiAnnotationReview";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -223,7 +229,7 @@ export class SilentReadScene extends Phaser.Scene {
       "Run the AI annotation review tool first.",
       "It returns a JSON plan, not a final decision.",
       "The Red Pencil opens the proof tower. Then every evidence flag moves by hand."
-    ], () => this.startPhysicalVerificationLoop());
+    ], () => this.beginAiAnnotationReview());
   }
 
   update(_: number, delta: number) {
@@ -524,6 +530,7 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private startPhysicalVerificationLoop() {
+    if (this.physicalFlags.length > 0) return;
     addProcessItem("review_folder");
     setDocumentWorkflowState("proof_page_412", "selected");
     this.physicalFlags = PHYSICAL_FLAGS.map((flag) => {
@@ -547,6 +554,62 @@ export class SilentReadScene extends Phaser.Scene {
     setObjective("Editor's Labyrinth: carry the StateChat mechanical flag.");
     this.syncVisibleEntities();
     this.updatePhysicalVerification();
+  }
+
+  private beginAiAnnotationReview() {
+    if (gameState.sceneProgress.aiAnnotationReviewComplete) {
+      this.startPhysicalVerificationLoop();
+      return;
+    }
+    this.showAiAnnotationReviewChoice();
+  }
+
+  private showAiAnnotationReviewChoice() {
+    if (gameState.sceneProgress.aiAnnotationReviewComplete) {
+      this.startPhysicalVerificationLoop();
+      return;
+    }
+
+    const step = gameState.sceneProgress.aiAnnotationReviewStep ?? 0;
+    const prompt = getAiAnnotationReviewPrompt(step);
+    setObjective(`AI Annotation Review: answer ${step + 1}/${AI_ANNOTATION_REVIEW_PROMPTS.length}.`);
+    this.actionHint.setText(`STATECHAT SOP ${step + 1}/${AI_ANNOTATION_REVIEW_PROMPTS.length}: choose A/B/C.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateAiAnnotationReviewAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        adjustReliability(-2, "AI annotation SOP correction");
+        setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
+        this.reliability.update();
+        this.dialog.show("AI ANNOTATION REVIEW", [
+          result.message,
+          "The terminal can propose. A human must route and decide."
+        ], () => this.showAiAnnotationReviewChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.aiAnnotationReviewStep = nextStep;
+      if (!aiAnnotationReviewComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`AI annotation SOP check ${nextStep}/${AI_ANNOTATION_REVIEW_PROMPTS.length}.`);
+        this.dialog.show("AI ANNOTATION REVIEW", [
+          result.message,
+          "Continue the SOP check before carrying review flags."
+        ], () => this.showAiAnnotationReviewChoice());
+        return;
+      }
+
+      gameState.sceneProgress.aiAnnotationReviewComplete = 1;
+      addDocumentPoints(4, "AI annotation review SOP filed");
+      retroAudio.confirm();
+      setLatestMessage("AI Annotation Review Log filed: terminal support, human decisions.");
+      this.dialog.show("AI ANNOTATION REVIEW", [
+        result.message,
+        "The review log is filed.",
+        "Now carry each flag to the correct human workstation."
+      ], () => this.startPhysicalVerificationLoop());
+    });
   }
 
   private positionActiveWaitingFlagForRoom() {
