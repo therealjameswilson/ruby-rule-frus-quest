@@ -23,6 +23,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     annotationDraftingComplete: false,
     foreignGovernmentPermissionComplete: false,
     withholdingAppealComplete: false,
+    editorialTreatmentComplete: false,
     manuscriptReviewComplete: false,
     recordCollectionComplete: false,
     seriesConceptComplete: false,
@@ -127,6 +128,7 @@ describe("FRUS production board", () => {
       annotationDraftingComplete: true,
       foreignGovernmentPermissionComplete: true,
       withholdingAppealComplete: true,
+      editorialTreatmentComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -164,6 +166,7 @@ describe("FRUS production board", () => {
       annotationDraftingComplete: true,
       foreignGovernmentPermissionComplete: true,
       withholdingAppealComplete: true,
+      editorialTreatmentComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -205,6 +208,7 @@ describe("FRUS production board", () => {
       annotationDraftingComplete: true,
       foreignGovernmentPermissionComplete: true,
       withholdingAppealComplete: true,
+      editorialTreatmentComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -355,10 +359,32 @@ describe("FRUS production board", () => {
     const boardContext = context({
       documentCandidates: documents,
       processStamps: ["proof"],
+      editorialTreatmentComplete: true,
       reliability: 90
     });
 
     expect(isFrusProductionBoardStepComplete("kellogg_editing", boardContext)).toBe(false);
+  });
+
+  it("requires editorial treatment before proof stamp can satisfy Kellogg editing", () => {
+    const unstamped = context({
+      processStamps: [],
+      editorialTreatmentComplete: true,
+      reliability: 90
+    });
+    const unconsulted = context({
+      processStamps: ["proof"],
+      reliability: 90
+    });
+    const consulted = context({
+      processStamps: ["proof"],
+      editorialTreatmentComplete: true,
+      reliability: 90
+    });
+
+    expect(isFrusProductionBoardStepComplete("kellogg_editing", unstamped)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("kellogg_editing", unconsulted)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("kellogg_editing", consulted)).toBe(true);
   });
 
   it("requires Buckram Key, complete pendants, cleared equities, fragments, and publication state for the final step", () => {

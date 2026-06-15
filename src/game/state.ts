@@ -1693,6 +1693,7 @@ export function getProductionBoardReadout() {
     annotationDraftingComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
     foreignGovernmentPermissionComplete: Boolean(gameState.sceneProgress.foreignGovernmentPermissionComplete),
     withholdingAppealComplete: Boolean(gameState.sceneProgress.withholdingAppealComplete),
+    editorialTreatmentComplete: Boolean(gameState.sceneProgress.editorialTreatmentComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
@@ -1775,6 +1776,8 @@ export function seedProgressForScene(sceneName: string) {
     awardProcessStamp("proof");
     addProcessItem("proof_lens");
     addProcessItem("buckram_key");
+    gameState.sceneProgress.editorialTreatmentComplete = 1;
+    gameState.sceneProgress.editorialTreatmentStep = 3;
     gameState.sceneProgress.typesetterProofComplete = 1;
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);

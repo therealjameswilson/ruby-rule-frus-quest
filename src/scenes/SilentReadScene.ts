@@ -49,6 +49,12 @@ import {
   typesetterProofComplete,
   TYPESETTER_PROOF_PROMPTS
 } from "../game/typesetterProof";
+import {
+  editorialTreatmentComplete,
+  EDITORIAL_TREATMENT_PROMPTS,
+  evaluateEditorialTreatmentAnswer,
+  getEditorialTreatmentPrompt
+} from "../game/editorialTreatment";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -426,6 +432,8 @@ export class SilentReadScene extends Phaser.Scene {
       setObjective("Silent Read Tower: exit east with Buckram Key.");
     } else if (gameState.sceneProgress.typesetterProofComplete) {
       setObjective("Silent Read Tower: take the Buckram Key after proofing.");
+    } else if (!gameState.sceneProgress.editorialTreatmentComplete) {
+      setObjective("Silent Read Tower: route flags, then resolve editorial treatment.");
     } else {
       setObjective("Silent Read Tower: carry flags, then run typesetter proof.");
     }
@@ -804,7 +812,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.updateProofMinimap();
     const nextFlag = this.getActiveFlag();
     if (!nextFlag) {
-      this.showTypesetterProofChoice();
+      this.showEditorialTreatmentChoice();
       return;
     }
 
@@ -825,6 +833,56 @@ export class SilentReadScene extends Phaser.Scene {
     nextFlag.icon?.setPosition(nextFlag.x, nextFlag.y).setVisible(true);
     nextFlag.labelText?.setPosition(nextFlag.x, nextFlag.y + 14).setVisible(true);
     setObjective(`Silent Read Tower: carry ${nextFlag.shortLabel} from the review outbox.`);
+  }
+
+  private showEditorialTreatmentChoice() {
+    if (gameState.sceneProgress.editorialTreatmentComplete) {
+      this.showTypesetterProofChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.editorialTreatmentStep ?? 0;
+    const prompt = getEditorialTreatmentPrompt(step);
+    setObjective(`Editorial Treatment: answer ${step + 1}/${EDITORIAL_TREATMENT_PROMPTS.length}.`);
+    this.actionHint.setText(`EDITORIAL ${step + 1}/${EDITORIAL_TREATMENT_PROMPTS.length}: choose A/B/C.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateEditorialTreatmentAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Editorial treatment shortcut: ${option.value}`);
+        this.reliability.update();
+        setLatestMessage("EDITORIAL TREATMENT FAILED - HUMAN CONSULTATION REQUIRED");
+        this.dialog.show("EDITORIAL TREATMENT", [
+          result.message,
+          "Readable text still has to preserve the record."
+        ], () => this.showEditorialTreatmentChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.editorialTreatmentStep = nextStep;
+      if (!editorialTreatmentComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Editorial treatment check ${nextStep}/${EDITORIAL_TREATMENT_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("EDITORIAL TREATMENT", [
+          result.message,
+          "Continue the human editorial pass before typesetting."
+        ], () => this.showEditorialTreatmentChoice());
+        return;
+      }
+
+      gameState.sceneProgress.editorialTreatmentComplete = 1;
+      gameState.sceneProgress.editorialTreatmentStep = EDITORIAL_TREATMENT_PROMPTS.length;
+      addDocumentPoints(10, "editorial treatment consultation filed");
+      adjustReliability(8, "human editorial treatment preserved record meaning");
+      retroAudio.confirm();
+      setLatestMessage("Editorial treatment filed: textual issues resolved visibly.");
+      this.dialog.show("EDITORIAL TREATMENT", [
+        result.message,
+        "The editor and compiler preserved the record while improving readability.",
+        "Now run the typesetter proof."
+      ], () => this.showTypesetterProofChoice());
+    });
   }
 
   private showTypesetterProofChoice() {

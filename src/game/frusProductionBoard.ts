@@ -1,6 +1,7 @@
 import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
+import { EDITORIAL_TREATMENT_SOURCE_URL } from "./editorialTreatment";
 import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPermission";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
@@ -41,6 +42,7 @@ export interface FrusProductionBoardContext {
   annotationDraftingComplete: boolean;
   foreignGovernmentPermissionComplete: boolean;
   withholdingAppealComplete: boolean;
+  editorialTreatmentComplete: boolean;
   manuscriptReviewComplete: boolean;
   recordCollectionComplete: boolean;
   seriesConceptComplete: boolean;
@@ -182,11 +184,11 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
   },
   {
     id: "kellogg_editing",
-    label: "Kellogg editing standards",
+    label: "Editorial treatment",
     shortLabel: "KLG",
-    sourceBasis: "No altered records, undisclosed deletions, major-fact omissions, or concealment of policy defects.",
-    sourceUrl: ABOUT_FRUS_URL,
-    gameplayTask: "Use Red Pencil and Proof Lens; bracket every excision and keep reliability above 70."
+    sourceBasis: "Remaining textual issues are flagged for consultation; editing must improve readability without altering records.",
+    sourceUrl: EDITORIAL_TREATMENT_SOURCE_URL,
+    gameplayTask: "Resolve textual issues with human editorial treatment before the proof stamp can satisfy Kellogg standards."
   },
   {
     id: "publication_30_year",
@@ -290,7 +292,7 @@ export function isFrusProductionBoardStepComplete(
     case "advisory_monitoring":
       return context.hacReviewComplete || stamps.has("sop");
     case "kellogg_editing":
-      return stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
+      return context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
     case "publication_30_year":
       return context.finalGatePublished
         || (context.volumeWorkflowState === "published")

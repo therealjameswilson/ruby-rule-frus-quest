@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Editorial treatment consultation gate (2026-06-15):
+  - Added `src/game/editorialTreatment.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: remaining textual issues are flagged for consultation with the compiler, and editing must improve readability without altering the documentary record.
+  - Reframed the Production Board's `kellogg_editing` step as `Editorial treatment`, sourced to the official stages page, and made it require `sceneProgress.editorialTreatmentComplete` plus the proof stamp, reliability, and no unresolved undisclosed deletions.
+  - Wired `SilentReadScene` so completing all physical evidence flags now opens a three-prompt human editorial treatment consultation before the existing typesetter proof can issue the Buckram Key. Wrong shortcuts apply standards damage (`altered_text`, `concealed_policy_defect`, or `undisclosed_deletion`); correct answers file the consultation and add document points.
+  - Updated deep-scene QA seeding so `?scene=EndingScene` remains coherent with the expanded final editing/proofing chain.
+  - Verified focused tests: `npm test -- src/game/editorialTreatment.test.ts src/game/frusProductionBoard.test.ts src/game/typesetterProof.test.ts` (3 files / 20 tests pass).
+  - Verified full `npm test`: 36 files / 194 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=SilentReadScene&role=proofreader&name=Sam` reports `productionBoard.total: 15`, `kellogg_editing.label: "Editorial treatment"`, official stages source URL, `complete: false`, and no console errors. The generated headless WebGL screenshot remains black as previously documented.
 - Whole-document withholding appeal gameplay gate (2026-06-15):
   - Added `src/game/withholdingAppeal.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: declassification review may withhold whole documents or excise portions, and contested withholding needs a visible human review outcome before concurrence.
   - Inserted `withholding_appeals` into the FRUS Production Board after `foreign_permissions` and before `agency_referrals`, so a foreign-government permission note no longer jumps straight to referral concurrence or visible excision.
