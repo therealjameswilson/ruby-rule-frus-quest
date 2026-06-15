@@ -583,14 +583,14 @@ export function setTouchControl(key: TouchControlKey, pressed: boolean) {
 }
 
 export function swallowNextInputFrame() {
-  swallowNextFrame = true;
   // The overlay-close that triggered this often comes from a still-held Escape.
   // resetInput() zeroes currentState, so the next frame would otherwise see a
   // false pause/cancel rising edge. Latch those edges off until Escape is released
   // (cleared by the Escape keyup listener). Read the held state before resetInput
-  // clears it.
+  // clears it. resetInput() also clears swallowNextFrame, so arm it afterwards.
   const escHeld = isKeyboardDown("Escape");
   resetInput();
+  swallowNextFrame = true;
   if (escHeld) suppressEscEdgesUntilRelease = true;
 }
 
@@ -645,6 +645,7 @@ export function resetInput() {
   previousConfirmDown = false;
   previousCancelDown = false;
   suppressEscEdgesUntilRelease = false;
+  swallowNextFrame = false;
   if (typeof window !== "undefined" && window.rubyRuleMobileMetrics) window.rubyRuleMobileMetrics.activePointerCount = 0;
 }
 

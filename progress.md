@@ -936,3 +936,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - decodes every shipped native PNG and verifies each referenced animation frame is a complete body (opaque pixel count and covered height), failing on thin slivers/empty cells. Confirmed the suite fails (8 tests) when action frames are pointed back at row 3.
 - Verified `npm test`: 8 files passed, 46 tests passed.
 - Verified `npm run build`.
+
+## 2026-06-15 Restore ESC overlay close in GuideScene
+
+- Live QA after PRs #21/#22 reported ESC no longer closing the M inventory and the Tab codex overlay in the Office Hub/gameplay area. Title art, sprite fragments, shadows, and plant all passed.
+- Root cause: `GuideScene.update` (the Archive Guide room reached from the Office Hub) imported the shared `handleOpenOverlays` helper but bypassed it with a bare `if (this.inventory.active || this.reliability.active) { ...; return; }` guard. That froze the scene while an overlay was open but never routed ESC/B/Tab through the close path, so the overlay could not be dismissed — exactly the PR #18 behavior the helper was introduced to guarantee. OfficeScene/ArchiveScene/etc. were already wired correctly.
+- Fix: route the frozen frame through `handleOpenOverlays(this.inventory, this.reliability)` in `GuideScene`, matching every other gameplay scene. ESC/B/Tab now close the inventory and reliability detail and swallow the still-held edge so it cannot leak into the pause panel.
+- Hardening: `resetInput()` (run on window blur / tab visibility change) now also clears the pending `swallowNextFrame` latch, and `swallowNextInputFrame()` arms the latch after the internal `resetInput()` rather than before. Previously a swallow armed just before a blur survived the reset and silently dropped the first real input frame after refocus.
+- Regression coverage:
+  - `src/systems/overlayInput.test.ts`: a frozen-scene overlay must close on ESC via the helper, not merely freeze.
+  - `src/input/InputState.test.ts`: `resetInput()` clears a pending swallow so the next frame is live.
+- No art changed; visual fixes from PRs #21/#22 are preserved.
+- Verified `npm test`: 9 files passed, 51 tests passed.
+- Verified `npm run build`.

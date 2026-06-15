@@ -81,4 +81,17 @@ describe("InputState keyboard edges", () => {
     expect(getInput().pauseJustPressed).toBe(true);
     expect(getInput().cancelJustPressed).toBe(true);
   });
+
+  // resetInput() runs on window blur / tab visibility changes. A swallow armed
+  // just before blur must not survive the reset, or the first real input frame
+  // after refocus would be silently dropped.
+  it("clears a pending swallow on resetInput so the next frame is live", () => {
+    setKeyboardDownForTests(["Space"]);
+    swallowNextInputFrame();
+    resetInput();
+
+    pressKeyForTests("Space");
+    tickInput();
+    expect(getInput().aJustPressed).toBe(true);
+  });
 });

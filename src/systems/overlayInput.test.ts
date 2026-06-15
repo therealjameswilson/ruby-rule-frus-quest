@@ -87,4 +87,21 @@ describe("handleOpenOverlays", () => {
     expect(handleOpenOverlays(inventory, reliability)).toBe(true);
     expect(reliability.active).toBe(false);
   });
+
+  // Regression for the gameplay-scene wiring: a scene that freezes itself while
+  // an overlay is open MUST route the frozen frame through handleOpenOverlays so
+  // ESC actually closes the overlay. A bare `if (inventory.active) return;`
+  // guard freezes the scene but swallows the ESC edge, leaving the overlay stuck
+  // open (the GuideScene regression). This asserts the close happens on the same
+  // frozen frame, the way OfficeScene/ArchiveScene already do it.
+  it("closes a frozen-scene overlay on Escape instead of only freezing", () => {
+    const inventory = makeInventory(true);
+    const reliability = makeReliability(false);
+    setKeyboardDownForTests(["Escape"]);
+    tickInput();
+
+    const frozen = handleOpenOverlays(inventory, reliability);
+    expect(frozen).toBe(true);
+    expect(inventory.active).toBe(false);
+  });
 });

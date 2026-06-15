@@ -132,7 +132,7 @@ export class GuideScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (this.inventory.active || this.reliability.active) {
+    if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
       return;
     }
