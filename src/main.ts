@@ -527,9 +527,30 @@ window.addEventListener("resize", scheduleIntegerScaleRefresh);
 window.addEventListener("orientationchange", scheduleIntegerScaleRefresh);
 window.visualViewport?.addEventListener("resize", scheduleIntegerScaleRefresh);
 
+function hideBootLoader() {
+  const loader = document.getElementById("boot-loader");
+  if (!loader || loader.hidden) return;
+  loader.classList.add("is-hiding");
+  window.setTimeout(() => {
+    loader.hidden = true;
+  }, 360);
+}
+
 const game = new Phaser.Game(gameConfig);
 window.game = game;
 phaserGame = game;
+
+game.events.once(Phaser.Core.Events.READY, () => {
+  const dismissOnNextScene = () => {
+    game.scene.getScenes(true).forEach((scene) => {
+      if (scene.scene.key !== "BootScene") hideBootLoader();
+    });
+  };
+  game.scene.scenes.forEach((scene) => {
+    scene.events.once(Phaser.Scenes.Events.CREATE, dismissOnNextScene);
+  });
+});
+window.setTimeout(hideBootLoader, 8000);
 installAutosaveLifecycle();
 installTapToResumeOverlay(game);
 const togglePixelProof = installPixelProofOverlay();

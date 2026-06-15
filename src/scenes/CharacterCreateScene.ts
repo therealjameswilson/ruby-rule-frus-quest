@@ -31,6 +31,11 @@ export class CharacterCreateScene extends Phaser.Scene {
 
   create() {
     setSceneState("CharacterCreateScene", "choice", "Craft your FRUS production character.");
+    this.roleIndex = 0;
+    this.displayName = "";
+    this.locked = false;
+    this.nameFocused = false;
+    this.cards = [];
     retroAudio.startMusic("CharacterCreateScene");
     setVisibleEntities(PROCESS_ROLES.map((role) => role.label));
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
@@ -64,8 +69,9 @@ export class CharacterCreateScene extends Phaser.Scene {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.creamPaper,
-      wordWrap: { width: 218, useAdvancedWrap: true },
-      align: "center"
+      wordWrap: { width: 196, useAdvancedWrap: true },
+      align: "center",
+      lineSpacing: 1
     }).setOrigin(0.5, 0);
 
     this.createRoleCards();
@@ -105,9 +111,10 @@ export class CharacterCreateScene extends Phaser.Scene {
   }
 
   private createRoleCards() {
-    const startX = 26;
+    const startX = 32;
+    const stepX = 48;
     PROCESS_ROLES.forEach((role, index) => {
-      const x = startX + index * 51;
+      const x = startX + index * stepX;
       const box = this.add.rectangle(0, 0, 44, 42, color(PALETTE.black));
       const border = this.add.rectangle(0, 0, 44, 42).setStrokeStyle(1, color(PALETTE.sepiaInk));
       const icon = this.add
@@ -115,11 +122,12 @@ export class CharacterCreateScene extends Phaser.Scene {
         .setOrigin(0.5, 0.9)
         .setScale(0.65);
       icon.play(characterAnimKey(getCharacterKeyForProcessRole(role.id), "idle-down"));
-      const label = this.add.text(0, 7, role.label.toUpperCase().replace(" ", "\n"), {
+      const label = this.add.text(0, 7, role.label.toUpperCase(), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: PALETTE.creamPaper,
-        align: "center"
+        align: "center",
+        wordWrap: { width: 42, useAdvancedWrap: true }
       }).setOrigin(0.5, 0);
       const container = this.add.container(x, 160, [box, border, icon, label]).setSize(44, 42);
       bindPointerDown(container, () => {

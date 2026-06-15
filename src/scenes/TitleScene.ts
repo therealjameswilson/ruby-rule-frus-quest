@@ -5,7 +5,7 @@ import { getSkipWarningPreference, setSkipWarningPreference } from "../game/warn
 import { bindPointerPress, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
-import { addSnesWorkflowRelicRack, addSnesWorldMap } from "../systems/snesPixelArt";
+import { addSnesWorkflowRelicRack } from "../systems/snesPixelArt";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -59,41 +59,13 @@ export class TitleScene extends Phaser.Scene {
       this.add.rectangle(x, 218, 16, 16, color(PALETTE.stoneDark));
       this.add.rectangle(x - 2, 216, 11, 11, color(PALETTE.stoneGray));
     }
-    addSnesWorldMap(this, 58, 92, "WEST MAP", "frus-snes-atlas", undefined, {
-      viewportWidth: 100,
-      viewportHeight: 78,
-      cropX: 0,
-      cropY: 24
-    });
-
-    const volume = this.add.image(160, 92, "frus-volume").setScale(1);
-    const lid = this.add.rectangle(160, 68, 74, 9, color(PALETTE.goldStamp));
-    this.tweens.add({
-      targets: lid,
-      y: 60,
-      angle: -9,
-      duration: 780,
-      yoyo: true,
-      repeat: -1,
-      ease: "Stepped",
-      onUpdate: () => {
-        volume.y = Math.round(volume.y);
-      }
-    });
-    this.tweens.add({
-      targets: volume,
-      y: 99,
-      duration: 780,
-      yoyo: true,
-      repeat: -1,
-      ease: "Stepped"
-    });
+    this.drawWorldMapBriefing();
 
     this.add.text(128, 126, "RUBY RULE", {
       fontFamily: "monospace",
-      fontSize: "24px",
+      fontSize: "22px",
       color: PALETTE.goldStamp
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setResolution(2);
     this.add.text(128, 151, "THE FRUS QUEST", {
       fontFamily: "monospace",
       fontSize: "10px",
@@ -105,10 +77,12 @@ export class TitleScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.terminalCyan
     }).setOrigin(0.5);
-    this.add.text(128, 216, CONTROLS_TEXT, {
+    this.add.text(128, 213, CONTROLS_TEXT, {
       fontFamily: "monospace",
       fontSize: "6px",
-      color: PALETTE.creamPaper
+      color: PALETTE.creamPaper,
+      align: "center",
+      lineSpacing: 2
     }).setOrigin(0.5);
     this.createSkipWarningToggle();
 
@@ -124,6 +98,30 @@ export class TitleScene extends Phaser.Scene {
       return;
     }
     if (input.aJustPressed || input.startJustPressed || input.pointerPrimaryJustPressed) this.start();
+  }
+
+  private drawWorldMapBriefing() {
+    const centerX = 128;
+    const centerY = 82;
+    const frameWidth = 120;
+    const frameHeight = 80;
+    this.add.rectangle(centerX, centerY, frameWidth + 6, frameHeight + 6, color(PALETTE.sepiaInk))
+      .setStrokeStyle(2, color(PALETTE.goldStamp));
+    if (this.textures.exists("frus_world_map")) {
+      const source = this.textures.get("frus_world_map").getSourceImage() as { width?: number; height?: number };
+      const width = source.width ?? frameWidth;
+      const height = source.height ?? frameHeight;
+      const scale = Math.min(frameWidth / width, frameHeight / height);
+      this.add.image(centerX, centerY, "frus_world_map").setOrigin(0.5).setScale(scale);
+    } else {
+      this.add.rectangle(centerX, centerY, frameWidth, frameHeight, color(PALETTE.mapWater));
+    }
+    this.add.rectangle(centerX, centerY - frameHeight / 2 - 1, frameWidth, 8, color(PALETTE.black), 0.6);
+    this.add.text(centerX, centerY - frameHeight / 2 - 5, "FRUS PRODUCTION MAP", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5);
   }
 
   private toggleAudio() {

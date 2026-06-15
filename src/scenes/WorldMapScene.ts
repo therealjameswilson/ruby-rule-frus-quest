@@ -102,7 +102,10 @@ export class WorldMapScene extends Phaser.Scene {
       if (Number.isInteger(index) && index >= 0 && index < REGION_ORDER.length) this.selectRegion(index);
     };
     this.input.keyboard.on("keydown", handler);
-    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.input.keyboard?.off("keydown", handler));
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.input.keyboard?.off("keydown", handler);
+      this.numberKeysInstalled = false;
+    });
   }
 
   private renderRegion() {

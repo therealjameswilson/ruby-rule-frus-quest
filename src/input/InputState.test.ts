@@ -1,8 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   getInput,
+  pressKeyForTests,
+  releaseKeyForTests,
   resetInput,
   setKeyboardDownForTests,
+  swallowNextInputFrame,
   tickInput
 } from "./InputState";
 
@@ -41,6 +44,41 @@ describe("InputState keyboard edges", () => {
 
     setKeyboardDownForTests(["Escape"]);
     tickInput();
+    expect(getInput().cancelJustPressed).toBe(true);
+  });
+
+  it("does not fire a pause/cancel edge from a still-held Escape after a swallow", () => {
+    // Escape is held when an overlay closes and swallows the next frame.
+    setKeyboardDownForTests(["Escape"]);
+    swallowNextInputFrame();
+    tickInput(); // swallow frame: currentState zeroed
+    expect(getInput().pauseJustPressed).toBe(false);
+    expect(getInput().cancelJustPressed).toBe(false);
+
+    // Browser key-repeat keeps Escape physically down on subsequent frames.
+    pressKeyForTests("Escape");
+    tickInput();
+    expect(getInput().pauseJustPressed).toBe(false);
+    expect(getInput().cancelJustPressed).toBe(false);
+
+    pressKeyForTests("Escape");
+    tickInput();
+    expect(getInput().pauseJustPressed).toBe(false);
+    expect(getInput().cancelJustPressed).toBe(false);
+  });
+
+  it("allows a fresh Escape edge after the key is released", () => {
+    setKeyboardDownForTests(["Escape"]);
+    swallowNextInputFrame();
+    tickInput();
+
+    releaseKeyForTests("Escape");
+    tickInput();
+    expect(getInput().pauseJustPressed).toBe(false);
+
+    pressKeyForTests("Escape");
+    tickInput();
+    expect(getInput().pauseJustPressed).toBe(true);
     expect(getInput().cancelJustPressed).toBe(true);
   });
 });

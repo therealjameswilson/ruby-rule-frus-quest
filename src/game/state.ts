@@ -1548,7 +1548,7 @@ export function getProductionStatusReadout() {
   const room = gameState.roomTraversal?.currentRoomId ?? getCurrentAreaReadout().displayName.toUpperCase();
   const objective = compactHudText(gameState.objective || "VERIFY", 32);
   return [
-    `ROLE ${role.padEnd(12, " ")} REL ${hud.confidence.meter} DOC ${String(hud.documentPoints).padStart(2, "0")}`,
+    `ROLE ${role.padEnd(12, " ")} REL ${String(hud.confidence.current).padStart(3, " ")}% DOC ${String(hud.documentPoints).padStart(2, "0")}`,
     `ITEM ${selectedItem.padEnd(10, " ")} STAMPS ${hud.stamps}`,
     `MAP ${compactHudText(room, 8).padEnd(8, " ")} FRAG ${hud.fragments.current}/${hud.fragments.total} ${objective}`
   ];
