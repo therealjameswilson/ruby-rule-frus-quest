@@ -147,6 +147,10 @@ function hasDocumentAtOrBeyond(context: FrusProductionBoardContext, states: read
   return context.documentCandidates.some((document) => states.includes(document.workflowState));
 }
 
+function hasSelectedDocument(context: FrusProductionBoardContext) {
+  return context.documentCandidates.some((document) => document.selected || document.workflowState === "selected");
+}
+
 function hasAnyEquityResponse(context: FrusProductionBoardContext, predicate: (status: ReviewStatus) => boolean) {
   return context.documentCandidates.some((document) => document.equities.some((equity) => predicate(equity.response)));
 }
@@ -164,8 +168,8 @@ export function isFrusProductionBoardStepComplete(
     case "records_access":
       return stamps.has("rule") || volumeAtLeast(context, "research");
     case "research_selection":
-      return context.documentPoints >= 6
-        || hasDocumentAtOrBeyond(context, ["candidate", "selected", "source_note_needed", "citation_verified"])
+      return (context.documentPoints >= 12 && hasSelectedDocument(context))
+        || hasDocumentAtOrBeyond(context, ["selected", "source_note_needed", "citation_verified"])
         || volumeAtLeast(context, "candidate_selection");
     case "source_notes":
       return stamps.has("archive")

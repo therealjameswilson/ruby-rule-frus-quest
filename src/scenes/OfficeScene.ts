@@ -16,6 +16,10 @@ import {
   setVisibleThreats
 } from "../game/state";
 import {
+  DOCUMENT_SELECTION_PROMPT,
+  evaluateDocumentSelectionAnswer
+} from "../game/documentSelection";
+import {
   evaluateResearchCharterAnswer,
   getResearchCharterPrompt,
   researchCharterComplete,
@@ -36,7 +40,7 @@ import {
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { InventoryOverlay } from "../systems/inventory";
-import { ReliabilityHud } from "../systems/reliability";
+import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { shouldDismissControlsCard } from "../systems/tutorialDismiss";
@@ -123,7 +127,7 @@ export class OfficeScene extends Phaser.Scene {
       },
       {
         id: "scope-charter-desk",
-        label: "Scope Charter Desk",
+        label: "Scope / Selection Desk",
         x: 158,
         y: 116,
         radius: 34,
@@ -188,7 +192,7 @@ export class OfficeScene extends Phaser.Scene {
     setVisibleEntities([
       "Junior Compiler",
       "Production Inbox",
-      "Scope Charter Desk",
+      "Scope and Candidate Selection Desk",
       "FRUS Cart",
       "Archive Terminal",
       "FRUS Production Board",
@@ -381,9 +385,13 @@ export class OfficeScene extends Phaser.Scene {
 
   private showResearchCharterChoice() {
     if (gameState.processStamps.includes("rule") || gameState.sceneProgress.researchCharterComplete) {
+      if (!gameState.sceneProgress.documentSelectionComplete) {
+        this.showDocumentSelectionChoice();
+        return;
+      }
       this.dialog.show("SCOPE CHARTER", [
         "Golden Rule charter is already filed.",
-        "Scope, records access, and Kellogg standards are on the production board.",
+        "Candidate selection is already logged.",
         "Next: verify source notes with the Archive Guide."
       ]);
       return;
@@ -423,12 +431,48 @@ export class OfficeScene extends Phaser.Scene {
       addDocumentPoints(6, "scope charter and 20-year access plan filed");
       retroAudio.stamp();
       setLatestMessage("Golden Rule charter filed: scope, 20-year access, and Kellogg standards recorded.");
-      setObjective("Golden Rule filed. Enter the Archive Guide to verify source notes.");
+      setObjective("Golden Rule filed. Return to the desk to select document candidates.");
       this.reliability.update();
       this.dialog.show("SCOPE CHARTER", [
         result.message,
         "Golden Rule filed: plan scope, use 20-year access, preserve material facts.",
-        "The Office Hub route now points to source-note verification."
+        "Next: select a balanced candidate set from the document queue."
+      ]);
+    });
+  }
+
+  private showDocumentSelectionChoice() {
+    if (!gameState.processStamps.includes("rule") && !gameState.sceneProgress.researchCharterComplete) {
+      this.dialog.show("CANDIDATE SELECTION", "File the Scope Charter before selecting documents.");
+      return;
+    }
+    setObjective("Candidate Selection: choose the balanced FRUS document set.");
+    this.choice.show(`${DOCUMENT_SELECTION_PROMPT.question}\n\n${DOCUMENT_SELECTION_PROMPT.sourceBasis}`, [...DOCUMENT_SELECTION_PROMPT.options], (option) => {
+      const result = evaluateDocumentSelectionAnswer(option.value, gameState.documentCandidates);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Candidate selection shortcut: ${option.value}`);
+        this.toast.show("REVISE SELECTION", this.player.position, "warn");
+        this.dialog.show("CANDIDATE SELECTION", [
+          result.message,
+          "A FRUS volume cannot be built from only easy records."
+        ], () => this.showDocumentSelectionChoice());
+        return;
+      }
+
+      gameState.sceneProgress.documentSelectionComplete = 1;
+      for (const documentId of result.selectedDocumentIds) {
+        setDocumentWorkflowState(documentId, "selected", "candidate selected for balanced FRUS volume");
+      }
+      addDocumentPoints(result.documentPoints, "balanced FRUS candidate set selected");
+      retroAudio.confirm();
+      setObjective("Candidate set selected. Enter the Archive Guide to verify source notes.");
+      setLatestMessage("Balanced FRUS candidate set selected: hard evidence stays in the volume.");
+      this.reliability.update();
+      this.dialog.show("CANDIDATE SELECTION", [
+        result.message,
+        `Selected ${result.selectedDocumentIds.length} records for source-note and review work.`,
+        "Now move to the Archive Guide for provenance verification."
       ]);
     });
   }

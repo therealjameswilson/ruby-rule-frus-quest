@@ -90,6 +90,28 @@ describe("FRUS production board", () => {
     expect(readout.steps.find((step) => step.id === "advisory_monitoring")?.complete).toBe(true);
   });
 
+  it("does not complete research selection from charter points alone", () => {
+    const charterOnly = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      documentPoints: 6
+    }));
+    const selectedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    selectedDocuments[1] = {
+      ...selectedDocuments[1],
+      selected: true,
+      workflowState: "selected"
+    };
+    const selectedReadout = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      documentPoints: 20,
+      documentCandidates: selectedDocuments
+    }));
+
+    expect(charterOnly.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
+    expect(charterOnly.steps.find((step) => step.id === "research_selection")?.complete).toBe(false);
+    expect(selectedReadout.steps.find((step) => step.id === "research_selection")?.complete).toBe(true);
+  });
+
   it("blocks Kellogg completion when an unbracketed deletion remains unresolved", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
     documents[0] = {

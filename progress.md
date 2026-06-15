@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Balanced FRUS document candidate selection gate (2026-06-15):
+  - Added `src/game/documentSelection.ts`, a source-backed candidate-selection rule for the history.state.gov FRUS standard that a volume must be thorough, accurate, reliable, and must not omit major facts or conceal policy defects.
+  - The Office Hub `Scope / Selection Desk` now runs as a two-step production gate: first file the Scope Charter, then return to select a balanced candidate set. Easy-record shortcuts debit reliability via the standards ledger (`omitted_material_fact` or `concealed_policy_defect`), while the correct balanced set selects `telegram_001`, `source_note_047`, `sbu_annotation_001`, and `proof_page_412`.
+  - Tightened the FRUS Production Board so `research_selection` no longer completes from charter points alone; it now requires actual selected documents or later document workflow progress.
+  - Verified `npm test`: 23 files / 128 tests pass; focused coverage added in `src/game/documentSelection.test.ts` and `src/game/frusProductionBoard.test.ts`.
+  - Verified `npm run build` with the existing Vite chunk-size warning only.
+  - Required web-game client reached the Office desk and exercised the charter handoff through answer 2; its virtual-frame timing can stick on dialog pages because the app's short-tap latch uses wall-clock time, and its headless WebGL screenshot remains all black as previously documented.
+  - Supplemental paced Playwright smoke (using the same `render_game_to_text()` state) completed the whole Office flow: Scope Charter A/A/B, candidate-selection A, `documentSelectionComplete: 1`, `documentPoints: 20`, selected four balanced records, and Production Board `research_selection` became complete. Screenshot: `docs/screenshots/document-selection-office-smoke.png`.
 - Final Kellogg certification gate (2026-06-15):
   - Added `src/game/kelloggCertification.ts`, a source-backed four-prompt final certification sequence for the About-FRUS/Kellogg requirements: thorough/accurate/reliable record, indicated deletions, no omission of material facts, and no concealment of policy defects.
   - Wired `EndingScene` so pressing Space at the ready Buckram Gate now starts final human Kellogg certification instead of immediately publishing. Correct A/A/A/A answers publish the volume and record `kelloggFinalCertificationComplete`.
