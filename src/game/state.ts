@@ -1692,6 +1692,7 @@ export function getProductionBoardReadout() {
     hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
     annotationDraftingComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
     foreignGovernmentPermissionComplete: Boolean(gameState.sceneProgress.foreignGovernmentPermissionComplete),
+    withholdingAppealComplete: Boolean(gameState.sceneProgress.withholdingAppealComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
@@ -1756,6 +1757,8 @@ export function seedProgressForScene(sceneName: string) {
   if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
     gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
     gameState.sceneProgress.foreignGovernmentPermissionStep = 3;
+    gameState.sceneProgress.withholdingAppealComplete = 1;
+    gameState.sceneProgress.withholdingAppealStep = 3;
     awardProcessStamp("referral");
     addProcessItem("concurrence_slip");
     addProcessItem("review_folder");

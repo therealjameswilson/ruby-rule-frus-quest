@@ -28,6 +28,12 @@ import {
   FOREIGN_GOVERNMENT_PERMISSION_PROMPTS,
   getForeignGovernmentPermissionPrompt
 } from "../game/foreignGovernmentPermission";
+import {
+  evaluateWithholdingAppealAnswer,
+  getWithholdingAppealPrompt,
+  withholdingAppealComplete,
+  WITHHOLDING_APPEAL_PROMPTS
+} from "../game/withholdingAppeal";
 import { getInput, tickInput, type InputState } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
@@ -609,6 +615,55 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.dialog.show("PERMISSION NOTE", [
         result.message,
         "The packet now shows permission or withholding treatment before concurrence."
+      ], () => this.showWithholdingAppealChoice());
+    });
+  }
+
+  private showWithholdingAppealChoice() {
+    if (gameState.sceneProgress.withholdingAppealComplete) {
+      this.showExcisionChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.withholdingAppealStep ?? 0;
+    const prompt = getWithholdingAppealPrompt(step);
+    setObjective(`Withholding appeal: review contested document ${step + 1}/${WITHHOLDING_APPEAL_PROMPTS.length}.`);
+    this.vaultText.setText(`WITHHOLDING\nAPPEAL ${step + 1}/3`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateWithholdingAppealAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Withholding appeal shortcut: ${option.value}`);
+        this.reliability.update();
+        this.dialog.show("WITHHOLDING REVIEW", [
+          result.message,
+          "Whole-document withholding needs a visible human review trail."
+        ], () => this.showWithholdingAppealChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.withholdingAppealStep = nextStep;
+      if (!withholdingAppealComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Withholding appeal check ${nextStep}/${WITHHOLDING_APPEAL_PROMPTS.length}.`);
+        this.dialog.show("WITHHOLDING REVIEW", [
+          result.message,
+          "Continue the appeal before marking partial excision."
+        ], () => this.showWithholdingAppealChoice());
+        return;
+      }
+
+      gameState.sceneProgress.withholdingAppealComplete = 1;
+      gameState.sceneProgress.withholdingAppealStep = WITHHOLDING_APPEAL_PROMPTS.length;
+      setDocumentWorkflowState("sbu_annotation_001", "appeal_needed");
+      addDocumentPoints(7, "whole-document withholding appeal recorded");
+      setLatestMessage("Whole-document withholding appeal recorded.");
+      adjustReliability(5, "withholding appeal kept visible");
+      this.reliability.update();
+      this.dialog.show("WITHHOLDING REVIEW", [
+        result.message,
+        "Now mark the remaining partial excision with visible language."
       ], () => this.showExcisionChoice());
     });
   }

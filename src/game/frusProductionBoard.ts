@@ -7,6 +7,7 @@ import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCove
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 import { VOLUME_CONCEPT_SOURCE_URL } from "./volumeConcept";
+import { WITHHOLDING_APPEAL_SOURCE_URL } from "./withholdingAppeal";
 
 export type FrusProductionBoardStepId =
   | "series_concept"
@@ -19,6 +20,7 @@ export type FrusProductionBoardStepId =
   | "manuscript_review"
   | "declassification_review"
   | "foreign_permissions"
+  | "withholding_appeals"
   | "agency_referrals"
   | "advisory_monitoring"
   | "kellogg_editing"
@@ -38,6 +40,7 @@ export interface FrusProductionBoardContext {
   hacReviewComplete: boolean;
   annotationDraftingComplete: boolean;
   foreignGovernmentPermissionComplete: boolean;
+  withholdingAppealComplete: boolean;
   manuscriptReviewComplete: boolean;
   recordCollectionComplete: boolean;
   seriesConceptComplete: boolean;
@@ -154,6 +157,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Flag foreign-government information and preserve a visible permission or withholding note."
   },
   {
+    id: "withholding_appeals",
+    label: "Withholding and appeal review",
+    shortLabel: "APP",
+    sourceBasis: "Declassification review may withhold whole documents or excise portions; contested withholding needs a visible review outcome.",
+    sourceUrl: WITHHOLDING_APPEAL_SOURCE_URL,
+    gameplayTask: "Route the whole-document withholding appeal before marking partial excisions."
+  },
+  {
     id: "agency_referrals",
     label: "Agency referrals",
     shortLabel: "REF",
@@ -263,6 +274,11 @@ export function isFrusProductionBoardStepComplete(
         || hasAnyEquityResponse(context, (status) => status !== "not_submitted");
     case "foreign_permissions":
       return context.foreignGovernmentPermissionComplete
+        || stamps.has("referral")
+        || context.heldProcessItems.has("concurrence_slip")
+        || volumeAtLeast(context, "editing");
+    case "withholding_appeals":
+      return context.withholdingAppealComplete
         || stamps.has("referral")
         || context.heldProcessItems.has("concurrence_slip")
         || volumeAtLeast(context, "editing");

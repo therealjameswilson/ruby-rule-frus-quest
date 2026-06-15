@@ -22,6 +22,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     hacReviewComplete: false,
     annotationDraftingComplete: false,
     foreignGovernmentPermissionComplete: false,
+    withholdingAppealComplete: false,
     manuscriptReviewComplete: false,
     recordCollectionComplete: false,
     seriesConceptComplete: false,
@@ -50,6 +51,7 @@ describe("FRUS production board", () => {
       "manuscript_review",
       "declassification_review",
       "foreign_permissions",
+      "withholding_appeals",
       "agency_referrals",
       "advisory_monitoring",
       "kellogg_editing",
@@ -124,13 +126,14 @@ describe("FRUS production board", () => {
       reliability: 90,
       annotationDraftingComplete: true,
       foreignGovernmentPermissionComplete: true,
+      withholdingAppealComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 12).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 13).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("publication_30_year");
   });
 
@@ -160,6 +163,7 @@ describe("FRUS production board", () => {
       documentPoints: 50,
       annotationDraftingComplete: true,
       foreignGovernmentPermissionComplete: true,
+      withholdingAppealComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -171,6 +175,47 @@ describe("FRUS production board", () => {
     expect(missingPermission.steps.find((step) => step.id === "advisory_monitoring")?.status).toBe("locked");
     expect(permissionFiled.steps.find((step) => step.id === "foreign_permissions")?.complete).toBe(true);
     expect(permissionFiled.nextStep?.id).toBe("advisory_monitoring");
+  });
+
+  it("requires withholding appeal review after foreign-government permission and before concurrence", () => {
+    const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    documents[4] = {
+      ...withEquityResolved(documents[4]),
+      workflowState: "referred"
+    };
+    const missingAppeal = getFrusProductionBoardReadout(context({
+      volumeWorkflowState: "declassification_review",
+      processStamps: ["rule", "archive", "network"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp", "clearance_token"]),
+      documentPoints: 50,
+      annotationDraftingComplete: true,
+      foreignGovernmentPermissionComplete: true,
+      recordCollectionComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true
+    }));
+    const appealFiled = getFrusProductionBoardReadout(context({
+      volumeWorkflowState: "declassification_review",
+      processStamps: ["rule", "archive", "network"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp", "clearance_token"]),
+      documentPoints: 50,
+      annotationDraftingComplete: true,
+      foreignGovernmentPermissionComplete: true,
+      withholdingAppealComplete: true,
+      recordCollectionComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true
+    }));
+
+    expect(missingAppeal.steps.find((step) => step.id === "foreign_permissions")?.complete).toBe(true);
+    expect(missingAppeal.nextStep?.id).toBe("withholding_appeals");
+    expect(missingAppeal.steps.find((step) => step.id === "advisory_monitoring")?.status).toBe("locked");
+    expect(appealFiled.steps.find((step) => step.id === "withholding_appeals")?.complete).toBe(true);
+    expect(appealFiled.nextStep?.id).toBe("advisory_monitoring");
   });
 
   it("requires annotation drafting after source-note provenance and before manuscript review", () => {
@@ -249,6 +294,7 @@ describe("FRUS production board", () => {
       hacReviewComplete: true,
       annotationDraftingComplete: true,
       foreignGovernmentPermissionComplete: true,
+      withholdingAppealComplete: true,
       recordCollectionComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true

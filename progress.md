@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Whole-document withholding appeal gameplay gate (2026-06-15):
+  - Added `src/game/withholdingAppeal.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: declassification review may withhold whole documents or excise portions, and contested withholding needs a visible human review outcome before concurrence.
+  - Inserted `withholding_appeals` into the FRUS Production Board after `foreign_permissions` and before `agency_referrals`, so a foreign-government permission note no longer jumps straight to referral concurrence or visible excision.
+  - Wired `ReferralVaultScene` so foreign-government permission now flows into a three-prompt withholding appeal review before partial excision. Wrong shortcuts apply standards damage (`altered_text`, `omitted_material_fact`, or `concealed_policy_defect`); correct answers record the appeal path, add document points, and preserve the review trail.
+  - Updated later-scene QA seeding so `?scene=SilentReadScene` and `?scene=EndingScene` remain coherent with the expanded board.
+  - Verified focused tests: `npm test -- src/game/withholdingAppeal.test.ts src/game/frusProductionBoard.test.ts` (2 files / 18 tests pass).
+  - Verified full `npm test`: 35 files / 190 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=ReferralVaultScene&role=declass_reviewer&name=Alex` reports `productionBoard.total: 15`, order `declassification_review -> foreign_permissions -> withholding_appeals -> agency_referrals -> advisory_monitoring`, `foreign_permissions` active, `withholding_appeals` locked until the permission step is complete, and no console errors. The generated headless WebGL screenshot remains black as previously documented.
 - Front matter assembly gameplay gate (2026-06-15):
   - Added `src/game/frontMatterAssembly.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: final publication apparatus includes preface/scope framing, sources consulted, persons and abbreviations, proofed pages, and the index.
   - Expanded `publicationApparatus` from five to six components by adding `front_matter_assembly`, so recovered fragments and proofing no longer imply the final reader apparatus has been assembled.
