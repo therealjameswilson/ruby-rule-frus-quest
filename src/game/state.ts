@@ -1785,6 +1785,8 @@ export function seedProgressForScene(sceneName: string) {
     addProcessItem("buckram_key");
     gameState.sceneProgress.editorialTreatmentComplete = 1;
     gameState.sceneProgress.editorialTreatmentStep = 3;
+    gameState.sceneProgress.typeflowOrderComplete = 1;
+    gameState.sceneProgress.typeflowOrderStep = 2;
     gameState.sceneProgress.typesetterProofComplete = 1;
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);

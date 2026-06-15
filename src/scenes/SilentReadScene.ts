@@ -55,6 +55,12 @@ import {
   evaluateEditorialTreatmentAnswer,
   getEditorialTreatmentPrompt
 } from "../game/editorialTreatment";
+import {
+  evaluateTypeflowOrderAnswer,
+  getTypeflowOrderPrompt,
+  typeflowOrderComplete,
+  TYPEFLOW_ORDER_PROMPTS
+} from "../game/typeflowOrder";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -434,6 +440,8 @@ export class SilentReadScene extends Phaser.Scene {
       setObjective("Silent Read Tower: take the Buckram Key after proofing.");
     } else if (!gameState.sceneProgress.editorialTreatmentComplete) {
       setObjective("Silent Read Tower: route flags, then resolve editorial treatment.");
+    } else if (!gameState.sceneProgress.typeflowOrderComplete) {
+      setObjective("Silent Read Tower: file the manuscript-clearance order before typesetting.");
     } else {
       setObjective("Silent Read Tower: carry flags, then run typesetter proof.");
     }
@@ -837,7 +845,7 @@ export class SilentReadScene extends Phaser.Scene {
 
   private showEditorialTreatmentChoice() {
     if (gameState.sceneProgress.editorialTreatmentComplete) {
-      this.showTypesetterProofChoice();
+      this.showTypeflowOrderChoice();
       return;
     }
 
@@ -880,12 +888,69 @@ export class SilentReadScene extends Phaser.Scene {
       this.dialog.show("EDITORIAL TREATMENT", [
         result.message,
         "The editor and compiler preserved the record while improving readability.",
+        "Now file the manuscript-clearance order before typesetting."
+      ], () => this.showTypeflowOrderChoice());
+    });
+  }
+
+  private showTypeflowOrderChoice() {
+    if (!gameState.sceneProgress.editorialTreatmentComplete) {
+      this.showEditorialTreatmentChoice();
+      return;
+    }
+    if (gameState.sceneProgress.typeflowOrderComplete) {
+      this.showTypesetterProofChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.typeflowOrderStep ?? 0;
+    const prompt = getTypeflowOrderPrompt(step);
+    setObjective(`Typeflow Order: answer ${step + 1}/${TYPEFLOW_ORDER_PROMPTS.length}.`);
+    this.actionHint.setText(`TYPEFLOW ${step + 1}/${TYPEFLOW_ORDER_PROMPTS.length}: choose A/B/C.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateTypeflowOrderAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Typeflow order shortcut: ${option.value}`);
+        this.reliability.update();
+        setLatestMessage("TYPEFLOW ORDER FAILED - CLEAR MANUSCRIPT BEFORE TYPESETTING");
+        this.dialog.show("TYPEFLOW ORDER", [
+          result.message,
+          "Modern FRUS typeflow must keep clearance and typesetting in the right order."
+        ], () => this.showTypeflowOrderChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.typeflowOrderStep = nextStep;
+      if (!typeflowOrderComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Typeflow order check ${nextStep}/${TYPEFLOW_ORDER_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("TYPEFLOW ORDER", [
+          result.message,
+          "Continue logging the historical sequence before proofing."
+        ], () => this.showTypeflowOrderChoice());
+        return;
+      }
+
+      gameState.sceneProgress.typeflowOrderComplete = 1;
+      gameState.sceneProgress.typeflowOrderStep = TYPEFLOW_ORDER_PROMPTS.length;
+      addDocumentPoints(6, "modern manuscript-clearance typeflow filed");
+      retroAudio.confirm();
+      setLatestMessage("Typeflow order filed: manuscript clearance precedes typesetting.");
+      this.dialog.show("TYPEFLOW ORDER", [
+        result.message,
+        "Modern sequence filed: clear manuscript, then typeset and compare pages.",
         "Now run the typesetter proof."
       ], () => this.showTypesetterProofChoice());
     });
   }
 
   private showTypesetterProofChoice() {
+    if (!gameState.sceneProgress.typeflowOrderComplete) {
+      this.showTypeflowOrderChoice();
+      return;
+    }
     if (gameState.sceneProgress.typesetterProofComplete) {
       this.awardBuckramKeyAfterTypesetterProof();
       return;

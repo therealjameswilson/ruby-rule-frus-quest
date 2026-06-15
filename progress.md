@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Typeflow order gameplay gate (2026-06-15):
+  - Added `src/game/typeflowOrder.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: until the late 1970s, typesetting preceded declassification review, but since then compilations are cleared in manuscript before typesetting.
+  - Wired `SilentReadScene` so completed editorial treatment now flows into a two-prompt Typeflow Order gate before the existing Typesetter Proof sequence. The Buckram Key remains downstream of correct manuscript-clearance order and page proofing.
+  - Wrong order shortcuts apply standards damage (`omitted_material_fact`, `concealed_policy_defect`, or `altered_text`), including modern "typeset first" and DANN-E order-inference shortcuts.
+  - Updated `?scene=EndingScene` QA seeding so direct final-gate deep links remain coherent with the expanded proofing chain while `SilentReadScene` still exposes the new gate during play.
+  - Verified focused tests: `npm test -- src/game/typeflowOrder.test.ts src/game/typesetterProof.test.ts src/game/editorialTreatment.test.ts` (3 files / 9 tests pass).
+  - Verified full `npm test`: 40 files / 206 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=SilentReadScene&role=proofreader&name=Sam` reports `scene: "SilentReadScene"`, coherent seeded prior progress, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Selection docket gameplay gate (2026-06-15):
   - Added `src/game/selectionDocket.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: selection narrows collected records into a printed subset, and expanded annotation mitigates the increasing selectivity of the series.
   - Reframed the Production Board's `research_selection` step as `Selection docket`, so a balanced candidate set no longer completes research/selection until the player files a visible rationale for the printed subset and an annotation bridge for nonprinted context.
