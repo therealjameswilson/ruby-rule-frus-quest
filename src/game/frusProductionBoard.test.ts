@@ -19,6 +19,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     reliability: 80,
     volumeFragments: [],
     finalGatePublished: false,
+    hacReviewComplete: false,
     ...overrides
   };
 }
@@ -78,6 +79,15 @@ describe("FRUS production board", () => {
 
     expect(readout.steps.slice(0, 7).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("publication_30_year");
+  });
+
+  it("can complete HAC monitoring through the hearing even before the SOP stamp", () => {
+    const readout = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive", "network", "referral"],
+      hacReviewComplete: true
+    }));
+
+    expect(readout.steps.find((step) => step.id === "advisory_monitoring")?.complete).toBe(true);
   });
 
   it("blocks Kellogg completion when an unbracketed deletion remains unresolved", () => {

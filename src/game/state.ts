@@ -1565,7 +1565,8 @@ export function getProductionBoardReadout() {
     documentPoints: gameState.documentPoints,
     reliability: gameState.reliability,
     volumeFragments: [...gameState.volumeFragments],
-    finalGatePublished: gameState.finalGateCertification?.status === "published"
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete)
   });
 }
 

@@ -23,6 +23,7 @@ export interface FrusProductionBoardContext {
   reliability: number;
   volumeFragments: readonly string[];
   finalGatePublished: boolean;
+  hacReviewComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -180,7 +181,7 @@ export function isFrusProductionBoardStepComplete(
         || (totalEquities(context.documentCandidates) > 0 && crystalsEarned(context.documentCandidates) === totalEquities(context.documentCandidates))
         || hasAnyEquityResponse(context, (status) => RESOLVED_REVIEW_STATUSES.has(status));
     case "advisory_monitoring":
-      return stamps.has("sop");
+      return context.hacReviewComplete || stamps.has("sop");
     case "kellogg_editing":
       return stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
     case "publication_30_year":

@@ -7,6 +7,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Exposed the board through `render_game_to_text().productionBoard` so QA and assistive checks can see the same production ladder that appears in-game.
   - Added an interactable `FRUS Production Board` in OfficeScene with a compact 8-step wall display and dialog pages for current progress, next task, and the source-backed reason for that task.
   - Added `src/game/frusProductionBoard.test.ts` covering board order, initial locking, step advancement, unbracketed-deletion blocking, and final Buckram Gate readiness.
+- Senate HAC hearing gameplay loop (2026-06-15):
+  - Added `src/game/hacHearing.ts` as a tested, source-backed three-question HAC process review about monitoring the compilation/editorial process, declassification procedures/guidelines, and Kellogg publication standards.
+  - Wired the Senate Hearing Chamber witness table to `ChoicePrompt`; Treaty Fragment II now requires answering the HAC process review instead of being granted by a single dialog.
+  - Wrong hearing posture costs a small reliability correction and retries; completion is persisted in `sceneProgress.senateHacReviewComplete`.
+  - The FRUS Production Board now treats the completed Senate HAC hearing as its own advisory-monitoring completion signal, separate from the Silent Read SOP stamp.
 
 - Post-PR27 live-QA fixes — ESC overlay close + interact feedback that the cloud browser swallowed (2026-06-15):
   - Two FAILs remained after PR #27: (1) pressing interact away from a target never visibly showed `STEP CLOSER`/`NOTHING TO INTERACT WITH`, and (2) ESC would not close the M inventory or Tab codex (their M/Tab toggles still worked). Both trace to the same root cause class PR27 fixed for *movement*, but for the discrete action/cancel keys, plus a stuck ESC-suppression latch.

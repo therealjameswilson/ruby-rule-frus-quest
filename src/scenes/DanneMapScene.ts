@@ -2,6 +2,12 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { unlockCodexEntry } from "../game/codex";
 import { DANNE_MAP_ASSETS } from "../game/danneAtlas";
+import {
+  evaluateHacHearingAnswer,
+  getHacHearingPrompt,
+  hacHearingComplete,
+  HAC_HEARING_PROMPTS
+} from "../game/hacHearing";
 import type {
   DanneMapSceneKey,
   DanneRectDefinition,
@@ -38,11 +44,12 @@ import { DialogBox } from "../systems/dialog";
 import { InteractionAssist, nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
-import { ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { transitionTo } from "../systems/sceneTransitions";
 import { saveGameNow } from "../systems/save";
+import { ChoicePrompt } from "../systems/verification";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -79,6 +86,7 @@ function mapAssetFor(sceneKey: DanneMapSceneKey) {
 export abstract class DanneMapScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
+  private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private hintText!: Phaser.GameObjects.Text;
@@ -117,6 +125,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.player = new Player(this, this.geometry.spawn.x, this.geometry.spawn.y);
     this.lastGoodPosition = this.player.position;
     this.dialog = new DialogBox(this);
+    this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 10, "", {
@@ -174,6 +183,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
+      return;
+    }
+    if (this.choice.active) {
+      this.choice.updateInput();
+      this.player.update(delta, false);
+      this.reliability.update();
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
@@ -342,14 +357,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     if (definition.action === "witness-table") {
-      const added = addDanneItem("treaty-fragments", 1);
-      if (added) retroAudio.danneItemPickup("Treaty Fragment II");
-      else retroAudio.confirm();
-      this.dialog.show("WITNESS TABLE", [
-        "The record is entered without partisan flourish.",
-        "Question, answer, source, and date remain separate.",
-        added ? "Treaty Fragment II is filed from the hearing record." : "Treaty Fragment II is already filed."
-      ]);
+      this.showHacHearingChoice();
       return;
     }
     if (definition.action === "nara-stacks-note") {
@@ -403,6 +411,58 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.dialog.show("MARINE GUARD", this.marineGuard?.blockedDialog() ?? "Classified door remains closed.");
       setLatestMessage("Marine guard blocks classified door.");
     }
+  }
+
+  private showHacHearingChoice() {
+    if (gameState.sceneProgress.senateHacReviewComplete) {
+      this.dialog.show("WITNESS TABLE", [
+        "The HAC process review is already entered.",
+        "Question, answer, source, and date remain separate.",
+        "Treaty Fragment II is filed from the hearing record."
+      ]);
+      return;
+    }
+
+    const step = gameState.sceneProgress.senateHacReviewStep ?? 0;
+    const prompt = getHacHearingPrompt(step);
+    setObjective(`Senate Hearing: answer HAC review ${step + 1}/${HAC_HEARING_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateHacHearingAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        adjustReliability(-3, "HAC hearing correction");
+        this.reliability.update();
+        this.dialog.show("HAC REVIEW", [
+          result.message,
+          "Try again. The hearing record must show the process honestly."
+        ], () => this.showHacHearingChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.senateHacReviewStep = nextStep;
+      setLatestMessage(`HAC hearing check ${nextStep}/${HAC_HEARING_PROMPTS.length}: ${result.prompt.id}.`);
+      if (!hacHearingComplete(nextStep)) {
+        this.dialog.show("HAC REVIEW", [
+          result.message,
+          "The committee has another process question."
+        ], () => this.showHacHearingChoice());
+        return;
+      }
+
+      gameState.sceneProgress.senateHacReviewComplete = 1;
+      const added = addDanneItem("treaty-fragments", 1);
+      if (added) retroAudio.danneItemPickup("Treaty Fragment II");
+      else retroAudio.confirm();
+      setLatestMessage("HAC process review complete.");
+      adjustReliability(6, "HAC process monitoring answered cleanly");
+      this.reliability.update();
+      this.dialog.show("WITNESS TABLE", [
+        result.message,
+        "HAC process review entered: compilation, declassification, and Kellogg standards are visible.",
+        added ? "Treaty Fragment II is filed from the hearing record." : "Treaty Fragment II is already filed."
+      ]);
+    });
   }
 
   private installUiDebugHooks() {
