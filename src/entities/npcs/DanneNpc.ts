@@ -1,6 +1,11 @@
 import Phaser from "phaser";
 import { characterAnimKey } from "../../art/character_anims";
-import type { CharacterKey } from "../../art/characters";
+import {
+  ART_PACK_FOOT_OFFSET_Y,
+  ART_PACK_LABEL_OFFSET_Y,
+  ART_PACK_SPRITE_ORIGIN_Y,
+  type CharacterKey
+} from "../../art/characters";
 import { danneAnimKey } from "../../art/danne_anims";
 import { PALETTE } from "../../game/constants";
 import type { DanneRuntimeSpriteAsset, DanneSpriteAsset } from "../../game/danneAtlas";
@@ -40,18 +45,20 @@ export abstract class DanneNpc {
     this.characterKey = options.characterKey && scene.textures.exists(options.characterKey)
       ? options.characterKey
       : null;
-    // The crisp 32x48 art-pack sprite anchors its feet near the container origin
-    // (origin 0.5, 0.9 => feet ~5px below center), so its ground shadow and name
-    // label sit close to the body. The legacy DANN-E runtime fallback is a large
-    // photographic frame scaled to ~1/14 whose body fills a much taller region, so
-    // it needs the lower offsets the callers pass in. Choosing offsets per mode keeps
-    // the shadow attached to the feet and the label just below it in both cases.
+    // The crisp 32x48 art-pack sprite is drawn at scale 1 with origin (0.5, 0.9),
+    // so its feet sit 48*(0.9-0.5) = ~19px below the container origin. The ground
+    // shadow and name label must sit at the feet, otherwise the shadow floats up at
+    // the body's waist and reads as a detached oval with the sprite hanging below it.
+    // The legacy DANN-E runtime fallback is a large photographic frame scaled to
+    // ~1/14 whose body fills a much taller region, so it needs the lower offsets the
+    // callers pass in. Choosing offsets per mode keeps the shadow attached to the
+    // feet and the label just below it in both cases.
     const usingArtPack = this.characterKey !== null;
-    const shadowOffsetY = usingArtPack ? 5 : options.shadowY ?? 12;
-    const labelOffsetY = usingArtPack ? 8 : options.labelY ?? 17;
+    const shadowOffsetY = usingArtPack ? ART_PACK_FOOT_OFFSET_Y : options.shadowY ?? 12;
+    const labelOffsetY = usingArtPack ? ART_PACK_LABEL_OFFSET_Y : options.labelY ?? 17;
     const shadow = scene.add.ellipse(0, shadowOffsetY, 20, 6, color(PALETTE.black));
     if (this.characterKey) {
-      this.sprite = scene.add.sprite(0, 0, this.characterKey).setOrigin(0.5, 0.9).setScale(1);
+      this.sprite = scene.add.sprite(0, 0, this.characterKey).setOrigin(0.5, ART_PACK_SPRITE_ORIGIN_Y).setScale(1);
     } else {
       this.sprite = scene.add
         .sprite(0, 0, scene.textures.exists(asset.key) ? asset.key : "marcus")

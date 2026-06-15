@@ -381,18 +381,22 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private drawPottedPlant(x: number, y: number) {
-    // Terracotta pot with a rim, so the foliage reads as a plant rather than a
-    // solid colour blob. Leaves are layered shaded greens with a couple of
-    // highlight fronds instead of one flat bright-green ellipse.
-    this.add.rectangle(x, y + 2, 12, 8, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
-    this.add.rectangle(x, y - 2, 14, 3, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
-    this.add.rectangle(x, y + 4, 12, 2, color(PALETTE.sepiaInk), 0.4).setDepth(-5);
-    this.add.ellipse(x, y - 10, 16, 14, color(PALETTE.plantLeafDark)).setDepth(-6);
-    this.add.ellipse(x - 4, y - 12, 8, 11, color(PALETTE.plantLeafShade)).setDepth(-5);
-    this.add.ellipse(x + 4, y - 11, 8, 11, color(PALETTE.plantLeafShade)).setDepth(-5);
-    this.add.ellipse(x, y - 14, 7, 10, color(PALETTE.plantLeaf)).setDepth(-4);
-    this.add.ellipse(x - 2, y - 16, 3, 6, color(PALETTE.plantLeaf)).setDepth(-4);
-    this.add.ellipse(x + 3, y - 15, 2, 5, color(PALETTE.openNetGreen)).setDepth(-3);
+    // Blocky NES-style potted plant. Earlier versions stacked several green
+    // ellipses, which merged into one flat green mass at 256x240 and read as a
+    // placeholder blob. Built from outlined rectangles instead so the pot, soil
+    // and individual leaf blades are all legible as an intentional plant prop.
+    // Terracotta pot body + rim.
+    this.add.rectangle(x, y + 3, 12, 9, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
+    this.add.rectangle(x, y - 2, 14, 4, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
+    this.add.rectangle(x, y + 6, 12, 2, color(PALETTE.sepiaInk), 0.4).setDepth(-5);
+    // Dark soil line under the rim.
+    this.add.rectangle(x, y - 1, 10, 2, color(PALETTE.sepiaInk)).setDepth(-5);
+    // Foliage as discrete outlined leaf blades fanning out of the pot.
+    this.add.rectangle(x, y - 11, 6, 14, color(PALETTE.plantLeafDark)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
+    this.add.rectangle(x - 5, y - 8, 4, 9, color(PALETTE.plantLeafShade)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-5).setAngle(-18);
+    this.add.rectangle(x + 5, y - 8, 4, 9, color(PALETTE.plantLeafShade)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-5).setAngle(18);
+    this.add.rectangle(x - 1, y - 14, 3, 8, color(PALETTE.plantLeaf)).setDepth(-4);
+    this.add.rectangle(x + 2, y - 13, 2, 6, color(PALETTE.plantLeaf)).setDepth(-4);
   }
 
   private drawArchiveBox(x: number, y: number) {

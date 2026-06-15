@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
-import { getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
+import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
@@ -116,7 +116,7 @@ export class Player {
         ? "snes16"
         : "nes8";
     const isSnesScale = this.spriteMode === "snes16" || this.spriteMode === "snesRoleFrame48" || this.spriteMode === "artPack32x48";
-    this.shadowOffsetY = this.spriteMode === "artPack32x48" ? 5 : isSnesScale ? 9 : 8;
+    this.shadowOffsetY = this.spriteMode === "artPack32x48" ? ART_PACK_FOOT_OFFSET_Y : isSnesScale ? 9 : 8;
     this.shadowDepthOffset = isSnesScale ? 2 : 1;
     this.shadow = scene.add
       .ellipse(
@@ -136,7 +136,7 @@ export class Player {
         : gameState.playerProfile.spriteKey;
     this.sprite = scene.add
       .sprite(snapPixel(this.logicalX), snapPixel(this.logicalY), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
-      .setOrigin(0.5, this.spriteMode === "artPack32x48" ? 0.9 : this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
+      .setOrigin(0.5, this.spriteMode === "artPack32x48" ? ART_PACK_SPRITE_ORIGIN_Y : this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
       .setDepth(snapPixel(this.logicalY));
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
       this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));
