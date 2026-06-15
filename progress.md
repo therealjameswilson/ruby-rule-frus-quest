@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Clearance procedure lane gameplay gate (2026-06-15):
+  - Added `src/game/clearanceProcedure.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: declassification clearance became a distinct function from compilation/review, post-1980 clearance review uses a human reviewer lane, and documents with other agency equities require accountable routing.
+  - Wired `NetworkScene` so the ClassNet Vault now requires a three-prompt clearance procedure lane before the existing Clearance Token declassification review can begin. The route text and objective now point players to `CLEARANCE LANE` until the procedure is documented.
+  - Wrong procedure shortcuts apply standards damage (`concealed_policy_defect`, `omitted_material_fact`, or `undisclosed_deletion`), including a StateChat final-signoff shortcut that correctly fails because StateChat remains terminal support only.
+  - Updated later-scene QA seeding so `?scene=ReferralVaultScene`, `?scene=SilentReadScene`, and `?scene=EndingScene` remain coherent with the expanded ClassNet chain.
+  - Verified focused tests: `npm test -- src/game/clearanceProcedure.test.ts src/game/declassificationReview.test.ts` (2 files / 7 tests pass).
+  - Verified full `npm test`: 38 files / 200 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=NetworkScene&role=declass_reviewer&name=Alex` reports `scene: "NetworkScene"`, production board `nextStep.id: "declassification_review"`, no `clearanceProcedureComplete` pre-seeded in `sceneProgress`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - GPO segment assembly publication loop (2026-06-15):
   - Added `src/game/gpoSegmentAssembly.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: FRUS volumes can move to GPO in parts, the final segment must arrive with index/apparatus intact, and GPO binds the entire certified volume.
   - Wired `EndingScene` so final Kellogg certification now flows into GPO segment assembly before the existing GPO handoff prompts. Wrong publication-packet shortcuts apply standards damage (`altered_text`, `omitted_material_fact`, or `concealed_policy_defect`); correct answers file `sceneProgress.gpoSegmentAssemblyComplete` and add document points.

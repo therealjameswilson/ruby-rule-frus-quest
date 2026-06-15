@@ -40,6 +40,12 @@ import {
   evaluateDeclassificationReviewAnswer,
   getDeclassificationReviewPrompt
 } from "../game/declassificationReview";
+import {
+  clearanceProcedureComplete,
+  CLEARANCE_PROCEDURE_PROMPTS,
+  evaluateClearanceProcedureAnswer,
+  getClearanceProcedurePrompt
+} from "../game/clearanceProcedure";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -329,8 +335,12 @@ export class NetworkScene extends Phaser.Scene {
     this.track(this.add.rectangle(128, 151, 92, 8, color(PALETTE.deepRuby)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(139));
     if (!this.clearanceTokenCollected) {
       this.clearanceTokenIcon = this.track(this.add.image(128, 132, "clearance-token").setDepth(155));
-      this.routeText.setText("CLEARANCE TOKEN\nVERIFY AND TAKE");
-      setObjective("Two Networks: collect the Clearance Token in N2.");
+      this.routeText.setText(gameState.sceneProgress.clearanceProcedureComplete
+        ? "CLEARANCE TOKEN\nVERIFY AND TAKE"
+        : "CLEARANCE LANE\nVERIFY PROCEDURE");
+      setObjective(gameState.sceneProgress.clearanceProcedureComplete
+        ? "Two Networks: collect the Clearance Token in N2."
+        : "Two Networks: document the ClassNet clearance procedure before token review.");
     } else {
       this.track(this.add.image(128, 132, "clearance-token").setTint(color(PALETTE.goldStamp)).setDepth(155));
       this.routeText.setText("TOKEN EARNED\nEAST: REFERRAL VAULT");
@@ -391,17 +401,71 @@ export class NetworkScene extends Phaser.Scene {
     const nearToken = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) <= 32;
     if (!nearToken) {
       setNearestInteractable(null);
-      this.routeText.setText("CLEARANCE TOKEN\nVERIFY AND TAKE");
+      this.routeText.setText(gameState.sceneProgress.clearanceProcedureComplete
+        ? "CLEARANCE TOKEN\nVERIFY AND TAKE"
+        : "CLEARANCE LANE\nVERIFY PROCEDURE");
       return false;
     }
     setNearestInteractable("Clearance Token");
-    this.routeText.setText(gameState.sceneProgress.declassificationReviewComplete
-      ? "CLEARANCE TOKEN\nPRESS SPACE"
-      : "CLEARANCE REVIEW\nPRESS SPACE");
+    this.routeText.setText(gameState.sceneProgress.clearanceProcedureComplete
+      ? gameState.sceneProgress.declassificationReviewComplete
+        ? "CLEARANCE TOKEN\nPRESS SPACE"
+        : "CLASSNET REVIEW\nPRESS SPACE"
+      : "CLEARANCE LANE\nPRESS SPACE");
     if (!input.aJustPressed) return false;
-    if (gameState.sceneProgress.declassificationReviewComplete) this.collectClearanceToken();
+    if (!gameState.sceneProgress.clearanceProcedureComplete) this.showClearanceProcedureChoice();
+    else if (gameState.sceneProgress.declassificationReviewComplete) this.collectClearanceToken();
     else this.showDeclassificationReviewChoice();
     return true;
+  }
+
+  private showClearanceProcedureChoice() {
+    if (gameState.sceneProgress.clearanceProcedureComplete) {
+      this.showDeclassificationReviewChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.clearanceProcedureStep ?? 0;
+    const prompt = getClearanceProcedurePrompt(step);
+    setObjective(`Clearance procedure: answer ${step + 1}/${CLEARANCE_PROCEDURE_PROMPTS.length}.`);
+    this.routeText.setText(`CLEARANCE LANE\n${step + 1}/${CLEARANCE_PROCEDURE_PROMPTS.length}`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateClearanceProcedureAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Clearance procedure shortcut: ${option.value}`);
+        this.reliability.update();
+        setLatestMessage("CLEARANCE LANE FAILED - HUMAN REVIEW ROUTE REQUIRED");
+        this.dialog.show("CLEARANCE PROCEDURE", [
+          result.message,
+          "The declassification lane must stay separate and accountable."
+        ], () => this.showClearanceProcedureChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.clearanceProcedureStep = nextStep;
+      if (!clearanceProcedureComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Clearance procedure check ${nextStep}/${CLEARANCE_PROCEDURE_PROMPTS.length}.`);
+        this.dialog.show("CLEARANCE PROCEDURE", [
+          result.message,
+          "Continue routing the clearance procedure before the token review."
+        ], () => this.showClearanceProcedureChoice());
+        return;
+      }
+
+      gameState.sceneProgress.clearanceProcedureComplete = 1;
+      gameState.sceneProgress.clearanceProcedureStep = CLEARANCE_PROCEDURE_PROMPTS.length;
+      addDocumentPoints(5, "declassification procedure lane documented");
+      retroAudio.confirm();
+      setLatestMessage("Clearance procedure lane logged: proceed to ClassNet review.");
+      this.dialog.show("CLEARANCE PROCEDURE", [
+        result.message,
+        "Procedure lane filed.",
+        "Now resolve the classified equity review."
+      ], () => this.showDeclassificationReviewChoice());
+    });
   }
 
   private showDeclassificationReviewChoice() {
@@ -453,6 +517,8 @@ export class NetworkScene extends Phaser.Scene {
 
   private collectClearanceToken() {
     if (this.clearanceTokenCollected) return;
+    gameState.sceneProgress.clearanceProcedureComplete = 1;
+    gameState.sceneProgress.clearanceProcedureStep = CLEARANCE_PROCEDURE_PROMPTS.length;
     gameState.sceneProgress.declassificationReviewComplete = 1;
     this.clearanceTokenCollected = true;
     addProcessItem("clearance_token");
