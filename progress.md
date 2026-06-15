@@ -949,3 +949,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 - No art changed; visual fixes from PRs #21/#22 are preserved.
 - Verified `npm test`: 9 files passed, 51 tests passed.
 - Verified `npm run build`.
+
+## 2026-06-15 JR detached feet fragment — split-frame source art
+
+- Live QA after PRs #21-#23 still saw a small black/orange fragment near the Junior Compiler's shadow in Office Hub, despite PR #21 already moving action poses off row 3.
+- Deeper root cause (separate from PR #21): the native art-pack sheets are misassembled. In nearly every 32x48 cell the character body is split by a horizontal transparent band that leaves the legs/feet as a detached lower segment; many cells also carry stray pixel columns on a cell edge. Reproduced from real pixels with a CPU compositor at the real engine geometry (origin 0.5/0.9, foot offset 5): the detached feet segment of `sprite_compiler` frame 0 lands directly on the shadow line and renders as the free-floating orange/black fragment. JuniorCompiler maps walk-down/attack -> idle-down -> frame 0, so it always showed this. The player walks frames 0-11, all similarly split.
+- Idle-down (frame 0) is the only cell that is edge-clean (no stray columns) on every sheet, with at most one closeable vertical gap. Fix:
+  - Closed the single vertical gap in frame 0 by sliding the lower segment up to rejoin the body, regenerating the PNGs for the 5 sheets that had a frame-0 gap (`sprite_compiler`, `sprite_editor`, `sprite_records_officer`, `sprite_reviewer`, `sprite_security_officer`). The other sheets' frame 0 was already contiguous and untouched.
+  - Remapped every direction and action pose to frame 0 in `src/art/character_anims.ts`, extending PR #21's "reuse complete frames" principle to its conclusion so no character ever plays a split/stray cell. Characters convey motion by position/bob, so no visible animation is lost.
+- Regression coverage in `src/art/characterSprites.test.ts`:
+  - asserts every direction and action pose resolves to frame 0 (the clean cell);
+  - decodes every shipped native PNG and asserts each referenced frame has no interior transparent row-band (`largestInteriorRowGap <= 1`), i.e. the body is one contiguous piece — failing on the detached-feet defect.
+- Did not touch TitleScene or overlay-input code. Verified `npm test`: 9 files, 50 tests passed. Verified `npm run build`.
