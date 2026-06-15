@@ -3,6 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   addDanneItem,
   gameState,
+  getProductionBoardReadout,
   hasDanneItem,
   setLatestMessage,
   setNearestInteractable,
@@ -127,6 +128,15 @@ export class OfficeScene extends Phaser.Scene {
         onInteract: () => this.handleJuniorQuestStation("terminal")
       },
       {
+        id: "frus-production-board",
+        label: "FRUS Production Board",
+        x: 148,
+        y: 60,
+        radius: 34,
+        kind: "terminal",
+        onInteract: () => this.openProductionBoard()
+      },
+      {
         id: "archive-guide-door",
         label: "Archive Guide Door",
         x: 128,
@@ -159,6 +169,7 @@ export class OfficeScene extends Phaser.Scene {
       "Production Inbox",
       "FRUS Cart",
       "Archive Terminal",
+      "FRUS Production Board",
       "Archive Guide Door",
       "Cherry Blossom Garden Door",
       "Senate Hearing Chamber Door"
@@ -338,6 +349,27 @@ export class OfficeScene extends Phaser.Scene {
     ]);
   }
 
+  private openProductionBoard() {
+    const board = getProductionBoardReadout();
+    const next = board.nextStep;
+    const statusPages = [
+      board.steps.slice(0, 4).map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`).join("\n"),
+      board.steps.slice(4).map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`).join("\n")
+    ];
+    retroAudio.confirm();
+    setLatestMessage(next ? `Production board next: ${next.label}.` : "Production board complete.");
+    this.dialog.show("FRUS BOARD", [
+      `FRUS volume board: ${board.completed}/${board.total} production checks complete.`,
+      next
+        ? `NEXT ${next.shortLabel}: ${next.gameplayTask}`
+        : "All production checks are complete. Certify the Buckram Gate.",
+      next
+        ? `WHY: ${next.sourceBasis}`
+        : "The volume is ready only if the record remains complete and standards-clean.",
+      ...statusPages
+    ]);
+  }
+
   private consumeOfficeReturnSpawn() {
     const x = gameState.sceneProgress.officeReturnX;
     const y = gameState.sceneProgress.officeReturnY;
@@ -404,13 +436,34 @@ export class OfficeScene extends Phaser.Scene {
     this.add.rectangle(108, 60, 24, 14, color(PALETTE.mapWater)).setDepth(-13);
     this.add.rectangle(102, 58, 6, 4, color(PALETTE.openNetGreen)).setDepth(-12);
     this.add.rectangle(113, 62, 5, 5, color(PALETTE.archiveAmber)).setDepth(-12);
-    this.add.rectangle(148, 60, 26, 18, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-14);
-    for (let i = 0; i < 4; i += 1) {
-      this.add.rectangle(148, 55 + i * 4, 18, 1, color(PALETTE.sepiaInk), 0.7).setDepth(-13);
-    }
+    this.drawProductionBoard(148, 60);
     // Hanging archive banner near the senate door.
     this.add.rectangle(128, 52, 18, 14, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
     this.add.rectangle(128, 50, 10, 6, color(PALETTE.goldStamp)).setDepth(-13);
+  }
+
+  private drawProductionBoard(x: number, y: number) {
+    const board = getProductionBoardReadout();
+    this.add.rectangle(x, y, 34, 24, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
+    this.add.text(x, y - 9, "FRUS", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(-13);
+    board.steps.forEach((step, index) => {
+      const col = index % 4;
+      const row = Math.floor(index / 4);
+      const dotColor = step.complete
+        ? PALETTE.openNetGreen
+        : step.status === "active"
+          ? PALETTE.terminalCyan
+          : PALETTE.stoneGray;
+      this.add.rectangle(x - 12 + col * 8, y - 1 + row * 7, 5, 5, color(dotColor)).setDepth(-13);
+      if (step.status === "active") {
+        this.add.rectangle(x - 12 + col * 8, y - 1 + row * 7, 7, 7).setStrokeStyle(1, color(PALETTE.white), 0.85).setDepth(-12);
+      }
+    });
+    this.add.rectangle(x, y + 10, 24, 2, color(PALETTE.buckramRed)).setDepth(-13);
   }
 
   private drawOfficeProps() {

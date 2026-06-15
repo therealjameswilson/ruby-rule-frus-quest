@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Office Hub FRUS Production Board (2026-06-15):
+  - Added `src/game/frusProductionBoard.ts`, a typed history.state.gov-backed checklist that turns real FRUS production into the next Zelda-like progression layer: 20-year records access, research/selection, source-note annotation, declassification review, agency referrals, HAC/process monitoring, Kellogg editing standards, and 30-year publication.
+  - Exposed the board through `render_game_to_text().productionBoard` so QA and assistive checks can see the same production ladder that appears in-game.
+  - Added an interactable `FRUS Production Board` in OfficeScene with a compact 8-step wall display and dialog pages for current progress, next task, and the source-backed reason for that task.
+  - Added `src/game/frusProductionBoard.test.ts` covering board order, initial locking, step advancement, unbracketed-deletion blocking, and final Buckram Gate readiness.
+
 - Post-PR27 live-QA fixes — ESC overlay close + interact feedback that the cloud browser swallowed (2026-06-15):
   - Two FAILs remained after PR #27: (1) pressing interact away from a target never visibly showed `STEP CLOSER`/`NOTHING TO INTERACT WITH`, and (2) ESC would not close the M inventory or Tab codex (their M/Tab toggles still worked). Both trace to the same root cause class PR27 fixed for *movement*, but for the discrete action/cancel keys, plus a stuck ESC-suppression latch.
   - Root cause (interact feedback): `aJustPressed` is derived from a once-per-`tickInput` sample of the physically-held key set. A too-short A/Space/Z tap — a keydown+keyup that both land between two samples, exactly what a cloud/automation browser emits — was added to and removed from `keyboardDown` before the next sample, so the rising edge never fired and `flashNoTargetHint()`/`nudgeTowardTarget()` never ran. PR27 latched *direction* keys for this; the action buttons were never latched.

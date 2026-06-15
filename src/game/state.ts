@@ -28,6 +28,7 @@ import {
   PENDANTS,
   totalEquities
 } from "./frusProgression";
+import { getFrusProductionBoardReadout } from "./frusProductionBoard";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import {
@@ -1554,6 +1555,20 @@ export function getProductionStatusReadout() {
   ];
 }
 
+export function getProductionBoardReadout() {
+  refreshQuestWorkflowState();
+  return getFrusProductionBoardReadout({
+    volumeWorkflowState: gameState.volumeWorkflowState,
+    documentCandidates: gameState.documentCandidates.map(cloneDocumentCandidate),
+    processStamps: [...gameState.processStamps],
+    heldProcessItems: getHeldProcessItemIds(),
+    documentPoints: gameState.documentPoints,
+    reliability: gameState.reliability,
+    volumeFragments: [...gameState.volumeFragments],
+    finalGatePublished: gameState.finalGateCertification?.status === "published"
+  });
+}
+
 export function seedProgressForScene(sceneName: string) {
   if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     addProcessItem("citation_stamp");
@@ -1721,6 +1736,7 @@ export function renderGameToText() {
       },
       finalGate: getFinalGateReadiness(),
       publicationReadiness: getPublicationReadinessReadout(),
+      productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,
