@@ -23,6 +23,7 @@ import { retroAudio } from "../systems/audio";
 import { InventoryOverlay } from "../systems/inventory";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorkflowRelicRack, addSnesWorldMap } from "../systems/snesPixelArt";
 
@@ -99,7 +100,7 @@ export class EndingScene extends Phaser.Scene {
       return;
     }
 
-    if (this.inventory.active || this.reliability.active) {
+    if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
       return;
     }

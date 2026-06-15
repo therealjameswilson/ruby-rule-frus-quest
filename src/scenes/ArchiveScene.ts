@@ -38,6 +38,7 @@ import { InteractionAssist, nearestWorkflowInteraction } from "../systems/intera
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
 
@@ -411,7 +412,7 @@ export class ArchiveScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (this.inventory.active || this.reliability.active) {
+    if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
       return;
     }

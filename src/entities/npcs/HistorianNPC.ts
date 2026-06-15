@@ -34,7 +34,7 @@ export class HistorianNPC {
       .setOrigin(0.5, usesArtPackTexture ? 0.9 : 0.5)
       .setDepth(snapPixel(y));
     if (usesArtPackTexture) {
-      const animKey = characterAnimKey(artPackTexture, "walk-down");
+      const animKey = characterAnimKey(artPackTexture, "idle-down");
       if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     }
     this.label = scene.add

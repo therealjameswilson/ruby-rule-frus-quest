@@ -26,6 +26,7 @@ import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 
 function color(hex: string) {

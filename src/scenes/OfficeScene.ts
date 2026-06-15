@@ -21,6 +21,7 @@ import { InteractionAssist, nearestInteractable } from "../systems/interaction";
 import { InventoryOverlay } from "../systems/inventory";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 
 type OfficeDanneRoute = "CherryBlossomGardenScene" | "SenateHearingChamberScene";
@@ -175,7 +176,7 @@ export class OfficeScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (this.inventory.active || this.reliability.active) {
+    if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
       return;
     }
@@ -374,12 +375,24 @@ export class OfficeScene extends Phaser.Scene {
     this.add.rectangle(214, 116, 12, 4, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
     this.add.rectangle(214, 112, 11, 4, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
     // Potted plant in the lower-right corner for warmth.
-    this.add.rectangle(228, 200, 8, 7, color(PALETTE.sepiaInk)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-6);
-    this.add.ellipse(228, 191, 14, 12, color(PALETTE.openNetGreen)).setDepth(-5);
-    this.add.ellipse(224, 188, 7, 8, color(PALETTE.openNetGreen)).setDepth(-5);
-    this.add.ellipse(232, 189, 7, 8, color(PALETTE.openNetGreen)).setDepth(-5);
+    this.drawPottedPlant(228, 200);
     // Desk lamp glow on the terminal desk.
     this.add.ellipse(195, 150, 30, 16, color(PALETTE.goldStamp), 0.18).setDepth(-7);
+  }
+
+  private drawPottedPlant(x: number, y: number) {
+    // Terracotta pot with a rim, so the foliage reads as a plant rather than a
+    // solid colour blob. Leaves are layered shaded greens with a couple of
+    // highlight fronds instead of one flat bright-green ellipse.
+    this.add.rectangle(x, y + 2, 12, 8, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
+    this.add.rectangle(x, y - 2, 14, 3, color(PALETTE.archiveAmber)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(-6);
+    this.add.rectangle(x, y + 4, 12, 2, color(PALETTE.sepiaInk), 0.4).setDepth(-5);
+    this.add.ellipse(x, y - 10, 16, 14, color(PALETTE.plantLeafDark)).setDepth(-6);
+    this.add.ellipse(x - 4, y - 12, 8, 11, color(PALETTE.plantLeafShade)).setDepth(-5);
+    this.add.ellipse(x + 4, y - 11, 8, 11, color(PALETTE.plantLeafShade)).setDepth(-5);
+    this.add.ellipse(x, y - 14, 7, 10, color(PALETTE.plantLeaf)).setDepth(-4);
+    this.add.ellipse(x - 2, y - 16, 3, 6, color(PALETTE.plantLeaf)).setDepth(-4);
+    this.add.ellipse(x + 3, y - 15, 2, 5, color(PALETTE.openNetGreen)).setDepth(-3);
   }
 
   private drawArchiveBox(x: number, y: number) {

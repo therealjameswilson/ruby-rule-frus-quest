@@ -29,6 +29,7 @@ import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { addNetworkCables, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
@@ -175,6 +176,7 @@ export class NetworkScene extends Phaser.Scene {
       return;
     }
     if (this.choice.active || this.inventory.active || this.reliability.active || this.routingActive) {
+      handleOpenOverlays(this.inventory, this.reliability);
       this.choice.updateInput();
       this.player.update(delta, false);
       return;

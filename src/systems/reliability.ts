@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   gameState,
   getAdventureHudReadout,
@@ -68,17 +68,30 @@ export class ReliabilityHud {
     });
     this.createItemStrip();
 
-    const box = scene.add.rectangle(128, 77, 224, 86, color(PALETTE.black)).setScrollFactor(0);
-    const border = scene.add.rectangle(128, 77, 224, 86).setStrokeStyle(2, color(PALETTE.goldStamp)).setScrollFactor(0);
-    this.detailsText = scene.add.text(23, 42, "", {
+    const dim = scene.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black), 0.62)
+      .setScrollFactor(0);
+    const box = scene.add.rectangle(128, 120, 236, 210, color(PALETTE.black)).setScrollFactor(0);
+    const border = scene.add.rectangle(128, 120, 236, 210).setStrokeStyle(2, color(PALETTE.goldStamp)).setScrollFactor(0);
+    const heading = scene.add.text(128, 22, "RELIABILITY DETAIL", {
       fontFamily: "monospace",
       fontSize: "8px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5, 0).setScrollFactor(0);
+    this.detailsText = scene.add.text(20, 38, "", {
+      fontFamily: "monospace",
+      fontSize: "6px",
       color: PALETTE.creamPaper,
-      wordWrap: { width: 210, useAdvancedWrap: true },
+      wordWrap: { width: 216, useAdvancedWrap: true },
       lineSpacing: 2
     }).setScrollFactor(0);
+    const footer = scene.add.text(128, 214, "R / ESC CLOSE", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5, 0).setScrollFactor(0);
     this.details = scene.add
-      .container(0, 0, [box, border, this.detailsText])
+      .container(0, 0, [dim, box, border, heading, this.detailsText, footer])
       .setDepth(990)
       .setVisible(false)
       .setScrollFactor(0);
@@ -103,6 +116,10 @@ export class ReliabilityHud {
       slot.box.setStrokeStyle(1, color(equipped ? PALETTE.white : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
       slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
     }
+  }
+
+  hideDetails() {
+    this.details.setVisible(false);
   }
 
   toggleDetails() {

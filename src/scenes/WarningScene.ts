@@ -26,7 +26,6 @@ function getIntegerFitScale(width: number, height: number) {
 export class WarningScene extends Phaser.Scene {
   private inputReadyAt = 0;
   private started = false;
-  private prompt?: Phaser.GameObjects.Text;
 
   constructor() {
     super("WarningScene");
@@ -45,19 +44,9 @@ export class WarningScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black));
     this.drawWarningCard();
-    this.prompt = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 14, "PRESS A TO BEGIN", {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5);
-    this.tweens.add({
-      targets: this.prompt,
-      alpha: 0.2,
-      duration: 500,
-      yoyo: true,
-      repeat: -1,
-      ease: "Stepped"
-    });
+    // The warning card art already carries a "PRESS A TO BEGIN" banner. The scene
+    // used to draw a second prompt text on top, which produced the duplicate
+    // prompt reported in QA, so it is no longer drawn here.
     this.cameras.main.fadeIn(600, 0, 0, 0);
     this.time.delayedCall(8000, () => void this.begin(false));
   }
