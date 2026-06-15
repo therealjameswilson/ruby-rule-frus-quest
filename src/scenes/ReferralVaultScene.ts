@@ -33,6 +33,7 @@ import { DialogBox } from "../systems/dialog";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { addDocumentStack, addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
@@ -183,6 +184,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       return;
     }
     if (this.choice.active || this.inventory.active || this.reliability.active) {
+      handleOpenOverlays(this.inventory, this.reliability);
       this.choice.updateInput();
       this.player.update(delta, false);
       return;

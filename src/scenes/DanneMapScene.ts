@@ -40,6 +40,7 @@ import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { transitionTo } from "../systems/sceneTransitions";
 import { saveGameNow } from "../systems/save";
 
@@ -175,7 +176,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (this.inventory.active || this.reliability.active) {
+    if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
       return;
     }

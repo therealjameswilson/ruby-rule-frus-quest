@@ -16,7 +16,7 @@ import {
   getWorkflowToolReadout
 } from "../game/state";
 import type { AdventureSubscreenReadout } from "../game/state";
-import { bindPointerPress, isTouchInputCapable, swallowNextInputFrame, updateInputCallbacks } from "../input/InputState";
+import { bindPointerPress, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
 import { openCodex } from "./codexOverlay";
 
@@ -158,10 +158,8 @@ export class InventoryOverlay {
     this.dannePopover = scene.add.container(0, 0, [popoverBox, this.dannePopoverImage, this.dannePopoverText]).setScrollFactor(0);
     updateInputCallbacks({ handlePauseTouch: (point) => this.handlePauseTouch(point.x, point.y) });
     scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.handleScenePointerDown, this);
-    scene.input.keyboard?.on("keydown-ESC", this.handleEscKey, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       scene.input.off(Phaser.Input.Events.POINTER_DOWN, this.handleScenePointerDown, this);
-      scene.input.keyboard?.off("keydown-ESC", this.handleEscKey, this);
     });
     this.container = scene.add
       .container(0, 0, [
@@ -415,12 +413,6 @@ export class InventoryOverlay {
   private handleScenePointerDown(pointer: Phaser.Input.Pointer) {
     if (!this.active) return;
     this.handlePauseTouch(Math.round(pointer.x), Math.round(pointer.y));
-  }
-
-  private handleEscKey() {
-    if (!this.active) return;
-    this.hide();
-    swallowNextInputFrame();
   }
 
   private renderToolGrid() {
