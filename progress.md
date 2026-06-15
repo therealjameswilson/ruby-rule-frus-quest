@@ -913,3 +913,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - CSS-scaled rect remains 768x720 at 3x shell scale;
   - Office scene renders correctly under the AUTO/WebGL path.
 - Checkpoint screenshot: `docs/screenshots/renderer-auto-smoke.png`.
+
+## 2026-06-15 Office Hub Stray Sprite Fragment Fix
+
+- Root cause: the art-pack `FRAMES.action` map (`interact: 12`, `reading: 13`, `approval: 14`) referenced spritesheet row 3 of the 4x4 32x48 native sheets. Only rows 0-2 (idle 0-3, walk 4-11) hold complete poses on every sheet; row 3 is empty or only stray top-edge pixels on several sheets (notably `sprite_compiler`). Playing those cells rendered a detached ~5px horizontal sliver above the body — the stray fragments on the JR desk and the rug near the player's shadow in Office Hub (JuniorCompiler plays `attack`→`reading`; Player plays `reading`/`interact` on ability/interact frames).
+- Fix: remapped action poses to complete idle frames (`interact: 0`, `reading: 0`, `approval: 1`) in `src/art/character_anims.ts` so every pose is guaranteed to be a full, correctly oriented sprite regardless of sheet. No behavioral regression: action poses already render as static single frames.
+- Regression coverage in `src/art/characterSprites.test.ts`:
+  - asserts action poses are drawn only from row-0 idle frames (never row 3);
+  - decodes every shipped native PNG and verifies each referenced animation frame is a complete body (opaque pixel count and covered height), failing on thin slivers/empty cells. Confirmed the suite fails (8 tests) when action frames are pointed back at row 3.
+- Verified `npm test`: 8 files passed, 46 tests passed.
+- Verified `npm run build`.

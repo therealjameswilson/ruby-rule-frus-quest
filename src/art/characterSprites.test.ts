@@ -1,3 +1,7 @@
+import { readFileSync, readdirSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
+import zlib from "node:zlib";
 import { describe, expect, it } from "vitest";
 import { FRAMES } from "./character_anims";
 import {
@@ -41,13 +45,22 @@ describe("character sprite frame layout", () => {
     }
   });
 
-  it("uses each of the 15 defined frames exactly once with no gaps", () => {
+  it("covers the full idle and walk grid (rows 0-2) with no gaps", () => {
     const indices = [
       ...Object.values(FRAMES.idle),
-      ...Object.values(FRAMES.walk).flat(),
-      ...Object.values(FRAMES.action)
+      ...Object.values(FRAMES.walk).flat()
     ].sort((a, b) => a - b);
-    expect(indices).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14]);
+    expect(indices).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
+  });
+
+  it("draws action poses from complete idle frames, never the unreliable row 3", () => {
+    // Row 3 (cells 12-15) is empty or fragmentary on several native sheets, so
+    // action poses must reuse the always-complete idle frames (rows 0-2). A frame
+    // index >= 12 here would reintroduce the floating-sliver Office Hub defect.
+    for (const index of Object.values(FRAMES.action)) {
+      expect(index).toBeLessThan(COLUMNS); // first row only
+      expect(Object.values(FRAMES.idle)).toContain(index);
+    }
   });
 });
 
@@ -103,4 +116,131 @@ describe("character key selection", () => {
       expect(CHARACTER_KEYS).toContain(getCharacterKeyForProductionColleague(id));
     }
   });
+});
+
+// Decode a PNG to RGBA without any image dependency so the test can inspect the
+// real shipped art and catch frames that are empty or only stray pixels.
+function decodePng(path: string): { width: number; height: number; rgba: Uint8Array } {
+  const data = readFileSync(path);
+  let pos = 8;
+  let width = 0;
+  let height = 0;
+  let colorType = 6;
+  const idat: Buffer[] = [];
+  while (pos < data.length) {
+    const len = data.readUInt32BE(pos);
+    const type = data.toString("ascii", pos + 4, pos + 8);
+    const chunk = data.subarray(pos + 8, pos + 8 + len);
+    pos += 12 + len;
+    if (type === "IHDR") {
+      width = chunk.readUInt32BE(0);
+      height = chunk.readUInt32BE(4);
+      colorType = chunk.readUInt8(9);
+    } else if (type === "IDAT") {
+      idat.push(chunk);
+    } else if (type === "IEND") {
+      break;
+    }
+  }
+  const channels = colorType === 6 ? 4 : colorType === 2 ? 3 : 1;
+  const raw = zlib.inflateSync(Buffer.concat(idat));
+  const stride = width * channels;
+  const out = Buffer.alloc(stride * height);
+  const paeth = (a: number, b: number, c: number) => {
+    const p = a + b - c;
+    const pa = Math.abs(p - a);
+    const pb = Math.abs(p - b);
+    const pc = Math.abs(p - c);
+    return pa <= pb && pa <= pc ? a : pb <= pc ? b : c;
+  };
+  let p = 0;
+  for (let y = 0; y < height; y += 1) {
+    const filter = raw[p];
+    p += 1;
+    for (let i = 0; i < stride; i += 1) {
+      const value = raw[p + i];
+      const a = i >= channels ? out[y * stride + i - channels] : 0;
+      const b = y > 0 ? out[(y - 1) * stride + i] : 0;
+      const c = i >= channels && y > 0 ? out[(y - 1) * stride + i - channels] : 0;
+      let recon = value;
+      if (filter === 1) recon = value + a;
+      else if (filter === 2) recon = value + b;
+      else if (filter === 3) recon = value + ((a + b) >> 1);
+      else if (filter === 4) recon = value + paeth(a, b, c);
+      out[y * stride + i] = recon & 0xff;
+    }
+    p += stride;
+  }
+  // Normalise to RGBA so callers can always read alpha at index +3.
+  if (channels === 4) return { width, height, rgba: new Uint8Array(out) };
+  const rgba = new Uint8Array(width * height * 4);
+  for (let i = 0; i < width * height; i += 1) {
+    const base = i * channels;
+    rgba[i * 4] = out[base];
+    rgba[i * 4 + 1] = out[channels >= 3 ? base + 1 : base];
+    rgba[i * 4 + 2] = out[channels >= 3 ? base + 2 : base];
+    rgba[i * 4 + 3] = 255;
+  }
+  return { width, height, rgba };
+}
+
+function frameBounds(
+  png: { width: number; rgba: Uint8Array },
+  frameIndex: number
+): { opaque: number; minY: number; maxY: number } {
+  const col = frameIndex % COLUMNS;
+  const row = Math.floor(frameIndex / COLUMNS);
+  const x0 = col * CHARACTER_FRAME.width;
+  const y0 = row * CHARACTER_FRAME.height;
+  let opaque = 0;
+  let minY: number = CHARACTER_FRAME.height;
+  let maxY = -1;
+  for (let yy = 0; yy < CHARACTER_FRAME.height; yy += 1) {
+    for (let xx = 0; xx < CHARACTER_FRAME.width; xx += 1) {
+      const idx = ((y0 + yy) * png.width + (x0 + xx)) * 4 + 3;
+      if (png.rgba[idx] > 40) {
+        opaque += 1;
+        if (yy < minY) minY = yy;
+        if (yy > maxY) maxY = yy;
+      }
+    }
+  }
+  return { opaque, minY, maxY };
+}
+
+describe("native sprite sheet frame content", () => {
+  const spriteDir = resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    "../../public/assets/art-pack/sprites/native"
+  );
+  const sheetFiles = readdirSync(spriteDir).filter((file) => file.endsWith(".png"));
+  // Every cell an animation actually plays: idle, walk, and the action poses.
+  const referencedFrames = Array.from(
+    new Set([
+      ...Object.values(FRAMES.idle),
+      ...Object.values(FRAMES.walk).flat(),
+      ...Object.values(FRAMES.action)
+    ])
+  ).sort((a, b) => a - b);
+
+  it("ships one sheet per character key", () => {
+    expect(sheetFiles.length).toBe(CHARACTER_KEYS.length);
+  });
+
+  for (const file of sheetFiles) {
+    it(`renders every referenced frame in ${file} as a complete body, not a fragment`, () => {
+      const png = decodePng(resolve(spriteDir, file));
+      expect(png.width).toBe(SHEET_WIDTH);
+      expect(png.height).toBe(SHEET_HEIGHT);
+      for (const frame of referencedFrames) {
+        const { opaque, minY, maxY } = frameBounds(png, frame);
+        const coveredHeight = maxY - minY + 1;
+        // A real pose fills a substantial, tall region. The Office Hub stray
+        // fragments were ~5px tall strips of a few dozen pixels clinging to the
+        // top edge; require enough body so such slivers can never be played.
+        expect(opaque, `frame ${frame} of ${file} is nearly empty`).toBeGreaterThan(120);
+        expect(coveredHeight, `frame ${frame} of ${file} is a thin sliver`).toBeGreaterThan(20);
+      }
+    });
+  }
 });
