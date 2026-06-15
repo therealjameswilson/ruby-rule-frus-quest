@@ -713,7 +713,11 @@ export class SilentReadScene extends Phaser.Scene {
       }
 
       markDocumentUndisclosedDeletion(documentId, "Red Pencil excision skipped bracketed insertion");
-      const violation = applyStandardsViolation("undisclosed_deletion", "Red Pencil excision skipped the bracketed insertion.");
+      const violation = applyStandardsViolation(
+        "undisclosed_deletion",
+        "Red Pencil excision skipped the bracketed insertion.",
+        documentId
+      );
       this.reliability.update();
       setObjective("Correct the Red Pencil edit with bracketed insertion before publication.");
       this.dialog.show("STANDARD VIOLATION", [

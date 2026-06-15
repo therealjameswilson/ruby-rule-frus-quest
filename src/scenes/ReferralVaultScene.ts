@@ -595,7 +595,11 @@ export class ReferralVaultScene extends Phaser.Scene {
         return;
       }
       markDocumentUndisclosedDeletion("sbu_annotation_001", "unbracketed excision");
-      const violation = applyStandardsViolation("undisclosed_deletion", "Excision skipped the bracketed insertion.");
+      const violation = applyStandardsViolation(
+        "undisclosed_deletion",
+        "Excision skipped the bracketed insertion.",
+        "sbu_annotation_001"
+      );
       this.reliability.update();
       this.dialog.show("STANDARD VIOLATION", [
         violation.label,

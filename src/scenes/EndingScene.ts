@@ -265,6 +265,7 @@ export class EndingScene extends Phaser.Scene {
       readiness.missingStamps.length ? `stamps ${readiness.missingStamps.join(" ")}` : "",
       readiness.missingFragments ? `${readiness.missingFragments} cover pieces` : "",
       readiness.documentsWithUndisclosedDeletion.length ? "bracketed insertion" : "",
+      readiness.standardsViolations.length ? "standards violation" : "",
       readiness.reliabilityReady ? "" : "reliability"
     ].filter(Boolean).join(", ");
     setObjective(`Buckram Gate locked: ${missing || "Buckram Key required"}.`);

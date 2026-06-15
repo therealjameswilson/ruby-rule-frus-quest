@@ -44,6 +44,8 @@ import {
   useSmallKey
 } from "../systems/dungeonKeys";
 import type { DungeonStateRegistry } from "../systems/dungeonKeys";
+import { VIOLATION_LABEL } from "../systems/standardsDamage";
+import type { StandardViolation } from "../systems/standardsDamage";
 import type {
   AdventureHudReadout,
   ChoiceOption,
@@ -88,6 +90,7 @@ export interface GameState {
     clearedBlockers: number;
   };
   dungeons: DungeonStateRegistry;
+  standardsViolations: StandardsViolationRecord[];
   reliability: number;
   heldItem: string | null;
   equippedProcessItem: ProcessItemId | null;
@@ -242,6 +245,16 @@ export interface FinalGateCertificationState {
   message: string;
 }
 
+export interface StandardsViolationRecord {
+  id: string;
+  violation: StandardViolation;
+  label: string;
+  context: string | null;
+  documentId: string | null;
+  unresolved: boolean;
+  count: number;
+}
+
 export interface PublicationReadinessReadout {
   pendants: {
     collected: number;
@@ -255,10 +268,12 @@ export interface PublicationReadinessReadout {
   };
   standards: {
     unresolved: Array<{
-      id: "undisclosed_deletion";
+      id: StandardViolation;
       label: string;
-      documentId: string;
-      title: string;
+      documentId: string | null;
+      title?: string;
+      context?: string | null;
+      count?: number;
     }>;
     clear: boolean;
   };
@@ -345,6 +360,7 @@ export const gameState: GameState = {
     clearedBlockers: 0
   },
   dungeons: createInitialDungeonStates(),
+  standardsViolations: [],
   reliability: 80,
   heldItem: null,
   equippedProcessItem: null,
@@ -401,6 +417,7 @@ export function resetGameState() {
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.documentWorkflowLog = [];
   gameState.dungeons = createInitialDungeonStates();
+  gameState.standardsViolations = [];
   gameState.heldItem = null;
   gameState.equippedProcessItem = null;
   gameState.equippedDanneItem = null;
@@ -510,6 +527,7 @@ export function restoreGameSaveData(save: GameSaveData) {
   gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
+  gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
   syncDungeonBigKeysFromInventory();
   syncDungeonBossesFromProcessStamps();
   resumeSpawn = {
@@ -556,6 +574,76 @@ export function setLatestAbility(message: string) {
 
 export function setAudioStatus(message: string) {
   gameState.audioStatus = message;
+}
+
+function standardsViolationId(violation: StandardViolation, context?: string, documentId?: string) {
+  const scope = documentId ?? (context ? context.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) : "general");
+  return `${violation}:${scope || "general"}`;
+}
+
+function normalizeStandardsViolations(records?: StandardsViolationRecord[]) {
+  if (!Array.isArray(records)) return [];
+  return records
+    .filter((record) => record && typeof record.violation === "string")
+    .map((record) => ({
+      id: record.id || standardsViolationId(record.violation, record.context ?? undefined, record.documentId ?? undefined),
+      violation: record.violation,
+      label: record.label || VIOLATION_LABEL[record.violation],
+      context: record.context ?? null,
+      documentId: record.documentId ?? null,
+      unresolved: record.unresolved !== false,
+      count: Math.max(1, Math.round(record.count ?? 1))
+    }));
+}
+
+export function recordStandardsViolation(violation: StandardViolation, context?: string, documentId?: string) {
+  const id = standardsViolationId(violation, context, documentId);
+  const existing = gameState.standardsViolations.find((record) => record.id === id && record.unresolved);
+  if (existing) {
+    existing.count += 1;
+    existing.context = context ?? existing.context;
+    refreshQuestWorkflowState();
+    return { ...existing };
+  }
+
+  const record: StandardsViolationRecord = {
+    id,
+    violation,
+    label: VIOLATION_LABEL[violation],
+    context: context ?? null,
+    documentId: documentId ?? null,
+    unresolved: true,
+    count: 1
+  };
+  gameState.standardsViolations.push(record);
+  refreshQuestWorkflowState();
+  return { ...record };
+}
+
+export function resolveStandardsViolation(id: string) {
+  const record = gameState.standardsViolations.find((candidate) => candidate.id === id);
+  if (!record || !record.unresolved) return false;
+  record.unresolved = false;
+  refreshQuestWorkflowState();
+  return true;
+}
+
+export function resolveStandardsViolationForDocument(documentId: string, violation: StandardViolation) {
+  let resolved = 0;
+  for (const record of gameState.standardsViolations) {
+    if (record.documentId === documentId && record.violation === violation && record.unresolved) {
+      record.unresolved = false;
+      resolved += 1;
+    }
+  }
+  if (resolved > 0) refreshQuestWorkflowState();
+  return resolved;
+}
+
+export function unresolvedStandardsViolations() {
+  return gameState.standardsViolations
+    .filter((record) => record.unresolved)
+    .map((record) => ({ ...record }));
 }
 
 export function setPhysicalVerificationState(state: PhysicalVerificationState | null) {
@@ -920,12 +1008,17 @@ export function getFinalGateReadiness() {
   const documentsWithUndisclosedDeletion = gameState.documentCandidates
     .filter((document) => document.undisclosedDeletion)
     .map((document) => ({ id: document.id, title: document.title }));
+  const standardsViolations = unresolvedStandardsViolations();
   const fragmentsNeeded = 5;
   const reliabilityMinimum = 70;
   const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
   const reliabilityReady = gameState.reliability >= reliabilityMinimum;
   const buckramKeyHeld = hasProcessItem("buckram_key");
-  const ready = missingStamps.length === 0 && missingFragments === 0 && reliabilityReady && documentsWithUndisclosedDeletion.length === 0;
+  const ready = missingStamps.length === 0
+    && missingFragments === 0
+    && reliabilityReady
+    && documentsWithUndisclosedDeletion.length === 0
+    && standardsViolations.length === 0;
   return {
     requiredStamps,
     missingStamps,
@@ -938,6 +1031,7 @@ export function getFinalGateReadiness() {
     buckramKeyHeld,
     buckramGateOpen: ready && buckramKeyHeld,
     documentsWithUndisclosedDeletion,
+    standardsViolations,
     stateChatMayOpenGate: false,
     ready
   };
@@ -945,12 +1039,23 @@ export function getFinalGateReadiness() {
 
 export function getPublicationReadinessReadout(): PublicationReadinessReadout {
   const readiness = getFinalGateReadiness();
-  const unresolved = readiness.documentsWithUndisclosedDeletion.map((document) => ({
+  const deletionBlockers = readiness.documentsWithUndisclosedDeletion.map((document) => ({
     id: "undisclosed_deletion" as const,
     label: `${document.title}: add visible bracketed insertion`,
     documentId: document.id,
     title: document.title
   }));
+  const ledgerBlockers = readiness.standardsViolations.map((record) => ({
+    id: record.violation,
+    label: record.context ? `${record.label} ${record.context}` : record.label,
+    documentId: record.documentId,
+    context: record.context,
+    count: record.count
+  }));
+  const unresolved = [...deletionBlockers, ...ledgerBlockers]
+    .filter((entry, index, entries) => entries.findIndex((candidate) => (
+      candidate.id === entry.id && candidate.documentId === entry.documentId && candidate.label === entry.label
+    )) === index);
   const missingSummary = [
     ...readiness.missingStamps.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
     ...(readiness.missingFragments ? [`${readiness.missingFragments} crystal${readiness.missingFragments === 1 ? "" : "s"}`] : []),
@@ -1112,6 +1217,7 @@ export function clearDocumentUndisclosedDeletion(documentId: string, reason = "b
     ...cloneDocumentCandidate(document),
     undisclosedDeletion: false
   }), reason);
+  if (changed) resolveStandardsViolationForDocument(documentId, "undisclosed_deletion");
   return changed ? !changed.undisclosedDeletion : false;
 }
 
@@ -1737,6 +1843,7 @@ export function renderGameToText() {
       },
       finalGate: getFinalGateReadiness(),
       publicationReadiness: getPublicationReadinessReadout(),
+      standardsViolations: unresolvedStandardsViolations(),
       productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,
       latestAbility: gameState.latestAbility,

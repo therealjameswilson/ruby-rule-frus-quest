@@ -12,6 +12,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Wired the Senate Hearing Chamber witness table to `ChoicePrompt`; Treaty Fragment II now requires answering the HAC process review instead of being granted by a single dialog.
   - Wrong hearing posture costs a small reliability correction and retries; completion is persisted in `sceneProgress.senateHacReviewComplete`.
   - The FRUS Production Board now treats the completed Senate HAC hearing as its own advisory-monitoring completion signal, separate from the Silent Read SOP stamp.
+- Standards-violation ledger (2026-06-15):
+  - Added persistent unresolved Kellogg-standard blockers for concealed policy defects, omitted material facts, altered text, missed 30-year deadline damage, and document-level undisclosed deletions.
+  - Final Gate and `render_game_to_text()` now expose those blockers, so DANN-E shortcuts and wrong-network/referral choices cannot hide behind a simple reliability number.
+  - Bracketed insertion repairs in Silent Read / Referral Vault clear the corresponding document-level standards blocker before publication.
 
 - Post-PR27 live-QA fixes — ESC overlay close + interact feedback that the cloud browser swallowed (2026-06-15):
   - Two FAILs remained after PR #27: (1) pressing interact away from a target never visibly showed `STEP CLOSER`/`NOTHING TO INTERACT WITH`, and (2) ESC would not close the M inventory or Tab codex (their M/Tab toggles still worked). Both trace to the same root cause class PR27 fixed for *movement*, but for the discrete action/cancel keys, plus a stuck ESC-suppression latch.
