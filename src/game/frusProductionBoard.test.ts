@@ -96,19 +96,28 @@ describe("FRUS production board", () => {
       documentPoints: 6
     }));
     const selectedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
-    selectedDocuments[1] = {
-      ...selectedDocuments[1],
-      selected: true,
-      workflowState: "selected"
-    };
-    const selectedReadout = getFrusProductionBoardReadout(context({
+    selectedDocuments[1] = { ...selectedDocuments[1], selected: true, workflowState: "selected" };
+    const partialSelection = getFrusProductionBoardReadout(context({
       processStamps: ["rule"],
       documentPoints: 20,
       documentCandidates: selectedDocuments
     }));
+    const balancedDocuments = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    for (const id of ["telegram_001", "source_note_047", "sbu_annotation_001", "proof_page_412"]) {
+      const index = balancedDocuments.findIndex((document) => document.id === id);
+      balancedDocuments[index] = { ...balancedDocuments[index], selected: true, workflowState: "selected" };
+    }
+    const selectedReadout = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      documentPoints: 20,
+      documentCandidates: balancedDocuments
+    }));
 
     expect(charterOnly.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
     expect(charterOnly.steps.find((step) => step.id === "research_selection")?.complete).toBe(false);
+    expect(partialSelection.researchCoverage.complete).toBe(false);
+    expect(partialSelection.steps.find((step) => step.id === "research_selection")?.complete).toBe(false);
+    expect(selectedReadout.researchCoverage.complete).toBe(true);
     expect(selectedReadout.steps.find((step) => step.id === "research_selection")?.complete).toBe(true);
   });
 

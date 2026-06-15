@@ -19,6 +19,7 @@ import {
   DOCUMENT_SELECTION_PROMPT,
   evaluateDocumentSelectionAnswer
 } from "../game/documentSelection";
+import { getResearchCoverageReadout } from "../game/researchCoverage";
 import {
   evaluateResearchCharterAnswer,
   getResearchCharterPrompt,
@@ -465,6 +466,7 @@ export class OfficeScene extends Phaser.Scene {
         setDocumentWorkflowState(documentId, "selected", "candidate selected for balanced FRUS volume");
       }
       addDocumentPoints(result.documentPoints, "balanced FRUS candidate set selected");
+      const coverage = getResearchCoverageReadout(gameState.documentCandidates);
       retroAudio.confirm();
       setObjective("Candidate set selected. Enter the Archive Guide to verify source notes.");
       setLatestMessage("Balanced FRUS candidate set selected: hard evidence stays in the volume.");
@@ -472,6 +474,7 @@ export class OfficeScene extends Phaser.Scene {
       this.dialog.show("CANDIDATE SELECTION", [
         result.message,
         `Selected ${result.selectedDocumentIds.length} records for source-note and review work.`,
+        coverage.summary,
         "Now move to the Archive Guide for provenance verification."
       ]);
     });
@@ -484,6 +487,7 @@ export class OfficeScene extends Phaser.Scene {
       board.steps.slice(0, 4).map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`).join("\n"),
       board.steps.slice(4).map((step) => `${step.complete ? "OK" : step.status === "active" ? "GO" : "--"} ${step.shortLabel}: ${step.label}`).join("\n")
     ];
+    const coveragePage = `COVERAGE: ${board.researchCoverage.completed}/${board.researchCoverage.total}\n${board.researchCoverage.summary}`;
     retroAudio.confirm();
     setLatestMessage(next ? `Production board next: ${next.label}.` : "Production board complete.");
     this.dialog.show("FRUS BOARD", [
@@ -494,6 +498,7 @@ export class OfficeScene extends Phaser.Scene {
       next
         ? `WHY: ${next.sourceBasis}`
         : "The volume is ready only if the record remains complete and standards-clean.",
+      coveragePage,
       ...statusPages
     ]);
   }

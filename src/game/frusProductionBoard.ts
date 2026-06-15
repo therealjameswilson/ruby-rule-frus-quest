@@ -1,6 +1,7 @@
 import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
+import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 
 export type FrusProductionBoardStepId =
   | "records_access"
@@ -47,6 +48,7 @@ export interface FrusProductionBoardReadout {
   nextStep: FrusProductionBoardStepReadout | null;
   steps: FrusProductionBoardStepReadout[];
   sourceUrls: string[];
+  researchCoverage: ResearchCoverageReadout;
 }
 
 const ABOUT_FRUS_URL = "https://history.state.gov/historicaldocuments/about-frus";
@@ -65,9 +67,9 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     id: "research_selection",
     label: "Research and selection",
     shortLabel: "SEL",
-    sourceBasis: "OH historians plan scope, research, compile, and edit individual volumes.",
+    sourceBasis: "OH historians research across White House, NSC, State, Defense, CIA, other agency, and private-paper records.",
     sourceUrl: ABOUT_FRUS_URL,
-    gameplayTask: "Evaluate document candidates and collect enough document points."
+    gameplayTask: "Select a balanced candidate set that covers the full FRUS research base."
   },
   {
     id: "source_notes",
@@ -168,8 +170,8 @@ export function isFrusProductionBoardStepComplete(
     case "records_access":
       return stamps.has("rule") || volumeAtLeast(context, "research");
     case "research_selection":
-      return (context.documentPoints >= 12 && hasSelectedDocument(context))
-        || hasDocumentAtOrBeyond(context, ["selected", "source_note_needed", "citation_verified"])
+      return (context.documentPoints >= 12 && hasSelectedDocument(context) && researchCoverageComplete(context.documentCandidates))
+        || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified"])
         || volumeAtLeast(context, "candidate_selection");
     case "source_notes":
       return stamps.has("archive")
@@ -201,6 +203,7 @@ export function isFrusProductionBoardStepComplete(
 }
 
 export function getFrusProductionBoardReadout(context: FrusProductionBoardContext): FrusProductionBoardReadout {
+  const researchCoverage = getResearchCoverageReadout(context.documentCandidates);
   let foundActive = false;
   const steps = FRUS_PRODUCTION_BOARD_STEPS.map((step) => {
     const complete = isFrusProductionBoardStepComplete(step.id, context);
@@ -219,6 +222,7 @@ export function getFrusProductionBoardReadout(context: FrusProductionBoardContex
     total: steps.length,
     nextStep: steps.find((step) => step.status === "active") ?? null,
     steps,
-    sourceUrls: [...new Set(steps.map((step) => step.sourceUrl))]
+    sourceUrls: [...new Set([...steps.map((step) => step.sourceUrl), researchCoverage.sourceUrl])],
+    researchCoverage
   };
 }

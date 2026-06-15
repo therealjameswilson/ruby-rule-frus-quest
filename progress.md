@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- FRUS research repository coverage gate (2026-06-15):
+  - Added `src/game/researchCoverage.ts`, a Phaser-free rule module that maps selected document candidates to the research base named on history.state.gov: White House/NSC records, State records, Defense records, CIA records, other foreign-affairs agency records, and private papers of policymakers.
+  - The FRUS Production Board now exposes `researchCoverage` through `render_game_to_text()` and only lets a selected-document set complete `research_selection` when coverage is 6/6; a single selected document no longer satisfies the board by itself.
+  - The Office `Scope / Selection Desk` now reports repository coverage in the candidate-selection completion dialog, and the Production Board dialog includes a compact `COVERAGE: x/6` page with missing lanes.
+  - Added deterministic tests in `src/game/researchCoverage.test.ts` plus board-regression coverage for partial vs. balanced selections.
+  - Verified focused tests: `npm test -- src/game/researchCoverage.test.ts src/game/frusProductionBoard.test.ts src/game/documentSelection.test.ts` (3 files / 16 tests pass).
+  - Verified full `npm test`: 24 files / 133 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=OfficeScene&role=compiler&name=Ruby` reports initial repository coverage `0/6`, all six lanes missing, and the source URL in `productionBoard.researchCoverage`; the headless WebGL screenshot remains black as previously documented.
+  - Supplemental paced Playwright smoke completed the Office flow and confirmed balanced candidate selection yields `researchCoverage.complete: true`, `completed: 6`, selected four documents, and marks the Production Board `research_selection` step complete. Screenshot: `docs/screenshots/research-coverage-office-smoke.png`.
 - Balanced FRUS document candidate selection gate (2026-06-15):
   - Added `src/game/documentSelection.ts`, a source-backed candidate-selection rule for the history.state.gov FRUS standard that a volume must be thorough, accurate, reliable, and must not omit major facts or conceal policy defects.
   - The Office Hub `Scope / Selection Desk` now runs as a two-step production gate: first file the Scope Charter, then return to select a balanced candidate set. Easy-record shortcuts debit reliability via the standards ledger (`omitted_material_fact` or `concealed_policy_defect`), while the correct balanced set selects `telegram_001`, `source_note_047`, `sbu_annotation_001`, and `proof_page_412`.
