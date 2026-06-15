@@ -88,6 +88,11 @@ describe("standards violation ledger", () => {
 
     addVolumeFragment("Source Note Fragment");
 
+    expect(getFinalGateReadiness().publicationApparatus.complete).toBe(false);
+    expect(getPublicationReadinessReadout().missingSummary).toContain("Apparatus IDX");
+
+    gameState.sceneProgress.typesetterProofComplete = 1;
+
     expect(getFinalGateReadiness().publicationApparatus.complete).toBe(true);
   });
 });

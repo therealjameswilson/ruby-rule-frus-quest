@@ -14,6 +14,7 @@ export interface PublicationApparatusContext {
   volumeFragments: readonly string[];
   documentCandidates: readonly DocumentCandidate[];
   documentPoints: number;
+  typesetterProofComplete: boolean;
 }
 
 export interface PublicationApparatusComponent {
@@ -73,7 +74,7 @@ const APPARATUS_COMPONENTS = [
     label: "Index and typeset proof check",
     shortLabel: "IDX",
     sourceBasis: "After typesetting, pages are checked against originals and an index is added.",
-    requirement: "Complete proofing and recover the Proof Fragment."
+    requirement: "Complete proofing, run the typesetter proof, and recover the Proof Fragment."
   }
 ] as const satisfies ReadonlyArray<Omit<PublicationApparatusComponent, "complete">>;
 
@@ -102,7 +103,7 @@ function componentComplete(component: PublicationApparatusComponentId, context: 
     case "declassification_accounting":
       return stamps.has("referral") && fragments.has("Referral Fragment") && !hasUndisclosedDeletion(context);
     case "index_typeset_check":
-      return stamps.has("proof") && fragments.has("Proof Fragment");
+      return stamps.has("proof") && fragments.has("Proof Fragment") && context.typesetterProofComplete;
   }
 }
 

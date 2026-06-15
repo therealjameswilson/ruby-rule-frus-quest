@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Typesetter proof and final text check (2026-06-15):
+  - Added `src/game/typesetterProof.ts`, a Phaser-free proofing rule module based on the history.state.gov FRUS creation stages: cleared text is prepared for typesetting, document notes must correctly render classification/drafting/date information, and typeset pages are compared to originals with remaining textual issues flagged for consultation.
+  - The Silent Read Tower no longer awards the Buckram Key immediately after every physical evidence flag is stamped. It now opens a three-prompt TypeSetter Proof sequence; wrong shortcuts apply standards damage, while correct answers file `sceneProgress.typesetterProofComplete`, proof the core documents, add document points, and only then issue the Buckram Key.
+  - Strengthened `publicationApparatus.index_typeset_check` so the final assembly gate requires the actual typesetter proof pass in addition to the Proof Fragment and proof stamp. The final readiness readout now reports `Apparatus IDX` until that pass is filed.
+  - Verified focused tests: `npm test -- src/game/typesetterProof.test.ts src/game/publicationApparatus.test.ts src/game/standardsViolations.test.ts` (3 files / 13 tests pass).
 - Manuscript review production gate (2026-06-15):
   - Added `src/game/manuscriptReview.ts`, a Phaser-free rule module based on the history.state.gov FRUS creation stages: manuscript review checks completeness, cohesion, concision, content appropriateness, and annotation accuracy, then proceeds through first-pass recommendations and a General Editor / series assessment.
   - Inserted a first-class `manuscript_review` step into `src/game/frusProductionBoard.ts` between source notes and declassification review, so the board no longer jumps straight from provenance to clearance routing.

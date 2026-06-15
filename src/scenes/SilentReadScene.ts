@@ -43,6 +43,12 @@ import {
   evaluateAiAnnotationReviewAnswer,
   getAiAnnotationReviewPrompt
 } from "../game/aiAnnotationReview";
+import {
+  evaluateTypesetterProofAnswer,
+  getTypesetterProofPrompt,
+  typesetterProofComplete,
+  TYPESETTER_PROOF_PROMPTS
+} from "../game/typesetterProof";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -418,8 +424,10 @@ export class SilentReadScene extends Phaser.Scene {
     if (hasProcessItem("buckram_key")) {
       this.track(this.add.image(128, 126, "buckram-key").setDepth(250));
       setObjective("Silent Read Tower: exit east with Buckram Key.");
+    } else if (gameState.sceneProgress.typesetterProofComplete) {
+      setObjective("Silent Read Tower: take the Buckram Key after proofing.");
     } else {
-      setObjective("Silent Read Tower: carry next evidence flag.");
+      setObjective("Silent Read Tower: carry flags, then run typesetter proof.");
     }
   }
 
@@ -796,21 +804,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.updateProofMinimap();
     const nextFlag = this.getActiveFlag();
     if (!nextFlag) {
-      setDocumentWorkflowState("telegram_001", "proofed");
-      setDocumentWorkflowState("source_note_047", "proofed");
-      setDocumentWorkflowState("cross_reference_001", "proofed");
-      setDocumentWorkflowState("sbu_annotation_001", "proofed");
-      addProcessItem("buckram_key");
-      setObjective("Silent Read Tower: exit east with Buckram Key.");
-      setLatestMessage("Buckram Key opens the final publication gate.");
-      this.track(this.add.image(this.outbox.x, this.outbox.y - 24, "buckram-key").setDepth(250));
-      this.actionHint.setText("DONE: all flags verified. Exit east.");
-      this.reliability.update();
-      this.dialog.show(gameState.playerProfile.displayName.toUpperCase(), [
-        "Every evidence-bound flag became a physical object.",
-        "Mechanical fixes proposed; human workstations verified.",
-        "Take the Buckram Key east to certify the ruby volume."
-      ]);
+      this.showTypesetterProofChoice();
       return;
     }
 
@@ -831,6 +825,77 @@ export class SilentReadScene extends Phaser.Scene {
     nextFlag.icon?.setPosition(nextFlag.x, nextFlag.y).setVisible(true);
     nextFlag.labelText?.setPosition(nextFlag.x, nextFlag.y + 14).setVisible(true);
     setObjective(`Silent Read Tower: carry ${nextFlag.shortLabel} from the review outbox.`);
+  }
+
+  private showTypesetterProofChoice() {
+    if (gameState.sceneProgress.typesetterProofComplete) {
+      this.awardBuckramKeyAfterTypesetterProof();
+      return;
+    }
+    const step = gameState.sceneProgress.typesetterProofStep ?? 0;
+    const prompt = getTypesetterProofPrompt(step);
+    setObjective(`Typesetter Proof: answer ${step + 1}/${TYPESETTER_PROOF_PROMPTS.length}.`);
+    this.actionHint.setText(`TYPESET PROOF ${step + 1}/${TYPESETTER_PROOF_PROMPTS.length}: choose A/B/C.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateTypesetterProofAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Typesetter proof shortcut: ${option.value}`);
+        this.reliability.update();
+        setLatestMessage("TYPESETTER PROOF FAILED - COMPARE TO ORIGINALS");
+        this.dialog.show("TYPESETTER PROOF", [
+          result.message,
+          "The typeset page must match the original record before binding."
+        ], () => this.showTypesetterProofChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.typesetterProofStep = nextStep;
+      if (!typesetterProofComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Typesetter proof check ${nextStep}/${TYPESETTER_PROOF_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("TYPESETTER PROOF", [
+          result.message,
+          "Continue proofing before the Buckram Key is issued."
+        ], () => this.showTypesetterProofChoice());
+        return;
+      }
+
+      gameState.sceneProgress.typesetterProofComplete = 1;
+      gameState.sceneProgress.typesetterProofStep = TYPESETTER_PROOF_PROMPTS.length;
+      addDocumentPoints(12, "typeset pages compared to originals");
+      setDocumentWorkflowState("telegram_001", "proofed");
+      setDocumentWorkflowState("source_note_047", "proofed");
+      setDocumentWorkflowState("cross_reference_001", "proofed");
+      setDocumentWorkflowState("sbu_annotation_001", "proofed");
+      setDocumentWorkflowState("proof_page_412", "proofed");
+      adjustReliability(10, "typesetter proof preserved document metadata");
+      retroAudio.confirm();
+      setLatestMessage("Typesetter proof complete: pages compared to originals.");
+      this.dialog.show("TYPESETTER PROOF", [
+        result.message,
+        "Classification, drafting, dates, and text match the originals.",
+        "Buckram Key issued for final assembly."
+      ], () => this.awardBuckramKeyAfterTypesetterProof());
+    });
+  }
+
+  private awardBuckramKeyAfterTypesetterProof() {
+    if (!hasProcessItem("buckram_key")) {
+      addProcessItem("buckram_key");
+      setLatestMessage("Buckram Key opens the final publication gate.");
+    }
+    setObjective("Silent Read Tower: exit east with Buckram Key.");
+    this.track(this.add.image(this.outbox.x, this.outbox.y - 24, "buckram-key").setDepth(250));
+    this.actionHint.setText("DONE: typesetter proof filed. Exit east.");
+    this.reliability.update();
+    this.syncRoomTraversalState();
+    this.dialog.show(gameState.playerProfile.displayName.toUpperCase(), [
+      "Every evidence-bound flag became a physical object.",
+      "Typeset pages were checked against the originals.",
+      "Take the Buckram Key east to certify the ruby volume."
+    ]);
   }
 
   private checkRoomExit() {

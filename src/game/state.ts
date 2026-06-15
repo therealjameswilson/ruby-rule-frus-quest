@@ -1012,7 +1012,8 @@ export function getFinalGateReadiness() {
     processStamps: gameState.processStamps,
     volumeFragments: gameState.volumeFragments,
     documentCandidates: gameState.documentCandidates,
-    documentPoints: gameState.documentPoints
+    documentPoints: gameState.documentPoints,
+    typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete)
   });
   const documentsWithUndisclosedDeletion = gameState.documentCandidates
     .filter((document) => document.undisclosedDeletion)
@@ -1755,6 +1756,7 @@ export function seedProgressForScene(sceneName: string) {
     awardProcessStamp("proof");
     addProcessItem("proof_lens");
     addProcessItem("buckram_key");
+    gameState.sceneProgress.typesetterProofComplete = 1;
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);
     setDocumentWorkflowState("telegram_001", "proofed");
