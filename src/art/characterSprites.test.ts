@@ -45,21 +45,21 @@ describe("character sprite frame layout", () => {
     }
   });
 
-  it("covers the full idle and walk grid (rows 0-2) with no gaps", () => {
+  it("resolves every direction and action pose to the clean idle-down frame 0", () => {
+    // The native sheets are misassembled: every cell except idle-down (frame 0)
+    // either splits the body with a transparent band (detaching the feet) or
+    // carries stray edge-column pixels. Drawn at origin (0.5, 0.9) those split
+    // cells render a free-floating fragment on the shadow line — the Office Hub
+    // artifact near the Junior Compiler. Frame 0 is the one edge-clean,
+    // gap-closed body on every sheet, so all poses must resolve to it. Any
+    // non-zero index here would reintroduce a detached fragment.
     const indices = [
       ...Object.values(FRAMES.idle),
-      ...Object.values(FRAMES.walk).flat()
-    ].sort((a, b) => a - b);
-    expect(indices).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
-  });
-
-  it("draws action poses from complete idle frames, never the unreliable row 3", () => {
-    // Row 3 (cells 12-15) is empty or fragmentary on several native sheets, so
-    // action poses must reuse the always-complete idle frames (rows 0-2). A frame
-    // index >= 12 here would reintroduce the floating-sliver Office Hub defect.
-    for (const index of Object.values(FRAMES.action)) {
-      expect(index).toBeLessThan(COLUMNS); // first row only
-      expect(Object.values(FRAMES.idle)).toContain(index);
+      ...Object.values(FRAMES.walk).flat(),
+      ...Object.values(FRAMES.action)
+    ];
+    for (const index of indices) {
+      expect(index).toBe(0);
     }
   });
 });
@@ -208,6 +208,37 @@ function frameBounds(
   return { opaque, minY, maxY };
 }
 
+// Largest run of fully-transparent rows sitting *between* two opaque rows of a
+// frame. The misassembled native art splits the body with such a band, and when
+// the lower segment is drawn at origin (0.5, 0.9) it detaches onto the shadow
+// line as the floating Office Hub fragment. A gap > 1 here means the rendered
+// sprite would show a detached piece.
+function largestInteriorRowGap(
+  png: { width: number; rgba: Uint8Array },
+  frameIndex: number
+): number {
+  const col = frameIndex % COLUMNS;
+  const row = Math.floor(frameIndex / COLUMNS);
+  const x0 = col * CHARACTER_FRAME.width;
+  const y0 = row * CHARACTER_FRAME.height;
+  const rowHasBody: number[] = [];
+  for (let yy = 0; yy < CHARACTER_FRAME.height; yy += 1) {
+    let present = false;
+    for (let xx = 0; xx < CHARACTER_FRAME.width; xx += 1) {
+      if (png.rgba[((y0 + yy) * png.width + (x0 + xx)) * 4 + 3] > 40) {
+        present = true;
+        break;
+      }
+    }
+    if (present) rowHasBody.push(yy);
+  }
+  let largest = 0;
+  for (let i = 1; i < rowHasBody.length; i += 1) {
+    largest = Math.max(largest, rowHasBody[i] - rowHasBody[i - 1] - 1);
+  }
+  return largest;
+}
+
 describe("native sprite sheet frame content", () => {
   const spriteDir = resolve(
     dirname(fileURLToPath(import.meta.url)),
@@ -240,6 +271,13 @@ describe("native sprite sheet frame content", () => {
         // top edge; require enough body so such slivers can never be played.
         expect(opaque, `frame ${frame} of ${file} is nearly empty`).toBeGreaterThan(120);
         expect(coveredHeight, `frame ${frame} of ${file} is a thin sliver`).toBeGreaterThan(20);
+        // The body must be one contiguous piece. A transparent band between two
+        // opaque rows detaches the feet onto the shadow line — the exact Office
+        // Hub fragment near the Junior Compiler.
+        expect(
+          largestInteriorRowGap(png, frame),
+          `frame ${frame} of ${file} is split by a transparent band (detached fragment)`
+        ).toBeLessThanOrEqual(1);
       }
     });
   }
