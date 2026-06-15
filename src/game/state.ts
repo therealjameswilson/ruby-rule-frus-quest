@@ -29,6 +29,7 @@ import {
   totalEquities
 } from "./frusProgression";
 import { getFrusProductionBoardReadout } from "./frusProductionBoard";
+import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import {
@@ -1676,6 +1677,19 @@ export function getProductionBoardReadout() {
   });
 }
 
+export function getStatutoryClockStateReadout() {
+  const storedTenths = gameState.sceneProgress.statutoryClockTenths;
+  const elapsedYears = typeof storedTenths === "number" && storedTenths > 0
+    ? storedTenths / 10
+    : STATUTORY_START_YEAR;
+  return getStatutoryClockReadout({
+    elapsedYears,
+    readiness: getPublicationReadinessReadout(),
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    deadlineDamageApplied: Boolean(gameState.sceneProgress.statutoryDeadlineMissed)
+  });
+}
+
 export function seedProgressForScene(sceneName: string) {
   if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     addProcessItem("citation_stamp");
@@ -1843,6 +1857,7 @@ export function renderGameToText() {
       },
       finalGate: getFinalGateReadiness(),
       publicationReadiness: getPublicationReadinessReadout(),
+      statutoryClock: getStatutoryClockStateReadout(),
       standardsViolations: unresolvedStandardsViolations(),
       productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,

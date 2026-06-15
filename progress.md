@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Statutory Clock shared FRUS deadline rule (2026-06-15):
+  - Added `src/game/statutoryClock.ts`, a Phaser-free rules module for the FRUS 30-year publication mandate from `https://history.state.gov/historicaldocuments/about-frus`.
+  - The DANN-E boss fight now uses the shared clock helper for completion pressure, at-risk/deadline-missed status, and the concealed-policy-defect shortcut mapping instead of keeping local clock math inside the entity class.
+  - `render_game_to_text()` now includes `statutoryClock` with source basis, years elapsed/remaining, status, missing publication gates, and shortcut violation state, so QA and assistive play can see the same deadline pressure as the boss UI.
+  - The Buckram Gate checklist now includes a compact `CLOCK` row, keeping the final publication room tied to the 30-year statutory line without letting StateChat certify the gate.
+  - Verified `npm test`: 21 files / 118 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game smoke at `?scene=EndingScene&role=compiler&name=Ruby` produced `render_game_to_text().statutoryClock.status === "buckram_gate_open"` and label `Buckram Gate open at 28.5 / 30 years`; the generated headless WebGL screenshot remains all black as previously documented.
 - AI annotation review SOP gate (2026-06-15):
   - Added `src/game/aiAnnotationReview.ts`, a tested three-question terminal-only SOP sequence: AI/StateChat can propose mechanical fixes, evidence-bound flags must become physical review objects, and humans own final sign-off.
   - Wired `SilentReadScene` so the physical review-folder loop no longer starts immediately after Priya's intro; it first opens the AI Annotation Review ChoicePrompt and persists completion in `sceneProgress.aiAnnotationReviewComplete`.

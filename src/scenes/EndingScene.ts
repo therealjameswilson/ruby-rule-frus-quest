@@ -5,6 +5,7 @@ import {
   addProcessItem,
   gameState,
   getFinalGateReadiness,
+  getStatutoryClockStateReadout,
   hasProcessItem,
   publishDocument,
   setFinalGateCertificationState,
@@ -173,13 +174,15 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private drawFinalChecklist(readiness: ReturnType<typeof getFinalGateReadiness>) {
+    const clock = getStatutoryClockStateReadout();
     const lines = [
       `STAMPS ${readiness.missingStamps.length ? "WAIT" : "OK"}`,
       `FRAG ${readiness.fragmentsCollected}/${readiness.fragmentsNeeded}`,
       `REL ${readiness.reliability}/${readiness.reliabilityMinimum}`,
-      `KEY ${hasProcessItem("buckram_key") ? "OK" : "--"}`
+      `KEY ${hasProcessItem("buckram_key") ? "OK" : "--"}`,
+      `CLOCK ${clock.status === "published" || clock.status === "buckram_gate_open" ? "OK" : clock.status === "deadline_missed" ? "MISS" : clock.elapsedYears.toFixed(1)}`
     ];
-    this.add.rectangle(44, 181, 68, 38, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(156);
+    this.add.rectangle(44, 185, 68, 46, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(156);
     this.add.text(14, 166, "STATECHAT\nCHECKLIST", {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -190,7 +193,7 @@ export class EndingScene extends Phaser.Scene {
       this.add.text(14, 184 + index * 7, line, {
         fontFamily: "monospace",
         fontSize: "6px",
-        color: line.includes("WAIT") || line.includes("--") ? PALETTE.classNetRed : PALETTE.creamPaper
+        color: line.includes("WAIT") || line.includes("--") || line.includes("MISS") ? PALETTE.classNetRed : PALETTE.creamPaper
       }).setDepth(157);
     });
 
