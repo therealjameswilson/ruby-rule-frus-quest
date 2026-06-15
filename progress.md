@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- ClassNet declassification review gate (2026-06-15):
+  - Added `src/game/declassificationReview.ts`, a tested three-question Clearance Token review that makes classified-equity routing depend on human agency review, the ClassNet channel, and a documented decision trail.
+  - Wired `NetworkScene` so the ClassNet Vault pedestal no longer grants the Clearance Token as a flat pickup: if `sceneProgress.declassificationReviewComplete` is not set, pressing interact starts the review ChoicePrompt; wrong StateChat/shortcut answers cost reliability, and the final correct answer logs the human decision trail before collecting the token.
+  - This keeps StateChat terminal-only and reinforces the real FRUS declassification split: StateChat may flag mechanics, but classified equities require human review and visible decisions.
+  - Verified `npm test`: 19 files / 109 tests pass; `npm run build` passes with the existing Vite chunk-size warning only; required web-game smoke reached `NetworkScene` with `volumeWorkflowState: "declassification_review"` (headless WebGL screenshot remains black as previously documented).
 - Archive source-note provenance challenge (2026-06-15):
   - Added `src/game/sourceNoteProvenance.ts`, a tested three-step Source Note 47 verification sequence that makes the player match repository, collection, and folder evidence before human citation stamping.
   - Wired `ArchiveScene` so the existing CARRY -> ROUTE -> VERIFY -> STAMP loop now pauses on a ChoicePrompt during VERIFY; wrong provenance shortcuts debit reliability and show `PROVENANCE CANNOT BE GUESSED`, while the final correct answer marks `source_note_047` as `citation_verified`.

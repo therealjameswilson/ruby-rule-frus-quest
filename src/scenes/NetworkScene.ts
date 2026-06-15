@@ -34,6 +34,12 @@ import { addNetworkCables, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
+import {
+  declassificationReviewComplete,
+  DECLASSIFICATION_REVIEW_PROMPTS,
+  evaluateDeclassificationReviewAnswer,
+  getDeclassificationReviewPrompt
+} from "../game/declassificationReview";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -389,14 +395,65 @@ export class NetworkScene extends Phaser.Scene {
       return false;
     }
     setNearestInteractable("Clearance Token");
-    this.routeText.setText("CLEARANCE TOKEN\nPRESS SPACE");
+    this.routeText.setText(gameState.sceneProgress.declassificationReviewComplete
+      ? "CLEARANCE TOKEN\nPRESS SPACE"
+      : "CLEARANCE REVIEW\nPRESS SPACE");
     if (!input.aJustPressed) return false;
-    this.collectClearanceToken();
+    if (gameState.sceneProgress.declassificationReviewComplete) this.collectClearanceToken();
+    else this.showDeclassificationReviewChoice();
     return true;
+  }
+
+  private showDeclassificationReviewChoice() {
+    if (gameState.sceneProgress.declassificationReviewComplete) {
+      this.collectClearanceToken();
+      return;
+    }
+
+    const step = gameState.sceneProgress.declassificationReviewStep ?? 0;
+    const prompt = getDeclassificationReviewPrompt(step);
+    setObjective(`ClassNet review: answer ${step + 1}/${DECLASSIFICATION_REVIEW_PROMPTS.length}.`);
+    this.routeText.setText(`CLASSNET REVIEW\n${step + 1}/${DECLASSIFICATION_REVIEW_PROMPTS.length}`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateDeclassificationReviewAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        adjustReliability(-3, "declassification review correction");
+        setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
+        this.reliability.update();
+        this.dialog.show("CLASSNET REVIEW", [
+          result.message,
+          "Classified equities need a documented human review before the token moves."
+        ], () => this.showDeclassificationReviewChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.declassificationReviewStep = nextStep;
+      if (!declassificationReviewComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`ClassNet review check ${nextStep}/${DECLASSIFICATION_REVIEW_PROMPTS.length}.`);
+        this.dialog.show("CLASSNET REVIEW", [
+          result.message,
+          "Continue the clearance review before taking the token."
+        ], () => this.showDeclassificationReviewChoice());
+        return;
+      }
+
+      gameState.sceneProgress.declassificationReviewComplete = 1;
+      retroAudio.confirm();
+      setLatestMessage("ClassNet declassification review documented.");
+      this.dialog.show("CLASSNET REVIEW", [
+        result.message,
+        "The human decision trail is logged.",
+        "Take the Clearance Token from the pedestal."
+      ], () => this.collectClearanceToken());
+    });
   }
 
   private collectClearanceToken() {
     if (this.clearanceTokenCollected) return;
+    gameState.sceneProgress.declassificationReviewComplete = 1;
     this.clearanceTokenCollected = true;
     addProcessItem("clearance_token");
     setLatestMessage("Clearance Token opens red vault doors.");
