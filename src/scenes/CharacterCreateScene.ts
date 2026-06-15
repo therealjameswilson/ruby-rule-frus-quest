@@ -31,6 +31,11 @@ export class CharacterCreateScene extends Phaser.Scene {
 
   create() {
     setSceneState("CharacterCreateScene", "choice", "Craft your FRUS production character.");
+    this.roleIndex = 0;
+    this.displayName = "";
+    this.locked = false;
+    this.nameFocused = false;
+    this.cards = [];
     retroAudio.startMusic("CharacterCreateScene");
     setVisibleEntities(PROCESS_ROLES.map((role) => role.label));
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);

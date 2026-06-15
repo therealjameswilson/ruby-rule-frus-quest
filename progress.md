@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Scene re-entry bug pass:
+  - `WorldMapScene` now resets `numberKeysInstalled` on `SHUTDOWN` so the region `1`-`5` shortcuts keep working after returning from a gameplay map (previously they broke permanently on the first revisit because the keydown handler was removed but the install flag was never cleared)
+  - `CharacterCreateScene.create()` now resets `roleIndex`, `displayName`, `locked`, `nameFocused`, and the `cards` array; re-entering after any ending returned the reused scene instance with `locked === true` (soft-locking confirm) and stacked duplicate role cards
+  - verified `npm test`: 6 files passed, 19 tests passed; `npm run build` passes with the pre-existing Vite chunk-size warning only
+
 - Gameplay smoothing/input pass:
   - wired `CharacterCreateScene.confirm()` to the shared confirm edge and guarded it with the existing `locked` flag
   - role cards now support first-click select and second-click/tap confirm, with a visible `PRESS ENTER / TAP AGAIN TO BEGIN` prompt
