@@ -306,6 +306,11 @@ export interface PublicationReadinessReadout {
     required: number;
     missing: ProcessStampId[];
   };
+  processStamps: {
+    collected: number;
+    required: number;
+    missing: ProcessStampId[];
+  };
   coverFragments: {
     collected: number;
     required: number;
@@ -1155,6 +1160,11 @@ export function getFinalGateReadiness() {
 
 export function getPublicationReadinessReadout(): PublicationReadinessReadout {
   const readiness = getFinalGateReadiness();
+  const requiredPendantStamps: ProcessStampId[] = PENDANTS.map((pendant) => pendant.stampId);
+  const requiredPendantStampSet = new Set<ProcessStampId>(requiredPendantStamps);
+  const missingPendants = requiredPendantStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const missingProcessStamps = readiness.missingStamps
+    .filter((stamp) => !requiredPendantStampSet.has(stamp));
   const deletionBlockers = readiness.documentsWithUndisclosedDeletion.map((document) => ({
     id: "undisclosed_deletion" as const,
     label: `${document.title}: add visible bracketed insertion`,
@@ -1173,7 +1183,8 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
       candidate.id === entry.id && candidate.documentId === entry.documentId && candidate.label === entry.label
     )) === index);
   const missingSummary = [
-    ...readiness.missingStamps.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
+    ...missingPendants.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
+    ...missingProcessStamps.map((stamp) => `Process ${stamp.toUpperCase()}`),
     ...(readiness.missingEquityCrystals
       ? [`${readiness.missingEquityCrystals} equity crystal${readiness.missingEquityCrystals === 1 ? "" : "s"}`]
       : readiness.equityCrystalsRequired > 0 ? [] : ["Equity crystals"]),
@@ -1183,8 +1194,9 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
     ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
     ...unresolved.map((standard) => standard.label)
   ];
-  const requiredUnits = readiness.requiredStamps.length + Math.max(1, readiness.equityCrystalsRequired) + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 2;
-  const collectedUnits = (readiness.requiredStamps.length - readiness.missingStamps.length)
+  const requiredUnits = requiredPendantStamps.length + readiness.requiredStamps.length + Math.max(1, readiness.equityCrystalsRequired) + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 2;
+  const collectedUnits = (requiredPendantStamps.length - missingPendants.length)
+    + (readiness.requiredStamps.length - readiness.missingStamps.length)
     + Math.min(readiness.equityCrystalsCollected, Math.max(1, readiness.equityCrystalsRequired))
     + Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded)
     + (readiness.repositoryCoverageMapReady ? 1 : 0)
@@ -1197,6 +1209,11 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
       label: "Repository coverage map"
     },
     pendants: {
+      collected: requiredPendantStamps.length - missingPendants.length,
+      required: requiredPendantStamps.length,
+      missing: missingPendants
+    },
+    processStamps: {
       collected: readiness.requiredStamps.length - readiness.missingStamps.length,
       required: readiness.requiredStamps.length,
       missing: [...readiness.missingStamps]
@@ -1217,7 +1234,7 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
     },
     apparatus: readiness.publicationApparatus,
     buckramKeyHeld: readiness.buckramKeyHeld,
-    buckramGateOpen: readiness.buckramGateOpen && unresolved.length === 0,
+    buckramGateOpen: readiness.buckramGateOpen && missingPendants.length === 0 && unresolved.length === 0,
     completionRatio: Math.max(0, Math.min(1, collectedUnits / Math.max(1, requiredUnits))),
     missingSummary
   };

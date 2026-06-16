@@ -117,6 +117,37 @@ describe("final publication certification", () => {
     expect(readiness.buckramGateOpen).toBe(false);
   });
 
+  it("reports the three research pendants separately from final process stamps", () => {
+    resetGameState();
+    completeProductionState();
+    gameState.processStamps = ["rule", "archive", "sop"];
+
+    const readiness = getPublicationReadinessReadout();
+
+    expect(readiness.pendants).toMatchObject({ collected: 3, required: 3, missing: [] });
+    expect(readiness.processStamps).toMatchObject({
+      collected: 2,
+      required: 5,
+      missing: ["network", "referral", "proof"]
+    });
+    expect(readiness.missingSummary).toContain("Process NETWORK");
+    expect(readiness.missingSummary).not.toContain("Pendant NETWORK");
+    expect(readiness.buckramGateOpen).toBe(false);
+  });
+
+  it("keeps the Buckram Gate closed when the SOP pendant is missing", () => {
+    resetGameState();
+    completeProductionState();
+    gameState.processStamps = gameState.processStamps.filter((stamp) => stamp !== "sop");
+
+    const readiness = getPublicationReadinessReadout();
+
+    expect(readiness.pendants).toMatchObject({ collected: 2, required: 3, missing: ["sop"] });
+    expect(readiness.processStamps).toMatchObject({ collected: 5, required: 5, missing: [] });
+    expect(readiness.missingSummary).toContain("Pendant SOP");
+    expect(readiness.buckramGateOpen).toBe(false);
+  });
+
   it("unlocks the true ending only when the certified volume also has the complete treaty record", () => {
     resetGameState();
     completeProductionState();

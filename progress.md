@@ -1558,3 +1558,13 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Started local dev server on `http://127.0.0.1:5173/`.
   - Required web-game Playwright client completed against `?scene=EndingScene&role=compiler&name=Ruby` with no input; the generated screenshot remains black due to the known headless WebGL artifact. A Space-input variant navigated during the state read, so the no-input route is the stable smoke for this scene.
   - Direct Playwright text-state probe for EndingScene reported `crystals: 2/2`, `coverFragments: 5/5`, Buckram Key held, Buckram Gate still locked by publication apparatus only, and no console/page errors.
+
+## 2026-06-16 Publication readiness separates research pendants from process stamps
+
+- Corrected `getPublicationReadinessReadout()` so the DANN-E statutory clock and final-readiness HUD now report only the three FRUS/Zelda research pendants (`RULE`, `ARCHIVE`, `SOP`) as `P`.
+- Added a parallel `processStamps` readout for the broader Buckram Gate process stamps (`RULE`, `ARCHIVE`, `NETWORK`, `REFERRAL`, `PROOF`) so non-pendant gates still block certification visibly.
+- Missing summaries now distinguish `Pendant SOP` from non-pendant blockers such as `Process NETWORK`, avoiding the old misleading `Pendant NETWORK` label.
+- The Buckram Gate now stays closed when the SOP pendant is missing, even if all five process stamps and other publication gates are otherwise complete.
+- Regression coverage:
+  - Three research pendants can be complete while network/referral/proof process gates remain locked.
+  - Missing SOP is surfaced as a pendant blocker and blocks publication readiness.
