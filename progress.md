@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- NARA Red Zone declassification gate (2026-06-16):
+  - Added `src/game/redZoneGate.ts`, a Phaser-free rule module for the NARA II Red Zone vault door, sourced to the E.O. 13526 FRUS preface language about release, concurrence, and accounting for withheld/excised material.
+  - Replaced the static Red Zone placeholder with a real Clearance Token / E.O. review gate: locked interactions show the needed-token prompt; valid declassification authority opens the gate, files `sceneProgress.redZoneDeclassification`, and grants 4 document points once.
+  - Added deterministic tests in `src/game/redZoneGate.test.ts` for locked entry, token entry, completed-review entry, and repeat-safe entry.
+  - Verified focused `npm test -- src/game/redZoneGate.test.ts`, full `npm test` (62 files / 305 tests pass), and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client ran against `?scene=GameplayMapScene&map=nara_stacks&role=declass_reviewer&name=Alex`; direct runtime probes confirmed locked and Clearance Token-opened Red Zone states with no browser errors. Screenshot: `output/web-game/red-zone-gate-smoke.png`.
 - NARA catalog desk gameplay (2026-06-16):
   - Added `src/game/naraCatalog.ts`, a Phaser-free rules module for the NARA II catalog desk and Archivist interaction, sourced to the official history.state.gov FRUS stages page and FRUS history chapter on microform supplements.
   - The NARA Archivist now files a `NARA Source Index`, awards `Microform Supplement Reels`, advances the collection notes to the context-record step, and grants 5 document points once instead of showing a static placeholder.

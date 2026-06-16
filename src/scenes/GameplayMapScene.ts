@@ -6,12 +6,14 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { browseFrusBookshelf } from "../game/frusBookshelf";
 import { logNaraCatalog } from "../game/naraCatalog";
 import { logFieldCableCollection } from "../game/recordCollection";
+import { checkRedZoneGate } from "../game/redZoneGate";
 import {
   addDocumentPoints,
   addInventoryItem,
   addVolumeFragment,
   clearDialogState,
   gameState,
+  hasProcessItem,
   setDialogState,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -401,12 +403,7 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     if (action === "red-zone-gate") {
-      if (!gameState.sceneProgress.redZoneDeclassification) {
-        this.showMapDialog("RED ZONE", "Declassification required before this vault opens.");
-        retroAudio.warning();
-        return;
-      }
-      this.showMapDialog("RED ZONE", "Approved declassification route opened.");
+      this.checkRedZoneGate();
       return;
     }
     if (action === "secret-service-gate") {
@@ -497,6 +494,30 @@ export class GameplayMapScene extends Phaser.Scene {
     setObjective(result.objective);
     setLatestMessage(result.message);
     this.showMapDialog("NARA ARCHIVIST", [...result.pages]);
+  }
+
+  private checkRedZoneGate() {
+    const result = checkRedZoneGate({
+      alreadyOpen: Boolean(gameState.sceneProgress.redZoneDeclassification),
+      hasClearanceToken: hasProcessItem("clearance_token"),
+      eo13526ReviewComplete: Boolean(gameState.sceneProgress.eo13526ReviewComplete),
+      declassificationReviewComplete: Boolean(gameState.sceneProgress.declassificationReviewComplete)
+    });
+
+    if (!result.ok) {
+      retroAudio.warning();
+      setObjective(result.objective);
+      setLatestMessage(result.message);
+      this.showMapDialog("RED ZONE", [...result.pages]);
+      return;
+    }
+
+    if (result.shouldOpenGate) gameState.sceneProgress.redZoneDeclassification = 1;
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "Red Zone declassification gate opened");
+    retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("RED ZONE", [...result.pages]);
   }
 
   private handleTriggers() {
