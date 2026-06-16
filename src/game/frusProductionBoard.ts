@@ -8,6 +8,8 @@ import { EDITORIAL_TREATMENT_SOURCE_URL } from "./editorialTreatment";
 import { EO13526_REVIEW_SOURCE_URL } from "./eo13526Review";
 import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPermission";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
+import { GPO_PUBLICATION_SOURCE_URL } from "./gpoPublication";
+import { GPO_SEGMENT_ASSEMBLY_SOURCE_URL } from "./gpoSegmentAssembly";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
@@ -34,6 +36,8 @@ export type FrusProductionBoardStepId =
   | "advisory_monitoring"
   | "editorial_methodology"
   | "kellogg_editing"
+  | "gpo_segment_assembly"
+  | "gpo_publication"
   | "chapter_release_status"
   | "digital_release"
   | "public_citation"
@@ -67,6 +71,8 @@ export interface FrusProductionBoardContext {
   digitalReleaseComplete: boolean;
   publicCitationComplete: boolean;
   releaseCalendarComplete: boolean;
+  gpoSegmentAssemblyComplete: boolean;
+  gpoPublicationComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -219,6 +225,22 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Resolve textual issues with human editorial treatment before the proof stamp can satisfy Kellogg standards."
   },
   {
+    id: "gpo_segment_assembly",
+    label: "GPO segment assembly",
+    shortLabel: "SEG",
+    sourceBasis: "FRUS volumes could move to GPO in prepared segments; the final segment and apparatus must stay intact before binding.",
+    sourceUrl: GPO_SEGMENT_ASSEMBLY_SOURCE_URL,
+    gameplayTask: "Submit prepared publication segments, preserve the final index/apparatus, and bind the complete certified volume."
+  },
+  {
+    id: "gpo_publication",
+    label: "GPO publication handoff",
+    shortLabel: "GPO",
+    sourceBasis: "The Department contracts with the Government Printing Office to prepare and publish FRUS volumes.",
+    sourceUrl: GPO_PUBLICATION_SOURCE_URL,
+    gameplayTask: "Complete the GPO handoff: print, bind, and hold any funding delay without altering the record."
+  },
+  {
     id: "chapter_release_status",
     label: "Chapter release ledger",
     shortLabel: "CHP",
@@ -355,6 +377,10 @@ export function isFrusProductionBoardStepComplete(
       return context.editorialMethodologyComplete;
     case "kellogg_editing":
       return context.editorialMethodologyComplete && context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
+    case "gpo_segment_assembly":
+      return context.finalGatePublished || context.gpoSegmentAssemblyComplete || context.gpoPublicationComplete;
+    case "gpo_publication":
+      return context.finalGatePublished || context.gpoPublicationComplete;
     case "chapter_release_status":
       return context.finalGatePublished || context.chapterReleaseComplete;
     case "digital_release":

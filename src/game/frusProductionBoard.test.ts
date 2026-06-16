@@ -35,6 +35,8 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     digitalReleaseComplete: false,
     publicCitationComplete: false,
     releaseCalendarComplete: false,
+    gpoSegmentAssemblyComplete: false,
+    gpoPublicationComplete: false,
     ...overrides
   };
 }
@@ -45,6 +47,41 @@ function withEquityResolved(document: DocumentCandidate): DocumentCandidate {
     equities: document.equities.map((equity) => ({ ...equity, response: "cleared" }))
   };
 }
+
+function balancedSelectedDocuments() {
+  const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+  for (const id of ["telegram_001", "source_note_047", "sbu_annotation_001", "proof_page_412"]) {
+    const index = documents.findIndex((document) => document.id === id);
+    documents[index] = { ...documents[index], selected: true, workflowState: "proofed" };
+  }
+  documents[4] = withEquityResolved(documents[4]);
+  return documents;
+}
+
+const COMPLETE_BEFORE_GPO = {
+  processStamps: ["rule", "archive", "network", "referral", "sop", "proof"] satisfies ProcessStampId[],
+  heldProcessItems: new Set<ProcessItemId>([
+    "citation_stamp",
+    "clearance_token",
+    "concurrence_slip",
+    "red_pencil",
+    "proof_lens"
+  ]),
+  documentPoints: 80,
+  reliability: 90,
+  documentCandidates: balancedSelectedDocuments(),
+  annotationDraftingComplete: true,
+  foreignGovernmentPermissionComplete: true,
+  withholdingAppealComplete: true,
+  editorialMethodologyComplete: true,
+  editorialTreatmentComplete: true,
+  manuscriptReviewComplete: true,
+  recordsAccessComplete: true,
+  recordCollectionComplete: true,
+  selectionDocketComplete: true,
+  seriesConceptComplete: true,
+  volumeConceptComplete: true
+} as const;
 
 describe("FRUS production board", () => {
   it("keeps the history.state.gov production ladder in a stable order", () => {
@@ -64,6 +101,8 @@ describe("FRUS production board", () => {
       "advisory_monitoring",
       "editorial_methodology",
       "kellogg_editing",
+      "gpo_segment_assembly",
+      "gpo_publication",
       "chapter_release_status",
       "digital_release",
       "public_citation",
@@ -159,6 +198,8 @@ describe("FRUS production board", () => {
       withholdingAppealComplete: true,
       editorialMethodologyComplete: true,
       editorialTreatmentComplete: true,
+      gpoSegmentAssemblyComplete: true,
+      gpoPublicationComplete: true,
       recordCollectionComplete: true,
       selectionDocketComplete: true,
       seriesConceptComplete: true,
@@ -166,8 +207,30 @@ describe("FRUS production board", () => {
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 14).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 17).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("chapter_release_status");
+  });
+
+  it("surfaces GPO segment assembly and handoff before public chapter status", () => {
+    const readyForGpo = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_GPO
+    }));
+    const segmentsComplete = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_GPO,
+      gpoSegmentAssemblyComplete: true
+    }));
+    const handoffComplete = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_GPO,
+      gpoSegmentAssemblyComplete: true,
+      gpoPublicationComplete: true
+    }));
+
+    expect(readyForGpo.steps.find((step) => step.id === "kellogg_editing")?.complete).toBe(true);
+    expect(readyForGpo.nextStep?.id).toBe("gpo_segment_assembly");
+    expect(readyForGpo.steps.find((step) => step.id === "chapter_release_status")?.status).toBe("locked");
+    expect(segmentsComplete.nextStep?.id).toBe("gpo_publication");
+    expect(handoffComplete.steps.find((step) => step.id === "gpo_publication")?.complete).toBe(true);
+    expect(handoffComplete.nextStep?.id).toBe("chapter_release_status");
   });
 
   it("requires foreign-government permission after declassification and before referral concurrence", () => {

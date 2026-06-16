@@ -1277,3 +1277,22 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Started local dev server on `http://127.0.0.1:5187/?scene=OfficeScene&role=compiler&name=Ruby`.
   - Ran the required web-game Playwright client. `render_game_to_text()` reported `productionBoard.total: 20`, `nextStep.id: "series_concept"`, and `records_access` locked/incomplete with source URL `https://history.state.gov/historicaldocuments/about-frus`.
   - Screenshot artifact `output/web-game/shot-0.png` is black due to the already-known headless WebGL capture issue; text state was valid and no console-error artifact was present.
+
+## 2026-06-15 GPO publication steps promoted to the Production Board
+
+- Promoted two already-playable EndingScene publication tasks into `src/game/frusProductionBoard.ts`:
+  - `gpo_segment_assembly`: prepared segments move to GPO, the final segment carries index/apparatus, and GPO binds the complete certified volume.
+  - `gpo_publication`: Department/GPO publication handoff, final binding, and funding-delay handling without altering the record.
+- Both steps are sourced to the official FRUS history stages page and now sit between `kellogg_editing` and `chapter_release_status`, so the public chapter ledger no longer appears as the next board task immediately after editorial treatment.
+- `getProductionBoardReadout()` now passes `sceneProgress.gpoSegmentAssemblyComplete` and `sceneProgress.gpoPublicationComplete` into the board context. Existing EndingScene gameplay already sets those flags through the GPO prompts.
+- Regression coverage:
+  - Board order now includes `gpo_segment_assembly` and `gpo_publication`.
+  - A proof-ready volume exposes GPO segment assembly as the active next step.
+  - Chapter status stays locked until both GPO segment assembly and GPO publication handoff are complete.
+- Verified focused tests: `npm test -- src/game/frusProductionBoard.test.ts src/game/gpoSegmentAssembly.test.ts src/game/gpoPublication.test.ts` -> 3 files / 22 tests passed.
+- Verified full `npm test` -> 47 files / 230 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5188/?scene=EndingScene&role=compiler&name=Ruby`.
+  - Required web-game Playwright client reported `productionBoard.total: 22`, `completed: 15`, `nextStep.id: "gpo_segment_assembly"`, `gpo_publication.status: "locked"`, and `chapter_release_status.status: "locked"`.
+  - Screenshot artifact remains black due to the known headless WebGL capture issue; text state was valid and no console-error artifact was present.
