@@ -63,6 +63,10 @@ function withEquityResolved(document: DocumentCandidate): DocumentCandidate {
   };
 }
 
+function withAllEquitiesResolved(documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate)) {
+  return documents.map((document) => document.equities.length ? withEquityResolved(document) : cloneDocumentCandidate(document));
+}
+
 function balancedSelectedDocuments() {
   const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
   for (const id of ["telegram_001", "source_note_047", "sbu_annotation_001", "proof_page_412"]) {
@@ -440,7 +444,7 @@ describe("FRUS production board", () => {
   });
 
   it("requires foreign-government permission after declassification and before referral concurrence", () => {
-    const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    const documents = withAllEquitiesResolved();
     documents[4] = {
       ...withEquityResolved(documents[4]),
       workflowState: "referred"
@@ -483,7 +487,7 @@ describe("FRUS production board", () => {
   });
 
   it("requires withholding appeal review after foreign-government permission and before concurrence", () => {
-    const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    const documents = withAllEquitiesResolved();
     documents[4] = {
       ...withEquityResolved(documents[4]),
       workflowState: "referred"
@@ -524,6 +528,54 @@ describe("FRUS production board", () => {
     expect(missingAppeal.steps.find((step) => step.id === "advisory_monitoring")?.status).toBe("locked");
     expect(appealFiled.steps.find((step) => step.id === "withholding_appeals")?.complete).toBe(true);
     expect(appealFiled.nextStep?.id).toBe("advisory_monitoring");
+  });
+
+  it("keeps agency referrals active until every distinct equity crystal is resolved", () => {
+    const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    documents[4] = {
+      ...withEquityResolved(documents[4]),
+      workflowState: "referred"
+    };
+    const partialCrystals = getFrusProductionBoardReadout(context({
+      volumeWorkflowState: "declassification_review",
+      processStamps: ["rule", "archive", "network"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp", "clearance_token"]),
+      documentPoints: 50,
+      annotationDraftingComplete: true,
+      foreignGovernmentPermissionComplete: true,
+      withholdingAppealComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true,
+      clearanceProcedureComplete: true,
+      eo13526ReviewComplete: true
+    }));
+    const allCrystals = getFrusProductionBoardReadout(context({
+      volumeWorkflowState: "declassification_review",
+      processStamps: ["rule", "archive", "network"],
+      documentCandidates: withAllEquitiesResolved(documents),
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp", "clearance_token"]),
+      documentPoints: 50,
+      annotationDraftingComplete: true,
+      foreignGovernmentPermissionComplete: true,
+      withholdingAppealComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true,
+      clearanceProcedureComplete: true,
+      eo13526ReviewComplete: true
+    }));
+
+    expect(partialCrystals.steps.find((step) => step.id === "agency_referrals")?.complete).toBe(false);
+    expect(partialCrystals.nextStep?.id).toBe("agency_referrals");
+    expect(partialCrystals.steps.find((step) => step.id === "advisory_monitoring")?.status).toBe("locked");
+    expect(allCrystals.steps.find((step) => step.id === "agency_referrals")?.complete).toBe(true);
+    expect(allCrystals.nextStep?.id).toBe("advisory_monitoring");
   });
 
   it("requires annotation drafting after source-note provenance and before manuscript review", () => {

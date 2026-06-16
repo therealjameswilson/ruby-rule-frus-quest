@@ -451,8 +451,6 @@ const VOLUME_STATE_ORDER: readonly VolumeWorkflowState[] = [
   "published"
 ];
 
-const RESOLVED_REVIEW_STATUSES = new Set<ReviewStatus>(["cleared", "excised", "denied", "resolved"]);
-
 function stampSet(context: FrusProductionBoardContext) {
   return new Set(context.processStamps);
 }
@@ -471,6 +469,11 @@ function hasSelectedDocument(context: FrusProductionBoardContext) {
 
 function hasAnyEquityResponse(context: FrusProductionBoardContext, predicate: (status: ReviewStatus) => boolean) {
   return context.documentCandidates.some((document) => document.equities.some((equity) => predicate(equity.response)));
+}
+
+function allDistinctEquitiesResolved(context: FrusProductionBoardContext) {
+  const total = totalEquities(context.documentCandidates);
+  return total > 0 && crystalsEarned(context.documentCandidates) === total;
 }
 
 function noUndisclosedDeletions(context: FrusProductionBoardContext) {
@@ -537,8 +540,7 @@ export function isFrusProductionBoardStepComplete(
     case "agency_referrals":
       return stamps.has("referral")
         || context.heldProcessItems.has("concurrence_slip")
-        || (totalEquities(context.documentCandidates) > 0 && crystalsEarned(context.documentCandidates) === totalEquities(context.documentCandidates))
-        || hasAnyEquityResponse(context, (status) => RESOLVED_REVIEW_STATUSES.has(status));
+        || allDistinctEquitiesResolved(context);
     case "advisory_monitoring":
       return context.hacReviewComplete || stamps.has("sop");
     case "ai_annotation_review":

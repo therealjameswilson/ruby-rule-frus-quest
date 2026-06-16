@@ -1517,3 +1517,16 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Restarted local dev server on `http://127.0.0.1:5173/`.
   - Required web-game Playwright client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
   - Direct Playwright text-state probe for ArchiveScene reported `productionBoard.total: 36`, `source_notes` active, `research_selection` complete, `annotation` locked, objective `Archive Cavern: collect Source Note 47 in A1.`, no seeded `sourceNoteProvenanceComplete`, and no console/page errors.
+
+## 2026-06-16 Agency equity crystals made a real Production Board gate
+
+- Tightened `agency_referrals` in `src/game/frusProductionBoard.ts` so one resolved agency equity no longer completes the referral gate by itself.
+- The board now requires the Referral stamp, the Concurrence Slip, or all distinct agency-equity crystals resolved via `crystalsEarned(...) === totalEquities(...)`, matching the Zelda-like crystal loop and the step text that says every distinct agency equity must resolve cleanly.
+- Added a regression in `src/game/frusProductionBoard.test.ts` proving partial crystal collection keeps `agency_referrals` active and `advisory_monitoring` locked until all distinct equities are resolved.
+- Verified focused tests: `npm test -- src/game/frusProductionBoard.test.ts src/game/frusProgression.test.ts` -> 2 files / 27 tests passed.
+- Verified full `npm test` -> 56 files / 273 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5173/`.
+  - Required web-game Playwright client completed against `?scene=ReferralVaultScene&role=declass_coordinator&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
+  - Direct Playwright text-state probe for ReferralVaultScene reported `foreign_permissions` active, `withholding_appeals`, `agency_referrals`, and `advisory_monitoring` locked, visible referral walls active, and no console/page errors.
