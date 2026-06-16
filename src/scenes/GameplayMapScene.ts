@@ -3,7 +3,20 @@ import { GAMEPLAY_MAPS, gameplayTiledCacheKey, type GameplayMapKey, type Overwor
 import { getDistrictById } from "../data/regions";
 import { Player } from "../entities/Player";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { clearDialogState, gameState, setDialogState, setLatestMessage, setNearestInteractable, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
+import { logFieldCableCollection } from "../game/recordCollection";
+import {
+  addDocumentPoints,
+  clearDialogState,
+  gameState,
+  setDialogState,
+  setDocumentWorkflowState,
+  setLatestMessage,
+  setNearestInteractable,
+  setObjective,
+  setSceneState,
+  setVisibleEntities,
+  setVisibleThreats
+} from "../game/state";
 import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
@@ -197,7 +210,10 @@ export class GameplayMapScene extends Phaser.Scene {
     });
     this.hintText.setText(nearest ? `A ${promptVerbForKind(nearest.kind)} ${nearest.label.toUpperCase()}` : "A INTERACT  ESC WORLD MAP");
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
-    if (bufferedInteraction) bufferedInteraction.onInteract();
+    if (bufferedInteraction) {
+      bufferedInteraction.onInteract();
+      if (this.dialogPages.length > 0) return;
+    }
     setObjective(MAP_OBJECTIVES[this.mapKey]);
   }
 
@@ -406,7 +422,7 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     if (action === "chancery-door") {
-      this.showMapDialog("CHANCERY", "Diplomatic cables not yet implemented.");
+      this.logEmbassyCableCollection();
       return;
     }
     if (action === "witness-table") {
@@ -426,6 +442,28 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     this.showMapDialog(label.toUpperCase(), propString(object, "text", "The record is noted."));
+  }
+
+  private logEmbassyCableCollection() {
+    const alreadyLogged = Boolean(gameState.sceneProgress.embassyCableLogged);
+    const result = logFieldCableCollection(gameState.sceneProgress.recordCollectionStep ?? 0, alreadyLogged);
+    gameState.sceneProgress.embassyCableLogged = 1;
+    gameState.sceneProgress.recordCollectionStep = result.nextRecordCollectionStep;
+
+    const telegram = gameState.documentCandidates.find((document) => document.id === result.documentId);
+    if (telegram?.workflowState === "found") {
+      setDocumentWorkflowState(result.documentId, "candidate", "embassy cable copied into collection notes");
+    }
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "embassy cable field collection logged");
+
+    retroAudio.confirm();
+    setObjective("Embassy cable copied into the collection notes. Finish formal collection at the Office desk.");
+    setLatestMessage(result.message);
+    this.showMapDialog("CHANCERY CABLE", [
+      result.message,
+      result.sourceBasis,
+      "The formal Collection board gate still needs the Office desk review before selection narrows the record."
+    ]);
   }
 
   private handleTriggers() {

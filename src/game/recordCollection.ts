@@ -24,6 +24,21 @@ export interface RecordCollectionEvaluation {
 }
 
 export const RECORD_COLLECTION_SOURCE_URL = "https://history.state.gov/historicaldocuments/frus-history/stages";
+export const FIELD_CABLE_COLLECTION_DOCUMENT_ID = "telegram_001";
+export const FIELD_CABLE_COLLECTION_POINT_VALUE = 3;
+export const FIELD_CABLE_COLLECTION_STEP = 1;
+export const FIELD_CABLE_COLLECTION_SOURCE_BASIS =
+  "The FRUS stages page says compilers identify important records, search for them, and make copies or notes of documents likely to be selected for publication or needed for context.";
+
+export interface FieldCableCollectionResult {
+  alreadyLogged: boolean;
+  documentId: typeof FIELD_CABLE_COLLECTION_DOCUMENT_ID;
+  documentPoints: number;
+  nextRecordCollectionStep: number;
+  sourceUrl: string;
+  sourceBasis: string;
+  message: string;
+}
 
 export const RECORD_COLLECTION_PROMPTS = [
   {
@@ -73,6 +88,23 @@ export function getRecordCollectionPrompt(step: number) {
 
 export function recordCollectionComplete(step: number) {
   return step >= RECORD_COLLECTION_PROMPTS.length;
+}
+
+export function logFieldCableCollection(
+  currentRecordCollectionStep = 0,
+  alreadyLogged = false
+): FieldCableCollectionResult {
+  return {
+    alreadyLogged,
+    documentId: FIELD_CABLE_COLLECTION_DOCUMENT_ID,
+    documentPoints: alreadyLogged ? 0 : FIELD_CABLE_COLLECTION_POINT_VALUE,
+    nextRecordCollectionStep: Math.max(currentRecordCollectionStep, FIELD_CABLE_COLLECTION_STEP),
+    sourceUrl: RECORD_COLLECTION_SOURCE_URL,
+    sourceBasis: FIELD_CABLE_COLLECTION_SOURCE_BASIS,
+    message: alreadyLogged
+      ? "Embassy cable already logged: the telegram candidate remains in the collection notes."
+      : "Embassy cable logged: copied a likely telegram candidate and preserved context notes."
+  };
 }
 
 export function evaluateRecordCollectionAnswer(

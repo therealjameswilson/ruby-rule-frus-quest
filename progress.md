@@ -1662,3 +1662,18 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Kept the routes thematic: embassy/cable tasks go to `embassy`, evidence and archive work goes to `nara_stacks`, review decisions go to `west_wing` or `capitol_hill`, production walkthroughs go to `frus_floor`, and restricted corridors go to `black_vault`.
 - Updated `WorldMapScene` text-state and hover copy so the region map reports playable destinations and only uses "unrouted" as a safety fallback.
 - Added `src/data/regions.test.ts` to prove each region still has eight numbered districts, every district has a registered gameplay-map destination, and every current gameplay map is reachable from the atlas.
+
+## 2026-06-16 Embassy Chancery cable collection made playable
+
+- Replaced the Embassy `Chancery Door` placeholder text with a stateful field-collection interaction sourced to the official FRUS stages page: compilers identify important records, search for them, and make copies or notes for publication/context.
+- Added `logFieldCableCollection()` to `src/game/recordCollection.ts` so the side-room cable action advances the collection step to the field-note point, awards document points once, and cannot be farmed on repeat interactions.
+- Wired `GameplayMapScene` so the first Chancery interaction logs `embassyCableLogged`, promotes `telegram_001` from `found` to `candidate`, awards 3 document points, and tells the player the formal Office Collection board gate still needs review.
+- Fixed `GameplayMapScene.update()` so an interaction-specific objective survives while the dialog is open instead of being immediately reset to the map's default objective.
+- Added record-collection regression tests proving the cable log records the source-backed field note and repeat interactions do not rewind progress or add more points.
+- Verified focused tests: `npm test -- src/game/recordCollection.test.ts` -> 1 file / 7 tests passed.
+- Verified full `npm test` -> 59 files / 295 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Required web-game Playwright client completed against `?scene=GameplayMapScene&map=embassy&role=compiler&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
+  - Direct Playwright interaction probe moved the player to the Chancery interaction, pressed Space, and reported `embassyCableLogged: 1`, `recordCollectionStep: 1`, `documentPoints: 3`, `telegram_001.workflowState: "candidate"`, the objective `Embassy cable copied into the collection notes...`, and no console/page errors.
+  - Repeat-interaction probe reported the already-logged message, kept `documentPoints: 3`, and kept a single workflow-log entry.
