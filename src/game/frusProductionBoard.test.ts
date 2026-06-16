@@ -708,6 +708,39 @@ describe("FRUS production board", () => {
     expect(reviewed.nextStep?.id).toBe("clearance_procedure");
   });
 
+  it("does not treat ready-for-review annotations as completed manuscript review", () => {
+    const documents = balancedSelectedDocuments();
+    for (const id of ["telegram_001", "source_note_047", "cross_reference_001", "sbu_annotation_001", "proof_page_412"]) {
+      const index = documents.findIndex((document) => document.id === id);
+      documents[index] = {
+        ...documents[index],
+        selected: true,
+        citationComplete: true,
+        annotationNeeded: false,
+        workflowState: "ready_for_review"
+      };
+    }
+
+    const readout = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 32,
+      sourceNoteProvenanceComplete: true,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      selectionDocketComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
+    }));
+
+    expect(readout.steps.find((step) => step.id === "annotation")?.complete).toBe(true);
+    expect(readout.steps.find((step) => step.id === "manuscript_review")?.complete).toBe(false);
+    expect(readout.nextStep?.id).toBe("manuscript_review");
+    expect(readout.steps.find((step) => step.id === "clearance_procedure")?.status).toBe("locked");
+  });
+
   it("requires clearance procedure and E.O. 13526 review before the declassification token gate", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
     documents[2] = {

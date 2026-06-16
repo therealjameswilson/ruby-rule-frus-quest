@@ -517,8 +517,17 @@ export function isFrusProductionBoardStepComplete(
         || volumeAtLeast(context, "declassification_review");
     case "manuscript_review":
       return context.manuscriptReviewComplete
-        || hasDocumentAtOrBeyond(context, ["ready_for_review", "submitted_for_review", "referred", "cleared", "ready_for_proof", "proofed", "published"])
-        || volumeAtLeast(context, "declassification_review");
+        || hasDocumentAtOrBeyond(context, [
+          "submitted_for_review",
+          "referred",
+          "cleared",
+          "excised",
+          "denied",
+          "appeal_needed",
+          "ready_for_proof",
+          "proofed",
+          "published"
+        ]);
     case "clearance_procedure":
       return context.clearanceProcedureComplete || context.heldProcessItems.has("clearance_token") || stamps.has("network");
     case "eo13526_review":

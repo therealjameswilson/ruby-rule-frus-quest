@@ -1577,3 +1577,17 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Regression coverage:
   - `src/game/adventureSubscreen.test.ts` proves the active board task carries its source basis and URL through both `getAdventureSubscreenReadout()` and `renderGameToText()`.
 - Verified focused tests: `npm test -- src/game/adventureSubscreen.test.ts src/game/frusProductionBoard.test.ts` -> 2 files / 25 tests passed.
+
+## 2026-06-16 Manuscript review remains a human gate after annotation
+
+- Tightened the FRUS Production Board so documents in `ready_for_review` no longer count as completed manuscript review by themselves.
+- Annotation now leads the player to the FRUS Cart manuscript-review station; only `sceneProgress.manuscriptReviewComplete` or an already-advanced declassification save can complete the `manuscript_review` board gate.
+- This preserves the official FRUS stages distinction between drafting annotation and the later human manuscript review for completeness, cohesion, concision, content appropriateness, and annotation accuracy.
+- Regression coverage:
+  - A balanced selected packet with drafted annotations and documents at `ready_for_review` now keeps `manuscript_review` active and `clearance_procedure` locked.
+- Verified focused tests: `npm test -- src/game/frusProductionBoard.test.ts src/game/manuscriptReview.test.ts src/game/frusProductionPhases.test.ts` -> 3 files / 31 tests passed.
+- Verified full `npm test` -> 57 files / 280 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Required web-game Playwright client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`; generated screenshot remains black due to the known headless WebGL artifact.
+  - Direct Playwright text-state probe with annotation drafted and documents at `ready_for_review` reported `manuscript_review` active, `clearance_procedure` locked, source URL `https://history.state.gov/historicaldocuments/frus-history/stages`, and no console/page errors.
