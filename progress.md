@@ -1296,3 +1296,23 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Started local dev server on `http://127.0.0.1:5188/?scene=EndingScene&role=compiler&name=Ruby`.
   - Required web-game Playwright client reported `productionBoard.total: 22`, `completed: 15`, `nextStep.id: "gpo_segment_assembly"`, `gpo_publication.status: "locked"`, and `chapter_release_status.status: "locked"`.
   - Screenshot artifact remains black due to the known headless WebGL capture issue; text state was valid and no console-error artifact was present.
+
+## 2026-06-15 Front matter and final certification promoted to the Production Board
+
+- Promoted two already-playable EndingScene publication tasks into `src/game/frusProductionBoard.ts`:
+  - `front_matter_assembly`: the Buckram Gate publication apparatus step for preface/scope, sources consulted, persons and abbreviations lists, proofed pages, and index handoff.
+  - `kellogg_final_certification`: the final human certification that the volume is thorough, accurate, reliable, and contains no undisclosed deletions, material omissions, or concealed policy defects.
+- The steps are sourced to the official FRUS history stages page and About FRUS/Kellogg standards page, and now sit between `kellogg_editing` and `gpo_segment_assembly`, so the GPO packet cannot appear before the publication apparatus and final Kellogg check.
+- `getProductionBoardReadout()` now passes `sceneProgress.frontMatterAssemblyComplete` and `sceneProgress.kelloggFinalCertificationComplete` into the board context. Existing EndingScene gameplay already sets those flags through the front matter and certification prompts.
+- Final `publication_30_year` completion now requires front matter assembly, final certification, GPO segment assembly, GPO publication handoff, chapter release status, digital release, public citation, release calendar, reliability >= 70, the proof stamp, and no unresolved undisclosed deletions.
+- Regression coverage:
+  - Board order now includes `front_matter_assembly` and `kellogg_final_certification`.
+  - A proof-ready volume exposes front matter assembly as the active next step before final certification and GPO.
+  - Final publication stays locked until publication apparatus, certification, GPO, chapter ledger, digital release, public citation, and release calendar are complete.
+- Verified focused tests: `npm test -- src/game/frusProductionBoard.test.ts src/game/frontMatterAssembly.test.ts src/game/kelloggCertification.test.ts src/game/publicationApparatus.test.ts` -> 4 files / 33 tests passed.
+- Verified full `npm test` -> 47 files / 231 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5189/?scene=EndingScene&role=compiler&name=Ruby`.
+  - Required web-game Playwright client reported `productionBoard.total: 24`, with `front_matter_assembly` surfaced before `kellogg_final_certification`, `gpo_segment_assembly`, `gpo_publication`, and `chapter_release_status`.
+  - Screenshot artifact remains black due to the known headless WebGL capture issue; text state was valid and no console-error artifact was present.

@@ -10,7 +10,9 @@ import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPer
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { GPO_PUBLICATION_SOURCE_URL } from "./gpoPublication";
 import { GPO_SEGMENT_ASSEMBLY_SOURCE_URL } from "./gpoSegmentAssembly";
+import { FRONT_MATTER_ASSEMBLY_SOURCE_URL } from "./frontMatterAssembly";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
+import { KELLOGG_CERTIFICATION_SOURCE_URL } from "./kelloggCertification";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { RECORDS_ACCESS_SOURCE_URL } from "./recordsAccess";
@@ -36,6 +38,8 @@ export type FrusProductionBoardStepId =
   | "advisory_monitoring"
   | "editorial_methodology"
   | "kellogg_editing"
+  | "front_matter_assembly"
+  | "kellogg_final_certification"
   | "gpo_segment_assembly"
   | "gpo_publication"
   | "chapter_release_status"
@@ -71,6 +75,8 @@ export interface FrusProductionBoardContext {
   digitalReleaseComplete: boolean;
   publicCitationComplete: boolean;
   releaseCalendarComplete: boolean;
+  frontMatterAssemblyComplete: boolean;
+  kelloggFinalCertificationComplete: boolean;
   gpoSegmentAssemblyComplete: boolean;
   gpoPublicationComplete: boolean;
 }
@@ -225,6 +231,22 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Resolve textual issues with human editorial treatment before the proof stamp can satisfy Kellogg standards."
   },
   {
+    id: "front_matter_assembly",
+    label: "Front matter assembly",
+    shortLabel: "ASM",
+    sourceBasis: "Completed front matter frames the volume with preface, sources consulted, persons, abbreviations, proofed pages, and index.",
+    sourceUrl: FRONT_MATTER_ASSEMBLY_SOURCE_URL,
+    gameplayTask: "Assemble the publication apparatus at the Buckram Gate table before final certification."
+  },
+  {
+    id: "kellogg_final_certification",
+    label: "Final Kellogg certification",
+    shortLabel: "CRT",
+    sourceBasis: "The final volume must be thorough, accurate, reliable, and free of undisclosed deletions, material omissions, or concealed policy defects.",
+    sourceUrl: KELLOGG_CERTIFICATION_SOURCE_URL,
+    gameplayTask: "Run the final human certification checklist before any GPO packet leaves the office."
+  },
+  {
     id: "gpo_segment_assembly",
     label: "GPO segment assembly",
     shortLabel: "SEG",
@@ -377,6 +399,10 @@ export function isFrusProductionBoardStepComplete(
       return context.editorialMethodologyComplete;
     case "kellogg_editing":
       return context.editorialMethodologyComplete && context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
+    case "front_matter_assembly":
+      return context.finalGatePublished || context.frontMatterAssemblyComplete;
+    case "kellogg_final_certification":
+      return context.finalGatePublished || context.kelloggFinalCertificationComplete;
     case "gpo_segment_assembly":
       return context.finalGatePublished || context.gpoSegmentAssemblyComplete || context.gpoPublicationComplete;
     case "gpo_publication":
@@ -400,6 +426,12 @@ export function isFrusProductionBoardStepComplete(
           && context.digitalReleaseComplete
           && context.publicCitationComplete
           && context.releaseCalendarComplete
+          && context.frontMatterAssemblyComplete
+          && context.kelloggFinalCertificationComplete
+          && context.gpoSegmentAssemblyComplete
+          && context.gpoPublicationComplete
+          && context.reliability >= 70
+          && stamps.has("proof")
           && noUndisclosedDeletions(context)
         );
   }

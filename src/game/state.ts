@@ -1705,6 +1705,8 @@ export function getProductionBoardReadout() {
     digitalReleaseComplete: Boolean(gameState.sceneProgress.digitalReleaseComplete),
     publicCitationComplete: Boolean(gameState.sceneProgress.publicCitationComplete),
     releaseCalendarComplete: Boolean(gameState.sceneProgress.releaseCalendarComplete),
+    frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
+    kelloggFinalCertificationComplete: Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete),
     gpoSegmentAssemblyComplete: Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete),
     gpoPublicationComplete: Boolean(gameState.sceneProgress.gpoPublicationComplete)
   });

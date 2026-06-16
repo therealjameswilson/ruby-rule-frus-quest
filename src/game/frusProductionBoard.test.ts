@@ -35,6 +35,8 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     digitalReleaseComplete: false,
     publicCitationComplete: false,
     releaseCalendarComplete: false,
+    frontMatterAssemblyComplete: false,
+    kelloggFinalCertificationComplete: false,
     gpoSegmentAssemblyComplete: false,
     gpoPublicationComplete: false,
     ...overrides
@@ -58,7 +60,7 @@ function balancedSelectedDocuments() {
   return documents;
 }
 
-const COMPLETE_BEFORE_GPO = {
+const COMPLETE_BEFORE_PUBLICATION_APPARATUS = {
   processStamps: ["rule", "archive", "network", "referral", "sop", "proof"] satisfies ProcessStampId[],
   heldProcessItems: new Set<ProcessItemId>([
     "citation_stamp",
@@ -83,6 +85,12 @@ const COMPLETE_BEFORE_GPO = {
   volumeConceptComplete: true
 } as const;
 
+const COMPLETE_BEFORE_GPO = {
+  ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
+  frontMatterAssemblyComplete: true,
+  kelloggFinalCertificationComplete: true
+} as const;
+
 describe("FRUS production board", () => {
   it("keeps the history.state.gov production ladder in a stable order", () => {
     expect(FRUS_PRODUCTION_BOARD_STEPS.map((step) => step.id)).toEqual([
@@ -101,6 +109,8 @@ describe("FRUS production board", () => {
       "advisory_monitoring",
       "editorial_methodology",
       "kellogg_editing",
+      "front_matter_assembly",
+      "kellogg_final_certification",
       "gpo_segment_assembly",
       "gpo_publication",
       "chapter_release_status",
@@ -198,6 +208,8 @@ describe("FRUS production board", () => {
       withholdingAppealComplete: true,
       editorialMethodologyComplete: true,
       editorialTreatmentComplete: true,
+      frontMatterAssemblyComplete: true,
+      kelloggFinalCertificationComplete: true,
       gpoSegmentAssemblyComplete: true,
       gpoPublicationComplete: true,
       recordCollectionComplete: true,
@@ -207,8 +219,26 @@ describe("FRUS production board", () => {
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 17).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 19).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("chapter_release_status");
+  });
+
+  it("surfaces front matter and final certification before GPO handoff", () => {
+    const needsFrontMatter = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_PUBLICATION_APPARATUS
+    }));
+    const frontMatterFiled = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
+      frontMatterAssemblyComplete: true
+    }));
+    const certified = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_GPO
+    }));
+
+    expect(needsFrontMatter.steps.find((step) => step.id === "kellogg_editing")?.complete).toBe(true);
+    expect(needsFrontMatter.nextStep?.id).toBe("front_matter_assembly");
+    expect(frontMatterFiled.nextStep?.id).toBe("kellogg_final_certification");
+    expect(certified.nextStep?.id).toBe("gpo_segment_assembly");
   });
 
   it("surfaces GPO segment assembly and handoff before public chapter status", () => {
@@ -504,21 +534,38 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("kellogg_editing", consulted)).toBe(true);
   });
 
-  it("requires chapter status, digital release, public citation, and release calendar before statutory publication", () => {
+  it("requires front matter, certification, GPO, chapter status, digital release, public citation, and release calendar before statutory publication", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(withEquityResolved);
     const notReady = context({
-      processStamps: ["rule", "archive", "sop"],
+      processStamps: ["rule", "archive", "sop", "proof"],
       documentCandidates: documents,
       heldProcessItems: new Set<ProcessItemId>(["buckram_key"]),
       volumeFragments: ["A", "B", "C", "D"],
+      reliability: 90,
       volumeWorkflowState: "final_assembly" as VolumeWorkflowState
     });
     const ready = context({
       ...notReady,
       volumeFragments: ["A", "B", "C", "D", "E"]
     });
-    const chapterLedgerFiled = context({
+    const frontMatterFiled = context({
       ...ready,
+      frontMatterAssemblyComplete: true
+    });
+    const certified = context({
+      ...frontMatterFiled,
+      kelloggFinalCertificationComplete: true
+    });
+    const gpoSegmentsFiled = context({
+      ...certified,
+      gpoSegmentAssemblyComplete: true
+    });
+    const gpoHandoffFiled = context({
+      ...gpoSegmentsFiled,
+      gpoPublicationComplete: true
+    });
+    const chapterLedgerFiled = context({
+      ...gpoHandoffFiled,
       chapterReleaseComplete: true
     });
     const digitallyReleased = context({
@@ -539,6 +586,14 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("digital_release", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("public_citation", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("release_calendar", ready)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("front_matter_assembly", frontMatterFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", frontMatterFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("kellogg_final_certification", certified)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", certified)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("gpo_segment_assembly", gpoSegmentsFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", gpoSegmentsFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("gpo_publication", gpoHandoffFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", gpoHandoffFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("chapter_release_status", chapterLedgerFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("digital_release", chapterLedgerFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("publication_30_year", ready)).toBe(false);
