@@ -57,7 +57,7 @@
         ] },
         { "id": 14, "name": "consular_queue", "type": "interaction", "x": 180, "y": 600, "width": 180, "height": 175, "properties": [
           { "name": "label", "type": "string", "value": "Consular Queue" },
-          { "name": "text", "type": "string", "value": "The queue is orderly. Cables need a later workflow." }
+          { "name": "action", "type": "string", "value": "consular-permission-queue" }
         ] }
       ]
     }

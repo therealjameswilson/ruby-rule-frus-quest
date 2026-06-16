@@ -4,6 +4,8 @@ import { getDistrictById } from "../data/regions";
 import { Player } from "../entities/Player";
 import { fileCapitolHacPacket, inspectClosedSessionSample } from "../game/capitolHacPacket";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { fileEmbassyPermissionQueue } from "../game/embassyPermissionQueue";
+import { FOREIGN_GOVERNMENT_PERMISSION_PROMPTS } from "../game/foreignGovernmentPermission";
 import { browseFrusBookshelf } from "../game/frusBookshelf";
 import { HAC_HEARING_PROMPTS } from "../game/hacHearing";
 import { logNaraCatalog } from "../game/naraCatalog";
@@ -422,6 +424,10 @@ export class GameplayMapScene extends Phaser.Scene {
       this.logEmbassyCableCollection();
       return;
     }
+    if (action === "consular-permission-queue") {
+      this.fileEmbassyPermissionQueue();
+      return;
+    }
     if (action === "witness-table") {
       this.fileCapitolHacPacket();
       return;
@@ -452,6 +458,38 @@ export class GameplayMapScene extends Phaser.Scene {
       result.message,
       result.sourceBasis,
       "The formal Collection board gate still needs the Office desk review before selection narrows the record."
+    ]);
+  }
+
+  private fileEmbassyPermissionQueue() {
+    const result = fileEmbassyPermissionQueue({
+      embassyCableLogged: Boolean(gameState.sceneProgress.embassyCableLogged),
+      alreadyFiled: Boolean(gameState.sceneProgress.foreignGovernmentPermissionComplete),
+      inventory: gameState.inventory,
+      currentStep: gameState.sceneProgress.foreignGovernmentPermissionStep ?? 0
+    });
+
+    if (!result.ok) {
+      retroAudio.warning();
+      setObjective(result.objective);
+      setLatestMessage(result.message);
+      this.showMapDialog("CONSULAR QUEUE", [...result.pages]);
+      return;
+    }
+
+    gameState.sceneProgress.foreignGovernmentPermissionStep = result.nextStep;
+    if (result.shouldFilePermission) gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
+    for (const item of result.itemsToAward) addInventoryItem(item);
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "foreign-government permission note filed at embassy queue");
+
+    retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("CONSULAR QUEUE", [
+      ...result.pages,
+      result.shouldFilePermission
+        ? `Permission review ${FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length}/${FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length}: note complete.`
+        : "The permission note is already attached to the publication packet."
     ]);
   }
 

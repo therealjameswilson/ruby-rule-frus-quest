@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Embassy foreign-government permission queue (2026-06-16):
+  - Added `src/game/embassyPermissionQueue.ts`, a Phaser-free rule module for the Embassy consular queue, sourced to the official FRUS stages page note that permission may be sought when selected documents include foreign-government information.
+  - Replaced the static Consular Queue "later workflow" text with a cable-gated permission route: the queue stays locked until the Chancery Door has copied the embassy cable, then files `sceneProgress.foreignGovernmentPermissionComplete`, advances the permission step to completion, awards `Foreign Permission Note` and `Visible Withholding Note`, and grants 5 document points once.
+  - Updated `public/assets/tiled/embassy.tmj` so the Consular Queue uses the new `consular-permission-queue` action rather than fallback text.
+  - Added deterministic tests in `src/game/embassyPermissionQueue.test.ts` for locked routing, first permission filing, and repeat-safe inventory recovery.
+  - Verified focused `npm test -- src/game/embassyPermissionQueue.test.ts`, full `npm test` (65 files / 317 tests pass), and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client ran against `?scene=GameplayMapScene&map=embassy&role=compiler&name=Ruby`; direct runtime probes confirmed locked queue, chancery cable collection, permission-note filing, repeat-safe points, and no browser errors. Screenshot: `output/web-game/embassy-permission-smoke.png`.
 - Capitol Hill HAC witness-table and closed-session loop (2026-06-16):
   - Added `src/game/capitolHacPacket.ts`, a Phaser-free rule module for the Capitol Hill hearing room, sourced to the official HAC description of monitoring FRUS compilation/editing/preparation/declassification, reviewing procedures and guidelines, sampling records still classified after 30 years, and reporting annual findings.
   - Replaced the static Witness Table dialog with a stateful HAC process docket: it files `sceneProgress.senateHacReviewComplete`, advances `senateHacReviewStep` to the full HAC prompt count, awards `HAC Process Docket`, `HAC Annual Findings`, Treaty Fragment II, and 6 document points once.
