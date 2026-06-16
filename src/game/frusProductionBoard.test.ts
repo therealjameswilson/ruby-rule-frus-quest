@@ -146,6 +146,8 @@ describe("FRUS production board", () => {
       "source_notes",
       "annotation",
       "manuscript_review",
+      "front_line_recommendations",
+      "general_editor_assessment",
       "clearance_procedure",
       "eo13526_review",
       "declassification_review",
@@ -671,7 +673,7 @@ describe("FRUS production board", () => {
     expect(sourceFiled.nextStep?.id).toBe("annotation");
   });
 
-  it("requires explicit manuscript review before the clearance procedure lane opens", () => {
+  it("requires every manuscript review pass before the clearance procedure lane opens", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
     documents[2] = {
       ...documents[2],
@@ -689,6 +691,30 @@ describe("FRUS production board", () => {
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
+    const scoped = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 20,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewStep: 1
+    }));
+    const recommended = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 20,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewStep: 2
+    }));
     const reviewed = getFrusProductionBoardReadout(context({
       processStamps: ["rule", "archive"],
       documentCandidates: documents,
@@ -704,7 +730,13 @@ describe("FRUS production board", () => {
 
     expect(unreviewed.nextStep?.id).toBe("manuscript_review");
     expect(unreviewed.steps.find((step) => step.id === "clearance_procedure")?.status).toBe("locked");
+    expect(scoped.steps.find((step) => step.id === "manuscript_review")?.complete).toBe(true);
+    expect(scoped.nextStep?.id).toBe("front_line_recommendations");
+    expect(recommended.steps.find((step) => step.id === "front_line_recommendations")?.complete).toBe(true);
+    expect(recommended.nextStep?.id).toBe("general_editor_assessment");
     expect(reviewed.steps.find((step) => step.id === "manuscript_review")?.complete).toBe(true);
+    expect(reviewed.steps.find((step) => step.id === "front_line_recommendations")?.complete).toBe(true);
+    expect(reviewed.steps.find((step) => step.id === "general_editor_assessment")?.complete).toBe(true);
     expect(reviewed.nextStep?.id).toBe("clearance_procedure");
   });
 

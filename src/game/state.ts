@@ -1963,6 +1963,7 @@ export function getProductionBoardReadout() {
     typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
     typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
+    manuscriptReviewStep: gameState.sceneProgress.manuscriptReviewStep ?? 0,
     clearanceProcedureComplete: Boolean(gameState.sceneProgress.clearanceProcedureComplete),
     eo13526ReviewComplete: Boolean(gameState.sceneProgress.eo13526ReviewComplete),
     recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),

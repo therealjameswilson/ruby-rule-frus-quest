@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Two-pass manuscript review board gates (2026-06-16):
+  - Split the Production Board's single manuscript-review bead into three source-backed gates that match the existing FRUS Cart prompt loop: `manuscript_review` (review scope), `front_line_recommendations` (first-pass amendment recommendations), and `general_editor_assessment` (General Editor / series assessment).
+  - Preserved old-save compatibility: `sceneProgress.manuscriptReviewComplete` still completes all three gates, while live play now exposes partial progress from `sceneProgress.manuscriptReviewStep`.
+  - Updated the clearance phase readout so the Zelda-like board now shows the manuscript review sequence as `REV -> AMN -> GEN -> LANE` before declassification can open.
+  - Verified focused tests: `npm test -- src/game/manuscriptReview.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts` (3 files / 32 tests pass).
+  - Verified full `npm test` (57 files / 286 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning; an initial parallel build hit a transient public-asset copy ENOENT, and a serial rerun passed).
+  - Required web-game client smoke at `?scene=OfficeScene&role=compiler&name=Ruby` still yields the known black headless WebGL screenshot. Direct runtime state confirms `OfficeScene` active, Production Board total `38`, and review sequence `annotation -> manuscript_review -> front_line_recommendations -> general_editor_assessment -> clearance_procedure` with no console errors.
 - Character-create input smoothing (2026-06-16):
   - Tightened the shared `InputState` navigation edges so buffered ultra-short Arrow/WASD taps now produce the same one-frame `nav*JustPressed` edges as held keyboard, touch D-pad, and gamepad input.
   - Updated the character-create begin prompt to the explicit "TAP AGAIN / PRESS ENTER TO BEGIN" wording while preserving the existing selected-card tap-to-confirm flow and name-field focus model.

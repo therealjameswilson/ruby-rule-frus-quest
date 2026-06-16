@@ -54,6 +54,8 @@ export const FRUS_PRODUCTION_PHASES = [
     sourceBasis: "Review the manuscript, separate clearance lanes, apply E.O. 13526, and resolve national-security, foreign-government, agency-equity, and HAC oversight issues.",
     stepIds: [
       "manuscript_review",
+      "front_line_recommendations",
+      "general_editor_assessment",
       "clearance_procedure",
       "eo13526_review",
       "declassification_review",

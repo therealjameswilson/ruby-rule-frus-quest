@@ -75,7 +75,7 @@ describe("FRUS production phase readout", () => {
     expect(phases.find((phase) => phase.id === "clearance")).toMatchObject({
       status: "active",
       completed: 0,
-      total: 8,
+      total: 10,
       nextStep: { id: "manuscript_review", shortLabel: "REV" }
     });
   });
@@ -92,6 +92,8 @@ describe("FRUS production phase readout", () => {
       "source_notes",
       "annotation",
       "manuscript_review",
+      "front_line_recommendations",
+      "general_editor_assessment",
       "clearance_procedure",
       "eo13526_review",
       "declassification_review",
@@ -102,7 +104,7 @@ describe("FRUS production phase readout", () => {
     ] satisfies FrusProductionBoardStepId[];
     const phases = getFrusProductionPhaseReadout(boardWith(completedThroughClearance, "ai_annotation_review"));
 
-    expect(phases.find((phase) => phase.id === "clearance")).toMatchObject({ status: "complete", completed: 8, total: 8 });
+    expect(phases.find((phase) => phase.id === "clearance")).toMatchObject({ status: "complete", completed: 10, total: 10 });
     expect(phases.find((phase) => phase.id === "editing")).toMatchObject({
       status: "active",
       completed: 0,

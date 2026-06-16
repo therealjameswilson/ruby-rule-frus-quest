@@ -3,7 +3,8 @@ import {
   evaluateManuscriptReviewAnswer,
   getManuscriptReviewPrompt,
   MANUSCRIPT_REVIEW_PROMPTS,
-  manuscriptReviewComplete
+  manuscriptReviewComplete,
+  manuscriptReviewPromptComplete
 } from "./manuscriptReview";
 
 describe("manuscript review", () => {
@@ -23,6 +24,15 @@ describe("manuscript review", () => {
     expect(manuscriptReviewComplete(0)).toBe(false);
     expect(manuscriptReviewComplete(MANUSCRIPT_REVIEW_PROMPTS.length - 1)).toBe(false);
     expect(manuscriptReviewComplete(MANUSCRIPT_REVIEW_PROMPTS.length)).toBe(true);
+  });
+
+  it("tracks each review pass as a separate gate", () => {
+    expect(manuscriptReviewPromptComplete(0, "review_scope")).toBe(false);
+    expect(manuscriptReviewPromptComplete(1, "review_scope")).toBe(true);
+    expect(manuscriptReviewPromptComplete(1, "front_line_recommendations")).toBe(false);
+    expect(manuscriptReviewPromptComplete(2, "front_line_recommendations")).toBe(true);
+    expect(manuscriptReviewPromptComplete(2, "series_assessment")).toBe(false);
+    expect(manuscriptReviewPromptComplete(3, "series_assessment")).toBe(true);
   });
 
   it("accepts the source-backed answer and maps shortcuts to standards violations", () => {

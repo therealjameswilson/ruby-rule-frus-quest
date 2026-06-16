@@ -75,6 +75,11 @@ export function manuscriptReviewComplete(step: number) {
   return step >= MANUSCRIPT_REVIEW_PROMPTS.length;
 }
 
+export function manuscriptReviewPromptComplete(step: number, promptId: ManuscriptReviewPromptId) {
+  const index = MANUSCRIPT_REVIEW_PROMPTS.findIndex((prompt) => prompt.id === promptId);
+  return index >= 0 && step > index;
+}
+
 export function evaluateManuscriptReviewAnswer(
   promptId: ManuscriptReviewPromptId,
   value?: string

@@ -16,6 +16,7 @@ import { FRONT_MATTER_ASSEMBLY_SOURCE_URL } from "./frontMatterAssembly";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 import { INDEX_DOCKET_SOURCE_URL } from "./indexDocket";
 import { KELLOGG_CERTIFICATION_SOURCE_URL } from "./kelloggCertification";
+import { MANUSCRIPT_REVIEW_SOURCE_URL, manuscriptReviewPromptComplete, type ManuscriptReviewPromptId } from "./manuscriptReview";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { PUBLICATION_FUNDING_SOURCE_URL } from "./publicationFundingQueue";
 import { READER_AID_REGISTERS_SOURCE_URL } from "./readerAidRegisters";
@@ -45,6 +46,8 @@ export type FrusProductionBoardStepId =
   | "source_notes"
   | "annotation"
   | "manuscript_review"
+  | "front_line_recommendations"
+  | "general_editor_assessment"
   | "clearance_procedure"
   | "eo13526_review"
   | "declassification_review"
@@ -95,6 +98,7 @@ export interface FrusProductionBoardContext {
   typesettingPreparationComplete: boolean;
   typesetterProofComplete: boolean;
   manuscriptReviewComplete: boolean;
+  manuscriptReviewStep?: number;
   clearanceProcedureComplete: boolean;
   eo13526ReviewComplete: boolean;
   recordsAccessComplete: boolean;
@@ -144,7 +148,6 @@ export interface FrusProductionBoardReadout {
 
 const ABOUT_FRUS_URL = "https://history.state.gov/historicaldocuments/about-frus";
 const HAC_URL = "https://history.state.gov/about/hac/intro";
-const FRUS_STAGES_URL = "https://history.state.gov/historicaldocuments/frus-history/stages";
 
 export const FRUS_PRODUCTION_BOARD_STEPS = [
   {
@@ -221,11 +224,27 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
   },
   {
     id: "manuscript_review",
-    label: "Manuscript review",
+    label: "Manuscript review scope",
     shortLabel: "REV",
     sourceBasis: "FRUS manuscripts receive human review for completeness, cohesion, concision, content appropriateness, and annotation accuracy.",
-    sourceUrl: FRUS_STAGES_URL,
-    gameplayTask: "Run the FRUS Cart manuscript review: first-pass recommendations, then series assessment."
+    sourceUrl: MANUSCRIPT_REVIEW_SOURCE_URL,
+    gameplayTask: "Check the manuscript's completeness, cohesion, concision, content appropriateness, and annotation accuracy at the FRUS Cart."
+  },
+  {
+    id: "front_line_recommendations",
+    label: "First review recommendations",
+    shortLabel: "AMN",
+    sourceBasis: "Recent FRUS volumes typically receive an initial review that makes recommendations for amendment.",
+    sourceUrl: MANUSCRIPT_REVIEW_SOURCE_URL,
+    gameplayTask: "File the first-pass amendment recommendations visibly; do not silently cut or publish from the first pass."
+  },
+  {
+    id: "general_editor_assessment",
+    label: "General Editor assessment",
+    shortLabel: "GEN",
+    sourceBasis: "The stages page describes a second assessment by the General Editor or another Office of the Historian manager.",
+    sourceUrl: MANUSCRIPT_REVIEW_SOURCE_URL,
+    gameplayTask: "Route the amended manuscript through the General Editor / series assessment before clearance lanes open."
   },
   {
     id: "clearance_procedure",
@@ -463,6 +482,26 @@ function hasDocumentAtOrBeyond(context: FrusProductionBoardContext, states: read
   return context.documentCandidates.some((document) => states.includes(document.workflowState));
 }
 
+function manuscriptReviewMovedDownstream(context: FrusProductionBoardContext) {
+  return hasDocumentAtOrBeyond(context, [
+    "submitted_for_review",
+    "referred",
+    "cleared",
+    "excised",
+    "denied",
+    "appeal_needed",
+    "ready_for_proof",
+    "proofed",
+    "published"
+  ]);
+}
+
+function manuscriptReviewPromptFiled(context: FrusProductionBoardContext, promptId: ManuscriptReviewPromptId) {
+  return context.manuscriptReviewComplete
+    || manuscriptReviewMovedDownstream(context)
+    || manuscriptReviewPromptComplete(context.manuscriptReviewStep ?? 0, promptId);
+}
+
 function hasSelectedDocument(context: FrusProductionBoardContext) {
   return context.documentCandidates.some((document) => document.selected || document.workflowState === "selected");
 }
@@ -516,18 +555,11 @@ export function isFrusProductionBoardStepComplete(
         || hasDocumentAtOrBeyond(context, ["ready_for_review", "submitted_for_review", "referred", "cleared", "ready_for_proof", "proofed", "published"])
         || volumeAtLeast(context, "declassification_review");
     case "manuscript_review":
-      return context.manuscriptReviewComplete
-        || hasDocumentAtOrBeyond(context, [
-          "submitted_for_review",
-          "referred",
-          "cleared",
-          "excised",
-          "denied",
-          "appeal_needed",
-          "ready_for_proof",
-          "proofed",
-          "published"
-        ]);
+      return manuscriptReviewPromptFiled(context, "review_scope");
+    case "front_line_recommendations":
+      return manuscriptReviewPromptFiled(context, "front_line_recommendations");
+    case "general_editor_assessment":
+      return manuscriptReviewPromptFiled(context, "series_assessment");
     case "clearance_procedure":
       return context.clearanceProcedureComplete || context.heldProcessItems.has("clearance_token") || stamps.has("network");
     case "eo13526_review":
