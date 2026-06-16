@@ -129,7 +129,7 @@ export class WorldMapScene extends Phaser.Scene {
     this.mapLayer.add(map);
 
     const districts = districtsForRegion(this.currentRegion);
-    setVisibleEntities(districts.map((district) => `${district.number}. ${district.displayName}${district.destinationScene ? ` -> ${district.destinationScene}` : " -> coming soon"}`));
+    setVisibleEntities(districts.map((district) => `${district.number}. ${district.displayName} -> ${district.destinationScene ?? "unrouted"}`));
     setLatestMessage(`World Map: ${regionLabel}`);
 
     for (const district of districts) this.createDistrictZone(district, fit);
@@ -171,7 +171,7 @@ export class WorldMapScene extends Phaser.Scene {
   private hoverDistrict(district: District, zone: Phaser.GameObjects.Rectangle) {
     zone.setFillStyle(color(PALETTE.goldStamp), 0.2);
     zone.setStrokeStyle(1, color(PALETTE.creamPaper), 0.9);
-    const suffix = district.locked ? "LOCKED" : district.destinationScene ? `A: ${this.mapDisplayName(district.destinationScene)}` : "COMING SOON";
+    const suffix = district.locked ? "LOCKED" : district.destinationScene ? `A: ${this.mapDisplayName(district.destinationScene)}` : "UNROUTED";
     this.tooltip?.setText(`${district.number}. ${district.displayName.toUpperCase()}   ${suffix}`);
     setNearestInteractable(district.displayName);
     setLatestMessage(`World Map hover: ${district.displayName}`);
@@ -190,7 +190,7 @@ export class WorldMapScene extends Phaser.Scene {
       return;
     }
     if (!district.destinationScene) {
-      this.showModal(district.displayName.toUpperCase(), "Coming soon - diplomatic cable archive.");
+      this.showModal(district.displayName.toUpperCase(), "No route has been cataloged for this district.");
       return;
     }
     setLatestMessage(`World Map route: ${district.displayName} -> ${district.destinationScene}`);

@@ -1655,3 +1655,10 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Runtime smoke:
   - Required web-game Playwright client completed against `?scene=TitleScene&role=compiler&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
   - Direct Playwright probe reported `scene: "TitleScene"`, `mode: "title"`, `title_screen_256x224` loaded at `256x224`, no console/page errors, and pointer start advanced to `CharacterCreateScene`.
+
+## 2026-06-16 World atlas cartouches all route to playable FRUS rooms
+
+- Filled every previously un-routed overworld district in `src/data/regions.ts` with an existing gameplay-map destination, so all 40 cartouches now lead to playable FRUS spaces instead of placeholder "coming soon" modals.
+- Kept the routes thematic: embassy/cable tasks go to `embassy`, evidence and archive work goes to `nara_stacks`, review decisions go to `west_wing` or `capitol_hill`, production walkthroughs go to `frus_floor`, and restricted corridors go to `black_vault`.
+- Updated `WorldMapScene` text-state and hover copy so the region map reports playable destinations and only uses "unrouted" as a safety fallback.
+- Added `src/data/regions.test.ts` to prove each region still has eight numbered districts, every district has a registered gameplay-map destination, and every current gameplay map is reachable from the atlas.
