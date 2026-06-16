@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- DANN-E final publication certification guard (2026-06-15):
+  - Fixed the DANN-E endgame route so a lawful boss defeat no longer unconditionally jumps to the true ending. DANN-E now publishes the certified FRUS volume through a shared state-layer final-publication helper, then unlocks `TrueEndingScene` only if the true-ending certificate is actually complete, including the full treaty record.
+  - Centralized the last-mile publication side effects previously embedded in `EndingScene`: GPO segment assembly, GPO publication handoff, chapter status, digital release, public citation card, release calendar, published FRUS cover inventory, published final-gate certification, and document publication.
+  - Made `finalGateCertification.status === "published"` durable across scene changes and save restoration while preserving transient locked/ready gate prompts as scene-local UI state.
+  - Added deterministic coverage in `src/game/finalPublicationCertification.test.ts`: locked Buckram Gate refuses DANN-E certification, lawful publication without all treaty fragments gets the normal certified-volume outcome, and complete treaty record plus completed FRUS production unlocks the true ending.
+  - Verified focused tests: `npm test -- src/game/finalPublicationCertification.test.ts src/game/trueEndingCertificate.test.ts` (2 files / 6 tests pass).
+  - Verified full `npm test`: 49 files / 238 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client smoke at `?scene=TrueEndingScene&role=compiler&name=Ruby` reports the expected unseeded `FRUS VOLUME REVIEWED` state, `Treaty Record 0/3`, and no console/error artifact; generated headless WebGL screenshot remains black as previously documented.
 - Editorial methodology ledger gameplay gate (2026-06-15):
   - Added `src/game/editorialMethodology.ts`, a Phaser-free rule module based on a history.state.gov About-the-Series page: documents are ordered by Washington time, reproduced as exactly as possible with marginalia described in footnotes, first source footnotes carry source/classification/distribution/drafting/background metadata, and editorial notes summarize pertinent material not printed plus related sources and accounts.
   - Inserted `editorial_methodology` into the FRUS Production Board after HAC/process monitoring and before `kellogg_editing`, so proof/editorial treatment no longer satisfies the final methodology standard unless the official editorial-method ledger has been filed.

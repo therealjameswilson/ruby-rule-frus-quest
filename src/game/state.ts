@@ -28,9 +28,16 @@ import {
   PENDANTS,
   totalEquities
 } from "./frusProgression";
+import { CHAPTER_RELEASE_PROMPTS } from "./chapterReleaseStatus";
+import { DIGITAL_RELEASE_PROMPTS } from "./digitalRelease";
+import { GPO_PUBLICATION_PROMPTS } from "./gpoPublication";
+import { GPO_SEGMENT_ASSEMBLY_PROMPTS } from "./gpoSegmentAssembly";
 import { getFrusProductionBoardReadout } from "./frusProductionBoard";
 import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
+import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
+import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
+import { buildTrueEndingCertificate } from "./trueEndingCertificate";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import {
@@ -173,6 +180,14 @@ export interface GameSaveSummary {
 type GameStateChangeReason = "reset" | "scene" | "restore";
 type GameStateChangeListener = (reason: GameStateChangeReason) => void;
 
+const FINAL_PUBLICATION_DOCUMENT_IDS = [
+  "telegram_001",
+  "source_note_047",
+  "cross_reference_001",
+  "sbu_annotation_001",
+  "proof_page_412"
+] as const;
+
 const gameStateChangeListeners = new Set<GameStateChangeListener>();
 let resumeSpawn: { scene: string; player: Position; facing: Direction } | null = null;
 
@@ -182,6 +197,10 @@ function notifyGameStateChange(reason: GameStateChangeReason) {
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function preservedFinalGateCertification(state: FinalGateCertificationState | null) {
+  return state?.status === "published" ? state : null;
 }
 
 function normalizeSaveMode(scene: string, mode: GameMode): GameMode {
@@ -245,6 +264,12 @@ export interface FinalGateCertificationState {
   certifiedBy: string | null;
   requiredItem: "Buckram Key";
   message: string;
+}
+
+export interface FinalPublicationCertificationResult {
+  ok: boolean;
+  trueEnding: boolean;
+  reason: string;
 }
 
 export interface StandardsViolationRecord {
@@ -468,7 +493,7 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.currentChoice = null;
   gameState.physicalVerification = null;
   gameState.roomTraversal = null;
-  gameState.finalGateCertification = null;
+  gameState.finalGateCertification = preservedFinalGateCertification(gameState.finalGateCertification);
   refreshQuestWorkflowState();
   notifyGameStateChange("scene");
 }
@@ -520,7 +545,7 @@ export function restoreGameSaveData(save: GameSaveData) {
   restored.visibleThreats = [];
   restored.nearestInteractable = null;
   restored.physicalVerification = null;
-  restored.finalGateCertification = null;
+  restored.finalGateCertification = preservedFinalGateCertification(restored.finalGateCertification);
   restored.snesTransition = {
     active: false,
     current: null,
@@ -1103,6 +1128,79 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
     completionRatio: Math.max(0, Math.min(1, collectedUnits / Math.max(1, requiredUnits))),
     missingSummary
   };
+}
+
+function publishedFinalGateCertificationState(): FinalGateCertificationState {
+  return {
+    status: "published",
+    nearestGate: true,
+    checklistComplete: true,
+    certifiedBy: gameState.playerProfile.displayName,
+    requiredItem: "Buckram Key",
+    message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+  };
+}
+
+function completePublicationReleaseFlags() {
+  gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
+  gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
+  gameState.sceneProgress.gpoPublicationComplete = 1;
+  gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
+  gameState.sceneProgress.chapterReleaseComplete = 1;
+  gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
+  gameState.sceneProgress.digitalReleaseComplete = 1;
+  gameState.sceneProgress.digitalReleaseStep = DIGITAL_RELEASE_PROMPTS.length;
+  gameState.sceneProgress.publicCitationComplete = 1;
+  gameState.sceneProgress.publicCitationStep = PUBLIC_CITATION_CARD_PROMPTS.length;
+  gameState.sceneProgress.releaseCalendarComplete = 1;
+  gameState.sceneProgress.releaseCalendarStep = RELEASE_CALENDAR_PROMPTS.length;
+}
+
+export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificationResult {
+  const readiness = getPublicationReadinessReadout();
+  if (!readiness.buckramGateOpen) {
+    const reason = readiness.missingSummary.length
+      ? `Buckram Gate locked: ${readiness.missingSummary.join(", ")}.`
+      : "Buckram Gate locked: final publication certification is incomplete.";
+    setLatestMessage(reason);
+    return { ok: false, trueEnding: false, reason };
+  }
+
+  completePublicationReleaseFlags();
+  addProcessItem("buckram_key");
+  addInventoryItem("Published FRUS Cover");
+  for (const documentId of FINAL_PUBLICATION_DOCUMENT_IDS) publishDocument(documentId);
+  setFinalGateCertificationState(publishedFinalGateCertificationState());
+  gameState.sceneProgress.trueEndingPublicationCertified = 1;
+  refreshQuestWorkflowState();
+
+  const finalReadiness = getFinalGateReadiness();
+  const publication = getPublicationReadinessReadout();
+  const board = getProductionBoardReadout();
+  const treatyFragmentsCollected = getTreatyFragmentCount();
+  const treatyLine = getDanneItemReadout().find((item) => item.id === "treaty-fragments");
+  const certificate = buildTrueEndingCertificate({
+    processStamps: gameState.processStamps,
+    documentCandidates: gameState.documentCandidates,
+    volumeFragments: gameState.volumeFragments,
+    reliability: gameState.reliability,
+    documentPoints: gameState.documentPoints,
+    treatyFragmentsCollected,
+    publicationBoardCompleted: board.completed,
+    publicationBoardTotal: board.total,
+    publicationApparatusCompleted: finalReadiness.publicationApparatus.completed,
+    publicationApparatusTotal: finalReadiness.publicationApparatus.total,
+    buckramGateOpen: publication.buckramGateOpen,
+    standardsClear: publication.standards.clear
+  });
+  const trueEnding = certificate.complete;
+  const reason = trueEnding
+    ? "Certified FRUS volume entered the public record with the complete treaty record."
+    : treatyLine && !treatyLine.trueEndingReady
+      ? `Certified FRUS volume published; treaty record incomplete (${treatyLine.count}/${treatyLine.total}).`
+      : "Certified FRUS volume published; true-ending certification still shows open work.";
+  setLatestMessage(reason);
+  return { ok: true, trueEnding, reason };
 }
 
 export function addDocumentPoints(amount: number, reason: string) {

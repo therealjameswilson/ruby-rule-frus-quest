@@ -14,6 +14,7 @@ import {
 } from "../../game/statutoryClock";
 import {
   addDanneItem,
+  certifyFinalPublicationAfterDanne,
   defeatDungeonBoss,
   gameState,
   getPublicationReadinessReadout,
@@ -256,7 +257,7 @@ export class DanneBoss {
     this.phaseTransitioning = false;
   }
 
-  private async finishFight(trueEnding: boolean) {
+  private async finishFight() {
     if (this.defeated) return;
     this.defeated = true;
     this.phase = "defeated";
@@ -271,7 +272,9 @@ export class DanneBoss {
     defeatDungeonBoss("buckram_gate", "DANN-E final review hurdle defeated");
     unlockCodexEntry("danne-defeated");
     addDanneItem("treaty-fragments", 2);
-    if (trueEnding) {
+    const certification = certifyFinalPublicationAfterDanne();
+    const trueEnding = certification.trueEnding;
+    if (trueEnding && this.secretAscendant) {
       await this.showPhaseCutscene("danne-ascendant", "ascendant", "danne-portrait-historian", "The complete treaty record forces DANN-E back into review.");
     }
     await this.showPhaseCutscene("danne-defeated", "defeated", "danne-portrait-archivist");
@@ -366,7 +369,7 @@ export class DanneBoss {
       if (!this.shortcutOffered) this.offerShortcut("DANN-E offers to omit contested material instead.");
       return;
     }
-    void this.finishFight(true);
+    void this.finishFight();
   }
 
   private updateStatutoryClock(deltaMs: number) {
