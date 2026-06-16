@@ -23,6 +23,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     annotationDraftingComplete: false,
     foreignGovernmentPermissionComplete: false,
     withholdingAppealComplete: false,
+    editorialMethodologyComplete: false,
     editorialTreatmentComplete: false,
     manuscriptReviewComplete: false,
     recordCollectionComplete: false,
@@ -60,6 +61,7 @@ describe("FRUS production board", () => {
       "withholding_appeals",
       "agency_referrals",
       "advisory_monitoring",
+      "editorial_methodology",
       "kellogg_editing",
       "chapter_release_status",
       "digital_release",
@@ -137,6 +139,7 @@ describe("FRUS production board", () => {
       annotationDraftingComplete: true,
       foreignGovernmentPermissionComplete: true,
       withholdingAppealComplete: true,
+      editorialMethodologyComplete: true,
       editorialTreatmentComplete: true,
       recordCollectionComplete: true,
       selectionDocketComplete: true,
@@ -381,6 +384,7 @@ describe("FRUS production board", () => {
     const boardContext = context({
       documentCandidates: documents,
       processStamps: ["proof"],
+      editorialMethodologyComplete: true,
       editorialTreatmentComplete: true,
       reliability: 90
     });
@@ -391,21 +395,31 @@ describe("FRUS production board", () => {
   it("requires editorial treatment before proof stamp can satisfy Kellogg editing", () => {
     const unstamped = context({
       processStamps: [],
+      editorialMethodologyComplete: true,
       editorialTreatmentComplete: true,
       reliability: 90
     });
     const unconsulted = context({
       processStamps: ["proof"],
+      editorialMethodologyComplete: true,
+      reliability: 90
+    });
+    const missingMethod = context({
+      processStamps: ["proof"],
+      editorialTreatmentComplete: true,
       reliability: 90
     });
     const consulted = context({
       processStamps: ["proof"],
+      editorialMethodologyComplete: true,
       editorialTreatmentComplete: true,
       reliability: 90
     });
 
     expect(isFrusProductionBoardStepComplete("kellogg_editing", unstamped)).toBe(false);
     expect(isFrusProductionBoardStepComplete("kellogg_editing", unconsulted)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("kellogg_editing", missingMethod)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("editorial_methodology", missingMethod)).toBe(false);
     expect(isFrusProductionBoardStepComplete("kellogg_editing", consulted)).toBe(true);
   });
 

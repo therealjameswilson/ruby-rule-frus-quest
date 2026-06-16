@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Editorial methodology ledger gameplay gate (2026-06-15):
+  - Added `src/game/editorialMethodology.ts`, a Phaser-free rule module based on a history.state.gov About-the-Series page: documents are ordered by Washington time, reproduced as exactly as possible with marginalia described in footnotes, first source footnotes carry source/classification/distribution/drafting/background metadata, and editorial notes summarize pertinent material not printed plus related sources and accounts.
+  - Inserted `editorial_methodology` into the FRUS Production Board after HAC/process monitoring and before `kellogg_editing`, so proof/editorial treatment no longer satisfies the final methodology standard unless the official editorial-method ledger has been filed.
+  - Wired `SilentReadScene` so completed physical verification now flows into Editorial Methodology -> Editorial Treatment -> Typeflow Order -> Typesetter Proof. Wrong methodology shortcuts apply standards damage (`undisclosed_deletion`, `omitted_material_fact`, `altered_text`, or `concealed_policy_defect`); correct answers file `sceneProgress.editorialMethodologyComplete`, add document points, and preserve the existing human editorial-treatment loop.
+  - Verified focused tests: `npm test -- src/game/editorialMethodology.test.ts src/game/frusProductionBoard.test.ts src/game/editorialTreatment.test.ts` (3 files / 20 tests pass).
+  - Verified full `npm test`: 46 files / 224 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Runtime smoke at `?scene=SilentReadScene&role=proofreader&name=Sam` opened the live Editorial Methodology prompt loop in the Phaser scene, completed it, and reported `sceneProgress.editorialMethodologyComplete: 1`, `editorialMethodologyStep: 4`, then `editorialTreatmentComplete: 1` after the existing follow-on loop. No console or page errors were produced; screenshot `output/web-game/editorial-methodology-smoke.png` shows the proof room and the follow-on Editorial Treatment dialog.
 - Release calendar docket gameplay gate (2026-06-15):
   - Added `src/game/releaseCalendar.ts`, a Phaser-free rule module based on the history.state.gov Status of the Series page: the public docket lists current and previous-year releases, anticipated releases later in the current year, and published volumes being digitized.
   - Inserted `release_calendar` into the FRUS Production Board after `public_citation` and before the 30-year publication gate, so a reader-facing citation card still needs public release-calendar/digitization status before publication.

@@ -3,6 +3,7 @@ import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./typ
 import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
 import { CHAPTER_RELEASE_STATUS_SOURCE_URL } from "./chapterReleaseStatus";
 import { DIGITAL_RELEASE_SOURCE_URL } from "./digitalRelease";
+import { EDITORIAL_METHODOLOGY_SOURCE_URL } from "./editorialMethodology";
 import { EDITORIAL_TREATMENT_SOURCE_URL } from "./editorialTreatment";
 import { EO13526_REVIEW_SOURCE_URL } from "./eo13526Review";
 import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPermission";
@@ -30,6 +31,7 @@ export type FrusProductionBoardStepId =
   | "withholding_appeals"
   | "agency_referrals"
   | "advisory_monitoring"
+  | "editorial_methodology"
   | "kellogg_editing"
   | "chapter_release_status"
   | "digital_release"
@@ -52,6 +54,7 @@ export interface FrusProductionBoardContext {
   annotationDraftingComplete: boolean;
   foreignGovernmentPermissionComplete: boolean;
   withholdingAppealComplete: boolean;
+  editorialMethodologyComplete: boolean;
   editorialTreatmentComplete: boolean;
   manuscriptReviewComplete: boolean;
   recordCollectionComplete: boolean;
@@ -198,6 +201,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Run the SOP review: StateChat may flag mechanics, but humans decide evidence-bound issues."
   },
   {
+    id: "editorial_methodology",
+    label: "Editorial methodology ledger",
+    shortLabel: "MTH",
+    sourceBasis: "The About-the-Series methodology fixes chronology, transcription, source-note metadata, and annotation rules before final treatment.",
+    sourceUrl: EDITORIAL_METHODOLOGY_SOURCE_URL,
+    gameplayTask: "File the methodology ledger: Washington-time order, exact transcription, source-footnote metadata, and editorial-note context."
+  },
+  {
     id: "kellogg_editing",
     label: "Editorial treatment",
     shortLabel: "KLG",
@@ -338,8 +349,10 @@ export function isFrusProductionBoardStepComplete(
         || hasAnyEquityResponse(context, (status) => RESOLVED_REVIEW_STATUSES.has(status));
     case "advisory_monitoring":
       return context.hacReviewComplete || stamps.has("sop");
+    case "editorial_methodology":
+      return context.editorialMethodologyComplete;
     case "kellogg_editing":
-      return context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
+      return context.editorialMethodologyComplete && context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
     case "chapter_release_status":
       return context.finalGatePublished || context.chapterReleaseComplete;
     case "digital_release":

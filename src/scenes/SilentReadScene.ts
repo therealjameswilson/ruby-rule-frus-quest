@@ -50,6 +50,12 @@ import {
   TYPESETTER_PROOF_PROMPTS
 } from "../game/typesetterProof";
 import {
+  EDITORIAL_METHODOLOGY_PROMPTS,
+  editorialMethodologyComplete,
+  evaluateEditorialMethodologyAnswer,
+  getEditorialMethodologyPrompt
+} from "../game/editorialMethodology";
+import {
   editorialTreatmentComplete,
   EDITORIAL_TREATMENT_PROMPTS,
   evaluateEditorialTreatmentAnswer,
@@ -438,6 +444,8 @@ export class SilentReadScene extends Phaser.Scene {
       setObjective("Silent Read Tower: exit east with Buckram Key.");
     } else if (gameState.sceneProgress.typesetterProofComplete) {
       setObjective("Silent Read Tower: take the Buckram Key after proofing.");
+    } else if (!gameState.sceneProgress.editorialMethodologyComplete) {
+      setObjective("Silent Read Tower: route flags, then file editorial methodology.");
     } else if (!gameState.sceneProgress.editorialTreatmentComplete) {
       setObjective("Silent Read Tower: route flags, then resolve editorial treatment.");
     } else if (!gameState.sceneProgress.typeflowOrderComplete) {
@@ -820,7 +828,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.updateProofMinimap();
     const nextFlag = this.getActiveFlag();
     if (!nextFlag) {
-      this.showEditorialTreatmentChoice();
+      this.showEditorialMethodologyChoice();
       return;
     }
 
@@ -843,7 +851,61 @@ export class SilentReadScene extends Phaser.Scene {
     setObjective(`Silent Read Tower: carry ${nextFlag.shortLabel} from the review outbox.`);
   }
 
+  private showEditorialMethodologyChoice() {
+    if (gameState.sceneProgress.editorialMethodologyComplete) {
+      this.showEditorialTreatmentChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.editorialMethodologyStep ?? 0;
+    const prompt = getEditorialMethodologyPrompt(step);
+    setObjective(`Editorial Methodology: answer ${step + 1}/${EDITORIAL_METHODOLOGY_PROMPTS.length}.`);
+    this.actionHint.setText(`METHOD ${step + 1}/${EDITORIAL_METHODOLOGY_PROMPTS.length}: choose A/B/C.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateEditorialMethodologyAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Editorial methodology shortcut: ${option.value}`);
+        this.reliability.update();
+        setLatestMessage("EDITORIAL METHODOLOGY FAILED - RETURN TO OFFICIAL METHOD");
+        this.dialog.show("EDITORIAL METHODOLOGY", [
+          result.message,
+          "Chronology, transcription, source notes, and annotation rules keep the reader oriented."
+        ], () => this.showEditorialMethodologyChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.editorialMethodologyStep = nextStep;
+      if (!editorialMethodologyComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Editorial methodology check ${nextStep}/${EDITORIAL_METHODOLOGY_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("EDITORIAL METHODOLOGY", [
+          result.message,
+          "Continue the methodology ledger before final editorial treatment."
+        ], () => this.showEditorialMethodologyChoice());
+        return;
+      }
+
+      gameState.sceneProgress.editorialMethodologyComplete = 1;
+      gameState.sceneProgress.editorialMethodologyStep = EDITORIAL_METHODOLOGY_PROMPTS.length;
+      addDocumentPoints(8, "editorial methodology ledger filed");
+      adjustReliability(6, "official editorial methodology preserved chronology and source notes");
+      retroAudio.confirm();
+      setLatestMessage("Editorial methodology filed: chronology, transcription, source notes, and annotation are anchored.");
+      this.dialog.show("EDITORIAL METHODOLOGY", [
+        result.message,
+        "Official methodology ledger filed.",
+        "Now resolve the final textual treatment by human consultation."
+      ], () => this.showEditorialTreatmentChoice());
+    });
+  }
+
   private showEditorialTreatmentChoice() {
+    if (!gameState.sceneProgress.editorialMethodologyComplete) {
+      this.showEditorialMethodologyChoice();
+      return;
+    }
     if (gameState.sceneProgress.editorialTreatmentComplete) {
       this.showTypeflowOrderChoice();
       return;
