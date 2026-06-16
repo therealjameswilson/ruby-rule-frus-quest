@@ -20,6 +20,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     volumeFragments: [],
     finalGatePublished: false,
     hacReviewComplete: false,
+    aiAnnotationReviewComplete: false,
     annotationDraftingComplete: false,
     foreignGovernmentPermissionComplete: false,
     withholdingAppealComplete: false,
@@ -86,6 +87,7 @@ const COMPLETE_BEFORE_TYPEFLOW = {
   annotationDraftingComplete: true,
   foreignGovernmentPermissionComplete: true,
   withholdingAppealComplete: true,
+  aiAnnotationReviewComplete: true,
   editorialMethodologyComplete: true,
   editorialTreatmentComplete: true,
   manuscriptReviewComplete: true,
@@ -136,6 +138,7 @@ describe("FRUS production board", () => {
       "withholding_appeals",
       "agency_referrals",
       "advisory_monitoring",
+      "ai_annotation_review",
       "editorial_methodology",
       "kellogg_editing",
       "modern_typeflow_order",
@@ -663,6 +666,31 @@ describe("FRUS production board", () => {
     }));
 
     expect(readout.steps.find((step) => step.id === "advisory_monitoring")?.complete).toBe(true);
+  });
+
+  it("requires terminal-only AI annotation review before editorial methodology", () => {
+    const needsAiReview = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_TYPEFLOW,
+      processStamps: ["rule", "archive", "network", "referral"],
+      hacReviewComplete: true,
+      aiAnnotationReviewComplete: false,
+      editorialMethodologyComplete: false,
+      editorialTreatmentComplete: false
+    }));
+    const aiReviewFiled = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_TYPEFLOW,
+      processStamps: ["rule", "archive", "network", "referral"],
+      hacReviewComplete: true,
+      aiAnnotationReviewComplete: true,
+      editorialMethodologyComplete: false,
+      editorialTreatmentComplete: false
+    }));
+
+    expect(needsAiReview.steps.find((step) => step.id === "advisory_monitoring")?.complete).toBe(true);
+    expect(needsAiReview.nextStep?.id).toBe("ai_annotation_review");
+    expect(needsAiReview.steps.find((step) => step.id === "editorial_methodology")?.status).toBe("locked");
+    expect(aiReviewFiled.steps.find((step) => step.id === "ai_annotation_review")?.complete).toBe(true);
+    expect(aiReviewFiled.nextStep?.id).toBe("editorial_methodology");
   });
 
   it("does not complete research selection from charter points alone", () => {

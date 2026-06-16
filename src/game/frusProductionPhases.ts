@@ -67,8 +67,8 @@ export const FRUS_PRODUCTION_PHASES = [
     id: "editing",
     label: "Editorial treatment and proof",
     shortLabel: "EDIT",
-    sourceBasis: "Apply official editorial methodology, human consultation, modern typeflow order, printer's-copy preparation, and proof comparison.",
-    stepIds: ["editorial_methodology", "kellogg_editing", "modern_typeflow_order", "typesetting_preparation", "typesetter_proof"]
+    sourceBasis: "Run terminal-only AI annotation review, apply official editorial methodology, human consultation, modern typeflow order, printer's-copy preparation, and proof comparison.",
+    stepIds: ["ai_annotation_review", "editorial_methodology", "kellogg_editing", "modern_typeflow_order", "typesetting_preparation", "typesetter_proof"]
   },
   {
     id: "apparatus",

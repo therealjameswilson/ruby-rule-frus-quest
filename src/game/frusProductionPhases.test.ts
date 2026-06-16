@@ -79,4 +79,35 @@ describe("FRUS production phase readout", () => {
       nextStep: { id: "manuscript_review", shortLabel: "REV" }
     });
   });
+
+  it("starts the editing phase with AI annotation review before methodology", () => {
+    const completedThroughClearance = [
+      "series_concept",
+      "volume_concept",
+      "records_access",
+      "research_charter",
+      "record_collection",
+      "repository_coverage_map",
+      "research_selection",
+      "source_notes",
+      "annotation",
+      "manuscript_review",
+      "clearance_procedure",
+      "eo13526_review",
+      "declassification_review",
+      "foreign_permissions",
+      "withholding_appeals",
+      "agency_referrals",
+      "advisory_monitoring"
+    ] satisfies FrusProductionBoardStepId[];
+    const phases = getFrusProductionPhaseReadout(boardWith(completedThroughClearance, "ai_annotation_review"));
+
+    expect(phases.find((phase) => phase.id === "clearance")).toMatchObject({ status: "complete", completed: 8, total: 8 });
+    expect(phases.find((phase) => phase.id === "editing")).toMatchObject({
+      status: "active",
+      completed: 0,
+      total: 6,
+      nextStep: { id: "ai_annotation_review", shortLabel: "AIR" }
+    });
+  });
 });

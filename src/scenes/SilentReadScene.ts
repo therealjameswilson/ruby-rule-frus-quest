@@ -413,6 +413,8 @@ export class SilentReadScene extends Phaser.Scene {
         color: PALETTE.goldStamp
       }).setOrigin(0.5, 0).setDepth(171));
       setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
+    } else if (!gameState.sceneProgress.aiAnnotationReviewComplete) {
+      setObjective("Editor's Labyrinth: run AI annotation review before carrying flags.");
     } else {
       setObjective("Editor's Labyrinth: route the mechanical flag to the editor desk.");
     }

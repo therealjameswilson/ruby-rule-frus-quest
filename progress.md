@@ -1480,3 +1480,23 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Required web-game Playwright client completed against `?scene=OfficeScene&role=compiler&name=Ruby`; the screenshot artifact remains black due to the known headless WebGL capture issue.
   - Direct Playwright text-state probe for OfficeScene reported `productionBoard.total: 35` and the first steps `series_concept`, `volume_concept`, `records_access`, `research_charter`, `record_collection`, `repository_coverage_map`, `research_selection`, `source_notes`.
   - Direct Playwright text-state probe for ArchiveScene reported `research_charter` complete with `sceneProgress.researchCharterComplete: 1`, `researchCharterStep: 3`, and no console/page errors.
+
+## 2026-06-16 AI Annotation Review promoted to the Production Board
+
+- Promoted the already-playable SilentReadScene AI Annotation Review SOP loop into `src/game/frusProductionBoard.ts` as `ai_annotation_review`, placed after HAC/process monitoring and before Editorial Methodology.
+- The new board step keeps StateChat terminal-only: it can flag mechanical annotation issues, while evidence-bound issues and final sign-off remain accountable human decisions.
+- `getProductionBoardReadout()` now passes `sceneProgress.aiAnnotationReviewComplete`; EndingScene deep links file the AI review log, and SilentReadScene deep links seed HAC oversight so the board can surface AI review as the active editing gate.
+- The editing phase readout now starts with AI Annotation Review before methodology, editorial treatment, typeflow, printer's-copy preparation, and typesetter proof.
+- Final `publication_30_year` completion now requires the AI review SOP through either `sceneProgress.aiAnnotationReviewComplete` or the backward-compatible SOP stamp.
+- Fixed the SilentReadScene editor-room objective so it says to run AI annotation review before carrying flags until the SOP is filed.
+- Regression coverage:
+  - Board order now includes `ai_annotation_review`.
+  - HAC completion exposes AI Annotation Review as the next active step and locks Editorial Methodology behind it.
+  - The editing phase begins with `AIR` and totals six steps.
+- Verified focused tests: `npm test -- src/game/aiAnnotationReview.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts src/game/finalPublicationCertification.test.ts` -> 4 files / 32 tests passed.
+- Verified full `npm test` -> 56 files / 271 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Restarted local dev server on `http://127.0.0.1:5173/`.
+  - Required web-game Playwright client completed against `?scene=SilentReadScene&role=proofreader&name=Sam`; the generated screenshot remains black due to the known headless WebGL artifact.
+  - Direct Playwright text-state probe for SilentReadScene reported `productionBoard.total: 36`, `ai_annotation_review` active, `advisory_monitoring` complete, `editorial_methodology` locked, active editing phase `AIR`, objective `Editor's Labyrinth: run AI annotation review before carrying flags.`, and no console/page errors.

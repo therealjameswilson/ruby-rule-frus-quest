@@ -55,6 +55,7 @@ function completeProductionState() {
     foreignGovernmentPermissionComplete: 1,
     withholdingAppealComplete: 1,
     senateHacReviewComplete: 1,
+    aiAnnotationReviewComplete: 1,
     editorialMethodologyComplete: 1,
     editorialTreatmentComplete: 1,
     typeflowOrderComplete: 1,

@@ -22,6 +22,7 @@ import {
 import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 import type { DanneItemId } from "./danneItemCatalog";
+import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
 import {
   crystalsEarned,
   EQUITY_CRYSTAL_STATUSES,
@@ -1900,6 +1901,7 @@ export function getProductionBoardReadout() {
     volumeFragments: [...gameState.volumeFragments],
     finalGatePublished: gameState.finalGateCertification?.status === "published",
     hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
+    aiAnnotationReviewComplete: Boolean(gameState.sceneProgress.aiAnnotationReviewComplete),
     annotationDraftingComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
     foreignGovernmentPermissionComplete: Boolean(gameState.sceneProgress.foreignGovernmentPermissionComplete),
     withholdingAppealComplete: Boolean(gameState.sceneProgress.withholdingAppealComplete),
@@ -2006,6 +2008,7 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.foreignGovernmentPermissionStep = 3;
     gameState.sceneProgress.withholdingAppealComplete = 1;
     gameState.sceneProgress.withholdingAppealStep = 3;
+    gameState.sceneProgress.senateHacReviewComplete = 1;
     awardProcessStamp("referral");
     addProcessItem("concurrence_slip");
     addProcessItem("review_folder");
@@ -2022,6 +2025,8 @@ export function seedProgressForScene(sceneName: string) {
     awardProcessStamp("proof");
     addProcessItem("proof_lens");
     addProcessItem("buckram_key");
+    gameState.sceneProgress.aiAnnotationReviewComplete = 1;
+    gameState.sceneProgress.aiAnnotationReviewStep = AI_ANNOTATION_REVIEW_PROMPTS.length;
     gameState.sceneProgress.editorialMethodologyComplete = 1;
     gameState.sceneProgress.editorialMethodologyStep = 4;
     gameState.sceneProgress.editorialTreatmentComplete = 1;

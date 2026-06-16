@@ -1,5 +1,6 @@
 import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
+import { AI_ANNOTATION_REVIEW_SOURCE_URL } from "./aiAnnotationReview";
 import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
 import { CHAPTER_RELEASE_STATUS_SOURCE_URL } from "./chapterReleaseStatus";
 import { CLEARANCE_PROCEDURE_SOURCE_URL } from "./clearanceProcedure";
@@ -50,6 +51,7 @@ export type FrusProductionBoardStepId =
   | "withholding_appeals"
   | "agency_referrals"
   | "advisory_monitoring"
+  | "ai_annotation_review"
   | "editorial_methodology"
   | "kellogg_editing"
   | "modern_typeflow_order"
@@ -81,6 +83,7 @@ export interface FrusProductionBoardContext {
   volumeFragments: readonly string[];
   finalGatePublished: boolean;
   hacReviewComplete: boolean;
+  aiAnnotationReviewComplete: boolean;
   annotationDraftingComplete: boolean;
   foreignGovernmentPermissionComplete: boolean;
   withholdingAppealComplete: boolean;
@@ -277,6 +280,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "HAC monitors compilation, editing, preparation, declassification procedures, 30-year classified samples, and annual findings.",
     sourceUrl: HAC_URL,
     gameplayTask: "File the HAC hearing record: process oversight, declassification procedure review, 30-year sample, annual findings, and Kellogg standards."
+  },
+  {
+    id: "ai_annotation_review",
+    label: "AI annotation review SOP",
+    shortLabel: "AIR",
+    sourceBasis: "FRUS must remain thorough, accurate, and reliable; AI/StateChat support can flag mechanical annotation issues, but evidence-bound and final decisions stay with accountable humans.",
+    sourceUrl: AI_ANNOTATION_REVIEW_SOURCE_URL,
+    gameplayTask: "Run the terminal-only AI annotation review SOP before carrying StateChat flags into human review stations."
   },
   {
     id: "editorial_methodology",
@@ -527,6 +538,11 @@ export function isFrusProductionBoardStepComplete(
         || hasAnyEquityResponse(context, (status) => RESOLVED_REVIEW_STATUSES.has(status));
     case "advisory_monitoring":
       return context.hacReviewComplete || stamps.has("sop");
+    case "ai_annotation_review":
+      return context.aiAnnotationReviewComplete
+        || stamps.has("sop")
+        || context.editorialMethodologyComplete
+        || context.editorialTreatmentComplete;
     case "editorial_methodology":
       return context.editorialMethodologyComplete;
     case "kellogg_editing":
@@ -579,6 +595,7 @@ export function isFrusProductionBoardStepComplete(
           && context.repositoryCoverageMapComplete
           && context.clearanceProcedureComplete
           && context.eo13526ReviewComplete
+          && (context.aiAnnotationReviewComplete || stamps.has("sop"))
           && context.frontMatterAssemblyComplete
           && context.readerAidRegistersComplete
           && context.indexDocketComplete
