@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Office wall FRUS phase board (2026-06-16):
+  - Refactored the Office hub wall chart from a dense 29-dot production tracker into six readable FRUS phase rows using `getFrusProductionPhaseReadout()`.
+  - The in-room board now shows short phase labels, completion ticks, active-phase highlighting, the current board step, and a gold progress underline while preserving the same state source as the pause/subscreen readout.
+  - Shifted the expanded board to the right side of the back wall so it reads as a distinct office reference chart rather than overlapping the wall map and archive banner.
+  - Verified focused tests: `npm test -- src/game/frusProductionPhases.test.ts src/game/frusProductionBoard.test.ts` (2 files / 21 tests pass).
+  - Verified full `npm test` (53 files / 256 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke at `?scene=OfficeScene&role=compiler&name=Ruby` reports `scene: "OfficeScene"`, `productionBoard.total: 29`, six phase summaries, active phase `PLAN 0/2`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - FRUS Production Board phase map (2026-06-16):
   - Added `src/game/frusProductionPhases.ts`, a typed phase layer that groups the 29 source-backed board gates into six readable production arcs: series/volume plan, research-selection-annotation, review/declassification, editorial/proof, final apparatus/certification, and print/digital/public release.
   - Extended `getAdventureSubscreenReadout()` so `window.render_game_to_text()` and the pause/subscreen now expose `productionBoard.phases` plus the active phase summary, not just individual board steps.

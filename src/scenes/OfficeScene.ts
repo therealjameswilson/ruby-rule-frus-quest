@@ -15,6 +15,7 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
+import { getFrusProductionPhaseReadout } from "../game/frusProductionPhases";
 import {
   DOCUMENT_SELECTION_PROMPT,
   evaluateDocumentSelectionAnswer
@@ -979,7 +980,7 @@ export class OfficeScene extends Phaser.Scene {
     this.add.rectangle(108, 60, 24, 14, color(PALETTE.mapWater)).setDepth(-13);
     this.add.rectangle(102, 58, 6, 4, color(PALETTE.openNetGreen)).setDepth(-12);
     this.add.rectangle(113, 62, 5, 5, color(PALETTE.archiveAmber)).setDepth(-12);
-    this.drawProductionBoard(148, 60);
+    this.drawProductionBoard(174, 60);
     // Hanging archive banner near the senate door.
     this.add.rectangle(128, 52, 18, 14, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
     this.add.rectangle(128, 50, 10, 6, color(PALETTE.goldStamp)).setDepth(-13);
@@ -987,32 +988,54 @@ export class OfficeScene extends Phaser.Scene {
 
   private drawProductionBoard(x: number, y: number) {
     const board = getProductionBoardReadout();
-    const columns = board.steps.length > 9 ? 5 : 3;
-    const rows = Math.ceil(board.steps.length / columns);
-    const boardWidth = columns * 9 + 12;
-    const boardHeight = rows * 7 + 18;
+    const phases = getFrusProductionPhaseReadout(board);
+    const boardWidth = 74;
+    const boardHeight = 50;
     this.add.rectangle(x, y, boardWidth, boardHeight, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
-    this.add.text(x, y - boardHeight / 2 + 5, "FRUS", {
+    this.add.rectangle(x, y - boardHeight / 2 + 6, boardWidth - 8, 7, color(PALETTE.deepRuby)).setDepth(-13);
+    this.add.text(x, y - boardHeight / 2 + 2, "FRUS PATH", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(-13);
-    board.steps.forEach((step, index) => {
-      const col = index % columns;
-      const row = Math.floor(index / columns);
-      const dotX = x - ((columns - 1) * 9) / 2 + col * 9;
-      const dotY = y - ((rows - 1) * 7) / 2 + row * 7 + 2;
-      const dotColor = step.complete
+    phases.forEach((phase, index) => {
+      const rowY = y - 13 + index * 6;
+      const rowColor = phase.status === "complete"
         ? PALETTE.openNetGreen
-        : step.status === "active"
+        : phase.status === "active"
           ? PALETTE.terminalCyan
           : PALETTE.stoneGray;
-      this.add.rectangle(dotX, dotY, 5, 5, color(dotColor)).setDepth(-13);
-      if (step.status === "active") {
-        this.add.rectangle(dotX, dotY, 7, 7).setStrokeStyle(1, color(PALETTE.white), 0.85).setDepth(-12);
+      if (phase.status === "active") {
+        this.add.rectangle(x, rowY + 1, boardWidth - 10, 6, color(PALETTE.black), 0.68)
+          .setStrokeStyle(1, color(PALETTE.white), 0.84)
+          .setDepth(-12);
       }
+      this.add.text(x - 31, rowY - 2, phase.shortLabel.slice(0, 4), {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: rowColor
+      }).setOrigin(0, 0).setDepth(-11);
+      for (let tick = 0; tick < phase.total; tick += 1) {
+        const tickX = x - 11 + tick * 4;
+        const tickFilled = tick < phase.completed;
+        const tickColor = tickFilled
+          ? PALETTE.goldStamp
+          : phase.status === "active"
+            ? PALETTE.terminalCyan
+            : PALETTE.stoneGray;
+        this.add.rectangle(tickX, rowY + 1, 2, 3, color(tickColor), tickFilled ? 1 : 0.54).setDepth(-11);
+      }
+      this.add.rectangle(x + 28, rowY + 1, 4, 4, color(rowColor), phase.status === "locked" ? 0.45 : 1).setDepth(-11);
     });
-    this.add.rectangle(x, y + boardHeight / 2 - 5, boardWidth - 12, 2, color(PALETTE.buckramRed)).setDepth(-13);
+    const activeStep = board.nextStep?.shortLabel ?? "DONE";
+    this.add.rectangle(x, y + boardHeight / 2 - 6, boardWidth - 10, 4, color(PALETTE.buckramRed)).setDepth(-13);
+    this.add.text(x, y + boardHeight / 2 - 10, activeStep, {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: board.nextStep ? PALETTE.terminalCyan : PALETTE.goldStamp
+    }).setOrigin(0.5, 0).setDepth(-12);
+    const completeWidth = Math.max(1, Math.round((board.completed / Math.max(1, board.total)) * (boardWidth - 12)));
+    this.add.rectangle(x - (boardWidth - 12) / 2 + completeWidth / 2, y + boardHeight / 2 - 4, completeWidth, 1, color(PALETTE.goldStamp), 0.7).setDepth(-12);
   }
 
   private drawOfficeProps() {
