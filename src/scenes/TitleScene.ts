@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { SCREENS } from "../assets/registry";
 import { CONTROLS_TEXT, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { resetGameState, setSceneState } from "../game/state";
 import { getSkipWarningPreference, setSkipWarningPreference } from "../game/warningSettings";
@@ -38,32 +39,34 @@ export class TitleScene extends Phaser.Scene {
     retroAudio.startMusic("TitleScene");
 
     this.cameras.main.setBackgroundColor(PALETTE.black);
-    this.drawWallpaper();
-    this.drawHeaderPlaque();
-    this.drawFilmstrip(TITLE_LAYOUT.topFilmstripY);
-    this.drawFilmstrip(TITLE_LAYOUT.bottomFilmstripY);
-    this.drawWorldMapBriefing();
-    this.drawTitlePlate();
-    this.drawRelicShelf(128, TITLE_LAYOUT.relicShelf.y);
+    if (!this.drawArtPackTitleScreen()) {
+      this.drawWallpaper();
+      this.drawHeaderPlaque();
+      this.drawFilmstrip(TITLE_LAYOUT.topFilmstripY);
+      this.drawFilmstrip(TITLE_LAYOUT.bottomFilmstripY);
+      this.drawWorldMapBriefing();
+      this.drawTitlePlate();
+      this.drawRelicShelf(128, TITLE_LAYOUT.relicShelf.y);
 
-    this.add
-      .text(128, TITLE_LAYOUT.pressStartY, "PRESS START TO VERIFY", {
-        fontFamily: "monospace",
-        fontSize: "8px",
-        color: PALETTE.terminalCyan
-      })
-      .setOrigin(0.5)
-      .setResolution(2);
-    this.add
-      .text(128, TITLE_LAYOUT.controlsY, CONTROLS_TEXT, {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.creamPaper,
-        align: "center",
-        lineSpacing: 2
-      })
-      .setOrigin(0.5)
-      .setResolution(2);
+      this.add
+        .text(128, TITLE_LAYOUT.pressStartY, "PRESS START TO VERIFY", {
+          fontFamily: "monospace",
+          fontSize: "8px",
+          color: PALETTE.terminalCyan
+        })
+        .setOrigin(0.5)
+        .setResolution(2);
+      this.add
+        .text(128, TITLE_LAYOUT.controlsY, CONTROLS_TEXT, {
+          fontFamily: "monospace",
+          fontSize: "6px",
+          color: PALETTE.creamPaper,
+          align: "center",
+          lineSpacing: 2
+        })
+        .setOrigin(0.5)
+        .setResolution(2);
+    }
     this.createSkipWarningToggle();
   }
 
@@ -77,6 +80,27 @@ export class TitleScene extends Phaser.Scene {
       return;
     }
     if (shouldStartTitle(input, this.time.now >= this.inputReadyAt)) this.start();
+  }
+
+  /**
+   * Prefer the repository-local 16-bit title card when it is loaded at native
+   * resolution. The procedural title stays as a fallback so deep links still
+   * boot if the art pack is absent.
+   */
+  private drawArtPackTitleScreen() {
+    const key = "title_screen_256x224" satisfies keyof typeof SCREENS;
+    if (!this.textures.exists(key)) return false;
+    const source = this.textures.get(key).getSourceImage() as { width?: number; height?: number };
+    if (source.width !== GAME_WIDTH || source.height !== 224) return false;
+
+    this.add.image(0, 0, key).setOrigin(0).setDepth(0);
+    this.add.rectangle(GAME_WIDTH / 2, 232, GAME_WIDTH, 16, color(PALETTE.black), 0.92).setDepth(38);
+    this.add.text(7, 226, "A / ENTER START", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan
+    }).setDepth(40);
+    return true;
   }
 
   /**

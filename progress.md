@@ -1614,3 +1614,17 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Runtime smoke:
   - Required web-game Playwright client completed against `?scene=TrueEndingScene&role=compiler&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
   - Direct Playwright text-state probe for TrueEndingScene reported `mode: "ending"`, objective `True ending review: certification packet still has visible open work.`, visible certificate title `FRUS VOLUME REVIEWED`, `Production Board 0/36`, and no console/page errors.
+
+## 2026-06-16 Native 16-bit title card promoted into the live title scene
+
+- Added the repository-local `title_screen_256x224.png` art-pack image to the typed screen registry so BootScene preloads it with the rest of the local art pack.
+- `TitleScene` now renders the native-resolution 16-bit title card at 1x when it is loaded and falls back to the procedural title screen if the art pack is missing.
+- Kept a small bottom command strip for `A / ENTER START` and the existing skip-warning toggle without cropping or scaling the 256x224 title art.
+- Regression coverage:
+  - `src/scenes/TitleScene.test.ts` proves the live title asset path points at the native 256x224 PNG, preventing accidental downscaled high-res use.
+- Verified focused tests: `npm test -- src/scenes/TitleScene.test.ts` -> 1 file / 8 tests passed.
+- Verified full `npm test` -> 57 files / 283 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Required web-game Playwright client completed against `?scene=TitleScene&role=compiler&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
+  - Direct Playwright probe reported `scene: "TitleScene"`, `mode: "title"`, `title_screen_256x224` loaded at `256x224`, no console/page errors, and pointer start advanced to `CharacterCreateScene`.

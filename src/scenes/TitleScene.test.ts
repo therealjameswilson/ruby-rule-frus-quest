@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { SCREENS, publicAssetPath } from "../assets/registry";
 import { GAME_HEIGHT } from "../game/constants";
 import { TITLE_LAYOUT, framedPlateBounds, shouldStartTitle } from "./titleLayout";
 
@@ -59,5 +61,15 @@ describe("TitleScene layout", () => {
   it("keeps the controls line on screen", () => {
     expect(TITLE_LAYOUT.controlsY).toBeLessThan(GAME_HEIGHT);
     expect(TITLE_LAYOUT.pressStartY).toBeLessThan(TITLE_LAYOUT.controlsY);
+  });
+
+  it("uses the native 256x224 art-pack title card for the live title background", () => {
+    const assetPath = `public/${publicAssetPath(SCREENS.title_screen_256x224)}`;
+    const png = readFileSync(assetPath);
+    const width = png.readUInt32BE(16);
+    const height = png.readUInt32BE(20);
+
+    expect(assetPath).toBe("public/assets/art-pack/screens/title_screen_256x224.png");
+    expect({ width, height }).toEqual({ width: 256, height: 224 });
   });
 });

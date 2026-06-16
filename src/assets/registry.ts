@@ -50,7 +50,8 @@ export const FRUS_VOLUMES = {
 } as const;
 
 export const SCREENS = {
-  frus_world_map: "art-pack/screens/frus_world_map.jpg"
+  frus_world_map: "art-pack/screens/frus_world_map.jpg",
+  title_screen_256x224: "art-pack/screens/title_screen_256x224.png"
 } as const;
 
 export const ALL_NEW_ART_REGISTRIES = {
