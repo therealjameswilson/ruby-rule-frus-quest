@@ -33,6 +33,12 @@ import {
   RECORD_COLLECTION_PROMPTS
 } from "../game/recordCollection";
 import {
+  evaluateRecordsAccessAnswer,
+  getRecordsAccessPrompt,
+  recordsAccessComplete,
+  RECORDS_ACCESS_PROMPTS
+} from "../game/recordsAccess";
+import {
   evaluateResearchCharterAnswer,
   getResearchCharterPrompt,
   researchCharterComplete,
@@ -427,7 +433,12 @@ export class OfficeScene extends Phaser.Scene {
       this.showVolumeConceptChoice();
       return;
     }
-    if (gameState.processStamps.includes("rule") || gameState.sceneProgress.researchCharterComplete) {
+    const recordsAccessFiled = Boolean(gameState.sceneProgress.recordsAccessComplete) || gameState.processStamps.includes("rule");
+    if (!recordsAccessFiled) {
+      this.showRecordsAccessChoice();
+      return;
+    }
+    if (gameState.sceneProgress.researchCharterComplete) {
       if (!gameState.sceneProgress.recordCollectionComplete) {
         this.showRecordCollectionChoice();
         return;
@@ -441,7 +452,8 @@ export class OfficeScene extends Phaser.Scene {
         return;
       }
       this.dialog.show("SCOPE CHARTER", [
-        "Golden Rule charter is already filed.",
+        "Scope charter is already filed.",
+        "20-year records access is already authorized.",
         "Collection notes are already logged.",
         "Candidate selection is already logged.",
         "Selection docket is already filed.",
@@ -478,18 +490,71 @@ export class OfficeScene extends Phaser.Scene {
       }
 
       gameState.sceneProgress.researchCharterComplete = 1;
-      awardProcessStamp("rule");
       setDocumentWorkflowState("telegram_001", "candidate", "scope charter identified first candidate set");
       setDocumentWorkflowState("doc-001", "candidate", "scope charter identified policy record");
-      addDocumentPoints(6, "scope charter and 20-year access plan filed");
-      retroAudio.stamp();
-      setLatestMessage("Golden Rule charter filed: scope, 20-year access, and Kellogg standards recorded.");
-      setObjective("Golden Rule filed. Return to the desk to collect source records.");
+      addDocumentPoints(4, "scope charter and Kellogg standards recorded");
+      retroAudio.confirm();
+      setLatestMessage("Scope charter filed: scope, source route, and Kellogg standards recorded.");
+      setObjective("Scope charter filed. Return to the desk to collect source records.");
       this.reliability.update();
       this.dialog.show("SCOPE CHARTER", [
         result.message,
-        "Golden Rule filed: plan scope, use 20-year access, preserve material facts.",
+        "Scope charter filed: plan scope, preserve source route, and protect material facts.",
         "Next: collect and note the records before candidate selection."
+      ]);
+    });
+  }
+
+  private showRecordsAccessChoice() {
+    if (!gameState.sceneProgress.volumeConceptComplete) {
+      this.showVolumeConceptChoice();
+      return;
+    }
+    if (gameState.sceneProgress.recordsAccessComplete || gameState.processStamps.includes("rule")) {
+      this.showResearchCharterChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.recordsAccessStep ?? 0;
+    const prompt = getRecordsAccessPrompt(step);
+    setObjective(`20-Year Access: answer ${step + 1}/${RECORDS_ACCESS_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateRecordsAccessAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `20-year records access shortcut: ${option.value}`);
+        this.toast.show("REVISE ACCESS ROUTE", this.player.position, "warn");
+        this.dialog.show("20-YEAR ACCESS", [
+          result.message,
+          "FRUS research needs human access to the pertinent record before selection narrows it."
+        ], () => this.showRecordsAccessChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.recordsAccessStep = nextStep;
+      if (!recordsAccessComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`20-year access check ${nextStep}/${RECORDS_ACCESS_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("20-YEAR ACCESS", [
+          result.message,
+          "Continue the access authorization before filing the Scope Charter."
+        ], () => this.showRecordsAccessChoice());
+        return;
+      }
+
+      gameState.sceneProgress.recordsAccessComplete = 1;
+      gameState.sceneProgress.recordsAccessStep = RECORDS_ACCESS_PROMPTS.length;
+      awardProcessStamp("rule");
+      addDocumentPoints(4, "20-year full records access authorized");
+      retroAudio.stamp();
+      setLatestMessage("20-year records access filed: full pertinent records route is open.");
+      setObjective("20-year access filed. Return to the desk to file the Scope Charter.");
+      this.reliability.update();
+      this.dialog.show("20-YEAR ACCESS", [
+        result.message,
+        "Golden Rule stamp earned: full and complete pertinent records access is authorized.",
+        "Next: file the Scope Charter before collection."
       ]);
     });
   }
@@ -586,18 +651,22 @@ export class OfficeScene extends Phaser.Scene {
       addDocumentPoints(4, "individual volume concept and strategy sources filed");
       retroAudio.confirm();
       setLatestMessage("Volume concept filed: parameters, strategy sources, and implementation depth recorded.");
-      setObjective("Volume concept filed. Return to the desk to file the Scope Charter.");
+      setObjective("Volume concept filed. Return to the desk to authorize 20-year records access.");
       this.reliability.update();
       this.dialog.show("VOLUME CONCEPT", [
         result.message,
         "Volume concept filed: parameters, histories/memoirs/accounts, and implementation depth are recorded.",
-        "Next: file the Scope Charter."
+        "Next: authorize the 20-year records-access route."
       ]);
     });
   }
 
   private showDocumentSelectionChoice() {
-    if (!gameState.processStamps.includes("rule") && !gameState.sceneProgress.researchCharterComplete) {
+    if (!gameState.sceneProgress.recordsAccessComplete && !gameState.processStamps.includes("rule")) {
+      this.dialog.show("CANDIDATE SELECTION", "Authorize 20-year records access before selecting documents.");
+      return;
+    }
+    if (!gameState.sceneProgress.researchCharterComplete) {
       this.dialog.show("CANDIDATE SELECTION", "File the Scope Charter before selecting documents.");
       return;
     }
@@ -695,7 +764,11 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private showRecordCollectionChoice() {
-    if (!gameState.processStamps.includes("rule") && !gameState.sceneProgress.researchCharterComplete) {
+    if (!gameState.sceneProgress.recordsAccessComplete && !gameState.processStamps.includes("rule")) {
+      this.dialog.show("COLLECTION", "Authorize 20-year records access before collecting records.");
+      return;
+    }
+    if (!gameState.sceneProgress.researchCharterComplete) {
       this.dialog.show("COLLECTION", "File the Scope Charter before collecting records.");
       return;
     }

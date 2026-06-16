@@ -2,7 +2,7 @@ import type { ChoiceOption } from "./types";
 
 export type ResearchCharterPromptId =
   | "scope_first"
-  | "records_access"
+  | "research_route"
   | "kellogg_selection";
 
 export interface ResearchCharterPrompt {
@@ -38,17 +38,17 @@ export const RESEARCH_CHARTER_PROMPTS = [
     failureMessage: "Scope cannot be guessed by a queue or the first folder on the cart."
   },
   {
-    id: "records_access",
-    question: "SCOPE CHARTER: WHAT ACCESS BASELINE MATTERS?",
+    id: "research_route",
+    question: "SCOPE CHARTER: WHAT SHOULD THE ROUTE PRESERVE?",
     options: [
-      { key: "A", label: "Full pertinent records access at 20 years", value: "twenty_year_access" },
-      { key: "B", label: "Only already-published public records", value: "public_only" },
-      { key: "C", label: "Wait until the 30-year deadline passes", value: "late_start" }
+      { key: "A", label: "Scope, source base, and hard questions", value: "scope_sources_questions" },
+      { key: "B", label: "Only documents already selected", value: "selected_only" },
+      { key: "C", label: "Only records that fit the cleanest story", value: "clean_story" }
     ],
-    correctValue: "twenty_year_access",
-    sourceBasis: "OH historians receive full and complete access to pertinent records at 20 years.",
-    successMessage: "Correct: the 20-year access point opens real research.",
-    failureMessage: "The access charter is neither public-only nor a late start."
+    correctValue: "scope_sources_questions",
+    sourceBasis: "OH historians plan scope and content before collecting and selecting records for a reliable volume.",
+    successMessage: "Correct: the charter preserves the route from scope to evidence.",
+    failureMessage: "The charter cannot start from a narrowed or cleaned-up record."
   },
   {
     id: "kellogg_selection",

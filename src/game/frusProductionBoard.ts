@@ -11,6 +11,7 @@ import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgressio
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
+import { RECORDS_ACCESS_SOURCE_URL } from "./recordsAccess";
 import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
@@ -57,6 +58,7 @@ export interface FrusProductionBoardContext {
   editorialMethodologyComplete: boolean;
   editorialTreatmentComplete: boolean;
   manuscriptReviewComplete: boolean;
+  recordsAccessComplete: boolean;
   recordCollectionComplete: boolean;
   selectionDocketComplete: boolean;
   seriesConceptComplete: boolean;
@@ -117,8 +119,8 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     label: "20-year records access",
     shortLabel: "20Y",
     sourceBasis: "OH historians get full and complete access to pertinent records at 20 years.",
-    sourceUrl: ABOUT_FRUS_URL,
-    gameplayTask: "Accept the Golden Rule charter and begin the Office Hub route."
+    sourceUrl: RECORDS_ACCESS_SOURCE_URL,
+    gameplayTask: "File the 20-year access authorization before the Scope Charter opens collection."
   },
   {
     id: "record_collection",
@@ -309,7 +311,7 @@ export function isFrusProductionBoardStepComplete(
     case "volume_concept":
       return context.volumeConceptComplete;
     case "records_access":
-      return stamps.has("rule") || volumeAtLeast(context, "research");
+      return context.recordsAccessComplete || stamps.has("rule") || volumeAtLeast(context, "research");
     case "record_collection":
       return context.recordCollectionComplete;
     case "research_selection":

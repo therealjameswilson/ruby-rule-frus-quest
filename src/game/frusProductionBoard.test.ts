@@ -26,6 +26,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     editorialMethodologyComplete: false,
     editorialTreatmentComplete: false,
     manuscriptReviewComplete: false,
+    recordsAccessComplete: false,
     recordCollectionComplete: false,
     selectionDocketComplete: false,
     seriesConceptComplete: false,
@@ -98,6 +99,23 @@ describe("FRUS production board", () => {
     expect(unplanned.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
     expect(seriesPlanned.nextStep?.id).toBe("volume_concept");
     expect(volumePlanned.nextStep?.id).toBe("record_collection");
+  });
+
+  it("keeps records access as its own gate after volume conceptualization", () => {
+    const missingAccess = getFrusProductionBoardReadout(context({
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
+    }));
+    const accessFiled = getFrusProductionBoardReadout(context({
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      recordsAccessComplete: true
+    }));
+
+    expect(missingAccess.nextStep?.id).toBe("records_access");
+    expect(missingAccess.steps.find((step) => step.id === "record_collection")?.status).toBe("locked");
+    expect(accessFiled.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
+    expect(accessFiled.nextStep?.id).toBe("record_collection");
   });
 
   it("does not let selected documents skip the collection pass", () => {

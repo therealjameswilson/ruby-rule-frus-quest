@@ -1696,6 +1696,7 @@ export function getProductionBoardReadout() {
     editorialMethodologyComplete: Boolean(gameState.sceneProgress.editorialMethodologyComplete),
     editorialTreatmentComplete: Boolean(gameState.sceneProgress.editorialTreatmentComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
+    recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
     selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
@@ -1734,6 +1735,8 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.seriesConceptStep = 3;
     gameState.sceneProgress.volumeConceptComplete = 1;
     gameState.sceneProgress.volumeConceptStep = 3;
+    gameState.sceneProgress.recordsAccessComplete = 1;
+    gameState.sceneProgress.recordsAccessStep = 3;
     gameState.sceneProgress.recordCollectionComplete = 1;
     gameState.sceneProgress.recordCollectionStep = 3;
     gameState.sceneProgress.selectionDocketComplete = 1;

@@ -1257,3 +1257,23 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - **Toast spec reused from PR #28:** 1600ms hold + 400ms fade (>1.5s), depth 1200 (above HUD/world), floats above the player, clamped clear of both HUD bands.
 - **Out of scope (caveat):** `ArchiveScene`, `GameplayMapScene`, and `DanneMapScene` still use the legacy hint path. `ArchiveScene`'s interact loop is combat/workflow-aware (enemy actions, source-note verification), so reusing the simple explore decision there would risk regressions; left untouched.
 - Tests: added `src/systems/interaction.test.ts` covering the decision logic and the live-verifiable band (hint shows but cannot act just outside strict radius; acts inside; nothing beyond hint radius). `npm test`: 13 files, 83 tests passed. `npm run build` passed.
+
+## 2026-06-15 First-class 20-year records access gate
+
+- Split the Office Hub early progression so `records_access` is no longer just implied by the Scope Charter. The desk route now flows: Series Plan -> Volume Concept -> 20-Year Access -> Scope Charter -> Collection -> Candidate Selection -> Selection Docket.
+- Added `src/game/recordsAccess.ts`, a Phaser-free gate module grounded in the official About FRUS page. It checks:
+  - 20-year access timing for OH historians;
+  - full and complete pertinent-records scope;
+  - the relationship between 20-year access and the 30-year publication clock.
+- Bad shortcuts now map to standards damage categories: public/easy narrowing (`omitted_material_fact`), machine readiness (`altered_text`), clean-story narrowing (`concealed_policy_defect`), and late-start deadline confusion (`missed_30_year_deadline`).
+- `src/game/frusProductionBoard.ts` now carries `recordsAccessComplete` in the board context; old saves with the Golden Rule stamp remain compatible, but new Office play records the milestone explicitly in `sceneProgress.recordsAccessComplete`.
+- `src/scenes/OfficeScene.ts` now awards the Golden Rule stamp on completing the 20-year access authorization. The Scope Charter now focuses on scope, source route, and Kellogg selection discipline instead of re-asking the access question.
+- Deep-link seeding in `src/game/state.ts` now marks records access complete for Guide/Archive/later scenes so QA shortcuts do not get trapped behind the new early gate.
+- Tests:
+  - Focused: `npm test -- src/game/recordsAccess.test.ts src/game/researchCharter.test.ts src/game/frusProductionBoard.test.ts` -> 3 files / 23 tests passed.
+  - Full: `npm test` -> 47 files / 229 tests passed.
+  - Build: `npm run build` passed.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5187/?scene=OfficeScene&role=compiler&name=Ruby`.
+  - Ran the required web-game Playwright client. `render_game_to_text()` reported `productionBoard.total: 20`, `nextStep.id: "series_concept"`, and `records_access` locked/incomplete with source URL `https://history.state.gov/historicaldocuments/about-frus`.
+  - Screenshot artifact `output/web-game/shot-0.png` is black due to the already-known headless WebGL capture issue; text state was valid and no console-error artifact was present.

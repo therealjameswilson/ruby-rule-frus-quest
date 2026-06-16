@@ -10,7 +10,7 @@ describe("research charter prompts", () => {
   it("keeps the source-backed Office Hub charter sequence stable", () => {
     expect(RESEARCH_CHARTER_PROMPTS.map((prompt) => prompt.id)).toEqual([
       "scope_first",
-      "records_access",
+      "research_route",
       "kellogg_selection"
     ]);
   });
