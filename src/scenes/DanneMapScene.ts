@@ -454,12 +454,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
       const added = addDanneItem("treaty-fragments", 1);
       if (added) retroAudio.danneItemPickup("Treaty Fragment II");
       else retroAudio.confirm();
-      setLatestMessage("HAC process review complete.");
+      setLatestMessage("HAC process review complete: oversight, 30-year sample, and annual findings filed.");
       adjustReliability(6, "HAC process monitoring answered cleanly");
       this.reliability.update();
       this.dialog.show("WITNESS TABLE", [
         result.message,
-        "HAC process review entered: compilation, declassification, and Kellogg standards are visible.",
+        "HAC process review entered: compilation, declassification, 30-year sampling, annual findings, and Kellogg standards are visible.",
         added ? "Treaty Fragment II is filed from the hearing record." : "Treaty Fragment II is already filed."
       ]);
     });

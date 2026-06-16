@@ -216,9 +216,9 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     id: "advisory_monitoring",
     label: "HAC and process monitoring",
     shortLabel: "HAC",
-    sourceBasis: "HAC monitors the overall compilation, editorial, preparation, and declassification process.",
+    sourceBasis: "HAC monitors compilation, editing, preparation, declassification procedures, 30-year classified samples, and annual findings.",
     sourceUrl: HAC_URL,
-    gameplayTask: "Run the SOP review: StateChat may flag mechanics, but humans decide evidence-bound issues."
+    gameplayTask: "File the HAC hearing record: process oversight, declassification procedure review, 30-year sample, annual findings, and Kellogg standards."
   },
   {
     id: "editorial_methodology",

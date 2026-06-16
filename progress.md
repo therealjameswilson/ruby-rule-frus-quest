@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- HAC 30-year sample and annual findings gate (2026-06-15):
+  - Strengthened the Senate Hearing HAC gate so it now covers the official process-monitoring scope from history.state.gov: compilation, editing, preparation, declassification procedures/guidelines, representative samples of documents still classified after 30 years, and annual findings/recommendations.
+  - Expanded `src/game/hacHearing.ts` from three prompts to five, adding `sample_thirty_year_records` and `annual_findings_report` as required human oversight answers before Treaty Fragment II is awarded.
+  - Updated the Production Board's `advisory_monitoring` source basis and gameplay task so the board reflects 30-year classified-record sampling and annual findings rather than a generic SOP review.
+  - Updated Senate Hearing completion copy in `DanneMapScene` so the player sees that the HAC record filed oversight, 30-year sampling, annual findings, and Kellogg standards.
+  - Verified focused tests: `npm test -- src/game/hacHearing.test.ts src/game/frusProductionBoard.test.ts` (2 files / 23 tests pass).
+  - Verified full `npm test`: 49 files / 239 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client smoke at `?scene=SenateHearingChamberScene&role=compiler&name=Ruby` reports the stronger HAC production-board source basis and gameplay task in `render_game_to_text()`, with no console/error artifact; generated headless WebGL screenshot remains black as previously documented.
 - DANN-E final publication certification guard (2026-06-15):
   - Fixed the DANN-E endgame route so a lawful boss defeat no longer unconditionally jumps to the true ending. DANN-E now publishes the certified FRUS volume through a shared state-layer final-publication helper, then unlocks `TrueEndingScene` only if the true-ending certificate is actually complete, including the full treaty record.
   - Centralized the last-mile publication side effects previously embedded in `EndingScene`: GPO segment assembly, GPO publication handoff, chapter status, digital release, public citation card, release calendar, published FRUS cover inventory, published final-gate certification, and document publication.

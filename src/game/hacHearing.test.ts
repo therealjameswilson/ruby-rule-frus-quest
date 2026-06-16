@@ -11,8 +11,17 @@ describe("HAC hearing prompts", () => {
     expect(HAC_HEARING_PROMPTS.map((prompt) => prompt.id)).toEqual([
       "monitor_process",
       "declassification_scope",
+      "sample_thirty_year_records",
+      "annual_findings_report",
       "kellogg_standard"
     ]);
+  });
+
+  it("models the official 30-year sample and annual-report oversight duties", () => {
+    expect(HAC_HEARING_PROMPTS.find((prompt) => prompt.id === "sample_thirty_year_records")?.sourceBasis)
+      .toContain("remaining classified after 30 years");
+    expect(HAC_HEARING_PROMPTS.find((prompt) => prompt.id === "annual_findings_report")?.sourceBasis)
+      .toContain("reports annually");
   });
 
   it("evaluates each correct answer and returns source-backed success text", () => {

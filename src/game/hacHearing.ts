@@ -3,6 +3,8 @@ import type { ChoiceOption } from "./types";
 export type HacHearingPromptId =
   | "monitor_process"
   | "declassification_scope"
+  | "sample_thirty_year_records"
+  | "annual_findings_report"
   | "kellogg_standard";
 
 export interface HacHearingPrompt {
@@ -29,13 +31,13 @@ export const HAC_HEARING_PROMPTS = [
     id: "monitor_process",
     question: "HAC REVIEW: WHAT DOES THE COMMITTEE MONITOR?",
     options: [
-      { key: "A", label: "Overall compilation and editorial process", value: "process" },
+      { key: "A", label: "Compilation, editing, preparation, and declassification process", value: "full_process" },
       { key: "B", label: "Every sentence in every volume", value: "line_edit" },
       { key: "C", label: "DANN-E shortcut queue", value: "machine_queue" }
     ],
-    correctValue: "process",
-    sourceBasis: "HAC monitors the overall compilation and editorial process, not line-editing every volume.",
-    successMessage: "Correct: monitor the process, surface problems, keep humans accountable.",
+    correctValue: "full_process",
+    sourceBasis: "HAC monitors the overall compilation, editorial, preparation, and declassification process.",
+    successMessage: "Correct: monitor the whole FRUS production process and keep humans accountable.",
     failureMessage: "HAC is not a line editor and DANN-E gets no shortcut."
   },
   {
@@ -50,6 +52,32 @@ export const HAC_HEARING_PROMPTS = [
     sourceBasis: "HAC reviews declassification procedures, guidelines, and representative document samples.",
     successMessage: "Correct: procedures and guidelines belong on the hearing record.",
     failureMessage: "Classification decisions remain human and equity-bound."
+  },
+  {
+    id: "sample_thirty_year_records",
+    question: "HAC REVIEW: WHICH RECORDS NEED REPRESENTATIVE SAMPLING?",
+    options: [
+      { key: "A", label: "Documents still classified after 30 years", value: "thirty_year_classified" },
+      { key: "B", label: "Only documents already cleared for publication", value: "already_cleared" },
+      { key: "C", label: "Only the easiest public documents", value: "easy_public" }
+    ],
+    correctValue: "thirty_year_classified",
+    sourceBasis: "HAC may review random samples of documents remaining classified after 30 years to evaluate agency declassification decisions.",
+    successMessage: "Correct: sample the still-classified 30-year record, not only easy public files.",
+    failureMessage: "Sampling only cleared or easy records hides the declassification problem."
+  },
+  {
+    id: "annual_findings_report",
+    question: "HAC REVIEW: HOW DOES PROCESS OVERSIGHT REACH THE PUBLIC RECORD?",
+    options: [
+      { key: "A", label: "File annual findings and recommendations", value: "annual_report" },
+      { key: "B", label: "Keep process problems off the record", value: "hide_findings" },
+      { key: "C", label: "Let StateChat write the findings alone", value: "statechat_report" }
+    ],
+    correctValue: "annual_report",
+    sourceBasis: "HAC reports annually to the Secretary of State on the state of the series and makes recommendations.",
+    successMessage: "Correct: file public-facing findings and recommendations from human oversight.",
+    failureMessage: "Process findings cannot be hidden or delegated to a terminal."
   },
   {
     id: "kellogg_standard",
