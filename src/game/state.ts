@@ -36,6 +36,7 @@ import { getFrusProductionBoardReadout } from "./frusProductionBoard";
 import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
 import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
+import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
 import type { QuestArchitectureContext } from "./questArchitecture";
@@ -1844,7 +1845,7 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.recordCollectionComplete = 1;
     gameState.sceneProgress.recordCollectionStep = 3;
     gameState.sceneProgress.selectionDocketComplete = 1;
-    gameState.sceneProgress.selectionDocketStep = 2;
+    gameState.sceneProgress.selectionDocketStep = SELECTION_DOCKET_PROMPTS.length;
     awardProcessStamp("rule");
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {

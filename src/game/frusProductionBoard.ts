@@ -152,9 +152,9 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     id: "research_selection",
     label: "Selection docket",
     shortLabel: "SEL",
-    sourceBasis: "Selection narrows collected records into a printed subset, while expanded annotation mitigates the series' selectivity.",
+    sourceBasis: "Selection narrows collected records into a printed subset, avoids reprinting Supplemental FRUS Submissions, and uses annotation to mitigate selectivity.",
     sourceUrl: SELECTION_DOCKET_SOURCE_URL,
-    gameplayTask: "Select a balanced candidate set and file the visible rationale for the printed subset."
+    gameplayTask: "Select a balanced candidate set, document the subset rationale, check supplemental-submission duplicates, and bridge omitted context in annotation."
   },
   {
     id: "source_notes",

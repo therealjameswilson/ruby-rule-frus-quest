@@ -3,6 +3,7 @@ import type { ChoiceOption } from "./types";
 
 export type SelectionDocketPromptId =
   | "subset_disclosure"
+  | "supplemental_deduplication"
   | "annotation_bridge";
 
 export interface SelectionDocketPrompt {
@@ -39,6 +40,19 @@ export const SELECTION_DOCKET_PROMPTS = [
     failureMessage: "The printed subset needs a visible selection rationale, not a claim of completeness."
   },
   {
+    id: "supplemental_deduplication",
+    question: "SELECTION DOCKET: WHAT ABOUT SUPPLEMENTAL FRUS SUBMISSIONS?",
+    options: [
+      { key: "A", label: "Do not reprint records already submitted to Congress", value: "avoid_reprint" },
+      { key: "B", label: "Reprint the duplicate because it is easy to clear", value: "reprint_duplicate" },
+      { key: "C", label: "Hide the duplicate source trail", value: "hide_duplicate" }
+    ],
+    correctValue: "avoid_reprint",
+    sourceBasis: "The stages page notes that documents already included in Supplemental FRUS Submissions to Congress were not printed again in regular volumes.",
+    successMessage: "Supplemental-submission check filed: duplicate documents stay visible in notes, not reprinted as filler.",
+    failureMessage: "The volume cannot reprint an easy duplicate or hide the supplemental source trail."
+  },
+  {
     id: "annotation_bridge",
     question: "SELECTION DOCKET: HOW DOES CONTEXT FOLLOW RECORDS NOT PRINTED?",
     options: [
@@ -70,7 +84,8 @@ export function evaluateSelectionDocketAnswer(
   let violation: StandardViolation | null = null;
   if (!ok) {
     if (value === "machine_summary") violation = "altered_text";
-    else if (value === "whole_record_claim" || value === "drop_context") violation = "omitted_material_fact";
+    else if (value === "whole_record_claim" || value === "drop_context" || value === "hide_duplicate") violation = "omitted_material_fact";
+    else if (value === "reprint_duplicate") violation = "altered_text";
     else violation = "concealed_policy_defect";
   }
   return {

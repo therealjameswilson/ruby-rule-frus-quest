@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Selection docket supplemental-submissions check (2026-06-15):
+  - Added a source-backed selection-docket gate for the official FRUS stages rule that documents already included in Supplemental FRUS Submissions to Congress were not printed again in regular volumes.
+  - Expanded `src/game/selectionDocket.ts` with `supplemental_deduplication`: the correct answer avoids reprinting duplicates while preserving the source trail in notes; wrong answers map to `altered_text` or `omitted_material_fact` standards damage.
+  - Updated the Production Board's `research_selection` source basis and gameplay task so selected subsets now require a visible rationale, a supplemental-submission duplicate check, and an annotation bridge for omitted context.
+  - Replaced the hardcoded later-scene selection docket seed count with `SELECTION_DOCKET_PROMPTS.length`, keeping QA deep links coherent as the selection gate grows.
+  - Verified focused tests: `npm test -- src/game/selectionDocket.test.ts src/game/frusProductionBoard.test.ts src/game/documentSelection.test.ts` (3 files / 25 tests pass).
+  - Verified full `npm test`: 49 files / 239 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client smoke at `?scene=OfficeScene&role=compiler&name=Ruby` reports the updated `research_selection` source basis and gameplay task in `render_game_to_text()`, with no console/error artifact; generated headless WebGL screenshot remains black as previously documented.
 - HAC 30-year sample and annual findings gate (2026-06-15):
   - Strengthened the Senate Hearing HAC gate so it now covers the official process-monitoring scope from history.state.gov: compilation, editing, preparation, declassification procedures/guidelines, representative samples of documents still classified after 30 years, and annual findings/recommendations.
   - Expanded `src/game/hacHearing.ts` from three prompts to five, adding `sample_thirty_year_records` and `annual_findings_report` as required human oversight answers before Treaty Fragment II is awarded.
