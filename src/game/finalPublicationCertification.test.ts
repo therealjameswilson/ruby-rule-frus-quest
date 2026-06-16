@@ -96,6 +96,27 @@ describe("final publication certification", () => {
     expect(getProductionBoardReadout().completed).toBe(getProductionBoardReadout().total);
   });
 
+  it("keeps equity crystals separate from cover fragments at the Buckram Gate", () => {
+    resetGameState();
+    completeProductionState();
+    const sbuAnnotation = gameState.documentCandidates.find((document) => document.id === "sbu_annotation_001");
+    if (sbuAnnotation) {
+      sbuAnnotation.equities = sbuAnnotation.equities.map((equity, index) => ({
+        ...equity,
+        response: index === 0 ? "cleared" : "referred"
+      }));
+      sbuAnnotation.reviewStatus = "referred";
+      sbuAnnotation.workflowState = "referred";
+    }
+
+    const readiness = getPublicationReadinessReadout();
+
+    expect(readiness.coverFragments).toMatchObject({ collected: 5, required: 5, missing: 0 });
+    expect(readiness.crystals).toMatchObject({ collected: 1, required: 2, missing: 1 });
+    expect(readiness.missingSummary).toContain("1 equity crystal");
+    expect(readiness.buckramGateOpen).toBe(false);
+  });
+
   it("unlocks the true ending only when the certified volume also has the complete treaty record", () => {
     resetGameState();
     completeProductionState();

@@ -306,6 +306,11 @@ export interface PublicationReadinessReadout {
     required: number;
     missing: ProcessStampId[];
   };
+  coverFragments: {
+    collected: number;
+    required: number;
+    missing: number;
+  };
   crystals: {
     collected: number;
     required: number;
@@ -1108,11 +1113,16 @@ export function getFinalGateReadiness() {
   const fragmentsNeeded = 5;
   const reliabilityMinimum = 70;
   const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
+  const equityCrystalsCollected = crystalsEarned(gameState.documentCandidates);
+  const equityCrystalsRequired = totalEquities(gameState.documentCandidates);
+  const missingEquityCrystals = Math.max(0, equityCrystalsRequired - equityCrystalsCollected);
+  const equityCrystalsReady = equityCrystalsRequired > 0 && missingEquityCrystals === 0;
   const reliabilityReady = gameState.reliability >= reliabilityMinimum;
   const buckramKeyHeld = hasProcessItem("buckram_key");
   const repositoryCoverageMapReady = Boolean(gameState.sceneProgress.repositoryCoverageMapComplete);
   const ready = missingStamps.length === 0
     && missingFragments === 0
+    && equityCrystalsReady
     && reliabilityReady
     && repositoryCoverageMapReady
     && publicationApparatus.complete
@@ -1124,6 +1134,10 @@ export function getFinalGateReadiness() {
     fragmentsCollected: gameState.volumeFragments.length,
     fragmentsNeeded,
     missingFragments,
+    equityCrystalsCollected,
+    equityCrystalsRequired,
+    missingEquityCrystals,
+    equityCrystalsReady,
     repositoryCoverageMapReady,
     reliability: gameState.reliability,
     reliabilityMinimum,
@@ -1160,14 +1174,18 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
     )) === index);
   const missingSummary = [
     ...readiness.missingStamps.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
-    ...(readiness.missingFragments ? [`${readiness.missingFragments} crystal${readiness.missingFragments === 1 ? "" : "s"}`] : []),
+    ...(readiness.missingEquityCrystals
+      ? [`${readiness.missingEquityCrystals} equity crystal${readiness.missingEquityCrystals === 1 ? "" : "s"}`]
+      : readiness.equityCrystalsRequired > 0 ? [] : ["Equity crystals"]),
+    ...(readiness.missingFragments ? [`${readiness.missingFragments} cover fragment${readiness.missingFragments === 1 ? "" : "s"}`] : []),
     ...(readiness.repositoryCoverageMapReady ? [] : ["Repository MAP"]),
     ...readiness.missingApparatus.map((component) => `Apparatus ${component.shortLabel}`),
     ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
     ...unresolved.map((standard) => standard.label)
   ];
-  const requiredUnits = readiness.requiredStamps.length + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 2;
+  const requiredUnits = readiness.requiredStamps.length + Math.max(1, readiness.equityCrystalsRequired) + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 2;
   const collectedUnits = (readiness.requiredStamps.length - readiness.missingStamps.length)
+    + Math.min(readiness.equityCrystalsCollected, Math.max(1, readiness.equityCrystalsRequired))
     + Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded)
     + (readiness.repositoryCoverageMapReady ? 1 : 0)
     + readiness.publicationApparatus.completed
@@ -1183,10 +1201,15 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
       required: readiness.requiredStamps.length,
       missing: [...readiness.missingStamps]
     },
-    crystals: {
+    coverFragments: {
       collected: Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded),
       required: readiness.fragmentsNeeded,
       missing: readiness.missingFragments
+    },
+    crystals: {
+      collected: readiness.equityCrystalsCollected,
+      required: readiness.equityCrystalsRequired,
+      missing: readiness.equityCrystalsRequired > 0 ? readiness.missingEquityCrystals : 1
     },
     standards: {
       unresolved,

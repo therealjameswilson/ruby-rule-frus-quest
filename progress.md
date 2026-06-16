@@ -1544,3 +1544,17 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Started local dev server on `http://127.0.0.1:5173/`.
   - Required web-game Playwright client completed against `?scene=ReferralVaultScene&role=declass_coordinator&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
   - Direct Playwright text-state probe for ReferralVaultScene reported crystal scope `earned: 0`, `total: 2`, only `sbu_annotation_001` in `byDocument`, `foreign_permissions` active, `agency_referrals` locked, and no console/page errors.
+
+## 2026-06-16 Buckram Gate readiness separates equity crystals from cover fragments
+
+- Updated `getPublicationReadinessReadout()` so final readiness now reports agency-equity `crystals` separately from ruby-cover `coverFragments`.
+- The Buckram Gate now requires cleared active equity crystals in addition to the five cover fragments, required process stamps, repository map, publication apparatus, reliability, Buckram Key, and clean standards ledger.
+- DANN-E's statutory clock `C` counter now reads declassification equity crystals rather than cover fragments, while the EndingScene checklist continues to show `FRAG` for the cover pieces.
+- Added a final-publication regression proving five cover fragments do not open the Buckram Gate when one active agency equity remains referred.
+- Verified focused tests: `npm test -- src/game/finalPublicationCertification.test.ts src/game/statutoryClock.test.ts src/game/standardsViolations.test.ts src/game/trueEndingCertificate.test.ts` -> 4 files / 17 tests passed.
+- Verified full `npm test` -> 56 files / 275 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5173/`.
+  - Required web-game Playwright client completed against `?scene=EndingScene&role=compiler&name=Ruby` with no input; the generated screenshot remains black due to the known headless WebGL artifact. A Space-input variant navigated during the state read, so the no-input route is the stable smoke for this scene.
+  - Direct Playwright text-state probe for EndingScene reported `crystals: 2/2`, `coverFragments: 5/5`, Buckram Key held, Buckram Gate still locked by publication apparatus only, and no console/page errors.
