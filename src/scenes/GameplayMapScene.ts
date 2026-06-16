@@ -7,6 +7,7 @@ import { browseFrusBookshelf } from "../game/frusBookshelf";
 import { logNaraCatalog } from "../game/naraCatalog";
 import { logFieldCableCollection } from "../game/recordCollection";
 import { checkRedZoneGate } from "../game/redZoneGate";
+import { checkWestWingNscGate } from "../game/westWingNsc";
 import {
   addDocumentPoints,
   addInventoryItem,
@@ -407,12 +408,7 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     if (action === "secret-service-gate") {
-      if (!gameState.sceneProgress.nsc_clearance) {
-        this.showMapDialog("SECRET SERVICE", "NSC clearance is required for the Situation Room.");
-        retroAudio.warning();
-        return;
-      }
-      this.showMapDialog("SECRET SERVICE", "Clearance confirmed. Proceed to the Situation Room.");
+      this.checkWestWingNscGate();
       return;
     }
     if (action === "vault-core") {
@@ -518,6 +514,31 @@ export class GameplayMapScene extends Phaser.Scene {
     setObjective(result.objective);
     setLatestMessage(result.message);
     this.showMapDialog("RED ZONE", [...result.pages]);
+  }
+
+  private checkWestWingNscGate() {
+    const result = checkWestWingNscGate({
+      alreadyCleared: Boolean(gameState.sceneProgress.nsc_clearance),
+      inventory: gameState.inventory,
+      repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete)
+    });
+
+    if (!result.ok) {
+      retroAudio.warning();
+      setObjective(result.objective);
+      setLatestMessage(result.message);
+      this.showMapDialog("SECRET SERVICE", [...result.pages]);
+      return;
+    }
+
+    if (result.shouldClearGate) gameState.sceneProgress.nsc_clearance = 1;
+    for (const item of result.itemsToAward) addInventoryItem(item);
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "White House and NSC source coverage certified");
+
+    retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("SECRET SERVICE", [...result.pages]);
   }
 
   private handleTriggers() {

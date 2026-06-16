@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- West Wing Situation Room source-coverage gate (2026-06-16):
+  - Added `src/game/westWingNsc.ts`, a Phaser-free rule module for the Secret Service / Situation Room gate, sourced to the official About FRUS source-base language naming White House, National Security Council, State, Defense, CIA, other agency, private, and published records.
+  - Replaced the static NSC clearance placeholder with a real source-coverage check: the gate opens after the NARA Source Index or repository coverage map proves White House/NSC records are being compared against the wider FRUS source base.
+  - The interaction now files `sceneProgress.nsc_clearance`, awards an `NSC Source Briefing`, grants 5 document points once, and remains repeat-safe for older saves missing the briefing item.
+  - Added deterministic tests in `src/game/westWingNsc.test.ts` for locked entry, NARA Source Index entry, repository map entry, and repeat-safe inventory recovery.
+  - Verified focused `npm test -- src/game/westWingNsc.test.ts`, full `npm test` (63 files / 309 tests pass), and `npm run build` (passes on rerun with the existing Vite chunk-size warning after one transient public-asset copy timeout).
+  - Required web-game client ran against `?scene=GameplayMapScene&map=west_wing&role=compiler&name=Ruby`; direct runtime probes confirmed locked and NARA Source Index-opened Situation Room states with no browser errors. Screenshot: `output/web-game/nsc-source-gate-smoke.png`.
 - NARA Red Zone declassification gate (2026-06-16):
   - Added `src/game/redZoneGate.ts`, a Phaser-free rule module for the NARA II Red Zone vault door, sourced to the E.O. 13526 FRUS preface language about release, concurrence, and accounting for withheld/excised material.
   - Replaced the static Red Zone placeholder with a real Clearance Token / E.O. review gate: locked interactions show the needed-token prompt; valid declassification authority opens the gate, files `sceneProgress.redZoneDeclassification`, and grants 4 document points once.
