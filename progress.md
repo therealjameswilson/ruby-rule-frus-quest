@@ -1568,3 +1568,12 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Regression coverage:
   - Three research pendants can be complete while network/referral/proof process gates remain locked.
   - Missing SOP is surfaced as a pendant blocker and blocks publication readiness.
+
+## 2026-06-16 Production Board source card exposed in play state
+
+- Added the active FRUS Production Board step's `sourceBasis` and `sourceUrl` to the ALttP-style adventure subscreen readout and therefore to `render_game_to_text()`.
+- The pause/subscreen panel now shows a compact `SOURCE: history.state.gov/...` line under the next board gate, while the Office Hub FRUS Production Board dialog includes a full `SOURCE:` page after the `WHY:` page.
+- This keeps every current gameplay task visibly tied to the official FRUS source path while preserving StateChat as terminal/system output only.
+- Regression coverage:
+  - `src/game/adventureSubscreen.test.ts` proves the active board task carries its source basis and URL through both `getAdventureSubscreenReadout()` and `renderGameToText()`.
+- Verified focused tests: `npm test -- src/game/adventureSubscreen.test.ts src/game/frusProductionBoard.test.ts` -> 2 files / 25 tests passed.

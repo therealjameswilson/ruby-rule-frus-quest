@@ -978,6 +978,9 @@ export class OfficeScene extends Phaser.Scene {
       next
         ? `WHY: ${next.sourceBasis}`
         : "The volume is ready only if the record remains complete and standards-clean.",
+      next
+        ? `SOURCE:\n${next.sourceUrl}`
+        : "SOURCE:\nhttps://history.state.gov/historicaldocuments/about-frus",
       coveragePage,
       ...statusPages
     ]);

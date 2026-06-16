@@ -237,6 +237,10 @@ export class InventoryOverlay {
       .map((pendant) => `${pendant.label}:${pendant.acquired ? "OK" : "--"}`)
       .join(" ");
     const boardNext = subscreen.productionBoard.nextStep?.shortLabel ?? "DONE";
+    const boardSource = subscreen.productionBoard.nextStep?.sourceUrl
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      ?? "history.state.gov";
     const activePhase = subscreen.productionBoard.activePhase;
     const phaseSummary = activePhase
       ? `${activePhase.shortLabel} ${activePhase.completed}/${activePhase.total}`
@@ -248,6 +252,7 @@ export class InventoryOverlay {
     ].join("\n"));
     this.body.setText([
       `NEXT BOARD: ${subscreen.productionBoard.nextStep?.label.toUpperCase() ?? "CERTIFY BUCKRAM GATE"}`,
+      `SOURCE: ${boardSource}`,
       "DUNGEON MAP / KEYS",
       dungeons,
       "",

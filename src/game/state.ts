@@ -349,6 +349,8 @@ export interface AdventureSubscreenReadout {
       shortLabel: string;
       label: string;
       gameplayTask: string;
+      sourceBasis: string;
+      sourceUrl: string;
       status: FrusProductionBoardStatus;
     } | null;
     steps: Array<{
@@ -1796,6 +1798,8 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
             shortLabel: board.nextStep.shortLabel,
             label: board.nextStep.label,
             gameplayTask: board.nextStep.gameplayTask,
+            sourceBasis: board.nextStep.sourceBasis,
+            sourceUrl: board.nextStep.sourceUrl,
             status: board.nextStep.status
           }
         : null,
