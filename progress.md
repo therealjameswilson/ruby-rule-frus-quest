@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Policy coverage audit gate (2026-06-16):
+  - Added `src/game/policyCoverageAudit.ts`, a Phaser-free rules module based on the official About FRUS mandate that the series be thorough, accurate, and reliable while omitting no major facts and concealing no policy defects.
+  - Inserted `policy_coverage_audit` (`AUD`) into the Production Board after `research_selection` and before `source_notes`, making the Office Scope / Selection Desk certify major decisions, material facts, and policy-defect evidence before the Archive Guide opens source-note verification.
+  - Wired the Office desk so Selection Docket completion now hands off to the coverage audit; wrong shortcuts debit standards reliability as omitted material facts, concealed policy defects, or altered text.
+  - Preserved later-scene deep-link coherence by seeding `policyCoverageAuditComplete` for Guide/Archive and downstream scenes.
+  - Verified focused tests: `npm test -- src/game/policyCoverageAudit.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts` (3 files / 32 tests pass).
 - Two-pass manuscript review board gates (2026-06-16):
   - Split the Production Board's single manuscript-review bead into three source-backed gates that match the existing FRUS Cart prompt loop: `manuscript_review` (review scope), `front_line_recommendations` (first-pass amendment recommendations), and `general_editor_assessment` (General Editor / series assessment).
   - Preserved old-save compatibility: `sceneProgress.manuscriptReviewComplete` still completes all three gates, while live play now exposes partial progress from `sceneProgress.manuscriptReviewStep`.

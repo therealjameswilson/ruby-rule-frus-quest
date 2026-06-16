@@ -41,6 +41,7 @@ import {
 } from "./frusProductionBoard";
 import { getFrusProductionPhaseReadout, type FrusProductionPhaseId } from "./frusProductionPhases";
 import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
+import { POLICY_COVERAGE_AUDIT_PROMPTS } from "./policyCoverageAudit";
 import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
 import { PUBLICATION_FUNDING_PROMPTS } from "./publicationFundingQueue";
 import { READER_AID_REGISTER_PROMPTS } from "./readerAidRegisters";
@@ -1971,6 +1972,7 @@ export function getProductionBoardReadout() {
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
     repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
     selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
+    policyCoverageAuditComplete: Boolean(gameState.sceneProgress.policyCoverageAuditComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
     volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete),
     chapterReleaseComplete: Boolean(gameState.sceneProgress.chapterReleaseComplete),
@@ -2028,6 +2030,8 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.repositoryCoverageMapStep = REPOSITORY_COVERAGE_MAP_PROMPTS.length;
     gameState.sceneProgress.selectionDocketComplete = 1;
     gameState.sceneProgress.selectionDocketStep = SELECTION_DOCKET_PROMPTS.length;
+    gameState.sceneProgress.policyCoverageAuditComplete = 1;
+    gameState.sceneProgress.policyCoverageAuditStep = POLICY_COVERAGE_AUDIT_PROMPTS.length;
     awardProcessStamp("rule");
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {

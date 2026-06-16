@@ -19,6 +19,7 @@ import { KELLOGG_CERTIFICATION_SOURCE_URL } from "./kelloggCertification";
 import { MANUSCRIPT_REVIEW_SOURCE_URL, manuscriptReviewPromptComplete, type ManuscriptReviewPromptId } from "./manuscriptReview";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { PUBLICATION_FUNDING_SOURCE_URL } from "./publicationFundingQueue";
+import { POLICY_COVERAGE_AUDIT_SOURCE_URL } from "./policyCoverageAudit";
 import { READER_AID_REGISTERS_SOURCE_URL } from "./readerAidRegisters";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { RECORDS_ACCESS_SOURCE_URL } from "./recordsAccess";
@@ -43,6 +44,7 @@ export type FrusProductionBoardStepId =
   | "record_collection"
   | "repository_coverage_map"
   | "research_selection"
+  | "policy_coverage_audit"
   | "source_notes"
   | "annotation"
   | "manuscript_review"
@@ -106,6 +108,7 @@ export interface FrusProductionBoardContext {
   recordCollectionComplete: boolean;
   repositoryCoverageMapComplete: boolean;
   selectionDocketComplete: boolean;
+  policyCoverageAuditComplete: boolean;
   seriesConceptComplete: boolean;
   volumeConceptComplete: boolean;
   chapterReleaseComplete: boolean;
@@ -205,6 +208,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "Selection narrows collected records into a printed subset, avoids reprinting Supplemental FRUS Submissions, and uses annotation to mitigate selectivity.",
     sourceUrl: SELECTION_DOCKET_SOURCE_URL,
     gameplayTask: "Select a balanced candidate set, document the subset rationale, check supplemental-submission duplicates, and bridge omitted context in annotation."
+  },
+  {
+    id: "policy_coverage_audit",
+    label: "Policy coverage audit",
+    shortLabel: "AUD",
+    sourceBasis: "Before source-note work, the selected set must still satisfy the FRUS mandate for a thorough, accurate, reliable record with no major omissions or concealed policy defects.",
+    sourceUrl: POLICY_COVERAGE_AUDIT_SOURCE_URL,
+    gameplayTask: "File the Kellogg coverage audit at the Scope / Selection Desk before the Archive Guide opens source-note verification."
   },
   {
     id: "source_notes",
@@ -545,6 +556,12 @@ export function isFrusProductionBoardStepComplete(
       return (context.selectionDocketComplete && context.documentPoints >= 12 && hasSelectedDocument(context) && researchCoverageComplete(context.documentCandidates))
         || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified", "annotation_needed"])
         || volumeAtLeast(context, "candidate_selection");
+    case "policy_coverage_audit":
+      return context.policyCoverageAuditComplete
+        || context.sourceNoteProvenanceComplete
+        || stamps.has("archive")
+        || context.heldProcessItems.has("citation_stamp")
+        || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified", "annotation_needed", "ready_for_review"]);
     case "source_notes":
       return context.sourceNoteProvenanceComplete
         || stamps.has("archive")
@@ -640,6 +657,7 @@ export function isFrusProductionBoardStepComplete(
           && (context.sourceNoteProvenanceComplete || stamps.has("archive"))
           && (context.researchCharterComplete || context.recordCollectionComplete)
           && context.repositoryCoverageMapComplete
+          && context.policyCoverageAuditComplete
           && context.clearanceProcedureComplete
           && context.eo13526ReviewComplete
           && (context.aiAnnotationReviewComplete || stamps.has("sop"))

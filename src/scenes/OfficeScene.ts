@@ -26,6 +26,12 @@ import {
   selectionDocketComplete,
   SELECTION_DOCKET_PROMPTS
 } from "../game/selectionDocket";
+import {
+  evaluatePolicyCoverageAuditAnswer,
+  getPolicyCoverageAuditPrompt,
+  policyCoverageAuditComplete,
+  POLICY_COVERAGE_AUDIT_PROMPTS
+} from "../game/policyCoverageAudit";
 import { getResearchCoverageReadout } from "../game/researchCoverage";
 import {
   evaluateRecordCollectionAnswer,
@@ -463,6 +469,10 @@ export class OfficeScene extends Phaser.Scene {
         this.showSelectionDocketChoice();
         return;
       }
+      if (!gameState.sceneProgress.policyCoverageAuditComplete) {
+        this.showPolicyCoverageAuditChoice();
+        return;
+      }
       this.dialog.show("SCOPE CHARTER", [
         "Scope charter is already filed.",
         "20-year records access is already authorized.",
@@ -470,6 +480,7 @@ export class OfficeScene extends Phaser.Scene {
         "Repository coverage map is already filed.",
         "Candidate selection is already logged.",
         "Selection docket is already filed.",
+        "Policy coverage audit is already filed.",
         "Next: verify source notes with the Archive Guide."
       ]);
       return;
@@ -770,11 +781,67 @@ export class OfficeScene extends Phaser.Scene {
       addDocumentPoints(4, "selection docket and annotation bridge filed");
       retroAudio.confirm();
       setLatestMessage("Selection docket filed: selected subset and annotation bridge are visible.");
-      setObjective("Selection docket filed. Enter the Archive Guide to verify source notes.");
+      setObjective("Selection docket filed. Return to the desk for the policy coverage audit.");
       this.reliability.update();
       this.dialog.show("SELECTION DOCKET", [
         result.message,
-        "The volume can now move from selection into source-note verification.",
+        "The volume now needs a Kellogg coverage audit before source-note verification.",
+        "Next: certify that major decisions, material facts, and hard policy defects are not hidden."
+      ]);
+    });
+  }
+
+  private showPolicyCoverageAuditChoice() {
+    if (!gameState.sceneProgress.selectionDocketComplete) {
+      this.showSelectionDocketChoice();
+      return;
+    }
+    if (gameState.sceneProgress.policyCoverageAuditComplete) {
+      this.dialog.show("POLICY COVERAGE AUDIT", [
+        "Policy coverage audit is already filed.",
+        "Major decisions, material facts, and policy defects remain visible."
+      ]);
+      return;
+    }
+
+    const step = gameState.sceneProgress.policyCoverageAuditStep ?? 0;
+    const prompt = getPolicyCoverageAuditPrompt(step);
+    setObjective(`Coverage Audit: answer ${step + 1}/${POLICY_COVERAGE_AUDIT_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluatePolicyCoverageAuditAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Policy coverage audit shortcut: ${option.value}`);
+        this.toast.show("REVISE COVERAGE AUDIT", this.player.position, "warn");
+        this.dialog.show("POLICY COVERAGE AUDIT", [
+          result.message,
+          "The selected set still has to prove it is thorough, accurate, reliable, and not hiding defects."
+        ], () => this.showPolicyCoverageAuditChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.policyCoverageAuditStep = nextStep;
+      if (!policyCoverageAuditComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Coverage audit check ${nextStep}/${POLICY_COVERAGE_AUDIT_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("POLICY COVERAGE AUDIT", [
+          result.message,
+          "Continue the audit before moving to source-note verification."
+        ], () => this.showPolicyCoverageAuditChoice());
+        return;
+      }
+
+      gameState.sceneProgress.policyCoverageAuditComplete = 1;
+      gameState.sceneProgress.policyCoverageAuditStep = POLICY_COVERAGE_AUDIT_PROMPTS.length;
+      addDocumentPoints(5, "policy coverage audit filed");
+      retroAudio.confirm();
+      setLatestMessage("Policy coverage audit filed: major decisions, material facts, and policy defects stay visible.");
+      setObjective("Coverage audit filed. Enter the Archive Guide to verify source notes.");
+      this.reliability.update();
+      this.dialog.show("POLICY COVERAGE AUDIT", [
+        result.message,
+        "The selected set is now certified against major omissions and concealed policy defects.",
         "Next: verify source notes with the Archive Guide."
       ]);
     });

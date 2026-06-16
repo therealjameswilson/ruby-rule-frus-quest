@@ -38,6 +38,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     recordCollectionComplete: false,
     repositoryCoverageMapComplete: false,
     selectionDocketComplete: false,
+    policyCoverageAuditComplete: false,
     seriesConceptComplete: false,
     volumeConceptComplete: false,
     chapterReleaseComplete: false,
@@ -113,6 +114,7 @@ const COMPLETE_BEFORE_TYPEFLOW = {
   recordCollectionComplete: true,
   repositoryCoverageMapComplete: true,
   selectionDocketComplete: true,
+  policyCoverageAuditComplete: true,
   seriesConceptComplete: true,
   volumeConceptComplete: true
 } as const;
@@ -143,6 +145,7 @@ describe("FRUS production board", () => {
       "record_collection",
       "repository_coverage_map",
       "research_selection",
+      "policy_coverage_audit",
       "source_notes",
       "annotation",
       "manuscript_review",
@@ -313,6 +316,7 @@ describe("FRUS production board", () => {
       recordCollectionComplete: true,
       repositoryCoverageMapComplete: true,
       selectionDocketComplete: true,
+      policyCoverageAuditComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
@@ -349,6 +353,7 @@ describe("FRUS production board", () => {
       recordCollectionComplete: true,
       repositoryCoverageMapComplete: true,
       selectionDocketComplete: true,
+      policyCoverageAuditComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
@@ -652,6 +657,7 @@ describe("FRUS production board", () => {
       recordCollectionComplete: true,
       repositoryCoverageMapComplete: true,
       selectionDocketComplete: true,
+      policyCoverageAuditComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
@@ -663,6 +669,7 @@ describe("FRUS production board", () => {
       recordCollectionComplete: true,
       repositoryCoverageMapComplete: true,
       selectionDocketComplete: true,
+      policyCoverageAuditComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
@@ -671,6 +678,42 @@ describe("FRUS production board", () => {
     expect(sourceMissing.steps.find((step) => step.id === "annotation")?.status).toBe("locked");
     expect(sourceFiled.steps.find((step) => step.id === "source_notes")?.complete).toBe(true);
     expect(sourceFiled.nextStep?.id).toBe("annotation");
+  });
+
+  it("requires a policy coverage audit after the selection docket and before source notes", () => {
+    const selectedDocuments = balancedSelectedDocuments().map((document) => ({
+      ...document,
+      workflowState: "selected" as const,
+      citationComplete: false,
+      annotationNeeded: true
+    }));
+    const auditMissing = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      documentCandidates: selectedDocuments,
+      documentPoints: 24,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      selectionDocketComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
+    }));
+    const auditFiled = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      documentCandidates: selectedDocuments,
+      documentPoints: 24,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      selectionDocketComplete: true,
+      policyCoverageAuditComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
+    }));
+
+    expect(auditMissing.steps.find((step) => step.id === "research_selection")?.complete).toBe(true);
+    expect(auditMissing.nextStep?.id).toBe("policy_coverage_audit");
+    expect(auditMissing.steps.find((step) => step.id === "source_notes")?.status).toBe("locked");
+    expect(auditFiled.steps.find((step) => step.id === "policy_coverage_audit")?.complete).toBe(true);
+    expect(auditFiled.nextStep?.id).toBe("source_notes");
   });
 
   it("requires every manuscript review pass before the clearance procedure lane opens", () => {
@@ -763,6 +806,7 @@ describe("FRUS production board", () => {
       recordCollectionComplete: true,
       repositoryCoverageMapComplete: true,
       selectionDocketComplete: true,
+      policyCoverageAuditComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
@@ -990,6 +1034,7 @@ describe("FRUS production board", () => {
       ...notReady,
       volumeFragments: ["A", "B", "C", "D", "E"],
       repositoryCoverageMapComplete: true,
+      policyCoverageAuditComplete: true,
       clearanceProcedureComplete: true,
       eo13526ReviewComplete: true
     });
