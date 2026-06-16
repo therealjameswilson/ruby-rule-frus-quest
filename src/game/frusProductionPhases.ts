@@ -51,8 +51,17 @@ export const FRUS_PRODUCTION_PHASES = [
     id: "clearance",
     label: "Review and declassification",
     shortLabel: "CLR",
-    sourceBasis: "Review the manuscript and resolve national-security, foreign-government, agency-equity, and HAC oversight issues.",
-    stepIds: ["manuscript_review", "declassification_review", "foreign_permissions", "withholding_appeals", "agency_referrals", "advisory_monitoring"]
+    sourceBasis: "Review the manuscript, separate clearance lanes, apply E.O. 13526, and resolve national-security, foreign-government, agency-equity, and HAC oversight issues.",
+    stepIds: [
+      "manuscript_review",
+      "clearance_procedure",
+      "eo13526_review",
+      "declassification_review",
+      "foreign_permissions",
+      "withholding_appeals",
+      "agency_referrals",
+      "advisory_monitoring"
+    ]
   },
   {
     id: "editing",

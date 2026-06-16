@@ -29,6 +29,8 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     typesettingPreparationComplete: false,
     typesetterProofComplete: false,
     manuscriptReviewComplete: false,
+    clearanceProcedureComplete: false,
+    eo13526ReviewComplete: false,
     recordsAccessComplete: false,
     recordCollectionComplete: false,
     repositoryCoverageMapComplete: false,
@@ -86,6 +88,8 @@ const COMPLETE_BEFORE_TYPEFLOW = {
   editorialMethodologyComplete: true,
   editorialTreatmentComplete: true,
   manuscriptReviewComplete: true,
+  clearanceProcedureComplete: true,
+  eo13526ReviewComplete: true,
   recordsAccessComplete: true,
   recordCollectionComplete: true,
   repositoryCoverageMapComplete: true,
@@ -122,6 +126,8 @@ describe("FRUS production board", () => {
       "source_notes",
       "annotation",
       "manuscript_review",
+      "clearance_procedure",
+      "eo13526_review",
       "declassification_review",
       "foreign_permissions",
       "withholding_appeals",
@@ -537,7 +543,7 @@ describe("FRUS production board", () => {
     expect(annotated.nextStep?.id).toBe("manuscript_review");
   });
 
-  it("requires explicit manuscript review before the declassification board step opens", () => {
+  it("requires explicit manuscript review before the clearance procedure lane opens", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
     documents[2] = {
       ...documents[2],
@@ -569,9 +575,63 @@ describe("FRUS production board", () => {
     }));
 
     expect(unreviewed.nextStep?.id).toBe("manuscript_review");
-    expect(unreviewed.steps.find((step) => step.id === "declassification_review")?.status).toBe("locked");
+    expect(unreviewed.steps.find((step) => step.id === "clearance_procedure")?.status).toBe("locked");
     expect(reviewed.steps.find((step) => step.id === "manuscript_review")?.complete).toBe(true);
-    expect(reviewed.nextStep?.id).toBe("declassification_review");
+    expect(reviewed.nextStep?.id).toBe("clearance_procedure");
+  });
+
+  it("requires clearance procedure and E.O. 13526 review before the declassification token gate", () => {
+    const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
+    documents[2] = {
+      ...documents[2],
+      workflowState: "citation_verified",
+      citationComplete: true
+    };
+    const needsLane = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 20,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true
+    }));
+    const needsEo = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 20,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true,
+      clearanceProcedureComplete: true
+    }));
+    const needsDecision = getFrusProductionBoardReadout(context({
+      processStamps: ["rule", "archive"],
+      documentCandidates: documents,
+      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      documentPoints: 20,
+      annotationDraftingComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true,
+      clearanceProcedureComplete: true,
+      eo13526ReviewComplete: true
+    }));
+
+    expect(needsLane.nextStep?.id).toBe("clearance_procedure");
+    expect(needsEo.steps.find((step) => step.id === "clearance_procedure")?.complete).toBe(true);
+    expect(needsEo.nextStep?.id).toBe("eo13526_review");
+    expect(needsDecision.steps.find((step) => step.id === "eo13526_review")?.complete).toBe(true);
+    expect(needsDecision.nextStep?.id).toBe("declassification_review");
   });
 
   it("can complete HAC monitoring through the hearing even before the SOP stamp", () => {
@@ -710,7 +770,9 @@ describe("FRUS production board", () => {
     const ready = context({
       ...notReady,
       volumeFragments: ["A", "B", "C", "D", "E"],
-      repositoryCoverageMapComplete: true
+      repositoryCoverageMapComplete: true,
+      clearanceProcedureComplete: true,
+      eo13526ReviewComplete: true
     });
     const typeflowFiled = context({
       ...ready,

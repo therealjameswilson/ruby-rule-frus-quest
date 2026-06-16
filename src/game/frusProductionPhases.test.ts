@@ -74,7 +74,7 @@ describe("FRUS production phase readout", () => {
     expect(phases.find((phase) => phase.id === "clearance")).toMatchObject({
       status: "active",
       completed: 0,
-      total: 6,
+      total: 8,
       nextStep: { id: "manuscript_review", shortLabel: "REV" }
     });
   });

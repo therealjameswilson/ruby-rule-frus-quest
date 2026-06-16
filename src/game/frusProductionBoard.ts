@@ -2,6 +2,7 @@ import type { ProcessItemId, ProcessStampId } from "./constants";
 import type { DocumentCandidate, ReviewStatus, VolumeWorkflowState } from "./types";
 import { ANNOTATION_DRAFTING_SOURCE_URL } from "./annotationDrafting";
 import { CHAPTER_RELEASE_STATUS_SOURCE_URL } from "./chapterReleaseStatus";
+import { CLEARANCE_PROCEDURE_SOURCE_URL } from "./clearanceProcedure";
 import { DIGITAL_RELEASE_SOURCE_URL } from "./digitalRelease";
 import { EDITORIAL_METHODOLOGY_SOURCE_URL } from "./editorialMethodology";
 import { EDITORIAL_TREATMENT_SOURCE_URL } from "./editorialTreatment";
@@ -40,6 +41,8 @@ export type FrusProductionBoardStepId =
   | "source_notes"
   | "annotation"
   | "manuscript_review"
+  | "clearance_procedure"
+  | "eo13526_review"
   | "declassification_review"
   | "foreign_permissions"
   | "withholding_appeals"
@@ -85,6 +88,8 @@ export interface FrusProductionBoardContext {
   typesettingPreparationComplete: boolean;
   typesetterProofComplete: boolean;
   manuscriptReviewComplete: boolean;
+  clearanceProcedureComplete: boolean;
+  eo13526ReviewComplete: boolean;
   recordsAccessComplete: boolean;
   recordCollectionComplete: boolean;
   repositoryCoverageMapComplete: boolean;
@@ -205,6 +210,22 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "FRUS manuscripts receive human review for completeness, cohesion, concision, content appropriateness, and annotation accuracy.",
     sourceUrl: FRUS_STAGES_URL,
     gameplayTask: "Run the FRUS Cart manuscript review: first-pass recommendations, then series assessment."
+  },
+  {
+    id: "clearance_procedure",
+    label: "Clearance procedure lane",
+    shortLabel: "LANE",
+    sourceBasis: "Declassification review became a separate accountable function, with agency-equity lanes routed to responsible reviewers.",
+    sourceUrl: CLEARANCE_PROCEDURE_SOURCE_URL,
+    gameplayTask: "Separate compilation from clearance review, route the correct era lane, and map agency equities before applying the release standard."
+  },
+  {
+    id: "eo13526_review",
+    label: "E.O. 13526 release review",
+    shortLabel: "EO",
+    sourceBasis: "Reviewers apply E.O. 13526 by releasing all information subject only to current national security requirements, with visible accounting.",
+    sourceUrl: EO13526_REVIEW_SOURCE_URL,
+    gameplayTask: "Apply the E.O. 13526 release standard and preserve concurrence plus withholding accounting before claiming clearance."
   },
   {
     id: "declassification_review",
@@ -464,6 +485,10 @@ export function isFrusProductionBoardStepComplete(
       return context.manuscriptReviewComplete
         || hasDocumentAtOrBeyond(context, ["ready_for_review", "submitted_for_review", "referred", "cleared", "ready_for_proof", "proofed", "published"])
         || volumeAtLeast(context, "declassification_review");
+    case "clearance_procedure":
+      return context.clearanceProcedureComplete || context.heldProcessItems.has("clearance_token") || stamps.has("network");
+    case "eo13526_review":
+      return context.eo13526ReviewComplete || context.heldProcessItems.has("clearance_token") || stamps.has("network");
     case "declassification_review":
       return stamps.has("network")
         || context.heldProcessItems.has("clearance_token")
@@ -534,6 +559,8 @@ export function isFrusProductionBoardStepComplete(
           && context.typesettingPreparationComplete
           && context.typesetterProofComplete
           && context.repositoryCoverageMapComplete
+          && context.clearanceProcedureComplete
+          && context.eo13526ReviewComplete
           && context.frontMatterAssemblyComplete
           && context.readerAidRegistersComplete
           && context.indexDocketComplete

@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Clearance lane / E.O. 13526 board split (2026-06-16):
+  - Promoted the already-playable `clearanceProcedure` and `eo13526Review` NetworkScene loops into first-class Production Board gates: `clearance_procedure` (`LANE`) and `eo13526_review` (`EO`).
+  - The clearance arc now reads in the Zelda-style quest map as Manuscript Review -> Clearance Procedure Lane -> E.O. 13526 Release Review -> Declassification Review -> Foreign Permissions -> Withholding Appeals -> Agency Referrals -> HAC.
+  - Wired `getProductionBoardReadout()` to the existing `sceneProgress.clearanceProcedureComplete` and `sceneProgress.eo13526ReviewComplete` save flags, so pause/subscreen and `window.render_game_to_text()` agree with the physical NetworkScene progression.
+  - Strengthened final publication gating so the 30-year publication step also requires the clearance lane and E.O. release standard to be filed before the Buckram Gate can count as lawful.
+  - Verified focused tests: `npm test -- src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts src/game/clearanceProcedure.test.ts src/game/eo13526Review.test.ts` (4 files / 29 tests pass).
+  - Verified full `npm test` (56 files / 269 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke at `?scene=NetworkScene&role=declass_reviewer&name=Alex` reports `productionBoard.total: 34`, active next gate `clearance_procedure`, sequence `manuscript_review -> clearance_procedure -> eo13526_review -> declassification_review -> foreign_permissions`, clearance phase `1/8`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Repository coverage map gate (2026-06-16):
   - Added `src/game/repositoryCoverageMap.ts`, a Phaser-free rules module that turns the history.state.gov FRUS source-base lanes into a physical Zelda-like source map: White House/NSC, State, Defense, CIA, other agencies, and private papers.
   - Inserted `repository_coverage_map` into the Production Board after Record Collection and before Research Selection, so the player must file the source map before narrowing the printed subset.
