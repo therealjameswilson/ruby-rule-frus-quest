@@ -1530,3 +1530,17 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Started local dev server on `http://127.0.0.1:5173/`.
   - Required web-game Playwright client completed against `?scene=ReferralVaultScene&role=declass_coordinator&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
   - Direct Playwright text-state probe for ReferralVaultScene reported `foreign_permissions` active, `withholding_appeals`, `agency_referrals`, and `advisory_monitoring` locked, visible referral walls active, and no console/page errors.
+
+## 2026-06-16 Equity crystals scoped to the active volume packet
+
+- Refined `src/game/frusProgression.ts` so equity crystals count only active selected/reviewed documents when workflow metadata is present; anonymous unit-test fixtures without workflow metadata still count all supplied equities.
+- Removed the old Source Note 47 pseudo-equity from `src/game/documentWorkflow.ts`; source-note provenance is now represented by the dedicated `source_notes` board gate rather than a declassification crystal.
+- Updated the adventure subscreen crystal readout to use the same active-packet filter, keeping HUD/map status aligned with the board and Buckram Gate logic.
+- Regression coverage now proves unselected found candidates and selected-but-not-submitted provenance notes do not count as agency-equity crystals, while submitted/proofed review documents do.
+- Verified focused tests: `npm test -- src/game/frusProgression.test.ts src/game/frusProductionBoard.test.ts src/game/finalPublicationCertification.test.ts src/game/trueEndingCertificate.test.ts` -> 4 files / 34 tests passed.
+- Verified full `npm test` -> 56 files / 274 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5173/`.
+  - Required web-game Playwright client completed against `?scene=ReferralVaultScene&role=declass_coordinator&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
+  - Direct Playwright text-state probe for ReferralVaultScene reported crystal scope `earned: 0`, `total: 2`, only `sbu_annotation_001` in `byDocument`, `foreign_permissions` active, `agency_referrals` locked, and no console/page errors.

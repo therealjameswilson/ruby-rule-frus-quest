@@ -6,6 +6,9 @@ import { buildTrueEndingCertificate, TRUE_ENDING_TREATY_FRAGMENTS_REQUIRED } fro
 function resolvedDocuments() {
   return INITIAL_DOCUMENT_CANDIDATES.map((document) => ({
     ...cloneDocumentCandidate(document),
+    selected: true,
+    workflowState: "proofed" as const,
+    reviewStatus: "resolved" as const,
     equities: document.equities.map((equity) => ({ ...equity, response: "cleared" as const }))
   }));
 }

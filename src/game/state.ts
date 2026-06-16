@@ -25,6 +25,7 @@ import type { DanneItemId } from "./danneItemCatalog";
 import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
 import {
   crystalsEarned,
+  equityCrystalDocuments,
   EQUITY_CRYSTAL_STATUSES,
   PENDANTS,
   totalEquities
@@ -1734,7 +1735,7 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
   const board = getProductionBoardReadout();
   const productionPhases = getFrusProductionPhaseReadout(board);
   const activePhase = productionPhases.find((phase) => phase.status === "active") ?? null;
-  const crystalDocuments = gameState.documentCandidates.map((document) => {
+  const crystalDocuments = equityCrystalDocuments(gameState.documentCandidates).map((document) => {
     const total = document.equities.length;
     const earned = document.equities.filter((equity) => EQUITY_CRYSTAL_STATUSES.has(equity.response)).length;
     return {

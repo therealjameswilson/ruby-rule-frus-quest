@@ -67,6 +67,15 @@ function withAllEquitiesResolved(documents = INITIAL_DOCUMENT_CANDIDATES.map(clo
   return documents.map((document) => document.equities.length ? withEquityResolved(document) : cloneDocumentCandidate(document));
 }
 
+function asReviewedPacketDocument(document: DocumentCandidate): DocumentCandidate {
+  return {
+    ...cloneDocumentCandidate(document),
+    selected: true,
+    workflowState: "proofed",
+    reviewStatus: "resolved"
+  };
+}
+
 function balancedSelectedDocuments() {
   const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
   for (const id of ["telegram_001", "source_note_047", "sbu_annotation_001", "proof_page_412"]) {
@@ -447,7 +456,9 @@ describe("FRUS production board", () => {
     const documents = withAllEquitiesResolved();
     documents[4] = {
       ...withEquityResolved(documents[4]),
-      workflowState: "referred"
+      selected: true,
+      workflowState: "referred",
+      reviewStatus: "referred"
     };
     const missingPermission = getFrusProductionBoardReadout(context({
       volumeWorkflowState: "declassification_review",
@@ -490,7 +501,9 @@ describe("FRUS production board", () => {
     const documents = withAllEquitiesResolved();
     documents[4] = {
       ...withEquityResolved(documents[4]),
-      workflowState: "referred"
+      selected: true,
+      workflowState: "referred",
+      reviewStatus: "referred"
     };
     const missingAppeal = getFrusProductionBoardReadout(context({
       volumeWorkflowState: "declassification_review",
@@ -533,8 +546,14 @@ describe("FRUS production board", () => {
   it("keeps agency referrals active until every distinct equity crystal is resolved", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate);
     documents[4] = {
-      ...withEquityResolved(documents[4]),
-      workflowState: "referred"
+      ...documents[4],
+      selected: true,
+      workflowState: "referred",
+      reviewStatus: "referred",
+      equities: documents[4].equities.map((equity, index) => ({
+        ...equity,
+        response: index === 0 ? "cleared" : "referred"
+      }))
     };
     const partialCrystals = getFrusProductionBoardReadout(context({
       volumeWorkflowState: "declassification_review",
@@ -892,7 +911,7 @@ describe("FRUS production board", () => {
   });
 
   it("requires front matter, certification, GPO, funding queue, chapter status, digital release, public citation, and release calendar before statutory publication", () => {
-    const documents = INITIAL_DOCUMENT_CANDIDATES.map(withEquityResolved);
+    const documents = INITIAL_DOCUMENT_CANDIDATES.map((document) => asReviewedPacketDocument(withEquityResolved(document)));
     const notReady = context({
       processStamps: ["rule", "archive", "sop", "proof"],
       documentCandidates: documents,
