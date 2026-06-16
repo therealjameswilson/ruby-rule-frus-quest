@@ -9,8 +9,10 @@ import { FOREIGN_GOVERNMENT_PERMISSION_PROMPTS } from "../game/foreignGovernment
 import { browseFrusBookshelf } from "../game/frusBookshelf";
 import { HAC_HEARING_PROMPTS } from "../game/hacHearing";
 import { logNaraCatalog } from "../game/naraCatalog";
+import { fileOvalOfficeBriefing } from "../game/ovalOfficeBriefing";
 import { logFieldCableCollection } from "../game/recordCollection";
 import { checkRedZoneGate } from "../game/redZoneGate";
+import { fileStackControlManifest } from "../game/stackControlManifest";
 import { checkWestWingNscGate } from "../game/westWingNsc";
 import {
   addDocumentPoints,
@@ -30,6 +32,7 @@ import {
   setVisibleThreats
 } from "../game/state";
 import type { Interactable } from "../game/types";
+import type { Position } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { InteractionAssist, nearestInteractable } from "../systems/interaction";
@@ -178,7 +181,8 @@ export class GameplayMapScene extends Phaser.Scene {
     if (isCollisionDebugEnabled()) this.drawCollisionDebug();
     this.createHudChrome();
     this.prompt = new InteractionPrompt(this, 880);
-    const spawn = this.findSpawn(this.spawnId) ?? this.findSpawn("entry") ?? { x: this.fitRect.x + this.fitRect.width / 2, y: this.fitRect.y + this.fitRect.height - 20 };
+    const rawSpawn = this.findSpawn(this.spawnId) ?? this.findSpawn("entry") ?? { x: this.fitRect.x + this.fitRect.width / 2, y: this.fitRect.y + this.fitRect.height - 20 };
+    const spawn = this.adjustSpawnAwayFromWorldExit(rawSpawn);
     this.player = new Player(this, spawn.x, spawn.y);
     setVisibleEntities([
       MAP_LABELS[this.mapKey],
@@ -408,6 +412,10 @@ export class GameplayMapScene extends Phaser.Scene {
       this.logNaraCatalog();
       return;
     }
+    if (action === "stack-control-manifest") {
+      this.fileStackControlManifest();
+      return;
+    }
     if (action === "red-zone-gate") {
       this.checkRedZoneGate();
       return;
@@ -416,8 +424,15 @@ export class GameplayMapScene extends Phaser.Scene {
       this.checkWestWingNscGate();
       return;
     }
+    if (action === "oval-office-briefing") {
+      this.fileOvalOfficeBriefing();
+      return;
+    }
     if (action === "vault-core") {
-      this.showMapDialog("BLACK VAULT CORE", "The obelisk hums. Final boss wiring arrives in the DANN-E path.");
+      this.showMapDialog("BLACK VAULT CORE", [
+        "The obelisk hums behind a final-review seal.",
+        "Recover the treaty fragments and keep every standards violation visible before challenging DANN-E."
+      ]);
       return;
     }
     if (action === "chancery-door") {
@@ -525,6 +540,34 @@ export class GameplayMapScene extends Phaser.Scene {
     this.showMapDialog("NARA ARCHIVIST", [...result.pages]);
   }
 
+  private fileStackControlManifest() {
+    const result = fileStackControlManifest({
+      naraCatalogFiled: Boolean(gameState.sceneProgress.naraCatalogFiled),
+      alreadyFiled: Boolean(gameState.sceneProgress.stackControlManifestFiled),
+      inventory: gameState.inventory,
+      currentRecordCollectionStep: gameState.sceneProgress.recordCollectionStep ?? 0
+    });
+
+    if (!result.ok) {
+      retroAudio.warning();
+      setObjective(result.objective);
+      setLatestMessage(result.message);
+      this.showMapDialog("STACK CONTROL", [...result.pages]);
+      return;
+    }
+
+    gameState.sceneProgress.recordCollectionStep = result.nextRecordCollectionStep;
+    if (result.shouldFileManifest) gameState.sceneProgress.stackControlManifestFiled = 1;
+    if (result.nextRecordCollectionStep >= 3) gameState.sceneProgress.recordCollectionComplete = 1;
+    for (const item of result.itemsToAward) addInventoryItem(item);
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "NARA stack transfer manifest filed");
+
+    retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("STACK CONTROL", [...result.pages]);
+  }
+
   private checkRedZoneGate() {
     const result = checkRedZoneGate({
       alreadyOpen: Boolean(gameState.sceneProgress.redZoneDeclassification),
@@ -572,6 +615,32 @@ export class GameplayMapScene extends Phaser.Scene {
     setObjective(result.objective);
     setLatestMessage(result.message);
     this.showMapDialog("SECRET SERVICE", [...result.pages]);
+  }
+
+  private fileOvalOfficeBriefing() {
+    const result = fileOvalOfficeBriefing({
+      nscClearance: Boolean(gameState.sceneProgress.nsc_clearance),
+      repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
+      alreadyFiled: Boolean(gameState.sceneProgress.ovalOfficeBriefingFiled),
+      inventory: gameState.inventory
+    });
+
+    if (!result.ok) {
+      retroAudio.warning();
+      setObjective(result.objective);
+      setLatestMessage(result.message);
+      this.showMapDialog("OVAL OFFICE DESK", [...result.pages]);
+      return;
+    }
+
+    if (result.shouldFileBriefing) gameState.sceneProgress.ovalOfficeBriefingFiled = 1;
+    for (const item of result.itemsToAward) addInventoryItem(item);
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "Oval Office chronology briefing filed");
+
+    retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("OVAL OFFICE DESK", [...result.pages]);
   }
 
   private fileCapitolHacPacket() {
@@ -637,6 +706,27 @@ export class GameplayMapScene extends Phaser.Scene {
     const spawn = (this.layer("spawns")?.objects ?? []).find((object) => object.name === spawnId);
     if (!spawn) return null;
     return this.pointFromSource(spawn.x, spawn.y);
+  }
+
+  private adjustSpawnAwayFromWorldExit(spawn: Position): Position {
+    const exit = this.doors.find((door) => {
+      if (door.target.scene !== "WorldMapScene") return false;
+      return Phaser.Math.Distance.Between(spawn.x, spawn.y, door.x, door.y) <= (door.radius ?? 18) + 4;
+    });
+    if (!exit) return spawn;
+
+    const center = {
+      x: this.fitRect.x + this.fitRect.width / 2,
+      y: this.fitRect.y + this.fitRect.height / 2
+    };
+    const dx = center.x - exit.x;
+    const dy = center.y - exit.y;
+    const length = Math.max(1, Math.hypot(dx, dy));
+    const distance = (exit.radius ?? 18) + 18;
+    return {
+      x: snapPixel(Phaser.Math.Clamp(exit.x + (dx / length) * distance, this.fitRect.x + 14, this.fitRect.x + this.fitRect.width - 14)),
+      y: snapPixel(Phaser.Math.Clamp(exit.y + (dy / length) * distance, this.fitRect.y + 18, this.fitRect.y + this.fitRect.height - 14))
+    };
   }
 
   private centerFromSourceObject(object: TiledObject) {

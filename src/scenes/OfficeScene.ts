@@ -115,7 +115,7 @@ export class OfficeScene extends Phaser.Scene {
   // The floating proximity prompt now carries the contextual "A [verb]" cue, so
   // the persistent bottom line drops INTERACT and trims spacing to de-clutter the
   // bottom band (live audit, 2026-06-15).
-  private readonly controlsHint = "MOVE  ·  TAB CODEX  ·  M MENU  ·  ESC PAUSE";
+  private readonly controlsHint = "MOVE · TAB CODEX · M MENU";
   private prompt!: InteractionPrompt;
   private toast!: FeedbackToast;
   private tutorialCard?: Phaser.GameObjects.Container;
@@ -271,7 +271,21 @@ export class OfficeScene extends Phaser.Scene {
       // The card is an overlay hint, not a hard modal: the player can walk away
       // from it. Any movement intent (or confirm/cancel/pointer) dismisses it so
       // the first step is never swallowed and the room never feels frozen.
-      if (shouldDismissControlsCard(input)) this.dismissOfficeTutorial();
+      if (shouldDismissControlsCard(input)) {
+        const actionDismissed = input.confirmJustPressed
+          || input.aJustPressed
+          || input.cancelJustPressed
+          || input.pointerPrimaryJustPressed;
+        this.dismissOfficeTutorial();
+        if (actionDismissed) {
+          this.player.update(delta, false);
+          this.prompt.update(delta, null);
+          this.toast.update(delta, this.player.position);
+          this.reliability.update();
+          setObjective("Office Hub: talk to the Junior Compiler or enter the Archive Guide.");
+          return;
+        }
+      }
     }
 
     if (this.dialog.active) {
@@ -305,11 +319,12 @@ export class OfficeScene extends Phaser.Scene {
       solids: this.solids
     });
     const nearest = nearestInteractable(this.player.position, this.interactables);
+    const tutorialVisible = Boolean(this.tutorialCard);
     // Show the prompt/ring from a little further out than the strict interact
     // radius so it is impossible to miss on approach, but only allow acting on a
     // target inside the strict radius.
-    const promptTarget = nearest ?? nearestInteractableHint(this.player.position, this.interactables);
-    setNearestInteractable(nearest?.label ?? null);
+    const promptTarget = tutorialVisible ? null : nearest ?? nearestInteractableHint(this.player.position, this.interactables);
+    setNearestInteractable(tutorialVisible ? null : nearest?.label ?? null);
     this.prompt.update(delta, promptTarget);
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
@@ -353,27 +368,26 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private showOfficeTutorial() {
-    const shadow = this.add.rectangle(128, 126, 206, 92, color(PALETTE.black), 0.72);
-    const panel = this.add.rectangle(128, 122, 198, 86, color(PALETTE.shadowNavy), 0.96)
+    this.hintText.setVisible(false);
+    const shadow = this.add.rectangle(128, 150, 188, 58, color(PALETTE.black), 0.72);
+    const panel = this.add.rectangle(128, 147, 180, 52, color(PALETTE.shadowNavy), 0.96)
       .setStrokeStyle(2, color(PALETTE.goldStamp));
-    const title = this.add.text(128, 86, "FIELD CONTROLS", {
-      fontFamily: "monospace",
-      fontSize: "9px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5);
-    const body = this.add.text(128, 105, [
-      "MOVE: ARROWS / WASD",
-      "INTERACT: ENTER / SPACE / A",
-      "CANCEL: ESC / B",
-      "CODEX/MENU: TAB / M"
-    ], {
+    const title = this.add.text(128, 126, "FIELD CONTROLS", {
       fontFamily: "monospace",
       fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5);
+    const body = this.add.text(128, 139, [
+      "MOVE ARROWS/WASD   ACT A/ENTER",
+      "TAB CODEX   M MENU   ESC PAUSE"
+    ], {
+      fontFamily: "monospace",
+      fontSize: "6px",
       color: PALETTE.creamPaper,
       align: "center",
       lineSpacing: 2
     }).setOrigin(0.5, 0);
-    const prompt = this.add.text(128, 162, "MOVE OR PRESS A TO BEGIN", {
+    const prompt = this.add.text(128, 166, "MOVE OR A: BEGIN", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
@@ -403,6 +417,7 @@ export class OfficeScene extends Phaser.Scene {
     if (!this.tutorialCard) return;
     this.tutorialCard.destroy();
     this.tutorialCard = undefined;
+    this.hintText.setVisible(true);
     gameState.sceneProgress.officeTutorialSeen = 1;
     setLatestMessage("Controls logged.");
   }

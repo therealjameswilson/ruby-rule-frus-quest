@@ -362,8 +362,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (definition.action === "nara-stacks-note") {
       this.dialog.show("STACK CONTROL NOTE", [
-        "Four redactor-drone patrol routes are marked for Phase 4.",
-        "Do not move boxes without a manifest."
+        "Four redactor-drone patrol routes cross the stack aisle.",
+        "File the stack manifest before moving boxes through the route."
       ]);
       return;
     }
@@ -380,7 +380,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       if (!gameState.sceneProgress.blackVaultBossCleared) {
         this.dialog.show("TREATY FRAGMENT III", [
           "The final fragment is sealed by DANN-E.",
-          "Phase 7 will drop it after the boss fight."
+          "Defeat the vault core through human review before filing it."
         ]);
         setLatestMessage("Treaty Fragment III is locked behind the DANN-E boss.");
         retroAudio.warning();
@@ -573,7 +573,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
         y: drone.position.y,
         spriteKey: drone.spriteKey,
         behavior: "patrol + stamp drop",
-        defeatMethod: "Avoid black-bar stamps until Phase 5 tools are wired.",
+        defeatMethod: "Use the Ruby Pen or keep clear of black-bar stamps while routing the manifest.",
         status: drone.status(timeMs)
       })),
       ...this.censorshipWraiths.map((wraith, index) => ({
@@ -582,7 +582,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
         y: wraith.position.y,
         spriteKey: wraith.spriteKey,
         behavior: "slow float + ink sweep",
-        defeatMethod: "Keep distance until Phase 5 tools are wired.",
+        defeatMethod: "Keep distance, strike during the ink-sweep pause, and preserve visible review notes.",
         status: wraith.status(timeMs)
       })),
       ...(this.danneBoss?.isActive ? [this.danneBoss.readout()] : [])
