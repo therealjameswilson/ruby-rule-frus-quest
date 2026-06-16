@@ -10,6 +10,7 @@ import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgressio
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
+import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 import { VOLUME_CONCEPT_SOURCE_URL } from "./volumeConcept";
@@ -33,6 +34,7 @@ export type FrusProductionBoardStepId =
   | "chapter_release_status"
   | "digital_release"
   | "public_citation"
+  | "release_calendar"
   | "publication_30_year";
 
 export type FrusProductionBoardStatus = "complete" | "active" | "locked";
@@ -59,6 +61,7 @@ export interface FrusProductionBoardContext {
   chapterReleaseComplete: boolean;
   digitalReleaseComplete: boolean;
   publicCitationComplete: boolean;
+  releaseCalendarComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -227,6 +230,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Assemble the reader citation card: media-neutral document number, full publication elements, canonical URL, and legacy-digitization caution."
   },
   {
+    id: "release_calendar",
+    label: "Release calendar docket",
+    shortLabel: "REL",
+    sourceBasis: "The Status page lists current and previous-year releases, anticipated current-year releases, stages of production, and published volumes being digitized.",
+    sourceUrl: RELEASE_CALENDAR_SOURCE_URL,
+    gameplayTask: "File the public release-calendar docket: released volumes, anticipated releases, and digitization status."
+  },
+  {
     id: "publication_30_year",
     label: "30-year publication",
     shortLabel: "PUB",
@@ -335,6 +346,8 @@ export function isFrusProductionBoardStepComplete(
       return context.finalGatePublished || (context.chapterReleaseComplete && context.digitalReleaseComplete);
     case "public_citation":
       return context.finalGatePublished || (context.digitalReleaseComplete && context.publicCitationComplete);
+    case "release_calendar":
+      return context.finalGatePublished || (context.publicCitationComplete && context.releaseCalendarComplete);
     case "publication_30_year":
       return context.finalGatePublished
         || (context.volumeWorkflowState === "published")
@@ -345,6 +358,7 @@ export function isFrusProductionBoardStepComplete(
           && context.chapterReleaseComplete
           && context.digitalReleaseComplete
           && context.publicCitationComplete
+          && context.releaseCalendarComplete
           && noUndisclosedDeletions(context)
         );
   }

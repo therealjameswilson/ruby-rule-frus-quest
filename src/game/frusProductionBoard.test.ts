@@ -32,6 +32,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     chapterReleaseComplete: false,
     digitalReleaseComplete: false,
     publicCitationComplete: false,
+    releaseCalendarComplete: false,
     ...overrides
   };
 }
@@ -63,6 +64,7 @@ describe("FRUS production board", () => {
       "chapter_release_status",
       "digital_release",
       "public_citation",
+      "release_calendar",
       "publication_30_year"
     ]);
   });
@@ -407,7 +409,7 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("kellogg_editing", consulted)).toBe(true);
   });
 
-  it("requires chapter status, digital release, and public citation before the statutory publication step can complete", () => {
+  it("requires chapter status, digital release, public citation, and release calendar before statutory publication", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(withEquityResolved);
     const notReady = context({
       processStamps: ["rule", "archive", "sop"],
@@ -432,11 +434,16 @@ describe("FRUS production board", () => {
       ...digitallyReleased,
       publicCitationComplete: true
     });
+    const releaseDocketFiled = context({
+      ...citationFiled,
+      releaseCalendarComplete: true
+    });
 
     expect(isFrusProductionBoardStepComplete("publication_30_year", notReady)).toBe(false);
     expect(isFrusProductionBoardStepComplete("chapter_release_status", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("digital_release", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("public_citation", ready)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("release_calendar", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("chapter_release_status", chapterLedgerFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("digital_release", chapterLedgerFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("publication_30_year", ready)).toBe(false);
@@ -444,6 +451,9 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("public_citation", digitallyReleased)).toBe(false);
     expect(isFrusProductionBoardStepComplete("publication_30_year", digitallyReleased)).toBe(false);
     expect(isFrusProductionBoardStepComplete("public_citation", citationFiled)).toBe(true);
-    expect(isFrusProductionBoardStepComplete("publication_30_year", citationFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("release_calendar", citationFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", citationFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("release_calendar", releaseDocketFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", releaseDocketFiled)).toBe(true);
   });
 });

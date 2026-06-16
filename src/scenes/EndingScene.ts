@@ -31,6 +31,12 @@ import {
   publicCitationCardComplete
 } from "../game/publicCitationCard";
 import {
+  RELEASE_CALENDAR_PROMPTS,
+  evaluateReleaseCalendarAnswer,
+  getReleaseCalendarPrompt,
+  releaseCalendarComplete
+} from "../game/releaseCalendar";
+import {
   evaluateGpoSegmentAssemblyAnswer,
   getGpoSegmentAssemblyPrompt,
   GPO_SEGMENT_ASSEMBLY_PROMPTS,
@@ -306,6 +312,7 @@ export class EndingScene extends Phaser.Scene {
     const chapterStatusReady = Boolean(gameState.sceneProgress.chapterReleaseComplete);
     const digitalReleaseReady = Boolean(gameState.sceneProgress.digitalReleaseComplete);
     const publicCitationReady = Boolean(gameState.sceneProgress.publicCitationComplete);
+    const releaseCalendarReady = Boolean(gameState.sceneProgress.releaseCalendarComplete);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     const status = ready ? "ready" : "locked";
     const message = ready
@@ -315,7 +322,9 @@ export class EndingScene extends Phaser.Scene {
             ? chapterStatusReady
               ? digitalReleaseReady
                 ? publicCitationReady
-                  ? "Buckram Key ready: public citation card complete; publish the volume."
+                  ? releaseCalendarReady
+                    ? "Buckram Key ready: release calendar docket complete; publish the volume."
+                    : "Public citation card complete: file the public release calendar docket."
                   : "Digital release complete: assemble the public citation card."
                 : "Chapter status ledger complete: prepare the history.state.gov digital release manifest."
               : "GPO handoff complete: file the public chapter status ledger."
@@ -346,7 +355,9 @@ export class EndingScene extends Phaser.Scene {
               ? chapterStatusReady
                 ? digitalReleaseReady
                   ? publicCitationReady
-                    ? "Buckram Gate: press Space to publish the public FRUS volume."
+                    ? releaseCalendarReady
+                      ? "Buckram Gate: press Space to publish the public FRUS volume."
+                      : "Buckram Gate: press Space for release calendar docket."
                     : "Buckram Gate: press Space for public citation card."
                   : "Buckram Gate: press Space for digital release manifest."
                 : "Buckram Gate: press Space for chapter status ledger."
@@ -361,7 +372,9 @@ export class EndingScene extends Phaser.Scene {
               ? chapterStatusReady
                 ? digitalReleaseReady
                   ? publicCitationReady
-                    ? "SPACE: PUBLISH PUBLIC FRUS VOLUME"
+                    ? releaseCalendarReady
+                      ? "SPACE: PUBLISH PUBLIC FRUS VOLUME"
+                      : "SPACE: RELEASE CALENDAR DOCKET"
                     : "SPACE: PUBLIC CITATION CARD"
                   : "SPACE: DIGITAL RELEASE MANIFEST"
                 : "SPACE: CHAPTER STATUS LEDGER"
@@ -436,6 +449,10 @@ export class EndingScene extends Phaser.Scene {
     }
     if (!gameState.sceneProgress.publicCitationComplete) {
       this.startPublicCitationCard();
+      return;
+    }
+    if (!gameState.sceneProgress.releaseCalendarComplete) {
+      this.startReleaseCalendar();
       return;
     }
     this.publishVolume();
@@ -537,7 +554,7 @@ export class EndingScene extends Phaser.Scene {
 
   private startPublicCitationCard() {
     if (gameState.sceneProgress.publicCitationComplete) {
-      this.publishVolume();
+      this.startReleaseCalendar();
       return;
     }
     if (!gameState.sceneProgress.digitalReleaseComplete) {
@@ -575,6 +592,51 @@ export class EndingScene extends Phaser.Scene {
       gameState.sceneProgress.publicCitationStep = PUBLIC_CITATION_CARD_PROMPTS.length;
       addDocumentPoints(4, "public FRUS citation card filed");
       setLatestMessage("Public citation card complete: document number, citation elements, canonical URL, and legacy caution are ready.");
+      setObjective("Buckram Gate: press Space for release calendar docket.");
+      this.updateGateReadout();
+    });
+  }
+
+  private startReleaseCalendar() {
+    if (gameState.sceneProgress.releaseCalendarComplete) {
+      this.publishVolume();
+      return;
+    }
+    if (!gameState.sceneProgress.publicCitationComplete) {
+      this.startPublicCitationCard();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      RELEASE_CALENDAR_PROMPTS.length - 1,
+      gameState.sceneProgress.releaseCalendarStep ?? 0
+    ));
+    gameState.sceneProgress.releaseCalendarStep = currentStep;
+    const prompt = getReleaseCalendarPrompt(currentStep);
+    setObjective(`Release calendar: ${currentStep + 1}/${RELEASE_CALENDAR_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateReleaseCalendarAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.releaseCalendarStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `Release calendar docket: ${prompt.id}`);
+        }
+        setObjective("Release calendar: correct public release and digitization status before publication.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.releaseCalendarStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!releaseCalendarComplete(nextStep)) {
+        this.startReleaseCalendar();
+        return;
+      }
+      gameState.sceneProgress.releaseCalendarComplete = 1;
+      gameState.sceneProgress.releaseCalendarStep = RELEASE_CALENDAR_PROMPTS.length;
+      addDocumentPoints(4, "public release calendar docket filed");
+      setLatestMessage("Release calendar docket complete: releases, anticipated releases, and digitization status are public.");
       setObjective("Buckram Gate: press Space to publish the public FRUS volume.");
       this.updateGateReadout();
     });
@@ -786,6 +848,8 @@ export class EndingScene extends Phaser.Scene {
     gameState.sceneProgress.digitalReleaseStep = DIGITAL_RELEASE_PROMPTS.length;
     gameState.sceneProgress.publicCitationComplete = 1;
     gameState.sceneProgress.publicCitationStep = PUBLIC_CITATION_CARD_PROMPTS.length;
+    gameState.sceneProgress.releaseCalendarComplete = 1;
+    gameState.sceneProgress.releaseCalendarStep = RELEASE_CALENDAR_PROMPTS.length;
     addProcessItem("buckram_key");
     addInventoryItem("Published FRUS Cover");
     ["telegram_001", "source_note_047", "cross_reference_001", "sbu_annotation_001", "proof_page_412"].forEach((documentId) => {
@@ -833,6 +897,7 @@ export class EndingScene extends Phaser.Scene {
       "chapter release status ledger",
       "history.state.gov digital release manifest",
       "public FRUS citation card",
+      "public release calendar docket",
       "StateChat readiness checklist"
     ]);
     const status = published || (getFinalGateReadiness().ready && hasProcessItem("buckram_key")) ? "cleared" : "blocking";

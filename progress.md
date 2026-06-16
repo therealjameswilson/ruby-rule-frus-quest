@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Release calendar docket gameplay gate (2026-06-15):
+  - Added `src/game/releaseCalendar.ts`, a Phaser-free rule module based on the history.state.gov Status of the Series page: the public docket lists current and previous-year releases, anticipated releases later in the current year, and published volumes being digitized.
+  - Inserted `release_calendar` into the FRUS Production Board after `public_citation` and before the 30-year publication gate, so a reader-facing citation card still needs public release-calendar/digitization status before publication.
+  - Wired `EndingScene` so Public citation card -> Release calendar docket -> final publication. Wrong docket shortcuts apply standards damage (`omitted_material_fact`, `concealed_policy_defect`, or `altered_text`); correct answers file `sceneProgress.releaseCalendarComplete`, add document points, and expose `"public release calendar docket"` in `render_game_to_text()`.
+  - Verified focused tests: `npm test -- src/game/releaseCalendar.test.ts src/game/frusProductionBoard.test.ts` (2 files / 17 tests pass).
+  - Verified full `npm test`: 45 files / 221 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=EndingScene&role=compiler&name=Ruby` drove front matter -> Kellogg certification -> GPO segments -> GPO handoff -> chapter status -> digital release -> public citation -> release calendar -> publication. Runtime state reports `sceneProgress.releaseCalendarComplete: 1`, `releaseCalendarStep: 3`, Production Board `completed: 19`, `total: 19`, visible entity `"public release calendar docket"`, and `mode: "ending"`. No console-error artifact was produced; the generated headless WebGL screenshot remains black as previously documented.
 - Public citation card gameplay gate (2026-06-15):
   - Added `src/game/publicCitationCard.ts`, a Phaser-free rule module based on the history.state.gov guide to citing the FRUS series: document numbers are media-neutral, citations need complete publication components, canonical history.state.gov URLs should be appended for web/eBook use, and earlier digitized volumes need a visible print-citation caution.
   - Inserted `public_citation` into the FRUS Production Board after `digital_release` and before the 30-year publication gate, so final publication now requires reader-facing citation integrity in addition to chapter status and web/eBook release metadata.
