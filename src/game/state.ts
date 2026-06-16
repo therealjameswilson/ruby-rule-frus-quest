@@ -37,6 +37,7 @@ import {
   type FrusProductionBoardStatus,
   type FrusProductionBoardStepId
 } from "./frusProductionBoard";
+import { getFrusProductionPhaseReadout, type FrusProductionPhaseId } from "./frusProductionPhases";
 import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
 import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
@@ -334,6 +335,26 @@ export interface AdventureSubscreenReadout {
       status: FrusProductionBoardStatus;
       complete: boolean;
     }>;
+    phases: Array<{
+      id: FrusProductionPhaseId;
+      label: string;
+      shortLabel: string;
+      status: FrusProductionBoardStatus;
+      completed: number;
+      total: number;
+      nextStep: {
+        id: FrusProductionBoardStepId;
+        shortLabel: string;
+        label: string;
+      } | null;
+    }>;
+    activePhase: {
+      id: FrusProductionPhaseId;
+      label: string;
+      shortLabel: string;
+      completed: number;
+      total: number;
+    } | null;
   };
   pendants: Array<{
     id: "objectivity" | "provenance" | "review";
@@ -1685,6 +1706,8 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
   const roomReadout = getRoomGraphReadout();
   const equippedTool = getProcessItemReadout().find((item) => item.equipped) ?? null;
   const board = getProductionBoardReadout();
+  const productionPhases = getFrusProductionPhaseReadout(board);
+  const activePhase = productionPhases.find((phase) => phase.status === "active") ?? null;
   const crystalDocuments = gameState.documentCandidates.map((document) => {
     const total = document.equities.length;
     const earned = document.equities.filter((equity) => EQUITY_CRYSTAL_STATUSES.has(equity.response)).length;
@@ -1714,7 +1737,25 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
         shortLabel: step.shortLabel,
         status: step.status,
         complete: step.complete
-      }))
+      })),
+      phases: productionPhases.map((phase) => ({
+        id: phase.id,
+        label: phase.label,
+        shortLabel: phase.shortLabel,
+        status: phase.status,
+        completed: phase.completed,
+        total: phase.total,
+        nextStep: phase.nextStep
+      })),
+      activePhase: activePhase
+        ? {
+            id: activePhase.id,
+            label: activePhase.label,
+            shortLabel: activePhase.shortLabel,
+            completed: activePhase.completed,
+            total: activePhase.total
+          }
+        : null
     },
     pendants: PENDANTS.map((pendant) => ({
       ...pendant,

@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- FRUS Production Board phase map (2026-06-16):
+  - Added `src/game/frusProductionPhases.ts`, a typed phase layer that groups the 29 source-backed board gates into six readable production arcs: series/volume plan, research-selection-annotation, review/declassification, editorial/proof, final apparatus/certification, and print/digital/public release.
+  - Extended `getAdventureSubscreenReadout()` so `window.render_game_to_text()` and the pause/subscreen now expose `productionBoard.phases` plus the active phase summary, not just individual board steps.
+  - Updated the quest subscreen with six compact phase chips in the right status panel and a `PHASE PLAN 0/2`-style text summary, making the FRUS production arc read more like a Zelda quest map while staying faithful to the official stages.
+  - Added deterministic tests in `src/game/frusProductionPhases.test.ts` proving every board step is covered exactly once and phase status advances from planning through research into clearance.
+  - Verified focused tests: `npm test -- src/game/frusProductionPhases.test.ts src/game/frusProductionBoard.test.ts` (2 files / 21 tests pass).
+  - Verified full `npm test` (53 files / 256 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke at `?scene=OfficeScene&role=compiler&name=Ruby` reports active phase `PLAN 0/2`, six phase summaries, next gate `GRD / Grand conceptualization`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Production Board subscreen track (2026-06-16):
   - Added a compact `productionBoard` summary to `getAdventureSubscreenReadout()`, so the ALttP-style pause/subscreen state now carries the FRUS Production Board completion count, active next gate, completion ratio, and all step statuses alongside pendants, crystals, hearts, equipped tools, dungeon keys, and the room map.
   - Updated the FRUS Quest subscreen overlay to render a small SNES-style bead track for all 29 FRUS production gates, with completed gates in green, the active gate in cyan with a white outline, locked gates dimmed, and a gold progress underline.
