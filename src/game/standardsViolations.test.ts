@@ -103,6 +103,11 @@ describe("standards violation ledger", () => {
 
     gameState.sceneProgress.frontMatterAssemblyComplete = 1;
 
+    expect(getFinalGateReadiness().publicationApparatus.complete).toBe(false);
+    expect(getPublicationReadinessReadout().missingSummary).toContain("Apparatus FIX");
+
+    gameState.sceneProgress.typesetterCorrectionsComplete = 1;
+
     expect(getFinalGateReadiness().publicationApparatus.complete).toBe(true);
   });
 });

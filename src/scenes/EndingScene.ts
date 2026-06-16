@@ -55,6 +55,12 @@ import {
   indexDocketComplete
 } from "../game/indexDocket";
 import {
+  evaluateTypesetterCorrectionsAnswer,
+  getTypesetterCorrectionsPrompt,
+  TYPESETTER_CORRECTIONS_PROMPTS,
+  typesetterCorrectionsComplete
+} from "../game/typesetterCorrections";
+import {
   addDocumentPoints,
   addInventoryItem,
   addProcessItem,
@@ -313,7 +319,9 @@ export class EndingScene extends Phaser.Scene {
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
     const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
     const canFileIndexDocket = this.canFileIndexDocket(readiness);
+    const canResolveTypesetterCorrections = this.canResolveTypesetterCorrections(readiness);
     const indexDocketReady = Boolean(gameState.sceneProgress.indexDocketComplete);
+    const typesetterCorrectionsReady = Boolean(gameState.sceneProgress.typesetterCorrectionsComplete);
     const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
     const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
     const gpoSegmentsComplete = Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete || gpoComplete);
@@ -339,12 +347,16 @@ export class EndingScene extends Phaser.Scene {
             : "GPO segments assembled: complete the final publication handoff."
           : "Final certification complete: submit the GPO publication segments."
         : indexDocketReady
-          ? "Buckram Key ready: complete the final Kellogg certification."
+          ? typesetterCorrectionsReady
+            ? "Buckram Key ready: complete the final Kellogg certification."
+            : "Index docket filed: resolve the typesetter correction docket."
           : "Front matter assembled: file the index docket."
       : canAssembleApparatus
         ? "Buckram Gate waits for front matter assembly at the human publication table."
       : canFileIndexDocket
         ? "Buckram Gate waits for the index docket at the human publication table."
+      : canResolveTypesetterCorrections
+        ? "Buckram Gate waits for the typesetter correction docket at the human publication table."
       : canCorrectCertification
         ? "Final certification needs repair at the human publication table."
       : "Buckram Gate locked: StateChat may checklist, but humans must complete readiness.";
@@ -376,7 +388,9 @@ export class EndingScene extends Phaser.Scene {
               : "Buckram Gate: press Space for GPO publication handoff."
             : "Buckram Gate: press Space to assemble GPO segments."
           : indexDocketReady
-            ? "Buckram Gate: press Space for final Kellogg certification."
+            ? typesetterCorrectionsReady
+              ? "Buckram Gate: press Space for final Kellogg certification."
+              : "Buckram Gate: press Space for typesetter corrections."
             : "Buckram Gate: press Space for index docket."
         : "Buckram Gate: stand at the human publication table.");
       this.actionHint.setText(nearGate
@@ -395,7 +409,9 @@ export class EndingScene extends Phaser.Scene {
               : "SPACE: GPO PUBLICATION HANDOFF"
             : "SPACE: ASSEMBLE GPO SEGMENTS"
           : indexDocketReady
-            ? "SPACE: FINAL KELLOGG CERTIFICATION"
+            ? typesetterCorrectionsReady
+              ? "SPACE: FINAL KELLOGG CERTIFICATION"
+              : "SPACE: TYPESETTER CORRECTIONS"
             : "SPACE: INDEX DOCKET"
         : "MOVE TO CERTIFICATION TABLE.");
       return;
@@ -414,6 +430,14 @@ export class EndingScene extends Phaser.Scene {
         ? "Buckram Gate: press Space to file the index docket."
         : "Return to the publication table to file the index docket.");
       this.actionHint.setText(nearGate ? "SPACE: INDEX DOCKET" : "MOVE TO PUBLICATION TABLE.");
+      return;
+    }
+    if (canResolveTypesetterCorrections) {
+      setNearestInteractable(nearGate ? "RESOLVE TYPESETTER CORRECTIONS" : null);
+      setObjective(nearGate
+        ? "Buckram Gate: press Space to resolve typesetter corrections."
+        : "Return to the publication table to resolve typesetter corrections.");
+      this.actionHint.setText(nearGate ? "SPACE: TYPESETTER CORRECTIONS" : "MOVE TO PUBLICATION TABLE.");
       return;
     }
     if (canCorrectCertification) {
@@ -441,6 +465,7 @@ export class EndingScene extends Phaser.Scene {
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
     const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
     const canFileIndexDocket = this.canFileIndexDocket(readiness);
+    const canResolveTypesetterCorrections = this.canResolveTypesetterCorrections(readiness);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     if (!nearGate) {
       retroAudio.warning();
@@ -453,6 +478,10 @@ export class EndingScene extends Phaser.Scene {
     }
     if (!ready && canFileIndexDocket) {
       this.startIndexDocket();
+      return;
+    }
+    if (!ready && canResolveTypesetterCorrections) {
+      this.startTypesetterCorrections();
       return;
     }
     if (!ready && !canCorrectCertification) {
@@ -750,6 +779,48 @@ export class EndingScene extends Phaser.Scene {
       gameState.sceneProgress.indexDocketStep = INDEX_DOCKET_PROMPTS.length;
       addDocumentPoints(4, "index docket filed");
       setLatestMessage("Index docket filed: verified entries and cross-references now support publication.");
+      setObjective("Buckram Gate: press Space to resolve typesetter corrections.");
+      this.updateGateReadout();
+    });
+  }
+
+  private startTypesetterCorrections() {
+    if (gameState.sceneProgress.typesetterCorrectionsComplete) {
+      this.updateGateReadout();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      TYPESETTER_CORRECTIONS_PROMPTS.length - 1,
+      gameState.sceneProgress.typesetterCorrectionsStep ?? 0
+    ));
+    gameState.sceneProgress.typesetterCorrectionsStep = currentStep;
+    const prompt = getTypesetterCorrectionsPrompt(currentStep);
+    setObjective(`Typesetter corrections: ${currentStep + 1}/${TYPESETTER_CORRECTIONS_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateTypesetterCorrectionsAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.typesetterCorrectionsStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `Typesetter corrections: ${prompt.id}`);
+        }
+        setObjective("Typesetter corrections: resolve flagged text before final certification.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.typesetterCorrectionsStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!typesetterCorrectionsComplete(nextStep)) {
+        this.startTypesetterCorrections();
+        return;
+      }
+
+      gameState.sceneProgress.typesetterCorrectionsComplete = 1;
+      gameState.sceneProgress.typesetterCorrectionsStep = TYPESETTER_CORRECTIONS_PROMPTS.length;
+      addDocumentPoints(4, "typesetter corrections resolved");
+      setLatestMessage("Typesetter correction docket complete: remaining editing issues are resolved.");
       setObjective("Buckram Gate: press Space for final Kellogg certification.");
       this.updateGateReadout();
     });
@@ -898,7 +969,7 @@ export class EndingScene extends Phaser.Scene {
     if (!gameState.sceneProgress.typesetterProofComplete) return false;
     if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
     if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
-    const allowedAssemblyBlockers = new Set(["front_matter_assembly", "index_typeset_check"]);
+    const allowedAssemblyBlockers = new Set(["front_matter_assembly", "index_typeset_check", "typesetter_corrections"]);
     return readiness.missingApparatus.some((component) => component.id === "front_matter_assembly")
       && readiness.missingApparatus.every((component) => allowedAssemblyBlockers.has(component.id));
   }
@@ -912,8 +983,23 @@ export class EndingScene extends Phaser.Scene {
     ) return false;
     if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
     if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
+    const allowedIndexBlockers = new Set(["index_typeset_check", "typesetter_corrections"]);
+    return readiness.missingApparatus.some((component) => component.id === "index_typeset_check")
+      && readiness.missingApparatus.every((component) => allowedIndexBlockers.has(component.id));
+  }
+
+  private canResolveTypesetterCorrections(readiness: ReturnType<typeof getFinalGateReadiness>) {
+    if (
+      !hasProcessItem("buckram_key")
+      || !gameState.sceneProgress.frontMatterAssemblyComplete
+      || !gameState.sceneProgress.indexDocketComplete
+      || !gameState.sceneProgress.typesetterProofComplete
+      || gameState.sceneProgress.typesetterCorrectionsComplete
+    ) return false;
+    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
+    if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
     return readiness.missingApparatus.length > 0
-      && readiness.missingApparatus.every((component) => component.id === "index_typeset_check");
+      && readiness.missingApparatus.every((component) => component.id === "typesetter_corrections");
   }
 
   private resolveKelloggCertificationViolations() {

@@ -59,6 +59,7 @@ function completeProductionState() {
     typesetterProofComplete: 1,
     frontMatterAssemblyComplete: 1,
     indexDocketComplete: 1,
+    typesetterCorrectionsComplete: 1,
     kelloggFinalCertificationComplete: 1
   });
 }

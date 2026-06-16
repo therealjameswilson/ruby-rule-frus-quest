@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Typesetter correction docket (2026-06-16):
+  - Added `src/game/typesetterCorrections.ts`, a Phaser-free rule module based on the history.state.gov FRUS stages page detail that remaining editing issues are resolved with the typesetter before the volume is finished.
+  - Inserted `typesetter_corrections` into the FRUS Production Board after the Index Docket and before Final Kellogg Certification, so a finished volume now requires compiler/typesetter consultation for flagged textual issues.
+  - Extended the final publication apparatus with a `FIX` component. The Buckram Gate now gates certification behind front matter, index, and typesetter corrections rather than treating proof flags as automatically resolved.
+  - Wired `EndingScene` with a three-prompt typesetter correction loop. Wrong shortcuts apply standards damage (`altered_text`, `omitted_material_fact`, or `missed_30_year_deadline`); correct answers file `sceneProgress.typesetterCorrectionsComplete`, add document points, and unlock final certification.
+  - Verified focused tests: `npm test -- src/game/typesetterCorrections.test.ts src/game/publicationApparatus.test.ts src/game/frusProductionBoard.test.ts src/game/finalPublicationCertification.test.ts src/game/standardsViolations.test.ts` (5 files / 38 tests pass).
+  - Verified full `npm test`: 51 files / 249 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client smoke at `?scene=EndingScene&role=compiler&name=Ruby` reports the corrected Buckram Gate order: Front Matter Assembly active, Index Docket locked next, Typesetter Correction Docket locked after that, and Final Kellogg Certification locked last, with no console/error artifact; generated headless WebGL screenshot remains black as previously documented.
 - Index docket publication gate (2026-06-15):
   - Added `src/game/indexDocket.ts`, a Phaser-free rule module based on the history.state.gov FRUS stages page detail that after typeset pages are compared to original documents, an index is added before publication.
   - Inserted `index_docket` into the FRUS Production Board after Front Matter Assembly and before Final Kellogg Certification, so the Buckram Gate now requires verified index entries, checked cross-references, and human-reviewed headings.

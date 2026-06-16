@@ -34,6 +34,7 @@ function context(overrides: Partial<{
   typesetterProofComplete: boolean;
   indexDocketComplete: boolean;
   frontMatterAssemblyComplete: boolean;
+  typesetterCorrectionsComplete: boolean;
 }> = {}) {
   return {
     processStamps: [] as ProcessStampId[],
@@ -43,6 +44,7 @@ function context(overrides: Partial<{
     typesetterProofComplete: false,
     indexDocketComplete: false,
     frontMatterAssemblyComplete: false,
+    typesetterCorrectionsComplete: false,
     ...overrides
   };
 }
@@ -58,7 +60,8 @@ describe("publication apparatus", () => {
       "persons_abbreviations",
       "declassification_accounting",
       "index_typeset_check",
-      "front_matter_assembly"
+      "front_matter_assembly",
+      "typesetter_corrections"
     ]);
     expect(readout.complete).toBe(false);
   });
@@ -75,11 +78,12 @@ describe("publication apparatus", () => {
       "sources_consulted",
       "declassification_accounting",
       "index_typeset_check",
-      "front_matter_assembly"
+      "front_matter_assembly",
+      "typesetter_corrections"
     ]);
   });
 
-  it("completes when front matter, sources, abbreviations, declassification accounting, and proof index are ready", () => {
+  it("completes when front matter, sources, abbreviations, declassification accounting, proof index, and typesetter corrections are ready", () => {
     const completeContext = context({
       processStamps: ["rule", "referral", "proof"],
       volumeFragments: ALL_FRAGMENTS,
@@ -87,7 +91,8 @@ describe("publication apparatus", () => {
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
       typesetterProofComplete: true,
       indexDocketComplete: true,
-      frontMatterAssemblyComplete: true
+      frontMatterAssemblyComplete: true,
+      typesetterCorrectionsComplete: true
     });
     const readout = getPublicationApparatusReadout(completeContext);
 
@@ -106,7 +111,8 @@ describe("publication apparatus", () => {
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
       typesetterProofComplete: true,
       indexDocketComplete: true,
-      frontMatterAssemblyComplete: true
+      frontMatterAssemblyComplete: true,
+      typesetterCorrectionsComplete: true
     }));
 
     expect(readout.complete).toBe(false);
@@ -145,10 +151,26 @@ describe("publication apparatus", () => {
       documentCandidates: selectedBalancedDocuments(),
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
       typesetterProofComplete: true,
-      indexDocketComplete: true
+      indexDocketComplete: true,
+      typesetterCorrectionsComplete: true
     }));
 
     expect(readout.complete).toBe(false);
     expect(readout.missing.map((component) => component.id)).toEqual(["front_matter_assembly"]);
+  });
+
+  it("blocks publication apparatus until remaining typesetter corrections are resolved", () => {
+    const readout = getPublicationApparatusReadout(context({
+      processStamps: ["rule", "referral", "proof"],
+      volumeFragments: ALL_FRAGMENTS,
+      documentCandidates: selectedBalancedDocuments(),
+      documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
+      typesetterProofComplete: true,
+      indexDocketComplete: true,
+      frontMatterAssemblyComplete: true
+    }));
+
+    expect(readout.complete).toBe(false);
+    expect(readout.missing.map((component) => component.id)).toEqual(["typesetter_corrections"]);
   });
 });

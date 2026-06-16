@@ -39,6 +39,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     releaseCalendarComplete: false,
     frontMatterAssemblyComplete: false,
     indexDocketComplete: false,
+    typesetterCorrectionsComplete: false,
     kelloggFinalCertificationComplete: false,
     gpoSegmentAssemblyComplete: false,
     gpoPublicationComplete: false,
@@ -98,6 +99,7 @@ const COMPLETE_BEFORE_GPO = {
   ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
   frontMatterAssemblyComplete: true,
   indexDocketComplete: true,
+  typesetterCorrectionsComplete: true,
   kelloggFinalCertificationComplete: true
 } as const;
 
@@ -123,6 +125,7 @@ describe("FRUS production board", () => {
       "typesetter_proof",
       "front_matter_assembly",
       "index_docket",
+      "typesetter_corrections",
       "kellogg_final_certification",
       "gpo_segment_assembly",
       "gpo_publication",
@@ -225,6 +228,7 @@ describe("FRUS production board", () => {
       typesetterProofComplete: true,
       frontMatterAssemblyComplete: true,
       indexDocketComplete: true,
+      typesetterCorrectionsComplete: true,
       kelloggFinalCertificationComplete: true,
       gpoSegmentAssemblyComplete: true,
       gpoPublicationComplete: true,
@@ -259,7 +263,7 @@ describe("FRUS production board", () => {
     expect(proofFiled.nextStep?.id).toBe("front_matter_assembly");
   });
 
-  it("surfaces front matter, index docket, and final certification before GPO handoff", () => {
+  it("surfaces front matter, index docket, typesetter corrections, and final certification before GPO handoff", () => {
     const needsFrontMatter = getFrusProductionBoardReadout(context({
       ...COMPLETE_BEFORE_PUBLICATION_APPARATUS
     }));
@@ -272,6 +276,12 @@ describe("FRUS production board", () => {
       frontMatterAssemblyComplete: true,
       indexDocketComplete: true
     }));
+    const correctionsFiled = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
+      frontMatterAssemblyComplete: true,
+      indexDocketComplete: true,
+      typesetterCorrectionsComplete: true
+    }));
     const certified = getFrusProductionBoardReadout(context({
       ...COMPLETE_BEFORE_GPO
     }));
@@ -279,7 +289,8 @@ describe("FRUS production board", () => {
     expect(needsFrontMatter.steps.find((step) => step.id === "kellogg_editing")?.complete).toBe(true);
     expect(needsFrontMatter.nextStep?.id).toBe("front_matter_assembly");
     expect(frontMatterFiled.nextStep?.id).toBe("index_docket");
-    expect(indexFiled.nextStep?.id).toBe("kellogg_final_certification");
+    expect(indexFiled.nextStep?.id).toBe("typesetter_corrections");
+    expect(correctionsFiled.nextStep?.id).toBe("kellogg_final_certification");
     expect(certified.nextStep?.id).toBe("gpo_segment_assembly");
   });
 
@@ -606,8 +617,12 @@ describe("FRUS production board", () => {
       ...frontMatterFiled,
       indexDocketComplete: true
     });
-    const certified = context({
+    const correctionsFiled = context({
       ...indexDocketFiled,
+      typesetterCorrectionsComplete: true
+    });
+    const certified = context({
+      ...correctionsFiled,
       kelloggFinalCertificationComplete: true
     });
     const gpoSegmentsFiled = context({
@@ -648,6 +663,8 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("publication_30_year", frontMatterFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("index_docket", indexDocketFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("publication_30_year", indexDocketFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("typesetter_corrections", correctionsFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", correctionsFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("kellogg_final_certification", certified)).toBe(true);
     expect(isFrusProductionBoardStepComplete("publication_30_year", certified)).toBe(false);
     expect(isFrusProductionBoardStepComplete("gpo_segment_assembly", gpoSegmentsFiled)).toBe(true);

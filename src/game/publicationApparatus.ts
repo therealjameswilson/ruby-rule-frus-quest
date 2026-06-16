@@ -8,7 +8,8 @@ export type PublicationApparatusComponentId =
   | "persons_abbreviations"
   | "declassification_accounting"
   | "index_typeset_check"
-  | "front_matter_assembly";
+  | "front_matter_assembly"
+  | "typesetter_corrections";
 
 export interface PublicationApparatusContext {
   processStamps: readonly ProcessStampId[];
@@ -18,6 +19,7 @@ export interface PublicationApparatusContext {
   typesetterProofComplete: boolean;
   indexDocketComplete: boolean;
   frontMatterAssemblyComplete: boolean;
+  typesetterCorrectionsComplete: boolean;
 }
 
 export interface PublicationApparatusComponent {
@@ -85,6 +87,13 @@ const APPARATUS_COMPONENTS = [
     shortLabel: "ASM",
     sourceBasis: "Before publication, the volume's front matter, reader aids, and proofed pages are assembled into the final apparatus.",
     requirement: "Run the front matter assembly sequence at the Buckram Gate publication table."
+  },
+  {
+    id: "typesetter_corrections",
+    label: "Typesetter correction docket",
+    shortLabel: "FIX",
+    sourceBasis: "Once remaining editing issues are resolved with the typesetter, the volume is then finished.",
+    requirement: "Resolve remaining typesetter issues with compiler consultation before final certification."
   }
 ] as const satisfies ReadonlyArray<Omit<PublicationApparatusComponent, "complete">>;
 
@@ -116,6 +125,8 @@ function componentComplete(component: PublicationApparatusComponentId, context: 
       return stamps.has("proof") && fragments.has("Proof Fragment") && context.typesetterProofComplete && context.indexDocketComplete;
     case "front_matter_assembly":
       return context.frontMatterAssemblyComplete;
+    case "typesetter_corrections":
+      return context.typesetterCorrectionsComplete;
   }
 }
 
@@ -128,14 +139,14 @@ export function getPublicationApparatusReadout(context: PublicationApparatusCont
   const complete = missing.length === 0;
   return {
     sourceUrl: PUBLICATION_APPARATUS_SOURCE_URL,
-    sourceBasis: "FRUS final editing adds front matter, source/person/abbreviation lists, proof checks, final assembly, and an index before publication.",
+    sourceBasis: "FRUS final editing adds front matter, source/person/abbreviation lists, proof checks, final assembly, an index, and typesetter corrections before publication.",
     complete,
     completed: components.length - missing.length,
     total: components.length,
     components,
     missing,
     summary: complete
-      ? "Publication apparatus complete: front matter, source aids, proof checks, assembly, and index are ready."
+      ? "Publication apparatus complete: front matter, source aids, proof checks, assembly, index, and typesetter corrections are ready."
       : `Publication apparatus missing: ${missing.map((component) => component.shortLabel).join(", ")}.`
   };
 }

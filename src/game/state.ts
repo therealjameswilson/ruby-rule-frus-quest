@@ -1041,7 +1041,8 @@ export function getFinalGateReadiness() {
     documentPoints: gameState.documentPoints,
     typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
     indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
-    frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete)
+    frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
+    typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete)
   });
   const documentsWithUndisclosedDeletion = gameState.documentCandidates
     .filter((document) => document.undisclosedDeletion)
@@ -1809,6 +1810,7 @@ export function getProductionBoardReadout() {
     releaseCalendarComplete: Boolean(gameState.sceneProgress.releaseCalendarComplete),
     frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
     indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
+    typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete),
     kelloggFinalCertificationComplete: Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete),
     gpoSegmentAssemblyComplete: Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete),
     gpoPublicationComplete: Boolean(gameState.sceneProgress.gpoPublicationComplete)

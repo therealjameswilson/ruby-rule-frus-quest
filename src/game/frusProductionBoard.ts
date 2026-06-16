@@ -21,6 +21,7 @@ import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 import { TYPEFLOW_ORDER_SOURCE_URL } from "./typeflowOrder";
+import { TYPESETTER_CORRECTIONS_SOURCE_URL } from "./typesetterCorrections";
 import { TYPESETTER_PROOF_SOURCE_URL } from "./typesetterProof";
 import { VOLUME_CONCEPT_SOURCE_URL } from "./volumeConcept";
 import { WITHHOLDING_APPEAL_SOURCE_URL } from "./withholdingAppeal";
@@ -45,6 +46,7 @@ export type FrusProductionBoardStepId =
   | "typesetter_proof"
   | "front_matter_assembly"
   | "index_docket"
+  | "typesetter_corrections"
   | "kellogg_final_certification"
   | "gpo_segment_assembly"
   | "gpo_publication"
@@ -85,6 +87,7 @@ export interface FrusProductionBoardContext {
   releaseCalendarComplete: boolean;
   frontMatterAssemblyComplete: boolean;
   indexDocketComplete: boolean;
+  typesetterCorrectionsComplete: boolean;
   kelloggFinalCertificationComplete: boolean;
   gpoSegmentAssemblyComplete: boolean;
   gpoPublicationComplete: boolean;
@@ -272,6 +275,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Verify index entries, cross-references, and human-reviewed headings before final certification."
   },
   {
+    id: "typesetter_corrections",
+    label: "Typesetter correction docket",
+    shortLabel: "FIX",
+    sourceBasis: "Once remaining editing issues are resolved with the typesetter, the volume is then finished.",
+    sourceUrl: TYPESETTER_CORRECTIONS_SOURCE_URL,
+    gameplayTask: "Resolve flagged textual issues with compiler/typesetter consultation before final certification."
+  },
+  {
     id: "kellogg_final_certification",
     label: "Final Kellogg certification",
     shortLabel: "CRT",
@@ -440,6 +451,8 @@ export function isFrusProductionBoardStepComplete(
       return context.finalGatePublished || context.frontMatterAssemblyComplete;
     case "index_docket":
       return context.finalGatePublished || context.indexDocketComplete;
+    case "typesetter_corrections":
+      return context.finalGatePublished || context.typesetterCorrectionsComplete;
     case "kellogg_final_certification":
       return context.finalGatePublished || context.kelloggFinalCertificationComplete;
     case "gpo_segment_assembly":
@@ -469,6 +482,7 @@ export function isFrusProductionBoardStepComplete(
           && context.typesetterProofComplete
           && context.frontMatterAssemblyComplete
           && context.indexDocketComplete
+          && context.typesetterCorrectionsComplete
           && context.kelloggFinalCertificationComplete
           && context.gpoSegmentAssemblyComplete
           && context.gpoPublicationComplete
