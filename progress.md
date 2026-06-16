@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Production Board subscreen track (2026-06-16):
+  - Added a compact `productionBoard` summary to `getAdventureSubscreenReadout()`, so the ALttP-style pause/subscreen state now carries the FRUS Production Board completion count, active next gate, completion ratio, and all step statuses alongside pendants, crystals, hearts, equipped tools, dungeon keys, and the room map.
+  - Updated the FRUS Quest subscreen overlay to render a small SNES-style bead track for all 29 FRUS production gates, with completed gates in green, the active gate in cyan with a white outline, locked gates dimmed, and a gold progress underline.
+  - Added board progress and the next gate label to the subscreen text panel, making the current FRUS-production objective visible from the same pause view as tools and dungeon status.
+  - Verified focused tests: `npm test -- src/game/frusProductionBoard.test.ts src/systems/dungeonKeys.test.ts` (2 files / 21 tests pass).
+  - Verified full `npm test` (52 files / 253 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke at `?scene=OfficeScene&role=compiler&name=Ruby` reports `adventureSubscreen.productionBoard.completed: 0`, `total: 29`, and active next gate `GRD / Grand conceptualization`. The client cannot press `M` because its key map lacks a menu token, and both headless WebGL screenshot capture and the in-app Browser screenshot remain black/timed out as previously documented; browser console check reports no errors.
 - Typesetting preparation gate (2026-06-16):
   - Added `src/game/typesettingPreparation.ts`, a Phaser-free rules module based on the official history.state.gov FRUS stages detail that completed text is prepared for typesetting and document-note metadata such as classification, drafting, and dates is carefully reviewed.
   - Split the previous all-in-one typesetter proof pass: `typesetting_preparation` now sits after Modern Typeflow Order and before Typesetter Proof on the FRUS Production Board, while `typesetter_proof` now focuses on comparing typeset pages to originals and flagging remaining textual issues.

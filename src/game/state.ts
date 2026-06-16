@@ -32,7 +32,11 @@ import { CHAPTER_RELEASE_PROMPTS } from "./chapterReleaseStatus";
 import { DIGITAL_RELEASE_PROMPTS } from "./digitalRelease";
 import { GPO_PUBLICATION_PROMPTS } from "./gpoPublication";
 import { GPO_SEGMENT_ASSEMBLY_PROMPTS } from "./gpoSegmentAssembly";
-import { getFrusProductionBoardReadout } from "./frusProductionBoard";
+import {
+  getFrusProductionBoardReadout,
+  type FrusProductionBoardStatus,
+  type FrusProductionBoardStepId
+} from "./frusProductionBoard";
 import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
 import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
@@ -313,6 +317,24 @@ export interface PublicationReadinessReadout {
 }
 
 export interface AdventureSubscreenReadout {
+  productionBoard: {
+    completed: number;
+    total: number;
+    completionRatio: number;
+    nextStep: {
+      id: FrusProductionBoardStepId;
+      shortLabel: string;
+      label: string;
+      gameplayTask: string;
+      status: FrusProductionBoardStatus;
+    } | null;
+    steps: Array<{
+      id: FrusProductionBoardStepId;
+      shortLabel: string;
+      status: FrusProductionBoardStatus;
+      complete: boolean;
+    }>;
+  };
   pendants: Array<{
     id: "objectivity" | "provenance" | "review";
     label: string;
@@ -1662,6 +1684,7 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
   const currentArea = getCurrentAreaReadout();
   const roomReadout = getRoomGraphReadout();
   const equippedTool = getProcessItemReadout().find((item) => item.equipped) ?? null;
+  const board = getProductionBoardReadout();
   const crystalDocuments = gameState.documentCandidates.map((document) => {
     const total = document.equities.length;
     const earned = document.equities.filter((equity) => EQUITY_CRYSTAL_STATUSES.has(equity.response)).length;
@@ -1673,6 +1696,26 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
     };
   }).filter((document) => document.total > 0);
   return {
+    productionBoard: {
+      completed: board.completed,
+      total: board.total,
+      completionRatio: board.total > 0 ? board.completed / board.total : 1,
+      nextStep: board.nextStep
+        ? {
+            id: board.nextStep.id,
+            shortLabel: board.nextStep.shortLabel,
+            label: board.nextStep.label,
+            gameplayTask: board.nextStep.gameplayTask,
+            status: board.nextStep.status
+          }
+        : null,
+      steps: board.steps.map((step) => ({
+        id: step.id,
+        shortLabel: step.shortLabel,
+        status: step.status,
+        complete: step.complete
+      }))
+    },
     pendants: PENDANTS.map((pendant) => ({
       ...pendant,
       acquired: gameState.processStamps.includes(pendant.stampId)

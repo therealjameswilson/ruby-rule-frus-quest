@@ -236,11 +236,14 @@ export class InventoryOverlay {
     const pendantSummary = subscreen.pendants
       .map((pendant) => `${pendant.label}:${pendant.acquired ? "OK" : "--"}`)
       .join(" ");
+    const boardNext = subscreen.productionBoard.nextStep?.shortLabel ?? "DONE";
     this.summary.setText([
       `${pendantSummary}  CRYSTALS ${subscreen.crystals.earned}/${subscreen.crystals.total || 0}  HEARTS ${subscreen.reliabilityHearts.filled}/${subscreen.reliabilityHearts.total}`,
-      `TOOL ${subscreen.equippedTool?.displayName.toUpperCase() ?? hud.equippedItem?.displayName.toUpperCase() ?? "NONE"}  ${danneSummary}`
+      `BOARD ${subscreen.productionBoard.completed}/${subscreen.productionBoard.total} NEXT ${boardNext}  ${danneSummary}`,
+      `TOOL ${subscreen.equippedTool?.displayName.toUpperCase() ?? hud.equippedItem?.displayName.toUpperCase() ?? "NONE"}`
     ].join("\n"));
     this.body.setText([
+      `NEXT BOARD: ${subscreen.productionBoard.nextStep?.label.toUpperCase() ?? "CERTIFY BUCKRAM GATE"}`,
       "DUNGEON MAP / KEYS",
       dungeons,
       "",
@@ -317,7 +320,40 @@ export class InventoryOverlay {
     g.strokeRect(216, 48, 15, 15);
     g.fillRect(220, 52, 7, 7);
 
+    this.renderProductionBoardTrack(g, subscreen.productionBoard);
     this.renderRoomMap(g, subscreen);
+  }
+
+  private renderProductionBoardTrack(
+    g: Phaser.GameObjects.Graphics,
+    board: AdventureSubscreenReadout["productionBoard"]
+  ) {
+    const x = 18;
+    const y = 113;
+    const width = 148;
+    const height = 7;
+    const total = Math.max(1, board.total);
+    g.fillStyle(color(PALETTE.black), 0.78);
+    g.fillRect(x, y, width, height);
+    g.lineStyle(1, color(PALETTE.goldStamp), 1);
+    g.strokeRect(x, y, width, height);
+    board.steps.forEach((step, index) => {
+      const beadX = Math.round(x + 4 + (index * (width - 8)) / Math.max(1, total - 1));
+      const beadColor = step.complete
+        ? PALETTE.openNetGreen
+        : step.status === "active"
+          ? PALETTE.terminalCyan
+          : PALETTE.stoneGray;
+      g.fillStyle(color(beadColor), step.status === "locked" ? 0.55 : 1);
+      g.fillRect(beadX - 1, y + 2, 2, 3);
+      if (step.status === "active") {
+        g.lineStyle(1, color(PALETTE.white), 1);
+        g.strokeRect(beadX - 2, y + 1, 4, 5);
+      }
+    });
+    const progressWidth = Math.max(1, Math.round((width - 2) * board.completionRatio));
+    g.fillStyle(color(PALETTE.goldStamp), 0.32);
+    g.fillRect(x + 1, y + height - 2, progressWidth, 1);
   }
 
   private renderRoomMap(g: Phaser.GameObjects.Graphics, subscreen: AdventureSubscreenReadout) {
