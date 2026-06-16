@@ -2,14 +2,17 @@ import Phaser from "phaser";
 import { GAMEPLAY_MAPS, gameplayTiledCacheKey, type GameplayMapKey, type OverworldRegionKey } from "../assets/registry";
 import { getDistrictById } from "../data/regions";
 import { Player } from "../entities/Player";
+import { fileCapitolHacPacket, inspectClosedSessionSample } from "../game/capitolHacPacket";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { browseFrusBookshelf } from "../game/frusBookshelf";
+import { HAC_HEARING_PROMPTS } from "../game/hacHearing";
 import { logNaraCatalog } from "../game/naraCatalog";
 import { logFieldCableCollection } from "../game/recordCollection";
 import { checkRedZoneGate } from "../game/redZoneGate";
 import { checkWestWingNscGate } from "../game/westWingNsc";
 import {
   addDocumentPoints,
+  addDanneItem,
   addInventoryItem,
   addVolumeFragment,
   clearDialogState,
@@ -420,19 +423,11 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     if (action === "witness-table") {
-      this.showMapDialog("WITNESS TABLE", [
-        "The hearing record separates question, answer, source, and date.",
-        "A concise entry is more useful than a speech."
-      ]);
+      this.fileCapitolHacPacket();
       return;
     }
     if (action === "closed-session-vault") {
-      if (!gameState.sceneProgress.closedSessionAccess) {
-        this.showMapDialog("CLOSED SESSION", "Closed-session access requires later quest progression.");
-        retroAudio.warning();
-        return;
-      }
-      this.showMapDialog("CLOSED SESSION", "Access memo accepted.");
+      this.inspectClosedSessionSample();
       return;
     }
     this.showMapDialog(label.toUpperCase(), propString(object, "text", "The record is noted."));
@@ -539,6 +534,56 @@ export class GameplayMapScene extends Phaser.Scene {
     setObjective(result.objective);
     setLatestMessage(result.message);
     this.showMapDialog("SECRET SERVICE", [...result.pages]);
+  }
+
+  private fileCapitolHacPacket() {
+    const result = fileCapitolHacPacket({
+      alreadyFiled: Boolean(gameState.sceneProgress.senateHacReviewComplete),
+      inventory: gameState.inventory,
+      currentStep: gameState.sceneProgress.senateHacReviewStep ?? 0
+    });
+
+    gameState.sceneProgress.senateHacReviewStep = result.nextStep;
+    if (result.shouldCompleteHearing) gameState.sceneProgress.senateHacReviewComplete = 1;
+    for (const item of result.itemsToAward) addInventoryItem(item);
+    const treatyAdded = addDanneItem("treaty-fragments", result.treatyFragmentIndex);
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "HAC process docket filed at witness table");
+
+    if (treatyAdded) retroAudio.danneItemPickup("Treaty Fragment II");
+    else retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("WITNESS TABLE", [
+      ...result.pages,
+      result.shouldCompleteHearing
+        ? `HAC review ${HAC_HEARING_PROMPTS.length}/${HAC_HEARING_PROMPTS.length}: process docket complete.`
+        : "The hearing packet is already on the FRUS production board."
+    ]);
+  }
+
+  private inspectClosedSessionSample() {
+    const result = inspectClosedSessionSample({
+      hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
+      alreadyFiled: Boolean(gameState.sceneProgress.closedSessionAccess),
+      inventory: gameState.inventory
+    });
+
+    if (!result.ok) {
+      retroAudio.warning();
+      setObjective(result.objective);
+      setLatestMessage(result.message);
+      this.showMapDialog("CLOSED SESSION", [...result.pages]);
+      return;
+    }
+
+    if (result.shouldFileSample) gameState.sceneProgress.closedSessionAccess = 1;
+    for (const item of result.itemsToAward) addInventoryItem(item);
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "closed-session 30-year HAC sample filed");
+
+    retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("CLOSED SESSION", [...result.pages]);
   }
 
   private handleTriggers() {

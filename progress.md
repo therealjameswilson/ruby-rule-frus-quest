@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Capitol Hill HAC witness-table and closed-session loop (2026-06-16):
+  - Added `src/game/capitolHacPacket.ts`, a Phaser-free rule module for the Capitol Hill hearing room, sourced to the official HAC description of monitoring FRUS compilation/editing/preparation/declassification, reviewing procedures and guidelines, sampling records still classified after 30 years, and reporting annual findings.
+  - Replaced the static Witness Table dialog with a stateful HAC process docket: it files `sceneProgress.senateHacReviewComplete`, advances `senateHacReviewStep` to the full HAC prompt count, awards `HAC Process Docket`, `HAC Annual Findings`, Treaty Fragment II, and 6 document points once.
+  - Replaced the static Closed-Session Vault placeholder with a gated follow-up: it stays locked until the HAC docket is filed, then awards a `30-Year Classified Sample`, files `sceneProgress.closedSessionAccess`, and grants 4 document points once.
+  - Added deterministic tests in `src/game/capitolHacPacket.test.ts` for first docket filing, repeat recovery, locked sample vault, first sample filing, and repeat-safe sample filing.
+  - Verified focused `npm test -- src/game/capitolHacPacket.test.ts`, full `npm test` (64 files / 314 tests pass), and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client ran against `?scene=GameplayMapScene&map=capitol_hill&role=compiler&name=Ruby`; direct runtime probes confirmed locked vault, witness-table docket, Treaty Fragment II, closed-session sample, repeat-safe points, and no browser errors. Screenshot: `output/web-game/capitol-hac-smoke.png`.
 - West Wing Situation Room source-coverage gate (2026-06-16):
   - Added `src/game/westWingNsc.ts`, a Phaser-free rule module for the Secret Service / Situation Room gate, sourced to the official About FRUS source-base language naming White House, National Security Council, State, Defense, CIA, other agency, private, and published records.
   - Replaced the static NSC clearance placeholder with a real source-coverage check: the gate opens after the NARA Source Index or repository coverage map proves White House/NSC records are being compared against the wider FRUS source base.
