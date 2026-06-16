@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- NARA catalog desk gameplay (2026-06-16):
+  - Added `src/game/naraCatalog.ts`, a Phaser-free rules module for the NARA II catalog desk and Archivist interaction, sourced to the official history.state.gov FRUS stages page and FRUS history chapter on microform supplements.
+  - The NARA Archivist now files a `NARA Source Index`, awards `Microform Supplement Reels`, advances the collection notes to the context-record step, and grants 5 document points once instead of showing a static placeholder.
+  - Wired `GameplayMapScene` so the `nara-archivist` Tiled interaction updates `sceneProgress.naraCatalogFiled`, preserves repeat-safety, and keeps later selection/review gates intact.
+  - Added deterministic unit coverage in `src/game/naraCatalog.test.ts` for first filing, repeat filing, and older-save inventory recovery.
+  - Verified focused `npm test -- src/game/naraCatalog.test.ts`, full `npm test` (61 files / 301 tests pass), and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client ran against `?scene=GameplayMapScene&map=nara_stacks&role=compiler&name=Ruby`; direct runtime probe at the catalog desk reported `sceneProgress.naraCatalogFiled: 1`, `recordCollectionStep: 2`, `documentPoints: 5`, `NARA Source Index`, `Microform Supplement Reels`, repeat-safe points, and no browser errors. Screenshot: `output/web-game/nara-catalog-smoke.png`.
 - FRUS public-record bookshelf gameplay (2026-06-16):
   - Added `src/game/frusBookshelf.ts`, a Phaser-free rules module for the Historian Office FRUS bookshelf, sourced to the official history.state.gov About FRUS page.
   - The shelf now awards a one-time `Reference Shelf Fragment`, 4 document points, and dialog explaining the official public record, 20-year access, 30-year publication, and broad source base instead of showing a Phase 7 placeholder.

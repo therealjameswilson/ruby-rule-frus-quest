@@ -4,9 +4,11 @@ import { getDistrictById } from "../data/regions";
 import { Player } from "../entities/Player";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { browseFrusBookshelf } from "../game/frusBookshelf";
+import { logNaraCatalog } from "../game/naraCatalog";
 import { logFieldCableCollection } from "../game/recordCollection";
 import {
   addDocumentPoints,
+  addInventoryItem,
   addVolumeFragment,
   clearDialogState,
   gameState,
@@ -395,10 +397,7 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     if (action === "nara-archivist") {
-      this.showMapDialog("NARA ARCHIVIST", [
-        "The catalog desk can tell you what survived.",
-        "The Red Zone waits for a declassification flag."
-      ]);
+      this.logNaraCatalog();
       return;
     }
     if (action === "red-zone-gate") {
@@ -481,6 +480,23 @@ export class GameplayMapScene extends Phaser.Scene {
     setObjective(result.objective);
     setLatestMessage(result.message);
     this.showMapDialog("FRUS BOOKSHELF", [...result.pages]);
+  }
+
+  private logNaraCatalog() {
+    const result = logNaraCatalog({
+      alreadyFiled: Boolean(gameState.sceneProgress.naraCatalogFiled),
+      inventory: gameState.inventory,
+      currentRecordCollectionStep: gameState.sceneProgress.recordCollectionStep ?? 0
+    });
+    gameState.sceneProgress.naraCatalogFiled = 1;
+    gameState.sceneProgress.recordCollectionStep = result.nextRecordCollectionStep;
+    for (const item of result.itemsToAward) addInventoryItem(item);
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "NARA source index and microform trail filed");
+
+    retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("NARA ARCHIVIST", [...result.pages]);
   }
 
   private handleTriggers() {
