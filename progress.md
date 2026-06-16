@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- FRUS public-record bookshelf gameplay (2026-06-16):
+  - Added `src/game/frusBookshelf.ts`, a Phaser-free rules module for the Historian Office FRUS bookshelf, sourced to the official history.state.gov About FRUS page.
+  - The shelf now awards a one-time `Reference Shelf Fragment`, 4 document points, and dialog explaining the official public record, 20-year access, 30-year publication, and broad source base instead of showing a Phase 7 placeholder.
+  - Wired `GameplayMapScene` so the `frus-bookshelf` Tiled interaction updates `sceneProgress.frusBookshelfBrowsed`, refreshes objective/latest-message state, and remains repeat-safe.
+  - Added deterministic unit coverage in `src/game/frusBookshelf.test.ts` for first browse, repeat browse, and older-save fragment recovery.
+  - Verified focused `npm test -- src/game/frusBookshelf.test.ts`, full `npm test` (60 files / 298 tests pass), and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client ran against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby`; direct runtime probe at the shelf reported `sceneProgress.frusBookshelfBrowsed: 1`, `documentPoints: 4`, one `Reference Shelf Fragment`, repeat-safe points, and no browser errors. Screenshot: `output/web-game/frus-bookshelf-smoke.png`.
 - Volume concept coverage breadth prompt (2026-06-16):
   - Expanded `src/game/volumeConcept.ts` with an About-FRUS-backed coverage-breadth prompt so the player must plan for bilateral/regional relations, global issues, and topical policy lanes instead of reducing a volume to one easy file path.
   - Wrong coverage shortcuts now debit standards reliability as omitted material facts or concealed policy defects.

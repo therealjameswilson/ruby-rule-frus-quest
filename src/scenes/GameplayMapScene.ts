@@ -3,9 +3,11 @@ import { GAMEPLAY_MAPS, gameplayTiledCacheKey, type GameplayMapKey, type Overwor
 import { getDistrictById } from "../data/regions";
 import { Player } from "../entities/Player";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { browseFrusBookshelf } from "../game/frusBookshelf";
 import { logFieldCableCollection } from "../game/recordCollection";
 import {
   addDocumentPoints,
+  addVolumeFragment,
   clearDialogState,
   gameState,
   setDialogState,
@@ -389,7 +391,7 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     if (action === "frus-bookshelf") {
-      this.showMapDialog("FRUS BOOKSHELF", "Collected volumes will be browsable from this shelf in Phase 7.");
+      this.browseFrusBookshelf();
       return;
     }
     if (action === "nara-archivist") {
@@ -464,6 +466,21 @@ export class GameplayMapScene extends Phaser.Scene {
       result.sourceBasis,
       "The formal Collection board gate still needs the Office desk review before selection narrows the record."
     ]);
+  }
+
+  private browseFrusBookshelf() {
+    const result = browseFrusBookshelf({
+      alreadyBrowsed: Boolean(gameState.sceneProgress.frusBookshelfBrowsed),
+      currentFragments: gameState.volumeFragments
+    });
+    gameState.sceneProgress.frusBookshelfBrowsed = 1;
+    if (result.shouldAwardFragment) addVolumeFragment(result.fragmentLabel);
+    if (result.documentPoints > 0) addDocumentPoints(result.documentPoints, "public FRUS reference shelf indexed");
+
+    retroAudio.confirm();
+    setObjective(result.objective);
+    setLatestMessage(result.message);
+    this.showMapDialog("FRUS BOOKSHELF", [...result.pages]);
   }
 
   private handleTriggers() {
