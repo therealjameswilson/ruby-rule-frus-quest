@@ -3,8 +3,7 @@ import type { ChoiceOption } from "./types";
 
 export type GpoPublicationPromptId =
   | "publication_contract"
-  | "volume_binding"
-  | "funding_delay";
+  | "volume_binding";
 
 export interface GpoPublicationPrompt {
   id: GpoPublicationPromptId;
@@ -51,19 +50,6 @@ export const GPO_PUBLICATION_PROMPTS = [
     sourceBasis: "The stages page notes that GPO would bind the entire volume together when the final segment was submitted.",
     successMessage: "Binding logged: the ruby buckram volume can become one finished object.",
     failureMessage: "The final book cannot ship as loose packets or without required apparatus."
-  },
-  {
-    id: "funding_delay",
-    question: "GPO HANDOFF: WHAT IF FUNDING DELAYS A FULLY PREPARED VOLUME?",
-    options: [
-      { key: "A", label: "Keep the prepared volume intact in the publication queue", value: "hold_prepared" },
-      { key: "B", label: "Cut pages until the print job fits", value: "cut_pages" },
-      { key: "C", label: "Publish an uncertified shortcut edition", value: "uncertified" }
-    ],
-    correctValue: "hold_prepared",
-    sourceBasis: "The stages page says lack of funding has delayed publication of fully prepared volumes.",
-    successMessage: "Funding-delay handling logged: delay cannot alter the finished record.",
-    failureMessage: "A funding delay cannot justify cutting pages or publishing an uncertified record."
   }
 ] as const satisfies readonly GpoPublicationPrompt[];
 
@@ -83,7 +69,7 @@ export function evaluateGpoPublicationAnswer(
   const ok = value === prompt.correctValue;
   let violation: StandardViolation | null = null;
   if (!ok) {
-    if (value === "cut_pages" || value === "drop_index") violation = "omitted_material_fact";
+    if (value === "drop_index") violation = "omitted_material_fact";
     else if (value === "uncertified" || value === "statechat_release") violation = "altered_text";
     else violation = "concealed_policy_defect";
   }

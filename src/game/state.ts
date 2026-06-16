@@ -40,6 +40,7 @@ import {
 import { getFrusProductionPhaseReadout, type FrusProductionPhaseId } from "./frusProductionPhases";
 import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
 import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
+import { PUBLICATION_FUNDING_PROMPTS } from "./publicationFundingQueue";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
@@ -1193,6 +1194,8 @@ function completePublicationReleaseFlags() {
   gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
   gameState.sceneProgress.gpoPublicationComplete = 1;
   gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
+  gameState.sceneProgress.publicationFundingComplete = 1;
+  gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
   gameState.sceneProgress.chapterReleaseComplete = 1;
   gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
   gameState.sceneProgress.digitalReleaseComplete = 1;
@@ -1899,7 +1902,8 @@ export function getProductionBoardReadout() {
     typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete),
     kelloggFinalCertificationComplete: Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete),
     gpoSegmentAssemblyComplete: Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete),
-    gpoPublicationComplete: Boolean(gameState.sceneProgress.gpoPublicationComplete)
+    gpoPublicationComplete: Boolean(gameState.sceneProgress.gpoPublicationComplete),
+    publicationFundingComplete: Boolean(gameState.sceneProgress.publicationFundingComplete)
   });
 }
 

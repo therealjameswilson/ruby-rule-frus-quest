@@ -44,6 +44,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     kelloggFinalCertificationComplete: false,
     gpoSegmentAssemblyComplete: false,
     gpoPublicationComplete: false,
+    publicationFundingComplete: false,
     ...overrides
   };
 }
@@ -132,6 +133,7 @@ describe("FRUS production board", () => {
       "kellogg_final_certification",
       "gpo_segment_assembly",
       "gpo_publication",
+      "publication_funding",
       "chapter_release_status",
       "digital_release",
       "public_citation",
@@ -242,11 +244,46 @@ describe("FRUS production board", () => {
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
     }));
+    const fundingFiled = getFrusProductionBoardReadout(context({
+      volumeWorkflowState: "proofing",
+      documentCandidates: documents,
+      processStamps: ["rule", "archive", "network", "referral", "sop", "proof"] satisfies ProcessStampId[],
+      heldProcessItems: new Set<ProcessItemId>([
+        "citation_stamp",
+        "clearance_token",
+        "concurrence_slip",
+        "red_pencil",
+        "proof_lens"
+      ]),
+      documentPoints: 20,
+      reliability: 90,
+      annotationDraftingComplete: true,
+      foreignGovernmentPermissionComplete: true,
+      withholdingAppealComplete: true,
+      editorialMethodologyComplete: true,
+      editorialTreatmentComplete: true,
+      typeflowOrderComplete: true,
+      typesettingPreparationComplete: true,
+      typesetterProofComplete: true,
+      frontMatterAssemblyComplete: true,
+      indexDocketComplete: true,
+      typesetterCorrectionsComplete: true,
+      kelloggFinalCertificationComplete: true,
+      gpoSegmentAssemblyComplete: true,
+      gpoPublicationComplete: true,
+      publicationFundingComplete: true,
+      recordCollectionComplete: true,
+      selectionDocketComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      manuscriptReviewComplete: true
+    }));
 
     const chapterStatusIndex = readout.steps.findIndex((step) => step.id === "chapter_release_status");
     expect(chapterStatusIndex).toBeGreaterThan(0);
-    expect(readout.steps.slice(0, chapterStatusIndex).every((step) => step.complete)).toBe(true);
-    expect(readout.nextStep?.id).toBe("chapter_release_status");
+    expect(readout.nextStep?.id).toBe("publication_funding");
+    expect(fundingFiled.steps.slice(0, chapterStatusIndex).every((step) => step.complete)).toBe(true);
+    expect(fundingFiled.nextStep?.id).toBe("chapter_release_status");
   });
 
   it("surfaces modern typeflow, typesetting preparation, and proof before publication apparatus", () => {
@@ -304,7 +341,7 @@ describe("FRUS production board", () => {
     expect(certified.nextStep?.id).toBe("gpo_segment_assembly");
   });
 
-  it("surfaces GPO segment assembly and handoff before public chapter status", () => {
+  it("surfaces GPO segment assembly, handoff, and funding queue before public chapter status", () => {
     const readyForGpo = getFrusProductionBoardReadout(context({
       ...COMPLETE_BEFORE_GPO
     }));
@@ -317,13 +354,21 @@ describe("FRUS production board", () => {
       gpoSegmentAssemblyComplete: true,
       gpoPublicationComplete: true
     }));
+    const fundingComplete = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_GPO,
+      gpoSegmentAssemblyComplete: true,
+      gpoPublicationComplete: true,
+      publicationFundingComplete: true
+    }));
 
     expect(readyForGpo.steps.find((step) => step.id === "kellogg_editing")?.complete).toBe(true);
     expect(readyForGpo.nextStep?.id).toBe("gpo_segment_assembly");
     expect(readyForGpo.steps.find((step) => step.id === "chapter_release_status")?.status).toBe("locked");
     expect(segmentsComplete.nextStep?.id).toBe("gpo_publication");
     expect(handoffComplete.steps.find((step) => step.id === "gpo_publication")?.complete).toBe(true);
-    expect(handoffComplete.nextStep?.id).toBe("chapter_release_status");
+    expect(handoffComplete.nextStep?.id).toBe("publication_funding");
+    expect(fundingComplete.steps.find((step) => step.id === "publication_funding")?.complete).toBe(true);
+    expect(fundingComplete.nextStep?.id).toBe("chapter_release_status");
   });
 
   it("requires foreign-government permission after declassification and before referral concurrence", () => {
@@ -597,7 +642,7 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("kellogg_editing", consulted)).toBe(true);
   });
 
-  it("requires front matter, certification, GPO, chapter status, digital release, public citation, and release calendar before statutory publication", () => {
+  it("requires front matter, certification, GPO, funding queue, chapter status, digital release, public citation, and release calendar before statutory publication", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(withEquityResolved);
     const notReady = context({
       processStamps: ["rule", "archive", "sop", "proof"],
@@ -644,8 +689,12 @@ describe("FRUS production board", () => {
       ...gpoSegmentsFiled,
       gpoPublicationComplete: true
     });
-    const chapterLedgerFiled = context({
+    const fundingQueueFiled = context({
       ...gpoHandoffFiled,
+      publicationFundingComplete: true
+    });
+    const chapterLedgerFiled = context({
+      ...fundingQueueFiled,
       chapterReleaseComplete: true
     });
     const digitallyReleased = context({
@@ -682,7 +731,10 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("gpo_segment_assembly", gpoSegmentsFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("publication_30_year", gpoSegmentsFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("gpo_publication", gpoHandoffFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_funding", gpoHandoffFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("publication_30_year", gpoHandoffFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("publication_funding", fundingQueueFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", fundingQueueFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("chapter_release_status", chapterLedgerFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("digital_release", chapterLedgerFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("publication_30_year", ready)).toBe(false);

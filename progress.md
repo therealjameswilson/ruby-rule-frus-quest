@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Publication funding queue gate (2026-06-16):
+  - Added `src/game/publicationFundingQueue.ts`, a Phaser-free rules module based on the official FRUS stages page statement that lack of funding has delayed publication of fully prepared volumes.
+  - Split funding-delay handling out of the GPO publication handoff and into a distinct Zelda-like `publication_funding` gate after GPO handoff and before chapter/public release status.
+  - Wired `EndingScene` so the Buckram Gate now flows: GPO segment assembly -> GPO publication handoff -> publication funding queue -> chapter release ledger -> digital release -> public citation -> release calendar -> publication.
+  - Unsafe shortcuts in the funding queue now apply standards damage: cutting documents is an omitted material fact, hiding the delay is a concealed policy defect, and calling an unpublished queue item published is altered text.
+  - Updated `getProductionBoardReadout()` and phase readouts so the Production Board now has 30 gates; the release phase includes `publication_funding` with short label `FND`.
+  - Verified focused tests: `npm test -- src/game/publicationFundingQueue.test.ts src/game/gpoPublication.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts` (4 files / 27 tests pass).
+  - Verified full `npm test` (54 files / 259 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke at `?scene=EndingScene&role=compiler&name=Ruby` reports `productionBoard.total: 30`, `hasPublicationFunding: true`, sequence `gpo_segment_assembly -> gpo_publication -> publication_funding -> chapter_release_status`, visible entity `publication funding queue docket`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Office wall FRUS phase board (2026-06-16):
   - Refactored the Office hub wall chart from a dense 29-dot production tracker into six readable FRUS phase rows using `getFrusProductionPhaseReadout()`.
   - The in-room board now shows short phase labels, completion ticks, active-phase highlighting, the current board step, and a gold progress underline while preserving the same state source as the pause/subscreen readout.

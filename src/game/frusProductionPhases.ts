@@ -72,8 +72,8 @@ export const FRUS_PRODUCTION_PHASES = [
     id: "release",
     label: "Print, digital, and public release",
     shortLabel: "REL",
-    sourceBasis: "Move the certified volume through GPO, chapter status, digital release, public citation, release calendar, and the 30-year publication gate.",
-    stepIds: ["gpo_segment_assembly", "gpo_publication", "chapter_release_status", "digital_release", "public_citation", "release_calendar", "publication_30_year"]
+    sourceBasis: "Move the certified volume through GPO, the funding wait queue, chapter status, digital release, public citation, release calendar, and the 30-year publication gate.",
+    stepIds: ["gpo_segment_assembly", "gpo_publication", "publication_funding", "chapter_release_status", "digital_release", "public_citation", "release_calendar", "publication_30_year"]
   }
 ] as const satisfies readonly FrusProductionPhase[];
 

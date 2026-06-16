@@ -15,6 +15,7 @@ import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCove
 import { INDEX_DOCKET_SOURCE_URL } from "./indexDocket";
 import { KELLOGG_CERTIFICATION_SOURCE_URL } from "./kelloggCertification";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
+import { PUBLICATION_FUNDING_SOURCE_URL } from "./publicationFundingQueue";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { RECORDS_ACCESS_SOURCE_URL } from "./recordsAccess";
 import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
@@ -52,6 +53,7 @@ export type FrusProductionBoardStepId =
   | "kellogg_final_certification"
   | "gpo_segment_assembly"
   | "gpo_publication"
+  | "publication_funding"
   | "chapter_release_status"
   | "digital_release"
   | "public_citation"
@@ -94,6 +96,7 @@ export interface FrusProductionBoardContext {
   kelloggFinalCertificationComplete: boolean;
   gpoSegmentAssemblyComplete: boolean;
   gpoPublicationComplete: boolean;
+  publicationFundingComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -315,7 +318,15 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     shortLabel: "GPO",
     sourceBasis: "The Department contracts with the Government Printing Office to prepare and publish FRUS volumes.",
     sourceUrl: GPO_PUBLICATION_SOURCE_URL,
-    gameplayTask: "Complete the GPO handoff: print, bind, and hold any funding delay without altering the record."
+    gameplayTask: "Complete the GPO handoff: print and bind the finished ruby buckram volume."
+  },
+  {
+    id: "publication_funding",
+    label: "Publication funding queue",
+    shortLabel: "FND",
+    sourceBasis: "Lack of funding can delay publication of fully prepared FRUS volumes, but the prepared record must remain intact.",
+    sourceUrl: PUBLICATION_FUNDING_SOURCE_URL,
+    gameplayTask: "Route the fully prepared volume through the funding wait queue without cutting pages, hiding delay, or publishing an uncertified shortcut."
   },
   {
     id: "chapter_release_status",
@@ -472,6 +483,8 @@ export function isFrusProductionBoardStepComplete(
       return context.finalGatePublished || context.gpoSegmentAssemblyComplete || context.gpoPublicationComplete;
     case "gpo_publication":
       return context.finalGatePublished || context.gpoPublicationComplete;
+    case "publication_funding":
+      return context.finalGatePublished || context.publicationFundingComplete;
     case "chapter_release_status":
       return context.finalGatePublished || context.chapterReleaseComplete;
     case "digital_release":
@@ -500,6 +513,7 @@ export function isFrusProductionBoardStepComplete(
           && context.kelloggFinalCertificationComplete
           && context.gpoSegmentAssemblyComplete
           && context.gpoPublicationComplete
+          && context.publicationFundingComplete
           && context.reliability >= 70
           && stamps.has("proof")
           && noUndisclosedDeletions(context)

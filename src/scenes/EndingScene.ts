@@ -31,6 +31,12 @@ import {
   publicCitationCardComplete
 } from "../game/publicCitationCard";
 import {
+  evaluatePublicationFundingAnswer,
+  getPublicationFundingPrompt,
+  PUBLICATION_FUNDING_PROMPTS,
+  publicationFundingComplete
+} from "../game/publicationFundingQueue";
+import {
   RELEASE_CALENDAR_PROMPTS,
   evaluateReleaseCalendarAnswer,
   getReleaseCalendarPrompt,
@@ -325,6 +331,7 @@ export class EndingScene extends Phaser.Scene {
     const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
     const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
     const gpoSegmentsComplete = Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete || gpoComplete);
+    const publicationFundingReady = Boolean(gameState.sceneProgress.publicationFundingComplete);
     const chapterStatusReady = Boolean(gameState.sceneProgress.chapterReleaseComplete);
     const digitalReleaseReady = Boolean(gameState.sceneProgress.digitalReleaseComplete);
     const publicCitationReady = Boolean(gameState.sceneProgress.publicCitationComplete);
@@ -335,15 +342,17 @@ export class EndingScene extends Phaser.Scene {
       ? certificationComplete
         ? gpoSegmentsComplete
           ? gpoComplete
-            ? chapterStatusReady
-              ? digitalReleaseReady
-                ? publicCitationReady
-                  ? releaseCalendarReady
-                    ? "Buckram Key ready: release calendar docket complete; publish the volume."
-                    : "Public citation card complete: file the public release calendar docket."
-                  : "Digital release complete: assemble the public citation card."
-                : "Chapter status ledger complete: prepare the history.state.gov digital release manifest."
-              : "GPO handoff complete: file the public chapter status ledger."
+            ? publicationFundingReady
+              ? chapterStatusReady
+                ? digitalReleaseReady
+                  ? publicCitationReady
+                    ? releaseCalendarReady
+                      ? "Buckram Key ready: release calendar docket complete; publish the volume."
+                      : "Public citation card complete: file the public release calendar docket."
+                    : "Digital release complete: assemble the public citation card."
+                  : "Chapter status ledger complete: prepare the history.state.gov digital release manifest."
+                : "Funding queue cleared: file the public chapter status ledger."
+              : "GPO handoff complete: route the publication funding queue."
             : "GPO segments assembled: complete the final publication handoff."
           : "Final certification complete: submit the GPO publication segments."
         : indexDocketReady
@@ -376,15 +385,17 @@ export class EndingScene extends Phaser.Scene {
         ? certificationComplete
           ? gpoSegmentsComplete
             ? gpoComplete
-              ? chapterStatusReady
-                ? digitalReleaseReady
-                  ? publicCitationReady
-                    ? releaseCalendarReady
-                      ? "Buckram Gate: press Space to publish the public FRUS volume."
-                      : "Buckram Gate: press Space for release calendar docket."
-                    : "Buckram Gate: press Space for public citation card."
-                  : "Buckram Gate: press Space for digital release manifest."
-                : "Buckram Gate: press Space for chapter status ledger."
+              ? publicationFundingReady
+                ? chapterStatusReady
+                  ? digitalReleaseReady
+                    ? publicCitationReady
+                      ? releaseCalendarReady
+                        ? "Buckram Gate: press Space to publish the public FRUS volume."
+                        : "Buckram Gate: press Space for release calendar docket."
+                      : "Buckram Gate: press Space for public citation card."
+                    : "Buckram Gate: press Space for digital release manifest."
+                  : "Buckram Gate: press Space for chapter status ledger."
+                : "Buckram Gate: press Space for publication funding queue."
               : "Buckram Gate: press Space for GPO publication handoff."
             : "Buckram Gate: press Space to assemble GPO segments."
           : indexDocketReady
@@ -397,15 +408,17 @@ export class EndingScene extends Phaser.Scene {
         ? certificationComplete
           ? gpoSegmentsComplete
             ? gpoComplete
-              ? chapterStatusReady
-                ? digitalReleaseReady
-                  ? publicCitationReady
-                    ? releaseCalendarReady
-                      ? "SPACE: PUBLISH PUBLIC FRUS VOLUME"
-                      : "SPACE: RELEASE CALENDAR DOCKET"
-                    : "SPACE: PUBLIC CITATION CARD"
-                  : "SPACE: DIGITAL RELEASE MANIFEST"
-                : "SPACE: CHAPTER STATUS LEDGER"
+              ? publicationFundingReady
+                ? chapterStatusReady
+                  ? digitalReleaseReady
+                    ? publicCitationReady
+                      ? releaseCalendarReady
+                        ? "SPACE: PUBLISH PUBLIC FRUS VOLUME"
+                        : "SPACE: RELEASE CALENDAR DOCKET"
+                      : "SPACE: PUBLIC CITATION CARD"
+                    : "SPACE: DIGITAL RELEASE MANIFEST"
+                  : "SPACE: CHAPTER STATUS LEDGER"
+                : "SPACE: PUBLICATION FUNDING QUEUE"
               : "SPACE: GPO PUBLICATION HANDOFF"
             : "SPACE: ASSEMBLE GPO SEGMENTS"
           : indexDocketReady
@@ -497,6 +510,10 @@ export class EndingScene extends Phaser.Scene {
       this.startGpoPublicationHandoff();
       return;
     }
+    if (!gameState.sceneProgress.publicationFundingComplete) {
+      this.startPublicationFundingQueue();
+      return;
+    }
     if (!gameState.sceneProgress.chapterReleaseComplete) {
       this.startChapterReleaseStatus();
       return;
@@ -519,6 +536,10 @@ export class EndingScene extends Phaser.Scene {
   private startChapterReleaseStatus() {
     if (gameState.sceneProgress.chapterReleaseComplete) {
       this.startDigitalRelease();
+      return;
+    }
+    if (!gameState.sceneProgress.publicationFundingComplete) {
+      this.startPublicationFundingQueue();
       return;
     }
     if (!gameState.sceneProgress.gpoPublicationComplete) {
@@ -568,6 +589,10 @@ export class EndingScene extends Phaser.Scene {
     }
     if (!gameState.sceneProgress.chapterReleaseComplete) {
       this.startChapterReleaseStatus();
+      return;
+    }
+    if (!gameState.sceneProgress.publicationFundingComplete) {
+      this.startPublicationFundingQueue();
       return;
     }
     if (!gameState.sceneProgress.gpoPublicationComplete) {
@@ -873,7 +898,7 @@ export class EndingScene extends Phaser.Scene {
 
   private startGpoPublicationHandoff() {
     if (gameState.sceneProgress.gpoPublicationComplete) {
-      this.publishVolume();
+      this.startPublicationFundingQueue();
       return;
     }
     if (!gameState.sceneProgress.gpoSegmentAssemblyComplete) {
@@ -909,8 +934,53 @@ export class EndingScene extends Phaser.Scene {
       }
       gameState.sceneProgress.gpoPublicationComplete = 1;
       gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
-      setLatestMessage("GPO handoff complete: print, bind, and publish the finished FRUS volume.");
-      setObjective("Buckram Gate: press Space to publish the GPO-ready volume.");
+      setLatestMessage("GPO handoff complete: the finished FRUS volume is prepared for the funding queue.");
+      setObjective("Buckram Gate: press Space for publication funding queue.");
+      this.updateGateReadout();
+    });
+  }
+
+  private startPublicationFundingQueue() {
+    if (gameState.sceneProgress.publicationFundingComplete) {
+      this.startChapterReleaseStatus();
+      return;
+    }
+    if (!gameState.sceneProgress.gpoPublicationComplete) {
+      this.startGpoPublicationHandoff();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      PUBLICATION_FUNDING_PROMPTS.length - 1,
+      gameState.sceneProgress.publicationFundingStep ?? 0
+    ));
+    gameState.sceneProgress.publicationFundingStep = currentStep;
+    const prompt = getPublicationFundingPrompt(currentStep);
+    setObjective(`Publication funding queue: ${currentStep + 1}/${PUBLICATION_FUNDING_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluatePublicationFundingAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.publicationFundingStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `Publication funding queue: ${prompt.id}`);
+        }
+        setObjective("Publication funding queue: keep the prepared volume intact while the queue clears.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.publicationFundingStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!publicationFundingComplete(nextStep)) {
+        this.startPublicationFundingQueue();
+        return;
+      }
+      gameState.sceneProgress.publicationFundingComplete = 1;
+      gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
+      addDocumentPoints(4, "publication funding queue cleared");
+      setLatestMessage("Publication funding queue cleared: the fully prepared volume stayed intact.");
+      setObjective("Buckram Gate: press Space for chapter status ledger.");
       this.updateGateReadout();
     });
   }
@@ -1014,6 +1084,8 @@ export class EndingScene extends Phaser.Scene {
     gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
     gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
     gameState.sceneProgress.gpoPublicationComplete = 1;
+    gameState.sceneProgress.publicationFundingComplete = 1;
+    gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
     gameState.sceneProgress.chapterReleaseComplete = 1;
     gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
     gameState.sceneProgress.digitalReleaseComplete = 1;
@@ -1070,6 +1142,7 @@ export class EndingScene extends Phaser.Scene {
       "history.state.gov digital release manifest",
       "public FRUS citation card",
       "public release calendar docket",
+      "publication funding queue docket",
       "StateChat readiness checklist"
     ]);
     const status = published || (getFinalGateReadiness().ready && hasProcessItem("buckram_key")) ? "cleared" : "blocking";
