@@ -1695,6 +1695,8 @@ export function getProductionBoardReadout() {
     withholdingAppealComplete: Boolean(gameState.sceneProgress.withholdingAppealComplete),
     editorialMethodologyComplete: Boolean(gameState.sceneProgress.editorialMethodologyComplete),
     editorialTreatmentComplete: Boolean(gameState.sceneProgress.editorialTreatmentComplete),
+    typeflowOrderComplete: Boolean(gameState.sceneProgress.typeflowOrderComplete),
+    typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
     recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),

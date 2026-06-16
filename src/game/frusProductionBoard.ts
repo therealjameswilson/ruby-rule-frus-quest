@@ -19,6 +19,8 @@ import { RECORDS_ACCESS_SOURCE_URL } from "./recordsAccess";
 import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
+import { TYPEFLOW_ORDER_SOURCE_URL } from "./typeflowOrder";
+import { TYPESETTER_PROOF_SOURCE_URL } from "./typesetterProof";
 import { VOLUME_CONCEPT_SOURCE_URL } from "./volumeConcept";
 import { WITHHOLDING_APPEAL_SOURCE_URL } from "./withholdingAppeal";
 
@@ -38,6 +40,8 @@ export type FrusProductionBoardStepId =
   | "advisory_monitoring"
   | "editorial_methodology"
   | "kellogg_editing"
+  | "modern_typeflow_order"
+  | "typesetter_proof"
   | "front_matter_assembly"
   | "kellogg_final_certification"
   | "gpo_segment_assembly"
@@ -65,6 +69,8 @@ export interface FrusProductionBoardContext {
   withholdingAppealComplete: boolean;
   editorialMethodologyComplete: boolean;
   editorialTreatmentComplete: boolean;
+  typeflowOrderComplete: boolean;
+  typesetterProofComplete: boolean;
   manuscriptReviewComplete: boolean;
   recordsAccessComplete: boolean;
   recordCollectionComplete: boolean;
@@ -229,6 +235,22 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "Remaining textual issues are flagged for consultation; editing must improve readability without altering records.",
     sourceUrl: EDITORIAL_TREATMENT_SOURCE_URL,
     gameplayTask: "Resolve textual issues with human editorial treatment before the proof stamp can satisfy Kellogg standards."
+  },
+  {
+    id: "modern_typeflow_order",
+    label: "Modern typeflow order",
+    shortLabel: "TYP",
+    sourceBasis: "Since the late 1970s, compilations have been cleared in manuscript before proceeding to typesetting.",
+    sourceUrl: TYPEFLOW_ORDER_SOURCE_URL,
+    gameplayTask: "File the modern sequence: clear the manuscript first, then move into typesetting."
+  },
+  {
+    id: "typesetter_proof",
+    label: "Typesetter proof",
+    shortLabel: "PRF",
+    sourceBasis: "After typesetting, pages are compared to original documents and remaining textual issues are flagged for compiler consultation.",
+    sourceUrl: TYPESETTER_PROOF_SOURCE_URL,
+    gameplayTask: "Compare the typeset pages to originals and preserve classification, drafting, date, and text metadata."
   },
   {
     id: "front_matter_assembly",
@@ -399,6 +421,10 @@ export function isFrusProductionBoardStepComplete(
       return context.editorialMethodologyComplete;
     case "kellogg_editing":
       return context.editorialMethodologyComplete && context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
+    case "modern_typeflow_order":
+      return context.finalGatePublished || context.typeflowOrderComplete;
+    case "typesetter_proof":
+      return context.finalGatePublished || context.typesetterProofComplete;
     case "front_matter_assembly":
       return context.finalGatePublished || context.frontMatterAssemblyComplete;
     case "kellogg_final_certification":
@@ -426,6 +452,8 @@ export function isFrusProductionBoardStepComplete(
           && context.digitalReleaseComplete
           && context.publicCitationComplete
           && context.releaseCalendarComplete
+          && context.typeflowOrderComplete
+          && context.typesetterProofComplete
           && context.frontMatterAssemblyComplete
           && context.kelloggFinalCertificationComplete
           && context.gpoSegmentAssemblyComplete

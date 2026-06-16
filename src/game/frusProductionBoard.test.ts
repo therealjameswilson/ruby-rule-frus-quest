@@ -25,6 +25,8 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     withholdingAppealComplete: false,
     editorialMethodologyComplete: false,
     editorialTreatmentComplete: false,
+    typeflowOrderComplete: false,
+    typesetterProofComplete: false,
     manuscriptReviewComplete: false,
     recordsAccessComplete: false,
     recordCollectionComplete: false,
@@ -60,7 +62,7 @@ function balancedSelectedDocuments() {
   return documents;
 }
 
-const COMPLETE_BEFORE_PUBLICATION_APPARATUS = {
+const COMPLETE_BEFORE_TYPEFLOW = {
   processStamps: ["rule", "archive", "network", "referral", "sop", "proof"] satisfies ProcessStampId[],
   heldProcessItems: new Set<ProcessItemId>([
     "citation_stamp",
@@ -83,6 +85,12 @@ const COMPLETE_BEFORE_PUBLICATION_APPARATUS = {
   selectionDocketComplete: true,
   seriesConceptComplete: true,
   volumeConceptComplete: true
+} as const;
+
+const COMPLETE_BEFORE_PUBLICATION_APPARATUS = {
+  ...COMPLETE_BEFORE_TYPEFLOW,
+  typeflowOrderComplete: true,
+  typesetterProofComplete: true
 } as const;
 
 const COMPLETE_BEFORE_GPO = {
@@ -109,6 +117,8 @@ describe("FRUS production board", () => {
       "advisory_monitoring",
       "editorial_methodology",
       "kellogg_editing",
+      "modern_typeflow_order",
+      "typesetter_proof",
       "front_matter_assembly",
       "kellogg_final_certification",
       "gpo_segment_assembly",
@@ -208,6 +218,8 @@ describe("FRUS production board", () => {
       withholdingAppealComplete: true,
       editorialMethodologyComplete: true,
       editorialTreatmentComplete: true,
+      typeflowOrderComplete: true,
+      typesetterProofComplete: true,
       frontMatterAssemblyComplete: true,
       kelloggFinalCertificationComplete: true,
       gpoSegmentAssemblyComplete: true,
@@ -219,8 +231,26 @@ describe("FRUS production board", () => {
       manuscriptReviewComplete: true
     }));
 
-    expect(readout.steps.slice(0, 19).every((step) => step.complete)).toBe(true);
+    expect(readout.steps.slice(0, 21).every((step) => step.complete)).toBe(true);
     expect(readout.nextStep?.id).toBe("chapter_release_status");
+  });
+
+  it("surfaces modern typeflow and typesetter proof before publication apparatus", () => {
+    const needsTypeflow = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_TYPEFLOW
+    }));
+    const typeflowFiled = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_TYPEFLOW,
+      typeflowOrderComplete: true
+    }));
+    const proofFiled = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_PUBLICATION_APPARATUS
+    }));
+
+    expect(needsTypeflow.steps.find((step) => step.id === "kellogg_editing")?.complete).toBe(true);
+    expect(needsTypeflow.nextStep?.id).toBe("modern_typeflow_order");
+    expect(typeflowFiled.nextStep?.id).toBe("typesetter_proof");
+    expect(proofFiled.nextStep?.id).toBe("front_matter_assembly");
   });
 
   it("surfaces front matter and final certification before GPO handoff", () => {
@@ -548,8 +578,16 @@ describe("FRUS production board", () => {
       ...notReady,
       volumeFragments: ["A", "B", "C", "D", "E"]
     });
-    const frontMatterFiled = context({
+    const typeflowFiled = context({
       ...ready,
+      typeflowOrderComplete: true
+    });
+    const typesetterProofFiled = context({
+      ...typeflowFiled,
+      typesetterProofComplete: true
+    });
+    const frontMatterFiled = context({
+      ...typesetterProofFiled,
       frontMatterAssemblyComplete: true
     });
     const certified = context({
@@ -586,6 +624,10 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("digital_release", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("public_citation", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("release_calendar", ready)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("modern_typeflow_order", typeflowFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", typeflowFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("typesetter_proof", typesetterProofFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", typesetterProofFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("front_matter_assembly", frontMatterFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("publication_30_year", frontMatterFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("kellogg_final_certification", certified)).toBe(true);

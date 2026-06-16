@@ -1316,3 +1316,23 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Started local dev server on `http://127.0.0.1:5189/?scene=EndingScene&role=compiler&name=Ruby`.
   - Required web-game Playwright client reported `productionBoard.total: 24`, with `front_matter_assembly` surfaced before `kellogg_final_certification`, `gpo_segment_assembly`, `gpo_publication`, and `chapter_release_status`.
   - Screenshot artifact remains black due to the known headless WebGL capture issue; text state was valid and no console-error artifact was present.
+
+## 2026-06-15 Typeflow and typesetter proof promoted to the Production Board
+
+- Promoted the existing Silent Read Tower editing loops into `src/game/frusProductionBoard.ts`:
+  - `modern_typeflow_order`: since the late 1970s, manuscript clearance comes before typesetting.
+  - `typesetter_proof`: after typesetting, pages are compared with original documents and remaining textual issues are flagged for compiler consultation.
+- Both steps are sourced to the official FRUS history stages page and now sit between `kellogg_editing` and `front_matter_assembly`, making the late editing path visible before publication apparatus work begins.
+- `getProductionBoardReadout()` now passes `sceneProgress.typeflowOrderComplete` and `sceneProgress.typesetterProofComplete` into the board context. Existing SilentReadScene gameplay already sets those flags through the typeflow and proof prompts.
+- Final `publication_30_year` completion now explicitly requires the modern typeflow order and typesetter proof gates as well as front matter, final certification, GPO handoff, chapter ledger, digital release, public citation, release calendar, reliability >= 70, proof stamp, and no unresolved undisclosed deletions.
+- Regression coverage:
+  - Board order now includes `modern_typeflow_order` and `typesetter_proof`.
+  - A proof-ready volume exposes modern typeflow, then typesetter proof, then front matter assembly.
+  - Final publication stays locked after typeflow alone and after typesetter proof alone.
+- Verified focused tests: `npm test -- src/game/frusProductionBoard.test.ts src/game/typeflowOrder.test.ts src/game/typesetterProof.test.ts src/game/publicationApparatus.test.ts` -> 4 files / 30 tests passed.
+- Verified full `npm test` -> 47 files / 232 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5192/?scene=EndingScene&role=compiler&name=Ruby`.
+  - Required web-game Playwright client reported `productionBoard.total: 26`; `modern_typeflow_order` and `typesetter_proof` were complete, `front_matter_assembly` was active, and later certification/GPO steps were locked.
+  - Screenshot artifact remains black due to the known headless WebGL capture issue; text state was valid and no console-error artifact was present.
