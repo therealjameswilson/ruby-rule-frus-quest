@@ -1336,3 +1336,24 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Started local dev server on `http://127.0.0.1:5192/?scene=EndingScene&role=compiler&name=Ruby`.
   - Required web-game Playwright client reported `productionBoard.total: 26`; `modern_typeflow_order` and `typesetter_proof` were complete, `front_matter_assembly` was active, and later certification/GPO steps were locked.
   - Screenshot artifact remains black due to the known headless WebGL capture issue; text state was valid and no console-error artifact was present.
+
+## 2026-06-15 True Ending certification screen replaces placeholder
+
+- Replaced the `TrueEndingScene` placeholder copy (`TRUE ENDING - TO BE WRITTEN`) with a full ruby-buckram certification tableau:
+  - certified/uncertified title state based on live quest data;
+  - final FRUS hardback cover drawn in the existing pixel palette;
+  - certification ledger for pendants, equity crystals, cover fragments, treaty record, publication apparatus, Production Board, reliability, and Kellogg standards;
+  - concise final summary text that keeps human review, provenance, declassification judgment, and public-record publication at the center.
+- Added `src/game/trueEndingCertificate.ts`, a pure certificate readout that derives the true-ending state from process stamps, document equities, cover fragments, treaty fragments, publication apparatus, Production Board progress, reliability, Buckram Gate state, and standards-clear status.
+- Added deterministic tests in `src/game/trueEndingCertificate.test.ts`:
+  - certifies only when the FRUS production packet and treaty record are complete;
+  - blocks certification when treaty fragments are missing;
+  - blocks certification when standards, apparatus, or board gates remain open.
+- Verified focused tests: `npm test -- src/game/trueEndingCertificate.test.ts` -> 1 file / 3 tests passed.
+- Verified full `npm test` -> 48 files / 235 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5193/?scene=TrueEndingScene&role=compiler&name=Ruby`.
+  - Required web-game Playwright client reported `scene: "TrueEndingScene"`, `mode: "ending"`, no visible threats, no placeholder text, `visibleEntities` led by `FRUS VOLUME REVIEWED` for a direct unseeded deep link, and the expected missing publication gates in `publicationReadiness`.
+  - A targeted Playwright request-failure probe reported no 4xx/console errors for the TrueEndingScene route.
+  - Headless and headed screenshot artifacts remain black due to the known WebGL capture issue; text state was valid.
