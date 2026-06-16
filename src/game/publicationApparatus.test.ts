@@ -32,6 +32,7 @@ function context(overrides: Partial<{
   documentCandidates: DocumentCandidate[];
   documentPoints: number;
   typesetterProofComplete: boolean;
+  indexDocketComplete: boolean;
   frontMatterAssemblyComplete: boolean;
 }> = {}) {
   return {
@@ -40,6 +41,7 @@ function context(overrides: Partial<{
     documentCandidates: INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate),
     documentPoints: 0,
     typesetterProofComplete: false,
+    indexDocketComplete: false,
     frontMatterAssemblyComplete: false,
     ...overrides
   };
@@ -84,6 +86,7 @@ describe("publication apparatus", () => {
       documentCandidates: selectedBalancedDocuments(),
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
       typesetterProofComplete: true,
+      indexDocketComplete: true,
       frontMatterAssemblyComplete: true
     });
     const readout = getPublicationApparatusReadout(completeContext);
@@ -102,6 +105,7 @@ describe("publication apparatus", () => {
       documentCandidates: documents,
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
       typesetterProofComplete: true,
+      indexDocketComplete: true,
       frontMatterAssemblyComplete: true
     }));
 
@@ -109,12 +113,25 @@ describe("publication apparatus", () => {
     expect(readout.missing.map((component) => component.id)).toContain("declassification_accounting");
   });
 
-  it("blocks the index/typeset component until the typesetter proof pass is filed", () => {
+  it("blocks the index/typeset component until the typesetter proof pass and index docket are filed", () => {
     const readout = getPublicationApparatusReadout(context({
       processStamps: ["rule", "referral", "proof"],
       volumeFragments: ALL_FRAGMENTS,
       documentCandidates: selectedBalancedDocuments(),
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS
+    }));
+
+    expect(readout.complete).toBe(false);
+    expect(readout.missing.map((component) => component.id)).toContain("index_typeset_check");
+  });
+
+  it("does not count the index/typeset component from typesetter proof alone", () => {
+    const readout = getPublicationApparatusReadout(context({
+      processStamps: ["rule", "referral", "proof"],
+      volumeFragments: ALL_FRAGMENTS,
+      documentCandidates: selectedBalancedDocuments(),
+      documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
+      typesetterProofComplete: true
     }));
 
     expect(readout.complete).toBe(false);
@@ -127,7 +144,8 @@ describe("publication apparatus", () => {
       volumeFragments: ALL_FRAGMENTS,
       documentCandidates: selectedBalancedDocuments(),
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
-      typesetterProofComplete: true
+      typesetterProofComplete: true,
+      indexDocketComplete: true
     }));
 
     expect(readout.complete).toBe(false);

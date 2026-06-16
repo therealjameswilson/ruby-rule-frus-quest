@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Index docket publication gate (2026-06-15):
+  - Added `src/game/indexDocket.ts`, a Phaser-free rule module based on the history.state.gov FRUS stages page detail that after typeset pages are compared to original documents, an index is added before publication.
+  - Inserted `index_docket` into the FRUS Production Board after Front Matter Assembly and before Final Kellogg Certification, so the Buckram Gate now requires verified index entries, checked cross-references, and human-reviewed headings.
+  - Extended the final publication apparatus so the `IDX` component requires the typesetter proof pass plus the new index docket; front matter assembly now hands off into the docket before certification.
+  - Wired `EndingScene` with a three-prompt index docket loop. Wrong index shortcuts apply standards damage (`omitted_material_fact`, `altered_text`, or `concealed_policy_defect`); correct answers file `sceneProgress.indexDocketComplete`, add document points, and unlock final certification.
+  - Verified focused tests: `npm test -- src/game/indexDocket.test.ts src/game/publicationApparatus.test.ts src/game/frusProductionBoard.test.ts src/game/finalPublicationCertification.test.ts` (4 files / 32 tests pass).
+  - Verified full `npm test`: 50 files / 244 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client smoke at `?scene=EndingScene&role=compiler&name=Ruby` reports the corrected Buckram Gate order: Front Matter Assembly active, Index Docket locked next, Final Kellogg Certification locked after that, and no console/error artifact; generated headless WebGL screenshot remains black as previously documented.
 - Selection docket supplemental-submissions check (2026-06-15):
   - Added a source-backed selection-docket gate for the official FRUS stages rule that documents already included in Supplemental FRUS Submissions to Congress were not printed again in regular volumes.
   - Expanded `src/game/selectionDocket.ts` with `supplemental_deduplication`: the correct answer avoids reprinting duplicates while preserving the source trail in notes; wrong answers map to `altered_text` or `omitted_material_fact` standards damage.

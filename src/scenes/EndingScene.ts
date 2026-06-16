@@ -49,6 +49,12 @@ import {
   getFrontMatterAssemblyPrompt
 } from "../game/frontMatterAssembly";
 import {
+  evaluateIndexDocketAnswer,
+  getIndexDocketPrompt,
+  INDEX_DOCKET_PROMPTS,
+  indexDocketComplete
+} from "../game/indexDocket";
+import {
   addDocumentPoints,
   addInventoryItem,
   addProcessItem,
@@ -306,6 +312,8 @@ export class EndingScene extends Phaser.Scene {
     const ready = readiness.ready && hasProcessItem("buckram_key");
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
     const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
+    const canFileIndexDocket = this.canFileIndexDocket(readiness);
+    const indexDocketReady = Boolean(gameState.sceneProgress.indexDocketComplete);
     const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
     const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
     const gpoSegmentsComplete = Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete || gpoComplete);
@@ -330,9 +338,13 @@ export class EndingScene extends Phaser.Scene {
               : "GPO handoff complete: file the public chapter status ledger."
             : "GPO segments assembled: complete the final publication handoff."
           : "Final certification complete: submit the GPO publication segments."
-        : "Buckram Key ready: complete the final Kellogg certification."
+        : indexDocketReady
+          ? "Buckram Key ready: complete the final Kellogg certification."
+          : "Front matter assembled: file the index docket."
       : canAssembleApparatus
         ? "Buckram Gate waits for front matter assembly at the human publication table."
+      : canFileIndexDocket
+        ? "Buckram Gate waits for the index docket at the human publication table."
       : canCorrectCertification
         ? "Final certification needs repair at the human publication table."
       : "Buckram Gate locked: StateChat may checklist, but humans must complete readiness.";
@@ -363,7 +375,9 @@ export class EndingScene extends Phaser.Scene {
                 : "Buckram Gate: press Space for chapter status ledger."
               : "Buckram Gate: press Space for GPO publication handoff."
             : "Buckram Gate: press Space to assemble GPO segments."
-          : "Buckram Gate: press Space for final Kellogg certification."
+          : indexDocketReady
+            ? "Buckram Gate: press Space for final Kellogg certification."
+            : "Buckram Gate: press Space for index docket."
         : "Buckram Gate: stand at the human publication table.");
       this.actionHint.setText(nearGate
         ? certificationComplete
@@ -380,7 +394,9 @@ export class EndingScene extends Phaser.Scene {
                 : "SPACE: CHAPTER STATUS LEDGER"
               : "SPACE: GPO PUBLICATION HANDOFF"
             : "SPACE: ASSEMBLE GPO SEGMENTS"
-          : "SPACE: FINAL KELLOGG CERTIFICATION"
+          : indexDocketReady
+            ? "SPACE: FINAL KELLOGG CERTIFICATION"
+            : "SPACE: INDEX DOCKET"
         : "MOVE TO CERTIFICATION TABLE.");
       return;
     }
@@ -390,6 +406,14 @@ export class EndingScene extends Phaser.Scene {
         ? "Buckram Gate: press Space to assemble front matter and reader aids."
         : "Return to the publication table to assemble front matter.");
       this.actionHint.setText(nearGate ? "SPACE: ASSEMBLE FRONT MATTER" : "MOVE TO PUBLICATION TABLE.");
+      return;
+    }
+    if (canFileIndexDocket) {
+      setNearestInteractable(nearGate ? "FILE INDEX DOCKET" : null);
+      setObjective(nearGate
+        ? "Buckram Gate: press Space to file the index docket."
+        : "Return to the publication table to file the index docket.");
+      this.actionHint.setText(nearGate ? "SPACE: INDEX DOCKET" : "MOVE TO PUBLICATION TABLE.");
       return;
     }
     if (canCorrectCertification) {
@@ -416,6 +440,7 @@ export class EndingScene extends Phaser.Scene {
     const ready = readiness.ready && hasProcessItem("buckram_key");
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
     const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
+    const canFileIndexDocket = this.canFileIndexDocket(readiness);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
     if (!nearGate) {
       retroAudio.warning();
@@ -424,6 +449,10 @@ export class EndingScene extends Phaser.Scene {
     }
     if (!ready && canAssembleApparatus) {
       this.startFrontMatterAssembly();
+      return;
+    }
+    if (!ready && canFileIndexDocket) {
+      this.startIndexDocket();
       return;
     }
     if (!ready && !canCorrectCertification) {
@@ -678,7 +707,49 @@ export class EndingScene extends Phaser.Scene {
       gameState.sceneProgress.frontMatterAssemblyComplete = 1;
       gameState.sceneProgress.frontMatterAssemblyStep = FRONT_MATTER_ASSEMBLY_PROMPTS.length;
       addDocumentPoints(6, "front matter and reader aids assembled");
-      setLatestMessage("Front matter assembled: preface, sources, persons, abbreviations, and index are ready.");
+      setLatestMessage("Front matter assembled: preface, sources, persons, and abbreviations are ready.");
+      setObjective("Buckram Gate: press Space to file the index docket.");
+      this.updateGateReadout();
+    });
+  }
+
+  private startIndexDocket() {
+    if (gameState.sceneProgress.indexDocketComplete) {
+      this.updateGateReadout();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      INDEX_DOCKET_PROMPTS.length - 1,
+      gameState.sceneProgress.indexDocketStep ?? 0
+    ));
+    gameState.sceneProgress.indexDocketStep = currentStep;
+    const prompt = getIndexDocketPrompt(currentStep);
+    setObjective(`Index docket: ${currentStep + 1}/${INDEX_DOCKET_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateIndexDocketAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.indexDocketStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `Index docket: ${prompt.id}`);
+        }
+        setObjective("Index docket: correct the reader aid before final certification.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.indexDocketStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!indexDocketComplete(nextStep)) {
+        this.startIndexDocket();
+        return;
+      }
+
+      gameState.sceneProgress.indexDocketComplete = 1;
+      gameState.sceneProgress.indexDocketStep = INDEX_DOCKET_PROMPTS.length;
+      addDocumentPoints(4, "index docket filed");
+      setLatestMessage("Index docket filed: verified entries and cross-references now support publication.");
       setObjective("Buckram Gate: press Space for final Kellogg certification.");
       this.updateGateReadout();
     });
@@ -824,10 +895,25 @@ export class EndingScene extends Phaser.Scene {
 
   private canAssembleFrontMatter(readiness: ReturnType<typeof getFinalGateReadiness>) {
     if (!hasProcessItem("buckram_key") || gameState.sceneProgress.frontMatterAssemblyComplete) return false;
+    if (!gameState.sceneProgress.typesetterProofComplete) return false;
+    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
+    if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
+    const allowedAssemblyBlockers = new Set(["front_matter_assembly", "index_typeset_check"]);
+    return readiness.missingApparatus.some((component) => component.id === "front_matter_assembly")
+      && readiness.missingApparatus.every((component) => allowedAssemblyBlockers.has(component.id));
+  }
+
+  private canFileIndexDocket(readiness: ReturnType<typeof getFinalGateReadiness>) {
+    if (
+      !hasProcessItem("buckram_key")
+      || !gameState.sceneProgress.frontMatterAssemblyComplete
+      || !gameState.sceneProgress.typesetterProofComplete
+      || gameState.sceneProgress.indexDocketComplete
+    ) return false;
     if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
     if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
     return readiness.missingApparatus.length > 0
-      && readiness.missingApparatus.every((component) => component.id === "front_matter_assembly");
+      && readiness.missingApparatus.every((component) => component.id === "index_typeset_check");
   }
 
   private resolveKelloggCertificationViolations() {

@@ -58,6 +58,7 @@ function completeProductionState() {
     typeflowOrderComplete: 1,
     typesetterProofComplete: 1,
     frontMatterAssemblyComplete: 1,
+    indexDocketComplete: 1,
     kelloggFinalCertificationComplete: 1
   });
 }

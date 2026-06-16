@@ -12,6 +12,7 @@ import { GPO_PUBLICATION_SOURCE_URL } from "./gpoPublication";
 import { GPO_SEGMENT_ASSEMBLY_SOURCE_URL } from "./gpoSegmentAssembly";
 import { FRONT_MATTER_ASSEMBLY_SOURCE_URL } from "./frontMatterAssembly";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
+import { INDEX_DOCKET_SOURCE_URL } from "./indexDocket";
 import { KELLOGG_CERTIFICATION_SOURCE_URL } from "./kelloggCertification";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
@@ -43,6 +44,7 @@ export type FrusProductionBoardStepId =
   | "modern_typeflow_order"
   | "typesetter_proof"
   | "front_matter_assembly"
+  | "index_docket"
   | "kellogg_final_certification"
   | "gpo_segment_assembly"
   | "gpo_publication"
@@ -82,6 +84,7 @@ export interface FrusProductionBoardContext {
   publicCitationComplete: boolean;
   releaseCalendarComplete: boolean;
   frontMatterAssemblyComplete: boolean;
+  indexDocketComplete: boolean;
   kelloggFinalCertificationComplete: boolean;
   gpoSegmentAssemblyComplete: boolean;
   gpoPublicationComplete: boolean;
@@ -256,9 +259,17 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     id: "front_matter_assembly",
     label: "Front matter assembly",
     shortLabel: "ASM",
-    sourceBasis: "Completed front matter frames the volume with preface, sources consulted, persons, abbreviations, proofed pages, and index.",
+    sourceBasis: "Completed front matter frames the volume with preface, sources consulted, persons, abbreviations, and proofed pages.",
     sourceUrl: FRONT_MATTER_ASSEMBLY_SOURCE_URL,
-    gameplayTask: "Assemble the publication apparatus at the Buckram Gate table before final certification."
+    gameplayTask: "Assemble the publication apparatus at the Buckram Gate table before the index docket."
+  },
+  {
+    id: "index_docket",
+    label: "Index docket",
+    shortLabel: "IDX",
+    sourceBasis: "After typeset pages are compared to originals, an index is added as a reader aid before publication.",
+    sourceUrl: INDEX_DOCKET_SOURCE_URL,
+    gameplayTask: "Verify index entries, cross-references, and human-reviewed headings before final certification."
   },
   {
     id: "kellogg_final_certification",
@@ -427,6 +438,8 @@ export function isFrusProductionBoardStepComplete(
       return context.finalGatePublished || context.typesetterProofComplete;
     case "front_matter_assembly":
       return context.finalGatePublished || context.frontMatterAssemblyComplete;
+    case "index_docket":
+      return context.finalGatePublished || context.indexDocketComplete;
     case "kellogg_final_certification":
       return context.finalGatePublished || context.kelloggFinalCertificationComplete;
     case "gpo_segment_assembly":
@@ -455,6 +468,7 @@ export function isFrusProductionBoardStepComplete(
           && context.typeflowOrderComplete
           && context.typesetterProofComplete
           && context.frontMatterAssemblyComplete
+          && context.indexDocketComplete
           && context.kelloggFinalCertificationComplete
           && context.gpoSegmentAssemblyComplete
           && context.gpoPublicationComplete
