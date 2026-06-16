@@ -31,6 +31,7 @@ function context(overrides: Partial<{
   volumeFragments: string[];
   documentCandidates: DocumentCandidate[];
   documentPoints: number;
+  typesettingPreparationComplete: boolean;
   typesetterProofComplete: boolean;
   indexDocketComplete: boolean;
   frontMatterAssemblyComplete: boolean;
@@ -41,6 +42,7 @@ function context(overrides: Partial<{
     volumeFragments: [] as string[],
     documentCandidates: INITIAL_DOCUMENT_CANDIDATES.map(cloneDocumentCandidate),
     documentPoints: 0,
+    typesettingPreparationComplete: false,
     typesetterProofComplete: false,
     indexDocketComplete: false,
     frontMatterAssemblyComplete: false,
@@ -83,12 +85,13 @@ describe("publication apparatus", () => {
     ]);
   });
 
-  it("completes when front matter, sources, abbreviations, declassification accounting, proof index, and typesetter corrections are ready", () => {
+  it("completes when front matter, sources, abbreviations, declassification accounting, typesetting prep, proof index, and typesetter corrections are ready", () => {
     const completeContext = context({
       processStamps: ["rule", "referral", "proof"],
       volumeFragments: ALL_FRAGMENTS,
       documentCandidates: selectedBalancedDocuments(),
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
+      typesettingPreparationComplete: true,
       typesetterProofComplete: true,
       indexDocketComplete: true,
       frontMatterAssemblyComplete: true,
@@ -109,6 +112,7 @@ describe("publication apparatus", () => {
       volumeFragments: ALL_FRAGMENTS,
       documentCandidates: documents,
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
+      typesettingPreparationComplete: true,
       typesetterProofComplete: true,
       indexDocketComplete: true,
       frontMatterAssemblyComplete: true,
@@ -119,7 +123,7 @@ describe("publication apparatus", () => {
     expect(readout.missing.map((component) => component.id)).toContain("declassification_accounting");
   });
 
-  it("blocks the index/typeset component until the typesetter proof pass and index docket are filed", () => {
+  it("blocks the index/typeset component until typesetting preparation, proof, and index docket are filed", () => {
     const readout = getPublicationApparatusReadout(context({
       processStamps: ["rule", "referral", "proof"],
       volumeFragments: ALL_FRAGMENTS,
@@ -144,12 +148,27 @@ describe("publication apparatus", () => {
     expect(readout.missing.map((component) => component.id)).toContain("index_typeset_check");
   });
 
+  it("does not count the index/typeset component from preparation plus proof without the index docket", () => {
+    const readout = getPublicationApparatusReadout(context({
+      processStamps: ["rule", "referral", "proof"],
+      volumeFragments: ALL_FRAGMENTS,
+      documentCandidates: selectedBalancedDocuments(),
+      documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
+      typesettingPreparationComplete: true,
+      typesetterProofComplete: true
+    }));
+
+    expect(readout.complete).toBe(false);
+    expect(readout.missing.map((component) => component.id)).toContain("index_typeset_check");
+  });
+
   it("blocks publication apparatus until front matter assembly is filed", () => {
     const readout = getPublicationApparatusReadout(context({
       processStamps: ["rule", "referral", "proof"],
       volumeFragments: ALL_FRAGMENTS,
       documentCandidates: selectedBalancedDocuments(),
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
+      typesettingPreparationComplete: true,
       typesetterProofComplete: true,
       indexDocketComplete: true,
       typesetterCorrectionsComplete: true
@@ -165,6 +184,7 @@ describe("publication apparatus", () => {
       volumeFragments: ALL_FRAGMENTS,
       documentCandidates: selectedBalancedDocuments(),
       documentPoints: PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS,
+      typesettingPreparationComplete: true,
       typesetterProofComplete: true,
       indexDocketComplete: true,
       frontMatterAssemblyComplete: true

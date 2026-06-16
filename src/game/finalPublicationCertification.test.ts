@@ -56,6 +56,7 @@ function completeProductionState() {
     editorialMethodologyComplete: 1,
     editorialTreatmentComplete: 1,
     typeflowOrderComplete: 1,
+    typesettingPreparationComplete: 1,
     typesetterProofComplete: 1,
     frontMatterAssemblyComplete: 1,
     indexDocketComplete: 1,

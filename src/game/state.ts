@@ -1039,6 +1039,7 @@ export function getFinalGateReadiness() {
     volumeFragments: gameState.volumeFragments,
     documentCandidates: gameState.documentCandidates,
     documentPoints: gameState.documentPoints,
+    typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
     typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
     indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
     frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
@@ -1797,6 +1798,7 @@ export function getProductionBoardReadout() {
     editorialMethodologyComplete: Boolean(gameState.sceneProgress.editorialMethodologyComplete),
     editorialTreatmentComplete: Boolean(gameState.sceneProgress.editorialTreatmentComplete),
     typeflowOrderComplete: Boolean(gameState.sceneProgress.typeflowOrderComplete),
+    typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
     typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
     recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
@@ -1908,6 +1910,8 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.editorialTreatmentStep = 3;
     gameState.sceneProgress.typeflowOrderComplete = 1;
     gameState.sceneProgress.typeflowOrderStep = 2;
+    gameState.sceneProgress.typesettingPreparationComplete = 1;
+    gameState.sceneProgress.typesettingPreparationStep = 2;
     gameState.sceneProgress.typesetterProofComplete = 1;
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);

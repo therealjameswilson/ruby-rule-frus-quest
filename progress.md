@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Typesetting preparation gate (2026-06-16):
+  - Added `src/game/typesettingPreparation.ts`, a Phaser-free rules module based on the official history.state.gov FRUS stages detail that completed text is prepared for typesetting and document-note metadata such as classification, drafting, and dates is carefully reviewed.
+  - Split the previous all-in-one typesetter proof pass: `typesetting_preparation` now sits after Modern Typeflow Order and before Typesetter Proof on the FRUS Production Board, while `typesetter_proof` now focuses on comparing typeset pages to originals and flagging remaining textual issues.
+  - Wired `SilentReadScene` so the player sequence is now: editorial treatment -> modern manuscript-clearance order -> printer's-copy preparation -> typesetter proof -> Buckram Key.
+  - Extended final apparatus readiness so the index/typeset component requires typesetting preparation, proof comparison, and the index docket before final certification can proceed.
+  - Verified focused tests: `npm test -- src/game/typesettingPreparation.test.ts src/game/typesetterProof.test.ts src/game/frusProductionBoard.test.ts src/game/publicationApparatus.test.ts src/game/finalPublicationCertification.test.ts src/game/standardsViolations.test.ts` (6 files / 41 tests pass).
+  - Verified full `npm test` (52 files / 253 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke at `?scene=SilentReadScene&role=proofreader&name=Sam` reports the new board order: Modern Typeflow Order locked, Typesetting Preparation locked next, Typesetter Proof locked after that, and Front Matter Assembly locked after proof. No console/error artifact was produced; the generated headless WebGL screenshot remains black as previously documented.
 - Typesetter correction docket (2026-06-16):
   - Added `src/game/typesetterCorrections.ts`, a Phaser-free rule module based on the history.state.gov FRUS stages page detail that remaining editing issues are resolved with the typesetter before the volume is finished.
   - Inserted `typesetter_corrections` into the FRUS Production Board after the Index Docket and before Final Kellogg Certification, so a finished volume now requires compiler/typesetter consultation for flagged textual issues.

@@ -50,6 +50,12 @@ import {
   TYPESETTER_PROOF_PROMPTS
 } from "../game/typesetterProof";
 import {
+  evaluateTypesettingPreparationAnswer,
+  getTypesettingPreparationPrompt,
+  typesettingPreparationComplete,
+  TYPESETTING_PREPARATION_PROMPTS
+} from "../game/typesettingPreparation";
+import {
   EDITORIAL_METHODOLOGY_PROMPTS,
   editorialMethodologyComplete,
   evaluateEditorialMethodologyAnswer,
@@ -450,6 +456,8 @@ export class SilentReadScene extends Phaser.Scene {
       setObjective("Silent Read Tower: route flags, then resolve editorial treatment.");
     } else if (!gameState.sceneProgress.typeflowOrderComplete) {
       setObjective("Silent Read Tower: file the manuscript-clearance order before typesetting.");
+    } else if (!gameState.sceneProgress.typesettingPreparationComplete) {
+      setObjective("Silent Read Tower: prepare the printer's copy before proof comparison.");
     } else {
       setObjective("Silent Read Tower: carry flags, then run typesetter proof.");
     }
@@ -961,7 +969,7 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     if (gameState.sceneProgress.typeflowOrderComplete) {
-      this.showTypesetterProofChoice();
+      this.showTypesettingPreparationChoice();
       return;
     }
 
@@ -1002,8 +1010,60 @@ export class SilentReadScene extends Phaser.Scene {
       setLatestMessage("Typeflow order filed: manuscript clearance precedes typesetting.");
       this.dialog.show("TYPEFLOW ORDER", [
         result.message,
-        "Modern sequence filed: clear manuscript, then typeset and compare pages.",
-        "Now run the typesetter proof."
+        "Modern sequence filed: clear manuscript, then prepare printer's copy.",
+        "Now prepare the text and notes for typesetting."
+      ], () => this.showTypesettingPreparationChoice());
+    });
+  }
+
+  private showTypesettingPreparationChoice() {
+    if (!gameState.sceneProgress.typeflowOrderComplete) {
+      this.showTypeflowOrderChoice();
+      return;
+    }
+    if (gameState.sceneProgress.typesettingPreparationComplete) {
+      this.showTypesetterProofChoice();
+      return;
+    }
+    const step = gameState.sceneProgress.typesettingPreparationStep ?? 0;
+    const prompt = getTypesettingPreparationPrompt(step);
+    setObjective(`Typesetting Preparation: answer ${step + 1}/${TYPESETTING_PREPARATION_PROMPTS.length}.`);
+    this.actionHint.setText(`TYPESET PREP ${step + 1}/${TYPESETTING_PREPARATION_PROMPTS.length}: choose A/B/C.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateTypesettingPreparationAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Typesetting preparation shortcut: ${option.value}`);
+        this.reliability.update();
+        setLatestMessage("TYPESETTING PREP FAILED - PREPARE PRINTER'S COPY");
+        this.dialog.show("TYPESETTING PREP", [
+          result.message,
+          "The printer's copy must preserve document metadata before proof comparison."
+        ], () => this.showTypesettingPreparationChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.typesettingPreparationStep = nextStep;
+      if (!typesettingPreparationComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Typesetting prep check ${nextStep}/${TYPESETTING_PREPARATION_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("TYPESETTING PREP", [
+          result.message,
+          "Continue preparing the cleared text before proofing the typeset pages."
+        ], () => this.showTypesettingPreparationChoice());
+        return;
+      }
+
+      gameState.sceneProgress.typesettingPreparationComplete = 1;
+      gameState.sceneProgress.typesettingPreparationStep = TYPESETTING_PREPARATION_PROMPTS.length;
+      addDocumentPoints(8, "printer's copy prepared for typesetting");
+      retroAudio.confirm();
+      setLatestMessage("Typesetting preparation complete: printer's copy and document notes are ready.");
+      this.dialog.show("TYPESETTING PREP", [
+        result.message,
+        "Printer's copy prepared: classification, drafting, and dates are preserved in notes.",
+        "Now compare the typeset pages to the originals."
       ], () => this.showTypesetterProofChoice());
     });
   }
@@ -1011,6 +1071,10 @@ export class SilentReadScene extends Phaser.Scene {
   private showTypesetterProofChoice() {
     if (!gameState.sceneProgress.typeflowOrderComplete) {
       this.showTypeflowOrderChoice();
+      return;
+    }
+    if (!gameState.sceneProgress.typesettingPreparationComplete) {
+      this.showTypesettingPreparationChoice();
       return;
     }
     if (gameState.sceneProgress.typesetterProofComplete) {

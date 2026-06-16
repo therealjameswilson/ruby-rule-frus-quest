@@ -7,16 +7,13 @@ import {
 } from "./typesetterProof";
 
 describe("typesetter proof", () => {
-  it("models the editing and typesetting pass from the FRUS stages page", () => {
+  it("models the post-typesetting proof pass from the FRUS stages page", () => {
     expect(TYPESETTER_PROOF_PROMPTS.map((prompt) => prompt.id)).toEqual([
-      "typesetting_prep",
-      "document_note_metadata",
-      "compare_to_originals"
+      "compare_to_originals",
+      "flag_textual_issues"
     ]);
-    expect(TYPESETTER_PROOF_PROMPTS[0].sourceBasis).toContain("typesetting");
-    expect(TYPESETTER_PROOF_PROMPTS[1].sourceBasis).toContain("classification");
-    expect(TYPESETTER_PROOF_PROMPTS[1].sourceBasis).toContain("date");
-    expect(TYPESETTER_PROOF_PROMPTS[2].sourceBasis).toContain("original documents");
+    expect(TYPESETTER_PROOF_PROMPTS[0].sourceBasis).toContain("original documents");
+    expect(TYPESETTER_PROOF_PROMPTS[1].sourceBasis).toContain("compiler");
   });
 
   it("completes only after every proof prompt is answered", () => {
@@ -28,13 +25,13 @@ describe("typesetter proof", () => {
   it("accepts faithful proofing and maps bad shortcuts to standards violations", () => {
     const first = getTypesetterProofPrompt(0);
     const correct = evaluateTypesetterProofAnswer(first.id, first.correctValue);
-    const smoothedDate = evaluateTypesetterProofAnswer("document_note_metadata", "smooth_date");
-    const silentResolution = evaluateTypesetterProofAnswer("compare_to_originals", "silent_resolution");
+    const trustTypesetter = evaluateTypesetterProofAnswer("compare_to_originals", "trust_typesetter");
+    const silentResolution = evaluateTypesetterProofAnswer("flag_textual_issues", "silent_resolution");
 
     expect(correct.ok).toBe(true);
     expect(correct.violation).toBeNull();
-    expect(smoothedDate.ok).toBe(false);
-    expect(smoothedDate.violation).toBe("altered_text");
+    expect(trustTypesetter.ok).toBe(false);
+    expect(trustTypesetter.violation).toBe("omitted_material_fact");
     expect(silentResolution.ok).toBe(false);
     expect(silentResolution.violation).toBe("undisclosed_deletion");
   });

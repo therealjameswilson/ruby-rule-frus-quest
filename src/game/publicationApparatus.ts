@@ -16,6 +16,7 @@ export interface PublicationApparatusContext {
   volumeFragments: readonly string[];
   documentCandidates: readonly DocumentCandidate[];
   documentPoints: number;
+  typesettingPreparationComplete: boolean;
   typesetterProofComplete: boolean;
   indexDocketComplete: boolean;
   frontMatterAssemblyComplete: boolean;
@@ -78,8 +79,8 @@ const APPARATUS_COMPONENTS = [
     id: "index_typeset_check",
     label: "Index and typeset proof check",
     shortLabel: "IDX",
-    sourceBasis: "After typesetting, pages are checked against originals and an index is added as a reader aid.",
-    requirement: "Complete proofing, run the typesetter proof, file the index docket, and recover the Proof Fragment."
+    sourceBasis: "After text is prepared for typesetting, pages are checked against originals and an index is added as a reader aid.",
+    requirement: "Complete proofing, prepare the printer's copy, run the typesetter proof, file the index docket, and recover the Proof Fragment."
   },
   {
     id: "front_matter_assembly",
@@ -122,7 +123,11 @@ function componentComplete(component: PublicationApparatusComponentId, context: 
     case "declassification_accounting":
       return stamps.has("referral") && fragments.has("Referral Fragment") && !hasUndisclosedDeletion(context);
     case "index_typeset_check":
-      return stamps.has("proof") && fragments.has("Proof Fragment") && context.typesetterProofComplete && context.indexDocketComplete;
+      return stamps.has("proof")
+        && fragments.has("Proof Fragment")
+        && context.typesettingPreparationComplete
+        && context.typesetterProofComplete
+        && context.indexDocketComplete;
     case "front_matter_assembly":
       return context.frontMatterAssemblyComplete;
     case "typesetter_corrections":
@@ -139,14 +144,14 @@ export function getPublicationApparatusReadout(context: PublicationApparatusCont
   const complete = missing.length === 0;
   return {
     sourceUrl: PUBLICATION_APPARATUS_SOURCE_URL,
-    sourceBasis: "FRUS final editing adds front matter, source/person/abbreviation lists, proof checks, final assembly, an index, and typesetter corrections before publication.",
+    sourceBasis: "FRUS final editing adds front matter, source/person/abbreviation lists, typesetting preparation, proof checks, final assembly, an index, and typesetter corrections before publication.",
     complete,
     completed: components.length - missing.length,
     total: components.length,
     components,
     missing,
     summary: complete
-      ? "Publication apparatus complete: front matter, source aids, proof checks, assembly, index, and typesetter corrections are ready."
+      ? "Publication apparatus complete: front matter, source aids, typesetting preparation, proof checks, assembly, index, and typesetter corrections are ready."
       : `Publication apparatus missing: ${missing.map((component) => component.shortLabel).join(", ")}.`
   };
 }

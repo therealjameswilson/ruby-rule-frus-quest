@@ -26,6 +26,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     editorialMethodologyComplete: false,
     editorialTreatmentComplete: false,
     typeflowOrderComplete: false,
+    typesettingPreparationComplete: false,
     typesetterProofComplete: false,
     manuscriptReviewComplete: false,
     recordsAccessComplete: false,
@@ -92,6 +93,7 @@ const COMPLETE_BEFORE_TYPEFLOW = {
 const COMPLETE_BEFORE_PUBLICATION_APPARATUS = {
   ...COMPLETE_BEFORE_TYPEFLOW,
   typeflowOrderComplete: true,
+  typesettingPreparationComplete: true,
   typesetterProofComplete: true
 } as const;
 
@@ -122,6 +124,7 @@ describe("FRUS production board", () => {
       "editorial_methodology",
       "kellogg_editing",
       "modern_typeflow_order",
+      "typesetting_preparation",
       "typesetter_proof",
       "front_matter_assembly",
       "index_docket",
@@ -225,6 +228,7 @@ describe("FRUS production board", () => {
       editorialMethodologyComplete: true,
       editorialTreatmentComplete: true,
       typeflowOrderComplete: true,
+      typesettingPreparationComplete: true,
       typesetterProofComplete: true,
       frontMatterAssemblyComplete: true,
       indexDocketComplete: true,
@@ -245,7 +249,7 @@ describe("FRUS production board", () => {
     expect(readout.nextStep?.id).toBe("chapter_release_status");
   });
 
-  it("surfaces modern typeflow and typesetter proof before publication apparatus", () => {
+  it("surfaces modern typeflow, typesetting preparation, and proof before publication apparatus", () => {
     const needsTypeflow = getFrusProductionBoardReadout(context({
       ...COMPLETE_BEFORE_TYPEFLOW
     }));
@@ -253,13 +257,19 @@ describe("FRUS production board", () => {
       ...COMPLETE_BEFORE_TYPEFLOW,
       typeflowOrderComplete: true
     }));
+    const prepFiled = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_TYPEFLOW,
+      typeflowOrderComplete: true,
+      typesettingPreparationComplete: true
+    }));
     const proofFiled = getFrusProductionBoardReadout(context({
       ...COMPLETE_BEFORE_PUBLICATION_APPARATUS
     }));
 
     expect(needsTypeflow.steps.find((step) => step.id === "kellogg_editing")?.complete).toBe(true);
     expect(needsTypeflow.nextStep?.id).toBe("modern_typeflow_order");
-    expect(typeflowFiled.nextStep?.id).toBe("typesetter_proof");
+    expect(typeflowFiled.nextStep?.id).toBe("typesetting_preparation");
+    expect(prepFiled.nextStep?.id).toBe("typesetter_proof");
     expect(proofFiled.nextStep?.id).toBe("front_matter_assembly");
   });
 
@@ -607,6 +617,7 @@ describe("FRUS production board", () => {
     });
     const typesetterProofFiled = context({
       ...typeflowFiled,
+      typesettingPreparationComplete: true,
       typesetterProofComplete: true
     });
     const frontMatterFiled = context({
@@ -657,6 +668,7 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("release_calendar", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("modern_typeflow_order", typeflowFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("publication_30_year", typeflowFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("typesetting_preparation", typesetterProofFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("typesetter_proof", typesetterProofFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("publication_30_year", typesetterProofFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("front_matter_assembly", frontMatterFiled)).toBe(true);

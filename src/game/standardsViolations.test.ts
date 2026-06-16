@@ -91,6 +91,7 @@ describe("standards violation ledger", () => {
     expect(getFinalGateReadiness().publicationApparatus.complete).toBe(false);
     expect(getPublicationReadinessReadout().missingSummary).toContain("Apparatus IDX");
 
+    gameState.sceneProgress.typesettingPreparationComplete = 1;
     gameState.sceneProgress.typesetterProofComplete = 1;
 
     expect(getFinalGateReadiness().publicationApparatus.complete).toBe(false);

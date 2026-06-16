@@ -21,6 +21,7 @@ import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 import { TYPEFLOW_ORDER_SOURCE_URL } from "./typeflowOrder";
+import { TYPESETTING_PREPARATION_SOURCE_URL } from "./typesettingPreparation";
 import { TYPESETTER_CORRECTIONS_SOURCE_URL } from "./typesetterCorrections";
 import { TYPESETTER_PROOF_SOURCE_URL } from "./typesetterProof";
 import { VOLUME_CONCEPT_SOURCE_URL } from "./volumeConcept";
@@ -43,6 +44,7 @@ export type FrusProductionBoardStepId =
   | "editorial_methodology"
   | "kellogg_editing"
   | "modern_typeflow_order"
+  | "typesetting_preparation"
   | "typesetter_proof"
   | "front_matter_assembly"
   | "index_docket"
@@ -74,6 +76,7 @@ export interface FrusProductionBoardContext {
   editorialMethodologyComplete: boolean;
   editorialTreatmentComplete: boolean;
   typeflowOrderComplete: boolean;
+  typesettingPreparationComplete: boolean;
   typesetterProofComplete: boolean;
   manuscriptReviewComplete: boolean;
   recordsAccessComplete: boolean;
@@ -249,6 +252,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "Since the late 1970s, compilations have been cleared in manuscript before proceeding to typesetting.",
     sourceUrl: TYPEFLOW_ORDER_SOURCE_URL,
     gameplayTask: "File the modern sequence: clear the manuscript first, then move into typesetting."
+  },
+  {
+    id: "typesetting_preparation",
+    label: "Typesetting preparation",
+    shortLabel: "PREP",
+    sourceBasis: "After completion, FRUS text is prepared for typesetting and document notes are reviewed for classification, drafting, date, and related metadata.",
+    sourceUrl: TYPESETTING_PREPARATION_SOURCE_URL,
+    gameplayTask: "Prepare the printer's copy: cleared text plus faithful document-note metadata before proof comparison."
   },
   {
     id: "typesetter_proof",
@@ -445,6 +456,8 @@ export function isFrusProductionBoardStepComplete(
       return context.editorialMethodologyComplete && context.editorialTreatmentComplete && stamps.has("proof") && context.reliability >= 70 && noUndisclosedDeletions(context);
     case "modern_typeflow_order":
       return context.finalGatePublished || context.typeflowOrderComplete;
+    case "typesetting_preparation":
+      return context.finalGatePublished || context.typesettingPreparationComplete;
     case "typesetter_proof":
       return context.finalGatePublished || context.typesetterProofComplete;
     case "front_matter_assembly":
@@ -479,6 +492,7 @@ export function isFrusProductionBoardStepComplete(
           && context.publicCitationComplete
           && context.releaseCalendarComplete
           && context.typeflowOrderComplete
+          && context.typesettingPreparationComplete
           && context.typesetterProofComplete
           && context.frontMatterAssemblyComplete
           && context.indexDocketComplete
