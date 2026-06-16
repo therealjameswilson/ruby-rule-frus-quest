@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Reader-aid register gate (2026-06-16):
+  - Added `src/game/readerAidRegisters.ts`, a Phaser-free rules module based on the official FRUS stages page naming lists of persons mentioned and abbreviations used in the completed front matter.
+  - Added a distinct `reader_aid_registers` Production Board gate after Front Matter Assembly and before Index Docket, so the Buckram Gate now requires human filing of persons and abbreviations registers before indexing.
+  - Extended the publication apparatus readiness model with a new `AIDS` component and wired `EndingScene` with a three-prompt reader-aid register loop. Unsafe shortcuts now debit standards reliability as omitted material facts, altered text, or concealed policy defects.
+  - Updated final publication and standards tests so old completion fixtures must file `sceneProgress.readerAidRegistersComplete` before publication apparatus can complete.
+  - Verified focused tests: `npm test -- src/game/readerAidRegisters.test.ts src/game/publicationApparatus.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts` (4 files / 34 tests pass).
+  - Verified full `npm test` (55 files / 263 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke at `?scene=EndingScene&role=compiler&name=Ruby` reports `productionBoard.total: 31`, `hasReaderAidRegisters: true`, sequence `front_matter_assembly -> reader_aid_registers -> index_docket -> typesetter_corrections`, visible entity `reader-aid registers`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Publication funding queue gate (2026-06-16):
   - Added `src/game/publicationFundingQueue.ts`, a Phaser-free rules module based on the official FRUS stages page statement that lack of funding has delayed publication of fully prepared volumes.
   - Split funding-delay handling out of the GPO publication handoff and into a distinct Zelda-like `publication_funding` gate after GPO handoff and before chapter/public release status.

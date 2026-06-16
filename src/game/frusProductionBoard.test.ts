@@ -39,6 +39,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     publicCitationComplete: false,
     releaseCalendarComplete: false,
     frontMatterAssemblyComplete: false,
+    readerAidRegistersComplete: false,
     indexDocketComplete: false,
     typesetterCorrectionsComplete: false,
     kelloggFinalCertificationComplete: false,
@@ -101,6 +102,7 @@ const COMPLETE_BEFORE_PUBLICATION_APPARATUS = {
 const COMPLETE_BEFORE_GPO = {
   ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
   frontMatterAssemblyComplete: true,
+  readerAidRegistersComplete: true,
   indexDocketComplete: true,
   typesetterCorrectionsComplete: true,
   kelloggFinalCertificationComplete: true
@@ -128,6 +130,7 @@ describe("FRUS production board", () => {
       "typesetting_preparation",
       "typesetter_proof",
       "front_matter_assembly",
+      "reader_aid_registers",
       "index_docket",
       "typesetter_corrections",
       "kellogg_final_certification",
@@ -233,6 +236,7 @@ describe("FRUS production board", () => {
       typesettingPreparationComplete: true,
       typesetterProofComplete: true,
       frontMatterAssemblyComplete: true,
+      readerAidRegistersComplete: true,
       indexDocketComplete: true,
       typesetterCorrectionsComplete: true,
       kelloggFinalCertificationComplete: true,
@@ -266,6 +270,7 @@ describe("FRUS production board", () => {
       typesettingPreparationComplete: true,
       typesetterProofComplete: true,
       frontMatterAssemblyComplete: true,
+      readerAidRegistersComplete: true,
       indexDocketComplete: true,
       typesetterCorrectionsComplete: true,
       kelloggFinalCertificationComplete: true,
@@ -310,7 +315,7 @@ describe("FRUS production board", () => {
     expect(proofFiled.nextStep?.id).toBe("front_matter_assembly");
   });
 
-  it("surfaces front matter, index docket, typesetter corrections, and final certification before GPO handoff", () => {
+  it("surfaces front matter, reader aids, index docket, typesetter corrections, and final certification before GPO handoff", () => {
     const needsFrontMatter = getFrusProductionBoardReadout(context({
       ...COMPLETE_BEFORE_PUBLICATION_APPARATUS
     }));
@@ -318,14 +323,21 @@ describe("FRUS production board", () => {
       ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
       frontMatterAssemblyComplete: true
     }));
+    const readerAidsFiled = getFrusProductionBoardReadout(context({
+      ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
+      frontMatterAssemblyComplete: true,
+      readerAidRegistersComplete: true
+    }));
     const indexFiled = getFrusProductionBoardReadout(context({
       ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
       frontMatterAssemblyComplete: true,
+      readerAidRegistersComplete: true,
       indexDocketComplete: true
     }));
     const correctionsFiled = getFrusProductionBoardReadout(context({
       ...COMPLETE_BEFORE_PUBLICATION_APPARATUS,
       frontMatterAssemblyComplete: true,
+      readerAidRegistersComplete: true,
       indexDocketComplete: true,
       typesetterCorrectionsComplete: true
     }));
@@ -335,7 +347,8 @@ describe("FRUS production board", () => {
 
     expect(needsFrontMatter.steps.find((step) => step.id === "kellogg_editing")?.complete).toBe(true);
     expect(needsFrontMatter.nextStep?.id).toBe("front_matter_assembly");
-    expect(frontMatterFiled.nextStep?.id).toBe("index_docket");
+    expect(frontMatterFiled.nextStep?.id).toBe("reader_aid_registers");
+    expect(readerAidsFiled.nextStep?.id).toBe("index_docket");
     expect(indexFiled.nextStep?.id).toBe("typesetter_corrections");
     expect(correctionsFiled.nextStep?.id).toBe("kellogg_final_certification");
     expect(certified.nextStep?.id).toBe("gpo_segment_assembly");
@@ -669,8 +682,12 @@ describe("FRUS production board", () => {
       ...typesetterProofFiled,
       frontMatterAssemblyComplete: true
     });
-    const indexDocketFiled = context({
+    const readerAidsFiled = context({
       ...frontMatterFiled,
+      readerAidRegistersComplete: true
+    });
+    const indexDocketFiled = context({
+      ...readerAidsFiled,
       indexDocketComplete: true
     });
     const correctionsFiled = context({
@@ -722,6 +739,9 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("publication_30_year", typesetterProofFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("front_matter_assembly", frontMatterFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("publication_30_year", frontMatterFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("reader_aid_registers", frontMatterFiled)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("reader_aid_registers", readerAidsFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", readerAidsFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("index_docket", indexDocketFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("publication_30_year", indexDocketFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("typesetter_corrections", correctionsFiled)).toBe(true);

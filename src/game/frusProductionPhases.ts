@@ -65,8 +65,8 @@ export const FRUS_PRODUCTION_PHASES = [
     id: "apparatus",
     label: "Final apparatus and certification",
     shortLabel: "APP",
-    sourceBasis: "Assemble front matter, index, typesetter corrections, and final Kellogg certification before release.",
-    stepIds: ["front_matter_assembly", "index_docket", "typesetter_corrections", "kellogg_final_certification"]
+    sourceBasis: "Assemble front matter, reader-aid registers, index, typesetter corrections, and final Kellogg certification before release.",
+    stepIds: ["front_matter_assembly", "reader_aid_registers", "index_docket", "typesetter_corrections", "kellogg_final_certification"]
   },
   {
     id: "release",

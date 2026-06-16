@@ -37,6 +37,12 @@ import {
   publicationFundingComplete
 } from "../game/publicationFundingQueue";
 import {
+  evaluateReaderAidRegisterAnswer,
+  getReaderAidRegisterPrompt,
+  READER_AID_REGISTER_PROMPTS,
+  readerAidRegistersComplete
+} from "../game/readerAidRegisters";
+import {
   RELEASE_CALENDAR_PROMPTS,
   evaluateReleaseCalendarAnswer,
   getReleaseCalendarPrompt,
@@ -324,9 +330,11 @@ export class EndingScene extends Phaser.Scene {
     const ready = readiness.ready && hasProcessItem("buckram_key");
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
     const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
+    const canFileReaderAidRegisters = this.canFileReaderAidRegisters(readiness);
     const canFileIndexDocket = this.canFileIndexDocket(readiness);
     const canResolveTypesetterCorrections = this.canResolveTypesetterCorrections(readiness);
     const indexDocketReady = Boolean(gameState.sceneProgress.indexDocketComplete);
+    const readerAidsReady = Boolean(gameState.sceneProgress.readerAidRegistersComplete);
     const typesetterCorrectionsReady = Boolean(gameState.sceneProgress.typesetterCorrectionsComplete);
     const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
     const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
@@ -359,7 +367,9 @@ export class EndingScene extends Phaser.Scene {
           ? typesetterCorrectionsReady
             ? "Buckram Key ready: complete the final Kellogg certification."
             : "Index docket filed: resolve the typesetter correction docket."
-          : "Front matter assembled: file the index docket."
+          : readerAidsReady
+            ? "Reader aids filed: file the index docket."
+            : "Front matter assembled: file persons and abbreviations registers."
       : canAssembleApparatus
         ? "Buckram Gate waits for front matter assembly at the human publication table."
       : canFileIndexDocket
@@ -402,7 +412,9 @@ export class EndingScene extends Phaser.Scene {
             ? typesetterCorrectionsReady
               ? "Buckram Gate: press Space for final Kellogg certification."
               : "Buckram Gate: press Space for typesetter corrections."
-            : "Buckram Gate: press Space for index docket."
+            : readerAidsReady
+              ? "Buckram Gate: press Space for index docket."
+              : "Buckram Gate: press Space for reader-aid registers."
         : "Buckram Gate: stand at the human publication table.");
       this.actionHint.setText(nearGate
         ? certificationComplete
@@ -425,7 +437,9 @@ export class EndingScene extends Phaser.Scene {
             ? typesetterCorrectionsReady
               ? "SPACE: FINAL KELLOGG CERTIFICATION"
               : "SPACE: TYPESETTER CORRECTIONS"
-            : "SPACE: INDEX DOCKET"
+            : readerAidsReady
+              ? "SPACE: INDEX DOCKET"
+              : "SPACE: READER-AID REGISTERS"
         : "MOVE TO CERTIFICATION TABLE.");
       return;
     }
@@ -435,6 +449,14 @@ export class EndingScene extends Phaser.Scene {
         ? "Buckram Gate: press Space to assemble front matter and reader aids."
         : "Return to the publication table to assemble front matter.");
       this.actionHint.setText(nearGate ? "SPACE: ASSEMBLE FRONT MATTER" : "MOVE TO PUBLICATION TABLE.");
+      return;
+    }
+    if (canFileReaderAidRegisters) {
+      setNearestInteractable(nearGate ? "FILE READER-AID REGISTERS" : null);
+      setObjective(nearGate
+        ? "Buckram Gate: press Space to file persons and abbreviations registers."
+        : "Return to the publication table to file reader-aid registers.");
+      this.actionHint.setText(nearGate ? "SPACE: READER-AID REGISTERS" : "MOVE TO PUBLICATION TABLE.");
       return;
     }
     if (canFileIndexDocket) {
@@ -477,6 +499,7 @@ export class EndingScene extends Phaser.Scene {
     const ready = readiness.ready && hasProcessItem("buckram_key");
     const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
     const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
+    const canFileReaderAidRegisters = this.canFileReaderAidRegisters(readiness);
     const canFileIndexDocket = this.canFileIndexDocket(readiness);
     const canResolveTypesetterCorrections = this.canResolveTypesetterCorrections(readiness);
     const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
@@ -487,6 +510,10 @@ export class EndingScene extends Phaser.Scene {
     }
     if (!ready && canAssembleApparatus) {
       this.startFrontMatterAssembly();
+      return;
+    }
+    if (!ready && canFileReaderAidRegisters) {
+      this.startReaderAidRegisters();
       return;
     }
     if (!ready && canFileIndexDocket) {
@@ -761,7 +788,49 @@ export class EndingScene extends Phaser.Scene {
       gameState.sceneProgress.frontMatterAssemblyComplete = 1;
       gameState.sceneProgress.frontMatterAssemblyStep = FRONT_MATTER_ASSEMBLY_PROMPTS.length;
       addDocumentPoints(6, "front matter and reader aids assembled");
-      setLatestMessage("Front matter assembled: preface, sources, persons, and abbreviations are ready.");
+      setLatestMessage("Front matter assembled: preface and sources are ready.");
+      setObjective("Buckram Gate: press Space to file persons and abbreviations registers.");
+      this.updateGateReadout();
+    });
+  }
+
+  private startReaderAidRegisters() {
+    if (gameState.sceneProgress.readerAidRegistersComplete) {
+      this.startIndexDocket();
+      return;
+    }
+    const currentStep = Math.max(0, Math.min(
+      READER_AID_REGISTER_PROMPTS.length - 1,
+      gameState.sceneProgress.readerAidRegistersStep ?? 0
+    ));
+    gameState.sceneProgress.readerAidRegistersStep = currentStep;
+    const prompt = getReaderAidRegisterPrompt(currentStep);
+    setObjective(`Reader-aid registers: ${currentStep + 1}/${READER_AID_REGISTER_PROMPTS.length}.`);
+    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateReaderAidRegisterAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        gameState.sceneProgress.readerAidRegistersStep = 0;
+        if (evaluation.violation) {
+          applyStandardsViolation(evaluation.violation, `Reader-aid registers: ${prompt.id}`);
+        }
+        setObjective("Reader-aid registers: correct persons and abbreviations before indexing.");
+        setLatestMessage(evaluation.message);
+        this.updateGateReadout();
+        return;
+      }
+
+      const nextStep = currentStep + 1;
+      gameState.sceneProgress.readerAidRegistersStep = nextStep;
+      setLatestMessage(evaluation.message);
+      if (!readerAidRegistersComplete(nextStep)) {
+        this.startReaderAidRegisters();
+        return;
+      }
+
+      gameState.sceneProgress.readerAidRegistersComplete = 1;
+      gameState.sceneProgress.readerAidRegistersStep = READER_AID_REGISTER_PROMPTS.length;
+      addDocumentPoints(4, "persons and abbreviations registers filed");
+      setLatestMessage("Reader-aid registers filed: persons and abbreviations match the proofed text.");
       setObjective("Buckram Gate: press Space to file the index docket.");
       this.updateGateReadout();
     });
@@ -1039,7 +1108,7 @@ export class EndingScene extends Phaser.Scene {
     if (!gameState.sceneProgress.typesetterProofComplete) return false;
     if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
     if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
-    const allowedAssemblyBlockers = new Set(["front_matter_assembly", "index_typeset_check", "typesetter_corrections"]);
+    const allowedAssemblyBlockers = new Set(["front_matter_assembly", "reader_aid_registers", "index_typeset_check", "typesetter_corrections"]);
     return readiness.missingApparatus.some((component) => component.id === "front_matter_assembly")
       && readiness.missingApparatus.every((component) => allowedAssemblyBlockers.has(component.id));
   }
@@ -1050,12 +1119,26 @@ export class EndingScene extends Phaser.Scene {
       || !gameState.sceneProgress.frontMatterAssemblyComplete
       || !gameState.sceneProgress.typesetterProofComplete
       || gameState.sceneProgress.indexDocketComplete
+      || !gameState.sceneProgress.readerAidRegistersComplete
     ) return false;
     if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
     if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
     const allowedIndexBlockers = new Set(["index_typeset_check", "typesetter_corrections"]);
     return readiness.missingApparatus.some((component) => component.id === "index_typeset_check")
       && readiness.missingApparatus.every((component) => allowedIndexBlockers.has(component.id));
+  }
+
+  private canFileReaderAidRegisters(readiness: ReturnType<typeof getFinalGateReadiness>) {
+    if (
+      !hasProcessItem("buckram_key")
+      || !gameState.sceneProgress.frontMatterAssemblyComplete
+      || gameState.sceneProgress.readerAidRegistersComplete
+    ) return false;
+    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
+    if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
+    const allowedReaderAidBlockers = new Set(["reader_aid_registers", "index_typeset_check", "typesetter_corrections"]);
+    return readiness.missingApparatus.some((component) => component.id === "reader_aid_registers")
+      && readiness.missingApparatus.every((component) => allowedReaderAidBlockers.has(component.id));
   }
 
   private canResolveTypesetterCorrections(readiness: ReturnType<typeof getFinalGateReadiness>) {
@@ -1086,6 +1169,8 @@ export class EndingScene extends Phaser.Scene {
     gameState.sceneProgress.gpoPublicationComplete = 1;
     gameState.sceneProgress.publicationFundingComplete = 1;
     gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
+    gameState.sceneProgress.readerAidRegistersComplete = 1;
+    gameState.sceneProgress.readerAidRegistersStep = READER_AID_REGISTER_PROMPTS.length;
     gameState.sceneProgress.chapterReleaseComplete = 1;
     gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
     gameState.sceneProgress.digitalReleaseComplete = 1;
@@ -1138,6 +1223,7 @@ export class EndingScene extends Phaser.Scene {
       "Buckram Key",
       "FRUS cover prize",
       published ? "Published FRUS Cover" : "Unpublished assembled cover",
+      "reader-aid registers",
       "chapter release status ledger",
       "history.state.gov digital release manifest",
       "public FRUS citation card",

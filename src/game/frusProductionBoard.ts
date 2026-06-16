@@ -16,6 +16,7 @@ import { INDEX_DOCKET_SOURCE_URL } from "./indexDocket";
 import { KELLOGG_CERTIFICATION_SOURCE_URL } from "./kelloggCertification";
 import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { PUBLICATION_FUNDING_SOURCE_URL } from "./publicationFundingQueue";
+import { READER_AID_REGISTERS_SOURCE_URL } from "./readerAidRegisters";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { RECORDS_ACCESS_SOURCE_URL } from "./recordsAccess";
 import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
@@ -48,6 +49,7 @@ export type FrusProductionBoardStepId =
   | "typesetting_preparation"
   | "typesetter_proof"
   | "front_matter_assembly"
+  | "reader_aid_registers"
   | "index_docket"
   | "typesetter_corrections"
   | "kellogg_final_certification"
@@ -91,6 +93,7 @@ export interface FrusProductionBoardContext {
   publicCitationComplete: boolean;
   releaseCalendarComplete: boolean;
   frontMatterAssemblyComplete: boolean;
+  readerAidRegistersComplete: boolean;
   indexDocketComplete: boolean;
   typesetterCorrectionsComplete: boolean;
   kelloggFinalCertificationComplete: boolean;
@@ -279,6 +282,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "Completed front matter frames the volume with preface, sources consulted, persons, abbreviations, and proofed pages.",
     sourceUrl: FRONT_MATTER_ASSEMBLY_SOURCE_URL,
     gameplayTask: "Assemble the publication apparatus at the Buckram Gate table before the index docket."
+  },
+  {
+    id: "reader_aid_registers",
+    label: "Reader-aid registers",
+    shortLabel: "AID",
+    sourceBasis: "Completed front matter includes lists of persons mentioned and abbreviations used in the text.",
+    sourceUrl: READER_AID_REGISTERS_SOURCE_URL,
+    gameplayTask: "File the persons-mentioned and abbreviations-used registers before indexing the proofed pages."
   },
   {
     id: "index_docket",
@@ -473,6 +484,8 @@ export function isFrusProductionBoardStepComplete(
       return context.finalGatePublished || context.typesetterProofComplete;
     case "front_matter_assembly":
       return context.finalGatePublished || context.frontMatterAssemblyComplete;
+    case "reader_aid_registers":
+      return context.finalGatePublished || context.readerAidRegistersComplete;
     case "index_docket":
       return context.finalGatePublished || context.indexDocketComplete;
     case "typesetter_corrections":
@@ -508,6 +521,7 @@ export function isFrusProductionBoardStepComplete(
           && context.typesettingPreparationComplete
           && context.typesetterProofComplete
           && context.frontMatterAssemblyComplete
+          && context.readerAidRegistersComplete
           && context.indexDocketComplete
           && context.typesetterCorrectionsComplete
           && context.kelloggFinalCertificationComplete

@@ -41,6 +41,7 @@ import { getFrusProductionPhaseReadout, type FrusProductionPhaseId } from "./fru
 import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
 import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
 import { PUBLICATION_FUNDING_PROMPTS } from "./publicationFundingQueue";
+import { READER_AID_REGISTER_PROMPTS } from "./readerAidRegisters";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
@@ -1085,6 +1086,7 @@ export function getFinalGateReadiness() {
     documentPoints: gameState.documentPoints,
     typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
     typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
+    readerAidRegistersComplete: Boolean(gameState.sceneProgress.readerAidRegistersComplete),
     indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
     frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
     typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete)
@@ -1196,6 +1198,8 @@ function completePublicationReleaseFlags() {
   gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
   gameState.sceneProgress.publicationFundingComplete = 1;
   gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
+  gameState.sceneProgress.readerAidRegistersComplete = 1;
+  gameState.sceneProgress.readerAidRegistersStep = READER_AID_REGISTER_PROMPTS.length;
   gameState.sceneProgress.chapterReleaseComplete = 1;
   gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
   gameState.sceneProgress.digitalReleaseComplete = 1;
@@ -1898,6 +1902,7 @@ export function getProductionBoardReadout() {
     publicCitationComplete: Boolean(gameState.sceneProgress.publicCitationComplete),
     releaseCalendarComplete: Boolean(gameState.sceneProgress.releaseCalendarComplete),
     frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
+    readerAidRegistersComplete: Boolean(gameState.sceneProgress.readerAidRegistersComplete),
     indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
     typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete),
     kelloggFinalCertificationComplete: Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete),

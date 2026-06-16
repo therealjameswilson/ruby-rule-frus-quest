@@ -7,6 +7,7 @@ export type PublicationApparatusComponentId =
   | "sources_consulted"
   | "persons_abbreviations"
   | "declassification_accounting"
+  | "reader_aid_registers"
   | "index_typeset_check"
   | "front_matter_assembly"
   | "typesetter_corrections";
@@ -18,6 +19,7 @@ export interface PublicationApparatusContext {
   documentPoints: number;
   typesettingPreparationComplete: boolean;
   typesetterProofComplete: boolean;
+  readerAidRegistersComplete: boolean;
   indexDocketComplete: boolean;
   frontMatterAssemblyComplete: boolean;
   typesetterCorrectionsComplete: boolean;
@@ -76,6 +78,13 @@ const APPARATUS_COMPONENTS = [
     requirement: "Resolve referral review, recover the Referral Fragment, and leave no undisclosed deletion."
   },
   {
+    id: "reader_aid_registers",
+    label: "Persons and abbreviations registers",
+    shortLabel: "AIDS",
+    sourceBasis: "The completed front matter includes lists of persons mentioned and abbreviations used in the text.",
+    requirement: "File the reader-aid registers at the Buckram Gate publication table."
+  },
+  {
     id: "index_typeset_check",
     label: "Index and typeset proof check",
     shortLabel: "IDX",
@@ -122,6 +131,8 @@ function componentComplete(component: PublicationApparatusComponentId, context: 
       return fragments.has("Routing Fragment") && context.documentPoints >= PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS;
     case "declassification_accounting":
       return stamps.has("referral") && fragments.has("Referral Fragment") && !hasUndisclosedDeletion(context);
+    case "reader_aid_registers":
+      return context.readerAidRegistersComplete;
     case "index_typeset_check":
       return stamps.has("proof")
         && fragments.has("Proof Fragment")
@@ -151,7 +162,7 @@ export function getPublicationApparatusReadout(context: PublicationApparatusCont
     components,
     missing,
     summary: complete
-      ? "Publication apparatus complete: front matter, source aids, typesetting preparation, proof checks, assembly, index, and typesetter corrections are ready."
+      ? "Publication apparatus complete: front matter, source aids, persons and abbreviations registers, typesetting preparation, proof checks, assembly, index, and typesetter corrections are ready."
       : `Publication apparatus missing: ${missing.map((component) => component.shortLabel).join(", ")}.`
   };
 }
