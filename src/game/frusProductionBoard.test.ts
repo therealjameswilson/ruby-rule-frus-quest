@@ -31,6 +31,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     manuscriptReviewComplete: false,
     recordsAccessComplete: false,
     recordCollectionComplete: false,
+    repositoryCoverageMapComplete: false,
     selectionDocketComplete: false,
     seriesConceptComplete: false,
     volumeConceptComplete: false,
@@ -87,6 +88,7 @@ const COMPLETE_BEFORE_TYPEFLOW = {
   manuscriptReviewComplete: true,
   recordsAccessComplete: true,
   recordCollectionComplete: true,
+  repositoryCoverageMapComplete: true,
   selectionDocketComplete: true,
   seriesConceptComplete: true,
   volumeConceptComplete: true
@@ -115,6 +117,7 @@ describe("FRUS production board", () => {
       "volume_concept",
       "records_access",
       "record_collection",
+      "repository_coverage_map",
       "research_selection",
       "source_notes",
       "annotation",
@@ -198,12 +201,36 @@ describe("FRUS production board", () => {
       processStamps: ["rule"],
       seriesConceptComplete: true,
       volumeConceptComplete: true,
+      recordsAccessComplete: true,
       documentPoints: 20,
       documentCandidates: selectedDocuments
     }));
 
     expect(readout.nextStep?.id).toBe("record_collection");
     expect(readout.steps.find((step) => step.id === "record_collection")?.complete).toBe(false);
+  });
+
+  it("requires the repository coverage map after collection and before selection", () => {
+    const mapMissing = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      recordsAccessComplete: true,
+      recordCollectionComplete: true
+    }));
+    const mapFiled = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      recordsAccessComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true
+    }));
+
+    expect(mapMissing.nextStep?.id).toBe("repository_coverage_map");
+    expect(mapMissing.steps.find((step) => step.id === "research_selection")?.status).toBe("locked");
+    expect(mapFiled.steps.find((step) => step.id === "repository_coverage_map")?.complete).toBe(true);
+    expect(mapFiled.nextStep?.id).toBe("research_selection");
   });
 
   it("advances through source-backed production steps as FRUS tools and stamps are earned", () => {
@@ -243,6 +270,7 @@ describe("FRUS production board", () => {
       gpoSegmentAssemblyComplete: true,
       gpoPublicationComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       selectionDocketComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -278,6 +306,7 @@ describe("FRUS production board", () => {
       gpoPublicationComplete: true,
       publicationFundingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       selectionDocketComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -398,6 +427,7 @@ describe("FRUS production board", () => {
       documentPoints: 50,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
@@ -413,6 +443,7 @@ describe("FRUS production board", () => {
       withholdingAppealComplete: true,
       editorialTreatmentComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
@@ -440,6 +471,7 @@ describe("FRUS production board", () => {
       annotationDraftingComplete: true,
       foreignGovernmentPermissionComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
@@ -455,6 +487,7 @@ describe("FRUS production board", () => {
       withholdingAppealComplete: true,
       editorialTreatmentComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
@@ -481,6 +514,7 @@ describe("FRUS production board", () => {
       heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
       documentPoints: 24,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
@@ -491,6 +525,7 @@ describe("FRUS production board", () => {
       documentPoints: 24,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
@@ -516,6 +551,7 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
@@ -526,6 +562,7 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       manuscriptReviewComplete: true
@@ -545,6 +582,7 @@ describe("FRUS production board", () => {
       foreignGovernmentPermissionComplete: true,
       withholdingAppealComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
@@ -558,6 +596,7 @@ describe("FRUS production board", () => {
       documentPoints: 6,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
@@ -568,6 +607,7 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       documentCandidates: selectedDocuments
@@ -582,6 +622,7 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       documentCandidates: balancedDocuments
@@ -591,6 +632,7 @@ describe("FRUS production board", () => {
       documentPoints: 20,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
       selectionDocketComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true,
@@ -667,7 +709,8 @@ describe("FRUS production board", () => {
     });
     const ready = context({
       ...notReady,
-      volumeFragments: ["A", "B", "C", "D", "E"]
+      volumeFragments: ["A", "B", "C", "D", "E"],
+      repositoryCoverageMapComplete: true
     });
     const typeflowFiled = context({
       ...ready,

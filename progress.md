@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Repository coverage map gate (2026-06-16):
+  - Added `src/game/repositoryCoverageMap.ts`, a Phaser-free rules module that turns the history.state.gov FRUS source-base lanes into a physical Zelda-like source map: White House/NSC, State, Defense, CIA, other agencies, and private papers.
+  - Inserted `repository_coverage_map` into the Production Board after Record Collection and before Research Selection, so the player must file the source map before narrowing the printed subset.
+  - Wired the Office Hub Scope / Selection Desk so the gameplay flow is now Series Plan -> Volume Concept -> 20-Year Access -> Scope Charter -> Collection -> Repository Coverage Map -> Candidate Selection -> Selection Docket.
+  - Added final-gate readiness impact: the Buckram Gate now reports `Repository MAP` as missing if the source map was never filed.
+  - Verified focused tests: `npm test -- src/game/repositoryCoverageMap.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts src/game/researchCoverage.test.ts` (4 files / 31 tests pass).
+  - Verified full `npm test` (56 files / 268 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke at `?scene=OfficeScene&role=compiler&name=Ruby` reports `productionBoard.total: 32`, `repository_coverage_map` between `record_collection` and `research_selection`, research phase total `6`, and no console-error artifact. The generated headless WebGL screenshot remains black as previously documented.
 - Reader-aid register gate (2026-06-16):
   - Added `src/game/readerAidRegisters.ts`, a Phaser-free rules module based on the official FRUS stages page naming lists of persons mentioned and abbreviations used in the completed front matter.
   - Added a distinct `reader_aid_registers` Production Board gate after Front Matter Assembly and before Index Docket, so the Buckram Gate now requires human filing of persons and abbreviations registers before indexing.

@@ -44,6 +44,7 @@ function completeProductionState() {
     volumeConceptComplete: 1,
     recordsAccessComplete: 1,
     recordCollectionComplete: 1,
+    repositoryCoverageMapComplete: 1,
     selectionDocketComplete: 1,
     annotationDraftingComplete: 1,
     manuscriptReviewComplete: 1,

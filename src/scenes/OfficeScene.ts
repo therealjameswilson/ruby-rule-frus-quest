@@ -34,6 +34,13 @@ import {
   RECORD_COLLECTION_PROMPTS
 } from "../game/recordCollection";
 import {
+  evaluateRepositoryCoverageMapAnswer,
+  getRepositoryCoverageMapPrompt,
+  repositoryCoverageLaneCount,
+  repositoryCoverageMapComplete,
+  REPOSITORY_COVERAGE_MAP_PROMPTS
+} from "../game/repositoryCoverageMap";
+import {
   evaluateRecordsAccessAnswer,
   getRecordsAccessPrompt,
   recordsAccessComplete,
@@ -444,6 +451,10 @@ export class OfficeScene extends Phaser.Scene {
         this.showRecordCollectionChoice();
         return;
       }
+      if (!gameState.sceneProgress.repositoryCoverageMapComplete) {
+        this.showRepositoryCoverageMapChoice();
+        return;
+      }
       if (!gameState.sceneProgress.documentSelectionComplete) {
         this.showDocumentSelectionChoice();
         return;
@@ -456,6 +467,7 @@ export class OfficeScene extends Phaser.Scene {
         "Scope charter is already filed.",
         "20-year records access is already authorized.",
         "Collection notes are already logged.",
+        "Repository coverage map is already filed.",
         "Candidate selection is already logged.",
         "Selection docket is already filed.",
         "Next: verify source notes with the Archive Guide."
@@ -675,6 +687,10 @@ export class OfficeScene extends Phaser.Scene {
       this.dialog.show("CANDIDATE SELECTION", "Complete the collection pass before selecting documents.");
       return;
     }
+    if (!gameState.sceneProgress.repositoryCoverageMapComplete) {
+      this.dialog.show("CANDIDATE SELECTION", "File the repository coverage map before selecting documents.");
+      return;
+    }
     setObjective("Candidate Selection: choose the balanced FRUS document set.");
     this.choice.show(`${DOCUMENT_SELECTION_PROMPT.question}\n\n${DOCUMENT_SELECTION_PROMPT.sourceBasis}`, [...DOCUMENT_SELECTION_PROMPT.options], (option) => {
       const result = evaluateDocumentSelectionAnswer(option.value, gameState.documentCandidates);
@@ -814,12 +830,65 @@ export class OfficeScene extends Phaser.Scene {
       addDocumentPoints(6, "collection pass copied records and context notes");
       retroAudio.confirm();
       setLatestMessage("Collection pass filed: likely documents and context records are preserved.");
-      setObjective("Collection filed. Return to the desk to select the candidate set.");
+      setObjective("Collection filed. Return to the desk to file the repository coverage map.");
       this.reliability.update();
       this.dialog.show("COLLECTION", [
         result.message,
         "Collection filed: searched records, copies, and context notes are ready.",
-        "Next: select the subset for publication."
+        "Next: file the repository coverage map before selection narrows the record."
+      ]);
+    });
+  }
+
+  private showRepositoryCoverageMapChoice() {
+    if (!gameState.sceneProgress.recordCollectionComplete) {
+      this.dialog.show("REPOSITORY MAP", "Complete the collection pass before filing the repository coverage map.");
+      return;
+    }
+    if (gameState.sceneProgress.repositoryCoverageMapComplete) {
+      this.showDocumentSelectionChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.repositoryCoverageMapStep ?? 0;
+    const prompt = getRepositoryCoverageMapPrompt(step);
+    setObjective(`Repository Coverage Map: answer ${step + 1}/${REPOSITORY_COVERAGE_MAP_PROMPTS.length}.`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateRepositoryCoverageMapAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Repository coverage map shortcut: ${option.value}`);
+        this.toast.show("REVISE SOURCE MAP", this.player.position, "warn");
+        this.dialog.show("REPOSITORY MAP", [
+          result.message,
+          "A reliable FRUS volume needs a visible source map before selection narrows the record."
+        ], () => this.showRepositoryCoverageMapChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.repositoryCoverageMapStep = nextStep;
+      if (!repositoryCoverageMapComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Repository map check ${nextStep}/${REPOSITORY_COVERAGE_MAP_PROMPTS.length}: ${result.prompt.id}.`);
+        this.dialog.show("REPOSITORY MAP", [
+          result.message,
+          "Continue the repository coverage map before selecting the publication subset."
+        ], () => this.showRepositoryCoverageMapChoice());
+        return;
+      }
+
+      gameState.sceneProgress.repositoryCoverageMapComplete = 1;
+      gameState.sceneProgress.repositoryCoverageMapStep = REPOSITORY_COVERAGE_MAP_PROMPTS.length;
+      addDocumentPoints(5, "repository coverage map filed");
+      retroAudio.confirm();
+      setLatestMessage(`Repository coverage map filed: ${repositoryCoverageLaneCount()} source lanes are visible.`);
+      setObjective("Repository map filed. Return to the desk to select the candidate set.");
+      this.reliability.update();
+      this.dialog.show("REPOSITORY MAP", [
+        result.message,
+        "Repository coverage map filed: White House/NSC, State, Defense, CIA, other agencies, and private papers are visible.",
+        "Next: select the balanced document set."
       ]);
     });
   }

@@ -42,6 +42,7 @@ import { getPublicationApparatusReadout, type PublicationApparatusReadout } from
 import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
 import { PUBLICATION_FUNDING_PROMPTS } from "./publicationFundingQueue";
 import { READER_AID_REGISTER_PROMPTS } from "./readerAidRegisters";
+import { REPOSITORY_COVERAGE_MAP_PROMPTS } from "./repositoryCoverageMap";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
@@ -291,6 +292,11 @@ export interface StandardsViolationRecord {
 }
 
 export interface PublicationReadinessReadout {
+  repositoryCoverageMap: {
+    complete: boolean;
+    shortLabel: "MAP";
+    label: "Repository coverage map";
+  };
   pendants: {
     collected: number;
     required: number;
@@ -1100,9 +1106,11 @@ export function getFinalGateReadiness() {
   const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
   const reliabilityReady = gameState.reliability >= reliabilityMinimum;
   const buckramKeyHeld = hasProcessItem("buckram_key");
+  const repositoryCoverageMapReady = Boolean(gameState.sceneProgress.repositoryCoverageMapComplete);
   const ready = missingStamps.length === 0
     && missingFragments === 0
     && reliabilityReady
+    && repositoryCoverageMapReady
     && publicationApparatus.complete
     && documentsWithUndisclosedDeletion.length === 0
     && standardsViolations.length === 0;
@@ -1112,6 +1120,7 @@ export function getFinalGateReadiness() {
     fragmentsCollected: gameState.volumeFragments.length,
     fragmentsNeeded,
     missingFragments,
+    repositoryCoverageMapReady,
     reliability: gameState.reliability,
     reliabilityMinimum,
     reliabilityReady,
@@ -1148,16 +1157,23 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
   const missingSummary = [
     ...readiness.missingStamps.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
     ...(readiness.missingFragments ? [`${readiness.missingFragments} crystal${readiness.missingFragments === 1 ? "" : "s"}`] : []),
+    ...(readiness.repositoryCoverageMapReady ? [] : ["Repository MAP"]),
     ...readiness.missingApparatus.map((component) => `Apparatus ${component.shortLabel}`),
     ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
     ...unresolved.map((standard) => standard.label)
   ];
-  const requiredUnits = readiness.requiredStamps.length + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 1;
+  const requiredUnits = readiness.requiredStamps.length + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 2;
   const collectedUnits = (readiness.requiredStamps.length - readiness.missingStamps.length)
     + Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded)
+    + (readiness.repositoryCoverageMapReady ? 1 : 0)
     + readiness.publicationApparatus.completed
     + (readiness.buckramKeyHeld ? 1 : 0);
   return {
+    repositoryCoverageMap: {
+      complete: readiness.repositoryCoverageMapReady,
+      shortLabel: "MAP",
+      label: "Repository coverage map"
+    },
     pendants: {
       collected: readiness.requiredStamps.length - readiness.missingStamps.length,
       required: readiness.requiredStamps.length,
@@ -1894,6 +1910,7 @@ export function getProductionBoardReadout() {
     manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
     recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
+    repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
     selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
     volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete),
@@ -1943,6 +1960,8 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.recordsAccessStep = 3;
     gameState.sceneProgress.recordCollectionComplete = 1;
     gameState.sceneProgress.recordCollectionStep = 3;
+    gameState.sceneProgress.repositoryCoverageMapComplete = 1;
+    gameState.sceneProgress.repositoryCoverageMapStep = REPOSITORY_COVERAGE_MAP_PROMPTS.length;
     gameState.sceneProgress.selectionDocketComplete = 1;
     gameState.sceneProgress.selectionDocketStep = SELECTION_DOCKET_PROMPTS.length;
     awardProcessStamp("rule");

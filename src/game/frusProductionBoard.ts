@@ -20,6 +20,7 @@ import { READER_AID_REGISTERS_SOURCE_URL } from "./readerAidRegisters";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { RECORDS_ACCESS_SOURCE_URL } from "./recordsAccess";
 import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
+import { REPOSITORY_COVERAGE_MAP_SOURCE_URL } from "./repositoryCoverageMap";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 import { TYPEFLOW_ORDER_SOURCE_URL } from "./typeflowOrder";
@@ -34,6 +35,7 @@ export type FrusProductionBoardStepId =
   | "volume_concept"
   | "records_access"
   | "record_collection"
+  | "repository_coverage_map"
   | "research_selection"
   | "source_notes"
   | "annotation"
@@ -85,6 +87,7 @@ export interface FrusProductionBoardContext {
   manuscriptReviewComplete: boolean;
   recordsAccessComplete: boolean;
   recordCollectionComplete: boolean;
+  repositoryCoverageMapComplete: boolean;
   selectionDocketComplete: boolean;
   seriesConceptComplete: boolean;
   volumeConceptComplete: boolean;
@@ -162,6 +165,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "Compilers identify important records, search for them, and copy or note records for publication or context.",
     sourceUrl: RECORD_COLLECTION_SOURCE_URL,
     gameplayTask: "File the archive collection pass before choosing the final candidate set."
+  },
+  {
+    id: "repository_coverage_map",
+    label: "Repository coverage map",
+    shortLabel: "MAP",
+    sourceBasis: "FRUS research covers White House/NSC, State, Defense, CIA, other agency, and private-papers source lanes.",
+    sourceUrl: REPOSITORY_COVERAGE_MAP_SOURCE_URL,
+    gameplayTask: "File the repository coverage map so source lanes and visible gaps are known before selection narrows the record."
   },
   {
     id: "research_selection",
@@ -435,6 +446,8 @@ export function isFrusProductionBoardStepComplete(
       return context.recordsAccessComplete || stamps.has("rule") || volumeAtLeast(context, "research");
     case "record_collection":
       return context.recordCollectionComplete;
+    case "repository_coverage_map":
+      return context.repositoryCoverageMapComplete;
     case "research_selection":
       return (context.selectionDocketComplete && context.documentPoints >= 12 && hasSelectedDocument(context) && researchCoverageComplete(context.documentCandidates))
         || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified", "annotation_needed"])
@@ -520,6 +533,7 @@ export function isFrusProductionBoardStepComplete(
           && context.typeflowOrderComplete
           && context.typesettingPreparationComplete
           && context.typesetterProofComplete
+          && context.repositoryCoverageMapComplete
           && context.frontMatterAssemblyComplete
           && context.readerAidRegistersComplete
           && context.indexDocketComplete
