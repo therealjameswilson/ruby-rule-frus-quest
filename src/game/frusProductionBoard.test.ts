@@ -31,6 +31,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     volumeConceptComplete: false,
     chapterReleaseComplete: false,
     digitalReleaseComplete: false,
+    publicCitationComplete: false,
     ...overrides
   };
 }
@@ -61,6 +62,7 @@ describe("FRUS production board", () => {
       "kellogg_editing",
       "chapter_release_status",
       "digital_release",
+      "public_citation",
       "publication_30_year"
     ]);
   });
@@ -405,7 +407,7 @@ describe("FRUS production board", () => {
     expect(isFrusProductionBoardStepComplete("kellogg_editing", consulted)).toBe(true);
   });
 
-  it("requires chapter status and digital release before the statutory publication step can complete", () => {
+  it("requires chapter status, digital release, and public citation before the statutory publication step can complete", () => {
     const documents = INITIAL_DOCUMENT_CANDIDATES.map(withEquityResolved);
     const notReady = context({
       processStamps: ["rule", "archive", "sop"],
@@ -426,14 +428,22 @@ describe("FRUS production board", () => {
       ...chapterLedgerFiled,
       digitalReleaseComplete: true
     });
+    const citationFiled = context({
+      ...digitallyReleased,
+      publicCitationComplete: true
+    });
 
     expect(isFrusProductionBoardStepComplete("publication_30_year", notReady)).toBe(false);
     expect(isFrusProductionBoardStepComplete("chapter_release_status", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("digital_release", ready)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("public_citation", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("chapter_release_status", chapterLedgerFiled)).toBe(true);
     expect(isFrusProductionBoardStepComplete("digital_release", chapterLedgerFiled)).toBe(false);
     expect(isFrusProductionBoardStepComplete("publication_30_year", ready)).toBe(false);
     expect(isFrusProductionBoardStepComplete("digital_release", digitallyReleased)).toBe(true);
-    expect(isFrusProductionBoardStepComplete("publication_30_year", digitallyReleased)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("public_citation", digitallyReleased)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", digitallyReleased)).toBe(false);
+    expect(isFrusProductionBoardStepComplete("public_citation", citationFiled)).toBe(true);
+    expect(isFrusProductionBoardStepComplete("publication_30_year", citationFiled)).toBe(true);
   });
 });

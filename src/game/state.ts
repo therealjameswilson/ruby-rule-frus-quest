@@ -1700,7 +1700,8 @@ export function getProductionBoardReadout() {
     seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
     volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete),
     chapterReleaseComplete: Boolean(gameState.sceneProgress.chapterReleaseComplete),
-    digitalReleaseComplete: Boolean(gameState.sceneProgress.digitalReleaseComplete)
+    digitalReleaseComplete: Boolean(gameState.sceneProgress.digitalReleaseComplete),
+    publicCitationComplete: Boolean(gameState.sceneProgress.publicCitationComplete)
   });
 }
 

@@ -8,6 +8,7 @@ import { EO13526_REVIEW_SOURCE_URL } from "./eo13526Review";
 import { FOREIGN_GOVERNMENT_PERMISSION_SOURCE_URL } from "./foreignGovernmentPermission";
 import { buckramGateOpen, crystalsEarned, totalEquities } from "./frusProgression";
 import { getResearchCoverageReadout, researchCoverageComplete, type ResearchCoverageReadout } from "./researchCoverage";
+import { PUBLIC_CITATION_CARD_SOURCE_URL } from "./publicCitationCard";
 import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
@@ -31,6 +32,7 @@ export type FrusProductionBoardStepId =
   | "kellogg_editing"
   | "chapter_release_status"
   | "digital_release"
+  | "public_citation"
   | "publication_30_year";
 
 export type FrusProductionBoardStatus = "complete" | "active" | "locked";
@@ -56,6 +58,7 @@ export interface FrusProductionBoardContext {
   volumeConceptComplete: boolean;
   chapterReleaseComplete: boolean;
   digitalReleaseComplete: boolean;
+  publicCitationComplete: boolean;
 }
 
 export interface FrusProductionBoardStep {
@@ -216,6 +219,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     gameplayTask: "Prepare the history.state.gov digital release manifest after GPO handoff: document numbers, TEI master, and eBook catalog."
   },
   {
+    id: "public_citation",
+    label: "Public citation card",
+    shortLabel: "CIT",
+    sourceBasis: "The FRUS citation guide requires stable document numbers, complete citation elements, and canonical history.state.gov URLs.",
+    sourceUrl: PUBLIC_CITATION_CARD_SOURCE_URL,
+    gameplayTask: "Assemble the reader citation card: media-neutral document number, full publication elements, canonical URL, and legacy-digitization caution."
+  },
+  {
     id: "publication_30_year",
     label: "30-year publication",
     shortLabel: "PUB",
@@ -322,6 +333,8 @@ export function isFrusProductionBoardStepComplete(
       return context.finalGatePublished || context.chapterReleaseComplete;
     case "digital_release":
       return context.finalGatePublished || (context.chapterReleaseComplete && context.digitalReleaseComplete);
+    case "public_citation":
+      return context.finalGatePublished || (context.digitalReleaseComplete && context.publicCitationComplete);
     case "publication_30_year":
       return context.finalGatePublished
         || (context.volumeWorkflowState === "published")
@@ -331,6 +344,7 @@ export function isFrusProductionBoardStepComplete(
           && context.volumeFragments.length >= 5
           && context.chapterReleaseComplete
           && context.digitalReleaseComplete
+          && context.publicCitationComplete
           && noUndisclosedDeletions(context)
         );
   }

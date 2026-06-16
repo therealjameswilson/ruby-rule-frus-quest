@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Public citation card gameplay gate (2026-06-15):
+  - Added `src/game/publicCitationCard.ts`, a Phaser-free rule module based on the history.state.gov guide to citing the FRUS series: document numbers are media-neutral, citations need complete publication components, canonical history.state.gov URLs should be appended for web/eBook use, and earlier digitized volumes need a visible print-citation caution.
+  - Inserted `public_citation` into the FRUS Production Board after `digital_release` and before the 30-year publication gate, so final publication now requires reader-facing citation integrity in addition to chapter status and web/eBook release metadata.
+  - Wired `EndingScene` so Digital release manifest -> Public citation card -> final publication. Wrong citation shortcuts apply standards damage (`omitted_material_fact`, `concealed_policy_defect`, or `altered_text`); correct answers file `sceneProgress.publicCitationComplete`, add document points, and expose `public FRUS citation card` in `render_game_to_text()`.
+  - Verified focused tests: `npm test -- src/game/publicCitationCard.test.ts src/game/digitalRelease.test.ts src/game/frusProductionBoard.test.ts` (3 files / 20 tests pass).
+  - Verified full `npm test`: 44 files / 218 tests pass; `npm run build` passes with the existing Vite chunk-size warning only.
+  - Required web-game client at `?scene=EndingScene&role=compiler&name=Ruby` drove front matter -> Kellogg certification -> GPO segments -> GPO handoff -> chapter release status -> digital release -> public citation card, then reported `sceneProgress.publicCitationComplete: 1`, `publicCitationStep: 4`, visible entity `"public FRUS citation card"`, and final gate message `"Buckram Key ready: public citation card complete; publish the volume."` No console-error artifact was produced; the generated headless WebGL screenshot remains black as previously documented.
 - Chapter release status gameplay gate (2026-06-15):
   - Added `src/game/chapterReleaseStatus.ts`, a Phaser-free rule module based on the history.state.gov Status of the Series page: FRUS volumes move through Planning, Research, Clearance, and Publication, and a growing number of volumes are published incrementally as chapters are cleared while outstanding chapters remain visible.
   - Inserted `chapter_release_status` into the FRUS Production Board after editorial treatment and before the digital edition release, so a GPO-ready volume still needs a public chapter ledger before web/eBook publication.
