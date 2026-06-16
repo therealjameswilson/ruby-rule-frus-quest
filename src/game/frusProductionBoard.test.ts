@@ -32,6 +32,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     clearanceProcedureComplete: false,
     eo13526ReviewComplete: false,
     recordsAccessComplete: false,
+    researchCharterComplete: false,
     recordCollectionComplete: false,
     repositoryCoverageMapComplete: false,
     selectionDocketComplete: false,
@@ -91,6 +92,7 @@ const COMPLETE_BEFORE_TYPEFLOW = {
   clearanceProcedureComplete: true,
   eo13526ReviewComplete: true,
   recordsAccessComplete: true,
+  researchCharterComplete: true,
   recordCollectionComplete: true,
   repositoryCoverageMapComplete: true,
   selectionDocketComplete: true,
@@ -120,6 +122,7 @@ describe("FRUS production board", () => {
       "series_concept",
       "volume_concept",
       "records_access",
+      "research_charter",
       "record_collection",
       "repository_coverage_map",
       "research_selection",
@@ -180,10 +183,10 @@ describe("FRUS production board", () => {
     expect(unplanned.nextStep?.id).toBe("series_concept");
     expect(unplanned.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
     expect(seriesPlanned.nextStep?.id).toBe("volume_concept");
-    expect(volumePlanned.nextStep?.id).toBe("record_collection");
+    expect(volumePlanned.nextStep?.id).toBe("research_charter");
   });
 
-  it("keeps records access as its own gate after volume conceptualization", () => {
+  it("keeps records access and the scope charter as their own gates after volume conceptualization", () => {
     const missingAccess = getFrusProductionBoardReadout(context({
       seriesConceptComplete: true,
       volumeConceptComplete: true
@@ -193,11 +196,20 @@ describe("FRUS production board", () => {
       volumeConceptComplete: true,
       recordsAccessComplete: true
     }));
+    const charterFiled = getFrusProductionBoardReadout(context({
+      seriesConceptComplete: true,
+      volumeConceptComplete: true,
+      recordsAccessComplete: true,
+      researchCharterComplete: true
+    }));
 
     expect(missingAccess.nextStep?.id).toBe("records_access");
     expect(missingAccess.steps.find((step) => step.id === "record_collection")?.status).toBe("locked");
     expect(accessFiled.steps.find((step) => step.id === "records_access")?.complete).toBe(true);
-    expect(accessFiled.nextStep?.id).toBe("record_collection");
+    expect(accessFiled.nextStep?.id).toBe("research_charter");
+    expect(accessFiled.steps.find((step) => step.id === "record_collection")?.status).toBe("locked");
+    expect(charterFiled.steps.find((step) => step.id === "research_charter")?.complete).toBe(true);
+    expect(charterFiled.nextStep?.id).toBe("record_collection");
   });
 
   it("does not let selected documents skip the collection pass", () => {
@@ -208,6 +220,7 @@ describe("FRUS production board", () => {
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       recordsAccessComplete: true,
+      researchCharterComplete: true,
       documentPoints: 20,
       documentCandidates: selectedDocuments
     }));
@@ -222,6 +235,7 @@ describe("FRUS production board", () => {
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       recordsAccessComplete: true,
+      researchCharterComplete: true,
       recordCollectionComplete: true
     }));
     const mapFiled = getFrusProductionBoardReadout(context({
@@ -229,6 +243,7 @@ describe("FRUS production board", () => {
       seriesConceptComplete: true,
       volumeConceptComplete: true,
       recordsAccessComplete: true,
+      researchCharterComplete: true,
       recordCollectionComplete: true,
       repositoryCoverageMapComplete: true
     }));
@@ -765,6 +780,7 @@ describe("FRUS production board", () => {
       heldProcessItems: new Set<ProcessItemId>(["buckram_key"]),
       volumeFragments: ["A", "B", "C", "D"],
       reliability: 90,
+      researchCharterComplete: true,
       volumeWorkflowState: "final_assembly" as VolumeWorkflowState
     });
     const ready = context({

@@ -22,6 +22,7 @@ import { RECORD_COLLECTION_SOURCE_URL } from "./recordCollection";
 import { RECORDS_ACCESS_SOURCE_URL } from "./recordsAccess";
 import { RELEASE_CALENDAR_SOURCE_URL } from "./releaseCalendar";
 import { REPOSITORY_COVERAGE_MAP_SOURCE_URL } from "./repositoryCoverageMap";
+import { RESEARCH_CHARTER_SOURCE_URL } from "./researchCharter";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
 import { TYPEFLOW_ORDER_SOURCE_URL } from "./typeflowOrder";
@@ -35,6 +36,7 @@ export type FrusProductionBoardStepId =
   | "series_concept"
   | "volume_concept"
   | "records_access"
+  | "research_charter"
   | "record_collection"
   | "repository_coverage_map"
   | "research_selection"
@@ -91,6 +93,7 @@ export interface FrusProductionBoardContext {
   clearanceProcedureComplete: boolean;
   eo13526ReviewComplete: boolean;
   recordsAccessComplete: boolean;
+  researchCharterComplete: boolean;
   recordCollectionComplete: boolean;
   repositoryCoverageMapComplete: boolean;
   selectionDocketComplete: boolean;
@@ -162,6 +165,14 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     sourceBasis: "OH historians get full and complete access to pertinent records at 20 years.",
     sourceUrl: RECORDS_ACCESS_SOURCE_URL,
     gameplayTask: "File the 20-year access authorization before the Scope Charter opens collection."
+  },
+  {
+    id: "research_charter",
+    label: "Scope charter",
+    shortLabel: "SCP",
+    sourceBasis: "OH historians plan the scope, content, source route, and hard questions of a volume before collection and selection narrow the record.",
+    sourceUrl: RESEARCH_CHARTER_SOURCE_URL,
+    gameplayTask: "File the scope, source route, and Kellogg standards at the Scope / Selection Desk before collection begins."
   },
   {
     id: "record_collection",
@@ -465,6 +476,12 @@ export function isFrusProductionBoardStepComplete(
       return context.volumeConceptComplete;
     case "records_access":
       return context.recordsAccessComplete || stamps.has("rule") || volumeAtLeast(context, "research");
+    case "research_charter":
+      return context.researchCharterComplete
+        || context.recordCollectionComplete
+        || context.repositoryCoverageMapComplete
+        || context.selectionDocketComplete
+        || volumeAtLeast(context, "research");
     case "record_collection":
       return context.recordCollectionComplete;
     case "repository_coverage_map":
@@ -558,6 +575,7 @@ export function isFrusProductionBoardStepComplete(
           && context.typeflowOrderComplete
           && context.typesettingPreparationComplete
           && context.typesetterProofComplete
+          && (context.researchCharterComplete || context.recordCollectionComplete)
           && context.repositoryCoverageMapComplete
           && context.clearanceProcedureComplete
           && context.eo13526ReviewComplete

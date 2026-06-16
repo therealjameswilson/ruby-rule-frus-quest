@@ -43,6 +43,7 @@ import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
 import { PUBLICATION_FUNDING_PROMPTS } from "./publicationFundingQueue";
 import { READER_AID_REGISTER_PROMPTS } from "./readerAidRegisters";
 import { REPOSITORY_COVERAGE_MAP_PROMPTS } from "./repositoryCoverageMap";
+import { RESEARCH_CHARTER_PROMPTS } from "./researchCharter";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
@@ -1911,6 +1912,7 @@ export function getProductionBoardReadout() {
     clearanceProcedureComplete: Boolean(gameState.sceneProgress.clearanceProcedureComplete),
     eo13526ReviewComplete: Boolean(gameState.sceneProgress.eo13526ReviewComplete),
     recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
+    researchCharterComplete: Boolean(gameState.sceneProgress.researchCharterComplete),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
     repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
     selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
@@ -1960,6 +1962,8 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.volumeConceptStep = 3;
     gameState.sceneProgress.recordsAccessComplete = 1;
     gameState.sceneProgress.recordsAccessStep = 3;
+    gameState.sceneProgress.researchCharterComplete = 1;
+    gameState.sceneProgress.researchCharterStep = RESEARCH_CHARTER_PROMPTS.length;
     gameState.sceneProgress.recordCollectionComplete = 1;
     gameState.sceneProgress.recordCollectionStep = 3;
     gameState.sceneProgress.repositoryCoverageMapComplete = 1;

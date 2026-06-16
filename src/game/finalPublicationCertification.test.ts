@@ -43,6 +43,7 @@ function completeProductionState() {
     seriesConceptComplete: 1,
     volumeConceptComplete: 1,
     recordsAccessComplete: 1,
+    researchCharterComplete: 1,
     recordCollectionComplete: 1,
     repositoryCoverageMapComplete: 1,
     selectionDocketComplete: 1,

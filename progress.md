@@ -1460,3 +1460,23 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Required web-game Playwright client reported `scene: "TrueEndingScene"`, `mode: "ending"`, no visible threats, no placeholder text, `visibleEntities` led by `FRUS VOLUME REVIEWED` for a direct unseeded deep link, and the expected missing publication gates in `publicationReadiness`.
   - A targeted Playwright request-failure probe reported no 4xx/console errors for the TrueEndingScene route.
   - Headless and headed screenshot artifacts remain black due to the known WebGL capture issue; text state was valid.
+
+## 2026-06-16 Scope Charter promoted to the Production Board
+
+- Promoted the existing OfficeScene Scope Charter loop into `src/game/frusProductionBoard.ts` as `research_charter`, placed after `records_access` and before `record_collection`.
+- The new board step is sourced to the About FRUS page and describes the existing gameplay task: file scope, source route, and Kellogg standards at the Scope / Selection Desk before collection begins.
+- `getProductionBoardReadout()` now passes `sceneProgress.researchCharterComplete`, and `seedProgressForScene()` files the charter for later-scene deep links so QA routes do not strand the player behind an early gate.
+- The research phase readout now includes seven steps: access, scope charter, collection, repository coverage map, selection, source notes, and annotation.
+- Final `publication_30_year` completion now requires the scope charter, with backward-compatible inference when a saved state already has later collection work filed.
+- Regression coverage:
+  - Board order now includes `research_charter`.
+  - 20-year access no longer jumps directly to collection; the Scope Charter becomes the next active board task.
+  - ArchiveScene seeding marks the charter complete before source-note and annotation play.
+- Verified focused tests: `npm test -- src/game/researchCharter.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts src/game/finalPublicationCertification.test.ts` -> 4 files / 30 tests passed.
+- Verified full `npm test` -> 56 files / 269 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Started local dev server on `http://127.0.0.1:5173/`.
+  - Required web-game Playwright client completed against `?scene=OfficeScene&role=compiler&name=Ruby`; the screenshot artifact remains black due to the known headless WebGL capture issue.
+  - Direct Playwright text-state probe for OfficeScene reported `productionBoard.total: 35` and the first steps `series_concept`, `volume_concept`, `records_access`, `research_charter`, `record_collection`, `repository_coverage_map`, `research_selection`, `source_notes`.
+  - Direct Playwright text-state probe for ArchiveScene reported `research_charter` complete with `sceneProgress.researchCharterComplete: 1`, `researchCharterStep: 3`, and no console/page errors.

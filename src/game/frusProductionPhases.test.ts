@@ -63,6 +63,7 @@ describe("FRUS production phase readout", () => {
       "series_concept",
       "volume_concept",
       "records_access",
+      "research_charter",
       "record_collection",
       "repository_coverage_map",
       "research_selection",
@@ -70,7 +71,7 @@ describe("FRUS production phase readout", () => {
       "annotation"
     ], "manuscript_review"));
     expect(phases.find((phase) => phase.id === "concept")).toMatchObject({ status: "complete", completed: 2, total: 2 });
-    expect(phases.find((phase) => phase.id === "research")).toMatchObject({ status: "complete", completed: 6, total: 6 });
+    expect(phases.find((phase) => phase.id === "research")).toMatchObject({ status: "complete", completed: 7, total: 7 });
     expect(phases.find((phase) => phase.id === "clearance")).toMatchObject({
       status: "active",
       completed: 0,

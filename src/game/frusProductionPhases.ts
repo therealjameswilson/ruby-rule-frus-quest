@@ -44,8 +44,8 @@ export const FRUS_PRODUCTION_PHASES = [
     id: "research",
     label: "Research, selection, and annotation",
     shortLabel: "RSCH",
-    sourceBasis: "Secure access, collect records, map repository coverage, select the printed subset, verify sources, and draft contextual annotation.",
-    stepIds: ["records_access", "record_collection", "repository_coverage_map", "research_selection", "source_notes", "annotation"]
+    sourceBasis: "Secure access, file the scope charter, collect records, map repository coverage, select the printed subset, verify sources, and draft contextual annotation.",
+    stepIds: ["records_access", "research_charter", "record_collection", "repository_coverage_map", "research_selection", "source_notes", "annotation"]
   },
   {
     id: "clearance",
