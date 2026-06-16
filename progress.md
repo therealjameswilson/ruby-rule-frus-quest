@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Character-create input smoothing (2026-06-16):
+  - Tightened the shared `InputState` navigation edges so buffered ultra-short Arrow/WASD taps now produce the same one-frame `nav*JustPressed` edges as held keyboard, touch D-pad, and gamepad input.
+  - Updated the character-create begin prompt to the explicit "TAP AGAIN / PRESS ENTER TO BEGIN" wording while preserving the existing selected-card tap-to-confirm flow and name-field focus model.
+  - Added deterministic input tests for buffered navigation taps and touch D-pad navigation edges.
+  - Verified focused tests: `npm test -- src/input/InputState.test.ts src/scenes/CharacterCreateScene.test.ts` (2 files / 17 tests pass).
+  - Verified full `npm test` (57 files / 285 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client smoke against `?scene=CharacterCreateScene&role=compiler&name=Ruby` still produces a black headless WebGL screenshot as previously documented. Direct runtime probes confirm Enter, Space, and tapping the already-selected role card all transition to `OfficeScene` with no console errors.
 - Clearance lane / E.O. 13526 board split (2026-06-16):
   - Promoted the already-playable `clearanceProcedure` and `eo13526Review` NetworkScene loops into first-class Production Board gates: `clearance_procedure` (`LANE`) and `eo13526_review` (`EO`).
   - The clearance arc now reads in the Zelda-style quest map as Manuscript Review -> Clearance Procedure Lane -> E.O. 13526 Release Review -> Declassification Review -> Foreign Permissions -> Withholding Appeals -> Agency Referrals -> HAC.

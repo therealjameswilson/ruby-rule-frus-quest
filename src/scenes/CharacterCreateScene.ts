@@ -75,7 +75,7 @@ export class CharacterCreateScene extends Phaser.Scene {
     }).setOrigin(0.5, 0);
 
     this.createRoleCards();
-    this.beginPrompt = this.add.text(128, 203, "PRESS ENTER / TAP AGAIN TO BEGIN", {
+    this.beginPrompt = this.add.text(128, 203, "TAP AGAIN / PRESS ENTER TO BEGIN", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
