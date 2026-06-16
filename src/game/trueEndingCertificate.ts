@@ -19,6 +19,7 @@ export interface TrueEndingCertificateInput {
   publicationApparatusTotal: number;
   buckramGateOpen: boolean;
   standardsClear: boolean;
+  publicRecordComplete: boolean;
 }
 
 export interface TrueEndingCertificateLine {
@@ -66,7 +67,8 @@ export function buildTrueEndingCertificate(input: TrueEndingCertificateInput): T
     && reliabilityComplete
     && fragmentsComplete
     && input.buckramGateOpen
-    && input.standardsClear;
+    && input.standardsClear
+    && input.publicRecordComplete;
 
   const checklist: TrueEndingCertificateLine[] = [
     ratioLine("PENDANTS", PENDANTS.filter((pendant) => input.processStamps.includes(pendant.stampId)).length, PENDANTS.length, pendantsComplete),
@@ -75,6 +77,7 @@ export function buildTrueEndingCertificate(input: TrueEndingCertificateInput): T
     ratioLine("TREATY RECORD", input.treatyFragmentsCollected, TRUE_ENDING_TREATY_FRAGMENTS_REQUIRED, treatyComplete),
     ratioLine("APPARATUS", input.publicationApparatusCompleted, input.publicationApparatusTotal, apparatusComplete),
     ratioLine("PRODUCTION BOARD", input.publicationBoardCompleted, input.publicationBoardTotal, boardComplete),
+    { label: "PUBLIC RECORD", value: input.publicRecordComplete ? "FILED" : "OPEN", complete: input.publicRecordComplete },
     { label: "RELIABILITY", value: `${input.reliability}/100`, complete: reliabilityComplete },
     { label: "KELLOGG STANDARDS", value: input.standardsClear ? "CLEAR" : "OPEN", complete: input.standardsClear }
   ];
@@ -90,11 +93,11 @@ export function buildTrueEndingCertificate(input: TrueEndingCertificateInput): T
       ? [
           "The complete treaty record survived DANN-E's queue.",
           "Human review preserved provenance, declassification judgment, and publication standards.",
-          "The ruby buckram volume can enter the public record."
+          "The ruby buckram volume is filed as a reader-facing public record."
         ]
       : [
           "The record survived, but the certification packet still shows open work.",
-          "Return to the board and close every visible process gate before publication.",
+          "Return to the board and close every visible process and public-record gate before publication.",
           "No shortcut may replace a certified documentary record."
         ],
     footer: complete

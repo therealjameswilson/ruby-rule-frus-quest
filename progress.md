@@ -1600,3 +1600,17 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Regression coverage:
   - `src/game/publicationApparatus.test.ts` proves the sources-consulted component stays missing until the front-matter source-list prompt is filed.
 - Verified focused tests: `npm test -- src/game/publicationApparatus.test.ts src/game/frontMatterAssembly.test.ts src/game/finalPublicationCertification.test.ts src/game/standardsViolations.test.ts` -> 4 files / 27 tests passed.
+
+## 2026-06-16 True ending now requires a reader-facing public record
+
+- Added an explicit `PUBLIC RECORD` line to the true-ending certificate so the final ending no longer infers public transparency only from broad Production Board counts.
+- `buildTrueEndingCertificate()` now requires `publicRecordComplete`, sourced from the official About FRUS mission of a public documentary record.
+- `certifyFinalPublicationAfterDanne()` and `TrueEndingScene` now pass `publicRecordComplete` only when the public citation card, release-calendar docket, and published final-gate certification are all present.
+- Regression coverage:
+  - `src/game/trueEndingCertificate.test.ts` proves the true ending stays reviewed-but-uncertified until the public-record handoff is filed.
+- Verified focused tests: `npm test -- src/game/trueEndingCertificate.test.ts src/game/finalPublicationCertification.test.ts` -> 2 files / 10 tests passed.
+- Verified full `npm test` -> 57 files / 282 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Required web-game Playwright client completed against `?scene=TrueEndingScene&role=compiler&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
+  - Direct Playwright text-state probe for TrueEndingScene reported `mode: "ending"`, objective `True ending review: certification packet still has visible open work.`, visible certificate title `FRUS VOLUME REVIEWED`, `Production Board 0/36`, and no console/page errors.

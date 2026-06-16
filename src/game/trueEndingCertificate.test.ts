@@ -27,6 +27,7 @@ function input(overrides: Partial<Parameters<typeof buildTrueEndingCertificate>[
     publicationApparatusTotal: 6,
     buckramGateOpen: true,
     standardsClear: true,
+    publicRecordComplete: true,
     ...overrides
   };
 }
@@ -39,6 +40,10 @@ describe("true ending certificate", () => {
     expect(certificate.title).toBe("FRUS VOLUME CERTIFIED");
     expect(certificate.checklist.every((line) => line.complete)).toBe(true);
     expect(certificate.footer).toContain("no concealed defects");
+    expect(certificate.checklist.find((line) => line.label === "PUBLIC RECORD")).toMatchObject({
+      value: "FILED",
+      complete: true
+    });
   });
 
   it("blocks the true ending certificate when treaty fragments are missing", () => {
@@ -63,5 +68,16 @@ describe("true ending certificate", () => {
     expect(certificate.checklist.find((line) => line.label === "KELLOGG STANDARDS")?.complete).toBe(false);
     expect(certificate.checklist.find((line) => line.label === "APPARATUS")?.complete).toBe(false);
     expect(certificate.checklist.find((line) => line.label === "PRODUCTION BOARD")?.complete).toBe(false);
+  });
+
+  it("blocks certification until the reader-facing public record is filed", () => {
+    const certificate = buildTrueEndingCertificate(input({ publicRecordComplete: false }));
+
+    expect(certificate.complete).toBe(false);
+    expect(certificate.checklist.find((line) => line.label === "PUBLIC RECORD")).toMatchObject({
+      value: "OPEN",
+      complete: false
+    });
+    expect(certificate.summaryLines.join(" ")).toContain("public-record gate");
   });
 });

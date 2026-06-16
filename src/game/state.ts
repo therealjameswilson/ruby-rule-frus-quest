@@ -1309,7 +1309,10 @@ export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificati
     publicationApparatusCompleted: finalReadiness.publicationApparatus.completed,
     publicationApparatusTotal: finalReadiness.publicationApparatus.total,
     buckramGateOpen: publication.buckramGateOpen,
-    standardsClear: publication.standards.clear
+    standardsClear: publication.standards.clear,
+    publicRecordComplete: Boolean(gameState.sceneProgress.publicCitationComplete)
+      && Boolean(gameState.sceneProgress.releaseCalendarComplete)
+      && gameState.finalGateCertification?.status === "published"
   });
   const trueEnding = certificate.complete;
   const reason = trueEnding

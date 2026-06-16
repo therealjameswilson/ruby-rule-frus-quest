@@ -42,7 +42,10 @@ export class TrueEndingScene extends Phaser.Scene {
       publicationApparatusCompleted: readiness.publicationApparatus.completed,
       publicationApparatusTotal: readiness.publicationApparatus.total,
       buckramGateOpen: publication.buckramGateOpen,
-      standardsClear: publication.standards.clear
+      standardsClear: publication.standards.clear,
+      publicRecordComplete: Boolean(gameState.sceneProgress.publicCitationComplete)
+        && Boolean(gameState.sceneProgress.releaseCalendarComplete)
+        && gameState.finalGateCertification?.status === "published"
     });
 
     setSceneState("TrueEndingScene", "ending", certificate.complete
