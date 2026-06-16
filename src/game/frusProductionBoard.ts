@@ -26,6 +26,7 @@ import { REPOSITORY_COVERAGE_MAP_SOURCE_URL } from "./repositoryCoverageMap";
 import { RESEARCH_CHARTER_SOURCE_URL } from "./researchCharter";
 import { SELECTION_DOCKET_SOURCE_URL } from "./selectionDocket";
 import { SERIES_CONCEPT_SOURCE_URL } from "./seriesConcept";
+import { SOURCE_NOTE_PROVENANCE_SOURCE_URL } from "./sourceNoteProvenance";
 import { TYPEFLOW_ORDER_SOURCE_URL } from "./typeflowOrder";
 import { TYPESETTING_PREPARATION_SOURCE_URL } from "./typesettingPreparation";
 import { TYPESETTER_CORRECTIONS_SOURCE_URL } from "./typesetterCorrections";
@@ -84,6 +85,7 @@ export interface FrusProductionBoardContext {
   finalGatePublished: boolean;
   hacReviewComplete: boolean;
   aiAnnotationReviewComplete: boolean;
+  sourceNoteProvenanceComplete: boolean;
   annotationDraftingComplete: boolean;
   foreignGovernmentPermissionComplete: boolean;
   withholdingAppealComplete: boolean;
@@ -205,9 +207,9 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     id: "source_notes",
     label: "Source-note provenance",
     shortLabel: "SRC",
-    sourceBasis: "FRUS must be thorough, accurate, and reliable across the national security record.",
-    sourceUrl: ABOUT_FRUS_URL,
-    gameplayTask: "Verify Source Note 47 at the research table with the Citation Stamp."
+    sourceBasis: "FRUS source notes must preserve a defensible provenance trail: repository, collection, and folder cannot be guessed or deferred.",
+    sourceUrl: SOURCE_NOTE_PROVENANCE_SOURCE_URL,
+    gameplayTask: "Carry Source Note 47 to the research table, verify repository/collection/folder, then apply the Citation Stamp."
   },
   {
     id: "annotation",
@@ -502,7 +504,8 @@ export function isFrusProductionBoardStepComplete(
         || hasDocumentAtOrBeyond(context, ["source_note_needed", "citation_verified", "annotation_needed"])
         || volumeAtLeast(context, "candidate_selection");
     case "source_notes":
-      return stamps.has("archive")
+      return context.sourceNoteProvenanceComplete
+        || stamps.has("archive")
         || context.heldProcessItems.has("citation_stamp")
         || hasDocumentAtOrBeyond(context, ["citation_verified", "annotation_needed", "ready_for_review"]);
     case "annotation":
@@ -591,6 +594,7 @@ export function isFrusProductionBoardStepComplete(
           && context.typeflowOrderComplete
           && context.typesettingPreparationComplete
           && context.typesetterProofComplete
+          && (context.sourceNoteProvenanceComplete || stamps.has("archive"))
           && (context.researchCharterComplete || context.recordCollectionComplete)
           && context.repositoryCoverageMapComplete
           && context.clearanceProcedureComplete

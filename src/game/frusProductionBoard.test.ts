@@ -21,6 +21,7 @@ function context(overrides: Partial<FrusProductionBoardContext> = {}): FrusProdu
     finalGatePublished: false,
     hacReviewComplete: false,
     aiAnnotationReviewComplete: false,
+    sourceNoteProvenanceComplete: false,
     annotationDraftingComplete: false,
     foreignGovernmentPermissionComplete: false,
     withholdingAppealComplete: false,
@@ -84,6 +85,7 @@ const COMPLETE_BEFORE_TYPEFLOW = {
   documentPoints: 80,
   reliability: 90,
   documentCandidates: balancedSelectedDocuments(),
+  sourceNoteProvenanceComplete: true,
   annotationDraftingComplete: true,
   foreignGovernmentPermissionComplete: true,
   withholdingAppealComplete: true,
@@ -533,20 +535,22 @@ describe("FRUS production board", () => {
       annotationNeeded: true
     };
     const notAnnotated = getFrusProductionBoardReadout(context({
-      processStamps: ["rule", "archive"],
+      processStamps: ["rule"],
       documentCandidates: documents,
-      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      heldProcessItems: new Set<ProcessItemId>(),
       documentPoints: 24,
+      sourceNoteProvenanceComplete: true,
       recordCollectionComplete: true,
       repositoryCoverageMapComplete: true,
       seriesConceptComplete: true,
       volumeConceptComplete: true
     }));
     const annotated = getFrusProductionBoardReadout(context({
-      processStamps: ["rule", "archive"],
+      processStamps: ["rule"],
       documentCandidates: documents,
-      heldProcessItems: new Set<ProcessItemId>(["citation_stamp"]),
+      heldProcessItems: new Set<ProcessItemId>(),
       documentPoints: 24,
+      sourceNoteProvenanceComplete: true,
       annotationDraftingComplete: true,
       recordCollectionComplete: true,
       repositoryCoverageMapComplete: true,
@@ -559,6 +563,41 @@ describe("FRUS production board", () => {
     expect(notAnnotated.steps.find((step) => step.id === "manuscript_review")?.status).toBe("locked");
     expect(annotated.steps.find((step) => step.id === "annotation")?.complete).toBe(true);
     expect(annotated.nextStep?.id).toBe("manuscript_review");
+  });
+
+  it("keeps source-note provenance locked until the human repository trail is filed", () => {
+    const selectedDocuments = balancedSelectedDocuments().map((document) => ({
+      ...document,
+      workflowState: "selected" as const,
+      citationComplete: false,
+      annotationNeeded: true
+    }));
+    const sourceMissing = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      documentCandidates: selectedDocuments,
+      documentPoints: 24,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      selectionDocketComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
+    }));
+    const sourceFiled = getFrusProductionBoardReadout(context({
+      processStamps: ["rule"],
+      documentCandidates: selectedDocuments,
+      documentPoints: 24,
+      sourceNoteProvenanceComplete: true,
+      recordCollectionComplete: true,
+      repositoryCoverageMapComplete: true,
+      selectionDocketComplete: true,
+      seriesConceptComplete: true,
+      volumeConceptComplete: true
+    }));
+
+    expect(sourceMissing.nextStep?.id).toBe("source_notes");
+    expect(sourceMissing.steps.find((step) => step.id === "annotation")?.status).toBe("locked");
+    expect(sourceFiled.steps.find((step) => step.id === "source_notes")?.complete).toBe(true);
+    expect(sourceFiled.nextStep?.id).toBe("annotation");
   });
 
   it("requires explicit manuscript review before the clearance procedure lane opens", () => {

@@ -47,6 +47,7 @@ import { REPOSITORY_COVERAGE_MAP_PROMPTS } from "./repositoryCoverageMap";
 import { RESEARCH_CHARTER_PROMPTS } from "./researchCharter";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
+import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
 import type { QuestArchitectureContext } from "./questArchitecture";
@@ -1902,6 +1903,7 @@ export function getProductionBoardReadout() {
     finalGatePublished: gameState.finalGateCertification?.status === "published",
     hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
     aiAnnotationReviewComplete: Boolean(gameState.sceneProgress.aiAnnotationReviewComplete),
+    sourceNoteProvenanceComplete: Boolean(gameState.sceneProgress.sourceNoteProvenanceComplete),
     annotationDraftingComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
     foreignGovernmentPermissionComplete: Boolean(gameState.sceneProgress.foreignGovernmentPermissionComplete),
     withholdingAppealComplete: Boolean(gameState.sceneProgress.withholdingAppealComplete),
@@ -1950,12 +1952,15 @@ export function getStatutoryClockStateReadout() {
 
 export function seedProgressForScene(sceneName: string) {
   if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
-    addProcessItem("citation_stamp");
-    addVolumeFragment("Front Matter Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 15);
     setDocumentWorkflowState("telegram_001", "selected");
-    setDocumentWorkflowState("source_note_047", "citation_verified");
+    setDocumentWorkflowState("source_note_047", "selected");
     setDocumentWorkflowState("cross_reference_001", "selected");
+  }
+  if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+    addProcessItem("citation_stamp");
+    addVolumeFragment("Front Matter Fragment");
+    setDocumentWorkflowState("source_note_047", "citation_verified");
   }
   if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     gameState.sceneProgress.seriesConceptComplete = 1;
@@ -1976,6 +1981,8 @@ export function seedProgressForScene(sceneName: string) {
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("archive");
+    gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
+    gameState.sceneProgress.sourceNoteProvenanceStep = SOURCE_NOTE_PROVENANCE_PROMPTS.length;
     gameState.sceneProgress.annotationDraftingComplete = 1;
     gameState.sceneProgress.annotationDraftingStep = 3;
     gameState.sceneProgress.manuscriptReviewComplete = 1;

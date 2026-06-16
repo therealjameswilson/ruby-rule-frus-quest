@@ -1500,3 +1500,20 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Restarted local dev server on `http://127.0.0.1:5173/`.
   - Required web-game Playwright client completed against `?scene=SilentReadScene&role=proofreader&name=Sam`; the generated screenshot remains black due to the known headless WebGL artifact.
   - Direct Playwright text-state probe for SilentReadScene reported `productionBoard.total: 36`, `ai_annotation_review` active, `advisory_monitoring` complete, `editorial_methodology` locked, active editing phase `AIR`, objective `Editor's Labyrinth: run AI annotation review before carrying flags.`, and no console/page errors.
+
+## 2026-06-16 Source Note provenance state wired to the Production Board
+
+- Tightened the existing `source_notes` Production Board gate so it now uses `SOURCE_NOTE_PROVENANCE_SOURCE_URL` and the explicit Source Note 47 repository/collection/folder gameplay task instead of a generic About FRUS label.
+- `getProductionBoardReadout()` now accepts `sceneProgress.sourceNoteProvenanceComplete`, while remaining backward-compatible with the existing Archive stamp, Citation Stamp item, and citation-verified document states.
+- Final `publication_30_year` completion now explicitly requires source-note provenance through either the saved provenance flag or the Archive stamp.
+- Split ArchiveScene deep-link seeding from later-scene seeding: Archive starts with selected candidate records but no pre-granted Citation Stamp or citation-verified Source Note 47, so the player and board both begin at the actual provenance loop. NetworkScene and later still seed the completed source-note state.
+- Regression coverage:
+  - A selected, coverage-complete document set now stops at `source_notes` until `sourceNoteProvenanceComplete` is filed.
+  - Source-note provenance completion opens annotation and keeps manuscript review locked until annotation is drafted.
+- Verified focused tests: `npm test -- src/game/sourceNoteProvenance.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts src/game/finalPublicationCertification.test.ts` -> 4 files / 33 tests passed.
+- Verified full `npm test` -> 56 files / 272 tests passed.
+- Verified `npm run build` passed with the existing Vite chunk-size warning.
+- Runtime smoke:
+  - Restarted local dev server on `http://127.0.0.1:5173/`.
+  - Required web-game Playwright client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`; the generated screenshot remains black due to the known headless WebGL artifact.
+  - Direct Playwright text-state probe for ArchiveScene reported `productionBoard.total: 36`, `source_notes` active, `research_selection` complete, `annotation` locked, objective `Archive Cavern: collect Source Note 47 in A1.`, no seeded `sourceNoteProvenanceComplete`, and no console/page errors.
