@@ -11,6 +11,7 @@ describe("volume conceptualization prompts", () => {
     expect(VOLUME_CONCEPT_PROMPTS.map((prompt) => prompt.id)).toEqual([
       "volume_parameters",
       "strategy_sources",
+      "coverage_breadth",
       "policy_implementation"
     ]);
   });
@@ -29,11 +30,15 @@ describe("volume conceptualization prompts", () => {
   it("maps volume-concept shortcuts to standards damage categories", () => {
     const easyFile = evaluateVolumeConceptAnswer("volume_parameters", "easy_country_file");
     const machineComplete = evaluateVolumeConceptAnswer("volume_parameters", "machine_complete");
+    const bilateralOnly = evaluateVolumeConceptAnswer("coverage_breadth", "bilateral_only");
+    const singleLane = evaluateVolumeConceptAnswer("coverage_breadth", "single_topic_lane");
     const hideDefects = evaluateVolumeConceptAnswer("policy_implementation", "avoid_defects");
 
     expect(easyFile.ok).toBe(false);
     expect(easyFile.violation).toBe("omitted_material_fact");
     expect(machineComplete.violation).toBe("altered_text");
+    expect(bilateralOnly.violation).toBe("omitted_material_fact");
+    expect(singleLane.violation).toBe("concealed_policy_defect");
     expect(hideDefects.violation).toBe("concealed_policy_defect");
   });
 

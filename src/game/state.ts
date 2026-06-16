@@ -52,6 +52,7 @@ import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
+import { VOLUME_CONCEPT_PROMPTS } from "./volumeConcept";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import {
@@ -2019,7 +2020,7 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.seriesConceptComplete = 1;
     gameState.sceneProgress.seriesConceptStep = 3;
     gameState.sceneProgress.volumeConceptComplete = 1;
-    gameState.sceneProgress.volumeConceptStep = 3;
+    gameState.sceneProgress.volumeConceptStep = VOLUME_CONCEPT_PROMPTS.length;
     gameState.sceneProgress.recordsAccessComplete = 1;
     gameState.sceneProgress.recordsAccessStep = 3;
     gameState.sceneProgress.researchCharterComplete = 1;

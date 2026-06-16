@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Volume concept coverage breadth prompt (2026-06-16):
+  - Expanded `src/game/volumeConcept.ts` with an About-FRUS-backed coverage-breadth prompt so the player must plan for bilateral/regional relations, global issues, and topical policy lanes instead of reducing a volume to one easy file path.
+  - Wrong coverage shortcuts now debit standards reliability as omitted material facts or concealed policy defects.
+  - Replaced the downstream debug-seed hardcode with `VOLUME_CONCEPT_PROMPTS.length`, keeping `?scene=` deep links coherent as the volume-planning gate grows.
+  - Verified focused tests: `npm test -- src/game/volumeConcept.test.ts src/game/frusProductionBoard.test.ts src/game/frusProductionPhases.test.ts` (3 files / 34 tests pass).
+  - Verified full `npm test` (58 files / 290 tests pass) and `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game smoke at `?scene=OfficeScene&role=compiler&name=Ruby` still yields the known black headless WebGL screenshot. Direct runtime state confirms `OfficeScene`, Production Board total `39`, next step `series_concept`, and no console errors.
 - Policy coverage audit gate (2026-06-16):
   - Added `src/game/policyCoverageAudit.ts`, a Phaser-free rules module based on the official About FRUS mandate that the series be thorough, accurate, and reliable while omitting no major facts and concealing no policy defects.
   - Inserted `policy_coverage_audit` (`AUD`) into the Production Board after `research_selection` and before `source_notes`, making the Office Scope / Selection Desk certify major decisions, material facts, and policy-defect evidence before the Archive Guide opens source-note verification.
