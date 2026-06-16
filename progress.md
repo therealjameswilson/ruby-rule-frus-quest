@@ -1591,3 +1591,12 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Runtime smoke:
   - Required web-game Playwright client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`; generated screenshot remains black due to the known headless WebGL artifact.
   - Direct Playwright text-state probe with annotation drafted and documents at `ready_for_review` reported `manuscript_review` active, `clearance_procedure` locked, source URL `https://history.state.gov/historicaldocuments/frus-history/stages`, and no console/page errors.
+
+## 2026-06-16 Sources consulted list made a filed front-matter component
+
+- Tightened `publicationApparatus.sources_consulted` so it now requires the Source Note Fragment, complete repository coverage, and a filed sources-consulted front-matter step.
+- `getFinalGateReadiness()` now passes `sourcesConsultedListComplete` from `frontMatterAssemblyStep >= 2` or completed front-matter assembly, so partial front-matter progress can satisfy the source-list component while full assembly remains its own apparatus gate.
+- This keeps the official FRUS stages distinction visible: the research coverage map proves the source base, but the publication apparatus still needs a reader-facing sources-consulted list.
+- Regression coverage:
+  - `src/game/publicationApparatus.test.ts` proves the sources-consulted component stays missing until the front-matter source-list prompt is filed.
+- Verified focused tests: `npm test -- src/game/publicationApparatus.test.ts src/game/frontMatterAssembly.test.ts src/game/finalPublicationCertification.test.ts src/game/standardsViolations.test.ts` -> 4 files / 27 tests passed.

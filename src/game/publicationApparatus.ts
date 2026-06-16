@@ -17,6 +17,7 @@ export interface PublicationApparatusContext {
   volumeFragments: readonly string[];
   documentCandidates: readonly DocumentCandidate[];
   documentPoints: number;
+  sourcesConsultedListComplete: boolean;
   typesettingPreparationComplete: boolean;
   typesetterProofComplete: boolean;
   readerAidRegistersComplete: boolean;
@@ -126,7 +127,9 @@ function componentComplete(component: PublicationApparatusComponentId, context: 
     case "preface_scope":
       return stamps.has("rule") && fragments.has("Front Matter Fragment");
     case "sources_consulted":
-      return fragments.has("Source Note Fragment") && researchCoverageComplete(context.documentCandidates);
+      return fragments.has("Source Note Fragment")
+        && researchCoverageComplete(context.documentCandidates)
+        && (context.sourcesConsultedListComplete || context.frontMatterAssemblyComplete);
     case "persons_abbreviations":
       return fragments.has("Routing Fragment") && context.documentPoints >= PUBLICATION_APPARATUS_MIN_DOCUMENT_POINTS;
     case "declassification_accounting":
@@ -155,7 +158,7 @@ export function getPublicationApparatusReadout(context: PublicationApparatusCont
   const complete = missing.length === 0;
   return {
     sourceUrl: PUBLICATION_APPARATUS_SOURCE_URL,
-    sourceBasis: "FRUS final editing adds front matter, source/person/abbreviation lists, typesetting preparation, proof checks, final assembly, an index, and typesetter corrections before publication.",
+    sourceBasis: "FRUS final editing adds front matter, a filed sources-consulted list, person/abbreviation registers, typesetting preparation, proof checks, final assembly, an index, and typesetter corrections before publication.",
     complete,
     completed: components.length - missing.length,
     total: components.length,

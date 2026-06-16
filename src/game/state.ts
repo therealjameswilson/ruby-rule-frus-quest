@@ -1106,6 +1106,8 @@ export function getFinalGateReadiness() {
     volumeFragments: gameState.volumeFragments,
     documentCandidates: gameState.documentCandidates,
     documentPoints: gameState.documentPoints,
+    sourcesConsultedListComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete)
+      || (gameState.sceneProgress.frontMatterAssemblyStep ?? 0) >= 2,
     typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
     typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
     readerAidRegistersComplete: Boolean(gameState.sceneProgress.readerAidRegistersComplete),
