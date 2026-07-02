@@ -2,6 +2,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- First-load friction cleanup pass (2026-07-02):
+  - Replaced the dense full-art DANN-E warning with a quieter in-engine pixel panel that states the antagonist is fictional and warns about bad shortcuts.
+  - Fixed first-load input friction: any tap/click or A/Start press now advances the warning immediately instead of being ignored during the first delay window.
+  - Shrank the title-screen warning preference control so it reads as a secondary setting rather than a primary game action.
+  - Gated BootScene asset-registry and 16-bit sprite-size console logs behind `?debug=assets`, keeping normal QA/browser sessions clear for real errors.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - focused `npm test -- --run src/scenes/TitleScene.test.ts src/scenes/CharacterCreateScene.test.ts src/input/InputState.test.ts src/systems/interactionPrompt.test.ts` passes (4 files / 34 tests);
+    - required web-game client completed against `?v=game-cleanup-client-final`;
+    - direct bundled-Playwright probe confirmed first tap advances from WarningScene to TitleScene, no page errors, and no normal asset-log spam;
+    - visual proof: `output/game-cleanup/final3/WarningScene-simple.png` and `output/game-cleanup/final3/After-warning-click.png`.
 - Opening-screen declutter pass (2026-07-02):
   - Replaced the dense pre-rendered title illustration with a quieter procedural ruby buckram title card: logo, FRUS volume icon, start prompt, and one mission plaque.
   - Removed the title control cheat-sheet from the first screen so it no longer competes with the core goal.

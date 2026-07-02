@@ -62,7 +62,9 @@ export class BootScene extends Phaser.Scene {
     preloadCharacters(this);
     this.preloadDannePack();
     this.preloadAllNewArtPack();
-    this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
+    if (this.shouldLogAssetDebug()) {
+      this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
+    }
     this.preloadSvgAssets();
   }
 
@@ -146,21 +148,26 @@ export class BootScene extends Phaser.Scene {
   }
 
   private preloadAllNewArtPack() {
+    const logAssets = this.shouldLogAssetDebug();
     for (const [registryName, registry] of Object.entries(ALL_NEW_ART_REGISTRIES)) {
-      console.group(`[Ruby Rule art registry] ${registryName}`);
+      if (logAssets) console.group(`[Ruby Rule art registry] ${registryName}`);
       for (const [key, path] of Object.entries(registry)) {
         this.load.image(key, publicAssetPath(path));
-        console.log(`${key} -> ${path}`);
+        if (logAssets) console.log(`${key} -> ${path}`);
       }
-      console.groupEnd();
+      if (logAssets) console.groupEnd();
     }
-    console.group("[Ruby Rule art registry] GAMEPLAY_TILED_MAPS");
+    if (logAssets) console.group("[Ruby Rule art registry] GAMEPLAY_TILED_MAPS");
     for (const key of Object.keys(GAMEPLAY_TILED_MAPS) as Array<keyof typeof GAMEPLAY_TILED_MAPS>) {
       const path = GAMEPLAY_TILED_MAPS[key];
       this.load.json(gameplayTiledCacheKey(key), publicAssetPath(path));
-      console.log(`${gameplayTiledCacheKey(key)} -> ${path}`);
+      if (logAssets) console.log(`${gameplayTiledCacheKey(key)} -> ${path}`);
     }
-    console.groupEnd();
+    if (logAssets) console.groupEnd();
+  }
+
+  private shouldLogAssetDebug() {
+    return new URLSearchParams(window.location.search).get("debug") === "assets";
   }
 
   private applyDanneTextureFilters() {
