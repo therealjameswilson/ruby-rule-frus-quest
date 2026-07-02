@@ -337,12 +337,13 @@ export class OfficeScene extends Phaser.Scene {
       bounds: { left: 16, right: GAME_WIDTH - 16, top: 42, bottom: GAME_HEIGHT - 18 },
       solids: this.solids
     });
-    const nearest = nearestInteractable(this.player.position, this.interactables);
+    const activeInteractables = this.currentInteractables();
+    const nearest = nearestInteractable(this.player.position, activeInteractables);
     const tutorialVisible = Boolean(this.tutorialCard);
     // Show the prompt/ring from a little further out than the strict interact
     // radius so it is impossible to miss on approach, but only allow acting on a
     // target inside the strict radius.
-    const hintTarget = tutorialVisible ? null : nearestInteractableHint(this.player.position, this.interactables);
+    const hintTarget = tutorialVisible ? null : nearestInteractableHint(this.player.position, activeInteractables);
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(tutorialVisible ? null : nearest?.label ?? null);
     this.prompt.update(delta, tutorialVisible ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
@@ -355,9 +356,29 @@ export class OfficeScene extends Phaser.Scene {
       if (feedback.kind === "step-closer") this.nudgeTowardTarget(feedback.target);
       else if (feedback.kind === "nothing") this.flashNoTargetHint();
     }
-    setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
+    setObjective(this.currentOfficeObjective());
     this.reliability.update();
     this.updateFirstQuestCue();
+  }
+
+  private currentInteractables() {
+    if (gameState.sceneProgress.juniorCompilerIntroduced) return this.interactables;
+    const junior = this.interactables.find((interactable) => interactable.id === "junior-compiler");
+    return junior ? [{ ...junior, radius: 72 }] : [];
+  }
+
+  private currentOfficeObjective() {
+    if (!gameState.sceneProgress.juniorCompilerIntroduced) return FRUS_QUEST_FIRST_OBJECTIVE;
+    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
+    if (progress < 3) return `Office Hub: inspect ${this.nextJuniorStationLabel(progress)}.`;
+    if (!hasDanneItem("master-declass-key")) return "Office Hub: return to the Junior Compiler for key issuance.";
+    return "Office Hub: use the Master Declass Key at approved classified doors.";
+  }
+
+  private nextJuniorStationLabel(progress = gameState.sceneProgress.juniorCompilerFetch ?? 0) {
+    if (progress === 0) return "Production Inbox";
+    if (progress === 1) return "FRUS Cart";
+    return "Archive Terminal";
   }
 
   private talkJuniorCompiler() {
@@ -384,7 +405,8 @@ export class OfficeScene extends Phaser.Scene {
       ]);
       return;
     }
-    const next = progress === 0 ? "Production Inbox" : progress === 1 ? "FRUS Cart" : "Archive Terminal";
+    const next = this.nextJuniorStationLabel(progress);
+    setObjective(`Office Hub: inspect ${next}.`);
     this.dialog.show("JUNIOR COMPILER", [
       FRUS_QUEST_MISSION,
       FRUS_QUEST_LOOP,
@@ -460,7 +482,7 @@ export class OfficeScene extends Phaser.Scene {
     const plate = this.add.rectangle(0, -26, 34, 10, color(PALETTE.black), 0.86)
       .setName("office-first-quest-plate")
       .setStrokeStyle(1, color(PALETTE.goldStamp));
-    const label = this.add.text(0, -29, "TALK", {
+    const label = this.add.text(0, -29, "JR", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp
@@ -481,12 +503,16 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private updateFirstQuestCue() {
+    const closeToJunior = this.player
+      ? Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, this.juniorCompiler.x, this.juniorCompiler.y) <= 86
+      : false;
     const visible = Boolean(
       this.firstQuestCue
       && !this.tutorialCard
       && !this.dialog?.active
       && !this.choice?.active
       && !gameState.sceneProgress.juniorCompilerIntroduced
+      && !closeToJunior
     );
     this.firstQuestCue?.setVisible(visible);
     this.updateFirstRoomProgressVisibility();
@@ -516,6 +542,12 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private handleJuniorQuestStation(station: "inbox" | "cart" | "terminal") {
+    if (!gameState.sceneProgress.juniorCompilerIntroduced) {
+      retroAudio.warning();
+      setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
+      this.dialog.show("OFFICE CHECK", "Talk to the Junior Compiler first. They will give you the production-check route.");
+      return;
+    }
     const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
     const expected = progress === 0 ? "inbox" : progress === 1 ? "cart" : progress === 2 ? "terminal" : "done";
     if (expected === "done") {
@@ -527,9 +559,16 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     if (station !== expected) {
-      const next = expected === "inbox" ? "Production Inbox" : expected === "cart" ? "FRUS Cart" : "Archive Terminal";
+      const next = this.nextJuniorStationLabel(progress);
       retroAudio.warning();
-      this.dialog.show("OFFICE CHECK", `Check order matters: go to ${next}.`);
+      setObjective(`Office Hub: inspect ${next}.`);
+      const alreadyLogged = (station === "inbox" && progress > 0)
+        || (station === "cart" && progress > 1)
+        || (station === "terminal" && progress > 2);
+      this.dialog.show(
+        "OFFICE CHECK",
+        alreadyLogged ? `Already logged. Next: go to ${next}.` : `Check order matters: go to ${next}.`
+      );
       return;
     }
     gameState.sceneProgress.juniorCompilerFetch = progress + 1;
@@ -540,6 +579,7 @@ export class OfficeScene extends Phaser.Scene {
       terminal: "Archive terminal checked: request status matches the paper trail."
     } as const;
     setLatestMessage(messages[station]);
+    setObjective(this.currentOfficeObjective());
     this.dialog.show("OFFICE CHECK", [
       messages[station],
       progress + 1 >= 3 ? "Return to the Junior Compiler for key issuance." : "Continue the production check sequence."

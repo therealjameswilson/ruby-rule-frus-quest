@@ -2,7 +2,13 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { createDanneScrollFrame } from "../game/danneUiSlices";
 import { clearDialogState, setDialogState } from "../game/state";
-import { bindPointerPress, isTouchInputCapable, setTouchControl, updateInputCallbacks } from "../input/InputState";
+import {
+  bindPointerPress,
+  isTouchInputCapable,
+  setTouchControl,
+  swallowNextInputFrame,
+  updateInputCallbacks
+} from "../input/InputState";
 import { retroAudio } from "./audio";
 
 type CompleteCallback = () => void;
@@ -81,6 +87,7 @@ export class DialogBox {
     this.releaseAdvance();
     this.container.setVisible(false);
     clearDialogState();
+    swallowNextInputFrame();
     const complete = this.onComplete;
     this.onComplete = undefined;
     complete?.();

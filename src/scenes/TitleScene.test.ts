@@ -6,8 +6,6 @@ import { TITLE_LAYOUT, framedPlateBounds, shouldStartTitle } from "./titleLayout
 
 function input(overrides: Partial<Parameters<typeof shouldStartTitle>[0]> = {}) {
   return {
-    a: false,
-    start: false,
     aJustPressed: false,
     startJustPressed: false,
     pointerPrimaryJustPressed: false,
@@ -17,24 +15,17 @@ function input(overrides: Partial<Parameters<typeof shouldStartTitle>[0]> = {}) 
 
 describe("shouldStartTitle", () => {
   it("advances on a fresh A / start / pointer rising edge", () => {
-    expect(shouldStartTitle(input({ aJustPressed: true }), false)).toBe(true);
-    expect(shouldStartTitle(input({ startJustPressed: true }), false)).toBe(true);
-    expect(shouldStartTitle(input({ pointerPrimaryJustPressed: true }), false)).toBe(true);
+    expect(shouldStartTitle(input({ aJustPressed: true }))).toBe(true);
+    expect(shouldStartTitle(input({ startJustPressed: true }))).toBe(true);
+    expect(shouldStartTitle(input({ pointerPrimaryJustPressed: true }))).toBe(true);
   });
 
-  it("advances on a held A/start once input is ready (key carried over from the warning)", () => {
-    // No rising edge: the key was already down when the warning handed off.
-    expect(shouldStartTitle(input({ a: true }), true)).toBe(true);
-    expect(shouldStartTitle(input({ start: true }), true)).toBe(true);
-  });
-
-  it("ignores a held key before the input-ready grace elapses", () => {
-    expect(shouldStartTitle(input({ a: true }), false)).toBe(false);
-    expect(shouldStartTitle(input({ start: true }), false)).toBe(false);
+  it("ignores held-key carry-over from the warning scene", () => {
+    expect(shouldStartTitle(input())).toBe(false);
   });
 
   it("does not advance with no input", () => {
-    expect(shouldStartTitle(input(), true)).toBe(false);
+    expect(shouldStartTitle(input())).toBe(false);
   });
 });
 
