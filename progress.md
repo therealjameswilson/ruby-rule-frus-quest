@@ -2,6 +2,19 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Chrome playtest smoothing pass (2026-07-02):
+  - Played the live local build in Chrome from WarningScene through TitleScene, CharacterCreateScene, and the Office Hub opening loop.
+  - Found and fixed a one-press scene-skip: pressing Enter on the DANN-E warning could carry through the title and land directly on role select. WarningScene now swallows the transition input, and TitleScene only advances on a fresh press.
+  - Found and fixed first-room target confusion: before the Junior Compiler introduction, nearby desks could show or trigger Production Inbox even while the objective said `TALK TO JR`. OfficeScene now filters active interactables to JR only until the introduction completes.
+  - Made the tutorial NPC forgiving without stealing later station focus: JR uses an enlarged interaction radius only before the introduction; after that, desks and stations regain normal priority.
+  - Replaced the far-away `TALK` marker with a destination-style `JR` marker and hands off to the actionable `A TALK JUNIOR COMPILER` prompt when close.
+  - Replaced repeated completed-station wording from a failure-like `Check order matters` with `Already logged. Next: go to ...`.
+  - Fixed a global dialog fallthrough issue: closing a dialog now swallows the closing input for one frame, preventing `advance text` from also immediately re-triggering the object underneath.
+  - Verification:
+    - Chrome screenshots confirmed WarningScene -> TitleScene stops on title, role select still requires its own confirm, Office now shows `A TALK JUNIOR COMPILER`, and post-JR HUD/prompt points to Production Inbox;
+    - `npm test -- --run src/scenes/TitleScene.test.ts src/input/InputState.test.ts src/systems/interactionPrompt.test.ts` passes;
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=chrome-playtest-client-smoke` and reported the Office objective/interactable state.
 - First-load friction cleanup pass (2026-07-02):
   - Replaced the dense full-art DANN-E warning with a quieter in-engine pixel panel that states the antagonist is fictional and warns about bad shortcuts.
   - Fixed first-load input friction: any tap/click or A/Start press now advances the warning immediately instead of being ignored during the first delay window.
