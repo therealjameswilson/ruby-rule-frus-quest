@@ -17,6 +17,7 @@ import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./syst
 declare global {
   interface Window {
     render_game_to_text?: () => string;
+    rubyRuleFullStateText?: () => string;
     advanceTime?: (ms: number) => Promise<void>;
     rubyRuleMobileMetrics?: MobileDebugMetrics;
     rubyRuleResetPerformanceMetrics?: () => void;
@@ -63,7 +64,45 @@ interface NavigatorWithStandalone extends Navigator {
   standalone?: boolean;
 }
 
-window.render_game_to_text = renderGameToText;
+function renderConciseGameToText() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("text") === "full" || params.get("debugState") === "full") return renderGameToText();
+  return JSON.stringify(
+    {
+      coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
+      scene: gameState.currentScene,
+      mode: gameState.mode,
+      objective: gameState.objective,
+      latestMessage: gameState.latestMessage,
+      player: gameState.player,
+      playerFacing: gameState.playerFacing,
+      playerAnimationState: gameState.playerAnimationState,
+      nearestInteractable: gameState.nearestInteractable,
+      heldItem: gameState.heldItem,
+      reliability: gameState.reliability,
+      documentPoints: gameState.documentPoints,
+      volumeWorkflowState: gameState.volumeWorkflowState,
+      questCounters: gameState.questCounters,
+      processStamps: gameState.processStamps,
+      inventory: gameState.inventory,
+      visibleEntities: gameState.visibleEntities.slice(0, 12),
+      visibleThreats: gameState.visibleThreats.slice(0, 8),
+      dialog: gameState.activeDialog,
+      choice: gameState.currentChoice
+        ? {
+            title: gameState.currentChoice.title,
+            options: gameState.currentChoice.options.map((option) => option.label)
+          }
+        : null,
+      fullStateHint: "Add ?text=full for the complete debug state."
+    },
+    null,
+    2
+  );
+}
+
+window.render_game_to_text = renderConciseGameToText;
+window.rubyRuleFullStateText = renderGameToText;
 window.rubyRuleAudioDebug = () => retroAudio.getDebugState();
 window.rubyRuleSaveDebug = () => getSaveDebugState();
 window.rubyRuleGamepadDebug = () => getGamepadDebugState();
@@ -568,9 +607,21 @@ window.addEventListener("resize", scheduleIntegerScaleRefresh);
 window.addEventListener("orientationchange", scheduleIntegerScaleRefresh);
 window.visualViewport?.addEventListener("resize", scheduleIntegerScaleRefresh);
 
+let bootLoaderPoll: number | undefined;
+
+function hasActivePlayableScene() {
+  if (!phaserGame) return false;
+  return phaserGame.scene.getScenes(true).some((scene) => scene.scene.key !== "BootScene");
+}
+
 function hideBootLoader() {
   const loader = document.getElementById("boot-loader");
   if (!loader || loader.hidden) return;
+  if (!hasActivePlayableScene()) return;
+  if (bootLoaderPoll !== undefined) {
+    window.clearInterval(bootLoaderPoll);
+    bootLoaderPoll = undefined;
+  }
   loader.classList.add("is-hiding");
   window.setTimeout(() => {
     loader.hidden = true;
@@ -597,7 +648,7 @@ game.events.once(Phaser.Core.Events.READY, () => {
   window.requestAnimationFrame(() => window.requestAnimationFrame(hideBootLoader));
   window.setTimeout(hideBootLoader, 1200);
 });
-window.setTimeout(hideBootLoader, 8000);
+bootLoaderPoll = window.setInterval(hideBootLoader, 500);
 installAutosaveLifecycle();
 installTapToResumeOverlay(game);
 const togglePixelProof = installPixelProofOverlay();

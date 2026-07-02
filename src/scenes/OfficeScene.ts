@@ -125,7 +125,7 @@ export class OfficeScene extends Phaser.Scene {
   // The floating proximity prompt now carries the contextual "A [verb]" cue, so
   // the persistent bottom line drops INTERACT and trims spacing to de-clutter the
   // bottom band (live audit, 2026-06-15).
-  private readonly controlsHint = "MOVE · TAB CODEX · M MENU";
+  private readonly controlsHint = "MOVE · A INTERACT · M MENU";
   private prompt!: InteractionPrompt;
   private toast!: FeedbackToast;
   private tutorialCard?: Phaser.GameObjects.Container;
@@ -383,35 +383,30 @@ export class OfficeScene extends Phaser.Scene {
 
   private showOfficeTutorial() {
     this.hintText.setVisible(false);
-    const shadow = this.add.rectangle(128, 57, 224, 42, color(PALETTE.black), 0.66)
+    const shadow = this.add.rectangle(129, 60, 178, 34, color(PALETTE.black), 0.58)
       .setName("office-tutorial-shadow");
-    const panel = this.add.rectangle(128, 54, 216, 38, color(PALETTE.shadowNavy), 0.96)
+    const panel = this.add.rectangle(128, 57, 170, 30, color(PALETTE.shadowNavy), 0.94)
       .setName("office-tutorial-panel")
-      .setStrokeStyle(2, color(PALETTE.goldStamp));
-    const title = this.add.text(128, 38, "MISSION", {
+      .setStrokeStyle(1, color(PALETTE.goldStamp));
+    const title = this.add.text(128, 44, "START HERE", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp
     }).setName("office-tutorial-title").setOrigin(0.5, 0);
-    const body = this.add.text(128, 47, "PUBLISH A RELIABLE FRUS VOLUME", {
+    const body = this.add.text(128, 53, "TALK TO THE JUNIOR COMPILER", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       align: "center",
       lineSpacing: 0
     }).setName("office-tutorial-body").setOrigin(0.5, 0);
-    const route = this.add.text(128, 56, "VERIFY SOURCES · CLEAR EQUITIES · PROOF PAGES", {
+    const route = this.add.text(128, 62, "A = INTERACT  ·  MOVE = BEGIN", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.terminalCyan,
       align: "center"
     }).setName("office-tutorial-route").setOrigin(0.5, 0);
-    const stakes = this.add.text(128, 64, "HEARTS = RELIABILITY.  MOVE OR A: BEGIN", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp
-    }).setName("office-tutorial-stakes").setOrigin(0.5, 0);
-    this.tutorialCard = this.add.container(0, 0, [shadow, panel, title, body, route, stakes]).setDepth(1800);
+    this.tutorialCard = this.add.container(0, 0, [shadow, panel, title, body, route]).setDepth(1800);
     bindPointerDown(panel, () => this.dismissOfficeTutorial());
   }
 
