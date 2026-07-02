@@ -59,6 +59,7 @@
       "objects": [
         { "id": 14, "name": "street_sign", "type": "interaction", "x": 1000, "y": 610, "width": 70, "height": 92, "properties": [
           { "name": "label", "type": "string", "value": "23rd Street Sign" },
+          { "name": "action", "type": "string", "value": "street-sign" },
           { "name": "text", "type": "string", "value": "23rd Street is traffic, not a research route. Stay on the sidewalk." }
         ] }
       ]

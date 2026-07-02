@@ -34,13 +34,26 @@ import { BureaucraticWall } from "../entities/BureaucraticWall";
 import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
-import { InteractionAssist, nearestWorkflowInteraction } from "../systems/interaction";
+import {
+  decideInteractionFeedback,
+  InteractionAssist,
+  nearestInteractableHint,
+  nearestWorkflowInteraction
+} from "../systems/interaction";
+import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
+import { addSnesGate, addSnesMapTablet, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal, addSnesWorldMap } from "../systems/snesPixelArt";
+import {
+  SNES_ARCHIVE_COMPASS_RELIC_ASSET,
+  SNES_ARCHIVE_PROP_ASSET,
+  SNES_ARCHIVE_ROOM_DETAIL_ASSET,
+  SNES_ARCHIVE_WALL_MAP_BOARD_ASSET,
+  SNES_ROOM_MAP_MARKER_ASSET
+} from "../game/snesAtlas";
 import { ChoicePrompt } from "../systems/verification";
 import {
   annotationDraftingComplete,
@@ -64,6 +77,8 @@ type Direction = "north" | "south" | "west" | "east";
 type ArchiveRoomId = "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
 type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "HOLD" | "AMBIGUOUS" | "DANN-E QUEUE";
 type ArchiveDanneRoute = "NaraStacksScene" | "EmbassyCableRoomScene" | "BlackVaultLairScene";
+type ArchivePropFrame = (typeof SNES_ARCHIVE_PROP_ASSET.frames)[number];
+type ArchiveRoomDetailFrame = (typeof SNES_ARCHIVE_ROOM_DETAIL_ASSET.frames)[number];
 
 interface ArchiveRoom {
   id: ArchiveRoomId;
@@ -74,6 +89,8 @@ interface ArchiveRoom {
   requiredItems?: Partial<Record<Direction, ProcessItemId>>;
   roomType: RoomType;
 }
+
+type ArchiveWallMapMarkerFrame = (typeof SNES_ROOM_MAP_MARKER_ASSET.frames)[number];
 
 interface ArchiveEnemyDefinition {
   id: string;
@@ -320,6 +337,7 @@ export class ArchiveScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
+  private interactionPrompt!: InteractionPrompt;
   private roomTitleText!: Phaser.GameObjects.Text;
   private interactables: Interactable[] = [];
   private readonly interactionAssist = new InteractionAssist();
@@ -330,6 +348,15 @@ export class ArchiveScene extends Phaser.Scene {
   private sourceNoteStatus: SourceNoteStatus = "inactive";
   private sourceNoteIcon?: Phaser.GameObjects.Image;
   private sourceNoteLabel?: Phaser.GameObjects.Text;
+  private sourceNoteRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private sourceNoteRouteCueKey = "";
+  private naraStacksGateObjects: Phaser.GameObjects.GameObject[] = [];
+  private noRepoStampCue?: Phaser.GameObjects.Container;
+  private readyWallCues = new Map<string, Phaser.GameObjects.Container>();
+  private archiveKeyRewardCue?: Phaser.GameObjects.Container;
+  private secretRewardCue?: Phaser.GameObjects.Container;
+  private bossReadinessObjects: Phaser.GameObjects.GameObject[] = [];
+  private blackVaultDoorObjects: Phaser.GameObjects.GameObject[] = [];
   private readonly researchTable = { x: 128, y: 116, label: "Research Table" };
   private currentRoomId: ArchiveRoomId = "A1";
   private visitedRoomIds = new Set<ArchiveRoomId>();
@@ -341,6 +368,8 @@ export class ArchiveScene extends Phaser.Scene {
   private activeEnemyWalls = new Map<string, BureaucraticWall>();
   private mapCells = new Map<ArchiveRoomId, Phaser.GameObjects.Rectangle>();
   private mapLabels = new Map<ArchiveRoomId, Phaser.GameObjects.Text>();
+  private mapMarkers = new Map<ArchiveRoomId, Phaser.GameObjects.Text>();
+  private archiveCompassRelicLabel?: Phaser.GameObjects.Text;
   private roomTransitionLocked = false;
   private exitCooldownUntil = 0;
   private revealedSecretIds = new Set<ArchiveRoomId>();
@@ -394,6 +423,7 @@ export class ArchiveScene extends Phaser.Scene {
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(810);
+    this.interactionPrompt = new InteractionPrompt(this, 950);
     this.player = new Player(this, 128, 184);
 
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
@@ -419,15 +449,18 @@ export class ArchiveScene extends Phaser.Scene {
     if (input.abilityJustPressed) activateRoleAbility(this);
 
     if (this.roomTransitionLocked) {
+      this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (this.dialog.active) {
+      this.interactionPrompt.update(delta, null);
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       return;
     }
     if (this.choice.active) {
+      this.interactionPrompt.update(delta, null);
       this.choice.updateInput();
       this.player.update(delta, false);
       this.updateSourceNoteVerification();
@@ -435,6 +468,7 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
+      this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
@@ -449,7 +483,12 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.sourceNoteStatus !== "inactive" && this.sourceNoteStatus !== "stamped") {
       this.updateSourceNoteVerification();
       this.reliability.update();
+      this.updateSourceNoteInteractionPrompt(delta);
       if (input.aJustPressed) {
+        if (this.warnIfSourceNoteHintOnly()) {
+          this.objectiveText.setText(gameState.objective);
+          return;
+        }
         this.handleSourceNoteAction();
       }
       this.objectiveText.setText(gameState.objective);
@@ -459,11 +498,25 @@ export class ArchiveScene extends Phaser.Scene {
     this.reliability.update();
     const workflowInteraction = nearestWorkflowInteraction(this.player.position, this.interactables, getAvailableWorkflowTools());
     const nearest = workflowInteraction.interactable;
+    const hintTarget = nearestInteractableHint(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
     this.hintText.setText(nearest ? `A: ${toolCue}${nearest.label.toUpperCase()}` : this.exitHint());
+    this.interactionPrompt.update(delta, nearest ?? hintTarget, undefined, nearest ? undefined : hintTarget ? {
+      badge: "!",
+      text: "STEP CLOSER"
+    } : undefined);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (input.aJustPressed && !bufferedInteraction && this.tryEnemyAction(nearest ?? undefined)) return;
+    if (input.aJustPressed && !bufferedInteraction) {
+      const feedback = decideInteractionFeedback(nearest, hintTarget);
+      if (feedback.kind === "step-closer") {
+        retroAudio.blip();
+        setLatestMessage(`Step closer to ${feedback.target.label}.`);
+        this.objectiveText.setText(gameState.objective);
+        return;
+      }
+    }
     if (bufferedInteraction) {
       if (bufferedInteraction.kind === "enemy" && this.tryEnemyAction(bufferedInteraction)) return;
       bufferedInteraction.onInteract();
@@ -503,6 +556,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private clearRoom() {
+    this.clearSourceNoteRouteCue();
     for (const cleanup of this.roomCleanups) cleanup();
     for (const object of this.roomObjects) {
       if (object.active) object.destroy();
@@ -510,6 +564,12 @@ export class ArchiveScene extends Phaser.Scene {
     this.roomCleanups = [];
     this.roomObjects = [];
     this.ambiguousFlagObjects = [];
+    this.naraStacksGateObjects = [];
+    this.noRepoStampCue = undefined;
+    this.readyWallCues.clear();
+    this.archiveKeyRewardCue = undefined;
+    this.bossReadinessObjects = [];
+    this.blackVaultDoorObjects = [];
     this.roomSolids = [];
     this.interactables = [];
     this.bureaucraticWalls = [];
@@ -527,12 +587,30 @@ export class ArchiveScene extends Phaser.Scene {
     const room = ARCHIVE_ROOMS[this.currentRoomId];
     this.cameras.main.setBackgroundColor(this.currentRoomId === "A2" || this.currentRoomId === "B2" ? PALETTE.shadowNavy : PALETTE.archiveAmber);
     this.roomTitleText.setText(`${room.id} ${room.title}`);
+    addSnesRoomIntroBanner(this, {
+      title: `${room.id} ${room.title}`,
+      subtitle: "ARCHIVE CAVERN",
+      accent: room.roomType === "reward" || room.roomType === "secret" ? PALETTE.goldStamp : PALETTE.buckramRed,
+      track: (object) => this.track(object)
+    });
     this.drawRoomExits(room);
     addSnesRoomLayer(this, {
       roomId: room.id,
       roomType: room.roomType,
       theme: this.currentRoomId === "A2" ? "network" : this.currentRoomId === "B2" ? "proof" : "archive",
       track: (object) => this.track(object)
+    });
+    this.drawArchiveRoomDetailLayer(room);
+    addSnesRoomCompass(this, {
+      x: 216,
+      y: 62,
+      roomId: room.id,
+      roomTitle: room.title,
+      exits: room.exits,
+      lockedExits: this.compassLockedExits(room),
+      requiredItems: room.requiredItems,
+      track: (object) => this.track(object),
+      depth: 143
     });
     if (room.id === "A1") this.renderSourceRoom();
     else if (room.id === "A2") this.renderOpenNetAnnex();
@@ -574,14 +652,16 @@ export class ArchiveScene extends Phaser.Scene {
       label: "NARA II Stacks",
       x: 128,
       y: 201,
-      radius: 30,
+      radius: 14,
       kind: "door",
-      onInteract: () => this.routeToDanneMap("NaraStacksScene", "A1", 128, 188)
+      onInteract: () => this.tryRouteToNaraStacks()
     });
     this.addRoomEnemy("repo-wall");
     if (this.sourceNoteStatus === "routed" || this.sourceNoteStatus === "verified" || this.sourceNoteStatus === "stamped") {
       this.drawRoutedSourceNote();
     }
+    this.refreshSourceNoteRouteCue();
+    this.drawNaraStacksGateSeal();
   }
 
   private renderOpenNetAnnex() {
@@ -692,6 +772,16 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawBookcase(48, 78, 42, 54);
     this.drawBookcase(208, 78, 42, 54);
     this.drawWallMap(128, 58, room.id);
+    addSnesMapTablet(this, {
+      x: 128,
+      y: 151,
+      label: room.id === "A3" ? "SECRET MAP" : "GATE MAP",
+      nodes: room.id === "A3" ? ["A1", "A3", "C3", "D1"] : ["B1", "B2", "C2", "D3"],
+      activeIndex: room.id === "A3" ? 1 : 2,
+      accent: room.id === "A3" ? PALETTE.goldStamp : PALETTE.terminalCyan,
+      track: (object) => this.track(object),
+      depth: 118
+    });
     const lines = room.id === "A3"
       ? ["THE BOX WITHOUT", "A NUMBER HOLDS", "NO PROVENANCE."]
       : ["GREEN IS OPEN.", "RED HAS TEETH.", "READ THE GATE."];
@@ -777,6 +867,15 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawRubyVolumeStack(78, 130, 4);
     this.drawDocumentStack(170, 118, true);
     this.drawSparkle(128, 92, PALETTE.goldStamp);
+    addSnesTreasurePedestal(this, {
+      x: 128,
+      y: 132,
+      textureKey: room.id === "C3" ? "volume-fragment" : "citation-stamp",
+      label: room.id === "C3" ? "Hidden Fragment" : "Reliability Well",
+      collected: this.collected.has(`secret-${room.id}`),
+      track: (object) => this.track(object),
+      depth: 146
+    });
     this.track(addTerminalPanel(this, 128, 62, [
       room.id === "C3" ? "HIDDEN CACHE" : "RELIABILITY WELL",
       "NOT ON FIRST MAP",
@@ -793,24 +892,43 @@ export class ArchiveScene extends Phaser.Scene {
       onInteract: () => {
         const key = `secret-${room.id}`;
         if (this.collected.has(key)) {
+          setLatestMessage(`${room.id} secret reward already filed.`);
+          setObjective("Return to the marked Archive route; this hidden room is complete.");
           this.dialog.show("SECRET", "This hidden room has already yielded its clue.");
           return;
         }
         this.collected.add(key);
         addDocumentPoints(room.id === "C3" ? 10 : 6, room.id === "C3" ? "hidden source cache" : "hidden reliability well");
-        if (room.id === "D2") adjustReliability(8, "hidden reliability refill");
-        else addVolumeFragment("Hidden Cache Fragment");
+        if (room.id === "D2") {
+          adjustReliability(8, "hidden reliability refill");
+          setLatestMessage("Hidden reliability well restored confidence.");
+          setObjective("Reliability restored; return to the marked Archive route.");
+        } else {
+          addVolumeFragment("Hidden Cache Fragment");
+          setLatestMessage("Hidden source cache fragment filed.");
+          setObjective("Hidden Source Cache filed; return to the Archive map marker.");
+        }
         retroAudio.confirm();
+        this.showSecretRewardCue(room.id);
         this.dialog.show("SECRET", room.id === "C3" ? "A cover fragment was filed where only a careful reader would look." : "The well restores confidence because the check was physical.");
       }
     });
   }
 
   private renderRewardRoom() {
-    this.drawRubyVolumeStack(128, 116, 5);
-    this.track(this.add.image(128, 88, "citation-stamp").setDepth(110));
-    this.track(this.add.rectangle(128, 150, 100, 26, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(111));
-    this.track(this.add.text(128, 142, "STAMP REWARD ROOM\nSOURCE STAMP: HUMAN VERIFIED", {
+    this.drawRubyVolumeStack(66, 116, 3);
+    this.drawRubyVolumeStack(190, 116, 3);
+    addSnesTreasurePedestal(this, {
+      x: 128,
+      y: 106,
+      textureKey: "citation-stamp",
+      label: "Citation Stamp",
+      collected: hasProcessItem("citation_stamp"),
+      track: (object) => this.track(object),
+      depth: 150
+    });
+    this.track(this.add.rectangle(128, 162, 122, 26, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(111));
+    this.track(this.add.text(128, 154, "STAMP REWARD ROOM\nSOURCE STAMP: HUMAN VERIFIED", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp,
@@ -826,7 +944,8 @@ export class ArchiveScene extends Phaser.Scene {
       "STATECHAT CHECKLIST",
       "HUMAN OPENS"
     ], PALETTE.classNetRed));
-    this.drawArchiveDoor(128, 154, "BLACK\nVAULT", PALETTE.classNetRed);
+    this.drawBossReadinessBoard();
+    this.drawBlackVaultDoorSeal();
     this.addRoomEnemy("danne-queue");
     this.interactables.push({
       id: "black-vault-seal",
@@ -850,13 +969,136 @@ export class ArchiveScene extends Phaser.Scene {
 
   private revealSecretRoom(roomId: ArchiveRoomId, message: string) {
     if (!ARCHIVE_ROOMS[roomId] || ARCHIVE_ROOMS[roomId].roomType !== "secret") return;
+    if (this.revealedSecretIds.has(roomId)) {
+      setLatestMessage(`${roomId} secret route already mapped.`);
+      this.dialog.show("SECRET", "That hidden route is already marked on the archive map.");
+      this.updateVisitedMinimap();
+      this.syncRoomTraversalState();
+      return;
+    }
+
     this.revealedSecretIds.add(roomId);
     addDocumentPoints(3, `${roomId} secret revealed`);
     setLatestMessage(message);
+    setObjective(`Secret route ${roomId} revealed; follow the map marker.`);
     retroAudio.confirm();
+    this.showSecretRevealCue(roomId);
     this.dialog.show("SECRET", message);
     this.updateVisitedMinimap();
     this.syncRoomTraversalState();
+  }
+
+  private showSecretRevealCue(roomId: ArchiveRoomId) {
+    const flash = this.track(this.add.rectangle(128, 120, 236, 162, color(PALETTE.goldStamp), 0.12)
+      .setName("archive-secret-reveal-flash")
+      .setDepth(760));
+    const back = this.add.rectangle(0, 0, 110, 30, color(PALETTE.black), 0.94)
+      .setStrokeStyle(2, color(PALETTE.goldStamp), 0.96)
+      .setName("archive-secret-reveal-back");
+    const rule = this.add.rectangle(0, -1, 86, 2, color(PALETTE.goldStamp), 1)
+      .setName("archive-secret-reveal-rule");
+    const label = this.add.text(0, -13, "SECRET ROUTE", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5, 0)
+      .setName("archive-secret-reveal-label");
+    const roomText = this.add.text(0, 4, `${roomId} REVEALED`, {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5, 0)
+      .setName("archive-secret-reveal-room");
+    const sparkleA = this.add.rectangle(-43, -1, 3, 3, color(PALETTE.terminalCyan), 1)
+      .setName("archive-secret-reveal-spark");
+    const sparkleB = this.add.rectangle(43, -1, 3, 3, color(PALETTE.terminalCyan), 1)
+      .setName("archive-secret-reveal-spark");
+    const cue = this.track(this.add.container(128, 112, [back, rule, label, roomText, sparkleA, sparkleB])
+      .setName("archive-secret-reveal-cue")
+      .setDepth(880));
+
+    this.tweens.add({
+      targets: flash,
+      alpha: 0,
+      duration: 420,
+      ease: "Stepped",
+      onComplete: () => flash.destroy()
+    });
+    this.tweens.add({
+      targets: cue,
+      y: 106,
+      alpha: 0,
+      duration: 780,
+      delay: 420,
+      ease: "Stepped",
+      onComplete: () => cue.destroy()
+    });
+    this.tweens.add({
+      targets: [sparkleA, sparkleB],
+      scaleX: 1.8,
+      scaleY: 1.8,
+      duration: 160,
+      yoyo: true,
+      repeat: 3,
+      ease: "Stepped"
+    });
+  }
+
+  private showSecretRewardCue(roomId: ArchiveRoomId) {
+    if (this.secretRewardCue?.active) this.secretRewardCue.destroy();
+    const isFragment = roomId === "C3";
+    const textureKey = isFragment ? "volume-fragment" : "citation-stamp";
+    const labelText = isFragment ? "FRUS FRAGMENT" : "RELIABILITY WELL";
+    addSnesRewardBurst(this, 128, 112, textureKey, labelText, (object) => this.track(object));
+
+    const back = this.add.rectangle(0, 0, 122, 32, color(PALETTE.black), 0.9)
+      .setStrokeStyle(2, color(PALETTE.goldStamp), 0.96)
+      .setName("archive-secret-reward-back");
+    const label = this.add.text(0, -13, labelText, {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5, 0)
+      .setName("archive-secret-reward-label");
+    const roomText = this.add.text(0, 3, `${roomId} FILED`, {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5, 0)
+      .setName("archive-secret-reward-room");
+    const sparkleA = this.add.rectangle(-52, -1, 3, 3, color(PALETTE.creamPaper), 1)
+      .setName("archive-secret-reward-spark");
+    const sparkleB = this.add.rectangle(52, -1, 3, 3, color(PALETTE.creamPaper), 1)
+      .setName("archive-secret-reward-spark");
+
+    this.secretRewardCue = this.track(this.add.container(128, 62, [
+      back,
+      label,
+      roomText,
+      sparkleA,
+      sparkleB
+    ]).setName("archive-secret-reward-cue").setDepth(890));
+    this.secretRewardCue.setAlpha(0);
+    this.tweens.add({
+      targets: this.secretRewardCue,
+      alpha: 1,
+      y: 58,
+      duration: 160,
+      ease: "Stepped"
+    });
+    this.time.delayedCall(1450, () => {
+      if (!this.secretRewardCue?.active) return;
+      this.tweens.add({
+        targets: this.secretRewardCue,
+        alpha: 0,
+        duration: 220,
+        ease: "Stepped",
+        onComplete: () => {
+          if (this.secretRewardCue?.active) this.secretRewardCue.destroy();
+          this.secretRewardCue = undefined;
+        }
+      });
+    });
   }
 
   private drawGoldenRuleGate() {
@@ -892,10 +1134,19 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawResearchTable() {
-    this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y, 68, 24, color(PALETTE.black)).setDepth(70));
-    this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y - 1, 64, 20, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(71));
-    this.track(this.add.image(this.researchTable.x - 20, this.researchTable.y - 3, "source-note").setDepth(72));
-    this.track(this.add.image(this.researchTable.x + 17, this.researchTable.y - 4, "citation-stamp").setDepth(72));
+    const prop = this.drawArchivePropFrame(
+      "research_table",
+      this.researchTable.x,
+      this.researchTable.y - 3,
+      72,
+      "research-table"
+    );
+    if (!prop) {
+      this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y, 68, 24, color(PALETTE.black)).setDepth(70));
+      this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y - 1, 64, 20, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(71));
+      this.track(this.add.image(this.researchTable.x - 20, this.researchTable.y - 3, "source-note").setDepth(72));
+      this.track(this.add.image(this.researchTable.x + 17, this.researchTable.y - 4, "citation-stamp").setDepth(72));
+    }
     this.track(this.add.text(this.researchTable.x, this.researchTable.y + 14, "RESEARCH TABLE", {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -1091,6 +1342,11 @@ export class ArchiveScene extends Phaser.Scene {
     this.activeEnemyDefs.delete(definition.id);
     if (definition.type === "AMBIGUOUS") this.clearAmbiguousFlags();
     wall.clear();
+    this.clearReadyWallCue(definition.id);
+    if (definition.id === "repo-wall") {
+      this.clearNoRepoStampCue();
+      this.showArchiveKeyRewardCue();
+    }
     retroAudio.stamp();
     addDocumentPoints(3, `${definition.type} process wall cleared`);
     adjustReliability(2, message);
@@ -1180,7 +1436,12 @@ export class ArchiveScene extends Phaser.Scene {
       "Human decision recorded at the gate."
     ]);
     this.clearEnemyById("danne-queue", "DANN-E QUEUE cleared by a human decision at the Golden Rule gate.");
-    setObjective("Golden Rule decision recorded.");
+    if (this.currentRoomId === "D3") {
+      this.drawBossReadinessBoard();
+      this.drawBlackVaultDoorSeal();
+    }
+    setLatestMessage("Black Vault route open by Golden Rule decision.");
+    setObjective("Black Vault route open: press A at the open door.");
   }
 
   private consumeArchiveReturnSpawn() {
@@ -1203,7 +1464,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private openBlackVaultRoute() {
-    if (getTreatyFragmentCount() >= 3 || this.goldenRuleDecisionMade || hasProcessItem("buckram_key") || gameState.sceneProgress.blackVaultBossCleared) {
+    if (this.blackVaultRouteOpen()) {
       this.routeToDanneMap("BlackVaultLairScene", "D3", 128, 188);
       return;
     }
@@ -1216,16 +1477,262 @@ export class ArchiveScene extends Phaser.Scene {
     ]);
   }
 
+  private blackVaultRouteOpen() {
+    return getTreatyFragmentCount() >= 3
+      || this.goldenRuleDecisionMade
+      || hasProcessItem("buckram_key")
+      || Boolean(gameState.sceneProgress.blackVaultBossCleared);
+  }
+
+  private drawBossReadinessBoard() {
+    this.clearBossReadinessBoard();
+    const fragments = getTreatyFragmentCount();
+    const ruleReady = this.goldenRuleDecisionMade || Boolean(gameState.sceneProgress.blackVaultBossCleared);
+    const keyReady = hasProcessItem("buckram_key");
+    const fragmentReady = fragments >= 3;
+    const routeOpen = this.blackVaultRouteOpen();
+    const rows = [
+      { label: "FRAG", value: `${fragments}/3`, ready: fragmentReady },
+      { label: "RULE", value: ruleReady ? "YES" : "NO", ready: ruleReady },
+      { label: "KEY", value: keyReady ? "YES" : "NO", ready: keyReady }
+    ] as const;
+
+    const board = this.trackBossReadinessObject(this.add.container(66, 81).setDepth(176).setName("archive-boss-readiness-board"));
+    board.add(this.add.rectangle(0, 0, 76, 54, color(PALETTE.black), 1)
+      .setStrokeStyle(2, color(routeOpen ? PALETTE.goldStamp : PALETTE.classNetRed))
+      .setName("archive-boss-readiness-back"));
+    board.add(this.add.text(0, -23, "VAULT CHECK", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: routeOpen ? PALETTE.goldStamp : PALETTE.classNetRed,
+      align: "center"
+    }).setOrigin(0.5, 0).setName("archive-boss-readiness-title"));
+
+    rows.forEach((row, index) => {
+      const y = -10 + index * 12;
+      const accent = row.ready ? PALETTE.openNetGreen : PALETTE.classNetRed;
+      board.add(this.add.rectangle(-28, y + 4, 5, 5, color(accent), 1)
+        .setStrokeStyle(1, color(PALETTE.black))
+        .setName("archive-boss-readiness-light"));
+      board.add(this.add.text(-20, y, row.label, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.creamPaper
+      }).setOrigin(0, 0).setName("archive-boss-readiness-row"));
+      board.add(this.add.text(26, y, row.value, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: row.ready ? PALETTE.goldStamp : PALETTE.stoneLight,
+        align: "right"
+      }).setOrigin(1, 0).setName("archive-boss-readiness-value"));
+    });
+
+    board.add(this.add.rectangle(0, 22, 60, 7, color(routeOpen ? PALETTE.openNetGreen : PALETTE.deepRuby), 1)
+      .setStrokeStyle(1, color(routeOpen ? PALETTE.goldStamp : PALETTE.classNetRed))
+      .setName("archive-boss-readiness-status-back"));
+    board.add(this.add.text(0, 18, routeOpen ? "ROUTE OPEN" : "SEALED", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: routeOpen ? PALETTE.black : PALETTE.creamPaper,
+      align: "center"
+    }).setOrigin(0.5, 0).setName("archive-boss-readiness-status"));
+  }
+
+  private clearBossReadinessBoard() {
+    for (const object of this.bossReadinessObjects) {
+      if (object.active) object.destroy();
+    }
+    this.bossReadinessObjects = [];
+  }
+
+  private trackBossReadinessObject<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.bossReadinessObjects.push(object);
+    return this.track(object);
+  }
+
+  private drawBlackVaultDoorSeal() {
+    this.clearBlackVaultDoorSeal();
+    const routeOpen = this.blackVaultRouteOpen();
+    const accent = routeOpen ? PALETTE.terminalCyan : PALETTE.classNetRed;
+    const fill = routeOpen ? PALETTE.black : PALETTE.deepRuby;
+    const status = routeOpen ? "OPEN" : "SEALED";
+    const x = 128;
+    const y = 154;
+
+    this.trackBlackVaultDoorObject(this.add.ellipse(x + 1, y + 9, 42, 9, color(PALETTE.black), 0.55)
+      .setDepth(y - 6)
+      .setName("archive-black-vault-door-shadow"));
+    this.trackBlackVaultDoorObject(this.add.rectangle(x, y, 48, 22, color(PALETTE.black), 1)
+      .setStrokeStyle(2, color(routeOpen ? PALETTE.goldStamp : PALETTE.classNetRed))
+      .setDepth(y - 5)
+      .setName("archive-black-vault-door-frame"));
+    this.trackBlackVaultDoorObject(this.add.rectangle(x, y + 2, 36, 12, color(fill), 1)
+      .setStrokeStyle(1, color(accent))
+      .setDepth(y - 4)
+      .setName("archive-black-vault-door-panel"));
+
+    if (routeOpen) {
+      this.trackBlackVaultDoorObject(this.add.rectangle(x, y + 2, 22, 16, color(PALETTE.black), 1)
+        .setStrokeStyle(1, color(PALETTE.goldStamp))
+        .setDepth(y - 3)
+        .setName("archive-black-vault-door-open-throat"));
+      this.trackBlackVaultDoorObject(this.add.rectangle(x, y + 11, 34, 3, color(PALETTE.terminalCyan), 1)
+        .setDepth(y - 2)
+        .setName("archive-black-vault-door-open-threshold"));
+      this.trackBlackVaultDoorObject(this.add.rectangle(x - 18, y - 1, 3, 14, color(PALETTE.goldStamp), 1)
+        .setDepth(y - 2)
+        .setName("archive-black-vault-door-open-left"));
+      this.trackBlackVaultDoorObject(this.add.rectangle(x + 18, y - 1, 3, 14, color(PALETTE.goldStamp), 1)
+        .setDepth(y - 2)
+        .setName("archive-black-vault-door-open-right"));
+      this.drawBlackVaultEnterCue(x, y);
+    } else {
+      for (let i = 0; i < 3; i += 1) {
+        this.trackBlackVaultDoorObject(this.add.rectangle(x, y - 4 + i * 6, 30, 2, color(PALETTE.classNetRed), 1)
+          .setDepth(y - 2)
+          .setName("archive-black-vault-door-lock-bar"));
+      }
+      this.trackBlackVaultDoorObject(this.add.rectangle(x, y + 2, 8, 8, color(PALETTE.black), 1)
+        .setStrokeStyle(1, color(PALETTE.goldStamp))
+        .setDepth(y - 1)
+        .setName("archive-black-vault-door-lock"));
+    }
+
+    this.trackBlackVaultDoorObject(this.add.text(x, y - 15, "BLACK\nVAULT", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: accent,
+      align: "center",
+      backgroundColor: PALETTE.black
+    }).setOrigin(0.5).setDepth(y - 1).setName("archive-black-vault-door-label"));
+    this.trackBlackVaultDoorObject(this.add.text(x, y + 17, status, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: routeOpen ? PALETTE.black : PALETTE.creamPaper,
+      align: "center",
+      backgroundColor: routeOpen ? PALETTE.terminalCyan : PALETTE.deepRuby
+    }).setOrigin(0.5).setDepth(y).setName("archive-black-vault-door-status"));
+  }
+
+  private drawBlackVaultEnterCue(x: number, y: number) {
+    const cue = this.trackBlackVaultDoorObject(this.add.container(x, y + 33).setDepth(y + 1).setName("archive-black-vault-enter-cue"));
+    cue.add(this.add.rectangle(0, 0, 50, 12, color(PALETTE.black), 0.95)
+      .setStrokeStyle(1, color(PALETTE.goldStamp), 0.94)
+      .setName("archive-black-vault-enter-cue-back"));
+    cue.add(this.add.text(0, -4, "A ENTER", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan,
+      align: "center"
+    }).setOrigin(0.5, 0).setName("archive-black-vault-enter-cue-text"));
+    cue.add(this.add.triangle(-32, -1, 0, 0, 7, 4, 0, 8, color(PALETTE.goldStamp), 0.96)
+      .setAngle(180)
+      .setName("archive-black-vault-enter-cue-arrow"));
+    cue.add(this.add.triangle(32, -1, 0, 0, 7, 4, 0, 8, color(PALETTE.goldStamp), 0.96)
+      .setName("archive-black-vault-enter-cue-arrow"));
+    this.tweens.add({
+      targets: cue,
+      y: y + 31,
+      duration: 360,
+      yoyo: true,
+      repeat: -1,
+      ease: "Stepped"
+    });
+  }
+
+  private clearBlackVaultDoorSeal() {
+    for (const object of this.blackVaultDoorObjects) {
+      if (object.active) object.destroy();
+    }
+    this.blackVaultDoorObjects = [];
+  }
+
+  private trackBlackVaultDoorObject<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.blackVaultDoorObjects.push(object);
+    return this.track(object);
+  }
+
+  private tryRouteToNaraStacks() {
+    if (this.sourceNoteGateOpen()) {
+      this.routeToDanneMap("NaraStacksScene", "A1", 128, 188);
+      return;
+    }
+
+    retroAudio.warning();
+    const message = this.sourceNoteStatus === "inactive"
+      ? "Pick up Source Note 47 before leaving the source room."
+      : this.sourceNoteStatus === "carried"
+        ? "Route Source Note 47 to the research table before taking the stairs."
+        : this.sourceNoteStatus === "routed"
+          ? "Verify Source Note 47 provenance before taking the stairs."
+          : "Stamp Source Note 47 before taking the stairs.";
+    setLatestMessage("Source Note 47 locks the NARA II stair route.");
+    setObjective("Archive Cavern: verify and stamp Source Note 47 before taking the NARA II stairs.");
+    this.dialog.show("NARA II STAIRS", [
+      "Visible route. Not open yet.",
+      message,
+      "The next archive wing opens after the first citation stamp."
+    ]);
+  }
+
+  private sourceNoteGateOpen() {
+    return this.sourceNoteStatus === "stamped"
+      || hasProcessItem("citation_stamp");
+  }
+
+  private drawNaraStacksGateSeal() {
+    this.clearNaraStacksGateSeal();
+    if (this.sourceNoteGateOpen()) {
+      this.trackNaraStacksGateSeal(this.add.rectangle(128, 191, 42, 4, color(PALETTE.terminalCyan), 0.9).setName("archive-nara-stairs-open-seal").setDepth(170));
+      this.trackNaraStacksGateSeal(this.add.text(128, 190, "OPEN", {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.black
+      }).setName("archive-nara-stairs-open-label").setOrigin(0.5).setDepth(171));
+      return;
+    }
+
+    this.trackNaraStacksGateSeal(this.add.rectangle(128, 191, 60, 10, color(PALETTE.black), 0.88).setStrokeStyle(1, color(PALETTE.classNetRed)).setName("archive-nara-stairs-source-lock-seal").setDepth(170));
+    this.trackNaraStacksGateSeal(this.add.text(128, 188, "SOURCE LOCK", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.classNetRed
+    }).setName("archive-nara-stairs-source-lock-label").setOrigin(0.5, 0).setDepth(171));
+    this.trackNaraStacksGateSeal(this.add.rectangle(104, 196, 8, 2, color(PALETTE.goldStamp), 1).setName("archive-nara-stairs-source-lock-rivet").setDepth(172));
+    this.trackNaraStacksGateSeal(this.add.rectangle(152, 196, 8, 2, color(PALETTE.goldStamp), 1).setName("archive-nara-stairs-source-lock-rivet").setDepth(172));
+  }
+
+  private clearNaraStacksGateSeal() {
+    for (const object of this.naraStacksGateObjects) {
+      if (object.active) object.destroy();
+    }
+    this.naraStacksGateObjects = [];
+  }
+
+  private trackNaraStacksGateSeal<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.naraStacksGateObjects.push(object);
+    return this.track(object);
+  }
+
   private updateBureaucraticWalls(delta: number) {
     for (const wall of this.bureaucraticWalls) {
       wall.update(this.time.now, delta, this.player.position);
     }
     this.syncWallInteractables();
     this.syncWallState();
+    this.refreshNoRepoStampCue();
+    this.refreshReadyWallCues();
     const activeWall = this.bureaucraticWalls.find((wall) => wall.isTouching(this.player.position, 19));
     if (!activeWall || this.time.now < this.wallContactCooldown) return;
-    activeWall.markHit();
     const definition = this.activeEnemyDefs.get(activeWall.id);
+    if (this.wallReadyForProcess(definition)) {
+      this.wallContactCooldown = this.time.now + 620;
+      setNearestInteractable(`${definition?.type ?? "WALL"}: use ${this.readyWallActionLabel(definition)}`);
+      setLatestMessage(`${definition?.type ?? "Process wall"} is ready for ${this.readyWallActionLabel(definition)}.`);
+      setObjective("Press A near the process wall to apply the verified human workflow step.");
+      return;
+    }
+    activeWall.markHit();
     const hit = this.player.takeHit(activeWall.position, definition?.type === "DANN-E QUEUE" ? 22 : 15);
     if (!hit) return;
     this.wallContactCooldown = this.time.now + 1200;
@@ -1234,6 +1741,28 @@ export class ArchiveScene extends Phaser.Scene {
     if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");
     else if (definition?.type === "WAIT") setObjective("Resolve the agency response timer at the referral tray.");
     else setObjective("Clear stonewalls with the matching human process.");
+  }
+
+  private wallReadyForProcess(definition?: ArchiveEnemyDefinition) {
+    if (!definition) return false;
+    if (definition.type === "NO REPO") return this.sourceNoteStatus === "stamped";
+    if (definition.type === "FIREWALL") return this.networkRoutingResolved;
+    if (definition.type === "PENDING") return this.referralManifestDelivered;
+    if (definition.type === "WAIT") return this.agencyTimerResolved;
+    if (definition.type === "AMBIGUOUS") return this.specialistDecisionMade;
+    if (definition.type === "DANN-E QUEUE") return this.goldenRuleDecisionMade;
+    return false;
+  }
+
+  private readyWallActionLabel(definition?: ArchiveEnemyDefinition) {
+    if (!definition) return "human review";
+    if (definition.type === "NO REPO") return "citation stamp";
+    if (definition.type === "FIREWALL") return "network routing";
+    if (definition.type === "PENDING") return "referral manifest";
+    if (definition.type === "WAIT") return "agency timer";
+    if (definition.type === "AMBIGUOUS") return "specialist decision";
+    if (definition.type === "DANN-E QUEUE") return "Golden Rule decision";
+    return "human review";
   }
 
   private syncWallInteractables() {
@@ -1298,11 +1827,61 @@ export class ArchiveScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(241);
     this.syncWallState();
     this.updateSourceNoteVerification();
+    this.refreshSourceNoteRouteCue();
     this.dialog.show("ELENA", [
       "StateChat flagged the missing repository on the terminal.",
       "It cannot guess provenance.",
       "Carry Source Note 47 to the research table in room A1 for human verification."
     ]);
+  }
+
+  private updateSourceNoteInteractionPrompt(delta: number) {
+    const hintTarget = this.sourceNoteResearchTableHint();
+    const strictTarget = this.isNearResearchTable() ? hintTarget : null;
+    this.interactionPrompt.update(
+      delta,
+      strictTarget ?? hintTarget,
+      undefined,
+      strictTarget
+        ? { badge: "A", text: this.sourceNotePromptText() }
+        : hintTarget
+        ? { badge: "!", text: "STEP CLOSER" }
+        : undefined
+    );
+  }
+
+  private warnIfSourceNoteHintOnly() {
+    if (this.isNearResearchTable() || !this.sourceNoteResearchTableHint()) return false;
+    retroAudio.blip();
+    setLatestMessage(`Step closer to ${this.researchTable.label}.`);
+    return true;
+  }
+
+  private sourceNoteResearchTableHint(): Interactable | null {
+    if (this.currentRoomId !== "A1") return null;
+    const distance = Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      this.researchTable.x,
+      this.researchTable.y
+    );
+    if (distance > 58) return null;
+    return {
+      id: "source-note-research-table",
+      label: this.researchTable.label,
+      x: this.researchTable.x,
+      y: this.researchTable.y,
+      radius: 44,
+      kind: "document",
+      onInteract: () => undefined
+    };
+  }
+
+  private sourceNotePromptText() {
+    if (this.sourceNoteStatus === "carried") return "ROUTE SRC NOTE";
+    if (this.sourceNoteStatus === "routed") return "VERIFY SRC NOTE";
+    if (this.sourceNoteStatus === "verified") return "STAMP SRC NOTE";
+    return "RESEARCH TABLE";
   }
 
   private updateSourceNoteVerification() {
@@ -1315,7 +1894,7 @@ export class ArchiveScene extends Phaser.Scene {
 
     const nearResearchTable = this.isNearResearchTable();
     const verb = this.verbForSourceNote();
-    setNearestInteractable(nearResearchTable ? `${verb} Source Note 47` : null);
+    setNearestInteractable(nearResearchTable ? `${verb} SRC NOTE 47` : null);
     if (this.sourceNoteStatus === "carried") {
       this.hintText.setText(nearResearchTable ? "ROUTE SOURCE NOTE 47" : "CARRY SOURCE NOTE 47");
       setObjective("ROUTE: carry Source Note 47 to research table in A1.");
@@ -1331,6 +1910,7 @@ export class ArchiveScene extends Phaser.Scene {
       setNearestInteractable(nearResearchTable ? "DRAFT Annotation" : null);
     }
     this.syncSourceNotePhysicalState(nearResearchTable ? this.researchTable.label : null);
+    this.refreshSourceNoteRouteCue();
   }
 
   private handleSourceNoteAction() {
@@ -1347,6 +1927,7 @@ export class ArchiveScene extends Phaser.Scene {
       setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
       retroAudio.confirm();
       this.updateSourceNoteVerification();
+      this.refreshSourceNoteRouteCue();
       return;
     }
     if (this.sourceNoteStatus === "routed") {
@@ -1413,6 +1994,7 @@ export class ArchiveScene extends Phaser.Scene {
     retroAudio.confirm();
     this.reliability.update();
     this.updateSourceNoteVerification();
+    this.refreshSourceNoteRouteCue();
     this.dialog.show("SOURCE NOTE 47", [
       message,
       "Repository, collection, and folder now match the evidence trail.",
@@ -1441,13 +2023,316 @@ export class ArchiveScene extends Phaser.Scene {
     addVolumeFragment("Source Note Fragment");
     addDocumentPoints(12, "source note provenance verified");
     retroAudio.stamp();
+    addSnesRewardBurst(this, this.researchTable.x + 20, this.researchTable.y - 36, "citation-stamp", "Citation Stamp", (object) => this.track(object));
     adjustReliability(10, "provenance verified by a human");
     setHeldItem(null);
     setNearestInteractable(null);
     setLatestMessage("VERIFIED BY HUMAN REVIEW");
     this.syncSourceNotePhysicalState(this.researchTable.label, "DONE");
+    this.clearSourceNoteRouteCue();
+    this.drawNaraStacksGateSeal();
+    this.syncRoomTraversalState();
+    this.refreshNoRepoStampCue();
     this.reliability.update();
     this.showAnnotationDraftingChoice();
+    this.syncRoomTraversalState();
+    this.time.delayedCall(0, () => this.syncRoomTraversalState());
+  }
+
+  private refreshNoRepoStampCue() {
+    const wall = this.activeEnemyWalls.get("repo-wall");
+    if (this.currentRoomId !== "A1" || this.sourceNoteStatus !== "stamped" || !wall || wall.isCleared) {
+      this.clearNoRepoStampCue();
+      return;
+    }
+
+    const position = wall.position;
+    const { x, y } = this.readyWallCuePosition(position.x, position.y, 26);
+    if (this.noRepoStampCue?.active) {
+      this.noRepoStampCue.setPosition(x, y);
+      this.noRepoStampCue.setDepth(268);
+      return;
+    }
+
+    const ring = this.add.rectangle(0, 0, 42, 22, color(PALETTE.black), 0)
+      .setStrokeStyle(2, color(PALETTE.goldStamp), 0.96)
+      .setName("archive-no-repo-stamp-target-ring");
+    const crossH = this.add.rectangle(0, 0, 30, 2, color(PALETTE.goldStamp), 0.88)
+      .setName("archive-no-repo-stamp-target-cross");
+    const crossV = this.add.rectangle(0, 0, 2, 18, color(PALETTE.creamPaper), 0.82)
+      .setName("archive-no-repo-stamp-target-cross");
+    const plate = this.add.rectangle(0, -19, 34, 9, color(PALETTE.black), 0.9)
+      .setStrokeStyle(1, color(PALETTE.classNetRed), 0.86)
+      .setName("archive-no-repo-stamp-target-plate");
+    const label = this.add.text(0, -23, "STAMP", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp
+    }).setName("archive-no-repo-stamp-target-label")
+      .setOrigin(0.5, 0);
+    const arrow = this.add.triangle(0, 18, 0, 0, 10, 0, 5, 8, color(PALETTE.goldStamp), 0.9)
+      .setName("archive-no-repo-stamp-target-arrow")
+      .setAngle(90);
+    this.noRepoStampCue = this.track(this.add.container(x, y, [
+      ring,
+      crossH,
+      crossV,
+      plate,
+      label,
+      arrow
+    ]).setName("archive-no-repo-stamp-target-cue").setDepth(268));
+    this.tweens.add({
+      targets: this.noRepoStampCue,
+      scaleX: 1.08,
+      scaleY: 1.08,
+      duration: 360,
+      yoyo: true,
+      repeat: -1,
+      ease: "Stepped"
+    });
+  }
+
+  private clearNoRepoStampCue() {
+    if (this.noRepoStampCue?.active) this.noRepoStampCue.destroy();
+    this.noRepoStampCue = undefined;
+  }
+
+  private refreshReadyWallCues() {
+    const activeReadyIds = new Set<string>();
+    for (const [id, wall] of this.activeEnemyWalls) {
+      const definition = this.activeEnemyDefs.get(id);
+      if (!definition || definition.type === "NO REPO" || !this.wallReadyForProcess(definition) || wall.isCleared) continue;
+      activeReadyIds.add(id);
+      const position = wall.position;
+      const { x, y } = this.readyWallCuePosition(position.x, position.y, 27);
+      const existing = this.readyWallCues.get(id);
+      if (existing?.active) {
+        existing.setPosition(x, y).setDepth(267);
+        continue;
+      }
+      this.readyWallCues.set(id, this.drawReadyWallCue(id, x, y, this.readyWallCueText(definition)));
+    }
+
+    for (const id of [...this.readyWallCues.keys()]) {
+      if (!activeReadyIds.has(id)) this.clearReadyWallCue(id);
+    }
+  }
+
+  private drawReadyWallCue(id: string, x: number, y: number, action: string) {
+    const ring = this.add.rectangle(0, 0, 44, 22, color(PALETTE.black), 0)
+      .setStrokeStyle(2, color(PALETTE.terminalCyan), 0.92)
+      .setName("archive-ready-wall-ring");
+    const crossH = this.add.rectangle(0, 0, 28, 2, color(PALETTE.terminalCyan), 0.82)
+      .setName("archive-ready-wall-cross");
+    const crossV = this.add.rectangle(0, 0, 2, 18, color(PALETTE.goldStamp), 0.78)
+      .setName("archive-ready-wall-cross");
+    const plate = this.add.rectangle(0, -19, 42, 10, color(PALETTE.black), 0.9)
+      .setStrokeStyle(1, color(PALETTE.goldStamp), 0.86)
+      .setName("archive-ready-wall-plate");
+    const label = this.add.text(0, -23, "READY", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.terminalCyan
+    }).setName("archive-ready-wall-label")
+      .setOrigin(0.5, 0);
+    const actionLabel = this.add.text(0, 13, action, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp,
+      backgroundColor: PALETTE.black
+    }).setName("archive-ready-wall-action")
+      .setOrigin(0.5, 0);
+    const arrow = this.add.triangle(0, 23, 0, 0, 10, 0, 5, 8, color(PALETTE.terminalCyan), 0.9)
+      .setName("archive-ready-wall-arrow")
+      .setAngle(90);
+
+    const cue = this.track(this.add.container(x, y, [
+      ring,
+      crossH,
+      crossV,
+      plate,
+      label,
+      actionLabel,
+      arrow
+    ]).setName("archive-ready-wall-cue").setData("wallId", id).setDepth(267));
+    this.tweens.add({
+      targets: cue,
+      scaleX: 1.07,
+      scaleY: 1.07,
+      duration: 380,
+      yoyo: true,
+      repeat: -1,
+      ease: "Stepped"
+    });
+    return cue;
+  }
+
+  private clearReadyWallCue(id: string) {
+    const cue = this.readyWallCues.get(id);
+    if (cue?.active) cue.destroy();
+    this.readyWallCues.delete(id);
+  }
+
+  private readyWallCueText(definition: ArchiveEnemyDefinition) {
+    if (definition.type === "FIREWALL") return "ROUTE";
+    if (definition.type === "PENDING") return "MANIFEST";
+    if (definition.type === "WAIT") return "TIMER";
+    if (definition.type === "AMBIGUOUS") return "DECIDE";
+    if (definition.type === "DANN-E QUEUE") return "RULE";
+    return "REVIEW";
+  }
+
+  private readyWallCuePosition(x: number, y: number, offset: number) {
+    return {
+      x: Math.round(Phaser.Math.Clamp(x, PLAY_BOUNDS.left + 24, PLAY_BOUNDS.right - 24)),
+      y: Math.round(Phaser.Math.Clamp(y - offset, PLAY_BOUNDS.top + 28, GAME_HEIGHT - 92))
+    };
+  }
+
+  private showArchiveKeyRewardCue() {
+    if (this.archiveKeyRewardCue?.active) this.archiveKeyRewardCue.destroy();
+    const dungeon = gameState.dungeons.archive_cavern;
+    const keyCount = `${dungeon.smallKeys}/${Math.max(1, dungeon.smallKeysRequired)}`;
+    const back = this.add.rectangle(0, 0, 104, 34, color(PALETTE.black), 0.9)
+      .setStrokeStyle(2, color(PALETTE.goldStamp), 0.96)
+      .setName("archive-chapter-key-reward-back");
+    const keyStem = this.add.rectangle(-38, -2, 18, 4, color(PALETTE.goldStamp), 1)
+      .setName("archive-chapter-key-reward-icon");
+    const keyHead = this.add.rectangle(-50, -2, 10, 10, color(PALETTE.black), 1)
+      .setStrokeStyle(2, color(PALETTE.goldStamp), 1)
+      .setName("archive-chapter-key-reward-icon");
+    const keyBitA = this.add.rectangle(-28, 2, 4, 7, color(PALETTE.goldStamp), 1)
+      .setName("archive-chapter-key-reward-icon");
+    const keyBitB = this.add.rectangle(-22, 0, 4, 5, color(PALETTE.goldStamp), 1)
+      .setName("archive-chapter-key-reward-icon");
+    const title = this.add.text(-8, -13, "CHAPTER KEY", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5, 0)
+      .setName("archive-chapter-key-reward-label");
+    const count = this.add.text(31, -1, keyCount, {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5, 0.5)
+      .setName("archive-chapter-key-reward-count");
+    const route = this.add.text(0, 10, "NARA II ROUTE OPEN", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5, 0)
+      .setName("archive-chapter-key-reward-route");
+
+    this.archiveKeyRewardCue = this.track(this.add.container(128, 58, [
+      back,
+      keyStem,
+      keyHead,
+      keyBitA,
+      keyBitB,
+      title,
+      count,
+      route
+    ]).setName("archive-chapter-key-reward-cue").setDepth(286));
+    this.archiveKeyRewardCue.setAlpha(0);
+    this.tweens.add({
+      targets: this.archiveKeyRewardCue,
+      alpha: 1,
+      y: 54,
+      duration: 180,
+      ease: "Stepped"
+    });
+    this.time.delayedCall(1700, () => {
+      if (!this.archiveKeyRewardCue?.active) return;
+      this.tweens.add({
+        targets: this.archiveKeyRewardCue,
+        alpha: 0,
+        duration: 220,
+        ease: "Stepped",
+        onComplete: () => {
+          if (this.archiveKeyRewardCue?.active) this.archiveKeyRewardCue.destroy();
+          this.archiveKeyRewardCue = undefined;
+        }
+      });
+    });
+    setObjective("Archive Cavern: use the Citation Stamp route to enter NARA II or clear the next source lock.");
+  }
+
+  private refreshSourceNoteRouteCue() {
+    if (this.currentRoomId !== "A1") {
+      this.clearSourceNoteRouteCue();
+      return;
+    }
+    if (this.sourceNoteStatus !== "carried" && this.sourceNoteStatus !== "routed" && this.sourceNoteStatus !== "verified") {
+      this.clearSourceNoteRouteCue();
+      return;
+    }
+
+    const start = this.sourceNoteStatus === "carried"
+      ? { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 15) }
+      : {
+          x: Math.round(this.sourceNoteIcon?.x ?? this.researchTable.x - 16),
+          y: Math.round(this.sourceNoteIcon?.y ?? this.researchTable.y - 17)
+        };
+    const end = { x: Math.round(this.researchTable.x), y: Math.round(this.researchTable.y) };
+    const cueKey = `${this.currentRoomId}:${this.sourceNoteStatus}:${start.x},${start.y}->${end.x},${end.y}`;
+    if (cueKey === this.sourceNoteRouteCueKey) return;
+
+    this.clearSourceNoteRouteCue();
+    this.sourceNoteRouteCueKey = cueKey;
+    this.drawSourceNoteRouteCue(this.verbForSourceNote(), start, end);
+  }
+
+  private clearSourceNoteRouteCue() {
+    for (const object of this.sourceNoteRouteCueObjects) {
+      if (object.active) object.destroy();
+    }
+    this.sourceNoteRouteCueObjects = [];
+    this.sourceNoteRouteCueKey = "";
+  }
+
+  private trackSourceNoteRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.sourceNoteRouteCueObjects.push(object);
+    return this.track(object);
+  }
+
+  private drawSourceNoteRouteCue(verb: "ROUTE" | "VERIFY" | "STAMP", start: { x: number; y: number }, end: { x: number; y: number }) {
+    const accent = verb === "ROUTE"
+      ? PALETTE.terminalCyan
+      : verb === "VERIFY"
+        ? PALETTE.goldStamp
+        : PALETTE.classNetRed;
+    this.trackSourceNoteRouteCue(this.add.ellipse(end.x, end.y + 12, 88, 18, color(PALETTE.black), 0.34)
+      .setName("archive-source-note-route-shadow")
+      .setDepth(136));
+    this.trackSourceNoteRouteCue(this.add.rectangle(end.x, end.y + 1, 78, 34, color(PALETTE.black), 0)
+      .setStrokeStyle(2, color(accent))
+      .setName("archive-source-note-route-table-glow")
+      .setDepth(236));
+
+    const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
+    const steps = Math.max(1, Math.min(7, Math.floor(distance / 13)));
+    for (let index = 1; index <= steps; index += 1) {
+      const t = index / (steps + 1);
+      const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
+      const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
+      this.trackSourceNoteRouteCue(this.add.rectangle(x, y, 5, 5, color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.9)
+        .setAngle(45)
+        .setName("archive-source-note-route-dot")
+        .setDepth(237));
+    }
+
+    this.trackSourceNoteRouteCue(this.add.rectangle(end.x, end.y + 32, 54, 10, color(PALETTE.black), 0.92)
+      .setStrokeStyle(1, color(accent))
+      .setName("archive-source-note-route-label-frame")
+      .setDepth(238));
+    this.trackSourceNoteRouteCue(this.add.text(end.x, end.y + 29, `${verb} HERE`, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: accent
+    }).setName("archive-source-note-route-label")
+      .setOrigin(0.5, 0)
+      .setDepth(239));
   }
 
   private showAnnotationDraftingChoice() {
@@ -1555,7 +2440,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private isNearResearchTable() {
     return this.currentRoomId === "A1"
-      && Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, this.researchTable.x, this.researchTable.y) <= 32;
+      && Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, this.researchTable.x, this.researchTable.y) <= 44;
   }
 
   private finishArchiveIfReady() {
@@ -1686,6 +2571,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private syncRoomTraversalState() {
     const room = ARCHIVE_ROOMS[this.currentRoomId];
+    const lockedExits = this.compassLockedExits(room);
     setRoomTraversalState({
       currentRoomId: room.id,
       roomTitle: room.title,
@@ -1699,44 +2585,104 @@ export class ArchiveScene extends Phaser.Scene {
         ...getRevealedShortcutRoomIds(getHeldProcessItemIds()).filter((roomId): roomId is ArchiveRoomId => roomId in ARCHIVE_ROOMS)
       ],
       exits: room.exits,
-      lockedExits: room.lockedExits,
+      lockedExits,
       requiredItems: room.requiredItems
     });
   }
 
   private drawVisitedMinimap() {
     this.add.rectangle(26, 16, 42, 27, color(PALETTE.black)).setDepth(878);
+    this.drawArchiveCompassRelic(58, 16);
     for (const room of Object.values(ARCHIVE_ROOMS)) {
-      const cell = this.add.rectangle(14 + room.grid.x * 12, 8 + room.grid.y * 6, 8, 5, color(PALETTE.black))
+      const x = 14 + room.grid.x * 12;
+      const y = 8 + room.grid.y * 6;
+      const cell = this.add.rectangle(x, y, 8, 5, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.stoneLight))
-        .setDepth(879);
-      const label = this.add.text(14 + room.grid.x * 12, 5 + room.grid.y * 6, "", {
+        .setDepth(879)
+        .setName("archive-minimap-cell");
+      const label = this.add.text(x, y - 3, "", {
         fontFamily: "monospace",
         fontSize: "4px",
         color: PALETTE.black
-      }).setOrigin(0.5, 0).setDepth(880);
+      }).setOrigin(0.5, 0).setDepth(880).setName("archive-minimap-label");
+      const marker = this.add.text(x, y - 1, "", {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: PALETTE.goldStamp
+      }).setOrigin(0.5, 0.5).setDepth(881).setName("archive-minimap-marker");
       this.mapCells.set(room.id, cell);
       this.mapLabels.set(room.id, label);
+      this.mapMarkers.set(room.id, marker);
     }
   }
 
+  private drawArchiveCompassRelic(x: number, y: number) {
+    this.add.rectangle(x, y, 23, 25, color(PALETTE.black), 0.92)
+      .setName("archive-compass-relic-panel")
+      .setStrokeStyle(1, color(PALETTE.goldStamp), 0.9)
+      .setDepth(878);
+    if (this.textures.exists(SNES_ARCHIVE_COMPASS_RELIC_ASSET.key)) {
+      this.add.image(x, y - 2, SNES_ARCHIVE_COMPASS_RELIC_ASSET.key)
+        .setName("archive-compass-relic")
+        .setDepth(880);
+    } else {
+      this.add.rectangle(x, y - 2, 18, 18, color(PALETTE.terminalCyan), 0.86)
+        .setName("archive-compass-relic-fallback")
+        .setStrokeStyle(1, color(PALETTE.goldStamp))
+        .setDepth(880);
+    }
+    this.archiveCompassRelicLabel = this.add.text(x, y + 8, "MAP", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.goldStamp,
+      backgroundColor: PALETTE.black
+    }).setName("archive-compass-relic-label").setOrigin(0.5, 0).setDepth(881);
+  }
+
   private updateVisitedMinimap() {
+    const dungeonMapRevealed = gameState.dungeons.archive_cavern?.mapRevealed ?? false;
+    this.archiveCompassRelicLabel?.setText(dungeonMapRevealed ? "MAP" : "???")
+      .setColor(dungeonMapRevealed ? PALETTE.goldStamp : PALETTE.stoneGray);
     for (const room of Object.values(ARCHIVE_ROOMS)) {
       const visited = this.visitedRoomIds.has(room.id);
-      const revealed = room.roomType !== "secret" || this.revealedSecretIds.has(room.id) || visited;
+      const revealed = room.roomType !== "secret" || this.revealedSecretIds.has(room.id) || visited || dungeonMapRevealed;
       const current = room.id === this.currentRoomId;
       this.mapCells.get(room.id)?.setFillStyle(color(current ? PALETTE.goldStamp : visited ? PALETTE.stoneLight : revealed ? PALETTE.stoneDark : PALETTE.black));
       this.mapLabels.get(room.id)?.setText(visited ? room.id : revealed && room.roomType === "secret" ? "?" : "").setColor(current ? PALETTE.black : PALETTE.shadowNavy);
+      const marker = this.minimapMarkerForRoom(room, revealed, visited, current);
+      this.mapMarkers.get(room.id)
+        ?.setText(marker.text)
+        .setColor(marker.color)
+        .setVisible(Boolean(marker.text));
     }
+  }
+
+  private minimapMarkerForRoom(room: ArchiveRoom, revealed: boolean, visited: boolean, current: boolean) {
+    if (!revealed) return { text: "", color: PALETTE.black };
+    const colorHex = current ? PALETTE.black : PALETTE.goldStamp;
+    if (room.roomType === "secret") return { text: visited ? "S" : "?", color: current ? PALETTE.black : PALETTE.terminalCyan };
+    if (room.roomType === "reward") return { text: "R", color: colorHex };
+    if (room.roomType === "boss") return { text: "B", color: current ? PALETTE.black : PALETTE.classNetRed };
+    return { text: "", color: PALETTE.black };
   }
 
   private drawRoomExits(room: ArchiveRoom) {
     const exits = room.exits;
     (["north", "south", "west", "east"] as Direction[]).forEach((direction) => {
-      const hasExit = !!exits[direction];
-      this.drawGate(direction, hasExit);
-      if (hasExit && !this.exitIsOpen(room, direction)) this.drawLockSeal(direction, room.requiredItems?.[direction]);
+      const target = exits[direction];
+      const hasExit = !!target;
+      this.drawGate(direction, hasExit, hasExit ? this.exitIsOpen(room, direction) : false, room.requiredItems?.[direction], target ? this.gateRouteLabel(target) : undefined, target);
     });
+  }
+
+  private compassLockedExits(room: ArchiveRoom) {
+    const locked: Partial<Record<Direction, string>> = {};
+    (["north", "south", "west", "east"] as Direction[]).forEach((direction) => {
+      if (room.exits[direction] && !this.exitIsOpen(room, direction)) {
+        locked[direction] = room.lockedExits?.[direction] ?? room.requiredItems?.[direction] ?? "LOCK";
+      }
+    });
+    return locked;
   }
 
   private exitIsOpen(room: ArchiveRoom, direction: Direction) {
@@ -1747,53 +2693,98 @@ export class ArchiveScene extends Phaser.Scene {
     return canTraverseExit(room.id, direction, getHeldProcessItemIds());
   }
 
-  private drawGate(direction: Direction, open: boolean) {
-    const fill = open ? PALETTE.black : PALETTE.stoneDark;
-    const accent = open ? PALETTE.goldStamp : PALETTE.stoneGray;
-    if (direction === "north") {
-      this.track(this.add.rectangle(128, 36, 34, 8, color(fill)).setDepth(61));
-      this.track(this.add.rectangle(128, 41, 26, 2, color(accent)).setDepth(62));
-      if (!open) this.addSolid(112, 32, 32, 16);
-    } else if (direction === "south") {
-      this.track(this.add.rectangle(128, 220, 34, 8, color(fill)).setDepth(61));
-      this.track(this.add.rectangle(128, 215, 26, 2, color(accent)).setDepth(62));
-      if (!open) this.addSolid(112, 208, 32, 16);
-    } else if (direction === "west") {
-      this.track(this.add.rectangle(8, 120, 8, 34, color(fill)).setDepth(61));
-      this.track(this.add.rectangle(13, 120, 2, 26, color(accent)).setDepth(62));
-      if (!open) this.addSolid(0, 104, 16, 32);
-    } else {
-      this.track(this.add.rectangle(248, 120, 8, 34, color(fill)).setDepth(61));
-      this.track(this.add.rectangle(243, 120, 2, 26, color(accent)).setDepth(62));
-      if (!open) this.addSolid(240, 104, 16, 32);
+  private drawGate(direction: Direction, hasExit: boolean, unlocked: boolean, requiredItem?: ProcessItemId, exitLabel?: string, target?: ArchiveRoomId) {
+    addSnesGate(this, {
+      direction,
+      hasExit,
+      unlocked,
+      accent: unlocked ? PALETTE.goldStamp : PALETTE.stoneGray,
+      lockLabel: requiredItem ? requiredItem.split("_")[0].slice(0, 4).toUpperCase() : "LOCK",
+      exitLabel,
+      track: (object) => this.track(object),
+      depth: 61
+    });
+    if (target && ARCHIVE_ROOMS[target].roomType === "secret") {
+      this.drawSecretExitMarker(direction, this.revealedSecretIds.has(target), requiredItem);
+    }
+    if (!hasExit) {
+      if (direction === "north") this.addSolid(112, 32, 32, 16);
+      else if (direction === "south") this.addSolid(112, 208, 32, 16);
+      else if (direction === "west") this.addSolid(0, 104, 16, 32);
+      else this.addSolid(240, 104, 16, 32);
     }
   }
 
-  private drawLockSeal(direction: Direction, requiredItem?: ProcessItemId) {
-    const label = requiredItem ? requiredItem.split("_")[0].slice(0, 4).toUpperCase() : "LOCK";
-    const positions: Record<Direction, { x: number; y: number }> = {
-      north: { x: 128, y: 45 },
-      south: { x: 128, y: 211 },
-      west: { x: 18, y: 120 },
-      east: { x: 238, y: 120 }
-    };
-    const { x, y } = positions[direction];
-    this.track(this.add.rectangle(x, y, 22, 10, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(170));
-    this.track(this.add.text(x, y - 3, label, {
+  private gateRouteLabel(target: ArchiveRoomId) {
+    const room = ARCHIVE_ROOMS[target];
+    if (room.roomType === "reward") return "REWARD";
+    if (room.roomType === "secret") return "SECRET";
+    if (room.roomType === "boss") return "BOSS";
+    if (room.roomType === "puzzle") return "PUZZLE";
+    if (room.roomType === "hint") return "HINT";
+    return target;
+  }
+
+  private drawSecretExitMarker(direction: Direction, revealed: boolean, requiredItem?: ProcessItemId) {
+    const accent = revealed ? PALETTE.goldStamp : requiredItem ? PALETTE.terminalCyan : PALETTE.buckramHighlight;
+    const label = revealed ? "SECRET" : requiredItem ? "SEAM" : "?";
+    const horizontal = direction === "north" || direction === "south";
+    const x = direction === "west" ? 31 : direction === "east" ? 225 : 128;
+    const y = direction === "north" ? 57 : direction === "south" ? 160 : 120;
+    const plateWidth = revealed ? 36 : 26;
+    const plateHeight = 10;
+    this.track(this.add.rectangle(x, y, horizontal ? plateWidth : plateHeight, horizontal ? plateHeight : plateWidth, color(PALETTE.black), 0.92)
+      .setStrokeStyle(1, color(accent), 0.9)
+      .setName("archive-secret-exit-marker")
+      .setDepth(77));
+    if (horizontal) {
+      this.track(this.add.rectangle(x - 7, y, 10, 1, color(accent), 0.96)
+        .setAngle(-18)
+        .setName("archive-secret-exit-crack")
+        .setDepth(78));
+      this.track(this.add.rectangle(x + 4, y + 1, 8, 1, color(accent), 0.9)
+        .setAngle(20)
+        .setName("archive-secret-exit-crack")
+        .setDepth(78));
+      this.track(this.add.text(x, y - 4, label, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: accent
+      }).setOrigin(0.5, 0)
+        .setName("archive-secret-exit-label")
+        .setDepth(79));
+      return;
+    }
+
+    this.track(this.add.rectangle(x, y - 7, 1, 10, color(accent), 0.96)
+      .setAngle(-18)
+      .setName("archive-secret-exit-crack")
+      .setDepth(78));
+    this.track(this.add.rectangle(x + 1, y + 4, 1, 8, color(accent), 0.9)
+      .setAngle(20)
+      .setName("archive-secret-exit-crack")
+      .setDepth(78));
+    this.track(this.add.text(x, y - 9, label, {
       fontFamily: "monospace",
       fontSize: "5px",
-      color: PALETTE.classNetRed
-    }).setOrigin(0.5, 0).setDepth(171));
+      color: accent,
+      backgroundColor: PALETTE.black
+    }).setOrigin(0.5, 0)
+      .setName("archive-secret-exit-label")
+      .setDepth(79));
   }
 
   private drawBookcase(x: number, y: number, width = 34, height = 34) {
-    this.track(this.add.rectangle(x, y, width, height, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.deepRuby)).setDepth(y - 2));
-    for (let row = -1; row <= 1; row += 1) {
-      const shelfY = y + row * 9;
-      this.track(this.add.rectangle(x, shelfY + 4, width - 5, 1, color(PALETTE.goldStamp)).setDepth(y - 1));
-      for (let i = 0; i < 5; i += 1) {
-        const bookColor = [PALETTE.buckramRed, PALETTE.goldStamp, PALETTE.archiveAmber, PALETTE.creamPaper][(i + row + 4) % 4];
-        this.track(this.add.rectangle(x - width / 2 + 6 + i * 5, shelfY, 3, 7, color(bookColor)).setDepth(y - 1));
+    const prop = this.drawArchivePropFrame("bookcase", x, y, y - 1, "bookcase");
+    if (!prop) {
+      this.track(this.add.rectangle(x, y, width, height, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.deepRuby)).setDepth(y - 2));
+      for (let row = -1; row <= 1; row += 1) {
+        const shelfY = y + row * 9;
+        this.track(this.add.rectangle(x, shelfY + 4, width - 5, 1, color(PALETTE.goldStamp)).setDepth(y - 1));
+        for (let i = 0; i < 5; i += 1) {
+          const bookColor = [PALETTE.buckramRed, PALETTE.goldStamp, PALETTE.archiveAmber, PALETTE.creamPaper][(i + row + 4) % 4];
+          this.track(this.add.rectangle(x - width / 2 + 6 + i * 5, shelfY, 3, 7, color(bookColor)).setDepth(y - 1));
+        }
       }
     }
     const solidX = Math.round((x - width / 2) / 8) * 8;
@@ -1802,9 +2793,12 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawDesk(x: number, y: number, label?: string) {
-    this.track(this.add.rectangle(x, y, 38, 20, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(y - 2));
-    this.track(this.add.rectangle(x - 12, y - 4, 10, 6, color(PALETTE.creamPaper)).setDepth(y - 1));
-    this.track(this.add.rectangle(x + 8, y + 2, 12, 2, color(PALETTE.archiveAmber)).setDepth(y - 1));
+    const prop = this.drawArchivePropFrame("desk", x, y, y - 1, "desk");
+    if (!prop) {
+      this.track(this.add.rectangle(x, y, 38, 20, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(y - 2));
+      this.track(this.add.rectangle(x - 12, y - 4, 10, 6, color(PALETTE.creamPaper)).setDepth(y - 1));
+      this.track(this.add.rectangle(x + 8, y + 2, 12, 2, color(PALETTE.archiveAmber)).setDepth(y - 1));
+    }
     if (label) {
       this.track(this.add.text(x, y - 4, label, {
         fontFamily: "monospace",
@@ -1829,12 +2823,19 @@ export class ArchiveScene extends Phaser.Scene {
 
   private drawWallMap(x: number, y: number, label = "MAP") {
     this.track(this.add.rectangle(x + 2, y + 3, 48, 30, color(PALETTE.black)).setDepth(y - 3));
-    this.track(this.add.rectangle(x, y, 48, 30, color(PALETTE.creamPaper)).setStrokeStyle(2, color(PALETTE.sepiaInk)).setDepth(y - 2));
-    this.track(this.add.rectangle(x - 16, y - 7, 12, 7, color(PALETTE.mapWater)).setDepth(y - 1));
-    this.track(this.add.rectangle(x - 2, y - 3, 18, 3, color(PALETTE.archiveAmber)).setDepth(y - 1));
-    this.track(this.add.rectangle(x + 7, y + 5, 13, 3, color(PALETTE.buckramRed)).setDepth(y - 1));
-    this.track(this.add.rectangle(x - 14, y + 8, 5, 5, color(PALETTE.goldStamp)).setDepth(y));
-    this.track(this.add.rectangle(x + 17, y - 8, 4, 4, color(PALETTE.classNetRed)).setDepth(y));
+    if (this.textures.exists(SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.key)) {
+      this.track(this.add.image(x, y, SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.key)
+        .setName(`archive-wall-map-board-${label}`)
+        .setDepth(y - 2));
+    } else {
+      this.track(this.add.rectangle(x, y, 48, 30, color(PALETTE.creamPaper)).setStrokeStyle(2, color(PALETTE.sepiaInk)).setDepth(y - 2));
+      this.track(this.add.rectangle(x - 16, y - 7, 12, 7, color(PALETTE.mapWater)).setDepth(y - 1));
+      this.track(this.add.rectangle(x - 2, y - 3, 18, 3, color(PALETTE.archiveAmber)).setDepth(y - 1));
+      this.track(this.add.rectangle(x + 7, y + 5, 13, 3, color(PALETTE.buckramRed)).setDepth(y - 1));
+      this.track(this.add.rectangle(x - 14, y + 8, 5, 5, color(PALETTE.goldStamp)).setDepth(y));
+      this.track(this.add.rectangle(x + 17, y - 8, 4, 4, color(PALETTE.classNetRed)).setDepth(y));
+    }
+    this.drawWallMapMarkers(x, y, label);
     this.track(this.add.text(x, y + 10, label, {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -1843,19 +2844,204 @@ export class ArchiveScene extends Phaser.Scene {
     this.addSolid(104, 48, 48, 28);
   }
 
+  private drawWallMapMarkers(x: number, y: number, label: string) {
+    const routeRoomIds = this.wallMapRouteRoomIds(label);
+    const markerTextureReady = this.textures.exists(SNES_ROOM_MAP_MARKER_ASSET.key);
+    for (const roomId of routeRoomIds) {
+      const room = ARCHIVE_ROOMS[roomId];
+      const visited = this.visitedRoomIds.has(room.id);
+      const dungeonMapRevealed = gameState.dungeons.archive_cavern?.mapRevealed ?? false;
+      const revealed = room.roomType !== "secret" || this.revealedSecretIds.has(room.id) || visited || dungeonMapRevealed;
+      const current = room.id === this.currentRoomId;
+      const px = Math.round(x - 17 + room.grid.x * 11);
+      const py = Math.round(y - 8 + room.grid.y * 6);
+      const frame = this.wallMapMarkerFrame(room, revealed, visited, current);
+      if (markerTextureReady) {
+        this.track(this.add.image(px, py, SNES_ROOM_MAP_MARKER_ASSET.key, frame)
+          .setName(`archive-wall-map-marker-${label}-${room.id}-${frame}`)
+          .setDepth(y + 2)
+          .setAlpha(current || visited ? 1 : 0.82));
+      } else {
+        const fill = frame === "current"
+          ? PALETTE.goldStamp
+          : frame === "boss"
+            ? PALETTE.classNetRed
+            : frame === "reward"
+              ? PALETTE.terminalCyan
+              : frame === "visited"
+                ? PALETTE.stoneLight
+                : PALETTE.stoneDark;
+        this.track(this.add.rectangle(px, py, 5, 5, color(fill), current || visited ? 1 : 0.82)
+          .setName(`archive-wall-map-marker-fallback-${label}-${room.id}`)
+          .setDepth(y + 2));
+      }
+    }
+  }
+
+  private wallMapRouteRoomIds(label: string): ArchiveRoomId[] {
+    if (label === "A3") return ["A1", "A3", "C3", "D1"];
+    if (label === "B3") return ["B1", "B2", "C2", "D3"];
+    return ["A1", "B1", "C1", "D1"];
+  }
+
+  private wallMapMarkerFrame(room: ArchiveRoom, revealed: boolean, visited: boolean, current: boolean): ArchiveWallMapMarkerFrame {
+    if (current) return "current";
+    if (!revealed) return "locked";
+    if (room.roomType === "boss") return "boss";
+    if (room.roomType === "reward") return "reward";
+    return visited ? "visited" : "locked";
+  }
+
   private drawDocumentStack(x: number, y: number, flagged = false) {
-    for (let i = 0; i < 4; i += 1) {
-      this.track(this.add.rectangle(x + i, y - i * 3, 20, 12, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(y + i));
-      this.track(this.add.rectangle(x - 5 + i, y - 2 - i * 3, 9, 1, color(PALETTE.sepiaInk)).setDepth(y + i + 1));
+    const prop = this.drawArchivePropFrame("document_stack", x, y - 4, y + 4, "document-stack");
+    if (!prop) {
+      for (let i = 0; i < 4; i += 1) {
+        this.track(this.add.rectangle(x + i, y - i * 3, 20, 12, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)).setDepth(y + i));
+        this.track(this.add.rectangle(x - 5 + i, y - 2 - i * 3, 9, 1, color(PALETTE.sepiaInk)).setDepth(y + i + 1));
+      }
     }
     if (flagged) this.track(this.add.rectangle(x - 12, y - 9, 3, 22, color(PALETTE.classNetRed)).setDepth(y + 6));
   }
 
   private drawRubyVolumeStack(x: number, y: number, count = 3) {
-    for (let i = 0; i < count; i += 1) {
-      this.track(this.add.rectangle(x + i * 3, y - i * 6, 24, 8, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(y + i));
-      this.track(this.add.rectangle(x - 5 + i * 3, y - i * 6, 10, 1, color(PALETTE.goldStamp)).setDepth(y + i + 1));
+    const prop = this.drawArchivePropFrame("ruby_volumes", x, y - 5, y + count, "ruby-volumes");
+    if (!prop) {
+      for (let i = 0; i < count; i += 1) {
+        this.track(this.add.rectangle(x + i * 3, y - i * 6, 24, 8, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(y + i));
+        this.track(this.add.rectangle(x - 5 + i * 3, y - i * 6, 10, 1, color(PALETTE.goldStamp)).setDepth(y + i + 1));
+      }
     }
+  }
+
+  private drawArchiveRoomDetailLayer(room: ArchiveRoom) {
+    const seed = room.id.charCodeAt(0) * 11 + Number(room.id.slice(1)) * 17;
+    const wallCaps = [
+      [48, 50],
+      [80, 50],
+      [176, 50],
+      [208, 50],
+      [48, 204],
+      [80, 204],
+      [176, 204],
+      [208, 204]
+    ] as const;
+    wallCaps.forEach(([x, y]) => {
+      const detail = this.drawArchiveRoomDetailFrame("wall_cap", x, y, -7, `wall-cap-${x}-${y}`);
+      if (detail instanceof Phaser.GameObjects.Image) detail.setFlipY(y > 120);
+    });
+
+    ([
+      { x: 30, y: 52, flipX: false, flipY: false },
+      { x: 226, y: 52, flipX: true, flipY: false },
+      { x: 30, y: 202, flipX: false, flipY: true },
+      { x: 226, y: 202, flipX: true, flipY: true }
+    ] as const).forEach((corner) => {
+      const detail = this.drawArchiveRoomDetailFrame("corner_shadow", corner.x, corner.y, -8, `corner-${corner.x}-${corner.y}`);
+      if (detail instanceof Phaser.GameObjects.Image) detail.setFlipX(corner.flipX).setFlipY(corner.flipY);
+    });
+
+    const scuffs = [
+      { x: 58 + (seed % 5) * 12, y: 82 + (seed % 3) * 18 },
+      { x: 112 + (seed % 4) * 11, y: 138 + (seed % 2) * 20 },
+      { x: 192 - (seed % 5) * 9, y: 100 + (seed % 4) * 18 },
+      { x: 76 + (seed % 3) * 21, y: 174 - (seed % 3) * 8 }
+    ];
+    scuffs.forEach((scuff, index) => {
+      this.drawArchiveRoomDetailFrame("floor_scuff", scuff.x, scuff.y, -6, `floor-scuff-${index}`);
+    });
+
+    (["north", "south", "west", "east"] as Direction[]).forEach((direction) => {
+      const target = room.exits[direction];
+      if (!target) return;
+      const frame = this.archiveThresholdFrame(room, direction, target);
+      const position = this.archiveThresholdPosition(direction);
+      this.drawArchiveRoomDetailFrame(frame, position.x, position.y, 67, `threshold-${direction}-${frame}`)
+        ?.setAngle(position.angle);
+    });
+  }
+
+  private archiveThresholdFrame(
+    room: ArchiveRoom,
+    direction: Direction,
+    target: ArchiveRoomId
+  ): ArchiveRoomDetailFrame {
+    if (room.roomType === "boss" || ARCHIVE_ROOMS[target].roomType === "boss") return "threshold_boss";
+    return this.exitIsOpen(room, direction) ? "threshold_open" : "threshold_locked";
+  }
+
+  private archiveThresholdPosition(direction: Direction) {
+    if (direction === "north") return { x: 128, y: 58, angle: 0 };
+    if (direction === "south") return { x: 128, y: 198, angle: 0 };
+    if (direction === "west") return { x: 34, y: 120, angle: -90 };
+    return { x: 222, y: 120, angle: 90 };
+  }
+
+  private drawArchiveRoomDetailFrame(
+    frame: ArchiveRoomDetailFrame,
+    x: number,
+    y: number,
+    depth: number,
+    name: string
+  ): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | null {
+    const px = Math.round(x);
+    const py = Math.round(y);
+    if (this.textures.exists(SNES_ARCHIVE_ROOM_DETAIL_ASSET.key)) {
+      const texture = this.textures.get(SNES_ARCHIVE_ROOM_DETAIL_ASSET.key);
+      if (texture.has(frame)) {
+        return this.track(this.add.image(px, py, SNES_ARCHIVE_ROOM_DETAIL_ASSET.key, frame)
+          .setName(`archive-room-detail-${name}`)
+          .setDepth(depth));
+      }
+    }
+
+    const fallback = this.archiveRoomDetailFallback(frame, px, py, depth, name);
+    return fallback ? this.track(fallback) : null;
+  }
+
+  private archiveRoomDetailFallback(
+    frame: ArchiveRoomDetailFrame,
+    x: number,
+    y: number,
+    depth: number,
+    name: string
+  ) {
+    if (frame === "floor_scuff") {
+      return this.add.rectangle(x, y, 12, 2, color(PALETTE.sepiaInk), 0.44)
+        .setName(`archive-room-detail-fallback-${name}`)
+        .setDepth(depth);
+    }
+    if (frame === "corner_shadow") {
+      return this.add.rectangle(x, y, 12, 12, color(PALETTE.black), 0.38)
+        .setName(`archive-room-detail-fallback-${name}`)
+        .setDepth(depth);
+    }
+    if (frame === "wall_cap") {
+      return this.add.rectangle(x, y, 16, 5, color(PALETTE.goldStamp), 0.72)
+        .setName(`archive-room-detail-fallback-${name}`)
+        .setDepth(depth);
+    }
+    const fill = frame === "threshold_open"
+      ? PALETTE.terminalCyan
+      : frame === "threshold_boss"
+        ? PALETTE.goldStamp
+        : PALETTE.classNetRed;
+    return this.add.rectangle(x, y, 16, 5, color(fill), 0.82)
+      .setName(`archive-room-detail-fallback-${name}`)
+      .setDepth(depth);
+  }
+
+  private drawArchivePropFrame(
+    frame: ArchivePropFrame,
+    x: number,
+    y: number,
+    depth: number,
+    name: string
+  ) {
+    if (!this.textures.exists(SNES_ARCHIVE_PROP_ASSET.key)) return null;
+    if (!this.textures.get(SNES_ARCHIVE_PROP_ASSET.key).has(frame)) return null;
+    return this.track(this.add.image(Math.round(x), Math.round(y), SNES_ARCHIVE_PROP_ASSET.key, frame)
+      .setName(`archive-prop-${name}`)
+      .setDepth(depth));
   }
 
   private drawSparkle(x: number, y: number, tint: string = PALETTE.goldStamp) {

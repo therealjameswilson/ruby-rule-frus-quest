@@ -135,7 +135,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
   BlackVaultLairScene: {
     sceneKey: "BlackVaultLairScene",
     displayName: "Black Vault Lair",
-    objective: "Black Vault Lair: inspect the dormant DANN-E core.",
+    objective: "Black Vault Lair: inspect DANN-E core.",
     musicScene: "EndingScene",
     spawn: { x: 128, y: 202 },
     exitTarget: "ArchiveScene",

@@ -51,6 +51,7 @@ export const FRUS_VOLUMES = {
 
 export const SCREENS = {
   frus_world_map: "art-pack/screens/frus_world_map.jpg",
+  title_screen_16bit_sharp_256x240: "art-pack/screens/title_screen_16bit_sharp_256x240.png",
   title_screen_256x224: "art-pack/screens/title_screen_256x224.png"
 } as const;
 

@@ -3,6 +3,7 @@ import { characterAnimKey } from "../art/character_anims";
 import { getCharacterKeyForNpcId } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { unlockCodexEntry } from "../game/codex";
+import { SNES_GUIDE_CAVERN_TILE_ASSET } from "../game/snesAtlas";
 import {
   addProcessItem,
   addDocumentPoints,
@@ -41,6 +42,8 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
+type GuideCavernTileFrame = (typeof SNES_GUIDE_CAVERN_TILE_ASSET.frames)[number];
+
 export class GuideScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
@@ -64,7 +67,7 @@ export class GuideScene extends Phaser.Scene {
 
   create() {
     setSceneState("GuideScene", "explore", "Archive Cavern: claim the Citation Stamp.");
-    unlockCodexEntry("npc-senior-archivist");
+    unlockCodexEntry("npc-archive-specialist");
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-30);
@@ -104,9 +107,9 @@ export class GuideScene extends Phaser.Scene {
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.objectiveText = addObjectiveText(this);
-    this.hintText = this.add.text(128, 211, "", {
+    this.hintText = this.add.text(128, 207, "", {
       fontFamily: "monospace",
-      fontSize: "8px",
+      fontSize: "7px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(810);
@@ -163,16 +166,19 @@ export class GuideScene extends Phaser.Scene {
     // Show the prompt/ring from a little further out than the strict interact
     // radius so it is impossible to miss on approach; acting still requires the
     // strict radius (mirrors OfficeScene, live audit 2026-06-15).
-    const promptTarget = nearest ?? nearestInteractableHint(this.player.position, this.interactables);
+    const hintTarget = nearestInteractableHint(this.player.position, this.interactables);
+    const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
-    this.prompt.update(delta, promptTarget);
+    // The floating prompt carries the contextual action cue; keep the bottom
+    // lane reserved for the persistent objective so the two never collide.
+    this.hintText.setText("");
+    this.prompt.update(delta, promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) {
       bufferedInteraction.onInteract();
     } else if (input.aJustPressed) {
-      const feedback = decideInteractionFeedback(nearest, promptTarget);
+      const feedback = decideInteractionFeedback(nearest, hintTarget);
       if (feedback.kind === "step-closer") this.nudgeTowardTarget(feedback.target);
       else if (feedback.kind === "nothing") this.flashNoTargetHint();
     }
@@ -259,6 +265,46 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private drawCaveInterior() {
+    if (this.guideCavernTileFramesReady([
+      "floor_base",
+      "floor_scuff",
+      "floor_ruby",
+      "wall_top",
+      "wall_front",
+      "wall_shadow",
+      "threshold_gate",
+      "pedestal_tile"
+    ])) {
+      this.add.rectangle(128, 126, 210, 156, color(PALETTE.black))
+        .setStrokeStyle(3, color(PALETTE.sepiaInk))
+        .setDepth(-10);
+      for (let row = 0; row < 8; row += 1) {
+        for (let col = 0; col < 12; col += 1) {
+          const frame: GuideCavernTileFrame = (row + col * 3) % 7 === 0
+            ? "floor_ruby"
+            : (row * 5 + col) % 4 === 0
+              ? "floor_scuff"
+              : "floor_base";
+          this.drawGuideCavernTileFrame(frame, 40 + col * 16, 66 + row * 16, -8, `floor-${row}-${col}`);
+        }
+      }
+      for (let col = 0; col < 12; col += 1) {
+        const x = 40 + col * 16;
+        this.drawGuideCavernTileFrame("wall_top", x, 50, -4, `north-wall-${col}`);
+        this.drawGuideCavernTileFrame("wall_front", x, 202, -4, `south-wall-${col}`);
+      }
+      for (let row = 0; row < 8; row += 1) {
+        const y = 66 + row * 16;
+        this.drawGuideCavernTileFrame("wall_shadow", 24, y, -4, `west-wall-${row}`);
+        this.drawGuideCavernTileFrame("wall_shadow", 232, y, -4, `east-wall-${row}`);
+      }
+      this.drawGuideCavernTileFrame("pedestal_tile", 96, 132, 58, "citation-pedestal");
+      this.drawGuideCavernTileFrame("pedestal_tile", 160, 132, 58, "fragment-pedestal");
+      this.drawGuideCavernTileFrame("threshold_gate", 120, 202, 46, "gate-left");
+      this.drawGuideCavernTileFrame("threshold_gate", 136, 202, 46, "gate-right");
+      return;
+    }
+
     this.add.rectangle(128, 126, 210, 156, color(PALETTE.black)).setStrokeStyle(3, color(PALETTE.sepiaInk)).setDepth(-10);
     for (let x = 32; x <= 224; x += 16) {
       this.add.rectangle(x, 53, 10, 12, color(PALETTE.sepiaInk)).setDepth(-5);
@@ -269,6 +315,27 @@ export class GuideScene extends Phaser.Scene {
       this.add.rectangle(227, y, 12, 10, color(PALETTE.sepiaInk)).setDepth(-5);
     }
     this.add.rectangle(128, 202, 40, 11, color(PALETTE.black)).setDepth(45);
+  }
+
+  private drawGuideCavernTileFrame(
+    frame: GuideCavernTileFrame,
+    x: number,
+    y: number,
+    depth: number,
+    name: string
+  ) {
+    if (!this.textures.exists(SNES_GUIDE_CAVERN_TILE_ASSET.key)) return null;
+    const texture = this.textures.get(SNES_GUIDE_CAVERN_TILE_ASSET.key);
+    if (!texture.has(frame)) return null;
+    return this.add.image(Math.round(x), Math.round(y), SNES_GUIDE_CAVERN_TILE_ASSET.key, frame)
+      .setName(`guide-cavern-tile-${name}`)
+      .setDepth(depth);
+  }
+
+  private guideCavernTileFramesReady(frames: readonly GuideCavernTileFrame[]) {
+    if (!this.textures.exists(SNES_GUIDE_CAVERN_TILE_ASSET.key)) return false;
+    const texture = this.textures.get(SNES_GUIDE_CAVERN_TILE_ASSET.key);
+    return frames.every((frame) => texture.has(frame));
   }
 
   private drawArchiveLamp(x: number, y: number) {

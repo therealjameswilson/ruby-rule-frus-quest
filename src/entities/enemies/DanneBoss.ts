@@ -269,6 +269,8 @@ export class DanneBoss {
     this.clearBolts();
     this.clearMinis();
     gameState.sceneProgress.blackVaultBossCleared = 1;
+    gameState.sceneProgress.blackVaultWestOpen = 1;
+    gameState.sceneProgress.blackVaultNorthOpen = 1;
     defeatDungeonBoss("buckram_gate", "DANN-E final review hurdle defeated");
     unlockCodexEntry("danne-defeated");
     addDanneItem("treaty-fragments", 2);

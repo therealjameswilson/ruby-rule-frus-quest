@@ -22,20 +22,21 @@ import {
   setSceneState,
   setVisibleEntities
 } from "../game/state";
-import type { ChoiceOption } from "../game/types";
+import type { ChoiceOption, Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { Player } from "../entities/Player";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
+import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addProofingTable, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesRoomLayer } from "../systems/snesPixelArt";
+import { addSnesGate, addSnesMapTablet, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
 import {
   aiAnnotationReviewComplete,
@@ -211,6 +212,7 @@ export class SilentReadScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
+  private interactionPrompt!: InteractionPrompt;
   private roomTitleText!: Phaser.GameObjects.Text;
   private currentRoomId: ProofRoomId = "E1";
   private visitedRoomIds = new Set<ProofRoomId>();
@@ -221,6 +223,8 @@ export class SilentReadScene extends Phaser.Scene {
   private roomTransitionLocked = false;
   private exitCooldownUntil = 0;
   private physicalFlags: PhysicalFlag[] = [];
+  private physicalRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private physicalRouteCueKey = "";
   private readonly outbox = { x: 128, y: 202 };
 
   constructor() {
@@ -248,6 +252,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.objectiveText = addObjectiveText(this);
+    this.interactionPrompt = new InteractionPrompt(this, 950);
     this.actionHint = this.add.text(8, 211, "", {
       fontFamily: "monospace",
       fontSize: "7px",
@@ -274,20 +279,24 @@ export class SilentReadScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     if (this.roomTransitionLocked) {
+      this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (this.dialog.active) {
+      this.interactionPrompt.update(delta, null);
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       return;
     }
     if (this.choice.active) {
+      this.interactionPrompt.update(delta, null);
       this.choice.updateInput();
       this.player.update(delta, false);
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
+      this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
@@ -297,6 +306,7 @@ export class SilentReadScene extends Phaser.Scene {
     }
     this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS });
     this.updatePhysicalVerification();
+    this.updatePhysicalInteractionPrompt(delta);
     if (input.aJustPressed) {
       this.handlePhysicalAction();
     }
@@ -344,6 +354,7 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private clearRoom() {
+    this.clearPhysicalRouteCue();
     for (const cleanup of this.roomCleanups) cleanup();
     for (const object of this.roomObjects) {
       if (object.active) object.destroy();
@@ -356,8 +367,25 @@ export class SilentReadScene extends Phaser.Scene {
   private renderCurrentRoom() {
     const room = PROOF_ROOMS[this.currentRoomId];
     this.roomTitleText.setText(`${room.id} ${room.title}`);
+    addSnesRoomIntroBanner(this, {
+      title: `${room.id} ${room.title}`,
+      subtitle: room.id.startsWith("E") ? "EDITOR'S LABYRINTH" : "SILENT READ TOWER",
+      accent: PALETTE.buckramRed,
+      track: (object) => this.track(object)
+    });
     addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "proof", track: (object) => this.track(object) });
     this.drawRoomDoors();
+    addSnesRoomCompass(this, {
+      x: 216,
+      y: 62,
+      roomId: room.id,
+      roomTitle: room.title,
+      exits: room.exits,
+      lockedExits: this.compassLockedExits(room),
+      requiredItems: room.requiredItems,
+      track: (object) => this.track(object),
+      depth: 143
+    });
     if (room.id === "E1") this.renderEditorsLabyrinth();
     else this.renderSilentReadTower();
     this.syncVisibleEntities();
@@ -366,16 +394,41 @@ export class SilentReadScene extends Phaser.Scene {
   private drawRoomDoors() {
     const room = PROOF_ROOMS[this.currentRoomId];
     if (room.exits.west) {
-      this.track(this.add.rectangle(11, 124, 9, 36, color(PALETTE.black)).setDepth(65));
-      this.track(this.add.rectangle(16, 124, 3, 26, color(PALETTE.buckramHighlight)).setDepth(66));
+      addSnesGate(this, {
+        direction: "west",
+        hasExit: true,
+        unlocked: true,
+        accent: PALETTE.buckramHighlight,
+        exitLabel: "EDIT",
+        track: (object) => this.track(object),
+        depth: 65
+      });
     }
     if (room.exits.east) {
       const open = this.currentRoomId === "E1" ? hasProcessItem("red_pencil") : hasProcessItem("buckram_key");
       const accent = open ? PALETTE.goldStamp : PALETTE.classNetRed;
-      this.track(this.add.rectangle(245, 124, 9, 36, color(PALETTE.black)).setDepth(65));
-      this.track(this.add.rectangle(240, 124, 3, 26, color(accent)).setDepth(66));
-      if (!open) this.track(this.add.rectangle(242, 124, 2, 30, color(PALETTE.classNetRed)).setDepth(67));
+      addSnesGate(this, {
+        direction: "east",
+        hasExit: true,
+        unlocked: open,
+        accent,
+        lockLabel: this.currentRoomId === "E1" ? "PENC" : "BUCK",
+        exitLabel: this.currentRoomId === "E1" ? "READ" : "GATE",
+        track: (object) => this.track(object),
+        depth: 65
+      });
     }
+  }
+
+  private compassLockedExits(room: ProofRoom) {
+    const locked: Partial<Record<Direction, string>> = {};
+    if (room.id === "E1" && room.exits.east && !hasProcessItem("red_pencil")) {
+      locked.east = room.lockedExits?.east ?? room.requiredItems?.east ?? "PENC";
+    }
+    if (room.id === "S1" && room.exits.east && !hasProcessItem("buckram_key")) {
+      locked.east = room.lockedExits?.east ?? room.requiredItems?.east ?? "BUCK";
+    }
+    return locked;
   }
 
   private renderEditorsLabyrinth() {
@@ -386,6 +439,16 @@ export class SilentReadScene extends Phaser.Scene {
       "EVIDENCE: COMMENT",
       "HUMAN TRIAGE"
     ]));
+    addSnesMapTablet(this, {
+      x: 128,
+      y: 88,
+      label: "EDIT MAP",
+      nodes: ["AI", "DESK", "PENC", "READ"],
+      activeIndex: hasProcessItem("red_pencil") ? 2 : 1,
+      accent: hasProcessItem("red_pencil") ? PALETTE.goldStamp : PALETTE.buckramHighlight,
+      track: (object) => this.track(object),
+      depth: -5
+    });
     const priya = new HistorianNPC(this, "priya", 28, 52);
     this.roomCleanups.push(() => priya.destroy());
     this.drawPage(76, 118, "DRAFT QUERY", [
@@ -400,8 +463,16 @@ export class SilentReadScene extends Phaser.Scene {
       "Editor decides",
       "meaning."
     ]);
-    this.track(this.add.image(128, 150, "red-pencil").setDepth(166));
-    this.track(addTinySparkle(this, 128, 138, PALETTE.buckramHighlight));
+    addSnesTreasurePedestal(this, {
+      x: 128,
+      y: 150,
+      textureKey: "red-pencil",
+      label: "Red Pencil",
+      collected: hasProcessItem("red_pencil"),
+      accent: PALETTE.buckramHighlight,
+      track: (object) => this.track(object),
+      depth: 160
+    });
     this.drawWorkstations();
     this.drawOutbox("STATECHAT OUTBOX");
     this.drawToolbeltIcons();
@@ -434,7 +505,16 @@ export class SilentReadScene extends Phaser.Scene {
       "\"publish fully."
     ]);
     this.track(this.add.image(180, 158, "proof-page").setDepth(165));
-    this.track(this.add.image(128, 82, "proof-lens").setDepth(166));
+    addSnesTreasurePedestal(this, {
+      x: 128,
+      y: 82,
+      textureKey: "proof-lens",
+      label: "Proof Lens",
+      collected: hasProcessItem("proof_lens"),
+      accent: PALETTE.terminalCyan,
+      track: (object) => this.track(object),
+      depth: 160
+    });
     this.track(addTinySparkle(this, 178, 87, PALETTE.classNetRed));
     this.track(addTerminalPanel(this, 128, 48, [
       "SILENT READ",
@@ -443,12 +523,30 @@ export class SilentReadScene extends Phaser.Scene {
       "PROOF DATE",
       "HUMAN STAMPS"
     ], PALETTE.goldStamp));
+    addSnesMapTablet(this, {
+      x: 128,
+      y: 156,
+      label: "PROOF MAP",
+      nodes: ["READ", "LENS", "STAMP", "BUCK"],
+      activeIndex: hasProcessItem("buckram_key") ? 3 : hasProcessItem("proof_lens") ? 2 : 1,
+      accent: hasProcessItem("buckram_key") ? PALETTE.goldStamp : PALETTE.terminalCyan,
+      track: (object) => this.track(object),
+      depth: -5
+    });
     addProofingTable(this, 128, 172, (object) => this.track(object));
     this.drawWorkstations();
     this.drawOutbox("REVIEW OUTBOX");
     this.drawToolbeltIcons();
     if (hasProcessItem("buckram_key")) {
-      this.track(this.add.image(128, 126, "buckram-key").setDepth(250));
+      addSnesTreasurePedestal(this, {
+        x: 128,
+        y: 126,
+        textureKey: "buckram-key",
+        label: "Buckram Key",
+        collected: true,
+        track: (object) => this.track(object),
+        depth: 230
+      });
       setObjective("Silent Read Tower: exit east with Buckram Key.");
     } else if (gameState.sceneProgress.typesetterProofComplete) {
       setObjective("Silent Read Tower: take the Buckram Key after proofing.");
@@ -663,9 +761,71 @@ export class SilentReadScene extends Phaser.Scene {
     activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14);
   }
 
+  private updatePhysicalInteractionPrompt(delta: number) {
+    const prompt = this.physicalPromptTargets();
+    this.interactionPrompt.update(
+      delta,
+      prompt.strictTarget ?? prompt.hintTarget,
+      undefined,
+      prompt.strictTarget
+        ? { badge: "A", text: prompt.strictText }
+        : prompt.hintTarget
+        ? { badge: "!", text: "STEP CLOSER" }
+        : undefined
+    );
+  }
+
+  private physicalPromptTargets(): {
+    strictTarget: Interactable | null;
+    hintTarget: Interactable | null;
+    strictText: string;
+  } {
+    const activeFlag = this.getActiveFlag();
+    if (!activeFlag || flagRoom(activeFlag) !== this.currentRoomId) {
+      return { strictTarget: null, hintTarget: null, strictText: "" };
+    }
+
+    if (activeFlag.status === "waiting") {
+      const strictTarget = this.isNear(activeFlag.x, activeFlag.y, 24) ? this.flagPromptTarget(activeFlag, 24) : null;
+      const hintTarget = this.isNear(activeFlag.x, activeFlag.y, 38) ? this.flagPromptTarget(activeFlag, 24) : null;
+      return { strictTarget, hintTarget, strictText: `CARRY ${activeFlag.shortLabel}` };
+    }
+
+    const strictStation = this.findNearestWorkstation(28);
+    const hintStation = strictStation ?? this.findNearestWorkstation(42);
+    const strictTarget = strictStation ? this.workstationPromptTarget(strictStation, 28) : null;
+    const hintTarget = hintStation ? this.workstationPromptTarget(hintStation, 28) : null;
+    return { strictTarget, hintTarget, strictText: `${this.verbFor(activeFlag)} ${activeFlag.shortLabel}` };
+  }
+
+  private flagPromptTarget(flag: PhysicalFlag, radius: number): Interactable {
+    return {
+      id: `proof-flag-${flag.id}`,
+      label: flag.shortLabel,
+      x: flag.x,
+      y: flag.y,
+      radius,
+      kind: "document",
+      onInteract: () => undefined
+    };
+  }
+
+  private workstationPromptTarget(station: Workstation, radius: number): Interactable {
+    return {
+      id: `proof-workstation-${station.id}`,
+      label: station.label,
+      x: station.x,
+      y: station.y,
+      radius,
+      kind: "terminal",
+      onInteract: () => undefined
+    };
+  }
+
   private updatePhysicalVerification() {
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) {
+      this.clearPhysicalRouteCue();
       this.actionHint.setText("DONE: exit east with the Buckram Key.");
       setNearestInteractable(null);
       this.syncPhysicalState("DONE", null);
@@ -673,6 +833,7 @@ export class SilentReadScene extends Phaser.Scene {
     }
 
     if (flagRoom(activeFlag) !== this.currentRoomId) {
+      this.clearPhysicalRouteCue();
       this.updateFlagVisibility();
       const target = PROOF_ROOMS[flagRoom(activeFlag)].title;
       this.actionHint.setText(`NEXT: enter ${target.toUpperCase()}.`);
@@ -696,6 +857,7 @@ export class SilentReadScene extends Phaser.Scene {
     const verb = this.verbFor(activeFlag);
     this.syncPhysicalState(verb, nearestStation);
     this.updateActionHint(activeFlag, nearestStation);
+    this.refreshPhysicalRouteCue(activeFlag);
   }
 
   private handlePhysicalAction() {
@@ -709,6 +871,11 @@ export class SilentReadScene extends Phaser.Scene {
 
     if (activeFlag.status === "waiting") {
       if (!this.isNear(activeFlag.x, activeFlag.y, 24)) {
+        if (this.isNear(activeFlag.x, activeFlag.y, 38)) {
+          retroAudio.blip();
+          setLatestMessage(`Step closer to ${activeFlag.shortLabel}.`);
+          return;
+        }
         retroAudio.warning();
         setLatestMessage(`CARRY: move to ${activeFlag.shortLabel}.`);
         return;
@@ -724,6 +891,12 @@ export class SilentReadScene extends Phaser.Scene {
 
     const nearestStation = this.findNearestWorkstation(28);
     if (!nearestStation) {
+      const hintStation = this.findNearestWorkstation(42);
+      if (hintStation) {
+        retroAudio.blip();
+        setLatestMessage(`Step closer to ${hintStation.label}.`);
+        return;
+      }
       retroAudio.warning();
       setLatestMessage(`${this.verbFor(activeFlag)}: stand beside the correct workstation.`);
       return;
@@ -775,6 +948,7 @@ export class SilentReadScene extends Phaser.Scene {
       awardProcessStamp("sop");
       addInventoryItem("AI Annotation Review Log");
       addProcessItem("red_pencil");
+      addSnesRewardBurst(this, 128, 136, "red-pencil", "Red Pencil", (object) => this.track(object));
       this.showRedPencilBracketChoice("source_note_047");
       return false;
     }
@@ -782,6 +956,7 @@ export class SilentReadScene extends Phaser.Scene {
       awardProcessStamp("proof");
       setDocumentWorkflowState("proof_page_412", "proofed");
       addProcessItem("proof_lens");
+      addSnesRewardBurst(this, 128, 104, "proof-lens", "Proof Lens", (object) => this.track(object));
       addVolumeFragment("Proof Fragment");
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");
@@ -1138,7 +1313,7 @@ export class SilentReadScene extends Phaser.Scene {
       setLatestMessage("Buckram Key opens the final publication gate.");
     }
     setObjective("Silent Read Tower: exit east with Buckram Key.");
-    this.track(this.add.image(this.outbox.x, this.outbox.y - 24, "buckram-key").setDepth(250));
+    addSnesRewardBurst(this, this.outbox.x, this.outbox.y - 24, "buckram-key", "Buckram Key", (object) => this.track(object));
     this.actionHint.setText("DONE: typesetter proof filed. Exit east.");
     this.reliability.update();
     this.syncRoomTraversalState();
@@ -1220,6 +1395,57 @@ export class SilentReadScene extends Phaser.Scene {
     flag.icon?.setTint(color(PALETTE.stoneGray));
     flag.labelText?.setColor(PALETTE.stoneGray);
     setLatestMessage(`STAMP: ${flag.shortLabel} human review recorded.`);
+  }
+
+  private refreshPhysicalRouteCue(flag: PhysicalFlag) {
+    const station = this.stationFor(flag.destination);
+    if (stationRoom(station.id) !== this.currentRoomId || flag.status === "stamped") {
+      this.clearPhysicalRouteCue();
+      return;
+    }
+
+    const start = flag.status === "carried"
+      ? { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 15) }
+      : { x: Math.round(flag.x), y: Math.round(flag.y) };
+    const end = { x: Math.round(station.x), y: Math.round(station.y) };
+    const cueKey = `${this.currentRoomId}:${flag.id}:${flag.status}:${start.x},${start.y}->${station.id}`;
+    if (cueKey === this.physicalRouteCueKey) return;
+
+    this.clearPhysicalRouteCue();
+    this.physicalRouteCueKey = cueKey;
+
+    const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
+    const steps = Math.max(1, Math.min(8, Math.floor(distance / 14)));
+    for (let index = 1; index <= steps; index += 1) {
+      const t = index / (steps + 1);
+      const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
+      const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
+      const routeAccent = index % 2 === 0 ? color(PALETTE.terminalCyan) : color(PALETTE.goldStamp);
+      const shadow = this.add.rectangle(x + 1, y + 1, 9, 9, color(PALETTE.black), 0.78).setDepth(235);
+      const tile = this.add.rectangle(x, y, 7, 7, routeAccent, 0.96).setDepth(236);
+      const shine = this.add.rectangle(x - 2, y - 2, 2, 2, color(PALETTE.creamPaper), 0.9).setDepth(237);
+      this.physicalRouteCueObjects.push(shadow, tile, shine);
+    }
+
+    const targetLabel = `TO ${station.label.toUpperCase()}`;
+    const targetWidth = Math.max(56, targetLabel.length * 4 + 8);
+    const targetBack = this.add.rectangle(end.x, end.y - 30, targetWidth, 11, color(PALETTE.black), 0.94)
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(238);
+    const targetText = this.add.text(end.x, end.y - 34, targetLabel, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(239);
+    this.physicalRouteCueObjects.push(targetBack, targetText);
+  }
+
+  private clearPhysicalRouteCue() {
+    for (const object of this.physicalRouteCueObjects) {
+      if (object.active) object.destroy();
+    }
+    this.physicalRouteCueObjects = [];
+    this.physicalRouteCueKey = "";
   }
 
   private updateActionHint(flag: PhysicalFlag, nearestStation: Workstation | null) {
