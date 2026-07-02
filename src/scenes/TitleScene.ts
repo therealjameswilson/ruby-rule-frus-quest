@@ -559,11 +559,11 @@ export class TitleScene extends Phaser.Scene {
 
   private createSkipWarningToggle() {
     this.add
-      .rectangle(191, 231, 118, 12, color(PALETTE.deepRuby), 0.96)
+      .rectangle(207, 232, 82, 9, color(PALETTE.black), 0.72)
       .setName("title-skip-warning-backplate")
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(39);
-    const hit = this.add.rectangle(191, 229, 112, 12, color(PALETTE.black), 0.01).setDepth(40);
+    const hit = this.add.rectangle(207, 231, 88, 12, color(PALETTE.black), 0.01).setDepth(40);
     bindPointerPress(hit, {
       down: () => {
         this.ignoreNextPointerStart = true;
@@ -571,9 +571,9 @@ export class TitleScene extends Phaser.Scene {
       }
     });
     this.skipWarningText = this.add
-      .text(191, 226, "", {
+      .text(207, 229, "", {
         fontFamily: "monospace",
-        fontSize: "6px",
+        fontSize: "4px",
         color: PALETTE.goldStamp
       })
       .setOrigin(0.5, 0)
@@ -590,6 +590,6 @@ export class TitleScene extends Phaser.Scene {
 
   private renderSkipWarningToggle() {
     const mark = this.skipWarning ? "X" : " ";
-    this.skipWarningText?.setText(`B SKIP WARNING [${mark}]`);
+    this.skipWarningText?.setText(`B: SKIP WARNING [${mark}]`);
   }
 }
