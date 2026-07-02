@@ -2,6 +2,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- First-room HUD cleanup pass (2026-07-02):
+  - Simplified the always-on quest band so Office onboarding shows one objective, one action cue, reliability hearts, and the equipped tool instead of stacking pendants, crystals, keys, cover fragments, and production counters.
+  - Added a small floating `TALK` cue over the Junior Compiler for the first objective, hidden while tutorial/dialog/choice overlays are active and removed after the Junior Compiler introduction.
+  - Hid the dense production/training route board and first-hour relic until the player has met the Junior Compiler, reducing first-screen poster clutter without deleting the later progress display.
+  - Fixed the Office tutorial card dismissal so all child text/panel objects are destroyed, and replaced non-ASCII middle-dot separators with ASCII hyphens for predictable pixel-font rendering.
+  - Added a summary-visibility switch to `ReliabilityHud` and used it in OfficeScene so the global quest band is the only always-on top HUD there; legacy room-frame HUD chrome is hidden in OfficeScene.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - focused `npm test -- --run src/input/InputState.test.ts src/scenes/CharacterCreateScene.test.ts src/systems/interactionPrompt.test.ts src/scenes/TitleScene.test.ts src/scenes/questBandCue.test.ts` passes (5 files / 38 tests);
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=first-room-cleanup-client-5`;
+    - direct SwiftShader Playwright probe confirmed no page/console errors, hidden first-hour/production-board objects, hidden legacy Office HUD, visible `office-first-quest-cue`, and quest-band cue text `GO LEFT - TALK WHEN CLOSE`;
+    - visual proof: `output/first-room-cleanup-client/direct-office-after-dismiss.png`; dialog probe: `output/first-room-cleanup-client/direct-office-junior-dialog.png`.
 - Archive 16x16 tile-strip pass (2026-07-02):
   - Added an original repo-local `public/assets/sprites/snes-archive-tiles.svg` strip with eight 16x16 room-construction frames: floor base, cracked floor, dotted floor, ruby floor, wall top, wall front, wall side, and floor shadow.
   - Registered `SNES_ARCHIVE_TILE_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and registered named frames after texture load.
