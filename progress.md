@@ -2,6 +2,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Opening-screen declutter pass (2026-07-02):
+  - Replaced the dense pre-rendered title illustration with a quieter procedural ruby buckram title card: logo, FRUS volume icon, start prompt, and one mission plaque.
+  - Removed the title control cheat-sheet from the first screen so it no longer competes with the core goal.
+  - Simplified character creation by hiding the workflow relic strip, side ability plaque, and small stage runes; the selected role, role row, and first action now read first.
+  - Simplified the first Office tutorial by dimming the room behind it and reducing the copy to one action: `TALK TO JR`, with `A/Space` as the only control cue.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - focused `npm test -- --run src/scenes/TitleScene.test.ts src/scenes/CharacterCreateScene.test.ts src/input/InputState.test.ts src/systems/interactionPrompt.test.ts` passes (4 files / 34 tests);
+    - required web-game client completed against `?scene=TitleScene&role=compiler&name=Ruby&v=declutter-client-final`;
+    - direct bundled-Playwright probe captured Title, CharacterCreate, and Office with zero page errors;
+    - visual proof: `output/declutter-opening/final/TitleScene.png`, `output/declutter-opening/final/CharacterCreateScene.png`, and `output/declutter-opening/final/OfficeScene.png`.
 - Onboarding clarity pass (2026-07-02):
   - Added shared player-facing mission copy that explains the opening goal, verb loop, stakes, and first action in plain language.
   - Updated the title mission plaque to state: publish one reliable FRUS volume; talk/carry/verify/stamp; reliability hearts punish bad shortcuts.

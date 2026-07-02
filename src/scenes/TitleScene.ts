@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { SCREENS, publicAssetPath } from "../assets/registry";
-import { CONTROLS_TEXT, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   FRUS_QUEST_MISSION,
   FRUS_QUEST_PLAYER_GOAL,
@@ -51,38 +51,9 @@ export class TitleScene extends Phaser.Scene {
     retroAudio.startMusic("TitleScene");
 
     this.cameras.main.setBackgroundColor(PALETTE.black);
-    const usingArtPackTitle = this.drawArtPackTitleScreen();
-    if (!usingArtPackTitle) {
-      this.drawWallpaper();
-      this.drawHeaderPlaque();
-      this.drawFilmstrip(TITLE_LAYOUT.topFilmstripY);
-      this.drawFilmstrip(TITLE_LAYOUT.bottomFilmstripY);
-      this.drawWorldMapBriefing();
-      this.drawTitlePlate();
-      this.drawRelicShelf(128, TITLE_LAYOUT.relicShelf.y);
-      this.drawQuestRouteStrip(128, 198, 36);
-
-      this.add
-        .text(128, TITLE_LAYOUT.pressStartY, "PRESS START TO VERIFY", {
-          fontFamily: "monospace",
-          fontSize: "8px",
-          color: PALETTE.terminalCyan
-        })
-        .setOrigin(0.5)
-        .setResolution(2);
-      this.add
-        .text(128, TITLE_LAYOUT.controlsY, CONTROLS_TEXT, {
-          fontFamily: "monospace",
-          fontSize: "6px",
-          color: PALETTE.creamPaper,
-          align: "center",
-          lineSpacing: 2
-        })
-        .setOrigin(0.5)
-        .setResolution(2);
-    }
-    this.drawStartAffordance(usingArtPackTitle ? TITLE_LAYOUT.artPackStartY : TITLE_LAYOUT.pressStartY);
-    this.drawMissionPlaque(usingArtPackTitle);
+    this.drawCleanTitleCard();
+    this.drawStartAffordance(TITLE_LAYOUT.pressStartY);
+    this.drawMissionPlaque(false);
     this.createSkipWarningToggle();
   }
 
@@ -127,6 +98,55 @@ export class TitleScene extends Phaser.Scene {
     }).setDepth(40);
     this.drawQuestRouteStrip(128, 211, 41);
     return true;
+  }
+
+  private drawCleanTitleCard() {
+    this.add.rectangle(128, 120, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby)).setName("title-clean-bg");
+    this.add.rectangle(128, 120, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black), 0.18).setName("title-clean-vignette");
+    for (let y = 14; y < GAME_HEIGHT - 18; y += 28) {
+      for (let x = (y / 28) % 2 === 0 ? 14 : 30; x < GAME_WIDTH; x += 32) {
+        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramHighlight), 0.28)
+          .setName("title-clean-buckram-dot");
+      }
+    }
+
+    this.add.rectangle(128, 72, 178, 86, color(PALETTE.black), 0.55)
+      .setName("title-clean-card-shadow");
+    this.add.rectangle(128, 69, 170, 82, color(PALETTE.shadowNavy), 0.96)
+      .setName("title-clean-card")
+      .setStrokeStyle(2, color(PALETTE.goldStamp));
+    this.add.rectangle(128, 103, 124, 1, color(PALETTE.goldStamp), 0.86)
+      .setName("title-clean-divider");
+
+    this.add.text(128, 34, "RUBY RULE", {
+      fontFamily: "monospace",
+      fontSize: "18px",
+      color: PALETTE.goldStamp,
+      fontStyle: "bold"
+    }).setName("title-clean-logo").setOrigin(0.5, 0).setResolution(2);
+    this.add.text(128, 56, "THE FRUS QUEST", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.creamPaper
+    }).setName("title-clean-subtitle").setOrigin(0.5, 0).setResolution(2);
+
+    this.add.rectangle(128, 84, 24, 30, color(PALETTE.deepRuby))
+      .setName("title-clean-volume")
+      .setStrokeStyle(1, color(PALETTE.goldStamp));
+    this.add.rectangle(121, 84, 4, 30, color(PALETTE.buckramHighlight), 0.82)
+      .setName("title-clean-volume-spine");
+    this.add.rectangle(132, 77, 10, 2, color(PALETTE.goldStamp))
+      .setName("title-clean-volume-band");
+    this.add.rectangle(132, 91, 10, 2, color(PALETTE.goldStamp))
+      .setName("title-clean-volume-band");
+    this.add.circle(132, 84, 4, color(PALETTE.goldStamp), 0.82)
+      .setName("title-clean-volume-seal");
+
+    this.add.text(128, 114, "PRESS START TO VERIFY", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.terminalCyan
+    }).setName("title-clean-start-text").setOrigin(0.5, 0).setResolution(2);
   }
 
   /**
