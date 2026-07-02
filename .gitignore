@@ -4,6 +4,7 @@ output/
 .vite/
 .parcel-cache/
 coverage/
+docs/screenshots/**
 
 *.log
 npm-debug.log*
