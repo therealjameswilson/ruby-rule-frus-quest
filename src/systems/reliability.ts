@@ -47,6 +47,7 @@ export function applyStandardsViolation(violation: StandardViolation, context?: 
 
 export class ReliabilityHud {
   private readonly scene: Phaser.Scene;
+  private readonly summaryObjects: Phaser.GameObjects.GameObject[] = [];
   private readonly statusLines: Phaser.GameObjects.Text[] = [];
   private readonly itemSlots: Array<{
     id: string;
@@ -58,8 +59,8 @@ export class ReliabilityHud {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    scene.add.rectangle(152, 20, 204, 38, color(PALETTE.black)).setDepth(860).setScrollFactor(0);
-    scene.add.rectangle(152, 20, 204, 38).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(861).setScrollFactor(0);
+    this.summaryObjects.push(scene.add.rectangle(152, 20, 204, 38, color(PALETTE.black)).setDepth(860).setScrollFactor(0));
+    this.summaryObjects.push(scene.add.rectangle(152, 20, 204, 38).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(861).setScrollFactor(0));
     [3, 13, 23].forEach((y, index) => {
       const line = scene.add.text(52, y, "", {
         fontFamily: "monospace",
@@ -67,6 +68,7 @@ export class ReliabilityHud {
         color: index === 0 ? PALETTE.goldStamp : PALETTE.creamPaper
       }).setDepth(862).setScrollFactor(0);
       this.statusLines.push(line);
+      this.summaryObjects.push(line);
     });
     this.createItemStrip();
 
@@ -124,6 +126,15 @@ export class ReliabilityHud {
     this.details.setVisible(false);
   }
 
+  setSummaryVisible(visible: boolean) {
+    this.summaryObjects.forEach((object) => {
+      const visibleObject = object as Phaser.GameObjects.GameObject & {
+        setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
+      };
+      visibleObject.setVisible?.(visible);
+    });
+  }
+
   toggleDetails() {
     if (this.active) {
       this.details.setVisible(false);
@@ -169,6 +180,7 @@ export class ReliabilityHud {
         color: PALETTE.stoneGray
       }).setDepth(864).setScrollFactor(0);
       this.itemSlots.push({ id: item.id, box, label });
+      this.summaryObjects.push(box, label);
     }
   }
 }

@@ -129,6 +129,8 @@ export class OfficeScene extends Phaser.Scene {
   private prompt!: InteractionPrompt;
   private toast!: FeedbackToast;
   private tutorialCard?: Phaser.GameObjects.Container;
+  private firstQuestCue?: Phaser.GameObjects.Container;
+  private firstRoomProgressObjects: Phaser.GameObjects.GameObject[] = [];
   private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
@@ -144,6 +146,7 @@ export class OfficeScene extends Phaser.Scene {
     retroAudio.startMusic("GuideScene");
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawRoomFrame(this, "OFFICE HUB", PALETTE.goldStamp);
+    this.hideLegacyRoomHud();
     this.drawOfficeInterior();
 
     const returnSpawn = this.consumeOfficeReturnSpawn();
@@ -153,6 +156,7 @@ export class OfficeScene extends Phaser.Scene {
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 10, this.controlsHint, {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -261,6 +265,7 @@ export class OfficeScene extends Phaser.Scene {
       "Cherry Blossom Garden Door",
       "Senate Hearing Chamber Door"
     ]);
+    this.createFirstQuestCue();
     if (!gameState.sceneProgress.officeTutorialSeen) this.showOfficeTutorial();
   }
 
@@ -303,6 +308,7 @@ export class OfficeScene extends Phaser.Scene {
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.toast.update(delta, this.player.position);
+      this.updateFirstQuestCue();
       return;
     }
     if (this.choice.active) {
@@ -311,16 +317,19 @@ export class OfficeScene extends Phaser.Scene {
       this.prompt.update(delta, null);
       this.toast.update(delta, this.player.position);
       this.reliability.update();
+      this.updateFirstQuestCue();
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.toast.update(delta, this.player.position);
+      this.updateFirstQuestCue();
       return;
     }
     if (input.pauseJustPressed) {
       this.dialog.show("OFFICE HUB", "The office route is paused.");
+      this.updateFirstQuestCue();
       return;
     }
 
@@ -348,10 +357,13 @@ export class OfficeScene extends Phaser.Scene {
     }
     setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
     this.reliability.update();
+    this.updateFirstQuestCue();
   }
 
   private talkJuniorCompiler() {
     retroAudio.confirm();
+    gameState.sceneProgress.juniorCompilerIntroduced = 1;
+    this.updateFirstQuestCue();
     const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
     if (hasDanneItem("master-declass-key")) {
       this.dialog.show("JUNIOR COMPILER", [
@@ -400,7 +412,7 @@ export class OfficeScene extends Phaser.Scene {
       align: "center",
       lineSpacing: 0
     }).setName("office-tutorial-body").setOrigin(0.5, 0);
-    const route = this.add.text(128, 62, "A = INTERACT  ·  MOVE = BEGIN", {
+    const route = this.add.text(128, 62, "A = INTERACT  -  MOVE = BEGIN", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.terminalCyan,
@@ -429,13 +441,76 @@ export class OfficeScene extends Phaser.Scene {
 
   private dismissOfficeTutorial() {
     if (!this.tutorialCard) return;
-    this.tutorialCard.destroy();
+    this.tutorialCard.destroy(true);
     this.tutorialCard = undefined;
     this.hintText.setVisible(true);
     this.setOfficeRouteCompassVisible(true);
     gameState.sceneProgress.officeTutorialSeen = 1;
     setLatestMessage(`${FRUS_QUEST_MISSION} ${FRUS_QUEST_STAKES}`);
     setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
+    this.updateFirstQuestCue();
+  }
+
+  private createFirstQuestCue() {
+    const arrow = this.add.triangle(0, -15, 0, 0, 8, 0, 4, 7, color(PALETTE.goldStamp), 0.96)
+      .setName("office-first-quest-arrow")
+      .setStrokeStyle(1, color(PALETTE.black));
+    const plate = this.add.rectangle(0, -26, 34, 10, color(PALETTE.black), 0.86)
+      .setName("office-first-quest-plate")
+      .setStrokeStyle(1, color(PALETTE.goldStamp));
+    const label = this.add.text(0, -29, "TALK", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp
+    }).setName("office-first-quest-label").setOrigin(0.5, 0);
+    this.firstQuestCue = this.add.container(this.juniorCompiler.x, this.juniorCompiler.y - 16, [arrow, plate, label])
+      .setName("office-first-quest-cue")
+      .setDepth(850)
+      .setVisible(false);
+    this.tweens.add({
+      targets: this.firstQuestCue,
+      y: this.juniorCompiler.y - 20,
+      duration: 520,
+      yoyo: true,
+      repeat: -1,
+      ease: "Sine.easeInOut"
+    });
+    this.updateFirstQuestCue();
+  }
+
+  private updateFirstQuestCue() {
+    const visible = Boolean(
+      this.firstQuestCue
+      && !this.tutorialCard
+      && !this.dialog?.active
+      && !this.choice?.active
+      && !gameState.sceneProgress.juniorCompilerIntroduced
+    );
+    this.firstQuestCue?.setVisible(visible);
+    this.updateFirstRoomProgressVisibility();
+  }
+
+  private updateFirstRoomProgressVisibility() {
+    const visible = Boolean(gameState.sceneProgress.juniorCompilerIntroduced);
+    this.firstRoomProgressObjects.forEach((object) => {
+      const visibleObject = object as Phaser.GameObjects.GameObject & {
+        setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
+      };
+      visibleObject.setVisible?.(visible);
+    });
+  }
+
+  private hideLegacyRoomHud() {
+    this.children.list.forEach((object) => {
+      const displayObject = object as Phaser.GameObjects.GameObject & {
+        depth?: number;
+        y?: number;
+        setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
+      };
+      if ((displayObject.depth ?? 0) >= 760 && (displayObject.depth ?? 0) <= 805 && (displayObject.y ?? 999) <= 36) {
+        displayObject.setVisible?.(false);
+      }
+    });
   }
 
   private handleJuniorQuestStation(station: "inbox" | "cart" | "terminal") {
@@ -1332,9 +1407,18 @@ export class OfficeScene extends Phaser.Scene {
     this.add.rectangle(113, 62, 5, 5, color(PALETTE.archiveAmber)).setDepth(-12);
     this.drawProductionBoard(174, 60);
     this.drawFirstHourTrainingRelic(222, 61);
+    this.captureFirstRoomProgressObjects();
+    this.updateFirstRoomProgressVisibility();
     // Hanging archive banner near the senate door.
     this.add.rectangle(128, 52, 18, 14, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
     this.add.rectangle(128, 50, 10, 6, color(PALETTE.goldStamp)).setDepth(-13);
+  }
+
+  private captureFirstRoomProgressObjects() {
+    this.firstRoomProgressObjects = this.children.list.filter((child) => {
+      const name = child.name ?? "";
+      return name.startsWith("office-production-route") || name.startsWith("office-first-hour");
+    });
   }
 
   private drawFirstHourTrainingRelic(x: number, y: number) {

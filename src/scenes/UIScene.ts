@@ -6,12 +6,12 @@ import {
   SNES_RESEARCH_PENDANT_RELIC_ASSET,
   SNES_ROOM_MAP_MARKER_ASSET
 } from "../game/snesAtlas";
-import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, getAdventureTrainingReadout } from "../game/state";
+import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout } from "../game/state";
 import { addGamepadConnectionListener, getInput, updateInputCallbacks } from "../input/InputState";
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
 import { applyIntegerZoom } from "../systems/pixelPerfect";
-import { questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandVerbCode } from "./questBandCue";
+import { questBandCoverFragmentSlots, questBandCrystalSlots } from "./questBandCue";
 
 type RoomMapMarkerFrameName = (typeof SNES_ROOM_MAP_MARKER_ASSET.frames)[number];
 
@@ -122,7 +122,7 @@ export class UIScene extends Phaser.Scene {
       .setDepth(20400)
       .setScrollFactor(0)
       .setVisible(false);
-    this.questBandText = this.add.text(5, 13, "", {
+    this.questBandText = this.add.text(78, 5, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper
@@ -130,7 +130,7 @@ export class UIScene extends Phaser.Scene {
       .setDepth(20401)
       .setScrollFactor(0)
       .setVisible(false);
-    this.questBandToolText = this.add.text(GAME_WIDTH - 4, 13, "", {
+    this.questBandToolText = this.add.text(GAME_WIDTH - 4, 5, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp,
@@ -140,7 +140,7 @@ export class UIScene extends Phaser.Scene {
       .setDepth(20401)
       .setScrollFactor(0)
       .setVisible(false);
-    this.questBandVerbText = this.add.text(6, 23, "", {
+    this.questBandVerbText = this.add.text(7, 18, "", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.black,
@@ -150,7 +150,7 @@ export class UIScene extends Phaser.Scene {
       .setDepth(20402)
       .setScrollFactor(0)
       .setVisible(false);
-    this.questBandCueText = this.add.text(35, 23, "", {
+    this.questBandCueText = this.add.text(34, 17, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
@@ -182,8 +182,8 @@ export class UIScene extends Phaser.Scene {
     this.questBandToolText.setVisible(visible);
     this.questBandVerbText.setVisible(visible);
     this.questBandCueText.setVisible(visible);
-    this.questBandVolumeText.setVisible(visible);
-    this.questBandPendantRelics.forEach((relic) => relic.setVisible(visible));
+    this.questBandVolumeText.setVisible(false);
+    this.questBandPendantRelics.forEach((relic) => relic.setVisible(false));
     if (!visible) {
       this.questBandCrystalRelics.forEach((relic) => relic.setVisible(false));
       this.questBandCoverFragmentRelics.forEach((relic) => relic.setVisible(false));
@@ -192,55 +192,66 @@ export class UIScene extends Phaser.Scene {
 
     const hud = getAdventureHudReadout();
     const subscreen = getAdventureSubscreenReadout();
-    const trainingCue = getAdventureTrainingReadout();
-    this.syncQuestBandCrystalRelics(subscreen.crystals.earned, subscreen.crystals.total);
-    this.syncQuestBandCoverFragmentRelics(hud.fragments.current, hud.fragments.total);
     if (now - this.questBandLastRefresh < 120) return;
     this.questBandLastRefresh = now;
 
-    const activePhase = subscreen.productionBoard.activePhase;
-    const phaseLabel = activePhase
-      ? `${activePhase.shortLabel} ${activePhase.completed}/${activePhase.total}`
-      : "DONE";
     const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? "NONE";
+    const objectiveLine = this.compactObjective(activeSceneKey);
+    const actionLine = this.compactActionLine(toolLabel);
     const signature = [
       gameState.reliability,
-      subscreen.pendants.map((pendant) => pendant.acquired ? "1" : "0").join(""),
-      `${subscreen.crystals.earned}/${subscreen.crystals.total}`,
       toolLabel,
-      hud.stamps,
-      `${hud.fragments.current}/${hud.fragments.total}`,
-      phaseLabel,
-      hud.documentPoints,
-      trainingCue.verb,
-      trainingCue.text,
-      trainingCue.drillId,
-      subscreen.roomMap.currentAreaId,
-      subscreen.roomMap.currentRoomId ?? "--",
-      subscreen.roomMap.rooms
-        .map((room) => `${room.id}:${room.visited ? "v" : ""}${room.revealed ? "r" : ""}`)
-        .join(","),
-      subscreen.dungeons
-        .map((dungeon) => `${dungeon.areaId}:${dungeon.smallKeys}/${dungeon.smallKeysRequired}:${dungeon.bigKeyHeld ? "b" : ""}:${dungeon.mapRevealed ? "m" : ""}`)
-        .join(",")
+      objectiveLine,
+      actionLine,
+      gameState.nearestInteractable ?? "",
+      gameState.heldItem ?? "",
+      gameState.mode
     ].join("|");
     if (signature === this.questBandSignature) return;
     this.questBandSignature = signature;
 
     this.questBandGraphics.clear();
     this.drawQuestBandChrome(subscreen.reliabilityHearts.filled, subscreen.reliabilityHearts.total);
-    this.drawQuestBandPendants(subscreen.pendants.map((pendant) => pendant.acquired));
-    this.drawQuestBandCrystals(subscreen.crystals.earned, subscreen.crystals.total);
-    this.drawQuestBandRoomMap(subscreen.roomMap);
-    this.drawQuestBandKeyStatus(subscreen.dungeons);
-    this.drawQuestBandVolumeAssembly(hud.fragments.current, hud.fragments.total);
+    this.drawQuestBandActionBadge();
     this.drawQuestBandToolSlot(Boolean(subscreen.equippedTool ?? hud.equippedItem));
-    this.drawQuestBandVerbBadge(trainingCue.verb);
-    this.questBandText.setText(`PH ${phaseLabel}  DP ${hud.documentPoints}`);
-    this.questBandVerbText.setText(questBandVerbCode(trainingCue.verb));
-    this.questBandCueText.setText(questBandCueLine(trainingCue));
+    this.questBandText.setText(objectiveLine);
+    this.questBandVerbText.setText("A");
+    this.questBandCueText.setText(actionLine);
     this.questBandToolText.setText(`TOOL ${toolLabel}`);
-    this.questBandVolumeText.setText(`VOL ${hud.fragments.current}/${hud.fragments.total}`);
+    this.questBandVolumeText.setText("");
+    this.hideDetailedQuestBandRelics();
+  }
+
+  private compactObjective(activeSceneKey: string | null) {
+    if (gameState.mode === "dialog") return "Read the line.";
+    if (gameState.mode === "choice") return "Choose the correct workflow answer.";
+    if (gameState.heldItem) return `Carry ${gameState.heldItem}.`;
+    if (activeSceneKey === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
+      return "Talk to the Junior Compiler.";
+    }
+    const objective = gameState.objective.replace(/^Mission:\s*/i, "");
+    const firstSentence = objective.split(".")[0]?.trim() || objective.trim();
+    if (firstSentence.length <= 42) return firstSentence;
+    return `${firstSentence.slice(0, 39).trim()}...`;
+  }
+
+  private compactActionLine(toolLabel: string) {
+    if (gameState.mode === "dialog") return "NEXT LINE";
+    if (gameState.mode === "choice") return "CONFIRM";
+    if (gameState.currentScene === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
+      return "GO LEFT - TALK WHEN CLOSE";
+    }
+    if (gameState.nearestInteractable) return `INTERACT: ${gameState.nearestInteractable.toUpperCase().slice(0, 22)}`;
+    if (toolLabel !== "NONE") return `USE ${toolLabel}`;
+    return "FIND A GLOWING DESK OR DOOR";
+  }
+
+  private hideDetailedQuestBandRelics() {
+    this.questBandPendantRelics.forEach((relic) => relic.setVisible(false));
+    this.questBandCrystalRelics.forEach((relic) => relic.setVisible(false));
+    this.questBandCoverFragmentRelics.forEach((relic) => relic.setVisible(false));
+    this.questBandRoomMapMarkers.forEach((marker) => marker.destroy());
+    this.questBandRoomMapMarkers = [];
   }
 
   private shouldShowQuestBand(activeSceneKey: string | null) {
@@ -260,14 +271,14 @@ export class UIScene extends Phaser.Scene {
 
   private drawQuestBandChrome(filledHearts: number, totalHearts: number) {
     const g = this.questBandGraphics;
-    g.fillStyle(color(PALETTE.black), 0.82);
-    g.fillRect(0, 0, GAME_WIDTH, 30);
-    g.fillStyle(color(PALETTE.deepRuby), 0.78);
-    g.fillRect(0, 20, GAME_WIDTH, 10);
+    g.fillStyle(color(PALETTE.black), 0.86);
+    g.fillRect(0, 0, GAME_WIDTH, 24);
+    g.fillStyle(color(PALETTE.deepRuby), 0.8);
+    g.fillRect(0, 16, GAME_WIDTH, 8);
     g.fillStyle(color(PALETTE.goldStamp), 1);
-    g.fillRect(0, 21, GAME_WIDTH, 1);
+    g.fillRect(0, 23, GAME_WIDTH, 1);
     g.fillStyle(color(PALETTE.black), 0.72);
-    g.fillRect(0, 22, GAME_WIDTH, 8);
+    g.fillRect(0, 17, GAME_WIDTH, 6);
     for (let index = 0; index < totalHearts; index += 1) {
       this.drawQuestHeart(5 + index * 7, 3, index < filledHearts);
     }
@@ -624,23 +635,15 @@ export class UIScene extends Phaser.Scene {
     g.fillRect(x + 6, 8, 2, 5);
   }
 
-  private drawQuestBandVerbBadge(verb: ReturnType<typeof getAdventureTrainingReadout>["verb"]) {
+  private drawQuestBandActionBadge() {
     const g = this.questBandGraphics;
-    const accent = this.questBandVerbAccent(verb);
+    const accent = gameState.nearestInteractable ? PALETTE.goldStamp : PALETTE.terminalCyan;
     g.fillStyle(color(PALETTE.black), 0.98);
-    g.fillRect(3, 22, 29, 8);
+    g.fillRect(3, 17, 25, 7);
     g.lineStyle(1, color(accent), 1);
-    g.strokeRect(3, 22, 29, 8);
+    g.strokeRect(3, 17, 25, 7);
     g.fillStyle(color(accent), 0.95);
-    g.fillRect(4, 23, 27, 6);
-  }
-
-  private questBandVerbAccent(verb: ReturnType<typeof getAdventureTrainingReadout>["verb"]) {
-    if (verb === "UNLOCK" || verb === "BOSS") return PALETTE.classNetRed;
-    if (verb === "KEY" || verb === "RETURN") return PALETTE.goldStamp;
-    if (verb === "MAP" || verb === "ACT") return PALETTE.terminalCyan;
-    if (verb === "READ" || verb === "CHOOSE") return PALETTE.creamPaper;
-    return PALETTE.openNetGreen;
+    g.fillRect(4, 18, 23, 5);
   }
 
   private showGamepadToast(message: string) {
