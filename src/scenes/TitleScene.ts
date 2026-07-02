@@ -1,7 +1,12 @@
 import Phaser from "phaser";
 import { SCREENS, publicAssetPath } from "../assets/registry";
 import { CONTROLS_TEXT, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { FRUS_QUEST_MISSION, FRUS_QUEST_TITLE_PROMPT } from "../game/mission";
+import {
+  FRUS_QUEST_MISSION,
+  FRUS_QUEST_PLAYER_GOAL,
+  FRUS_QUEST_PLAYER_LOOP,
+  FRUS_QUEST_PLAYER_STAKES
+} from "../game/mission";
 import { resetGameState, setSceneState } from "../game/state";
 import { getSkipWarningPreference, setSkipWarningPreference } from "../game/warningSettings";
 import { bindPointerPress, getInput, tickInput } from "../input/InputState";
@@ -490,27 +495,34 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private drawMissionPlaque(usingArtPackTitle: boolean) {
-    const y = usingArtPackTitle ? 205 : 192;
+    const y = usingArtPackTitle ? 204 : 192;
     const depth = 43;
-    this.add.rectangle(128, y, 238, 15, color(PALETTE.black), 0.82)
+    const plaqueHeight = usingArtPackTitle ? 28 : 24;
+    this.add.rectangle(128, y, 238, plaqueHeight + 2, color(PALETTE.black), 0.84)
       .setName("title-mission-plaque-shadow")
       .setDepth(depth);
-    this.add.rectangle(128, y - 1, 232, 13, color(PALETTE.deepRuby), 0.9)
+    this.add.rectangle(128, y - 1, 232, plaqueHeight, color(PALETTE.deepRuby), 0.92)
       .setName("title-mission-plaque")
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(depth + 1);
-    this.add.text(128, y - 6, FRUS_QUEST_TITLE_PROMPT, {
+    this.add.text(128, y - 11, FRUS_QUEST_PLAYER_GOAL, {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp,
       align: "center"
     }).setName("title-mission-text").setOrigin(0.5, 0).setDepth(depth + 2).setResolution(2);
-    this.add.text(128, y, "VERIFY SOURCES · CLEAR EQUITIES · PROOF PAGES", {
+    this.add.text(128, y - 2, FRUS_QUEST_PLAYER_LOOP, {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.terminalCyan,
+      align: "center"
+    }).setName("title-mission-loop-text").setOrigin(0.5, 0).setDepth(depth + 2).setResolution(2);
+    this.add.text(128, y + 6, FRUS_QUEST_PLAYER_STAKES, {
       fontFamily: "monospace",
       fontSize: "4px",
       color: PALETTE.creamPaper,
       align: "center"
-    }).setName("title-mission-subtext").setOrigin(0.5, 0).setDepth(depth + 2).setResolution(2);
+    }).setName("title-mission-stakes-text").setOrigin(0.5, 0).setDepth(depth + 2).setResolution(2);
   }
 
   private toggleAudio() {
