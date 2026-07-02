@@ -3698,3 +3698,15 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - required web-game client reached `OfficeScene` with `gameGoal`, mission objective, and no browser errors;
   - direct system Chrome pass captured title, character creation, and Office tutorial proof with zero page errors;
   - visual proof: `docs/screenshots/mission-clarity-direct/title.png`, `docs/screenshots/mission-clarity-direct/character-create.png`, and `docs/screenshots/mission-clarity-direct/office-tutorial.png`.
+
+## 2026-07-02 Mess triage pass
+
+- Responded to the live gameplay critique by tightening the first playable surface instead of adding new systems.
+- Fixed the DOM boot loader so it no longer hides before a non-Boot Phaser scene is active; this prevents the blank ruby canvas during slower art-pack loads.
+- Shrunk the Office opening mission card and changed its copy from broad mission exposition to a direct first action: talk to the Junior Compiler, A = interact, movement begins play.
+- Restored a visible basic-control reminder in the Office bottom hint: `MOVE · A INTERACT · M MENU`.
+- Made `window.render_game_to_text()` concise by default so gameplay QA sees scene, objective, player, target, dialog, inventory, and counters instead of a huge internal-state dump. The complete dump remains available with `?text=full` or `?debugState=full`.
+- Verification in progress:
+  - `npm run build` passed with the known large-chunk warning;
+  - direct Playwright probe confirmed `OfficeScene` active, no page errors, concise 1.2KB text state, and no blank canvas after load;
+  - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=mess-fix-client` with no error artifact.
