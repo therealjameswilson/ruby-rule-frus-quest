@@ -31,6 +31,12 @@ export class WarningScene extends Phaser.Scene {
     super("WarningScene");
   }
 
+  preload() {
+    if (!this.textures.exists(DANNE_WARNING_SCREEN_ASSET.key)) {
+      this.load.image(DANNE_WARNING_SCREEN_ASSET.key, DANNE_WARNING_SCREEN_ASSET.path);
+    }
+  }
+
   create() {
     setSceneState("WarningScene", "title", "DANN-E warning screen before title.");
     setLatestMessage("Beware DANN-E. Press A to begin.");

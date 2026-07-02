@@ -22,10 +22,12 @@ export class DialogBox {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     const touch = isTouchInputCapable();
-    const fontSize = touch ? 10 : 8;
-    const speakerY = GAME_HEIGHT - 63;
-    const bodyY = touch ? GAME_HEIGHT - 48 : GAME_HEIGHT - 52;
-    const frame = createDanneScrollFrame(scene, 6, GAME_HEIGHT - 68, GAME_WIDTH - 12, 64);
+    const fontSize = touch ? 9 : 8;
+    const frameHeight = touch ? 56 : 50;
+    const frameY = GAME_HEIGHT - frameHeight - 4;
+    const speakerY = frameY + 6;
+    const bodyY = speakerY + 12;
+    const frame = createDanneScrollFrame(scene, 6, frameY, GAME_WIDTH - 12, frameHeight);
     this.speakerText = scene.add.text(14, speakerY, "", {
       fontFamily: "monospace",
       fontSize: `${fontSize}px`,
@@ -35,8 +37,8 @@ export class DialogBox {
       fontFamily: "monospace",
       fontSize: `${fontSize}px`,
       color: PALETTE.creamPaper,
-      wordWrap: { width: 226, useAdvancedWrap: true },
-      lineSpacing: touch ? 0 : 2
+      wordWrap: { width: 228, useAdvancedWrap: true },
+      lineSpacing: 0
     }).setScrollFactor(0);
     bindPointerPress(frame.hitArea, {
       down: () => this.pressAdvance(),

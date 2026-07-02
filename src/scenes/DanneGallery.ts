@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { danneAnimKey } from "../art/danne_anims";
+import { danneAnimKey, registerDanneAnims } from "../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   DANNE_GALLERY_ASSETS,
@@ -44,7 +44,22 @@ export class DanneGallery extends Phaser.Scene {
     super("DanneGallery");
   }
 
+  preload() {
+    for (const asset of DANNE_GALLERY_ASSETS) {
+      if (this.textures.exists(asset.key)) continue;
+      if (hasSpriteSheetFrame(asset)) {
+        this.load.spritesheet(asset.key, asset.path, {
+          frameWidth: asset.frameW,
+          frameHeight: asset.frameH
+        });
+      } else {
+        this.load.image(asset.key, asset.path);
+      }
+    }
+  }
+
   create() {
+    registerDanneAnims(this);
     setSceneState("DanneGallery", "debug", "Visual QA: verify every DANN-E pack texture is registered.");
     setLatestMessage("DANN-E Gallery loaded. Use wheel or Up/Down to scroll.");
     setVisibleEntities(DANNE_GALLERY_ASSETS.map((asset) => `${asset.category}: ${asset.key}`));
@@ -85,9 +100,9 @@ export class DanneGallery extends Phaser.Scene {
   }
 
   private drawAssetGrid() {
-    const cellWidth = 122;
-    const cellHeight = 86;
-    const columns = 2;
+    const cellWidth = 244;
+    const cellHeight = 78;
+    const columns = 1;
     const top = 45;
     const left = 6;
     const rows = Math.ceil(DANNE_GALLERY_ASSETS.length / columns);
@@ -112,7 +127,7 @@ export class DanneGallery extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan
     });
-    this.add.text(x + 4, y + 10, wrapLabel(asset.key, 24), {
+    this.add.text(x + 4, y + 10, wrapLabel(asset.key, 40), {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.creamPaper,
@@ -120,8 +135,8 @@ export class DanneGallery extends Phaser.Scene {
     });
 
     if (!exists) {
-      this.add.rectangle(x + width / 2, y + 46, 54, 36, color(PALETTE.classNetRed), 0.85);
-      this.add.text(x + width / 2, y + 42, "MISSING", {
+      this.add.rectangle(x + width / 2, y + 43, 54, 30, color(PALETTE.classNetRed), 0.85);
+      this.add.text(x + width / 2, y + 39, "MISSING", {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.white
@@ -130,7 +145,7 @@ export class DanneGallery extends Phaser.Scene {
     }
 
     const source = this.textures.get(asset.key).getSourceImage() as TextureSourceSize;
-    const preview = this.createPreview(asset, x + width / 2, y + 47, source);
+    const preview = this.createPreview(asset, x + width / 2, y + 42, source);
     this.add.text(x + width / 2, y + height - 14, `${source.width}x${source.height}`, {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -147,8 +162,8 @@ export class DanneGallery extends Phaser.Scene {
   }
 
   private createPreview(asset: DanneGalleryAsset, x: number, y: number, source: TextureSourceSize) {
-    const maxWidth = 58;
-    const maxHeight = 38;
+    const maxWidth = 72;
+    const maxHeight = 28;
     const scale = Math.min(maxWidth / source.width, maxHeight / source.height, 1);
     if (isDanneSpriteKey(asset.key)) {
       const sprite = this.add.sprite(x, y + 11, asset.key, 0).setOrigin(0.5, 0.9).setScale(scale);

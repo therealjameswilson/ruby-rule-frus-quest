@@ -137,9 +137,7 @@ export const INITIAL_DOCUMENT_CANDIDATES: readonly DocumentCandidate[] = [
     undisclosedDeletion: false,
     workflowState: "found",
     reviewStatus: "not_submitted",
-    equities: [
-      equity("historians-office", "Office Source Trail", "diplomatic", "not_submitted")
-    ]
+    equities: []
   },
   {
     id: "cross_reference_001",

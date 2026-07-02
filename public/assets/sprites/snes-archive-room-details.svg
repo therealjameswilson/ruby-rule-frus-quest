@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="16" viewBox="0 0 96 16" shape-rendering="crispEdges">
+  <!-- frame 0: floor scuff -->
+  <g transform="translate(0 0)">
+    <rect x="2" y="7" width="6" height="1" fill="#B89A5A"/>
+    <rect x="5" y="10" width="8" height="1" fill="#B89A5A"/>
+    <rect x="10" y="5" width="3" height="1" fill="#E8D8A8"/>
+    <rect x="3" y="4" width="1" height="1" fill="#D6A23A"/>
+    <rect x="12" y="12" width="1" height="1" fill="#7A1020"/>
+  </g>
+
+  <!-- frame 1: corner shadow -->
+  <g transform="translate(16 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#0F0F0F" opacity="0"/>
+    <rect x="2" y="2" width="12" height="2" fill="#0F0F0F"/>
+    <rect x="2" y="4" width="2" height="10" fill="#0F0F0F"/>
+    <rect x="4" y="4" width="8" height="1" fill="#3A0710"/>
+    <rect x="4" y="6" width="1" height="6" fill="#3A0710"/>
+    <rect x="5" y="5" width="2" height="2" fill="#D6A23A"/>
+    <rect x="10" y="3" width="3" height="1" fill="#B89A5A"/>
+    <rect x="3" y="10" width="1" height="3" fill="#B89A5A"/>
+  </g>
+
+  <!-- frame 2: wall cap -->
+  <g transform="translate(32 0)">
+    <rect x="0" y="4" width="16" height="8" fill="#0F0F0F"/>
+    <rect x="1" y="2" width="14" height="8" fill="#7A1020"/>
+    <rect x="2" y="3" width="12" height="2" fill="#B82030"/>
+    <rect x="2" y="9" width="12" height="1" fill="#3A0710"/>
+    <rect x="4" y="6" width="8" height="1" fill="#D6A23A"/>
+    <rect x="12" y="5" width="2" height="4" fill="#B89A5A"/>
+  </g>
+
+  <!-- frame 3: open threshold plate -->
+  <g transform="translate(48 0)">
+    <rect x="1" y="5" width="14" height="8" fill="#0F0F0F"/>
+    <rect x="2" y="4" width="12" height="7" fill="#304860"/>
+    <rect x="3" y="5" width="10" height="2" fill="#68C0C0"/>
+    <rect x="4" y="9" width="8" height="1" fill="#E8D8A8"/>
+    <rect x="1" y="12" width="14" height="1" fill="#0F0F0F"/>
+  </g>
+
+  <!-- frame 4: locked threshold plate -->
+  <g transform="translate(64 0)">
+    <rect x="1" y="5" width="14" height="8" fill="#0F0F0F"/>
+    <rect x="2" y="4" width="12" height="7" fill="#7A1020"/>
+    <rect x="3" y="5" width="10" height="2" fill="#B82030"/>
+    <rect x="5" y="8" width="6" height="3" fill="#D6A23A"/>
+    <rect x="7" y="6" width="2" height="2" fill="#E8D8A8"/>
+    <rect x="1" y="12" width="14" height="1" fill="#0F0F0F"/>
+  </g>
+
+  <!-- frame 5: boss threshold plate -->
+  <g transform="translate(80 0)">
+    <rect x="1" y="5" width="14" height="8" fill="#0F0F0F"/>
+    <rect x="2" y="4" width="12" height="7" fill="#3A0710"/>
+    <rect x="3" y="5" width="10" height="2" fill="#D6A23A"/>
+    <rect x="4" y="8" width="2" height="2" fill="#B82030"/>
+    <rect x="7" y="8" width="2" height="2" fill="#F8F0D8"/>
+    <rect x="10" y="8" width="2" height="2" fill="#B82030"/>
+    <rect x="1" y="12" width="14" height="1" fill="#0F0F0F"/>
+  </g>
+</svg>

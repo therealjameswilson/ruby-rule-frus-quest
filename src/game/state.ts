@@ -22,12 +22,40 @@ import {
 import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 import type { DanneItemId } from "./danneItemCatalog";
+import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
+import { getAdventureTrainingCue } from "./adventureTraining";
+import { firstHourTrainingCoverageReadout } from "./firstHourTraining";
+import { FRUS_QUEST_LOOP, FRUS_QUEST_MISSION, FRUS_QUEST_STAKES } from "./mission";
 import {
   crystalsEarned,
+  equityCrystalDocuments,
   EQUITY_CRYSTAL_STATUSES,
   PENDANTS,
   totalEquities
 } from "./frusProgression";
+import { CHAPTER_RELEASE_PROMPTS } from "./chapterReleaseStatus";
+import { DIGITAL_RELEASE_PROMPTS } from "./digitalRelease";
+import { GPO_PUBLICATION_PROMPTS } from "./gpoPublication";
+import { GPO_SEGMENT_ASSEMBLY_PROMPTS } from "./gpoSegmentAssembly";
+import {
+  getFrusProductionBoardReadout,
+  type FrusProductionBoardStatus,
+  type FrusProductionBoardStepId
+} from "./frusProductionBoard";
+import { getFrusProductionPhaseReadout, type FrusProductionPhaseId } from "./frusProductionPhases";
+import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
+import { POLICY_COVERAGE_AUDIT_PROMPTS } from "./policyCoverageAudit";
+import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
+import { PUBLICATION_FUNDING_PROMPTS } from "./publicationFundingQueue";
+import { READER_AID_REGISTER_PROMPTS } from "./readerAidRegisters";
+import { REPOSITORY_COVERAGE_MAP_PROMPTS } from "./repositoryCoverageMap";
+import { RESEARCH_CHARTER_PROMPTS } from "./researchCharter";
+import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
+import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
+import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
+import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
+import { buildTrueEndingCertificate } from "./trueEndingCertificate";
+import { VOLUME_CONCEPT_PROMPTS } from "./volumeConcept";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
 import {
@@ -43,8 +71,11 @@ import {
   useSmallKey
 } from "../systems/dungeonKeys";
 import type { DungeonStateRegistry } from "../systems/dungeonKeys";
+import { VIOLATION_LABEL } from "../systems/standardsDamage";
+import type { StandardViolation } from "../systems/standardsDamage";
 import type {
   AdventureHudReadout,
+  AdventureTrainingReadout,
   ChoiceOption,
   DocumentCandidate,
   DocumentWorkflowState,
@@ -53,6 +84,7 @@ import type {
   PlayerCombatReadout,
   PlayerProfile,
   Position,
+  OneHourTrainingReadout,
   ReviewStatus,
   VolumeMetrics,
   VolumeWorkflowState,
@@ -87,6 +119,7 @@ export interface GameState {
     clearedBlockers: number;
   };
   dungeons: DungeonStateRegistry;
+  standardsViolations: StandardsViolationRecord[];
   reliability: number;
   heldItem: string | null;
   equippedProcessItem: ProcessItemId | null;
@@ -167,6 +200,14 @@ export interface GameSaveSummary {
 type GameStateChangeReason = "reset" | "scene" | "restore";
 type GameStateChangeListener = (reason: GameStateChangeReason) => void;
 
+const FINAL_PUBLICATION_DOCUMENT_IDS = [
+  "telegram_001",
+  "source_note_047",
+  "cross_reference_001",
+  "sbu_annotation_001",
+  "proof_page_412"
+] as const;
+
 const gameStateChangeListeners = new Set<GameStateChangeListener>();
 let resumeSpawn: { scene: string; player: Position; facing: Direction } | null = null;
 
@@ -176,6 +217,10 @@ function notifyGameStateChange(reason: GameStateChangeReason) {
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function preservedFinalGateCertification(state: FinalGateCertificationState | null) {
+  return state?.status === "published" ? state : null;
 }
 
 function normalizeSaveMode(scene: string, mode: GameMode): GameMode {
@@ -241,11 +286,42 @@ export interface FinalGateCertificationState {
   message: string;
 }
 
+export interface FinalPublicationCertificationResult {
+  ok: boolean;
+  trueEnding: boolean;
+  reason: string;
+}
+
+export interface StandardsViolationRecord {
+  id: string;
+  violation: StandardViolation;
+  label: string;
+  context: string | null;
+  documentId: string | null;
+  unresolved: boolean;
+  count: number;
+}
+
 export interface PublicationReadinessReadout {
+  repositoryCoverageMap: {
+    complete: boolean;
+    shortLabel: "MAP";
+    label: "Repository coverage map";
+  };
   pendants: {
     collected: number;
     required: number;
     missing: ProcessStampId[];
+  };
+  processStamps: {
+    collected: number;
+    required: number;
+    missing: ProcessStampId[];
+  };
+  coverFragments: {
+    collected: number;
+    required: number;
+    missing: number;
   };
   crystals: {
     collected: number;
@@ -254,13 +330,16 @@ export interface PublicationReadinessReadout {
   };
   standards: {
     unresolved: Array<{
-      id: "undisclosed_deletion";
+      id: StandardViolation;
       label: string;
-      documentId: string;
-      title: string;
+      documentId: string | null;
+      title?: string;
+      context?: string | null;
+      count?: number;
     }>;
     clear: boolean;
   };
+  apparatus: PublicationApparatusReadout;
   buckramKeyHeld: boolean;
   buckramGateOpen: boolean;
   completionRatio: number;
@@ -268,6 +347,46 @@ export interface PublicationReadinessReadout {
 }
 
 export interface AdventureSubscreenReadout {
+  productionBoard: {
+    completed: number;
+    total: number;
+    completionRatio: number;
+    nextStep: {
+      id: FrusProductionBoardStepId;
+      shortLabel: string;
+      label: string;
+      gameplayTask: string;
+      sourceBasis: string;
+      sourceUrl: string;
+      status: FrusProductionBoardStatus;
+    } | null;
+    steps: Array<{
+      id: FrusProductionBoardStepId;
+      shortLabel: string;
+      status: FrusProductionBoardStatus;
+      complete: boolean;
+    }>;
+    phases: Array<{
+      id: FrusProductionPhaseId;
+      label: string;
+      shortLabel: string;
+      status: FrusProductionBoardStatus;
+      completed: number;
+      total: number;
+      nextStep: {
+        id: FrusProductionBoardStepId;
+        shortLabel: string;
+        label: string;
+      } | null;
+    }>;
+    activePhase: {
+      id: FrusProductionPhaseId;
+      label: string;
+      shortLabel: string;
+      completed: number;
+      total: number;
+    } | null;
+  };
   pendants: Array<{
     id: "objectivity" | "provenance" | "review";
     label: string;
@@ -344,6 +463,7 @@ export const gameState: GameState = {
     clearedBlockers: 0
   },
   dungeons: createInitialDungeonStates(),
+  standardsViolations: [],
   reliability: 80,
   heldItem: null,
   equippedProcessItem: null,
@@ -400,6 +520,7 @@ export function resetGameState() {
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.documentWorkflowLog = [];
   gameState.dungeons = createInitialDungeonStates();
+  gameState.standardsViolations = [];
   gameState.heldItem = null;
   gameState.equippedProcessItem = null;
   gameState.equippedDanneItem = null;
@@ -447,7 +568,7 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.currentChoice = null;
   gameState.physicalVerification = null;
   gameState.roomTraversal = null;
-  gameState.finalGateCertification = null;
+  gameState.finalGateCertification = preservedFinalGateCertification(gameState.finalGateCertification);
   refreshQuestWorkflowState();
   notifyGameStateChange("scene");
 }
@@ -499,7 +620,7 @@ export function restoreGameSaveData(save: GameSaveData) {
   restored.visibleThreats = [];
   restored.nearestInteractable = null;
   restored.physicalVerification = null;
-  restored.finalGateCertification = null;
+  restored.finalGateCertification = preservedFinalGateCertification(restored.finalGateCertification);
   restored.snesTransition = {
     active: false,
     current: null,
@@ -509,6 +630,7 @@ export function restoreGameSaveData(save: GameSaveData) {
   gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
+  gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
   syncDungeonBigKeysFromInventory();
   syncDungeonBossesFromProcessStamps();
   resumeSpawn = {
@@ -557,6 +679,76 @@ export function setAudioStatus(message: string) {
   gameState.audioStatus = message;
 }
 
+function standardsViolationId(violation: StandardViolation, context?: string, documentId?: string) {
+  const scope = documentId ?? (context ? context.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) : "general");
+  return `${violation}:${scope || "general"}`;
+}
+
+function normalizeStandardsViolations(records?: StandardsViolationRecord[]) {
+  if (!Array.isArray(records)) return [];
+  return records
+    .filter((record) => record && typeof record.violation === "string")
+    .map((record) => ({
+      id: record.id || standardsViolationId(record.violation, record.context ?? undefined, record.documentId ?? undefined),
+      violation: record.violation,
+      label: record.label || VIOLATION_LABEL[record.violation],
+      context: record.context ?? null,
+      documentId: record.documentId ?? null,
+      unresolved: record.unresolved !== false,
+      count: Math.max(1, Math.round(record.count ?? 1))
+    }));
+}
+
+export function recordStandardsViolation(violation: StandardViolation, context?: string, documentId?: string) {
+  const id = standardsViolationId(violation, context, documentId);
+  const existing = gameState.standardsViolations.find((record) => record.id === id && record.unresolved);
+  if (existing) {
+    existing.count += 1;
+    existing.context = context ?? existing.context;
+    refreshQuestWorkflowState();
+    return { ...existing };
+  }
+
+  const record: StandardsViolationRecord = {
+    id,
+    violation,
+    label: VIOLATION_LABEL[violation],
+    context: context ?? null,
+    documentId: documentId ?? null,
+    unresolved: true,
+    count: 1
+  };
+  gameState.standardsViolations.push(record);
+  refreshQuestWorkflowState();
+  return { ...record };
+}
+
+export function resolveStandardsViolation(id: string) {
+  const record = gameState.standardsViolations.find((candidate) => candidate.id === id);
+  if (!record || !record.unresolved) return false;
+  record.unresolved = false;
+  refreshQuestWorkflowState();
+  return true;
+}
+
+export function resolveStandardsViolationForDocument(documentId: string, violation: StandardViolation) {
+  let resolved = 0;
+  for (const record of gameState.standardsViolations) {
+    if (record.documentId === documentId && record.violation === violation && record.unresolved) {
+      record.unresolved = false;
+      resolved += 1;
+    }
+  }
+  if (resolved > 0) refreshQuestWorkflowState();
+  return resolved;
+}
+
+export function unresolvedStandardsViolations() {
+  return gameState.standardsViolations
+    .filter((record) => record.unresolved)
+    .map((record) => ({ ...record }));
+}
+
 export function setPhysicalVerificationState(state: PhysicalVerificationState | null) {
   gameState.physicalVerification = state;
   refreshQuestWorkflowState();
@@ -573,6 +765,18 @@ export function setGameMode(mode: GameMode, objective?: string) {
   refreshQuestWorkflowState();
 }
 
+function currentLockedExitsForInventory(state: RoomTraversalState) {
+  const lockedExits = state.lockedExits ?? {};
+  const heldItems = getHeldProcessItemIds();
+  return Object.fromEntries(
+    (Object.entries(lockedExits) as Array<[Direction, string]>).filter(([direction]) => {
+      const requiredItem = state.requiredItems?.[direction];
+      if (!requiredItem || !processItemDefinition(requiredItem as ProcessItemId)) return true;
+      return !heldItems.has(requiredItem as ProcessItemId);
+    })
+  ) as Partial<Record<Direction, string>>;
+}
+
 export function setRoomTraversalState(state: RoomTraversalState | null) {
   const revealedRoomIds = state
     ? new Set([
@@ -583,6 +787,7 @@ export function setRoomTraversalState(state: RoomTraversalState | null) {
   gameState.roomTraversal = state
     ? {
         ...state,
+        lockedExits: currentLockedExitsForInventory(state),
         visitedRoomIds: [...state.visitedRoomIds],
         revealedRoomIds: [...(revealedRoomIds ?? [])]
       }
@@ -916,27 +1121,62 @@ export function getRoomGraphReadout() {
 export function getFinalGateReadiness() {
   const requiredStamps: ProcessStampId[] = ["rule", "archive", "network", "referral", "proof"];
   const missingStamps = requiredStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const publicationApparatus = getPublicationApparatusReadout({
+    processStamps: gameState.processStamps,
+    volumeFragments: gameState.volumeFragments,
+    documentCandidates: gameState.documentCandidates,
+    documentPoints: gameState.documentPoints,
+    sourcesConsultedListComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete)
+      || (gameState.sceneProgress.frontMatterAssemblyStep ?? 0) >= 2,
+    typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
+    typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
+    readerAidRegistersComplete: Boolean(gameState.sceneProgress.readerAidRegistersComplete),
+    indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
+    frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
+    typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete)
+  });
   const documentsWithUndisclosedDeletion = gameState.documentCandidates
     .filter((document) => document.undisclosedDeletion)
     .map((document) => ({ id: document.id, title: document.title }));
+  const standardsViolations = unresolvedStandardsViolations();
   const fragmentsNeeded = 5;
   const reliabilityMinimum = 70;
   const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
+  const equityCrystalsCollected = crystalsEarned(gameState.documentCandidates);
+  const equityCrystalsRequired = totalEquities(gameState.documentCandidates);
+  const missingEquityCrystals = Math.max(0, equityCrystalsRequired - equityCrystalsCollected);
+  const equityCrystalsReady = equityCrystalsRequired > 0 && missingEquityCrystals === 0;
   const reliabilityReady = gameState.reliability >= reliabilityMinimum;
   const buckramKeyHeld = hasProcessItem("buckram_key");
-  const ready = missingStamps.length === 0 && missingFragments === 0 && reliabilityReady && documentsWithUndisclosedDeletion.length === 0;
+  const repositoryCoverageMapReady = Boolean(gameState.sceneProgress.repositoryCoverageMapComplete);
+  const ready = missingStamps.length === 0
+    && missingFragments === 0
+    && equityCrystalsReady
+    && reliabilityReady
+    && repositoryCoverageMapReady
+    && publicationApparatus.complete
+    && documentsWithUndisclosedDeletion.length === 0
+    && standardsViolations.length === 0;
   return {
     requiredStamps,
     missingStamps,
     fragmentsCollected: gameState.volumeFragments.length,
     fragmentsNeeded,
     missingFragments,
+    equityCrystalsCollected,
+    equityCrystalsRequired,
+    missingEquityCrystals,
+    equityCrystalsReady,
+    repositoryCoverageMapReady,
     reliability: gameState.reliability,
     reliabilityMinimum,
     reliabilityReady,
     buckramKeyHeld,
+    publicationApparatus,
+    missingApparatus: publicationApparatus.missing,
     buckramGateOpen: ready && buckramKeyHeld,
     documentsWithUndisclosedDeletion,
+    standardsViolations,
     stateChatMayOpenGate: false,
     ready
   };
@@ -944,42 +1184,164 @@ export function getFinalGateReadiness() {
 
 export function getPublicationReadinessReadout(): PublicationReadinessReadout {
   const readiness = getFinalGateReadiness();
-  const unresolved = readiness.documentsWithUndisclosedDeletion.map((document) => ({
+  const requiredPendantStamps: ProcessStampId[] = PENDANTS.map((pendant) => pendant.stampId);
+  const requiredPendantStampSet = new Set<ProcessStampId>(requiredPendantStamps);
+  const missingPendants = requiredPendantStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const missingProcessStamps = readiness.missingStamps
+    .filter((stamp) => !requiredPendantStampSet.has(stamp));
+  const deletionBlockers = readiness.documentsWithUndisclosedDeletion.map((document) => ({
     id: "undisclosed_deletion" as const,
     label: `${document.title}: add visible bracketed insertion`,
     documentId: document.id,
     title: document.title
   }));
+  const ledgerBlockers = readiness.standardsViolations.map((record) => ({
+    id: record.violation,
+    label: record.context ? `${record.label} ${record.context}` : record.label,
+    documentId: record.documentId,
+    context: record.context,
+    count: record.count
+  }));
+  const unresolved = [...deletionBlockers, ...ledgerBlockers]
+    .filter((entry, index, entries) => entries.findIndex((candidate) => (
+      candidate.id === entry.id && candidate.documentId === entry.documentId && candidate.label === entry.label
+    )) === index);
   const missingSummary = [
-    ...readiness.missingStamps.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
-    ...(readiness.missingFragments ? [`${readiness.missingFragments} crystal${readiness.missingFragments === 1 ? "" : "s"}`] : []),
+    ...missingPendants.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
+    ...missingProcessStamps.map((stamp) => `Process ${stamp.toUpperCase()}`),
+    ...(readiness.missingEquityCrystals
+      ? [`${readiness.missingEquityCrystals} equity crystal${readiness.missingEquityCrystals === 1 ? "" : "s"}`]
+      : readiness.equityCrystalsRequired > 0 ? [] : ["Equity crystals"]),
+    ...(readiness.missingFragments ? [`${readiness.missingFragments} cover fragment${readiness.missingFragments === 1 ? "" : "s"}`] : []),
+    ...(readiness.repositoryCoverageMapReady ? [] : ["Repository MAP"]),
+    ...readiness.missingApparatus.map((component) => `Apparatus ${component.shortLabel}`),
     ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
     ...unresolved.map((standard) => standard.label)
   ];
-  const requiredUnits = readiness.requiredStamps.length + readiness.fragmentsNeeded + 1;
-  const collectedUnits = (readiness.requiredStamps.length - readiness.missingStamps.length)
+  const requiredUnits = requiredPendantStamps.length + readiness.requiredStamps.length + Math.max(1, readiness.equityCrystalsRequired) + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 2;
+  const collectedUnits = (requiredPendantStamps.length - missingPendants.length)
+    + (readiness.requiredStamps.length - readiness.missingStamps.length)
+    + Math.min(readiness.equityCrystalsCollected, Math.max(1, readiness.equityCrystalsRequired))
     + Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded)
+    + (readiness.repositoryCoverageMapReady ? 1 : 0)
+    + readiness.publicationApparatus.completed
     + (readiness.buckramKeyHeld ? 1 : 0);
   return {
+    repositoryCoverageMap: {
+      complete: readiness.repositoryCoverageMapReady,
+      shortLabel: "MAP",
+      label: "Repository coverage map"
+    },
     pendants: {
+      collected: requiredPendantStamps.length - missingPendants.length,
+      required: requiredPendantStamps.length,
+      missing: missingPendants
+    },
+    processStamps: {
       collected: readiness.requiredStamps.length - readiness.missingStamps.length,
       required: readiness.requiredStamps.length,
       missing: [...readiness.missingStamps]
     },
-    crystals: {
+    coverFragments: {
       collected: Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded),
       required: readiness.fragmentsNeeded,
       missing: readiness.missingFragments
+    },
+    crystals: {
+      collected: readiness.equityCrystalsCollected,
+      required: readiness.equityCrystalsRequired,
+      missing: readiness.equityCrystalsRequired > 0 ? readiness.missingEquityCrystals : 1
     },
     standards: {
       unresolved,
       clear: unresolved.length === 0
     },
+    apparatus: readiness.publicationApparatus,
     buckramKeyHeld: readiness.buckramKeyHeld,
-    buckramGateOpen: readiness.buckramGateOpen && unresolved.length === 0,
+    buckramGateOpen: readiness.buckramGateOpen && missingPendants.length === 0 && unresolved.length === 0,
     completionRatio: Math.max(0, Math.min(1, collectedUnits / Math.max(1, requiredUnits))),
     missingSummary
   };
+}
+
+function publishedFinalGateCertificationState(): FinalGateCertificationState {
+  return {
+    status: "published",
+    nearestGate: true,
+    checklistComplete: true,
+    certifiedBy: gameState.playerProfile.displayName,
+    requiredItem: "Buckram Key",
+    message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+  };
+}
+
+function completePublicationReleaseFlags() {
+  gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
+  gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
+  gameState.sceneProgress.gpoPublicationComplete = 1;
+  gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
+  gameState.sceneProgress.publicationFundingComplete = 1;
+  gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
+  gameState.sceneProgress.readerAidRegistersComplete = 1;
+  gameState.sceneProgress.readerAidRegistersStep = READER_AID_REGISTER_PROMPTS.length;
+  gameState.sceneProgress.chapterReleaseComplete = 1;
+  gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
+  gameState.sceneProgress.digitalReleaseComplete = 1;
+  gameState.sceneProgress.digitalReleaseStep = DIGITAL_RELEASE_PROMPTS.length;
+  gameState.sceneProgress.publicCitationComplete = 1;
+  gameState.sceneProgress.publicCitationStep = PUBLIC_CITATION_CARD_PROMPTS.length;
+  gameState.sceneProgress.releaseCalendarComplete = 1;
+  gameState.sceneProgress.releaseCalendarStep = RELEASE_CALENDAR_PROMPTS.length;
+}
+
+export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificationResult {
+  const readiness = getPublicationReadinessReadout();
+  if (!readiness.buckramGateOpen) {
+    const reason = readiness.missingSummary.length
+      ? `Buckram Gate locked: ${readiness.missingSummary.join(", ")}.`
+      : "Buckram Gate locked: final publication certification is incomplete.";
+    setLatestMessage(reason);
+    return { ok: false, trueEnding: false, reason };
+  }
+
+  completePublicationReleaseFlags();
+  addProcessItem("buckram_key");
+  addInventoryItem("Published FRUS Cover");
+  for (const documentId of FINAL_PUBLICATION_DOCUMENT_IDS) publishDocument(documentId);
+  setFinalGateCertificationState(publishedFinalGateCertificationState());
+  gameState.sceneProgress.trueEndingPublicationCertified = 1;
+  refreshQuestWorkflowState();
+
+  const finalReadiness = getFinalGateReadiness();
+  const publication = getPublicationReadinessReadout();
+  const board = getProductionBoardReadout();
+  const treatyFragmentsCollected = getTreatyFragmentCount();
+  const treatyLine = getDanneItemReadout().find((item) => item.id === "treaty-fragments");
+  const certificate = buildTrueEndingCertificate({
+    processStamps: gameState.processStamps,
+    documentCandidates: gameState.documentCandidates,
+    volumeFragments: gameState.volumeFragments,
+    reliability: gameState.reliability,
+    documentPoints: gameState.documentPoints,
+    treatyFragmentsCollected,
+    publicationBoardCompleted: board.completed,
+    publicationBoardTotal: board.total,
+    publicationApparatusCompleted: finalReadiness.publicationApparatus.completed,
+    publicationApparatusTotal: finalReadiness.publicationApparatus.total,
+    buckramGateOpen: publication.buckramGateOpen,
+    standardsClear: publication.standards.clear,
+    publicRecordComplete: Boolean(gameState.sceneProgress.publicCitationComplete)
+      && Boolean(gameState.sceneProgress.releaseCalendarComplete)
+      && gameState.finalGateCertification?.status === "published"
+  });
+  const trueEnding = certificate.complete;
+  const reason = trueEnding
+    ? "Certified FRUS volume entered the public record with the complete treaty record."
+    : treatyLine && !treatyLine.trueEndingReady
+      ? `Certified FRUS volume published; treaty record incomplete (${treatyLine.count}/${treatyLine.total}).`
+      : "Certified FRUS volume published; true-ending certification still shows open work.";
+  setLatestMessage(reason);
+  return { ok: true, trueEnding, reason };
 }
 
 export function addDocumentPoints(amount: number, reason: string) {
@@ -1111,6 +1473,7 @@ export function clearDocumentUndisclosedDeletion(documentId: string, reason = "b
     ...cloneDocumentCandidate(document),
     undisclosedDeletion: false
   }), reason);
+  if (changed) resolveStandardsViolationForDocument(documentId, "undisclosed_deletion");
   return changed ? !changed.undisclosedDeletion : false;
 }
 
@@ -1431,12 +1794,45 @@ export function getAdventureHudReadout(): AdventureHudReadout {
   };
 }
 
+export function getAdventureTrainingReadout(): AdventureTrainingReadout {
+  const currentArea = getCurrentAreaReadout();
+  const dungeon = gameState.dungeons[currentArea.id];
+  return getAdventureTrainingCue({
+    mode: gameState.mode,
+    objective: gameState.objective,
+    latestMessage: gameState.latestMessage,
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    nearestInteractable: gameState.nearestInteractable,
+    activeDialog: gameState.activeDialog,
+    currentChoice: gameState.currentChoice,
+    roomTraversal: gameState.roomTraversal,
+    dungeon: dungeon
+      ? {
+          displayName: currentArea.displayName,
+          smallKeys: dungeon.smallKeys,
+          smallKeysRequired: dungeon.smallKeysRequired,
+          bigKeyHeld: dungeon.bigKeyHeld,
+          bossDefeated: dungeon.bossDefeated,
+          mapRevealed: dungeon.mapRevealed
+        }
+      : null
+  });
+}
+
+export function getOneHourTrainingReadout(): OneHourTrainingReadout {
+  const activeCue = getAdventureTrainingReadout();
+  return firstHourTrainingCoverageReadout(activeCue.drillId);
+}
+
 export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
   refreshQuestWorkflowState();
   const currentArea = getCurrentAreaReadout();
   const roomReadout = getRoomGraphReadout();
   const equippedTool = getProcessItemReadout().find((item) => item.equipped) ?? null;
-  const crystalDocuments = gameState.documentCandidates.map((document) => {
+  const board = getProductionBoardReadout();
+  const productionPhases = getFrusProductionPhaseReadout(board);
+  const activePhase = productionPhases.find((phase) => phase.status === "active") ?? null;
+  const crystalDocuments = equityCrystalDocuments(gameState.documentCandidates).map((document) => {
     const total = document.equities.length;
     const earned = document.equities.filter((equity) => EQUITY_CRYSTAL_STATUSES.has(equity.response)).length;
     return {
@@ -1447,6 +1843,46 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
     };
   }).filter((document) => document.total > 0);
   return {
+    productionBoard: {
+      completed: board.completed,
+      total: board.total,
+      completionRatio: board.total > 0 ? board.completed / board.total : 1,
+      nextStep: board.nextStep
+        ? {
+            id: board.nextStep.id,
+            shortLabel: board.nextStep.shortLabel,
+            label: board.nextStep.label,
+            gameplayTask: board.nextStep.gameplayTask,
+            sourceBasis: board.nextStep.sourceBasis,
+            sourceUrl: board.nextStep.sourceUrl,
+            status: board.nextStep.status
+          }
+        : null,
+      steps: board.steps.map((step) => ({
+        id: step.id,
+        shortLabel: step.shortLabel,
+        status: step.status,
+        complete: step.complete
+      })),
+      phases: productionPhases.map((phase) => ({
+        id: phase.id,
+        label: phase.label,
+        shortLabel: phase.shortLabel,
+        status: phase.status,
+        completed: phase.completed,
+        total: phase.total,
+        nextStep: phase.nextStep
+      })),
+      activePhase: activePhase
+        ? {
+            id: activePhase.id,
+            label: activePhase.label,
+            shortLabel: activePhase.shortLabel,
+            completed: activePhase.completed,
+            total: activePhase.total
+          }
+        : null
+    },
     pendants: PENDANTS.map((pendant) => ({
       ...pendant,
       acquired: gameState.processStamps.includes(pendant.stampId)
@@ -1554,20 +1990,106 @@ export function getProductionStatusReadout() {
   ];
 }
 
+export function getProductionBoardReadout() {
+  refreshQuestWorkflowState();
+  return getFrusProductionBoardReadout({
+    volumeWorkflowState: gameState.volumeWorkflowState,
+    documentCandidates: gameState.documentCandidates.map(cloneDocumentCandidate),
+    processStamps: [...gameState.processStamps],
+    heldProcessItems: getHeldProcessItemIds(),
+    documentPoints: gameState.documentPoints,
+    reliability: gameState.reliability,
+    volumeFragments: [...gameState.volumeFragments],
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
+    aiAnnotationReviewComplete: Boolean(gameState.sceneProgress.aiAnnotationReviewComplete),
+    sourceNoteProvenanceComplete: Boolean(gameState.sceneProgress.sourceNoteProvenanceComplete),
+    annotationDraftingComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
+    foreignGovernmentPermissionComplete: Boolean(gameState.sceneProgress.foreignGovernmentPermissionComplete),
+    withholdingAppealComplete: Boolean(gameState.sceneProgress.withholdingAppealComplete),
+    editorialMethodologyComplete: Boolean(gameState.sceneProgress.editorialMethodologyComplete),
+    editorialTreatmentComplete: Boolean(gameState.sceneProgress.editorialTreatmentComplete),
+    typeflowOrderComplete: Boolean(gameState.sceneProgress.typeflowOrderComplete),
+    typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
+    typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
+    manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
+    manuscriptReviewStep: gameState.sceneProgress.manuscriptReviewStep ?? 0,
+    clearanceProcedureComplete: Boolean(gameState.sceneProgress.clearanceProcedureComplete),
+    eo13526ReviewComplete: Boolean(gameState.sceneProgress.eo13526ReviewComplete),
+    recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
+    researchCharterComplete: Boolean(gameState.sceneProgress.researchCharterComplete),
+    recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
+    repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
+    selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
+    policyCoverageAuditComplete: Boolean(gameState.sceneProgress.policyCoverageAuditComplete),
+    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
+    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete),
+    chapterReleaseComplete: Boolean(gameState.sceneProgress.chapterReleaseComplete),
+    digitalReleaseComplete: Boolean(gameState.sceneProgress.digitalReleaseComplete),
+    publicCitationComplete: Boolean(gameState.sceneProgress.publicCitationComplete),
+    releaseCalendarComplete: Boolean(gameState.sceneProgress.releaseCalendarComplete),
+    frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
+    readerAidRegistersComplete: Boolean(gameState.sceneProgress.readerAidRegistersComplete),
+    indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
+    typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete),
+    kelloggFinalCertificationComplete: Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete),
+    gpoSegmentAssemblyComplete: Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete),
+    gpoPublicationComplete: Boolean(gameState.sceneProgress.gpoPublicationComplete),
+    publicationFundingComplete: Boolean(gameState.sceneProgress.publicationFundingComplete)
+  });
+}
+
+export function getStatutoryClockStateReadout() {
+  const storedTenths = gameState.sceneProgress.statutoryClockTenths;
+  const elapsedYears = typeof storedTenths === "number" && storedTenths > 0
+    ? storedTenths / 10
+    : STATUTORY_START_YEAR;
+  return getStatutoryClockReadout({
+    elapsedYears,
+    readiness: getPublicationReadinessReadout(),
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    deadlineDamageApplied: Boolean(gameState.sceneProgress.statutoryDeadlineMissed)
+  });
+}
+
 export function seedProgressForScene(sceneName: string) {
   if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
-    addProcessItem("citation_stamp");
-    addVolumeFragment("Front Matter Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 15);
     setDocumentWorkflowState("telegram_001", "selected");
-    setDocumentWorkflowState("source_note_047", "citation_verified");
+    setDocumentWorkflowState("source_note_047", "selected");
     setDocumentWorkflowState("cross_reference_001", "selected");
   }
+  if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+    addProcessItem("citation_stamp");
+    addVolumeFragment("Front Matter Fragment");
+    setDocumentWorkflowState("source_note_047", "citation_verified");
+  }
   if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+    gameState.sceneProgress.seriesConceptComplete = 1;
+    gameState.sceneProgress.seriesConceptStep = 3;
+    gameState.sceneProgress.volumeConceptComplete = 1;
+    gameState.sceneProgress.volumeConceptStep = VOLUME_CONCEPT_PROMPTS.length;
+    gameState.sceneProgress.recordsAccessComplete = 1;
+    gameState.sceneProgress.recordsAccessStep = 3;
+    gameState.sceneProgress.researchCharterComplete = 1;
+    gameState.sceneProgress.researchCharterStep = RESEARCH_CHARTER_PROMPTS.length;
+    gameState.sceneProgress.recordCollectionComplete = 1;
+    gameState.sceneProgress.recordCollectionStep = 3;
+    gameState.sceneProgress.repositoryCoverageMapComplete = 1;
+    gameState.sceneProgress.repositoryCoverageMapStep = REPOSITORY_COVERAGE_MAP_PROMPTS.length;
+    gameState.sceneProgress.selectionDocketComplete = 1;
+    gameState.sceneProgress.selectionDocketStep = SELECTION_DOCKET_PROMPTS.length;
+    gameState.sceneProgress.policyCoverageAuditComplete = 1;
+    gameState.sceneProgress.policyCoverageAuditStep = POLICY_COVERAGE_AUDIT_PROMPTS.length;
     awardProcessStamp("rule");
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("archive");
+    gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
+    gameState.sceneProgress.sourceNoteProvenanceStep = SOURCE_NOTE_PROVENANCE_PROMPTS.length;
+    gameState.sceneProgress.annotationDraftingComplete = 1;
+    gameState.sceneProgress.annotationDraftingStep = 3;
+    gameState.sceneProgress.manuscriptReviewComplete = 1;
     gameState.reliability = Math.max(gameState.reliability, 90);
     for (const item of ["Telegram", "Source Note", "Cross-Ref"]) {
       addInventoryItem(item);
@@ -1579,6 +2101,12 @@ export function seedProgressForScene(sceneName: string) {
   }
   if (["ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("network");
+    gameState.sceneProgress.clearanceProcedureComplete = 1;
+    gameState.sceneProgress.clearanceProcedureStep = 3;
+    gameState.sceneProgress.eo13526ReviewComplete = 1;
+    gameState.sceneProgress.eo13526ReviewStep = 3;
+    gameState.sceneProgress.declassificationReviewComplete = 1;
+    gameState.sceneProgress.declassificationReviewStep = 3;
     gameState.reliability = Math.max(gameState.reliability, 100);
     addProcessItem("clearance_token");
     addVolumeFragment("Routing Fragment");
@@ -1587,6 +2115,11 @@ export function seedProgressForScene(sceneName: string) {
     setDocumentWorkflowState("sbu_annotation_001", "referred");
   }
   if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
+    gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
+    gameState.sceneProgress.foreignGovernmentPermissionStep = 3;
+    gameState.sceneProgress.withholdingAppealComplete = 1;
+    gameState.sceneProgress.withholdingAppealStep = 3;
+    gameState.sceneProgress.senateHacReviewComplete = 1;
     awardProcessStamp("referral");
     addProcessItem("concurrence_slip");
     addProcessItem("review_folder");
@@ -1603,6 +2136,17 @@ export function seedProgressForScene(sceneName: string) {
     awardProcessStamp("proof");
     addProcessItem("proof_lens");
     addProcessItem("buckram_key");
+    gameState.sceneProgress.aiAnnotationReviewComplete = 1;
+    gameState.sceneProgress.aiAnnotationReviewStep = AI_ANNOTATION_REVIEW_PROMPTS.length;
+    gameState.sceneProgress.editorialMethodologyComplete = 1;
+    gameState.sceneProgress.editorialMethodologyStep = 4;
+    gameState.sceneProgress.editorialTreatmentComplete = 1;
+    gameState.sceneProgress.editorialTreatmentStep = 3;
+    gameState.sceneProgress.typeflowOrderComplete = 1;
+    gameState.sceneProgress.typeflowOrderStep = 2;
+    gameState.sceneProgress.typesettingPreparationComplete = 1;
+    gameState.sceneProgress.typesettingPreparationStep = 2;
+    gameState.sceneProgress.typesetterProofComplete = 1;
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);
     setDocumentWorkflowState("telegram_001", "proofed");
@@ -1645,6 +2189,11 @@ export function renderGameToText() {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
       scene: gameState.currentScene,
       mode: gameState.mode,
+      gameGoal: {
+        mission: FRUS_QUEST_MISSION,
+        loop: FRUS_QUEST_LOOP,
+        stakes: FRUS_QUEST_STAKES
+      },
       objective: gameState.objective,
       volumeWorkflowState: gameState.volumeWorkflowState,
       documentCandidates: getDocumentCandidateReadout(),
@@ -1657,6 +2206,8 @@ export function renderGameToText() {
       snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
       adventureHud: getAdventureHudReadout(),
+      adventureTraining: getAdventureTrainingReadout(),
+      oneHourTraining: getOneHourTrainingReadout(),
       adventureSubscreen: getAdventureSubscreenReadout(),
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,
@@ -1721,6 +2272,9 @@ export function renderGameToText() {
       },
       finalGate: getFinalGateReadiness(),
       publicationReadiness: getPublicationReadinessReadout(),
+      statutoryClock: getStatutoryClockStateReadout(),
+      standardsViolations: unresolvedStandardsViolations(),
+      productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,

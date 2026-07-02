@@ -531,10 +531,10 @@ export function tickInput() {
   const down = isDirectionActive("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
   const dir = computeAxis(left, right, up, down);
   if (gamepadSnapshot.direction) lastDirection = gamepadSnapshot.direction;
-  const navLeft = isKeyboardDown("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
-  const navRight = isKeyboardDown("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
-  const navUp = isKeyboardDown("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
-  const navDown = isKeyboardDown("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
+  const navLeft = left;
+  const navRight = right;
+  const navUp = up;
+  const navDown = down;
 
   // KeyZ / KeyX are the classic SNES A / B faces most browser-emulator users
   // reach for first. The live audit (2026-06-15) found a tester pressing

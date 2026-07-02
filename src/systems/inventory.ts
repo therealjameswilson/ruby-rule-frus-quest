@@ -1,8 +1,15 @@
 import Phaser from "phaser";
+import { FRUS_VOLUMES } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { ProcessItemId } from "../game/constants";
 import { DANNE_ITEM_CATALOG } from "../game/danneItemCatalog";
 import type { DanneItemCatalogEntry, DanneItemId } from "../game/danneItemCatalog";
+import {
+  SNES_DUNGEON_STATUS_RELIC_ASSET,
+  SNES_EQUITY_CRYSTAL_RELIC_ASSET,
+  SNES_RESEARCH_PENDANT_RELIC_ASSET,
+  SNES_WORKFLOW_TOOL_RELIC_ASSET
+} from "../game/snesAtlas";
 import type { GameMode } from "../game/types";
 import {
   equipDanneItem,
@@ -57,6 +64,22 @@ const COMPACT_TOOL_LINES: Record<string, string> = {
 const MODAL_BOUNDS = { left: 8, right: 248, top: 12, bottom: 228 };
 const CLOSE_HIT = { x: 223, y: 35, width: 44, height: 44 };
 const CODEX_HIT = { x: 171, y: 35, width: 58, height: 44 };
+const FRUS_VOLUME_ROW_TEXTURE: keyof typeof FRUS_VOLUMES = "ui_row_six";
+const FRUS_VOLUME_SLOT_X = [26, 51, 76, 101, 126, 151] as const;
+type DungeonStatusFrame = (typeof SNES_DUNGEON_STATUS_RELIC_ASSET.frames)[number];
+type ResearchPendantFrame = (typeof SNES_RESEARCH_PENDANT_RELIC_ASSET.frames)[number];
+type EquityCrystalFrame = (typeof SNES_EQUITY_CRYSTAL_RELIC_ASSET.frames)[number];
+type WorkflowToolFrame = (typeof SNES_WORKFLOW_TOOL_RELIC_ASSET.frames)[number];
+
+const PROCESS_ITEM_TOOL_FRAMES: Record<ProcessItemId, WorkflowToolFrame> = {
+  citation_stamp: "citation_stamp",
+  red_pencil: "red_pencil",
+  review_folder: "cross_reference_thread",
+  clearance_token: "terminal",
+  concurrence_slip: "concurrence_slip",
+  proof_lens: "proof_pages",
+  buckram_key: "frus_volume"
+};
 
 export class InventoryOverlay {
   private readonly scene: Phaser.Scene;
@@ -64,10 +87,26 @@ export class InventoryOverlay {
   private readonly subscreenGraphics: Phaser.GameObjects.Graphics;
   private readonly summary: Phaser.GameObjects.Text;
   private readonly body: Phaser.GameObjects.Text;
+  private frusVolumeRowTitle!: Phaser.GameObjects.Text;
+  private readonly frusVolumeSlotLights: Phaser.GameObjects.Rectangle[] = [];
+  private readonly frusVolumeSlotLabels: Phaser.GameObjects.Text[] = [];
+  private readonly dungeonStatusRelics: Array<{
+    frame: DungeonStatusFrame;
+    image: Phaser.GameObjects.Image;
+  }> = [];
+  private readonly researchPendantRelics: Array<{
+    frame: ResearchPendantFrame;
+    image: Phaser.GameObjects.Image;
+  }> = [];
+  private readonly equityCrystalRelics: Array<{
+    frame: EquityCrystalFrame;
+    image: Phaser.GameObjects.Image;
+  }> = [];
   private previousMode: GameMode | null = null;
   private readonly itemSlots: Array<{
     id: ProcessItemId;
     box: Phaser.GameObjects.Rectangle;
+    icon?: Phaser.GameObjects.Image;
     label: Phaser.GameObjects.Text;
   }> = [];
   private readonly danneItemSlots: Array<{
@@ -141,8 +180,12 @@ export class InventoryOverlay {
       wordWrap: { width: 150, useAdvancedWrap: true },
       lineSpacing: 0
     }).setScrollFactor(0);
+    const frusRowObjects = this.createFrusVolumeRow(scene);
     const slotObjects = this.createToolGrid(scene);
     const danneObjects = this.createDanneItemGrid(scene);
+    const researchPendantObjects = this.createResearchPendantRelics(scene);
+    const equityCrystalObjects = this.createEquityCrystalRelics(scene);
+    const dungeonStatusObjects = this.createDungeonStatusRelics(scene);
     const popoverBox = scene.add
       .rectangle(204, 88, 80, 62, color(PALETTE.black), 0.94)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
@@ -174,8 +217,12 @@ export class InventoryOverlay {
         closeBox,
         closeLabel,
         closeHit,
+        ...frusRowObjects,
         ...slotObjects,
         ...danneObjects,
+        ...researchPendantObjects,
+        ...equityCrystalObjects,
+        ...dungeonStatusObjects,
         this.dannePopover,
         this.summary,
         this.body
@@ -236,20 +283,34 @@ export class InventoryOverlay {
     const pendantSummary = subscreen.pendants
       .map((pendant) => `${pendant.label}:${pendant.acquired ? "OK" : "--"}`)
       .join(" ");
+    const boardNext = subscreen.productionBoard.nextStep?.shortLabel ?? "DONE";
+    const boardSource = subscreen.productionBoard.nextStep?.sourceUrl
+      .replace(/^https?:\/\//, "")
+      .replace(/^www\./, "")
+      ?? "history.state.gov";
+    const activePhase = subscreen.productionBoard.activePhase;
+    const phaseSummary = activePhase
+      ? `${activePhase.shortLabel} ${activePhase.completed}/${activePhase.total}`
+      : "DONE";
     this.summary.setText([
       `${pendantSummary}  CRYSTALS ${subscreen.crystals.earned}/${subscreen.crystals.total || 0}  HEARTS ${subscreen.reliabilityHearts.filled}/${subscreen.reliabilityHearts.total}`,
-      `TOOL ${subscreen.equippedTool?.displayName.toUpperCase() ?? hud.equippedItem?.displayName.toUpperCase() ?? "NONE"}  ${danneSummary}`
+      `BOARD ${subscreen.productionBoard.completed}/${subscreen.productionBoard.total} NEXT ${boardNext}  ${danneSummary}`,
+      `PHASE ${phaseSummary}  TOOL ${subscreen.equippedTool?.displayName.toUpperCase() ?? hud.equippedItem?.displayName.toUpperCase() ?? "NONE"}`
     ].join("\n"));
+    const dungeonPreview = dungeons.split("\n").slice(0, 3).join("\n");
+    const shelfCount = Math.min(FRUS_VOLUME_SLOT_X.length, gameState.volumeFragments.length + (gameState.inventory.includes("Published FRUS Cover") ? 1 : 0));
+    this.frusVolumeRowTitle.setText(`FRUS VOLUME SHELF ${shelfCount}/${FRUS_VOLUME_SLOT_X.length}`);
     this.body.setText([
+      `NEXT BOARD: ${subscreen.productionBoard.nextStep?.label.toUpperCase() ?? "CERTIFY BUCKRAM GATE"}`,
+      `SOURCE: ${boardSource}`,
       "DUNGEON MAP / KEYS",
-      dungeons,
-      "",
-      tools ? "READY TOOLS" : "READY TOOLS --",
-      tools.split("\n").slice(0, 2).join("\n")
+      dungeonPreview,
+      ""
     ].join("\n"));
     this.renderSubscreenGraphics(subscreen);
     this.renderToolGrid();
     this.renderDanneItemGrid();
+    this.renderFrusVolumeRow();
     this.renderDannePopover();
   }
 
@@ -265,35 +326,41 @@ export class InventoryOverlay {
     g.lineStyle(1, color(PALETTE.stoneGray), 1);
     g.strokeRect(172, 42, 66, 74);
 
-    subscreen.pendants.forEach((pendant, index) => {
-      const x = 184 + index * 16;
-      const y = 55;
-      g.lineStyle(1, color(pendant.acquired ? PALETTE.white : PALETTE.stoneGray), 1);
-      g.fillStyle(color(pendant.acquired ? PALETTE.goldStamp : PALETTE.black), 1);
-      g.fillTriangle(x, y - 8, x - 7, y + 7, x + 7, y + 7);
-      g.lineBetween(x, y - 8, x - 7, y + 7);
-      g.lineBetween(x - 7, y + 7, x + 7, y + 7);
-      g.lineBetween(x + 7, y + 7, x, y - 8);
-      if (pendant.acquired) {
-        g.fillStyle(color(PALETTE.white), 1);
-        g.fillRect(x - 1, y - 2, 2, 2);
-      }
-    });
+    const renderedPendantRelics = this.renderResearchPendantRelics(subscreen);
+    if (!renderedPendantRelics) {
+      subscreen.pendants.forEach((pendant, index) => {
+        const x = 184 + index * 16;
+        const y = 55;
+        g.lineStyle(1, color(pendant.acquired ? PALETTE.white : PALETTE.stoneGray), 1);
+        g.fillStyle(color(pendant.acquired ? PALETTE.goldStamp : PALETTE.black), 1);
+        g.fillTriangle(x, y - 8, x - 7, y + 7, x + 7, y + 7);
+        g.lineBetween(x, y - 8, x - 7, y + 7);
+        g.lineBetween(x - 7, y + 7, x + 7, y + 7);
+        g.lineBetween(x + 7, y + 7, x, y - 8);
+        if (pendant.acquired) {
+          g.fillStyle(color(PALETTE.white), 1);
+          g.fillRect(x - 1, y - 2, 2, 2);
+        }
+      });
+    }
 
     const crystalTotal = Math.max(1, subscreen.crystals.total);
     const visibleCrystals = Math.min(8, crystalTotal);
-    for (let index = 0; index < visibleCrystals; index += 1) {
-      const x = 181 + index * 6;
-      const y = 77;
-      const acquired = index < subscreen.crystals.earned;
-      g.fillStyle(color(acquired ? PALETTE.terminalCyan : PALETTE.black), 1);
-      g.lineStyle(1, color(acquired ? PALETTE.white : PALETTE.stoneGray), 1);
-      g.fillTriangle(x, y - 5, x - 4, y, x + 4, y);
-      g.fillTriangle(x, y + 5, x - 4, y, x + 4, y);
-      g.lineBetween(x, y - 5, x - 4, y);
-      g.lineBetween(x - 4, y, x, y + 5);
-      g.lineBetween(x, y + 5, x + 4, y);
-      g.lineBetween(x + 4, y, x, y - 5);
+    const renderedCrystalRelics = this.renderEquityCrystalRelics(subscreen);
+    if (!renderedCrystalRelics) {
+      for (let index = 0; index < visibleCrystals; index += 1) {
+        const x = 181 + index * 6;
+        const y = 77;
+        const acquired = index < subscreen.crystals.earned;
+        g.fillStyle(color(acquired ? PALETTE.terminalCyan : PALETTE.black), 1);
+        g.lineStyle(1, color(acquired ? PALETTE.white : PALETTE.stoneGray), 1);
+        g.fillTriangle(x, y - 5, x - 4, y, x + 4, y);
+        g.fillTriangle(x, y + 5, x - 4, y, x + 4, y);
+        g.lineBetween(x, y - 5, x - 4, y);
+        g.lineBetween(x - 4, y, x, y + 5);
+        g.lineBetween(x, y + 5, x + 4, y);
+        g.lineBetween(x + 4, y, x, y - 5);
+      }
     }
 
     for (let index = 0; index < subscreen.reliabilityHearts.total; index += 1) {
@@ -317,7 +384,190 @@ export class InventoryOverlay {
     g.strokeRect(216, 48, 15, 15);
     g.fillRect(220, 52, 7, 7);
 
+    this.renderProductionBoardTrack(g, subscreen.productionBoard);
+    this.renderPhaseChips(g, subscreen.productionBoard);
+    this.renderDungeonStatusRelics(g, subscreen);
     this.renderRoomMap(g, subscreen);
+  }
+
+  private createResearchPendantRelics(scene: Phaser.Scene) {
+    if (!scene.textures.exists(SNES_RESEARCH_PENDANT_RELIC_ASSET.key)) return [];
+    return SNES_RESEARCH_PENDANT_RELIC_ASSET.frames.map((frame, index) => {
+      const image = scene.add
+        .image(184 + index * 16, 55, SNES_RESEARCH_PENDANT_RELIC_ASSET.key, frame)
+        .setName(`subscreen-research-pendant-${frame}`)
+        .setScrollFactor(0)
+        .setVisible(false);
+      this.researchPendantRelics.push({ frame, image });
+      return image;
+    });
+  }
+
+  private renderResearchPendantRelics(subscreen: AdventureSubscreenReadout) {
+    if (this.researchPendantRelics.length !== SNES_RESEARCH_PENDANT_RELIC_ASSET.frames.length) {
+      for (const relic of this.researchPendantRelics) relic.image.setVisible(false);
+      return false;
+    }
+
+    for (const relic of this.researchPendantRelics) {
+      const index = SNES_RESEARCH_PENDANT_RELIC_ASSET.frames.indexOf(relic.frame);
+      const pendant = subscreen.pendants.find((candidate) => candidate.id === relic.frame);
+      relic.image
+        .setPosition(184 + index * 16, 55)
+        .setVisible(true)
+        .setAlpha(pendant?.acquired ? 1 : 0.3);
+    }
+    return true;
+  }
+
+  private createEquityCrystalRelics(scene: Phaser.Scene) {
+    if (!scene.textures.exists(SNES_EQUITY_CRYSTAL_RELIC_ASSET.key)) return [];
+    return SNES_EQUITY_CRYSTAL_RELIC_ASSET.frames.map((frame, index) => {
+      const image = scene.add
+        .image(181 + index * 9, 77, SNES_EQUITY_CRYSTAL_RELIC_ASSET.key, frame)
+        .setName(`subscreen-equity-crystal-${frame}`)
+        .setScrollFactor(0)
+        .setVisible(false);
+      this.equityCrystalRelics.push({ frame, image });
+      return image;
+    });
+  }
+
+  private renderEquityCrystalRelics(subscreen: AdventureSubscreenReadout) {
+    if (this.equityCrystalRelics.length !== SNES_EQUITY_CRYSTAL_RELIC_ASSET.frames.length) {
+      for (const relic of this.equityCrystalRelics) relic.image.setVisible(false);
+      return false;
+    }
+
+    const availableCount = Math.min(
+      SNES_EQUITY_CRYSTAL_RELIC_ASSET.frames.length,
+      Math.max(1, subscreen.crystals.total)
+    );
+    for (const relic of this.equityCrystalRelics) {
+      const index = SNES_EQUITY_CRYSTAL_RELIC_ASSET.frames.indexOf(relic.frame);
+      const available = index < availableCount;
+      const earned = index < subscreen.crystals.earned;
+      relic.image
+        .setPosition(181 + index * 9, 77)
+        .setVisible(true)
+        .setAlpha(earned ? 1 : available ? 0.34 : 0.16);
+    }
+    return true;
+  }
+
+  private createDungeonStatusRelics(scene: Phaser.Scene) {
+    if (!scene.textures.exists(SNES_DUNGEON_STATUS_RELIC_ASSET.key)) return [];
+    return SNES_DUNGEON_STATUS_RELIC_ASSET.frames.map((frame, index) => {
+      const image = scene.add
+        .image(181 + index * 14, 134, SNES_DUNGEON_STATUS_RELIC_ASSET.key, frame)
+        .setName(`subscreen-dungeon-status-${frame}`)
+        .setScrollFactor(0)
+        .setVisible(false);
+      this.dungeonStatusRelics.push({ frame, image });
+      return image;
+    });
+  }
+
+  private renderDungeonStatusRelics(
+    g: Phaser.GameObjects.Graphics,
+    subscreen: AdventureSubscreenReadout
+  ) {
+    const dungeon = subscreen.dungeons.find((candidate) => candidate.active) ?? subscreen.dungeons[0];
+    if (!dungeon) {
+      for (const relic of this.dungeonStatusRelics) relic.image.setVisible(false);
+      return;
+    }
+
+    const states: Record<DungeonStatusFrame, { lit: boolean; available: boolean }> = {
+      small_key: { lit: dungeon.smallKeys > 0, available: dungeon.smallKeysRequired > 0 },
+      big_key: { lit: dungeon.bigKeyHeld, available: true },
+      map: { lit: dungeon.mapRevealed, available: true },
+      boss: { lit: dungeon.bossDefeated, available: true }
+    };
+
+    if (this.dungeonStatusRelics.length === SNES_DUNGEON_STATUS_RELIC_ASSET.frames.length) {
+      for (const relic of this.dungeonStatusRelics) {
+        const state = states[relic.frame];
+        relic.image
+          .setPosition(181 + SNES_DUNGEON_STATUS_RELIC_ASSET.frames.indexOf(relic.frame) * 14, 134)
+          .setVisible(true)
+          .setAlpha(state.lit ? 1 : state.available ? 0.36 : 0.2);
+      }
+      return;
+    }
+
+    SNES_DUNGEON_STATUS_RELIC_ASSET.frames.forEach((frame, index) => {
+      const state = states[frame];
+      const x = 176 + index * 14;
+      g.lineStyle(1, color(state.lit ? PALETTE.goldStamp : PALETTE.stoneGray), state.available ? 1 : 0.4);
+      g.fillStyle(color(state.lit ? PALETTE.deepRuby : PALETTE.black), state.lit ? 0.9 : 0.48);
+      g.fillRect(x, 128, 10, 10);
+      g.strokeRect(x, 128, 10, 10);
+    });
+  }
+
+  private renderProductionBoardTrack(
+    g: Phaser.GameObjects.Graphics,
+    board: AdventureSubscreenReadout["productionBoard"]
+  ) {
+    const x = 178;
+    const y = 119;
+    const width = 61;
+    const height = 7;
+    const total = Math.max(1, board.total);
+    g.fillStyle(color(PALETTE.black), 0.78);
+    g.fillRect(x, y, width, height);
+    g.lineStyle(1, color(PALETTE.goldStamp), 1);
+    g.strokeRect(x, y, width, height);
+    board.steps.forEach((step, index) => {
+      const beadX = Math.round(x + 4 + (index * (width - 8)) / Math.max(1, total - 1));
+      const beadColor = step.complete
+        ? PALETTE.openNetGreen
+        : step.status === "active"
+          ? PALETTE.terminalCyan
+          : PALETTE.stoneGray;
+      g.fillStyle(color(beadColor), step.status === "locked" ? 0.55 : 1);
+      g.fillRect(beadX, y + 2, 1, 3);
+      if (step.status === "active") {
+        g.lineStyle(1, color(PALETTE.white), 1);
+        g.strokeRect(beadX - 1, y + 1, 3, 5);
+      }
+    });
+    const progressWidth = Math.max(1, Math.round((width - 2) * board.completionRatio));
+    g.fillStyle(color(PALETTE.goldStamp), 0.32);
+    g.fillRect(x + 1, y + height - 2, progressWidth, 1);
+  }
+
+  private renderPhaseChips(
+    g: Phaser.GameObjects.Graphics,
+    board: AdventureSubscreenReadout["productionBoard"]
+  ) {
+    const x = 179;
+    const y = 110;
+    board.phases.forEach((phase, index) => {
+      const chipX = x + index * 10;
+      const active = phase.status === "active";
+      const fill = phase.status === "complete"
+        ? PALETTE.openNetGreen
+        : active
+          ? PALETTE.terminalCyan
+          : PALETTE.black;
+      const stroke = active
+        ? PALETTE.white
+        : phase.status === "complete"
+          ? PALETTE.goldStamp
+          : PALETTE.stoneGray;
+      g.fillStyle(color(fill), phase.status === "locked" ? 0.5 : 0.9);
+      g.fillRect(chipX, y, 8, 7);
+      g.lineStyle(1, color(stroke), 1);
+      g.strokeRect(chipX, y, 8, 7);
+      const ticks = Math.max(1, phase.total);
+      const tickWidth = Math.max(1, Math.floor(6 / ticks));
+      for (let tick = 0; tick < ticks; tick += 1) {
+        g.fillStyle(color(tick < phase.completed ? PALETTE.goldStamp : PALETTE.stoneGray), tick < phase.completed ? 1 : 0.45);
+        g.fillRect(chipX + 1 + tick * tickWidth, y + 5, 1, 1);
+      }
+    });
   }
 
   private renderRoomMap(g: Phaser.GameObjects.Graphics, subscreen: AdventureSubscreenReadout) {
@@ -366,16 +616,83 @@ export class InventoryOverlay {
         .rectangle(x, y, 30, 18, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.stoneGray))
         .setScrollFactor(0);
-      const label = scene.add.text(x, y - 4, item.shortLabel, {
+      const icon = scene.textures.exists(SNES_WORKFLOW_TOOL_RELIC_ASSET.key)
+        ? scene.add
+          .image(x, y - 4, SNES_WORKFLOW_TOOL_RELIC_ASSET.key, PROCESS_ITEM_TOOL_FRAMES[item.id as ProcessItemId])
+          .setName(`inventory-tool-icon-${item.id}`)
+          .setScale(0.5)
+          .setScrollFactor(0)
+        : undefined;
+      const label = scene.add.text(x, y + (icon ? 7 : -4), item.shortLabel, {
         fontFamily: "monospace",
-        fontSize: "5px",
+        fontSize: icon ? "4px" : "5px",
         color: PALETTE.stoneGray,
         align: "center"
       }).setOrigin(0.5).setScrollFactor(0);
       bindPointerPress(hit, { down: () => this.tapTool(item.id as ProcessItemId) });
-      this.itemSlots.push({ id: item.id as ProcessItemId, box, label });
-      objects.push(hit, box, label);
+      this.itemSlots.push({ id: item.id as ProcessItemId, box, icon, label });
+      objects.push(hit, box);
+      if (icon) objects.push(icon);
+      objects.push(label);
     });
+    return objects;
+  }
+
+  private createFrusVolumeRow(scene: Phaser.Scene) {
+    const objects: Phaser.GameObjects.GameObject[] = [];
+    const frame = scene.add
+      .rectangle(88, 203, 154, 44, color(PALETTE.black), 0.82)
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setName("inventory-frus-volume-row-frame")
+      .setScrollFactor(0);
+    objects.push(frame);
+
+    if (scene.textures.exists(FRUS_VOLUME_ROW_TEXTURE)) {
+      const rowArt = scene.add.image(88, 203, FRUS_VOLUME_ROW_TEXTURE)
+        .setCrop(105, 470, 1500, 410)
+        .setScale(0.1)
+        .setAlpha(0.42)
+        .setName("inventory-frus-volume-row-art")
+        .setScrollFactor(0);
+      rowArt.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      objects.push(rowArt);
+    } else {
+      const fallback = scene.add
+        .rectangle(88, 203, 150, 32, color(PALETTE.deepRuby), 0.5)
+        .setStrokeStyle(1, color(PALETTE.sepiaInk))
+        .setName("inventory-frus-volume-row-fallback")
+        .setScrollFactor(0);
+      objects.push(fallback);
+    }
+
+    const dim = scene.add
+      .rectangle(88, 203, 154, 44, color(PALETTE.black), 0.52)
+      .setName("inventory-frus-volume-row-dim")
+      .setScrollFactor(0);
+    this.frusVolumeRowTitle = scene.add.text(17, 184, "FRUS VOLUME SHELF 0/6", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp
+    }).setName("inventory-frus-volume-row-title").setScrollFactor(0);
+    objects.push(dim, this.frusVolumeRowTitle);
+
+    FRUS_VOLUME_SLOT_X.forEach((x, index) => {
+      const light = scene.add
+        .rectangle(x, 219, 15, 6, color(PALETTE.black), 0.95)
+        .setStrokeStyle(1, color(PALETTE.stoneGray))
+        .setName("inventory-frus-volume-slot-light")
+        .setScrollFactor(0);
+      const label = scene.add.text(x, 214, String(index + 1), {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: PALETTE.stoneGray,
+        align: "center"
+      }).setOrigin(0.5, 0).setName("inventory-frus-volume-slot-label").setScrollFactor(0);
+      this.frusVolumeSlotLights.push(light);
+      this.frusVolumeSlotLabels.push(label);
+      objects.push(light, label);
+    });
+
     return objects;
   }
 
@@ -425,6 +742,23 @@ export class InventoryOverlay {
       slot.box.setStrokeStyle(1, color(equipped ? PALETTE.white : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
       slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
       slot.label.setText(item?.shortLabel ?? "--");
+      slot.icon?.setAlpha(equipped ? 1 : acquired ? 0.88 : 0.22);
+      slot.icon?.setTint(equipped ? color(PALETTE.black) : color(PALETTE.white));
+    }
+  }
+
+  private renderFrusVolumeRow() {
+    const published = gameState.inventory.includes("Published FRUS Cover");
+    const filledCount = Math.min(FRUS_VOLUME_SLOT_X.length, gameState.volumeFragments.length + (published ? 1 : 0));
+    for (let index = 0; index < this.frusVolumeSlotLights.length; index += 1) {
+      const filled = index < filledCount;
+      const finalSlot = published && index === this.frusVolumeSlotLights.length - 1;
+      const fill = finalSlot ? PALETTE.openNetGreen : filled ? PALETTE.goldStamp : PALETTE.black;
+      const stroke = finalSlot ? PALETTE.white : filled ? PALETTE.goldStamp : PALETTE.stoneGray;
+      this.frusVolumeSlotLights[index].setFillStyle(color(fill), filled ? 0.95 : 0.82);
+      this.frusVolumeSlotLights[index].setStrokeStyle(1, color(stroke));
+      this.frusVolumeSlotLabels[index].setColor(finalSlot ? PALETTE.openNetGreen : filled ? PALETTE.goldStamp : PALETTE.stoneGray);
+      this.frusVolumeSlotLabels[index].setText(finalSlot ? "PUB" : String(index + 1));
     }
   }
 

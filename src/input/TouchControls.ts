@@ -42,6 +42,12 @@ function isTouchCapable() {
   return typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 }
 
+function isOneXPortraitCanvas() {
+  if (typeof window === "undefined") return false;
+  const metrics = window.rubyRuleMobileMetrics;
+  return Boolean(metrics?.integerZoom && metrics.computedZoom <= 1.01 && window.innerHeight > window.innerWidth);
+}
+
 function clampToCanvas(point: Phaser.Math.Vector2) {
   point.x = Phaser.Math.Clamp(point.x, 0, GAME_WIDTH);
   point.y = Phaser.Math.Clamp(point.y, 0, GAME_HEIGHT);
@@ -473,10 +479,13 @@ export class TouchControls {
       const visible = !button.hiddenUntilPressed || pressed;
       button.text.setVisible(visible);
       if (!visible) continue;
-      const alpha = pressed ? 0.75 : 0.35;
+      const idleAlpha = isOneXPortraitCanvas() ? 0.18 : 0.35;
+      const labelAlpha = isOneXPortraitCanvas() ? 0.28 : 0.48;
+      const alpha = pressed ? 0.75 : idleAlpha;
       const scale = pressed ? 0.9 : 1;
-      const width = Math.round(button.visibleWidth * scale);
-      const height = Math.round(button.visibleHeight * scale);
+      const portraitScale = isOneXPortraitCanvas() && !pressed ? 0.82 : 1;
+      const width = Math.round(button.visibleWidth * scale * portraitScale);
+      const height = Math.round(button.visibleHeight * scale * portraitScale);
       this.graphics.lineStyle(2, color(pressed ? PALETTE.terminalCyan : PALETTE.goldStamp), alpha);
       this.graphics.fillStyle(color(PALETTE.black), alpha);
       if (button.kind === "circle") {
@@ -486,7 +495,7 @@ export class TouchControls {
         this.graphics.fillRect(Math.round(button.x - width / 2), Math.round(button.y - height / 2), width, height);
         this.graphics.strokeRect(Math.round(button.x - width / 2), Math.round(button.y - height / 2), width, height);
       }
-      button.text.setAlpha((pressed ? 0.9 : 0.48) * this.overlayAlpha);
+      button.text.setAlpha((pressed ? 0.9 : labelAlpha) * this.overlayAlpha);
       button.text.setPosition(button.x, button.y - (button.kind === "circle" ? 4 : 2));
     }
   }

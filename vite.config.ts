@@ -5,6 +5,11 @@ export default defineConfig({
     ? `/${process.env.GITHUB_REPOSITORY.split("/")[1]}/`
     : "/",
   build: {
-    outDir: "dist"
+    outDir: "dist",
+    copyPublicDir: false,
+    reportCompressedSize: false,
+    rollupOptions: {
+      treeshake: false
+    }
   }
 });

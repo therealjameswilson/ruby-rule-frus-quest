@@ -76,7 +76,12 @@ export class InteractionPrompt {
     return this.container.visible;
   }
 
-  update(deltaMs: number, nearest: Interactable | null, bounds?: PromptPlacementBounds) {
+  update(
+    deltaMs: number,
+    nearest: Interactable | null,
+    bounds?: PromptPlacementBounds,
+    display?: { badge?: string; text?: string }
+  ) {
     this.clock += deltaMs;
     const placement = computePromptPlacement(nearest, bounds);
     if (!placement.visible || !nearest) {
@@ -91,13 +96,14 @@ export class InteractionPrompt {
     // A gentle 1px bob keeps the prompt lively without anti-aliasing or motion
     // blur; the step keeps every frame pixel-snapped.
     const bob = Math.floor(this.clock / 220) % 2 === 0 ? 0 : 1;
-    const text = `${placement.verb} ${placement.label}`;
+    const text = display?.text ?? `${placement.verb} ${placement.label}`;
     this.labelText.setText(text);
     const labelWidth = this.labelText.width;
     const panelWidth = Math.max(34, labelWidth + 18);
     this.panel.setSize(panelWidth, 13);
     this.border.setSize(panelWidth + 2, 15);
     const left = -panelWidth / 2;
+    this.badgeText.setText(display?.badge ?? "A");
     this.badge.setPosition(left + 8, 0);
     this.badgeText.setPosition(left + 8, 0);
     this.labelText.setPosition(left + 14, 0);

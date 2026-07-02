@@ -7,6 +7,7 @@ import {
   getProcessItemReadout,
   getProductionStatusReadout,
   refreshQuestWorkflowState,
+  recordStandardsViolation,
   setLatestMessage
 } from "../game/state";
 import type { ProposalKind } from "../game/types";
@@ -31,12 +32,13 @@ export function adjustReliability(amount: number, reason: string) {
   else retroAudio.warning();
 }
 
-export function applyStandardsViolation(violation: StandardViolation, context?: string) {
+export function applyStandardsViolation(violation: StandardViolation, context?: string, documentId?: string) {
   const before = gameState.reliability;
   const after = applyStandardsDamage(before, violation);
   gameState.reliability = after;
   const lost = before - after;
   const label = VIOLATION_LABEL[violation];
+  recordStandardsViolation(violation, context, documentId);
   setLatestMessage(`-${lost} reliability: ${label}${context ? ` ${context}` : ""}`);
   refreshQuestWorkflowState();
   retroAudio.warning();

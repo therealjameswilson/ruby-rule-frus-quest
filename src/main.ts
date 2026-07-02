@@ -590,6 +590,12 @@ game.events.once(Phaser.Core.Events.READY, () => {
   game.scene.scenes.forEach((scene) => {
     scene.events.once(Phaser.Scenes.Events.CREATE, dismissOnNextScene);
   });
+  // Direct ?scene= deep links can create the target scene before READY fires,
+  // which means the CREATE listener above may miss the event and leave the DOM
+  // loader covering the playable canvas. Hide it after the first ready paint as
+  // a safety net while keeping the 8s failure fallback below.
+  window.requestAnimationFrame(() => window.requestAnimationFrame(hideBootLoader));
+  window.setTimeout(hideBootLoader, 1200);
 });
 window.setTimeout(hideBootLoader, 8000);
 installAutosaveLifecycle();

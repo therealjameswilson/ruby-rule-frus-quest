@@ -6,6 +6,7 @@ import {
   resetInput,
   setKeyboardDownForTests,
   setNowProviderForTests,
+  setTouchControl,
   swallowNextInputFrame,
   TAP_ACTION_HOLD_MS,
   TAP_MOVEMENT_HOLD_MS,
@@ -74,6 +75,36 @@ describe("InputState keyboard edges", () => {
     expect(getInput().navLeftJustPressed).toBe(true);
     expect(getInput().navRightJustPressed).toBe(true);
     expect(getInput().navUpJustPressed).toBe(true);
+    expect(getInput().navDownJustPressed).toBe(true);
+  });
+
+  it("turns too-short arrow and WASD taps into navigation just-pressed edges", () => {
+    let now = 1200;
+    setNowProviderForTests(() => now);
+    tapDirectionForTests("ArrowLeft");
+    tapDirectionForTests("KeyW");
+    tickInput();
+    expect(getInput().navLeftJustPressed).toBe(true);
+    expect(getInput().navUpJustPressed).toBe(true);
+
+    now += TAP_MOVEMENT_HOLD_MS - 10;
+    tickInput();
+    expect(getInput().navLeftJustPressed).toBe(false);
+    expect(getInput().navUpJustPressed).toBe(false);
+  });
+
+  it("maps touch D-pad presses to one-frame navigation edges", () => {
+    setTouchControl("right", true);
+    tickInput();
+    expect(getInput().navRightJustPressed).toBe(true);
+    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+
+    tickInput();
+    expect(getInput().navRightJustPressed).toBe(false);
+
+    setTouchControl("right", false);
+    setTouchControl("down", true);
+    tickInput();
     expect(getInput().navDownJustPressed).toBe(true);
   });
 

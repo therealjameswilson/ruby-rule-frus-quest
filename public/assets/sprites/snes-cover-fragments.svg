@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="15" height="10" viewBox="0 0 15 10" shape-rendering="crispEdges">
+  <rect width="15" height="10" fill="#0F0F0F"/>
+
+  <!-- spine fragment -->
+  <rect x="0" y="0" width="3" height="10" fill="#3A0710"/>
+  <rect x="1" y="1" width="1" height="8" fill="#B82030"/>
+  <rect x="2" y="0" width="1" height="10" fill="#D6A23A"/>
+
+  <!-- title-band fragment -->
+  <rect x="3" y="0" width="3" height="10" fill="#7A1020"/>
+  <rect x="4" y="2" width="2" height="1" fill="#D6A23A"/>
+  <rect x="3" y="5" width="2" height="1" fill="#E8D8A8"/>
+  <rect x="4" y="8" width="2" height="1" fill="#D6A23A"/>
+
+  <!-- years-panel fragment -->
+  <rect x="6" y="0" width="3" height="10" fill="#7A1020"/>
+  <rect x="6" y="2" width="3" height="5" fill="#E8D8A8"/>
+  <rect x="7" y="3" width="2" height="1" fill="#304860"/>
+  <rect x="7" y="5" width="1" height="1" fill="#D6A23A"/>
+
+  <!-- seal fragment -->
+  <rect x="9" y="0" width="3" height="10" fill="#7A1020"/>
+  <rect x="10" y="3" width="1" height="1" fill="#D6A23A"/>
+  <rect x="9" y="4" width="3" height="1" fill="#D6A23A"/>
+  <rect x="10" y="5" width="1" height="1" fill="#F8F0D8"/>
+  <rect x="9" y="8" width="3" height="1" fill="#D6A23A"/>
+
+  <!-- imprint fragment -->
+  <rect x="12" y="0" width="3" height="10" fill="#3A0710"/>
+  <rect x="12" y="1" width="1" height="8" fill="#B82030"/>
+  <rect x="14" y="0" width="1" height="10" fill="#D6A23A"/>
+  <rect x="12" y="7" width="3" height="1" fill="#E8D8A8"/>
+</svg>
