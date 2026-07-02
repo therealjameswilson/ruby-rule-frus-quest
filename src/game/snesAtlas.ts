@@ -278,9 +278,287 @@ export const SNES_EDITOR_FRAME_SHEET = {
   frames: SNES_COMPILER_FRAME_NAMES
 } as const;
 
+export const SNES_PROOFREADER_FRAME_SHEET = {
+  roleId: "proofreader",
+  key: "snes-player-proofreader-frames",
+  path: "assets/sprites/snes-player-proofreader-frames.svg",
+  kind: "role-animation-strip",
+  displayName: "Proofreader animation frame set",
+  frameCue: "compact in-play proofreader with proof stack, glasses glint, four-direction walk cycle, and silent-read pose",
+  dimensions: { width: 608, height: 48 },
+  frame: { width: 32, height: 48 },
+  frames: SNES_COMPILER_FRAME_NAMES
+} as const;
+
+export const SNES_DECLASS_REVIEWER_FRAME_SHEET = {
+  roleId: "declass_reviewer",
+  key: "snes-player-declass-reviewer-frames",
+  path: "assets/sprites/snes-player-declass-reviewer-frames.svg",
+  kind: "role-animation-strip",
+  displayName: "Declass coordinator animation frame set",
+  frameCue: "compact in-play declass coordinator with mug, tracker clipboard, network-color cues, and equity-map pose",
+  dimensions: { width: 608, height: 48 },
+  frame: { width: 32, height: 48 },
+  frames: SNES_COMPILER_FRAME_NAMES
+} as const;
+
+export const SNES_SOURCE_NOTE_SPECIALIST_FRAME_SHEET = {
+  roleId: "source_note_specialist",
+  key: "snes-player-source-note-specialist-frames",
+  path: "assets/sprites/snes-player-source-note-specialist-frames.svg",
+  kind: "role-animation-strip",
+  displayName: "Source-note specialist animation frame set",
+  frameCue: "compact in-play source-note specialist with citation stamp satchel, source card, four-direction walk cycle, and provenance-check pose",
+  dimensions: { width: 608, height: 48 },
+  frame: { width: 32, height: 48 },
+  frames: SNES_COMPILER_FRAME_NAMES
+} as const;
+
+export const SNES_FIRST_HOUR_TRAINING_RELIC_ASSET = {
+  key: "snes-first-hour-training-relic",
+  path: "assets/sprites/snes-first-hour-training-relic.svg",
+  kind: "training-route-relic",
+  displayName: "One-Hour Route Relic",
+  cue: "ruby-and-gold route card showing the live one-hour action-adventure training ladder",
+  dimensions: { width: 24, height: 24 }
+} as const;
+
+export const SNES_ARCHIVE_COMPASS_RELIC_ASSET = {
+  key: "snes-archive-compass-relic",
+  path: "assets/sprites/snes-archive-compass-relic.svg",
+  kind: "archive-map-relic",
+  displayName: "Archive Compass Relic",
+  cue: "gold-and-cyan room compass showing contested-equity map literacy inside Archive Cavern",
+  dimensions: { width: 24, height: 24 }
+} as const;
+
+export const SNES_ARCHIVE_WALL_MAP_BOARD_ASSET = {
+  key: "snes-archive-wall-map-board",
+  path: "assets/sprites/snes-archive-wall-map-board.svg",
+  kind: "archive-wall-map-board",
+  displayName: "Archive Wall Map Board",
+  cue: "48x30 ruby-and-cream wall map board for in-room dungeon route hints",
+  dimensions: { width: 48, height: 30 }
+} as const;
+
+export const SNES_ARCHIVE_PROP_ASSET = {
+  key: "snes-archive-props",
+  path: "assets/sprites/snes-archive-props.svg",
+  kind: "archive-prop-strip",
+  displayName: "Archive Prop Strip",
+  cue: "five 64x48 Archive Cavern props for shelves, desks, document stacks, ruby volume piles, and research tables",
+  dimensions: { width: 320, height: 48 },
+  frame: { width: 64, height: 48 },
+  frames: ["bookcase", "desk", "document_stack", "ruby_volumes", "research_table"]
+} as const;
+
+export const SNES_ARCHIVE_TILE_ASSET = {
+  key: "snes-archive-tiles",
+  path: "assets/sprites/snes-archive-tiles.svg",
+  kind: "archive-tile-strip",
+  displayName: "Archive Tile Strip",
+  cue: "eight 16x16 Archive Cavern floor and wall tiles for reusable SNES room construction",
+  dimensions: { width: 128, height: 16 },
+  frame: { width: 16, height: 16 },
+  frames: ["floor_base", "floor_crack", "floor_dot", "floor_ruby", "wall_top", "wall_front", "wall_side", "floor_shadow"]
+} as const;
+
+export const SNES_OFFICE_TILE_ASSET = {
+  key: "snes-office-tiles",
+  path: "assets/sprites/snes-office-tiles.svg",
+  kind: "office-tile-strip",
+  displayName: "Office Tile Strip",
+  cue: "eight 16x16 Office Hub floor, rug, bookcase, and desk tiles for reusable FRUS interior construction",
+  dimensions: { width: 128, height: 16 },
+  frame: { width: 16, height: 16 },
+  frames: ["floor_base", "floor_shadow", "floor_scuff", "rug_center", "rug_edge", "wall_top", "wall_bookcase", "desk_top"]
+} as const;
+
+export const SNES_GUIDE_CAVERN_TILE_ASSET = {
+  key: "snes-guide-cavern-tiles",
+  path: "assets/sprites/snes-guide-cavern-tiles.svg",
+  kind: "guide-cavern-tile-strip",
+  displayName: "Guide Cavern Tile Strip",
+  cue: "eight 16x16 Archive Guide cavern floor, wall, threshold, and pedestal tiles for the first dungeon threshold",
+  dimensions: { width: 128, height: 16 },
+  frame: { width: 16, height: 16 },
+  frames: ["floor_base", "floor_scuff", "floor_ruby", "wall_top", "wall_front", "wall_shadow", "threshold_gate", "pedestal_tile"]
+} as const;
+
+export const SNES_NETWORK_TILE_ASSET = {
+  key: "snes-network-tiles",
+  path: "assets/sprites/snes-network-tiles.svg",
+  kind: "network-tile-strip",
+  displayName: "Two Networks Tile Strip",
+  cue: "eight 16x16 OpenNet/ClassNet floors, terminals, firewall, vault wall, and token plinth tiles",
+  dimensions: { width: 128, height: 16 },
+  frame: { width: 16, height: 16 },
+  frames: ["open_floor", "class_floor", "cable_cross", "terminal_pad", "class_terminal", "firewall_gate", "vault_wall", "token_plinth"]
+} as const;
+
+export const SNES_REFERRAL_VAULT_TILE_ASSET = {
+  key: "snes-referral-vault-tiles",
+  path: "assets/sprites/snes-referral-vault-tiles.svg",
+  kind: "referral-vault-tile-strip",
+  displayName: "Referral Vault Tile Strip",
+  cue: "eight 16x16 equity, manifest, excision, concurrence, and slip-plinth tiles for the referral dungeon",
+  dimensions: { width: 128, height: 16 },
+  frame: { width: 16, height: 16 },
+  frames: [
+    "equity_floor",
+    "referral_channel",
+    "agency_seal_tile",
+    "manifest_desk",
+    "excision_gate",
+    "concurrence_wall",
+    "slip_plinth",
+    "archive_floor"
+  ]
+} as const;
+
+export const SNES_ARCHIVE_ROOM_DETAIL_ASSET = {
+  key: "snes-archive-room-details",
+  path: "assets/sprites/snes-archive-room-details.svg",
+  kind: "archive-room-detail-strip",
+  displayName: "Archive Room Detail Strip",
+  cue: "six 16x16 Archive Cavern detail frames for floor scuffs, corners, wall caps, and route thresholds",
+  dimensions: { width: 96, height: 16 },
+  frame: { width: 16, height: 16 },
+  frames: ["floor_scuff", "corner_shadow", "wall_cap", "threshold_open", "threshold_locked", "threshold_boss"]
+} as const;
+
+export const SNES_WORLD_ATLAS_RELIC_ASSET = {
+  key: "snes-world-atlas-relic",
+  path: "assets/sprites/snes-world-atlas-relic.svg",
+  kind: "world-atlas-relic",
+  displayName: "World Atlas Relic",
+  cue: "open atlas route card for cycling FRUS regions and entering district maps",
+  dimensions: { width: 24, height: 24 }
+} as const;
+
+export const SNES_ROUTE_ARROW_RELIC_ASSET = {
+  key: "snes-route-arrows",
+  path: "assets/sprites/snes-route-arrows.svg",
+  kind: "route-arrow-relic-strip",
+  displayName: "Route Arrow Relics",
+  cue: "four 12x12 cardinal route arrows for selected overworld exits and one-hour edge-memory training",
+  dimensions: { width: 48, height: 12 },
+  frame: { width: 12, height: 12 },
+  frames: ["north", "east", "south", "west"]
+} as const;
+
+export const SNES_DUNGEON_STATUS_RELIC_ASSET = {
+  key: "snes-dungeon-status-relics",
+  path: "assets/sprites/snes-dungeon-status-relics.svg",
+  kind: "dungeon-status-relic-strip",
+  displayName: "Chapter Status Relics",
+  cue: "four 12x12 pause-subscreen relics for chapter keys, big key, map/compass, and boss-review completion",
+  dimensions: { width: 48, height: 12 },
+  frame: { width: 12, height: 12 },
+  frames: ["small_key", "big_key", "map", "boss"]
+} as const;
+
+export const SNES_ROOM_MAP_MARKER_ASSET = {
+  key: "snes-room-map-markers",
+  path: "assets/sprites/snes-room-map-markers.svg",
+  kind: "room-map-marker-strip",
+  displayName: "Room Map Markers",
+  cue: "five 6x6 quest-band room-map markers for visited, current, locked, boss, and reward rooms",
+  dimensions: { width: 30, height: 6 },
+  frame: { width: 6, height: 6 },
+  frames: ["visited", "current", "locked", "boss", "reward"]
+} as const;
+
+export const SNES_GATE_GLYPH_ASSET = {
+  key: "snes-gate-glyphs",
+  path: "assets/sprites/snes-gate-glyphs.svg",
+  kind: "gate-glyph-strip",
+  displayName: "Gate Glyphs",
+  cue: "five 12x12 route-state glyphs for open, locked, sealed, secret, and boss exits",
+  dimensions: { width: 60, height: 12 },
+  frame: { width: 12, height: 12 },
+  frames: ["open", "locked", "sealed", "secret", "boss"]
+} as const;
+
+export const SNES_WORKFLOW_TOOL_RELIC_ASSET = {
+  key: "snes-workflow-tools",
+  path: "assets/sprites/snes-workflow-tools.svg",
+  kind: "workflow-tool-relic-strip",
+  displayName: "Workflow Tool Relics",
+  cue: "eight 16x32 FRUS workflow relics for process-tool inventory slots and gated exploration",
+  dimensions: { width: 128, height: 32 },
+  frame: { width: 16, height: 32 },
+  frames: [
+    "citation_stamp",
+    "source_note_card",
+    "cross_reference_thread",
+    "terminal",
+    "frus_volume",
+    "red_pencil",
+    "proof_pages",
+    "concurrence_slip"
+  ]
+} as const;
+
+export const SNES_RESEARCH_PENDANT_RELIC_ASSET = {
+  key: "snes-research-pendants",
+  path: "assets/sprites/snes-research-pendants.svg",
+  kind: "research-pendant-relic-strip",
+  displayName: "Research Pendant Relics",
+  cue: "three 10x10 quest-band relics for objectivity, provenance, and SOP review discipline",
+  dimensions: { width: 30, height: 10 },
+  frame: { width: 10, height: 10 },
+  frames: ["objectivity", "provenance", "review"]
+} as const;
+
+export const SNES_EQUITY_CRYSTAL_RELIC_ASSET = {
+  key: "snes-equity-crystals",
+  path: "assets/sprites/snes-equity-crystals.svg",
+  kind: "equity-crystal-relic-strip",
+  displayName: "Equity Crystal Relics",
+  cue: "five 8x10 quest-band relics for declassification agency-equity progress",
+  dimensions: { width: 40, height: 10 },
+  frame: { width: 8, height: 10 },
+  frames: ["defense", "intelligence", "diplomatic", "foreign", "privacy"]
+} as const;
+
+export const SNES_COVER_FRAGMENT_RELIC_ASSET = {
+  key: "snes-cover-fragments",
+  path: "assets/sprites/snes-cover-fragments.svg",
+  kind: "cover-fragment-relic-strip",
+  displayName: "FRUS Cover Fragment Relics",
+  cue: "five 3x10 quest-band relics for assembling the final ruby buckram FRUS cover",
+  dimensions: { width: 15, height: 10 },
+  frame: { width: 3, height: 10 },
+  frames: ["spine", "title", "years", "seal", "imprint"]
+} as const;
+
+export const SNES_PROCESS_STAMP_RELIC_ASSET = {
+  key: "snes-process-stamps",
+  path: "assets/sprites/snes-process-stamps.svg",
+  kind: "process-stamp-relic-strip",
+  displayName: "Process Stamp Relics",
+  cue: "six 12x12 publication-screen relics for the earned FRUS process stamps",
+  dimensions: { width: 72, height: 12 },
+  frame: { width: 12, height: 12 },
+  frames: ["rule", "archive", "network", "referral", "sop", "proof"]
+} as const;
+
+export const SNES_PUBLISHED_FRUS_PRIZE_ASSET = {
+  key: "frus-prize-cover",
+  path: "assets/sprites/frus-prize-cover.svg",
+  kind: "published-frus-prize",
+  displayName: "Published FRUS Prize Cover",
+  cue: "80x120 ruby buckram pixel-art reward cover shown after human publication certification",
+  dimensions: { width: 80, height: 120 }
+} as const;
+
 export const SNES_ROLE_FRAME_SHEETS = [
   SNES_COMPILER_FRAME_SHEET,
-  SNES_EDITOR_FRAME_SHEET
+  SNES_EDITOR_FRAME_SHEET,
+  SNES_PROOFREADER_FRAME_SHEET,
+  SNES_DECLASS_REVIEWER_FRAME_SHEET,
+  SNES_SOURCE_NOTE_SPECIALIST_FRAME_SHEET
 ] as const;
 
 export function getSnesRoleFrameSheet(roleId: string) {
@@ -389,6 +667,27 @@ export const SNES_VISUAL_ASSETS = [
   ...SNES_PRODUCTION_COLLEAGUE_ASSETS,
   SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET,
   ...SNES_ROLE_FRAME_SHEETS,
+  SNES_FIRST_HOUR_TRAINING_RELIC_ASSET,
+  SNES_ARCHIVE_COMPASS_RELIC_ASSET,
+  SNES_ARCHIVE_WALL_MAP_BOARD_ASSET,
+  SNES_ARCHIVE_PROP_ASSET,
+  SNES_ARCHIVE_TILE_ASSET,
+  SNES_OFFICE_TILE_ASSET,
+  SNES_GUIDE_CAVERN_TILE_ASSET,
+  SNES_NETWORK_TILE_ASSET,
+  SNES_REFERRAL_VAULT_TILE_ASSET,
+  SNES_ARCHIVE_ROOM_DETAIL_ASSET,
+  SNES_WORLD_ATLAS_RELIC_ASSET,
+  SNES_ROUTE_ARROW_RELIC_ASSET,
+  SNES_DUNGEON_STATUS_RELIC_ASSET,
+  SNES_ROOM_MAP_MARKER_ASSET,
+  SNES_GATE_GLYPH_ASSET,
+  SNES_WORKFLOW_TOOL_RELIC_ASSET,
+  SNES_RESEARCH_PENDANT_RELIC_ASSET,
+  SNES_EQUITY_CRYSTAL_RELIC_ASSET,
+  SNES_COVER_FRAGMENT_RELIC_ASSET,
+  SNES_PROCESS_STAMP_RELIC_ASSET,
+  SNES_PUBLISHED_FRUS_PRIZE_ASSET,
   ...SNES_ANTAGONIST_ASSETS,
   ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => ({
     key: wall.key,
@@ -397,12 +696,6 @@ export const SNES_VISUAL_ASSETS = [
     enemyType: wall.type,
     dimensions: { width: 32, height: 32 }
   })),
-  {
-    key: "snes-workflow-tools",
-    path: "assets/sprites/snes-workflow-tools.svg",
-    kind: "tool-sprite-strip",
-    dimensions: { width: 128, height: 32 }
-  },
   ...PROCESS_ROLES.map((role) => ({
     key: role.snesSpriteKey,
     path: `assets/sprites/${role.snesSpriteKey}.svg`,
@@ -459,6 +752,185 @@ export function getSnesAtlasReadout() {
       frames: [...sheet.frames],
       cue: sheet.frameCue
     })),
+    firstHourTrainingRelic: {
+      texture: SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.key,
+      path: SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.path,
+      displayName: SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.displayName,
+      cue: SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.cue,
+      dimensions: { ...SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.dimensions }
+    },
+    archiveCompassRelic: {
+      texture: SNES_ARCHIVE_COMPASS_RELIC_ASSET.key,
+      path: SNES_ARCHIVE_COMPASS_RELIC_ASSET.path,
+      displayName: SNES_ARCHIVE_COMPASS_RELIC_ASSET.displayName,
+      cue: SNES_ARCHIVE_COMPASS_RELIC_ASSET.cue,
+      dimensions: { ...SNES_ARCHIVE_COMPASS_RELIC_ASSET.dimensions }
+    },
+    archiveWallMapBoard: {
+      texture: SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.key,
+      path: SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.path,
+      displayName: SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.displayName,
+      cue: SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.cue,
+      dimensions: { ...SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.dimensions }
+    },
+    archiveProps: {
+      texture: SNES_ARCHIVE_PROP_ASSET.key,
+      path: SNES_ARCHIVE_PROP_ASSET.path,
+      displayName: SNES_ARCHIVE_PROP_ASSET.displayName,
+      cue: SNES_ARCHIVE_PROP_ASSET.cue,
+      dimensions: { ...SNES_ARCHIVE_PROP_ASSET.dimensions },
+      frame: { ...SNES_ARCHIVE_PROP_ASSET.frame },
+      frames: [...SNES_ARCHIVE_PROP_ASSET.frames]
+    },
+    archiveTiles: {
+      texture: SNES_ARCHIVE_TILE_ASSET.key,
+      path: SNES_ARCHIVE_TILE_ASSET.path,
+      displayName: SNES_ARCHIVE_TILE_ASSET.displayName,
+      cue: SNES_ARCHIVE_TILE_ASSET.cue,
+      dimensions: { ...SNES_ARCHIVE_TILE_ASSET.dimensions },
+      frame: { ...SNES_ARCHIVE_TILE_ASSET.frame },
+      frames: [...SNES_ARCHIVE_TILE_ASSET.frames]
+    },
+    officeTiles: {
+      texture: SNES_OFFICE_TILE_ASSET.key,
+      path: SNES_OFFICE_TILE_ASSET.path,
+      displayName: SNES_OFFICE_TILE_ASSET.displayName,
+      cue: SNES_OFFICE_TILE_ASSET.cue,
+      dimensions: { ...SNES_OFFICE_TILE_ASSET.dimensions },
+      frame: { ...SNES_OFFICE_TILE_ASSET.frame },
+      frames: [...SNES_OFFICE_TILE_ASSET.frames]
+    },
+    guideCavernTiles: {
+      texture: SNES_GUIDE_CAVERN_TILE_ASSET.key,
+      path: SNES_GUIDE_CAVERN_TILE_ASSET.path,
+      displayName: SNES_GUIDE_CAVERN_TILE_ASSET.displayName,
+      cue: SNES_GUIDE_CAVERN_TILE_ASSET.cue,
+      dimensions: { ...SNES_GUIDE_CAVERN_TILE_ASSET.dimensions },
+      frame: { ...SNES_GUIDE_CAVERN_TILE_ASSET.frame },
+      frames: [...SNES_GUIDE_CAVERN_TILE_ASSET.frames]
+    },
+    networkTiles: {
+      texture: SNES_NETWORK_TILE_ASSET.key,
+      path: SNES_NETWORK_TILE_ASSET.path,
+      displayName: SNES_NETWORK_TILE_ASSET.displayName,
+      cue: SNES_NETWORK_TILE_ASSET.cue,
+      dimensions: { ...SNES_NETWORK_TILE_ASSET.dimensions },
+      frame: { ...SNES_NETWORK_TILE_ASSET.frame },
+      frames: [...SNES_NETWORK_TILE_ASSET.frames]
+    },
+    referralVaultTiles: {
+      texture: SNES_REFERRAL_VAULT_TILE_ASSET.key,
+      path: SNES_REFERRAL_VAULT_TILE_ASSET.path,
+      displayName: SNES_REFERRAL_VAULT_TILE_ASSET.displayName,
+      cue: SNES_REFERRAL_VAULT_TILE_ASSET.cue,
+      dimensions: { ...SNES_REFERRAL_VAULT_TILE_ASSET.dimensions },
+      frame: { ...SNES_REFERRAL_VAULT_TILE_ASSET.frame },
+      frames: [...SNES_REFERRAL_VAULT_TILE_ASSET.frames]
+    },
+    archiveRoomDetails: {
+      texture: SNES_ARCHIVE_ROOM_DETAIL_ASSET.key,
+      path: SNES_ARCHIVE_ROOM_DETAIL_ASSET.path,
+      displayName: SNES_ARCHIVE_ROOM_DETAIL_ASSET.displayName,
+      cue: SNES_ARCHIVE_ROOM_DETAIL_ASSET.cue,
+      dimensions: { ...SNES_ARCHIVE_ROOM_DETAIL_ASSET.dimensions },
+      frame: { ...SNES_ARCHIVE_ROOM_DETAIL_ASSET.frame },
+      frames: [...SNES_ARCHIVE_ROOM_DETAIL_ASSET.frames]
+    },
+    worldAtlasRelic: {
+      texture: SNES_WORLD_ATLAS_RELIC_ASSET.key,
+      path: SNES_WORLD_ATLAS_RELIC_ASSET.path,
+      displayName: SNES_WORLD_ATLAS_RELIC_ASSET.displayName,
+      cue: SNES_WORLD_ATLAS_RELIC_ASSET.cue,
+      dimensions: { ...SNES_WORLD_ATLAS_RELIC_ASSET.dimensions }
+    },
+    routeArrowRelics: {
+      texture: SNES_ROUTE_ARROW_RELIC_ASSET.key,
+      path: SNES_ROUTE_ARROW_RELIC_ASSET.path,
+      displayName: SNES_ROUTE_ARROW_RELIC_ASSET.displayName,
+      cue: SNES_ROUTE_ARROW_RELIC_ASSET.cue,
+      dimensions: { ...SNES_ROUTE_ARROW_RELIC_ASSET.dimensions },
+      frame: { ...SNES_ROUTE_ARROW_RELIC_ASSET.frame },
+      frames: [...SNES_ROUTE_ARROW_RELIC_ASSET.frames]
+    },
+    dungeonStatusRelics: {
+      texture: SNES_DUNGEON_STATUS_RELIC_ASSET.key,
+      path: SNES_DUNGEON_STATUS_RELIC_ASSET.path,
+      displayName: SNES_DUNGEON_STATUS_RELIC_ASSET.displayName,
+      cue: SNES_DUNGEON_STATUS_RELIC_ASSET.cue,
+      dimensions: { ...SNES_DUNGEON_STATUS_RELIC_ASSET.dimensions },
+      frame: { ...SNES_DUNGEON_STATUS_RELIC_ASSET.frame },
+      frames: [...SNES_DUNGEON_STATUS_RELIC_ASSET.frames]
+    },
+    roomMapMarkers: {
+      texture: SNES_ROOM_MAP_MARKER_ASSET.key,
+      path: SNES_ROOM_MAP_MARKER_ASSET.path,
+      displayName: SNES_ROOM_MAP_MARKER_ASSET.displayName,
+      cue: SNES_ROOM_MAP_MARKER_ASSET.cue,
+      dimensions: { ...SNES_ROOM_MAP_MARKER_ASSET.dimensions },
+      frame: { ...SNES_ROOM_MAP_MARKER_ASSET.frame },
+      frames: [...SNES_ROOM_MAP_MARKER_ASSET.frames]
+    },
+    gateGlyphs: {
+      texture: SNES_GATE_GLYPH_ASSET.key,
+      path: SNES_GATE_GLYPH_ASSET.path,
+      displayName: SNES_GATE_GLYPH_ASSET.displayName,
+      cue: SNES_GATE_GLYPH_ASSET.cue,
+      dimensions: { ...SNES_GATE_GLYPH_ASSET.dimensions },
+      frame: { ...SNES_GATE_GLYPH_ASSET.frame },
+      frames: [...SNES_GATE_GLYPH_ASSET.frames]
+    },
+    workflowToolRelics: {
+      texture: SNES_WORKFLOW_TOOL_RELIC_ASSET.key,
+      path: SNES_WORKFLOW_TOOL_RELIC_ASSET.path,
+      displayName: SNES_WORKFLOW_TOOL_RELIC_ASSET.displayName,
+      cue: SNES_WORKFLOW_TOOL_RELIC_ASSET.cue,
+      dimensions: { ...SNES_WORKFLOW_TOOL_RELIC_ASSET.dimensions },
+      frame: { ...SNES_WORKFLOW_TOOL_RELIC_ASSET.frame },
+      frames: [...SNES_WORKFLOW_TOOL_RELIC_ASSET.frames]
+    },
+    researchPendantRelics: {
+      texture: SNES_RESEARCH_PENDANT_RELIC_ASSET.key,
+      path: SNES_RESEARCH_PENDANT_RELIC_ASSET.path,
+      displayName: SNES_RESEARCH_PENDANT_RELIC_ASSET.displayName,
+      cue: SNES_RESEARCH_PENDANT_RELIC_ASSET.cue,
+      dimensions: { ...SNES_RESEARCH_PENDANT_RELIC_ASSET.dimensions },
+      frame: { ...SNES_RESEARCH_PENDANT_RELIC_ASSET.frame },
+      frames: [...SNES_RESEARCH_PENDANT_RELIC_ASSET.frames]
+    },
+    equityCrystalRelics: {
+      texture: SNES_EQUITY_CRYSTAL_RELIC_ASSET.key,
+      path: SNES_EQUITY_CRYSTAL_RELIC_ASSET.path,
+      displayName: SNES_EQUITY_CRYSTAL_RELIC_ASSET.displayName,
+      cue: SNES_EQUITY_CRYSTAL_RELIC_ASSET.cue,
+      dimensions: { ...SNES_EQUITY_CRYSTAL_RELIC_ASSET.dimensions },
+      frame: { ...SNES_EQUITY_CRYSTAL_RELIC_ASSET.frame },
+      frames: [...SNES_EQUITY_CRYSTAL_RELIC_ASSET.frames]
+    },
+    coverFragmentRelics: {
+      texture: SNES_COVER_FRAGMENT_RELIC_ASSET.key,
+      path: SNES_COVER_FRAGMENT_RELIC_ASSET.path,
+      displayName: SNES_COVER_FRAGMENT_RELIC_ASSET.displayName,
+      cue: SNES_COVER_FRAGMENT_RELIC_ASSET.cue,
+      dimensions: { ...SNES_COVER_FRAGMENT_RELIC_ASSET.dimensions },
+      frame: { ...SNES_COVER_FRAGMENT_RELIC_ASSET.frame },
+      frames: [...SNES_COVER_FRAGMENT_RELIC_ASSET.frames]
+    },
+    processStampRelics: {
+      texture: SNES_PROCESS_STAMP_RELIC_ASSET.key,
+      path: SNES_PROCESS_STAMP_RELIC_ASSET.path,
+      displayName: SNES_PROCESS_STAMP_RELIC_ASSET.displayName,
+      cue: SNES_PROCESS_STAMP_RELIC_ASSET.cue,
+      dimensions: { ...SNES_PROCESS_STAMP_RELIC_ASSET.dimensions },
+      frame: { ...SNES_PROCESS_STAMP_RELIC_ASSET.frame },
+      frames: [...SNES_PROCESS_STAMP_RELIC_ASSET.frames]
+    },
+    publishedFrusPrize: {
+      texture: SNES_PUBLISHED_FRUS_PRIZE_ASSET.key,
+      path: SNES_PUBLISHED_FRUS_PRIZE_ASSET.path,
+      displayName: SNES_PUBLISHED_FRUS_PRIZE_ASSET.displayName,
+      cue: SNES_PUBLISHED_FRUS_PRIZE_ASSET.cue,
+      dimensions: { ...SNES_PUBLISHED_FRUS_PRIZE_ASSET.dimensions }
+    },
     npcSprites: SNES_NPC_ASSETS.map((asset) => ({
       characterId: asset.characterId,
       displayName: asset.displayName,
@@ -496,6 +968,8 @@ export function getSnesAtlasReadout() {
       id: item.id,
       displayName: item.displayName,
       icon: item.icon,
+      texture: SNES_WORKFLOW_TOOL_RELIC_ASSET.key,
+      frame: workflowToolFrameForItem(item.id),
       hudSlot: item.hudSlot,
       function: item.zeldaFunction,
       frusMeaning: item.frusMeaning
@@ -507,4 +981,15 @@ export function getSnesAtlasReadout() {
       silhouette: wall.silhouette
     }))
   };
+}
+
+function workflowToolFrameForItem(itemId: string) {
+  if (itemId === "citation_stamp") return "citation_stamp";
+  if (itemId === "red_pencil") return "red_pencil";
+  if (itemId === "review_folder") return "cross_reference_thread";
+  if (itemId === "clearance_token") return "terminal";
+  if (itemId === "concurrence_slip") return "concurrence_slip";
+  if (itemId === "proof_lens") return "proof_pages";
+  if (itemId === "buckram_key") return "frus_volume";
+  return "source_note_card";
 }

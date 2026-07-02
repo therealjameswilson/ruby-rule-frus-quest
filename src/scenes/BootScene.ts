@@ -13,13 +13,34 @@ import {
 } from "../game/danneAtlas";
 import {
   SNES_ANTAGONIST_ASSETS,
+  SNES_ARCHIVE_COMPASS_RELIC_ASSET,
+  SNES_ARCHIVE_PROP_ASSET,
+  SNES_ARCHIVE_ROOM_DETAIL_ASSET,
+  SNES_ARCHIVE_TILE_ASSET,
+  SNES_ARCHIVE_WALL_MAP_BOARD_ASSET,
   SNES_AREA_MAP_ASSETS,
   SNES_BUREAUCRATIC_WALL_ASSETS,
+  SNES_COVER_FRAGMENT_RELIC_ASSET,
+  SNES_DUNGEON_STATUS_RELIC_ASSET,
+  SNES_EQUITY_CRYSTAL_RELIC_ASSET,
+  SNES_FIRST_HOUR_TRAINING_RELIC_ASSET,
+  SNES_GATE_GLYPH_ASSET,
+  SNES_GUIDE_CAVERN_TILE_ASSET,
   SNES_MAIN_MAP_ASSET,
   SNES_NPC_ASSETS,
+  SNES_NETWORK_TILE_ASSET,
+  SNES_OFFICE_TILE_ASSET,
+  SNES_PROCESS_STAMP_RELIC_ASSET,
+  SNES_PUBLISHED_FRUS_PRIZE_ASSET,
   SNES_PRODUCTION_COLLEAGUE_ASSETS,
   SNES_PRODUCTION_COLLEAGUE_FRAME_SHEET,
-  SNES_ROLE_FRAME_SHEETS
+  SNES_REFERRAL_VAULT_TILE_ASSET,
+  SNES_RESEARCH_PENDANT_RELIC_ASSET,
+  SNES_ROOM_MAP_MARKER_ASSET,
+  SNES_ROLE_FRAME_SHEETS,
+  SNES_ROUTE_ARROW_RELIC_ASSET,
+  SNES_WORKFLOW_TOOL_RELIC_ASSET,
+  SNES_WORLD_ATLAS_RELIC_ASSET
 } from "../game/snesAtlas";
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 import { retroAudio } from "../systems/audio";
@@ -39,9 +60,9 @@ export class BootScene extends Phaser.Scene {
     this.load.json("dialogue", "assets/data/dialogue.json");
     this.load.json("scenes", "assets/data/scenes.json");
     preloadCharacters(this);
-    this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
     this.preloadDannePack();
     this.preloadAllNewArtPack();
+    this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
     this.preloadSvgAssets();
   }
 
@@ -54,6 +75,21 @@ export class BootScene extends Phaser.Scene {
     ensurePixelBitmapFont(this);
     installPixelTextFactory();
     this.createManualDanneRuntimeFrames();
+    this.registerSnesProcessStampFrames();
+    this.registerSnesRouteArrowFrames();
+    this.registerSnesDungeonStatusFrames();
+    this.registerSnesRoomMapMarkerFrames();
+    this.registerSnesGateGlyphFrames();
+    this.registerSnesArchivePropFrames();
+    this.registerSnesArchiveTileFrames();
+    this.registerSnesOfficeTileFrames();
+    this.registerSnesGuideCavernTileFrames();
+    this.registerSnesNetworkTileFrames();
+    this.registerSnesReferralVaultTileFrames();
+    this.registerSnesArchiveRoomDetailFrames();
+    this.registerSnesWorkflowToolFrames();
+    this.registerSnesResearchPendantFrames();
+    this.registerSnesEquityCrystalFrames();
     registerCharacterAnims(this);
     registerDanneAnims(this);
     this.applyNearestTextureFilters();
@@ -261,8 +297,7 @@ export class BootScene extends Phaser.Scene {
       ["excision-bracket-marker", "excision-bracket-marker.svg", 24, 24],
       ["bureaucratic-wall", "bureaucratic-wall.svg", 36, 32],
       ["manuscript", "manuscript.svg", 18, 18],
-      ["frus-volume", "frus-volume.svg", 52, 42],
-      ["frus-prize-cover", "frus-prize-cover.svg", 80, 120]
+      ["frus-volume", "frus-volume.svg", 52, 42]
     ];
     for (const [key, file, width, height] of sprites) {
       this.load.svg(key, `assets/sprites/${file}`, { width, height });
@@ -283,6 +318,86 @@ export class BootScene extends Phaser.Scene {
         height: sheet.dimensions.height
       });
     }
+    this.load.svg(SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.key, SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.path, {
+      width: SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.dimensions.width,
+      height: SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_ARCHIVE_COMPASS_RELIC_ASSET.key, SNES_ARCHIVE_COMPASS_RELIC_ASSET.path, {
+      width: SNES_ARCHIVE_COMPASS_RELIC_ASSET.dimensions.width,
+      height: SNES_ARCHIVE_COMPASS_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.key, SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.path, {
+      width: SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.dimensions.width,
+      height: SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_ARCHIVE_PROP_ASSET.key, SNES_ARCHIVE_PROP_ASSET.path, {
+      width: SNES_ARCHIVE_PROP_ASSET.dimensions.width,
+      height: SNES_ARCHIVE_PROP_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_ARCHIVE_TILE_ASSET.key, SNES_ARCHIVE_TILE_ASSET.path, {
+      width: SNES_ARCHIVE_TILE_ASSET.dimensions.width,
+      height: SNES_ARCHIVE_TILE_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_OFFICE_TILE_ASSET.key, SNES_OFFICE_TILE_ASSET.path, {
+      width: SNES_OFFICE_TILE_ASSET.dimensions.width,
+      height: SNES_OFFICE_TILE_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_GUIDE_CAVERN_TILE_ASSET.key, SNES_GUIDE_CAVERN_TILE_ASSET.path, {
+      width: SNES_GUIDE_CAVERN_TILE_ASSET.dimensions.width,
+      height: SNES_GUIDE_CAVERN_TILE_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_NETWORK_TILE_ASSET.key, SNES_NETWORK_TILE_ASSET.path, {
+      width: SNES_NETWORK_TILE_ASSET.dimensions.width,
+      height: SNES_NETWORK_TILE_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_REFERRAL_VAULT_TILE_ASSET.key, SNES_REFERRAL_VAULT_TILE_ASSET.path, {
+      width: SNES_REFERRAL_VAULT_TILE_ASSET.dimensions.width,
+      height: SNES_REFERRAL_VAULT_TILE_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_ARCHIVE_ROOM_DETAIL_ASSET.key, SNES_ARCHIVE_ROOM_DETAIL_ASSET.path, {
+      width: SNES_ARCHIVE_ROOM_DETAIL_ASSET.dimensions.width,
+      height: SNES_ARCHIVE_ROOM_DETAIL_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_WORLD_ATLAS_RELIC_ASSET.key, SNES_WORLD_ATLAS_RELIC_ASSET.path, {
+      width: SNES_WORLD_ATLAS_RELIC_ASSET.dimensions.width,
+      height: SNES_WORLD_ATLAS_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_ROUTE_ARROW_RELIC_ASSET.key, SNES_ROUTE_ARROW_RELIC_ASSET.path, {
+      width: SNES_ROUTE_ARROW_RELIC_ASSET.dimensions.width,
+      height: SNES_ROUTE_ARROW_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_DUNGEON_STATUS_RELIC_ASSET.key, SNES_DUNGEON_STATUS_RELIC_ASSET.path, {
+      width: SNES_DUNGEON_STATUS_RELIC_ASSET.dimensions.width,
+      height: SNES_DUNGEON_STATUS_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_ROOM_MAP_MARKER_ASSET.key, SNES_ROOM_MAP_MARKER_ASSET.path, {
+      width: SNES_ROOM_MAP_MARKER_ASSET.dimensions.width,
+      height: SNES_ROOM_MAP_MARKER_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_GATE_GLYPH_ASSET.key, SNES_GATE_GLYPH_ASSET.path, {
+      width: SNES_GATE_GLYPH_ASSET.dimensions.width,
+      height: SNES_GATE_GLYPH_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_RESEARCH_PENDANT_RELIC_ASSET.key, SNES_RESEARCH_PENDANT_RELIC_ASSET.path, {
+      width: SNES_RESEARCH_PENDANT_RELIC_ASSET.dimensions.width,
+      height: SNES_RESEARCH_PENDANT_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_EQUITY_CRYSTAL_RELIC_ASSET.key, SNES_EQUITY_CRYSTAL_RELIC_ASSET.path, {
+      width: SNES_EQUITY_CRYSTAL_RELIC_ASSET.dimensions.width,
+      height: SNES_EQUITY_CRYSTAL_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_COVER_FRAGMENT_RELIC_ASSET.key, SNES_COVER_FRAGMENT_RELIC_ASSET.path, {
+      width: SNES_COVER_FRAGMENT_RELIC_ASSET.dimensions.width,
+      height: SNES_COVER_FRAGMENT_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_PROCESS_STAMP_RELIC_ASSET.key, SNES_PROCESS_STAMP_RELIC_ASSET.path, {
+      width: SNES_PROCESS_STAMP_RELIC_ASSET.dimensions.width,
+      height: SNES_PROCESS_STAMP_RELIC_ASSET.dimensions.height
+    });
+    this.load.svg(SNES_PUBLISHED_FRUS_PRIZE_ASSET.key, SNES_PUBLISHED_FRUS_PRIZE_ASSET.path, {
+      width: SNES_PUBLISHED_FRUS_PRIZE_ASSET.dimensions.width,
+      height: SNES_PUBLISHED_FRUS_PRIZE_ASSET.dimensions.height
+    });
     for (const antagonistAsset of SNES_ANTAGONIST_ASSETS) {
       this.load.svg(antagonistAsset.key, antagonistAsset.path, { width: 32, height: 32 });
     }
@@ -296,7 +411,10 @@ export class BootScene extends Phaser.Scene {
     for (const mapAsset of SNES_AREA_MAP_ASSETS) {
       this.load.svg(mapAsset.key, mapAsset.path, { width: mapAsset.dimensions.width, height: mapAsset.dimensions.height });
     }
-    this.load.svg("snes-workflow-tools", "assets/sprites/snes-workflow-tools.svg", { width: 128, height: 32 });
+    this.load.svg(SNES_WORKFLOW_TOOL_RELIC_ASSET.key, SNES_WORKFLOW_TOOL_RELIC_ASSET.path, {
+      width: SNES_WORKFLOW_TOOL_RELIC_ASSET.dimensions.width,
+      height: SNES_WORKFLOW_TOOL_RELIC_ASSET.dimensions.height
+    });
 
     for (const key of ["office-tiles", "archive-tiles", "network-tiles", "vault-tiles"]) {
       this.load.svg(key, `assets/tiles/${key}.svg`, { width: 16, height: 16 });
@@ -305,6 +423,246 @@ export class BootScene extends Phaser.Scene {
     for (const key of ["dialog-box", "terminal-panel", "reliability-meter"]) {
       this.load.svg(key, `assets/ui/${key}.svg`, { width: 32, height: 16 });
     }
+  }
+
+  private registerSnesProcessStampFrames() {
+    if (!this.textures.exists(SNES_PROCESS_STAMP_RELIC_ASSET.key)) return;
+    const texture = this.textures.get(SNES_PROCESS_STAMP_RELIC_ASSET.key);
+    SNES_PROCESS_STAMP_RELIC_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_PROCESS_STAMP_RELIC_ASSET.frame.width,
+        0,
+        SNES_PROCESS_STAMP_RELIC_ASSET.frame.width,
+        SNES_PROCESS_STAMP_RELIC_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesRouteArrowFrames() {
+    if (!this.textures.exists(SNES_ROUTE_ARROW_RELIC_ASSET.key)) return;
+    const texture = this.textures.get(SNES_ROUTE_ARROW_RELIC_ASSET.key);
+    SNES_ROUTE_ARROW_RELIC_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_ROUTE_ARROW_RELIC_ASSET.frame.width,
+        0,
+        SNES_ROUTE_ARROW_RELIC_ASSET.frame.width,
+        SNES_ROUTE_ARROW_RELIC_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesDungeonStatusFrames() {
+    if (!this.textures.exists(SNES_DUNGEON_STATUS_RELIC_ASSET.key)) return;
+    const texture = this.textures.get(SNES_DUNGEON_STATUS_RELIC_ASSET.key);
+    SNES_DUNGEON_STATUS_RELIC_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_DUNGEON_STATUS_RELIC_ASSET.frame.width,
+        0,
+        SNES_DUNGEON_STATUS_RELIC_ASSET.frame.width,
+        SNES_DUNGEON_STATUS_RELIC_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesRoomMapMarkerFrames() {
+    if (!this.textures.exists(SNES_ROOM_MAP_MARKER_ASSET.key)) return;
+    const texture = this.textures.get(SNES_ROOM_MAP_MARKER_ASSET.key);
+    SNES_ROOM_MAP_MARKER_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_ROOM_MAP_MARKER_ASSET.frame.width,
+        0,
+        SNES_ROOM_MAP_MARKER_ASSET.frame.width,
+        SNES_ROOM_MAP_MARKER_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesGateGlyphFrames() {
+    if (!this.textures.exists(SNES_GATE_GLYPH_ASSET.key)) return;
+    const texture = this.textures.get(SNES_GATE_GLYPH_ASSET.key);
+    SNES_GATE_GLYPH_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_GATE_GLYPH_ASSET.frame.width,
+        0,
+        SNES_GATE_GLYPH_ASSET.frame.width,
+        SNES_GATE_GLYPH_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesArchivePropFrames() {
+    if (!this.textures.exists(SNES_ARCHIVE_PROP_ASSET.key)) return;
+    const texture = this.textures.get(SNES_ARCHIVE_PROP_ASSET.key);
+    SNES_ARCHIVE_PROP_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_ARCHIVE_PROP_ASSET.frame.width,
+        0,
+        SNES_ARCHIVE_PROP_ASSET.frame.width,
+        SNES_ARCHIVE_PROP_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesArchiveTileFrames() {
+    if (!this.textures.exists(SNES_ARCHIVE_TILE_ASSET.key)) return;
+    const texture = this.textures.get(SNES_ARCHIVE_TILE_ASSET.key);
+    SNES_ARCHIVE_TILE_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_ARCHIVE_TILE_ASSET.frame.width,
+        0,
+        SNES_ARCHIVE_TILE_ASSET.frame.width,
+        SNES_ARCHIVE_TILE_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesOfficeTileFrames() {
+    if (!this.textures.exists(SNES_OFFICE_TILE_ASSET.key)) return;
+    const texture = this.textures.get(SNES_OFFICE_TILE_ASSET.key);
+    SNES_OFFICE_TILE_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_OFFICE_TILE_ASSET.frame.width,
+        0,
+        SNES_OFFICE_TILE_ASSET.frame.width,
+      SNES_OFFICE_TILE_ASSET.frame.height
+    );
+    });
+  }
+
+  private registerSnesGuideCavernTileFrames() {
+    if (!this.textures.exists(SNES_GUIDE_CAVERN_TILE_ASSET.key)) return;
+    const texture = this.textures.get(SNES_GUIDE_CAVERN_TILE_ASSET.key);
+    SNES_GUIDE_CAVERN_TILE_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_GUIDE_CAVERN_TILE_ASSET.frame.width,
+        0,
+        SNES_GUIDE_CAVERN_TILE_ASSET.frame.width,
+        SNES_GUIDE_CAVERN_TILE_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesNetworkTileFrames() {
+    if (!this.textures.exists(SNES_NETWORK_TILE_ASSET.key)) return;
+    const texture = this.textures.get(SNES_NETWORK_TILE_ASSET.key);
+    SNES_NETWORK_TILE_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_NETWORK_TILE_ASSET.frame.width,
+        0,
+        SNES_NETWORK_TILE_ASSET.frame.width,
+        SNES_NETWORK_TILE_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesReferralVaultTileFrames() {
+    if (!this.textures.exists(SNES_REFERRAL_VAULT_TILE_ASSET.key)) return;
+    const texture = this.textures.get(SNES_REFERRAL_VAULT_TILE_ASSET.key);
+    SNES_REFERRAL_VAULT_TILE_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_REFERRAL_VAULT_TILE_ASSET.frame.width,
+        0,
+        SNES_REFERRAL_VAULT_TILE_ASSET.frame.width,
+        SNES_REFERRAL_VAULT_TILE_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesArchiveRoomDetailFrames() {
+    if (!this.textures.exists(SNES_ARCHIVE_ROOM_DETAIL_ASSET.key)) return;
+    const texture = this.textures.get(SNES_ARCHIVE_ROOM_DETAIL_ASSET.key);
+    SNES_ARCHIVE_ROOM_DETAIL_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_ARCHIVE_ROOM_DETAIL_ASSET.frame.width,
+        0,
+        SNES_ARCHIVE_ROOM_DETAIL_ASSET.frame.width,
+        SNES_ARCHIVE_ROOM_DETAIL_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesWorkflowToolFrames() {
+    if (!this.textures.exists(SNES_WORKFLOW_TOOL_RELIC_ASSET.key)) return;
+    const texture = this.textures.get(SNES_WORKFLOW_TOOL_RELIC_ASSET.key);
+    SNES_WORKFLOW_TOOL_RELIC_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_WORKFLOW_TOOL_RELIC_ASSET.frame.width,
+        0,
+        SNES_WORKFLOW_TOOL_RELIC_ASSET.frame.width,
+        SNES_WORKFLOW_TOOL_RELIC_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesResearchPendantFrames() {
+    if (!this.textures.exists(SNES_RESEARCH_PENDANT_RELIC_ASSET.key)) return;
+    const texture = this.textures.get(SNES_RESEARCH_PENDANT_RELIC_ASSET.key);
+    SNES_RESEARCH_PENDANT_RELIC_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_RESEARCH_PENDANT_RELIC_ASSET.frame.width,
+        0,
+        SNES_RESEARCH_PENDANT_RELIC_ASSET.frame.width,
+        SNES_RESEARCH_PENDANT_RELIC_ASSET.frame.height
+      );
+    });
+  }
+
+  private registerSnesEquityCrystalFrames() {
+    if (!this.textures.exists(SNES_EQUITY_CRYSTAL_RELIC_ASSET.key)) return;
+    const texture = this.textures.get(SNES_EQUITY_CRYSTAL_RELIC_ASSET.key);
+    SNES_EQUITY_CRYSTAL_RELIC_ASSET.frames.forEach((frameName, index) => {
+      if (texture.has(frameName)) return;
+      texture.add(
+        frameName,
+        0,
+        index * SNES_EQUITY_CRYSTAL_RELIC_ASSET.frame.width,
+        0,
+        SNES_EQUITY_CRYSTAL_RELIC_ASSET.frame.width,
+        SNES_EQUITY_CRYSTAL_RELIC_ASSET.frame.height
+      );
+    });
   }
 
   private makeCharacterTextureIfMissing(key: string, bodyHex: string) {
