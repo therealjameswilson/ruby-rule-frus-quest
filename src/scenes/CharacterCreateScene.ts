@@ -104,7 +104,6 @@ export class CharacterCreateScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setDepth(12);
 
     this.createRoleCards();
-    this.drawWorkflowRelicStrip();
     this.beginPrompt = this.add.text(128, 203, "PICK ANY ROLE - SAME QUEST", {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -144,13 +143,6 @@ export class CharacterCreateScene extends Phaser.Scene {
     this.add.ellipse(128, 77, 48, 10, color(PALETTE.black), 0.62)
       .setName("character-create-role-shadow")
       .setDepth(-2);
-    for (let index = 0; index < 5; index += 1) {
-      const x = 98 + index * 15;
-      const tint = index % 2 === 0 ? PALETTE.goldStamp : PALETTE.terminalCyan;
-      this.add.rectangle(x, 91, 10, 4, color(tint), 0.72)
-        .setName("character-create-stage-rune")
-        .setDepth(-3);
-    }
   }
 
   private drawWorkflowRelicStrip() {
@@ -291,7 +283,9 @@ export class CharacterCreateScene extends Phaser.Scene {
     const roleAccent = PALETTE[role.color as keyof typeof PALETTE] ?? PALETTE.terminalCyan;
     this.sprite.setTexture(characterKey);
     this.sprite.play(characterAnimKey(characterKey, "idle-down"), true);
-    this.drawSelectedAbilityCrest(role.id, roleAccent);
+    this.abilityCrest?.destroy(true);
+    this.abilityCrest = undefined;
+    this.abilityCrestRole = undefined;
     const caretVisible = this.nameFocused && Math.floor(this.time.now / 350) % 2 === 0;
     this.nameText.setText(`NAME: ${this.displayName || "Sam"}${caretVisible ? "|" : ""}`);
     this.nameBox.setStrokeStyle(1, color(this.nameFocused ? PALETTE.goldStamp : PALETTE.sepiaInk));
