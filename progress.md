@@ -2,6 +2,1012 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Archive 16x16 tile-strip pass (2026-07-02):
+  - Added an original repo-local `public/assets/sprites/snes-archive-tiles.svg` strip with eight 16x16 room-construction frames: floor base, cracked floor, dotted floor, ruby floor, wall top, wall front, wall side, and floor shadow.
+  - Registered `SNES_ARCHIVE_TILE_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and registered named frames after texture load.
+  - Updated `addSnesRoomLayer()` in `src/systems/snesPixelArt.ts` so archive/vault/boss/secret room layers prefer real tile sprites for floor and wall-depth construction while preserving the existing rectangle fallback path when texture frames are missing.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts` passes (1 file / 1 test);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=snes-archive-tiles-client`;
+    - direct Playwright/Phaser probe confirmed texture `snes-archive-tiles`, all eight named frames, 130 visible archive tile sprites in both A1 and D3, frame coverage for floor/wall variants including ruby boss-room tiles, atlas readout `archiveTiles`, and zero page/console errors;
+    - the required client screenshot remains black due to the known WebGL capture artifact, so visual proof comes from the direct SwiftShader probe: `docs/screenshots/snes-archive-tiles/page.png`; JSON proof: `docs/screenshots/snes-archive-tiles/state.json`.
+- Archive room-detail sprite-strip pass (2026-07-02):
+  - Wired the original repo-local `public/assets/sprites/snes-archive-room-details.svg` strip into live Archive Cavern room rendering.
+  - `ArchiveScene` now adds sprite-based floor scuffs, corner shadows, wall caps, and directional route thresholds after the base SNES room layer while preserving primitive fallbacks if the texture or frame is missing.
+  - Threshold detail frames reuse the existing traversal checks: open exits show cyan `threshold_open`, locked FRUS process gates show ruby `threshold_locked`, and boss/review routes show `threshold_boss`.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts` passes (1 file / 1 test);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=archive-room-details-client`;
+    - direct Playwright/Phaser probe confirmed texture `snes-archive-room-details`, all six named frames, visible frame coverage for `floor_scuff/corner_shadow/wall_cap/threshold_open/threshold_locked/threshold_boss` across rooms A1/B1/D2/D3, atlas readout `archiveRoomDetails`, and zero page/console errors;
+    - the required client screenshot remains black due to the known WebGL capture artifact, so visual proof comes from the direct SwiftShader probe: `docs/screenshots/archive-room-details/page.png`; JSON proof: `docs/screenshots/archive-room-details/state.json`.
+- One-hour gameplay training current refresh (2026-07-02):
+  - Treated `https://www.youtube.com/watch?v=Dq_gUziNZUk` as a high-level gameplay-grammar reference only, not literal model training and not a source for copied maps, sprites, music, names, text, enemies, or exact puzzle layouts.
+  - Refreshed the public YouTube metadata and confirmed the title as `Legend of Zelda A LINK TO THE PAST Full Game Walkthrough - No Commentary (A Link to the Past Full)`.
+  - Re-verified the existing first-hour training layer in the current tree: `window.render_game_to_text().oneHourTraining` reports `trainingWindowMinutes: 60`, `trainedMinuteMarks: 60`, `coveredDrills: 12`, `totalDrills: 12`, and active drill `hazard_readability` for minute range `45-50`.
+  - Confirmed the Office scene visibly renders the one-hour route board, `1HR 45-50 HZ` chip, and `office-first-hour-training-relic` with no page/console errors.
+  - Verification:
+    - public oEmbed metadata check succeeded for the linked video;
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (2 files / 26 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-train-current-refresh`;
+    - direct bundled-Playwright probe confirmed the runtime training readout and visible one-hour objects;
+    - visual proof: `docs/screenshots/one-hour-training-current-turn/page.png`; JSON proof: `docs/screenshots/one-hour-training-current-turn/state.json`.
+- Archive prop sprite-strip pass (2026-07-02):
+  - Added an original repo-local `public/assets/sprites/snes-archive-props.svg` strip with five 64x48 Archive Cavern prop frames: bookcase, desk, document stack, ruby volume stack, and research table.
+  - Registered `SNES_ARCHIVE_PROP_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and registered named frames after load.
+  - Updated `ArchiveScene` so `drawBookcase()`, `drawDesk()`, `drawDocumentStack()`, `drawRubyVolumeStack()`, and `drawResearchTable()` prefer the new SNES prop frames while preserving the old rectangle/image fallback path and all existing collision/interactable behavior.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts` passes (1 file / 1 test);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=archive-props-client`;
+    - direct Playwright/Phaser probe confirmed texture `snes-archive-props`, frames `bookcase/desk/document_stack/ruby_volumes/research_table`, visible named `archive-prop-*` image objects across rooms A1/B1/B2/D1, atlas readout `archiveProps`, and zero page/console errors;
+    - the web-game client screenshot remains black due to the known WebGL capture artifact, so visual proof comes from the direct SwiftShader probe: `docs/screenshots/archive-props/page.png`; JSON proof: `docs/screenshots/archive-props/state.json`.
+- One-hour source-window training pass (2026-07-02):
+  - Treated `https://www.youtube.com/watch?v=Dq_gUziNZUk` as a first-hour gameplay-grammar reference only, not literal model training and not a source to copy maps, art, music, names, enemies, text, or exact puzzle layouts.
+  - Confirmed the video metadata identifies a 23,936-second no-commentary full walkthrough; the game now records the trained slice explicitly as minutes 0-60 / 3,600 seconds in `window.render_game_to_text().oneHourTraining`.
+  - Extended the one-hour training readout with `sourceDurationSeconds`, `trainedSeconds`, and `trainingWindow` so QA can prove the first-hour scope instead of assuming it from the 60-minute ledger.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (2 files / 26 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-source-window`;
+    - direct browser probe confirmed `sourceDurationSeconds: 23936`, `trainedSeconds: 3600`, `trainingWindow: 0-60`, `trainedMinuteMarks: 60`, `coveredDrills: 12`, and `totalDrills: 12`;
+    - visual proof: `docs/screenshots/one-hour-source-window-direct/page.png`; JSON proof: `docs/screenshots/one-hour-source-window-direct/state.json`.
+- Archive gate glyph pass (2026-07-02):
+  - Added an original repo-local `public/assets/sprites/snes-gate-glyphs.svg` strip with five 12x12 gate-state frames: open, locked, sealed, secret, and boss.
+  - Registered `SNES_GATE_GLYPH_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and registered named frames after load.
+  - Updated shared `addSnesGate()` in `src/systems/snesPixelArt.ts` so Archive room exits now display crisp state glyphs without changing collision, locked-exit checks, labels, or traversal rules.
+  - The glyphs make one-screen room exits read more like a 16-bit action-adventure dungeon: closed walls are sealed slabs, locked FRUS workflow gates show ruby locks, open routes show cyan doors, secret routes show gold cracks, and boss routes show a red-gold warning mark.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts` passes (1 file / 1 test);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=archive-gate-glyphs-client-final`;
+    - direct Playwright/Phaser probe confirmed texture `snes-gate-glyphs`, frames `open/locked/sealed/secret/boss`, visible named glyph objects such as `snes-gate-glyph-south-secret`, coverage of all five frame states across A1/A3/B3/C3, atlas readout `gateGlyphs`, current room `B3`, and zero page/console errors;
+    - visual proof: `docs/screenshots/archive-gate-glyphs/page.png`; JSON proof: `docs/screenshots/archive-gate-glyphs/state.json`.
+- Archive wall-map board sprite pass (2026-07-02):
+  - Added an original repo-local `public/assets/sprites/snes-archive-wall-map-board.svg` sprite: a 48x30 ruby/cream/gold wall-board prop for Archive Cavern route hints.
+  - Registered `SNES_ARCHIVE_WALL_MAP_BOARD_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and exposed it through `window.render_game_to_text().snesAtlas.archiveWallMapBoard`.
+  - Updated `ArchiveScene.drawWallMap()` so A3/B3 hint-room wall maps render the new sprite when available, with the existing rectangle-based wall-map drawing retained as a missing-texture fallback.
+  - The previous route markers still layer on top, so the board now reads as a single 16-bit prop plus live visited/current/locked/reward/boss state.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts` passes (1 file / 1 test);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=archive-wall-map-board-client`;
+    - direct Playwright/Phaser probe confirmed texture `snes-archive-wall-map-board`, visible image `archive-wall-map-board-A3`, marker texture `snes-room-map-markers`, four live route markers, atlas readout `archiveWallMapBoard`, current room `A3`, and zero page/console errors;
+    - visual proof: `docs/screenshots/archive-wall-map-board/page-clean.png`; JSON proof: `docs/screenshots/archive-wall-map-board/state-clean.json`.
+- Archive hint-room wall-map marker pass (2026-07-02):
+  - Reused the repo-local `SNES_ROOM_MAP_MARKER_ASSET` strip inside `ArchiveScene.drawWallMap()` so the A3/B3 in-room hint boards now show sprite-based room-state markers instead of purely primitive decorations.
+  - Preserved the existing cream-paper board, labels, and fallback rectangle path; if the marker texture is unavailable, the board still draws colored primitive cells.
+  - A3 now displays a compact secret-route map with visited, current, locked, and reward frames; B3 displays locked route nodes plus the boss/review-room marker.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts` passes (1 file / 1 test);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=archive-wall-map-markers`;
+    - direct Playwright/Phaser probe confirmed texture `snes-room-map-markers`, frames `visited/current/locked/boss/reward`, A3 marker objects `visited/current/locked/reward`, B3 marker objects `locked/boss`, and zero page/console errors;
+    - visual proof: `docs/screenshots/archive-wall-map-markers/page.png` and `docs/screenshots/archive-wall-map-markers-boss/page.png`; JSON proof: `docs/screenshots/archive-wall-map-markers/state.json` and `docs/screenshots/archive-wall-map-markers-boss/state.json`.
+- Quest-band room-map marker pass (2026-07-02):
+  - Added an original repo-local `public/assets/sprites/snes-room-map-markers.svg` strip with five 6x6 map-marker frames: visited, current, locked, boss, and reward.
+  - Registered `SNES_ROOM_MAP_MARKER_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and registered named frames after load.
+  - Updated `UIScene.drawQuestBandRoomMap()` so the always-visible HUD room map now uses sprite markers when available, while preserving the old primitive rectangle fallback if the texture is missing.
+  - This makes the active room map read more like a 16-bit dungeon map: current room is gold/white, unreached gates are ruby locks, reward rooms are brass/cyan, and boss/review rooms are red/gold.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/input/InputState.test.ts` passes (2 files / 16 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=snes-room-map-marker-client`;
+    - direct browser probe confirmed atlas readout `snesAtlas.roomMapMarkers`, texture `snes-room-map-markers`, frames `visited/current/locked/boss/reward`, and visible `quest-band-room-map-marker-*` sprites for current, locked, reward, and boss rooms with no page errors;
+    - visual proof: `docs/screenshots/snes-room-map-markers/page.png`; JSON proof: `docs/screenshots/snes-room-map-markers/state.json`.
+- Full selectable-role SNES frame-sheet pass (2026-07-02):
+  - Added original 32x48, 19-frame SNES-style animation strips for the remaining selectable roles: Proofreader, Declass Coordinator, and Source-note Specialist.
+  - Each new strip preserves the existing Compiler/Editor frame layout (`idle-0/1`, four-direction walk cycles, and `read`) while adding role-specific silhouettes: proof stack and glasses glint, mug plus tracker clipboard, and citation-stamp satchel plus source card.
+  - Registered the new strips in `SNES_ROLE_FRAME_SHEETS`, so `BootScene` preloads/slices them through the existing typed atlas path and `Player` automatically prefers them for matching role IDs.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/input/InputState.test.ts` passes (2 files / 16 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=source_note_specialist&name=Ruby&v=snes-all-role-frame-sheets-client`;
+    - direct browser probe confirmed all five selectable roles use their expected `snes-player-*-frames` texture, start on `idle-*`, advance to `walk-right-*` while moving, return to idle, and expose all five role frame sets through `window.render_game_to_text().snesAtlas.roleFrameSets`;
+    - visual proof: `docs/screenshots/snes-all-role-frame-sheets/source-note-specialist-page.png`; JSON proof: `docs/screenshots/snes-all-role-frame-sheets/state.json`.
+- Playable compiler/editor SNES frame-sheet priority pass (2026-07-02):
+  - Improved the live player sprite path so curated SNES role frame sheets are preferred for roles that have them, instead of defaulting to the imported art-pack sheets whose native cells are documented as fragment-prone and collapsed to frame 0.
+  - `Player` now chooses `snesRoleFrame48` first when a valid role frame sheet exists, then falls back to the 32x48 art-pack sheet, then the older SNES/8-bit textures.
+  - This makes the Compiler and Editor playable characters use the cleaner original `snes-player-*-frames` textures with idle/read/walk frames, improving the in-play 16-bit silhouette while preserving fallbacks for other roles.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/input/InputState.test.ts` passes (2 files / 16 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=snes-role-frame-player-client`;
+    - direct browser probe confirmed the player uses texture `snes-player-compiler-frames`, starts on an idle frame, advances to `walk-right-2` while moving, and returns to idle with no page errors;
+    - visual proof: `docs/screenshots/snes-role-frame-player/page.png`; JSON proof: `docs/screenshots/snes-role-frame-player/state.json`.
+- Pause subscreen workflow-tool icon pass (2026-07-02):
+  - Continued the SNES inventory/map polish by making every FRUS process item in the pause subscreen render as a distinct workflow-tool relic rather than relying on text-only boxes.
+  - `SNES_WORKFLOW_TOOL_RELIC_ASSET` is now the typed atlas source for the 128x32 `snes-workflow-tools` strip, with named frames for citation stamp, source-note card, cross-reference thread, terminal, FRUS volume, red pencil, proof pages, and concurrence slip.
+  - `BootScene` preloads the strip through the typed atlas metadata and registers named frames after texture load.
+  - `InventoryOverlay` now creates seven named `inventory-tool-icon-*` sprites for the Zelda-like FRUS tool grid: citation stamp, red pencil, review folder, clearance token, concurrence slip, proof lens, and buckram key. The old short labels remain as a fallback/readability layer.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureSubscreen.test.ts src/input/InputState.test.ts` passes (3 files / 18 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=workflow-tool-icons-current-client`;
+    - direct Chrome/Phaser probe opened the pause subscreen and confirmed texture `snes-workflow-tools`, all eight named frames, seven visible `inventory-tool-icon-*` objects with the expected frames, and `mode: "pause"` with no page errors;
+    - visual proof: `docs/screenshots/workflow-tool-icons-current/page.png`; JSON proof: `docs/screenshots/workflow-tool-icons-current/display.json`.
+- One-hour gameplay training current verification (2026-07-02):
+  - Treated `https://www.youtube.com/watch?v=Dq_gUziNZUk` as high-level action-adventure gameplay grammar only, not literal model training and not a source to copy protected maps, sprites, music, text, enemies, names, or exact puzzle layouts.
+  - Reconfirmed the public YouTube oEmbed title as `Legend of Zelda A LINK TO THE PAST Full Game Walkthrough - No Commentary (A Link to the Past Full)`, matching `FIRST_HOUR_REFERENCE.sourceTitle`.
+  - Verified the game still exposes the one-hour training model at runtime: `trainingWindowMinutes: 60`, `trainedMinuteMarks: 60`, `coveredDrills: 12`, `totalDrills: 12`, minute 0 start-room affordance, and minute 59 world-change reward.
+  - Confirmed the Office scene visibly renders the one-hour training relic, the `1HR 45-50 HZ` chip, and the twelve-node route strip while `window.render_game_to_text().oneHourTraining` reports the same current drill.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/game/snesAtlas.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-training-verify-current`;
+    - direct browser probe confirmed no page/console errors, live one-hour training readout, visible `office-first-hour-training-relic`, visible `office-first-hour-chip-label`, and visible twelve-node route strip;
+    - visual proof: `docs/screenshots/one-hour-training-current-verify/page.png`; JSON proof: `docs/screenshots/one-hour-training-current-verify/state.json`.
+- Pause subscreen progression-relic pass (2026-07-02):
+  - Continued the SNES inventory/map polish by replacing the pause-subscreen primitive pendant and crystal drawings with the existing original pixel-art relic strips.
+  - BootScene now registers named frames for `SNES_RESEARCH_PENDANT_RELIC_ASSET` (`objectivity/provenance/review`) and `SNES_EQUITY_CRYSTAL_RELIC_ASSET` (`defense/intelligence/diplomatic/foreign/privacy`) after load.
+  - `InventoryOverlay` now creates named image objects (`subscreen-research-pendant-*` and `subscreen-equity-crystal-*`) with dim/bright alpha states while preserving the old primitive vector fallback if the textures are unavailable.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureSubscreen.test.ts src/input/InputState.test.ts` passes (3 files / 18 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=subscreen-relics-client`;
+    - direct Chrome/Phaser probe against `?scene=OfficeScene&role=compiler&name=Ruby&v=subscreen-relics-focused-probe` opened the pause subscreen and confirmed texture frames for `snes-research-pendants` and `snes-equity-crystals`, visible named subscreen relic image objects, and `mode: "pause"` with no page/console errors;
+    - visual proof: `docs/screenshots/subscreen-progression-relics/page-focused.png`; JSON proof: `docs/screenshots/subscreen-progression-relics/display-focused.json`.
+- Pause subscreen dungeon-status relic pass (2026-07-02):
+  - Added an original repo-local `public/assets/sprites/snes-dungeon-status-relics.svg` strip with four 12x12 chapter-status frames: small key, big key, map, and boss/review completion.
+  - Registered `SNES_DUNGEON_STATUS_RELIC_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and registered named texture frames for each status relic.
+  - Updated `InventoryOverlay` so the ALttP-style FRUS Quest subscreen now shows active-dungeon status relics for local chapter keys, big-key/stage-gate, map/compass literacy, and boss-review completion, with primitive fallback boxes if the strip is unavailable.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureSubscreen.test.ts src/input/InputState.test.ts` passes (3 files / 18 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=dungeon-status-relic-client`; its key map cannot send `KeyM`, so the feature-specific menu-open proof comes from the direct Chrome probe;
+    - direct Chrome/Phaser probe against `?scene=OfficeScene&role=compiler&name=Ruby&v=dungeon-status-relic-probe` opened the pause subscreen and confirmed texture `snes-dungeon-status-relics`, frames `small_key/big_key/map/boss`, four visible `subscreen-dungeon-status-*` images, and active dungeon state `Office Hub`;
+    - visual proof: `docs/screenshots/dungeon-status-relics/page.png`; JSON proof: `docs/screenshots/dungeon-status-relics/state.json`.
+- One-hour route-arrow relic pass (2026-07-02):
+  - Continued the one-hour action-adventure training translation by making selected overworld routes use a reusable original pixel-art cardinal-arrow strip instead of transient primitive cursor triangles.
+  - Added `public/assets/sprites/snes-route-arrows.svg` with four 12x12 frames: north, east, south, and west.
+  - Registered `SNES_ROUTE_ARROW_RELIC_ASSET` in `src/game/snesAtlas.ts`, preloaded and sliced it in `BootScene`, and exposed it through the SNES atlas readout.
+  - Updated `WorldMapScene` so selected district cursors prefer the named route-arrow frames while preserving the old primitive fallback if the texture is unavailable.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - direct Chrome/Phaser probe against `?scene=WorldMapScene&role=compiler&name=Ruby&v=route-arrows-probe2` confirmed texture `snes-route-arrows`, frames `north/east/south/west`, four visible cursor images using those frames, and the atlas `routeArrowRelics` readout;
+    - visual proof: `docs/screenshots/world-map-route-arrows/page-recursive.png`; JSON proof: `docs/screenshots/world-map-route-arrows/state-recursive.json`.
+- SNES process stamp relic publication pass (2026-07-02):
+  - Added an original repo-local `public/assets/sprites/snes-process-stamps.svg` strip with six 12x12 process-stamp frames: rule, archive, network, referral, sop, and proof.
+  - Registered `SNES_PROCESS_STAMP_RELIC_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and registered named texture frames for each stamp.
+  - Updated the published FRUS reward screen in `EndingScene` so the final process checklist now shows six earned stamp relics with secondary label/status text instead of text-only proof.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=process-stamps-client`;
+    - direct Chrome probe invoked publication and confirmed atlas texture `snes-process-stamps`, frames `rule/archive/network/referral/sop/proof`, six visible `published-process-stamp-*` images, six labels, six statuses, and `finalGateCertification.status: "published"`;
+    - visual proof: `docs/screenshots/process-stamp-relics/page.png`; JSON proof: `docs/screenshots/process-stamp-relics/state.json`.
+- SNES published FRUS prize cover pass (2026-07-02):
+  - Registered the existing repo-local `public/assets/sprites/frus-prize-cover.svg` as `SNES_PUBLISHED_FRUS_PRIZE_ASSET` in `src/game/snesAtlas.ts`.
+  - Moved the final prize cover preload to the typed SNES atlas path in `BootScene`, removing the duplicate hard-coded loader entry.
+  - Updated `EndingScene` so the published-volume payoff prefers the crisp 80x120 ruby buckram pixel-art cover and only falls back to the large art-pack legendary reward if that texture is unavailable.
+  - Added the named runtime object `published-frus-snes-prize-art` with `rewardTexture: frus-prize-cover` so browser probes can verify the actual final reward art.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=snes-prize-client`;
+    - direct Chrome probe invoked publication and confirmed `finalGateCertification.status: "published"`, atlas texture `frus-prize-cover`, visible `published-frus-snes-prize-art`, and `rewardTexture: frus-prize-cover`;
+    - visual proof: `docs/screenshots/snes-published-prize/page.png`; JSON proof: `docs/screenshots/snes-published-prize/state.json`.
+- FRUS cover fragment relic quest-band pass (2026-07-02):
+  - Added an original repo-local `public/assets/sprites/snes-cover-fragments.svg` strip with five 3x10 cover-piece frames: spine, title band, years panel, seal, and imprint.
+  - Registered `SNES_COVER_FRAGMENT_RELIC_ASSET` in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and exposed it through `window.render_game_to_text().snesAtlas.coverFragmentRelics`.
+  - Updated `UIScene` so the existing `VOL 0/5` quest-band book slot now uses real cropped cover-piece sprites while keeping the previous procedural fallback if the texture is missing.
+  - Added `questBandCoverFragmentSlots()` coverage so the cover fragments use the same five-slot SNES counter grammar as research pendants and equity crystals.
+  - Verification:
+    - focused `npm test -- --run src/scenes/questBandCue.test.ts src/game/snesAtlas.test.ts src/game/adventureSubscreen.test.ts src/input/InputState.test.ts` passes (4 files / 22 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=cover-fragment-relic-client`;
+    - direct Phaser display-list probe confirmed five visible `quest-band-cover-fragment-*` frames (`spine/title/years/seal/imprint`), texture `snes-cover-fragments`, alpha `0.34` at `VOL 0/5`, atlas frame readout, and no page errors;
+    - visual proof: `docs/screenshots/cover-fragment-relic-page.png`; JSON proof: `docs/screenshots/cover-fragment-relic-state.json`.
+- Equity crystal relic quest-band sync pass (2026-07-02):
+  - Finished the SNES-style equity crystal quest-band integration so declassification/equity progress reads as five original 8x10 relic frames instead of generic marks.
+  - Added `questBandCrystalSlots()` with unit coverage to cap the strip at five, keep at least one dim future crystal visible, and hide inactive frames when the active equity total is lower than the strip length.
+  - Fixed `UIScene` so crystal sprite visibility synchronizes before the quest-band refresh throttle/signature cache can return early; this prevents stale frames from showing all five crystals during Office/HUD refreshes.
+  - Verification:
+    - focused `npm test -- --run src/scenes/questBandCue.test.ts src/game/snesAtlas.test.ts src/game/frusProgression.test.ts src/game/adventureSubscreen.test.ts src/input/InputState.test.ts` passes (5 files / 26 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=equity-crystal-sync-client`;
+    - direct Phaser display-list probe confirmed `visibleCount: 1`, visible relic `quest-band-equity-crystal-defense`, alpha `0.38`, atlas frames `defense/intelligence/diplomatic/foreign/privacy`, and no page errors;
+    - visual proof: `docs/screenshots/equity-crystal-sync-page.png`; JSON proof: `docs/screenshots/equity-crystal-sync-state.json`.
+- One-hour gameplay training verification refresh (2026-07-02):
+  - Treated `https://www.youtube.com/watch?v=Dq_gUziNZUk` as high-level action-adventure gameplay grammar only, not literal model training and not a source to copy maps, sprites, music, names, enemies, text, or exact puzzle layouts.
+  - Re-confirmed the YouTube oEmbed title as `Legend of Zelda A LINK TO THE PAST Full Game Walkthrough - No Commentary (A Link to the Past Full)`.
+  - Re-verified that the current live implementation already encodes the first hour as a typed 60-minute FRUS Quest training profile in `src/game/firstHourTraining.ts`.
+  - Confirmed the runtime `window.render_game_to_text().oneHourTraining` exposes `trainingWindowMinutes: 60`, `trainedMinuteMarks: 60`, `coveredDrills: 12`, `totalDrills: 12`, a minute 0 start-room objective, a minute 59 reward-changes-world objective, and the visible `snes-first-hour-training-relic` object in OfficeScene.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/game/snesAtlas.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-train-verify`;
+    - refreshed web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-train-refresh`;
+    - direct Chrome probe confirmed `trainingWindowMinutes: 60`, `trainedMinuteMarks: 60`, `coveredDrills: 12`, `totalDrills: 12`, visible `office-first-hour-training-relic`, visible `1HR 45-50 HZ` chip, and the full twelve-node Office route strip;
+    - refreshed JSON proof: `docs/screenshots/web-game-one-hour-train-refresh/state-2.json`; direct visual proof: `docs/screenshots/one-hour-train-refresh-direct/page.png`; direct JSON proof: `docs/screenshots/one-hour-train-refresh-direct/state.json`; the required client screenshot remains black because of the known headless WebGL capture artifact.
+- Research pendant relic quest-band pass (2026-07-02):
+  - Added an original repo-local 30x10 SNES-style pendant strip at `public/assets/sprites/snes-research-pendants.svg`.
+  - Registered it in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and rendered three 10x10 cropped frames in `UIScene` for the FRUS research pendants: objectivity, provenance, and SOP/review discipline.
+  - Kept the existing `GameState` and `getAdventureSubscreenReadout()` logic intact; the new sprites replace the generic quest-band triangle marks visually while still dimming when the pendant is unearned.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureSubscreen.test.ts src/input/InputState.test.ts` passes (3 files / 18 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=research-pendant-relic-client`;
+    - direct browser probe confirmed texture `snes-research-pendants`, visible objects `quest-band-research-pendant-objectivity`, `quest-band-research-pendant-provenance`, and `quest-band-research-pendant-review`, matching frame names, and no page errors;
+    - visual proof: `docs/screenshots/research-pendant-relic-clean-page.png`; JSON proof: `docs/screenshots/research-pendant-relic-clean-state.json`.
+- World atlas relic training pass (2026-07-02):
+  - Continued treating the linked one-hour gameplay reference as high-level action-adventure grammar only, not literal model training and not a source to copy maps, art, music, names, enemies, text, or exact puzzle layouts.
+  - Added an original repo-local 24x24 SNES-style world atlas relic at `public/assets/sprites/snes-world-atlas-relic.svg`.
+  - Registered it in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, rendered it in `WorldMapScene`, and exposed it through `window.render_game_to_text().snesAtlas.worldAtlasRelic`.
+  - Updated `docs/gameplay/first-hour-reference-training.md` so future tuning treats the relic as the visible map-literacy handoff for the first-hour training profile.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/data/regions.test.ts` passes (2 files / 4 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=WorldMapScene&region=europe&role=compiler&name=Ruby&v=world-atlas-relic-final-client`;
+    - direct browser probe confirmed texture `snes-world-atlas-relic`, visible objects `world-map-atlas-relic-panel`, `world-map-atlas-relic`, and `world-map-atlas-relic-label`, atlas readout `World Atlas Relic`, and no page errors;
+    - visual proof: `docs/screenshots/world-atlas-relic-final-page.png`; JSON proof: `docs/screenshots/world-atlas-relic-final-state.json`.
+- Archive compass relic pass (2026-07-02):
+  - Added an original repo-local 24x24 SNES-style map/compass relic at `public/assets/sprites/snes-archive-compass-relic.svg`.
+  - Registered it in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and rendered it beside the Archive Cavern minimap in `ArchiveScene`.
+  - The relic label now reflects the existing dungeon map state: `???` until the Archive Cavern map/compass is revealed, then `MAP`.
+  - Added `src/game/snesAtlas.test.ts` so the new original relics remain covered by the typed atlas readout.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureTraining.test.ts` passes (2 files / 12 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=archive-compass-relic-final-client`;
+    - direct browser probe confirmed texture `snes-archive-compass-relic`, visible object `archive-compass-relic`, atlas readout `Archive Compass Relic`, `mapRevealed: false`, label `???`, and no page errors;
+    - visual proof: `docs/screenshots/archive-compass-relic-fresh-page.png`; JSON proof: `docs/screenshots/archive-compass-relic-fresh-state.json`.
+- Office one-hour route relic pass (2026-07-02):
+  - Added an original repo-local 24x24 SNES-style route relic at `public/assets/sprites/snes-first-hour-training-relic.svg`.
+  - Registered it in `src/game/snesAtlas.ts`, preloaded it in `BootScene`, and rendered it in `OfficeScene` as a named wall prop beside the FRUS Path board.
+  - Extended the one-hour readout with `visualRelic` so `window.render_game_to_text().oneHourTraining` links the 60-minute training model to the visible map prop.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/scenes/questBandCue.test.ts` passes (2 files / 13 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=first-hour-relic-client`;
+    - direct browser probe confirmed texture `snes-first-hour-training-relic`, visible object `office-first-hour-training-relic`, `trainingWindowMinutes: 60`, `trainedMinuteMarks: 60`, no page errors, and JSON proof `docs/screenshots/first-hour-relic-state.json`;
+    - visual proof: `docs/screenshots/first-hour-relic-page.png`.
+- One-hour gameplay training receipt pass (2026-07-02):
+  - Treated the linked gameplay video as high-level action-adventure grammar only, not literal model training and not a source to copy protected maps, sprites, music, text, enemies, names, or exact puzzle layouts.
+  - Added `docs/gameplay/one-hour-training-receipt.md` so future passes have a concise handoff artifact for what "one hour trained" means in this repo.
+  - The receipt points to the existing live training implementation in `src/game/firstHourTraining.ts`, `src/game/adventureTraining.ts`, `docs/gameplay/first-hour-reference-training.md`, and `window.render_game_to_text().oneHourTraining`.
+  - Polished the active HUD cue so the SNES verb badge carries `GOAL`/`ACT`/`LOCK` etc. while the cue text no longer repeats the same verb prefix.
+  - Verification:
+    - focused `npm test -- --run src/scenes/questBandCue.test.ts src/game/adventureTraining.test.ts` passes (2 files / 13 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-training-receipt-clean`;
+    - direct browser probe confirmed `trainingWindowMinutes: 60`, `trainedMinuteMarks: 60`, `coveredDrills: 12`, `totalDrills: 12`, visible HUD badge `GOAL`, cue text `NEXT Office Hub loaded.`, and no page errors;
+    - visual proof: `docs/screenshots/one-hour-training-receipt-clean-page.png`; JSON proof: `docs/screenshots/one-hour-training-receipt-clean-state.json`.
+- Buckram Gate process-checklist copy pass (2026-07-02):
+  - Corrected the final publication room so StateChat does not appear to own the final certification checklist.
+  - Renamed the left final-room checklist from `STATECHAT CHECKLIST` to `PROCESS CHECKLIST`, keeping `HUMAN SIGN-OFF` as the separate publication authority.
+  - Added the named display object `buckram-process-checklist-title` for browser QA.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/standardsDamage.test.ts src/systems/dungeonKeys.test.ts` passes (3 files / 17 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=ending-process-checklist-client`;
+    - direct browser probe confirmed visible `buckram-process-checklist-title` text `PROCESS\\nCHECKLIST`, no `STATECHAT` checklist text, no page errors, and JSON proof `docs/screenshots/ending-process-checklist-state.json`;
+    - visual proof: `docs/screenshots/ending-process-checklist-page.png`.
+- Title start-affordance polish pass (2026-07-02):
+  - Preserved the repository-local 16-bit title card while adding live SNES-style start feedback over it.
+  - `TitleScene` now draws a named `title-start-affordance` overlay at the art-pack prompt position: gold side arrows, a dark underline backplate, cyan pulse line, and small cyan sparks.
+  - Added `TITLE_LAYOUT.artPackStartY` plus a layout test so the art-pack affordance remains in a safe on-screen band above the controls line.
+  - Verification:
+    - focused `npm test -- --run src/scenes/TitleScene.test.ts src/input/InputState.test.ts` passes (2 files / 25 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=TitleScene&v=title-start-affordance-client`;
+    - direct browser probe confirmed `title-start-affordance` visible at `x=128, y=190`, Enter transition to `CharacterCreateScene`, and no page errors;
+    - visual proof: `docs/screenshots/title-start-affordance-page.png`; JSON proof: `docs/screenshots/title-start-affordance-state.json`.
+- Character creator equal-rank FRUS role pass (2026-07-02):
+  - Tightened the first playable screen so it presents equal-rank FRUS production roles instead of a generic/singular historian identity.
+  - Replaced the top title with `CREATE YOUR FRUS ROLE`, added `EQUAL RANK · SHARED PUBLICATION DUTY`, and updated the scene objective to `Choose an equal-rank FRUS production role.`
+  - Moved the copy constants into Phaser-free `src/scenes/characterCreateCopy.ts` so the role framing is covered by unit tests without importing the Phaser scene in Node.
+  - Verification:
+    - focused `npm test -- --run src/scenes/CharacterCreateScene.test.ts src/input/InputState.test.ts` passes (2 files / 18 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=CharacterCreateScene&role=editor&name=Ruby&v=character-equal-role-client`;
+    - direct browser probe confirmed `CharacterCreateScene`, objective `Choose an equal-rank FRUS production role.`, visible role set, Enter transition to `OfficeScene`, selected Editor profile, and no page errors;
+    - visual proof: `docs/screenshots/character-create-equal-role-page.png`; JSON proof: `docs/screenshots/character-create-equal-role-slim-state.json`.
+- Office one-hour drill chip pass (2026-07-02):
+  - Made the one-hour reference-training state visible in the Office scene instead of only surfacing it through JSON and the tiny node strip.
+  - `drawFirstHourTrainingStrip()` now adds a readable `1HR` chip and active minute/drill code such as `45-50 HZ` beside the twelve-node strip on the FRUS Path board.
+  - The chip is driven from the live `getAdventureTrainingReadout()` drill, so it stays synchronized with the HUD cue and `window.render_game_to_text().oneHourTraining`.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (2 files / 26 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=office-one-hour-chip-client`;
+    - direct browser probe confirmed visible display objects `office-first-hour-chip-label: 1HR` and `office-first-hour-chip-minute: 45-50 HZ`, `trainedMinuteMarks: 60`, no page errors, and JSON proof `docs/screenshots/office-one-hour-chip-state.json`;
+    - visual proof: `docs/screenshots/office-one-hour-chip-page.png`.
+- Literal one-hour training ledger pass (2026-07-02):
+  - Treated the linked gameplay as high-level action-adventure grammar only, not literal model training and not a source to copy maps, sprites, music, text, names, or exact puzzle layouts.
+  - Extended `src/game/firstHourTraining.ts` so `window.render_game_to_text().oneHourTraining` now includes `trainedMinuteMarks: 60` and a `minuteMarks[0..59]` ledger.
+  - Each minute mark records the phase, drill, primary beat, cue text, FRUS objective, and implementation signal, while the visible Office board keeps its compact twelve-node SNES strip.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts` passes (1 file / 11 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-minute-ledger-client`;
+    - direct browser probe confirmed `trainingWindowMinutes: 60`, `trainedMinuteMarks: 60`, `uniqueMinuteCount: 60`, all minutes have implementation signals, and no page errors;
+    - visual proof: `docs/screenshots/one-hour-minute-ledger-page.png`; JSON proof: `docs/screenshots/one-hour-minute-ledger-state.json`.
+- World Map selected-route cursor pass (2026-07-02):
+  - Continued the first-hour action-adventure translation by making the overworld atlas selectable with keyboard/gamepad-style controls instead of relying on pointer hover.
+  - `WorldMapScene` now keeps a selected district, draws a named four-arrow SNES cursor around the active cartouche, uses up/down to cycle districts, keeps left/right for region cycling, and activates the selected district with A/Enter/Start.
+  - Replaced the redundant bottom tooltip with a single route-preview card showing district, destination, and verb, removing the visual overlap found during screenshot QA.
+  - Verification:
+    - focused `npm test -- --run src/data/regions.test.ts src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts` passes (3 files / 21 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=WorldMapScene&region=europe&role=compiler&name=Ruby&v=world-map-selected-route-client-2`;
+    - direct browser probe confirmed cursor route `3. MANILA`, destination `EMBASSY`, verb `CABLES`, tooltip hidden, Enter route to `GameplayMapScene`, no page errors, and JSON proof `docs/screenshots/world-map-selected-route-probe.json`;
+    - visual proof: `docs/screenshots/world-map-selected-route-page.png`.
+- Archive Guide first-hour training cue pass (2026-07-02):
+  - Treated the linked one-hour gameplay reference as high-level action-adventure grammar only, not literal model training and not a source to copy protected maps, sprites, music, text, enemies, or exact puzzle layouts.
+  - Reframed the Historian Office guide interaction from `Historian-in-Chief` to equal-rank `Archive Guide` in the live scene copy, Tiled data, and codex unlock path.
+  - Added a visible SNES cue with an evidence map, source token, archive box, equal-rank tag, and `EVIDENCE PATH` caption so the opening safe guide reads as a first-hour start-room affordance rather than text-only instruction.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/interactionPrompt.test.ts src/systems/snesMapDressing.test.ts` passes (3 files / 24 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby&v=archive-guide-cue-client`;
+    - direct browser probe confirmed title `ARCHIVE GUIDE`, caption `EVIDENCE PATH`, active first-hour drill `start_room_affordance`, no page errors, and JSON proof `docs/screenshots/archive-guide-cue-probe.json`;
+    - visual proof: `docs/screenshots/archive-guide-cue-page.png`.
+- FRUS Production Floor phase-cue pass (2026-07-02):
+  - Made FRUS Production Floor room triggers show visible SNES milestone cues instead of only bottom dialog.
+  - Research, Compilation, Declassification Review, Annotation, and Publication now share a compact phase-cue system with phase-specific title, caption, accent color, and icon art.
+  - Verified bookend phases directly: `RESEARCH` / `SOURCE TRAIL` and `PUBLICATION` / `BIND VOLUME`.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/interactionPrompt.test.ts src/systems/snesMapDressing.test.ts` passes (3 files / 24 tests);
+    - `npm run build` passes with known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-phase-cue-client`;
+    - direct browser probe confirmed Research/Publication cue titles/captions, no page errors, and JSON proof `docs/screenshots/frus-phase-cue-probe.json`;
+    - visual proofs: `docs/screenshots/frus-phase-research-cue-page.png` and `docs/screenshots/frus-phase-publication-cue-page.png`.
+- Foggy Bottom 23rd Street sign route-cue pass (2026-07-02):
+  - Made the 23rd Street Sign interaction show a visible SNES route cue instead of only dialog.
+  - First check now shows `ROUTE +1` with a signpost, street/sidewalk split, cyan sidewalk arrow, and `SIDEWALK ONLY` caption.
+  - Repeat checks show `ROUTE LOG` / `SIGN LOGGED`.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/interactionPrompt.test.ts src/systems/snesMapDressing.test.ts` passes (3 files / 24 tests);
+    - `npm run build` passes with known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=foggy_bottom&role=compiler&name=Ruby&v=street-sign-cue-client`;
+    - direct browser probe confirmed first/repeat cue titles/captions, no page errors, and JSON proof `docs/screenshots/street-sign-cue-probe.json`;
+    - visual proofs: `docs/screenshots/street-sign-route-cue-page.png` and `docs/screenshots/street-sign-logged-cue-page.png`.
+- Historian Office Coffee Station focus-cue pass (2026-07-02):
+  - Made the Coffee Station safe starting-room interaction show a visible SNES reward cue instead of only dialog.
+  - First check now shows `FOCUS +1` with mug, steam, annotation note, and `ANNOTATION READY` caption.
+  - Repeat checks show `FOCUS LOG` / `POT LOGGED`.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/interactionPrompt.test.ts src/systems/snesMapDressing.test.ts` passes (3 files / 24 tests);
+    - `npm run build` passes with known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby&v=coffee-station-cue-client`;
+    - direct browser probe confirmed first/repeat cue titles/captions, no page errors, and JSON proof `docs/screenshots/coffee-station-cue-probe.json`;
+    - visual proofs: `docs/screenshots/coffee-station-focus-cue-page.png` and `docs/screenshots/coffee-station-logged-cue-page.png`.
+- Black Vault live-core statutory-clock cue pass (2026-07-02):
+  - Made the Black Vault `Obelisk Core` interaction read like a final SNES boss threshold instead of an instant scene jump.
+  - Pressing A at the live core now locks the route briefly, shows a `LIVE CORE` cue with a DANN-E obelisk, red eye, chest core, record card, shortcut tag, and `DANN-E / 30YR` caption, then transitions to `BlackVaultLairScene`.
+  - Reused the existing `addSnesStatutoryClock()` pixel widget beside the core cue so the boss route visibly ties DANN-E pressure to the FRUS 30-year publication clock.
+  - Verification:
+    - focused `npm test -- --run src/game/statutoryClock.test.ts src/game/finalPublicationCertification.test.ts src/game/adventureTraining.test.ts src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts` passes (5 files / 35 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=black_vault&role=compiler&name=Ruby&v=black-vault-core-cue-client`;
+    - direct browser probe confirmed title `LIVE CORE`, caption `DANN-E\n30YR`, clock title `30-YR CLOCK`, transition to `BlackVaultLairScene`, no page errors, and JSON proof `docs/screenshots/black-vault-core-cue-probe.json`;
+    - visual proof: `docs/screenshots/black-vault-core-cue-page.png`.
+- Embassy cable and foreign-permission cue pass (2026-07-02):
+  - Finished and verified the Embassy Cable Room process loop as readable SNES-style workflow objects.
+  - The Chancery Door now shows a floating `CABLE COPIED` cue with a telex terminal, copied cable sheet, red margin bar, context tag, and `COPY + CONTEXT` caption when the field cable is logged.
+  - The Consular Queue now shows a locked `NEED CABLE` cue with a red slash and `COPY CABLE` caption before the cable is collected.
+  - After the cable is copied, the Consular Queue switches to a `PERMIT NOTE` cue with a permission note, request channel, approval seal, cyan open glow, and `VISIBLE OUTCOME` caption.
+  - Verification:
+    - focused `npm test -- --run src/game/recordCollection.test.ts src/game/embassyPermissionQueue.test.ts src/game/adventureTraining.test.ts src/systems/interactionPrompt.test.ts` passes (4 files / 27 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=embassy&role=compiler&name=Ruby&v=embassy-cue-client`;
+    - direct browser probe confirmed locked title `NEED CABLE`, cable title `CABLE COPIED`, filed title `PERMIT NOTE`, matching captions, no page errors, and JSON proof `docs/screenshots/embassy-cue-probe.json`;
+    - visual proofs: `docs/screenshots/embassy-permission-locked-cue-page.png`, `docs/screenshots/embassy-cable-copied-cue-page.png`, and `docs/screenshots/embassy-permission-filed-cue-page.png`.
+- One-hour gameplay training coverage pass (2026-07-02):
+  - Treated the linked hour of gameplay as high-level action-adventure grammar only, not literal model training and not a source to copy maps, sprites, music, text, names, or exact puzzle layouts.
+  - Added a typed `firstHourTrainingCoverageReadout()` in `src/game/firstHourTraining.ts` with all twelve five-minute drills, active drill selection, minute ranges, acceptance signals, and concrete FRUS implementation signals.
+  - Exposed the full ladder through `window.render_game_to_text().oneHourTraining`, alongside the existing current `adventureTraining` cue, so browser QA can verify the game has a complete one-hour reference coverage model.
+  - Updated `docs/gameplay/first-hour-reference-training.md` to point future tuning at the live `oneHourTraining` readout.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts` passes (1 file / 11 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-training-coverage`;
+    - direct browser probe confirmed `oneHourTraining.coveredDrills: 12`, `totalDrills: 12`, all implementation signals present, active drill `hazard_readability`, no page errors, and screenshot `docs/screenshots/one-hour-training-coverage-page.png`.
+- Capitol HAC hearing packet and closed-session vault cue pass (2026-07-02):
+  - Made the Capitol Hill Hearing map behave more like a SNES review-gate room by adding visible procedural pixel cues to the witness-table and closed-session-vault interactions.
+  - When `inspectClosedSessionSample()` blocks the vault, `GameplayMapScene` now draws a floating `NEED HAC` cue with a closed vault wheel, 30-year sample sheet, red slash, and `WITNESS DOCKET` caption.
+  - When `fileCapitolHacPacket()` files the witness-table packet, it draws a `HAC DOCKET` cue with a witness table, microphone, process docket, annual finding seal, and treaty-fragment marker.
+  - When the closed-session packet is valid, the vault cue switches to `30YR SAMPLE` with an open cyan vault glow, classified-sample sheet, and gold seal.
+  - Verification:
+    - focused `npm test -- --run src/game/capitolHacPacket.test.ts src/game/adventureTraining.test.ts src/systems/interactionPrompt.test.ts` passes (3 files / 21 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=capitol_hill&role=compiler&name=Ruby&v=capitol-hac-cue-client`;
+    - direct browser probe confirmed locked title `NEED HAC`, witness title `HAC DOCKET`, sample title `30YR SAMPLE`, matching captions, and no page errors;
+    - visual proofs: `docs/screenshots/capitol-closed-session-locked-cue-page.png`, `docs/screenshots/capitol-hac-witness-docket-cue-page.png`, and `docs/screenshots/capitol-closed-session-sample-cue-page.png`.
+- West Wing Oval Office briefing-dossier cue pass (2026-07-02):
+  - Continued the White House source-coverage route by making the Oval Office Desk briefing behave like a visible SNES workflow reward/lock instead of only a dialog update.
+  - When `fileOvalOfficeBriefing()` blocks the desk, `GameplayMapScene` now draws a floating `NEED NSC` cue with a briefing dossier, red margin, policy-context card, and red slash.
+  - When NSC source coverage has been certified and the desk files the packet, the cue switches to `FILED BRIEF` with a chronology/context dossier, cyan/gold approval glow, and `CHRONOLOGY CONTEXT` caption.
+  - Added cue cleanup so rapid West Wing interactions do not stack the NSC source gate cue behind the Oval Office dossier cue.
+  - Verification:
+    - focused `npm test -- --run src/game/ovalOfficeBriefing.test.ts src/game/westWingNsc.test.ts src/game/adventureTraining.test.ts src/systems/interactionPrompt.test.ts` passes (4 files / 23 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=west_wing&role=compiler&name=Ruby&v=oval-briefing-client`;
+    - direct browser probe confirmed locked title `NEED NSC`, caption `SOURCE\nGATE`, filed title `FILED BRIEF`, caption `CHRONOLOGY\nCONTEXT`, `nscCount: 0` after cleanup, and no page errors;
+    - visual proofs: `docs/screenshots/west-wing-oval-briefing-locked-cue-page.png` and `docs/screenshots/west-wing-oval-briefing-filed-cue-page.png`.
+- West Wing NSC source-coverage gate-cue pass (2026-07-02):
+  - Made the White House West Wing Secret Service/Situation Room gate behave like a readable SNES item lock instead of only a dialog/state update.
+  - When `checkWestWingNscGate()` blocks the route, `GameplayMapScene` now draws a floating `NEED SOURCES` cue with a cream repository/source map, red margin bar, checkpoint badge, and red slash.
+  - When the NARA Source Index or repository coverage map certifies the route, the same cue switches to `NSC CLEAR` / `WH/NSC SOURCE MAP` with a cyan/gold open checkpoint glow.
+  - The cue is clamped into the West Wing playfield and all pieces are named (`nsc-source-gate-cue`, `nsc-source-gate-map`, `nsc-source-gate-checkpoint`, `nsc-source-gate-open-glow`, etc.) for browser QA.
+  - Verification:
+    - focused `npm test -- --run src/game/westWingNsc.test.ts src/game/redZoneGate.test.ts src/game/adventureTraining.test.ts src/systems/interactionPrompt.test.ts` passes (4 files / 24 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=west_wing&role=compiler&name=Ruby&v=nsc-source-gate-client`;
+    - direct browser probe confirmed blocked title `NEED SOURCES`, caption `REPO MAP\nOR INDEX`, cleared title `NSC CLEAR`, caption `WH/NSC\nSOURCE MAP`, and no page errors;
+    - visual proofs: `docs/screenshots/west-wing-nsc-source-gate-locked-cue-page.png` and `docs/screenshots/west-wing-nsc-source-gate-clear-cue-page.png`.
+- One-hour reference-training verification (2026-07-02):
+  - Treated the linked walkthrough as high-level gameplay grammar only, not a source to copy or literally train a model on.
+  - Confirmed the first-hour model is already encoded in `src/game/firstHourTraining.ts`, surfaced through `src/game/adventureTraining.ts`, and documented in `docs/gameplay/first-hour-reference-training.md`.
+  - Verified focused tests: `npm test -- --run src/game/adventureTraining.test.ts src/game/gameplayMapFlow.test.ts src/systems/snesMapDressing.test.ts` passes (2 files / 17 tests; duplicate arg collapsed by Vitest).
+  - Verified `npm run build` passes with the existing Vite large-chunk warning.
+  - Ran the required web-game client against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-training-current`; text state exposes `adventureTraining` metadata from the one-hour training profile.
+  - Direct browser proof confirmed the Office hub renders and the HUD cue is visible; screenshot: `docs/screenshots/one-hour-training-local-check.png`.
+- Red Zone declassification gate-cue pass (2026-07-02):
+  - Made the NARA Stacks Red Zone gate behave like a readable SNES vault lock instead of only a dialog/state update.
+  - When `checkRedZoneGate()` blocks the route, `GameplayMapScene` now draws a floating `NEED CLEAR` card with a red vault door, ClassNet token caption, red seal, and lock core.
+  - When the Clearance Token or completed E.O. 13526/declassification review opens the gate, the same cue family switches to `RED ZONE OPEN` with a cyan open-gap/glow and `ACCOUNTED REVIEW` caption.
+  - The cue is clamped into the NARA Stacks playfield and all pieces are named (`red-zone-gate-cue`, `red-zone-gate-door`, `red-zone-gate-lock-core`, `red-zone-gate-open-glow`, etc.) for browser QA.
+  - Verification:
+    - focused `npm test -- --run src/game/redZoneGate.test.ts src/game/stackControlManifest.test.ts src/game/naraCatalog.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts` passes (5 files / 26 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - browser probe confirmed the blocked state as title `NEED CLEAR`, caption `CLASSNET TOKEN`, 14 visible `red-zone-gate-*` objects, and no page errors;
+    - seeded browser probe through `ReferralVaultScene` confirmed the open state in `GameplayMapScene` as title `RED ZONE OPEN`, caption `ACCOUNTED REVIEW`, 15 visible `red-zone-gate-*` objects, and no page errors;
+    - visual proofs: `docs/screenshots/red-zone-gate-locked-cue-page.png` and `docs/screenshots/red-zone-gate-open-cue-page.png`.
+- Stack-control manifest reward-cue pass (2026-07-02):
+  - Made the NARA Stacks stack-control manifest interaction pay off like a visible SNES archive reward instead of only a dialog/state update.
+  - When `fileStackControlManifest()` succeeds after the NARA Source Index is filed, `GameplayMapScene` now draws a floating `MANIFEST+CART` card with original procedural pixel art: cream manifest sheet, red margin bar, archive box, cart rail, and cyan wheels.
+  - If the player tries the stack move too early, the same cue family can show `NEED INDEX`, keeping the gate readable as a missing FRUS source-index requirement.
+  - The cue is clamped into the playable field so it does not slide under the HUD when the target is near the top of the NARA Stacks map, and all pieces are tagged (`stack-manifest-reward-cue`, `stack-manifest-reward-paper`, `stack-manifest-reward-box`, etc.) for browser QA.
+  - Verification:
+    - focused `npm test -- --run src/game/stackControlManifest.test.ts src/game/naraCatalog.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts` passes (4 files / 22 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - direct browser probe against `?scene=GameplayMapScene&map=nara_stacks&role=compiler&name=Ruby&v=stack-manifest-reward-final` confirmed 17 visible `stack-manifest-reward-*` objects, title `MANIFEST+CART`, caption `BOXES VISIBLE`, no lingering catalog cue, and no page errors;
+    - visual proof: `docs/screenshots/stack-manifest-reward-cue-page.png`.
+- NARA catalog microform reward-cue pass (2026-07-02):
+  - Made the NARA catalog interaction feel like a SNES item reward instead of only a dialog/state update.
+  - When `logNaraCatalog()` awards the `NARA Source Index` and `Microform Supplement Reels`, `GameplayMapScene` now draws a floating `INDEX + REELS` reward card at the catalog desk using a runtime 22x22 nearest-neighbor thumbnail generated from `FRUS_VOLUMES.pickup_microform`.
+  - Preserved fallback procedural microform/reel art if the PNG texture is missing, and tagged the reward pieces (`nara-catalog-reward-cue`, `nara-catalog-reward-microform-art`, `nara-catalog-reward-title`, etc.) for browser QA.
+  - This links the real FRUS source-index/microform research loop to visible treasure-like feedback in NARA Stacks, continuing the one-hour action-adventure reward grammar without copying reference expression.
+  - Verification:
+    - focused `npm test -- --run src/game/naraCatalog.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts` passes (3 files / 19 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - direct browser probe against `?scene=GameplayMapScene&map=nara_stacks&role=compiler&name=Ruby&v=nara-catalog-reward` confirmed `pickup_microform` loaded, runtime `nara-catalog-reward-thumb` created, 7 visible `nara-catalog-reward-*` objects, and no page errors;
+    - visual proof: `docs/screenshots/nara-catalog-reward-cue-page.png`.
+- FRUS Bookshelf reward-cue pass (2026-07-02):
+  - Made the Historian Office FRUS Bookshelf interaction feel like a SNES item pickup instead of only a dialog/state update.
+  - When `browseFrusBookshelf()` awards `Reference Shelf Fragment`, `GameplayMapScene` now draws a floating `FRAG +1` reward card at the shelf using a runtime 18x28 nearest-neighbor thumbnail generated from `FRUS_VOLUMES.world_standing`.
+  - Preserved fallback procedural book art if the PNG texture is missing, and tagged the reward pieces (`frus-bookshelf-reward-cue`, `frus-bookshelf-reward-volume-art`, `frus-bookshelf-reward-title`, etc.) for browser QA.
+  - This makes the public-reference shelf visibly connect to the cover-fragment progression used by the pause shelf and Buckram Gate final cover assembly.
+  - Verification:
+    - focused `npm test -- --run src/game/frusBookshelf.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts` passes (3 files / 19 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby&v=frus-bookshelf-reward-client`;
+    - direct browser probe confirmed `world_standing` loaded, runtime `frus-bookshelf-reward-thumb` created, 7 visible `frus-bookshelf-reward-*` objects, and no page errors;
+    - visual proof: `docs/screenshots/frus-bookshelf-reward-cue-page.png`.
+- FRUS Quest subscreen volume-shelf pass (2026-07-02):
+  - Upgraded `InventoryOverlay` with the registered `FRUS_VOLUMES.ui_row_six` art as a cropped ruby buckram shelf strip, keeping the existing process-tool, DANN-E item, dungeon-key, pendant/crystal, and room-map logic intact.
+  - Added six small volume-progress lamps tied to `gameState.volumeFragments` plus the `Published FRUS Cover`, so the pause/subscreen now shows the FRUS cover/volume collection as a visible SNES inventory object rather than text alone.
+  - Kept a procedural fallback shelf strip if the PNG is missing and tagged the new display objects (`inventory-frus-volume-row-art`, `inventory-frus-volume-slot-light`, `inventory-frus-volume-row-title`, etc.) for browser QA.
+  - Tightened the subscreen body copy so the shelf strip does not collide with the dungeon-key readout on the 256x240 canvas.
+  - Verification:
+    - focused `npm test -- --run src/systems/overlayInput.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts` passes (3 files / 21 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - browser probe against `?scene=OfficeScene&role=compiler&name=Ruby&v=inventory-frus-shelf-final-no-toast` confirmed `ui_row_six` loaded, 16 visible `inventory-frus-volume-*` objects, title `FRUS VOLUME SHELF 0/6`, and no page errors;
+    - visual proof: `docs/screenshots/inventory-frus-shelf-page.png`.
+- Published FRUS reward-art pass (2026-07-02):
+  - Wired the registered PNG art packs into `BootScene.preload()` by calling `preloadDannePack()` and `preloadAllNewArtPack()`, so the DANN-E expansion art, gameplay maps, overworld maps, title screens, and FRUS volume assets load from their typed registries at boot instead of depending on scene-local fallback loads.
+  - Upgraded the Buckram Gate published-prize screen to prefer the 16-bit `FRUS_VOLUMES.reward_legendary` texture when available, using an exact 96x64 display target from the 1536x1024 source so the reward art resolves crisply with nearest-neighbor filtering.
+  - Preserved the procedural assembled-cover fallback if the reward texture is missing.
+  - Added named display-list objects (`published-frus-reward-art`, `published-frus-reward-frame`, `published-frus-reward-spark*`, and caption/title objects) for browser QA.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts src/systems/interaction.test.ts` passes (4 files / 22 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=published-prize-art`;
+    - direct browser probe confirmed `reward_legendary` texture loaded, 17 visible `published-frus-reward-*` objects, and no page errors;
+    - visual proof: `docs/screenshots/published-prize-art-page.png`.
+- Buckram Gate blocker-glyph pass (2026-07-02):
+  - Added original pixel-art blocker glyphs to the central Buckram Gate lock panel so the final blocker reads by silhouette as well as text.
+  - `buckramBlockerCue()` now carries an icon family (`stamp`, `cover`, `equity`, `map`, `apparatus`, `bracket`, `standards`, `reliability`, `key`, `ready`) alongside the compact label/detail.
+  - The current `APP SRC` blocker draws a cream source-list sheet with red margin bar and gold/ink lines, tagged as `buckram-gate-blocker-icon-apparatus-*` for browser QA.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts src/systems/interaction.test.ts` passes (4 files / 22 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=buckram-blocker-glyph`;
+    - text state reports `Buckram Gate locked: APP SRC.` and detailed message `Buckram Gate locked: next file Sources consulted list.`;
+    - display-list probe confirmed `LOCKED`, `NEXT\nAPP SRC`, and five visible `buckram-gate-blocker-icon-apparatus-*` objects;
+    - visual proof: `docs/screenshots/buckram-blocker-glyph-page.png`.
+- Buckram Gate central-blocker plaque pass (2026-07-02):
+  - Continued the final-room SNES readability pass by moving the compact blocker cue into the central publication gate itself, not only the HUD.
+  - The locked gate panel now updates from readiness state with named display-list labels:
+    - `buckram-gate-status-label` -> `LOCKED` or `READY`;
+    - `buckram-gate-blocker-label` -> `NEXT\nAPP SRC` or the current compact blocker.
+  - This makes the win-room blocker read like a dungeon lock: the player can see the missing FRUS process object directly on the gate.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts src/systems/interaction.test.ts` passes (4 files / 22 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=buckram-central-blocker`;
+    - direct display-list probe confirmed `buckram-gate-status-label: LOCKED` and `buckram-gate-blocker-label: NEXT\nAPP SRC`;
+    - visual proof: `docs/screenshots/buckram-central-blocker-page.png`.
+- Buckram Gate compact-blocker cue pass (2026-07-02):
+  - Tightened the final gate's blocked-state readability so it behaves more like an SNES dungeon lock: one compact blocker code on screen, fuller explanation in the structured gate message.
+  - Added `buckramBlockerCue()` in `EndingScene`, prioritizing blockers as `STAMP <id>`, `COVER xN`, `EQUITY xN`, `REPO MAP`, `APP <shortLabel>`, `BRACKET TEXT`, `STANDARDS`, `REL current/min`, or `BUCKRAM KEY`.
+  - Replaced the old long comma-list objective with a short cue such as `Buckram Gate locked: APP SRC.`, preventing bottom-HUD clipping in the win room.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts src/systems/interaction.test.ts` passes (4 files / 22 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=buckram-compact-blocker-final`;
+    - text state reports compact objective `Buckram Gate locked: APP SRC.` and detailed `finalGateCertification.message: Buckram Gate locked: next file Sources consulted list.`;
+    - full-page visual proof shows the bottom objective fits: `docs/screenshots/buckram-compact-blocker-final-page.png`.
+- First-hour action-adventure training verification (2026-07-02):
+  - Treated the linked one-hour reference as gameplay grammar only: readable next verb, visible gates, key/tool rhythm, room-map literacy, boss-readiness cues, reward-return, and recoverable standards pressure.
+  - Confirmed the typed model is present in `src/game/firstHourTraining.ts`, `src/game/adventureTraining.ts`, and `docs/gameplay/first-hour-reference-training.md`.
+  - Fixed a live cue polish bug where fallback objectives could render as `NEXT NEXT ...`; `adventureTraining` now strips leading `NEXT`/`GOAL` before adding its own cue verb.
+  - Added a deterministic test covering that duplicated-prefix case.
+  - Verification:
+    - focused `npm test -- --run src/game/adventureTraining.test.ts src/systems/interaction.test.ts src/game/gameplayMapFlow.test.ts src/systems/snesMapDressing.test.ts` passes (3 files / 23 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=first-hour-training-fixed`;
+    - direct Playwright page probe confirmed the Office scene, the controls card dismissal, clean top cue `NEXT Controls logged.`, `adventureTraining` metadata in `render_game_to_text()`, and screenshot `docs/screenshots/first-hour-training-page-probe.png`.
+- FRUS Production Floor Buckram handoff pass (2026-07-02):
+  - Made the completed `Gate READY` station act like a real stage threshold instead of a passive instruction dialog.
+  - Pressing A at `Gate READY` now records `sceneProgress.frusProductionFloorReadyHandoff`, plays the ruby mosaic `GATE READY` transition, and loads `EndingScene` at the Buckram Gate publication table.
+  - Updated the text-state interaction readout to `FRUS FLOOR INTERACT: GATE READY`.
+  - Verified focused tests and build: 7 focused test files / 49 tests pass; `npm run build` passes with the existing Vite chunk-size warning.
+  - Ran the required web-game client against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-buckram-handoff-client`; the fresh unfinished floor still reports `FRUS FLOOR ROUTE: TO 1 CITE`.
+  - Direct Chrome/Phaser probe seeded all five floor gates complete, invoked the `Gate READY` interactable, and confirmed `EndingScene` active, Buckram Gate objective visible, handoff flag set, transition record `GATE READY -> EndingScene`, no page errors, no failed requests, and screenshot `docs/screenshots/frus-floor-buckram-handoff-probe.png`.
+- FRUS Production Floor ready-prompt priority pass (2026-07-02):
+  - Fixed a completed-floor clarity conflict found in screenshot QA: the route and plaque pointed to `GATE READY`, but the generic return-door hint could still win the bottom prompt.
+  - `GameplayMapScene` now prioritizes the active FRUS floor gate as the prompt hint whenever the player is not already in strict interaction range of another target, keeping the final handoff readable.
+  - Verified focused tests and build: 7 focused test files / 49 tests pass; `npm run build` passes with the existing Vite chunk-size warning.
+  - Direct Chrome/Phaser probe seeded all five gates complete and confirmed `FRUS FLOOR ROUTE: TO GATE READY`, bottom hint `STEP CLOSER: GATE READY`, one ready card, one `GATE READY` label, five `ready` route dots, no page errors, no failed requests, and screenshot `docs/screenshots/frus-floor-ready-prompt-probe.png`.
+- FRUS Production Floor ready-marker pass (2026-07-02):
+  - Continued the one-hour action-adventure reference training by making the completed Production Floor show a visible final handoff, not only route breadcrumbs.
+  - When all five gates are clear, `GameplayMapScene` now replaces the unfinished-gate `NEXT` marker with a green/gold `GATE READY` plaque, arrow, and glow at the publication node.
+  - Verified focused tests and build: 7 focused test files / 49 tests pass; `npm run build` passes with the existing Vite chunk-size warning.
+  - Ran the required web-game client against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-ready-marker-client`; the fresh state still reports `FRUS FLOOR ROUTE: TO 1 CITE`.
+  - Direct Chrome/Phaser probe seeded all five gates complete and confirmed `FRUS FLOOR NEXT GATE: READY`, `FRUS FLOOR ROUTE: TO GATE READY`, one `frus-production-ready-gate-card`, label `GATE READY`, no old next-gate cards, five `ready` route dots, no page errors, no failed requests, and screenshot `docs/screenshots/frus-floor-ready-marker-probe.png`.
+- FRUS Production Floor ready-route pass (2026-07-02):
+  - Continued the one-hour action-adventure reference training by keeping the completed Production Floor actionable after all five workflow gates are clear.
+  - Changed the completion route readout from a passive complete state to `FRUS FLOOR ROUTE: TO GATE READY`, so `window.render_game_to_text()` still names the final publication station.
+  - `GameplayMapScene` now draws a gold/cyan breadcrumb trail to the publication node when no unfinished gate remains, with route dots tagged `ready`.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (7 files / 49 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Direct Chrome/Phaser probe confirmed `FRUS FLOOR ROUTE: TO GATE READY`, five `ready` route dots, five shadows, no page errors, no failed requests, and screenshot `docs/screenshots/frus-floor-ready-route-probe.png`.
+- FRUS Production Floor next-route pass (2026-07-01):
+  - Turned the Production Floor `NEXT` marker into a live route objective by drawing a small cyan/gold breadcrumb trail from the player toward the first unfinished FRUS gate.
+  - Added `frusProductionFloorNextGateRouteReadout()` in `src/game/gameplayMapFlow.ts`, exposing first waiting-gate route text such as `FRUS FLOOR ROUTE: TO 1 CITE` through `window.render_game_to_text()`.
+  - `GameplayMapScene` now refreshes `frus-production-next-gate-route-dot` objects as the player moves, using the first waiting gate from current `GameState`.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (7 files / 47 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-next-route-client`; text state reports `FRUS FLOOR ROUTE: TO 1 CITE`.
+  - Direct Chrome/Phaser probe confirmed six route dots and six shadows targeting gate 1, label `NEXT CITE`, no page errors, and screenshot `docs/screenshots/frus-floor-next-route-probe.png`.
+- FRUS Production Floor next-gate pass (2026-07-01):
+  - Added a Zelda-like "next unfinished gate" cue to the FRUS Production Floor rail so the player can see not only current status but the next station that needs work.
+  - Added typed helpers in `src/game/gameplayMapFlow.ts`: `frusProductionFloorNextGate()` and `frusProductionFloorNextGateReadout()`, with text-state output such as `FRUS FLOOR NEXT GATE: 1 CITE`.
+  - `GameplayMapScene` now draws a compact `NEXT <requirement>` card and arrow at the first waiting FRUS gate; in a fresh run this appears as `NEXT CITE` at the provenance/citation station.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (7 files / 47 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-next-gate-client`; text state reports `FRUS FLOOR NEXT GATE: 1 CITE`.
+  - Direct Chrome/Phaser probe confirmed one `frus-production-next-gate-card`, label `NEXT CITE`, arrow attached to gate 1, no page errors, and screenshot `docs/screenshots/frus-floor-next-gate-probe.png`.
+- FRUS Production Floor gate-status pass (2026-07-01):
+  - Made the Production Floor workflow rail behave more like an SNES dungeon/progress dashboard by adding per-station gate status markers for the five FRUS phases.
+  - Added typed gate readouts in `src/game/gameplayMapFlow.ts`, exposing `FRUS FLOOR GATES: 1 NEED CITE > 2 NEED SEL > 3 NEED EQ > 4 NEED EDIT > 5 NEED BIND` through `window.render_game_to_text()`.
+  - `GameplayMapScene` now derives gate status from current `GameState`: Citation Stamp/provenance, selected-document progress, clearance/referral tools, editorial/proof tools, and Buckram/publication readiness.
+  - Added five tiny in-world status lights/cards to the rail, while preserving the current-stage cursor and task card.
+  - Fixed a visual overlap issue found during screenshot QA: the floating `STEP CLOSER` prompt can now reserve a bottom band, and the `frus_floor` scene uses that to keep prompts off the workflow rail.
+  - Shifted the active task card to the side of the current node so the player sprite no longer covers labels like `ROUTE EQ` while standing on the active station.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (7 files / 47 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-gate-status-client-2`; text state reports the new gate summary.
+  - Direct Chrome/Phaser probe confirmed five status lights/cards, waiting labels `CITE`, `SEL`, `EQ`, `EDIT`, `BIND`, prompt y-clamped above the rail, off-player task label placement, no page errors, and screenshot `docs/screenshots/frus-floor-gate-status-probe.png`.
+- FRUS Production Floor live task-card pass (2026-07-01):
+  - Turned the current-stage cursor into a compact playable task cue, so the production-floor rail now tells the player both where they are and what FRUS verb belongs to that phase.
+  - Added typed stage task labels/details to `src/game/gameplayMapFlow.ts`: `VERIFY SRC`, `SELECT DOC`, `ROUTE EQ`, `CHECK NOTE`, and `BIND VOL`, with full `render_game_to_text()` readouts such as `FRUS FLOOR TASK: ROUTE EQUITIES`.
+  - Updated `GameplayMapScene` to draw a small SNES-style task card under the active rail node while preserving the existing stage cursor.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (6 files / 40 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-task-card-client`; text state reports the full rail, current stage, and current task.
+  - Direct Chrome/Phaser probe moved the player across all five stage ratios and confirmed task labels/readouts: `VERIFY SRC` / `VERIFY SOURCE TRAIL`, `SELECT DOC` / `SELECT DOCUMENTS`, `ROUTE EQ` / `ROUTE EQUITIES`, `CHECK NOTE` / `CHECK ANNOTATION`, and `BIND VOL` / `BIND VOLUME`, with no page/console errors. Screenshot: `docs/screenshots/frus-floor-task-card-probe.png`.
+- FRUS Production Floor current-stage cursor pass (2026-07-01):
+  - Advanced the SNES/FRUS production-floor map from a static workflow rail into a responsive gameplay guide.
+  - Added typed helpers that map the player's x-position on the FRUS Production Floor to the nearest workflow stage and expose `FRUS FLOOR CURRENT: <stage>` through `window.render_game_to_text()`.
+  - Added a live pixel cursor over the rail that follows the active stage (`NOW R`, `NOW C`, `NOW D`, `NOW A`, `NOW P`) as the player moves across Research, Compile, Declass, Annotate, and Publish.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (6 files / 40 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-current-stage-client`; text state reports both the full rail and current stage.
+  - Direct Chrome/Phaser probe moved the player across all five stage ratios and confirmed labels/readouts: `NOW R` / `1 RESEARCH`, `NOW C` / `2 COMPILE`, `NOW D` / `3 DECLASS`, `NOW A` / `4 ANNOTATE`, and `NOW P` / `5 PUBLISH`, with no page/console errors. Screenshot: `docs/screenshots/frus-floor-current-stage-probe.png`.
+- FRUS Production Floor workflow-rail pass (2026-07-01):
+  - Continued the one-hour action-adventure reference training by making the FRUS Production Floor teach the whole volume-production sequence as an in-world route, not just a static map label.
+  - Added a generated SNES-style `FRUS VOLUME PATH` rail to the `frus_floor` gameplay map with five compact nodes: `SRC`, `COMP`, `DEC`, `ANN`, and `PUB`.
+  - Added typed workflow metadata in `src/game/gameplayMapFlow.ts` and exposed the full text-state readout as `FRUS FLOOR RAIL: 1 RESEARCH > 2 COMPILE > 3 DECLASS > 4 ANNOTATE > 5 PUBLISH` so `window.render_game_to_text()` can verify the map's gameplay lesson.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (6 files / 39 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-rail-client-final`; text state reports the new workflow rail readout.
+  - Direct Chrome/Phaser probe confirmed one rail, five nodes, four arrows, labels `R/C/D/A/P`, tags `SRC/COMP/DEC/ANN/PUB`, title `FRUS VOLUME PATH`, no page/console errors, and screenshot `docs/screenshots/frus-floor-production-flow-rail-probe.png`.
+- Buckram Gate publication-table route-cue pass (2026-07-01):
+  - Continued the SNES/FRUS production goal by making the final human publication table behave like a physical action-adventure reward gate instead of relying only on bottom HUD text.
+  - Added a live route cue and floating action prompt to `EndingScene`; when a valid Buckram Gate action is available, the cue points from the player to the table and labels the next publication verb (`FRONT MATTER`, `READER AIDS`, `INDEX`, `TYPESET`, `CERTIFY`, `GPO`, `FUNDING`, `LEDGER`, `DIGITAL`, `CITATION`, `CALENDAR`, or `PUBLISH`).
+  - The route clears when the player reaches the table, while the prompt remains as the local action cue (`A CERTIFY`, etc.), keeping the final FRUS volume handoff readable in-world.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 36 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=buckram-table-route-client`.
+  - Direct Chrome/Phaser probe seeded a lawful publication-ready state and confirmed the cue key `G1:CERTIFY:128,200->128,176`, two route dots, visible prompt, route cleanup at table range, Buckram Gate readiness `1.0`, and no page/console errors. Screenshots are saved at `docs/screenshots/buckram-publication-table-route-certify.png` and `docs/screenshots/buckram-publication-table-route-near.png`.
+- Referral Concurrence Slip dynamic route-trail pass (2026-07-01):
+  - Continued the one-hour action-adventure reference training by making the Referral Vault reward room point spatially to the Concurrence Slip, not only through HUD text.
+  - Added a generated cyan/gold route trail from the player's current position to the Concurrence Slip pedestal in `ReferralVaultScene`, with state labels such as `PERMISSION`, `APPEAL`, `VISIBLE EXCISION`, and `TAKE SLIP`.
+  - The cue refreshes as the player moves in R2, clears on room changes or slip collection, and uses named objects (`referral-concurrence-slip-route-*`) for future visual probes.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 36 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ReferralVaultScene&role=compiler&name=Ruby&v=referral-concurrence-route-client`.
+  - Direct Chrome/Phaser probe confirmed the R2 Concurrence Slip cue key changed from `R2:PERMISSION:58,178->128,132` to `R2:PERMISSION:116,144->128,132`, route dots moved accordingly, no page/console errors occurred, and screenshots are saved at `docs/screenshots/referral-concurrence-slip-route-permission.png` and `docs/screenshots/referral-concurrence-slip-route-near.png`.
+- Network Clearance Token dynamic route-trail pass (2026-07-01):
+  - Continued the one-hour action-adventure reference training by making the Two Networks reward room point spatially to the next process tool, not only through HUD text.
+  - Added a generated cyan/gold route trail from the player's current position to the Clearance Token pedestal in `NetworkScene`, with state labels such as `VERIFY LANE`, `E.O. REVIEW`, `CLASS REVIEW`, and `TAKE TOKEN`.
+  - The cue refreshes as the player moves in N2, clears on room changes or token collection, and uses named objects (`network-clearance-token-route-*`) for future visual probes.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 36 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=NetworkScene&role=compiler&name=Ruby&v=network-clearance-route-client`.
+  - Direct Chrome/Phaser probe confirmed the N2 Clearance Token cue key changed from `N2:VERIFY LANE:56,178->128,132` to `N2:VERIFY LANE:116,144->128,132`, route dots moved accordingly, no page/console errors occurred, and screenshots are saved at `docs/screenshots/network-clearance-token-route-lane.png` and `docs/screenshots/network-clearance-token-route-take.png`.
+- Archive Source Note dynamic route-trail pass (2026-07-01):
+  - Continued the one-hour action-adventure reference training by making the first provenance object behave like a carried room-route task, matching the newer Silent Read route trail.
+  - Refactored the `ArchiveScene` Source Note 47 cue so route diamonds originate at the carried note's current position, refresh when the player moves, and retarget the research table instead of using a fixed vertical breadcrumb.
+  - Added a route-cue cache key and explicit cue cleanup so the trail clears across rooms/status changes without leaving stale objects.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 36 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=archive-dynamic-route-client`.
+  - Direct Chrome/Phaser probe confirmed the carried Source Note 47 cue key changed from `A1:carried:92,155->128,116` to `A1:carried:116,143->128,116`, route dots moved accordingly, no page/console errors occurred, and screenshots are saved at `docs/screenshots/archive-source-note-dynamic-route-carried.png` and `docs/screenshots/archive-source-note-dynamic-route-moved.png`.
+- Silent Read physical-verification route-trail pass (2026-07-01):
+  - Continued the one-hour action-adventure reference training by turning active Silent Read review-folder routing into a visible spatial cue.
+  - Added a generated cyan/gold pixel route trail from the carried review folder or waiting flag to the target workstation in `SilentReadScene`, plus a compact `TO <station>` plaque at the destination.
+  - The cue refreshes as the player moves, stays scoped to the current room/active physical flag, and clears when there is no active flag, the flag belongs to another room, or the flag has already been stamped.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 36 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=SilentReadScene&role=compiler&name=Ruby&v=silent-read-route-trail-smoke-2`.
+  - Direct Chrome/Phaser probe confirmed the E1 Editor's Labyrinth route cue exists while carrying the mechanical-fix flag, updates when the player moves, produces no page/console errors, and saves screenshots at `docs/screenshots/silent-read-route-trail-carried.png` and `docs/screenshots/silent-read-route-trail-carried-moved.png`.
+- Silent Read physical-verification proximity-cue pass (2026-07-01):
+  - Continued the one-hour action-adventure reference training by making the proofing outbox/workstation loop teach the same visible approach-then-act grammar as the earlier FRUS production areas.
+  - Added the floating `! STEP CLOSER` prompt to active review-folder flags and nearby workstations in `SilentReadScene`, while strict actions still require the original 24px flag pickup radius and 28px workstation action radius.
+  - Pressing A/Space just outside range now reports `Step closer to MECH FIX.` or `Step closer to Editor Desk.` and does not carry, route, verify, or stamp early.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 36 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=SilentReadScene&role=compiler&name=Ruby&v=silent-read-step-closer-smoke`.
+  - Direct Chrome/Phaser probes confirmed the E1 proofing room rendered, strict nearest remains null at 28px from the waiting flag and 40px from the editor desk, prompt focus cues are visible, flag state remains unchanged after A/Space, and screenshots are saved at `docs/screenshots/silent-read-flag-step-closer-hint.png` and `docs/screenshots/silent-read-station-step-closer-hint.png`.
+- Network/Referral reward-pedestal proximity-cue pass (2026-07-01):
+  - Continued the one-hour action-adventure reference training as mechanics grammar only by making the Two Networks and Referral Vault reward pedestals teach the same approach-then-act loop as Archive and the DANN-E maps.
+  - Added the floating `! STEP CLOSER` prompt to the Clearance Token pedestal in `N2 ClassNet Vault` and the Concurrence Slip pedestal in `R2 Concurrence Chamber`, while strict collection still requires the original 32px action radius.
+  - Pressing A/Space just outside the reward radius now reports `Step closer to Clearance Token.` or `Step closer to Concurrence Slip.` and does not collect the process item early.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 36 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=NetworkScene&role=compiler&name=Ruby&v=network-referral-step-closer-smoke`.
+  - Direct Chrome/Phaser probes confirmed the reward rooms are actually rendered, strict nearest remains null at 38px from the pedestals, prompt focus cues are visible, neither reward is collected, and screenshots are saved at `docs/screenshots/network-clearance-token-step-closer-hint.png` and `docs/screenshots/referral-concurrence-slip-step-closer-hint.png`.
+- Archive source-note proximity-cue training pass (2026-07-01):
+  - Re-verified the linked YouTube reference through YouTube oEmbed metadata as `Legend of Zelda A LINK TO THE PAST Full Game Walkthrough - No Commentary (A Link to the Past Full)` and continued to treat it as one-hour gameplay-grammar training only.
+  - Extended the honest `! STEP CLOSER` floating prompt into `ArchiveScene`, including the Source Note 47 research-table loop, while preserving the strict verification radius.
+  - Pressing A/Space just outside the research-table radius now reports `Step closer to Research Table.` and leaves `Source Note 47` in the carried state instead of routing, verifying, or stamping early.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 36 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=archive-step-closer-smoke`.
+  - Direct Chrome/Phaser probe confirmed strict nearest remains null at 50px from the research table, the prompt focus cue is visible, no page/console errors occur, and screenshots are saved at `docs/screenshots/archive-step-closer-prompt-hint.png` and `docs/screenshots/archive-step-closer-prompt-after-a.png`.
+- DANN-E expansion proximity-cue consistency pass (2026-07-01):
+  - Extended the same honest `! STEP CLOSER` floating prompt into the shared `DanneMapScene`, covering Cherry Blossom Garden, Senate Hearing Chamber, NARA Stacks, Embassy Cable Room, and Black Vault Lair.
+  - DANN-E maps now use the wider hint radius only for visible focus cues while strict actions still require `nearestInteractable()` and the existing interaction buffer.
+  - Pressing A/Space just outside the Ruby Pen Chest radius now reports `Step closer to Ruby Pen Chest.` and does not open the chest, grant the Ruby Pen, or create a dialog.
+  - Verified focused tests: `npm test -- src/systems/interaction.test.ts src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (6 files / 38 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=CherryBlossomGardenScene&role=compiler&name=Ruby&v=danne-step-closer-smoke`.
+  - Direct Chrome/Phaser probe in a clean browser context confirmed strict nearest remains null, the prompt focus cue is visible, Ruby Pen `acquired` remains false, no dialog opens, and no page errors occur. Screenshots: `docs/screenshots/danne-map-step-closer-prompt-hint.png`, `docs/screenshots/danne-map-step-closer-prompt-after-a.png`.
+- Office/Guide proximity-cue consistency pass (2026-07-01):
+  - Extended the honest `! STEP CLOSER` floating prompt from gameplay maps into the Office Hub and Archive Guide route, continuing the one-hour action-adventure readability training without copying expression.
+  - Office and Guide still use strict `nearestInteractable()` for actual A-button actions, but now use the wider hint radius only for visible target focus.
+  - Pressing A just outside the Office Archive Guide Door radius now nudges with `Step closer to Archive Guide Door.` instead of entering the door or saying nothing.
+  - Pressing A just outside the Guide Citation Stamp radius now nudges with `Step closer to Citation Stamp.` and does not collect the stamp.
+  - Cleaned the Guide bottom HUD by reserving the bottom objective lane for the objective text and relying on the floating prompt for local action hints.
+  - Verified focused tests: `npm test -- src/systems/interaction.test.ts src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (6 files / 38 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against both Office and Guide deep links: `?scene=OfficeScene&role=compiler&name=Ruby&v=office-guide-step-closer-smoke` and `?scene=GuideScene&role=compiler&name=Ruby&v=guide-step-closer-smoke-final`.
+  - Direct Chrome/Phaser probes confirmed strict nearest remains null, the prompt focus cue stays visible, A/Space does not activate the target, no page errors occur, and screenshots are saved at `docs/screenshots/office-step-closer-prompt-hint.png` and `docs/screenshots/guide-step-closer-prompt-hint.png`.
+- Gameplay-map proximity-cue training pass (2026-07-01):
+  - Continued the one-hour action-adventure reference training as mechanics grammar only: readable proximity, honest prompts, and forgiving action feedback without copying art, maps, music, text, enemies, or puzzle layouts.
+  - `GameplayMapScene` now uses the wider `nearestInteractableHint()` range for visible focus cues while keeping strict interactions tied to `nearestInteractable()`.
+  - Hint-only targets show `STEP CLOSER: <target>` in the command band and the floating plaque now reads `! STEP CLOSER` instead of implying the A action is already live.
+  - Pressing A while just outside the strict radius gives `Step closer to <target>.`, temporarily overrides the objective with `Move closer to <target>, then press A.`, and does not trigger doors or interactions.
+  - Verified focused tests: `npm test -- src/systems/interaction.test.ts src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (6 files / 38 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby&v=interaction-focus-smoke-3`.
+  - Direct Chrome/Phaser probe placed the player just outside the Foggy Bottom strict door radius and confirmed strict nearest remains null, the hint/focus cue is visible, Space does not transition away from `GameplayMapScene`, the step-closer message/objective appears, and no page errors occur. Screenshots: `docs/screenshots/gameplay-map-interaction-focus-hint.png`, `docs/screenshots/gameplay-map-interaction-focus-step-closer.png`.
+- Gameplay-map arrival-stamp pass (2026-07-01):
+  - Continued the first-hour threshold training by adding a compact SNES-style arrival stamp whenever `GameplayMapScene` loads.
+  - The stamp sits top-right, keeps the existing left map-flow plaque readable, shows the stage code/action such as `01 CHARTER` or `03 ENTER`, and auto-clears after a short beat.
+  - Door transitions still use the ruby mosaic route card, then the destination map now gets its own arrival stamp, making route changes feel intentional instead of abrupt.
+  - Updated `docs/gameplay/first-hour-reference-training.md` to include the destination-arrival stamp in the non-copying gameplay grammar.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 32 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby&v=entry-banner-smoke-compact`.
+  - Direct Chrome/Phaser probe confirmed the initial arrival stamp appears and clears, the door transition still records `03 ENTER`, Foggy Bottom loads, and the destination arrival stamp appears with no page/console errors. Screenshots: `docs/screenshots/gameplay-map-entry-banner-initial.png`, `docs/screenshots/gameplay-map-entry-banner-destination.png`.
+- First-hour route-transition training pass (2026-07-01):
+  - Continued treating the linked one-hour `A Link to the Past` reference as gameplay grammar only, not copied expression.
+  - Gameplay-map doors now use the existing ruby mosaic transition before changing maps, locking player input during the cover and recording the SNES transition state.
+  - Cleaned route readouts so the Foggy Bottom route displays as `ROUTE 03 ENTER` instead of the doubled `ROUTE 03 ROUTE: ENTER`.
+  - Updated `docs/gameplay/first-hour-reference-training.md` to document the route-transition threshold lesson and its non-copying boundary.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 32 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby&v=route-transition-smoke-2`; text-state smoke confirms the gameplay-map scene loads and route readouts are present.
+  - Direct Chrome/Phaser probe invoked the Foggy Bottom door and confirmed transition label `03 ENTER`, active ruby mosaic coverage, route readout `ROUTE 03 ENTER`, destination `Foggy Bottom Street`, no page/console errors, and screenshot `docs/screenshots/route-transition-card-visible.png`.
+- Dynamic SNES route-badge refresh pass (2026-07-01):
+  - Fixed a gameplay-map readability gap: route badges no longer stay stale after a gated doorway opens during play.
+  - `GameplayMapScene` now tracks route-badge objects separately from the base door marker, rebuilds them after gate-opening interactions, and refreshes the `visibleEntities` route readouts at the same time.
+  - The West Wing Situation Room route now flips immediately from red `LOCK` / `LOCKED 08 FINAL: CERTIFY` to `08 CERTIFY` / `ROUTE 08 FINAL: CERTIFY` after NSC source coverage is certified.
+  - The Black Vault blast-door helper also refreshes route badges when west/north doors open after human review.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 32 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=west_wing&role=compiler&name=Ruby&v=route-badge-refresh-smoke`; initial readout confirms `LOCKED 08 FINAL: CERTIFY`.
+  - Direct Chrome/Phaser probe granted the existing repository-coverage prerequisite, invoked the scene's Secret Service gate handler, and confirmed route labels changed from `LOCK` to `08 CERTIFY`, lock-count changed from `1` to `0`, visible routes changed from `LOCKED 08 FINAL: CERTIFY` to `ROUTE 08 FINAL: CERTIFY`, and no page/console errors. Screenshot: `docs/screenshots/route-badge-refresh-probe.png`.
+- SNES gameplay-map route-badge pass (2026-07-01):
+  - Added compact original SNES-style route badges to gameplay-map doorways so routes read like deliberate screen transitions instead of generic markers.
+  - Door badges now show a cardinal direction plus a destination cue such as `WORLD`, `03 ENTER`, `08 CERTIFY`, or `LOCK` for gated routes.
+  - Added Phaser-free helpers `gameplayMapRouteBadgeLabel()` and `gameplayMapRouteReadout()` in `src/game/gameplayMapFlow.ts`, then reused them for both visible door art and `window.render_game_to_text()` state.
+  - `GameplayMapScene` now includes route readouts such as `ROUTE WORLD MAP`, `ROUTE 03 ROUTE: ENTER`, and `LOCKED 08 FINAL: CERTIFY` in `visibleEntities`.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 32 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby&v=snes-route-badge-smoke`; `render_game_to_text()` reports `ROUTE WORLD MAP` and `ROUTE 03 ROUTE: ENTER`.
+  - Direct Chrome/Phaser probe confirmed route badges and labels in `historian_office`, `nara_stacks`, `west_wing`, and `black_vault`, including locked route badges for gated West Wing and Black Vault doors, with no page/console errors. Screenshot: `docs/screenshots/snes-route-badge-probe.png`.
+- SNES gameplay-map flow-plaque pass (2026-07-01):
+  - Added a compact original SNES-style flow plaque to the generated gameplay-map dressing so each map visibly declares its FRUS production role, e.g. `01 RESEARCH / CHARTER`, `02 STACKS / CITE`, and `08 FINAL / CERTIFY`.
+  - Split the map-flow metadata into Phaser-free `src/game/gameplayMapFlow.ts`, then reused it from both `GameplayMapScene` state readouts and `snesMapDressing` rendering.
+  - `GameplayMapScene` now adds the map-flow readout to `visibleEntities`, so `window.render_game_to_text()` confirms the map's production-stage cue alongside the visual plaque.
+  - Added `src/systems/snesMapDressing.test.ts` to lock the compact FRUS stage labels.
+  - Verified focused tests: `npm test -- src/systems/snesMapDressing.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (5 files / 31 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby&v=snes-map-flow-plaque-smoke`; `render_game_to_text()` reports visible entity `01 RESEARCH: CHARTER`, while the generated screenshot remains black due the known headless WebGL capture artifact.
+  - Direct Chrome/Phaser probe across all eight gameplay maps confirmed one `snes-map-flow-plaque`, one code box, one title, one verb, matching readouts for `historian_office`, `nara_stacks`, `foggy_bottom`, `west_wing`, `frus_floor`, `embassy`, `capitol_hill`, and `black_vault`, and no page/console errors. Probe JSON: `docs/screenshots/snes-map-flow-plaque-probe.json`.
+- First-hour published-reward training pass (2026-07-01):
+  - Treated the linked one-hour gameplay reference as gameplay-grammar training only, not copied expression: the final 55-60 minute lesson is that a major reward visibly changes the world and points the player back outward.
+  - Added a published Buckram Gate override to `getAdventureTrainingCue()` so once the FRUS cover is certified, `window.render_game_to_text().adventureTraining` reports the `reward_return` phase and the specific `reward_changes_world` drill.
+  - The ending reward screen now drives the live training cue as `RETURN` with detail `Published FRUS cover changed the world: public record complete.`, matching the in-world published cover payoff.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 30 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=one-hour-training-published-smoke`; the default scene state remains pre-publication and the generated screenshot remains black due the known headless WebGL capture artifact.
+  - Direct Chrome/Phaser probe invoked `publishVolume()` and confirmed `finalGateCertification.status: "published"`, visible threats cleared, adventure-training `drillId: "reward_changes_world"`, `drillMinuteRange: "55-60"`, and no page/console errors. Screenshot: `docs/screenshots/one-hour-training-published-reward-probe.png`.
+- Black Vault certification-docket pass (2026-07-01):
+  - Added a pre-fight `CERT DOCKET` board to `BlackVaultLairScene` so DANN-E's final publication gate rules are readable before combat instead of only being discovered after a failed defeat attempt.
+  - The board reads live `getPublicationReadinessReadout()` state and displays Pendants, Equity Crystals, Buckram Gate, Standards, and Treaty Fragments with red/green readiness lights plus a first missing requirement line such as `NEED PENDANT RULE`.
+  - The certification board hides when the DANN-E boss starts so it does not collide with the statutory-clock and boss-HUD combat UI.
+  - Fixed DANN-E map scenes to refresh the global objective on create, keeping `window.render_game_to_text()` and the HUD aligned with the active map objective.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=BlackVaultLairScene&role=compiler&name=Ruby&v=publication-board-smoke`; the scripted Space press triggered the valid return route to Archive, and the screenshot remains black due the known headless WebGL capture artifact.
+  - Direct Chrome/Phaser probe confirmed the board is visible before the boss, child texts `CERT DOCKET`, `PEND 0/3`, `CRYS 0/1`, `GATE NO`, `STD OK`, `TFRG 0/3`, and `NEED PENDANT RULE`, scene objective `Black Vault Lair: inspect DANN-E core.`, then board hidden after `startDanneBoss()` with objective `Black Vault Lair: defeat DANN-E with human-reviewed tools.`, and no page/console errors. Screenshot: `docs/screenshots/black-vault-publication-board-final.png`.
+- First-hour Black Vault enter-cue pass (2026-07-01):
+  - Tightened the Archive D3 boss-route payoff so the opened Black Vault threshold now tells the player exactly what to do next.
+  - When the route predicate is false, the Black Vault door remains sealed with no enter cue. After the Golden Rule decision, the door redraws as open and adds a persistent SNES-style `A ENTER` cue with gold arrows under the threshold.
+  - Updated the Golden Rule gate interaction to set `latestMessage` to `Black Vault route open by Golden Rule decision.` and the objective to `Black Vault route open: press A at the open door.`
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=black-vault-enter-cue-smoke`; its screenshot remains black due the known headless WebGL capture artifact, while the state dump confirms `ArchiveScene`.
+  - Direct Chrome/Phaser probe in Archive D3 confirmed pre-decision `enterCueCount: 0` with `SEALED`, post-Golden Rule `enterCueCount: 1`, nested cue text `A ENTER`, two cue arrows, door status `OPEN`, objective `Black Vault route open: press A at the open door.`, visible threats cleared, and no page/console errors. Screenshot: `docs/screenshots/archive-black-vault-enter-cue-clean.png`.
+- First-hour Black Vault door-state pass (2026-07-01):
+  - Continued the first-hour action-adventure training translation by making the Archive D3 Black Vault door visibly change state when the boss route opens.
+  - Replaced the static red `BLACK VAULT` door with a tracked sealed/open render: sealed state shows red lock bars and `SEALED`; open state redraws as a cyan/gold threshold with an `OPEN` status.
+  - Centralized route-open logic with `blackVaultRouteOpen()` so the readiness board, door art, and route transition all agree on Treaty Fragments, Golden Rule decision, Buckram Key, or cleared boss state.
+  - The door now refreshes immediately after `useGoldenRuleGate()`, matching the `VAULT CHECK` board flip from `SEALED` to `ROUTE OPEN`.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=black-vault-door-smoke`; its screenshot remains black due the known headless WebGL capture artifact, while the state dump confirms `ArchiveScene`.
+  - Direct Chrome/Phaser probe in Archive D3 confirmed pre-decision door status `SEALED`, post-Golden Rule door status `OPEN`, route-open predicate `true`, DANN-E queue cleared, objective `Golden Rule decision recorded.`, and no page/console errors. Screenshots: `docs/screenshots/archive-black-vault-door-open-probe.png`, `docs/screenshots/archive-black-vault-door-open-clean.png`.
+- First-hour Archive boss-readiness pass (2026-07-01):
+  - Continued the SNES action-adventure training translation by making the Archive D3 boss gate communicate readiness before the Black Vault/DANN-E route.
+  - Added a compact `VAULT CHECK` board with three live conditions: Treaty Fragments (`FRAG 0/3`), Golden Rule human decision (`RULE YES/NO`), and Buckram Key (`KEY YES/NO`).
+  - The board starts as `SEALED` and refreshes immediately to `ROUTE OPEN` when the Golden Rule gate records a human decision, matching the actual `openBlackVaultRoute()` conditions.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=boss-readiness-board-smoke`; its screenshot remains black due the known headless WebGL capture artifact.
+  - Direct Chrome/Phaser probe in Archive D3 confirmed sealed board texts `FRAG 0/3`, `RULE NO`, `KEY NO`, `SEALED`, then after `useGoldenRuleGate()` board texts `RULE YES` and `ROUTE OPEN`, visible threats cleared, objective `Golden Rule decision recorded.`, and no page/console errors. Screenshot: `docs/screenshots/archive-boss-readiness-board-clear-final.png`.
+- First-hour Archive minimap literacy pass (2026-07-01):
+  - Continued translating the first-hour action-adventure map lesson into FRUS grammar by making the Archive Cavern minimap identify high-value room roles, not just visited cells.
+  - Added tiny SNES-style minimap glyphs for revealed secret rooms (`?` / `S`), reward room (`R`), and boss gate (`B`) while avoiding low-value clutter on ordinary puzzle rooms.
+  - The minimap now honors the Archive dungeon map-revealed state when deciding whether hidden rooms should appear as `?`, keeping the visual map and room-traversal state aligned.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=minimap-markers-final-smoke`; its screenshot remains black due the known headless WebGL capture artifact.
+  - Direct Chrome/Phaser probe in Archive A1 confirmed 12 minimap cells, marker text `?R?B`, reward marker present, boss marker present, two secret markers present, zero puzzle clutter markers, and no page/console errors. Screenshot: `docs/screenshots/archive-minimap-role-markers-clean-probe.png`.
+- First-hour secret-reward treasure pass (2026-07-01):
+  - Continued the one-hour action-adventure training translation by making Archive secret rooms pay off like readable treasure rooms rather than silent state changes.
+  - Hidden Source Cache and Hidden Reliability Well rewards now show a short `FRUS FRAGMENT` / `RELIABILITY WELL` cue, trigger the existing SNES reward burst, and update the objective toward the return route.
+  - Repeat interactions are now state-honest: the reward is not duplicated, `latestMessage` reports that the secret reward is already filed, and the objective points back to the marked Archive route.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=secret-reward-cue-smoke`; its state dump confirms `ArchiveScene`.
+  - Direct Chrome/Phaser probe in Archive C3 confirmed `archive-secret-reward-cue: 1`, cue texts `FRUS FRAGMENT` / `C3 FILED`, reward burst count `1`, fragments `1`, objective `Hidden Source Cache filed; return to the Archive map marker.`, repeat message `C3 secret reward already filed.`, and no page/console errors. Screenshot: `docs/screenshots/archive-secret-reward-cue-probe.png`.
+- First-hour secret-reveal feedback pass (2026-07-01):
+  - Turned Archive secret discovery into a physical SNES-style room event instead of a silent state update: discovering C3/D2 now flashes the room and briefly displays a `SECRET ROUTE / <room> REVEALED` cue.
+  - Made secret-route reveals repeat-safe. Interacting with an already revealed hidden route now reports that the route is already mapped instead of awarding document points again.
+  - The reveal cue also updates the objective to follow the newly marked route, keeping the FRUS workflow map and the player-facing prompt in sync.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=secret-reveal-cue-final-smoke`; its state dump confirms `ArchiveScene`.
+  - Direct Chrome/Phaser probe in Archive A3 confirmed `archive-secret-reveal-cue: 1`, cue texts `SECRET ROUTE` / `C3 REVEALED`, flash overlay present, objective `Secret route C3 revealed; follow the map marker.`, C3 added to `revealedRoomIds`, repeat reveal reports `C3 secret route already mapped.`, and no page/console errors. Screenshot: `docs/screenshots/archive-secret-reveal-cue-clean.png`.
+- First-hour secret-route readability pass (2026-07-01):
+  - Added subtle SNES-style secret-exit markers to Archive gates that lead to secret rooms, preserving the existing FRUS reveal mechanics while making hidden routes read more like an action-adventure dungeon.
+  - Unrevealed secret exits now show a small `?` / seam marker; after the player triggers the proper evidence/tool reveal, the same gate redraws as a gold `SECRET` route plaque and the locked exit clears.
+  - Kept the markers inside the playable field for south-facing exits so they do not disappear under the dialogue chrome.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=secret-marker-final-smoke`; its state dump confirms `ArchiveScene`.
+  - Direct Chrome/Phaser probe in Archive B3 confirmed the south secret exit displays `?` while locked, then after revealing C3 displays `SECRET`, clears `lockedExits`, adds `C3` to `revealedRoomIds`, and reports no page/console errors. Screenshot: `docs/screenshots/archive-secret-route-marker-readable-probe.png`.
+- First-hour process cue readability pass (2026-07-01):
+  - Tightened the ALttP-style process-ready cue placement so solved bureaucratic walls keep their `READY` / action marker inside the playable field instead of drifting under the bottom dialogue box.
+  - Added a shared `readyWallCuePosition()` helper that clamps cue x/y positions within the Archive play bounds and lifts bottom-room prompts above the dialogue chrome.
+  - Applied the same placement discipline to the special NO REPO Citation Stamp target cue and the generic process-ready wall cues.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=ready-wall-cue-clamp-smoke`; its screenshot remains black due the known headless WebGL artifact, while its state dump confirms `ArchiveScene`.
+  - Direct Chrome/Phaser probe in Archive A2 set FIREWALL to `routing ready` and confirmed cue texts `READY` / `ROUTE`, cue position `x=127 y=148`, reliability stayed `80 -> 80`, and no page/console errors. Screenshot: `docs/screenshots/archive-ready-wall-cue-clamped-probe.png`.
+- First-hour process-ready reticle pass (2026-07-01):
+  - Continued the one-hour action-adventure training pass by making solved bureaucratic walls read like ALttP-style gates: a threat becomes a visible, safe process action once the proper FRUS step is complete.
+  - Added a generic `READY` reticle/action badge for process-ready walls beyond NO REPO: FIREWALL (`ROUTE`), PENDING (`MANIFEST`), WAIT (`TIMER`), AMBIGUOUS (`DECIDE`), and DANN-E QUEUE (`RULE`).
+  - Preserved the existing special NO REPO `STAMP` target cue while giving the other walls their own process-action marker.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Direct Chrome/Phaser probe in Archive A2 set FIREWALL to `routing ready` and confirmed one `archive-ready-wall-cue`, cue texts `READY` / `ROUTE`, reliability stayed `80 -> 80`, and no page/console errors. Screenshot: `docs/screenshots/archive-ready-wall-cue-safe-probe.png`.
+- First-hour process-ready hazard fairness pass (2026-07-01):
+  - Fixed an unfair first-hour Archive edge case: once a bureaucratic wall is ready for its human workflow resolution, contact with it no longer damages reliability as a missed 30-year deadline.
+  - `updateBureaucraticWalls()` now treats process-ready walls as interactable gates: NO REPO after Citation Stamp, FIREWALL after routing, PENDING after manifest, WAIT after timer, AMBIGUOUS after specialist decision, and DANN-E QUEUE after Golden Rule decision.
+  - Contact with a process-ready wall now cues the proper action (`citation stamp`, `network routing`, `referral manifest`, etc.) and asks the player to press A, preserving hazard pressure before the workflow is complete.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=process-ready-wall-smoke`; the generated screenshot remains black due the known WebGL capture artifact.
+  - Direct Chrome/Phaser probe completed the Source Note route/verify/stamp chain, placed the player in the stamp-ready NO REPO wall's contact radius, and confirmed reliability stayed at `90`, latest message `NO REPO is ready for citation stamp.`, objective `Press A near the process wall to apply the verified human workflow step.`, visible `archive-no-repo-stamp-target-cue: 1`, NARA stairs `OPEN: 1`, and no page/console errors. Screenshot: `docs/screenshots/archive-process-ready-wall-safe-probe.png`.
+- First-hour training cue lock-honesty pass (2026-07-01):
+  - Fixed a gameplay-readability bug in the first-hour training HUD: it no longer tells the player to spend a chapter key on exits that actually require a FRUS process tool such as the Citation Stamp.
+  - `getAdventureTrainingCue()` now distinguishes true local small-key locks from process-tool gates; process-tool gates keep the `NEED TOOL` cue even when the player holds small keys.
+  - `setRoomTraversalState()` now normalizes locked exits against the current process-tool inventory before storing the readout, so `window.render_game_to_text().roomTraversal.lockedExits` does not claim an opened process gate is still locked.
+  - Tightened the Archive Source Note gate so provenance verification alone does not open the NARA II route; the actual Citation Stamp/tool acquisition is required.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` (4 files / 29 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=training-cue-lock-final-smoke`; the generated screenshot remains black due the known WebGL capture artifact, while the state dump confirms `ArchiveScene` and the pre-stamp Citation Stamp locks.
+  - Direct Chrome/Phaser probe completed the Source Note route/verify/stamp chain in a fresh Vite runtime and confirmed pre-stamp `lockedExits` includes the Citation Stamp gates, post-stamp `lockedExits: {}`, visible NARA stairs `OPEN` label count `1`, lock label count `0`, no page errors, and no console errors. Screenshot: `docs/screenshots/archive-training-cue-lock-fresh-probe.png`.
+- First-hour Archive chapter-key payoff pass (2026-07-01):
+  - Continued translating the first-hour action-adventure reference into FRUS workflow grammar: after Source Note 47 is verified, stamped, and used to clear the NO REPO wall, the room now gives a brief Zelda-like chapter-key reward cue instead of silently updating hidden state.
+  - Added a transient `CHAPTER KEY` card in Archive A1 that reads the live `archive_cavern` dungeon key state, shows the key count, and points the player toward the newly opened NARA II route.
+  - The NO REPO clear now also updates the objective to the next route/action, so the player gets immediate "tool earned -> obstacle cleared -> route open" feedback.
+  - Verified focused tests: `npm test -- src/systems/dungeonKeys.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` (4 files / 28 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning) and `git diff --check`.
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=chapter-key-reward-smoke`; the generated screenshot remains black due the known WebGL capture artifact, but the state dump confirms `ArchiveScene`.
+  - Direct Chrome/Phaser probe completed the Source Note 47 route/verify/stamp chain, cleared NO REPO, and confirmed `archive-chapter-key-reward-cue: 1`, `archive-nara-stairs-open-label: 1`, `visibleThreats: []`, and objective `Archive Cavern: use the Citation Stamp route to enter NARA II or clear the next source lock.` Screenshot: `docs/screenshots/archive-chapter-key-reward-probe.png`.
+- Office Hub route-cue readability pass (2026-07-01):
+  - Added small SNES-style glints to the Garden/Senate doors and Archive threshold so the first playable room's exits read as intentional adventure-game routes rather than flat labels.
+  - Added a low `GDN / ARC / HAC` route-chip strip that stays hidden while the first `FIELD GUIDE` tutorial card is visible, then reveals after the first movement/action logs controls.
+  - Preserved all existing Office Hub interaction mechanics, tutorial dismissal behavior, nearest-interactable logic, save state, and scene routing.
+  - Verified focused tests: `npm test -- src/systems/overlayInput.test.ts src/input/InputState.test.ts` (2 files / 20 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=office-route-compass-client-final`.
+  - Direct Chrome/Phaser probe confirmed `OfficeScene` active; route chips hidden before first movement (`routeVisible: 0/18`), revealed after ArrowRight (`routeVisible: 18/18`, labels `GDN`, `ARC`, `HAC`), 6 route/threshold glints present, no page errors, no console errors, no failed requests, and no 4xx/5xx responses. Screenshot: `docs/screenshots/office-route-compass-final-probe.png`.
+- Sharp 16-bit title-card integration (2026-07-01):
+  - Converted the repository-local `title_screen_16bit_sharp.png` source into a native 256x240 pixel-art card at `public/assets/art-pack/screens/title_screen_16bit_sharp_256x240.png`, using nearest-neighbor sampling so the live title scene does not downscale a high-resolution image at runtime.
+  - Added the new card to the typed `SCREENS` registry and updated `TitleScene` to prefer it at exact `GAME_WIDTH x GAME_HEIGHT`, while keeping the older 256x224 book-box card and procedural title composition as fallbacks.
+  - Added a small ruby/gold backplate behind the live `B SKIP WARNING [ ]` toggle so it no longer visually fights the baked label in the sharp title art.
+  - Updated `TitleScene.test.ts` to assert the sharp title card is exactly 256x240 and that the legacy 256x224 card remains available as fallback.
+  - Verified focused tests: `npm test -- src/scenes/TitleScene.test.ts src/input/InputState.test.ts` (2 files / 24 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=TitleScene&v=sharp-final`.
+  - Direct Chrome/Phaser probe confirmed active `TitleScene`, visible `title-art-sharp-card` using texture `title_screen_16bit_sharp_256x240`, visible `title-skip-warning-backplate`, no page errors, no console errors, no failed requests, and no 4xx/5xx responses. Screenshot: `docs/screenshots/title-sharp-card-fixed-probe.png`.
+- Office first-playable-screen tutorial plaque polish (2026-07-01):
+  - Replaced the large central `FIELD CONTROLS` modal with a compact SNES-style `FIELD GUIDE` plaque tucked under the top HUD, so the Office Hub reads as a playable room immediately instead of being visually blocked by instructions.
+  - The plaque now uses short verb cues (`MOVE  ACT  CODEX  MENU`) and keeps the dismiss prompt while preserving the existing non-blocking first-movement behavior.
+  - Verified focused tests: `npm test -- src/systems/overlayInput.test.ts src/input/InputState.test.ts` (2 files / 20 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby`.
+  - Direct Chrome/Phaser probe confirmed active `OfficeScene`, compact tutorial objects (`office-tutorial-panel`, `office-tutorial-title`, `office-tutorial-body`, `office-tutorial-prompt`), no page errors, no console errors, no failed requests, and no 4xx/5xx responses. Screenshot: `docs/screenshots/office-tutorial-compact-probe.png`.
+  - Direct first-move probe confirmed `ArrowRight` both dismisses the plaque and moves the player from `x=128` to `x=135`, with `latestMessage: Controls logged.`
+- Character creation SNES role-select layout polish (2026-07-01):
+  - Cleaned up the first role-selection screen so it reads more like a deliberate 16-bit character-select panel: remit line, workflow relic row, role cards, and confirm prompts now occupy distinct lanes.
+  - Shortened long role-card labels (`DECLASS / COORD`, `SOURCE / NOTE`, `PROOF`) while preserving the full equal-rank role names in the selected-role title and game state.
+  - Tightened the remit text to one readable pixel-font line so it no longer collides with the workflow relic strip.
+  - Verified focused tests: `npm test -- src/scenes/CharacterCreateScene.test.ts src/input/InputState.test.ts` (2 files / 17 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=CharacterCreateScene&role=proofreader&name=Ruby`.
+  - Direct Chrome/Phaser probe confirmed active `CharacterCreateScene`, visible 32x48 role sprites, 5 role-card labels, 5 workflow relic labels, no page errors, no console errors, no failed requests, and no 4xx/5xx responses. Screenshot: `docs/screenshots/character-create-layout-polish-probe.png`.
+  - Direct Enter-key probe confirmed the selected profile still transitions to `OfficeScene`, `explore` mode, with objective `Office Hub: talk to the Junior Compiler or enter the Archive Guide.`
+- World Map route-preview command-strip polish (2026-07-01):
+  - Moved the selected-district route preview out of the map art and into the bottom command band so the SNES atlas reads like an intentional route/map screen instead of a floating opaque card over the parchment map.
+  - Kept the map-layer district seals, route threads, and destination glyphs intact while lifting only the live route preview above the bottom chrome.
+  - Moved the `A SELECT  < > REGION` legend away from the preview strip and hid the redundant hover tooltip; the preview now carries district number/name, destination map, FRUS verb, and destination glyph.
+  - Verified focused tests: `npm test -- src/data/regions.test.ts src/input/InputState.test.ts` (2 files / 18 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=WorldMapScene&region=europe&role=compiler&name=Ruby`.
+  - Direct Chrome/Phaser probe confirmed 8 district seals, 9 destination frames (8 map seals plus the preview glyph), 7 route threads, a visible route-preview container at UI depth 904, preview text `1. WEST BERLIN / WEST WING / REVIEW`, and no page errors, console errors, failed requests, or 4xx/5xx responses. Screenshot: `docs/screenshots/world-map-route-preview-polish-probe.png`.
+  - Direct click probe converted 256x240 game coordinates to the zoomed canvas and confirmed a district cartouche still transitions to `GameplayMapScene` with a valid destination objective, so the UI strip does not block world-map routing.
+- First-hour gameplay training refresh (2026-07-01):
+  - Re-verified the linked YouTube reference through oEmbed metadata as `Legend of Zelda A LINK TO THE PAST Full Game Walkthrough - No Commentary (A Link to the Past Full)` and continued to treat it as gameplay-grammar training only: no copied art, maps, music, text, names, enemies, room layouts, or puzzle sequences.
+  - Confirmed the existing one-hour training profile remains wired through `src/game/firstHourTraining.ts`, `src/game/adventureTraining.ts`, `getAdventureTrainingReadout()`, `UIScene`, and `window.render_game_to_text().adventureTraining`.
+  - Fixed the live HUD training cue so it no longer renders a doubled `NEXT NEXT ...` verb; the quest band now displays the training cue text directly and names the cue text object for future browser probes.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts` (2 files / 22 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby`; a direct Chrome/Phaser probe confirmed `render_game_to_text()` reports `OfficeScene`, `explore` mode, and the active one-hour training cue (`Deadline Pressure` / `Hazards`), while the visible HUD now reads `NEXT OFFICE HUB LOADED.` exactly once. Screenshot: `docs/screenshots/first-hour-training-hud-cue-fix.png`.
+- First-hour Citation Stamp gate payoff pass (2026-07-01):
+  - Continued the same one-hour action-adventure training translation by tightening the "new tool immediately changes a nearby gate" lesson in Archive A1.
+  - NARA II stairs gate art is now tracked separately, so stale `SOURCE LOCK` sprites are destroyed and the cyan `OPEN` marker redraws as soon as Source Note 47 is verified and stamped.
+  - The route cue still guides ROUTE -> VERIFY -> STAMP at the research table, then clears after the Citation Stamp reward so the screen reads as a changed room rather than a lingering tutorial overlay.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` (3 files / 25 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=first-hour-training-stamp-gate-smoke`; the generated headless screenshot remains black due the known WebGL capture artifact.
+  - Direct Chrome/Phaser probe completed the full Source Note 47 loop with correct A/A/A provenance choices, applied the Citation Stamp, and confirmed `sourceNoteStatus: stamped`, `openLabel: 1`, `lockLabel: 0`, `latestMessage: VERIFIED BY HUMAN REVIEW`, and no page/console/request errors. Screenshots: `docs/screenshots/archive-citation-stamp-opens-nara-gate-probe.png`, `docs/screenshots/archive-citation-stamp-opens-nara-gate-clean-visible.png`.
+- First-hour Citation Stamp wall-target pass (2026-07-01):
+  - Continued the "new tool immediately solves a nearby obstacle" lesson after the NARA II gate payoff.
+  - After Source Note 47 is stamped, the NO REPO bureaucratic stonewall now gets a visible gold `STAMP` target reticle that follows the moving wall and sits above the room-intro dressing.
+  - The target cue is removed as soon as the wall clears, keeping the room state honest: target visible only while the newly earned Citation Stamp can act.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` (3 files / 25 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=no-repo-stamp-cue-smoke`; the generated headless screenshot remains black due the known WebGL capture artifact.
+  - Direct Chrome/Phaser probes confirmed `cue: 1`, `noRepoStatus: citation stamp ready`, and `sourceNoteStatus: stamped` before wall clearing, then `cue: 0`, `noRepoThreats: 0`, and `latestMessage: NO REPO cleared with citation stamp after source-table verification.` after clearing. Screenshots: `docs/screenshots/archive-no-repo-stamp-cue-visible.png`, `docs/screenshots/archive-no-repo-stamp-cue-cleared-probe.png`.
+- World Map SNES route-overlay pass (2026-07-01):
+  - Converted the region-select map from invisible hit-zone behavior toward a readable SNES adventure atlas without changing the existing five-region art pack or district routing data.
+  - `WorldMapScene` now derives visible brass district seals, numbered cartouches, stitched route threads, destination glyphs, and a compact route legend from the existing `DISTRICTS` bounds and `destinationScene` values.
+  - Destination glyphs distinguish archives, embassies, federal review rooms, Black Vault routes, FRUS floor/office routes, and field-office routes; locked districts are ready to render redaction bars.
+  - Verified focused tests: `npm test -- src/data/regions.test.ts src/input/InputState.test.ts` (2 files / 18 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=WorldMapScene&region=europe&role=compiler&name=Ruby`; `render_game_to_text()` reports active `WorldMapScene`, objective `Select a FRUS region.`, and all eight Europe district routes.
+  - Direct Chrome/Phaser probe confirmed 8 `snes-world-district-seal` objects, 8 destination frames, 7 route-thread graphics, and the route legend with no page errors, failed requests, or 4xx/5xx responses. Screenshot: `docs/screenshots/world-map-route-overlay-probe.png`.
+  - Direct click probe against the actual first district hit rectangle still routed to `GameplayMapScene` / White House West Wing, proving the new overlay does not block district selection.
+- Cherry Blossom Garden SNES safe-zone readability pass (2026-07-01):
+  - Converted the DANN-E expansion safe/save/reward route into an original 16-bit one-screen garden while preserving the existing save point, Historian, Ruby Pen Chest, Office Back Door return, koi pond, pavilion, objective text, collision geometry, and interaction state.
+  - Added `addSnesCherryBlossomGardenTileRoom()` to the shared SNES pixel-art helpers: grass and blossom-petal tile variants, cream-paper path network, ruby/gold perimeter tiles, koi pond with fish/ripples, cherry pavilion, blossom trees, save point, historian mat, Ruby Pen chest, and return stair.
+  - Wired `CherryBlossomGardenScene` through `DanneMapScene.drawSnesTileRoomLayer()` so it renders the new tile-room layer under the existing player, markers, HUD, and scene logic.
+  - Tightened the DANN-E map location-card title sizing/short label so long map names no longer clip at the top of the screen.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` (3 files / 25 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=CherryBlossomGardenScene&role=compiler&name=Ruby`; `render_game_to_text()` reports active `CherryBlossomGardenScene`, objective `Cherry Blossom Garden: rest and save the expedition.`, nearest interactable `Save Point`, and visible entities `Save Point`, `Historian`, `Ruby Pen Chest`, `Office Back Door`, `Koi Pond`, and `Cherry Pavilion`.
+  - Direct Chrome/Phaser probe confirmed 454 `snes-cherry-garden-*` objects in the scene, including the tile-room container, koi pond, pavilion, save point, Ruby Pen chest, and return threshold. Network probes reported no failed requests or 4xx/5xx responses. Screenshot: `docs/screenshots/cherry-garden-tile-room-probe.png`.
+- Senate Hearing Chamber SNES readability pass (2026-07-01):
+  - Converted the HAC / hearing workflow room into an original 16-bit one-screen chamber while preserving the existing witness-table interaction, return route, collision geometry, and FRUS oversight objective.
+  - Added `addSnesSenateHearingChamberTileRoom()` to the shared SNES pixel-art helpers: ruby carpet tiles, wood/brass wall tiles, committee dais, seven dossier seats, counsel/review tables, gallery benches, witness table with mic panel and docket, HAC review plaque, and return stair.
+  - Wired `SenateHearingChamberScene` to draw that layer beneath the existing player/interactable UI, making the witness table and committee dais readable without relying on poster-style art.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` (3 files / 25 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=SenateHearingChamberScene&role=compiler&name=Ruby`; `render_game_to_text()` reports active `SenateHearingChamberScene`, objective `Senate Hearing Chamber: review the witness table record.`, and visible entities `Witness Table`, `Committee Dais`, and `Office Corridor`.
+  - Direct Chrome/Phaser probe confirmed 445 `snes-senate-*` objects in the scene, including the tile-room container, committee dais, witness table, counsel tables, gallery benches, and return threshold. Network probes reported no failed requests or 4xx/5xx responses. Screenshot: `docs/screenshots/senate-hearing-tile-room-probe.png`.
+- Black Vault SNES boss-room readability pass (2026-07-01):
+  - Converted the final DANN-E space from illustration-first presentation into a readable SNES boss chamber while preserving the existing DANN-E fight, Censorship Wraiths, Treaty Fragment III, return gate, collision geometry, and boss trigger logic.
+  - Added `addSnesBlackVaultTileRoom()` to the shared SNES pixel-art helpers: original dark/ruby floor tiles, blast doors, redaction fissures, DANN-E altar/socket, four FRUS review stations, rubble, Treaty Fragment III pedestal, and return stair.
+  - Wired `BlackVaultLairScene` to draw that boss-room layer underneath the existing `addSnesDanneArena()` deadline-pressure arena, so the final boss mechanics now sit in a legible one-screen chamber.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` (3 files / 25 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=BlackVaultLairScene&role=compiler&name=Ruby`; `render_game_to_text()` reports active `BlackVaultLairScene`, objective `Black Vault Lair: inspect DANN-E core.`, two visible Censorship Wraith threats, and nearest interactable `Return to Archive`.
+  - Direct Chrome/Phaser probe confirmed 455 `snes-black-vault-*` objects plus 43 `snes-danne-arena*` objects, including the tile-room container, altar, fissures, review stations, Treaty Fragment III frame, and DANN-E arena. Network probes reported no failed requests or 4xx/5xx responses. Screenshot: `docs/screenshots/black-vault-tile-room-probe.png`.
+- Embassy Cable Room SNES readability pass (2026-07-01):
+  - Applied the same first-hour action-adventure room-readability rule to the Embassy Cable Room route.
+  - Added `addSnesEmbassyCableRoomTileRoom()` to the shared SNES pixel-art helpers: original 16x16 floor/wall tiles, OpenNet/ClassNet teletype banks, a bronze cipher-machine workstation, cable route lines, cable crates, a red secure door, Marine guard post, and return stair.
+  - Wired `EmbassyCableRoomScene` to draw that layer while preserving the existing Marine Security Guard, bronze cipher machine interaction, steel-door blocking logic, collision geometry, and FRUS objective state.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` (3 files / 25 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=EmbassyCableRoomScene&role=declass_reviewer&name=Alex`; `render_game_to_text()` reports active `EmbassyCableRoomScene`, objective `Embassy Cable Room: inspect the bronze cipher machine.`, and visible entities including `Marine Security Guard (blocking)`.
+  - Direct Chrome/Phaser probe confirmed 438 `snes-embassy-*` objects in the scene, including the tile-room container, cipher machine, guard post, secure door, and teletype banks. A follow-up network probe reported no failed requests or 4xx/5xx responses. Screenshot: `docs/screenshots/embassy-cable-room-tile-probe.png`.
+- NARA Stacks SNES room-readability pass (2026-07-01):
+  - Continued the first-hour action-adventure training work by applying its "room readable from the doorway" rule to the DANN-E expansion NARA Stacks route.
+  - Added `addSnesNaraStacksTileRoom()` to the shared SNES pixel-art helpers: original 16x16 floor/wall tiles, archive shelf blocks, row plaques, patrol rails, source-note station, treaty fragment pedestal, sealed cartons, and return stair.
+  - Wired `NaraStacksScene` to draw that tile-room layer over the map backdrop while preserving the existing collision polygons, drones, interactables, return route, save state, and FRUS objective text.
+  - Verified focused tests: `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` (3 files / 25 tests pass).
+  - Verified `npm run build` (passes with the existing Vite chunk-size warning).
+  - Required web-game client completed against `?scene=NaraStacksScene&role=compiler&name=Ruby`; `render_game_to_text()` reports active `NaraStacksScene`, objective `NARA Stacks: read the classified stack note.`, visible drone patrols, and nearest interactable `Return to Archive`.
+  - Direct Chrome/Phaser probe after a clean dev-server restart confirmed 503 `snes-nara-*` objects in the scene, including the tile-room container, shelf blocks, drone patrol rails, treaty-fragment frame, and no console/page errors. Screenshot: `docs/screenshots/nara-stacks-tile-room-probe.png`.
+- ALttP reference gameplay translation pass (2026-06-30):
+  - Used the supplied six-hour `A Link to the Past` walkthrough only as a mechanics reference, not as copied art/layout/audio/text.
+  - Replaced the visible default player action rectangle with a short role-colored FRUS tool swipe/stamp effect so the Citation Stamp, Red Pencil, Proof Lens, and Ruby Pen action window reads like an SNES action-adventure tool use.
+  - Kept the real directional collision hitbox and `render_game_to_text().playerCombat.hitbox` intact for enemies, bosses, and QA, while hiding the raw box unless `?debug=hitbox` is set.
+  - Verified focused runtime probe in `BlackVaultLairScene`: active attack state, live hitbox readout, trail/edge/stamp visible, raw hitbox hidden by default, and no browser console errors.
+  - Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+- Gameplay error cleanup pass (2026-06-17):
+  - Connected the static GameplayMap Black Vault obelisk core to the live `BlackVaultLairScene` DANN-E encounter, and made normal/debug boss-clear paths open the west/north blast-door flags.
+  - Reduced the world-exit spawn nudge so `frus_floor` no longer starts by pushing the player into a phase trigger dialog.
+  - Converted Coffee Station and 23rd Street Sign from flavor-only false affordances into repeat-safe stateful interactions with objective/latest-message updates and small one-time document-point rewards.
+  - Seeded CharacterCreateScene from `?role=` / `?name=` (or restored profile state) while preserving the normal blank-name-to-Sam behavior.
+  - Made touch controls less visually invasive at 1x portrait integer zoom, shortened the Black Vault objective, widened DanneGallery cards, and replaced the oversized RenderDebug 4x character sample with single-texel proof chips.
+  - Verified full `npm test` (67 files / 323 tests), `npm run build`, `git diff --check`, focused CharacterCreate deep-link/confirm flow, Black Vault boss routing, Coffee Station and 23rd Street interactions, `frus_floor` no-immediate-dialog spawn, RenderDebug single-texel proof output, and in-app Browser local route boot with no console errors.
 - Embassy foreign-government permission queue (2026-06-16):
   - Added `src/game/embassyPermissionQueue.ts`, a Phaser-free rule module for the Embassy consular queue, sourced to the official FRUS stages page note that permission may be sought when selected documents include foreign-government information.
   - Replaced the static Consular Queue "later workflow" text with a cable-gated permission route: the queue stays locked until the Chancery Door has copied the embassy cable, then files `sceneProgress.foreignGovernmentPermissionComplete`, advances the permission step to completion, awards `Foreign Permission Note` and `Visible Withholding Note`, and grants 5 document points once.
@@ -1725,3 +2731,970 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - Reduced the Office Hub first-run controls card, hid proximity prompts/bottom hints while it is visible, and swallowed confirm/cancel dismissal so a first Space/A press no longer triggers a stray step-closer toast or interaction.
   - Verified focused tests for `stackControlManifest` and `ovalOfficeBriefing` (2 files / 6 tests), full `npm test` (67 files / 323 tests), and `npm run build` (passes with existing Vite chunk-size warning only).
   - Required web-game client ran against `?scene=GameplayMapScene&map=nara_stacks&role=compiler&name=Ruby`; direct runtime probes confirmed NARA spawn no longer auto-exits, Stack Control locked/unlocked states, catalog filing, Stack Transfer Manifest filing, West Wing spawn safety, Secret Service source-coverage clearing, Oval Office briefing filing, and no console/page errors. Screenshots: `output/web-game/office-tutorial-compact-page-2.png`, `output/web-game/office-tutorial-dismissed-page-2.png`.
+
+## 2026-06-30 First-hour SNES adventure readability pass
+
+- Treated the supplied A Link to the Past walkthrough as mechanics reference only: screen readability, tile blocking, landmarks, and interactable cues were translated into original FRUS production spaces without copying Nintendo assets, maps, text, audio, or sprites.
+- Added `src/systems/snesMapDressing.ts`, a runtime-generated 16x16 SNES-style dressing layer for gameplay-map scenes using original floor, blocker, door, NPC, and document-marker textures.
+- `GameplayMapScene` now draws map-specific floor tiles, collision-blocker tiles, and feature markers from the existing Tiled object layers while preserving the static map art, collision data, and interactable behavior.
+- NARA Stacks runtime probe confirmed 176 archive floor tiles, 110 shelf/blocker tiles, 2 door markers, 1 NPC marker, 2 document markers, the visible readout `SNES archive dungeon shelves and catalog path`, and no console/page errors.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 SNES map-dressing variant and silhouette upgrade
+
+- Expanded the generated gameplay-map dressing into a richer SNES-style layer:
+  - 4 deterministic floor variants per map surface.
+  - 3 deterministic blocker variants per collision material.
+  - Distinct 16x16 silhouettes for doors, locked gates, NPCs, document notes, and workstations.
+  - A thin map-local frame and stepped pulsing on important feature markers.
+- `GameplayMapScene` now passes richer feature metadata from existing Tiled object layers into the dressing system, so red-zone gates, vaults, doors, desks, queues, tables, stations, NPCs, and documents read differently without adding parallel gameplay data.
+- Runtime probe across `nara_stacks`, `historian_office`, `black_vault`, and `embassy` confirmed:
+  - all sampled maps emitted 4 floor variants and 3 blocker variants;
+  - NARA Stacks showed door, NPC, gate, and workstation icons;
+  - Historian Office showed door, NPC, document, and workstation icons;
+  - Black Vault showed door and gate icons;
+  - Embassy showed door, gate, and workstation icons;
+  - no console/page errors.
+- Required web-game client completed against `?scene=GameplayMapScene&map=nara_stacks&role=compiler&name=Ruby`; screenshot capture remains black due to the known headless WebGL artifact, but `render_game_to_text()` and direct Phaser display-list probes verified the scene.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 FRUS-specific 16-bit interaction sprites
+
+- Extended `src/systems/snesMapDressing.ts` with original 16x16 silhouettes for the actual FRUS production loop:
+  - ruby FRUS bookshelf;
+  - source-index / manifest papers;
+  - red declassification gate;
+  - review desk with red pencil;
+  - Black Vault obelisk core;
+  - Embassy cable machine;
+  - Capitol Hill witness table;
+  - Foggy Bottom street sign;
+  - office coffee station;
+  - FRUS production phase markers.
+- `GameplayMapScene` now maps existing Tiled actions to those sprites, so the current maps visually distinguish FRUS tasks without inventing new gameplay data or breaking the object-layer source of truth.
+- Runtime all-map probe confirmed the expected sprites:
+  - `historian_office`: FRUS shelf + coffee;
+  - `nara_stacks`: declass gate + source index;
+  - `west_wing`: review desk + gate;
+  - `black_vault`: vault core + blast doors;
+  - `embassy`: cable machine + review desk;
+  - `capitol_hill`: witness table + declass gate;
+  - `foggy_bottom`: street sign;
+  - `frus_floor`: five phase markers.
+- Required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby`; screenshot capture remains black due to the known headless WebGL artifact, but direct Phaser display-list probes verified all feature textures and reported no console/page errors.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 32x48 role actors placed on gameplay-map NPCs
+
+- `GameplayMapScene` now renders actual 32x48 art-pack character sprites for Tiled NPC interaction objects, using the same pixel-art family as the player instead of relying only on small markers.
+- NPC actor mapping stays tied to existing object-layer labels/actions:
+  - office historian interaction -> `general_editor`;
+  - NARA Archivist -> `archivist`;
+  - Secret Service gatekeeper -> `security_officer`;
+  - fallback review NPC -> `reviewer`.
+- Added matching ground shadows and small gold foot markers so actors sit in the room rather than floating over the map art.
+- Runtime probe confirmed:
+  - `historian_office` renders one `general_editor` actor at the historian interaction;
+  - `nara_stacks` renders one `archivist` actor at the catalog desk;
+  - `west_wing` renders one `security_officer` actor at the gatekeeper interaction;
+  - `embassy` correctly renders no NPC actors because it has no NPC object-layer entries;
+  - no console/page errors.
+- Required web-game client completed against `?scene=GameplayMapScene&map=historian_office&role=compiler&name=Ruby`; screenshot capture remains black due to the known headless WebGL artifact, but direct Phaser display-list probes verified the actor sprites.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 Always-on SNES quest-status band
+
+- Added a compact 16-bit quest-status band to `UIScene` for active gameplay scenes.
+- The band reads only from existing `GameState` helpers:
+  - reliability hearts from `getAdventureSubscreenReadout().reliabilityHearts`;
+  - three FRUS research pendants;
+  - declassification equity crystals;
+  - active FRUS Production Board phase and document points;
+  - currently equipped process tool.
+- The band hides on Boot, tap-to-start, warning, title, character creation, render-debug, gallery, and Codex scenes so it does not clutter menus or debug pages.
+- Runtime UI probe confirmed:
+  - `GameplayMapScene` shows the band graphics plus `PH PLAN 0/2  DP 0` and `TOOL NONE`;
+  - `TitleScene` keeps the band hidden;
+  - no console/page errors.
+- Required web-game client completed against `?scene=GameplayMapScene&map=nara_stacks&role=compiler&name=Ruby`; screenshot capture remains black due to the known headless WebGL artifact, but direct UIScene probes verified the band.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 First-hour top-down adventure training pass
+
+- Treated the linked first-hour adventure reference as a high-level gameplay lesson, not a source to copy. The reusable lesson for FRUS Quest is constant dungeon literacy: the player should always know current room, revealed/visited rooms, and key/big-key/map status without pausing.
+- Extended the active-gameplay SNES quest-status band with:
+  - a tiny room-map/compass chip sourced from `getAdventureSubscreenReadout().roomMap`;
+  - current-room highlight, visited-room cyan cells, unreached revealed-room slate cells, and boss-room red cells;
+  - active dungeon small-key / big-key / map status iconography sourced from `getAdventureSubscreenReadout().dungeons`.
+- Kept the change purely in `UIScene`, so no room data, save data, combat, or traversal code was rewritten.
+- Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`; screenshot capture remains black due to the known headless WebGL artifact, but direct Phaser probes confirmed:
+  - `ArchiveScene` + `UIScene` active;
+  - quest band visible;
+  - room traversal set to `A1 SOURCE ROOM`;
+  - quest-band signature includes room-map and dungeon-key state;
+  - no console/page errors.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 Stonewall hit-feedback pass
+
+- Improved the literal bureaucratic stonewall enemies so they now respond to player tool/action hits with SNES-style tactile feedback:
+  - a snapped ruby/gold impact flash;
+  - short-lived stone-chip particles;
+  - a larger burst on process-wall clearance.
+- Kept all FRUS gate logic in the existing scenes: the effect is purely presentation inside `BureaucraticWall`, so source-note, routing, referral, and Golden Rule requirements are unchanged.
+- Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`; screenshot capture remains black due to the known headless WebGL artifact.
+- Direct Phaser probe confirmed a `repo-wall` hit creates the expected transient effect objects (7 chip rectangles + 1 flash container), keeps the wall uncleared when the source-note requirement is unmet, and reports no console/page errors.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 16-bit dungeon room-depth pass
+
+- Upgraded the shared `addSnesRoomLayer` renderer so active FRUS dungeon rooms read less like flat panels and more like 16-bit chambers:
+  - deterministic 16x16 floor variants, cracks, and specks;
+  - separate wall-top, wall-front, side-wall, brass-corner, and shadow tiles;
+  - room-type landmarks for source rooms, puzzle tables, hint boards, reward plinths, and boss cores;
+  - theme landmarks for Two Networks terminals, Referral Vault trays/seals, Silent Read proof pages, and office desks.
+- The renderer tags every new dressing object with `snes-room-*` names for runtime QA.
+- Because Archive, Network, Referral Vault, Silent Read, and Ending already share this renderer, the pass improves multiple FRUS production dungeons without changing traversal, saves, combat, or workflow gates.
+- Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`; screenshot capture remains black due to the known headless WebGL artifact.
+- Direct Phaser display-list probe confirmed:
+  - Archive, Network, Referral Vault, and Silent Read scenes all boot with no console/page errors;
+  - each sampled room contains 88 `snes-room-floor-variant` tiles plus wall-top/front/side depth tiles;
+  - Archive source-room landmarks, Network terminal glows, Referral Vault trays/seals, and Silent Read proof pages render through the shared room layer.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 16-bit dungeon gate pass
+
+- Added a reusable `addSnesGate` helper to `snesPixelArt.ts`.
+- The helper renders directional SNES-style gates with:
+  - arch shadow/opening;
+  - stone gateposts;
+  - brass/cyan/ruby threshold trim;
+  - red locked bars;
+  - compact process-tool seal labels.
+- Replaced simple strip doors in:
+  - `ArchiveScene` room exits;
+  - `NetworkScene` Two Networks doors;
+  - `ReferralVaultScene` referral gates;
+  - `SilentReadScene` editor/proof gates.
+- Gate visuals now communicate FRUS/Zelda requirements directly: `CITA`, `ROUT`, `EQTY`, `PENC`, etc., while preserving all existing room-exit logic and locked-exit prompts.
+- Required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`; screenshot capture remains black due to the known headless WebGL artifact.
+- Direct Phaser display-list probe confirmed:
+  - Archive A1 renders four gates with two `CITA` lock seals;
+  - Network N1 renders the locked `ROUT` gate;
+  - Referral Vault R1 renders the locked `EQTY` gate;
+  - Silent Read E1 renders the locked `PENC` gate;
+  - no console/page errors.
+- Verified full `npm test` (67 files / 323 tests) and `npm run build` (passes with the existing Vite chunk-size warning).
+
+## 2026-06-30 First-hour reference training cue pass
+
+- Treated the linked hour of classic top-down adventure gameplay as a high-level grammar reference only: no copied maps, art, music, enemy designs, or puzzle layouts.
+- Added `src/game/adventureTraining.ts`, a pure helper that turns live FRUS Quest state into an immediate adventure verb:
+  - dialog -> `READ`;
+  - choices -> `CHOOSE`;
+  - nearby interactable -> `ACT`;
+  - unvisited exits -> `EXPLORE`;
+  - locked gates -> `UNLOCK` with the required FRUS process tool;
+  - fallback objective -> `GOAL`.
+- Exposed the cue through `getAdventureTrainingReadout()` and `window.render_game_to_text()` so the visible HUD and automated text-state QA agree.
+- Extended `UIScene` with a tiny second quest-band line showing `NEXT ...`, keeping the moment-to-moment objective visible during live play.
+- Added `docs/gameplay/first-hour-reference-training.md` documenting the transfer rules and non-copying boundary.
+- Added deterministic tests in `src/game/adventureTraining.test.ts`.
+- Verified:
+  - `npm test` passes (68 files / 327 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - `render_game_to_text()` reports `READ -> A ADVANCE` during dialog and `ACT -> A NARA II STACKS` when exploring near the stacks;
+  - direct Phaser display-list probe confirmed the visible `NEXT A ADVANCE` BitmapText in `UIScene` and no console/page errors.
+
+## 2026-06-30 SNES reward pedestal pass
+
+- Added `addSnesTreasurePedestal()` and `addSnesRewardBurst()` to `src/systems/snesPixelArt.ts`.
+- The new helper renders original SNES-style FRUS treasure presentation:
+  - shadowed pedestal;
+  - ruby/gold case and lid;
+  - actual process-tool icon;
+  - compact label plaque;
+  - small pixel sparkle accents.
+- Wired the helper into major FRUS dungeon rewards:
+  - Archive D1 Citation Stamp reward room;
+  - hidden Archive secret rewards;
+  - Network N2 Clearance Token vault;
+  - Referral Vault R2 Concurrence Slip chamber;
+  - Silent Read red-pencil/proof-lens/Buckram Key reward displays.
+- Added reward-burst feedback when major tools are earned:
+  - Source Note Citation Stamp;
+  - Clearance Token;
+  - Concurrence Slip;
+  - Red Pencil;
+  - Proof Lens;
+  - Buckram Key.
+- Verified:
+  - `npm test` passes (68 files / 327 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=NetworkScene&role=declass_reviewer&name=Alex`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - direct Phaser display-list probe confirmed reward pedestals in Archive D1, Network N2, Referral R2, and Silent Read S1 with the expected tool textures;
+  - direct collection probe confirmed Clearance Token acquisition creates one `snes-reward-burst`, updates inventory, and reports `Clearance Token opens red vault doors.`;
+  - no console/page errors in the probes.
+
+## 2026-06-30 SNES exit-plaque pass
+
+- Extended `addSnesGate()` with optional unlocked-route plaques.
+- Locked gates still show red process seals (`CITA`, `PENC`, `ROUT`, `EQTY`, etc.); open gates now show short destination plaques such as `VAULT`, `SLIP`, `READ`, `GATE`, `PUZZLE`, `REWARD`, or `BOSS`.
+- Wired route labels into:
+  - Archive room graph exits;
+  - Two Networks doors;
+  - Referral Vault doors;
+  - Silent Read / Editor's Labyrinth doors.
+- This keeps door art doing gameplay work: locked exits explain what process tool is missing, while open exits tell the player where the next workflow room leads.
+- Verified:
+  - `npm test` passes (68 files / 327 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - direct Phaser display-list probe confirmed locked labels in Archive A1 (`CITA`, `CITA`) and Silent Read E1 (`PENC`);
+  - direct Phaser display-list probe confirmed route plaques in Network N1 (`VAULT`), Referral R1 (`SLIP`), and Archive D1 (`PUZZLE`);
+  - no console/page errors in the probes.
+
+## 2026-06-30 First-hour gameplay training profile
+
+- Treated the linked first hour of the `A Link to the Past` walkthrough as systems training only, using YouTube oEmbed metadata to identify the reference and avoiding any copied art, maps, music, text, names, or exact puzzle layouts.
+- Added `src/game/firstHourTraining.ts`, a typed first-hour training profile that translates action-adventure lessons into FRUS Quest rules: readable rooms, unvisited exits, visible gates, small-key spending, map/compass literacy, boss gates, reward-return loops, and standards-pressure clarity.
+- Extended `src/game/adventureTraining.ts` so the HUD cue now reads live dungeon state as well as room state:
+  - `USE KEY` when a chapter small key can open the visible gate.
+  - `FIND MAP` when a contested-equity map/compass cue is still missing.
+  - `BOSS GATE` when a boss-room review hurdle is ready.
+  - `RETURN` after a boss/stamp reward opens new routes.
+  - `GO EXIT N/E/S/W` for unvisited room edges.
+- Updated the deterministic Vitest coverage for the first-hour training cues.
+
+## 2026-06-30 SNES room-intro banner pass
+
+- Added `addSnesRoomIntroBanner()` to `src/systems/snesPixelArt.ts`.
+- The helper draws a short-lived SNES-style room-entry card with:
+  - black title panel;
+  - gold/ruby/cyan side rules;
+  - room title;
+  - chapter/area subtitle;
+  - a quick fade/slide-out tween.
+- Wired the banner into:
+  - Archive Cavern rooms;
+  - Two Networks rooms;
+  - Referral Vault rooms;
+  - Editor's Labyrinth / Silent Read Tower rooms.
+- This strengthens one-screen-room readability without changing traversal, saves, collisions, enemies, workflow gates, or map data.
+- Verified:
+  - focused `src/game/adventureTraining.test.ts` passes;
+  - full `npm test` passes (68 files / 329 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - direct Phaser display-list probe confirmed one `snes-room-intro-banner` with panel, rule, title, and subtitle children in Archive, Network, Referral Vault, and Silent Read scenes;
+  - no console/page errors in the probes.
+
+## 2026-06-30 SNES ambient-room animation pass
+
+- Added a tiny ambient animation layer to `addSnesRoomLayer()` in `src/systems/snesPixelArt.ts`.
+- The layer creates original procedural 16-bit room-life sprites:
+  - Archive rooms: lamp glint plus drifting dust motes.
+  - Two Networks: cyan terminal cursor pulses.
+  - Referral Vault / boss / secret rooms: red-gold torch flickers.
+  - Silent Read / proof rooms: proof-page shimmer marks.
+  - Office-themed rooms: mug-steam pulse plus dust motes.
+- Looping tweens are stopped when tracked room objects are destroyed, so room transitions do not leave stray animation work behind.
+- Verified:
+  - focused `src/game/adventureTraining.test.ts` passes;
+  - full `npm test` passes (68 files / 329 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - direct Phaser display-list probe confirmed ambient sprites in Archive (`dust`, `lamp-glint`), Network (`terminal-pulse`), Referral Vault (`torch`), and Silent Read (`proof-shimmer`);
+  - no console/page errors in the probes.
+
+## 2026-06-30 FRUS volume assembly HUD pass
+
+- Added a compact ruby-buckram FRUS volume assembly indicator to the active-gameplay quest band in `UIScene`.
+- The indicator reads existing `getAdventureHudReadout().fragments` state instead of creating a parallel counter:
+  - the top-band graphic shows a tiny assembled book cover with five fragment slats;
+  - the lower-right HUD line shows `VOL x/5`;
+  - the quest-band signature now includes fragment progress so it refreshes immediately when a volume fragment is earned.
+- This makes the actual win object (a completed FRUS volume) visible during play, alongside hearts/reliability, pendants, crystals, keys, map, and equipped tool.
+- Verified:
+  - focused `src/game/adventureTraining.test.ts` passes;
+  - full `npm test` passes (68 files / 329 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - direct Phaser probe confirmed `quest-band-volume-text` is visible as `VOL 0/5`, then updates to `VOL 3/5` when three existing volume fragments are injected into live `GameState`;
+  - `render_game_to_text()` reports matching `adventureHud.fragments` values and no console/page errors.
+
+## 2026-06-30 One-hour reference gameplay training profile expansion
+
+- Treated the linked one-hour gameplay reference as high-level systems training only; no maps, sprites, music, text, room layouts, enemies, or puzzle sequences were copied.
+- Expanded `src/game/firstHourTraining.ts` from individual beats into a full one-hour segment model:
+  - 0-8 minutes: orientation;
+  - 8-18 minutes: overworld loop;
+  - 18-28 minutes: dungeon entry;
+  - 28-38 minutes: item mastery;
+  - 38-48 minutes: key-lock loop;
+  - 48-56 minutes: boss readiness;
+  - 56-60 minutes: reward return.
+- Each segment now maps the reference gameplay grammar into a FRUS production mechanic, e.g. source-note locks, chapter keys, contested-equity map literacy, process-tool gates, and stamp-driven return shortcuts.
+- Extended `AdventureTrainingReadout` so `window.render_game_to_text().adventureTraining` exposes `sourceBeatId`, `phase`, and `phaseLabel`, making the live HUD cue auditable against the one-hour training model.
+- Updated `docs/gameplay/first-hour-reference-training.md` with the one-hour segment table and the non-copying boundary.
+- Verified:
+  - focused `src/game/adventureTraining.test.ts` passes (7 tests);
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - generated state JSON reports `adventureTraining.sourceBeatId: "room_readability"`, `phase: "orientation"`, and `phaseLabel: "Orientation"` with no console/page errors.
+
+## 2026-06-30 SNES FRUS cover assembly pass
+
+- Added `addSnesFrusCoverAssembly()` to `src/systems/snesPixelArt.ts`.
+- The helper procedurally renders an original ruby-buckram FRUS volume with:
+  - gold spine bands and title rules;
+  - a generic circular publication seal;
+  - subtle buckram texture dots;
+  - five state-driven physical cover-piece regions;
+  - missing-piece masks/labels and complete-state sparkles.
+- Replaced the older `EndingScene` assembled-prize renderer with the new helper while preserving the existing `COVER_PIECES` fragment list, Buckram Gate readiness checks, publication flow, and save/game state.
+- The final Buckram Gate now makes the actual win object — a physically assembled, human-certified FRUS volume — visible as SNES-style game art instead of only a text counter.
+- Verified:
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - generated state JSON reports `EndingScene`, `FRUS cover prize`, five volume fragments, and no console/page errors;
+  - direct Phaser display-list probe confirmed one `snes-frus-cover-assembly`, five `snes-frus-cover-piece-earned` children, one cover label, and four complete spark objects.
+
+## 2026-06-30 Equal-rank publication ceremony pass
+
+- Added `addSnesPublicationTeam()` to `src/systems/snesPixelArt.ts`.
+- The helper renders a small SNES-style equal-rank review circle using existing 32x48 role sprite sheets when available, with procedural pixel fallbacks if a sheet is missing.
+- Wired the helper into `EndingScene` around the human publication table with five visible FRUS production roles:
+  - Compiler / selection;
+  - Editor / text;
+  - Declassification Coordinator / equity;
+  - Records Officer / source notes;
+  - Reviewer / proof read.
+- Added `Equal-rank publication team` to the final scene's visible entity readout so `render_game_to_text()` and accessibility/QA state match the visual ceremony.
+- The ceremony is presentation-only: it does not add hierarchy, collision blockers, new gates, or save-state changes, and it preserves the existing human certification flow.
+- Verified:
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - `render_game_to_text()` reports `Equal-rank publication team` with no console/page errors;
+  - direct Phaser display-list probe confirmed one `snes-publication-team`, five `snes-publication-team-sprite` children, five labels, no fallback sprites, and the expected `compiler`, `editor`, `declassification_coordinator`, `records_officer`, and `reviewer` textures.
+
+## 2026-06-30 SNES title quest-route strip pass
+
+- Added a compact original pixel-art FRUS quest-route strip to `TitleScene`.
+- The route strip overlays both the loaded native art-pack title card and the procedural fallback title, showing the core adventure path:
+  - ARCH: Archive/source-note start;
+  - NET: OpenNet/ClassNet routing;
+  - REF: referral/equity gate;
+  - READ: proof/silent-read gate;
+  - GATE: final Buckram Gate volume publication.
+- The strip uses only Phaser-drawn local pixel shapes and the existing ruby/gold/cream/cyan palette, with no imported or copied assets.
+- Kept the existing title art-pack preference and title-start flow intact; this is additive presentation only.
+- Verified:
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=TitleScene`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - direct Phaser display-list probe confirmed the native `title_screen_256x224` texture is loaded, one `title-quest-route-strip`, five route nodes, four route links, five labels, and route labels `ARCH`, `NET`, `REF`, `READ`, and `GATE`;
+  - start-flow smoke from `TitleScene` with Enter reached `CharacterCreateScene` and then `OfficeScene` with no console/page errors.
+
+## 2026-06-30 Office first-hour training route-board pass
+
+- Treated the linked first hour of the action-adventure reference as high-level gameplay grammar only; no maps, sprites, music, text, room layouts, enemies, or puzzle sequences were copied.
+- Upgraded the Office Hub `FRUS Production Board` so the start room now physically shows the live one-hour training model alongside the FRUS production phases.
+- Added stable display-list object names for automated visual QA:
+  - `office-production-route-board`;
+  - `office-production-route-phase-label`;
+  - `office-production-route-phase-tick`;
+  - `office-first-hour-route-node`;
+  - `office-first-hour-route-link`;
+  - `office-first-hour-route-label`;
+  - `office-production-route-next-label`.
+- The first-hour strip now contains eight readable cue nodes:
+  - `RM`: room readability;
+  - `EX`: unvisited exit;
+  - `GT`: visible tool gate;
+  - `KY`: small-key loop;
+  - `MP`: map/compass literacy;
+  - `BS`: boss gate;
+  - `RT`: reward return;
+  - `RL`: Kellogg/standards pressure.
+- The active node is driven by `getAdventureTrainingReadout().sourceBeatId`, and the board's bottom label shows the live training phase plus current FRUS Production Board step.
+- Verified:
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - generated state JSON reports `OfficeScene`, `FRUS Production Board`, and `adventureTraining.sourceBeatId: "standards_pressure"`;
+  - direct Phaser display-list probe confirmed one `office-production-route-board`, six phase labels, 39 phase ticks, eight first-hour nodes, seven links, eight labels (`RM`, `EX`, `GT`, `KY`, `MP`, `BS`, `RT`, `RL`), and no console/page errors.
+
+## 2026-06-30 Office Hub 16-bit dressing pass
+
+- Added an original procedural SNES dressing layer to the Office Hub, the first playable room:
+  - 16x16-feeling floor tile variation and small pixel details;
+  - back-wall bookshelves and book-spine silhouettes;
+  - gold workflow-route inlays that lead from desks toward the FRUS cart and Archive exit;
+  - small workflow station icons for the Scope desk, Production Inbox, Archive Terminal, and FRUS Cart.
+- Kept the change presentation-only:
+  - no collision bounds changed;
+  - no interaction radii changed;
+  - no save-state shape changed;
+  - the existing Junior Compiler, desks, terminal, doors, FRUS Production Board, and Danne map doors remain the same interactables.
+- Added stable display-list names for QA:
+  - `office-snes-floor-tile`;
+  - `office-snes-floor-detail`;
+  - `office-snes-wall-shelf`;
+  - `office-snes-wall-book`;
+  - `office-snes-route-inlay`;
+  - `office-snes-workflow-shadow`;
+  - `office-snes-workflow-icon`.
+- Verified:
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - generated state JSON reports `OfficeScene`, `explore`, and the live adventure-training readout;
+  - direct Phaser display-list probe confirmed 96 floor tiles, 72 floor details, 4 shelves, 12 book sprites, 4 route inlays, 4 workflow shadows, 11 workflow icon pieces, the existing production board, eight first-hour route nodes, and no console/page errors.
+
+## 2026-06-30 SNES dungeon map-tablet pass
+
+- Added `addSnesMapTablet()` to `src/systems/snesPixelArt.ts`.
+- The helper procedurally renders an original 16-bit map/compass-style tablet:
+  - shadowed tablet body;
+  - cream paper inset;
+  - ruby heading band;
+  - linked route cells;
+  - compact two-letter room/process node labels;
+  - active-route beacon.
+- Wired map tablets into route-literacy rooms:
+  - Archive A3: `SECRET MAP` with `A1 -> A3 -> C3 -> D1`;
+  - Archive B3: `GATE MAP` with `B1 -> B2 -> C2 -> D3`;
+  - Two Networks N1: `NET ROUTE` with OpenNet/routing/ClassNet/vault nodes;
+  - Referral Vault R1: `EQUITY` with manifest/agency/slip nodes;
+  - Editor's Labyrinth E1: `EDIT MAP` with AI/desk/pencil/read nodes;
+  - Silent Read Tower S1: `PROOF MAP` with read/lens/stamp/buckram nodes.
+- The pass makes the map/compass lesson physically visible in rooms rather than only in the HUD, while keeping traversal, collision, save state, and FRUS workflow logic unchanged.
+- Verified:
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite chunk-size warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby`;
+  - screenshot capture remains black due to the known headless WebGL artifact;
+  - generated state JSON reports `ArchiveScene`, `dialog`, and `adventureTraining.sourceBeatId: "room_readability"`;
+  - recursive Phaser display-list probe confirmed one `snes-map-tablet` per sampled room, with route/cell/beacon children and labels `SECRET MAP`, `GATE MAP`, `NET ROUTE`, `EQUITY`, `EDIT MAP`, and `PROOF MAP`;
+  - no console/page errors in the probes.
+
+## 2026-06-30 One-hour gameplay training ladder
+
+- Treated the linked one-hour slice of `Legend of Zelda A LINK TO THE PAST Full Game Walkthrough - No Commentary (A Link to the Past Full)` as gameplay-grammar training only, verified through YouTube oEmbed metadata, with no copied maps, sprites, music, text, names, enemies, room layouts, or puzzle sequences.
+- Expanded `src/game/firstHourTraining.ts` from broad first-hour phases into a twelve-drill five-minute ladder:
+  - `0-5` Start Room: obvious first verb;
+  - `5-10` Edges: clean unvisited exits;
+  - `10-15` Tease Gate: visible missing-tool blockers;
+  - `15-20` Threshold: overworld-to-chapter transition;
+  - `20-25` Map Chip: dungeon-map literacy before blind key spending;
+  - `25-30` Local Key: document subtask earns a local chapter key;
+  - `30-35` Use Reward: newly earned tool solves a nearby gate;
+  - `35-40` Shortcut: reward points back to changed routes;
+  - `40-45` Cadence: repeated earn/spend key rhythm;
+  - `45-50` Hazards: visible standards/deadline pressure before damage;
+  - `50-55` Boss Gate: stage tool checks hardest review hurdle;
+  - `55-60` World Change: reward opens a new route or workflow shortcut.
+- Added the cross-cutting `deadline_pressure` first-hour segment so standards-pressure cues no longer fall back to Orientation.
+- Extended the live adventure-training readout with `drillId`, `drillLabel`, `drillMinuteRange`, and `drillObjective`; `window.render_game_to_text().adventureTraining` now exposes the active drill for QA and future tuning.
+- Updated the Office Hub production board to use the tighter drill label in its active route-band text.
+- Updated `docs/gameplay/first-hour-reference-training.md` with the drill ladder and the expanded `render_game_to_text()` contract.
+- Verification:
+  - focused `npm test -- src/game/adventureTraining.test.ts` passes (7 tests);
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - required web-game client ran against `?scene=OfficeScene&role=compiler&name=Ruby`;
+  - state JSON reported `phase: "deadline_pressure"`, `drillId: "hazard_readability"`, `drillMinuteRange: "45-50"`, and no page/console error artifact;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-06-30 Office twelve-drill training route pass
+
+- Replaced the Office Hub's older eight-node first-hour strip with the full twelve-drill one-hour ladder from `FIRST_HOUR_TRAINING_DRILLS`.
+- The `FRUS PATH` board now physically shows the 0-60 minute training route:
+  - `ST`: start-room affordance;
+  - `ED`: edge/exit memory;
+  - `GT`: visible gate tease;
+  - `TH`: dungeon threshold;
+  - `MP`: map-chip orientation;
+  - `KY`: local key task;
+  - `TL`: tool reward use;
+  - `SC`: shortcut return;
+  - `KD`: key-lock cadence;
+  - `HZ`: hazard readability;
+  - `BS`: boss gate check;
+  - `RW`: reward changes world.
+- Added compact minute markers (`00`, `10`, `20`, `30`, `40`, `50`) below alternating nodes, so the start room now presents the one-hour training pass as an in-world SNES route board rather than hidden telemetry.
+- The active route-band text now uses `training.drillLabel`, so the board can show concrete drill state such as `HAZARDS GRD`.
+- Verification:
+  - focused `npm test -- src/game/adventureTraining.test.ts` passes (7 tests);
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - required web-game client ran against `?scene=OfficeScene&role=compiler&name=Ruby`;
+  - direct Phaser display-list probe confirmed one `office-production-route-board`, 12 `office-first-hour-route-node` objects, 11 route links, 12 drill labels (`ST`, `ED`, `GT`, `TH`, `MP`, `KY`, `TL`, `SC`, `KD`, `HZ`, `BS`, `RW`), six minute labels, next label `HAZARDS GRD`, and no console/page errors;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-06-30 Buckram Gate publication-shrine pass
+
+- Added `addSnesPublicationShrine()` to `src/systems/snesPixelArt.ts`.
+- The helper renders an original 16-bit final-publication shrine around the FRUS cover:
+  - raised ruby/gold publication dais;
+  - press rails and posts;
+  - five FRUS fragment sockets with source/annotation/equity/proof/index-style labels;
+  - status lamps for stamps, apparatus, reliability, and key readiness;
+  - a StateChat checklist tower kept visually separate from a human-review seal tower;
+  - ready/public-record sparks and public-record lines once the gate is clear.
+- Wired the shrine behind the assembled FRUS cover in `EndingScene`'s Buckram Gate room.
+- Wired the same shrine in published mode behind the final `PUBLISHED FRUS COVER` prize overlay, so the win state now reads as a SNES-style public-record altar rather than just a text panel.
+- Kept gameplay and save logic unchanged; the shrine reads the existing `getFinalGateReadiness()` state and is presentation-only.
+- Verification:
+  - focused `npm test -- src/game/adventureTraining.test.ts` passes (7 tests);
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - required web-game client ran against `?scene=EndingScene&role=compiler&name=Ruby`;
+  - direct Phaser display-list probe confirmed one `snes-publication-shrine`, five fragment sockets, five visible fragment pages, four status frames/labels, one StateChat tower, one human-review tower, one FRUS cover assembly, locked shrine title `ASSEMBLY LOCK`, and no console/page errors;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-06-30 Buckram Gate statutory-clock sprite pass
+
+- Added `addSnesStatutoryClock()` to `src/systems/snesPixelArt.ts`.
+- The helper renders an original 16-bit Statutory Clock widget:
+  - raised ruby/gold clock cabinet;
+  - 30 tick marks for the thirty-year publication mandate;
+  - a rotating hand tied to elapsed statutory time;
+  - progress bar, elapsed-year label, and status label;
+  - warning bars for at-risk or missed-deadline states;
+  - public-record spark lines once the Buckram Gate is open or the volume is published.
+- Wired the clock into the Buckram Gate room so deadline pressure is visible next to the publication shrine and route map.
+- Wired a published-state version into the final `PUBLISHED FRUS COVER` prize overlay.
+- The display reads `getStatutoryClockStateReadout()` and remains presentation-only; gameplay, save state, DANN-E deadline logic, and publication checks are unchanged.
+- Verification:
+  - focused `npm test -- src/game/statutoryClock.test.ts` passes (5 tests);
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - required web-game client ran against `?scene=EndingScene&role=compiler&name=Ruby`;
+  - direct Phaser display-list probe confirmed one `snes-statutory-clock`, 30 tick marks, one hand, one progress fill, one year label, one status label, `statutoryClock.status: "running"`, and no console/page errors;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-06-30 Buckram Gate pendant-and-crystal mural pass
+
+- Added `addSnesProgressMural()` to `src/systems/snesPixelArt.ts`.
+- The helper turns final-publication readiness into original SNES wall art:
+  - three research pendants for objectivity/provenance/review discipline;
+  - equity crystals for declassification progress;
+  - five cover-fragment sockets;
+  - MAP, APP, STD, and KEY status lamps;
+  - a compact completion gauge and open-gate highlight lines.
+- Wired the mural into the Buckram Gate room beside the map, relic rack, statutory clock, and publication shrine.
+- The mural reads `getPublicationReadinessReadout()` and is presentation-only; final-gate logic, save state, publication certification, DANN-E deadline pressure, and standards checks are unchanged.
+- Verification:
+  - focused `npm test -- src/game/frusProgression.test.ts src/game/finalPublicationCertification.test.ts` passes (2 files / 11 tests);
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - required web-game client ran against `?scene=EndingScene&role=compiler&name=Ruby`;
+  - direct Phaser display-list probe confirmed one `snes-progress-mural`, three pendant glyphs, two equity-crystal glyphs, five cover-fragment glyphs, four status lamps, one completion fill, the title/pendant/crystal/fragment labels, and no console/page errors;
+  - the live `publicationReadiness` payload showed pendants `3/3`, crystals `2/2`, cover fragments `5/5`, Buckram Key held, and the gate still blocked by apparatus `SRC/AIDS/IDX/ASM/FIX`, matching the mural state;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-06-30 Black Vault DANN-E arena readability pass
+
+- Added `addSnesDanneArena()` to `src/systems/snesPixelArt.ts`.
+- The helper renders an original 16-bit boss-arena layer for the Black Vault:
+  - ruby/black vault floor seal around DANN-E's core;
+  - four FRUS review stations labeled `SRC`, `EQ`, `PRF`, and `STD`;
+  - visible ego-bolt lanes crossing the arena;
+  - DANN-E core-eye/chest glyph;
+  - phase-band and phase lamps for the live boss fight;
+  - optional shortcut-warning frame for bad-ending pressure.
+- Wired the arena into `BlackVaultLairScene` through `DanneMapScene`, where it draws only on the Black Vault map and refreshes when DANN-E changes phase.
+- The layer is presentation-only; boss HP, statutory-clock pressure, standards-damage logic, treaty-fragment gating, and scene transitions are unchanged.
+- Verification:
+  - focused `npm test -- src/game/statutoryClock.test.ts src/game/frusProgression.test.ts` passes (2 files / 10 tests);
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - required web-game client ran against `?scene=BlackVaultLairScene&role=compiler&name=Ruby`;
+  - direct Phaser display-list probe confirmed one `snes-danne-arena`, four review stations, four station labels, four ego-bolt lanes, three phase lamps, one core, and one core eye in the resting Black Vault scene;
+  - quick boss probe with `?scene=BlackVaultLairScene&role=compiler&name=Ruby&bossQuick=1&give=fragments` confirmed the arena redraws during the DANN-E colossus phase with four phase lamps for the secret phase path, one phase band, one live DANN-E threat, and no console/page errors;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-06-30 Dungeon room-compass readability pass
+
+- Added `addSnesRoomCompass()` to `src/systems/snesPixelArt.ts`.
+- The helper renders a compact 16-bit room compass with:
+  - room ID and room-title footer;
+  - north/south/east/west exit arrows;
+  - red lock seals for blocked exits;
+  - short item/route lock labels;
+  - a small source-document chip at the center.
+- Wired the compass into the main FRUS dungeon chain:
+  - Archive Cavern / NARA rooms;
+  - Two Networks;
+  - Referral Vault;
+  - Editor's Labyrinth / Silent Read Tower.
+- Each scene computes live locked exits from its existing traversal and process-tool state, so the compass mirrors current gates without changing traversal, save state, enemy logic, or workflow locks.
+- Verification:
+  - focused `npm test -- src/game/adventureSubscreen.test.ts src/systems/dungeonKeys.test.ts src/game/frusProgression.test.ts` passes (3 files / 10 tests);
+  - full `npm test` passes (68 files / 330 tests);
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - required web-game client ran against `?scene=ArchiveScene&role=compiler&name=Ruby`;
+  - direct Phaser display-list probe confirmed one `snes-room-compass` in `ArchiveScene`, `NetworkScene`, `ReferralVaultScene`, and `SilentReadScene`;
+  - Archive A1 probe confirmed four compass arrows, two direction labels, two lock seals/labels, and matching live `roomTraversal` locks for citation-stamp east/south exits;
+  - Network N1, Referral R1, and Silent E1 probes each confirmed one compass, one live locked east route, one lock seal/label, and no console/page errors;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-06-30 Character-create role ability crest pass
+
+- Added a selected-role 16-bit ability crest to `CharacterCreateScene`.
+- The crest makes each equal-rank FRUS production role readable by silhouette and tool cue, not just by text:
+  - Compiler: archive folder, glasses bridge, and cyan glint for Archive Sense;
+  - Declassification Coordinator: tracker clipboard, mug, and agency-seal pixels for Equity Map;
+  - Editor: proof copy with diagonal red pencil and red mark for Red Pencil;
+  - Proofreader: two-page proof stack with lens for Silent Read;
+  - Source-note specialist: source-note card, margin bar, stamp handle/base, and red ink pad for Provenance Check.
+- Kept the change presentation-only:
+  - no role IDs changed;
+  - no save-state fields changed;
+  - no confirm/input behavior changed;
+  - no Office transition logic changed.
+- Added stable display-list names for QA:
+  - `character-create-role-ability-crest`;
+  - `character-create-role-ability-folder`;
+  - `character-create-role-ability-pencil`;
+  - `character-create-role-ability-proof-left`;
+  - `character-create-role-ability-stamp-base`;
+  - `character-create-role-ability-code`.
+- Verification:
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - focused `npm test -- src/scenes/characterCreateInput.test.ts src/input/InputState.test.ts` passes (15 tests);
+  - focused `npm test -- src/game/adventureTraining.test.ts` passes (7 tests);
+  - required web-game client completed against `?scene=CharacterCreateScene&role=compiler&name=Ruby`;
+  - generated state JSON confirmed Enter still transitions to `OfficeScene`;
+  - direct Phaser display-list probe confirmed one ability crest, one compiler folder/glasses crest on load, one editor pencil/copy crest after ArrowRight, five role cards, and no console/page errors;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-06-30 Live role-ability SNES burst pass
+
+- Upgraded `activateRoleAbility()` in `src/systems/roleAbility.ts` so the selected character role now produces a more SNES-like item-use burst during actual gameplay.
+- The ability effect now draws:
+  - a shadowed ruby/black burst panel around the player;
+  - role-coded header text (`ARCH`, `EDIT`, `EQTY`, `READ`, `SRC`);
+  - six flickering spark pixels;
+  - four scanline/pulse bars;
+  - the existing role-specific tool glyph inside the stronger burst frame.
+- Added stable display-list names for browser QA:
+  - `role-ability-visual`;
+  - `role-ability-snes-burst`;
+  - `role-ability-snes-spark`;
+  - `role-ability-snes-pulse`;
+  - `role-ability-snes-code`;
+  - `role-ability-banner`;
+  - `role-ability-banner-text`;
+  - role-specific glyph names such as `role-ability-editor-red-pencil`, `role-ability-equity-seal`, `role-ability-proof-lens`, and `role-ability-provenance-lock-body`.
+- Kept the change behavior-compatible:
+  - same `role-ability-frame` event;
+  - same `latestAbility` / `latestMessage` update;
+  - same short timed visual lifetime;
+  - no save-state or role-profile changes.
+- Verification:
+  - `npm run build` passes with the existing Vite large-chunk warning;
+  - focused `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (22 tests);
+  - required web-game client completed against `?scene=OfficeScene&role=editor&name=Ruby`;
+  - direct Phaser display-list probe after pressing `E` confirmed one role-ability visual, one SNES burst, six sparks, four pulses, one code label, one editor red pencil, one editor copy sheet, one editor red mark, one banner, one banner text, and no console/page errors;
+  - `render_game_to_text()` reported `latestAbility: "RED PENCIL: Style can clarify, but never decide facts."`;
+  - screenshot capture remains black due to the known headless WebGL artifact.
+
+## 2026-07-01 First-hour adventure-training + lean boot pass
+
+- Treated the linked first hour of *A Link to the Past* gameplay as a legal gameplay-grammar reference only:
+  - no copied art, maps, text, puzzles, music, names, or exact room layouts;
+  - retained the existing typed first-hour training model in `src/game/firstHourTraining.ts`;
+  - verified the model drives live `adventureTraining` cues through `window.render_game_to_text()`.
+- Finished the bureaucratic-wall readability pass in `src/entities/BureaucraticWall.ts`:
+  - added a ruby/gold pressure halo;
+  - added eye glints;
+  - added behavior-code plaques such as `CITE`, `NET`, `REF`, `WAIT`, and `RULE`;
+  - added a directional pressure arrow for active player-facing blockers.
+- Unblocked normal scene boot by making expansion art loading lazy:
+  - stopped `BootScene` from preloading the giant DANN-E and all-new-art packs;
+  - added scene-owned preloads for `WarningScene`, `TitleScene`, `WorldMapScene`, `GameplayMapScene`, `DanneMapScene`, and `DanneGallery`;
+  - normal `ArchiveScene` deep links now reach gameplay instead of remaining stuck on the loader.
+- Verification:
+  - `npx tsc --noEmit` passes;
+  - focused browser probe against `?scene=ArchiveScene&role=compiler&name=Ruby` reaches `ArchiveScene` with active `UIScene`;
+  - after dialog, `render_game_to_text().adventureTraining` reports `ACT / A NARA II STACKS`, matching the first-hour "obvious next verb" training model;
+  - direct display-list probe confirms `bureaucratic-wall-threat-halo`, `bureaucratic-wall-eye-glow`, `bureaucratic-wall-behavior-code`, and `bureaucratic-wall-pressure-arrow` are present;
+  - screenshot `docs/screenshots/archive-wall-training-probe.png` rendered the Archive scene correctly in headless Chrome.
+- Remaining blocker:
+  - `npm run build` currently hangs after Vite transforms 150 modules, although TypeScript completes cleanly;
+  - the latest focused Vitest command hit a local dependency startup error: `TypeError: pico is not a function` inside `picomatch`.
+
+## 2026-07-01 Build pipeline recovery for SNES asset pack
+
+- Repaired the local dependency tree with `npm ci`; this resolved the Vitest startup failure where `picomatch` was not callable.
+- Confirmed the build hang was tied to Vite's default public-directory copy/tree-shaking path against the large 225 MB SNES art pack.
+- Updated the build pipeline:
+  - `vite.config.ts` now disables Rollup tree-shaking for this prototype bundle and skips Vite's built-in public copy;
+  - `package.json` now runs `node scripts/copy-public-assets.mjs` after Vite emits JS/CSS;
+  - `scripts/copy-public-assets.mjs` uses `rsync` to merge `public/assets` into `dist/assets` without deleting Vite's generated `index-*.js` and `index-*.css`.
+- Verification:
+  - `npm test` passes: 68 files / 330 tests;
+  - `npm run build` passes in about five seconds with the known large-chunk warning;
+  - `dist/assets/index-*.js`, `dist/assets/index-*.css`, and `dist/assets/art-pack/manifest.json` coexist after the post-build copy;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby` and wrote `output/web-game-build-fix/state-0.json`;
+  - direct Chrome probe against the dev server confirms `ArchiveScene` reaches explore mode, `adventureTraining` reports `ACT / A NARA II STACKS`, and the bureaucratic wall telegraph display-list names are present;
+  - production preview at `http://127.0.0.1:4173/?scene=ArchiveScene&role=compiler&name=Ruby` reaches `ArchiveScene`, exposes `window.render_game_to_text()`, and reports no network errors.
+- Remaining follow-up:
+  - the bundle is still a single 2.2 MB JS chunk; future SNES-art work should split optional expansion scenes and debug galleries into dynamic imports once the gameplay loop is more stable.
+
+## 2026-07-01 First-hour dialog-footprint polish
+
+- Continued treating the linked first hour of *A Link to the Past* as a gameplay-grammar reference only: compact readable chrome, visible room objects, immediate action cues, and no copied expression.
+- Reduced the shared `DialogBox` footprint from a 64px/68px bottom panel to a 50px desktop panel and 56px touch panel, preserving the same advance, fast-forward, dialog-state, and touch behavior.
+- The Archive Source Room now keeps more of the shelf/table/source-note playfield visible while Elena's opening line remains readable.
+- Verification:
+  - focused `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` passes (3 files / 25 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=compact-dialog-client`;
+  - the client screenshot remains black due to the known headless WebGL artifact, so a direct Chromium/Phaser probe captured `docs/screenshots/archive-compact-dialog-probe.png`;
+  - direct probe reported `ArchiveScene`, active `ELENA` dialog, `adventureTraining` cue `READ / A ADVANCE`, no page errors, no console errors, no failed requests, and no 4xx/5xx responses.
+
+## 2026-07-01 Archive first-room source-note gate polish
+
+- Tightened the first Archive Cavern room around the FRUS production loop instead of letting the optional NARA II route steal the first interaction.
+- The NARA II Stacks stair remains visible as a future route, but now has:
+  - a smaller interaction radius so the spawn prompt chooses `Source Note 47`;
+  - a named `SOURCE LOCK` seal (`archive-nara-stairs-source-lock-*`) until Source Note 47 is stamped;
+  - a Zelda-style blocked-route dialog explaining that the next archive wing opens after the first citation stamp.
+- The route gate keys off both local source-note state and persisted process state (`sourceNoteProvenanceComplete` / `citation_stamp`) so restore/deep-link cases are not stranded.
+- Verification:
+  - focused `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` passes (3 files / 25 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - `git diff --check` passes;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=source-note-gate-client`;
+  - direct probe after dismissing Elena's dialog reported `nearestInteractable: Source Note 47`, adventure cue `A SOURCE NOTE 47`, and four visible named NARA stair source-lock objects;
+  - pressing the action key at spawn picks up Source Note 47 and enters the physical `ROUTE` state;
+  - walking down to the stairs before stamping stays in `ArchiveScene` and opens the `NARA II STAIRS` blocked-route dialog instead of leaving the room;
+  - screenshot: `docs/screenshots/archive-source-note-gate-final-probe.png`.
+
+## 2026-07-01 Archive Source Note physical-route cue pass
+
+- Added a visible SNES-style physical-route cue for the Source Note 47 loop:
+  - dotted route diamonds from the carried source note toward the research table;
+  - a table-edge glow;
+  - state-specific labels (`ROUTE HERE`, `VERIFY HERE`, `STAMP HERE`) tied to the existing physical-verification state.
+- Widened the research-table interaction radius from 32px to 44px so the player can actually route the note from the natural collision edge of the table.
+- Shortened the command-band prompt from `VERIFY SOURCE NOTE 47` to `VERIFY SRC NOTE 47`, preserving the full Source Note 47 labels in document state and verification state while avoiding HUD clipping.
+- Verification:
+  - focused `npm test -- src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/standardsDamage.test.ts` passes (3 files / 25 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=source-route-cue-client-final`;
+  - direct probe confirmed pickup -> carry -> table-edge route works: before route, `nearestInteractable: ROUTE Source Note 47` and `nearestStation: Research Table`; after route, `physicalVerification.verb: VERIFY`, `status: routed`, `nearestInteractable: VERIFY SRC NOTE 47`, and visible `archive-source-note-route-*` cue objects;
+  - screenshot: `docs/screenshots/archive-source-note-route-cue-final-probe.png`.
+
+## 2026-07-01 FRUS Production Floor next-gate interaction pass
+
+- Turned the FRUS Production Floor's `NEXT` workflow node from pure decoration into a live gate station.
+- Added a dynamic `Gate CITE` / `Gate SEL` / `Gate EQ` / `Gate EDIT` / `Gate BIND` interactable at the first unfinished node on the production rail.
+- Added concise FRUS-specific gate instructions:
+  - Citation Stamp / Source Note 47 for `CITE`;
+  - selection docket / policy coverage audit for `SEL`;
+  - Clearance Token / Concurrence Slip for `EQ`;
+  - Red Pencil / Proof Lens for `EDIT`;
+  - Buckram Key / final certification for `BIND`.
+- Mirrored the interactable in text state as `FRUS FLOOR INTERACT: GATE 1 CITE`, so browser QA can confirm the active node without relying on screenshots.
+- Verification:
+  - focused `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` passes (7 files / 48 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-gate-interact-client`;
+  - client text state includes `FRUS FLOOR INTERACT: GATE 1 CITE` and `Gate CITE`;
+  - direct browser probe confirmed `Gate CITE` is the nearest interactable and its interaction opens the `GATE 1 CITE` dialog: `Citation gate needs the Citation Stamp.`;
+  - screenshot: `docs/screenshots/frus-floor-gate-interaction-probe.png`.
+
+## 2026-07-02 FRUS Production Floor ready-gate pass
+
+- Closed the production-rail edge case where all workflow gates were complete but the last station went silent.
+- When the gate context is fully satisfied, the dynamic rail interactable now moves to the publication node as `Gate READY`.
+- Interacting with `Gate READY` opens a final instruction dialog: carry the certified record toward the Buckram Gate, preserving the FRUS volume handoff as a physical step.
+- Verification:
+  - focused `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` passes (7 files / 48 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-ready-client`;
+  - browser text state for the completed floor reports `FRUS FLOOR NEXT GATE: READY`, `FRUS FLOOR ROUTE: COMPLETE`, `FRUS FLOOR INTERACT: ALL GATES CLEAR`, and `Gate READY`;
+  - direct probe confirmed the `Gate READY` dialog and visual proof in `docs/screenshots/frus-floor-ready-gate-probe.png`.
+
+## 2026-07-02 FRUS Production Floor tool-lock icon pass
+
+- Added a typed gate-to-tool cue for the production rail:
+  - `CITE` -> Citation Stamp;
+  - `SEL` -> Review Folder;
+  - `EQ` -> Clearance Token;
+  - `EDIT` -> Red Pencil;
+  - `BIND` -> Buckram Key.
+- The active unfinished gate now displays a tiny original pixel-art tool icon beside the `NEXT` card. The first gate uses a squat citation-stamp silhouette with handle, base, and ink pad.
+- `render_game_to_text()` mirrors the lock as `FRUS FLOOR TOOL: CITE Citation Stamp`, making the Zelda-like tool gate auditable without a screenshot.
+- Verification:
+  - focused `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` passes (7 files / 49 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-tool-icon-client`;
+  - direct browser probe found five named `frus-production-gate-tool-icon-*` display objects for `citation_stamp`;
+  - screenshot: `docs/screenshots/frus-floor-tool-icon-probe.png`.
+
+## 2026-07-02 FRUS Production Floor full lock-strip pass
+
+- Expanded the single active-gate icon into a full five-gate tool-lock strip.
+- Each gate now has a mini original pixel icon keyed to its required FRUS process tool:
+  - Citation Stamp for citation/provenance;
+  - Review Folder for selection/human review queue;
+  - Clearance Token for equity routing;
+  - Red Pencil for editorial treatment;
+  - Buckram Key for final binding.
+- Missing gates render dimmed, while satisfied gates render bright, preserving the SNES item-lock grammar across the whole rail.
+- `render_game_to_text()` now mirrors the strip as `FRUS FLOOR LOCKS: 1 CITE Citation Stamp NEED > ...`, so automated QA can verify each gate/tool pairing.
+- Verification:
+  - focused `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` passes (7 files / 49 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-lock-strip-client`;
+  - direct browser probe found five `mini` tool-icon frames, one for each gate, plus the active full Citation Stamp icon;
+  - screenshot: `docs/screenshots/frus-floor-lock-strip-probe.png`.
+
+## 2026-07-02 FRUS Production Floor gate-count plaque pass
+
+- Added a compact `GATE COUNT` readout for the Production Floor rail.
+- `render_game_to_text()` now mirrors gate progress as `FRUS FLOOR GATE COUNT: 0/5` through `5/5`.
+- The map now draws a small ruby/gold `0/5 GATE` plaque with five pips. Pips brighten as gates are satisfied, giving the rail a dungeon-progress meter that stays separate from the detailed lock strip.
+- Verification:
+  - focused `npm test -- src/systems/snesMapDressing.test.ts src/systems/interactionPrompt.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts src/systems/interaction.test.ts src/systems/dungeonKeys.test.ts src/systems/standardsDamage.test.ts` passes (7 files / 49 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=GameplayMapScene&map=frus_floor&role=compiler&name=Ruby&v=frus-floor-gate-count-client`;
+  - direct browser probe confirmed the count card, label, title, and five pips exist with `complete: 0`, `total: 5`;
+  - screenshot: `docs/screenshots/frus-floor-gate-count-probe.png`.
+
+## 2026-07-02 One-hour reference training + Office tile-strip verification
+
+- Treated the linked action-adventure video as first-hour gameplay grammar only, not literal model training and not a source for copied maps, sprites, music, room layouts, enemies, names, text, or puzzle sequences.
+- Reconfirmed the live first-hour model:
+  - `src/game/firstHourTraining.ts` encodes 12 five-minute drills and a 60-entry minute ledger;
+  - `src/game/adventureTraining.ts` converts live game state into next-verb cues;
+  - `docs/gameplay/first-hour-reference-training.md` and `docs/gameplay/one-hour-training-receipt.md` document the FRUS transfer.
+- Finished wiring the new reusable `snes-office-tiles` strip into OfficeScene so the visible one-hour training board now sits inside a sharper 16x16 office-room language.
+- OfficeScene now uses all eight office tile frames: floor base, shadow, scuff, rug center, rug edge, wall top, wall bookcase, and desk top.
+- Verification:
+  - focused `npm test -- --run src/game/adventureTraining.test.ts src/game/snesAtlas.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=one-hour-office-tiles-client`;
+  - direct browser probe confirmed `trainedMinuteMarks: 60`, `coveredDrills: 12`, `totalDrills: 12`, visible `office-first-hour-training-relic`, visible `1HR 45-50 HZ` chip, 12 visible route nodes, and 147 office tile sprites using all eight frames;
+  - clean visual proof: `docs/screenshots/one-hour-office-tiles-clean/page.png`; JSON proof: `docs/screenshots/one-hour-office-tiles-clean/state.json`;
+  - only browser console noise was the pre-existing missing `favicon.ico` 404, not a game asset failure.
+
+## 2026-07-02 Archive Guide cavern tile-strip pass
+
+- Added an original `snes-guide-cavern-tiles` SVG strip for the first dungeon-threshold room:
+  - floor base;
+  - floor scuff;
+  - ruby inlay floor;
+  - wall top;
+  - wall front;
+  - side shadow;
+  - verification-gate threshold;
+  - reward pedestal.
+- Registered the strip in `snesAtlas`, BootScene preload/frame registration, and atlas readout/tests.
+- Rebuilt GuideScene's `drawCaveInterior()` around the strip with a safe fallback to the older rectangle cave if the texture or frames are missing.
+- The Guide room now reads more like a 16-bit dungeon threshold: visible wall depth, patterned floor, two reward pedestals, and a physical gate tile at the south exit.
+- Verification:
+  - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=GuideScene&role=compiler&name=Ruby&v=guide-cavern-tiles-client`;
+  - direct browser probe confirmed `GuideScene`, 140 `snes-guide-cavern-tiles` sprites, all eight frames visible, and no asset/page errors after ignoring the browser favicon lookup;
+  - focused interaction probe confirmed the opening dialog advances to explore mode after explicit canvas focus and the `STEP CLOSER` cue still works;
+  - visual proof: `docs/screenshots/guide-cavern-tiles-direct/page.png` and `docs/screenshots/guide-cavern-tiles-focus-check/page.png`; JSON proof: `docs/screenshots/guide-cavern-tiles-direct/state.json`.
+
+## 2026-07-02 Two Networks tile-strip pass
+
+- Applied the one-hour action-adventure training model to the Two Networks dungeon room language.
+- Added an original `snes-network-tiles` SVG strip:
+  - OpenNet floor;
+  - ClassNet floor;
+  - cable crossing;
+  - OpenNet terminal pad;
+  - ClassNet terminal pad;
+  - firewall gate;
+  - vault wall;
+  - clearance-token plinth.
+- Registered the strip in `snesAtlas`, BootScene preload/frame registration, and the atlas readout/test.
+- Rebuilt `NetworkScene` room dressing with guarded tile rendering so the older rectangle/SVG drawing remains a fallback if the strip is missing.
+- N1 now reads as a split OpenNet/ClassNet room with cable crossings, terminal pads, and firewall gates; N2 reads as a red ClassNet vault with wall tiles and a physical token plinth.
+- Verification:
+  - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=NetworkScene&role=compiler&name=Ruby&v=network-tiles-client`;
+  - direct browser probe confirmed `snes-network-tiles` exists, all eight frames are registered, N1 renders 100 visible network-tile sprites, and N2 renders 105 visible network-tile sprites including `vault_wall` and `token_plinth`;
+  - one-hour training proof remains live through `render_game_to_text()` with `trainedSeconds: 3600`, `trainedMinuteMarks: 60`, and `coveredDrills: 12/12`;
+  - visual proof: `docs/screenshots/network-tiles-direct/n1-page.png` and `docs/screenshots/network-tiles-direct/n2-page.png`; JSON proof: `docs/screenshots/network-tiles-direct/state.json`.
+
+## 2026-07-02 Referral Vault tile-strip pass
+
+- Applied the same first-hour room-readability model to the Referral Vault stage.
+- Added an original `snes-referral-vault-tiles` SVG strip:
+  - equity floor;
+  - referral channel;
+  - agency seal tile;
+  - manifest desk;
+  - excision gate;
+  - concurrence wall;
+  - slip plinth;
+  - archive floor.
+- Registered the strip in `snesAtlas`, BootScene preload/frame registration, and atlas readout/tests.
+- Rebuilt `ReferralVaultScene` room dressing with guarded tile rendering so the previous vault/rectangle drawing remains available as fallback.
+- R1 now reads as an agency-equity gate room with referral channels, manifest desk tiles, seal tiles, and a visible excision gate; R2 now reads as a concurrence chamber with wall tiles and a physical Concurrence Slip plinth.
+- Verification:
+  - focused `npm test -- --run src/game/snesAtlas.test.ts src/game/adventureTraining.test.ts src/input/InputState.test.ts` passes (3 files / 27 tests);
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed against `?scene=ReferralVaultScene&role=compiler&name=Ruby&v=referral-tiles-client`;
+  - direct browser probe confirmed `snes-referral-vault-tiles` exists, all eight frames are registered, R1 renders 101 visible referral-vault tile sprites, and R2 renders 106 visible referral-vault tile sprites including `concurrence_wall` and `slip_plinth`;
+  - one-hour training proof remains live through `render_game_to_text()` with `trainedSeconds: 3600`, `trainedMinuteMarks: 60`, and `coveredDrills: 12/12`;
+  - visual proof: `docs/screenshots/referral-vault-tiles-direct/r1-page.png` and `docs/screenshots/referral-vault-tiles-direct/r2-page.png`; JSON proof: `docs/screenshots/referral-vault-tiles-direct/state.json`.
+
+## 2026-07-02 Chrome gameplay smoke pass
+
+- Tested the current game in system Chrome via Playwright-core against:
+  - default start flow through title/character creation into `OfficeScene`;
+  - deep links for `OfficeScene`, `ArchiveScene`, `NetworkScene`, `ReferralVaultScene`, `SilentReadScene`, `WorldMapScene`, `GameplayMapScene`, and `EndingScene`;
+  - targeted gameplay-map checks for `frus_floor` and `embassy`.
+- Confirmed there were no JavaScript page errors in the final Chrome pass.
+- Fixed two Chrome-visible issues:
+  - reduced `drawSnesMapDressing` floor opacity and changed collision dressing to edge-only so imported gameplay maps are no longer covered by large solid collision blocks;
+  - added a boot-loader fallback hide after Phaser ready frames so `?scene=GameplayMapScene&map=frus_floor` cannot leave the DOM loader over the playable canvas.
+- Added an inline favicon so Chrome no longer emits a missing-resource console error during smoke tests.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - focused `npm test -- --run src/input/InputState.test.ts src/scenes/CharacterCreateScene.test.ts src/systems/interactionPrompt.test.ts` passes (3 files / 24 tests);
+  - final Chrome targeted pass reports zero console warnings/errors, zero page errors, zero bad HTTP responses, `loaderHidden: true`, and correct scene states for `frus_floor`, `embassy`, and default start flow;
+  - visual proof: `docs/screenshots/chrome-gameplay-sweep/frus_floor_final.png`, `docs/screenshots/chrome-gameplay-sweep/embassy_final.png`, and `docs/screenshots/chrome-gameplay-sweep/start_flow_final.png`.
+
+## 2026-07-02 Mission clarity pass
+
+- Made the core point of the game explicit in the first screens: publish a reliable FRUS volume before the 30-year deadline.
+- Added a shared mission copy module so TitleScene, CharacterCreateScene, OfficeScene, and `window.render_game_to_text()` present the same goal, loop, and stakes.
+- Updated the title card with a mission plaque, the role creator with a mission line, and the Office opening tutorial with a concise mission card.
+- Preserved the existing three-line production HUD while exposing the fuller mission text through scene state and `render_game_to_text()`.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - focused `npm test -- --run src/scenes/TitleScene.test.ts src/scenes/CharacterCreateScene.test.ts src/input/InputState.test.ts src/systems/interactionPrompt.test.ts` passes (4 files / 34 tests);
+  - required web-game client reached `OfficeScene` with `gameGoal`, mission objective, and no browser errors;
+  - direct system Chrome pass captured title, character creation, and Office tutorial proof with zero page errors;
+  - visual proof: `docs/screenshots/mission-clarity-direct/title.png`, `docs/screenshots/mission-clarity-direct/character-create.png`, and `docs/screenshots/mission-clarity-direct/office-tutorial.png`.
