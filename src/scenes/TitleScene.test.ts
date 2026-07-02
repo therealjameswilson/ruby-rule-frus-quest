@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { SCREENS, publicAssetPath } from "../assets/registry";
-import { GAME_HEIGHT } from "../game/constants";
+import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";
 import { TITLE_LAYOUT, framedPlateBounds, shouldStartTitle } from "./titleLayout";
 
 function input(overrides: Partial<Parameters<typeof shouldStartTitle>[0]> = {}) {
@@ -63,13 +63,24 @@ describe("TitleScene layout", () => {
     expect(TITLE_LAYOUT.pressStartY).toBeLessThan(TITLE_LAYOUT.controlsY);
   });
 
-  it("uses the native 256x224 art-pack title card for the live title background", () => {
-    const assetPath = `public/${publicAssetPath(SCREENS.title_screen_256x224)}`;
+  it("places the art-pack start affordance above the controls band", () => {
+    expect(TITLE_LAYOUT.artPackStartY).toBeGreaterThan(TITLE_LAYOUT.titlePlate.y);
+    expect(TITLE_LAYOUT.artPackStartY).toBeLessThan(TITLE_LAYOUT.controlsY);
+  });
+
+  it("uses the sharp native 256x240 art-pack title card for the live title background", () => {
+    const assetPath = `public/${publicAssetPath(SCREENS.title_screen_16bit_sharp_256x240)}`;
     const png = readFileSync(assetPath);
     const width = png.readUInt32BE(16);
     const height = png.readUInt32BE(20);
 
-    expect(assetPath).toBe("public/assets/art-pack/screens/title_screen_256x224.png");
-    expect({ width, height }).toEqual({ width: 256, height: 224 });
+    expect(assetPath).toBe("public/assets/art-pack/screens/title_screen_16bit_sharp_256x240.png");
+    expect({ width, height }).toEqual({ width: GAME_WIDTH, height: GAME_HEIGHT });
+  });
+
+  it("keeps the legacy 256x224 title card available as a fallback", () => {
+    const assetPath = `public/${publicAssetPath(SCREENS.title_screen_256x224)}`;
+    const png = readFileSync(assetPath);
+    expect({ width: png.readUInt32BE(16), height: png.readUInt32BE(20) }).toEqual({ width: 256, height: 224 });
   });
 });

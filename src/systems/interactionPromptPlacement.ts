@@ -23,7 +23,7 @@ export interface PromptPlacement {
   verb: string;
   /** Anchor X for the floating prompt (clamped to stay on-screen). */
   x: number;
-  /** Anchor Y for the floating prompt (clamped above the top HUD band). */
+  /** Anchor Y for the floating prompt (clamped away from reserved HUD/map bands). */
   y: number;
   /** World position of the highlight ring (the interactable itself). */
   ringX: number;
@@ -34,6 +34,7 @@ export interface PromptPlacementBounds {
   left: number;
   right: number;
   top: number;
+  bottom?: number;
 }
 
 export const DEFAULT_PROMPT_BOUNDS: PromptPlacementBounds = {
@@ -60,12 +61,13 @@ export function computePromptPlacement(
   }
   const verb = promptVerbForKind(nearest.kind);
   const desiredY = nearest.y - 22;
+  const bottom = bounds.bottom ?? Number.POSITIVE_INFINITY;
   return {
     visible: true,
     label: nearest.label.toUpperCase(),
     verb,
     x: clamp(nearest.x, bounds.left, bounds.right),
-    y: Math.max(desiredY, bounds.top),
+    y: clamp(desiredY, bounds.top, Math.max(bounds.top, bottom)),
     ringX: nearest.x,
     ringY: nearest.y
   };

@@ -10,6 +10,7 @@ export const TITLE_LAYOUT = {
   map: { y: 82, frameHeight: 80 },
   titlePlate: { y: 145, frameHeight: 26 },
   relicShelf: { y: 180, frameHeight: 26 },
+  artPackStartY: 190,
   pressStartY: 203,
   controlsY: 214
 } as const;

@@ -1,10 +1,17 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
+  FRUS_QUEST_FIRST_OBJECTIVE,
+  FRUS_QUEST_LOOP,
+  FRUS_QUEST_MISSION,
+  FRUS_QUEST_STAKES
+} from "../game/mission";
+import {
   addDocumentPoints,
   addDanneItem,
   awardProcessStamp,
   gameState,
+  getAdventureTrainingReadout,
   getProductionBoardReadout,
   hasDanneItem,
   setLatestMessage,
@@ -64,6 +71,8 @@ import {
   seriesConceptComplete,
   SERIES_CONCEPT_PROMPTS
 } from "../game/seriesConcept";
+import { FIRST_HOUR_TRAINING_DRILLS } from "../game/firstHourTraining";
+import { SNES_FIRST_HOUR_TRAINING_RELIC_ASSET, SNES_OFFICE_TILE_ASSET } from "../game/snesAtlas";
 import {
   evaluateVolumeConceptAnswer,
   getVolumeConceptPrompt,
@@ -99,6 +108,7 @@ import { drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 import { ChoicePrompt } from "../systems/verification";
 
 type OfficeDanneRoute = "CherryBlossomGardenScene" | "SenateHearingChamberScene";
+type OfficeTileFrame = (typeof SNES_OFFICE_TILE_ASSET.frames)[number];
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -128,8 +138,8 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("OfficeScene", "explore", "Office Hub: talk to the Junior Compiler or enter the Archive Guide.");
-    setLatestMessage("Office Hub loaded.");
+    setSceneState("OfficeScene", "explore", FRUS_QUEST_FIRST_OBJECTIVE);
+    setLatestMessage(FRUS_QUEST_MISSION);
     setVisibleThreats([]);
     retroAudio.startMusic("GuideScene");
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
@@ -282,7 +292,7 @@ export class OfficeScene extends Phaser.Scene {
           this.prompt.update(delta, null);
           this.toast.update(delta, this.player.position);
           this.reliability.update();
-          setObjective("Office Hub: talk to the Junior Compiler or enter the Archive Guide.");
+          setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
           return;
         }
       }
@@ -323,19 +333,20 @@ export class OfficeScene extends Phaser.Scene {
     // Show the prompt/ring from a little further out than the strict interact
     // radius so it is impossible to miss on approach, but only allow acting on a
     // target inside the strict radius.
-    const promptTarget = tutorialVisible ? null : nearest ?? nearestInteractableHint(this.player.position, this.interactables);
+    const hintTarget = tutorialVisible ? null : nearestInteractableHint(this.player.position, this.interactables);
+    const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(tutorialVisible ? null : nearest?.label ?? null);
-    this.prompt.update(delta, promptTarget);
+    this.prompt.update(delta, tutorialVisible ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) {
       bufferedInteraction.onInteract();
     } else if (input.aJustPressed) {
-      const feedback = decideInteractionFeedback(nearest, promptTarget);
+      const feedback = decideInteractionFeedback(nearest, hintTarget);
       if (feedback.kind === "step-closer") this.nudgeTowardTarget(feedback.target);
       else if (feedback.kind === "nothing") this.flashNoTargetHint();
     }
-    setObjective("Office Hub: talk to the Junior Compiler or enter the Archive Guide.");
+    setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
     this.reliability.update();
   }
 
@@ -344,6 +355,7 @@ export class OfficeScene extends Phaser.Scene {
     const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
     if (hasDanneItem("master-declass-key")) {
       this.dialog.show("JUNIOR COMPILER", [
+        FRUS_QUEST_MISSION,
         "Master Declass Key is logged.",
         "Use it only at approved classified doors.",
         ...this.juniorCompiler.dialogLines()
@@ -362,6 +374,8 @@ export class OfficeScene extends Phaser.Scene {
     }
     const next = progress === 0 ? "Production Inbox" : progress === 1 ? "FRUS Cart" : "Archive Terminal";
     this.dialog.show("JUNIOR COMPILER", [
+      FRUS_QUEST_MISSION,
+      FRUS_QUEST_LOOP,
       ...this.juniorCompiler.dialogLines(),
       `Fetch check ${progress + 1}/3: inspect ${next}.`
     ]);
@@ -369,30 +383,35 @@ export class OfficeScene extends Phaser.Scene {
 
   private showOfficeTutorial() {
     this.hintText.setVisible(false);
-    const shadow = this.add.rectangle(128, 150, 188, 58, color(PALETTE.black), 0.72);
-    const panel = this.add.rectangle(128, 147, 180, 52, color(PALETTE.shadowNavy), 0.96)
+    const shadow = this.add.rectangle(128, 57, 224, 42, color(PALETTE.black), 0.66)
+      .setName("office-tutorial-shadow");
+    const panel = this.add.rectangle(128, 54, 216, 38, color(PALETTE.shadowNavy), 0.96)
+      .setName("office-tutorial-panel")
       .setStrokeStyle(2, color(PALETTE.goldStamp));
-    const title = this.add.text(128, 126, "FIELD CONTROLS", {
+    const title = this.add.text(128, 38, "MISSION", {
       fontFamily: "monospace",
-      fontSize: "7px",
+      fontSize: "6px",
       color: PALETTE.goldStamp
-    }).setOrigin(0.5);
-    const body = this.add.text(128, 139, [
-      "MOVE ARROWS/WASD   ACT A/ENTER",
-      "TAB CODEX   M MENU   ESC PAUSE"
-    ], {
+    }).setName("office-tutorial-title").setOrigin(0.5, 0);
+    const body = this.add.text(128, 47, "PUBLISH A RELIABLE FRUS VOLUME", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       align: "center",
-      lineSpacing: 2
-    }).setOrigin(0.5, 0);
-    const prompt = this.add.text(128, 166, "MOVE OR A: BEGIN", {
+      lineSpacing: 0
+    }).setName("office-tutorial-body").setOrigin(0.5, 0);
+    const route = this.add.text(128, 56, "VERIFY SOURCES · CLEAR EQUITIES · PROOF PAGES", {
       fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.terminalCyan
-    }).setOrigin(0.5);
-    this.tutorialCard = this.add.container(0, 0, [shadow, panel, title, body, prompt]).setDepth(1800);
+      fontSize: "5px",
+      color: PALETTE.terminalCyan,
+      align: "center"
+    }).setName("office-tutorial-route").setOrigin(0.5, 0);
+    const stakes = this.add.text(128, 64, "HEARTS = RELIABILITY.  MOVE OR A: BEGIN", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp
+    }).setName("office-tutorial-stakes").setOrigin(0.5, 0);
+    this.tutorialCard = this.add.container(0, 0, [shadow, panel, title, body, route, stakes]).setDepth(1800);
     bindPointerDown(panel, () => this.dismissOfficeTutorial());
   }
 
@@ -418,8 +437,10 @@ export class OfficeScene extends Phaser.Scene {
     this.tutorialCard.destroy();
     this.tutorialCard = undefined;
     this.hintText.setVisible(true);
+    this.setOfficeRouteCompassVisible(true);
     gameState.sceneProgress.officeTutorialSeen = 1;
-    setLatestMessage("Controls logged.");
+    setLatestMessage(`${FRUS_QUEST_MISSION} ${FRUS_QUEST_STAKES}`);
+    setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
   }
 
   private handleJuniorQuestStation(station: "inbox" | "cart" | "terminal") {
@@ -1086,18 +1107,23 @@ export class OfficeScene extends Phaser.Scene {
   private drawOfficeInterior() {
     this.add.rectangle(128, 128, 210, 160, color(PALETTE.creamPaper)).setDepth(-20);
     this.drawFloorPattern();
+    this.drawSnesOfficeHubDressing();
     this.drawWallDressing();
     this.drawOfficeProps();
     this.add.rectangle(128, 43, 208, 12, color(PALETTE.sepiaInk)).setDepth(-15);
     this.drawSmallDoor(39, 47, "GARDEN", PALETTE.openNetGreen);
     this.drawSmallDoor(215, 47, "SENATE", PALETTE.goldStamp);
     this.add.rectangle(128, 219, 30, 10, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(20);
+    this.add.rectangle(117, 214, 5, 1, color(PALETTE.white), 0.74).setName("office-archive-threshold-glint").setDepth(22);
+    this.add.rectangle(140, 222, 5, 1, color(PALETTE.goldStamp), 0.86).setName("office-archive-threshold-glint").setDepth(22);
     this.add.text(128, 213, "ARCHIVE", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(21);
+    this.drawOfficeRouteCompass();
+    this.setOfficeRouteCompassVisible(Boolean(gameState.sceneProgress.officeTutorialSeen));
     this.drawDesk(70, 92, "JR");
     this.drawDesk(186, 92, "SCOPE");
     this.drawDesk(60, 154, "IN");
@@ -1111,7 +1137,156 @@ export class OfficeScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(-3);
   }
 
+  private drawSnesOfficeHubDressing() {
+    // Original 16-bit dressing for the first playable room: the player should
+    // read this as an office "overworld start" with workflow landmarks, not a
+    // flat staging rectangle.
+    if (!this.officeTileFramesReady(["floor_base", "floor_shadow", "floor_scuff"])) {
+      for (let row = 0; row < 8; row += 1) {
+        for (let col = 0; col < 12; col += 1) {
+          const x = 40 + col * 16;
+          const y = 62 + row * 16;
+          const variant = (row * 5 + col * 3) % 4;
+          const fill = variant === 0
+            ? PALETTE.creamPaper
+            : variant === 1
+              ? PALETTE.buckramHighlight
+              : PALETTE.archiveAmber;
+          const alpha = variant === 0 ? 0.16 : variant === 1 ? 0.18 : 0.1;
+          this.add.rectangle(x, y, 13, 13, color(fill), alpha)
+            .setName("office-snes-floor-tile")
+            .setDepth(-17);
+          if (variant === 2) {
+            this.add.rectangle(x - 4, y + 4, 5, 1, color(PALETTE.sepiaInk), 0.32)
+              .setName("office-snes-floor-detail")
+              .setDepth(-16);
+          } else if (variant === 3) {
+            this.add.rectangle(x + 3, y - 3, 1, 1, color(PALETTE.goldStamp), 0.48)
+              .setName("office-snes-floor-detail")
+              .setDepth(-16);
+            this.add.rectangle(x - 2, y + 2, 1, 1, color(PALETTE.sepiaInk), 0.42)
+              .setName("office-snes-floor-detail")
+              .setDepth(-16);
+          }
+        }
+      }
+    }
+
+    for (let index = 0; index < 4; index += 1) {
+      const shelfX = 45 + index * 17;
+      const tileShelf = this.drawOfficeTileFrame("wall_bookcase", shelfX, 57, -13, `wall-bookcase-${index}`);
+      if (tileShelf) continue;
+      this.add.rectangle(shelfX, 57, 13, 13, color(PALETTE.sepiaInk))
+        .setName("office-snes-wall-shelf")
+        .setStrokeStyle(1, color(PALETTE.black))
+        .setDepth(-13);
+      this.add.rectangle(shelfX - 3, 56, 2, 8, color(PALETTE.deepRuby))
+        .setName("office-snes-wall-book")
+        .setDepth(-12);
+      this.add.rectangle(shelfX, 56, 2, 8, color(PALETTE.goldStamp))
+        .setName("office-snes-wall-book")
+        .setDepth(-12);
+      this.add.rectangle(shelfX + 3, 56, 2, 8, color(PALETTE.shadowNavy))
+        .setName("office-snes-wall-book")
+        .setDepth(-12);
+    }
+
+    this.add.rectangle(73, 117, 38, 6, color(PALETTE.goldStamp), 0.72)
+      .setName("office-snes-route-inlay")
+      .setDepth(-11);
+    this.add.rectangle(101, 130, 42, 6, color(PALETTE.goldStamp), 0.72)
+      .setName("office-snes-route-inlay")
+      .setDepth(-11);
+    this.add.rectangle(128, 151, 6, 42, color(PALETTE.goldStamp), 0.72)
+      .setName("office-snes-route-inlay")
+      .setDepth(-11);
+    this.add.rectangle(128, 208, 40, 4, color(PALETTE.goldStamp), 0.72)
+      .setName("office-snes-route-inlay")
+      .setDepth(-11);
+
+    this.drawOfficeWorkflowIcon(186, 116, "scope");
+    this.drawOfficeWorkflowIcon(60, 154, "inbox");
+    this.drawOfficeWorkflowIcon(195, 154, "terminal");
+    this.drawOfficeWorkflowIcon(128, 132, "cart");
+  }
+
+  private drawOfficeWorkflowIcon(x: number, y: number, kind: "scope" | "inbox" | "terminal" | "cart") {
+    this.add.ellipse(x, y + 10, 20, 6, color(PALETTE.black), 0.36)
+      .setName("office-snes-workflow-shadow")
+      .setDepth(-10);
+    if (kind === "scope") {
+      this.add.rectangle(x - 4, y, 10, 12, color(PALETTE.creamPaper))
+        .setName("office-snes-workflow-icon")
+        .setStrokeStyle(1, color(PALETTE.sepiaInk))
+        .setDepth(-9);
+      this.add.rectangle(x - 8, y, 2, 12, color(PALETTE.buckramRed))
+        .setName("office-snes-workflow-icon")
+        .setDepth(-8);
+      this.add.rectangle(x + 4, y - 2, 7, 4, color(PALETTE.goldStamp))
+        .setName("office-snes-workflow-icon")
+        .setDepth(-8);
+      return;
+    }
+    if (kind === "inbox") {
+      this.add.rectangle(x, y + 1, 16, 9, color(PALETTE.archiveAmber))
+        .setName("office-snes-workflow-icon")
+        .setStrokeStyle(1, color(PALETTE.sepiaInk))
+        .setDepth(-9);
+      this.add.rectangle(x, y - 5, 14, 4, color(PALETTE.creamPaper))
+        .setName("office-snes-workflow-icon")
+        .setStrokeStyle(1, color(PALETTE.sepiaInk))
+        .setDepth(-8);
+      return;
+    }
+    if (kind === "terminal") {
+      this.add.rectangle(x, y, 15, 12, color(PALETTE.shadowNavy))
+        .setName("office-snes-workflow-icon")
+        .setStrokeStyle(1, color(PALETTE.terminalCyan))
+        .setDepth(-9);
+      this.add.rectangle(x, y - 1, 9, 3, color(PALETTE.terminalCyan), 0.86)
+        .setName("office-snes-workflow-icon")
+        .setDepth(-8);
+      this.add.rectangle(x + 4, y + 5, 7, 2, color(PALETTE.stoneGray))
+        .setName("office-snes-workflow-icon")
+        .setDepth(-8);
+      return;
+    }
+    this.add.rectangle(x, y, 19, 12, color(PALETTE.deepRuby))
+      .setName("office-snes-workflow-icon")
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(-9);
+    this.add.rectangle(x - 4, y - 2, 8, 6, color(PALETTE.creamPaper))
+      .setName("office-snes-workflow-icon")
+      .setDepth(-8);
+    this.add.rectangle(x + 5, y + 4, 4, 3, color(PALETTE.black), 0.5)
+      .setName("office-snes-workflow-icon")
+      .setDepth(-8);
+  }
+
   private drawFloorPattern() {
+    if (this.officeTileFramesReady(["floor_base", "floor_shadow", "floor_scuff", "rug_center", "rug_edge"])) {
+      for (let row = 0; row < 8; row += 1) {
+        for (let col = 0; col < 12; col += 1) {
+          const x = 40 + col * 16;
+          const y = 62 + row * 16;
+          const variant = (row * 7 + col * 5) % 5;
+          const frame: OfficeTileFrame = variant === 0
+            ? "floor_shadow"
+            : variant === 2
+              ? "floor_scuff"
+              : "floor_base";
+          this.drawOfficeTileFrame(frame, x, y, -19, `floor-${row}-${col}`);
+        }
+      }
+      for (let row = 0; row < 5; row += 1) {
+        for (let col = 0; col < 5; col += 1) {
+          const edge = row === 0 || row === 4 || col === 0 || col === 4;
+          this.drawOfficeTileFrame(edge ? "rug_edge" : "rug_center", 96 + col * 16, 144 + row * 16, -18, `rug-${row}-${col}`);
+        }
+      }
+      return;
+    }
+
     // Subtle checker tiling across the cream floor to break up the empty space.
     for (let row = 0; row < 7; row += 1) {
       for (let col = 0; col < 9; col += 1) {
@@ -1128,39 +1303,98 @@ export class OfficeScene extends Phaser.Scene {
     this.add.rectangle(128, 176, 46, 54).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-16);
   }
 
+  private drawOfficeTileFrame(
+    frame: OfficeTileFrame,
+    x: number,
+    y: number,
+    depth: number,
+    name: string
+  ) {
+    if (!this.textures.exists(SNES_OFFICE_TILE_ASSET.key)) return null;
+    const texture = this.textures.get(SNES_OFFICE_TILE_ASSET.key);
+    if (!texture.has(frame)) return null;
+    return this.add.image(Math.round(x), Math.round(y), SNES_OFFICE_TILE_ASSET.key, frame)
+      .setName(`office-tile-${name}`)
+      .setDepth(depth);
+  }
+
+  private officeTileFramesReady(frames: readonly OfficeTileFrame[]) {
+    if (!this.textures.exists(SNES_OFFICE_TILE_ASSET.key)) return false;
+    const texture = this.textures.get(SNES_OFFICE_TILE_ASSET.key);
+    return frames.every((frame) => texture.has(frame));
+  }
+
   private drawWallDressing() {
+    if (this.officeTileFramesReady(["wall_top"])) {
+      for (let col = 0; col < 10; col += 1) {
+        this.drawOfficeTileFrame("wall_top", 49 + col * 16, 48, -15, `wall-top-${col}`);
+      }
+    }
     // Framed wall map and reference charts on the back wall strip (above desks).
     this.add.rectangle(108, 60, 30, 20, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
     this.add.rectangle(108, 60, 24, 14, color(PALETTE.mapWater)).setDepth(-13);
     this.add.rectangle(102, 58, 6, 4, color(PALETTE.openNetGreen)).setDepth(-12);
     this.add.rectangle(113, 62, 5, 5, color(PALETTE.archiveAmber)).setDepth(-12);
     this.drawProductionBoard(174, 60);
+    this.drawFirstHourTrainingRelic(222, 61);
     // Hanging archive banner near the senate door.
     this.add.rectangle(128, 52, 18, 14, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
     this.add.rectangle(128, 50, 10, 6, color(PALETTE.goldStamp)).setDepth(-13);
   }
 
+  private drawFirstHourTrainingRelic(x: number, y: number) {
+    this.add.ellipse(x, y + 12, 22, 5, color(PALETTE.black), 0.34)
+      .setName("office-first-hour-relic-shadow")
+      .setDepth(-13);
+    if (this.textures.exists(SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.key)) {
+      this.add.image(x, y, SNES_FIRST_HOUR_TRAINING_RELIC_ASSET.key)
+        .setName("office-first-hour-training-relic")
+        .setDepth(-12);
+    } else {
+      this.add.rectangle(x, y, 22, 22, color(PALETTE.buckramRed))
+        .setName("office-first-hour-training-relic-fallback")
+        .setStrokeStyle(1, color(PALETTE.goldStamp))
+        .setDepth(-12);
+      this.add.rectangle(x, y, 10, 10, color(PALETTE.terminalCyan), 0.86)
+        .setName("office-first-hour-training-relic-fallback")
+        .setDepth(-11);
+    }
+    this.add.text(x, y + 15, "1HR", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.goldStamp,
+      backgroundColor: PALETTE.black
+    }).setName("office-first-hour-relic-label").setOrigin(0.5, 0).setDepth(-11);
+  }
+
   private drawProductionBoard(x: number, y: number) {
     const board = getProductionBoardReadout();
+    const training = getAdventureTrainingReadout();
     const phases = getFrusProductionPhaseReadout(board);
     const boardWidth = 74;
-    const boardHeight = 50;
-    this.add.rectangle(x, y, boardWidth, boardHeight, color(PALETTE.shadowNavy)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-14);
-    this.add.rectangle(x, y - boardHeight / 2 + 6, boardWidth - 8, 7, color(PALETTE.deepRuby)).setDepth(-13);
+    const boardHeight = 58;
+    this.add.rectangle(x, y, boardWidth, boardHeight, color(PALETTE.shadowNavy))
+      .setName("office-production-route-board")
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(-14);
+    this.add.rectangle(x, y - boardHeight / 2 + 6, boardWidth - 8, 7, color(PALETTE.deepRuby))
+      .setName("office-production-route-heading-band")
+      .setDepth(-13);
     this.add.text(x, y - boardHeight / 2 + 2, "FRUS PATH", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(-13);
+    }).setName("office-production-route-heading").setOrigin(0.5).setDepth(-13);
     phases.forEach((phase, index) => {
-      const rowY = y - 13 + index * 6;
+      const rowY = y - 17 + index * 5;
       const rowColor = phase.status === "complete"
         ? PALETTE.openNetGreen
         : phase.status === "active"
           ? PALETTE.terminalCyan
           : PALETTE.stoneGray;
       if (phase.status === "active") {
-        this.add.rectangle(x, rowY + 1, boardWidth - 10, 6, color(PALETTE.black), 0.68)
+        this.add.rectangle(x, rowY + 1, boardWidth - 10, 5, color(PALETTE.black), 0.68)
+          .setName("office-production-route-active-row")
           .setStrokeStyle(1, color(PALETTE.white), 0.84)
           .setDepth(-12);
       }
@@ -1168,7 +1402,7 @@ export class OfficeScene extends Phaser.Scene {
         fontFamily: "monospace",
         fontSize: "4px",
         color: rowColor
-      }).setOrigin(0, 0).setDepth(-11);
+      }).setName("office-production-route-phase-label").setOrigin(0, 0).setDepth(-11);
       for (let tick = 0; tick < phase.total; tick += 1) {
         const tickX = x - 11 + tick * 4;
         const tickFilled = tick < phase.completed;
@@ -1177,19 +1411,90 @@ export class OfficeScene extends Phaser.Scene {
           : phase.status === "active"
             ? PALETTE.terminalCyan
             : PALETTE.stoneGray;
-        this.add.rectangle(tickX, rowY + 1, 2, 3, color(tickColor), tickFilled ? 1 : 0.54).setDepth(-11);
+        this.add.rectangle(tickX, rowY + 1, 2, 3, color(tickColor), tickFilled ? 1 : 0.54)
+          .setName("office-production-route-phase-tick")
+          .setDepth(-11);
       }
-      this.add.rectangle(x + 28, rowY + 1, 4, 4, color(rowColor), phase.status === "locked" ? 0.45 : 1).setDepth(-11);
+      this.add.rectangle(x + 28, rowY + 1, 4, 4, color(rowColor), phase.status === "locked" ? 0.45 : 1)
+        .setName("office-production-route-phase-state")
+        .setDepth(-11);
     });
-    const activeStep = board.nextStep?.shortLabel ?? "DONE";
-    this.add.rectangle(x, y + boardHeight / 2 - 6, boardWidth - 10, 4, color(PALETTE.buckramRed)).setDepth(-13);
-    this.add.text(x, y + boardHeight / 2 - 10, activeStep, {
+    this.drawFirstHourTrainingStrip(x, y + 16, training.drillId);
+    const activeStep = `${training.drillLabel.slice(0, 8).toUpperCase()} ${board.nextStep?.shortLabel ?? "DONE"}`;
+    this.add.rectangle(x, y + boardHeight / 2 - 7, boardWidth - 10, 5, color(PALETTE.buckramRed))
+      .setName("office-production-route-next-band")
+      .setDepth(-13);
+    this.add.text(x, y + boardHeight / 2 - 11, activeStep, {
       fontFamily: "monospace",
       fontSize: "4px",
       color: board.nextStep ? PALETTE.terminalCyan : PALETTE.goldStamp
-    }).setOrigin(0.5, 0).setDepth(-12);
+    }).setName("office-production-route-next-label").setOrigin(0.5, 0).setDepth(-12);
     const completeWidth = Math.max(1, Math.round((board.completed / Math.max(1, board.total)) * (boardWidth - 12)));
-    this.add.rectangle(x - (boardWidth - 12) / 2 + completeWidth / 2, y + boardHeight / 2 - 4, completeWidth, 1, color(PALETTE.goldStamp), 0.7).setDepth(-12);
+    this.add.rectangle(x - (boardWidth - 12) / 2 + completeWidth / 2, y + boardHeight / 2 - 3, completeWidth, 1, color(PALETTE.goldStamp), 0.7)
+      .setName("office-production-route-progress")
+      .setDepth(-12);
+  }
+
+  private drawFirstHourTrainingStrip(x: number, y: number, activeDrillId: string) {
+    const drillLabels: Record<string, string> = {
+      start_room_affordance: "ST",
+      edge_route_memory: "ED",
+      blocked_route_tease: "GT",
+      threshold_transition: "TH",
+      map_chip_orientation: "MP",
+      local_key_task: "KY",
+      tool_reward_use: "TL",
+      shortcut_return: "SC",
+      key_lock_cadence: "KD",
+      hazard_readability: "HZ",
+      boss_gate_check: "BS",
+      reward_changes_world: "RW"
+    };
+    const activeDrill = FIRST_HOUR_TRAINING_DRILLS.find((drill) => drill.id === activeDrillId)
+      ?? FIRST_HOUR_TRAINING_DRILLS[0];
+    const activeCode = drillLabels[activeDrill.id] ?? activeDrill.label.slice(0, 2).toUpperCase();
+    const startX = x - 33;
+    const nodeSpacing = 6;
+    this.add.rectangle(x - 15, y - 8, 38, 7, color(PALETTE.black), 0.78)
+      .setName("office-first-hour-active-chip")
+      .setStrokeStyle(1, color(PALETTE.terminalCyan), 0.84)
+      .setDepth(-10);
+    this.add.text(x - 32, y - 11, "1HR", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.goldStamp
+    }).setName("office-first-hour-chip-label").setOrigin(0, 0).setDepth(-9);
+    this.add.text(x - 15, y - 11, `${activeDrill.minutes[0]}-${activeDrill.minutes[1]} ${activeCode}`, {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.terminalCyan
+    }).setName("office-first-hour-chip-minute").setOrigin(0.5, 0).setDepth(-9);
+    FIRST_HOUR_TRAINING_DRILLS.forEach((drill, index) => {
+      const nodeX = startX + index * nodeSpacing;
+      const active = drill.id === activeDrillId;
+      const nodeColor = active ? PALETTE.terminalCyan : PALETTE.stoneGray;
+      if (index > 0) {
+        this.add.rectangle(nodeX - 3, y, 3, 1, color(PALETTE.goldStamp), 0.54)
+          .setName("office-first-hour-route-link")
+          .setDepth(-12);
+      }
+      this.add.rectangle(nodeX, y, 5, 5, color(active ? PALETTE.black : PALETTE.deepRuby), active ? 1 : 0.82)
+        .setName("office-first-hour-route-node")
+        .setStrokeStyle(1, color(nodeColor), active ? 1 : 0.62)
+        .setDepth(-11);
+      this.add.text(nodeX, y - 2, drillLabels[drill.id] ?? drill.label.slice(0, 2).toUpperCase(), {
+        fontFamily: "monospace",
+        fontSize: "3px",
+        color: active ? PALETTE.white : nodeColor
+      }).setName("office-first-hour-route-label").setOrigin(0.5, 0.5).setDepth(-10);
+      if (index % 2 === 0) {
+        this.add.text(nodeX, y + 4, String(drill.minutes[0]).padStart(2, "0"), {
+          fontFamily: "monospace",
+          fontSize: "3px",
+          color: active ? PALETTE.goldStamp : PALETTE.stoneGray
+        }).setName("office-first-hour-minute-label").setOrigin(0.5, 0).setDepth(-10);
+      }
+    });
   }
 
   private drawOfficeProps() {
@@ -1234,6 +1539,11 @@ export class OfficeScene extends Phaser.Scene {
   private drawDesk(x: number, y: number, label: string) {
     this.add.rectangle(x + 2, y + 2, 58, 20, color(PALETTE.black), 0.35).setDepth(-8);
     this.add.rectangle(x, y, 58, 20, color(PALETTE.sepiaInk)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-6);
+    if (this.officeTileFramesReady(["desk_top"])) {
+      for (let col = 0; col < 3; col += 1) {
+        this.drawOfficeTileFrame("desk_top", x - 16 + col * 16, y - 2, -5, `desk-top-${label}-${col}`);
+      }
+    }
     this.add.rectangle(x - 15, y - 2, 18, 8, color(PALETTE.creamPaper)).setDepth(-5);
     this.add.rectangle(x + 13, y - 2, 15, 8, color(PALETTE.buckramRed)).setDepth(-5);
     this.add.text(x, y + 5, label, {
@@ -1249,9 +1559,90 @@ export class OfficeScene extends Phaser.Scene {
     this.add.rectangle(x, y - 9, 14, 7, color(PALETTE.terminalCyan), 0.7).setDepth(-2);
   }
 
+  private drawOfficeRouteCompass() {
+    const y = 202;
+    this.add.rectangle(128, y + 2, 110, 16, color(PALETTE.black), 0.34)
+      .setName("office-route-compass-shadow")
+      .setDepth(-5);
+    this.add.rectangle(128, y, 108, 14, color(PALETTE.shadowNavy), 0.92)
+      .setName("office-route-compass-panel")
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(-4);
+    const routes = [
+      { x: 93, label: "GDN", accent: PALETTE.openNetGreen, kind: "garden" },
+      { x: 128, label: "ARC", accent: PALETTE.goldStamp, kind: "archive" },
+      { x: 163, label: "HAC", accent: PALETTE.creamPaper, kind: "senate" }
+    ] as const;
+    routes.forEach((route, index) => {
+      if (index > 0) {
+        this.add.rectangle(route.x - 18, y + 2, 14, 1, color(PALETTE.goldStamp), 0.6)
+          .setName("office-route-compass-link")
+          .setDepth(-3);
+      }
+      this.add.rectangle(route.x, y + 2, 22, 10, color(PALETTE.black), 0.88)
+        .setName("office-route-compass-chip")
+        .setStrokeStyle(1, color(route.accent))
+        .setDepth(-3);
+      this.drawOfficeRouteCompassIcon(route.x - 6, y + 1, route.kind, route.accent);
+      this.add.text(route.x + 5, y - 1, route.label, {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: route.accent
+      }).setName("office-route-compass-label").setOrigin(0.5, 0).setDepth(-2);
+    });
+  }
+
+  private drawOfficeRouteCompassIcon(x: number, y: number, kind: "garden" | "archive" | "senate", accent: string) {
+    if (kind === "garden") {
+      this.add.rectangle(x, y + 2, 5, 4, color(PALETTE.plantLeafDark))
+        .setName("office-route-compass-icon")
+        .setStrokeStyle(1, color(accent))
+        .setDepth(-2);
+      this.add.rectangle(x, y + 5, 2, 3, color(PALETTE.sepiaInk))
+        .setName("office-route-compass-icon")
+        .setDepth(-1);
+      return;
+    }
+    if (kind === "senate") {
+      this.add.rectangle(x, y + 3, 7, 4, color(PALETTE.creamPaper))
+        .setName("office-route-compass-icon")
+        .setStrokeStyle(1, color(PALETTE.goldStamp))
+        .setDepth(-2);
+      this.add.rectangle(x - 2, y + 1, 2, 3, color(accent))
+        .setName("office-route-compass-icon")
+        .setDepth(-1);
+      this.add.rectangle(x + 2, y + 1, 2, 3, color(accent))
+        .setName("office-route-compass-icon")
+        .setDepth(-1);
+      return;
+    }
+    this.add.rectangle(x, y + 3, 6, 7, color(PALETTE.deepRuby))
+      .setName("office-route-compass-icon")
+      .setStrokeStyle(1, color(accent))
+      .setDepth(-2);
+    this.add.rectangle(x - 2, y + 3, 2, 7, color(PALETTE.buckramRed))
+      .setName("office-route-compass-icon")
+      .setDepth(-1);
+    this.add.rectangle(x + 1, y + 1, 4, 1, color(accent))
+      .setName("office-route-compass-icon")
+      .setDepth(-1);
+  }
+
+  private setOfficeRouteCompassVisible(visible: boolean) {
+    for (const object of this.children.list) {
+      if (!object.name.startsWith("office-route-compass")) continue;
+      const visibleObject = object as Phaser.GameObjects.GameObject & {
+        setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
+      };
+      visibleObject.setVisible?.(visible);
+    }
+  }
+
   private drawSmallDoor(x: number, y: number, label: string, accent: string) {
     this.add.rectangle(x, y, 30, 12, color(PALETTE.black)).setStrokeStyle(1, color(accent)).setDepth(16);
     this.add.rectangle(x, y + 3, 20, 5, color(PALETTE.deepRuby)).setDepth(17);
+    this.add.rectangle(x - 9, y - 3, 5, 1, color(PALETTE.white), 0.72).setName("office-route-door-glint").setDepth(18);
+    this.add.rectangle(x + 8, y + 1, 4, 1, color(accent), 0.9).setName("office-route-door-glint").setDepth(18);
     this.add.text(x, y - 4, label, {
       fontFamily: "monospace",
       fontSize: "4px",

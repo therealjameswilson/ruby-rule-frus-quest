@@ -54,4 +54,9 @@ describe("computePromptPlacement", () => {
     const placement = computePromptPlacement(make({ x: 100, y: 44 }), { left: 36, right: 220, top: 50 });
     expect(placement.y).toBeGreaterThanOrEqual(50);
   });
+
+  it("can reserve a bottom band for dense in-world UI", () => {
+    const placement = computePromptPlacement(make({ x: 100, y: 190 }), { left: 36, right: 220, top: 50, bottom: 92 });
+    expect(placement.y).toBe(92);
+  });
 });

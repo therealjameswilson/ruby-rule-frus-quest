@@ -23,6 +23,9 @@ import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 import type { DanneItemId } from "./danneItemCatalog";
 import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
+import { getAdventureTrainingCue } from "./adventureTraining";
+import { firstHourTrainingCoverageReadout } from "./firstHourTraining";
+import { FRUS_QUEST_LOOP, FRUS_QUEST_MISSION, FRUS_QUEST_STAKES } from "./mission";
 import {
   crystalsEarned,
   equityCrystalDocuments,
@@ -72,6 +75,7 @@ import { VIOLATION_LABEL } from "../systems/standardsDamage";
 import type { StandardViolation } from "../systems/standardsDamage";
 import type {
   AdventureHudReadout,
+  AdventureTrainingReadout,
   ChoiceOption,
   DocumentCandidate,
   DocumentWorkflowState,
@@ -80,6 +84,7 @@ import type {
   PlayerCombatReadout,
   PlayerProfile,
   Position,
+  OneHourTrainingReadout,
   ReviewStatus,
   VolumeMetrics,
   VolumeWorkflowState,
@@ -760,6 +765,18 @@ export function setGameMode(mode: GameMode, objective?: string) {
   refreshQuestWorkflowState();
 }
 
+function currentLockedExitsForInventory(state: RoomTraversalState) {
+  const lockedExits = state.lockedExits ?? {};
+  const heldItems = getHeldProcessItemIds();
+  return Object.fromEntries(
+    (Object.entries(lockedExits) as Array<[Direction, string]>).filter(([direction]) => {
+      const requiredItem = state.requiredItems?.[direction];
+      if (!requiredItem || !processItemDefinition(requiredItem as ProcessItemId)) return true;
+      return !heldItems.has(requiredItem as ProcessItemId);
+    })
+  ) as Partial<Record<Direction, string>>;
+}
+
 export function setRoomTraversalState(state: RoomTraversalState | null) {
   const revealedRoomIds = state
     ? new Set([
@@ -770,6 +787,7 @@ export function setRoomTraversalState(state: RoomTraversalState | null) {
   gameState.roomTraversal = state
     ? {
         ...state,
+        lockedExits: currentLockedExitsForInventory(state),
         visitedRoomIds: [...state.visitedRoomIds],
         revealedRoomIds: [...(revealedRoomIds ?? [])]
       }
@@ -1776,6 +1794,36 @@ export function getAdventureHudReadout(): AdventureHudReadout {
   };
 }
 
+export function getAdventureTrainingReadout(): AdventureTrainingReadout {
+  const currentArea = getCurrentAreaReadout();
+  const dungeon = gameState.dungeons[currentArea.id];
+  return getAdventureTrainingCue({
+    mode: gameState.mode,
+    objective: gameState.objective,
+    latestMessage: gameState.latestMessage,
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    nearestInteractable: gameState.nearestInteractable,
+    activeDialog: gameState.activeDialog,
+    currentChoice: gameState.currentChoice,
+    roomTraversal: gameState.roomTraversal,
+    dungeon: dungeon
+      ? {
+          displayName: currentArea.displayName,
+          smallKeys: dungeon.smallKeys,
+          smallKeysRequired: dungeon.smallKeysRequired,
+          bigKeyHeld: dungeon.bigKeyHeld,
+          bossDefeated: dungeon.bossDefeated,
+          mapRevealed: dungeon.mapRevealed
+        }
+      : null
+  });
+}
+
+export function getOneHourTrainingReadout(): OneHourTrainingReadout {
+  const activeCue = getAdventureTrainingReadout();
+  return firstHourTrainingCoverageReadout(activeCue.drillId);
+}
+
 export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
   refreshQuestWorkflowState();
   const currentArea = getCurrentAreaReadout();
@@ -2141,6 +2189,11 @@ export function renderGameToText() {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
       scene: gameState.currentScene,
       mode: gameState.mode,
+      gameGoal: {
+        mission: FRUS_QUEST_MISSION,
+        loop: FRUS_QUEST_LOOP,
+        stakes: FRUS_QUEST_STAKES
+      },
       objective: gameState.objective,
       volumeWorkflowState: gameState.volumeWorkflowState,
       documentCandidates: getDocumentCandidateReadout(),
@@ -2153,6 +2206,8 @@ export function renderGameToText() {
       snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
       adventureHud: getAdventureHudReadout(),
+      adventureTraining: getAdventureTrainingReadout(),
+      oneHourTraining: getOneHourTrainingReadout(),
       adventureSubscreen: getAdventureSubscreenReadout(),
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,

@@ -1,6 +1,7 @@
 import Phaser from "phaser";
-import { SCREENS } from "../assets/registry";
+import { SCREENS, publicAssetPath } from "../assets/registry";
 import { CONTROLS_TEXT, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { FRUS_QUEST_MISSION, FRUS_QUEST_TITLE_PROMPT } from "../game/mission";
 import { resetGameState, setSceneState } from "../game/state";
 import { getSkipWarningPreference, setSkipWarningPreference } from "../game/warningSettings";
 import { bindPointerPress, getInput, tickInput } from "../input/InputState";
@@ -24,8 +25,14 @@ export class TitleScene extends Phaser.Scene {
     super("TitleScene");
   }
 
+  preload() {
+    for (const [key, path] of Object.entries(SCREENS)) {
+      if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
+    }
+  }
+
   create() {
-    setSceneState("TitleScene", "title", "Press start to verify.");
+    setSceneState("TitleScene", "title", FRUS_QUEST_MISSION);
     this.started = false;
     this.skipWarning = getSkipWarningPreference();
     this.ignoreNextPointerStart = false;
@@ -39,7 +46,8 @@ export class TitleScene extends Phaser.Scene {
     retroAudio.startMusic("TitleScene");
 
     this.cameras.main.setBackgroundColor(PALETTE.black);
-    if (!this.drawArtPackTitleScreen()) {
+    const usingArtPackTitle = this.drawArtPackTitleScreen();
+    if (!usingArtPackTitle) {
       this.drawWallpaper();
       this.drawHeaderPlaque();
       this.drawFilmstrip(TITLE_LAYOUT.topFilmstripY);
@@ -47,6 +55,7 @@ export class TitleScene extends Phaser.Scene {
       this.drawWorldMapBriefing();
       this.drawTitlePlate();
       this.drawRelicShelf(128, TITLE_LAYOUT.relicShelf.y);
+      this.drawQuestRouteStrip(128, 198, 36);
 
       this.add
         .text(128, TITLE_LAYOUT.pressStartY, "PRESS START TO VERIFY", {
@@ -67,6 +76,8 @@ export class TitleScene extends Phaser.Scene {
         .setOrigin(0.5)
         .setResolution(2);
     }
+    this.drawStartAffordance(usingArtPackTitle ? TITLE_LAYOUT.artPackStartY : TITLE_LAYOUT.pressStartY);
+    this.drawMissionPlaque(usingArtPackTitle);
     this.createSkipWarningToggle();
   }
 
@@ -88,6 +99,15 @@ export class TitleScene extends Phaser.Scene {
    * boot if the art pack is absent.
    */
   private drawArtPackTitleScreen() {
+    const sharpKey = "title_screen_16bit_sharp_256x240" satisfies keyof typeof SCREENS;
+    if (this.textures.exists(sharpKey)) {
+      const source = this.textures.get(sharpKey).getSourceImage() as { width?: number; height?: number };
+      if (source.width === GAME_WIDTH && source.height === GAME_HEIGHT) {
+        this.add.image(0, 0, sharpKey).setName("title-art-sharp-card").setOrigin(0).setDepth(0);
+        return true;
+      }
+    }
+
     const key = "title_screen_256x224" satisfies keyof typeof SCREENS;
     if (!this.textures.exists(key)) return false;
     const source = this.textures.get(key).getSourceImage() as { width?: number; height?: number };
@@ -100,6 +120,7 @@ export class TitleScene extends Phaser.Scene {
       fontSize: "6px",
       color: PALETTE.terminalCyan
     }).setDepth(40);
+    this.drawQuestRouteStrip(128, 211, 41);
     return true;
   }
 
@@ -365,6 +386,133 @@ export class TitleScene extends Phaser.Scene {
     addSnesWorkflowRelicRack(this, x, y - 5);
   }
 
+  private drawQuestRouteStrip(x: number, y: number, depth: number) {
+    const steps = [
+      { label: "ARCH", color: PALETTE.archiveAmber, kind: "stamp" },
+      { label: "NET", color: PALETTE.terminalCyan, kind: "terminal" },
+      { label: "REF", color: PALETTE.classNetRed, kind: "seal" },
+      { label: "READ", color: PALETTE.creamPaper, kind: "pages" },
+      { label: "GATE", color: PALETTE.goldStamp, kind: "volume" }
+    ] as const;
+    const spacing = 38;
+    const startX = x - spacing * 2;
+    this.add.rectangle(x + 2, y + 3, 206, 23, color(PALETTE.black), 0.72)
+      .setName("title-quest-route-shadow")
+      .setDepth(depth);
+    this.add.rectangle(x, y, 206, 23, color(PALETTE.deepRuby), 0.9)
+      .setName("title-quest-route-strip")
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(depth + 1);
+    this.add.text(x, y - 10, "FRUS QUEST ROUTE", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp,
+      align: "center"
+    }).setName("title-quest-route-heading").setOrigin(0.5, 0).setDepth(depth + 3).setResolution(2);
+
+    steps.forEach((step, index) => {
+      const nodeX = startX + index * spacing;
+      if (index > 0) {
+        this.add.rectangle(nodeX - spacing / 2, y + 1, spacing - 17, 2, color(PALETTE.goldStamp), 0.86)
+          .setName("title-quest-route-link")
+          .setDepth(depth + 2);
+        this.add.rectangle(nodeX - spacing / 2 + 5, y - 2, 4, 4, color(PALETTE.black), 0.82)
+          .setName("title-quest-route-link-rivet")
+          .setDepth(depth + 2);
+      }
+      this.add.rectangle(nodeX, y + 1, 19, 15, color(PALETTE.black), 0.95)
+        .setName("title-quest-route-node")
+        .setStrokeStyle(1, color(step.color))
+        .setDepth(depth + 3);
+      this.drawQuestRouteIcon(nodeX, y - 1, step.kind, step.color, depth + 4);
+      this.add.text(nodeX, y + 9, step.label, {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: step.color,
+        align: "center"
+      }).setName("title-quest-route-label").setOrigin(0.5, 0).setDepth(depth + 5).setResolution(2);
+    });
+  }
+
+  private drawQuestRouteIcon(x: number, y: number, kind: "stamp" | "terminal" | "seal" | "pages" | "volume", accent: string, depth: number) {
+    if (kind === "stamp") {
+      this.add.rectangle(x, y - 3, 8, 3, color(accent)).setName("title-quest-route-icon").setDepth(depth);
+      this.add.rectangle(x, y + 1, 12, 5, color(PALETTE.creamPaper)).setName("title-quest-route-icon").setDepth(depth);
+      this.add.rectangle(x, y + 3, 8, 1, color(PALETTE.buckramRed)).setName("title-quest-route-icon").setDepth(depth + 1);
+      return;
+    }
+    if (kind === "terminal") {
+      this.add.rectangle(x, y, 12, 9, color(PALETTE.black)).setName("title-quest-route-icon").setStrokeStyle(1, color(accent)).setDepth(depth);
+      this.add.rectangle(x, y - 1, 7, 3, color(accent), 0.9).setName("title-quest-route-icon").setDepth(depth + 1);
+      return;
+    }
+    if (kind === "seal") {
+      this.add.circle(x, y, 5, color(PALETTE.deepRuby)).setName("title-quest-route-icon").setStrokeStyle(1, color(accent)).setDepth(depth);
+      this.add.rectangle(x, y, 7, 1, color(accent)).setName("title-quest-route-icon").setDepth(depth + 1);
+      return;
+    }
+    if (kind === "pages") {
+      this.add.rectangle(x - 3, y, 7, 9, color(PALETTE.creamPaper)).setName("title-quest-route-icon").setStrokeStyle(1, color(PALETTE.black)).setDepth(depth);
+      this.add.rectangle(x + 3, y + 1, 7, 9, color(PALETTE.creamPaper)).setName("title-quest-route-icon").setStrokeStyle(1, color(PALETTE.black)).setDepth(depth);
+      this.add.rectangle(x + 3, y + 3, 5, 1, color(PALETTE.buckramRed)).setName("title-quest-route-icon").setDepth(depth + 1);
+      return;
+    }
+    this.add.rectangle(x, y, 9, 11, color(PALETTE.deepRuby)).setName("title-quest-route-icon").setStrokeStyle(1, color(accent)).setDepth(depth);
+    this.add.rectangle(x - 3, y, 2, 11, color(PALETTE.buckramRed)).setName("title-quest-route-icon").setDepth(depth + 1);
+    this.add.rectangle(x + 1, y - 2, 5, 1, color(accent)).setName("title-quest-route-icon").setDepth(depth + 1);
+    this.add.rectangle(x + 1, y + 2, 5, 1, color(accent)).setName("title-quest-route-icon").setDepth(depth + 1);
+  }
+
+  private drawStartAffordance(y: number) {
+    const depth = 42;
+    const group = this.add.container(128, y).setName("title-start-affordance").setDepth(depth);
+    const left = this.add.triangle(-76, 0, 0, 0, 7, 4, 0, 8, color(PALETTE.goldStamp))
+      .setName("title-start-affordance-arrow-left");
+    const right = this.add.triangle(76, 0, 7, 0, 0, 4, 7, 8, color(PALETTE.goldStamp))
+      .setName("title-start-affordance-arrow-right");
+    const underlineBack = this.add.rectangle(0, 9, 102, 3, color(PALETTE.black), 0.72)
+      .setName("title-start-affordance-underline-back");
+    const underline = this.add.rectangle(0, 9, 86, 1, color(PALETTE.terminalCyan), 0.95)
+      .setName("title-start-affordance-underline");
+    const sparkLeft = this.add.rectangle(-49, 9, 3, 3, color(PALETTE.terminalCyan), 0.85)
+      .setName("title-start-affordance-spark");
+    const sparkRight = this.add.rectangle(49, 9, 3, 3, color(PALETTE.terminalCyan), 0.85)
+      .setName("title-start-affordance-spark");
+    group.add([left, right, underlineBack, underline, sparkLeft, sparkRight]);
+    this.tweens.add({
+      targets: [left, right, underline, sparkLeft, sparkRight],
+      alpha: 0.38,
+      duration: 420,
+      yoyo: true,
+      repeat: -1,
+      ease: "Stepped"
+    });
+  }
+
+  private drawMissionPlaque(usingArtPackTitle: boolean) {
+    const y = usingArtPackTitle ? 205 : 192;
+    const depth = 43;
+    this.add.rectangle(128, y, 238, 15, color(PALETTE.black), 0.82)
+      .setName("title-mission-plaque-shadow")
+      .setDepth(depth);
+    this.add.rectangle(128, y - 1, 232, 13, color(PALETTE.deepRuby), 0.9)
+      .setName("title-mission-plaque")
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(depth + 1);
+    this.add.text(128, y - 6, FRUS_QUEST_TITLE_PROMPT, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp,
+      align: "center"
+    }).setName("title-mission-text").setOrigin(0.5, 0).setDepth(depth + 2).setResolution(2);
+    this.add.text(128, y, "VERIFY SOURCES · CLEAR EQUITIES · PROOF PAGES", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.creamPaper,
+      align: "center"
+    }).setName("title-mission-subtext").setOrigin(0.5, 0).setDepth(depth + 2).setResolution(2);
+  }
+
   private toggleAudio() {
     retroAudio.toggle();
   }
@@ -378,6 +526,11 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private createSkipWarningToggle() {
+    this.add
+      .rectangle(191, 231, 118, 12, color(PALETTE.deepRuby), 0.96)
+      .setName("title-skip-warning-backplate")
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(39);
     const hit = this.add.rectangle(191, 229, 112, 12, color(PALETTE.black), 0.01).setDepth(40);
     bindPointerPress(hit, {
       down: () => {
