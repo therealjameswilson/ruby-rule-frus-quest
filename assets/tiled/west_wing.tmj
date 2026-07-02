@@ -1,0 +1,75 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 1536,
+  "height": 1024,
+  "tilewidth": 1,
+  "tileheight": 1,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "collisions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 1, "name": "parchment_north", "type": "solid", "x": 0, "y": 0, "width": 1536, "height": 90 },
+        { "id": 2, "name": "parchment_south", "type": "solid", "x": 0, "y": 900, "width": 1536, "height": 124 },
+        { "id": 3, "name": "parchment_west", "type": "solid", "x": 0, "y": 0, "width": 90, "height": 1024 },
+        { "id": 4, "name": "parchment_east", "type": "solid", "x": 1446, "y": 0, "width": 90, "height": 1024 },
+        { "id": 5, "name": "cabinet_table", "type": "solid", "x": 205, "y": 245, "width": 335, "height": 160 },
+        { "id": 6, "name": "oval_desk", "type": "solid", "x": 690, "y": 220, "width": 170, "height": 130 },
+        { "id": 7, "name": "roosevelt_table", "type": "solid", "x": 1045, "y": 240, "width": 340, "height": 160 },
+        { "id": 8, "name": "situation_table", "type": "solid", "x": 325, "y": 612, "width": 270, "height": 125 },
+        { "id": 9, "name": "press_podium", "type": "solid", "x": 1110, "y": 560, "width": 190, "height": 110 },
+        { "id": 10, "name": "central_wall", "type": "solid", "x": 610, "y": 90, "width": 55, "height": 780 },
+        { "id": 11, "name": "central_wall_right", "type": "solid", "x": 885, "y": 90, "width": 55, "height": 780 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "doors",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 12, "name": "world_exit", "type": "door", "x": 710, "y": 845, "width": 120, "height": 70, "properties": [
+          { "name": "label", "type": "string", "value": "Return to World Map" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" }
+        ] },
+        { "id": 13, "name": "situation_room_door", "type": "door", "x": 600, "y": 585, "width": 80, "height": 110, "properties": [
+          { "name": "label", "type": "string", "value": "Situation Room Gate" },
+          { "name": "targetScene", "type": "string", "value": "GameplayMapScene" },
+          { "name": "targetMap", "type": "string", "value": "black_vault" },
+          { "name": "spawn", "type": "string", "value": "south_gate" },
+          { "name": "requiredFlag", "type": "string", "value": "nsc_clearance" },
+          { "name": "lockedMessage", "type": "string", "value": "Secret Service requires NSC clearance before this route opens." }
+        ] }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "spawns",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 14, "name": "entry", "type": "spawn", "point": true, "x": 768, "y": 820 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "interactions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 15, "name": "secret_service", "type": "npc", "x": 600, "y": 365, "width": 110, "height": 120, "properties": [
+          { "name": "label", "type": "string", "value": "Secret Service NPC" },
+          { "name": "action", "type": "string", "value": "secret-service-gate" }
+        ] },
+        { "id": 16, "name": "oval_office_desk", "type": "interaction", "x": 690, "y": 210, "width": 165, "height": 140, "properties": [
+          { "name": "label", "type": "string", "value": "Oval Office Desk" },
+          { "name": "action", "type": "string", "value": "oval-office-briefing" },
+          { "name": "text", "type": "string", "value": "The briefing memo asks for chronology, source, and policy context." }
+        ] }
+      ]
+    }
+  ]
+}

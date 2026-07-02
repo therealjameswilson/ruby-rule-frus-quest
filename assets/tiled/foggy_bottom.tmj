@@ -1,0 +1,68 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 1254,
+  "height": 1254,
+  "tilewidth": 1,
+  "tileheight": 1,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "collisions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 1, "name": "parchment_north", "type": "solid", "x": 0, "y": 0, "width": 1254, "height": 82 },
+        { "id": 2, "name": "parchment_south", "type": "solid", "x": 0, "y": 1172, "width": 1254, "height": 82 },
+        { "id": 3, "name": "parchment_west", "type": "solid", "x": 0, "y": 0, "width": 72, "height": 1254 },
+        { "id": 4, "name": "parchment_east", "type": "solid", "x": 1182, "y": 0, "width": 72, "height": 1254 },
+        { "id": 5, "name": "truman_building", "type": "solid", "x": 390, "y": 140, "width": 460, "height": 410 },
+        { "id": 6, "name": "academy_building", "type": "solid", "x": 70, "y": 120, "width": 235, "height": 295 },
+        { "id": 7, "name": "twenty_third_street", "type": "solid", "x": 890, "y": 80, "width": 170, "height": 1030 },
+        { "id": 8, "name": "c_street", "type": "solid", "x": 260, "y": 690, "width": 620, "height": 190 },
+        { "id": 9, "name": "lower_park_statue", "type": "solid", "x": 530, "y": 940, "width": 160, "height": 150 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "doors",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 10, "name": "truman_front_door", "type": "door", "x": 585, "y": 475, "width": 120, "height": 88, "properties": [
+          { "name": "label", "type": "string", "value": "Truman Building Entrance" },
+          { "name": "targetScene", "type": "string", "value": "GameplayMapScene" },
+          { "name": "targetMap", "type": "string", "value": "historian_office" },
+          { "name": "spawn", "type": "string", "value": "foggy_return" }
+        ] },
+        { "id": 11, "name": "world_exit", "type": "door", "x": 545, "y": 1088, "width": 170, "height": 90, "properties": [
+          { "name": "label", "type": "string", "value": "Return to World Map" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" }
+        ] }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "spawns",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 12, "name": "entry", "type": "spawn", "point": true, "x": 628, "y": 1030 },
+        { "id": 13, "name": "truman_entry", "type": "spawn", "point": true, "x": 627, "y": 610 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "interactions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 14, "name": "street_sign", "type": "interaction", "x": 1000, "y": 610, "width": 70, "height": 92, "properties": [
+          { "name": "label", "type": "string", "value": "23rd Street Sign" },
+          { "name": "action", "type": "string", "value": "street-sign" },
+          { "name": "text", "type": "string", "value": "23rd Street is traffic, not a research route. Stay on the sidewalk." }
+        ] }
+      ]
+    }
+  ]
+}
