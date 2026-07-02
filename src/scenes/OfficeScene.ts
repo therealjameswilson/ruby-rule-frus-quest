@@ -2,8 +2,10 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   FRUS_QUEST_FIRST_OBJECTIVE,
+  FRUS_QUEST_FIRST_ACTION,
   FRUS_QUEST_LOOP,
   FRUS_QUEST_MISSION,
+  FRUS_QUEST_PLAYER_GOAL,
   FRUS_QUEST_STAKES
 } from "../game/mission";
 import {
@@ -395,9 +397,9 @@ export class OfficeScene extends Phaser.Scene {
 
   private showOfficeTutorial() {
     this.hintText.setVisible(false);
-    const shadow = this.add.rectangle(129, 60, 178, 34, color(PALETTE.black), 0.58)
+    const shadow = this.add.rectangle(129, 62, 190, 48, color(PALETTE.black), 0.58)
       .setName("office-tutorial-shadow");
-    const panel = this.add.rectangle(128, 57, 170, 30, color(PALETTE.shadowNavy), 0.94)
+    const panel = this.add.rectangle(128, 59, 182, 44, color(PALETTE.shadowNavy), 0.94)
       .setName("office-tutorial-panel")
       .setStrokeStyle(1, color(PALETTE.goldStamp));
     const title = this.add.text(128, 44, "START HERE", {
@@ -405,20 +407,26 @@ export class OfficeScene extends Phaser.Scene {
       fontSize: "6px",
       color: PALETTE.goldStamp
     }).setName("office-tutorial-title").setOrigin(0.5, 0);
-    const body = this.add.text(128, 53, "TALK TO THE JUNIOR COMPILER", {
+    const goal = this.add.text(128, 52, FRUS_QUEST_PLAYER_GOAL, {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "4px",
       color: PALETTE.creamPaper,
-      align: "center",
-      lineSpacing: 0
-    }).setName("office-tutorial-body").setOrigin(0.5, 0);
-    const route = this.add.text(128, 62, "A = INTERACT  -  MOVE = BEGIN", {
+      align: "center"
+    }).setName("office-tutorial-goal").setOrigin(0.5, 0);
+    const body = this.add.text(128, 60, FRUS_QUEST_FIRST_ACTION, {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.terminalCyan,
+      align: "center",
+      lineSpacing: 0
+    }).setName("office-tutorial-body").setOrigin(0.5, 0);
+    const route = this.add.text(128, 69, "STAND BY JR - PRESS A/SPACE", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp,
       align: "center"
     }).setName("office-tutorial-route").setOrigin(0.5, 0);
-    this.tutorialCard = this.add.container(0, 0, [shadow, panel, title, body, route]).setDepth(1800);
+    this.tutorialCard = this.add.container(0, 0, [shadow, panel, title, goal, body, route]).setDepth(1800);
     bindPointerDown(panel, () => this.dismissOfficeTutorial());
   }
 

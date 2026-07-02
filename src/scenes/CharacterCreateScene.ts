@@ -3,7 +3,7 @@ import { characterAnimKey } from "../art/character_anims";
 import { getCharacterKeyForProcessRole } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_ROLES } from "../game/constants";
 import type { ProcessRoleId } from "../game/constants";
-import { FRUS_QUEST_TITLE_PROMPT } from "../game/mission";
+import { FRUS_QUEST_FIRST_ACTION } from "../game/mission";
 import { gameState, setLatestMessage, setPlayerProfile, setSceneState, setVisibleEntities } from "../game/state";
 import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
@@ -105,16 +105,21 @@ export class CharacterCreateScene extends Phaser.Scene {
 
     this.createRoleCards();
     this.drawWorkflowRelicStrip();
-    this.beginPrompt = this.add.text(128, 203, FRUS_QUEST_TITLE_PROMPT, {
+    this.beginPrompt = this.add.text(128, 203, "PICK ANY ROLE - SAME QUEST", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.terminalCyan
-    }).setOrigin(0.5);
-    this.add.text(128, 212, "ENTER/TAP BEGIN  HEARTS = RELIABILITY", {
+    }).setName("character-create-begin-summary").setOrigin(0.5);
+    this.add.text(128, 212, "ENTER / TAP SAME CARD AGAIN TO BEGIN", {
       fontFamily: "monospace",
       fontSize: "4px",
       color: PALETTE.goldStamp
-    }).setOrigin(0.5);
+    }).setName("character-create-begin-controls").setOrigin(0.5);
+    this.add.text(128, 220, FRUS_QUEST_FIRST_ACTION, {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.creamPaper
+    }).setName("character-create-first-action").setOrigin(0.5);
 
     this.renderSelection();
   }

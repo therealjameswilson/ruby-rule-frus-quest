@@ -2,6 +2,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Onboarding clarity pass (2026-07-02):
+  - Added shared player-facing mission copy that explains the opening goal, verb loop, stakes, and first action in plain language.
+  - Updated the title mission plaque to state: publish one reliable FRUS volume; talk/carry/verify/stamp; reliability hearts punish bad shortcuts.
+  - Updated character creation so players know any role is valid, the quest is shared, and the first task is to talk to the Junior Compiler.
+  - Expanded the first Office tutorial card so the opening room says exactly what to do: stand by `JR` and press `A/Space`.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - focused `npm test -- --run src/scenes/TitleScene.test.ts src/scenes/CharacterCreateScene.test.ts src/input/InputState.test.ts src/systems/interactionPrompt.test.ts` passes (4 files / 34 tests);
+    - required web-game client completed against `?scene=TitleScene&role=compiler&name=Ruby&v=onboarding-client-final`;
+    - direct bundled-Playwright probe captured Title, CharacterCreate, and Office with zero page errors;
+    - visual proof: `output/onboarding-clarity/after-final/TitleScene.png`, `output/onboarding-clarity/after-final/CharacterCreateScene.png`, and `output/onboarding-clarity/after-final/OfficeScene.png`.
 - First-room HUD cleanup pass (2026-07-02):
   - Simplified the always-on quest band so Office onboarding shows one objective, one action cue, reliability hearts, and the equipped tool instead of stacking pendants, crystals, keys, cover fragments, and production counters.
   - Added a small floating `TALK` cue over the Junior Compiler for the first objective, hidden while tutorial/dialog/choice overlays are active and removed after the Junior Compiler introduction.
