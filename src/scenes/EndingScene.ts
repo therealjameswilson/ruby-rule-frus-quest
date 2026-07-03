@@ -166,13 +166,14 @@ export class EndingScene extends Phaser.Scene {
     retroAudio.startMusic("EndingScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
-    drawRoomFrame(this, "BUCKRAM GATE", PALETTE.goldStamp);
+    drawRoomFrame(this, "BUCKRAM GATE", PALETTE.goldStamp, { showLegacyHud: false });
     addSnesRoomLayer(this, { roomId: "G1", roomType: "boss", theme: "ending" });
     this.drawGateRoom();
 
     this.player = new Player(this, 128, 204);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.certificationPrompt = new ChoicePrompt(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.objectiveText = addObjectiveText(this);

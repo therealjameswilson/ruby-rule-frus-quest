@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Gameplay HUD declutter pass (2026-07-03):
+  - Removed the duplicate legacy room HUD from Guide, Archive, Network, Referral Vault, Silent Read, Office, and Ending scenes so the global quest band is the only persistent top HUD.
+  - Hid the ReliabilityHud summary by default in the gameplay scenes; the reliability detail panel remains available when explicitly opened, but it no longer paints production text over the playfield on scene load.
+  - Hid permanent multi-room title labels in Archive, Network, Referral Vault, and Silent Read scenes. The animated room-entry banner now provides location feedback without colliding with minimaps or room art.
+  - Tightened the default dialog frame from a large bottom box into a smaller caption-style box, preserving guidance while leaving more of the room visible during conversations.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - focused `npm test -- --run src/input/InputState.test.ts src/systems/interactionPrompt.test.ts` passes (2 files / 21 tests);
+    - required web-game client completed against `?scene=ArchiveScene&role=compiler&name=Ruby&v=adventure-hud-client`;
+    - visual proof: `output/adventure-dialog-pass/GuideScene.png`, `output/adventure-dialog-pass/ArchiveScene.png`, and `output/adventure-dialog-pass/NetworkScene.png`.
 - First-route gameplay feel pass (2026-07-03):
   - Played the current first-time-player opening flow and found that the game was technically playable but still felt noisy: the first Office room showed multiple station labels and route UI before the player had a reason to care, the JR target cue hid at the starting position, the role preview had an overlapping `EQUAL RANK` stage label, and the title prompt used the abstract phrase `VERIFY`.
   - Tightened the first quest into a single readable lane: JR -> Production Inbox -> FRUS Cart -> Archive Terminal -> JR -> Archive Guide. The Archive Guide door now explains what is missing instead of silently acting like an early bypass.

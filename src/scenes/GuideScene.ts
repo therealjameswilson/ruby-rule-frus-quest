@@ -71,7 +71,7 @@ export class GuideScene extends Phaser.Scene {
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-30);
-    drawRoomFrame(this, "ARCHIVE CAVERN", PALETTE.goldStamp);
+    drawRoomFrame(this, "ARCHIVE CAVERN", PALETTE.goldStamp, { showLegacyHud: false });
     this.drawCaveInterior();
     this.drawArchiveLamp(86, 88);
     this.drawArchiveLamp(170, 88);
@@ -106,6 +106,7 @@ export class GuideScene extends Phaser.Scene {
     this.dialog = new DialogBox(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.hintText = this.add.text(128, 207, "", {
       fontFamily: "monospace",

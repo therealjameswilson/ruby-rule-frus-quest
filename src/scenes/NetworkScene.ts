@@ -147,14 +147,14 @@ export class NetworkScene extends Phaser.Scene {
     retroAudio.startMusic("NetworkScene");
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawTiledFloor(this, "network-tiles");
-    drawRoomFrame(this, "TWO NETWORKS");
+    drawRoomFrame(this, "TWO NETWORKS", PALETTE.goldStamp, { showLegacyHud: false });
     this.drawNetworkMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(902);
+    }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.routeText = this.add.text(128, 88, "ROUTING LOG EMPTY", {
       fontFamily: "monospace",
@@ -169,6 +169,7 @@ export class NetworkScene extends Phaser.Scene {
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.enterRoom("N1", { x: 128, y: 196 }, false);

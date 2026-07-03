@@ -403,19 +403,20 @@ export class ArchiveScene extends Phaser.Scene {
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.archiveAmber);
     drawTiledFloor(this, "archive-tiles");
-    drawRoomFrame(this, "ARCHIVE CAVERN");
+    drawRoomFrame(this, "ARCHIVE CAVERN", PALETTE.goldStamp, { showLegacyHud: false });
     this.drawVisitedMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(902);
+    }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.dialog = new DialogBox(this);
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.hintText = this.add.text(128, 211, "", {
       fontFamily: "monospace",
