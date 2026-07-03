@@ -134,7 +134,7 @@ export class TitleScene extends Phaser.Scene {
     this.add.circle(132, 84, 4, color(PALETTE.goldStamp), 0.82)
       .setName("title-clean-volume-seal");
 
-    this.add.text(128, 114, "PRESS START TO VERIFY", {
+    this.add.text(128, 114, "PRESS START TO BEGIN", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.terminalCyan

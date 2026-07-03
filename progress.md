@@ -2,6 +2,20 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- First-route gameplay feel pass (2026-07-03):
+  - Played the current first-time-player opening flow and found that the game was technically playable but still felt noisy: the first Office room showed multiple station labels and route UI before the player had a reason to care, the JR target cue hid at the starting position, the role preview had an overlapping `EQUAL RANK` stage label, and the title prompt used the abstract phrase `VERIFY`.
+  - Tightened the first quest into a single readable lane: JR -> Production Inbox -> FRUS Cart -> Archive Terminal -> JR -> Archive Guide. The Archive Guide door now explains what is missing instead of silently acting like an early bypass.
+  - Kept the first Office route visually quiet until the Master Declass Key is earned. Station labels appear after JR introduces the route, but the route compass and production/training board stay hidden until the first route is complete.
+  - Reworked the gold target cue so it remains visible from the starting position and retargets to the next active station (`JR`, `INBOX`, `CART`, `TERM`, then `ARCHIVE`). Approach prompts now say `GO TO JR`/`GO TO INBOX` instead of the less useful `STEP CLOSER`.
+  - Shortened Office objectives for the HUD (`Inspect Production Inbox.`, `Return to JR for the key.`, `Enter Archive Guide.`) so they fit the top band and read like immediate actions.
+  - Cleaned the character creation role preview by removing the duplicate `EQUAL RANK` label that overlapped the sprite, and changed the title affordance to `PRESS START TO BEGIN`.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - focused `npm test -- --run src/scenes/TitleScene.test.ts src/scenes/CharacterCreateScene.test.ts src/input/InputState.test.ts src/systems/interactionPrompt.test.ts` passes (4 files / 33 tests);
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=feel-pass-client` and confirmed the JR dialog advances to objective `Inspect Production Inbox.`;
+    - direct Playwright route confirmed JR -> Inbox -> Cart -> Terminal -> JR -> Archive transitions to `GuideScene`;
+    - direct endgame smoke confirmed the Buckram Gate still reaches `Published FRUS cover complete.` and `PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED`;
+    - visual proof: `output/feel-pass-3/after-dismiss.png` and `output/feel-pass-3/inbox-target.png`; route state proof: `output/feel-route/final.json`.
 - Play-to-completion blocker pass (2026-07-03):
   - Played the current local build with the browser harness from the opening route into Office, then through Guide/Archive A1, Network routing, and the Buckram Gate publication table.
   - Fixed the first Office quest lane: lower furniture collision was blocking the inbox/cart/terminal route, and the Junior Compiler remained too easy to re-trigger while the objective asked for station checks. The lower lane is now open, JR has a smaller radius during station checks, and the expected station gets a slightly larger active radius.

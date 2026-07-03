@@ -131,15 +131,6 @@ export class CharacterCreateScene extends Phaser.Scene {
       .setName("character-create-snes-stage")
       .setStrokeStyle(2, color(PALETTE.goldStamp))
       .setDepth(-5);
-    this.add.rectangle(128, 41, 66, 8, color(PALETTE.shadowNavy), 0.95)
-      .setName("character-create-snes-stage-header")
-      .setStrokeStyle(1, color(PALETTE.terminalCyan))
-      .setDepth(-4);
-    this.add.text(128, 38, "EQUAL RANK", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.terminalCyan
-    }).setName("character-create-snes-stage-label").setOrigin(0.5, 0).setDepth(-3);
     this.add.ellipse(128, 77, 48, 10, color(PALETTE.black), 0.62)
       .setName("character-create-role-shadow")
       .setDepth(-2);

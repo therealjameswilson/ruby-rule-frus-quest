@@ -130,6 +130,9 @@ export class OfficeScene extends Phaser.Scene {
   private toast!: FeedbackToast;
   private tutorialCard?: Phaser.GameObjects.Container;
   private firstQuestCue?: Phaser.GameObjects.Container;
+  private firstQuestCueLabel?: Phaser.GameObjects.Text;
+  private firstQuestCuePlate?: Phaser.GameObjects.Rectangle;
+  private postIntroLabels: Phaser.GameObjects.GameObject[] = [];
   private firstRoomProgressObjects: Phaser.GameObjects.GameObject[] = [];
   private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
@@ -147,6 +150,7 @@ export class OfficeScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawRoomFrame(this, "OFFICE HUB", PALETTE.goldStamp);
     this.hideLegacyRoomHud();
+    this.postIntroLabels = [];
     this.drawOfficeInterior();
 
     const returnSpawn = this.consumeOfficeReturnSpawn();
@@ -231,7 +235,7 @@ export class OfficeScene extends Phaser.Scene {
         y: 216,
         radius: 24,
         kind: "door",
-        onInteract: () => transitionTo(this, "GuideScene")
+        onInteract: () => this.handleArchiveGuideDoor()
       },
       {
         id: "cherry-garden-door",
@@ -344,7 +348,13 @@ export class OfficeScene extends Phaser.Scene {
     const hintTarget = tutorialVisible ? null : nearestInteractableHint(this.player.position, activeInteractables);
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(tutorialVisible ? null : nearest?.label ?? null);
-    this.prompt.update(delta, tutorialVisible ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
+    const approachCue = hintTarget ? this.approachCueFor(hintTarget) : null;
+    this.prompt.update(
+      delta,
+      tutorialVisible ? null : promptTarget,
+      undefined,
+      nearest ? undefined : hintTarget && approachCue ? { badge: "!", text: approachCue } : undefined
+    );
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) {
@@ -392,9 +402,9 @@ export class OfficeScene extends Phaser.Scene {
   private currentOfficeObjective() {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) return FRUS_QUEST_FIRST_OBJECTIVE;
     const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
-    if (progress < 3) return `Office Hub: inspect ${this.nextJuniorStationLabel(progress)}.`;
-    if (!hasDanneItem("master-declass-key")) return "Office Hub: return to the Junior Compiler for key issuance.";
-    return "Office Hub: use the Master Declass Key at approved classified doors.";
+    if (progress < 3) return `Inspect ${this.nextJuniorStationLabel(progress)}.`;
+    if (!hasDanneItem("master-declass-key")) return "Return to JR for the key.";
+    return "Enter Archive Guide.";
   }
 
   private nextJuniorStationLabel(progress = gameState.sceneProgress.juniorCompilerFetch ?? 0) {
@@ -428,12 +438,12 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     const next = this.nextJuniorStationLabel(progress);
-    setObjective(`Office Hub: inspect ${next}.`);
+    setObjective(`Inspect ${next}.`);
     this.dialog.show("JUNIOR COMPILER", [
       FRUS_QUEST_MISSION,
       FRUS_QUEST_LOOP,
       ...this.juniorCompiler.dialogLines(),
-      `Fetch check ${progress + 1}/3: inspect ${next}.`
+      `First quest: inspect ${next}. Follow the gold target marker.`
     ]);
   }
 
@@ -446,19 +456,19 @@ export class OfficeScene extends Phaser.Scene {
     const panel = this.add.rectangle(128, 58, 162, 36, color(PALETTE.shadowNavy), 0.97)
       .setName("office-tutorial-panel")
       .setStrokeStyle(1, color(PALETTE.goldStamp));
-    const title = this.add.text(128, 45, "START HERE", {
+    const title = this.add.text(128, 44, "BUILD ONE FRUS VOLUME", {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "5px",
       color: PALETTE.goldStamp
     }).setName("office-tutorial-title").setOrigin(0.5, 0);
-    const body = this.add.text(128, 55, "TALK TO JR", {
+    const body = this.add.text(128, 54, "TALK TO JR", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.terminalCyan,
       align: "center",
       lineSpacing: 0
     }).setName("office-tutorial-body").setOrigin(0.5, 0);
-    const route = this.add.text(128, 68, "STAND BY JR - PRESS A/SPACE", {
+    const route = this.add.text(128, 68, "THEN FOLLOW THE GOLD TARGET", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp,
@@ -490,26 +500,35 @@ export class OfficeScene extends Phaser.Scene {
     this.tutorialCard.destroy(true);
     this.tutorialCard = undefined;
     this.hintText.setVisible(true);
-    this.setOfficeRouteCompassVisible(true);
+    this.setOfficeRouteCompassVisible(hasDanneItem("master-declass-key"));
     gameState.sceneProgress.officeTutorialSeen = 1;
     setLatestMessage(`${FRUS_QUEST_MISSION} ${FRUS_QUEST_STAKES}`);
     setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
     this.updateFirstQuestCue();
   }
 
+  private approachCueFor(target: Interactable) {
+    if (target.id === "junior-compiler") return "GO TO JR";
+    if (target.id === "production-inbox") return "GO TO INBOX";
+    if (target.id === "frus-cart") return "GO TO CART";
+    if (target.id === "Archive Terminal") return "GO TO TERM";
+    if (target.id === "archive-guide-door") return "GO TO ARCHIVE";
+    return `GO TO ${target.label.toUpperCase().slice(0, 12)}`;
+  }
+
   private createFirstQuestCue() {
     const arrow = this.add.triangle(0, -15, 0, 0, 8, 0, 4, 7, color(PALETTE.goldStamp), 0.96)
       .setName("office-first-quest-arrow")
       .setStrokeStyle(1, color(PALETTE.black));
-    const plate = this.add.rectangle(0, -26, 34, 10, color(PALETTE.black), 0.86)
+    this.firstQuestCuePlate = this.add.rectangle(0, -26, 50, 10, color(PALETTE.black), 0.86)
       .setName("office-first-quest-plate")
       .setStrokeStyle(1, color(PALETTE.goldStamp));
-    const label = this.add.text(0, -29, "JR", {
+    this.firstQuestCueLabel = this.add.text(0, -29, "JR", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp
     }).setName("office-first-quest-label").setOrigin(0.5, 0);
-    this.firstQuestCue = this.add.container(this.juniorCompiler.x, this.juniorCompiler.y - 16, [arrow, plate, label])
+    this.firstQuestCue = this.add.container(this.juniorCompiler.x, this.juniorCompiler.y - 16, [arrow, this.firstQuestCuePlate, this.firstQuestCueLabel])
       .setName("office-first-quest-cue")
       .setDepth(850)
       .setVisible(false);
@@ -525,28 +544,54 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private updateFirstQuestCue() {
-    const closeToJunior = this.player
-      ? Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, this.juniorCompiler.x, this.juniorCompiler.y) <= 86
+    const target = this.currentGuidedTarget();
+    const closeToTarget = this.player && target
+      ? Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, target.x, target.y) <= 34
       : false;
     const visible = Boolean(
       this.firstQuestCue
       && !this.tutorialCard
       && !this.dialog?.active
       && !this.choice?.active
-      && !gameState.sceneProgress.juniorCompilerIntroduced
-      && !closeToJunior
+      && target
+      && !closeToTarget
     );
+    if (this.firstQuestCue && target) {
+      this.firstQuestCue.setPosition(target.x, target.y - 16);
+      this.firstQuestCueLabel?.setText(target.label);
+      this.firstQuestCuePlate?.setDisplaySize(target.label.length >= 6 ? 58 : 50, 10);
+    }
     this.firstQuestCue?.setVisible(visible);
     this.updateFirstRoomProgressVisibility();
   }
 
+  private currentGuidedTarget() {
+    if (!gameState.sceneProgress.juniorCompilerIntroduced) {
+      return { x: this.juniorCompiler.x, y: this.juniorCompiler.y, label: "JR" };
+    }
+    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
+    if (progress === 0) return { x: 60, y: 154, label: "INBOX" };
+    if (progress === 1) return { x: 128, y: 132, label: "CART" };
+    if (progress === 2) return { x: 195, y: 154, label: "TERM" };
+    if (!hasDanneItem("master-declass-key")) return { x: this.juniorCompiler.x, y: this.juniorCompiler.y, label: "JR" };
+    return { x: 128, y: 216, label: "ARCHIVE" };
+  }
+
   private updateFirstRoomProgressVisibility() {
-    const visible = Boolean(gameState.sceneProgress.juniorCompilerIntroduced);
+    const stationLabelsVisible = Boolean(gameState.sceneProgress.juniorCompilerIntroduced);
+    const routeUnlocked = hasDanneItem("master-declass-key");
+    this.setOfficeRouteCompassVisible(routeUnlocked);
     this.firstRoomProgressObjects.forEach((object) => {
       const visibleObject = object as Phaser.GameObjects.GameObject & {
         setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
       };
-      visibleObject.setVisible?.(visible);
+      visibleObject.setVisible?.(routeUnlocked);
+    });
+    this.postIntroLabels.forEach((object) => {
+      const visibleObject = object as Phaser.GameObjects.GameObject & {
+        setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
+      };
+      visibleObject.setVisible?.(stationLabelsVisible);
     });
   }
 
@@ -583,7 +628,7 @@ export class OfficeScene extends Phaser.Scene {
     if (station !== expected) {
       const next = this.nextJuniorStationLabel(progress);
       retroAudio.warning();
-      setObjective(`Office Hub: inspect ${next}.`);
+      setObjective(`Inspect ${next}.`);
       const alreadyLogged = (station === "inbox" && progress > 0)
         || (station === "cart" && progress > 1)
         || (station === "terminal" && progress > 2);
@@ -606,6 +651,30 @@ export class OfficeScene extends Phaser.Scene {
       messages[station],
       progress + 1 >= 3 ? "Return to the Junior Compiler for key issuance." : "Continue the production check sequence."
     ]);
+  }
+
+  private handleArchiveGuideDoor() {
+    if (!gameState.sceneProgress.juniorCompilerIntroduced) {
+      retroAudio.warning();
+      setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
+      this.dialog.show("ARCHIVE GUIDE", "Talk to JR first. They will open the first production route.");
+      return;
+    }
+    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
+    if (progress < 3) {
+      const next = this.nextJuniorStationLabel(progress);
+      retroAudio.warning();
+      setObjective(`Inspect ${next}.`);
+      this.dialog.show("ARCHIVE GUIDE", `Finish the first route before entering the archive: inspect ${next}.`);
+      return;
+    }
+    if (!hasDanneItem("master-declass-key")) {
+      retroAudio.warning();
+      setObjective("Return to JR for the key.");
+      this.dialog.show("ARCHIVE GUIDE", "Return to JR for the Master Declass Key, then enter the archive.");
+      return;
+    }
+    transitionTo(this, "GuideScene");
   }
 
   private showResearchCharterChoice() {
@@ -1250,12 +1319,14 @@ export class OfficeScene extends Phaser.Scene {
     this.add.rectangle(128, 219, 30, 10, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(20);
     this.add.rectangle(117, 214, 5, 1, color(PALETTE.white), 0.74).setName("office-archive-threshold-glint").setDepth(22);
     this.add.rectangle(140, 222, 5, 1, color(PALETTE.goldStamp), 0.86).setName("office-archive-threshold-glint").setDepth(22);
-    this.add.text(128, 213, "ARCHIVE", {
+    const archiveLabel = this.add.text(128, 213, "ARCHIVE", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(21);
+    archiveLabel.setName("office-post-intro-label-archive");
+    this.postIntroLabels.push(archiveLabel);
     this.drawOfficeRouteCompass();
     this.setOfficeRouteCompassVisible(Boolean(gameState.sceneProgress.officeTutorialSeen));
     this.drawDesk(70, 92, "JR");
@@ -1264,11 +1335,13 @@ export class OfficeScene extends Phaser.Scene {
     this.drawTerminalDesk(195, 154);
     this.add.rectangle(128, 132, 40, 18, color(PALETTE.buckramRed)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(-5);
     this.add.rectangle(128, 130, 26, 9, color(PALETTE.creamPaper)).setDepth(-4);
-    this.add.text(128, 145, "FRUS CART", {
+    const cartLabel = this.add.text(128, 145, "FRUS CART", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.black
     }).setOrigin(0.5).setDepth(-3);
+    cartLabel.setName("office-post-intro-label-cart");
+    this.postIntroLabels.push(cartLabel);
   }
 
   private drawSnesOfficeHubDressing() {
@@ -1689,11 +1762,13 @@ export class OfficeScene extends Phaser.Scene {
     }
     this.add.rectangle(x - 15, y - 2, 18, 8, color(PALETTE.creamPaper)).setDepth(-5);
     this.add.rectangle(x + 13, y - 2, 15, 8, color(PALETTE.buckramRed)).setDepth(-5);
-    this.add.text(x, y + 5, label, {
+    const deskLabel = this.add.text(x, y + 5, label, {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5).setDepth(-4);
+    deskLabel.setName(label === "JR" ? "office-primary-label-jr" : `office-post-intro-label-${label.toLowerCase()}`);
+    if (label !== "JR") this.postIntroLabels.push(deskLabel);
   }
 
   private drawTerminalDesk(x: number, y: number) {
@@ -1786,11 +1861,13 @@ export class OfficeScene extends Phaser.Scene {
     this.add.rectangle(x, y + 3, 20, 5, color(PALETTE.deepRuby)).setDepth(17);
     this.add.rectangle(x - 9, y - 3, 5, 1, color(PALETTE.white), 0.72).setName("office-route-door-glint").setDepth(18);
     this.add.rectangle(x + 8, y + 1, 4, 1, color(accent), 0.9).setName("office-route-door-glint").setDepth(18);
-    this.add.text(x, y - 4, label, {
+    const doorLabel = this.add.text(x, y - 4, label, {
       fontFamily: "monospace",
       fontSize: "4px",
       color: accent,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(18);
+    doorLabel.setName(`office-post-intro-label-door-${label.toLowerCase()}`);
+    this.postIntroLabels.push(doorLabel);
   }
 }

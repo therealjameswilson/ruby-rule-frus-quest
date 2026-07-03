@@ -8,7 +8,7 @@ export const FRUS_QUEST_STAKES =
   "Reliability hearts fall when Kellogg standards are violated.";
 
 export const FRUS_QUEST_FIRST_OBJECTIVE =
-  "Mission: publish a reliable FRUS volume. First: talk to the Junior Compiler or enter the Archive Guide.";
+  "Mission: publish a reliable FRUS volume. First: talk to JR.";
 
 export const FRUS_QUEST_TITLE_PROMPT =
   "MISSION: PUBLISH A RELIABLE FRUS VOLUME";
