@@ -237,20 +237,21 @@ export class SilentReadScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
     this.add.rectangle(128, 120, 256, 240, color(PALETTE.sepiaInk));
     this.add.rectangle(128, 120, 248, 232, color(PALETTE.creamPaper));
-    drawRoomFrame(this, "EDITOR / READ", PALETTE.deepRuby);
+    drawRoomFrame(this, "EDITOR / READ", PALETTE.deepRuby, { showLegacyHud: false });
     this.drawProofMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(902);
+    }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.player = new Player(this, 128, 202);
     this.dialog = new DialogBox(this);
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.actionHint = this.add.text(8, 211, "", {

@@ -144,14 +144,14 @@ export class ReferralVaultScene extends Phaser.Scene {
     retroAudio.startMusic("ReferralVaultScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     drawTiledFloor(this, "vault-tiles");
-    drawRoomFrame(this, "REFERRAL VAULT");
+    drawRoomFrame(this, "REFERRAL VAULT", PALETTE.goldStamp, { showLegacyHud: false });
     this.drawReferralMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(902);
+    }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.vaultText = this.add.text(128, 88, "BATCH MANIFEST\nPENDING HUMAN CHECK", {
       fontFamily: "monospace",
@@ -166,6 +166,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.referralGateOpen = gameState.processStamps.includes("referral");

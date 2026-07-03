@@ -182,9 +182,15 @@ export function drawTiledFloor(scene: Phaser.Scene, textureKey: string) {
   }
 }
 
-export function drawRoomFrame(scene: Phaser.Scene, title: string, accent: string = PALETTE.goldStamp) {
+export function drawRoomFrame(
+  scene: Phaser.Scene,
+  title: string,
+  accent: string = PALETTE.goldStamp,
+  options: { showLegacyHud?: boolean } = {}
+) {
+  const showLegacyHud = options.showLegacyHud ?? true;
   scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.shadowNavy)).setDepth(-30);
-  drawAdventureHud(scene, title, accent);
+  if (showLegacyHud) drawAdventureHud(scene, title, accent);
   drawDungeonWalls(scene, accent);
   scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 16, GAME_WIDTH - 8, GAME_HEIGHT - 40).setStrokeStyle(4, color(PALETTE.buckramRed)).setDepth(50);
 }

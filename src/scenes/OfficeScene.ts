@@ -148,7 +148,7 @@ export class OfficeScene extends Phaser.Scene {
     setVisibleThreats([]);
     retroAudio.startMusic("GuideScene");
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
-    drawRoomFrame(this, "OFFICE HUB", PALETTE.goldStamp);
+    drawRoomFrame(this, "OFFICE HUB", PALETTE.goldStamp, { showLegacyHud: false });
     this.hideLegacyRoomHud();
     this.postIntroLabels = [];
     this.drawOfficeInterior();

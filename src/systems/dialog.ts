@@ -28,11 +28,11 @@ export class DialogBox {
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
     const touch = isTouchInputCapable();
-    const fontSize = touch ? 9 : 8;
-    const frameHeight = touch ? 56 : 50;
+    const fontSize = touch ? 8 : 7;
+    const frameHeight = touch ? 48 : 42;
     const frameY = GAME_HEIGHT - frameHeight - 4;
-    const speakerY = frameY + 6;
-    const bodyY = speakerY + 12;
+    const speakerY = frameY + 5;
+    const bodyY = speakerY + 11;
     const frame = createDanneScrollFrame(scene, 6, frameY, GAME_WIDTH - 12, frameHeight);
     this.speakerText = scene.add.text(14, speakerY, "", {
       fontFamily: "monospace",
