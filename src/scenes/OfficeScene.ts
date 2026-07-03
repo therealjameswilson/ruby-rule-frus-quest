@@ -167,9 +167,7 @@ export class OfficeScene extends Phaser.Scene {
     this.toast = new FeedbackToast(this);
     this.solids = [
       new Phaser.Geom.Rectangle(34, 72, 72, 28),
-      new Phaser.Geom.Rectangle(154, 72, 64, 28),
-      new Phaser.Geom.Rectangle(32, 134, 56, 28),
-      new Phaser.Geom.Rectangle(174, 132, 42, 34)
+      new Phaser.Geom.Rectangle(154, 72, 64, 28)
     ];
     this.interactables = [
       {
@@ -362,7 +360,31 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private currentInteractables() {
-    if (gameState.sceneProgress.juniorCompilerIntroduced) return this.interactables;
+    if (gameState.sceneProgress.juniorCompilerIntroduced) {
+      const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
+      const expectedStationId = progress === 0
+        ? "production-inbox"
+        : progress === 1
+          ? "frus-cart"
+          : progress === 2
+            ? "Archive Terminal"
+            : null;
+      return this.interactables.map((interactable) => {
+        if (interactable.id === "junior-compiler") {
+          return {
+            ...interactable,
+            radius: progress >= 3 ? 34 : 18
+          };
+        }
+        if (interactable.id === expectedStationId) {
+          return {
+            ...interactable,
+            radius: (interactable.radius ?? 24) + 8
+          };
+        }
+        return interactable;
+      });
+    }
     const junior = this.interactables.find((interactable) => interactable.id === "junior-compiler");
     return junior ? [{ ...junior, radius: 72 }] : [];
   }
