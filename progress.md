@@ -2,6 +2,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Play-to-completion blocker pass (2026-07-03):
+  - Played the current local build with the browser harness from the opening route into Office, then through Guide/Archive A1, Network routing, and the Buckram Gate publication table.
+  - Fixed the first Office quest lane: lower furniture collision was blocking the inbox/cart/terminal route, and the Junior Compiler remained too easy to re-trigger while the objective asked for station checks. The lower lane is now open, JR has a smaller radius during station checks, and the expected station gets a slightly larger active radius.
+  - Fixed choice prompts so the primary action button (Space/Enter/gamepad A/touch A) selects option A. This matches the on-screen prompts and makes the repeated FRUS review checks playable without requiring players to discover literal letter-key input.
+  - Fixed the Buckram Gate deadlock where `APP SRC`/sources-consulted appeared as the next blocker but the publication table refused to start front-matter assembly. Sources consulted is now treated as part of the front-matter assembly blocker set.
+  - Verification:
+    - Office route script confirmed JR -> Production Inbox -> FRUS Cart -> Archive Terminal -> return to JR -> Master Declass Key -> Archive Guide transition;
+    - Archive route script confirmed Source Note 47 pickup -> research-table route -> provenance verification -> citation stamp -> annotation -> remaining documents -> NetworkScene transition;
+    - Network route script confirmed pointer route sequence `A A A B B B B` clears FIREWALL and awards the network stamp; primary action now advances A-choice review prompts;
+    - Ending route script confirmed Buckram Gate now advances through front matter, reader aids, index, typesetter corrections, final certification, GPO handoff, funding, ledger, digital release, public citation, release calendar, and publishes the FRUS cover;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=post-fix-harness-ending`;
+    - `npm run build` passes with the known Vite large-chunk warning.
 - Chrome playtest smoothing pass (2026-07-02):
   - Played the live local build in Chrome from WarningScene through TitleScene, CharacterCreateScene, and the Office Hub opening loop.
   - Found and fixed a one-press scene-skip: pressing Enter on the DANN-E warning could carry through the title and land directly on role select. WarningScene now swallows the transition input, and TitleScene only advances on a fresh press.

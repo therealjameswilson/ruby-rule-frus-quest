@@ -1481,7 +1481,13 @@ export class EndingScene extends Phaser.Scene {
     if (!gameState.sceneProgress.typesetterProofComplete) return false;
     if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
     if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
-    const allowedAssemblyBlockers = new Set(["front_matter_assembly", "reader_aid_registers", "index_typeset_check", "typesetter_corrections"]);
+    const allowedAssemblyBlockers = new Set([
+      "sources_consulted",
+      "front_matter_assembly",
+      "reader_aid_registers",
+      "index_typeset_check",
+      "typesetter_corrections"
+    ]);
     return readiness.missingApparatus.some((component) => component.id === "front_matter_assembly")
       && readiness.missingApparatus.every((component) => allowedAssemblyBlockers.has(component.id));
   }
