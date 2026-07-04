@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   FRUS_QUEST_FIRST_OBJECTIVE,
-  FRUS_QUEST_LOOP,
   FRUS_QUEST_MISSION,
   FRUS_QUEST_STAKES
 } from "../game/mission";
@@ -14,6 +13,7 @@ import {
   getAdventureTrainingReadout,
   getProductionBoardReadout,
   hasDanneItem,
+  setHeldItem,
   setLatestMessage,
   setDocumentWorkflowState,
   setNearestInteractable,
@@ -132,6 +132,7 @@ export class OfficeScene extends Phaser.Scene {
   private firstQuestCue?: Phaser.GameObjects.Container;
   private firstQuestCueLabel?: Phaser.GameObjects.Text;
   private firstQuestCuePlate?: Phaser.GameObjects.Rectangle;
+  private starterMemoIcon?: Phaser.GameObjects.Container;
   private postIntroLabels: Phaser.GameObjects.GameObject[] = [];
   private firstRoomProgressObjects: Phaser.GameObjects.GameObject[] = [];
   private readonly interactionAssist = new InteractionAssist();
@@ -182,6 +183,15 @@ export class OfficeScene extends Phaser.Scene {
         radius: 30,
         kind: "npc",
         onInteract: () => this.talkJuniorCompiler()
+      },
+      {
+        id: "starter-memo",
+        label: "Assignment Memo",
+        x: 128,
+        y: 166,
+        radius: 26,
+        kind: "document",
+        onInteract: () => this.handleStarterMemo()
       },
       {
         id: "production-inbox",
@@ -258,6 +268,7 @@ export class OfficeScene extends Phaser.Scene {
     ];
     setVisibleEntities([
       "Junior Compiler",
+      "Assignment Memo",
       "Production Inbox",
       "Scope and Candidate Selection Desk",
       "FRUS Cart",
@@ -371,25 +382,31 @@ export class OfficeScene extends Phaser.Scene {
 
   private currentInteractables() {
     if (gameState.sceneProgress.juniorCompilerIntroduced) {
-      const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
-      const expectedStationId = progress === 0
-        ? "production-inbox"
-        : progress === 1
-          ? "frus-cart"
-          : progress === 2
-            ? "Archive Terminal"
-            : null;
+      const memoStatus = this.officeStarterMemoStatus();
+      const routeUnlocked = hasDanneItem("master-declass-key");
+      const junior = this.interactables.find((interactable) => interactable.id === "junior-compiler");
+      const memo = this.interactables.find((interactable) => interactable.id === "starter-memo");
+      const inbox = this.interactables.find((interactable) => interactable.id === "production-inbox");
+      const archive = this.interactables.find((interactable) => interactable.id === "archive-guide-door");
+      if (!routeUnlocked) {
+        const focused: Interactable[] = [];
+        if (memoStatus === 0 && memo) focused.push({ ...memo, radius: 36 });
+        if ((memoStatus === 1 || memoStatus === 2) && inbox) {
+          focused.push({
+            ...inbox,
+            label: memoStatus === 1 ? "Route Memo" : "Stamp Memo",
+            radius: 54
+          });
+        }
+        if (junior) focused.push({ ...junior, radius: memoStatus >= 3 ? 34 : 18 });
+        if (archive) focused.push(archive);
+        return focused;
+      }
       return this.interactables.map((interactable) => {
         if (interactable.id === "junior-compiler") {
           return {
             ...interactable,
-            radius: progress >= 3 ? 34 : 18
-          };
-        }
-        if (interactable.id === expectedStationId) {
-          return {
-            ...interactable,
-            radius: (interactable.radius ?? 24) + 8
+            radius: 34
           };
         }
         return interactable;
@@ -401,50 +418,41 @@ export class OfficeScene extends Phaser.Scene {
 
   private currentOfficeObjective() {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) return FRUS_QUEST_FIRST_OBJECTIVE;
-    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
-    if (progress < 3) return `Inspect ${this.nextJuniorStationLabel(progress)}.`;
-    if (!hasDanneItem("master-declass-key")) return "Return to JR for the key.";
+    const memoStatus = this.officeStarterMemoStatus();
+    if (memoStatus === 0) return "Pick up the Assignment Memo.";
+    if (memoStatus === 1) return "Carry the memo to INBOX.";
+    if (memoStatus === 2) return "Stamp the memo at INBOX.";
+    if (!hasDanneItem("master-declass-key")) return "Stamp the memo to open Archive.";
     return "Enter Archive Guide.";
   }
 
   private nextJuniorStationLabel(progress = gameState.sceneProgress.juniorCompilerFetch ?? 0) {
-    if (progress === 0) return "Production Inbox";
-    if (progress === 1) return "FRUS Cart";
-    return "Archive Terminal";
+    if (progress <= 0) return "Assignment Memo";
+    if (progress === 1) return "Production Inbox";
+    if (progress === 2) return "Stamp";
+    return "Archive Guide";
   }
 
   private talkJuniorCompiler() {
     retroAudio.confirm();
     gameState.sceneProgress.juniorCompilerIntroduced = 1;
     this.updateFirstQuestCue();
-    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
+    const memoStatus = this.officeStarterMemoStatus();
     if (hasDanneItem("master-declass-key")) {
-      this.dialog.show("JUNIOR COMPILER", [
-        FRUS_QUEST_MISSION,
-        "Master Declass Key is logged.",
-        "Use it only at approved classified doors.",
-        ...this.juniorCompiler.dialogLines()
-      ]);
+      setLatestMessage("Archive Guide is open. Go south through the gold door.");
+      setObjective("Enter Archive Guide.");
+      this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
       return;
     }
-    if (progress >= 3) {
-      const added = addDanneItem("master-declass-key");
-      if (added) retroAudio.danneItemPickup("Master Declass Key");
-      this.dialog.show("JUNIOR COMPILER", [
-        "Inbox, cart, and terminal agree.",
-        "Master Declass Key acquired.",
-        "Carry it to the Marine Guard for approved access."
-      ]);
+    if (memoStatus >= 3) {
+      setLatestMessage("Memo is stamped. Archive Guide is open.");
+      setObjective("Enter Archive Guide.");
+      this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
       return;
     }
-    const next = this.nextJuniorStationLabel(progress);
-    setObjective(`Inspect ${next}.`);
-    this.dialog.show("JUNIOR COMPILER", [
-      FRUS_QUEST_MISSION,
-      FRUS_QUEST_LOOP,
-      ...this.juniorCompiler.dialogLines(),
-      `First quest: inspect ${next}. Follow the gold target marker.`
-    ]);
+    setObjective(this.currentOfficeObjective());
+    setLatestMessage("Pick up the memo, carry it to INBOX, then stamp it.");
+    this.toast.show("PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
   }
 
   private showOfficeTutorial() {
@@ -509,6 +517,7 @@ export class OfficeScene extends Phaser.Scene {
 
   private approachCueFor(target: Interactable) {
     if (target.id === "junior-compiler") return "GO TO JR";
+    if (target.id === "starter-memo") return "GO TO MEMO";
     if (target.id === "production-inbox") return "GO TO INBOX";
     if (target.id === "frus-cart") return "GO TO CART";
     if (target.id === "Archive Terminal") return "GO TO TERM";
@@ -569,30 +578,31 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       return { x: this.juniorCompiler.x, y: this.juniorCompiler.y, label: "JR" };
     }
-    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
-    if (progress === 0) return { x: 60, y: 154, label: "INBOX" };
-    if (progress === 1) return { x: 128, y: 132, label: "CART" };
-    if (progress === 2) return { x: 195, y: 154, label: "TERM" };
-    if (!hasDanneItem("master-declass-key")) return { x: this.juniorCompiler.x, y: this.juniorCompiler.y, label: "JR" };
+    const memoStatus = this.officeStarterMemoStatus();
+    if (!hasDanneItem("master-declass-key")) {
+      if (memoStatus === 0) return { x: 128, y: 166, label: "MEMO" };
+      if (memoStatus === 1) return { x: 60, y: 154, label: "INBOX" };
+      if (memoStatus === 2) return { x: 60, y: 154, label: "STAMP" };
+    }
     return { x: 128, y: 216, label: "ARCHIVE" };
   }
 
   private updateFirstRoomProgressVisibility() {
-    const stationLabelsVisible = Boolean(gameState.sceneProgress.juniorCompilerIntroduced);
     const routeUnlocked = hasDanneItem("master-declass-key");
     this.setOfficeRouteCompassVisible(routeUnlocked);
     this.firstRoomProgressObjects.forEach((object) => {
       const visibleObject = object as Phaser.GameObjects.GameObject & {
         setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
       };
-      visibleObject.setVisible?.(routeUnlocked);
+      visibleObject.setVisible?.(false);
     });
     this.postIntroLabels.forEach((object) => {
       const visibleObject = object as Phaser.GameObjects.GameObject & {
         setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
       };
-      visibleObject.setVisible?.(stationLabelsVisible);
+      visibleObject.setVisible?.(false);
     });
+    this.syncStarterMemoVisual();
   }
 
   private hideLegacyRoomHud() {
@@ -609,6 +619,10 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private handleJuniorQuestStation(station: "inbox" | "cart" | "terminal") {
+    if (station === "inbox") {
+      this.handleStarterMemoInbox();
+      return;
+    }
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
@@ -629,8 +643,7 @@ export class OfficeScene extends Phaser.Scene {
       const next = this.nextJuniorStationLabel(progress);
       retroAudio.warning();
       setObjective(`Inspect ${next}.`);
-      const alreadyLogged = (station === "inbox" && progress > 0)
-        || (station === "cart" && progress > 1)
+      const alreadyLogged = (station === "cart" && progress > 1)
         || (station === "terminal" && progress > 2);
       this.dialog.show(
         "OFFICE CHECK",
@@ -653,6 +666,79 @@ export class OfficeScene extends Phaser.Scene {
     ]);
   }
 
+  private officeStarterMemoStatus() {
+    const stored = gameState.sceneProgress.officeStarterMemoStatus;
+    if (typeof stored === "number") return Phaser.Math.Clamp(Math.round(stored), 0, 3);
+    return (gameState.sceneProgress.juniorCompilerFetch ?? 0) >= 3 ? 3 : 0;
+  }
+
+  private setOfficeStarterMemoStatus(status: 0 | 1 | 2 | 3) {
+    gameState.sceneProgress.officeStarterMemoStatus = status;
+    gameState.sceneProgress.juniorCompilerFetch = status >= 3 ? 3 : status;
+    this.syncStarterMemoVisual();
+    this.updateFirstQuestCue();
+  }
+
+  private handleStarterMemo() {
+    if (!gameState.sceneProgress.juniorCompilerIntroduced) {
+      retroAudio.warning();
+      setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
+      this.dialog.show("OFFICE CHECK", "Talk to JR first. Then pick up the memo.");
+      return;
+    }
+    const memoStatus = this.officeStarterMemoStatus();
+    if (memoStatus > 0) {
+      this.toast.show(memoStatus >= 3 ? "MEMO ALREADY STAMPED" : "MEMO ALREADY HELD", this.player.position, "info");
+      return;
+    }
+    this.setOfficeStarterMemoStatus(1);
+    setHeldItem("Assignment Memo");
+    setLatestMessage("CARRY: Assignment Memo.");
+    setObjective("Carry the memo to INBOX.");
+    retroAudio.confirm();
+    this.toast.show("MEMO PICKED UP", this.player.position, "info");
+  }
+
+  private handleStarterMemoInbox() {
+    if (!gameState.sceneProgress.juniorCompilerIntroduced) {
+      retroAudio.warning();
+      setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
+      this.dialog.show("OFFICE CHECK", "Talk to JR first. Then use INBOX.");
+      return;
+    }
+    const memoStatus = this.officeStarterMemoStatus();
+    if (memoStatus === 0) {
+      retroAudio.warning();
+      setObjective("Pick up the Assignment Memo.");
+      this.dialog.show("INBOX", "Pick up the memo first.");
+      return;
+    }
+    if (memoStatus === 1) {
+      this.setOfficeStarterMemoStatus(2);
+      setHeldItem(null);
+      setLatestMessage("ROUTE: memo placed in INBOX.");
+      setObjective("Stamp the memo at INBOX.");
+      retroAudio.confirm();
+      this.toast.show("MEMO ROUTED", this.player.position, "info");
+      return;
+    }
+    if (memoStatus === 2) {
+      this.setOfficeStarterMemoStatus(3);
+      setHeldItem(null);
+      addDocumentPoints(5, "opening assignment memo stamped");
+      const added = addDanneItem("master-declass-key");
+      if (added) retroAudio.danneItemPickup("Master Declass Key");
+      retroAudio.stamp();
+      setLatestMessage("STAMPED: Archive Guide door open.");
+      setObjective("Archive Guide open. Go south.");
+      this.showArchiveUnlockBurst();
+      this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
+      this.dialog.show("STAMP", "Memo stamped. Archive Guide door is open.");
+      return;
+    }
+    this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
+  }
+
   private handleArchiveGuideDoor() {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
@@ -660,12 +746,12 @@ export class OfficeScene extends Phaser.Scene {
       this.dialog.show("ARCHIVE GUIDE", "Talk to JR first. They will open the first production route.");
       return;
     }
-    const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
-    if (progress < 3) {
-      const next = this.nextJuniorStationLabel(progress);
+    const memoStatus = this.officeStarterMemoStatus();
+    if (memoStatus < 3) {
+      const next = this.nextJuniorStationLabel(memoStatus);
       retroAudio.warning();
-      setObjective(`Inspect ${next}.`);
-      this.dialog.show("ARCHIVE GUIDE", `Finish the first route before entering the archive: inspect ${next}.`);
+      setObjective(this.currentOfficeObjective());
+      this.dialog.show("ARCHIVE GUIDE", `Finish the first route before entering the archive: ${next}.`);
       return;
     }
     if (!hasDanneItem("master-declass-key")) {
@@ -1342,6 +1428,7 @@ export class OfficeScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(-3);
     cartLabel.setName("office-post-intro-label-cart");
     this.postIntroLabels.push(cartLabel);
+    this.drawStarterMemo(128, 166);
   }
 
   private drawSnesOfficeHubDressing() {
@@ -1554,7 +1641,50 @@ export class OfficeScene extends Phaser.Scene {
   private captureFirstRoomProgressObjects() {
     this.firstRoomProgressObjects = this.children.list.filter((child) => {
       const name = child.name ?? "";
-      return name.startsWith("office-production-route") || name.startsWith("office-first-hour");
+      return name.startsWith("office-production-route")
+        || name.startsWith("office-first-hour")
+        || name.startsWith("office-snes-route-inlay");
+    });
+  }
+
+  private drawStarterMemo(x: number, y: number) {
+    const shadow = this.add.ellipse(0, 8, 18, 5, color(PALETTE.black), 0.3).setDepth(-3);
+    const page = this.add.rectangle(0, 0, 14, 16, color(PALETTE.creamPaper))
+      .setStrokeStyle(1, color(PALETTE.sepiaInk))
+      .setDepth(-2);
+    const margin = this.add.rectangle(-5, 0, 2, 14, color(PALETTE.buckramRed)).setDepth(-1);
+    const lineA = this.add.rectangle(2, -4, 6, 1, color(PALETTE.sepiaInk), 0.75).setDepth(-1);
+    const lineB = this.add.rectangle(1, 1, 8, 1, color(PALETTE.goldStamp), 0.86).setDepth(-1);
+    const lineC = this.add.rectangle(2, 5, 5, 1, color(PALETTE.sepiaInk), 0.55).setDepth(-1);
+    this.starterMemoIcon = this.add.container(x, y, [shadow, page, margin, lineA, lineB, lineC])
+      .setName("office-starter-assignment-memo")
+      .setDepth(28);
+    this.syncStarterMemoVisual();
+  }
+
+  private syncStarterMemoVisual() {
+    this.starterMemoIcon?.setVisible(this.officeStarterMemoStatus() === 0);
+  }
+
+  private showArchiveUnlockBurst() {
+    const burst = this.add.container(128, 205).setDepth(1200);
+    const panel = this.add.rectangle(0, 0, 126, 18, color(PALETTE.black), 0.88)
+      .setStrokeStyle(1, color(PALETTE.goldStamp));
+    const text = this.add.text(0, -5, "ARCHIVE GUIDE OPEN", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5, 0);
+    const left = this.add.rectangle(-72, 0, 24, 2, color(PALETTE.terminalCyan));
+    const right = this.add.rectangle(72, 0, 24, 2, color(PALETTE.terminalCyan));
+    burst.add([panel, text, left, right]);
+    this.tweens.add({
+      targets: burst,
+      y: 194,
+      alpha: 0,
+      duration: 950,
+      ease: "Sine.easeOut",
+      onComplete: () => burst.destroy(true)
     });
   }
 
