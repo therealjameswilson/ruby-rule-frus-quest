@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- First-three-minutes physical loop pass (2026-07-04):
+  - Replaced the opening Office station-check sequence with one concrete task: talk to JR, pick up the Assignment Memo, carry it to INBOX, stamp it, and enter Archive Guide.
+  - Made the first JR interaction non-modal so the first click starts the task instead of forcing players through dialogue pages.
+  - Added a visible Assignment Memo object, a held-item state, route/stamp states at the INBOX, and a clear `ARCHIVE GUIDE OPEN` unlock burst.
+  - Kept the first Office visually quiet by hiding route diagrams and station labels during the opening loop; prompts now introduce terms only when the player is acting on them.
+  - Widened the onboarding-only INBOX interaction radius so the first physical routing step is forgiving.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - direct bundled-Playwright route confirmed JR -> Assignment Memo -> INBOX route -> INBOX stamp -> Master Declass Key -> GuideScene;
+    - visual proof: `output/targeted-nonmodal-first-loop-after-stamp.png` and `output/targeted-enter-archive-final.png`.
 - Gameplay HUD declutter pass (2026-07-03):
   - Removed the duplicate legacy room HUD from Guide, Archive, Network, Referral Vault, Silent Read, Office, and Ending scenes so the global quest band is the only persistent top HUD.
   - Hid the ReliabilityHud summary by default in the gameplay scenes; the reliability detail panel remains available when explicitly opened, but it no longer paints production text over the playfield on scene load.
