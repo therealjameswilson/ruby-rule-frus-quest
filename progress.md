@@ -2,6 +2,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- iPhone playability pass (2026-07-05):
+  - Found and fixed a mobile-specific blocker where a quick on-screen A-button tap could press and release between frames, so `aJustPressed` never reached gameplay scenes.
+  - Added a short touch-control latch parallel to the existing keyboard tap latch, preserving one clean interaction edge for brief A/B/Start-style taps.
+  - Made CharacterCreateScene easier to start on a phone by turning the large role preview and begin prompt into forgiving confirmation targets, with copy changed to `A / TAP PREVIEW TO BEGIN`.
+  - Verification:
+    - iPhone 14 Pro emulation confirmed Warning -> Title -> Character Create -> touch confirm -> Office;
+    - iPhone portrait confirmed virtual D-pad movement, approach to Junior Compiler, and on-screen A interaction advancing the objective to `Pick up the Assignment Memo.`;
+    - iPhone landscape confirmed virtual D-pad movement with integer zoom and touch controls active;
+    - `npm test -- --run src/input/InputState.test.ts` passes (1 file / 16 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?v=iphone-touch-latch-client`;
+    - visual proof: `output/iphone-final-qa/iphone-portrait-office-after-a.png` and `output/iphone-final-qa/iphone-landscape-office-move.png`.
 - DANN-E lurking obstacle pass (2026-07-05):
   - Added a reusable `DanneLurker` enemy that uses existing DANN-E art and patrols workflow routes as deadline-pressure friction rather than replacing StateChat or human review.
   - Wired the lurker into Office, Archive, Network, Referral Vault, and Silent Read scenes; the existing Ending/Buckram Gate still reports the 30-year line and DANN-E queue as final blockers.

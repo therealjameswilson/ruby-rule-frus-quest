@@ -108,6 +108,27 @@ describe("InputState keyboard edges", () => {
     expect(getInput().navDownJustPressed).toBe(true);
   });
 
+  it("turns a too-short touch A tap into a single interaction edge", () => {
+    let now = 3000;
+    setNowProviderForTests(() => now);
+    setTouchControl("space", true);
+    setTouchControl("space", false);
+
+    tickInput();
+    expect(getInput().aJustPressed).toBe(true);
+    expect(getInput().confirmJustPressed).toBe(true);
+
+    now += TAP_ACTION_HOLD_MS - 10;
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+    expect(getInput().a).toBe(true);
+
+    now += 20;
+    tickInput();
+    expect(getInput().a).toBe(false);
+    expect(getInput().aJustReleased).toBe(true);
+  });
+
   it("maps WASD and arrow keys to the identical movement axis", () => {
     setKeyboardDownForTests(["KeyW"]);
     tickInput();

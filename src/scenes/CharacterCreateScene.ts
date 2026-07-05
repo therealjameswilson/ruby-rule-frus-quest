@@ -79,6 +79,7 @@ export class CharacterCreateScene extends Phaser.Scene {
       .setName("character-create-role-preview-sprite")
       .setDepth(10)
       .setOrigin(0.5, 0.9);
+    bindPointerDown(this.sprite, () => this.confirm());
     this.nameText = this.add.text(128, 94, "", {
       fontFamily: "monospace",
       fontSize: "8px",
@@ -109,7 +110,7 @@ export class CharacterCreateScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan
     }).setName("character-create-begin-summary").setOrigin(0.5);
-    this.add.text(128, 212, "ENTER / TAP SAME CARD AGAIN TO BEGIN", {
+    this.add.text(128, 212, "A / TAP PREVIEW TO BEGIN", {
       fontFamily: "monospace",
       fontSize: "4px",
       color: PALETTE.goldStamp
@@ -119,6 +120,10 @@ export class CharacterCreateScene extends Phaser.Scene {
       fontSize: "4px",
       color: PALETTE.creamPaper
     }).setName("character-create-first-action").setOrigin(0.5);
+    bindPointerDown(
+      this.add.zone(128, 211, 190, 28).setName("character-create-begin-touch-zone").setDepth(30),
+      () => this.confirm()
+    );
 
     this.renderSelection();
   }

@@ -178,6 +178,7 @@ let currentState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 let previousState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 const keyboardDown = new Set<string>();
 const touchDown = new Set<TouchControlKey>();
+const touchTapLatch = new Map<TouchControlKey, number>();
 const pendingTypedCharacters: string[] = [];
 const pendingPointerStarts: Array<{ x: number; y: number }> = [];
 const activePointerIds = new Set<number>();
@@ -243,7 +244,12 @@ function isActionActive(...codes: string[]) {
 }
 
 function isTouchDown(...keys: TouchControlKey[]) {
-  return keys.some((key) => touchDown.has(key));
+  if (keys.some((key) => touchDown.has(key))) return true;
+  const now = nowProvider();
+  return keys.some((key) => {
+    const at = touchTapLatch.get(key);
+    return at !== undefined && now - at <= TAP_ACTION_HOLD_MS;
+  });
 }
 
 function getConnectedGamepads() {
@@ -657,6 +663,7 @@ export function getInput(): Readonly<InputState> {
 export function setTouchControl(key: TouchControlKey, pressed: boolean) {
   if (pressed) {
     touchDown.add(key);
+    touchTapLatch.set(key, nowProvider());
     if (key === "left" || key === "right" || key === "up" || key === "down") lastDirection = key;
   } else {
     touchDown.delete(key);
@@ -709,6 +716,7 @@ export function bindDomPointerDown(element: HTMLElement, callback: (event: Point
 export function resetInput() {
   keyboardDown.clear();
   touchDown.clear();
+  touchTapLatch.clear();
   directionTapLatch.clear();
   actionTapLatch.clear();
   pendingTypedCharacters.length = 0;
