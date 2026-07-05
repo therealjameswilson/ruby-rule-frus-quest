@@ -19,7 +19,7 @@ export class WarningScene extends Phaser.Scene {
   create() {
     setSceneState("WarningScene", "title", "Fictional DANN-E warning before title.");
     setLatestMessage("DANN-E is a fictional rogue AI. Tap to continue.");
-    setVisibleEntities(["DANN-E warning", "TAP / PRESS A"]);
+    setVisibleEntities(["DANN-E warning", "history.state.gov shoutout", "TAP / PRESS A"]);
     if (getSkipWarningPreference()) {
       this.scene.start("TitleScene");
       return;
@@ -74,6 +74,11 @@ export class WarningScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan
     }).setName("warning-simple-stakes").setOrigin(0.5, 0).setResolution(2);
+    this.add.text(128, 162, "FRUS SOURCE TRAIL: HISTORY.STATE.GOV", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.creamPaper
+    }).setName("warning-history-state-shoutout").setOrigin(0.5, 0).setResolution(2);
     this.add.text(128, 172, "TAP / PRESS A TO CONTINUE", {
       fontFamily: "monospace",
       fontSize: "6px",

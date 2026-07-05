@@ -139,6 +139,11 @@ export class TitleScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.terminalCyan
     }).setName("title-clean-start-text").setOrigin(0.5, 0).setResolution(2);
+    this.add.text(128, 126, "FRUS SOURCE TRAIL: HISTORY.STATE.GOV", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.creamPaper
+    }).setName("title-history-state-shoutout").setOrigin(0.5, 0).setResolution(2);
   }
 
   /**

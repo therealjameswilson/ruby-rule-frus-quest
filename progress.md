@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Opening history.state.gov shoutout pass (2026-07-05):
+  - Added a small `FRUS SOURCE TRAIL: HISTORY.STATE.GOV` line to the first DANN-E warning card.
+  - Added the same small source-trail line to the procedural title card so the shoutout remains visible when the warning is skipped.
+  - Updated the opening scene text-state entities so `window.render_game_to_text()` exposes the history.state.gov shoutout during automated QA.
+  - Verification:
+    - `npm test -- --run src/input/InputState.test.ts src/scenes/TitleScene.test.ts` passes (2 files / 25 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?v=history-shoutout-client`;
+    - direct Playwright probe confirmed `WarningScene` exposes `history.state.gov shoutout` in `window.render_game_to_text()` and reports zero browser errors;
+    - visual proof: `output/history-shoutout-warning.png` and `output/history-shoutout-title.png`.
 - Eerie public-domain Bach background music pass (2026-07-05):
   - Added a richer `Eerie Bach Fugue` Web Audio theme built from repo-local MIDI note data derived from checked-in public-domain Bach MIDI sources.
   - Layered the background music with low pedal tones, a delayed counterline, and a chromatic square-wave lead so it reads more like eerie Bach than a thin single-line chiptune.
