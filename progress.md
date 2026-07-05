@@ -2,6 +2,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Cohesive FRUS character sprite pass (2026-07-05):
+  - Replaced the broken imported native 32x48 character animation sheets with original repo-local FRUS-themed pixel sheets that preserve the same filenames, dimensions, 4x4 frame layout, transparency, and role identities.
+  - Added `scripts/sharpen-frus-character-sprites.py` so the character sheets can be regenerated reproducibly; original imported sheets are backed up under `public/assets/_originals/art-pack/sprites/native/`.
+  - Restored real 4-direction idle/walk/action frame usage in `src/art/character_anims.ts` instead of forcing every animation to frame 0.
+  - Updated `Player` art priority so the playable character uses the same sharpened 32x48 art family as role cards and NPCs, with older SVG role strips retained as fallback.
+  - Verification:
+    - focused `npm test -- --run src/game/snesAtlas.test.ts src/input/InputState.test.ts src/scenes/CharacterCreateScene.test.ts` passes (3 files / 19 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=SpriteGallery&v=sharp-sprites-generated-client`;
+    - direct Playwright visual probe confirmed `SpriteGallery` and `OfficeScene` render with zero browser errors;
+    - visual proof: `output/sharp-sprites-generated-gallery.png`, `output/sharp-sprites-generated-office.png`, and `output/native-sprites-generated-montage.png`.
 - First-three-minutes physical loop pass (2026-07-04):
   - Replaced the opening Office station-check sequence with one concrete task: talk to JR, pick up the Assignment Memo, carry it to INBOX, stamp it, and enter Archive Guide.
   - Made the first JR interaction non-modal so the first click starts the task instead of forcing players through dialogue pages.

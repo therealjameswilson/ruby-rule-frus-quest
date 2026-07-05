@@ -114,21 +114,16 @@ export class Player {
     this.logicalX = resumeSpawn?.player.x ?? x;
     this.logicalY = resumeSpawn?.player.y ?? y;
     this.facing = resumeSpawn?.facing ?? this.facing;
-    const preferredRoleFrameSheet = this.getAvailableRoleFrameSheet(scene);
     const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId);
-    this.roleFrameSheet = preferredRoleFrameSheet;
-    this.characterKey = this.roleFrameSheet
-      ? null
-      : scene.textures.exists(preferredCharacterKey)
-        ? preferredCharacterKey
-        : null;
-    this.spriteMode = this.roleFrameSheet
-      ? "snesRoleFrame48"
-      : this.characterKey
-        ? "artPack32x48"
-      : scene.textures.exists(gameState.playerProfile.snesSpriteKey)
-        ? "snes16"
-        : "nes8";
+    this.characterKey = scene.textures.exists(preferredCharacterKey) ? preferredCharacterKey : null;
+    this.roleFrameSheet = this.characterKey ? null : this.getAvailableRoleFrameSheet(scene);
+    this.spriteMode = this.characterKey
+      ? "artPack32x48"
+      : this.roleFrameSheet
+        ? "snesRoleFrame48"
+        : scene.textures.exists(gameState.playerProfile.snesSpriteKey)
+          ? "snes16"
+          : "nes8";
     const isSnesScale = this.spriteMode === "snes16" || this.spriteMode === "snesRoleFrame48" || this.spriteMode === "artPack32x48";
     this.shadowOffsetY = this.spriteMode === "artPack32x48" ? ART_PACK_FOOT_OFFSET_Y : isSnesScale ? 9 : 8;
     this.shadowDepthOffset = isSnesScale ? 2 : 1;
