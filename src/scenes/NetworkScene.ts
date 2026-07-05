@@ -973,11 +973,17 @@ export class NetworkScene extends Phaser.Scene {
       && !this.reliability.active
       && !this.routingActive;
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
-    if (!result.triggered) return;
-    this.player.takeHit(this.danneLurker.position, 11, 700);
-    applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted network routing.");
-    setObjective("Two Networks: route evidence by human review, not DANN-E urgency.");
-    this.reliability.update();
+    if (result.triggered) {
+      this.player.takeHit(this.danneLurker.position, 11, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted network routing.");
+      setObjective("Two Networks: route evidence by human review, not DANN-E urgency.");
+      this.reliability.update();
+    } else if (result.egoBoltHit) {
+      this.player.takeHit(this.danneLurker.position, 9, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted network routing.");
+      setObjective("Two Networks: dodge Ego bolts and route evidence on the right network.");
+      this.reliability.update();
+    }
   }
 
   private showRouteChoice() {

@@ -337,6 +337,11 @@ export class SilentReadScene extends Phaser.Scene {
       applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted proof review.");
       setObjective("Silent Read Tower: proof by human review, not DANN-E pressure.");
       this.reliability.update();
+    } else if (result.egoBoltHit) {
+      this.player.takeHit(this.danneLurker.position, 9, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted proof review.");
+      setObjective("Silent Read Tower: dodge Ego bolts and keep proofing.");
+      this.reliability.update();
     }
     this.syncThreatState();
   }

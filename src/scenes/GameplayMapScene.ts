@@ -16,6 +16,7 @@ import {
   type OverworldRegionKey
 } from "../assets/registry";
 import { getDistrictById } from "../data/regions";
+import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
 import { fileCapitolHacPacket, inspectClosedSessionSample } from "../game/capitolHacPacket";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -85,6 +86,7 @@ import {
 } from "../systems/interaction";
 import { InteractionPrompt, promptVerbForKind } from "../systems/interactionPrompt";
 import { snapPixel } from "../systems/pixelPerfect";
+import { applyStandardsViolation } from "../systems/reliability";
 import { playRubyMosaicTransition } from "../systems/sceneTransitions";
 import { addSnesStatutoryClock } from "../systems/snesPixelArt";
 import {
@@ -224,6 +226,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private readonly frusFloorNextGateInteractableId = "frus-floor-next-gate";
   private triggerZones: TriggerZone[] = [];
   private tileData!: TiledMapData;
+  private danneLurker?: DanneLurker;
 
   constructor() {
     super("GameplayMapScene");
@@ -268,6 +271,7 @@ export class GameplayMapScene extends Phaser.Scene {
     const rawSpawn = this.findSpawn(this.spawnId) ?? this.findSpawn("entry") ?? { x: this.fitRect.x + this.fitRect.width / 2, y: this.fitRect.y + this.fitRect.height - 20 };
     const spawn = this.adjustSpawnAwayFromWorldExit(rawSpawn);
     this.player = new Player(this, spawn.x, spawn.y);
+    this.createDanneEncounter();
     this.suppressSpawnTrigger(spawn);
     this.showEntryBanner();
     this.updateFrusFloorCurrentStage(true);
@@ -275,6 +279,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.updateFrusFloorNextGateRoute(true);
     this.updateFrusFloorNextGateInteractable(true);
     this.updateVisibleMapState();
+    this.syncGameplayThreats();
   }
 
   private updateVisibleMapState() {
@@ -296,7 +301,8 @@ export class GameplayMapScene extends Phaser.Scene {
       ] : []),
       ...this.routeReadouts(),
       `District: ${this.districtName}`,
-      ...this.interactables.map((item) => item.label)
+      ...this.interactables.map((item) => item.label),
+      ...(this.danneLurker ? ["DANN-E Lurker"] : [])
     ]);
   }
 
@@ -335,6 +341,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.updateFrusFloorGateStatus();
     this.updateFrusFloorNextGateRoute();
     this.updateFrusFloorNextGateInteractable();
+    this.updateDanneEncounter(delta);
     const nearest = nearestInteractable(this.player.position, this.interactables);
     const hintTarget = this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, this.interactables));
     const promptTarget = nearest ?? hintTarget;
@@ -368,6 +375,43 @@ export class GameplayMapScene extends Phaser.Scene {
     } else if (!showedStepCloserFeedback) {
       setObjective(MAP_OBJECTIVES[this.mapKey]);
     }
+    this.syncGameplayThreats();
+  }
+
+  private createDanneEncounter() {
+    if (this.mapKey !== "black_vault") return;
+    const centerX = Math.round(this.fitRect.x + this.fitRect.width * 0.5);
+    const centerY = Math.round(this.fitRect.y + this.fitRect.height * 0.43);
+    this.danneLurker = new DanneLurker(this, centerX, centerY, {
+      waypoints: [
+        { x: centerX, y: centerY },
+        { x: centerX - 34, y: centerY + 14 },
+        { x: centerX, y: centerY - 18 },
+        { x: centerX + 34, y: centerY + 14 }
+      ]
+    });
+  }
+
+  private updateDanneEncounter(delta: number) {
+    if (!this.danneLurker) return;
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
+    if (result.triggered) {
+      this.player.takeHit(this.danneLurker.position, 11, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted Black Vault navigation.");
+      setObjective("Black Vault: dodge DANN-E and reject shortcut pressure.");
+      this.objectiveOverrideMsRemaining = 1000;
+      return;
+    }
+    if (result.egoBoltHit) {
+      this.player.takeHit(this.danneLurker.position, 9, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted Black Vault navigation.");
+      setObjective("Black Vault: dodge Ego bolts and reach the lawful review route.");
+      this.objectiveOverrideMsRemaining = 1000;
+    }
+  }
+
+  private syncGameplayThreats() {
+    setVisibleThreats(this.danneLurker ? [this.danneLurker.readout(this.time.now)] : []);
   }
 
   private readTileData(): TiledMapData {

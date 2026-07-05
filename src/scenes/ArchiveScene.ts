@@ -552,6 +552,11 @@ export class ArchiveScene extends Phaser.Scene {
       applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted archive verification.");
       setObjective("Archive Cavern: verify sources by human review, not DANN-E pressure.");
       this.reliability.update();
+    } else if (result.egoBoltHit) {
+      this.player.takeHit(this.danneLurker.position, 9, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted archive verification.");
+      setObjective("Archive Cavern: dodge Ego bolts and keep verifying sources.");
+      this.reliability.update();
     }
     this.syncWallState();
   }

@@ -2,6 +2,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- DANN-E Ego attack and boast encounter pass (2026-07-05):
+  - Upgraded the reusable roaming `DanneLurker` so DANN-E now boasts in a floating speech cue and fires visible Ego-bolt attacks when the hero enters range.
+  - Reused the existing DANN-E ego-bolt VFX/audio and added a small gold-edged red stamp body so the projectile remains readable against ruby/black vault art.
+  - Wired Ego-bolt hits into Office, Archive, Network, Referral Vault, Silent Read, and the Black Vault gameplay map; hits apply the existing missed-30-year-deadline standards damage and update the objective toward lawful human review.
+  - Added a Black Vault `GameplayMapScene` DANN-E encounter so the static gameplay-map route now has the same lurker behavior before the dedicated final boss scene.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - `npm test -- --run src/input/InputState.test.ts src/systems/standardsDamage.test.ts` passes (2 files / 19 tests);
+    - required web-game client completed against `?scene=GameplayMapScene&map=black_vault&role=compiler&name=Ruby&v=danne-ego-final-client`;
+    - direct Playwright probes confirmed `visibleThreats[0].behavior` reports DANN-E "boasts, and fires ego bolts", the live boast line `DANN-E boasts: OMIT THE HARD PART.`, and standards damage on Ego-bolt hit with zero browser errors;
+    - visual proof: `output/danne-ego-final-early.png`, `output/danne-ego-final-proof.png`, and `output/danne-ego-gameplay-map.png`.
 - Opening history.state.gov shoutout pass (2026-07-05):
   - Added a small `FRUS SOURCE TRAIL: HISTORY.STATE.GOV` line to the first DANN-E warning card.
   - Added the same small source-trail line to the procedural title card so the shoutout remains visible when the warning is skipped.

@@ -554,11 +554,17 @@ export class ReferralVaultScene extends Phaser.Scene {
       && !this.inventory.active
       && !this.reliability.active;
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
-    if (!result.triggered) return;
-    this.player.takeHit(this.danneLurker.position, 11, 700);
-    applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted referral review.");
-    setObjective("Referral Vault: use agency concurrence, not DANN-E pressure.");
-    this.reliability.update();
+    if (result.triggered) {
+      this.player.takeHit(this.danneLurker.position, 11, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted referral review.");
+      setObjective("Referral Vault: use agency concurrence, not DANN-E pressure.");
+      this.reliability.update();
+    } else if (result.egoBoltHit) {
+      this.player.takeHit(this.danneLurker.position, 9, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted referral review.");
+      setObjective("Referral Vault: dodge Ego bolts and preserve agency concurrence.");
+      this.reliability.update();
+    }
   }
 
   private drawReferralMinimap() {

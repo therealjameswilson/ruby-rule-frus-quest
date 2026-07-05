@@ -400,6 +400,11 @@ export class OfficeScene extends Phaser.Scene {
       applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure interrupted office workflow.");
       setObjective("Keep moving: DANN-E pressure cannot replace human review.");
       this.reliability.update();
+    } else if (result.egoBoltHit) {
+      this.player.takeHit(this.danneLurker.position, 9, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt interrupted office workflow.");
+      setObjective("Dodge Ego bolts and keep the human review route moving.");
+      this.reliability.update();
     }
     this.syncOfficeThreatState();
   }
