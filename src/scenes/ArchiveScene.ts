@@ -43,6 +43,7 @@ import {
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
+import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
@@ -338,6 +339,7 @@ export class ArchiveScene extends Phaser.Scene {
   private objectiveText!: Phaser.GameObjects.Text;
   private hintText!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
+  private toast!: FeedbackToast;
   private roomTitleText!: Phaser.GameObjects.Text;
   private interactables: Interactable[] = [];
   private readonly interactionAssist = new InteractionAssist();
@@ -425,6 +427,7 @@ export class ArchiveScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(810);
     this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.toast = new FeedbackToast(this);
     this.player = new Player(this, 128, 184);
 
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
@@ -458,6 +461,7 @@ export class ArchiveScene extends Phaser.Scene {
       this.interactionPrompt.update(delta, null);
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
+      this.toast.update(delta, this.player.position);
       return;
     }
     if (this.choice.active) {
@@ -466,11 +470,13 @@ export class ArchiveScene extends Phaser.Scene {
       this.player.update(delta, false);
       this.updateSourceNoteVerification();
       this.reliability.update();
+      this.toast.update(delta, this.player.position);
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
+      this.toast.update(delta, this.player.position);
       return;
     }
     if (input.pauseJustPressed) {
@@ -485,6 +491,7 @@ export class ArchiveScene extends Phaser.Scene {
       this.updateSourceNoteVerification();
       this.reliability.update();
       this.updateSourceNoteInteractionPrompt(delta);
+      this.toast.update(delta, this.player.position);
       if (input.aJustPressed) {
         if (this.warnIfSourceNoteHintOnly()) {
           this.objectiveText.setText(gameState.objective);
@@ -507,6 +514,7 @@ export class ArchiveScene extends Phaser.Scene {
       badge: "!",
       text: "STEP CLOSER"
     } : undefined);
+    this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (input.aJustPressed && !bufferedInteraction && this.tryEnemyAction(nearest ?? undefined)) return;
     if (input.aJustPressed && !bufferedInteraction) {
@@ -1218,7 +1226,8 @@ export class ArchiveScene extends Phaser.Scene {
     }
     if (this.collected.size < 3) {
       setObjective(`Collect document tiles: ${this.collected.size}/3.`);
-      this.dialog.show("ARCHIVE", `${document.label} filed.`);
+      this.toast.show(`${document.label} filed`, this.player.position, "info");
+      setLatestMessage(`${document.label} filed. Keep collecting document tiles.`);
       return;
     }
     this.finishArchiveIfReady();
@@ -1829,11 +1838,8 @@ export class ArchiveScene extends Phaser.Scene {
     this.syncWallState();
     this.updateSourceNoteVerification();
     this.refreshSourceNoteRouteCue();
-    this.dialog.show("ELENA", [
-      "StateChat flagged the missing repository on the terminal.",
-      "It cannot guess provenance.",
-      "Carry Source Note 47 to the research table in room A1 for human verification."
-    ]);
+    this.toast.show("CARRY SN47 TO TABLE", this.player.position, "info");
+    setLatestMessage("StateChat flagged a missing repository. Carry Source Note 47 to the research table.");
   }
 
   private updateSourceNoteInteractionPrompt(delta: number) {
@@ -1866,13 +1872,13 @@ export class ArchiveScene extends Phaser.Scene {
       this.researchTable.x,
       this.researchTable.y
     );
-    if (distance > 58) return null;
+    if (distance > 70) return null;
     return {
       id: "source-note-research-table",
       label: this.researchTable.label,
       x: this.researchTable.x,
       y: this.researchTable.y,
-      radius: 44,
+      radius: 54,
       kind: "document",
       onInteract: () => undefined
     };
@@ -1996,11 +2002,8 @@ export class ArchiveScene extends Phaser.Scene {
     this.reliability.update();
     this.updateSourceNoteVerification();
     this.refreshSourceNoteRouteCue();
-    this.dialog.show("SOURCE NOTE 47", [
-      message,
-      "Repository, collection, and folder now match the evidence trail.",
-      "Apply the citation stamp to lock the source note."
-    ]);
+    this.toast.show("SN47 VERIFIED - STAMP NEXT", this.player.position, "info");
+    setLatestMessage(`${message} Apply the citation stamp to lock the source note.`);
   }
 
   private drawRoutedSourceNote() {
@@ -2441,7 +2444,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private isNearResearchTable() {
     return this.currentRoomId === "A1"
-      && Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, this.researchTable.x, this.researchTable.y) <= 44;
+      && Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, this.researchTable.x, this.researchTable.y) <= 54;
   }
 
   private finishArchiveIfReady() {

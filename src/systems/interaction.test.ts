@@ -3,6 +3,7 @@ import {
   decideInteractionFeedback,
   nearestInteractable,
   nearestInteractableHint,
+  CRITICAL_INTERACTION_RADIUS_PAD,
   PROMPT_HINT_MARGIN
 } from "./interaction";
 import type { Interactable } from "../game/types";
@@ -63,7 +64,7 @@ describe("step-closer is live-verifiable: a band exists where hint shows but can
 
   it("reports nothing once the player is beyond even the hint radius", () => {
     const target = make({ x: 0, y: 0, radius: 20 });
-    const player = { x: 0, y: 20 + PROMPT_HINT_MARGIN + 5 };
+    const player = { x: 0, y: 20 + CRITICAL_INTERACTION_RADIUS_PAD + PROMPT_HINT_MARGIN + 5 };
     const actable = nearestInteractable(player, [target]);
     const hint = nearestInteractableHint(player, [target]);
     expect(actable).toBeNull();

@@ -3814,3 +3814,20 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - `npm run build` passed with the known large-chunk warning;
   - direct Playwright probe confirmed `OfficeScene` active, no page errors, concise 1.2KB text state, and no blank canvas after load;
   - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=mess-fix-client` with no error artifact.
+
+## 2026-07-05 HUD/prompt/interactability cleanup
+
+- Applied the five highest-priority smoothness fixes from the live gameplay audit:
+  - global objective HUD text now compacts and clamps through `addObjectiveText()`, including all later `objectiveText.setText(gameState.objective)` calls;
+  - `ChoicePrompt` now uses a taller fixed panel with separated question/source/option zones so long questions cannot collide with answer rows;
+  - document/manuscript, terminal, and door interactions now get forgiving effective radii, with wider explicit Source Note table and Clearance Token hit ranges;
+  - Guide and Archive routine pickups now use short `FeedbackToast` cues instead of modal dialogs, reserving modal choice/dialog flow for actual workflow decisions;
+  - NetworkScene route status moved from a large central label into a small top-right status chip with concise route/progress text.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - focused `npm test -- --run src/systems/interaction.test.ts` passes (1 file / 6 tests);
+  - full `npm test -- --run` passes (71 files / 349 tests);
+  - required web-game client completed against `?scene=GuideScene&role=compiler&name=Ruby&v=hudfix-client` and reported active `GuideScene`;
+  - direct Playwright screenshots verified Guide, Archive, and Network, plus a forced live `ChoicePrompt` in Network;
+  - visual proof: `docs/screenshots/hud-prompt-cleanup/guide-final.png`, `docs/screenshots/hud-prompt-cleanup/archive-final.png`, and `docs/screenshots/hud-prompt-cleanup/network-choice-final.png`;
+  - browser pass reported only WebGL `ReadPixels` warnings caused by screenshot capture, with no page errors.

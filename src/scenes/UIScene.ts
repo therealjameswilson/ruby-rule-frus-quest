@@ -22,6 +22,15 @@ function roomMapFrameName(roomType: string, current: boolean, visited: boolean):
   return visited ? "visited" : "locked";
 }
 
+function clampQuestBandText(value: string) {
+  const text = value.replace(/\s+/g, " ").trim();
+  const max = 27;
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 3);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 12 ? cut.slice(0, lastSpace) : cut).trim()}...`;
+}
+
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
   private gamepadToastBg?: Phaser.GameObjects.Rectangle;
@@ -125,7 +134,9 @@ export class UIScene extends Phaser.Scene {
     this.questBandText = this.add.text(78, 5, "", {
       fontFamily: "monospace",
       fontSize: "6px",
-      color: PALETTE.creamPaper
+      color: PALETTE.creamPaper,
+      wordWrap: { width: 132, useAdvancedWrap: true },
+      fixedWidth: 132
     })
       .setDepth(20401)
       .setScrollFactor(0)
@@ -223,16 +234,15 @@ export class UIScene extends Phaser.Scene {
   }
 
   private compactObjective(activeSceneKey: string | null) {
-    if (gameState.mode === "dialog") return "Read the line.";
-    if (gameState.mode === "choice") return "Choose the correct workflow answer.";
-    if (gameState.heldItem) return `Carry ${gameState.heldItem}.`;
+    if (gameState.mode === "dialog") return "Read line.";
+    if (gameState.mode === "choice") return "Choose answer.";
+    if (gameState.heldItem) return clampQuestBandText(`Carry ${gameState.heldItem}.`);
     if (activeSceneKey === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
-      return "Talk to the Junior Compiler.";
+      return clampQuestBandText("Talk to the Junior Compiler.");
     }
     const objective = gameState.objective.replace(/^Mission:\s*/i, "");
     const firstSentence = objective.split(".")[0]?.trim() || objective.trim();
-    if (firstSentence.length <= 42) return firstSentence;
-    return `${firstSentence.slice(0, 39).trim()}...`;
+    return clampQuestBandText(firstSentence);
   }
 
   private compactActionLine(toolLabel: string) {

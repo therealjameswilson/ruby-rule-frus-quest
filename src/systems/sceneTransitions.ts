@@ -270,12 +270,67 @@ function drawStoneBlock(scene: Phaser.Scene, x: number, y: number, accent: strin
 }
 
 export function addObjectiveText(scene: Phaser.Scene) {
-  return scene.add.text(8, 224, "", {
+  const text = scene.add.text(8, 224, compactObjectiveText(""), {
     fontFamily: "monospace",
     fontSize: "8px",
     color: PALETTE.creamPaper,
-    backgroundColor: PALETTE.black
+    backgroundColor: PALETTE.black,
+    wordWrap: { width: 238, useAdvancedWrap: true },
+    fixedWidth: 238
   }).setDepth(810).setScrollFactor(0);
+
+  const setText = text.setText.bind(text);
+  text.setText = ((value: string | string[]) => {
+    const raw = Array.isArray(value) ? value.join(" ") : value;
+    return setText(compactObjectiveText(raw));
+  }) as typeof text.setText;
+
+  return text;
+}
+
+const OBJECTIVE_PREFIXES: Array<[RegExp, string]> = [
+  [/^Archive Cavern:\s*/i, "ARCHIVE: "],
+  [/^Two Networks:\s*/i, "NETWORK: "],
+  [/^Referral Vault:\s*/i, "REFERRAL: "],
+  [/^Editor's Labyrinth:\s*/i, "EDITOR: "],
+  [/^Silent Read Tower:\s*/i, "PROOF: "],
+  [/^Office of the Historian:\s*/i, "OFFICE: "],
+  [/^Black Vault Lair:\s*/i, "VAULT: "],
+  [/^Buckram Gate:\s*/i, "GATE: "]
+];
+
+const OBJECTIVE_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/\bSource Note 47\b/gi, "SN47"],
+  [/\bresearch table\b/gi, "table"],
+  [/\bCitation Stamp\b/gi, "stamp"],
+  [/\bClearance Token\b/gi, "token"],
+  [/\bConcurrence Slip\b/gi, "slip"],
+  [/\bRed Pencil\b/gi, "pencil"],
+  [/\bProof Lens\b/gi, "lens"],
+  [/\bFRUS volume\b/gi, "volume"],
+  [/\bdeclassification\b/gi, "declass"],
+  [/\bpublication\b/gi, "pub."],
+  [/\bprocess wall\b/gi, "wall"],
+  [/\bremaining\b/gi, "left"],
+  [/\bdocument tiles\b/gi, "docs"],
+  [/\bprovenance\b/gi, "prov."]
+];
+
+const MAX_OBJECTIVE_CHARS = 39;
+
+export function compactObjectiveText(objective: string) {
+  let text = objective.replace(/\s+/g, " ").trim();
+  for (const [pattern, replacement] of OBJECTIVE_PREFIXES) {
+    text = text.replace(pattern, replacement);
+  }
+  for (const [pattern, replacement] of OBJECTIVE_REPLACEMENTS) {
+    text = text.replace(pattern, replacement);
+  }
+  if (text.length <= MAX_OBJECTIVE_CHARS) return text;
+  const hardLimit = MAX_OBJECTIVE_CHARS - 3;
+  const cut = text.slice(0, hardLimit);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 20 ? cut.slice(0, lastSpace) : cut).trim()}...`;
 }
 
 export function addTerminalPanel(scene: Phaser.Scene, x: number, y: number, lines: string[], border: string = PALETTE.terminalCyan) {

@@ -9,7 +9,6 @@ import {
   addDocumentPoints,
   addInventoryItem,
   addVolumeFragment,
-  getProcessItemDefinition,
   gameState,
   setLatestMessage,
   setNearestInteractable,
@@ -126,8 +125,7 @@ export class GuideScene extends Phaser.Scene {
     this.syncVisibleState();
     this.dialog.show("ARCHIVE COLLEAGUE", [
       `Good to compare notes, ${gameState.playerProfile.displayName}.`,
-      "Same rank, same burden: make the volume reliable.",
-      "Take the citation stamp. Find the fragments. Let no delay decide for us."
+      "Take the Citation Stamp, claim the fragment, then open the gate."
     ], () => setObjective("Archive Cavern: take the Citation Stamp."));
   }
 
@@ -208,7 +206,9 @@ export class GuideScene extends Phaser.Scene {
 
   private takeStamp() {
     if (this.hasStamp) {
-      this.dialog.show("CITATION STAMP", "Already in your folder.");
+      retroAudio.blip();
+      this.toast.show("CITATION STAMP ALREADY HELD", this.player.position, "info");
+      setLatestMessage("Citation Stamp already held.");
       return;
     }
     this.hasStamp = true;
@@ -217,18 +217,22 @@ export class GuideScene extends Phaser.Scene {
     addDocumentPoints(5, "citation stamp claimed");
     retroAudio.confirm();
     setObjective("Archive Cavern: claim the first FRUS volume fragment.");
-    const pickupDialog = getProcessItemDefinition("citation_stamp")?.pickupDialog;
-    this.dialog.show("CITATION STAMP", pickupDialog ? [...pickupDialog] : "A source note is not magic. It is a claim you can defend.");
+    this.toast.show("CITATION STAMP ACQUIRED", this.player.position, "info");
+    setLatestMessage("Citation Stamp acquired: use it on cited fragments.");
     this.syncVisibleState();
   }
 
   private takeFragment() {
     if (!this.hasStamp) {
-      this.dialog.show("FRUS FRAGMENT", "Stamp the citation trail before taking the fragment.");
+      retroAudio.warning();
+      this.toast.show("NEED CITATION STAMP", this.player.position, "warn");
+      setLatestMessage("Stamp the citation trail before taking the fragment.");
       return;
     }
     if (this.hasFragment) {
-      this.dialog.show("FRUS FRAGMENT", "Front matter fragment secured.");
+      retroAudio.blip();
+      this.toast.show("FRAGMENT ALREADY SECURED", this.player.position, "info");
+      setLatestMessage("Front matter fragment already secured.");
       return;
     }
     this.hasFragment = true;
@@ -239,7 +243,8 @@ export class GuideScene extends Phaser.Scene {
     retroAudio.stamp();
     setObjective("Archive Cavern: open the Verification Gate.");
     this.gateGlow.setFillStyle(color(PALETTE.openNetGreen));
-    this.dialog.show("FRUS FRAGMENT", "The ruby cover gains its title plate because the chain is visible.");
+    this.toast.show("FRUS FRAGMENT SECURED", this.player.position, "info");
+    setLatestMessage("FRUS fragment secured: the gate can open.");
     this.syncVisibleState();
   }
 

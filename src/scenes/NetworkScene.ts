@@ -156,14 +156,15 @@ export class NetworkScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(902).setVisible(false);
 
-    this.routeText = this.add.text(128, 88, "ROUTING LOG EMPTY", {
+    this.routeText = this.add.text(196, 45, "", {
       fontFamily: "monospace",
-      fontSize: "7px",
+      fontSize: "6px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black,
       align: "center",
-      wordWrap: { width: 176, useAdvancedWrap: true }
-    }).setOrigin(0.5).setDepth(820);
+      wordWrap: { width: 96, useAdvancedWrap: true },
+      fixedWidth: 96
+    }).setOrigin(0.5).setDepth(820).setVisible(false);
     this.player = new Player(this, 128, 196);
     this.dialog = new DialogBox(this);
     this.choice = new ChoicePrompt(this);
@@ -174,9 +175,8 @@ export class NetworkScene extends Phaser.Scene {
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.enterRoom("N1", { x: 128, y: 196 }, false);
     this.dialog.show("MARCUS", [
-      "OpenNet is the open world.",
-      "ClassNet is where the sharp edges live.",
-      "Route each item. Then cross the firewall door into the vault."
+      "OpenNet is public; ClassNet is classified review.",
+      "Route each item, then cross east into the vault."
     ], () => this.beginRouting());
   }
 
@@ -441,17 +441,17 @@ export class NetworkScene extends Phaser.Scene {
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 60, 124, "OpenNet").container);
     this.track(new Terminal(this, 196, 124, "ClassNet").container);
-    this.track(this.add.rectangle(60, 166, 52, 34, color(PALETTE.black)).setStrokeStyle(3, color(PALETTE.openNetGreen)).setDepth(166));
-    this.track(this.add.text(60, 159, "OPEN\nNET", {
+    this.track(this.add.rectangle(60, 178, 42, 12, color(PALETTE.black), 0.92).setStrokeStyle(1, color(PALETTE.openNetGreen)).setDepth(166));
+    this.track(this.add.text(60, 174, "OPENNET", {
       fontFamily: "monospace",
-      fontSize: "9px",
+      fontSize: "5px",
       color: PALETTE.openNetGreen,
       align: "center"
     }).setOrigin(0.5).setDepth(167));
-    this.track(this.add.rectangle(196, 166, 52, 34, color(PALETTE.black)).setStrokeStyle(3, color(PALETTE.classNetRed)).setDepth(166));
-    this.track(this.add.text(196, 159, "CLASS\nNET", {
+    this.track(this.add.rectangle(196, 178, 42, 12, color(PALETTE.black), 0.92).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(166));
+    this.track(this.add.text(196, 174, "CLASSNET", {
       fontFamily: "monospace",
-      fontSize: "9px",
+      fontSize: "5px",
       color: PALETTE.classNetRed,
       align: "center"
     }).setOrigin(0.5).setDepth(167));
@@ -460,9 +460,9 @@ export class NetworkScene extends Phaser.Scene {
         new BureaucraticWall(this, "firewall-open", "FIREWALL", 96, 152, { behavior: "block", accent: PALETTE.classNetRed }),
         new BureaucraticWall(this, "firewall-class", "FORM 32", 160, 152, { behavior: "block", accent: PALETTE.classNetRed })
       ];
-      this.routeText.setText("ROUTING LOG EMPTY");
+      this.routeText.setVisible(false);
     } else {
-      this.routeText.setText("FIREWALL CLEARED\nEAST: CLASSNET VAULT");
+      this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
       setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
     }
   }
@@ -491,11 +491,11 @@ export class NetworkScene extends Phaser.Scene {
     });
     if (!this.clearanceTokenCollected) {
       this.clearanceTokenIcon = this.track(this.add.image(128, 132, "clearance-token").setDepth(165).setVisible(false));
-      this.routeText.setText(this.clearanceTokenRouteLabel(false));
+      this.routeText.setText(this.clearanceTokenRouteLabel(false)).setVisible(true);
       setObjective(this.clearanceTokenObjective());
     } else {
       this.track(this.add.image(128, 132, "clearance-token").setTint(color(PALETTE.goldStamp)).setDepth(165).setVisible(false));
-      this.routeText.setText("TOKEN EARNED\nEAST: REFERRAL VAULT");
+      this.routeText.setText("TOKEN EARNED\nEAST DOOR").setVisible(true);
       setObjective("Two Networks: exit east to the Referral Vault.");
     }
   }
@@ -547,13 +547,13 @@ export class NetworkScene extends Phaser.Scene {
     }
     if (this.clearanceTokenCollected) {
       setNearestInteractable(null);
-      this.routeText.setText("TOKEN EARNED\nEAST: REFERRAL VAULT");
+      this.routeText.setText("TOKEN EARNED\nEAST DOOR").setVisible(true);
       return false;
     }
-    const nearToken = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) <= 32;
+    const nearToken = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) <= 40;
     if (!nearToken) {
       setNearestInteractable(null);
-      this.routeText.setText(this.clearanceTokenRouteLabel(false));
+      this.routeText.setText(this.clearanceTokenRouteLabel(false)).setVisible(true);
       if (input.aJustPressed && this.clearanceTokenHintTarget()) {
         retroAudio.blip();
         setLatestMessage("Step closer to Clearance Token.");
@@ -562,7 +562,7 @@ export class NetworkScene extends Phaser.Scene {
       return false;
     }
     setNearestInteractable("Clearance Token");
-    this.routeText.setText(this.clearanceTokenRouteLabel(true));
+    this.routeText.setText(this.clearanceTokenRouteLabel(true)).setVisible(true);
     if (!input.aJustPressed) return false;
     if (!gameState.sceneProgress.clearanceProcedureComplete) this.showClearanceProcedureChoice();
     else if (!gameState.sceneProgress.eo13526ReviewComplete) this.showEo13526ReviewChoice();
@@ -584,14 +584,14 @@ export class NetworkScene extends Phaser.Scene {
 
   private clearanceTokenStrictTarget(): Interactable | null {
     if (this.currentRoomId !== "N2" || this.clearanceTokenCollected) return null;
-    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 32) return null;
-    return this.clearanceTokenTarget(32);
+    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 40) return null;
+    return this.clearanceTokenTarget(40);
   }
 
   private clearanceTokenHintTarget(): Interactable | null {
     if (this.currentRoomId !== "N2" || this.clearanceTokenCollected) return null;
-    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 46) return null;
-    return this.clearanceTokenTarget(32);
+    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 56) return null;
+    return this.clearanceTokenTarget(40);
   }
 
   private clearanceTokenTarget(radius: number): Interactable {
@@ -641,7 +641,7 @@ export class NetworkScene extends Phaser.Scene {
     const step = gameState.sceneProgress.clearanceProcedureStep ?? 0;
     const prompt = getClearanceProcedurePrompt(step);
     setObjective(`Clearance procedure: answer ${step + 1}/${CLEARANCE_PROCEDURE_PROMPTS.length}.`);
-    this.routeText.setText(`CLEARANCE LANE\n${step + 1}/${CLEARANCE_PROCEDURE_PROMPTS.length}`);
+    this.routeText.setText(`CLEARANCE\n${step + 1}/${CLEARANCE_PROCEDURE_PROMPTS.length}`).setVisible(true);
     this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
       const result = evaluateClearanceProcedureAnswer(prompt.id, option.value);
       if (!result.ok) {
@@ -694,7 +694,7 @@ export class NetworkScene extends Phaser.Scene {
     const step = gameState.sceneProgress.eo13526ReviewStep ?? 0;
     const prompt = getEo13526ReviewPrompt(step);
     setObjective(`E.O. 13526 review: answer ${step + 1}/${EO13526_REVIEW_PROMPTS.length}.`);
-    this.routeText.setText(`E.O. 13526\n${step + 1}/${EO13526_REVIEW_PROMPTS.length}`);
+    this.routeText.setText(`E.O. 13526\n${step + 1}/${EO13526_REVIEW_PROMPTS.length}`).setVisible(true);
     this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
       const result = evaluateEo13526ReviewAnswer(prompt.id, option.value);
       if (!result.ok) {
@@ -743,7 +743,7 @@ export class NetworkScene extends Phaser.Scene {
     const step = gameState.sceneProgress.declassificationReviewStep ?? 0;
     const prompt = getDeclassificationReviewPrompt(step);
     setObjective(`ClassNet review: answer ${step + 1}/${DECLASSIFICATION_REVIEW_PROMPTS.length}.`);
-    this.routeText.setText(`CLASSNET REVIEW\n${step + 1}/${DECLASSIFICATION_REVIEW_PROMPTS.length}`);
+    this.routeText.setText(`CLASSNET\n${step + 1}/${DECLASSIFICATION_REVIEW_PROMPTS.length}`).setVisible(true);
     this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
       const result = evaluateDeclassificationReviewAnswer(prompt.id, option.value);
       if (!result.ok) {
@@ -792,7 +792,7 @@ export class NetworkScene extends Phaser.Scene {
     addProcessItem("clearance_token");
     setLatestMessage("Clearance Token opens red vault doors.");
     setObjective("Two Networks: exit east to the Referral Vault.");
-    this.routeText.setText("TOKEN EARNED\nEAST: REFERRAL VAULT");
+    this.routeText.setText("TOKEN EARNED\nEAST DOOR").setVisible(true);
     this.clearanceTokenIcon?.setTint(color(PALETTE.goldStamp));
     this.clearClearanceTokenRouteCue();
     addSnesRewardBurst(this, 128, 114, "clearance-token", "Clearance Token", (object) => this.track(object));
@@ -952,7 +952,7 @@ export class NetworkScene extends Phaser.Scene {
 
   private showRouteChoice() {
     const item = this.routeItems[this.currentRoute];
-    this.routeText.setText(`ITEM ${this.currentRoute + 1}/7\n${item.label.toUpperCase()}`);
+    this.routeText.setText(`ROUTE\n${this.currentRoute + 1}/7`).setVisible(true);
     const options: ChoiceOption[] = [
       { key: "A", label: "Send to OpenNet", value: "OpenNet" },
       { key: "B", label: "Send to ClassNet", value: "ClassNet" }
@@ -967,7 +967,7 @@ export class NetworkScene extends Phaser.Scene {
     if (correct) {
       this.correctRoutes += 1;
       adjustReliability(3, `${item.label} routed to ${destination}`);
-      this.routeText.setText(`CORRECT\n${destination}`);
+      this.routeText.setText(`CORRECT\n${destination.toUpperCase()}`).setVisible(true);
     } else {
       const leakWarning = destination === "OpenNet" && item.network === "ClassNet";
       const violation = applyStandardsViolation(
@@ -975,7 +975,7 @@ export class NetworkScene extends Phaser.Scene {
         leakWarning ? "Closed material was sent to OpenNet." : `${item.label} was routed through the wrong network.`
       );
       setLatestMessage(`WRONG NETWORK - ${violation.label}`);
-      this.routeText.setText(leakWarning ? "WARNING\nOPENNET LEAK RISK" : "WARNING\nWRONG ROOM");
+      this.routeText.setText(leakWarning ? "WARNING\nLEAK RISK" : "WARNING\nWRONG NET").setVisible(true);
       this.reliability.update();
       this.currentRoute += 1;
       if (this.currentRoute >= this.routeItems.length) {
@@ -1013,7 +1013,7 @@ export class NetworkScene extends Phaser.Scene {
       this.syncThreatState();
       this.syncRoomTraversalState();
       this.updateNetworkMinimap();
-      this.routeText.setText("FIREWALL CLEARED\nEAST: CLASSNET VAULT");
+      this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
       retroAudio.stamp();
       this.dialog.show("MARCUS", [
         "Good routing.",

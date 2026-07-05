@@ -4,6 +4,19 @@ import { selectWorkflowToolForInteractable } from "../game/workflowTools";
 
 export const ACTION_BUFFER_MS = 120;
 export const INTERACTION_COYOTE_MS = 80;
+export const CRITICAL_INTERACTION_RADIUS_PAD = 10;
+export const UTILITY_INTERACTION_RADIUS_PAD = 6;
+
+export function effectiveInteractRadius(interactable: Interactable, fallbackRadius: number) {
+  const radius = interactable.radius ?? fallbackRadius;
+  if (interactable.kind === "document" || interactable.kind === "manuscript") {
+    return radius + CRITICAL_INTERACTION_RADIUS_PAD;
+  }
+  if (interactable.kind === "door" || interactable.kind === "terminal") {
+    return radius + UTILITY_INTERACTION_RADIUS_PAD;
+  }
+  return radius;
+}
 
 export function nearestInteractable(
   player: Position,
@@ -16,7 +29,7 @@ export function nearestInteractable(
     const dx = interactable.x - player.x;
     const dy = interactable.y - player.y;
     const distance = Math.hypot(dx, dy);
-    const radius = interactable.radius ?? maxDistance;
+    const radius = effectiveInteractRadius(interactable, maxDistance);
     if (distance <= radius && distance < nearestDistance) {
       nearest = interactable;
       nearestDistance = distance;
@@ -47,7 +60,7 @@ export function nearestInteractableHint(
     const dx = interactable.x - player.x;
     const dy = interactable.y - player.y;
     const distance = Math.hypot(dx, dy);
-    const radius = (interactable.radius ?? maxDistance) + margin;
+    const radius = effectiveInteractRadius(interactable, maxDistance) + margin;
     if (distance <= radius && distance < nearestDistance) {
       nearest = interactable;
       nearestDistance = distance;
