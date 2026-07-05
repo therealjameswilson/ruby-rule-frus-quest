@@ -2,6 +2,8 @@
 
 The game stores public-domain MIDI clips for provenance and uses short, simplified Web Audio motifs derived from them during play.
 
+The in-game `Eerie Bach Fugue` theme is a repo-local Web Audio arrangement that combines simplified note material from the public-domain Bach MIDI sources below with original low pedal and counterline programming. It does not use any copyrighted recording.
+
 ## MIDI Sources
 
 - `midi/bach-contrapunctus-i.mid`

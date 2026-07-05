@@ -2,6 +2,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Eerie public-domain Bach background music pass (2026-07-05):
+  - Added a richer `Eerie Bach Fugue` Web Audio theme built from repo-local MIDI note data derived from checked-in public-domain Bach MIDI sources.
+  - Layered the background music with low pedal tones, a delayed counterline, and a chromatic square-wave lead so it reads more like eerie Bach than a thin single-line chiptune.
+  - Mapped the main production route (Title, Character Create, Office/Guide, Archive, Network, Referral Vault, and Silent Read) to the new eerie Bach theme while preserving the existing procedural scene stems elsewhere.
+  - Updated `public/assets/audio/ATTRIBUTION.md` to document that the theme is a repo-local Web Audio arrangement and does not use a copyrighted recording.
+  - Verification:
+    - normal browser flow confirmed audio unlocks on first tap and `window.rubyRuleAudioDebug()` reports `currentThemeTitle: "Eerie Bach Fugue"` with `musicTimerActive: true`;
+    - direct Office route reports the same theme after the main route remap;
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - focused `npm test -- --run src/input/InputState.test.ts` passes (1 file / 16 tests);
+    - required web-game client completed against `?v=eerie-bach-client-final`;
+    - visual proof: `output/eerie-bach-normal-flow-office.png`.
 - iPhone playability pass (2026-07-05):
   - Found and fixed a mobile-specific blocker where a quick on-screen A-button tap could press and release between frames, so `aJustPressed` never reached gameplay scenes.
   - Added a short touch-control latch parallel to the existing keyboard tap latch, preserving one clean interaction edge for brief A/B/Start-style taps.

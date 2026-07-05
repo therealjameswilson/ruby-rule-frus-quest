@@ -10,7 +10,12 @@ interface MidiTheme {
   stepMs: number;
   notes: Array<number | null>;
   bass?: number[];
+  counter?: Array<number | null>;
+  pedal?: number[];
   wave?: Wave;
+  gain?: number;
+  bassGain?: number;
+  counterGain?: number;
 }
 
 interface ResolvedTheme {
@@ -38,6 +43,19 @@ export interface AudioDebugState {
 }
 
 const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
+  eerieBach: {
+    title: "Eerie Bach Fugue",
+    source: "Ruby Rule Web Audio arrangement from Mutopia public-domain Bach MIDI",
+    stepMs: 165,
+    notes: [50, 57, 53, 50, 49, 50, 52, 53, 55, 57, 56, 55, 53, 52, 50, null],
+    counter: [62, null, 61, 60, 59, null, 57, 56, 55, 56, 57, null, 59, 60, 61, 62],
+    bass: [38, 38, 37, 36, 35, 35, 34, 33],
+    pedal: [26, 26, 26, 25],
+    wave: "square",
+    gain: 0.010,
+    bassGain: 0.009,
+    counterGain: 0.005
+  },
   title: {
     title: "Bach Contrapunctus I",
     source: "Mutopia public-domain MIDI",
@@ -329,20 +347,20 @@ class RetroAudio {
 
   private resolveTheme(sceneKey: string): ResolvedTheme {
     const themeMap: Record<string, keyof typeof PUBLIC_DOMAIN_MIDI_THEMES> = {
-      TitleScene: "title",
-      CharacterCreateScene: "title",
-      OfficeScene: "title",
+      TitleScene: "eerieBach",
+      CharacterCreateScene: "eerieBach",
+      OfficeScene: "eerieBach",
       CherryBlossomGardenScene: "cherryGarden",
       SenateHearingChamberScene: "senate",
-      GuideScene: "archive",
-      ArchiveScene: "archive",
+      GuideScene: "eerieBach",
+      ArchiveScene: "eerieBach",
       NaraStacksScene: "naraStacks",
       EmbassyCableRoomScene: "embassyCable",
       BlackVaultLairScene: "blackVault",
       DanneBoss: "danneBoss",
-      NetworkScene: "archive",
-      ReferralVaultScene: "archive",
-      SilentReadScene: "satie",
+      NetworkScene: "eerieBach",
+      ReferralVaultScene: "eerieBach",
+      SilentReadScene: "eerieBach",
       EndingScene: "satie"
     };
     const key = themeMap[sceneKey] ?? "title";
@@ -352,11 +370,23 @@ class RetroAudio {
   private playMusicStep(theme: MidiTheme) {
     const note = theme.notes[this.musicStep % theme.notes.length];
     if (note !== null) {
-      this.tone(midiToFrequency(note), Math.min(0.16, (theme.stepMs / 1000) * 0.68), 0.012, theme.wave ?? "square");
+      this.tone(midiToFrequency(note), Math.min(0.16, (theme.stepMs / 1000) * 0.68), theme.gain ?? 0.012, theme.wave ?? "square");
+    }
+    if (theme.counter && this.musicStep % 2 === 1) {
+      const counter = theme.counter[this.musicStep % theme.counter.length];
+      if (counter !== null) {
+        window.setTimeout(() => {
+          this.tone(midiToFrequency(counter), Math.min(0.15, (theme.stepMs / 1000) * 0.62), theme.counterGain ?? 0.0045, "triangle");
+        }, Math.max(24, Math.round(theme.stepMs * 0.36)));
+      }
     }
     if (theme.bass && this.musicStep % 4 === 0) {
       const bass = theme.bass[Math.floor(this.musicStep / 4) % theme.bass.length];
-      this.tone(midiToFrequency(bass), Math.min(0.18, (theme.stepMs / 1000) * 0.85), 0.008, "triangle");
+      this.tone(midiToFrequency(bass), Math.min(0.18, (theme.stepMs / 1000) * 0.85), theme.bassGain ?? 0.008, "triangle");
+    }
+    if (theme.pedal && this.musicStep % 8 === 0) {
+      const pedal = theme.pedal[Math.floor(this.musicStep / 8) % theme.pedal.length];
+      this.tone(midiToFrequency(pedal), Math.min(0.55, (theme.stepMs / 1000) * 2.7), 0.005, "sawtooth");
     }
     this.musicStep += 1;
   }
