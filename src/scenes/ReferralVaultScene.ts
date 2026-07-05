@@ -37,6 +37,7 @@ import {
 import { getInput, tickInput, type InputState } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
+import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
@@ -128,6 +129,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private concurrenceSlipRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private concurrenceSlipRouteCueKey = "";
   private bureaucraticWalls: BureaucraticWall[] = [];
+  private danneLurker!: DanneLurker;
 
   private readonly matches: EquityMatch[] = [
     { label: "Intelligence annex", agency: "CIA" },
@@ -169,6 +171,15 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.danneLurker = new DanneLurker(this, 214, 70, {
+      waypoints: [
+        { x: 214, y: 70 },
+        { x: 154, y: 60 },
+        { x: 68, y: 104 },
+        { x: 68, y: 190 },
+        { x: 188, y: 188 }
+      ]
+    });
     this.referralGateOpen = gameState.processStamps.includes("referral");
     this.concurrenceSlipCollected = hasProcessItem("concurrence_slip");
     this.enterRoom("R1", { x: 128, y: 192 }, false);
@@ -185,6 +196,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
+    this.updateDanneLurker(delta);
     this.syncThreatState();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
@@ -520,7 +532,8 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   private syncThreatState() {
     setVisibleThreats(
-      this.bureaucraticWalls.filter((wall) => !wall.isCleared).map((wall) => ({
+      [
+        ...this.bureaucraticWalls.filter((wall) => !wall.isCleared).map((wall) => ({
         label: `Stone Wall: ${wall.label}`,
         x: wall.position.x,
         y: wall.position.y,
@@ -528,8 +541,24 @@ export class ReferralVaultScene extends Phaser.Scene {
         behavior: wall.label === "WAIT" ? "freezes exits temporarily" : "blocks referral gate",
         defeatMethod: "Resolve agency response timer and visible referral review",
         status: this.referralGateOpen ? "cleared" : "active"
-      }))
+      })),
+        this.danneLurker.readout(this.time.now)
+      ]
     );
+  }
+
+  private updateDanneLurker(delta: number) {
+    const canPressure = !this.roomTransitionLocked
+      && !this.dialog.active
+      && !this.choice.active
+      && !this.inventory.active
+      && !this.reliability.active;
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
+    if (!result.triggered) return;
+    this.player.takeHit(this.danneLurker.position, 11, 700);
+    applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted referral review.");
+    setObjective("Referral Vault: use agency concurrence, not DANN-E pressure.");
+    this.reliability.update();
   }
 
   private drawReferralMinimap() {

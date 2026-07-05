@@ -2,6 +2,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- DANN-E lurking obstacle pass (2026-07-05):
+  - Added a reusable `DanneLurker` enemy that uses existing DANN-E art and patrols workflow routes as deadline-pressure friction rather than replacing StateChat or human review.
+  - Wired the lurker into Office, Archive, Network, Referral Vault, and Silent Read scenes; the existing Ending/Buckram Gate still reports the 30-year line and DANN-E queue as final blockers.
+  - DANN-E pressure now applies the `missed_30_year_deadline` standards violation, debits reliability hearts, bumps the player, and refreshes the objective toward human review instead of shortcutting the process.
+  - The visible-threat readout now includes DANN-E alongside scene-specific bureaucratic walls, so the obstacle is inspectable through `window.render_game_to_text()`.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - focused `npm test -- --run src/input/InputState.test.ts src/systems/standardsDamage.test.ts` passes (2 files / 18 tests);
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=danne-lurker-client-2`;
+    - direct Playwright sweep confirmed Office, Archive, Network, Referral Vault, Silent Read, and Ending all report DANN-E in visible threats with zero fatal browser errors;
+    - visual proof: `output/danne-lurker-OfficeScene.png` and `output/danne-lurker-ArchiveScene.png`.
 - Cohesive FRUS character sprite pass (2026-07-05):
   - Replaced the broken imported native 32x48 character animation sheets with original repo-local FRUS-themed pixel sheets that preserve the same filenames, dimensions, 4x4 frame layout, transparency, and role identities.
   - Added `scripts/sharpen-frus-character-sprites.py` so the character sheets can be regenerated reproducibly; original imported sheets are backed up under `public/assets/_originals/art-pack/sprites/native/`.

@@ -31,6 +31,7 @@ import { Manuscript } from "../entities/items/Manuscript";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { Player } from "../entities/Player";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
+import { DanneLurker } from "../entities/enemies/DanneLurker";
 import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
@@ -332,6 +333,7 @@ const ARCHIVE_ENEMIES: ArchiveEnemyDefinition[] = [
 
 export class ArchiveScene extends Phaser.Scene {
   private player!: Player;
+  private danneLurker!: DanneLurker;
   private dialog!: DialogBox;
   private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
@@ -429,6 +431,15 @@ export class ArchiveScene extends Phaser.Scene {
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.toast = new FeedbackToast(this);
     this.player = new Player(this, 128, 184);
+    this.danneLurker = new DanneLurker(this, 214, 74, {
+      waypoints: [
+        { x: 214, y: 74 },
+        { x: 142, y: 54 },
+        { x: 54, y: 98 },
+        { x: 58, y: 190 },
+        { x: 198, y: 188 }
+      ]
+    });
 
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
     if (!restoredPlayer) {
@@ -485,6 +496,7 @@ export class ArchiveScene extends Phaser.Scene {
     }
 
     this.player.update(delta, true, { bounds: PLAY_BOUNDS, solids: this.roomSolids });
+    this.updateDanneLurker(delta);
     if (this.checkRoomExit()) return;
 
     if (this.sourceNoteStatus !== "inactive" && this.sourceNoteStatus !== "stamped") {
@@ -531,6 +543,17 @@ export class ArchiveScene extends Phaser.Scene {
       bufferedInteraction.onInteract();
     }
     this.objectiveText.setText(gameState.objective);
+  }
+
+  private updateDanneLurker(delta: number) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
+    if (result.triggered) {
+      this.player.takeHit(this.danneLurker.position, 11, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted archive verification.");
+      setObjective("Archive Cavern: verify sources by human review, not DANN-E pressure.");
+      this.reliability.update();
+    }
+    this.syncWallState();
   }
 
   private enterRoom(roomId: ArchiveRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
@@ -1800,7 +1823,7 @@ export class ArchiveScene extends Phaser.Scene {
           status: this.enemyStatus(definition)
         };
       });
-    setVisibleThreats(activeThreats);
+    setVisibleThreats([...activeThreats, this.danneLurker.readout(this.time.now)]);
     setVisibleEntities([
       `Room ${this.currentRoomId}`,
       ...this.interactables.map((item) => item.label),

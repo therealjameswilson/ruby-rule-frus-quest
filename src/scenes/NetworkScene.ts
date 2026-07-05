@@ -22,6 +22,7 @@ import type { Interactable } from "../game/types";
 import { getInput, tickInput, type InputState } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
+import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
@@ -127,6 +128,7 @@ export class NetworkScene extends Phaser.Scene {
   private clearanceTokenRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private clearanceTokenRouteCueKey = "";
   private bureaucraticWalls: BureaucraticWall[] = [];
+  private danneLurker!: DanneLurker;
 
   private readonly routeItems: RouteItem[] = [
     { label: "Published FRUS cross-reference research", network: "OpenNet", classification: "unclassified" },
@@ -173,6 +175,15 @@ export class NetworkScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.danneLurker = new DanneLurker(this, 46, 66, {
+      waypoints: [
+        { x: 46, y: 66 },
+        { x: 204, y: 66 },
+        { x: 214, y: 184 },
+        { x: 128, y: 206 },
+        { x: 48, y: 178 }
+      ]
+    });
     this.enterRoom("N1", { x: 128, y: 196 }, false);
     this.dialog.show("MARCUS", [
       "OpenNet is public; ClassNet is classified review.",
@@ -184,6 +195,7 @@ export class NetworkScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
+    this.updateDanneLurker(delta);
     this.syncThreatState();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
@@ -936,7 +948,8 @@ export class NetworkScene extends Phaser.Scene {
 
   private syncThreatState() {
     setVisibleThreats(
-      this.bureaucraticWalls
+      [
+        ...this.bureaucraticWalls
         .filter((wall) => !wall.isCleared)
         .map((wall) => ({
           label: `Stone Wall: ${wall.label}`,
@@ -946,8 +959,25 @@ export class NetworkScene extends Phaser.Scene {
           behavior: "blocks terminal door",
           defeatMethod: "Use correct OpenNet/ClassNet routing",
           status: this.routingComplete ? "cleared" : "active"
-        }))
+        })),
+        this.danneLurker.readout(this.time.now)
+      ]
     );
+  }
+
+  private updateDanneLurker(delta: number) {
+    const canPressure = !this.roomTransitionLocked
+      && !this.dialog.active
+      && !this.choice.active
+      && !this.inventory.active
+      && !this.reliability.active
+      && !this.routingActive;
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
+    if (!result.triggered) return;
+    this.player.takeHit(this.danneLurker.position, 11, 700);
+    applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted network routing.");
+    setObjective("Two Networks: route evidence by human review, not DANN-E urgency.");
+    this.reliability.update();
   }
 
   private showRouteChoice() {

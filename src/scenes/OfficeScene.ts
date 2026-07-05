@@ -87,6 +87,7 @@ import {
 } from "../game/manuscriptReview";
 import type { Interactable } from "../game/types";
 import { Player } from "../entities/Player";
+import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
 import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
@@ -138,6 +139,7 @@ export class OfficeScene extends Phaser.Scene {
   private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
+  private danneLurker!: DanneLurker;
 
   constructor() {
     super("OfficeScene");
@@ -157,6 +159,15 @@ export class OfficeScene extends Phaser.Scene {
     const returnSpawn = this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 184);
     this.juniorCompiler = new JuniorCompiler(this, 70, 122);
+    this.danneLurker = new DanneLurker(this, 218, 78, {
+      waypoints: [
+        { x: 218, y: 78 },
+        { x: 188, y: 58 },
+        { x: 102, y: 58 },
+        { x: 46, y: 132 },
+        { x: 190, y: 186 }
+      ]
+    });
     this.dialog = new DialogBox(this);
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
@@ -279,6 +290,7 @@ export class OfficeScene extends Phaser.Scene {
       "Senate Hearing Chamber Door"
     ]);
     this.createFirstQuestCue();
+    this.syncOfficeThreatState();
     if (!gameState.sceneProgress.officeTutorialSeen) this.showOfficeTutorial();
   }
 
@@ -350,6 +362,7 @@ export class OfficeScene extends Phaser.Scene {
       bounds: { left: 16, right: GAME_WIDTH - 16, top: 42, bottom: GAME_HEIGHT - 18 },
       solids: this.solids
     });
+    this.updateDanneLurker(delta, true);
     const activeInteractables = this.currentInteractables();
     const nearest = nearestInteractable(this.player.position, activeInteractables);
     const tutorialVisible = Boolean(this.tutorialCard);
@@ -378,6 +391,21 @@ export class OfficeScene extends Phaser.Scene {
     setObjective(this.currentOfficeObjective());
     this.reliability.update();
     this.updateFirstQuestCue();
+  }
+
+  private updateDanneLurker(delta: number, canPressure: boolean) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
+    if (result.triggered) {
+      this.player.takeHit(this.danneLurker.position, 10, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure interrupted office workflow.");
+      setObjective("Keep moving: DANN-E pressure cannot replace human review.");
+      this.reliability.update();
+    }
+    this.syncOfficeThreatState();
+  }
+
+  private syncOfficeThreatState() {
+    setVisibleThreats([this.danneLurker.readout(this.time.now)]);
   }
 
   private currentInteractables() {

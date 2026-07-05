@@ -20,11 +20,13 @@ import {
   setPhysicalVerificationState,
   setRoomTraversalState,
   setSceneState,
-  setVisibleEntities
+  setVisibleEntities,
+  setVisibleThreats
 } from "../game/state";
 import type { ChoiceOption, Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
+import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
@@ -218,6 +220,7 @@ export class SilentReadScene extends Phaser.Scene {
   private visitedRoomIds = new Set<ProofRoomId>();
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
   private roomCleanups: Array<() => void> = [];
+  private danneLurker!: DanneLurker;
   private mapCells = new Map<ProofRoomId, Phaser.GameObjects.Rectangle>();
   private mapLabels = new Map<ProofRoomId, Phaser.GameObjects.Text>();
   private roomTransitionLocked = false;
@@ -254,6 +257,15 @@ export class SilentReadScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.danneLurker = new DanneLurker(this, 212, 72, {
+      waypoints: [
+        { x: 212, y: 72 },
+        { x: 152, y: 58 },
+        { x: 62, y: 94 },
+        { x: 70, y: 190 },
+        { x: 190, y: 186 }
+      ]
+    });
     this.actionHint = this.add.text(8, 211, "", {
       fontFamily: "monospace",
       fontSize: "7px",
@@ -261,6 +273,7 @@ export class SilentReadScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setDepth(811);
     this.enterRoom("E1", { x: 128, y: 202 }, false);
+    this.syncThreatState();
     this.dialog.show("PRIYA", [
       "Run the AI annotation review tool first.",
       "It returns a JSON plan, not a final decision.",
@@ -306,6 +319,7 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS });
+    this.updateDanneLurker(delta);
     this.updatePhysicalVerification();
     this.updatePhysicalInteractionPrompt(delta);
     if (input.aJustPressed) {
@@ -314,6 +328,21 @@ export class SilentReadScene extends Phaser.Scene {
     if (this.checkRoomExit()) return;
     this.reliability.update();
     this.objectiveText.setText(gameState.objective);
+  }
+
+  private updateDanneLurker(delta: number) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
+    if (result.triggered) {
+      this.player.takeHit(this.danneLurker.position, 11, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted proof review.");
+      setObjective("Silent Read Tower: proof by human review, not DANN-E pressure.");
+      this.reliability.update();
+    }
+    this.syncThreatState();
+  }
+
+  private syncThreatState() {
+    setVisibleThreats([this.danneLurker.readout(this.time.now)]);
   }
 
   private track<T extends Phaser.GameObjects.GameObject>(object: T) {
