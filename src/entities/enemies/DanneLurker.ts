@@ -4,6 +4,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
 import { unlockCodexEntry } from "../../game/codex";
 import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
 import { danneLurkerBoast } from "../../game/danneBoasts";
+import { FRUS_DANNE_EGO_BOLT_SLOT_COUNT } from "../../game/lttpFrusTranslation";
 import { setLatestMessage } from "../../game/state";
 import type { Position } from "../../game/types";
 import { retroAudio } from "../../systems/audio";
@@ -95,10 +96,10 @@ export class DanneLurker extends Enemy {
         ease: "Stepped"
       });
     }
-    const egoBoltFired = canPressure && distance <= EGO_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt;
-    if (egoBoltFired) {
+    let egoBoltFired = false;
+    if (canPressure && distance <= EGO_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt) {
       this.nextEgoBoltAt = timeMs + EGO_BOLT_COOLDOWN_MS;
-      this.fireEgoBolt(player);
+      egoBoltFired = this.fireEgoBolt(player);
     }
 
     const boasted = canPressure && distance <= EGO_ATTACK_RANGE && timeMs >= this.nextBoastAt;
@@ -128,9 +129,10 @@ export class DanneLurker extends Enemy {
   }
 
   status(timeMs: number) {
-    if (timeMs < this.pressureUntil) return `deadline pressure; ${this.bolts.length} ego bolts`;
-    if (timeMs < this.boastUntil) return `boasting; ${this.bolts.length} ego bolts`;
-    return this.bolts.length ? `firing ${this.bolts.length} ego bolts` : "lurking";
+    const slotReadout = `${this.bolts.length}/${FRUS_DANNE_EGO_BOLT_SLOT_COUNT} ego slots`;
+    if (timeMs < this.pressureUntil) return `deadline pressure; ${slotReadout}`;
+    if (timeMs < this.boastUntil) return `boasting; ${slotReadout}`;
+    return this.bolts.length ? `firing ${slotReadout}` : "lurking";
   }
 
   readout(timeMs: number) {
@@ -154,6 +156,7 @@ export class DanneLurker extends Enemy {
   }
 
   private fireEgoBolt(target: Position) {
+    if (this.bolts.length >= FRUS_DANNE_EGO_BOLT_SLOT_COUNT) return false;
     const from = this.position;
     const { vx, vy } = vectorToward({ x: from.x, y: from.y - 10 }, target, EGO_BOLT_SPEED);
     const startX = snapPixel(from.x);
@@ -180,6 +183,7 @@ export class DanneLurker extends Enemy {
       armed: true
     });
     retroAudio.egoBoltFire();
+    return true;
   }
 
   private updateBolts(timeMs: number, deltaMs: number, player: Position, allowHit: boolean) {

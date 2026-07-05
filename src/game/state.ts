@@ -25,6 +25,7 @@ import type { DanneItemId } from "./danneItemCatalog";
 import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
 import { getAdventureTrainingCue } from "./adventureTraining";
 import { firstHourTrainingCoverageReadout } from "./firstHourTraining";
+import { getLttpFrusTranslationReadout } from "./lttpFrusTranslation";
 import { FRUS_QUEST_LOOP, FRUS_QUEST_MISSION, FRUS_QUEST_STAKES } from "./mission";
 import {
   crystalsEarned,
@@ -2207,6 +2208,7 @@ export function renderGameToText() {
       reliability: gameState.reliability,
       adventureHud: getAdventureHudReadout(),
       adventureTraining: getAdventureTrainingReadout(),
+      lttpFrusTranslation: getLttpFrusTranslationReadout(),
       oneHourTraining: getOneHourTrainingReadout(),
       adventureSubscreen: getAdventureSubscreenReadout(),
       productionHud: getProductionStatusReadout(),

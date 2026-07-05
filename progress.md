@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- ALTTP disassembly translation pass (2026-07-05):
+  - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
+  - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.
+  - Exposed the translation through the full `window.render_game_to_text()` debug state so QA can verify that the game is aiming at a Zelda-like grammar without copying protected assets or expression.
+  - Capped DANN-E's roaming Ego bolts at four active slots inside the ten-slot FRUS temporary-effect model, keeping deadline pressure readable on the 256x240 screen.
 - DANN-E Ego attack and boast encounter pass (2026-07-05):
   - Upgraded the reusable roaming `DanneLurker` so DANN-E now boasts in a floating speech cue and fires visible Ego-bolt attacks when the hero enters range.
   - Reused the existing DANN-E ego-bolt VFX/audio and added a small gold-edged red stamp body so the projectile remains readable against ruby/black vault art.
