@@ -1,3 +1,5 @@
+import type { DanneVariantPhase } from "./danneAtlas";
+
 export type DanneBoastPhase = "intro" | "colossus" | "swarm" | "cloud" | "ascendant" | "defeated";
 
 export const DANNE_PHASE_BOASTS: Record<DanneBoastPhase, readonly string[]> = {
@@ -36,6 +38,21 @@ export const DANNE_PHASE_BOASTS: Record<DanneBoastPhase, readonly string[]> = {
 export function danneBoastForPhase(phase: DanneBoastPhase, index: number) {
   const lines = DANNE_PHASE_BOASTS[phase];
   return lines[index % lines.length];
+}
+
+const DANNE_VARIANT_BOAST_PHASE: Record<DanneVariantPhase, DanneBoastPhase> = {
+  reveal: "intro",
+  prototype: "intro",
+  colossus: "colossus",
+  cloud: "cloud",
+  infiltrator: "intro",
+  swarm: "swarm",
+  defeated: "defeated",
+  ascendant: "ascendant"
+};
+
+export function danneBoastsForVariantPhase(phase: DanneVariantPhase) {
+  return DANNE_PHASE_BOASTS[DANNE_VARIANT_BOAST_PHASE[phase]];
 }
 
 export const DANNE_LURKER_BOASTS = [

@@ -3978,3 +3978,15 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - direct Playwright probe confirmed Office -> `officeHub`, NARA DANN-E room -> `danneMiniboss`, Black Vault active room -> `danneCombat`, Black Vault after forced room clear -> `blackVault`, and Ending -> `endingFanfare`;
   - direct Playwright probe confirmed the existing `N` key sound toggle still stops and resumes music while preserving the selected track;
   - details are recorded in `docs/REGION_COMBAT_AUDIO_QA.md`.
+
+## 2026-07-06 DANN-E combat taunts
+
+- Reused the existing `danneBoasts.ts` phase lines for live `DanneEnemy` combat bubbles, keyed by each DANN-E variant phase.
+- Added aggro and damage taunt triggers with a per-enemy 4-6 second throttle plus a short scene-level anti-spam throttle so crowded rooms stay readable.
+- Styled the floating bubbles in the same black, ruby, cream, and gold language as the dialog chrome.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against Black Vault;
+  - direct Playwright probe confirmed a readable aggro taunt bubble with no page errors;
+  - direct Playwright damage probe confirmed the Colossus dropped from 4 HP to 3 HP, entered `stunned`, and showed a single readable taunt bubble;
+  - visual proof: `output/danne-taunt-dialogue-throttled.png` and `output/danne-taunt-damage-final.png`.
