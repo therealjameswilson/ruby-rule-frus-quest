@@ -412,16 +412,21 @@ export class GameplayMapScene extends Phaser.Scene {
         for (const flag of this.danneRoomUnlockedFlags) gameState.sceneProgress[flag] = 1;
         return;
       }
-      this.spawnDanneEnemy("black-vault-node", "danne_colossus_node", 0.5, 0.37, [
+      this.spawnDanneEnemy("black-vault-colossus", "danne-colossus-final-form", 0.5, 0.37, [
         { x: 0.5, y: 0.37 }
       ]);
-      this.spawnDanneEnemy("black-vault-wraith", "censorship_wraith", 0.35, 0.55, [
+      this.spawnDanneEnemy("black-vault-cloud", "danne-cloud-form", 0.35, 0.55, [
         { x: 0.35, y: 0.55 },
         { x: 0.43, y: 0.48 },
         { x: 0.39, y: 0.68 }
       ]);
-      this.spawnDanneEnemy("black-vault-mark-i", "danne_mark_i", 0.66, 0.56, [
-        { x: 0.66, y: 0.56 }
+      this.spawnDanneEnemy("black-vault-ascendant", "danne-ascendant", 0.66, 0.56, [
+        { x: 0.66, y: 0.56 },
+        { x: 0.58, y: 0.62 },
+        { x: 0.72, y: 0.66 }
+      ]);
+      this.spawnDanneEnemy("black-vault-defeated-decoy", "danne-defeated", 0.52, 0.69, [
+        { x: 0.52, y: 0.69 }
       ]);
       setObjective("Black Vault: defeat DANN-E with the matching FRUS tools to open the blast doors.");
       setLatestMessage("DANN-E room gate active: Citation Stamp, Red Pencil, and Review Folder each matter.");
@@ -432,17 +437,43 @@ export class GameplayMapScene extends Phaser.Scene {
       this.danneRoomId = "nara_stacks_patrol";
       this.danneRoomUnlockedFlags = [];
       if (isRoomCleared(this.danneRoomId)) return;
-      this.spawnDanneEnemy("nara-drone-a", "redactor_drone", 0.38, 0.47, [
+      this.spawnDanneEnemy("nara-mark-i", "danne-mark-i-prototype", 0.38, 0.47, [
         { x: 0.32, y: 0.47 },
         { x: 0.5, y: 0.47 },
         { x: 0.5, y: 0.58 },
         { x: 0.32, y: 0.58 }
       ]);
-      this.spawnDanneEnemy("nara-drone-b", "redactor_drone", 0.63, 0.42, [
+      this.spawnDanneEnemy("nara-swarm", "danne-swarm", 0.63, 0.42, [
         { x: 0.58, y: 0.42 },
         { x: 0.72, y: 0.42 },
         { x: 0.72, y: 0.54 },
         { x: 0.58, y: 0.54 }
+      ]);
+      return;
+    }
+
+    if (this.mapKey === "embassy") {
+      this.danneRoomId = "embassy_prime_pressure";
+      this.danneRoomUnlockedFlags = [];
+      if (isRoomCleared(this.danneRoomId)) return;
+      this.spawnDanneEnemy("embassy-prime", "danne-prime-humanoid", 0.55, 0.55, [
+        { x: 0.47, y: 0.55 },
+        { x: 0.62, y: 0.55 },
+        { x: 0.62, y: 0.66 },
+        { x: 0.47, y: 0.66 }
+      ]);
+      return;
+    }
+
+    if (this.mapKey === "capitol_hill") {
+      this.danneRoomId = "capitol_executive_pressure";
+      this.danneRoomUnlockedFlags = [];
+      if (isRoomCleared(this.danneRoomId)) return;
+      this.spawnDanneEnemy("capitol-executive", "danne-executive-suit", 0.52, 0.46, [
+        { x: 0.45, y: 0.46 },
+        { x: 0.6, y: 0.46 },
+        { x: 0.6, y: 0.58 },
+        { x: 0.45, y: 0.58 }
       ]);
     }
   }

@@ -1,18 +1,8 @@
 import type { ProcessItemId, ProcessStampId } from "../game/constants";
-import {
-  DANNE_BOSS_SPRITE_ASSET,
-  DANNE_RUNTIME_SPRITE_ASSETS,
-  DANNE_VARIANT_ASSETS
-} from "../game/danneAtlas";
+import { DANNE_VARIANT_ASSETS, type DanneVariantPhase } from "../game/danneAtlas";
 
 export type DanneEnemyAiKind = "patrol" | "chase" | "turret";
-export type DanneEnemyVariantId =
-  | "redactor_drone"
-  | "censorship_wraith"
-  | "danne_mark_i"
-  | "danne_executive"
-  | "danne_swarm_unit"
-  | "danne_colossus_node";
+export type DanneEnemyVariantId = (typeof DANNE_VARIANT_ASSETS)[number]["variantId"];
 
 export interface DanneEnemyLoot {
   documentPoints?: number;
@@ -25,6 +15,7 @@ export interface DanneEnemyVariantConfig {
   displayName: string;
   textureKey: string;
   codexEntryId: string;
+  phase: DanneVariantPhase;
   maxHp: number;
   speed: number;
   aggroRadius: number;
@@ -42,111 +33,131 @@ export interface DanneEnemyVariantConfig {
   defeatMethod: string;
 }
 
-function runtimeTextureKey(entityId: string) {
-  return DANNE_RUNTIME_SPRITE_ASSETS.find((asset) => asset.entityId === entityId)?.key ?? DANNE_BOSS_SPRITE_ASSET.key;
+function variantAsset(variantId: DanneEnemyVariantId) {
+  const asset = DANNE_VARIANT_ASSETS.find((candidate) => candidate.variantId === variantId);
+  if (!asset) throw new Error(`Missing DANN-E variant asset: ${variantId}`);
+  return asset;
 }
 
-function variantTextureKey(variantId: string) {
-  return DANNE_VARIANT_ASSETS.find((asset) => asset.variantId === variantId)?.key ?? DANNE_BOSS_SPRITE_ASSET.key;
+function config(
+  id: DanneEnemyVariantId,
+  values: Omit<DanneEnemyVariantConfig, "id" | "displayName" | "textureKey" | "phase">
+): DanneEnemyVariantConfig {
+  const asset = variantAsset(id);
+  return {
+    id,
+    displayName: asset.displayName,
+    textureKey: asset.key,
+    phase: asset.phase,
+    ...values
+  };
 }
 
 export const DANNE_ENEMY_VARIANTS = {
-  redactor_drone: {
-    id: "redactor_drone",
-    displayName: "Redactor Drone",
-    textureKey: runtimeTextureKey("redactor-drone"),
-    codexEntryId: "enemy-redactor-drone",
+  "danne-prime-humanoid": config("danne-prime-humanoid", {
+    codexEntryId: "danne-prime-humanoid",
     maxHp: 2,
-    speed: 23,
-    aggroRadius: 58,
-    weakness: "citation_stamp",
-    ai: "patrol",
-    scale: 0.18,
-    body: { width: 18, height: 14, offsetX: -9, offsetY: -7 },
-    loot: { documentPoints: 3 },
-    behavior: "patrols shelves and drops automated black-bar pressure",
-    defeatMethod: "Use the Citation Stamp after checking provenance."
-  },
-  censorship_wraith: {
-    id: "censorship_wraith",
-    displayName: "Censorship Wraith",
-    textureKey: runtimeTextureKey("censorship-wraith"),
-    codexEntryId: "enemy-censorship-wraith",
-    maxHp: 3,
-    speed: 17,
+    speed: 18,
     aggroRadius: 64,
-    weakness: "red_pencil",
+    weakness: "review_folder",
     ai: "chase",
-    scale: 0.15,
-    body: { width: 18, height: 18, offsetX: -9, offsetY: -10 },
-    loot: { documentPoints: 5 },
-    behavior: "drifts toward the player and sweeps away unsupported text",
-    defeatMethod: "Use the Red Pencil to mark unsupported material openly."
-  },
-  danne_mark_i: {
-    id: "danne_mark_i",
-    displayName: "DANN-E Mark I",
-    textureKey: variantTextureKey("danne-mark-i-prototype"),
+    scale: 0.03,
+    body: { width: 18, height: 20, offsetX: -9, offsetY: -10 },
+    loot: { documentPoints: 4 },
+    behavior: "chases the player with false-human shortcut pressure",
+    defeatMethod: "Use the Review Folder to force a documented human decision."
+  }),
+  "danne-mark-i-prototype": config("danne-mark-i-prototype", {
     codexEntryId: "danne-mark-i-prototype",
     maxHp: 2,
     speed: 0,
     aggroRadius: 86,
     weakness: "review_folder",
     ai: "turret",
-    scale: 0.044,
+    scale: 0.03,
     body: { width: 20, height: 18, offsetX: -10, offsetY: -10 },
     loot: { documentPoints: 4 },
     behavior: "fixed prototype node firing slow ego bolts from the record queue",
     defeatMethod: "Use the Review Folder to route the issue to human review."
-  },
-  danne_executive: {
-    id: "danne_executive",
-    displayName: "DANN-E Executive",
-    textureKey: variantTextureKey("danne-executive-suit"),
+  }),
+  "danne-colossus-final-form": config("danne-colossus-final-form", {
+    codexEntryId: "danne-colossus-final-form",
+    maxHp: 4,
+    speed: 0,
+    aggroRadius: 96,
+    weakness: "red_pencil",
+    ai: "turret",
+    scale: 0.029,
+    body: { width: 24, height: 22, offsetX: -12, offsetY: -12 },
+    loot: { documentPoints: 8, processStamp: "sop", volumeFragment: "Black Vault Review Fragment" },
+    behavior: "guards blast-door progression with boast-driven ego bolts",
+    defeatMethod: "Use the Red Pencil to reject unsupported shortcut pressure."
+  }),
+  "danne-cloud-form": config("danne-cloud-form", {
+    codexEntryId: "danne-cloud-form",
+    maxHp: 3,
+    speed: 22,
+    aggroRadius: 78,
+    weakness: "citation_stamp",
+    ai: "patrol",
+    scale: 0.03,
+    body: { width: 22, height: 18, offsetX: -11, offsetY: -9 },
+    loot: { documentPoints: 6 },
+    behavior: "phase-shifts around the room and tries to blur the source trail",
+    defeatMethod: "Use the Citation Stamp to anchor the provenance trail."
+  }),
+  "danne-executive-suit": config("danne-executive-suit", {
     codexEntryId: "danne-executive-suit",
     maxHp: 3,
     speed: 19,
     aggroRadius: 70,
     weakness: "review_folder",
     ai: "chase",
-    scale: 0.042,
+    scale: 0.03,
     body: { width: 18, height: 18, offsetX: -9, offsetY: -10 },
     loot: { documentPoints: 5 },
     behavior: "infiltrates hearings with shortcut memos and false certainty",
     defeatMethod: "Use the Review Folder to force a documented human decision."
-  },
-  danne_swarm_unit: {
-    id: "danne_swarm_unit",
-    displayName: "Mini DANN-E",
-    textureKey: DANNE_BOSS_SPRITE_ASSET.key,
+  }),
+  "danne-swarm": config("danne-swarm", {
     codexEntryId: "danne-swarm",
-    maxHp: 1,
-    speed: 28,
-    aggroRadius: 56,
+    maxHp: 2,
+    speed: 27,
+    aggroRadius: 62,
     weakness: "citation_stamp",
     ai: "patrol",
-    scale: 0.045,
-    body: { width: 16, height: 14, offsetX: -8, offsetY: -8 },
-    loot: { documentPoints: 2 },
-    behavior: "small automated record-pusher trying to split attention",
-    defeatMethod: "Use the Citation Stamp to pin the source trail."
-  },
-  danne_colossus_node: {
-    id: "danne_colossus_node",
-    displayName: "DANN-E Gate Node",
-    textureKey: DANNE_BOSS_SPRITE_ASSET.key,
-    codexEntryId: "enemy-danne-boss",
-    maxHp: 4,
+    scale: 0.03,
+    body: { width: 18, height: 16, offsetX: -9, offsetY: -8 },
+    loot: { documentPoints: 4 },
+    behavior: "splits attention with small synchronized DANN-E units",
+    defeatMethod: "Use the Citation Stamp to pin each source trail before the swarm spreads."
+  }),
+  "danne-defeated": config("danne-defeated", {
+    codexEntryId: "danne-defeated",
+    maxHp: 1,
     speed: 0,
-    aggroRadius: 92,
+    aggroRadius: 54,
     weakness: "red_pencil",
     ai: "turret",
-    scale: 0.085,
-    body: { width: 22, height: 20, offsetX: -11, offsetY: -11 },
-    loot: { documentPoints: 8, processStamp: "sop", volumeFragment: "Black Vault Review Fragment" },
-    behavior: "guards blast-door progression with boast-driven ego bolts",
-    defeatMethod: "Use the Red Pencil to reject unsupported shortcut pressure."
-  }
+    scale: 0.03,
+    body: { width: 18, height: 16, offsetX: -9, offsetY: -8 },
+    loot: { documentPoints: 2 },
+    behavior: "plays dead as a false-surrender decoy near the final gate",
+    defeatMethod: "Use the Red Pencil to mark the false ending as unsupported."
+  }),
+  "danne-ascendant": config("danne-ascendant", {
+    codexEntryId: "danne-ascendant",
+    maxHp: 5,
+    speed: 21,
+    aggroRadius: 92,
+    weakness: "red_pencil",
+    ai: "chase",
+    scale: 0.03,
+    body: { width: 24, height: 22, offsetX: -12, offsetY: -12 },
+    loot: { documentPoints: 10, volumeFragment: "Ascendant Record Fragment" },
+    behavior: "true-form pursuit with redaction-wing pressure and boast loops",
+    defeatMethod: "Use the Red Pencil to keep every deletion visible before publication."
+  })
 } as const satisfies Record<DanneEnemyVariantId, DanneEnemyVariantConfig>;
 
 export function danneEnemyVariant(id: DanneEnemyVariantId): DanneEnemyVariantConfig {

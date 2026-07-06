@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Canonical DANN-E eight-variant combat correction (2026-07-06):
+  - Revised the live DANN-E combat registry to use exactly the eight PR #7/#8 variant assets: Prime, Mark I, Colossus, Cloud, Executive, Swarm, Defeated, and Ascendant.
+  - Removed redactor-drone and censorship-wraith from the DANN-E variant registry so those extra pack enemies no longer masquerade as DANN-E forms.
+  - Distributed the eight canonical DANN-E forms across GameplayMapScene combat rooms: Black Vault, NARA Stacks, Embassy, and Capitol Hill.
+  - Scaled the single-card DANN-E variant art down to enemy-token size and hid permanent labels during normal play; names/HP remain available through `window.render_game_to_text()` and `?debug=threats`.
+  - Updated `docs/DANNE_ENEMY_DESIGN.md` and tests so future changes cannot silently add non-canonical DANN-E variants.
 - ALTTP disassembly translation pass (2026-07-05):
   - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
   - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.

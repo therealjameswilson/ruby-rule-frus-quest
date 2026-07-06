@@ -386,14 +386,20 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     const x = snapPixel(this.x);
     const y = snapPixel(this.y);
     this.shadow.setPosition(x, y + 11).setDepth(Math.round(y - 2));
-    this.label.setPosition(x, y + 15).setDepth(Math.round(y + 18));
     const hpVisible = this.hp > 0 && this.hp < this.maxHp;
+    const labelVisible = hpVisible || this.isDebugLabelVisible();
+    this.label.setVisible(labelVisible).setPosition(x, y + 15).setDepth(Math.round(y + 18));
     this.hpBack.setVisible(hpVisible).setPosition(x, y - 28);
     this.hpFill.setVisible(hpVisible).setPosition(x - 11, y - 28).setSize(Math.max(1, Math.round(22 * (this.hp / this.maxHp))), 2);
   }
 
   private weaknessLabel() {
     return this.weakness.replace(/_/g, " ").toUpperCase();
+  }
+
+  private isDebugLabelVisible() {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("debug") === "threats";
   }
 
   private arcadeBody() {

@@ -2,8 +2,22 @@ import { describe, expect, it } from "vitest";
 import { DANNE_ENEMY_VARIANTS, danneEnemyVariant } from "./danneVariants";
 
 describe("DANN-E enemy variants", () => {
+  it("uses exactly the eight existing DANN-E variant assets", () => {
+    expect(Object.keys(DANNE_ENEMY_VARIANTS)).toEqual([
+      "danne-prime-humanoid",
+      "danne-mark-i-prototype",
+      "danne-colossus-final-form",
+      "danne-cloud-form",
+      "danne-executive-suit",
+      "danne-swarm",
+      "danne-defeated",
+      "danne-ascendant"
+    ]);
+  });
+
   it("keeps one typed config per variant id", () => {
     const variants = Object.values(DANNE_ENEMY_VARIANTS);
+    expect(variants).toHaveLength(8);
     expect(new Set(variants.map((variant) => variant.id)).size).toBe(variants.length);
     for (const variant of variants) {
       expect(danneEnemyVariant(variant.id)).toBe(variant);
