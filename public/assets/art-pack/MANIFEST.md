@@ -225,6 +225,14 @@ are also provided for per-piece display.
 | `volume_segment_title_plate_16.png` / `_32.png` | 16×16 / 32×32 | — | Segment 3: gold title plate with engraved lines | Yes |
 | `volume_segment_ribbon_marker_16.png` / `_32.png` | 16×16 / 32×32 | — | Segment 4: gold ribbon bookmark with notched tail | Yes |
 | `volume_segment_seal_stamp_16.png` / `_32.png` | 16×16 / 32×32 | — | Segment 5: gold wax seal/stamp with ruby core + star emboss | Yes |
+## 9. Accessibility overlays (`accessibility/`)
+
+Colorblind-accessible overlay/icon assets that encode UI/HUD state with
+**shape and pattern** instead of color alone (HP/verification cells, meter
+tiers, inventory-slot state, process stamps, dungeon keys, map room status,
+boss healthbar/phase, network routing, enemy weakness). All RGBA, transparent,
+hard-pixel, palette-consistent. See `accessibility/MANIFEST.md` for the full
+per-file index (21 overlays at 8×8 and 16×16).
 
 ---
 

@@ -3964,3 +3964,9 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Verification: automated check confirmed all 32 PNGs are RGBA with exact
   dimensions, binary alpha (0/255 only, no AA), and colors strictly within the
   NES palette; visual montage inspected for readability.
+## 2026-07-06 Colorblind-accessible UI overlays
+
+- Audited `public/assets/art-pack/` and HUD code (`src/scenes/UIScene.ts`, `src/systems/reliability.ts`, `NetworkScene`, `danne-pack/ui/18_ui_boss_healthbar.png`) for state cues conveyed by color alone: verification/HP cells (red vs slate), confidence/clarity meter tiers, inventory-slot equipped/acquired/locked, process-stamp earned/pending, dungeon-key held, minimap room current/cleared/locked, boss critical + phase gems, OpenNet/ClassNet routing, and enemy weakness.
+- Added 21 shape/pattern overlay assets under `public/assets/art-pack/accessibility/` (8×8 and 16×16) so each state reads without color — stripes/hatch/dots for meters, padlock/star/dot for slots, check/ring for stamps, chevron/check/X for rooms, diamond/exclamation for boss state, ring/cross for network, crosshair for weakness. Every glyph has a black outline over a light palette fill for contrast on any background.
+- Documented each file (path, dimensions, state/use, shape meaning, placement/animation) in `public/assets/art-pack/accessibility/MANIFEST.md`; linked it from the top-level art-pack `MANIFEST.md`.
+- Verification: Python/PIL checks confirmed all 21 PNGs are RGBA with a transparent region, no partial-alpha (no smoothing artifacts), correct 8×8/16×16 dimensions, and only palette-consistent colors; scaled montage visually confirmed each glyph is legible and distinct.
