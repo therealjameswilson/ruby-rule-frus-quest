@@ -101,6 +101,16 @@ interface VisibleThreat {
   behavior?: string;
   defeatMethod?: string;
   status?: string;
+  hp?: number;
+  maxHp?: number;
+  enemyState?: string;
+  weakness?: string;
+  roomClear?: {
+    roomId: string;
+    defeated: number;
+    required: number;
+    cleared: boolean;
+  };
 }
 
 export interface GameState {
@@ -1376,9 +1386,32 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     spriteKey: threat.spriteKey,
     behavior: threat.behavior,
     defeatMethod: threat.defeatMethod,
-    status: threat.status
+    status: threat.status,
+    hp: threat.hp,
+    maxHp: threat.maxHp,
+    enemyState: threat.enemyState,
+    weakness: threat.weakness,
+    roomClear: threat.roomClear ? { ...threat.roomClear } : undefined
   }));
   refreshQuestWorkflowState();
+}
+
+export function getDanneCombatReadout() {
+  const enemies = gameState.visibleThreats.filter((threat) => typeof threat.hp === "number" && typeof threat.maxHp === "number");
+  const roomClear = enemies.find((threat) => threat.roomClear)?.roomClear ?? null;
+  return {
+    activeEnemyCount: enemies.filter((enemy) => enemy.enemyState !== "defeated" && (enemy.hp ?? 0) > 0).length,
+    enemies: enemies.map((enemy) => ({
+      label: enemy.label,
+      hp: enemy.hp ?? 0,
+      maxHp: enemy.maxHp ?? 0,
+      state: enemy.enemyState ?? enemy.status ?? "unknown",
+      weakness: enemy.weakness ?? "unknown",
+      position: { x: enemy.x, y: enemy.y },
+      defeatMethod: enemy.defeatMethod ?? ""
+    })),
+    roomClear
+  };
 }
 
 function getQuestArchitectureContext(): QuestArchitectureContext {
@@ -2275,6 +2308,7 @@ export function renderGameToText() {
       finalGate: getFinalGateReadiness(),
       publicationReadiness: getPublicationReadinessReadout(),
       statutoryClock: getStatutoryClockStateReadout(),
+      danneCombat: getDanneCombatReadout(),
       standardsViolations: unresolvedStandardsViolations(),
       productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,

@@ -16,10 +16,11 @@ import {
   type OverworldRegionKey
 } from "../assets/registry";
 import { getDistrictById } from "../data/regions";
-import { DanneLurker } from "../entities/enemies/DanneLurker";
+import { DanneEnemy } from "../entities/DanneEnemy";
+import { danneEnemyVariant, type DanneEnemyVariantId } from "../entities/danneVariants";
 import { Player } from "../entities/Player";
 import { fileCapitolHacPacket, inspectClosedSessionSample } from "../game/capitolHacPacket";
-import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE, type ProcessItemId } from "../game/constants";
 import { fileEmbassyPermissionQueue } from "../game/embassyPermissionQueue";
 import { FOREIGN_GOVERNMENT_PERMISSION_PROMPTS } from "../game/foreignGovernmentPermission";
 import { browseFrusBookshelf } from "../game/frusBookshelf";
@@ -58,10 +59,12 @@ import {
   addDocumentPoints,
   addDanneItem,
   addInventoryItem,
+  addProcessItem,
   addVolumeFragment,
   beginSnesTransition,
   clearDialogState,
   completeSnesTransition,
+  equipProcessItem,
   gameState,
   hasProcessItem,
   setDialogState,
@@ -87,6 +90,12 @@ import {
 import { InteractionPrompt, promptVerbForKind } from "../systems/interactionPrompt";
 import { snapPixel } from "../systems/pixelPerfect";
 import { applyStandardsViolation } from "../systems/reliability";
+import {
+  applyRoomClearGate,
+  isRoomCleared,
+  roomClearFlag,
+  roomClearStatus
+} from "../systems/roomClear";
 import { playRubyMosaicTransition } from "../systems/sceneTransitions";
 import { addSnesStatutoryClock } from "../systems/snesPixelArt";
 import {
@@ -226,7 +235,9 @@ export class GameplayMapScene extends Phaser.Scene {
   private readonly frusFloorNextGateInteractableId = "frus-floor-next-gate";
   private triggerZones: TriggerZone[] = [];
   private tileData!: TiledMapData;
-  private danneLurker?: DanneLurker;
+  private readonly danneEnemies: DanneEnemy[] = [];
+  private danneRoomId = "";
+  private danneRoomUnlockedFlags: string[] = [];
 
   constructor() {
     super("GameplayMapScene");
@@ -302,7 +313,13 @@ export class GameplayMapScene extends Phaser.Scene {
       ...this.routeReadouts(),
       `District: ${this.districtName}`,
       ...this.interactables.map((item) => item.label),
-      ...(this.danneLurker ? ["DANN-E Lurker"] : [])
+      ...this.danneEnemies.map((enemy) => {
+        const readout = enemy.readout();
+        return `${readout.label}: ${readout.hp}/${readout.maxHp} HP`;
+      }),
+      ...(this.danneRoomId
+        ? [`DANN-E room clear: ${this.currentDanneRoomStatus().defeatedEnemyCount}/${this.currentDanneRoomStatus().requiredEnemyCount}`]
+        : [])
     ]);
   }
 
@@ -325,6 +342,12 @@ export class GameplayMapScene extends Phaser.Scene {
     if (input.pauseJustPressed) {
       this.returnToWorldMap();
       return;
+    }
+    if (input.bJustPressed || input.abilityJustPressed) {
+      this.player.startAction();
+      const toolLabel = gameState.equippedProcessItem?.replace(/_/g, " ").toUpperCase() ?? "FRUS TOOL";
+      setLatestMessage(`Tool action: ${toolLabel}.`);
+      retroAudio.blip();
     }
 
     this.player.update(delta, true, {
@@ -379,39 +402,152 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   private createDanneEncounter() {
-    if (this.mapKey !== "black_vault") return;
-    const centerX = Math.round(this.fitRect.x + this.fitRect.width * 0.5);
-    const centerY = Math.round(this.fitRect.y + this.fitRect.height * 0.43);
-    this.danneLurker = new DanneLurker(this, centerX, centerY, {
-      waypoints: [
-        { x: centerX, y: centerY },
-        { x: centerX - 34, y: centerY + 14 },
-        { x: centerX, y: centerY - 18 },
-        { x: centerX + 34, y: centerY + 14 }
-      ]
-    });
+    this.clearDanneEnemies();
+    this.danneRoomId = "";
+    this.danneRoomUnlockedFlags = [];
+    if (this.mapKey === "black_vault") {
+      this.danneRoomId = "black_vault";
+      this.danneRoomUnlockedFlags = ["blackVaultBossCleared", "blackVaultWestOpen", "blackVaultNorthOpen"];
+      if (isRoomCleared(this.danneRoomId)) {
+        for (const flag of this.danneRoomUnlockedFlags) gameState.sceneProgress[flag] = 1;
+        return;
+      }
+      this.spawnDanneEnemy("black-vault-node", "danne_colossus_node", 0.5, 0.37, [
+        { x: 0.5, y: 0.37 }
+      ]);
+      this.spawnDanneEnemy("black-vault-wraith", "censorship_wraith", 0.35, 0.55, [
+        { x: 0.35, y: 0.55 },
+        { x: 0.43, y: 0.48 },
+        { x: 0.39, y: 0.68 }
+      ]);
+      this.spawnDanneEnemy("black-vault-mark-i", "danne_mark_i", 0.66, 0.56, [
+        { x: 0.66, y: 0.56 }
+      ]);
+      setObjective("Black Vault: defeat DANN-E with the matching FRUS tools to open the blast doors.");
+      setLatestMessage("DANN-E room gate active: Citation Stamp, Red Pencil, and Review Folder each matter.");
+      return;
+    }
+
+    if (this.mapKey === "nara_stacks") {
+      this.danneRoomId = "nara_stacks_patrol";
+      this.danneRoomUnlockedFlags = [];
+      if (isRoomCleared(this.danneRoomId)) return;
+      this.spawnDanneEnemy("nara-drone-a", "redactor_drone", 0.38, 0.47, [
+        { x: 0.32, y: 0.47 },
+        { x: 0.5, y: 0.47 },
+        { x: 0.5, y: 0.58 },
+        { x: 0.32, y: 0.58 }
+      ]);
+      this.spawnDanneEnemy("nara-drone-b", "redactor_drone", 0.63, 0.42, [
+        { x: 0.58, y: 0.42 },
+        { x: 0.72, y: 0.42 },
+        { x: 0.72, y: 0.54 },
+        { x: 0.58, y: 0.54 }
+      ]);
+    }
+  }
+
+  private clearDanneEnemies() {
+    for (const enemy of this.danneEnemies) {
+      if (enemy.scene) enemy.destroy();
+    }
+    this.danneEnemies.length = 0;
+  }
+
+  private spawnDanneEnemy(
+    id: string,
+    variantId: DanneEnemyVariantId,
+    xRatio: number,
+    yRatio: number,
+    waypointRatios: Position[]
+  ) {
+    const position = this.pointFromRatio(xRatio, yRatio);
+    const waypoints = waypointRatios.map((point) => this.pointFromRatio(point.x, point.y));
+    this.danneEnemies.push(new DanneEnemy(this, position.x, position.y, {
+      id,
+      roomId: this.danneRoomId || this.mapKey,
+      config: danneEnemyVariant(variantId),
+      waypoints
+    }));
+  }
+
+  private currentDanneRoomStatus() {
+    return roomClearStatus(this.danneRoomId || this.mapKey, this.danneEnemies, this.danneRoomUnlockedFlags);
   }
 
   private updateDanneEncounter(delta: number) {
-    if (!this.danneLurker) return;
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted Black Vault navigation.");
-      setObjective("Black Vault: dodge DANN-E and reject shortcut pressure.");
-      this.objectiveOverrideMsRemaining = 1000;
-      return;
+    if (!this.danneRoomId || !this.danneEnemies.length) return;
+    const playerPosition = this.player.position;
+    const playerFootBox = new Phaser.Geom.Rectangle(playerPosition.x - 8, playerPosition.y - 3, 16, 8);
+    let hitFeedback = false;
+    for (const enemy of this.danneEnemies) {
+      const result = enemy.updateEnemy(this.time.now, delta, playerPosition, playerFootBox);
+      if (result.projectileHit && this.player.takeHit(enemy.readout(), 9, 700)) {
+        applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted room-clear review.");
+        setObjective("Dodge Ego bolts, then counter with the correct FRUS tool.");
+        this.objectiveOverrideMsRemaining = 1100;
+      }
+      const hitResult = enemy.tryPlayerToolHit(this.player.activeActionHitbox, gameState.equippedProcessItem, playerPosition);
+      if (hitResult === "wrong-tool") {
+        setObjective(`Wrong counter. Equip ${enemy.readout().weakness.replace(/_/g, " ").toUpperCase()} for ${enemy.readout().label}.`);
+        this.objectiveOverrideMsRemaining = 1250;
+        hitFeedback = true;
+      } else if (hitResult === "damaged") {
+        setObjective(`${enemy.readout().label}: ${enemy.readout().hp}/${enemy.readout().maxHp} HP. Keep pressure with the matching tool.`);
+        this.objectiveOverrideMsRemaining = 900;
+        hitFeedback = true;
+      } else if (hitResult === "defeated") {
+        setObjective(`${enemy.readout().label} defeated. Clear remaining DANN-E variants to open the room.`);
+        this.objectiveOverrideMsRemaining = 1150;
+        hitFeedback = true;
+      }
     }
-    if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted Black Vault navigation.");
-      setObjective("Black Vault: dodge Ego bolts and reach the lawful review route.");
-      this.objectiveOverrideMsRemaining = 1000;
+
+    const wasCleared = isRoomCleared(this.danneRoomId);
+    const status = applyRoomClearGate(
+      this.danneRoomId,
+      this.danneEnemies,
+      this.danneRoomUnlockedFlags,
+      this.mapKey === "black_vault"
+        ? "Black Vault: all DANN-E nodes cleared; blast doors are open."
+        : "Room cleared: DANN-E pressure resolved."
+    );
+    if (!wasCleared && status.cleared) {
+      retroAudio.confirm();
+      if (this.mapKey === "black_vault") this.openBlackVaultBlastDoors();
+      else this.refreshDoorRouteBadges();
+      this.updateVisibleMapState();
+    } else if (!hitFeedback && status.requiredEnemyCount > 0 && !status.cleared) {
+      setLatestMessage(`DANN-E room gate: ${status.defeatedEnemyCount}/${status.requiredEnemyCount} cleared.`);
     }
   }
 
   private syncGameplayThreats() {
-    setVisibleThreats(this.danneLurker ? [this.danneLurker.readout(this.time.now)] : []);
+    const roomStatus = this.danneRoomId ? this.currentDanneRoomStatus() : null;
+    setVisibleThreats(this.danneEnemies.map((enemy) => {
+      const readout = enemy.readout();
+      return {
+        label: readout.label,
+        x: readout.x,
+        y: readout.y,
+        spriteKey: readout.id,
+        behavior: readout.behavior,
+        defeatMethod: readout.defeatMethod,
+        status: `${readout.state}; ${readout.hp}/${readout.maxHp} HP; weakness ${readout.weakness.replace(/_/g, " ")}`,
+        hp: readout.hp,
+        maxHp: readout.maxHp,
+        enemyState: readout.state,
+        weakness: readout.weakness,
+        roomClear: roomStatus
+          ? {
+              roomId: roomStatus.roomId,
+              defeated: roomStatus.defeatedEnemyCount,
+              required: roomStatus.requiredEnemyCount,
+              cleared: roomStatus.cleared
+            }
+          : undefined
+      };
+    }));
   }
 
   private readTileData(): TiledMapData {
@@ -422,12 +558,25 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   private applyGameplayMapDebugGrants() {
-    if (this.mapKey !== "black_vault" || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
     const params = new URLSearchParams(window.location.search);
+    const give = params.get("give")?.split(",").map((value) => value.trim()) ?? [];
+    if (give.includes("combat-tools")) {
+      const tools: ProcessItemId[] = ["citation_stamp", "red_pencil", "review_folder"];
+      for (const tool of tools) addProcessItem(tool);
+      if (!gameState.equippedProcessItem) equipProcessItem("citation_stamp");
+    }
+    const equip = params.get("equip");
+    if (equip === "citation_stamp" || equip === "red_pencil" || equip === "review_folder") {
+      addProcessItem(equip);
+      equipProcessItem(equip);
+    }
+    if (this.mapKey !== "black_vault") return;
     if (params.get("boss") !== "defeated" && params.get("bossCleared") !== "1") return;
     gameState.sceneProgress.blackVaultBossCleared = 1;
     gameState.sceneProgress.blackVaultWestOpen = 1;
     gameState.sceneProgress.blackVaultNorthOpen = 1;
+    gameState.sceneProgress[roomClearFlag("black_vault")] = 1;
   }
 
   private layer(name: string) {
@@ -2758,6 +2907,13 @@ export class GameplayMapScene extends Phaser.Scene {
     return {
       x: snapPixel(this.fitRect.x + x * this.fitRect.scale),
       y: snapPixel(this.fitRect.y + y * this.fitRect.scale)
+    };
+  }
+
+  private pointFromRatio(xRatio: number, yRatio: number) {
+    return {
+      x: snapPixel(this.fitRect.x + this.fitRect.width * xRatio),
+      y: snapPixel(this.fitRect.y + this.fitRect.height * yRatio)
     };
   }
 
