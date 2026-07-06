@@ -81,7 +81,9 @@ import {
   getFinalGateReadiness,
   getPublicationReadinessReadout,
   getStatutoryClockStateReadout,
+  getVolumeAssemblyReadout,
   hasProcessItem,
+  markVolumeAssemblyCeremonyComplete,
   publishDocument,
   resolveStandardsViolation,
   setFinalGateCertificationState,
@@ -116,6 +118,7 @@ import {
 } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
 import { InteractionPrompt } from "../systems/interactionPrompt";
+import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 import type { Interactable } from "../game/types";
 
 function color(hex: string) {
@@ -1574,10 +1577,45 @@ export class EndingScene extends Phaser.Scene {
       message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
     });
     setLatestMessage("PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED");
+    markVolumeAssemblyCeremonyComplete();
     this.syncVisibleState(true);
     retroAudio.ending();
-    this.showPublishedPrize();
-    this.time.delayedCall(350, () => {
+    this.playBindingCeremony();
+  }
+
+  private playBindingCeremony() {
+    const hasAnimation = this.textures.exists(VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key);
+    this.add.rectangle(128, 120, 256, 240, color(PALETTE.black), 0.92).setDepth(880);
+    this.add.text(128, 20, "BINDING CEREMONY", {
+      fontFamily: "monospace",
+      fontSize: "11px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(884);
+    this.add.text(128, 35, "ASSEMBLING THE PUBLIC FRUS VOLUME", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(884);
+    const sprite = hasAnimation
+      ? this.add.sprite(128, 100, VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key, 0).setScale(0.72).setDepth(885)
+      : null;
+    if (!sprite) {
+      this.showPublishedPrize();
+      this.canRestart = true;
+      return;
+    }
+    let frame = 0;
+    this.time.addEvent({
+      delay: 170,
+      repeat: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameCount - 1,
+      callback: () => {
+        sprite.setFrame(frame);
+        frame += 1;
+      }
+    });
+    this.time.delayedCall(1250, () => {
+      sprite.destroy();
+      this.showPublishedPrize();
       this.canRestart = true;
     });
   }
@@ -1638,6 +1676,7 @@ export class EndingScene extends Phaser.Scene {
 
   private showPublishedPrize() {
     const clock = getStatutoryClockStateReadout();
+    const volumeAssembly = getVolumeAssemblyReadout();
     this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby)).setDepth(900);
     for (let y = 0; y < GAME_HEIGHT; y += 8) {
       for (let x = (y / 8) % 2 === 0 ? 2 : 10; x < GAME_WIDTH; x += 16) {
@@ -1682,7 +1721,7 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "6px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 139, `COVER PIECES ${gameState.volumeFragments.length}/5`, {
+    this.add.text(128, 139, `COVER PIECES ${volumeAssembly.earnedCount}/${volumeAssembly.total}`, {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.goldStamp
@@ -1782,7 +1821,9 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private drawPublishedPrize(x: number, y: number, depth = 130) {
-    const rewardTexture = this.textures.exists(SNES_PUBLISHED_FRUS_PRIZE_ASSET.key)
+    const rewardTexture = this.textures.exists(VOLUME_ASSEMBLY_ASSETS.completedHero.key)
+      ? VOLUME_ASSEMBLY_ASSETS.completedHero.key
+      : this.textures.exists(SNES_PUBLISHED_FRUS_PRIZE_ASSET.key)
       ? SNES_PUBLISHED_FRUS_PRIZE_ASSET.key
       : this.textures.exists(FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE)
         ? FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE
@@ -1794,8 +1835,9 @@ export class EndingScene extends Phaser.Scene {
     const texture = this.textures.get(rewardTexture);
     const source = texture.getSourceImage() as HTMLCanvasElement | HTMLImageElement;
     const usesSnesPrize = rewardTexture === SNES_PUBLISHED_FRUS_PRIZE_ASSET.key;
-    const targetWidth = usesSnesPrize ? 58 : 96;
-    const targetHeight = usesSnesPrize ? 84 : 64;
+    const usesAssemblyHero = rewardTexture === VOLUME_ASSEMBLY_ASSETS.completedHero.key;
+    const targetWidth = usesAssemblyHero ? 74 : usesSnesPrize ? 58 : 96;
+    const targetHeight = usesAssemblyHero ? 74 : usesSnesPrize ? 84 : 64;
     const scale = Math.min(targetWidth / source.width, targetHeight / source.height);
     const renderedWidth = Math.round(source.width * scale);
     const renderedHeight = Math.round(source.height * scale);
@@ -1820,7 +1862,7 @@ export class EndingScene extends Phaser.Scene {
 
     const cover = this.add.image(x, y, rewardTexture)
       .setScale(scale)
-      .setName(usesSnesPrize ? "published-frus-snes-prize-art" : "published-frus-reward-art")
+      .setName(usesAssemblyHero ? "published-frus-volume-assembly-hero" : usesSnesPrize ? "published-frus-snes-prize-art" : "published-frus-reward-art")
       .setDepth(depth);
     cover.setData("rewardTexture", rewardTexture);
     cover.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);

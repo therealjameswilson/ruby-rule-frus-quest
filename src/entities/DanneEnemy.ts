@@ -6,6 +6,7 @@ import { DANNE_VFX_ASSETS } from "../game/danneAtlas";
 import {
   addDocumentPoints,
   addVolumeFragment,
+  awardVolumeAssemblyPieceForDanneVariant,
   awardProcessStamp,
   setLatestMessage
 } from "../game/state";
@@ -337,6 +338,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     if (loot.documentPoints) addDocumentPoints(loot.documentPoints, `${this.config.displayName} defeated`);
     if (loot.processStamp) awardProcessStamp(loot.processStamp);
     if (loot.volumeFragment) addVolumeFragment(loot.volumeFragment);
+    const assembly = awardVolumeAssemblyPieceForDanneVariant(this.config.id, this.config.displayName);
     const burst = this.scene.add.text(this.x, this.y - 20, loot.volumeFragment ? "FRAGMENT" : "CLEARED", {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -351,7 +353,9 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       ease: "Stepped",
       onComplete: () => burst.destroy()
     });
-    setLatestMessage(`${this.config.displayName} cleared by ${this.weaknessLabel()}.`);
+    setLatestMessage(assembly.changed && assembly.piece
+      ? `${this.config.displayName} cleared: ${assembly.piece.label} added to the FRUS binding.`
+      : `${this.config.displayName} cleared by ${this.weaknessLabel()}.`);
   }
 
   private flash(hex: string) {

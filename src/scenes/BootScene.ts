@@ -46,6 +46,7 @@ import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState }
 import { retroAudio } from "../systems/audio";
 import { ensurePixelBitmapFont, installPixelTextFactory } from "../systems/pixelFont";
 import { WEAPON_VFX_ASSET } from "../systems/weaponState";
+import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -64,6 +65,12 @@ export class BootScene extends Phaser.Scene {
     this.load.spritesheet(WEAPON_VFX_ASSET.key, WEAPON_VFX_ASSET.path, {
       frameWidth: WEAPON_VFX_ASSET.frameWidth,
       frameHeight: WEAPON_VFX_ASSET.frameHeight
+    });
+    this.load.image(VOLUME_ASSEMBLY_ASSETS.hudBar.key, VOLUME_ASSEMBLY_ASSETS.hudBar.path);
+    this.load.image(VOLUME_ASSEMBLY_ASSETS.completedHero.key, VOLUME_ASSEMBLY_ASSETS.completedHero.path);
+    this.load.spritesheet(VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key, VOLUME_ASSEMBLY_ASSETS.bindingAnimation.path, {
+      frameWidth: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameWidth,
+      frameHeight: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameHeight
     });
     this.preloadDannePack();
     this.preloadAllNewArtPack();

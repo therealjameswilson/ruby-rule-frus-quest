@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import "./styles/pixel.css";
 import { gameConfig } from "./game/config";
 import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
-import { gameState, getDanneCombatReadout, renderGameToText, setLatestMessage } from "./game/state";
+import { gameState, getDanneCombatReadout, getVolumeAssemblyReadout, renderGameToText, setLatestMessage } from "./game/state";
 import {
   bindDomPointerDown,
   getGamepadDebugState,
@@ -83,6 +83,11 @@ function renderConciseGameToText() {
       documentPoints: gameState.documentPoints,
       volumeWorkflowState: gameState.volumeWorkflowState,
       questCounters: gameState.questCounters,
+      volumeAssembly: {
+        piecesEarned: getVolumeAssemblyReadout().earnedCount,
+        piecesTotal: getVolumeAssemblyReadout().total,
+        complete: getVolumeAssemblyReadout().complete
+      },
       processStamps: gameState.processStamps,
       inventory: gameState.inventory,
       visibleEntities: gameState.visibleEntities.slice(0, 12),

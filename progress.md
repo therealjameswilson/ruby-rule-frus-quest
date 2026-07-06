@@ -3922,3 +3922,20 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - required web-game client completed against Black Vault with debug hitbox enabled and no page errors;
   - direct Playwright probe confirmed no hitbox during windup/cooldown, an active hitbox during Red Pencil active frames, and failed re-swing attempts until idle;
   - direct DANN-E probe confirmed wrong tools knock back without HP loss, while Citation Stamp, Red Pencil, and Review Folder each reduce HP on matching variants.
+
+## 2026-07-06 FRUS volume assembly arc
+
+- Added a persistent five-piece FRUS binding arc: spine, front board, title plate, ribbon marker, and seal/stamp.
+- Boss-tier DANN-E defeats now award binding pieces while preserving the older cover-fragment labels for existing saves and Buckram Gate readiness.
+- Added original local volume-assembly art: HUD tracker, six-frame binding animation sheet, and completed-volume hero sprite.
+- UIScene now shows a five-segment binding tracker in the compact quest band; `window.render_game_to_text()` and full debug state report volume assembly progress.
+- EndingScene now plays the binding ceremony, marks it as played in saved state, and displays the completed-volume hero with a skills-practiced summary.
+- Verification:
+  - focused `npm test -- --run src/systems/volumeAssembly.test.ts src/entities/danneVariants.test.ts src/systems/roomClear.test.ts` passes (3 files / 10 tests);
+  - `npx tsc --noEmit --pretty false` passes;
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed and captured `render_game_to_text()` with the new `volumeAssembly` field;
+  - direct Playwright probe confirmed Black Vault DANN-E enemies are active and reported by `render_game_to_text()`;
+  - direct Playwright reward probe defeated the boss-tier DANN-E variants across Black Vault, NARA Stacks, and Capitol Hill, producing `VOLUME 5/5` with `missingFragments: 0`;
+  - direct ending probe confirmed `ceremonyPlayed: true` and final certification status `published`;
+  - full `npm test` still has the pre-existing base-branch character sprite frame-layout assertion mismatch in `src/art/characterSprites.test.ts`.

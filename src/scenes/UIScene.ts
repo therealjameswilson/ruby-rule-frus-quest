@@ -7,10 +7,12 @@ import {
   SNES_ROOM_MAP_MARKER_ASSET
 } from "../game/snesAtlas";
 import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout } from "../game/state";
+import { getVolumeAssemblyReadout } from "../game/state";
 import { addGamepadConnectionListener, getInput, updateInputCallbacks } from "../input/InputState";
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
 import { applyIntegerZoom } from "../systems/pixelPerfect";
+import { VOLUME_ASSEMBLY_ASSETS, type VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { questBandCoverFragmentSlots, questBandCrystalSlots } from "./questBandCue";
 
 type RoomMapMarkerFrameName = (typeof SNES_ROOM_MAP_MARKER_ASSET.frames)[number];
@@ -48,6 +50,7 @@ export class UIScene extends Phaser.Scene {
   private questBandPendantRelics: Phaser.GameObjects.Image[] = [];
   private questBandCrystalRelics: Phaser.GameObjects.Image[] = [];
   private questBandCoverFragmentRelics: Phaser.GameObjects.Image[] = [];
+  private questBandVolumeAssemblyBar?: Phaser.GameObjects.Image;
   private questBandRoomMapMarkers: Phaser.GameObjects.Image[] = [];
   private questBandSignature = "";
   private questBandLastRefresh = 0;
@@ -181,6 +184,15 @@ export class UIScene extends Phaser.Scene {
       .setDepth(20401)
       .setScrollFactor(0)
       .setVisible(false);
+    if (this.textures.exists(VOLUME_ASSEMBLY_ASSETS.hudBar.key)) {
+      this.questBandVolumeAssemblyBar = this.add.image(145, 15, VOLUME_ASSEMBLY_ASSETS.hudBar.key)
+        .setName("quest-band-volume-assembly-art-bar")
+        .setOrigin(0, 0)
+        .setScale(0.5)
+        .setDepth(20402)
+        .setScrollFactor(0)
+        .setVisible(false);
+    }
     this.createQuestBandPendantRelics();
     this.createQuestBandCrystalRelics();
     this.createQuestBandCoverFragmentRelics();
@@ -194,6 +206,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandVerbText.setVisible(visible);
     this.questBandCueText.setVisible(visible);
     this.questBandVolumeText.setVisible(false);
+    this.questBandVolumeAssemblyBar?.setVisible(false);
     this.questBandPendantRelics.forEach((relic) => relic.setVisible(false));
     if (!visible) {
       this.questBandCrystalRelics.forEach((relic) => relic.setVisible(false));
@@ -203,6 +216,7 @@ export class UIScene extends Phaser.Scene {
 
     const hud = getAdventureHudReadout();
     const subscreen = getAdventureSubscreenReadout();
+    const volumeAssembly = getVolumeAssemblyReadout();
     if (now - this.questBandLastRefresh < 120) return;
     this.questBandLastRefresh = now;
 
@@ -213,6 +227,8 @@ export class UIScene extends Phaser.Scene {
     const signature = [
       gameState.reliability,
       toolLabel,
+      volumeAssembly.earnedPieces.join(","),
+      volumeAssembly.ceremonyUnlocked ? "bound" : "loose",
       weapon.phase,
       weapon.cooldownMsRemaining,
       objectiveLine,
@@ -228,6 +244,7 @@ export class UIScene extends Phaser.Scene {
     this.drawQuestBandChrome(subscreen.reliabilityHearts.filled, subscreen.reliabilityHearts.total);
     this.drawQuestBandActionBadge();
     this.drawQuestBandToolSlot(Boolean(subscreen.equippedTool ?? hud.equippedItem), weapon.cooldownRatio, weapon.phase);
+    this.drawQuestBandVolumeAssembly(volumeAssembly);
     this.questBandText.setText(objectiveLine);
     this.questBandVerbText.setText("A");
     this.questBandCueText.setText(actionLine);
@@ -263,6 +280,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandPendantRelics.forEach((relic) => relic.setVisible(false));
     this.questBandCrystalRelics.forEach((relic) => relic.setVisible(false));
     this.questBandCoverFragmentRelics.forEach((relic) => relic.setVisible(false));
+    this.questBandVolumeAssemblyBar?.setVisible(false);
     this.questBandRoomMapMarkers.forEach((marker) => marker.destroy());
     this.questBandRoomMapMarkers = [];
   }
@@ -547,24 +565,37 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
-  private drawQuestBandVolumeAssembly(current: number, total: number) {
+  private drawQuestBandVolumeAssembly(readout: VolumeAssemblyReadout) {
     const g = this.questBandGraphics;
-    const clampedTotal = Math.max(1, total);
-    const filled = Math.max(0, Math.min(clampedTotal, current));
-    const x = 178;
-    const y = 4;
+    const clampedTotal = Math.max(1, readout.total);
+    const filled = Math.max(0, Math.min(clampedTotal, readout.earnedCount));
+    const x = 146;
+    const y = 16;
     const hasCoverFragmentSprites = this.questBandCoverFragmentRelics.length >= SNES_COVER_FRAGMENT_RELIC_ASSET.frames.length;
-    this.syncQuestBandCoverFragmentRelics(current, total);
+    this.syncQuestBandCoverFragmentRelics(readout.earnedCount, readout.total);
+    if (this.questBandVolumeAssemblyBar) {
+      this.questBandVolumeAssemblyBar
+        .setVisible(true)
+        .setAlpha(0.9)
+        .setPosition(x - 1, y - 2);
+      for (let index = 0; index < clampedTotal; index += 1) {
+        const earned = index < filled;
+        const pieceX = x + 3 + index * 8;
+        g.fillStyle(color(earned ? PALETTE.goldStamp : PALETTE.black), earned ? 0.95 : 0.55);
+        g.fillRect(pieceX, y + 1, 5, 3);
+        if (earned) {
+          g.fillStyle(color(PALETTE.white), 0.95);
+          g.fillRect(pieceX + 1, y + 1, 1, 1);
+        }
+      }
+      return;
+    }
     g.fillStyle(color(PALETTE.black), 0.9);
-    g.fillRect(x - 2, y - 1, 17, 14);
+    g.fillRect(x - 2, y - 1, 43, 8);
     g.lineStyle(1, color(filled >= clampedTotal ? PALETTE.goldStamp : PALETTE.stoneGray), 0.95);
-    g.strokeRect(x - 2, y - 1, 17, 14);
+    g.strokeRect(x - 2, y - 1, 43, 8);
     g.fillStyle(color(PALETTE.deepRuby), 1);
-    g.fillRect(x, y + 1, 13, 10);
-    g.fillStyle(color(PALETTE.buckramRed), 1);
-    g.fillRect(x + 2, y + 2, 1, 8);
-    g.fillStyle(color(PALETTE.goldStamp), 1);
-    g.fillRect(x + 10, y + 1, 2, 10);
+    g.fillRect(x, y + 1, 39, 4);
     if (hasCoverFragmentSprites) {
       if (filled >= clampedTotal) {
         g.fillStyle(color(PALETTE.white), 1);
