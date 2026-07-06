@@ -21,9 +21,31 @@ facilities, black redaction bars, brass plaques, manila folders, document boxes.
 | `intro_screen.png` | 1024×896 (native 256×224 ×4) | — | Story introduction / reading-room scene | No |
 | `intro_screen_256x224.png` | 256×224 | — | Exact native-resolution intro screen | No |
 | `intro_screen_hires.png` | 1448×1086 | — | High-res hero/marketing version | No |
+| `title_screen_16bit_sharp_256x240.png` | 256×240 | — | Live 16-bit title background (`TitleScene`, sharp native card) | No |
+| `title_screen_frus_chest_256x240.png` | 256×240 | — | Refreshed title background (`TitleScene`): ruby buckram FRUS volume opening like a treasure chest, gold light burst, framed gold title plate | No |
+| `ending_binding_ceremony_256x240.png` | 256×240 | — | True ending / binding-ceremony background (`EndingScene`): human publication table, glowing assembled FRUS volume, Office of the Historian staff celebrating | No |
 
 > The `_1024x896.png` variants are identical to the primary `title_screen.png` /
 > `intro_screen.png` files (crisp 4× nearest-neighbor upscales of the 256×224 masters).
+
+### Refreshed native screen art (`title_screen_frus_chest_256x240.png`, `ending_binding_ceremony_256x240.png`)
+
+Both are generated deterministically by `scripts/generate-screen-art.py` (Pillow),
+so they can be re-rendered reproducibly. Drawn at exact 256×240 with hard edges and
+**no anti-aliasing**; every pixel comes from the game palette (`src/art/palette.ts` /
+`src/game/constants.ts` `PALETTE`). Registered in `src/assets/registry.ts` under
+`SCREENS` as `title_screen_frus_chest_256x240` and `ending_binding_ceremony_256x240`.
+
+- **Palette notes:** deep maroon/ruby buckram ground (`deepRuby`/`buckramRed`/`buckramHighlight`),
+  gold-stamp accents (`goldStamp`/`paleGold`/`bronze`), cream paper (`creamPaper`),
+  with `terminalCyan` / `openNetGreen` cues. Title uses 14 colors; ending uses 16.
+- **Reserved safe/text areas:**
+  - *Title* — top brass rail (y 0–12), framed gold title plate carrying
+    `RUBY RULE:` / `THE FRUS QUEST` (y 20–64), `PRESS START TO VERIFY` line (~y 210),
+    bottom marker band (y 224–236).
+  - *Ending* — top gold banner `THE BINDING CEREMONY` (y 10–30) and bottom caption
+    band (y 216–234); the central glowing volume + publication table occupy the
+    mid-field, staff along the floor line.
 
 ## 2. Tilesets (16×16 grid)
 

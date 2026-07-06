@@ -3982,3 +3982,13 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   - output opaque-palette count ≤ source for every role (palette-limited);
   - each master is a byte-for-byte 8× nearest-neighbor upscale of its native sheet (no smoothing);
   - side-by-side visual review of all five recolors confirmed retained silhouette/identity with the ruby-buckram + gold/silver treatment.
+## 2026-07-06 Refreshed title & ending screen art
+
+- Added a deterministic Pillow generator `scripts/generate-screen-art.py` that renders two native 256×240, limited-palette, no-AA backgrounds from the game palette (`src/art/palette.ts` / `PALETTE`).
+  - `public/assets/art-pack/screens/title_screen_frus_chest_256x240.png` — ruby buckram FRUS volume opening like a treasure chest with a gold light burst and a framed gold title plate carrying `RUBY RULE:` / `THE FRUS QUEST` (14 colors).
+  - `public/assets/art-pack/screens/ending_binding_ceremony_256x240.png` — true ending / binding ceremony: human publication table, glowing assembled FRUS volume, Office of the Historian staff in celebration poses (16 colors).
+- Registered both under `SCREENS` in `src/assets/registry.ts` so they load through the existing screen pipeline; documented dimensions, intended scene, palette notes, and reserved text/safe areas in `public/assets/art-pack/MANIFEST.md`.
+- Verification:
+  - both PNGs confirmed at exactly 256×240, RGB, with every color inside the palette and no anti-aliasing (14 / 16 unique colors);
+  - `tsc --noEmit` passes clean;
+  - `vitest run src/scenes/TitleScene.test.ts` passes (9 tests); full suite is 352/353 with the one pre-existing, unrelated `src/art/characterSprites.test.ts` failure present on the base commit.

@@ -52,7 +52,9 @@ export const FRUS_VOLUMES = {
 export const SCREENS = {
   frus_world_map: "art-pack/screens/frus_world_map.jpg",
   title_screen_16bit_sharp_256x240: "art-pack/screens/title_screen_16bit_sharp_256x240.png",
-  title_screen_256x224: "art-pack/screens/title_screen_256x224.png"
+  title_screen_256x224: "art-pack/screens/title_screen_256x224.png",
+  title_screen_frus_chest_256x240: "art-pack/screens/title_screen_frus_chest_256x240.png",
+  ending_binding_ceremony_256x240: "art-pack/screens/ending_binding_ceremony_256x240.png"
 } as const;
 
 export const ALL_NEW_ART_REGISTRIES = {
