@@ -3953,3 +3953,16 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - required web-game client was run against `?scene=TitleScene`;
   - direct Playwright probes verified TitleScene and OfficeScene render with no page or console errors and intact `window.render_game_to_text()`;
   - visual proof: `docs/screenshots/consistent-16bit-visual-pipeline/title-before.png`, `title-after.png`, `office-before.png`, and `office-hud-after.png`.
+
+## 2026-07-06 Mobile DANN-E combat and volume parity
+
+- Confirmed the touch path for DANN-E combat: floating D-pad feeds directional movement, touch `B` feeds the equipped-tool swing path, and touch `A` remains reserved for confirm/interact.
+- Added a touch-friendly cooldown meter beside the on-screen `B` button, using the same weapon phase and cooldown data as the desktop HUD.
+- Extended `window.rubyRuleTouchControls` with weapon phase, cooldown ratio, and equipped tool so mobile combat QA can inspect the same state used by `weaponState` and `DanneEnemy` hit detection.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against Black Vault on the local dev build;
+  - direct mobile Playwright probe at 375 x 667 confirmed integer zoom 1, DPR 2, 256 x 240 CSS canvas, 512 x 480 backing buffer, and no page errors;
+  - simulated touch movement and touch `B` swing reached `weaponPhase: active` with `weaponTool: red_pencil`;
+  - repeated touch `B` swings defeated DANN-E Colossus, advanced `volumeAssembly` from 0/5 to 1/5, and left `render_game_to_text()` reporting active enemy HP and room-clear status;
+  - visual proof: `docs/screenshots/mobile-danne-volume-parity/combat-touch-before.png`, `combat-cooldown-visible.png`, and `volume-piece-award.png`.
