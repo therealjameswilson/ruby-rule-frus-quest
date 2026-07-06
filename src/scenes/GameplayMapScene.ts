@@ -238,6 +238,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private readonly danneEnemies: DanneEnemy[] = [];
   private danneRoomId = "";
   private danneRoomUnlockedFlags: string[] = [];
+  private activeMusicCue = "";
 
   constructor() {
     super("GameplayMapScene");
@@ -269,7 +270,6 @@ export class GameplayMapScene extends Phaser.Scene {
     setSceneState("GameplayMapScene", "explore", MAP_OBJECTIVES[this.mapKey]);
     setVisibleThreats([]);
     setLatestMessage(`${MAP_LABELS[this.mapKey]} loaded from object layers.`);
-    retroAudio.startMusic(this.mapKey === "black_vault" ? "BlackVaultLairScene" : "TitleScene");
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.fitRect = this.computeMapFit();
     this.drawMap();
@@ -283,6 +283,7 @@ export class GameplayMapScene extends Phaser.Scene {
     const spawn = this.adjustSpawnAwayFromWorldExit(rawSpawn);
     this.player = new Player(this, spawn.x, spawn.y);
     this.createDanneEncounter();
+    this.updateGameplayMusic(true);
     this.suppressSpawnTrigger(spawn);
     this.showEntryBanner();
     this.updateFrusFloorCurrentStage(true);
@@ -547,12 +548,31 @@ export class GameplayMapScene extends Phaser.Scene {
     );
     if (!wasCleared && status.cleared) {
       retroAudio.confirm();
+      this.updateGameplayMusic();
       if (this.mapKey === "black_vault") this.openBlackVaultBlastDoors();
       else this.refreshDoorRouteBadges();
       this.updateVisibleMapState();
     } else if (!hitFeedback && status.requiredEnemyCount > 0 && !status.cleared) {
       setLatestMessage(`DANN-E room gate: ${status.defeatedEnemyCount}/${status.requiredEnemyCount} cleared.`);
     }
+  }
+
+  private updateGameplayMusic(force = false) {
+    const cue = this.danneEnemies.some((enemy) => !enemy.defeated)
+      ? this.danneCombatMusicCue()
+      : this.ambientMusicCue();
+    if (!force && cue === this.activeMusicCue) return;
+    this.activeMusicCue = cue;
+    if (force) retroAudio.startMusic(cue, { forceRestart: true });
+    else retroAudio.crossfadeToMusic(cue, { forceRestart: true });
+  }
+
+  private ambientMusicCue() {
+    return this.mapKey;
+  }
+
+  private danneCombatMusicCue() {
+    return this.mapKey === "black_vault" ? "DanneCombat" : "DanneMiniboss";
   }
 
   private syncGameplayThreats() {

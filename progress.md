@@ -3966,3 +3966,15 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - simulated touch movement and touch `B` swing reached `weaponPhase: active` with `weaponTool: red_pencil`;
   - repeated touch `B` swings defeated DANN-E Colossus, advanced `volumeAssembly` from 0/5 to 1/5, and left `render_game_to_text()` reporting active enemy HP and room-clear status;
   - visual proof: `docs/screenshots/mobile-danne-volume-parity/combat-touch-before.png`, `combat-cooldown-visible.png`, and `volume-piece-award.png`.
+
+## 2026-07-06 Region and DANN-E combat audio
+
+- Registered new named Web Audio chiptune tracks derived from the public-domain MIDI stems in `public/assets/audio/midi/`, including Office Hub, dungeon-region themes, DANN-E miniboss/combat tracks, and an ending fanfare.
+- `window.rubyRuleAudioDebug()` now reports the active track's source note and MIDI stem path, making track routing testable without relying on browser audio capture.
+- Gameplay maps now select ambient music by map key, switch to DANN-E combat/miniboss music while live `DanneEnemy` instances remain in the room, and crossfade back to ambient once the room is cleared.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against Black Vault;
+  - direct Playwright probe confirmed Office -> `officeHub`, NARA DANN-E room -> `danneMiniboss`, Black Vault active room -> `danneCombat`, Black Vault after forced room clear -> `blackVault`, and Ending -> `endingFanfare`;
+  - direct Playwright probe confirmed the existing `N` key sound toggle still stops and resumes music while preserving the selected track;
+  - details are recorded in `docs/REGION_COMBAT_AUDIO_QA.md`.
