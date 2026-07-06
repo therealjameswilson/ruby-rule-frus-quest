@@ -171,6 +171,60 @@ Optional secret content reached via a hidden passage. See
 | `secrets/tileset_reading_room_16x16_native.png` | 112×112 | 7×7 grid (16px tiles) | Hidden reading-room bonus-area tileset (native 1× source): stone floors/walls, disguised + revealed hidden-passage tiles, doorway/arch, bookshelves, reading table/chair/pedestal, globe, candle & green banker lamp (+ glow overlays), wall sconce, framed map, brass FRUS placard; rows 5-7 seamless fills | Yes |
 | `secrets/tileset_reading_room_16x16.png` | 896×896 | 7×7 grid (128px cells) | 8× crisp nearest-neighbor upscale of the native reading-room tileset (display/master) | Yes |
 | `secrets/collectible_first_edition_frus_32x32.png` | 128×32 | 4 frames × 32×32 (horizontal) | Rare collectible: gilded "first edition" FRUS volume, sparkle-animated (4 frames, ~8fps / ~500ms loop) — the optional secret reward | Yes |
+## 9. HUD icon polish pack (`hud/`)
+
+Original SNES-era HUD sprites authored pixel-by-pixel on an exact grid (hard
+edges, no anti-aliasing, transparent background) via
+`scripts/generate-hud-icon-pack.py`. Every icon ships as a 16×16 master plus a
+crisp 2× nearest-neighbour 32×32 variant, and reuses the project's NES palette
+(`src/art/palette.ts`) to match the `UIScene` quest-band visual language: ruby
+buckram bodies, gold-stamped trim, cream paper, slate secure-facility blue,
+terminal cyan. Palette-, dimension-, and alpha-verified (binary alpha, no AA).
+
+### 9a. Meters & counters
+
+| Filename | Dimensions | Intended use | Transparency |
+|---|---|---|---|
+| `reliability_meter_frame_16.png` / `_32.png` | 16×16 / 32×32 | Reliability/confidence meter frame: gold-riveted container with ruby fill track + heart emblem, framing the quest-band reliability hearts | Yes |
+| `document_points_icon_16.png` / `_32.png` | 16×16 / 32×32 | Document-points counter icon: cream page with ruby ruled lines, folded gold corner, and gold points star badge | Yes |
+
+### 9b. Process stamp icons (12×12 stamp on 16×16 tile)
+
+Match the earned-process motifs used by the publication screen. Each is a ruby
+(or paper/slate) stamp plate with a black notch shadow and an accent glyph.
+
+| Filename | Dimensions | Intended use | Transparency |
+|---|---|---|---|
+| `process_stamp_rule_16.png` / `_32.png` | 16×16 / 32×32 | "Rule" process stamp — gold serif rule/paragraph mark on ruby | Yes |
+| `process_stamp_source_16.png` / `_32.png` | 16×16 / 32×32 | "Source" process stamp — aged document with ruby lines + gold provenance seal | Yes |
+| `process_stamp_network_16.png` / `_32.png` | 16×16 / 32×32 | "Network" process stamp — cyan node graph on slate | Yes |
+| `process_stamp_referral_16.png` / `_32.png` | 16×16 / 32×32 | "Referral" process stamp — routing slip with ruby spine + gold forwarding arrow | Yes |
+| `process_stamp_read_16.png` / `_32.png` | 16×16 / 32×32 | "Read" process stamp — gold eye over a cream page (Silent Read / proofreading) | Yes |
+
+### 9c. Equipped-tool slot frames
+
+| Filename | Dimensions | Intended use | Transparency |
+|---|---|---|---|
+| `tool_slot_frame_empty_16.png` / `_32.png` | 16×16 / 32×32 | Empty tool slot — stone-gray bevel, black interior, dim placeholder glyph | Yes |
+| `tool_slot_frame_active_16.png` / `_32.png` | 16×16 / 32×32 | Equipped/selected tool slot — gold bevel, ruby interior, gold corner accents + tool glyph | Yes |
+
+### 9d. Volume-assembly progress tracker (5-segment)
+
+Five cover pieces assembled left→right into the final ruby buckram FRUS volume,
+in order: **spine, front board, title plate, ribbon marker, seal/stamp**. The
+tracker bar is 5 × 16px segments (80×16); `empty` shows unearned (stone/black)
+segments, `full` shows all five earned. Individual 16×16 (+32×32) segment icons
+are also provided for per-piece display.
+
+| Filename | Dimensions | Grid | Intended use | Transparency |
+|---|---|---|---|---|
+| `volume_assembly_tracker_empty_80x16.png` / `_160x32.png` | 80×16 / 160×32 | 5×1 (16px cells) | Unearned progress tracker (all segments dim) | Yes |
+| `volume_assembly_tracker_full_80x16.png` / `_160x32.png` | 80×16 / 160×32 | 5×1 (16px cells) | Complete progress tracker (all five cover pieces earned) | Yes |
+| `volume_segment_spine_16.png` / `_32.png` | 16×16 / 32×32 | — | Segment 1: ruby spine with gold bands | Yes |
+| `volume_segment_front_board_16.png` / `_32.png` | 16×16 / 32×32 | — | Segment 2: ruby buckram front board with gold emblem | Yes |
+| `volume_segment_title_plate_16.png` / `_32.png` | 16×16 / 32×32 | — | Segment 3: gold title plate with engraved lines | Yes |
+| `volume_segment_ribbon_marker_16.png` / `_32.png` | 16×16 / 32×32 | — | Segment 4: gold ribbon bookmark with notched tail | Yes |
+| `volume_segment_seal_stamp_16.png` / `_32.png` | 16×16 / 32×32 | — | Segment 5: gold wax seal/stamp with ruby core + star emboss | Yes |
 
 ---
 

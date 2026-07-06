@@ -3946,3 +3946,21 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Palette style-locked to the archive / stone-dungeon pack (federal stone, ruby buckram, gold stamp, cream paper, archival wood, reading-room green, warm candle glow).
 - Documented in a new `secrets/MANIFEST.md` plus a new section 9 in the top-level `art-pack/MANIFEST.md`.
 - Verification: PIL checks confirmed exact dimensions, RGBA with only alpha 0/255 (no anti-aliasing), 29-color tileset / 12-color collectible limited palettes, the display tileset is a pixel-exact ×8 nearest-neighbor upscale (identical color count), and each of the 4 collectible frames contains the volume plus distinct sparkles.
+## 2026-07-06 HUD icon polish pack
+
+- Added an original 16-bit HUD icon set under `public/assets/art-pack/hud/`,
+  generated deterministically by `scripts/generate-hud-icon-pack.py` (PIL,
+  hard-edged pixel grid, no anti-aliasing, transparent backgrounds, project NES
+  palette from `src/art/palette.ts`), matching the `UIScene` quest-band look:
+  - reliability/confidence meter frame;
+  - document-points counter icon;
+  - process stamp icons: Rule, Source, Network, Referral, Read;
+  - equipped-tool slot frames (empty + active);
+  - 5-segment volume-assembly progress tracker bar (spine, front board, title
+    plate, ribbon marker, seal/stamp) plus per-segment icons.
+- Each icon ships as a 16×16 master and a crisp 2× nearest-neighbour 32×32
+  variant; the tracker bar ships at 80×16 and 160×32.
+- Documented every file in `public/assets/art-pack/MANIFEST.md` (new section 9).
+- Verification: automated check confirmed all 32 PNGs are RGBA with exact
+  dimensions, binary alpha (0/255 only, no AA), and colors strictly within the
+  NES palette; visual montage inspected for readability.
