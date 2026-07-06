@@ -51,23 +51,66 @@ export const FRUS_VOLUMES = {
 
 export const SCREENS = {
   frus_world_map: "art-pack/screens/frus_world_map.jpg",
+  intro_screen_256x224: "art-pack/screens/intro_screen_256x224.png",
   title_screen_16bit_sharp_256x240: "art-pack/screens/title_screen_16bit_sharp_256x240.png",
   title_screen_256x224: "art-pack/screens/title_screen_256x224.png"
+} as const;
+
+export const UI_PACK = {
+  ui_hud_16bit: "art-pack/ui/ui_hud_16bit.png",
+  ui_kit: "art-pack/ui/ui_kit.png"
+} as const;
+
+export const UI_PACK_FRAMES = {
+  rubyHudBar: {
+    textureKey: "ui_hud_16bit",
+    frame: "ruby-hud-bar",
+    x: 55,
+    y: 40,
+    width: 1411,
+    height: 78
+  },
+  verificationHeart: {
+    textureKey: "ui_hud_16bit",
+    frame: "verification-heart",
+    x: 714,
+    y: 264,
+    width: 113,
+    height: 101
+  },
+  toolSlot: {
+    textureKey: "ui_hud_16bit",
+    frame: "tool-slot",
+    x: 164,
+    y: 345,
+    width: 148,
+    height: 131
+  },
+  actionBadge: {
+    textureKey: "ui_hud_16bit",
+    frame: "action-badge",
+    x: 296,
+    y: 812,
+    width: 518,
+    height: 82
+  }
 } as const;
 
 export const ALL_NEW_ART_REGISTRIES = {
   OVERWORLD_REGIONS,
   GAMEPLAY_MAPS,
   FRUS_VOLUMES,
-  SCREENS
+  SCREENS,
+  UI_PACK
 } as const;
 
 export type OverworldRegionKey = keyof typeof OVERWORLD_REGIONS;
 export type GameplayMapKey = keyof typeof GAMEPLAY_MAPS;
 export type FrusVolumeKey = keyof typeof FRUS_VOLUMES;
 export type ScreenKey = keyof typeof SCREENS;
+export type UiPackKey = keyof typeof UI_PACK;
 export type NewArtRegistryName = keyof typeof ALL_NEW_ART_REGISTRIES;
-export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey | ScreenKey;
+export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey | ScreenKey | UiPackKey;
 
 export function gameplayTiledCacheKey(mapKey: GameplayMapKey) {
   return `tiled-${mapKey}`;

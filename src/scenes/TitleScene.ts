@@ -43,9 +43,11 @@ export class TitleScene extends Phaser.Scene {
     retroAudio.startMusic("TitleScene");
 
     this.cameras.main.setBackgroundColor(PALETTE.black);
-    this.drawCleanTitleCard();
+    const usingArtPackTitle = this.drawArtPackTitleScreen();
+    if (!usingArtPackTitle) this.drawCleanTitleCard();
     this.drawStartAffordance(TITLE_LAYOUT.pressStartY);
-    this.drawMissionPlaque(false);
+    if (!usingArtPackTitle) this.drawMissionPlaque(false);
+    else this.drawHistoryStateSourceTag();
     this.createSkipWarningToggle();
   }
 
@@ -90,6 +92,17 @@ export class TitleScene extends Phaser.Scene {
     }).setDepth(40);
     this.drawQuestRouteStrip(128, 211, 41);
     return true;
+  }
+
+  private drawHistoryStateSourceTag() {
+    this.add.rectangle(128, 28, 86, 7, color(PALETTE.black), 0.84)
+      .setName("title-history-state-artpack-tag-plate")
+      .setDepth(41);
+    this.add.text(128, 25, "SOURCE: HISTORY.STATE.GOV", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.creamPaper
+    }).setName("title-history-state-artpack-shoutout").setOrigin(0.5, 0).setDepth(42).setResolution(2);
   }
 
   private drawCleanTitleCard() {

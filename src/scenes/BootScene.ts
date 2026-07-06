@@ -2,7 +2,13 @@ import Phaser from "phaser";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
-import { ALL_NEW_ART_REGISTRIES, GAMEPLAY_TILED_MAPS, gameplayTiledCacheKey, publicAssetPath } from "../assets/registry";
+import {
+  ALL_NEW_ART_REGISTRIES,
+  GAMEPLAY_TILED_MAPS,
+  UI_PACK_FRAMES,
+  gameplayTiledCacheKey,
+  publicAssetPath
+} from "../assets/registry";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
   DANNE_BOSS_SPRITE_ASSET,
@@ -104,6 +110,7 @@ export class BootScene extends Phaser.Scene {
     this.registerSnesWorkflowToolFrames();
     this.registerSnesResearchPendantFrames();
     this.registerSnesEquityCrystalFrames();
+    this.registerArtPackUiFrames();
     registerCharacterAnims(this);
     registerDanneAnims(this);
     this.applyNearestTextureFilters();
@@ -218,6 +225,22 @@ export class BootScene extends Phaser.Scene {
           this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
       }
+    }
+  }
+
+  private registerArtPackUiFrames() {
+    for (const frameSpec of Object.values(UI_PACK_FRAMES)) {
+      if (!this.textures.exists(frameSpec.textureKey)) continue;
+      const texture = this.textures.get(frameSpec.textureKey);
+      if (texture.has(frameSpec.frame)) continue;
+      texture.add(
+        frameSpec.frame,
+        0,
+        frameSpec.x,
+        frameSpec.y,
+        frameSpec.width,
+        frameSpec.height
+      );
     }
   }
 

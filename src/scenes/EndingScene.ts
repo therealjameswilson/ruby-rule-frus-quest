@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FRUS_VOLUMES } from "../assets/registry";
+import { FRUS_VOLUMES, SCREENS } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
 import {
   evaluateKelloggCertificationAnswer,
@@ -1677,12 +1677,7 @@ export class EndingScene extends Phaser.Scene {
   private showPublishedPrize() {
     const clock = getStatutoryClockStateReadout();
     const volumeAssembly = getVolumeAssemblyReadout();
-    this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby)).setDepth(900);
-    for (let y = 0; y < GAME_HEIGHT; y += 8) {
-      for (let x = (y / 8) % 2 === 0 ? 2 : 10; x < GAME_WIDTH; x += 16) {
-        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramRed)).setDepth(901);
-      }
-    }
+    this.drawPublishedBackdrop();
 
     addSnesPublicationShrine(this, {
       x: 128,
@@ -1800,6 +1795,27 @@ export class EndingScene extends Phaser.Scene {
   private restart() {
     if (!this.canRestart) return;
     transitionTo(this, "TitleScene");
+  }
+
+  private drawPublishedBackdrop() {
+    const key = "intro_screen_256x224" satisfies keyof typeof SCREENS;
+    if (this.textures.exists(key)) {
+      const source = this.textures.get(key).getSourceImage() as { width?: number; height?: number };
+      if (source.width === GAME_WIDTH && source.height === 224) {
+        this.add.rectangle(128, 120, 256, 240, color(PALETTE.black)).setDepth(900);
+        this.add.image(0, 0, key).setOrigin(0).setDepth(901);
+        this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby), 0.28).setDepth(902);
+        this.add.rectangle(128, 224, 256, 16, color(PALETTE.black), 0.94).setDepth(903);
+        return;
+      }
+    }
+
+    this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby)).setDepth(900);
+    for (let y = 0; y < GAME_HEIGHT; y += 8) {
+      for (let x = (y / 8) % 2 === 0 ? 2 : 10; x < GAME_WIDTH; x += 16) {
+        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramRed)).setDepth(901);
+      }
+    }
   }
 
   private isNear(x: number, y: number, radius: number) {

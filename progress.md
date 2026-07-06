@@ -3939,3 +3939,17 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - direct Playwright reward probe defeated the boss-tier DANN-E variants across Black Vault, NARA Stacks, and Capitol Hill, producing `VOLUME 5/5` with `missingFragments: 0`;
   - direct ending probe confirmed `ceremonyPlayed: true` and final certification status `published`;
   - full `npm test` still has the pre-existing base-branch character sprite frame-layout assertion mismatch in `src/art/characterSprites.test.ts`.
+
+## 2026-07-06 Consistent 16-bit visual pipeline pass
+
+- Audited BootScene fallback generation and the committed art pack, then documented remaining gaps in `docs/ASSET_GAPS.md`.
+- Added the art-pack UI sheets to the central asset registry and registered named HUD slices in BootScene.
+- Switched TitleScene to prefer the native `title_screen_16bit_sharp_256x240.png` title card, with the procedural title retained as a missing-asset fallback.
+- Updated UIScene's compact quest band to use art-pack HUD chrome, verification-heart, equipped-tool slot, and action-badge slices where available.
+- Updated EndingScene to use `intro_screen_256x224.png` as a polished published-volume backdrop while keeping the completed-volume hero/binding ceremony art.
+- Confirmed the render config still uses Phaser.AUTO, `pixelArt: true`, `roundPixels: true`, `antialias: false`, `antialiasGL: false`, and nearest texture filtering.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against `?scene=TitleScene`;
+  - direct Playwright probes verified TitleScene and OfficeScene render with no page or console errors and intact `window.render_game_to_text()`;
+  - visual proof: `docs/screenshots/consistent-16bit-visual-pipeline/title-before.png`, `title-after.png`, `office-before.png`, and `office-hud-after.png`.

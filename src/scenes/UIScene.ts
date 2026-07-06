@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { UI_PACK_FRAMES } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   SNES_COVER_FRAGMENT_RELIC_ASSET,
@@ -52,6 +53,10 @@ export class UIScene extends Phaser.Scene {
   private questBandCoverFragmentRelics: Phaser.GameObjects.Image[] = [];
   private questBandVolumeAssemblyBar?: Phaser.GameObjects.Image;
   private questBandRoomMapMarkers: Phaser.GameObjects.Image[] = [];
+  private questBandArtPackChrome?: Phaser.GameObjects.Image;
+  private questBandArtPackHearts: Phaser.GameObjects.Image[] = [];
+  private questBandArtPackToolSlot?: Phaser.GameObjects.Image;
+  private questBandArtPackActionBadge?: Phaser.GameObjects.Image;
   private questBandSignature = "";
   private questBandLastRefresh = 0;
 
@@ -193,6 +198,7 @@ export class UIScene extends Phaser.Scene {
         .setScrollFactor(0)
         .setVisible(false);
     }
+    this.createArtPackQuestBandSprites();
     this.createQuestBandPendantRelics();
     this.createQuestBandCrystalRelics();
     this.createQuestBandCoverFragmentRelics();
@@ -207,6 +213,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandCueText.setVisible(visible);
     this.questBandVolumeText.setVisible(false);
     this.questBandVolumeAssemblyBar?.setVisible(false);
+    this.setArtPackQuestBandVisible(visible);
     this.questBandPendantRelics.forEach((relic) => relic.setVisible(false));
     if (!visible) {
       this.questBandCrystalRelics.forEach((relic) => relic.setVisible(false));
@@ -285,6 +292,48 @@ export class UIScene extends Phaser.Scene {
     this.questBandRoomMapMarkers = [];
   }
 
+  private createArtPackQuestBandSprites() {
+    const topBar = UI_PACK_FRAMES.rubyHudBar;
+    if (this.textures.exists(topBar.textureKey) && this.textures.get(topBar.textureKey).has(topBar.frame)) {
+      this.questBandArtPackChrome = this.add.image(0, 0, topBar.textureKey, topBar.frame)
+        .setName("quest-band-artpack-ruby-hud-bar")
+        .setOrigin(0, 0)
+        .setDisplaySize(GAME_WIDTH, 14)
+        .setDepth(20400)
+        .setScrollFactor(0)
+        .setVisible(false);
+    }
+
+    const toolSlot = UI_PACK_FRAMES.toolSlot;
+    if (this.textures.exists(toolSlot.textureKey) && this.textures.get(toolSlot.textureKey).has(toolSlot.frame)) {
+      this.questBandArtPackToolSlot = this.add.image(GAME_WIDTH - 48, 3, toolSlot.textureKey, toolSlot.frame)
+        .setName("quest-band-artpack-tool-slot")
+        .setOrigin(0, 0)
+        .setDisplaySize(14, 14)
+        .setDepth(20402)
+        .setScrollFactor(0)
+        .setVisible(false);
+    }
+
+    const actionBadge = UI_PACK_FRAMES.actionBadge;
+    if (this.textures.exists(actionBadge.textureKey) && this.textures.get(actionBadge.textureKey).has(actionBadge.frame)) {
+      this.questBandArtPackActionBadge = this.add.image(3, 17, actionBadge.textureKey, actionBadge.frame)
+        .setName("quest-band-artpack-action-badge")
+        .setOrigin(0, 0)
+        .setDisplaySize(25, 7)
+        .setDepth(20401)
+        .setScrollFactor(0)
+        .setVisible(false);
+    }
+  }
+
+  private setArtPackQuestBandVisible(visible: boolean) {
+    this.questBandArtPackChrome?.setVisible(visible);
+    this.questBandArtPackToolSlot?.setVisible(false);
+    this.questBandArtPackActionBadge?.setVisible(false);
+    this.questBandArtPackHearts.forEach((heart) => heart.setVisible(false));
+  }
+
   private shouldShowQuestBand(activeSceneKey: string | null) {
     if (!activeSceneKey) return false;
     if (this.scene.isActive("CodexScene")) return false;
@@ -302,17 +351,50 @@ export class UIScene extends Phaser.Scene {
 
   private drawQuestBandChrome(filledHearts: number, totalHearts: number) {
     const g = this.questBandGraphics;
-    g.fillStyle(color(PALETTE.black), 0.86);
-    g.fillRect(0, 0, GAME_WIDTH, 24);
-    g.fillStyle(color(PALETTE.deepRuby), 0.8);
-    g.fillRect(0, 16, GAME_WIDTH, 8);
+    if (this.questBandArtPackChrome) {
+      this.questBandArtPackChrome.setVisible(true);
+      g.fillStyle(color(PALETTE.black), 0.76);
+      g.fillRect(0, 13, GAME_WIDTH, 11);
+    } else {
+      g.fillStyle(color(PALETTE.black), 0.86);
+      g.fillRect(0, 0, GAME_WIDTH, 24);
+      g.fillStyle(color(PALETTE.deepRuby), 0.8);
+      g.fillRect(0, 16, GAME_WIDTH, 8);
+    }
     g.fillStyle(color(PALETTE.goldStamp), 1);
     g.fillRect(0, 23, GAME_WIDTH, 1);
     g.fillStyle(color(PALETTE.black), 0.72);
     g.fillRect(0, 17, GAME_WIDTH, 6);
-    for (let index = 0; index < totalHearts; index += 1) {
-      this.drawQuestHeart(5 + index * 7, 3, index < filledHearts);
+    if (!this.syncArtPackQuestHearts(filledHearts, totalHearts)) {
+      for (let index = 0; index < totalHearts; index += 1) {
+        this.drawQuestHeart(5 + index * 7, 3, index < filledHearts);
+      }
     }
+  }
+
+  private syncArtPackQuestHearts(filledHearts: number, totalHearts: number) {
+    const heart = UI_PACK_FRAMES.verificationHeart;
+    if (!this.textures.exists(heart.textureKey) || !this.textures.get(heart.textureKey).has(heart.frame)) return false;
+    while (this.questBandArtPackHearts.length < totalHearts) {
+      const index = this.questBandArtPackHearts.length;
+      const icon = this.add.image(5 + index * 7, 3, heart.textureKey, heart.frame)
+        .setName(`quest-band-artpack-heart-${index}`)
+        .setOrigin(0, 0)
+        .setDisplaySize(7, 7)
+        .setDepth(20403)
+        .setScrollFactor(0)
+        .setVisible(false);
+      this.questBandArtPackHearts.push(icon);
+    }
+    this.questBandArtPackHearts.forEach((icon, index) => {
+      const filled = index < filledHearts;
+      icon
+        .setPosition(5 + index * 7, 2)
+        .setAlpha(index < totalHearts ? (filled ? 1 : 0.36) : 0)
+        .setTint(filled ? 0xffffff : color(PALETTE.stoneGray))
+        .setVisible(index < totalHearts);
+    });
+    return true;
   }
 
   private drawQuestHeart(x: number, y: number, filled: boolean) {
@@ -670,10 +752,17 @@ export class UIScene extends Phaser.Scene {
   private drawQuestBandToolSlot(acquired: boolean, cooldownRatio = 0, phase: string = "idle") {
     const g = this.questBandGraphics;
     const x = GAME_WIDTH - 48;
-    g.lineStyle(1, color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray), 1);
-    g.fillStyle(color(acquired ? PALETTE.deepRuby : PALETTE.black), 0.95);
-    g.fillRect(x, 3, 14, 14);
-    g.strokeRect(x, 3, 14, 14);
+    if (this.questBandArtPackToolSlot) {
+      this.questBandArtPackToolSlot
+        .setVisible(true)
+        .setAlpha(acquired ? 1 : 0.45)
+        .setTint(acquired ? 0xffffff : color(PALETTE.stoneGray));
+    } else {
+      g.lineStyle(1, color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray), 1);
+      g.fillStyle(color(acquired ? PALETTE.deepRuby : PALETTE.black), 0.95);
+      g.fillRect(x, 3, 14, 14);
+      g.strokeRect(x, 3, 14, 14);
+    }
     g.fillStyle(color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray), 1);
     g.fillRect(x + 4, 6, 6, 2);
     g.fillRect(x + 6, 8, 2, 5);
@@ -692,12 +781,21 @@ export class UIScene extends Phaser.Scene {
   private drawQuestBandActionBadge() {
     const g = this.questBandGraphics;
     const accent = gameState.nearestInteractable ? PALETTE.goldStamp : PALETTE.terminalCyan;
-    g.fillStyle(color(PALETTE.black), 0.98);
-    g.fillRect(3, 17, 25, 7);
-    g.lineStyle(1, color(accent), 1);
-    g.strokeRect(3, 17, 25, 7);
-    g.fillStyle(color(accent), 0.95);
-    g.fillRect(4, 18, 23, 5);
+    if (this.questBandArtPackActionBadge) {
+      this.questBandArtPackActionBadge
+        .setVisible(true)
+        .setTint(color(accent))
+        .setAlpha(0.95);
+      g.fillStyle(color(PALETTE.black), 0.58);
+      g.fillRect(6, 18, 19, 5);
+    } else {
+      g.fillStyle(color(PALETTE.black), 0.98);
+      g.fillRect(3, 17, 25, 7);
+      g.lineStyle(1, color(accent), 1);
+      g.strokeRect(3, 17, 25, 7);
+      g.fillStyle(color(accent), 0.95);
+      g.fillRect(4, 18, 23, 5);
+    }
   }
 
   private showGamepadToast(message: string) {
