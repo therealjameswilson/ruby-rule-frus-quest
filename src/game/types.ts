@@ -35,6 +35,19 @@ export interface PlayerCombatReadout {
   state: PlayerControlState;
   actionActive: boolean;
   actionMsRemaining: number;
+  weapon: {
+    phase: "idle" | "windup" | "active" | "cooldown";
+    tool: ProcessItemId;
+    label: string;
+    canSwing: boolean;
+    active: boolean;
+    windupMsRemaining: number;
+    activeMsRemaining: number;
+    cooldownMsRemaining: number;
+    cooldownRatio: number;
+    movementScale: number;
+    swingId: number;
+  };
   invulnerable: boolean;
   invulnerableMsRemaining: number;
   hitbox: {

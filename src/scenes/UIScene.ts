@@ -207,11 +207,14 @@ export class UIScene extends Phaser.Scene {
     this.questBandLastRefresh = now;
 
     const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? "NONE";
+    const weapon = gameState.playerCombat.weapon;
     const objectiveLine = this.compactObjective(activeSceneKey);
     const actionLine = this.compactActionLine(toolLabel);
     const signature = [
       gameState.reliability,
       toolLabel,
+      weapon.phase,
+      weapon.cooldownMsRemaining,
       objectiveLine,
       actionLine,
       gameState.nearestInteractable ?? "",
@@ -224,7 +227,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandGraphics.clear();
     this.drawQuestBandChrome(subscreen.reliabilityHearts.filled, subscreen.reliabilityHearts.total);
     this.drawQuestBandActionBadge();
-    this.drawQuestBandToolSlot(Boolean(subscreen.equippedTool ?? hud.equippedItem));
+    this.drawQuestBandToolSlot(Boolean(subscreen.equippedTool ?? hud.equippedItem), weapon.cooldownRatio, weapon.phase);
     this.questBandText.setText(objectiveLine);
     this.questBandVerbText.setText("A");
     this.questBandCueText.setText(actionLine);
@@ -633,7 +636,7 @@ export class UIScene extends Phaser.Scene {
     }
   }
 
-  private drawQuestBandToolSlot(acquired: boolean) {
+  private drawQuestBandToolSlot(acquired: boolean, cooldownRatio = 0, phase: string = "idle") {
     const g = this.questBandGraphics;
     const x = GAME_WIDTH - 48;
     g.lineStyle(1, color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray), 1);
@@ -643,6 +646,16 @@ export class UIScene extends Phaser.Scene {
     g.fillStyle(color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray), 1);
     g.fillRect(x + 4, 6, 6, 2);
     g.fillRect(x + 6, 8, 2, 5);
+    if (acquired && cooldownRatio > 0) {
+      const barHeight = Math.max(1, Math.round(12 * cooldownRatio));
+      g.fillStyle(color(PALETTE.black), 0.74);
+      g.fillRect(x + 16, 3, 3, 14);
+      g.fillStyle(color(phase === "active" ? PALETTE.terminalCyan : PALETTE.classNetRed), 0.95);
+      g.fillRect(x + 17, 16 - barHeight, 1, barHeight);
+    } else if (acquired) {
+      g.fillStyle(color(PALETTE.terminalCyan), 0.9);
+      g.fillRect(x + 16, 15, 3, 2);
+    }
   }
 
   private drawQuestBandActionBadge() {

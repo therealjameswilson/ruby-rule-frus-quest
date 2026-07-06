@@ -3909,3 +3909,16 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - direct Playwright screenshots verified Guide, Archive, and Network, plus a forced live `ChoicePrompt` in Network;
   - visual proof: `docs/screenshots/hud-prompt-cleanup/guide-final.png`, `docs/screenshots/hud-prompt-cleanup/archive-final.png`, and `docs/screenshots/hud-prompt-cleanup/network-choice-final.png`;
   - browser pass reported only WebGL `ReadPixels` warnings caused by screenshot capture, with no page errors.
+
+## 2026-07-06 Equipped-tool swing state machine
+
+- Replaced the player action-hitbox timer with a real equipped-tool state machine for Citation Stamp, Red Pencil, and Review Folder.
+- Added windup, active, and cooldown windows per tool; damaging hitboxes now exist only during active frames, and repeated swings are blocked until cooldown ends.
+- Added tool-specific movement slowdown during windup/active, art-pack effects-sheet VFX with rectangle fallback, distinct oscillator windup/hit cues, and a HUD cooldown meter beside the equipped tool slot.
+- Kept legacy Archive stonewall interactions responsive through facing checks while DANN-E enemies use the strict active-frame hitbox.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - focused `npx vitest run src/systems/weaponState.test.ts --reporter=dot` passes (1 file / 3 tests);
+  - required web-game client completed against Black Vault with debug hitbox enabled and no page errors;
+  - direct Playwright probe confirmed no hitbox during windup/cooldown, an active hitbox during Red Pencil active frames, and failed re-swing attempts until idle;
+  - direct DANN-E probe confirmed wrong tools knock back without HP loss, while Citation Stamp, Red Pencil, and Review Folder each reduce HP on matching variants.

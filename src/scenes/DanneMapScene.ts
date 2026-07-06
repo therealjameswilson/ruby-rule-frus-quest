@@ -847,7 +847,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private useDanneItemAction() {
     if (gameState.equippedDanneItem !== "ruby-pen" || !hasDanneItem("ruby-pen")) return;
-    this.player.startAction();
+    if (!this.player.startAction(gameState.equippedProcessItem)) {
+      setLatestMessage("Ruby Pen is cooling down.");
+      return;
+    }
     const hitbox = this.player.getFacingActionHitbox();
     const trail = this.add.rectangle(
       Math.round(hitbox.centerX),

@@ -45,6 +45,7 @@ import {
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { ensurePixelBitmapFont, installPixelTextFactory } from "../systems/pixelFont";
+import { WEAPON_VFX_ASSET } from "../systems/weaponState";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -60,6 +61,10 @@ export class BootScene extends Phaser.Scene {
     this.load.json("dialogue", "assets/data/dialogue.json");
     this.load.json("scenes", "assets/data/scenes.json");
     preloadCharacters(this);
+    this.load.spritesheet(WEAPON_VFX_ASSET.key, WEAPON_VFX_ASSET.path, {
+      frameWidth: WEAPON_VFX_ASSET.frameWidth,
+      frameHeight: WEAPON_VFX_ASSET.frameHeight
+    });
     this.preloadDannePack();
     this.preloadAllNewArtPack();
     if (this.shouldLogAssetDebug()) {

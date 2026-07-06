@@ -492,6 +492,19 @@ export const gameState: GameState = {
     state: "idle",
     actionActive: false,
     actionMsRemaining: 0,
+    weapon: {
+      phase: "idle",
+      tool: "citation_stamp",
+      label: "Citation Stamp",
+      canSwing: true,
+      active: false,
+      windupMsRemaining: 0,
+      activeMsRemaining: 0,
+      cooldownMsRemaining: 0,
+      cooldownRatio: 0,
+      movementScale: 1,
+      swingId: 0
+    },
     invulnerable: false,
     invulnerableMsRemaining: 0,
     hitbox: null
@@ -548,6 +561,19 @@ export function resetGameState() {
     state: "idle",
     actionActive: false,
     actionMsRemaining: 0,
+    weapon: {
+      phase: "idle",
+      tool: "citation_stamp",
+      label: "Citation Stamp",
+      canSwing: true,
+      active: false,
+      windupMsRemaining: 0,
+      activeMsRemaining: 0,
+      cooldownMsRemaining: 0,
+      cooldownRatio: 0,
+      movementScale: 1,
+      swingId: 0
+    },
     invulnerable: false,
     invulnerableMsRemaining: 0,
     hitbox: null

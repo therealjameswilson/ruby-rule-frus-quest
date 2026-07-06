@@ -2,21 +2,17 @@ import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
 import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import type { Direction } from "../game/constants";
+import type { Direction, ProcessItemId } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
 import { consumeResumePlayerSpawn, gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
 import { getInput } from "../input/InputState";
-import {
-  buildDirectionalHitbox,
-  PLAYER_ACTION_HITBOX_MS,
-  PLAYER_HURT_MS,
-  PLAYER_IFRAME_MS,
-  toHitboxReadout
-} from "../systems/combat";
+import { PLAYER_HURT_MS, PLAYER_IFRAME_MS, toHitboxReadout } from "../systems/combat";
+import { retroAudio } from "../systems/audio";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 import { approach, frameDeltaSeconds, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
+import { buildWeaponHitbox, WEAPON_VFX_ASSET, WeaponStateController, weaponTiming } from "../systems/weaponState";
 
 interface MoveBounds {
   left: number;
@@ -86,6 +82,7 @@ export class Player {
   private readonly actionTrail: Phaser.GameObjects.Rectangle;
   private readonly actionEdge: Phaser.GameObjects.Rectangle;
   private readonly actionStamp: Phaser.GameObjects.Rectangle;
+  private readonly weaponVfxSprite?: Phaser.GameObjects.Sprite;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
   private readonly spriteMode: "artPack32x48" | "snes16" | "snesRoleFrame48" | "nes8";
@@ -96,7 +93,6 @@ export class Player {
   private walkClock = 0;
   private idleClock = 0;
   private abilityFrameUntil = 0;
-  private actionActiveUntil = 0;
   private invulnerableUntil = 0;
   private hurtUntil = 0;
   private isMoving = false;
@@ -106,6 +102,7 @@ export class Player {
   private velocityX = 0;
   private velocityY = 0;
   private readonly scene: Phaser.Scene;
+  private readonly weaponState = new WeaponStateController();
   private facing: Direction = "south";
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -177,6 +174,15 @@ export class Player {
       .setStrokeStyle(1, color(PALETTE.black))
       .setDepth(900)
       .setVisible(false);
+    if (scene.textures.exists(WEAPON_VFX_ASSET.key)) {
+      this.weaponVfxSprite = scene.add
+        .sprite(snapPixel(this.logicalX), snapPixel(this.logicalY), WEAPON_VFX_ASSET.key, 17)
+        .setOrigin(0.5)
+        .setScale(0.085)
+        .setAlpha(0.76)
+        .setDepth(901)
+        .setVisible(false);
+    }
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);
     scene.events.on("role-ability-frame", this.playAbilityFrame, this);
@@ -208,11 +214,11 @@ export class Player {
   }
 
   get isActionActive() {
-    return this.scene.time.now < this.actionActiveUntil;
+    return this.weaponState.phase === "active";
   }
 
   get activeActionHitbox() {
-    return this.isActionActive ? this.getFacingActionHitbox() : null;
+    return this.weaponState.activeHitbox(this.position, this.facing, this.scene.time.now);
   }
 
   get isInvulnerable() {
@@ -222,10 +228,12 @@ export class Player {
   get combatReadout(): PlayerCombatReadout {
     const now = this.scene.time.now;
     const hitbox = this.activeActionHitbox;
+    const weapon = this.weaponState.readout(now);
     return {
       state: this.currentControlState(now),
       actionActive: this.isActionActive,
-      actionMsRemaining: Math.max(0, Math.round(this.actionActiveUntil - now)),
+      actionMsRemaining: weapon.activeMsRemaining,
+      weapon,
       invulnerable: this.isInvulnerable,
       invulnerableMsRemaining: Math.max(0, Math.round(this.invulnerableUntil - now)),
       hitbox: toHitboxReadout(hitbox)
@@ -254,15 +262,20 @@ export class Player {
     setPlayerFacing(this.facing);
   }
 
-  startAction() {
-    this.actionActiveUntil = this.scene.time.now + PLAYER_ACTION_HITBOX_MS;
+  startAction(tool: ProcessItemId | null = gameState.equippedProcessItem) {
+    const now = this.scene.time.now;
+    const started = this.weaponState.tryStart(tool, now);
+    if (!started) return false;
     this.controlState = "attack";
-    this.abilityFrameUntil = Math.max(this.abilityFrameUntil, this.scene.time.now + PLAYER_ACTION_HITBOX_MS);
+    const timing = weaponTiming(tool);
+    this.abilityFrameUntil = Math.max(this.abilityFrameUntil, now + timing.windupMs + timing.activeMs);
+    retroAudio.toolWindup(this.weaponState.tool);
     this.syncRenderPosition();
+    return true;
   }
 
   getFacingActionHitbox() {
-    return buildDirectionalHitbox(this.position, this.facing);
+    return buildWeaponHitbox(this.position, this.facing, gameState.equippedProcessItem ?? this.weaponState.tool);
   }
 
   takeHit(source: Position, distance = 14, invulnerabilityMs = PLAYER_IFRAME_MS) {
@@ -278,6 +291,7 @@ export class Player {
   update(deltaMs: number, canMove: boolean, options: PlayerMoveOptions = {}) {
     this.idleClock += deltaMs;
     const now = this.scene.time.now;
+    this.weaponState.update(now);
     if (!canMove) {
       this.isMoving = false;
       this.velocityX = 0;
@@ -296,8 +310,9 @@ export class Player {
     const dy = movementInput.y;
     const inputMoving = movementInput.moving;
     const dt = frameDeltaSeconds(deltaMs);
-    const targetVelocityX = dx * this.speed;
-    const targetVelocityY = dy * this.speed;
+    const movementScale = this.weaponState.movementScale(now);
+    const targetVelocityX = dx * this.speed * movementScale;
+    const targetVelocityY = dy * this.speed * movementScale;
     const velocityRate = inputMoving ? this.acceleration : this.deceleration;
     this.velocityX = approach(this.velocityX, targetVelocityX, velocityRate * dt);
     this.velocityY = approach(this.velocityY, targetVelocityY, velocityRate * dt);
@@ -337,7 +352,7 @@ export class Player {
       this.walkClock = 0;
     }
     this.isMoving = moving;
-    if (now >= this.hurtUntil && now >= this.actionActiveUntil) this.controlState = moving ? "walk" : "idle";
+    if (now >= this.hurtUntil && this.weaponState.phase === "idle") this.controlState = moving ? "walk" : "idle";
     this.sprite.setAngle(0);
     this.sprite.setScale(1);
     if (now >= this.abilityFrameUntil && !this.isInvulnerable) this.sprite.clearTint();
@@ -429,7 +444,7 @@ export class Player {
 
   private currentControlState(now = this.scene.time.now): PlayerControlState {
     if (now < this.hurtUntil) return "hurt";
-    if (now < this.actionActiveUntil) return "attack";
+    if (this.weaponState.phase === "windup" || this.weaponState.phase === "active") return "attack";
     if (this.controlState === "hurt" || this.controlState === "attack") return this.isMoving ? "walk" : "idle";
     return this.controlState;
   }
@@ -454,6 +469,7 @@ export class Player {
     this.actionTrail.setVisible(false);
     this.actionEdge.setVisible(false);
     this.actionStamp.setVisible(false);
+    this.weaponVfxSprite?.setVisible(false);
   }
 
   private isActionHitboxDebugEnabled() {
@@ -462,40 +478,19 @@ export class Player {
   }
 
   private actionColors(): ActionColors {
-    const role = gameState.playerProfile.roleId;
-    if (gameState.equippedDanneItem === "ruby-pen") {
+    const tool = this.weaponState.tool;
+    if (tool === "red_pencil" || gameState.equippedDanneItem === "ruby-pen") {
       return {
         fill: color(PALETTE.buckramHighlight),
         stroke: color(PALETTE.goldStamp),
         stamp: color(PALETTE.buckramRed)
       };
     }
-    if (role === "editor") {
-      return {
-        fill: color(PALETTE.buckramHighlight),
-        stroke: color(PALETTE.goldStamp),
-        stamp: color(PALETTE.buckramRed)
-      };
-    }
-    if (role === "declass_reviewer") {
-      return {
-        fill: color(PALETTE.classNetRed),
-        stroke: color(PALETTE.creamPaper),
-        stamp: color(PALETTE.stoneGray)
-      };
-    }
-    if (role === "proofreader") {
+    if (tool === "review_folder") {
       return {
         fill: color(PALETTE.terminalCyan),
         stroke: color(PALETTE.creamPaper),
-        stamp: color(PALETTE.creamPaper)
-      };
-    }
-    if (role === "source_note_specialist") {
-      return {
-        fill: color(PALETTE.goldStamp),
-        stroke: color(PALETTE.buckramRed),
-        stamp: color(PALETTE.goldStamp)
+        stamp: color(PALETTE.stoneGray)
       };
     }
     return {
@@ -507,7 +502,9 @@ export class Player {
 
   private syncActionEffect(hitbox: Phaser.Geom.Rectangle) {
     const now = this.scene.time.now;
-    const remainingRatio = Phaser.Math.Clamp((this.actionActiveUntil - now) / PLAYER_ACTION_HITBOX_MS, 0, 1);
+    const readout = this.weaponState.readout(now);
+    const timing = weaponTiming(readout.tool);
+    const remainingRatio = timing.activeMs <= 0 ? 0 : Phaser.Math.Clamp(readout.activeMsRemaining / timing.activeMs, 0, 1);
     const alpha = 0.34 + remainingRatio * 0.5;
     const colors = this.actionColors();
     const centerX = snapPixel(hitbox.centerX);
@@ -516,19 +513,24 @@ export class Player {
     const horizontal = this.facing === "north" || this.facing === "south";
     const signX = this.facing === "west" ? -1 : this.facing === "east" ? 1 : 0;
     const signY = this.facing === "north" ? -1 : this.facing === "south" ? 1 : 0;
+    const heavyTool = readout.tool === "review_folder";
+    const pencil = readout.tool === "red_pencil";
 
     this.actionTrail
       .setVisible(true)
       .setFillStyle(colors.fill, alpha)
       .setStrokeStyle(1, colors.stroke, alpha)
-      .setSize(horizontal ? 28 : 6, horizontal ? 6 : 28)
-      .setAngle(horizontal ? 0 : 0)
+      .setSize(
+        horizontal ? hitbox.width + (pencil ? 5 : 2) : heavyTool ? 9 : 6,
+        horizontal ? heavyTool ? 9 : 6 : hitbox.height + (pencil ? 5 : 2)
+      )
+      .setAngle(pencil ? (this.facing === "north" || this.facing === "east" ? -10 : 10) : 0)
       .setDepth(depth)
       .setPosition(centerX, centerY);
     this.actionEdge
       .setVisible(true)
       .setFillStyle(colors.stroke, alpha)
-      .setSize(horizontal ? 18 : 4, horizontal ? 2 : 18)
+      .setSize(horizontal ? Math.max(8, hitbox.width - 5) : 4, horizontal ? 2 : Math.max(8, hitbox.height - 5))
       .setDepth(depth + 1)
       .setPosition(
         centerX + signX * Math.round(hitbox.width * 0.38),
@@ -538,13 +540,21 @@ export class Player {
       .setVisible(true)
       .setFillStyle(colors.stamp, Math.min(1, alpha + 0.12))
       .setStrokeStyle(1, color(PALETTE.black), alpha)
-      .setSize(horizontal ? 8 : 6, horizontal ? 6 : 8)
+      .setSize(heavyTool ? 10 : horizontal ? 8 : 6, heavyTool ? 8 : horizontal ? 6 : 8)
       .setAngle(this.facing === "north" || this.facing === "east" ? 8 : -8)
       .setDepth(depth + 2)
       .setPosition(
         centerX + signX * Math.round(hitbox.width * 0.52),
         centerY + signY * Math.round(hitbox.height * 0.52)
       );
+    this.weaponVfxSprite
+      ?.setVisible(true)
+      .setFrame(timing.vfxFrame)
+      .setAlpha(Math.min(0.9, alpha + 0.1))
+      .setScale(readout.tool === "review_folder" ? 0.1 : readout.tool === "red_pencil" ? 0.082 : 0.075)
+      .setAngle(this.facing === "west" ? -90 : this.facing === "east" ? 90 : this.facing === "north" ? 180 : 0)
+      .setDepth(depth + 3)
+      .setPosition(centerX, centerY);
   }
 
   private syncInvulnerabilityBlink() {

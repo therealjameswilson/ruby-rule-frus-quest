@@ -224,7 +224,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       retroAudio.warning();
       return "wrong-tool" as const;
     }
-    this.takeDamage(1);
+    this.takeDamage(1, equippedTool);
     return this.defeated ? "defeated" as const : "damaged" as const;
   }
 
@@ -290,10 +290,10 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     };
   }
 
-  private takeDamage(amount: number) {
+  private takeDamage(amount: number, tool: ProcessItemId) {
     this.hp = Math.max(0, this.hp - amount);
     this.flash(PALETTE.white);
-    retroAudio.confirm();
+    retroAudio.toolHit(tool);
     if (this.hp <= 0) this.defeat();
     else setLatestMessage(`${this.config.displayName}: ${this.hp}/${this.maxHp} HP.`);
   }

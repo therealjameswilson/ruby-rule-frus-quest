@@ -1361,9 +1361,12 @@ export class ArchiveScene extends Phaser.Scene {
     const wall = facedWall ?? (nearest?.kind === "enemy" ? this.activeEnemyWalls.get(nearest.id) : undefined);
     const definition = wall ? this.activeEnemyDefs.get(wall.id) : undefined;
     if (!wall && nearest?.kind !== "enemy") return false;
-    this.player.startAction();
-    const hitbox = this.player.activeActionHitbox;
-    if (!wall || !definition || !hitbox || !wall.intersectsHitbox(hitbox)) {
+    if (!this.player.startAction(gameState.equippedProcessItem)) {
+      setLatestMessage("Process tool is cooling down.");
+      this.hintText.setText("COOLDOWN");
+      return true;
+    }
+    if (!wall || !definition || !wall.intersectsHitbox(facingHitbox)) {
       retroAudio.warning();
       setLatestMessage("Face the stonewall before applying the process.");
       this.hintText.setText("FACE THE WALL");

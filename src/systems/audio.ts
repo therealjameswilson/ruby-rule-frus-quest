@@ -1,4 +1,5 @@
 import { setAudioStatus } from "../game/state";
+import type { ProcessItemId } from "../game/constants";
 import { addInputGestureListener } from "../input/InputState";
 
 type Wave = OscillatorType;
@@ -232,6 +233,36 @@ class RetroAudio {
   stamp() {
     setAudioStatus("process stamp chime");
     this.sequence([392, 523, 659, 1046], 0.07, 0.06, 0.045);
+  }
+
+  toolWindup(tool: ProcessItemId) {
+    if (tool === "red_pencil") {
+      setAudioStatus("red pencil windup");
+      this.sequence([440, 554], 0.035, 0.018, 0.026, "triangle");
+      return;
+    }
+    if (tool === "review_folder") {
+      setAudioStatus("review folder windup");
+      this.sequence([196, 247, 294], 0.045, 0.02, 0.032, "square");
+      return;
+    }
+    setAudioStatus("citation stamp windup");
+    this.sequence([330, 392], 0.04, 0.018, 0.032, "square");
+  }
+
+  toolHit(tool: ProcessItemId) {
+    if (tool === "red_pencil") {
+      setAudioStatus("red pencil hit");
+      this.sequence([880, 660, 988], 0.035, 0.022, 0.04, "triangle");
+      return;
+    }
+    if (tool === "review_folder") {
+      setAudioStatus("review folder hit");
+      this.sequence([294, 392, 523], 0.05, 0.03, 0.045, "square");
+      return;
+    }
+    setAudioStatus("citation stamp hit");
+    this.sequence([392, 523, 784], 0.045, 0.03, 0.045, "square");
   }
 
   transition() {

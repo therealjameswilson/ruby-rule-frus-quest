@@ -344,10 +344,12 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     if (input.bJustPressed || input.abilityJustPressed) {
-      this.player.startAction();
       const toolLabel = gameState.equippedProcessItem?.replace(/_/g, " ").toUpperCase() ?? "FRUS TOOL";
-      setLatestMessage(`Tool action: ${toolLabel}.`);
-      retroAudio.blip();
+      if (this.player.startAction(gameState.equippedProcessItem)) {
+        setLatestMessage(`Tool action: ${toolLabel}.`);
+      } else {
+        setLatestMessage(`${toolLabel} is cooling down.`);
+      }
     }
 
     this.player.update(delta, true, {
