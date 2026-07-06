@@ -127,6 +127,40 @@ Added after the base pack. See `manifest.json` → `extras` for grid metadata. G
 | `effects/stamps_text.png` | 1536×1024 | 2×2 grid | Document stamp marks with correct text: CONFIDENTIAL, TOP SECRET, DECLASSIFIED, APPROVED — overlay for the declassification theme | Yes |
 | `ui/ui_kit.png` | 1536×1024 | free layout | UI kit (ruby-red/gold parchment): dialogue/menu box frames (9-slice), cursor + continue arrows, progress meters, HP ruby gem, A/B/START buttons, scroll banner, heart/star/coin, corner flourishes | Yes |
 
+## 9. DANN-E enemy variant sprite sheets (`enemies/danne/`)
+
+Grid-aligned, exact-pixel enemy sheets (no anti-aliasing) following the same
+hard-edge / limited-palette conventions as `tilesets/gameplay/tileset_overworld_16x16.png`.
+They reuse the locked ruby-buckram / stone-archive palette (ruby `#7B0208`,
+gold `#D6A23A`, cream `#F8F0D8`/`#E8D8A8`, steel/stone `#707070`/`#B0B0A8`,
+chassis ink `#0F0F0F`, red core/eye `#B82030`/`#E83030`, manila `#D8B060`).
+
+**Sheet layout (all variants):** 8 columns × 3 rows. 22 frames used; the last 2
+cells (row 3, cols 7–8) are intentionally transparent.
+
+**Frame order (row-major, index 0-based):**
+- `0` idle A, `1` idle B (2-frame idle bob)
+- `2–5` walk down ×4
+- `6–9` walk up ×4
+- `10–13` walk left ×4
+- `14–17` walk right ×4
+- `18` stun / hit-flash (single frame)
+- `19–21` defeat / dissolve ×3
+
+Slice with `cellW = imageWidth / 8`, `cellH = imageHeight / 3`.
+
+| Filename | Dimensions | Grid (cell) | Frames | Frame duration | Motif / behavior | Transparency |
+|---|---|---|---|---|---|---|
+| `enemies/danne/01_danne_redactor.png` | 256×96 | 32×32 | 22 | idle 350ms · walk 160ms · stun 120ms · dissolve 130ms | Black-bar redaction motif — slow patrol enemy | Yes |
+| `enemies/danne/02_danne_queue_blocker.png` | 256×96 | 32×32 | 22 | idle 400ms · walk 150ms · stun 120ms · dissolve 130ms | Stamped folder / inbox motif — tanky enemy | Yes |
+| `enemies/danne/03_danne_30_year_wall.png` | 256×96 | 32×32 | 22 | idle 500ms · walk 200ms (turret aim) · stun 120ms · dissolve 140ms | Stone-and-clock motif — stationary turret (walk frames = 4-direction aim) | Yes |
+| `enemies/danne/04_danne_classification_drone.png` | 256×96 | 32×32 | 22 | idle 200ms · walk 90ms · stun 100ms · dissolve 110ms | Red-stripe / eye motif — fast erratic flyer | Yes |
+| `enemies/danne/05_danne_shutdown_miniboss.png` | 384×144 | 48×48 | 22 | idle 300ms · walk 140ms · stun 130ms · dissolve 160ms | Stop-work-sign motif — larger 48×48 miniboss | Yes |
+
+> All five sheets verified: exact dimensions, on an exact pixel grid, RGBA with
+> alpha 0 background, no anti-aliasing (≤16 distinct colors each, all within the
+> locked palette above), and all 22 frame cells populated.
+
 ---
 
 ## Engine / integration notes (Phaser)
