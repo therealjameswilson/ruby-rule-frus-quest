@@ -3992,3 +3992,10 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   - both PNGs confirmed at exactly 256×240, RGB, with every color inside the palette and no anti-aliasing (14 / 16 unique colors);
   - `tsc --noEmit` passes clean;
   - `vitest run src/scenes/TitleScene.test.ts` passes (9 tests); full suite is 352/353 with the one pre-existing, unrelated `src/art/characterSprites.test.ts` failure present on the base commit.
+## 2026-07-06 — Second FRUS volume world map (Overseas Post)
+- Added a sixth regional overworld board: `public/assets/art-pack/world2/01_overseas_post_region.png` (1536×1024) with 384×256 native master and a deterministic Python/Pillow generator (`generate_overseas_post.py`).
+- Theme: overseas diplomatic post / embassy subject area — 8 numbered, politically-neutral nodes (Regional Bureau, Chancery, Consular Section, Classified Pouch Room, Communications Vault, Foreign Ministry Liaison Office, Records & Archives Annex, Marine Security Post). No real countries/officials/flags.
+- Style-matched the existing overworld boards' fixed-viewport composition (brass title cartouche, deckled parchment border, sea + dashed pouch routes, compass rose, neutral pennant margin) but rendered as original 16-bit pixel art: limited 34-color palette, ×4 nearest-neighbor, no anti-aliasing (verified every 4×4 block uniform).
+- Wired in as region key `overseas_post`: `src/assets/registry.ts` (`OVERWORLD_REGIONS`), `src/data/regions.ts` (`REGION_ORDER`, `REGION_LABELS`, 8 districts), and made the WorldMapScene region hint `[1-N]` dynamic. Auto-preloaded by `BootScene`.
+- Manifests: new `world2/MANIFEST.md` plus a cross-reference section/row and asset-key in `MANIFEST_overworld_and_gameplay.md`.
+- Verification: `tsc --noEmit` clean; `vite build` passes (known large-chunk warning; post-build asset-copy script absent from this sparse worktree); `vitest run src/data/regions.test.ts` 3/3 pass; full suite 352/353 (the single failure, `src/art/characterSprites.test.ts`, is pre-existing on the untouched base commit and unrelated).
