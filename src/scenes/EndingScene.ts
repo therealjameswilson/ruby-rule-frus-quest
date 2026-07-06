@@ -106,6 +106,7 @@ import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 import { SNES_PROCESS_STAMP_RELIC_ASSET, SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
+import { hiddenFirstEditionBonusLabel } from "../game/secretReadingRoom";
 import {
   addSnesFrusCoverAssembly,
   addSnesPublicationShrine,
@@ -1642,6 +1643,7 @@ export class EndingScene extends Phaser.Scene {
       "FRUS cover prize",
       "SNES published FRUS prize cover",
       published ? "Published FRUS Cover" : "Unpublished assembled cover",
+      hiddenFirstEditionBonusLabel(gameState),
       "Equal-rank publication team",
       "reader-aid registers",
       "chapter release status ledger",
@@ -1775,12 +1777,13 @@ export class EndingScene extends Phaser.Scene {
       "SOURCE NOTES NEED PROVENANCE.",
       "OPENNET AND CLASSNET STAY SEPARATE.",
       "REFERRALS LEAVE A VISIBLE TRACE.",
-      "AI TOOLS PROPOSE; HUMANS DECIDE."
+      "AI TOOLS PROPOSE; HUMANS DECIDE.",
+      hiddenFirstEditionBonusLabel(gameState).toUpperCase()
     ];
     practiced.forEach((line, index) => {
-      this.add.text(16, 203 + index * 6, line, {
+      this.add.text(16, 202 + index * 5, line, {
         fontFamily: "monospace",
-        fontSize: "6px",
+        fontSize: "5px",
         color: PALETTE.terminalCyan
       }).setDepth(932);
     });

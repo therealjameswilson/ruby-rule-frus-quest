@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import "./styles/pixel.css";
 import { gameConfig } from "./game/config";
 import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
+import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./game/secretReadingRoom";
 import { gameState, getDanneCombatReadout, getVolumeAssemblyReadout, renderGameToText, setLatestMessage } from "./game/state";
 import {
   bindDomPointerDown,
@@ -87,6 +88,10 @@ function renderConciseGameToText() {
         piecesEarned: getVolumeAssemblyReadout().earnedCount,
         piecesTotal: getVolumeAssemblyReadout().total,
         complete: getVolumeAssemblyReadout().complete
+      },
+      secrets: {
+        hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),
+        hiddenFirstEditionBonus: hiddenFirstEditionBonusLabel(gameState)
       },
       processStamps: gameState.processStamps,
       inventory: gameState.inventory,

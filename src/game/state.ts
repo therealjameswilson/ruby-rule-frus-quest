@@ -55,6 +55,7 @@ import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
+import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./secretReadingRoom";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
 import { VOLUME_CONCEPT_PROMPTS } from "./volumeConcept";
 import type { QuestArchitectureContext } from "./questArchitecture";
@@ -2377,6 +2378,10 @@ export function renderGameToText() {
       roomGraph: getRoomGraphReadout(),
       volumeFragments: gameState.volumeFragments,
       volumeAssembly: getVolumeAssemblyReadout(),
+      secrets: {
+        hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),
+        hiddenFirstEditionBonus: hiddenFirstEditionBonusLabel(gameState)
+      },
       frusPrize: {
         cover: "ruby FRUS cover",
         piecesEarned: getVolumeAssemblyReadout().earnedCount,

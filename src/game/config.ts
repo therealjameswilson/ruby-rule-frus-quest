@@ -12,6 +12,7 @@ import { EmbassyCableRoomScene } from "../scenes/EmbassyCableRoomScene";
 import { EndingScene } from "../scenes/EndingScene";
 import { GameplayMapScene } from "../scenes/GameplayMapScene";
 import { GuideScene } from "../scenes/GuideScene";
+import { HiddenReadingRoomScene } from "../scenes/HiddenReadingRoomScene";
 import { NaraStacksScene } from "../scenes/NaraStacksScene";
 import { NetworkScene } from "../scenes/NetworkScene";
 import { OfficeScene } from "../scenes/OfficeScene";
@@ -81,6 +82,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     BlackVaultLairScene,
     SenateHearingChamberScene,
     NaraStacksScene,
+    HiddenReadingRoomScene,
     EmbassyCableRoomScene,
     GameplayMapScene,
     NetworkScene,

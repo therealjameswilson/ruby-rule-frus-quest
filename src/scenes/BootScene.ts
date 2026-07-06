@@ -5,6 +5,7 @@ import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/charac
 import {
   ALL_NEW_ART_REGISTRIES,
   GAMEPLAY_TILED_MAPS,
+  SECRET_READING_ROOM_ASSETS,
   UI_PACK_FRAMES,
   gameplayTiledCacheKey,
   publicAssetPath
@@ -80,6 +81,7 @@ export class BootScene extends Phaser.Scene {
     });
     this.preloadDannePack();
     this.preloadAllNewArtPack();
+    this.preloadSecretReadingRoom();
     if (this.shouldLogAssetDebug()) {
       this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
     }
@@ -183,6 +185,15 @@ export class BootScene extends Phaser.Scene {
       if (logAssets) console.log(`${gameplayTiledCacheKey(key)} -> ${path}`);
     }
     if (logAssets) console.groupEnd();
+  }
+
+  private preloadSecretReadingRoom() {
+    const { tilesetNative, firstEdition } = SECRET_READING_ROOM_ASSETS;
+    this.load.image(tilesetNative.key, tilesetNative.path);
+    this.load.spritesheet(firstEdition.key, firstEdition.path, {
+      frameWidth: firstEdition.frameWidth,
+      frameHeight: firstEdition.frameHeight
+    });
   }
 
   private shouldLogAssetDebug() {
