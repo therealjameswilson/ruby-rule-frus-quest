@@ -114,6 +114,9 @@ interface VisibleThreat {
   status?: string;
   hp?: number;
   maxHp?: number;
+  damage?: number;
+  difficultyTier?: number;
+  reliabilityRisk?: string;
   enemyState?: string;
   weakness?: string;
   roomClear?: {
@@ -1465,6 +1468,9 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     status: threat.status,
     hp: threat.hp,
     maxHp: threat.maxHp,
+    damage: threat.damage,
+    difficultyTier: threat.difficultyTier,
+    reliabilityRisk: threat.reliabilityRisk,
     enemyState: threat.enemyState,
     weakness: threat.weakness,
     roomClear: threat.roomClear ? { ...threat.roomClear } : undefined
@@ -1481,6 +1487,9 @@ export function getDanneCombatReadout() {
       label: enemy.label,
       hp: enemy.hp ?? 0,
       maxHp: enemy.maxHp ?? 0,
+      damage: enemy.damage ?? 0,
+      difficultyTier: enemy.difficultyTier ?? 0,
+      reliabilityRisk: enemy.reliabilityRisk ?? "unknown",
       state: enemy.enemyState ?? enemy.status ?? "unknown",
       weakness: enemy.weakness ?? "unknown",
       position: { x: enemy.x, y: enemy.y },

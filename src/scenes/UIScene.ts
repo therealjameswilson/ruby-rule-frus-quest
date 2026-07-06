@@ -230,7 +230,8 @@ export class UIScene extends Phaser.Scene {
     const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? "NONE";
     const weapon = gameState.playerCombat.weapon;
     const objectiveLine = this.compactObjective(activeSceneKey);
-    const actionLine = this.compactActionLine(toolLabel);
+    const riskLine = this.compactReliabilityRiskLine();
+    const actionLine = riskLine ?? this.compactActionLine(toolLabel);
     const signature = [
       gameState.reliability,
       toolLabel,
@@ -255,6 +256,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandText.setText(objectiveLine);
     this.questBandVerbText.setText("A");
     this.questBandCueText.setText(actionLine);
+    this.questBandCueText.setColor(riskLine ? PALETTE.classNetRed : PALETTE.terminalCyan);
     this.questBandToolText.setText(`TOOL ${toolLabel}`);
     this.questBandVolumeText.setText("");
     this.hideDetailedQuestBandRelics();
@@ -270,6 +272,15 @@ export class UIScene extends Phaser.Scene {
     const objective = gameState.objective.replace(/^Mission:\s*/i, "");
     const firstSentence = objective.split(".")[0]?.trim() || objective.trim();
     return clampQuestBandText(firstSentence);
+  }
+
+  private compactReliabilityRiskLine() {
+    const hardestThreat = gameState.visibleThreats
+      .filter((threat) => (threat.hp ?? 0) > 0 && threat.enemyState !== "defeated" && (threat.difficultyTier ?? 0) >= 4)
+      .sort((left, right) => (right.difficultyTier ?? 0) - (left.difficultyTier ?? 0))[0];
+    if (!hardestThreat) return null;
+    const risk = (hardestThreat.reliabilityRisk ?? "high").toUpperCase();
+    return clampQuestBandText(`RELIABILITY RISK: ${risk}`);
   }
 
   private compactActionLine(toolLabel: string) {

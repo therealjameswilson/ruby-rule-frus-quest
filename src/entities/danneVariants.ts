@@ -3,6 +3,8 @@ import { DANNE_VARIANT_ASSETS, type DanneVariantPhase } from "../game/danneAtlas
 
 export type DanneEnemyAiKind = "patrol" | "chase" | "turret";
 export type DanneEnemyVariantId = (typeof DANNE_VARIANT_ASSETS)[number]["variantId"];
+export type DanneEnemyReliabilityRisk = "low" | "guarded" | "elevated" | "high" | "severe";
+export type DanneEnemyDifficultyTier = 1 | 2 | 3 | 4 | 5;
 
 export interface DanneEnemyLoot {
   documentPoints?: number;
@@ -18,7 +20,10 @@ export interface DanneEnemyVariantConfig {
   phase: DanneVariantPhase;
   maxHp: number;
   speed: number;
+  damage: number;
   aggroRadius: number;
+  difficultyTier: DanneEnemyDifficultyTier;
+  reliabilityRisk: DanneEnemyReliabilityRisk;
   weakness: ProcessItemId;
   ai: DanneEnemyAiKind;
   scale: number;
@@ -56,9 +61,12 @@ function config(
 export const DANNE_ENEMY_VARIANTS = {
   "danne-prime-humanoid": config("danne-prime-humanoid", {
     codexEntryId: "danne-prime-humanoid",
-    maxHp: 2,
+    maxHp: 3,
     speed: 18,
+    damage: 5,
     aggroRadius: 64,
+    difficultyTier: 2,
+    reliabilityRisk: "guarded",
     weakness: "review_folder",
     ai: "chase",
     scale: 0.03,
@@ -71,7 +79,10 @@ export const DANNE_ENEMY_VARIANTS = {
     codexEntryId: "danne-mark-i-prototype",
     maxHp: 2,
     speed: 0,
+    damage: 4,
     aggroRadius: 86,
+    difficultyTier: 1,
+    reliabilityRisk: "low",
     weakness: "review_folder",
     ai: "turret",
     scale: 0.03,
@@ -82,9 +93,12 @@ export const DANNE_ENEMY_VARIANTS = {
   }),
   "danne-colossus-final-form": config("danne-colossus-final-form", {
     codexEntryId: "danne-colossus-final-form",
-    maxHp: 4,
+    maxHp: 6,
     speed: 0,
+    damage: 8,
     aggroRadius: 96,
+    difficultyTier: 5,
+    reliabilityRisk: "severe",
     weakness: "red_pencil",
     ai: "turret",
     scale: 0.029,
@@ -95,9 +109,12 @@ export const DANNE_ENEMY_VARIANTS = {
   }),
   "danne-cloud-form": config("danne-cloud-form", {
     codexEntryId: "danne-cloud-form",
-    maxHp: 3,
-    speed: 22,
+    maxHp: 4,
+    speed: 24,
+    damage: 7,
     aggroRadius: 78,
+    difficultyTier: 4,
+    reliabilityRisk: "high",
     weakness: "citation_stamp",
     ai: "patrol",
     scale: 0.03,
@@ -108,9 +125,12 @@ export const DANNE_ENEMY_VARIANTS = {
   }),
   "danne-executive-suit": config("danne-executive-suit", {
     codexEntryId: "danne-executive-suit",
-    maxHp: 3,
-    speed: 19,
+    maxHp: 4,
+    speed: 20,
+    damage: 6,
     aggroRadius: 70,
+    difficultyTier: 3,
+    reliabilityRisk: "elevated",
     weakness: "review_folder",
     ai: "chase",
     scale: 0.03,
@@ -122,8 +142,11 @@ export const DANNE_ENEMY_VARIANTS = {
   "danne-swarm": config("danne-swarm", {
     codexEntryId: "danne-swarm",
     maxHp: 2,
-    speed: 27,
+    speed: 22,
+    damage: 3,
     aggroRadius: 62,
+    difficultyTier: 1,
+    reliabilityRisk: "low",
     weakness: "citation_stamp",
     ai: "patrol",
     scale: 0.03,
@@ -134,9 +157,12 @@ export const DANNE_ENEMY_VARIANTS = {
   }),
   "danne-defeated": config("danne-defeated", {
     codexEntryId: "danne-defeated",
-    maxHp: 1,
+    maxHp: 2,
     speed: 0,
+    damage: 5,
     aggroRadius: 54,
+    difficultyTier: 3,
+    reliabilityRisk: "elevated",
     weakness: "red_pencil",
     ai: "turret",
     scale: 0.03,
@@ -147,9 +173,12 @@ export const DANNE_ENEMY_VARIANTS = {
   }),
   "danne-ascendant": config("danne-ascendant", {
     codexEntryId: "danne-ascendant",
-    maxHp: 5,
-    speed: 21,
+    maxHp: 7,
+    speed: 25,
+    damage: 9,
     aggroRadius: 92,
+    difficultyTier: 5,
+    reliabilityRisk: "severe",
     weakness: "red_pencil",
     ai: "chase",
     scale: 0.03,

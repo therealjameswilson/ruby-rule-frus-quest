@@ -22,6 +22,9 @@ describe("DANN-E enemy variants", () => {
     for (const variant of variants) {
       expect(danneEnemyVariant(variant.id)).toBe(variant);
       expect(variant.maxHp).toBeGreaterThan(0);
+      expect(variant.damage).toBeGreaterThanOrEqual(0);
+      expect(variant.difficultyTier).toBeGreaterThanOrEqual(1);
+      expect(variant.difficultyTier).toBeLessThanOrEqual(5);
       expect(variant.textureKey.length).toBeGreaterThan(0);
       expect(variant.defeatMethod.length).toBeGreaterThan(0);
     }
@@ -32,5 +35,20 @@ describe("DANN-E enemy variants", () => {
     for (const variant of Object.values(DANNE_ENEMY_VARIANTS)) {
       expect(supportedWeaknesses.has(variant.weakness)).toBe(true);
     }
+  });
+
+  it("ramps from early archive variants to severe Black Vault variants", () => {
+    const naraTier = Math.max(
+      DANNE_ENEMY_VARIANTS["danne-mark-i-prototype"].difficultyTier,
+      DANNE_ENEMY_VARIANTS["danne-swarm"].difficultyTier
+    );
+    const capitolTier = DANNE_ENEMY_VARIANTS["danne-executive-suit"].difficultyTier;
+    const blackVaultTier = Math.max(
+      DANNE_ENEMY_VARIANTS["danne-colossus-final-form"].difficultyTier,
+      DANNE_ENEMY_VARIANTS["danne-ascendant"].difficultyTier
+    );
+    expect(naraTier).toBeLessThan(capitolTier);
+    expect(capitolTier).toBeLessThan(blackVaultTier);
+    expect(DANNE_ENEMY_VARIANTS["danne-ascendant"].damage).toBeGreaterThan(DANNE_ENEMY_VARIANTS["danne-swarm"].damage);
   });
 });

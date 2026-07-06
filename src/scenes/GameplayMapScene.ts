@@ -516,7 +516,7 @@ export class GameplayMapScene extends Phaser.Scene {
     let hitFeedback = false;
     for (const enemy of this.danneEnemies) {
       const result = enemy.updateEnemy(this.time.now, delta, playerPosition, playerFootBox);
-      if (result.projectileHit && this.player.takeHit(enemy.readout(), 9, 700)) {
+      if (result.projectileHit && this.player.takeHit(enemy.readout(), enemy.damage, 700)) {
         applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted room-clear review.");
         setObjective("Dodge Ego bolts, then counter with the correct FRUS tool.");
         this.objectiveOverrideMsRemaining = 1100;
@@ -589,6 +589,9 @@ export class GameplayMapScene extends Phaser.Scene {
         status: `${readout.state}; ${readout.hp}/${readout.maxHp} HP; weakness ${readout.weakness.replace(/_/g, " ")}`,
         hp: readout.hp,
         maxHp: readout.maxHp,
+        damage: readout.damage,
+        difficultyTier: readout.difficultyTier,
+        reliabilityRisk: readout.reliabilityRisk,
         enemyState: readout.state,
         weakness: readout.weakness,
         roomClear: roomStatus

@@ -106,6 +106,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   readonly roomId: string;
   readonly maxHp: number;
   readonly speed: number;
+  readonly damage: number;
   readonly weakness: ProcessItemId;
   readonly aggroRadius: number;
   state: DanneEnemyState = "patrol";
@@ -135,6 +136,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.maxHp = options.config.maxHp;
     this.hp = options.config.maxHp;
     this.speed = options.config.speed;
+    this.damage = options.config.damage;
     this.weakness = options.config.weakness;
     this.aggroRadius = options.config.aggroRadius;
     this.waypoints = options.waypoints.length ? options.waypoints.map((point) => ({ ...point })) : [{ x, y }];
@@ -300,6 +302,9 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       y: Math.round(this.y),
       hp: this.hp,
       maxHp: this.maxHp,
+      damage: this.damage,
+      difficultyTier: this.config.difficultyTier,
+      reliabilityRisk: this.config.reliabilityRisk,
       state: this.state,
       weakness: this.weakness,
       behavior: this.config.behavior,
