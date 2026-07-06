@@ -3922,3 +3922,10 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Palette matched to the existing sprite frames and FRUS volume art (`#0F0F0F` outline, `#7A1020` ruby buckram, `#D6A23A` brass, `#B89A5A` manila). All output is hard-edged pixel art: every pixel is fully transparent or fully opaque, no anti-aliasing, transparent background, limited palette.
 - Documented frame size/count/speed for each strip in `public/assets/art-pack/vfx/MANIFEST.md`.
 - Verification: independent PIL check confirmed exact dimensions, zero soft-alpha pixels, and zero off-palette colors across all seven strips.
+## 2026-07-06 DANN-E miniboss arena tileset
+
+- Added `public/assets/art-pack/tilesets/gameplay/tileset_miniboss_arena_16x16.png` (1024×1024 display) plus its `*_native.png` (128×128) source, matching the `tileset_interiors_16x16` conventions exactly: 8×8 grid, 16px native tiles, 128px display cells, crisp 8× nearest-neighbor upscale, near-black 1px outlines, federal palette family (ruby red, federal blue, cream paper, gray stone, brass).
+- Theme: a federal office floor overtaken by a shutdown/stop-work antagonist. Tiles cover walls, office + cracked-tile floors, hazard floors (paper debris, red-glow seams, warning chevrons, scorch, grate), scattered paper stacks + file boxes, overhead light fixtures (on/flicker/off/broken-spark), a full caution-tape border set (4 edges + 4 corners + cross), and a locked vault door with 2×2 CLOSED and OPEN-on-clear states plus single-tile variants.
+- Floors/walls are opaque; props, lights, tape, and vault tiles use transparent backgrounds so they drop into Phaser tilemaps as overlay layers without rescaling.
+- Documented in `MANIFEST.md` (section 2a) and `manifest.json` (`tilesets.tileset_miniboss_arena_16x16`).
+- Verification: dimensions confirmed multiples of 16; display is an exact 8× nearest upscale of native (0 pixel mismatches → no anti-aliasing); tight 66-color palette; floor/wall tiles fully opaque, prop tiles transparent-backed; `manifest.json` re-parses as valid JSON.
