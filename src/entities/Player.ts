@@ -15,6 +15,7 @@ import {
   PLAYER_IFRAME_MS,
   toHitboxReadout
 } from "../systems/combat";
+import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 import { approach, frameDeltaSeconds, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
 
@@ -271,6 +272,7 @@ export class Player {
     this.hurtUntil = this.scene.time.now + PLAYER_HURT_MS;
     this.controlState = "hurt";
     this.pushAwayFrom(source, distance);
+    applyHitShake(this.scene, distance >= 15 ? "player-hurt-heavy" : "player-hurt");
     this.syncRenderPosition();
     return true;
   }

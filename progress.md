@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Combat feel / ALTTP juice pass (2026-07-07):
+  - Added `src/systems/combatFeedback.ts`, a small reusable screen-shake helper with pure, tuned hit-feedback profiles (`player-hurt`, `player-hurt-heavy`, `boss-hit`, `boss-defeat`) plus `resolveHitFeedback` (scaling + clamping) and an `applyHitShake(scene, kind)` wrapper that no-ops safely during teardown.
+  - Intensities are capped so shake stays ~1-2px on the 256x240 canvas, preserving pixel-perfect art while adding an impact flinch.
+  - Wired shake into the universal damage choke point `Player.takeHit` (heavy variant for high-knockback wall hits, normal for lurker/ego-bolt contact) so every scene gets consistent got-hit feedback.
+  - Wired shake into the DANN-E boss: a light flinch on each Ruby Pen sword connect and a stronger shake on final defeat.
+  - Added `src/systems/combatFeedback.test.ts` (profile defaults, subtlety bounds, heavy>normal ordering, scaling, clamp, and non-finite/negative scale safety).
+  - Verification: `tsc --noEmit` clean; `npm test` 74 files / 362 tests pass; `npm run build` passes (known Vite large-chunk warning only).
 - Localization scaffold pass (2026-07-07):
   - Added a typed `src/systems/i18n.ts` helper with `getString(key)` lookup, interpolation, localStorage persistence, and English fallback for missing Spanish/French keys.
   - Added the English baseline strings beside the existing Spanish/French packs and extended those packs with language/pause-menu labels.

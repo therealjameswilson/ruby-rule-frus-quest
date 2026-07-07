@@ -26,6 +26,7 @@ import type { ChoiceOption, Position } from "../../game/types";
 import { hideBossHud, setBossHp, showBossHud } from "../../systems/bossHud";
 import { enterCutscene, exitCutscene, playLine } from "../../systems/cutscene";
 import { retroAudio } from "../../systems/audio";
+import { applyHitShake } from "../../systems/combatFeedback";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { applyStandardsViolation } from "../../systems/reliability";
 import { ChoicePrompt } from "../../systems/verification";
@@ -262,6 +263,7 @@ export class DanneBoss {
     this.defeated = true;
     this.phase = "defeated";
     this.onPhaseChange("defeated");
+    applyHitShake(this.scene, "boss-defeat");
     hideBossHud();
     this.sprite.setVisible(false);
     this.shadow.setVisible(false);
@@ -325,6 +327,7 @@ export class DanneBoss {
     const damage = this.phase === "cloud" ? Math.ceil(baseDamage / 2) : baseDamage;
     this.hp = Math.max(0, this.hp - damage);
     setBossHp(this.hp, this.phaseIndex());
+    applyHitShake(this.scene, "boss-hit");
     this.scene.tweens.add({
       targets: this.sprite,
       alpha: 0.35,
