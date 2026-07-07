@@ -100,11 +100,19 @@
     "goLeftTalk": "VE A LA IZQUIERDA - HABLA AL ACERCARTE",
     "interact": "INTERACTUAR: {label}",
     "nextLine": "SIGUIENTE LÍNEA",
+    "none": "NINGUNA",
     "readLine": "Lee la línea.",
     "talkJuniorCompiler": "Habla con el Compilador Junior.",
     "toolLabel": "HERRAMIENTA {label}",
     "touchControlsReady": "CONTROLES TÁCTILES LISTOS",
     "useTool": "USAR {tool}"
+  },
+  "language": {
+    "changed": "Idioma cambiado a {language}.",
+    "english": "Inglés",
+    "french": "Francés",
+    "label": "IDIOMA {language}",
+    "spanish": "Español"
   },
   "items": {
     "buckramKey": {
@@ -168,6 +176,23 @@
     "scopeDesk": "Escritorio de alcance / selección",
     "senateHearingChamber": "Sala de audiencias del Senado",
     "title": "CENTRO DE OFICINA"
+  },
+  "pause": {
+    "board": "TABLERO",
+    "certifyBuckramGate": "CERTIFICAR PUERTA BUCKRAM",
+    "close": "X",
+    "codex": "CÓDICE",
+    "crystals": "CRISTALES",
+    "dungeonMapKeys": "MAPA / LLAVES DE MAZMORRA",
+    "frusShelf": "ESTANTE FRUS {count}/{total}",
+    "hearts": "CORAZONES",
+    "next": "SIG.",
+    "nextBoard": "SIG. TABLERO",
+    "phase": "FASE",
+    "source": "FUENTE",
+    "title": "SUBPANTALLA FRUS QUEST",
+    "tool": "HERR.",
+    "treaty": "TRATADO"
   },
   "roles": {
     "compiler": {
