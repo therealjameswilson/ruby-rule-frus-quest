@@ -133,17 +133,15 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
     wave: "square"
   },
   officeHub: {
-    title: "Office Hub Contrapunctus",
-    source: "Ruby Rule oscillator stem derived from public-domain Bach Contrapunctus I MIDI",
-    midiStem: "assets/audio/midi/bach-contrapunctus-i.mid",
-    stepMs: 285,
-    notes: [50, 57, 62, null, 53, 60, 64, null, 55, 62, 65, 64, 57, null, 53, 50],
-    counter: [69, null, 67, 65, null, 64, 62, null, 60, 62, 64, null, 65, 67, null, 69],
-    bass: [38, 41, 45, 43],
-    wave: "triangle",
-    gain: 0.010,
-    bassGain: 0.007,
-    counterGain: 0.004
+    title: "Office Hub Lilt",
+    source: "Ruby Rule square-wave arrangement from Satie Gymnopedie No. 1 (public domain)",
+    midiStem: "assets/audio/midi/office-hub-satie-gymnopedie.mid",
+    stepMs: 316,
+    notes: [74, null, 73, 69, 66, null, 69, 71, 74, null, 73, 69, 71, 69, 66, null],
+    counter: [62, null, 61, null, 57, null, 61, 62, 62, null, 61, null, 57, null, 62, null],
+    bass: [43, 50, 45, 52],
+    wave: "square",
+    counterGain: 0.005
   },
   archiveDungeon: {
     title: "Archive Dungeon Chromatic",
@@ -193,18 +191,13 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
     counterGain: 0.004
   },
   danneCombat: {
-    title: "DANN-E Combat Chromatic",
-    source: "Ruby Rule combat stem derived from public-domain Bach Chromatic Fantasy MIDI",
-    midiStem: "assets/audio/midi/bach-chromatic-fantasy-bwv903.mid",
-    stepMs: 128,
-    notes: [55, 58, 67, 58, 55, null, 70, 67, 55, 58, 67, 72, 70, 67, 58, null],
-    counter: [79, null, 78, 76, null, 75, 74, null, 72, null, 70, 69, null, 67, 66, null],
-    bass: [31, 31, 34, 30],
-    pedal: [24, 24, 25, 23],
-    wave: "sawtooth",
-    gain: 0.012,
-    bassGain: 0.010,
-    counterGain: 0.004
+    title: "DANN-E Combat Encounter",
+    source: "Ruby Rule square-wave arrangement from Beethoven Symphony No. 5, Op. 67 (public domain)",
+    midiStem: "assets/audio/midi/danne-combat-beethoven-sym5.mid",
+    stepMs: 145,
+    notes: [null, 67, 67, 67, 63, null, 65, 65, 65, 62, null, 67, 67, 63, 62, 60],
+    bass: [48, 51, 43, 36],
+    wave: "square"
   },
   danneMiniboss: {
     title: "DANN-E Miniboss Queue",
@@ -239,6 +232,55 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
     notes: [55, 58, 67, 58, 55, null, 70, 67, 55, 58, 67, 72, 70, 67, 58, null],
     bass: [31, 31, 34, 30],
     wave: "sawtooth"
+  },
+  openNetRouting: {
+    title: "OpenNet Routing Run",
+    source: "Ruby Rule square-wave arrangement from Bach Invention No. 1, BWV 772 (public domain)",
+    midiStem: "assets/audio/midi/opennet-routing-bach-invention-i.mid",
+    stepMs: 150,
+    notes: [60, 62, 64, 65, 62, 64, 60, 67, 72, 71, 72, 67, 69, 67, 65, 64],
+    bass: [48, 55, 48, 43],
+    wave: "square"
+  },
+  referralVault: {
+    title: "Referral Vault Descent",
+    source: "Ruby Rule square-wave arrangement from Bach Toccata & Fugue in D minor, BWV 565 (public domain)",
+    midiStem: "assets/audio/midi/referral-vault-bach-toccata-bwv565.mid",
+    stepMs: 205,
+    notes: [69, 67, 69, null, 67, 65, 64, 62, 61, 62, null, 57, 60, 62, 61, null],
+    bass: [38, 38, 33, 38],
+    wave: "square"
+  },
+  silentReadTower: {
+    title: "Silent Read Tower",
+    source: "Ruby Rule square-wave arrangement from Satie Gnossienne No. 1 (public domain)",
+    midiStem: "assets/audio/midi/silent-read-tower-satie-gnossienne-i.mid",
+    stepMs: 300,
+    notes: [72, 71, 72, 68, 67, 65, 67, 68, 67, 63, 65, 63, 61, 60, null, null],
+    counter: [null, 56, null, 55, null, 53, null, 51, null, 48, null, 51, null, 53, null, 55],
+    bass: [41, 48, 44, 46],
+    wave: "square",
+    counterGain: 0.0045
+  },
+  miniboss: {
+    title: "Miniboss March",
+    source: "Ruby Rule square-wave arrangement from Grieg 'In the Hall of the Mountain King', Op. 46 (public domain)",
+    midiStem: "assets/audio/midi/miniboss-grieg-mountain-king.mid",
+    stepMs: 155,
+    notes: [47, 49, 50, 52, 54, 50, 54, null, 53, 49, 53, 52, 48, 52, null, null],
+    bass: [35, 35, 35, 30],
+    wave: "square"
+  },
+  bindingCeremony: {
+    title: "Binding Ceremony Fanfare",
+    source: "Ruby Rule square-wave arrangement from Beethoven 'Ode to Joy', Symphony No. 9 (public domain)",
+    midiStem: "assets/audio/midi/binding-ceremony-beethoven-ode-to-joy.mid",
+    stepMs: 288,
+    notes: [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 64, null, 62, null],
+    counter: [null, 72, null, 71, null, 67, null, 67, null, 71, null, 72, null, 67, null, 67],
+    bass: [48, 53, 48, 43],
+    wave: "square",
+    counterGain: 0.005
   }
 };
 
@@ -526,24 +568,24 @@ class RetroAudio {
   private resolveTheme(sceneKey: string): ResolvedTheme {
     const themeMap: Record<string, keyof typeof PUBLIC_DOMAIN_MIDI_THEMES> = {
       title: "title",
-      TitleScene: "title",
-      CharacterCreateScene: "title",
+      TitleScene: "eerieBach",
+      CharacterCreateScene: "eerieBach",
       OfficeScene: "officeHub",
       CherryBlossomGardenScene: "cherryGarden",
       SenateHearingChamberScene: "senate",
       GuideScene: "archiveDungeon",
       ArchiveScene: "archiveDungeon",
-      NaraStacksScene: "archiveDungeon",
+      NaraStacksScene: "naraStacks",
       EmbassyCableRoomScene: "embassyCable",
       BlackVaultLairScene: "blackVault",
       DanneCombat: "danneCombat",
-      DanneMiniboss: "danneMiniboss",
+      DanneMiniboss: "miniboss",
       DanneBoss: "danneCombat",
-      NetworkScene: "networkDungeon",
-      ReferralVaultScene: "referralDungeon",
-      SilentReadScene: "silentReadDungeon",
-      EndingScene: "endingFanfare",
-      TrueEndingScene: "endingFanfare",
+      NetworkScene: "openNetRouting",
+      ReferralVaultScene: "referralVault",
+      SilentReadScene: "silentReadTower",
+      EndingScene: "bindingCeremony",
+      TrueEndingScene: "bindingCeremony",
       BadEndingScene: "danneBoss",
       historian_office: "officeHub",
       nara_stacks: "archiveDungeon",
