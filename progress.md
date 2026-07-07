@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Second FRUS volume world-region unlock pass (2026-07-06):
+  - Wired the existing `public/assets/art-pack/world2/` Overseas Post map into the live world-map selector as a post-completion region rather than an always-open sixth atlas page.
+  - Added `secondVolumeUnlocked` to `GameState`, save/restore normalization, and `window.render_game_to_text()` output so QA can verify whether the second-volume region is available.
+  - Publishing the first FRUS volume now sets the second-volume unlock flag, and direct `?scene=WorldMapScene&region=overseas_post` links display a locked-region prompt until the flag is present.
+  - Reused the existing district routing into `GameplayMapScene`, DANN-E routes, and FRUS room graph instead of duplicating dungeon or combat logic for the new map.
+  - Verification:
+    - focused tests cover explicit unlock, final-gate publication unlock, save/restore persistence, and legacy scene-progress normalization;
+    - build and browser smoke-test details are in this branch's PR checklist.
 - ALTTP disassembly translation pass (2026-07-05):
   - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
   - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.

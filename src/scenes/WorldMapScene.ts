@@ -3,7 +3,14 @@ import { OVERWORLD_REGIONS, publicAssetPath, type GameplayMapKey, type Overworld
 import { DISTRICTS, REGION_LABELS, REGION_ORDER, districtsForRegion, type District } from "../data/regions";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { SNES_ROUTE_ARROW_RELIC_ASSET, SNES_WORLD_ATLAS_RELIC_ASSET } from "../game/snesAtlas";
-import { setLatestMessage, setNearestInteractable, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
+import {
+  isSecondVolumeRegionUnlocked,
+  setLatestMessage,
+  setNearestInteractable,
+  setSceneState,
+  setVisibleEntities,
+  setVisibleThreats
+} from "../game/state";
 import { bindPointerPress, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 
@@ -15,6 +22,7 @@ type FitRect = { x: number; y: number; width: number; height: number; scale: num
 
 const TOP_SAFE_BAND = 32;
 const BOTTOM_SAFE_BAND = 26;
+const SECOND_VOLUME_REGION: OverworldRegionKey = "overseas_post";
 
 type ScreenPoint = { x: number; y: number };
 type DistrictGlyphPart = {
@@ -42,6 +50,7 @@ export class WorldMapScene extends Phaser.Scene {
   private fitRect: FitRect | null = null;
   private numberKeysInstalled = false;
   private selectedDistrictNumber = 1;
+  private blockedStartRegion: OverworldRegionKey | null = null;
 
   constructor() {
     super("WorldMapScene");
@@ -60,7 +69,9 @@ export class WorldMapScene extends Phaser.Scene {
   create() {
     setSceneState("WorldMapScene", "explore", "Select a FRUS region.");
     setVisibleThreats([]);
-    this.currentRegion = this.startRegion ?? this.regionFromQuery();
+    const requestedRegion = this.startRegion ?? this.regionFromQuery();
+    this.currentRegion = this.isRegionUnlocked(requestedRegion) ? requestedRegion : "europe";
+    this.blockedStartRegion = this.currentRegion === requestedRegion ? null : requestedRegion;
     this.regionIndex = REGION_ORDER.indexOf(this.currentRegion);
     if (this.regionIndex < 0) this.regionIndex = 0;
     this.currentRegion = REGION_ORDER[this.regionIndex];
@@ -69,6 +80,7 @@ export class WorldMapScene extends Phaser.Scene {
     this.createChrome();
     this.installNumberShortcuts();
     this.renderRegion();
+    if (this.blockedStartRegion) this.showLockedRegionModal(this.blockedStartRegion);
   }
 
   update() {
@@ -92,6 +104,15 @@ export class WorldMapScene extends Phaser.Scene {
     const rawRegion = new URLSearchParams(window.location.search).get("region");
     if (rawRegion && rawRegion in OVERWORLD_REGIONS) return rawRegion as OverworldRegionKey;
     return "europe";
+  }
+
+  private isRegionUnlocked(region: OverworldRegionKey) {
+    return region !== SECOND_VOLUME_REGION || isSecondVolumeRegionUnlocked();
+  }
+
+  private lockedRegionMessage(region: OverworldRegionKey) {
+    const label = REGION_LABELS[region] ?? "this region";
+    return `${label} unlocks after publishing the first FRUS volume.`;
   }
 
   private createChrome() {
@@ -549,6 +570,10 @@ export class WorldMapScene extends Phaser.Scene {
   }
 
   private activateDistrict(district: District) {
+    if (!this.isRegionUnlocked(district.region)) {
+      this.showLockedRegionModal(district.region);
+      return;
+    }
     if (district.locked) {
       this.showModal("LOCKED", `${district.displayName} is behind a redaction bar.`);
       return;
@@ -592,6 +617,11 @@ export class WorldMapScene extends Phaser.Scene {
     this.modal = modal;
   }
 
+  private showLockedRegionModal(region: OverworldRegionKey) {
+    setLatestMessage(this.lockedRegionMessage(region));
+    this.showModal("REGION LOCKED", this.lockedRegionMessage(region));
+  }
+
   private closeModal() {
     this.modal?.destroy();
     this.modal = undefined;
@@ -602,8 +632,13 @@ export class WorldMapScene extends Phaser.Scene {
   }
 
   private selectRegion(index: number) {
+    const nextRegion = REGION_ORDER[index] ?? REGION_ORDER[0];
+    if (!this.isRegionUnlocked(nextRegion)) {
+      this.showLockedRegionModal(nextRegion);
+      return;
+    }
     this.regionIndex = index;
-    this.currentRegion = REGION_ORDER[this.regionIndex];
+    this.currentRegion = nextRegion;
     retroAudio.confirm();
     this.renderRegion();
   }
