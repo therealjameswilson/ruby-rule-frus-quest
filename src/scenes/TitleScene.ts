@@ -1,16 +1,11 @@
 import Phaser from "phaser";
 import { SCREENS, publicAssetPath } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import {
-  FRUS_QUEST_MISSION,
-  FRUS_QUEST_PLAYER_GOAL,
-  FRUS_QUEST_PLAYER_LOOP,
-  FRUS_QUEST_PLAYER_STAKES
-} from "../game/mission";
 import { resetGameState, setSceneState } from "../game/state";
 import { getSkipWarningPreference, setSkipWarningPreference } from "../game/warningSettings";
 import { bindPointerPress, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
+import { cycleLanguage, getLanguage, getString } from "../systems/i18n";
 import { transitionTo } from "../systems/sceneTransitions";
 import { addSnesWorkflowRelicRack } from "../systems/snesPixelArt";
 import { shouldStartTitle, TITLE_LAYOUT } from "./titleLayout";
@@ -19,11 +14,21 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
+function compactTitleLine(value: string, max = 56) {
+  const text = value.replace(/\s+/g, " ").trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 3);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 18 ? cut.slice(0, lastSpace) : cut).trim()}...`;
+}
+
 export class TitleScene extends Phaser.Scene {
   private started = false;
   private skipWarning = false;
   private skipWarningText?: Phaser.GameObjects.Text;
+  private languageText?: Phaser.GameObjects.Text;
   private ignoreNextPointerStart = false;
+  private languageKeyHandler?: () => void;
 
   constructor() {
     super("TitleScene");
@@ -36,7 +41,7 @@ export class TitleScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("TitleScene", "title", FRUS_QUEST_MISSION);
+    setSceneState("TitleScene", "title", getString("mission.objective"));
     this.started = false;
     this.skipWarning = getSkipWarningPreference();
     this.ignoreNextPointerStart = false;
@@ -49,6 +54,8 @@ export class TitleScene extends Phaser.Scene {
     if (!usingArtPackTitle) this.drawMissionPlaque(false);
     else this.drawHistoryStateSourceTag();
     this.createSkipWarningToggle();
+    this.createLanguageSelector();
+    this.installLanguageShortcut();
   }
 
   update() {
@@ -123,13 +130,13 @@ export class TitleScene extends Phaser.Scene {
     this.add.rectangle(128, 103, 124, 1, color(PALETTE.goldStamp), 0.86)
       .setName("title-clean-divider");
 
-    this.add.text(128, 34, "RUBY RULE", {
+    this.add.text(128, 34, getString("title.title"), {
       fontFamily: "monospace",
       fontSize: "18px",
       color: PALETTE.goldStamp,
       fontStyle: "bold"
     }).setName("title-clean-logo").setOrigin(0.5, 0).setResolution(2);
-    this.add.text(128, 56, "THE FRUS QUEST", {
+    this.add.text(128, 56, getString("title.subtitle"), {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.creamPaper
@@ -147,12 +154,12 @@ export class TitleScene extends Phaser.Scene {
     this.add.circle(132, 84, 4, color(PALETTE.goldStamp), 0.82)
       .setName("title-clean-volume-seal");
 
-    this.add.text(128, 114, "PRESS START TO BEGIN", {
+    this.add.text(128, 114, getString("title.pressStart"), {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.terminalCyan
     }).setName("title-clean-start-text").setOrigin(0.5, 0).setResolution(2);
-    this.add.text(128, 126, "FRUS SOURCE TRAIL: HISTORY.STATE.GOV", {
+    this.add.text(128, 126, getString("title.sourceTrail"), {
       fontFamily: "monospace",
       fontSize: "4px",
       color: PALETTE.creamPaper
@@ -285,7 +292,7 @@ export class TitleScene extends Phaser.Scene {
     this.add.rectangle(28, 11, 38, 1, color(PALETTE.white), 0.25).setDepth(10);
 
     this.add
-      .text(58, 7, "FRUS MAP", {
+      .text(58, 7, getString("title.frusMap"), {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.goldStamp
@@ -293,7 +300,7 @@ export class TitleScene extends Phaser.Scene {
       .setDepth(9)
       .setResolution(2);
     this.add
-      .text(58, 16, "ARCHIVE TERMINAL", {
+      .text(58, 16, getString("title.archiveTerminal"), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: PALETTE.bronze
@@ -303,7 +310,7 @@ export class TitleScene extends Phaser.Scene {
 
     // classification stamp
     this.add
-      .text(184, 6, "-CONF-", {
+      .text(184, 6, getString("title.conf"), {
         fontFamily: "monospace",
         fontSize: "7px",
         color: PALETTE.buckramHighlight
@@ -359,7 +366,7 @@ export class TitleScene extends Phaser.Scene {
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(18);
     this.add
-      .text(centerX, ribbonY - 3, "FRUS PRODUCTION MAP", {
+      .text(centerX, ribbonY - 3, getString("title.productionMap"), {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.goldStamp
@@ -386,23 +393,23 @@ export class TitleScene extends Phaser.Scene {
     });
     const titleY = plateY - 4;
     this.add
-      .text(129, titleY + 1, "RUBY RULE", titleStyle("14px", PALETTE.black))
+      .text(129, titleY + 1, getString("title.title"), titleStyle("14px", PALETTE.black))
       .setOrigin(0.5)
       .setDepth(26)
       .setResolution(2);
     this.add
-      .text(127, titleY - 1, "RUBY RULE", titleStyle("14px", PALETTE.mutedRuby))
+      .text(127, titleY - 1, getString("title.title"), titleStyle("14px", PALETTE.mutedRuby))
       .setOrigin(0.5)
       .setDepth(27)
       .setResolution(2);
     this.add
-      .text(128, titleY, "RUBY RULE", titleStyle("14px", PALETTE.goldStamp))
+      .text(128, titleY, getString("title.title"), titleStyle("14px", PALETTE.goldStamp))
       .setOrigin(0.5)
       .setDepth(28)
       .setResolution(2);
 
     this.add
-      .text(128, plateY + 8, "THE FRUS QUEST", {
+      .text(128, plateY + 8, getString("title.subtitle"), {
         fontFamily: "monospace",
         fontSize: "7px",
         color: PALETTE.creamPaper
@@ -423,11 +430,11 @@ export class TitleScene extends Phaser.Scene {
 
   private drawQuestRouteStrip(x: number, y: number, depth: number) {
     const steps = [
-      { label: "ARCH", color: PALETTE.archiveAmber, kind: "stamp" },
-      { label: "NET", color: PALETTE.terminalCyan, kind: "terminal" },
-      { label: "REF", color: PALETTE.classNetRed, kind: "seal" },
-      { label: "READ", color: PALETTE.creamPaper, kind: "pages" },
-      { label: "GATE", color: PALETTE.goldStamp, kind: "volume" }
+      { label: getString("title.arch"), color: PALETTE.archiveAmber, kind: "stamp" },
+      { label: getString("title.net"), color: PALETTE.terminalCyan, kind: "terminal" },
+      { label: getString("title.ref"), color: PALETTE.classNetRed, kind: "seal" },
+      { label: getString("title.read"), color: PALETTE.creamPaper, kind: "pages" },
+      { label: getString("title.gate"), color: PALETTE.goldStamp, kind: "volume" }
     ] as const;
     const spacing = 38;
     const startX = x - spacing * 2;
@@ -438,7 +445,7 @@ export class TitleScene extends Phaser.Scene {
       .setName("title-quest-route-strip")
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(depth + 1);
-    this.add.text(x, y - 10, "FRUS QUEST ROUTE", {
+    this.add.text(x, y - 10, getString("title.questRoute"), {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp,
@@ -535,19 +542,19 @@ export class TitleScene extends Phaser.Scene {
       .setName("title-mission-plaque")
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(depth + 1);
-    this.add.text(128, y - 11, FRUS_QUEST_PLAYER_GOAL, {
+    this.add.text(128, y - 11, compactTitleLine(getString("mission.goalBanner"), 48), {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.goldStamp,
       align: "center"
     }).setName("title-mission-text").setOrigin(0.5, 0).setDepth(depth + 2).setResolution(2);
-    this.add.text(128, y - 2, FRUS_QUEST_PLAYER_LOOP, {
+    this.add.text(128, y - 2, compactTitleLine(getString("mission.loop"), 58), {
       fontFamily: "monospace",
       fontSize: "4px",
       color: PALETTE.terminalCyan,
       align: "center"
     }).setName("title-mission-loop-text").setOrigin(0.5, 0).setDepth(depth + 2).setResolution(2);
-    this.add.text(128, y + 6, FRUS_QUEST_PLAYER_STAKES, {
+    this.add.text(128, y + 6, compactTitleLine(getString("mission.heartsHint"), 54), {
       fontFamily: "monospace",
       fontSize: "4px",
       color: PALETTE.creamPaper,
@@ -592,6 +599,41 @@ export class TitleScene extends Phaser.Scene {
     this.renderSkipWarningToggle();
   }
 
+  private createLanguageSelector() {
+    this.add
+      .rectangle(49, 232, 82, 9, color(PALETTE.black), 0.72)
+      .setName("title-language-backplate")
+      .setStrokeStyle(1, color(PALETTE.terminalCyan))
+      .setDepth(39);
+    const hit = this.add.rectangle(49, 231, 88, 12, color(PALETTE.black), 0.01).setDepth(40);
+    bindPointerPress(hit, {
+      down: () => {
+        this.ignoreNextPointerStart = true;
+        this.changeLanguage();
+      }
+    });
+    this.languageText = this.add
+      .text(49, 229, "", {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: PALETTE.terminalCyan
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(40)
+      .setResolution(2);
+    this.renderLanguageSelector();
+  }
+
+  private installLanguageShortcut() {
+    if (!this.input.keyboard) return;
+    this.languageKeyHandler = () => this.changeLanguage();
+    this.input.keyboard.on("keydown-L", this.languageKeyHandler);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      if (this.languageKeyHandler) this.input.keyboard?.off("keydown-L", this.languageKeyHandler);
+      this.languageKeyHandler = undefined;
+    });
+  }
+
   private toggleSkipWarning() {
     this.skipWarning = !this.skipWarning;
     setSkipWarningPreference(this.skipWarning);
@@ -600,6 +642,18 @@ export class TitleScene extends Phaser.Scene {
 
   private renderSkipWarningToggle() {
     const mark = this.skipWarning ? "X" : " ";
-    this.skipWarningText?.setText(`B: SKIP WARNING [${mark}]`);
+    this.skipWarningText?.setText(getString("title.skipWarning", { mark }));
+  }
+
+  private changeLanguage() {
+    const language = cycleLanguage();
+    retroAudio.confirm();
+    this.registry.set("ruby-rule-language", language);
+    this.scene.restart();
+  }
+
+  private renderLanguageSelector() {
+    const language = getLanguage();
+    this.languageText?.setText(getString("language.label", { language: language.toUpperCase() }));
   }
 }
