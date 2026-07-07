@@ -3910,3 +3910,15 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Each frame is an exact 256x224 indexed-color PNG with no anti-aliasing, built on a single fixed 38-color palette curated from the existing FRUS art pack (archive browns, gold leaf, ruby buckram red, navy, cherry-blossom pink) so they match the shipped title/DANN-E/volume/garden art.
 - Frames are generated deterministically by `docs/promo/generate_frames.py` (hand-coded 5x7 pixel font, ordered Bayer dithering, no smoothing); added `docs/promo/MANIFEST.md` with per-file path, dimensions, scene label, trailer order, and palette/source notes.
 - Verification: all six PNGs confirmed `(256, 224)` mode `P`, 13-23 colors each, and 0 stray colors outside the palette (no anti-aliasing).
+
+## 2026-07-06 DANN-E combat & pickup VFX sprite sheets
+
+- Added seven original 16-bit SNES/ALttP-style VFX sprite strips under `public/assets/art-pack/vfx/`, generated deterministically by `scripts/generate-vfx-sprites.py`:
+  - `vfx_hit_spark_strip.png` — 4 frames, 16x16 (hit-spark burst);
+  - `vfx_defeat_dissolve_strip.png` — 5 frames, 32x32 (defeat pixel-scatter);
+  - `vfx_doc_point_sparkle_strip.png` — 3 frames, 8x8 (document-point pickup sparkle);
+  - `vfx_frus_fragment_glow_strip.png` — 4 frames, 16x16 (ruby-red buckram FRUS volume fragment glow/pickup);
+  - `vfx_citation_stamp_swing_strip.png`, `vfx_red_pencil_swing_strip.png`, `vfx_review_folder_swing_strip.png` — 3 frames each, 24x24, arcs colored to match the Citation Stamp / Red Pencil / Review Folder weapon icons in the item registry.
+- Palette matched to the existing sprite frames and FRUS volume art (`#0F0F0F` outline, `#7A1020` ruby buckram, `#D6A23A` brass, `#B89A5A` manila). All output is hard-edged pixel art: every pixel is fully transparent or fully opaque, no anti-aliasing, transparent background, limited palette.
+- Documented frame size/count/speed for each strip in `public/assets/art-pack/vfx/MANIFEST.md`.
+- Verification: independent PIL check confirmed exact dimensions, zero soft-alpha pixels, and zero off-palette colors across all seven strips.
