@@ -5,7 +5,8 @@ export const OVERWORLD_REGIONS = {
   pacific: "art-pack/overworld_maps/02_pacific_theater.png",
   middle_east: "art-pack/overworld_maps/03_middle_east_crossroads.png",
   latin_america: "art-pack/overworld_maps/04_latin_america.png",
-  africa: "art-pack/overworld_maps/05_africa_cold_war_front.png"
+  africa: "art-pack/overworld_maps/05_africa_cold_war_front.png",
+  overseas_post: "art-pack/world2/01_overseas_post_region.png"
 } as const;
 
 export const GAMEPLAY_MAPS = {
