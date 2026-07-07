@@ -262,7 +262,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show(this.geometry.displayName.toUpperCase(), "The route is paused.");
+      this.inventory.toggle();
       return;
     }
 

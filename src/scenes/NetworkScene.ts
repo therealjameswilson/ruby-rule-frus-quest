@@ -224,7 +224,7 @@ export class NetworkScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("PAUSED", "The networks wait.");
+      this.inventory.toggle();
       return;
     }
     this.player.update(delta, true, { bounds: NETWORK_PLAY_BOUNDS });

@@ -55,19 +55,45 @@ export const SCREENS = {
   title_screen_256x224: "art-pack/screens/title_screen_256x224.png"
 } as const;
 
+export const ACCESSIBILITY_OVERLAYS = {
+  boss_hp_critical_excl: "art-pack/accessibility/boss_hp_critical_excl.png",
+  boss_phase_active: "art-pack/accessibility/boss_phase_active.png",
+  boss_phase_spent: "art-pack/accessibility/boss_phase_spent.png",
+  gate_unlocked: "art-pack/accessibility/gate_unlocked.png",
+  hp_cell_empty: "art-pack/accessibility/hp_cell_empty.png",
+  hp_cell_full: "art-pack/accessibility/hp_cell_full.png",
+  key_held: "art-pack/accessibility/key_held.png",
+  meter_tier_high: "art-pack/accessibility/meter_tier_high.png",
+  meter_tier_low: "art-pack/accessibility/meter_tier_low.png",
+  meter_tier_mid: "art-pack/accessibility/meter_tier_mid.png",
+  net_classnet_cross: "art-pack/accessibility/net_classnet_cross.png",
+  net_opennet_open: "art-pack/accessibility/net_opennet_open.png",
+  room_cleared_check: "art-pack/accessibility/room_cleared_check.png",
+  room_current_arrow: "art-pack/accessibility/room_current_arrow.png",
+  room_locked_x: "art-pack/accessibility/room_locked_x.png",
+  slot_acquired: "art-pack/accessibility/slot_acquired.png",
+  slot_equipped: "art-pack/accessibility/slot_equipped.png",
+  slot_locked: "art-pack/accessibility/slot_locked.png",
+  stamp_earned_check: "art-pack/accessibility/stamp_earned_check.png",
+  stamp_pending_ring: "art-pack/accessibility/stamp_pending_ring.png",
+  weakness_target: "art-pack/accessibility/weakness_target.png"
+} as const;
+
 export const ALL_NEW_ART_REGISTRIES = {
   OVERWORLD_REGIONS,
   GAMEPLAY_MAPS,
   FRUS_VOLUMES,
-  SCREENS
+  SCREENS,
+  ACCESSIBILITY_OVERLAYS
 } as const;
 
 export type OverworldRegionKey = keyof typeof OVERWORLD_REGIONS;
 export type GameplayMapKey = keyof typeof GAMEPLAY_MAPS;
 export type FrusVolumeKey = keyof typeof FRUS_VOLUMES;
 export type ScreenKey = keyof typeof SCREENS;
+export type AccessibilityOverlayKey = keyof typeof ACCESSIBILITY_OVERLAYS;
 export type NewArtRegistryName = keyof typeof ALL_NEW_ART_REGISTRIES;
-export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey | ScreenKey;
+export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey | ScreenKey | AccessibilityOverlayKey;
 
 export function gameplayTiledCacheKey(mapKey: GameplayMapKey) {
   return `tiled-${mapKey}`;

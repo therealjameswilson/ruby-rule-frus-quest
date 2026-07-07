@@ -74,6 +74,7 @@ import {
 import type { DungeonStateRegistry } from "../systems/dungeonKeys";
 import { VIOLATION_LABEL } from "../systems/standardsDamage";
 import type { StandardViolation } from "../systems/standardsDamage";
+import { isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import type {
   AdventureHudReadout,
   AdventureTrainingReadout,
@@ -2207,6 +2208,9 @@ export function renderGameToText() {
       snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
       adventureHud: getAdventureHudReadout(),
+      accessibility: {
+        highContrastColorblindMode: isColorblindModeEnabled()
+      },
       adventureTraining: getAdventureTrainingReadout(),
       lttpFrusTranslation: getLttpFrusTranslationReadout(),
       oneHourTraining: getOneHourTrainingReadout(),

@@ -227,7 +227,8 @@ export class EndingScene extends Phaser.Scene {
     }
 
     if (input.pauseJustPressed) {
-      setLatestMessage("Buckram Gate paused. Human certification still required.");
+      this.inventory.toggle();
+      return;
     }
 
     this.player.update(delta, true, { bounds: GATE_PLAY_BOUNDS });

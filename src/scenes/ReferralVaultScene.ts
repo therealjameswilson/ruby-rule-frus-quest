@@ -225,7 +225,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("PAUSED", "The vault waits.");
+      this.inventory.toggle();
       return;
     }
     this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS });

@@ -155,7 +155,7 @@ export class GuideScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("PAUSED", "Your colleague waits.");
+      this.inventory.toggle();
       return;
     }
 

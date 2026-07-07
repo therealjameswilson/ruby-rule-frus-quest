@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { ACCESSIBILITY_OVERLAYS } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   SNES_COVER_FRAGMENT_RELIC_ASSET,
@@ -11,6 +12,7 @@ import { addGamepadConnectionListener, getInput, updateInputCallbacks } from "..
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
 import { applyIntegerZoom } from "../systems/pixelPerfect";
+import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { questBandCoverFragmentSlots, questBandCrystalSlots } from "./questBandCue";
 
 type RoomMapMarkerFrameName = (typeof SNES_ROOM_MAP_MARKER_ASSET.frames)[number];
@@ -49,6 +51,8 @@ export class UIScene extends Phaser.Scene {
   private questBandCrystalRelics: Phaser.GameObjects.Image[] = [];
   private questBandCoverFragmentRelics: Phaser.GameObjects.Image[] = [];
   private questBandRoomMapMarkers: Phaser.GameObjects.Image[] = [];
+  private questBandHeartOverlays: Phaser.GameObjects.Image[] = [];
+  private removeColorblindModeListener?: () => void;
   private questBandSignature = "";
   private questBandLastRefresh = 0;
 
@@ -69,8 +73,13 @@ export class UIScene extends Phaser.Scene {
         this.controls.setForceVisible(!this.controls.isForceVisible);
       }
     });
+    this.removeColorblindModeListener = addColorblindModeListener(() => {
+      this.questBandSignature = "";
+      this.questBandLastRefresh = 0;
+    });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.removeGamepadListener?.();
+      this.removeColorblindModeListener?.();
       this.gamepadToastTimer?.remove(false);
       this.gamepadToastTween?.stop();
     });
@@ -195,6 +204,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandCueText.setVisible(visible);
     this.questBandVolumeText.setVisible(false);
     this.questBandPendantRelics.forEach((relic) => relic.setVisible(false));
+    this.questBandHeartOverlays.forEach((overlay) => overlay.setVisible(false));
     if (!visible) {
       this.questBandCrystalRelics.forEach((relic) => relic.setVisible(false));
       this.questBandCoverFragmentRelics.forEach((relic) => relic.setVisible(false));
@@ -216,7 +226,8 @@ export class UIScene extends Phaser.Scene {
       actionLine,
       gameState.nearestInteractable ?? "",
       gameState.heldItem ?? "",
-      gameState.mode
+      gameState.mode,
+      isColorblindModeEnabled() ? "hc" : "std"
     ].join("|");
     if (signature === this.questBandSignature) return;
     this.questBandSignature = signature;
@@ -290,11 +301,11 @@ export class UIScene extends Phaser.Scene {
     g.fillStyle(color(PALETTE.black), 0.72);
     g.fillRect(0, 17, GAME_WIDTH, 6);
     for (let index = 0; index < totalHearts; index += 1) {
-      this.drawQuestHeart(5 + index * 7, 3, index < filledHearts);
+      this.drawQuestHeart(index, 5 + index * 7, 3, index < filledHearts);
     }
   }
 
-  private drawQuestHeart(x: number, y: number, filled: boolean) {
+  private drawQuestHeart(index: number, x: number, y: number, filled: boolean) {
     const g = this.questBandGraphics;
     g.fillStyle(color(PALETTE.black), 1);
     g.fillRect(x, y + 1, 6, 5);
@@ -308,6 +319,28 @@ export class UIScene extends Phaser.Scene {
       g.fillStyle(color(PALETTE.goldStamp), 1);
       g.fillRect(x + 2, y + 1, 1, 1);
     }
+    this.syncQuestHeartOverlay(index, x, y, filled);
+  }
+
+  private syncQuestHeartOverlay(index: number, x: number, y: number, filled: boolean) {
+    const textureKey: keyof typeof ACCESSIBILITY_OVERLAYS = filled ? "hp_cell_full" : "hp_cell_empty";
+    if (!isColorblindModeEnabled() || !this.textures.exists(textureKey)) {
+      this.questBandHeartOverlays[index]?.setVisible(false);
+      return;
+    }
+    const overlay = this.questBandHeartOverlays[index] ?? this.add
+      .image(0, 0, textureKey)
+      .setName(`quest-band-heart-accessibility-${index}`)
+      .setDepth(20404)
+      .setScrollFactor(0)
+      .setVisible(false);
+    this.questBandHeartOverlays[index] = overlay;
+    overlay
+      .setTexture(textureKey)
+      .setPosition(x + 3, y + 3)
+      .setScale(0.75)
+      .setAlpha(filled ? 0.95 : 0.82)
+      .setVisible(true);
   }
 
   private drawQuestBandPendants(acquired: boolean[]) {

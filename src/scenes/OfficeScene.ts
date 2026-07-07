@@ -353,7 +353,7 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("OFFICE HUB", "The office route is paused.");
+      this.inventory.toggle();
       this.updateFirstQuestCue();
       return;
     }

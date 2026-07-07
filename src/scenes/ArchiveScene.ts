@@ -491,7 +491,7 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("PAUSED", "The archive waits.");
+      this.inventory.toggle();
       return;
     }
 

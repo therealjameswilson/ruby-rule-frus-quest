@@ -127,6 +127,15 @@ Added after the base pack. See `manifest.json` → `extras` for grid metadata. G
 | `effects/stamps_text.png` | 1536×1024 | 2×2 grid | Document stamp marks with correct text: CONFIDENTIAL, TOP SECRET, DECLASSIFIED, APPROVED — overlay for the declassification theme | Yes |
 | `ui/ui_kit.png` | 1536×1024 | free layout | UI kit (ruby-red/gold parchment): dialogue/menu box frames (9-slice), cursor + continue arrows, progress meters, HP ruby gem, A/B/START buttons, scroll banner, heart/star/coin, corner flourishes | Yes |
 
+## 9. Accessibility overlays (`accessibility/`)
+
+Colorblind-accessible overlay/icon assets that encode UI/HUD state with
+**shape and pattern** instead of color alone (HP/verification cells, meter
+tiers, inventory-slot state, process stamps, dungeon keys, map room status,
+boss healthbar/phase, network routing, enemy weakness). All RGBA, transparent,
+hard-pixel, palette-consistent. See `accessibility/MANIFEST.md` for the full
+per-file index (21 overlays at 8×8 and 16×16).
+
 ---
 
 ## Engine / integration notes (Phaser)

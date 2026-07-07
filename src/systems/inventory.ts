@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FRUS_VOLUMES } from "../assets/registry";
+import { ACCESSIBILITY_OVERLAYS, FRUS_VOLUMES } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { ProcessItemId } from "../game/constants";
 import { DANNE_ITEM_CATALOG } from "../game/danneItemCatalog";
@@ -25,6 +25,7 @@ import {
 import type { AdventureSubscreenReadout } from "../game/state";
 import { bindPointerPress, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
+import { isColorblindModeEnabled, toggleColorblindMode } from "./accessibilitySettings";
 import { openCodex } from "./codexOverlay";
 
 function color(hex: string) {
@@ -64,6 +65,7 @@ const COMPACT_TOOL_LINES: Record<string, string> = {
 const MODAL_BOUNDS = { left: 8, right: 248, top: 12, bottom: 228 };
 const CLOSE_HIT = { x: 223, y: 35, width: 44, height: 44 };
 const CODEX_HIT = { x: 171, y: 35, width: 58, height: 44 };
+const CONTRAST_HIT = { x: 95, y: 35, width: 88, height: 44 };
 const FRUS_VOLUME_ROW_TEXTURE: keyof typeof FRUS_VOLUMES = "ui_row_six";
 const FRUS_VOLUME_SLOT_X = [26, 51, 76, 101, 126, 151] as const;
 type DungeonStatusFrame = (typeof SNES_DUNGEON_STATUS_RELIC_ASSET.frames)[number];
@@ -87,9 +89,12 @@ export class InventoryOverlay {
   private readonly subscreenGraphics: Phaser.GameObjects.Graphics;
   private readonly summary: Phaser.GameObjects.Text;
   private readonly body: Phaser.GameObjects.Text;
+  private readonly colorblindToggleBox: Phaser.GameObjects.Rectangle;
+  private readonly colorblindToggleLabel: Phaser.GameObjects.Text;
   private frusVolumeRowTitle!: Phaser.GameObjects.Text;
   private readonly frusVolumeSlotLights: Phaser.GameObjects.Rectangle[] = [];
   private readonly frusVolumeSlotLabels: Phaser.GameObjects.Text[] = [];
+  private readonly subscreenHeartOverlays: Phaser.GameObjects.Image[] = [];
   private readonly dungeonStatusRelics: Array<{
     frame: DungeonStatusFrame;
     image: Phaser.GameObjects.Image;
@@ -107,6 +112,7 @@ export class InventoryOverlay {
     id: ProcessItemId;
     box: Phaser.GameObjects.Rectangle;
     icon?: Phaser.GameObjects.Image;
+    stateOverlay?: Phaser.GameObjects.Image;
     label: Phaser.GameObjects.Text;
   }> = [];
   private readonly danneItemSlots: Array<{
@@ -119,6 +125,7 @@ export class InventoryOverlay {
   private readonly dannePopoverImage: Phaser.GameObjects.Image;
   private readonly dannePopoverText: Phaser.GameObjects.Text;
   private selectedDanneItemId: DanneItemId | null = null;
+  private colorblindToggleLockedUntil = 0;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -166,6 +173,20 @@ export class InventoryOverlay {
       color: PALETTE.terminalCyan
     }).setOrigin(0.5, 0).setScrollFactor(0);
     bindPointerPress(codexHit, { down: () => this.openCodexFromInventory() });
+    const contrastHit = scene.add
+      .rectangle(CONTRAST_HIT.x, CONTRAST_HIT.y, CONTRAST_HIT.width, CONTRAST_HIT.height, color(PALETTE.black), 0.01)
+      .setScrollFactor(0);
+    bindPointerPress(contrastHit, { down: () => this.toggleColorblindMode() });
+    this.colorblindToggleBox = scene.add
+      .rectangle(CONTRAST_HIT.x, CONTRAST_HIT.y, 72, 16, color(PALETTE.deepRuby))
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setScrollFactor(0);
+    this.colorblindToggleLabel = scene.add.text(CONTRAST_HIT.x, CONTRAST_HIT.y - 4, "", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.goldStamp,
+      align: "center"
+    }).setOrigin(0.5, 0).setScrollFactor(0);
     this.summary = scene.add.text(14, 126, "", {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -186,6 +207,7 @@ export class InventoryOverlay {
     const researchPendantObjects = this.createResearchPendantRelics(scene);
     const equityCrystalObjects = this.createEquityCrystalRelics(scene);
     const dungeonStatusObjects = this.createDungeonStatusRelics(scene);
+    const accessibilityObjects = this.createAccessibilityOverlays(scene);
     const popoverBox = scene.add
       .rectangle(204, 88, 80, 62, color(PALETTE.black), 0.94)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
@@ -214,6 +236,9 @@ export class InventoryOverlay {
         codexBox,
         codexLabel,
         codexHit,
+        this.colorblindToggleBox,
+        this.colorblindToggleLabel,
+        contrastHit,
         closeBox,
         closeLabel,
         closeHit,
@@ -223,6 +248,7 @@ export class InventoryOverlay {
         ...researchPendantObjects,
         ...equityCrystalObjects,
         ...dungeonStatusObjects,
+        ...accessibilityObjects,
         this.dannePopover,
         this.summary,
         this.body
@@ -312,6 +338,7 @@ export class InventoryOverlay {
     this.renderDanneItemGrid();
     this.renderFrusVolumeRow();
     this.renderDannePopover();
+    this.renderColorblindToggle();
   }
 
   private renderSubscreenGraphics(subscreen: AdventureSubscreenReadout) {
@@ -376,6 +403,7 @@ export class InventoryOverlay {
       g.fillRect(x + 3, y + 6, 1, 1);
       g.lineStyle(1, color(filled ? PALETTE.goldStamp : PALETTE.stoneGray), 0.9);
       g.strokeRect(x, y + 1, 7, 4);
+      this.syncSubscreenHeartOverlay(index, x, y, filled);
     }
 
     const toolColor = subscreen.equippedTool ? PALETTE.goldStamp : PALETTE.stoneGray;
@@ -466,6 +494,22 @@ export class InventoryOverlay {
       this.dungeonStatusRelics.push({ frame, image });
       return image;
     });
+  }
+
+  private createAccessibilityOverlays(scene: Phaser.Scene) {
+    if (!scene.textures.exists("hp_cell_empty" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)) return [];
+    const objects: Phaser.GameObjects.Image[] = [];
+    for (let index = 0; index < 10; index += 1) {
+      const image = scene.add
+        .image(0, 0, "hp_cell_empty" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+        .setName(`inventory-reliability-heart-accessibility-${index}`)
+        .setScale(0.9)
+        .setScrollFactor(0)
+        .setVisible(false);
+      this.subscreenHeartOverlays.push(image);
+      objects.push(image);
+    }
+    return objects;
   }
 
   private renderDungeonStatusRelics(
@@ -623,6 +667,14 @@ export class InventoryOverlay {
           .setScale(0.5)
           .setScrollFactor(0)
         : undefined;
+      const stateOverlay = scene.textures.exists("slot_locked" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+        ? scene.add
+          .image(x + 9, y - 5, "slot_locked")
+          .setName(`inventory-tool-state-overlay-${item.id}`)
+          .setScale(0.5)
+          .setScrollFactor(0)
+          .setVisible(false)
+        : undefined;
       const label = scene.add.text(x, y + (icon ? 7 : -4), item.shortLabel, {
         fontFamily: "monospace",
         fontSize: icon ? "4px" : "5px",
@@ -630,9 +682,10 @@ export class InventoryOverlay {
         align: "center"
       }).setOrigin(0.5).setScrollFactor(0);
       bindPointerPress(hit, { down: () => this.tapTool(item.id as ProcessItemId) });
-      this.itemSlots.push({ id: item.id as ProcessItemId, box, icon, label });
+      this.itemSlots.push({ id: item.id as ProcessItemId, box, icon, stateOverlay, label });
       objects.push(hit, box);
       if (icon) objects.push(icon);
+      if (stateOverlay) objects.push(stateOverlay);
       objects.push(label);
     });
     return objects;
@@ -698,6 +751,10 @@ export class InventoryOverlay {
 
   private handlePauseTouch(x: number, y: number) {
     if (!this.active) return false;
+    if (this.hitRect(x, y, CONTRAST_HIT.x, CONTRAST_HIT.y, CONTRAST_HIT.width, CONTRAST_HIT.height)) {
+      this.toggleColorblindMode();
+      return true;
+    }
     if (this.hitRect(x, y, CLOSE_HIT.x, CLOSE_HIT.y, CLOSE_HIT.width, CLOSE_HIT.height)) {
       this.hide();
       return true;
@@ -744,7 +801,69 @@ export class InventoryOverlay {
       slot.label.setText(item?.shortLabel ?? "--");
       slot.icon?.setAlpha(equipped ? 1 : acquired ? 0.88 : 0.22);
       slot.icon?.setTint(equipped ? color(PALETTE.black) : color(PALETTE.white));
+      this.syncToolStateOverlay(slot, equipped, acquired);
     }
+  }
+
+  private renderColorblindToggle() {
+    const enabled = isColorblindModeEnabled();
+    this.colorblindToggleBox
+      .setFillStyle(color(enabled ? PALETTE.goldStamp : PALETTE.deepRuby), 0.96)
+      .setStrokeStyle(1, color(enabled ? PALETTE.white : PALETTE.goldStamp), 1);
+    this.colorblindToggleLabel
+      .setText(enabled ? "HC / CB ON" : "HC / CB OFF")
+      .setColor(enabled ? PALETTE.black : PALETTE.goldStamp);
+  }
+
+  private toggleColorblindMode() {
+    const now = this.scene.time.now;
+    if (now < this.colorblindToggleLockedUntil) return;
+    this.colorblindToggleLockedUntil = now + 120;
+    const enabled = toggleColorblindMode();
+    setLatestMessage(`High Contrast / Colorblind Mode ${enabled ? "enabled" : "disabled"}.`);
+    retroAudio.confirm();
+    this.render();
+  }
+
+  private syncToolStateOverlay(
+    slot: (typeof this.itemSlots)[number],
+    equipped: boolean,
+    acquired: boolean
+  ) {
+    if (!slot.stateOverlay) return;
+    if (!isColorblindModeEnabled()) {
+      slot.stateOverlay.setVisible(false);
+      return;
+    }
+    const textureKey: keyof typeof ACCESSIBILITY_OVERLAYS = equipped
+      ? "slot_equipped"
+      : acquired
+        ? "slot_acquired"
+        : "slot_locked";
+    if (!this.scene.textures.exists(textureKey)) return;
+    slot.stateOverlay
+      .setTexture(textureKey)
+      .setAlpha(equipped ? 1 : acquired ? 0.92 : 0.78)
+      .setVisible(true);
+  }
+
+  private syncSubscreenHeartOverlay(index: number, x: number, y: number, filled: boolean) {
+    const overlay = this.subscreenHeartOverlays[index];
+    if (!overlay) return;
+    if (!isColorblindModeEnabled()) {
+      overlay.setVisible(false);
+      return;
+    }
+    const textureKey: keyof typeof ACCESSIBILITY_OVERLAYS = filled ? "hp_cell_full" : "hp_cell_empty";
+    if (!this.scene.textures.exists(textureKey)) {
+      overlay.setVisible(false);
+      return;
+    }
+    overlay
+      .setTexture(textureKey)
+      .setPosition(x + 4, y + 4)
+      .setAlpha(filled ? 0.95 : 0.82)
+      .setVisible(true);
   }
 
   private renderFrusVolumeRow() {
