@@ -20,6 +20,7 @@ import {
   getPublicationReadinessReadout,
   hasDanneItem,
   recordDanneVariantDefeated,
+  recordUnresolvedEquity,
   setLatestMessage,
   setObjective
 } from "../../game/state";
@@ -442,6 +443,7 @@ export class DanneBoss {
         gameState.sceneProgress.danneBadEnding = 1;
         gameState.sceneProgress.concealedPolicyDefect = 1;
         applyStandardsViolation("concealed_policy_defect", "DANN-E shortcut concealed policy defects by omitting material.");
+        recordUnresolvedEquity("DANN-E shortcut accepted: contested material omitted at the deadline");
         setLatestMessage("BAD ENDING: DANN-E shortcut accepted; material facts were concealed.");
         this.defeated = true;
         this.clockContainer.setVisible(false);

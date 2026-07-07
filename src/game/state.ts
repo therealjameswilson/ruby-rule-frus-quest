@@ -118,6 +118,19 @@ export type DanneVariantDefeatId = keyof typeof DANNE_VARIANT_DEFEAT_LABELS;
 
 const DANNE_VARIANT_DEFEAT_IDS = Object.keys(DANNE_VARIANT_DEFEAT_LABELS) as DanneVariantDefeatId[];
 
+export type PublicationOutcomeId = "published_clean" | "published_under_appeal";
+
+export const PUBLICATION_OUTCOME_LABELS: Record<PublicationOutcomeId, string> = {
+  published_clean: "Published clean",
+  published_under_appeal: "Published under appeal"
+};
+
+export interface PublicationOutcomeReadout {
+  id: PublicationOutcomeId;
+  label: string;
+  unresolvedEquities: number;
+}
+
 export interface CompletionStatsState {
   runStartedAtMs: number;
   totalPlayTimeMs: number;
@@ -126,6 +139,8 @@ export interface CompletionStatsState {
   hiddenCollectibleFound: boolean;
   hiddenCollectibleLabel: string | null;
   finalReliabilityScore: number | null;
+  unresolvedEquities: number;
+  publicationOutcome: PublicationOutcomeId | null;
   completedAtMs: number | null;
 }
 
@@ -146,6 +161,8 @@ export interface CompletionStatsReadout {
   hiddenCollectibleFound: boolean;
   hiddenCollectibleLabel: string | null;
   finalReliabilityScore: number;
+  unresolvedEquities: number;
+  publicationOutcome: PublicationOutcomeReadout;
   completed: boolean;
   completedAt: string | null;
 }
@@ -168,6 +185,7 @@ export interface GameState {
   };
   dungeons: DungeonStateRegistry;
   standardsViolations: StandardsViolationRecord[];
+  unresolvedEquities: number;
   reliability: number;
   heldItem: string | null;
   equippedProcessItem: ProcessItemId | null;
@@ -502,6 +520,8 @@ function createInitialCompletionStats(): CompletionStatsState {
     hiddenCollectibleFound: false,
     hiddenCollectibleLabel: null,
     finalReliabilityScore: null,
+    unresolvedEquities: 0,
+    publicationOutcome: null,
     completedAtMs: null
   };
 }
@@ -514,6 +534,14 @@ function clampReliabilityScore(value: unknown) {
   return Math.max(0, Math.min(100, Math.round(safeFiniteNumber(value, gameState.reliability))));
 }
 
+function normalizeUnresolvedEquityCount(value: unknown) {
+  return Math.max(0, Math.round(safeFiniteNumber(value, 0)));
+}
+
+function normalizePublicationOutcome(value: unknown): PublicationOutcomeId | null {
+  return value === "published_clean" || value === "published_under_appeal" ? value : null;
+}
+
 function normalizeCompletionStats(stats?: Partial<CompletionStatsState> | null): CompletionStatsState {
   const normalized = createInitialCompletionStats();
   normalized.runStartedAtMs = safeFiniteNumber(stats?.runStartedAtMs, completionStatsNowMs());
@@ -524,6 +552,8 @@ function normalizeCompletionStats(stats?: Partial<CompletionStatsState> | null):
   normalized.finalReliabilityScore = typeof stats?.finalReliabilityScore === "number"
     ? clampReliabilityScore(stats.finalReliabilityScore)
     : null;
+  normalized.unresolvedEquities = normalizeUnresolvedEquityCount(stats?.unresolvedEquities);
+  normalized.publicationOutcome = normalizePublicationOutcome(stats?.publicationOutcome);
   normalized.completedAtMs = typeof stats?.completedAtMs === "number" && Number.isFinite(stats.completedAtMs)
     ? stats.completedAtMs
     : null;
@@ -576,6 +606,7 @@ export const gameState: GameState = {
   },
   dungeons: createInitialDungeonStates(),
   standardsViolations: [],
+  unresolvedEquities: 0,
   reliability: 80,
   heldItem: null,
   equippedProcessItem: null,
@@ -634,6 +665,7 @@ export function resetGameState() {
   gameState.documentWorkflowLog = [];
   gameState.dungeons = createInitialDungeonStates();
   gameState.standardsViolations = [];
+  gameState.unresolvedEquities = 0;
   gameState.heldItem = null;
   gameState.equippedProcessItem = null;
   gameState.equippedDanneItem = null;
@@ -746,6 +778,7 @@ export function restoreGameSaveData(save: GameSaveData) {
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
   gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
+  gameState.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities);
   gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
   gameState.completionStats.volumePiecesCollected = Math.max(
     gameState.completionStats.volumePiecesCollected,
@@ -1496,6 +1529,25 @@ export function recordHiddenCollectibleFound(label = "Hidden collectible") {
   refreshQuestWorkflowState();
 }
 
+export function getPublicationOutcomeReadout(unresolvedEquities = gameState.unresolvedEquities): PublicationOutcomeReadout {
+  const count = normalizeUnresolvedEquityCount(unresolvedEquities);
+  const id: PublicationOutcomeId = count > 0 ? "published_under_appeal" : "published_clean";
+  return {
+    id,
+    label: PUBLICATION_OUTCOME_LABELS[id],
+    unresolvedEquities: count
+  };
+}
+
+export function recordUnresolvedEquity(reason: string, documentId?: string) {
+  gameState.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities) + 1;
+  gameState.sceneProgress.unresolvedEquities = gameState.unresolvedEquities;
+  const scopedReason = documentId ? `${reason} (${documentId})` : reason;
+  setLatestMessage(`UNRESOLVED EQUITY ${gameState.unresolvedEquities}: ${scopedReason}`);
+  refreshQuestWorkflowState();
+  return gameState.unresolvedEquities;
+}
+
 function hiddenCollectibleInferredFromProgress() {
   if (gameState.completionStats.hiddenCollectibleFound) {
     return {
@@ -1533,6 +1585,8 @@ export function finalizeCompletionStats() {
   gameState.completionStats.hiddenCollectibleFound = hidden.found;
   gameState.completionStats.hiddenCollectibleLabel = hidden.label;
   gameState.completionStats.finalReliabilityScore = clampReliabilityScore(gameState.reliability);
+  gameState.completionStats.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities);
+  gameState.completionStats.publicationOutcome = getPublicationOutcomeReadout(gameState.unresolvedEquities).id;
   gameState.completionStats.completedAtMs = completionStatsNowMs();
   refreshQuestWorkflowState();
   return getCompletionStatsReadout();
@@ -1552,6 +1606,16 @@ export function getCompletionStatsReadout(): CompletionStatsReadout {
   }));
   const totalPlayTimeMs = currentCompletionPlayTimeMs(stats);
   const completedAt = stats.completedAtMs === null ? null : new Date(stats.completedAtMs).toISOString();
+  const unresolvedEquities = stats.completedAtMs === null
+    ? normalizeUnresolvedEquityCount(gameState.unresolvedEquities)
+    : stats.unresolvedEquities;
+  const publicationOutcome = stats.publicationOutcome
+    ? {
+        id: stats.publicationOutcome,
+        label: PUBLICATION_OUTCOME_LABELS[stats.publicationOutcome],
+        unresolvedEquities
+      }
+    : getPublicationOutcomeReadout(unresolvedEquities);
   return {
     totalPlayTimeMs,
     totalPlayTime: formatCompletionPlayTime(totalPlayTimeMs),
@@ -1565,6 +1629,8 @@ export function getCompletionStatsReadout(): CompletionStatsReadout {
     hiddenCollectibleFound: hidden.found,
     hiddenCollectibleLabel: hidden.label,
     finalReliabilityScore: stats.finalReliabilityScore ?? clampReliabilityScore(gameState.reliability),
+    unresolvedEquities,
+    publicationOutcome,
     completed: stats.completedAtMs !== null,
     completedAt
   };
@@ -2494,6 +2560,8 @@ export function renderGameToText() {
         piecesTotal: 5,
         assembled: gameState.volumeFragments.length >= 5
       },
+      unresolvedEquities: normalizeUnresolvedEquityCount(gameState.unresolvedEquities),
+      publicationOutcome: getPublicationOutcomeReadout(),
       completionStats: getCompletionStatsReadout(),
       finalGate: getFinalGateReadiness(),
       publicationReadiness: getPublicationReadinessReadout(),

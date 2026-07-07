@@ -4,8 +4,10 @@ import {
   finalizeCompletionStats,
   gameState,
   getCompletionStatsReadout,
+  getPublicationOutcomeReadout,
   recordDanneVariantDefeated,
   recordHiddenCollectibleFound,
+  recordUnresolvedEquity,
   renderGameToText,
   resetGameState
 } from "./state";
@@ -59,15 +61,39 @@ describe("completion stats", () => {
     expect(later.hiddenCollectibleFound).toBe(true);
   });
 
+  it("branches publication outcome based on unresolved equities", () => {
+    expect(getPublicationOutcomeReadout()).toMatchObject({
+      id: "published_clean",
+      label: "Published clean",
+      unresolvedEquities: 0
+    });
+
+    recordUnresolvedEquity("Wrong agency equity selected");
+    const finalized = finalizeCompletionStats();
+
+    expect(finalized.unresolvedEquities).toBe(1);
+    expect(finalized.publicationOutcome).toMatchObject({
+      id: "published_under_appeal",
+      label: "Published under appeal",
+      unresolvedEquities: 1
+    });
+  });
+
   it("reports completion stats through render_game_to_text", () => {
     addVolumeFragment("Proof Fragment");
     recordDanneVariantDefeated("cloud");
+    recordUnresolvedEquity("Network routing gate failed");
 
     const textState = JSON.parse(renderGameToText()) as {
+      unresolvedEquities: number;
+      publicationOutcome: ReturnType<typeof getPublicationOutcomeReadout>;
       completionStats: ReturnType<typeof getCompletionStatsReadout>;
     };
 
+    expect(textState.unresolvedEquities).toBe(1);
+    expect(textState.publicationOutcome.id).toBe("published_under_appeal");
     expect(textState.completionStats.volumePiecesCollected).toBe(1);
     expect(textState.completionStats.danneVariantsDefeated.counts.cloud).toBe(1);
+    expect(textState.completionStats.publicationOutcome.id).toBe("published_under_appeal");
   });
 });

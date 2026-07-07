@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { FRUS_VOLUMES } from "../assets/registry";
+import { ALT_ENDING_ASSETS, FRUS_VOLUMES } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   evaluateKelloggCertificationAnswer,
@@ -81,6 +81,7 @@ import {
   gameState,
   getCompletionStatsReadout,
   getFinalGateReadiness,
+  getPublicationOutcomeReadout,
   getPublicationReadinessReadout,
   getStatutoryClockStateReadout,
   hasProcessItem,
@@ -1575,11 +1576,15 @@ export class EndingScene extends Phaser.Scene {
       requiredItem: "Buckram Key",
       message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
     });
-    finalizeCompletionStats();
-    setLatestMessage("PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED");
+    const completionStats = finalizeCompletionStats();
+    const outcome = completionStats.publicationOutcome;
+    setLatestMessage(outcome.id === "published_under_appeal"
+      ? "PUBLISHED UNDER APPEAL - UNRESOLVED EQUITIES RECORDED"
+      : "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED");
     this.syncVisibleState(true);
     retroAudio.ending();
-    this.showPublishedPrize();
+    if (outcome.id === "published_under_appeal") this.showContestedPrize();
+    else this.showPublishedPrize();
     this.time.delayedCall(350, () => {
       this.canRestart = true;
     });
@@ -1709,6 +1714,89 @@ export class EndingScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(932);
   }
 
+  private showContestedPrize() {
+    const clock = getStatutoryClockStateReadout();
+    const bgKey = "interagency_review_room" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(bgKey)) {
+      const background = this.add.image(128, 120, bgKey).setDepth(900);
+      background.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby)).setDepth(900);
+      this.add.rectangle(128, 96, 210, 92, color(PALETTE.stoneDark), 0.88).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(901);
+      this.add.rectangle(128, 146, 160, 34, color(PALETTE.creamPaper), 0.92).setStrokeStyle(2, color(PALETTE.black)).setDepth(902);
+    }
+
+    addSnesStatutoryClock(this, {
+      x: 40,
+      y: 70,
+      elapsedYears: clock.elapsedYears,
+      deadlineYears: clock.deadlineYears,
+      yearsRemaining: clock.yearsRemaining,
+      status: "published",
+      depth: 925
+    });
+
+    this.add.text(128, 5, "CONTESTED DECLASSIFICATION", {
+      fontFamily: "monospace",
+      fontSize: "10px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(931);
+    this.add.text(128, 17, "PUBLISHED UNDER APPEAL", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(931);
+
+    const volumeKey = "volume_contested_redacted" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(volumeKey)) {
+      this.add.ellipse(128, 140, 70, 12, color(PALETTE.black), 0.62).setDepth(927);
+      const cover = this.add.image(128, 84, volumeKey).setDepth(930);
+      cover.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.drawAssembledPrize(128, 82, 0.82, 930, true);
+    }
+
+    const stampKey = "stamp_under_appeal" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(stampKey)) {
+      const stamp = this.add.image(174, 75, stampKey).setDepth(932).setAngle(-8);
+      stamp.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.add.rectangle(174, 75, 92, 20, color(PALETTE.black), 0.9).setStrokeStyle(2, color(PALETTE.classNetRed)).setDepth(932);
+      this.add.text(174, 70, "UNDER APPEAL", {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: PALETTE.goldStamp
+      }).setOrigin(0.5).setDepth(933);
+    }
+
+    const outcome = getPublicationOutcomeReadout();
+    this.add.rectangle(128, 143, 230, 24, color(PALETTE.black), 0.9).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(931);
+    this.add.text(128, 135, `${outcome.unresolvedEquities} UNRESOLVED EQUIT${outcome.unresolvedEquities === 1 ? "Y" : "IES"} RECORDED`, {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(932);
+    this.add.text(128, 146, "THE PUBLICATION DOCKET CARRIES AN APPEAL TRAIL.", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(932);
+
+    this.drawCompletionStatsBlock(128, 177);
+
+    this.add.rectangle(128, 223, 236, 22, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(931);
+    [
+      "CLEAN RUN: CLEAR EVERY EQUITY BEFORE THE BUCKRAM GATE.",
+      "SPACE: RETURN TO TITLE"
+    ].forEach((line, index) => {
+      this.add.text(128, 216 + index * 8, line, {
+        fontFamily: "monospace",
+        fontSize: index === 0 ? "6px" : "7px",
+        color: index === 0 ? PALETTE.terminalCyan : PALETTE.goldStamp
+      }).setOrigin(0.5).setDepth(932);
+    });
+  }
+
   private drawCompletionStatsBlock(x: number, y: number) {
     const depth = 3100;
     const stats = getCompletionStatsReadout();
@@ -1727,7 +1815,7 @@ export class EndingScene extends Phaser.Scene {
     const rightLines = [
       `DANN-E ${stats.danneVariantsDefeated.total}`,
       `SECRET ${stats.hiddenCollectibleFound ? "YES" : "NO"}`,
-      `DOC PTS ${gameState.documentPoints}`
+      stats.publicationOutcome.id === "published_under_appeal" ? "OUTCOME APPEAL" : "OUTCOME CLEAN"
     ];
 
     leftLines.forEach((line, index) => {
@@ -1738,10 +1826,15 @@ export class EndingScene extends Phaser.Scene {
       }).setOrigin(0, 0.5).setDepth(depth + 1);
     });
     rightLines.forEach((line, index) => {
+      const lineColor = line === "OUTCOME APPEAL"
+        ? PALETTE.classNetRed
+        : index === 1 && stats.hiddenCollectibleFound
+          ? PALETTE.terminalCyan
+          : PALETTE.creamPaper;
       this.add.text(x + 12, y - 13 + index * 12, line, {
         fontFamily: "monospace",
         fontSize: "7px",
-        color: index === 1 && stats.hiddenCollectibleFound ? PALETTE.terminalCyan : PALETTE.creamPaper
+        color: lineColor
       }).setOrigin(0, 0.5).setDepth(depth + 1);
     });
   }
