@@ -55,6 +55,7 @@ import {
   nearestInteractable,
   nearestInteractableHint
 } from "../systems/interaction";
+import { AttackBuffer, HitstopController } from "../systems/hitstop";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
@@ -117,6 +118,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private solids: Phaser.Geom.Rectangle[] = [];
   private interactables: Interactable[] = [];
   private readonly interactionAssist = new InteractionAssist();
+  private readonly hitstop = new HitstopController();
+  private readonly attackBuffer = new AttackBuffer();
   private redactorDrones: RedactorDrone[] = [];
   private censorshipWraiths: CensorshipWraith[] = [];
   private danneBoss?: DanneBoss;
@@ -223,8 +226,11 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     if (isUiDebugEnabled() && input.bJustPressed) this.showBossHudDebug();
-    if (input.bJustPressed) this.useDanneItemAction();
-    this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    const frozen = this.hitstop.isFrozen(this.time.now);
+    if (!frozen) {
+      this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
+    }
 
     if (isCutsceneActive(this)) {
       if (input.aJustPressed) exitCutscene(this);
@@ -266,6 +272,17 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
 
+    // Hitstop: hold actors on the impact frame for a few frames so a clean
+    // sword hit crunches. The camera shake / boss flash tweens run on Phaser's
+    // own systems and keep playing; only gameplay logic is held here.
+    if (frozen) {
+      this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      this.reliability.update();
+      this.syncDanneReadout(this.time.now);
+      return;
+    }
+
     this.lastGoodPosition = this.player.position;
     this.player.update(delta, true, {
       bounds: { left: 16, right: GAME_WIDTH - 16, top: 38, bottom: GAME_HEIGHT - 18 },
@@ -274,6 +291,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (!polygonContains(this.player.position, this.geometry)) {
       this.player.setPosition(this.lastGoodPosition.x, this.lastGoodPosition.y);
     }
+    if (this.attackBuffer.consume(this.time.now, true)) this.useDanneItemAction();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     const hintTarget = nearestInteractableHint(this.player.position, this.interactables);
     const promptTarget = nearest ?? hintTarget;
@@ -740,6 +758,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
       },
       onBadEnding: () => {
         transitionTo(this, "BadEndingScene");
+      },
+      onPlayerHit: (heavy) => {
+        this.hitstop.freezeFor(this.time.now, heavy ? "sword-hit-heavy" : "sword-hit");
       }
     });
     gameState.sceneProgress.blackVaultBossStarted = 1;

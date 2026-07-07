@@ -56,6 +56,7 @@ interface DanneBossOptions {
   onDefeated: (trueEnding: boolean) => void;
   onBadEnding: () => void;
   onPhaseChange: (phase: DanneBossPhase) => void;
+  onPlayerHit?: (heavy: boolean) => void;
 }
 
 const EGO_BOLT = DANNE_VFX_ASSETS[0];
@@ -96,6 +97,7 @@ export class DanneBoss {
   private readonly onDefeated: (trueEnding: boolean) => void;
   private readonly onBadEnding: () => void;
   private readonly onPhaseChange: (phase: DanneBossPhase) => void;
+  private readonly onPlayerHit?: (heavy: boolean) => void;
   private readonly sprite: Phaser.GameObjects.Sprite;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly clockContainer: Phaser.GameObjects.Container;
@@ -128,6 +130,7 @@ export class DanneBoss {
     this.onDefeated = options.onDefeated;
     this.onBadEnding = options.onBadEnding;
     this.onPhaseChange = options.onPhaseChange;
+    this.onPlayerHit = options.onPlayerHit;
     this.shadow = scene.add.ellipse(BOSS_CENTER.x, BOSS_CENTER.y + 12, 34, 9, color(PALETTE.black), 0.7)
       .setDepth(BOSS_CENTER.y - 5);
     this.sprite = scene.add.sprite(BOSS_CENTER.x, BOSS_CENTER.y, this.spriteKey)
@@ -328,6 +331,7 @@ export class DanneBoss {
     this.hp = Math.max(0, this.hp - damage);
     setBossHp(this.hp, this.phaseIndex());
     applyHitShake(this.scene, "boss-hit");
+    this.onPlayerHit?.(hasRubyPen);
     this.scene.tweens.add({
       targets: this.sprite,
       alpha: 0.35,
