@@ -236,6 +236,28 @@ per-file index (21 overlays at 8×8 and 16×16).
 
 ---
 
+## 9. New Game+ veteran editor cosmetic pack (`ng-plus/`)
+
+Palette-swap cosmetic sprite sheets for the five production player roles, unlocked
+as a **New Game+** reward. Ruby-buckram + gold/silver-trim recolors that preserve
+the exact 32×48 / 4×4 frame layout, sheet dimensions, transparency, and animation
+ordering of the base player sheets. See `ng-plus/MANIFEST.md` for per-role palette
+notes and source→output mapping; regenerate with
+`scripts/generate-ng-plus-veteran-pack.py`.
+
+| Filename | Dimensions | Frame size | Source sheet | Intended use | Transparency |
+|---|---|---|---|---|---|
+| `ng-plus/native/sprite_proofreader_veteran.png` | 128×192 | 32×48 | `sprite_reviewer.png` | NG+ veteran Proofreader costume | Yes |
+| `ng-plus/native/sprite_compiler_veteran.png` | 128×192 | 32×48 | `sprite_compiler.png` | NG+ veteran Compiler costume | Yes |
+| `ng-plus/native/sprite_editor_veteran.png` | 128×192 | 32×48 | `sprite_editor.png` | NG+ veteran Editor costume | Yes |
+| `ng-plus/native/sprite_declass_reviewer_veteran.png` | 128×192 | 32×48 | `sprite_declassification_coordinator.png` | NG+ veteran Declass Reviewer costume | Yes |
+| `ng-plus/native/sprite_source_note_specialist_veteran.png` | 128×192 | 32×48 | `sprite_records_officer.png` | NG+ veteran Source Note Specialist costume | Yes |
+
+> Each `ng-plus/native/*.png` also has a 1024×1536 display master at `ng-plus/*.png`
+> (exact 8× nearest-neighbor upscale), matching the masters + `native/` convention.
+
+---
+
 ## Engine / integration notes (Phaser)
 
 - Sprite sheets, tilesets, icons, and UI are exported with true alpha transparency

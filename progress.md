@@ -3970,3 +3970,15 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Added 21 shape/pattern overlay assets under `public/assets/art-pack/accessibility/` (8×8 and 16×16) so each state reads without color — stripes/hatch/dots for meters, padlock/star/dot for slots, check/ring for stamps, chevron/check/X for rooms, diamond/exclamation for boss state, ring/cross for network, crosshair for weakness. Every glyph has a black outline over a light palette fill for contrast on any background.
 - Documented each file (path, dimensions, state/use, shape meaning, placement/animation) in `public/assets/art-pack/accessibility/MANIFEST.md`; linked it from the top-level art-pack `MANIFEST.md`.
 - Verification: Python/PIL checks confirmed all 21 PNGs are RGBA with a transparent region, no partial-alpha (no smoothing artifacts), correct 8×8/16×16 dimensions, and only palette-consistent colors; scaled montage visually confirmed each glyph is legible and distinct.
+## 2026-07-06 New Game+ veteran editor cosmetic pack
+
+- Added a cosmetic palette-swap sprite pack under `public/assets/art-pack/ng-plus/` for the five production player roles (Proofreader, Compiler, Editor, Declass Reviewer, Source Note Specialist), intended as a New Game+ unlock reward.
+- Each veteran variant is a strict per-role color-lookup recolor of its production native sheet (Proofreader←`sprite_reviewer`, Compiler←`sprite_compiler`, Editor←`sprite_editor`, Declass Reviewer←`sprite_declassification_coordinator`, Source Note Specialist←`sprite_records_officer`), following the `getCharacterKeyForProcessRole()` mapping.
+- Distinguished ruby-buckram base with sparing gold/silver trim; skin, hair, held documents, and outlines preserved for readability. Exact 128×192 4×4 / 32×48 frame layout, animation ordering, and transparency retained; 1024×1536 8× nearest masters mirror the base masters + `native/` convention.
+- Reproducible via `scripts/generate-ng-plus-veteran-pack.py`. Manifest metadata in `ng-plus/MANIFEST.md` plus a section 9 pointer in the top-level `art-pack/MANIFEST.md`.
+- Verification (Python/PIL + ImageMagick, no code paths touched):
+  - all native sheets exactly 128×192, masters exactly 1024×1536;
+  - alpha mask identical to each source (transparency preserved), zero partial-alpha pixels (no anti-aliasing / hard pixel edges);
+  - output opaque-palette count ≤ source for every role (palette-limited);
+  - each master is a byte-for-byte 8× nearest-neighbor upscale of its native sheet (no smoothing);
+  - side-by-side visual review of all five recolors confirmed retained silhouette/identity with the ruby-buckram + gold/silver treatment.
