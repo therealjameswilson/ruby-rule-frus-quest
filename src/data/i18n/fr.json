@@ -100,11 +100,19 @@
     "goLeftTalk": "VA À GAUCHE - PARLE EN T'APPROCHANT",
     "interact": "INTERAGIR : {label}",
     "nextLine": "LIGNE SUIVANTE",
+    "none": "AUCUN",
     "readLine": "Lis la ligne.",
     "talkJuniorCompiler": "Parle au Compilateur Junior.",
     "toolLabel": "OUTIL {label}",
     "touchControlsReady": "COMMANDES TACTILES PRÊTES",
     "useTool": "UTILISER {tool}"
+  },
+  "language": {
+    "changed": "Langue réglée sur {language}.",
+    "english": "Anglais",
+    "french": "Français",
+    "label": "LANGUE {language}",
+    "spanish": "Espagnol"
   },
   "items": {
     "buckramKey": {
@@ -168,6 +176,23 @@
     "scopeDesk": "Bureau de portée / sélection",
     "senateHearingChamber": "Salle d'audience du Sénat",
     "title": "CENTRE DE BUREAU"
+  },
+  "pause": {
+    "board": "TABLEAU",
+    "certifyBuckramGate": "CERTIFIER LA PORTE BUCKRAM",
+    "close": "X",
+    "codex": "CODEX",
+    "crystals": "CRISTAUX",
+    "dungeonMapKeys": "CARTE / CLÉS DU DONJON",
+    "frusShelf": "RAYON FRUS {count}/{total}",
+    "hearts": "CŒURS",
+    "next": "SUIV.",
+    "nextBoard": "TABLEAU SUIV.",
+    "phase": "PHASE",
+    "source": "SOURCE",
+    "title": "SOUS-ÉCRAN FRUS QUEST",
+    "tool": "OUTIL",
+    "treaty": "TRAITÉ"
   },
   "roles": {
     "compiler": {
