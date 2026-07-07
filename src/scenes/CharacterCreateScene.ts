@@ -44,6 +44,7 @@ export class CharacterCreateScene extends Phaser.Scene {
   private abilityCrestRole?: ProcessRoleId;
   private locked = false;
   private nameFocused = false;
+  private ngPlusBadge?: Phaser.GameObjects.Text;
 
   constructor() {
     super("CharacterCreateScene");
@@ -75,7 +76,7 @@ export class CharacterCreateScene extends Phaser.Scene {
 
     this.drawSnesRoleStage();
     this.sprite = this.add
-      .sprite(128, 70, getCharacterKeyForProcessRole(PROCESS_ROLES[this.roleIndex].id))
+      .sprite(128, 70, this.characterKeyForRole(PROCESS_ROLES[this.roleIndex].id))
       .setName("character-create-role-preview-sprite")
       .setDepth(10)
       .setOrigin(0.5, 0.9);
@@ -105,6 +106,13 @@ export class CharacterCreateScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setDepth(12);
 
     this.createRoleCards();
+    if (gameState.ngPlusActive) {
+      this.ngPlusBadge = this.add.text(128, 139, "NEW GAME+ VETERAN SKIN", {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.goldStamp
+      }).setName("character-create-ng-plus-badge").setOrigin(0.5);
+    }
     this.beginPrompt = this.add.text(128, 203, "PICK ANY ROLE - SAME QUEST", {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -206,11 +214,11 @@ export class CharacterCreateScene extends Phaser.Scene {
         .setName("character-create-role-card-border")
         .setStrokeStyle(1, color(PALETTE.sepiaInk));
       const icon = this.add
-        .sprite(0, 1, getCharacterKeyForProcessRole(role.id))
+        .sprite(0, 1, this.characterKeyForRole(role.id))
         .setName("character-create-role-card-sprite")
         .setOrigin(0.5, 0.9)
         .setScale(0.65);
-      icon.play(characterAnimKey(getCharacterKeyForProcessRole(role.id), "idle-down"));
+      icon.play(characterAnimKey(this.characterKeyForRole(role.id), "idle-down"));
       const label = this.add.text(0, 7, roleCardLabel(role.id), {
         fontFamily: "monospace",
         fontSize: "5px",
@@ -275,7 +283,7 @@ export class CharacterCreateScene extends Phaser.Scene {
 
   private renderSelection() {
     const role = PROCESS_ROLES[this.roleIndex];
-    const characterKey = getCharacterKeyForProcessRole(role.id);
+    const characterKey = this.characterKeyForRole(role.id);
     const roleAccent = PALETTE[role.color as keyof typeof PALETTE] ?? PALETTE.terminalCyan;
     this.sprite.setTexture(characterKey);
     this.sprite.play(characterAnimKey(characterKey, "idle-down"), true);
@@ -293,7 +301,12 @@ export class CharacterCreateScene extends Phaser.Scene {
       card.y = index === this.roleIndex ? 164 : 168;
     });
     this.beginPrompt.setAlpha(this.nameFocused ? 0.45 : 1);
+    this.ngPlusBadge?.setAlpha(this.nameFocused ? 0.55 : 1);
     setLatestMessage(`Selected ${role.label}`);
+  }
+
+  private characterKeyForRole(roleId: string) {
+    return getCharacterKeyForProcessRole(roleId, gameState.ngPlusActive);
   }
 
   private drawSelectedAbilityCrest(roleId: ProcessRoleId, accent: string) {

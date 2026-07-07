@@ -2,6 +2,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- New Game+ unlock pass (2026-07-06):
+  - Added persistent New Game+ metadata (`ngPlusUnlocked`, `volumesCompleted`) separate from the normal save slot, so clearing or starting a fresh game does not erase completion history.
+  - Completing the Buckram Gate binding/publication ceremony now counts the volume once per run, unlocks New Game+, and displays the lifetime completed-volume count on the title and ending summary screens.
+  - Wired the NG+ veteran editor cosmetic sheets from `public/assets/art-pack/ng-plus/` through the central 32x48 character registry; New Game+ runs automatically use veteran role sprites in character creation and gameplay.
+  - Added a veteran DANN-E difficulty tier that shifts the existing curve upward with more HP, faster movement/projectiles, shorter attack cooldowns, and faster statutory-clock pressure while leaving normal mode unchanged.
+  - Verification:
+    - `npm run test` passes (72 files / 354 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=TitleScene&v=ngplus-smoke`;
+    - direct Playwright probes confirmed title count/NG+ selection, `newGamePlus.active === true`, `difficultyTier === "veteran"`, and active player sprite `reviewer_veteran` after entering Office;
+    - visual proof: `output/ngplus-probe/title-unlocked.png`, `output/ngplus-probe/character-veteran.png`, and `output/ngplus-probe/office-veteran.png`.
 - ALTTP disassembly translation pass (2026-07-05):
   - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
   - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.

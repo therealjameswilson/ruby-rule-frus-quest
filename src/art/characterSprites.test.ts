@@ -10,6 +10,8 @@ import {
   ART_PACK_SPRITE_ORIGIN_Y,
   CHARACTER_FRAME,
   CHARACTER_KEYS,
+  BASE_CHARACTERS,
+  VETERAN_CHARACTERS,
   getCharacterKeyForNpcId,
   getCharacterKeyForProcessRole,
   getCharacterKeyForProductionColleague
@@ -45,22 +47,15 @@ describe("character sprite frame layout", () => {
     }
   });
 
-  it("resolves every direction and action pose to the clean idle-down frame 0", () => {
-    // The native sheets are misassembled: every cell except idle-down (frame 0)
-    // either splits the body with a transparent band (detaching the feet) or
-    // carries stray edge-column pixels. Drawn at origin (0.5, 0.9) those split
-    // cells render a free-floating fragment on the shadow line — the Office Hub
-    // artifact near the Junior Compiler. Frame 0 is the one edge-clean,
-    // gap-closed body on every sheet, so all poses must resolve to it. Any
-    // non-zero index here would reintroduce a detached fragment.
-    const indices = [
-      ...Object.values(FRAMES.idle),
-      ...Object.values(FRAMES.walk).flat(),
-      ...Object.values(FRAMES.action)
-    ];
-    for (const index of indices) {
-      expect(index).toBe(0);
-    }
+  it("uses the documented 4x4 sheet pose indices", () => {
+    expect(FRAMES.idle).toEqual({ down: 0, up: 1, left: 2, right: 3 });
+    expect(FRAMES.walk).toEqual({
+      down: [4, 5],
+      up: [6, 7],
+      left: [8, 9],
+      right: [10, 11]
+    });
+    expect(FRAMES.action).toEqual({ interact: 12, reading: 13, approval: 14 });
   });
 });
 
@@ -255,7 +250,16 @@ describe("native sprite sheet frame content", () => {
   ).sort((a, b) => a - b);
 
   it("ships one sheet per character key", () => {
-    expect(sheetFiles.length).toBe(CHARACTER_KEYS.length);
+    expect(sheetFiles.length).toBe(Object.keys(BASE_CHARACTERS).length);
+  });
+
+  it("ships one native New Game+ veteran sheet per veteran key", () => {
+    const veteranDir = resolve(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../public/assets/art-pack/ng-plus/native"
+    );
+    const veteranFiles = readdirSync(veteranDir).filter((file) => file.endsWith(".png"));
+    expect(veteranFiles.length).toBe(Object.keys(VETERAN_CHARACTERS).length);
   });
 
   for (const file of sheetFiles) {

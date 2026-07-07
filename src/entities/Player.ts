@@ -114,7 +114,7 @@ export class Player {
     this.logicalX = resumeSpawn?.player.x ?? x;
     this.logicalY = resumeSpawn?.player.y ?? y;
     this.facing = resumeSpawn?.facing ?? this.facing;
-    const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId);
+    const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive);
     this.characterKey = scene.textures.exists(preferredCharacterKey) ? preferredCharacterKey : null;
     this.roleFrameSheet = this.characterKey ? null : this.getAvailableRoleFrameSheet(scene);
     this.spriteMode = this.characterKey

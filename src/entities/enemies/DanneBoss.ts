@@ -26,6 +26,7 @@ import type { ChoiceOption, Position } from "../../game/types";
 import { hideBossHud, setBossHp, showBossHud } from "../../systems/bossHud";
 import { enterCutscene, exitCutscene, playLine } from "../../systems/cutscene";
 import { retroAudio } from "../../systems/audio";
+import { getDanneDifficultyProfile, type DanneDifficultyProfile } from "../../systems/newGamePlus";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { applyStandardsViolation } from "../../systems/reliability";
 import { ChoicePrompt } from "../../systems/verification";
@@ -92,6 +93,7 @@ export class DanneBoss {
   private readonly maxHp: number;
   private readonly phaseCount: number;
   private readonly quickFight: boolean;
+  private readonly difficulty: DanneDifficultyProfile;
   private readonly onDefeated: (trueEnding: boolean) => void;
   private readonly onBadEnding: () => void;
   private readonly onPhaseChange: (phase: DanneBossPhase) => void;
@@ -122,7 +124,8 @@ export class DanneBoss {
     this.player = options.player;
     this.secretAscendant = options.secretAscendant;
     this.quickFight = options.quickFight;
-    this.maxHp = options.quickFight ? 48 : 180;
+    this.difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
+    this.maxHp = Math.round((options.quickFight ? 48 : 180) * this.difficulty.hpMultiplier);
     this.phaseCount = this.secretAscendant ? 4 : 3;
     this.onDefeated = options.onDefeated;
     this.onBadEnding = options.onBadEnding;
@@ -205,7 +208,7 @@ export class DanneBoss {
       spriteKey: this.spriteKey,
       behavior: this.behaviorLabel(),
       defeatMethod: "Publish with all pendants, all crystals, the Buckram Key, and zero unresolved standards violations.",
-      status: `${this.hp}/${this.maxHp} HP; Statutory Clock ${this.clockReadout()}; ${this.bolts.length} ego bolts; ${this.minis.length} mini-DANN-Es`
+      status: `${this.hp}/${this.maxHp} HP; ${this.difficulty.label} tier; Statutory Clock ${this.clockReadout()}; ${this.bolts.length} ego bolts; ${this.minis.length} mini-DANN-Es`
     };
   }
 
@@ -232,8 +235,8 @@ export class DanneBoss {
     this.phase = phase;
     unlockCodexEntry(this.variantKeyForPhase(phase));
     this.hp = this.maxHp;
-    this.nextBoltAt = this.scene.time.now + 650;
-    this.nextTeleportAt = this.scene.time.now + 900;
+    this.nextBoltAt = this.scene.time.now + this.cooldown(650);
+    this.nextTeleportAt = this.scene.time.now + this.cooldown(900);
     this.onPhaseChange(phase);
     this.sprite.setVisible(true);
     this.clockContainer.setVisible(true);
@@ -286,32 +289,32 @@ export class DanneBoss {
   private updateAttackPattern(timeMs: number) {
     if (timeMs < this.nextBoltAt) return;
     if (this.phase === "colossus") {
-      this.fireTowardPlayer(58);
-      this.nextBoltAt = timeMs + 2500;
+      this.fireTowardPlayer(this.speed(58));
+      this.nextBoltAt = timeMs + this.cooldown(2500);
       return;
     }
     if (this.phase === "swarm") {
-      this.fireTowardPlayer(62);
+      this.fireTowardPlayer(this.speed(62));
       for (const mini of this.minis.slice(0, 2)) {
-        this.fireBolt({ x: mini.sprite.x, y: mini.sprite.y }, this.player.position, 50);
+        this.fireBolt({ x: mini.sprite.x, y: mini.sprite.y }, this.player.position, this.speed(50));
       }
-      this.nextBoltAt = timeMs + 1550;
+      this.nextBoltAt = timeMs + this.cooldown(1550);
       return;
     }
     if (this.phase === "cloud") {
       if (timeMs >= this.nextTeleportAt) {
         const target = CLOUD_CORNERS[Math.floor(timeMs / 1800) % CLOUD_CORNERS.length];
         this.moveBossTo(target.x, target.y);
-        this.nextTeleportAt = timeMs + 1800;
+        this.nextTeleportAt = timeMs + this.cooldown(1800);
       }
-      this.fireSpread(64, [-0.28, 0, 0.28]);
-      this.nextBoltAt = timeMs + 1250;
+      this.fireSpread(this.speed(64), [-0.28, 0, 0.28]);
+      this.nextBoltAt = timeMs + this.cooldown(1250);
       return;
     }
     if (this.phase === "ascendant") {
-      this.fireSpread(72, [-0.5, -0.18, 0.18, 0.5]);
-      for (const corner of CLOUD_CORNERS) this.fireBolt(corner, this.player.position, 48);
-      this.nextBoltAt = timeMs + 980;
+      this.fireSpread(this.speed(72), [-0.5, -0.18, 0.18, 0.5]);
+      for (const corner of CLOUD_CORNERS) this.fireBolt(corner, this.player.position, this.speed(48));
+      this.nextBoltAt = timeMs + this.cooldown(980);
     }
   }
 
@@ -379,7 +382,7 @@ export class DanneBoss {
     this.statutoryYear = advanceStatutoryClock(
       this.statutoryYear,
       deltaMs,
-      this.quickFight ? STATUTORY_QUICK_BOSS_MS_PER_YEAR : STATUTORY_BOSS_MS_PER_YEAR,
+      this.cooldown(this.quickFight ? STATUTORY_QUICK_BOSS_MS_PER_YEAR : STATUTORY_BOSS_MS_PER_YEAR),
       readiness
     );
     this.syncStatutoryClockUi();
@@ -498,6 +501,14 @@ export class DanneBoss {
       armed: true
     });
     retroAudio.egoBoltFire();
+  }
+
+  private speed(base: number) {
+    return base * this.difficulty.speedMultiplier;
+  }
+
+  private cooldown(baseMs: number) {
+    return Math.max(180, Math.round(baseMs * this.difficulty.cooldownMultiplier));
   }
 
   private updateBolts(timeMs: number, deltaMs: number) {
