@@ -145,14 +145,19 @@ export class RenderDebugScene extends Phaser.Scene {
     const scaleY = rect.height / GAME_HEIGHT;
     const rawDpr = window.devicePixelRatio || 1;
     const roundedDpr = metrics?.dpr ?? Math.max(1, Math.round(rawDpr));
-    const integerZoomTarget = metrics?.integerZoomTarget ?? Math.max(1, Math.round(scaleX));
     const backingPerGamePixelX = canvas.width / GAME_WIDTH;
     const backingPerGamePixelY = canvas.height / GAME_HEIGHT;
-    const expectedDevicePixels = integerZoomTarget * roundedDpr;
+    // integerZoomTarget is the device-pixel zoom: the number of physical pixels
+    // each game pixel should occupy. CSS zoom can be fractional on high-DPR
+    // screens, so crispness is proven by the backing store being an exact
+    // integer multiple of the base resolution, not by an integer CSS scale.
+    const integerZoomTarget = metrics?.integerZoomTarget ?? Math.max(1, Math.round(backingPerGamePixelX));
+    const expectedDevicePixels = integerZoomTarget;
     const sameScale = Math.abs(scaleX - scaleY) < 0.001;
-    const integerScale = sameScale && isIntegerScale(scaleX);
+    const backingIsInteger = isIntegerScale(backingPerGamePixelX) && isIntegerScale(backingPerGamePixelY);
     const exactDeviceMapping = (
-      integerScale
+      sameScale
+      && backingIsInteger
       && Math.abs(backingPerGamePixelX - expectedDevicePixels) < 0.001
       && Math.abs(backingPerGamePixelY - expectedDevicePixels) < 0.001
     );

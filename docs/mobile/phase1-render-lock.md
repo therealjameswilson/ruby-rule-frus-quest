@@ -31,6 +31,25 @@ Measured through local Vite preview at:
 
 The current DOM touch-control layout still forces mobile down to 1x in these profiles. That is visually smaller than the Phase 0 fractional fit, but it is pixel-correct. Phase 4 should recover screen real estate by moving to floating overlay controls while preserving integer zoom.
 
+## Follow-up: device-pixel integer zoom
+
+The Phase 1 lock computed integer zoom in **CSS** pixels, which caps a high-DPR
+iPhone (dpr 3, ~393 CSS px wide) at 1x — a 256 px canvas on a 393 px screen. The
+render lock now snaps to an integer number of **device** pixels instead
+(`computeDeviceIntegerZoom`): the backing store is always an exact integer
+multiple of the 256x240 base, so every game pixel maps to a whole number of
+physical pixels and stays crisp, while the CSS zoom is allowed to be fractional
+so the canvas fills more of the screen.
+
+| Profile | dpr | Old CSS zoom | Old CSS width | New device zoom | New CSS width | Backing store |
+|---|---:|---:|---:|---:|---:|---:|
+| iPhone 14 Pro portrait | 3 | 1x | 256 px | 4x | ~341 px | 1024x960 |
+
+On dpr=1 desktops the device-pixel zoom is identical to the old CSS-integer zoom,
+so desktop behavior is unchanged. The crispness invariant is now "backing store
+is an integer multiple of the base resolution", proven by `?scene=RenderDebugScene`
+(`CHECK: PASS`) and covered by `src/systems/pixelPerfect.test.ts`.
+
 ## Captured Artifacts
 
 - `docs/screenshots/mobile/phase1-standard.png`

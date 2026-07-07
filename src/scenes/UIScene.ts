@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { FRUS_VOLUMES, publicAssetPath } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   SNES_COVER_FRAGMENT_RELIC_ASSET,
@@ -55,6 +56,12 @@ export class UIScene extends Phaser.Scene {
 
   constructor() {
     super("UIScene");
+  }
+
+  preload() {
+    if (!this.textures.exists("ui_row_six")) {
+      this.load.image("ui_row_six", publicAssetPath(FRUS_VOLUMES.ui_row_six));
+    }
   }
 
   create() {

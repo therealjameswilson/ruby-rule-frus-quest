@@ -32,6 +32,19 @@ export function computeIntegerZoom(viewW: number, viewH: number) {
   return Math.max(1, Math.floor(Math.min(viewW / GAME_WIDTH, viewH / GAME_HEIGHT)));
 }
 
+// Integer zoom measured in *device* pixels rather than CSS pixels. On high-DPR
+// phones (iPhone dpr=3) the CSS viewport is small, so a CSS-integer zoom locks to
+// 1x and the game renders tiny. Snapping to an integer number of physical device
+// pixels lets the canvas fill far more of the screen while still mapping every
+// game pixel to a whole number of device pixels, so SNES art stays crisp. On
+// dpr=1 desktops this is identical to computeIntegerZoom.
+export function computeDeviceIntegerZoom(viewW: number, viewH: number, dpr: number) {
+  const safeDpr = Math.max(1, dpr);
+  const deviceW = viewW * safeDpr;
+  const deviceH = viewH * safeDpr;
+  return Math.max(1, Math.floor(Math.min(deviceW / GAME_WIDTH, deviceH / GAME_HEIGHT)));
+}
+
 type PixelPerfectWebGlRenderer = Phaser.Renderer.WebGL.WebGLRenderer & {
   drawingBufferHeight: number;
   defaultScissor: number[];
@@ -84,15 +97,19 @@ function resizeActiveCameras(game: Phaser.Game, width: number, height: number) {
 
 export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
   const { width, height } = getViewportSize();
-  const zoom = computeIntegerZoom(width, height);
   const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
-  const canvasCssWidth = GAME_WIDTH * zoom;
-  const canvasCssHeight = GAME_HEIGHT * zoom;
-  const canvasBackingWidth = canvasCssWidth * dpr;
-  const canvasBackingHeight = canvasCssHeight * dpr;
+  const deviceZoom = computeDeviceIntegerZoom(width, height, dpr);
+  // CSS zoom may be fractional (e.g. 4/3 on an iPhone), but the backing store is
+  // an exact integer multiple of the base resolution, so each game pixel still
+  // maps to `deviceZoom` physical pixels and stays crisp.
+  const cssZoom = deviceZoom / dpr;
+  const canvasCssWidth = GAME_WIDTH * cssZoom;
+  const canvasCssHeight = GAME_HEIGHT * cssZoom;
+  const canvasBackingWidth = GAME_WIDTH * deviceZoom;
+  const canvasBackingHeight = GAME_HEIGHT * deviceZoom;
   const canvas = game.canvas;
 
-  game.scale.setZoom(zoom);
+  game.scale.setZoom(cssZoom);
   canvas.style.width = `${canvasCssWidth}px`;
   canvas.style.height = `${canvasCssHeight}px`;
   if (canvas.width !== canvasBackingWidth) canvas.width = canvasBackingWidth;
@@ -101,8 +118,8 @@ export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
   resizeActiveCameras(game, canvasBackingWidth, canvasBackingHeight);
 
   return {
-    computedZoom: zoom,
-    integerZoomTarget: zoom,
+    computedZoom: cssZoom,
+    integerZoomTarget: deviceZoom,
     integerZoom: true,
     dpr,
     canvasCssWidth,
