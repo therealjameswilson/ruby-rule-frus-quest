@@ -3903,3 +3903,26 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - direct Playwright screenshots verified Guide, Archive, and Network, plus a forced live `ChoicePrompt` in Network;
   - visual proof: `docs/screenshots/hud-prompt-cleanup/guide-final.png`, `docs/screenshots/hud-prompt-cleanup/archive-final.png`, and `docs/screenshots/hud-prompt-cleanup/network-choice-final.png`;
   - browser pass reported only WebGL `ReadPixels` warnings caused by screenshot capture, with no page errors.
+
+## 2026-07-06 Completion stats tracking
+
+- Added a lightweight completion-stats tracker to `GameState` for replayability/trailer-ready completion summaries.
+- The tracker now reports:
+  - total play time;
+  - DANN-E variant defeats by type;
+  - FRUS cover/volume pieces collected;
+  - hidden collectible discovery status;
+  - final reliability score once the run is finalized.
+- Wired stats into:
+  - volume-fragment pickup tracking;
+  - Archive hidden-room rewards;
+  - DANN-E boss phase completion;
+  - final publication certification;
+  - `window.render_game_to_text()` full debug payload;
+  - the EndingScene published-prize stat block.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - focused `npm test -- completionStats.test.ts` passes (1 file / 3 tests);
+  - full `npm test` still has the pre-existing unrelated `src/art/characterSprites.test.ts` frame-layout failure;
+  - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&text=full` with no error artifacts and `completionStats` present in the text payload;
+  - direct Playwright visual proof captured the completion stat block in `/tmp/ruby-rule-stats/web-game-stats/page-published-stats-2.png`.

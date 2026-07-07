@@ -19,6 +19,7 @@ import {
   gameState,
   getPublicationReadinessReadout,
   hasDanneItem,
+  recordDanneVariantDefeated,
   setLatestMessage,
   setObjective
 } from "../../game/state";
@@ -116,6 +117,7 @@ export class DanneBoss {
   private phaseTransitioning = false;
   private defeated = false;
   private boastIndex = 0;
+  private readonly recordedPhaseDefeats = new Set<DanneBossPhase>();
 
   constructor(scene: Phaser.Scene, options: DanneBossOptions) {
     this.scene = scene;
@@ -273,6 +275,7 @@ export class DanneBoss {
     gameState.sceneProgress.blackVaultNorthOpen = 1;
     defeatDungeonBoss("buckram_gate", "DANN-E final review hurdle defeated");
     unlockCodexEntry("danne-defeated");
+    this.recordPhaseDefeat("defeated");
     addDanneItem("treaty-fragments", 2);
     const certification = certifyFinalPublicationAfterDanne();
     const trueEnding = certification.trueEnding;
@@ -340,15 +343,18 @@ export class DanneBoss {
   private resolvePhaseHp() {
     if (this.hp > 0 || this.phaseTransitioning) return;
     if (this.phase === "colossus") {
+      this.recordPhaseDefeat("colossus");
       void this.transitionToPhase("swarm");
       return;
     }
     if (this.phase === "swarm") {
+      this.recordPhaseDefeat("swarm");
       this.clearMinis();
       void this.transitionToPhase("cloud");
       return;
     }
     if (this.phase === "cloud") {
+      this.recordPhaseDefeat("cloud");
       if (this.secretAscendant) {
         void this.transitionToPhase("ascendant");
         return;
@@ -356,7 +362,16 @@ export class DanneBoss {
       this.resolveLegitimatePublicationOrHold();
       return;
     }
-    if (this.phase === "ascendant") this.resolveLegitimatePublicationOrHold();
+    if (this.phase === "ascendant") {
+      this.recordPhaseDefeat("ascendant");
+      this.resolveLegitimatePublicationOrHold();
+    }
+  }
+
+  private recordPhaseDefeat(phase: Exclude<DanneBossPhase, "intro">) {
+    if (this.recordedPhaseDefeats.has(phase)) return;
+    this.recordedPhaseDefeats.add(phase);
+    recordDanneVariantDefeated(phase);
   }
 
   private resolveLegitimatePublicationOrHold() {

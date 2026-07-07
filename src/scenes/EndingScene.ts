@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { FRUS_VOLUMES } from "../assets/registry";
-import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   evaluateKelloggCertificationAnswer,
   getKelloggCertificationPrompt,
@@ -77,7 +77,9 @@ import {
   addDocumentPoints,
   addInventoryItem,
   addProcessItem,
+  finalizeCompletionStats,
   gameState,
+  getCompletionStatsReadout,
   getFinalGateReadiness,
   getPublicationReadinessReadout,
   getStatutoryClockStateReadout,
@@ -103,7 +105,7 @@ import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability"
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
-import { SNES_PROCESS_STAMP_RELIC_ASSET, SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
+import { SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
 import {
   addSnesFrusCoverAssembly,
   addSnesPublicationShrine,
@@ -1573,6 +1575,7 @@ export class EndingScene extends Phaser.Scene {
       requiredItem: "Buckram Key",
       message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
     });
+    finalizeCompletionStats();
     setLatestMessage("PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED");
     this.syncVisibleState(true);
     retroAudio.ending();
@@ -1682,59 +1685,7 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "6px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 139, `COVER PIECES ${gameState.volumeFragments.length}/5`, {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 149, `RELIABILITY ${gameState.reliability}/100  DOC PTS ${gameState.documentPoints}`, {
-      fontFamily: "monospace",
-      fontSize: "7px",
-      color: PALETTE.openNetGreen
-    }).setOrigin(0.5).setDepth(931);
-    this.add.image(218, 145, "buckram-key").setDepth(932);
-    this.add.text(218, 157, "BUCKRAM\nKEY", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp,
-      align: "center"
-    }).setOrigin(0.5).setDepth(932);
-
-    this.add.rectangle(128, 170, 236, 29, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(931);
-    const hasProcessStampRelics = this.textures.exists(SNES_PROCESS_STAMP_RELIC_ASSET.key);
-    PROCESS_STAMPS.forEach((stamp, index) => {
-      const earned = gameState.processStamps.includes(stamp.id);
-      const x = 28 + index * 39;
-      if (hasProcessStampRelics) {
-        this.add.image(x, 164, SNES_PROCESS_STAMP_RELIC_ASSET.key, stamp.id)
-          .setName(`published-process-stamp-${stamp.id}`)
-          .setAlpha(earned ? 1 : 0.28)
-          .setDepth(932);
-      }
-      this.add.text(x, 172, stamp.label, {
-        fontFamily: "monospace",
-        fontSize: stamp.label.length > 3 ? "5px" : "6px",
-        color: earned ? PALETTE.goldStamp : PALETTE.sepiaInk
-      }).setName(`published-process-stamp-label-${stamp.id}`).setOrigin(0.5, 0).setDepth(932);
-      this.add.text(x, 179, earned ? "OK" : "--", {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: earned ? PALETTE.openNetGreen : PALETTE.sepiaInk
-      }).setName(`published-process-stamp-status-${stamp.id}`).setOrigin(0.5, 0).setDepth(932);
-    });
-
-    const lines = [
-      "ELENA: SELECTION COMPLETE",
-      "MARCUS: REFERRALS CLOSED",
-      "PRIYA: QUERIES RESOLVED"
-    ];
-    lines.forEach((line, index) => {
-      this.add.text(14, 184 + index * 6, line, {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.creamPaper
-      }).setDepth(932);
-    });
+    this.drawCompletionStatsBlock(128, 164);
 
     this.add.rectangle(128, 213, 236, 28, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(931);
     const practiced = [
@@ -1756,6 +1707,43 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "7px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(932);
+  }
+
+  private drawCompletionStatsBlock(x: number, y: number) {
+    const depth = 3100;
+    const stats = getCompletionStatsReadout();
+    this.add.rectangle(x, y, 236, 56, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(depth);
+    this.add.text(x, y - 23, "COMPLETION STATS", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(depth + 1);
+
+    const leftLines = [
+      `TIME ${stats.totalPlayTime}`,
+      `RELIABILITY ${stats.finalReliabilityScore}/100`,
+      `PIECES ${stats.volumePiecesCollected}/${stats.volumePiecesTotal}`
+    ];
+    const rightLines = [
+      `DANN-E ${stats.danneVariantsDefeated.total}`,
+      `SECRET ${stats.hiddenCollectibleFound ? "YES" : "NO"}`,
+      `DOC PTS ${gameState.documentPoints}`
+    ];
+
+    leftLines.forEach((line, index) => {
+      this.add.text(x - 105, y - 13 + index * 12, line, {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: index === 1 ? PALETTE.openNetGreen : PALETTE.creamPaper
+      }).setOrigin(0, 0.5).setDepth(depth + 1);
+    });
+    rightLines.forEach((line, index) => {
+      this.add.text(x + 12, y - 13 + index * 12, line, {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: index === 1 && stats.hiddenCollectibleFound ? PALETTE.terminalCyan : PALETTE.creamPaper
+      }).setOrigin(0, 0.5).setDepth(depth + 1);
+    });
   }
 
   private restart() {

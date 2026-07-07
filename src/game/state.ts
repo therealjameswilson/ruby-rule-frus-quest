@@ -103,6 +103,53 @@ interface VisibleThreat {
   status?: string;
 }
 
+export const DANNE_VARIANT_DEFEAT_LABELS = {
+  prime: "Prime",
+  mark_i: "Mark I",
+  colossus: "Colossus",
+  cloud: "Cloud",
+  executive: "Executive",
+  swarm: "Swarm",
+  defeated: "Defeated",
+  ascendant: "Ascendant"
+} as const;
+
+export type DanneVariantDefeatId = keyof typeof DANNE_VARIANT_DEFEAT_LABELS;
+
+const DANNE_VARIANT_DEFEAT_IDS = Object.keys(DANNE_VARIANT_DEFEAT_LABELS) as DanneVariantDefeatId[];
+
+export interface CompletionStatsState {
+  runStartedAtMs: number;
+  totalPlayTimeMs: number;
+  danneVariantsDefeated: Partial<Record<DanneVariantDefeatId, number>>;
+  volumePiecesCollected: number;
+  hiddenCollectibleFound: boolean;
+  hiddenCollectibleLabel: string | null;
+  finalReliabilityScore: number | null;
+  completedAtMs: number | null;
+}
+
+export interface CompletionStatsReadout {
+  totalPlayTimeMs: number;
+  totalPlayTime: string;
+  danneVariantsDefeated: {
+    total: number;
+    counts: Record<DanneVariantDefeatId, number>;
+    byType: Array<{
+      id: DanneVariantDefeatId;
+      label: string;
+      count: number;
+    }>;
+  };
+  volumePiecesCollected: number;
+  volumePiecesTotal: number;
+  hiddenCollectibleFound: boolean;
+  hiddenCollectibleLabel: string | null;
+  finalReliabilityScore: number;
+  completed: boolean;
+  completedAt: string | null;
+}
+
 export interface GameState {
   currentScene: string;
   mode: GameMode;
@@ -147,6 +194,7 @@ export interface GameState {
   roomTraversal: RoomTraversalState | null;
   snesTransition: SnesTransitionState;
   finalGateCertification: FinalGateCertificationState | null;
+  completionStats: CompletionStatsState;
 }
 
 export interface DanneItemReadout {
@@ -441,6 +489,69 @@ export interface AdventureSubscreenReadout {
   };
 }
 
+function completionStatsNowMs() {
+  return Date.now();
+}
+
+function createInitialCompletionStats(): CompletionStatsState {
+  return {
+    runStartedAtMs: completionStatsNowMs(),
+    totalPlayTimeMs: 0,
+    danneVariantsDefeated: {},
+    volumePiecesCollected: 0,
+    hiddenCollectibleFound: false,
+    hiddenCollectibleLabel: null,
+    finalReliabilityScore: null,
+    completedAtMs: null
+  };
+}
+
+function safeFiniteNumber(value: unknown, fallback = 0) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function clampReliabilityScore(value: unknown) {
+  return Math.max(0, Math.min(100, Math.round(safeFiniteNumber(value, gameState.reliability))));
+}
+
+function normalizeCompletionStats(stats?: Partial<CompletionStatsState> | null): CompletionStatsState {
+  const normalized = createInitialCompletionStats();
+  normalized.runStartedAtMs = safeFiniteNumber(stats?.runStartedAtMs, completionStatsNowMs());
+  normalized.totalPlayTimeMs = Math.max(0, Math.round(safeFiniteNumber(stats?.totalPlayTimeMs, 0)));
+  normalized.volumePiecesCollected = Math.max(0, Math.round(safeFiniteNumber(stats?.volumePiecesCollected, 0)));
+  normalized.hiddenCollectibleFound = Boolean(stats?.hiddenCollectibleFound);
+  normalized.hiddenCollectibleLabel = typeof stats?.hiddenCollectibleLabel === "string" ? stats.hiddenCollectibleLabel : null;
+  normalized.finalReliabilityScore = typeof stats?.finalReliabilityScore === "number"
+    ? clampReliabilityScore(stats.finalReliabilityScore)
+    : null;
+  normalized.completedAtMs = typeof stats?.completedAtMs === "number" && Number.isFinite(stats.completedAtMs)
+    ? stats.completedAtMs
+    : null;
+
+  for (const id of DANNE_VARIANT_DEFEAT_IDS) {
+    const count = Math.max(0, Math.round(safeFiniteNumber(stats?.danneVariantsDefeated?.[id], 0)));
+    if (count > 0) normalized.danneVariantsDefeated[id] = count;
+  }
+
+  return normalized;
+}
+
+function currentCompletionPlayTimeMs(stats = gameState.completionStats) {
+  const normalized = normalizeCompletionStats(stats);
+  if (normalized.completedAtMs !== null) return normalized.totalPlayTimeMs;
+  return normalized.totalPlayTimeMs + Math.max(0, completionStatsNowMs() - normalized.runStartedAtMs);
+}
+
+function formatCompletionPlayTime(ms: number) {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  const minuteText = hours > 0 ? String(minutes).padStart(2, "0") : String(minutes);
+  const secondText = String(remainingSeconds).padStart(2, "0");
+  return hours > 0 ? `${hours}:${minuteText}:${secondText}` : `${minuteText}:${secondText}`;
+}
+
 export const gameState: GameState = {
   currentScene: "BootScene",
   mode: "boot",
@@ -509,7 +620,8 @@ export const gameState: GameState = {
     current: null,
     last: null
   },
-  finalGateCertification: null
+  finalGateCertification: null,
+  completionStats: createInitialCompletionStats()
 };
 
 export function resetGameState() {
@@ -552,6 +664,7 @@ export function resetGameState() {
   gameState.roomTraversal = null;
   gameState.snesTransition = { active: false, current: null, last: null };
   gameState.finalGateCertification = null;
+  gameState.completionStats = createInitialCompletionStats();
   setPlayerProfile("Sam", defaultRole);
   refreshQuestWorkflowState();
   notifyGameStateChange("reset");
@@ -580,6 +693,7 @@ export function addGameStateChangeListener(listener: GameStateChangeListener) {
 }
 
 export function createGameSaveData(): GameSaveData {
+  syncCompletionStatsPlayTime();
   const state = cloneJson(gameState);
   state.mode = normalizeSaveMode(state.currentScene, state.mode);
   state.activeDialog = null;
@@ -632,6 +746,11 @@ export function restoreGameSaveData(save: GameSaveData) {
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
   gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
+  gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  gameState.completionStats.volumePiecesCollected = Math.max(
+    gameState.completionStats.volumePiecesCollected,
+    gameState.volumeFragments.length
+  );
   syncDungeonBigKeysFromInventory();
   syncDungeonBossesFromProcessStamps();
   resumeSpawn = {
@@ -1311,6 +1430,7 @@ export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificati
   for (const documentId of FINAL_PUBLICATION_DOCUMENT_IDS) publishDocument(documentId);
   setFinalGateCertificationState(publishedFinalGateCertificationState());
   gameState.sceneProgress.trueEndingPublicationCertified = 1;
+  finalizeCompletionStats();
   refreshQuestWorkflowState();
 
   const finalReadiness = getFinalGateReadiness();
@@ -1352,9 +1472,111 @@ export function addDocumentPoints(amount: number, reason: string) {
   refreshQuestWorkflowState();
 }
 
+export function syncCompletionStatsPlayTime() {
+  gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  if (gameState.completionStats.completedAtMs !== null) return gameState.completionStats.totalPlayTimeMs;
+  const now = completionStatsNowMs();
+  const elapsedMs = Math.max(0, now - gameState.completionStats.runStartedAtMs);
+  gameState.completionStats.totalPlayTimeMs += elapsedMs;
+  gameState.completionStats.runStartedAtMs = now;
+  return gameState.completionStats.totalPlayTimeMs;
+}
+
+export function recordDanneVariantDefeated(variantId: DanneVariantDefeatId) {
+  gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  gameState.completionStats.danneVariantsDefeated[variantId] =
+    (gameState.completionStats.danneVariantsDefeated[variantId] ?? 0) + 1;
+  refreshQuestWorkflowState();
+}
+
+export function recordHiddenCollectibleFound(label = "Hidden collectible") {
+  gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  gameState.completionStats.hiddenCollectibleFound = true;
+  gameState.completionStats.hiddenCollectibleLabel = label;
+  refreshQuestWorkflowState();
+}
+
+function hiddenCollectibleInferredFromProgress() {
+  if (gameState.completionStats.hiddenCollectibleFound) {
+    return {
+      found: true,
+      label: gameState.completionStats.hiddenCollectibleLabel
+    };
+  }
+  if (gameState.volumeFragments.includes("Hidden Cache Fragment")) {
+    return {
+      found: true,
+      label: "Hidden Cache Fragment"
+    };
+  }
+  const progressFlags = [
+    "hiddenCollectibleFound",
+    "hiddenFirstEditionFound",
+    "hiddenReadingRoomFirstEditionFound",
+    "firstEditionFound"
+  ];
+  const progressFlagFound = progressFlags.some((flag) => Boolean(gameState.sceneProgress[flag]));
+  return {
+    found: progressFlagFound,
+    label: progressFlagFound ? "Hidden first edition" : null
+  };
+}
+
+export function finalizeCompletionStats() {
+  if (gameState.completionStats.completedAtMs !== null) return getCompletionStatsReadout();
+  syncCompletionStatsPlayTime();
+  const hidden = hiddenCollectibleInferredFromProgress();
+  gameState.completionStats.volumePiecesCollected = Math.max(
+    gameState.completionStats.volumePiecesCollected,
+    gameState.volumeFragments.length
+  );
+  gameState.completionStats.hiddenCollectibleFound = hidden.found;
+  gameState.completionStats.hiddenCollectibleLabel = hidden.label;
+  gameState.completionStats.finalReliabilityScore = clampReliabilityScore(gameState.reliability);
+  gameState.completionStats.completedAtMs = completionStatsNowMs();
+  refreshQuestWorkflowState();
+  return getCompletionStatsReadout();
+}
+
+export function getCompletionStatsReadout(): CompletionStatsReadout {
+  const stats = normalizeCompletionStats(gameState.completionStats);
+  const hidden = hiddenCollectibleInferredFromProgress();
+  const counts = DANNE_VARIANT_DEFEAT_IDS.reduce((accumulator, id) => {
+    accumulator[id] = stats.danneVariantsDefeated[id] ?? 0;
+    return accumulator;
+  }, {} as Record<DanneVariantDefeatId, number>);
+  const byType = DANNE_VARIANT_DEFEAT_IDS.map((id) => ({
+    id,
+    label: DANNE_VARIANT_DEFEAT_LABELS[id],
+    count: counts[id]
+  }));
+  const totalPlayTimeMs = currentCompletionPlayTimeMs(stats);
+  const completedAt = stats.completedAtMs === null ? null : new Date(stats.completedAtMs).toISOString();
+  return {
+    totalPlayTimeMs,
+    totalPlayTime: formatCompletionPlayTime(totalPlayTimeMs),
+    danneVariantsDefeated: {
+      total: byType.reduce((sum, variant) => sum + variant.count, 0),
+      counts,
+      byType
+    },
+    volumePiecesCollected: Math.max(stats.volumePiecesCollected, gameState.volumeFragments.length),
+    volumePiecesTotal: 5,
+    hiddenCollectibleFound: hidden.found,
+    hiddenCollectibleLabel: hidden.label,
+    finalReliabilityScore: stats.finalReliabilityScore ?? clampReliabilityScore(gameState.reliability),
+    completed: stats.completedAtMs !== null,
+    completedAt
+  };
+}
+
 export function addVolumeFragment(label: string) {
   if (!gameState.volumeFragments.includes(label)) {
     gameState.volumeFragments.push(label);
+    gameState.completionStats.volumePiecesCollected = Math.max(
+      gameState.completionStats.volumePiecesCollected,
+      gameState.volumeFragments.length
+    );
     setLatestMessage(`FRUS fragment found: ${label}`);
     refreshQuestWorkflowState();
   }
@@ -2272,6 +2494,7 @@ export function renderGameToText() {
         piecesTotal: 5,
         assembled: gameState.volumeFragments.length >= 5
       },
+      completionStats: getCompletionStatsReadout(),
       finalGate: getFinalGateReadiness(),
       publicationReadiness: getPublicationReadinessReadout(),
       statutoryClock: getStatutoryClockStateReadout(),
