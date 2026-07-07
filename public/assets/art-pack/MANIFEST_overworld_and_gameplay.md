@@ -23,6 +23,14 @@ Strategic district-overview boards. Each region presents 8 numbered districts on
 
 **Use in-engine:** load as `region.<key>` keys in the world-select scene; clicking a district transitions into a corresponding gameplay map or sub-scene.
 
+### Second FRUS volume board — Overseas Post (`public/assets/art-pack/world2/`)
+
+A sixth region board covering the **overseas diplomatic post / embassy** subject area (the field side of the FRUS record). Same 1536×1024 fixed-viewport composition and parchment/brass conventions, but rendered as original **code-generated pixel art** (limited 34-color palette, nearest-neighbor, no anti-aliasing) and kept politically neutral (generic facility labels, no real countries/flags). See `world2/MANIFEST.md` for full metadata and the deterministic generator.
+
+| # | File | Region | Districts |
+|---|------|--------|-----------|
+| 06 | `world2/01_overseas_post_region.png` | Overseas Post | Regional Bureau, Chancery, Consular Section, Classified Pouch Room, Communications Vault, Foreign Ministry Liaison Office, Records & Archives Annex, Marine Security Post |
+
 ---
 
 ## Gameplay World Maps (`public/assets/art-pack/gameplay_maps/`)
@@ -59,6 +67,7 @@ Walkable tilemap-style interiors and compounds. Each map shows a single building
 'region.middle_east'   -> overworld_maps/03_middle_east_crossroads.png
 'region.latin_america' -> overworld_maps/04_latin_america.png
 'region.africa'        -> overworld_maps/05_africa_cold_war_front.png
+'region.overseas_post' -> world2/01_overseas_post_region.png
 
 // Gameplay
 'map.historian_office' -> gameplay_maps/01_office_of_the_historian.png
