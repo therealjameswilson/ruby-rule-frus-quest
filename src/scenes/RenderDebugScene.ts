@@ -24,10 +24,10 @@ export class RenderDebugScene extends Phaser.Scene {
   create() {
     setSceneState("RenderDebugScene", "debug", "Inspect pixel-art render scaling.");
     setVisibleEntities([
-      "sample sprite 1x",
-      "sample sprite 2x",
-      "sample sprite 3x",
-      "sample sprite 4x",
+      "single-texel proof 1x",
+      "single-texel proof 2x",
+      "single-texel proof 3x",
+      "single-texel proof 4x",
       ...CHARACTER_KEYS.map((key) => `${key} 32x48 art-pack sheet`),
       ...SNES_ANTAGONIST_ASSETS.map((asset) => `${asset.displayName} antagonist sprite`),
       ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => `${wall.type} wall sprite`)
@@ -109,20 +109,27 @@ export class RenderDebugScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(2);
     });
 
-    this.add.rectangle(128, 191, 232, 64, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(1);
+    this.add.rectangle(128, 194, 232, 40, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(1);
+    this.add.text(128, 178, "SINGLE-TEXEL PROOF SCALE", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(2);
     [1, 2, 3, 4].forEach((scale, index) => {
       const x = 34 + index * 62;
-      this.add.sprite(x, 225, "compiler").setScale(scale).setOrigin(0.5, 1).play(characterAnimKey("compiler", "idle-down")).setDepth(2);
-      this.add.text(x, 226, `${scale}X`, {
+      const size = scale * 4;
+      this.add.rectangle(x, 196, size, size, color(PALETTE.buckramHighlight)).setOrigin(0.5).setDepth(2);
+      this.add.rectangle(x, 196, size + 2, size + 2).setOrigin(0.5).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(2);
+      this.add.text(x, 213, `${scale}X`, {
         fontFamily: "monospace",
         fontSize: "7px",
         color: PALETTE.goldStamp
       }).setOrigin(0.5).setDepth(2);
     });
 
-    this.add.text(128, 225, "DIRECT URL: ?scene=RenderDebugScene", {
+    this.add.text(128, 228, "DIRECT URL: ?scene=RenderDebugScene", {
       fontFamily: "monospace",
-      fontSize: "7px",
+      fontSize: "6px",
       color: PALETTE.terminalCyan
     }).setOrigin(0.5);
 

@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
-import { getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
+import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
 import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
@@ -69,6 +69,12 @@ interface MovementInput {
   facing: Direction;
 }
 
+interface ActionColors {
+  fill: number;
+  stroke: number;
+  stamp: number;
+}
+
 export class Player {
   readonly sprite: Phaser.GameObjects.Sprite;
   private readonly speed = 58;
@@ -77,6 +83,9 @@ export class Player {
   private readonly cornerNudgePixels = 3;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
+  private readonly actionTrail: Phaser.GameObjects.Rectangle;
+  private readonly actionEdge: Phaser.GameObjects.Rectangle;
+  private readonly actionStamp: Phaser.GameObjects.Rectangle;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
   private readonly spriteMode: "artPack32x48" | "snes16" | "snesRoleFrame48" | "nes8";
@@ -111,12 +120,12 @@ export class Player {
     this.spriteMode = this.characterKey
       ? "artPack32x48"
       : this.roleFrameSheet
-      ? "snesRoleFrame48"
-      : scene.textures.exists(gameState.playerProfile.snesSpriteKey)
-        ? "snes16"
-        : "nes8";
+        ? "snesRoleFrame48"
+        : scene.textures.exists(gameState.playerProfile.snesSpriteKey)
+          ? "snes16"
+          : "nes8";
     const isSnesScale = this.spriteMode === "snes16" || this.spriteMode === "snesRoleFrame48" || this.spriteMode === "artPack32x48";
-    this.shadowOffsetY = this.spriteMode === "artPack32x48" ? 5 : isSnesScale ? 9 : 8;
+    this.shadowOffsetY = this.spriteMode === "artPack32x48" ? ART_PACK_FOOT_OFFSET_Y : isSnesScale ? 9 : 8;
     this.shadowDepthOffset = isSnesScale ? 2 : 1;
     this.shadow = scene.add
       .ellipse(
@@ -126,6 +135,10 @@ export class Player {
         isSnesScale ? 6 : 4,
         color(PALETTE.black)
       )
+      // A full-black oval read as a hard pasted-on disc (live audit, 2026-06-15).
+      // Drop the alpha so the shadow grounds the sprite without punching a hole in
+      // the floor art.
+      .setAlpha(0.34)
       .setDepth(snapPixel(this.logicalY - this.shadowDepthOffset));
     const textureKey = this.spriteMode === "artPack32x48"
       ? this.characterKey ?? gameState.playerProfile.snesSpriteKey
@@ -136,7 +149,7 @@ export class Player {
         : gameState.playerProfile.spriteKey;
     this.sprite = scene.add
       .sprite(snapPixel(this.logicalX), snapPixel(this.logicalY), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
-      .setOrigin(0.5, this.spriteMode === "artPack32x48" ? 0.9 : this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
+      .setOrigin(0.5, this.spriteMode === "artPack32x48" ? ART_PACK_SPRITE_ORIGIN_Y : this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
       .setDepth(snapPixel(this.logicalY));
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
       this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));
@@ -146,6 +159,23 @@ export class Player {
       .setOrigin(0, 0)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(899)
+      .setVisible(false);
+    this.actionTrail = scene.add
+      .rectangle(snapPixel(this.logicalX), snapPixel(this.logicalY), 24, 5, color(PALETTE.buckramHighlight), 0.8)
+      .setOrigin(0.5)
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(898)
+      .setVisible(false);
+    this.actionEdge = scene.add
+      .rectangle(snapPixel(this.logicalX), snapPixel(this.logicalY), 12, 3, color(PALETTE.creamPaper), 0.75)
+      .setOrigin(0.5)
+      .setDepth(899)
+      .setVisible(false);
+    this.actionStamp = scene.add
+      .rectangle(snapPixel(this.logicalX), snapPixel(this.logicalY), 7, 7, color(PALETTE.goldStamp), 0.9)
+      .setOrigin(0.5)
+      .setStrokeStyle(1, color(PALETTE.black))
+      .setDepth(900)
       .setVisible(false);
     this.createIdleCue(scene);
     this.createWalkCycleCue(scene);
@@ -408,13 +438,113 @@ export class Player {
     const hitbox = this.activeActionHitbox;
     if (!hitbox) {
       this.actionHitboxVisual.setVisible(false);
+      this.hideActionEffect();
       return;
     }
+    this.syncActionEffect(hitbox);
+    const debugHitbox = this.isActionHitboxDebugEnabled();
     this.actionHitboxVisual
-      .setVisible(true)
+      .setVisible(debugHitbox)
       .setSize(hitbox.width, hitbox.height)
       .setPosition(snapPixel(hitbox.x), snapPixel(hitbox.y))
       .setDepth(snapPixel(this.logicalY + 1));
+  }
+
+  private hideActionEffect() {
+    this.actionTrail.setVisible(false);
+    this.actionEdge.setVisible(false);
+    this.actionStamp.setVisible(false);
+  }
+
+  private isActionHitboxDebugEnabled() {
+    if (typeof window === "undefined") return false;
+    return new URLSearchParams(window.location.search).get("debug") === "hitbox";
+  }
+
+  private actionColors(): ActionColors {
+    const role = gameState.playerProfile.roleId;
+    if (gameState.equippedDanneItem === "ruby-pen") {
+      return {
+        fill: color(PALETTE.buckramHighlight),
+        stroke: color(PALETTE.goldStamp),
+        stamp: color(PALETTE.buckramRed)
+      };
+    }
+    if (role === "editor") {
+      return {
+        fill: color(PALETTE.buckramHighlight),
+        stroke: color(PALETTE.goldStamp),
+        stamp: color(PALETTE.buckramRed)
+      };
+    }
+    if (role === "declass_reviewer") {
+      return {
+        fill: color(PALETTE.classNetRed),
+        stroke: color(PALETTE.creamPaper),
+        stamp: color(PALETTE.stoneGray)
+      };
+    }
+    if (role === "proofreader") {
+      return {
+        fill: color(PALETTE.terminalCyan),
+        stroke: color(PALETTE.creamPaper),
+        stamp: color(PALETTE.creamPaper)
+      };
+    }
+    if (role === "source_note_specialist") {
+      return {
+        fill: color(PALETTE.goldStamp),
+        stroke: color(PALETTE.buckramRed),
+        stamp: color(PALETTE.goldStamp)
+      };
+    }
+    return {
+      fill: color(PALETTE.goldStamp),
+      stroke: color(PALETTE.creamPaper),
+      stamp: color(PALETTE.creamPaper)
+    };
+  }
+
+  private syncActionEffect(hitbox: Phaser.Geom.Rectangle) {
+    const now = this.scene.time.now;
+    const remainingRatio = Phaser.Math.Clamp((this.actionActiveUntil - now) / PLAYER_ACTION_HITBOX_MS, 0, 1);
+    const alpha = 0.34 + remainingRatio * 0.5;
+    const colors = this.actionColors();
+    const centerX = snapPixel(hitbox.centerX);
+    const centerY = snapPixel(hitbox.centerY);
+    const depth = snapPixel(this.logicalY + 2);
+    const horizontal = this.facing === "north" || this.facing === "south";
+    const signX = this.facing === "west" ? -1 : this.facing === "east" ? 1 : 0;
+    const signY = this.facing === "north" ? -1 : this.facing === "south" ? 1 : 0;
+
+    this.actionTrail
+      .setVisible(true)
+      .setFillStyle(colors.fill, alpha)
+      .setStrokeStyle(1, colors.stroke, alpha)
+      .setSize(horizontal ? 28 : 6, horizontal ? 6 : 28)
+      .setAngle(horizontal ? 0 : 0)
+      .setDepth(depth)
+      .setPosition(centerX, centerY);
+    this.actionEdge
+      .setVisible(true)
+      .setFillStyle(colors.stroke, alpha)
+      .setSize(horizontal ? 18 : 4, horizontal ? 2 : 18)
+      .setDepth(depth + 1)
+      .setPosition(
+        centerX + signX * Math.round(hitbox.width * 0.38),
+        centerY + signY * Math.round(hitbox.height * 0.38)
+      );
+    this.actionStamp
+      .setVisible(true)
+      .setFillStyle(colors.stamp, Math.min(1, alpha + 0.12))
+      .setStrokeStyle(1, color(PALETTE.black), alpha)
+      .setSize(horizontal ? 8 : 6, horizontal ? 6 : 8)
+      .setAngle(this.facing === "north" || this.facing === "east" ? 8 : -8)
+      .setDepth(depth + 2)
+      .setPosition(
+        centerX + signX * Math.round(hitbox.width * 0.52),
+        centerY + signY * Math.round(hitbox.height * 0.52)
+      );
   }
 
   private syncInvulnerabilityBlink() {

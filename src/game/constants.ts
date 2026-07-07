@@ -3,14 +3,22 @@ import {
   NES_ARCHIVE_GRAY,
   NES_BLACK,
   NES_BRIGHT_RUBY,
+  NES_BRONZE,
   NES_BUCKRAM_RUBY,
   NES_CLASSNET_RED,
   NES_CREAM_PAPER,
   NES_DARK_MAROON,
+  NES_DEEP_BROWN,
+  NES_DEEP_GREEN,
   NES_DEEP_RUBY,
   NES_GOLD,
+  NES_MEDIUM_GREEN,
+  NES_MOSS_GREEN,
+  NES_MUTED_RUBY,
+  NES_OLD_GOLD,
   NES_OPENNET_GREEN,
   NES_AGED_PAPER_SHADOW,
+  NES_PALE_GOLD,
   NES_SLATE_BLUE,
   NES_STONE_LIGHT,
   NES_TERMINAL_CYAN,
@@ -34,10 +42,18 @@ export const PALETTE = {
   mapWater: NES_SLATE_BLUE,
   terminalCyan: NES_TERMINAL_CYAN,
   openNetGreen: NES_OPENNET_GREEN,
+  plantLeaf: NES_MEDIUM_GREEN,
+  plantLeafShade: NES_MOSS_GREEN,
+  plantLeafDark: NES_DEEP_GREEN,
   classNetRed: NES_CLASSNET_RED,
   shadowNavy: NES_DEEP_RUBY,
   black: NES_BLACK,
-  white: NES_WHITE_HIGHLIGHT
+  white: NES_WHITE_HIGHLIGHT,
+  bronze: NES_BRONZE,
+  oldGold: NES_OLD_GOLD,
+  paleGold: NES_PALE_GOLD,
+  mutedRuby: NES_MUTED_RUBY,
+  deepBrown: NES_DEEP_BROWN
 } as const;
 
 export type PaletteKey = keyof typeof PALETTE;
@@ -610,4 +626,4 @@ export const SCENE_ORDER = [
   "SpriteGallery"
 ] as const;
 
-export const CONTROLS_TEXT = "ARROWS/WASD MOVE  SPACE/ENTER ACT  E ABILITY  M INV  R REL  N SOUND";
+export const CONTROLS_TEXT = "ARROWS/WASD MOVE   SPACE/ENTER ACT   E ABILITY\nM INV   R REL   N SOUND   ESC CLOSE";

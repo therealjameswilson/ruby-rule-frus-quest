@@ -71,6 +71,7 @@
         ] },
         { "id": 20, "name": "stack_control_note", "type": "interaction", "x": 500, "y": 350, "width": 120, "height": 110, "properties": [
           { "name": "label", "type": "string", "value": "Stack Control Note" },
+          { "name": "action", "type": "string", "value": "stack-control-manifest" },
           { "name": "text", "type": "string", "value": "Rows 17-24 are stable. Bring a manifest before moving boxes." }
         ] }
       ]

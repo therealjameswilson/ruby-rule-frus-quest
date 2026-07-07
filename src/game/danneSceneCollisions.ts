@@ -135,7 +135,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
   BlackVaultLairScene: {
     sceneKey: "BlackVaultLairScene",
     displayName: "Black Vault Lair",
-    objective: "Black Vault Lair: inspect the dormant DANN-E core.",
+    objective: "Black Vault Lair: inspect DANN-E core.",
     musicScene: "EndingScene",
     spawn: { x: 128, y: 202 },
     exitTarget: "ArchiveScene",
@@ -273,7 +273,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["Stack Control Note", "Treaty Fragment I", "Archive Stairwell", "Patrol Route Placeholders"],
+    visibleEntities: ["Stack Control Note", "Treaty Fragment I", "Archive Stairwell", "Redactor Drone Patrol Routes"],
     patrolRoutes: [
       { id: "drone-route-a", points: [{ x: 88, y: 92 }, { x: 168, y: 92 }] },
       { id: "drone-route-b", points: [{ x: 88, y: 152 }, { x: 168, y: 152 }] },

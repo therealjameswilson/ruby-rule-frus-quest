@@ -60,8 +60,8 @@
       "name": "interactions",
       "type": "objectgroup",
       "objects": [
-        { "id": 17, "name": "historian_in_chief", "type": "npc", "x": 370, "y": 530, "width": 140, "height": 92, "properties": [
-          { "name": "label", "type": "string", "value": "Historian-in-Chief" },
+        { "id": 17, "name": "archive_guide", "type": "npc", "x": 370, "y": 530, "width": 140, "height": 92, "properties": [
+          { "name": "label", "type": "string", "value": "Archive Guide" },
           { "name": "action", "type": "string", "value": "historian-chief" }
         ] },
         { "id": 18, "name": "frus_bookshelf", "type": "interaction", "x": 132, "y": 520, "width": 150, "height": 125, "properties": [
@@ -70,6 +70,7 @@
         ] },
         { "id": 19, "name": "coffee_station", "type": "interaction", "x": 1230, "y": 682, "width": 170, "height": 142, "properties": [
           { "name": "label", "type": "string", "value": "Coffee Station" },
+          { "name": "action", "type": "string", "value": "coffee-station" },
           { "name": "text", "type": "string", "value": "The coffee is strong enough to support a full annotation pass." }
         ] }
       ]

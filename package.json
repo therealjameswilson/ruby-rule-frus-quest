@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "test": "vitest run",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/copy-public-assets.mjs",
     "improve:assets": "python scripts/improve-existing-assets.py",
     "perf:profile": "node tools/perf-profile.mjs",
     "preview": "vite preview --host 127.0.0.1"

@@ -4,6 +4,7 @@ import {
   buckramGateOpen,
   compilationIsComplete,
   crystalsEarned,
+  equityCrystalDocuments,
   PENDANTS,
   totalEquities
 } from "./frusProgression";
@@ -59,6 +60,45 @@ describe("FRUS/Zelda progression helpers", () => {
 
     expect(totalEquities(documents)).toBe(6);
     expect(crystalsEarned(documents)).toBe(5);
+  });
+
+  it("counts crystals only for the active selected review packet when workflow metadata is present", () => {
+    const documents = [
+      {
+        selected: false,
+        workflowState: "found",
+        reviewStatus: "not_submitted",
+        equities: [equity("unused-defense", "cleared")]
+      },
+      {
+        selected: true,
+        workflowState: "selected",
+        reviewStatus: "not_submitted",
+        equities: [equity("provenance-note", "cleared")]
+      },
+      {
+        selected: true,
+        workflowState: "submitted_for_review",
+        reviewStatus: "submitted",
+        equities: [
+          equity("intelligence", "cleared"),
+          equity("defense", "referred")
+        ]
+      },
+      {
+        selected: true,
+        workflowState: "proofed",
+        reviewStatus: "resolved",
+        equities: [equity("foreign", "resolved")]
+      }
+    ] as const;
+
+    expect(equityCrystalDocuments(documents).map((document) => document.workflowState)).toEqual([
+      "submitted_for_review",
+      "proofed"
+    ]);
+    expect(totalEquities(documents)).toBe(3);
+    expect(crystalsEarned(documents)).toBe(2);
   });
 
   it("opens the Buckram Gate only with complete pendants and all distinct equities cleared", () => {

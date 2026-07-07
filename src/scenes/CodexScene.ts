@@ -3,7 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { CODEX_CATEGORIES, getCodexEntries, getCodexReadout, type CodexCategory, type CodexEntryReadout } from "../game/codex";
 import { gameState, setLatestMessage, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
 import type { GameMode } from "../game/types";
-import { bindPointerPress, getInput, tickInput } from "../input/InputState";
+import { bindPointerPress, getInput, swallowNextInputFrame, tickInput } from "../input/InputState";
 
 interface CodexSceneData {
   returnScene?: string;
@@ -269,6 +269,7 @@ export class CodexScene extends Phaser.Scene {
 
   private close() {
     setLatestMessage("Codex closed.");
+    swallowNextInputFrame();
     if (this.returnScene && this.returnScene !== this.scene.key && this.scene.isPaused(this.returnScene)) {
       this.scene.resume(this.returnScene);
     }

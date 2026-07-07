@@ -66,6 +66,7 @@
         ] },
         { "id": 16, "name": "oval_office_desk", "type": "interaction", "x": 690, "y": 210, "width": 165, "height": 140, "properties": [
           { "name": "label", "type": "string", "value": "Oval Office Desk" },
+          { "name": "action", "type": "string", "value": "oval-office-briefing" },
           { "name": "text", "type": "string", "value": "The briefing memo asks for chronology, source, and policy context." }
         ] }
       ]

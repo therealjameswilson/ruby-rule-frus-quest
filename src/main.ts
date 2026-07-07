@@ -11,12 +11,14 @@ import {
   updateInputCallbacks
 } from "./input/InputState";
 import { retroAudio, type AudioDebugState } from "./systems/audio";
+import { getLanguage } from "./systems/i18n";
 import { applyIntegerZoom, computeIntegerZoom } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
 
 declare global {
   interface Window {
     render_game_to_text?: () => string;
+    rubyRuleFullStateText?: () => string;
     advanceTime?: (ms: number) => Promise<void>;
     rubyRuleMobileMetrics?: MobileDebugMetrics;
     rubyRuleResetPerformanceMetrics?: () => void;
@@ -63,7 +65,46 @@ interface NavigatorWithStandalone extends Navigator {
   standalone?: boolean;
 }
 
-window.render_game_to_text = renderGameToText;
+function renderConciseGameToText() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("text") === "full" || params.get("debugState") === "full") return renderGameToText();
+  return JSON.stringify(
+    {
+      coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
+      scene: gameState.currentScene,
+      mode: gameState.mode,
+      objective: gameState.objective,
+      language: getLanguage(),
+      latestMessage: gameState.latestMessage,
+      player: gameState.player,
+      playerFacing: gameState.playerFacing,
+      playerAnimationState: gameState.playerAnimationState,
+      nearestInteractable: gameState.nearestInteractable,
+      heldItem: gameState.heldItem,
+      reliability: gameState.reliability,
+      documentPoints: gameState.documentPoints,
+      volumeWorkflowState: gameState.volumeWorkflowState,
+      questCounters: gameState.questCounters,
+      processStamps: gameState.processStamps,
+      inventory: gameState.inventory,
+      visibleEntities: gameState.visibleEntities.slice(0, 12),
+      visibleThreats: gameState.visibleThreats.slice(0, 8),
+      dialog: gameState.activeDialog,
+      choice: gameState.currentChoice
+        ? {
+            title: gameState.currentChoice.title,
+            options: gameState.currentChoice.options.map((option) => option.label)
+          }
+        : null,
+      fullStateHint: "Add ?text=full for the complete debug state."
+    },
+    null,
+    2
+  );
+}
+
+window.render_game_to_text = renderConciseGameToText;
+window.rubyRuleFullStateText = renderGameToText;
 window.rubyRuleAudioDebug = () => retroAudio.getDebugState();
 window.rubyRuleSaveDebug = () => getSaveDebugState();
 window.rubyRuleGamepadDebug = () => getGamepadDebugState();
@@ -289,6 +330,47 @@ function installCanvasTouchLock() {
     return;
   }
   canvas.addEventListener("touchmove", (event) => event.preventDefault(), { passive: false });
+}
+
+// Keyboard input is captured on `window` keydown. In a cloud browser or embedded
+// iframe the page can load without keyboard focus, so the first WASD/arrow press
+// goes nowhere and the player concludes movement is broken (live audit,
+// 2026-06-15). Make the canvas focusable and pull focus to it on load and on
+// every pointer interaction so the first key press always reaches the game
+// without an extra click.
+function installKeyboardFocusGuard() {
+  const focusCanvas = () => {
+    const canvas = getGameCanvas();
+    if (canvas) {
+      if (!canvas.hasAttribute("tabindex")) canvas.setAttribute("tabindex", "0");
+      canvas.style.outline = "none";
+      try {
+        canvas.focus({ preventScroll: true });
+      } catch {
+        canvas.focus();
+      }
+    }
+    try {
+      window.focus();
+    } catch {
+      // Some embedders block programmatic window focus; the canvas focus above still helps.
+    }
+  };
+
+  const waitForCanvasThenFocus = () => {
+    if (getGameCanvas()) {
+      focusCanvas();
+      return;
+    }
+    window.requestAnimationFrame(waitForCanvasThenFocus);
+  };
+  waitForCanvasThenFocus();
+
+  // Re-grab focus on any pointer/touch so a tap that lands on the canvas also
+  // arms the keyboard, and refocus when the tab/window regains focus.
+  window.addEventListener("pointerdown", focusCanvas, { capture: true, passive: true });
+  window.addEventListener("touchstart", focusCanvas, { capture: true, passive: true });
+  window.addEventListener("focus", focusCanvas);
 }
 
 function createDismissButton(target: HTMLElement, storageKey: string) {
@@ -527,9 +609,48 @@ window.addEventListener("resize", scheduleIntegerScaleRefresh);
 window.addEventListener("orientationchange", scheduleIntegerScaleRefresh);
 window.visualViewport?.addEventListener("resize", scheduleIntegerScaleRefresh);
 
+let bootLoaderPoll: number | undefined;
+
+function hasActivePlayableScene() {
+  if (!phaserGame) return false;
+  return phaserGame.scene.getScenes(true).some((scene) => scene.scene.key !== "BootScene");
+}
+
+function hideBootLoader() {
+  const loader = document.getElementById("boot-loader");
+  if (!loader || loader.hidden) return;
+  if (!hasActivePlayableScene()) return;
+  if (bootLoaderPoll !== undefined) {
+    window.clearInterval(bootLoaderPoll);
+    bootLoaderPoll = undefined;
+  }
+  loader.classList.add("is-hiding");
+  window.setTimeout(() => {
+    loader.hidden = true;
+  }, 360);
+}
+
 const game = new Phaser.Game(gameConfig);
 window.game = game;
 phaserGame = game;
+
+game.events.once(Phaser.Core.Events.READY, () => {
+  const dismissOnNextScene = () => {
+    game.scene.getScenes(true).forEach((scene) => {
+      if (scene.scene.key !== "BootScene") hideBootLoader();
+    });
+  };
+  game.scene.scenes.forEach((scene) => {
+    scene.events.once(Phaser.Scenes.Events.CREATE, dismissOnNextScene);
+  });
+  // Direct ?scene= deep links can create the target scene before READY fires,
+  // which means the CREATE listener above may miss the event and leave the DOM
+  // loader covering the playable canvas. Hide it after the first ready paint as
+  // a safety net while keeping the 8s failure fallback below.
+  window.requestAnimationFrame(() => window.requestAnimationFrame(hideBootLoader));
+  window.setTimeout(hideBootLoader, 1200);
+});
+bootLoaderPoll = window.setInterval(hideBootLoader, 500);
 installAutosaveLifecycle();
 installTapToResumeOverlay(game);
 const togglePixelProof = installPixelProofOverlay();
@@ -540,5 +661,6 @@ updateInputCallbacks({
   }
 });
 installCanvasTouchLock();
+installKeyboardFocusGuard();
 refreshIntegerScale();
 game.scale.on("resize", () => window.requestAnimationFrame(enforceIntegerCanvasScale));

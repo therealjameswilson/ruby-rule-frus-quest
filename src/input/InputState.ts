@@ -141,12 +141,44 @@ const emptyState: InputState = {
   typedText: ""
 };
 
+// A short tap (keydown + keyup inside one animation frame, or a synthetic
+// keypress from a cloud/automation browser) can be added to and removed from
+// `keyboardDown` between two tickInput() samples, so the held check never sees
+// it and the player visibly does not move (live audit, 2026-06-15). Latch each
+// direction code's most-recent keydown time; tickInput treats a direction as
+// "down" while its latch is fresh, turning an imperceptible tap into a small,
+// visible nudge without changing how held movement or collision works.
+export const TAP_MOVEMENT_HOLD_MS = 110;
+const directionTapLatch = new Map<string, number>();
+
+// Action / confirm / cancel keys suffer the same too-short-tap drop as movement
+// did (live audit, 2026-06-15): a keydown+keyup that both land between two
+// tickInput() samples is never seen as held, so the `justPressed` edge never
+// fires. That silently swallowed the A-button (no interact feedback) and Escape
+// (overlays would not close) in the cloud QA browser. Latch each action code's
+// most-recent keydown time and treat it as "down" for a short window so a too
+// short tap still produces a single rising edge. The set is intentionally
+// limited to the discrete action/menu keys — never to held movement.
+export const TAP_ACTION_HOLD_MS = 90;
+const ACTION_LATCH_CODES = new Set<string>([
+  "Space",
+  "Enter",
+  "KeyZ",
+  "KeyX",
+  "ShiftLeft",
+  "ShiftRight",
+  "Escape",
+  "Tab"
+]);
+const actionTapLatch = new Map<string, number>();
+let nowProvider: () => number = () =>
+  typeof performance !== "undefined" ? performance.now() : Date.now();
+
 let currentState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 let previousState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 const keyboardDown = new Set<string>();
-const pendingKeyPresses = new Set<string>();
 const touchDown = new Set<TouchControlKey>();
-const pendingTouchPresses = new Set<TouchControlKey>();
+const touchTapLatch = new Map<TouchControlKey, number>();
 const pendingTypedCharacters: string[] = [];
 const pendingPointerStarts: Array<{ x: number; y: number }> = [];
 const activePointerIds = new Set<number>();
@@ -159,6 +191,7 @@ let gamepadConnected = false;
 let lastGamepadLabel: string | null = null;
 let lastGamepadEvent = "idle";
 let swallowNextFrame = false;
+let suppressEscEdgesUntilRelease = false;
 let gamepadSnapshot: GamepadSnapshot = {
   connected: false,
   index: null,
@@ -186,16 +219,37 @@ function isKeyboardDown(...codes: string[]) {
   return codes.some((code) => keyboardDown.has(code));
 }
 
-function isKeyboardPressedThisTick(...codes: string[]) {
-  return codes.some((code) => pendingKeyPresses.has(code));
+// True when a direction code is physically held, or was tapped within the last
+// TAP_MOVEMENT_HOLD_MS so a too-short tap still registers as a brief hold.
+function isDirectionActive(...codes: string[]) {
+  if (isKeyboardDown(...codes)) return true;
+  const now = nowProvider();
+  return codes.some((code) => {
+    const at = directionTapLatch.get(code);
+    return at !== undefined && now - at <= TAP_MOVEMENT_HOLD_MS;
+  });
+}
+
+// True when an action code is physically held, or was tapped within the last
+// TAP_ACTION_HOLD_MS so a too-short tap still registers as a brief hold. Only
+// codes in ACTION_LATCH_CODES are ever latched.
+function isActionActive(...codes: string[]) {
+  if (isKeyboardDown(...codes)) return true;
+  const now = nowProvider();
+  return codes.some((code) => {
+    if (!ACTION_LATCH_CODES.has(code)) return false;
+    const at = actionTapLatch.get(code);
+    return at !== undefined && now - at <= TAP_ACTION_HOLD_MS;
+  });
 }
 
 function isTouchDown(...keys: TouchControlKey[]) {
-  return keys.some((key) => touchDown.has(key));
-}
-
-function isTouchPressedThisTick(...keys: TouchControlKey[]) {
-  return keys.some((key) => pendingTouchPresses.has(key));
+  if (keys.some((key) => touchDown.has(key))) return true;
+  const now = nowProvider();
+  return keys.some((key) => {
+    const at = touchTapLatch.get(key);
+    return at !== undefined && now - at <= TAP_ACTION_HOLD_MS;
+  });
 }
 
 function getConnectedGamepads() {
@@ -321,7 +375,9 @@ function preventGameKeyDefault(event: KeyboardEvent) {
       "KeyM",
       "KeyN",
       "KeyR",
-      "KeyF"
+      "KeyF",
+      "KeyZ",
+      "KeyX"
     ].includes(event.code)
   ) {
     event.preventDefault();
@@ -365,8 +421,13 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
       return;
     }
     preventGameKeyDefault(event);
-    if (!event.repeat && directionKeyMap[event.code]) lastDirection = directionKeyMap[event.code]!;
-    if (!event.repeat) pendingKeyPresses.add(event.code);
+    if (!event.repeat && directionKeyMap[event.code]) {
+      lastDirection = directionKeyMap[event.code]!;
+      directionTapLatch.set(event.code, nowProvider());
+    }
+    if (!event.repeat && ACTION_LATCH_CODES.has(event.code)) {
+      actionTapLatch.set(event.code, nowProvider());
+    }
     keyboardDown.add(event.code);
     if (!event.repeat && /^[a-zA-Z]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey) {
       pendingTypedCharacters.push(event.key);
@@ -376,6 +437,7 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   window.addEventListener("keyup", (event) => {
     preventGameKeyDefault(event);
     keyboardDown.delete(event.code);
+    if (event.code === "Escape") suppressEscEdgesUntilRelease = false;
   });
 
   window.addEventListener("pointerdown", (event) => {
@@ -451,8 +513,6 @@ export function tickInput() {
     swallowNextFrame = false;
     pendingTypedCharacters.length = 0;
     pendingPointerStarts.length = 0;
-    pendingKeyPresses.clear();
-    pendingTouchPresses.clear();
     currentState = { ...emptyState, dir: { ...emptyState.dir } };
     previousChoiceDown.choiceA = false;
     previousChoiceDown.choiceB = false;
@@ -471,40 +531,51 @@ export function tickInput() {
   syncGamepadConnection(gamepadSnapshot);
   notifyGamepadGestureIfNeeded(gamepadSnapshot);
 
-  const left = isKeyboardDown("ArrowLeft", "KeyA") || isKeyboardPressedThisTick("ArrowLeft", "KeyA") || isTouchDown("left") || isTouchPressedThisTick("left") || gamepadDirectionDown("left", gamepadSnapshot);
-  const right = isKeyboardDown("ArrowRight", "KeyD") || isKeyboardPressedThisTick("ArrowRight", "KeyD") || isTouchDown("right") || isTouchPressedThisTick("right") || gamepadDirectionDown("right", gamepadSnapshot);
-  const up = isKeyboardDown("ArrowUp", "KeyW") || isKeyboardPressedThisTick("ArrowUp", "KeyW") || isTouchDown("up") || isTouchPressedThisTick("up") || gamepadDirectionDown("up", gamepadSnapshot);
-  const down = isKeyboardDown("ArrowDown", "KeyS") || isKeyboardPressedThisTick("ArrowDown", "KeyS") || isTouchDown("down") || isTouchPressedThisTick("down") || gamepadDirectionDown("down", gamepadSnapshot);
+  const left = isDirectionActive("ArrowLeft", "KeyA") || isTouchDown("left") || gamepadDirectionDown("left", gamepadSnapshot);
+  const right = isDirectionActive("ArrowRight", "KeyD") || isTouchDown("right") || gamepadDirectionDown("right", gamepadSnapshot);
+  const up = isDirectionActive("ArrowUp", "KeyW") || isTouchDown("up") || gamepadDirectionDown("up", gamepadSnapshot);
+  const down = isDirectionActive("ArrowDown", "KeyS") || isTouchDown("down") || gamepadDirectionDown("down", gamepadSnapshot);
   const dir = computeAxis(left, right, up, down);
   if (gamepadSnapshot.direction) lastDirection = gamepadSnapshot.direction;
-  const navLeft = isKeyboardDown("ArrowLeft", "KeyA") || isKeyboardPressedThisTick("ArrowLeft", "KeyA") || isTouchDown("left") || isTouchPressedThisTick("left") || gamepadDirectionDown("left", gamepadSnapshot);
-  const navRight = isKeyboardDown("ArrowRight", "KeyD") || isKeyboardPressedThisTick("ArrowRight", "KeyD") || isTouchDown("right") || isTouchPressedThisTick("right") || gamepadDirectionDown("right", gamepadSnapshot);
-  const navUp = isKeyboardDown("ArrowUp", "KeyW") || isKeyboardPressedThisTick("ArrowUp", "KeyW") || isTouchDown("up") || isTouchPressedThisTick("up") || gamepadDirectionDown("up", gamepadSnapshot);
-  const navDown = isKeyboardDown("ArrowDown", "KeyS") || isKeyboardPressedThisTick("ArrowDown", "KeyS") || isTouchDown("down") || isTouchPressedThisTick("down") || gamepadDirectionDown("down", gamepadSnapshot);
+  const navLeft = left;
+  const navRight = right;
+  const navUp = up;
+  const navDown = down;
 
-  const pendingA = isKeyboardPressedThisTick("Space", "Enter");
-  const pendingB = isKeyboardPressedThisTick("ShiftLeft", "ShiftRight");
-  const pendingConfirm = isKeyboardPressedThisTick("Enter", "Space");
-  const pendingCancel = isKeyboardPressedThisTick("Escape");
-  const pendingTouchA = isTouchPressedThisTick("space");
-  const pendingTouchB = isTouchPressedThisTick("b");
-  const a = isKeyboardDown("Space", "Enter") || pendingA || isTouchDown("space") || pendingTouchA || isGamepadButtonDown([0], gamepadSnapshot);
-  const b = isKeyboardDown("ShiftLeft", "ShiftRight") || pendingB || isTouchDown("b") || pendingTouchB || isGamepadButtonDown([1], gamepadSnapshot);
-  const confirm = isKeyboardDown("Enter", "Space") || pendingConfirm || isTouchDown("space") || pendingTouchA || isGamepadButtonDown([0], gamepadSnapshot);
-  const cancel = isKeyboardDown("Escape") || pendingCancel || isTouchDown("b") || pendingTouchB || isGamepadButtonDown([1], gamepadSnapshot);
-  const start = isKeyboardDown("Enter") || isKeyboardPressedThisTick("Enter") || isTouchDown("start") || isTouchPressedThisTick("start") || isGamepadButtonDown([9], gamepadSnapshot);
-  const select = isKeyboardDown("Tab") || isKeyboardPressedThisTick("Tab") || isTouchDown("select") || isTouchPressedThisTick("select") || isGamepadButtonDown([8], gamepadSnapshot);
-  const ability = isKeyboardDown("KeyE") || isKeyboardPressedThisTick("KeyE") || isTouchDown("e") || isTouchPressedThisTick("e") || isGamepadButtonDown([2], gamepadSnapshot);
-  const menu = isKeyboardDown("KeyM") || isKeyboardPressedThisTick("KeyM") || isTouchDown("m", "start") || isTouchPressedThisTick("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
-  const reliability = isKeyboardDown("KeyR") || isKeyboardPressedThisTick("KeyR") || isTouchDown("r") || isTouchPressedThisTick("r");
-  const sound = isKeyboardDown("KeyN") || isKeyboardPressedThisTick("KeyN") || isTouchDown("n") || isTouchPressedThisTick("n");
-  const fullscreen = isKeyboardDown("KeyF") || isKeyboardPressedThisTick("KeyF");
-  const pause = isKeyboardDown("Escape") || isKeyboardPressedThisTick("Escape");
-  const choiceA = isKeyboardDown("KeyA") || isKeyboardPressedThisTick("KeyA");
-  const choiceB = isKeyboardDown("KeyB") || isKeyboardPressedThisTick("KeyB");
-  const choiceC = isKeyboardDown("KeyC") || isKeyboardPressedThisTick("KeyC");
-  const choiceD = isKeyboardDown("KeyD") || isKeyboardPressedThisTick("KeyD");
-  const backspace = isKeyboardDown("Backspace") || isKeyboardPressedThisTick("Backspace");
+  // KeyZ / KeyX are the classic SNES A / B faces most browser-emulator users
+  // reach for first. The live audit (2026-06-15) found a tester pressing
+  // Z/X/A/S at the title and getting no response, so accept Z (and Enter/Space)
+  // as the A button and X as the B button. KeyA/KeyS stay movement-only to avoid
+  // fighting WASD.
+  const a = isActionActive("Space", "Enter", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
+  const b = isActionActive("ShiftLeft", "ShiftRight", "KeyX") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
+  const confirm = isActionActive("Enter", "Space", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
+  const cancel = isActionActive("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
+  const start = isActionActive("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
+  const select = isActionActive("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
+  const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2], gamepadSnapshot);
+  const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
+  const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
+  const sound = isKeyboardDown("KeyN") || isTouchDown("n");
+  const fullscreen = isKeyboardDown("KeyF");
+  // Physically-held Escape drives the suppress-until-release bookkeeping, while
+  // the latched form drives the pause edge so a too-short ESC tap still toggles
+  // the pause/overlay-close.
+  const escHeld = isKeyboardDown("Escape");
+  const escDown = isActionActive("Escape");
+  // Self-heal the ESC suppression latch. It is normally cleared by the Escape
+  // keyup listener, but a missed keyup (focus shift on overlay/scene close, or a
+  // cloud-automation key event) would otherwise leave it stuck true and silently
+  // kill every future ESC edge while M/Tab kept working (live audit,
+  // 2026-06-15). Once Escape is no longer physically held on a tick, release the
+  // suppression here regardless of whether the keyup event arrived.
+  if (suppressEscEdgesUntilRelease && !escHeld) suppressEscEdgesUntilRelease = false;
+  const pause = escDown;
+  const choiceA = isKeyboardDown("KeyA");
+  const choiceB = isKeyboardDown("KeyB");
+  const choiceC = isKeyboardDown("KeyC");
+  const choiceD = isKeyboardDown("KeyD");
+  const backspace = isKeyboardDown("Backspace");
 
   currentState = {
     dir,
@@ -512,18 +583,18 @@ export function tickInput() {
     right,
     up,
     down,
-    leftJustPressed: isKeyboardPressedThisTick("ArrowLeft", "KeyA") || isTouchPressedThisTick("left") || justPressed(left, previousState.left),
-    rightJustPressed: isKeyboardPressedThisTick("ArrowRight", "KeyD") || isTouchPressedThisTick("right") || justPressed(right, previousState.right),
-    upJustPressed: isKeyboardPressedThisTick("ArrowUp", "KeyW") || isTouchPressedThisTick("up") || justPressed(up, previousState.up),
-    downJustPressed: isKeyboardPressedThisTick("ArrowDown", "KeyS") || isTouchPressedThisTick("down") || justPressed(down, previousState.down),
-    navLeftJustPressed: isKeyboardPressedThisTick("ArrowLeft", "KeyA") || isTouchPressedThisTick("left") || justPressed(navLeft, previousNavLeftDown),
-    navRightJustPressed: isKeyboardPressedThisTick("ArrowRight", "KeyD") || isTouchPressedThisTick("right") || justPressed(navRight, previousNavRightDown),
-    navUpJustPressed: isKeyboardPressedThisTick("ArrowUp", "KeyW") || isTouchPressedThisTick("up") || justPressed(navUp, previousNavUpDown),
-    navDownJustPressed: isKeyboardPressedThisTick("ArrowDown", "KeyS") || isTouchPressedThisTick("down") || justPressed(navDown, previousNavDownDown),
-    confirmJustPressed: pendingConfirm || pendingTouchA || justPressed(confirm, previousConfirmDown),
-    cancelJustPressed: pendingCancel || pendingTouchB || justPressed(cancel, previousCancelDown),
+    leftJustPressed: justPressed(left, previousState.left),
+    rightJustPressed: justPressed(right, previousState.right),
+    upJustPressed: justPressed(up, previousState.up),
+    downJustPressed: justPressed(down, previousState.down),
+    navLeftJustPressed: justPressed(navLeft, previousNavLeftDown),
+    navRightJustPressed: justPressed(navRight, previousNavRightDown),
+    navUpJustPressed: justPressed(navUp, previousNavUpDown),
+    navDownJustPressed: justPressed(navDown, previousNavDownDown),
+    confirmJustPressed: justPressed(confirm, previousConfirmDown),
+    cancelJustPressed: suppressEscEdgesUntilRelease && escDown ? false : justPressed(cancel, previousCancelDown),
     a,
-    aJustPressed: pendingA || pendingTouchA || justPressed(a, previousState.a),
+    aJustPressed: justPressed(a, previousState.a),
     aJustReleased: justReleased(a, previousState.a),
     b,
     bJustPressed: justPressed(b, previousState.b),
@@ -543,7 +614,7 @@ export function tickInput() {
     fullscreen,
     fullscreenJustPressed: justPressed(fullscreen, previousState.fullscreen),
     pause,
-    pauseJustPressed: justPressed(pause, previousState.pause),
+    pauseJustPressed: suppressEscEdgesUntilRelease && escDown ? false : justPressed(pause, previousState.pause),
     choiceAJustPressed: justPressed(choiceA, isKeyboardDownFromPrevious("choiceA")),
     choiceBJustPressed: justPressed(choiceB, isKeyboardDownFromPrevious("choiceB")),
     choiceCJustPressed: justPressed(choiceC, isKeyboardDownFromPrevious("choiceC")),
@@ -565,8 +636,6 @@ export function tickInput() {
   previousCancelDown = cancel;
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
-  pendingKeyPresses.clear();
-  pendingTouchPresses.clear();
 }
 
 const previousChoiceDown = {
@@ -594,7 +663,7 @@ export function getInput(): Readonly<InputState> {
 export function setTouchControl(key: TouchControlKey, pressed: boolean) {
   if (pressed) {
     touchDown.add(key);
-    pendingTouchPresses.add(key);
+    touchTapLatch.set(key, nowProvider());
     if (key === "left" || key === "right" || key === "up" || key === "down") lastDirection = key;
   } else {
     touchDown.delete(key);
@@ -602,8 +671,15 @@ export function setTouchControl(key: TouchControlKey, pressed: boolean) {
 }
 
 export function swallowNextInputFrame() {
-  swallowNextFrame = true;
+  // The overlay-close that triggered this often comes from a still-held Escape.
+  // resetInput() zeroes currentState, so the next frame would otherwise see a
+  // false pause/cancel rising edge. Latch those edges off until Escape is released
+  // (cleared by the Escape keyup listener). Read the held state before resetInput
+  // clears it. resetInput() also clears swallowNextFrame, so arm it afterwards.
+  const escHeld = isKeyboardDown("Escape");
   resetInput();
+  swallowNextFrame = true;
+  if (escHeld) suppressEscEdgesUntilRelease = true;
 }
 
 export function bindPointerDown<T extends Phaser.GameObjects.GameObject>(
@@ -639,9 +715,10 @@ export function bindDomPointerDown(element: HTMLElement, callback: (event: Point
 
 export function resetInput() {
   keyboardDown.clear();
-  pendingKeyPresses.clear();
   touchDown.clear();
-  pendingTouchPresses.clear();
+  touchTapLatch.clear();
+  directionTapLatch.clear();
+  actionTapLatch.clear();
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
   activePointerIds.clear();
@@ -658,6 +735,8 @@ export function resetInput() {
   previousNavDownDown = false;
   previousConfirmDown = false;
   previousCancelDown = false;
+  suppressEscEdgesUntilRelease = false;
+  swallowNextFrame = false;
   if (typeof window !== "undefined" && window.rubyRuleMobileMetrics) window.rubyRuleMobileMetrics.activePointerCount = 0;
 }
 
@@ -666,6 +745,31 @@ export function setKeyboardDownForTests(codes: readonly string[]) {
   for (const code of codes) keyboardDown.add(code);
 }
 
-export function pressKeyboardForTests(codes: readonly string[]) {
-  for (const code of codes) pendingKeyPresses.add(code);
+export function pressKeyForTests(code: string) {
+  keyboardDown.add(code);
+  if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
+  if (ACTION_LATCH_CODES.has(code)) actionTapLatch.set(code, nowProvider());
+}
+
+export function releaseKeyForTests(code: string) {
+  keyboardDown.delete(code);
+  if (code === "Escape") suppressEscEdgesUntilRelease = false;
+}
+
+// Simulate a tap that is too short to be sampled while held: it latches the
+// keydown time but leaves no physical key down. Used to verify tap-buffered
+// movement.
+export function tapDirectionForTests(code: string) {
+  if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
+}
+
+// Same idea for the action/confirm/cancel keys: latch the keydown time without
+// leaving the key physically down, so a too-short A/Escape/B tap still produces
+// a single rising edge on the next tickInput().
+export function tapActionForTests(code: string) {
+  if (ACTION_LATCH_CODES.has(code)) actionTapLatch.set(code, nowProvider());
+}
+
+export function setNowProviderForTests(provider: (() => number) | null) {
+  nowProvider = provider ?? (() => (typeof performance !== "undefined" ? performance.now() : Date.now()));
 }

@@ -5,7 +5,16 @@ import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas
 import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts";
 import { unlockCodexEntry } from "../../game/codex";
 import {
+  advanceStatutoryClock,
+  getStatutoryClockReadout,
+  STATUTORY_DEADLINE_YEARS,
+  STATUTORY_QUICK_BOSS_MS_PER_YEAR,
+  STATUTORY_START_YEAR,
+  STATUTORY_BOSS_MS_PER_YEAR
+} from "../../game/statutoryClock";
+import {
   addDanneItem,
+  certifyFinalPublicationAfterDanne,
   defeatDungeonBoss,
   gameState,
   getPublicationReadinessReadout,
@@ -50,11 +59,6 @@ interface DanneBossOptions {
 
 const EGO_BOLT = DANNE_VFX_ASSETS[0];
 const BOSS_CENTER = { x: 128, y: 118 } as const;
-const STATUTORY_DEADLINE_YEARS = 30;
-const STATUTORY_START_YEAR = 20;
-const STATUTORY_COMPLETION_PRESSURE_YEARS = 8.5;
-const STATUTORY_MS_PER_YEAR = 4200;
-const STATUTORY_QUICK_MS_PER_YEAR = 700;
 const CLOUD_CORNERS: readonly Position[] = [
   { x: 72, y: 94 },
   { x: 184, y: 94 },
@@ -253,7 +257,7 @@ export class DanneBoss {
     this.phaseTransitioning = false;
   }
 
-  private async finishFight(trueEnding: boolean) {
+  private async finishFight() {
     if (this.defeated) return;
     this.defeated = true;
     this.phase = "defeated";
@@ -265,10 +269,14 @@ export class DanneBoss {
     this.clearBolts();
     this.clearMinis();
     gameState.sceneProgress.blackVaultBossCleared = 1;
+    gameState.sceneProgress.blackVaultWestOpen = 1;
+    gameState.sceneProgress.blackVaultNorthOpen = 1;
     defeatDungeonBoss("buckram_gate", "DANN-E final review hurdle defeated");
     unlockCodexEntry("danne-defeated");
     addDanneItem("treaty-fragments", 2);
-    if (trueEnding) {
+    const certification = certifyFinalPublicationAfterDanne();
+    const trueEnding = certification.trueEnding;
+    if (trueEnding && this.secretAscendant) {
       await this.showPhaseCutscene("danne-ascendant", "ascendant", "danne-portrait-historian", "The complete treaty record forces DANN-E back into review.");
     }
     await this.showPhaseCutscene("danne-defeated", "defeated", "danne-portrait-archivist");
@@ -363,17 +371,17 @@ export class DanneBoss {
       if (!this.shortcutOffered) this.offerShortcut("DANN-E offers to omit contested material instead.");
       return;
     }
-    void this.finishFight(true);
+    void this.finishFight();
   }
 
   private updateStatutoryClock(deltaMs: number) {
     const readiness = getPublicationReadinessReadout();
-    this.applyCompletionPressure(readiness.completionRatio);
-    if (!readiness.buckramGateOpen) {
-      const msPerYear = this.quickFight ? STATUTORY_QUICK_MS_PER_YEAR : STATUTORY_MS_PER_YEAR;
-      this.statutoryYear += Math.max(0, deltaMs) / msPerYear;
-    }
-    this.statutoryYear = Math.min(STATUTORY_DEADLINE_YEARS, this.statutoryYear);
+    this.statutoryYear = advanceStatutoryClock(
+      this.statutoryYear,
+      deltaMs,
+      this.quickFight ? STATUTORY_QUICK_BOSS_MS_PER_YEAR : STATUTORY_BOSS_MS_PER_YEAR,
+      readiness
+    );
     this.syncStatutoryClockUi();
     gameState.sceneProgress.statutoryClockTenths = Math.round(this.statutoryYear * 10);
     gameState.sceneProgress.buckramGateOpen = readiness.buckramGateOpen ? 1 : 0;
@@ -389,12 +397,17 @@ export class DanneBoss {
 
   private syncStatutoryClockUi() {
     const readiness = getPublicationReadinessReadout();
-    this.applyCompletionPressure(readiness.completionRatio);
-    const ratio = Phaser.Math.Clamp(this.statutoryYear / STATUTORY_DEADLINE_YEARS, 0, 1);
+    const readout = getStatutoryClockReadout({
+      elapsedYears: this.statutoryYear,
+      readiness,
+      deadlineDamageApplied: this.deadlineDamageApplied
+    });
+    this.statutoryYear = readout.elapsedYears;
+    const ratio = Phaser.Math.Clamp(readout.progressRatio, 0, 1);
     this.clockFill.setSize(Math.max(1, Math.round(214 * ratio)), 5);
-    const urgent = this.statutoryYear >= 29 || this.deadlineDamageApplied;
+    const urgent = readout.status === "at_risk" || readout.status === "deadline_missed";
     this.clockFill.setFillStyle(color(readiness.buckramGateOpen ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp), 0.92);
-    this.clockText.setText(`STATUTORY CLOCK ${this.statutoryYear.toFixed(1)} / 30 YEARS`);
+    this.clockText.setText(`STATUTORY CLOCK ${readout.elapsedYears.toFixed(1)} / ${readout.deadlineYears} YEARS`);
     this.clockStatusText
       .setText(readiness.buckramGateOpen ? "BUCKRAM GATE OPEN" : `${readiness.pendants.collected}/${readiness.pendants.required} P  ${readiness.crystals.collected}/${readiness.crystals.required} C`)
       .setColor(readiness.buckramGateOpen ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp);
@@ -437,17 +450,13 @@ export class DanneBoss {
     return readiness.missingSummary.length ? readiness.missingSummary.join(", ") : "final certification";
   }
 
-  private applyCompletionPressure(completionRatio: number) {
-    const completionFloor = STATUTORY_START_YEAR + completionRatio * STATUTORY_COMPLETION_PRESSURE_YEARS;
-    this.statutoryYear = Math.max(this.statutoryYear, completionFloor);
-  }
-
   private clockReadout() {
     const readiness = getPublicationReadinessReadout();
-    const status = readiness.buckramGateOpen ? "Buckram Gate open" : this.deadlineDamageApplied ? "deadline missed" : "running";
-    return readiness.buckramGateOpen
-      ? `${this.statutoryYear.toFixed(1)}/30 years (${status})`
-      : `${this.statutoryYear.toFixed(1)}/30 years (${status}; missing ${this.readinessMissingSummary(readiness)})`;
+    return getStatutoryClockReadout({
+      elapsedYears: this.statutoryYear,
+      readiness,
+      deadlineDamageApplied: this.deadlineDamageApplied
+    }).label;
   }
 
   private bossBody() {

@@ -1,0 +1,262 @@
+{
+  "characterCreate": {
+    "abilityLabel": "HABILIDAD",
+    "beginPrompt": "A / TOCA LA VISTA PREVIA PARA EMPEZAR",
+    "declassCoord": "COORD.\nDESCLAS.",
+    "firstStep": "PRIMERO: HABLA CON EL COMPILADOR JUNIOR",
+    "nameLabel": "NOMBRE: {displayName}",
+    "pickRole": "ELIGE CUALQUIER ROL - MISMA MISIÓN",
+    "proof": "PRUEBA",
+    "prompt": "Elige un rol de producción de FRUS de igual rango.",
+    "sourceNote": "NOTA DE\nFUENTE",
+    "subtitle": "IGUAL RANGO · DEBER DE PUBLICACIÓN COMPARTIDO",
+    "title": "CREA TU ROL EN FRUS"
+  },
+  "codex": {
+    "categoryProgress": "{category} {unlocked}/{total}",
+    "closeHint": "IZQ./DER. CATEGORÍA  ARR./ABA. ENTRADA  TAB/ESC CERRAR",
+    "closed": "Códice cerrado.",
+    "foundProgress": "ENCONTRADO {unlocked}/{total}",
+    "lockedEntry": "Encuentra esta entrada en el campo para revelar sus notas.",
+    "noArt": "SIN ARTE",
+    "opened": "Códice abierto.",
+    "summary": "Códice: revisa enemigos, PNJ, variantes de DANN-E y herramientas.",
+    "title": "CÓDICE DE CAMPO DE FRUS"
+  },
+  "controls": {
+    "full": "FLECHAS/WASD MOVER   ESPACIO/ENTER ACTUAR   E HABILIDAD\nM INV   R REL   N SONIDO   ESC CERRAR"
+  },
+  "ending": {
+    "bad": {
+      "concealedDefect": "Defecto de política ocultado",
+      "contested": "Se omitió material en disputa para ocultar un defecto de política.",
+      "danneShortcut": "Atajo de DANN-E",
+      "log": "Final malo alcanzado: el atajo de DANN-E ocultó defectos materiales.",
+      "notCertified": "El registro no puede certificarse según las normas Kellogg.",
+      "rejectedVolume": "Volumen de FRUS rechazado",
+      "returnPrompt": "PULSA A PARA VOLVER AL TÍTULO",
+      "rushed": "DANN-E apuró el volumen contra el reloj.",
+      "shortcutAccepted": "ATAJO ACEPTADO",
+      "subtitle": "Final malo: DANN-E ocultó defectos materiales.",
+      "title": "FINAL MALO"
+    },
+    "true": {
+      "boardProgress": "Tablero de producción {completed}/{total}",
+      "certifiedVolume": "Volumen certificado con buckram rojo",
+      "complete": "REGISTRO\nCOMPLETO",
+      "foreignRelations": "RELACIONES\nEXTERIORES",
+      "incompleteLog": "Final verdadero alcanzado, pero la certificación sigue visiblemente incompleta.",
+      "incompleteReview": "Revisión del final verdadero: el paquete de certificación aún tiene trabajo pendiente visible.",
+      "published": "PUBLICADO",
+      "reachedLog": "Final verdadero alcanzado: el volumen de FRUS certificado entró en el registro público.",
+      "summary": "Final verdadero: volumen de FRUS certificado publicado tras derrotar a DANN-E con un registro completo.",
+      "treatyRecord": "Registro de tratado {count}/3"
+    }
+  },
+  "guide": {
+    "archiveColleague": "Colega del archivo",
+    "areaTitle": "CAVERNA DEL ARCHIVO",
+    "citationAccepted": "Cita aceptada.",
+    "citationStamp": "Sello de cita",
+    "cite": "CITA",
+    "colleagueGreeting": "Es bueno comparar notas, {displayName}.",
+    "colleagueWaits": "Tu colega espera.",
+    "confidenceForward": "La confianza avanza.",
+    "danneQueue": "COLA DE\nDANN-E",
+    "deadlineNote": "La línea de 30 años es un plazo, no quien decide.",
+    "danneJudgment": "DANN-E puede poner una tarea en cola. No puede asumir el criterio.",
+    "frag": "FRAG",
+    "fragmentAlreadyHeldTitle": "SELLO DE CITA YA EN POSESIÓN",
+    "fragmentAlreadyHeld": "Sello de cita ya en posesión.",
+    "fragmentAlreadySecuredTitle": "FRAGMENTO YA ASEGURADO",
+    "fragmentAlreadySecured": "Fragmento de portada ya asegurado.",
+    "fragmentClaim": "Caverna del Archivo: reclama el primer fragmento del volumen de FRUS.",
+    "fragmentSecuredTitle": "FRAGMENTO DE FRUS ASEGURADO",
+    "fragmentSecured": "Fragmento de FRUS asegurado: la puerta puede abrirse.",
+    "frusVolumeFragment": "Fragmento de volumen de FRUS",
+    "gateHint": "La puerta se abre para un fragmento citado, no para una corazonada.",
+    "gateOpen": "Caverna del Archivo: abre la Puerta de Verificación.",
+    "needStampTitle": "SE NECESITA SELLO DE CITA",
+    "needStamp": "Sella el rastro de la cita antes de tomar el fragmento.",
+    "nothingToInteract": "NADA CON QUÉ INTERACTUAR",
+    "paused": "EN PAUSA",
+    "stampAcquiredTitle": "SELLO DE CITA OBTENIDO",
+    "stampAcquired": "Sello de cita obtenido: úsalo en los fragmentos citados.",
+    "stampTake": "Caverna del Archivo: toma el Sello de Cita.",
+    "stepCloser": "ACÉRCATE",
+    "stepCloserTo": "ACÉRCATE A {label}",
+    "takeStamp": "Toma el Sello de Cita, reclama el fragmento y luego abre la puerta.",
+    "thirtyYearLine": "LÍNEA DE\n30 AÑOS",
+    "toolbelt": "Nuestro cinturón: sello, lápiz, carpeta, ficha, boleta, lente y llave de buckram.",
+    "verificationGate": "Puerta de verificación",
+    "verifyGate": "PUERTA DE\nVERIF."
+  },
+  "hud": {
+    "carryItem": "Lleva {item}.",
+    "chooseAnswer": "Elige respuesta.",
+    "confirm": "CONFIRMAR",
+    "controllerConnected": "MANDO CONECTADO",
+    "findGlowing": "BUSCA UN ESCRITORIO O PUERTA BRILLANTE",
+    "goLeftTalk": "VE A LA IZQUIERDA - HABLA AL ACERCARTE",
+    "interact": "INTERACTUAR: {label}",
+    "nextLine": "SIGUIENTE LÍNEA",
+    "none": "NINGUNA",
+    "readLine": "Lee la línea.",
+    "talkJuniorCompiler": "Habla con el Compilador Junior.",
+    "toolLabel": "HERRAMIENTA {label}",
+    "touchControlsReady": "CONTROLES TÁCTILES LISTOS",
+    "useTool": "USAR {tool}"
+  },
+  "language": {
+    "changed": "Idioma cambiado a {language}.",
+    "english": "Inglés",
+    "french": "Francés",
+    "label": "IDIOMA {language}",
+    "spanish": "Español"
+  },
+  "items": {
+    "buckramKey": {
+      "detail": "Volumen certificado",
+      "desc": "Abre la puerta de publicación final",
+      "name": "Llave de buckram"
+    },
+    "citationStamp": {
+      "detail": "Procedencia verificada",
+      "desc": "Abre los cierres de notas de fuente",
+      "name": "Sello de cita"
+    },
+    "clearanceToken": {
+      "detail": "Acceso a ClassNet/desclasificación",
+      "desc": "Abre las puertas del depósito rojo",
+      "name": "Ficha de autorización"
+    },
+    "concurrenceSlip": {
+      "detail": "Respuesta de la agencia completa",
+      "desc": "Abre las puertas de derivación",
+      "name": "Boleta de concurrencia"
+    },
+    "proofLens": {
+      "detail": "Habilidad de lectura silenciosa",
+      "desc": "Revela pequeñas discrepancias",
+      "name": "Lente de prueba"
+    },
+    "redPencil": {
+      "detail": "Criterio del editor",
+      "desc": "Marca el texto sin respaldo",
+      "name": "Lápiz rojo"
+    },
+    "reviewFolder": {
+      "detail": "Cola de revisión humana",
+      "desc": "Lleva los asuntos sin resolver",
+      "name": "Carpeta de revisión"
+    }
+  },
+  "mission": {
+    "goalBanner": "META: PUBLICAR UN VOLUMEN DE FRUS FIABLE",
+    "goalStep": "OBJETIVO: PUBLICAR UN VOLUMEN DE FRUS FIABLE",
+    "heartsHint": "CORAZONES = FIABILIDAD; LOS MALOS ATAJOS DAÑAN",
+    "loop": "Encuentra documentos, verifica fuentes, resuelve equidades, corrige páginas y luego encuaderna el volumen.",
+    "missionBanner": "MISIÓN: PUBLICAR UN VOLUMEN DE FRUS FIABLE",
+    "missionStart": "Misión: publica un volumen de FRUS fiable. Primero: habla con JR.",
+    "objective": "Publica un volumen de FRUS fiable antes del plazo de 30 años.",
+    "stakes": "Los corazones de fiabilidad caen cuando se violan las normas Kellogg.",
+    "talkFirst": "PRIMERO: HABLA CON EL COMPILADOR JUNIOR",
+    "trail": "HABLAR -> LLEVAR DOCS -> VERIFICAR -> SELLAR"
+  },
+  "office": {
+    "archiveGuideDoor": "Puerta de la guía del archivo",
+    "archiveTerminal": "Terminal del archivo",
+    "assignmentMemo": "Memorando de asignación",
+    "cherryBlossomGarden": "Jardín de los cerezos en flor",
+    "controls": "MOVER · A INTERACTUAR · M MENÚ",
+    "frusCart": "Carrito de FRUS",
+    "juniorCompiler": "Compilador Junior",
+    "productionBoard": "Tablero de producción de FRUS",
+    "productionInbox": "Bandeja de producción",
+    "scopeDesk": "Escritorio de alcance / selección",
+    "senateHearingChamber": "Sala de audiencias del Senado",
+    "title": "CENTRO DE OFICINA"
+  },
+  "pause": {
+    "board": "TABLERO",
+    "certifyBuckramGate": "CERTIFICAR PUERTA BUCKRAM",
+    "close": "X",
+    "codex": "CÓDICE",
+    "crystals": "CRISTALES",
+    "dungeonMapKeys": "MAPA / LLAVES DE MAZMORRA",
+    "frusShelf": "ESTANTE FRUS {count}/{total}",
+    "hearts": "CORAZONES",
+    "next": "SIG.",
+    "nextBoard": "SIG. TABLERO",
+    "phase": "FASE",
+    "source": "FUENTE",
+    "title": "SUBPANTALLA FRUS QUEST",
+    "tool": "HERR.",
+    "treaty": "TRATADO"
+  },
+  "roles": {
+    "compiler": {
+      "ability": "Sentido del archivo",
+      "detail": "Verifica la selección y la procedencia.",
+      "name": "Compilador"
+    },
+    "declassCoordinator": {
+      "ability": "Mapa de equidades",
+      "detail": "Encamina las equidades clasificadas.",
+      "name": "Coordinador de desclasificación"
+    },
+    "editor": {
+      "ability": "Lápiz rojo",
+      "detail": "Resuelve estilo, significado y consultas.",
+      "name": "Editor"
+    },
+    "proofreader": {
+      "ability": "Lectura silenciosa",
+      "detail": "Compara el manuscrito y la prueba.",
+      "name": "Corrector"
+    },
+    "sourceNoteSpecialist": {
+      "ability": "Comprobación de procedencia",
+      "detail": "Prepara las notas de fuente para publicación.",
+      "name": "Especialista en notas de fuente"
+    }
+  },
+  "tapToStart": {
+    "confirmHint": "IZQ./DER. SELECCIONAR  A CONFIRMAR",
+    "continue": "CONTINUAR",
+    "continueQuest": "¿CONTINUAR LA MISIÓN?",
+    "newGame": "NUEVA PARTIDA",
+    "pressStart": "PULSA START",
+    "saveSummary": "{scene}  DOC {documentPoints}",
+    "tapUnlock": "TOCA UNA VEZ PARA ACTIVAR EL SONIDO",
+    "title": "RUBY RULE",
+    "unlockAudio": "Toca o pulsa start para activar el audio."
+  },
+  "title": {
+    "arch": "ARCH",
+    "archiveTerminal": "TERMINAL DEL ARCHIVO",
+    "conf": "-CONF-",
+    "frusMap": "MAPA DE FRUS",
+    "gate": "PUERTA",
+    "net": "RED",
+    "productionMap": "MAPA DE PRODUCCIÓN DE FRUS",
+    "pressStart": "PULSA START PARA EMPEZAR",
+    "questRoute": "RUTA DE LA MISIÓN FRUS",
+    "read": "LEER",
+    "ref": "DER",
+    "skipWarning": "B: OMITIR AVISO [{mark}]",
+    "sourceTrail": "RASTRO DE FUENTES DE FRUS: HISTORY.STATE.GOV",
+    "start": "A / ENTER EMPEZAR",
+    "subtitle": "THE FRUS QUEST",
+    "title": "RUBY RULE"
+  },
+  "warning": {
+    "continue": "TOCA / PULSA A PARA CONTINUAR",
+    "fictional": "IA PÍCARA FICTICIA",
+    "log": "Aviso ficticio de DANN-E antes del título.",
+    "pressures": "PRESIONA HACIA MALOS ATAJOS",
+    "shortDismiss": "DANN-E es una IA pícara ficticia. Toca para continuar.",
+    "sourceTrail": "RASTRO DE FUENTES DE FRUS: HISTORY.STATE.GOV",
+    "title": "AVISO DE DANN-E"
+  }
+}
