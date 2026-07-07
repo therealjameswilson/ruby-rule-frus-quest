@@ -64,4 +64,37 @@ describe("weaponState", () => {
     expect(pencilEast.height).toBeGreaterThan(stampNorth.height);
     expect(folderSouth.width).toBeGreaterThan(stampNorth.width);
   });
+
+  it("keeps one swing id through the active window so a target cannot be hit twice", () => {
+    const { WeaponStateController, WEAPON_TIMINGS } = weaponState;
+    const state = new WeaponStateController();
+    const timing = WEAPON_TIMINGS.review_folder;
+    const registeredHits = new Set<string>();
+
+    const registerHit = (targetId: string, nowMs: number) => {
+      const readout = state.readout(nowMs);
+      if (!readout.active) return false;
+      const key = `${readout.swingId}:${targetId}`;
+      if (registeredHits.has(key)) return false;
+      registeredHits.add(key);
+      return true;
+    };
+
+    expect(state.tryStart("review_folder", 5000)).toBe(true);
+    const activeStart = 5000 + timing.windupMs + 1;
+    const firstSwingId = state.readout(activeStart).swingId;
+
+    expect(registerHit("danne-mark-i", activeStart)).toBe(true);
+    const activeEndInside = 5000 + timing.windupMs + timing.activeMs - 1;
+    expect(registerHit("danne-mark-i", activeStart + Math.floor(timing.activeMs / 2))).toBe(false);
+    expect(state.readout(activeEndInside).swingId).toBe(firstSwingId);
+    expect(registerHit("danne-cloud", activeEndInside)).toBe(true);
+
+    const idleAt = 5000 + timing.windupMs + timing.activeMs + timing.cooldownMs + 1;
+    expect(state.readout(idleAt).phase).toBe("idle");
+    expect(state.tryStart("review_folder", idleAt)).toBe(true);
+    const nextActive = idleAt + timing.windupMs + 1;
+    expect(state.readout(nextActive).swingId).toBe(firstSwingId + 1);
+    expect(registerHit("danne-mark-i", nextActive)).toBe(true);
+  });
 });

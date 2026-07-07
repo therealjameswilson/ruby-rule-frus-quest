@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  awardVolumeAssemblyPiece,
+  createGameSaveData,
+  gameState,
+  getVolumeAssemblyReadout,
+  resetGameState,
+  restoreGameSaveData,
+  setSceneState
+} from "../game/state";
+import {
   createInitialVolumeAssemblyState,
   earnVolumeAssemblyPiece,
   markVolumeAssemblyCeremonyPlayed,
@@ -85,5 +94,42 @@ describe("volumeAssembly", () => {
     expect(readout.complete).toBe(true);
     expect(readout.ceremonyPlayed).toBe(true);
     expect(readout.earnedCount).toBe(5);
+  });
+
+  it("persists earned progress through the save/restore boundary", () => {
+    resetGameState();
+    setSceneState("OfficeScene", "explore", "Testing volume assembly persistence.");
+
+    expect(awardVolumeAssemblyPiece("spine", "test reward").changed).toBe(true);
+    expect(awardVolumeAssemblyPiece("front_board", "test reward").changed).toBe(true);
+    const saved = createGameSaveData();
+
+    resetGameState();
+    expect(getVolumeAssemblyReadout().earnedCount).toBe(0);
+
+    const restoredScene = restoreGameSaveData(saved);
+    expect(restoredScene).toBe("OfficeScene");
+    expect(gameState.volumeAssembly.earnedPieces).toEqual(["spine", "front_board"]);
+    expect(getVolumeAssemblyReadout()).toMatchObject({
+      earnedCount: 2,
+      total: 5,
+      complete: false,
+      ceremonyUnlocked: false
+    });
+  });
+
+  it("sets the global completion flag when the fifth cover piece is earned", () => {
+    resetGameState();
+    setSceneState("OfficeScene", "explore", "Testing volume assembly completion.");
+
+    for (const piece of VOLUME_ASSEMBLY_PIECES) {
+      awardVolumeAssemblyPiece(piece.id, "test reward");
+    }
+
+    const readout = getVolumeAssemblyReadout();
+    expect(readout.earnedCount).toBe(5);
+    expect(readout.complete).toBe(true);
+    expect(readout.ceremonyUnlocked).toBe(true);
+    expect(gameState.sceneProgress.volumeAssemblyComplete).toBe(1);
   });
 });

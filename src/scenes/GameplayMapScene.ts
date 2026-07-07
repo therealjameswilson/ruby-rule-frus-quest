@@ -521,7 +521,12 @@ export class GameplayMapScene extends Phaser.Scene {
         setObjective("Dodge Ego bolts, then counter with the correct FRUS tool.");
         this.objectiveOverrideMsRemaining = 1100;
       }
-      const hitResult = enemy.tryPlayerToolHit(this.player.activeActionHitbox, gameState.equippedProcessItem, playerPosition);
+      const hitResult = enemy.tryPlayerToolHit(
+        this.player.activeActionHitbox,
+        gameState.equippedProcessItem,
+        playerPosition,
+        gameState.playerCombat.weapon.swingId
+      );
       if (hitResult === "wrong-tool") {
         setObjective(`Wrong counter. Equip ${enemy.readout().weakness.replace(/_/g, " ").toUpperCase()} for ${enemy.readout().label}.`);
         this.objectiveOverrideMsRemaining = 1250;

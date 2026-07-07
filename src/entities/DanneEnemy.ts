@@ -126,6 +126,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private stunnedUntil = 0;
   private nextProjectileAt = 0;
   private nextToolHitAt = 0;
+  private lastDamagingSwingId = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneEnemyOptions) {
     super(scene, x, y, scene.textures.exists(options.config.textureKey) ? options.config.textureKey : "snes-wall-danne-queue");
@@ -227,9 +228,15 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     return { projectileHit: this.updateProjectiles(timeMs, deltaMs, playerFootBox) };
   }
 
-  tryPlayerToolHit(hitbox: Phaser.Geom.Rectangle | null, equippedTool: ProcessItemId | null, source: Position) {
+  tryPlayerToolHit(
+    hitbox: Phaser.Geom.Rectangle | null,
+    equippedTool: ProcessItemId | null,
+    source: Position,
+    swingId = 0
+  ) {
     if (this.defeated || !hitbox || !Phaser.Geom.Intersects.RectangleToRectangle(this.getHurtbox(), hitbox)) return "miss" as const;
     if (this.scene.time.now < this.nextToolHitAt) return "cooldown" as const;
+    if (swingId > 0 && this.lastDamagingSwingId === swingId) return "cooldown" as const;
     this.nextToolHitAt = this.scene.time.now + 170;
     const correctTool = equippedTool === this.weakness;
     this.knockbackFrom(source, correctTool ? 7 : 12);
@@ -240,6 +247,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       retroAudio.warning();
       return "wrong-tool" as const;
     }
+    this.lastDamagingSwingId = swingId;
     this.takeDamage(1, equippedTool);
     return this.defeated ? "defeated" as const : "damaged" as const;
   }

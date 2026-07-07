@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- DANN-E/weapon/volume automated coverage pass (2026-07-06):
+  - Added direct unit coverage for live DANN-E enemy interactions: matching-tool damage, wrong-tool knockback without damage, loot/volume-piece awards on defeat, and room-clear gate unlock behavior.
+  - Added save/restore coverage for FRUS volume assembly progress and verified the 5/5 completion flag is set when the final cover piece is earned.
+  - Strengthened weapon-state coverage so a single active swing keeps one swing id and can be used to prevent repeat hits on the same DANN-E target.
+  - Verification: `npm run test` passes (77 files / 375 tests), `npm run build` passes, and the required web-game client completed against Black Vault with DANN-E threat/readout state present.
 - Canonical DANN-E eight-variant combat correction (2026-07-06):
   - Revised the live DANN-E combat registry to use exactly the eight PR #7/#8 variant assets: Prime, Mark I, Colossus, Cloud, Executive, Swarm, Defeated, and Ascendant.
   - Removed redactor-drone and censorship-wraith from the DANN-E variant registry so those extra pack enemies no longer masquerade as DANN-E forms.
