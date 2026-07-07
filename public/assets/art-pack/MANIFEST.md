@@ -161,6 +161,16 @@ Slice with `cellW = imageWidth / 8`, `cellH = imageHeight / 3`.
 > All five sheets verified: exact dimensions, on an exact pixel grid, RGBA with
 > alpha 0 background, no anti-aliasing (≤16 distinct colors each, all within the
 > locked palette above), and all 22 frame cells populated.
+## 9. Secrets (hidden reading-room bonus area)
+
+Optional secret content reached via a hidden passage. See
+`secrets/MANIFEST.md` for the full tile map, animation, and palette notes.
+
+| Filename | Dimensions | Grid / layout | Intended use | Transparency |
+|---|---|---|---|---|
+| `secrets/tileset_reading_room_16x16_native.png` | 112×112 | 7×7 grid (16px tiles) | Hidden reading-room bonus-area tileset (native 1× source): stone floors/walls, disguised + revealed hidden-passage tiles, doorway/arch, bookshelves, reading table/chair/pedestal, globe, candle & green banker lamp (+ glow overlays), wall sconce, framed map, brass FRUS placard; rows 5-7 seamless fills | Yes |
+| `secrets/tileset_reading_room_16x16.png` | 896×896 | 7×7 grid (128px cells) | 8× crisp nearest-neighbor upscale of the native reading-room tileset (display/master) | Yes |
+| `secrets/collectible_first_edition_frus_32x32.png` | 128×32 | 4 frames × 32×32 (horizontal) | Rare collectible: gilded "first edition" FRUS volume, sparkle-animated (4 frames, ~8fps / ~500ms loop) — the optional secret reward | Yes |
 
 ---
 

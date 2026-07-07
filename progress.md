@@ -3937,3 +3937,12 @@ frames, ~8 fps) showing the pieces binding into one ruby volume, and a 128×128
 completed-volume hero sprite for the ending. Deterministic generator at
 `scripts/generate-volume-assembly.py`; palette-locked to `src/art/palette.ts`;
 verified for exact dimensions, transparent corners, and strict palette membership.
+## 2026-07-06 Hidden reading-room secret art
+
+- Added an optional hidden reading-room bonus area and its rare collectible reward, generated as original SNES-style pixel art (hard edges, locked limited palette, no anti-aliasing).
+- New assets under `public/assets/art-pack/secrets/`:
+  - `tileset_reading_room_16x16_native.png` (112×112, 7×7 grid of 16px tiles) and its exact 8× nearest-neighbor display upscale `tileset_reading_room_16x16.png` (896×896). Includes stone floors/walls, a disguised hidden-passage wall + its revealed edge, doorway/arch, bookshelves, reading table/chair/pedestal, globe, candle + green banker lamp with glow overlays, wall sconce, framed map, brass FRUS placard, and seamless fill rows.
+  - `collectible_first_edition_frus_32x32.png` (128×32, 4 frames of 32×32) — a gilded "first edition" FRUS volume with a rotating gold sparkle animation (~8fps / ~500ms loop).
+- Palette style-locked to the archive / stone-dungeon pack (federal stone, ruby buckram, gold stamp, cream paper, archival wood, reading-room green, warm candle glow).
+- Documented in a new `secrets/MANIFEST.md` plus a new section 9 in the top-level `art-pack/MANIFEST.md`.
+- Verification: PIL checks confirmed exact dimensions, RGBA with only alpha 0/255 (no anti-aliasing), 29-color tileset / 12-color collectible limited palettes, the display tileset is a pixel-exact ×8 nearest-neighbor upscale (identical color count), and each of the 4 collectible frames contains the volume plus distinct sparkles.
