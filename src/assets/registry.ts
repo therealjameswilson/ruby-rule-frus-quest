@@ -5,7 +5,8 @@ export const OVERWORLD_REGIONS = {
   pacific: "art-pack/overworld_maps/02_pacific_theater.png",
   middle_east: "art-pack/overworld_maps/03_middle_east_crossroads.png",
   latin_america: "art-pack/overworld_maps/04_latin_america.png",
-  africa: "art-pack/overworld_maps/05_africa_cold_war_front.png"
+  africa: "art-pack/overworld_maps/05_africa_cold_war_front.png",
+  overseas_post: "art-pack/world2/01_overseas_post_region.png"
 } as const;
 
 export const GAMEPLAY_MAPS = {
@@ -52,7 +53,9 @@ export const FRUS_VOLUMES = {
 export const SCREENS = {
   frus_world_map: "art-pack/screens/frus_world_map.jpg",
   title_screen_16bit_sharp_256x240: "art-pack/screens/title_screen_16bit_sharp_256x240.png",
-  title_screen_256x224: "art-pack/screens/title_screen_256x224.png"
+  title_screen_256x224: "art-pack/screens/title_screen_256x224.png",
+  title_screen_frus_chest_256x240: "art-pack/screens/title_screen_frus_chest_256x240.png",
+  ending_binding_ceremony_256x240: "art-pack/screens/ending_binding_ceremony_256x240.png"
 } as const;
 
 export const ACCESSIBILITY_OVERLAYS = {

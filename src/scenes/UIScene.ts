@@ -11,6 +11,7 @@ import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout } from 
 import { addGamepadConnectionListener, getInput, updateInputCallbacks } from "../input/InputState";
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
+import { getString } from "../systems/i18n";
 import { applyIntegerZoom } from "../systems/pixelPerfect";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { questBandCoverFragmentSlots, questBandCrystalSlots } from "./questBandCue";
@@ -66,7 +67,7 @@ export class UIScene extends Phaser.Scene {
     this.createGamepadToast();
     this.removeGamepadListener = addGamepadConnectionListener((connected) => {
       this.controls.setGamepadSuppressed(connected);
-      this.showGamepadToast(connected ? "CONTROLLER CONNECTED" : "TOUCH CONTROLS READY");
+      this.showGamepadToast(connected ? getString("hud.controllerConnected") : getString("hud.touchControlsReady"));
     });
     updateInputCallbacks({
       toggleTouchOverlay: () => {
@@ -216,7 +217,7 @@ export class UIScene extends Phaser.Scene {
     if (now - this.questBandLastRefresh < 120) return;
     this.questBandLastRefresh = now;
 
-    const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? "NONE";
+    const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? getString("hud.none");
     const objectiveLine = this.compactObjective(activeSceneKey);
     const actionLine = this.compactActionLine(toolLabel);
     const signature = [
@@ -239,17 +240,17 @@ export class UIScene extends Phaser.Scene {
     this.questBandText.setText(objectiveLine);
     this.questBandVerbText.setText("A");
     this.questBandCueText.setText(actionLine);
-    this.questBandToolText.setText(`TOOL ${toolLabel}`);
+    this.questBandToolText.setText(getString("hud.toolLabel", { label: toolLabel }));
     this.questBandVolumeText.setText("");
     this.hideDetailedQuestBandRelics();
   }
 
   private compactObjective(activeSceneKey: string | null) {
-    if (gameState.mode === "dialog") return "Read line.";
-    if (gameState.mode === "choice") return "Choose answer.";
-    if (gameState.heldItem) return clampQuestBandText(`Carry ${gameState.heldItem}.`);
+    if (gameState.mode === "dialog") return getString("hud.readLine");
+    if (gameState.mode === "choice") return getString("hud.chooseAnswer");
+    if (gameState.heldItem) return clampQuestBandText(getString("hud.carryItem", { item: gameState.heldItem }));
     if (activeSceneKey === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
-      return clampQuestBandText("Talk to the Junior Compiler.");
+      return clampQuestBandText(getString("hud.talkJuniorCompiler"));
     }
     const objective = gameState.objective.replace(/^Mission:\s*/i, "");
     const firstSentence = objective.split(".")[0]?.trim() || objective.trim();
@@ -257,14 +258,14 @@ export class UIScene extends Phaser.Scene {
   }
 
   private compactActionLine(toolLabel: string) {
-    if (gameState.mode === "dialog") return "NEXT LINE";
-    if (gameState.mode === "choice") return "CONFIRM";
+    if (gameState.mode === "dialog") return getString("hud.nextLine");
+    if (gameState.mode === "choice") return getString("hud.confirm");
     if (gameState.currentScene === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
-      return "GO LEFT - TALK WHEN CLOSE";
+      return getString("hud.goLeftTalk");
     }
-    if (gameState.nearestInteractable) return `INTERACT: ${gameState.nearestInteractable.toUpperCase().slice(0, 22)}`;
-    if (toolLabel !== "NONE") return `USE ${toolLabel}`;
-    return "FIND A GLOWING DESK OR DOOR";
+    if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
+    if (toolLabel !== getString("hud.none")) return getString("hud.useTool", { tool: toolLabel });
+    return getString("hud.findGlowing");
   }
 
   private hideDetailedQuestBandRelics() {
