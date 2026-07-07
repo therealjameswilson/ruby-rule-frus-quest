@@ -11,6 +11,7 @@ import {
   updateInputCallbacks
 } from "./input/InputState";
 import { retroAudio, type AudioDebugState } from "./systems/audio";
+import { getLanguage } from "./systems/i18n";
 import { applyIntegerZoom, computeIntegerZoom } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
 
@@ -73,6 +74,7 @@ function renderConciseGameToText() {
       scene: gameState.currentScene,
       mode: gameState.mode,
       objective: gameState.objective,
+      language: getLanguage(),
       latestMessage: gameState.latestMessage,
       player: gameState.player,
       playerFacing: gameState.playerFacing,

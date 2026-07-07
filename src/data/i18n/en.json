@@ -1,0 +1,66 @@
+{
+  "hud": {
+    "carryItem": "Carry {item}.",
+    "chooseAnswer": "Choose answer.",
+    "confirm": "CONFIRM",
+    "controllerConnected": "CONTROLLER CONNECTED",
+    "findGlowing": "FIND A GLOWING DESK OR DOOR",
+    "goLeftTalk": "GO LEFT - TALK WHEN CLOSE",
+    "interact": "INTERACT: {label}",
+    "nextLine": "NEXT LINE",
+    "none": "NONE",
+    "readLine": "Read line.",
+    "talkJuniorCompiler": "Talk to the Junior Compiler.",
+    "toolLabel": "TOOL {label}",
+    "touchControlsReady": "TOUCH CONTROLS READY",
+    "useTool": "USE {tool}"
+  },
+  "language": {
+    "changed": "Language set to {language}.",
+    "english": "English",
+    "french": "French",
+    "label": "LANG {language}",
+    "spanish": "Spanish"
+  },
+  "mission": {
+    "goalBanner": "GOAL: PUBLISH ONE RELIABLE FRUS VOLUME",
+    "heartsHint": "HEARTS = RELIABILITY; BAD SHORTCUTS HURT",
+    "loop": "Find documents, verify sources, resolve equities, proof pages, then bind the volume.",
+    "objective": "Publish a reliable FRUS volume before the 30-year deadline."
+  },
+  "pause": {
+    "board": "BOARD",
+    "certifyBuckramGate": "CERTIFY BUCKRAM GATE",
+    "close": "X",
+    "codex": "CODEX",
+    "crystals": "CRYSTALS",
+    "dungeonMapKeys": "DUNGEON MAP / KEYS",
+    "frusShelf": "FRUS VOLUME SHELF {count}/{total}",
+    "hearts": "HEARTS",
+    "next": "NEXT",
+    "nextBoard": "NEXT BOARD",
+    "phase": "PHASE",
+    "source": "SOURCE",
+    "title": "FRUS QUEST SUBSCREEN",
+    "tool": "TOOL",
+    "treaty": "TREATY"
+  },
+  "title": {
+    "arch": "ARCH",
+    "archiveTerminal": "ARCHIVE TERMINAL",
+    "conf": "-CONF-",
+    "frusMap": "FRUS MAP",
+    "gate": "GATE",
+    "net": "NET",
+    "productionMap": "FRUS PRODUCTION MAP",
+    "pressStart": "PRESS START TO BEGIN",
+    "questRoute": "FRUS QUEST ROUTE",
+    "read": "READ",
+    "ref": "REF",
+    "skipWarning": "B: SKIP WARNING [{mark}]",
+    "sourceTrail": "FRUS SOURCE TRAIL: HISTORY.STATE.GOV",
+    "start": "A / ENTER START",
+    "subtitle": "THE FRUS QUEST",
+    "title": "RUBY RULE"
+  }
+}

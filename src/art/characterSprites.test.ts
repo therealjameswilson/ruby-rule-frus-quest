@@ -47,7 +47,13 @@ describe("character sprite frame layout", () => {
     }
   });
 
-  it("uses the documented 4x4 sheet pose indices", () => {
+  it("maps every direction and action pose to the documented in-bounds cells", () => {
+    // The native sheets now ship a clean, contiguous body in every cell (the
+    // per-frame pixel checks in "native sprite sheet frame content" verify this
+    // against the real PNGs). The frame table must therefore address every cell
+    // it plays: idle anchored at frame 0, and each of the 15 referenced poses a
+    // unique, in-bounds index. A merge that scrambled or collapsed the table
+    // would show up here as an out-of-range or duplicated frame.
     expect(FRAMES.idle).toEqual({ down: 0, up: 1, left: 2, right: 3 });
     expect(FRAMES.walk).toEqual({
       down: [4, 5],
@@ -56,6 +62,17 @@ describe("character sprite frame layout", () => {
       right: [10, 11]
     });
     expect(FRAMES.action).toEqual({ interact: 12, reading: 13, approval: 14 });
+    const indices = [
+      ...Object.values(FRAMES.idle),
+      ...Object.values(FRAMES.walk).flat(),
+      ...Object.values(FRAMES.action)
+    ];
+    for (const index of indices) {
+      expect(Number.isInteger(index)).toBe(true);
+      expect(index).toBeGreaterThanOrEqual(0);
+      expect(index).toBeLessThan(FRAME_COUNT);
+    }
+    expect(new Set(indices).size).toBe(indices.length);
   });
 });
 

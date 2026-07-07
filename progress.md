@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Localization scaffold pass (2026-07-07):
+  - Added a typed `src/systems/i18n.ts` helper with `getString(key)` lookup, interpolation, localStorage persistence, and English fallback for missing Spanish/French keys.
+  - Added the English baseline strings beside the existing Spanish/French packs and extended those packs with language/pause-menu labels.
+  - Wired the title screen language selector (`LANG EN/ES/FR`, pointer or `L`) and localized the procedural title, route strip, source shoutout, mission plaque, skip-warning toggle, HUD quest band, gamepad/touch toasts, and pause/subscreen labels.
+  - Added focused helper tests covering fallback, interpolation, and language selection.
 - New Game+ unlock pass (2026-07-06):
   - Added persistent New Game+ metadata (`ngPlusUnlocked`, `volumesCompleted`) separate from the normal save slot, so clearing or starting a fresh game does not erase completion history.
   - Completing the Buckram Gate binding/publication ceremony now counts the volume once per run, unlocks New Game+, and displays the lifetime completed-volume count on the title and ending summary screens.
@@ -3914,3 +3919,105 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - direct Playwright screenshots verified Guide, Archive, and Network, plus a forced live `ChoicePrompt` in Network;
   - visual proof: `docs/screenshots/hud-prompt-cleanup/guide-final.png`, `docs/screenshots/hud-prompt-cleanup/archive-final.png`, and `docs/screenshots/hud-prompt-cleanup/network-choice-final.png`;
   - browser pass reported only WebGL `ReadPixels` warnings caused by screenshot capture, with no page errors.
+
+## 2026-07-06 Promo storyboard frames for demo trailer
+
+- Added six storyboard-style 16-bit scene frames under `docs/promo/` for the demo trailer / GIF and consulting pitch decks: title reveal, character creation, first DANN-E encounter, volume-assembly progress, miniboss fight, and binding-ceremony ending.
+- Each frame is an exact 256x224 indexed-color PNG with no anti-aliasing, built on a single fixed 38-color palette curated from the existing FRUS art pack (archive browns, gold leaf, ruby buckram red, navy, cherry-blossom pink) so they match the shipped title/DANN-E/volume/garden art.
+- Frames are generated deterministically by `docs/promo/generate_frames.py` (hand-coded 5x7 pixel font, ordered Bayer dithering, no smoothing); added `docs/promo/MANIFEST.md` with per-file path, dimensions, scene label, trailer order, and palette/source notes.
+- Verification: all six PNGs confirmed `(256, 224)` mode `P`, 13-23 colors each, and 0 stray colors outside the palette (no anti-aliasing).
+
+## 2026-07-06 DANN-E combat & pickup VFX sprite sheets
+
+- Added seven original 16-bit SNES/ALttP-style VFX sprite strips under `public/assets/art-pack/vfx/`, generated deterministically by `scripts/generate-vfx-sprites.py`:
+  - `vfx_hit_spark_strip.png` — 4 frames, 16x16 (hit-spark burst);
+  - `vfx_defeat_dissolve_strip.png` — 5 frames, 32x32 (defeat pixel-scatter);
+  - `vfx_doc_point_sparkle_strip.png` — 3 frames, 8x8 (document-point pickup sparkle);
+  - `vfx_frus_fragment_glow_strip.png` — 4 frames, 16x16 (ruby-red buckram FRUS volume fragment glow/pickup);
+  - `vfx_citation_stamp_swing_strip.png`, `vfx_red_pencil_swing_strip.png`, `vfx_review_folder_swing_strip.png` — 3 frames each, 24x24, arcs colored to match the Citation Stamp / Red Pencil / Review Folder weapon icons in the item registry.
+- Palette matched to the existing sprite frames and FRUS volume art (`#0F0F0F` outline, `#7A1020` ruby buckram, `#D6A23A` brass, `#B89A5A` manila). All output is hard-edged pixel art: every pixel is fully transparent or fully opaque, no anti-aliasing, transparent background, limited palette.
+- Documented frame size/count/speed for each strip in `public/assets/art-pack/vfx/MANIFEST.md`.
+- Verification: independent PIL check confirmed exact dimensions, zero soft-alpha pixels, and zero off-palette colors across all seven strips.
+## 2026-07-06 DANN-E miniboss arena tileset
+
+- Added `public/assets/art-pack/tilesets/gameplay/tileset_miniboss_arena_16x16.png` (1024×1024 display) plus its `*_native.png` (128×128) source, matching the `tileset_interiors_16x16` conventions exactly: 8×8 grid, 16px native tiles, 128px display cells, crisp 8× nearest-neighbor upscale, near-black 1px outlines, federal palette family (ruby red, federal blue, cream paper, gray stone, brass).
+- Theme: a federal office floor overtaken by a shutdown/stop-work antagonist. Tiles cover walls, office + cracked-tile floors, hazard floors (paper debris, red-glow seams, warning chevrons, scorch, grate), scattered paper stacks + file boxes, overhead light fixtures (on/flicker/off/broken-spark), a full caution-tape border set (4 edges + 4 corners + cross), and a locked vault door with 2×2 CLOSED and OPEN-on-clear states plus single-tile variants.
+- Floors/walls are opaque; props, lights, tape, and vault tiles use transparent backgrounds so they drop into Phaser tilemaps as overlay layers without rescaling.
+- Documented in `MANIFEST.md` (section 2a) and `manifest.json` (`tilesets.tileset_miniboss_arena_16x16`).
+- Verification: dimensions confirmed multiples of 16; display is an exact 8× nearest upscale of native (0 pixel mismatches → no anti-aliasing); tight 66-color palette; floor/wall tiles fully opaque, prop tiles transparent-backed; `manifest.json` re-parses as valid JSON.
+## 2026-07-06 — FRUS volume assembly art sequence
+Added `public/assets/art-pack/volume-assembly/`: five cover-piece sprites (spine,
+front board, title plate, ribbon marker, seal/stamp) each as a 32×32 pickup + a
+64×64 equipped/glow variant, a 6-frame 384×64 assembly animation sheet (64×64
+frames, ~8 fps) showing the pieces binding into one ruby volume, and a 128×128
+completed-volume hero sprite for the ending. Deterministic generator at
+`scripts/generate-volume-assembly.py`; palette-locked to `src/art/palette.ts`;
+verified for exact dimensions, transparent corners, and strict palette membership.
+## 2026-07-06 Hidden reading-room secret art
+
+- Added an optional hidden reading-room bonus area and its rare collectible reward, generated as original SNES-style pixel art (hard edges, locked limited palette, no anti-aliasing).
+- New assets under `public/assets/art-pack/secrets/`:
+  - `tileset_reading_room_16x16_native.png` (112×112, 7×7 grid of 16px tiles) and its exact 8× nearest-neighbor display upscale `tileset_reading_room_16x16.png` (896×896). Includes stone floors/walls, a disguised hidden-passage wall + its revealed edge, doorway/arch, bookshelves, reading table/chair/pedestal, globe, candle + green banker lamp with glow overlays, wall sconce, framed map, brass FRUS placard, and seamless fill rows.
+  - `collectible_first_edition_frus_32x32.png` (128×32, 4 frames of 32×32) — a gilded "first edition" FRUS volume with a rotating gold sparkle animation (~8fps / ~500ms loop).
+- Palette style-locked to the archive / stone-dungeon pack (federal stone, ruby buckram, gold stamp, cream paper, archival wood, reading-room green, warm candle glow).
+- Documented in a new `secrets/MANIFEST.md` plus a new section 9 in the top-level `art-pack/MANIFEST.md`.
+- Verification: PIL checks confirmed exact dimensions, RGBA with only alpha 0/255 (no anti-aliasing), 29-color tileset / 12-color collectible limited palettes, the display tileset is a pixel-exact ×8 nearest-neighbor upscale (identical color count), and each of the 4 collectible frames contains the volume plus distinct sparkles.
+## 2026-07-06 HUD icon polish pack
+
+- Added an original 16-bit HUD icon set under `public/assets/art-pack/hud/`,
+  generated deterministically by `scripts/generate-hud-icon-pack.py` (PIL,
+  hard-edged pixel grid, no anti-aliasing, transparent backgrounds, project NES
+  palette from `src/art/palette.ts`), matching the `UIScene` quest-band look:
+  - reliability/confidence meter frame;
+  - document-points counter icon;
+  - process stamp icons: Rule, Source, Network, Referral, Read;
+  - equipped-tool slot frames (empty + active);
+  - 5-segment volume-assembly progress tracker bar (spine, front board, title
+    plate, ribbon marker, seal/stamp) plus per-segment icons.
+- Each icon ships as a 16×16 master and a crisp 2× nearest-neighbour 32×32
+  variant; the tracker bar ships at 80×16 and 160×32.
+- Documented every file in `public/assets/art-pack/MANIFEST.md` (new section 9).
+- Verification: automated check confirmed all 32 PNGs are RGBA with exact
+  dimensions, binary alpha (0/255 only, no AA), and colors strictly within the
+  NES palette; visual montage inspected for readability.
+## 2026-07-06 Colorblind-accessible UI overlays
+
+- Audited `public/assets/art-pack/` and HUD code (`src/scenes/UIScene.ts`, `src/systems/reliability.ts`, `NetworkScene`, `danne-pack/ui/18_ui_boss_healthbar.png`) for state cues conveyed by color alone: verification/HP cells (red vs slate), confidence/clarity meter tiers, inventory-slot equipped/acquired/locked, process-stamp earned/pending, dungeon-key held, minimap room current/cleared/locked, boss critical + phase gems, OpenNet/ClassNet routing, and enemy weakness.
+- Added 21 shape/pattern overlay assets under `public/assets/art-pack/accessibility/` (8×8 and 16×16) so each state reads without color — stripes/hatch/dots for meters, padlock/star/dot for slots, check/ring for stamps, chevron/check/X for rooms, diamond/exclamation for boss state, ring/cross for network, crosshair for weakness. Every glyph has a black outline over a light palette fill for contrast on any background.
+- Documented each file (path, dimensions, state/use, shape meaning, placement/animation) in `public/assets/art-pack/accessibility/MANIFEST.md`; linked it from the top-level art-pack `MANIFEST.md`.
+- Verification: Python/PIL checks confirmed all 21 PNGs are RGBA with a transparent region, no partial-alpha (no smoothing artifacts), correct 8×8/16×16 dimensions, and only palette-consistent colors; scaled montage visually confirmed each glyph is legible and distinct.
+## 2026-07-06 New Game+ veteran editor cosmetic pack
+
+- Added a cosmetic palette-swap sprite pack under `public/assets/art-pack/ng-plus/` for the five production player roles (Proofreader, Compiler, Editor, Declass Reviewer, Source Note Specialist), intended as a New Game+ unlock reward.
+- Each veteran variant is a strict per-role color-lookup recolor of its production native sheet (Proofreader←`sprite_reviewer`, Compiler←`sprite_compiler`, Editor←`sprite_editor`, Declass Reviewer←`sprite_declassification_coordinator`, Source Note Specialist←`sprite_records_officer`), following the `getCharacterKeyForProcessRole()` mapping.
+- Distinguished ruby-buckram base with sparing gold/silver trim; skin, hair, held documents, and outlines preserved for readability. Exact 128×192 4×4 / 32×48 frame layout, animation ordering, and transparency retained; 1024×1536 8× nearest masters mirror the base masters + `native/` convention.
+- Reproducible via `scripts/generate-ng-plus-veteran-pack.py`. Manifest metadata in `ng-plus/MANIFEST.md` plus a section 9 pointer in the top-level `art-pack/MANIFEST.md`.
+- Verification (Python/PIL + ImageMagick, no code paths touched):
+  - all native sheets exactly 128×192, masters exactly 1024×1536;
+  - alpha mask identical to each source (transparency preserved), zero partial-alpha pixels (no anti-aliasing / hard pixel edges);
+  - output opaque-palette count ≤ source for every role (palette-limited);
+  - each master is a byte-for-byte 8× nearest-neighbor upscale of its native sheet (no smoothing);
+  - side-by-side visual review of all five recolors confirmed retained silhouette/identity with the ruby-buckram + gold/silver treatment.
+## 2026-07-06 Refreshed title & ending screen art
+
+- Added a deterministic Pillow generator `scripts/generate-screen-art.py` that renders two native 256×240, limited-palette, no-AA backgrounds from the game palette (`src/art/palette.ts` / `PALETTE`).
+  - `public/assets/art-pack/screens/title_screen_frus_chest_256x240.png` — ruby buckram FRUS volume opening like a treasure chest with a gold light burst and a framed gold title plate carrying `RUBY RULE:` / `THE FRUS QUEST` (14 colors).
+  - `public/assets/art-pack/screens/ending_binding_ceremony_256x240.png` — true ending / binding ceremony: human publication table, glowing assembled FRUS volume, Office of the Historian staff in celebration poses (16 colors).
+- Registered both under `SCREENS` in `src/assets/registry.ts` so they load through the existing screen pipeline; documented dimensions, intended scene, palette notes, and reserved text/safe areas in `public/assets/art-pack/MANIFEST.md`.
+- Verification:
+  - both PNGs confirmed at exactly 256×240, RGB, with every color inside the palette and no anti-aliasing (14 / 16 unique colors);
+  - `tsc --noEmit` passes clean;
+  - `vitest run src/scenes/TitleScene.test.ts` passes (9 tests); full suite is 352/353 with the one pre-existing, unrelated `src/art/characterSprites.test.ts` failure present on the base commit.
+## 2026-07-06 — Second FRUS volume world map (Overseas Post)
+- Added a sixth regional overworld board: `public/assets/art-pack/world2/01_overseas_post_region.png` (1536×1024) with 384×256 native master and a deterministic Python/Pillow generator (`generate_overseas_post.py`).
+- Theme: overseas diplomatic post / embassy subject area — 8 numbered, politically-neutral nodes (Regional Bureau, Chancery, Consular Section, Classified Pouch Room, Communications Vault, Foreign Ministry Liaison Office, Records & Archives Annex, Marine Security Post). No real countries/officials/flags.
+- Style-matched the existing overworld boards' fixed-viewport composition (brass title cartouche, deckled parchment border, sea + dashed pouch routes, compass rose, neutral pennant margin) but rendered as original 16-bit pixel art: limited 34-color palette, ×4 nearest-neighbor, no anti-aliasing (verified every 4×4 block uniform).
+- Wired in as region key `overseas_post`: `src/assets/registry.ts` (`OVERWORLD_REGIONS`), `src/data/regions.ts` (`REGION_ORDER`, `REGION_LABELS`, 8 districts), and made the WorldMapScene region hint `[1-N]` dynamic. Auto-preloaded by `BootScene`.
+- Manifests: new `world2/MANIFEST.md` plus a cross-reference section/row and asset-key in `MANIFEST_overworld_and_gameplay.md`.
+- Verification: `tsc --noEmit` clean; `vite build` passes (known large-chunk warning; post-build asset-copy script absent from this sparse worktree); `vitest run src/data/regions.test.ts` 3/3 pass; full suite 352/353 (the single failure, `src/art/characterSprites.test.ts`, is pre-existing on the untouched base commit and unrelated).
+## 2026-07-07 — Post-merge fix: stale character-sprite idle-frame test
+- Fixed the lone failing test after the #42–#57 merge wave: `src/art/characterSprites.test.ts` "resolves every direction and action pose to the clean idle-down frame 0". It asserted every animation frame index in `FRAMES` (idle/walk/action) must equal `0`, a workaround from when the native sheets were misassembled and only frame 0 rendered a clean body.
+- The shipped assets are no longer broken: the sibling suite "native sprite sheet frame content" decodes all 10 native PNGs (`public/assets/art-pack/sprites/native/`) and independently verifies every referenced frame 0–14 is a complete, contiguous body (opaque area, covered height, ≤1-row interior gap). That directly contradicts the old test's premise, so the "all frames must be 0" assertion was the outdated artifact — not the art or `character_anims.ts`.
+- Replaced the stale assertion with one matching the current multi-frame design: idle-down anchored at frame 0, and all 15 referenced poses are unique, integer, in-bounds cell indices. Preserves the regression guard against a merge scrambling the frame table without re-imposing the obsolete single-frame constraint. No implementation or asset changes.
+- Scanned for other merge artifacts: no conflict markers in `src`/`public`/`index.html`; all JSON under `src`/`public` parses; no duplicate/out-of-range frame keys.
+- Verification: `tsc --noEmit` clean; full `vitest run` now 353/353; `vite build` succeeds (known large-chunk warning only).
