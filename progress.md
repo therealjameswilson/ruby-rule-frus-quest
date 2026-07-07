@@ -3903,3 +3903,10 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - direct Playwright screenshots verified Guide, Archive, and Network, plus a forced live `ChoicePrompt` in Network;
   - visual proof: `docs/screenshots/hud-prompt-cleanup/guide-final.png`, `docs/screenshots/hud-prompt-cleanup/archive-final.png`, and `docs/screenshots/hud-prompt-cleanup/network-choice-final.png`;
   - browser pass reported only WebGL `ReadPixels` warnings caused by screenshot capture, with no page errors.
+
+## 2026-07-06 Promo storyboard frames for demo trailer
+
+- Added six storyboard-style 16-bit scene frames under `docs/promo/` for the demo trailer / GIF and consulting pitch decks: title reveal, character creation, first DANN-E encounter, volume-assembly progress, miniboss fight, and binding-ceremony ending.
+- Each frame is an exact 256x224 indexed-color PNG with no anti-aliasing, built on a single fixed 38-color palette curated from the existing FRUS art pack (archive browns, gold leaf, ruby buckram red, navy, cherry-blossom pink) so they match the shipped title/DANN-E/volume/garden art.
+- Frames are generated deterministically by `docs/promo/generate_frames.py` (hand-coded 5x7 pixel font, ordered Bayer dithering, no smoothing); added `docs/promo/MANIFEST.md` with per-file path, dimensions, scene label, trailer order, and palette/source notes.
+- Verification: all six PNGs confirmed `(256, 224)` mode `P`, 13-23 colors each, and 0 stray colors outside the palette (no anti-aliasing).
