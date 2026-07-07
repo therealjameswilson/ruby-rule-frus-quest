@@ -45,22 +45,25 @@ describe("character sprite frame layout", () => {
     }
   });
 
-  it("resolves every direction and action pose to the clean idle-down frame 0", () => {
-    // The native sheets are misassembled: every cell except idle-down (frame 0)
-    // either splits the body with a transparent band (detaching the feet) or
-    // carries stray edge-column pixels. Drawn at origin (0.5, 0.9) those split
-    // cells render a free-floating fragment on the shadow line — the Office Hub
-    // artifact near the Junior Compiler. Frame 0 is the one edge-clean,
-    // gap-closed body on every sheet, so all poses must resolve to it. Any
-    // non-zero index here would reintroduce a detached fragment.
+  it("maps every direction and action pose to a distinct in-bounds cell", () => {
+    // The native sheets now ship a clean, contiguous body in every cell (the
+    // per-frame pixel checks in "native sprite sheet frame content" verify this
+    // against the real PNGs). The frame table must therefore address every cell
+    // it plays: idle anchored at frame 0, and each of the 15 referenced poses a
+    // unique, in-bounds index. A merge that scrambled or collapsed the table
+    // would show up here as an out-of-range or duplicated frame.
+    expect(FRAMES.idle.down).toBe(0);
     const indices = [
       ...Object.values(FRAMES.idle),
       ...Object.values(FRAMES.walk).flat(),
       ...Object.values(FRAMES.action)
     ];
     for (const index of indices) {
-      expect(index).toBe(0);
+      expect(Number.isInteger(index)).toBe(true);
+      expect(index).toBeGreaterThanOrEqual(0);
+      expect(index).toBeLessThan(FRAME_COUNT);
     }
+    expect(new Set(indices).size).toBe(indices.length);
   });
 });
 

@@ -398,6 +398,22 @@
       "kind": "tileset-packed",
       "theme": "archive-dungeon",
       "note": "7x7 packed grid (v2, cleaner centered objects). Row1 floors; Row2 walls + doorway/arches + brick + gold panel; Row3 pit/rubble/column/carved-face/bookshelf/grate; Row4 torch/brazier/iron-door/ruby-pedestal/button-panel/treasure-chest; Rows5-7 seamless stone-floor fills."
+    },
+    "tileset_miniboss_arena_16x16": {
+      "path": "assets/art-pack/tilesets/gameplay/tileset_miniboss_arena_16x16.png",
+      "nativePath": "assets/art-pack/tilesets/gameplay/tileset_miniboss_arena_16x16_native.png",
+      "imageWidth": 1024,
+      "imageHeight": 1024,
+      "columns": 8,
+      "rows": 8,
+      "nativeTileSize": 16,
+      "displayCellPx": 128,
+      "nativeImageWidth": 128,
+      "nativeImageHeight": 128,
+      "transparent": true,
+      "kind": "tileset-packed",
+      "theme": "miniboss-arena",
+      "note": "8x8 packed grid. DANN-E miniboss arena: a federal office floor overtaken by a shutdown/stop-work antagonist. Row1 walls (corners/edges); Row2 office floor variants incl. cracked-tile floors; Row3 hazard floors (paper debris, red stain, rubble, diagonal crack, antagonist red-glow seam, warning chevrons, scorch, floor grate); Row4 paper stacks (small/med/toppling/scattered), file box + overturned box, STOP-WORK octagon sign, striped barricade; Row5 overhead light fixtures on/flicker/off/broken-spark + ceiling/stain/hanging-wire/broken-vent; Row6 caution-tape border set (4 edges + 4 corners); Row7 locked vault door 2x2 CLOSED (tiles 48,49,56,57) and OPEN-on-clear (50,51,58,59), single-tile vault closed/open (60,61), shutdown terminal, STOP-WORK placard, caution-tape cross, rubble pile, dark filler. Floors/walls opaque; props/lights/tape/vault on transparent backgrounds to overlay floor layers."
     }
   },
   "extras": {
@@ -456,7 +472,12 @@
       "cellHeight": 512,
       "transparent": true,
       "kind": "stamp-sheet",
-      "stampOrder": ["CONFIDENTIAL", "TOP SECRET", "DECLASSIFIED", "APPROVED"],
+      "stampOrder": [
+        "CONFIDENTIAL",
+        "TOP SECRET",
+        "DECLASSIFIED",
+        "APPROVED"
+      ],
       "note": "2x2 document stamp marks with correct spelled text. Overlay on document sprites/dialogue for the declassification theme."
     },
     "ui_kit": {
