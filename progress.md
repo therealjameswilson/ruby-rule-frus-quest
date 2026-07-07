@@ -3929,3 +3929,11 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
 - Floors/walls are opaque; props, lights, tape, and vault tiles use transparent backgrounds so they drop into Phaser tilemaps as overlay layers without rescaling.
 - Documented in `MANIFEST.md` (section 2a) and `manifest.json` (`tilesets.tileset_miniboss_arena_16x16`).
 - Verification: dimensions confirmed multiples of 16; display is an exact 8× nearest upscale of native (0 pixel mismatches → no anti-aliasing); tight 66-color palette; floor/wall tiles fully opaque, prop tiles transparent-backed; `manifest.json` re-parses as valid JSON.
+## 2026-07-06 — FRUS volume assembly art sequence
+Added `public/assets/art-pack/volume-assembly/`: five cover-piece sprites (spine,
+front board, title plate, ribbon marker, seal/stamp) each as a 32×32 pickup + a
+64×64 equipped/glow variant, a 6-frame 384×64 assembly animation sheet (64×64
+frames, ~8 fps) showing the pieces binding into one ruby volume, and a 128×128
+completed-volume hero sprite for the ending. Deterministic generator at
+`scripts/generate-volume-assembly.py`; palette-locked to `src/art/palette.ts`;
+verified for exact dimensions, transparent corners, and strict palette membership.
