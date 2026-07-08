@@ -3,6 +3,7 @@ import { danneAnimKey } from "../../art/danne_anims";
 import { PALETTE } from "../../game/constants";
 import { DANNE_RUNTIME_SPRITE_ASSETS } from "../../game/danneAtlas";
 import { unlockCodexEntry } from "../../game/codex";
+import { CENSORSHIP_WRAITH_SWIPE_TRIGGER_RADIUS } from "../../game/levelPacing";
 import type { Position } from "../../game/types";
 import {
   isTelegraphActive,
@@ -53,7 +54,7 @@ export class CensorshipWraith extends Enemy {
     if (!swinging) this.moveTowardWaypoint(deltaMs);
     this.updateFacing();
     if (!swinging) this.playWalk(this.facing);
-    const triggered = canAttack && this.swipeStartedAt === null && this.distanceTo(player.position) <= 34 && timeMs >= this.nextSwipeAt;
+    const triggered = canAttack && this.swipeStartedAt === null && this.distanceTo(player.position) <= CENSORSHIP_WRAITH_SWIPE_TRIGGER_RADIUS && timeMs >= this.nextSwipeAt;
     if (triggered) this.startSwipe(timeMs);
     this.resolveSwipe(timeMs, player);
 

@@ -3,6 +3,7 @@ import { danneAnimKey } from "../../art/danne_anims";
 import { PALETTE } from "../../game/constants";
 import { DANNE_RUNTIME_SPRITE_ASSETS } from "../../game/danneAtlas";
 import { unlockCodexEntry } from "../../game/codex";
+import { REDACTOR_DRONE_STAMP_TRIGGER_RADIUS } from "../../game/levelPacing";
 import type { Position } from "../../game/types";
 import { Player } from "../Player";
 import { Enemy } from "./Enemy";
@@ -50,7 +51,7 @@ export class RedactorDrone extends Enemy {
     this.moveTowardWaypoint(deltaMs);
     this.updateFacing();
     this.playWalk(this.facing);
-    const triggered = canAttack && this.distanceTo(player.position) <= 44 && timeMs >= this.nextStampAt;
+    const triggered = canAttack && this.distanceTo(player.position) <= REDACTOR_DRONE_STAMP_TRIGGER_RADIUS && timeMs >= this.nextStampAt;
     if (triggered) this.dropBlackBar(timeMs, player.position);
     this.updateProjectiles(timeMs, player);
     const active = timeMs < this.stampingUntil;
