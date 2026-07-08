@@ -79,6 +79,11 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
+// One-time reliability top-up granted by the Black Vault human-review cache, in
+// reliability points (2 of the 10 HUD hearts). Sized to soften attrition before
+// the DANN-E boss spike without erasing the fight; adjustReliability clamps to 100.
+const RELIABILITY_CACHE_REFILL = 20;
+
 function isCollisionDebugEnabled() {
   if (typeof window === "undefined") return false;
   return new URLSearchParams(window.location.search).get("debug") === "collision";
@@ -607,6 +612,23 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.dialog.show("TREATY FRAGMENT III", added
         ? "Fragment III drops from the cleared vault core."
         : "Fragment III is already filed.");
+      return;
+    }
+    if (definition.action === "reliability-cache") {
+      if (gameState.sceneProgress.blackVaultReliabilityCacheUsed) {
+        this.dialog.show("HUMAN REVIEW CACHE", "The review cache is spent. Its confidence is already logged.");
+        setLatestMessage("Human review cache already used.");
+        retroAudio.confirm();
+        return;
+      }
+      gameState.sceneProgress.blackVaultReliabilityCacheUsed = 1;
+      adjustReliability(RELIABILITY_CACHE_REFILL, "human review cache restored confidence");
+      this.reliability.update();
+      this.dialog.show("HUMAN REVIEW CACHE", [
+        "A shelf of vetted human-review notes steadies your hand.",
+        "Reliability restored. Top up before facing the DANN-E core."
+      ]);
+      setObjective("Reliability restored; face the DANN-E core when ready.");
       return;
     }
     if (definition.action === "cipher-machine") {

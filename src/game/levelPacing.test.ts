@@ -5,6 +5,9 @@ import {
   minDistanceToPatrolRoutes,
   patrolHotspotViolations,
   spawnPatrolClearance,
+  bossTriggerInteraction,
+  recoveryInteractions,
+  recoveryReachableBeforeBoss,
   PATROL_HOTSPOT_MIN_CLEARANCE,
   REDACTOR_DRONE_STAMP_TRIGGER_RADIUS
 } from "./levelPacing";
@@ -70,5 +73,48 @@ describe("all DANN-E scenes", () => {
     for (const geometry of Object.values(DANNE_SCENE_GEOMETRY)) {
       expect(patrolHotspotViolations(geometry)).toEqual([]);
     }
+  });
+});
+
+describe("recovery cadence around boss spikes", () => {
+  const vault = DANNE_SCENE_GEOMETRY.BlackVaultLairScene;
+
+  it("treats the Black Vault as the boss scene under test", () => {
+    expect(bossTriggerInteraction(vault)).toBeDefined();
+  });
+
+  it("offers a recovery pickup the player can reach before the boss trigger", () => {
+    const boss = bossTriggerInteraction(vault)!;
+    const recoveries = recoveryInteractions(vault);
+    expect(recoveries.length).toBeGreaterThan(0);
+    // Read-before-threat: the cache is nearer the spawn than the boss altar, so
+    // the player passes recovery on the way in, not mid-fight.
+    const bossDistance = Math.hypot(boss.x - vault.spawn.x, boss.y - vault.spawn.y);
+    for (const recovery of recoveries) {
+      const recoveryDistance = Math.hypot(recovery.x - vault.spawn.x, recovery.y - vault.spawn.y);
+      expect(recoveryDistance).toBeLessThanOrEqual(bossDistance);
+    }
+    expect(recoveryReachableBeforeBoss(vault)).toBe(true);
+  });
+
+  it("keeps the recovery cache clear of any patrol sweep lines", () => {
+    for (const recovery of recoveryInteractions(vault)) {
+      expect(minDistanceToPatrolRoutes(recovery, vault.patrolRoutes)).toBeGreaterThanOrEqual(
+        PATROL_HOTSPOT_MIN_CLEARANCE
+      );
+    }
+  });
+
+  it("requires every boss scene to front-load a reachable recovery pickup", () => {
+    for (const geometry of Object.values(DANNE_SCENE_GEOMETRY)) {
+      // Non-boss scenes are unconstrained and return true.
+      expect(recoveryReachableBeforeBoss(geometry)).toBe(true);
+    }
+  });
+
+  it("does not constrain scenes without a boss trigger", () => {
+    const garden = DANNE_SCENE_GEOMETRY.CherryBlossomGardenScene;
+    expect(bossTriggerInteraction(garden)).toBeUndefined();
+    expect(recoveryReachableBeforeBoss(garden)).toBe(true);
   });
 });

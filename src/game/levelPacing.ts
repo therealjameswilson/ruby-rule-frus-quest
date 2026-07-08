@@ -79,3 +79,44 @@ export function patrolHotspotViolations(
   }
   return violations;
 }
+
+// Interaction actions that restore player reliability (the ALTTP heart
+// analogue). Kept here so the pacing guard and the DanneMapScene handler agree
+// on what counts as recovery and cannot drift apart.
+export const RECOVERY_INTERACTION_ACTIONS = ["reliability-cache"] as const;
+
+// The interaction action that opens the DANN-E boss fight, i.e. the difficulty
+// spike a recovery pickup should sit in front of.
+export const BOSS_TRIGGER_ACTION = "boss-trigger";
+
+function distanceFromSpawn(geometry: DanneSceneGeometry, interaction: DanneSceneInteractionDefinition): number {
+  return Math.hypot(interaction.x - geometry.spawn.x, interaction.y - geometry.spawn.y);
+}
+
+export function recoveryInteractions(geometry: DanneSceneGeometry): DanneSceneInteractionDefinition[] {
+  return (geometry.interactions as readonly DanneSceneInteractionDefinition[]).filter((interaction) =>
+    (RECOVERY_INTERACTION_ACTIONS as readonly string[]).includes(interaction.action)
+  );
+}
+
+export function bossTriggerInteraction(geometry: DanneSceneGeometry): DanneSceneInteractionDefinition | undefined {
+  return (geometry.interactions as readonly DanneSceneInteractionDefinition[]).find(
+    (interaction) => interaction.action === BOSS_TRIGGER_ACTION
+  );
+}
+
+// Recovery cadence guard: a scene that houses a boss trigger must offer a
+// recovery pickup the player can reach *before* committing to the fight. We
+// approximate "before" geometrically as at least one recovery pickup sitting no
+// farther from the spawn than the boss trigger, so the player passes recovery on
+// the way in rather than only finding it mid-fight. Non-boss scenes are
+// unconstrained (they return true). This prevents attrition frustration where a
+// player who arrives low on hearts has no fair way to top up before the spike.
+export function recoveryReachableBeforeBoss(geometry: DanneSceneGeometry): boolean {
+  const boss = bossTriggerInteraction(geometry);
+  if (!boss) return true;
+  const recoveries = recoveryInteractions(geometry);
+  if (recoveries.length === 0) return false;
+  const bossDistance = distanceFromSpawn(geometry, boss);
+  return recoveries.some((recovery) => distanceFromSpawn(geometry, recovery) <= bossDistance);
+}

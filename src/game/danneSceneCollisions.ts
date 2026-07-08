@@ -15,7 +15,8 @@ export type DanneSceneInteractionAction =
   | "garden-historian"
   | "ruby-pen-chest"
   | "treaty-fragment-nara"
-  | "treaty-fragment-vault";
+  | "treaty-fragment-vault"
+  | "reliability-cache";
 
 export interface DanneRectDefinition {
   x: number;
@@ -170,6 +171,21 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.goldStamp
       },
       {
+        // Recovery cadence: a one-time reliability top-up sits on the entry
+        // side of the lair (spawn y=202) below the DANN-E core trigger (y=122),
+        // so the player can restore hearts before committing to the boss spike.
+        // ALTTP "top up at the boss door". Enforced by recoveryReachableBeforeBoss
+        // in levelPacing.ts. x=128 falls in the gap between the obsidian rubble.
+        id: "vault-reliability-cache",
+        label: "Human Review Cache",
+        x: 128,
+        y: 182,
+        radius: 24,
+        kind: "document",
+        action: "reliability-cache",
+        accent: PALETTE.openNetGreen
+      },
+      {
         id: "vault-return",
         label: "Return to Archive",
         x: 128,
@@ -180,7 +196,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["DANN-E Core Trigger", "Treaty Fragment III", "Archive Boss Gate", "Obsidian Altar"]
+    visibleEntities: ["DANN-E Core Trigger", "Treaty Fragment III", "Human Review Cache", "Archive Boss Gate", "Obsidian Altar"]
   },
   SenateHearingChamberScene: {
     sceneKey: "SenateHearingChamberScene",
