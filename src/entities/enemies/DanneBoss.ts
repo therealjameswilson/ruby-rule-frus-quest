@@ -267,6 +267,7 @@ export class DanneBoss {
     this.phase = "defeated";
     this.onPhaseChange("defeated");
     applyHitShake(this.scene, "boss-defeat");
+    retroAudio.bossDefeat();
     hideBossHud();
     this.sprite.setVisible(false);
     this.shadow.setVisible(false);
@@ -331,6 +332,7 @@ export class DanneBoss {
     this.hp = Math.max(0, this.hp - damage);
     setBossHp(this.hp, this.phaseIndex());
     applyHitShake(this.scene, "boss-hit");
+    retroAudio.bossHit();
     this.onPlayerHit?.(hasRubyPen);
     this.scene.tweens.add({
       targets: this.sprite,
@@ -519,7 +521,6 @@ export class DanneBoss {
         bolt.armed = false;
         this.player.takeHit({ x: bolt.sprite.x, y: bolt.sprite.y }, 12, 800);
         setLatestMessage("Ego bolt hit. Evidence still requires review.");
-        retroAudio.egoBoltImpact();
       }
       if (timeMs >= bolt.expiresAt || bolt.sprite.x < -20 || bolt.sprite.x > GAME_WIDTH + 20 || bolt.sprite.y < 20 || bolt.sprite.y > GAME_HEIGHT + 20) {
         bolt.sprite.destroy();

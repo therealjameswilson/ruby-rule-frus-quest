@@ -15,6 +15,7 @@ import {
   PLAYER_IFRAME_MS,
   toHitboxReadout
 } from "../systems/combat";
+import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 import { approach, frameDeltaSeconds, resolveFacing, resolveMovementVector, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
@@ -278,7 +279,9 @@ export class Player {
     this.hurtUntil = this.scene.time.now + PLAYER_HURT_MS;
     this.controlState = "hurt";
     this.pushAwayFrom(source, distance);
-    applyHitShake(this.scene, distance >= 15 ? "player-hurt-heavy" : "player-hurt");
+    const heavy = distance >= 15;
+    applyHitShake(this.scene, heavy ? "player-hurt-heavy" : "player-hurt");
+    retroAudio.playerHurt(heavy);
     this.syncRenderPosition();
     return true;
   }

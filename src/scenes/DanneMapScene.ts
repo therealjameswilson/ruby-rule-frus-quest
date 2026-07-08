@@ -819,7 +819,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       retroAudio.confirm();
       setLatestMessage("Human review cleared the automated block.");
     } else {
-      retroAudio.egoBoltImpact();
+      retroAudio.bossHit();
     }
   }
 
