@@ -55,6 +55,7 @@ import {
   nearestInteractable,
   nearestInteractableHint
 } from "../systems/interaction";
+import { applyHitShake } from "../systems/combatFeedback";
 import { AttackBuffer, HitstopController } from "../systems/hitstop";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
@@ -292,6 +293,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.player.setPosition(this.lastGoodPosition.x, this.lastGoodPosition.y);
     }
     if (this.attackBuffer.consume(this.time.now, true)) this.useDanneItemAction();
+    this.resolvePlayerMeleeHits(this.time.now);
     const nearest = nearestInteractable(this.player.position, this.interactables);
     const hintTarget = nearestInteractableHint(this.player.position, this.interactables);
     const promptTarget = nearest ?? hintTarget;
@@ -767,6 +769,36 @@ export abstract class DanneMapScene extends Phaser.Scene {
     setObjective("Black Vault Lair: defeat DANN-E with human-reviewed tools.");
     retroAudio.startMusic("DanneBoss", { forceRestart: true });
     this.danneBoss.start();
+  }
+
+  // Connect the player's active sword/Ruby-Pen hitbox to overworld enemies so
+  // they flinch, take knockback, and can be defeated (the boss already had this
+  // via checkPlayerActionHit; the drones/wraiths were previously unhittable).
+  private resolvePlayerMeleeHits(timeMs: number) {
+    const hitbox = this.player.activeActionHitbox;
+    if (!hitbox) return;
+    const source = this.player.position;
+    let connected = false;
+    let defeated = false;
+    const strike = (enemy: RedactorDrone | CensorshipWraith) => {
+      if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, enemy.bodyBounds())) return;
+      const result = enemy.tryPlayerHit(timeMs, 1, source, 11);
+      if (result === "miss") return;
+      connected = true;
+      if (result === "kill") defeated = true;
+    };
+    for (const drone of this.redactorDrones) strike(drone);
+    for (const wraith of this.censorshipWraiths) strike(wraith);
+    if (!connected) return;
+    this.redactorDrones = this.redactorDrones.filter((drone) => !drone.isDead);
+    this.censorshipWraiths = this.censorshipWraiths.filter((wraith) => !wraith.isDead);
+    applyHitShake(this, "boss-hit");
+    if (defeated) {
+      retroAudio.confirm();
+      setLatestMessage("Human review cleared the automated block.");
+    } else {
+      retroAudio.egoBoltImpact();
+    }
   }
 
   private updateDanneEntities(timeMs: number, deltaMs: number, canAct: boolean) {

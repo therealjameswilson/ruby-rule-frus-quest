@@ -12,9 +12,14 @@ const DRONE_ASSET = DANNE_RUNTIME_SPRITE_ASSETS.find((asset) => asset.entityId =
 interface BlackBarProjectile {
   rect: Phaser.GameObjects.Rectangle;
   bounds: Phaser.Geom.Rectangle;
+  armAt: number;
   expiresAt: number;
   armed: boolean;
 }
+
+// The stamp telegraphs its landing zone before it can redact you, so a player
+// standing on the drop has a fair window to step clear (ALTTP AoE tell).
+const BLACK_BAR_ARM_MS = 260;
 
 export class RedactorDrone extends Enemy {
   private nextStampAt = 0;
@@ -61,6 +66,11 @@ export class RedactorDrone extends Enemy {
     return timeMs < this.stampingUntil ? "dropping black-bar stamp" : "patrolling";
   }
 
+  protected onDeath() {
+    for (const projectile of this.projectiles.splice(0)) projectile.rect.destroy();
+    super.onDeath();
+  }
+
   private updateFacing() {
     if (Math.abs(this.velocityX) > Math.abs(this.velocityY)) {
       this.facing = this.velocityX < 0 ? "left" : "right";
@@ -88,6 +98,7 @@ export class RedactorDrone extends Enemy {
     this.projectiles.push({
       rect,
       bounds: new Phaser.Geom.Rectangle(x - 15, y - 4, 30, 8),
+      armAt: timeMs + BLACK_BAR_ARM_MS,
       expiresAt: timeMs + 1000,
       armed: true
     });
@@ -104,7 +115,7 @@ export class RedactorDrone extends Enemy {
   private updateProjectiles(timeMs: number, player: Player) {
     const footBox = new Phaser.Geom.Rectangle(player.position.x - 8, player.position.y - 3, 16, 8);
     this.projectiles = this.projectiles.filter((projectile) => {
-      if (projectile.armed && Phaser.Geom.Intersects.RectangleToRectangle(projectile.bounds, footBox)) {
+      if (projectile.armed && timeMs >= projectile.armAt && Phaser.Geom.Intersects.RectangleToRectangle(projectile.bounds, footBox)) {
         projectile.armed = false;
         player.takeHit(this.position, 8, 800);
       }

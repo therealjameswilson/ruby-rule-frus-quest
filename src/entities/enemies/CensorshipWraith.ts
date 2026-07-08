@@ -4,14 +4,26 @@ import { PALETTE } from "../../game/constants";
 import { DANNE_RUNTIME_SPRITE_ASSETS } from "../../game/danneAtlas";
 import { unlockCodexEntry } from "../../game/codex";
 import type { Position } from "../../game/types";
+import {
+  isTelegraphActive,
+  isTelegraphVisible,
+  telegraphDurationMs,
+  telegraphPhase,
+  type TelegraphTiming
+} from "../../systems/enemyCombat";
 import { Player } from "../Player";
 import { Enemy } from "./Enemy";
 
 const WRAITH_ASSET = DANNE_RUNTIME_SPRITE_ASSETS.find((asset) => asset.entityId === "censorship-wraith")!;
 
+// Windup is the tell (arc/cue flash, no damage). Damage only lands during the
+// short active window, then a recovery the player can punish. ~650ms total.
+const SWIPE_TIMING: TelegraphTiming = { windupMs: 240, activeMs: 170, recoveryMs: 240 };
+
 export class CensorshipWraith extends Enemy {
   private nextSwipeAt = 0;
-  private swipingUntil = 0;
+  private swipeStartedAt: number | null = null;
+  private swipeDamageDone = false;
   private swipeArc?: Phaser.GameObjects.Arc;
   private facing: "down" | "up" | "left" | "right" = "down";
 
@@ -35,15 +47,23 @@ export class CensorshipWraith extends Enemy {
   }
 
   update(timeMs: number, deltaMs: number, player: Player, canAttack: boolean) {
-    this.moveTowardWaypoint(deltaMs);
+    const swinging = isTelegraphVisible(this.swipeStartedAt, timeMs, SWIPE_TIMING);
+    // Hold position through the swing so the tell reads clearly (ALTTP enemies
+    // plant themselves to attack rather than sliding into you mid-swipe).
+    if (!swinging) this.moveTowardWaypoint(deltaMs);
     this.updateFacing();
-    this.playWalk(this.facing);
-    const triggered = canAttack && this.distanceTo(player.position) <= 34 && timeMs >= this.nextSwipeAt;
-    if (triggered) this.startSwipe(timeMs, player);
-    const active = timeMs < this.swipingUntil;
-    this.cue.setVisible(active);
-    this.swipeArc?.setVisible(active);
-    if (active && Math.floor(timeMs / 90) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
+    if (!swinging) this.playWalk(this.facing);
+    const triggered = canAttack && this.swipeStartedAt === null && this.distanceTo(player.position) <= 34 && timeMs >= this.nextSwipeAt;
+    if (triggered) this.startSwipe(timeMs);
+    this.resolveSwipe(timeMs, player);
+
+    const phase = telegraphPhase(this.swipeStartedAt, timeMs, SWIPE_TIMING);
+    const visible = phase !== "idle";
+    this.cue.setVisible(visible);
+    this.swipeArc?.setVisible(visible);
+    // Warn in gold during the windup tell, flash red on the damaging frames.
+    if (phase === "windup") this.sprite.setTint(this.color(PALETTE.goldStamp));
+    else if ((phase === "active" || phase === "recovery") && Math.floor(timeMs / 90) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
     else this.sprite.clearTint();
     const drift = Math.sin(timeMs / 250) * 0.7;
     this.syncRender(timeMs, 0, drift);
@@ -52,7 +72,16 @@ export class CensorshipWraith extends Enemy {
   }
 
   status(timeMs: number) {
-    return timeMs < this.swipingUntil ? "paint-roller swipe" : "floating";
+    const phase = telegraphPhase(this.swipeStartedAt, timeMs, SWIPE_TIMING);
+    if (phase === "windup") return "winding up ink sweep";
+    if (phase === "active" || phase === "recovery") return "paint-roller swipe";
+    return "floating";
+  }
+
+  protected onDeath() {
+    this.swipeArc?.destroy();
+    this.swipeArc = undefined;
+    super.onDeath();
   }
 
   private updateFacing() {
@@ -70,14 +99,10 @@ export class CensorshipWraith extends Enemy {
     this.sprite.setFlipX(direction === "right");
   }
 
-  private startSwipe(timeMs: number, player: Player) {
+  private startSwipe(timeMs: number) {
     this.nextSwipeAt = timeMs + 2300;
-    this.swipingUntil = timeMs + 650;
-    const hitbox = this.swipeHitbox();
-    const footBox = new Phaser.Geom.Rectangle(player.position.x - 8, player.position.y - 3, 16, 8);
-    if (Phaser.Geom.Intersects.RectangleToRectangle(hitbox, footBox)) {
-      player.takeHit(this.position, 10, 850);
-    }
+    this.swipeStartedAt = timeMs;
+    this.swipeDamageDone = false;
     if (!this.swipeArc) {
       this.swipeArc = this.scene.add.arc(this.currentX, this.currentY, 19, 210, 330, false, this.color(PALETTE.classNetRed), 0.35)
         .setStrokeStyle(2, this.color(PALETTE.creamPaper))
@@ -85,6 +110,19 @@ export class CensorshipWraith extends Enemy {
         .setVisible(false);
     }
     this.playAttack();
+  }
+
+  private resolveSwipe(timeMs: number, player: Player) {
+    if (this.swipeStartedAt === null) return;
+    if (!this.swipeDamageDone && isTelegraphActive(this.swipeStartedAt, timeMs, SWIPE_TIMING)) {
+      const hitbox = this.swipeHitbox();
+      const footBox = new Phaser.Geom.Rectangle(player.position.x - 8, player.position.y - 3, 16, 8);
+      if (Phaser.Geom.Intersects.RectangleToRectangle(hitbox, footBox)) {
+        player.takeHit(this.position, 10, 850);
+        this.swipeDamageDone = true;
+      }
+    }
+    if (timeMs - this.swipeStartedAt >= telegraphDurationMs(SWIPE_TIMING)) this.swipeStartedAt = null;
   }
 
   private swipeHitbox() {
