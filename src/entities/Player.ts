@@ -17,7 +17,7 @@ import {
 } from "../systems/combat";
 import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
-import { approach, frameDeltaSeconds, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
+import { approach, frameDeltaSeconds, resolveFacing, resolveMovementVector, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
 
 interface MoveBounds {
   left: number;
@@ -79,8 +79,14 @@ interface ActionColors {
 export class Player {
   readonly sprite: Phaser.GameObjects.Sprite;
   private readonly speed = 58;
-  private readonly acceleration = 720;
-  private readonly deceleration = 900;
+  // ALTTP overworld walking is essentially instantaneous: full speed on the
+  // first press, a hard stop on release. The previous 720/900 rates left a
+  // ~5-frame ease-in and a ~4-frame glide (~2px of drift after key release)
+  // that read as floaty. These rates reach full speed in ~1.5 frames and stop
+  // in ~1 frame, keeping the sub-pixel smoothing without the sluggish ramp or
+  // the post-release slide.
+  private readonly acceleration = 2300;
+  private readonly deceleration = 4000;
   private readonly cornerNudgePixels = 3;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
@@ -401,17 +407,9 @@ export class Player {
 
   private resolveMovementInput(): MovementInput {
     const input = getInput();
-    const moving = input.dir.x !== 0 || input.dir.y !== 0;
-    let facing = this.facing;
-    if (input.dir.x < 0) facing = "west";
-    else if (input.dir.x > 0) facing = "east";
-    else if (input.dir.y < 0) facing = "north";
-    else if (input.dir.y > 0) facing = "south";
-    if (input.dir.x !== 0 && input.dir.y !== 0) {
-      const diagonalScale = Math.SQRT1_2;
-      return { x: input.dir.x * diagonalScale, y: input.dir.y * diagonalScale, moving, facing };
-    }
-    return { x: input.dir.x, y: input.dir.y, moving, facing };
+    const vector = resolveMovementVector(input.dir);
+    const facing = resolveFacing(this.facing, input.dir);
+    return { x: vector.x, y: vector.y, moving: vector.moving, facing };
   }
 
   private syncRenderPosition() {
