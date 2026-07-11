@@ -2603,6 +2603,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - CSS-scaled rect remains 768x720 at 3x shell scale;
   - Office scene renders correctly under the AUTO/WebGL path.
 - Checkpoint screenshot: `docs/screenshots/renderer-auto-smoke.png`.
+- Input-only Part 1 hardening pass:
+  - changed the Character Create begin prompt to `TAP AGAIN / PRESS ENTER TO BEGIN`
+  - added an explicit name-field hit zone so pointer/touch focus reliably captures typed names
+  - buffered non-repeat keyboard presses until the next `tickInput()` so fast Enter/Space/WASD taps are not missed between Phaser frames
+  - buffered touch-control presses the same way so quick on-screen A/B/D-pad taps still produce one-frame edges
+  - expanded Vitest coverage for fast keyboard taps, touch confirm/cancel, gamepad A/B, and resume-input swallowing
+  - verified `npm test`: 6 files passed, 23 tests passed
+  - verified `npm run build` with only the existing Vite chunk-size warning
+  - verified direct Playwright full flow: TitleScene -> CharacterCreateScene -> OfficeScene via keyboard, mouse, and touch-style A button
+  - verified resume overlay fallthrough: first Enter dismisses `TAP TO RESUME` and is swallowed; the next Enter confirms normally
 
 ## 2026-06-15 Office Hub Stray Sprite Fragment Fix
 
