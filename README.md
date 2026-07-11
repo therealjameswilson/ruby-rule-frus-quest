@@ -62,25 +62,23 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 
 ## Current Cleanup Status
 
-Current `main` is deployable as a compact Phaser/Vite GitHub Pages game, with several larger feature pillars staged in open PRs. The table below separates what is already live on `main` from work that should be counted as complete only after its PR merges.
+Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78. The earlier Codex gameplay branches and Perplexity art drops are all represented in that merge; no component PR remains open.
 
 | Pillar | Deploy Status |
 | --- | --- |
 | 1. Tight movement | Live on `main`: player movement is pixel-snapped, exposes movement/facing state to QA, and remains keyboard/touch compatible. |
 | 2. Tile-based overworld | Partially live: region/world scenes and gameplay-map scenes boot through direct links; older large overworld experiments remain quarantined under `experiments/overworld-wip/`. |
 | 3. Collision | Live on `main`: player/action collision, gates, interactables, and room blockers use Arcade-style AABB patterns; fuller per-tile terrain collision remains a promotion target. |
-| 4. Combat and workflow tools | Live on `main`: DANN-E pressure, ego attacks, Ruby Pen/DANN-E item flow, Buckram Gate pressure, and FRUS action hitboxes are present. Expanded DANN-E room-clear combat is pending in PR #58, and the full equipped-tool swing state machine is pending in PR #59. |
-| 5. Enemy AI | Live on `main`: DANN-E lurkers, boss phases, hazards, and blocker enemies are present across rooms. Difficulty-curve and automated combat-test follow-ups are pending in PRs #66-#67. |
-| 6. HUD and volume assembly | Live on `main`: the HUD shows role, reliability/confidence, document points, equipped process/DANN-E items, stamps, fragments, quest band, and five FRUS cover pieces. The persistent volume-assembly arc is pending in draft PR #60. |
-| 7. Visual pipeline | Live on `main`: fixed 256x240 pixel canvas, `pixelArt`/`roundPixels`, repository-local art-pack assets, Phaser fallbacks, and Web Audio tones. Full 16-bit visual-pipeline enforcement is pending in draft PR #61. |
+| 4. Combat and workflow tools | Live on `main`: equipped Citation Stamp, Red Pencil, and Review Folder swings have active frames/cooldowns; tool-specific DANN-E counters, room-clear gates, ego attacks, hit-stop, loot, and Buckram Gate pressure are integrated. |
+| 5. Enemy AI | Live on `main`: the canonical eight DANN-E forms, roaming lurkers, patrol/chase/turret strategies, boss phases, taunts, hazards, difficulty tiers, and automated combat coverage are integrated. |
+| 6. HUD and volume assembly | Live on `main`: role, reliability, document points, equipped tools, cooldown, stamps, fragments, DANN-E risk, and the persistent five-piece volume-assembly arc share the compact quest band and pause subscreen. |
+| 7. Visual pipeline | Live on `main`: fixed 256x240 pixel canvas, integer nearest-neighbor scaling, native 16-bit character/DANN-E sheets, repository-local Codex and Perplexity art packs, guarded fallbacks, and Web Audio tones. |
 | 8. Room and dungeon scaffolding | Live on `main`: FRUS dungeon/room scenes, DANN-E map scenes, gates, rewards, final certification, true/bad ending scenes, and debug galleries all boot through `?scene=` QA links. |
-| Mobile parity | Live on `main`: iPhone-oriented touch controls, safe-area/mobile metrics, and text QA remain in place. DANN-E combat/volume mobile parity is pending in PR #62. |
-| Accessibility | Live on `main`: keyboard controls, concise/full `window.render_game_to_text()` payloads, debug scenes, and QA deep links. High-contrast/colorblind overlay mode is pending in PR #68. |
-| New Game+ | Pending: New Game+ with veteran cosmetic and harder DANN-E tier is staged in PR #69 and is not yet merged to `main`. |
+| Mobile parity | Live on `main`: floating D-pad, A/B/Start controls, multi-touch combat, touch cooldown feedback, safe-area metrics, and integer DPR scaling are verified on iPhone-sized Chromium. |
+| Accessibility | Live on `main`: keyboard/touch/gamepad controls, concise/full `window.render_game_to_text()` payloads, debug scenes, QA deep links, and persisted high-contrast/colorblind patterns are integrated. |
+| New Game+ | Live on `main`: first completion unlocks the veteran cosmetic, harder DANN-E tier, second-volume region, and persistent completed-volume count. |
 
-Latest deploy verification from `origin/main` (`aa13da8`) passed the full test suite and `npm run build`, and produced `dist/` at 237.23 MB decimal (226.24 MiB). The generated bundle is `dist/assets/index-DTkAkOcD.js` at 2,554.11 kB uncompressed / 613.58 kB gzip, plus `dist/assets/index-Jc8x0JIO.css` at 4.92 kB uncompressed / 1.38 kB gzip. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
-
-Open-PR harmonization was refreshed against this main tip: every open pull request is mergeable; every `main`-target branch contains `aa13da8`; and stacked gameplay PRs #58-#67 plus the dependent equity-ending PR #72 contain their current parent branch. Perplexity/Computer art PRs #5-#6 remain asset-only, while Computer audit PR #76 now shares the device-pixel rendering rule documented by PR #15.
+Latest deploy verification from `origin/main` (`2ffdb98`) passed 471 Vitest cases, `npm run build`, all 25 registered `?scene=` routes, the full NARA DANN-E counter room, and iPhone-sized touch/DPR checks. GitHub Pages deployed the matching `index-D0Q9SaNO.js` bundle successfully. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
 
 ## MVP Features
 
@@ -161,11 +159,11 @@ Sprites, tiles, enemy art, and UI textures are original repository-local SVG pix
 
 ## Roadmap
 
-1. Pillars 1 and 3: tighten the player body, foot collision box, knockback, and i-frame timing against all room blockers.
-2. Pillar 2: promote the quarantined tile registry and screen-manager work in small, buildable steps.
-3. Pillar 2: replace poster-like room composition with validated Phaser tilemap layers only after fallbacks and `?scene=` links survive.
-4. Pillar 4: turn workflow tools into a true equipped-use state machine with clear active frames and cooldowns.
-5. Pillar 5: standardize enemy base behavior for patrol, chase, and projectile-like FRUS hazards.
-6. Pillar 6: add a minimal minimap/status panel that stays readable at native resolution.
-7. Pillar 7: enforce one active palette/scale path for all live sprites and tiles before promoting art-pack PNGs.
-8. Pillar 8: add local save/load for room state, collected rewards, process stamps, and publication progress.
+1. Convert the remaining quiz-like annotation and review checks into physical room puzzles with short decision moments.
+2. Promote the quarantined tile registry and screen manager in small, fallback-guarded steps.
+3. Replace remaining poster-like room surfaces with validated Phaser tilemap layers and per-tile collision.
+4. Give every main dungeon a compact entrance, key/tool reveal, shortcut, and boss/review payoff.
+5. Continue tuning DANN-E encounters around readable telegraphs, movement choices, and distinctive tool counters.
+6. Simplify oversized scene implementations as physical interactions move into reusable systems.
+7. Expand save/load coverage to exact in-room puzzle and enemy-wave state.
+8. Keep testing complete desktop and iPhone playthroughs rather than only direct-scene bootability.

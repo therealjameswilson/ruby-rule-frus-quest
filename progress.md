@@ -4377,3 +4377,30 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   artifacts: `output/danne-wave-review-pause.png`,
   `output/danne-wave-two-active.png`, `output/danne-room-cleared.png`, and their
   `mobile-` counterparts.
+
+## 2026-07-11 — Physical Source Note provenance trail
+
+- Replaced Archive A1's blocking three-question Source Note 47 quiz with a
+  physical one-screen puzzle. The player now carries SN47 to the research
+  table, follows a gold trail through Repository Ledger, Collection Register,
+  and Folder Tab stations, returns to the table, and applies the Citation Stamp.
+- Preserved the same defensible FRUS provenance sequence and existing
+  `sourceNoteProvenanceStep` / completion save fields. Inspecting a later station
+  early gives a concise route correction without reliability damage or a modal.
+- Added distinct numbered paper-station silhouettes, active/queued/matched
+  states, dotted route guidance, contextual A prompts, and accessible
+  `visibleEntities` status for all three checks.
+- Removed duplicated lower-screen instructions during this loop. The fixed HUD
+  carries the objective, the room carries the route, and the interaction prompt
+  appears only at the physical target.
+- Stamping no longer throws the player directly into the next annotation quiz.
+  Control returns immediately with `ANNOTATE` as the next voluntary table action.
+- Live desktop QA completed the full carry -> route -> repository -> collection
+  -> folder -> stamp sequence with `choice: null` throughout. iPhone 393x852 / DPR
+  3 completed the same sequence using the real on-screen A touch target; no
+  console or page errors occurred.
+- Verification: full Vitest suite `473/473` across 89 files; production build
+  passes (known Vite large-chunk warning only); all 25 direct scene routes boot
+  cleanly. Visual artifacts: `output/archive-provenance-routed.png`,
+  `output/archive-provenance-collection.png`,
+  `output/archive-provenance-stamped.png`, and their `mobile-` counterparts.
