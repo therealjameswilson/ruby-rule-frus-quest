@@ -1,0 +1,430 @@
+[
+  {
+    "id": "iphone14pro-portrait",
+    "label": "iPhone 14 Pro portrait",
+    "viewport": {
+      "width": 393,
+      "height": 852,
+      "deviceScaleFactor": 3
+    },
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "localPreviewUrl": "http://127.0.0.1:5197/?scene=ArchiveScene&role=compiler&name=Ruby&mobileDebug=1",
+    "elapsedWallMs": 2168,
+    "beforeAction": {
+      "metrics": {
+        "fpsCurrent": 59.88023952095792,
+        "fpsAvg1s": 59.99872099146978,
+        "fpsMin10s": 7.499850002999939,
+        "lastInputLatencyMs": null,
+        "lastPointerDownAt": null,
+        "activePointerCount": 0,
+        "dpr": 3,
+        "canvasCssWidth": 256,
+        "canvasCssHeight": 240,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1,
+        "integerZoomTarget": 1,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 113.164
+      },
+      "shellDataset": {
+        "scale": "1",
+        "rawScale": "1.473",
+        "integerScale": "true",
+        "mobileControls": "true"
+      },
+      "gameCanvasRect": {
+        "width": 256,
+        "height": 240,
+        "left": 68.5,
+        "top": 158.65625
+      },
+      "viewportMeta": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+      "mobileWebAppCapable": "yes",
+      "appleMobileWebAppCapable": "yes",
+      "appleStatusBar": "black-translucent",
+      "themeColor": "#000000",
+      "formatDetection": "telephone=no",
+      "css": {
+        "bodyHeight": "852px",
+        "htmlHeight": "852px",
+        "overflow": "hidden",
+        "overscrollBehavior": "none",
+        "touchAction": "none",
+        "userSelect": "none",
+        "shellPosition": "relative",
+        "shellOverflow": "hidden"
+      },
+      "cssVars": {
+        "vh": "852px",
+        "vw": "393px"
+      },
+      "iosHintVisible": true,
+      "fullscreenVisible": false,
+      "canvasTouchmovePrevented": true,
+      "bodyTouchmovePrevented": false,
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "afterAction": {
+      "metrics": {
+        "fpsCurrent": 59.88023952095874,
+        "fpsAvg1s": 59.99872099146979,
+        "fpsMin10s": 7.499850002999939,
+        "lastInputLatencyMs": 4.699999988079071,
+        "lastPointerDownAt": 1791.800000011921,
+        "activePointerCount": 0,
+        "dpr": 3,
+        "canvasCssWidth": 256,
+        "canvasCssHeight": 240,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1,
+        "integerZoomTarget": 1,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 113.164
+      },
+      "fullscreenElement": false,
+      "fullscreenVisible": false,
+      "iosHintVisible": true,
+      "localStorage": {
+        "fullscreenDismissed": null,
+        "iosHintDismissed": null
+      }
+    },
+    "screenshotPath": "docs/screenshots/mobile/phase2-iphone14pro-portrait.png",
+    "videoPath": "docs/screenshots/mobile/phase2-iphone14pro-portrait.webm",
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "id": "iphone14pro-landscape",
+    "label": "iPhone 14 Pro landscape",
+    "viewport": {
+      "width": 852,
+      "height": 393,
+      "deviceScaleFactor": 3
+    },
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "localPreviewUrl": "http://127.0.0.1:5197/?scene=ArchiveScene&role=compiler&name=Ruby&mobileDebug=1",
+    "elapsedWallMs": 1996,
+    "beforeAction": {
+      "metrics": {
+        "fpsCurrent": 59.88023952095792,
+        "fpsAvg1s": 59.9990051473219,
+        "fpsMin10s": 30.03003003003002,
+        "lastInputLatencyMs": null,
+        "lastPointerDownAt": null,
+        "activePointerCount": 0,
+        "dpr": 3,
+        "canvasCssWidth": 256,
+        "canvasCssHeight": 240,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1,
+        "integerZoomTarget": 1,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 75.398
+      },
+      "shellDataset": {
+        "scale": "1",
+        "rawScale": "1.571",
+        "integerScale": "true",
+        "mobileControls": "true"
+      },
+      "gameCanvasRect": {
+        "width": 256,
+        "height": 240,
+        "left": 124,
+        "top": 76.5
+      },
+      "viewportMeta": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+      "mobileWebAppCapable": "yes",
+      "appleMobileWebAppCapable": "yes",
+      "appleStatusBar": "black-translucent",
+      "themeColor": "#000000",
+      "formatDetection": "telephone=no",
+      "css": {
+        "bodyHeight": "393px",
+        "htmlHeight": "393px",
+        "overflow": "hidden",
+        "overscrollBehavior": "none",
+        "touchAction": "none",
+        "userSelect": "none",
+        "shellPosition": "relative",
+        "shellOverflow": "hidden"
+      },
+      "cssVars": {
+        "vh": "393px",
+        "vw": "852px"
+      },
+      "iosHintVisible": true,
+      "fullscreenVisible": false,
+      "canvasTouchmovePrevented": true,
+      "bodyTouchmovePrevented": false,
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "afterAction": {
+      "metrics": {
+        "fpsCurrent": 59.88023952095792,
+        "fpsAvg1s": 60.0047074640845,
+        "fpsMin10s": 30.03003003003002,
+        "lastInputLatencyMs": 11.300000011920929,
+        "lastPointerDownAt": 1630.699999988079,
+        "activePointerCount": 0,
+        "dpr": 3,
+        "canvasCssWidth": 256,
+        "canvasCssHeight": 240,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1,
+        "integerZoomTarget": 1,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 75.398
+      },
+      "fullscreenElement": false,
+      "fullscreenVisible": false,
+      "iosHintVisible": true,
+      "localStorage": {
+        "fullscreenDismissed": null,
+        "iosHintDismissed": null
+      }
+    },
+    "screenshotPath": "docs/screenshots/mobile/phase2-iphone14pro-landscape.png",
+    "videoPath": "docs/screenshots/mobile/phase2-iphone14pro-landscape.webm",
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "id": "pixel7-portrait",
+    "label": "Pixel 7 portrait",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "deviceScaleFactor": 2.625
+    },
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36",
+    "localPreviewUrl": "http://127.0.0.1:5197/?scene=ArchiveScene&role=compiler&name=Ruby&mobileDebug=1",
+    "elapsedWallMs": 2170,
+    "beforeAction": {
+      "metrics": {
+        "fpsCurrent": 59.52380952380968,
+        "fpsAvg1s": 59.99879267042347,
+        "fpsMin10s": 59.52380952380968,
+        "lastInputLatencyMs": null,
+        "lastPointerDownAt": null,
+        "activePointerCount": 0,
+        "dpr": 2.625,
+        "canvasCssWidth": 256,
+        "canvasCssHeight": 240,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1,
+        "integerZoomTarget": 1,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 85.264
+      },
+      "shellDataset": {
+        "scale": "1",
+        "rawScale": "1.547",
+        "integerScale": "true",
+        "mobileControls": "true"
+      },
+      "gameCanvasRect": {
+        "width": 256,
+        "height": 240,
+        "left": 78,
+        "top": 179.65625
+      },
+      "viewportMeta": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+      "mobileWebAppCapable": "yes",
+      "appleMobileWebAppCapable": "yes",
+      "appleStatusBar": "black-translucent",
+      "themeColor": "#000000",
+      "formatDetection": "telephone=no",
+      "css": {
+        "bodyHeight": "915px",
+        "htmlHeight": "915px",
+        "overflow": "hidden",
+        "overscrollBehavior": "none",
+        "touchAction": "none",
+        "userSelect": "none",
+        "shellPosition": "relative",
+        "shellOverflow": "hidden"
+      },
+      "cssVars": {
+        "vh": "915px",
+        "vw": "412px"
+      },
+      "iosHintVisible": false,
+      "fullscreenVisible": true,
+      "canvasTouchmovePrevented": true,
+      "bodyTouchmovePrevented": false,
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "afterAction": {
+      "metrics": {
+        "fpsCurrent": 59.880239520957105,
+        "fpsAvg1s": 60.00470618410323,
+        "fpsMin10s": 59.52380952380968,
+        "lastInputLatencyMs": 8.000000035762696,
+        "lastPointerDownAt": 1810.5999999642372,
+        "activePointerCount": 0,
+        "dpr": 2.625,
+        "canvasCssWidth": 256,
+        "canvasCssHeight": 240,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1,
+        "integerZoomTarget": 1,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 85.264
+      },
+      "fullscreenElement": true,
+      "fullscreenVisible": false,
+      "iosHintVisible": false,
+      "localStorage": {
+        "fullscreenDismissed": "1",
+        "iosHintDismissed": null
+      }
+    },
+    "screenshotPath": "docs/screenshots/mobile/phase2-pixel7-portrait.png",
+    "videoPath": "docs/screenshots/mobile/phase2-pixel7-portrait.webm",
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "id": "pixel7-landscape",
+    "label": "Pixel 7 landscape",
+    "viewport": {
+      "width": 915,
+      "height": 412,
+      "deviceScaleFactor": 2.625
+    },
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36",
+    "localPreviewUrl": "http://127.0.0.1:5197/?scene=ArchiveScene&role=compiler&name=Ruby&mobileDebug=1",
+    "elapsedWallMs": 2169,
+    "beforeAction": {
+      "metrics": {
+        "fpsCurrent": 60.24096385542202,
+        "fpsAvg1s": 60.004704904121866,
+        "fpsMin10s": 30.12048192771084,
+        "lastInputLatencyMs": null,
+        "lastPointerDownAt": null,
+        "activePointerCount": 0,
+        "dpr": 2.625,
+        "canvasCssWidth": 256,
+        "canvasCssHeight": 240,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1,
+        "integerZoomTarget": 1,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 68.8
+      },
+      "shellDataset": {
+        "scale": "1",
+        "rawScale": "1.650",
+        "integerScale": "true",
+        "mobileControls": "true"
+      },
+      "gameCanvasRect": {
+        "width": 256,
+        "height": 240,
+        "left": 155.5,
+        "top": 86
+      },
+      "viewportMeta": "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover",
+      "mobileWebAppCapable": "yes",
+      "appleMobileWebAppCapable": "yes",
+      "appleStatusBar": "black-translucent",
+      "themeColor": "#000000",
+      "formatDetection": "telephone=no",
+      "css": {
+        "bodyHeight": "412px",
+        "htmlHeight": "412px",
+        "overflow": "hidden",
+        "overscrollBehavior": "none",
+        "touchAction": "none",
+        "userSelect": "none",
+        "shellPosition": "relative",
+        "shellOverflow": "hidden"
+      },
+      "cssVars": {
+        "vh": "412px",
+        "vw": "915px"
+      },
+      "iosHintVisible": false,
+      "fullscreenVisible": true,
+      "canvasTouchmovePrevented": true,
+      "bodyTouchmovePrevented": false,
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "afterAction": {
+      "metrics": {
+        "fpsCurrent": 60.24096385542202,
+        "fpsAvg1s": 60.01047761985686,
+        "fpsMin10s": 30.12048192771084,
+        "lastInputLatencyMs": 9.299999964237259,
+        "lastPointerDownAt": 1809.4000000357628,
+        "activePointerCount": 0,
+        "dpr": 2.625,
+        "canvasCssWidth": 256,
+        "canvasCssHeight": 240,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1,
+        "integerZoomTarget": 1,
+        "integerZoom": true,
+        "scaleGuardAdjustments": 0,
+        "pixelProofVisible": false,
+        "firstFrameMs": 68.8
+      },
+      "fullscreenElement": true,
+      "fullscreenVisible": false,
+      "iosHintVisible": false,
+      "localStorage": {
+        "fullscreenDismissed": "1",
+        "iosHintDismissed": null
+      }
+    },
+    "screenshotPath": "docs/screenshots/mobile/phase2-pixel7-landscape.png",
+    "videoPath": "docs/screenshots/mobile/phase2-pixel7-landscape.webm",
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  }
+]

@@ -1,0 +1,280 @@
+{
+  "beforeTap": {
+    "scene": "TapToStartScene",
+    "mode": "title",
+    "objective": "Tap or press start to unlock audio.",
+    "audioStatus": "oscillator score prepared",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": false,
+      "contextState": "uncreated",
+      "currentSceneKey": null,
+      "currentThemeKey": null,
+      "currentThemeTitle": null,
+      "pendingSceneKey": null,
+      "musicTimerActive": false,
+      "musicStep": 0,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": null,
+      "lastFirstSampleMs": null,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "mobile": {
+      "lastInputLatencyMs": null,
+      "computedZoom": 3,
+      "integerZoom": true,
+      "activePointerCount": 0
+    }
+  },
+  "afterTap": {
+    "scene": "TitleScene",
+    "mode": "title",
+    "objective": "Press start to verify.",
+    "audioStatus": "pd midi Bach Contrapunctus I",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "TitleScene",
+      "currentThemeKey": "title",
+      "currentThemeTitle": "Bach Contrapunctus I",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 3,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 2.899999976158142,
+      "lastFirstSampleMs": 2.899999976158142,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "mobile": {
+      "lastInputLatencyMs": 0.29999997615811935,
+      "computedZoom": 3,
+      "integerZoom": true,
+      "activePointerCount": 0
+    }
+  },
+  "afterSameThemeTransition": {
+    "scene": "CharacterCreateScene",
+    "mode": "choice",
+    "objective": "Craft your FRUS production character.",
+    "audioStatus": "pd midi Bach Contrapunctus I",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "CharacterCreateScene",
+      "currentThemeKey": "title",
+      "currentThemeTitle": "Bach Contrapunctus I",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 7,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 2.899999976158142,
+      "lastFirstSampleMs": 2.899999976158142,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "mobile": {
+      "lastInputLatencyMs": 6.500000023841949,
+      "computedZoom": 3,
+      "integerZoom": true,
+      "activePointerCount": 0
+    }
+  },
+  "afterHidden": {
+    "scene": "CharacterCreateScene",
+    "mode": "choice",
+    "objective": "Craft your FRUS production character.",
+    "audioStatus": "audio paused for background",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "suspended",
+      "currentSceneKey": "CharacterCreateScene",
+      "currentThemeKey": "title",
+      "currentThemeTitle": "Bach Contrapunctus I",
+      "pendingSceneKey": null,
+      "musicTimerActive": false,
+      "musicStep": 7,
+      "resumePending": true,
+      "hiddenPaused": true,
+      "firstUnlockMs": 2.899999976158142,
+      "lastFirstSampleMs": 2.899999976158142,
+      "lastVisibilityEvent": "hidden",
+      "lastInterruptionEvent": null
+    },
+    "mobile": {
+      "lastInputLatencyMs": 6.500000023841949,
+      "computedZoom": 3,
+      "integerZoom": true,
+      "activePointerCount": 0
+    }
+  },
+  "afterVisible": {
+    "scene": "CharacterCreateScene",
+    "mode": "choice",
+    "objective": "Craft your FRUS production character.",
+    "audioStatus": "pd midi Bach Contrapunctus I",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "CharacterCreateScene",
+      "currentThemeKey": "title",
+      "currentThemeTitle": "Bach Contrapunctus I",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 3,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 2.899999976158142,
+      "lastFirstSampleMs": 2.899999976158142,
+      "lastVisibilityEvent": "visible",
+      "lastInterruptionEvent": null
+    },
+    "mobile": {
+      "lastInputLatencyMs": 6.500000023841949,
+      "computedZoom": 3,
+      "integerZoom": true,
+      "activePointerCount": 0
+    }
+  },
+  "matrix": [
+    {
+      "name": "iphone14pro-portrait",
+      "viewport": {
+        "width": 393,
+        "height": 660
+      },
+      "scene": "TitleScene",
+      "audioStatus": "pd midi Bach Contrapunctus I",
+      "audio": {
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "TitleScene",
+        "currentThemeKey": "title",
+        "currentThemeTitle": "Bach Contrapunctus I",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 2,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 2.199999988079071,
+        "lastFirstSampleMs": 2.199999988079071,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      "integerZoom": true,
+      "computedZoom": 1,
+      "errors": [],
+      "screenshot": "/Users/jameswilson/Documents/New project/ruby-rule-frus-quest/docs/screenshots/mobile/phase6-audio-iphone14pro-portrait.png"
+    },
+    {
+      "name": "iphone14pro-landscape",
+      "viewport": {
+        "width": 734,
+        "height": 343
+      },
+      "scene": "TitleScene",
+      "audioStatus": "pd midi Bach Contrapunctus I",
+      "audio": {
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "TitleScene",
+        "currentThemeKey": "title",
+        "currentThemeTitle": "Bach Contrapunctus I",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 2,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 3,
+        "lastFirstSampleMs": 3,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      "integerZoom": true,
+      "computedZoom": 1,
+      "errors": [],
+      "screenshot": "/Users/jameswilson/Documents/New project/ruby-rule-frus-quest/docs/screenshots/mobile/phase6-audio-iphone14pro-landscape.png"
+    },
+    {
+      "name": "pixel7-portrait",
+      "viewport": {
+        "width": 412,
+        "height": 839
+      },
+      "scene": "TitleScene",
+      "audioStatus": "pd midi Bach Contrapunctus I",
+      "audio": {
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "TitleScene",
+        "currentThemeKey": "title",
+        "currentThemeTitle": "Bach Contrapunctus I",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 2,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 2.5,
+        "lastFirstSampleMs": 2.5,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      "integerZoom": true,
+      "computedZoom": 1,
+      "errors": [],
+      "screenshot": "/Users/jameswilson/Documents/New project/ruby-rule-frus-quest/docs/screenshots/mobile/phase6-audio-pixel7-portrait.png"
+    },
+    {
+      "name": "pixel7-landscape",
+      "viewport": {
+        "width": 863,
+        "height": 360
+      },
+      "scene": "TitleScene",
+      "audioStatus": "pd midi Bach Contrapunctus I",
+      "audio": {
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "TitleScene",
+        "currentThemeKey": "title",
+        "currentThemeTitle": "Bach Contrapunctus I",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 2,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 2.899999976158142,
+        "lastFirstSampleMs": 2.899999976158142,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      "integerZoom": true,
+      "computedZoom": 1,
+      "errors": [],
+      "screenshot": "/Users/jameswilson/Documents/New project/ruby-rule-frus-quest/docs/screenshots/mobile/phase6-audio-pixel7-landscape.png"
+    }
+  ],
+  "errors": [],
+  "videoPath": "docs/screenshots/mobile/phase6-audio-recording.webm"
+}

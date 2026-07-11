@@ -1,0 +1,92 @@
+{
+  "scene": "EmbassyCableRoomScene",
+  "mode": "explore",
+  "objective": "Embassy Cable Room: inspect the bronze cipher machine.",
+  "player": {
+    "x": 128,
+    "y": 204
+  },
+  "nearestInteractable": "Return to Archive",
+  "latestMessage": "Embassy Cable Room loaded.",
+  "currentArea": {
+    "id": "two_networks",
+    "displayName": "Two Networks",
+    "zeldaRole": "Dungeon 2"
+  },
+  "roomGraphEntries": [
+    {
+      "id": "DG1",
+      "area": "office_hub",
+      "title": "Cherry Blossom Garden",
+      "exits": {
+        "east": "O1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "reward",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "DH1",
+      "area": "office_hub",
+      "title": "Senate Hearing Chamber",
+      "exits": {
+        "south": "O1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "hint",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "DN1",
+      "area": "archive_cavern",
+      "title": "NARA Stacks",
+      "exits": {
+        "south": "A1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "DE1",
+      "area": "two_networks",
+      "title": "Embassy Cable Room",
+      "exits": {
+        "south": "A2"
+      },
+      "lockedExits": {
+        "south": "Marine security door"
+      },
+      "requiredItems": {},
+      "roomType": "puzzle",
+      "visited": true,
+      "revealed": true
+    },
+    {
+      "id": "DV1",
+      "area": "buckram_gate",
+      "title": "Black Vault Lair",
+      "exits": {
+        "north": "D3"
+      },
+      "lockedExits": {
+        "north": "Treaty fragments or Buckram Key"
+      },
+      "requiredItems": {},
+      "roomType": "boss",
+      "visited": false,
+      "revealed": true
+    }
+  ],
+  "sceneProgress": {
+    "archiveReturnRoom": 2,
+    "archiveReturnX": 52,
+    "archiveReturnY": 184
+  }
+}

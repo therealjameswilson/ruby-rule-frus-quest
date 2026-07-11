@@ -1,0 +1,154 @@
+[
+  {
+    "name": "iphone14pro-portrait",
+    "screenshot": "docs/screenshots/mobile/phase7-iphone14pro-portrait.png",
+    "metrics": {
+      "fpsCurrent": 60.24096385542202,
+      "fpsAvg1s": 60.00477658307561,
+      "fpsMin10s": 59.52380952380888,
+      "frameMsCurrent": 16.59999999999991,
+      "frameMsP99": 20,
+      "frameMsMax10s": 16.800000000000182,
+      "frameSampleCount": 120,
+      "frameHistogram": {
+        "under16": 83,
+        "under20": 37,
+        "under33": 0,
+        "over33": 0
+      },
+      "lastInputLatencyMs": 9.29999997615812,
+      "lastPointerDownAt": 919.1000000238419,
+      "activePointerCount": 0,
+      "dpr": 3,
+      "canvasCssWidth": 256,
+      "canvasCssHeight": 240,
+      "canvasBackingWidth": 256,
+      "canvasBackingHeight": 240,
+      "computedZoom": 1,
+      "integerZoomTarget": 1,
+      "integerZoom": true,
+      "scaleGuardAdjustments": 0,
+      "pixelProofVisible": false,
+      "firstFrameMs": 161.8
+    },
+    "warningCount": 1,
+    "warnings": [
+      "[.WebGL-0x114004e4e00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    ],
+    "errorCount": 0,
+    "errors": []
+  },
+  {
+    "name": "iphone14pro-landscape",
+    "screenshot": "docs/screenshots/mobile/phase7-iphone14pro-landscape.png",
+    "metrics": {
+      "fpsCurrent": 60.24096385542202,
+      "fpsAvg1s": 60.01054929881059,
+      "fpsMin10s": 59.52380952380888,
+      "frameMsCurrent": 16.59999999999991,
+      "frameMsP99": 20,
+      "frameMsMax10s": 16.800000000000182,
+      "frameSampleCount": 121,
+      "frameHistogram": {
+        "under16": 77,
+        "under20": 44,
+        "under33": 0,
+        "over33": 0
+      },
+      "lastInputLatencyMs": 4.2999999999999545,
+      "lastPointerDownAt": 693,
+      "activePointerCount": 0,
+      "dpr": 3,
+      "canvasCssWidth": 256,
+      "canvasCssHeight": 240,
+      "canvasBackingWidth": 256,
+      "canvasBackingHeight": 240,
+      "computedZoom": 1,
+      "integerZoomTarget": 1,
+      "integerZoom": true,
+      "scaleGuardAdjustments": 0,
+      "pixelProofVisible": false,
+      "firstFrameMs": 97.364
+    },
+    "warningCount": 1,
+    "warnings": [
+      "[.WebGL-0x11c00534200]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    ],
+    "errorCount": 0,
+    "errors": []
+  },
+  {
+    "name": "pixel7-portrait",
+    "screenshot": "docs/screenshots/mobile/phase7-pixel7-portrait.png",
+    "metrics": {
+      "fpsCurrent": 60.24096385542202,
+      "fpsAvg1s": 60.00484698204797,
+      "fpsMin10s": 59.52380952380888,
+      "frameMsCurrent": 16.59999999999991,
+      "frameMsP99": 20,
+      "frameMsMax10s": 16.800000000000182,
+      "frameSampleCount": 120,
+      "frameHistogram": {
+        "under16": 78,
+        "under20": 42,
+        "under33": 0,
+        "over33": 0
+      },
+      "lastInputLatencyMs": 7.199999964237236,
+      "lastPointerDownAt": 846.4000000357628,
+      "activePointerCount": 0,
+      "dpr": 2.625,
+      "canvasCssWidth": 256,
+      "canvasCssHeight": 240,
+      "canvasBackingWidth": 256,
+      "canvasBackingHeight": 240,
+      "computedZoom": 1,
+      "integerZoomTarget": 1,
+      "integerZoom": true,
+      "scaleGuardAdjustments": 0,
+      "pixelProofVisible": false,
+      "firstFrameMs": 86.9
+    },
+    "warningCount": 0,
+    "warnings": [],
+    "errorCount": 0,
+    "errors": []
+  },
+  {
+    "name": "pixel7-landscape",
+    "screenshot": "docs/screenshots/mobile/phase7-pixel7-landscape.png",
+    "metrics": {
+      "fpsCurrent": 59.88023952095874,
+      "fpsAvg1s": 59.99879267042351,
+      "fpsMin10s": 59.52380952380888,
+      "frameMsCurrent": 16.699999999999818,
+      "frameMsP99": 20,
+      "frameMsMax10s": 16.800000000000182,
+      "frameSampleCount": 120,
+      "frameHistogram": {
+        "under16": 88,
+        "under20": 32,
+        "under33": 0,
+        "over33": 0
+      },
+      "lastInputLatencyMs": 10.199999976158097,
+      "lastPointerDownAt": 845.6000000238419,
+      "activePointerCount": 0,
+      "dpr": 2.625,
+      "canvasCssWidth": 256,
+      "canvasCssHeight": 240,
+      "canvasBackingWidth": 256,
+      "canvasBackingHeight": 240,
+      "computedZoom": 1,
+      "integerZoomTarget": 1,
+      "integerZoom": true,
+      "scaleGuardAdjustments": 0,
+      "pixelProofVisible": false,
+      "firstFrameMs": 89.2
+    },
+    "warningCount": 0,
+    "warnings": [],
+    "errorCount": 0,
+    "errors": []
+  }
+]

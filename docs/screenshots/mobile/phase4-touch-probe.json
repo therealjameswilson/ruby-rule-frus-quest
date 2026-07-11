@@ -1,0 +1,55 @@
+{
+  "gateState": {
+    "scene": "TapToStartScene",
+    "mode": "title",
+    "objective": "Tap or press start to unlock audio.",
+    "audioStatus": "audio ready"
+  },
+  "titleState": {
+    "scene": "TitleScene",
+    "mode": "title",
+    "objective": "Press start to verify.",
+    "audioStatus": "pd midi Bach Contrapunctus I"
+  },
+  "touchState": {
+    "scene": "GuideScene",
+    "mode": "explore",
+    "player": {
+      "x": 128,
+      "y": 113
+    },
+    "facing": "north",
+    "dialog": null,
+    "nearest": "Archive Colleague",
+    "audioStatus": "pd midi Bach Chromatic Fantasy"
+  },
+  "finalState": {
+    "scene": "GuideScene",
+    "mode": "explore",
+    "player": {
+      "x": 128,
+      "y": 113
+    },
+    "facing": "north",
+    "dialog": null,
+    "nearest": "Archive Colleague"
+  },
+  "metrics": {
+    "activePointerCount": 0,
+    "lastInputLatencyMs": 0,
+    "computedZoom": 1,
+    "integerZoom": true
+  },
+  "heldTouchDebug": {
+    "enabled": true,
+    "forceVisible": false,
+    "dpadPointerId": 11,
+    "dpadDirection": "up",
+    "pressedButtons": [
+      "space"
+    ],
+    "lastEvent": "dom-down"
+  },
+  "videoPath": "docs/screenshots/mobile/phase4-touch-recording.webm",
+  "errors": []
+}

@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="16" viewBox="0 0 128 16" shape-rendering="crispEdges">
+  <rect width="128" height="16" fill="none"/>
+
+  <!-- floor_base -->
+  <g transform="translate(0 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#d6b463"/>
+    <rect x="0" y="0" width="16" height="1" fill="#f4e3a1"/>
+    <rect x="0" y="15" width="16" height="1" fill="#8f6b2f"/>
+    <rect x="2" y="3" width="2" height="1" fill="#c49a42"/>
+    <rect x="10" y="9" width="3" height="1" fill="#c49a42"/>
+  </g>
+
+  <!-- floor_crack -->
+  <g transform="translate(16 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#d6b463"/>
+    <rect x="2" y="4" width="5" height="1" fill="#5a2a18"/>
+    <rect x="6" y="5" width="1" height="3" fill="#5a2a18"/>
+    <rect x="7" y="7" width="4" height="1" fill="#5a2a18"/>
+    <rect x="11" y="8" width="1" height="2" fill="#5a2a18"/>
+    <rect x="4" y="12" width="3" height="1" fill="#b88938"/>
+  </g>
+
+  <!-- floor_dot -->
+  <g transform="translate(32 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#d6b463"/>
+    <rect x="3" y="4" width="2" height="2" fill="#8d1228"/>
+    <rect x="11" y="5" width="1" height="1" fill="#f4e3a1"/>
+    <rect x="7" y="11" width="2" height="2" fill="#8f6b2f"/>
+  </g>
+
+  <!-- floor_ruby -->
+  <g transform="translate(48 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#6b0718"/>
+    <rect x="0" y="0" width="16" height="1" fill="#a8182c"/>
+    <rect x="3" y="3" width="2" height="2" fill="#c8283f"/>
+    <rect x="10" y="8" width="1" height="3" fill="#c8283f"/>
+    <rect x="6" y="13" width="4" height="1" fill="#2a0710"/>
+  </g>
+
+  <!-- wall_top -->
+  <g transform="translate(64 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#f4e3a1"/>
+    <rect x="0" y="0" width="16" height="2" fill="#fff3c8"/>
+    <rect x="0" y="13" width="16" height="3" fill="#b98a35"/>
+    <rect x="2" y="4" width="5" height="1" fill="#d6b463"/>
+    <rect x="9" y="8" width="4" height="1" fill="#c49a42"/>
+  </g>
+
+  <!-- wall_front -->
+  <g transform="translate(80 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#5a0715"/>
+    <rect x="0" y="0" width="16" height="2" fill="#8d1228"/>
+    <rect x="0" y="14" width="16" height="2" fill="#1a0508"/>
+    <rect x="3" y="5" width="2" height="6" fill="#7b1020"/>
+    <rect x="10" y="4" width="3" height="1" fill="#b98a35"/>
+    <rect x="12" y="10" width="1" height="3" fill="#b98a35"/>
+  </g>
+
+  <!-- wall_side -->
+  <g transform="translate(96 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#3a4656"/>
+    <rect x="0" y="0" width="3" height="16" fill="#2b3445"/>
+    <rect x="13" y="0" width="3" height="16" fill="#546879"/>
+    <rect x="5" y="3" width="6" height="3" fill="#707a82"/>
+    <rect x="5" y="10" width="6" height="2" fill="#202733"/>
+  </g>
+
+  <!-- floor_shadow -->
+  <g transform="translate(112 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#2a0710"/>
+    <rect x="1" y="1" width="14" height="3" fill="#5a0715"/>
+    <rect x="2" y="7" width="12" height="2" fill="#1a0508"/>
+    <rect x="4" y="12" width="8" height="1" fill="#b98a35"/>
+  </g>
+</svg>

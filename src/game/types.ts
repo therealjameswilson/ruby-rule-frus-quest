@@ -1,5 +1,11 @@
 import type Phaser from "phaser";
 import type { AreaId, CHARACTERS, Direction, PROCESS_ROLES, ProcessItemId, ProcessStampId, RoomType } from "./constants";
+import type {
+  FirstHourTrainingBeatId,
+  FirstHourTrainingCoverageReadout,
+  FirstHourTrainingDrillId,
+  FirstHourTrainingPhaseId
+} from "./firstHourTraining";
 
 export type CharacterId = keyof typeof CHARACTERS;
 export type ProcessRole = (typeof PROCESS_ROLES)[number];
@@ -70,6 +76,21 @@ export interface AdventureHudReadout {
   };
 }
 
+export interface AdventureTrainingReadout {
+  verb: "READ" | "CHOOSE" | "ACT" | "EXPLORE" | "UNLOCK" | "KEY" | "MAP" | "BOSS" | "RETURN" | "GOAL";
+  text: string;
+  detail: string;
+  sourceBeatId: FirstHourTrainingBeatId;
+  phase: FirstHourTrainingPhaseId;
+  phaseLabel: string;
+  drillId: FirstHourTrainingDrillId;
+  drillLabel: string;
+  drillMinuteRange: string;
+  drillObjective: string;
+}
+
+export type OneHourTrainingReadout = FirstHourTrainingCoverageReadout;
+
 export interface Position {
   x: number;
   y: number;
@@ -138,6 +159,7 @@ export type DocumentCandidate = {
   annotationNeeded: boolean;
   sensitivityRisk: number;
   selected: boolean;
+  undisclosedDeletion: boolean;
   workflowState: DocumentWorkflowState;
   reviewStatus: ReviewStatus;
   equities: AgencyEquity[];
@@ -275,6 +297,7 @@ export interface WorkflowDocument {
   citationComplete?: boolean;
   annotationNeeded?: boolean;
   sensitivityRisk?: number;
+  undisclosedDeletion?: boolean;
 }
 
 export interface Interactable {
@@ -307,23 +330,4 @@ export interface PlayerProfile {
   remit: string;
   spriteKey: string;
   snesSpriteKey: string;
-}
-
-export interface KeyboardMap {
-  up: Phaser.Input.Keyboard.Key;
-  down: Phaser.Input.Keyboard.Key;
-  left: Phaser.Input.Keyboard.Key;
-  right: Phaser.Input.Keyboard.Key;
-  w: Phaser.Input.Keyboard.Key;
-  a: Phaser.Input.Keyboard.Key;
-  s: Phaser.Input.Keyboard.Key;
-  d: Phaser.Input.Keyboard.Key;
-  e: Phaser.Input.Keyboard.Key;
-  space: Phaser.Input.Keyboard.Key;
-  enter: Phaser.Input.Keyboard.Key;
-  esc: Phaser.Input.Keyboard.Key;
-  m: Phaser.Input.Keyboard.Key;
-  n: Phaser.Input.Keyboard.Key;
-  r: Phaser.Input.Keyboard.Key;
-  f: Phaser.Input.Keyboard.Key;
 }

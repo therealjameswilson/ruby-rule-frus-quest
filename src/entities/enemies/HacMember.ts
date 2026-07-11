@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { PALETTE } from "../../game/constants";
+import { unlockCodexEntry } from "../../game/codex";
 import type { Position } from "../../game/types";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { Enemy } from "./Enemy";
@@ -9,6 +10,7 @@ export class HacMember extends Enemy {
   private distractingUntil = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
+    unlockCodexEntry("enemy-hac-member");
     super(scene, x, y, {
       label: "HAC member",
       spriteKey: "snes-hac-member",
