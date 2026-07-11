@@ -315,7 +315,7 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("PAUSED", "The page waits.");
+      this.inventory.toggle();
       return;
     }
     this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS });

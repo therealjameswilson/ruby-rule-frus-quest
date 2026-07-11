@@ -5,9 +5,10 @@ import { unlockCodexEntry } from "../../game/codex";
 import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
 import { danneLurkerBoast } from "../../game/danneBoasts";
 import { FRUS_DANNE_EGO_BOLT_SLOT_COUNT } from "../../game/lttpFrusTranslation";
-import { setLatestMessage } from "../../game/state";
+import { gameState, setLatestMessage } from "../../game/state";
 import type { Position } from "../../game/types";
 import { retroAudio } from "../../systems/audio";
+import { getDanneDifficultyProfile } from "../../systems/newGamePlus";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { Enemy } from "./Enemy";
 
@@ -52,6 +53,7 @@ export class DanneLurker extends Enemy {
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneLurkerOptions) {
     unlockCodexEntry("enemy-danne-boss");
+    const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
     super(scene, x, y, {
       label: options.label ?? "DANN-E",
       spriteKey: DANNE_BOSS_SPRITE_ASSET.key,
@@ -60,11 +62,11 @@ export class DanneLurker extends Enemy {
       tag: { text: "DANN-E", y: 17, color: PALETTE.goldStamp, backgroundColor: PALETTE.black },
       cue: { text: "30YR", y: -24, color: PALETTE.classNetRed, backgroundColor: PALETTE.black },
       shadow: { y: 13, width: 21, height: 6 },
-      speed: 16,
-      acceleration: 58,
+      speed: 16 * difficulty.speedMultiplier,
+      acceleration: 58 * difficulty.speedMultiplier,
       waypointTolerance: 4
     });
-    this.sprite.setOrigin(0.5, 0.82).setScale(0.055);
+    this.sprite.setOrigin(0.5, 0.82).setScale(0.72);
     const animKey = danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.boastText = scene.add.text(0, -32, "", {
@@ -85,7 +87,7 @@ export class DanneLurker extends Enemy {
     const distance = this.distanceTo(player);
     const triggered = canPressure && distance <= 25 && timeMs >= this.nextPressureAt;
     if (triggered) {
-      this.nextPressureAt = timeMs + 5600;
+      this.nextPressureAt = timeMs + this.cooldown(5600);
       this.pressureUntil = timeMs + 1150;
       this.scene.tweens.add({
         targets: this.container,
@@ -98,13 +100,13 @@ export class DanneLurker extends Enemy {
     }
     let egoBoltFired = false;
     if (canPressure && distance <= EGO_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt) {
-      this.nextEgoBoltAt = timeMs + EGO_BOLT_COOLDOWN_MS;
+      this.nextEgoBoltAt = timeMs + this.cooldown(EGO_BOLT_COOLDOWN_MS);
       egoBoltFired = this.fireEgoBolt(player);
     }
 
     const boasted = canPressure && distance <= EGO_ATTACK_RANGE && timeMs >= this.nextBoastAt;
     if (boasted) {
-      this.nextBoastAt = timeMs + EGO_BOAST_COOLDOWN_MS;
+      this.nextBoastAt = timeMs + this.cooldown(EGO_BOAST_COOLDOWN_MS);
       this.boastUntil = timeMs + 1700;
       const boast = danneLurkerBoast(this.boastIndex);
       this.boastIndex += 1;
@@ -136,6 +138,7 @@ export class DanneLurker extends Enemy {
   }
 
   readout(timeMs: number) {
+    const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
     return {
       label: "DANN-E LURKER",
       x: this.position.x,
@@ -143,7 +146,7 @@ export class DanneLurker extends Enemy {
       spriteKey: this.spriteKey,
       behavior: "lurks near workflow paths, boasts, and fires ego bolts",
       defeatMethod: "Keep moving through human review; final defeat happens at the Buckram Gate.",
-      status: this.status(timeMs)
+      status: `${this.status(timeMs)}; ${difficulty.label} tier`
     };
   }
 
@@ -158,7 +161,8 @@ export class DanneLurker extends Enemy {
   private fireEgoBolt(target: Position) {
     if (this.bolts.length >= FRUS_DANNE_EGO_BOLT_SLOT_COUNT) return false;
     const from = this.position;
-    const { vx, vy } = vectorToward({ x: from.x, y: from.y - 10 }, target, EGO_BOLT_SPEED);
+    const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
+    const { vx, vy } = vectorToward({ x: from.x, y: from.y - 10 }, target, EGO_BOLT_SPEED * difficulty.speedMultiplier);
     const startX = snapPixel(from.x);
     const startY = snapPixel(from.y - 10);
     const angle = Math.round(Phaser.Math.RadToDeg(Math.atan2(vy, vx)));
@@ -184,6 +188,11 @@ export class DanneLurker extends Enemy {
     });
     retroAudio.egoBoltFire();
     return true;
+  }
+
+  private cooldown(baseMs: number) {
+    const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
+    return Math.max(220, Math.round(baseMs * difficulty.cooldownMultiplier));
   }
 
   private updateBolts(timeMs: number, deltaMs: number, player: Position, allowHit: boolean) {

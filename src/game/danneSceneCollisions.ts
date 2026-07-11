@@ -16,6 +16,7 @@ export type DanneSceneInteractionAction =
   | "ruby-pen-chest"
   | "treaty-fragment-nara"
   | "treaty-fragment-vault"
+  | "hidden-reading-room-passage"
   | "reliability-cache";
 
 export interface DanneRectDefinition {
@@ -283,6 +284,16 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.goldStamp
       },
       {
+        id: "stacks-hidden-reading-room",
+        label: "Faint Wall Seam",
+        x: 204,
+        y: 68,
+        radius: 22,
+        kind: "door",
+        action: "hidden-reading-room-passage",
+        accent: PALETTE.goldStamp
+      },
+      {
         id: "stacks-return",
         label: "Return to Archive",
         x: 128,
@@ -293,7 +304,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["Stack Control Note", "Treaty Fragment I", "Archive Stairwell", "Redactor Drone Patrol Routes"],
+    visibleEntities: ["Stack Control Note", "Treaty Fragment I", "Archive Stairwell", "Faint Wall Seam", "Redactor Drone Patrol Routes"],
     patrolRoutes: [
       { id: "drone-route-a", points: [{ x: 88, y: 92 }, { x: 168, y: 92 }] },
       { id: "drone-route-b", points: [{ x: 88, y: 152 }, { x: 168, y: 152 }] },

@@ -10,9 +10,24 @@ The eight variants and their art are canonical and already shipped in the varian
 art pack. Do **not** invent new variant names. Art lives in
 `public/assets/art-pack/bosses/danne-variants/` and is registered in
 `src/game/danneAtlas.ts` as `DANNE_VARIANT_ASSETS`. Combat animation frames for any
-DANN-E form use the shared sprite sheet
-`public/assets/art-pack/sprites/sprite_dann_e.png` — the variant cards themselves are
-single illustrated stills, not sprite sheets.
+DANN-E form use the shared native runtime sheet
+`public/assets/art-pack/sprites/runtime/sprite_dann_e.png`. It is derived from
+the illustrated `sprites/sprite_dann_e.png` pose board; the variant cards and
+master pose board remain single illustrated still/reference art, not packed
+runtime sprite grids.
+
+## Difficulty-tuned live room stat table
+
+| Variant | Loaded texture key | AI | Weakness | HP | Speed | Damage | Risk tier | Loot |
+| --- | --- | --- | --- | ---: | ---: | ---: | --- | --- |
+| DANN-E Prime | `danne-prime-humanoid` | Chase | Review Folder | 3 | 18 | 5 | Guarded / 2 | 4 document points |
+| DANN-E Mark I | `danne-mark-i-prototype` | Turret | Review Folder | 2 | 0 | 4 | Low / 1 | 4 document points |
+| DANN-E Colossus | `danne-colossus-final-form` | Turret | Red Pencil | 6 | 0 | 8 | Severe / 5 | 8 document points, SOP stamp, Black Vault Review Fragment |
+| DANN-E Cloud Form | `danne-cloud-form` | Patrol | Citation Stamp | 4 | 24 | 7 | High / 4 | 6 document points |
+| DANN-E Executive | `danne-executive-suit` | Chase | Review Folder | 4 | 20 | 6 | Elevated / 3 | 5 document points |
+| DANN-E Swarm | `danne-swarm` | Patrol | Citation Stamp | 2 | 22 | 3 | Low / 1 | 4 document points |
+| DANN-E Defeated | `danne-defeated` | Turret | Red Pencil | 2 | 0 | 5 | Elevated / 3 | 2 document points |
+| DANN-E Ascendant | `danne-ascendant` | Chase | Red Pencil | 7 | 25 | 9 | Severe / 5 | 10 document points, Ascendant Record Fragment |
 
 ## FRUS tool weaknesses
 
@@ -130,6 +145,65 @@ publication — the **Citation Stamp** plus an open Buckram Gate (all pendants, 
 Buckram Key, and zero standards violations). Defeating Ascendant secures the **FRUS volume
 fragment** true ending.
 
+## Live room enemy layer
+
+The room-clear combat implementation treats the same eight canonical cards as live,
+defeatable room enemies. No redactor-drone or censorship-wraith forms should be added to
+the DANN-E roster.
+
+| Variant | Live texture / portrait still | Room enemy AI | Counter-tool | Room-clear loot |
+| --- | --- | --- | --- | --- |
+| DANN-E Prime | `danne-boss-combat` / `danne-prime-humanoid` | Chase | Review Folder | 4 document points |
+| DANN-E Mark I | `danne-boss-combat` / `danne-mark-i-prototype` | Turret | Review Folder | 4 document points |
+| DANN-E Colossus | `danne-boss-combat` / `danne-colossus-final-form` | Turret | Red Pencil | 8 document points, SOP stamp, Black Vault Review Fragment |
+| DANN-E Cloud Form | `danne-boss-combat` / `danne-cloud-form` | Patrol | Citation Stamp | 6 document points |
+| DANN-E Executive | `danne-boss-combat` / `danne-executive-suit` | Chase | Review Folder | 5 document points |
+| DANN-E Swarm | `danne-boss-combat` / `danne-swarm` | Patrol | Citation Stamp | 4 document points |
+| DANN-E Defeated | `danne-boss-combat` / `danne-defeated` | Turret | Red Pencil | 2 document points |
+| DANN-E Ascendant | `danne-boss-combat` / `danne-ascendant` | Chase | Red Pencil | 10 document points, Ascendant Record Fragment |
+
+The slash separates the small animated room sprite from the large illustrated still.
+Never render a variant still as a moving room entity: at 1024x1536 it reads as a framed
+poster and obscures the playfield. Chase forms stop at a short standoff distance, show a
+gold windup ring and `!`, strike during one brief red active window, and then expose a
+recovery window. Room entry gives melee and turret forms a short grace period before their
+first attack.
+
+### Room placement
+
+- Black Vault: Colossus, Cloud Form, Ascendant, and the Defeated false-surrender decoy.
+  Clearing all four opens the west and north blast doors.
+- NARA Stacks: Mark I and Swarm patrol the stacks as a mid-game room-clear challenge.
+- Embassy Compound: Prime applies disguised shortcut pressure.
+- Capitol Hill: Executive applies false-certainty pressure near hearing spaces.
+
+## Difficulty Curve
+
+The live room graph ramps DANN-E pressure by reliability risk, not only by enemy count. Earlier rooms keep HP low and damage forgiving so the player can learn tool-specific counters. Later rooms increase HP, chase speed, and Ego-bolt damage, and the HUD surfaces a `RELIABILITY RISK` warning whenever an active tier-4 or tier-5 enemy is present.
+
+| Room | Variants | Rationale |
+| --- | --- | --- |
+| NARA Stacks | Mark I, Swarm | First DANN-E room-clear lesson. Mark I is stationary and Swarm is quick but fragile; both are low-risk and teach Review Folder/Citation Stamp counters without heavy reliability loss. |
+| Embassy Compound | Prime | Mid-early disguised shortcut pressure. Prime has one extra HP over the NARA variants and moderate chase speed, making the Review Folder counter matter without overwhelming the player. |
+| Capitol Hill | Executive | Late-mid hearing pressure. Executive has elevated HP, speed, and damage to make false certainty feel more dangerous before the player reaches the vault. |
+| Black Vault | Cloud Form, Colossus, Defeated Decoy, Ascendant | Final miniboss room. Cloud introduces high-risk source-trail blur, Colossus and Ascendant are severe tier-5 checks, and the Defeated decoy prevents the final room from being solved by reading labels alone. |
+
+## Room-Clear Loop
+
+1. Enter a room with DANN-E pressure.
+2. Identify each variant and its required FRUS counter-tool.
+3. Strike with the wrong tool: the enemy is knocked back but loses no HP.
+4. Strike with the correct tool: HP drops, the HP bar appears, and the enemy flashes.
+5. Defeat every DANN-E enemy in the room.
+6. The room-clear flag opens the vault/exit and awards any configured process stamp or FRUS
+   volume fragment.
+
+The gameplay-map pause screen is part of this loop: `M` opens the tool grid, arrows move
+between acquired tools, and `A` equips the highlighted counter. `B`, `X`, or Shift uses
+the equipped tool. The lower combat cue always names the nearest live DANN-E counter.
+
+The Black Vault currently uses this loop to open its west and north blast doors.
+
 ## Implementation notes for Codex
 
 1. **Codex / bestiary entries** already exist per variant via
@@ -143,8 +217,8 @@ fragment** true ending.
    and scale by integer multiples only (`pixelArt: true`). The 3:2 cards (`03`, `08`) are
    sized for full-screen cutscene reveals; letterbox them with the existing gold-filigree
    cutscene bars.
-4. **Do not slice the variant cards as sprite sheets.** For DANN-E combat animation continue
-   using `sprite_dann_e.png`.
+4. **Do not slice the variant cards or illustrated master as sprite sheets.** For DANN-E
+   combat animation use `sprites/runtime/sprite_dann_e.png`.
 5. **Tool → weakness wiring:** enforce the weakness listed per variant so each form teaches
    the matching FRUS tool (Citation Stamp / Red Pencil / Review Folder). Cutscene forms
    (Prime, Defeated) and the stealth form (Executive) gate on the tool check rather than an

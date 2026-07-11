@@ -31,6 +31,7 @@ import {
   getPublicationReadinessReadout,
   getTreatyFragmentCount,
   hasDanneItem,
+  hasProcessItem,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -38,6 +39,11 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
+import {
+  HIDDEN_READING_ROOM_DISCOVERED_FLAG,
+  HIDDEN_READING_ROOM_SCENE,
+  hiddenReadingRoomDiscovered
+} from "../game/secretReadingRoom";
 import type { Interactable, Position } from "../game/types";
 import { Player } from "../entities/Player";
 import { CensorshipWraith } from "../entities/enemies/CensorshipWraith";
@@ -132,6 +138,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private marineGuard?: MarineSecurityGuard;
   private danneArena?: Phaser.GameObjects.Container;
   private publicationBoard?: Phaser.GameObjects.Container;
+  private readonly interactionMarkerObjects: Phaser.GameObjects.GameObject[] = [];
   private marineDoorCleared = false;
   private lastGoodPosition: Position;
 
@@ -185,6 +192,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.drawMapBackground();
     this.drawSnesTileRoomLayer();
     this.drawDanneArenaLayer(0);
+    this.interactionMarkerObjects.length = 0;
     this.drawInteractionMarkers();
     if (isCollisionDebugEnabled()) this.drawCollisionDebug();
     this.drawLocationCard();
@@ -274,7 +282,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show(this.geometry.displayName.toUpperCase(), "The route is paused.");
+      this.inventory.toggle();
       return;
     }
 
@@ -299,8 +307,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (this.attackBuffer.consume(this.time.now, true)) this.useDanneItemAction();
     this.resolvePlayerMeleeHits(this.time.now);
-    const nearest = nearestInteractable(this.player.position, this.interactables);
-    const hintTarget = nearestInteractableHint(this.player.position, this.interactables);
+    const bossActive = Boolean(this.danneBoss?.isActive);
+    const nearest = bossActive ? null : nearestInteractable(this.player.position, this.interactables);
+    const hintTarget = bossActive ? null : nearestInteractableHint(this.player.position, this.interactables);
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
     this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
@@ -382,12 +391,42 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private drawInteractionMarkers() {
     for (const interaction of this.geometry.interactions) {
-      this.add.ellipse(interaction.x + 1, interaction.y + 2, 15, 7, color(PALETTE.black), 0.55).setDepth(interaction.y - 4);
-      this.add.rectangle(interaction.x, interaction.y, 13, 13, color(PALETTE.black), 0.82)
+      if (interaction.action === "hidden-reading-room-passage") {
+        this.drawHiddenPassageSeam(interaction);
+        continue;
+      }
+      this.interactionMarkerObjects.push(this.add.ellipse(interaction.x + 1, interaction.y + 2, 15, 7, color(PALETTE.black), 0.55).setDepth(interaction.y - 4));
+      this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y, 13, 13, color(PALETTE.black), 0.82)
         .setStrokeStyle(1, color(interaction.accent))
-        .setDepth(interaction.y);
-      this.add.rectangle(interaction.x, interaction.y - 3, 7, 3, color(interaction.accent)).setDepth(interaction.y + 1);
-      this.add.rectangle(interaction.x + 3, interaction.y - 5, 2, 2, color(PALETTE.creamPaper)).setDepth(interaction.y + 2);
+        .setDepth(interaction.y));
+      this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 3, 7, 3, color(interaction.accent)).setDepth(interaction.y + 1));
+      this.interactionMarkerObjects.push(this.add.rectangle(interaction.x + 3, interaction.y - 5, 2, 2, color(PALETTE.creamPaper)).setDepth(interaction.y + 2));
+    }
+  }
+
+  private drawHiddenPassageSeam(interaction: DanneSceneInteractionDefinition) {
+    const discovered = hiddenReadingRoomDiscovered(gameState);
+    const accent = discovered ? PALETTE.goldStamp : PALETTE.stoneLight;
+    const alpha = discovered ? 0.92 : 0.42;
+    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 4, 18, 3, color(PALETTE.black), 0.45)
+      .setDepth(interaction.y + 1)
+      .setName("nara-hidden-reading-room-shadow"));
+    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x - 7, interaction.y - 8, 2, 9, color(accent), alpha)
+      .setDepth(interaction.y + 2)
+      .setName("nara-hidden-reading-room-seam"));
+    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 5, 7, 2, color(accent), alpha)
+      .setDepth(interaction.y + 2)
+      .setName("nara-hidden-reading-room-seam"));
+    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x + 6, interaction.y - 2, 2, 7, color(accent), alpha)
+      .setDepth(interaction.y + 2)
+      .setName("nara-hidden-reading-room-seam"));
+    if (discovered) {
+      this.interactionMarkerObjects.push(this.add.text(interaction.x, interaction.y + 7, "SECRET", {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.goldStamp,
+        backgroundColor: PALETTE.black
+      }).setOrigin(0.5).setDepth(interaction.y + 3).setName("nara-hidden-reading-room-label"));
     }
   }
 
@@ -596,6 +635,24 @@ export abstract class DanneMapScene extends Phaser.Scene {
         : "Fragment I is already in the treaty folder.");
       return;
     }
+    if (definition.action === "hidden-reading-room-passage") {
+      if (!hasProcessItem("review_folder")) {
+        retroAudio.warning();
+        this.dialog.show("FAINT WALL SEAM", [
+          "A shelf wall sounds hollow, but the route needs a review-folder cross-check.",
+          "Return with the Review Folder to compare the stack register against the wall seam."
+        ]);
+        setLatestMessage("Hidden reading-room seam needs Review Folder.");
+        return;
+      }
+      gameState.sceneProgress[HIDDEN_READING_ROOM_DISCOVERED_FLAG] = 1;
+      retroAudio.confirm();
+      setLatestMessage("Secret reading-room passage opened.");
+      setObjective("Secret passage opened: enter the hidden reading room.");
+      saveGameNow("manual");
+      transitionTo(this, HIDDEN_READING_ROOM_SCENE);
+      return;
+    }
     if (definition.action === "treaty-fragment-vault") {
       if (!gameState.sceneProgress.blackVaultBossCleared) {
         this.dialog.show("TREATY FRAGMENT III", [
@@ -766,6 +823,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
     for (const wraith of this.censorshipWraiths) wraith.destroy();
     this.censorshipWraiths = [];
     this.publicationBoard?.setVisible(false);
+    for (const marker of this.interactionMarkerObjects) {
+      (marker as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(false);
+    }
     const quickFight = this.isBossQuickDebugEnabled();
     this.danneBoss = new DanneBoss(this, {
       player: this.player,
@@ -897,6 +957,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const grants = new Set(give.split(",").map((part) => part.trim()).filter(Boolean));
     if (grants.has("declass-key") || grants.has("master-declass-key")) addDanneItem("master-declass-key");
     if (grants.has("ruby-pen")) addDanneItem("ruby-pen");
+    if (grants.has("review-folder") || grants.has("review_folder")) addProcessItem("review_folder");
     if (grants.has("publication") || grants.has("buckram-gate")) {
       (["rule", "archive", "network", "referral", "proof"] as const).forEach((stampId) => awardProcessStamp(stampId));
       addProcessItem("buckram_key");
@@ -922,7 +983,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private useDanneItemAction() {
     if (gameState.equippedDanneItem !== "ruby-pen" || !hasDanneItem("ruby-pen")) return;
-    this.player.startAction();
+    if (!this.player.startAction(gameState.equippedProcessItem)) {
+      setLatestMessage("Ruby Pen is cooling down.");
+      return;
+    }
     const hitbox = this.player.getFacingActionHitbox();
     const trail = this.add.rectangle(
       Math.round(hitbox.centerX),

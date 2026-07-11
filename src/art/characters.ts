@@ -15,7 +15,7 @@ export const ART_PACK_FOOT_OFFSET_Y = Math.round(
 );
 export const ART_PACK_LABEL_OFFSET_Y = ART_PACK_FOOT_OFFSET_Y + 3;
 
-export const CHARACTERS = {
+export const BASE_CHARACTERS = {
   compiler: "assets/art-pack/sprites/native/sprite_compiler.png",
   editor: "assets/art-pack/sprites/native/sprite_editor.png",
   declassification_coordinator: "assets/art-pack/sprites/native/sprite_declassification_coordinator.png",
@@ -28,11 +28,31 @@ export const CHARACTERS = {
   statechat_terminal: "assets/art-pack/sprites/native/sprite_statechat_terminal.png"
 } as const;
 
+export const VETERAN_CHARACTERS = {
+  compiler_veteran: "assets/art-pack/ng-plus/native/sprite_compiler_veteran.png",
+  editor_veteran: "assets/art-pack/ng-plus/native/sprite_editor_veteran.png",
+  declassification_coordinator_veteran: "assets/art-pack/ng-plus/native/sprite_declass_reviewer_veteran.png",
+  reviewer_veteran: "assets/art-pack/ng-plus/native/sprite_proofreader_veteran.png",
+  records_officer_veteran: "assets/art-pack/ng-plus/native/sprite_source_note_specialist_veteran.png"
+} as const;
+
+export const CHARACTERS = {
+  ...BASE_CHARACTERS,
+  ...VETERAN_CHARACTERS
+} as const;
+
 export type CharacterKey = keyof typeof CHARACTERS;
 
 export const CHARACTER_KEYS = Object.keys(CHARACTERS) as CharacterKey[];
 
-export function getCharacterKeyForProcessRole(roleId: string): CharacterKey {
+export function getCharacterKeyForProcessRole(roleId: string, veteran = false): CharacterKey {
+  if (veteran) {
+    if (roleId === "compiler") return "compiler_veteran";
+    if (roleId === "editor") return "editor_veteran";
+    if (roleId === "declass_reviewer") return "declassification_coordinator_veteran";
+    if (roleId === "source_note_specialist") return "records_officer_veteran";
+    return "reviewer_veteran";
+  }
   if (roleId === "compiler") return "compiler";
   if (roleId === "editor") return "editor";
   if (roleId === "declass_reviewer") return "declassification_coordinator";

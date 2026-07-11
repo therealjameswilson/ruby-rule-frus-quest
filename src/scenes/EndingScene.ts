@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { FRUS_VOLUMES } from "../assets/registry";
-import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
+import { ALT_ENDING_ASSETS, FRUS_VOLUMES, SCREENS, publicAssetPath } from "../assets/registry";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   evaluateKelloggCertificationAnswer,
   getKelloggCertificationPrompt,
@@ -77,12 +77,17 @@ import {
   addDocumentPoints,
   addInventoryItem,
   addProcessItem,
+  finalizeCompletionStats,
   gameState,
+  getCompletionStatsReadout,
   getFinalGateReadiness,
+  getPublicationOutcomeReadout,
   getPublicationReadinessReadout,
   getStatutoryClockStateReadout,
   hasProcessItem,
+  markVolumeAssemblyCeremonyComplete,
   publishDocument,
+  recordBindingCeremonyCompletion,
   resolveStandardsViolation,
   setFinalGateCertificationState,
   setGameMode,
@@ -103,7 +108,8 @@ import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability"
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
-import { SNES_PROCESS_STAMP_RELIC_ASSET, SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
+import { SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
+import { hiddenFirstEditionBonusLabel } from "../game/secretReadingRoom";
 import {
   addSnesFrusCoverAssembly,
   addSnesPublicationShrine,
@@ -116,6 +122,7 @@ import {
 } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
 import { InteractionPrompt } from "../systems/interactionPrompt";
+import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 import type { Interactable } from "../game/types";
 
 function color(hex: string) {
@@ -159,6 +166,20 @@ export class EndingScene extends Phaser.Scene {
 
   constructor() {
     super("EndingScene");
+  }
+
+  preload() {
+    for (const [key, path] of Object.entries(ALT_ENDING_ASSETS)) {
+      if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
+    }
+    const rewardKey = FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE;
+    if (!this.textures.exists(rewardKey)) {
+      this.load.image(rewardKey, publicAssetPath(FRUS_VOLUMES[rewardKey]));
+    }
+    const introKey = "intro_screen_256x224" satisfies keyof typeof SCREENS;
+    if (!this.textures.exists(introKey)) {
+      this.load.image(introKey, publicAssetPath(SCREENS[introKey]));
+    }
   }
 
   create() {
@@ -227,7 +248,8 @@ export class EndingScene extends Phaser.Scene {
     }
 
     if (input.pauseJustPressed) {
-      setLatestMessage("Buckram Gate paused. Human certification still required.");
+      this.inventory.toggle();
+      return;
     }
 
     this.player.update(delta, true, { bounds: GATE_PLAY_BOUNDS });
@@ -1573,11 +1595,58 @@ export class EndingScene extends Phaser.Scene {
       requiredItem: "Buckram Key",
       message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
     });
-    setLatestMessage("PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED");
+    markVolumeAssemblyCeremonyComplete();
+    recordBindingCeremonyCompletion();
+    const completionStats = finalizeCompletionStats();
+    const outcome = completionStats.publicationOutcome;
+    setLatestMessage(outcome.id === "published_under_appeal"
+      ? "PUBLISHED UNDER APPEAL - UNRESOLVED EQUITIES RECORDED - NEW GAME+ READY"
+      : "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED - NEW GAME+ READY");
     this.syncVisibleState(true);
     retroAudio.ending();
-    this.showPublishedPrize();
-    this.time.delayedCall(350, () => {
+    if (outcome.id === "published_under_appeal") {
+      this.showContestedPrize();
+      this.time.delayedCall(350, () => {
+        this.canRestart = true;
+      });
+    } else {
+      this.playBindingCeremony();
+    }
+  }
+
+  private playBindingCeremony() {
+    const hasAnimation = this.textures.exists(VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key);
+    this.add.rectangle(128, 120, 256, 240, color(PALETTE.black), 0.92).setDepth(880);
+    this.add.text(128, 20, "BINDING CEREMONY", {
+      fontFamily: "monospace",
+      fontSize: "11px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(884);
+    this.add.text(128, 35, "ASSEMBLING THE PUBLIC FRUS VOLUME", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(884);
+    const sprite = hasAnimation
+      ? this.add.sprite(128, 100, VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key, 0).setScale(0.72).setDepth(885)
+      : null;
+    if (!sprite) {
+      this.showPublishedPrize();
+      this.canRestart = true;
+      return;
+    }
+    let frame = 0;
+    this.time.addEvent({
+      delay: 170,
+      repeat: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameCount - 1,
+      callback: () => {
+        sprite.setFrame(frame);
+        frame += 1;
+      }
+    });
+    this.time.delayedCall(1250, () => {
+      sprite.destroy();
+      this.showPublishedPrize();
       this.canRestart = true;
     });
   }
@@ -1604,6 +1673,7 @@ export class EndingScene extends Phaser.Scene {
       "FRUS cover prize",
       "SNES published FRUS prize cover",
       published ? "Published FRUS Cover" : "Unpublished assembled cover",
+      hiddenFirstEditionBonusLabel(gameState),
       "Equal-rank publication team",
       "reader-aid registers",
       "chapter release status ledger",
@@ -1638,12 +1708,7 @@ export class EndingScene extends Phaser.Scene {
 
   private showPublishedPrize() {
     const clock = getStatutoryClockStateReadout();
-    this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby)).setDepth(900);
-    for (let y = 0; y < GAME_HEIGHT; y += 8) {
-      for (let x = (y / 8) % 2 === 0 ? 2 : 10; x < GAME_WIDTH; x += 16) {
-        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramRed)).setDepth(901);
-      }
-    }
+    this.drawPublishedBackdrop();
 
     addSnesPublicationShrine(this, {
       x: 128,
@@ -1682,71 +1747,20 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "6px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 139, `COVER PIECES ${gameState.volumeFragments.length}/5`, {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 149, `RELIABILITY ${gameState.reliability}/100  DOC PTS ${gameState.documentPoints}`, {
-      fontFamily: "monospace",
-      fontSize: "7px",
-      color: PALETTE.openNetGreen
-    }).setOrigin(0.5).setDepth(931);
-    this.add.image(218, 145, "buckram-key").setDepth(932);
-    this.add.text(218, 157, "BUCKRAM\nKEY", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp,
-      align: "center"
-    }).setOrigin(0.5).setDepth(932);
-
-    this.add.rectangle(128, 170, 236, 29, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(931);
-    const hasProcessStampRelics = this.textures.exists(SNES_PROCESS_STAMP_RELIC_ASSET.key);
-    PROCESS_STAMPS.forEach((stamp, index) => {
-      const earned = gameState.processStamps.includes(stamp.id);
-      const x = 28 + index * 39;
-      if (hasProcessStampRelics) {
-        this.add.image(x, 164, SNES_PROCESS_STAMP_RELIC_ASSET.key, stamp.id)
-          .setName(`published-process-stamp-${stamp.id}`)
-          .setAlpha(earned ? 1 : 0.28)
-          .setDepth(932);
-      }
-      this.add.text(x, 172, stamp.label, {
-        fontFamily: "monospace",
-        fontSize: stamp.label.length > 3 ? "5px" : "6px",
-        color: earned ? PALETTE.goldStamp : PALETTE.sepiaInk
-      }).setName(`published-process-stamp-label-${stamp.id}`).setOrigin(0.5, 0).setDepth(932);
-      this.add.text(x, 179, earned ? "OK" : "--", {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: earned ? PALETTE.openNetGreen : PALETTE.sepiaInk
-      }).setName(`published-process-stamp-status-${stamp.id}`).setOrigin(0.5, 0).setDepth(932);
-    });
-
-    const lines = [
-      "ELENA: SELECTION COMPLETE",
-      "MARCUS: REFERRALS CLOSED",
-      "PRIYA: QUERIES RESOLVED"
-    ];
-    lines.forEach((line, index) => {
-      this.add.text(14, 184 + index * 6, line, {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.creamPaper
-      }).setDepth(932);
-    });
+    this.drawCompletionStatsBlock(128, 164);
 
     this.add.rectangle(128, 213, 236, 28, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(931);
     const practiced = [
       "SOURCE NOTES NEED PROVENANCE.",
       "OPENNET AND CLASSNET STAY SEPARATE.",
       "REFERRALS LEAVE A VISIBLE TRACE.",
-      "AI TOOLS PROPOSE; HUMANS DECIDE."
+      "AI TOOLS PROPOSE; HUMANS DECIDE.",
+      hiddenFirstEditionBonusLabel(gameState).toUpperCase()
     ];
     practiced.forEach((line, index) => {
-      this.add.text(16, 203 + index * 6, line, {
+      this.add.text(16, 202 + index * 5, line, {
         fontFamily: "monospace",
-        fontSize: "6px",
+        fontSize: "5px",
         color: PALETTE.terminalCyan
       }).setDepth(932);
     });
@@ -1758,9 +1772,155 @@ export class EndingScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(932);
   }
 
+  private showContestedPrize() {
+    const clock = getStatutoryClockStateReadout();
+    const bgKey = "interagency_review_room" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(bgKey)) {
+      const background = this.add.image(128, 120, bgKey).setDepth(900);
+      background.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby)).setDepth(900);
+      this.add.rectangle(128, 96, 210, 92, color(PALETTE.stoneDark), 0.88).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(901);
+      this.add.rectangle(128, 146, 160, 34, color(PALETTE.creamPaper), 0.92).setStrokeStyle(2, color(PALETTE.black)).setDepth(902);
+    }
+
+    addSnesStatutoryClock(this, {
+      x: 40,
+      y: 70,
+      elapsedYears: clock.elapsedYears,
+      deadlineYears: clock.deadlineYears,
+      yearsRemaining: clock.yearsRemaining,
+      status: "published",
+      depth: 925
+    });
+
+    this.add.text(128, 5, "CONTESTED DECLASSIFICATION", {
+      fontFamily: "monospace",
+      fontSize: "10px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(931);
+    this.add.text(128, 17, "PUBLISHED UNDER APPEAL", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(931);
+
+    const volumeKey = "volume_contested_redacted" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(volumeKey)) {
+      this.add.ellipse(128, 140, 70, 12, color(PALETTE.black), 0.62).setDepth(927);
+      const cover = this.add.image(128, 84, volumeKey).setDepth(930);
+      cover.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.drawAssembledPrize(128, 82, 0.82, 930, true);
+    }
+
+    const stampKey = "stamp_under_appeal" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(stampKey)) {
+      const stamp = this.add.image(174, 75, stampKey).setDepth(932).setAngle(-8);
+      stamp.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.add.rectangle(174, 75, 92, 20, color(PALETTE.black), 0.9).setStrokeStyle(2, color(PALETTE.classNetRed)).setDepth(932);
+      this.add.text(174, 70, "UNDER APPEAL", {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: PALETTE.goldStamp
+      }).setOrigin(0.5).setDepth(933);
+    }
+
+    const outcome = getPublicationOutcomeReadout();
+    this.add.rectangle(128, 143, 230, 24, color(PALETTE.black), 0.9).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(931);
+    this.add.text(128, 135, `${outcome.unresolvedEquities} UNRESOLVED EQUIT${outcome.unresolvedEquities === 1 ? "Y" : "IES"} RECORDED`, {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(932);
+    this.add.text(128, 146, "THE PUBLICATION DOCKET CARRIES AN APPEAL TRAIL.", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(932);
+
+    this.drawCompletionStatsBlock(128, 177);
+
+    this.add.rectangle(128, 223, 236, 22, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(931);
+    [
+      "CLEAN RUN: CLEAR EVERY EQUITY BEFORE THE BUCKRAM GATE.",
+      "SPACE: RETURN TO TITLE"
+    ].forEach((line, index) => {
+      this.add.text(128, 216 + index * 8, line, {
+        fontFamily: "monospace",
+        fontSize: index === 0 ? "6px" : "7px",
+        color: index === 0 ? PALETTE.terminalCyan : PALETTE.goldStamp
+      }).setOrigin(0.5).setDepth(932);
+    });
+  }
+
+  private drawCompletionStatsBlock(x: number, y: number) {
+    const depth = 3100;
+    const stats = getCompletionStatsReadout();
+    this.add.rectangle(x, y, 236, 56, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(depth);
+    this.add.text(x, y - 23, "COMPLETION STATS", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(depth + 1);
+
+    const leftLines = [
+      `TIME ${stats.totalPlayTime}`,
+      `RELIABILITY ${stats.finalReliabilityScore}/100`,
+      `PIECES ${stats.volumePiecesCollected}/${stats.volumePiecesTotal}`
+    ];
+    const rightLines = [
+      `DANN-E ${stats.danneVariantsDefeated.total}`,
+      `SECRET ${stats.hiddenCollectibleFound ? "YES" : "NO"}`,
+      stats.publicationOutcome.id === "published_under_appeal" ? "OUTCOME APPEAL" : "OUTCOME CLEAN"
+    ];
+
+    leftLines.forEach((line, index) => {
+      this.add.text(x - 105, y - 13 + index * 12, line, {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: index === 1 ? PALETTE.openNetGreen : PALETTE.creamPaper
+      }).setOrigin(0, 0.5).setDepth(depth + 1);
+    });
+    rightLines.forEach((line, index) => {
+      const lineColor = line === "OUTCOME APPEAL"
+        ? PALETTE.classNetRed
+        : index === 1 && stats.hiddenCollectibleFound
+          ? PALETTE.terminalCyan
+          : PALETTE.creamPaper;
+      this.add.text(x + 12, y - 13 + index * 12, line, {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: lineColor
+      }).setOrigin(0, 0.5).setDepth(depth + 1);
+    });
+  }
+
   private restart() {
     if (!this.canRestart) return;
     transitionTo(this, "TitleScene");
+  }
+
+  private drawPublishedBackdrop() {
+    const key = "intro_screen_256x224" satisfies keyof typeof SCREENS;
+    if (this.textures.exists(key)) {
+      const source = this.textures.get(key).getSourceImage() as { width?: number; height?: number };
+      if (source.width === GAME_WIDTH && source.height === 224) {
+        this.add.rectangle(128, 120, 256, 240, color(PALETTE.black)).setDepth(900);
+        this.add.image(0, 0, key).setOrigin(0).setDepth(901);
+        this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby), 0.28).setDepth(902);
+        this.add.rectangle(128, 224, 256, 16, color(PALETTE.black), 0.94).setDepth(903);
+        return;
+      }
+    }
+
+    this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby)).setDepth(900);
+    for (let y = 0; y < GAME_HEIGHT; y += 8) {
+      for (let x = (y / 8) % 2 === 0 ? 2 : 10; x < GAME_WIDTH; x += 16) {
+        this.add.rectangle(x, y, 2, 2, color(PALETTE.buckramRed)).setDepth(901);
+      }
+    }
   }
 
   private isNear(x: number, y: number, radius: number) {
@@ -1782,7 +1942,9 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private drawPublishedPrize(x: number, y: number, depth = 130) {
-    const rewardTexture = this.textures.exists(SNES_PUBLISHED_FRUS_PRIZE_ASSET.key)
+    const rewardTexture = this.textures.exists(VOLUME_ASSEMBLY_ASSETS.completedHero.key)
+      ? VOLUME_ASSEMBLY_ASSETS.completedHero.key
+      : this.textures.exists(SNES_PUBLISHED_FRUS_PRIZE_ASSET.key)
       ? SNES_PUBLISHED_FRUS_PRIZE_ASSET.key
       : this.textures.exists(FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE)
         ? FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE
@@ -1794,8 +1956,9 @@ export class EndingScene extends Phaser.Scene {
     const texture = this.textures.get(rewardTexture);
     const source = texture.getSourceImage() as HTMLCanvasElement | HTMLImageElement;
     const usesSnesPrize = rewardTexture === SNES_PUBLISHED_FRUS_PRIZE_ASSET.key;
-    const targetWidth = usesSnesPrize ? 58 : 96;
-    const targetHeight = usesSnesPrize ? 84 : 64;
+    const usesAssemblyHero = rewardTexture === VOLUME_ASSEMBLY_ASSETS.completedHero.key;
+    const targetWidth = usesAssemblyHero ? 74 : usesSnesPrize ? 58 : 96;
+    const targetHeight = usesAssemblyHero ? 74 : usesSnesPrize ? 84 : 64;
     const scale = Math.min(targetWidth / source.width, targetHeight / source.height);
     const renderedWidth = Math.round(source.width * scale);
     const renderedHeight = Math.round(source.height * scale);
@@ -1820,7 +1983,7 @@ export class EndingScene extends Phaser.Scene {
 
     const cover = this.add.image(x, y, rewardTexture)
       .setScale(scale)
-      .setName(usesSnesPrize ? "published-frus-snes-prize-art" : "published-frus-reward-art")
+      .setName(usesAssemblyHero ? "published-frus-volume-assembly-hero" : usesSnesPrize ? "published-frus-snes-prize-art" : "published-frus-reward-art")
       .setDepth(depth);
     cover.setData("rewardTexture", rewardTexture);
     cover.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);

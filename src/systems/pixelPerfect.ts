@@ -32,10 +32,18 @@ export function computeIntegerZoom(viewW: number, viewH: number) {
   return Math.max(1, Math.floor(Math.min(viewW / GAME_WIDTH, viewH / GAME_HEIGHT)));
 }
 
-type PixelPerfectWebGlRenderer = Phaser.Renderer.WebGL.WebGLRenderer & {
-  drawingBufferHeight: number;
-  defaultScissor: number[];
-};
+// Integer zoom measured in *device* pixels rather than CSS pixels. On high-DPR
+// phones (iPhone dpr=3) the CSS viewport is small, so a CSS-integer zoom locks to
+// 1x and the game renders tiny. Snapping to an integer number of physical device
+// pixels lets the canvas fill far more of the screen while still mapping every
+// game pixel to a whole number of device pixels, so SNES art stays crisp. On
+// dpr=1 desktops this is identical to computeIntegerZoom.
+export function computeDeviceIntegerZoom(viewW: number, viewH: number, dpr: number) {
+  const safeDpr = Math.max(1, dpr);
+  const deviceW = viewW * safeDpr;
+  const deviceH = viewH * safeDpr;
+  return Math.max(1, Math.floor(Math.min(deviceW / GAME_WIDTH, deviceH / GAME_HEIGHT)));
+}
 
 function getViewportSize() {
   const bodyStyle = window.getComputedStyle(document.body);
@@ -48,35 +56,9 @@ function getViewportSize() {
   };
 }
 
-function isWebGlRenderer(
-  renderer: Phaser.Renderer.Canvas.CanvasRenderer | Phaser.Renderer.WebGL.WebGLRenderer
-): renderer is Phaser.Renderer.WebGL.WebGLRenderer {
-  return "gl" in renderer && typeof renderer.setProjectionMatrix === "function";
-}
-
-function resizeWebGlViewport(game: Phaser.Game, width: number, height: number) {
-  const renderer = game.renderer;
-  if (!isWebGlRenderer(renderer)) return;
-
-  const webGlRenderer = renderer as PixelPerfectWebGlRenderer;
-  const gl = renderer.gl;
-  webGlRenderer.width = width;
-  webGlRenderer.height = height;
-  webGlRenderer.setProjectionMatrix(GAME_WIDTH, GAME_HEIGHT);
-  gl.viewport(0, 0, width, height);
-  webGlRenderer.drawingBufferHeight = gl.drawingBufferHeight;
-  gl.scissor(0, Math.max(0, gl.drawingBufferHeight - height), width, height);
-  webGlRenderer.defaultScissor[2] = width;
-  webGlRenderer.defaultScissor[3] = height;
-}
-
-function resizeActiveCameras(game: Phaser.Game, width: number, height: number) {
+function roundActiveCameras(game: Phaser.Game) {
   for (const scene of game.scene.getScenes(true)) {
     for (const camera of scene.cameras.cameras) {
-      if (camera.width !== width || camera.height !== height) {
-        camera.setViewport(camera.x, camera.y, width, height);
-      }
-      if (!isIntegerScale(camera.zoom) || camera.zoom !== 1) camera.setZoom(1);
       camera.roundPixels = true;
     }
   }
@@ -84,30 +66,33 @@ function resizeActiveCameras(game: Phaser.Game, width: number, height: number) {
 
 export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
   const { width, height } = getViewportSize();
-  const zoom = computeIntegerZoom(width, height);
   const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
-  const canvasCssWidth = GAME_WIDTH * zoom;
-  const canvasCssHeight = GAME_HEIGHT * zoom;
-  const canvasBackingWidth = canvasCssWidth * dpr;
-  const canvasBackingHeight = canvasCssHeight * dpr;
+  const deviceZoom = computeDeviceIntegerZoom(width, height, dpr);
+  // CSS zoom may be fractional (e.g. 4/3 on an iPhone), but the backing store is
+  // an exact integer multiple of the base resolution, so each game pixel still
+  // maps to `deviceZoom` physical pixels and stays crisp.
+  const cssZoom = deviceZoom / dpr;
+  const canvasCssWidth = GAME_WIDTH * cssZoom;
+  const canvasCssHeight = GAME_HEIGHT * cssZoom;
   const canvas = game.canvas;
 
-  game.scale.setZoom(zoom);
+  if (Math.abs(game.scale.zoom - cssZoom) > 0.001) game.scale.setZoom(cssZoom);
   canvas.style.width = `${canvasCssWidth}px`;
   canvas.style.height = `${canvasCssHeight}px`;
-  if (canvas.width !== canvasBackingWidth) canvas.width = canvasBackingWidth;
-  if (canvas.height !== canvasBackingHeight) canvas.height = canvasBackingHeight;
-  resizeWebGlViewport(game, canvasBackingWidth, canvasBackingHeight);
-  resizeActiveCameras(game, canvasBackingWidth, canvasBackingHeight);
+  // Phaser owns the logical drawing buffer and camera viewports. Resizing either
+  // after WebGL initialization clears the buffer and moves the 256x240 camera
+  // into physical-pixel space. CSS nearest-neighbor scaling still maps each
+  // logical pixel to exactly `deviceZoom` physical pixels.
+  roundActiveCameras(game);
 
   return {
-    computedZoom: zoom,
-    integerZoomTarget: zoom,
-    integerZoom: true,
+    computedZoom: cssZoom,
+    integerZoomTarget: deviceZoom,
+    integerZoom: isIntegerScale(cssZoom * dpr),
     dpr,
     canvasCssWidth,
     canvasCssHeight,
-    canvasBackingWidth,
-    canvasBackingHeight
+    canvasBackingWidth: canvas.width,
+    canvasBackingHeight: canvas.height
   };
 }

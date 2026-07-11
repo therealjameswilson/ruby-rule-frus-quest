@@ -13,6 +13,7 @@ import {
   getTreatyFragmentCount,
   gameState,
   hasProcessItem,
+  recordHiddenCollectibleFound,
   setHeldItem,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -443,11 +444,8 @@ export class ArchiveScene extends Phaser.Scene {
 
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
     if (!restoredPlayer) {
-      this.dialog.show("ELENA", [
-        "A compiler reads the trail.",
-        "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving.",
-        "Use the edge gates to map each room, but verify Source Note 47 here."
-      ]);
+      this.toast.show("FIND SN47 -> RESEARCH TABLE", this.player.position, "info");
+      setLatestMessage("Archive A1: find Source Note 47 and verify it at the research table.");
     }
   }
 
@@ -491,7 +489,7 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("PAUSED", "The archive waits.");
+      this.inventory.toggle();
       return;
     }
 
@@ -938,10 +936,12 @@ export class ArchiveScene extends Phaser.Scene {
         addDocumentPoints(room.id === "C3" ? 10 : 6, room.id === "C3" ? "hidden source cache" : "hidden reliability well");
         if (room.id === "D2") {
           adjustReliability(8, "hidden reliability refill");
+          recordHiddenCollectibleFound("Hidden Reliability Well");
           setLatestMessage("Hidden reliability well restored confidence.");
           setObjective("Reliability restored; return to the marked Archive route.");
         } else {
           addVolumeFragment("Hidden Cache Fragment");
+          recordHiddenCollectibleFound("Hidden Source Cache");
           setLatestMessage("Hidden source cache fragment filed.");
           setObjective("Hidden Source Cache filed; return to the Archive map marker.");
         }
@@ -1361,9 +1361,12 @@ export class ArchiveScene extends Phaser.Scene {
     const wall = facedWall ?? (nearest?.kind === "enemy" ? this.activeEnemyWalls.get(nearest.id) : undefined);
     const definition = wall ? this.activeEnemyDefs.get(wall.id) : undefined;
     if (!wall && nearest?.kind !== "enemy") return false;
-    this.player.startAction();
-    const hitbox = this.player.activeActionHitbox;
-    if (!wall || !definition || !hitbox || !wall.intersectsHitbox(hitbox)) {
+    if (!this.player.startAction(gameState.equippedProcessItem)) {
+      setLatestMessage("Process tool is cooling down.");
+      this.hintText.setText("COOLDOWN");
+      return true;
+    }
+    if (!wall || !definition || !wall.intersectsHitbox(facingHitbox)) {
       retroAudio.warning();
       setLatestMessage("Face the stonewall before applying the process.");
       this.hintText.setText("FACE THE WALL");

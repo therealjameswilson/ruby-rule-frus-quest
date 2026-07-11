@@ -2,6 +2,26 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Codex + Perplexity integration play pass (2026-07-11):
+  - Composed all 21 open PR heads into `codex/gameplay-integration`; every open head commit is an ancestor of the integration branch.
+  - Reconciled accessibility, NG+, completion stats, equity endings, the hidden room, second-volume unlocks, deferred art loading, and both Perplexity art drops without dropping sibling state fields or scene assets.
+  - Fixed deferred loading gaps so the accessibility HUD, ending variants, and Hidden Reading Room load their own textures instead of relying on the old boot-wide art preload.
+  - Removed post-start WebGL backing/camera mutation from the pixel scaler; Phaser now retains its 256x240 logical buffer while nearest-neighbor CSS scaling resolves to an integer physical-pixel multiple.
+  - Live-played the Office tutorial route and removed the redundant blocking dialog after a successful Assignment Memo stamp; the existing toast now returns control immediately.
+  - Replaced the Archive Cavern's unsolicited entry dialog with a concise `STAMP -> FRAGMENT -> GATE` route toast; the colleague's optional interaction still carries the longer workflow explanation.
+  - Made the first Verification Gate non-blocking: missing evidence produces a warning toast, while a cited fragment produces a brief success toast and automatic room transition.
+  - Removed Archive A1's unsolicited three-page briefing; the room now opens in movement mode with a concise Source Note 47 route toast.
+  - Fixed cleared DANN-E rooms reporting `0/0` and `roomClear: null`; persisted/cheat-cleared encounters now expose their expected defeated count and a positive room-clear marker to `render_game_to_text()`.
+  - Desktop + mobile QA: all 25 registered `?scene=` routes boot to the requested scene with no page/console errors; DPR-3 iPhone emulation maps the 341.3x320 CSS canvas to 4 physical pixels per game pixel at ~60 fps with zero scale-guard adjustments.
+  - Verified multi-touch combat by holding the floating D-pad while pressing B: movement advanced 14px while the Citation Stamp entered cooldown, with independent pointer IDs and no dropped input.
+  - Verified tool weakness live in Black Vault: Citation Stamp damaged Cloud Form (4 -> 3 HP), while Red Pencil produced a resistance cue and no damage; seeded clear state now reports 4/4 and opens the blast-door flags.
+  - Removed the meaningless first-run `VOLUMES COMPLETED 0` overlay that was colliding with the baked title logo; completion history remains visible once NG+ is unlocked.
+
+- DANN-E/weapon/volume automated coverage pass (2026-07-06):
+  - Added direct unit coverage for live DANN-E enemy interactions: matching-tool damage, wrong-tool knockback without damage, loot/volume-piece awards on defeat, and room-clear gate unlock behavior.
+  - Added save/restore coverage for FRUS volume assembly progress and verified the 5/5 completion flag is set when the final cover piece is earned.
+  - Strengthened weapon-state coverage so a single active swing keeps one swing id and can be used to prevent repeat hits on the same DANN-E target.
+  - Verification: `npm run test` passes (77 files / 375 tests), `npm run build` passes, and the required web-game client completed against Black Vault with DANN-E threat/readout state present.
 - Combat feel / ALTTP juice pass (2026-07-07):
   - Added `src/systems/combatFeedback.ts`, a small reusable screen-shake helper with pure, tuned hit-feedback profiles (`player-hurt`, `player-hurt-heavy`, `boss-hit`, `boss-defeat`) plus `resolveHitFeedback` (scaling + clamping) and an `applyHitShake(scene, kind)` wrapper that no-ops safely during teardown.
   - Intensities are capped so shake stays ~1-2px on the 256x240 canvas, preserving pixel-perfect art while adding an impact flinch.
@@ -14,6 +34,52 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Added the English baseline strings beside the existing Spanish/French packs and extended those packs with language/pause-menu labels.
   - Wired the title screen language selector (`LANG EN/ES/FR`, pointer or `L`) and localized the procedural title, route strip, source shoutout, mission plaque, skip-warning toggle, HUD quest band, gamepad/touch toasts, and pause/subscreen labels.
   - Added focused helper tests covering fallback, interpolation, and language selection.
+- Canonical DANN-E eight-variant combat correction (2026-07-06):
+  - Revised the live DANN-E combat registry to use exactly the eight PR #7/#8 variant assets: Prime, Mark I, Colossus, Cloud, Executive, Swarm, Defeated, and Ascendant.
+  - Removed redactor-drone and censorship-wraith from the DANN-E variant registry so those extra pack enemies no longer masquerade as DANN-E forms.
+  - Distributed the eight canonical DANN-E forms across GameplayMapScene combat rooms: Black Vault, NARA Stacks, Embassy, and Capitol Hill.
+  - Scaled the single-card DANN-E variant art down to enemy-token size and hid permanent labels during normal play; names/HP remain available through `window.render_game_to_text()` and `?debug=threats`.
+  - Updated `docs/DANNE_ENEMY_DESIGN.md` and tests so future changes cannot silently add non-canonical DANN-E variants.
+- Colorblind accessibility mode pass (2026-07-07):
+  - Registered the accessibility overlay art pack as typed preload assets so HUD, enemy, and boss feedback can swap to pattern-backed indicators without hardcoded paths.
+  - Added a persisted `High Contrast / Colorblind Mode` pause-subscreen toggle, available from Esc/M pause flow and stored in `localStorage`.
+  - Wired pattern overlays into reliability hearts, process-tool slots, enemy HP bars, boss HP/phase/weakness indicators, and `window.render_game_to_text()` state.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=colorblind-smoke`;
+    - direct Playwright probe confirmed Esc opens the subscreen and clicking `HC / CB` keeps pause open while persisting `ruby-rule.highContrastColorblind=true`;
+    - visual proof: `output/colorblind-pause-after-toggle.png`.
+- New Game+ unlock pass (2026-07-06):
+  - Added persistent New Game+ metadata (`ngPlusUnlocked`, `volumesCompleted`) separate from the normal save slot, so clearing or starting a fresh game does not erase completion history.
+  - Completing the Buckram Gate binding/publication ceremony now counts the volume once per run, unlocks New Game+, and displays the lifetime completed-volume count on the title and ending summary screens.
+  - Wired the NG+ veteran editor cosmetic sheets from `public/assets/art-pack/ng-plus/` through the central 32x48 character registry; New Game+ runs automatically use veteran role sprites in character creation and gameplay.
+  - Added a veteran DANN-E difficulty tier that shifts the existing curve upward with more HP, faster movement/projectiles, shorter attack cooldowns, and faster statutory-clock pressure while leaving normal mode unchanged.
+  - Verification:
+    - `npm run test` passes (72 files / 354 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=TitleScene&v=ngplus-smoke`;
+    - direct Playwright probes confirmed title count/NG+ selection, `newGamePlus.active === true`, `difficultyTier === "veteran"`, and active player sprite `reviewer_veteran` after entering Office;
+    - visual proof: `output/ngplus-probe/title-unlocked.png`, `output/ngplus-probe/character-veteran.png`, and `output/ngplus-probe/office-veteran.png`.
+- Equity-resolution ending branch (2026-07-06):
+  - Added a save-safe unresolved-equities counter to `GameState`, completion stats, and `window.render_game_to_text()`.
+  - Wired concrete declassification/referral failure points into the counter: wrong OpenNet/ClassNet routing, wrong agency-equity matching, unchecked StateChat referral manifests, failed foreign-government permission/withholding appeal gates, visible-excision failures, and DANN-E's omission shortcut.
+  - Added a publication outcome readout (`Published clean` vs. `Published under appeal`) and froze the outcome when completion stats finalize.
+  - Added original repo-local alt-ending pixel art under `public/assets/art-pack/alt-ending/` and registered it through `ALT_ENDING_ASSETS`.
+  - Branched the Buckram Gate publication result: clean runs keep the existing binding-ceremony prize, while unresolved equities show a contested-declassification / under-appeal ending and completion-stat outcome.
+  - Verification:
+    - `npm test -- --run src/game/completionStats.test.ts` passes (1 file / 4 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=equity-ending-smoke`;
+    - Chrome-backed visual smoke against `EndingScene` reports zero console errors and a valid `render_game_to_text()` state;
+    - full `npm test -- --run` currently fails in pre-existing `src/art/characterSprites.test.ts` because that test still expects every character pose to resolve to frame 0.
+- Second FRUS volume world-region unlock pass (2026-07-06):
+  - Wired the existing `public/assets/art-pack/world2/` Overseas Post map into the live world-map selector as a post-completion region rather than an always-open sixth atlas page.
+  - Added `secondVolumeUnlocked` to `GameState`, save/restore normalization, and `window.render_game_to_text()` output so QA can verify whether the second-volume region is available.
+  - Publishing the first FRUS volume now sets the second-volume unlock flag, and direct `?scene=WorldMapScene&region=overseas_post` links display a locked-region prompt until the flag is present.
+  - Reused the existing district routing into `GameplayMapScene`, DANN-E routes, and FRUS room graph instead of duplicating dungeon or combat logic for the new map.
+  - Verification:
+    - focused tests cover explicit unlock, final-gate publication unlock, save/restore persistence, and legacy scene-progress normalization;
+    - build and browser smoke-test details are in this branch's PR checklist.
 - ALTTP disassembly translation pass (2026-07-05):
   - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
   - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.
@@ -2552,6 +2618,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - CSS-scaled rect remains 768x720 at 3x shell scale;
   - Office scene renders correctly under the AUTO/WebGL path.
 - Checkpoint screenshot: `docs/screenshots/renderer-auto-smoke.png`.
+- Input-only Part 1 hardening pass:
+  - changed the Character Create begin prompt to `TAP AGAIN / PRESS ENTER TO BEGIN`
+  - added an explicit name-field hit zone so pointer/touch focus reliably captures typed names
+  - buffered non-repeat keyboard presses until the next `tickInput()` so fast Enter/Space/WASD taps are not missed between Phaser frames
+  - buffered touch-control presses the same way so quick on-screen A/B/D-pad taps still produce one-frame edges
+  - expanded Vitest coverage for fast keyboard taps, touch confirm/cancel, gamepad A/B, and resume-input swallowing
+  - verified `npm test`: 6 files passed, 23 tests passed
+  - verified `npm run build` with only the existing Vite chunk-size warning
+  - verified direct Playwright full flow: TitleScene -> CharacterCreateScene -> OfficeScene via keyboard, mouse, and touch-style A button
+  - verified resume overlay fallthrough: first Enter dismisses `TAP TO RESUME` and is swallowed; the next Enter confirms normally
 
 ## 2026-06-15 Office Hub Stray Sprite Fragment Fix
 
@@ -3916,6 +3992,122 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - visual proof: `docs/screenshots/hud-prompt-cleanup/guide-final.png`, `docs/screenshots/hud-prompt-cleanup/archive-final.png`, and `docs/screenshots/hud-prompt-cleanup/network-choice-final.png`;
   - browser pass reported only WebGL `ReadPixels` warnings caused by screenshot capture, with no page errors.
 
+## 2026-07-06 Equipped-tool swing state machine
+
+- Replaced the player action-hitbox timer with a real equipped-tool state machine for Citation Stamp, Red Pencil, and Review Folder.
+- Added windup, active, and cooldown windows per tool; damaging hitboxes now exist only during active frames, and repeated swings are blocked until cooldown ends.
+- Added tool-specific movement slowdown during windup/active, art-pack effects-sheet VFX with rectangle fallback, distinct oscillator windup/hit cues, and a HUD cooldown meter beside the equipped tool slot.
+- Kept legacy Archive stonewall interactions responsive through facing checks while DANN-E enemies use the strict active-frame hitbox.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - focused `npx vitest run src/systems/weaponState.test.ts --reporter=dot` passes (1 file / 3 tests);
+  - required web-game client completed against Black Vault with debug hitbox enabled and no page errors;
+  - direct Playwright probe confirmed no hitbox during windup/cooldown, an active hitbox during Red Pencil active frames, and failed re-swing attempts until idle;
+  - direct DANN-E probe confirmed wrong tools knock back without HP loss, while Citation Stamp, Red Pencil, and Review Folder each reduce HP on matching variants.
+
+## 2026-07-06 FRUS volume assembly arc
+
+- Added a persistent five-piece FRUS binding arc: spine, front board, title plate, ribbon marker, and seal/stamp.
+- Boss-tier DANN-E defeats now award binding pieces while preserving the older cover-fragment labels for existing saves and Buckram Gate readiness.
+- Added original local volume-assembly art: HUD tracker, six-frame binding animation sheet, and completed-volume hero sprite.
+- UIScene now shows a five-segment binding tracker in the compact quest band; `window.render_game_to_text()` and full debug state report volume assembly progress.
+- EndingScene now plays the binding ceremony, marks it as played in saved state, and displays the completed-volume hero with a skills-practiced summary.
+- Verification:
+  - focused `npm test -- --run src/systems/volumeAssembly.test.ts src/entities/danneVariants.test.ts src/systems/roomClear.test.ts` passes (3 files / 10 tests);
+  - `npx tsc --noEmit --pretty false` passes;
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client completed and captured `render_game_to_text()` with the new `volumeAssembly` field;
+  - direct Playwright probe confirmed Black Vault DANN-E enemies are active and reported by `render_game_to_text()`;
+  - direct Playwright reward probe defeated the boss-tier DANN-E variants across Black Vault, NARA Stacks, and Capitol Hill, producing `VOLUME 5/5` with `missingFragments: 0`;
+  - direct ending probe confirmed `ceremonyPlayed: true` and final certification status `published`;
+  - full `npm test` still has the pre-existing base-branch character sprite frame-layout assertion mismatch in `src/art/characterSprites.test.ts`.
+
+## 2026-07-06 Consistent 16-bit visual pipeline pass
+
+- Audited BootScene fallback generation and the committed art pack, then documented remaining gaps in `docs/ASSET_GAPS.md`.
+- Added the art-pack UI sheets to the central asset registry and registered named HUD slices in BootScene.
+- Switched TitleScene to prefer the native `title_screen_16bit_sharp_256x240.png` title card, with the procedural title retained as a missing-asset fallback.
+- Updated UIScene's compact quest band to use art-pack HUD chrome, verification-heart, equipped-tool slot, and action-badge slices where available.
+- Updated EndingScene to use `intro_screen_256x224.png` as a polished published-volume backdrop while keeping the completed-volume hero/binding ceremony art.
+- Confirmed the render config still uses Phaser.AUTO, `pixelArt: true`, `roundPixels: true`, `antialias: false`, `antialiasGL: false`, and nearest texture filtering.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against `?scene=TitleScene`;
+  - direct Playwright probes verified TitleScene and OfficeScene render with no page or console errors and intact `window.render_game_to_text()`;
+  - visual proof: `docs/screenshots/consistent-16bit-visual-pipeline/title-before.png`, `title-after.png`, `office-before.png`, and `office-hud-after.png`.
+
+## 2026-07-06 Mobile DANN-E combat and volume parity
+
+- Confirmed the touch path for DANN-E combat: floating D-pad feeds directional movement, touch `B` feeds the equipped-tool swing path, and touch `A` remains reserved for confirm/interact.
+- Added a touch-friendly cooldown meter beside the on-screen `B` button, using the same weapon phase and cooldown data as the desktop HUD.
+- Extended `window.rubyRuleTouchControls` with weapon phase, cooldown ratio, and equipped tool so mobile combat QA can inspect the same state used by `weaponState` and `DanneEnemy` hit detection.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against Black Vault on the local dev build;
+  - direct mobile Playwright probe at 375 x 667 confirmed integer zoom 1, DPR 2, 256 x 240 CSS canvas, 512 x 480 backing buffer, and no page errors;
+  - simulated touch movement and touch `B` swing reached `weaponPhase: active` with `weaponTool: red_pencil`;
+  - repeated touch `B` swings defeated DANN-E Colossus, advanced `volumeAssembly` from 0/5 to 1/5, and left `render_game_to_text()` reporting active enemy HP and room-clear status;
+  - visual proof: `docs/screenshots/mobile-danne-volume-parity/combat-touch-before.png`, `combat-cooldown-visible.png`, and `volume-piece-award.png`.
+
+## 2026-07-06 Region and DANN-E combat audio
+
+- Registered new named Web Audio chiptune tracks derived from the public-domain MIDI stems in `public/assets/audio/midi/`, including Office Hub, dungeon-region themes, DANN-E miniboss/combat tracks, and an ending fanfare.
+- `window.rubyRuleAudioDebug()` now reports the active track's source note and MIDI stem path, making track routing testable without relying on browser audio capture.
+- Gameplay maps now select ambient music by map key, switch to DANN-E combat/miniboss music while live `DanneEnemy` instances remain in the room, and crossfade back to ambient once the room is cleared.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against Black Vault;
+  - direct Playwright probe confirmed Office -> `officeHub`, NARA DANN-E room -> `danneMiniboss`, Black Vault active room -> `danneCombat`, Black Vault after forced room clear -> `blackVault`, and Ending -> `endingFanfare`;
+  - direct Playwright probe confirmed the existing `N` key sound toggle still stops and resumes music while preserving the selected track;
+  - details are recorded in `docs/REGION_COMBAT_AUDIO_QA.md`.
+
+## 2026-07-06 DANN-E combat taunts
+
+- Reused the existing `danneBoasts.ts` phase lines for live `DanneEnemy` combat bubbles, keyed by each DANN-E variant phase.
+- Added aggro and damage taunt triggers with a per-enemy 4-6 second throttle plus a short scene-level anti-spam throttle so crowded rooms stay readable.
+- Styled the floating bubbles in the same black, ruby, cream, and gold language as the dialog chrome.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against Black Vault;
+  - direct Playwright probe confirmed a readable aggro taunt bubble with no page errors;
+  - direct Playwright damage probe confirmed the Colossus dropped from 4 HP to 3 HP, entered `stunned`, and showed a single readable taunt bubble;
+  - visual proof: `output/danne-taunt-dialogue-throttled.png` and `output/danne-taunt-damage-final.png`.
+
+## 2026-07-06 Hidden reading-room secret
+
+- Imported the secret reading-room art pack: native 16x16 tileset, display tileset, manifest, and animated 32x32 first-edition FRUS collectible.
+- Added a concealed wall seam in NARA Stacks that opens only when the Review Folder has been acquired, following the existing Zelda-style secret route grammar.
+- Added `HiddenReadingRoomScene`, a compact tile-based bonus room with the rare first-edition pickup and return threshold to NARA Stacks.
+- Persisted collection through `sceneProgress.hiddenFirstEditionFound`, added the first edition to inventory, awarded document points, and exposed the bonus in `window.render_game_to_text()`.
+- EndingScene and TrueEndingScene now surface the final bonus stat: `Hidden first edition: yes/no`.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against `?scene=HiddenReadingRoomScene`;
+  - direct Playwright route confirmed NARA Stacks + Review Folder -> hidden room -> first edition pickup -> inventory and secret readout -> EndingScene bonus stat, with no page errors;
+  - visual proof: `output/hidden-reading-room-entry-fixed.png`, `output/hidden-reading-room-collected-fixed.png`, and `output/hidden-reading-room-final-qa-2.png`.
+## 2026-07-06 Completion stats tracking
+
+- Added a lightweight completion-stats tracker to `GameState` for replayability/trailer-ready completion summaries.
+- The tracker now reports:
+  - total play time;
+  - DANN-E variant defeats by type;
+  - FRUS cover/volume pieces collected;
+  - hidden collectible discovery status;
+  - final reliability score once the run is finalized.
+- Wired stats into:
+  - volume-fragment pickup tracking;
+  - Archive hidden-room rewards;
+  - DANN-E boss phase completion;
+  - final publication certification;
+  - `window.render_game_to_text()` full debug payload;
+  - the EndingScene published-prize stat block.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - focused `npm test -- completionStats.test.ts` passes (1 file / 3 tests);
+  - full `npm test` still has the pre-existing unrelated `src/art/characterSprites.test.ts` frame-layout failure;
+  - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&text=full` with no error artifacts and `completionStats` present in the text payload;
+  - direct Playwright visual proof captured the completion stat block in `/tmp/ruby-rule-stats/web-game-stats/page-published-stats-2.png`.
+
 ## 2026-07-06 Promo storyboard frames for demo trailer
 
 - Added six storyboard-style 16-bit scene frames under `docs/promo/` for the demo trailer / GIF and consulting pitch decks: title reveal, character creation, first DANN-E encounter, volume-assembly progress, miniboss fight, and binding-ceremony ending.
@@ -4017,6 +4209,14 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Replaced the stale assertion with one matching the current multi-frame design: idle-down anchored at frame 0, and all 15 referenced poses are unique, integer, in-bounds cell indices. Preserves the regression guard against a merge scrambling the frame table without re-imposing the obsolete single-frame constraint. No implementation or asset changes.
 - Scanned for other merge artifacts: no conflict markers in `src`/`public`/`index.html`; all JSON under `src`/`public` parses; no duplicate/out-of-range frame keys.
 - Verification: `tsc --noEmit` clean; full `vitest run` now 353/353; `vite build` succeeds (known large-chunk warning only).
+## 2026-07-07 — Game + iPhone audit follow-ups (mobile scaling, boot load, asset/data cleanup)
+- **Mobile scaling (device-pixel integer zoom):** the Phase 1 render lock computed integer zoom in CSS pixels, which capped a high-DPR iPhone (dpr 3, ~393 CSS px) at 1x — a 256 px canvas on a 393 px screen. Added `computeDeviceIntegerZoom` (`src/systems/pixelPerfect.ts`) that snaps to an integer number of *device* pixels; the backing store is always an exact integer multiple of the 256×240 base, so every game pixel maps to a whole number of physical pixels (crisp) while the CSS zoom may be fractional so the canvas fills more of the screen. `main.ts` shell/canvas sizing, `applyIntegerZoom`, and the `RenderDebugScene` crispness check now assert "backing store is an integer multiple of the base resolution" instead of "integer CSS scale". On dpr=1 desktops the result is identical to the old CSS-integer zoom, so desktop behavior is unchanged. Documented in `docs/mobile/phase1-render-lock.md`; covered by `src/systems/pixelPerfect.test.ts`.
+- **Boot payload (lazy map loading):** `BootScene` was eager-loading `ALL_NEW_ART_REGISTRIES` images + `GAMEPLAY_TILED_MAPS` json (~75 MB) before the first scene. Removed `preloadAllNewArtPack()`/`applyAllNewArtTextureFilters()` and their imports; the `installNearestTextureFilterGuard` (Textures ADD listener) keeps lazily-loaded textures crisp. The scenes that consume registry art already lazy-load it; wired the only 4 referenced `FRUS_VOLUMES` textures via per-scene `preload()` guards (`GameplayMapScene` → `world_standing`, `pickup_microform`; `UIScene` → `ui_row_six`). `reward_legendary` is a never-hit `EndingScene` fallback (the SVG prize always loads), left unloaded to avoid dead payload. 12 unused FRUS volumes (~19 MB) + 2 unused screens are no longer loaded at boot. Guarded by `src/scenes/bootLazyLoad.test.ts`.
+- **Gallery DANN-E sheets (grid-perfect):** `11_sprite_redactor_drone.png` and `13_sprite_junior_compiler.png` were 1254×1254 but declared 4×4 @ 313 px (1254/4 = 313.5 → ~1.5 px sub-pixel drift on later frames). Added deterministic `scripts/fix-danne-gallery-sheet-grid.py` (Pillow, `Image.Resampling.NEAREST` — no interpolation/anti-aliasing) resampling both to 1252×1252 (4×313 exact); color counts *decreased* (167760→167522, 157642→157377), confirming no new colors. Originals backed up under `public/assets/_originals/…`; report in `docs/art/danne_gallery_sheet_grid.md`. No `danneAtlas.ts` change needed (313 already divides 1252). These sheets are gallery-preview only; gameplay uses the separate `runtime_*` sheets. Guarded by `src/game/danneAtlas.test.ts`.
+- **Dead data cleanup:** removed orphaned `src/data/danneBoasts.ts` (variant-keyed `DANNE_VARIANT_BOASTS`, imported nowhere; its exports were self-referential only). The live boast module `src/game/danneBoasts.ts` (phase-keyed, used by `DanneBoss`/`DanneLurker`) is the single source of truth.
+- **Dead i18n cleanup:** `es.json`/`fr.json` carried 10 sections with no English counterpart and no `getString` usage (`characterCreate, codex, controls, ending, guide, items, office, roles, tapToStart, warning`) plus extra dead `mission` keys. All `getString` calls use string literals (no dynamic keys), so these were truly dead. Normalized both locales to mirror the English baseline (`hud, language, mission, pause, title`) exactly, preserving every live translation. Added a key-parity guard to `src/systems/i18n.test.ts` so ES/FR stay in sync with EN.
+- **Harmonization browser QA:** made fractional-CSS/device-integer zoom application idempotent and tolerated the browser's harmless 1/64px layout quantization, eliminating a self-triggering resize loop. A Chromium iPhone profile (393x852 CSS, DPR 3) rendered a 341.328x320 CSS canvas backed by 1024x960 pixels (exactly 4 physical pixels per game pixel), reached 60 fps after load, reported zero scale-guard adjustments, lazy-loaded `GameplayMapScene`, and produced no console errors.
+- Verification: `tsc --noEmit` clean; full `vitest run` 369/369 (was 353 pre-change; +16 from new guard tests); `npm run build` succeeds (known large-chunk warning only). Desktop integer-zoom behavior preserved (dpr=1 identical to prior).
 ## 2026-07-07 — Sword feel: ALTTP-style hitstop + primary-action buffer
 - Added `src/systems/hitstop.ts`, a pure/testable timing module (no Phaser coupling): `HitstopController` (freeze/isFrozen/remainingMs/freezeFor, extend-only overlap, NaN/negative guards, reset) and `AttackBuffer` (single-fire input grace, `canAct` gated), plus frame math (`framesToMs`, `resolveHitstopMs`) clamped to the 2–4 frame SNES range (normal sword hit = 3 frames ≈ 50ms, heavy/Ruby-Pen = 4 frames ≈ 67ms).
 - `DanneBoss` now exposes an optional `onPlayerHit(heavy)` callback fired from `checkPlayerActionHit` alongside the existing `boss-hit` camera shake; `heavy` is true on a Ruby-Pen (critical) connect.
@@ -4057,3 +4257,123 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Unified the overworld melee non-kill cue: `DanneMapScene.resolvePlayerMeleeHits` (from the strikeable-enemies commit) previously used the bolt-impact thud for a sword connect; it now uses the same `bossHit()` chk it already pairs with the `boss-hit` shake, so striking a drone/wraith and striking DANN-E share one consistent sword-connect sound. Enemy defeat keeps its rising `confirm()` "cleared" sting.
 - Playtest method: static inspection + type/test/build verification only. Browser automation was unavailable in this sparse worktree; the changes are additive audio hooks at existing, test-covered hit sites (i-frame and hit-cooldown gating already unit-tested via `combat`/`hitstop`), so gameplay logic is unchanged.
 - Verification: `tsc --noEmit` clean; full `vitest run` 418/418; `npm run build` succeeds (pre-existing large-chunk warning only).
+
+## 2026-07-11 — Playable DANN-E counter-room integration
+
+- Reconciled the repaired DANN-E enemy/room-clear branch with current `main` after the
+  PR #77 movement, hit-stop, telegraph, and audio-feedback merge.
+- Replaced live use of the eight 1024x1536 variant presentation cards with the shared
+  animated `danne-boss-combat` sheet; the variant cards remain codex/cutscene stills.
+- Made chase forms stop at a readable distance and use a gold windup, one active damage
+  window, and a recovery window instead of overlapping the player.
+- Added first-attack grace, safer room placements, destruction-safe combat readouts,
+  per-swing hit deduplication, HP bars, correct/wrong tool behavior, loot, and persistent
+  room-clear flags.
+- Added a usable gameplay-map tool loop: `M` opens the inventory, arrows select acquired
+  tools, `A` equips, and `B`/`X`/Shift attacks. HUD and lower-screen cues name the nearest
+  DANN-E weakness and room-clear count.
+- Kept DANN-E visibly roaming in the Office but delayed damaging pressure until the player
+  has talked to JR and picked up the first memo, preserving the onboarding read-before-threat
+  window.
+- Browser QA:
+  - wrong Citation Stamp against Embassy Prime: knockback/stun, HP stayed `2/2`, HUD named
+    Review Folder;
+  - correct Review Folder: exactly two swings, HP `2/2 -> 1/2 -> 0/2`, +4 document points,
+    no reliability loss, room clear `1/1`, zero page/console errors;
+  - keyboard inventory switched Citation Stamp -> Review Folder and returned to play;
+  - Office idle onboarding remained at reliability 80 with DANN-E lurking but not firing.
+- Proof artifacts: `docs/screenshots/danne-embassy-paced/telegraph-256.png`,
+  `docs/screenshots/danne-embassy-paced/room-cleared-fixed-state.json`, and
+  `docs/screenshots/office-danne-safe-onboarding/state-0.json`.
+
+## 2026-07-11 — DANN-E encounter pacing and combat-focus pass
+
+- Split the first NARA counter room into two one-enemy waves (Mark I, then
+  Swarm) and the Black Vault finale into two two-enemy waves (Colossus/Cloud,
+  then Ascendant/decoy). Room-clear progress still counts the complete 2- or
+  4-enemy encounter, so wave staging cannot open a gate early.
+- Added a small pure `encounterWaves` queue with deterministic tests, including
+  the saved-clear case where totals remain available for QA while pending waves
+  are exhausted.
+- While DANN-E is active, chapter plaques, route badges, distant `STEP CLOSER`
+  coaching, and spawn-point door prompts now recede. The screen instead gives
+  one combat instruction: the nearest target, matching FRUS tool, and B action.
+  Navigation plaques and door prompts return immediately after room clearance.
+- Defeated enemies no longer remain in live entity/threat readouts; the current
+  wave is the only on-screen enemy roster while room-clear reporting retains the
+  full encounter denominator.
+- Live QA:
+  - automated keyboard play defeated NARA Mark I with two Review Folder swings,
+    awarded 4 document points, spawned Swarm, and reported `1/2` cleared;
+  - Black Vault reported two active enemies and `0/4` cleared with routes hidden;
+  - a saved-cleared Black Vault restored its three route badges and chapter plaque;
+  - iPhone 14-sized Chromium (393x852, DPR 3) held ~60 fps after load, showed two
+    active Black Vault enemies, exact `0/4` gate status, crisp integer device-pixel
+    mapping, and no console/page errors.
+- Verification: full Vitest suite `465/465`; `npm run build` passes (known Vite
+  large-chunk warning only). Visual artifacts: `output/black-vault-wave-mobile.png`,
+  and `output/nara-wave-transition/state-0.json`.
+
+## 2026-07-11 — DANN-E native sprite and target-readability repair
+
+- Found the cause of the chopped/tiny live DANN-E art: the 1024×1536
+  `sprite_dann_e.png` master is an illustrated 3×4 pose board, but runtime
+  metadata sliced it as a packed 4×4 sheet at 256×384. Every live frame mixed
+  pieces of adjacent poses.
+- Added deterministic `scripts/build-danne-runtime-sheet.py` and generated
+  `public/assets/art-pack/sprites/runtime/sprite_dann_e.png`: a true 128×192
+  4×4 sheet of complete 32×48 poses. It uses only the existing master art,
+  nearest-neighbor resampling, nine colors, and binary alpha. The illustrated
+  master and eight variant cards remain untouched for cutscenes/codex use.
+- Pointed `DANNE_BOSS_SPRITE_ASSET` at the native sheet and retuned DANN-E
+  counter enemies, the recurring lurker, boss, and mini-DANN-Es to native
+  scales. The final boss now occupies roughly the same visual footprint as its
+  previous intended 36×54 rendering rather than collapsing to a few pixels.
+- Added persistent shape-coded tool cues at enemy feet: stamp silhouette in
+  cyan, diagonal pencil in ruby/gold, and folder silhouette in gold. Attack
+  windups/projectile launches now play the native action poses; right-facing
+  movement mirrors the left-facing frames correctly.
+- During active DANN-E waves, all nearby interaction prompts are now sealed.
+  The final Black Vault boss also hides return-route prompts, publication
+  markers, and interaction markers until combat ends, keeping focus on the
+  statutory clock, boss, player, and ego bolts.
+- Visual QA confirmed complete, recognizable bodies in NARA, Black Vault
+  counter waves, and the final multi-phase boss; the Office remained clean
+  during its protected pre-pressure onboarding window. A real Review Folder
+  strike changed Mark I from `2/2` to `1/2` HP with no
+  overlapping archival prompt. iPhone-sized Chromium (393×852, DPR 3) held
+  ~60 fps, retained integer device-pixel scaling, and showed both wave-one
+  enemies and their distinct tool glyphs without errors.
+- Verification: runtime asset 128×192, 9 RGBA colors, alpha values only 0/255;
+  full Vitest suite `466/466`; production build passes; all 25 `?scene=` QA
+  routes booted their requested scene with zero console/page errors. Visual
+  artifacts: `output/danne-native-attack-focused.png` and
+  `output/danne-native-mobile.png`.
+
+## 2026-07-11 — Codex + Perplexity harmonization and counter-room cadence
+
+- Re-audited the GitHub pull-request graph after the later Perplexity drops:
+  every one of the 21 source PR heads remains an ancestor of
+  `codex/gameplay-integration`. The only closed-unmerged PR is the deliberately
+  superseded five-variant DANN-E design draft (#41); the canonical eight-form
+  roster is preserved.
+- Added three-frame normal and four-frame heavy hit-stop plus restrained camera
+  shake to correct-tool DANN-E impacts. A short action buffer retains a B press
+  made during hit-stop without allowing weapon cooldown cancellation.
+- Added a 900 ms review pause between staged waves. The room stays locked and
+  reports `1/2, cleared: false` during the pause, then announces the next review
+  file. The dedicated DANN-E QA readout now preserves room-clear state even when
+  the between-wave active enemy count is zero.
+- Added compact `WAVE CLEARED` and `RECORD CLEARED / ROUTES UNLOCKED` banners.
+  Ordinary archival prompts remain suppressed through the celebration so the
+  reward beat stays legible on desktop and mobile.
+- Live-played the complete NARA counter room: Review Folder defeated Mark I,
+  Citation Stamp defeated Swarm, the tool was switched through the real pause
+  inventory, and the route opened only at `2/2`. The same route passed at
+  393×852 / DPR 3 with touch controls visible and no console/page errors.
+- Verification: full Vitest suite `471/471` across 89 files; production build
+  passes (known Vite large-chunk warning only); all 25 registered `?scene=`
+  routes reached the requested scene with zero console/page errors. Visual
+  artifacts: `output/danne-wave-review-pause.png`,
+  `output/danne-wave-two-active.png`, `output/danne-room-cleared.png`, and their
+  `mobile-` counterparts.

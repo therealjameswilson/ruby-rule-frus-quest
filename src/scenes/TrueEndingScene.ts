@@ -12,6 +12,7 @@ import {
   setVisibleThreats
 } from "../game/state";
 import { buildTrueEndingCertificate, type TrueEndingCertificate } from "../game/trueEndingCertificate";
+import { hiddenFirstEditionBonusLabel } from "../game/secretReadingRoom";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
@@ -55,7 +56,8 @@ export class TrueEndingScene extends Phaser.Scene {
       certificate.title,
       "Ruby Buckram Certified Volume",
       `Treaty Record ${Math.min(treatyFragments, 3)}/3`,
-      `Production Board ${board.completed}/${board.total}`
+      `Production Board ${board.completed}/${board.total}`,
+      hiddenFirstEditionBonusLabel(gameState)
     ]);
     setVisibleThreats([]);
     setLatestMessage(certificate.complete

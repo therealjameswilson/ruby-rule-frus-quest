@@ -9,6 +9,7 @@ import {
   gameState,
   getHeldProcessItemIds,
   hasProcessItem,
+  recordUnresolvedEquity,
   clearDocumentUndisclosedDeletion,
   markDocumentUndisclosedDeletion,
   setAgencyEquityResponse,
@@ -225,7 +226,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("PAUSED", "The vault waits.");
+      this.inventory.toggle();
       return;
     }
     this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS });
@@ -837,6 +838,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         adjustReliability(3, `${item.label} matched to ${item.agency}`);
       } else {
         applyStandardsViolation("omitted_material_fact", `${item.label} was sent to the wrong equity.`);
+        recordUnresolvedEquity(`Wrong agency equity selected for ${item.label}`);
         this.vaultText.setText("STANDARD HIT\nMATERIAL FACT RISK");
       }
       this.reliability.update();
@@ -869,6 +871,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         return;
       }
       const violation = applyStandardsViolation("concealed_policy_defect", "A final referral decision was ceded or unchecked.");
+      recordUnresolvedEquity("Referral manifest accepted without complete human equity review");
       this.reliability.update();
       this.dialog.show("STANDARD VIOLATION", [
         violation.label,
@@ -892,6 +895,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       if (!result.ok) {
         retroAudio.warning();
         if (result.violation) applyStandardsViolation(result.violation, `Foreign-government permission shortcut: ${option.value}`);
+        recordUnresolvedEquity(`Foreign-government permission gate failed: ${option.value}`);
         this.reliability.update();
         this.dialog.show("PERMISSION NOTE", [
           result.message,
@@ -940,6 +944,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       if (!result.ok) {
         retroAudio.warning();
         if (result.violation) applyStandardsViolation(result.violation, `Withholding appeal shortcut: ${option.value}`);
+        recordUnresolvedEquity(`Withholding appeal gate failed: ${option.value}`, "sbu_annotation_001");
         this.reliability.update();
         this.dialog.show("WITHHOLDING REVIEW", [
           result.message,
@@ -1015,6 +1020,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         "Excision skipped the bracketed insertion.",
         "sbu_annotation_001"
       );
+      recordUnresolvedEquity("Visible excision gate failed: bracketed insertion skipped", "sbu_annotation_001");
       this.reliability.update();
       this.dialog.show("STANDARD VIOLATION", [
         violation.label,

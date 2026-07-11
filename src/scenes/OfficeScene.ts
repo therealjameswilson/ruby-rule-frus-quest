@@ -149,7 +149,7 @@ export class OfficeScene extends Phaser.Scene {
     setSceneState("OfficeScene", "explore", FRUS_QUEST_FIRST_OBJECTIVE);
     setLatestMessage(FRUS_QUEST_MISSION);
     setVisibleThreats([]);
-    retroAudio.startMusic("GuideScene");
+    retroAudio.startMusic("OfficeScene");
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawRoomFrame(this, "OFFICE HUB", PALETTE.goldStamp, { showLegacyHud: false });
     this.hideLegacyRoomHud();
@@ -353,7 +353,7 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
-      this.dialog.show("OFFICE HUB", "The office route is paused.");
+      this.inventory.toggle();
       this.updateFirstQuestCue();
       return;
     }
@@ -362,7 +362,9 @@ export class OfficeScene extends Phaser.Scene {
       bounds: { left: 16, right: GAME_WIDTH - 16, top: 42, bottom: GAME_HEIGHT - 18 },
       solids: this.solids
     });
-    this.updateDanneLurker(delta, true);
+    const dannePressureUnlocked = Boolean(gameState.sceneProgress.juniorCompilerIntroduced)
+      && this.officeStarterMemoStatus() > 0;
+    this.updateDanneLurker(delta, dannePressureUnlocked);
     const activeInteractables = this.currentInteractables();
     const nearest = nearestInteractable(this.player.position, activeInteractables);
     const tutorialVisible = Boolean(this.tutorialCard);
@@ -766,7 +768,6 @@ export class OfficeScene extends Phaser.Scene {
       setObjective("Archive Guide open. Go south.");
       this.showArchiveUnlockBurst();
       this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
-      this.dialog.show("STAMP", "Memo stamped. Archive Guide door is open.");
       return;
     }
     this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");

@@ -12,6 +12,7 @@ import { EmbassyCableRoomScene } from "../scenes/EmbassyCableRoomScene";
 import { EndingScene } from "../scenes/EndingScene";
 import { GameplayMapScene } from "../scenes/GameplayMapScene";
 import { GuideScene } from "../scenes/GuideScene";
+import { HiddenReadingRoomScene } from "../scenes/HiddenReadingRoomScene";
 import { NaraStacksScene } from "../scenes/NaraStacksScene";
 import { NetworkScene } from "../scenes/NetworkScene";
 import { OfficeScene } from "../scenes/OfficeScene";
@@ -51,6 +52,13 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   audio: {
     disableWebAudio: false
   },
+  physics: {
+    default: "arcade",
+    arcade: {
+      debug: false,
+      gravity: { x: 0, y: 0 }
+    }
+  },
   scale: {
     parent: "game-shell",
     mode: Phaser.Scale.NONE,
@@ -58,7 +66,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    autoRound: true
+    // High-DPR devices can need a fractional CSS zoom that still resolves to a
+    // whole-number physical pixel multiple (for example 4 / 3 on DPR 3).
+    autoRound: false
   },
   scene: [
     BootScene,
@@ -74,6 +84,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     BlackVaultLairScene,
     SenateHearingChamberScene,
     NaraStacksScene,
+    HiddenReadingRoomScene,
     EmbassyCableRoomScene,
     GameplayMapScene,
     NetworkScene,

@@ -237,11 +237,11 @@ export const DANNE_VFX_ASSETS = [
 export const DANNE_BOSS_SPRITE_ASSET = {
   entityId: "danne-boss",
   key: "danne-boss-combat",
-  path: "assets/art-pack/sprites/sprite_dann_e.png",
+  path: "assets/art-pack/sprites/runtime/sprite_dann_e.png",
   cols: 4,
   rows: 4,
-  frameW: 256,
-  frameH: 384,
+  frameW: 32,
+  frameH: 48,
   role: "enemy"
 } as const satisfies {
   entityId: string;

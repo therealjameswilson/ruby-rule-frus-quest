@@ -54,6 +54,10 @@ interface DrawSnesMapDressingOptions {
   features: SnesMapDressingFeature[];
 }
 
+export interface SnesMapDressingResult {
+  flowPlaque: Phaser.GameObjects.GameObject[];
+}
+
 const TILE = 16;
 const MAX_SOLID_TILES = 180;
 
@@ -137,15 +141,16 @@ export function drawSnesMapDressing(
   mapKey: GameplayMapKey,
   fitRect: FitRectLike,
   options: DrawSnesMapDressingOptions
-) {
+): SnesMapDressingResult {
   ensureSnesMapDressingTextures(scene);
   const style = MAP_STYLES[mapKey];
   drawFrame(scene, fitRect, style);
   drawFloorLayer(scene, fitRect, style);
   drawSolidLayer(scene, options.solids, style);
-  drawMapFlowPlaque(scene, fitRect, GAMEPLAY_MAP_FLOW_STEPS[mapKey]);
+  const flowPlaque = drawMapFlowPlaque(scene, fitRect, GAMEPLAY_MAP_FLOW_STEPS[mapKey]);
   if (mapKey === "frus_floor") drawFrusProductionFloorRail(scene, fitRect);
   drawFeatureLayer(scene, options.features);
+  return { flowPlaque };
 }
 
 function ensureSnesMapDressingTextures(scene: Phaser.Scene) {
@@ -477,38 +482,40 @@ function drawFrame(scene: Phaser.Scene, fitRect: FitRectLike, style: SnesMapDres
 function drawMapFlowPlaque(scene: Phaser.Scene, fitRect: FitRectLike, step: GameplayMapFlowStep) {
   const x = Math.round(fitRect.x + 31);
   const y = Math.round(fitRect.y + 18);
-  scene.add.rectangle(x + 2, y + 2, 54, 22, color(PALETTE.black), 0.42)
+  const objects: Phaser.GameObjects.GameObject[] = [];
+  objects.push(scene.add.rectangle(x + 2, y + 2, 54, 22, color(PALETTE.black), 0.42)
     .setName("snes-map-flow-shadow")
-    .setDepth(-10);
-  scene.add.rectangle(x, y, 54, 22, color(PALETTE.black), 0.76)
+    .setDepth(-10));
+  objects.push(scene.add.rectangle(x, y, 54, 22, color(PALETTE.black), 0.76)
     .setStrokeStyle(1, color(step.accent), 0.86)
     .setName("snes-map-flow-plaque")
-    .setDepth(-9);
-  scene.add.rectangle(x - 18, y, 12, 14, color(PALETTE.deepRuby))
+    .setDepth(-9));
+  objects.push(scene.add.rectangle(x - 18, y, 12, 14, color(PALETTE.deepRuby))
     .setStrokeStyle(1, color(step.accent))
     .setName("snes-map-flow-code-box")
-    .setDepth(-8);
-  scene.add.text(x - 18, y - 4, step.code, {
+    .setDepth(-8));
+  objects.push(scene.add.text(x - 18, y - 4, step.code, {
     fontFamily: "monospace",
     fontSize: "7px",
     color: PALETTE.creamPaper,
     align: "center"
-  }).setName("snes-map-flow-code").setOrigin(0.5, 0).setDepth(-7);
-  scene.add.text(x - 5, y - 8, step.title, {
+  }).setName("snes-map-flow-code").setOrigin(0.5, 0).setDepth(-7));
+  objects.push(scene.add.text(x - 5, y - 8, step.title, {
     fontFamily: "monospace",
     fontSize: step.title.length > 7 ? "5px" : "6px",
     color: step.accent,
     align: "left"
-  }).setName("snes-map-flow-title").setOrigin(0, 0).setDepth(-7);
-  scene.add.rectangle(x + 9, y + 2, 20, 1, color(PALETTE.goldStamp), 0.82)
+  }).setName("snes-map-flow-title").setOrigin(0, 0).setDepth(-7));
+  objects.push(scene.add.rectangle(x + 9, y + 2, 20, 1, color(PALETTE.goldStamp), 0.82)
     .setName("snes-map-flow-rule")
-    .setDepth(-7);
-  scene.add.text(x - 5, y + 4, step.verb, {
+    .setDepth(-7));
+  objects.push(scene.add.text(x - 5, y + 4, step.verb, {
     fontFamily: "monospace",
     fontSize: step.verb.length > 6 ? "5px" : "6px",
     color: PALETTE.terminalCyan,
     align: "left"
-  }).setName("snes-map-flow-verb").setOrigin(0, 0).setDepth(-7);
+  }).setName("snes-map-flow-verb").setOrigin(0, 0).setDepth(-7));
+  return objects;
 }
 
 function drawFrusProductionFloorRail(scene: Phaser.Scene, fitRect: FitRectLike) {

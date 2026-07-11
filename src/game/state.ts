@@ -55,6 +55,7 @@ import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
+import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./secretReadingRoom";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
 import { VOLUME_CONCEPT_PROMPTS } from "./volumeConcept";
 import type { QuestArchitectureContext } from "./questArchitecture";
@@ -74,6 +75,25 @@ import {
 import type { DungeonStateRegistry } from "../systems/dungeonKeys";
 import { VIOLATION_LABEL } from "../systems/standardsDamage";
 import type { StandardViolation } from "../systems/standardsDamage";
+import {
+  createInitialVolumeAssemblyState,
+  earnVolumeAssemblyPiece,
+  markVolumeAssemblyCeremonyPlayed,
+  normalizeVolumeAssemblyState,
+  pieceForDanneVariant,
+  volumeAssemblyPiece,
+  volumeAssemblyReadout
+} from "../systems/volumeAssembly";
+import type { VolumeAssemblyPieceId, VolumeAssemblyReadout, VolumeAssemblyState } from "../systems/volumeAssembly";
+import type { DanneEnemyVariantId } from "../entities/danneVariants";
+import { isColorblindModeEnabled } from "../systems/accessibilitySettings";
+import {
+  getDanneDifficultyProfile,
+  getNewGamePlusMeta,
+  persistNewGamePlusMeta,
+  recordNewGamePlusCompletion,
+  type DanneDifficultyTier
+} from "../systems/newGamePlus";
 import type {
   AdventureHudReadout,
   AdventureTrainingReadout,
@@ -101,12 +121,93 @@ interface VisibleThreat {
   behavior?: string;
   defeatMethod?: string;
   status?: string;
+  hp?: number;
+  maxHp?: number;
+  damage?: number;
+  difficultyTier?: number;
+  reliabilityRisk?: string;
+  enemyState?: string;
+  weakness?: string;
+  roomClear?: {
+    roomId: string;
+    defeated: number;
+    required: number;
+    cleared: boolean;
+  };
+}
+
+export const DANNE_VARIANT_DEFEAT_LABELS = {
+  prime: "Prime",
+  mark_i: "Mark I",
+  colossus: "Colossus",
+  cloud: "Cloud",
+  executive: "Executive",
+  swarm: "Swarm",
+  defeated: "Defeated",
+  ascendant: "Ascendant"
+} as const;
+
+export type DanneVariantDefeatId = keyof typeof DANNE_VARIANT_DEFEAT_LABELS;
+
+const DANNE_VARIANT_DEFEAT_IDS = Object.keys(DANNE_VARIANT_DEFEAT_LABELS) as DanneVariantDefeatId[];
+
+export type PublicationOutcomeId = "published_clean" | "published_under_appeal";
+
+export const PUBLICATION_OUTCOME_LABELS: Record<PublicationOutcomeId, string> = {
+  published_clean: "Published clean",
+  published_under_appeal: "Published under appeal"
+};
+
+export interface PublicationOutcomeReadout {
+  id: PublicationOutcomeId;
+  label: string;
+  unresolvedEquities: number;
+}
+
+export interface CompletionStatsState {
+  runStartedAtMs: number;
+  totalPlayTimeMs: number;
+  danneVariantsDefeated: Partial<Record<DanneVariantDefeatId, number>>;
+  volumePiecesCollected: number;
+  hiddenCollectibleFound: boolean;
+  hiddenCollectibleLabel: string | null;
+  finalReliabilityScore: number | null;
+  unresolvedEquities: number;
+  publicationOutcome: PublicationOutcomeId | null;
+  completedAtMs: number | null;
+}
+
+export interface CompletionStatsReadout {
+  totalPlayTimeMs: number;
+  totalPlayTime: string;
+  danneVariantsDefeated: {
+    total: number;
+    counts: Record<DanneVariantDefeatId, number>;
+    byType: Array<{
+      id: DanneVariantDefeatId;
+      label: string;
+      count: number;
+    }>;
+  };
+  volumePiecesCollected: number;
+  volumePiecesTotal: number;
+  hiddenCollectibleFound: boolean;
+  hiddenCollectibleLabel: string | null;
+  finalReliabilityScore: number;
+  unresolvedEquities: number;
+  publicationOutcome: PublicationOutcomeReadout;
+  completed: boolean;
+  completedAt: string | null;
 }
 
 export interface GameState {
   currentScene: string;
   mode: GameMode;
   objective: string;
+  ngPlusUnlocked: boolean;
+  ngPlusActive: boolean;
+  volumesCompleted: number;
+  danneDifficultyTier: DanneDifficultyTier;
   volumeWorkflowState: VolumeWorkflowState;
   documentCandidates: DocumentCandidate[];
   documentWorkflow: WorkflowDocument[];
@@ -121,6 +222,7 @@ export interface GameState {
   };
   dungeons: DungeonStateRegistry;
   standardsViolations: StandardsViolationRecord[];
+  unresolvedEquities: number;
   reliability: number;
   heldItem: string | null;
   equippedProcessItem: ProcessItemId | null;
@@ -128,6 +230,7 @@ export interface GameState {
   documentPoints: number;
   inventory: string[];
   volumeFragments: string[];
+  volumeAssembly: VolumeAssemblyState;
   latestMessage: string;
   activeDialog: { speaker: string; text: string } | null;
   currentChoice: { title: string; options: ChoiceOption[] } | null;
@@ -147,6 +250,8 @@ export interface GameState {
   roomTraversal: RoomTraversalState | null;
   snesTransition: SnesTransitionState;
   finalGateCertification: FinalGateCertificationState | null;
+  completionStats: CompletionStatsState;
+  secondVolumeUnlocked: boolean;
 }
 
 export interface DanneItemReadout {
@@ -177,7 +282,7 @@ const TRANSIENT_SAVE_SCENES = new Set([
   "SpriteGallery"
 ]);
 
-export const SAVE_SCHEMA_VERSION = 1;
+export const SAVE_SCHEMA_VERSION = 2;
 
 export interface GameSaveData {
   version: number;
@@ -196,9 +301,12 @@ export interface GameSaveSummary {
   processStamps: ProcessStampId[];
   inventoryCount: number;
   documentPoints: number;
+  ngPlusUnlocked: boolean;
+  ngPlusActive: boolean;
+  volumesCompleted: number;
 }
 
-type GameStateChangeReason = "reset" | "scene" | "restore";
+type GameStateChangeReason = "reset" | "scene" | "restore" | "second-volume-unlocked";
 type GameStateChangeListener = (reason: GameStateChangeReason) => void;
 
 const FINAL_PUBLICATION_DOCUMENT_IDS = [
@@ -208,6 +316,8 @@ const FINAL_PUBLICATION_DOCUMENT_IDS = [
   "sbu_annotation_001",
   "proof_page_412"
 ] as const;
+
+const initialNewGamePlusMeta = getNewGamePlusMeta();
 
 const gameStateChangeListeners = new Set<GameStateChangeListener>();
 let resumeSpawn: { scene: string; player: Position; facing: Direction } | null = null;
@@ -441,10 +551,89 @@ export interface AdventureSubscreenReadout {
   };
 }
 
+function completionStatsNowMs() {
+  return Date.now();
+}
+
+function createInitialCompletionStats(): CompletionStatsState {
+  return {
+    runStartedAtMs: completionStatsNowMs(),
+    totalPlayTimeMs: 0,
+    danneVariantsDefeated: {},
+    volumePiecesCollected: 0,
+    hiddenCollectibleFound: false,
+    hiddenCollectibleLabel: null,
+    finalReliabilityScore: null,
+    unresolvedEquities: 0,
+    publicationOutcome: null,
+    completedAtMs: null
+  };
+}
+
+function safeFiniteNumber(value: unknown, fallback = 0) {
+  return typeof value === "number" && Number.isFinite(value) ? value : fallback;
+}
+
+function clampReliabilityScore(value: unknown) {
+  return Math.max(0, Math.min(100, Math.round(safeFiniteNumber(value, gameState.reliability))));
+}
+
+function normalizeUnresolvedEquityCount(value: unknown) {
+  return Math.max(0, Math.round(safeFiniteNumber(value, 0)));
+}
+
+function normalizePublicationOutcome(value: unknown): PublicationOutcomeId | null {
+  return value === "published_clean" || value === "published_under_appeal" ? value : null;
+}
+
+function normalizeCompletionStats(stats?: Partial<CompletionStatsState> | null): CompletionStatsState {
+  const normalized = createInitialCompletionStats();
+  normalized.runStartedAtMs = safeFiniteNumber(stats?.runStartedAtMs, completionStatsNowMs());
+  normalized.totalPlayTimeMs = Math.max(0, Math.round(safeFiniteNumber(stats?.totalPlayTimeMs, 0)));
+  normalized.volumePiecesCollected = Math.max(0, Math.round(safeFiniteNumber(stats?.volumePiecesCollected, 0)));
+  normalized.hiddenCollectibleFound = Boolean(stats?.hiddenCollectibleFound);
+  normalized.hiddenCollectibleLabel = typeof stats?.hiddenCollectibleLabel === "string" ? stats.hiddenCollectibleLabel : null;
+  normalized.finalReliabilityScore = typeof stats?.finalReliabilityScore === "number"
+    ? clampReliabilityScore(stats.finalReliabilityScore)
+    : null;
+  normalized.unresolvedEquities = normalizeUnresolvedEquityCount(stats?.unresolvedEquities);
+  normalized.publicationOutcome = normalizePublicationOutcome(stats?.publicationOutcome);
+  normalized.completedAtMs = typeof stats?.completedAtMs === "number" && Number.isFinite(stats.completedAtMs)
+    ? stats.completedAtMs
+    : null;
+
+  for (const id of DANNE_VARIANT_DEFEAT_IDS) {
+    const count = Math.max(0, Math.round(safeFiniteNumber(stats?.danneVariantsDefeated?.[id], 0)));
+    if (count > 0) normalized.danneVariantsDefeated[id] = count;
+  }
+
+  return normalized;
+}
+
+function currentCompletionPlayTimeMs(stats = gameState.completionStats) {
+  const normalized = normalizeCompletionStats(stats);
+  if (normalized.completedAtMs !== null) return normalized.totalPlayTimeMs;
+  return normalized.totalPlayTimeMs + Math.max(0, completionStatsNowMs() - normalized.runStartedAtMs);
+}
+
+function formatCompletionPlayTime(ms: number) {
+  const seconds = Math.max(0, Math.floor(ms / 1000));
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainingSeconds = seconds % 60;
+  const minuteText = hours > 0 ? String(minutes).padStart(2, "0") : String(minutes);
+  const secondText = String(remainingSeconds).padStart(2, "0");
+  return hours > 0 ? `${hours}:${minuteText}:${secondText}` : `${minuteText}:${secondText}`;
+}
+
 export const gameState: GameState = {
   currentScene: "BootScene",
   mode: "boot",
   objective: "",
+  ngPlusUnlocked: initialNewGamePlusMeta.ngPlusUnlocked,
+  ngPlusActive: false,
+  volumesCompleted: initialNewGamePlusMeta.volumesCompleted,
+  danneDifficultyTier: "standard",
   volumeWorkflowState: "charter",
   documentCandidates: cloneInitialDocumentCandidates(),
   documentWorkflow: cloneInitialDocumentCandidates().map(documentToWorkflowDocument),
@@ -465,6 +654,7 @@ export const gameState: GameState = {
   },
   dungeons: createInitialDungeonStates(),
   standardsViolations: [],
+  unresolvedEquities: 0,
   reliability: 80,
   heldItem: null,
   equippedProcessItem: null,
@@ -472,6 +662,7 @@ export const gameState: GameState = {
   documentPoints: 0,
   inventory: [],
   volumeFragments: [],
+  volumeAssembly: createInitialVolumeAssemblyState(),
   latestMessage: "",
   activeDialog: null,
   currentChoice: null,
@@ -482,6 +673,19 @@ export const gameState: GameState = {
     state: "idle",
     actionActive: false,
     actionMsRemaining: 0,
+    weapon: {
+      phase: "idle",
+      tool: "citation_stamp",
+      label: "Citation Stamp",
+      canSwing: true,
+      active: false,
+      windupMsRemaining: 0,
+      activeMsRemaining: 0,
+      cooldownMsRemaining: 0,
+      cooldownRatio: 0,
+      movementScale: 1,
+      swingId: 0
+    },
     invulnerable: false,
     invulnerableMsRemaining: 0,
     hitbox: null
@@ -509,25 +713,35 @@ export const gameState: GameState = {
     current: null,
     last: null
   },
-  finalGateCertification: null
+  finalGateCertification: null,
+  completionStats: createInitialCompletionStats(),
+  secondVolumeUnlocked: false
 };
 
-export function resetGameState() {
+export function resetGameState(options: { ngPlus?: boolean } = {}) {
+  const ngPlusMeta = getNewGamePlusMeta();
+  const ngPlusActive = Boolean(options.ngPlus && ngPlusMeta.ngPlusUnlocked);
   gameState.currentScene = "TitleScene";
   gameState.mode = "title";
-  gameState.objective = "Press start to verify.";
+  gameState.objective = ngPlusActive ? "New Game+ active: verify with veteran judgment." : "Press start to verify.";
+  gameState.ngPlusUnlocked = ngPlusMeta.ngPlusUnlocked;
+  gameState.ngPlusActive = ngPlusActive;
+  gameState.volumesCompleted = ngPlusMeta.volumesCompleted;
+  gameState.danneDifficultyTier = ngPlusActive ? "veteran" : "standard";
   gameState.reliability = 80;
   gameState.documentCandidates = cloneInitialDocumentCandidates();
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.documentWorkflowLog = [];
   gameState.dungeons = createInitialDungeonStates();
   gameState.standardsViolations = [];
+  gameState.unresolvedEquities = 0;
   gameState.heldItem = null;
   gameState.equippedProcessItem = null;
   gameState.equippedDanneItem = null;
   gameState.documentPoints = 0;
   gameState.inventory = [];
   gameState.volumeFragments = [];
+  gameState.volumeAssembly = createInitialVolumeAssemblyState();
   gameState.latestMessage = "";
   gameState.activeDialog = null;
   gameState.currentChoice = null;
@@ -538,6 +752,19 @@ export function resetGameState() {
     state: "idle",
     actionActive: false,
     actionMsRemaining: 0,
+    weapon: {
+      phase: "idle",
+      tool: "citation_stamp",
+      label: "Citation Stamp",
+      canSwing: true,
+      active: false,
+      windupMsRemaining: 0,
+      activeMsRemaining: 0,
+      cooldownMsRemaining: 0,
+      cooldownRatio: 0,
+      movementScale: 1,
+      swingId: 0
+    },
     invulnerable: false,
     invulnerableMsRemaining: 0,
     hitbox: null
@@ -552,6 +779,8 @@ export function resetGameState() {
   gameState.roomTraversal = null;
   gameState.snesTransition = { active: false, current: null, last: null };
   gameState.finalGateCertification = null;
+  gameState.completionStats = createInitialCompletionStats();
+  gameState.secondVolumeUnlocked = false;
   setPlayerProfile("Sam", defaultRole);
   refreshQuestWorkflowState();
   notifyGameStateChange("reset");
@@ -580,6 +809,7 @@ export function addGameStateChangeListener(listener: GameStateChangeListener) {
 }
 
 export function createGameSaveData(): GameSaveData {
+  syncCompletionStatsPlayTime();
   const state = cloneJson(gameState);
   state.mode = normalizeSaveMode(state.currentScene, state.mode);
   state.activeDialog = null;
@@ -607,7 +837,10 @@ export function getGameSaveSummary(save: GameSaveData): GameSaveSummary {
     player: { ...save.state.player },
     processStamps: [...save.state.processStamps],
     inventoryCount: save.state.inventory.length,
-    documentPoints: save.state.documentPoints
+    documentPoints: save.state.documentPoints,
+    ngPlusUnlocked: Boolean(save.state.ngPlusUnlocked),
+    ngPlusActive: Boolean(save.state.ngPlusActive),
+    volumesCompleted: Math.max(0, Math.floor(Number(save.state.volumesCompleted ?? 0)))
   };
 }
 
@@ -622,16 +855,45 @@ export function restoreGameSaveData(save: GameSaveData) {
   restored.nearestInteractable = null;
   restored.physicalVerification = null;
   restored.finalGateCertification = preservedFinalGateCertification(restored.finalGateCertification);
+  restored.secondVolumeUnlocked = Boolean(
+    restored.secondVolumeUnlocked
+    || restored.sceneProgress?.secondVolumeUnlocked
+    || restored.finalGateCertification?.status === "published"
+  );
   restored.snesTransition = {
     active: false,
     current: null,
     last: restored.snesTransition?.last ?? null
   };
   Object.assign(gameState, restored);
+  const ngPlusMeta = getNewGamePlusMeta();
+  gameState.ngPlusUnlocked = Boolean(gameState.ngPlusUnlocked || ngPlusMeta.ngPlusUnlocked);
+  gameState.volumesCompleted = Math.max(
+    Math.max(0, Math.floor(Number(gameState.volumesCompleted ?? 0))),
+    ngPlusMeta.volumesCompleted
+  );
+  gameState.ngPlusActive = Boolean(gameState.ngPlusActive && gameState.ngPlusUnlocked);
+  gameState.danneDifficultyTier = gameState.ngPlusActive ? "veteran" : "standard";
+  if (gameState.volumesCompleted > ngPlusMeta.volumesCompleted || (gameState.ngPlusUnlocked && !ngPlusMeta.ngPlusUnlocked)) {
+    persistNewGamePlusMeta({
+      ngPlusUnlocked: gameState.ngPlusUnlocked,
+      volumesCompleted: gameState.volumesCompleted,
+      lastCompletedAt: ngPlusMeta.lastCompletedAt
+    });
+  }
+  gameState.secondVolumeUnlocked = Boolean(gameState.secondVolumeUnlocked || gameState.ngPlusUnlocked);
+  if (gameState.secondVolumeUnlocked) gameState.sceneProgress.secondVolumeUnlocked = 1;
   gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
+  gameState.volumeAssembly = normalizeVolumeAssemblyState(gameState.volumeAssembly, gameState.volumeFragments);
   gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
+  gameState.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities);
+  gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  gameState.completionStats.volumePiecesCollected = Math.max(
+    gameState.completionStats.volumePiecesCollected,
+    gameState.volumeFragments.length
+  );
   syncDungeonBigKeysFromInventory();
   syncDungeonBossesFromProcessStamps();
   resumeSpawn = {
@@ -757,7 +1019,27 @@ export function setPhysicalVerificationState(state: PhysicalVerificationState | 
 
 export function setFinalGateCertificationState(state: FinalGateCertificationState | null) {
   gameState.finalGateCertification = state;
+  if (state?.status === "published") unlockSecondVolumeRegion("First FRUS volume completed");
   refreshQuestWorkflowState();
+}
+
+export function isSecondVolumeRegionUnlocked() {
+  return Boolean(
+    gameState.secondVolumeUnlocked
+    || gameState.ngPlusUnlocked
+    || gameState.sceneProgress.secondVolumeUnlocked
+    || gameState.finalGateCertification?.status === "published"
+  );
+}
+
+export function unlockSecondVolumeRegion(reason = "Second FRUS volume unlocked") {
+  const wasUnlocked = isSecondVolumeRegionUnlocked();
+  gameState.secondVolumeUnlocked = true;
+  gameState.sceneProgress.secondVolumeUnlocked = 1;
+  if (!wasUnlocked) setLatestMessage(`${reason}: Overseas Post region unlocked.`);
+  refreshQuestWorkflowState();
+  notifyGameStateChange("second-volume-unlocked");
+  return !wasUnlocked;
 }
 
 export function setGameMode(mode: GameMode, objective?: string) {
@@ -1122,6 +1404,7 @@ export function getRoomGraphReadout() {
 export function getFinalGateReadiness() {
   const requiredStamps: ProcessStampId[] = ["rule", "archive", "network", "referral", "proof"];
   const missingStamps = requiredStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const volumeAssembly = getVolumeAssemblyReadout();
   const publicationApparatus = getPublicationApparatusReadout({
     processStamps: gameState.processStamps,
     volumeFragments: gameState.volumeFragments,
@@ -1140,9 +1423,9 @@ export function getFinalGateReadiness() {
     .filter((document) => document.undisclosedDeletion)
     .map((document) => ({ id: document.id, title: document.title }));
   const standardsViolations = unresolvedStandardsViolations();
-  const fragmentsNeeded = 5;
+  const fragmentsNeeded = volumeAssembly.total;
   const reliabilityMinimum = 70;
-  const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
+  const missingFragments = volumeAssembly.missingCount;
   const equityCrystalsCollected = crystalsEarned(gameState.documentCandidates);
   const equityCrystalsRequired = totalEquities(gameState.documentCandidates);
   const missingEquityCrystals = Math.max(0, equityCrystalsRequired - equityCrystalsCollected);
@@ -1161,7 +1444,7 @@ export function getFinalGateReadiness() {
   return {
     requiredStamps,
     missingStamps,
-    fragmentsCollected: gameState.volumeFragments.length,
+    fragmentsCollected: volumeAssembly.earnedCount,
     fragmentsNeeded,
     missingFragments,
     equityCrystalsCollected,
@@ -1310,7 +1593,9 @@ export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificati
   addInventoryItem("Published FRUS Cover");
   for (const documentId of FINAL_PUBLICATION_DOCUMENT_IDS) publishDocument(documentId);
   setFinalGateCertificationState(publishedFinalGateCertificationState());
+  recordBindingCeremonyCompletion();
   gameState.sceneProgress.trueEndingPublicationCertified = 1;
+  finalizeCompletionStats();
   refreshQuestWorkflowState();
 
   const finalReadiness = getFinalGateReadiness();
@@ -1345,6 +1630,30 @@ export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificati
   return { ok: true, trueEnding, reason };
 }
 
+export function recordBindingCeremonyCompletion() {
+  if (gameState.sceneProgress.bindingCeremonyCompletionCounted) return getNewGamePlusReadout();
+  gameState.sceneProgress.bindingCeremonyCompletionCounted = 1;
+  const meta = recordNewGamePlusCompletion(gameState.volumesCompleted);
+  gameState.ngPlusUnlocked = true;
+  gameState.volumesCompleted = meta.volumesCompleted;
+  gameState.sceneProgress.ngPlusUnlocked = 1;
+  setLatestMessage(`FRUS volume completed. New Game+ unlocked. Volumes completed: ${meta.volumesCompleted}.`);
+  refreshQuestWorkflowState();
+  return getNewGamePlusReadout();
+}
+
+export function getNewGamePlusReadout() {
+  const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
+  return {
+    unlocked: gameState.ngPlusUnlocked,
+    active: gameState.ngPlusActive,
+    volumesCompleted: gameState.volumesCompleted,
+    difficultyTier: gameState.danneDifficultyTier,
+    difficultyLabel: difficulty.label,
+    veteranSkinActive: gameState.ngPlusActive
+  };
+}
+
 export function addDocumentPoints(amount: number, reason: string) {
   gameState.documentPoints = Math.max(0, gameState.documentPoints + amount);
   const sign = amount >= 0 ? "+" : "";
@@ -1352,12 +1661,181 @@ export function addDocumentPoints(amount: number, reason: string) {
   refreshQuestWorkflowState();
 }
 
+export function syncCompletionStatsPlayTime() {
+  gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  if (gameState.completionStats.completedAtMs !== null) return gameState.completionStats.totalPlayTimeMs;
+  const now = completionStatsNowMs();
+  const elapsedMs = Math.max(0, now - gameState.completionStats.runStartedAtMs);
+  gameState.completionStats.totalPlayTimeMs += elapsedMs;
+  gameState.completionStats.runStartedAtMs = now;
+  return gameState.completionStats.totalPlayTimeMs;
+}
+
+export function recordDanneVariantDefeated(variantId: DanneVariantDefeatId) {
+  gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  gameState.completionStats.danneVariantsDefeated[variantId] =
+    (gameState.completionStats.danneVariantsDefeated[variantId] ?? 0) + 1;
+  refreshQuestWorkflowState();
+}
+
+export function recordHiddenCollectibleFound(label = "Hidden collectible") {
+  gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  gameState.completionStats.hiddenCollectibleFound = true;
+  gameState.completionStats.hiddenCollectibleLabel = label;
+  refreshQuestWorkflowState();
+}
+
+export function getPublicationOutcomeReadout(unresolvedEquities = gameState.unresolvedEquities): PublicationOutcomeReadout {
+  const count = normalizeUnresolvedEquityCount(unresolvedEquities);
+  const id: PublicationOutcomeId = count > 0 ? "published_under_appeal" : "published_clean";
+  return {
+    id,
+    label: PUBLICATION_OUTCOME_LABELS[id],
+    unresolvedEquities: count
+  };
+}
+
+export function recordUnresolvedEquity(reason: string, documentId?: string) {
+  gameState.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities) + 1;
+  gameState.sceneProgress.unresolvedEquities = gameState.unresolvedEquities;
+  const scopedReason = documentId ? `${reason} (${documentId})` : reason;
+  setLatestMessage(`UNRESOLVED EQUITY ${gameState.unresolvedEquities}: ${scopedReason}`);
+  refreshQuestWorkflowState();
+  return gameState.unresolvedEquities;
+}
+
+function hiddenCollectibleInferredFromProgress() {
+  if (gameState.completionStats.hiddenCollectibleFound) {
+    return {
+      found: true,
+      label: gameState.completionStats.hiddenCollectibleLabel
+    };
+  }
+  if (gameState.volumeFragments.includes("Hidden Cache Fragment")) {
+    return {
+      found: true,
+      label: "Hidden Cache Fragment"
+    };
+  }
+  const progressFlags = [
+    "hiddenCollectibleFound",
+    "hiddenFirstEditionFound",
+    "hiddenReadingRoomFirstEditionFound",
+    "firstEditionFound"
+  ];
+  const progressFlagFound = progressFlags.some((flag) => Boolean(gameState.sceneProgress[flag]));
+  return {
+    found: progressFlagFound,
+    label: progressFlagFound ? "Hidden first edition" : null
+  };
+}
+
+export function finalizeCompletionStats() {
+  if (gameState.completionStats.completedAtMs !== null) return getCompletionStatsReadout();
+  syncCompletionStatsPlayTime();
+  const hidden = hiddenCollectibleInferredFromProgress();
+  gameState.completionStats.volumePiecesCollected = Math.max(
+    gameState.completionStats.volumePiecesCollected,
+    gameState.volumeFragments.length
+  );
+  gameState.completionStats.hiddenCollectibleFound = hidden.found;
+  gameState.completionStats.hiddenCollectibleLabel = hidden.label;
+  gameState.completionStats.finalReliabilityScore = clampReliabilityScore(gameState.reliability);
+  gameState.completionStats.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities);
+  gameState.completionStats.publicationOutcome = getPublicationOutcomeReadout(gameState.unresolvedEquities).id;
+  gameState.completionStats.completedAtMs = completionStatsNowMs();
+  refreshQuestWorkflowState();
+  return getCompletionStatsReadout();
+}
+
+export function getCompletionStatsReadout(): CompletionStatsReadout {
+  const stats = normalizeCompletionStats(gameState.completionStats);
+  const hidden = hiddenCollectibleInferredFromProgress();
+  const counts = DANNE_VARIANT_DEFEAT_IDS.reduce((accumulator, id) => {
+    accumulator[id] = stats.danneVariantsDefeated[id] ?? 0;
+    return accumulator;
+  }, {} as Record<DanneVariantDefeatId, number>);
+  const byType = DANNE_VARIANT_DEFEAT_IDS.map((id) => ({
+    id,
+    label: DANNE_VARIANT_DEFEAT_LABELS[id],
+    count: counts[id]
+  }));
+  const totalPlayTimeMs = currentCompletionPlayTimeMs(stats);
+  const completedAt = stats.completedAtMs === null ? null : new Date(stats.completedAtMs).toISOString();
+  const unresolvedEquities = stats.completedAtMs === null
+    ? normalizeUnresolvedEquityCount(gameState.unresolvedEquities)
+    : stats.unresolvedEquities;
+  const publicationOutcome = stats.publicationOutcome
+    ? {
+        id: stats.publicationOutcome,
+        label: PUBLICATION_OUTCOME_LABELS[stats.publicationOutcome],
+        unresolvedEquities
+      }
+    : getPublicationOutcomeReadout(unresolvedEquities);
+  return {
+    totalPlayTimeMs,
+    totalPlayTime: formatCompletionPlayTime(totalPlayTimeMs),
+    danneVariantsDefeated: {
+      total: byType.reduce((sum, variant) => sum + variant.count, 0),
+      counts,
+      byType
+    },
+    volumePiecesCollected: Math.max(stats.volumePiecesCollected, gameState.volumeFragments.length),
+    volumePiecesTotal: 5,
+    hiddenCollectibleFound: hidden.found,
+    hiddenCollectibleLabel: hidden.label,
+    finalReliabilityScore: stats.finalReliabilityScore ?? clampReliabilityScore(gameState.reliability),
+    unresolvedEquities,
+    publicationOutcome,
+    completed: stats.completedAtMs !== null,
+    completedAt
+  };
+}
+
 export function addVolumeFragment(label: string) {
   if (!gameState.volumeFragments.includes(label)) {
     gameState.volumeFragments.push(label);
+    gameState.completionStats.volumePiecesCollected = Math.max(
+      gameState.completionStats.volumePiecesCollected,
+      gameState.volumeFragments.length
+    );
     setLatestMessage(`FRUS fragment found: ${label}`);
     refreshQuestWorkflowState();
   }
+}
+
+export function getVolumeAssemblyReadout(): VolumeAssemblyReadout {
+  gameState.volumeAssembly = normalizeVolumeAssemblyState(gameState.volumeAssembly, gameState.volumeFragments);
+  return volumeAssemblyReadout(gameState.volumeAssembly);
+}
+
+export function awardVolumeAssemblyPiece(pieceId: VolumeAssemblyPieceId, reason: string) {
+  const result = earnVolumeAssemblyPiece(gameState.volumeAssembly, pieceId);
+  gameState.volumeAssembly = result.state;
+  const piece = result.piece ?? volumeAssemblyPiece(pieceId);
+  if (!piece) return { ok: false, changed: false, complete: getVolumeAssemblyReadout().complete, piece: null };
+  if (result.changed) {
+    if (!gameState.volumeFragments.includes(piece.legacyFragmentLabel)) {
+      gameState.volumeFragments.push(piece.legacyFragmentLabel);
+    }
+    gameState.sceneProgress[`volumeAssembly:${piece.id}`] = 1;
+    if (result.state.ceremonyUnlocked) gameState.sceneProgress.volumeAssemblyComplete = 1;
+    setLatestMessage(`${piece.label} recovered: ${reason}`);
+    refreshQuestWorkflowState();
+  }
+  return { ok: true, changed: result.changed, complete: result.state.ceremonyUnlocked, piece };
+}
+
+export function awardVolumeAssemblyPieceForDanneVariant(variantId: DanneEnemyVariantId, displayName: string) {
+  const pieceId = pieceForDanneVariant(variantId);
+  if (!pieceId) return { ok: false, changed: false, complete: getVolumeAssemblyReadout().complete, piece: null };
+  return awardVolumeAssemblyPiece(pieceId, `${displayName} defeated`);
+}
+
+export function markVolumeAssemblyCeremonyComplete() {
+  gameState.volumeAssembly = markVolumeAssemblyCeremonyPlayed(gameState.volumeAssembly);
+  gameState.sceneProgress.volumeAssemblyCeremonyPlayed = 1;
+  refreshQuestWorkflowState();
 }
 
 export function setNearestInteractable(label: string | null) {
@@ -1376,9 +1854,38 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     spriteKey: threat.spriteKey,
     behavior: threat.behavior,
     defeatMethod: threat.defeatMethod,
-    status: threat.status
+    status: threat.status,
+    hp: threat.hp,
+    maxHp: threat.maxHp,
+    damage: threat.damage,
+    difficultyTier: threat.difficultyTier,
+    reliabilityRisk: threat.reliabilityRisk,
+    enemyState: threat.enemyState,
+    weakness: threat.weakness,
+    roomClear: threat.roomClear ? { ...threat.roomClear } : undefined
   }));
   refreshQuestWorkflowState();
+}
+
+export function getDanneCombatReadout() {
+  const enemies = gameState.visibleThreats.filter((threat) => typeof threat.hp === "number" && typeof threat.maxHp === "number");
+  const roomClear = gameState.visibleThreats.find((threat) => threat.roomClear)?.roomClear ?? null;
+  return {
+    activeEnemyCount: enemies.filter((enemy) => enemy.enemyState !== "defeated" && (enemy.hp ?? 0) > 0).length,
+    enemies: enemies.map((enemy) => ({
+      label: enemy.label,
+      hp: enemy.hp ?? 0,
+      maxHp: enemy.maxHp ?? 0,
+      damage: enemy.damage ?? 0,
+      difficultyTier: enemy.difficultyTier ?? 0,
+      reliabilityRisk: enemy.reliabilityRisk ?? "unknown",
+      state: enemy.enemyState ?? enemy.status ?? "unknown",
+      weakness: enemy.weakness ?? "unknown",
+      position: { x: enemy.x, y: enemy.y },
+      defeatMethod: enemy.defeatMethod ?? ""
+    })),
+    roomClear
+  };
 }
 
 function getQuestArchitectureContext(): QuestArchitectureContext {
@@ -1761,6 +2268,7 @@ export function getProcessItemReadout() {
 
 export function getAdventureHudReadout(): AdventureHudReadout {
   refreshQuestWorkflowState();
+  const volumeAssembly = getVolumeAssemblyReadout();
   const inventoryStrip = getProcessItemReadout().map((item) => ({
     id: item.id,
     displayName: item.displayName,
@@ -1789,8 +2297,8 @@ export function getAdventureHudReadout(): AdventureHudReadout {
     inventoryStrip,
     stamps: stampReadout(),
     fragments: {
-      current: gameState.volumeFragments.length,
-      total: 5
+      current: volumeAssembly.earnedCount,
+      total: volumeAssembly.total
     }
   };
 }
@@ -2184,7 +2692,7 @@ export function clearChoiceState(nextMode: GameMode = "explore") {
 export function renderGameToText() {
   const questWorkflow = getQuestWorkflowReadout();
   const activeRoleFrameSheet = getSnesRoleFrameSheet(gameState.playerProfile.roleId);
-  const activeCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId);
+  const activeCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive);
   return JSON.stringify(
     {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
@@ -2196,6 +2704,7 @@ export function renderGameToText() {
         stakes: FRUS_QUEST_STAKES
       },
       objective: gameState.objective,
+      newGamePlus: getNewGamePlusReadout(),
       volumeWorkflowState: gameState.volumeWorkflowState,
       documentCandidates: getDocumentCandidateReadout(),
       documentWorkflow: gameState.documentWorkflow,
@@ -2207,6 +2716,9 @@ export function renderGameToText() {
       snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
       adventureHud: getAdventureHudReadout(),
+      accessibility: {
+        highContrastColorblindMode: isColorblindModeEnabled()
+      },
       adventureTraining: getAdventureTrainingReadout(),
       lttpFrusTranslation: getLttpFrusTranslationReadout(),
       oneHourTraining: getOneHourTrainingReadout(),
@@ -2266,15 +2778,29 @@ export function renderGameToText() {
       currentArea: getCurrentAreaReadout(),
       roomGraph: getRoomGraphReadout(),
       volumeFragments: gameState.volumeFragments,
+      volumeAssembly: getVolumeAssemblyReadout(),
+      secrets: {
+        hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),
+        hiddenFirstEditionBonus: hiddenFirstEditionBonusLabel(gameState)
+      },
       frusPrize: {
         cover: "ruby FRUS cover",
-        piecesEarned: gameState.volumeFragments.length,
-        piecesTotal: 5,
-        assembled: gameState.volumeFragments.length >= 5
+        piecesEarned: getVolumeAssemblyReadout().earnedCount,
+        piecesTotal: getVolumeAssemblyReadout().total,
+        assembled: getVolumeAssemblyReadout().complete
       },
+      unresolvedEquities: normalizeUnresolvedEquityCount(gameState.unresolvedEquities),
+      publicationOutcome: getPublicationOutcomeReadout(),
+      completionStats: getCompletionStatsReadout(),
       finalGate: getFinalGateReadiness(),
+      secondVolume: {
+        unlocked: isSecondVolumeRegionUnlocked(),
+        unlockFlag: gameState.secondVolumeUnlocked,
+        region: "overseas_post"
+      },
       publicationReadiness: getPublicationReadinessReadout(),
       statutoryClock: getStatutoryClockStateReadout(),
+      danneCombat: getDanneCombatReadout(),
       standardsViolations: unresolvedStandardsViolations(),
       productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,

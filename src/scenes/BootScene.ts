@@ -2,7 +2,6 @@ import Phaser from "phaser";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
-import { ALL_NEW_ART_REGISTRIES, GAMEPLAY_TILED_MAPS, gameplayTiledCacheKey, publicAssetPath } from "../assets/registry";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
   DANNE_BOSS_SPRITE_ASSET,
@@ -45,6 +44,8 @@ import {
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { ensurePixelBitmapFont, installPixelTextFactory } from "../systems/pixelFont";
+import { WEAPON_VFX_ASSET } from "../systems/weaponState";
+import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -60,8 +61,17 @@ export class BootScene extends Phaser.Scene {
     this.load.json("dialogue", "assets/data/dialogue.json");
     this.load.json("scenes", "assets/data/scenes.json");
     preloadCharacters(this);
+    this.load.spritesheet(WEAPON_VFX_ASSET.key, WEAPON_VFX_ASSET.path, {
+      frameWidth: WEAPON_VFX_ASSET.frameWidth,
+      frameHeight: WEAPON_VFX_ASSET.frameHeight
+    });
+    this.load.image(VOLUME_ASSEMBLY_ASSETS.hudBar.key, VOLUME_ASSEMBLY_ASSETS.hudBar.path);
+    this.load.image(VOLUME_ASSEMBLY_ASSETS.completedHero.key, VOLUME_ASSEMBLY_ASSETS.completedHero.path);
+    this.load.spritesheet(VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key, VOLUME_ASSEMBLY_ASSETS.bindingAnimation.path, {
+      frameWidth: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameWidth,
+      frameHeight: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameHeight
+    });
     this.preloadDannePack();
-    this.preloadAllNewArtPack();
     if (this.shouldLogAssetDebug()) {
       this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
     }
@@ -147,25 +157,6 @@ export class BootScene extends Phaser.Scene {
     }
   }
 
-  private preloadAllNewArtPack() {
-    const logAssets = this.shouldLogAssetDebug();
-    for (const [registryName, registry] of Object.entries(ALL_NEW_ART_REGISTRIES)) {
-      if (logAssets) console.group(`[Ruby Rule art registry] ${registryName}`);
-      for (const [key, path] of Object.entries(registry)) {
-        this.load.image(key, publicAssetPath(path));
-        if (logAssets) console.log(`${key} -> ${path}`);
-      }
-      if (logAssets) console.groupEnd();
-    }
-    if (logAssets) console.group("[Ruby Rule art registry] GAMEPLAY_TILED_MAPS");
-    for (const key of Object.keys(GAMEPLAY_TILED_MAPS) as Array<keyof typeof GAMEPLAY_TILED_MAPS>) {
-      const path = GAMEPLAY_TILED_MAPS[key];
-      this.load.json(gameplayTiledCacheKey(key), publicAssetPath(path));
-      if (logAssets) console.log(`${gameplayTiledCacheKey(key)} -> ${path}`);
-    }
-    if (logAssets) console.groupEnd();
-  }
-
   private shouldLogAssetDebug() {
     return new URLSearchParams(window.location.search).get("debug") === "assets";
   }
@@ -194,16 +185,6 @@ export class BootScene extends Phaser.Scene {
           const frameName = String(frameIndex);
           if (texture.has(frameName)) continue;
           texture.add(frameName, 0, col * asset.frameW, row * asset.frameH, asset.frameW, asset.frameH);
-        }
-      }
-    }
-  }
-
-  private applyAllNewArtTextureFilters() {
-    for (const registry of Object.values(ALL_NEW_ART_REGISTRIES)) {
-      for (const key of Object.keys(registry)) {
-        if (this.textures.exists(key)) {
-          this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
       }
     }
