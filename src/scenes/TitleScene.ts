@@ -1,7 +1,13 @@
 import Phaser from "phaser";
 import { SCREENS, publicAssetPath } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { resetGameState, setSceneState } from "../game/state";
+import {
+  FRUS_QUEST_MISSION,
+  FRUS_QUEST_PLAYER_GOAL,
+  FRUS_QUEST_PLAYER_LOOP,
+  FRUS_QUEST_PLAYER_STAKES
+} from "../game/mission";
+import { getNewGamePlusReadout, resetGameState, setLatestMessage, setSceneState } from "../game/state";
 import { getSkipWarningPreference, setSkipWarningPreference } from "../game/warningSettings";
 import { bindPointerPress, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
@@ -28,6 +34,10 @@ export class TitleScene extends Phaser.Scene {
   private skipWarningText?: Phaser.GameObjects.Text;
   private languageText?: Phaser.GameObjects.Text;
   private ignoreNextPointerStart = false;
+  private startMode: "normal" | "ngplus" = "normal";
+  private newGameText?: Phaser.GameObjects.Text;
+  private newGamePlusText?: Phaser.GameObjects.Text;
+  private volumesCompletedText?: Phaser.GameObjects.Text;
   private languageKeyHandler?: () => void;
 
   constructor() {
@@ -53,6 +63,7 @@ export class TitleScene extends Phaser.Scene {
     this.drawStartAffordance(TITLE_LAYOUT.pressStartY);
     if (!usingArtPackTitle) this.drawMissionPlaque(false);
     else this.drawHistoryStateSourceTag();
+    this.createNewGamePlusOptions();
     this.createSkipWarningToggle();
     this.createLanguageSelector();
     this.installLanguageShortcut();
@@ -63,11 +74,12 @@ export class TitleScene extends Phaser.Scene {
     const input = getInput();
     if (input.soundJustPressed) this.toggleAudio();
     if (input.bJustPressed) this.toggleSkipWarning();
+    this.updateNewGamePlusSelection(input.navUpJustPressed || input.navLeftJustPressed, input.navDownJustPressed || input.navRightJustPressed);
     if (this.ignoreNextPointerStart && input.pointerPrimaryJustPressed) {
       this.ignoreNextPointerStart = false;
       return;
     }
-    if (shouldStartTitle(input)) this.start();
+    if (shouldStartTitle(input)) this.start(this.startMode === "ngplus");
   }
 
   /**
@@ -566,12 +578,76 @@ export class TitleScene extends Phaser.Scene {
     retroAudio.toggle();
   }
 
-  private start() {
+  private start(ngPlus = false) {
     if (this.started) return;
     this.started = true;
     retroAudio.confirm();
-    resetGameState();
+    resetGameState({ ngPlus });
+    if (ngPlus) setLatestMessage("New Game+ active: veteran editor skin and harder DANN-E tier.");
     transitionTo(this, "CharacterCreateScene");
+  }
+
+  private createNewGamePlusOptions() {
+    const readout = getNewGamePlusReadout();
+    this.volumesCompletedText = this.add.text(128, 136, `VOLUMES COMPLETED ${readout.volumesCompleted}`, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: readout.unlocked ? PALETTE.goldStamp : PALETTE.creamPaper
+    }).setName("title-volumes-completed").setOrigin(0.5, 0).setDepth(44);
+
+    if (!readout.unlocked) return;
+
+    this.startMode = "normal";
+    this.add.rectangle(128, 153, 178, 25, color(PALETTE.black), 0.7)
+      .setName("title-ng-plus-option-panel")
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(43);
+    this.newGameText = this.add.text(74, 146, "NEW GAME", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setName("title-new-game-option").setOrigin(0.5, 0).setDepth(44);
+    this.newGamePlusText = this.add.text(181, 146, "NEW GAME+", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setName("title-new-game-plus-option").setOrigin(0.5, 0).setDepth(44);
+    this.add.text(128, 158, "VETERAN SKIN + HARDER DANN-E", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: PALETTE.terminalCyan
+    }).setName("title-new-game-plus-caption").setOrigin(0.5, 0).setDepth(44);
+
+    const normalHit = this.add.zone(74, 153, 88, 20).setName("title-new-game-hit-zone").setDepth(45);
+    bindPointerPress(normalHit, {
+      down: () => {
+        this.startMode = "normal";
+        this.renderNewGamePlusOptions();
+        this.start(false);
+      }
+    });
+    const ngPlusHit = this.add.zone(181, 153, 96, 20).setName("title-new-game-plus-hit-zone").setDepth(45);
+    bindPointerPress(ngPlusHit, {
+      down: () => {
+        this.startMode = "ngplus";
+        this.renderNewGamePlusOptions();
+        this.start(true);
+      }
+    });
+    this.renderNewGamePlusOptions();
+  }
+
+  private updateNewGamePlusSelection(previous: boolean, next: boolean) {
+    if (!this.newGamePlusText || (!previous && !next)) return;
+    this.startMode = this.startMode === "normal" ? "ngplus" : "normal";
+    this.renderNewGamePlusOptions();
+  }
+
+  private renderNewGamePlusOptions() {
+    this.newGameText?.setText(`${this.startMode === "normal" ? ">" : " "} NEW GAME`);
+    this.newGamePlusText?.setText(`${this.startMode === "ngplus" ? ">" : " "} NEW GAME+`);
+    this.newGameText?.setColor(this.startMode === "normal" ? PALETTE.goldStamp : PALETTE.creamPaper);
+    this.newGamePlusText?.setColor(this.startMode === "ngplus" ? PALETTE.goldStamp : PALETTE.creamPaper);
   }
 
   private createSkipWarningToggle() {

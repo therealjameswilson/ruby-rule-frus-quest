@@ -87,6 +87,13 @@ import {
 import type { VolumeAssemblyPieceId, VolumeAssemblyReadout, VolumeAssemblyState } from "../systems/volumeAssembly";
 import type { DanneEnemyVariantId } from "../entities/danneVariants";
 import { isColorblindModeEnabled } from "../systems/accessibilitySettings";
+import {
+  getDanneDifficultyProfile,
+  getNewGamePlusMeta,
+  persistNewGamePlusMeta,
+  recordNewGamePlusCompletion,
+  type DanneDifficultyTier
+} from "../systems/newGamePlus";
 import type {
   AdventureHudReadout,
   AdventureTrainingReadout,
@@ -133,6 +140,10 @@ export interface GameState {
   currentScene: string;
   mode: GameMode;
   objective: string;
+  ngPlusUnlocked: boolean;
+  ngPlusActive: boolean;
+  volumesCompleted: number;
+  danneDifficultyTier: DanneDifficultyTier;
   volumeWorkflowState: VolumeWorkflowState;
   documentCandidates: DocumentCandidate[];
   documentWorkflow: WorkflowDocument[];
@@ -204,7 +215,7 @@ const TRANSIENT_SAVE_SCENES = new Set([
   "SpriteGallery"
 ]);
 
-export const SAVE_SCHEMA_VERSION = 1;
+export const SAVE_SCHEMA_VERSION = 2;
 
 export interface GameSaveData {
   version: number;
@@ -223,6 +234,9 @@ export interface GameSaveSummary {
   processStamps: ProcessStampId[];
   inventoryCount: number;
   documentPoints: number;
+  ngPlusUnlocked: boolean;
+  ngPlusActive: boolean;
+  volumesCompleted: number;
 }
 
 type GameStateChangeReason = "reset" | "scene" | "restore";
@@ -235,6 +249,8 @@ const FINAL_PUBLICATION_DOCUMENT_IDS = [
   "sbu_annotation_001",
   "proof_page_412"
 ] as const;
+
+const initialNewGamePlusMeta = getNewGamePlusMeta();
 
 const gameStateChangeListeners = new Set<GameStateChangeListener>();
 let resumeSpawn: { scene: string; player: Position; facing: Direction } | null = null;
@@ -472,6 +488,10 @@ export const gameState: GameState = {
   currentScene: "BootScene",
   mode: "boot",
   objective: "",
+  ngPlusUnlocked: initialNewGamePlusMeta.ngPlusUnlocked,
+  ngPlusActive: false,
+  volumesCompleted: initialNewGamePlusMeta.volumesCompleted,
+  danneDifficultyTier: "standard",
   volumeWorkflowState: "charter",
   documentCandidates: cloneInitialDocumentCandidates(),
   documentWorkflow: cloneInitialDocumentCandidates().map(documentToWorkflowDocument),
@@ -553,10 +573,16 @@ export const gameState: GameState = {
   finalGateCertification: null
 };
 
-export function resetGameState() {
+export function resetGameState(options: { ngPlus?: boolean } = {}) {
+  const ngPlusMeta = getNewGamePlusMeta();
+  const ngPlusActive = Boolean(options.ngPlus && ngPlusMeta.ngPlusUnlocked);
   gameState.currentScene = "TitleScene";
   gameState.mode = "title";
-  gameState.objective = "Press start to verify.";
+  gameState.objective = ngPlusActive ? "New Game+ active: verify with veteran judgment." : "Press start to verify.";
+  gameState.ngPlusUnlocked = ngPlusMeta.ngPlusUnlocked;
+  gameState.ngPlusActive = ngPlusActive;
+  gameState.volumesCompleted = ngPlusMeta.volumesCompleted;
+  gameState.danneDifficultyTier = ngPlusActive ? "veteran" : "standard";
   gameState.reliability = 80;
   gameState.documentCandidates = cloneInitialDocumentCandidates();
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
@@ -662,7 +688,10 @@ export function getGameSaveSummary(save: GameSaveData): GameSaveSummary {
     player: { ...save.state.player },
     processStamps: [...save.state.processStamps],
     inventoryCount: save.state.inventory.length,
-    documentPoints: save.state.documentPoints
+    documentPoints: save.state.documentPoints,
+    ngPlusUnlocked: Boolean(save.state.ngPlusUnlocked),
+    ngPlusActive: Boolean(save.state.ngPlusActive),
+    volumesCompleted: Math.max(0, Math.floor(Number(save.state.volumesCompleted ?? 0)))
   };
 }
 
@@ -683,6 +712,21 @@ export function restoreGameSaveData(save: GameSaveData) {
     last: restored.snesTransition?.last ?? null
   };
   Object.assign(gameState, restored);
+  const ngPlusMeta = getNewGamePlusMeta();
+  gameState.ngPlusUnlocked = Boolean(gameState.ngPlusUnlocked || ngPlusMeta.ngPlusUnlocked);
+  gameState.volumesCompleted = Math.max(
+    Math.max(0, Math.floor(Number(gameState.volumesCompleted ?? 0))),
+    ngPlusMeta.volumesCompleted
+  );
+  gameState.ngPlusActive = Boolean(gameState.ngPlusActive && gameState.ngPlusUnlocked);
+  gameState.danneDifficultyTier = gameState.ngPlusActive ? "veteran" : "standard";
+  if (gameState.volumesCompleted > ngPlusMeta.volumesCompleted || (gameState.ngPlusUnlocked && !ngPlusMeta.ngPlusUnlocked)) {
+    persistNewGamePlusMeta({
+      ngPlusUnlocked: gameState.ngPlusUnlocked,
+      volumesCompleted: gameState.volumesCompleted,
+      lastCompletedAt: ngPlusMeta.lastCompletedAt
+    });
+  }
   gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
@@ -1367,6 +1411,7 @@ export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificati
   addInventoryItem("Published FRUS Cover");
   for (const documentId of FINAL_PUBLICATION_DOCUMENT_IDS) publishDocument(documentId);
   setFinalGateCertificationState(publishedFinalGateCertificationState());
+  recordBindingCeremonyCompletion();
   gameState.sceneProgress.trueEndingPublicationCertified = 1;
   refreshQuestWorkflowState();
 
@@ -1400,6 +1445,30 @@ export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificati
       : "Certified FRUS volume published; true-ending certification still shows open work.";
   setLatestMessage(reason);
   return { ok: true, trueEnding, reason };
+}
+
+export function recordBindingCeremonyCompletion() {
+  if (gameState.sceneProgress.bindingCeremonyCompletionCounted) return getNewGamePlusReadout();
+  gameState.sceneProgress.bindingCeremonyCompletionCounted = 1;
+  const meta = recordNewGamePlusCompletion(gameState.volumesCompleted);
+  gameState.ngPlusUnlocked = true;
+  gameState.volumesCompleted = meta.volumesCompleted;
+  gameState.sceneProgress.ngPlusUnlocked = 1;
+  setLatestMessage(`FRUS volume completed. New Game+ unlocked. Volumes completed: ${meta.volumesCompleted}.`);
+  refreshQuestWorkflowState();
+  return getNewGamePlusReadout();
+}
+
+export function getNewGamePlusReadout() {
+  const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
+  return {
+    unlocked: gameState.ngPlusUnlocked,
+    active: gameState.ngPlusActive,
+    volumesCompleted: gameState.volumesCompleted,
+    difficultyTier: gameState.danneDifficultyTier,
+    difficultyLabel: difficulty.label,
+    veteranSkinActive: gameState.ngPlusActive
+  };
 }
 
 export function addDocumentPoints(amount: number, reason: string) {
@@ -2305,7 +2374,7 @@ export function clearChoiceState(nextMode: GameMode = "explore") {
 export function renderGameToText() {
   const questWorkflow = getQuestWorkflowReadout();
   const activeRoleFrameSheet = getSnesRoleFrameSheet(gameState.playerProfile.roleId);
-  const activeCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId);
+  const activeCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive);
   return JSON.stringify(
     {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
@@ -2317,6 +2386,7 @@ export function renderGameToText() {
         stakes: FRUS_QUEST_STAKES
       },
       objective: gameState.objective,
+      newGamePlus: getNewGamePlusReadout(),
       volumeWorkflowState: gameState.volumeWorkflowState,
       documentCandidates: getDocumentCandidateReadout(),
       documentWorkflow: gameState.documentWorkflow,

@@ -85,6 +85,7 @@ import {
   hasProcessItem,
   markVolumeAssemblyCeremonyComplete,
   publishDocument,
+  recordBindingCeremonyCompletion,
   resolveStandardsViolation,
   setFinalGateCertificationState,
   setGameMode,
@@ -1580,6 +1581,8 @@ export class EndingScene extends Phaser.Scene {
     });
     setLatestMessage("PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED");
     markVolumeAssemblyCeremonyComplete();
+    recordBindingCeremonyCompletion();
+    setLatestMessage("PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED - NEW GAME+ READY");
     this.syncVisibleState(true);
     retroAudio.ending();
     this.playBindingCeremony();
@@ -1728,6 +1731,11 @@ export class EndingScene extends Phaser.Scene {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.openNetGreen
+    }).setOrigin(0.5).setDepth(931);
+    this.add.text(128, 158, `VOLUMES COMPLETED ${gameState.volumesCompleted}`, {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(931);
     this.add.image(218, 145, "buckram-key").setDepth(932);
     this.add.text(218, 157, "BUCKRAM\nKEY", {
