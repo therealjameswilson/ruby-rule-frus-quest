@@ -109,7 +109,7 @@ export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
   const canvasBackingHeight = GAME_HEIGHT * deviceZoom;
   const canvas = game.canvas;
 
-  game.scale.setZoom(cssZoom);
+  if (Math.abs(game.scale.zoom - cssZoom) > 0.001) game.scale.setZoom(cssZoom);
   canvas.style.width = `${canvasCssWidth}px`;
   canvas.style.height = `${canvasCssHeight}px`;
   if (canvas.width !== canvasBackingWidth) canvas.width = canvasBackingWidth;

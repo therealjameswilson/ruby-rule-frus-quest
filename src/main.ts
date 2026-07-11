@@ -139,6 +139,7 @@ window.rubyRuleMobileMetrics = {
 
 const mobileDebugFrames: Array<{ time: number; fps: number; ms: number }> = [];
 let phaserGame: Phaser.Game | undefined;
+const CSS_LAYOUT_EPSILON = 0.02;
 
 function resetMobilePerformanceMetrics() {
   const metrics = window.rubyRuleMobileMetrics;
@@ -539,8 +540,8 @@ function enforceIntegerCanvasScale() {
   if (
     rect
     && (
-      Math.abs(rect.width - result.canvasCssWidth) > 0.001
-      || Math.abs(rect.height - result.canvasCssHeight) > 0.001
+      Math.abs(rect.width - result.canvasCssWidth) > CSS_LAYOUT_EPSILON
+      || Math.abs(rect.height - result.canvasCssHeight) > CSS_LAYOUT_EPSILON
     )
   ) {
     metrics.scaleGuardAdjustments = beforeAdjustments + 1;
