@@ -62,18 +62,25 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 
 ## Current Cleanup Status
 
-The `cleanup/lttp-bar` branch has landed these cleanup phases:
+Current `main` is deployable as a compact Phaser/Vite GitHub Pages game, with several larger feature pillars staged in open PRs. The table below separates what is already live on `main` from work that should be counted as complete only after its PR merges.
 
-| Pillar | Current Status |
+| Pillar | Deploy Status |
 | --- | --- |
-| 1. Tight movement | Player controller refactored toward 8-direction input, pixel-snapped positions, and exposed movement state. |
-| 2. Tile-based overworld | Incomplete overworld, screen-manager, tile registry, interiors, and art-pack work is quarantined under `experiments/overworld-wip/`. It is preserved but not live. |
-| 3. Collision | Player/action collision and process-gate blockers use Arcade-style AABB patterns; terrain/tile collision remains a next promotion target. |
-| 4. Sword + secondary item system | FRUS action hitbox and equipped secondary workflow item HUD are in place. |
-| 5. Enemy AI | Coherent patrol-style hazards and blocker enemies are retained; half-wired variants are quarantined. |
-| 6. HUD | Top HUD shows role, reliability/confidence, document points, equipped process item, stamps, fragments, and status details. |
-| 7. Cohesive presentation | 256x240 pixel canvas, original repository-local SVG assets, Phaser fallbacks, and Web Audio tones remain the active discipline. |
-| 8. Room and dungeon scaffolding | Existing FRUS dungeon/room scenes, gates, rewards, and final certification room remain runnable; save/load remains future work. |
+| 1. Tight movement | Live on `main`: player movement is pixel-snapped, exposes movement/facing state to QA, and remains keyboard/touch compatible. |
+| 2. Tile-based overworld | Partially live: region/world scenes and gameplay-map scenes boot through direct links; older large overworld experiments remain quarantined under `experiments/overworld-wip/`. |
+| 3. Collision | Live on `main`: player/action collision, gates, interactables, and room blockers use Arcade-style AABB patterns; fuller per-tile terrain collision remains a promotion target. |
+| 4. Combat and workflow tools | Live on `main`: DANN-E pressure, ego attacks, Ruby Pen/DANN-E item flow, Buckram Gate pressure, and FRUS action hitboxes are present. Expanded DANN-E room-clear combat is pending in PR #58, and the full equipped-tool swing state machine is pending in PR #59. |
+| 5. Enemy AI | Live on `main`: DANN-E lurkers, boss phases, hazards, and blocker enemies are present across rooms. Difficulty-curve and automated combat-test follow-ups are pending in PRs #66-#67. |
+| 6. HUD and volume assembly | Live on `main`: the HUD shows role, reliability/confidence, document points, equipped process/DANN-E items, stamps, fragments, quest band, and five FRUS cover pieces. The persistent volume-assembly arc is pending in draft PR #60. |
+| 7. Visual pipeline | Live on `main`: fixed 256x240 pixel canvas, `pixelArt`/`roundPixels`, repository-local art-pack assets, Phaser fallbacks, and Web Audio tones. Full 16-bit visual-pipeline enforcement is pending in draft PR #61. |
+| 8. Room and dungeon scaffolding | Live on `main`: FRUS dungeon/room scenes, DANN-E map scenes, gates, rewards, final certification, true/bad ending scenes, and debug galleries all boot through `?scene=` QA links. |
+| Mobile parity | Live on `main`: iPhone-oriented touch controls, safe-area/mobile metrics, and text QA remain in place. DANN-E combat/volume mobile parity is pending in PR #62. |
+| Accessibility | Live on `main`: keyboard controls, concise/full `window.render_game_to_text()` payloads, debug scenes, and QA deep links. High-contrast/colorblind overlay mode is pending in PR #68. |
+| New Game+ | Pending: New Game+ with veteran cosmetic and harder DANN-E tier is staged in PR #69 and is not yet merged to `main`. |
+
+Latest deploy verification from `origin/main` (`aa13da8`) passed the full test suite and `npm run build`, and produced `dist/` at 237.23 MB decimal (226.24 MiB). The generated bundle is `dist/assets/index-DTkAkOcD.js` at 2,554.11 kB uncompressed / 613.58 kB gzip, plus `dist/assets/index-Jc8x0JIO.css` at 4.92 kB uncompressed / 1.38 kB gzip. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+
+Open-PR harmonization was refreshed against this main tip: every open pull request is mergeable; every `main`-target branch contains `aa13da8`; and stacked gameplay PRs #58-#67 plus the dependent equity-ending PR #72 contain their current parent branch. Perplexity/Computer art PRs #5-#6 remain asset-only, while Computer audit PR #76 now shares the device-pixel rendering rule documented by PR #15.
 
 ## MVP Features
 
