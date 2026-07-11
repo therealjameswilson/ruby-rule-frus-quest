@@ -61,6 +61,8 @@ import {
   nearestInteractable,
   nearestInteractableHint
 } from "../systems/interaction";
+import { applyHitShake } from "../systems/combatFeedback";
+import { AttackBuffer, HitstopController } from "../systems/hitstop";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
@@ -82,6 +84,11 @@ import { ChoicePrompt } from "../systems/verification";
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
+
+// One-time reliability top-up granted by the Black Vault human-review cache, in
+// reliability points (2 of the 10 HUD hearts). Sized to soften attrition before
+// the DANN-E boss spike without erasing the fight; adjustReliability clamps to 100.
+const RELIABILITY_CACHE_REFILL = 20;
 
 function isCollisionDebugEnabled() {
   if (typeof window === "undefined") return false;
@@ -123,6 +130,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private solids: Phaser.Geom.Rectangle[] = [];
   private interactables: Interactable[] = [];
   private readonly interactionAssist = new InteractionAssist();
+  private readonly hitstop = new HitstopController();
+  private readonly attackBuffer = new AttackBuffer();
   private redactorDrones: RedactorDrone[] = [];
   private censorshipWraiths: CensorshipWraith[] = [];
   private danneBoss?: DanneBoss;
@@ -229,8 +238,11 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     if (isUiDebugEnabled() && input.bJustPressed) this.showBossHudDebug();
-    if (input.bJustPressed) this.useDanneItemAction();
-    this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    const frozen = this.hitstop.isFrozen(this.time.now);
+    if (!frozen) {
+      this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
+    }
 
     if (isCutsceneActive(this)) {
       if (input.aJustPressed) exitCutscene(this);
@@ -272,6 +284,17 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
 
+    // Hitstop: hold actors on the impact frame for a few frames so a clean
+    // sword hit crunches. The camera shake / boss flash tweens run on Phaser's
+    // own systems and keep playing; only gameplay logic is held here.
+    if (frozen) {
+      this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      this.reliability.update();
+      this.syncDanneReadout(this.time.now);
+      return;
+    }
+
     this.lastGoodPosition = this.player.position;
     this.player.update(delta, true, {
       bounds: { left: 16, right: GAME_WIDTH - 16, top: 38, bottom: GAME_HEIGHT - 18 },
@@ -280,6 +303,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (!polygonContains(this.player.position, this.geometry)) {
       this.player.setPosition(this.lastGoodPosition.x, this.lastGoodPosition.y);
     }
+    if (this.attackBuffer.consume(this.time.now, true)) this.useDanneItemAction();
+    this.resolvePlayerMeleeHits(this.time.now);
     const nearest = nearestInteractable(this.player.position, this.interactables);
     const hintTarget = nearestInteractableHint(this.player.position, this.interactables);
     const promptTarget = nearest ?? hintTarget;
@@ -643,6 +668,23 @@ export abstract class DanneMapScene extends Phaser.Scene {
         : "Fragment III is already filed.");
       return;
     }
+    if (definition.action === "reliability-cache") {
+      if (gameState.sceneProgress.blackVaultReliabilityCacheUsed) {
+        this.dialog.show("HUMAN REVIEW CACHE", "The review cache is spent. Its confidence is already logged.");
+        setLatestMessage("Human review cache already used.");
+        retroAudio.confirm();
+        return;
+      }
+      gameState.sceneProgress.blackVaultReliabilityCacheUsed = 1;
+      adjustReliability(RELIABILITY_CACHE_REFILL, "human review cache restored confidence");
+      this.reliability.update();
+      this.dialog.show("HUMAN REVIEW CACHE", [
+        "A shelf of vetted human-review notes steadies your hand.",
+        "Reliability restored. Top up before facing the DANN-E core."
+      ]);
+      setObjective("Reliability restored; face the DANN-E core when ready.");
+      return;
+    }
     if (definition.action === "cipher-machine") {
       this.dialog.show("FAKE CABLE", [
         "ROUTINE CABLE: punctuation survives transmission.",
@@ -794,12 +836,45 @@ export abstract class DanneMapScene extends Phaser.Scene {
       },
       onBadEnding: () => {
         transitionTo(this, "BadEndingScene");
+      },
+      onPlayerHit: (heavy) => {
+        this.hitstop.freezeFor(this.time.now, heavy ? "sword-hit-heavy" : "sword-hit");
       }
     });
     gameState.sceneProgress.blackVaultBossStarted = 1;
     setObjective("Black Vault Lair: defeat DANN-E with human-reviewed tools.");
     retroAudio.startMusic("DanneBoss", { forceRestart: true });
     this.danneBoss.start();
+  }
+
+  // Connect the player's active sword/Ruby-Pen hitbox to overworld enemies so
+  // they flinch, take knockback, and can be defeated (the boss already had this
+  // via checkPlayerActionHit; the drones/wraiths were previously unhittable).
+  private resolvePlayerMeleeHits(timeMs: number) {
+    const hitbox = this.player.activeActionHitbox;
+    if (!hitbox) return;
+    const source = this.player.position;
+    let connected = false;
+    let defeated = false;
+    const strike = (enemy: RedactorDrone | CensorshipWraith) => {
+      if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, enemy.bodyBounds())) return;
+      const result = enemy.tryPlayerHit(timeMs, 1, source, 11);
+      if (result === "miss") return;
+      connected = true;
+      if (result === "kill") defeated = true;
+    };
+    for (const drone of this.redactorDrones) strike(drone);
+    for (const wraith of this.censorshipWraiths) strike(wraith);
+    if (!connected) return;
+    this.redactorDrones = this.redactorDrones.filter((drone) => !drone.isDead);
+    this.censorshipWraiths = this.censorshipWraiths.filter((wraith) => !wraith.isDead);
+    applyHitShake(this, "boss-hit");
+    if (defeated) {
+      retroAudio.confirm();
+      setLatestMessage("Human review cleared the automated block.");
+    } else {
+      retroAudio.bossHit();
+    }
   }
 
   private updateDanneEntities(timeMs: number, deltaMs: number, canAct: boolean) {
