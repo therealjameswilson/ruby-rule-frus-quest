@@ -123,10 +123,9 @@ export class GuideScene extends Phaser.Scene {
       { id: "gate", label: "Verification Gate", x: 128, y: 198, radius: 30, kind: "door", onInteract: () => this.openGate() }
     ];
     this.syncVisibleState();
-    this.dialog.show("ARCHIVE COLLEAGUE", [
-      `Good to compare notes, ${gameState.playerProfile.displayName}.`,
-      "Take the Citation Stamp, claim the fragment, then open the gate."
-    ], () => setObjective("Archive Cavern: take the Citation Stamp."));
+    setObjective("Archive Cavern: take the Citation Stamp.");
+    setLatestMessage(`Archive route ready for ${gameState.playerProfile.displayName}: stamp, fragment, gate.`);
+    this.toast.show("STAMP -> FRAGMENT -> GATE", this.player.position, "info");
   }
 
   update(_: number, delta: number) {
@@ -250,13 +249,15 @@ export class GuideScene extends Phaser.Scene {
 
   private openGate() {
     if (!this.hasFragment) {
-      this.dialog.show("VERIFICATION GATE", "The gate opens for a cited fragment, not a hunch.");
+      retroAudio.warning();
+      this.toast.show("NEED CITED FRAGMENT", this.player.position, "warn");
+      setLatestMessage("The Verification Gate needs a cited fragment.");
       return;
     }
-    this.dialog.show("VERIFICATION GATE", [
-      "Citation accepted.",
-      "Confidence carries forward."
-    ], () => transitionTo(this, "ArchiveScene"));
+    retroAudio.confirm();
+    this.toast.show("CITATION ACCEPTED", this.player.position, "info");
+    setLatestMessage("Citation accepted. Confidence carries forward.");
+    this.time.delayedCall(450, () => transitionTo(this, "ArchiveScene"));
   }
 
   private syncVisibleState() {

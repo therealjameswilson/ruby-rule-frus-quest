@@ -66,7 +66,9 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     width: GAME_WIDTH,
     height: GAME_HEIGHT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    autoRound: true
+    // High-DPR devices can need a fractional CSS zoom that still resolves to a
+    // whole-number physical pixel multiple (for example 4 / 3 on DPR 3).
+    autoRound: false
   },
   scene: [
     BootScene,

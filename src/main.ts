@@ -201,10 +201,10 @@ function updateMobileCanvasMetrics() {
   metrics.canvasBackingWidth = canvas.width;
   metrics.canvasBackingHeight = canvas.height;
   metrics.computedZoom = rect.width / GAME_WIDTH;
-  // Crispness depends on the backing store being an integer multiple of the base
-  // resolution (device-pixel integer zoom), not on the CSS zoom being integer.
-  const backingPerGamePixel = canvas.width / GAME_WIDTH;
-  metrics.integerZoom = Math.abs(backingPerGamePixel - Math.round(backingPerGamePixel)) < 0.001;
+  // Phaser keeps a logical 256x240 backing buffer. Crispness comes from the
+  // displayed CSS zoom resolving to a whole physical-pixel multiple.
+  const physicalPixelsPerGamePixel = (rect.width / GAME_WIDTH) * metrics.dpr;
+  metrics.integerZoom = Math.abs(physicalPixelsPerGamePixel - Math.round(physicalPixelsPerGamePixel)) < 0.001;
 }
 
 function installMobileDebugHud() {

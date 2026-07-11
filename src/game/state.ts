@@ -1869,7 +1869,7 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
 
 export function getDanneCombatReadout() {
   const enemies = gameState.visibleThreats.filter((threat) => typeof threat.hp === "number" && typeof threat.maxHp === "number");
-  const roomClear = enemies.find((threat) => threat.roomClear)?.roomClear ?? null;
+  const roomClear = gameState.visibleThreats.find((threat) => threat.roomClear)?.roomClear ?? null;
   return {
     activeEnemyCount: enemies.filter((enemy) => enemy.enemyState !== "defeated" && (enemy.hp ?? 0) > 0).length,
     enemies: enemies.map((enemy) => ({

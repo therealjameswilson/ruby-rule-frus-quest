@@ -23,7 +23,7 @@ Canvas2D upscaling. Use WebGL. gameConfig.type is Phaser.AUTO so WebGL nearest-n
 
 Non-integer device zoom. Never combine a fixed zoom with Phaser.Scale.FIT; FIT can rescale to fractional physical pixels. We use Phaser.Scale.NONE and compute an integer deviceZoom ourselves.
 
-High-DPR backing store smoothing. The canvas backing buffer is sized to GAME_* × deviceZoom and the CSS size to GAME_* × (deviceZoom / round(dpr)), so the browser maps every game pixel to exactly deviceZoom physical pixels without interpolation.
+High-DPR scaling. Phaser keeps its fixed logical backing buffer and the CSS size is GAME_* × (deviceZoom / round(dpr)), so the browser maps every game pixel to exactly deviceZoom physical pixels without interpolation. Do not resize the WebGL backing canvas after startup.
 
 Required configuration
 src/game/config.ts
@@ -49,7 +49,7 @@ game.scale.setZoom(cssZoom) only when the value changed
 
 canvas CSS size = GAME_WIDTH*cssZoom × GAME_HEIGHT*cssZoom
 
-canvas backing size = GAME_WIDTH*deviceZoom × GAME_HEIGHT*deviceZoom
+canvas backing size remains GAME_WIDTH × GAME_HEIGHT (owned by Phaser)
 
 
 Call it on boot and on window resize / orientationchange (wired in src/main.ts).
@@ -84,16 +84,16 @@ A 1px checkerboard renders as crisp alternating pixels (no gray bleed).
 
 A single-texel test sprite at the origin stays sharp.
 
-The on-screen readout shows: devicePixelRatio, CSS zoom, integer deviceZoom target, canvas CSS size, and backing size — and that 1 game px == deviceZoom device px.
+The on-screen readout shows: devicePixelRatio, CSS zoom, integer deviceZoom target, canvas CSS size, and logical backing size — and that 1 game px == deviceZoom device px.
 
 window.rubyRuleMobileMetrics exposes computedZoom, integerZoomTarget, integerZoom, dpr, canvasCss*, canvasBacking*, and scaleGuardAdjustments for the same checks at runtime.
 
 Checklist before merging render/art changes
 Renderer is Phaser.AUTO (WebGL preferred).
 
-Backing width / GAME_WIDTH and backing height / GAME_HEIGHT are integers at every tested viewport size and DPR.
+CSS zoom × rounded DPR is an integer at every tested viewport size and DPR.
 
-Canvas backing = GAME size × integer deviceZoom; CSS size = backing size / round(dpr).
+Canvas backing remains GAME size; CSS size = GAME size × deviceZoom / round(dpr).
 
 cameras.main.roundPixels === true.
 

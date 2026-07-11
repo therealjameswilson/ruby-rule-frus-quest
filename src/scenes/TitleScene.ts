@@ -589,6 +589,7 @@ export class TitleScene extends Phaser.Scene {
 
   private createNewGamePlusOptions() {
     const readout = getNewGamePlusReadout();
+    if (!readout.unlocked && readout.volumesCompleted === 0) return;
     this.volumesCompletedText = this.add.text(128, 136, `VOLUMES COMPLETED ${readout.volumesCompleted}`, {
       fontFamily: "monospace",
       fontSize: "5px",

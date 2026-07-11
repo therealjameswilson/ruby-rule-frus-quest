@@ -30,14 +30,11 @@ describe("computeDeviceIntegerZoom (device pixels)", () => {
     expect((GAME_WIDTH * deviceZoom) / 3).toBeGreaterThan(GAME_WIDTH * cssZoom);
   });
 
-  it("keeps the backing store an exact integer multiple of the base resolution", () => {
+  it("keeps the final CSS-to-device scale an exact integer", () => {
     for (const dpr of [1, 2, 3]) {
       const deviceZoom = computeDeviceIntegerZoom(393, 659, dpr);
-      const backingWidth = GAME_WIDTH * deviceZoom;
-      const backingHeight = GAME_HEIGHT * deviceZoom;
-      // Each game pixel maps to a whole number of physical pixels -> crisp.
-      expect(isIntegerScale(backingWidth / GAME_WIDTH)).toBe(true);
-      expect(isIntegerScale(backingHeight / GAME_HEIGHT)).toBe(true);
+      const cssZoom = deviceZoom / dpr;
+      expect(isIntegerScale(cssZoom * dpr)).toBe(true);
     }
   });
 

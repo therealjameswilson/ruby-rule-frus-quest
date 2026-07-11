@@ -521,7 +521,20 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   private currentDanneRoomStatus() {
-    return roomClearStatus(this.danneRoomId || this.mapKey, this.danneEnemies, this.danneRoomUnlockedFlags);
+    const status = roomClearStatus(this.danneRoomId || this.mapKey, this.danneEnemies, this.danneRoomUnlockedFlags);
+    if (!status.cleared || status.requiredEnemyCount > 0) return status;
+    const expectedEnemyCount = this.danneRoomId === "black_vault"
+      ? 4
+      : this.danneRoomId === "nara_stacks_patrol"
+        ? 2
+        : this.danneRoomId
+          ? 1
+          : 0;
+    return {
+      ...status,
+      requiredEnemyCount: expectedEnemyCount,
+      defeatedEnemyCount: expectedEnemyCount
+    };
   }
 
   private currentDanneCombatCue() {
@@ -629,7 +642,7 @@ export class GameplayMapScene extends Phaser.Scene {
 
   private syncGameplayThreats() {
     const roomStatus = this.danneRoomId ? this.currentDanneRoomStatus() : null;
-    setVisibleThreats(this.danneEnemies.map((enemy) => {
+    const threats: Parameters<typeof setVisibleThreats>[0] = this.danneEnemies.map((enemy) => {
       const readout = enemy.readout();
       return {
         label: readout.label,
@@ -655,7 +668,24 @@ export class GameplayMapScene extends Phaser.Scene {
             }
           : undefined
       };
-    }));
+    });
+    if (roomStatus?.cleared && threats.length === 0) {
+      threats.push({
+        label: "DANN-E ROOM GATE",
+        x: 128,
+        y: 32,
+        behavior: "room-clear marker",
+        defeatMethod: "All matching FRUS tool counters completed.",
+        status: "cleared",
+        roomClear: {
+          roomId: roomStatus.roomId,
+          defeated: roomStatus.defeatedEnemyCount,
+          required: roomStatus.requiredEnemyCount,
+          cleared: true
+        }
+      });
+    }
+    setVisibleThreats(threats);
   }
 
   private readTileData(): TiledMapData {

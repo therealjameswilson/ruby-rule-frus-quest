@@ -2,6 +2,21 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Codex + Perplexity integration play pass (2026-07-11):
+  - Composed all 21 open PR heads into `codex/gameplay-integration`; every open head commit is an ancestor of the integration branch.
+  - Reconciled accessibility, NG+, completion stats, equity endings, the hidden room, second-volume unlocks, deferred art loading, and both Perplexity art drops without dropping sibling state fields or scene assets.
+  - Fixed deferred loading gaps so the accessibility HUD, ending variants, and Hidden Reading Room load their own textures instead of relying on the old boot-wide art preload.
+  - Removed post-start WebGL backing/camera mutation from the pixel scaler; Phaser now retains its 256x240 logical buffer while nearest-neighbor CSS scaling resolves to an integer physical-pixel multiple.
+  - Live-played the Office tutorial route and removed the redundant blocking dialog after a successful Assignment Memo stamp; the existing toast now returns control immediately.
+  - Replaced the Archive Cavern's unsolicited entry dialog with a concise `STAMP -> FRAGMENT -> GATE` route toast; the colleague's optional interaction still carries the longer workflow explanation.
+  - Made the first Verification Gate non-blocking: missing evidence produces a warning toast, while a cited fragment produces a brief success toast and automatic room transition.
+  - Removed Archive A1's unsolicited three-page briefing; the room now opens in movement mode with a concise Source Note 47 route toast.
+  - Fixed cleared DANN-E rooms reporting `0/0` and `roomClear: null`; persisted/cheat-cleared encounters now expose their expected defeated count and a positive room-clear marker to `render_game_to_text()`.
+  - Desktop + mobile QA: all 25 registered `?scene=` routes boot to the requested scene with no page/console errors; DPR-3 iPhone emulation maps the 341.3x320 CSS canvas to 4 physical pixels per game pixel at ~60 fps with zero scale-guard adjustments.
+  - Verified multi-touch combat by holding the floating D-pad while pressing B: movement advanced 14px while the Citation Stamp entered cooldown, with independent pointer IDs and no dropped input.
+  - Verified tool weakness live in Black Vault: Citation Stamp damaged Cloud Form (4 -> 3 HP), while Red Pencil produced a resistance cue and no damage; seeded clear state now reports 4/4 and opens the blast-door flags.
+  - Removed the meaningless first-run `VOLUMES COMPLETED 0` overlay that was colliding with the baked title logo; completion history remains visible once NG+ is unlocked.
+
 - DANN-E/weapon/volume automated coverage pass (2026-07-06):
   - Added direct unit coverage for live DANN-E enemy interactions: matching-tool damage, wrong-tool knockback without damage, loot/volume-piece awards on defeat, and room-clear gate unlock behavior.
   - Added save/restore coverage for FRUS volume assembly progress and verified the 5/5 completion flag is set when the final cover piece is earned.

@@ -768,7 +768,6 @@ export class OfficeScene extends Phaser.Scene {
       setObjective("Archive Guide open. Go south.");
       this.showArchiveUnlockBurst();
       this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
-      this.dialog.show("STAMP", "Memo stamped. Archive Guide door is open.");
       return;
     }
     this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");

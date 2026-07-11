@@ -147,19 +147,19 @@ export class RenderDebugScene extends Phaser.Scene {
     const roundedDpr = metrics?.dpr ?? Math.max(1, Math.round(rawDpr));
     const backingPerGamePixelX = canvas.width / GAME_WIDTH;
     const backingPerGamePixelY = canvas.height / GAME_HEIGHT;
-    // integerZoomTarget is the device-pixel zoom: the number of physical pixels
-    // each game pixel should occupy. CSS zoom can be fractional on high-DPR
-    // screens, so crispness is proven by the backing store being an exact
-    // integer multiple of the base resolution, not by an integer CSS scale.
-    const integerZoomTarget = metrics?.integerZoomTarget ?? Math.max(1, Math.round(backingPerGamePixelX));
+    const physicalPixelsPerGamePixelX = scaleX * roundedDpr;
+    const physicalPixelsPerGamePixelY = scaleY * roundedDpr;
+    // Phaser owns a logical-size backing buffer. CSS nearest-neighbor scaling
+    // is crisp when the final CSS scale times DPR is a whole number.
+    const integerZoomTarget = metrics?.integerZoomTarget ?? Math.max(1, Math.round(physicalPixelsPerGamePixelX));
     const expectedDevicePixels = integerZoomTarget;
     const sameScale = Math.abs(scaleX - scaleY) < 0.001;
-    const backingIsInteger = isIntegerScale(backingPerGamePixelX) && isIntegerScale(backingPerGamePixelY);
+    const physicalScaleIsInteger = isIntegerScale(physicalPixelsPerGamePixelX) && isIntegerScale(physicalPixelsPerGamePixelY);
     const exactDeviceMapping = (
       sameScale
-      && backingIsInteger
-      && Math.abs(backingPerGamePixelX - expectedDevicePixels) < 0.001
-      && Math.abs(backingPerGamePixelY - expectedDevicePixels) < 0.001
+      && physicalScaleIsInteger
+      && Math.abs(physicalPixelsPerGamePixelX - expectedDevicePixels) < 0.001
+      && Math.abs(physicalPixelsPerGamePixelY - expectedDevicePixels) < 0.001
     );
     const displayScale = sameScale ? scaleX.toFixed(3) : `${scaleX.toFixed(3)} x ${scaleY.toFixed(3)}`;
     this.metricsText.setText([
@@ -169,7 +169,8 @@ export class RenderDebugScene extends Phaser.Scene {
       `INTERNAL: ${GAME_WIDTH}x${GAME_HEIGHT}`,
       `ZOOM: ${integerZoomTarget} TARGET / ${displayScale} COMPUTED`,
       `1PX: ${expectedDevicePixels} DEVICE PX EXPECTED`,
-      `BACKING: ${backingPerGamePixelX.toFixed(3)}x${backingPerGamePixelY.toFixed(3)}`,
+      `PHYSICAL: ${physicalPixelsPerGamePixelX.toFixed(3)}x${physicalPixelsPerGamePixelY.toFixed(3)}`,
+      `BACKING: ${backingPerGamePixelX.toFixed(3)}x${backingPerGamePixelY.toFixed(3)} LOGICAL`,
       `CHECK: ${exactDeviceMapping ? "PASS" : "CHECK"}  FLAGS: PIXEL/NEAREST`
     ]);
     setLatestMessage(`Pixel proof ${exactDeviceMapping ? "pass" : "check"}; 1px=${expectedDevicePixels} device px`);

@@ -444,11 +444,8 @@ export class ArchiveScene extends Phaser.Scene {
 
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
     if (!restoredPlayer) {
-      this.dialog.show("ELENA", [
-        "A compiler reads the trail.",
-        "Collect the pieces. If bureaucracy turns to stone, name the record and keep moving.",
-        "Use the edge gates to map each room, but verify Source Note 47 here."
-      ]);
+      this.toast.show("FIND SN47 -> RESEARCH TABLE", this.player.position, "info");
+      setLatestMessage("Archive A1: find Source Note 47 and verify it at the research table.");
     }
   }
 

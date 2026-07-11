@@ -45,11 +45,6 @@ export function computeDeviceIntegerZoom(viewW: number, viewH: number, dpr: numb
   return Math.max(1, Math.floor(Math.min(deviceW / GAME_WIDTH, deviceH / GAME_HEIGHT)));
 }
 
-type PixelPerfectWebGlRenderer = Phaser.Renderer.WebGL.WebGLRenderer & {
-  drawingBufferHeight: number;
-  defaultScissor: number[];
-};
-
 function getViewportSize() {
   const bodyStyle = window.getComputedStyle(document.body);
   const paddingX = parseFloat(bodyStyle.paddingLeft || "0") + parseFloat(bodyStyle.paddingRight || "0");
@@ -61,35 +56,9 @@ function getViewportSize() {
   };
 }
 
-function isWebGlRenderer(
-  renderer: Phaser.Renderer.Canvas.CanvasRenderer | Phaser.Renderer.WebGL.WebGLRenderer
-): renderer is Phaser.Renderer.WebGL.WebGLRenderer {
-  return "gl" in renderer && typeof renderer.setProjectionMatrix === "function";
-}
-
-function resizeWebGlViewport(game: Phaser.Game, width: number, height: number) {
-  const renderer = game.renderer;
-  if (!isWebGlRenderer(renderer)) return;
-
-  const webGlRenderer = renderer as PixelPerfectWebGlRenderer;
-  const gl = renderer.gl;
-  webGlRenderer.width = width;
-  webGlRenderer.height = height;
-  webGlRenderer.setProjectionMatrix(GAME_WIDTH, GAME_HEIGHT);
-  gl.viewport(0, 0, width, height);
-  webGlRenderer.drawingBufferHeight = gl.drawingBufferHeight;
-  gl.scissor(0, Math.max(0, gl.drawingBufferHeight - height), width, height);
-  webGlRenderer.defaultScissor[2] = width;
-  webGlRenderer.defaultScissor[3] = height;
-}
-
-function resizeActiveCameras(game: Phaser.Game, width: number, height: number) {
+function roundActiveCameras(game: Phaser.Game) {
   for (const scene of game.scene.getScenes(true)) {
     for (const camera of scene.cameras.cameras) {
-      if (camera.width !== width || camera.height !== height) {
-        camera.setViewport(camera.x, camera.y, width, height);
-      }
-      if (!isIntegerScale(camera.zoom) || camera.zoom !== 1) camera.setZoom(1);
       camera.roundPixels = true;
     }
   }
@@ -105,26 +74,25 @@ export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
   const cssZoom = deviceZoom / dpr;
   const canvasCssWidth = GAME_WIDTH * cssZoom;
   const canvasCssHeight = GAME_HEIGHT * cssZoom;
-  const canvasBackingWidth = GAME_WIDTH * deviceZoom;
-  const canvasBackingHeight = GAME_HEIGHT * deviceZoom;
   const canvas = game.canvas;
 
   if (Math.abs(game.scale.zoom - cssZoom) > 0.001) game.scale.setZoom(cssZoom);
   canvas.style.width = `${canvasCssWidth}px`;
   canvas.style.height = `${canvasCssHeight}px`;
-  if (canvas.width !== canvasBackingWidth) canvas.width = canvasBackingWidth;
-  if (canvas.height !== canvasBackingHeight) canvas.height = canvasBackingHeight;
-  resizeWebGlViewport(game, canvasBackingWidth, canvasBackingHeight);
-  resizeActiveCameras(game, canvasBackingWidth, canvasBackingHeight);
+  // Phaser owns the logical drawing buffer and camera viewports. Resizing either
+  // after WebGL initialization clears the buffer and moves the 256x240 camera
+  // into physical-pixel space. CSS nearest-neighbor scaling still maps each
+  // logical pixel to exactly `deviceZoom` physical pixels.
+  roundActiveCameras(game);
 
   return {
     computedZoom: cssZoom,
     integerZoomTarget: deviceZoom,
-    integerZoom: true,
+    integerZoom: isIntegerScale(cssZoom * dpr),
     dpr,
     canvasCssWidth,
     canvasCssHeight,
-    canvasBackingWidth,
-    canvasBackingHeight
+    canvasBackingWidth: canvas.width,
+    canvasBackingHeight: canvas.height
   };
 }
