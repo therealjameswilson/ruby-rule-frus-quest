@@ -362,7 +362,9 @@ export class OfficeScene extends Phaser.Scene {
       bounds: { left: 16, right: GAME_WIDTH - 16, top: 42, bottom: GAME_HEIGHT - 18 },
       solids: this.solids
     });
-    this.updateDanneLurker(delta, true);
+    const dannePressureUnlocked = Boolean(gameState.sceneProgress.juniorCompilerIntroduced)
+      && this.officeStarterMemoStatus() > 0;
+    this.updateDanneLurker(delta, dannePressureUnlocked);
     const activeInteractables = this.currentInteractables();
     const nearest = nearestInteractable(this.player.position, activeInteractables);
     const tutorialVisible = Boolean(this.tutorialCard);

@@ -342,9 +342,23 @@ class RetroAudio {
     this.sequence([740, 370, 555], 0.035, 0.012, 0.035, "square");
   }
 
-  egoBoltImpact() {
-    setAudioStatus("ego bolt impact");
-    this.sequence([196, 110, 82], 0.055, 0.018, 0.05, "sawtooth");
+  playerHurt(heavy = false) {
+    setAudioStatus(heavy ? "player hurt (heavy)" : "player hurt");
+    if (heavy) {
+      this.sequence([174, 116, 82], 0.06, 0.016, 0.055, "sawtooth");
+      return;
+    }
+    this.sequence([220, 146, 104], 0.05, 0.014, 0.05, "sawtooth");
+  }
+
+  bossHit() {
+    setAudioStatus("boss review hit");
+    this.sequence([330, 208], 0.04, 0.008, 0.05, "square");
+  }
+
+  bossDefeat() {
+    setAudioStatus("boss defeat sting");
+    this.sequence([392, 294, 220, 147, 98], 0.12, 0.02, 0.05, "sawtooth");
   }
 
   danneBoast() {

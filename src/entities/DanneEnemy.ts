@@ -12,6 +12,7 @@ import {
 } from "../game/state";
 import type { Position } from "../game/types";
 import { retroAudio } from "../systems/audio";
+import { telegraphDurationMs, telegraphPhase, type TelegraphPhase, type TelegraphTiming } from "../systems/enemyCombat";
 import { snapPixel } from "../systems/pixelPerfect";
 import type { DanneEnemyVariantConfig } from "./danneVariants";
 
@@ -19,6 +20,7 @@ export type DanneEnemyState = "patrol" | "chase" | "stunned" | "defeated";
 
 export interface DanneEnemyUpdateResult {
   projectileHit: boolean;
+  contactHit: boolean;
 }
 
 interface DanneEnemyOptions {
@@ -47,6 +49,14 @@ const EGO_BOLT = DANNE_VFX_ASSETS[0];
 const PROJECTILE_SPEED = 34;
 const PROJECTILE_COOLDOWN_MS = 1750;
 const STUN_MS = 190;
+const MELEE_START_DISTANCE = 28;
+const MELEE_MIN_DISTANCE = 20;
+const MELEE_COOLDOWN_MS = 950;
+const MELEE_TELEGRAPH: TelegraphTiming = {
+  windupMs: 360,
+  activeMs: 110,
+  recoveryMs: 290
+};
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -85,7 +95,16 @@ export function chaseDanneAi(context: DanneAiContext) {
   const distance = Phaser.Math.Distance.Between(context.enemy.x, context.enemy.y, context.player.x, context.player.y);
   if (distance <= context.enemy.aggroRadius) {
     context.enemy.state = "chase";
-    moveToward(context.enemy, context.player, context.deltaMs, context.enemy.speed + 8);
+    if (context.enemy.meleeSequenceActive) {
+      context.enemy.setVelocity(0, 0);
+    } else if (distance < MELEE_MIN_DISTANCE) {
+      context.enemy.backAwayFrom(context.player, context.deltaMs);
+    } else if (distance <= MELEE_START_DISTANCE) {
+      context.enemy.setVelocity(0, 0);
+      context.enemy.beginMeleeAttack(context.player, context.timeMs);
+    } else {
+      moveToward(context.enemy, context.player, context.deltaMs, context.enemy.speed + 8);
+    }
     return;
   }
   context.enemy.state = "patrol";
@@ -113,11 +132,19 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private readonly hpFill: Phaser.GameObjects.Rectangle;
   private readonly label: Phaser.GameObjects.Text;
   private readonly shadow: Phaser.GameObjects.Ellipse;
+  private readonly attackRing: Phaser.GameObjects.Ellipse;
+  private readonly attackMark: Phaser.GameObjects.Text;
   private readonly projectiles: DanneProjectile[] = [];
   private readonly config: DanneEnemyVariantConfig;
   private stunnedUntil = 0;
   private nextProjectileAt = 0;
   private nextToolHitAt = 0;
+  private lastPlayerSwingId = -1;
+  private nextMeleeAt = 0;
+  private meleeStartedAt: number | null = null;
+  private meleeHitApplied = false;
+  private meleeDirection = { x: 0, y: 1 };
+  private lastAttackPhase: TelegraphPhase = "idle";
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneEnemyOptions) {
     super(scene, x, y, scene.textures.exists(options.config.textureKey) ? options.config.textureKey : "snes-wall-danne-queue");
@@ -161,6 +188,18 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0).setDepth(922);
+    this.attackRing = scene.add.ellipse(x, y, 30, 20)
+      .setStrokeStyle(2, color(PALETTE.goldStamp), 0.95)
+      .setDepth(918)
+      .setVisible(false);
+    this.attackMark = scene.add.text(x, y - 30, "!", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.goldStamp,
+      backgroundColor: PALETTE.black
+    }).setOrigin(0.5).setDepth(923).setVisible(false);
+    this.nextMeleeAt = scene.time.now + 1800;
+    this.nextProjectileAt = scene.time.now + 1350;
 
     unlockCodexEntry(options.config.codexEntryId);
     this.syncUi();
@@ -178,6 +217,10 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     return this.waypoints[this.waypointIndex] ?? null;
   }
 
+  get meleeSequenceActive() {
+    return this.meleeStartedAt !== null;
+  }
+
   get velocity() {
     const body = this.arcadeBody();
     return { x: body.velocity.x, y: body.velocity.y };
@@ -193,11 +236,37 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     return this;
   }
 
+  backAwayFrom(target: Position, deltaMs: number) {
+    const dx = this.x - target.x;
+    const dy = this.y - target.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    const dt = Math.min(0.05, deltaMs / 1000);
+    this.setVelocity((dx / distance) * this.speed, (dy / distance) * this.speed);
+    this.setPosition(
+      snapPixel(this.x + this.velocity.x * dt),
+      snapPixel(this.y + this.velocity.y * dt)
+    );
+  }
+
+  beginMeleeAttack(target: Position, timeMs: number) {
+    if (this.meleeSequenceActive || timeMs < this.nextMeleeAt) return false;
+    const dx = target.x - this.x;
+    const dy = target.y - this.y;
+    const distance = Math.max(1, Math.hypot(dx, dy));
+    this.meleeDirection = { x: dx / distance, y: dy / distance };
+    this.meleeStartedAt = timeMs;
+    this.meleeHitApplied = false;
+    this.nextMeleeAt = timeMs + telegraphDurationMs(MELEE_TELEGRAPH) + MELEE_COOLDOWN_MS;
+    retroAudio.blip();
+    return true;
+  }
+
   updateEnemy(timeMs: number, deltaMs: number, player: Position, playerFootBox: Phaser.Geom.Rectangle): DanneEnemyUpdateResult {
-    if (this.defeated) return { projectileHit: false };
+    if (this.defeated) return { projectileHit: false, contactHit: false };
     if (timeMs < this.stunnedUntil) {
       this.state = "stunned";
       this.setVelocity(0, 0);
+      this.cancelMeleeAttack();
     } else if (this.config.ai === "chase") {
       chaseDanneAi({ enemy: this, player, timeMs, deltaMs });
     } else if (this.config.ai === "turret") {
@@ -208,13 +277,19 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     }
     this.playFacingAnim();
     this.clampToRoom();
-    this.syncUi();
-    return { projectileHit: this.updateProjectiles(timeMs, deltaMs, playerFootBox) };
+    const contactHit = this.resolveMeleeAttack(timeMs, playerFootBox);
+    this.syncUi(timeMs);
+    return {
+      projectileHit: this.updateProjectiles(timeMs, deltaMs, playerFootBox),
+      contactHit
+    };
   }
 
-  tryPlayerToolHit(hitbox: Phaser.Geom.Rectangle | null, equippedTool: ProcessItemId | null, source: Position) {
+  tryPlayerToolHit(hitbox: Phaser.Geom.Rectangle | null, equippedTool: ProcessItemId | null, source: Position, swingId: number) {
     if (this.defeated || !hitbox || !Phaser.Geom.Intersects.RectangleToRectangle(this.getHurtbox(), hitbox)) return "miss" as const;
+    if (swingId === this.lastPlayerSwingId) return "cooldown" as const;
     if (this.scene.time.now < this.nextToolHitAt) return "cooldown" as const;
+    this.lastPlayerSwingId = swingId;
     this.nextToolHitAt = this.scene.time.now + 170;
     const correctTool = equippedTool === this.weakness;
     this.knockbackFrom(source, correctTool ? 7 : 12);
@@ -256,9 +331,12 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   defeat() {
     if (this.defeated) return;
     this.state = "defeated";
+    this.lastAttackPhase = "idle";
     this.setActive(false).setVisible(false);
     this.arcadeBody().enable = false;
     this.shadow.setVisible(false);
+    this.attackRing.setVisible(false);
+    this.attackMark.setVisible(false);
     this.hpBack.setVisible(false);
     this.hpFill.setVisible(false);
     this.label.setVisible(false);
@@ -272,6 +350,8 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.hpBack.destroy();
     this.hpFill.destroy();
     this.label.destroy();
+    this.attackRing.destroy();
+    this.attackMark.destroy();
     for (const projectile of this.projectiles.splice(0)) projectile.sprite.destroy();
     super.destroy(fromScene);
   }
@@ -285,6 +365,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       hp: this.hp,
       maxHp: this.maxHp,
       state: this.state,
+      attackPhase: this.lastAttackPhase,
       weakness: this.weakness,
       behavior: this.config.behavior,
       defeatMethod: this.config.defeatMethod
@@ -295,8 +376,13 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.hp = Math.max(0, this.hp - amount);
     this.flash(PALETTE.white);
     retroAudio.toolHit(tool);
-    if (this.hp <= 0) this.defeat();
-    else setLatestMessage(`${this.config.displayName}: ${this.hp}/${this.maxHp} HP.`);
+    if (this.hp <= 0) {
+      retroAudio.bossDefeat();
+      this.defeat();
+    } else {
+      retroAudio.bossHit();
+      setLatestMessage(`${this.config.displayName}: ${this.hp}/${this.maxHp} HP.`);
+    }
   }
 
   private getHurtbox() {
@@ -316,7 +402,6 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       if (projectile.armed && Phaser.Geom.Intersects.RectangleToRectangle(bounds, playerFootBox)) {
         hit = true;
         projectile.armed = false;
-        retroAudio.egoBoltImpact();
       }
       if (!projectile.armed || timeMs >= projectile.expiresAt || x < -16 || x > GAME_WIDTH + 16 || y < 10 || y > GAME_HEIGHT + 16) {
         projectile.sprite.destroy();
@@ -324,6 +409,33 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       }
     }
     return hit;
+  }
+
+  private resolveMeleeAttack(timeMs: number, playerFootBox: Phaser.Geom.Rectangle) {
+    if (this.meleeStartedAt === null) return false;
+    const elapsed = timeMs - this.meleeStartedAt;
+    if (elapsed >= telegraphDurationMs(MELEE_TELEGRAPH)) {
+      this.cancelMeleeAttack();
+      return false;
+    }
+    if (this.meleePhase(timeMs) !== "active" || this.meleeHitApplied) return false;
+    this.meleeHitApplied = true;
+    return Phaser.Geom.Intersects.RectangleToRectangle(this.meleeHitbox(), playerFootBox);
+  }
+
+  private meleePhase(timeMs: number) {
+    return telegraphPhase(this.meleeStartedAt, timeMs, MELEE_TELEGRAPH);
+  }
+
+  private meleeHitbox() {
+    const centerX = this.x + this.meleeDirection.x * 17;
+    const centerY = this.y + this.meleeDirection.y * 14;
+    return new Phaser.Geom.Rectangle(centerX - 12, centerY - 9, 24, 18);
+  }
+
+  private cancelMeleeAttack() {
+    this.meleeStartedAt = null;
+    this.meleeHitApplied = false;
   }
 
   private knockbackFrom(source: Position, distance: number) {
@@ -386,7 +498,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.setDepth(Math.round(this.y));
   }
 
-  private syncUi() {
+  private syncUi(timeMs = this.scene.time.now) {
     const x = snapPixel(this.x);
     const y = snapPixel(this.y);
     this.shadow.setPosition(x, y + 11).setDepth(Math.round(y - 2));
@@ -395,6 +507,23 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.label.setVisible(labelVisible).setPosition(x, y + 15).setDepth(Math.round(y + 18));
     this.hpBack.setVisible(hpVisible).setPosition(x, y - 28);
     this.hpFill.setVisible(hpVisible).setPosition(x - 11, y - 28).setSize(Math.max(1, Math.round(22 * (this.hp / this.maxHp))), 2);
+    const attackPhase = this.meleePhase(timeMs);
+    this.lastAttackPhase = attackPhase;
+    const attacking = attackPhase !== "idle";
+    const cueColor = attackPhase === "active"
+      ? PALETTE.classNetRed
+      : attackPhase === "recovery"
+        ? PALETTE.stoneGray
+        : PALETTE.goldStamp;
+    this.attackRing
+      .setVisible(attacking)
+      .setPosition(x + this.meleeDirection.x * 8, y + this.meleeDirection.y * 6)
+      .setStrokeStyle(2, color(cueColor), attackPhase === "recovery" ? 0.55 : 0.95)
+      .setDepth(Math.round(y + 12));
+    this.attackMark
+      .setVisible(attackPhase === "windup" || attackPhase === "active")
+      .setPosition(x, y - 30)
+      .setColor(cueColor);
   }
 
   private weaknessLabel() {
