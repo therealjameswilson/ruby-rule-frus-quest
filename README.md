@@ -78,7 +78,9 @@ Current `main` is deployable as a compact Phaser/Vite GitHub Pages game, with se
 | Accessibility | Live on `main`: keyboard controls, concise/full `window.render_game_to_text()` payloads, debug scenes, and QA deep links. High-contrast/colorblind overlay mode is pending in PR #68. |
 | New Game+ | Pending: New Game+ with veteran cosmetic and harder DANN-E tier is staged in PR #69 and is not yet merged to `main`. |
 
-Latest deploy verification from `origin/main` (`207d521`) passed `npm run build`, loaded all `?scene=` QA links without console/page/request errors, and produced `dist/` at 227 MB total. The current generated bundle is `dist/assets/index-eGO9om4c.js` at 2,522.25 kB uncompressed / 591.29 kB gzip, plus `dist/assets/index-Jc8x0JIO.css` at 4.80 kB uncompressed / 1.36 kB gzip. The large deploy footprint is static art-pack PNG/audio payload, not JavaScript growth.
+Latest deploy verification from `origin/main` (`aa13da8`) passed the full test suite and `npm run build`, and produced `dist/` at 237.23 MB decimal (226.24 MiB). The generated bundle is `dist/assets/index-DTkAkOcD.js` at 2,554.11 kB uncompressed / 613.58 kB gzip, plus `dist/assets/index-Jc8x0JIO.css` at 4.92 kB uncompressed / 1.38 kB gzip. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+
+Open-PR harmonization was refreshed against this main tip: every open pull request is mergeable; every `main`-target branch contains `aa13da8`; and stacked gameplay PRs #58-#67 plus the dependent equity-ending PR #72 contain their current parent branch. Perplexity/Computer art PRs #5-#6 remain asset-only, while Computer audit PR #76 now shares the device-pixel rendering rule documented by PR #15.
 
 ## MVP Features
 

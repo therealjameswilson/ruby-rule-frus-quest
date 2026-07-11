@@ -174,7 +174,7 @@ export class WorldMapScene extends Phaser.Scene {
     this.modal = undefined;
     setNearestInteractable(null);
     const regionLabel = REGION_LABELS[this.currentRegion];
-    this.regionTitle?.setText(`REGION: ${regionLabel.toUpperCase()}  [1-5]`);
+    this.regionTitle?.setText(`REGION: ${regionLabel.toUpperCase()}  [1-${REGION_ORDER.length}]`);
 
     this.mapLayer = this.add.container(0, 0).setDepth(10);
     this.districtLayer = this.add.container(0, 0).setDepth(40);

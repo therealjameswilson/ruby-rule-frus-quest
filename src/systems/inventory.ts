@@ -26,6 +26,7 @@ import type { AdventureSubscreenReadout } from "../game/state";
 import { bindPointerPress, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
 import { openCodex } from "./codexOverlay";
+import { cycleLanguage, getLanguage, getString } from "./i18n";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -50,6 +51,16 @@ function ensureItemThumbnail(scene: Phaser.Scene, asset: DanneItemCatalogEntry) 
   return key;
 }
 
+function compactPauseLine(value: string, max = 36) {
+  const text = value.replace(/\s+/g, " ").trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 3);
+  const lastSlash = cut.lastIndexOf("/");
+  const lastSpace = cut.lastIndexOf(" ");
+  const splitAt = Math.max(lastSlash, lastSpace);
+  return `${(splitAt > 14 ? cut.slice(0, splitAt) : cut).trim()}...`;
+}
+
 const COMPACT_TOOL_LINES: Record<string, string> = {
   citation_stamp: "source locks = provenance",
   source_note_card: "repository trail = source note",
@@ -64,6 +75,7 @@ const COMPACT_TOOL_LINES: Record<string, string> = {
 const MODAL_BOUNDS = { left: 8, right: 248, top: 12, bottom: 228 };
 const CLOSE_HIT = { x: 223, y: 35, width: 44, height: 44 };
 const CODEX_HIT = { x: 171, y: 35, width: 58, height: 44 };
+const LANGUAGE_HIT = { x: 205, y: 204, width: 64, height: 44 };
 const FRUS_VOLUME_ROW_TEXTURE: keyof typeof FRUS_VOLUMES = "ui_row_six";
 const FRUS_VOLUME_SLOT_X = [26, 51, 76, 101, 126, 151] as const;
 type DungeonStatusFrame = (typeof SNES_DUNGEON_STATUS_RELIC_ASSET.frames)[number];
@@ -85,6 +97,9 @@ export class InventoryOverlay {
   private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
   private readonly subscreenGraphics: Phaser.GameObjects.Graphics;
+  private readonly titleText: Phaser.GameObjects.Text;
+  private readonly closeText: Phaser.GameObjects.Text;
+  private readonly codexText: Phaser.GameObjects.Text;
   private readonly summary: Phaser.GameObjects.Text;
   private readonly body: Phaser.GameObjects.Text;
   private frusVolumeRowTitle!: Phaser.GameObjects.Text;
@@ -118,6 +133,7 @@ export class InventoryOverlay {
   private readonly dannePopover: Phaser.GameObjects.Container;
   private readonly dannePopoverImage: Phaser.GameObjects.Image;
   private readonly dannePopoverText: Phaser.GameObjects.Text;
+  private readonly languageLabel: Phaser.GameObjects.Text;
   private selectedDanneItemId: DanneItemId | null = null;
 
   constructor(scene: Phaser.Scene) {
@@ -134,7 +150,7 @@ export class InventoryOverlay {
       .rectangle(128, 120, 240, 216)
       .setStrokeStyle(2, color(PALETTE.goldStamp))
       .setScrollFactor(0);
-    const title = scene.add.text(16, 18, "FRUS QUEST SUBSCREEN", {
+    this.titleText = scene.add.text(16, 18, getString("pause.title"), {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.goldStamp
@@ -147,7 +163,7 @@ export class InventoryOverlay {
       .rectangle(223, 35, 16, 16, color(PALETTE.deepRuby))
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setScrollFactor(0);
-    const closeLabel = scene.add.text(220, 29, "X", {
+    this.closeText = scene.add.text(220, 29, getString("pause.close"), {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.goldStamp
@@ -160,7 +176,7 @@ export class InventoryOverlay {
       .rectangle(171, 35, 44, 16, color(PALETTE.deepRuby))
       .setStrokeStyle(1, color(PALETTE.terminalCyan))
       .setScrollFactor(0);
-    const codexLabel = scene.add.text(171, 31, "CODEX", {
+    this.codexText = scene.add.text(171, 31, getString("pause.codex"), {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
@@ -186,6 +202,20 @@ export class InventoryOverlay {
     const researchPendantObjects = this.createResearchPendantRelics(scene);
     const equityCrystalObjects = this.createEquityCrystalRelics(scene);
     const dungeonStatusObjects = this.createDungeonStatusRelics(scene);
+    const languageHit = scene.add
+      .rectangle(LANGUAGE_HIT.x, LANGUAGE_HIT.y, LANGUAGE_HIT.width, LANGUAGE_HIT.height, color(PALETTE.black), 0.01)
+      .setScrollFactor(0);
+    const languageBox = scene.add
+      .rectangle(LANGUAGE_HIT.x, LANGUAGE_HIT.y, 56, 13, color(PALETTE.deepRuby), 0.9)
+      .setStrokeStyle(1, color(PALETTE.terminalCyan))
+      .setScrollFactor(0);
+    this.languageLabel = scene.add.text(LANGUAGE_HIT.x, LANGUAGE_HIT.y - 4, "", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.terminalCyan,
+      align: "center"
+    }).setOrigin(0.5, 0).setScrollFactor(0);
+    bindPointerPress(languageHit, { down: () => this.changeLanguage() });
     const popoverBox = scene.add
       .rectangle(204, 88, 80, 62, color(PALETTE.black), 0.94)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
@@ -209,13 +239,13 @@ export class InventoryOverlay {
         dim,
         box,
         border,
-        title,
+        this.titleText,
         this.subscreenGraphics,
         codexBox,
-        codexLabel,
+        this.codexText,
         codexHit,
         closeBox,
-        closeLabel,
+        this.closeText,
         closeHit,
         ...frusRowObjects,
         ...slotObjects,
@@ -223,6 +253,9 @@ export class InventoryOverlay {
         ...researchPendantObjects,
         ...equityCrystalObjects,
         ...dungeonStatusObjects,
+        languageBox,
+        this.languageLabel,
+        languageHit,
         this.dannePopover,
         this.summary,
         this.body
@@ -260,6 +293,9 @@ export class InventoryOverlay {
   }
 
   private render() {
+    this.titleText.setText(getString("pause.title"));
+    this.closeText.setText(getString("pause.close"));
+    this.codexText.setText(getString("pause.codex"));
     const subscreen = getAdventureSubscreenReadout();
     const tools = getWorkflowToolReadout()
       .filter((tool) => tool.acquired)
@@ -279,7 +315,7 @@ export class InventoryOverlay {
       .join("\n");
     const hud = getAdventureHudReadout();
     const treaty = getDanneItemReadout().find((item) => item.id === "treaty-fragments");
-    const danneSummary = treaty ? `TREATY ${treaty.count}/${treaty.total}` : "TREATY 0/3";
+    const danneSummary = treaty ? `${getString("pause.treaty")} ${treaty.count}/${treaty.total}` : `${getString("pause.treaty")} 0/3`;
     const pendantSummary = subscreen.pendants
       .map((pendant) => `${pendant.label}:${pendant.acquired ? "OK" : "--"}`)
       .join(" ");
@@ -293,20 +329,21 @@ export class InventoryOverlay {
       ? `${activePhase.shortLabel} ${activePhase.completed}/${activePhase.total}`
       : "DONE";
     this.summary.setText([
-      `${pendantSummary}  CRYSTALS ${subscreen.crystals.earned}/${subscreen.crystals.total || 0}  HEARTS ${subscreen.reliabilityHearts.filled}/${subscreen.reliabilityHearts.total}`,
-      `BOARD ${subscreen.productionBoard.completed}/${subscreen.productionBoard.total} NEXT ${boardNext}  ${danneSummary}`,
-      `PHASE ${phaseSummary}  TOOL ${subscreen.equippedTool?.displayName.toUpperCase() ?? hud.equippedItem?.displayName.toUpperCase() ?? "NONE"}`
+      `${pendantSummary}  ${getString("pause.crystals")} ${subscreen.crystals.earned}/${subscreen.crystals.total || 0}  ${getString("pause.hearts")} ${subscreen.reliabilityHearts.filled}/${subscreen.reliabilityHearts.total}`,
+      `${getString("pause.board")} ${subscreen.productionBoard.completed}/${subscreen.productionBoard.total} ${getString("pause.next")} ${boardNext}  ${danneSummary}`,
+      `${getString("pause.phase")} ${phaseSummary}  ${getString("pause.tool")} ${subscreen.equippedTool?.displayName.toUpperCase() ?? hud.equippedItem?.displayName.toUpperCase() ?? getString("hud.none")}`
     ].join("\n"));
     const dungeonPreview = dungeons.split("\n").slice(0, 3).join("\n");
     const shelfCount = Math.min(FRUS_VOLUME_SLOT_X.length, gameState.volumeFragments.length + (gameState.inventory.includes("Published FRUS Cover") ? 1 : 0));
-    this.frusVolumeRowTitle.setText(`FRUS VOLUME SHELF ${shelfCount}/${FRUS_VOLUME_SLOT_X.length}`);
+    this.frusVolumeRowTitle.setText(getString("pause.frusShelf", { count: shelfCount, total: FRUS_VOLUME_SLOT_X.length }));
     this.body.setText([
-      `NEXT BOARD: ${subscreen.productionBoard.nextStep?.label.toUpperCase() ?? "CERTIFY BUCKRAM GATE"}`,
-      `SOURCE: ${boardSource}`,
-      "DUNGEON MAP / KEYS",
+      `${getString("pause.nextBoard")}: ${compactPauseLine(subscreen.productionBoard.nextStep?.label.toUpperCase() ?? getString("pause.certifyBuckramGate"), 31)}`,
+      `${getString("pause.source")}: ${compactPauseLine(boardSource, 34)}`,
+      getString("pause.dungeonMapKeys"),
       dungeonPreview,
       ""
     ].join("\n"));
+    this.renderLanguageSelector();
     this.renderSubscreenGraphics(subscreen);
     this.renderToolGrid();
     this.renderDanneItemGrid();
@@ -706,6 +743,10 @@ export class InventoryOverlay {
       this.openCodexFromInventory();
       return true;
     }
+    if (this.hitRect(x, y, LANGUAGE_HIT.x, LANGUAGE_HIT.y, LANGUAGE_HIT.width, LANGUAGE_HIT.height)) {
+      this.changeLanguage();
+      return true;
+    }
     const slot = this.itemSlots.find((candidate) => this.hitRect(x, y, candidate.box.x, candidate.box.y, 44, 44));
     if (slot) {
       this.tapTool(slot.id);
@@ -760,6 +801,17 @@ export class InventoryOverlay {
       this.frusVolumeSlotLabels[index].setColor(finalSlot ? PALETTE.openNetGreen : filled ? PALETTE.goldStamp : PALETTE.stoneGray);
       this.frusVolumeSlotLabels[index].setText(finalSlot ? "PUB" : String(index + 1));
     }
+  }
+
+  private changeLanguage() {
+    cycleLanguage();
+    retroAudio.confirm();
+    setLatestMessage(getString("language.changed", { language: getLanguage().toUpperCase() }));
+    this.render();
+  }
+
+  private renderLanguageSelector() {
+    this.languageLabel.setText(getString("language.label", { language: getLanguage().toUpperCase() }));
   }
 
   private createDanneItemGrid(scene: Phaser.Scene) {

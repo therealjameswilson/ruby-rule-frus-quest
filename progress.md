@@ -2,6 +2,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Combat feel / ALTTP juice pass (2026-07-07):
+  - Added `src/systems/combatFeedback.ts`, a small reusable screen-shake helper with pure, tuned hit-feedback profiles (`player-hurt`, `player-hurt-heavy`, `boss-hit`, `boss-defeat`) plus `resolveHitFeedback` (scaling + clamping) and an `applyHitShake(scene, kind)` wrapper that no-ops safely during teardown.
+  - Intensities are capped so shake stays ~1-2px on the 256x240 canvas, preserving pixel-perfect art while adding an impact flinch.
+  - Wired shake into the universal damage choke point `Player.takeHit` (heavy variant for high-knockback wall hits, normal for lurker/ego-bolt contact) so every scene gets consistent got-hit feedback.
+  - Wired shake into the DANN-E boss: a light flinch on each Ruby Pen sword connect and a stronger shake on final defeat.
+  - Added `src/systems/combatFeedback.test.ts` (profile defaults, subtlety bounds, heavy>normal ordering, scaling, clamp, and non-finite/negative scale safety).
+  - Verification: `tsc --noEmit` clean; `npm test` 74 files / 362 tests pass; `npm run build` passes (known Vite large-chunk warning only).
+- Localization scaffold pass (2026-07-07):
+  - Added a typed `src/systems/i18n.ts` helper with `getString(key)` lookup, interpolation, localStorage persistence, and English fallback for missing Spanish/French keys.
+  - Added the English baseline strings beside the existing Spanish/French packs and extended those packs with language/pause-menu labels.
+  - Wired the title screen language selector (`LANG EN/ES/FR`, pointer or `L`) and localized the procedural title, route strip, source shoutout, mission plaque, skip-warning toggle, HUD quest band, gamepad/touch toasts, and pause/subscreen labels.
+  - Added focused helper tests covering fallback, interpolation, and language selection.
 - ALTTP disassembly translation pass (2026-07-05):
   - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
   - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.
@@ -3903,3 +3915,145 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - direct Playwright screenshots verified Guide, Archive, and Network, plus a forced live `ChoicePrompt` in Network;
   - visual proof: `docs/screenshots/hud-prompt-cleanup/guide-final.png`, `docs/screenshots/hud-prompt-cleanup/archive-final.png`, and `docs/screenshots/hud-prompt-cleanup/network-choice-final.png`;
   - browser pass reported only WebGL `ReadPixels` warnings caused by screenshot capture, with no page errors.
+
+## 2026-07-06 Promo storyboard frames for demo trailer
+
+- Added six storyboard-style 16-bit scene frames under `docs/promo/` for the demo trailer / GIF and consulting pitch decks: title reveal, character creation, first DANN-E encounter, volume-assembly progress, miniboss fight, and binding-ceremony ending.
+- Each frame is an exact 256x224 indexed-color PNG with no anti-aliasing, built on a single fixed 38-color palette curated from the existing FRUS art pack (archive browns, gold leaf, ruby buckram red, navy, cherry-blossom pink) so they match the shipped title/DANN-E/volume/garden art.
+- Frames are generated deterministically by `docs/promo/generate_frames.py` (hand-coded 5x7 pixel font, ordered Bayer dithering, no smoothing); added `docs/promo/MANIFEST.md` with per-file path, dimensions, scene label, trailer order, and palette/source notes.
+- Verification: all six PNGs confirmed `(256, 224)` mode `P`, 13-23 colors each, and 0 stray colors outside the palette (no anti-aliasing).
+
+## 2026-07-06 DANN-E combat & pickup VFX sprite sheets
+
+- Added seven original 16-bit SNES/ALttP-style VFX sprite strips under `public/assets/art-pack/vfx/`, generated deterministically by `scripts/generate-vfx-sprites.py`:
+  - `vfx_hit_spark_strip.png` — 4 frames, 16x16 (hit-spark burst);
+  - `vfx_defeat_dissolve_strip.png` — 5 frames, 32x32 (defeat pixel-scatter);
+  - `vfx_doc_point_sparkle_strip.png` — 3 frames, 8x8 (document-point pickup sparkle);
+  - `vfx_frus_fragment_glow_strip.png` — 4 frames, 16x16 (ruby-red buckram FRUS volume fragment glow/pickup);
+  - `vfx_citation_stamp_swing_strip.png`, `vfx_red_pencil_swing_strip.png`, `vfx_review_folder_swing_strip.png` — 3 frames each, 24x24, arcs colored to match the Citation Stamp / Red Pencil / Review Folder weapon icons in the item registry.
+- Palette matched to the existing sprite frames and FRUS volume art (`#0F0F0F` outline, `#7A1020` ruby buckram, `#D6A23A` brass, `#B89A5A` manila). All output is hard-edged pixel art: every pixel is fully transparent or fully opaque, no anti-aliasing, transparent background, limited palette.
+- Documented frame size/count/speed for each strip in `public/assets/art-pack/vfx/MANIFEST.md`.
+- Verification: independent PIL check confirmed exact dimensions, zero soft-alpha pixels, and zero off-palette colors across all seven strips.
+## 2026-07-06 DANN-E miniboss arena tileset
+
+- Added `public/assets/art-pack/tilesets/gameplay/tileset_miniboss_arena_16x16.png` (1024×1024 display) plus its `*_native.png` (128×128) source, matching the `tileset_interiors_16x16` conventions exactly: 8×8 grid, 16px native tiles, 128px display cells, crisp 8× nearest-neighbor upscale, near-black 1px outlines, federal palette family (ruby red, federal blue, cream paper, gray stone, brass).
+- Theme: a federal office floor overtaken by a shutdown/stop-work antagonist. Tiles cover walls, office + cracked-tile floors, hazard floors (paper debris, red-glow seams, warning chevrons, scorch, grate), scattered paper stacks + file boxes, overhead light fixtures (on/flicker/off/broken-spark), a full caution-tape border set (4 edges + 4 corners + cross), and a locked vault door with 2×2 CLOSED and OPEN-on-clear states plus single-tile variants.
+- Floors/walls are opaque; props, lights, tape, and vault tiles use transparent backgrounds so they drop into Phaser tilemaps as overlay layers without rescaling.
+- Documented in `MANIFEST.md` (section 2a) and `manifest.json` (`tilesets.tileset_miniboss_arena_16x16`).
+- Verification: dimensions confirmed multiples of 16; display is an exact 8× nearest upscale of native (0 pixel mismatches → no anti-aliasing); tight 66-color palette; floor/wall tiles fully opaque, prop tiles transparent-backed; `manifest.json` re-parses as valid JSON.
+## 2026-07-06 — FRUS volume assembly art sequence
+Added `public/assets/art-pack/volume-assembly/`: five cover-piece sprites (spine,
+front board, title plate, ribbon marker, seal/stamp) each as a 32×32 pickup + a
+64×64 equipped/glow variant, a 6-frame 384×64 assembly animation sheet (64×64
+frames, ~8 fps) showing the pieces binding into one ruby volume, and a 128×128
+completed-volume hero sprite for the ending. Deterministic generator at
+`scripts/generate-volume-assembly.py`; palette-locked to `src/art/palette.ts`;
+verified for exact dimensions, transparent corners, and strict palette membership.
+## 2026-07-06 Hidden reading-room secret art
+
+- Added an optional hidden reading-room bonus area and its rare collectible reward, generated as original SNES-style pixel art (hard edges, locked limited palette, no anti-aliasing).
+- New assets under `public/assets/art-pack/secrets/`:
+  - `tileset_reading_room_16x16_native.png` (112×112, 7×7 grid of 16px tiles) and its exact 8× nearest-neighbor display upscale `tileset_reading_room_16x16.png` (896×896). Includes stone floors/walls, a disguised hidden-passage wall + its revealed edge, doorway/arch, bookshelves, reading table/chair/pedestal, globe, candle + green banker lamp with glow overlays, wall sconce, framed map, brass FRUS placard, and seamless fill rows.
+  - `collectible_first_edition_frus_32x32.png` (128×32, 4 frames of 32×32) — a gilded "first edition" FRUS volume with a rotating gold sparkle animation (~8fps / ~500ms loop).
+- Palette style-locked to the archive / stone-dungeon pack (federal stone, ruby buckram, gold stamp, cream paper, archival wood, reading-room green, warm candle glow).
+- Documented in a new `secrets/MANIFEST.md` plus a new section 9 in the top-level `art-pack/MANIFEST.md`.
+- Verification: PIL checks confirmed exact dimensions, RGBA with only alpha 0/255 (no anti-aliasing), 29-color tileset / 12-color collectible limited palettes, the display tileset is a pixel-exact ×8 nearest-neighbor upscale (identical color count), and each of the 4 collectible frames contains the volume plus distinct sparkles.
+## 2026-07-06 HUD icon polish pack
+
+- Added an original 16-bit HUD icon set under `public/assets/art-pack/hud/`,
+  generated deterministically by `scripts/generate-hud-icon-pack.py` (PIL,
+  hard-edged pixel grid, no anti-aliasing, transparent backgrounds, project NES
+  palette from `src/art/palette.ts`), matching the `UIScene` quest-band look:
+  - reliability/confidence meter frame;
+  - document-points counter icon;
+  - process stamp icons: Rule, Source, Network, Referral, Read;
+  - equipped-tool slot frames (empty + active);
+  - 5-segment volume-assembly progress tracker bar (spine, front board, title
+    plate, ribbon marker, seal/stamp) plus per-segment icons.
+- Each icon ships as a 16×16 master and a crisp 2× nearest-neighbour 32×32
+  variant; the tracker bar ships at 80×16 and 160×32.
+- Documented every file in `public/assets/art-pack/MANIFEST.md` (new section 9).
+- Verification: automated check confirmed all 32 PNGs are RGBA with exact
+  dimensions, binary alpha (0/255 only, no AA), and colors strictly within the
+  NES palette; visual montage inspected for readability.
+## 2026-07-06 Colorblind-accessible UI overlays
+
+- Audited `public/assets/art-pack/` and HUD code (`src/scenes/UIScene.ts`, `src/systems/reliability.ts`, `NetworkScene`, `danne-pack/ui/18_ui_boss_healthbar.png`) for state cues conveyed by color alone: verification/HP cells (red vs slate), confidence/clarity meter tiers, inventory-slot equipped/acquired/locked, process-stamp earned/pending, dungeon-key held, minimap room current/cleared/locked, boss critical + phase gems, OpenNet/ClassNet routing, and enemy weakness.
+- Added 21 shape/pattern overlay assets under `public/assets/art-pack/accessibility/` (8×8 and 16×16) so each state reads without color — stripes/hatch/dots for meters, padlock/star/dot for slots, check/ring for stamps, chevron/check/X for rooms, diamond/exclamation for boss state, ring/cross for network, crosshair for weakness. Every glyph has a black outline over a light palette fill for contrast on any background.
+- Documented each file (path, dimensions, state/use, shape meaning, placement/animation) in `public/assets/art-pack/accessibility/MANIFEST.md`; linked it from the top-level art-pack `MANIFEST.md`.
+- Verification: Python/PIL checks confirmed all 21 PNGs are RGBA with a transparent region, no partial-alpha (no smoothing artifacts), correct 8×8/16×16 dimensions, and only palette-consistent colors; scaled montage visually confirmed each glyph is legible and distinct.
+## 2026-07-06 New Game+ veteran editor cosmetic pack
+
+- Added a cosmetic palette-swap sprite pack under `public/assets/art-pack/ng-plus/` for the five production player roles (Proofreader, Compiler, Editor, Declass Reviewer, Source Note Specialist), intended as a New Game+ unlock reward.
+- Each veteran variant is a strict per-role color-lookup recolor of its production native sheet (Proofreader←`sprite_reviewer`, Compiler←`sprite_compiler`, Editor←`sprite_editor`, Declass Reviewer←`sprite_declassification_coordinator`, Source Note Specialist←`sprite_records_officer`), following the `getCharacterKeyForProcessRole()` mapping.
+- Distinguished ruby-buckram base with sparing gold/silver trim; skin, hair, held documents, and outlines preserved for readability. Exact 128×192 4×4 / 32×48 frame layout, animation ordering, and transparency retained; 1024×1536 8× nearest masters mirror the base masters + `native/` convention.
+- Reproducible via `scripts/generate-ng-plus-veteran-pack.py`. Manifest metadata in `ng-plus/MANIFEST.md` plus a section 9 pointer in the top-level `art-pack/MANIFEST.md`.
+- Verification (Python/PIL + ImageMagick, no code paths touched):
+  - all native sheets exactly 128×192, masters exactly 1024×1536;
+  - alpha mask identical to each source (transparency preserved), zero partial-alpha pixels (no anti-aliasing / hard pixel edges);
+  - output opaque-palette count ≤ source for every role (palette-limited);
+  - each master is a byte-for-byte 8× nearest-neighbor upscale of its native sheet (no smoothing);
+  - side-by-side visual review of all five recolors confirmed retained silhouette/identity with the ruby-buckram + gold/silver treatment.
+## 2026-07-06 Refreshed title & ending screen art
+
+- Added a deterministic Pillow generator `scripts/generate-screen-art.py` that renders two native 256×240, limited-palette, no-AA backgrounds from the game palette (`src/art/palette.ts` / `PALETTE`).
+  - `public/assets/art-pack/screens/title_screen_frus_chest_256x240.png` — ruby buckram FRUS volume opening like a treasure chest with a gold light burst and a framed gold title plate carrying `RUBY RULE:` / `THE FRUS QUEST` (14 colors).
+  - `public/assets/art-pack/screens/ending_binding_ceremony_256x240.png` — true ending / binding ceremony: human publication table, glowing assembled FRUS volume, Office of the Historian staff in celebration poses (16 colors).
+- Registered both under `SCREENS` in `src/assets/registry.ts` so they load through the existing screen pipeline; documented dimensions, intended scene, palette notes, and reserved text/safe areas in `public/assets/art-pack/MANIFEST.md`.
+- Verification:
+  - both PNGs confirmed at exactly 256×240, RGB, with every color inside the palette and no anti-aliasing (14 / 16 unique colors);
+  - `tsc --noEmit` passes clean;
+  - `vitest run src/scenes/TitleScene.test.ts` passes (9 tests); full suite is 352/353 with the one pre-existing, unrelated `src/art/characterSprites.test.ts` failure present on the base commit.
+## 2026-07-06 — Second FRUS volume world map (Overseas Post)
+- Added a sixth regional overworld board: `public/assets/art-pack/world2/01_overseas_post_region.png` (1536×1024) with 384×256 native master and a deterministic Python/Pillow generator (`generate_overseas_post.py`).
+- Theme: overseas diplomatic post / embassy subject area — 8 numbered, politically-neutral nodes (Regional Bureau, Chancery, Consular Section, Classified Pouch Room, Communications Vault, Foreign Ministry Liaison Office, Records & Archives Annex, Marine Security Post). No real countries/officials/flags.
+- Style-matched the existing overworld boards' fixed-viewport composition (brass title cartouche, deckled parchment border, sea + dashed pouch routes, compass rose, neutral pennant margin) but rendered as original 16-bit pixel art: limited 34-color palette, ×4 nearest-neighbor, no anti-aliasing (verified every 4×4 block uniform).
+- Wired in as region key `overseas_post`: `src/assets/registry.ts` (`OVERWORLD_REGIONS`), `src/data/regions.ts` (`REGION_ORDER`, `REGION_LABELS`, 8 districts), and made the WorldMapScene region hint `[1-N]` dynamic. Auto-preloaded by `BootScene`.
+- Manifests: new `world2/MANIFEST.md` plus a cross-reference section/row and asset-key in `MANIFEST_overworld_and_gameplay.md`.
+- Verification: `tsc --noEmit` clean; `vite build` passes (known large-chunk warning; post-build asset-copy script absent from this sparse worktree); `vitest run src/data/regions.test.ts` 3/3 pass; full suite 352/353 (the single failure, `src/art/characterSprites.test.ts`, is pre-existing on the untouched base commit and unrelated).
+## 2026-07-07 — Post-merge fix: stale character-sprite idle-frame test
+- Fixed the lone failing test after the #42–#57 merge wave: `src/art/characterSprites.test.ts` "resolves every direction and action pose to the clean idle-down frame 0". It asserted every animation frame index in `FRAMES` (idle/walk/action) must equal `0`, a workaround from when the native sheets were misassembled and only frame 0 rendered a clean body.
+- The shipped assets are no longer broken: the sibling suite "native sprite sheet frame content" decodes all 10 native PNGs (`public/assets/art-pack/sprites/native/`) and independently verifies every referenced frame 0–14 is a complete, contiguous body (opaque area, covered height, ≤1-row interior gap). That directly contradicts the old test's premise, so the "all frames must be 0" assertion was the outdated artifact — not the art or `character_anims.ts`.
+- Replaced the stale assertion with one matching the current multi-frame design: idle-down anchored at frame 0, and all 15 referenced poses are unique, integer, in-bounds cell indices. Preserves the regression guard against a merge scrambling the frame table without re-imposing the obsolete single-frame constraint. No implementation or asset changes.
+- Scanned for other merge artifacts: no conflict markers in `src`/`public`/`index.html`; all JSON under `src`/`public` parses; no duplicate/out-of-range frame keys.
+- Verification: `tsc --noEmit` clean; full `vitest run` now 353/353; `vite build` succeeds (known large-chunk warning only).
+## 2026-07-07 — Sword feel: ALTTP-style hitstop + primary-action buffer
+- Added `src/systems/hitstop.ts`, a pure/testable timing module (no Phaser coupling): `HitstopController` (freeze/isFrozen/remainingMs/freezeFor, extend-only overlap, NaN/negative guards, reset) and `AttackBuffer` (single-fire input grace, `canAct` gated), plus frame math (`framesToMs`, `resolveHitstopMs`) clamped to the 2–4 frame SNES range (normal sword hit = 3 frames ≈ 50ms, heavy/Ruby-Pen = 4 frames ≈ 67ms).
+- `DanneBoss` now exposes an optional `onPlayerHit(heavy)` callback fired from `checkPlayerActionHit` alongside the existing `boss-hit` camera shake; `heavy` is true on a Ruby-Pen (critical) connect.
+- `DanneMapScene` owns a `HitstopController` + `AttackBuffer`. On a clean boss hit it freezes gameplay for a few frames by skipping actor advancement (`updateDanneEntities`, player movement) while still ticking prompts/reliability/HUD and rendering — the camera shake and boss flash tween run on Phaser's own systems and play through the freeze, so the UI scene and Phaser timers/tweens are never touched or left paused. Primary-action (B) presses now route through the attack buffer so a swing pressed a hair early or during the freeze fires the instant play resumes instead of being dropped.
+- Builds on the PR #77 combat-feedback system (screen shake); hitstop reuses the same hit sites for a coherent shake-plus-freeze crunch.
+- Added `src/systems/hitstop.test.ts` (18 cases): frame math edge cases, freeze windows/overlap/reset, and attack-buffer window/single-fire/hold-until-can-act behavior.
+- Verification: `tsc --noEmit` clean; full `vitest run` 378/378; `npm run build` succeeds (pre-existing large-chunk warning only).
+## 2026-07-08 — Enemy behavior: strikeable overworld enemies + fair, telegraphed attacks
+- Overworld enemies could not be hit before: `RedactorDrone` (hp 2) and `CensorshipWraith` (hp 3) carried health and inherited `Enemy.takeDamage` knockback/flinch, and their codex defeat notes say to "strike" / "use the Ruby Pen", but nothing ever connected the player's action hitbox to them — only the DANN-E boss reacted to sword hits. Wired the player's active Ruby-Pen/sword hitbox to damage them so they flinch, take knockback, and die, closing the core ALTTP loop.
+  - `Enemy` base: added `bodyBounds()` (AABB for hit tests) and `tryPlayerHit(now, amount, source, knockback, cooldownMs)` with a per-enemy 320ms hit-gate so one swing that overlaps for several frames connects once (one swing, one flinch); returns `"miss" | "hit" | "kill"`.
+  - `DanneMapScene.resolvePlayerMeleeHits` runs each active frame while `player.activeActionHitbox` is live, strikes intersecting drones/wraiths, prunes the dead from their arrays, and adds a light `boss-hit` shake + impact/confirm SFX and a review-themed message. Gated out during hitstop/dialog/cutscene/boss-lock.
+- Fair, readable attacks (pure timing, no Phaser coupling): new `src/systems/enemyCombat.ts` models an attack as windup → active → recovery via `telegraphPhase` / `isTelegraphActive` / `isTelegraphVisible` / `telegraphDurationMs`.
+  - `CensorshipWraith` ink-sweep no longer deals damage on frame 0 alongside the cue. It now telegraphs a 240ms windup (gold tint tell, arc/cue up), deals damage only during a 170ms active window (once), then a 240ms recovery; the wraith plants itself for the whole swing instead of sliding into the player. ~650ms total, ~1.65s rest between swings.
+  - `RedactorDrone` black-bar stamp now arms after a 260ms delay, so a player standing on the drop has a fair window to step clear before it can redact them.
+  - Cleaned up leaked scene objects on death: drone projectiles and the wraith swipe arc are destroyed in `onDeath` (the scene stops updating a dead enemy).
+- Preserved FRUS theme/content, boss phases, movement, and the directional hitbox untouched. No enemy hp/spacing retuning beyond the fairness windows.
+- Added `src/systems/enemyCombat.test.ts` (telegraph phase ordering, active-window fairness, visibility across the swing, duration/negative clamping).
+- Verification: `tsc --noEmit` clean; full `vitest run` 403/403 (77 files); `npm run build` succeeds (pre-existing large-chunk warning only). No in-browser playtest — no Puppeteer/Playwright/Chromium available in this worktree; validated via the pure telegraph unit tests, the existing suite, and static inspection of the DanneMapScene update path.
+## 2026-07-08 — Level flow/pacing: read-before-threat briefing + patrol pacing guards
+- NARA Stacks first-enemy room: the Stack Control Note (the note that *warns* "four redactor-drone patrol routes cross the stack aisle") sat at (128,92) — 0px from drone-route-a, i.e. literally on the sweep line, and past the first patrols so the player only read the drone warning after already walking into them. Moved it to (128,178) in the lower entry aisle by the spawn (128,205): 26px clear of every patrol lane, read before wading into the drones (ALTTP "read the room before the threat"). Treaty Fragment I stays intentionally drone-guarded at (204,184).
+- New pure, Phaser-free `src/game/levelPacing.ts`: shared enemy engagement ranges (`REDACTOR_DRONE_STAMP_TRIGGER_RADIUS` = 44, `CENSORSHIP_WRAITH_SWIPE_TRIGGER_RADIUS` = 34) plus `distancePointToSegment`, `minDistanceToPatrolRoutes`, `spawnPatrolClearance`, and `patrolHotspotViolations`. `RedactorDrone`/`CensorshipWraith` now read their trigger radius from these constants (one source of truth; the magic numbers can't drift from the pacing checks).
+- Added `src/game/levelPacing.test.ts` (10 cases): segment-distance math, and pacing invariants over `DANNE_SCENE_GEOMETRY` — no readable hotspot sits on a patrol lane (would have failed on the old note), the drone-warning note reads nearer the spawn than the first sweep lane, and the spawn stays outside drone stamp range so arrival is never a free hit (no surprise damage on transition).
+- Verified the DANN-E boss opening is already fair (first ego bolt fires 650ms after the post-cutscene colossus phase; wraiths are cleared when the boss starts) — left unchanged.
+- Preserved FRUS theme/content, room dressing, enemy counts, and boss design. Only the one note coordinate changed in map data.
+- Verification: `tsc --noEmit` clean; full `vitest run` 413/413 (78 files, +10); `npm run build` succeeds (pre-existing large-chunk warning only). No in-browser playtest — no Puppeteer/Playwright/Chromium in this worktree; validated via the pure pacing unit tests over the real scene geometry, a numeric clearance check, and static inspection of the DanneMapScene spawn/entity setup and boss opening path.
+## 2026-07-08 — Pickups/recovery: front-loaded heart top-up before the boss spike
+- Recovery cadence gap: the Black Vault Lair (the DANN-E boss room) had no recovery pickup at all — a player who arrived low on reliability (the 10-heart health analogue) had no fair way to top up before the game's biggest difficulty spike, pure attrition frustration. ALTTP always gives you a way to refill at the boss door. Added a one-time "Human Review Cache" pickup on the entry side of the lair at (128,182) — below the DANN-E core trigger (128,122) and just above the spawn (128,202) — so the player passes recovery on the way in, not mid-fight. It restores +20 reliability (2 hearts; `adjustReliability` clamps to 100), fires once (gated by `sceneProgress.blackVaultReliabilityCacheUsed`), and reads as human-review notes steadying your hand — on-theme (human review restores reliability) and not a wall of text. One-time + capped so it softens attrition without erasing the fight.
+- New `reliability-cache` interaction action wired through the existing generic geometry pipeline (`danneSceneCollisions.ts` union + `BlackVaultLairScene` interaction + `visibleEntities`; rendered by `drawInteractionMarkers` and dispatched by `handleInteraction` — no new render/wiring paths). Accent is `openNetGreen` so the restorative reads as friendly against the red boss cues.
+- Extended the pure, Phaser-free `src/game/levelPacing.ts` with recovery-cadence helpers (one source of truth shared by the guard and the scene): `RECOVERY_INTERACTION_ACTIONS`, `BOSS_TRIGGER_ACTION`, `recoveryInteractions`, `bossTriggerInteraction`, and `recoveryReachableBeforeBoss` — a boss scene must offer a recovery pickup no farther from the spawn than the boss trigger (read-before-threat), non-boss scenes are unconstrained.
+- Added 5 `levelPacing.test.ts` cases: the Black Vault is the boss scene under test, its cache reads before the boss trigger and clears any patrol lanes, every boss scene front-loads a reachable recovery pickup, and non-boss scenes (Cherry Blossom Garden) stay unconstrained.
+- Preserved FRUS theme/content, room dressing, enemy/boss design, and all existing pickups (Ruby Pen chest, treaty fragments, hidden reliability well) untouched. Only additive map data + one handler case + pure helpers.
+- Verification: `tsc --noEmit` clean; full `vitest run` 418/418 (78 files, +5); `npm run build` succeeds (pre-existing large-chunk warning only). No in-browser playtest — no Puppeteer/Playwright/Chromium in this worktree; validated via the pure recovery-pacing unit tests over the real scene geometry (spawn/boss/recovery distances) and static inspection of the DanneMapScene interaction dispatch.
+## 2026-07-08 — Audio/visual juice: fill silent hit cues (player hurt, boss hit/defeat)
+- Audited every combat/pickup/interaction feedback path on the PR #77 branch. Found three high-frequency actions that fired camera shake + sprite flash but had no SFX at all: the player taking a hit, the player's sword connecting with DANN-E, and the DANN-E defeat moment. Also found the two ego-bolt player-impact SFX (`DanneLurker`, `DanneBoss`) fired from the collision loop independent of i-frames, so they could re-trigger during the damage cooldown.
+- Added three restrained original Web Audio cues to `RetroAudio` (`src/systems/audio.ts`): `playerHurt(heavy?)` (short descending sawtooth, beefier variant on knockback ≥15px), `bossHit()` (two-tone square "chk"), and `bossDefeat()` (falling five-note sawtooth sting). Removed the now-superseded `egoBoltImpact()` method.
+- Wired `retroAudio.playerHurt(heavy)` into `Player.takeHit()` after the i-frame guard, so exactly one hurt cue plays per real hit and none play during the invulnerability/contact cooldown. This gives a consistent ALTTP-style flinch to every damage source — including previously silent ones (redactor-drone bolts, censorship-wraith/mini-DANN-E contact, melee).
+- Wired `retroAudio.bossHit()` into `DanneBoss.checkPlayerActionHit` (gated by the existing 260ms hit cooldown, no spam) and `retroAudio.bossDefeat()` into `finishFight`. Removed the redundant `egoBoltImpact()` calls at the two bolt-collision sites so the universal `takeHit` cue is the single hurt signal.
+- Unified the overworld melee non-kill cue: `DanneMapScene.resolvePlayerMeleeHits` (from the strikeable-enemies commit) previously used the bolt-impact thud for a sword connect; it now uses the same `bossHit()` chk it already pairs with the `boss-hit` shake, so striking a drone/wraith and striking DANN-E share one consistent sword-connect sound. Enemy defeat keeps its rising `confirm()` "cleared" sting.
+- Playtest method: static inspection + type/test/build verification only. Browser automation was unavailable in this sparse worktree; the changes are additive audio hooks at existing, test-covered hit sites (i-frame and hit-cooldown gating already unit-tested via `combat`/`hitstop`), so gameplay logic is unchanged.
+- Verification: `tsc --noEmit` clean; full `vitest run` 418/418; `npm run build` succeeds (pre-existing large-chunk warning only).

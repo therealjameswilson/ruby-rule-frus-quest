@@ -12,14 +12,15 @@ export type District = {
   locked?: boolean;
 };
 
-export const REGION_ORDER: OverworldRegionKey[] = ["europe", "pacific", "middle_east", "latin_america", "africa"];
+export const REGION_ORDER: OverworldRegionKey[] = ["europe", "pacific", "middle_east", "latin_america", "africa", "overseas_post"];
 
 export const REGION_LABELS: Record<OverworldRegionKey, string> = {
   europe: "Cold War Europe",
   pacific: "Pacific Theater",
   middle_east: "Middle East Crossroads",
   latin_america: "Latin America",
-  africa: "African Cold War Front"
+  africa: "African Cold War Front",
+  overseas_post: "Overseas Post"
 };
 
 const zone = (centerX: number, centerY: number, width = 270, height = 82) => ({
@@ -73,7 +74,16 @@ export const DISTRICTS: District[] = [
   { id: "nairobi", region: "africa", number: 5, displayName: "Nairobi", bounds: zone(1215, 758, 270, 78), destinationScene: "frus_floor" },
   { id: "luanda", region: "africa", number: 6, displayName: "Luanda", bounds: zone(850, 758, 255, 78), destinationScene: "black_vault" },
   { id: "pretoria", region: "africa", number: 7, displayName: "Pretoria", bounds: zone(1025, 565, 270, 78), destinationScene: "embassy" },
-  { id: "cape_town", region: "africa", number: 8, displayName: "Cape Town", bounds: zone(240, 828, 285, 78), destinationScene: "capitol_hill" }
+  { id: "cape_town", region: "africa", number: 8, displayName: "Cape Town", bounds: zone(240, 828, 285, 78), destinationScene: "capitol_hill" },
+
+  { id: "regional_bureau", region: "overseas_post", number: 1, displayName: "Regional Bureau", bounds: zone(312, 600, 250, 150), destinationScene: "historian_office" },
+  { id: "chancery", region: "overseas_post", number: 2, displayName: "Chancery", bounds: zone(1168, 256, 250, 150), destinationScene: "embassy" },
+  { id: "consular_section", region: "overseas_post", number: 3, displayName: "Consular Section", bounds: zone(400, 240, 250, 150), destinationScene: "embassy" },
+  { id: "pouch_room", region: "overseas_post", number: 4, displayName: "Classified Pouch Room", bounds: zone(320, 816, 250, 150), destinationScene: "nara_stacks" },
+  { id: "comms_vault", region: "overseas_post", number: 5, displayName: "Communications Vault", bounds: zone(1168, 776, 250, 150), destinationScene: "black_vault" },
+  { id: "ministry_liaison", region: "overseas_post", number: 6, displayName: "Foreign Ministry Liaison Office", bounds: zone(744, 840, 250, 150), destinationScene: "foggy_bottom" },
+  { id: "archives_annex", region: "overseas_post", number: 7, displayName: "Records & Archives Annex", bounds: zone(1168, 552, 250, 150), destinationScene: "frus_floor" },
+  { id: "marine_post", region: "overseas_post", number: 8, displayName: "Marine Security Post", bounds: zone(744, 480, 250, 150), destinationScene: "capitol_hill" }
 ];
 
 export function districtsForRegion(region: OverworldRegionKey) {

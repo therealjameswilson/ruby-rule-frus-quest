@@ -126,6 +126,68 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
     notes: [55, 58, 67, 58, 55, null, 70, 67, 55, 58, 67, 72, 70, 67, 58, null],
     bass: [31, 31, 34, 30],
     wave: "sawtooth"
+  },
+  officeHub: {
+    title: "Office Hub Lilt",
+    source: "Ruby Rule square-wave arrangement from Satie Gymnopedie No. 1 (public domain)",
+    stepMs: 316,
+    notes: [74, null, 73, 69, 66, null, 69, 71, 74, null, 73, 69, 71, 69, 66, null],
+    counter: [62, null, 61, null, 57, null, 61, 62, 62, null, 61, null, 57, null, 62, null],
+    bass: [43, 50, 45, 52],
+    wave: "square",
+    counterGain: 0.005
+  },
+  openNetRouting: {
+    title: "OpenNet Routing Run",
+    source: "Ruby Rule square-wave arrangement from Bach Invention No. 1, BWV 772 (public domain)",
+    stepMs: 150,
+    notes: [60, 62, 64, 65, 62, 64, 60, 67, 72, 71, 72, 67, 69, 67, 65, 64],
+    bass: [48, 55, 48, 43],
+    wave: "square"
+  },
+  referralVault: {
+    title: "Referral Vault Descent",
+    source: "Ruby Rule square-wave arrangement from Bach Toccata & Fugue in D minor, BWV 565 (public domain)",
+    stepMs: 205,
+    notes: [69, 67, 69, null, 67, 65, 64, 62, 61, 62, null, 57, 60, 62, 61, null],
+    bass: [38, 38, 33, 38],
+    wave: "square"
+  },
+  silentReadTower: {
+    title: "Silent Read Tower",
+    source: "Ruby Rule square-wave arrangement from Satie Gnossienne No. 1 (public domain)",
+    stepMs: 300,
+    notes: [72, 71, 72, 68, 67, 65, 67, 68, 67, 63, 65, 63, 61, 60, null, null],
+    counter: [null, 56, null, 55, null, 53, null, 51, null, 48, null, 51, null, 53, null, 55],
+    bass: [41, 48, 44, 46],
+    wave: "square",
+    counterGain: 0.0045
+  },
+  danneCombat: {
+    title: "DANN-E Combat Encounter",
+    source: "Ruby Rule square-wave arrangement from Beethoven Symphony No. 5, Op. 67 (public domain)",
+    stepMs: 145,
+    notes: [null, 67, 67, 67, 63, null, 65, 65, 65, 62, null, 67, 67, 63, 62, 60],
+    bass: [48, 51, 43, 36],
+    wave: "square"
+  },
+  miniboss: {
+    title: "Miniboss March",
+    source: "Ruby Rule square-wave arrangement from Grieg 'In the Hall of the Mountain King', Op. 46 (public domain)",
+    stepMs: 155,
+    notes: [47, 49, 50, 52, 54, 50, 54, null, 53, 49, 53, 52, 48, 52, null, null],
+    bass: [35, 35, 35, 30],
+    wave: "square"
+  },
+  bindingCeremony: {
+    title: "Binding Ceremony Fanfare",
+    source: "Ruby Rule square-wave arrangement from Beethoven 'Ode to Joy', Symphony No. 9 (public domain)",
+    stepMs: 288,
+    notes: [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 64, null, 62, null],
+    counter: [null, 72, null, 71, null, 67, null, 67, null, 71, null, 72, null, 67, null, 67],
+    bass: [48, 53, 48, 43],
+    wave: "square",
+    counterGain: 0.005
   }
 };
 
@@ -249,9 +311,23 @@ class RetroAudio {
     this.sequence([740, 370, 555], 0.035, 0.012, 0.035, "square");
   }
 
-  egoBoltImpact() {
-    setAudioStatus("ego bolt impact");
-    this.sequence([196, 110, 82], 0.055, 0.018, 0.05, "sawtooth");
+  playerHurt(heavy = false) {
+    setAudioStatus(heavy ? "player hurt (heavy)" : "player hurt");
+    if (heavy) {
+      this.sequence([174, 116, 82], 0.06, 0.016, 0.055, "sawtooth");
+      return;
+    }
+    this.sequence([220, 146, 104], 0.05, 0.014, 0.05, "sawtooth");
+  }
+
+  bossHit() {
+    setAudioStatus("boss review hit");
+    this.sequence([330, 208], 0.04, 0.008, 0.05, "square");
+  }
+
+  bossDefeat() {
+    setAudioStatus("boss defeat sting");
+    this.sequence([392, 294, 220, 147, 98], 0.12, 0.02, 0.05, "sawtooth");
   }
 
   danneBoast() {
@@ -349,7 +425,7 @@ class RetroAudio {
     const themeMap: Record<string, keyof typeof PUBLIC_DOMAIN_MIDI_THEMES> = {
       TitleScene: "eerieBach",
       CharacterCreateScene: "eerieBach",
-      OfficeScene: "eerieBach",
+      OfficeScene: "officeHub",
       CherryBlossomGardenScene: "cherryGarden",
       SenateHearingChamberScene: "senate",
       GuideScene: "eerieBach",
@@ -357,11 +433,12 @@ class RetroAudio {
       NaraStacksScene: "naraStacks",
       EmbassyCableRoomScene: "embassyCable",
       BlackVaultLairScene: "blackVault",
-      DanneBoss: "danneBoss",
-      NetworkScene: "eerieBach",
-      ReferralVaultScene: "eerieBach",
-      SilentReadScene: "eerieBach",
-      EndingScene: "satie"
+      DanneBoss: "danneCombat",
+      DanneMiniboss: "miniboss",
+      NetworkScene: "openNetRouting",
+      ReferralVaultScene: "referralVault",
+      SilentReadScene: "silentReadTower",
+      EndingScene: "bindingCeremony"
     };
     const key = themeMap[sceneKey] ?? "title";
     return { key, theme: PUBLIC_DOMAIN_MIDI_THEMES[key] };
