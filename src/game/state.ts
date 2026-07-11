@@ -251,6 +251,7 @@ export interface GameState {
   snesTransition: SnesTransitionState;
   finalGateCertification: FinalGateCertificationState | null;
   completionStats: CompletionStatsState;
+  secondVolumeUnlocked: boolean;
 }
 
 export interface DanneItemReadout {
@@ -305,7 +306,7 @@ export interface GameSaveSummary {
   volumesCompleted: number;
 }
 
-type GameStateChangeReason = "reset" | "scene" | "restore";
+type GameStateChangeReason = "reset" | "scene" | "restore" | "second-volume-unlocked";
 type GameStateChangeListener = (reason: GameStateChangeReason) => void;
 
 const FINAL_PUBLICATION_DOCUMENT_IDS = [
@@ -713,7 +714,8 @@ export const gameState: GameState = {
     last: null
   },
   finalGateCertification: null,
-  completionStats: createInitialCompletionStats()
+  completionStats: createInitialCompletionStats(),
+  secondVolumeUnlocked: false
 };
 
 export function resetGameState(options: { ngPlus?: boolean } = {}) {
@@ -778,6 +780,7 @@ export function resetGameState(options: { ngPlus?: boolean } = {}) {
   gameState.snesTransition = { active: false, current: null, last: null };
   gameState.finalGateCertification = null;
   gameState.completionStats = createInitialCompletionStats();
+  gameState.secondVolumeUnlocked = false;
   setPlayerProfile("Sam", defaultRole);
   refreshQuestWorkflowState();
   notifyGameStateChange("reset");
@@ -852,6 +855,11 @@ export function restoreGameSaveData(save: GameSaveData) {
   restored.nearestInteractable = null;
   restored.physicalVerification = null;
   restored.finalGateCertification = preservedFinalGateCertification(restored.finalGateCertification);
+  restored.secondVolumeUnlocked = Boolean(
+    restored.secondVolumeUnlocked
+    || restored.sceneProgress?.secondVolumeUnlocked
+    || restored.finalGateCertification?.status === "published"
+  );
   restored.snesTransition = {
     active: false,
     current: null,
@@ -873,6 +881,8 @@ export function restoreGameSaveData(save: GameSaveData) {
       lastCompletedAt: ngPlusMeta.lastCompletedAt
     });
   }
+  gameState.secondVolumeUnlocked = Boolean(gameState.secondVolumeUnlocked || gameState.ngPlusUnlocked);
+  if (gameState.secondVolumeUnlocked) gameState.sceneProgress.secondVolumeUnlocked = 1;
   gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
@@ -1009,7 +1019,27 @@ export function setPhysicalVerificationState(state: PhysicalVerificationState | 
 
 export function setFinalGateCertificationState(state: FinalGateCertificationState | null) {
   gameState.finalGateCertification = state;
+  if (state?.status === "published") unlockSecondVolumeRegion("First FRUS volume completed");
   refreshQuestWorkflowState();
+}
+
+export function isSecondVolumeRegionUnlocked() {
+  return Boolean(
+    gameState.secondVolumeUnlocked
+    || gameState.ngPlusUnlocked
+    || gameState.sceneProgress.secondVolumeUnlocked
+    || gameState.finalGateCertification?.status === "published"
+  );
+}
+
+export function unlockSecondVolumeRegion(reason = "Second FRUS volume unlocked") {
+  const wasUnlocked = isSecondVolumeRegionUnlocked();
+  gameState.secondVolumeUnlocked = true;
+  gameState.sceneProgress.secondVolumeUnlocked = 1;
+  if (!wasUnlocked) setLatestMessage(`${reason}: Overseas Post region unlocked.`);
+  refreshQuestWorkflowState();
+  notifyGameStateChange("second-volume-unlocked");
+  return !wasUnlocked;
 }
 
 export function setGameMode(mode: GameMode, objective?: string) {
@@ -2763,6 +2793,11 @@ export function renderGameToText() {
       publicationOutcome: getPublicationOutcomeReadout(),
       completionStats: getCompletionStatsReadout(),
       finalGate: getFinalGateReadiness(),
+      secondVolume: {
+        unlocked: isSecondVolumeRegionUnlocked(),
+        unlockFlag: gameState.secondVolumeUnlocked,
+        region: "overseas_post"
+      },
       publicationReadiness: getPublicationReadinessReadout(),
       statutoryClock: getStatutoryClockStateReadout(),
       danneCombat: getDanneCombatReadout(),

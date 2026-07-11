@@ -3,7 +3,14 @@ import "./styles/pixel.css";
 import { gameConfig } from "./game/config";
 import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
 import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./game/secretReadingRoom";
-import { gameState, getDanneCombatReadout, getVolumeAssemblyReadout, renderGameToText, setLatestMessage } from "./game/state";
+import {
+  gameState,
+  getDanneCombatReadout,
+  getVolumeAssemblyReadout,
+  isSecondVolumeRegionUnlocked,
+  renderGameToText,
+  setLatestMessage
+} from "./game/state";
 import {
   bindDomPointerDown,
   getGamepadDebugState,
@@ -94,6 +101,11 @@ function renderConciseGameToText() {
       secrets: {
         hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),
         hiddenFirstEditionBonus: hiddenFirstEditionBonusLabel(gameState)
+      },
+      secondVolume: {
+        unlocked: isSecondVolumeRegionUnlocked(),
+        unlockFlag: gameState.secondVolumeUnlocked,
+        region: "overseas_post"
       },
       processStamps: gameState.processStamps,
       inventory: gameState.inventory,
