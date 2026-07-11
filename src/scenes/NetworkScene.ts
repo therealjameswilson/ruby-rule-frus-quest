@@ -8,6 +8,7 @@ import {
   awardProcessStamp,
   gameState,
   getHeldProcessItemIds,
+  recordUnresolvedEquity,
   setLatestMessage,
   setDocumentWorkflowState,
   setNearestInteractable,
@@ -1010,6 +1011,7 @@ export class NetworkScene extends Phaser.Scene {
         leakWarning ? "concealed_policy_defect" : "omitted_material_fact",
         leakWarning ? "Closed material was sent to OpenNet." : `${item.label} was routed through the wrong network.`
       );
+      recordUnresolvedEquity(`${leakWarning ? "Closed material routed to OpenNet" : "Network routing gate failed"}: ${item.label}`);
       setLatestMessage(`WRONG NETWORK - ${violation.label}`);
       this.routeText.setText(leakWarning ? "WARNING\nLEAK RISK" : "WARNING\nWRONG NET").setVisible(true);
       this.reliability.update();

@@ -45,6 +45,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
     - required web-game client completed against `?scene=TitleScene&v=ngplus-smoke`;
     - direct Playwright probes confirmed title count/NG+ selection, `newGamePlus.active === true`, `difficultyTier === "veteran"`, and active player sprite `reviewer_veteran` after entering Office;
     - visual proof: `output/ngplus-probe/title-unlocked.png`, `output/ngplus-probe/character-veteran.png`, and `output/ngplus-probe/office-veteran.png`.
+- Equity-resolution ending branch (2026-07-06):
+  - Added a save-safe unresolved-equities counter to `GameState`, completion stats, and `window.render_game_to_text()`.
+  - Wired concrete declassification/referral failure points into the counter: wrong OpenNet/ClassNet routing, wrong agency-equity matching, unchecked StateChat referral manifests, failed foreign-government permission/withholding appeal gates, visible-excision failures, and DANN-E's omission shortcut.
+  - Added a publication outcome readout (`Published clean` vs. `Published under appeal`) and froze the outcome when completion stats finalize.
+  - Added original repo-local alt-ending pixel art under `public/assets/art-pack/alt-ending/` and registered it through `ALT_ENDING_ASSETS`.
+  - Branched the Buckram Gate publication result: clean runs keep the existing binding-ceremony prize, while unresolved equities show a contested-declassification / under-appeal ending and completion-stat outcome.
+  - Verification:
+    - `npm test -- --run src/game/completionStats.test.ts` passes (1 file / 4 tests);
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&v=equity-ending-smoke`;
+    - Chrome-backed visual smoke against `EndingScene` reports zero console errors and a valid `render_game_to_text()` state;
+    - full `npm test -- --run` currently fails in pre-existing `src/art/characterSprites.test.ts` because that test still expects every character pose to resolve to frame 0.
 - ALTTP disassembly translation pass (2026-07-05):
   - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
   - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.
@@ -4040,6 +4052,28 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - required web-game client was run against `?scene=HiddenReadingRoomScene`;
   - direct Playwright route confirmed NARA Stacks + Review Folder -> hidden room -> first edition pickup -> inventory and secret readout -> EndingScene bonus stat, with no page errors;
   - visual proof: `output/hidden-reading-room-entry-fixed.png`, `output/hidden-reading-room-collected-fixed.png`, and `output/hidden-reading-room-final-qa-2.png`.
+## 2026-07-06 Completion stats tracking
+
+- Added a lightweight completion-stats tracker to `GameState` for replayability/trailer-ready completion summaries.
+- The tracker now reports:
+  - total play time;
+  - DANN-E variant defeats by type;
+  - FRUS cover/volume pieces collected;
+  - hidden collectible discovery status;
+  - final reliability score once the run is finalized.
+- Wired stats into:
+  - volume-fragment pickup tracking;
+  - Archive hidden-room rewards;
+  - DANN-E boss phase completion;
+  - final publication certification;
+  - `window.render_game_to_text()` full debug payload;
+  - the EndingScene published-prize stat block.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - focused `npm test -- completionStats.test.ts` passes (1 file / 3 tests);
+  - full `npm test` still has the pre-existing unrelated `src/art/characterSprites.test.ts` frame-layout failure;
+  - required web-game client completed against `?scene=EndingScene&role=compiler&name=Ruby&text=full` with no error artifacts and `completionStats` present in the text payload;
+  - direct Playwright visual proof captured the completion stat block in `/tmp/ruby-rule-stats/web-game-stats/page-published-stats-2.png`.
 
 ## 2026-07-06 Promo storyboard frames for demo trailer
 

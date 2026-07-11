@@ -50,6 +50,12 @@ export const FRUS_VOLUMES = {
   interact_open_maps: "art-pack/frus_volumes/16_open_volume_with_maps.png"
 } as const;
 
+export const ALT_ENDING_ASSETS = {
+  interagency_review_room: "art-pack/alt-ending/bg_interagency_review_room.png",
+  stamp_under_appeal: "art-pack/alt-ending/stamp_under_appeal.png",
+  volume_contested_redacted: "art-pack/alt-ending/volume_contested_redacted.png"
+} as const;
+
 export const SCREENS = {
   frus_world_map: "art-pack/screens/frus_world_map.jpg",
   intro_screen_256x224: "art-pack/screens/intro_screen_256x224.png",
@@ -144,6 +150,7 @@ export const ALL_NEW_ART_REGISTRIES = {
   OVERWORLD_REGIONS,
   GAMEPLAY_MAPS,
   FRUS_VOLUMES,
+  ALT_ENDING_ASSETS,
   SCREENS,
   UI_PACK,
   ACCESSIBILITY_OVERLAYS
@@ -152,6 +159,7 @@ export const ALL_NEW_ART_REGISTRIES = {
 export type OverworldRegionKey = keyof typeof OVERWORLD_REGIONS;
 export type GameplayMapKey = keyof typeof GAMEPLAY_MAPS;
 export type FrusVolumeKey = keyof typeof FRUS_VOLUMES;
+export type AltEndingAssetKey = keyof typeof ALT_ENDING_ASSETS;
 export type ScreenKey = keyof typeof SCREENS;
 export type UiPackKey = keyof typeof UI_PACK;
 export type AccessibilityOverlayKey = keyof typeof ACCESSIBILITY_OVERLAYS;
@@ -160,6 +168,7 @@ export type NewArtTextureKey =
   | OverworldRegionKey
   | GameplayMapKey
   | FrusVolumeKey
+  | AltEndingAssetKey
   | ScreenKey
   | UiPackKey
   | AccessibilityOverlayKey;

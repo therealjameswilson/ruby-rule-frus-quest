@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { FRUS_VOLUMES, SCREENS } from "../assets/registry";
-import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_STAMPS } from "../game/constants";
+import { ALT_ENDING_ASSETS, FRUS_VOLUMES, SCREENS } from "../assets/registry";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   evaluateKelloggCertificationAnswer,
   getKelloggCertificationPrompt,
@@ -77,11 +77,13 @@ import {
   addDocumentPoints,
   addInventoryItem,
   addProcessItem,
+  finalizeCompletionStats,
   gameState,
+  getCompletionStatsReadout,
   getFinalGateReadiness,
+  getPublicationOutcomeReadout,
   getPublicationReadinessReadout,
   getStatutoryClockStateReadout,
-  getVolumeAssemblyReadout,
   hasProcessItem,
   markVolumeAssemblyCeremonyComplete,
   publishDocument,
@@ -106,7 +108,7 @@ import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability"
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
-import { SNES_PROCESS_STAMP_RELIC_ASSET, SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
+import { SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
 import { hiddenFirstEditionBonusLabel } from "../game/secretReadingRoom";
 import {
   addSnesFrusCoverAssembly,
@@ -1579,13 +1581,23 @@ export class EndingScene extends Phaser.Scene {
       requiredItem: "Buckram Key",
       message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
     });
-    setLatestMessage("PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED");
     markVolumeAssemblyCeremonyComplete();
     recordBindingCeremonyCompletion();
-    setLatestMessage("PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED - NEW GAME+ READY");
+    const completionStats = finalizeCompletionStats();
+    const outcome = completionStats.publicationOutcome;
+    setLatestMessage(outcome.id === "published_under_appeal"
+      ? "PUBLISHED UNDER APPEAL - UNRESOLVED EQUITIES RECORDED - NEW GAME+ READY"
+      : "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED - NEW GAME+ READY");
     this.syncVisibleState(true);
     retroAudio.ending();
-    this.playBindingCeremony();
+    if (outcome.id === "published_under_appeal") {
+      this.showContestedPrize();
+      this.time.delayedCall(350, () => {
+        this.canRestart = true;
+      });
+    } else {
+      this.playBindingCeremony();
+    }
   }
 
   private playBindingCeremony() {
@@ -1682,7 +1694,6 @@ export class EndingScene extends Phaser.Scene {
 
   private showPublishedPrize() {
     const clock = getStatutoryClockStateReadout();
-    const volumeAssembly = getVolumeAssemblyReadout();
     this.drawPublishedBackdrop();
 
     addSnesPublicationShrine(this, {
@@ -1722,64 +1733,7 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "6px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 139, `COVER PIECES ${volumeAssembly.earnedCount}/${volumeAssembly.total}`, {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 149, `RELIABILITY ${gameState.reliability}/100  DOC PTS ${gameState.documentPoints}`, {
-      fontFamily: "monospace",
-      fontSize: "7px",
-      color: PALETTE.openNetGreen
-    }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 158, `VOLUMES COMPLETED ${gameState.volumesCompleted}`, {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(931);
-    this.add.image(218, 145, "buckram-key").setDepth(932);
-    this.add.text(218, 157, "BUCKRAM\nKEY", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp,
-      align: "center"
-    }).setOrigin(0.5).setDepth(932);
-
-    this.add.rectangle(128, 170, 236, 29, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(931);
-    const hasProcessStampRelics = this.textures.exists(SNES_PROCESS_STAMP_RELIC_ASSET.key);
-    PROCESS_STAMPS.forEach((stamp, index) => {
-      const earned = gameState.processStamps.includes(stamp.id);
-      const x = 28 + index * 39;
-      if (hasProcessStampRelics) {
-        this.add.image(x, 164, SNES_PROCESS_STAMP_RELIC_ASSET.key, stamp.id)
-          .setName(`published-process-stamp-${stamp.id}`)
-          .setAlpha(earned ? 1 : 0.28)
-          .setDepth(932);
-      }
-      this.add.text(x, 172, stamp.label, {
-        fontFamily: "monospace",
-        fontSize: stamp.label.length > 3 ? "5px" : "6px",
-        color: earned ? PALETTE.goldStamp : PALETTE.sepiaInk
-      }).setName(`published-process-stamp-label-${stamp.id}`).setOrigin(0.5, 0).setDepth(932);
-      this.add.text(x, 179, earned ? "OK" : "--", {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: earned ? PALETTE.openNetGreen : PALETTE.sepiaInk
-      }).setName(`published-process-stamp-status-${stamp.id}`).setOrigin(0.5, 0).setDepth(932);
-    });
-
-    const lines = [
-      "ELENA: SELECTION COMPLETE",
-      "MARCUS: REFERRALS CLOSED",
-      "PRIYA: QUERIES RESOLVED"
-    ];
-    lines.forEach((line, index) => {
-      this.add.text(14, 184 + index * 6, line, {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.creamPaper
-      }).setDepth(932);
-    });
+    this.drawCompletionStatsBlock(128, 164);
 
     this.add.rectangle(128, 213, 236, 28, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(931);
     const practiced = [
@@ -1802,6 +1756,131 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "7px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(932);
+  }
+
+  private showContestedPrize() {
+    const clock = getStatutoryClockStateReadout();
+    const bgKey = "interagency_review_room" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(bgKey)) {
+      const background = this.add.image(128, 120, bgKey).setDepth(900);
+      background.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.add.rectangle(128, 120, 256, 240, color(PALETTE.deepRuby)).setDepth(900);
+      this.add.rectangle(128, 96, 210, 92, color(PALETTE.stoneDark), 0.88).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(901);
+      this.add.rectangle(128, 146, 160, 34, color(PALETTE.creamPaper), 0.92).setStrokeStyle(2, color(PALETTE.black)).setDepth(902);
+    }
+
+    addSnesStatutoryClock(this, {
+      x: 40,
+      y: 70,
+      elapsedYears: clock.elapsedYears,
+      deadlineYears: clock.deadlineYears,
+      yearsRemaining: clock.yearsRemaining,
+      status: "published",
+      depth: 925
+    });
+
+    this.add.text(128, 5, "CONTESTED DECLASSIFICATION", {
+      fontFamily: "monospace",
+      fontSize: "10px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(931);
+    this.add.text(128, 17, "PUBLISHED UNDER APPEAL", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(931);
+
+    const volumeKey = "volume_contested_redacted" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(volumeKey)) {
+      this.add.ellipse(128, 140, 70, 12, color(PALETTE.black), 0.62).setDepth(927);
+      const cover = this.add.image(128, 84, volumeKey).setDepth(930);
+      cover.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.drawAssembledPrize(128, 82, 0.82, 930, true);
+    }
+
+    const stampKey = "stamp_under_appeal" satisfies keyof typeof ALT_ENDING_ASSETS;
+    if (this.textures.exists(stampKey)) {
+      const stamp = this.add.image(174, 75, stampKey).setDepth(932).setAngle(-8);
+      stamp.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    } else {
+      this.add.rectangle(174, 75, 92, 20, color(PALETTE.black), 0.9).setStrokeStyle(2, color(PALETTE.classNetRed)).setDepth(932);
+      this.add.text(174, 70, "UNDER APPEAL", {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: PALETTE.goldStamp
+      }).setOrigin(0.5).setDepth(933);
+    }
+
+    const outcome = getPublicationOutcomeReadout();
+    this.add.rectangle(128, 143, 230, 24, color(PALETTE.black), 0.9).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(931);
+    this.add.text(128, 135, `${outcome.unresolvedEquities} UNRESOLVED EQUIT${outcome.unresolvedEquities === 1 ? "Y" : "IES"} RECORDED`, {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(932);
+    this.add.text(128, 146, "THE PUBLICATION DOCKET CARRIES AN APPEAL TRAIL.", {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(932);
+
+    this.drawCompletionStatsBlock(128, 177);
+
+    this.add.rectangle(128, 223, 236, 22, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(931);
+    [
+      "CLEAN RUN: CLEAR EVERY EQUITY BEFORE THE BUCKRAM GATE.",
+      "SPACE: RETURN TO TITLE"
+    ].forEach((line, index) => {
+      this.add.text(128, 216 + index * 8, line, {
+        fontFamily: "monospace",
+        fontSize: index === 0 ? "6px" : "7px",
+        color: index === 0 ? PALETTE.terminalCyan : PALETTE.goldStamp
+      }).setOrigin(0.5).setDepth(932);
+    });
+  }
+
+  private drawCompletionStatsBlock(x: number, y: number) {
+    const depth = 3100;
+    const stats = getCompletionStatsReadout();
+    this.add.rectangle(x, y, 236, 56, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(depth);
+    this.add.text(x, y - 23, "COMPLETION STATS", {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(depth + 1);
+
+    const leftLines = [
+      `TIME ${stats.totalPlayTime}`,
+      `RELIABILITY ${stats.finalReliabilityScore}/100`,
+      `PIECES ${stats.volumePiecesCollected}/${stats.volumePiecesTotal}`
+    ];
+    const rightLines = [
+      `DANN-E ${stats.danneVariantsDefeated.total}`,
+      `SECRET ${stats.hiddenCollectibleFound ? "YES" : "NO"}`,
+      stats.publicationOutcome.id === "published_under_appeal" ? "OUTCOME APPEAL" : "OUTCOME CLEAN"
+    ];
+
+    leftLines.forEach((line, index) => {
+      this.add.text(x - 105, y - 13 + index * 12, line, {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: index === 1 ? PALETTE.openNetGreen : PALETTE.creamPaper
+      }).setOrigin(0, 0.5).setDepth(depth + 1);
+    });
+    rightLines.forEach((line, index) => {
+      const lineColor = line === "OUTCOME APPEAL"
+        ? PALETTE.classNetRed
+        : index === 1 && stats.hiddenCollectibleFound
+          ? PALETTE.terminalCyan
+          : PALETTE.creamPaper;
+      this.add.text(x + 12, y - 13 + index * 12, line, {
+        fontFamily: "monospace",
+        fontSize: "7px",
+        color: lineColor
+      }).setOrigin(0, 0.5).setDepth(depth + 1);
+    });
   }
 
   private restart() {

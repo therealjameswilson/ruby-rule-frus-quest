@@ -13,6 +13,7 @@ import {
   getTreatyFragmentCount,
   gameState,
   hasProcessItem,
+  recordHiddenCollectibleFound,
   setHeldItem,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -938,10 +939,12 @@ export class ArchiveScene extends Phaser.Scene {
         addDocumentPoints(room.id === "C3" ? 10 : 6, room.id === "C3" ? "hidden source cache" : "hidden reliability well");
         if (room.id === "D2") {
           adjustReliability(8, "hidden reliability refill");
+          recordHiddenCollectibleFound("Hidden Reliability Well");
           setLatestMessage("Hidden reliability well restored confidence.");
           setObjective("Reliability restored; return to the marked Archive route.");
         } else {
           addVolumeFragment("Hidden Cache Fragment");
+          recordHiddenCollectibleFound("Hidden Source Cache");
           setLatestMessage("Hidden source cache fragment filed.");
           setObjective("Hidden Source Cache filed; return to the Archive map marker.");
         }
