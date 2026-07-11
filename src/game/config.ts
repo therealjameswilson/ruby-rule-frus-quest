@@ -51,6 +51,13 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   audio: {
     disableWebAudio: false
   },
+  physics: {
+    default: "arcade",
+    arcade: {
+      debug: false,
+      gravity: { x: 0, y: 0 }
+    }
+  },
   scale: {
     parent: "game-shell",
     mode: Phaser.Scale.NONE,

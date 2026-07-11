@@ -23,7 +23,7 @@ import {
   getWorkflowToolReadout
 } from "../game/state";
 import type { AdventureSubscreenReadout } from "../game/state";
-import { bindPointerPress, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
+import { bindPointerPress, getInput, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
 import { openCodex } from "./codexOverlay";
 import { cycleLanguage, getLanguage, getString } from "./i18n";
@@ -135,6 +135,7 @@ export class InventoryOverlay {
   private readonly dannePopoverText: Phaser.GameObjects.Text;
   private readonly languageLabel: Phaser.GameObjects.Text;
   private selectedDanneItemId: DanneItemId | null = null;
+  private selectedToolId: ProcessItemId | null = null;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
@@ -288,8 +289,36 @@ export class InventoryOverlay {
   private show() {
     this.previousMode = gameState.mode;
     gameState.mode = "pause";
+    const processItems = getProcessItemReadout();
+    const equipped = processItems.find((item) => item.equipped && item.acquired);
+    const firstAcquired = processItems.find((item) => item.acquired);
+    this.selectedToolId = (equipped?.id ?? firstAcquired?.id ?? null) as ProcessItemId | null;
     this.render();
     this.container.setVisible(true);
+  }
+
+  updateInput() {
+    if (!this.active) return;
+    const input = getInput();
+    const acquiredIds = getProcessItemReadout()
+      .filter((item) => item.acquired)
+      .map((item) => item.id as ProcessItemId);
+    if (!acquiredIds.length) return;
+
+    const currentIndex = Math.max(0, acquiredIds.indexOf(this.selectedToolId ?? acquiredIds[0]));
+    const previous = input.navLeftJustPressed || input.navUpJustPressed;
+    const next = input.navRightJustPressed || input.navDownJustPressed;
+    if (previous || next) {
+      const direction = previous ? -1 : 1;
+      const nextIndex = (currentIndex + direction + acquiredIds.length) % acquiredIds.length;
+      this.selectedToolId = acquiredIds[nextIndex];
+      retroAudio.blip();
+      this.renderToolGrid();
+    }
+
+    if ((input.aJustPressed || input.confirmJustPressed) && this.selectedToolId) {
+      this.tapTool(this.selectedToolId);
+    }
   }
 
   private render() {
@@ -667,6 +696,10 @@ export class InventoryOverlay {
         align: "center"
       }).setOrigin(0.5).setScrollFactor(0);
       bindPointerPress(hit, { down: () => this.tapTool(item.id as ProcessItemId) });
+      hit.on("pointerover", () => {
+        this.selectedToolId = item.id as ProcessItemId;
+        this.renderToolGrid();
+      });
       this.itemSlots.push({ id: item.id as ProcessItemId, box, icon, label });
       objects.push(hit, box);
       if (icon) objects.push(icon);
@@ -779,8 +812,9 @@ export class InventoryOverlay {
       const item = readout.find((candidate) => candidate.id === slot.id);
       const acquired = Boolean(item?.acquired);
       const equipped = Boolean(item?.equipped);
+      const selected = slot.id === this.selectedToolId;
       slot.box.setFillStyle(color(equipped ? PALETTE.goldStamp : acquired ? PALETTE.deepRuby : PALETTE.black));
-      slot.box.setStrokeStyle(1, color(equipped ? PALETTE.white : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
+      slot.box.setStrokeStyle(1, color(selected ? PALETTE.white : equipped ? PALETTE.goldStamp : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
       slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
       slot.label.setText(item?.shortLabel ?? "--");
       slot.icon?.setAlpha(equipped ? 1 : acquired ? 0.88 : 0.22);
@@ -918,6 +952,7 @@ export class InventoryOverlay {
   }
 
   private tapTool(itemId: ProcessItemId) {
+    this.selectedToolId = itemId;
     const item = getProcessItemReadout().find((candidate) => candidate.id === itemId);
     if (!item?.acquired) {
       setLatestMessage("Tool not in the folder yet.");

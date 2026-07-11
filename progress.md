@@ -14,6 +14,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Added the English baseline strings beside the existing Spanish/French packs and extended those packs with language/pause-menu labels.
   - Wired the title screen language selector (`LANG EN/ES/FR`, pointer or `L`) and localized the procedural title, route strip, source shoutout, mission plaque, skip-warning toggle, HUD quest band, gamepad/touch toasts, and pause/subscreen labels.
   - Added focused helper tests covering fallback, interpolation, and language selection.
+- Canonical DANN-E eight-variant combat correction (2026-07-06):
+  - Revised the live DANN-E combat registry to use exactly the eight PR #7/#8 variant assets: Prime, Mark I, Colossus, Cloud, Executive, Swarm, Defeated, and Ascendant.
+  - Removed redactor-drone and censorship-wraith from the DANN-E variant registry so those extra pack enemies no longer masquerade as DANN-E forms.
+  - Distributed the eight canonical DANN-E forms across GameplayMapScene combat rooms: Black Vault, NARA Stacks, Embassy, and Capitol Hill.
+  - Scaled the single-card DANN-E variant art down to enemy-token size and hid permanent labels during normal play; names/HP remain available through `window.render_game_to_text()` and `?debug=threats`.
+  - Updated `docs/DANNE_ENEMY_DESIGN.md` and tests so future changes cannot silently add non-canonical DANN-E variants.
 - ALTTP disassembly translation pass (2026-07-05):
   - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
   - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.
@@ -4057,3 +4063,31 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Unified the overworld melee non-kill cue: `DanneMapScene.resolvePlayerMeleeHits` (from the strikeable-enemies commit) previously used the bolt-impact thud for a sword connect; it now uses the same `bossHit()` chk it already pairs with the `boss-hit` shake, so striking a drone/wraith and striking DANN-E share one consistent sword-connect sound. Enemy defeat keeps its rising `confirm()` "cleared" sting.
 - Playtest method: static inspection + type/test/build verification only. Browser automation was unavailable in this sparse worktree; the changes are additive audio hooks at existing, test-covered hit sites (i-frame and hit-cooldown gating already unit-tested via `combat`/`hitstop`), so gameplay logic is unchanged.
 - Verification: `tsc --noEmit` clean; full `vitest run` 418/418; `npm run build` succeeds (pre-existing large-chunk warning only).
+
+## 2026-07-11 — Playable DANN-E counter-room integration
+
+- Reconciled the repaired DANN-E enemy/room-clear branch with current `main` after the
+  PR #77 movement, hit-stop, telegraph, and audio-feedback merge.
+- Replaced live use of the eight 1024x1536 variant presentation cards with the shared
+  animated `danne-boss-combat` sheet; the variant cards remain codex/cutscene stills.
+- Made chase forms stop at a readable distance and use a gold windup, one active damage
+  window, and a recovery window instead of overlapping the player.
+- Added first-attack grace, safer room placements, destruction-safe combat readouts,
+  per-swing hit deduplication, HP bars, correct/wrong tool behavior, loot, and persistent
+  room-clear flags.
+- Added a usable gameplay-map tool loop: `M` opens the inventory, arrows select acquired
+  tools, `A` equips, and `B`/`X`/Shift attacks. HUD and lower-screen cues name the nearest
+  DANN-E weakness and room-clear count.
+- Kept DANN-E visibly roaming in the Office but delayed damaging pressure until the player
+  has talked to JR and picked up the first memo, preserving the onboarding read-before-threat
+  window.
+- Browser QA:
+  - wrong Citation Stamp against Embassy Prime: knockback/stun, HP stayed `2/2`, HUD named
+    Review Folder;
+  - correct Review Folder: exactly two swings, HP `2/2 -> 1/2 -> 0/2`, +4 document points,
+    no reliability loss, room clear `1/1`, zero page/console errors;
+  - keyboard inventory switched Citation Stamp -> Review Folder and returned to play;
+  - Office idle onboarding remained at reliability 80 with DANN-E lurking but not firing.
+- Proof artifacts: `docs/screenshots/danne-embassy-paced/telegraph-256.png`,
+  `docs/screenshots/danne-embassy-paced/room-cleared-fixed-state.json`, and
+  `docs/screenshots/office-danne-safe-onboarding/state-0.json`.

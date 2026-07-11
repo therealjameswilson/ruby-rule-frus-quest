@@ -105,6 +105,7 @@ export class Player {
   private idleClock = 0;
   private abilityFrameUntil = 0;
   private actionActiveUntil = 0;
+  private actionSequence = 0;
   private invulnerableUntil = 0;
   private hurtUntil = 0;
   private isMoving = false;
@@ -223,6 +224,10 @@ export class Player {
     return this.isActionActive ? this.getFacingActionHitbox() : null;
   }
 
+  get actionId() {
+    return this.actionSequence;
+  }
+
   get isInvulnerable() {
     return this.scene.time.now < this.invulnerableUntil;
   }
@@ -263,6 +268,7 @@ export class Player {
   }
 
   startAction() {
+    this.actionSequence += 1;
     this.actionActiveUntil = this.scene.time.now + PLAYER_ACTION_HITBOX_MS;
     this.controlState = "attack";
     this.abilityFrameUntil = Math.max(this.abilityFrameUntil, this.scene.time.now + PLAYER_ACTION_HITBOX_MS);
