@@ -64,6 +64,23 @@ export const UI_PACK = {
   ui_kit: "art-pack/ui/ui_kit.png"
 } as const;
 
+export const SECRET_READING_ROOM_ASSETS = {
+  tilesetNative: {
+    key: "secret-reading-room-tiles-native",
+    path: "assets/art-pack/secrets/tileset_reading_room_16x16_native.png",
+    columns: 7,
+    rows: 7,
+    tileSize: 16
+  },
+  firstEdition: {
+    key: "secret-frus-first-edition",
+    path: "assets/art-pack/secrets/collectible_first_edition_frus_32x32.png",
+    frameWidth: 32,
+    frameHeight: 32,
+    frames: 4
+  }
+} as const;
+
 export const UI_PACK_FRAMES = {
   rubyHudBar: {
     textureKey: "ui_hud_16bit",

@@ -4008,6 +4008,19 @@ Live QA after PR #28 still could not observe `STEP CLOSER` or `NOTHING TO INTERA
   - direct Playwright damage probe confirmed the Colossus dropped from 4 HP to 3 HP, entered `stunned`, and showed a single readable taunt bubble;
   - visual proof: `output/danne-taunt-dialogue-throttled.png` and `output/danne-taunt-damage-final.png`.
 
+## 2026-07-06 Hidden reading-room secret
+
+- Imported the secret reading-room art pack: native 16x16 tileset, display tileset, manifest, and animated 32x32 first-edition FRUS collectible.
+- Added a concealed wall seam in NARA Stacks that opens only when the Review Folder has been acquired, following the existing Zelda-style secret route grammar.
+- Added `HiddenReadingRoomScene`, a compact tile-based bonus room with the rare first-edition pickup and return threshold to NARA Stacks.
+- Persisted collection through `sceneProgress.hiddenFirstEditionFound`, added the first edition to inventory, awarded document points, and exposed the bonus in `window.render_game_to_text()`.
+- EndingScene and TrueEndingScene now surface the final bonus stat: `Hidden first edition: yes/no`.
+- Verification:
+  - `npm run build` passes with the known large-chunk warning;
+  - required web-game client was run against `?scene=HiddenReadingRoomScene`;
+  - direct Playwright route confirmed NARA Stacks + Review Folder -> hidden room -> first edition pickup -> inventory and secret readout -> EndingScene bonus stat, with no page errors;
+  - visual proof: `output/hidden-reading-room-entry-fixed.png`, `output/hidden-reading-room-collected-fixed.png`, and `output/hidden-reading-room-final-qa-2.png`.
+
 ## 2026-07-06 Promo storyboard frames for demo trailer
 
 - Added six storyboard-style 16-bit scene frames under `docs/promo/` for the demo trailer / GIF and consulting pitch decks: title reveal, character creation, first DANN-E encounter, volume-assembly progress, miniboss fight, and binding-ceremony ending.

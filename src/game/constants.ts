@@ -612,6 +612,7 @@ export const SCENE_ORDER = [
   "BlackVaultLairScene",
   "SenateHearingChamberScene",
   "NaraStacksScene",
+  "HiddenReadingRoomScene",
   "EmbassyCableRoomScene",
   "GameplayMapScene",
   "NetworkScene",
