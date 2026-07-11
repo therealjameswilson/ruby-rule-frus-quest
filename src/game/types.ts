@@ -1,5 +1,11 @@
 import type Phaser from "phaser";
 import type { AreaId, CHARACTERS, Direction, PROCESS_ROLES, ProcessItemId, ProcessStampId, RoomType } from "./constants";
+import type {
+  FirstHourTrainingBeatId,
+  FirstHourTrainingCoverageReadout,
+  FirstHourTrainingDrillId,
+  FirstHourTrainingPhaseId
+} from "./firstHourTraining";
 
 export type CharacterId = keyof typeof CHARACTERS;
 export type ProcessRole = (typeof PROCESS_ROLES)[number];
@@ -70,6 +76,21 @@ export interface AdventureHudReadout {
   };
 }
 
+export interface AdventureTrainingReadout {
+  verb: "READ" | "CHOOSE" | "ACT" | "EXPLORE" | "UNLOCK" | "KEY" | "MAP" | "BOSS" | "RETURN" | "GOAL";
+  text: string;
+  detail: string;
+  sourceBeatId: FirstHourTrainingBeatId;
+  phase: FirstHourTrainingPhaseId;
+  phaseLabel: string;
+  drillId: FirstHourTrainingDrillId;
+  drillLabel: string;
+  drillMinuteRange: string;
+  drillObjective: string;
+}
+
+export type OneHourTrainingReadout = FirstHourTrainingCoverageReadout;
+
 export interface Position {
   x: number;
   y: number;
@@ -138,6 +159,7 @@ export type DocumentCandidate = {
   annotationNeeded: boolean;
   sensitivityRisk: number;
   selected: boolean;
+  undisclosedDeletion: boolean;
   workflowState: DocumentWorkflowState;
   reviewStatus: ReviewStatus;
   equities: AgencyEquity[];
@@ -275,6 +297,7 @@ export interface WorkflowDocument {
   citationComplete?: boolean;
   annotationNeeded?: boolean;
   sensitivityRisk?: number;
+  undisclosedDeletion?: boolean;
 }
 
 export interface Interactable {

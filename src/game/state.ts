@@ -4,21 +4,79 @@ import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_S
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import {
   applyAgencyEquityResponse,
-  applyDocumentWorkflowAction,
   applyDocumentWorkflowState,
   cloneDocumentCandidate,
   cloneInitialDocumentCandidates,
-  documentToWorkflowDocument
+  DOCUMENT_ROOM_LOOKUP,
+  documentToWorkflowDocument,
+  tryWorkflowAction
 } from "./documentWorkflow";
 import type { DocumentWorkflowAction } from "./documentWorkflow";
-import { deriveWorkflowSnapshot, getQuestArchitectureReadout } from "./questArchitecture";
+import {
+  blockedExitPrompt,
+  canTraverseExit,
+  deriveWorkflowSnapshot,
+  getQuestArchitectureReadout,
+  getRevealedShortcutRoomIds
+} from "./questArchitecture";
 import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 import type { DanneItemId } from "./danneItemCatalog";
+import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
+import { getAdventureTrainingCue } from "./adventureTraining";
+import { firstHourTrainingCoverageReadout } from "./firstHourTraining";
+import { getLttpFrusTranslationReadout } from "./lttpFrusTranslation";
+import { FRUS_QUEST_LOOP, FRUS_QUEST_MISSION, FRUS_QUEST_STAKES } from "./mission";
+import {
+  crystalsEarned,
+  equityCrystalDocuments,
+  EQUITY_CRYSTAL_STATUSES,
+  PENDANTS,
+  totalEquities
+} from "./frusProgression";
+import { CHAPTER_RELEASE_PROMPTS } from "./chapterReleaseStatus";
+import { DIGITAL_RELEASE_PROMPTS } from "./digitalRelease";
+import { GPO_PUBLICATION_PROMPTS } from "./gpoPublication";
+import { GPO_SEGMENT_ASSEMBLY_PROMPTS } from "./gpoSegmentAssembly";
+import {
+  getFrusProductionBoardReadout,
+  type FrusProductionBoardStatus,
+  type FrusProductionBoardStepId
+} from "./frusProductionBoard";
+import { getFrusProductionPhaseReadout, type FrusProductionPhaseId } from "./frusProductionPhases";
+import { getPublicationApparatusReadout, type PublicationApparatusReadout } from "./publicationApparatus";
+import { POLICY_COVERAGE_AUDIT_PROMPTS } from "./policyCoverageAudit";
+import { PUBLIC_CITATION_CARD_PROMPTS } from "./publicCitationCard";
+import { PUBLICATION_FUNDING_PROMPTS } from "./publicationFundingQueue";
+import { READER_AID_REGISTER_PROMPTS } from "./readerAidRegisters";
+import { REPOSITORY_COVERAGE_MAP_PROMPTS } from "./repositoryCoverageMap";
+import { RESEARCH_CHARTER_PROMPTS } from "./researchCharter";
+import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
+import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
+import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
+import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
+import { buildTrueEndingCertificate } from "./trueEndingCertificate";
+import { VOLUME_CONCEPT_PROMPTS } from "./volumeConcept";
 import type { QuestArchitectureContext } from "./questArchitecture";
 import { WORKFLOW_TOOL_PRIORITY, WORKFLOW_TOOL_REGISTRY } from "./workflowTools";
+import {
+  bigKeyForArea,
+  bossStampForArea,
+  canOpenBossDoor,
+  canOpenLockedDoor,
+  createInitialDungeonStates,
+  dungeonComplete,
+  earnSmallKey,
+  isBossDoor,
+  normalizeDungeonStates,
+  useSmallKey
+} from "../systems/dungeonKeys";
+import type { DungeonStateRegistry } from "../systems/dungeonKeys";
+import { VIOLATION_LABEL } from "../systems/standardsDamage";
+import type { StandardViolation } from "../systems/standardsDamage";
 import type {
   AdventureHudReadout,
+  AdventureTrainingReadout,
   ChoiceOption,
   DocumentCandidate,
   DocumentWorkflowState,
@@ -27,6 +85,7 @@ import type {
   PlayerCombatReadout,
   PlayerProfile,
   Position,
+  OneHourTrainingReadout,
   ReviewStatus,
   VolumeMetrics,
   VolumeWorkflowState,
@@ -60,6 +119,8 @@ export interface GameState {
     verifiedFlags: number;
     clearedBlockers: number;
   };
+  dungeons: DungeonStateRegistry;
+  standardsViolations: StandardsViolationRecord[];
   reliability: number;
   heldItem: string | null;
   equippedProcessItem: ProcessItemId | null;
@@ -140,6 +201,14 @@ export interface GameSaveSummary {
 type GameStateChangeReason = "reset" | "scene" | "restore";
 type GameStateChangeListener = (reason: GameStateChangeReason) => void;
 
+const FINAL_PUBLICATION_DOCUMENT_IDS = [
+  "telegram_001",
+  "source_note_047",
+  "cross_reference_001",
+  "sbu_annotation_001",
+  "proof_page_412"
+] as const;
+
 const gameStateChangeListeners = new Set<GameStateChangeListener>();
 let resumeSpawn: { scene: string; player: Position; facing: Direction } | null = null;
 
@@ -149,6 +218,10 @@ function notifyGameStateChange(reason: GameStateChangeReason) {
 
 function cloneJson<T>(value: T): T {
   return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function preservedFinalGateCertification(state: FinalGateCertificationState | null) {
+  return state?.status === "published" ? state : null;
 }
 
 function normalizeSaveMode(scene: string, mode: GameMode): GameMode {
@@ -214,6 +287,160 @@ export interface FinalGateCertificationState {
   message: string;
 }
 
+export interface FinalPublicationCertificationResult {
+  ok: boolean;
+  trueEnding: boolean;
+  reason: string;
+}
+
+export interface StandardsViolationRecord {
+  id: string;
+  violation: StandardViolation;
+  label: string;
+  context: string | null;
+  documentId: string | null;
+  unresolved: boolean;
+  count: number;
+}
+
+export interface PublicationReadinessReadout {
+  repositoryCoverageMap: {
+    complete: boolean;
+    shortLabel: "MAP";
+    label: "Repository coverage map";
+  };
+  pendants: {
+    collected: number;
+    required: number;
+    missing: ProcessStampId[];
+  };
+  processStamps: {
+    collected: number;
+    required: number;
+    missing: ProcessStampId[];
+  };
+  coverFragments: {
+    collected: number;
+    required: number;
+    missing: number;
+  };
+  crystals: {
+    collected: number;
+    required: number;
+    missing: number;
+  };
+  standards: {
+    unresolved: Array<{
+      id: StandardViolation;
+      label: string;
+      documentId: string | null;
+      title?: string;
+      context?: string | null;
+      count?: number;
+    }>;
+    clear: boolean;
+  };
+  apparatus: PublicationApparatusReadout;
+  buckramKeyHeld: boolean;
+  buckramGateOpen: boolean;
+  completionRatio: number;
+  missingSummary: string[];
+}
+
+export interface AdventureSubscreenReadout {
+  productionBoard: {
+    completed: number;
+    total: number;
+    completionRatio: number;
+    nextStep: {
+      id: FrusProductionBoardStepId;
+      shortLabel: string;
+      label: string;
+      gameplayTask: string;
+      sourceBasis: string;
+      sourceUrl: string;
+      status: FrusProductionBoardStatus;
+    } | null;
+    steps: Array<{
+      id: FrusProductionBoardStepId;
+      shortLabel: string;
+      status: FrusProductionBoardStatus;
+      complete: boolean;
+    }>;
+    phases: Array<{
+      id: FrusProductionPhaseId;
+      label: string;
+      shortLabel: string;
+      status: FrusProductionBoardStatus;
+      completed: number;
+      total: number;
+      nextStep: {
+        id: FrusProductionBoardStepId;
+        shortLabel: string;
+        label: string;
+      } | null;
+    }>;
+    activePhase: {
+      id: FrusProductionPhaseId;
+      label: string;
+      shortLabel: string;
+      completed: number;
+      total: number;
+    } | null;
+  };
+  pendants: Array<{
+    id: "objectivity" | "provenance" | "review";
+    label: string;
+    title: string;
+    stampId: ProcessStampId;
+    acquired: boolean;
+  }>;
+  crystals: {
+    earned: number;
+    total: number;
+    byDocument: Array<{
+      documentId: string;
+      title: string;
+      earned: number;
+      total: number;
+    }>;
+  };
+  equippedTool: {
+    id: ProcessItemId;
+    displayName: string;
+    shortLabel: string;
+  } | null;
+  reliabilityHearts: {
+    current: number;
+    max: number;
+    filled: number;
+    total: number;
+    meter: string;
+  };
+  dungeons: Array<{
+    areaId: AreaId;
+    displayName: string;
+    active: boolean;
+    smallKeys: number;
+    smallKeysRequired: number;
+    bigKeyHeld: boolean;
+    bossDefeated: boolean;
+    mapRevealed: boolean;
+  }>;
+  roomMap: {
+    currentAreaId: AreaId;
+    currentRoomId: string | null;
+    rooms: Array<{
+      id: string;
+      title: string;
+      grid: { x: number; y: number };
+      visited: boolean;
+      revealed: boolean;
+      roomType: RoomType;
+    }>;
+  };
+}
+
 export const gameState: GameState = {
   currentScene: "BootScene",
   mode: "boot",
@@ -236,6 +463,8 @@ export const gameState: GameState = {
     verifiedFlags: 0,
     clearedBlockers: 0
   },
+  dungeons: createInitialDungeonStates(),
+  standardsViolations: [],
   reliability: 80,
   heldItem: null,
   equippedProcessItem: null,
@@ -291,6 +520,8 @@ export function resetGameState() {
   gameState.documentCandidates = cloneInitialDocumentCandidates();
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.documentWorkflowLog = [];
+  gameState.dungeons = createInitialDungeonStates();
+  gameState.standardsViolations = [];
   gameState.heldItem = null;
   gameState.equippedProcessItem = null;
   gameState.equippedDanneItem = null;
@@ -338,7 +569,7 @@ export function setSceneState(sceneName: string, mode: GameMode, objective: stri
   gameState.currentChoice = null;
   gameState.physicalVerification = null;
   gameState.roomTraversal = null;
-  gameState.finalGateCertification = null;
+  gameState.finalGateCertification = preservedFinalGateCertification(gameState.finalGateCertification);
   refreshQuestWorkflowState();
   notifyGameStateChange("scene");
 }
@@ -390,13 +621,19 @@ export function restoreGameSaveData(save: GameSaveData) {
   restored.visibleThreats = [];
   restored.nearestInteractable = null;
   restored.physicalVerification = null;
-  restored.finalGateCertification = null;
+  restored.finalGateCertification = preservedFinalGateCertification(restored.finalGateCertification);
   restored.snesTransition = {
     active: false,
     current: null,
     last: restored.snesTransition?.last ?? null
   };
   Object.assign(gameState, restored);
+  gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
+  gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
+  gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
+  gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
+  syncDungeonBigKeysFromInventory();
+  syncDungeonBossesFromProcessStamps();
   resumeSpawn = {
     scene: gameState.currentScene,
     player: { ...gameState.player },
@@ -443,6 +680,76 @@ export function setAudioStatus(message: string) {
   gameState.audioStatus = message;
 }
 
+function standardsViolationId(violation: StandardViolation, context?: string, documentId?: string) {
+  const scope = documentId ?? (context ? context.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 48) : "general");
+  return `${violation}:${scope || "general"}`;
+}
+
+function normalizeStandardsViolations(records?: StandardsViolationRecord[]) {
+  if (!Array.isArray(records)) return [];
+  return records
+    .filter((record) => record && typeof record.violation === "string")
+    .map((record) => ({
+      id: record.id || standardsViolationId(record.violation, record.context ?? undefined, record.documentId ?? undefined),
+      violation: record.violation,
+      label: record.label || VIOLATION_LABEL[record.violation],
+      context: record.context ?? null,
+      documentId: record.documentId ?? null,
+      unresolved: record.unresolved !== false,
+      count: Math.max(1, Math.round(record.count ?? 1))
+    }));
+}
+
+export function recordStandardsViolation(violation: StandardViolation, context?: string, documentId?: string) {
+  const id = standardsViolationId(violation, context, documentId);
+  const existing = gameState.standardsViolations.find((record) => record.id === id && record.unresolved);
+  if (existing) {
+    existing.count += 1;
+    existing.context = context ?? existing.context;
+    refreshQuestWorkflowState();
+    return { ...existing };
+  }
+
+  const record: StandardsViolationRecord = {
+    id,
+    violation,
+    label: VIOLATION_LABEL[violation],
+    context: context ?? null,
+    documentId: documentId ?? null,
+    unresolved: true,
+    count: 1
+  };
+  gameState.standardsViolations.push(record);
+  refreshQuestWorkflowState();
+  return { ...record };
+}
+
+export function resolveStandardsViolation(id: string) {
+  const record = gameState.standardsViolations.find((candidate) => candidate.id === id);
+  if (!record || !record.unresolved) return false;
+  record.unresolved = false;
+  refreshQuestWorkflowState();
+  return true;
+}
+
+export function resolveStandardsViolationForDocument(documentId: string, violation: StandardViolation) {
+  let resolved = 0;
+  for (const record of gameState.standardsViolations) {
+    if (record.documentId === documentId && record.violation === violation && record.unresolved) {
+      record.unresolved = false;
+      resolved += 1;
+    }
+  }
+  if (resolved > 0) refreshQuestWorkflowState();
+  return resolved;
+}
+
+export function unresolvedStandardsViolations() {
+  return gameState.standardsViolations
+    .filter((record) => record.unresolved)
+    .map((record) => ({ ...record }));
+}
+
 export function setPhysicalVerificationState(state: PhysicalVerificationState | null) {
   gameState.physicalVerification = state;
   refreshQuestWorkflowState();
@@ -459,12 +766,31 @@ export function setGameMode(mode: GameMode, objective?: string) {
   refreshQuestWorkflowState();
 }
 
+function currentLockedExitsForInventory(state: RoomTraversalState) {
+  const lockedExits = state.lockedExits ?? {};
+  const heldItems = getHeldProcessItemIds();
+  return Object.fromEntries(
+    (Object.entries(lockedExits) as Array<[Direction, string]>).filter(([direction]) => {
+      const requiredItem = state.requiredItems?.[direction];
+      if (!requiredItem || !processItemDefinition(requiredItem as ProcessItemId)) return true;
+      return !heldItems.has(requiredItem as ProcessItemId);
+    })
+  ) as Partial<Record<Direction, string>>;
+}
+
 export function setRoomTraversalState(state: RoomTraversalState | null) {
+  const revealedRoomIds = state
+    ? new Set([
+        ...(state.revealedRoomIds ?? state.visitedRoomIds),
+        ...getRevealedShortcutRoomIds(getHeldProcessItemIds())
+      ])
+    : null;
   gameState.roomTraversal = state
     ? {
         ...state,
+        lockedExits: currentLockedExitsForInventory(state),
         visitedRoomIds: [...state.visitedRoomIds],
-        revealedRoomIds: [...(state.revealedRoomIds ?? state.visitedRoomIds)]
+        revealedRoomIds: [...(revealedRoomIds ?? [])]
       }
     : null;
   refreshQuestWorkflowState();
@@ -589,14 +915,40 @@ export function hasProcessItem(itemId: ProcessItemId) {
   );
 }
 
+export function getHeldProcessItemIds() {
+  const inventory = new Set<ProcessItemId>();
+  for (const item of ITEM_REGISTRY) {
+    if (hasProcessItem(item.id)) inventory.add(item.id);
+  }
+  return inventory;
+}
+
+function markDungeonBigKeyForItem(itemId: ProcessItemId) {
+  for (const area of AREA_REGISTRY) {
+    if (bigKeyForArea(area.id) === itemId) {
+      gameState.dungeons[area.id] = {
+        ...gameState.dungeons[area.id],
+        bigKeyHeld: true,
+        mapRevealed: true
+      };
+    }
+  }
+}
+
+function syncDungeonBigKeysFromInventory() {
+  for (const itemId of getHeldProcessItemIds()) markDungeonBigKeyForItem(itemId);
+}
+
 export function addProcessItem(itemId: ProcessItemId) {
   const item = processItemDefinition(itemId);
   if (!item) return;
   addInventoryItem(item.displayName);
+  markDungeonBigKeyForItem(itemId);
   if (!gameState.equippedProcessItem) {
     gameState.equippedProcessItem = itemId;
     refreshQuestWorkflowState();
   }
+  refreshQuestWorkflowState();
 }
 
 export function getProcessItemDefinition(itemId: ProcessItemId) {
@@ -640,6 +992,7 @@ export function getProcessItemGateReadout(itemId: ProcessItemId) {
 }
 
 function areaRewardEarned(area: (typeof AREA_REGISTRY)[number]) {
+  if (dungeonComplete(gameState.dungeons[area.id])) return true;
   if (area.rewardType === "stamp") {
     return gameState.processStamps.includes(area.rewardId as ProcessStampId);
   }
@@ -681,6 +1034,8 @@ export function getCurrentAreaReadout() {
 export function getRoomGraphReadout() {
   const visitedRoomIds = new Set(gameState.roomTraversal?.visitedRoomIds ?? []);
   const revealedRoomIds = new Set(gameState.roomTraversal?.revealedRoomIds ?? []);
+  const heldProcessItems = getHeldProcessItemIds();
+  for (const roomId of getRevealedShortcutRoomIds(heldProcessItems)) revealedRoomIds.add(roomId);
   if (gameState.currentScene === "OfficeScene") {
     visitedRoomIds.add("O1");
     revealedRoomIds.add("O1");
@@ -723,38 +1078,271 @@ export function getRoomGraphReadout() {
     visitedRoomIds.add("DV1");
     revealedRoomIds.add("DV1");
   }
-  return FRUS_ROOM_GRAPH.map((room) => ({
-    id: room.id,
-    area: room.area,
-    title: room.title,
-    exits: room.exits,
-    lockedExits: room.lockedExits ?? {},
-    requiredItems: room.requiredItems ?? {},
-    roomType: room.roomType,
-    visited: visitedRoomIds.has(room.id),
-    revealed: revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret"
-  }));
+  return FRUS_ROOM_GRAPH.map((room) => {
+    const dungeon = gameState.dungeons[room.area];
+    const lockedExits = room.lockedExits ?? {};
+    const lockedExitState = Object.fromEntries(
+      (Object.keys(lockedExits) as Direction[]).map((direction) => {
+        const requiredItem = room.requiredItems?.[direction] ?? null;
+        const bossDoor = isBossDoor(room, direction);
+        const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
+        const canOpen = bossDoor
+          ? canOpenBossDoor(dungeon)
+          : requiredItem
+            ? canTraverseExit(room.id, direction, heldProcessItems)
+            : canOpenLockedDoor(dungeon);
+        return [direction, {
+          label: lockedExits[direction] ?? "Locked route",
+          gateType: bossDoor ? "boss" : requiredItem ? "process_item" : "small_key",
+          requiredItem,
+          requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
+          blockedMessage: canOpen ? null : prompt.message,
+          blockedObjective: canOpen ? null : prompt.objective,
+          canOpen,
+          smallKeys: dungeon.smallKeys,
+          bigKeyHeld: dungeon.bigKeyHeld
+        }];
+      })
+    );
+    return {
+      id: room.id,
+      area: room.area,
+      title: room.title,
+      exits: room.exits,
+      lockedExits,
+      lockedExitState,
+      requiredItems: room.requiredItems ?? {},
+      roomType: room.roomType,
+      visited: visitedRoomIds.has(room.id),
+      revealed: revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret" || dungeon.mapRevealed
+    };
+  });
 }
 
 export function getFinalGateReadiness() {
   const requiredStamps: ProcessStampId[] = ["rule", "archive", "network", "referral", "proof"];
   const missingStamps = requiredStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const publicationApparatus = getPublicationApparatusReadout({
+    processStamps: gameState.processStamps,
+    volumeFragments: gameState.volumeFragments,
+    documentCandidates: gameState.documentCandidates,
+    documentPoints: gameState.documentPoints,
+    sourcesConsultedListComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete)
+      || (gameState.sceneProgress.frontMatterAssemblyStep ?? 0) >= 2,
+    typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
+    typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
+    readerAidRegistersComplete: Boolean(gameState.sceneProgress.readerAidRegistersComplete),
+    indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
+    frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
+    typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete)
+  });
+  const documentsWithUndisclosedDeletion = gameState.documentCandidates
+    .filter((document) => document.undisclosedDeletion)
+    .map((document) => ({ id: document.id, title: document.title }));
+  const standardsViolations = unresolvedStandardsViolations();
   const fragmentsNeeded = 5;
   const reliabilityMinimum = 70;
   const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
+  const equityCrystalsCollected = crystalsEarned(gameState.documentCandidates);
+  const equityCrystalsRequired = totalEquities(gameState.documentCandidates);
+  const missingEquityCrystals = Math.max(0, equityCrystalsRequired - equityCrystalsCollected);
+  const equityCrystalsReady = equityCrystalsRequired > 0 && missingEquityCrystals === 0;
   const reliabilityReady = gameState.reliability >= reliabilityMinimum;
+  const buckramKeyHeld = hasProcessItem("buckram_key");
+  const repositoryCoverageMapReady = Boolean(gameState.sceneProgress.repositoryCoverageMapComplete);
+  const ready = missingStamps.length === 0
+    && missingFragments === 0
+    && equityCrystalsReady
+    && reliabilityReady
+    && repositoryCoverageMapReady
+    && publicationApparatus.complete
+    && documentsWithUndisclosedDeletion.length === 0
+    && standardsViolations.length === 0;
   return {
     requiredStamps,
     missingStamps,
     fragmentsCollected: gameState.volumeFragments.length,
     fragmentsNeeded,
     missingFragments,
+    equityCrystalsCollected,
+    equityCrystalsRequired,
+    missingEquityCrystals,
+    equityCrystalsReady,
+    repositoryCoverageMapReady,
     reliability: gameState.reliability,
     reliabilityMinimum,
     reliabilityReady,
+    buckramKeyHeld,
+    publicationApparatus,
+    missingApparatus: publicationApparatus.missing,
+    buckramGateOpen: ready && buckramKeyHeld,
+    documentsWithUndisclosedDeletion,
+    standardsViolations,
     stateChatMayOpenGate: false,
-    ready: missingStamps.length === 0 && missingFragments === 0 && reliabilityReady
+    ready
   };
+}
+
+export function getPublicationReadinessReadout(): PublicationReadinessReadout {
+  const readiness = getFinalGateReadiness();
+  const requiredPendantStamps: ProcessStampId[] = PENDANTS.map((pendant) => pendant.stampId);
+  const requiredPendantStampSet = new Set<ProcessStampId>(requiredPendantStamps);
+  const missingPendants = requiredPendantStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const missingProcessStamps = readiness.missingStamps
+    .filter((stamp) => !requiredPendantStampSet.has(stamp));
+  const deletionBlockers = readiness.documentsWithUndisclosedDeletion.map((document) => ({
+    id: "undisclosed_deletion" as const,
+    label: `${document.title}: add visible bracketed insertion`,
+    documentId: document.id,
+    title: document.title
+  }));
+  const ledgerBlockers = readiness.standardsViolations.map((record) => ({
+    id: record.violation,
+    label: record.context ? `${record.label} ${record.context}` : record.label,
+    documentId: record.documentId,
+    context: record.context,
+    count: record.count
+  }));
+  const unresolved = [...deletionBlockers, ...ledgerBlockers]
+    .filter((entry, index, entries) => entries.findIndex((candidate) => (
+      candidate.id === entry.id && candidate.documentId === entry.documentId && candidate.label === entry.label
+    )) === index);
+  const missingSummary = [
+    ...missingPendants.map((stamp) => `Pendant ${stamp.toUpperCase()}`),
+    ...missingProcessStamps.map((stamp) => `Process ${stamp.toUpperCase()}`),
+    ...(readiness.missingEquityCrystals
+      ? [`${readiness.missingEquityCrystals} equity crystal${readiness.missingEquityCrystals === 1 ? "" : "s"}`]
+      : readiness.equityCrystalsRequired > 0 ? [] : ["Equity crystals"]),
+    ...(readiness.missingFragments ? [`${readiness.missingFragments} cover fragment${readiness.missingFragments === 1 ? "" : "s"}`] : []),
+    ...(readiness.repositoryCoverageMapReady ? [] : ["Repository MAP"]),
+    ...readiness.missingApparatus.map((component) => `Apparatus ${component.shortLabel}`),
+    ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
+    ...unresolved.map((standard) => standard.label)
+  ];
+  const requiredUnits = requiredPendantStamps.length + readiness.requiredStamps.length + Math.max(1, readiness.equityCrystalsRequired) + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 2;
+  const collectedUnits = (requiredPendantStamps.length - missingPendants.length)
+    + (readiness.requiredStamps.length - readiness.missingStamps.length)
+    + Math.min(readiness.equityCrystalsCollected, Math.max(1, readiness.equityCrystalsRequired))
+    + Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded)
+    + (readiness.repositoryCoverageMapReady ? 1 : 0)
+    + readiness.publicationApparatus.completed
+    + (readiness.buckramKeyHeld ? 1 : 0);
+  return {
+    repositoryCoverageMap: {
+      complete: readiness.repositoryCoverageMapReady,
+      shortLabel: "MAP",
+      label: "Repository coverage map"
+    },
+    pendants: {
+      collected: requiredPendantStamps.length - missingPendants.length,
+      required: requiredPendantStamps.length,
+      missing: missingPendants
+    },
+    processStamps: {
+      collected: readiness.requiredStamps.length - readiness.missingStamps.length,
+      required: readiness.requiredStamps.length,
+      missing: [...readiness.missingStamps]
+    },
+    coverFragments: {
+      collected: Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded),
+      required: readiness.fragmentsNeeded,
+      missing: readiness.missingFragments
+    },
+    crystals: {
+      collected: readiness.equityCrystalsCollected,
+      required: readiness.equityCrystalsRequired,
+      missing: readiness.equityCrystalsRequired > 0 ? readiness.missingEquityCrystals : 1
+    },
+    standards: {
+      unresolved,
+      clear: unresolved.length === 0
+    },
+    apparatus: readiness.publicationApparatus,
+    buckramKeyHeld: readiness.buckramKeyHeld,
+    buckramGateOpen: readiness.buckramGateOpen && missingPendants.length === 0 && unresolved.length === 0,
+    completionRatio: Math.max(0, Math.min(1, collectedUnits / Math.max(1, requiredUnits))),
+    missingSummary
+  };
+}
+
+function publishedFinalGateCertificationState(): FinalGateCertificationState {
+  return {
+    status: "published",
+    nearestGate: true,
+    checklistComplete: true,
+    certifiedBy: gameState.playerProfile.displayName,
+    requiredItem: "Buckram Key",
+    message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+  };
+}
+
+function completePublicationReleaseFlags() {
+  gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
+  gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
+  gameState.sceneProgress.gpoPublicationComplete = 1;
+  gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
+  gameState.sceneProgress.publicationFundingComplete = 1;
+  gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
+  gameState.sceneProgress.readerAidRegistersComplete = 1;
+  gameState.sceneProgress.readerAidRegistersStep = READER_AID_REGISTER_PROMPTS.length;
+  gameState.sceneProgress.chapterReleaseComplete = 1;
+  gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
+  gameState.sceneProgress.digitalReleaseComplete = 1;
+  gameState.sceneProgress.digitalReleaseStep = DIGITAL_RELEASE_PROMPTS.length;
+  gameState.sceneProgress.publicCitationComplete = 1;
+  gameState.sceneProgress.publicCitationStep = PUBLIC_CITATION_CARD_PROMPTS.length;
+  gameState.sceneProgress.releaseCalendarComplete = 1;
+  gameState.sceneProgress.releaseCalendarStep = RELEASE_CALENDAR_PROMPTS.length;
+}
+
+export function certifyFinalPublicationAfterDanne(): FinalPublicationCertificationResult {
+  const readiness = getPublicationReadinessReadout();
+  if (!readiness.buckramGateOpen) {
+    const reason = readiness.missingSummary.length
+      ? `Buckram Gate locked: ${readiness.missingSummary.join(", ")}.`
+      : "Buckram Gate locked: final publication certification is incomplete.";
+    setLatestMessage(reason);
+    return { ok: false, trueEnding: false, reason };
+  }
+
+  completePublicationReleaseFlags();
+  addProcessItem("buckram_key");
+  addInventoryItem("Published FRUS Cover");
+  for (const documentId of FINAL_PUBLICATION_DOCUMENT_IDS) publishDocument(documentId);
+  setFinalGateCertificationState(publishedFinalGateCertificationState());
+  gameState.sceneProgress.trueEndingPublicationCertified = 1;
+  refreshQuestWorkflowState();
+
+  const finalReadiness = getFinalGateReadiness();
+  const publication = getPublicationReadinessReadout();
+  const board = getProductionBoardReadout();
+  const treatyFragmentsCollected = getTreatyFragmentCount();
+  const treatyLine = getDanneItemReadout().find((item) => item.id === "treaty-fragments");
+  const certificate = buildTrueEndingCertificate({
+    processStamps: gameState.processStamps,
+    documentCandidates: gameState.documentCandidates,
+    volumeFragments: gameState.volumeFragments,
+    reliability: gameState.reliability,
+    documentPoints: gameState.documentPoints,
+    treatyFragmentsCollected,
+    publicationBoardCompleted: board.completed,
+    publicationBoardTotal: board.total,
+    publicationApparatusCompleted: finalReadiness.publicationApparatus.completed,
+    publicationApparatusTotal: finalReadiness.publicationApparatus.total,
+    buckramGateOpen: publication.buckramGateOpen,
+    standardsClear: publication.standards.clear,
+    publicRecordComplete: Boolean(gameState.sceneProgress.publicCitationComplete)
+      && Boolean(gameState.sceneProgress.releaseCalendarComplete)
+      && gameState.finalGateCertification?.status === "published"
+  });
+  const trueEnding = certificate.complete;
+  const reason = trueEnding
+    ? "Certified FRUS volume entered the public record with the complete treaty record."
+    : treatyLine && !treatyLine.trueEndingReady
+      ? `Certified FRUS volume published; treaty record incomplete (${treatyLine.count}/${treatyLine.total}).`
+      : "Certified FRUS volume published; true-ending certification still shows open work.";
+  setLatestMessage(reason);
+  return { ok: true, trueEnding, reason };
 }
 
 export function addDocumentPoints(amount: number, reason: string) {
@@ -848,7 +1436,17 @@ export function getDocumentWorkflowReadout() {
 }
 
 export function advanceDocumentWorkflow(documentId: string, action: DocumentWorkflowAction, reason?: string) {
-  const changed = updateDocumentCandidate(documentId, (document) => applyDocumentWorkflowAction(document, action), reason);
+  const current = gameState.documentCandidates.find((document) => document.id === documentId);
+  if (!current) return null;
+  const result = tryWorkflowAction(current, action, getHeldProcessItemIds());
+  if (!result.ok) {
+    const lockedReason = result.reason ?? "Locked: matching FRUS tool required.";
+    setLatestMessage(lockedReason);
+    gameState.objective = lockedReason;
+    refreshQuestWorkflowState();
+    return null;
+  }
+  const changed = updateDocumentCandidate(documentId, () => result.document, reason);
   return changed?.workflowState ?? null;
 }
 
@@ -862,61 +1460,120 @@ export function setAgencyEquityResponse(documentId: string, agencyId: string, re
   return changed?.reviewStatus ?? null;
 }
 
+export function markDocumentUndisclosedDeletion(documentId: string, reason = "unbracketed excision") {
+  const changed = updateDocumentCandidate(documentId, (document) => ({
+    ...cloneDocumentCandidate(document),
+    undisclosedDeletion: true,
+    annotationNeeded: true
+  }), reason);
+  return changed?.undisclosedDeletion ?? false;
+}
+
+export function clearDocumentUndisclosedDeletion(documentId: string, reason = "bracketed insertion added") {
+  const changed = updateDocumentCandidate(documentId, (document) => ({
+    ...cloneDocumentCandidate(document),
+    undisclosedDeletion: false
+  }), reason);
+  if (changed) resolveStandardsViolationForDocument(documentId, "undisclosed_deletion");
+  return changed ? !changed.undisclosedDeletion : false;
+}
+
 export function markAsCandidate(documentId: string): void {
-  setDocumentWorkflowState(documentId, "candidate", "marked as candidate");
+  advanceDocumentWorkflow(documentId, "evaluate", "marked as candidate");
 }
 
 export function selectDocument(documentId: string): void {
-  setDocumentWorkflowState(documentId, "selected", "selected for volume");
+  advanceDocumentWorkflow(documentId, "select", "selected for volume");
 }
 
 export function verifyCitation(documentId: string): void {
-  setDocumentWorkflowState(documentId, "citation_verified", "citation verified");
+  advanceDocumentWorkflow(documentId, "verify_citation", "citation verified");
 }
 
 export function addAnnotation(documentId: string): void {
-  setDocumentWorkflowState(documentId, "ready_for_review", "annotation added");
+  advanceDocumentWorkflow(documentId, "prepare_review", "annotation added");
 }
 
 export function submitForReview(documentId: string): void {
-  setDocumentWorkflowState(documentId, "submitted_for_review", "submitted for review");
+  advanceDocumentWorkflow(documentId, "submit_review", "submitted for review");
 }
 
 export function routeReferral(documentId: string, agencyId: string): void {
-  setDocumentWorkflowState(documentId, "referred", `routed to ${agencyId}`);
-  setAgencyEquityResponse(documentId, agencyId, "referred");
+  const state = advanceDocumentWorkflow(documentId, "refer_agency", `routed to ${agencyId}`);
+  if (state === "referred") setAgencyEquityResponse(documentId, agencyId, "referred");
 }
 
 export function resolveReview(documentId: string, result: ReviewStatus): void {
   if (result === "cleared" || result === "excised" || result === "denied" || result === "appeal_needed") {
-    setDocumentWorkflowState(documentId, result, `review ${result}`);
+    const action: DocumentWorkflowAction =
+      result === "cleared" ? "clear" : result === "excised" ? "excise" : result === "denied" ? "deny" : "appeal";
+    advanceDocumentWorkflow(documentId, action, `review ${result}`);
     return;
   }
   if (result === "resolved") {
-    setDocumentWorkflowState(documentId, "ready_for_proof", "review resolved");
+    advanceDocumentWorkflow(documentId, "resolve", "review resolved");
     return;
   }
   if (result === "submitted") {
-    setDocumentWorkflowState(documentId, "submitted_for_review", "review submitted");
+    advanceDocumentWorkflow(documentId, "submit_review", "review submitted");
     return;
   }
   if (result === "referred") {
-    setDocumentWorkflowState(documentId, "referred", "review referred");
+    advanceDocumentWorkflow(documentId, "refer_agency", "review referred");
     return;
   }
   setDocumentWorkflowState(documentId, "ready_for_review", "review reset");
 }
 
 export function markReadyForProof(documentId: string): void {
-  setDocumentWorkflowState(documentId, "ready_for_proof", "ready for proof");
+  advanceDocumentWorkflow(documentId, "ready_proof", "ready for proof");
 }
 
 export function proofDocument(documentId: string): void {
-  setDocumentWorkflowState(documentId, "proofed", "proofed");
+  advanceDocumentWorkflow(documentId, "proof", "proofed");
 }
 
 export function publishDocument(documentId: string): void {
-  setDocumentWorkflowState(documentId, "published", "published");
+  advanceDocumentWorkflow(documentId, "publish", "published");
+}
+
+const SMALL_KEY_DOCUMENT_STATES = new Set<DocumentWorkflowState>(["source_note_needed", "citation_verified"]);
+
+function areaIdForDocument(document: DocumentCandidate): AreaId {
+  const roomId = DOCUMENT_ROOM_LOOKUP[document.id];
+  const graphRoom = roomId ? FRUS_ROOM_GRAPH.find((room) => room.id === roomId) : undefined;
+  if (graphRoom) return graphRoom.area;
+  const sceneArea = roomId
+    ? AREA_REGISTRY.find((area) => area.scenes.some((scene) => scene === roomId))
+    : undefined;
+  return sceneArea?.id ?? currentAreaId();
+}
+
+export function earnDungeonSmallKey(areaId: AreaId, reason = "document sub-task resolved") {
+  gameState.dungeons[areaId] = earnSmallKey(gameState.dungeons[areaId]);
+  const area = AREA_REGISTRY.find((candidate) => candidate.id === areaId);
+  setLatestMessage(`${area?.displayName ?? areaId}: small key earned (${reason}).`);
+  refreshQuestWorkflowState();
+}
+
+export function useDungeonSmallKey(areaId: AreaId, reason = "locked chapter route opened") {
+  if (!canOpenLockedDoor(gameState.dungeons[areaId])) {
+    const area = AREA_REGISTRY.find((candidate) => candidate.id === areaId);
+    setLatestMessage(`${area?.displayName ?? areaId}: locked door requires a small key.`);
+    refreshQuestWorkflowState();
+    return false;
+  }
+  gameState.dungeons[areaId] = useSmallKey(gameState.dungeons[areaId]);
+  const area = AREA_REGISTRY.find((candidate) => candidate.id === areaId);
+  setLatestMessage(`${area?.displayName ?? areaId}: small key used (${reason}).`);
+  refreshQuestWorkflowState();
+  return true;
+}
+
+function earnDungeonSmallKeyForDocument(document: DocumentCandidate, previousState: DocumentWorkflowState) {
+  if (document.workflowState === previousState || !SMALL_KEY_DOCUMENT_STATES.has(document.workflowState)) return;
+  const label = document.workflowState === "citation_verified" ? "citation verified" : "source note found";
+  earnDungeonSmallKey(areaIdForDocument(document), `${document.title} ${label}`);
 }
 
 function updateDocumentCandidate(documentId: string, updater: (document: DocumentCandidate) => DocumentCandidate, reason?: string): DocumentCandidate | null {
@@ -928,6 +1585,7 @@ function updateDocumentCandidate(documentId: string, updater: (document: Documen
       continue;
     }
     changed = updater(document);
+    earnDungeonSmallKeyForDocument(changed, document.workflowState);
     nextDocuments.push(changed);
   }
   gameState.documentCandidates = nextDocuments;
@@ -972,8 +1630,36 @@ export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLE
 export function awardProcessStamp(stampId: ProcessStampId) {
   if (!gameState.processStamps.includes(stampId)) {
     gameState.processStamps.push(stampId);
+    markDungeonBossDefeatedForStamp(stampId);
     refreshQuestWorkflowState();
   }
+}
+
+function markDungeonBossDefeated(areaId: AreaId) {
+  gameState.dungeons[areaId] = {
+    ...gameState.dungeons[areaId],
+    bossDefeated: true,
+    mapRevealed: true
+  };
+}
+
+function markDungeonBossDefeatedForStamp(stampId: ProcessStampId) {
+  for (const area of AREA_REGISTRY) {
+    if (bossStampForArea(area.id) === stampId) markDungeonBossDefeated(area.id);
+  }
+}
+
+function syncDungeonBossesFromProcessStamps() {
+  for (const stampId of gameState.processStamps) markDungeonBossDefeatedForStamp(stampId);
+}
+
+export function defeatDungeonBoss(areaId: AreaId, reason = "chapter boss review hurdle defeated") {
+  markDungeonBossDefeated(areaId);
+  const stampId = bossStampForArea(areaId);
+  if (stampId) awardProcessStamp(stampId);
+  const area = AREA_REGISTRY.find((candidate) => candidate.id === areaId);
+  setLatestMessage(`${area?.displayName ?? areaId}: ${reason}`);
+  refreshQuestWorkflowState();
 }
 
 const HUD_STAMP_LABELS: Record<ProcessStampId, string> = {
@@ -1109,6 +1795,151 @@ export function getAdventureHudReadout(): AdventureHudReadout {
   };
 }
 
+export function getAdventureTrainingReadout(): AdventureTrainingReadout {
+  const currentArea = getCurrentAreaReadout();
+  const dungeon = gameState.dungeons[currentArea.id];
+  return getAdventureTrainingCue({
+    mode: gameState.mode,
+    objective: gameState.objective,
+    latestMessage: gameState.latestMessage,
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    nearestInteractable: gameState.nearestInteractable,
+    activeDialog: gameState.activeDialog,
+    currentChoice: gameState.currentChoice,
+    roomTraversal: gameState.roomTraversal,
+    dungeon: dungeon
+      ? {
+          displayName: currentArea.displayName,
+          smallKeys: dungeon.smallKeys,
+          smallKeysRequired: dungeon.smallKeysRequired,
+          bigKeyHeld: dungeon.bigKeyHeld,
+          bossDefeated: dungeon.bossDefeated,
+          mapRevealed: dungeon.mapRevealed
+        }
+      : null
+  });
+}
+
+export function getOneHourTrainingReadout(): OneHourTrainingReadout {
+  const activeCue = getAdventureTrainingReadout();
+  return firstHourTrainingCoverageReadout(activeCue.drillId);
+}
+
+export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
+  refreshQuestWorkflowState();
+  const currentArea = getCurrentAreaReadout();
+  const roomReadout = getRoomGraphReadout();
+  const equippedTool = getProcessItemReadout().find((item) => item.equipped) ?? null;
+  const board = getProductionBoardReadout();
+  const productionPhases = getFrusProductionPhaseReadout(board);
+  const activePhase = productionPhases.find((phase) => phase.status === "active") ?? null;
+  const crystalDocuments = equityCrystalDocuments(gameState.documentCandidates).map((document) => {
+    const total = document.equities.length;
+    const earned = document.equities.filter((equity) => EQUITY_CRYSTAL_STATUSES.has(equity.response)).length;
+    return {
+      documentId: document.id,
+      title: document.title,
+      earned,
+      total
+    };
+  }).filter((document) => document.total > 0);
+  return {
+    productionBoard: {
+      completed: board.completed,
+      total: board.total,
+      completionRatio: board.total > 0 ? board.completed / board.total : 1,
+      nextStep: board.nextStep
+        ? {
+            id: board.nextStep.id,
+            shortLabel: board.nextStep.shortLabel,
+            label: board.nextStep.label,
+            gameplayTask: board.nextStep.gameplayTask,
+            sourceBasis: board.nextStep.sourceBasis,
+            sourceUrl: board.nextStep.sourceUrl,
+            status: board.nextStep.status
+          }
+        : null,
+      steps: board.steps.map((step) => ({
+        id: step.id,
+        shortLabel: step.shortLabel,
+        status: step.status,
+        complete: step.complete
+      })),
+      phases: productionPhases.map((phase) => ({
+        id: phase.id,
+        label: phase.label,
+        shortLabel: phase.shortLabel,
+        status: phase.status,
+        completed: phase.completed,
+        total: phase.total,
+        nextStep: phase.nextStep
+      })),
+      activePhase: activePhase
+        ? {
+            id: activePhase.id,
+            label: activePhase.label,
+            shortLabel: activePhase.shortLabel,
+            completed: activePhase.completed,
+            total: activePhase.total
+          }
+        : null
+    },
+    pendants: PENDANTS.map((pendant) => ({
+      ...pendant,
+      acquired: gameState.processStamps.includes(pendant.stampId)
+    })),
+    crystals: {
+      earned: crystalsEarned(gameState.documentCandidates),
+      total: totalEquities(gameState.documentCandidates),
+      byDocument: crystalDocuments
+    },
+    equippedTool: equippedTool
+      ? {
+          id: equippedTool.id,
+          displayName: equippedTool.displayName,
+          shortLabel: equippedTool.shortLabel
+        }
+      : null,
+    reliabilityHearts: {
+      current: gameState.reliability,
+      max: 100,
+      filled: Math.max(0, Math.min(10, Math.ceil(gameState.reliability / 10))),
+      total: 10,
+      meter: meterBlocks(gameState.reliability, 100, 10)
+    },
+    dungeons: getAreaProgressReadout().map((area) => {
+      const dungeon = gameState.dungeons[area.id];
+      return {
+        areaId: area.id,
+        displayName: area.displayName,
+        active: area.active,
+        smallKeys: dungeon.smallKeys,
+        smallKeysRequired: dungeon.smallKeysRequired,
+        bigKeyHeld: dungeon.bigKeyHeld,
+        bossDefeated: dungeon.bossDefeated,
+        mapRevealed: dungeon.mapRevealed
+      };
+    }),
+    roomMap: {
+      currentAreaId: currentArea.id,
+      currentRoomId: gameState.roomTraversal?.currentRoomId ?? null,
+      rooms: FRUS_ROOM_GRAPH
+        .filter((room) => room.area === currentArea.id)
+        .map((room) => {
+          const readout = roomReadout.find((candidate) => candidate.id === room.id);
+          return {
+            id: room.id,
+            title: room.title,
+            grid: { ...room.grid },
+            visited: Boolean(readout?.visited),
+            revealed: Boolean(readout?.revealed),
+            roomType: room.roomType
+          };
+        })
+    }
+  };
+}
+
 export function hasWorkflowTool(toolId: WorkflowTool) {
   if (toolId === "citation_stamp") return hasProcessItem("citation_stamp");
   if (toolId === "source_note_card") {
@@ -1154,26 +1985,112 @@ export function getProductionStatusReadout() {
   const room = gameState.roomTraversal?.currentRoomId ?? getCurrentAreaReadout().displayName.toUpperCase();
   const objective = compactHudText(gameState.objective || "VERIFY", 32);
   return [
-    `ROLE ${role.padEnd(12, " ")} REL ${hud.confidence.meter} DOC ${String(hud.documentPoints).padStart(2, "0")}`,
+    `ROLE ${role.padEnd(12, " ")} REL ${String(hud.confidence.current).padStart(3, " ")}% DOC ${String(hud.documentPoints).padStart(2, "0")}`,
     `ITEM ${selectedItem.padEnd(10, " ")} STAMPS ${hud.stamps}`,
     `MAP ${compactHudText(room, 8).padEnd(8, " ")} FRAG ${hud.fragments.current}/${hud.fragments.total} ${objective}`
   ];
 }
 
+export function getProductionBoardReadout() {
+  refreshQuestWorkflowState();
+  return getFrusProductionBoardReadout({
+    volumeWorkflowState: gameState.volumeWorkflowState,
+    documentCandidates: gameState.documentCandidates.map(cloneDocumentCandidate),
+    processStamps: [...gameState.processStamps],
+    heldProcessItems: getHeldProcessItemIds(),
+    documentPoints: gameState.documentPoints,
+    reliability: gameState.reliability,
+    volumeFragments: [...gameState.volumeFragments],
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    hacReviewComplete: Boolean(gameState.sceneProgress.senateHacReviewComplete),
+    aiAnnotationReviewComplete: Boolean(gameState.sceneProgress.aiAnnotationReviewComplete),
+    sourceNoteProvenanceComplete: Boolean(gameState.sceneProgress.sourceNoteProvenanceComplete),
+    annotationDraftingComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
+    foreignGovernmentPermissionComplete: Boolean(gameState.sceneProgress.foreignGovernmentPermissionComplete),
+    withholdingAppealComplete: Boolean(gameState.sceneProgress.withholdingAppealComplete),
+    editorialMethodologyComplete: Boolean(gameState.sceneProgress.editorialMethodologyComplete),
+    editorialTreatmentComplete: Boolean(gameState.sceneProgress.editorialTreatmentComplete),
+    typeflowOrderComplete: Boolean(gameState.sceneProgress.typeflowOrderComplete),
+    typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
+    typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
+    manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
+    manuscriptReviewStep: gameState.sceneProgress.manuscriptReviewStep ?? 0,
+    clearanceProcedureComplete: Boolean(gameState.sceneProgress.clearanceProcedureComplete),
+    eo13526ReviewComplete: Boolean(gameState.sceneProgress.eo13526ReviewComplete),
+    recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
+    researchCharterComplete: Boolean(gameState.sceneProgress.researchCharterComplete),
+    recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
+    repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
+    selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
+    policyCoverageAuditComplete: Boolean(gameState.sceneProgress.policyCoverageAuditComplete),
+    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
+    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete),
+    chapterReleaseComplete: Boolean(gameState.sceneProgress.chapterReleaseComplete),
+    digitalReleaseComplete: Boolean(gameState.sceneProgress.digitalReleaseComplete),
+    publicCitationComplete: Boolean(gameState.sceneProgress.publicCitationComplete),
+    releaseCalendarComplete: Boolean(gameState.sceneProgress.releaseCalendarComplete),
+    frontMatterAssemblyComplete: Boolean(gameState.sceneProgress.frontMatterAssemblyComplete),
+    readerAidRegistersComplete: Boolean(gameState.sceneProgress.readerAidRegistersComplete),
+    indexDocketComplete: Boolean(gameState.sceneProgress.indexDocketComplete),
+    typesetterCorrectionsComplete: Boolean(gameState.sceneProgress.typesetterCorrectionsComplete),
+    kelloggFinalCertificationComplete: Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete),
+    gpoSegmentAssemblyComplete: Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete),
+    gpoPublicationComplete: Boolean(gameState.sceneProgress.gpoPublicationComplete),
+    publicationFundingComplete: Boolean(gameState.sceneProgress.publicationFundingComplete)
+  });
+}
+
+export function getStatutoryClockStateReadout() {
+  const storedTenths = gameState.sceneProgress.statutoryClockTenths;
+  const elapsedYears = typeof storedTenths === "number" && storedTenths > 0
+    ? storedTenths / 10
+    : STATUTORY_START_YEAR;
+  return getStatutoryClockReadout({
+    elapsedYears,
+    readiness: getPublicationReadinessReadout(),
+    finalGatePublished: gameState.finalGateCertification?.status === "published",
+    deadlineDamageApplied: Boolean(gameState.sceneProgress.statutoryDeadlineMissed)
+  });
+}
+
 export function seedProgressForScene(sceneName: string) {
   if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
-    addProcessItem("citation_stamp");
-    addVolumeFragment("Front Matter Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 15);
     setDocumentWorkflowState("telegram_001", "selected");
-    setDocumentWorkflowState("source_note_047", "citation_verified");
+    setDocumentWorkflowState("source_note_047", "selected");
     setDocumentWorkflowState("cross_reference_001", "selected");
   }
+  if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+    addProcessItem("citation_stamp");
+    addVolumeFragment("Front Matter Fragment");
+    setDocumentWorkflowState("source_note_047", "citation_verified");
+  }
   if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+    gameState.sceneProgress.seriesConceptComplete = 1;
+    gameState.sceneProgress.seriesConceptStep = 3;
+    gameState.sceneProgress.volumeConceptComplete = 1;
+    gameState.sceneProgress.volumeConceptStep = VOLUME_CONCEPT_PROMPTS.length;
+    gameState.sceneProgress.recordsAccessComplete = 1;
+    gameState.sceneProgress.recordsAccessStep = 3;
+    gameState.sceneProgress.researchCharterComplete = 1;
+    gameState.sceneProgress.researchCharterStep = RESEARCH_CHARTER_PROMPTS.length;
+    gameState.sceneProgress.recordCollectionComplete = 1;
+    gameState.sceneProgress.recordCollectionStep = 3;
+    gameState.sceneProgress.repositoryCoverageMapComplete = 1;
+    gameState.sceneProgress.repositoryCoverageMapStep = REPOSITORY_COVERAGE_MAP_PROMPTS.length;
+    gameState.sceneProgress.selectionDocketComplete = 1;
+    gameState.sceneProgress.selectionDocketStep = SELECTION_DOCKET_PROMPTS.length;
+    gameState.sceneProgress.policyCoverageAuditComplete = 1;
+    gameState.sceneProgress.policyCoverageAuditStep = POLICY_COVERAGE_AUDIT_PROMPTS.length;
     awardProcessStamp("rule");
   }
   if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("archive");
+    gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
+    gameState.sceneProgress.sourceNoteProvenanceStep = SOURCE_NOTE_PROVENANCE_PROMPTS.length;
+    gameState.sceneProgress.annotationDraftingComplete = 1;
+    gameState.sceneProgress.annotationDraftingStep = 3;
+    gameState.sceneProgress.manuscriptReviewComplete = 1;
     gameState.reliability = Math.max(gameState.reliability, 90);
     for (const item of ["Telegram", "Source Note", "Cross-Ref"]) {
       addInventoryItem(item);
@@ -1185,6 +2102,12 @@ export function seedProgressForScene(sceneName: string) {
   }
   if (["ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("network");
+    gameState.sceneProgress.clearanceProcedureComplete = 1;
+    gameState.sceneProgress.clearanceProcedureStep = 3;
+    gameState.sceneProgress.eo13526ReviewComplete = 1;
+    gameState.sceneProgress.eo13526ReviewStep = 3;
+    gameState.sceneProgress.declassificationReviewComplete = 1;
+    gameState.sceneProgress.declassificationReviewStep = 3;
     gameState.reliability = Math.max(gameState.reliability, 100);
     addProcessItem("clearance_token");
     addVolumeFragment("Routing Fragment");
@@ -1193,6 +2116,11 @@ export function seedProgressForScene(sceneName: string) {
     setDocumentWorkflowState("sbu_annotation_001", "referred");
   }
   if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
+    gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
+    gameState.sceneProgress.foreignGovernmentPermissionStep = 3;
+    gameState.sceneProgress.withholdingAppealComplete = 1;
+    gameState.sceneProgress.withholdingAppealStep = 3;
+    gameState.sceneProgress.senateHacReviewComplete = 1;
     awardProcessStamp("referral");
     addProcessItem("concurrence_slip");
     addProcessItem("review_folder");
@@ -1209,6 +2137,17 @@ export function seedProgressForScene(sceneName: string) {
     awardProcessStamp("proof");
     addProcessItem("proof_lens");
     addProcessItem("buckram_key");
+    gameState.sceneProgress.aiAnnotationReviewComplete = 1;
+    gameState.sceneProgress.aiAnnotationReviewStep = AI_ANNOTATION_REVIEW_PROMPTS.length;
+    gameState.sceneProgress.editorialMethodologyComplete = 1;
+    gameState.sceneProgress.editorialMethodologyStep = 4;
+    gameState.sceneProgress.editorialTreatmentComplete = 1;
+    gameState.sceneProgress.editorialTreatmentStep = 3;
+    gameState.sceneProgress.typeflowOrderComplete = 1;
+    gameState.sceneProgress.typeflowOrderStep = 2;
+    gameState.sceneProgress.typesettingPreparationComplete = 1;
+    gameState.sceneProgress.typesettingPreparationStep = 2;
+    gameState.sceneProgress.typesetterProofComplete = 1;
     addVolumeFragment("Proof Fragment");
     gameState.documentPoints = Math.max(gameState.documentPoints, 80);
     setDocumentWorkflowState("telegram_001", "proofed");
@@ -1251,6 +2190,11 @@ export function renderGameToText() {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
       scene: gameState.currentScene,
       mode: gameState.mode,
+      gameGoal: {
+        mission: FRUS_QUEST_MISSION,
+        loop: FRUS_QUEST_LOOP,
+        stakes: FRUS_QUEST_STAKES
+      },
       objective: gameState.objective,
       volumeWorkflowState: gameState.volumeWorkflowState,
       documentCandidates: getDocumentCandidateReadout(),
@@ -1258,10 +2202,15 @@ export function renderGameToText() {
       documentWorkflowLog: gameState.documentWorkflowLog,
       volumeMetrics: gameState.volumeMetrics,
       questCounters: gameState.questCounters,
+      dungeons: gameState.dungeons,
       questWorkflow,
       snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
       adventureHud: getAdventureHudReadout(),
+      adventureTraining: getAdventureTrainingReadout(),
+      lttpFrusTranslation: getLttpFrusTranslationReadout(),
+      oneHourTraining: getOneHourTrainingReadout(),
+      adventureSubscreen: getAdventureSubscreenReadout(),
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,
       documentPoints: gameState.documentPoints,
@@ -1324,6 +2273,10 @@ export function renderGameToText() {
         assembled: gameState.volumeFragments.length >= 5
       },
       finalGate: getFinalGateReadiness(),
+      publicationReadiness: getPublicationReadinessReadout(),
+      statutoryClock: getStatutoryClockStateReadout(),
+      standardsViolations: unresolvedStandardsViolations(),
+      productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,
       latestAbility: gameState.latestAbility,
       audioStatus: gameState.audioStatus,

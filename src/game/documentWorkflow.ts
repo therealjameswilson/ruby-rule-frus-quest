@@ -1,4 +1,6 @@
 import type { AgencyEquity, DocumentCandidate, DocumentWorkflowState, ReviewStatus, WorkflowDocument } from "./types";
+import { ITEM_REGISTRY } from "./constants";
+import type { ProcessItemId } from "./constants";
 
 export type DocumentWorkflowAction =
   | "evaluate"
@@ -56,6 +58,15 @@ export const DOCUMENT_WORKFLOW_TRANSITIONS: Record<DocumentWorkflowState, Partia
   published: {}
 };
 
+export const ACTION_REQUIRED_ITEM: Partial<Record<DocumentWorkflowAction, ProcessItemId>> = {
+  verify_citation: "citation_stamp",
+  excise: "red_pencil",
+  clear: "clearance_token",
+  refer_agency: "concurrence_slip",
+  proof: "proof_lens",
+  publish: "buckram_key"
+} as const;
+
 export const DOCUMENT_ROOM_LOOKUP: Record<string, string> = {
   "doc-001": "A1",
   telegram_001: "A1",
@@ -81,6 +92,7 @@ export const INITIAL_DOCUMENT_CANDIDATES: readonly DocumentCandidate[] = [
     annotationNeeded: true,
     sensitivityRisk: 3,
     selected: false,
+    undisclosedDeletion: false,
     workflowState: "found",
     reviewStatus: "not_submitted",
     equities: [
@@ -102,6 +114,7 @@ export const INITIAL_DOCUMENT_CANDIDATES: readonly DocumentCandidate[] = [
     annotationNeeded: false,
     sensitivityRisk: 18,
     selected: false,
+    undisclosedDeletion: false,
     workflowState: "found",
     reviewStatus: "not_submitted",
     equities: []
@@ -121,11 +134,10 @@ export const INITIAL_DOCUMENT_CANDIDATES: readonly DocumentCandidate[] = [
     annotationNeeded: true,
     sensitivityRisk: 42,
     selected: false,
+    undisclosedDeletion: false,
     workflowState: "found",
     reviewStatus: "not_submitted",
-    equities: [
-      equity("historians-office", "Office Source Trail", "diplomatic", "not_submitted")
-    ]
+    equities: []
   },
   {
     id: "cross_reference_001",
@@ -142,6 +154,7 @@ export const INITIAL_DOCUMENT_CANDIDATES: readonly DocumentCandidate[] = [
     annotationNeeded: true,
     sensitivityRisk: 12,
     selected: false,
+    undisclosedDeletion: false,
     workflowState: "found",
     reviewStatus: "not_submitted",
     equities: []
@@ -161,6 +174,7 @@ export const INITIAL_DOCUMENT_CANDIDATES: readonly DocumentCandidate[] = [
     annotationNeeded: true,
     sensitivityRisk: 76,
     selected: false,
+    undisclosedDeletion: false,
     workflowState: "found",
     reviewStatus: "not_submitted",
     equities: [
@@ -183,6 +197,7 @@ export const INITIAL_DOCUMENT_CANDIDATES: readonly DocumentCandidate[] = [
     annotationNeeded: false,
     sensitivityRisk: 9,
     selected: false,
+    undisclosedDeletion: false,
     workflowState: "found",
     reviewStatus: "not_submitted",
     equities: []
@@ -196,6 +211,7 @@ export function cloneInitialDocumentCandidates() {
 export function cloneDocumentCandidate(document: DocumentCandidate): DocumentCandidate {
   return {
     ...document,
+    undisclosedDeletion: document.undisclosedDeletion ?? false,
     equities: document.equities.map((equityRecord) => ({ ...equityRecord }))
   };
 }
@@ -206,8 +222,44 @@ export function applyDocumentWorkflowAction(document: DocumentCandidate, action:
   return applyDocumentWorkflowState(document, nextState);
 }
 
+export function canPerformAction(action: DocumentWorkflowAction, inventory: Set<ProcessItemId>): boolean {
+  const requiredItem = ACTION_REQUIRED_ITEM[action];
+  return !requiredItem || inventory.has(requiredItem);
+}
+
+export function tryWorkflowAction(
+  document: DocumentCandidate,
+  action: DocumentWorkflowAction,
+  inventory: Set<ProcessItemId>
+): { ok: boolean; document: DocumentCandidate; reason?: string } {
+  if (action === "publish" && document.undisclosedDeletion) {
+    return {
+      ok: false,
+      document: cloneDocumentCandidate(document),
+      reason: `Locked: ${document.title} has an undisclosed deletion. Add a bracketed insertion before publication.`
+    };
+  }
+  const requiredItem = ACTION_REQUIRED_ITEM[action];
+  if (requiredItem && !inventory.has(requiredItem)) {
+    const displayName = ITEM_REGISTRY.find((item) => item.id === requiredItem)?.displayName ?? requiredItem.replace(/_/g, " ");
+    return {
+      ok: false,
+      document: cloneDocumentCandidate(document),
+      reason: `Locked: ${action.replace(/_/g, " ")} requires ${displayName}.`
+    };
+  }
+  return {
+    ok: true,
+    document: applyDocumentWorkflowAction(document, action)
+  };
+}
+
 export function applyDocumentWorkflowState(document: DocumentCandidate, workflowState: DocumentWorkflowState): DocumentCandidate {
   const next = cloneDocumentCandidate(document);
+  if (workflowState === "published" && next.undisclosedDeletion) {
+    next.annotationNeeded = true;
+    return next;
+  }
   next.workflowState = workflowState;
 
   if (workflowState !== "found") next.selected ||= workflowState !== "candidate";
@@ -281,11 +333,13 @@ export function documentToWorkflowDocument(document: DocumentCandidate): Workflo
     selected: document.selected,
     citationComplete: document.citationComplete,
     annotationNeeded: document.annotationNeeded,
-    sensitivityRisk: document.sensitivityRisk
+    sensitivityRisk: document.sensitivityRisk,
+    undisclosedDeletion: Boolean(document.undisclosedDeletion)
   };
 }
 
 export function needsHumanReview(document: DocumentCandidate) {
+  if (Boolean(document.undisclosedDeletion)) return true;
   if (document.workflowState === "published" || document.workflowState === "proofed") return false;
   if (document.annotationNeeded || !document.citationComplete || document.sensitivityRisk >= 50) return true;
   return document.equities.some((equityRecord) => equityRecord.response !== "resolved" && equityRecord.response !== "cleared");

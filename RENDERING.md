@@ -1,29 +1,29 @@
 
 Rendering & Pixel-Perfect Contract
 Ruby Rule: The FRUS Quest renders at a fixed internal resolution and scales up
-by whole-number multiples only. This document is the source of truth for
+by whole-number device-pixel multiples only. This document is the source of truth for
 keeping the art crisp. If you touch the renderer, scaling, CSS, or any moving
 sprite, follow this contract.
 
 The contract, in one line
-One game pixel must map to exactly zoom × round(devicePixelRatio) device
+One game pixel must map to exactly deviceZoom whole device
 
-pixels — no fractional scaling, ever.
+pixels — no fractional physical-pixel scaling, ever.
 
 Internal resolution: GAME_WIDTH × GAME_HEIGHT = 256 × 240 (see src/game/constants.ts).
 
 Tile size: 16 px (TILE_SIZE in src/game/questArchitecture.ts).
 
-Scaling: integer-only. The runtime picks the largest whole-number zoom that fits the viewport.
+Scaling: device-pixel integer-only. The runtime picks the largest whole-number deviceZoom that fits the viewport. CSS zoom may equal deviceZoom / round(devicePixelRatio) on high-DPR phones.
 
 Why this matters
 Pixel art looks soft/blurry whenever a 16 px tile lands on fractional device pixels. The three classic causes — and how we avoid them:
 
 Canvas2D upscaling. Use WebGL. gameConfig.type is Phaser.AUTO so WebGL nearest-neighbor is used when available. (Do not revert to Phaser.CANVAS.)
 
-Non-integer zoom. Never combine a fixed zoom with Phaser.Scale.FIT; FIT re-scales to fractional multiples. We use Phaser.Scale.NONE and compute an integer zoom ourselves.
+Non-integer device zoom. Never combine a fixed zoom with Phaser.Scale.FIT; FIT can rescale to fractional physical pixels. We use Phaser.Scale.NONE and compute an integer deviceZoom ourselves.
 
-High-DPR backing store smoothing. The canvas backing buffer is sized to GAME_* × zoom × round(dpr) and the CSS size to GAME_* × zoom, so the browser never has to interpolate.
+High-DPR backing store smoothing. The canvas backing buffer is sized to GAME_* × deviceZoom and the CSS size to GAME_* × (deviceZoom / round(dpr)), so the browser maps every game pixel to exactly deviceZoom physical pixels without interpolation.
 
 Required configuration
 src/game/config.ts
@@ -40,12 +40,16 @@ No fixed zoom: 3. Zoom is computed at runtime.
 Runtime integer zoom (src/systems/pixelPerfect.ts)
 computeIntegerZoom(viewW, viewH) = max(1, floor(min(viewW/GAME_WIDTH, viewH/GAME_HEIGHT)))
 
+computeDeviceIntegerZoom(viewW, viewH, dpr) = max(1, floor(min((viewW*dpr)/GAME_WIDTH, (viewH*dpr)/GAME_HEIGHT)))
+
 applyIntegerZoom(game):
-game.scale.setZoom(zoom)
+cssZoom = deviceZoom / round(devicePixelRatio)
 
-canvas CSS size = GAME_WIDTH*zoom × GAME_HEIGHT*zoom
+game.scale.setZoom(cssZoom) only when the value changed
 
-canvas backing size = CSS size × round(devicePixelRatio)
+canvas CSS size = GAME_WIDTH*cssZoom × GAME_HEIGHT*cssZoom
+
+canvas backing size = GAME_WIDTH*deviceZoom × GAME_HEIGHT*deviceZoom
 
 
 Call it on boot and on window resize / orientationchange (wired in src/main.ts).
@@ -80,16 +84,16 @@ A 1px checkerboard renders as crisp alternating pixels (no gray bleed).
 
 A single-texel test sprite at the origin stays sharp.
 
-The on-screen readout shows: devicePixelRatio, computed integer zoom, canvas CSS size, and backing size — and that 1 game px == zoom × round(dpr) device px.
+The on-screen readout shows: devicePixelRatio, CSS zoom, integer deviceZoom target, canvas CSS size, and backing size — and that 1 game px == deviceZoom device px.
 
 window.rubyRuleMobileMetrics exposes computedZoom, integerZoomTarget, integerZoom, dpr, canvasCss*, canvasBacking*, and scaleGuardAdjustments for the same checks at runtime.
 
 Checklist before merging render/art changes
 Renderer is Phaser.AUTO (WebGL preferred).
 
-Zoom is integer at every tested viewport size and DPR.
+Backing width / GAME_WIDTH and backing height / GAME_HEIGHT are integers at every tested viewport size and DPR.
 
-Canvas backing = CSS size × round(dpr).
+Canvas backing = GAME size × integer deviceZoom; CSS size = backing size / round(dpr).
 
 cameras.main.roundPixels === true.
 

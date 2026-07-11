@@ -7,7 +7,10 @@ import {
   addVolumeFragment,
   awardProcessStamp,
   gameState,
+  getHeldProcessItemIds,
   hasProcessItem,
+  clearDocumentUndisclosedDeletion,
+  markDocumentUndisclosedDeletion,
   setAgencyEquityResponse,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -18,21 +21,38 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
-import type { ChoiceOption } from "../game/types";
+import type { ChoiceOption, Interactable } from "../game/types";
+import {
+  evaluateForeignGovernmentPermissionAnswer,
+  foreignGovernmentPermissionComplete,
+  FOREIGN_GOVERNMENT_PERMISSION_PROMPTS,
+  getForeignGovernmentPermissionPrompt
+} from "../game/foreignGovernmentPermission";
+import {
+  evaluateWithholdingAppealAnswer,
+  getWithholdingAppealPrompt,
+  withholdingAppealComplete,
+  WITHHOLDING_APPEAL_PROMPTS
+} from "../game/withholdingAppeal";
 import { getInput, tickInput, type InputState } from "../input/InputState";
+import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
+import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
+import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { addDocumentStack, addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesRoomLayer, addSnesWorldMap } from "../systems/snesPixelArt";
+import { addSnesGate, addSnesMapTablet, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal, addSnesWorldMap } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
+import { SNES_REFERRAL_VAULT_TILE_ASSET } from "../game/snesAtlas";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -44,6 +64,7 @@ interface EquityMatch {
 }
 
 type ReferralRoomId = "R1" | "R2";
+type ReferralVaultTileFrame = (typeof SNES_REFERRAL_VAULT_TILE_ASSET.frames)[number];
 
 interface ReferralRoom {
   id: ReferralRoomId;
@@ -51,6 +72,7 @@ interface ReferralRoom {
   roomType: RoomType;
   exits: Partial<Record<Direction, ReferralRoomId | "SilentReadScene">>;
   lockedExits?: Partial<Record<Direction, string>>;
+  requiredItems?: Partial<Record<Direction, "concurrence_slip">>;
 }
 
 const REFERRAL_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
@@ -76,7 +98,8 @@ const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
     title: "Concurrence Chamber",
     roomType: "reward",
     exits: { west: "R1", east: "SilentReadScene" },
-    lockedExits: { east: "Concurrence Slip handoff" }
+    lockedExits: { east: "Concurrence Slip handoff" },
+    requiredItems: { east: "concurrence_slip" }
   }
 };
 
@@ -88,6 +111,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
   private vaultText!: Phaser.GameObjects.Text;
+  private interactionPrompt!: InteractionPrompt;
   private matchIndex = 0;
   private correctMatches = 0;
   private referralGateOpen = false;
@@ -102,7 +126,10 @@ export class ReferralVaultScene extends Phaser.Scene {
   private roomTransitionLocked = false;
   private exitCooldownUntil = 0;
   private concurrenceSlipIcon?: Phaser.GameObjects.Image;
+  private concurrenceSlipRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private concurrenceSlipRouteCueKey = "";
   private bureaucraticWalls: BureaucraticWall[] = [];
+  private danneLurker!: DanneLurker;
 
   private readonly matches: EquityMatch[] = [
     { label: "Intelligence annex", agency: "CIA" },
@@ -119,14 +146,14 @@ export class ReferralVaultScene extends Phaser.Scene {
     retroAudio.startMusic("ReferralVaultScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     drawTiledFloor(this, "vault-tiles");
-    drawRoomFrame(this, "REFERRAL VAULT");
+    drawRoomFrame(this, "REFERRAL VAULT", PALETTE.goldStamp, { showLegacyHud: false });
     this.drawReferralMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(902);
+    }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.vaultText = this.add.text(128, 88, "BATCH MANIFEST\nPENDING HUMAN CHECK", {
       fontFamily: "monospace",
@@ -141,7 +168,18 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
+    this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.danneLurker = new DanneLurker(this, 214, 70, {
+      waypoints: [
+        { x: 214, y: 70 },
+        { x: 154, y: 60 },
+        { x: 68, y: 104 },
+        { x: 68, y: 190 },
+        { x: 188, y: 188 }
+      ]
+    });
     this.referralGateOpen = gameState.processStamps.includes("referral");
     this.concurrenceSlipCollected = hasProcessItem("concurrence_slip");
     this.enterRoom("R1", { x: 128, y: 192 }, false);
@@ -158,6 +196,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
+    this.updateDanneLurker(delta);
     this.syncThreatState();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
@@ -168,15 +207,19 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     if (this.roomTransitionLocked) {
+      this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (this.dialog.active) {
+      this.interactionPrompt.update(delta, null);
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       return;
     }
     if (this.choice.active || this.inventory.active || this.reliability.active) {
+      this.interactionPrompt.update(delta, null);
+      handleOpenOverlays(this.inventory, this.reliability);
       this.choice.updateInput();
       this.player.update(delta, false);
       return;
@@ -186,6 +229,8 @@ export class ReferralVaultScene extends Phaser.Scene {
       return;
     }
     this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS });
+    this.updateConcurrenceSlipPrompt(delta);
+    this.refreshConcurrenceSlipRouteCue();
     if (this.handleConcurrenceSlipAction(input)) {
       this.reliability.update();
       this.objectiveText.setText(gameState.objective);
@@ -233,6 +278,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private clearRoom() {
+    this.clearConcurrenceSlipRouteCue();
     for (const cleanup of this.roomCleanups) cleanup();
     for (const object of this.roomObjects) {
       if (object.active) object.destroy();
@@ -248,27 +294,148 @@ export class ReferralVaultScene extends Phaser.Scene {
   private renderCurrentRoom() {
     const room = REFERRAL_ROOMS[this.currentRoomId];
     this.roomTitleText.setText(`${room.id} ${room.title}`);
+    addSnesRoomIntroBanner(this, {
+      title: `${room.id} ${room.title}`,
+      subtitle: "REFERRAL VAULT",
+      accent: PALETTE.goldStamp,
+      track: (object) => this.track(object)
+    });
     addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "vault", track: (object) => this.track(object) });
+    this.drawReferralVaultTileField(room.id);
     this.drawRoomDoors();
+    addSnesRoomCompass(this, {
+      x: 216,
+      y: 62,
+      roomId: room.id,
+      roomTitle: room.title,
+      exits: room.exits,
+      lockedExits: this.compassLockedExits(room),
+      requiredItems: room.requiredItems,
+      track: (object) => this.track(object),
+      depth: 143
+    });
     if (room.id === "R1") this.renderEquityGate();
     else this.renderConcurrenceChamber();
     this.syncRoomTraversalState();
     this.syncThreatState();
   }
 
+  private drawReferralVaultTileField(roomId: ReferralRoomId) {
+    if (!this.referralVaultTileFramesReady([
+      "equity_floor",
+      "referral_channel",
+      "agency_seal_tile",
+      "manifest_desk",
+      "excision_gate",
+      "concurrence_wall",
+      "slip_plinth",
+      "archive_floor"
+    ])) {
+      return;
+    }
+
+    for (let row = 0; row < 8; row += 1) {
+      for (let col = 0; col < 12; col += 1) {
+        const frame = roomId === "R1"
+          ? this.equityGateFloorFrame(col, row)
+          : this.concurrenceChamberFloorFrame(col, row);
+        this.drawReferralVaultTileFrame(frame, 40 + col * 16, 62 + row * 16, -13, `${roomId}-floor-${row}-${col}`);
+      }
+    }
+
+    if (roomId === "R1") {
+      this.drawReferralVaultTileFrame("manifest_desk", 112, 116, 112, "manifest-desk");
+      this.drawReferralVaultTileFrame("agency_seal_tile", 72, 132, 112, "cia-seal-floor");
+      this.drawReferralVaultTileFrame("agency_seal_tile", 128, 132, 112, "dod-seal-floor");
+      this.drawReferralVaultTileFrame("agency_seal_tile", 184, 132, 112, "nsc-seal-floor");
+      this.drawReferralVaultTileFrame("excision_gate", 216, 132, 66, "visible-excision-gate");
+      return;
+    }
+
+    for (let col = 2; col <= 9; col += 1) {
+      this.drawReferralVaultTileFrame("concurrence_wall", 40 + col * 16, 94, 82, `concurrence-wall-${col}`);
+    }
+    this.drawReferralVaultTileFrame("slip_plinth", 120, 132, 137, "slip-plinth-left");
+    this.drawReferralVaultTileFrame("slip_plinth", 136, 132, 137, "slip-plinth-right");
+  }
+
+  private equityGateFloorFrame(col: number, row: number): ReferralVaultTileFrame {
+    if (col === 5 || col === 6 || row === 3) return "referral_channel";
+    if (row === 4 && (col === 2 || col === 5 || col === 8)) return "agency_seal_tile";
+    if (row === 3 && (col === 4 || col === 7)) return "manifest_desk";
+    if (col === 11 && row >= 3 && row <= 5) return "excision_gate";
+    if ((row + col) % 7 === 0) return "archive_floor";
+    return "equity_floor";
+  }
+
+  private concurrenceChamberFloorFrame(col: number, row: number): ReferralVaultTileFrame {
+    if (row === 0 || col === 0 || col === 11) return "concurrence_wall";
+    if (row === 4 && (col === 5 || col === 6)) return "slip_plinth";
+    if (row === 2 && (col === 2 || col === 4 || col === 7 || col === 9)) return "agency_seal_tile";
+    if (row === 5 && col >= 4 && col <= 7) return "referral_channel";
+    if ((row + col) % 6 === 0) return "archive_floor";
+    return "equity_floor";
+  }
+
+  private drawReferralVaultTileFrame(
+    frame: ReferralVaultTileFrame,
+    x: number,
+    y: number,
+    depth: number,
+    name: string
+  ) {
+    if (!this.textures.exists(SNES_REFERRAL_VAULT_TILE_ASSET.key)) return null;
+    const texture = this.textures.get(SNES_REFERRAL_VAULT_TILE_ASSET.key);
+    if (!texture.has(frame)) return null;
+    return this.track(this.add.image(Math.round(x), Math.round(y), SNES_REFERRAL_VAULT_TILE_ASSET.key, frame)
+      .setName(`referral-vault-tile-${name}`)
+      .setDepth(depth));
+  }
+
+  private referralVaultTileFramesReady(frames: readonly ReferralVaultTileFrame[]) {
+    if (!this.textures.exists(SNES_REFERRAL_VAULT_TILE_ASSET.key)) return false;
+    const texture = this.textures.get(SNES_REFERRAL_VAULT_TILE_ASSET.key);
+    return frames.every((frame) => texture.has(frame));
+  }
+
   private drawRoomDoors() {
     const room = REFERRAL_ROOMS[this.currentRoomId];
     if (room.exits.west) {
-      this.track(this.add.rectangle(11, 124, 9, 36, color(PALETTE.black)).setDepth(65));
-      this.track(this.add.rectangle(16, 124, 3, 26, color(PALETTE.goldStamp)).setDepth(66));
+      addSnesGate(this, {
+        direction: "west",
+        hasExit: true,
+        unlocked: true,
+        accent: PALETTE.goldStamp,
+        exitLabel: "EQUITY",
+        track: (object) => this.track(object),
+        depth: 65
+      });
     }
     if (room.exits.east) {
       const open = this.currentRoomId === "R1" ? this.referralGateOpen : this.concurrenceSlipCollected;
       const accent = open ? PALETTE.goldStamp : PALETTE.classNetRed;
-      this.track(this.add.rectangle(245, 124, 9, 36, color(PALETTE.black)).setDepth(65));
-      this.track(this.add.rectangle(240, 124, 3, 26, color(accent)).setDepth(66));
-      if (!open) this.track(this.add.rectangle(242, 124, 2, 30, color(PALETTE.classNetRed)).setDepth(67));
+      addSnesGate(this, {
+        direction: "east",
+        hasExit: true,
+        unlocked: open,
+        accent,
+        lockLabel: this.currentRoomId === "R1" ? "EQTY" : "SLIP",
+        exitLabel: this.currentRoomId === "R1" ? "SLIP" : "READ",
+        track: (object) => this.track(object),
+        depth: 65
+      });
     }
+  }
+
+  private compassLockedExits(room: ReferralRoom) {
+    const locked: Partial<Record<Direction, string>> = {};
+    if (room.id === "R1" && room.exits.east && !this.referralGateOpen) {
+      locked.east = room.lockedExits?.east ?? "EQTY";
+    }
+    if (room.id === "R2" && room.exits.east && !this.concurrenceSlipCollected) {
+      locked.east = room.lockedExits?.east ?? room.requiredItems?.east ?? "SLIP";
+    }
+    return locked;
   }
 
   private renderEquityGate() {
@@ -284,6 +451,16 @@ export class ReferralVaultScene extends Phaser.Scene {
     ]);
     addVaultBlocks(this, (object) => this.track(object));
     addSnesWorldMap(this, 128, 62, "EQUITY MAP", "referral-vault-map", (object) => this.track(object));
+    addSnesMapTablet(this, {
+      x: 128,
+      y: 91,
+      label: "EQUITY",
+      nodes: ["MAN", "CIA", "DOD", "NSC", "SLIP"],
+      activeIndex: this.referralGateOpen ? 4 : 1,
+      accent: this.referralGateOpen ? PALETTE.goldStamp : PALETTE.classNetRed,
+      track: (object) => this.track(object),
+      depth: 118
+    });
     addDocumentStack(this, 214, 116, true, (object) => this.track(object));
     this.track(addTinySparkle(this, 128, 120, PALETTE.goldStamp));
     const marcus = new HistorianNPC(this, "marcus", 42, 58);
@@ -320,14 +497,21 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.track(this.add.rectangle(x, 104, 24, 20, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(95));
       this.track(this.add.image(x, 101, "agency-equity-seal").setScale(1).setDepth(96));
     }
-    this.track(this.add.rectangle(128, 145, 78, 32, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(138));
-    this.track(this.add.rectangle(128, 156, 96, 7, color(PALETTE.deepRuby)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(139));
+    addSnesTreasurePedestal(this, {
+      x: 128,
+      y: 132,
+      textureKey: "concurrence-slip",
+      label: "Concurrence Slip",
+      collected: this.concurrenceSlipCollected,
+      track: (object) => this.track(object),
+      depth: 138
+    });
     if (!this.concurrenceSlipCollected) {
-      this.concurrenceSlipIcon = this.track(this.add.image(128, 132, "concurrence-slip").setDepth(155));
+      this.concurrenceSlipIcon = this.track(this.add.image(128, 132, "concurrence-slip").setDepth(165).setVisible(false));
       this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
       setObjective("Referral Vault: collect the Concurrence Slip in R2.");
     } else {
-      this.track(this.add.image(128, 132, "concurrence-slip").setTint(color(PALETTE.goldStamp)).setDepth(155));
+      this.track(this.add.image(128, 132, "concurrence-slip").setTint(color(PALETTE.goldStamp)).setDepth(165).setVisible(false));
       this.vaultText.setText("SLIP EARNED\nEAST: SILENT READ");
       setObjective("Referral Vault: exit east to Silent Read Tower.");
     }
@@ -348,7 +532,8 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   private syncThreatState() {
     setVisibleThreats(
-      this.bureaucraticWalls.filter((wall) => !wall.isCleared).map((wall) => ({
+      [
+        ...this.bureaucraticWalls.filter((wall) => !wall.isCleared).map((wall) => ({
         label: `Stone Wall: ${wall.label}`,
         x: wall.position.x,
         y: wall.position.y,
@@ -356,8 +541,30 @@ export class ReferralVaultScene extends Phaser.Scene {
         behavior: wall.label === "WAIT" ? "freezes exits temporarily" : "blocks referral gate",
         defeatMethod: "Resolve agency response timer and visible referral review",
         status: this.referralGateOpen ? "cleared" : "active"
-      }))
+      })),
+        this.danneLurker.readout(this.time.now)
+      ]
     );
+  }
+
+  private updateDanneLurker(delta: number) {
+    const canPressure = !this.roomTransitionLocked
+      && !this.dialog.active
+      && !this.choice.active
+      && !this.inventory.active
+      && !this.reliability.active;
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
+    if (result.triggered) {
+      this.player.takeHit(this.danneLurker.position, 11, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted referral review.");
+      setObjective("Referral Vault: use agency concurrence, not DANN-E pressure.");
+      this.reliability.update();
+    } else if (result.egoBoltHit) {
+      this.player.takeHit(this.danneLurker.position, 9, 700);
+      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted referral review.");
+      setObjective("Referral Vault: dodge Ego bolts and preserve agency concurrence.");
+      this.reliability.update();
+    }
   }
 
   private drawReferralMinimap() {
@@ -386,21 +593,22 @@ export class ReferralVaultScene extends Phaser.Scene {
   private syncRoomTraversalState() {
     const room = REFERRAL_ROOMS[this.currentRoomId];
     const lockedExits: Partial<Record<Direction, string>> = {};
-    const requiredItems: Partial<Record<Direction, "concurrence_slip">> = {};
     if (room.id === "R1" && !this.referralGateOpen) lockedExits.east = room.lockedExits?.east;
-    if (room.id === "R2" && !this.concurrenceSlipCollected) {
+    if (room.id === "R2" && !canTraverseExit(room.id, "east", getHeldProcessItemIds())) {
       lockedExits.east = room.lockedExits?.east;
-      requiredItems.east = "concurrence_slip";
     }
     setRoomTraversalState({
       currentRoomId: room.id,
       roomTitle: room.title,
       roomType: room.roomType,
       visitedRoomIds: [...this.visitedRoomIds],
-      revealedRoomIds: this.referralGateOpen || this.concurrenceSlipCollected ? ["R1", "R2"] : ["R1"],
+      revealedRoomIds: [
+        ...(this.referralGateOpen || this.concurrenceSlipCollected ? ["R1", "R2"] : ["R1"]),
+        ...getRevealedShortcutRoomIds(getHeldProcessItemIds()).filter((roomId): roomId is ReferralRoomId => roomId in REFERRAL_ROOMS)
+      ],
       exits: room.exits,
       lockedExits,
-      requiredItems
+      requiredItems: room.requiredItems
     });
   }
 
@@ -418,6 +626,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (!nearSlip) {
       setNearestInteractable(null);
       this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
+      if (input.aJustPressed && this.concurrenceSlipHintTarget()) {
+        retroAudio.blip();
+        setLatestMessage("Step closer to Concurrence Slip.");
+        return true;
+      }
       return false;
     }
     setNearestInteractable("Concurrence Slip");
@@ -425,6 +638,41 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (!input.aJustPressed) return false;
     this.collectConcurrenceSlip();
     return true;
+  }
+
+  private updateConcurrenceSlipPrompt(delta: number) {
+    const hintTarget = this.concurrenceSlipHintTarget();
+    const strictTarget = this.concurrenceSlipStrictTarget();
+    this.interactionPrompt.update(
+      delta,
+      strictTarget ?? hintTarget,
+      undefined,
+      strictTarget ? { badge: "A", text: "CONCURRENCE SLIP" } : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined
+    );
+  }
+
+  private concurrenceSlipStrictTarget(): Interactable | null {
+    if (this.currentRoomId !== "R2" || this.concurrenceSlipCollected) return null;
+    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 32) return null;
+    return this.concurrenceSlipTarget(32);
+  }
+
+  private concurrenceSlipHintTarget(): Interactable | null {
+    if (this.currentRoomId !== "R2" || this.concurrenceSlipCollected) return null;
+    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 46) return null;
+    return this.concurrenceSlipTarget(32);
+  }
+
+  private concurrenceSlipTarget(radius: number): Interactable {
+    return {
+      id: "concurrence-slip-pedestal",
+      label: "Concurrence Slip",
+      x: 128,
+      y: 132,
+      radius,
+      kind: "document",
+      onInteract: () => undefined
+    };
   }
 
   private collectConcurrenceSlip() {
@@ -435,6 +683,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     setObjective("Referral Vault: exit east to Silent Read Tower.");
     this.vaultText.setText("SLIP EARNED\nEAST: SILENT READ");
     this.concurrenceSlipIcon?.setTint(color(PALETTE.goldStamp));
+    this.clearConcurrenceSlipRouteCue();
+    addSnesRewardBurst(this, 128, 114, "concurrence-slip", "Concurrence Slip", (object) => this.track(object));
     retroAudio.stamp();
     this.syncRoomTraversalState();
     this.updateReferralMinimap();
@@ -443,6 +693,83 @@ export class ReferralVaultScene extends Phaser.Scene {
       "The slip is process evidence, not a machine decision.",
       "Carry it east to the proof tower."
     ]);
+  }
+
+  private refreshConcurrenceSlipRouteCue() {
+    if (this.currentRoomId !== "R2" || this.concurrenceSlipCollected) {
+      this.clearConcurrenceSlipRouteCue();
+      return;
+    }
+
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 12) };
+    const end = { x: 128, y: 132 };
+    const label = this.concurrenceSlipRouteCueLabel();
+    const cueKey = `R2:${label}:${start.x},${start.y}->${end.x},${end.y}`;
+    if (cueKey === this.concurrenceSlipRouteCueKey) return;
+
+    this.clearConcurrenceSlipRouteCue();
+    this.concurrenceSlipRouteCueKey = cueKey;
+    this.drawConcurrenceSlipRouteCue(start, end, label);
+  }
+
+  private clearConcurrenceSlipRouteCue() {
+    for (const object of this.concurrenceSlipRouteCueObjects) {
+      if (object.active) object.destroy();
+    }
+    this.concurrenceSlipRouteCueObjects = [];
+    this.concurrenceSlipRouteCueKey = "";
+  }
+
+  private trackConcurrenceSlipRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.concurrenceSlipRouteCueObjects.push(object);
+    return this.track(object);
+  }
+
+  private concurrenceSlipRouteCueLabel() {
+    if (!gameState.sceneProgress.foreignGovernmentPermissionComplete) return "PERMISSION";
+    if (!gameState.sceneProgress.withholdingAppealComplete) return "APPEAL";
+    if (!this.referralGateOpen) return "VISIBLE EXCISION";
+    return "TAKE SLIP";
+  }
+
+  private drawConcurrenceSlipRouteCue(start: { x: number; y: number }, end: { x: number; y: number }, label: string) {
+    const accent = label === "TAKE SLIP"
+      ? PALETTE.goldStamp
+      : label === "APPEAL"
+        ? PALETTE.classNetRed
+        : PALETTE.terminalCyan;
+
+    this.trackConcurrenceSlipRouteCue(this.add.ellipse(end.x, end.y + 16, 78, 16, color(PALETTE.black), 0.34)
+      .setName("referral-concurrence-slip-route-shadow")
+      .setDepth(136));
+    this.trackConcurrenceSlipRouteCue(this.add.rectangle(end.x, end.y, 44, 32, color(PALETTE.black), 0)
+      .setStrokeStyle(2, color(accent))
+      .setName("referral-concurrence-slip-route-target-glow")
+      .setDepth(236));
+
+    const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
+    const steps = Math.max(1, Math.min(7, Math.floor(distance / 13)));
+    for (let index = 1; index <= steps; index += 1) {
+      const t = index / (steps + 1);
+      const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
+      const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
+      this.trackConcurrenceSlipRouteCue(this.add.rectangle(x, y, 5, 5, color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.92)
+        .setName("referral-concurrence-slip-route-dot")
+        .setDepth(237));
+    }
+
+    const width = Math.max(56, label.length * 5 + 10);
+    this.trackConcurrenceSlipRouteCue(this.add.rectangle(end.x, end.y + 34, width, 10, color(PALETTE.black), 0.94)
+      .setStrokeStyle(1, color(accent))
+      .setName("referral-concurrence-slip-route-label-frame")
+      .setDepth(238));
+    this.trackConcurrenceSlipRouteCue(this.add.text(end.x, end.y + 31, label, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: accent
+    }).setName("referral-concurrence-slip-route-label")
+      .setOrigin(0.5, 0)
+      .setDepth(239));
   }
 
   private checkRoomExit() {
@@ -471,9 +798,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
 
     if (this.currentRoomId === "R2" && direction === "east") {
-      if (!this.concurrenceSlipCollected) {
-        setLatestMessage("Referral handoff requires the Concurrence Slip.");
-        setObjective("Collect the Concurrence Slip before leaving the chamber.");
+      const heldItems = getHeldProcessItemIds();
+      if (!canTraverseExit(this.currentRoomId, direction, heldItems)) {
+        const prompt = blockedExitPrompt(this.currentRoomId, direction, heldItems);
+        setLatestMessage(prompt.message);
+        setObjective(prompt.objective);
         this.player.setPosition(REFERRAL_PLAY_BOUNDS.right - 18, position.y);
         this.exitCooldownUntil = this.time.now + 500;
         return false;
@@ -507,7 +836,8 @@ export class ReferralVaultScene extends Phaser.Scene {
         this.correctMatches += 1;
         adjustReliability(3, `${item.label} matched to ${item.agency}`);
       } else {
-        adjustReliability(-6, "agency equity mismatch");
+        applyStandardsViolation("omitted_material_fact", `${item.label} was sent to the wrong equity.`);
+        this.vaultText.setText("STANDARD HIT\nMATERIAL FACT RISK");
       }
       this.reliability.update();
       this.matchIndex += 1;
@@ -535,12 +865,112 @@ export class ReferralVaultScene extends Phaser.Scene {
         setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
         adjustReliability(7, "manifest confirmed by human review");
         this.reliability.update();
-        this.showExcisionChoice();
+        this.showForeignGovernmentPermissionChoice();
         return;
       }
-      adjustReliability(-14, "final referral decision ceded or unchecked");
+      const violation = applyStandardsViolation("concealed_policy_defect", "A final referral decision was ceded or unchecked.");
       this.reliability.update();
-      this.dialog.show("MARCUS", "No silent handoff. Review the equities again.", () => this.startMatching());
+      this.dialog.show("STANDARD VIOLATION", [
+        violation.label,
+        "No silent handoff. Review the equities again."
+      ], () => this.startMatching());
+    });
+  }
+
+  private showForeignGovernmentPermissionChoice() {
+    if (gameState.sceneProgress.foreignGovernmentPermissionComplete) {
+      this.showExcisionChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.foreignGovernmentPermissionStep ?? 0;
+    const prompt = getForeignGovernmentPermissionPrompt(step);
+    setObjective(`Foreign-government permission: review note ${step + 1}/${FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length}.`);
+    this.vaultText.setText(`FOREIGN INFO\nPERMISSION ${step + 1}/3`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateForeignGovernmentPermissionAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Foreign-government permission shortcut: ${option.value}`);
+        this.reliability.update();
+        this.dialog.show("PERMISSION NOTE", [
+          result.message,
+          "Foreign-government information needs a visible review trail."
+        ], () => this.showForeignGovernmentPermissionChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.foreignGovernmentPermissionStep = nextStep;
+      if (!foreignGovernmentPermissionComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Foreign-government permission check ${nextStep}/${FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length}.`);
+        this.dialog.show("PERMISSION NOTE", [
+          result.message,
+          "Continue the permission note before concurrence."
+        ], () => this.showForeignGovernmentPermissionChoice());
+        return;
+      }
+
+      gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
+      gameState.sceneProgress.foreignGovernmentPermissionStep = FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length;
+      addDocumentPoints(6, "foreign-government permission note documented");
+      setLatestMessage("Foreign-government permission note documented.");
+      adjustReliability(4, "foreign-government permission trail preserved");
+      this.reliability.update();
+      this.dialog.show("PERMISSION NOTE", [
+        result.message,
+        "The packet now shows permission or withholding treatment before concurrence."
+      ], () => this.showWithholdingAppealChoice());
+    });
+  }
+
+  private showWithholdingAppealChoice() {
+    if (gameState.sceneProgress.withholdingAppealComplete) {
+      this.showExcisionChoice();
+      return;
+    }
+
+    const step = gameState.sceneProgress.withholdingAppealStep ?? 0;
+    const prompt = getWithholdingAppealPrompt(step);
+    setObjective(`Withholding appeal: review contested document ${step + 1}/${WITHHOLDING_APPEAL_PROMPTS.length}.`);
+    this.vaultText.setText(`WITHHOLDING\nAPPEAL ${step + 1}/3`);
+    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const result = evaluateWithholdingAppealAnswer(prompt.id, option.value);
+      if (!result.ok) {
+        retroAudio.warning();
+        if (result.violation) applyStandardsViolation(result.violation, `Withholding appeal shortcut: ${option.value}`);
+        this.reliability.update();
+        this.dialog.show("WITHHOLDING REVIEW", [
+          result.message,
+          "Whole-document withholding needs a visible human review trail."
+        ], () => this.showWithholdingAppealChoice());
+        return;
+      }
+
+      const nextStep = step + 1;
+      gameState.sceneProgress.withholdingAppealStep = nextStep;
+      if (!withholdingAppealComplete(nextStep)) {
+        retroAudio.confirm();
+        setLatestMessage(`Withholding appeal check ${nextStep}/${WITHHOLDING_APPEAL_PROMPTS.length}.`);
+        this.dialog.show("WITHHOLDING REVIEW", [
+          result.message,
+          "Continue the appeal before marking partial excision."
+        ], () => this.showWithholdingAppealChoice());
+        return;
+      }
+
+      gameState.sceneProgress.withholdingAppealComplete = 1;
+      gameState.sceneProgress.withholdingAppealStep = WITHHOLDING_APPEAL_PROMPTS.length;
+      setDocumentWorkflowState("sbu_annotation_001", "appeal_needed");
+      addDocumentPoints(7, "whole-document withholding appeal recorded");
+      setLatestMessage("Whole-document withholding appeal recorded.");
+      adjustReliability(5, "withholding appeal kept visible");
+      this.reliability.update();
+      this.dialog.show("WITHHOLDING REVIEW", [
+        result.message,
+        "Now mark the remaining partial excision with visible language."
+      ], () => this.showExcisionChoice());
     });
   }
 
@@ -556,6 +986,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         awardProcessStamp("referral");
         setDocumentWorkflowState("source_note_047", "cleared");
         setDocumentWorkflowState("cross_reference_001", "cleared");
+        clearDocumentUndisclosedDeletion("sbu_annotation_001", "bracketed insertion added");
         setDocumentWorkflowState("sbu_annotation_001", "excised");
         setAgencyEquityResponse("sbu_annotation_001", "agency-cyan", "cleared");
         setAgencyEquityResponse("sbu_annotation_001", "agency-red", "excised");
@@ -578,9 +1009,17 @@ export class ReferralVaultScene extends Phaser.Scene {
         ]);
         return;
       }
-      adjustReliability(-10, "withholding was hidden or unclear");
+      markDocumentUndisclosedDeletion("sbu_annotation_001", "unbracketed excision");
+      const violation = applyStandardsViolation(
+        "undisclosed_deletion",
+        "Excision skipped the bracketed insertion.",
+        "sbu_annotation_001"
+      );
       this.reliability.update();
-      this.dialog.show("PRIYA", "Visible language. Never a silent gap.", () => this.showExcisionChoice());
+      this.dialog.show("STANDARD VIOLATION", [
+        violation.label,
+        "Visible language. Never a silent gap."
+      ], () => this.showExcisionChoice());
     });
   }
 }

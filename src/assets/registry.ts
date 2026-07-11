@@ -5,7 +5,8 @@ export const OVERWORLD_REGIONS = {
   pacific: "art-pack/overworld_maps/02_pacific_theater.png",
   middle_east: "art-pack/overworld_maps/03_middle_east_crossroads.png",
   latin_america: "art-pack/overworld_maps/04_latin_america.png",
-  africa: "art-pack/overworld_maps/05_africa_cold_war_front.png"
+  africa: "art-pack/overworld_maps/05_africa_cold_war_front.png",
+  overseas_post: "art-pack/world2/01_overseas_post_region.png"
 } as const;
 
 export const GAMEPLAY_MAPS = {
@@ -49,17 +50,27 @@ export const FRUS_VOLUMES = {
   interact_open_maps: "art-pack/frus_volumes/16_open_volume_with_maps.png"
 } as const;
 
+export const SCREENS = {
+  frus_world_map: "art-pack/screens/frus_world_map.jpg",
+  title_screen_16bit_sharp_256x240: "art-pack/screens/title_screen_16bit_sharp_256x240.png",
+  title_screen_256x224: "art-pack/screens/title_screen_256x224.png",
+  title_screen_frus_chest_256x240: "art-pack/screens/title_screen_frus_chest_256x240.png",
+  ending_binding_ceremony_256x240: "art-pack/screens/ending_binding_ceremony_256x240.png"
+} as const;
+
 export const ALL_NEW_ART_REGISTRIES = {
   OVERWORLD_REGIONS,
   GAMEPLAY_MAPS,
-  FRUS_VOLUMES
+  FRUS_VOLUMES,
+  SCREENS
 } as const;
 
 export type OverworldRegionKey = keyof typeof OVERWORLD_REGIONS;
 export type GameplayMapKey = keyof typeof GAMEPLAY_MAPS;
 export type FrusVolumeKey = keyof typeof FRUS_VOLUMES;
+export type ScreenKey = keyof typeof SCREENS;
 export type NewArtRegistryName = keyof typeof ALL_NEW_ART_REGISTRIES;
-export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey;
+export type NewArtTextureKey = OverworldRegionKey | GameplayMapKey | FrusVolumeKey | ScreenKey;
 
 export function gameplayTiledCacheKey(mapKey: GameplayMapKey) {
   return `tiled-${mapKey}`;

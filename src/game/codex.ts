@@ -76,12 +76,12 @@ const NPC_ENTRIES: readonly CodexEntry[] = [
     lore: "Tracks declassification routes, referrals, and ClassNet/OpenNet handoffs."
   },
   {
-    id: "npc-senior-archivist",
+    id: "npc-archive-specialist",
     category: "NPCs",
-    displayName: "Senior Archivist",
+    displayName: "Archive Specialist",
     artKey: "danne-portrait-archivist",
     startsUnlocked: true,
-    lore: "Represents archival expertise without creating a rank advantage over the player."
+    lore: "Represents archival expertise as equal-rank collaboration around provenance and source access."
   },
   {
     id: "npc-senator",

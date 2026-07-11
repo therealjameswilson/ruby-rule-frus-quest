@@ -10,9 +10,9 @@ export class MarineSecurityGuard extends DanneNpc {
     unlockCodexEntry("npc-marine-guard");
     super(scene, MARINE_GUARD_ASSET, "Marine Security Guard", x, y, {
       label: "GUARD",
-      scale: 0.15,
-      labelY: 17,
-      shadowY: 13
+      characterKey: "security_officer",
+      labelY: 22,
+      shadowY: 16
     });
   }
 

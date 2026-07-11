@@ -37,3 +37,15 @@ export function danneBoastForPhase(phase: DanneBoastPhase, index: number) {
   const lines = DANNE_PHASE_BOASTS[phase];
   return lines[index % lines.length];
 }
+
+export const DANNE_LURKER_BOASTS = [
+  "OMIT THE HARD PART.",
+  "MY CONFIDENCE IS ENOUGH.",
+  "SOURCE NOTES ARE TOO SLOW.",
+  "LET THE QUEUE DECIDE.",
+  "NO NEED TO SHOW THE GAP."
+] as const;
+
+export function danneLurkerBoast(index: number) {
+  return DANNE_LURKER_BOASTS[index % DANNE_LURKER_BOASTS.length];
+}

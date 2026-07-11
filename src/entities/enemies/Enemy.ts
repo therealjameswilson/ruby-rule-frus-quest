@@ -1,8 +1,8 @@
 import Phaser from "phaser";
 import { PALETTE } from "../../game/constants";
 import type { Position } from "../../game/types";
-import { setPixelPosition, snapPixel } from "../../systems/pixelPerfect";
-import { approach, frameDeltaSeconds } from "../../systems/smoothMovement";
+import { snapPixel } from "../../systems/pixelPerfect";
+import { approach, frameDeltaSeconds, setRenderedPosition, snapRenderedPosition } from "../../systems/smoothMovement";
 
 interface EnemyOptions {
   label: string;
@@ -54,6 +54,7 @@ export abstract class Enemy {
   private readonly speed: number;
   private readonly acceleration: number;
   private readonly waypointTolerance: number;
+  private playerHitCooldownUntil = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: EnemyOptions) {
     this.scene = scene;
@@ -87,7 +88,7 @@ export abstract class Enemy {
   }
 
   get position(): Position {
-    return { x: snapPixel(this.currentX), y: snapPixel(this.currentY) };
+    return snapRenderedPosition({ x: this.currentX, y: this.currentY });
   }
 
   get isDead() {
@@ -111,6 +112,23 @@ export abstract class Enemy {
       ease: "Stepped"
     });
     return false;
+  }
+
+  /** Axis-aligned body used to test the player's sword/action hitbox. */
+  bodyBounds(): Phaser.Geom.Rectangle {
+    return new Phaser.Geom.Rectangle(this.currentX - 9, this.currentY - 14, 18, 20);
+  }
+
+  /**
+   * Apply a player sword/action hit, gated by a short per-enemy cooldown so a
+   * single swing that overlaps for several frames only connects once (ALTTP:
+   * one swing, one flinch). Returns "miss" when the cooldown swallows the hit,
+   * "kill" when the hit is fatal, otherwise "hit".
+   */
+  tryPlayerHit(now: number, amount = 1, source?: Position, knockbackDistance = 10, cooldownMs = 320): "miss" | "hit" | "kill" {
+    if (this.dead || now < this.playerHitCooldownUntil) return "miss";
+    this.playerHitCooldownUntil = now + cooldownMs;
+    return this.takeDamage(amount, source, knockbackDistance) ? "kill" : "hit";
   }
 
   knockbackFrom(source: Position, distance = 8) {
@@ -160,7 +178,7 @@ export abstract class Enemy {
   protected syncRender(timeMs: number, offsetX = 0, offsetY = 0) {
     const renderX = snapPixel(this.currentX + offsetX);
     const renderY = snapPixel(this.currentY + offsetY);
-    setPixelPosition(this.container, renderX, renderY);
+    setRenderedPosition(this.container, renderX, renderY);
     this.container.setDepth(renderY);
     return { renderX, renderY };
   }

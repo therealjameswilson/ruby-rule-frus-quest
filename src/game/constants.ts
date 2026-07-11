@@ -3,14 +3,22 @@ import {
   NES_ARCHIVE_GRAY,
   NES_BLACK,
   NES_BRIGHT_RUBY,
+  NES_BRONZE,
   NES_BUCKRAM_RUBY,
   NES_CLASSNET_RED,
   NES_CREAM_PAPER,
   NES_DARK_MAROON,
+  NES_DEEP_BROWN,
+  NES_DEEP_GREEN,
   NES_DEEP_RUBY,
   NES_GOLD,
+  NES_MEDIUM_GREEN,
+  NES_MOSS_GREEN,
+  NES_MUTED_RUBY,
+  NES_OLD_GOLD,
   NES_OPENNET_GREEN,
   NES_AGED_PAPER_SHADOW,
+  NES_PALE_GOLD,
   NES_SLATE_BLUE,
   NES_STONE_LIGHT,
   NES_TERMINAL_CYAN,
@@ -34,10 +42,18 @@ export const PALETTE = {
   mapWater: NES_SLATE_BLUE,
   terminalCyan: NES_TERMINAL_CYAN,
   openNetGreen: NES_OPENNET_GREEN,
+  plantLeaf: NES_MEDIUM_GREEN,
+  plantLeafShade: NES_MOSS_GREEN,
+  plantLeafDark: NES_DEEP_GREEN,
   classNetRed: NES_CLASSNET_RED,
   shadowNavy: NES_DEEP_RUBY,
   black: NES_BLACK,
-  white: NES_WHITE_HIGHLIGHT
+  white: NES_WHITE_HIGHLIGHT,
+  bronze: NES_BRONZE,
+  oldGold: NES_OLD_GOLD,
+  paleGold: NES_PALE_GOLD,
+  mutedRuby: NES_MUTED_RUBY,
+  deepBrown: NES_DEEP_BROWN
 } as const;
 
 export type PaletteKey = keyof typeof PALETTE;
@@ -376,6 +392,16 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     title: "Source Entry",
     grid: { x: 0, y: 0 },
     exits: { north: "DN1", east: "A2", south: "B1" },
+    lockedExits: {
+      north: "NARA stacks citation lock",
+      east: "OpenNet source-note lock",
+      south: "Referral stacks citation lock"
+    },
+    requiredItems: {
+      north: "citation_stamp",
+      east: "citation_stamp",
+      south: "citation_stamp"
+    },
     roomType: "normal"
   },
   {
@@ -510,7 +536,6 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     grid: { x: 4, y: 0 },
     exits: { east: "N2" },
     lockedExits: { east: "ClassNet vault door" },
-    requiredItems: { east: "clearance_token" },
     roomType: "puzzle"
   },
   {
@@ -518,7 +543,9 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "two_networks",
     title: "ClassNet Vault",
     grid: { x: 5, y: 0 },
-    exits: { west: "N1" },
+    exits: { west: "N1", east: "R1" },
+    lockedExits: { east: "Red vault exit" },
+    requiredItems: { east: "clearance_token" },
     roomType: "reward"
   },
   {
@@ -592,10 +619,11 @@ export const SCENE_ORDER = [
   "SilentReadScene",
   "EndingScene",
   "TrueEndingScene",
+  "BadEndingScene",
   "CodexScene",
   "RenderDebugScene",
   "DanneGallery",
   "SpriteGallery"
 ] as const;
 
-export const CONTROLS_TEXT = "ARROWS/WASD MOVE  SPACE/ENTER ACT  E ABILITY  M INV  R REL  N SOUND";
+export const CONTROLS_TEXT = "ARROWS/WASD MOVE   SPACE/ENTER ACT   E ABILITY\nM INV   R REL   N SOUND   ESC CLOSE";
