@@ -86,6 +86,7 @@ import {
 } from "../systems/volumeAssembly";
 import type { VolumeAssemblyPieceId, VolumeAssemblyReadout, VolumeAssemblyState } from "../systems/volumeAssembly";
 import type { DanneEnemyVariantId } from "../entities/danneVariants";
+import { isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import type {
   AdventureHudReadout,
   AdventureTrainingReadout,
@@ -2327,6 +2328,9 @@ export function renderGameToText() {
       snesAtlas: getSnesAtlasReadout(),
       reliability: gameState.reliability,
       adventureHud: getAdventureHudReadout(),
+      accessibility: {
+        highContrastColorblindMode: isColorblindModeEnabled()
+      },
       adventureTraining: getAdventureTrainingReadout(),
       lttpFrusTranslation: getLttpFrusTranslationReadout(),
       oneHourTraining: getOneHourTrainingReadout(),

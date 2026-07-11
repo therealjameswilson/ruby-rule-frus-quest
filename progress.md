@@ -25,6 +25,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
   - Distributed the eight canonical DANN-E forms across GameplayMapScene combat rooms: Black Vault, NARA Stacks, Embassy, and Capitol Hill.
   - Scaled the single-card DANN-E variant art down to enemy-token size and hid permanent labels during normal play; names/HP remain available through `window.render_game_to_text()` and `?debug=threats`.
   - Updated `docs/DANNE_ENEMY_DESIGN.md` and tests so future changes cannot silently add non-canonical DANN-E variants.
+- Colorblind accessibility mode pass (2026-07-07):
+  - Registered the accessibility overlay art pack as typed preload assets so HUD, enemy, and boss feedback can swap to pattern-backed indicators without hardcoded paths.
+  - Added a persisted `High Contrast / Colorblind Mode` pause-subscreen toggle, available from Esc/M pause flow and stored in `localStorage`.
+  - Wired pattern overlays into reliability hearts, process-tool slots, enemy HP bars, boss HP/phase/weakness indicators, and `window.render_game_to_text()` state.
+  - Verification:
+    - `npm run build` passes with the known Vite large-chunk warning;
+    - required web-game client completed against `?scene=OfficeScene&role=compiler&name=Ruby&v=colorblind-smoke`;
+    - direct Playwright probe confirmed Esc opens the subscreen and clicking `HC / CB` keeps pause open while persisting `ruby-rule.highContrastColorblind=true`;
+    - visual proof: `output/colorblind-pause-after-toggle.png`.
 - ALTTP disassembly translation pass (2026-07-05):
   - Studied `JaredBrian/AsarUSALTTPDisassembly` as a mechanics reference only, focusing on room data pointers, ancilla object allocation/update loops, sprite damage checks, direction-to-player helpers, and milestone item effects.
   - Added `src/game/lttpFrusTranslation.ts` and `docs/lttp-frus-translation.md` to formalize how those patterns become FRUS rooms, process-effect slots, standards/reliability damage, DANN-E pressure targeting, and publication milestone rewards.

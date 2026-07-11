@@ -1,6 +1,8 @@
 import Phaser from "phaser";
+import { ACCESSIBILITY_OVERLAYS } from "../../assets/registry";
 import { PALETTE } from "../../game/constants";
 import type { Position } from "../../game/types";
+import { isColorblindModeEnabled } from "../../systems/accessibilitySettings";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { approach, frameDeltaSeconds, setRenderedPosition, snapRenderedPosition } from "../../systems/smoothMovement";
 
@@ -51,6 +53,11 @@ export abstract class Enemy {
   protected velocityY = 0;
   protected health: number;
   protected dead = false;
+  private readonly maxHealth: number;
+  private readonly hpBack: Phaser.GameObjects.Rectangle;
+  private readonly hpFill: Phaser.GameObjects.Rectangle;
+  private readonly hpPattern?: Phaser.GameObjects.TileSprite;
+  private readonly weaknessIcon?: Phaser.GameObjects.Image;
   private readonly speed: number;
   private readonly acceleration: number;
   private readonly waypointTolerance: number;
@@ -66,12 +73,29 @@ export abstract class Enemy {
     this.acceleration = options.acceleration;
     this.waypointTolerance = options.waypointTolerance ?? 3;
     this.health = options.health ?? 1;
+    this.maxHealth = Math.max(1, this.health);
     this.waypoints = options.waypoints.map((point) => ({ ...point }));
     if (this.waypoints.length) this.waypoints[0] = { x, y };
 
     const shadowOptions = options.shadow ?? { y: 15, width: 18, height: 6 };
     const shadow = scene.add.ellipse(0, shadowOptions.y, shadowOptions.width, shadowOptions.height, color(PALETTE.black));
     this.sprite = scene.add.sprite(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : options.fallbackTextureKey);
+    this.hpBack = scene.add.rectangle(0, -19, 22, 4, color(PALETTE.black), 0.9)
+      .setStrokeStyle(1, color(PALETTE.stoneGray))
+      .setVisible(false);
+    this.hpFill = scene.add.rectangle(-10, -19, 20, 2, color(PALETTE.classNetRed), 0.95)
+      .setOrigin(0, 0.5)
+      .setVisible(false);
+    this.hpPattern = scene.textures.exists("hp_cell_full" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+      ? scene.add.tileSprite(-10, -19, 20, 4, "hp_cell_full" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+        .setOrigin(0, 0.5)
+        .setVisible(false)
+      : undefined;
+    this.weaknessIcon = scene.textures.exists("weakness_target" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+      ? scene.add.image(13, -20, "weakness_target" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+        .setScale(0.65)
+        .setVisible(false)
+      : undefined;
     const tag = scene.add.text(0, options.tag.y, options.tag.text, {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -84,7 +108,16 @@ export abstract class Enemy {
       color: options.cue.color,
       backgroundColor: options.cue.backgroundColor
     }).setOrigin(0.5).setVisible(false);
-    this.container = scene.add.container(x, y, [shadow, this.sprite, tag, this.cue]).setDepth(y);
+    this.container = scene.add.container(x, y, [
+      shadow,
+      this.sprite,
+      this.hpBack,
+      this.hpFill,
+      ...(this.hpPattern ? [this.hpPattern] : []),
+      ...(this.weaknessIcon ? [this.weaknessIcon] : []),
+      tag,
+      this.cue
+    ]).setDepth(y);
   }
 
   get position(): Position {
@@ -180,7 +213,19 @@ export abstract class Enemy {
     const renderY = snapPixel(this.currentY + offsetY);
     setRenderedPosition(this.container, renderX, renderY);
     this.container.setDepth(renderY);
+    this.syncAccessibilityCombatFeedback();
     return { renderX, renderY };
+  }
+
+  private syncAccessibilityCombatFeedback() {
+    const damaged = this.health < this.maxHealth;
+    const highContrast = isColorblindModeEnabled();
+    const ratio = Phaser.Math.Clamp(this.health / this.maxHealth, 0, 1);
+    const width = Math.max(1, Math.round(20 * ratio));
+    this.hpBack.setVisible(damaged);
+    this.hpFill.setVisible(damaged).setSize(width, 2);
+    this.hpPattern?.setVisible(damaged && highContrast).setSize(width, 4);
+    this.weaknessIcon?.setVisible(damaged && highContrast);
   }
 
   protected color(hex: string) {
