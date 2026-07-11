@@ -81,6 +81,7 @@ import type { Interactable } from "../game/types";
 import type { Position } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
+import { applyHitShake } from "../systems/combatFeedback";
 import {
   decideInteractionFeedback,
   InteractionAssist,
@@ -95,10 +96,13 @@ import { applyStandardsViolation } from "../systems/reliability";
 import {
   completeEncounterWaveQueue,
   createEncounterWaveQueue,
+  EncounterWaveTransition,
   hasPendingEncounterWaves,
   nextEncounterWave,
+  resolveEncounterCompletion,
   type EncounterWaveQueue
 } from "../systems/encounterWaves";
+import { AttackBuffer, HitstopController } from "../systems/hitstop";
 import {
   applyRoomClearGate,
   isRoomCleared,
@@ -258,6 +262,10 @@ export class GameplayMapScene extends Phaser.Scene {
   private danneRoomId = "";
   private danneRoomUnlockedFlags: string[] = [];
   private danneWaves: EncounterWaveQueue<DanneSpawnPlan> = createEncounterWaveQueue([]);
+  private readonly danneWaveTransition = new EncounterWaveTransition();
+  private readonly hitstop = new HitstopController();
+  private readonly attackBuffer = new AttackBuffer();
+  private danneBanner?: Phaser.GameObjects.Container;
   private activeMusicCue = "";
 
   constructor() {
@@ -290,6 +298,11 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   create() {
+    this.danneWaveTransition.reset();
+    this.hitstop.reset();
+    this.attackBuffer.clear();
+    this.danneBanner?.destroy();
+    this.danneBanner = undefined;
     this.tileData = this.readTileData();
     this.applyGameplayMapDebugGrants();
     setSceneState("GameplayMapScene", "explore", MAP_OBJECTIVES[this.mapKey]);
@@ -378,7 +391,14 @@ export class GameplayMapScene extends Phaser.Scene {
       this.returnToWorldMap();
       return;
     }
-    if (input.bJustPressed || input.abilityJustPressed) {
+    if (input.bJustPressed || input.abilityJustPressed) this.attackBuffer.press(this.time.now);
+    if (this.hitstop.isFrozen(this.time.now)) {
+      this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      this.syncGameplayThreats();
+      return;
+    }
+    if (this.attackBuffer.consume(this.time.now, true)) {
       const toolLabel = gameState.equippedProcessItem?.replace(/_/g, " ").toUpperCase() ?? "FRUS TOOL";
       if (this.player.startAction(gameState.equippedProcessItem)) {
         setLatestMessage(`Tool action: ${toolLabel}.`);
@@ -404,8 +424,9 @@ export class GameplayMapScene extends Phaser.Scene {
     this.updateDanneEncounter(delta);
     const combatCue = this.currentDanneCombatCue();
     const nearestCandidate = nearestInteractable(this.player.position, this.interactables);
-    const nearest = combatCue ? null : nearestCandidate;
-    const hintTarget = combatCue
+    const combatLocked = this.isDanneEncounterLocked();
+    const nearest = combatLocked ? null : nearestCandidate;
+    const hintTarget = combatLocked
       ? null
       : this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, this.interactables));
     const promptTarget = nearest ?? hintTarget;
@@ -588,16 +609,30 @@ export class GameplayMapScene extends Phaser.Scene {
         : this.danneRoomId
           ? 1
           : 0);
+    const completion = resolveEncounterCompletion(
+      expectedEnemyCount,
+      status.defeatedEnemyCount,
+      isRoomCleared(this.danneRoomId || this.mapKey),
+      hasPendingEncounterWaves(this.danneWaves) || this.danneWaveTransition.pending
+    );
     return {
       ...status,
-      requiredEnemyCount: expectedEnemyCount,
-      defeatedEnemyCount: status.cleared ? expectedEnemyCount : status.defeatedEnemyCount
+      requiredEnemyCount: completion.required,
+      defeatedEnemyCount: completion.defeated,
+      cleared: completion.cleared
     };
   }
 
   private currentDanneCombatCue() {
     const active = this.danneEnemies.filter((enemy) => !enemy.defeated);
-    if (!this.danneRoomId || !active.length) return null;
+    if (!this.danneRoomId) return null;
+    if (!active.length) {
+      if (!this.danneWaveTransition.pending && !hasPendingEncounterWaves(this.danneWaves)) return null;
+      return {
+        actionHint: "NEXT WAVE",
+        objective: `Wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} cleared. Next review file incoming.`
+      };
+    }
     const player = this.player.position;
     const target = active.reduce((nearest, enemy) => {
       const nearestDistance = Phaser.Math.Distance.Between(player.x, player.y, nearest.x, nearest.y);
@@ -655,20 +690,33 @@ export class GameplayMapScene extends Phaser.Scene {
         setObjective(`Wrong counter. Equip ${enemy.readout().weakness.replace(/_/g, " ").toUpperCase()} for ${enemy.readout().label}.`);
         this.objectiveOverrideMsRemaining = 1250;
       } else if (hitResult === "damaged") {
+        this.hitstop.freezeFor(this.time.now, "sword-hit");
+        applyHitShake(this, "boss-hit", 0.8);
         setObjective(`${enemy.readout().label}: ${enemy.readout().hp}/${enemy.readout().maxHp} HP. Keep pressure with the matching tool.`);
         this.objectiveOverrideMsRemaining = 900;
       } else if (hitResult === "defeated") {
+        this.hitstop.freezeFor(this.time.now, "sword-hit-heavy");
+        applyHitShake(this, "boss-defeat", 0.5);
         setObjective(`${enemy.readout().label} defeated. Clear remaining DANN-E variants to open the room.`);
         this.objectiveOverrideMsRemaining = 1150;
       }
     }
 
     if (!this.danneEnemies.some((enemy) => !enemy.defeated) && hasPendingEncounterWaves(this.danneWaves)) {
+      if (this.danneWaveTransition.begin(this.time.now)) {
+        const nextWave = this.danneWaves.currentWave + 1;
+        this.showDanneBanner(`WAVE ${this.danneWaves.currentWave} CLEARED`, `NEXT REVIEW ${nextWave}/${this.danneWaves.totalWaves}`, PALETTE.goldStamp);
+        retroAudio.confirm();
+        setLatestMessage(`DANN-E wave ${this.danneWaves.currentWave} cleared. Next review file incoming.`);
+        setObjective(`Wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} cleared. Prepare the next tool counter.`);
+        this.objectiveOverrideMsRemaining = 700;
+        this.updateVisibleMapState();
+      }
+      if (!this.danneWaveTransition.consumeIfReady(this.time.now)) return;
       this.advanceDanneWave();
-      retroAudio.confirm();
-      setLatestMessage(`DANN-E wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} incoming.`);
-      setObjective("New DANN-E wave: read the nearest weakness, equip its tool, then press B.");
-      this.objectiveOverrideMsRemaining = 1300;
+      setLatestMessage(`DANN-E wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} active.`);
+      setObjective("New DANN-E wave: read the weakness glyph, equip its tool, then press B.");
+      this.objectiveOverrideMsRemaining = 1100;
     }
 
     const wasCleared = isRoomCleared(this.danneRoomId);
@@ -682,6 +730,8 @@ export class GameplayMapScene extends Phaser.Scene {
     );
     if (!wasCleared && status.cleared) {
       retroAudio.confirm();
+      applyHitShake(this, "boss-defeat", 0.42);
+      this.showDanneBanner("RECORD CLEARED", "ROUTES UNLOCKED", PALETTE.openNetGreen);
       this.updateGameplayMusic();
       if (this.mapKey === "black_vault") this.openBlackVaultBlastDoors();
       else this.refreshDoorRouteBadges();
@@ -706,6 +756,61 @@ export class GameplayMapScene extends Phaser.Scene {
 
   private danneCombatMusicCue() {
     return this.mapKey === "black_vault" ? "DanneCombat" : "DanneMiniboss";
+  }
+
+  private isDanneEncounterLocked() {
+    return Boolean(this.danneBanner?.active) || (Boolean(this.danneRoomId) && (
+      this.danneEnemies.some((enemy) => !enemy.defeated)
+      || hasPendingEncounterWaves(this.danneWaves)
+      || this.danneWaveTransition.pending
+    ));
+  }
+
+  private showDanneBanner(title: string, subtitle: string, accent: string) {
+    this.danneBanner?.destroy();
+    const banner = this.add.container(GAME_WIDTH / 2, 112)
+      .setName("danne-encounter-banner")
+      .setDepth(970)
+      .setAlpha(0);
+    banner.add(this.add.rectangle(1, 1, 112, 27, color(PALETTE.black), 0.55));
+    banner.add(this.add.rectangle(0, 0, 112, 27, color(PALETTE.deepRuby), 0.96)
+      .setStrokeStyle(1, color(accent), 1));
+    banner.add(this.add.text(0, -10, title, {
+      fontFamily: "monospace",
+      fontSize: "7px",
+      color: PALETTE.creamPaper,
+      align: "center"
+    }).setOrigin(0.5, 0));
+    banner.add(this.add.text(0, 2, subtitle, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: accent,
+      align: "center"
+    }).setOrigin(0.5, 0));
+    this.danneBanner = banner;
+    this.tweens.add({
+      targets: banner,
+      alpha: 1,
+      y: 109,
+      duration: 90,
+      ease: "Stepped",
+      onComplete: () => {
+        this.time.delayedCall(520, () => {
+          if (!banner.scene) return;
+          this.tweens.add({
+            targets: banner,
+            alpha: 0,
+            y: 104,
+            duration: 130,
+            ease: "Stepped",
+            onComplete: () => {
+              if (this.danneBanner === banner) this.danneBanner = undefined;
+              banner.destroy();
+            }
+          });
+        });
+      }
+    });
   }
 
   private syncGameplayThreats() {
@@ -737,19 +842,21 @@ export class GameplayMapScene extends Phaser.Scene {
           : undefined
       };
     });
-    if (roomStatus?.cleared && threats.length === 0) {
+    if (roomStatus && threats.length === 0) {
       threats.push({
-        label: "DANN-E ROOM GATE",
+        label: roomStatus.cleared ? "DANN-E ROOM GATE" : "DANN-E REVIEW QUEUE",
         x: 128,
         y: 32,
-        behavior: "room-clear marker",
-        defeatMethod: "All matching FRUS tool counters completed.",
-        status: "cleared",
+        behavior: roomStatus.cleared ? "room-clear marker" : "between-wave review pause",
+        defeatMethod: roomStatus.cleared
+          ? "All matching FRUS tool counters completed."
+          : "Prepare the matching FRUS tool for the next review file.",
+        status: roomStatus.cleared ? "cleared" : "next wave pending",
         roomClear: {
           roomId: roomStatus.roomId,
           defeated: roomStatus.defeatedEnemyCount,
           required: roomStatus.requiredEnemyCount,
-          cleared: true
+          cleared: roomStatus.cleared
         }
       });
     }

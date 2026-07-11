@@ -4349,3 +4349,31 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   routes booted their requested scene with zero console/page errors. Visual
   artifacts: `output/danne-native-attack-focused.png` and
   `output/danne-native-mobile.png`.
+
+## 2026-07-11 — Codex + Perplexity harmonization and counter-room cadence
+
+- Re-audited the GitHub pull-request graph after the later Perplexity drops:
+  every one of the 21 source PR heads remains an ancestor of
+  `codex/gameplay-integration`. The only closed-unmerged PR is the deliberately
+  superseded five-variant DANN-E design draft (#41); the canonical eight-form
+  roster is preserved.
+- Added three-frame normal and four-frame heavy hit-stop plus restrained camera
+  shake to correct-tool DANN-E impacts. A short action buffer retains a B press
+  made during hit-stop without allowing weapon cooldown cancellation.
+- Added a 900 ms review pause between staged waves. The room stays locked and
+  reports `1/2, cleared: false` during the pause, then announces the next review
+  file. The dedicated DANN-E QA readout now preserves room-clear state even when
+  the between-wave active enemy count is zero.
+- Added compact `WAVE CLEARED` and `RECORD CLEARED / ROUTES UNLOCKED` banners.
+  Ordinary archival prompts remain suppressed through the celebration so the
+  reward beat stays legible on desktop and mobile.
+- Live-played the complete NARA counter room: Review Folder defeated Mark I,
+  Citation Stamp defeated Swarm, the tool was switched through the real pause
+  inventory, and the route opened only at `2/2`. The same route passed at
+  393×852 / DPR 3 with touch controls visible and no console/page errors.
+- Verification: full Vitest suite `471/471` across 89 files; production build
+  passes (known Vite large-chunk warning only); all 25 registered `?scene=`
+  routes reached the requested scene with zero console/page errors. Visual
+  artifacts: `output/danne-wave-review-pause.png`,
+  `output/danne-wave-two-active.png`, `output/danne-room-cleared.png`, and their
+  `mobile-` counterparts.
