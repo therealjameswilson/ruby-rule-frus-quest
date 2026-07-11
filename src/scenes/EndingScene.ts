@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { ALT_ENDING_ASSETS, FRUS_VOLUMES, SCREENS } from "../assets/registry";
+import { ALT_ENDING_ASSETS, FRUS_VOLUMES, SCREENS, publicAssetPath } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   evaluateKelloggCertificationAnswer,
@@ -166,6 +166,20 @@ export class EndingScene extends Phaser.Scene {
 
   constructor() {
     super("EndingScene");
+  }
+
+  preload() {
+    for (const [key, path] of Object.entries(ALT_ENDING_ASSETS)) {
+      if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
+    }
+    const rewardKey = FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE;
+    if (!this.textures.exists(rewardKey)) {
+      this.load.image(rewardKey, publicAssetPath(FRUS_VOLUMES[rewardKey]));
+    }
+    const introKey = "intro_screen_256x224" satisfies keyof typeof SCREENS;
+    if (!this.textures.exists(introKey)) {
+      this.load.image(introKey, publicAssetPath(SCREENS[introKey]));
+    }
   }
 
   create() {

@@ -101,6 +101,19 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
     super("HiddenReadingRoomScene");
   }
 
+  preload() {
+    const { tilesetNative, firstEdition } = SECRET_READING_ROOM_ASSETS;
+    if (!this.textures.exists(tilesetNative.key)) {
+      this.load.image(tilesetNative.key, tilesetNative.path);
+    }
+    if (!this.textures.exists(firstEdition.key)) {
+      this.load.spritesheet(firstEdition.key, firstEdition.path, {
+        frameWidth: firstEdition.frameWidth,
+        frameHeight: firstEdition.frameHeight
+      });
+    }
+  }
+
   create() {
     this.cameras.main.setBackgroundColor(PALETTE.black);
     setSceneState("HiddenReadingRoomScene", "explore", "Hidden Reading Room: claim the first-edition FRUS volume.");

@@ -2,14 +2,6 @@ import Phaser from "phaser";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
-import {
-  ALL_NEW_ART_REGISTRIES,
-  GAMEPLAY_TILED_MAPS,
-  SECRET_READING_ROOM_ASSETS,
-  UI_PACK_FRAMES,
-  gameplayTiledCacheKey,
-  publicAssetPath
-} from "../assets/registry";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
   DANNE_BOSS_SPRITE_ASSET,
@@ -80,8 +72,6 @@ export class BootScene extends Phaser.Scene {
       frameHeight: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameHeight
     });
     this.preloadDannePack();
-    this.preloadAllNewArtPack();
-    this.preloadSecretReadingRoom();
     if (this.shouldLogAssetDebug()) {
       this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
     }
@@ -112,7 +102,6 @@ export class BootScene extends Phaser.Scene {
     this.registerSnesWorkflowToolFrames();
     this.registerSnesResearchPendantFrames();
     this.registerSnesEquityCrystalFrames();
-    this.registerArtPackUiFrames();
     registerCharacterAnims(this);
     registerDanneAnims(this);
     this.applyNearestTextureFilters();
@@ -168,34 +157,6 @@ export class BootScene extends Phaser.Scene {
     }
   }
 
-  private preloadAllNewArtPack() {
-    const logAssets = this.shouldLogAssetDebug();
-    for (const [registryName, registry] of Object.entries(ALL_NEW_ART_REGISTRIES)) {
-      if (logAssets) console.group(`[Ruby Rule art registry] ${registryName}`);
-      for (const [key, path] of Object.entries(registry)) {
-        this.load.image(key, publicAssetPath(path));
-        if (logAssets) console.log(`${key} -> ${path}`);
-      }
-      if (logAssets) console.groupEnd();
-    }
-    if (logAssets) console.group("[Ruby Rule art registry] GAMEPLAY_TILED_MAPS");
-    for (const key of Object.keys(GAMEPLAY_TILED_MAPS) as Array<keyof typeof GAMEPLAY_TILED_MAPS>) {
-      const path = GAMEPLAY_TILED_MAPS[key];
-      this.load.json(gameplayTiledCacheKey(key), publicAssetPath(path));
-      if (logAssets) console.log(`${gameplayTiledCacheKey(key)} -> ${path}`);
-    }
-    if (logAssets) console.groupEnd();
-  }
-
-  private preloadSecretReadingRoom() {
-    const { tilesetNative, firstEdition } = SECRET_READING_ROOM_ASSETS;
-    this.load.image(tilesetNative.key, tilesetNative.path);
-    this.load.spritesheet(firstEdition.key, firstEdition.path, {
-      frameWidth: firstEdition.frameWidth,
-      frameHeight: firstEdition.frameHeight
-    });
-  }
-
   private shouldLogAssetDebug() {
     return new URLSearchParams(window.location.search).get("debug") === "assets";
   }
@@ -226,32 +187,6 @@ export class BootScene extends Phaser.Scene {
           texture.add(frameName, 0, col * asset.frameW, row * asset.frameH, asset.frameW, asset.frameH);
         }
       }
-    }
-  }
-
-  private applyAllNewArtTextureFilters() {
-    for (const registry of Object.values(ALL_NEW_ART_REGISTRIES)) {
-      for (const key of Object.keys(registry)) {
-        if (this.textures.exists(key)) {
-          this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
-        }
-      }
-    }
-  }
-
-  private registerArtPackUiFrames() {
-    for (const frameSpec of Object.values(UI_PACK_FRAMES)) {
-      if (!this.textures.exists(frameSpec.textureKey)) continue;
-      const texture = this.textures.get(frameSpec.textureKey);
-      if (texture.has(frameSpec.frame)) continue;
-      texture.add(
-        frameSpec.frame,
-        0,
-        frameSpec.x,
-        frameSpec.y,
-        frameSpec.width,
-        frameSpec.height
-      );
     }
   }
 

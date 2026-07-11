@@ -20,7 +20,7 @@ import {
 } from "./input/InputState";
 import { retroAudio, type AudioDebugState } from "./systems/audio";
 import { getLanguage } from "./systems/i18n";
-import { applyIntegerZoom, computeIntegerZoom } from "./systems/pixelPerfect";
+import { applyIntegerZoom, computeDeviceIntegerZoom } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
 
 declare global {
@@ -162,6 +162,7 @@ window.rubyRuleMobileMetrics = {
 
 const mobileDebugFrames: Array<{ time: number; fps: number; ms: number }> = [];
 let phaserGame: Phaser.Game | undefined;
+const CSS_LAYOUT_EPSILON = 0.02;
 
 function resetMobilePerformanceMetrics() {
   const metrics = window.rubyRuleMobileMetrics;
@@ -200,7 +201,10 @@ function updateMobileCanvasMetrics() {
   metrics.canvasBackingWidth = canvas.width;
   metrics.canvasBackingHeight = canvas.height;
   metrics.computedZoom = rect.width / GAME_WIDTH;
-  metrics.integerZoom = Math.abs(metrics.computedZoom - Math.round(metrics.computedZoom)) < 0.001;
+  // Crispness depends on the backing store being an integer multiple of the base
+  // resolution (device-pixel integer zoom), not on the CSS zoom being integer.
+  const backingPerGamePixel = canvas.width / GAME_WIDTH;
+  metrics.integerZoom = Math.abs(backingPerGamePixel - Math.round(backingPerGamePixel)) < 0.001;
 }
 
 function installMobileDebugHud() {
@@ -520,20 +524,23 @@ function calculateIntegerGameShellScale() {
   const paddingY = parseFloat(bodyStyle.paddingTop || "0") + parseFloat(bodyStyle.paddingBottom || "0");
   const availableWidth = Math.max(160, window.innerWidth - paddingX);
   const availableHeight = Math.max(160, window.innerHeight - paddingY);
+  const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
   const rawScale = Math.min(availableWidth / GAME_WIDTH, availableHeight / GAME_HEIGHT);
-  const scale = computeIntegerZoom(availableWidth, availableHeight);
-  return { shell, rawScale, scale };
+  const deviceZoom = computeDeviceIntegerZoom(availableWidth, availableHeight, dpr);
+  // CSS scale can be fractional on high-DPR screens; the device-pixel zoom stays integer.
+  const scale = deviceZoom / dpr;
+  return { shell, rawScale, scale, deviceZoom };
 }
 
 function configureIntegerGameShellScale() {
-  const { shell, rawScale, scale } = calculateIntegerGameShellScale();
+  const { shell, rawScale, scale, deviceZoom } = calculateIntegerGameShellScale();
   if (!shell) return scale;
-  shell.style.width = `${Math.max(1, Math.floor(GAME_WIDTH * scale))}px`;
-  shell.style.height = `${Math.max(1, Math.floor(GAME_HEIGHT * scale))}px`;
+  shell.style.width = `${Math.max(1, GAME_WIDTH * scale)}px`;
+  shell.style.height = `${Math.max(1, GAME_HEIGHT * scale)}px`;
   shell.dataset.scale = String(scale);
   shell.dataset.rawScale = rawScale.toFixed(3);
   shell.dataset.integerScale = "true";
-  window.rubyRuleMobileMetrics!.integerZoomTarget = scale;
+  window.rubyRuleMobileMetrics!.integerZoomTarget = deviceZoom;
   return scale;
 }
 
@@ -556,8 +563,8 @@ function enforceIntegerCanvasScale() {
   if (
     rect
     && (
-      Math.abs(rect.width - result.canvasCssWidth) > 0.001
-      || Math.abs(rect.height - result.canvasCssHeight) > 0.001
+      Math.abs(rect.width - result.canvasCssWidth) > CSS_LAYOUT_EPSILON
+      || Math.abs(rect.height - result.canvasCssHeight) > CSS_LAYOUT_EPSILON
     )
   ) {
     metrics.scaleGuardAdjustments = beforeAdjustments + 1;

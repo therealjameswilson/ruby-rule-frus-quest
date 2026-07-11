@@ -265,6 +265,11 @@ export class GameplayMapScene extends Phaser.Scene {
     if (!this.cache.json.exists(gameplayTiledCacheKey(this.mapKey))) {
       this.load.json(gameplayTiledCacheKey(this.mapKey), publicAssetPath(GAMEPLAY_TILED_MAPS[this.mapKey]));
     }
+    for (const rewardTexture of [FRUS_BOOKSHELF_REWARD_TEXTURE, NARA_CATALOG_REWARD_TEXTURE]) {
+      if (!this.textures.exists(rewardTexture)) {
+        this.load.image(rewardTexture, publicAssetPath(FRUS_VOLUMES[rewardTexture]));
+      }
+    }
   }
 
   create() {

@@ -1,5 +1,11 @@
 import Phaser from "phaser";
-import { ACCESSIBILITY_OVERLAYS, UI_PACK_FRAMES } from "../assets/registry";
+import {
+  ACCESSIBILITY_OVERLAYS,
+  FRUS_VOLUMES,
+  UI_PACK,
+  UI_PACK_FRAMES,
+  publicAssetPath
+} from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   SNES_COVER_FRAGMENT_RELIC_ASSET,
@@ -68,7 +74,20 @@ export class UIScene extends Phaser.Scene {
     super("UIScene");
   }
 
+  preload() {
+    if (!this.textures.exists("ui_row_six")) {
+      this.load.image("ui_row_six", publicAssetPath(FRUS_VOLUMES.ui_row_six));
+    }
+    for (const [key, path] of Object.entries(UI_PACK)) {
+      if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
+    }
+    for (const [key, path] of Object.entries(ACCESSIBILITY_OVERLAYS)) {
+      if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
+    }
+  }
+
   create() {
+    this.registerArtPackUiFrames();
     this.controls = new TouchControls(this);
     this.createQuestBand();
     this.createGamepadToast();
@@ -92,6 +111,22 @@ export class UIScene extends Phaser.Scene {
       this.gamepadToastTween?.stop();
     });
     this.scene.bringToTop();
+  }
+
+  private registerArtPackUiFrames() {
+    for (const frameSpec of Object.values(UI_PACK_FRAMES)) {
+      if (!this.textures.exists(frameSpec.textureKey)) continue;
+      const texture = this.textures.get(frameSpec.textureKey);
+      if (texture.has(frameSpec.frame)) continue;
+      texture.add(
+        frameSpec.frame,
+        0,
+        frameSpec.x,
+        frameSpec.y,
+        frameSpec.width,
+        frameSpec.height
+      );
+    }
   }
 
   update() {
