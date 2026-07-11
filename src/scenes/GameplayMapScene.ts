@@ -93,6 +93,13 @@ import { handleOpenOverlays } from "../systems/overlayInput";
 import { snapPixel } from "../systems/pixelPerfect";
 import { applyStandardsViolation } from "../systems/reliability";
 import {
+  completeEncounterWaveQueue,
+  createEncounterWaveQueue,
+  hasPendingEncounterWaves,
+  nextEncounterWave,
+  type EncounterWaveQueue
+} from "../systems/encounterWaves";
+import {
   applyRoomClearGate,
   isRoomCleared,
   roomClearFlag,
@@ -118,6 +125,14 @@ type GameplayMapSceneData = {
   districtId?: string;
   districtName?: string;
   spawnId?: string;
+};
+
+type DanneSpawnPlan = {
+  id: string;
+  variantId: DanneEnemyVariantId;
+  xRatio: number;
+  yRatio: number;
+  waypointRatios: Position[];
 };
 
 type TiledProperty = { name: string; type?: string; value: unknown };
@@ -225,6 +240,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private readonly interactionAssist = new InteractionAssist();
   private doors: SceneDoor[] = [];
   private readonly doorRouteBadges = new Map<string, Phaser.GameObjects.GameObject[]>();
+  private snesFlowPlaque: Phaser.GameObjects.GameObject[] = [];
   private routeTransitionLocked = false;
   private entryBanner?: Phaser.GameObjects.Container;
   private objectiveOverrideMsRemaining = 0;
@@ -241,6 +257,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private readonly danneEnemies: DanneEnemy[] = [];
   private danneRoomId = "";
   private danneRoomUnlockedFlags: string[] = [];
+  private danneWaves: EncounterWaveQueue<DanneSpawnPlan> = createEncounterWaveQueue([]);
   private activeMusicCue = "";
 
   constructor() {
@@ -280,6 +297,7 @@ export class GameplayMapScene extends Phaser.Scene {
     setLatestMessage(`${MAP_LABELS[this.mapKey]} loaded from object layers.`);
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.fitRect = this.computeMapFit();
+    this.snesFlowPlaque = [];
     this.drawMap();
     this.createObjectsFromTileData();
     this.drawSnesDressing();
@@ -292,6 +310,7 @@ export class GameplayMapScene extends Phaser.Scene {
     const spawn = this.adjustSpawnAwayFromWorldExit(rawSpawn);
     this.player = new Player(this, spawn.x, spawn.y);
     this.createDanneEncounter();
+    this.syncDanneCombatPresentation();
     this.updateGameplayMusic(true);
     this.suppressSpawnTrigger(spawn);
     this.showEntryBanner();
@@ -323,7 +342,7 @@ export class GameplayMapScene extends Phaser.Scene {
       ...this.routeReadouts(),
       `District: ${this.districtName}`,
       ...this.interactables.map((item) => item.label),
-      ...this.danneEnemies.map((enemy) => {
+      ...this.danneEnemies.filter((enemy) => !enemy.defeated).map((enemy) => {
         const readout = enemy.readout();
         return `${readout.label}: ${readout.hp}/${readout.maxHp} HP`;
       }),
@@ -383,8 +402,12 @@ export class GameplayMapScene extends Phaser.Scene {
     this.updateFrusFloorNextGateRoute();
     this.updateFrusFloorNextGateInteractable();
     this.updateDanneEncounter(delta);
-    const nearest = nearestInteractable(this.player.position, this.interactables);
-    const hintTarget = this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, this.interactables));
+    const combatCue = this.currentDanneCombatCue();
+    const nearestCandidate = nearestInteractable(this.player.position, this.interactables);
+    const nearest = combatCue && nearestCandidate?.kind === "door" ? null : nearestCandidate;
+    const hintTarget = combatCue
+      ? null
+      : this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, this.interactables));
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
     this.prompt.update(delta, promptTarget, {
@@ -393,7 +416,6 @@ export class GameplayMapScene extends Phaser.Scene {
       top: TOP_SAFE_BAND + 14,
       bottom: this.mapKey === "frus_floor" ? this.frusFloorRailY() - 34 : undefined
     }, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
-    const combatCue = this.currentDanneCombatCue();
     this.hintText.setText(nearest
       ? `A ${promptVerbForKind(nearest.kind)} ${nearest.label.toUpperCase()}`
       : hintTarget
@@ -426,47 +448,62 @@ export class GameplayMapScene extends Phaser.Scene {
     this.clearDanneEnemies();
     this.danneRoomId = "";
     this.danneRoomUnlockedFlags = [];
+    this.danneWaves = createEncounterWaveQueue([]);
     if (this.mapKey === "black_vault") {
       this.danneRoomId = "black_vault";
       this.danneRoomUnlockedFlags = ["blackVaultBossCleared", "blackVaultWestOpen", "blackVaultNorthOpen"];
+      this.danneWaves = createEncounterWaveQueue([
+        [
+          this.danneSpawn("black-vault-colossus", "danne-colossus-final-form", 0.56, 0.27, [
+            { x: 0.56, y: 0.27 }
+          ]),
+          this.danneSpawn("black-vault-cloud", "danne-cloud-form", 0.27, 0.34, [
+            { x: 0.27, y: 0.34 },
+            { x: 0.39, y: 0.31 },
+            { x: 0.32, y: 0.48 }
+          ])
+        ],
+        [
+          this.danneSpawn("black-vault-ascendant", "danne-ascendant", 0.82, 0.24, [
+            { x: 0.82, y: 0.24 },
+            { x: 0.74, y: 0.33 },
+            { x: 0.84, y: 0.41 }
+          ]),
+          this.danneSpawn("black-vault-defeated-decoy", "danne-defeated", 0.24, 0.58, [
+            { x: 0.24, y: 0.58 }
+          ])
+        ]
+      ]);
       if (isRoomCleared(this.danneRoomId)) {
+        this.danneWaves = completeEncounterWaveQueue(this.danneWaves);
         for (const flag of this.danneRoomUnlockedFlags) gameState.sceneProgress[flag] = 1;
         return;
       }
-      this.spawnDanneEnemy("black-vault-colossus", "danne-colossus-final-form", 0.56, 0.27, [
-        { x: 0.56, y: 0.27 }
-      ]);
-      this.spawnDanneEnemy("black-vault-cloud", "danne-cloud-form", 0.27, 0.34, [
-        { x: 0.27, y: 0.34 },
-        { x: 0.39, y: 0.31 },
-        { x: 0.32, y: 0.48 }
-      ]);
-      this.spawnDanneEnemy("black-vault-ascendant", "danne-ascendant", 0.82, 0.24, [
-        { x: 0.82, y: 0.24 },
-        { x: 0.74, y: 0.33 },
-        { x: 0.84, y: 0.41 }
-      ]);
-      this.spawnDanneEnemy("black-vault-defeated-decoy", "danne-defeated", 0.24, 0.58, [
-        { x: 0.24, y: 0.58 }
-      ]);
+      this.advanceDanneWave();
       setObjective("Black Vault: defeat DANN-E with the matching FRUS tools to open the blast doors.");
-      setLatestMessage("DANN-E room gate active: Citation Stamp, Red Pencil, and Review Folder each matter.");
+      setLatestMessage("DANN-E wave 1/2: match each node with its FRUS tool.");
       return;
     }
 
     if (this.mapKey === "nara_stacks") {
       this.danneRoomId = "nara_stacks_patrol";
       this.danneRoomUnlockedFlags = [];
-      if (isRoomCleared(this.danneRoomId)) return;
-      this.spawnDanneEnemy("nara-mark-i", "danne-mark-i-prototype", 0.29, 0.34, [
-        { x: 0.29, y: 0.34 }
+      this.danneWaves = createEncounterWaveQueue([
+        [this.danneSpawn("nara-mark-i", "danne-mark-i-prototype", 0.29, 0.34, [
+          { x: 0.29, y: 0.34 }
+        ])],
+        [this.danneSpawn("nara-swarm", "danne-swarm", 0.72, 0.38, [
+          { x: 0.65, y: 0.38 },
+          { x: 0.78, y: 0.38 },
+          { x: 0.78, y: 0.51 },
+          { x: 0.65, y: 0.51 }
+        ])]
       ]);
-      this.spawnDanneEnemy("nara-swarm", "danne-swarm", 0.72, 0.38, [
-        { x: 0.65, y: 0.38 },
-        { x: 0.78, y: 0.38 },
-        { x: 0.78, y: 0.51 },
-        { x: 0.65, y: 0.51 }
-      ]);
+      if (isRoomCleared(this.danneRoomId)) {
+        this.danneWaves = completeEncounterWaveQueue(this.danneWaves);
+        return;
+      }
+      this.advanceDanneWave();
       return;
     }
 
@@ -503,6 +540,28 @@ export class GameplayMapScene extends Phaser.Scene {
     this.danneEnemies.length = 0;
   }
 
+  private danneSpawn(
+    id: string,
+    variantId: DanneEnemyVariantId,
+    xRatio: number,
+    yRatio: number,
+    waypointRatios: Position[]
+  ): DanneSpawnPlan {
+    return { id, variantId, xRatio, yRatio, waypointRatios };
+  }
+
+  private advanceDanneWave() {
+    const next = nextEncounterWave(this.danneWaves);
+    if (!next) return false;
+    this.danneWaves = next.queue;
+    for (const plan of next.wave) {
+      this.spawnDanneEnemy(plan.id, plan.variantId, plan.xRatio, plan.yRatio, plan.waypointRatios);
+    }
+    this.syncDanneCombatPresentation();
+    this.updateVisibleMapState();
+    return true;
+  }
+
   private spawnDanneEnemy(
     id: string,
     variantId: DanneEnemyVariantId,
@@ -522,18 +581,17 @@ export class GameplayMapScene extends Phaser.Scene {
 
   private currentDanneRoomStatus() {
     const status = roomClearStatus(this.danneRoomId || this.mapKey, this.danneEnemies, this.danneRoomUnlockedFlags);
-    if (!status.cleared || status.requiredEnemyCount > 0) return status;
-    const expectedEnemyCount = this.danneRoomId === "black_vault"
+    const expectedEnemyCount = this.danneWaves.totalEntries || (this.danneRoomId === "black_vault"
       ? 4
       : this.danneRoomId === "nara_stacks_patrol"
         ? 2
         : this.danneRoomId
           ? 1
-          : 0;
+          : 0);
     return {
       ...status,
       requiredEnemyCount: expectedEnemyCount,
-      defeatedEnemyCount: expectedEnemyCount
+      defeatedEnemyCount: status.cleared ? expectedEnemyCount : status.defeatedEnemyCount
     };
   }
 
@@ -579,6 +637,7 @@ export class GameplayMapScene extends Phaser.Scene {
     const playerPosition = this.player.position;
     const playerFootBox = new Phaser.Geom.Rectangle(playerPosition.x - 8, playerPosition.y - 3, 16, 8);
     for (const enemy of this.danneEnemies) {
+      if (enemy.defeated) continue;
       const result = enemy.updateEnemy(this.time.now, delta, playerPosition, playerFootBox);
       if ((result.projectileHit || result.contactHit) && this.player.takeHit(enemy.readout(), enemy.damage, 700)) {
         const attack = result.projectileHit ? "ego bolt" : "telegraphed pressure strike";
@@ -604,6 +663,14 @@ export class GameplayMapScene extends Phaser.Scene {
       }
     }
 
+    if (!this.danneEnemies.some((enemy) => !enemy.defeated) && hasPendingEncounterWaves(this.danneWaves)) {
+      this.advanceDanneWave();
+      retroAudio.confirm();
+      setLatestMessage(`DANN-E wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} incoming.`);
+      setObjective("New DANN-E wave: read the nearest weakness, equip its tool, then press B.");
+      this.objectiveOverrideMsRemaining = 1300;
+    }
+
     const wasCleared = isRoomCleared(this.danneRoomId);
     const status = applyRoomClearGate(
       this.danneRoomId,
@@ -618,12 +685,13 @@ export class GameplayMapScene extends Phaser.Scene {
       this.updateGameplayMusic();
       if (this.mapKey === "black_vault") this.openBlackVaultBlastDoors();
       else this.refreshDoorRouteBadges();
+      this.syncDanneCombatPresentation();
       this.updateVisibleMapState();
     }
   }
 
   private updateGameplayMusic(force = false) {
-    const cue = this.danneEnemies.some((enemy) => !enemy.defeated)
+    const cue = this.danneEnemies.some((enemy) => !enemy.defeated) || hasPendingEncounterWaves(this.danneWaves)
       ? this.danneCombatMusicCue()
       : this.ambientMusicCue();
     if (!force && cue === this.activeMusicCue) return;
@@ -642,7 +710,7 @@ export class GameplayMapScene extends Phaser.Scene {
 
   private syncGameplayThreats() {
     const roomStatus = this.danneRoomId ? this.currentDanneRoomStatus() : null;
-    const threats: Parameters<typeof setVisibleThreats>[0] = this.danneEnemies.map((enemy) => {
+    const threats: Parameters<typeof setVisibleThreats>[0] = this.danneEnemies.filter((enemy) => !enemy.defeated).map((enemy) => {
       const readout = enemy.readout();
       return {
         label: readout.label,
@@ -841,10 +909,11 @@ export class GameplayMapScene extends Phaser.Scene {
         };
       })
     ];
-    drawSnesMapDressing(this, this.mapKey, this.fitRect, {
+    const dressing = drawSnesMapDressing(this, this.mapKey, this.fitRect, {
       solids: this.solids,
       features
     });
+    this.snesFlowPlaque = dressing.flowPlaque;
   }
 
   private snesFeatureKindForObject(object: TiledObject): SnesMapDressingFeature["kind"] {
@@ -3128,6 +3197,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.clearDoorRouteBadge(id);
     const badgeObjects = this.drawDoorRouteBadge(x, y, target);
     this.doorRouteBadges.set(id, badgeObjects);
+    this.syncDanneCombatPresentation();
   }
 
   private clearDoorRouteBadge(id: string) {
@@ -3145,6 +3215,19 @@ export class GameplayMapScene extends Phaser.Scene {
       this.setDoorRouteBadge(door.id, door.x, door.y, door.target);
     }
     this.updateVisibleMapState();
+  }
+
+  private syncDanneCombatPresentation() {
+    const showRoutes = !this.danneEnemies.some((enemy) => !enemy.defeated)
+      && !hasPendingEncounterWaves(this.danneWaves);
+    for (const object of this.snesFlowPlaque) {
+      (object as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(showRoutes);
+    }
+    for (const objects of this.doorRouteBadges.values()) {
+      for (const object of objects) {
+        (object as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(showRoutes);
+      }
+    }
   }
 
   private routeDirectionForPoint(x: number, y: number) {

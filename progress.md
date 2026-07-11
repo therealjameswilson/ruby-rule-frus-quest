@@ -4285,3 +4285,31 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Proof artifacts: `docs/screenshots/danne-embassy-paced/telegraph-256.png`,
   `docs/screenshots/danne-embassy-paced/room-cleared-fixed-state.json`, and
   `docs/screenshots/office-danne-safe-onboarding/state-0.json`.
+
+## 2026-07-11 — DANN-E encounter pacing and combat-focus pass
+
+- Split the first NARA counter room into two one-enemy waves (Mark I, then
+  Swarm) and the Black Vault finale into two two-enemy waves (Colossus/Cloud,
+  then Ascendant/decoy). Room-clear progress still counts the complete 2- or
+  4-enemy encounter, so wave staging cannot open a gate early.
+- Added a small pure `encounterWaves` queue with deterministic tests, including
+  the saved-clear case where totals remain available for QA while pending waves
+  are exhausted.
+- While DANN-E is active, chapter plaques, route badges, distant `STEP CLOSER`
+  coaching, and spawn-point door prompts now recede. The screen instead gives
+  one combat instruction: the nearest target, matching FRUS tool, and B action.
+  Navigation plaques and door prompts return immediately after room clearance.
+- Defeated enemies no longer remain in live entity/threat readouts; the current
+  wave is the only on-screen enemy roster while room-clear reporting retains the
+  full encounter denominator.
+- Live QA:
+  - automated keyboard play defeated NARA Mark I with two Review Folder swings,
+    awarded 4 document points, spawned Swarm, and reported `1/2` cleared;
+  - Black Vault reported two active enemies and `0/4` cleared with routes hidden;
+  - a saved-cleared Black Vault restored its three route badges and chapter plaque;
+  - iPhone 14-sized Chromium (393x852, DPR 3) held ~60 fps after load, showed two
+    active Black Vault enemies, exact `0/4` gate status, crisp integer device-pixel
+    mapping, and no console/page errors.
+- Verification: full Vitest suite `465/465`; `npm run build` passes (known Vite
+  large-chunk warning only). Visual artifacts: `output/black-vault-wave-mobile.png`,
+  and `output/nara-wave-transition/state-0.json`.
