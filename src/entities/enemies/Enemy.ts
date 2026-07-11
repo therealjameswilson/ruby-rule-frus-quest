@@ -61,6 +61,7 @@ export abstract class Enemy {
   private readonly speed: number;
   private readonly acceleration: number;
   private readonly waypointTolerance: number;
+  private playerHitCooldownUntil = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: EnemyOptions) {
     this.scene = scene;
@@ -144,6 +145,23 @@ export abstract class Enemy {
       ease: "Stepped"
     });
     return false;
+  }
+
+  /** Axis-aligned body used to test the player's sword/action hitbox. */
+  bodyBounds(): Phaser.Geom.Rectangle {
+    return new Phaser.Geom.Rectangle(this.currentX - 9, this.currentY - 14, 18, 20);
+  }
+
+  /**
+   * Apply a player sword/action hit, gated by a short per-enemy cooldown so a
+   * single swing that overlaps for several frames only connects once (ALTTP:
+   * one swing, one flinch). Returns "miss" when the cooldown swallows the hit,
+   * "kill" when the hit is fatal, otherwise "hit".
+   */
+  tryPlayerHit(now: number, amount = 1, source?: Position, knockbackDistance = 10, cooldownMs = 320): "miss" | "hit" | "kill" {
+    if (this.dead || now < this.playerHitCooldownUntil) return "miss";
+    this.playerHitCooldownUntil = now + cooldownMs;
+    return this.takeDamage(amount, source, knockbackDistance) ? "kill" : "hit";
   }
 
   knockbackFrom(source: Position, distance = 8) {
