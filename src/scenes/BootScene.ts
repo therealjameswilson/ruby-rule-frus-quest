@@ -2,7 +2,13 @@ import Phaser from "phaser";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
-import { ALL_NEW_ART_REGISTRIES, GAMEPLAY_TILED_MAPS, gameplayTiledCacheKey, publicAssetPath } from "../assets/registry";
+import {
+  ALL_NEW_ART_REGISTRIES,
+  GAMEPLAY_TILED_MAPS,
+  UI_PACK_FRAMES,
+  gameplayTiledCacheKey,
+  publicAssetPath
+} from "../assets/registry";
 import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
 import {
   DANNE_BOSS_SPRITE_ASSET,
@@ -45,6 +51,8 @@ import {
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { ensurePixelBitmapFont, installPixelTextFactory } from "../systems/pixelFont";
+import { WEAPON_VFX_ASSET } from "../systems/weaponState";
+import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -60,6 +68,16 @@ export class BootScene extends Phaser.Scene {
     this.load.json("dialogue", "assets/data/dialogue.json");
     this.load.json("scenes", "assets/data/scenes.json");
     preloadCharacters(this);
+    this.load.spritesheet(WEAPON_VFX_ASSET.key, WEAPON_VFX_ASSET.path, {
+      frameWidth: WEAPON_VFX_ASSET.frameWidth,
+      frameHeight: WEAPON_VFX_ASSET.frameHeight
+    });
+    this.load.image(VOLUME_ASSEMBLY_ASSETS.hudBar.key, VOLUME_ASSEMBLY_ASSETS.hudBar.path);
+    this.load.image(VOLUME_ASSEMBLY_ASSETS.completedHero.key, VOLUME_ASSEMBLY_ASSETS.completedHero.path);
+    this.load.spritesheet(VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key, VOLUME_ASSEMBLY_ASSETS.bindingAnimation.path, {
+      frameWidth: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameWidth,
+      frameHeight: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameHeight
+    });
     this.preloadDannePack();
     this.preloadAllNewArtPack();
     if (this.shouldLogAssetDebug()) {
@@ -92,6 +110,7 @@ export class BootScene extends Phaser.Scene {
     this.registerSnesWorkflowToolFrames();
     this.registerSnesResearchPendantFrames();
     this.registerSnesEquityCrystalFrames();
+    this.registerArtPackUiFrames();
     registerCharacterAnims(this);
     registerDanneAnims(this);
     this.applyNearestTextureFilters();
@@ -206,6 +225,22 @@ export class BootScene extends Phaser.Scene {
           this.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
         }
       }
+    }
+  }
+
+  private registerArtPackUiFrames() {
+    for (const frameSpec of Object.values(UI_PACK_FRAMES)) {
+      if (!this.textures.exists(frameSpec.textureKey)) continue;
+      const texture = this.textures.get(frameSpec.textureKey);
+      if (texture.has(frameSpec.frame)) continue;
+      texture.add(
+        frameSpec.frame,
+        0,
+        frameSpec.x,
+        frameSpec.y,
+        frameSpec.width,
+        frameSpec.height
+      );
     }
   }
 

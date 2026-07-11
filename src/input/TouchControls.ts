@@ -30,6 +30,9 @@ type TouchDebugWindow = Window & {
     gamepadSuppressed: boolean;
     overlayAlpha: number;
     pressedButtons: TouchControlKey[];
+    weaponPhase: string;
+    weaponCooldownRatio: number;
+    weaponTool: string | null;
     lastEvent: string;
   };
 };
@@ -449,6 +452,9 @@ export class TouchControls {
       gamepadSuppressed: this.gamepadSuppressed,
       overlayAlpha: Number(this.overlayAlpha.toFixed(2)),
       pressedButtons: this.buttons.filter((button) => button.pointerId !== null).map((button) => button.key),
+      weaponPhase: gameState.playerCombat.weapon.phase,
+      weaponCooldownRatio: Number(gameState.playerCombat.weapon.cooldownRatio.toFixed(2)),
+      weaponTool: gameState.playerCombat.weapon.tool,
       lastEvent: this.lastEvent
     };
   }
@@ -497,6 +503,32 @@ export class TouchControls {
       }
       button.text.setAlpha((pressed ? 0.9 : labelAlpha) * this.overlayAlpha);
       button.text.setPosition(button.x, button.y - (button.kind === "circle" ? 4 : 2));
+      if (button.key === "b") this.drawToolCooldownIndicator(button, pressed);
+    }
+  }
+
+  private drawToolCooldownIndicator(button: ButtonState, pressed: boolean) {
+    const weapon = gameState.playerCombat.weapon;
+    const ratio = Phaser.Math.Clamp(weapon.cooldownRatio, 0, 1);
+    const active = weapon.phase !== "idle" || ratio > 0;
+    const height = isOneXPortraitCanvas() ? 22 : 28;
+    const x = Math.round(button.x + button.visibleWidth / 2 + 8);
+    const y = Math.round(button.y - height / 2);
+    const alpha = (active ? 0.78 : 0.28) * this.overlayAlpha;
+    const fillHeight = active ? Math.max(2, Math.round((height - 4) * ratio)) : 0;
+    const fill = weapon.phase === "active" ? PALETTE.terminalCyan : PALETTE.classNetRed;
+
+    this.graphics.fillStyle(color(PALETTE.black), alpha);
+    this.graphics.fillRect(x, y, 5, height);
+    this.graphics.lineStyle(1, color(pressed || active ? PALETTE.goldStamp : PALETTE.stoneGray), alpha);
+    this.graphics.strokeRect(x, y, 5, height);
+    if (fillHeight > 0) {
+      this.graphics.fillStyle(color(fill), 0.86 * this.overlayAlpha);
+      this.graphics.fillRect(x + 2, y + height - 2 - fillHeight, 1, fillHeight);
+    }
+    if (weapon.phase === "windup" || weapon.phase === "active") {
+      this.graphics.fillStyle(color(PALETTE.goldStamp), 0.95 * this.overlayAlpha);
+      this.graphics.fillRect(x + 1, y + 1, 3, 2);
     }
   }
 

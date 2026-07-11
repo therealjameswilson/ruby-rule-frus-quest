@@ -74,6 +74,17 @@ import {
 import type { DungeonStateRegistry } from "../systems/dungeonKeys";
 import { VIOLATION_LABEL } from "../systems/standardsDamage";
 import type { StandardViolation } from "../systems/standardsDamage";
+import {
+  createInitialVolumeAssemblyState,
+  earnVolumeAssemblyPiece,
+  markVolumeAssemblyCeremonyPlayed,
+  normalizeVolumeAssemblyState,
+  pieceForDanneVariant,
+  volumeAssemblyPiece,
+  volumeAssemblyReadout
+} from "../systems/volumeAssembly";
+import type { VolumeAssemblyPieceId, VolumeAssemblyReadout, VolumeAssemblyState } from "../systems/volumeAssembly";
+import type { DanneEnemyVariantId } from "../entities/danneVariants";
 import type {
   AdventureHudReadout,
   AdventureTrainingReadout,
@@ -101,6 +112,19 @@ interface VisibleThreat {
   behavior?: string;
   defeatMethod?: string;
   status?: string;
+  hp?: number;
+  maxHp?: number;
+  damage?: number;
+  difficultyTier?: number;
+  reliabilityRisk?: string;
+  enemyState?: string;
+  weakness?: string;
+  roomClear?: {
+    roomId: string;
+    defeated: number;
+    required: number;
+    cleared: boolean;
+  };
 }
 
 export interface GameState {
@@ -128,6 +152,7 @@ export interface GameState {
   documentPoints: number;
   inventory: string[];
   volumeFragments: string[];
+  volumeAssembly: VolumeAssemblyState;
   latestMessage: string;
   activeDialog: { speaker: string; text: string } | null;
   currentChoice: { title: string; options: ChoiceOption[] } | null;
@@ -472,6 +497,7 @@ export const gameState: GameState = {
   documentPoints: 0,
   inventory: [],
   volumeFragments: [],
+  volumeAssembly: createInitialVolumeAssemblyState(),
   latestMessage: "",
   activeDialog: null,
   currentChoice: null,
@@ -482,6 +508,19 @@ export const gameState: GameState = {
     state: "idle",
     actionActive: false,
     actionMsRemaining: 0,
+    weapon: {
+      phase: "idle",
+      tool: "citation_stamp",
+      label: "Citation Stamp",
+      canSwing: true,
+      active: false,
+      windupMsRemaining: 0,
+      activeMsRemaining: 0,
+      cooldownMsRemaining: 0,
+      cooldownRatio: 0,
+      movementScale: 1,
+      swingId: 0
+    },
     invulnerable: false,
     invulnerableMsRemaining: 0,
     hitbox: null
@@ -528,6 +567,7 @@ export function resetGameState() {
   gameState.documentPoints = 0;
   gameState.inventory = [];
   gameState.volumeFragments = [];
+  gameState.volumeAssembly = createInitialVolumeAssemblyState();
   gameState.latestMessage = "";
   gameState.activeDialog = null;
   gameState.currentChoice = null;
@@ -538,6 +578,19 @@ export function resetGameState() {
     state: "idle",
     actionActive: false,
     actionMsRemaining: 0,
+    weapon: {
+      phase: "idle",
+      tool: "citation_stamp",
+      label: "Citation Stamp",
+      canSwing: true,
+      active: false,
+      windupMsRemaining: 0,
+      activeMsRemaining: 0,
+      cooldownMsRemaining: 0,
+      cooldownRatio: 0,
+      movementScale: 1,
+      swingId: 0
+    },
     invulnerable: false,
     invulnerableMsRemaining: 0,
     hitbox: null
@@ -631,6 +684,7 @@ export function restoreGameSaveData(save: GameSaveData) {
   gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
+  gameState.volumeAssembly = normalizeVolumeAssemblyState(gameState.volumeAssembly, gameState.volumeFragments);
   gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
   syncDungeonBigKeysFromInventory();
   syncDungeonBossesFromProcessStamps();
@@ -1122,6 +1176,7 @@ export function getRoomGraphReadout() {
 export function getFinalGateReadiness() {
   const requiredStamps: ProcessStampId[] = ["rule", "archive", "network", "referral", "proof"];
   const missingStamps = requiredStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const volumeAssembly = getVolumeAssemblyReadout();
   const publicationApparatus = getPublicationApparatusReadout({
     processStamps: gameState.processStamps,
     volumeFragments: gameState.volumeFragments,
@@ -1140,9 +1195,9 @@ export function getFinalGateReadiness() {
     .filter((document) => document.undisclosedDeletion)
     .map((document) => ({ id: document.id, title: document.title }));
   const standardsViolations = unresolvedStandardsViolations();
-  const fragmentsNeeded = 5;
+  const fragmentsNeeded = volumeAssembly.total;
   const reliabilityMinimum = 70;
-  const missingFragments = Math.max(0, fragmentsNeeded - gameState.volumeFragments.length);
+  const missingFragments = volumeAssembly.missingCount;
   const equityCrystalsCollected = crystalsEarned(gameState.documentCandidates);
   const equityCrystalsRequired = totalEquities(gameState.documentCandidates);
   const missingEquityCrystals = Math.max(0, equityCrystalsRequired - equityCrystalsCollected);
@@ -1161,7 +1216,7 @@ export function getFinalGateReadiness() {
   return {
     requiredStamps,
     missingStamps,
-    fragmentsCollected: gameState.volumeFragments.length,
+    fragmentsCollected: volumeAssembly.earnedCount,
     fragmentsNeeded,
     missingFragments,
     equityCrystalsCollected,
@@ -1360,6 +1415,40 @@ export function addVolumeFragment(label: string) {
   }
 }
 
+export function getVolumeAssemblyReadout(): VolumeAssemblyReadout {
+  gameState.volumeAssembly = normalizeVolumeAssemblyState(gameState.volumeAssembly, gameState.volumeFragments);
+  return volumeAssemblyReadout(gameState.volumeAssembly);
+}
+
+export function awardVolumeAssemblyPiece(pieceId: VolumeAssemblyPieceId, reason: string) {
+  const result = earnVolumeAssemblyPiece(gameState.volumeAssembly, pieceId);
+  gameState.volumeAssembly = result.state;
+  const piece = result.piece ?? volumeAssemblyPiece(pieceId);
+  if (!piece) return { ok: false, changed: false, complete: getVolumeAssemblyReadout().complete, piece: null };
+  if (result.changed) {
+    if (!gameState.volumeFragments.includes(piece.legacyFragmentLabel)) {
+      gameState.volumeFragments.push(piece.legacyFragmentLabel);
+    }
+    gameState.sceneProgress[`volumeAssembly:${piece.id}`] = 1;
+    if (result.state.ceremonyUnlocked) gameState.sceneProgress.volumeAssemblyComplete = 1;
+    setLatestMessage(`${piece.label} recovered: ${reason}`);
+    refreshQuestWorkflowState();
+  }
+  return { ok: true, changed: result.changed, complete: result.state.ceremonyUnlocked, piece };
+}
+
+export function awardVolumeAssemblyPieceForDanneVariant(variantId: DanneEnemyVariantId, displayName: string) {
+  const pieceId = pieceForDanneVariant(variantId);
+  if (!pieceId) return { ok: false, changed: false, complete: getVolumeAssemblyReadout().complete, piece: null };
+  return awardVolumeAssemblyPiece(pieceId, `${displayName} defeated`);
+}
+
+export function markVolumeAssemblyCeremonyComplete() {
+  gameState.volumeAssembly = markVolumeAssemblyCeremonyPlayed(gameState.volumeAssembly);
+  gameState.sceneProgress.volumeAssemblyCeremonyPlayed = 1;
+  refreshQuestWorkflowState();
+}
+
 export function setNearestInteractable(label: string | null) {
   gameState.nearestInteractable = label;
 }
@@ -1376,9 +1465,38 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     spriteKey: threat.spriteKey,
     behavior: threat.behavior,
     defeatMethod: threat.defeatMethod,
-    status: threat.status
+    status: threat.status,
+    hp: threat.hp,
+    maxHp: threat.maxHp,
+    damage: threat.damage,
+    difficultyTier: threat.difficultyTier,
+    reliabilityRisk: threat.reliabilityRisk,
+    enemyState: threat.enemyState,
+    weakness: threat.weakness,
+    roomClear: threat.roomClear ? { ...threat.roomClear } : undefined
   }));
   refreshQuestWorkflowState();
+}
+
+export function getDanneCombatReadout() {
+  const enemies = gameState.visibleThreats.filter((threat) => typeof threat.hp === "number" && typeof threat.maxHp === "number");
+  const roomClear = enemies.find((threat) => threat.roomClear)?.roomClear ?? null;
+  return {
+    activeEnemyCount: enemies.filter((enemy) => enemy.enemyState !== "defeated" && (enemy.hp ?? 0) > 0).length,
+    enemies: enemies.map((enemy) => ({
+      label: enemy.label,
+      hp: enemy.hp ?? 0,
+      maxHp: enemy.maxHp ?? 0,
+      damage: enemy.damage ?? 0,
+      difficultyTier: enemy.difficultyTier ?? 0,
+      reliabilityRisk: enemy.reliabilityRisk ?? "unknown",
+      state: enemy.enemyState ?? enemy.status ?? "unknown",
+      weakness: enemy.weakness ?? "unknown",
+      position: { x: enemy.x, y: enemy.y },
+      defeatMethod: enemy.defeatMethod ?? ""
+    })),
+    roomClear
+  };
 }
 
 function getQuestArchitectureContext(): QuestArchitectureContext {
@@ -1761,6 +1879,7 @@ export function getProcessItemReadout() {
 
 export function getAdventureHudReadout(): AdventureHudReadout {
   refreshQuestWorkflowState();
+  const volumeAssembly = getVolumeAssemblyReadout();
   const inventoryStrip = getProcessItemReadout().map((item) => ({
     id: item.id,
     displayName: item.displayName,
@@ -1789,8 +1908,8 @@ export function getAdventureHudReadout(): AdventureHudReadout {
     inventoryStrip,
     stamps: stampReadout(),
     fragments: {
-      current: gameState.volumeFragments.length,
-      total: 5
+      current: volumeAssembly.earnedCount,
+      total: volumeAssembly.total
     }
   };
 }
@@ -2266,15 +2385,17 @@ export function renderGameToText() {
       currentArea: getCurrentAreaReadout(),
       roomGraph: getRoomGraphReadout(),
       volumeFragments: gameState.volumeFragments,
+      volumeAssembly: getVolumeAssemblyReadout(),
       frusPrize: {
         cover: "ruby FRUS cover",
-        piecesEarned: gameState.volumeFragments.length,
-        piecesTotal: 5,
-        assembled: gameState.volumeFragments.length >= 5
+        piecesEarned: getVolumeAssemblyReadout().earnedCount,
+        piecesTotal: getVolumeAssemblyReadout().total,
+        assembled: getVolumeAssemblyReadout().complete
       },
       finalGate: getFinalGateReadiness(),
       publicationReadiness: getPublicationReadinessReadout(),
       statutoryClock: getStatutoryClockStateReadout(),
+      danneCombat: getDanneCombatReadout(),
       standardsViolations: unresolvedStandardsViolations(),
       productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,

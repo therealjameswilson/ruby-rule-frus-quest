@@ -1,4 +1,5 @@
 import { setAudioStatus } from "../game/state";
+import type { ProcessItemId } from "../game/constants";
 import { addInputGestureListener } from "../input/InputState";
 
 type Wave = OscillatorType;
@@ -7,6 +8,7 @@ type RuntimeAudioState = AudioContextState | "interrupted" | "unavailable" | "un
 interface MidiTheme {
   title: string;
   source: string;
+  midiStem: string;
   stepMs: number;
   notes: Array<number | null>;
   bass?: number[];
@@ -31,6 +33,8 @@ export interface AudioDebugState {
   currentSceneKey: string | null;
   currentThemeKey: string | null;
   currentThemeTitle: string | null;
+  currentThemeSource: string | null;
+  currentThemeStem: string | null;
   pendingSceneKey: string | null;
   musicTimerActive: boolean;
   musicStep: number;
@@ -46,6 +50,7 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   eerieBach: {
     title: "Eerie Bach Fugue",
     source: "Ruby Rule Web Audio arrangement from Mutopia public-domain Bach MIDI",
+    midiStem: "assets/audio/midi/bach-contrapunctus-i.mid",
     stepMs: 165,
     notes: [50, 57, 53, 50, 49, 50, 52, 53, 55, 57, 56, 55, 53, 52, 50, null],
     counter: [62, null, 61, 60, 59, null, 57, 56, 55, 56, 57, null, 59, 60, 61, 62],
@@ -59,6 +64,7 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   title: {
     title: "Bach Contrapunctus I",
     source: "Mutopia public-domain MIDI",
+    midiStem: "assets/audio/midi/bach-contrapunctus-i.mid",
     stepMs: 300,
     notes: [50, 57, 53, 50, 49, 50, 52, 53, 55, 57, 53, 52, 50, null, 45, 50],
     bass: [38, 38, 41, 45]
@@ -66,6 +72,7 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   archive: {
     title: "Bach Chromatic Fantasy",
     source: "Mutopia public-domain MIDI",
+    midiStem: "assets/audio/midi/bach-chromatic-fantasy-bwv903.mid",
     stepMs: 180,
     notes: [64, 65, 66, 67, 68, 69, 70, 71, 72, 71, 70, 69, 68, 67, 66, 65],
     bass: [40, 43, 45, 47],
@@ -74,6 +81,7 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   satie: {
     title: "Satie Ogive No. 2",
     source: "Wikimedia Commons public-domain MIDI",
+    midiStem: "assets/audio/midi/satie-ogive-no2.mid",
     stepMs: 520,
     notes: [48, 55, 60, 64, 67, 64, 60, 55, 50, 57, 62, 65, 69, 65, 62, 57],
     bass: [36, 36, 38, 38],
@@ -81,7 +89,8 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   },
   cherryGarden: {
     title: "Cherry Blossom Garden",
-    source: "Ruby Rule procedural oscillator stem",
+    source: "Ruby Rule procedural oscillator stem derived from public-domain MIDI",
+    midiStem: "assets/audio/midi/satie-ogive-no2.mid",
     stepMs: 360,
     notes: [69, null, 72, 76, 74, null, 72, 69, 67, null, 69, 72, 64, null, 67, 69],
     bass: [45, 45, 52, 50],
@@ -89,7 +98,8 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   },
   blackVault: {
     title: "Black Vault Lair",
-    source: "Ruby Rule procedural oscillator stem",
+    source: "Ruby Rule procedural oscillator stem derived from public-domain MIDI",
+    midiStem: "assets/audio/midi/bach-chromatic-fantasy-bwv903.mid",
     stepMs: 190,
     notes: [43, 46, null, 43, 42, 43, 49, null, 43, 51, 46, null, 42, 43, null, 39],
     bass: [31, 31, 34, 30],
@@ -97,7 +107,8 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   },
   senate: {
     title: "Senate Hearing Chamber",
-    source: "Ruby Rule procedural oscillator stem",
+    source: "Ruby Rule procedural oscillator stem derived from public-domain MIDI",
+    midiStem: "assets/audio/midi/bach-contrapunctus-i.mid",
     stepMs: 420,
     notes: [55, 59, 62, null, 60, 59, 55, null, 52, 55, 59, 60, 62, null, 59, 55],
     bass: [36, 43, 40, 38],
@@ -105,7 +116,8 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   },
   naraStacks: {
     title: "NARA Stacks HVAC",
-    source: "Ruby Rule procedural oscillator stem",
+    source: "Ruby Rule procedural oscillator stem derived from public-domain MIDI",
+    midiStem: "assets/audio/midi/bach-chromatic-fantasy-bwv903.mid",
     stepMs: 260,
     notes: [48, null, 50, null, 47, null, 45, null, 48, 52, null, 50, 47, null, 45, null],
     bass: [32, 32, 35, 35],
@@ -113,23 +125,17 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   },
   embassyCable: {
     title: "Embassy Cable Room",
-    source: "Ruby Rule procedural oscillator stem",
+    source: "Ruby Rule procedural oscillator stem derived from public-domain MIDI",
+    midiStem: "assets/audio/midi/bach-contrapunctus-i.mid",
     stepMs: 150,
     notes: [60, null, 60, 67, null, 64, 60, null, 62, null, 62, 69, null, 65, 62, null],
     bass: [36, 39, 36, 41],
     wave: "square"
   },
-  danneBoss: {
-    title: "DANN-E Boss Alert",
-    source: "Ruby Rule procedural oscillator stem",
-    stepMs: 135,
-    notes: [55, 58, 67, 58, 55, null, 70, 67, 55, 58, 67, 72, 70, 67, 58, null],
-    bass: [31, 31, 34, 30],
-    wave: "sawtooth"
-  },
   officeHub: {
     title: "Office Hub Lilt",
     source: "Ruby Rule square-wave arrangement from Satie Gymnopedie No. 1 (public domain)",
+    midiStem: "assets/audio/midi/office-hub-satie-gymnopedie.mid",
     stepMs: 316,
     notes: [74, null, 73, 69, 66, null, 69, 71, 74, null, 73, 69, 71, 69, 66, null],
     counter: [62, null, 61, null, 57, null, 61, 62, 62, null, 61, null, 57, null, 62, null],
@@ -137,9 +143,100 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
     wave: "square",
     counterGain: 0.005
   },
+  archiveDungeon: {
+    title: "Archive Dungeon Chromatic",
+    source: "Ruby Rule oscillator stem derived from public-domain Bach Chromatic Fantasy MIDI",
+    midiStem: "assets/audio/midi/bach-chromatic-fantasy-bwv903.mid",
+    stepMs: 170,
+    notes: [52, 53, 55, 56, 58, 59, 61, 62, 64, 62, 61, 59, 58, 56, 55, 53],
+    counter: [64, null, 63, 62, 61, null, 60, 59, 58, null, 57, 56, 55, null, 54, 53],
+    bass: [40, 39, 38, 37],
+    pedal: [28, 28, 27, 27],
+    wave: "square",
+    gain: 0.010,
+    bassGain: 0.008
+  },
+  networkDungeon: {
+    title: "Two Networks Fugue",
+    source: "Ruby Rule oscillator stem derived from public-domain Bach Contrapunctus I MIDI",
+    midiStem: "assets/audio/midi/bach-contrapunctus-i.mid",
+    stepMs: 205,
+    notes: [50, null, 57, 53, 49, null, 56, 52, 48, null, 55, 51, 47, null, 54, 50],
+    counter: [62, 61, null, 60, 59, 58, null, 57, 56, 57, null, 58, 59, 60, null, 61],
+    bass: [38, 35, 37, 34],
+    wave: "square",
+    gain: 0.010
+  },
+  referralDungeon: {
+    title: "Referral Vault Ogive",
+    source: "Ruby Rule oscillator stem derived from public-domain Satie Ogive No. 2 MIDI",
+    midiStem: "assets/audio/midi/satie-ogive-no2.mid",
+    stepMs: 470,
+    notes: [48, 55, 60, null, 52, 57, 64, null, 50, 55, 62, null, 53, 57, 65, null],
+    bass: [36, 36, 40, 38],
+    wave: "triangle",
+    gain: 0.011,
+    bassGain: 0.007
+  },
+  silentReadDungeon: {
+    title: "Silent Read Chromatic",
+    source: "Ruby Rule oscillator stem derived from public-domain Bach Chromatic Fantasy MIDI",
+    midiStem: "assets/audio/midi/bach-chromatic-fantasy-bwv903.mid",
+    stepMs: 230,
+    notes: [64, null, 63, 62, null, 61, 60, null, 59, 58, null, 57, 56, null, 55, 54],
+    counter: [52, 55, null, 56, 57, null, 58, 59, null, 60, 61, null, 62, null, 61, 60],
+    bass: [40, 40, 39, 38],
+    wave: "triangle",
+    gain: 0.009,
+    counterGain: 0.004
+  },
+  danneCombat: {
+    title: "DANN-E Combat Encounter",
+    source: "Ruby Rule square-wave arrangement from Beethoven Symphony No. 5, Op. 67 (public domain)",
+    midiStem: "assets/audio/midi/danne-combat-beethoven-sym5.mid",
+    stepMs: 145,
+    notes: [null, 67, 67, 67, 63, null, 65, 65, 65, 62, null, 67, 67, 63, 62, 60],
+    bass: [48, 51, 43, 36],
+    wave: "square"
+  },
+  danneMiniboss: {
+    title: "DANN-E Miniboss Queue",
+    source: "Ruby Rule miniboss stem derived from public-domain Bach Contrapunctus I MIDI",
+    midiStem: "assets/audio/midi/bach-contrapunctus-i.mid",
+    stepMs: 155,
+    notes: [50, 57, 53, 50, 49, null, 52, 56, 50, 58, 53, null, 49, 52, 57, null],
+    counter: [62, null, 61, null, 60, 59, null, 58, 57, null, 56, 57, null, 58, 59, null],
+    bass: [38, 35, 34, 31],
+    wave: "sawtooth",
+    gain: 0.010,
+    bassGain: 0.009
+  },
+  endingFanfare: {
+    title: "Published Volume Fanfare",
+    source: "Ruby Rule ending stem derived from public-domain Satie Ogive No. 2 MIDI",
+    midiStem: "assets/audio/midi/satie-ogive-no2.mid",
+    stepMs: 360,
+    notes: [48, 55, 60, 67, 72, 76, 79, null, 76, 72, 67, 60, 55, 60, 72, null],
+    counter: [72, null, 74, 76, 79, null, 81, 79, 76, null, 74, 72, 71, null, 72, null],
+    bass: [36, 43, 48, 40],
+    wave: "triangle",
+    gain: 0.012,
+    bassGain: 0.008,
+    counterGain: 0.005
+  },
+  danneBoss: {
+    title: "DANN-E Boss Alert",
+    source: "Ruby Rule procedural oscillator stem derived from public-domain MIDI",
+    midiStem: "assets/audio/midi/bach-chromatic-fantasy-bwv903.mid",
+    stepMs: 135,
+    notes: [55, 58, 67, 58, 55, null, 70, 67, 55, 58, 67, 72, 70, 67, 58, null],
+    bass: [31, 31, 34, 30],
+    wave: "sawtooth"
+  },
   openNetRouting: {
     title: "OpenNet Routing Run",
     source: "Ruby Rule square-wave arrangement from Bach Invention No. 1, BWV 772 (public domain)",
+    midiStem: "assets/audio/midi/opennet-routing-bach-invention-i.mid",
     stepMs: 150,
     notes: [60, 62, 64, 65, 62, 64, 60, 67, 72, 71, 72, 67, 69, 67, 65, 64],
     bass: [48, 55, 48, 43],
@@ -148,6 +245,7 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   referralVault: {
     title: "Referral Vault Descent",
     source: "Ruby Rule square-wave arrangement from Bach Toccata & Fugue in D minor, BWV 565 (public domain)",
+    midiStem: "assets/audio/midi/referral-vault-bach-toccata-bwv565.mid",
     stepMs: 205,
     notes: [69, 67, 69, null, 67, 65, 64, 62, 61, 62, null, 57, 60, 62, 61, null],
     bass: [38, 38, 33, 38],
@@ -156,6 +254,7 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   silentReadTower: {
     title: "Silent Read Tower",
     source: "Ruby Rule square-wave arrangement from Satie Gnossienne No. 1 (public domain)",
+    midiStem: "assets/audio/midi/silent-read-tower-satie-gnossienne-i.mid",
     stepMs: 300,
     notes: [72, 71, 72, 68, 67, 65, 67, 68, 67, 63, 65, 63, 61, 60, null, null],
     counter: [null, 56, null, 55, null, 53, null, 51, null, 48, null, 51, null, 53, null, 55],
@@ -163,17 +262,10 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
     wave: "square",
     counterGain: 0.0045
   },
-  danneCombat: {
-    title: "DANN-E Combat Encounter",
-    source: "Ruby Rule square-wave arrangement from Beethoven Symphony No. 5, Op. 67 (public domain)",
-    stepMs: 145,
-    notes: [null, 67, 67, 67, 63, null, 65, 65, 65, 62, null, 67, 67, 63, 62, 60],
-    bass: [48, 51, 43, 36],
-    wave: "square"
-  },
   miniboss: {
     title: "Miniboss March",
     source: "Ruby Rule square-wave arrangement from Grieg 'In the Hall of the Mountain King', Op. 46 (public domain)",
+    midiStem: "assets/audio/midi/miniboss-grieg-mountain-king.mid",
     stepMs: 155,
     notes: [47, 49, 50, 52, 54, 50, 54, null, 53, 49, 53, 52, 48, 52, null, null],
     bass: [35, 35, 35, 30],
@@ -182,6 +274,7 @@ const PUBLIC_DOMAIN_MIDI_THEMES: Record<string, MidiTheme> = {
   bindingCeremony: {
     title: "Binding Ceremony Fanfare",
     source: "Ruby Rule square-wave arrangement from Beethoven 'Ode to Joy', Symphony No. 9 (public domain)",
+    midiStem: "assets/audio/midi/binding-ceremony-beethoven-ode-to-joy.mid",
     stepMs: 288,
     notes: [64, 64, 65, 67, 67, 65, 64, 62, 60, 60, 62, 64, 64, null, 62, null],
     counter: [null, 72, null, 71, null, 67, null, 67, null, 71, null, 72, null, 67, null, 67],
@@ -206,6 +299,7 @@ class RetroAudio {
   private prepared = false;
   private unlocked = false;
   private musicTimer: number | null = null;
+  private crossfadeTimer: number | null = null;
   private musicStep = 0;
   private currentSceneKey: string | null = null;
   private currentThemeKey: string | null = null;
@@ -296,6 +390,36 @@ class RetroAudio {
     this.sequence([392, 523, 659, 1046], 0.07, 0.06, 0.045);
   }
 
+  toolWindup(tool: ProcessItemId) {
+    if (tool === "red_pencil") {
+      setAudioStatus("red pencil windup");
+      this.sequence([440, 554], 0.035, 0.018, 0.026, "triangle");
+      return;
+    }
+    if (tool === "review_folder") {
+      setAudioStatus("review folder windup");
+      this.sequence([196, 247, 294], 0.045, 0.02, 0.032, "square");
+      return;
+    }
+    setAudioStatus("citation stamp windup");
+    this.sequence([330, 392], 0.04, 0.018, 0.032, "square");
+  }
+
+  toolHit(tool: ProcessItemId) {
+    if (tool === "red_pencil") {
+      setAudioStatus("red pencil hit");
+      this.sequence([880, 660, 988], 0.035, 0.022, 0.04, "triangle");
+      return;
+    }
+    if (tool === "review_folder") {
+      setAudioStatus("review folder hit");
+      this.sequence([294, 392, 523], 0.05, 0.03, 0.045, "square");
+      return;
+    }
+    setAudioStatus("citation stamp hit");
+    this.sequence([392, 523, 784], 0.045, 0.03, 0.045, "square");
+  }
+
   transition() {
     setAudioStatus("transition sweep");
     this.sequence([330, 392, 494, 659], 0.055, 0.055, 0.035);
@@ -353,8 +477,36 @@ class RetroAudio {
     this.sequence([523, 784, 1046, 1175], 0.06, 0.035, 0.048, "square");
   }
 
+  crossfadeToMusic(sceneKey: string, options: { forceRestart?: boolean } = {}) {
+    if (!this.enabled || typeof window === "undefined") return;
+    this.prepare();
+    const { key, theme } = this.resolveTheme(sceneKey);
+    if (this.currentThemeKey === key && !options.forceRestart) {
+      setAudioStatus(`pd midi ${theme.title}`);
+      return;
+    }
+    if (!this.unlocked || !this.getContext() || this.getContextState() !== "running") {
+      this.startMusic(sceneKey, options);
+      return;
+    }
+
+    if (this.crossfadeTimer !== null) window.clearTimeout(this.crossfadeTimer);
+    this.currentSceneKey = sceneKey;
+    this.pendingSceneKey = null;
+    this.fadeMasterGain(0.0001, 0.18);
+    setAudioStatus(`crossfade ${theme.title}`);
+    this.crossfadeTimer = window.setTimeout(() => {
+      this.crossfadeTimer = null;
+      this.startMusic(sceneKey, { forceRestart: true });
+    }, 180);
+  }
+
   startMusic(sceneKey: string, options: { forceRestart?: boolean } = {}) {
     if (!this.enabled || typeof window === "undefined") return;
+    if (this.crossfadeTimer !== null) {
+      window.clearTimeout(this.crossfadeTimer);
+      this.crossfadeTimer = null;
+    }
     this.prepare();
     const { key, theme } = this.resolveTheme(sceneKey);
     this.currentSceneKey = sceneKey;
@@ -394,6 +546,10 @@ class RetroAudio {
   }
 
   stopMusic() {
+    if (this.crossfadeTimer !== null && typeof window !== "undefined") {
+      window.clearTimeout(this.crossfadeTimer);
+      this.crossfadeTimer = null;
+    }
     if (this.musicTimer !== null && typeof window !== "undefined") {
       window.clearInterval(this.musicTimer);
       this.musicTimer = null;
@@ -409,6 +565,8 @@ class RetroAudio {
       currentSceneKey: this.currentSceneKey,
       currentThemeKey: this.currentThemeKey,
       currentThemeTitle: this.currentTheme?.title ?? null,
+      currentThemeSource: this.currentTheme?.source ?? null,
+      currentThemeStem: this.currentTheme?.midiStem ?? null,
       pendingSceneKey: this.pendingSceneKey,
       musicTimerActive: this.musicTimer !== null,
       musicStep: this.musicStep,
@@ -423,22 +581,34 @@ class RetroAudio {
 
   private resolveTheme(sceneKey: string): ResolvedTheme {
     const themeMap: Record<string, keyof typeof PUBLIC_DOMAIN_MIDI_THEMES> = {
+      title: "title",
       TitleScene: "eerieBach",
       CharacterCreateScene: "eerieBach",
       OfficeScene: "officeHub",
       CherryBlossomGardenScene: "cherryGarden",
       SenateHearingChamberScene: "senate",
-      GuideScene: "eerieBach",
-      ArchiveScene: "eerieBach",
+      GuideScene: "archiveDungeon",
+      ArchiveScene: "archiveDungeon",
       NaraStacksScene: "naraStacks",
       EmbassyCableRoomScene: "embassyCable",
       BlackVaultLairScene: "blackVault",
-      DanneBoss: "danneCombat",
+      DanneCombat: "danneCombat",
       DanneMiniboss: "miniboss",
+      DanneBoss: "danneCombat",
       NetworkScene: "openNetRouting",
       ReferralVaultScene: "referralVault",
       SilentReadScene: "silentReadTower",
-      EndingScene: "bindingCeremony"
+      EndingScene: "bindingCeremony",
+      TrueEndingScene: "bindingCeremony",
+      BadEndingScene: "danneBoss",
+      historian_office: "officeHub",
+      nara_stacks: "archiveDungeon",
+      foggy_bottom: "officeHub",
+      west_wing: "senate",
+      black_vault: "blackVault",
+      frus_floor: "officeHub",
+      embassy: "embassyCable",
+      capitol_hill: "senate"
     };
     const key = themeMap[sceneKey] ?? "title";
     return { key, theme: PUBLIC_DOMAIN_MIDI_THEMES[key] };
