@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   gameState,
   getAdventureHudReadout,
@@ -7,10 +7,13 @@ import {
   getProcessItemReadout,
   getProductionStatusReadout,
   refreshQuestWorkflowState,
+  recordStandardsViolation,
   setLatestMessage
 } from "../game/state";
 import type { ProposalKind } from "../game/types";
 import { retroAudio } from "./audio";
+import { applyStandardsDamage, VIOLATION_LABEL } from "./standardsDamage";
+import type { StandardViolation } from "./standardsDamage";
 
 export function canAutoApplyProposal(kind: ProposalKind): boolean {
   return kind === "mechanical";
@@ -29,8 +32,22 @@ export function adjustReliability(amount: number, reason: string) {
   else retroAudio.warning();
 }
 
+export function applyStandardsViolation(violation: StandardViolation, context?: string, documentId?: string) {
+  const before = gameState.reliability;
+  const after = applyStandardsDamage(before, violation);
+  gameState.reliability = after;
+  const lost = before - after;
+  const label = VIOLATION_LABEL[violation];
+  recordStandardsViolation(violation, context, documentId);
+  setLatestMessage(`-${lost} reliability: ${label}${context ? ` ${context}` : ""}`);
+  refreshQuestWorkflowState();
+  retroAudio.warning();
+  return { before, after, lost, label, violation };
+}
+
 export class ReliabilityHud {
   private readonly scene: Phaser.Scene;
+  private readonly summaryObjects: Phaser.GameObjects.GameObject[] = [];
   private readonly statusLines: Phaser.GameObjects.Text[] = [];
   private readonly itemSlots: Array<{
     id: string;
@@ -42,31 +59,46 @@ export class ReliabilityHud {
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    scene.add.rectangle(152, 20, 204, 38, color(PALETTE.black)).setDepth(860);
-    scene.add.rectangle(152, 20, 204, 38).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(861);
+    this.summaryObjects.push(scene.add.rectangle(152, 20, 204, 38, color(PALETTE.black)).setDepth(860).setScrollFactor(0));
+    this.summaryObjects.push(scene.add.rectangle(152, 20, 204, 38).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(861).setScrollFactor(0));
     [3, 13, 23].forEach((y, index) => {
       const line = scene.add.text(52, y, "", {
         fontFamily: "monospace",
         fontSize: index === 0 ? "6px" : "5px",
         color: index === 0 ? PALETTE.goldStamp : PALETTE.creamPaper
-      }).setDepth(862);
+      }).setDepth(862).setScrollFactor(0);
       this.statusLines.push(line);
+      this.summaryObjects.push(line);
     });
     this.createItemStrip();
 
-    const box = scene.add.rectangle(128, 77, 224, 86, color(PALETTE.black));
-    const border = scene.add.rectangle(128, 77, 224, 86).setStrokeStyle(2, color(PALETTE.goldStamp));
-    this.detailsText = scene.add.text(23, 42, "", {
+    const dim = scene.add
+      .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black), 0.62)
+      .setScrollFactor(0);
+    const box = scene.add.rectangle(128, 120, 236, 210, color(PALETTE.black)).setScrollFactor(0);
+    const border = scene.add.rectangle(128, 120, 236, 210).setStrokeStyle(2, color(PALETTE.goldStamp)).setScrollFactor(0);
+    const heading = scene.add.text(128, 22, "RELIABILITY DETAIL", {
       fontFamily: "monospace",
       fontSize: "8px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5, 0).setScrollFactor(0);
+    this.detailsText = scene.add.text(20, 38, "", {
+      fontFamily: "monospace",
+      fontSize: "6px",
       color: PALETTE.creamPaper,
-      wordWrap: { width: 210, useAdvancedWrap: true },
+      wordWrap: { width: 216, useAdvancedWrap: true },
       lineSpacing: 2
-    });
+    }).setScrollFactor(0);
+    const footer = scene.add.text(128, 214, "R / ESC CLOSE", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5, 0).setScrollFactor(0);
     this.details = scene.add
-      .container(0, 0, [box, border, this.detailsText])
+      .container(0, 0, [dim, box, border, heading, this.detailsText, footer])
       .setDepth(990)
-      .setVisible(false);
+      .setVisible(false)
+      .setScrollFactor(0);
     this.update();
   }
 
@@ -88,6 +120,19 @@ export class ReliabilityHud {
       slot.box.setStrokeStyle(1, color(equipped ? PALETTE.white : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
       slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
     }
+  }
+
+  hideDetails() {
+    this.details.setVisible(false);
+  }
+
+  setSummaryVisible(visible: boolean) {
+    this.summaryObjects.forEach((object) => {
+      const visibleObject = object as Phaser.GameObjects.GameObject & {
+        setVisible?: (value: boolean) => Phaser.GameObjects.GameObject;
+      };
+      visibleObject.setVisible?.(visible);
+    });
   }
 
   toggleDetails() {
@@ -127,13 +172,15 @@ export class ReliabilityHud {
       const box = this.scene.add
         .rectangle(x, y, 9, 9, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.stoneGray))
-        .setDepth(863);
+        .setDepth(863)
+        .setScrollFactor(0);
       const label = this.scene.add.text(x - 2, y - 4, item.shortLabel.slice(0, 1), {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.stoneGray
-      }).setDepth(864);
+      }).setDepth(864).setScrollFactor(0);
       this.itemSlots.push({ id: item.id, box, label });
+      this.summaryObjects.push(box, label);
     }
   }
 }

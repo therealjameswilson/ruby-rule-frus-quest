@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="16" viewBox="0 0 128 16" shape-rendering="crispEdges">
+  <rect width="128" height="16" fill="#0F0F0F"/>
+
+  <!-- floor_base -->
+  <g transform="translate(0 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#3A0710"/>
+    <rect x="1" y="1" width="14" height="14" fill="#5A2E1D"/>
+    <rect x="3" y="3" width="4" height="1" fill="#8A5A32"/>
+    <rect x="10" y="11" width="3" height="1" fill="#2A1A14"/>
+    <rect x="6" y="8" width="1" height="1" fill="#D6A23A"/>
+  </g>
+
+  <!-- floor_scuff -->
+  <g transform="translate(16 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#3A0710"/>
+    <rect x="1" y="1" width="14" height="14" fill="#5A2E1D"/>
+    <rect x="3" y="5" width="6" height="1" fill="#B89A5A"/>
+    <rect x="4" y="6" width="1" height="1" fill="#E8D8A8"/>
+    <rect x="10" y="9" width="3" height="1" fill="#8A5A32"/>
+    <rect x="2" y="13" width="2" height="1" fill="#2A1A14"/>
+  </g>
+
+  <!-- floor_ruby -->
+  <g transform="translate(32 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#3A0710"/>
+    <rect x="1" y="1" width="14" height="14" fill="#5A2E1D"/>
+    <rect x="6" y="5" width="4" height="4" fill="#7A1020"/>
+    <rect x="7" y="6" width="2" height="2" fill="#B82030"/>
+    <rect x="3" y="12" width="5" height="1" fill="#8A5A32"/>
+    <rect x="12" y="3" width="1" height="1" fill="#D6A23A"/>
+  </g>
+
+  <!-- wall_top -->
+  <g transform="translate(48 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#0F0F0F"/>
+    <rect x="1" y="1" width="14" height="14" fill="#3A0710"/>
+    <rect x="2" y="2" width="5" height="5" fill="#7A1020"/>
+    <rect x="8" y="2" width="5" height="4" fill="#5A2E1D"/>
+    <rect x="3" y="8" width="9" height="3" fill="#8A5A32"/>
+    <rect x="5" y="4" width="1" height="1" fill="#D6A23A"/>
+    <rect x="11" y="10" width="3" height="2" fill="#2A1A14"/>
+  </g>
+
+  <!-- wall_front -->
+  <g transform="translate(64 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#0F0F0F"/>
+    <rect x="1" y="1" width="14" height="14" fill="#2A1A14"/>
+    <rect x="2" y="2" width="12" height="4" fill="#7A1020"/>
+    <rect x="2" y="7" width="5" height="6" fill="#5A2E1D"/>
+    <rect x="8" y="7" width="6" height="6" fill="#3A0710"/>
+    <rect x="4" y="9" width="2" height="1" fill="#B89A5A"/>
+    <rect x="10" y="3" width="3" height="1" fill="#D6A23A"/>
+  </g>
+
+  <!-- wall_shadow -->
+  <g transform="translate(80 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#0F0F0F"/>
+    <rect x="1" y="1" width="14" height="14" fill="#2A1A14"/>
+    <rect x="1" y="1" width="3" height="14" fill="#3A0710"/>
+    <rect x="5" y="2" width="8" height="3" fill="#5A2E1D"/>
+    <rect x="6" y="8" width="7" height="2" fill="#0F0F0F"/>
+    <rect x="11" y="12" width="2" height="1" fill="#B89A5A"/>
+  </g>
+
+  <!-- threshold_gate -->
+  <g transform="translate(96 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#0F0F0F"/>
+    <rect x="1" y="1" width="14" height="14" fill="#3A0710"/>
+    <rect x="3" y="3" width="10" height="10" fill="#7A1020"/>
+    <rect x="5" y="5" width="6" height="6" fill="#0F0F0F"/>
+    <rect x="4" y="2" width="8" height="2" fill="#D6A23A"/>
+    <rect x="5" y="12" width="6" height="1" fill="#D6A23A"/>
+    <rect x="12" y="7" width="1" height="2" fill="#68C0C0"/>
+  </g>
+
+  <!-- pedestal_tile -->
+  <g transform="translate(112 0)">
+    <rect x="0" y="0" width="16" height="16" fill="#3A0710"/>
+    <rect x="2" y="11" width="12" height="3" fill="#0F0F0F"/>
+    <rect x="3" y="9" width="10" height="3" fill="#5A2E1D"/>
+    <rect x="5" y="5" width="6" height="5" fill="#B89A5A"/>
+    <rect x="4" y="4" width="8" height="2" fill="#D6A23A"/>
+    <rect x="7" y="2" width="2" height="2" fill="#F8F0D8"/>
+    <rect x="6" y="6" width="4" height="2" fill="#7A1020"/>
+  </g>
+</svg>

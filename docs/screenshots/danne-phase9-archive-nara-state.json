@@ -1,0 +1,27 @@
+{
+  "before": {
+    "scene": "ArchiveScene",
+    "player": {
+      "x": 128,
+      "y": 184
+    },
+    "nearest": "NARA II Stacks"
+  },
+  "target": {
+    "scene": "NaraStacksScene",
+    "player": {
+      "x": 128,
+      "y": 205
+    },
+    "nearest": "Return to Archive"
+  },
+  "returned": {
+    "scene": "ArchiveScene",
+    "player": {
+      "x": 128,
+      "y": 188
+    },
+    "nearest": "NARA II Stacks",
+    "room": "A1"
+  }
+}

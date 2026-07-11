@@ -1,0 +1,88 @@
+{
+  "scene": "BlackVaultLairScene",
+  "mode": "explore",
+  "objective": "Black Vault Lair: inspect the dormant DANN-E core.",
+  "player": {
+    "x": 128,
+    "y": 202
+  },
+  "nearestInteractable": "Return to Archive",
+  "latestMessage": "Treaty Fragment III secured.",
+  "currentArea": {
+    "id": "buckram_gate",
+    "displayName": "Buckram Gate",
+    "zeldaRole": "Final dungeon"
+  },
+  "roomGraphEntries": [
+    {
+      "id": "DG1",
+      "area": "office_hub",
+      "title": "Cherry Blossom Garden",
+      "exits": {
+        "east": "O1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "reward",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "DH1",
+      "area": "office_hub",
+      "title": "Senate Hearing Chamber",
+      "exits": {
+        "south": "O1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "hint",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "DN1",
+      "area": "archive_cavern",
+      "title": "NARA Stacks",
+      "exits": {
+        "south": "A1"
+      },
+      "lockedExits": {},
+      "requiredItems": {},
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "DE1",
+      "area": "two_networks",
+      "title": "Embassy Cable Room",
+      "exits": {
+        "south": "A2"
+      },
+      "lockedExits": {
+        "south": "Marine security door"
+      },
+      "requiredItems": {},
+      "roomType": "puzzle",
+      "visited": false,
+      "revealed": true
+    },
+    {
+      "id": "DV1",
+      "area": "buckram_gate",
+      "title": "Black Vault Lair",
+      "exits": {
+        "north": "D3"
+      },
+      "lockedExits": {
+        "north": "Treaty fragments or Buckram Key"
+      },
+      "requiredItems": {},
+      "roomType": "boss",
+      "visited": true,
+      "revealed": true
+    }
+  ],
+  "sceneProgress": {}
+}

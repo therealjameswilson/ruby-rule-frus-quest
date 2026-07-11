@@ -1,0 +1,126 @@
+[
+  {
+    "name": "iphone14pro-portrait",
+    "viewport": {
+      "width": 393,
+      "height": 660
+    },
+    "scene": "TitleScene",
+    "audioStatus": "pd midi Bach Contrapunctus I",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "TitleScene",
+      "currentThemeKey": "title",
+      "currentThemeTitle": "Bach Contrapunctus I",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 2,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 2.199999988079071,
+      "lastFirstSampleMs": 2.199999988079071,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "integerZoom": true,
+    "computedZoom": 1,
+    "errors": [],
+    "screenshot": "/Users/jameswilson/Documents/New project/ruby-rule-frus-quest/docs/screenshots/mobile/phase6-audio-iphone14pro-portrait.png"
+  },
+  {
+    "name": "iphone14pro-landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "scene": "TitleScene",
+    "audioStatus": "pd midi Bach Contrapunctus I",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "TitleScene",
+      "currentThemeKey": "title",
+      "currentThemeTitle": "Bach Contrapunctus I",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 2,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 3,
+      "lastFirstSampleMs": 3,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "integerZoom": true,
+    "computedZoom": 1,
+    "errors": [],
+    "screenshot": "/Users/jameswilson/Documents/New project/ruby-rule-frus-quest/docs/screenshots/mobile/phase6-audio-iphone14pro-landscape.png"
+  },
+  {
+    "name": "pixel7-portrait",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "scene": "TitleScene",
+    "audioStatus": "pd midi Bach Contrapunctus I",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "TitleScene",
+      "currentThemeKey": "title",
+      "currentThemeTitle": "Bach Contrapunctus I",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 2,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 2.5,
+      "lastFirstSampleMs": 2.5,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "integerZoom": true,
+    "computedZoom": 1,
+    "errors": [],
+    "screenshot": "/Users/jameswilson/Documents/New project/ruby-rule-frus-quest/docs/screenshots/mobile/phase6-audio-pixel7-portrait.png"
+  },
+  {
+    "name": "pixel7-landscape",
+    "viewport": {
+      "width": 863,
+      "height": 360
+    },
+    "scene": "TitleScene",
+    "audioStatus": "pd midi Bach Contrapunctus I",
+    "audio": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "TitleScene",
+      "currentThemeKey": "title",
+      "currentThemeTitle": "Bach Contrapunctus I",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 2,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 2.899999976158142,
+      "lastFirstSampleMs": 2.899999976158142,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "integerZoom": true,
+    "computedZoom": 1,
+    "errors": [],
+    "screenshot": "/Users/jameswilson/Documents/New project/ruby-rule-frus-quest/docs/screenshots/mobile/phase6-audio-pixel7-landscape.png"
+  }
+]

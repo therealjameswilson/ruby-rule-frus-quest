@@ -3,6 +3,7 @@ import { characterAnimKey } from "../art/character_anims";
 import { CHARACTER_KEYS, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
+import { getInput, tickInput } from "../input/InputState";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -59,7 +60,7 @@ export class SpriteGallery extends Phaser.Scene {
       const x = 27 + column * 50;
       const y = row === 0 ? 86 : 174;
       this.add.ellipse(x, y + 1, 20, 5, color(PALETTE.black), 0.86);
-      const sprite = this.add.sprite(x, y, key).setOrigin(0.5, 0.9).setScale(0.72);
+      const sprite = this.add.sprite(x, y, key).setOrigin(0.5, 0.9).setScale(1);
       this.sprites.push({ key, sprite });
       this.add.text(x, y + 8, shortName(key), {
         fontFamily: "monospace",
@@ -76,9 +77,13 @@ export class SpriteGallery extends Phaser.Scene {
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
 
-    this.input.keyboard?.on("keydown-ESC", () => this.scene.start("TitleScene"));
     this.playCycle();
     this.time.addEvent({ delay: 1500, loop: true, callback: () => this.advanceCycle() });
+  }
+
+  update() {
+    tickInput();
+    if (getInput().pauseJustPressed) this.scene.start("TitleScene");
   }
 
   private advanceCycle() {

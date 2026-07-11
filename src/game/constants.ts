@@ -3,14 +3,22 @@ import {
   NES_ARCHIVE_GRAY,
   NES_BLACK,
   NES_BRIGHT_RUBY,
+  NES_BRONZE,
   NES_BUCKRAM_RUBY,
   NES_CLASSNET_RED,
   NES_CREAM_PAPER,
   NES_DARK_MAROON,
+  NES_DEEP_BROWN,
+  NES_DEEP_GREEN,
   NES_DEEP_RUBY,
   NES_GOLD,
+  NES_MEDIUM_GREEN,
+  NES_MOSS_GREEN,
+  NES_MUTED_RUBY,
+  NES_OLD_GOLD,
   NES_OPENNET_GREEN,
   NES_AGED_PAPER_SHADOW,
+  NES_PALE_GOLD,
   NES_SLATE_BLUE,
   NES_STONE_LIGHT,
   NES_TERMINAL_CYAN,
@@ -34,10 +42,18 @@ export const PALETTE = {
   mapWater: NES_SLATE_BLUE,
   terminalCyan: NES_TERMINAL_CYAN,
   openNetGreen: NES_OPENNET_GREEN,
+  plantLeaf: NES_MEDIUM_GREEN,
+  plantLeafShade: NES_MOSS_GREEN,
+  plantLeafDark: NES_DEEP_GREEN,
   classNetRed: NES_CLASSNET_RED,
   shadowNavy: NES_DEEP_RUBY,
   black: NES_BLACK,
-  white: NES_WHITE_HIGHLIGHT
+  white: NES_WHITE_HIGHLIGHT,
+  bronze: NES_BRONZE,
+  oldGold: NES_OLD_GOLD,
+  paleGold: NES_PALE_GOLD,
+  mutedRuby: NES_MUTED_RUBY,
+  deepBrown: NES_DEEP_BROWN
 } as const;
 
 export type PaletteKey = keyof typeof PALETTE;
@@ -270,7 +286,7 @@ export const AREA_REGISTRY = [
     reward: "Golden Rule",
     rewardType: "stamp",
     rewardId: "rule",
-    scenes: ["OfficeScene"]
+    scenes: ["OfficeScene", "CherryBlossomGardenScene", "SenateHearingChamberScene"]
   },
   {
     id: "archive_cavern",
@@ -279,7 +295,7 @@ export const AREA_REGISTRY = [
     reward: "Citation Stamp",
     rewardType: "item",
     rewardId: "citation_stamp",
-    scenes: ["GuideScene", "ArchiveScene"]
+    scenes: ["GuideScene", "ArchiveScene", "NaraStacksScene"]
   },
   {
     id: "two_networks",
@@ -288,7 +304,7 @@ export const AREA_REGISTRY = [
     reward: "Clearance Token",
     rewardType: "item",
     rewardId: "clearance_token",
-    scenes: ["NetworkScene"]
+    scenes: ["NetworkScene", "EmbassyCableRoomScene"]
   },
   {
     id: "referral_vault",
@@ -324,7 +340,7 @@ export const AREA_REGISTRY = [
     reward: "Published FRUS cover",
     rewardType: "finalPrize",
     rewardId: "published_frus_cover",
-    scenes: ["EndingScene"]
+    scenes: ["EndingScene", "BlackVaultLairScene"]
   }
 ] as const;
 
@@ -350,8 +366,24 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "office_hub",
     title: "Office Hub",
     grid: { x: -1, y: 0 },
-    exits: { east: "A1" },
+    exits: { north: "DH1", west: "DG1", east: "A1" },
     lockedExits: { east: "Golden Rule door" },
+    roomType: "hint"
+  },
+  {
+    id: "DG1",
+    area: "office_hub",
+    title: "Cherry Blossom Garden",
+    grid: { x: -2, y: 0 },
+    exits: { east: "O1" },
+    roomType: "reward"
+  },
+  {
+    id: "DH1",
+    area: "office_hub",
+    title: "Senate Hearing Chamber",
+    grid: { x: -1, y: -1 },
+    exits: { south: "O1" },
     roomType: "hint"
   },
   {
@@ -359,17 +391,44 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "Source Entry",
     grid: { x: 0, y: 0 },
-    exits: { east: "A2", south: "B1" },
+    exits: { north: "DN1", east: "A2", south: "B1" },
+    lockedExits: {
+      north: "NARA stacks citation lock",
+      east: "OpenNet source-note lock",
+      south: "Referral stacks citation lock"
+    },
+    requiredItems: {
+      north: "citation_stamp",
+      east: "citation_stamp",
+      south: "citation_stamp"
+    },
     roomType: "normal"
+  },
+  {
+    id: "DN1",
+    area: "archive_cavern",
+    title: "NARA Stacks",
+    grid: { x: 0, y: -1 },
+    exits: { south: "A1" },
+    roomType: "puzzle"
   },
   {
     id: "A2",
     area: "archive_cavern",
     title: "OpenNet Annex",
     grid: { x: 1, y: 0 },
-    exits: { west: "A1", east: "A3", south: "B2" },
+    exits: { north: "DE1", west: "A1", east: "A3", south: "B2" },
     lockedExits: { south: "ClassNet seal" },
     requiredItems: { south: "clearance_token" },
+    roomType: "puzzle"
+  },
+  {
+    id: "DE1",
+    area: "two_networks",
+    title: "Embassy Cable Room",
+    grid: { x: 1, y: -1 },
+    exits: { south: "A2" },
+    lockedExits: { south: "Marine security door" },
     roomType: "puzzle"
   },
   {
@@ -457,7 +516,17 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "Queue Boss Gate",
     grid: { x: 2, y: 3 },
-    exits: { north: "C3", west: "D2" },
+    exits: { north: "C3", west: "D2", south: "DV1" },
+    lockedExits: { south: "Black Vault seal" },
+    roomType: "boss"
+  },
+  {
+    id: "DV1",
+    area: "buckram_gate",
+    title: "Black Vault Lair",
+    grid: { x: 2, y: 4 },
+    exits: { north: "D3" },
+    lockedExits: { north: "Treaty fragments or Buckram Key" },
     roomType: "boss"
   },
   {
@@ -467,7 +536,6 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     grid: { x: 4, y: 0 },
     exits: { east: "N2" },
     lockedExits: { east: "ClassNet vault door" },
-    requiredItems: { east: "clearance_token" },
     roomType: "puzzle"
   },
   {
@@ -475,7 +543,9 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "two_networks",
     title: "ClassNet Vault",
     grid: { x: 5, y: 0 },
-    exits: { west: "N1" },
+    exits: { west: "N1", east: "R1" },
+    lockedExits: { east: "Red vault exit" },
+    requiredItems: { east: "clearance_token" },
     roomType: "reward"
   },
   {
@@ -530,17 +600,30 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
 ] as const;
 
 export const SCENE_ORDER = [
+  "TapToStartScene",
+  "WarningScene",
   "TitleScene",
+  "WorldMapScene",
   "CharacterCreateScene",
   "OfficeScene",
   "GuideScene",
   "ArchiveScene",
+  "CherryBlossomGardenScene",
+  "BlackVaultLairScene",
+  "SenateHearingChamberScene",
+  "NaraStacksScene",
+  "EmbassyCableRoomScene",
+  "GameplayMapScene",
   "NetworkScene",
   "ReferralVaultScene",
   "SilentReadScene",
   "EndingScene",
+  "TrueEndingScene",
+  "BadEndingScene",
+  "CodexScene",
   "RenderDebugScene",
+  "DanneGallery",
   "SpriteGallery"
 ] as const;
 
-export const CONTROLS_TEXT = "ARROWS/WASD MOVE  SPACE/ENTER ACT  E ABILITY  M INV  R REL  N SOUND";
+export const CONTROLS_TEXT = "ARROWS/WASD MOVE   SPACE/ENTER ACT   E ABILITY\nM INV   R REL   N SOUND   ESC CLOSE";

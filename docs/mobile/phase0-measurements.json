@@ -1,0 +1,394 @@
+[
+  {
+    "id": "iphone14pro-portrait",
+    "label": "iPhone 14 Pro portrait",
+    "viewport": {
+      "width": 393,
+      "height": 852,
+      "deviceScaleFactor": 3
+    },
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "localPreviewUrl": "http://127.0.0.1:5195/?scene=ArchiveScene&role=compiler&name=Ruby&mobileDebug=1",
+    "elapsedWallMs": 4697,
+    "beforeTap": {
+      "perfNow": 2244,
+      "metrics": {
+        "fpsCurrent": 29.94011976047896,
+        "fpsAvg1s": 27.84943155563406,
+        "fpsMin10s": 1.5001500150015001,
+        "lastInputLatencyMs": null,
+        "lastPointerDownAt": null,
+        "activePointerCount": 0,
+        "dpr": 3,
+        "canvasCssWidth": 376,
+        "canvasCssHeight": 353,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1.46875,
+        "integerZoom": false,
+        "firstFrameMs": 211.626
+      },
+      "shell": {
+        "shellDataset": {
+          "scale": "1.473",
+          "integerScale": "false",
+          "mobileControls": "true"
+        },
+        "shellRect": {
+          "width": 377,
+          "height": 353
+        },
+        "canvasRect": {
+          "width": 376,
+          "height": 353
+        },
+        "mobileControlsDisplay": "grid"
+      },
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "afterTap": {
+      "perfNow": 4137.300000011921,
+      "metrics": {
+        "fpsCurrent": 20.00000000000018,
+        "fpsAvg1s": 23.269276758991964,
+        "fpsMin10s": 1.5001500150015001,
+        "lastInputLatencyMs": 37.89999998807889,
+        "lastPointerDownAt": 2733.300000011921,
+        "activePointerCount": 0,
+        "dpr": 3,
+        "canvasCssWidth": 376,
+        "canvasCssHeight": 353,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1.46875,
+        "integerZoom": false,
+        "firstFrameMs": 211.626
+      },
+      "shell": {
+        "shellDataset": {
+          "scale": "1.473",
+          "integerScale": "false",
+          "mobileControls": "true"
+        },
+        "shellRect": {
+          "width": 377,
+          "height": 353
+        },
+        "canvasRect": {
+          "width": 376,
+          "height": 353
+        },
+        "mobileControlsDisplay": "grid"
+      },
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "screenshotPath": "docs/screenshots/mobile/phase0-iphone14pro-portrait.png",
+    "videoPath": "docs/screenshots/mobile/phase0-iphone14pro-portrait.webm",
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "id": "iphone14pro-landscape",
+    "label": "iPhone 14 Pro landscape",
+    "viewport": {
+      "width": 852,
+      "height": 393,
+      "deviceScaleFactor": 3
+    },
+    "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1",
+    "localPreviewUrl": "http://127.0.0.1:5195/?scene=ArchiveScene&role=compiler&name=Ruby&mobileDebug=1",
+    "elapsedWallMs": 3700,
+    "beforeTap": {
+      "perfNow": 1420.800000011921,
+      "metrics": {
+        "fpsCurrent": 30.030030030030073,
+        "fpsAvg1s": 28.574732249580705,
+        "fpsMin10s": 11.990407673860915,
+        "lastInputLatencyMs": null,
+        "lastPointerDownAt": null,
+        "activePointerCount": 0,
+        "dpr": 3,
+        "canvasCssWidth": 402,
+        "canvasCssHeight": 376,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1.5703125,
+        "integerZoom": false,
+        "firstFrameMs": 131.896
+      },
+      "shell": {
+        "shellDataset": {
+          "scale": "1.571",
+          "integerScale": "false",
+          "mobileControls": "true"
+        },
+        "shellRect": {
+          "width": 402,
+          "height": 377
+        },
+        "canvasRect": {
+          "width": 402,
+          "height": 376
+        },
+        "mobileControlsDisplay": "grid"
+      },
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "afterTap": {
+      "perfNow": 3228.800000011921,
+      "metrics": {
+        "fpsCurrent": 20,
+        "fpsAvg1s": 24.798041966942648,
+        "fpsMin10s": 11.990407673860915,
+        "lastInputLatencyMs": 41.29999996423726,
+        "lastPointerDownAt": 1823.9000000357628,
+        "activePointerCount": 0,
+        "dpr": 3,
+        "canvasCssWidth": 402,
+        "canvasCssHeight": 376,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1.5703125,
+        "integerZoom": false,
+        "firstFrameMs": 131.896
+      },
+      "shell": {
+        "shellDataset": {
+          "scale": "1.571",
+          "integerScale": "false",
+          "mobileControls": "true"
+        },
+        "shellRect": {
+          "width": 402,
+          "height": 377
+        },
+        "canvasRect": {
+          "width": 402,
+          "height": 376
+        },
+        "mobileControlsDisplay": "grid"
+      },
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "screenshotPath": "docs/screenshots/mobile/phase0-iphone14pro-landscape.png",
+    "videoPath": "docs/screenshots/mobile/phase0-iphone14pro-landscape.webm",
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "id": "pixel7-portrait",
+    "label": "Pixel 7 portrait",
+    "viewport": {
+      "width": 412,
+      "height": 915,
+      "deviceScaleFactor": 2.625
+    },
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36",
+    "localPreviewUrl": "http://127.0.0.1:5195/?scene=ArchiveScene&role=compiler&name=Ruby&mobileDebug=1",
+    "elapsedWallMs": 4071,
+    "beforeTap": {
+      "perfNow": 1526.199999988079,
+      "metrics": {
+        "fpsCurrent": 20,
+        "fpsAvg1s": 27.65046174529535,
+        "fpsMin10s": 12.004801920768298,
+        "lastInputLatencyMs": null,
+        "lastPointerDownAt": null,
+        "activePointerCount": 0,
+        "dpr": 2.625,
+        "canvasCssWidth": 395,
+        "canvasCssHeight": 371,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1.54296875,
+        "integerZoom": false,
+        "firstFrameMs": 81.398
+      },
+      "shell": {
+        "shellDataset": {
+          "scale": "1.547",
+          "integerScale": "false",
+          "mobileControls": "true"
+        },
+        "shellRect": {
+          "width": 396,
+          "height": 371
+        },
+        "canvasRect": {
+          "width": 395,
+          "height": 371
+        },
+        "mobileControlsDisplay": "grid"
+      },
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "afterTap": {
+      "perfNow": 3356.899999976158,
+      "metrics": {
+        "fpsCurrent": 19.9600798403194,
+        "fpsAvg1s": 24.585871646789887,
+        "fpsMin10s": 12.004801920768298,
+        "lastInputLatencyMs": 28.400000035762787,
+        "lastPointerDownAt": 1953.5999999642372,
+        "activePointerCount": 0,
+        "dpr": 2.625,
+        "canvasCssWidth": 395,
+        "canvasCssHeight": 371,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1.54296875,
+        "integerZoom": false,
+        "firstFrameMs": 81.398
+      },
+      "shell": {
+        "shellDataset": {
+          "scale": "1.547",
+          "integerScale": "false",
+          "mobileControls": "true"
+        },
+        "shellRect": {
+          "width": 396,
+          "height": 371
+        },
+        "canvasRect": {
+          "width": 395,
+          "height": 371
+        },
+        "mobileControlsDisplay": "grid"
+      },
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "screenshotPath": "docs/screenshots/mobile/phase0-pixel7-portrait.png",
+    "videoPath": "docs/screenshots/mobile/phase0-pixel7-portrait.webm",
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  },
+  {
+    "id": "pixel7-landscape",
+    "label": "Pixel 7 landscape",
+    "viewport": {
+      "width": 915,
+      "height": 412,
+      "deviceScaleFactor": 2.625
+    },
+    "userAgent": "Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Mobile Safari/537.36",
+    "localPreviewUrl": "http://127.0.0.1:5195/?scene=ArchiveScene&role=compiler&name=Ruby&mobileDebug=1",
+    "elapsedWallMs": 3857,
+    "beforeTap": {
+      "perfNow": 1537.5,
+      "metrics": {
+        "fpsCurrent": 20,
+        "fpsAvg1s": 27.65671050902914,
+        "fpsMin10s": 12.004801920768314,
+        "lastInputLatencyMs": null,
+        "lastPointerDownAt": null,
+        "activePointerCount": 0,
+        "dpr": 2.625,
+        "canvasCssWidth": 422,
+        "canvasCssHeight": 395,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1.6484375,
+        "integerZoom": false,
+        "firstFrameMs": 77.798
+      },
+      "shell": {
+        "shellDataset": {
+          "scale": "1.650",
+          "integerScale": "false",
+          "mobileControls": "true"
+        },
+        "shellRect": {
+          "width": 422,
+          "height": 396
+        },
+        "canvasRect": {
+          "width": 422,
+          "height": 395
+        },
+        "mobileControlsDisplay": "grid"
+      },
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "afterTap": {
+      "perfNow": 3361.800000011921,
+      "metrics": {
+        "fpsCurrent": 20,
+        "fpsAvg1s": 23.756307142526595,
+        "fpsMin10s": 12.004801920768314,
+        "lastInputLatencyMs": 39.39999998807912,
+        "lastPointerDownAt": 1960.300000011921,
+        "activePointerCount": 0,
+        "dpr": 2.625,
+        "canvasCssWidth": 422,
+        "canvasCssHeight": 395,
+        "canvasBackingWidth": 256,
+        "canvasBackingHeight": 240,
+        "computedZoom": 1.6484375,
+        "integerZoom": false,
+        "firstFrameMs": 77.798
+      },
+      "shell": {
+        "shellDataset": {
+          "scale": "1.650",
+          "integerScale": "false",
+          "mobileControls": "true"
+        },
+        "shellRect": {
+          "width": 422,
+          "height": 396
+        },
+        "canvasRect": {
+          "width": 422,
+          "height": 395
+        },
+        "mobileControlsDisplay": "grid"
+      },
+      "stateSummary": {
+        "scene": "ArchiveScene",
+        "mode": "dialog",
+        "audioStatus": "pd midi Bach Chromatic Fantasy",
+        "objective": "Archive Cavern: collect Source Note 47 in A1."
+      }
+    },
+    "screenshotPath": "docs/screenshots/mobile/phase0-pixel7-landscape.png",
+    "videoPath": "docs/screenshots/mobile/phase0-pixel7-landscape.webm",
+    "consoleErrorCount": 0,
+    "consoleErrors": []
+  }
+]

@@ -1,0 +1,80 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.10.2",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 1536,
+  "height": 1024,
+  "tilewidth": 1,
+  "tileheight": 1,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "collisions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 1, "name": "parchment_north", "type": "solid", "x": 0, "y": 0, "width": 1536, "height": 82 },
+        { "id": 2, "name": "parchment_south", "type": "solid", "x": 0, "y": 925, "width": 1536, "height": 99 },
+        { "id": 3, "name": "parchment_west", "type": "solid", "x": 0, "y": 0, "width": 82, "height": 1024 },
+        { "id": 4, "name": "parchment_east", "type": "solid", "x": 1456, "y": 0, "width": 80, "height": 1024 },
+        { "id": 5, "name": "vault_a", "type": "solid", "x": 88, "y": 92, "width": 185, "height": 150 },
+        { "id": 6, "name": "vault_c", "type": "solid", "x": 1280, "y": 92, "width": 175, "height": 150 },
+        { "id": 7, "name": "vault_b", "type": "solid", "x": 82, "y": 760, "width": 205, "height": 165 },
+        { "id": 8, "name": "vault_d", "type": "solid", "x": 1285, "y": 760, "width": 170, "height": 165 },
+        { "id": 9, "name": "catalog_desk", "type": "solid", "x": 690, "y": 442, "width": 160, "height": 145 },
+        { "id": 10, "name": "red_zone", "type": "solid", "x": 1160, "y": 254, "width": 250, "height": 145 },
+        { "id": 11, "name": "freight_elevator", "type": "solid", "x": 710, "y": 755, "width": 142, "height": 165 },
+        { "id": 12, "name": "upper_shelves_left", "type": "solid", "x": 320, "y": 112, "width": 320, "height": 82 },
+        { "id": 13, "name": "upper_shelves_right", "type": "solid", "x": 850, "y": 112, "width": 310, "height": 82 }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "doors",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 14, "name": "world_exit", "type": "door", "x": 710, "y": 820, "width": 130, "height": 85, "properties": [
+          { "name": "label", "type": "string", "value": "Freight Elevator Exit" },
+          { "name": "targetScene", "type": "string", "value": "WorldMapScene" }
+        ] },
+        { "id": 15, "name": "vault_a_route", "type": "door", "x": 110, "y": 170, "width": 110, "height": 70, "properties": [
+          { "name": "label", "type": "string", "value": "Vault A Transfer" },
+          { "name": "targetScene", "type": "string", "value": "GameplayMapScene" },
+          { "name": "targetMap", "type": "string", "value": "black_vault" },
+          { "name": "spawn", "type": "string", "value": "west_gate" }
+        ] }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "spawns",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 16, "name": "entry", "type": "spawn", "point": true, "x": 768, "y": 810 },
+        { "id": 17, "name": "catalog", "type": "spawn", "point": true, "x": 768, "y": 615 }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "interactions",
+      "type": "objectgroup",
+      "objects": [
+        { "id": 18, "name": "nara_archivist", "type": "npc", "x": 700, "y": 430, "width": 145, "height": 125, "properties": [
+          { "name": "label", "type": "string", "value": "NARA Archivist" },
+          { "name": "action", "type": "string", "value": "nara-archivist" }
+        ] },
+        { "id": 19, "name": "red_zone_gate", "type": "interaction", "x": 1185, "y": 260, "width": 210, "height": 125, "properties": [
+          { "name": "label", "type": "string", "value": "Red Zone Gate" },
+          { "name": "action", "type": "string", "value": "red-zone-gate" }
+        ] },
+        { "id": 20, "name": "stack_control_note", "type": "interaction", "x": 500, "y": 350, "width": 120, "height": 110, "properties": [
+          { "name": "label", "type": "string", "value": "Stack Control Note" },
+          { "name": "action", "type": "string", "value": "stack-control-manifest" },
+          { "name": "text", "type": "string", "value": "Rows 17-24 are stable. Bring a manifest before moving boxes." }
+        ] }
+      ]
+    }
+  ]
+}

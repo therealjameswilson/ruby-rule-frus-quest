@@ -1,6 +1,8 @@
 import type Phaser from "phaser";
 import { CHARACTERS, type CharacterKey } from "./characters";
 
+// Native sheets are 4 columns by 4 rows of 32x48 cells. The final cell is
+// intentionally unused; keeping it untouched preserves the art-pack layout.
 export const FRAMES = {
   idle: { down: 0, up: 1, left: 2, right: 3 },
   walk: { down: [4, 5], up: [6, 7], left: [8, 9], right: [10, 11] },

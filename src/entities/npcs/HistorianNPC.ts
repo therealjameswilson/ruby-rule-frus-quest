@@ -4,7 +4,7 @@ import { getCharacterKeyForNpcId } from "../../art/characters";
 import { CHARACTERS, PALETTE } from "../../game/constants";
 import type { CharacterId } from "../../game/types";
 import { getSnesNpcTextureKey } from "../../game/snesAtlas";
-import { snapPixel } from "../../systems/pixelPerfect";
+import { setPixelPosition, snapPixel } from "../../systems/pixelPerfect";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -34,7 +34,7 @@ export class HistorianNPC {
       .setOrigin(0.5, usesArtPackTexture ? 0.9 : 0.5)
       .setDepth(snapPixel(y));
     if (usesArtPackTexture) {
-      const animKey = characterAnimKey(artPackTexture, "walk-down");
+      const animKey = characterAnimKey(artPackTexture, "idle-down");
       if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     }
     this.label = scene.add
@@ -56,9 +56,9 @@ export class HistorianNPC {
       repeat: -1,
       ease: "Stepped",
       onUpdate: () => {
-        this.sprite.y = snapPixel(this.sprite.y);
-        this.label.y = snapPixel(this.label.y);
-        this.shadow.y = snapPixel(this.shadow.y);
+        setPixelPosition(this.sprite, this.sprite.x, this.sprite.y);
+        setPixelPosition(this.label, this.label.x, this.label.y);
+        setPixelPosition(this.shadow, this.shadow.x, this.shadow.y);
       }
     });
   }

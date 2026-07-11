@@ -182,18 +182,24 @@ export function drawTiledFloor(scene: Phaser.Scene, textureKey: string) {
   }
 }
 
-export function drawRoomFrame(scene: Phaser.Scene, title: string, accent: string = PALETTE.goldStamp) {
+export function drawRoomFrame(
+  scene: Phaser.Scene,
+  title: string,
+  accent: string = PALETTE.goldStamp,
+  options: { showLegacyHud?: boolean } = {}
+) {
+  const showLegacyHud = options.showLegacyHud ?? true;
   scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.shadowNavy)).setDepth(-30);
-  drawAdventureHud(scene, title, accent);
+  if (showLegacyHud) drawAdventureHud(scene, title, accent);
   drawDungeonWalls(scene, accent);
   scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2 + 16, GAME_WIDTH - 8, GAME_HEIGHT - 40).setStrokeStyle(4, color(PALETTE.buckramRed)).setDepth(50);
 }
 
 function drawAdventureHud(scene: Phaser.Scene, title: string, accent: string) {
-  scene.add.rectangle(GAME_WIDTH / 2, 16, GAME_WIDTH, 32, color(PALETTE.black)).setDepth(760);
-  scene.add.rectangle(GAME_WIDTH / 2, 31, GAME_WIDTH, 2, color(PALETTE.buckramRed)).setDepth(761);
-  scene.add.rectangle(26, 16, 42, 20, color(PALETTE.stoneGray)).setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(762);
-  scene.add.rectangle(26, 16, 34, 12, color(PALETTE.stoneDark)).setDepth(763);
+  scene.add.rectangle(GAME_WIDTH / 2, 16, GAME_WIDTH, 32, color(PALETTE.black)).setDepth(760).setScrollFactor(0);
+  scene.add.rectangle(GAME_WIDTH / 2, 31, GAME_WIDTH, 2, color(PALETTE.buckramRed)).setDepth(761).setScrollFactor(0);
+  scene.add.rectangle(26, 16, 42, 20, color(PALETTE.stoneGray)).setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(762).setScrollFactor(0);
+  scene.add.rectangle(26, 16, 34, 12, color(PALETTE.stoneDark)).setDepth(763).setScrollFactor(0);
   const roomHash = title.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
   const rooms = [
     [16, 12],
@@ -204,38 +210,38 @@ function drawAdventureHud(scene: Phaser.Scene, title: string, accent: string) {
   ];
   rooms.forEach(([x, y], index) => {
     const active = index === roomHash % rooms.length;
-    scene.add.rectangle(x, y, active ? 6 : 4, active ? 5 : 4, color(active ? accent : PALETTE.stoneLight)).setDepth(764);
+    scene.add.rectangle(x, y, active ? 6 : 4, active ? 5 : 4, color(active ? accent : PALETTE.stoneLight)).setDepth(764).setScrollFactor(0);
   });
   scene.add.text(52, 5, title, {
     fontFamily: "monospace",
     fontSize: "6px",
     color: accent
-  }).setDepth(802);
+  }).setDepth(802).setScrollFactor(0);
   drawHudIcon(scene, 141, 16, "B", PALETTE.terminalCyan);
   drawHudIcon(scene, 160, 16, "A", PALETTE.goldStamp);
   scene.add.text(184, 5, "-CONF-", {
     fontFamily: "monospace",
     fontSize: "7px",
     color: PALETTE.buckramHighlight
-  }).setDepth(802);
+  }).setDepth(802).setScrollFactor(0);
   for (let i = 0; i < 5; i += 1) {
-    scene.add.rectangle(214 + i * 7, 20, 5, 5, color(PALETTE.buckramHighlight)).setDepth(802);
-    scene.add.rectangle(215 + i * 7, 18, 3, 2, color(PALETTE.goldStamp)).setDepth(803);
+    scene.add.rectangle(214 + i * 7, 20, 5, 5, color(PALETTE.buckramHighlight)).setDepth(802).setScrollFactor(0);
+    scene.add.rectangle(215 + i * 7, 18, 3, 2, color(PALETTE.goldStamp)).setDepth(803).setScrollFactor(0);
   }
 }
 
 function drawHudIcon(scene: Phaser.Scene, x: number, y: number, label: string, accent: string) {
-  scene.add.rectangle(x + 1, y + 1, 14, 20, color(PALETTE.stoneDark)).setDepth(801);
-  scene.add.rectangle(x, y, 14, 20, color(PALETTE.black)).setStrokeStyle(2, color(accent)).setDepth(802);
-  scene.add.rectangle(x, y - 3, 8, 1, color(PALETTE.creamPaper)).setDepth(803);
+  scene.add.rectangle(x + 1, y + 1, 14, 20, color(PALETTE.stoneDark)).setDepth(801).setScrollFactor(0);
+  scene.add.rectangle(x, y, 14, 20, color(PALETTE.black)).setStrokeStyle(2, color(accent)).setDepth(802).setScrollFactor(0);
+  scene.add.rectangle(x, y - 3, 8, 1, color(PALETTE.creamPaper)).setDepth(803).setScrollFactor(0);
   scene.add.text(x, y - 7, label, {
     fontFamily: "monospace",
     fontSize: "6px",
     color: PALETTE.creamPaper
-  }).setOrigin(0.5).setDepth(803);
-  scene.add.rectangle(x - 1, y + 4, 7, 9, color(PALETTE.black)).setDepth(803);
-  scene.add.rectangle(x, y + 3, 6, 8, color(accent)).setDepth(804);
-  scene.add.rectangle(x + 2, y + 1, 2, 2, color(PALETTE.creamPaper)).setDepth(805);
+  }).setOrigin(0.5).setDepth(803).setScrollFactor(0);
+  scene.add.rectangle(x - 1, y + 4, 7, 9, color(PALETTE.black)).setDepth(803).setScrollFactor(0);
+  scene.add.rectangle(x, y + 3, 6, 8, color(accent)).setDepth(804).setScrollFactor(0);
+  scene.add.rectangle(x + 2, y + 1, 2, 2, color(PALETTE.creamPaper)).setDepth(805).setScrollFactor(0);
 }
 
 function drawDungeonWalls(scene: Phaser.Scene, accent: string) {
@@ -264,12 +270,67 @@ function drawStoneBlock(scene: Phaser.Scene, x: number, y: number, accent: strin
 }
 
 export function addObjectiveText(scene: Phaser.Scene) {
-  return scene.add.text(8, 224, "", {
+  const text = scene.add.text(8, 224, compactObjectiveText(""), {
     fontFamily: "monospace",
     fontSize: "8px",
     color: PALETTE.creamPaper,
-    backgroundColor: PALETTE.black
-  }).setDepth(810);
+    backgroundColor: PALETTE.black,
+    wordWrap: { width: 238, useAdvancedWrap: true },
+    fixedWidth: 238
+  }).setDepth(810).setScrollFactor(0);
+
+  const setText = text.setText.bind(text);
+  text.setText = ((value: string | string[]) => {
+    const raw = Array.isArray(value) ? value.join(" ") : value;
+    return setText(compactObjectiveText(raw));
+  }) as typeof text.setText;
+
+  return text;
+}
+
+const OBJECTIVE_PREFIXES: Array<[RegExp, string]> = [
+  [/^Archive Cavern:\s*/i, "ARCHIVE: "],
+  [/^Two Networks:\s*/i, "NETWORK: "],
+  [/^Referral Vault:\s*/i, "REFERRAL: "],
+  [/^Editor's Labyrinth:\s*/i, "EDITOR: "],
+  [/^Silent Read Tower:\s*/i, "PROOF: "],
+  [/^Office of the Historian:\s*/i, "OFFICE: "],
+  [/^Black Vault Lair:\s*/i, "VAULT: "],
+  [/^Buckram Gate:\s*/i, "GATE: "]
+];
+
+const OBJECTIVE_REPLACEMENTS: Array<[RegExp, string]> = [
+  [/\bSource Note 47\b/gi, "SN47"],
+  [/\bresearch table\b/gi, "table"],
+  [/\bCitation Stamp\b/gi, "stamp"],
+  [/\bClearance Token\b/gi, "token"],
+  [/\bConcurrence Slip\b/gi, "slip"],
+  [/\bRed Pencil\b/gi, "pencil"],
+  [/\bProof Lens\b/gi, "lens"],
+  [/\bFRUS volume\b/gi, "volume"],
+  [/\bdeclassification\b/gi, "declass"],
+  [/\bpublication\b/gi, "pub."],
+  [/\bprocess wall\b/gi, "wall"],
+  [/\bremaining\b/gi, "left"],
+  [/\bdocument tiles\b/gi, "docs"],
+  [/\bprovenance\b/gi, "prov."]
+];
+
+const MAX_OBJECTIVE_CHARS = 39;
+
+export function compactObjectiveText(objective: string) {
+  let text = objective.replace(/\s+/g, " ").trim();
+  for (const [pattern, replacement] of OBJECTIVE_PREFIXES) {
+    text = text.replace(pattern, replacement);
+  }
+  for (const [pattern, replacement] of OBJECTIVE_REPLACEMENTS) {
+    text = text.replace(pattern, replacement);
+  }
+  if (text.length <= MAX_OBJECTIVE_CHARS) return text;
+  const hardLimit = MAX_OBJECTIVE_CHARS - 3;
+  const cut = text.slice(0, hardLimit);
+  const lastSpace = cut.lastIndexOf(" ");
+  return `${(lastSpace > 20 ? cut.slice(0, lastSpace) : cut).trim()}...`;
 }
 
 export function addTerminalPanel(scene: Phaser.Scene, x: number, y: number, lines: string[], border: string = PALETTE.terminalCyan) {

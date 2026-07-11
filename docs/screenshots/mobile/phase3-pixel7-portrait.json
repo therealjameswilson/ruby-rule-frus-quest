@@ -1,0 +1,21 @@
+{
+  "url": "http://127.0.0.1:5193/?scene=GuideScene&role=compiler&name=Ruby",
+  "width": 412,
+  "height": 915,
+  "dpr": 2.625,
+  "metrics": {
+    "css": [
+      256,
+      240
+    ],
+    "buffer": [
+      256,
+      240
+    ],
+    "zoom": 1,
+    "target": 1,
+    "integer": true,
+    "pointers": 0
+  },
+  "errors": []
+}

@@ -1,0 +1,92 @@
+{
+  "beforeSave": {
+    "scene": "ArchiveScene",
+    "player": {
+      "x": 128,
+      "y": 184
+    },
+    "facing": "south",
+    "inventory": [
+      "Citation Stamp"
+    ],
+    "documentPoints": 15
+  },
+  "saveDebugAfterPagehide": {
+    "key": "rubyRuleFrusQuestSave",
+    "hasSave": true,
+    "summary": {
+      "version": 1,
+      "savedAt": "2026-06-12T22:33:20.489Z",
+      "currentScene": "ArchiveScene",
+      "objective": "Archive Cavern: collect Source Note 47 in A1.",
+      "displayName": "Ruby",
+      "roleLabel": "Compiler",
+      "player": {
+        "x": 128,
+        "y": 184
+      },
+      "processStamps": [
+        "rule"
+      ],
+      "inventoryCount": 1,
+      "documentPoints": 15
+    },
+    "storage": "localStorage",
+    "lastSaveResult": {
+      "ok": true,
+      "reason": "pagehide",
+      "storage": "localStorage",
+      "savedAt": "2026-06-12T22:33:20.489Z"
+    }
+  },
+  "tapState": {
+    "scene": "TapToStartScene",
+    "mode": "title",
+    "objective": "Tap or press start to unlock audio."
+  },
+  "afterContinue": {
+    "scene": "ArchiveScene",
+    "player": {
+      "x": 128,
+      "y": 184
+    },
+    "facing": "south",
+    "profile": {
+      "displayName": "Ruby",
+      "roleId": "compiler",
+      "roleLabel": "Compiler",
+      "ability": "Archive Sense",
+      "remit": "Verify selection and provenance.",
+      "spriteKey": "player-compiler",
+      "snesSpriteKey": "snes-player-compiler"
+    },
+    "inventory": [
+      "Citation Stamp"
+    ],
+    "documentPoints": 15,
+    "mode": "explore"
+  },
+  "overlayVisible": true,
+  "overlayHiddenAfterTap": true,
+  "afterResume": {
+    "scene": "ArchiveScene",
+    "mode": "explore",
+    "player": {
+      "x": 128,
+      "y": 184
+    },
+    "audioStatus": "audio unlocked + prewarmed",
+    "latestMessage": "Paused for mobile resume."
+  },
+  "logs": [
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x12c004e6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    },
+    {
+      "type": "warning",
+      "text": "[.WebGL-0x12c004e6600]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels"
+    }
+  ],
+  "errors": []
+}

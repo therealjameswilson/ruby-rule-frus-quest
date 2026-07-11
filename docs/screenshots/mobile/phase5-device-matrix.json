@@ -1,0 +1,58 @@
+[
+  {
+    "name": "iphone14pro-portrait",
+    "viewport": {
+      "width": 393,
+      "height": 660
+    },
+    "scene": "GuideScene",
+    "mode": "dialog",
+    "dialog": "Good to compare notes, Ruby.",
+    "integerZoom": true,
+    "computedZoom": 1,
+    "errors": [],
+    "screenshot": "docs/screenshots/mobile/phase5-iphone14pro-portrait.png"
+  },
+  {
+    "name": "iphone14pro-landscape",
+    "viewport": {
+      "width": 734,
+      "height": 343
+    },
+    "scene": "GuideScene",
+    "mode": "dialog",
+    "dialog": "Good to compare notes, Ruby.",
+    "integerZoom": true,
+    "computedZoom": 1,
+    "errors": [],
+    "screenshot": "docs/screenshots/mobile/phase5-iphone14pro-landscape.png"
+  },
+  {
+    "name": "pixel7-portrait",
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "scene": "GuideScene",
+    "mode": "dialog",
+    "dialog": "Good to compare notes, Ruby.",
+    "integerZoom": true,
+    "computedZoom": 1,
+    "errors": [],
+    "screenshot": "docs/screenshots/mobile/phase5-pixel7-portrait.png"
+  },
+  {
+    "name": "pixel7-landscape",
+    "viewport": {
+      "width": 863,
+      "height": 360
+    },
+    "scene": "GuideScene",
+    "mode": "dialog",
+    "dialog": "Good to compare notes, Ruby.",
+    "integerZoom": true,
+    "computedZoom": 1,
+    "errors": [],
+    "screenshot": "docs/screenshots/mobile/phase5-pixel7-landscape.png"
+  }
+]

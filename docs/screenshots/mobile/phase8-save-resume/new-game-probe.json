@@ -1,0 +1,6 @@
+{
+  "scene": "TitleScene",
+  "mode": "title",
+  "objective": "Press start to verify.",
+  "hasSave": false
+}
