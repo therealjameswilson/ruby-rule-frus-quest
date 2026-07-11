@@ -1,5 +1,5 @@
 import type { ProcessItemId, ProcessStampId } from "../game/constants";
-import { DANNE_VARIANT_ASSETS, type DanneVariantPhase } from "../game/danneAtlas";
+import { DANNE_BOSS_SPRITE_ASSET, DANNE_VARIANT_ASSETS, type DanneVariantPhase } from "../game/danneAtlas";
 
 export type DanneEnemyAiKind = "patrol" | "chase" | "turret";
 export type DanneEnemyVariantId = (typeof DANNE_VARIANT_ASSETS)[number]["variantId"];
@@ -16,6 +16,7 @@ export interface DanneEnemyVariantConfig {
   id: DanneEnemyVariantId;
   displayName: string;
   textureKey: string;
+  portraitTextureKey: string;
   codexEntryId: string;
   phase: DanneVariantPhase;
   maxHp: number;
@@ -46,13 +47,14 @@ function variantAsset(variantId: DanneEnemyVariantId) {
 
 function config(
   id: DanneEnemyVariantId,
-  values: Omit<DanneEnemyVariantConfig, "id" | "displayName" | "textureKey" | "phase">
+  values: Omit<DanneEnemyVariantConfig, "id" | "displayName" | "textureKey" | "portraitTextureKey" | "phase">
 ): DanneEnemyVariantConfig {
   const asset = variantAsset(id);
   return {
     id,
     displayName: asset.displayName,
-    textureKey: asset.key,
+    textureKey: DANNE_BOSS_SPRITE_ASSET.key,
+    portraitTextureKey: asset.key,
     phase: asset.phase,
     ...values
   };
@@ -69,7 +71,7 @@ export const DANNE_ENEMY_VARIANTS = {
     reliabilityRisk: "guarded",
     weakness: "review_folder",
     ai: "chase",
-    scale: 0.03,
+    scale: 0.055,
     body: { width: 18, height: 20, offsetX: -9, offsetY: -10 },
     loot: { documentPoints: 4 },
     behavior: "chases the player with false-human shortcut pressure",
@@ -85,7 +87,7 @@ export const DANNE_ENEMY_VARIANTS = {
     reliabilityRisk: "low",
     weakness: "review_folder",
     ai: "turret",
-    scale: 0.03,
+    scale: 0.052,
     body: { width: 20, height: 18, offsetX: -10, offsetY: -10 },
     loot: { documentPoints: 4 },
     behavior: "fixed prototype node firing slow ego bolts from the record queue",
@@ -101,7 +103,7 @@ export const DANNE_ENEMY_VARIANTS = {
     reliabilityRisk: "severe",
     weakness: "red_pencil",
     ai: "turret",
-    scale: 0.029,
+    scale: 0.072,
     body: { width: 24, height: 22, offsetX: -12, offsetY: -12 },
     loot: { documentPoints: 8, processStamp: "sop", volumeFragment: "Black Vault Review Fragment" },
     behavior: "guards blast-door progression with boast-driven ego bolts",
@@ -117,7 +119,7 @@ export const DANNE_ENEMY_VARIANTS = {
     reliabilityRisk: "high",
     weakness: "citation_stamp",
     ai: "patrol",
-    scale: 0.03,
+    scale: 0.054,
     body: { width: 22, height: 18, offsetX: -11, offsetY: -9 },
     loot: { documentPoints: 6 },
     behavior: "phase-shifts around the room and tries to blur the source trail",
@@ -133,7 +135,7 @@ export const DANNE_ENEMY_VARIANTS = {
     reliabilityRisk: "elevated",
     weakness: "review_folder",
     ai: "chase",
-    scale: 0.03,
+    scale: 0.055,
     body: { width: 18, height: 18, offsetX: -9, offsetY: -10 },
     loot: { documentPoints: 5 },
     behavior: "infiltrates hearings with shortcut memos and false certainty",
@@ -149,7 +151,7 @@ export const DANNE_ENEMY_VARIANTS = {
     reliabilityRisk: "low",
     weakness: "citation_stamp",
     ai: "patrol",
-    scale: 0.03,
+    scale: 0.043,
     body: { width: 18, height: 16, offsetX: -9, offsetY: -8 },
     loot: { documentPoints: 4 },
     behavior: "splits attention with small synchronized DANN-E units",
@@ -165,7 +167,7 @@ export const DANNE_ENEMY_VARIANTS = {
     reliabilityRisk: "elevated",
     weakness: "red_pencil",
     ai: "turret",
-    scale: 0.03,
+    scale: 0.05,
     body: { width: 18, height: 16, offsetX: -9, offsetY: -8 },
     loot: { documentPoints: 2 },
     behavior: "plays dead as a false-surrender decoy near the final gate",
@@ -181,7 +183,7 @@ export const DANNE_ENEMY_VARIANTS = {
     reliabilityRisk: "severe",
     weakness: "red_pencil",
     ai: "chase",
-    scale: 0.03,
+    scale: 0.068,
     body: { width: 24, height: 22, offsetX: -12, offsetY: -12 },
     loot: { documentPoints: 10, volumeFragment: "Ascendant Record Fragment" },
     behavior: "true-form pursuit with redaction-wing pressure and boast loops",

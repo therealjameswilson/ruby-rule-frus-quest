@@ -149,16 +149,23 @@ The room-clear combat implementation treats the same eight canonical cards as li
 defeatable room enemies. No redactor-drone or censorship-wraith forms should be added to
 the DANN-E roster.
 
-| Variant | Loaded texture key | Room enemy AI | Counter-tool | Room-clear loot |
+| Variant | Live texture / portrait still | Room enemy AI | Counter-tool | Room-clear loot |
 | --- | --- | --- | --- | --- |
-| DANN-E Prime | `danne-prime-humanoid` | Chase | Review Folder | 4 document points |
-| DANN-E Mark I | `danne-mark-i-prototype` | Turret | Review Folder | 4 document points |
-| DANN-E Colossus | `danne-colossus-final-form` | Turret | Red Pencil | 8 document points, SOP stamp, Black Vault Review Fragment |
-| DANN-E Cloud Form | `danne-cloud-form` | Patrol | Citation Stamp | 6 document points |
-| DANN-E Executive | `danne-executive-suit` | Chase | Review Folder | 5 document points |
-| DANN-E Swarm | `danne-swarm` | Patrol | Citation Stamp | 4 document points |
-| DANN-E Defeated | `danne-defeated` | Turret | Red Pencil | 2 document points |
-| DANN-E Ascendant | `danne-ascendant` | Chase | Red Pencil | 10 document points, Ascendant Record Fragment |
+| DANN-E Prime | `danne-boss-combat` / `danne-prime-humanoid` | Chase | Review Folder | 4 document points |
+| DANN-E Mark I | `danne-boss-combat` / `danne-mark-i-prototype` | Turret | Review Folder | 4 document points |
+| DANN-E Colossus | `danne-boss-combat` / `danne-colossus-final-form` | Turret | Red Pencil | 8 document points, SOP stamp, Black Vault Review Fragment |
+| DANN-E Cloud Form | `danne-boss-combat` / `danne-cloud-form` | Patrol | Citation Stamp | 6 document points |
+| DANN-E Executive | `danne-boss-combat` / `danne-executive-suit` | Chase | Review Folder | 5 document points |
+| DANN-E Swarm | `danne-boss-combat` / `danne-swarm` | Patrol | Citation Stamp | 4 document points |
+| DANN-E Defeated | `danne-boss-combat` / `danne-defeated` | Turret | Red Pencil | 2 document points |
+| DANN-E Ascendant | `danne-boss-combat` / `danne-ascendant` | Chase | Red Pencil | 10 document points, Ascendant Record Fragment |
+
+The slash separates the small animated room sprite from the large illustrated still.
+Never render a variant still as a moving room entity: at 1024x1536 it reads as a framed
+poster and obscures the playfield. Chase forms stop at a short standoff distance, show a
+gold windup ring and `!`, strike during one brief red active window, and then expose a
+recovery window. Room entry gives melee and turret forms a short grace period before their
+first attack.
 
 ### Room placement
 
@@ -188,6 +195,10 @@ The live room graph ramps DANN-E pressure by reliability risk, not only by enemy
 5. Defeat every DANN-E enemy in the room.
 6. The room-clear flag opens the vault/exit and awards any configured process stamp or FRUS
    volume fragment.
+
+The gameplay-map pause screen is part of this loop: `M` opens the tool grid, arrows move
+between acquired tools, and `A` equips the highlighted counter. `B`, `X`, or Shift uses
+the equipped tool. The lower combat cue always names the nearest live DANN-E counter.
 
 The Black Vault currently uses this loop to open its west and north blast doors.
 
