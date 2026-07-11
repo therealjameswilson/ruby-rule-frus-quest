@@ -25,7 +25,8 @@ describe("DANN-E enemy variants", () => {
       expect(variant.damage).toBeGreaterThanOrEqual(0);
       expect(variant.difficultyTier).toBeGreaterThanOrEqual(1);
       expect(variant.difficultyTier).toBeLessThanOrEqual(5);
-      expect(variant.textureKey.length).toBeGreaterThan(0);
+      expect(variant.textureKey).toBe("danne-boss-combat");
+      expect(variant.portraitTextureKey).toBe(variant.id);
       expect(variant.defeatMethod.length).toBeGreaterThan(0);
     }
   });

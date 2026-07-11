@@ -73,7 +73,7 @@ function makeEnemy(variantId: DanneEnemyVariantId, hp = 2) {
     x: 100,
     y: 100,
     nextToolHitAt: 0,
-    lastDamagingSwingId: 0,
+    lastPlayerSwingId: -1,
     stunnedUntil: 0,
     projectiles: [],
     scene: {
@@ -85,6 +85,8 @@ function makeEnemy(variantId: DanneEnemyVariantId, hp = 2) {
     hpBack: dummyVisual(),
     hpFill: dummyVisual(),
     label: dummyVisual(),
+    attackRing: dummyVisual(),
+    attackMark: dummyVisual(),
     setPosition(x: number, y: number) {
       this.x = x;
       this.y = y;
@@ -213,6 +215,8 @@ describe("DanneEnemy combat", () => {
   beforeEach(() => {
     resetGameState();
     vi.spyOn(retroAudio, "toolHit").mockImplementation(() => undefined);
+    vi.spyOn(retroAudio, "bossHit").mockImplementation(() => undefined);
+    vi.spyOn(retroAudio, "bossDefeat").mockImplementation(() => undefined);
     vi.spyOn(retroAudio, "warning").mockImplementation(() => undefined);
   });
 
