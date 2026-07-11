@@ -165,6 +165,7 @@ const ACTION_LATCH_CODES = new Set<string>([
   "Enter",
   "KeyZ",
   "KeyX",
+  "KeyB",
   "ShiftLeft",
   "ShiftRight",
   "Escape",
@@ -548,7 +549,7 @@ export function tickInput() {
   // as the A button and X as the B button. KeyA/KeyS stay movement-only to avoid
   // fighting WASD.
   const a = isActionActive("Space", "Enter", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
-  const b = isActionActive("ShiftLeft", "ShiftRight", "KeyX") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
+  const b = isActionActive("ShiftLeft", "ShiftRight", "KeyX", "KeyB") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
   const confirm = isActionActive("Enter", "Space", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
   const cancel = isActionActive("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
   const start = isActionActive("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);

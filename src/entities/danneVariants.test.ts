@@ -22,7 +22,8 @@ describe("DANN-E enemy variants", () => {
     for (const variant of variants) {
       expect(danneEnemyVariant(variant.id)).toBe(variant);
       expect(variant.maxHp).toBeGreaterThan(0);
-      expect(variant.textureKey.length).toBeGreaterThan(0);
+      expect(variant.textureKey).toBe("danne-boss-combat");
+      expect(variant.portraitTextureKey).toBe(variant.id);
       expect(variant.defeatMethod.length).toBeGreaterThan(0);
     }
   });

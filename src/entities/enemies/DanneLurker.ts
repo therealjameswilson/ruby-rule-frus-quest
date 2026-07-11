@@ -202,7 +202,6 @@ export class DanneLurker extends Enemy {
       if (allowHit && bolt.armed && timeMs >= bolt.armedAt && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
         bolt.armed = false;
         hit = true;
-        retroAudio.egoBoltImpact();
       }
       if (timeMs >= bolt.expiresAt || bolt.sprite.x < -20 || bolt.sprite.x > GAME_WIDTH + 20 || bolt.sprite.y < 10 || bolt.sprite.y > GAME_HEIGHT + 20 || !bolt.armed) {
         bolt.sprite.destroy();
