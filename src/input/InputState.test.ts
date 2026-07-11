@@ -21,7 +21,7 @@ describe("InputState keyboard edges", () => {
     resetInput();
   });
 
-  it("maps Z to the A button and X to the B button (SNES emulator faces)", () => {
+  it("maps Z to A and X/B to the secondary action", () => {
     setKeyboardDownForTests(["KeyZ"]);
     tickInput();
     expect(getInput().aJustPressed).toBe(true);
@@ -29,6 +29,11 @@ describe("InputState keyboard edges", () => {
     resetInput();
 
     setKeyboardDownForTests(["KeyX"]);
+    tickInput();
+    expect(getInput().bJustPressed).toBe(true);
+    resetInput();
+
+    setKeyboardDownForTests(["KeyB"]);
     tickInput();
     expect(getInput().bJustPressed).toBe(true);
   });
