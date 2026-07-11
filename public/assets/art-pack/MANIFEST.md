@@ -110,6 +110,13 @@ runtime sheets are 128×192 images arranged as a 4×4 grid of 32×48 frames, and
 are the paths used by `src/art/characters.ts` for `this.load.spritesheet(...)`.
 The larger 1024×1536 sheets remain the display/master exports.
 
+The illustrated DANN-E master is a 3×4 pose board rather than a packed runtime
+grid. Its gameplay-safe derivative lives at
+`sprites/runtime/sprite_dann_e.png`: 128×192, 4×4 frames at 32×48, binary
+transparency, and a nine-color steel/red palette. Regenerate it with
+`scripts/build-danne-runtime-sheet.py`; keep the 1024×1536 master for portraits
+and cutscene reference only.
+
 ### Boss art
 
 | Filename | Dimensions | Intended use | Transparency |

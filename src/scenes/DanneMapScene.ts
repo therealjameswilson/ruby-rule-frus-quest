@@ -138,6 +138,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private marineGuard?: MarineSecurityGuard;
   private danneArena?: Phaser.GameObjects.Container;
   private publicationBoard?: Phaser.GameObjects.Container;
+  private readonly interactionMarkerObjects: Phaser.GameObjects.GameObject[] = [];
   private marineDoorCleared = false;
   private lastGoodPosition: Position;
 
@@ -191,6 +192,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.drawMapBackground();
     this.drawSnesTileRoomLayer();
     this.drawDanneArenaLayer(0);
+    this.interactionMarkerObjects.length = 0;
     this.drawInteractionMarkers();
     if (isCollisionDebugEnabled()) this.drawCollisionDebug();
     this.drawLocationCard();
@@ -305,8 +307,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (this.attackBuffer.consume(this.time.now, true)) this.useDanneItemAction();
     this.resolvePlayerMeleeHits(this.time.now);
-    const nearest = nearestInteractable(this.player.position, this.interactables);
-    const hintTarget = nearestInteractableHint(this.player.position, this.interactables);
+    const bossActive = Boolean(this.danneBoss?.isActive);
+    const nearest = bossActive ? null : nearestInteractable(this.player.position, this.interactables);
+    const hintTarget = bossActive ? null : nearestInteractableHint(this.player.position, this.interactables);
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
     this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
@@ -392,12 +395,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
         this.drawHiddenPassageSeam(interaction);
         continue;
       }
-      this.add.ellipse(interaction.x + 1, interaction.y + 2, 15, 7, color(PALETTE.black), 0.55).setDepth(interaction.y - 4);
-      this.add.rectangle(interaction.x, interaction.y, 13, 13, color(PALETTE.black), 0.82)
+      this.interactionMarkerObjects.push(this.add.ellipse(interaction.x + 1, interaction.y + 2, 15, 7, color(PALETTE.black), 0.55).setDepth(interaction.y - 4));
+      this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y, 13, 13, color(PALETTE.black), 0.82)
         .setStrokeStyle(1, color(interaction.accent))
-        .setDepth(interaction.y);
-      this.add.rectangle(interaction.x, interaction.y - 3, 7, 3, color(interaction.accent)).setDepth(interaction.y + 1);
-      this.add.rectangle(interaction.x + 3, interaction.y - 5, 2, 2, color(PALETTE.creamPaper)).setDepth(interaction.y + 2);
+        .setDepth(interaction.y));
+      this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 3, 7, 3, color(interaction.accent)).setDepth(interaction.y + 1));
+      this.interactionMarkerObjects.push(this.add.rectangle(interaction.x + 3, interaction.y - 5, 2, 2, color(PALETTE.creamPaper)).setDepth(interaction.y + 2));
     }
   }
 
@@ -405,25 +408,25 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const discovered = hiddenReadingRoomDiscovered(gameState);
     const accent = discovered ? PALETTE.goldStamp : PALETTE.stoneLight;
     const alpha = discovered ? 0.92 : 0.42;
-    this.add.rectangle(interaction.x, interaction.y - 4, 18, 3, color(PALETTE.black), 0.45)
+    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 4, 18, 3, color(PALETTE.black), 0.45)
       .setDepth(interaction.y + 1)
-      .setName("nara-hidden-reading-room-shadow");
-    this.add.rectangle(interaction.x - 7, interaction.y - 8, 2, 9, color(accent), alpha)
+      .setName("nara-hidden-reading-room-shadow"));
+    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x - 7, interaction.y - 8, 2, 9, color(accent), alpha)
       .setDepth(interaction.y + 2)
-      .setName("nara-hidden-reading-room-seam");
-    this.add.rectangle(interaction.x, interaction.y - 5, 7, 2, color(accent), alpha)
+      .setName("nara-hidden-reading-room-seam"));
+    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 5, 7, 2, color(accent), alpha)
       .setDepth(interaction.y + 2)
-      .setName("nara-hidden-reading-room-seam");
-    this.add.rectangle(interaction.x + 6, interaction.y - 2, 2, 7, color(accent), alpha)
+      .setName("nara-hidden-reading-room-seam"));
+    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x + 6, interaction.y - 2, 2, 7, color(accent), alpha)
       .setDepth(interaction.y + 2)
-      .setName("nara-hidden-reading-room-seam");
+      .setName("nara-hidden-reading-room-seam"));
     if (discovered) {
-      this.add.text(interaction.x, interaction.y + 7, "SECRET", {
+      this.interactionMarkerObjects.push(this.add.text(interaction.x, interaction.y + 7, "SECRET", {
         fontFamily: "monospace",
         fontSize: "5px",
         color: PALETTE.goldStamp,
         backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(interaction.y + 3).setName("nara-hidden-reading-room-label");
+      }).setOrigin(0.5).setDepth(interaction.y + 3).setName("nara-hidden-reading-room-label"));
     }
   }
 
@@ -820,6 +823,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
     for (const wraith of this.censorshipWraiths) wraith.destroy();
     this.censorshipWraiths = [];
     this.publicationBoard?.setVisible(false);
+    for (const marker of this.interactionMarkerObjects) {
+      (marker as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(false);
+    }
     const quickFight = this.isBossQuickDebugEnabled();
     this.danneBoss = new DanneBoss(this, {
       player: this.player,

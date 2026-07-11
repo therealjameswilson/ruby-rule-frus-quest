@@ -66,7 +66,7 @@ export class DanneLurker extends Enemy {
       acceleration: 58 * difficulty.speedMultiplier,
       waypointTolerance: 4
     });
-    this.sprite.setOrigin(0.5, 0.82).setScale(0.055);
+    this.sprite.setOrigin(0.5, 0.82).setScale(0.72);
     const animKey = danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.boastText = scene.add.text(0, -32, "", {

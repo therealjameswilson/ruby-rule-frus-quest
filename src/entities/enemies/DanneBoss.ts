@@ -141,7 +141,7 @@ export class DanneBoss {
       .setDepth(BOSS_CENTER.y - 5);
     this.sprite = scene.add.sprite(BOSS_CENTER.x, BOSS_CENTER.y, this.spriteKey)
       .setOrigin(0.5, 0.82)
-      .setScale(0.14)
+      .setScale(1.15)
       .setDepth(BOSS_CENTER.y)
       .setVisible(false);
     const animKey = danneAnimKey(this.spriteKey, "walk-down");
@@ -563,7 +563,7 @@ export class DanneBoss {
     for (const [index, angle] of starts.entries()) {
       const mini = this.scene.add.sprite(BOSS_CENTER.x, BOSS_CENTER.y, this.spriteKey)
         .setOrigin(0.5, 0.82)
-        .setScale(0.055)
+        .setScale(0.52)
         .setDepth(BOSS_CENTER.y + index + 1);
       const animKey = danneAnimKey(this.spriteKey, "walk-down");
       if (this.scene.anims.exists(animKey)) mini.play(animKey);

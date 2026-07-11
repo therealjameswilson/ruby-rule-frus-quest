@@ -82,6 +82,7 @@ function makeEnemy(variantId: DanneEnemyVariantId, hp = 2) {
       tweens: { add: vi.fn() }
     },
     shadow: dummyVisual(),
+    weaknessCue: dummyVisual(),
     hpBack: dummyVisual(),
     hpFill: dummyVisual(),
     label: dummyVisual(),

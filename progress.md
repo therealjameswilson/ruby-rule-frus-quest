@@ -4313,3 +4313,39 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Verification: full Vitest suite `465/465`; `npm run build` passes (known Vite
   large-chunk warning only). Visual artifacts: `output/black-vault-wave-mobile.png`,
   and `output/nara-wave-transition/state-0.json`.
+
+## 2026-07-11 — DANN-E native sprite and target-readability repair
+
+- Found the cause of the chopped/tiny live DANN-E art: the 1024×1536
+  `sprite_dann_e.png` master is an illustrated 3×4 pose board, but runtime
+  metadata sliced it as a packed 4×4 sheet at 256×384. Every live frame mixed
+  pieces of adjacent poses.
+- Added deterministic `scripts/build-danne-runtime-sheet.py` and generated
+  `public/assets/art-pack/sprites/runtime/sprite_dann_e.png`: a true 128×192
+  4×4 sheet of complete 32×48 poses. It uses only the existing master art,
+  nearest-neighbor resampling, nine colors, and binary alpha. The illustrated
+  master and eight variant cards remain untouched for cutscenes/codex use.
+- Pointed `DANNE_BOSS_SPRITE_ASSET` at the native sheet and retuned DANN-E
+  counter enemies, the recurring lurker, boss, and mini-DANN-Es to native
+  scales. The final boss now occupies roughly the same visual footprint as its
+  previous intended 36×54 rendering rather than collapsing to a few pixels.
+- Added persistent shape-coded tool cues at enemy feet: stamp silhouette in
+  cyan, diagonal pencil in ruby/gold, and folder silhouette in gold. Attack
+  windups/projectile launches now play the native action poses; right-facing
+  movement mirrors the left-facing frames correctly.
+- During active DANN-E waves, all nearby interaction prompts are now sealed.
+  The final Black Vault boss also hides return-route prompts, publication
+  markers, and interaction markers until combat ends, keeping focus on the
+  statutory clock, boss, player, and ego bolts.
+- Visual QA confirmed complete, recognizable bodies in NARA, Black Vault
+  counter waves, and the final multi-phase boss; the Office remained clean
+  during its protected pre-pressure onboarding window. A real Review Folder
+  strike changed Mark I from `2/2` to `1/2` HP with no
+  overlapping archival prompt. iPhone-sized Chromium (393×852, DPR 3) held
+  ~60 fps, retained integer device-pixel scaling, and showed both wave-one
+  enemies and their distinct tool glyphs without errors.
+- Verification: runtime asset 128×192, 9 RGBA colors, alpha values only 0/255;
+  full Vitest suite `466/466`; production build passes; all 25 `?scene=` QA
+  routes booted their requested scene with zero console/page errors. Visual
+  artifacts: `output/danne-native-attack-focused.png` and
+  `output/danne-native-mobile.png`.

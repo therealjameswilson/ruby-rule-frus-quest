@@ -10,9 +10,11 @@ The eight variants and their art are canonical and already shipped in the varian
 art pack. Do **not** invent new variant names. Art lives in
 `public/assets/art-pack/bosses/danne-variants/` and is registered in
 `src/game/danneAtlas.ts` as `DANNE_VARIANT_ASSETS`. Combat animation frames for any
-DANN-E form use the shared sprite sheet
-`public/assets/art-pack/sprites/sprite_dann_e.png` — the variant cards themselves are
-single illustrated stills, not sprite sheets.
+DANN-E form use the shared native runtime sheet
+`public/assets/art-pack/sprites/runtime/sprite_dann_e.png`. It is derived from
+the illustrated `sprites/sprite_dann_e.png` pose board; the variant cards and
+master pose board remain single illustrated still/reference art, not packed
+runtime sprite grids.
 
 ## Difficulty-tuned live room stat table
 
@@ -215,8 +217,8 @@ The Black Vault currently uses this loop to open its west and north blast doors.
    and scale by integer multiples only (`pixelArt: true`). The 3:2 cards (`03`, `08`) are
    sized for full-screen cutscene reveals; letterbox them with the existing gold-filigree
    cutscene bars.
-4. **Do not slice the variant cards as sprite sheets.** For DANN-E combat animation continue
-   using `sprite_dann_e.png`.
+4. **Do not slice the variant cards or illustrated master as sprite sheets.** For DANN-E
+   combat animation use `sprites/runtime/sprite_dann_e.png`.
 5. **Tool → weakness wiring:** enforce the weakness listed per variant so each form teaches
    the matching FRUS tool (Citation Stamp / Red Pencil / Review Folder). Cutscene forms
    (Prime, Defeated) and the stealth form (Executive) gate on the tool check rather than an

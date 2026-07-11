@@ -136,6 +136,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private readonly hpFill: Phaser.GameObjects.Rectangle;
   private readonly label: Phaser.GameObjects.Text;
   private readonly shadow: Phaser.GameObjects.Ellipse;
+  private readonly weaknessCue: Phaser.GameObjects.Graphics;
   private readonly attackRing: Phaser.GameObjects.Ellipse;
   private readonly attackMark: Phaser.GameObjects.Text;
   private readonly projectiles: DanneProjectile[] = [];
@@ -153,6 +154,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private meleeHitApplied = false;
   private meleeDirection = { x: 0, y: 1 };
   private lastAttackPhase: TelegraphPhase = "idle";
+  private attackAnimUntil = 0;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneEnemyOptions) {
     super(scene, x, y, scene.textures.exists(options.config.textureKey) ? options.config.textureKey : "snes-wall-danne-queue");
@@ -184,6 +186,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     if (scene.anims.exists(walkKey)) this.play(walkKey);
 
     this.shadow = scene.add.ellipse(x, y + 11, 20, 6, color(PALETTE.black), 0.36).setDepth(Math.round(y - 2));
+    this.weaknessCue = this.createWeaknessCue(scene, options.config.weakness);
     this.hpBack = scene.add.rectangle(x, y - 28, 24, 4, color(PALETTE.black), 0.88)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(920)
@@ -267,6 +270,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.meleeStartedAt = timeMs;
     this.meleeHitApplied = false;
     this.nextMeleeAt = timeMs + telegraphDurationMs(MELEE_TELEGRAPH) + MELEE_COOLDOWN_MS;
+    this.playAttackAnim(telegraphDurationMs(MELEE_TELEGRAPH));
     retroAudio.blip();
     return true;
   }
@@ -340,6 +344,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       expiresAt: timeMs + 2100,
       armed: true
     });
+    this.playAttackAnim(420);
     retroAudio.egoBoltFire();
     return true;
   }
@@ -351,6 +356,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.setActive(false).setVisible(false);
     this.arcadeBody().enable = false;
     this.shadow.setVisible(false);
+    this.weaknessCue.setVisible(false);
     this.attackRing.setVisible(false);
     this.attackMark.setVisible(false);
     this.hpBack.setVisible(false);
@@ -365,6 +371,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
 
   destroy(fromScene?: boolean) {
     this.shadow.destroy();
+    this.weaknessCue.destroy();
     this.hpBack.destroy();
     this.hpFill.destroy();
     this.label.destroy();
@@ -556,6 +563,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   }
 
   private playFacingAnim() {
+    if (this.scene.time.now < this.attackAnimUntil) return;
     const body = this.arcadeBody();
     const vx = body.velocity.x;
     const vy = body.velocity.y;
@@ -565,7 +573,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     const animDirection = direction === "right" ? "walk-right" : `walk-${direction}`;
     const key = danneAnimKey(this.config.textureKey, animDirection);
     if (this.scene.anims.exists(key) && this.anims.currentAnim?.key !== key) this.play(key);
-    this.setFlipX(direction === "right" && !this.scene.anims.exists(danneAnimKey(this.config.textureKey, "walk-right")));
+    this.setFlipX(direction === "right");
   }
 
   private clampToRoom() {
@@ -579,12 +587,15 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private syncUi(timeMs = this.scene.time.now) {
     const x = snapPixel(this.x);
     const y = snapPixel(this.y);
+    const topY = snapPixel(y - this.displayHeight * this.originY);
+    const hpY = topY - 4;
     this.shadow.setPosition(x, y + 11).setDepth(Math.round(y - 2));
+    this.weaknessCue.setPosition(x, y + 10).setDepth(Math.round(y - 1));
     const hpVisible = this.hp > 0 && this.hp < this.maxHp;
     const labelVisible = hpVisible || this.isDebugLabelVisible();
     this.label.setVisible(labelVisible).setPosition(x, y + 15).setDepth(Math.round(y + 18));
-    this.hpBack.setVisible(hpVisible).setPosition(x, y - 28);
-    this.hpFill.setVisible(hpVisible).setPosition(x - 11, y - 28).setSize(Math.max(1, Math.round(22 * (this.hp / this.maxHp))), 2);
+    this.hpBack.setVisible(hpVisible).setPosition(x, hpY);
+    this.hpFill.setVisible(hpVisible).setPosition(x - 11, hpY).setSize(Math.max(1, Math.round(22 * (this.hp / this.maxHp))), 2);
     const attackPhase = this.meleePhase(timeMs);
     this.lastAttackPhase = attackPhase;
     const attacking = attackPhase !== "idle";
@@ -600,8 +611,48 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       .setDepth(Math.round(y + 12));
     this.attackMark
       .setVisible(attackPhase === "windup" || attackPhase === "active")
-      .setPosition(x, y - 30)
+      .setPosition(x, topY - 8)
       .setColor(cueColor);
+  }
+
+  private playAttackAnim(durationMs: number) {
+    const key = danneAnimKey(this.config.textureKey, "attack");
+    if (!this.scene.anims.exists(key)) return;
+    this.attackAnimUntil = this.scene.time.now + durationMs;
+    this.play(key, true);
+  }
+
+  private createWeaknessCue(scene: Phaser.Scene, weakness: ProcessItemId) {
+    const graphics = scene.add.graphics().setName(`danne-weakness-${weakness}`);
+    const accent = weakness === "citation_stamp"
+      ? PALETTE.terminalCyan
+      : weakness === "red_pencil"
+        ? PALETTE.classNetRed
+        : PALETTE.goldStamp;
+    graphics.lineStyle(2, color(PALETTE.black), 0.8);
+    graphics.strokeEllipse(0, 0, 20, 7);
+    graphics.lineStyle(1, color(accent), 0.95);
+    graphics.strokeEllipse(0, 0, 20, 7);
+    graphics.fillStyle(color(PALETTE.black), 0.9);
+    graphics.fillRect(6, -8, 8, 8);
+    graphics.lineStyle(1, color(accent), 1);
+    graphics.strokeRect(6, -8, 8, 8);
+    graphics.fillStyle(color(accent), 1);
+    if (weakness === "citation_stamp") {
+      graphics.fillRect(8, -3, 4, 2);
+      graphics.fillRect(9, -6, 2, 3);
+    } else if (weakness === "red_pencil") {
+      graphics.fillRect(8, -2, 1, 1);
+      graphics.fillRect(9, -3, 1, 1);
+      graphics.fillRect(10, -4, 1, 1);
+      graphics.fillRect(11, -5, 1, 1);
+      graphics.fillStyle(color(PALETTE.goldStamp), 1);
+      graphics.fillRect(12, -6, 1, 1);
+    } else {
+      graphics.fillRect(8, -5, 4, 4);
+      graphics.fillRect(8, -6, 2, 1);
+    }
+    return graphics.setPosition(this.x, this.y + 10).setDepth(Math.round(this.y - 1));
   }
 
   private weaknessLabel() {

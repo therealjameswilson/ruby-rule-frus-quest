@@ -404,7 +404,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.updateDanneEncounter(delta);
     const combatCue = this.currentDanneCombatCue();
     const nearestCandidate = nearestInteractable(this.player.position, this.interactables);
-    const nearest = combatCue && nearestCandidate?.kind === "door" ? null : nearestCandidate;
+    const nearest = combatCue ? null : nearestCandidate;
     const hintTarget = combatCue
       ? null
       : this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, this.interactables));
