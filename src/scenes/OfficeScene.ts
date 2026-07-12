@@ -2,9 +2,9 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   FRUS_QUEST_FIRST_OBJECTIVE,
-  FRUS_QUEST_MISSION,
-  FRUS_QUEST_STAKES
+  FRUS_QUEST_MISSION
 } from "../game/mission";
+import { getOfficeStarterStage, officeStarterObjective, officeStarterTarget } from "../game/officeStarterRoute";
 import {
   addDocumentPoints,
   addDanneItem,
@@ -89,7 +89,7 @@ import type { Interactable } from "../game/types";
 import { Player } from "../entities/Player";
 import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
-import { bindPointerDown, getInput, tickInput } from "../input/InputState";
+import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import {
@@ -105,7 +105,6 @@ import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability"
 import { applyDanneLurkerDamage } from "../systems/dannePressure";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
-import { shouldDismissControlsCard } from "../systems/tutorialDismiss";
 import { drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 import { ChoicePrompt } from "../systems/verification";
 
@@ -123,14 +122,8 @@ export class OfficeScene extends Phaser.Scene {
   private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
-  private hintText!: Phaser.GameObjects.Text;
-  // The floating proximity prompt now carries the contextual "A [verb]" cue, so
-  // the persistent bottom line drops INTERACT and trims spacing to de-clutter the
-  // bottom band (live audit, 2026-06-15).
-  private readonly controlsHint = "MOVE · A INTERACT · M MENU";
   private prompt!: InteractionPrompt;
   private toast!: FeedbackToast;
-  private tutorialCard?: Phaser.GameObjects.Container;
   private firstQuestCue?: Phaser.GameObjects.Container;
   private firstQuestCueLabel?: Phaser.GameObjects.Text;
   private firstQuestCuePlate?: Phaser.GameObjects.Rectangle;
@@ -174,12 +167,6 @@ export class OfficeScene extends Phaser.Scene {
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
-    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 10, this.controlsHint, {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp,
-      backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(900);
     this.prompt = new InteractionPrompt(this);
     this.toast = new FeedbackToast(this);
     this.solids = [
@@ -292,7 +279,9 @@ export class OfficeScene extends Phaser.Scene {
     ]);
     this.createFirstQuestCue();
     this.syncOfficeThreatState();
-    if (!gameState.sceneProgress.officeTutorialSeen) this.showOfficeTutorial();
+    if (!gameState.sceneProgress.officeTutorialSeen) {
+      gameState.sceneProgress.officeTutorialSeen = 1;
+    }
   }
 
   update(_: number, delta: number) {
@@ -307,27 +296,6 @@ export class OfficeScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     this.juniorCompiler.update(this.time.now);
-
-    if (this.tutorialCard) {
-      // The card is an overlay hint, not a hard modal: the player can walk away
-      // from it. Any movement intent (or confirm/cancel/pointer) dismisses it so
-      // the first step is never swallowed and the room never feels frozen.
-      if (shouldDismissControlsCard(input)) {
-        const actionDismissed = input.confirmJustPressed
-          || input.aJustPressed
-          || input.cancelJustPressed
-          || input.pointerPrimaryJustPressed;
-        this.dismissOfficeTutorial();
-        if (actionDismissed) {
-          this.player.update(delta, false);
-          this.prompt.update(delta, null);
-          this.toast.update(delta, this.player.position);
-          this.reliability.update();
-          setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-          return;
-        }
-      }
-    }
 
     if (this.dialog.active) {
       if (input.aJustPressed) this.dialog.advance();
@@ -368,17 +336,16 @@ export class OfficeScene extends Phaser.Scene {
     this.updateDanneLurker(delta, dannePressureUnlocked);
     const activeInteractables = this.currentInteractables();
     const nearest = nearestInteractable(this.player.position, activeInteractables);
-    const tutorialVisible = Boolean(this.tutorialCard);
     // Show the prompt/ring from a little further out than the strict interact
     // radius so it is impossible to miss on approach, but only allow acting on a
     // target inside the strict radius.
-    const hintTarget = tutorialVisible ? null : nearestInteractableHint(this.player.position, activeInteractables);
+    const hintTarget = nearestInteractableHint(this.player.position, activeInteractables);
     const promptTarget = nearest ?? hintTarget;
-    setNearestInteractable(tutorialVisible ? null : nearest?.label ?? null);
+    setNearestInteractable(nearest?.label ?? null);
     const approachCue = hintTarget ? this.approachCueFor(hintTarget) : null;
     this.prompt.update(
       delta,
-      tutorialVisible ? null : promptTarget,
+      promptTarget,
       undefined,
       nearest ? undefined : hintTarget && approachCue ? { badge: "!", text: approachCue } : undefined
     );
@@ -435,7 +402,6 @@ export class OfficeScene extends Phaser.Scene {
           });
         }
         if (junior) focused.push({ ...junior, radius: memoStatus >= 3 ? 34 : 18 });
-        if (archive) focused.push(archive);
         return focused;
       }
       return this.interactables.map((interactable) => {
@@ -453,20 +419,16 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private currentOfficeObjective() {
-    if (!gameState.sceneProgress.juniorCompilerIntroduced) return FRUS_QUEST_FIRST_OBJECTIVE;
-    const memoStatus = this.officeStarterMemoStatus();
-    if (memoStatus === 0) return "Pick up the Assignment Memo.";
-    if (memoStatus === 1) return "Carry the memo to INBOX.";
-    if (memoStatus === 2) return "Stamp the memo at INBOX.";
-    if (!hasDanneItem("master-declass-key")) return "Stamp the memo to open Archive.";
-    return "Enter Archive Guide.";
+    return officeStarterObjective(this.officeStarterStage());
   }
 
   private nextJuniorStationLabel(progress = gameState.sceneProgress.juniorCompilerFetch ?? 0) {
-    if (progress <= 0) return "Assignment Memo";
-    if (progress === 1) return "Production Inbox";
-    if (progress === 2) return "Stamp";
-    return "Archive Guide";
+    const stage = getOfficeStarterStage({
+      juniorIntroduced: Boolean(gameState.sceneProgress.juniorCompilerIntroduced),
+      memoStatus: progress,
+      hasArchiveKey: hasDanneItem("master-declass-key")
+    });
+    return officeStarterTarget(stage).label;
   }
 
   private talkJuniorCompiler() {
@@ -481,45 +443,17 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     if (memoStatus >= 3) {
-      setLatestMessage("Memo is stamped. Archive Guide is open.");
-      setObjective("Enter Archive Guide.");
+      const added = addDanneItem("master-declass-key");
+      if (added) retroAudio.danneItemPickup("Master Declass Key");
+      setLatestMessage("Memo is stamped. Master Declass Key restored; Archive Guide is open.");
+      setObjective(this.currentOfficeObjective());
       this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
+      this.updateFirstQuestCue();
       return;
     }
     setObjective(this.currentOfficeObjective());
     setLatestMessage("Pick up the memo, carry it to INBOX, then stamp it.");
     this.toast.show("PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
-  }
-
-  private showOfficeTutorial() {
-    this.hintText.setVisible(false);
-    const dim = this.add.rectangle(128, 155, GAME_WIDTH, 170, color(PALETTE.black), 0.34)
-      .setName("office-tutorial-dim");
-    const shadow = this.add.rectangle(129, 61, 170, 40, color(PALETTE.black), 0.62)
-      .setName("office-tutorial-shadow");
-    const panel = this.add.rectangle(128, 58, 162, 36, color(PALETTE.shadowNavy), 0.97)
-      .setName("office-tutorial-panel")
-      .setStrokeStyle(1, color(PALETTE.goldStamp));
-    const title = this.add.text(128, 44, "BUILD ONE FRUS VOLUME", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp
-    }).setName("office-tutorial-title").setOrigin(0.5, 0);
-    const body = this.add.text(128, 54, "TALK TO JR", {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.terminalCyan,
-      align: "center",
-      lineSpacing: 0
-    }).setName("office-tutorial-body").setOrigin(0.5, 0);
-    const route = this.add.text(128, 68, "THEN FOLLOW THE GOLD TARGET", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp,
-      align: "center"
-    }).setName("office-tutorial-route").setOrigin(0.5, 0);
-    this.tutorialCard = this.add.container(0, 0, [dim, shadow, panel, title, body, route]).setDepth(1800);
-    bindPointerDown(panel, () => this.dismissOfficeTutorial());
   }
 
   private flashNoTargetHint() {
@@ -537,18 +471,6 @@ export class OfficeScene extends Phaser.Scene {
     retroAudio.blip();
     this.toast.show(`STEP CLOSER TO ${target.label.toUpperCase()}`, this.player.position, "info");
     setLatestMessage(`Step closer to ${target.label}.`);
-  }
-
-  private dismissOfficeTutorial() {
-    if (!this.tutorialCard) return;
-    this.tutorialCard.destroy(true);
-    this.tutorialCard = undefined;
-    this.hintText.setVisible(true);
-    this.setOfficeRouteCompassVisible(hasDanneItem("master-declass-key"));
-    gameState.sceneProgress.officeTutorialSeen = 1;
-    setLatestMessage(`${FRUS_QUEST_MISSION} ${FRUS_QUEST_STAKES}`);
-    setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-    this.updateFirstQuestCue();
   }
 
   private approachCueFor(target: Interactable) {
@@ -595,7 +517,6 @@ export class OfficeScene extends Phaser.Scene {
       : false;
     const visible = Boolean(
       this.firstQuestCue
-      && !this.tutorialCard
       && !this.dialog?.active
       && !this.choice?.active
       && target
@@ -611,16 +532,19 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private currentGuidedTarget() {
-    if (!gameState.sceneProgress.juniorCompilerIntroduced) {
-      return { x: this.juniorCompiler.x, y: this.juniorCompiler.y, label: "JR" };
-    }
-    const memoStatus = this.officeStarterMemoStatus();
-    if (!hasDanneItem("master-declass-key")) {
-      if (memoStatus === 0) return { x: 128, y: 166, label: "MEMO" };
-      if (memoStatus === 1) return { x: 60, y: 154, label: "INBOX" };
-      if (memoStatus === 2) return { x: 60, y: 154, label: "STAMP" };
-    }
-    return { x: 128, y: 216, label: "ARCHIVE" };
+    const target = officeStarterTarget(this.officeStarterStage());
+    if (target.id === "junior") return { x: this.juniorCompiler.x, y: this.juniorCompiler.y, label: target.label };
+    if (target.id === "memo") return { x: 128, y: 166, label: target.label };
+    if (target.id === "inbox") return { x: 60, y: 154, label: target.label };
+    return { x: 128, y: 216, label: target.label };
+  }
+
+  private officeStarterStage() {
+    return getOfficeStarterStage({
+      juniorIntroduced: Boolean(gameState.sceneProgress.juniorCompilerIntroduced),
+      memoStatus: this.officeStarterMemoStatus(),
+      hasArchiveKey: hasDanneItem("master-declass-key")
+    });
   }
 
   private updateFirstRoomProgressVisibility() {
