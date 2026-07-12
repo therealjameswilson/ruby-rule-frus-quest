@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Network N2 real-tilemap and ClassNet readability promotion (2026-07-12):
+  - Completed the Two Networks dungeon's visual transition by promoting N2 to native 16x16 ground, wall, and decoration Tilemap layers with west/east doorway cells and tile-derived perimeter collision.
+  - Built a ruby center aisle, dark secure floor, separate Human Desk / E.O. Board / Decision Log pads, a concrete token pedestal, and sparse safe/board wall cues.
+  - Removed the decorative seven-cabinet wall, fallback room layer, procedural network tile field, and compass only when the packed map succeeds; the old scene remains the guarded fallback.
+  - Preserved every physical docket, wrong-desk retry, human-review check, Clearance Token reward, gate rule, DANN-E lurker, save field, and Referral transition.
+  - Verification: 109 Vitest files / 565 tests pass; TypeScript and production build pass; all 25 `?scene=` routes boot without browser errors; the complete N1/N2 route passes on desktop and DPR-3 iPhone touch with both intentional error branches exercised.
+
 - Network N1 real-tilemap and readability promotion (2026-07-12):
   - Added a typed manifest-backed native interiors tileset contract and explicit Phaser `firstgid: 1`; zero-based source frames now map through one tested `packedTileGid()` helper shared with Archive A1.
   - Promoted N1 to a 16x12 three-layer Tilemap: warm OpenNet floor, dark ClassNet floor, concrete divider, checker terminal pads, sparse wall cues, and a tile-colliding perimeter with only the real east door open.

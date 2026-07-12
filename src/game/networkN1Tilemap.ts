@@ -10,13 +10,17 @@ export const NETWORK_N1_TILEMAP = {
 
 export const INTERIOR_TILES = {
   openNetFloor: 0,
+  redCarpetFloor: 2,
   classNetFloor: 3,
+  darkWoodAltFloor: 4,
   terminalPad: 5,
   centerLane: 6,
   sorterPad: 7,
   wallPanel: 8,
   wallMetal: 10,
+  wallBrick: 12,
   wallBlue: 14,
+  safe: 24,
   worldMap: 27,
   bulletinBoard: 28
 } as const;
