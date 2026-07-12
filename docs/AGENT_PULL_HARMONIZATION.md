@@ -1,6 +1,6 @@
 # Codex and Perplexity Pull Harmonization
 
-Audit date: 2026-07-11 (America/New_York)
+Audit date: 2026-07-12 (America/New_York)
 
 ## Result
 
@@ -17,7 +17,7 @@ superseded.
 | #5, #6, #15, #16, #58-#73, #76 | Composed in PR #78. Every source head commit is an ancestor of `main`; closed PRs #59-#67 and #72 are superseded integration inputs, not missing work. |
 | #42-#57 | Asset/data wave merged before PR #78. GitHub used squash merges for several heads, so branch ancestry alone is misleading. Every added binary asset remains on `main` byte-for-byte; registry, audio, manifest, localization, and test files have since evolved. |
 | #75, #77 | Localization runtime and combat feedback merged and retained. |
-| #79-#84 | Physical Archive, Network, ClassNet, and Referral workflow follow-ups merged on top of the integrated line. |
+| #79-#86 | Physical Archive, Network, ClassNet, Referral, Silent Read, and harmonization follow-ups merged on top of the integrated line. |
 | #41 | Intentionally excluded. Its five-form DANN-E draft was replaced by the canonical eight-form design in #43 and the live eight-variant registry. |
 
 ## Reconciled Payloads
@@ -55,14 +55,21 @@ systems, or duplicate asset paths were introduced.
 
 ## Verification Refresh
 
-The audit was rerun after PR #85 and before the next gameplay branch landed:
+The audit was rerun after PR #86 and again before the physical Buckram Gate branch was published:
 
-- GitHub reported 84 historical pull requests and no open pull requests.
+- GitHub reported 85 historical pull requests and no open pull requests.
 - All 10 closed integration-component heads (#59-#67 and #72) are exact
   ancestors of `main` through PR #78.
 - All 112 binary assets touched by the 16 squash-merged art/data pulls
   (#42-#57) exist on `main` with identical Git blob IDs.
 - None of the 60 surviving source branches has a commit newer than its pull
   request head. No unreviewed post-merge branch payload is waiting to land.
+- The two surviving source branches without a standalone PR,
+  `codex/add-new-files` and `integrate/all-new-art`, are exact ancestors of
+  `main` through the integration history.
 - PR #41 remains the only non-ancestor, non-merged source head and remains
   intentionally superseded by the canonical eight-form DANN-E design.
+- The physical Buckram Gate preserves all 38 final apparatus checks in typed
+  metadata while replacing their modal question chain with a five-packet
+  carry, route, seal, and publish loop. This follow-up does not introduce a
+  competing save schema or duplicate any agent-owned art payload.

@@ -1,78 +1,28 @@
 import Phaser from "phaser";
 import { ALT_ENDING_ASSETS, FRUS_VOLUMES, SCREENS, publicAssetPath } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { KELLOGG_CERTIFICATION_PROMPTS } from "../game/kelloggCertification";
+import { GPO_PUBLICATION_PROMPTS } from "../game/gpoPublication";
+import { CHAPTER_RELEASE_PROMPTS } from "../game/chapterReleaseStatus";
+import { DIGITAL_RELEASE_PROMPTS } from "../game/digitalRelease";
+import { PUBLIC_CITATION_CARD_PROMPTS } from "../game/publicCitationCard";
+import { PUBLICATION_FUNDING_PROMPTS } from "../game/publicationFundingQueue";
+import { READER_AID_REGISTER_PROMPTS } from "../game/readerAidRegisters";
+import { RELEASE_CALENDAR_PROMPTS } from "../game/releaseCalendar";
+import { GPO_SEGMENT_ASSEMBLY_PROMPTS } from "../game/gpoSegmentAssembly";
+import { FRONT_MATTER_ASSEMBLY_PROMPTS } from "../game/frontMatterAssembly";
+import { INDEX_DOCKET_PROMPTS } from "../game/indexDocket";
+import { TYPESETTER_CORRECTIONS_PROMPTS } from "../game/typesetterCorrections";
 import {
-  evaluateKelloggCertificationAnswer,
-  getKelloggCertificationPrompt,
-  KELLOGG_CERTIFICATION_PROMPTS,
-  kelloggCertificationComplete
-} from "../game/kelloggCertification";
-import {
-  evaluateGpoPublicationAnswer,
-  getGpoPublicationPrompt,
-  GPO_PUBLICATION_PROMPTS,
-  gpoPublicationComplete
-} from "../game/gpoPublication";
-import {
-  CHAPTER_RELEASE_PROMPTS,
-  chapterReleaseComplete,
-  evaluateChapterReleaseAnswer,
-  getChapterReleasePrompt
-} from "../game/chapterReleaseStatus";
-import {
-  DIGITAL_RELEASE_PROMPTS,
-  digitalReleaseComplete,
-  evaluateDigitalReleaseAnswer,
-  getDigitalReleasePrompt
-} from "../game/digitalRelease";
-import {
-  PUBLIC_CITATION_CARD_PROMPTS,
-  evaluatePublicCitationCardAnswer,
-  getPublicCitationCardPrompt,
-  publicCitationCardComplete
-} from "../game/publicCitationCard";
-import {
-  evaluatePublicationFundingAnswer,
-  getPublicationFundingPrompt,
-  PUBLICATION_FUNDING_PROMPTS,
-  publicationFundingComplete
-} from "../game/publicationFundingQueue";
-import {
-  evaluateReaderAidRegisterAnswer,
-  getReaderAidRegisterPrompt,
-  READER_AID_REGISTER_PROMPTS,
-  readerAidRegistersComplete
-} from "../game/readerAidRegisters";
-import {
-  RELEASE_CALENDAR_PROMPTS,
-  evaluateReleaseCalendarAnswer,
-  getReleaseCalendarPrompt,
-  releaseCalendarComplete
-} from "../game/releaseCalendar";
-import {
-  evaluateGpoSegmentAssemblyAnswer,
-  getGpoSegmentAssemblyPrompt,
-  GPO_SEGMENT_ASSEMBLY_PROMPTS,
-  gpoSegmentAssemblyComplete
-} from "../game/gpoSegmentAssembly";
-import {
-  evaluateFrontMatterAssemblyAnswer,
-  frontMatterAssemblyComplete,
-  FRONT_MATTER_ASSEMBLY_PROMPTS,
-  getFrontMatterAssemblyPrompt
-} from "../game/frontMatterAssembly";
-import {
-  evaluateIndexDocketAnswer,
-  getIndexDocketPrompt,
-  INDEX_DOCKET_PROMPTS,
-  indexDocketComplete
-} from "../game/indexDocket";
-import {
-  evaluateTypesetterCorrectionsAnswer,
-  getTypesetterCorrectionsPrompt,
-  TYPESETTER_CORRECTIONS_PROMPTS,
-  typesetterCorrectionsComplete
-} from "../game/typesetterCorrections";
+  BUCKRAM_BINDING_PACKETS,
+  BUCKRAM_BINDING_TOTAL,
+  buckramBindingStatusCode,
+  buckramBindingStatusFromCode,
+  deriveBuckramBindingStep,
+  routeBuckramBindingPacket,
+  type BuckramBindingStationId,
+  type BuckramBindingStatus
+} from "../game/buckramBinding";
 import {
   addDocumentPoints,
   addInventoryItem,
@@ -82,7 +32,6 @@ import {
   getCompletionStatsReadout,
   getFinalGateReadiness,
   getPublicationOutcomeReadout,
-  getPublicationReadinessReadout,
   getStatutoryClockStateReadout,
   hasProcessItem,
   markVolumeAssemblyCeremonyComplete,
@@ -92,6 +41,7 @@ import {
   setFinalGateCertificationState,
   setGameMode,
   setLatestMessage,
+  setHeldItem,
   setNearestInteractable,
   setObjective,
   setRoomTraversalState,
@@ -104,7 +54,7 @@ import { getInput, tickInput } from "../input/InputState";
 import { Player } from "../entities/Player";
 import { retroAudio } from "../systems/audio";
 import { InventoryOverlay } from "../systems/inventory";
-import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
@@ -113,15 +63,11 @@ import { hiddenFirstEditionBonusLabel } from "../game/secretReadingRoom";
 import {
   addSnesFrusCoverAssembly,
   addSnesPublicationShrine,
-  addSnesPublicationTeam,
-  addSnesProgressMural,
   addSnesRoomLayer,
   addSnesStatutoryClock,
-  addSnesWorkflowRelicRack,
-  addSnesWorldMap
 } from "../systems/snesPixelArt";
-import { ChoicePrompt } from "../systems/verification";
 import { InteractionPrompt } from "../systems/interactionPrompt";
+import { FeedbackToast } from "../systems/feedbackToast";
 import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 import type { Interactable } from "../game/types";
 
@@ -138,7 +84,8 @@ const COVER_PIECES = [
 ] as const;
 
 const GATE_PLAY_BOUNDS = { left: 16, right: 240, top: 48, bottom: 220 };
-const CERTIFICATION_TABLE = { x: 128, y: 176, radius: 30 };
+const BINDERY_INBOX = { x: 128, y: 190, radius: 28 };
+const BINDING_PRESS = { x: 128, y: 148, radius: 28 };
 const KELLOGG_CERTIFICATION_CONTEXT_PREFIX = "Kellogg final certification";
 const FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE: keyof typeof FRUS_VOLUMES = "reward_legendary";
 type BuckramBlockerIcon = "stamp" | "cover" | "equity" | "map" | "apparatus" | "bracket" | "standards" | "reliability" | "key" | "ready";
@@ -148,17 +95,54 @@ interface BuckramBlockerCue {
   icon: BuckramBlockerIcon;
 }
 
+interface BindingStation {
+  id: BuckramBindingStationId;
+  label: string;
+  shortLabel: string;
+  x: number;
+  y: number;
+  accent: string;
+  texture: string;
+}
+
+interface PhysicalBindingPacket {
+  id: string;
+  label: string;
+  shortLabel: string;
+  station: BuckramBindingStationId;
+  texture: string;
+  accent: string;
+  checkCount: number;
+  status: BuckramBindingStatus;
+  x: number;
+  y: number;
+  routedStation?: BuckramBindingStationId;
+  icon?: Phaser.GameObjects.Image;
+  labelText?: Phaser.GameObjects.Text;
+}
+
+const BINDING_STATIONS: readonly BindingStation[] = [
+  { id: "front-matter-bench", label: "Front Matter Bench", shortLabel: "FRONT", x: 42, y: 102, accent: PALETTE.goldStamp, texture: "source-note" },
+  { id: "index-desk", label: "Index Desk", shortLabel: "INDEX", x: 42, y: 164, accent: PALETTE.terminalCyan, texture: "proof-page" },
+  { id: "kellogg-press", label: "Kellogg Seal Press", shortLabel: "SEAL", x: 128, y: 94, accent: PALETTE.classNetRed, texture: "citation-stamp" },
+  { id: "gpo-handoff", label: "GPO Handoff", shortLabel: "GPO", x: 214, y: 102, accent: PALETTE.goldStamp, texture: "review-folder" },
+  { id: "public-release-terminal", label: "Public Release Terminal", shortLabel: "PUBLIC", x: 214, y: 164, accent: PALETTE.terminalCyan, texture: "opennet-terminal" }
+];
+
 export class EndingScene extends Phaser.Scene {
   private player!: Player;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
-  private certificationPrompt!: ChoicePrompt;
+  private toast!: FeedbackToast;
   private interactionPrompt!: InteractionPrompt;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
-  private gateStatusText?: Phaser.GameObjects.Text;
-  private gateBlockerText?: Phaser.GameObjects.Text;
-  private gateBlockerIconObjects: Phaser.GameObjects.GameObject[] = [];
+  private bindingPackets: PhysicalBindingPacket[] = [];
+  private bindingProgressLights: Phaser.GameObjects.Rectangle[] = [];
+  private bindingStationLights = new Map<BuckramBindingStationId, Phaser.GameObjects.Rectangle>();
+  private bindingProgressText?: Phaser.GameObjects.Text;
+  private bindingPressFrame?: Phaser.GameObjects.Rectangle;
+  private bindingPressLabel?: Phaser.GameObjects.Text;
   private publicationTableRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private publicationTableRouteCueKey = "";
   private canRestart = false;
@@ -183,7 +167,8 @@ export class EndingScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("EndingScene", "explore", "Buckram Gate: certify the volume at the publication table.");
+    this.resetTransientState();
+    setSceneState("EndingScene", "explore", "Buckram Gate: carry the first binding packet.");
     retroAudio.startMusic("EndingScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
@@ -191,11 +176,11 @@ export class EndingScene extends Phaser.Scene {
     addSnesRoomLayer(this, { roomId: "G1", roomType: "boss", theme: "ending" });
     this.drawGateRoom();
 
-    this.player = new Player(this, 128, 204);
+    this.player = new Player(this, 80, 214);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
-    this.certificationPrompt = new ChoicePrompt(this);
+    this.toast = new FeedbackToast(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.objectiveText = addObjectiveText(this);
     this.actionHint = this.add.text(8, 211, "", {
@@ -203,11 +188,30 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "7px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
-    }).setDepth(811);
+    }).setDepth(811).setVisible(false);
 
+    this.startPhysicalBindingLoop();
     this.syncRoomTraversal();
     this.syncVisibleState(false);
     this.updateGateReadout();
+    if (gameState.finalGateCertification?.status === "published") {
+      this.published = true;
+      this.showPublishedPrize();
+      this.canRestart = true;
+    }
+  }
+
+  private resetTransientState() {
+    this.bindingPackets = [];
+    this.bindingProgressLights = [];
+    this.bindingStationLights = new Map<BuckramBindingStationId, Phaser.GameObjects.Rectangle>();
+    this.bindingProgressText = undefined;
+    this.bindingPressFrame = undefined;
+    this.bindingPressLabel = undefined;
+    this.publicationTableRouteCueObjects = [];
+    this.publicationTableRouteCueKey = "";
+    this.canRestart = false;
+    this.published = false;
   }
 
   update(_: number, delta: number) {
@@ -223,20 +227,13 @@ export class EndingScene extends Phaser.Scene {
     if (input.abilityJustPressed && !this.published) activateRoleAbility(this);
 
     if (this.published) {
+      this.toast.update(delta, this.player.position, GATE_PLAY_BOUNDS);
       this.interactionPrompt.update(delta, null);
       this.clearPublicationTableRouteCue();
       this.player.update(delta, false);
       if (this.canRestart && input.aJustPressed) {
         this.restart();
       }
-      return;
-    }
-
-    if (this.certificationPrompt.active) {
-      this.interactionPrompt.update(delta, null);
-      this.clearPublicationTableRouteCue();
-      this.certificationPrompt.updateInput();
-      this.player.update(delta, false);
       return;
     }
 
@@ -253,348 +250,130 @@ export class EndingScene extends Phaser.Scene {
     }
 
     this.player.update(delta, true, { bounds: GATE_PLAY_BOUNDS });
+    this.toast.update(delta, this.player.position, GATE_PLAY_BOUNDS);
+    this.updateCarriedBindingPacket();
     this.updateGateReadout();
     this.updatePublicationTableCue(delta);
     if (input.aJustPressed) {
       this.handleGateAction();
     }
     this.reliability.update();
-    this.objectiveText.setText(gameState.objective);
+    this.objectiveText.setText("");
   }
 
   private drawGateRoom() {
-    const readiness = getFinalGateReadiness();
-    const publication = getPublicationReadinessReadout();
-    const clock = getStatutoryClockStateReadout();
-    const ready = readiness.ready && hasProcessItem("buckram_key");
-    addSnesWorldMap(this, 50, 78, "G1 GATE", "buckram-gate-map");
-    addSnesWorkflowRelicRack(this, 184, 78);
-    addSnesProgressMural(this, {
-      x: 128,
-      y: 38,
-      pendantsCollected: publication.pendants.collected,
-      pendantsRequired: publication.pendants.required,
-      crystalsCollected: publication.crystals.collected,
-      crystalsRequired: publication.crystals.required,
-      fragmentsCollected: publication.coverFragments.collected,
-      fragmentsNeeded: publication.coverFragments.required,
-      repositoryMapComplete: publication.repositoryCoverageMap.complete,
-      apparatusComplete: publication.apparatus.complete,
-      standardsClear: publication.standards.clear,
-      buckramKeyHeld: publication.buckramKeyHeld,
-      gateOpen: publication.buckramGateOpen,
-      completionRatio: publication.completionRatio,
-      depth: 116
-    });
-    addSnesStatutoryClock(this, {
-      x: 45,
-      y: 112,
-      elapsedYears: clock.elapsedYears,
-      deadlineYears: clock.deadlineYears,
-      yearsRemaining: clock.yearsRemaining,
-      status: clock.status,
-      depth: 116
-    });
-
-    this.drawStoneBureaucracyWall(74, 130, "30-YR", ready, "snes-wall-hold");
-    this.drawStoneBureaucracyWall(182, 130, "DANN-E", ready, "snes-wall-danne-queue");
-
-    this.add.rectangle(128, 89, 104, 90, color(PALETTE.black)).setStrokeStyle(2, color(ready ? PALETTE.goldStamp : PALETTE.classNetRed)).setDepth(94);
-    this.add.rectangle(128, 55, 72, 8, color(PALETTE.deepRuby)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(95);
-    this.add.text(128, 51, "PUBLICATION GATE", {
+    this.add.rectangle(128, 58, 130, 28, color(PALETTE.black), 0.96)
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(140);
+    this.add.text(128, 47, "FRUS BINDERY", {
       fontFamily: "monospace",
-      fontSize: "6px",
-      color: ready ? PALETTE.goldStamp : PALETTE.classNetRed
-    }).setOrigin(0.5, 0).setDepth(96);
-    addSnesPublicationShrine(this, {
-      x: 128,
-      y: 100,
-      ready,
-      fragmentsCollected: readiness.fragmentsCollected,
-      fragmentsNeeded: readiness.fragmentsNeeded,
-      apparatusComplete: readiness.publicationApparatus.complete,
-      stampsComplete: readiness.missingStamps.length === 0,
-      reliabilityReady: readiness.reliabilityReady,
-      depth: 112
-    });
-    this.drawAssembledPrize(128, 100, 0.76);
-    if (!ready) {
-      this.add.rectangle(128, 103, 70, 72, color(PALETTE.black)).setDepth(151);
-      this.gateStatusText = this.add.text(128, 91, "LOCKED", {
-        fontFamily: "monospace",
-        fontSize: "9px",
-        color: PALETTE.classNetRed
-      }).setName("buckram-gate-status-label").setOrigin(0.5).setDepth(152);
-      this.gateBlockerText = this.add.text(128, 103, "NEXT\nCHECK", {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.creamPaper,
-        align: "center"
-      }).setName("buckram-gate-blocker-label").setOrigin(0.5).setDepth(152);
-    }
-
-    this.drawCertificationTable(ready);
-    this.drawFinalChecklist(readiness);
-  }
-
-  private drawCertificationTable(ready: boolean) {
-    this.add.rectangle(CERTIFICATION_TABLE.x + 2, CERTIFICATION_TABLE.y + 3, 96, 24, color(PALETTE.black)).setDepth(155);
-    this.add.rectangle(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, 96, 24, color(PALETTE.deepRuby)).setStrokeStyle(2, color(ready ? PALETTE.goldStamp : PALETTE.stoneGray)).setDepth(156);
-    this.add.image(CERTIFICATION_TABLE.x - 33, CERTIFICATION_TABLE.y - 2, "buckram-key").setDepth(157);
-    this.add.image(CERTIFICATION_TABLE.x + 32, CERTIFICATION_TABLE.y - 2, "citation-stamp").setDepth(157);
-    this.add.rectangle(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y - 3, 40, 8, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(157);
-    this.add.text(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y - 7, "CERTIFY", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: ready ? PALETTE.deepRuby : PALETTE.sepiaInk
-    }).setOrigin(0.5, 0).setDepth(158);
-    this.add.text(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y + 12, "HUMAN PUBLICATION TABLE", {
+      fontSize: "7px",
+      color: PALETTE.goldStamp
+    }).setOrigin(0.5).setDepth(141);
+    this.bindingProgressText = this.add.text(128, 56, "PACKETS 0/5", {
       fontFamily: "monospace",
       fontSize: "5px",
-      color: ready ? PALETTE.goldStamp : PALETTE.stoneGray
-    }).setOrigin(0.5).setDepth(158);
-    addSnesPublicationTeam(this, {
-      x: CERTIFICATION_TABLE.x,
-      y: CERTIFICATION_TABLE.y,
-      depth: 159,
-      members: [
-        { textureKey: "compiler", label: "COMP", role: "SELECT", x: -56, y: -8, accent: PALETTE.archiveAmber },
-        { textureKey: "editor", label: "EDIT", role: "TEXT", x: -28, y: -28, accent: PALETTE.goldStamp },
-        { textureKey: "declassification_coordinator", label: "DECL", role: "EQUITY", x: 28, y: -28, accent: PALETTE.classNetRed },
-        { textureKey: "records_officer", label: "SRC", role: "NOTES", x: 56, y: -8, accent: PALETTE.terminalCyan },
-        { textureKey: "reviewer", label: "PROOF", role: "READ", x: 0, y: -36, accent: PALETTE.creamPaper }
-      ]
-    });
-  }
-
-  private drawFinalChecklist(readiness: ReturnType<typeof getFinalGateReadiness>) {
-    const clock = getStatutoryClockStateReadout();
-    const lines = [
-      `STAMPS ${readiness.missingStamps.length ? "WAIT" : "OK"}`,
-      `FRAG ${readiness.fragmentsCollected}/${readiness.fragmentsNeeded}`,
-      `APP ${readiness.publicationApparatus.complete ? "OK" : `${readiness.publicationApparatus.completed}/${readiness.publicationApparatus.total} WAIT`}`,
-      `REL ${readiness.reliability}/${readiness.reliabilityMinimum}`,
-      `KEY ${hasProcessItem("buckram_key") ? "OK" : "--"}`,
-      `CLOCK ${clock.status === "published" || clock.status === "buckram_gate_open" ? "OK" : clock.status === "deadline_missed" ? "MISS" : clock.elapsedYears.toFixed(1)}`
-    ];
-    this.add.rectangle(44, 185, 68, 48, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(156);
-    this.add.text(14, 166, "PROCESS\nCHECKLIST", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.terminalCyan,
-      align: "left"
-    }).setName("buckram-process-checklist-title").setDepth(157);
-    lines.forEach((line, index) => {
-      this.add.text(14, 179 + index * 6, line, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: line.includes("WAIT") || line.includes("--") || line.includes("MISS") ? PALETTE.classNetRed : PALETTE.creamPaper
-      }).setDepth(157);
-    });
-
-    this.add.rectangle(213, 181, 58, 38, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(156);
-    this.add.text(188, 166, "HUMAN\nSIGN-OFF", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp,
-      align: "left"
-    }).setDepth(157);
-    this.add.text(188, 184, "SPACE\nAT TABLE\nTO PUBLISH", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.creamPaper,
-      align: "left"
-    }).setDepth(157);
-  }
-
-  private drawStoneBureaucracyWall(x: number, y: number, label: string, cleared: boolean, textureKey: string) {
-    const fill = cleared ? PALETTE.stoneGray : PALETTE.stoneDark;
-    this.add.ellipse(x, y + 15, 36, 8, color(PALETTE.black)).setDepth(109);
-    if (this.textures.exists(textureKey)) {
-      const image = this.add.image(x, y, textureKey).setDepth(111);
-      if (cleared) image.setTint(color(PALETTE.stoneLight));
-    } else {
-      this.add.rectangle(x, y, 38, 26, color(PALETTE.black)).setDepth(110);
-      this.add.rectangle(x - 1, y - 1, 34, 22, color(fill)).setStrokeStyle(2, color(cleared ? PALETTE.goldStamp : PALETTE.classNetRed)).setDepth(111);
-      for (let ix = -13; ix <= 13; ix += 13) {
-        for (let iy = -7; iy <= 7; iy += 7) {
-          this.add.rectangle(x + ix, y + iy, 8, 5, color(cleared ? PALETTE.creamPaper : PALETTE.black)).setDepth(112);
-        }
-      }
+      color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(141);
+    for (let index = 0; index < BUCKRAM_BINDING_TOTAL; index += 1) {
+      this.bindingProgressLights.push(this.add.rectangle(108 + index * 10, 68, 7, 4, color(PALETTE.stoneDark))
+        .setStrokeStyle(1, color(PALETTE.stoneGray)).setDepth(141));
     }
-    this.add.text(x, y - 5, label, {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: cleared ? PALETTE.goldStamp : PALETTE.creamPaper
-    }).setOrigin(0.5).setDepth(113);
-    this.add.text(x, y + 7, cleared ? "CLEAR" : "BLOCK", {
+
+    for (const station of BINDING_STATIONS) this.drawBindingStation(station);
+
+    this.bindingPressFrame = this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y, 62, 36, color(PALETTE.black), 0.96)
+      .setStrokeStyle(2, color(PALETTE.classNetRed)).setDepth(146);
+    this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y + 10, 52, 8, color(PALETTE.deepRuby))
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(147);
+    this.add.image(BINDING_PRESS.x - 20, BINDING_PRESS.y + 9, "buckram-key").setDepth(148);
+    this.add.image(BINDING_PRESS.x + 20, BINDING_PRESS.y + 9, "citation-stamp").setDepth(148);
+    this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y - 5, 18, 20, color(PALETTE.deepRuby))
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(148);
+    this.add.rectangle(BINDING_PRESS.x - 5, BINDING_PRESS.y - 5, 2, 18, color(PALETTE.buckramHighlight)).setDepth(149);
+    this.bindingPressLabel = this.add.text(BINDING_PRESS.x, BINDING_PRESS.y + 17, "LOCKED PRESS", {
       fontFamily: "monospace",
       fontSize: "5px",
-      color: cleared ? PALETTE.openNetGreen : PALETTE.classNetRed
-    }).setOrigin(0.5).setDepth(113);
+      color: PALETTE.classNetRed
+    }).setOrigin(0.5).setDepth(149);
+
+    this.add.rectangle(BINDERY_INBOX.x, BINDERY_INBOX.y, 58, 16, color(PALETTE.black), 0.96)
+      .setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(145);
+    this.add.text(BINDERY_INBOX.x, BINDERY_INBOX.y + 11, "BINDERY INBOX", {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.terminalCyan
+    }).setOrigin(0.5).setDepth(146);
+
+  }
+
+  private drawBindingStation(station: BindingStation) {
+    this.add.rectangle(station.x + 1, station.y + 2, 40, 26, color(PALETTE.black), 0.7).setDepth(142);
+    this.add.rectangle(station.x, station.y, 38, 24, color(PALETTE.deepRuby), 0.98)
+      .setStrokeStyle(2, color(station.accent)).setDepth(143);
+    this.add.image(station.x - 10, station.y, station.texture).setDepth(144);
+    this.bindingStationLights.set(
+      station.id,
+      this.add.rectangle(station.x + 10, station.y - 3, 10, 5, color(PALETTE.stoneDark))
+        .setStrokeStyle(1, color(station.accent)).setDepth(144)
+    );
+    this.add.rectangle(station.x + 10, station.y + 4, 10, 2, color(PALETTE.creamPaper)).setDepth(144);
+    this.add.text(station.x, station.y + 16, station.shortLabel, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: station.accent
+    }).setOrigin(0.5).setDepth(145);
   }
 
   private updateGateReadout() {
+    const activePacket = this.getActiveBindingPacket();
     const readiness = getFinalGateReadiness();
-    const ready = readiness.ready && hasProcessItem("buckram_key");
-    const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
-    const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
-    const canFileReaderAidRegisters = this.canFileReaderAidRegisters(readiness);
-    const canFileIndexDocket = this.canFileIndexDocket(readiness);
-    const canResolveTypesetterCorrections = this.canResolveTypesetterCorrections(readiness);
-    const indexDocketReady = Boolean(gameState.sceneProgress.indexDocketComplete);
-    const readerAidsReady = Boolean(gameState.sceneProgress.readerAidRegistersComplete);
-    const typesetterCorrectionsReady = Boolean(gameState.sceneProgress.typesetterCorrectionsComplete);
-    const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
-    const gpoComplete = Boolean(gameState.sceneProgress.gpoPublicationComplete);
-    const gpoSegmentsComplete = Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete || gpoComplete);
-    const publicationFundingReady = Boolean(gameState.sceneProgress.publicationFundingComplete);
-    const chapterStatusReady = Boolean(gameState.sceneProgress.chapterReleaseComplete);
-    const digitalReleaseReady = Boolean(gameState.sceneProgress.digitalReleaseComplete);
-    const publicCitationReady = Boolean(gameState.sceneProgress.publicCitationComplete);
-    const releaseCalendarReady = Boolean(gameState.sceneProgress.releaseCalendarComplete);
-    const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
-    const blockerCue = this.buckramBlockerCue(readiness);
-    this.updateGateLockPanel(ready, blockerCue.short, blockerCue.icon);
-    const status = ready ? "ready" : "locked";
-    const message = ready
-      ? certificationComplete
-        ? gpoSegmentsComplete
-          ? gpoComplete
-            ? publicationFundingReady
-              ? chapterStatusReady
-                ? digitalReleaseReady
-                  ? publicCitationReady
-                    ? releaseCalendarReady
-                      ? "Buckram Key ready: release calendar docket complete; publish the volume."
-                      : "Public citation card complete: file the public release calendar docket."
-                    : "Digital release complete: assemble the public citation card."
-                  : "Chapter status ledger complete: prepare the history.state.gov digital release manifest."
-                : "Funding queue cleared: file the public chapter status ledger."
-              : "GPO handoff complete: route the publication funding queue."
-            : "GPO segments assembled: complete the final publication handoff."
-          : "Final certification complete: submit the GPO publication segments."
-        : indexDocketReady
-          ? typesetterCorrectionsReady
-            ? "Buckram Key ready: complete the final Kellogg certification."
-            : "Index docket filed: resolve the typesetter correction docket."
-          : readerAidsReady
-            ? "Reader aids filed: file the index docket."
-            : "Front matter assembled: file persons and abbreviations registers."
-      : canAssembleApparatus
-        ? "Buckram Gate waits for front matter assembly at the human publication table."
-      : canFileIndexDocket
-        ? "Buckram Gate waits for the index docket at the human publication table."
-      : canResolveTypesetterCorrections
-        ? "Buckram Gate waits for the typesetter correction docket at the human publication table."
-      : canCorrectCertification
-        ? "Final certification needs repair at the human publication table."
-      : `Buckram Gate locked: next ${blockerCue.detail}.`;
+    const ready = !activePacket && readiness.ready && hasProcessItem("buckram_key");
+    this.updateBindingRoomVisuals();
 
+    if (activePacket) {
+      const station = this.bindingStation(activePacket.station);
+      const target = activePacket.status === "waiting" ? BINDERY_INBOX : station;
+      const radius = activePacket.status === "waiting" ? BINDERY_INBOX.radius : 30;
+      const nearTarget = this.isNear(target.x, target.y, radius);
+      const verb = activePacket.status === "waiting" ? "CARRY" : activePacket.status === "carried" ? "ROUTE" : "SEAL";
+      const message = activePacket.status === "waiting"
+        ? `Collect ${activePacket.shortLabel} from the bindery inbox.`
+        : activePacket.status === "carried"
+          ? `Route ${activePacket.shortLabel} to ${station.label}.`
+          : `Seal ${activePacket.shortLabel} at ${station.label}.`;
+      setFinalGateCertificationState({
+        status: "locked",
+        nearestGate: nearTarget,
+        checklistComplete: false,
+        certifiedBy: null,
+        requiredItem: "Buckram Key",
+        message
+      });
+      setNearestInteractable(nearTarget ? `${verb} ${activePacket.shortLabel}` : null);
+      setObjective(`Buckram Gate: ${message}`);
+      this.actionHint.setText("");
+      return;
+    }
+
+    const nearPress = this.isNear(BINDING_PRESS.x, BINDING_PRESS.y, BINDING_PRESS.radius);
+    const blocker = this.buckramBlockerCue(readiness);
     setFinalGateCertificationState({
-      status,
-      nearestGate: nearGate,
+      status: ready ? "ready" : "locked",
+      nearestGate: nearPress,
       checklistComplete: ready,
       certifiedBy: null,
       requiredItem: "Buckram Key",
-      message
+      message: ready
+        ? "Five binding packets are sealed. Human publication can proceed."
+        : `Buckram Gate locked: ${blocker.detail}.`
     });
-
-    setNearestInteractable(nearGate ? (ready ? "CERTIFY FRUS VOLUME" : "BUCKRAM GATE LOCKED") : null);
-    if (ready) {
-      setObjective(nearGate
-        ? certificationComplete
-          ? gpoSegmentsComplete
-            ? gpoComplete
-              ? publicationFundingReady
-                ? chapterStatusReady
-                  ? digitalReleaseReady
-                    ? publicCitationReady
-                      ? releaseCalendarReady
-                        ? "Buckram Gate: press Space to publish the public FRUS volume."
-                        : "Buckram Gate: press Space for release calendar docket."
-                      : "Buckram Gate: press Space for public citation card."
-                    : "Buckram Gate: press Space for digital release manifest."
-                  : "Buckram Gate: press Space for chapter status ledger."
-                : "Buckram Gate: press Space for publication funding queue."
-              : "Buckram Gate: press Space for GPO publication handoff."
-            : "Buckram Gate: press Space to assemble GPO segments."
-          : indexDocketReady
-            ? typesetterCorrectionsReady
-              ? "Buckram Gate: press Space for final Kellogg certification."
-              : "Buckram Gate: press Space for typesetter corrections."
-            : readerAidsReady
-              ? "Buckram Gate: press Space for index docket."
-              : "Buckram Gate: press Space for reader-aid registers."
-        : "Buckram Gate: stand at the human publication table.");
-      this.actionHint.setText(nearGate
-        ? certificationComplete
-          ? gpoSegmentsComplete
-            ? gpoComplete
-              ? publicationFundingReady
-                ? chapterStatusReady
-                  ? digitalReleaseReady
-                    ? publicCitationReady
-                      ? releaseCalendarReady
-                        ? "SPACE: PUBLISH PUBLIC FRUS VOLUME"
-                        : "SPACE: RELEASE CALENDAR DOCKET"
-                      : "SPACE: PUBLIC CITATION CARD"
-                    : "SPACE: DIGITAL RELEASE MANIFEST"
-                  : "SPACE: CHAPTER STATUS LEDGER"
-                : "SPACE: PUBLICATION FUNDING QUEUE"
-              : "SPACE: GPO PUBLICATION HANDOFF"
-            : "SPACE: ASSEMBLE GPO SEGMENTS"
-          : indexDocketReady
-            ? typesetterCorrectionsReady
-              ? "SPACE: FINAL KELLOGG CERTIFICATION"
-              : "SPACE: TYPESETTER CORRECTIONS"
-            : readerAidsReady
-              ? "SPACE: INDEX DOCKET"
-              : "SPACE: READER-AID REGISTERS"
-        : "MOVE TO CERTIFICATION TABLE.");
-      return;
-    }
-    if (canAssembleApparatus) {
-      setNearestInteractable(nearGate ? "ASSEMBLE FRONT MATTER" : null);
-      setObjective(nearGate
-        ? "Buckram Gate: press Space to assemble front matter and reader aids."
-        : "Return to the publication table to assemble front matter.");
-      this.actionHint.setText(nearGate ? "SPACE: ASSEMBLE FRONT MATTER" : "MOVE TO PUBLICATION TABLE.");
-      return;
-    }
-    if (canFileReaderAidRegisters) {
-      setNearestInteractable(nearGate ? "FILE READER-AID REGISTERS" : null);
-      setObjective(nearGate
-        ? "Buckram Gate: press Space to file persons and abbreviations registers."
-        : "Return to the publication table to file reader-aid registers.");
-      this.actionHint.setText(nearGate ? "SPACE: READER-AID REGISTERS" : "MOVE TO PUBLICATION TABLE.");
-      return;
-    }
-    if (canFileIndexDocket) {
-      setNearestInteractable(nearGate ? "FILE INDEX DOCKET" : null);
-      setObjective(nearGate
-        ? "Buckram Gate: press Space to file the index docket."
-        : "Return to the publication table to file the index docket.");
-      this.actionHint.setText(nearGate ? "SPACE: INDEX DOCKET" : "MOVE TO PUBLICATION TABLE.");
-      return;
-    }
-    if (canResolveTypesetterCorrections) {
-      setNearestInteractable(nearGate ? "RESOLVE TYPESETTER CORRECTIONS" : null);
-      setObjective(nearGate
-        ? "Buckram Gate: press Space to resolve typesetter corrections."
-        : "Return to the publication table to resolve typesetter corrections.");
-      this.actionHint.setText(nearGate ? "SPACE: TYPESETTER CORRECTIONS" : "MOVE TO PUBLICATION TABLE.");
-      return;
-    }
-    if (canCorrectCertification) {
-      setNearestInteractable(nearGate ? "REPAIR FINAL CERTIFICATION" : null);
-      setObjective(nearGate ? "Repair final certification: press Space to rerun Kellogg checks." : "Return to the publication table to repair certification.");
-      this.actionHint.setText(nearGate ? "SPACE: REPAIR CERTIFICATION" : "MOVE TO CERTIFICATION TABLE.");
-      return;
-    }
-
-    setObjective(`Buckram Gate locked: ${blockerCue.short}.`);
-    this.actionHint.setText(nearGate ? `LOCKED: ${blockerCue.short}.` : `NEXT: ${blockerCue.short}.`);
+    setNearestInteractable(nearPress ? (ready ? "PUBLISH FRUS VOLUME" : "BINDING PRESS LOCKED") : null);
+    setObjective(ready
+      ? nearPress
+        ? "Buckram Gate: press Space to bind and publish the FRUS volume."
+        : "Buckram Gate: carry the Buckram Key to the binding press."
+      : `Buckram Gate locked: ${blocker.short}.`);
+    this.actionHint.setText("");
   }
 
   private buckramBlockerCue(readiness: ReturnType<typeof getFinalGateReadiness>): BuckramBlockerCue {
@@ -678,92 +457,6 @@ export class EndingScene extends Phaser.Scene {
     };
   }
 
-  private updateGateLockPanel(ready: boolean, blockerShort: string, icon: BuckramBlockerIcon) {
-    if (!this.gateStatusText || !this.gateBlockerText) return;
-    this.gateStatusText
-      .setText(ready ? "READY" : "LOCKED")
-      .setColor(ready ? PALETTE.openNetGreen : PALETTE.classNetRed);
-    this.gateBlockerText
-      .setText(ready ? "HUMAN\nCERTIFY" : `NEXT\n${blockerShort}`)
-      .setColor(ready ? PALETTE.goldStamp : PALETTE.creamPaper);
-    this.refreshGateBlockerIcon(ready ? "ready" : icon);
-  }
-
-  private refreshGateBlockerIcon(icon: BuckramBlockerIcon) {
-    for (const object of this.gateBlockerIconObjects) object.destroy();
-    this.gateBlockerIconObjects = [];
-    const x = 128;
-    const y = 121;
-    const add = (object: Phaser.GameObjects.GameObject, suffix: string) => {
-      object.setName(`buckram-gate-blocker-icon-${icon}-${suffix}`);
-      this.gateBlockerIconObjects.push(object);
-      return object;
-    };
-    add(this.add.rectangle(x, y + 3, 18, 5, color(PALETTE.black), 0.72).setDepth(152), "shadow");
-    if (icon === "stamp") {
-      add(this.add.rectangle(x, y - 4, 8, 7, color(PALETTE.goldStamp)).setStrokeStyle(1, color(PALETTE.black)).setDepth(153), "handle");
-      add(this.add.rectangle(x, y + 2, 15, 5, color(PALETTE.classNetRed)).setStrokeStyle(1, color(PALETTE.black)).setDepth(153), "base");
-      add(this.add.rectangle(x, y + 5, 13, 2, color(PALETTE.buckramRed)).setDepth(154), "ink");
-      return;
-    }
-    if (icon === "cover") {
-      add(this.add.rectangle(x, y, 13, 14, color(PALETTE.deepRuby)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(153), "cover");
-      add(this.add.rectangle(x - 4, y, 2, 14, color(PALETTE.buckramRed)).setDepth(154), "spine");
-      add(this.add.rectangle(x + 2, y - 3, 5, 1, color(PALETTE.goldStamp)).setDepth(154), "band-top");
-      add(this.add.rectangle(x + 2, y + 3, 5, 1, color(PALETTE.goldStamp)).setDepth(154), "band-bottom");
-      return;
-    }
-    if (icon === "equity") {
-      add(this.add.polygon(x, y, [0, -8, 8, 0, 0, 8, -8, 0], color(PALETTE.terminalCyan)).setStrokeStyle(1, color(PALETTE.black)).setDepth(153), "crystal");
-      add(this.add.rectangle(x, y, 7, 2, color(PALETTE.white), 0.82).setDepth(154), "glint");
-      return;
-    }
-    if (icon === "map") {
-      add(this.add.rectangle(x, y, 15, 12, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.black)).setDepth(153), "paper");
-      add(this.add.rectangle(x - 4, y, 1, 10, color(PALETTE.buckramRed)).setDepth(154), "fold-a");
-      add(this.add.rectangle(x + 2, y, 1, 10, color(PALETTE.goldStamp)).setDepth(154), "fold-b");
-      add(this.add.rectangle(x + 4, y - 3, 5, 1, color(PALETTE.terminalCyan)).setDepth(154), "route");
-      return;
-    }
-    if (icon === "apparatus") {
-      add(this.add.rectangle(x - 2, y, 12, 14, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.black)).setDepth(153), "sheet");
-      add(this.add.rectangle(x - 7, y, 2, 12, color(PALETTE.classNetRed)).setDepth(154), "margin");
-      add(this.add.rectangle(x + 2, y - 3, 6, 1, color(PALETTE.goldStamp)).setDepth(154), "line-a");
-      add(this.add.rectangle(x + 1, y + 2, 7, 1, color(PALETTE.sepiaInk)).setDepth(154), "line-b");
-      return;
-    }
-    if (icon === "bracket") {
-      add(this.add.rectangle(x - 5, y, 2, 14, color(PALETTE.classNetRed)).setDepth(153), "left-stem");
-      add(this.add.rectangle(x + 5, y, 2, 14, color(PALETTE.classNetRed)).setDepth(153), "right-stem");
-      add(this.add.rectangle(x - 2, y - 6, 7, 2, color(PALETTE.goldStamp)).setDepth(154), "top");
-      add(this.add.rectangle(x + 2, y + 6, 7, 2, color(PALETTE.goldStamp)).setDepth(154), "bottom");
-      return;
-    }
-    if (icon === "standards") {
-      add(this.add.triangle(x, y, 0, 9, 8, -7, 16, 9, color(PALETTE.goldStamp)).setStrokeStyle(1, color(PALETTE.black)).setDepth(153), "seal");
-      add(this.add.rectangle(x, y + 2, 2, 6, color(PALETTE.black)).setDepth(154), "mark");
-      add(this.add.rectangle(x, y + 7, 2, 2, color(PALETTE.black)).setDepth(154), "dot");
-      return;
-    }
-    if (icon === "reliability") {
-      add(this.add.rectangle(x - 4, y - 3, 6, 6, color(PALETTE.classNetRed)).setDepth(153), "heart-left");
-      add(this.add.rectangle(x + 4, y - 3, 6, 6, color(PALETTE.classNetRed)).setDepth(153), "heart-right");
-      add(this.add.rectangle(x, y + 3, 10, 6, color(PALETTE.classNetRed)).setDepth(153), "heart-bottom");
-      add(this.add.rectangle(x + 1, y, 3, 2, color(PALETTE.white), 0.75).setDepth(154), "glint");
-      return;
-    }
-    if (icon === "key") {
-      add(this.add.circle(x - 5, y, 4, color(PALETTE.goldStamp)).setStrokeStyle(1, color(PALETTE.black)).setDepth(153), "bow");
-      add(this.add.rectangle(x + 2, y, 12, 3, color(PALETTE.goldStamp)).setDepth(153), "shaft");
-      add(this.add.rectangle(x + 7, y + 3, 2, 4, color(PALETTE.goldStamp)).setDepth(153), "tooth-a");
-      add(this.add.rectangle(x + 10, y + 3, 2, 3, color(PALETTE.goldStamp)).setDepth(153), "tooth-b");
-      return;
-    }
-    add(this.add.rectangle(x, y, 14, 10, color(PALETTE.openNetGreen)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(153), "seal");
-    add(this.add.rectangle(x, y, 8, 2, color(PALETTE.black)).setAngle(-35).setDepth(154), "check-a");
-    add(this.add.rectangle(x + 4, y - 2, 12, 2, color(PALETTE.black)).setAngle(-35).setDepth(154), "check-b");
-  }
-
   private updatePublicationTableCue(delta: number) {
     const label = this.publicationTableActionLabel();
     if (!label) {
@@ -772,62 +465,57 @@ export class EndingScene extends Phaser.Scene {
       return;
     }
 
-    const target = this.publicationTableTarget(label);
+    const position = this.bindingCuePosition();
+    const target = this.publicationTableTarget(label, position);
     this.interactionPrompt.update(delta, target, undefined, { badge: "A", text: label });
-    this.refreshPublicationTableRouteCue(label);
+    this.refreshPublicationTableRouteCue(label, position);
   }
 
   private publicationTableActionLabel() {
+    const activePacket = this.getActiveBindingPacket();
+    if (activePacket) {
+      if (activePacket.status === "waiting") return `CARRY ${activePacket.shortLabel}`;
+      if (activePacket.status === "carried") return `ROUTE ${activePacket.shortLabel}`;
+      return `SEAL ${activePacket.shortLabel}`;
+    }
     const readiness = getFinalGateReadiness();
     const ready = readiness.ready && hasProcessItem("buckram_key");
-    if (!ready) {
-      if (this.canAssembleFrontMatter(readiness)) return "FRONT MATTER";
-      if (this.canFileReaderAidRegisters(readiness)) return "READER AIDS";
-      if (this.canFileIndexDocket(readiness)) return "INDEX";
-      if (this.canResolveTypesetterCorrections(readiness)) return "TYPESET";
-      if (this.canCorrectKelloggCertification(readiness)) return "REPAIR";
-      return null;
-    }
-
-    const certificationComplete = Boolean(gameState.sceneProgress.kelloggFinalCertificationComplete);
-    const gpoSegmentsComplete = Boolean(gameState.sceneProgress.gpoSegmentAssemblyComplete || gameState.sceneProgress.gpoPublicationComplete);
-    if (!certificationComplete) return "CERTIFY";
-    if (!gpoSegmentsComplete) return "SEGMENTS";
-    if (!gameState.sceneProgress.gpoPublicationComplete) return "GPO";
-    if (!gameState.sceneProgress.publicationFundingComplete) return "FUNDING";
-    if (!gameState.sceneProgress.chapterReleaseComplete) return "LEDGER";
-    if (!gameState.sceneProgress.digitalReleaseComplete) return "DIGITAL";
-    if (!gameState.sceneProgress.publicCitationComplete) return "CITATION";
-    if (!gameState.sceneProgress.releaseCalendarComplete) return "CALENDAR";
-    return "PUBLISH";
+    return ready ? "PUBLISH" : "PRESS LOCKED";
   }
 
-  private publicationTableTarget(label: string): Interactable {
+  private bindingCuePosition() {
+    const activePacket = this.getActiveBindingPacket();
+    if (!activePacket) return BINDING_PRESS;
+    if (activePacket.status === "waiting") return BINDERY_INBOX;
+    return { ...this.bindingStation(activePacket.station), radius: 30 };
+  }
+
+  private publicationTableTarget(label: string, position: { x: number; y: number; radius: number }): Interactable {
     return {
-      id: "buckram-publication-table",
+      id: "buckram-binding-target",
       label,
-      x: CERTIFICATION_TABLE.x,
-      y: CERTIFICATION_TABLE.y,
-      radius: CERTIFICATION_TABLE.radius,
+      x: position.x,
+      y: position.y,
+      radius: position.radius,
       kind: "manuscript",
       onInteract: () => undefined
     };
   }
 
-  private refreshPublicationTableRouteCue(label: string) {
+  private refreshPublicationTableRouteCue(label: string, target: { x: number; y: number; radius: number }) {
     const distance = Phaser.Math.Distance.Between(
       this.player.position.x,
       this.player.position.y,
-      CERTIFICATION_TABLE.x,
-      CERTIFICATION_TABLE.y
+      target.x,
+      target.y
     );
-    if (distance <= CERTIFICATION_TABLE.radius + 2) {
+    if (distance <= target.radius + 2) {
       this.clearPublicationTableRouteCue();
       return;
     }
 
     const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 12) };
-    const end = { x: CERTIFICATION_TABLE.x, y: CERTIFICATION_TABLE.y };
+    const end = { x: target.x, y: target.y };
     const cueKey = `G1:${label}:${start.x},${start.y}->${end.x},${end.y}`;
     if (cueKey === this.publicationTableRouteCueKey) return;
 
@@ -850,17 +538,16 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private drawPublicationTableRouteCue(start: { x: number; y: number }, end: { x: number; y: number }, label: string) {
-    const finalLabels = new Set(["CERTIFY", "PUBLISH", "GPO", "CALENDAR"]);
-    const accent = finalLabels.has(label)
+    const accent = label === "PUBLISH"
       ? PALETTE.goldStamp
-      : label === "REPAIR"
+      : label === "PRESS LOCKED"
         ? PALETTE.classNetRed
         : PALETTE.terminalCyan;
 
-    this.trackPublicationTableRouteCue(this.add.ellipse(end.x, end.y + 15, 96, 14, color(PALETTE.black), 0.35)
+    this.trackPublicationTableRouteCue(this.add.ellipse(end.x, end.y + 14, 42, 8, color(PALETTE.black), 0.35)
       .setName("buckram-publication-table-route-shadow")
       .setDepth(154));
-    this.trackPublicationTableRouteCue(this.add.rectangle(end.x, end.y, 104, 30, color(PALETTE.black), 0)
+    this.trackPublicationTableRouteCue(this.add.rectangle(end.x, end.y, 44, 30, color(PALETTE.black), 0)
       .setStrokeStyle(2, color(accent))
       .setName("buckram-publication-table-route-target-glow")
       .setDepth(240));
@@ -876,688 +563,279 @@ export class EndingScene extends Phaser.Scene {
         .setDepth(241));
     }
 
-    const width = Math.max(58, label.length * 5 + 10);
-    this.trackPublicationTableRouteCue(this.add.rectangle(end.x, end.y + 25, width, 10, color(PALETTE.black), 0.94)
-      .setStrokeStyle(1, color(accent))
-      .setName("buckram-publication-table-route-label-frame")
-      .setDepth(242));
-    this.trackPublicationTableRouteCue(this.add.text(end.x, end.y + 22, label, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: accent
-    }).setName("buckram-publication-table-route-label")
-      .setOrigin(0.5, 0)
-      .setDepth(243));
   }
 
   private handleGateAction() {
+    const activePacket = this.getActiveBindingPacket();
+    if (activePacket) {
+      this.handleBindingPacketAction(activePacket);
+      return;
+    }
     const readiness = getFinalGateReadiness();
     const ready = readiness.ready && hasProcessItem("buckram_key");
-    const canCorrectCertification = this.canCorrectKelloggCertification(readiness);
-    const canAssembleApparatus = this.canAssembleFrontMatter(readiness);
-    const canFileReaderAidRegisters = this.canFileReaderAidRegisters(readiness);
-    const canFileIndexDocket = this.canFileIndexDocket(readiness);
-    const canResolveTypesetterCorrections = this.canResolveTypesetterCorrections(readiness);
-    const nearGate = this.isNear(CERTIFICATION_TABLE.x, CERTIFICATION_TABLE.y, CERTIFICATION_TABLE.radius);
-    if (!nearGate) {
+    if (!this.isNear(BINDING_PRESS.x, BINDING_PRESS.y, BINDING_PRESS.radius)) {
       retroAudio.warning();
-      setLatestMessage("Move to the human publication table before certifying.");
+      setLatestMessage("Carry the Buckram Key to the binding press.");
       return;
     }
-    if (!ready && canAssembleApparatus) {
-      this.startFrontMatterAssembly();
-      return;
-    }
-    if (!ready && canFileReaderAidRegisters) {
-      this.startReaderAidRegisters();
-      return;
-    }
-    if (!ready && canFileIndexDocket) {
-      this.startIndexDocket();
-      return;
-    }
-    if (!ready && canResolveTypesetterCorrections) {
-      this.startTypesetterCorrections();
-      return;
-    }
-    if (!ready && !canCorrectCertification) {
+    if (!ready) {
+      const blocker = this.buckramBlockerCue(readiness);
       retroAudio.warning();
-      setLatestMessage("PROVENANCE CANNOT BE GUESSED - complete the readiness checklist.");
-      return;
-    }
-    if (!gameState.sceneProgress.kelloggFinalCertificationComplete || canCorrectCertification) {
-      this.startKelloggCertification();
-      return;
-    }
-    if (!gameState.sceneProgress.gpoPublicationComplete) {
-      this.startGpoPublicationHandoff();
-      return;
-    }
-    if (!gameState.sceneProgress.publicationFundingComplete) {
-      this.startPublicationFundingQueue();
-      return;
-    }
-    if (!gameState.sceneProgress.chapterReleaseComplete) {
-      this.startChapterReleaseStatus();
-      return;
-    }
-    if (!gameState.sceneProgress.digitalReleaseComplete) {
-      this.startDigitalRelease();
-      return;
-    }
-    if (!gameState.sceneProgress.publicCitationComplete) {
-      this.startPublicCitationCard();
-      return;
-    }
-    if (!gameState.sceneProgress.releaseCalendarComplete) {
-      this.startReleaseCalendar();
+      setLatestMessage(`BINDING PRESS LOCKED - ${blocker.detail}.`);
+      this.toast.show(`LOCKED - ${blocker.short}`, this.player.position, "warn", GATE_PLAY_BOUNDS);
       return;
     }
     this.publishVolume();
   }
 
-  private startChapterReleaseStatus() {
-    if (gameState.sceneProgress.chapterReleaseComplete) {
-      this.startDigitalRelease();
-      return;
-    }
-    if (!gameState.sceneProgress.publicationFundingComplete) {
-      this.startPublicationFundingQueue();
-      return;
-    }
-    if (!gameState.sceneProgress.gpoPublicationComplete) {
-      this.startGpoPublicationHandoff();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      CHAPTER_RELEASE_PROMPTS.length - 1,
-      gameState.sceneProgress.chapterReleaseStep ?? 0
-    ));
-    gameState.sceneProgress.chapterReleaseStep = currentStep;
-    const prompt = getChapterReleasePrompt(currentStep);
-    setObjective(`Chapter status ledger: ${currentStep + 1}/${CHAPTER_RELEASE_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateChapterReleaseAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.chapterReleaseStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Chapter release status: ${prompt.id}`);
-        }
-        setObjective("Chapter status ledger: correct chapter release status before public release.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.chapterReleaseStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!chapterReleaseComplete(nextStep)) {
-        this.startChapterReleaseStatus();
-        return;
-      }
-      gameState.sceneProgress.chapterReleaseComplete = 1;
-      gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
-      addDocumentPoints(4, "chapter release status ledger filed");
-      setLatestMessage("Chapter status ledger complete: cleared chapters and outstanding clearance work are visible.");
-      setObjective("Buckram Gate: press Space for digital release manifest.");
-      this.updateGateReadout();
+  private startPhysicalBindingLoop() {
+    if (this.bindingPackets.length > 0) return;
+    const restoredStep = deriveBuckramBindingStep(gameState.sceneProgress);
+    const restoredStatus = buckramBindingStatusFromCode(gameState.sceneProgress.buckramBindingStatus ?? 0);
+    this.bindingPackets = BUCKRAM_BINDING_PACKETS.map((packet, index) => {
+      const status: BuckramBindingStatus = index < restoredStep
+        ? "sealed"
+        : index === restoredStep
+          ? restoredStatus
+          : "waiting";
+      const station = this.bindingStation(packet.station);
+      const placed = status === "routed";
+      const physicalPacket: PhysicalBindingPacket = {
+        id: packet.id,
+        label: packet.label,
+        shortLabel: packet.shortLabel,
+        station: packet.station,
+        texture: packet.texture,
+        accent: packet.accent,
+        checkCount: packet.checkIds.length,
+        status,
+        x: placed ? station.x : BINDERY_INBOX.x,
+        y: placed ? station.y - 18 : BINDERY_INBOX.y - 13,
+        routedStation: placed ? station.id : undefined
+      };
+      physicalPacket.icon = this.add.image(physicalPacket.x, physicalPacket.y, physicalPacket.texture)
+        .setDepth(240).setVisible(false);
+      physicalPacket.labelText = this.add.text(physicalPacket.x, physicalPacket.y + 13, physicalPacket.shortLabel, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: physicalPacket.accent,
+        backgroundColor: PALETTE.black
+      }).setOrigin(0.5).setDepth(241).setVisible(false);
+      return physicalPacket;
     });
+    const carried = this.bindingPackets.find((packet) => packet.status === "carried");
+    setHeldItem(carried ? `Binding Folder: ${carried.shortLabel}` : null);
+    gameState.sceneProgress.buckramBindingStep = restoredStep;
+    gameState.sceneProgress.buckramBindingStatus = buckramBindingStatusCode(restoredStatus);
+    this.updateBindingPacketVisibility();
+    this.updateBindingRoomVisuals();
   }
 
-  private startDigitalRelease() {
-    if (gameState.sceneProgress.digitalReleaseComplete) {
-      this.startPublicCitationCard();
-      return;
-    }
-    if (!gameState.sceneProgress.chapterReleaseComplete) {
-      this.startChapterReleaseStatus();
-      return;
-    }
-    if (!gameState.sceneProgress.publicationFundingComplete) {
-      this.startPublicationFundingQueue();
-      return;
-    }
-    if (!gameState.sceneProgress.gpoPublicationComplete) {
-      this.startGpoPublicationHandoff();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      DIGITAL_RELEASE_PROMPTS.length - 1,
-      gameState.sceneProgress.digitalReleaseStep ?? 0
-    ));
-    gameState.sceneProgress.digitalReleaseStep = currentStep;
-    const prompt = getDigitalReleasePrompt(currentStep);
-    setObjective(`Digital release: ${currentStep + 1}/${DIGITAL_RELEASE_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateDigitalReleaseAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.digitalReleaseStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Digital release: ${prompt.id}`);
-        }
-        setObjective("Digital release: correct the public metadata before the volume can issue.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.digitalReleaseStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!digitalReleaseComplete(nextStep)) {
-        this.startDigitalRelease();
-        return;
-      }
-      gameState.sceneProgress.digitalReleaseComplete = 1;
-      gameState.sceneProgress.digitalReleaseStep = DIGITAL_RELEASE_PROMPTS.length;
-      addDocumentPoints(4, "history.state.gov digital release manifest filed");
-      setLatestMessage("Digital release complete: document-number citations, TEI master, and eBook catalog are queued.");
-      setObjective("Buckram Gate: press Space for public citation card.");
-      this.updateGateReadout();
-    });
+  private getActiveBindingPacket() {
+    return this.bindingPackets.find((packet) => packet.status !== "sealed") ?? null;
   }
 
-  private startPublicCitationCard() {
-    if (gameState.sceneProgress.publicCitationComplete) {
-      this.startReleaseCalendar();
-      return;
-    }
-    if (!gameState.sceneProgress.digitalReleaseComplete) {
-      this.startDigitalRelease();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      PUBLIC_CITATION_CARD_PROMPTS.length - 1,
-      gameState.sceneProgress.publicCitationStep ?? 0
-    ));
-    gameState.sceneProgress.publicCitationStep = currentStep;
-    const prompt = getPublicCitationCardPrompt(currentStep);
-    setObjective(`Public citation card: ${currentStep + 1}/${PUBLIC_CITATION_CARD_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluatePublicCitationCardAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.publicCitationStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Public citation card: ${prompt.id}`);
-        }
-        setObjective("Public citation card: correct the reader citation before the volume can issue.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.publicCitationStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!publicCitationCardComplete(nextStep)) {
-        this.startPublicCitationCard();
-        return;
-      }
-      gameState.sceneProgress.publicCitationComplete = 1;
-      gameState.sceneProgress.publicCitationStep = PUBLIC_CITATION_CARD_PROMPTS.length;
-      addDocumentPoints(4, "public FRUS citation card filed");
-      setLatestMessage("Public citation card complete: document number, citation elements, canonical URL, and legacy caution are ready.");
-      setObjective("Buckram Gate: press Space for release calendar docket.");
-      this.updateGateReadout();
-    });
+  private bindingStation(id: BuckramBindingStationId) {
+    return BINDING_STATIONS.find((station) => station.id === id) ?? BINDING_STATIONS[0];
   }
 
-  private startReleaseCalendar() {
-    if (gameState.sceneProgress.releaseCalendarComplete) {
-      this.publishVolume();
-      return;
-    }
-    if (!gameState.sceneProgress.publicCitationComplete) {
-      this.startPublicCitationCard();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      RELEASE_CALENDAR_PROMPTS.length - 1,
-      gameState.sceneProgress.releaseCalendarStep ?? 0
-    ));
-    gameState.sceneProgress.releaseCalendarStep = currentStep;
-    const prompt = getReleaseCalendarPrompt(currentStep);
-    setObjective(`Release calendar: ${currentStep + 1}/${RELEASE_CALENDAR_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateReleaseCalendarAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.releaseCalendarStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Release calendar docket: ${prompt.id}`);
-        }
-        setObjective("Release calendar: correct public release and digitization status before publication.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.releaseCalendarStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!releaseCalendarComplete(nextStep)) {
-        this.startReleaseCalendar();
-        return;
-      }
-      gameState.sceneProgress.releaseCalendarComplete = 1;
-      gameState.sceneProgress.releaseCalendarStep = RELEASE_CALENDAR_PROMPTS.length;
-      addDocumentPoints(4, "public release calendar docket filed");
-      setLatestMessage("Release calendar docket complete: releases, anticipated releases, and digitization status are public.");
-      setObjective("Buckram Gate: press Space to publish the public FRUS volume.");
-      this.updateGateReadout();
-    });
+  private savePhysicalBindingProgress(packet: PhysicalBindingPacket | null = this.getActiveBindingPacket()) {
+    const step = packet ? this.bindingPackets.indexOf(packet) : BUCKRAM_BINDING_TOTAL;
+    gameState.sceneProgress.buckramBindingStep = Math.max(0, step);
+    gameState.sceneProgress.buckramBindingStatus = packet ? buckramBindingStatusCode(packet.status) : 0;
   }
 
-  private startFrontMatterAssembly() {
-    if (gameState.sceneProgress.frontMatterAssemblyComplete) {
-      this.updateGateReadout();
+  private updateCarriedBindingPacket() {
+    const activePacket = this.getActiveBindingPacket();
+    if (activePacket?.status === "carried" && activePacket.icon) {
+      activePacket.x = Math.round(this.player.position.x);
+      activePacket.y = Math.round(this.player.position.y - 16);
+      activePacket.icon.setPosition(activePacket.x, activePacket.y).setDepth(Math.round(this.player.position.y) + 4);
+      activePacket.labelText?.setPosition(activePacket.x, activePacket.y + 13).setDepth(Math.round(this.player.position.y) + 5);
+    }
+    this.updateBindingPacketVisibility();
+  }
+
+  private updateBindingPacketVisibility() {
+    const activePacket = this.getActiveBindingPacket();
+    for (const packet of this.bindingPackets) {
+      const visible = packet === activePacket;
+      packet.icon?.setVisible(visible);
+      packet.labelText?.setVisible(visible && packet.status !== "carried");
+    }
+  }
+
+  private updateBindingRoomVisuals() {
+    const completed = this.bindingPackets.filter((packet) => packet.status === "sealed").length;
+    this.bindingProgressText?.setText(`PACKETS ${completed}/${BUCKRAM_BINDING_TOTAL}`);
+    this.bindingProgressLights.forEach((light, index) => {
+      const filled = index < completed;
+      light.setFillStyle(color(filled ? PALETTE.openNetGreen : PALETTE.stoneDark));
+      light.setStrokeStyle(1, color(filled ? PALETTE.goldStamp : PALETTE.stoneGray));
+    });
+    for (const station of BINDING_STATIONS) {
+      const sealed = this.bindingPackets.some((packet) => packet.station === station.id && packet.status === "sealed");
+      this.bindingStationLights.get(station.id)
+        ?.setFillStyle(color(sealed ? PALETTE.openNetGreen : PALETTE.stoneDark));
+    }
+    const ready = completed === BUCKRAM_BINDING_TOTAL
+      && getFinalGateReadiness().ready
+      && hasProcessItem("buckram_key");
+    this.bindingPressFrame?.setStrokeStyle(2, color(ready ? PALETTE.goldStamp : PALETTE.classNetRed));
+    this.bindingPressLabel
+      ?.setText(ready ? "PUBLISH READY" : "LOCKED PRESS")
+      .setColor(ready ? PALETTE.goldStamp : PALETTE.classNetRed);
+  }
+
+  private findNearestBindingStation(maxDistance = 28) {
+    const nearest = BINDING_STATIONS
+      .map((station) => ({
+        station,
+        distance: Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, station.x, station.y)
+      }))
+      .sort((a, b) => a.distance - b.distance)[0];
+    return nearest && nearest.distance <= maxDistance ? nearest.station : null;
+  }
+
+  private findActionBindingStation(packet: PhysicalBindingPacket, maxDistance = 28) {
+    const intended = this.bindingStation(packet.station);
+    const intendedDistance = Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      intended.x,
+      intended.y
+    );
+    if (intendedDistance <= maxDistance + 8) return intended;
+    return this.findNearestBindingStation(maxDistance);
+  }
+
+  private handleBindingPacketAction(packet: PhysicalBindingPacket) {
+    if (packet.status === "waiting") {
+      if (!this.isNear(BINDERY_INBOX.x, BINDERY_INBOX.y, BINDERY_INBOX.radius)) {
+        retroAudio.warning();
+        setLatestMessage(`CARRY: move to ${packet.shortLabel} at the bindery inbox.`);
+        return;
+      }
+      packet.status = "carried";
+      setHeldItem(`Binding Folder: ${packet.shortLabel}`);
+      setLatestMessage(`CARRY: ${packet.label}.`);
+      this.savePhysicalBindingProgress(packet);
+      retroAudio.blip();
+      this.updateBindingPacketVisibility();
       return;
     }
-    const currentStep = Math.max(0, Math.min(
-      FRONT_MATTER_ASSEMBLY_PROMPTS.length - 1,
-      gameState.sceneProgress.frontMatterAssemblyStep ?? 0
-    ));
-    gameState.sceneProgress.frontMatterAssemblyStep = currentStep;
-    const prompt = getFrontMatterAssemblyPrompt(currentStep);
-    setObjective(`Front matter assembly: ${currentStep + 1}/${FRONT_MATTER_ASSEMBLY_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateFrontMatterAssemblyAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.frontMatterAssemblyStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Front matter assembly: ${prompt.id}`);
-        }
-        setObjective("Front matter assembly: correct the publication apparatus before certification.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
+
+    if (packet.status === "carried") {
+      const station = this.findActionBindingStation(packet);
+      if (!station) {
+        retroAudio.warning();
+        setLatestMessage(`ROUTE: carry ${packet.shortLabel} to ${this.bindingStation(packet.station).label}.`);
         return;
       }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.frontMatterAssemblyStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!frontMatterAssemblyComplete(nextStep)) {
-        this.startFrontMatterAssembly();
+      const step = this.bindingPackets.indexOf(packet);
+      const routed = routeBuckramBindingPacket(step, packet.id, station.id);
+      if (!routed.ok) {
+        const intended = this.bindingStation(packet.station);
+        packet.status = "waiting";
+        packet.routedStation = undefined;
+        packet.x = BINDERY_INBOX.x;
+        packet.y = BINDERY_INBOX.y - 13;
+        packet.icon?.setPosition(packet.x, packet.y);
+        packet.labelText?.setPosition(packet.x, packet.y + 13);
+        setHeldItem(null);
+        adjustReliability(-2, `${packet.shortLabel} filed at wrong bindery station`);
+        this.reliability.update();
+        setLatestMessage(`RETRY: ${packet.shortLabel} belongs at ${intended.label}.`);
+        this.toast.show(`WRONG: ${intended.shortLabel} BENCH`, this.player.position, "warn", GATE_PLAY_BOUNDS);
+        this.savePhysicalBindingProgress(packet);
+        retroAudio.warning();
+        this.updateBindingPacketVisibility();
         return;
       }
+      packet.status = "routed";
+      packet.routedStation = station.id;
+      packet.x = station.x;
+      packet.y = station.y - 18;
+      packet.icon?.setPosition(packet.x, packet.y).setDepth(242);
+      packet.labelText?.setPosition(packet.x, packet.y + 13).setDepth(243);
+      setHeldItem(null);
+      setLatestMessage(`ROUTE: ${packet.shortLabel} placed at ${station.label}.`);
+      this.savePhysicalBindingProgress(packet);
+      retroAudio.confirm();
+      this.updateBindingPacketVisibility();
+      return;
+    }
 
+    const station = this.bindingStation(packet.station);
+    if (!this.isNear(station.x, station.y, 36)) {
+      retroAudio.warning();
+      setLatestMessage(`SEAL: return to ${station.label}.`);
+      return;
+    }
+    packet.status = "sealed";
+    this.applyBindingPacketReward(packet);
+    this.savePhysicalBindingProgress();
+    retroAudio.stamp();
+    this.updateBindingPacketVisibility();
+    this.updateBindingRoomVisuals();
+    this.syncRoomTraversal();
+    this.syncVisibleState(false);
+    const nextPacket = this.getActiveBindingPacket();
+    if (nextPacket) {
+      nextPacket.x = BINDERY_INBOX.x;
+      nextPacket.y = BINDERY_INBOX.y - 13;
+      nextPacket.icon?.setPosition(nextPacket.x, nextPacket.y);
+      nextPacket.labelText?.setPosition(nextPacket.x, nextPacket.y + 13);
+      this.toast.show(`${packet.shortLabel} SEALED`, this.player.position, "info", GATE_PLAY_BOUNDS);
+    } else {
+      gameState.sceneProgress.buckramGateOpen = getFinalGateReadiness().buckramGateOpen ? 1 : 0;
+      this.toast.show("PRESS READY", this.player.position, "info", GATE_PLAY_BOUNDS);
+    }
+  }
+
+  private applyBindingPacketReward(packet: PhysicalBindingPacket) {
+    if (packet.id === "front-matter-packet") {
       gameState.sceneProgress.frontMatterAssemblyComplete = 1;
       gameState.sceneProgress.frontMatterAssemblyStep = FRONT_MATTER_ASSEMBLY_PROMPTS.length;
-      addDocumentPoints(6, "front matter and reader aids assembled");
-      setLatestMessage("Front matter assembled: preface and sources are ready.");
-      setObjective("Buckram Gate: press Space to file persons and abbreviations registers.");
-      this.updateGateReadout();
-    });
-  }
-
-  private startReaderAidRegisters() {
-    if (gameState.sceneProgress.readerAidRegistersComplete) {
-      this.startIndexDocket();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      READER_AID_REGISTER_PROMPTS.length - 1,
-      gameState.sceneProgress.readerAidRegistersStep ?? 0
-    ));
-    gameState.sceneProgress.readerAidRegistersStep = currentStep;
-    const prompt = getReaderAidRegisterPrompt(currentStep);
-    setObjective(`Reader-aid registers: ${currentStep + 1}/${READER_AID_REGISTER_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateReaderAidRegisterAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.readerAidRegistersStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Reader-aid registers: ${prompt.id}`);
-        }
-        setObjective("Reader-aid registers: correct persons and abbreviations before indexing.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.readerAidRegistersStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!readerAidRegistersComplete(nextStep)) {
-        this.startReaderAidRegisters();
-        return;
-      }
-
       gameState.sceneProgress.readerAidRegistersComplete = 1;
       gameState.sceneProgress.readerAidRegistersStep = READER_AID_REGISTER_PROMPTS.length;
-      addDocumentPoints(4, "persons and abbreviations registers filed");
-      setLatestMessage("Reader-aid registers filed: persons and abbreviations match the proofed text.");
-      setObjective("Buckram Gate: press Space to file the index docket.");
-      this.updateGateReadout();
-    });
-  }
-
-  private startIndexDocket() {
-    if (gameState.sceneProgress.indexDocketComplete) {
-      this.updateGateReadout();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      INDEX_DOCKET_PROMPTS.length - 1,
-      gameState.sceneProgress.indexDocketStep ?? 0
-    ));
-    gameState.sceneProgress.indexDocketStep = currentStep;
-    const prompt = getIndexDocketPrompt(currentStep);
-    setObjective(`Index docket: ${currentStep + 1}/${INDEX_DOCKET_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateIndexDocketAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.indexDocketStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Index docket: ${prompt.id}`);
-        }
-        setObjective("Index docket: correct the reader aid before final certification.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.indexDocketStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!indexDocketComplete(nextStep)) {
-        this.startIndexDocket();
-        return;
-      }
-
+      addDocumentPoints(8, "front matter and reader-aid packet sealed");
+    } else if (packet.id === "index-proof-docket") {
       gameState.sceneProgress.indexDocketComplete = 1;
       gameState.sceneProgress.indexDocketStep = INDEX_DOCKET_PROMPTS.length;
-      addDocumentPoints(4, "index docket filed");
-      setLatestMessage("Index docket filed: verified entries and cross-references now support publication.");
-      setObjective("Buckram Gate: press Space to resolve typesetter corrections.");
-      this.updateGateReadout();
-    });
-  }
-
-  private startTypesetterCorrections() {
-    if (gameState.sceneProgress.typesetterCorrectionsComplete) {
-      this.updateGateReadout();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      TYPESETTER_CORRECTIONS_PROMPTS.length - 1,
-      gameState.sceneProgress.typesetterCorrectionsStep ?? 0
-    ));
-    gameState.sceneProgress.typesetterCorrectionsStep = currentStep;
-    const prompt = getTypesetterCorrectionsPrompt(currentStep);
-    setObjective(`Typesetter corrections: ${currentStep + 1}/${TYPESETTER_CORRECTIONS_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateTypesetterCorrectionsAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.typesetterCorrectionsStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Typesetter corrections: ${prompt.id}`);
-        }
-        setObjective("Typesetter corrections: resolve flagged text before final certification.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.typesetterCorrectionsStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!typesetterCorrectionsComplete(nextStep)) {
-        this.startTypesetterCorrections();
-        return;
-      }
-
       gameState.sceneProgress.typesetterCorrectionsComplete = 1;
       gameState.sceneProgress.typesetterCorrectionsStep = TYPESETTER_CORRECTIONS_PROMPTS.length;
-      addDocumentPoints(4, "typesetter corrections resolved");
-      setLatestMessage("Typesetter correction docket complete: remaining editing issues are resolved.");
-      setObjective("Buckram Gate: press Space for final Kellogg certification.");
-      this.updateGateReadout();
-    });
-  }
-
-  private startKelloggCertification() {
-    const currentStep = Math.max(0, Math.min(
-      KELLOGG_CERTIFICATION_PROMPTS.length - 1,
-      gameState.sceneProgress.kelloggFinalCertificationStep ?? 0
-    ));
-    gameState.sceneProgress.kelloggFinalCertificationStep = currentStep;
-    const prompt = getKelloggCertificationPrompt(currentStep);
-    setObjective(`Final certification: ${currentStep + 1}/${KELLOGG_CERTIFICATION_PROMPTS.length}.`);
-    this.certificationPrompt.show(prompt.question, [...prompt.options], (option) => {
-      const evaluation = evaluateKelloggCertificationAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.kelloggFinalCertificationComplete = 0;
-        gameState.sceneProgress.kelloggFinalCertificationCorrectionNeeded = 1;
-        gameState.sceneProgress.kelloggFinalCertificationStep = 0;
-        const violation = evaluation.violation;
-        if (violation) {
-          applyStandardsViolation(violation, `${KELLOGG_CERTIFICATION_CONTEXT_PREFIX}: ${prompt.id}`);
-        }
-        setObjective("Repair final certification: repeat the Kellogg checks at the publication table.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.kelloggFinalCertificationStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!kelloggCertificationComplete(nextStep)) {
-        this.startKelloggCertification();
-        return;
-      }
+      addDocumentPoints(8, "index and typesetter correction docket sealed");
+    } else if (packet.id === "kellogg-certification") {
       this.resolveKelloggCertificationViolations();
       gameState.sceneProgress.kelloggFinalCertificationComplete = 1;
       gameState.sceneProgress.kelloggFinalCertificationCorrectionNeeded = 0;
       gameState.sceneProgress.kelloggFinalCertificationStep = KELLOGG_CERTIFICATION_PROMPTS.length;
-      const finalReadiness = getFinalGateReadiness();
-      if (finalReadiness.ready && hasProcessItem("buckram_key")) {
-        this.startGpoSegmentAssembly();
-        return;
-      }
-      setObjective("Certification repaired. Restore reliability or remaining standards blockers before publication.");
-      setLatestMessage("Certification repaired, but the Buckram Gate checklist still has blockers.");
-      this.updateGateReadout();
-    });
-  }
-
-  private startGpoPublicationHandoff() {
-    if (gameState.sceneProgress.gpoPublicationComplete) {
-      this.startPublicationFundingQueue();
-      return;
-    }
-    if (!gameState.sceneProgress.gpoSegmentAssemblyComplete) {
-      this.startGpoSegmentAssembly();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      GPO_PUBLICATION_PROMPTS.length - 1,
-      gameState.sceneProgress.gpoPublicationStep ?? 0
-    ));
-    gameState.sceneProgress.gpoPublicationStep = currentStep;
-    const prompt = getGpoPublicationPrompt(currentStep);
-    setObjective(`GPO handoff: ${currentStep + 1}/${GPO_PUBLICATION_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateGpoPublicationAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.gpoPublicationStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `GPO publication handoff: ${prompt.id}`);
-        }
-        setObjective("GPO handoff: correct the publication route before the volume can issue.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.gpoPublicationStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!gpoPublicationComplete(nextStep)) {
-        this.startGpoPublicationHandoff();
-        return;
-      }
-      gameState.sceneProgress.gpoPublicationComplete = 1;
-      gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
-      setLatestMessage("GPO handoff complete: the finished FRUS volume is prepared for the funding queue.");
-      setObjective("Buckram Gate: press Space for publication funding queue.");
-      this.updateGateReadout();
-    });
-  }
-
-  private startPublicationFundingQueue() {
-    if (gameState.sceneProgress.publicationFundingComplete) {
-      this.startChapterReleaseStatus();
-      return;
-    }
-    if (!gameState.sceneProgress.gpoPublicationComplete) {
-      this.startGpoPublicationHandoff();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      PUBLICATION_FUNDING_PROMPTS.length - 1,
-      gameState.sceneProgress.publicationFundingStep ?? 0
-    ));
-    gameState.sceneProgress.publicationFundingStep = currentStep;
-    const prompt = getPublicationFundingPrompt(currentStep);
-    setObjective(`Publication funding queue: ${currentStep + 1}/${PUBLICATION_FUNDING_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluatePublicationFundingAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.publicationFundingStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `Publication funding queue: ${prompt.id}`);
-        }
-        setObjective("Publication funding queue: keep the prepared volume intact while the queue clears.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.publicationFundingStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!publicationFundingComplete(nextStep)) {
-        this.startPublicationFundingQueue();
-        return;
-      }
-      gameState.sceneProgress.publicationFundingComplete = 1;
-      gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
-      addDocumentPoints(4, "publication funding queue cleared");
-      setLatestMessage("Publication funding queue cleared: the fully prepared volume stayed intact.");
-      setObjective("Buckram Gate: press Space for chapter status ledger.");
-      this.updateGateReadout();
-    });
-  }
-
-  private startGpoSegmentAssembly() {
-    if (gameState.sceneProgress.gpoSegmentAssemblyComplete) {
-      this.startGpoPublicationHandoff();
-      return;
-    }
-    const currentStep = Math.max(0, Math.min(
-      GPO_SEGMENT_ASSEMBLY_PROMPTS.length - 1,
-      gameState.sceneProgress.gpoSegmentAssemblyStep ?? 0
-    ));
-    gameState.sceneProgress.gpoSegmentAssemblyStep = currentStep;
-    const prompt = getGpoSegmentAssemblyPrompt(currentStep);
-    setObjective(`GPO segment assembly: ${currentStep + 1}/${GPO_SEGMENT_ASSEMBLY_PROMPTS.length}.`);
-    this.certificationPrompt.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateGpoSegmentAssemblyAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        gameState.sceneProgress.gpoSegmentAssemblyStep = 0;
-        if (evaluation.violation) {
-          applyStandardsViolation(evaluation.violation, `GPO segment assembly: ${prompt.id}`);
-        }
-        setObjective("GPO segment assembly: correct the publication packet before GPO handoff.");
-        setLatestMessage(evaluation.message);
-        this.updateGateReadout();
-        return;
-      }
-
-      const nextStep = currentStep + 1;
-      gameState.sceneProgress.gpoSegmentAssemblyStep = nextStep;
-      setLatestMessage(evaluation.message);
-      if (!gpoSegmentAssemblyComplete(nextStep)) {
-        this.startGpoSegmentAssembly();
-        return;
-      }
+      addDocumentPoints(6, "Kellogg standards certification sealed by human review");
+    } else if (packet.id === "gpo-binding-packet") {
       gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
       gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
-      addDocumentPoints(6, "GPO final publication segments assembled");
-      setLatestMessage("GPO segments complete: final segment submitted for binding.");
-      setObjective("Buckram Gate: press Space for GPO publication handoff.");
-      this.updateGateReadout();
-    });
+      gameState.sceneProgress.gpoPublicationComplete = 1;
+      gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
+      gameState.sceneProgress.publicationFundingComplete = 1;
+      gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
+      addDocumentPoints(8, "GPO binding and funding packet sealed");
+    } else if (packet.id === "public-release-packet") {
+      gameState.sceneProgress.chapterReleaseComplete = 1;
+      gameState.sceneProgress.chapterReleaseStep = CHAPTER_RELEASE_PROMPTS.length;
+      gameState.sceneProgress.digitalReleaseComplete = 1;
+      gameState.sceneProgress.digitalReleaseStep = DIGITAL_RELEASE_PROMPTS.length;
+      gameState.sceneProgress.publicCitationComplete = 1;
+      gameState.sceneProgress.publicCitationStep = PUBLIC_CITATION_CARD_PROMPTS.length;
+      gameState.sceneProgress.releaseCalendarComplete = 1;
+      gameState.sceneProgress.releaseCalendarStep = RELEASE_CALENDAR_PROMPTS.length;
+      addDocumentPoints(10, "public release and citation packet sealed");
+    }
+    adjustReliability(3, `${packet.shortLabel} completed by accountable human review`);
+    setLatestMessage(`${packet.shortLabel} SEALED - ${packet.checkCount} FINAL CHECKS RECORDED`);
   }
 
-  private canCorrectKelloggCertification(readiness: ReturnType<typeof getFinalGateReadiness>) {
-    if (!hasProcessItem("buckram_key") || !gameState.sceneProgress.kelloggFinalCertificationCorrectionNeeded) return false;
-    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
-    if (!readiness.reliabilityReady) return false;
-    return readiness.standardsViolations.length > 0
-      && readiness.standardsViolations.every((record) => record.context?.startsWith(KELLOGG_CERTIFICATION_CONTEXT_PREFIX));
-  }
-
-  private canAssembleFrontMatter(readiness: ReturnType<typeof getFinalGateReadiness>) {
-    if (!hasProcessItem("buckram_key") || gameState.sceneProgress.frontMatterAssemblyComplete) return false;
-    if (!gameState.sceneProgress.typesetterProofComplete) return false;
-    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
-    if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
-    const allowedAssemblyBlockers = new Set([
-      "sources_consulted",
-      "front_matter_assembly",
-      "reader_aid_registers",
-      "index_typeset_check",
-      "typesetter_corrections"
-    ]);
-    return readiness.missingApparatus.some((component) => component.id === "front_matter_assembly")
-      && readiness.missingApparatus.every((component) => allowedAssemblyBlockers.has(component.id));
-  }
-
-  private canFileIndexDocket(readiness: ReturnType<typeof getFinalGateReadiness>) {
-    if (
-      !hasProcessItem("buckram_key")
-      || !gameState.sceneProgress.frontMatterAssemblyComplete
-      || !gameState.sceneProgress.typesetterProofComplete
-      || gameState.sceneProgress.indexDocketComplete
-      || !gameState.sceneProgress.readerAidRegistersComplete
-    ) return false;
-    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
-    if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
-    const allowedIndexBlockers = new Set(["index_typeset_check", "typesetter_corrections"]);
-    return readiness.missingApparatus.some((component) => component.id === "index_typeset_check")
-      && readiness.missingApparatus.every((component) => allowedIndexBlockers.has(component.id));
-  }
-
-  private canFileReaderAidRegisters(readiness: ReturnType<typeof getFinalGateReadiness>) {
-    if (
-      !hasProcessItem("buckram_key")
-      || !gameState.sceneProgress.frontMatterAssemblyComplete
-      || gameState.sceneProgress.readerAidRegistersComplete
-    ) return false;
-    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
-    if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
-    const allowedReaderAidBlockers = new Set(["reader_aid_registers", "index_typeset_check", "typesetter_corrections"]);
-    return readiness.missingApparatus.some((component) => component.id === "reader_aid_registers")
-      && readiness.missingApparatus.every((component) => allowedReaderAidBlockers.has(component.id));
-  }
-
-  private canResolveTypesetterCorrections(readiness: ReturnType<typeof getFinalGateReadiness>) {
-    if (
-      !hasProcessItem("buckram_key")
-      || !gameState.sceneProgress.frontMatterAssemblyComplete
-      || !gameState.sceneProgress.indexDocketComplete
-      || !gameState.sceneProgress.typesetterProofComplete
-      || gameState.sceneProgress.typesetterCorrectionsComplete
-    ) return false;
-    if (readiness.missingStamps.length || readiness.missingFragments || readiness.documentsWithUndisclosedDeletion.length) return false;
-    if (!readiness.reliabilityReady || readiness.standardsViolations.length) return false;
-    return readiness.missingApparatus.length > 0
-      && readiness.missingApparatus.every((component) => component.id === "typesetter_corrections");
-  }
-
-  private resolveKelloggCertificationViolations() {
+ private resolveKelloggCertificationViolations() {
     for (const record of unresolvedStandardsViolations()) {
       if (record.context?.startsWith(KELLOGG_CERTIFICATION_CONTEXT_PREFIX)) resolveStandardsViolation(record.id);
     }
@@ -1566,9 +844,12 @@ export class EndingScene extends Phaser.Scene {
   private publishVolume() {
     this.published = true;
     this.canRestart = false;
+    gameState.sceneProgress.buckramBindingStep = BUCKRAM_BINDING_TOTAL;
+    gameState.sceneProgress.buckramBindingStatus = 0;
     gameState.sceneProgress.gpoSegmentAssemblyComplete = 1;
     gameState.sceneProgress.gpoSegmentAssemblyStep = GPO_SEGMENT_ASSEMBLY_PROMPTS.length;
     gameState.sceneProgress.gpoPublicationComplete = 1;
+    gameState.sceneProgress.gpoPublicationStep = GPO_PUBLICATION_PROMPTS.length;
     gameState.sceneProgress.publicationFundingComplete = 1;
     gameState.sceneProgress.publicationFundingStep = PUBLICATION_FUNDING_PROMPTS.length;
     gameState.sceneProgress.readerAidRegistersComplete = 1;
@@ -1581,6 +862,8 @@ export class EndingScene extends Phaser.Scene {
     gameState.sceneProgress.publicCitationStep = PUBLIC_CITATION_CARD_PROMPTS.length;
     gameState.sceneProgress.releaseCalendarComplete = 1;
     gameState.sceneProgress.releaseCalendarStep = RELEASE_CALENDAR_PROMPTS.length;
+    setHeldItem(null);
+    setNearestInteractable(null);
     addProcessItem("buckram_key");
     addInventoryItem("Published FRUS Cover");
     ["telegram_001", "source_note_047", "cross_reference_001", "sbu_annotation_001", "proof_page_412"].forEach((documentId) => {
@@ -1596,6 +879,7 @@ export class EndingScene extends Phaser.Scene {
       message: "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
     });
     markVolumeAssemblyCeremonyComplete();
+    this.syncRoomTraversal();
     recordBindingCeremonyCompletion();
     const completionStats = finalizeCompletionStats();
     const outcome = completionStats.publicationOutcome;
@@ -1653,6 +937,7 @@ export class EndingScene extends Phaser.Scene {
 
   private syncRoomTraversal() {
     const readiness = getFinalGateReadiness();
+    const bindingComplete = !this.getActiveBindingPacket();
     setRoomTraversalState({
       currentRoomId: "G1",
       roomTitle: "Buckram Gate",
@@ -1660,47 +945,45 @@ export class EndingScene extends Phaser.Scene {
       visitedRoomIds: ["G1"],
       revealedRoomIds: ["G1"],
       exits: {},
-      lockedExits: readiness.ready && hasProcessItem("buckram_key") ? {} : { north: "Publication gate checklist" },
+      lockedExits: bindingComplete && readiness.ready && hasProcessItem("buckram_key")
+        ? {}
+        : { north: bindingComplete ? "Publication gate checklist" : "Seal all five binding packets" },
       requiredItems: { north: "buckram_key" }
     });
   }
 
   private syncVisibleState(published: boolean) {
+    const activePacket = this.getActiveBindingPacket();
     setVisibleEntities([
       "Buckram Gate",
-      "Human publication table",
+      "Bindery inbox",
+      "Human binding press",
       "Buckram Key",
       "FRUS cover prize",
       "SNES published FRUS prize cover",
       published ? "Published FRUS Cover" : "Unpublished assembled cover",
       hiddenFirstEditionBonusLabel(gameState),
-      "Equal-rank publication team",
-      "reader-aid registers",
-      "chapter release status ledger",
-      "history.state.gov digital release manifest",
-      "public FRUS citation card",
-      "public release calendar docket",
-      "publication funding queue docket",
-      "StateChat readiness checklist"
+      ...BINDING_STATIONS.map((station) => station.label),
+      ...(activePacket ? [activePacket.label] : [])
     ]);
-    const status = published || (getFinalGateReadiness().ready && hasProcessItem("buckram_key")) ? "cleared" : "blocking";
+    const status = published || (!activePacket && getFinalGateReadiness().ready && hasProcessItem("buckram_key")) ? "cleared" : "blocking";
     setVisibleThreats([
       {
         label: "30-YEAR LINE",
-        x: 74,
-        y: 130,
+        x: 21,
+        y: 126,
         spriteKey: "snes-wall-hold",
-        behavior: "blocks publication gate until checklist is complete",
-        defeatMethod: "complete FRUS workflow and certify at human publication table",
+        behavior: "pressures the five-packet binding route",
+        defeatMethod: "seal every packet and publish at the human binding press",
         status
       },
       {
         label: "DANN-E QUEUE",
-        x: 182,
-        y: 130,
+        x: 235,
+        y: 126,
         spriteKey: "snes-wall-danne-queue",
-        behavior: "pushes against publication with unresolved final assembly",
-        defeatMethod: "use human decision at Golden Rule gate",
+        behavior: "pushes against unresolved final assembly",
+        defeatMethod: "complete the accountable bindery route without a shortcut",
         status
       }
     ]);

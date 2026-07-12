@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical Buckram Gate and final pull harmonization pass (2026-07-12):
+  - Replaced the final room's 38-question modal chain with five visible binding packets covering the same typed front-matter, index, Kellogg, GPO, public-release, and citation checks.
+  - Added a physical `CARRY -> ROUTE -> SEAL` loop across five distinct human workstations and one final binding press; wrong stations cost two reliability points and return the packet for retry.
+  - Persisted exact packet step/status through scene restarts and translated sealed packets into every legacy publication-apparatus field used by existing saves and readiness logic.
+  - Added the compact/full `render_game_to_text()` binding readout, refreshed room-clear state after each seal, and kept the publication gate locked until all five physical packets and the Buckram Key are present.
+  - Decluttered the room, removed duplicate route labels, shortened transient warnings, moved the spawn away from the inbox, and cleared stale prompts from the published-volume screen.
+  - Verified the entire bindery on desktop and DPR-3 iPhone touch controls, including a wrong route, carried-packet restart, all five seals, binding ceremony, and clean publication with zero browser errors.
+  - Re-fetched all 62 remote branches: no component PR is open, all 60 source branches have no post-PR commits, the two no-PR integration branches are exact ancestors of `main`, and the prior 112-asset byte-for-byte audit remains intact.
+  - Verification: 100 Vitest files / 528 tests pass; TypeScript and the Vite production build pass.
+
 - Physical Silent Read proofing pass and agent-pull re-audit (2026-07-11):
   - Replaced the unsolicited Priya briefing and every remaining Silent Read `ChoicePrompt` with an eight-object physical review sequence.
   - StateChat now contributes a draft plan only; the player carries it to an equal-rank editor, who records a visible bracket before issuing the Red Pencil.
