@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
 import {
@@ -28,6 +29,7 @@ import { getInput, tickInput } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
+import { Terminal } from "../entities/items/Terminal";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { FeedbackToast } from "../systems/feedbackToast";
@@ -69,6 +71,13 @@ import {
   type SilentReadReviewStatus,
   type SilentReadStationId
 } from "../game/silentReadReview";
+import { INTERIOR_TILES } from "../game/networkN1Tilemap";
+import { packedTileGid } from "../game/packedTileIndex";
+import {
+  EDITOR_E1_TILEMAP,
+  buildEditorE1TileLayers,
+  editorE1CollisionRect
+} from "../game/editorE1Tilemap";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -186,6 +195,7 @@ export class SilentReadScene extends Phaser.Scene {
   private visitedRoomIds = new Set<ProofRoomId>();
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
   private roomCleanups: Array<() => void> = [];
+  private roomSolids: Phaser.Geom.Rectangle[] = [];
   private danneLurker!: DanneLurker;
   private mapCells = new Map<ProofRoomId, Phaser.GameObjects.Rectangle>();
   private mapLabels = new Map<ProofRoomId, Phaser.GameObjects.Text>();
@@ -257,6 +267,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.visitedRoomIds = new Set<ProofRoomId>();
     this.roomObjects = [];
     this.roomCleanups = [];
+    this.roomSolids = [];
     this.roomTransitionLocked = false;
     this.exitCooldownUntil = 0;
     this.physicalFlags = [];
@@ -292,7 +303,7 @@ export class SilentReadScene extends Phaser.Scene {
       this.inventory.toggle();
       return;
     }
-    this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS });
+    this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS, solids: this.roomSolids });
     this.updateDanneLurker(delta);
     this.updatePhysicalVerification();
     this.updatePhysicalInteractionPrompt(delta);
@@ -371,6 +382,7 @@ export class SilentReadScene extends Phaser.Scene {
     }
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.roomSolids = [];
     setNearestInteractable(null);
   }
 
@@ -392,22 +404,114 @@ export class SilentReadScene extends Phaser.Scene {
         track: (object) => this.track(object)
       });
     }
-    addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "proof", track: (object) => this.track(object) });
+    const packedTilemapRendered = room.id === "E1" && this.renderEditorE1Tilemap();
+    if (!packedTilemapRendered) {
+      addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "proof", track: (object) => this.track(object) });
+    }
     this.drawRoomDoors();
-    addSnesRoomCompass(this, {
-      x: 216,
-      y: 62,
-      roomId: room.id,
-      roomTitle: room.title,
-      exits: room.exits,
-      lockedExits: this.compassLockedExits(room),
-      requiredItems: room.requiredItems,
-      track: (object) => this.track(object),
-      depth: 143
-    });
-    if (room.id === "E1") this.renderEditorsLabyrinth();
+    if (!packedTilemapRendered) {
+      addSnesRoomCompass(this, {
+        x: 216,
+        y: 62,
+        roomId: room.id,
+        roomTitle: room.title,
+        exits: room.exits,
+        lockedExits: this.compassLockedExits(room),
+        requiredItems: room.requiredItems,
+        track: (object) => this.track(object),
+        depth: 143
+      });
+    }
+    if (room.id === "E1") this.renderEditorsLabyrinth(packedTilemapRendered);
     else this.renderSilentReadTower();
     this.syncVisibleEntities();
+  }
+
+  private renderEditorE1Tilemap() {
+    const asset = GAMEPLAY_TILESETS.interiorsNative;
+    if (!this.textures.exists(asset.key)) return false;
+    const map = this.make.tilemap({
+      width: EDITOR_E1_TILEMAP.columns,
+      height: EDITOR_E1_TILEMAP.rows,
+      tileWidth: asset.tileSize,
+      tileHeight: asset.tileSize
+    });
+    const tileset = map.addTilesetImage(
+      asset.manifestKey,
+      asset.key,
+      asset.tileSize,
+      asset.tileSize,
+      asset.margin,
+      asset.spacing,
+      asset.firstGid
+    );
+    if (!tileset) {
+      map.destroy();
+      return false;
+    }
+
+    const ground = map.createBlankLayer(
+      "editor-e1-ground",
+      tileset,
+      EDITOR_E1_TILEMAP.x,
+      EDITOR_E1_TILEMAP.y,
+      EDITOR_E1_TILEMAP.columns,
+      EDITOR_E1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const walls = map.createBlankLayer(
+      "editor-e1-walls",
+      tileset,
+      EDITOR_E1_TILEMAP.x,
+      EDITOR_E1_TILEMAP.y,
+      EDITOR_E1_TILEMAP.columns,
+      EDITOR_E1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const decoration = map.createBlankLayer(
+      "editor-e1-decoration",
+      tileset,
+      EDITOR_E1_TILEMAP.x,
+      EDITOR_E1_TILEMAP.y,
+      EDITOR_E1_TILEMAP.columns,
+      EDITOR_E1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    if (!ground || !walls || !decoration) {
+      ground?.destroy();
+      walls?.destroy();
+      decoration?.destroy();
+      map.destroy();
+      return false;
+    }
+
+    const layers = buildEditorE1TileLayers();
+    // SilentReadScene has a legacy cream backing panel at depth 0. Keep the
+    // real floor above it while remaining well below walls and entities.
+    ground.putTilesAt(layers.ground, 0, 0, false).setDepth(1);
+    walls.putTilesAt(layers.walls, 0, 0, true)
+      .setCollision([
+        packedTileGid(INTERIOR_TILES.wallPanel),
+        packedTileGid(INTERIOR_TILES.wallMetal),
+        packedTileGid(INTERIOR_TILES.wallBrick),
+        packedTileGid(INTERIOR_TILES.wallBlue)
+      ])
+      .setDepth(44);
+    decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    for (const cell of layers.collisionCells) {
+      const rect = editorE1CollisionRect(cell);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+    }
+    this.roomCleanups.push(() => {
+      ground.destroy();
+      walls.destroy();
+      decoration.destroy();
+      map.destroy();
+    });
+    return true;
   }
 
   private drawRoomDoors() {
@@ -450,24 +554,30 @@ export class SilentReadScene extends Phaser.Scene {
     return locked;
   }
 
-  private renderEditorsLabyrinth() {
-    this.drawStagePanel("STATECHAT DRAFT", [
-      `PLAN ${canAutoApplyProposal("mechanical") ? "READY" : "HOLD"}`,
-      "HUMAN DECIDES",
-      "BRACKETS PRINT"
-    ], PALETTE.terminalCyan);
+  private renderEditorsLabyrinth(packedTilemapRendered = false) {
+    if (packedTilemapRendered) {
+      this.track(new Terminal(this, 128, 60, "StateChat").container);
+    } else {
+      this.drawStagePanel("STATECHAT DRAFT", [
+        `PLAN ${canAutoApplyProposal("mechanical") ? "READY" : "HOLD"}`,
+        "HUMAN DECIDES",
+        "BRACKETS PRINT"
+      ], PALETTE.terminalCyan);
+    }
     const priya = new HistorianNPC(this, "priya", 28, 52);
     this.roomCleanups.push(() => priya.destroy());
-    this.drawPage(72, 114, "DRAFT QUERY", [
-      "Claim marked",
-      "for editor",
-      "judgment"
-    ]);
-    this.drawPage(184, 114, "VISIBLE EDIT", [
-      "[Text not",
-      "declassified]",
-      "prints"
-    ]);
+    if (!packedTilemapRendered) {
+      this.drawPage(72, 114, "DRAFT QUERY", [
+        "Claim marked",
+        "for editor",
+        "judgment"
+      ]);
+      this.drawPage(184, 114, "VISIBLE EDIT", [
+        "[Text not",
+        "declassified]",
+        "prints"
+      ]);
+    }
     this.drawWorkstations();
     this.drawOutbox("STATECHAT OUTBOX");
     if (hasProcessItem("red_pencil")) {
@@ -758,7 +868,7 @@ export class SilentReadScene extends Phaser.Scene {
       return { strictTarget, hintTarget, strictText: `CARRY ${activeFlag.shortLabel}` };
     }
 
-    const strictStation = this.findActionWorkstation(activeFlag, 28);
+    const strictStation = this.findActionWorkstation(activeFlag, 32);
     const hintStation = strictStation ?? this.findActionWorkstation(activeFlag, 42);
     const strictTarget = strictStation ? this.workstationPromptTarget(strictStation, 36) : null;
     const hintTarget = hintStation ? this.workstationPromptTarget(hintStation, 28) : null;
@@ -857,7 +967,7 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
 
-    const nearestStation = this.findActionWorkstation(activeFlag, 28);
+    const nearestStation = this.findActionWorkstation(activeFlag, 32);
     if (!nearestStation) {
       const hintStation = this.findNearestWorkstation(42);
       if (hintStation) {

@@ -47,7 +47,7 @@ describe("SilentReadScene physical proofing flow", () => {
   });
 
   it("gives the intended workstation an eight-pixel mobile targeting margin", () => {
-    expect(sceneSource).toContain("findActionWorkstation(activeFlag, 28)");
+    expect(sceneSource).toContain("findActionWorkstation(activeFlag, 32)");
     expect(sceneSource).toContain("intendedDistance <= maxDistance + 8");
   });
 });

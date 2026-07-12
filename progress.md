@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Editor's Labyrinth E1 real-tilemap and interaction-forgiveness promotion (2026-07-12):
+  - Promoted E1 to native 16x16 ground, wall, and decoration layers with one reachable east gate and tile-derived perimeter collision.
+  - Replaced two giant pages, the oversized StateChat panel, fallback room layer, and compass with a compact StateChat terminal, warm office floor, ruby review lane, one outbox, and one human editor desk.
+  - Preserved the StateChat proposal-only rule, physical Review Folder, human visible bracket, Red Pencil reward, DANN-E lurker, save fields, and S1 transition; the previous renderer remains the texture-guarded fallback.
+  - Increased strict workstation acquisition from 28 to 32 pixels after live DANN-E knockback left the player 28.2 pixels from a visibly adjacent Proof Table. The existing eight-pixel intended-station margin remains, and neighboring stations stay distinguishable.
+  - Refreshed the temporary full-route QA expectation from the obsolete direct ending to the current mandatory Black Vault handoff.
+  - Verification: 112 Vitest files / 577 tests pass; the required web-game client ran; the complete E1/S1/Black Vault handoff passes on desktop and DPR-3 iPhone touch, including a wrong-desk retry and carried-file scene restart.
+
 - Referral R2 real-tilemap and reward-room readability promotion (2026-07-12):
   - Completed the Referral Vault's tilemap transition by promoting R2 to native 16x16 ground, wall, and decoration layers with west/east openings and tile-derived perimeter collision.
   - Replaced the filing-cabinet collage with a warm reward floor, ruby process aisle, five quiet resolved-equity marks, and one central Concurrence Slip pad.
