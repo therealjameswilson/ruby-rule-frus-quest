@@ -62,7 +62,7 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 
 ## Current Cleanup Status
 
-Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78. The earlier Codex gameplay branches and Perplexity art drops are all represented in that merge; no component PR remains open.
+Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78, plus PR #79's physical Source Note provenance trail. The earlier Codex gameplay branches and Perplexity art drops are all represented; no component PR remains open.
 
 | Pillar | Deploy Status |
 | --- | --- |
@@ -78,7 +78,7 @@ Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #7
 | Accessibility | Live on `main`: keyboard/touch/gamepad controls, concise/full `window.render_game_to_text()` payloads, debug scenes, QA deep links, and persisted high-contrast/colorblind patterns are integrated. |
 | New Game+ | Live on `main`: first completion unlocks the veteran cosmetic, harder DANN-E tier, second-volume region, and persistent completed-volume count. |
 
-Latest deploy verification from `origin/main` (`2ffdb98`) passed 471 Vitest cases, `npm run build`, all 25 registered `?scene=` routes, the full NARA DANN-E counter room, and iPhone-sized touch/DPR checks. GitHub Pages deployed the matching `index-D0Q9SaNO.js` bundle successfully. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+Latest deployed verification from `origin/main` (`010ca50`) passed 473 Vitest cases, `npm run build`, all 25 registered `?scene=` routes, the physical Source Note provenance route, the full NARA DANN-E counter room, and iPhone-sized touch/DPR checks. GitHub Pages deployed the matching `index-DNjAksXK.js` bundle successfully. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
 
 ## MVP Features
 
@@ -93,7 +93,7 @@ Latest deploy verification from `origin/main` (`2ffdb98`) passed 471 Vitest case
 - Verification gate tutorial: citation stamp first, then a FRUS volume fragment, then the Office hub opens.
 - Office hub with Elena, Marcus, Priya, the Golden Rule poster, and OpenNet/ClassNet terminals.
 - Office hub production floor populated with original equal-rank Compiler, Declass Coordinator, Reviewer, Editor, and Review Specialist sprites inspired by supplied character-role cues.
-- Archive provenance puzzle.
+- Archive provenance puzzle: carry Source Note 47, trace repository/collection/folder stations, stamp the verified citation, and physically file three expanded-annotation notes.
 - Two-room OpenNet/ClassNet routing dungeon where clean routing opens the ClassNet Vault and a physical Clearance Token reward.
 - Two-room Referral Vault dungeon where equity matching and visible excision open the Concurrence Chamber, then the player physically collects the Concurrence Slip.
 - Two-room Editor's Labyrinth / Silent Read Tower sequence where the AI annotation review tool checks mechanical/schema issues, the Red Pencil opens the tower, evidence-bound findings route to human workstations, and the player earns the Proof Lens and Buckram Key.
@@ -159,7 +159,7 @@ Sprites, tiles, enemy art, and UI textures are original repository-local SVG pix
 
 ## Roadmap
 
-1. Convert the remaining quiz-like annotation and review checks into physical room puzzles with short decision moments.
+1. Convert the remaining quiz-like review checks into physical room puzzles with short decision moments.
 2. Promote the quarantined tile registry and screen manager in small, fallback-guarded steps.
 3. Replace remaining poster-like room surfaces with validated Phaser tilemap layers and per-tile collision.
 4. Give every main dungeon a compact entrance, key/tool reveal, shortcut, and boss/review payoff.

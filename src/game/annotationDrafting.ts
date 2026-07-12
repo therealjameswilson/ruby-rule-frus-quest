@@ -23,6 +23,23 @@ export interface AnnotationDraftingEvaluation {
   violation: StandardViolation | null;
 }
 
+export interface AnnotationDraftingStation {
+  id: AnnotationDraftingPromptId;
+  order: 1 | 2 | 3;
+  label: string;
+  shortLabel: string;
+  carriedLabel: string;
+}
+
+export interface AnnotationDraftingRouteResult {
+  ok: boolean;
+  station: AnnotationDraftingStation;
+  expectedStation: AnnotationDraftingStation;
+  nextStep: number;
+  complete: boolean;
+  message: string;
+}
+
 export const ANNOTATION_DRAFTING_SOURCE_URL = "https://history.state.gov/historicaldocuments/frus-history/stages";
 
 export const ANNOTATION_DRAFTING_PROMPTS = [
@@ -67,12 +84,84 @@ export const ANNOTATION_DRAFTING_PROMPTS = [
   }
 ] as const satisfies readonly AnnotationDraftingPrompt[];
 
+export const ANNOTATION_DRAFTING_STATIONS = [
+  {
+    id: "published_provenance",
+    order: 1,
+    label: "Source Line",
+    shortLabel: "SOURCE",
+    carriedLabel: "Provenance Note"
+  },
+  {
+    id: "contextual_annotation",
+    order: 2,
+    label: "Context Index",
+    shortLabel: "CONTEXT",
+    carriedLabel: "Context Note"
+  },
+  {
+    id: "selectivity_mitigation",
+    order: 3,
+    label: "Selection Ledger",
+    shortLabel: "SELECT",
+    carriedLabel: "Selectivity Note"
+  }
+] as const satisfies readonly AnnotationDraftingStation[];
+
 export function getAnnotationDraftingPrompt(step: number) {
   return ANNOTATION_DRAFTING_PROMPTS[Math.max(0, Math.min(ANNOTATION_DRAFTING_PROMPTS.length - 1, step))];
 }
 
 export function annotationDraftingComplete(step: number) {
   return step >= ANNOTATION_DRAFTING_PROMPTS.length;
+}
+
+export function getAnnotationDraftingStation(step: number) {
+  return ANNOTATION_DRAFTING_STATIONS[
+    Math.max(0, Math.min(ANNOTATION_DRAFTING_STATIONS.length - 1, step))
+  ];
+}
+
+export function collectAnnotationDraftingSlip(
+  step: number,
+  stationId: AnnotationDraftingPromptId
+): AnnotationDraftingRouteResult {
+  const expectedStation = getAnnotationDraftingStation(step);
+  const station = ANNOTATION_DRAFTING_STATIONS.find((candidate) => candidate.id === stationId)
+    ?? expectedStation;
+  const ok = station.id === expectedStation.id;
+  return {
+    ok,
+    station,
+    expectedStation,
+    nextStep: step,
+    complete: false,
+    message: ok
+      ? `${station.carriedLabel} lifted. Carry it to the research table.`
+      : `File ${expectedStation.label} before taking ${station.label}.`
+  };
+}
+
+export function fileAnnotationDraftingSlip(
+  step: number,
+  stationId: AnnotationDraftingPromptId
+): AnnotationDraftingRouteResult {
+  const expectedStation = getAnnotationDraftingStation(step);
+  const station = ANNOTATION_DRAFTING_STATIONS.find((candidate) => candidate.id === stationId)
+    ?? expectedStation;
+  const ok = station.id === expectedStation.id;
+  const nextStep = ok ? step + 1 : step;
+  const prompt = getAnnotationDraftingPrompt(step);
+  return {
+    ok,
+    station,
+    expectedStation,
+    nextStep,
+    complete: ok && annotationDraftingComplete(nextStep),
+    message: ok
+      ? prompt.successMessage
+      : `${expectedStation.carriedLabel} belongs in the next manuscript slot.`
+  };
 }
 
 export function evaluateAnnotationDraftingAnswer(
