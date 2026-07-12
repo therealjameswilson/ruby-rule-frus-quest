@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Archive A1 real-tilemap promotion (2026-07-12):
+  - Promoted only the verified A1 source room to a real 16x12 Phaser tilemap using the art-pack manifest's native 7x7 archive-dungeon sheet at 16px with zero margin/spacing.
+  - Added separate ground, wall, and decoration layers; kept the floor quiet with one dark base and three landmark accents after live visual comparison rejected banded and overly bright variants.
+  - Derived A1 perimeter collision from solid tile cells while preserving the exact three-cell east opening and two-cell south opening required by the existing physical locked-exit prompts.
+  - Kept `addSnesRoomLayer()` and the archive detail renderer as the texture-guarded fallback; all other Archive rooms remain unchanged, and A1 tilemaps clean up through the existing room lifecycle.
+  - Added a manifest-contract test plus layer dimension/index, exit, collision, and world-coordinate tests. Documented the promotion in `docs/ARCHIVE_A1_TILEMAP.md`.
+  - Verification: 107 Vitest files / 556 tests pass; TypeScript and production build pass; all 25 `?scene=` routes boot without browser errors; full Guide -> A1 -> Network completion and restored-room traversal pass on desktop and DPR-3 iPhone touch.
+
 - Codex + Perplexity pull harmonization refresh (2026-07-12):
   - Re-fetched the complete remote and reviewed all 89 GitHub pull-request records through PR #90; no component pull remains open.
   - Confirmed all 58 surviving PR-backed branches remain at their recorded PR head, both no-PR integration branches are ancestors of `main`, and all ten closed stacked Codex gameplay heads are represented through PR #78.
