@@ -1,6 +1,6 @@
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { DANNE_MAP_ASSETS } from "./danneAtlas";
-import type { Interactable } from "./types";
+import type { Interactable, Position } from "./types";
 
 export type DanneMapSceneKey = (typeof DANNE_MAP_ASSETS)[number]["sceneKey"];
 
@@ -62,6 +62,16 @@ export interface DanneSceneGeometry {
   visibleEntities: readonly string[];
   patrolRoutes?: readonly DannePatrolRouteDefinition[];
 }
+
+// Cloud Form must remain inside the playable floor. The earlier art-pack
+// coordinates landed inside the lava-fissure collision rectangles, making the
+// final phase unreachable with real movement.
+export const DANNE_CLOUD_WAYPOINTS: readonly Position[] = [
+  { x: 84, y: 118 },
+  { x: 172, y: 118 },
+  { x: 112, y: 184 },
+  { x: 144, y: 184 }
+] as const;
 
 const mapWalkable = (label: string): DannePolygonDefinition => ({
   label,

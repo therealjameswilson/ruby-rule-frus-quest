@@ -6,6 +6,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
 import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./game/secretReadingRoom";
 import {
   gameState,
+  getBlackVaultClimaxReadiness,
   getDanneCombatReadout,
   getVolumeAssemblyReadout,
   isSecondVolumeRegionUnlocked,
@@ -99,6 +100,7 @@ function renderConciseGameToText() {
         piecesTotal: getVolumeAssemblyReadout().total,
         complete: getVolumeAssemblyReadout().complete
       },
+      blackVaultClimax: getBlackVaultClimaxReadiness(),
       buckramBinding: getBuckramBindingReadout(gameState.sceneProgress),
       secrets: {
         hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),

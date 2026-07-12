@@ -17,7 +17,7 @@ superseded.
 | #5, #6, #15, #16, #58-#73, #76 | Composed in PR #78. Every source head commit is an ancestor of `main`; closed PRs #59-#67 and #72 are superseded integration inputs, not missing work. |
 | #42-#57 | Asset/data wave merged before PR #78. GitHub used squash merges for several heads, so branch ancestry alone is misleading. Every added binary asset remains on `main` byte-for-byte; registry, audio, manifest, localization, and test files have since evolved. |
 | #75, #77 | Localization runtime and combat feedback merged and retained. |
-| #79-#86 | Physical Archive, Network, ClassNet, Referral, Silent Read, and harmonization follow-ups merged on top of the integrated line. |
+| #79-#87 | Physical Archive, Network, ClassNet, Referral, Silent Read, Buckram Gate, and harmonization follow-ups merged on top of the integrated line. |
 | #41 | Intentionally excluded. Its five-form DANN-E draft was replaced by the canonical eight-form design in #43 and the live eight-variant registry. |
 
 ## Reconciled Payloads
@@ -55,9 +55,9 @@ systems, or duplicate asset paths were introduced.
 
 ## Verification Refresh
 
-The audit was rerun after PR #86 and again before the physical Buckram Gate branch was published:
+The audit was rerun after PR #87 and again while preparing the mandatory Black Vault climax follow-up:
 
-- GitHub reported 85 historical pull requests and no open pull requests.
+- GitHub reported 86 pull-request records through PR #87 and no open pull requests.
 - All 10 closed integration-component heads (#59-#67 and #72) are exact
   ancestors of `main` through PR #78.
 - All 112 binary assets touched by the 16 squash-merged art/data pulls
@@ -73,3 +73,24 @@ The audit was rerun after PR #86 and again before the physical Buckram Gate bran
   metadata while replacing their modal question chain with a five-packet
   carry, route, seal, and publish loop. This follow-up does not introduce a
   competing save schema or duplicate any agent-owned art payload.
+
+## Final Route Reconciliation
+
+The post-integration route now uses one authoritative version of each agent-built system:
+
+- Silent Read awards the existing Red Pencil and Buckram Key, then routes to
+  the existing eight-form DANN-E Black Vault instead of skipping directly to
+  publication.
+- DANN-E validates the existing stamps, equities, cover pieces, proof, and
+  standards ledger. Defeat clears room `DV1`; it does not publish the volume.
+- The existing five-packet Buckram Gate remains the only publication action,
+  preserving human routing, sealing, and final certification.
+- Rejecting DANN-E's deadline shortcut resolves the deadline ledger finding
+  without restoring lost reliability. Accepting it still follows the existing
+  concealed-policy-defect bad-ending path.
+- Shared touch/controller B input now selects a displayed B choice, Cloud Form
+  teleports only to collision-safe floor, and hostile knockback cannot save an
+  obstacle interior as the player's last valid position.
+
+This is a composition of the merged Codex gameplay stack and Perplexity art/data
+payloads, not a parallel boss, input layer, save schema, or ending system.

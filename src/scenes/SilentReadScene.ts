@@ -7,6 +7,7 @@ import {
   addProcessItem,
   addVolumeFragment,
   awardProcessStamp,
+  equipProcessItem,
   gameState,
   getHeldProcessItemIds,
   hasProcessItem,
@@ -107,7 +108,7 @@ interface ProofRoom {
   id: ProofRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, ProofRoomId | "EndingScene">>;
+  exits: Partial<Record<Direction, ProofRoomId | "BlackVaultLairScene">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "red_pencil" | "buckram_key">>;
 }
@@ -135,8 +136,8 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
     id: "S1",
     title: "Silent Read Tower",
     roomType: "reward",
-    exits: { west: "E1", east: "EndingScene" },
-    lockedExits: { east: "Buckram publication gate" },
+    exits: { west: "E1", east: "BlackVaultLairScene" },
+    lockedExits: { east: "Black Vault final-review gate" },
     requiredItems: { east: "buckram_key" }
   }
 };
@@ -949,6 +950,7 @@ export class SilentReadScene extends Phaser.Scene {
       clearDocumentUndisclosedDeletion("source_note_047", "visible bracket added during human editor verification");
       setDocumentWorkflowState("source_note_047", "ready_for_proof");
       addProcessItem("red_pencil");
+      equipProcessItem("red_pencil");
       addDocumentPoints(12, "StateChat plan reviewed and visibly bracketed by human editor");
       adjustReliability(8, "AI proposal remained inside SOP with a visible bracket");
       addSnesRewardBurst(this, 128, 136, "red-pencil", "Red Pencil", (object) => this.track(object));
@@ -1097,7 +1099,10 @@ export class SilentReadScene extends Phaser.Scene {
         return false;
       }
       this.roomTransitionLocked = true;
-      transitionTo(this, "EndingScene");
+      gameState.sceneProgress.blackVaultClimaxRequired = 1;
+      gameState.sceneProgress.blackVaultEnteredFromSilentRead = 1;
+      setLatestMessage("Buckram Key turns: the Black Vault final-review route opens.");
+      transitionTo(this, "BlackVaultLairScene");
       return true;
     }
 

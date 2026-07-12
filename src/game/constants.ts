@@ -525,8 +525,9 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "buckram_gate",
     title: "Black Vault Lair",
     grid: { x: 2, y: 4 },
-    exits: { north: "D3" },
-    lockedExits: { north: "Treaty fragments or Buckram Key" },
+    exits: { north: "D3", east: "G1" },
+    lockedExits: { east: "DANN-E final review" },
+    requiredItems: { east: "buckram_key" },
     roomType: "boss"
   },
   {
@@ -582,8 +583,8 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "silent_read_tower",
     title: "Silent Read Tower",
     grid: { x: 5, y: 2 },
-    exits: { west: "E1", east: "G1" },
-    lockedExits: { east: "Buckram publication gate" },
+    exits: { west: "E1", east: "DV1" },
+    lockedExits: { east: "Black Vault final-review gate" },
     requiredItems: { east: "buckram_key" },
     roomType: "reward"
   },

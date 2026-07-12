@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DANNE_SCENE_GEOMETRY } from "./danneSceneCollisions";
+import { DANNE_CLOUD_WAYPOINTS, DANNE_SCENE_GEOMETRY } from "./danneSceneCollisions";
 import {
   distancePointToSegment,
   minDistanceToPatrolRoutes,
@@ -116,5 +116,17 @@ describe("recovery cadence around boss spikes", () => {
     const garden = DANNE_SCENE_GEOMETRY.CherryBlossomGardenScene;
     expect(bossTriggerInteraction(garden)).toBeUndefined();
     expect(recoveryReachableBeforeBoss(garden)).toBe(true);
+  });
+
+  it("keeps every Cloud Form teleport waypoint on reachable Black Vault floor", () => {
+    for (const point of DANNE_CLOUD_WAYPOINTS) {
+      const insideSolid = vault.solids.some((solid) =>
+        point.x >= solid.x
+        && point.x <= solid.x + solid.width
+        && point.y >= solid.y
+        && point.y <= solid.y + solid.height
+      );
+      expect(insideSolid, `${point.x},${point.y} overlaps a Black Vault solid`).toBe(false);
+    }
   });
 });
