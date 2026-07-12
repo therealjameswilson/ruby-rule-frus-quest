@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical Two Networks routing pass (2026-07-11):
+  - Replaced Network N1's seven consecutive OpenNet/ClassNet choice modals with four visible packets that preserve all seven underlying routing checks.
+  - Added a physical `CARRY -> ROUTE` loop: collect each packet from the sorter, walk it to OpenNet or ClassNet, and press the action button at the terminal.
+  - Wrong-network packets now stop at the firewall, cost a small reliability penalty, return to the sorter, and remain retryable without silently poisoning the ending.
+  - Persisted packet order, carried packet, and completion state through `sceneProgress`; restoring the scene resumes the exact physical routing step.
+  - Kept DANN-E active while the player routes evidence, so movement and deadline pressure replace a frozen quiz screen.
+  - Added forgiving sorter/terminal action radii after desktop and iPhone playthroughs exposed a visually-adjacent 0.35-pixel dead zone.
+  - Added deterministic packet-routing tests and source-level guards that prevent the legacy seven-question N1 modal from returning.
+  - Desktop and DPR-3 iPhone playthroughs verified all four routes, protected-material rejection on OpenNet, retry on ClassNet, firewall clearance, and the open transition into the ClassNet Vault with zero browser errors.
+
 - Codex + Perplexity integration play pass (2026-07-11):
   - Composed all 21 open PR heads into `codex/gameplay-integration`; every open head commit is an ancestor of the integration branch.
   - Reconciled accessibility, NG+, completion stats, equity endings, the hidden room, second-volume unlocks, deferred art loading, and both Perplexity art drops without dropping sibling state fields or scene assets.
