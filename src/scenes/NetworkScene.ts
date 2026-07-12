@@ -85,7 +85,7 @@ interface NetworkRoom {
   id: NetworkRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, NetworkRoomId | "ReferralVaultScene">>;
+  exits: Partial<Record<Direction, NetworkRoomId | "R1">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "clearance_token">>;
 }
@@ -112,7 +112,7 @@ const NETWORK_ROOMS: Record<NetworkRoomId, NetworkRoom> = {
     id: "N2",
     title: "ClassNet Vault",
     roomType: "reward",
-    exits: { west: "N1", east: "ReferralVaultScene" },
+    exits: { west: "N1", east: "R1" },
     lockedExits: { east: "Red vault exit" },
     requiredItems: { east: "clearance_token" }
   }

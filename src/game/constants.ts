@@ -391,7 +391,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "Source Entry",
     grid: { x: 0, y: 0 },
-    exits: { north: "DN1", east: "A2", south: "B1" },
+    exits: { north: "DN1", east: "N1", south: "B1" },
     lockedExits: {
       north: "NARA stacks citation lock",
       east: "OpenNet source-note lock",
@@ -563,7 +563,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "referral_vault",
     title: "Concurrence Chamber",
     grid: { x: 5, y: 1 },
-    exits: { west: "R1", east: "S1" },
+    exits: { west: "R1", east: "E1" },
     lockedExits: { east: "Silent Read handoff" },
     requiredItems: { east: "concurrence_slip" },
     roomType: "reward"

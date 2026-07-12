@@ -8,7 +8,7 @@ const verificationSource = readFileSync(new URL("../systems/verification.ts", im
 
 describe("normal quest climax route", () => {
   it("routes the Silent Read reward exit into the Black Vault instead of skipping to publication", () => {
-    expect(silentReadSource).toContain('east: "BlackVaultLairScene"');
+    expect(silentReadSource).toContain('east: "DV1"');
     expect(silentReadSource).toContain('transitionTo(this, "BlackVaultLairScene")');
     expect(silentReadSource).not.toContain('transitionTo(this, "EndingScene")');
   });

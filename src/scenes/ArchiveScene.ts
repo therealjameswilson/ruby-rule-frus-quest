@@ -95,6 +95,7 @@ function color(hex: string) {
 type SourceNoteStatus = "inactive" | "carried" | "routed" | "verified" | "stamped";
 type Direction = "north" | "south" | "west" | "east";
 type ArchiveRoomId = "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
+type ArchiveExitTarget = ArchiveRoomId | "N1";
 type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "HOLD" | "AMBIGUOUS" | "DANN-E QUEUE";
 type ArchiveDanneRoute = "NaraStacksScene" | "EmbassyCableRoomScene" | "BlackVaultLairScene";
 type ArchivePropFrame = (typeof SNES_ARCHIVE_PROP_ASSET.frames)[number];
@@ -128,7 +129,7 @@ interface ArchiveRoom {
   id: ArchiveRoomId;
   title: string;
   grid: { x: number; y: number };
-  exits: Partial<Record<Direction, ArchiveRoomId>>;
+  exits: Partial<Record<Direction, ArchiveExitTarget>>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, ProcessItemId>>;
   roomType: RoomType;
@@ -178,7 +179,7 @@ const ARCHIVE_ROOMS: Record<ArchiveRoomId, ArchiveRoom> = {
     id: "A1",
     title: "SOURCE ROOM",
     grid: { x: 0, y: 0 },
-    exits: { east: "A2", south: "B1" },
+    exits: { east: "N1", south: "B1" },
     lockedExits: {
       east: "OPENNET SOURCE-NOTE LOCK",
       south: "REFERRAL GATE"
@@ -3325,13 +3326,6 @@ export class ArchiveScene extends Phaser.Scene {
       return false;
     }
 
-    if (this.currentRoomId === "A1" && direction === "east" && this.sourceRoomComplete()) {
-      gameState.sceneProgress.archiveSourceRoomExited = 1;
-      setLatestMessage("Verified source packet routed to Two Networks.");
-      transitionTo(this, "NetworkScene");
-      return true;
-    }
-
     if (this.currentRoomId === "B1" && this.activeEnemyWalls.has("wait-timer") && !this.agencyTimerResolved) {
       setLatestMessage("WAIT freezes exits until the agency response timer is resolved.");
       setObjective("Resolve agency response timer at the referral tray.");
@@ -3347,6 +3341,13 @@ export class ArchiveScene extends Phaser.Scene {
       setLatestMessage(`No ${direction} route from room ${this.currentRoomId}`);
       this.exitCooldownUntil = this.time.now + 360;
       return false;
+    }
+
+    if (target === "N1") {
+      gameState.sceneProgress.archiveSourceRoomExited = 1;
+      setLatestMessage("Verified source packet routed to Two Networks.");
+      transitionTo(this, "NetworkScene");
+      return true;
     }
 
     const targetRoom = ARCHIVE_ROOMS[target];
@@ -3535,6 +3536,7 @@ export class ArchiveScene extends Phaser.Scene {
     const target = room.exits[direction];
     if (!target) return false;
     if (room.id === "A1" && direction === "east" && !this.sourceRoomComplete()) return false;
+    if (target === "N1") return canTraverseExit(room.id, direction, getHeldProcessItemIds());
     const targetRoom = ARCHIVE_ROOMS[target];
     if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) return false;
     return canTraverseExit(room.id, direction, getHeldProcessItemIds());
@@ -3546,7 +3548,7 @@ export class ArchiveScene extends Phaser.Scene {
     unlocked: boolean,
     requiredItem?: ProcessItemId,
     exitLabel?: string,
-    target?: ArchiveRoomId,
+    target?: ArchiveExitTarget,
     lockLabelOverride?: string
   ) {
     addSnesGate(this, {
@@ -3559,7 +3561,7 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 61
     });
-    if (target && ARCHIVE_ROOMS[target].roomType === "secret") {
+    if (target && target !== "N1" && ARCHIVE_ROOMS[target].roomType === "secret") {
       this.drawSecretExitMarker(direction, this.revealedSecretIds.has(target), requiredItem);
     }
     if (!hasExit) {
@@ -3570,7 +3572,8 @@ export class ArchiveScene extends Phaser.Scene {
     }
   }
 
-  private gateRouteLabel(target: ArchiveRoomId) {
+  private gateRouteLabel(target: ArchiveExitTarget) {
+    if (target === "N1") return "NETWORK";
     const room = ARCHIVE_ROOMS[target];
     if (room.roomType === "reward") return "REWARD";
     if (room.roomType === "secret") return "SECRET";
@@ -3818,9 +3821,9 @@ export class ArchiveScene extends Phaser.Scene {
   private archiveThresholdFrame(
     room: ArchiveRoom,
     direction: Direction,
-    target: ArchiveRoomId
+    target: ArchiveExitTarget
   ): ArchiveRoomDetailFrame {
-    if (room.roomType === "boss" || ARCHIVE_ROOMS[target].roomType === "boss") return "threshold_boss";
+    if (room.roomType === "boss" || (target !== "N1" && ARCHIVE_ROOMS[target].roomType === "boss")) return "threshold_boss";
     return this.exitIsOpen(room, direction) ? "threshold_open" : "threshold_locked";
   }
 

@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Stable-ID live critical-path graph reconciliation (2026-07-12):
+  - Corrected the authoritative route to `A1 -> N1 -> N2 -> R1 -> R2 -> E1 -> S1 -> DV1 -> G1`, matching the physical scene transitions players already use.
+  - Replaced stale A1-to-A2 and R2-to-S1 edges in `FRUS_ROOM_GRAPH`; the legacy A2-D3 Archive annex remains optional content rather than a main-route Clearance Token bypass.
+  - Changed Archive, Network, Referral, and Silent Read scene-local traversal readouts to stable room IDs (`N1`, `R1`, `E1`, `DV1`) instead of obsolete rooms or scene class names.
+  - Added a nine-test critical-path contract covering all eight live edges plus the legacy-annex boundary, and refreshed adventure-training fixtures so visible-gate and unvisited-exit cues consume the real route.
+  - Full-state browser QA confirmed A1 east -> N1, N2 east -> R1, R2 east -> E1, and S1 east -> DV1 with no errors.
+  - Desktop and DPR-3 touch QA completed the entire Guide/A1 provenance and annotation route, restored the cleared room, and crossed the physical east gate into N1.
+  - Verification: 116 Vitest files / 602 tests pass; TypeScript and production build pass; all 25 `?scene=` routes boot without browser errors; the required web-game client reports live Archive state; in-app visual QA confirms the A1 tilemap is crisp; the Codex/Perplexity audit remains fully clean.
+
 - Office starter-route authority and unobstructed-opening pass (2026-07-12):
   - Replaced four independent progress guesses with one typed `talk JR -> take memo -> route -> stamp -> enter Archive` stage contract used by the objective, gold target, and interaction filter.
   - Removed the full-room tutorial card and permanent keybind footer. The first playable frame now exposes the actual room, compact HUD instruction, gold JR marker, and lurking DANN-E without requiring a dismissal input.

@@ -159,7 +159,7 @@ describe("adventure training cue", () => {
       mode: "explore",
       roomTraversal: {
         ...roomState(),
-        visitedRoomIds: ["A1", "A2", "B1"],
+        visitedRoomIds: ["A1", "N1", "B1"],
         lockedExits: { north: "Source note lock" },
         requiredItems: { north: "citation_stamp" }
       }
@@ -177,7 +177,7 @@ describe("adventure training cue", () => {
       mode: "explore",
       roomTraversal: {
         ...roomState(),
-        visitedRoomIds: ["A1", "A2", "B1"],
+        visitedRoomIds: ["A1", "N1", "B1"],
         lockedExits: { north: "Source note lock" },
         requiredItems: { north: "citation_stamp" }
       },
@@ -202,7 +202,7 @@ describe("adventure training cue", () => {
       mode: "explore",
       roomTraversal: {
         ...roomState(),
-        visitedRoomIds: ["A1", "A2", "B1"],
+        visitedRoomIds: ["A1", "N1", "B1"],
         lockedExits: { north: "Chapter lock" }
       },
       dungeon: {
@@ -226,7 +226,7 @@ describe("adventure training cue", () => {
       mode: "explore",
       roomTraversal: {
         ...roomState(),
-        visitedRoomIds: ["A1", "A2", "B1"]
+        visitedRoomIds: ["A1", "N1", "B1"]
       },
       dungeon: {
         displayName: "Archive Cavern",
@@ -243,7 +243,7 @@ describe("adventure training cue", () => {
       roomTraversal: {
         ...roomState(),
         roomType: "boss",
-        visitedRoomIds: ["A1", "A2", "B1"]
+        visitedRoomIds: ["A1", "N1", "B1"]
       },
       dungeon: {
         displayName: "Archive Cavern",
@@ -293,7 +293,7 @@ function roomState() {
     roomTitle: "Source Room",
     visitedRoomIds: ["A1"],
     exits: {
-      east: "A2",
+      east: "N1",
       south: "B1"
     }
   } as const;
