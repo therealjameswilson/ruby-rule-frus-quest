@@ -68,6 +68,11 @@ import {
   networkN1CollisionRect
 } from "../game/networkN1Tilemap";
 import { packedTileGid } from "../game/packedTileIndex";
+import {
+  NETWORK_N2_TILEMAP,
+  buildNetworkN2TileLayers,
+  networkN2CollisionRect
+} from "../game/networkN2Tilemap";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -365,7 +370,9 @@ export class NetworkScene extends Phaser.Scene {
       accent: PALETTE.terminalCyan,
       track: (object) => this.track(object)
     });
-    const packedTilemapRendered = room.id === "N1" && this.renderNetworkN1Tilemap();
+    const packedTilemapRendered = room.id === "N1"
+      ? this.renderNetworkN1Tilemap()
+      : this.renderNetworkN2Tilemap();
     if (!packedTilemapRendered) {
       addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "network", track: (object) => this.track(object) });
       this.drawNetworkTileField(room.id);
@@ -385,7 +392,7 @@ export class NetworkScene extends Phaser.Scene {
       });
     }
     if (room.id === "N1") this.renderNetworkSplit(packedTilemapRendered);
-    else this.renderClassNetVault();
+    else this.renderClassNetVault(packedTilemapRendered);
     this.syncRoomTraversalState();
     this.syncThreatState();
   }
@@ -463,6 +470,91 @@ export class NetworkScene extends Phaser.Scene {
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
     for (const cell of layers.collisionCells) {
       const rect = networkN1CollisionRect(cell);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+    }
+    this.roomCleanups.push(() => {
+      ground.destroy();
+      walls.destroy();
+      decoration.destroy();
+      map.destroy();
+    });
+    return true;
+  }
+
+  private renderNetworkN2Tilemap() {
+    const asset = GAMEPLAY_TILESETS.interiorsNative;
+    if (!this.textures.exists(asset.key)) return false;
+    const map = this.make.tilemap({
+      width: NETWORK_N2_TILEMAP.columns,
+      height: NETWORK_N2_TILEMAP.rows,
+      tileWidth: asset.tileSize,
+      tileHeight: asset.tileSize
+    });
+    const tileset = map.addTilesetImage(
+      asset.manifestKey,
+      asset.key,
+      asset.tileSize,
+      asset.tileSize,
+      asset.margin,
+      asset.spacing,
+      asset.firstGid
+    );
+    if (!tileset) {
+      map.destroy();
+      return false;
+    }
+
+    const ground = map.createBlankLayer(
+      "network-n2-ground",
+      tileset,
+      NETWORK_N2_TILEMAP.x,
+      NETWORK_N2_TILEMAP.y,
+      NETWORK_N2_TILEMAP.columns,
+      NETWORK_N2_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const walls = map.createBlankLayer(
+      "network-n2-walls",
+      tileset,
+      NETWORK_N2_TILEMAP.x,
+      NETWORK_N2_TILEMAP.y,
+      NETWORK_N2_TILEMAP.columns,
+      NETWORK_N2_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const decoration = map.createBlankLayer(
+      "network-n2-decoration",
+      tileset,
+      NETWORK_N2_TILEMAP.x,
+      NETWORK_N2_TILEMAP.y,
+      NETWORK_N2_TILEMAP.columns,
+      NETWORK_N2_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    if (!ground || !walls || !decoration) {
+      ground?.destroy();
+      walls?.destroy();
+      decoration?.destroy();
+      map.destroy();
+      return false;
+    }
+
+    const layers = buildNetworkN2TileLayers();
+    ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
+    walls.putTilesAt(layers.walls, 0, 0, true)
+      .setCollision([
+        packedTileGid(INTERIOR_TILES.wallPanel),
+        packedTileGid(INTERIOR_TILES.wallMetal),
+        packedTileGid(INTERIOR_TILES.wallBrick),
+        packedTileGid(INTERIOR_TILES.wallBlue)
+      ])
+      .setDepth(44);
+    decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    for (const cell of layers.collisionCells) {
+      const rect = networkN2CollisionRect(cell);
       this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
     }
     this.roomCleanups.push(() => {
@@ -975,11 +1067,13 @@ export class NetworkScene extends Phaser.Scene {
     }).setOrigin(0.5, 0).setName("network-routing-label").setDepth(239));
   }
 
-  private renderClassNetVault() {
+  private renderClassNetVault(packedTilemapRendered = false) {
     this.syncClassNetVaultEntities();
-    for (let x = 54; x <= 202; x += 24) {
-      this.track(this.add.rectangle(x, 96, 14, 18, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(84));
-      this.track(this.add.rectangle(x, 94, 8, 2, color(PALETTE.goldStamp)).setDepth(85));
+    if (!packedTilemapRendered) {
+      for (let x = 54; x <= 202; x += 24) {
+        this.track(this.add.rectangle(x, 96, 14, 18, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(84));
+        this.track(this.add.rectangle(x, 94, 8, 2, color(PALETTE.goldStamp)).setDepth(85));
+      }
     }
     this.drawClassNetStations();
     addSnesTreasurePedestal(this, {
