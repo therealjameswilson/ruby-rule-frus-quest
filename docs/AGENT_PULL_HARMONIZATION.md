@@ -17,7 +17,7 @@ superseded.
 | #5, #6, #15, #16, #58-#73, #76 | Composed in PR #78. Every source head commit is an ancestor of `main`; closed PRs #59-#67 and #72 are superseded integration inputs, not missing work. |
 | #42-#57 | Asset/data wave merged before PR #78. GitHub used squash merges for several heads, so branch ancestry alone is misleading. Every added binary asset remains on `main` byte-for-byte; registry, audio, manifest, localization, and test files have since evolved. |
 | #75, #77 | Localization runtime and combat feedback merged and retained. |
-| #79-#87 | Physical Archive, Network, ClassNet, Referral, Silent Read, Buckram Gate, and harmonization follow-ups merged on top of the integrated line. |
+| #79-#90 | Physical Archive, Network, ClassNet, Referral, Silent Read, Buckram Gate, mandatory DANN-E climax, attack-telegraph, and Archive A1 rhythm follow-ups merged on top of the integrated line. |
 | #41 | Intentionally excluded. Its five-form DANN-E draft was replaced by the canonical eight-form design in #43 and the live eight-variant registry. |
 
 ## Reconciled Payloads
@@ -40,6 +40,9 @@ systems, or duplicate asset paths were introduced.
 
 ## Evidence Checks
 
+- `npm run audit:pulls` fetches the current remote and verifies PR heads,
+  closed stacked ancestry, no-PR integration ancestry, and Perplexity asset
+  blob identity in one repeatable command.
 - `gh pr list --state open` returned no component pull requests before this
   reconciliation branch was opened.
 - Every surviving non-ancestral asset branch has a tip timestamp before its
@@ -55,9 +58,11 @@ systems, or duplicate asset paths were introduced.
 
 ## Verification Refresh
 
-The audit was rerun after PR #87 and again while preparing the mandatory Black Vault climax follow-up:
+The audit was rerun from a fresh `origin/main` after PR #90:
 
-- GitHub reported 86 pull-request records through PR #87 and no open pull requests.
+- GitHub reported 89 pull-request records through PR #90 and no open pull requests.
+- All 58 surviving PR-backed source branches still point to their recorded PR
+  head, so none contains an unreviewed post-PR commit.
 - All 10 closed integration-component heads (#59-#67 and #72) are exact
   ancestors of `main` through PR #78.
 - All 112 binary assets touched by the 16 squash-merged art/data pulls
@@ -73,6 +78,10 @@ The audit was rerun after PR #87 and again while preparing the mandatory Black V
   metadata while replacing their modal question chain with a five-packet
   carry, route, seal, and publish loop. This follow-up does not introduce a
   competing save schema or duplicate any agent-owned art payload.
+- Archive A1 preserves the same harmonized Citation Stamp, scene-progress,
+  standards, DANN-E, and room-graph systems while replacing its last modal
+  handoff with a physical room-clear exit. It introduces no parallel inventory
+  or save contract.
 
 ## Final Route Reconciliation
 
