@@ -62,7 +62,7 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 
 ## Current Cleanup Status
 
-Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78 plus the physical Archive, Two Networks, ClassNet, Referral Vault, and Silent Read follow-ups. Every stacked Codex gameplay head and later Perplexity art drop is represented; superseded component PRs are closed by design, not missing. The obsolete five-form DANN-E draft in PR #41 is the sole intentional exclusion because the canonical eight-form roster replaced it. Historical source branches and the deployment branch remain on the remote for provenance and are not pending integrations.
+Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78 plus the physical Archive, Two Networks, ClassNet, Referral Vault, Silent Read, and Buckram Gate follow-ups. Every stacked Codex gameplay head and later Perplexity art drop is represented; superseded component PRs are closed by design, not missing. The obsolete five-form DANN-E draft in PR #41 is the sole intentional exclusion because the canonical eight-form roster replaced it. Historical source branches and the deployment branch remain on the remote for provenance and are not pending integrations.
 
 The branch-by-branch evidence and the two restored data payloads are recorded in [`docs/AGENT_PULL_HARMONIZATION.md`](docs/AGENT_PULL_HARMONIZATION.md).
 
@@ -80,7 +80,7 @@ The branch-by-branch evidence and the two restored data payloads are recorded in
 | Accessibility | Live on `main`: keyboard/touch/gamepad controls, concise/full `window.render_game_to_text()` payloads, debug scenes, QA deep links, and persisted high-contrast/colorblind patterns are integrated. |
 | New Game+ | Live on `main`: first completion unlocks the veteran cosmetic, harder DANN-E tier, second-volume region, and persistent completed-volume count. |
 
-Current integration verification passes 517 Vitest cases and covers the complete desktop and touch-driven route through both Network rooms, the physical Referral Vault, the physical Silent Read proofing line, and the Buckram Key exit. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+Current integration verification passes 528 Vitest cases and covers the complete desktop and touch-driven route through both Network rooms, the physical Referral Vault, the physical Silent Read proofing line, all five Buckram binding packets, and final publication. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
 
 ## MVP Features
 
@@ -115,7 +115,7 @@ Current integration verification passes 517 Vitest cases and covers the complete
   - quest relics become FRUS volume fragments
   - tools become a citation stamp, red pencil mark, and review folder logic
   - antagonists include the 30-year line and DANN-E queue
-- Final Buckram Gate: the player earns five cover pieces and the Buckram Key, enters a physical final room, certifies the volume at a human publication table, and only then publishes the assembled FRUS cover.
+- Final Buckram Gate: the player earns five cover pieces and the Buckram Key, then carries, routes, and seals five visible binding packets at distinct human workstations before publishing the assembled FRUS cover at the binding press.
 - Player shadow, facing flip, and walk-bob movement polish.
 - Larger 32x32 SNES-style player and human specialist sprites with readable FRUS production props.
 - Playable Compiler and Editor in-play sprite strips with four-direction walk frames, idle frames, and role-ability document review poses.
@@ -161,7 +161,7 @@ Sprites, tiles, enemy art, and UI textures are original repository-local SVG pix
 
 ## Roadmap
 
-1. Turn the Buckram Gate's remaining publication-apparatus checks into a physical binding-room puzzle with a clean full-path ending.
+1. Route the main quest through the live Black Vault DANN-E boss before the physical bindery, so the climax is earned on the normal path instead of only through a debug scene.
 2. Promote the quarantined tile registry and screen manager in small, fallback-guarded steps.
 3. Replace remaining poster-like room surfaces with validated Phaser tilemap layers and per-tile collision.
 4. Give every main dungeon a compact entrance, key/tool reveal, shortcut, and boss/review payoff.

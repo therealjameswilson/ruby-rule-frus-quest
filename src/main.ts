@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import "./styles/pixel.css";
 import { gameConfig } from "./game/config";
+import { getBuckramBindingReadout } from "./game/buckramBinding";
 import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
 import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./game/secretReadingRoom";
 import {
@@ -98,6 +99,7 @@ function renderConciseGameToText() {
         piecesTotal: getVolumeAssemblyReadout().total,
         complete: getVolumeAssemblyReadout().complete
       },
+      buckramBinding: getBuckramBindingReadout(gameState.sceneProgress),
       secrets: {
         hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),
         hiddenFirstEditionBonus: hiddenFirstEditionBonusLabel(gameState)

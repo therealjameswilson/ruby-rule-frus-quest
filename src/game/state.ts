@@ -23,6 +23,7 @@ import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 import type { DanneItemId } from "./danneItemCatalog";
 import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
+import { getBuckramBindingReadout } from "./buckramBinding";
 import { getAdventureTrainingCue } from "./adventureTraining";
 import { firstHourTrainingCoverageReadout } from "./firstHourTraining";
 import { getLttpFrusTranslationReadout } from "./lttpFrusTranslation";
@@ -2793,6 +2794,7 @@ export function renderGameToText() {
       publicationOutcome: getPublicationOutcomeReadout(),
       completionStats: getCompletionStatsReadout(),
       finalGate: getFinalGateReadiness(),
+      buckramBinding: getBuckramBindingReadout(gameState.sceneProgress),
       secondVolume: {
         unlocked: isSecondVolumeRegionUnlocked(),
         unlockFlag: gameState.secondVolumeUnlocked,
