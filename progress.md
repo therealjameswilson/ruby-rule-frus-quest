@@ -2,6 +2,25 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Compiler-only character setup pass (2026-07-12):
+  - Replaced the five-card role picker with one clear playable identity: the FRUS Compiler.
+  - Reduced the screen to the enlarged compiler portrait, optional name field, Archive Sense remit, and one Begin button; removed duplicate role labels, equal-rank copy, five role cards, workflow strip, and role-cycling input.
+  - Preserved name typing/focus, keyboard/mouse/touch confirmation, New Game+ compiler skin, save-profile wiring, and legacy role data for deep-link/save compatibility; normal character creation always stores the Compiler role even when a conflicting `?role=` query is supplied.
+  - Verification: focused character/input/sprite tests and `npx tsc --noEmit` pass; the required web-game client confirms a conflicting `role=editor` route still presents the Compiler and Space advances to OfficeScene; in-app browser QA confirms zero console errors and a clean layout at desktop and 375x667 phone viewports. Visual proof: `docs/screenshots/character-create-compiler-only.png` and `docs/screenshots/character-create-compiler-only-mobile.png`.
+
+- Clean FRUS volume title-screen pass (2026-07-12):
+  - Replaced the busy baked title card with an original 256x240, 48-color native image focused on one ruby FRUS volume, a restrained archival map silhouette, and clear top/bottom text bands.
+  - Removed the faux HUD, map labels, confidence blocks, item rack, keyboard legend, duplicate prompts, and embedded status copy from the live composition.
+  - Moved the localized title, subtitle, start prompt, history.state.gov credit, language control, warning preference, and optional New Game+ selector into crisp 8px/16px Phaser bitmap text.
+  - Preserved the previous sharp card and 256x224 card as fallbacks; title start, warning toggle, language selector, and New Game+ behavior remain intact.
+  - Verification: focused title/lazy-load/i18n tests and `npx tsc --noEmit` pass; the required web-game client confirms the TitleScene state; in-app browser QA confirms a working warning toggle and title-to-character transition with zero console errors at desktop and 375x667 phone viewports. Visual proof: `docs/screenshots/title-frus-volume-clean.png` and `docs/screenshots/title-frus-volume-clean-mobile.png`.
+
+- FRUS adventure warning-art pass (2026-07-12):
+  - Replaced the live warning scene's sparse procedural DANN-E card with an original 256x171, 64-color pixel-art tableau built for the 256x240 canvas: an archivist raises a ruby FRUS volume while three volume relics face DANN-E in the Black Vault.
+  - Kept all title/copy outside the bitmap so the scene can render crisp, editable text for the quest stakes, history.state.gov credit, and start prompt.
+  - Preserved the old procedural warning card as the missing-texture fallback.
+  - Verification: focused atlas tests, `npx tsc --noEmit`, and the production build pass; the required web-game client confirms the warning state and visible entity contract; in-app browser QA confirms crisp integer-scaled art, readable 8px bitmap text, a working tap transition, and zero console errors at desktop and 375x667 phone viewports. Visual proof: `docs/screenshots/frus-adventure-intro.png` and `docs/screenshots/frus-adventure-intro-mobile.png`.
+
 - Stable-ID live critical-path graph reconciliation (2026-07-12):
   - Corrected the authoritative route to `A1 -> N1 -> N2 -> R1 -> R2 -> E1 -> S1 -> DV1 -> G1`, matching the physical scene transitions players already use.
   - Replaced stale A1-to-A2 and R2-to-S1 edges in `FRUS_ROOM_GRAPH`; the legacy A2-D3 Archive annex remains optional content rather than a main-route Clearance Token bypass.
@@ -4609,3 +4628,33 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   artifacts include `output/archive-annotation-trail-ready.png`,
   `output/archive-annotation-source-carried.png`,
   `output/archive-annotation-context-filed.png`, and their `mobile-` versions.
+
+## 2026-07-12 — Office Hub art and compiler readability pass
+
+- Replaced the Office Hub's stacked rectangle/tile/poster layers with one
+  original native 208×192 compiler-office playfield. The room now has a single
+  central ruby route, four readable workstations, two side exits, and a south
+  archive gate; the old renderer remains intact as a missing-texture fallback.
+- Rebuilt the native compiler sheet in place as a coherent 4×4, 32×48 sprite
+  set with glasses, navy cardigan, and one ruby FRUS folder. The frame order,
+  foot alignment, nearest-neighbor rendering, and existing animation API are
+  unchanged. DANN-E art and behavior were not modified.
+- Removed duplicate distant interaction plates, reduced the onboarding marker
+  to one gold arrow, shortened the fixed HUD cue to `TALK TO JR`, and moved the
+  memo/workstation hit zones onto the visible furniture. Added matching desk
+  collision so the art and walkable space agree.
+- Browser QA confirmed the revised room and compiler gallery render cleanly at
+  native scale. Automated play completed talk -> memo -> inbox -> stamp -> key;
+  the objective advanced to the Archive Guide with reliability unchanged.
+
+## 2026-07-12 — Physical A-button interaction fix
+
+- Reconciled the on-screen `A TALK` prompt with keyboard input: a quick tap of
+  physical `A` now emits one interaction edge, while holding `A` still preserves
+  WASD left movement.
+- Added deterministic regression coverage for both the quick-tap action and
+  held-movement behavior.
+- Browser QA used physical `KeyA` at the Junior Compiler and confirmed the
+  objective advances to `Pick up the Assignment Memo.`
+- Verification: full Vitest suite `604/604`; production build passes (known
+  Vite large-chunk warning only).

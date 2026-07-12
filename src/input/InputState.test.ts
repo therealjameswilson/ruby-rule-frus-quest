@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   getInput,
+  KEY_A_INTERACT_TAP_MS,
   pressKeyForTests,
   releaseKeyForTests,
   resetInput,
@@ -155,6 +156,37 @@ describe("InputState keyboard edges", () => {
     tickInput();
     expect(getInput().dir).toEqual(wasdRight);
     expect(getInput().dir).toEqual({ x: 1, y: 0 });
+  });
+
+  it("treats a quick KeyA tap as one interaction without latching left movement", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    pressKeyForTests("KeyA");
+    tickInput();
+    expect(getInput().dir).toEqual({ x: -1, y: 0 });
+    expect(getInput().aJustPressed).toBe(false);
+
+    now += KEY_A_INTERACT_TAP_MS - 20;
+    releaseKeyForTests("KeyA");
+    tickInput();
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    expect(getInput().aJustPressed).toBe(true);
+
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+  });
+
+  it("keeps a held KeyA as movement without firing an interaction", () => {
+    let now = 2000;
+    setNowProviderForTests(() => now);
+    pressKeyForTests("KeyA");
+    tickInput();
+    expect(getInput().dir).toEqual({ x: -1, y: 0 });
+
+    now += KEY_A_INTERACT_TAP_MS + 20;
+    releaseKeyForTests("KeyA");
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
   });
 
   it("keeps just-pressed flags true for exactly one tick while held", () => {

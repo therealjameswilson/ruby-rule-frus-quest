@@ -12,7 +12,7 @@ export class JuniorCompiler extends DanneNpc {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     unlockCodexEntry("npc-junior-compiler");
     super(scene, JUNIOR_COMPILER_ASSET, "Junior Compiler", x, y, {
-      label: "JR COMP",
+      label: "",
       characterKey: "compiler",
       labelY: 22,
       shadowY: 16

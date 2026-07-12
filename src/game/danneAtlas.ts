@@ -4,8 +4,8 @@ import type { DanneItemId, DanneItemTier } from "./danneItemCatalog";
 export const DANNE_WARNING_SCREEN_ASSET = {
   id: "warning-screen",
   key: "danne-warning-screen",
-  path: "assets/art-pack/danne-pack/screens/01_warning_screen_danne.png",
-  displayName: "DANN-E Warning Screen"
+  path: "assets/art-pack/danne-pack/screens/01_warning_screen_frus_quest_256x171.png",
+  displayName: "DANN-E and the Lost FRUS Volumes"
 } as const;
 
 export const DANNE_MAP_ASSETS = [

@@ -52,7 +52,7 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 
 - Arrow keys or WASD: move
 - Space or Enter: interact / advance dialog / confirm
-- Left or Right on the character screen: choose role
+- Character screen: name the FRUS Compiler, then press Space or Enter to begin
 - E: use your role ability
 - M: manuscript inventory
 - N: toggle sound
@@ -85,12 +85,7 @@ Current integration verification passes 602 Vitest cases and covers the unobstru
 ## MVP Features
 
 - NES-style title screen with a ruby buckram FRUS volume, top HUD band, regional map viewport, and stone dungeon framing.
-- Character crafting with actual FRUS production roles:
-  - Proofreader
-  - Compiler
-  - Editor
-  - Declass Reviewer
-  - Source Note Specialist
+- A single playable FRUS Compiler identity, with a name field, Archive Sense ability, and a direct start into the production quest.
 - Equal-rank Archive Colleague room inspired by NES cave/dialogue composition, translated into a FRUS archive chamber with original art.
 - Verification gate tutorial: citation stamp first, then a FRUS volume fragment, then the Office hub opens.
 - Office hub with Elena, Marcus, Priya, the Golden Rule poster, and OpenNet/ClassNet terminals.

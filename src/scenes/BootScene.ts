@@ -29,6 +29,7 @@ import {
   SNES_MAIN_MAP_ASSET,
   SNES_NPC_ASSETS,
   SNES_NETWORK_TILE_ASSET,
+  SNES_OFFICE_ROOM_BACKGROUND_ASSET,
   SNES_OFFICE_TILE_ASSET,
   SNES_PROCESS_STAMP_RELIC_ASSET,
   SNES_PUBLISHED_FRUS_PRIZE_ASSET,
@@ -68,6 +69,7 @@ export class BootScene extends Phaser.Scene {
     });
     this.load.image(VOLUME_ASSEMBLY_ASSETS.hudBar.key, VOLUME_ASSEMBLY_ASSETS.hudBar.path);
     this.load.image(VOLUME_ASSEMBLY_ASSETS.completedHero.key, VOLUME_ASSEMBLY_ASSETS.completedHero.path);
+    this.load.image(SNES_OFFICE_ROOM_BACKGROUND_ASSET.key, SNES_OFFICE_ROOM_BACKGROUND_ASSET.path);
     this.load.spritesheet(VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key, VOLUME_ASSEMBLY_ASSETS.bindingAnimation.path, {
       frameWidth: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameWidth,
       frameHeight: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameHeight

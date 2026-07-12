@@ -97,7 +97,7 @@
     "confirm": "CONFIRMAR",
     "controllerConnected": "MANDO CONECTADO",
     "findGlowing": "BUSCA UN ESCRITORIO O PUERTA BRILLANTE",
-    "goLeftTalk": "VE A LA IZQUIERDA - HABLA AL ACERCARTE",
+    "goLeftTalk": "HABLA CON JR",
     "interact": "INTERACTUAR: {label}",
     "nextLine": "SIGUIENTE LÍNEA",
     "none": "NINGUNA",
@@ -248,7 +248,8 @@
     "sourceTrail": "RASTRO DE FUENTES DE FRUS: HISTORY.STATE.GOV",
     "start": "A / ENTER EMPEZAR",
     "subtitle": "THE FRUS QUEST",
-    "title": "RUBY RULE"
+    "title": "RUBY RULE",
+    "warningShort": "AVISO {mark}"
   },
   "warning": {
     "continue": "TOCA / PULSA A PARA CONTINUAR",
