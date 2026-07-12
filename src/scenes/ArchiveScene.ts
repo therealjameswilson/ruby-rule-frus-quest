@@ -80,6 +80,7 @@ import {
   archiveA1CollisionRect,
   buildArchiveA1TileLayers
 } from "../game/archiveA1Tilemap";
+import { packedTileGid } from "../game/packedTileIndex";
 import {
   getSourceNoteProvenanceStation,
   inspectSourceNoteProvenanceStation,
@@ -792,7 +793,8 @@ export class ArchiveScene extends Phaser.Scene {
       asset.tileSize,
       asset.tileSize,
       asset.margin,
-      asset.spacing
+      asset.spacing,
+      asset.firstGid
     );
     if (!tileset) {
       map.destroy();
@@ -841,9 +843,9 @@ export class ArchiveScene extends Phaser.Scene {
     ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
     walls.putTilesAt(layers.walls, 0, 0, true)
       .setCollision([
-        ARCHIVE_DUNGEON_TILES.wallDark,
-        ARCHIVE_DUNGEON_TILES.wallStone,
-        ARCHIVE_DUNGEON_TILES.wallLight
+        packedTileGid(ARCHIVE_DUNGEON_TILES.wallDark),
+        packedTileGid(ARCHIVE_DUNGEON_TILES.wallStone),
+        packedTileGid(ARCHIVE_DUNGEON_TILES.wallLight)
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);

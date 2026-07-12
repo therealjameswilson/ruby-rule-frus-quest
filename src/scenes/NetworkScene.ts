@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
 import {
@@ -60,6 +61,13 @@ import type {
   ClassNetVaultDocketId,
   ClassNetVaultStationId
 } from "../game/classNetVaultReview";
+import {
+  INTERIOR_TILES,
+  NETWORK_N1_TILEMAP,
+  buildNetworkN1TileLayers,
+  networkN1CollisionRect
+} from "../game/networkN1Tilemap";
+import { packedTileGid } from "../game/packedTileIndex";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -133,6 +141,7 @@ export class NetworkScene extends Phaser.Scene {
   private visitedRoomIds = new Set<NetworkRoomId>();
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
   private roomCleanups: Array<() => void> = [];
+  private roomSolids: Phaser.Geom.Rectangle[] = [];
   private mapCells = new Map<NetworkRoomId, Phaser.GameObjects.Rectangle>();
   private mapLabels = new Map<NetworkRoomId, Phaser.GameObjects.Text>();
   private roomTitleText!: Phaser.GameObjects.Text;
@@ -263,7 +272,7 @@ export class NetworkScene extends Phaser.Scene {
       this.inventory.toggle();
       return;
     }
-    this.player.update(delta, true, { bounds: NETWORK_PLAY_BOUNDS });
+    this.player.update(delta, true, { bounds: NETWORK_PLAY_BOUNDS, solids: this.roomSolids });
     if (this.currentRoomId === "N1") {
       this.updateRoutingPacketIcon();
       this.updateRoutingPacketPrompt(delta);
@@ -332,6 +341,7 @@ export class NetworkScene extends Phaser.Scene {
     for (const wall of this.bureaucraticWalls) wall.destroy();
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.roomSolids = [];
     this.bureaucraticWalls = [];
     this.clearanceTokenIcon = undefined;
     this.vaultDocketWorldIcon = undefined;
@@ -355,24 +365,113 @@ export class NetworkScene extends Phaser.Scene {
       accent: PALETTE.terminalCyan,
       track: (object) => this.track(object)
     });
-    addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "network", track: (object) => this.track(object) });
-    this.drawNetworkTileField(room.id);
+    const packedTilemapRendered = room.id === "N1" && this.renderNetworkN1Tilemap();
+    if (!packedTilemapRendered) {
+      addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "network", track: (object) => this.track(object) });
+      this.drawNetworkTileField(room.id);
+    }
     this.drawRoomDoors();
-    addSnesRoomCompass(this, {
-      x: 216,
-      y: 62,
-      roomId: room.id,
-      roomTitle: room.title,
-      exits: room.exits,
-      lockedExits: this.compassLockedExits(room),
-      requiredItems: room.requiredItems,
-      track: (object) => this.track(object),
-      depth: 143
-    });
-    if (room.id === "N1") this.renderNetworkSplit();
+    if (!packedTilemapRendered) {
+      addSnesRoomCompass(this, {
+        x: 216,
+        y: 62,
+        roomId: room.id,
+        roomTitle: room.title,
+        exits: room.exits,
+        lockedExits: this.compassLockedExits(room),
+        requiredItems: room.requiredItems,
+        track: (object) => this.track(object),
+        depth: 143
+      });
+    }
+    if (room.id === "N1") this.renderNetworkSplit(packedTilemapRendered);
     else this.renderClassNetVault();
     this.syncRoomTraversalState();
     this.syncThreatState();
+  }
+
+  private renderNetworkN1Tilemap() {
+    const asset = GAMEPLAY_TILESETS.interiorsNative;
+    if (!this.textures.exists(asset.key)) return false;
+    const map = this.make.tilemap({
+      width: NETWORK_N1_TILEMAP.columns,
+      height: NETWORK_N1_TILEMAP.rows,
+      tileWidth: asset.tileSize,
+      tileHeight: asset.tileSize
+    });
+    const tileset = map.addTilesetImage(
+      asset.manifestKey,
+      asset.key,
+      asset.tileSize,
+      asset.tileSize,
+      asset.margin,
+      asset.spacing,
+      asset.firstGid
+    );
+    if (!tileset) {
+      map.destroy();
+      return false;
+    }
+
+    const ground = map.createBlankLayer(
+      "network-n1-ground",
+      tileset,
+      NETWORK_N1_TILEMAP.x,
+      NETWORK_N1_TILEMAP.y,
+      NETWORK_N1_TILEMAP.columns,
+      NETWORK_N1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const walls = map.createBlankLayer(
+      "network-n1-walls",
+      tileset,
+      NETWORK_N1_TILEMAP.x,
+      NETWORK_N1_TILEMAP.y,
+      NETWORK_N1_TILEMAP.columns,
+      NETWORK_N1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const decoration = map.createBlankLayer(
+      "network-n1-decoration",
+      tileset,
+      NETWORK_N1_TILEMAP.x,
+      NETWORK_N1_TILEMAP.y,
+      NETWORK_N1_TILEMAP.columns,
+      NETWORK_N1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    if (!ground || !walls || !decoration) {
+      ground?.destroy();
+      walls?.destroy();
+      decoration?.destroy();
+      map.destroy();
+      return false;
+    }
+
+    const layers = buildNetworkN1TileLayers();
+    ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
+    walls.putTilesAt(layers.walls, 0, 0, true)
+      .setCollision([
+        packedTileGid(INTERIOR_TILES.wallPanel),
+        packedTileGid(INTERIOR_TILES.wallMetal),
+        packedTileGid(INTERIOR_TILES.wallBlue)
+      ])
+      .setDepth(44);
+    decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    for (const cell of layers.collisionCells) {
+      const rect = networkN1CollisionRect(cell);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+    }
+    this.roomCleanups.push(() => {
+      ground.destroy();
+      walls.destroy();
+      decoration.destroy();
+      map.destroy();
+    });
+    return true;
   }
 
   private drawNetworkTileField(roomId: NetworkRoomId) {
@@ -489,30 +588,34 @@ export class NetworkScene extends Phaser.Scene {
     return locked;
   }
 
-  private renderNetworkSplit() {
+  private renderNetworkSplit(packedTilemapRendered = false) {
     this.syncNetworkSplitEntities();
-    addNetworkCables(this, (object) => this.track(object));
-    addSnesWorldMap(this, 128, 66, "NET MAP", "two-networks-map", (object) => this.track(object));
+    if (!packedTilemapRendered) {
+      addNetworkCables(this, (object) => this.track(object));
+      addSnesWorldMap(this, 128, 66, "NET MAP", "two-networks-map", (object) => this.track(object));
+    }
     this.track(addTinySparkle(this, 60, 108, PALETTE.openNetGreen));
     this.track(addTinySparkle(this, 196, 108, PALETTE.classNetRed));
     const marcus = new HistorianNPC(this, "marcus", 128, 54);
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 60, 124, "OpenNet").container);
     this.track(new Terminal(this, 196, 124, "ClassNet").container);
-    this.track(this.add.rectangle(60, 178, 42, 12, color(PALETTE.black), 0.92).setStrokeStyle(1, color(PALETTE.openNetGreen)).setDepth(166));
-    this.track(this.add.text(60, 174, "OPENNET", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.openNetGreen,
-      align: "center"
-    }).setOrigin(0.5).setDepth(167));
-    this.track(this.add.rectangle(196, 178, 42, 12, color(PALETTE.black), 0.92).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(166));
-    this.track(this.add.text(196, 174, "CLASSNET", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.classNetRed,
-      align: "center"
-    }).setOrigin(0.5).setDepth(167));
+    if (!packedTilemapRendered) {
+      this.track(this.add.rectangle(60, 178, 42, 12, color(PALETTE.black), 0.92).setStrokeStyle(1, color(PALETTE.openNetGreen)).setDepth(166));
+      this.track(this.add.text(60, 174, "OPENNET", {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.openNetGreen,
+        align: "center"
+      }).setOrigin(0.5).setDepth(167));
+      this.track(this.add.rectangle(196, 178, 42, 12, color(PALETTE.black), 0.92).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(166));
+      this.track(this.add.text(196, 174, "CLASSNET", {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: PALETTE.classNetRed,
+        align: "center"
+      }).setOrigin(0.5).setDepth(167));
+    }
     this.drawRoutingSorter();
     if (!this.routingComplete) {
       this.bureaucraticWalls = [

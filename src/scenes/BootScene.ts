@@ -162,6 +162,8 @@ export class BootScene extends Phaser.Scene {
   private preloadGameplayTilesets() {
     const archiveDungeon = GAMEPLAY_TILESETS.archiveDungeonNative;
     this.load.image(archiveDungeon.key, archiveDungeon.path);
+    const interiors = GAMEPLAY_TILESETS.interiorsNative;
+    this.load.image(interiors.key, interiors.path);
   }
 
   private shouldLogAssetDebug() {
