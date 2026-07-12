@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Referral R2 real-tilemap and reward-room readability promotion (2026-07-12):
+  - Completed the Referral Vault's tilemap transition by promoting R2 to native 16x16 ground, wall, and decoration layers with west/east openings and tile-derived perimeter collision.
+  - Replaced the filing-cabinet collage with a warm reward floor, ruby process aisle, five quiet resolved-equity marks, and one central Concurrence Slip pad.
+  - Removed the fallback room layer, procedural tile field, compass, vault-block mosaic, and five freestanding seal plaques only when the packed map succeeds; the prior composition remains the guarded fallback.
+  - Preserved the R1 return, Concurrence Slip pickup, DANN-E lurker, save state, locked Silent Read handoff, and all existing gate prompts.
+  - Verification: 111 Vitest files / 573 tests pass; focused build passes; the complete R1/R2/Silent Read route passes on desktop and DPR-3 iPhone touch with both deliberate error branches retained.
+
 - Referral R1 real-tilemap and equity-routing readability promotion (2026-07-12):
   - Promoted the Referral Vault's first room to native 16x16 ground, wall, and decoration Tilemap layers with a reachable east gate and tile-derived perimeter collision.
   - Built a quiet dark-wood review floor, ruby intake lane, three checker agency pads, a parquet document tray, and separate colleague/StateChat work areas.

@@ -64,6 +64,11 @@ import {
   buildReferralR1TileLayers,
   referralR1CollisionRect
 } from "../game/referralR1Tilemap";
+import {
+  REFERRAL_R2_TILEMAP,
+  buildReferralR2TileLayers,
+  referralR2CollisionRect
+} from "../game/referralR2Tilemap";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -337,7 +342,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         track: (object) => this.track(object)
       });
     }
-    const packedTilemapRendered = room.id === "R1" && this.renderReferralR1Tilemap();
+    const packedTilemapRendered = this.renderReferralTilemap(room.id);
     if (!packedTilemapRendered) {
       addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "vault", track: (object) => this.track(object) });
       this.drawReferralVaultTileField(room.id);
@@ -357,17 +362,30 @@ export class ReferralVaultScene extends Phaser.Scene {
       });
     }
     if (room.id === "R1") this.renderEquityGate(packedTilemapRendered);
-    else this.renderConcurrenceChamber();
+    else this.renderConcurrenceChamber(packedTilemapRendered);
     this.syncRoomTraversalState();
     this.syncThreatState();
   }
 
-  private renderReferralR1Tilemap() {
+  private renderReferralTilemap(roomId: ReferralRoomId) {
     const asset = GAMEPLAY_TILESETS.interiorsNative;
     if (!this.textures.exists(asset.key)) return false;
+    const definition = roomId === "R1"
+      ? {
+          id: "referral-r1",
+          map: REFERRAL_R1_TILEMAP,
+          layers: buildReferralR1TileLayers(),
+          collisionRect: referralR1CollisionRect
+        }
+      : {
+          id: "referral-r2",
+          map: REFERRAL_R2_TILEMAP,
+          layers: buildReferralR2TileLayers(),
+          collisionRect: referralR2CollisionRect
+        };
     const map = this.make.tilemap({
-      width: REFERRAL_R1_TILEMAP.columns,
-      height: REFERRAL_R1_TILEMAP.rows,
+      width: definition.map.columns,
+      height: definition.map.rows,
       tileWidth: asset.tileSize,
       tileHeight: asset.tileSize
     });
@@ -386,32 +404,32 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
 
     const ground = map.createBlankLayer(
-      "referral-r1-ground",
+      `${definition.id}-ground`,
       tileset,
-      REFERRAL_R1_TILEMAP.x,
-      REFERRAL_R1_TILEMAP.y,
-      REFERRAL_R1_TILEMAP.columns,
-      REFERRAL_R1_TILEMAP.rows,
+      definition.map.x,
+      definition.map.y,
+      definition.map.columns,
+      definition.map.rows,
       asset.tileSize,
       asset.tileSize
     );
     const walls = map.createBlankLayer(
-      "referral-r1-walls",
+      `${definition.id}-walls`,
       tileset,
-      REFERRAL_R1_TILEMAP.x,
-      REFERRAL_R1_TILEMAP.y,
-      REFERRAL_R1_TILEMAP.columns,
-      REFERRAL_R1_TILEMAP.rows,
+      definition.map.x,
+      definition.map.y,
+      definition.map.columns,
+      definition.map.rows,
       asset.tileSize,
       asset.tileSize
     );
     const decoration = map.createBlankLayer(
-      "referral-r1-decoration",
+      `${definition.id}-decoration`,
       tileset,
-      REFERRAL_R1_TILEMAP.x,
-      REFERRAL_R1_TILEMAP.y,
-      REFERRAL_R1_TILEMAP.columns,
-      REFERRAL_R1_TILEMAP.rows,
+      definition.map.x,
+      definition.map.y,
+      definition.map.columns,
+      definition.map.rows,
       asset.tileSize,
       asset.tileSize
     );
@@ -423,7 +441,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       return false;
     }
 
-    const layers = buildReferralR1TileLayers();
+    const layers = definition.layers;
     ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
     walls.putTilesAt(layers.walls, 0, 0, true)
       .setCollision([
@@ -435,7 +453,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
     for (const cell of layers.collisionCells) {
-      const rect = referralR1CollisionRect(cell);
+      const rect = definition.collisionRect(cell);
       this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
     }
     this.roomCleanups.push(() => {
@@ -739,12 +757,14 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
   }
 
-  private renderConcurrenceChamber() {
+  private renderConcurrenceChamber(packedTilemapRendered = false) {
     setVisibleEntities(["Concurrence Slip pedestal", "Agency concurrence chamber", "Silent Read handoff gate"]);
-    addVaultBlocks(this, (object) => this.track(object));
-    for (let x = 62; x <= 194; x += 33) {
-      this.track(this.add.rectangle(x, 104, 24, 20, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(95));
-      this.track(this.add.image(x, 101, "agency-equity-seal").setScale(1).setDepth(96));
+    if (!packedTilemapRendered) {
+      addVaultBlocks(this, (object) => this.track(object));
+      for (let x = 62; x <= 194; x += 33) {
+        this.track(this.add.rectangle(x, 104, 24, 20, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(95));
+        this.track(this.add.image(x, 101, "agency-equity-seal").setScale(1).setDepth(96));
+      }
     }
     addSnesTreasurePedestal(this, {
       x: 128,
