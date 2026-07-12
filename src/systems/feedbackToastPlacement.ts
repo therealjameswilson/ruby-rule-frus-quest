@@ -39,10 +39,13 @@ function clamp(value: number, min: number, max: number) {
 export function computeToastPlacement(
   anchor: ToastPlacement,
   bounds: ToastAnchorBounds = DEFAULT_TOAST_BOUNDS,
-  gapAbove = 26
+  gapAbove = 26,
+  halfWidth = 0
 ): ToastPlacement {
+  const availableHalfWidth = Math.max(0, (bounds.right - bounds.left) / 2);
+  const clampedHalfWidth = Math.min(Math.max(0, halfWidth), availableHalfWidth);
   return {
-    x: clamp(anchor.x, bounds.left, bounds.right),
+    x: clamp(anchor.x, bounds.left + clampedHalfWidth, bounds.right - clampedHalfWidth),
     y: clamp(anchor.y - gapAbove, bounds.top, bounds.bottom)
   };
 }
