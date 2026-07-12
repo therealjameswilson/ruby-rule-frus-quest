@@ -9,6 +9,7 @@ import {
   isArchiveA1ExitCell,
   isArchiveA1WallCell
 } from "./archiveA1Tilemap";
+import { packedTileGid } from "./packedTileIndex";
 
 describe("Archive A1 packed tilemap", () => {
   it("keeps the typed native tileset registry aligned with the art-pack manifest", () => {
@@ -37,16 +38,17 @@ describe("Archive A1 packed tilemap", () => {
 
   it("builds three 16x12 layers using valid archive-dungeon indices", () => {
     const layers = buildArchiveA1TileLayers();
-    const maxIndex = GAMEPLAY_TILESETS.archiveDungeonNative.columns
-      * GAMEPLAY_TILESETS.archiveDungeonNative.rows - 1;
+    const maxGid = GAMEPLAY_TILESETS.archiveDungeonNative.columns
+      * GAMEPLAY_TILESETS.archiveDungeonNative.rows;
 
     for (const layer of [layers.ground, layers.walls, layers.decoration]) {
       expect(layer).toHaveLength(ARCHIVE_A1_TILEMAP.rows);
       expect(layer.every((row) => row.length === ARCHIVE_A1_TILEMAP.columns)).toBe(true);
-      expect(layer.flat().every((index) => index >= -1 && index <= maxIndex)).toBe(true);
+      expect(layer.flat().every((index) => index >= -1 && index <= maxGid)).toBe(true);
     }
-    expect(layers.ground.flat().every((index) => index >= 0)).toBe(true);
+    expect(layers.ground.flat().every((index) => index >= 1)).toBe(true);
     expect(new Set(layers.ground.flat()).size).toBeGreaterThanOrEqual(4);
+    expect(layers.ground[1][1]).toBe(packedTileGid(0));
   });
 
   it("keeps east and south exits open while deriving collision from every other border tile", () => {

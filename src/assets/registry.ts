@@ -98,7 +98,21 @@ export const GAMEPLAY_TILESETS = {
     imageWidth: 112,
     imageHeight: 112,
     margin: 0,
-    spacing: 0
+    spacing: 0,
+    firstGid: 1
+  },
+  interiorsNative: {
+    manifestKey: "tileset_interiors_16x16",
+    key: "pack-tiles-interiors-native",
+    path: "assets/art-pack/tilesets/gameplay/tileset_interiors_16x16_native.png",
+    columns: 8,
+    rows: 8,
+    tileSize: 16,
+    imageWidth: 128,
+    imageHeight: 128,
+    margin: 0,
+    spacing: 0,
+    firstGid: 1
   }
 } as const;
 

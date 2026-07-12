@@ -1,4 +1,5 @@
 import { GAMEPLAY_TILESETS } from "../assets/registry";
+import { EMPTY_TILE, packedTileGid } from "./packedTileIndex";
 
 export const ARCHIVE_A1_TILEMAP = {
   columns: 16,
@@ -36,7 +37,7 @@ const FLOOR_ACCENTS = [
 function emptyLayer() {
   return Array.from(
     { length: ARCHIVE_A1_TILEMAP.rows },
-    () => Array<number>(ARCHIVE_A1_TILEMAP.columns).fill(-1)
+    () => Array<number>(ARCHIVE_A1_TILEMAP.columns).fill(EMPTY_TILE)
   );
 }
 
@@ -66,26 +67,26 @@ function wallTile(tileX: number, tileY: number) {
 export function buildArchiveA1TileLayers(): ArchiveA1TileLayers {
   const ground = Array.from(
     { length: ARCHIVE_A1_TILEMAP.rows },
-    () => Array<number>(ARCHIVE_A1_TILEMAP.columns).fill(ARCHIVE_DUNGEON_TILES.floorBase)
+    () => Array<number>(ARCHIVE_A1_TILEMAP.columns).fill(packedTileGid(ARCHIVE_DUNGEON_TILES.floorBase))
   );
   const walls = emptyLayer();
   const decoration = emptyLayer();
   const collisionCells: Array<{ tileX: number; tileY: number }> = [];
 
   for (const accent of FLOOR_ACCENTS) {
-    ground[accent.y][accent.x] = accent.tile;
+    ground[accent.y][accent.x] = packedTileGid(accent.tile);
   }
 
   for (let tileY = 0; tileY < ARCHIVE_A1_TILEMAP.rows; tileY += 1) {
     for (let tileX = 0; tileX < ARCHIVE_A1_TILEMAP.columns; tileX += 1) {
       if (!isArchiveA1WallCell(tileX, tileY)) continue;
-      walls[tileY][tileX] = wallTile(tileX, tileY);
+      walls[tileY][tileX] = packedTileGid(wallTile(tileX, tileY));
       collisionCells.push({ tileX, tileY });
     }
   }
 
-  decoration[0][3] = ARCHIVE_DUNGEON_TILES.torch;
-  decoration[0][12] = ARCHIVE_DUNGEON_TILES.torch;
+  decoration[0][3] = packedTileGid(ARCHIVE_DUNGEON_TILES.torch);
+  decoration[0][12] = packedTileGid(ARCHIVE_DUNGEON_TILES.torch);
 
   return { ground, walls, decoration, collisionCells };
 }

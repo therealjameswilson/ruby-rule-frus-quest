@@ -26,6 +26,10 @@ The room is 16 columns x 12 rows at world origin `(0, 32)`.
 | Walls | `7`, `8`, `9` | One-tile perimeter and tile-derived collision. |
 | Decoration | `21` | Two restrained wall torches. |
 
+The manifest's frame numbers are zero-based. Both packed tilesets register
+explicitly at Phaser `firstgid: 1`, and layer data converts source frames with
+`packedTileGid(sourceIndex)` so frame zero is never confused with an empty tile.
+
 The east exit is open at `(15, 4..6)` and the south exit at `(7..8, 11)`.
 All other perimeter cells are collision cells. Existing locked-exit logic is
 unchanged: a real exit remains physically reachable so it can explain the

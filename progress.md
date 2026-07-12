@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Network N1 real-tilemap and readability promotion (2026-07-12):
+  - Added a typed manifest-backed native interiors tileset contract and explicit Phaser `firstgid: 1`; zero-based source frames now map through one tested `packedTileGid()` helper shared with Archive A1.
+  - Promoted N1 to a 16x12 three-layer Tilemap: warm OpenNet floor, dark ClassNet floor, concrete divider, checker terminal pads, sparse wall cues, and a tile-colliding perimeter with only the real east door open.
+  - Kept the four packet routes, wrong-network retry, FIREWALL walls, DANN-E lurker, Marcus, terminals, sorter, gate, room state, and N2 transition unchanged.
+  - On successful tilemap load, removed the duplicate giant map, room compass, cable lattice, fallback floor layer, and distant OpenNet/ClassNet labels. The old composition remains the guarded fallback.
+  - Empirically verified source-frame mapping with a runtime tile strip before fixing the sheet's eight-cell material index; documented the final indices in `docs/NETWORK_N1_TILEMAP.md`.
+  - Verification: 108 Vitest files / 561 tests pass; TypeScript and production build pass; all 25 `?scene=` routes boot without browser errors; full N1 packet routing, N2 human-review filing, token pickup, and Referral exit pass on desktop and DPR-3 iPhone touch; Archive A1 completion remains clean.
+
 - Archive A1 real-tilemap promotion (2026-07-12):
   - Promoted only the verified A1 source room to a real 16x12 Phaser tilemap using the art-pack manifest's native 7x7 archive-dungeon sheet at 16px with zero margin/spacing.
   - Added separate ground, wall, and decoration layers; kept the floor quiet with one dark base and three landmark accents after live visual comparison rejected banded and overly bright variants.
