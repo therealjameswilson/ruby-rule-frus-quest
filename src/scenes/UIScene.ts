@@ -13,8 +13,9 @@ import {
   SNES_RESEARCH_PENDANT_RELIC_ASSET,
   SNES_ROOM_MAP_MARKER_ASSET
 } from "../game/snesAtlas";
-import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout } from "../game/state";
+import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasProcessItem } from "../game/state";
 import { getVolumeAssemblyReadout } from "../game/state";
+import { getGuideCavernStage, guideCavernActionCue } from "../game/guideCavernFlow";
 import { addGamepadConnectionListener, getInput, updateInputCallbacks } from "../input/InputState";
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
@@ -336,6 +337,13 @@ export class UIScene extends Phaser.Scene {
       return getString("hud.goLeftTalk");
     }
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
+    if (gameState.currentScene === "GuideScene") {
+      const stage = getGuideCavernStage(
+        hasProcessItem("citation_stamp"),
+        gameState.volumeFragments.includes("Front Matter Fragment")
+      );
+      return guideCavernActionCue(stage);
+    }
     if (toolLabel !== getString("hud.none")) return getString("hud.useTool", { tool: toolLabel });
     return getString("hud.findGlowing");
   }

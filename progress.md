@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Guide Cavern staged-onboarding clarity pass (2026-07-12):
+  - Reworked the first dungeon threshold into one explicit physical sequence: take the Citation Stamp, claim the FRUS fragment, then open the south Verification Gate.
+  - Only the current mandatory target now participates in proximity/action selection. The optional equal-rank colleague remains available before the route begins without stealing later fragment or gate prompts.
+  - Dimmed and marked the future fragment `LOCK`, hid completed pedestal labels, changed the gate from ruby `LOCKED` to green `OPEN GATE`, removed the duplicate floor objective, and replaced the generic HUD action with a stage-specific cue.
+  - Restored the exact stage from existing Citation Stamp inventory and `Front Matter Fragment` save data; restarting after the stamp resumes at the fragment instead of duplicating the reward.
+  - Reduced the 30-year line and DANN-E queue to subdued wall warnings while keeping both canonical pressures present in the room.
+  - Desktop and DPR-3 iPhone touch QA completed stamp -> restart -> fragment -> gate -> Archive A1 with no browser errors.
+  - Verification: 114 Vitest files / 586 tests pass; TypeScript and production build pass; all 25 `?scene=` routes boot without browser errors; the Codex/Perplexity audit still reports zero open components and 112/112 byte-identical Perplexity assets.
+
 - Silent Read S1 real-tilemap and mobile-feedback promotion (2026-07-12):
   - Completed the Editor/Silent Read pair's tilemap transition with one native 16x16 S1 layout shared by its evidence and publication phases.
   - Replaced giant manuscript/proof pages, the phase panel, fallback room layer, compass, and three duplicate production-lane cards with a quiet dark proof floor, central route lane, explicit workstation pads, and one outbox.

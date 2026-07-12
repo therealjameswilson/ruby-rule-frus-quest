@@ -10,6 +10,7 @@ import {
   addInventoryItem,
   addVolumeFragment,
   gameState,
+  hasProcessItem,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -17,6 +18,12 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
+import {
+  getGuideCavernStage,
+  guideCavernActionCue,
+  guideCavernObjective,
+  guideCavernTargetId
+} from "../game/guideCavernFlow";
 import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { Player } from "../entities/Player";
@@ -53,8 +60,11 @@ export class GuideScene extends Phaser.Scene {
   private prompt!: InteractionPrompt;
   private toast!: FeedbackToast;
   private stampIcon!: Phaser.GameObjects.Image;
+  private stampLabel!: Phaser.GameObjects.Text;
   private fragmentIcon!: Phaser.GameObjects.Image;
+  private fragmentLabel!: Phaser.GameObjects.Text;
   private gateGlow!: Phaser.GameObjects.Rectangle;
+  private gateLabel!: Phaser.GameObjects.Text;
   private readonly interactionAssist = new InteractionAssist();
   private hasStamp = false;
   private hasFragment = false;
@@ -65,7 +75,10 @@ export class GuideScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("GuideScene", "explore", "Archive Cavern: claim the Citation Stamp.");
+    this.hasStamp = hasProcessItem("citation_stamp");
+    this.hasFragment = gameState.volumeFragments.includes("Front Matter Fragment");
+    const openingStage = getGuideCavernStage(this.hasStamp, this.hasFragment);
+    setSceneState("GuideScene", "explore", guideCavernObjective(openingStage));
     unlockCodexEntry("npc-archive-specialist");
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.black);
@@ -74,8 +87,8 @@ export class GuideScene extends Phaser.Scene {
     this.drawCaveInterior();
     this.drawArchiveLamp(86, 88);
     this.drawArchiveLamp(170, 88);
-    this.drawAntagonistPlaque(58, 164, "30-YEAR\nLINE", PALETTE.classNetRed);
-    this.drawAntagonistPlaque(198, 164, "DANN-E\nQUEUE", PALETTE.terminalCyan);
+    this.drawAntagonistPlaque(58, 164, "30-YR", PALETTE.classNetRed);
+    this.drawAntagonistPlaque(198, 164, "DANN-E", PALETTE.terminalCyan);
     const colleagueTexture = getCharacterKeyForNpcId("archive-colleague");
     const colleague = this.add
       .sprite(128, 104, colleagueTexture)
@@ -87,13 +100,13 @@ export class GuideScene extends Phaser.Scene {
     this.tweens.add({ targets: colleague, y: 103, duration: 560, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { colleague.y = snapPixel(colleague.y); } });
     this.tweens.add({ targets: this.stampIcon, y: 130, duration: 460, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.stampIcon.y = snapPixel(this.stampIcon.y); } });
     this.tweens.add({ targets: this.fragmentIcon, y: 130, duration: 580, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.fragmentIcon.y = snapPixel(this.fragmentIcon.y); } });
-    this.add.text(96, 148, "CITE", {
+    this.stampLabel = this.add.text(96, 148, "CITE", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(121);
-    this.add.text(160, 148, "FRAG", {
+    this.fragmentLabel = this.add.text(160, 148, "FRAG", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp,
@@ -106,7 +119,7 @@ export class GuideScene extends Phaser.Scene {
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
-    this.objectiveText = addObjectiveText(this);
+    this.objectiveText = addObjectiveText(this).setVisible(false);
     this.hintText = this.add.text(128, 207, "", {
       fontFamily: "monospace",
       fontSize: "7px",
@@ -116,16 +129,9 @@ export class GuideScene extends Phaser.Scene {
     this.prompt = new InteractionPrompt(this);
     this.toast = new FeedbackToast(this);
 
-    this.interactables = [
-      { id: "colleague", label: "Archive Colleague", x: 128, y: 104, radius: 28, kind: "npc", onInteract: () => this.talkColleague() },
-      { id: "stamp", label: "Citation Stamp", x: 96, y: 132, radius: 30, kind: "document", onInteract: () => this.takeStamp() },
-      { id: "fragment", label: "FRUS Volume Fragment", x: 160, y: 132, radius: 30, kind: "document", onInteract: () => this.takeFragment() },
-      { id: "gate", label: "Verification Gate", x: 128, y: 198, radius: 30, kind: "door", onInteract: () => this.openGate() }
-    ];
-    this.syncVisibleState();
-    setObjective("Archive Cavern: take the Citation Stamp.");
-    setLatestMessage(`Archive route ready for ${gameState.playerProfile.displayName}: stamp, fragment, gate.`);
-    this.toast.show("STAMP -> FRAGMENT -> GATE", this.player.position, "info");
+    this.syncStagePresentation();
+    setLatestMessage(`Archive route ready for ${gameState.playerProfile.displayName}: ${guideCavernActionCue(openingStage).toLowerCase()}.`);
+    this.toast.show(guideCavernActionCue(openingStage), this.player.position, "info");
   }
 
   update(_: number, delta: number) {
@@ -180,7 +186,7 @@ export class GuideScene extends Phaser.Scene {
       if (feedback.kind === "step-closer") this.nudgeTowardTarget(feedback.target);
       else if (feedback.kind === "nothing") this.flashNoTargetHint();
     }
-    this.objectiveText.setText(gameState.objective);
+    this.objectiveText.setText("");
   }
 
   private flashNoTargetHint() {
@@ -211,14 +217,12 @@ export class GuideScene extends Phaser.Scene {
       return;
     }
     this.hasStamp = true;
-    this.stampIcon.setVisible(false);
     addProcessItem("citation_stamp");
     addDocumentPoints(5, "citation stamp claimed");
     retroAudio.confirm();
-    setObjective("Archive Cavern: claim the first FRUS volume fragment.");
-    this.toast.show("CITATION STAMP ACQUIRED", this.player.position, "info");
+    this.toast.show("STAMP READY - TAKE FRAGMENT", this.player.position, "info");
     setLatestMessage("Citation Stamp acquired: use it on cited fragments.");
-    this.syncVisibleState();
+    this.syncStagePresentation();
   }
 
   private takeFragment() {
@@ -235,16 +239,13 @@ export class GuideScene extends Phaser.Scene {
       return;
     }
     this.hasFragment = true;
-    this.fragmentIcon.setVisible(false);
     addInventoryItem("FRUS Fragment: Front Matter");
     addVolumeFragment("Front Matter Fragment");
     addDocumentPoints(10, "front matter fragment secured");
     retroAudio.stamp();
-    setObjective("Archive Cavern: open the Verification Gate.");
-    this.gateGlow.setFillStyle(color(PALETTE.openNetGreen));
-    this.toast.show("FRUS FRAGMENT SECURED", this.player.position, "info");
+    this.toast.show("FRAGMENT CITED - OPEN GATE", this.player.position, "info");
     setLatestMessage("FRUS fragment secured: the gate can open.");
-    this.syncVisibleState();
+    this.syncStagePresentation();
   }
 
   private openGate() {
@@ -261,14 +262,55 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private syncVisibleState() {
-    const labels = ["Archive Colleague", "Verification Gate", "30-Year Line", "DANN-E Queue"];
-    if (!this.hasStamp) labels.push("Citation Stamp");
-    if (!this.hasFragment) labels.push("FRUS Volume Fragment");
+    const stage = getGuideCavernStage(this.hasStamp, this.hasFragment);
+    const labels = ["Archive Colleague", "30-Year Line", "DANN-E Queue"];
+    if (stage === "stamp") labels.push("Citation Stamp");
+    else if (stage === "fragment") labels.push("FRUS Volume Fragment");
+    else labels.push("Verification Gate");
     setVisibleEntities(labels);
     setVisibleThreats([
       { label: "30-Year Line", x: 58, y: 164 },
       { label: "DANN-E Queue", x: 198, y: 164 }
     ]);
+  }
+
+  private syncStagePresentation() {
+    const stage = getGuideCavernStage(this.hasStamp, this.hasFragment);
+    this.stampIcon.setVisible(!this.hasStamp);
+    this.stampLabel.setVisible(!this.hasStamp);
+    this.fragmentIcon
+      .setVisible(!this.hasFragment)
+      .setAlpha(this.hasStamp ? 1 : 0.25);
+    this.fragmentLabel
+      .setVisible(!this.hasFragment)
+      .setText(this.hasStamp ? "FRAG" : "LOCK")
+      .setColor(this.hasStamp ? PALETTE.goldStamp : PALETTE.stoneGray);
+    this.gateGlow.setFillStyle(color(this.hasFragment ? PALETTE.openNetGreen : PALETTE.classNetRed));
+    this.gateLabel
+      .setText(this.hasFragment ? "OPEN\nGATE" : "LOCKED")
+      .setColor(this.hasFragment ? PALETTE.creamPaper : PALETTE.goldStamp);
+    this.refreshInteractables(stage);
+    setObjective(guideCavernObjective(stage));
+    this.syncVisibleState();
+  }
+
+  private refreshInteractables(stage = getGuideCavernStage(this.hasStamp, this.hasFragment)) {
+    const colleague: Interactable = {
+      id: "colleague",
+      label: "Archive Colleague",
+      x: 128,
+      y: 104,
+      radius: 24,
+      kind: "npc",
+      onInteract: () => this.talkColleague()
+    };
+    const targets: Record<ReturnType<typeof guideCavernTargetId>, Interactable> = {
+      stamp: { id: "stamp", label: "Citation Stamp", x: 96, y: 132, radius: 32, kind: "document", onInteract: () => this.takeStamp() },
+      fragment: { id: "fragment", label: "FRUS Volume Fragment", x: 160, y: 132, radius: 32, kind: "document", onInteract: () => this.takeFragment() },
+      gate: { id: "gate", label: "Verification Gate", x: 128, y: 198, radius: 32, kind: "door", onInteract: () => this.openGate() }
+    };
+    const target = targets[guideCavernTargetId(stage)];
+    this.interactables = stage === "stamp" ? [colleague, target] : [target];
   }
 
   private drawCaveInterior() {
@@ -357,23 +399,23 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private drawAntagonistPlaque(x: number, y: number, label: string, accent: string) {
-    this.add.rectangle(x, y, 50, 26, color(PALETTE.black)).setStrokeStyle(2, color(accent)).setDepth(60);
-    this.add.text(x, y - 7, label, {
+    this.add.rectangle(x, y, 38, 18, color(PALETTE.black), 0.82).setStrokeStyle(1, color(accent), 0.7).setDepth(60);
+    this.add.text(x, y, label, {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "5px",
       color: accent,
       align: "center"
-    }).setOrigin(0.5, 0).setDepth(61);
+    }).setOrigin(0.5).setAlpha(0.75).setDepth(61);
   }
 
   private drawVerificationGate() {
     this.gateGlow = this.add.rectangle(128, 198, 54, 24, color(PALETTE.classNetRed)).setDepth(55);
-    this.add.rectangle(128, 198, 54, 24, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(56);
-    this.add.text(128, 190, "VERIFY\nGATE", {
+    this.add.rectangle(128, 198, 54, 24, color(PALETTE.black), 0.45).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(56);
+    this.gateLabel = this.add.text(128, 198, "LOCKED", {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.goldStamp,
       align: "center"
-    }).setOrigin(0.5, 0).setDepth(57);
+    }).setOrigin(0.5).setDepth(57);
   }
 }
