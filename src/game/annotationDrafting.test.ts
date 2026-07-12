@@ -2,8 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   annotationDraftingComplete,
   ANNOTATION_DRAFTING_PROMPTS,
+  ANNOTATION_DRAFTING_STATIONS,
+  collectAnnotationDraftingSlip,
   evaluateAnnotationDraftingAnswer,
-  getAnnotationDraftingPrompt
+  fileAnnotationDraftingSlip,
+  getAnnotationDraftingPrompt,
+  getAnnotationDraftingStation
 } from "./annotationDrafting";
 
 describe("annotation drafting prompts", () => {
@@ -46,5 +50,34 @@ describe("annotation drafting prompts", () => {
   it("clamps prompt lookup to the annotation sequence", () => {
     expect(getAnnotationDraftingPrompt(-1).id).toBe("published_provenance");
     expect(getAnnotationDraftingPrompt(99).id).toBe("selectivity_mitigation");
+  });
+
+  it("maps every source-backed rule to one physical note station", () => {
+    expect(ANNOTATION_DRAFTING_STATIONS.map((station) => station.id)).toEqual(
+      ANNOTATION_DRAFTING_PROMPTS.map((prompt) => prompt.id)
+    );
+    expect(getAnnotationDraftingStation(-1).label).toBe("Source Line");
+    expect(getAnnotationDraftingStation(99).label).toBe("Selection Ledger");
+  });
+
+  it("keeps physical note slips in a readable collect-and-file order", () => {
+    const earlyContext = collectAnnotationDraftingSlip(0, "contextual_annotation");
+    expect(earlyContext.ok).toBe(false);
+    expect(earlyContext.expectedStation.id).toBe("published_provenance");
+    expect(earlyContext.nextStep).toBe(0);
+
+    const source = collectAnnotationDraftingSlip(0, "published_provenance");
+    expect(source.ok).toBe(true);
+    expect(source.station.carriedLabel).toBe("Provenance Note");
+
+    const filedSource = fileAnnotationDraftingSlip(0, source.station.id);
+    expect(filedSource.ok).toBe(true);
+    expect(filedSource.nextStep).toBe(1);
+    expect(filedSource.complete).toBe(false);
+
+    const filedContext = fileAnnotationDraftingSlip(1, "contextual_annotation");
+    const filedSelection = fileAnnotationDraftingSlip(filedContext.nextStep, "selectivity_mitigation");
+    expect(filedSelection.nextStep).toBe(3);
+    expect(filedSelection.complete).toBe(true);
   });
 });

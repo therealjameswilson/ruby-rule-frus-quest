@@ -4404,3 +4404,35 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   cleanly. Visual artifacts: `output/archive-provenance-routed.png`,
   `output/archive-provenance-collection.png`,
   `output/archive-provenance-stamped.png`, and their `mobile-` counterparts.
+
+## 2026-07-11 — Physical expanded-annotation filing loop
+
+- Removed Archive A1's remaining full-screen annotation `ChoicePrompt`. The
+  three source-backed rules now exist as physical Source Line, Context Index,
+  and Selection Ledger slips, each with a distinct card symbol and manuscript
+  slot.
+- Added the dungeon-item payoff missing from the handoff: after provenance is
+  stamped, the player applies the new Citation Stamp to the literal `NO REPO`
+  stone wall. The chapter-key reward gets a clean beat before the annotation
+  trail appears.
+- The player carries one slip at a time, follows an in-room route to the
+  research table, and files it. Held/filed/next states persist through
+  `sceneProgress`, appear in `render_game_to_text()`, and block carrying a note
+  out of A1.
+- Removed redundant `STEP CLOSER` prompts during annotation routing. The fixed
+  HUD, physical card, held-note silhouette, gold trail, and three table slots
+  now communicate the loop without covering the room.
+- Preserved the original FRUS annotation substance and workflow transitions:
+  provenance, persons/events/policies/references/attachments, and selectivity
+  mitigation all advance the same documents to human review and award the same
+  eight document points.
+- Browser QA completed provenance -> Citation Stamp -> `NO REPO` clear -> all
+  three collect/file trips on desktop and at 393x852 DPR 3 using the real touch
+  A control. `choice` remained null throughout and no page/console errors were
+  reported.
+- Verification: focused physical-flow tests `10/10`; full Vitest suite
+  `478/478` across 90 files; production build passes (known Vite large-chunk
+  warning only); all 25 registered `?scene=` routes boot cleanly. Visual
+  artifacts include `output/archive-annotation-trail-ready.png`,
+  `output/archive-annotation-source-carried.png`,
+  `output/archive-annotation-context-filed.png`, and their `mobile-` versions.
