@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical ClassNet Vault review pass (2026-07-11):
+  - Removed Network N2's nine consecutive clearance, E.O. 13526, and declassification ChoicePrompts; NetworkScene no longer imports or owns quiz UI.
+  - Bundled all nine source-backed checks directly from their existing registries into three physical dockets: Clearance Lane, E.O. 13526 Release, and Equity Decision Trail.
+  - Added a `CARRY -> FILE -> REVEAL -> COLLECT` loop across an equal-rank Human Review Desk, Release Standard Board, Decision Ledger, and locked Clearance Token pedestal.
+  - Wrong-desk filings cost a small reliability penalty, return the docket for retry, and do not silently create unresolved-equity ending state.
+  - Preserved older saves by translating completed legacy review phases into the equivalent docket step and continuing to set the legacy completion flags used by the production board.
+  - Persisted the current docket, carried state, completed phase, and token unlock in `sceneProgress`; a carried docket cannot leave the vault unfiled.
+  - Decluttered N2 after visual QA by removing the duplicate bottom objective, redundant vault title, route labels, and routine success banners; each filed three-check station now lights visibly.
+  - Desktop and DPR-3 iPhone playthroughs used real movement/action controls to clear N1, file all N2 dockets, retry a deliberate wrong-desk filing, collect the Clearance Token, and enter Referral Vault with no browser errors.
+
 - Physical Two Networks routing pass (2026-07-11):
   - Replaced Network N1's seven consecutive OpenNet/ClassNet choice modals with four visible packets that preserve all seven underlying routing checks.
   - Added a physical `CARRY -> ROUTE` loop: collect each packet from the sorter, walk it to OpenNet or ClassNet, and press the action button at the terminal.
@@ -4362,11 +4372,12 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 
 ## 2026-07-11 — Codex + Perplexity harmonization and counter-room cadence
 
-- Re-audited the GitHub pull-request graph after the later Perplexity drops:
-  every one of the 21 source PR heads remains an ancestor of
-  `codex/gameplay-integration`. The only closed-unmerged PR is the deliberately
-  superseded five-variant DANN-E design draft (#41); the canonical eight-form
-  roster is preserved.
+- Re-audited the GitHub pull-request graph after the later Perplexity drops.
+  Every one of the 21 source PR heads integrated by PR #78 is an ancestor of
+  `main`. The stacked component PRs #59-67 and #72 were closed as superseded
+  after that integration, not dropped. The sole intentionally excluded head is
+  the obsolete five-variant DANN-E design draft (#41), replaced by the canonical
+  eight-form roster. No Codex or Perplexity component PR remains open.
 - Added three-frame normal and four-frame heavy hit-stop plus restrained camera
   shake to correct-tool DANN-E impacts. A short action buffer retains a B press
   made during hit-stop without allowing weapon cooldown cancellation.

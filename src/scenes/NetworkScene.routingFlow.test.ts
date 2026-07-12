@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const networkSceneSource = readFileSync(new URL("./NetworkScene.ts", import.meta.url), "utf8");
 const routingSource = readFileSync(new URL("../game/networkRouting.ts", import.meta.url), "utf8");
+const vaultReviewSource = readFileSync(new URL("../game/classNetVaultReview.ts", import.meta.url), "utf8");
 
 describe("NetworkScene physical routing flow", () => {
   it("routes packets in the room instead of opening the legacy seven-question quiz", () => {
@@ -29,5 +30,21 @@ describe("NetworkScene physical routing flow", () => {
     expect(networkSceneSource).toContain("drawRoutingPacketAtSorter");
     expect(networkSceneSource).toContain("WRONG NETWORK");
     expect(networkSceneSource).not.toContain("recordUnresolvedEquity");
+  });
+
+  it("files ClassNet review dockets in the room instead of reopening clearance quizzes", () => {
+    expect(networkSceneSource).toContain("handleClassNetVaultAction");
+    expect(networkSceneSource).toContain("routeClassNetVaultDocket");
+    expect(networkSceneSource).not.toContain("ChoicePrompt");
+    expect(networkSceneSource).not.toContain("showClearanceProcedureChoice");
+    expect(networkSceneSource).not.toContain("showEo13526ReviewChoice");
+    expect(networkSceneSource).not.toContain("showDeclassificationReviewChoice");
+  });
+
+  it("persists carried docket and completed review state", () => {
+    expect(networkSceneSource).toContain("sceneProgress.classNetVaultReviewStep");
+    expect(networkSceneSource).toContain("sceneProgress.classNetVaultDocketCarried");
+    expect(networkSceneSource).toContain("sceneProgress.classNetVaultReviewComplete");
+    expect(vaultReviewSource).toContain("Docket returned to the pedestal");
   });
 });

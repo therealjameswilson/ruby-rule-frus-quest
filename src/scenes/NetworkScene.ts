@@ -38,26 +38,7 @@ import { handleOpenOverlays } from "../systems/overlayInput";
 import { addNetworkCables, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesGate, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal, addSnesWorldMap } from "../systems/snesPixelArt";
-import { ChoicePrompt } from "../systems/verification";
 import { SNES_NETWORK_TILE_ASSET } from "../game/snesAtlas";
-import {
-  declassificationReviewComplete,
-  DECLASSIFICATION_REVIEW_PROMPTS,
-  evaluateDeclassificationReviewAnswer,
-  getDeclassificationReviewPrompt
-} from "../game/declassificationReview";
-import {
-  clearanceProcedureComplete,
-  CLEARANCE_PROCEDURE_PROMPTS,
-  evaluateClearanceProcedureAnswer,
-  getClearanceProcedurePrompt
-} from "../game/clearanceProcedure";
-import {
-  eo13526ReviewComplete,
-  EO13526_REVIEW_PROMPTS,
-  evaluateEo13526ReviewAnswer,
-  getEo13526ReviewPrompt
-} from "../game/eo13526Review";
 import {
   getNetworkRoutePacket,
   NETWORK_ROUTE_ITEM_TOTAL,
@@ -66,6 +47,18 @@ import {
   routedItemCount
 } from "../game/networkRouting";
 import type { NetworkRoutePacketId, RoutingNetwork } from "../game/networkRouting";
+import {
+  CLASSNET_VAULT_CHECK_TOTAL,
+  CLASSNET_VAULT_DOCKETS,
+  completedClassNetVaultChecks,
+  deriveClassNetVaultStep,
+  getClassNetVaultDocket,
+  routeClassNetVaultDocket
+} from "../game/classNetVaultReview";
+import type {
+  ClassNetVaultDocketId,
+  ClassNetVaultStationId
+} from "../game/classNetVaultReview";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -114,7 +107,6 @@ const NETWORK_ROOMS: Record<NetworkRoomId, NetworkRoom> = {
 export class NetworkScene extends Phaser.Scene {
   private player!: Player;
   private dialog!: DialogBox;
-  private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -129,6 +121,12 @@ export class NetworkScene extends Phaser.Scene {
   private routingSorterSlots: Phaser.GameObjects.Rectangle[] = [];
   private routingRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private routingRouteCueKey = "";
+  private classNetReviewStep = 0;
+  private classNetReviewComplete = false;
+  private vaultDocketWorldIcon?: Phaser.GameObjects.Container;
+  private vaultDocketHeldIcon?: Phaser.GameObjects.Container;
+  private vaultStationFrames = new Map<ClassNetVaultStationId, Phaser.GameObjects.Rectangle>();
+  private vaultStationLamps = new Map<ClassNetVaultStationId, Phaser.GameObjects.Rectangle[]>();
   private clearanceTokenCollected = false;
   private currentRoomId: NetworkRoomId = "N1";
   private visitedRoomIds = new Set<NetworkRoomId>();
@@ -174,7 +172,6 @@ export class NetworkScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(820).setVisible(false);
     this.player = new Player(this, 128, 196);
     this.dialog = new DialogBox(this);
-    this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
@@ -211,6 +208,18 @@ export class NetworkScene extends Phaser.Scene {
       ? NETWORK_ROUTE_ITEM_TOTAL
       : routedItemCount(this.currentRoute);
     this.clearanceTokenCollected = hasProcessItem("clearance_token");
+    this.classNetReviewStep = this.clearanceTokenCollected
+      ? CLASSNET_VAULT_DOCKETS.length
+      : deriveClassNetVaultStep(gameState.sceneProgress);
+    this.classNetReviewComplete = this.classNetReviewStep >= CLASSNET_VAULT_DOCKETS.length;
+    gameState.sceneProgress.classNetVaultReviewStep = this.classNetReviewStep;
+    if (this.classNetReviewComplete) {
+      gameState.sceneProgress.classNetVaultReviewComplete = 1;
+      gameState.sceneProgress.classNetVaultDocketCarried = 0;
+      this.syncLegacyClassNetProgress(this.classNetReviewStep);
+    } else if ((gameState.sceneProgress.classNetVaultDocketCarried ?? 0) !== getClassNetVaultDocket(this.classNetReviewStep).order) {
+      gameState.sceneProgress.classNetVaultDocketCarried = 0;
+    }
     if (this.routingComplete) gameState.sceneProgress.networkRoutingCarried = 0;
     else if ((gameState.sceneProgress.networkRoutingCarried ?? 0) !== getNetworkRoutePacket(this.currentRoute).order) {
       gameState.sceneProgress.networkRoutingCarried = 0;
@@ -243,10 +252,9 @@ export class NetworkScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (this.choice.active || this.inventory.active || this.reliability.active) {
+    if (this.inventory.active || this.reliability.active) {
       this.interactionPrompt.update(delta, null);
       handleOpenOverlays(this.inventory, this.reliability);
-      this.choice.updateInput();
       this.player.update(delta, false);
       return;
     }
@@ -260,20 +268,21 @@ export class NetworkScene extends Phaser.Scene {
       this.updateRoutingPacketPrompt(delta);
       this.refreshRoutingRouteCue();
     } else {
-      this.updateClearanceTokenPrompt(delta);
+      this.updateVaultDocketIcon();
+      this.updateClassNetVaultPrompt(delta);
       this.refreshClearanceTokenRouteCue();
     }
     const handledRoomAction = this.currentRoomId === "N1"
       ? this.handleRoutingPacketAction(input)
-      : this.handleClearanceTokenAction(input);
+      : this.handleClassNetVaultAction(input);
     if (handledRoomAction) {
       this.reliability.update();
-      this.objectiveText.setText(this.currentRoomId === "N1" ? "" : gameState.objective);
+      this.objectiveText.setText("");
       return;
     }
     if (this.checkRoomExit()) return;
     this.reliability.update();
-    this.objectiveText.setText(this.currentRoomId === "N1" ? "" : gameState.objective);
+    this.objectiveText.setText("");
   }
 
   private track<T extends Phaser.GameObjects.GameObject>(object: T) {
@@ -324,6 +333,11 @@ export class NetworkScene extends Phaser.Scene {
     this.roomObjects = [];
     this.bureaucraticWalls = [];
     this.clearanceTokenIcon = undefined;
+    this.vaultDocketWorldIcon = undefined;
+    if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
+    this.vaultDocketHeldIcon = undefined;
+    this.vaultStationFrames.clear();
+    this.vaultStationLamps.clear();
     this.routingPacketWorldIcon = undefined;
     this.routingSorterSlots = [];
     if (this.routingPacketHeldIcon?.active) this.routingPacketHeldIcon.destroy();
@@ -858,17 +872,12 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private renderClassNetVault() {
-    setVisibleEntities(["ClassNet vault door", "Clearance Token pedestal", "Referral handoff gate"]);
-    this.track(this.add.rectangle(128, 78, 164, 28, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.classNetRed)).setDepth(76));
-    this.track(this.add.text(128, 69, "CLASSNET VAULT", {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.classNetRed
-    }).setOrigin(0.5).setDepth(78));
+    this.syncClassNetVaultEntities();
     for (let x = 54; x <= 202; x += 24) {
       this.track(this.add.rectangle(x, 96, 14, 18, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(84));
       this.track(this.add.rectangle(x, 94, 8, 2, color(PALETTE.goldStamp)).setDepth(85));
     }
+    this.drawClassNetStations();
     addSnesTreasurePedestal(this, {
       x: 128,
       y: 132,
@@ -876,18 +885,96 @@ export class NetworkScene extends Phaser.Scene {
       label: "Clearance Token",
       collected: this.clearanceTokenCollected,
       accent: PALETTE.classNetRed,
-      track: (object) => this.track(object),
+      track: (object) => {
+        this.track(object);
+        if (object.name === "snes-treasure-icon" && object instanceof Phaser.GameObjects.Image) {
+          this.clearanceTokenIcon = object;
+          if (!this.classNetReviewComplete && !this.clearanceTokenCollected) object.setAlpha(0.18);
+        }
+        return object;
+      },
       depth: 138
     });
-    if (!this.clearanceTokenCollected) {
-      this.clearanceTokenIcon = this.track(this.add.image(128, 132, "clearance-token").setDepth(165).setVisible(false));
-      this.routeText.setText(this.clearanceTokenRouteLabel(false)).setVisible(true);
-      setObjective(this.clearanceTokenObjective());
-    } else {
-      this.track(this.add.image(128, 132, "clearance-token").setTint(color(PALETTE.goldStamp)).setDepth(165).setVisible(false));
-      this.routeText.setText("TOKEN EARNED\nEAST DOOR").setVisible(true);
+    if (this.clearanceTokenCollected) {
+      this.routeText.setVisible(false);
       setObjective("Two Networks: exit east to the Referral Vault.");
+      return;
     }
+    if (this.classNetReviewComplete) {
+      this.clearanceTokenIcon?.setAlpha(1);
+      this.routeText.setVisible(false);
+      setObjective("Two Networks: collect the Clearance Token from the center pedestal.");
+      return;
+    }
+    const carried = this.vaultCarriedDocket();
+    if (carried) this.createVaultDocketHeldIcon(carried.id);
+    else this.drawVaultDocketAtPedestal();
+    this.updateClassNetVaultRouteText();
+    setObjective(this.classNetVaultObjective());
+  }
+
+  private drawClassNetStations() {
+    for (const [index, docket] of CLASSNET_VAULT_DOCKETS.entries()) {
+      const position = this.classNetStationPosition(docket.station);
+      const filed = index < this.classNetReviewStep || this.classNetReviewComplete;
+      const accent = filed
+        ? PALETTE.openNetGreen
+        : docket.station === "human_desk"
+          ? PALETTE.terminalCyan
+          : docket.station === "release_board"
+            ? PALETTE.goldStamp
+            : PALETTE.classNetRed;
+      const container = this.track(this.add.container(position.x, position.y)
+        .setName(`classnet-station-${docket.station}`)
+        .setDepth(154));
+      container.add(this.add.ellipse(0, 10, 54, 10, color(PALETTE.black), 0.48));
+      const frame = this.add.rectangle(0, 0, 56, 25, color(PALETTE.black), 0.92)
+        .setStrokeStyle(2, color(accent));
+      this.vaultStationFrames.set(docket.station, frame);
+      container.add(frame);
+      container.add(this.add.text(0, -9, this.classNetStationShortLabel(docket.station), {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: accent,
+        align: "center"
+      }).setOrigin(0.5, 0));
+      const lamps: Phaser.GameObjects.Rectangle[] = [];
+      for (let lamp = 0; lamp < docket.checkIds.length; lamp += 1) {
+        const indicator = this.add.rectangle(-10 + lamp * 10, 5, 6, 5, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
+          .setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray));
+        lamps.push(indicator);
+        container.add(indicator);
+      }
+      this.vaultStationLamps.set(docket.station, lamps);
+    }
+  }
+
+  private classNetStationPosition(station: ClassNetVaultStationId) {
+    if (station === "human_desk") return { x: 61, y: 174 };
+    if (station === "release_board") return { x: 128, y: 83 };
+    return { x: 195, y: 174 };
+  }
+
+  private classNetStationShortLabel(station: ClassNetVaultStationId) {
+    if (station === "human_desk") return "HUMAN DESK";
+    if (station === "release_board") return "E.O. BOARD";
+    return "DECISION LOG";
+  }
+
+  private syncClassNetVaultEntities() {
+    const docket = this.classNetReviewComplete ? null : getClassNetVaultDocket(this.classNetReviewStep);
+    const carried = this.vaultCarriedDocket();
+    setVisibleEntities([
+      "ClassNet vault door",
+      "Human Review Desk",
+      "E.O. 13526 Release Standard Board",
+      "Equity Decision Ledger",
+      "Clearance Token pedestal",
+      "Referral handoff gate",
+      ...(docket ? [
+        `ClassNet docket ${docket.order}/3: ${docket.label} (${carried ? "carried" : "at pedestal"}; ${docket.checkIds.length} checks)`
+      ] : [])
+    ]);
   }
 
   private drawNetworkMinimap() {
@@ -930,269 +1017,307 @@ export class NetworkScene extends Phaser.Scene {
     });
   }
 
-  private handleClearanceTokenAction(input: Readonly<InputState>) {
+  private handleClassNetVaultAction(input: Readonly<InputState>) {
     if (this.currentRoomId !== "N2") {
       setNearestInteractable(null);
       return false;
     }
     if (this.clearanceTokenCollected) {
       setNearestInteractable(null);
-      this.routeText.setText("TOKEN EARNED\nEAST DOOR").setVisible(true);
+      this.routeText.setVisible(false);
       return false;
     }
-    const nearToken = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) <= 40;
-    if (!nearToken) {
-      setNearestInteractable(null);
-      this.routeText.setText(this.clearanceTokenRouteLabel(false)).setVisible(true);
-      if (input.aJustPressed && this.clearanceTokenHintTarget()) {
-        retroAudio.blip();
-        setLatestMessage("Step closer to Clearance Token.");
-        return true;
-      }
-      return false;
-    }
-    setNearestInteractable("Clearance Token");
-    this.routeText.setText(this.clearanceTokenRouteLabel(true)).setVisible(true);
     if (!input.aJustPressed) return false;
-    if (!gameState.sceneProgress.clearanceProcedureComplete) this.showClearanceProcedureChoice();
-    else if (!gameState.sceneProgress.eo13526ReviewComplete) this.showEo13526ReviewChoice();
-    else if (gameState.sceneProgress.declassificationReviewComplete) this.collectClearanceToken();
-    else this.showDeclassificationReviewChoice();
+    const target = this.classNetVaultActionHint();
+    if (!target || Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      target.x,
+      target.y
+    ) > (target.radius ?? 44)) {
+      retroAudio.blip();
+      setLatestMessage("Follow the gold route to the highlighted ClassNet station.");
+      return true;
+    }
+    if (this.classNetReviewComplete) {
+      this.collectClearanceToken();
+      return true;
+    }
+    const carried = this.vaultCarriedDocket();
+    if (!carried) {
+      this.pickUpVaultDocket();
+      return true;
+    }
+    const station = target.id.replace("classnet-station-", "") as ClassNetVaultStationId;
+    this.routeVaultDocket(station);
     return true;
   }
 
-  private updateClearanceTokenPrompt(delta: number) {
-    const hintTarget = this.clearanceTokenHintTarget();
-    const strictTarget = this.clearanceTokenStrictTarget();
-    this.interactionPrompt.update(
-      delta,
-      strictTarget ?? hintTarget,
-      undefined,
-      strictTarget ? { badge: "A", text: "CLEARANCE TOKEN" } : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined
-    );
+  private updateClassNetVaultPrompt(delta: number) {
+    const target = this.classNetVaultActionHint();
+    const strictTarget = target && Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      target.x,
+      target.y
+    ) <= (target.radius ?? 44) ? target : null;
+    const carried = this.vaultCarriedDocket();
+    const docket = this.classNetReviewComplete ? null : getClassNetVaultDocket(this.classNetReviewStep);
+    this.interactionPrompt.update(delta, strictTarget, undefined, strictTarget ? {
+      badge: "A",
+      text: this.classNetReviewComplete
+        ? "TAKE CLEARANCE TOKEN"
+        : carried
+          ? `FILE ${this.classNetStationShortLabel(target!.id.replace("classnet-station-", "") as ClassNetVaultStationId)}`
+          : `TAKE ${docket?.shortLabel ?? "DOCKET"}`
+    } : undefined);
+    setNearestInteractable(strictTarget?.label ?? null);
   }
 
-  private clearanceTokenStrictTarget(): Interactable | null {
+  private classNetVaultActionHint() {
     if (this.currentRoomId !== "N2" || this.clearanceTokenCollected) return null;
-    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 40) return null;
-    return this.clearanceTokenTarget(40);
+    if (this.classNetReviewComplete) return this.classNetVaultPedestalTarget("Clearance Token");
+    const carried = this.vaultCarriedDocket();
+    if (!carried) return this.classNetVaultPedestalTarget("ClassNet Docket");
+    const candidates = CLASSNET_VAULT_DOCKETS.map((docket) => this.classNetVaultStationTarget(docket.station));
+    const nearest = candidates.reduce((best, candidate) => {
+      const bestDistance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, best.x, best.y);
+      const candidateDistance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, candidate.x, candidate.y);
+      return candidateDistance < bestDistance ? candidate : best;
+    });
+    return Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, nearest.x, nearest.y) <= 82
+      ? nearest
+      : null;
   }
 
-  private clearanceTokenHintTarget(): Interactable | null {
-    if (this.currentRoomId !== "N2" || this.clearanceTokenCollected) return null;
-    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 56) return null;
-    return this.clearanceTokenTarget(40);
-  }
-
-  private clearanceTokenTarget(radius: number): Interactable {
+  private classNetVaultPedestalTarget(label: string): Interactable {
     return {
-      id: "clearance-token-pedestal",
-      label: "Clearance Token",
+      id: "classnet-vault-pedestal",
+      label,
       x: 128,
       y: 132,
-      radius,
+      radius: 46,
       kind: "document",
       onInteract: () => undefined
     };
   }
 
-  private clearanceTokenRouteLabel(nearToken: boolean) {
-    if (!gameState.sceneProgress.clearanceProcedureComplete) {
-      return nearToken ? "CLEARANCE LANE\nPRESS SPACE" : "CLEARANCE LANE\nVERIFY PROCEDURE";
-    }
-    if (!gameState.sceneProgress.eo13526ReviewComplete) {
-      return nearToken ? "E.O. 13526\nPRESS SPACE" : "E.O. 13526\nRELEASE REVIEW";
-    }
-    if (!gameState.sceneProgress.declassificationReviewComplete) {
-      return nearToken ? "CLASSNET REVIEW\nPRESS SPACE" : "CLASSNET REVIEW\nVERIFY AND TAKE";
-    }
-    return nearToken ? "CLEARANCE TOKEN\nPRESS SPACE" : "CLEARANCE TOKEN\nVERIFY AND TAKE";
+  private classNetVaultStationTarget(station: ClassNetVaultStationId): Interactable {
+    const position = this.classNetStationPosition(station);
+    return {
+      id: `classnet-station-${station}`,
+      label: CLASSNET_VAULT_DOCKETS.find((docket) => docket.station === station)?.stationLabel ?? "ClassNet station",
+      x: position.x,
+      y: position.y,
+      radius: 46,
+      kind: "document",
+      onInteract: () => undefined
+    };
   }
 
-  private clearanceTokenObjective() {
-    if (!gameState.sceneProgress.clearanceProcedureComplete) {
-      return "Two Networks: document the ClassNet clearance procedure before token review.";
-    }
-    if (!gameState.sceneProgress.eo13526ReviewComplete) {
-      return "Two Networks: apply the E.O. 13526 release standard before token review.";
-    }
-    if (!gameState.sceneProgress.declassificationReviewComplete) {
-      return "Two Networks: complete the ClassNet review before taking the token.";
-    }
-    return "Two Networks: collect the Clearance Token in N2.";
+  private vaultCarriedDocket() {
+    const order = Math.floor(gameState.sceneProgress.classNetVaultDocketCarried ?? 0);
+    return CLASSNET_VAULT_DOCKETS.find((docket) => docket.order === order) ?? null;
   }
 
-  private showClearanceProcedureChoice() {
-    if (gameState.sceneProgress.clearanceProcedureComplete) {
-      this.showEo13526ReviewChoice();
+  private pickUpVaultDocket() {
+    const docket = getClassNetVaultDocket(this.classNetReviewStep);
+    gameState.sceneProgress.classNetVaultDocketCarried = docket.order;
+    setHeldItem(`${docket.label} Docket`);
+    if (this.vaultDocketWorldIcon?.active) this.vaultDocketWorldIcon.destroy();
+    this.vaultDocketWorldIcon = undefined;
+    this.createVaultDocketHeldIcon(docket.id);
+    retroAudio.confirm();
+    setLatestMessage(`${docket.contentsLabel}. File at ${docket.stationLabel}.`);
+    setObjective(this.classNetVaultObjective());
+    this.updateClassNetVaultRouteText();
+    this.syncClassNetVaultEntities();
+    this.refreshClearanceTokenRouteCue();
+  }
+
+  private routeVaultDocket(station: ClassNetVaultStationId) {
+    const docket = this.vaultCarriedDocket();
+    if (!docket) return;
+    const result = routeClassNetVaultDocket(this.classNetReviewStep, docket.id, station);
+    gameState.sceneProgress.classNetVaultDocketCarried = 0;
+    setHeldItem(null);
+    if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
+    this.vaultDocketHeldIcon = undefined;
+
+    if (!result.ok) {
+      adjustReliability(-2, `${result.docket.label} returned from the wrong ClassNet station`);
+      retroAudio.warning();
+      this.routeText.setVisible(false);
+      this.toast.show("WRONG DESK", this.player.position, "warn");
+      setLatestMessage(result.message);
+      setObjective(`RETRY ${docket.order}/3: collect ${docket.label} from the pedestal.`);
+      this.drawVaultDocketAtPedestal();
+      this.syncClassNetVaultEntities();
+      this.refreshClearanceTokenRouteCue();
+      this.reliability.update();
       return;
     }
 
-    const step = gameState.sceneProgress.clearanceProcedureStep ?? 0;
-    const prompt = getClearanceProcedurePrompt(step);
-    setObjective(`Clearance procedure: answer ${step + 1}/${CLEARANCE_PROCEDURE_PROMPTS.length}.`);
-    this.routeText.setText(`CLEARANCE\n${step + 1}/${CLEARANCE_PROCEDURE_PROMPTS.length}`).setVisible(true);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateClearanceProcedureAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `Clearance procedure shortcut: ${option.value}`);
-        this.reliability.update();
-        setLatestMessage("CLEARANCE LANE FAILED - HUMAN REVIEW ROUTE REQUIRED");
-        this.dialog.show("CLEARANCE PROCEDURE", [
-          result.message,
-          "The declassification lane must stay separate and accountable."
-        ], () => this.showClearanceProcedureChoice());
-        return;
-      }
+    this.classNetReviewStep = result.nextStep;
+    this.classNetReviewComplete = result.complete;
+    gameState.sceneProgress.classNetVaultReviewStep = result.nextStep;
+    this.syncLegacyClassNetProgress(result.nextStep);
+    this.awardClassNetDocketPoints(result.docket.id);
+    this.syncClassNetStationFrames();
+    retroAudio.stamp();
+    setLatestMessage(result.message);
+    if (result.complete) {
+      gameState.sceneProgress.classNetVaultReviewComplete = 1;
+      this.clearanceTokenIcon?.setAlpha(1);
+      this.routeText.setVisible(false);
+      setObjective("Two Networks: collect the Clearance Token from the center pedestal.");
+      this.clearClearanceTokenRouteCue();
+      this.syncClassNetVaultEntities();
+      this.track(addTinySparkle(this, 116, 120, PALETTE.goldStamp));
+      this.track(addTinySparkle(this, 140, 120, PALETTE.terminalCyan));
+      return;
+    }
 
-      const nextStep = step + 1;
-      gameState.sceneProgress.clearanceProcedureStep = nextStep;
-      if (!clearanceProcedureComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`Clearance procedure check ${nextStep}/${CLEARANCE_PROCEDURE_PROMPTS.length}.`);
-        this.dialog.show("CLEARANCE PROCEDURE", [
-          result.message,
-          "Continue routing the clearance procedure before the token review."
-        ], () => this.showClearanceProcedureChoice());
-        return;
-      }
+    this.drawVaultDocketAtPedestal();
+    this.updateClassNetVaultRouteText();
+    setObjective(this.classNetVaultObjective());
+    this.syncClassNetVaultEntities();
+    this.refreshClearanceTokenRouteCue();
+  }
 
+  private awardClassNetDocketPoints(docketId: ClassNetVaultDocketId) {
+    if (docketId === "clearance_lane") addDocumentPoints(5, "declassification procedure lane filed");
+    else if (docketId === "release_standard") addDocumentPoints(7, "E.O. 13526 release review filed");
+  }
+
+  private syncLegacyClassNetProgress(completedDockets: number) {
+    if (completedDockets >= 1) {
       gameState.sceneProgress.clearanceProcedureComplete = 1;
-      gameState.sceneProgress.clearanceProcedureStep = CLEARANCE_PROCEDURE_PROMPTS.length;
-      addDocumentPoints(5, "declassification procedure lane documented");
-      retroAudio.confirm();
-      setLatestMessage("Clearance procedure lane logged: proceed to ClassNet review.");
-      this.dialog.show("CLEARANCE PROCEDURE", [
-        result.message,
-        "Procedure lane filed.",
-        "Now apply the E.O. 13526 release review."
-      ], () => this.showEo13526ReviewChoice());
-    });
-  }
-
-  private showEo13526ReviewChoice() {
-    if (!gameState.sceneProgress.clearanceProcedureComplete) {
-      this.showClearanceProcedureChoice();
-      return;
+      gameState.sceneProgress.clearanceProcedureStep = CLASSNET_VAULT_DOCKETS[0].checkIds.length;
     }
-    if (gameState.sceneProgress.eo13526ReviewComplete) {
-      this.showDeclassificationReviewChoice();
-      return;
-    }
-
-    const step = gameState.sceneProgress.eo13526ReviewStep ?? 0;
-    const prompt = getEo13526ReviewPrompt(step);
-    setObjective(`E.O. 13526 review: answer ${step + 1}/${EO13526_REVIEW_PROMPTS.length}.`);
-    this.routeText.setText(`E.O. 13526\n${step + 1}/${EO13526_REVIEW_PROMPTS.length}`).setVisible(true);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateEo13526ReviewAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `E.O. 13526 review shortcut: ${option.value}`);
-        this.reliability.update();
-        setLatestMessage("E.O. 13526 REVIEW FAILED - RELEASE STANDARD REQUIRED");
-        this.dialog.show("E.O. 13526 REVIEW", [
-          result.message,
-          "Release review must keep concurrence and withholding accounting visible."
-        ], () => this.showEo13526ReviewChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.eo13526ReviewStep = nextStep;
-      if (!eo13526ReviewComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`E.O. 13526 review check ${nextStep}/${EO13526_REVIEW_PROMPTS.length}.`);
-        this.dialog.show("E.O. 13526 REVIEW", [
-          result.message,
-          "Continue the release-standard review before the token moves."
-        ], () => this.showEo13526ReviewChoice());
-        return;
-      }
-
+    if (completedDockets >= 2) {
       gameState.sceneProgress.eo13526ReviewComplete = 1;
-      gameState.sceneProgress.eo13526ReviewStep = EO13526_REVIEW_PROMPTS.length;
-      addDocumentPoints(7, "E.O. 13526 release review filed");
-      retroAudio.confirm();
-      setLatestMessage("E.O. 13526 review logged: release, concurrence, and accounting filed.");
-      this.dialog.show("E.O. 13526 REVIEW", [
-        result.message,
-        "Release standard filed.",
-        "Now resolve the classified equity review."
-      ], () => this.showDeclassificationReviewChoice());
+      gameState.sceneProgress.eo13526ReviewStep = CLASSNET_VAULT_DOCKETS[1].checkIds.length;
+    }
+    if (completedDockets >= 3) {
+      gameState.sceneProgress.declassificationReviewComplete = 1;
+      gameState.sceneProgress.declassificationReviewStep = CLASSNET_VAULT_DOCKETS[2].checkIds.length;
+    }
+  }
+
+  private syncClassNetStationFrames() {
+    CLASSNET_VAULT_DOCKETS.forEach((docket, index) => {
+      const frame = this.vaultStationFrames.get(docket.station);
+      if (!frame) return;
+      const filed = index < this.classNetReviewStep || this.classNetReviewComplete;
+      const accent = filed
+        ? PALETTE.openNetGreen
+        : docket.station === "human_desk"
+          ? PALETTE.terminalCyan
+          : docket.station === "release_board"
+            ? PALETTE.goldStamp
+            : PALETTE.classNetRed;
+      frame.setStrokeStyle(2, color(accent));
+      for (const lamp of this.vaultStationLamps.get(docket.station) ?? []) {
+        lamp.setFillStyle(color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark));
+        lamp.setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray));
+      }
     });
   }
 
-  private showDeclassificationReviewChoice() {
-    if (gameState.sceneProgress.declassificationReviewComplete) {
-      this.collectClearanceToken();
+  private classNetVaultObjective() {
+    if (this.clearanceTokenCollected) return "Two Networks: exit east to the Referral Vault.";
+    if (this.classNetReviewComplete) return "Two Networks: collect the Clearance Token from the center pedestal.";
+    const docket = getClassNetVaultDocket(this.classNetReviewStep);
+    return this.vaultCarriedDocket()
+      ? `FILE ${docket.order}/3: carry ${docket.label} to ${docket.stationLabel}.`
+      : `FILE ${docket.order}/3: collect ${docket.label} from the center pedestal.`;
+  }
+
+  private updateClassNetVaultRouteText() {
+    this.routeText.setVisible(false);
+  }
+
+  private drawVaultDocketAtPedestal() {
+    if (this.vaultDocketWorldIcon?.active) this.vaultDocketWorldIcon.destroy();
+    if (this.classNetReviewComplete || this.clearanceTokenCollected) {
+      this.vaultDocketWorldIcon = undefined;
       return;
     }
+    const docket = getClassNetVaultDocket(this.classNetReviewStep);
+    this.vaultDocketWorldIcon = this.track(this.createVaultDocketIcon(128, 119, docket.id, false)
+      .setName(`classnet-docket-${docket.id}`)
+      .setDepth(177));
+  }
 
-    const step = gameState.sceneProgress.declassificationReviewStep ?? 0;
-    const prompt = getDeclassificationReviewPrompt(step);
-    setObjective(`ClassNet review: answer ${step + 1}/${DECLASSIFICATION_REVIEW_PROMPTS.length}.`);
-    this.routeText.setText(`CLASSNET\n${step + 1}/${DECLASSIFICATION_REVIEW_PROMPTS.length}`).setVisible(true);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateDeclassificationReviewAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        adjustReliability(-3, "declassification review correction");
-        setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
-        this.reliability.update();
-        this.dialog.show("CLASSNET REVIEW", [
-          result.message,
-          "Classified equities need a documented human review before the token moves."
-        ], () => this.showDeclassificationReviewChoice());
-        return;
-      }
+  private createVaultDocketHeldIcon(docketId: ClassNetVaultDocketId) {
+    if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
+    this.vaultDocketHeldIcon = this.createVaultDocketIcon(
+      Math.round(this.player.position.x),
+      Math.round(this.player.position.y - 17),
+      docketId,
+      true
+    ).setName(`classnet-carried-docket-${docketId}`).setDepth(280);
+  }
 
-      const nextStep = step + 1;
-      gameState.sceneProgress.declassificationReviewStep = nextStep;
-      if (!declassificationReviewComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`ClassNet review check ${nextStep}/${DECLASSIFICATION_REVIEW_PROMPTS.length}.`);
-        this.dialog.show("CLASSNET REVIEW", [
-          result.message,
-          "Continue the clearance review before taking the token."
-        ], () => this.showDeclassificationReviewChoice());
-        return;
-      }
+  private createVaultDocketIcon(
+    x: number,
+    y: number,
+    docketId: ClassNetVaultDocketId,
+    compact: boolean
+  ) {
+    const docket = CLASSNET_VAULT_DOCKETS.find((candidate) => candidate.id === docketId)
+      ?? CLASSNET_VAULT_DOCKETS[0];
+    const accent = docket.station === "human_desk"
+      ? PALETTE.terminalCyan
+      : docket.station === "release_board"
+        ? PALETTE.goldStamp
+        : PALETTE.classNetRed;
+    const width = compact ? 22 : 32;
+    const height = compact ? 14 : 20;
+    return this.add.container(x, y, [
+      this.add.ellipse(1, Math.round(height / 2), width + 4, 7, color(PALETTE.black), 0.42),
+      this.add.rectangle(0, 0, width, height, color(PALETTE.creamPaper))
+        .setStrokeStyle(1, color(accent)),
+      this.add.rectangle(-Math.round(width / 2) + 4, 0, 4, height - 3, color(PALETTE.deepRuby)),
+      this.add.rectangle(-5, -Math.round(height / 2), compact ? 9 : 13, 4, color(accent))
+        .setStrokeStyle(1, color(PALETTE.black)),
+      this.add.text(3, compact ? -5 : -7, docket.shortLabel.slice(0, compact ? 4 : 6), {
+        fontFamily: "monospace",
+        fontSize: compact ? "4px" : "5px",
+        color: PALETTE.black
+      }).setOrigin(0.5, 0),
+      ...docket.checkIds.map((_, index) => this.add.rectangle(-7 + index * 7, compact ? 3 : 4, 4, 2, color(accent)))
+    ]);
+  }
 
-      gameState.sceneProgress.declassificationReviewComplete = 1;
-      retroAudio.confirm();
-      setLatestMessage("ClassNet declassification review documented.");
-      this.dialog.show("CLASSNET REVIEW", [
-        result.message,
-        "The human decision trail is logged.",
-        "Take the Clearance Token from the pedestal."
-      ], () => this.collectClearanceToken());
-    });
+  private updateVaultDocketIcon() {
+    if (!this.vaultDocketHeldIcon?.active) return;
+    this.vaultDocketHeldIcon
+      .setPosition(Math.round(this.player.position.x), Math.round(this.player.position.y - 17))
+      .setDepth(Math.round(this.player.position.y) + 5);
   }
 
   private collectClearanceToken() {
-    if (this.clearanceTokenCollected) return;
-    gameState.sceneProgress.clearanceProcedureComplete = 1;
-    gameState.sceneProgress.clearanceProcedureStep = CLEARANCE_PROCEDURE_PROMPTS.length;
-    gameState.sceneProgress.eo13526ReviewComplete = 1;
-    gameState.sceneProgress.eo13526ReviewStep = EO13526_REVIEW_PROMPTS.length;
-    gameState.sceneProgress.declassificationReviewComplete = 1;
+    if (this.clearanceTokenCollected || !this.classNetReviewComplete) return;
+    this.syncLegacyClassNetProgress(CLASSNET_VAULT_DOCKETS.length);
+    gameState.sceneProgress.classNetVaultReviewComplete = 1;
+    gameState.sceneProgress.classNetVaultReviewStep = CLASSNET_VAULT_DOCKETS.length;
+    gameState.sceneProgress.classNetVaultDocketCarried = 0;
     this.clearanceTokenCollected = true;
+    setHeldItem(null);
     addProcessItem("clearance_token");
-    setLatestMessage("Clearance Token opens red vault doors.");
+    setLatestMessage("Clearance Token earned after nine human-review checks were physically filed.");
     setObjective("Two Networks: exit east to the Referral Vault.");
-    this.routeText.setText("TOKEN EARNED\nEAST DOOR").setVisible(true);
-    this.clearanceTokenIcon?.setTint(color(PALETTE.goldStamp));
+    this.routeText.setVisible(false);
+    this.clearanceTokenIcon?.setTint(color(PALETTE.goldStamp)).setAlpha(0.4);
     this.clearClearanceTokenRouteCue();
     addSnesRewardBurst(this, 128, 114, "clearance-token", "Clearance Token", (object) => this.track(object));
+    this.toast.show("CLEARANCE TOKEN", this.player.position, "info");
     retroAudio.stamp();
+    this.syncClassNetVaultEntities();
     this.syncRoomTraversalState();
     this.updateNetworkMinimap();
-    this.dialog.show("CLASSNET", [
-      "Token logged after correct routing.",
-      "Human review owns the handoff. StateChat stays on terminal support."
-    ]);
   }
 
   private refreshClearanceTokenRouteCue() {
@@ -1202,14 +1327,33 @@ export class NetworkScene extends Phaser.Scene {
     }
 
     const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 12) };
-    const end = { x: 128, y: 132 };
-    const label = this.clearanceTokenRouteCueLabel();
+    const docket = this.classNetReviewComplete ? null : getClassNetVaultDocket(this.classNetReviewStep);
+    const carried = this.vaultCarriedDocket();
+    const end = this.classNetReviewComplete || !carried || !docket
+      ? { x: 128, y: 132 }
+      : this.classNetStationPosition(docket.station);
+    const label = this.classNetReviewComplete
+      ? "TAKE TOKEN"
+      : carried && docket
+        ? this.classNetStationShortLabel(docket.station)
+        : `TAKE ${docket?.shortLabel ?? "DOCKET"}`;
+    const accent = this.classNetReviewComplete
+      ? PALETTE.goldStamp
+      : docket?.station === "human_desk"
+        ? PALETTE.terminalCyan
+        : docket?.station === "release_board"
+          ? PALETTE.goldStamp
+          : PALETTE.classNetRed;
+    if (Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y) <= 42) {
+      this.clearClearanceTokenRouteCue();
+      return;
+    }
     const cueKey = `N2:${label}:${start.x},${start.y}->${end.x},${end.y}`;
     if (cueKey === this.clearanceTokenRouteCueKey) return;
 
     this.clearClearanceTokenRouteCue();
     this.clearanceTokenRouteCueKey = cueKey;
-    this.drawClearanceTokenRouteCue(start, end, label);
+    this.drawClearanceTokenRouteCue(start, end, accent);
   }
 
   private clearClearanceTokenRouteCue() {
@@ -1225,24 +1369,15 @@ export class NetworkScene extends Phaser.Scene {
     return this.track(object);
   }
 
-  private clearanceTokenRouteCueLabel() {
-    if (!gameState.sceneProgress.clearanceProcedureComplete) return "VERIFY LANE";
-    if (!gameState.sceneProgress.eo13526ReviewComplete) return "E.O. REVIEW";
-    if (!gameState.sceneProgress.declassificationReviewComplete) return "CLASS REVIEW";
-    return "TAKE TOKEN";
-  }
-
-  private drawClearanceTokenRouteCue(start: { x: number; y: number }, end: { x: number; y: number }, label: string) {
-    const accent = label === "TAKE TOKEN"
-      ? PALETTE.goldStamp
-      : label === "CLASS REVIEW"
-        ? PALETTE.classNetRed
-        : PALETTE.terminalCyan;
-
-    this.trackClearanceTokenRouteCue(this.add.ellipse(end.x, end.y + 16, 78, 16, color(PALETTE.black), 0.34)
+  private drawClearanceTokenRouteCue(
+    start: { x: number; y: number },
+    end: { x: number; y: number },
+    accent: string
+  ) {
+    this.trackClearanceTokenRouteCue(this.add.ellipse(end.x, end.y + 13, 58, 12, color(PALETTE.black), 0.3)
       .setName("network-clearance-token-route-shadow")
       .setDepth(136));
-    this.trackClearanceTokenRouteCue(this.add.rectangle(end.x, end.y, 44, 32, color(PALETTE.black), 0)
+    this.trackClearanceTokenRouteCue(this.add.rectangle(end.x, end.y, 58, 29, color(PALETTE.black), 0)
       .setStrokeStyle(2, color(accent))
       .setName("network-clearance-token-route-target-glow")
       .setDepth(236));
@@ -1258,18 +1393,6 @@ export class NetworkScene extends Phaser.Scene {
         .setDepth(237));
     }
 
-    const width = Math.max(56, label.length * 5 + 10);
-    this.trackClearanceTokenRouteCue(this.add.rectangle(end.x, end.y + 34, width, 10, color(PALETTE.black), 0.94)
-      .setStrokeStyle(1, color(accent))
-      .setName("network-clearance-token-route-label-frame")
-      .setDepth(238));
-    this.trackClearanceTokenRouteCue(this.add.text(end.x, end.y + 31, label, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: accent
-    }).setName("network-clearance-token-route-label")
-      .setOrigin(0.5, 0)
-      .setDepth(239));
   }
 
   private checkRoomExit() {
@@ -1293,6 +1416,14 @@ export class NetworkScene extends Phaser.Scene {
     }
 
     if (this.currentRoomId === "N2" && direction === "west") {
+      const carried = this.vaultCarriedDocket();
+      if (carried) {
+        setLatestMessage(`${carried.label} must be filed before leaving the ClassNet Vault.`);
+        setObjective(this.classNetVaultObjective());
+        this.player.setPosition(NETWORK_PLAY_BOUNDS.left + 18, position.y);
+        this.exitCooldownUntil = this.time.now + 500;
+        return false;
+      }
       this.enterRoom("N1", EXIT_SPAWNS.west, true, "west");
       return true;
     }
@@ -1353,7 +1484,6 @@ export class NetworkScene extends Phaser.Scene {
   private updateDanneLurker(delta: number) {
     const canPressure = !this.roomTransitionLocked
       && !this.dialog.active
-      && !this.choice.active
       && !this.inventory.active
       && !this.reliability.active;
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
@@ -1377,7 +1507,7 @@ export class NetworkScene extends Phaser.Scene {
     }
     setObjective(this.clearanceTokenCollected
       ? "Two Networks: exit east to the Referral Vault."
-      : this.clearanceTokenObjective());
+      : this.classNetVaultObjective());
   }
 
   private finishRouting() {
