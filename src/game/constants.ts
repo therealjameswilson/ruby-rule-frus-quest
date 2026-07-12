@@ -395,12 +395,12 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     lockedExits: {
       north: "NARA stacks citation lock",
       east: "OpenNet source-note lock",
-      south: "Referral stacks citation lock"
+      south: "Referral gate"
     },
     requiredItems: {
       north: "citation_stamp",
       east: "citation_stamp",
-      south: "citation_stamp"
+      south: "concurrence_slip"
     },
     roomType: "normal"
   },

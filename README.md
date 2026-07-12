@@ -72,15 +72,15 @@ The branch-by-branch evidence and the two restored data payloads are recorded in
 | 2. Tile-based overworld | Partially live: region/world scenes and gameplay-map scenes boot through direct links; older large overworld experiments remain quarantined under `experiments/overworld-wip/`. |
 | 3. Collision | Live on `main`: player/action collision, gates, interactables, and room blockers use Arcade-style AABB patterns; fuller per-tile terrain collision remains a promotion target. |
 | 4. Combat and workflow tools | Live on `main`: equipped Citation Stamp, Red Pencil, and Review Folder swings have active frames/cooldowns; tool-specific DANN-E counters, room-clear gates, ego attacks, hit-stop, loot, and Buckram Gate pressure are integrated. |
-| 5. Enemy AI | Live on `main`: the canonical eight DANN-E forms, roaming lurkers, patrol/chase/turret strategies, boss phases, readable lock/shift/barrage telegraphs, taunts, hazards, difficulty tiers, and automated combat coverage are integrated. |
+| 5. Enemy AI | Live on `main`: the canonical eight DANN-E forms, roaming lurkers, patrol/chase/turret strategies, boss phases, readable ambient and boss lock/shift/barrage telegraphs, taunts, hazards, difficulty tiers, and automated combat coverage are integrated. |
 | 6. HUD and volume assembly | Live on `main`: role, reliability, document points, equipped tools, cooldown, stamps, fragments, DANN-E risk, and the persistent five-piece volume-assembly arc share the compact quest band and pause subscreen. |
 | 7. Visual pipeline | Live on `main`: fixed 256x240 pixel canvas, integer nearest-neighbor scaling, native 16-bit character/DANN-E sheets, repository-local Codex and Perplexity art packs, guarded fallbacks, and Web Audio tones. |
-| 8. Room and dungeon scaffolding | Live on `main`: the normal route runs Silent Read -> mandatory DANN-E Black Vault -> physical Buckram bindery; gates, rewards, final certification, true/bad ending scenes, and debug galleries all boot through `?scene=` QA links. |
+| 8. Room and dungeon scaffolding | Live on `main`: Archive A1 now demonstrates the compact entrance -> dungeon tool -> source puzzle -> room clear -> physical exit rhythm; the normal route later runs Silent Read -> mandatory DANN-E Black Vault -> physical Buckram bindery. |
 | Mobile parity | Live on `main`: floating D-pad, A/B/Start controls, multi-touch combat, touch cooldown feedback, safe-area metrics, and integer DPR scaling are verified on iPhone-sized Chromium. |
 | Accessibility | Live on `main`: keyboard/touch/gamepad controls, concise/full `window.render_game_to_text()` payloads, debug scenes, QA deep links, and persisted high-contrast/colorblind patterns are integrated. |
 | New Game+ | Live on `main`: first completion unlocks the veteran cosmetic, harder DANN-E tier, second-volume region, and persistent completed-volume count. |
 
-Current integration verification passes 543 Vitest cases and covers the complete desktop and touch-driven route through both Network rooms, the physical Referral Vault, the physical Silent Read proofing line, all three mandatory telegraphed DANN-E phases, all five Buckram binding packets, and final publication. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+Current integration verification passes 552 Vitest cases and covers the compact Archive source-room route, both Network rooms, the physical Referral Vault, the physical Silent Read proofing line, all three mandatory telegraphed DANN-E phases, all five Buckram binding packets, and final publication on desktop and touch. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
 
 ## MVP Features
 
@@ -163,7 +163,7 @@ Sprites, tiles, enemy art, and UI textures are original repository-local SVG pix
 
 1. Promote the quarantined tile registry and screen manager in small, fallback-guarded steps.
 2. Replace remaining poster-like room surfaces with validated Phaser tilemap layers and per-tile collision.
-3. Give every main dungeon a compact entrance, key/tool reveal, shortcut, and boss/review payoff.
+3. Extend Archive A1's compact entrance, tool reveal, room-clear, and physical-exit rhythm across every main dungeon.
 4. Expand DANN-E encounters beyond readable telegraphs into more phase-specific movement choices and distinctive tool counters.
 5. Simplify oversized scene implementations as physical interactions move into reusable systems.
 6. Expand save/load coverage to exact in-room puzzle and enemy-wave state.

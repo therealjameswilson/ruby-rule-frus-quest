@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Archive A1 dungeon-rhythm and ambient DANN-E fairness pass (2026-07-12):
+  - Fixed the dungeon-item state bug that treated mere Citation Stamp ownership as proof that Source Note 47 had already been verified; the Guide now grants the tool, while A1 still requires the repository, collection, and folder trail.
+  - Rebuilt A1 around one readable room idea: quiet floor, central research table, optional equal-rank colleague, compact terminal-only StateChat flag, visible wall enemy, and physical locked exits. Removed the overlapping atlas, room compass, 92x70 terminal panel, extra shelf collision, and duplicate floor objective/exit text.
+  - Kept Telegram and Cross-Ref sealed until the three annotation notes are physically carried back to the manuscript table, then reveals both as the final room packet.
+  - Replaced the last-document dialog teleport with a visible `SOURCE ROOM CLEAR` payoff and a physical east gate; crossing that edge now routes the verified packet into Two Networks.
+  - Persisted Source Note, Telegram, Cross-Ref, source-stamp, and room-clear state through the existing numeric `sceneProgress` save contract; restored runs do not duplicate pickups.
+  - Changed A1's south route into a later Concurrence Slip shortcut instead of a second Citation Stamp bypass, harmonizing the local room graph with `FRUS_ROOM_GRAPH`.
+  - Added a pause-safe 620 ms snapshot telegraph to roaming DANN-E Ego bolts, lengthened their recovery cadence, and changed ambient contact/bolt hits to 1/2 reliability damage without falsely recording a statutory standards violation. The real missed-deadline violation remains at the Statutory Clock boss.
+  - Verification: 106 Vitest files / 552 tests and the production build pass; the required web-game client ran; full Guide -> A1 -> Network desktop and DPR-3 iPhone touch routes complete without browser errors; a dedicated red-lock dodge preserves reliability after leaving the marked target.
+
 - Readable DANN-E boss-pattern pass (2026-07-12):
   - Replaced instant Colossus, Swarm, Cloud, and Ascendant attacks with 460-640 ms pixel telegraphs: red snapshot brackets, dotted firing lanes, cyan Cloud Shift destinations, and a pulsing DANN-E core.
   - Projectiles now commit to the marked player snapshot, so moving out of the warning is a real dodge rather than a cosmetic cue; Cloud Form marks a collision-safe destination before teleporting and firing.

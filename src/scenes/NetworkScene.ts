@@ -31,7 +31,8 @@ import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { applyDanneLurkerDamage } from "../systems/dannePressure";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -1489,12 +1490,12 @@ export class NetworkScene extends Phaser.Scene {
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
     if (result.triggered) {
       this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted network routing.");
+      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted network routing.");
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     } else if (result.egoBoltHit) {
       this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted network routing.");
+      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted network routing.");
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     }
