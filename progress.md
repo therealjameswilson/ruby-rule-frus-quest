@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Silent Read S1 real-tilemap and mobile-feedback promotion (2026-07-12):
+  - Completed the Editor/Silent Read pair's tilemap transition with one native 16x16 S1 layout shared by its evidence and publication phases.
+  - Replaced giant manuscript/proof pages, the phase panel, fallback room layer, compass, and three duplicate production-lane cards with a quiet dark proof floor, central route lane, explicit workstation pads, and one outbox.
+  - Preserved all four evidence files, three publication dockets, wrong-desk retry, carried-file restart, Proof Lens, Buckram Key, DANN-E lurker, save fields, E1 return, and mandatory Black Vault gate; the old composition remains the texture-guarded fallback.
+  - Fixed shared FeedbackToast placement to clamp the full panel width, not just its center. Long DANN-E messages now remain inside the 256px playfield at mobile edge anchors.
+  - Verification: 113 Vitest files / 583 tests pass; the required web-game client ran; the complete E1/S1/Black Vault handoff passes on desktop and DPR-3 iPhone touch; mobile screenshots confirm the full Ego-bolt toast remains visible.
+
 - Editor's Labyrinth E1 real-tilemap and interaction-forgiveness promotion (2026-07-12):
   - Promoted E1 to native 16x16 ground, wall, and decoration layers with one reachable east gate and tile-derived perimeter collision.
   - Replaced two giant pages, the oversized StateChat panel, fallback room layer, and compass with a compact StateChat terminal, warm office floor, ruby review lane, one outbox, and one human editor desk.

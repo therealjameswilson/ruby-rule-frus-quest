@@ -31,6 +31,23 @@ describe("computeToastPlacement", () => {
     const right = computeToastPlacement({ x: 999, y: 120 }, { top: 54, bottom: 214, left: 8, right: 248 });
     expect(right.x).toBeLessThanOrEqual(248);
   });
+
+  it("clamps the whole panel when a wide toast follows an edge anchor", () => {
+    const bounds = { top: 54, bottom: 214, left: 8, right: 248 };
+    const left = computeToastPlacement({ x: 12, y: 120 }, bounds, 26, 80);
+    const right = computeToastPlacement({ x: 244, y: 120 }, bounds, 26, 80);
+
+    expect(left.x).toBe(88);
+    expect(right.x).toBe(168);
+    expect(left.x - 80).toBe(bounds.left);
+    expect(right.x + 80).toBe(bounds.right);
+  });
+
+  it("centers a panel that is wider than the available bounds", () => {
+    const bounds = { top: 54, bottom: 214, left: 8, right: 248 };
+    const placement = computeToastPlacement({ x: 12, y: 120 }, bounds, 26, 500);
+    expect(placement.x).toBe(128);
+  });
 });
 
 describe("toast timing", () => {

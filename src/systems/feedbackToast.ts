@@ -73,7 +73,7 @@ export class FeedbackToast {
   }
 
   private place(anchor: ToastPlacement, bounds?: ToastAnchorBounds) {
-    const placement = computeToastPlacement(anchor, bounds);
+    const placement = computeToastPlacement(anchor, bounds, 26, this.border.displayWidth / 2);
     this.container.setPosition(snapPixel(placement.x), snapPixel(placement.y));
   }
 
