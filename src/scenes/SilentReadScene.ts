@@ -123,7 +123,7 @@ interface ProofRoom {
   id: ProofRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, ProofRoomId | "BlackVaultLairScene">>;
+  exits: Partial<Record<Direction, ProofRoomId | "DV1">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "red_pencil" | "buckram_key">>;
 }
@@ -151,7 +151,7 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
     id: "S1",
     title: "Silent Read Tower",
     roomType: "reward",
-    exits: { west: "E1", east: "BlackVaultLairScene" },
+    exits: { west: "E1", east: "DV1" },
     lockedExits: { east: "Black Vault final-review gate" },
     requiredItems: { east: "buckram_key" }
   }

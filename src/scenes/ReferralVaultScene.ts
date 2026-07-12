@@ -81,7 +81,7 @@ interface ReferralRoom {
   id: ReferralRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, ReferralRoomId | "SilentReadScene">>;
+  exits: Partial<Record<Direction, ReferralRoomId | "E1">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "concurrence_slip">>;
 }
@@ -108,7 +108,7 @@ const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
     id: "R2",
     title: "Concurrence Chamber",
     roomType: "reward",
-    exits: { west: "R1", east: "SilentReadScene" },
+    exits: { west: "R1", east: "E1" },
     lockedExits: { east: "Concurrence Slip handoff" },
     requiredItems: { east: "concurrence_slip" }
   }
