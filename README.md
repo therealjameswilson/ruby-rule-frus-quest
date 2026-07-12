@@ -62,7 +62,7 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 
 ## Current Cleanup Status
 
-Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78, plus PRs #79-80's physical Source Note provenance and annotation trail. The earlier Codex gameplay branches and Perplexity art drops are all represented; no component PR or unmerged remote branch remains open.
+Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78, plus PRs #79-81's physical Archive and Two Networks trail. The earlier Codex gameplay branches and Perplexity art drops are all represented, and no component PR remains open. Historical source branches and the deployment branch remain on the remote by design; they are not pending integrations.
 
 | Pillar | Deploy Status |
 | --- | --- |
@@ -78,7 +78,7 @@ Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #7
 | Accessibility | Live on `main`: keyboard/touch/gamepad controls, concise/full `window.render_game_to_text()` payloads, debug scenes, QA deep links, and persisted high-contrast/colorblind patterns are integrated. |
 | New Game+ | Live on `main`: first completion unlocks the veteran cosmetic, harder DANN-E tier, second-volume region, and persistent completed-volume count. |
 
-The latest deployed `main` baseline (`fc47a98`) passed 478 Vitest cases. This physical-routing follow-up passes 487 Vitest cases, `npm run build`, all 25 registered `?scene=` routes, the complete desktop and touch-driven Network N1 route into the ClassNet Vault, and the existing iPhone/DPR checks. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+Latest deployed `main` (`b7436da`) passes 487 Vitest cases, `npm run build`, all 25 registered `?scene=` routes, the complete desktop and touch-driven Network N1 route into the ClassNet Vault, and the existing iPhone/DPR checks. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
 
 ## MVP Features
 
