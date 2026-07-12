@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Codex + Perplexity pull harmonization audit (2026-07-11):
+  - Rechecked every open, merged, closed, and surviving remote agent branch against `main`; no component PR remains open and no source branch contains a post-merge commit.
+  - Confirmed the closed Codex component heads are exact ancestors through PR #78 and that non-ancestral art/data heads are squash-merge history, not missing binary assets.
+  - Restored the full eight-form DANN-E boast catalog behind the newer phase-based combat API, preserving both richer variant taunts and scripted boss lines.
+  - Restored all earlier Spanish/French scene strings as supersets of the live English-backed runtime catalogs instead of discarding unwired translations.
+  - Added `docs/AGENT_PULL_HARMONIZATION.md` as the durable resolution ledger; PR #41 remains the sole intentional exclusion because its five-form draft was superseded by the canonical eight-form roster.
+
 - Physical Referral Vault review pass (2026-07-11):
   - Removed the unsolicited Marcus briefing and every `ChoicePrompt` from ReferralVaultScene, returning control immediately on entry.
   - Replaced the three agency-equity quiz choices with physical Intelligence Annex, Base Access Memo, and White House Minutes files carried to CIA, DOD, and NSC desks.

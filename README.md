@@ -64,6 +64,8 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 
 Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78 plus the physical Archive, Two Networks, ClassNet, and Referral Vault follow-ups. Every stacked Codex gameplay head and later Perplexity art drop is represented; superseded component PRs are closed by design, not missing. The obsolete five-form DANN-E draft in PR #41 is the sole intentional exclusion because the canonical eight-form roster replaced it. Historical source branches and the deployment branch remain on the remote for provenance and are not pending integrations.
 
+The branch-by-branch evidence and the two restored data payloads are recorded in [`docs/AGENT_PULL_HARMONIZATION.md`](docs/AGENT_PULL_HARMONIZATION.md).
+
 | Pillar | Deploy Status |
 | --- | --- |
 | 1. Tight movement | Live on `main`: player movement is pixel-snapped, exposes movement/facing state to QA, and remains keyboard/touch compatible. |
