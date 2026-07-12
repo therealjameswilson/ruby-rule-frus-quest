@@ -2,6 +2,13 @@ import Phaser from "phaser";
 import { danneAnimKey } from "../../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
 import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
+import {
+  danneAttackTelegraphSpec,
+  danneTelegraphPulseOn,
+  danneTelegraphRemainingMs,
+  type DanneAttackPhase,
+  type DanneAttackTelegraphKind
+} from "../../game/danneBossTelegraph";
 import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts";
 import { DANNE_CLOUD_WAYPOINTS } from "../../game/danneSceneCollisions";
 import { unlockCodexEntry } from "../../game/codex";
@@ -52,6 +59,19 @@ interface MiniDanne {
   angle: number;
   radius: number;
   speed: number;
+}
+
+interface ActiveAttackTelegraph {
+  kind: DanneAttackTelegraphKind;
+  label: string;
+  phase: DanneAttackPhase;
+  startedAt: number;
+  resolvesAt: number;
+  source: Position;
+  target: Position;
+  destination: Position | null;
+  cooldownMs: number;
+  markers: Phaser.GameObjects.Rectangle[];
 }
 
 interface DanneBossOptions {
@@ -115,10 +135,14 @@ export class DanneBoss {
   private nextBoltAt = 0;
   private nextTeleportAt = 0;
   private nextPlayerHitAt = 0;
+  private attackTelegraph: ActiveAttackTelegraph | null = null;
+  private cloudWaypointIndex = 0;
+  private combatPausedAt: number | null = null;
   private phaseTransitioning = false;
   private defeated = false;
   private boastIndex = 0;
   private readonly recordedPhaseDefeats = new Set<DanneBossPhase>();
+  private readonly announcedTelegraphs = new Set<DanneBossPhase>();
 
   constructor(scene: Phaser.Scene, options: DanneBossOptions) {
     this.scene = scene;
@@ -193,10 +217,15 @@ export class DanneBoss {
       this.syncStatutoryClockUi();
       return;
     }
+    this.syncDepths();
+    if (this.phase === "intro" || this.phaseTransitioning) return;
+    if (!canAct) {
+      if (this.combatPausedAt === null) this.combatPausedAt = timeMs;
+      return;
+    }
+    this.resumeCombatTimers(timeMs);
     this.updateBolts(timeMs, deltaMs);
     this.updateMinis(timeMs, deltaMs);
-    this.syncDepths();
-    if (this.phase === "intro" || this.phaseTransitioning || !canAct) return;
     this.updateStatutoryClock(deltaMs);
     this.checkPlayerActionHit(timeMs);
     this.updateAttackPattern(timeMs);
@@ -204,6 +233,15 @@ export class DanneBoss {
 
   readout() {
     const cleared = this.defeated || this.phase === "defeated";
+    const telegraph = this.attackTelegraph
+      ? {
+          kind: this.attackTelegraph.kind,
+          label: this.attackTelegraph.label,
+          msRemaining: danneTelegraphRemainingMs(this.attackTelegraph.resolvesAt, this.scene.time.now),
+          target: { ...this.attackTelegraph.target },
+          destination: this.attackTelegraph.destination ? { ...this.attackTelegraph.destination } : null
+        }
+      : null;
     return {
       label: `DANN-E ${this.phase.toUpperCase()}`,
       x: this.position.x,
@@ -211,7 +249,7 @@ export class DanneBoss {
       spriteKey: this.spriteKey,
       behavior: this.behaviorLabel(),
       defeatMethod: "Use the Red Pencil after completing pendants, equities, proofing, and the Buckram Key route.",
-      status: `${this.hp}/${this.maxHp} HP; ${this.difficulty.label} tier; ${this.clockReadout()}; ${this.bolts.length} ego bolts; ${this.minis.length} mini-DANN-Es`,
+      status: `${this.hp}/${this.maxHp} HP; ${this.difficulty.label} tier; ${this.clockReadout()}; ${telegraph ? `${telegraph.label} ${telegraph.msRemaining}ms` : `${this.bolts.length} ego bolts`}; ${this.minis.length} mini-DANN-Es`,
       hp: cleared ? 0 : this.hp,
       maxHp: this.maxHp,
       damage: 12,
@@ -219,6 +257,7 @@ export class DanneBoss {
       reliabilityRisk: "critical",
       enemyState: cleared ? "defeated" : this.phase,
       weakness: "red_pencil",
+      telegraph,
       roomClear: {
         roomId: "DV1",
         defeated: cleared ? 1 : 0,
@@ -229,6 +268,7 @@ export class DanneBoss {
   }
 
   destroy() {
+    this.clearAttackTelegraph();
     this.sprite.destroy();
     this.shadow.destroy();
     this.clockContainer.destroy();
@@ -248,17 +288,18 @@ export class DanneBoss {
   }
 
   private beginPhase(phase: Exclude<DanneBossPhase, "intro" | "defeated">) {
+    this.clearAttackTelegraph();
+    this.clearBolts();
+    this.combatPausedAt = null;
     this.phase = phase;
     unlockCodexEntry(this.variantKeyForPhase(phase));
     this.hp = this.maxHp;
     this.nextBoltAt = this.scene.time.now + this.cooldown(650);
-    this.nextTeleportAt = this.scene.time.now + this.cooldown(900);
+    this.nextTeleportAt = phase === "cloud" ? this.scene.time.now : this.scene.time.now + this.cooldown(900);
     this.onPhaseChange(phase);
     this.sprite.setVisible(true);
     this.clockContainer.setVisible(true);
-    this.sprite.clearTint();
-    if (phase === "cloud") this.sprite.setTint(color(PALETTE.terminalCyan));
-    if (phase === "ascendant") this.sprite.setTint(color(PALETTE.buckramHighlight));
+    this.applyPhaseTint();
     if (phase === "swarm") this.spawnMiniDannes();
     if (phase === "colossus") this.moveBossTo(BOSS_CENTER.x, BOSS_CENTER.y);
     showBossHud(this.scene, "DANN-E", this.maxHp, this.phaseCount);
@@ -287,6 +328,7 @@ export class DanneBoss {
     this.sprite.setVisible(false);
     this.shadow.setVisible(false);
     this.clockContainer.setVisible(false);
+    this.clearAttackTelegraph();
     this.clearBolts();
     this.clearMinis();
     gameState.sceneProgress.blackVaultBossCleared = 1;
@@ -303,35 +345,140 @@ export class DanneBoss {
   }
 
   private updateAttackPattern(timeMs: number) {
-    if (timeMs < this.nextBoltAt) return;
-    if (this.phase === "colossus") {
-      this.fireTowardPlayer(this.speed(58));
-      this.nextBoltAt = timeMs + this.cooldown(2500);
+    if (this.attackTelegraph) {
+      this.updateAttackTelegraph(timeMs);
       return;
     }
-    if (this.phase === "swarm") {
-      this.fireTowardPlayer(this.speed(62));
+    if (timeMs < this.nextBoltAt || !this.isAttackPhase(this.phase)) return;
+    this.startAttackTelegraph(timeMs, this.phase);
+  }
+
+  private isAttackPhase(phase: DanneBossPhase): phase is DanneAttackPhase {
+    return phase === "colossus" || phase === "swarm" || phase === "cloud" || phase === "ascendant";
+  }
+
+  private startAttackTelegraph(timeMs: number, phase: DanneAttackPhase) {
+    const cloudWillShift = phase === "cloud" && timeMs >= this.nextTeleportAt;
+    const spec = danneAttackTelegraphSpec(phase, cloudWillShift);
+    const destination = cloudWillShift
+      ? DANNE_CLOUD_WAYPOINTS[this.cloudWaypointIndex++ % DANNE_CLOUD_WAYPOINTS.length]
+      : null;
+    const source = destination ?? this.position;
+    const target = this.player.position;
+    this.attackTelegraph = {
+      kind: spec.kind,
+      label: spec.label,
+      phase,
+      startedAt: timeMs,
+      resolvesAt: timeMs + spec.durationMs,
+      source: { ...source },
+      target: { ...target },
+      destination: destination ? { ...destination } : null,
+      cooldownMs: spec.cooldownMs,
+      markers: this.createAttackTelegraphMarkers(source, target, destination)
+    };
+    this.sprite.setTint(color(PALETTE.classNetRed));
+    if (!this.announcedTelegraphs.has(phase)) {
+      this.announcedTelegraphs.add(phase);
+      setLatestMessage(destination
+        ? "DANN-E marks a Cloud Shift destination. Leave the red target before the spread fires."
+        : "DANN-E locks an ego-bolt line. Leave the red target, then counterattack.");
+    }
+    retroAudio.blip();
+  }
+
+  private updateAttackTelegraph(timeMs: number) {
+    const telegraph = this.attackTelegraph;
+    if (!telegraph) return;
+    const pulseOn = danneTelegraphPulseOn(telegraph.startedAt, timeMs);
+    for (const marker of telegraph.markers) marker.setAlpha(pulseOn ? 0.95 : 0.34);
+    this.sprite.setAlpha(pulseOn ? 1 : 0.66);
+    if (timeMs < telegraph.resolvesAt) return;
+
+    this.clearAttackTelegraph();
+    if (this.phase !== telegraph.phase || this.phaseTransitioning || this.defeated) return;
+    if (telegraph.phase === "colossus") {
+      this.fireBolt(telegraph.source, telegraph.target, this.speed(58));
+    } else if (telegraph.phase === "swarm") {
+      this.fireBolt(telegraph.source, telegraph.target, this.speed(62));
       for (const mini of this.minis.slice(0, 2)) {
-        this.fireBolt({ x: mini.sprite.x, y: mini.sprite.y }, this.player.position, this.speed(50));
+        this.fireBolt({ x: mini.sprite.x, y: mini.sprite.y }, telegraph.target, this.speed(50));
       }
-      this.nextBoltAt = timeMs + this.cooldown(1550);
-      return;
-    }
-    if (this.phase === "cloud") {
-      if (timeMs >= this.nextTeleportAt) {
-        const target = DANNE_CLOUD_WAYPOINTS[Math.floor(timeMs / 1800) % DANNE_CLOUD_WAYPOINTS.length];
-        this.moveBossTo(target.x, target.y);
+    } else if (telegraph.phase === "cloud") {
+      if (telegraph.destination) {
+        this.moveBossTo(telegraph.destination.x, telegraph.destination.y);
         this.nextTeleportAt = timeMs + this.cooldown(1800);
       }
-      this.fireSpread(this.speed(64), [-0.28, 0, 0.28]);
-      this.nextBoltAt = timeMs + this.cooldown(1250);
-      return;
+      this.fireSpreadToward(this.position, telegraph.target, this.speed(64), [-0.28, 0, 0.28]);
+    } else {
+      this.fireSpreadToward(this.position, telegraph.target, this.speed(72), [-0.5, -0.18, 0.18, 0.5]);
+      for (const corner of DANNE_CLOUD_WAYPOINTS) this.fireBolt(corner, telegraph.target, this.speed(48));
     }
-    if (this.phase === "ascendant") {
-      this.fireSpread(this.speed(72), [-0.5, -0.18, 0.18, 0.5]);
-      for (const corner of DANNE_CLOUD_WAYPOINTS) this.fireBolt(corner, this.player.position, this.speed(48));
-      this.nextBoltAt = timeMs + this.cooldown(980);
+    this.nextBoltAt = timeMs + this.cooldown(telegraph.cooldownMs);
+  }
+
+  private createAttackTelegraphMarkers(source: Position, target: Position, destination: Position | null) {
+    const markers: Phaser.GameObjects.Rectangle[] = [];
+    const add = (x: number, y: number, width: number, height: number, fill: string) => {
+      const marker = this.scene.add.rectangle(snapPixel(x), snapPixel(y), width, height, color(fill), 0.95)
+        .setDepth(940);
+      markers.push(marker);
+    };
+    const bracket = (position: Position, fill: string, radius: number) => {
+      add(position.x - radius, position.y - radius, 6, 2, fill);
+      add(position.x - radius, position.y - radius, 2, 6, fill);
+      add(position.x + radius, position.y - radius, 6, 2, fill);
+      add(position.x + radius, position.y - radius, 2, 6, fill);
+      add(position.x - radius, position.y + radius, 6, 2, fill);
+      add(position.x - radius, position.y + radius, 2, 6, fill);
+      add(position.x + radius, position.y + radius, 6, 2, fill);
+      add(position.x + radius, position.y + radius, 2, 6, fill);
+    };
+
+    bracket(target, PALETTE.classNetRed, 10);
+    if (destination) bracket(destination, PALETTE.terminalCyan, 14);
+    for (let step = 1; step <= 6; step += 1) {
+      const ratio = step / 7;
+      add(
+        source.x + (target.x - source.x) * ratio,
+        source.y - 10 + (target.y - (source.y - 10)) * ratio,
+        2,
+        2,
+        step % 2 === 0 ? PALETTE.goldStamp : PALETTE.classNetRed
+      );
     }
+    add(source.x, source.y - 10, 5, 5, PALETTE.buckramHighlight);
+    return markers;
+  }
+
+  private clearAttackTelegraph() {
+    const telegraph = this.attackTelegraph;
+    if (telegraph) {
+      for (const marker of telegraph.markers) marker.destroy();
+    }
+    this.attackTelegraph = null;
+    this.sprite.setAlpha(1);
+    this.applyPhaseTint();
+  }
+
+  private applyPhaseTint() {
+    this.sprite.clearTint();
+    if (this.phase === "cloud") this.sprite.setTint(color(PALETTE.terminalCyan));
+    if (this.phase === "ascendant") this.sprite.setTint(color(PALETTE.buckramHighlight));
+  }
+
+  private resumeCombatTimers(timeMs: number) {
+    if (this.combatPausedAt === null) return;
+    const pausedMs = Math.max(0, timeMs - this.combatPausedAt);
+    this.combatPausedAt = null;
+    this.nextBoltAt += pausedMs;
+    this.nextTeleportAt += pausedMs;
+    this.nextPlayerHitAt += pausedMs;
+    if (this.attackTelegraph) {
+      this.attackTelegraph.startedAt += pausedMs;
+      this.attackTelegraph.resolvesAt += pausedMs;
+    }
+    for (const bolt of this.bolts) bolt.expiresAt += pausedMs;
   }
 
   private checkPlayerActionHit(timeMs: number) {
@@ -461,6 +608,7 @@ export class DanneBoss {
   private offerShortcut(reason: string) {
     if (this.shortcutResolved || this.shortcutChoice.active) return;
     this.shortcutOffered = true;
+    this.clearAttackTelegraph();
     this.clearBolts();
     const options: ChoiceOption[] = [
       { key: "A", label: "Omit contested material", value: "shortcut" },
@@ -519,13 +667,8 @@ export class DanneBoss {
     return new Phaser.Geom.Rectangle(x - 19, y - 42, 38, 48);
   }
 
-  private fireTowardPlayer(speed: number) {
-    this.fireBolt(this.position, this.player.position, speed);
-  }
-
-  private fireSpread(speed: number, angleOffsets: readonly number[]) {
-    const from = this.position;
-    const baseAngle = Phaser.Math.Angle.Between(from.x, from.y, this.player.position.x, this.player.position.y);
+  private fireSpreadToward(from: Position, target: Position, speed: number, angleOffsets: readonly number[]) {
+    const baseAngle = Phaser.Math.Angle.Between(from.x, from.y, target.x, target.y);
     for (const offset of angleOffsets) {
       const target = {
         x: from.x + Math.cos(baseAngle + offset) * 48,
@@ -674,10 +817,10 @@ export class DanneBoss {
 
   private behaviorLabel() {
     if (this.phase === "intro") return "cutscene reveal";
-    if (this.phase === "colossus") return "ego-bolt cannon every 2.5s";
-    if (this.phase === "swarm") return "mini-DANN-E reinforcement wave";
-    if (this.phase === "cloud") return "teleporting cloud form with spread shots";
-    if (this.phase === "ascendant") return "four simultaneous ego-bolt patterns";
+    if (this.phase === "colossus") return "telegraphed ego-bolt cannon";
+    if (this.phase === "swarm") return "telegraphed mini-DANN-E convergence";
+    if (this.phase === "cloud") return "marked Cloud Shift with snapshot spread";
+    if (this.phase === "ascendant") return "telegraphed four-source barrage";
     return "defeated";
   }
 }
