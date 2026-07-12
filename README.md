@@ -69,8 +69,8 @@ The branch-by-branch evidence and the two restored data payloads are recorded in
 | Pillar | Deploy Status |
 | --- | --- |
 | 1. Tight movement | Live on `main`: player movement is pixel-snapped, exposes movement/facing state to QA, and remains keyboard/touch compatible. |
-| 2. Tile-based overworld | Partially live: Archive A1 and both Two Networks rooms use real ground/wall/decoration Phaser tilemap layers from manifest-backed native 16x16 sheets; region/world scenes and gameplay-map scenes boot through direct links; older large overworld experiments remain quarantined under `experiments/overworld-wip/`. |
-| 3. Collision | Live on `main`: player/action collision, gates, interactables, and room blockers use Arcade-style AABB patterns; Archive A1 and both Network rooms derive perimeter collision from tile cells while preserving reachable locked-exit prompts. |
+| 2. Tile-based overworld | Partially live: Archive A1, both Two Networks rooms, and Referral R1 use real ground/wall/decoration Phaser tilemap layers from manifest-backed native 16x16 sheets; region/world scenes and gameplay-map scenes boot through direct links; older large overworld experiments remain quarantined under `experiments/overworld-wip/`. |
+| 3. Collision | Live on `main`: player/action collision, gates, interactables, and room blockers use Arcade-style AABB patterns; Archive A1, both Network rooms, and Referral R1 derive perimeter collision from tile cells while preserving reachable locked-exit prompts. |
 | 4. Combat and workflow tools | Live on `main`: equipped Citation Stamp, Red Pencil, and Review Folder swings have active frames/cooldowns; tool-specific DANN-E counters, room-clear gates, ego attacks, hit-stop, loot, and Buckram Gate pressure are integrated. |
 | 5. Enemy AI | Live on `main`: the canonical eight DANN-E forms, roaming lurkers, patrol/chase/turret strategies, boss phases, readable ambient and boss lock/shift/barrage telegraphs, taunts, hazards, difficulty tiers, and automated combat coverage are integrated. |
 | 6. HUD and volume assembly | Live on `main`: role, reliability, document points, equipped tools, cooldown, stamps, fragments, DANN-E risk, and the persistent five-piece volume-assembly arc share the compact quest band and pause subscreen. |
@@ -80,7 +80,7 @@ The branch-by-branch evidence and the two restored data payloads are recorded in
 | Accessibility | Live on `main`: keyboard/touch/gamepad controls, concise/full `window.render_game_to_text()` payloads, debug scenes, QA deep links, and persisted high-contrast/colorblind patterns are integrated. |
 | New Game+ | Live on `main`: first completion unlocks the veteran cosmetic, harder DANN-E tier, second-volume region, and persistent completed-volume count. |
 
-Current integration verification passes 565 Vitest cases and covers the compact tilemapped Archive source room, Network routing split, and ClassNet review chamber, the physical Referral Vault, the physical Silent Read proofing line, all three mandatory telegraphed DANN-E phases, all five Buckram binding packets, and final publication on desktop and touch. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+Current integration verification passes 569 Vitest cases and covers the compact tilemapped Archive source room, Network routing split, ClassNet review chamber, and Referral equity gate, the physical Silent Read proofing line, all three mandatory telegraphed DANN-E phases, all five Buckram binding packets, and final publication on desktop and touch. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
 
 ## MVP Features
 
@@ -161,7 +161,7 @@ Sprites, tiles, enemy art, and UI textures are original repository-local SVG pix
 
 ## Roadmap
 
-1. Extend the manifest-backed native tilemap contract to the Referral Vault's first physical routing room, retaining its agency-desk loop, per-room fallback, and full-route QA.
+1. Promote the Referral Vault's R2 reward chamber to the manifest-backed native tilemap contract while retaining its Concurrence Slip pickup and Silent Read handoff.
 2. Replace remaining poster-like room surfaces with validated Phaser tilemap layers and tile-derived collision.
 3. Extend Archive A1's compact entrance, tool reveal, room-clear, and physical-exit rhythm across every main dungeon.
 4. Expand DANN-E encounters beyond readable telegraphs into more phase-specific movement choices and distinctive tool counters.

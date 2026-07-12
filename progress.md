@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Referral R1 real-tilemap and equity-routing readability promotion (2026-07-12):
+  - Promoted the Referral Vault's first room to native 16x16 ground, wall, and decoration Tilemap layers with a reachable east gate and tile-derived perimeter collision.
+  - Built a quiet dark-wood review floor, ruby intake lane, three checker agency pads, a parquet document tray, and separate colleague/StateChat work areas.
+  - Removed the giant equity map, stage tablet, procedural referral field, compass, fallback room layer, and vault-block dressing only when the packed map succeeds; the prior renderer remains the guarded fallback.
+  - Preserved all three agency files, wrong-agency retry, StateChat draft-to-human handoff, three visible-treatment dockets, wrong-station retry, DANN-E lurker, literal WAIT/HOLD walls, save fields, R2 gate, Concurrence Slip pickup, and Silent Read transition.
+  - Verification: 110 Vitest files / 569 tests pass; TypeScript and production build pass; all 25 `?scene=` routes boot without browser errors; the complete Referral route passes on desktop and DPR-3 iPhone touch with both intentional error branches exercised.
+
 - Network N2 real-tilemap and ClassNet readability promotion (2026-07-12):
   - Completed the Two Networks dungeon's visual transition by promoting N2 to native 16x16 ground, wall, and decoration Tilemap layers with west/east doorway cells and tile-derived perimeter collision.
   - Built a ruby center aisle, dark secure floor, separate Human Desk / E.O. Board / Decision Log pads, a concrete token pedestal, and sparse safe/board wall cues.
