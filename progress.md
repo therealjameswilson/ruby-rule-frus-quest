@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Office starter-route authority and unobstructed-opening pass (2026-07-12):
+  - Replaced four independent progress guesses with one typed `talk JR -> take memo -> route -> stamp -> enter Archive` stage contract used by the objective, gold target, and interaction filter.
+  - Removed the full-room tutorial card and permanent keybind footer. The first playable frame now exposes the actual room, compact HUD instruction, gold JR marker, and lurking DANN-E without requiring a dismissal input.
+  - Preserved the physical Assignment Memo carry/route/stamp loop and Master Declass Key reward while preventing the locked Archive door from becoming actionable before the key exists.
+  - Added an explicit legacy-save recovery stage for stamped-memo saves missing the key: the objective and gold target return to JR, who restores the key before revealing Archive.
+  - Desktop and DPR-3 iPhone touch QA completed JR -> memo -> inbox -> stamp -> Archive Guide with no browser errors; a separate injected legacy state recovered the key and corrected the route.
+  - Verification: 115 Vitest files / 593 tests pass; TypeScript and production build pass; all 25 `?scene=` routes boot without browser errors; the required web-game client reports the unobstructed JR objective; the Codex/Perplexity audit remains fully clean.
+
 - Guide Cavern staged-onboarding clarity pass (2026-07-12):
   - Reworked the first dungeon threshold into one explicit physical sequence: take the Citation Stamp, claim the FRUS fragment, then open the south Verification Gate.
   - Only the current mandatory target now participates in proximity/action selection. The optional equal-rank colleague remains available before the route begins without stealing later fragment or gate prompts.
