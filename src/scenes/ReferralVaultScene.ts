@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
 import {
@@ -56,6 +57,13 @@ import type {
   ReferralTreatmentDocketId,
   ReferralTreatmentStationId
 } from "../game/referralVaultReview";
+import { INTERIOR_TILES } from "../game/networkN1Tilemap";
+import { packedTileGid } from "../game/packedTileIndex";
+import {
+  REFERRAL_R1_TILEMAP,
+  buildReferralR1TileLayers,
+  referralR1CollisionRect
+} from "../game/referralR1Tilemap";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -125,6 +133,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private visitedRoomIds = new Set<ReferralRoomId>();
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
   private roomCleanups: Array<() => void> = [];
+  private roomSolids: Phaser.Geom.Rectangle[] = [];
   private mapCells = new Map<ReferralRoomId, Phaser.GameObjects.Rectangle>();
   private mapLabels = new Map<ReferralRoomId, Phaser.GameObjects.Text>();
   private roomTitleText!: Phaser.GameObjects.Text;
@@ -239,7 +248,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.inventory.toggle();
       return;
     }
-    this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS });
+    this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS, solids: this.roomSolids });
     this.updateCarriedReviewIcon();
     this.updateReferralInteractionPrompt(delta);
     this.refreshReviewRouteCue();
@@ -302,6 +311,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     for (const wall of this.bureaucraticWalls) wall.destroy();
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.roomSolids = [];
     this.bureaucraticWalls = [];
     this.concurrenceSlipIcon = undefined;
     this.equityPacketWorldIcon = undefined;
@@ -327,24 +337,114 @@ export class ReferralVaultScene extends Phaser.Scene {
         track: (object) => this.track(object)
       });
     }
-    addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "vault", track: (object) => this.track(object) });
-    this.drawReferralVaultTileField(room.id);
+    const packedTilemapRendered = room.id === "R1" && this.renderReferralR1Tilemap();
+    if (!packedTilemapRendered) {
+      addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "vault", track: (object) => this.track(object) });
+      this.drawReferralVaultTileField(room.id);
+    }
     this.drawRoomDoors();
-    addSnesRoomCompass(this, {
-      x: 216,
-      y: 62,
-      roomId: room.id,
-      roomTitle: room.title,
-      exits: room.exits,
-      lockedExits: this.compassLockedExits(room),
-      requiredItems: room.requiredItems,
-      track: (object) => this.track(object),
-      depth: 143
-    });
-    if (room.id === "R1") this.renderEquityGate();
+    if (!packedTilemapRendered) {
+      addSnesRoomCompass(this, {
+        x: 216,
+        y: 62,
+        roomId: room.id,
+        roomTitle: room.title,
+        exits: room.exits,
+        lockedExits: this.compassLockedExits(room),
+        requiredItems: room.requiredItems,
+        track: (object) => this.track(object),
+        depth: 143
+      });
+    }
+    if (room.id === "R1") this.renderEquityGate(packedTilemapRendered);
     else this.renderConcurrenceChamber();
     this.syncRoomTraversalState();
     this.syncThreatState();
+  }
+
+  private renderReferralR1Tilemap() {
+    const asset = GAMEPLAY_TILESETS.interiorsNative;
+    if (!this.textures.exists(asset.key)) return false;
+    const map = this.make.tilemap({
+      width: REFERRAL_R1_TILEMAP.columns,
+      height: REFERRAL_R1_TILEMAP.rows,
+      tileWidth: asset.tileSize,
+      tileHeight: asset.tileSize
+    });
+    const tileset = map.addTilesetImage(
+      asset.manifestKey,
+      asset.key,
+      asset.tileSize,
+      asset.tileSize,
+      asset.margin,
+      asset.spacing,
+      asset.firstGid
+    );
+    if (!tileset) {
+      map.destroy();
+      return false;
+    }
+
+    const ground = map.createBlankLayer(
+      "referral-r1-ground",
+      tileset,
+      REFERRAL_R1_TILEMAP.x,
+      REFERRAL_R1_TILEMAP.y,
+      REFERRAL_R1_TILEMAP.columns,
+      REFERRAL_R1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const walls = map.createBlankLayer(
+      "referral-r1-walls",
+      tileset,
+      REFERRAL_R1_TILEMAP.x,
+      REFERRAL_R1_TILEMAP.y,
+      REFERRAL_R1_TILEMAP.columns,
+      REFERRAL_R1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const decoration = map.createBlankLayer(
+      "referral-r1-decoration",
+      tileset,
+      REFERRAL_R1_TILEMAP.x,
+      REFERRAL_R1_TILEMAP.y,
+      REFERRAL_R1_TILEMAP.columns,
+      REFERRAL_R1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    if (!ground || !walls || !decoration) {
+      ground?.destroy();
+      walls?.destroy();
+      decoration?.destroy();
+      map.destroy();
+      return false;
+    }
+
+    const layers = buildReferralR1TileLayers();
+    ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
+    walls.putTilesAt(layers.walls, 0, 0, true)
+      .setCollision([
+        packedTileGid(INTERIOR_TILES.wallPanel),
+        packedTileGid(INTERIOR_TILES.wallMetal),
+        packedTileGid(INTERIOR_TILES.wallBrick),
+        packedTileGid(INTERIOR_TILES.wallBlue)
+      ])
+      .setDepth(44);
+    decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    for (const cell of layers.collisionCells) {
+      const rect = referralR1CollisionRect(cell);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+    }
+    this.roomCleanups.push(() => {
+      ground.destroy();
+      walls.destroy();
+      decoration.destroy();
+      map.destroy();
+    });
+    return true;
   }
 
   private drawReferralVaultTileField(roomId: ReferralRoomId) {
@@ -465,9 +565,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     return locked;
   }
 
-  private renderEquityGate() {
-    addVaultBlocks(this, (object) => this.track(object));
-    addSnesWorldMap(this, 128, 62, "EQUITY MAP", "referral-vault-map", (object) => this.track(object));
+  private renderEquityGate(packedTilemapRendered = false) {
+    if (!packedTilemapRendered) {
+      addVaultBlocks(this, (object) => this.track(object));
+      addSnesWorldMap(this, 128, 62, "EQUITY MAP", "referral-vault-map", (object) => this.track(object));
+    }
     const marcus = new HistorianNPC(this, "marcus", 42, 58);
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 214, 58, "StateChat").container);
@@ -478,10 +580,10 @@ export class ReferralVaultScene extends Phaser.Scene {
       ];
     }
     const stage = this.referralReviewStage();
-    if (stage === "equity") this.drawEquityRoutingStage();
-    else if (stage === "manifest") this.drawManifestReviewStage();
-    else if (stage === "treatment") this.drawVisibleTreatmentStage();
-    else this.drawReferralCompleteStage();
+    if (stage === "equity") this.drawEquityRoutingStage(packedTilemapRendered);
+    else if (stage === "manifest") this.drawManifestReviewStage(packedTilemapRendered);
+    else if (stage === "treatment") this.drawVisibleTreatmentStage(packedTilemapRendered);
+    else this.drawReferralCompleteStage(packedTilemapRendered);
     setObjective(this.referralObjective());
     this.syncReferralVisibleEntities();
   }
@@ -493,8 +595,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     return "treatment" as const;
   }
 
-  private drawEquityRoutingStage() {
-    addSnesMapTablet(this, {
+  private drawEquityRoutingStage(compact = false) {
+    if (!compact) addSnesMapTablet(this, {
       x: 128,
       y: 88,
       label: "ROUTE",
@@ -512,8 +614,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     else this.drawEquityPacketAtTray();
   }
 
-  private drawManifestReviewStage() {
-    addSnesMapTablet(this, {
+  private drawManifestReviewStage(compact = false) {
+    if (!compact) addSnesMapTablet(this, {
       x: 128,
       y: 88,
       label: "MANIFEST",
@@ -532,8 +634,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     else this.drawManifestAtTerminalTray();
   }
 
-  private drawVisibleTreatmentStage() {
-    addSnesMapTablet(this, {
+  private drawVisibleTreatmentStage(compact = false) {
+    if (!compact) addSnesMapTablet(this, {
       x: 128,
       y: 88,
       label: "VISIBLE",
@@ -567,8 +669,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     else this.drawTreatmentDocketAtTray();
   }
 
-  private drawReferralCompleteStage() {
-    addSnesMapTablet(this, {
+  private drawReferralCompleteStage(compact = false) {
+    if (!compact) addSnesMapTablet(this, {
       x: 128,
       y: 88,
       label: "CONCUR",
@@ -598,7 +700,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     container.add(this.add.rectangle(0, 0, 44, 31, color(PALETTE.black), 0.94)
       .setStrokeStyle(2, color(accent)));
     container.add(this.add.image(0, -2, "agency-equity-seal"));
-    container.add(this.add.text(0, -8, agency, {
+    container.add(this.add.text(0, -18, agency, {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.black,
