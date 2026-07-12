@@ -87,6 +87,21 @@ export const SECRET_READING_ROOM_ASSETS = {
   }
 } as const;
 
+export const GAMEPLAY_TILESETS = {
+  archiveDungeonNative: {
+    manifestKey: "tileset_archive_dungeon_16x16",
+    key: "pack-tiles-archive-dungeon-native",
+    path: "assets/art-pack/tilesets/gameplay/tileset_archive_dungeon_16x16_native.png",
+    columns: 7,
+    rows: 7,
+    tileSize: 16,
+    imageWidth: 112,
+    imageHeight: 112,
+    margin: 0,
+    spacing: 0
+  }
+} as const;
+
 export const UI_PACK_FRAMES = {
   rubyHudBar: {
     textureKey: "ui_hud_16bit",

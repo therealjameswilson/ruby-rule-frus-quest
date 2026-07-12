@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
@@ -72,6 +73,7 @@ export class BootScene extends Phaser.Scene {
       frameHeight: VOLUME_ASSEMBLY_ASSETS.bindingAnimation.frameHeight
     });
     this.preloadDannePack();
+    this.preloadGameplayTilesets();
     if (this.shouldLogAssetDebug()) {
       this.load.once(Phaser.Loader.Events.COMPLETE, () => logLoadedCharacterTextureSizes(this));
     }
@@ -155,6 +157,11 @@ export class BootScene extends Phaser.Scene {
         frameHeight: asset.frameH
       });
     }
+  }
+
+  private preloadGameplayTilesets() {
+    const archiveDungeon = GAMEPLAY_TILESETS.archiveDungeonNative;
+    this.load.image(archiveDungeon.key, archiveDungeon.path);
   }
 
   private shouldLogAssetDebug() {

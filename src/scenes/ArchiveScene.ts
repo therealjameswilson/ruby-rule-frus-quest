@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { ProcessItemId, RoomType } from "../game/constants";
 import {
@@ -73,6 +74,12 @@ import {
   getAnnotationDraftingStation
 } from "../game/annotationDrafting";
 import type { AnnotationDraftingPromptId } from "../game/annotationDrafting";
+import {
+  ARCHIVE_A1_TILEMAP,
+  ARCHIVE_DUNGEON_TILES,
+  archiveA1CollisionRect,
+  buildArchiveA1TileLayers
+} from "../game/archiveA1Tilemap";
 import {
   getSourceNoteProvenanceStation,
   inspectSourceNoteProvenanceStation,
@@ -703,13 +710,16 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object)
     });
     this.drawRoomExits(room);
-    addSnesRoomLayer(this, {
-      roomId: room.id,
-      roomType: room.roomType,
-      theme: this.currentRoomId === "A2" ? "network" : this.currentRoomId === "B2" ? "proof" : "archive",
-      track: (object) => this.track(object)
-    });
-    this.drawArchiveRoomDetailLayer(room);
+    const packedTilemapRendered = room.id === "A1" && this.renderArchiveA1Tilemap();
+    if (!packedTilemapRendered) {
+      addSnesRoomLayer(this, {
+        roomId: room.id,
+        roomType: room.roomType,
+        theme: this.currentRoomId === "A2" ? "network" : this.currentRoomId === "B2" ? "proof" : "archive",
+        track: (object) => this.track(object)
+      });
+      this.drawArchiveRoomDetailLayer(room);
+    }
     if (room.id !== "A1") {
       addSnesRoomCompass(this, {
         x: 216,
@@ -764,6 +774,91 @@ export class ArchiveScene extends Phaser.Scene {
     this.refreshSourceNoteRouteCue();
     this.drawNaraStacksGateSeal();
     this.syncSourceRoomTerminalStatus();
+  }
+
+  private renderArchiveA1Tilemap() {
+    const asset = GAMEPLAY_TILESETS.archiveDungeonNative;
+    if (!this.textures.exists(asset.key)) return false;
+
+    const map = this.make.tilemap({
+      width: ARCHIVE_A1_TILEMAP.columns,
+      height: ARCHIVE_A1_TILEMAP.rows,
+      tileWidth: asset.tileSize,
+      tileHeight: asset.tileSize
+    });
+    const tileset = map.addTilesetImage(
+      asset.manifestKey,
+      asset.key,
+      asset.tileSize,
+      asset.tileSize,
+      asset.margin,
+      asset.spacing
+    );
+    if (!tileset) {
+      map.destroy();
+      return false;
+    }
+
+    const ground = map.createBlankLayer(
+      "archive-a1-ground",
+      tileset,
+      ARCHIVE_A1_TILEMAP.x,
+      ARCHIVE_A1_TILEMAP.y,
+      ARCHIVE_A1_TILEMAP.columns,
+      ARCHIVE_A1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const walls = map.createBlankLayer(
+      "archive-a1-walls",
+      tileset,
+      ARCHIVE_A1_TILEMAP.x,
+      ARCHIVE_A1_TILEMAP.y,
+      ARCHIVE_A1_TILEMAP.columns,
+      ARCHIVE_A1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    const decoration = map.createBlankLayer(
+      "archive-a1-decoration",
+      tileset,
+      ARCHIVE_A1_TILEMAP.x,
+      ARCHIVE_A1_TILEMAP.y,
+      ARCHIVE_A1_TILEMAP.columns,
+      ARCHIVE_A1_TILEMAP.rows,
+      asset.tileSize,
+      asset.tileSize
+    );
+    if (!ground || !walls || !decoration) {
+      ground?.destroy();
+      walls?.destroy();
+      decoration?.destroy();
+      map.destroy();
+      return false;
+    }
+
+    const layers = buildArchiveA1TileLayers();
+    ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
+    walls.putTilesAt(layers.walls, 0, 0, true)
+      .setCollision([
+        ARCHIVE_DUNGEON_TILES.wallDark,
+        ARCHIVE_DUNGEON_TILES.wallStone,
+        ARCHIVE_DUNGEON_TILES.wallLight
+      ])
+      .setDepth(44);
+    decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    for (const cell of layers.collisionCells) {
+      const rect = archiveA1CollisionRect(cell);
+      this.addSolid(rect.x, rect.y, rect.width, rect.height);
+    }
+
+    this.roomCleanups.push(() => {
+      ground.destroy();
+      walls.destroy();
+      decoration.destroy();
+      map.destroy();
+    });
+    return true;
   }
 
   private renderOpenNetAnnex() {
