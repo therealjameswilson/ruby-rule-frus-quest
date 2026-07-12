@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical Silent Read proofing pass and agent-pull re-audit (2026-07-11):
+  - Replaced the unsolicited Priya briefing and every remaining Silent Read `ChoicePrompt` with an eight-object physical review sequence.
+  - StateChat now contributes a draft plan only; the player carries it to an equal-rank editor, who records a visible bracket before issuing the Red Pencil.
+  - Routed four evidence files through OpenNet, ClassNet, Referral, and Proof workstations, then bundled the remaining methodology, treatment, typeflow, printer-copy, and typesetter checks into three visible publication dockets.
+  - Wrong workstations cost a small reliability penalty and return the docket for retry instead of poisoning the ending.
+  - Preserved every legacy completion field and added exact step/status/room restoration for current saves and Phaser scene restarts.
+  - Kept DANN-E's deadline pressure active as concise toasts without allowing attacks to overwrite the active physical-route objective.
+  - Decluttered both rooms, removed redundant objective text, and verified the complete proofing route through the Buckram Key on desktop and DPR-3 touch controls.
+  - Re-ran the Codex/Perplexity branch audit: zero open PRs, all 10 closed component heads represented, all 112 squash-merged binary assets identical on `main`, and no post-PR branch commits.
+
 - Codex + Perplexity pull harmonization audit (2026-07-11):
   - Rechecked every open, merged, closed, and surviving remote agent branch against `main`; no component PR remains open and no source branch contains a post-merge commit.
   - Confirmed the closed Codex component heads are exact ancestors through PR #78 and that non-ancestral art/data heads are squash-merge history, not missing binary assets.

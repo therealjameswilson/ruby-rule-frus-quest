@@ -11,7 +11,6 @@ import {
   getHeldProcessItemIds,
   hasProcessItem,
   clearDocumentUndisclosedDeletion,
-  markDocumentUndisclosedDeletion,
   setHeldItem,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -23,66 +22,58 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
-import type { ChoiceOption, Interactable } from "../game/types";
+import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
-import { DialogBox } from "../systems/dialog";
+import { FeedbackToast } from "../systems/feedbackToast";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
-import { addProofingTable, addTinySparkle } from "../systems/roomDressing";
-import { addObjectiveText, addTerminalPanel, drawRoomFrame, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesGate, addSnesMapTablet, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
-import { ChoicePrompt } from "../systems/verification";
+import { addTinySparkle } from "../systems/roomDressing";
+import { addObjectiveText, drawRoomFrame, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
+import { addSnesGate, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
 import {
-  aiAnnotationReviewComplete,
   AI_ANNOTATION_REVIEW_PROMPTS,
-  evaluateAiAnnotationReviewAnswer,
-  getAiAnnotationReviewPrompt
 } from "../game/aiAnnotationReview";
 import {
-  evaluateTypesetterProofAnswer,
-  getTypesetterProofPrompt,
-  typesetterProofComplete,
   TYPESETTER_PROOF_PROMPTS
 } from "../game/typesetterProof";
 import {
-  evaluateTypesettingPreparationAnswer,
-  getTypesettingPreparationPrompt,
-  typesettingPreparationComplete,
   TYPESETTING_PREPARATION_PROMPTS
 } from "../game/typesettingPreparation";
 import {
   EDITORIAL_METHODOLOGY_PROMPTS,
-  editorialMethodologyComplete,
-  evaluateEditorialMethodologyAnswer,
-  getEditorialMethodologyPrompt
 } from "../game/editorialMethodology";
 import {
-  editorialTreatmentComplete,
   EDITORIAL_TREATMENT_PROMPTS,
-  evaluateEditorialTreatmentAnswer,
-  getEditorialTreatmentPrompt
 } from "../game/editorialTreatment";
 import {
-  evaluateTypeflowOrderAnswer,
-  getTypeflowOrderPrompt,
-  typeflowOrderComplete,
   TYPEFLOW_ORDER_PROMPTS
 } from "../game/typeflowOrder";
+import {
+  deriveSilentReadReviewStep,
+  routeSilentReadReviewItem,
+  SILENT_READ_REVIEW_ITEMS,
+  SILENT_READ_REVIEW_TOTAL,
+  silentReadReviewStatusCode,
+  silentReadReviewStatusFromCode,
+  type SilentReadReviewPhase,
+  type SilentReadReviewStatus,
+  type SilentReadStationId
+} from "../game/silentReadReview";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-type WorkstationId = "opennet" | "classnet" | "editor-desk" | "referral-tray" | "proof-table";
-type PhysicalFlagStatus = "waiting" | "carried" | "routed" | "verified" | "stamped";
+type WorkstationId = SilentReadStationId;
+type PhysicalFlagStatus = SilentReadReviewStatus;
 type ProofRoomId = "E1" | "S1";
 
 interface Workstation {
@@ -92,6 +83,7 @@ interface Workstation {
   y: number;
   accent: string;
   texture: string;
+  phases: readonly SilentReadReviewPhase[];
 }
 
 interface PhysicalFlag {
@@ -99,6 +91,8 @@ interface PhysicalFlag {
   label: string;
   shortLabel: string;
   kind: string;
+  phase: SilentReadReviewPhase;
+  checkCount: number;
   destination: WorkstationId;
   texture: string;
   status: PhysicalFlagStatus;
@@ -148,70 +142,40 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
 };
 
 const WORKSTATIONS: Workstation[] = [
-  { id: "opennet", label: "OpenNet", x: 42, y: 184, accent: PALETTE.openNetGreen, texture: "opennet-terminal" },
-  { id: "classnet", label: "ClassNet", x: 214, y: 184, accent: PALETTE.classNetRed, texture: "classnet-terminal" },
-  { id: "editor-desk", label: "Editor Desk", x: 128, y: 176, accent: PALETTE.buckramHighlight, texture: "red-pencil" },
-  { id: "referral-tray", label: "Referral Tray", x: 76, y: 160, accent: PALETTE.goldStamp, texture: "concurrence-slip" },
-  { id: "proof-table", label: "Proof Table", x: 180, y: 160, accent: PALETTE.terminalCyan, texture: "proof-page" }
+  { id: "opennet", label: "OpenNet", x: 42, y: 180, accent: PALETTE.openNetGreen, texture: "opennet-terminal", phases: ["evidence"] },
+  { id: "classnet", label: "ClassNet", x: 214, y: 180, accent: PALETTE.classNetRed, texture: "classnet-terminal", phases: ["evidence"] },
+  { id: "editor-desk", label: "Editor Desk", x: 128, y: 166, accent: PALETTE.buckramHighlight, texture: "red-pencil", phases: ["editor"] },
+  { id: "referral-tray", label: "Referral Tray", x: 78, y: 158, accent: PALETTE.goldStamp, texture: "concurrence-slip", phases: ["evidence"] },
+  { id: "proof-table", label: "Proof Table", x: 194, y: 164, accent: PALETTE.terminalCyan, texture: "proof-page", phases: ["evidence", "production"] },
+  { id: "consultation-desk", label: "Consult Desk", x: 62, y: 164, accent: PALETTE.goldStamp, texture: "review-folder", phases: ["production"] },
+  { id: "typeflow-rail", label: "Typeflow Rail", x: 128, y: 164, accent: PALETTE.buckramHighlight, texture: "proof-page", phases: ["production"] }
 ];
 
-const PHYSICAL_FLAGS: Array<Omit<PhysicalFlag, "status" | "x" | "y" | "icon" | "labelText" | "routedStation">> = [
-  {
-    id: "mechanical-fix",
-    label: "StateChat Mechanical Fix Proposal",
-    shortLabel: "MECH FIX",
-    kind: "mechanical",
-    destination: "editor-desk",
-    texture: "red-pencil"
-  },
-  {
-    id: "public-crossref",
-    label: "Evidence-Bound OpenNet Cross-Reference",
-    shortLabel: "OPEN NOTE",
-    kind: "evidence_bound",
-    destination: "opennet",
-    texture: "cross-reference"
-  },
-  {
-    id: "classified-source",
-    label: "Evidence-Bound ClassNet Source Note",
-    shortLabel: "CLASS NOTE",
-    kind: "classification",
-    destination: "classnet",
-    texture: "source-note"
-  },
-  {
-    id: "referral-equity",
-    label: "Evidence-Bound Referral Equity Slip",
-    shortLabel: "REF SLIP",
-    kind: "evidence_bound",
-    destination: "referral-tray",
-    texture: "concurrence-slip"
-  },
-  {
-    id: "proof-date",
-    label: "Evidence-Bound Proof Date Discrepancy",
-    shortLabel: "PROOF DATE",
-    kind: "evidence_bound",
-    destination: "proof-table",
-    texture: "proof-page"
-  }
-];
+const PHYSICAL_FLAGS: Array<Omit<PhysicalFlag, "status" | "x" | "y" | "icon" | "labelText" | "routedStation">> =
+  SILENT_READ_REVIEW_ITEMS.map((item) => ({
+    id: item.id,
+    label: item.label,
+    shortLabel: item.shortLabel,
+    kind: item.kind,
+    phase: item.phase,
+    checkCount: item.checkIds.length,
+    destination: item.destination,
+    texture: item.texture
+  }));
 
 function stationRoom(id: WorkstationId): ProofRoomId {
   return id === "editor-desk" ? "E1" : "S1";
 }
 
 function flagRoom(flag: PhysicalFlag): ProofRoomId {
-  return stationRoom(flag.destination);
+  return flag.phase === "editor" ? "E1" : "S1";
 }
 
 export class SilentReadScene extends Phaser.Scene {
   private player!: Player;
-  private dialog!: DialogBox;
-  private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
+  private toast!: FeedbackToast;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
@@ -235,6 +199,7 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   create() {
+    this.resetTransientState();
     setSceneState("SilentReadScene", "explore", "Editor's Labyrinth: earn the Red Pencil.");
     retroAudio.startMusic("SilentReadScene");
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
@@ -250,10 +215,9 @@ export class SilentReadScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.player = new Player(this, 128, 202);
-    this.dialog = new DialogBox(this);
-    this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.toast = new FeedbackToast(this);
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
@@ -271,14 +235,33 @@ export class SilentReadScene extends Phaser.Scene {
       fontSize: "7px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
-    }).setDepth(811);
-    this.enterRoom("E1", { x: 128, y: 202 }, false);
+    }).setDepth(811).setVisible(false);
+    const restoredStep = deriveSilentReadReviewStep(gameState.sceneProgress, new Set(getHeldProcessItemIds()));
+    const restoredRoom: ProofRoomId = gameState.sceneProgress.silentReadRoom === 1 || restoredStep > 0 ? "S1" : "E1";
+    this.currentRoomId = restoredRoom;
+    this.startPhysicalVerificationLoop();
+    this.enterRoom(restoredRoom, { x: 128, y: 202 }, false);
     this.syncThreatState();
-    this.dialog.show("PRIYA", [
-      "Run the AI annotation review tool first.",
-      "It returns a JSON plan, not a final decision.",
-      "The Red Pencil opens the proof tower. Then every evidence flag moves by hand."
-    ], () => this.beginAiAnnotationReview());
+    this.toast.show(
+      restoredRoom === "E1" ? "DRAFT READY" : "REVIEW FILE READY",
+      this.player.position,
+      "info",
+      PROOF_PLAY_BOUNDS
+    );
+  }
+
+  private resetTransientState() {
+    this.currentRoomId = "E1";
+    this.visitedRoomIds = new Set<ProofRoomId>();
+    this.roomObjects = [];
+    this.roomCleanups = [];
+    this.roomTransitionLocked = false;
+    this.exitCooldownUntil = 0;
+    this.physicalFlags = [];
+    this.physicalRouteCueObjects = [];
+    this.physicalRouteCueKey = "";
+    this.mapCells = new Map<ProofRoomId, Phaser.GameObjects.Rectangle>();
+    this.mapLabels = new Map<ProofRoomId, Phaser.GameObjects.Text>();
   }
 
   update(_: number, delta: number) {
@@ -292,20 +275,9 @@ export class SilentReadScene extends Phaser.Scene {
     }
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
+    this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
     if (this.roomTransitionLocked) {
       this.interactionPrompt.update(delta, null);
-      this.player.update(delta, false);
-      return;
-    }
-    if (this.dialog.active) {
-      this.interactionPrompt.update(delta, null);
-      if (input.aJustPressed) this.dialog.advance();
-      this.player.update(delta, false);
-      return;
-    }
-    if (this.choice.active) {
-      this.interactionPrompt.update(delta, null);
-      this.choice.updateInput();
       this.player.update(delta, false);
       return;
     }
@@ -327,7 +299,7 @@ export class SilentReadScene extends Phaser.Scene {
     }
     if (this.checkRoomExit()) return;
     this.reliability.update();
-    this.objectiveText.setText(gameState.objective);
+    this.objectiveText.setText("");
   }
 
   private updateDanneLurker(delta: number) {
@@ -335,12 +307,12 @@ export class SilentReadScene extends Phaser.Scene {
     if (result.triggered) {
       this.player.takeHit(this.danneLurker.position, 11, 700);
       applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted proof review.");
-      setObjective("Silent Read Tower: proof by human review, not DANN-E pressure.");
+      this.toast.show("DANN-E DEADLINE PRESSURE", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.reliability.update();
     } else if (result.egoBoltHit) {
       this.player.takeHit(this.danneLurker.position, 9, 700);
       applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted proof review.");
-      setObjective("Silent Read Tower: dodge Ego bolts and keep proofing.");
+      this.toast.show("EGO BOLT - KEEP PROOFING", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.reliability.update();
     }
     this.syncThreatState();
@@ -358,6 +330,7 @@ export class SilentReadScene extends Phaser.Scene {
   private enterRoom(roomId: ProofRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
     const applyRoom = () => {
       this.currentRoomId = roomId;
+      gameState.sceneProgress.silentReadRoom = roomId === "S1" ? 1 : 0;
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
@@ -399,15 +372,24 @@ export class SilentReadScene extends Phaser.Scene {
     setNearestInteractable(null);
   }
 
-  private renderCurrentRoom() {
+  private redrawCurrentRoom() {
+    this.clearRoom();
+    this.renderCurrentRoom(false);
+    this.positionActiveWaitingFlagForRoom();
+    this.syncVisibleEntities();
+  }
+
+  private renderCurrentRoom(showIntro = true) {
     const room = PROOF_ROOMS[this.currentRoomId];
     this.roomTitleText.setText(`${room.id} ${room.title}`);
-    addSnesRoomIntroBanner(this, {
-      title: `${room.id} ${room.title}`,
-      subtitle: room.id.startsWith("E") ? "EDITOR'S LABYRINTH" : "SILENT READ TOWER",
-      accent: PALETTE.buckramRed,
-      track: (object) => this.track(object)
-    });
+    if (showIntro) {
+      addSnesRoomIntroBanner(this, {
+        title: `${room.id} ${room.title}`,
+        subtitle: room.id.startsWith("E") ? "EDITOR'S LABYRINTH" : "SILENT READ TOWER",
+        accent: PALETTE.buckramRed,
+        track: (object) => this.track(object)
+      });
+    }
     addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "proof", track: (object) => this.track(object) });
     this.drawRoomDoors();
     addSnesRoomCompass(this, {
@@ -467,115 +449,72 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private renderEditorsLabyrinth() {
-    this.track(addTerminalPanel(this, 128, 48, [
-      "AI ANNO REVIEW",
-      "SCHEMA: OK",
-      `MECH AUTO: ${canAutoApplyProposal("mechanical") ? "YES" : "NO"}`,
-      "EVIDENCE: COMMENT",
-      "HUMAN TRIAGE"
-    ]));
-    addSnesMapTablet(this, {
-      x: 128,
-      y: 88,
-      label: "EDIT MAP",
-      nodes: ["AI", "DESK", "PENC", "READ"],
-      activeIndex: hasProcessItem("red_pencil") ? 2 : 1,
-      accent: hasProcessItem("red_pencil") ? PALETTE.goldStamp : PALETTE.buckramHighlight,
-      track: (object) => this.track(object),
-      depth: -5
-    });
+    this.drawStagePanel("STATECHAT DRAFT", [
+      `PLAN ${canAutoApplyProposal("mechanical") ? "READY" : "HOLD"}`,
+      "HUMAN DECIDES",
+      "BRACKETS PRINT"
+    ], PALETTE.terminalCyan);
     const priya = new HistorianNPC(this, "priya", 28, 52);
     this.roomCleanups.push(() => priya.destroy());
-    this.drawPage(76, 118, "DRAFT QUERY", [
-      "Unsupported",
-      "claim marked",
+    this.drawPage(72, 114, "DRAFT QUERY", [
+      "Claim marked",
       "for editor",
-      "judgment."
+      "judgment"
     ]);
-    this.drawPage(180, 118, "STYLE FILE", [
-      "StateChat may",
-      "propose text.",
-      "Editor decides",
-      "meaning."
+    this.drawPage(184, 114, "VISIBLE EDIT", [
+      "[Text not",
+      "declassified]",
+      "prints"
     ]);
-    addSnesTreasurePedestal(this, {
-      x: 128,
-      y: 150,
-      textureKey: "red-pencil",
-      label: "Red Pencil",
-      collected: hasProcessItem("red_pencil"),
-      accent: PALETTE.buckramHighlight,
-      track: (object) => this.track(object),
-      depth: 160
-    });
     this.drawWorkstations();
     this.drawOutbox("STATECHAT OUTBOX");
-    this.drawToolbeltIcons();
     if (hasProcessItem("red_pencil")) {
-      this.track(this.add.rectangle(128, 84, 104, 10, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(170));
-      this.track(this.add.text(128, 80, "RED PENCIL EARNED - EAST", {
+      addSnesTreasurePedestal(this, {
+        x: 128,
+        y: 118,
+        textureKey: "red-pencil",
+        label: "Red Pencil",
+        collected: true,
+        accent: PALETTE.buckramHighlight,
+        track: (object) => this.track(object),
+        depth: 160
+      });
+      this.track(this.add.text(128, 136, "RED PENCIL READY - EAST", {
         fontFamily: "monospace",
         fontSize: "6px",
         color: PALETTE.goldStamp
-      }).setOrigin(0.5, 0).setDepth(171));
+      }).setOrigin(0.5).setDepth(171));
       setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
-    } else if (!gameState.sceneProgress.aiAnnotationReviewComplete) {
-      setObjective("Editor's Labyrinth: run AI annotation review before carrying flags.");
     } else {
-      setObjective("Editor's Labyrinth: route the mechanical flag to the editor desk.");
+      setObjective("Editor's Labyrinth: carry StateChat's draft to the Editor Desk.");
     }
   }
 
   private renderSilentReadTower() {
-    this.drawPage(76, 110, "MANUSCRIPT", [
-      "The office office",
-      "opened in 1947.",
-      "The record said",
-      "\"publish fully."
-    ]);
-    this.drawPage(180, 110, "TYPESET PROOF", [
-      "The office",
-      "opened in 1974.",
-      "The record said",
-      "\"publish fully."
-    ]);
-    this.track(this.add.image(180, 158, "proof-page").setDepth(165));
-    addSnesTreasurePedestal(this, {
-      x: 128,
-      y: 82,
-      textureKey: "proof-lens",
-      label: "Proof Lens",
-      collected: hasProcessItem("proof_lens"),
-      accent: PALETTE.terminalCyan,
-      track: (object) => this.track(object),
-      depth: 160
-    });
-    this.track(addTinySparkle(this, 178, 87, PALETTE.classNetRed));
-    this.track(addTerminalPanel(this, 128, 48, [
-      "SILENT READ",
-      "EVIDENCE FLAGS",
-      "OPEN / CLASS / REF",
-      "PROOF DATE",
-      "HUMAN STAMPS"
-    ], PALETTE.goldStamp));
-    addSnesMapTablet(this, {
-      x: 128,
-      y: 156,
-      label: "PROOF MAP",
-      nodes: ["READ", "LENS", "STAMP", "BUCK"],
-      activeIndex: hasProcessItem("buckram_key") ? 3 : hasProcessItem("proof_lens") ? 2 : 1,
-      accent: hasProcessItem("buckram_key") ? PALETTE.goldStamp : PALETTE.terminalCyan,
-      track: (object) => this.track(object),
-      depth: -5
-    });
-    addProofingTable(this, 128, 172, (object) => this.track(object));
+    const phase = this.activeReviewPhase();
+    if (phase === "evidence") {
+      this.drawPage(74, 102, "MANUSCRIPT", ["Office opened", "in 1947", "original"]);
+      this.drawPage(182, 102, "TYPESET PROOF", ["Office opened", "in 1974", "compare"]);
+      this.track(addTinySparkle(this, 182, 88, PALETTE.classNetRed));
+      this.drawStagePanel("SILENT READ", [
+        "ROUTE EVIDENCE",
+        "COMPARE DATES",
+        "HUMAN STAMPS"
+      ], PALETTE.goldStamp);
+    } else {
+      this.drawStagePanel("PUBLICATION LINE", [
+        "METHOD LEDGER",
+        "PRINTER COPY",
+        "PROOF PULL"
+      ], PALETTE.goldStamp);
+      this.drawProductionLanes();
+    }
     this.drawWorkstations();
-    this.drawOutbox("REVIEW OUTBOX");
-    this.drawToolbeltIcons();
+    this.drawOutbox(phase === "production" ? "PUBLICATION OUTBOX" : "REVIEW OUTBOX");
     if (hasProcessItem("buckram_key")) {
       addSnesTreasurePedestal(this, {
         x: 128,
-        y: 126,
+        y: 118,
         textureKey: "buckram-key",
         label: "Buckram Key",
         collected: true,
@@ -583,32 +522,25 @@ export class SilentReadScene extends Phaser.Scene {
         depth: 230
       });
       setObjective("Silent Read Tower: exit east with Buckram Key.");
-    } else if (gameState.sceneProgress.typesetterProofComplete) {
-      setObjective("Silent Read Tower: take the Buckram Key after proofing.");
-    } else if (!gameState.sceneProgress.editorialMethodologyComplete) {
-      setObjective("Silent Read Tower: route flags, then file editorial methodology.");
-    } else if (!gameState.sceneProgress.editorialTreatmentComplete) {
-      setObjective("Silent Read Tower: route flags, then resolve editorial treatment.");
-    } else if (!gameState.sceneProgress.typeflowOrderComplete) {
-      setObjective("Silent Read Tower: file the manuscript-clearance order before typesetting.");
-    } else if (!gameState.sceneProgress.typesettingPreparationComplete) {
-      setObjective("Silent Read Tower: prepare the printer's copy before proof comparison.");
     } else {
-      setObjective("Silent Read Tower: carry flags, then run typesetter proof.");
+      const active = this.getActiveFlag();
+      setObjective(active
+        ? `Silent Read Tower: carry ${active.shortLabel} to ${this.stationFor(active.destination).label}.`
+        : "Silent Read Tower: Buckram Key ready for final publication.");
     }
   }
 
   private drawPage(x: number, y: number, title: string, lines: string[]) {
-    this.track(this.add.rectangle(x, y, 86, 112, color(PALETTE.white)).setStrokeStyle(2, color(PALETTE.sepiaInk)));
-    this.track(this.add.rectangle(x - 38, y, 3, 104, color(PALETTE.classNetRed)));
-    this.track(this.add.text(x, y - 49, title, {
+    this.track(this.add.rectangle(x, y, 72, 70, color(PALETTE.white)).setStrokeStyle(2, color(PALETTE.sepiaInk)));
+    this.track(this.add.rectangle(x - 31, y, 3, 62, color(PALETTE.classNetRed)));
+    this.track(this.add.text(x, y - 29, title, {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.deepRuby
     }).setOrigin(0.5));
     lines.forEach((line, index) => {
-      const isDate = line.includes("1974") || line.includes("1947");
-      this.track(this.add.text(x - 34, y - 31 + index * 16, line, {
+      const isDate = line.includes("1974") || line.includes("1947") || line.includes("compare");
+      this.track(this.add.text(x - 27, y - 17 + index * 12, line, {
         fontFamily: "monospace",
         fontSize: "7px",
         color: isDate ? PALETTE.classNetRed : PALETTE.sepiaInk
@@ -616,8 +548,53 @@ export class SilentReadScene extends Phaser.Scene {
     });
   }
 
+  private drawStagePanel(title: string, lines: readonly string[], accent: string) {
+    this.track(this.add.rectangle(128, 58, 112, 38, color(PALETTE.black), 0.96)
+      .setStrokeStyle(1, color(accent)).setDepth(144));
+    this.track(this.add.text(128, 43, title, {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: accent
+    }).setOrigin(0.5).setDepth(145));
+    this.track(this.add.text(128, 51, lines.join("\n"), {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.creamPaper,
+      align: "center",
+      lineSpacing: 0
+    }).setOrigin(0.5, 0).setDepth(145));
+  }
+
+  private drawProductionLanes() {
+    const lanes = [
+      { x: 62, label: "METHOD", itemId: "editorial-ledger", accent: PALETTE.goldStamp },
+      { x: 128, label: "TYPEFLOW", itemId: "printer-copy", accent: PALETTE.buckramHighlight },
+      { x: 194, label: "PROOF", itemId: "typesetter-proof", accent: PALETTE.terminalCyan }
+    ];
+    for (const lane of lanes) {
+      const item = SILENT_READ_REVIEW_ITEMS.find((candidate) => candidate.id === lane.itemId);
+      this.track(this.add.rectangle(lane.x, 111, 42, 48, color(PALETTE.black), 0.92)
+        .setStrokeStyle(1, color(lane.accent)).setDepth(140));
+      this.track(this.add.image(lane.x, 104, item?.texture ?? "review-folder").setDepth(141));
+      this.track(this.add.text(lane.x, 116, lane.label, {
+        fontFamily: "monospace",
+        fontSize: "5px",
+        color: lane.accent
+      }).setOrigin(0.5).setDepth(142));
+      this.track(this.add.text(lane.x, 124, `${item?.checkIds.length ?? 0} CHECKS`, {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: PALETTE.creamPaper
+      }).setOrigin(0.5).setDepth(142));
+      this.track(this.add.rectangle(lane.x, 142, 2, 16, color(lane.accent), 0.9).setDepth(139));
+    }
+  }
+
   private drawWorkstations() {
-    for (const station of WORKSTATIONS.filter((candidate) => stationRoom(candidate.id) === this.currentRoomId)) {
+    const phase = this.activeReviewPhase();
+    for (const station of WORKSTATIONS.filter((candidate) =>
+      stationRoom(candidate.id) === this.currentRoomId && candidate.phases.includes(phase)
+    )) {
       this.track(this.add.rectangle(station.x, station.y + 1, 40, 18, color(PALETTE.black)).setDepth(150));
       this.track(this.add.rectangle(station.x, station.y, 38, 16, color(PALETTE.deepRuby)).setStrokeStyle(2, color(station.accent)).setDepth(151));
       this.track(this.add.image(station.x - 11, station.y, station.texture).setDepth(152));
@@ -638,23 +615,6 @@ export class SilentReadScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan
     }).setOrigin(0.5).setDepth(154));
-  }
-
-  private drawToolbeltIcons() {
-    const tools = [
-      { x: 92, y: 72, key: "review-folder", label: "FOLDER", color: PALETTE.goldStamp },
-      { x: 128, y: 72, key: "proof-lens", label: "LENS", color: PALETTE.terminalCyan },
-      { x: 164, y: 72, key: "red-pencil", label: "PENCIL", color: PALETTE.buckramHighlight }
-    ];
-    for (const tool of tools) {
-      this.track(this.add.rectangle(tool.x, tool.y, 28, 22, color(PALETTE.black)).setStrokeStyle(1, color(tool.color)).setDepth(146));
-      this.track(this.add.image(tool.x, tool.y - 3, tool.key).setDepth(147));
-      this.track(this.add.text(tool.x, tool.y + 9, tool.label, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: tool.color
-      }).setOrigin(0.5).setDepth(148));
-    }
   }
 
   private drawProofMinimap() {
@@ -707,13 +667,23 @@ export class SilentReadScene extends Phaser.Scene {
   private startPhysicalVerificationLoop() {
     if (this.physicalFlags.length > 0) return;
     addProcessItem("review_folder");
-    setDocumentWorkflowState("proof_page_412", "selected");
-    this.physicalFlags = PHYSICAL_FLAGS.map((flag) => {
+    const restoredStep = deriveSilentReadReviewStep(gameState.sceneProgress, getHeldProcessItemIds());
+    const restoredStatus = silentReadReviewStatusFromCode(gameState.sceneProgress.silentReadReviewStatus ?? 0);
+    if (restoredStep < 5) setDocumentWorkflowState("proof_page_412", "selected");
+    this.physicalFlags = PHYSICAL_FLAGS.map((flag, index) => {
+      const status: PhysicalFlagStatus = index < restoredStep
+        ? "stamped"
+        : index === restoredStep
+          ? restoredStatus
+          : "waiting";
+      const station = this.stationFor(flag.destination);
+      const placed = status === "routed" || status === "verified";
       const physicalFlag: PhysicalFlag = {
         ...flag,
-        status: "waiting",
-        x: this.outbox.x,
-        y: this.outbox.y - 10
+        status,
+        x: placed ? station.x : this.outbox.x,
+        y: placed ? station.y - 17 : this.outbox.y - 10,
+        routedStation: placed ? station.id : undefined
       };
       physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture).setDepth(240).setVisible(false);
       physicalFlag.labelText = this.add.text(physicalFlag.x, physicalFlag.y + 14, flag.shortLabel, {
@@ -724,67 +694,27 @@ export class SilentReadScene extends Phaser.Scene {
       }).setOrigin(0.5).setDepth(241).setVisible(false);
       return physicalFlag;
     });
+    const carried = this.physicalFlags.find((flag) => flag.status === "carried");
+    setHeldItem(carried ? `Review Folder: ${carried.shortLabel}` : null);
+    gameState.sceneProgress.silentReadReviewStep = restoredStep;
+    gameState.sceneProgress.silentReadReviewStatus = silentReadReviewStatusCode(restoredStatus);
     this.positionActiveWaitingFlagForRoom();
-    setLatestMessage("Review Folder carries unresolved issues through human review.");
-    setObjective("Editor's Labyrinth: carry the StateChat mechanical flag.");
+    const active = this.getActiveFlag();
+    if (active) {
+      setLatestMessage("Review Folder carries unresolved issues through accountable human review.");
+      setObjective(`${PROOF_ROOMS[flagRoom(active)].title}: carry ${active.shortLabel} to ${this.stationFor(active.destination).label}.`);
+    } else {
+      if (!hasProcessItem("buckram_key")) addProcessItem("buckram_key");
+      setObjective("Silent Read Tower: exit east with the Buckram Key.");
+    }
     this.syncVisibleEntities();
     this.updatePhysicalVerification();
   }
 
-  private beginAiAnnotationReview() {
-    if (gameState.sceneProgress.aiAnnotationReviewComplete) {
-      this.startPhysicalVerificationLoop();
-      return;
-    }
-    this.showAiAnnotationReviewChoice();
-  }
-
-  private showAiAnnotationReviewChoice() {
-    if (gameState.sceneProgress.aiAnnotationReviewComplete) {
-      this.startPhysicalVerificationLoop();
-      return;
-    }
-
-    const step = gameState.sceneProgress.aiAnnotationReviewStep ?? 0;
-    const prompt = getAiAnnotationReviewPrompt(step);
-    setObjective(`AI Annotation Review: answer ${step + 1}/${AI_ANNOTATION_REVIEW_PROMPTS.length}.`);
-    this.actionHint.setText(`STATECHAT SOP ${step + 1}/${AI_ANNOTATION_REVIEW_PROMPTS.length}: choose A/B/C.`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateAiAnnotationReviewAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        adjustReliability(-2, "AI annotation SOP correction");
-        setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
-        this.reliability.update();
-        this.dialog.show("AI ANNOTATION REVIEW", [
-          result.message,
-          "The terminal can propose. A human must route and decide."
-        ], () => this.showAiAnnotationReviewChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.aiAnnotationReviewStep = nextStep;
-      if (!aiAnnotationReviewComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`AI annotation SOP check ${nextStep}/${AI_ANNOTATION_REVIEW_PROMPTS.length}.`);
-        this.dialog.show("AI ANNOTATION REVIEW", [
-          result.message,
-          "Continue the SOP check before carrying review flags."
-        ], () => this.showAiAnnotationReviewChoice());
-        return;
-      }
-
-      gameState.sceneProgress.aiAnnotationReviewComplete = 1;
-      addDocumentPoints(4, "AI annotation review SOP filed");
-      retroAudio.confirm();
-      setLatestMessage("AI Annotation Review Log filed: terminal support, human decisions.");
-      this.dialog.show("AI ANNOTATION REVIEW", [
-        result.message,
-        "The review log is filed.",
-        "Now carry each flag to the correct human workstation."
-      ], () => this.startPhysicalVerificationLoop());
-    });
+  private savePhysicalReviewProgress(flag: PhysicalFlag | null = this.getActiveFlag()) {
+    const index = flag ? this.physicalFlags.indexOf(flag) : SILENT_READ_REVIEW_TOTAL;
+    gameState.sceneProgress.silentReadReviewStep = Math.max(0, index);
+    gameState.sceneProgress.silentReadReviewStatus = flag ? silentReadReviewStatusCode(flag.status) : 0;
   }
 
   private positionActiveWaitingFlagForRoom() {
@@ -826,9 +756,9 @@ export class SilentReadScene extends Phaser.Scene {
       return { strictTarget, hintTarget, strictText: `CARRY ${activeFlag.shortLabel}` };
     }
 
-    const strictStation = this.findNearestWorkstation(28);
-    const hintStation = strictStation ?? this.findNearestWorkstation(42);
-    const strictTarget = strictStation ? this.workstationPromptTarget(strictStation, 28) : null;
+    const strictStation = this.findActionWorkstation(activeFlag, 28);
+    const hintStation = strictStation ?? this.findActionWorkstation(activeFlag, 42);
+    const strictTarget = strictStation ? this.workstationPromptTarget(strictStation, 36) : null;
     const hintTarget = hintStation ? this.workstationPromptTarget(hintStation, 28) : null;
     return { strictTarget, hintTarget, strictText: `${this.verbFor(activeFlag)} ${activeFlag.shortLabel}` };
   }
@@ -919,12 +849,13 @@ export class SilentReadScene extends Phaser.Scene {
       setHeldItem(`Review Folder: ${activeFlag.shortLabel}`);
       setLatestMessage(`CARRY: ${activeFlag.label}.`);
       setObjective(`ROUTE: place ${activeFlag.shortLabel} on ${this.stationFor(activeFlag.destination).label}.`);
+      this.savePhysicalReviewProgress(activeFlag);
       retroAudio.blip();
       this.updatePhysicalVerification();
       return;
     }
 
-    const nearestStation = this.findNearestWorkstation(28);
+    const nearestStation = this.findActionWorkstation(activeFlag, 28);
     if (!nearestStation) {
       const hintStation = this.findNearestWorkstation(42);
       if (hintStation) {
@@ -937,9 +868,24 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     const correctStation = this.stationFor(activeFlag.destination);
-    if (nearestStation.id !== activeFlag.destination) {
+    const step = this.physicalFlags.indexOf(activeFlag);
+    const routed = routeSilentReadReviewItem(step, activeFlag.id, nearestStation.id);
+    if (!routed.ok) {
       retroAudio.warning();
-      setLatestMessage(`ROUTE: ${activeFlag.shortLabel} belongs at ${correctStation.label}.`);
+      adjustReliability(-2, `${activeFlag.shortLabel} filed at wrong workstation`);
+      activeFlag.status = "waiting";
+      activeFlag.routedStation = undefined;
+      activeFlag.x = this.outbox.x;
+      activeFlag.y = this.outbox.y - 10;
+      activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y);
+      activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14);
+      setHeldItem(null);
+      setLatestMessage(`RETRY: ${activeFlag.shortLabel} belongs at ${correctStation.label}.`);
+      setObjective(`RETRY: collect ${activeFlag.shortLabel} from the outbox.`);
+      this.toast.show(`WRONG DESK - USE ${correctStation.label}`, this.player.position, "warn", PROOF_PLAY_BOUNDS);
+      this.savePhysicalReviewProgress(activeFlag);
+      this.reliability.update();
+      this.updatePhysicalVerification();
       return;
     }
 
@@ -952,17 +898,32 @@ export class SilentReadScene extends Phaser.Scene {
       activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y).setDepth(242);
       activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14).setDepth(243);
       setLatestMessage(`ROUTE: ${activeFlag.shortLabel} placed on ${nearestStation.label}.`);
-      setObjective(`VERIFY: press Space at ${nearestStation.label}.`);
+      setObjective(`${activeFlag.kind === "production" ? "STAMP" : "VERIFY"}: press Space at ${nearestStation.label}.`);
+      this.savePhysicalReviewProgress(activeFlag);
       retroAudio.confirm();
       this.updatePhysicalVerification();
       return;
     }
 
     if (activeFlag.status === "routed") {
+      if (activeFlag.kind === "production") {
+        activeFlag.status = "stamped";
+        this.addVerificationMark(nearestStation);
+        this.addProcessStampMark(activeFlag, nearestStation);
+        const shouldAdvance = this.applyFlagReward(activeFlag);
+        this.savePhysicalReviewProgress();
+        retroAudio.stamp();
+        this.updatePhysicalVerification();
+        if (shouldAdvance) this.advanceAfterStamp();
+        return;
+      }
       activeFlag.status = "verified";
       this.addVerificationMark(nearestStation);
-      setLatestMessage(`VERIFY: human review resolved ${activeFlag.shortLabel}.`);
+      setLatestMessage(activeFlag.id === "mechanical-fix"
+        ? "VERIFY: human editor added the visible bracketed insertion."
+        : `VERIFY: human review resolved ${activeFlag.shortLabel}.`);
       setObjective(`STAMP: apply a process stamp at ${nearestStation.label}.`);
+      this.savePhysicalReviewProgress(activeFlag);
       retroAudio.confirm();
       this.updatePhysicalVerification();
       return;
@@ -972,6 +933,7 @@ export class SilentReadScene extends Phaser.Scene {
       activeFlag.status = "stamped";
       this.addProcessStampMark(activeFlag, nearestStation);
       const shouldAdvance = this.applyFlagReward(activeFlag);
+      this.savePhysicalReviewProgress();
       retroAudio.stamp();
       this.updatePhysicalVerification();
       if (shouldAdvance) this.advanceAfterStamp();
@@ -980,12 +942,18 @@ export class SilentReadScene extends Phaser.Scene {
 
   private applyFlagReward(flag: PhysicalFlag) {
     if (flag.id === "mechanical-fix") {
+      gameState.sceneProgress.aiAnnotationReviewComplete = 1;
+      gameState.sceneProgress.aiAnnotationReviewStep = AI_ANNOTATION_REVIEW_PROMPTS.length;
       awardProcessStamp("sop");
       addInventoryItem("AI Annotation Review Log");
+      clearDocumentUndisclosedDeletion("source_note_047", "visible bracket added during human editor verification");
+      setDocumentWorkflowState("source_note_047", "ready_for_proof");
       addProcessItem("red_pencil");
+      addDocumentPoints(12, "StateChat plan reviewed and visibly bracketed by human editor");
+      adjustReliability(8, "AI proposal remained inside SOP with a visible bracket");
       addSnesRewardBurst(this, 128, 136, "red-pencil", "Red Pencil", (object) => this.track(object));
-      this.showRedPencilBracketChoice("source_note_047");
-      return false;
+      setLatestMessage("MECHANICAL FIX ACCEPTED - VISIBLE BRACKET RECORDED");
+      return true;
     }
     if (flag.id === "proof-date") {
       awardProcessStamp("proof");
@@ -996,6 +964,39 @@ export class SilentReadScene extends Phaser.Scene {
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");
       setLatestMessage("VERIFIED BY HUMAN REVIEW - PROOF LENS EARNED");
+      return true;
+    }
+    if (flag.id === "editorial-ledger") {
+      gameState.sceneProgress.editorialMethodologyComplete = 1;
+      gameState.sceneProgress.editorialMethodologyStep = EDITORIAL_METHODOLOGY_PROMPTS.length;
+      gameState.sceneProgress.editorialTreatmentComplete = 1;
+      gameState.sceneProgress.editorialTreatmentStep = EDITORIAL_TREATMENT_PROMPTS.length;
+      addDocumentPoints(18, "editorial method and treatment ledger filed");
+      adjustReliability(14, "human consultation preserved chronology, meaning, and reader clarity");
+      setLatestMessage(`METHOD LEDGER FILED - ${flag.checkCount} HUMAN CHECKS`);
+      return true;
+    }
+    if (flag.id === "printer-copy") {
+      gameState.sceneProgress.typeflowOrderComplete = 1;
+      gameState.sceneProgress.typeflowOrderStep = TYPEFLOW_ORDER_PROMPTS.length;
+      gameState.sceneProgress.typesettingPreparationComplete = 1;
+      gameState.sceneProgress.typesettingPreparationStep = TYPESETTING_PREPARATION_PROMPTS.length;
+      addDocumentPoints(14, "cleared printer's copy sequence filed");
+      adjustReliability(6, "clearance preceded typesetting and metadata stayed visible");
+      setLatestMessage(`PRINTER COPY FILED - ${flag.checkCount} ORDER CHECKS`);
+      return true;
+    }
+    if (flag.id === "typesetter-proof") {
+      gameState.sceneProgress.typesetterProofComplete = 1;
+      gameState.sceneProgress.typesetterProofStep = TYPESETTER_PROOF_PROMPTS.length;
+      addDocumentPoints(12, "typeset pages compared to originals");
+      setDocumentWorkflowState("telegram_001", "proofed");
+      setDocumentWorkflowState("source_note_047", "proofed");
+      setDocumentWorkflowState("cross_reference_001", "proofed");
+      setDocumentWorkflowState("sbu_annotation_001", "proofed");
+      setDocumentWorkflowState("proof_page_412", "proofed");
+      adjustReliability(10, "typesetter proof preserved document metadata");
+      setLatestMessage(`TYPESETTER PROOF FILED - ${flag.checkCount} COMPARISONS`);
       return true;
     }
     if (flag.id === "public-crossref") {
@@ -1010,58 +1011,29 @@ export class SilentReadScene extends Phaser.Scene {
     return true;
   }
 
-  private showRedPencilBracketChoice(documentId: string) {
-    setObjective("Red Pencil: add bracketed insertion before the edit can move to proof.");
-    const options: ChoiceOption[] = [
-      { key: "A", label: "[Text not declassified]", value: "bracket" },
-      { key: "B", label: "Skip bracket", value: "skip" }
-    ];
-    this.choice.show("RED PENCIL EXCISION.\nABOUT THE SERIES REQUIRES VISIBLE ALTERATION.\n\nWHAT PRINTS?", options, (option) => {
-      if (option.value === "bracket") {
-        clearDocumentUndisclosedDeletion(documentId, "bracketed insertion added");
-        setDocumentWorkflowState(documentId, "ready_for_proof");
-        addDocumentPoints(8, "mechanical StateChat proposal bracketed by editor");
-        adjustReliability(8, "AI checker output kept inside SOP with visible brackets");
-        setLatestMessage("MECHANICAL FIX ACCEPTED - BRACKETED INSERTION RECORDED");
-        this.advanceAfterStamp();
-        return;
-      }
-
-      markDocumentUndisclosedDeletion(documentId, "Red Pencil excision skipped bracketed insertion");
-      const violation = applyStandardsViolation(
-        "undisclosed_deletion",
-        "Red Pencil excision skipped the bracketed insertion.",
-        documentId
-      );
-      this.reliability.update();
-      setObjective("Correct the Red Pencil edit with bracketed insertion before publication.");
-      this.dialog.show("STANDARD VIOLATION", [
-        violation.label,
-        "Add the bracketed insertion before this document can publish."
-      ], () => this.showRedPencilBracketChoice(documentId));
-    });
-  }
-
   private advanceAfterStamp() {
     this.syncVisibleEntities();
     this.syncRoomTraversalState();
     this.updateProofMinimap();
     const nextFlag = this.getActiveFlag();
     if (!nextFlag) {
-      this.showEditorialMethodologyChoice();
+      this.awardBuckramKeyAfterTypesetterProof();
       return;
     }
 
     if (flagRoom(nextFlag) !== this.currentRoomId) {
-      this.renderCurrentRoom();
+      this.redrawCurrentRoom();
       this.positionActiveWaitingFlagForRoom();
       setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
-      this.dialog.show("PRIYA", [
-        "Red Pencil earned.",
-        "The mechanical proposal is handled.",
-        "Now enter the tower and route the evidence-bound flags by hand."
-      ]);
+      this.toast.show("RED PENCIL READY - ENTER EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
       return;
+    }
+
+    const nextIndex = this.physicalFlags.indexOf(nextFlag);
+    const previous = nextIndex > 0 ? this.physicalFlags[nextIndex - 1] : null;
+    if (previous && previous.phase !== nextFlag.phase) {
+      this.redrawCurrentRoom();
+      this.toast.show("PUBLICATION DOCKETS READY", this.player.position, "info", PROOF_PLAY_BOUNDS);
     }
 
     nextFlag.x = this.outbox.x;
@@ -1071,292 +1043,20 @@ export class SilentReadScene extends Phaser.Scene {
     setObjective(`Silent Read Tower: carry ${nextFlag.shortLabel} from the review outbox.`);
   }
 
-  private showEditorialMethodologyChoice() {
-    if (gameState.sceneProgress.editorialMethodologyComplete) {
-      this.showEditorialTreatmentChoice();
-      return;
-    }
-
-    const step = gameState.sceneProgress.editorialMethodologyStep ?? 0;
-    const prompt = getEditorialMethodologyPrompt(step);
-    setObjective(`Editorial Methodology: answer ${step + 1}/${EDITORIAL_METHODOLOGY_PROMPTS.length}.`);
-    this.actionHint.setText(`METHOD ${step + 1}/${EDITORIAL_METHODOLOGY_PROMPTS.length}: choose A/B/C.`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateEditorialMethodologyAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `Editorial methodology shortcut: ${option.value}`);
-        this.reliability.update();
-        setLatestMessage("EDITORIAL METHODOLOGY FAILED - RETURN TO OFFICIAL METHOD");
-        this.dialog.show("EDITORIAL METHODOLOGY", [
-          result.message,
-          "Chronology, transcription, source notes, and annotation rules keep the reader oriented."
-        ], () => this.showEditorialMethodologyChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.editorialMethodologyStep = nextStep;
-      if (!editorialMethodologyComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`Editorial methodology check ${nextStep}/${EDITORIAL_METHODOLOGY_PROMPTS.length}: ${result.prompt.id}.`);
-        this.dialog.show("EDITORIAL METHODOLOGY", [
-          result.message,
-          "Continue the methodology ledger before final editorial treatment."
-        ], () => this.showEditorialMethodologyChoice());
-        return;
-      }
-
-      gameState.sceneProgress.editorialMethodologyComplete = 1;
-      gameState.sceneProgress.editorialMethodologyStep = EDITORIAL_METHODOLOGY_PROMPTS.length;
-      addDocumentPoints(8, "editorial methodology ledger filed");
-      adjustReliability(6, "official editorial methodology preserved chronology and source notes");
-      retroAudio.confirm();
-      setLatestMessage("Editorial methodology filed: chronology, transcription, source notes, and annotation are anchored.");
-      this.dialog.show("EDITORIAL METHODOLOGY", [
-        result.message,
-        "Official methodology ledger filed.",
-        "Now resolve the final textual treatment by human consultation."
-      ], () => this.showEditorialTreatmentChoice());
-    });
-  }
-
-  private showEditorialTreatmentChoice() {
-    if (!gameState.sceneProgress.editorialMethodologyComplete) {
-      this.showEditorialMethodologyChoice();
-      return;
-    }
-    if (gameState.sceneProgress.editorialTreatmentComplete) {
-      this.showTypeflowOrderChoice();
-      return;
-    }
-
-    const step = gameState.sceneProgress.editorialTreatmentStep ?? 0;
-    const prompt = getEditorialTreatmentPrompt(step);
-    setObjective(`Editorial Treatment: answer ${step + 1}/${EDITORIAL_TREATMENT_PROMPTS.length}.`);
-    this.actionHint.setText(`EDITORIAL ${step + 1}/${EDITORIAL_TREATMENT_PROMPTS.length}: choose A/B/C.`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateEditorialTreatmentAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `Editorial treatment shortcut: ${option.value}`);
-        this.reliability.update();
-        setLatestMessage("EDITORIAL TREATMENT FAILED - HUMAN CONSULTATION REQUIRED");
-        this.dialog.show("EDITORIAL TREATMENT", [
-          result.message,
-          "Readable text still has to preserve the record."
-        ], () => this.showEditorialTreatmentChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.editorialTreatmentStep = nextStep;
-      if (!editorialTreatmentComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`Editorial treatment check ${nextStep}/${EDITORIAL_TREATMENT_PROMPTS.length}: ${result.prompt.id}.`);
-        this.dialog.show("EDITORIAL TREATMENT", [
-          result.message,
-          "Continue the human editorial pass before typesetting."
-        ], () => this.showEditorialTreatmentChoice());
-        return;
-      }
-
-      gameState.sceneProgress.editorialTreatmentComplete = 1;
-      gameState.sceneProgress.editorialTreatmentStep = EDITORIAL_TREATMENT_PROMPTS.length;
-      addDocumentPoints(10, "editorial treatment consultation filed");
-      adjustReliability(8, "human editorial treatment preserved record meaning");
-      retroAudio.confirm();
-      setLatestMessage("Editorial treatment filed: textual issues resolved visibly.");
-      this.dialog.show("EDITORIAL TREATMENT", [
-        result.message,
-        "The editor and compiler preserved the record while improving readability.",
-        "Now file the manuscript-clearance order before typesetting."
-      ], () => this.showTypeflowOrderChoice());
-    });
-  }
-
-  private showTypeflowOrderChoice() {
-    if (!gameState.sceneProgress.editorialTreatmentComplete) {
-      this.showEditorialTreatmentChoice();
-      return;
-    }
-    if (gameState.sceneProgress.typeflowOrderComplete) {
-      this.showTypesettingPreparationChoice();
-      return;
-    }
-
-    const step = gameState.sceneProgress.typeflowOrderStep ?? 0;
-    const prompt = getTypeflowOrderPrompt(step);
-    setObjective(`Typeflow Order: answer ${step + 1}/${TYPEFLOW_ORDER_PROMPTS.length}.`);
-    this.actionHint.setText(`TYPEFLOW ${step + 1}/${TYPEFLOW_ORDER_PROMPTS.length}: choose A/B/C.`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateTypeflowOrderAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `Typeflow order shortcut: ${option.value}`);
-        this.reliability.update();
-        setLatestMessage("TYPEFLOW ORDER FAILED - CLEAR MANUSCRIPT BEFORE TYPESETTING");
-        this.dialog.show("TYPEFLOW ORDER", [
-          result.message,
-          "Modern FRUS typeflow must keep clearance and typesetting in the right order."
-        ], () => this.showTypeflowOrderChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.typeflowOrderStep = nextStep;
-      if (!typeflowOrderComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`Typeflow order check ${nextStep}/${TYPEFLOW_ORDER_PROMPTS.length}: ${result.prompt.id}.`);
-        this.dialog.show("TYPEFLOW ORDER", [
-          result.message,
-          "Continue logging the historical sequence before proofing."
-        ], () => this.showTypeflowOrderChoice());
-        return;
-      }
-
-      gameState.sceneProgress.typeflowOrderComplete = 1;
-      gameState.sceneProgress.typeflowOrderStep = TYPEFLOW_ORDER_PROMPTS.length;
-      addDocumentPoints(6, "modern manuscript-clearance typeflow filed");
-      retroAudio.confirm();
-      setLatestMessage("Typeflow order filed: manuscript clearance precedes typesetting.");
-      this.dialog.show("TYPEFLOW ORDER", [
-        result.message,
-        "Modern sequence filed: clear manuscript, then prepare printer's copy.",
-        "Now prepare the text and notes for typesetting."
-      ], () => this.showTypesettingPreparationChoice());
-    });
-  }
-
-  private showTypesettingPreparationChoice() {
-    if (!gameState.sceneProgress.typeflowOrderComplete) {
-      this.showTypeflowOrderChoice();
-      return;
-    }
-    if (gameState.sceneProgress.typesettingPreparationComplete) {
-      this.showTypesetterProofChoice();
-      return;
-    }
-    const step = gameState.sceneProgress.typesettingPreparationStep ?? 0;
-    const prompt = getTypesettingPreparationPrompt(step);
-    setObjective(`Typesetting Preparation: answer ${step + 1}/${TYPESETTING_PREPARATION_PROMPTS.length}.`);
-    this.actionHint.setText(`TYPESET PREP ${step + 1}/${TYPESETTING_PREPARATION_PROMPTS.length}: choose A/B/C.`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateTypesettingPreparationAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `Typesetting preparation shortcut: ${option.value}`);
-        this.reliability.update();
-        setLatestMessage("TYPESETTING PREP FAILED - PREPARE PRINTER'S COPY");
-        this.dialog.show("TYPESETTING PREP", [
-          result.message,
-          "The printer's copy must preserve document metadata before proof comparison."
-        ], () => this.showTypesettingPreparationChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.typesettingPreparationStep = nextStep;
-      if (!typesettingPreparationComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`Typesetting prep check ${nextStep}/${TYPESETTING_PREPARATION_PROMPTS.length}: ${result.prompt.id}.`);
-        this.dialog.show("TYPESETTING PREP", [
-          result.message,
-          "Continue preparing the cleared text before proofing the typeset pages."
-        ], () => this.showTypesettingPreparationChoice());
-        return;
-      }
-
-      gameState.sceneProgress.typesettingPreparationComplete = 1;
-      gameState.sceneProgress.typesettingPreparationStep = TYPESETTING_PREPARATION_PROMPTS.length;
-      addDocumentPoints(8, "printer's copy prepared for typesetting");
-      retroAudio.confirm();
-      setLatestMessage("Typesetting preparation complete: printer's copy and document notes are ready.");
-      this.dialog.show("TYPESETTING PREP", [
-        result.message,
-        "Printer's copy prepared: classification, drafting, and dates are preserved in notes.",
-        "Now compare the typeset pages to the originals."
-      ], () => this.showTypesetterProofChoice());
-    });
-  }
-
-  private showTypesetterProofChoice() {
-    if (!gameState.sceneProgress.typeflowOrderComplete) {
-      this.showTypeflowOrderChoice();
-      return;
-    }
-    if (!gameState.sceneProgress.typesettingPreparationComplete) {
-      this.showTypesettingPreparationChoice();
-      return;
-    }
-    if (gameState.sceneProgress.typesetterProofComplete) {
-      this.awardBuckramKeyAfterTypesetterProof();
-      return;
-    }
-    const step = gameState.sceneProgress.typesetterProofStep ?? 0;
-    const prompt = getTypesetterProofPrompt(step);
-    setObjective(`Typesetter Proof: answer ${step + 1}/${TYPESETTER_PROOF_PROMPTS.length}.`);
-    this.actionHint.setText(`TYPESET PROOF ${step + 1}/${TYPESETTER_PROOF_PROMPTS.length}: choose A/B/C.`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateTypesetterProofAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `Typesetter proof shortcut: ${option.value}`);
-        this.reliability.update();
-        setLatestMessage("TYPESETTER PROOF FAILED - COMPARE TO ORIGINALS");
-        this.dialog.show("TYPESETTER PROOF", [
-          result.message,
-          "The typeset page must match the original record before binding."
-        ], () => this.showTypesetterProofChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.typesetterProofStep = nextStep;
-      if (!typesetterProofComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`Typesetter proof check ${nextStep}/${TYPESETTER_PROOF_PROMPTS.length}: ${result.prompt.id}.`);
-        this.dialog.show("TYPESETTER PROOF", [
-          result.message,
-          "Continue proofing before the Buckram Key is issued."
-        ], () => this.showTypesetterProofChoice());
-        return;
-      }
-
-      gameState.sceneProgress.typesetterProofComplete = 1;
-      gameState.sceneProgress.typesetterProofStep = TYPESETTER_PROOF_PROMPTS.length;
-      addDocumentPoints(12, "typeset pages compared to originals");
-      setDocumentWorkflowState("telegram_001", "proofed");
-      setDocumentWorkflowState("source_note_047", "proofed");
-      setDocumentWorkflowState("cross_reference_001", "proofed");
-      setDocumentWorkflowState("sbu_annotation_001", "proofed");
-      setDocumentWorkflowState("proof_page_412", "proofed");
-      adjustReliability(10, "typesetter proof preserved document metadata");
-      retroAudio.confirm();
-      setLatestMessage("Typesetter proof complete: pages compared to originals.");
-      this.dialog.show("TYPESETTER PROOF", [
-        result.message,
-        "Classification, drafting, dates, and text match the originals.",
-        "Buckram Key issued for final assembly."
-      ], () => this.awardBuckramKeyAfterTypesetterProof());
-    });
-  }
-
   private awardBuckramKeyAfterTypesetterProof() {
     if (!hasProcessItem("buckram_key")) {
       addProcessItem("buckram_key");
       setLatestMessage("Buckram Key opens the final publication gate.");
     }
+    gameState.sceneProgress.silentReadReviewStep = SILENT_READ_REVIEW_TOTAL;
+    gameState.sceneProgress.silentReadReviewStatus = 0;
     setObjective("Silent Read Tower: exit east with Buckram Key.");
+    this.redrawCurrentRoom();
     addSnesRewardBurst(this, this.outbox.x, this.outbox.y - 24, "buckram-key", "Buckram Key", (object) => this.track(object));
     this.actionHint.setText("DONE: typesetter proof filed. Exit east.");
     this.reliability.update();
     this.syncRoomTraversalState();
-    this.dialog.show(gameState.playerProfile.displayName.toUpperCase(), [
-      "Every evidence-bound flag became a physical object.",
-      "Typeset pages were checked against the originals.",
-      "Take the Buckram Key east to certify the ruby volume."
-    ]);
+    this.toast.show("BUCKRAM KEY READY - EXIT EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
   }
 
   private checkRoomExit() {
@@ -1412,7 +1112,8 @@ export class SilentReadScene extends Phaser.Scene {
       y: glow.y - 1,
       duration: 260,
       yoyo: true,
-      repeat: 2
+      repeat: 2,
+      onComplete: () => glow.destroy()
     });
   }
 
@@ -1420,13 +1121,13 @@ export class SilentReadScene extends Phaser.Scene {
     const stationStampCount = this.physicalFlags.filter((candidate) => candidate.status === "stamped" && candidate.destination === station.id).length;
     const x = station.x - 14 + ((stationStampCount - 1) % 3) * 14;
     const y = station.y + 22 + Math.floor((stationStampCount - 1) / 3) * 7;
-    this.add.rectangle(x, y, 12, 6, color(PALETTE.goldStamp)).setStrokeStyle(1, color(PALETTE.black)).setDepth(246);
-    this.add.rectangle(x, y + 2, 10, 2, color(PALETTE.buckramHighlight)).setDepth(247);
-    this.add.text(x, y - 3, "OK", {
+    this.track(this.add.rectangle(x, y, 12, 6, color(PALETTE.goldStamp)).setStrokeStyle(1, color(PALETTE.black)).setDepth(246));
+    this.track(this.add.rectangle(x, y + 2, 10, 2, color(PALETTE.buckramHighlight)).setDepth(247));
+    this.track(this.add.text(x, y - 3, "OK", {
       fontFamily: "monospace",
       fontSize: "4px",
       color: PALETTE.black
-    }).setOrigin(0.5).setDepth(248);
+    }).setOrigin(0.5).setDepth(248));
     flag.icon?.setTint(color(PALETTE.stoneGray));
     flag.labelText?.setColor(PALETTE.stoneGray);
     setLatestMessage(`STAMP: ${flag.shortLabel} human review recorded.`);
@@ -1499,8 +1200,9 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     if (flag.status === "routed") {
-      setNearestInteractable(nearestStation?.id === flag.destination ? `VERIFY ${flag.shortLabel}` : null);
-      this.actionHint.setText(`VERIFY ${flag.shortLabel}: press Space at ${correctStation.label}.`);
+      const verb = flag.kind === "production" ? "STAMP" : "VERIFY";
+      setNearestInteractable(nearestStation?.id === flag.destination ? `${verb} ${flag.shortLabel}` : null);
+      this.actionHint.setText(`${verb} ${flag.shortLabel}: press Space at ${correctStation.label}.`);
       return;
     }
     setNearestInteractable(nearestStation?.id === flag.destination ? `STAMP ${flag.shortLabel}` : null);
@@ -1511,7 +1213,7 @@ export class SilentReadScene extends Phaser.Scene {
     const activeFlag = this.getActiveFlag();
     for (const flag of this.physicalFlags) {
       const inRoom = flagRoom(flag) === this.currentRoomId;
-      const visible = inRoom && (flag === activeFlag || flag.status === "stamped");
+      const visible = inRoom && flag === activeFlag;
       flag.icon?.setVisible(visible);
       flag.labelText?.setVisible(visible && flag.status !== "carried");
     }
@@ -1537,15 +1239,17 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private syncVisibleEntities() {
+    const phase = this.activeReviewPhase();
     const roomLabels = this.currentRoomId === "E1"
-      ? ["Priya", "AI Annotation Review terminal", "StateChat outbox", "Editor Desk", "Red Pencil"]
-      : ["Manuscript page", "Typeset proof", "Review outbox", "Proof Lens", "OpenNet", "ClassNet", "Referral Tray", "Proof Table"];
+      ? ["Priya", "StateChat draft terminal", "StateChat outbox", "Editor Desk", "Red Pencil"]
+      : phase === "evidence"
+        ? ["Manuscript page", "Typeset proof", "Review outbox", "Proof Lens", "OpenNet", "ClassNet", "Referral Tray", "Proof Table"]
+        : ["Cleared copy", "Publication outbox", "Consult Desk", "Typeflow Rail", "Proof Table", "Buckram Key"];
+    const active = this.getActiveFlag();
     setVisibleEntities([
       ...roomLabels,
       "Review Folder",
-      ...this.physicalFlags
-        .filter((flag) => flag.status !== "stamped" && flagRoom(flag) === this.currentRoomId)
-        .map((flag) => flag.label)
+      ...(active && flagRoom(active) === this.currentRoomId ? [active.label] : [])
     ]);
   }
 
@@ -1556,7 +1260,7 @@ export class SilentReadScene extends Phaser.Scene {
   private verbFor(flag: PhysicalFlag): "CARRY" | "ROUTE" | "VERIFY" | "STAMP" {
     if (flag.status === "waiting") return "CARRY";
     if (flag.status === "carried") return "ROUTE";
-    if (flag.status === "routed") return "VERIFY";
+    if (flag.status === "routed") return flag.kind === "production" ? "STAMP" : "VERIFY";
     return "STAMP";
   }
 
@@ -1566,14 +1270,33 @@ export class SilentReadScene extends Phaser.Scene {
     return station;
   }
 
+  private activeReviewPhase(): SilentReadReviewPhase {
+    const active = this.getActiveFlag();
+    if (active) return active.phase;
+    return this.currentRoomId === "E1" ? "editor" : "production";
+  }
+
   private findNearestWorkstation(maxDistance = 24) {
+    const phase = this.activeReviewPhase();
     const nearest = WORKSTATIONS
-      .filter((station) => stationRoom(station.id) === this.currentRoomId)
+      .filter((station) => stationRoom(station.id) === this.currentRoomId && station.phases.includes(phase))
       .map((station) => ({
         station,
         distance: Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, station.x, station.y)
       })).sort((a, b) => a.distance - b.distance)[0];
     return nearest && nearest.distance <= maxDistance ? nearest.station : null;
+  }
+
+  private findActionWorkstation(flag: PhysicalFlag, maxDistance: number) {
+    const intended = this.stationFor(flag.destination);
+    const intendedDistance = Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      intended.x,
+      intended.y
+    );
+    if (intendedDistance <= maxDistance + 8) return intended;
+    return this.findNearestWorkstation(maxDistance);
   }
 
   private isNear(x: number, y: number, radius: number) {
