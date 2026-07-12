@@ -102,6 +102,7 @@ import { InteractionPrompt } from "../systems/interactionPrompt";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { InventoryOverlay } from "../systems/inventory";
 import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
+import { applyDanneLurkerDamage } from "../systems/dannePressure";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { shouldDismissControlsCard } from "../systems/tutorialDismiss";
@@ -399,12 +400,12 @@ export class OfficeScene extends Phaser.Scene {
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
     if (result.triggered) {
       this.player.takeHit(this.danneLurker.position, 10, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure interrupted office workflow.");
+      applyDanneLurkerDamage("contact", "DANN-E deadline pressure interrupted office workflow.");
       setObjective("Keep moving: DANN-E pressure cannot replace human review.");
       this.reliability.update();
     } else if (result.egoBoltHit) {
       this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt interrupted office workflow.");
+      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt interrupted office workflow.");
       setObjective("Dodge Ego bolts and keep the human review route moving.");
       this.reliability.update();
     }

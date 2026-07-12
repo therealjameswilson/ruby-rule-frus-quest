@@ -32,7 +32,8 @@ import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { applyDanneLurkerDamage } from "../systems/dannePressure";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -727,12 +728,12 @@ export class ReferralVaultScene extends Phaser.Scene {
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
     if (result.triggered) {
       this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted referral review.");
+      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted referral review.");
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     } else if (result.egoBoltHit) {
       this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted referral review.");
+      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted referral review.");
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     }

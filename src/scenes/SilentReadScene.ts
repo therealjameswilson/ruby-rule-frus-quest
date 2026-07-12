@@ -33,7 +33,8 @@ import { retroAudio } from "../systems/audio";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, applyStandardsViolation, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
+import { adjustReliability, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
+import { applyDanneLurkerDamage } from "../systems/dannePressure";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addTinySparkle } from "../systems/roomDressing";
@@ -307,12 +308,12 @@ export class SilentReadScene extends Phaser.Scene {
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
     if (result.triggered) {
       this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted proof review.");
+      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted proof review.");
       this.toast.show("DANN-E DEADLINE PRESSURE", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.reliability.update();
     } else if (result.egoBoltHit) {
       this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted proof review.");
+      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted proof review.");
       this.toast.show("EGO BOLT - KEEP PROOFING", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.reliability.update();
     }
