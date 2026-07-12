@@ -129,6 +129,13 @@ interface VisibleThreat {
   reliabilityRisk?: string;
   enemyState?: string;
   weakness?: string;
+  telegraph?: {
+    kind: string;
+    label: string;
+    msRemaining: number;
+    target: Position;
+    destination: Position | null;
+  } | null;
   roomClear?: {
     roomId: string;
     defeated: number;
@@ -1941,6 +1948,13 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     reliabilityRisk: threat.reliabilityRisk,
     enemyState: threat.enemyState,
     weakness: threat.weakness,
+    telegraph: threat.telegraph
+      ? {
+          ...threat.telegraph,
+          target: { ...threat.telegraph.target },
+          destination: threat.telegraph.destination ? { ...threat.telegraph.destination } : null
+        }
+      : null,
     roomClear: threat.roomClear ? { ...threat.roomClear } : undefined
   }));
   refreshQuestWorkflowState();
@@ -1960,6 +1974,13 @@ export function getDanneCombatReadout() {
       reliabilityRisk: enemy.reliabilityRisk ?? "unknown",
       state: enemy.enemyState ?? enemy.status ?? "unknown",
       weakness: enemy.weakness ?? "unknown",
+      telegraph: enemy.telegraph
+        ? {
+            ...enemy.telegraph,
+            target: { ...enemy.telegraph.target },
+            destination: enemy.telegraph.destination ? { ...enemy.telegraph.destination } : null
+          }
+        : null,
       position: { x: enemy.x, y: enemy.y },
       defeatMethod: enemy.defeatMethod ?? ""
     })),

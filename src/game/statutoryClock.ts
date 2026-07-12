@@ -5,7 +5,10 @@ export const STATUTORY_DEADLINE_YEARS = 30;
 export const STATUTORY_START_YEAR = 20;
 export const STATUTORY_COMPLETION_PRESSURE_YEARS = 8.5;
 export const STATUTORY_AT_RISK_YEAR = 29;
-export const STATUTORY_BOSS_MS_PER_YEAR = 4200;
+// The mandatory three-phase fight needs a fair read-dodge-counter window.
+// Roughly 85 active seconds remain from the boss's 21.5-year readiness floor;
+// menus and cutscenes pause the clock.
+export const STATUTORY_BOSS_MS_PER_YEAR = 10_000;
 export const STATUTORY_QUICK_BOSS_MS_PER_YEAR = 700;
 export const STATUTORY_SHORTCUT_VIOLATION: StandardViolation = "concealed_policy_defect";
 

@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Readable DANN-E boss-pattern pass (2026-07-12):
+  - Replaced instant Colossus, Swarm, Cloud, and Ascendant attacks with 460-640 ms pixel telegraphs: red snapshot brackets, dotted firing lanes, cyan Cloud Shift destinations, and a pulsing DANN-E core.
+  - Projectiles now commit to the marked player snapshot, so moving out of the warning is a real dodge rather than a cosmetic cue; Cloud Form marks a collision-safe destination before teleporting and firing.
+  - Added short phase objectives that fit the mobile quest band: `DODGE RED LOCK; COUNTER`, `DODGE CONVERGENCE; COUNTER`, and `WATCH CYAN SHIFT; LEAVE RED TARGET`.
+  - Pausing or opening an overlay freezes bolts, minions, telegraph countdowns, and projectile expiry instead of allowing attacks through UI; phase transitions clear stale bolts.
+  - Exposed telegraph kind, label, countdown, target, and destination through `window.render_game_to_text()` for nonvisual QA.
+  - Retuned the normal Statutory Clock to roughly 85 active combat seconds so continuous desktop and touch play can beat the deadline without input-modality penalties; quick QA mode still forces and verifies the lawful-rejection shortcut branch.
+  - Verification: 104 Vitest files / 543 tests pass; the production build passes; real 180-HP desktop combat clears all three phases at 100 reliability; fast desktop and DPR-3 touch fights show every phase tell, reject the deadline shortcut, and enter the bindery with no browser errors.
+
 - Mandatory Black Vault climax and final agent-pull reconciliation (2026-07-12):
   - Rewired the normal quest from Silent Read into the existing Black Vault DANN-E encounter, then into the physical Buckram bindery. DANN-E now clears the final review room but cannot publish the volume before human binding and certification.
   - Reused the harmonized Red Pencil, six process stamps, equity crystals, five cover pieces, repository map, typesetter proof, Buckram Key, standards ledger, room graph, eight-form DANN-E art, and save fields instead of introducing parallel systems.

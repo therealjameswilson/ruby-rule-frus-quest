@@ -992,10 +992,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private objectiveForBossPhase(phase: string) {
-    if (phase === "colossus") return "Black Vault Lair: dodge ego bolts and strike DANN-E with the Red Pencil.";
-    if (phase === "swarm") return "Black Vault Lair: survive the mini-DANN-E queue and keep reviewing.";
-    if (phase === "cloud") return "Black Vault Lair: cloud form takes half damage; keep pressure on the record.";
-    if (phase === "ascendant") return "Black Vault Lair: complete treaty record unlocked the secret Ascendant phase.";
+    if (phase === "colossus") return "Black Vault: DODGE RED LOCK; COUNTER.";
+    if (phase === "swarm") return "Black Vault: DODGE CONVERGENCE; COUNTER.";
+    if (phase === "cloud") return "Black Vault: WATCH CYAN SHIFT; LEAVE RED TARGET.";
+    if (phase === "ascendant") return "Black Vault: READ MARKERS; COUNTER BETWEEN VOLLEYS.";
     if (phase === "defeated") return "Black Vault Lair: DANN-E defeated; route to publication.";
     return this.geometry.objective;
   }

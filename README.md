@@ -72,7 +72,7 @@ The branch-by-branch evidence and the two restored data payloads are recorded in
 | 2. Tile-based overworld | Partially live: region/world scenes and gameplay-map scenes boot through direct links; older large overworld experiments remain quarantined under `experiments/overworld-wip/`. |
 | 3. Collision | Live on `main`: player/action collision, gates, interactables, and room blockers use Arcade-style AABB patterns; fuller per-tile terrain collision remains a promotion target. |
 | 4. Combat and workflow tools | Live on `main`: equipped Citation Stamp, Red Pencil, and Review Folder swings have active frames/cooldowns; tool-specific DANN-E counters, room-clear gates, ego attacks, hit-stop, loot, and Buckram Gate pressure are integrated. |
-| 5. Enemy AI | Live on `main`: the canonical eight DANN-E forms, roaming lurkers, patrol/chase/turret strategies, boss phases, taunts, hazards, difficulty tiers, and automated combat coverage are integrated. |
+| 5. Enemy AI | Live on `main`: the canonical eight DANN-E forms, roaming lurkers, patrol/chase/turret strategies, boss phases, readable lock/shift/barrage telegraphs, taunts, hazards, difficulty tiers, and automated combat coverage are integrated. |
 | 6. HUD and volume assembly | Live on `main`: role, reliability, document points, equipped tools, cooldown, stamps, fragments, DANN-E risk, and the persistent five-piece volume-assembly arc share the compact quest band and pause subscreen. |
 | 7. Visual pipeline | Live on `main`: fixed 256x240 pixel canvas, integer nearest-neighbor scaling, native 16-bit character/DANN-E sheets, repository-local Codex and Perplexity art packs, guarded fallbacks, and Web Audio tones. |
 | 8. Room and dungeon scaffolding | Live on `main`: the normal route runs Silent Read -> mandatory DANN-E Black Vault -> physical Buckram bindery; gates, rewards, final certification, true/bad ending scenes, and debug galleries all boot through `?scene=` QA links. |
@@ -80,7 +80,7 @@ The branch-by-branch evidence and the two restored data payloads are recorded in
 | Accessibility | Live on `main`: keyboard/touch/gamepad controls, concise/full `window.render_game_to_text()` payloads, debug scenes, QA deep links, and persisted high-contrast/colorblind patterns are integrated. |
 | New Game+ | Live on `main`: first completion unlocks the veteran cosmetic, harder DANN-E tier, second-volume region, and persistent completed-volume count. |
 
-Current integration verification passes 538 Vitest cases and covers the complete desktop and touch-driven route through both Network rooms, the physical Referral Vault, the physical Silent Read proofing line, all three mandatory DANN-E phases, all five Buckram binding packets, and final publication. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+Current integration verification passes 543 Vitest cases and covers the complete desktop and touch-driven route through both Network rooms, the physical Referral Vault, the physical Silent Read proofing line, all three mandatory telegraphed DANN-E phases, all five Buckram binding packets, and final publication. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
 
 ## MVP Features
 
@@ -161,11 +161,10 @@ Sprites, tiles, enemy art, and UI textures are original repository-local SVG pix
 
 ## Roadmap
 
-1. Route the main quest through the live Black Vault DANN-E boss before the physical bindery, so the climax is earned on the normal path instead of only through a debug scene.
-2. Promote the quarantined tile registry and screen manager in small, fallback-guarded steps.
-3. Replace remaining poster-like room surfaces with validated Phaser tilemap layers and per-tile collision.
-4. Give every main dungeon a compact entrance, key/tool reveal, shortcut, and boss/review payoff.
-5. Continue tuning DANN-E encounters around readable telegraphs, movement choices, and distinctive tool counters.
-6. Simplify oversized scene implementations as physical interactions move into reusable systems.
-7. Expand save/load coverage to exact in-room puzzle and enemy-wave state.
-8. Keep testing complete desktop and iPhone playthroughs rather than only direct-scene bootability.
+1. Promote the quarantined tile registry and screen manager in small, fallback-guarded steps.
+2. Replace remaining poster-like room surfaces with validated Phaser tilemap layers and per-tile collision.
+3. Give every main dungeon a compact entrance, key/tool reveal, shortcut, and boss/review payoff.
+4. Expand DANN-E encounters beyond readable telegraphs into more phase-specific movement choices and distinctive tool counters.
+5. Simplify oversized scene implementations as physical interactions move into reusable systems.
+6. Expand save/load coverage to exact in-room puzzle and enemy-wave state.
+7. Keep testing complete desktop and iPhone playthroughs rather than only direct-scene bootability.
