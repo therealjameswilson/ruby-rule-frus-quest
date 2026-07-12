@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Codex + Perplexity pull harmonization refresh (2026-07-12):
+  - Re-fetched the complete remote and reviewed all 89 GitHub pull-request records through PR #90; no component pull remains open.
+  - Confirmed all 58 surviving PR-backed branches remain at their recorded PR head, both no-PR integration branches are ancestors of `main`, and all ten closed stacked Codex gameplay heads are represented through PR #78.
+  - Rechecked every binary payload from Perplexity PRs #42-#57: all 112 assets remain present on `main` with identical Git blob IDs.
+  - Added `npm run audit:pulls` so branch drift, missing stacked heads, missing assets, changed asset blobs, or an accidental merge of the superseded five-form PR #41 now fails visibly.
+  - Refreshed `docs/AGENT_PULL_HARMONIZATION.md` through the mandatory DANN-E climax, telegraph, and Archive A1 follow-ups (#88-#90).
+  - Verification: the repeatable pull audit passes; 106 Vitest files / 552 tests pass; TypeScript and the production build pass; all 25 `?scene=` routes boot without browser errors; in-app Chromium visually renders the live Archive A1 composition at the integer 3x scale with no warnings or errors.
+
 - Archive A1 dungeon-rhythm and ambient DANN-E fairness pass (2026-07-12):
   - Fixed the dungeon-item state bug that treated mere Citation Stamp ownership as proof that Source Note 47 had already been verified; the Guide now grants the tool, while A1 still requires the repository, collection, and folder trail.
   - Rebuilt A1 around one readable room idea: quiet floor, central research table, optional equal-rank colleague, compact terminal-only StateChat flag, visible wall enemy, and physical locked exits. Removed the overlapping atlas, room compass, 92x70 terminal panel, extra shelf collision, and duplicate floor objective/exit text.
