@@ -2,6 +2,17 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical Referral Vault review pass (2026-07-11):
+  - Removed the unsolicited Marcus briefing and every `ChoicePrompt` from ReferralVaultScene, returning control immediately on entry.
+  - Replaced the three agency-equity quiz choices with physical Intelligence Annex, Base Access Memo, and White House Minutes files carried to CIA, DOD, and NSC desks.
+  - Kept StateChat terminal-only and draft-only: its generated batch manifest must now be carried across the room and filed at an equal-rank Human Concurrence Desk.
+  - Bundled the six foreign-government permission and withholding-appeal checks plus visible excision into three physical dockets filed at Permission, Appeal, and Bracket stations.
+  - Wrong equity/station filings cost a small reliability penalty, return the object for retry, and no longer create irreversible unresolved-equity state from exploration mistakes.
+  - Preserved legacy production-board/save compatibility by continuing to set permission, appeal, referral-stamp, document-workflow, and agency-equity completion fields.
+  - Persisted every stage and carried object in `sceneProgress`; route cues, compact check lamps, distinct document silhouettes, and dynamic `visibleEntities` keep the room readable without modal text.
+  - Decluttered the Concurrence Chamber, changed its reward pickup to a non-blocking toast, and prevented stage redraws from replaying the location banner.
+  - Desktop and DPR-3 iPhone playthroughs used real movement/action controls to test wrong agency and wrong station retries, complete all human checks, collect the Concurrence Slip, and enter Silent Read with no browser errors.
+
 - Physical ClassNet Vault review pass (2026-07-11):
   - Removed Network N2's nine consecutive clearance, E.O. 13526, and declassification ChoicePrompts; NetworkScene no longer imports or owns quiz UI.
   - Bundled all nine source-backed checks directly from their existing registries into three physical dockets: Clearance Lane, E.O. 13526 Release, and Equity Decision Trail.

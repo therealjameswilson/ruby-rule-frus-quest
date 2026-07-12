@@ -9,11 +9,10 @@ import {
   gameState,
   getHeldProcessItemIds,
   hasProcessItem,
-  recordUnresolvedEquity,
   clearDocumentUndisclosedDeletion,
-  markDocumentUndisclosedDeletion,
   setAgencyEquityResponse,
   setDocumentWorkflowState,
+  setHeldItem,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
@@ -22,19 +21,7 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
-import type { ChoiceOption, Interactable } from "../game/types";
-import {
-  evaluateForeignGovernmentPermissionAnswer,
-  foreignGovernmentPermissionComplete,
-  FOREIGN_GOVERNMENT_PERMISSION_PROMPTS,
-  getForeignGovernmentPermissionPrompt
-} from "../game/foreignGovernmentPermission";
-import {
-  evaluateWithholdingAppealAnswer,
-  getWithholdingAppealPrompt,
-  withholdingAppealComplete,
-  WITHHOLDING_APPEAL_PROMPTS
-} from "../game/withholdingAppeal";
+import type { Interactable } from "../game/types";
 import { getInput, tickInput, type InputState } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import { BureaucraticWall } from "../entities/BureaucraticWall";
@@ -43,25 +30,34 @@ import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
-import { DialogBox } from "../systems/dialog";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
+import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
-import { addDocumentStack, addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
+import { addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesGate, addSnesMapTablet, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal, addSnesWorldMap } from "../systems/snesPixelArt";
-import { ChoicePrompt } from "../systems/verification";
 import { SNES_REFERRAL_VAULT_TILE_ASSET } from "../game/snesAtlas";
+import {
+  deriveReferralPhysicalProgress,
+  getReferralEquityPacket,
+  getReferralTreatmentDocket,
+  REFERRAL_EQUITY_PACKETS,
+  REFERRAL_TREATMENT_DOCKETS,
+  routeReferralEquityPacket,
+  routeReferralTreatmentDocket
+} from "../game/referralVaultReview";
+import type {
+  ReferralAgency,
+  ReferralEquityPacketId,
+  ReferralTreatmentDocketId,
+  ReferralTreatmentStationId
+} from "../game/referralVaultReview";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
-}
-
-interface EquityMatch {
-  label: string;
-  agency: "CIA" | "DOD" | "NSC";
 }
 
 type ReferralRoomId = "R1" | "R2";
@@ -106,15 +102,22 @@ const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
 
 export class ReferralVaultScene extends Phaser.Scene {
   private player!: Player;
-  private dialog!: DialogBox;
-  private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
-  private vaultText!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
-  private matchIndex = 0;
-  private correctMatches = 0;
+  private toast!: FeedbackToast;
+  private equityStep = 0;
+  private manifestReviewed = false;
+  private treatmentStep = 0;
+  private equityPacketWorldIcon?: Phaser.GameObjects.Container;
+  private equityPacketHeldIcon?: Phaser.GameObjects.Container;
+  private manifestWorldIcon?: Phaser.GameObjects.Container;
+  private manifestHeldIcon?: Phaser.GameObjects.Container;
+  private treatmentDocketWorldIcon?: Phaser.GameObjects.Container;
+  private treatmentDocketHeldIcon?: Phaser.GameObjects.Container;
+  private reviewRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private reviewRouteCueKey = "";
   private referralGateOpen = false;
   private concurrenceSlipCollected = false;
   private currentRoomId: ReferralRoomId = "R1";
@@ -131,12 +134,6 @@ export class ReferralVaultScene extends Phaser.Scene {
   private concurrenceSlipRouteCueKey = "";
   private bureaucraticWalls: BureaucraticWall[] = [];
   private danneLurker!: DanneLurker;
-
-  private readonly matches: EquityMatch[] = [
-    { label: "Intelligence annex", agency: "CIA" },
-    { label: "Base access memo", agency: "DOD" },
-    { label: "White House minutes", agency: "NSC" }
-  ];
 
   constructor() {
     super("ReferralVaultScene");
@@ -156,22 +153,13 @@ export class ReferralVaultScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(902).setVisible(false);
 
-    this.vaultText = this.add.text(128, 88, "BATCH MANIFEST\nPENDING HUMAN CHECK", {
-      fontFamily: "monospace",
-      fontSize: "7px",
-      color: PALETTE.terminalCyan,
-      backgroundColor: PALETTE.black,
-      align: "center"
-    }).setOrigin(0.5).setDepth(820);
-
     this.player = new Player(this, 128, 192);
-    this.dialog = new DialogBox(this);
-    this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.toast = new FeedbackToast(this);
     this.danneLurker = new DanneLurker(this, 214, 70, {
       waypoints: [
         { x: 214, y: 70 },
@@ -181,16 +169,43 @@ export class ReferralVaultScene extends Phaser.Scene {
         { x: 188, y: 188 }
       ]
     });
+    this.restoreReferralProgress();
+    this.enterRoom("R1", { x: 128, y: 192 }, false);
+    if (!this.referralGateOpen) {
+      setLatestMessage("Route each file to its agency equity. StateChat drafts; a human confirms.");
+    }
+  }
+
+  private restoreReferralProgress() {
     this.referralGateOpen = gameState.processStamps.includes("referral");
     this.concurrenceSlipCollected = hasProcessItem("concurrence_slip");
-    this.enterRoom("R1", { x: 128, y: 192 }, false);
-    this.dialog.show("MARCUS", [
-      "Referral means agency equity.",
-      "Your clearance token opens this red vault door.",
-      "StateChat can draft a manifest. You confirm it, then take the slip by hand."
-    ], () => {
-      if (!this.referralGateOpen) this.startMatching();
+    const restored = deriveReferralPhysicalProgress({
+      ...gameState.sceneProgress,
+      referralGateOpen: this.referralGateOpen ? 1 : 0
     });
+    this.equityStep = restored.equityStep;
+    this.manifestReviewed = restored.manifestReviewed;
+    this.treatmentStep = restored.treatmentStep;
+    gameState.sceneProgress.referralEquityRouteStep = this.equityStep;
+    gameState.sceneProgress.referralTreatmentStep = this.treatmentStep;
+
+    if (this.equityStep >= REFERRAL_EQUITY_PACKETS.length) {
+      gameState.sceneProgress.referralEquityRouteComplete = 1;
+      gameState.sceneProgress.referralEquityPacketCarried = 0;
+    } else if ((gameState.sceneProgress.referralEquityPacketCarried ?? 0) !== getReferralEquityPacket(this.equityStep).order) {
+      gameState.sceneProgress.referralEquityPacketCarried = 0;
+    }
+    if (this.manifestReviewed) {
+      gameState.sceneProgress.referralManifestReviewComplete = 1;
+      gameState.sceneProgress.referralManifestCarried = 0;
+    }
+    if (this.treatmentStep >= REFERRAL_TREATMENT_DOCKETS.length) {
+      gameState.sceneProgress.referralPhysicalReviewComplete = 1;
+      gameState.sceneProgress.referralTreatmentDocketCarried = 0;
+    } else if ((gameState.sceneProgress.referralTreatmentDocketCarried ?? 0) !== getReferralTreatmentDocket(this.treatmentStep).order) {
+      gameState.sceneProgress.referralTreatmentDocketCarried = 0;
+    }
+    if (this.referralGateOpen) this.syncLegacyReferralProgress(REFERRAL_TREATMENT_DOCKETS.length);
   }
 
   update(_: number, delta: number) {
@@ -199,6 +214,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
     this.updateDanneLurker(delta);
     this.syncThreatState();
+    this.toast.update(delta, this.player.position);
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
@@ -212,16 +228,9 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (this.dialog.active) {
-      this.interactionPrompt.update(delta, null);
-      if (input.aJustPressed) this.dialog.advance();
-      this.player.update(delta, false);
-      return;
-    }
-    if (this.choice.active || this.inventory.active || this.reliability.active) {
+    if (this.inventory.active || this.reliability.active) {
       this.interactionPrompt.update(delta, null);
       handleOpenOverlays(this.inventory, this.reliability);
-      this.choice.updateInput();
       this.player.update(delta, false);
       return;
     }
@@ -230,16 +239,20 @@ export class ReferralVaultScene extends Phaser.Scene {
       return;
     }
     this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS });
-    this.updateConcurrenceSlipPrompt(delta);
-    this.refreshConcurrenceSlipRouteCue();
-    if (this.handleConcurrenceSlipAction(input)) {
+    this.updateCarriedReviewIcon();
+    this.updateReferralInteractionPrompt(delta);
+    this.refreshReviewRouteCue();
+    const handledRoomAction = this.currentRoomId === "R1"
+      ? this.handleReferralReviewAction(input)
+      : this.handleConcurrenceSlipAction(input);
+    if (handledRoomAction) {
       this.reliability.update();
-      this.objectiveText.setText(gameState.objective);
+      this.objectiveText.setText("");
       return;
     }
     if (this.checkRoomExit()) return;
     this.reliability.update();
-    this.objectiveText.setText(gameState.objective);
+    this.objectiveText.setText("");
   }
 
   private track<T extends Phaser.GameObjects.GameObject>(object: T) {
@@ -279,6 +292,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private clearRoom() {
+    this.clearReviewRouteCue();
     this.clearConcurrenceSlipRouteCue();
     for (const cleanup of this.roomCleanups) cleanup();
     for (const object of this.roomObjects) {
@@ -289,18 +303,29 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.roomObjects = [];
     this.bureaucraticWalls = [];
     this.concurrenceSlipIcon = undefined;
+    this.equityPacketWorldIcon = undefined;
+    if (this.equityPacketHeldIcon?.active) this.equityPacketHeldIcon.destroy();
+    this.equityPacketHeldIcon = undefined;
+    this.manifestWorldIcon = undefined;
+    if (this.manifestHeldIcon?.active) this.manifestHeldIcon.destroy();
+    this.manifestHeldIcon = undefined;
+    this.treatmentDocketWorldIcon = undefined;
+    if (this.treatmentDocketHeldIcon?.active) this.treatmentDocketHeldIcon.destroy();
+    this.treatmentDocketHeldIcon = undefined;
     setNearestInteractable(null);
   }
 
-  private renderCurrentRoom() {
+  private renderCurrentRoom(showIntro = true) {
     const room = REFERRAL_ROOMS[this.currentRoomId];
     this.roomTitleText.setText(`${room.id} ${room.title}`);
-    addSnesRoomIntroBanner(this, {
-      title: `${room.id} ${room.title}`,
-      subtitle: "REFERRAL VAULT",
-      accent: PALETTE.goldStamp,
-      track: (object) => this.track(object)
-    });
+    if (showIntro) {
+      addSnesRoomIntroBanner(this, {
+        title: `${room.id} ${room.title}`,
+        subtitle: "REFERRAL VAULT",
+        accent: PALETTE.goldStamp,
+        track: (object) => this.track(object)
+      });
+    }
     addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "vault", track: (object) => this.track(object) });
     this.drawReferralVaultTileField(room.id);
     this.drawRoomDoors();
@@ -440,60 +465,180 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private renderEquityGate() {
-    setVisibleEntities([
-      "Marcus",
-      "StateChat terminal",
-      "CIA equity seal",
-      "DOD equity seal",
-      "NSC equity seal",
-      "Referral Manifest",
-      "Excision Bracket Marker",
-      "Stone Wall: Referral delay"
-    ]);
     addVaultBlocks(this, (object) => this.track(object));
     addSnesWorldMap(this, 128, 62, "EQUITY MAP", "referral-vault-map", (object) => this.track(object));
-    addSnesMapTablet(this, {
-      x: 128,
-      y: 91,
-      label: "EQUITY",
-      nodes: ["MAN", "CIA", "DOD", "NSC", "SLIP"],
-      activeIndex: this.referralGateOpen ? 4 : 1,
-      accent: this.referralGateOpen ? PALETTE.goldStamp : PALETTE.classNetRed,
-      track: (object) => this.track(object),
-      depth: 118
-    });
-    addDocumentStack(this, 214, 116, true, (object) => this.track(object));
-    this.track(addTinySparkle(this, 128, 120, PALETTE.goldStamp));
     const marcus = new HistorianNPC(this, "marcus", 42, 58);
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 214, 58, "StateChat").container);
-    this.track(this.add.image(114, 112, "referral-manifest").setDepth(120));
-    this.track(this.add.image(158, 112, "excision-bracket-marker").setDepth(120));
-    this.addSeal(70, 132, "CIA");
-    this.addSeal(128, 132, "DOD");
-    this.addSeal(186, 132, "NSC");
     if (!this.referralGateOpen) {
       this.bureaucraticWalls = [
-        new BureaucraticWall(this, "cia-delay-wall", "WAIT", 44, 160, { behavior: "freeze", accent: PALETTE.goldStamp }),
-        new BureaucraticWall(this, "nsc-delay-wall", "HOLD", 212, 160, { behavior: "block", accent: PALETTE.classNetRed })
+        new BureaucraticWall(this, "cia-delay-wall", "WAIT", 44, 198, { behavior: "freeze", accent: PALETTE.goldStamp }),
+        new BureaucraticWall(this, "nsc-delay-wall", "HOLD", 212, 198, { behavior: "block", accent: PALETTE.classNetRed })
       ];
-      this.vaultText.setText("BATCH MANIFEST\nPENDING HUMAN CHECK");
-      setObjective("Referral Vault: match each document to its agency equity.");
-    } else {
-      this.vaultText.setText("REFERRAL GATE OPEN\nEAST: CONCURRENCE");
-      setObjective("Referral Vault: enter R2 and collect the Concurrence Slip.");
+    }
+    const stage = this.referralReviewStage();
+    if (stage === "equity") this.drawEquityRoutingStage();
+    else if (stage === "manifest") this.drawManifestReviewStage();
+    else if (stage === "treatment") this.drawVisibleTreatmentStage();
+    else this.drawReferralCompleteStage();
+    setObjective(this.referralObjective());
+    this.syncReferralVisibleEntities();
+  }
+
+  private referralReviewStage() {
+    if (this.referralGateOpen) return "complete" as const;
+    if (this.equityStep < REFERRAL_EQUITY_PACKETS.length) return "equity" as const;
+    if (!this.manifestReviewed) return "manifest" as const;
+    return "treatment" as const;
+  }
+
+  private drawEquityRoutingStage() {
+    addSnesMapTablet(this, {
+      x: 128,
+      y: 88,
+      label: "ROUTE",
+      nodes: ["FILE", "CIA", "DOD", "NSC"],
+      activeIndex: Math.min(3, this.equityStep),
+      accent: PALETTE.terminalCyan,
+      track: (object) => this.track(object),
+      depth: 118
+    });
+    this.drawAgencyStation("CIA", 60, 130, 0);
+    this.drawAgencyStation("DOD", 128, 126, 1);
+    this.drawAgencyStation("NSC", 196, 130, 2);
+    const carried = this.carriedEquityPacket();
+    if (carried) this.createEquityPacketHeldIcon(carried.id);
+    else this.drawEquityPacketAtTray();
+  }
+
+  private drawManifestReviewStage() {
+    addSnesMapTablet(this, {
+      x: 128,
+      y: 88,
+      label: "MANIFEST",
+      nodes: ["AI", "DRAFT", "HUMAN", "FILE"],
+      activeIndex: this.manifestCarried() ? 2 : 1,
+      accent: PALETTE.terminalCyan,
+      track: (object) => this.track(object),
+      depth: 118
+    });
+    this.drawReviewStation(72, 156, "HUMAN CHECK", PALETTE.goldStamp, false, 3);
+    this.track(this.add.line(0, 0, 178, 116, 92, 146, color(PALETTE.terminalCyan), 0.8)
+      .setLineWidth(2)
+      .setOrigin(0)
+      .setDepth(119));
+    if (this.manifestCarried()) this.createManifestHeldIcon();
+    else this.drawManifestAtTerminalTray();
+  }
+
+  private drawVisibleTreatmentStage() {
+    addSnesMapTablet(this, {
+      x: 128,
+      y: 88,
+      label: "VISIBLE",
+      nodes: ["PERM", "APPL", "BRKT", "GATE"],
+      activeIndex: Math.min(3, this.treatmentStep),
+      accent: PALETTE.goldStamp,
+      track: (object) => this.track(object),
+      depth: 118
+    });
+    REFERRAL_TREATMENT_DOCKETS.forEach((docket, index) => {
+      const position = this.treatmentStationPosition(docket.station);
+      const filed = index < this.treatmentStep;
+      const accent = filed
+        ? PALETTE.openNetGreen
+        : docket.station === "permission_desk"
+          ? PALETTE.terminalCyan
+          : docket.station === "appeal_ledger"
+            ? PALETTE.classNetRed
+            : PALETTE.goldStamp;
+      this.drawReviewStation(
+        position.x,
+        position.y,
+        this.treatmentStationShortLabel(docket.station),
+        accent,
+        filed,
+        docket.checkIds.length
+      );
+    });
+    const carried = this.carriedTreatmentDocket();
+    if (carried) this.createTreatmentDocketHeldIcon(carried.id);
+    else this.drawTreatmentDocketAtTray();
+  }
+
+  private drawReferralCompleteStage() {
+    addSnesMapTablet(this, {
+      x: 128,
+      y: 88,
+      label: "CONCUR",
+      nodes: ["CIA", "DOD", "NSC", "OPEN"],
+      activeIndex: 3,
+      accent: PALETTE.openNetGreen,
+      track: (object) => this.track(object),
+      depth: 118
+    });
+    this.drawAgencyStation("CIA", 60, 130, 0, true);
+    this.drawAgencyStation("DOD", 128, 126, 1, true);
+    this.drawAgencyStation("NSC", 196, 130, 2, true);
+    this.track(addTinySparkle(this, 218, 124, PALETTE.goldStamp));
+  }
+
+  private drawAgencyStation(
+    agency: ReferralAgency,
+    x: number,
+    y: number,
+    index: number,
+    forceFiled = false
+  ) {
+    const filed = forceFiled || index < this.equityStep;
+    const accent = filed ? PALETTE.openNetGreen : PALETTE.goldStamp;
+    const container = this.track(this.add.container(x, y).setDepth(150).setName(`referral-agency-${agency}`));
+    container.add(this.add.ellipse(0, 12, 48, 9, color(PALETTE.black), 0.42));
+    container.add(this.add.rectangle(0, 0, 44, 31, color(PALETTE.black), 0.94)
+      .setStrokeStyle(2, color(accent)));
+    container.add(this.add.image(0, -2, "agency-equity-seal"));
+    container.add(this.add.text(0, -8, agency, {
+      fontFamily: "monospace",
+      fontSize: "6px",
+      color: PALETTE.black,
+      backgroundColor: accent
+    }).setOrigin(0.5, 0));
+    container.add(this.add.rectangle(0, 10, 22, 4, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
+      .setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray)));
+  }
+
+  private drawReviewStation(
+    x: number,
+    y: number,
+    label: string,
+    accent: string,
+    filed: boolean,
+    checks: number
+  ) {
+    const width = label.length > 9 ? 58 : 52;
+    const container = this.track(this.add.container(x, y).setDepth(150).setName(`referral-station-${label}`));
+    container.add(this.add.ellipse(0, 11, width, 9, color(PALETTE.black), 0.42));
+    container.add(this.add.rectangle(0, 0, width, 27, color(PALETTE.black), 0.94)
+      .setStrokeStyle(2, color(accent)));
+    container.add(this.add.text(0, -10, label, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: accent
+    }).setOrigin(0.5, 0));
+    for (let index = 0; index < checks; index += 1) {
+      container.add(this.add.rectangle(
+        (index - (checks - 1) / 2) * 9,
+        6,
+        6,
+        4,
+        color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark)
+      ).setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray)));
     }
   }
 
   private renderConcurrenceChamber() {
     setVisibleEntities(["Concurrence Slip pedestal", "Agency concurrence chamber", "Silent Read handoff gate"]);
     addVaultBlocks(this, (object) => this.track(object));
-    this.track(this.add.rectangle(128, 76, 172, 28, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(76));
-    this.track(this.add.text(128, 67, "CONCURRENCE CHAMBER", {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(78));
     for (let x = 62; x <= 194; x += 33) {
       this.track(this.add.rectangle(x, 104, 24, 20, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(95));
       this.track(this.add.image(x, 101, "agency-equity-seal").setScale(1).setDepth(96));
@@ -509,26 +654,53 @@ export class ReferralVaultScene extends Phaser.Scene {
     });
     if (!this.concurrenceSlipCollected) {
       this.concurrenceSlipIcon = this.track(this.add.image(128, 132, "concurrence-slip").setDepth(165).setVisible(false));
-      this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
       setObjective("Referral Vault: collect the Concurrence Slip in R2.");
     } else {
       this.track(this.add.image(128, 132, "concurrence-slip").setTint(color(PALETTE.goldStamp)).setDepth(165).setVisible(false));
-      this.vaultText.setText("SLIP EARNED\nEAST: SILENT READ");
       setObjective("Referral Vault: exit east to Silent Read Tower.");
     }
   }
 
-  private addSeal(x: number, y: number, label: string) {
-    const container = this.track(this.add.container(x, y).setDepth(120));
-    const plate = this.add.rectangle(0, 0, 38, 30, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp));
-    const seal = this.add.image(0, -1, "agency-equity-seal");
-    const text = this.add.text(0, -5, label, {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.black,
-      backgroundColor: PALETTE.goldStamp
-    }).setOrigin(0.5);
-    container.add([plate, seal, text]);
+  private syncReferralVisibleEntities() {
+    const base = ["Marcus", "StateChat terminal", "Stone Wall: Referral delay"];
+    const stage = this.referralReviewStage();
+    if (stage === "equity") {
+      const packet = getReferralEquityPacket(this.equityStep);
+      setVisibleEntities([
+        ...base,
+        "CIA equity desk",
+        "DOD equity desk",
+        "NSC equity desk",
+        `Referral file ${packet.order}/3: ${packet.label} (${this.carriedEquityPacket() ? "carried" : "at tray"})`
+      ]);
+      return;
+    }
+    if (stage === "manifest") {
+      setVisibleEntities([
+        ...base,
+        "Human Concurrence Desk",
+        `StateChat draft manifest (${this.manifestCarried() ? "carried" : "at terminal tray"})`
+      ]);
+      return;
+    }
+    if (stage === "treatment") {
+      const docket = getReferralTreatmentDocket(this.treatmentStep);
+      setVisibleEntities([
+        ...base,
+        "Foreign-Government Permission Desk",
+        "Withholding Appeal Ledger",
+        "Visible Excision Bracket Press",
+        `Treatment docket ${docket.order}/3: ${docket.label} (${this.carriedTreatmentDocket() ? "carried" : "at tray"}; ${docket.checkIds.length} checks)`
+      ]);
+      return;
+    }
+    setVisibleEntities([
+      ...base,
+      "Cleared CIA equity desk",
+      "Cleared DOD equity desk",
+      "Cleared NSC equity desk",
+      "Open visible-excision gate"
+    ]);
   }
 
   private syncThreatState() {
@@ -550,22 +722,28 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   private updateDanneLurker(delta: number) {
     const canPressure = !this.roomTransitionLocked
-      && !this.dialog.active
-      && !this.choice.active
       && !this.inventory.active
       && !this.reliability.active;
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
     if (result.triggered) {
       this.player.takeHit(this.danneLurker.position, 11, 700);
       applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted referral review.");
-      setObjective("Referral Vault: use agency concurrence, not DANN-E pressure.");
+      this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     } else if (result.egoBoltHit) {
       this.player.takeHit(this.danneLurker.position, 9, 700);
       applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted referral review.");
-      setObjective("Referral Vault: dodge Ego bolts and preserve agency concurrence.");
+      this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     }
+  }
+
+  private restoreObjectiveAfterDannePressure() {
+    setObjective(this.currentRoomId === "R1"
+      ? this.referralObjective()
+      : this.concurrenceSlipCollected
+        ? "Referral Vault: exit east to Silent Read Tower."
+        : "Referral Vault: collect the Concurrence Slip in R2.");
   }
 
   private drawReferralMinimap() {
@@ -620,13 +798,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
     if (this.concurrenceSlipCollected) {
       setNearestInteractable(null);
-      this.vaultText.setText("SLIP EARNED\nEAST: SILENT READ");
       return false;
     }
     const nearSlip = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) <= 32;
     if (!nearSlip) {
       setNearestInteractable(null);
-      this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
       if (input.aJustPressed && this.concurrenceSlipHintTarget()) {
         retroAudio.blip();
         setLatestMessage("Step closer to Concurrence Slip.");
@@ -635,7 +811,6 @@ export class ReferralVaultScene extends Phaser.Scene {
       return false;
     }
     setNearestInteractable("Concurrence Slip");
-    this.vaultText.setText("CONCURRENCE SLIP\nPRESS SPACE");
     if (!input.aJustPressed) return false;
     this.collectConcurrenceSlip();
     return true;
@@ -680,20 +855,15 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (this.concurrenceSlipCollected) return;
     this.concurrenceSlipCollected = true;
     addProcessItem("concurrence_slip");
-    setLatestMessage("Concurrence Slip opens referral gates.");
+    setLatestMessage("Concurrence logged after human review. Carry the slip east to proofing.");
     setObjective("Referral Vault: exit east to Silent Read Tower.");
-    this.vaultText.setText("SLIP EARNED\nEAST: SILENT READ");
     this.concurrenceSlipIcon?.setTint(color(PALETTE.goldStamp));
     this.clearConcurrenceSlipRouteCue();
     addSnesRewardBurst(this, 128, 114, "concurrence-slip", "Concurrence Slip", (object) => this.track(object));
     retroAudio.stamp();
     this.syncRoomTraversalState();
     this.updateReferralMinimap();
-    this.dialog.show("MARCUS", [
-      "Concurrence logged after human review.",
-      "The slip is process evidence, not a machine decision.",
-      "Carry it east to the proof tower."
-    ]);
+    this.toast.show("CONCURRENCE SLIP", this.player.position, "info");
   }
 
   private refreshConcurrenceSlipRouteCue() {
@@ -817,215 +987,573 @@ export class ReferralVaultScene extends Phaser.Scene {
     return false;
   }
 
-  private startMatching() {
-    this.matchIndex = 0;
-    this.correctMatches = 0;
-    setObjective("Referral Vault: match each document to its agency equity.");
-    this.showMatchChoice();
+  private handleReferralReviewAction(input: Readonly<InputState>) {
+    if (this.currentRoomId !== "R1" || this.referralGateOpen) return false;
+    if (!input.aJustPressed) return false;
+    const target = this.referralActionTarget();
+    if (!target || Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      target.x,
+      target.y
+    ) > (target.radius ?? 44)) {
+      retroAudio.blip();
+      setLatestMessage("Follow the gold route to the highlighted referral station.");
+      return true;
+    }
+
+    const stage = this.referralReviewStage();
+    if (stage === "equity") {
+      const carried = this.carriedEquityPacket();
+      if (!carried) this.pickUpEquityPacket();
+      else this.routeEquityPacket(target.id.replace("referral-agency-", "") as ReferralAgency);
+      return true;
+    }
+    if (stage === "manifest") {
+      if (!this.manifestCarried()) this.pickUpManifest();
+      else this.fileManifestAtHumanDesk();
+      return true;
+    }
+    if (stage === "treatment") {
+      const carried = this.carriedTreatmentDocket();
+      if (!carried) this.pickUpTreatmentDocket();
+      else this.routeTreatmentDocket(target.id.replace("referral-treatment-", "") as ReferralTreatmentStationId);
+      return true;
+    }
+    return false;
   }
 
-  private showMatchChoice() {
-    const item = this.matches[this.matchIndex];
-    this.vaultText.setText(`MATCH ${this.matchIndex + 1}/3\n${item.label.toUpperCase()}`);
-    const options: ChoiceOption[] = [
-      { key: "A", label: "CIA equity", value: "CIA" },
-      { key: "B", label: "DOD equity", value: "DOD" },
-      { key: "C", label: "NSC equity", value: "NSC" }
-    ];
-    this.choice.show(`REFERRAL MATCH:\n${item.label}\n\nWHICH EQUITY SEAL?`, options, (option) => {
-      if (option.value === item.agency) {
-        this.correctMatches += 1;
-        adjustReliability(3, `${item.label} matched to ${item.agency}`);
-      } else {
-        applyStandardsViolation("omitted_material_fact", `${item.label} was sent to the wrong equity.`);
-        recordUnresolvedEquity(`Wrong agency equity selected for ${item.label}`);
-        this.vaultText.setText("STANDARD HIT\nMATERIAL FACT RISK");
-      }
-      this.reliability.update();
-      this.matchIndex += 1;
-      if (this.matchIndex >= this.matches.length) {
-        this.showManifestChoice();
-      } else {
-        this.showMatchChoice();
-      }
+  private updateReferralInteractionPrompt(delta: number) {
+    if (this.currentRoomId === "R2") {
+      this.updateConcurrenceSlipPrompt(delta);
+      return;
+    }
+    const target = this.referralActionTarget();
+    const strictTarget = target && Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      target.x,
+      target.y
+    ) <= (target.radius ?? 44) ? target : null;
+    this.interactionPrompt.update(delta, strictTarget, undefined, strictTarget ? {
+      badge: "A",
+      text: this.referralPromptText(strictTarget)
+    } : undefined);
+    setNearestInteractable(strictTarget?.label ?? null);
+  }
+
+  private referralPromptText(target: Interactable) {
+    const stage = this.referralReviewStage();
+    if (stage === "equity") {
+      const packet = getReferralEquityPacket(this.equityStep);
+      return this.carriedEquityPacket()
+        ? `FILE ${target.id.replace("referral-agency-", "")}`
+        : `TAKE ${packet.shortLabel}`;
+    }
+    if (stage === "manifest") return this.manifestCarried() ? "HUMAN REVIEW" : "TAKE MANIFEST";
+    if (stage === "treatment") {
+      const docket = getReferralTreatmentDocket(this.treatmentStep);
+      return this.carriedTreatmentDocket()
+        ? `FILE ${this.treatmentStationShortLabel(target.id.replace("referral-treatment-", "") as ReferralTreatmentStationId)}`
+        : `TAKE ${docket.shortLabel}`;
+    }
+    return "";
+  }
+
+  private referralActionTarget(): Interactable | null {
+    const stage = this.referralReviewStage();
+    if (stage === "equity") {
+      if (!this.carriedEquityPacket()) return this.referralTrayTarget("referral-equity-tray", "Referral file", 128, 174);
+      return this.nearestReferralTarget(
+        REFERRAL_EQUITY_PACKETS.map((packet) => this.agencyTarget(packet.agency)),
+        82
+      );
+    }
+    if (stage === "manifest") {
+      return this.manifestCarried()
+        ? this.referralTrayTarget("referral-human-desk", "Human Concurrence Desk", 72, 156)
+        : this.referralTrayTarget("referral-manifest-tray", "StateChat draft manifest", 178, 116);
+    }
+    if (stage === "treatment") {
+      if (!this.carriedTreatmentDocket()) return this.referralTrayTarget("referral-treatment-tray", "Visible-treatment docket", 128, 174);
+      return this.nearestReferralTarget(
+        REFERRAL_TREATMENT_DOCKETS.map((docket) => this.treatmentTarget(docket.station)),
+        82
+      );
+    }
+    return null;
+  }
+
+  private expectedReferralTarget(): Interactable | null {
+    const stage = this.referralReviewStage();
+    if (stage === "equity") {
+      const carried = this.carriedEquityPacket();
+      return carried
+        ? this.agencyTarget(carried.agency)
+        : this.referralTrayTarget("referral-equity-tray", "Referral file", 128, 174);
+    }
+    if (stage === "manifest") {
+      return this.manifestCarried()
+        ? this.referralTrayTarget("referral-human-desk", "Human Concurrence Desk", 72, 156)
+        : this.referralTrayTarget("referral-manifest-tray", "StateChat draft manifest", 178, 116);
+    }
+    if (stage === "treatment") {
+      const carried = this.carriedTreatmentDocket();
+      return carried
+        ? this.treatmentTarget(carried.station)
+        : this.referralTrayTarget("referral-treatment-tray", "Visible-treatment docket", 128, 174);
+    }
+    return null;
+  }
+
+  private nearestReferralTarget(candidates: Interactable[], maxDistance: number) {
+    const nearest = candidates.reduce((best, candidate) => {
+      const bestDistance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, best.x, best.y);
+      const candidateDistance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, candidate.x, candidate.y);
+      return candidateDistance < bestDistance ? candidate : best;
     });
+    return Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, nearest.x, nearest.y) <= maxDistance
+      ? nearest
+      : null;
   }
 
-  private showManifestChoice() {
-    setObjective("Confirm the manifest with human judgment.");
-    this.vaultText.setText("STATECHAT MANIFEST\n3 REFERRALS QUEUED\nHUMAN CONFIRM?");
-    const options: ChoiceOption[] = [
-      { key: "A", label: "Accept without review", value: "blind" },
-      { key: "B", label: "Confirm after checking equities", value: "checked" },
-      { key: "C", label: "Let StateChat decide", value: "machine" }
-    ];
-    this.choice.show("STATECHAT GENERATED A BATCH MANIFEST.\n\nWHO DECIDES?", options, (option) => {
-      if (option.value === "checked" && this.correctMatches === this.matches.length) {
-        setDocumentWorkflowState("source_note_047", "referred");
-        setDocumentWorkflowState("sbu_annotation_001", "referred");
-        addDocumentPoints(8, "agency concurrence checked");
-        setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
-        adjustReliability(7, "manifest confirmed by human review");
-        this.reliability.update();
-        this.showForeignGovernmentPermissionChoice();
-        return;
-      }
-      const violation = applyStandardsViolation("concealed_policy_defect", "A final referral decision was ceded or unchecked.");
-      recordUnresolvedEquity("Referral manifest accepted without complete human equity review");
+  private referralTrayTarget(id: string, label: string, x: number, y: number): Interactable {
+    return { id, label, x, y, radius: 46, kind: "document", onInteract: () => undefined };
+  }
+
+  private agencyTarget(agency: ReferralAgency): Interactable {
+    const position = this.agencyStationPosition(agency);
+    return this.referralTrayTarget(`referral-agency-${agency}`, `${agency} equity desk`, position.x, position.y);
+  }
+
+  private treatmentTarget(station: ReferralTreatmentStationId): Interactable {
+    const position = this.treatmentStationPosition(station);
+    const docket = REFERRAL_TREATMENT_DOCKETS.find((candidate) => candidate.station === station);
+    return this.referralTrayTarget(
+      `referral-treatment-${station}`,
+      docket?.stationLabel ?? "Treatment station",
+      position.x,
+      position.y
+    );
+  }
+
+  private agencyStationPosition(agency: ReferralAgency) {
+    if (agency === "CIA") return { x: 60, y: 130 };
+    if (agency === "DOD") return { x: 128, y: 126 };
+    return { x: 196, y: 130 };
+  }
+
+  private treatmentStationPosition(station: ReferralTreatmentStationId) {
+    if (station === "permission_desk") return { x: 60, y: 156 };
+    if (station === "appeal_ledger") return { x: 128, y: 126 };
+    return { x: 196, y: 156 };
+  }
+
+  private treatmentStationShortLabel(station: ReferralTreatmentStationId) {
+    if (station === "permission_desk") return "PERMIT";
+    if (station === "appeal_ledger") return "APPEAL";
+    return "BRACKET";
+  }
+
+  private carriedEquityPacket() {
+    const order = Math.floor(gameState.sceneProgress.referralEquityPacketCarried ?? 0);
+    return REFERRAL_EQUITY_PACKETS.find((packet) => packet.order === order) ?? null;
+  }
+
+  private manifestCarried() {
+    return Boolean(gameState.sceneProgress.referralManifestCarried);
+  }
+
+  private carriedTreatmentDocket() {
+    const order = Math.floor(gameState.sceneProgress.referralTreatmentDocketCarried ?? 0);
+    return REFERRAL_TREATMENT_DOCKETS.find((docket) => docket.order === order) ?? null;
+  }
+
+  private pickUpEquityPacket() {
+    const packet = getReferralEquityPacket(this.equityStep);
+    gameState.sceneProgress.referralEquityPacketCarried = packet.order;
+    setHeldItem(`${packet.label} Referral File`);
+    if (this.equityPacketWorldIcon?.active) this.equityPacketWorldIcon.destroy();
+    this.equityPacketWorldIcon = undefined;
+    this.createEquityPacketHeldIcon(packet.id);
+    retroAudio.confirm();
+    setLatestMessage(`${packet.label}: route to the ${packet.agency} equity desk.`);
+    setObjective(this.referralObjective());
+    this.syncReferralVisibleEntities();
+  }
+
+  private routeEquityPacket(agency: ReferralAgency) {
+    const packet = this.carriedEquityPacket();
+    if (!packet) return;
+    const result = routeReferralEquityPacket(this.equityStep, packet.id, agency);
+    gameState.sceneProgress.referralEquityPacketCarried = 0;
+    setHeldItem(null);
+    if (this.equityPacketHeldIcon?.active) this.equityPacketHeldIcon.destroy();
+    this.equityPacketHeldIcon = undefined;
+    if (!result.ok) {
+      adjustReliability(-2, `${result.packet.label} returned from the wrong equity desk`);
+      retroAudio.warning();
+      this.toast.show("WRONG EQUITY", this.player.position, "warn");
+      setLatestMessage(result.message);
+      setObjective(`RETRY ${packet.order}/3: collect ${packet.label} from the referral tray.`);
+      this.drawEquityPacketAtTray();
+      this.syncReferralVisibleEntities();
       this.reliability.update();
-      this.dialog.show("STANDARD VIOLATION", [
-        violation.label,
-        "No silent handoff. Review the equities again."
-      ], () => this.startMatching());
-    });
-  }
-
-  private showForeignGovernmentPermissionChoice() {
-    if (gameState.sceneProgress.foreignGovernmentPermissionComplete) {
-      this.showExcisionChoice();
       return;
     }
 
-    const step = gameState.sceneProgress.foreignGovernmentPermissionStep ?? 0;
-    const prompt = getForeignGovernmentPermissionPrompt(step);
-    setObjective(`Foreign-government permission: review note ${step + 1}/${FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length}.`);
-    this.vaultText.setText(`FOREIGN INFO\nPERMISSION ${step + 1}/3`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateForeignGovernmentPermissionAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `Foreign-government permission shortcut: ${option.value}`);
-        recordUnresolvedEquity(`Foreign-government permission gate failed: ${option.value}`);
-        this.reliability.update();
-        this.dialog.show("PERMISSION NOTE", [
-          result.message,
-          "Foreign-government information needs a visible review trail."
-        ], () => this.showForeignGovernmentPermissionChoice());
-        return;
-      }
+    this.equityStep = result.nextStep;
+    gameState.sceneProgress.referralEquityRouteStep = result.nextStep;
+    adjustReliability(3, `${result.packet.label} matched to ${result.packet.agency}`);
+    retroAudio.stamp();
+    setLatestMessage(result.message);
+    if (result.complete) gameState.sceneProgress.referralEquityRouteComplete = 1;
+    this.redrawReferralRoom();
+  }
 
-      const nextStep = step + 1;
-      gameState.sceneProgress.foreignGovernmentPermissionStep = nextStep;
-      if (!foreignGovernmentPermissionComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`Foreign-government permission check ${nextStep}/${FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length}.`);
-        this.dialog.show("PERMISSION NOTE", [
-          result.message,
-          "Continue the permission note before concurrence."
-        ], () => this.showForeignGovernmentPermissionChoice());
-        return;
-      }
+  private pickUpManifest() {
+    gameState.sceneProgress.referralManifestCarried = 1;
+    setHeldItem("StateChat Draft Manifest");
+    if (this.manifestWorldIcon?.active) this.manifestWorldIcon.destroy();
+    this.manifestWorldIcon = undefined;
+    this.createManifestHeldIcon();
+    retroAudio.confirm();
+    setLatestMessage("StateChat drafted the batch. Carry it to the Human Concurrence Desk.");
+    setObjective(this.referralObjective());
+    this.syncReferralVisibleEntities();
+  }
 
-      gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
-      gameState.sceneProgress.foreignGovernmentPermissionStep = FOREIGN_GOVERNMENT_PERMISSION_PROMPTS.length;
+  private fileManifestAtHumanDesk() {
+    gameState.sceneProgress.referralManifestCarried = 0;
+    gameState.sceneProgress.referralManifestReviewComplete = 1;
+    this.manifestReviewed = true;
+    setHeldItem(null);
+    if (this.manifestHeldIcon?.active) this.manifestHeldIcon.destroy();
+    this.manifestHeldIcon = undefined;
+    setDocumentWorkflowState("source_note_047", "referred");
+    setDocumentWorkflowState("sbu_annotation_001", "referred");
+    addDocumentPoints(8, "agency concurrence checked");
+    adjustReliability(7, "manifest confirmed by human review");
+    retroAudio.stamp();
+    setLatestMessage("Human review confirmed the manifest. Visible treatment comes next.");
+    this.redrawReferralRoom();
+  }
+
+  private pickUpTreatmentDocket() {
+    const docket = getReferralTreatmentDocket(this.treatmentStep);
+    gameState.sceneProgress.referralTreatmentDocketCarried = docket.order;
+    setHeldItem(docket.label);
+    if (this.treatmentDocketWorldIcon?.active) this.treatmentDocketWorldIcon.destroy();
+    this.treatmentDocketWorldIcon = undefined;
+    this.createTreatmentDocketHeldIcon(docket.id);
+    retroAudio.confirm();
+    setLatestMessage(`${docket.label}: file at the ${docket.stationLabel}.`);
+    setObjective(this.referralObjective());
+    this.syncReferralVisibleEntities();
+  }
+
+  private routeTreatmentDocket(station: ReferralTreatmentStationId) {
+    const docket = this.carriedTreatmentDocket();
+    if (!docket) return;
+    const result = routeReferralTreatmentDocket(this.treatmentStep, docket.id, station);
+    gameState.sceneProgress.referralTreatmentDocketCarried = 0;
+    setHeldItem(null);
+    if (this.treatmentDocketHeldIcon?.active) this.treatmentDocketHeldIcon.destroy();
+    this.treatmentDocketHeldIcon = undefined;
+    if (!result.ok) {
+      adjustReliability(-2, `${result.docket.label} returned from the wrong review station`);
+      retroAudio.warning();
+      this.toast.show("WRONG STATION", this.player.position, "warn");
+      setLatestMessage(result.message);
+      setObjective(`RETRY ${docket.order}/3: collect ${docket.label} from the treatment tray.`);
+      this.drawTreatmentDocketAtTray();
+      this.syncReferralVisibleEntities();
+      this.reliability.update();
+      return;
+    }
+
+    this.treatmentStep = result.nextStep;
+    gameState.sceneProgress.referralTreatmentStep = result.nextStep;
+    this.syncLegacyReferralProgress(result.nextStep);
+    this.awardTreatmentDocket(result.docket.id);
+    setLatestMessage(result.message);
+    retroAudio.stamp();
+    if (result.complete) {
+      this.finishReferralReview();
+      return;
+    }
+    this.redrawReferralRoom();
+  }
+
+  private awardTreatmentDocket(docketId: ReferralTreatmentDocketId) {
+    if (docketId === "permission_note") {
       addDocumentPoints(6, "foreign-government permission note documented");
-      setLatestMessage("Foreign-government permission note documented.");
       adjustReliability(4, "foreign-government permission trail preserved");
-      this.reliability.update();
-      this.dialog.show("PERMISSION NOTE", [
-        result.message,
-        "The packet now shows permission or withholding treatment before concurrence."
-      ], () => this.showWithholdingAppealChoice());
-    });
-  }
-
-  private showWithholdingAppealChoice() {
-    if (gameState.sceneProgress.withholdingAppealComplete) {
-      this.showExcisionChoice();
       return;
     }
-
-    const step = gameState.sceneProgress.withholdingAppealStep ?? 0;
-    const prompt = getWithholdingAppealPrompt(step);
-    setObjective(`Withholding appeal: review contested document ${step + 1}/${WITHHOLDING_APPEAL_PROMPTS.length}.`);
-    this.vaultText.setText(`WITHHOLDING\nAPPEAL ${step + 1}/3`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateWithholdingAppealAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        if (result.violation) applyStandardsViolation(result.violation, `Withholding appeal shortcut: ${option.value}`);
-        recordUnresolvedEquity(`Withholding appeal gate failed: ${option.value}`, "sbu_annotation_001");
-        this.reliability.update();
-        this.dialog.show("WITHHOLDING REVIEW", [
-          result.message,
-          "Whole-document withholding needs a visible human review trail."
-        ], () => this.showWithholdingAppealChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.withholdingAppealStep = nextStep;
-      if (!withholdingAppealComplete(nextStep)) {
-        retroAudio.confirm();
-        setLatestMessage(`Withholding appeal check ${nextStep}/${WITHHOLDING_APPEAL_PROMPTS.length}.`);
-        this.dialog.show("WITHHOLDING REVIEW", [
-          result.message,
-          "Continue the appeal before marking partial excision."
-        ], () => this.showWithholdingAppealChoice());
-        return;
-      }
-
-      gameState.sceneProgress.withholdingAppealComplete = 1;
-      gameState.sceneProgress.withholdingAppealStep = WITHHOLDING_APPEAL_PROMPTS.length;
+    if (docketId === "appeal_record") {
       setDocumentWorkflowState("sbu_annotation_001", "appeal_needed");
       addDocumentPoints(7, "whole-document withholding appeal recorded");
-      setLatestMessage("Whole-document withholding appeal recorded.");
       adjustReliability(5, "withholding appeal kept visible");
-      this.reliability.update();
-      this.dialog.show("WITHHOLDING REVIEW", [
-        result.message,
-        "Now mark the remaining partial excision with visible language."
-      ], () => this.showExcisionChoice());
-    });
+    }
   }
 
-  private showExcisionChoice() {
-    setObjective("Mark excised text visibly.");
-    const options: ChoiceOption[] = [
-      { key: "A", label: "Delete the missing passage", value: "erase" },
-      { key: "B", label: "[Text not declassified]", value: "visible" },
-      { key: "C", label: "Leave a blank gap", value: "blank" }
+  private syncLegacyReferralProgress(completedTreatment: number) {
+    if (completedTreatment >= 1) {
+      gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
+      gameState.sceneProgress.foreignGovernmentPermissionStep = REFERRAL_TREATMENT_DOCKETS[0].checkIds.length;
+    }
+    if (completedTreatment >= 2) {
+      gameState.sceneProgress.withholdingAppealComplete = 1;
+      gameState.sceneProgress.withholdingAppealStep = REFERRAL_TREATMENT_DOCKETS[1].checkIds.length;
+    }
+    if (completedTreatment >= 3) {
+      gameState.sceneProgress.referralPhysicalReviewComplete = 1;
+      gameState.sceneProgress.referralTreatmentDocketCarried = 0;
+    }
+  }
+
+  private finishReferralReview() {
+    awardProcessStamp("referral");
+    setDocumentWorkflowState("source_note_047", "cleared");
+    setDocumentWorkflowState("cross_reference_001", "cleared");
+    clearDocumentUndisclosedDeletion("sbu_annotation_001", "bracketed insertion added");
+    setDocumentWorkflowState("sbu_annotation_001", "excised");
+    setAgencyEquityResponse("sbu_annotation_001", "agency-cyan", "cleared");
+    setAgencyEquityResponse("sbu_annotation_001", "agency-red", "excised");
+    addVolumeFragment("Referral Fragment");
+    addDocumentPoints(12, "visible withholding language printed");
+    adjustReliability(8, "visible withholding language used");
+    this.referralGateOpen = true;
+    gameState.sceneProgress.referralPhysicalReviewComplete = 1;
+    gameState.sceneProgress.referralTreatmentStep = REFERRAL_TREATMENT_DOCKETS.length;
+    gameState.sceneProgress.referralTreatmentDocketCarried = 0;
+    setHeldItem(null);
+    this.bureaucraticWalls.forEach((wall) => wall.clear());
+    this.toast.show("REFERRAL GATE OPEN", this.player.position, "info");
+    retroAudio.stamp();
+    setLatestMessage("Visible treatment complete. The reader sees every withholding decision.");
+    this.redrawReferralRoom({ x: 128, y: 178 });
+  }
+
+  private referralObjective() {
+    if (this.referralGateOpen) return "Referral Vault: enter R2 and collect the Concurrence Slip.";
+    const stage = this.referralReviewStage();
+    if (stage === "equity") {
+      const packet = getReferralEquityPacket(this.equityStep);
+      return this.carriedEquityPacket()
+        ? `ROUTE ${packet.order}/3: carry ${packet.label} to the ${packet.agency} equity desk.`
+        : `ROUTE ${packet.order}/3: collect ${packet.label} from the referral tray.`;
+    }
+    if (stage === "manifest") {
+      return this.manifestCarried()
+        ? "VERIFY: carry StateChat's draft to the Human Concurrence Desk."
+        : "VERIFY: collect StateChat's draft manifest from the terminal tray.";
+    }
+    const docket = getReferralTreatmentDocket(this.treatmentStep);
+    return this.carriedTreatmentDocket()
+      ? `FILE ${docket.order}/3: carry ${docket.label} to the ${docket.stationLabel}.`
+      : `FILE ${docket.order}/3: collect ${docket.label} from the treatment tray.`;
+  }
+
+  private redrawReferralRoom(position = this.player.position) {
+    const nextPosition = { x: Math.round(position.x), y: Math.round(position.y) };
+    this.clearRoom();
+    this.renderCurrentRoom(false);
+    this.player.setPosition(nextPosition.x, nextPosition.y);
+    this.syncRoomTraversalState();
+    this.updateReferralMinimap();
+    this.reliability.update();
+  }
+
+  private drawEquityPacketAtTray() {
+    if (this.equityPacketWorldIcon?.active) this.equityPacketWorldIcon.destroy();
+    if (this.equityStep >= REFERRAL_EQUITY_PACKETS.length) return;
+    const packet = getReferralEquityPacket(this.equityStep);
+    this.equityPacketWorldIcon = this.track(this.createEquityPacketIcon(128, 166, packet.id, false)
+      .setName(`referral-file-${packet.id}`)
+      .setDepth(176));
+  }
+
+  private createEquityPacketHeldIcon(packetId: ReferralEquityPacketId) {
+    if (this.equityPacketHeldIcon?.active) this.equityPacketHeldIcon.destroy();
+    this.equityPacketHeldIcon = this.createEquityPacketIcon(
+      Math.round(this.player.position.x),
+      Math.round(this.player.position.y - 17),
+      packetId,
+      true
+    ).setDepth(280);
+  }
+
+  private createEquityPacketIcon(x: number, y: number, packetId: ReferralEquityPacketId, compact: boolean) {
+    const packet = REFERRAL_EQUITY_PACKETS.find((candidate) => candidate.id === packetId) ?? REFERRAL_EQUITY_PACKETS[0];
+    const width = compact ? 23 : 34;
+    const height = compact ? 14 : 21;
+    return this.add.container(x, y, [
+      this.add.ellipse(1, Math.round(height / 2), width + 4, 7, color(PALETTE.black), 0.42),
+      this.add.rectangle(0, 0, width, height, color(PALETTE.sepiaInk)).setStrokeStyle(1, color(PALETTE.black)),
+      this.add.rectangle(-Math.round(width / 2) + 6, -Math.round(height / 2), compact ? 8 : 12, 4, color(PALETTE.goldStamp)),
+      this.add.text(2, compact ? -5 : -7, packet.shortLabel, {
+        fontFamily: "monospace",
+        fontSize: compact ? "4px" : "5px",
+        color: PALETTE.black
+      }).setOrigin(0.5, 0),
+      this.add.text(2, compact ? 1 : 3, packet.agency, {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: PALETTE.deepRuby
+      }).setOrigin(0.5, 0)
+    ]);
+  }
+
+  private drawManifestAtTerminalTray() {
+    if (this.manifestWorldIcon?.active) this.manifestWorldIcon.destroy();
+    this.manifestWorldIcon = this.track(this.createManifestIcon(178, 116, false)
+      .setName("referral-statechat-manifest")
+      .setDepth(176));
+  }
+
+  private createManifestHeldIcon() {
+    if (this.manifestHeldIcon?.active) this.manifestHeldIcon.destroy();
+    this.manifestHeldIcon = this.createManifestIcon(
+      Math.round(this.player.position.x),
+      Math.round(this.player.position.y - 17),
+      true
+    ).setDepth(280);
+  }
+
+  private createManifestIcon(x: number, y: number, compact: boolean) {
+    const scale = compact ? 0.72 : 1;
+    return this.add.container(x, y, [
+      this.add.ellipse(1, compact ? 8 : 12, compact ? 24 : 32, 7, color(PALETTE.black), 0.42),
+      this.add.image(0, 0, "referral-manifest").setScale(scale),
+      this.add.rectangle(7, compact ? -5 : -8, compact ? 7 : 9, 4, color(PALETTE.terminalCyan)).setStrokeStyle(1, color(PALETTE.black))
+    ]);
+  }
+
+  private drawTreatmentDocketAtTray() {
+    if (this.treatmentDocketWorldIcon?.active) this.treatmentDocketWorldIcon.destroy();
+    if (this.treatmentStep >= REFERRAL_TREATMENT_DOCKETS.length) return;
+    const docket = getReferralTreatmentDocket(this.treatmentStep);
+    this.treatmentDocketWorldIcon = this.track(this.createTreatmentDocketIcon(128, 168, docket.id, false)
+      .setName(`referral-treatment-docket-${docket.id}`)
+      .setDepth(176));
+  }
+
+  private createTreatmentDocketHeldIcon(docketId: ReferralTreatmentDocketId) {
+    if (this.treatmentDocketHeldIcon?.active) this.treatmentDocketHeldIcon.destroy();
+    this.treatmentDocketHeldIcon = this.createTreatmentDocketIcon(
+      Math.round(this.player.position.x),
+      Math.round(this.player.position.y - 17),
+      docketId,
+      true
+    ).setDepth(280);
+  }
+
+  private createTreatmentDocketIcon(
+    x: number,
+    y: number,
+    docketId: ReferralTreatmentDocketId,
+    compact: boolean
+  ) {
+    const docket = REFERRAL_TREATMENT_DOCKETS.find((candidate) => candidate.id === docketId) ?? REFERRAL_TREATMENT_DOCKETS[0];
+    const accent = docket.station === "permission_desk"
+      ? PALETTE.terminalCyan
+      : docket.station === "appeal_ledger"
+        ? PALETTE.classNetRed
+        : PALETTE.goldStamp;
+    const width = compact ? 24 : 36;
+    const height = compact ? 15 : 22;
+    const objects: Phaser.GameObjects.GameObject[] = [
+      this.add.ellipse(1, Math.round(height / 2), width + 4, 7, color(PALETTE.black), 0.42),
+      this.add.rectangle(0, 0, width, height, color(PALETTE.creamPaper)).setStrokeStyle(1, color(accent)),
+      this.add.rectangle(-Math.round(width / 2) + 4, 0, 4, height - 3, color(PALETTE.deepRuby)),
+      this.add.text(3, compact ? -5 : -7, docket.shortLabel, {
+        fontFamily: "monospace",
+        fontSize: compact ? "4px" : "5px",
+        color: PALETTE.black
+      }).setOrigin(0.5, 0)
     ];
-    this.choice.show("EXCISION REQUIRED.\nFRUS DOES NOT SILENTLY ERASE WITHHELD MATERIAL.\n\nWHAT PRINTS?", options, (option) => {
-      if (option.value === "visible") {
-        awardProcessStamp("referral");
-        setDocumentWorkflowState("source_note_047", "cleared");
-        setDocumentWorkflowState("cross_reference_001", "cleared");
-        clearDocumentUndisclosedDeletion("sbu_annotation_001", "bracketed insertion added");
-        setDocumentWorkflowState("sbu_annotation_001", "excised");
-        setAgencyEquityResponse("sbu_annotation_001", "agency-cyan", "cleared");
-        setAgencyEquityResponse("sbu_annotation_001", "agency-red", "excised");
-        addVolumeFragment("Referral Fragment");
-        addDocumentPoints(12, "visible withholding language printed");
-        retroAudio.stamp();
-        adjustReliability(8, "visible withholding language used");
-        this.reliability.update();
-        this.referralGateOpen = true;
-        this.bureaucraticWalls.forEach((wall) => wall.clear());
-        this.clearRoom();
-        this.renderCurrentRoom();
-        this.player.setPosition(128, 178);
-        this.syncRoomTraversalState();
-        this.updateReferralMinimap();
-        this.dialog.show("MARCUS", [
-          "Correct.",
-          "The reader sees the withholding. The record does not pretend.",
-          "The Concurrence Chamber is open. Take the slip by hand."
-        ]);
-        return;
-      }
-      markDocumentUndisclosedDeletion("sbu_annotation_001", "unbracketed excision");
-      const violation = applyStandardsViolation(
-        "undisclosed_deletion",
-        "Excision skipped the bracketed insertion.",
-        "sbu_annotation_001"
-      );
-      recordUnresolvedEquity("Visible excision gate failed: bracketed insertion skipped", "sbu_annotation_001");
-      this.reliability.update();
-      this.dialog.show("STANDARD VIOLATION", [
-        violation.label,
-        "Visible language. Never a silent gap."
-      ], () => this.showExcisionChoice());
-    });
+    for (let index = 0; index < docket.checkIds.length; index += 1) {
+      objects.push(this.add.rectangle(
+        -7 + index * 7,
+        compact ? 3 : 5,
+        4,
+        2,
+        color(accent)
+      ));
+    }
+    return this.add.container(x, y, objects);
+  }
+
+  private updateCarriedReviewIcon() {
+    const x = Math.round(this.player.position.x);
+    const y = Math.round(this.player.position.y - 17);
+    const depth = Math.round(this.player.position.y) + 5;
+    this.equityPacketHeldIcon?.setPosition(x, y).setDepth(depth);
+    this.manifestHeldIcon?.setPosition(x, y).setDepth(depth);
+    this.treatmentDocketHeldIcon?.setPosition(x, y).setDepth(depth);
+  }
+
+  private refreshReviewRouteCue() {
+    if (this.currentRoomId !== "R1" || this.referralGateOpen) {
+      this.clearReviewRouteCue();
+      return;
+    }
+    const target = this.expectedReferralTarget();
+    if (!target) {
+      this.clearReviewRouteCue();
+      return;
+    }
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 12) };
+    if (Phaser.Math.Distance.Between(start.x, start.y, target.x, target.y) <= 40) {
+      this.clearReviewRouteCue();
+      return;
+    }
+    const key = `${target.id}:${start.x},${start.y}`;
+    if (key === this.reviewRouteCueKey) return;
+    this.clearReviewRouteCue();
+    this.reviewRouteCueKey = key;
+    this.drawReviewRouteCue(start, target, this.reviewTargetAccent(target));
+  }
+
+  private clearReviewRouteCue() {
+    for (const object of this.reviewRouteCueObjects) {
+      if (object.active) object.destroy();
+    }
+    this.reviewRouteCueObjects = [];
+    this.reviewRouteCueKey = "";
+  }
+
+  private trackReviewRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.reviewRouteCueObjects.push(object);
+    return this.track(object);
+  }
+
+  private reviewTargetAccent(target: Interactable) {
+    if (target.id.includes("manifest")) return PALETTE.terminalCyan;
+    if (target.id.includes("appeal")) return PALETTE.classNetRed;
+    if (target.id.includes("permission")) return PALETTE.terminalCyan;
+    return PALETTE.goldStamp;
+  }
+
+  private drawReviewRouteCue(start: { x: number; y: number }, target: Interactable, accent: string) {
+    this.trackReviewRouteCue(this.add.rectangle(target.x, target.y, 52, 34, color(PALETTE.black), 0)
+      .setStrokeStyle(2, color(accent))
+      .setName("referral-review-route-target")
+      .setDepth(236));
+    const distance = Phaser.Math.Distance.Between(start.x, start.y, target.x, target.y);
+    const steps = Math.max(1, Math.min(7, Math.floor(distance / 13)));
+    for (let index = 1; index <= steps; index += 1) {
+      const t = index / (steps + 1);
+      this.trackReviewRouteCue(this.add.rectangle(
+        Math.round(Phaser.Math.Linear(start.x, target.x, t)),
+        Math.round(Phaser.Math.Linear(start.y, target.y, t)),
+        5,
+        5,
+        color(index % 2 === 0 ? PALETTE.creamPaper : accent),
+        0.92
+      ).setAngle(45).setName("referral-review-route-dot").setDepth(237));
+    }
   }
 }
