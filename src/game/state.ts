@@ -452,6 +452,10 @@ export interface PublicationReadinessReadout {
     clear: boolean;
   };
   apparatus: PublicationApparatusReadout;
+  blackVault: {
+    required: boolean;
+    bossDefeated: boolean;
+  };
   buckramKeyHeld: boolean;
   buckramGateOpen: boolean;
   completionRatio: number;
@@ -1007,6 +1011,18 @@ export function resolveStandardsViolationForDocument(documentId: string, violati
   return resolved;
 }
 
+export function resolveStandardsViolationsByType(violation: StandardViolation) {
+  let resolved = 0;
+  for (const record of gameState.standardsViolations) {
+    if (record.violation === violation && record.unresolved) {
+      record.unresolved = false;
+      resolved += 1;
+    }
+  }
+  if (resolved > 0) refreshQuestWorkflowState();
+  return resolved;
+}
+
 export function unresolvedStandardsViolations() {
   return gameState.standardsViolations
     .filter((record) => record.unresolved)
@@ -1360,6 +1376,7 @@ export function getRoomGraphReadout() {
   if (gameState.currentScene === "BlackVaultLairScene") {
     visitedRoomIds.add("DV1");
     revealedRoomIds.add("DV1");
+    if (gameState.sceneProgress.blackVaultBossCleared) revealedRoomIds.add("G1");
   }
   return FRUS_ROOM_GRAPH.map((room) => {
     const dungeon = gameState.dungeons[room.area];
@@ -1368,8 +1385,11 @@ export function getRoomGraphReadout() {
       (Object.keys(lockedExits) as Direction[]).map((direction) => {
         const requiredItem = room.requiredItems?.[direction] ?? null;
         const bossDoor = isBossDoor(room, direction);
+        const blackVaultFinalExit = room.id === "DV1" && direction === "east";
         const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
-        const canOpen = bossDoor
+        const canOpen = blackVaultFinalExit
+          ? Boolean(gameState.sceneProgress.blackVaultBossCleared)
+          : bossDoor
           ? canOpenBossDoor(dungeon)
           : requiredItem
             ? canTraverseExit(room.id, direction, heldProcessItems)
@@ -1379,8 +1399,8 @@ export function getRoomGraphReadout() {
           gateType: bossDoor ? "boss" : requiredItem ? "process_item" : "small_key",
           requiredItem,
           requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
-          blockedMessage: canOpen ? null : prompt.message,
-          blockedObjective: canOpen ? null : prompt.objective,
+          blockedMessage: canOpen ? null : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
+          blockedObjective: canOpen ? null : blackVaultFinalExit ? "Black Vault: defeat DANN-E before entering the Buckram Gate." : prompt.objective,
           canOpen,
           smallKeys: dungeon.smallKeys,
           bigKeyHeld: dungeon.bigKeyHeld
@@ -1434,6 +1454,10 @@ export function getFinalGateReadiness() {
   const reliabilityReady = gameState.reliability >= reliabilityMinimum;
   const buckramKeyHeld = hasProcessItem("buckram_key");
   const repositoryCoverageMapReady = Boolean(gameState.sceneProgress.repositoryCoverageMapComplete);
+  const blackVaultRequired = Boolean(gameState.sceneProgress.blackVaultClimaxRequired);
+  const blackVaultBossCleared = !blackVaultRequired
+    || Boolean(gameState.sceneProgress.blackVaultBossCleared)
+    || gameState.finalGateCertification?.status === "published";
   const ready = missingStamps.length === 0
     && missingFragments === 0
     && equityCrystalsReady
@@ -1442,6 +1466,7 @@ export function getFinalGateReadiness() {
     && publicationApparatus.complete
     && documentsWithUndisclosedDeletion.length === 0
     && standardsViolations.length === 0;
+  const finalReady = ready && blackVaultBossCleared;
   return {
     requiredStamps,
     missingStamps,
@@ -1459,11 +1484,58 @@ export function getFinalGateReadiness() {
     buckramKeyHeld,
     publicationApparatus,
     missingApparatus: publicationApparatus.missing,
-    buckramGateOpen: ready && buckramKeyHeld,
+    blackVaultRequired,
+    blackVaultBossCleared,
+    buckramGateOpen: finalReady && buckramKeyHeld,
     documentsWithUndisclosedDeletion,
     standardsViolations,
     stateChatMayOpenGate: false,
-    ready
+    ready: finalReady
+  };
+}
+
+export function getBlackVaultClimaxReadiness() {
+  const readiness = getFinalGateReadiness();
+  const requiredStamps = Array.from(new Set<ProcessStampId>([
+    ...readiness.requiredStamps,
+    ...PENDANTS.map((pendant) => pendant.stampId)
+  ]));
+  const missingStamps = requiredStamps.filter((stamp) => !gameState.processStamps.includes(stamp));
+  const hasRedPencil = hasProcessItem("red_pencil");
+  const typesetterProofReady = Boolean(gameState.sceneProgress.typesetterProofComplete);
+  const bossDefeated = Boolean(gameState.sceneProgress.blackVaultBossCleared);
+  const missingSummary = [
+    ...missingStamps.map((stamp) => `${stamp.toUpperCase()} stamp`),
+    ...(readiness.missingEquityCrystals
+      ? [`${readiness.missingEquityCrystals} equity crystal${readiness.missingEquityCrystals === 1 ? "" : "s"}`]
+      : readiness.equityCrystalsRequired > 0 ? [] : ["equity map"]),
+    ...(readiness.missingFragments ? [`${readiness.missingFragments} cover piece${readiness.missingFragments === 1 ? "" : "s"}`] : []),
+    ...(readiness.repositoryCoverageMapReady ? [] : ["repository map"]),
+    ...(readiness.reliabilityReady ? [] : [`reliability ${readiness.reliabilityMinimum}`]),
+    ...(readiness.documentsWithUndisclosedDeletion.length ? ["visible brackets"] : []),
+    ...(readiness.standardsViolations.length ? ["standards ledger"] : []),
+    ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
+    ...(hasRedPencil ? [] : ["Red Pencil"]),
+    ...(typesetterProofReady ? [] : ["typesetter proof"])
+  ];
+  return {
+    ready: missingSummary.length === 0,
+    bossDefeated,
+    requiredTool: "red_pencil" as const,
+    requiredStamps,
+    missingStamps,
+    equityCrystalsCollected: readiness.equityCrystalsCollected,
+    equityCrystalsRequired: readiness.equityCrystalsRequired,
+    coverPiecesCollected: readiness.fragmentsCollected,
+    coverPiecesRequired: readiness.fragmentsNeeded,
+    reliability: readiness.reliability,
+    reliabilityMinimum: readiness.reliabilityMinimum,
+    buckramKeyHeld: readiness.buckramKeyHeld,
+    hasRedPencil,
+    typesetterProofReady,
+    standardsClear: readiness.documentsWithUndisclosedDeletion.length === 0
+      && readiness.standardsViolations.length === 0,
+    missingSummary
   };
 }
 
@@ -1500,16 +1572,18 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
     ...(readiness.missingFragments ? [`${readiness.missingFragments} cover fragment${readiness.missingFragments === 1 ? "" : "s"}`] : []),
     ...(readiness.repositoryCoverageMapReady ? [] : ["Repository MAP"]),
     ...readiness.missingApparatus.map((component) => `Apparatus ${component.shortLabel}`),
+    ...(readiness.blackVaultBossCleared ? [] : ["DANN-E final review"]),
     ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
     ...unresolved.map((standard) => standard.label)
   ];
-  const requiredUnits = requiredPendantStamps.length + readiness.requiredStamps.length + Math.max(1, readiness.equityCrystalsRequired) + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 2;
+  const requiredUnits = requiredPendantStamps.length + readiness.requiredStamps.length + Math.max(1, readiness.equityCrystalsRequired) + readiness.fragmentsNeeded + readiness.publicationApparatus.total + 3;
   const collectedUnits = (requiredPendantStamps.length - missingPendants.length)
     + (readiness.requiredStamps.length - readiness.missingStamps.length)
     + Math.min(readiness.equityCrystalsCollected, Math.max(1, readiness.equityCrystalsRequired))
     + Math.min(readiness.fragmentsCollected, readiness.fragmentsNeeded)
     + (readiness.repositoryCoverageMapReady ? 1 : 0)
     + readiness.publicationApparatus.completed
+    + (readiness.blackVaultBossCleared ? 1 : 0)
     + (readiness.buckramKeyHeld ? 1 : 0);
   return {
     repositoryCoverageMap: {
@@ -1542,6 +1616,10 @@ export function getPublicationReadinessReadout(): PublicationReadinessReadout {
       clear: unresolved.length === 0
     },
     apparatus: readiness.publicationApparatus,
+    blackVault: {
+      required: readiness.blackVaultRequired,
+      bossDefeated: readiness.blackVaultBossCleared
+    },
     buckramKeyHeld: readiness.buckramKeyHeld,
     buckramGateOpen: readiness.buckramGateOpen && missingPendants.length === 0 && unresolved.length === 0,
     completionRatio: Math.max(0, Math.min(1, collectedUnits / Math.max(1, requiredUnits))),
@@ -2563,18 +2641,18 @@ export function getStatutoryClockStateReadout() {
 }
 
 export function seedProgressForScene(sceneName: string) {
-  if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+  if (["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "EndingScene"].includes(sceneName)) {
     gameState.documentPoints = Math.max(gameState.documentPoints, 15);
     setDocumentWorkflowState("telegram_001", "selected");
     setDocumentWorkflowState("source_note_047", "selected");
     setDocumentWorkflowState("cross_reference_001", "selected");
   }
-  if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+  if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "EndingScene"].includes(sceneName)) {
     addProcessItem("citation_stamp");
     addVolumeFragment("Front Matter Fragment");
     setDocumentWorkflowState("source_note_047", "citation_verified");
   }
-  if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+  if (["GuideScene", "ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "EndingScene"].includes(sceneName)) {
     gameState.sceneProgress.seriesConceptComplete = 1;
     gameState.sceneProgress.seriesConceptStep = 3;
     gameState.sceneProgress.volumeConceptComplete = 1;
@@ -2593,7 +2671,7 @@ export function seedProgressForScene(sceneName: string) {
     gameState.sceneProgress.policyCoverageAuditStep = POLICY_COVERAGE_AUDIT_PROMPTS.length;
     awardProcessStamp("rule");
   }
-  if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+  if (["NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("archive");
     gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
     gameState.sceneProgress.sourceNoteProvenanceStep = SOURCE_NOTE_PROVENANCE_PROMPTS.length;
@@ -2609,7 +2687,7 @@ export function seedProgressForScene(sceneName: string) {
     setDocumentWorkflowState("source_note_047", "ready_for_review");
     setDocumentWorkflowState("cross_reference_001", "submitted_for_review");
   }
-  if (["ReferralVaultScene", "SilentReadScene", "EndingScene"].includes(sceneName)) {
+  if (["ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("network");
     gameState.sceneProgress.clearanceProcedureComplete = 1;
     gameState.sceneProgress.clearanceProcedureStep = 3;
@@ -2624,7 +2702,7 @@ export function seedProgressForScene(sceneName: string) {
     setDocumentWorkflowState("source_note_047", "submitted_for_review");
     setDocumentWorkflowState("sbu_annotation_001", "referred");
   }
-  if (["SilentReadScene", "EndingScene"].includes(sceneName)) {
+  if (["SilentReadScene", "BlackVaultLairScene", "EndingScene"].includes(sceneName)) {
     gameState.sceneProgress.foreignGovernmentPermissionComplete = 1;
     gameState.sceneProgress.foreignGovernmentPermissionStep = 3;
     gameState.sceneProgress.withholdingAppealComplete = 1;
@@ -2639,7 +2717,7 @@ export function seedProgressForScene(sceneName: string) {
     setDocumentWorkflowState("sbu_annotation_001", "excised");
     setDocumentWorkflowState("proof_page_412", "ready_for_proof");
   }
-  if (sceneName === "EndingScene") {
+  if (["BlackVaultLairScene", "EndingScene"].includes(sceneName)) {
     awardProcessStamp("sop");
     addInventoryItem("AI Annotation Review Log");
     addProcessItem("red_pencil");
@@ -2664,6 +2742,15 @@ export function seedProgressForScene(sceneName: string) {
     setDocumentWorkflowState("cross_reference_001", "proofed");
     setDocumentWorkflowState("sbu_annotation_001", "proofed");
     setDocumentWorkflowState("proof_page_412", "proofed");
+  }
+  if (sceneName === "BlackVaultLairScene") {
+    gameState.sceneProgress.blackVaultClimaxRequired = 1;
+    gameState.sceneProgress.blackVaultBossCleared = 0;
+    equipProcessItem("red_pencil");
+  }
+  if (sceneName === "EndingScene") {
+    gameState.sceneProgress.blackVaultClimaxRequired = 1;
+    gameState.sceneProgress.blackVaultBossCleared = 1;
   }
   refreshQuestWorkflowState();
 }
@@ -2794,6 +2881,7 @@ export function renderGameToText() {
       publicationOutcome: getPublicationOutcomeReadout(),
       completionStats: getCompletionStatsReadout(),
       finalGate: getFinalGateReadiness(),
+      blackVaultClimax: getBlackVaultClimaxReadiness(),
       buckramBinding: getBuckramBindingReadout(gameState.sceneProgress),
       secondVolume: {
         unlocked: isSecondVolumeRegionUnlocked(),

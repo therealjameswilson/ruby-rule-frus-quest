@@ -79,7 +79,7 @@ export class ChoicePrompt {
     if (!this.active) return;
     const input = getInput();
     if (input.aJustPressed || input.confirmJustPressed || input.choiceAJustPressed) this.choose("A");
-    else if (input.choiceBJustPressed) this.choose("B");
+    else if (input.bJustPressed || input.cancelJustPressed || input.choiceBJustPressed) this.choose("B");
     else if (input.choiceCJustPressed) this.choose("C");
     else if (input.choiceDJustPressed) this.choose("D");
   }

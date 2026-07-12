@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Mandatory Black Vault climax and final agent-pull reconciliation (2026-07-12):
+  - Rewired the normal quest from Silent Read into the existing Black Vault DANN-E encounter, then into the physical Buckram bindery. DANN-E now clears the final review room but cannot publish the volume before human binding and certification.
+  - Reused the harmonized Red Pencil, six process stamps, equity crystals, five cover pieces, repository map, typesetter proof, Buckram Key, standards ledger, room graph, eight-form DANN-E art, and save fields instead of introducing parallel systems.
+  - Fixed the deadline-choice softlock: rejecting DANN-E's omission shortcut resolves the missed-deadline ledger blocker while retaining the four-point reliability loss; accepting the shortcut still records a concealed policy defect and follows the bad ending.
+  - Moved Cloud Form's teleport points out of Black Vault lava/rubble collision, and prevented ego-bolt knockback from making an illegal obstacle interior the player's saved movement position.
+  - Harmonized the shared choice prompt so touch/controller B and keyboard B all select the visible B option; the full boss route is now completable on a DPR-3 iPhone viewport.
+  - Refreshed the pull audit after PR #87: no PR is open; all source branches remain either integrated, squash-merge provenance, deployment history, or the documented superseded five-form draft.
+  - Verification: 102 Vitest files / 538 tests pass; TypeScript and production build pass; all 25 direct scene routes boot without browser errors; desktop and touch playthroughs clear Colossus, Swarm, and Cloud Form, reject the shortcut, enter the bindery, seal all five packets, and publish.
+
 - Physical Buckram Gate and final pull harmonization pass (2026-07-12):
   - Replaced the final room's 38-question modal chain with five visible binding packets covering the same typed front-matter, index, Kellogg, GPO, public-release, and citation checks.
   - Added a physical `CARRY -> ROUTE -> SEAL` loop across five distinct human workstations and one final binding press; wrong stations cost two reliability points and return the packet for retry.

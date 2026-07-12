@@ -3,6 +3,7 @@ import { danneAnimKey } from "../../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
 import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
 import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts";
+import { DANNE_CLOUD_WAYPOINTS } from "../../game/danneSceneCollisions";
 import { unlockCodexEntry } from "../../game/codex";
 import {
   advanceStatutoryClock,
@@ -14,13 +15,14 @@ import {
 } from "../../game/statutoryClock";
 import {
   addDanneItem,
-  certifyFinalPublicationAfterDanne,
   defeatDungeonBoss,
   gameState,
-  getPublicationReadinessReadout,
+  getBlackVaultClimaxReadiness,
+  getTreatyFragmentCount,
   hasDanneItem,
   recordDanneVariantDefeated,
   recordUnresolvedEquity,
+  resolveStandardsViolationsByType,
   setLatestMessage,
   setObjective
 } from "../../game/state";
@@ -64,13 +66,6 @@ interface DanneBossOptions {
 
 const EGO_BOLT = DANNE_VFX_ASSETS[0];
 const BOSS_CENTER = { x: 128, y: 118 } as const;
-const CLOUD_CORNERS: readonly Position[] = [
-  { x: 72, y: 94 },
-  { x: 184, y: 94 },
-  { x: 72, y: 170 },
-  { x: 184, y: 170 }
-];
-
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
@@ -208,14 +203,28 @@ export class DanneBoss {
   }
 
   readout() {
+    const cleared = this.defeated || this.phase === "defeated";
     return {
       label: `DANN-E ${this.phase.toUpperCase()}`,
       x: this.position.x,
       y: this.position.y,
       spriteKey: this.spriteKey,
       behavior: this.behaviorLabel(),
-      defeatMethod: "Publish with all pendants, all crystals, the Buckram Key, and zero unresolved standards violations.",
-      status: `${this.hp}/${this.maxHp} HP; ${this.difficulty.label} tier; Statutory Clock ${this.clockReadout()}; ${this.bolts.length} ego bolts; ${this.minis.length} mini-DANN-Es`
+      defeatMethod: "Use the Red Pencil after completing pendants, equities, proofing, and the Buckram Key route.",
+      status: `${this.hp}/${this.maxHp} HP; ${this.difficulty.label} tier; ${this.clockReadout()}; ${this.bolts.length} ego bolts; ${this.minis.length} mini-DANN-Es`,
+      hp: cleared ? 0 : this.hp,
+      maxHp: this.maxHp,
+      damage: 12,
+      difficultyTier: this.difficulty.tier === "veteran" ? 6 : 5,
+      reliabilityRisk: "critical",
+      enemyState: cleared ? "defeated" : this.phase,
+      weakness: "red_pencil",
+      roomClear: {
+        roomId: "DV1",
+        defeated: cleared ? 1 : 0,
+        required: 1,
+        cleared
+      }
     };
   }
 
@@ -287,13 +296,10 @@ export class DanneBoss {
     unlockCodexEntry("danne-defeated");
     this.recordPhaseDefeat("defeated");
     addDanneItem("treaty-fragments", 2);
-    const certification = certifyFinalPublicationAfterDanne();
-    const trueEnding = certification.trueEnding;
-    if (trueEnding && this.secretAscendant) {
-      await this.showPhaseCutscene("danne-ascendant", "ascendant", "danne-portrait-historian", "The complete treaty record forces DANN-E back into review.");
-    }
+    const completeTreatyRecord = getTreatyFragmentCount() >= 3;
+    gameState.sceneProgress.blackVaultTreatyRecordComplete = completeTreatyRecord ? 1 : 0;
     await this.showPhaseCutscene("danne-defeated", "defeated", "danne-portrait-archivist");
-    this.onDefeated(trueEnding);
+    this.onDefeated(completeTreatyRecord);
   }
 
   private updateAttackPattern(timeMs: number) {
@@ -313,7 +319,7 @@ export class DanneBoss {
     }
     if (this.phase === "cloud") {
       if (timeMs >= this.nextTeleportAt) {
-        const target = CLOUD_CORNERS[Math.floor(timeMs / 1800) % CLOUD_CORNERS.length];
+        const target = DANNE_CLOUD_WAYPOINTS[Math.floor(timeMs / 1800) % DANNE_CLOUD_WAYPOINTS.length];
         this.moveBossTo(target.x, target.y);
         this.nextTeleportAt = timeMs + this.cooldown(1800);
       }
@@ -323,7 +329,7 @@ export class DanneBoss {
     }
     if (this.phase === "ascendant") {
       this.fireSpread(this.speed(72), [-0.5, -0.18, 0.18, 0.5]);
-      for (const corner of CLOUD_CORNERS) this.fireBolt(corner, this.player.position, this.speed(48));
+      for (const corner of DANNE_CLOUD_WAYPOINTS) this.fireBolt(corner, this.player.position, this.speed(48));
       this.nextBoltAt = timeMs + this.cooldown(980);
     }
   }
@@ -334,7 +340,14 @@ export class DanneBoss {
     if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, this.bossBody())) return;
     this.nextPlayerHitAt = timeMs + 260;
     const hasRubyPen = gameState.equippedDanneItem === "ruby-pen" && hasDanneItem("ruby-pen");
-    const baseDamage = hasRubyPen ? 35 : 14;
+    const hasRedPencil = gameState.equippedProcessItem === "red_pencil";
+    if (!hasRubyPen && !hasRedPencil) {
+      this.player.pushAwayFrom(this.position, 8);
+      setLatestMessage("DANN-E resists that tool. Equip the Red Pencil for accountable edits.");
+      retroAudio.warning();
+      return;
+    }
+    const baseDamage = hasRubyPen ? 35 : 28;
     const damage = this.phase === "cloud" ? Math.ceil(baseDamage / 2) : baseDamage;
     this.hp = Math.max(0, this.hp - damage);
     setBossHp(this.hp, this.phaseIndex());
@@ -349,7 +362,7 @@ export class DanneBoss {
       repeat: 2,
       ease: "Stepped"
     });
-    setLatestMessage(`Ruby Pen review hit DANN-E for ${damage}.`);
+    setLatestMessage(`${hasRubyPen ? "Ruby Pen" : "Red Pencil"} review hit DANN-E for ${damage}.`);
     this.resolvePhaseHp();
   }
 
@@ -388,14 +401,14 @@ export class DanneBoss {
   }
 
   private resolveLegitimatePublicationOrHold() {
-    const readiness = getPublicationReadinessReadout();
-    if (!readiness.buckramGateOpen) {
+    const readiness = getBlackVaultClimaxReadiness();
+    if (!readiness.ready) {
       this.hp = 1;
       setBossHp(this.hp, this.phaseIndex());
       this.sprite.setTint(color(PALETTE.classNetRed));
       const missing = this.readinessMissingSummary(readiness);
-      setLatestMessage(`DANN-E cannot be defeated until the Buckram Gate opens: ${missing}.`);
-      setObjective(`Open Buckram Gate first: ${missing}.`);
+      setLatestMessage(`DANN-E cannot be defeated until the review packet is complete: ${missing}.`);
+      setObjective(`Complete the Black Vault packet: ${missing}.`);
       if (!this.shortcutOffered) this.offerShortcut("DANN-E offers to omit contested material instead.");
       return;
     }
@@ -403,7 +416,7 @@ export class DanneBoss {
   }
 
   private updateStatutoryClock(deltaMs: number) {
-    const readiness = getPublicationReadinessReadout();
+    const readiness = this.combatClockReadiness();
     this.statutoryYear = advanceStatutoryClock(
       this.statutoryYear,
       deltaMs,
@@ -412,8 +425,7 @@ export class DanneBoss {
     );
     this.syncStatutoryClockUi();
     gameState.sceneProgress.statutoryClockTenths = Math.round(this.statutoryYear * 10);
-    gameState.sceneProgress.buckramGateOpen = readiness.buckramGateOpen ? 1 : 0;
-    if (this.statutoryYear >= STATUTORY_DEADLINE_YEARS && !readiness.buckramGateOpen && !this.deadlineDamageApplied) {
+    if (this.statutoryYear >= STATUTORY_DEADLINE_YEARS && !this.defeated && !this.deadlineDamageApplied) {
       this.deadlineDamageApplied = true;
       gameState.sceneProgress.statutoryDeadlineMissed = 1;
       const violation = applyStandardsViolation("missed_30_year_deadline", "Statutory Clock expired before the Buckram Gate opened.");
@@ -424,21 +436,26 @@ export class DanneBoss {
   }
 
   private syncStatutoryClockUi() {
-    const readiness = getPublicationReadinessReadout();
+    const clockReadiness = this.combatClockReadiness();
+    const climax = getBlackVaultClimaxReadiness();
     const readout = getStatutoryClockReadout({
       elapsedYears: this.statutoryYear,
-      readiness,
+      readiness: clockReadiness,
       deadlineDamageApplied: this.deadlineDamageApplied
     });
     this.statutoryYear = readout.elapsedYears;
     const ratio = Phaser.Math.Clamp(readout.progressRatio, 0, 1);
     this.clockFill.setSize(Math.max(1, Math.round(214 * ratio)), 5);
     const urgent = readout.status === "at_risk" || readout.status === "deadline_missed";
-    this.clockFill.setFillStyle(color(readiness.buckramGateOpen ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp), 0.92);
+    this.clockFill.setFillStyle(color(this.defeated ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp), 0.92);
     this.clockText.setText(`STATUTORY CLOCK ${readout.elapsedYears.toFixed(1)} / ${readout.deadlineYears} YEARS`);
     this.clockStatusText
-      .setText(readiness.buckramGateOpen ? "BUCKRAM GATE OPEN" : `${readiness.pendants.collected}/${readiness.pendants.required} P  ${readiness.crystals.collected}/${readiness.crystals.required} C`)
-      .setColor(readiness.buckramGateOpen ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp);
+      .setText(this.defeated
+        ? "DANN-E CLEARED"
+        : climax.ready
+          ? "RECORD READY"
+          : `${climax.missingSummary.length} CHECKS OPEN`)
+      .setColor(this.defeated ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp);
   }
 
   private offerShortcut(reason: string) {
@@ -467,25 +484,33 @@ export class DanneBoss {
         this.onBadEnding();
         return;
       }
+      resolveStandardsViolationsByType("missed_30_year_deadline");
       this.hp = Math.max(1, this.hp);
       setBossHp(this.hp, this.phaseIndex());
-      setObjective("Reject the shortcut. Open the Buckram Gate with all pendants, crystals, and clean standards.");
-      setLatestMessage("Shortcut rejected. DANN-E remains vulnerable only to lawful publication readiness.");
+      setObjective("Reject the shortcut. Defeat DANN-E, then route the cleared record to the bindery.");
+      setLatestMessage("Shortcut rejected. DANN-E remains vulnerable to the complete human-reviewed record.");
       retroAudio.warning();
     });
   }
 
-  private readinessMissingSummary(readiness = getPublicationReadinessReadout()) {
+  private readinessMissingSummary(readiness = getBlackVaultClimaxReadiness()) {
     return readiness.missingSummary.length ? readiness.missingSummary.join(", ") : "final certification";
   }
 
   private clockReadout() {
-    const readiness = getPublicationReadinessReadout();
     return getStatutoryClockReadout({
       elapsedYears: this.statutoryYear,
-      readiness,
+      readiness: this.combatClockReadiness(),
       deadlineDamageApplied: this.deadlineDamageApplied
     }).label;
+  }
+
+  private combatClockReadiness() {
+    return {
+      buckramGateOpen: this.defeated,
+      completionRatio: 0.18,
+      missingSummary: this.defeated ? [] : ["DANN-E final review"]
+    };
   }
 
   private bossBody() {

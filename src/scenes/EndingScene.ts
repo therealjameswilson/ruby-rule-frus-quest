@@ -32,6 +32,7 @@ import {
   getCompletionStatsReadout,
   getFinalGateReadiness,
   getPublicationOutcomeReadout,
+  getTreatyFragmentCount,
   getStatutoryClockStateReadout,
   hasProcessItem,
   markVolumeAssemblyCeremonyComplete,
@@ -883,6 +884,10 @@ export class EndingScene extends Phaser.Scene {
     recordBindingCeremonyCompletion();
     const completionStats = finalizeCompletionStats();
     const outcome = completionStats.publicationOutcome;
+    const trueEndingReady = outcome.id === "published_clean"
+      && Boolean(gameState.sceneProgress.blackVaultBossCleared)
+      && getTreatyFragmentCount() >= 3;
+    gameState.sceneProgress.trueEndingPublicationCertified = trueEndingReady ? 1 : 0;
     setLatestMessage(outcome.id === "published_under_appeal"
       ? "PUBLISHED UNDER APPEAL - UNRESOLVED EQUITIES RECORDED - NEW GAME+ READY"
       : "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED - NEW GAME+ READY");
@@ -915,8 +920,7 @@ export class EndingScene extends Phaser.Scene {
       ? this.add.sprite(128, 100, VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key, 0).setScale(0.72).setDepth(885)
       : null;
     if (!sprite) {
-      this.showPublishedPrize();
-      this.canRestart = true;
+      this.finishBindingCeremonyPresentation();
       return;
     }
     let frame = 0;
@@ -930,9 +934,18 @@ export class EndingScene extends Phaser.Scene {
     });
     this.time.delayedCall(1250, () => {
       sprite.destroy();
-      this.showPublishedPrize();
-      this.canRestart = true;
+      this.finishBindingCeremonyPresentation();
     });
+  }
+
+  private finishBindingCeremonyPresentation() {
+    if (gameState.sceneProgress.trueEndingPublicationCertified) {
+      setLatestMessage("Complete treaty record certified. True-ending docket opened.");
+      transitionTo(this, "TrueEndingScene");
+      return;
+    }
+    this.showPublishedPrize();
+    this.canRestart = true;
   }
 
   private syncRoomTraversal() {
