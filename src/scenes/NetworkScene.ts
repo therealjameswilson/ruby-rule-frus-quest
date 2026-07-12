@@ -8,7 +8,8 @@ import {
   awardProcessStamp,
   gameState,
   getHeldProcessItemIds,
-  recordUnresolvedEquity,
+  hasProcessItem,
+  setHeldItem,
   setLatestMessage,
   setDocumentWorkflowState,
   setNearestInteractable,
@@ -18,7 +19,6 @@ import {
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
-import type { ChoiceOption, RouteItem } from "../game/types";
 import type { Interactable } from "../game/types";
 import { getInput, tickInput, type InputState } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
@@ -32,11 +32,12 @@ import { DialogBox } from "../systems/dialog";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
+import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addNetworkCables, addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesGate, addSnesMapTablet, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal, addSnesWorldMap } from "../systems/snesPixelArt";
+import { addSnesGate, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal, addSnesWorldMap } from "../systems/snesPixelArt";
 import { ChoicePrompt } from "../systems/verification";
 import { SNES_NETWORK_TILE_ASSET } from "../game/snesAtlas";
 import {
@@ -57,6 +58,14 @@ import {
   evaluateEo13526ReviewAnswer,
   getEo13526ReviewPrompt
 } from "../game/eo13526Review";
+import {
+  getNetworkRoutePacket,
+  NETWORK_ROUTE_ITEM_TOTAL,
+  NETWORK_ROUTE_PACKETS,
+  routeNetworkPacket,
+  routedItemCount
+} from "../game/networkRouting";
+import type { NetworkRoutePacketId, RoutingNetwork } from "../game/networkRouting";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -111,10 +120,15 @@ export class NetworkScene extends Phaser.Scene {
   private objectiveText!: Phaser.GameObjects.Text;
   private routeText!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
+  private toast!: FeedbackToast;
   private currentRoute = 0;
   private correctRoutes = 0;
-  private routingActive = false;
   private routingComplete = false;
+  private routingPacketWorldIcon?: Phaser.GameObjects.Container;
+  private routingPacketHeldIcon?: Phaser.GameObjects.Container;
+  private routingSorterSlots: Phaser.GameObjects.Rectangle[] = [];
+  private routingRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private routingRouteCueKey = "";
   private clearanceTokenCollected = false;
   private currentRoomId: NetworkRoomId = "N1";
   private visitedRoomIds = new Set<NetworkRoomId>();
@@ -130,16 +144,6 @@ export class NetworkScene extends Phaser.Scene {
   private clearanceTokenRouteCueKey = "";
   private bureaucraticWalls: BureaucraticWall[] = [];
   private danneLurker!: DanneLurker;
-
-  private readonly routeItems: RouteItem[] = [
-    { label: "Published FRUS cross-reference research", network: "OpenNet", classification: "unclassified" },
-    { label: "Publication status verification", network: "OpenNet", classification: "unclassified" },
-    { label: "Typeset unclassified proof", network: "OpenNet", classification: "unclassified" },
-    { label: "SBU annotation sheet", network: "ClassNet", classification: "sbu" },
-    { label: "Classified source note", network: "ClassNet", classification: "classified" },
-    { label: "Codeword document review", network: "ClassNet", classification: "codeword" },
-    { label: "Excision language review", network: "ClassNet", classification: "classified" }
-  ];
 
   constructor() {
     super("NetworkScene");
@@ -176,6 +180,7 @@ export class NetworkScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.toast = new FeedbackToast(this);
     this.danneLurker = new DanneLurker(this, 46, 66, {
       waypoints: [
         { x: 46, y: 66 },
@@ -185,11 +190,31 @@ export class NetworkScene extends Phaser.Scene {
         { x: 48, y: 178 }
       ]
     });
+    this.restoreNetworkProgress();
     this.enterRoom("N1", { x: 128, y: 196 }, false);
-    this.dialog.show("MARCUS", [
-      "OpenNet is public; ClassNet is classified review.",
-      "Route each item, then cross east into the vault."
-    ], () => this.beginRouting());
+    this.beginRouting();
+    if (!this.routingComplete) {
+      setLatestMessage("OpenNet takes public material. ClassNet takes protected review packets.");
+    }
+  }
+
+  private restoreNetworkProgress() {
+    this.routingComplete = Boolean(gameState.sceneProgress.networkRoutingComplete)
+      || gameState.processStamps.includes("network");
+    this.currentRoute = this.routingComplete
+      ? NETWORK_ROUTE_PACKETS.length
+      : Math.max(0, Math.min(
+        NETWORK_ROUTE_PACKETS.length - 1,
+        Math.floor(gameState.sceneProgress.networkRoutingStep ?? 0)
+      ));
+    this.correctRoutes = this.routingComplete
+      ? NETWORK_ROUTE_ITEM_TOTAL
+      : routedItemCount(this.currentRoute);
+    this.clearanceTokenCollected = hasProcessItem("clearance_token");
+    if (this.routingComplete) gameState.sceneProgress.networkRoutingCarried = 0;
+    else if ((gameState.sceneProgress.networkRoutingCarried ?? 0) !== getNetworkRoutePacket(this.currentRoute).order) {
+      gameState.sceneProgress.networkRoutingCarried = 0;
+    }
   }
 
   update(_: number, delta: number) {
@@ -198,6 +223,7 @@ export class NetworkScene extends Phaser.Scene {
     this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
     this.updateDanneLurker(delta);
     this.syncThreatState();
+    this.toast.update(delta, this.player.position);
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
@@ -217,7 +243,7 @@ export class NetworkScene extends Phaser.Scene {
       this.player.update(delta, false);
       return;
     }
-    if (this.choice.active || this.inventory.active || this.reliability.active || this.routingActive) {
+    if (this.choice.active || this.inventory.active || this.reliability.active) {
       this.interactionPrompt.update(delta, null);
       handleOpenOverlays(this.inventory, this.reliability);
       this.choice.updateInput();
@@ -229,16 +255,25 @@ export class NetworkScene extends Phaser.Scene {
       return;
     }
     this.player.update(delta, true, { bounds: NETWORK_PLAY_BOUNDS });
-    this.updateClearanceTokenPrompt(delta);
-    this.refreshClearanceTokenRouteCue();
-    if (this.handleClearanceTokenAction(input)) {
+    if (this.currentRoomId === "N1") {
+      this.updateRoutingPacketIcon();
+      this.updateRoutingPacketPrompt(delta);
+      this.refreshRoutingRouteCue();
+    } else {
+      this.updateClearanceTokenPrompt(delta);
+      this.refreshClearanceTokenRouteCue();
+    }
+    const handledRoomAction = this.currentRoomId === "N1"
+      ? this.handleRoutingPacketAction(input)
+      : this.handleClearanceTokenAction(input);
+    if (handledRoomAction) {
       this.reliability.update();
-      this.objectiveText.setText(gameState.objective);
+      this.objectiveText.setText(this.currentRoomId === "N1" ? "" : gameState.objective);
       return;
     }
     if (this.checkRoomExit()) return;
     this.reliability.update();
-    this.objectiveText.setText(gameState.objective);
+    this.objectiveText.setText(this.currentRoomId === "N1" ? "" : gameState.objective);
   }
 
   private track<T extends Phaser.GameObjects.GameObject>(object: T) {
@@ -279,6 +314,7 @@ export class NetworkScene extends Phaser.Scene {
 
   private clearRoom() {
     this.clearClearanceTokenRouteCue();
+    this.clearRoutingRouteCue();
     for (const cleanup of this.roomCleanups) cleanup();
     for (const object of this.roomObjects) {
       if (object.active) object.destroy();
@@ -288,6 +324,10 @@ export class NetworkScene extends Phaser.Scene {
     this.roomObjects = [];
     this.bureaucraticWalls = [];
     this.clearanceTokenIcon = undefined;
+    this.routingPacketWorldIcon = undefined;
+    this.routingSorterSlots = [];
+    if (this.routingPacketHeldIcon?.active) this.routingPacketHeldIcon.destroy();
+    this.routingPacketHeldIcon = undefined;
     setNearestInteractable(null);
   }
 
@@ -435,19 +475,9 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private renderNetworkSplit() {
-    setVisibleEntities(["Marcus", "OpenNet terminal", "ClassNet terminal", "Routing sorter", "Stone Wall: FIREWALL"]);
+    this.syncNetworkSplitEntities();
     addNetworkCables(this, (object) => this.track(object));
     addSnesWorldMap(this, 128, 66, "NET MAP", "two-networks-map", (object) => this.track(object));
-    addSnesMapTablet(this, {
-      x: 128,
-      y: 102,
-      label: "NET ROUTE",
-      nodes: ["OPEN", "ROUT", "CLASS", "VAULT"],
-      activeIndex: this.routingComplete ? 2 : 1,
-      accent: this.routingComplete ? PALETTE.openNetGreen : PALETTE.terminalCyan,
-      track: (object) => this.track(object),
-      depth: 118
-    });
     this.track(addTinySparkle(this, 60, 108, PALETTE.openNetGreen));
     this.track(addTinySparkle(this, 196, 108, PALETTE.classNetRed));
     const marcus = new HistorianNPC(this, "marcus", 128, 54);
@@ -468,16 +498,363 @@ export class NetworkScene extends Phaser.Scene {
       color: PALETTE.classNetRed,
       align: "center"
     }).setOrigin(0.5).setDepth(167));
+    this.drawRoutingSorter();
     if (!this.routingComplete) {
       this.bureaucraticWalls = [
         new BureaucraticWall(this, "firewall-open", "FIREWALL", 96, 152, { behavior: "block", accent: PALETTE.classNetRed }),
         new BureaucraticWall(this, "firewall-class", "FORM 32", 160, 152, { behavior: "block", accent: PALETTE.classNetRed })
       ];
-      this.routeText.setVisible(false);
+      this.updateRoutingRouteText();
     } else {
       this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
       setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
     }
+  }
+
+  private syncNetworkSplitEntities() {
+    const packet = this.routingComplete ? null : getNetworkRoutePacket(this.currentRoute);
+    const carried = this.routingCarriedPacket();
+    setVisibleEntities([
+      "Marcus",
+      "OpenNet terminal",
+      "ClassNet terminal",
+      "Routing sorter",
+      ...(!this.routingComplete ? ["Stone Wall: FIREWALL"] : []),
+      ...(packet ? [`Routing packet ${packet.order}/4: ${packet.label} (${carried ? "carried" : "at sorter"})`] : [])
+    ]);
+  }
+
+  private drawRoutingSorter() {
+    const sorter = this.track(this.add.container(128, 178).setDepth(170).setName("network-routing-sorter"));
+    sorter.add(this.add.ellipse(0, 8, 48, 12, color(PALETTE.black), 0.42));
+    sorter.add(this.add.rectangle(0, 0, 48, 22, color(PALETTE.black), 0.92)
+      .setStrokeStyle(2, color(this.routingComplete ? PALETTE.openNetGreen : PALETTE.goldStamp)));
+    sorter.add(this.add.text(0, 6, this.routingComplete ? "ROUTED" : "SORTER", {
+      fontFamily: "monospace",
+      fontSize: "4px",
+      color: this.routingComplete ? PALETTE.openNetGreen : PALETTE.goldStamp
+    }).setOrigin(0.5, 0));
+    for (let index = 0; index < NETWORK_ROUTE_PACKETS.length; index += 1) {
+      const filed = index < this.currentRoute || this.routingComplete;
+      const slot = this.add.rectangle(-15 + index * 10, 9, 7, 4, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
+        .setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray));
+      this.routingSorterSlots.push(slot);
+      sorter.add(slot);
+    }
+    if (this.routingComplete) return;
+    const carried = this.routingCarriedPacket();
+    if (carried) {
+      this.createRoutingPacketHeldIcon(carried.id);
+      return;
+    }
+    this.drawRoutingPacketAtSorter();
+  }
+
+  private syncRoutingSorterSlots() {
+    this.routingSorterSlots.forEach((slot, index) => {
+      const filed = index < this.currentRoute || this.routingComplete;
+      slot.setFillStyle(color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark));
+      slot.setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray));
+    });
+  }
+
+  private drawRoutingPacketAtSorter() {
+    if (this.routingPacketWorldIcon?.active) this.routingPacketWorldIcon.destroy();
+    if (this.routingComplete) {
+      this.routingPacketWorldIcon = undefined;
+      return;
+    }
+    const packet = getNetworkRoutePacket(this.currentRoute);
+    this.routingPacketWorldIcon = this.track(this.createRoutingPacketIcon(128, 164, packet.id, false)
+      .setName(`network-route-packet-${packet.id}`)
+      .setDepth(179));
+  }
+
+  private createRoutingPacketHeldIcon(packetId: NetworkRoutePacketId) {
+    if (this.routingPacketHeldIcon?.active) this.routingPacketHeldIcon.destroy();
+    const packet = NETWORK_ROUTE_PACKETS.find((candidate) => candidate.id === packetId);
+    if (!packet) return;
+    this.routingPacketHeldIcon = this.createRoutingPacketIcon(
+      Math.round(this.player.position.x),
+      Math.round(this.player.position.y - 16),
+      packet.id,
+      true
+    ).setName(`network-carried-packet-${packet.id}`).setDepth(280);
+  }
+
+  private createRoutingPacketIcon(
+    x: number,
+    y: number,
+    packetId: NetworkRoutePacketId,
+    compact: boolean
+  ) {
+    const packet = NETWORK_ROUTE_PACKETS.find((candidate) => candidate.id === packetId)
+      ?? NETWORK_ROUTE_PACKETS[0];
+    const accent = packet.network === "OpenNet" ? PALETTE.openNetGreen : PALETTE.classNetRed;
+    const width = compact ? 21 : 30;
+    const height = compact ? 13 : 19;
+    const classification = packet.classification === "unclassified"
+      ? "U"
+      : packet.classification === "sbu"
+        ? "SBU"
+        : "C";
+    return this.add.container(x, y, [
+      this.add.ellipse(1, Math.round(height / 2), width + 4, 7, color(PALETTE.black), 0.4),
+      this.add.rectangle(0, 0, width, height, color(PALETTE.creamPaper))
+        .setStrokeStyle(1, color(accent)),
+      this.add.rectangle(-Math.round(width / 2) + 3, 0, 3, height - 3, color(accent)),
+      this.add.rectangle(-4, -Math.round(height / 2), compact ? 8 : 11, 4, color(PALETTE.archiveAmber))
+        .setStrokeStyle(1, color(PALETTE.sepiaInk)),
+      this.add.text(compact ? 3 : 4, compact ? -5 : -7, classification, {
+        fontFamily: "monospace",
+        fontSize: compact ? "4px" : "5px",
+        color: PALETTE.black
+      }).setOrigin(0.5, 0),
+      this.add.text(0, compact ? 2 : 3, packet.shortLabel.slice(0, compact ? 4 : 6), {
+        fontFamily: "monospace",
+        fontSize: "3px",
+        color: PALETTE.sepiaInk
+      }).setOrigin(0.5, 0)
+    ]);
+  }
+
+  private routingCarriedPacket() {
+    const order = Math.floor(gameState.sceneProgress.networkRoutingCarried ?? 0);
+    return NETWORK_ROUTE_PACKETS.find((packet) => packet.order === order) ?? null;
+  }
+
+  private updateRoutingPacketIcon() {
+    if (!this.routingPacketHeldIcon?.active) return;
+    this.routingPacketHeldIcon
+      .setPosition(Math.round(this.player.position.x), Math.round(this.player.position.y - 16))
+      .setDepth(Math.round(this.player.position.y) + 5);
+  }
+
+  private routingActionHint() {
+    if (this.currentRoomId !== "N1" || this.routingComplete) return null;
+    const carried = this.routingCarriedPacket();
+    const candidates: Interactable[] = carried
+      ? [this.routingTerminalTarget("OpenNet"), this.routingTerminalTarget("ClassNet")]
+      : [this.routingSorterTarget()];
+    const nearest = candidates.reduce((best, candidate) => {
+      const bestDistance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, best.x, best.y);
+      const candidateDistance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, candidate.x, candidate.y);
+      return candidateDistance < bestDistance ? candidate : best;
+    });
+    const distance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, nearest.x, nearest.y);
+    return distance <= 78 ? nearest : null;
+  }
+
+  private routingSorterTarget(): Interactable {
+    return {
+      id: "network-routing-sorter",
+      label: "Routing Sorter",
+      x: 128,
+      y: 178,
+      radius: 40,
+      kind: "document",
+      onInteract: () => undefined
+    };
+  }
+
+  private routingTerminalTarget(network: RoutingNetwork): Interactable {
+    return {
+      id: network === "OpenNet" ? "network-opennet" : "network-classnet",
+      label: `${network} terminal`,
+      x: network === "OpenNet" ? 60 : 196,
+      y: 124,
+      radius: 44,
+      kind: "terminal",
+      onInteract: () => undefined
+    };
+  }
+
+  private updateRoutingPacketPrompt(delta: number) {
+    const target = this.routingActionHint();
+    const strictTarget = target && Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      target.x,
+      target.y
+    ) <= (target.radius ?? 34) ? target : null;
+    const carried = this.routingCarriedPacket();
+    const packet = this.routingComplete ? null : getNetworkRoutePacket(this.currentRoute);
+    this.interactionPrompt.update(delta, strictTarget, undefined, strictTarget ? {
+      badge: "A",
+      text: carried
+        ? `SEND ${target?.id === "network-opennet" ? "OPENNET" : "CLASSNET"}`
+        : `TAKE ${packet?.shortLabel ?? "PACKET"}`
+    } : undefined);
+    setNearestInteractable(strictTarget?.label ?? null);
+  }
+
+  private handleRoutingPacketAction(input: Readonly<InputState>) {
+    if (this.currentRoomId !== "N1" || this.routingComplete || !input.aJustPressed) return false;
+    const target = this.routingActionHint();
+    if (!target || Phaser.Math.Distance.Between(
+      this.player.position.x,
+      this.player.position.y,
+      target.x,
+      target.y
+    ) > (target.radius ?? 34)) {
+      retroAudio.blip();
+      setLatestMessage("Follow the lit cable to the highlighted target.");
+      return true;
+    }
+    const carried = this.routingCarriedPacket();
+    if (!carried) {
+      this.pickUpRoutingPacket();
+      return true;
+    }
+    const destination: RoutingNetwork = target.id === "network-opennet" ? "OpenNet" : "ClassNet";
+    this.routeCarriedPacket(destination);
+    return true;
+  }
+
+  private pickUpRoutingPacket() {
+    const packet = getNetworkRoutePacket(this.currentRoute);
+    gameState.sceneProgress.networkRoutingCarried = packet.order;
+    setHeldItem(`${packet.label} Packet`);
+    if (this.routingPacketWorldIcon?.active) this.routingPacketWorldIcon.destroy();
+    this.routingPacketWorldIcon = undefined;
+    this.createRoutingPacketHeldIcon(packet.id);
+    retroAudio.confirm();
+    this.toast.show(`${packet.shortLabel} ACQUIRED`, this.player.position, "info");
+    setLatestMessage(`${packet.label}: ${packet.classification.toUpperCase()}. Route it to ${packet.network}.`);
+    setObjective(`ROUTE ${packet.order}/4: carry ${packet.label} to ${packet.network}.`);
+    this.updateRoutingRouteText();
+    this.syncNetworkSplitEntities();
+    this.refreshRoutingRouteCue();
+  }
+
+  private routeCarriedPacket(destination: RoutingNetwork) {
+    const packet = this.routingCarriedPacket();
+    if (!packet) return;
+    const result = routeNetworkPacket(this.currentRoute, packet.id, destination);
+    gameState.sceneProgress.networkRoutingCarried = 0;
+    setHeldItem(null);
+    if (this.routingPacketHeldIcon?.active) this.routingPacketHeldIcon.destroy();
+    this.routingPacketHeldIcon = undefined;
+
+    if (!result.ok) {
+      adjustReliability(-2, `${result.packet.label} caught at the wrong-network firewall before transmission`);
+      retroAudio.warning();
+      this.routeText.setText(result.leakRisk ? "FIREWALL STOP\nCLOSED PACKET" : "FIREWALL STOP\nWRONG NETWORK").setVisible(true);
+      this.toast.show("WRONG NETWORK", this.player.position, "warn");
+      setLatestMessage(result.message);
+      setObjective(`RETRY ${packet.order}/4: collect ${packet.label} from the sorter.`);
+      this.drawRoutingPacketAtSorter();
+      this.syncNetworkSplitEntities();
+      this.refreshRoutingRouteCue();
+      this.reliability.update();
+      return;
+    }
+
+    this.currentRoute = result.nextStep;
+    this.correctRoutes = routedItemCount(result.nextStep);
+    gameState.sceneProgress.networkRoutingStep = result.nextStep;
+    this.syncRoutingSorterSlots();
+    adjustReliability(result.packet.itemLabels.length * 3, `${result.packet.label} routed to ${destination}`);
+    retroAudio.stamp();
+    this.toast.show(`${result.packet.shortLabel} > ${destination.toUpperCase()}`, this.player.position, "info");
+    setLatestMessage(result.message);
+    if (result.complete) {
+      this.finishRouting();
+      return;
+    }
+
+    const nextPacket = getNetworkRoutePacket(result.nextStep);
+    setObjective(`ROUTE ${nextPacket.order}/4: collect ${nextPacket.label} from the sorter.`);
+    this.drawRoutingPacketAtSorter();
+    this.updateRoutingRouteText();
+    this.syncNetworkSplitEntities();
+    this.refreshRoutingRouteCue();
+    this.reliability.update();
+  }
+
+  private updateRoutingRouteText() {
+    if (this.routingComplete) {
+      this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
+      return;
+    }
+    this.routeText.setVisible(false);
+  }
+
+  private refreshRoutingRouteCue() {
+    if (this.currentRoomId !== "N1" || this.routingComplete) {
+      this.clearRoutingRouteCue();
+      return;
+    }
+    const packet = getNetworkRoutePacket(this.currentRoute);
+    const carried = this.routingCarriedPacket();
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 14) };
+    const end = carried
+      ? { x: packet.network === "OpenNet" ? 60 : 196, y: 124 }
+      : { x: 128, y: 178 };
+    const targetDistance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
+    if (targetDistance <= (carried ? 38 : 36)) {
+      this.clearRoutingRouteCue();
+      return;
+    }
+    const label = carried ? packet.network.toUpperCase() : "GET PACKET";
+    const cueKey = `N1:${packet.id}:${carried ? "carried" : "sorter"}:${start.x},${start.y}->${end.x},${end.y}`;
+    if (cueKey === this.routingRouteCueKey) return;
+    this.clearRoutingRouteCue();
+    this.routingRouteCueKey = cueKey;
+    this.drawRoutingRouteCue(start, end, label, carried ? packet.network : null);
+  }
+
+  private clearRoutingRouteCue() {
+    for (const object of this.routingRouteCueObjects) {
+      if (object.active) object.destroy();
+    }
+    this.routingRouteCueObjects = [];
+    this.routingRouteCueKey = "";
+  }
+
+  private trackRoutingRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
+    this.routingRouteCueObjects.push(object);
+    return this.track(object);
+  }
+
+  private drawRoutingRouteCue(
+    start: { x: number; y: number },
+    end: { x: number; y: number },
+    label: string,
+    network: RoutingNetwork | null
+  ) {
+    const accent = network === "OpenNet"
+      ? PALETTE.openNetGreen
+      : network === "ClassNet"
+        ? PALETTE.classNetRed
+        : PALETTE.goldStamp;
+    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y, network ? 46 : 52, network ? 34 : 30, color(PALETTE.black), 0)
+      .setStrokeStyle(2, color(accent), 0.96)
+      .setName("network-routing-target")
+      .setDepth(236));
+    const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
+    const steps = Math.max(1, Math.min(7, Math.floor(distance / 14)));
+    for (let index = 1; index <= steps; index += 1) {
+      const t = index / (steps + 1);
+      this.trackRoutingRouteCue(this.add.rectangle(
+        Math.round(Phaser.Math.Linear(start.x, end.x, t)),
+        Math.round(Phaser.Math.Linear(start.y, end.y, t)),
+        4,
+        4,
+        color(index % 2 === 0 ? PALETTE.creamPaper : accent),
+        0.9
+      ).setAngle(45).setName("network-routing-dot").setDepth(237));
+    }
+    const width = Math.max(52, label.length * 4 + 10);
+    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y + (network ? 27 : 24), width, 10, color(PALETTE.black), 0.94)
+      .setStrokeStyle(1, color(accent))
+      .setName("network-routing-label-frame")
+      .setDepth(238));
+    this.trackRoutingRouteCue(this.add.text(end.x, end.y + (network ? 24 : 21), label, {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: accent
+    }).setOrigin(0.5, 0).setName("network-routing-label").setDepth(239));
   }
 
   private renderClassNetVault() {
@@ -940,11 +1317,18 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private beginRouting() {
-    this.currentRoute = 0;
-    this.correctRoutes = 0;
-    this.routingActive = true;
-    setObjective("Two Networks: route each item to OpenNet or ClassNet.");
-    this.showRouteChoice();
+    if (this.routingComplete) {
+      setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
+      this.updateRoutingRouteText();
+      return;
+    }
+    const packet = getNetworkRoutePacket(this.currentRoute);
+    setObjective(this.routingCarriedPacket()
+      ? `ROUTE ${packet.order}/4: carry ${packet.label} to ${packet.network}.`
+      : `ROUTE ${packet.order}/4: collect ${packet.label} from the sorter.`);
+    this.updateRoutingRouteText();
+    this.syncNetworkSplitEntities();
+    this.refreshRoutingRouteCue();
   }
 
   private syncThreatState() {
@@ -971,98 +1355,61 @@ export class NetworkScene extends Phaser.Scene {
       && !this.dialog.active
       && !this.choice.active
       && !this.inventory.active
-      && !this.reliability.active
-      && !this.routingActive;
+      && !this.reliability.active;
     const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
     if (result.triggered) {
       this.player.takeHit(this.danneLurker.position, 11, 700);
       applyStandardsViolation("missed_30_year_deadline", "DANN-E deadline pressure disrupted network routing.");
-      setObjective("Two Networks: route evidence by human review, not DANN-E urgency.");
+      this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     } else if (result.egoBoltHit) {
       this.player.takeHit(this.danneLurker.position, 9, 700);
       applyStandardsViolation("missed_30_year_deadline", "DANN-E ego bolt disrupted network routing.");
-      setObjective("Two Networks: dodge Ego bolts and route evidence on the right network.");
+      this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     }
   }
 
-  private showRouteChoice() {
-    const item = this.routeItems[this.currentRoute];
-    this.routeText.setText(`ROUTE\n${this.currentRoute + 1}/7`).setVisible(true);
-    const options: ChoiceOption[] = [
-      { key: "A", label: "Send to OpenNet", value: "OpenNet" },
-      { key: "B", label: "Send to ClassNet", value: "ClassNet" }
-    ];
-    this.choice.show(`ROUTE:\n${item.label}\n\nCLASSIFICATION: ${item.classification.toUpperCase()}`, options, (option) => {
-      this.resolveRoute(item, option.value as RouteItem["network"]);
-    });
-  }
-
-  private resolveRoute(item: RouteItem, destination: RouteItem["network"]) {
-    const correct = destination === item.network;
-    if (correct) {
-      this.correctRoutes += 1;
-      adjustReliability(3, `${item.label} routed to ${destination}`);
-      this.routeText.setText(`CORRECT\n${destination.toUpperCase()}`).setVisible(true);
-    } else {
-      const leakWarning = destination === "OpenNet" && item.network === "ClassNet";
-      const violation = applyStandardsViolation(
-        leakWarning ? "concealed_policy_defect" : "omitted_material_fact",
-        leakWarning ? "Closed material was sent to OpenNet." : `${item.label} was routed through the wrong network.`
-      );
-      recordUnresolvedEquity(`${leakWarning ? "Closed material routed to OpenNet" : "Network routing gate failed"}: ${item.label}`);
-      setLatestMessage(`WRONG NETWORK - ${violation.label}`);
-      this.routeText.setText(leakWarning ? "WARNING\nLEAK RISK" : "WARNING\nWRONG NET").setVisible(true);
-      this.reliability.update();
-      this.currentRoute += 1;
-      if (this.currentRoute >= this.routeItems.length) {
-        this.finishRouting();
-        return;
-      }
-      this.dialog.show("STANDARD VIOLATION", [
-        violation.label,
-        "Route the next item through the correct network."
-      ], () => this.showRouteChoice());
+  private restoreObjectiveAfterDannePressure() {
+    if (this.currentRoomId === "N1") {
+      this.beginRouting();
       return;
     }
-    this.reliability.update();
-    this.currentRoute += 1;
-    if (this.currentRoute >= this.routeItems.length) {
-      this.finishRouting();
-      return;
-    }
-    this.time.delayedCall(450, () => this.showRouteChoice());
+    setObjective(this.clearanceTokenCollected
+      ? "Two Networks: exit east to the Referral Vault."
+      : this.clearanceTokenObjective());
   }
 
   private finishRouting() {
-    this.routingActive = false;
-    if (this.correctRoutes === this.routeItems.length) {
-      this.routingComplete = true;
-      awardProcessStamp("network");
-      setDocumentWorkflowState("source_note_047", "submitted_for_review");
-      setDocumentWorkflowState("cross_reference_001", "submitted_for_review");
-      setDocumentWorkflowState("sbu_annotation_001", "referred");
-      addVolumeFragment("Routing Fragment");
-      addDocumentPoints(14, "OpenNet/ClassNet routes cleared");
-      setLatestMessage("FIREWALL cleared: ClassNet Vault door open.");
-      setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
-      this.bureaucraticWalls.forEach((wall) => wall.clear());
-      this.syncThreatState();
-      this.syncRoomTraversalState();
-      this.updateNetworkMinimap();
-      this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
-      retroAudio.stamp();
-      this.dialog.show("MARCUS", [
-        "Good routing.",
-        "The open world stays open. The closed world stays closed.",
-        "Now enter the ClassNet Vault and take the clearance token by hand."
-      ]);
-      return;
-    }
-    this.dialog.show("MARCUS", [
-      "Routing log has warnings.",
-      "Review the split before referrals move."
-    ], () => this.beginRouting());
+    if (this.correctRoutes !== NETWORK_ROUTE_ITEM_TOTAL) return;
+    this.routingComplete = true;
+    gameState.sceneProgress.networkRoutingComplete = 1;
+    gameState.sceneProgress.networkRoutingStep = NETWORK_ROUTE_PACKETS.length;
+    gameState.sceneProgress.networkRoutingCarried = 0;
+    setHeldItem(null);
+    if (this.routingPacketWorldIcon?.active) this.routingPacketWorldIcon.destroy();
+    if (this.routingPacketHeldIcon?.active) this.routingPacketHeldIcon.destroy();
+    this.routingPacketWorldIcon = undefined;
+    this.routingPacketHeldIcon = undefined;
+    this.clearRoutingRouteCue();
+    this.syncRoutingSorterSlots();
+    awardProcessStamp("network");
+    setDocumentWorkflowState("source_note_047", "submitted_for_review");
+    setDocumentWorkflowState("cross_reference_001", "submitted_for_review");
+    setDocumentWorkflowState("sbu_annotation_001", "referred");
+    addVolumeFragment("Routing Fragment");
+    addDocumentPoints(14, "OpenNet/ClassNet routes cleared");
+    setLatestMessage("FIREWALL cleared: ClassNet Vault door open.");
+    setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
+    this.bureaucraticWalls.forEach((wall) => wall.clear());
+    this.syncThreatState();
+    this.syncRoomTraversalState();
+    this.updateNetworkMinimap();
+    this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
+    this.syncNetworkSplitEntities();
+    this.track(addTinySparkle(this, 96, 152, PALETTE.terminalCyan));
+    this.track(addTinySparkle(this, 160, 152, PALETTE.openNetGreen));
+    this.track(addTinySparkle(this, 222, 126, PALETTE.goldStamp));
+    retroAudio.stamp();
   }
 }
