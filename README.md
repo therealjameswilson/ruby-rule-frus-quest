@@ -62,7 +62,7 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 
 ## Current Cleanup Status
 
-Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78 plus the physical Archive, Two Networks, ClassNet, and Referral Vault follow-ups. Every stacked Codex gameplay head and later Perplexity art drop is represented; superseded component PRs are closed by design, not missing. The obsolete five-form DANN-E draft in PR #41 is the sole intentional exclusion because the canonical eight-form roster replaced it. Historical source branches and the deployment branch remain on the remote for provenance and are not pending integrations.
+Current `main` is the harmonized Phaser/Vite GitHub Pages game produced by PR #78 plus the physical Archive, Two Networks, ClassNet, Referral Vault, and Silent Read follow-ups. Every stacked Codex gameplay head and later Perplexity art drop is represented; superseded component PRs are closed by design, not missing. The obsolete five-form DANN-E draft in PR #41 is the sole intentional exclusion because the canonical eight-form roster replaced it. Historical source branches and the deployment branch remain on the remote for provenance and are not pending integrations.
 
 The branch-by-branch evidence and the two restored data payloads are recorded in [`docs/AGENT_PULL_HARMONIZATION.md`](docs/AGENT_PULL_HARMONIZATION.md).
 
@@ -80,7 +80,7 @@ The branch-by-branch evidence and the two restored data payloads are recorded in
 | Accessibility | Live on `main`: keyboard/touch/gamepad controls, concise/full `window.render_game_to_text()` payloads, debug scenes, QA deep links, and persisted high-contrast/colorblind patterns are integrated. |
 | New Game+ | Live on `main`: first completion unlocks the veteran cosmetic, harder DANN-E tier, second-volume region, and persistent completed-volume count. |
 
-Current integration verification passes 502 Vitest cases and covers the complete desktop and touch-driven route through both Network rooms, the physical Referral Vault, and into Silent Read Tower. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
+Current integration verification passes 517 Vitest cases and covers the complete desktop and touch-driven route through both Network rooms, the physical Referral Vault, the physical Silent Read proofing line, and the Buckram Key exit. The large deploy footprint remains static art-pack PNG/audio payload, not JavaScript growth.
 
 ## MVP Features
 
@@ -98,7 +98,7 @@ Current integration verification passes 502 Vitest cases and covers the complete
 - Archive provenance puzzle: carry Source Note 47, trace repository/collection/folder stations, stamp the verified citation, and physically file three expanded-annotation notes.
 - Two-room OpenNet/ClassNet dungeon where the player routes four packets representing seven source items, then physically files three ClassNet dockets representing nine human-review checks at the Human Desk, E.O. Board, and Decision Ledger before claiming the Clearance Token.
 - Two-room Referral Vault dungeon where the player routes three files to distinct agency desks, carries StateChat's draft manifest to a human concurrence desk, files permission/appeal/visible-excision dockets, opens the Concurrence Chamber, and physically collects the Concurrence Slip.
-- Two-room Editor's Labyrinth / Silent Read Tower sequence where the AI annotation review tool checks mechanical/schema issues, the Red Pencil opens the tower, evidence-bound findings route to human workstations, and the player earns the Proof Lens and Buckram Key.
+- Two-room Editor's Labyrinth / Silent Read Tower sequence where StateChat produces a draft plan, a human editor adds the visible bracket, four evidence files route to human workstations, and three publication dockets earn the Red Pencil, Proof Lens, and Buckram Key without a quiz chain.
 - Room-specific pixel dressing: desks, shelves, document stacks, wall maps, cable runs, vault blocks, proofing table, and ruby FRUS volumes.
 - Original large regional main game map with numbered FRUS Quest locations including Navy Hill, NARA I/II, Foggy Bottom, Capitol Hill, the White House, Newington, Little Rock, Springfield, the Potomac, and a locked undisclosed location, shown through fixed 1x viewports instead of being compressed into one tiny panel.
 - One-screen room composition with a minimap/status HUD, 16x16 tile-feeling floors, stone borders, and clear blocked/walkable space.
@@ -161,7 +161,7 @@ Sprites, tiles, enemy art, and UI textures are original repository-local SVG pix
 
 ## Roadmap
 
-1. Convert the remaining Editor's Labyrinth and Silent Read review checks into physical room puzzles with short decision moments.
+1. Turn the Buckram Gate's remaining publication-apparatus checks into a physical binding-room puzzle with a clean full-path ending.
 2. Promote the quarantined tile registry and screen manager in small, fallback-guarded steps.
 3. Replace remaining poster-like room surfaces with validated Phaser tilemap layers and per-tile collision.
 4. Give every main dungeon a compact entrance, key/tool reveal, shortcut, and boss/review payoff.

@@ -52,3 +52,17 @@ systems, or duplicate asset paths were introduced.
   restored scene-catalog keys.
 - Vitest, TypeScript, Vite production build, scene-route smoke tests, and the
   live desktop/touch route remain the final acceptance gates.
+
+## Verification Refresh
+
+The audit was rerun after PR #85 and before the next gameplay branch landed:
+
+- GitHub reported 84 historical pull requests and no open pull requests.
+- All 10 closed integration-component heads (#59-#67 and #72) are exact
+  ancestors of `main` through PR #78.
+- All 112 binary assets touched by the 16 squash-merged art/data pulls
+  (#42-#57) exist on `main` with identical Git blob IDs.
+- None of the 60 surviving source branches has a commit newer than its pull
+  request head. No unreviewed post-merge branch payload is waiting to land.
+- PR #41 remains the only non-ancestor, non-merged source head and remains
+  intentionally superseded by the canonical eight-form DANN-E design.
