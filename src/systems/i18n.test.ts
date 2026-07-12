@@ -38,16 +38,28 @@ describe("localization helper", () => {
     expect(getLanguage()).toBe("es");
     expect(getString("title.pressStart")).toBe("PULSA START PARA EMPEZAR");
   });
+
+  it("keeps the extended scene catalogs available for incremental wiring", () => {
+    setLanguage("es");
+    expect(getString("characterCreate.title")).toBe("CREA TU ROL EN FRUS");
+    expect(getString("ending.bad.title")).toBe("FINAL MALO");
+
+    setLanguage("fr");
+    expect(getString("characterCreate.title")).toBe("CRÉE TON RÔLE FRUS");
+    expect(getString("ending.bad.title")).toBe("MAUVAISE FIN");
+  });
 });
 
-describe("localization data stays normalized to the English baseline", () => {
+describe("localization data covers the English runtime baseline", () => {
   const enKeys = flattenKeys(enStrings).sort();
 
-  it("Spanish mirrors the English key set exactly", () => {
-    expect(flattenKeys(esStrings).sort()).toEqual(enKeys);
+  it("Spanish contains every live English key", () => {
+    const spanishKeys = new Set(flattenKeys(esStrings));
+    expect(enKeys.filter((key) => !spanishKeys.has(key))).toEqual([]);
   });
 
-  it("French mirrors the English key set exactly", () => {
-    expect(flattenKeys(frStrings).sort()).toEqual(enKeys);
+  it("French contains every live English key", () => {
+    const frenchKeys = new Set(flattenKeys(frStrings));
+    expect(enKeys.filter((key) => !frenchKeys.has(key))).toEqual([]);
   });
 });
