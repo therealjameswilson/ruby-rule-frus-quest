@@ -40,7 +40,7 @@ export class HistorianNPC {
     this.label = scene.add
       .text(snapPixel(x), snapPixel(y + (usesArtPackTexture ? 8 : usesSnesTexture ? 18 : 12)), character.displayName.toUpperCase(), {
         fontFamily: "monospace",
-        fontSize: "6px",
+        fontSize: "8px",
         color: PALETTE.creamPaper,
         backgroundColor: PALETTE.black
       })

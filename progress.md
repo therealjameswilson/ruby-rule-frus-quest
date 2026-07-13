@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Final gameplay readability and input repair (2026-07-13):
+  - Rebuilt the live quest HUD as a native 256x24 pixel band with bounded objective/tool/action regions, ten readable reliability hearts, a five-piece volume tracker, and no downscaled decorative chrome or overlapping labels.
+  - Reduced Network N1 to the physical routing lesson: two distinct terminals, compact packet silhouettes, one contextual prompt, perimeter DANN-E pressure, and no embedded map/compass/cable/route-label collage.
+  - Removed the keyboard ambiguity between WASD `A` and the primary action. Desktop now consistently uses `Z`/Space/Enter while touch retains `A`; all start, interaction, ending, map, and localized control copy follows that contract.
+  - Standardized shared NPC, terminal, enemy, wall, prompt, and toast labels at readable 8px scale; moved interaction prompts above the taller 32x48 character art and suppressed redundant DANN-E/NPC nameplates where the sprites already communicate identity.
+  - Quarantined the malformed duplicate `origin/HEAD 2` Git ref so the Codex/Perplexity integration audit can inspect the repository normally; the feature branch's PR record is created during publication.
+  - Verification: 117 Vitest files / 608 tests pass; TypeScript and the production Vite build pass; the required gameplay client confirms Enter reaches OfficeScene and a Network packet can be taken and routed; desktop and 375x667 in-app browser checks show no overflow or console errors.
+
 - Compiler-only character setup pass (2026-07-12):
   - Replaced the five-card role picker with one clear playable identity: the FRUS Compiler.
   - Reduced the screen to the enlarged compiler portrait, optional name field, Archive Sense remit, and one Begin button; removed duplicate role labels, equal-rank copy, five role cards, workflow strip, and role-cycling input.

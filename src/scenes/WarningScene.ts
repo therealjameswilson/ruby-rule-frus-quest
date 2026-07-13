@@ -25,7 +25,7 @@ export class WarningScene extends Phaser.Scene {
       "three recovered FRUS volumes",
       "DANN-E",
       "history.state.gov shoutout",
-      "TAP / PRESS A"
+      "TAP / Z / ENTER"
     ]);
     if (getSkipWarningPreference()) {
       this.scene.start("TitleScene");
@@ -92,7 +92,7 @@ export class WarningScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.creamPaper
     }).setName("warning-history-state-shoutout").setOrigin(0.5, 0).setResolution(2).setDepth(2);
-    const prompt = this.add.text(128, 229, "TAP / PRESS A", {
+    const prompt = this.add.text(128, 229, "TAP / Z / ENTER", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.goldStamp,
@@ -161,7 +161,7 @@ export class WarningScene extends Phaser.Scene {
       fontSize: "4px",
       color: PALETTE.creamPaper
     }).setName("warning-history-state-shoutout").setOrigin(0.5, 0).setResolution(2);
-    this.add.text(128, 172, "TAP / PRESS A TO CONTINUE", {
+    this.add.text(128, 172, "TAP / Z / ENTER", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp

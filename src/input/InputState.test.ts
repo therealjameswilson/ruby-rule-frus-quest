@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   getInput,
-  KEY_A_INTERACT_TAP_MS,
+  getPrimaryActionBadge,
   pressKeyForTests,
   releaseKeyForTests,
   resetInput,
@@ -158,7 +158,7 @@ describe("InputState keyboard edges", () => {
     expect(getInput().dir).toEqual({ x: 1, y: 0 });
   });
 
-  it("treats a quick KeyA tap as one interaction without latching left movement", () => {
+  it("keeps a quick KeyA tap as movement only", () => {
     let now = 1000;
     setNowProviderForTests(() => now);
     pressKeyForTests("KeyA");
@@ -166,27 +166,17 @@ describe("InputState keyboard edges", () => {
     expect(getInput().dir).toEqual({ x: -1, y: 0 });
     expect(getInput().aJustPressed).toBe(false);
 
-    now += KEY_A_INTERACT_TAP_MS - 20;
+    now += TAP_MOVEMENT_HOLD_MS - 20;
     releaseKeyForTests("KeyA");
     tickInput();
-    expect(getInput().dir).toEqual({ x: 0, y: 0 });
-    expect(getInput().aJustPressed).toBe(true);
+    expect(getInput().aJustPressed).toBe(false);
 
     tickInput();
     expect(getInput().aJustPressed).toBe(false);
   });
 
-  it("keeps a held KeyA as movement without firing an interaction", () => {
-    let now = 2000;
-    setNowProviderForTests(() => now);
-    pressKeyForTests("KeyA");
-    tickInput();
-    expect(getInput().dir).toEqual({ x: -1, y: 0 });
-
-    now += KEY_A_INTERACT_TAP_MS + 20;
-    releaseKeyForTests("KeyA");
-    tickInput();
-    expect(getInput().aJustPressed).toBe(false);
+  it("advertises the keyboard action key without overloading WASD", () => {
+    expect(getPrimaryActionBadge()).toBe("Z");
   });
 
   it("keeps just-pressed flags true for exactly one tick while held", () => {

@@ -168,7 +168,7 @@
     "archiveTerminal": "Terminal del archivo",
     "assignmentMemo": "Memorando de asignación",
     "cherryBlossomGarden": "Jardín de los cerezos en flor",
-    "controls": "MOVER · A INTERACTUAR · M MENÚ",
+    "controls": "MOVER · Z/ENTER ACTUAR · M MENÚ",
     "frusCart": "Carrito de FRUS",
     "juniorCompiler": "Compilador Junior",
     "productionBoard": "Tablero de producción de FRUS",
@@ -222,7 +222,7 @@
     }
   },
   "tapToStart": {
-    "confirmHint": "IZQ./DER. SELECCIONAR  A CONFIRMAR",
+    "confirmHint": "IZQ./DER. SELECCIONAR  Z/ENTER",
     "continue": "CONTINUAR",
     "continueQuest": "¿CONTINUAR LA MISIÓN?",
     "newGame": "NUEVA PARTIDA",

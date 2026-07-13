@@ -51,7 +51,7 @@ The target is classic 16-bit action-adventure feel, not a Nintendo clone. All ar
 ## Controls
 
 - Arrow keys or WASD: move
-- Space or Enter: interact / advance dialog / confirm
+- Z, Space, or Enter: interact / advance dialog / confirm
 - Character screen: name the FRUS Compiler, then press Space or Enter to begin
 - E: use your role ability
 - M: manuscript inventory

@@ -154,13 +154,12 @@ const directionTapLatch = new Map<string, number>();
 // Action / confirm / cancel keys suffer the same too-short-tap drop as movement
 // did (live audit, 2026-06-15): a keydown+keyup that both land between two
 // tickInput() samples is never seen as held, so the `justPressed` edge never
-// fires. That silently swallowed the A-button (no interact feedback) and Escape
+// fires. That silently swallowed the primary action (no interact feedback) and Escape
 // (overlays would not close) in the cloud QA browser. Latch each action code's
 // most-recent keydown time and treat it as "down" for a short window so a too
 // short tap still produces a single rising edge. The set is intentionally
 // limited to the discrete action/menu keys — never to held movement.
 export const TAP_ACTION_HOLD_MS = 90;
-export const KEY_A_INTERACT_TAP_MS = 180;
 const ACTION_LATCH_CODES = new Set<string>([
   "Space",
   "Enter",
@@ -173,8 +172,6 @@ const ACTION_LATCH_CODES = new Set<string>([
   "Tab"
 ]);
 const actionTapLatch = new Map<string, number>();
-let keyADownAt: number | null = null;
-let keyAInteractQueued = false;
 let nowProvider: () => number = () =>
   typeof performance !== "undefined" ? performance.now() : Date.now();
 
@@ -429,7 +426,6 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
       lastDirection = directionKeyMap[event.code]!;
       directionTapLatch.set(event.code, nowProvider());
     }
-    if (!event.repeat && event.code === "KeyA") keyADownAt = nowProvider();
     if (!event.repeat && ACTION_LATCH_CODES.has(event.code)) {
       actionTapLatch.set(event.code, nowProvider());
     }
@@ -442,14 +438,6 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   window.addEventListener("keyup", (event) => {
     preventGameKeyDefault(event);
     keyboardDown.delete(event.code);
-    if (event.code === "KeyA") {
-      const releasedAt = nowProvider();
-      if (keyADownAt !== null && releasedAt - keyADownAt <= KEY_A_INTERACT_TAP_MS) {
-        keyAInteractQueued = true;
-        directionTapLatch.delete("KeyA");
-      }
-      keyADownAt = null;
-    }
     if (event.code === "Escape") suppressEscEdgesUntilRelease = false;
   });
 
@@ -520,6 +508,10 @@ export function isTouchInputCapable() {
   return typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 }
 
+export function getPrimaryActionBadge() {
+  return isTouchInputCapable() ? "A" : "Z";
+}
+
 export function tickInput() {
   previousState = cloneState(currentState);
   if (swallowNextFrame) {
@@ -558,9 +550,9 @@ export function tickInput() {
   // KeyZ / KeyX are the classic SNES A / B faces most browser-emulator users
   // reach for first. The live audit (2026-06-15) found a tester pressing
   // Z/X/A/S at the title and getting no response, so accept Z (and Enter/Space)
-  // as the A button and X as the B button. A held KeyA remains WASD-left, while
-  // a quick press-and-release queues one interaction edge so the on-screen
-  // "A TALK" badge is truthful for keyboard players too.
+  // as the primary action and X as the secondary action. KeyA remains
+  // exclusively WASD-left; desktop prompts use Z so the control copy is
+  // unambiguous.
   const a = isActionActive("Space", "Enter", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
   const b = isActionActive("ShiftLeft", "ShiftRight", "KeyX", "KeyB") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
   const confirm = isActionActive("Enter", "Space", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
@@ -608,7 +600,7 @@ export function tickInput() {
     confirmJustPressed: justPressed(confirm, previousConfirmDown),
     cancelJustPressed: suppressEscEdgesUntilRelease && escDown ? false : justPressed(cancel, previousCancelDown),
     a,
-    aJustPressed: justPressed(a, previousState.a) || keyAInteractQueued,
+    aJustPressed: justPressed(a, previousState.a),
     aJustReleased: justReleased(a, previousState.a),
     b,
     bJustPressed: justPressed(b, previousState.b),
@@ -648,7 +640,6 @@ export function tickInput() {
   previousNavDownDown = navDown;
   previousConfirmDown = confirm;
   previousCancelDown = cancel;
-  keyAInteractQueued = false;
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
 }
@@ -734,8 +725,6 @@ export function resetInput() {
   touchTapLatch.clear();
   directionTapLatch.clear();
   actionTapLatch.clear();
-  keyADownAt = null;
-  keyAInteractQueued = false;
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
   activePointerIds.clear();
@@ -763,23 +752,13 @@ export function setKeyboardDownForTests(codes: readonly string[]) {
 }
 
 export function pressKeyForTests(code: string) {
-  const alreadyDown = keyboardDown.has(code);
   keyboardDown.add(code);
   if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
   if (ACTION_LATCH_CODES.has(code)) actionTapLatch.set(code, nowProvider());
-  if (code === "KeyA" && !alreadyDown) keyADownAt = nowProvider();
 }
 
 export function releaseKeyForTests(code: string) {
   keyboardDown.delete(code);
-  if (code === "KeyA") {
-    const releasedAt = nowProvider();
-    if (keyADownAt !== null && releasedAt - keyADownAt <= KEY_A_INTERACT_TAP_MS) {
-      keyAInteractQueued = true;
-      directionTapLatch.delete("KeyA");
-    }
-    keyADownAt = null;
-  }
   if (code === "Escape") suppressEscEdgesUntilRelease = false;
 }
 

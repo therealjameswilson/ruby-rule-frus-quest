@@ -105,7 +105,7 @@ export class CharacterCreateScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.goldStamp
     }).setName("character-create-begin-summary").setOrigin(0.5, 0);
-    this.add.text(128, 207, "TAP / PRESS A", {
+    this.add.text(128, 207, "TAP / Z / ENTER", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper

@@ -29,7 +29,6 @@ export class BureaucraticWall {
   private readonly eyeGlowLeft: Phaser.GameObjects.Rectangle;
   private readonly eyeGlowRight: Phaser.GameObjects.Rectangle;
   private readonly pressureArrow: Phaser.GameObjects.Triangle;
-  private readonly behaviorCodeText: Phaser.GameObjects.Text;
   private cleared = false;
   private wobbleOffset: number;
   private currentX: number;
@@ -61,12 +60,11 @@ export class BureaucraticWall {
     this.stone = scene.add.image(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : "bureaucratic-wall")
       .setName("bureaucratic-wall-stone-sprite");
     const labelText = scene.add
-      .text(0, 1, label.toUpperCase(), {
+      .text(0, 1, behaviorCode(label, this.behavior), {
         fontFamily: "monospace",
-        fontSize: "5px",
+        fontSize: "8px",
         color: PALETTE.creamPaper,
-        align: "center",
-        wordWrap: { width: 31, useAdvancedWrap: true }
+        align: "center"
       })
       .setName("bureaucratic-wall-label")
       .setOrigin(0.5);
@@ -74,17 +72,6 @@ export class BureaucraticWall {
       .setName("bureaucratic-wall-crack")
       .setAngle(18)
       .setVisible(false);
-    const behaviorPip = scene.add.rectangle(-12, -14, 6, 4, color(this.accent))
-      .setName("bureaucratic-wall-behavior-pip")
-      .setStrokeStyle(1, color(PALETTE.black));
-    const behaviorPlate = scene.add.rectangle(9, -16, 22, 7, color(PALETTE.black), 0.84)
-      .setName("bureaucratic-wall-behavior-plate")
-      .setStrokeStyle(1, color(this.accent), 0.72);
-    this.behaviorCodeText = scene.add.text(9, -20, behaviorCode(label, this.behavior), {
-      fontFamily: "monospace",
-      fontSize: "4px",
-      color: this.accent
-    }).setName("bureaucratic-wall-behavior-code").setOrigin(0.5, 0);
     this.eyeGlowLeft = scene.add.rectangle(-6, -6, 3, 2, color(this.accent), 0)
       .setName("bureaucratic-wall-eye-glow");
     this.eyeGlowRight = scene.add.rectangle(5, -6, 3, 2, color(this.accent), 0)
@@ -99,9 +86,6 @@ export class BureaucraticWall {
       this.eyeGlowLeft,
       this.eyeGlowRight,
       labelText,
-      behaviorPip,
-      behaviorPlate,
-      this.behaviorCodeText,
       this.pressureArrow,
       this.crack
     ]).setName("bureaucratic-wall").setDepth(y);
@@ -289,8 +273,6 @@ export class BureaucraticWall {
     this.threatHalo.setStrokeStyle(1, color(this.accent), active ? 0.86 : 0.32);
     this.eyeGlowLeft.setAlpha(active ? 0.88 : 0);
     this.eyeGlowRight.setAlpha(active ? 0.88 : 0);
-    this.behaviorCodeText.setAlpha(active ? 1 : 0.72);
-
     const directional = active && Number.isFinite(distanceToTarget) && distanceToTarget > 1;
     this.pressureArrow.setVisible(directional);
     this.pressureArrow.setAlpha(directional ? 0.78 : 0);

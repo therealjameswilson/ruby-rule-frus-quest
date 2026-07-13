@@ -628,4 +628,4 @@ export const SCENE_ORDER = [
   "SpriteGallery"
 ] as const;
 
-export const CONTROLS_TEXT = "ARROWS/WASD MOVE   SPACE/ENTER ACT   E ABILITY\nM INV   R REL   N SOUND   ESC CLOSE";
+export const CONTROLS_TEXT = "ARROWS/WASD MOVE   Z/SPACE/ENTER ACT   E ABILITY\nM INV   R REL   N SOUND   ESC CLOSE";

@@ -27,7 +27,7 @@ type ToastTone = "warn" | "info";
 // A short, high-contrast 16-bit message panel that floats above the player and
 // holds long enough to read. Used for transient feedback the bottom HUD hint
 // swallowed before, most importantly the "nothing to interact with" cue when the
-// player presses A away from any target (live audit, 2026-06-15).
+// player presses the primary action away from any target (live audit, 2026-06-15).
 export class FeedbackToast {
   private readonly container: Phaser.GameObjects.Container;
   private readonly panel: Phaser.GameObjects.Rectangle;
@@ -42,7 +42,7 @@ export class FeedbackToast {
     this.text = scene.add
       .text(0, 0, "", {
         fontFamily: "monospace",
-        fontSize: "7px",
+        fontSize: "8px",
         color: PALETTE.creamPaper,
         align: "center"
       })

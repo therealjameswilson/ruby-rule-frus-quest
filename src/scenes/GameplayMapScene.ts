@@ -79,7 +79,7 @@ import {
 } from "../game/state";
 import type { Interactable } from "../game/types";
 import type { Position } from "../game/types";
-import { getInput, tickInput } from "../input/InputState";
+import { getInput, getPrimaryActionBadge, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import {
@@ -437,18 +437,19 @@ export class GameplayMapScene extends Phaser.Scene {
       top: TOP_SAFE_BAND + 14,
       bottom: this.mapKey === "frus_floor" ? this.frusFloorRailY() - 34 : undefined
     }, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
+    const actionBadge = getPrimaryActionBadge();
     this.hintText.setText(nearest
-      ? `A ${promptVerbForKind(nearest.kind)} ${nearest.label.toUpperCase()}`
+      ? `${actionBadge} ${promptVerbForKind(nearest.kind)} ${nearest.label.toUpperCase()}`
       : hintTarget
         ? `STEP CLOSER: ${hintTarget.label.toUpperCase()}`
         : combatCue
           ? `${combatCue.actionHint}  M TOOLS`
-          : "A INTERACT  ESC WORLD MAP");
+          : `${actionBadge} INTERACT  ESC WORLD MAP`);
     const feedback = decideInteractionFeedback(nearest, hintTarget);
     const showedStepCloserFeedback = input.aJustPressed && feedback.kind === "step-closer";
     if (showedStepCloserFeedback) {
       setLatestMessage(`Step closer to ${feedback.target.label}.`);
-      setObjective(`Move closer to ${feedback.target.label}, then press A.`);
+      setObjective(`Move closer to ${feedback.target.label}, then press ${actionBadge}.`);
       this.objectiveOverrideMsRemaining = 850;
       retroAudio.blip();
     }
@@ -933,7 +934,7 @@ export class GameplayMapScene extends Phaser.Scene {
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - BOTTOM_SAFE_BAND / 2, GAME_WIDTH, BOTTOM_SAFE_BAND, color(PALETTE.black), 0.96).setDepth(900);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - BOTTOM_SAFE_BAND, GAME_WIDTH, 2, color(PALETTE.goldStamp)).setDepth(901);
-    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 29, "A INTERACT  ESC WORLD MAP", {
+    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 29, `${getPrimaryActionBadge()} INTERACT  ESC WORLD MAP`, {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.goldStamp,
@@ -3892,7 +3893,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.dialogIndex = 0;
     this.dialogSpeakerText.setText("");
     this.dialogBodyText.setText("");
-    this.hintText.setText("A INTERACT  ESC WORLD MAP");
+    this.hintText.setText(`${getPrimaryActionBadge()} INTERACT  ESC WORLD MAP`);
     clearDialogState();
   }
 

@@ -168,7 +168,7 @@
     "archiveTerminal": "Terminal des archives",
     "assignmentMemo": "Note d'affectation",
     "cherryBlossomGarden": "Jardin des cerisiers en fleurs",
-    "controls": "DÉPLACER · A INTERAGIR · M MENU",
+    "controls": "DÉPLACER · Z/ENTRÉE AGIR · M MENU",
     "frusCart": "Chariot FRUS",
     "juniorCompiler": "Compilateur Junior",
     "productionBoard": "Tableau de production FRUS",
@@ -222,7 +222,7 @@
     }
   },
   "tapToStart": {
-    "confirmHint": "GAUCHE/DROITE SÉLECTIONNER  A CONFIRMER",
+    "confirmHint": "GAUCHE/DROITE SÉLECTIONNER  Z/ENTRÉE",
     "continue": "CONTINUER",
     "continueQuest": "CONTINUER LA QUÊTE ?",
     "newGame": "NOUVELLE PARTIE",

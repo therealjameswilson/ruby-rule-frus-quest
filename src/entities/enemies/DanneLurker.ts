@@ -76,7 +76,7 @@ export class DanneLurker extends Enemy {
       spriteKey: DANNE_BOSS_SPRITE_ASSET.key,
       fallbackTextureKey: "snes-wall-danne-queue",
       waypoints: options.waypoints,
-      tag: { text: "DANN-E", y: 17, color: PALETTE.goldStamp, backgroundColor: PALETTE.black },
+      tag: { text: "DANN-E", y: 17, color: PALETTE.goldStamp, backgroundColor: PALETTE.black, visible: false },
       cue: { text: "30YR", y: -24, color: PALETTE.classNetRed, backgroundColor: PALETTE.black },
       shadow: { y: 13, width: 21, height: 6 },
       speed: 16 * difficulty.speedMultiplier,
@@ -88,7 +88,7 @@ export class DanneLurker extends Enemy {
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.boastText = scene.add.text(0, -32, "", {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "8px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black,
       align: "center",

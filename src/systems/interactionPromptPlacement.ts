@@ -2,7 +2,7 @@ import { GAME_WIDTH } from "../game/constants";
 import type { Interactable } from "../game/types";
 
 // Short verb shown on the prompt per interactable kind. Keeps the floating cue
-// readable at 8-bit scale and tells the player what the A button will do.
+// readable at 8-bit scale and tells the player what the primary action will do.
 const KIND_VERB: Record<Interactable["kind"], string> = {
   npc: "TALK",
   terminal: "USE",
@@ -60,7 +60,9 @@ export function computePromptPlacement(
     return { visible: false, label: "", verb: "", x: 0, y: 0, ringX: 0, ringY: 0 };
   }
   const verb = promptVerbForKind(nearest.kind);
-  const desiredY = nearest.y - 22;
+  // Character art is 32x48, so leave enough clearance for the player's head
+  // when they stand immediately below an object or workstation.
+  const desiredY = nearest.y - 40;
   const bottom = bounds.bottom ?? Number.POSITIVE_INFINITY;
   return {
     visible: true,

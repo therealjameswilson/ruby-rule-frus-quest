@@ -37,9 +37,9 @@ import { applyDanneLurkerDamage } from "../systems/dannePressure";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
-import { addNetworkCables, addTinySparkle } from "../systems/roomDressing";
+import { addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesGate, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal, addSnesWorldMap } from "../systems/snesPixelArt";
+import { addSnesGate, addSnesRewardBurst, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
 import { SNES_NETWORK_TILE_ASSET } from "../game/snesAtlas";
 import {
   getNetworkRoutePacket,
@@ -147,8 +147,6 @@ export class NetworkScene extends Phaser.Scene {
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
   private roomCleanups: Array<() => void> = [];
   private roomSolids: Phaser.Geom.Rectangle[] = [];
-  private mapCells = new Map<NetworkRoomId, Phaser.GameObjects.Rectangle>();
-  private mapLabels = new Map<NetworkRoomId, Phaser.GameObjects.Text>();
   private roomTitleText!: Phaser.GameObjects.Text;
   private roomTransitionLocked = false;
   private exitCooldownUntil = 0;
@@ -168,17 +166,16 @@ export class NetworkScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawTiledFloor(this, "network-tiles");
     drawRoomFrame(this, "TWO NETWORKS", PALETTE.goldStamp, { showLegacyHud: false });
-    this.drawNetworkMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "8px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.routeText = this.add.text(196, 45, "", {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "8px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black,
       align: "center",
@@ -195,11 +192,10 @@ export class NetworkScene extends Phaser.Scene {
     this.toast = new FeedbackToast(this);
     this.danneLurker = new DanneLurker(this, 46, 66, {
       waypoints: [
-        { x: 46, y: 66 },
-        { x: 204, y: 66 },
-        { x: 214, y: 184 },
-        { x: 128, y: 206 },
-        { x: 48, y: 178 }
+        { x: 38, y: 82 },
+        { x: 218, y: 82 },
+        { x: 218, y: 202 },
+        { x: 38, y: 202 }
       ]
     });
     this.restoreNetworkProgress();
@@ -313,7 +309,6 @@ export class NetworkScene extends Phaser.Scene {
       this.renderCurrentRoom();
       this.player.setPosition(spawn.x, spawn.y);
       this.syncRoomTraversalState();
-      this.updateNetworkMinimap();
       this.exitCooldownUntil = this.time.now + 280;
     };
 
@@ -378,20 +373,7 @@ export class NetworkScene extends Phaser.Scene {
       this.drawNetworkTileField(room.id);
     }
     this.drawRoomDoors();
-    if (!packedTilemapRendered) {
-      addSnesRoomCompass(this, {
-        x: 216,
-        y: 62,
-        roomId: room.id,
-        roomTitle: room.title,
-        exits: room.exits,
-        lockedExits: this.compassLockedExits(room),
-        requiredItems: room.requiredItems,
-        track: (object) => this.track(object),
-        depth: 143
-      });
-    }
-    if (room.id === "N1") this.renderNetworkSplit(packedTilemapRendered);
+    if (room.id === "N1") this.renderNetworkSplit();
     else this.renderClassNetVault(packedTilemapRendered);
     this.syncRoomTraversalState();
     this.syncThreatState();
@@ -669,45 +651,15 @@ export class NetworkScene extends Phaser.Scene {
     }
   }
 
-  private compassLockedExits(room: NetworkRoom) {
-    const locked: Partial<Record<Direction, string>> = {};
-    if (room.id === "N1" && room.exits.east && !this.routingComplete) {
-      locked.east = room.lockedExits?.east ?? "ROUT";
-    }
-    if (room.id === "N2" && room.exits.east && !this.clearanceTokenCollected) {
-      locked.east = room.lockedExits?.east ?? room.requiredItems?.east ?? "TOKN";
-    }
-    return locked;
-  }
-
-  private renderNetworkSplit(packedTilemapRendered = false) {
+  private renderNetworkSplit() {
     this.syncNetworkSplitEntities();
-    if (!packedTilemapRendered) {
-      addNetworkCables(this, (object) => this.track(object));
-      addSnesWorldMap(this, 128, 66, "NET MAP", "two-networks-map", (object) => this.track(object));
-    }
     this.track(addTinySparkle(this, 60, 108, PALETTE.openNetGreen));
     this.track(addTinySparkle(this, 196, 108, PALETTE.classNetRed));
-    const marcus = new HistorianNPC(this, "marcus", 128, 54);
+    const marcus = new HistorianNPC(this, "marcus", 128, 76);
+    marcus.label.setVisible(false);
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 60, 124, "OpenNet").container);
     this.track(new Terminal(this, 196, 124, "ClassNet").container);
-    if (!packedTilemapRendered) {
-      this.track(this.add.rectangle(60, 178, 42, 12, color(PALETTE.black), 0.92).setStrokeStyle(1, color(PALETTE.openNetGreen)).setDepth(166));
-      this.track(this.add.text(60, 174, "OPENNET", {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.openNetGreen,
-        align: "center"
-      }).setOrigin(0.5).setDepth(167));
-      this.track(this.add.rectangle(196, 178, 42, 12, color(PALETTE.black), 0.92).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(166));
-      this.track(this.add.text(196, 174, "CLASSNET", {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.classNetRed,
-        align: "center"
-      }).setOrigin(0.5).setDepth(167));
-    }
     this.drawRoutingSorter();
     if (!this.routingComplete) {
       this.bureaucraticWalls = [
@@ -716,7 +668,7 @@ export class NetworkScene extends Phaser.Scene {
       ];
       this.updateRoutingRouteText();
     } else {
-      this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
+      this.routeText.setVisible(false);
       setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
     }
   }
@@ -741,9 +693,9 @@ export class NetworkScene extends Phaser.Scene {
       .setStrokeStyle(2, color(this.routingComplete ? PALETTE.openNetGreen : PALETTE.goldStamp)));
     sorter.add(this.add.text(0, 6, this.routingComplete ? "ROUTED" : "SORTER", {
       fontFamily: "monospace",
-      fontSize: "4px",
+      fontSize: "8px",
       color: this.routingComplete ? PALETTE.openNetGreen : PALETTE.goldStamp
-    }).setOrigin(0.5, 0));
+    }).setOrigin(0.5, 0).setPosition(0, 2));
     for (let index = 0; index < NETWORK_ROUTE_PACKETS.length; index += 1) {
       const filed = index < this.currentRoute || this.routingComplete;
       const slot = this.add.rectangle(-15 + index * 10, 9, 7, 4, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
@@ -803,28 +755,13 @@ export class NetworkScene extends Phaser.Scene {
     const accent = packet.network === "OpenNet" ? PALETTE.openNetGreen : PALETTE.classNetRed;
     const width = compact ? 21 : 30;
     const height = compact ? 13 : 19;
-    const classification = packet.classification === "unclassified"
-      ? "U"
-      : packet.classification === "sbu"
-        ? "SBU"
-        : "C";
     return this.add.container(x, y, [
       this.add.ellipse(1, Math.round(height / 2), width + 4, 7, color(PALETTE.black), 0.4),
       this.add.rectangle(0, 0, width, height, color(PALETTE.creamPaper))
         .setStrokeStyle(1, color(accent)),
       this.add.rectangle(-Math.round(width / 2) + 3, 0, 3, height - 3, color(accent)),
-      this.add.rectangle(-4, -Math.round(height / 2), compact ? 8 : 11, 4, color(PALETTE.archiveAmber))
-        .setStrokeStyle(1, color(PALETTE.sepiaInk)),
-      this.add.text(compact ? 3 : 4, compact ? -5 : -7, classification, {
-        fontFamily: "monospace",
-        fontSize: compact ? "4px" : "5px",
-        color: PALETTE.black
-      }).setOrigin(0.5, 0),
-      this.add.text(0, compact ? 2 : 3, packet.shortLabel.slice(0, compact ? 4 : 6), {
-        fontFamily: "monospace",
-        fontSize: "3px",
-        color: PALETTE.sepiaInk
-      }).setOrigin(0.5, 0)
+      this.add.rectangle(0, -Math.round(height / 2) + 3, compact ? 9 : 13, 4, color(PALETTE.archiveAmber))
+        .setStrokeStyle(1, color(PALETTE.sepiaInk))
     ]);
   }
 
@@ -892,7 +829,7 @@ export class NetworkScene extends Phaser.Scene {
     this.interactionPrompt.update(delta, strictTarget, undefined, strictTarget ? {
       badge: "A",
       text: carried
-        ? `SEND ${target?.id === "network-opennet" ? "OPENNET" : "CLASSNET"}`
+        ? `SEND ${target?.id === "network-opennet" ? "OPEN" : "CLASS"}`
         : `TAKE ${packet?.shortLabel ?? "PACKET"}`
     } : undefined);
     setNearestInteractable(strictTarget?.label ?? null);
@@ -949,7 +886,7 @@ export class NetworkScene extends Phaser.Scene {
     if (!result.ok) {
       adjustReliability(-2, `${result.packet.label} caught at the wrong-network firewall before transmission`);
       retroAudio.warning();
-      this.routeText.setText(result.leakRisk ? "FIREWALL STOP\nCLOSED PACKET" : "FIREWALL STOP\nWRONG NETWORK").setVisible(true);
+      this.routeText.setVisible(false);
       this.toast.show("WRONG NETWORK", this.player.position, "warn");
       setLatestMessage(result.message);
       setObjective(`RETRY ${packet.order}/4: collect ${packet.label} from the sorter.`);
@@ -983,10 +920,6 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private updateRoutingRouteText() {
-    if (this.routingComplete) {
-      this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
-      return;
-    }
     this.routeText.setVisible(false);
   }
 
@@ -1006,12 +939,11 @@ export class NetworkScene extends Phaser.Scene {
       this.clearRoutingRouteCue();
       return;
     }
-    const label = carried ? packet.network.toUpperCase() : "GET PACKET";
     const cueKey = `N1:${packet.id}:${carried ? "carried" : "sorter"}:${start.x},${start.y}->${end.x},${end.y}`;
     if (cueKey === this.routingRouteCueKey) return;
     this.clearRoutingRouteCue();
     this.routingRouteCueKey = cueKey;
-    this.drawRoutingRouteCue(start, end, label, carried ? packet.network : null);
+    this.drawRoutingRouteCue(start, end, carried ? packet.network : null);
   }
 
   private clearRoutingRouteCue() {
@@ -1030,7 +962,6 @@ export class NetworkScene extends Phaser.Scene {
   private drawRoutingRouteCue(
     start: { x: number; y: number },
     end: { x: number; y: number },
-    label: string,
     network: RoutingNetwork | null
   ) {
     const accent = network === "OpenNet"
@@ -1038,33 +969,23 @@ export class NetworkScene extends Phaser.Scene {
       : network === "ClassNet"
         ? PALETTE.classNetRed
         : PALETTE.goldStamp;
-    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y, network ? 46 : 52, network ? 34 : 30, color(PALETTE.black), 0)
+    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y, network ? 38 : 42, network ? 28 : 24, color(PALETTE.black), 0)
       .setStrokeStyle(2, color(accent), 0.96)
       .setName("network-routing-target")
       .setDepth(236));
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
-    const steps = Math.max(1, Math.min(7, Math.floor(distance / 14)));
+    const steps = Math.max(1, Math.min(4, Math.floor(distance / 22)));
     for (let index = 1; index <= steps; index += 1) {
       const t = index / (steps + 1);
       this.trackRoutingRouteCue(this.add.rectangle(
         Math.round(Phaser.Math.Linear(start.x, end.x, t)),
         Math.round(Phaser.Math.Linear(start.y, end.y, t)),
-        4,
-        4,
+        3,
+        3,
         color(index % 2 === 0 ? PALETTE.creamPaper : accent),
         0.9
       ).setAngle(45).setName("network-routing-dot").setDepth(237));
     }
-    const width = Math.max(52, label.length * 4 + 10);
-    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y + (network ? 27 : 24), width, 10, color(PALETTE.black), 0.94)
-      .setStrokeStyle(1, color(accent))
-      .setName("network-routing-label-frame")
-      .setDepth(238));
-    this.trackRoutingRouteCue(this.add.text(end.x, end.y + (network ? 24 : 21), label, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: accent
-    }).setOrigin(0.5, 0).setName("network-routing-label").setDepth(239));
   }
 
   private renderClassNetVault(packedTilemapRendered = false) {
@@ -1132,7 +1053,7 @@ export class NetworkScene extends Phaser.Scene {
       container.add(frame);
       container.add(this.add.text(0, -9, this.classNetStationShortLabel(docket.station), {
         fontFamily: "monospace",
-        fontSize: "5px",
+        fontSize: "8px",
         color: accent,
         align: "center"
       }).setOrigin(0.5, 0));
@@ -1173,29 +1094,6 @@ export class NetworkScene extends Phaser.Scene {
         `ClassNet docket ${docket.order}/3: ${docket.label} (${carried ? "carried" : "at pedestal"}; ${docket.checkIds.length} checks)`
       ] : [])
     ]);
-  }
-
-  private drawNetworkMinimap() {
-    (["N1", "N2"] as NetworkRoomId[]).forEach((roomId, index) => {
-      const x = 16 + index * 11;
-      const cell = this.add.rectangle(x, 16, 8, 7, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(805);
-      const label = this.add.text(x, 12, roomId, {
-        fontFamily: "monospace",
-        fontSize: "4px",
-        color: PALETTE.creamPaper
-      }).setOrigin(0.5, 0).setDepth(806);
-      this.mapCells.set(roomId, cell);
-      this.mapLabels.set(roomId, label);
-    });
-  }
-
-  private updateNetworkMinimap() {
-    for (const [roomId, cell] of this.mapCells) {
-      const active = roomId === this.currentRoomId;
-      const visited = this.visitedRoomIds.has(roomId);
-      cell.setFillStyle(color(active ? PALETTE.goldStamp : visited ? PALETTE.terminalCyan : PALETTE.stoneDark));
-      this.mapLabels.get(roomId)?.setColor(active ? PALETTE.black : PALETTE.creamPaper);
-    }
   }
 
   private syncRoomTraversalState() {
@@ -1480,11 +1378,6 @@ export class NetworkScene extends Phaser.Scene {
       this.add.rectangle(-Math.round(width / 2) + 4, 0, 4, height - 3, color(PALETTE.deepRuby)),
       this.add.rectangle(-5, -Math.round(height / 2), compact ? 9 : 13, 4, color(accent))
         .setStrokeStyle(1, color(PALETTE.black)),
-      this.add.text(3, compact ? -5 : -7, docket.shortLabel.slice(0, compact ? 4 : 6), {
-        fontFamily: "monospace",
-        fontSize: compact ? "4px" : "5px",
-        color: PALETTE.black
-      }).setOrigin(0.5, 0),
       ...docket.checkIds.map((_, index) => this.add.rectangle(-7 + index * 7, compact ? 3 : 4, 4, 2, color(accent)))
     ]);
   }
@@ -1515,7 +1408,6 @@ export class NetworkScene extends Phaser.Scene {
     retroAudio.stamp();
     this.syncClassNetVaultEntities();
     this.syncRoomTraversalState();
-    this.updateNetworkMinimap();
   }
 
   private refreshClearanceTokenRouteCue() {
@@ -1732,8 +1624,7 @@ export class NetworkScene extends Phaser.Scene {
     this.bureaucraticWalls.forEach((wall) => wall.clear());
     this.syncThreatState();
     this.syncRoomTraversalState();
-    this.updateNetworkMinimap();
-    this.routeText.setText("FIREWALL CLEARED\nEAST DOOR").setVisible(true);
+    this.routeText.setVisible(false);
     this.syncNetworkSplitEntities();
     this.track(addTinySparkle(this, 96, 152, PALETTE.terminalCyan));
     this.track(addTinySparkle(this, 160, 152, PALETTE.openNetGreen));
