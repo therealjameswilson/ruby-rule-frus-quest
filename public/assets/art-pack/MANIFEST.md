@@ -22,6 +22,7 @@ facilities, black redaction bars, brass plaques, manila folders, document boxes.
 | `intro_screen_256x224.png` | 256×224 | — | Exact native-resolution intro screen | No |
 | `intro_screen_hires.png` | 1448×1086 | — | High-res hero/marketing version | No |
 | `title_screen_16bit_sharp_256x240.png` | 256×240 | — | Live 16-bit title background (`TitleScene`, sharp native card) | No |
+| `title_screen_frus_volume_clean_256x240.png` | 256×240 | — | Clean live title background: one ruby FRUS volume, restrained map silhouette, and reserved text bands | No |
 | `title_screen_frus_chest_256x240.png` | 256×240 | — | Refreshed title background (`TitleScene`): ruby buckram FRUS volume opening like a treasure chest, gold light burst, framed gold title plate | No |
 | `ending_binding_ceremony_256x240.png` | 256×240 | — | True ending / binding-ceremony background (`EndingScene`): human publication table, glowing assembled FRUS volume, Office of the Historian staff celebrating | No |
 
@@ -110,6 +111,12 @@ runtime sheets are 128×192 images arranged as a 4×4 grid of 32×48 frames, and
 are the paths used by `src/art/characters.ts` for `this.load.spritesheet(...)`.
 The larger 1024×1536 sheets remain the display/master exports.
 
+`sprites/native/sprite_compiler.png` is the refreshed playable compiler sheet:
+one navy-cardigan compiler with glasses and a single ruby FRUS folder, reduced
+to clear 32×48 silhouettes with no loose-paper clutter. It preserves the exact
+4×4 frame order above, binary transparency, aligned foot points, and hard pixel
+edges.
+
 The illustrated DANN-E master is a 3×4 pose board rather than a packed runtime
 grid. Its gameplay-safe derivative lives at
 `sprites/runtime/sprite_dann_e.png`: 128×192, 4×4 frames at 32×48, binary
@@ -144,6 +151,7 @@ and cutscene reference only.
 | `bg_secure_facility.png` | 1536×1024 | Secure-facility cutscene/menu backdrop | No |
 | `bg_federal_exterior.png` | 1536×1024 | Federal-building exterior establishing backdrop | No |
 | `bg_ruby_buckram_pattern.png` | 1254×1254 | Seamless ruby buckram pattern for menus/cutscenes (tileable) | No |
+| `rooms/office_compiler_room_208x192.png` | 208×192 | Live Office Hub playfield: sparse compiler workstations, FRUS shelves, ruby runner, two side exits, and south archive gate | No |
 
 ## 8. Extras (portraits, items, effects, UI kit)
 
@@ -190,6 +198,18 @@ Slice with `cellW = imageWidth / 8`, `cellH = imageHeight / 3`.
 > All five sheets verified: exact dimensions, on an exact pixel grid, RGBA with
 > alpha 0 background, no anti-aliasing (≤16 distinct colors each, all within the
 > locked palette above), and all 22 frame cells populated.
+
+### 9a. DANN-E variant concept boards (`danne-pack/concepts/`)
+
+Reference-only source art establishing DANN-E as the single master villain and
+all lesser antagonists as his forms, projections, prototypes, corrupted shells,
+or swarm nodes. These large sheets are not runtime textures; crop and pixel-clean
+individual assets before wiring them into scenes.
+
+| Filename | Dimensions | Intended use | Transparency |
+|---|---|---|---|
+| `danne-pack/concepts/22_danne_variant_lineup.png` | 1536×1024 | Eight-form full-body design lineup | No |
+| `danne-pack/concepts/23_danne_variant_portraits.png` | 1717×916 | Eight-expression dialogue/combat portrait board | No |
 
 ## 10. Secrets (hidden reading-room bonus area)
 

@@ -5,7 +5,7 @@
     "confirm": "CONFIRM",
     "controllerConnected": "CONTROLLER CONNECTED",
     "findGlowing": "FIND A GLOWING DESK OR DOOR",
-    "goLeftTalk": "GO LEFT - TALK WHEN CLOSE",
+    "goLeftTalk": "TALK TO JR",
     "interact": "INTERACT: {label}",
     "nextLine": "NEXT LINE",
     "none": "NONE",
@@ -61,6 +61,7 @@
     "sourceTrail": "FRUS SOURCE TRAIL: HISTORY.STATE.GOV",
     "start": "A / ENTER START",
     "subtitle": "THE FRUS QUEST",
-    "title": "RUBY RULE"
+    "title": "RUBY RULE",
+    "warningShort": "WARN {mark}"
   }
 }

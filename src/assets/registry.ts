@@ -59,6 +59,7 @@ export const ALT_ENDING_ASSETS = {
 export const SCREENS = {
   frus_world_map: "art-pack/screens/frus_world_map.jpg",
   intro_screen_256x224: "art-pack/screens/intro_screen_256x224.png",
+  title_screen_frus_volume_clean_256x240: "art-pack/screens/title_screen_frus_volume_clean_256x240.png",
   title_screen_16bit_sharp_256x240: "art-pack/screens/title_screen_16bit_sharp_256x240.png",
   title_screen_256x224: "art-pack/screens/title_screen_256x224.png",
   title_screen_frus_chest_256x240: "art-pack/screens/title_screen_frus_chest_256x240.png",

@@ -1,6 +1,6 @@
 # DANN-E Warning & Expansion Art Pack
 
-Twenty-one new 16-bit SNES-style art assets for **Ruby Rule: The FRUS Quest** — anchored by a DANN-E warning screen shown at game start, plus a wide expansion across maps, NPC portraits, enemy/ally sprite sheets, items, UI, and VFX. All assets match the established painterly-pixel-art aesthetic of the existing `ruby_rule_art_pack` (Zelda: A Link to the Past, parchment border, brass cartouche).
+Twenty-three new 16-bit SNES-style art assets for **Ruby Rule: The FRUS Quest** — anchored by a DANN-E warning screen shown at game start, plus a wide expansion across maps, NPC portraits, enemy/ally sprite sheets, items, UI, VFX, and DANN-E variant concept art. All assets match the established painterly-pixel-art aesthetic of the existing `ruby_rule_art_pack` (top-down 16-bit adventure composition, parchment border, brass cartouche).
 
 ## Pack layout
 
@@ -12,15 +12,17 @@ public/assets/art-pack/danne-pack/
 ├── sprites/   — 4-direction sprite sheets (enemies + allies)
 ├── items/     — Inventory item cards
 ├── ui/        — HUD + window-chrome UI assets
-└── vfx/       — Projectile / effect frame strips
+├── vfx/       — Projectile / effect frame strips
+└── concepts/  — DANN-E form and dialogue-portrait reference sheets
 ```
 
 ## File index
 
-### Screens (1)
+### Screens (2)
 | # | File | Use |
 |---|------|-----|
 | 01 | `screens/01_warning_screen_danne.png` | Game-start warning card. Shows DANN-E with red eye-slit glow and copy: "BEWARE DANN-E / DOCUMENT ANNIHILATING NEURAL NETWORK EXECUTABLE / HE STRIKES WITH EGO BOLTS AND BOASTS WITHOUT END / DESTROY HIM AND SAVE THE RECORD / PRESS A TO BEGIN". Display before the main title screen. |
+| 01A | `screens/01_warning_screen_frus_quest_256x171.png` | Live 256x171 warning tableau authored for the 256x240 canvas. An original archivist raises a ruby FRUS volume while three volume relics face DANN-E in the Black Vault; scene-rendered text occupies the calm top and bottom bands. Original project art, 64-color palette, no external or copyrighted game assets. |
 
 ### Maps (5)
 | # | File | Setting | In-game role |
@@ -68,15 +70,23 @@ Oval-brass-framed NPC portraits sized for dialogue UI. All 1024×1024 (1:1).
 |---|------|--------|
 | 19 | `vfx/19_vfx_ego_bolt_strip.png` | **Ego Bolt projectile frames** — 4-frame animation strip × 2 rotations. Red rubber-stamp-shaped energy projectile (canonical "I" sigil for ego). Spawn → mid-flight → peak → impact (with shredded paper). |
 
+### DANN-E concepts (2, reference only)
+| # | File | Use |
+|---|------|-----|
+| 22 | `concepts/22_danne_variant_lineup.png` | Eight-form DANN-E design board: every lesser antagonist is a projection, prototype, shell, or escalation of the same master villain. Shared identity cues include the high dome silhouette, arched brows, mechanical grin, red eyes/core, steel, ruby, brass, and document motifs. Reference for future runtime sprite authoring; do not load directly in gameplay. |
+| 23 | `concepts/23_danne_variant_portraits.png` | Matching eight-expression dialogue and combat portrait board for boasts, aggro, hit reactions, defeat, and ascendant-phase cutscenes. Reference for future cropped portrait assets; do not load directly in gameplay. |
+
 ## DANN-E lore (canonical)
 - **Acronym:** Document Annihilating Neural Network Executable
 - **Visual:** Steel-armored robotic figure, dome head, glowing red eye-slits, red glowing chest core, chunky armored limbs
 - **Attacks:** Ego bolts (red rubber-stamp shaped energy projectiles)
 - **Behavior:** Boasts endlessly
 - **Role:** Final boss
+- **Variant rule:** Every mini-villain is a DANN-E form, projection, prototype,
+  corrupted shell, or swarm node. They are not separate masterminds.
 
 ## Integration notes
-1. **Warning screen** — Display before the existing title screen with a 3-second hold + "PRESS A TO BEGIN" prompt to skip.
+1. **Warning screen** — The live scene uses the 256x171 FRUS Quest tableau at native size and renders its title, public-record credit, and input prompt separately. The earlier portrait card remains reference art.
 2. **Maps** — Load as backgrounds in their own scenes; route the player via doorways from existing maps.
 3. **Portraits** — Wire into the dialogue system as portrait slots keyed by NPC ID.
 4. **Sprite sheets** — Slice at 4 cols × 4 rows for 4-direction movement (down/up/left + attack-or-idle).

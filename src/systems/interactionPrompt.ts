@@ -7,6 +7,7 @@ import {
   type PromptPlacementBounds
 } from "./interactionPromptPlacement";
 import { snapPixel } from "./pixelPerfect";
+import { getPrimaryActionBadge } from "../input/InputState";
 
 export { computePromptPlacement, promptVerbForKind } from "./interactionPromptPlacement";
 export type { PromptPlacement, PromptPlacementBounds } from "./interactionPromptPlacement";
@@ -15,7 +16,7 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-// SNES-style floating interaction prompt: a small framed "A VERB LABEL" panel
+// SNES-style floating interaction prompt: a small framed action panel
 // that hovers above the nearest interactable plus an animated highlight ring on
 // the target itself. Replaces the bare bottom-of-screen hint text with a cue the
 // player can read in context, without obscuring gameplay.
@@ -61,10 +62,10 @@ export class InteractionPrompt {
       .setOrigin(0.5, 0);
     this.badge = scene.add.rectangle(0, 0, 9, 9, color(PALETTE.goldStamp)).setOrigin(0.5);
     this.badgeText = scene.add
-      .text(0, 0, "A", { fontFamily: "monospace", fontSize: "7px", color: PALETTE.black })
+      .text(0, 0, getPrimaryActionBadge(), { fontFamily: "monospace", fontSize: "8px", color: PALETTE.black })
       .setOrigin(0.5);
     this.labelText = scene.add
-      .text(0, 0, "", { fontFamily: "monospace", fontSize: "6px", color: PALETTE.creamPaper })
+      .text(0, 0, "", { fontFamily: "monospace", fontSize: "8px", color: PALETTE.creamPaper })
       .setOrigin(0, 0.5);
     this.container = scene.add
       .container(0, 0, [this.panel, this.border, this.caret, this.badge, this.badgeText, this.labelText])
@@ -103,7 +104,8 @@ export class InteractionPrompt {
     this.panel.setSize(panelWidth, 13);
     this.border.setSize(panelWidth + 2, 15);
     const left = -panelWidth / 2;
-    this.badgeText.setText(display?.badge ?? "A");
+    const requestedBadge = display?.badge;
+    this.badgeText.setText(!requestedBadge || requestedBadge === "A" ? getPrimaryActionBadge() : requestedBadge);
     this.badge.setPosition(left + 8, 0);
     this.badgeText.setPosition(left + 8, 0);
     this.labelText.setPosition(left + 14, 0);

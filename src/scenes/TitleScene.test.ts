@@ -59,13 +59,13 @@ describe("TitleScene layout", () => {
     expect(TITLE_LAYOUT.artPackStartY).toBeLessThan(TITLE_LAYOUT.controlsY);
   });
 
-  it("uses the sharp native 256x240 art-pack title card for the live title background", () => {
-    const assetPath = `public/${publicAssetPath(SCREENS.title_screen_16bit_sharp_256x240)}`;
+  it("uses the clean native 256x240 FRUS volume art for the live title background", () => {
+    const assetPath = `public/${publicAssetPath(SCREENS.title_screen_frus_volume_clean_256x240)}`;
     const png = readFileSync(assetPath);
     const width = png.readUInt32BE(16);
     const height = png.readUInt32BE(20);
 
-    expect(assetPath).toBe("public/assets/art-pack/screens/title_screen_16bit_sharp_256x240.png");
+    expect(assetPath).toBe("public/assets/art-pack/screens/title_screen_frus_volume_clean_256x240.png");
     expect({ width, height }).toEqual({ width: GAME_WIDTH, height: GAME_HEIGHT });
   });
 

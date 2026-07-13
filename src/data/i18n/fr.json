@@ -97,7 +97,7 @@
     "confirm": "CONFIRMER",
     "controllerConnected": "MANETTE CONNECTÉE",
     "findGlowing": "TROUVE UN BUREAU OU UNE PORTE LUMINEUSE",
-    "goLeftTalk": "VA À GAUCHE - PARLE EN T'APPROCHANT",
+    "goLeftTalk": "PARLE À JR",
     "interact": "INTERAGIR : {label}",
     "nextLine": "LIGNE SUIVANTE",
     "none": "AUCUN",
@@ -168,7 +168,7 @@
     "archiveTerminal": "Terminal des archives",
     "assignmentMemo": "Note d'affectation",
     "cherryBlossomGarden": "Jardin des cerisiers en fleurs",
-    "controls": "DÉPLACER · A INTERAGIR · M MENU",
+    "controls": "DÉPLACER · Z/ENTRÉE AGIR · M MENU",
     "frusCart": "Chariot FRUS",
     "juniorCompiler": "Compilateur Junior",
     "productionBoard": "Tableau de production FRUS",
@@ -222,7 +222,7 @@
     }
   },
   "tapToStart": {
-    "confirmHint": "GAUCHE/DROITE SÉLECTIONNER  A CONFIRMER",
+    "confirmHint": "GAUCHE/DROITE SÉLECTIONNER  Z/ENTRÉE",
     "continue": "CONTINUER",
     "continueQuest": "CONTINUER LA QUÊTE ?",
     "newGame": "NOUVELLE PARTIE",
@@ -248,7 +248,8 @@
     "sourceTrail": "PISTE DES SOURCES FRUS : HISTORY.STATE.GOV",
     "start": "A / ENTRÉE COMMENCER",
     "subtitle": "THE FRUS QUEST",
-    "title": "RUBY RULE"
+    "title": "RUBY RULE",
+    "warningShort": "AVIS {mark}"
   },
   "warning": {
     "continue": "TOUCHE / APPUIE SUR A POUR CONTINUER",

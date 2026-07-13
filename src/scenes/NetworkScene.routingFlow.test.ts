@@ -47,4 +47,18 @@ describe("NetworkScene physical routing flow", () => {
     expect(networkSceneSource).toContain("sceneProgress.classNetVaultReviewComplete");
     expect(vaultReviewSource).toContain("Docket returned to the pedestal");
   });
+
+  it("keeps the routing floor readable instead of layering a poster map over play", () => {
+    expect(networkSceneSource).not.toContain("addSnesWorldMap");
+    expect(networkSceneSource).not.toContain("addNetworkCables");
+    expect(networkSceneSource).not.toContain("addSnesRoomCompass");
+    expect(networkSceneSource).not.toContain("network-routing-label-frame");
+    expect(networkSceneSource).not.toContain('fontSize: "3px"');
+  });
+
+  it("moves a carried packet's interaction target from the sorter to the two terminals", () => {
+    expect(networkSceneSource).toContain("const carried = this.routingCarriedPacket();");
+    expect(networkSceneSource).toContain('[this.routingTerminalTarget("OpenNet"), this.routingTerminalTarget("ClassNet")]');
+    expect(networkSceneSource).toContain("const destination: RoutingNetwork = target.id === \"network-opennet\"");
+  });
 });

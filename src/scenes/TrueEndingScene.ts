@@ -198,7 +198,7 @@ export class TrueEndingScene extends Phaser.Scene {
   }
 
   private drawPrompt() {
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 18, "PRESS A TO RETURN TO TITLE", {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 18, "PRESS Z / ENTER FOR TITLE", {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.terminalCyan

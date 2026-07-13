@@ -37,6 +37,7 @@ describe("FRUS volume texture contract", () => {
   });
 
   it("keeps the lazily loaded screen and overworld keys defined", () => {
+    expect(SCREENS.title_screen_frus_volume_clean_256x240).toBeTruthy();
     expect(SCREENS.title_screen_16bit_sharp_256x240).toBeTruthy();
     expect(OVERWORLD_REGIONS.europe).toBeTruthy();
   });

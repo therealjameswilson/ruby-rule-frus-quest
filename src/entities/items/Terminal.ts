@@ -17,10 +17,11 @@ export class Terminal {
     const texture = label === "OpenNet" ? "opennet-terminal" : label === "ClassNet" ? "classnet-terminal" : "terminal-panel";
     const screen = scene.add.image(0, 0, texture);
     const plate = scene.add.rectangle(0, 17, 34, 8, color(PALETTE.black)).setStrokeStyle(1, color(border));
+    const displayLabel = label === "OpenNet" ? "OPEN" : label === "ClassNet" ? "CLASS" : "CHAT";
     const text = scene.add
-      .text(0, 15, label.toUpperCase(), {
+      .text(0, 15, displayLabel, {
         fontFamily: "monospace",
-        fontSize: "5px",
+        fontSize: "8px",
         color: label === "ClassNet" ? PALETTE.classNetRed : label === "OpenNet" ? PALETTE.openNetGreen : PALETTE.terminalCyan
       })
       .setOrigin(0.5);

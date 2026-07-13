@@ -72,7 +72,11 @@ import {
   SERIES_CONCEPT_PROMPTS
 } from "../game/seriesConcept";
 import { FIRST_HOUR_TRAINING_DRILLS } from "../game/firstHourTraining";
-import { SNES_FIRST_HOUR_TRAINING_RELIC_ASSET, SNES_OFFICE_TILE_ASSET } from "../game/snesAtlas";
+import {
+  SNES_FIRST_HOUR_TRAINING_RELIC_ASSET,
+  SNES_OFFICE_ROOM_BACKGROUND_ASSET,
+  SNES_OFFICE_TILE_ASSET
+} from "../game/snesAtlas";
 import {
   evaluateVolumeConceptAnswer,
   getVolumeConceptPrompt,
@@ -111,6 +115,8 @@ import { ChoicePrompt } from "../systems/verification";
 type OfficeDanneRoute = "CherryBlossomGardenScene" | "SenateHearingChamberScene";
 type OfficeTileFrame = (typeof SNES_OFFICE_TILE_ASSET.frames)[number];
 
+const OFFICE_STARTER_MEMO = { x: 128, y: 138 } as const;
+
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
@@ -125,8 +131,6 @@ export class OfficeScene extends Phaser.Scene {
   private prompt!: InteractionPrompt;
   private toast!: FeedbackToast;
   private firstQuestCue?: Phaser.GameObjects.Container;
-  private firstQuestCueLabel?: Phaser.GameObjects.Text;
-  private firstQuestCuePlate?: Phaser.GameObjects.Rectangle;
   private starterMemoIcon?: Phaser.GameObjects.Container;
   private postIntroLabels: Phaser.GameObjects.GameObject[] = [];
   private firstRoomProgressObjects: Phaser.GameObjects.GameObject[] = [];
@@ -151,7 +155,7 @@ export class OfficeScene extends Phaser.Scene {
     this.drawOfficeInterior();
 
     const returnSpawn = this.consumeOfficeReturnSpawn();
-    this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 184);
+    this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
     this.juniorCompiler = new JuniorCompiler(this, 70, 122);
     this.danneLurker = new DanneLurker(this, 218, 78, {
       waypoints: [
@@ -170,8 +174,10 @@ export class OfficeScene extends Phaser.Scene {
     this.prompt = new InteractionPrompt(this);
     this.toast = new FeedbackToast(this);
     this.solids = [
-      new Phaser.Geom.Rectangle(34, 72, 72, 28),
-      new Phaser.Geom.Rectangle(154, 72, 64, 28)
+      new Phaser.Geom.Rectangle(45, 72, 64, 34),
+      new Phaser.Geom.Rectangle(147, 72, 65, 34),
+      new Phaser.Geom.Rectangle(43, 138, 65, 32),
+      new Phaser.Geom.Rectangle(150, 138, 66, 32)
     ];
     this.interactables = [
       {
@@ -186,8 +192,8 @@ export class OfficeScene extends Phaser.Scene {
       {
         id: "starter-memo",
         label: "Assignment Memo",
-        x: 128,
-        y: 166,
+        x: OFFICE_STARTER_MEMO.x,
+        y: OFFICE_STARTER_MEMO.y,
         radius: 26,
         kind: "document",
         onInteract: () => this.handleStarterMemo()
@@ -204,8 +210,8 @@ export class OfficeScene extends Phaser.Scene {
       {
         id: "scope-charter-desk",
         label: "Scope / Selection Desk",
-        x: 158,
-        y: 116,
+        x: 178,
+        y: 88,
         radius: 34,
         kind: "document",
         onInteract: () => this.showResearchCharterChoice()
@@ -213,8 +219,8 @@ export class OfficeScene extends Phaser.Scene {
       {
         id: "frus-cart",
         label: "FRUS Cart",
-        x: 128,
-        y: 132,
+        x: 177,
+        y: 118,
         radius: 30,
         kind: "document",
         onInteract: () => this.handleJuniorQuestStation("cart")
@@ -222,7 +228,7 @@ export class OfficeScene extends Phaser.Scene {
       {
         id: "Archive Terminal",
         label: "Archive Terminal",
-        x: 195,
+        x: 184,
         y: 154,
         radius: 36,
         kind: "terminal",
@@ -340,9 +346,10 @@ export class OfficeScene extends Phaser.Scene {
     // radius so it is impossible to miss on approach, but only allow acting on a
     // target inside the strict radius.
     const hintTarget = nearestInteractableHint(this.player.position, activeInteractables);
-    const promptTarget = nearest ?? hintTarget;
+    const distantQuestCueVisible = Boolean(this.firstQuestCue?.visible);
+    const promptTarget = nearest ?? (distantQuestCueVisible ? null : hintTarget);
     setNearestInteractable(nearest?.label ?? null);
-    const approachCue = hintTarget ? this.approachCueFor(hintTarget) : null;
+    const approachCue = !distantQuestCueVisible && hintTarget ? this.approachCueFor(hintTarget) : null;
     this.prompt.update(
       delta,
       promptTarget,
@@ -474,34 +481,26 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private approachCueFor(target: Interactable) {
-    if (target.id === "junior-compiler") return "GO TO JR";
-    if (target.id === "starter-memo") return "GO TO MEMO";
-    if (target.id === "production-inbox") return "GO TO INBOX";
-    if (target.id === "frus-cart") return "GO TO CART";
-    if (target.id === "Archive Terminal") return "GO TO TERM";
-    if (target.id === "archive-guide-door") return "GO TO ARCHIVE";
-    return `GO TO ${target.label.toUpperCase().slice(0, 12)}`;
+    if (target.id === "junior-compiler") return "JR";
+    if (target.id === "starter-memo") return "MEMO";
+    if (target.id === "production-inbox") return "INBOX";
+    if (target.id === "frus-cart") return "CART";
+    if (target.id === "Archive Terminal") return "TERM";
+    if (target.id === "archive-guide-door") return "ARCHIVE";
+    return target.label.toUpperCase().slice(0, 12);
   }
 
   private createFirstQuestCue() {
-    const arrow = this.add.triangle(0, -15, 0, 0, 8, 0, 4, 7, color(PALETTE.goldStamp), 0.96)
+    const arrow = this.add.triangle(0, -8, 0, 0, 7, 0, 3.5, 6, color(PALETTE.goldStamp), 0.96)
       .setName("office-first-quest-arrow")
       .setStrokeStyle(1, color(PALETTE.black));
-    this.firstQuestCuePlate = this.add.rectangle(0, -26, 50, 10, color(PALETTE.black), 0.86)
-      .setName("office-first-quest-plate")
-      .setStrokeStyle(1, color(PALETTE.goldStamp));
-    this.firstQuestCueLabel = this.add.text(0, -29, "JR", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp
-    }).setName("office-first-quest-label").setOrigin(0.5, 0);
-    this.firstQuestCue = this.add.container(this.juniorCompiler.x, this.juniorCompiler.y - 16, [arrow, this.firstQuestCuePlate, this.firstQuestCueLabel])
+    this.firstQuestCue = this.add.container(this.juniorCompiler.x, this.juniorCompiler.y - 11, [arrow])
       .setName("office-first-quest-cue")
       .setDepth(850)
       .setVisible(false);
     this.tweens.add({
       targets: this.firstQuestCue,
-      y: this.juniorCompiler.y - 20,
+      y: this.juniorCompiler.y - 14,
       duration: 520,
       yoyo: true,
       repeat: -1,
@@ -523,9 +522,7 @@ export class OfficeScene extends Phaser.Scene {
       && !closeToTarget
     );
     if (this.firstQuestCue && target) {
-      this.firstQuestCue.setPosition(target.x, target.y - 16);
-      this.firstQuestCueLabel?.setText(target.label);
-      this.firstQuestCuePlate?.setDisplaySize(target.label.length >= 6 ? 58 : 50, 10);
+      this.firstQuestCue.setPosition(target.x, target.y - 11);
     }
     this.firstQuestCue?.setVisible(visible);
     this.updateFirstRoomProgressVisibility();
@@ -534,7 +531,7 @@ export class OfficeScene extends Phaser.Scene {
   private currentGuidedTarget() {
     const target = officeStarterTarget(this.officeStarterStage());
     if (target.id === "junior") return { x: this.juniorCompiler.x, y: this.juniorCompiler.y, label: target.label };
-    if (target.id === "memo") return { x: 128, y: 166, label: target.label };
+    if (target.id === "memo") return { x: OFFICE_STARTER_MEMO.x, y: OFFICE_STARTER_MEMO.y, label: target.label };
     if (target.id === "inbox") return { x: 60, y: 154, label: target.label };
     return { x: 128, y: 216, label: target.label };
   }
@@ -1353,6 +1350,14 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private drawOfficeInterior() {
+    if (this.textures.exists(SNES_OFFICE_ROOM_BACKGROUND_ASSET.key)) {
+      this.add.image(128, 132, SNES_OFFICE_ROOM_BACKGROUND_ASSET.key)
+        .setName("office-compiler-room-background")
+        .setDepth(-20);
+      this.drawStarterMemo(OFFICE_STARTER_MEMO.x, OFFICE_STARTER_MEMO.y);
+      return;
+    }
+
     this.add.rectangle(128, 128, 210, 160, color(PALETTE.creamPaper)).setDepth(-20);
     this.drawFloorPattern();
     this.drawSnesOfficeHubDressing();
@@ -1387,7 +1392,7 @@ export class OfficeScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(-3);
     cartLabel.setName("office-post-intro-label-cart");
     this.postIntroLabels.push(cartLabel);
-    this.drawStarterMemo(128, 166);
+    this.drawStarterMemo(OFFICE_STARTER_MEMO.x, OFFICE_STARTER_MEMO.y);
   }
 
   private drawSnesOfficeHubDressing() {

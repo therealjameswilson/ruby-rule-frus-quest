@@ -109,9 +109,9 @@ export class TapToStartScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
-    this.add.text(128, 178, "LEFT/RIGHT SELECT  A CONFIRM", {
+    this.add.text(128, 178, "LEFT/RIGHT SELECT  Z/ENTER", {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "8px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
     this.renderChoice();

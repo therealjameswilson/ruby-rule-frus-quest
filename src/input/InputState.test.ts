@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   getInput,
+  getPrimaryActionBadge,
   pressKeyForTests,
   releaseKeyForTests,
   resetInput,
@@ -155,6 +156,27 @@ describe("InputState keyboard edges", () => {
     tickInput();
     expect(getInput().dir).toEqual(wasdRight);
     expect(getInput().dir).toEqual({ x: 1, y: 0 });
+  });
+
+  it("keeps a quick KeyA tap as movement only", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    pressKeyForTests("KeyA");
+    tickInput();
+    expect(getInput().dir).toEqual({ x: -1, y: 0 });
+    expect(getInput().aJustPressed).toBe(false);
+
+    now += TAP_MOVEMENT_HOLD_MS - 20;
+    releaseKeyForTests("KeyA");
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+  });
+
+  it("advertises the keyboard action key without overloading WASD", () => {
+    expect(getPrimaryActionBadge()).toBe("Z");
   });
 
   it("keeps just-pressed flags true for exactly one tick while held", () => {

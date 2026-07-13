@@ -39,6 +39,7 @@ export class TitleScene extends Phaser.Scene {
   private newGamePlusText?: Phaser.GameObjects.Text;
   private volumesCompletedText?: Phaser.GameObjects.Text;
   private languageKeyHandler?: () => void;
+  private cleanArtTitle = false;
 
   constructor() {
     super("TitleScene");
@@ -55,14 +56,18 @@ export class TitleScene extends Phaser.Scene {
     this.started = false;
     this.skipWarning = getSkipWarningPreference();
     this.ignoreNextPointerStart = false;
+    this.cleanArtTitle = false;
     retroAudio.startMusic("TitleScene");
 
     this.cameras.main.setBackgroundColor(PALETTE.black);
     const usingArtPackTitle = this.drawArtPackTitleScreen();
     if (!usingArtPackTitle) this.drawCleanTitleCard();
-    this.drawStartAffordance(TITLE_LAYOUT.pressStartY);
-    if (!usingArtPackTitle) this.drawMissionPlaque(false);
-    else this.drawHistoryStateSourceTag();
+    if (this.cleanArtTitle) this.drawCleanArtTitleOverlay();
+    else {
+      this.drawStartAffordance(TITLE_LAYOUT.pressStartY);
+      if (!usingArtPackTitle) this.drawMissionPlaque(false);
+      else this.drawHistoryStateSourceTag();
+    }
     this.createNewGamePlusOptions();
     this.createSkipWarningToggle();
     this.createLanguageSelector();
@@ -88,6 +93,16 @@ export class TitleScene extends Phaser.Scene {
    * boot if the art pack is absent.
    */
   private drawArtPackTitleScreen() {
+    const cleanKey = "title_screen_frus_volume_clean_256x240" satisfies keyof typeof SCREENS;
+    if (this.textures.exists(cleanKey)) {
+      const source = this.textures.get(cleanKey).getSourceImage() as { width?: number; height?: number };
+      if (source.width === GAME_WIDTH && source.height === GAME_HEIGHT) {
+        this.add.image(0, 0, cleanKey).setName("title-art-clean-frus-volume").setOrigin(0).setDepth(0);
+        this.cleanArtTitle = true;
+        return true;
+      }
+    }
+
     const sharpKey = "title_screen_16bit_sharp_256x240" satisfies keyof typeof SCREENS;
     if (this.textures.exists(sharpKey)) {
       const source = this.textures.get(sharpKey).getSourceImage() as { width?: number; height?: number };
@@ -111,6 +126,35 @@ export class TitleScene extends Phaser.Scene {
     }).setDepth(40);
     this.drawQuestRouteStrip(128, 211, 41);
     return true;
+  }
+
+  private drawCleanArtTitleOverlay() {
+    this.add.text(128, 7, getString("title.title"), {
+      fontFamily: "monospace",
+      fontSize: "16px",
+      color: PALETTE.goldStamp,
+      fontStyle: "bold"
+    }).setName("title-clean-art-logo").setOrigin(0.5, 0).setDepth(42).setResolution(2);
+    this.add.text(128, 27, getString("title.subtitle"), {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.creamPaper
+    }).setName("title-clean-art-subtitle").setOrigin(0.5, 0).setDepth(42).setResolution(2);
+
+    const readout = getNewGamePlusReadout();
+    if (!readout.unlocked) {
+      this.add.text(128, 201, "PRESS START TO VERIFY", {
+        fontFamily: "monospace",
+        fontSize: "8px",
+        color: PALETTE.terminalCyan
+      }).setName("title-clean-art-start").setOrigin(0.5, 0).setDepth(42).setResolution(2);
+      this.drawStartAffordance(204);
+    }
+    this.add.text(128, 217, "HISTORY.STATE.GOV", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.creamPaper
+    }).setName("title-history-state-artpack-shoutout").setOrigin(0.5, 0).setDepth(42).setResolution(2);
   }
 
   private drawHistoryStateSourceTag() {
@@ -590,36 +634,41 @@ export class TitleScene extends Phaser.Scene {
   private createNewGamePlusOptions() {
     const readout = getNewGamePlusReadout();
     if (!readout.unlocked && readout.volumesCompleted === 0) return;
-    this.volumesCompletedText = this.add.text(128, 136, `VOLUMES COMPLETED ${readout.volumesCompleted}`, {
+    const volumesY = this.cleanArtTitle ? 190 : 136;
+    const panelY = this.cleanArtTitle ? 207 : 153;
+    const optionY = this.cleanArtTitle ? 203 : 146;
+    this.volumesCompletedText = this.add.text(128, volumesY, `VOLUMES COMPLETED ${readout.volumesCompleted}`, {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: this.cleanArtTitle ? "8px" : "5px",
       color: readout.unlocked ? PALETTE.goldStamp : PALETTE.creamPaper
     }).setName("title-volumes-completed").setOrigin(0.5, 0).setDepth(44);
 
     if (!readout.unlocked) return;
 
     this.startMode = "normal";
-    this.add.rectangle(128, 153, 178, 25, color(PALETTE.black), 0.7)
+    this.add.rectangle(128, panelY, 178, this.cleanArtTitle ? 17 : 25, color(PALETTE.black), 0.7)
       .setName("title-ng-plus-option-panel")
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(43);
-    this.newGameText = this.add.text(74, 146, "NEW GAME", {
+    this.newGameText = this.add.text(74, optionY, "NEW GAME", {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: this.cleanArtTitle ? "8px" : "6px",
       color: PALETTE.creamPaper
     }).setName("title-new-game-option").setOrigin(0.5, 0).setDepth(44);
-    this.newGamePlusText = this.add.text(181, 146, "NEW GAME+", {
+    this.newGamePlusText = this.add.text(181, optionY, "NEW GAME+", {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: this.cleanArtTitle ? "8px" : "6px",
       color: PALETTE.creamPaper
     }).setName("title-new-game-plus-option").setOrigin(0.5, 0).setDepth(44);
-    this.add.text(128, 158, "VETERAN SKIN + HARDER DANN-E", {
-      fontFamily: "monospace",
-      fontSize: "4px",
-      color: PALETTE.terminalCyan
-    }).setName("title-new-game-plus-caption").setOrigin(0.5, 0).setDepth(44);
+    if (!this.cleanArtTitle) {
+      this.add.text(128, 158, "VETERAN SKIN + HARDER DANN-E", {
+        fontFamily: "monospace",
+        fontSize: "4px",
+        color: PALETTE.terminalCyan
+      }).setName("title-new-game-plus-caption").setOrigin(0.5, 0).setDepth(44);
+    }
 
-    const normalHit = this.add.zone(74, 153, 88, 20).setName("title-new-game-hit-zone").setDepth(45);
+    const normalHit = this.add.zone(74, panelY, 88, 20).setName("title-new-game-hit-zone").setDepth(45);
     bindPointerPress(normalHit, {
       down: () => {
         this.startMode = "normal";
@@ -627,7 +676,7 @@ export class TitleScene extends Phaser.Scene {
         this.start(false);
       }
     });
-    const ngPlusHit = this.add.zone(181, 153, 96, 20).setName("title-new-game-plus-hit-zone").setDepth(45);
+    const ngPlusHit = this.add.zone(181, panelY, 96, 20).setName("title-new-game-plus-hit-zone").setDepth(45);
     bindPointerPress(ngPlusHit, {
       down: () => {
         this.startMode = "ngplus";
@@ -652,12 +701,14 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private createSkipWarningToggle() {
+    const width = this.cleanArtTitle ? 72 : 82;
+    const y = this.cleanArtTitle ? 234 : 232;
     this.add
-      .rectangle(207, 232, 82, 9, color(PALETTE.black), 0.72)
+      .rectangle(207, y, width, this.cleanArtTitle ? 11 : 9, color(PALETTE.black), 0.72)
       .setName("title-skip-warning-backplate")
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(39);
-    const hit = this.add.rectangle(207, 231, 88, 12, color(PALETTE.black), 0.01).setDepth(40);
+    const hit = this.add.rectangle(207, y, width + 8, 12, color(PALETTE.black), 0.01).setDepth(40);
     bindPointerPress(hit, {
       down: () => {
         this.ignoreNextPointerStart = true;
@@ -665,9 +716,9 @@ export class TitleScene extends Phaser.Scene {
       }
     });
     this.skipWarningText = this.add
-      .text(207, 229, "", {
+      .text(207, this.cleanArtTitle ? 230 : 229, "", {
         fontFamily: "monospace",
-        fontSize: "4px",
+        fontSize: this.cleanArtTitle ? "8px" : "4px",
         color: PALETTE.goldStamp
       })
       .setOrigin(0.5, 0)
@@ -677,12 +728,14 @@ export class TitleScene extends Phaser.Scene {
   }
 
   private createLanguageSelector() {
+    const width = this.cleanArtTitle ? 72 : 82;
+    const y = this.cleanArtTitle ? 234 : 232;
     this.add
-      .rectangle(49, 232, 82, 9, color(PALETTE.black), 0.72)
+      .rectangle(49, y, width, this.cleanArtTitle ? 11 : 9, color(PALETTE.black), 0.72)
       .setName("title-language-backplate")
       .setStrokeStyle(1, color(PALETTE.terminalCyan))
       .setDepth(39);
-    const hit = this.add.rectangle(49, 231, 88, 12, color(PALETTE.black), 0.01).setDepth(40);
+    const hit = this.add.rectangle(49, y, width + 8, 12, color(PALETTE.black), 0.01).setDepth(40);
     bindPointerPress(hit, {
       down: () => {
         this.ignoreNextPointerStart = true;
@@ -690,9 +743,9 @@ export class TitleScene extends Phaser.Scene {
       }
     });
     this.languageText = this.add
-      .text(49, 229, "", {
+      .text(49, this.cleanArtTitle ? 230 : 229, "", {
         fontFamily: "monospace",
-        fontSize: "4px",
+        fontSize: this.cleanArtTitle ? "8px" : "4px",
         color: PALETTE.terminalCyan
       })
       .setOrigin(0.5, 0)
@@ -719,7 +772,8 @@ export class TitleScene extends Phaser.Scene {
 
   private renderSkipWarningToggle() {
     const mark = this.skipWarning ? "X" : " ";
-    this.skipWarningText?.setText(getString("title.skipWarning", { mark }));
+    const key = this.cleanArtTitle ? "title.warningShort" : "title.skipWarning";
+    this.skipWarningText?.setText(getString(key, { mark }));
   }
 
   private changeLanguage() {

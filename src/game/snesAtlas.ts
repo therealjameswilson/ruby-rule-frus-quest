@@ -374,6 +374,15 @@ export const SNES_OFFICE_TILE_ASSET = {
   frames: ["floor_base", "floor_shadow", "floor_scuff", "rug_center", "rug_edge", "wall_top", "wall_bookcase", "desk_top"]
 } as const;
 
+export const SNES_OFFICE_ROOM_BACKGROUND_ASSET = {
+  key: "snes-office-compiler-room",
+  path: "assets/art-pack/rooms/office_compiler_room_208x192.png",
+  kind: "office-room-background",
+  displayName: "FRUS Compiler Office",
+  cue: "single-screen compiler office with clear workstations and an open central route",
+  dimensions: { width: 208, height: 192 }
+} as const;
+
 export const SNES_GUIDE_CAVERN_TILE_ASSET = {
   key: "snes-guide-cavern-tiles",
   path: "assets/sprites/snes-guide-cavern-tiles.svg",
@@ -673,6 +682,7 @@ export const SNES_VISUAL_ASSETS = [
   SNES_ARCHIVE_PROP_ASSET,
   SNES_ARCHIVE_TILE_ASSET,
   SNES_OFFICE_TILE_ASSET,
+  SNES_OFFICE_ROOM_BACKGROUND_ASSET,
   SNES_GUIDE_CAVERN_TILE_ASSET,
   SNES_NETWORK_TILE_ASSET,
   SNES_REFERRAL_VAULT_TILE_ASSET,

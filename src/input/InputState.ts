@@ -154,7 +154,7 @@ const directionTapLatch = new Map<string, number>();
 // Action / confirm / cancel keys suffer the same too-short-tap drop as movement
 // did (live audit, 2026-06-15): a keydown+keyup that both land between two
 // tickInput() samples is never seen as held, so the `justPressed` edge never
-// fires. That silently swallowed the A-button (no interact feedback) and Escape
+// fires. That silently swallowed the primary action (no interact feedback) and Escape
 // (overlays would not close) in the cloud QA browser. Latch each action code's
 // most-recent keydown time and treat it as "down" for a short window so a too
 // short tap still produces a single rising edge. The set is intentionally
@@ -508,6 +508,10 @@ export function isTouchInputCapable() {
   return typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 }
 
+export function getPrimaryActionBadge() {
+  return isTouchInputCapable() ? "A" : "Z";
+}
+
 export function tickInput() {
   previousState = cloneState(currentState);
   if (swallowNextFrame) {
@@ -546,8 +550,9 @@ export function tickInput() {
   // KeyZ / KeyX are the classic SNES A / B faces most browser-emulator users
   // reach for first. The live audit (2026-06-15) found a tester pressing
   // Z/X/A/S at the title and getting no response, so accept Z (and Enter/Space)
-  // as the A button and X as the B button. KeyA/KeyS stay movement-only to avoid
-  // fighting WASD.
+  // as the primary action and X as the secondary action. KeyA remains
+  // exclusively WASD-left; desktop prompts use Z so the control copy is
+  // unambiguous.
   const a = isActionActive("Space", "Enter", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);
   const b = isActionActive("ShiftLeft", "ShiftRight", "KeyX", "KeyB") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
   const confirm = isActionActive("Enter", "Space", "KeyZ") || isTouchDown("space") || isGamepadButtonDown([0], gamepadSnapshot);

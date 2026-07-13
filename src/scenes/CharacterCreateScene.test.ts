@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  CHARACTER_CREATE_RANK_COPY,
-  CHARACTER_CREATE_TITLE
+  CHARACTER_CREATE_TITLE,
+  FRUS_COMPILER_ROLE_ID
 } from "./characterCreateCopy";
 import {
   normalizeCharacterDisplayName,
@@ -15,11 +15,9 @@ const idleInput = {
 };
 
 describe("CharacterCreateScene input helpers", () => {
-  it("frames the first screen as equal-rank FRUS production roles", () => {
-    expect(CHARACTER_CREATE_TITLE).toBe("CREATE YOUR FRUS ROLE");
-    expect(CHARACTER_CREATE_RANK_COPY).toContain("EQUAL RANK");
-    expect(CHARACTER_CREATE_RANK_COPY).toContain("PUBLICATION");
-    expect(CHARACTER_CREATE_TITLE).not.toContain("HISTORIAN");
+  it("presents one clear FRUS Compiler identity", () => {
+    expect(FRUS_COMPILER_ROLE_ID).toBe("compiler");
+    expect(CHARACTER_CREATE_TITLE).toBe("CREATE YOUR FRUS COMPILER");
   });
 
   it("treats an empty name as Sam without storing Sam as typed text", () => {

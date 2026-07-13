@@ -16,6 +16,7 @@ interface EnemyOptions {
     y: number;
     color: string;
     backgroundColor: string;
+    visible?: boolean;
   };
   cue: {
     text: string;
@@ -98,13 +99,13 @@ export abstract class Enemy {
       : undefined;
     const tag = scene.add.text(0, options.tag.y, options.tag.text, {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "8px",
       color: options.tag.color,
       backgroundColor: options.tag.backgroundColor
-    }).setOrigin(0.5);
+    }).setOrigin(0.5).setVisible(options.tag.visible ?? true);
     this.cue = scene.add.text(0, options.cue.y, options.cue.text, {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "8px",
       color: options.cue.color,
       backgroundColor: options.cue.backgroundColor
     }).setOrigin(0.5).setVisible(false);

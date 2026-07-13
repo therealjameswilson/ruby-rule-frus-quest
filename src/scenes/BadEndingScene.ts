@@ -47,7 +47,7 @@ export class BadEndingScene extends Phaser.Scene {
       wordWrap: { width: GAME_WIDTH - 42, useAdvancedWrap: true },
       lineSpacing: 4
     }).setOrigin(0.5, 0);
-    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 34, "PRESS A TO RETURN TO TITLE", {
+    this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 34, "PRESS Z / ENTER FOR TITLE", {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.goldStamp

@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { DANNE_WARNING_SCREEN_ASSET } from "../game/danneAtlas";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { getSkipWarningPreference } from "../game/warningSettings";
 import { getInput, swallowNextInputFrame, tickInput } from "../input/InputState";
@@ -18,8 +19,14 @@ export class WarningScene extends Phaser.Scene {
 
   create() {
     setSceneState("WarningScene", "title", "Fictional DANN-E warning before title.");
-    setLatestMessage("DANN-E is a fictional rogue AI. Tap to continue.");
-    setVisibleEntities(["DANN-E warning", "history.state.gov shoutout", "TAP / PRESS A"]);
+    setLatestMessage("Recover the FRUS volumes. DANN-E is a fictional rogue AI.");
+    setVisibleEntities([
+      DANNE_WARNING_SCREEN_ASSET.key,
+      "three recovered FRUS volumes",
+      "DANN-E",
+      "history.state.gov shoutout",
+      "TAP / Z / ENTER"
+    ]);
     if (getSkipWarningPreference()) {
       this.scene.start("TitleScene");
       return;
@@ -27,7 +34,7 @@ export class WarningScene extends Phaser.Scene {
 
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black));
-    this.drawSimpleWarningCard();
+    this.drawQuestWarning();
     this.cameras.main.fadeIn(600, 0, 0, 0);
     this.time.delayedCall(8000, () => void this.begin(false));
   }
@@ -41,6 +48,81 @@ export class WarningScene extends Phaser.Scene {
     if (heldStart || pressedStart) {
       void this.begin(true);
     }
+  }
+
+  private drawQuestWarning() {
+    if (!this.textures.exists(DANNE_WARNING_SCREEN_ASSET.key)) {
+      this.drawSimpleWarningCard();
+      return;
+    }
+
+    this.add.image(128, 120, DANNE_WARNING_SCREEN_ASSET.key)
+      .setName("warning-frus-quest-art")
+      .setOrigin(0.5)
+      .setDepth(0);
+
+    this.add.rectangle(128, 32, 238, 1, color(PALETTE.goldStamp), 0.92)
+      .setName("warning-quest-title-rule")
+      .setDepth(2);
+    this.add.text(128, 7, "THE RECORD IS UNDER ATTACK", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.goldStamp,
+      fontStyle: "bold"
+    }).setName("warning-quest-title").setOrigin(0.5, 0).setResolution(2).setDepth(2);
+    this.add.text(128, 22, "RECOVER THE FRUS VOLUMES", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.creamPaper
+    }).setName("warning-quest-subtitle").setOrigin(0.5, 0).setResolution(2).setDepth(2);
+
+    this.add.rectangle(128, 223, 256, 34, color(PALETTE.black), 0.9)
+      .setName("warning-quest-prompt-band")
+      .setDepth(1);
+    this.add.rectangle(128, 206, 238, 1, color(PALETTE.goldStamp), 0.92)
+      .setName("warning-quest-prompt-rule")
+      .setDepth(2);
+    this.add.text(128, 210, "DANN-E ERASES THE RECORD.", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.terminalCyan
+    }).setName("warning-quest-stakes").setOrigin(0.5, 0).setResolution(2).setDepth(2);
+    this.add.text(128, 220, "EXPLORE HISTORY.STATE.GOV", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.creamPaper
+    }).setName("warning-history-state-shoutout").setOrigin(0.5, 0).setResolution(2).setDepth(2);
+    const prompt = this.add.text(128, 229, "TAP / Z / ENTER", {
+      fontFamily: "monospace",
+      fontSize: "8px",
+      color: PALETTE.goldStamp,
+      fontStyle: "bold"
+    }).setName("warning-quest-prompt").setOrigin(0.5, 0).setResolution(2).setDepth(2);
+
+    this.tweens.add({
+      targets: prompt,
+      alpha: 0.4,
+      duration: 500,
+      yoyo: true,
+      repeat: -1
+    });
+
+    this.addQuestSpark(128, 101, 0);
+    this.addQuestSpark(83, 142, 180);
+    this.addQuestSpark(173, 142, 360);
+  }
+
+  private addQuestSpark(x: number, y: number, delay: number) {
+    const horizontal = this.add.rectangle(x, y, 3, 1, color(PALETTE.goldStamp), 0.9).setDepth(2);
+    const vertical = this.add.rectangle(x, y, 1, 3, color(PALETTE.creamPaper), 0.9).setDepth(2);
+    this.tweens.add({
+      targets: [horizontal, vertical],
+      alpha: 0.2,
+      duration: 420,
+      delay,
+      yoyo: true,
+      repeat: -1
+    });
   }
 
   private drawSimpleWarningCard() {
@@ -79,7 +161,7 @@ export class WarningScene extends Phaser.Scene {
       fontSize: "4px",
       color: PALETTE.creamPaper
     }).setName("warning-history-state-shoutout").setOrigin(0.5, 0).setResolution(2);
-    this.add.text(128, 172, "TAP / PRESS A TO CONTINUE", {
+    this.add.text(128, 172, "TAP / Z / ENTER", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp
