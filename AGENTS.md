@@ -2,7 +2,7 @@
 
 ## Project
 
-`ruby-rule-frus-quest` is a Vite + TypeScript + Phaser 3 browser game. It is static-only and designed for GitHub Pages.
+`ruby-rule-frus-quest` is a Vite + TypeScript + Phaser 3 game. It deploys as a static GitHub Pages site and as a Capacitor iPhone app built from the same `dist/` output.
 
 ## Commands
 
@@ -10,6 +10,8 @@
 npm install
 npm run dev
 npm run build
+npm run build:ios
+npm run ios:open
 ```
 
 ## Conventions

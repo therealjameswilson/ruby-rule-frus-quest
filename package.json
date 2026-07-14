@@ -7,15 +7,24 @@
     "dev": "vite --host 127.0.0.1",
     "test": "vitest run",
     "build": "tsc --noEmit && vite build && node scripts/copy-public-assets.mjs",
+    "build:ios": "npm run build && cap sync ios",
+    "ios:copy": "npm run build && cap copy ios",
+    "ios:open": "cap open ios",
+    "ios:run": "npm run build:ios && cap run ios",
     "audit:pulls": "node scripts/audit-agent-pulls.mjs",
     "improve:assets": "python scripts/improve-existing-assets.py",
     "perf:profile": "node tools/perf-profile.mjs",
     "preview": "vite preview --host 127.0.0.1"
   },
   "dependencies": {
+    "@capacitor/app": "^8.1.0",
+    "@capacitor/core": "^8.4.1",
+    "@capacitor/haptics": "^8.0.2",
+    "@capacitor/ios": "^8.4.1",
     "phaser": "^3.80.1"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.4.1",
     "@types/node": "^22.10.0",
     "typescript": "^5.6.3",
     "vite": "^5.4.11",

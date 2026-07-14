@@ -1,6 +1,6 @@
 # Ruby Rule: The FRUS Quest
 
-Browser-based NES-style FRUS production game prototype built with Phaser 3, TypeScript, and Vite.
+NES-style FRUS production game built with Phaser 3, TypeScript, and Vite, available as both a browser game and a bundled iPhone app.
 
 StateChat proposes. Humans decide. Published FRUS is the record.
 
@@ -8,7 +8,7 @@ The current cleanup branch keeps the runnable game focused on the existing scene
 
 ## Scope
 
-This project is a static web game intended for GitHub Pages. The active mainline is a compact top-down FRUS production quest with title, character creation, guide/tutorial, archive, network, referral, proofing, and publication-gate scenes.
+This project ships as a static GitHub Pages game and as an offline-capable Capacitor iOS app. The active mainline is a compact top-down FRUS production quest with title, character creation, guide/tutorial, archive, network, referral, proofing, and publication-gate scenes.
 
 The cleanup target is SNES action-adventure craft, translated into FRUS workflow language:
 
@@ -35,6 +35,20 @@ npm run build
 ```
 
 The static build is emitted to `dist/` and is ready for GitHub Pages.
+
+## Build for iPhone
+
+The iOS wrapper lives in `ios/` and bundles the same tested game from `dist/`:
+
+```bash
+npm install
+npm run build:ios
+npm run ios:open
+```
+
+In Xcode, select the `App` target, choose an Apple Developer team under **Signing & Capabilities**, then run on an iPhone or simulator. The app uses the bundle identifier `com.jameswilson.rubyrulefrusquest`, supports iPhone portrait and landscape orientations, saves locally, pauses safely when backgrounded, and uses native impact feedback for touch controls.
+
+See [`docs/ios/README.md`](docs/ios/README.md) for device testing, versioning, and TestFlight steps.
 
 ## Engine Rationale
 

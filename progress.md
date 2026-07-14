@@ -2,6 +2,16 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Native iPhone packaging pass (2026-07-13):
+  - Added a Capacitor 8 iOS wrapper on `codex/iphone-app` without changing the 256x240 Phaser game or the GitHub Pages deployment path.
+  - Generated an iPhone-only Swift Package Manager Xcode project with iOS 15 minimum support, automatic signing defaults, portrait/landscape support, full-screen presentation, original opaque FRUS app-icon art, and an original ruby-volume launch screen.
+  - Bundled the game for offline play, suppressed browser-only install/fullscreen prompts in native mode, exposed native platform state through `render_game_to_text`, and preserved the integer-scaling/safe-area shell.
+  - Added native light-impact feedback for touch controls with the existing browser vibration fallback, plus Capacitor App lifecycle forwarding so backgrounding autosaves/pauses and foregrounding uses the existing input-swallowing resume gate.
+  - Added focused native-platform and haptic tests plus an iPhone build, device-QA, signing, and TestFlight handoff guide under `docs/ios/`.
+  - Verification: 119 Vitest files / 617 tests pass; TypeScript and the production build pass; `npm run build:ios` copies the complete offline bundle and registers both Swift packages; Swift Package Manager resolves Capacitor 8.4.1; plist/storyboard XML and opaque 1024px icon checks pass; production npm dependencies report zero vulnerabilities.
+  - The required game client confirms keyboard start reaches Office and reports the web/native platform contract. In-app Chromium confirms clean Office rendering, no console warnings, no page overflow at 393x852 or 852x393 with DPR 3, and a simulated touch-A transition from Compiler creation to Office.
+  - Native signing, simulator/device launch, and TestFlight upload remain the Xcode handoff: this machine has Command Line Tools but not the full Xcode application or an Apple signing team.
+
 - Final gameplay readability and input repair (2026-07-13):
   - Rebuilt the live quest HUD as a native 256x24 pixel band with bounded objective/tool/action regions, ten readable reliability hearts, a five-piece volume tracker, and no downscaled decorative chrome or overlapping labels.
   - Reduced Network N1 to the physical routing lesson: two distinct terminals, compact packet silhouettes, one contextual prompt, perimeter DANN-E pressure, and no embedded map/compass/cable/route-label collage.
