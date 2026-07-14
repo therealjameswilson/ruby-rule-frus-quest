@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState } from "../game/state";
+import { triggerTouchHaptic } from "../platform/haptics";
 import { handlePauseTouch, setTouchControl, triggerDialogFastForward, type CardinalDirection, type TouchControlKey } from "./InputState";
 
 interface ButtonSpec {
@@ -422,8 +423,7 @@ export class TouchControls {
   }
 
   private hapticPress() {
-    const vibrator = navigator.vibrate?.bind(navigator);
-    if (vibrator) vibrator(8);
+    triggerTouchHaptic();
   }
 
   private redraw() {

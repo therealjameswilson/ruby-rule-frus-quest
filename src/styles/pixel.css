@@ -18,6 +18,22 @@ body,
   -webkit-touch-callout: none;
 }
 
+html.native-app,
+html.native-app body {
+  background: #0f0f0f;
+  cursor: default;
+}
+
+html.native-app body {
+  position: fixed;
+  inset: 0;
+}
+
+html.native-app #ios-install-hint,
+html.native-app #fullscreen-affordance {
+  display: none !important;
+}
+
 body {
   min-height: var(--ruby-rule-vh, 100dvh);
   display: flex;

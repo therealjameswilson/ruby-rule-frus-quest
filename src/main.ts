@@ -20,6 +20,7 @@ import {
   swallowNextInputFrame,
   updateInputCallbacks
 } from "./input/InputState";
+import { installNativeAppShell, observeNativeAppState, type NativeAppState } from "./platform/nativeApp";
 import { retroAudio, type AudioDebugState } from "./systems/audio";
 import { getLanguage } from "./systems/i18n";
 import { applyIntegerZoom, computeDeviceIntegerZoom } from "./systems/pixelPerfect";
@@ -35,6 +36,7 @@ declare global {
     rubyRuleAudioDebug?: () => AudioDebugState;
     rubyRuleSaveDebug?: () => ReturnType<typeof getSaveDebugState>;
     rubyRuleGamepadDebug?: () => ReturnType<typeof getGamepadDebugState>;
+    rubyRulePlatform?: NativeAppState;
     game?: Phaser.Game;
   }
 }
@@ -85,6 +87,7 @@ function renderConciseGameToText() {
       mode: gameState.mode,
       objective: gameState.objective,
       language: getLanguage(),
+      platform: window.rubyRulePlatform,
       latestMessage: gameState.latestMessage,
       player: gameState.player,
       playerFacing: gameState.playerFacing,
@@ -419,6 +422,7 @@ function createDismissButton(target: HTMLElement, storageKey: string) {
 
 function installMobileShellAffordances() {
   if (!isTouchCapable()) return;
+  if (window.rubyRulePlatform?.native) return;
 
   if (isIosLike() && !isStandaloneDisplay() && localStorageGet("rubyRuleDismissedIosInstallHint") !== "1") {
     const hint = document.createElement("aside");
@@ -519,6 +523,13 @@ function installTapToResumeOverlay(game: Phaser.Game) {
   window.addEventListener("pageshow", () => {
     if (!document.hidden) showResumeOverlay();
   });
+  void observeNativeAppState((isActive) => {
+    if (isActive) {
+      showResumeOverlay();
+      return;
+    }
+    pauseForBackground("visibility");
+  }).catch(() => undefined);
 }
 
 function calculateIntegerGameShellScale() {
@@ -634,6 +645,7 @@ function installPixelProofOverlay() {
   return () => setVisible(!visible);
 }
 
+window.rubyRulePlatform = installNativeAppShell();
 updateViewportCssVars();
 installMobileShellAffordances();
 const performanceToggles = installMobileDebugHud();
