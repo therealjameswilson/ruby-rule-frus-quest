@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { createGameSaveData, gameState, resetGameState, SAVE_SCHEMA_VERSION, setSceneState } from "../game/state";
+import { createGameSaveData, gameState, resetGameState, SAVE_SCHEMA_VERSION, setPlayerProfile, setSceneState } from "../game/state";
+import { DEFAULT_PROCESS_ROLE, PROCESS_ROLES, resolveProcessRole } from "../game/constants";
+import { getCharacterKeyForProcessRole } from "../art/characters";
 import { getSavedGameSummary, loadSavedGame, readSavedGame, saveGameNow } from "./save";
 
 function createStorage() {
@@ -23,6 +25,27 @@ afterEach(() => {
 });
 
 describe("browser save storage", () => {
+  it("starts new and unspecified debug profiles as the same compiler", () => {
+    expect(DEFAULT_PROCESS_ROLE.id).toBe("compiler");
+    expect(gameState.playerProfile.roleId).toBe("compiler");
+    expect(resolveProcessRole(null)).toEqual(DEFAULT_PROCESS_ROLE);
+    expect(resolveProcessRole("unknown")).toEqual(DEFAULT_PROCESS_ROLE);
+  });
+
+  it.each(PROCESS_ROLES)("preserves an existing $id profile and appearance through Continue", (role) => {
+    setPlayerProfile("Alex", role);
+    gameState.inventory = ["citation_stamp"];
+    const profile = { ...gameState.playerProfile };
+    const texture = getCharacterKeyForProcessRole(role.id);
+    expect(resolveProcessRole(role.id)).toEqual(role);
+    expect(saveGameNow()).toBe(true);
+    resetGameState();
+    expect(loadSavedGame()).toBe("ArchiveScene");
+    expect(gameState.playerProfile).toEqual(profile);
+    expect(gameState.inventory).toEqual(["citation_stamp"]);
+    expect(getCharacterKeyForProcessRole(gameState.playerProfile.roleId)).toBe(texture);
+  });
+
   it("offers Continue for the schema emitted by the current writer", () => {
     gameState.player = { x: 128, y: 158 };
     gameState.sceneProgress.archiveSourceNoteCollected = 1;

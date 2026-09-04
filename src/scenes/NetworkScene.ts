@@ -679,7 +679,7 @@ export class NetworkScene extends Phaser.Scene {
     this.syncNetworkSplitEntities();
     this.track(addTinySparkle(this, 60, 108, PALETTE.openNetGreen));
     this.track(addTinySparkle(this, 196, 108, PALETTE.classNetRed));
-    const marcus = new HistorianNPC(this, "marcus", 128, 76);
+    const marcus = new HistorianNPC(this, "marcus", 38, 88);
     marcus.label.setVisible(false);
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 60, 124, "OpenNet").container);

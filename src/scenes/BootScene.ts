@@ -3,7 +3,7 @@ import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
-import { PALETTE, PROCESS_ROLES } from "../game/constants";
+import { PALETTE, PROCESS_ROLES, resolveProcessRole } from "../game/constants";
 import { resolveStartScene } from "../game/startScene";
 import { hasSavedGame } from "../systems/save";
 import {
@@ -129,7 +129,7 @@ export class BootScene extends Phaser.Scene {
   private applyRoleFromQuery() {
     const params = new URLSearchParams(window.location.search);
     const roleId = params.get("role");
-    const role = PROCESS_ROLES.find((item) => item.id === roleId) ?? PROCESS_ROLES[0];
+    const role = resolveProcessRole(roleId);
     const rawName = params.get("name")?.trim() || "Sam";
     const name = rawName.charAt(0).toUpperCase() + rawName.slice(1, 10);
     setPlayerProfile(name, role);

@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
 import { getCharacterKeyForProcessRole } from "../art/characters";
-import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_ROLES } from "../game/constants";
+import { DEFAULT_PROCESS_ROLE as COMPILER_ROLE, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState, setLatestMessage, setPlayerProfile, setSceneState, setVisibleEntities } from "../game/state";
 import { bindPointerDown, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
@@ -15,12 +15,6 @@ import { normalizeCharacterDisplayName, shouldConfirmCharacterCreateInput } from
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
-
-const COMPILER_ROLE = (() => {
-  const role = PROCESS_ROLES.find((candidate) => candidate.id === FRUS_COMPILER_ROLE_ID);
-  if (!role) throw new Error("The FRUS Compiler role is missing from PROCESS_ROLES.");
-  return role;
-})();
 
 export class CharacterCreateScene extends Phaser.Scene {
   private displayName = "";

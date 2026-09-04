@@ -763,7 +763,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawSourceNoteProvenanceStations();
     this.drawAnnotationDraftingStations();
     this.drawAnnotationTableSlots();
-    const elena = new HistorianNPC(this, "elena", 42, 72);
+    const elena = new HistorianNPC(this, "elena", 42, 84);
     elena.label.setVisible(false);
     this.roomCleanups.push(() => elena.destroy());
     this.drawCompactSourceRoomTerminal();

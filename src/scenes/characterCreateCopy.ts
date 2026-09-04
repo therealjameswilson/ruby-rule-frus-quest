@@ -1,2 +1,4 @@
-export const FRUS_COMPILER_ROLE_ID = "compiler" as const;
+import { DEFAULT_PROCESS_ROLE } from "../game/constants";
+
+export const FRUS_COMPILER_ROLE_ID = DEFAULT_PROCESS_ROLE.id;
 export const CHARACTER_CREATE_TITLE = "CREATE YOUR FRUS COMPILER";

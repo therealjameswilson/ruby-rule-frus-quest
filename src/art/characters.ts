@@ -18,10 +18,10 @@ export const ART_PACK_LABEL_OFFSET_Y = ART_PACK_FOOT_OFFSET_Y + 3;
 export const BASE_CHARACTERS = {
   compiler: "assets/art-pack/sprites/native/sprite_compiler.png",
   editor: "assets/art-pack/sprites/native/sprite_editor.png",
-  declassification_coordinator: "assets/art-pack/sprites/native/sprite_declassification_coordinator.png",
-  reviewer: "assets/art-pack/sprites/native/sprite_reviewer.png",
+  declassification_coordinator: "assets/art-pack/sprites/refreshed/sprite_declassification_coordinator.png",
+  reviewer: "assets/art-pack/sprites/refreshed/sprite_reviewer.png",
   senior_reviewer: "assets/art-pack/sprites/native/sprite_senior_reviewer.png",
-  general_editor: "assets/art-pack/sprites/native/sprite_general_editor.png",
+  general_editor: "assets/art-pack/sprites/refreshed/sprite_general_editor.png",
   archivist: "assets/art-pack/sprites/native/sprite_archivist.png",
   records_officer: "assets/art-pack/sprites/native/sprite_records_officer.png",
   security_officer: "assets/art-pack/sprites/native/sprite_security_officer.png",

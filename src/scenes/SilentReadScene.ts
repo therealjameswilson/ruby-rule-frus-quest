@@ -591,7 +591,7 @@ export class SilentReadScene extends Phaser.Scene {
         "BRACKETS PRINT"
       ], PALETTE.terminalCyan);
     }
-    const priya = new HistorianNPC(this, "priya", 28, 52);
+    const priya = new HistorianNPC(this, "priya", 36, 88);
     this.roomCleanups.push(() => priya.destroy());
     if (!packedTilemapRendered) {
       this.drawPage(72, 114, "DRAFT QUERY", [

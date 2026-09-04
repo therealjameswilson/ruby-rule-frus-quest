@@ -601,7 +601,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       addVaultBlocks(this, (object) => this.track(object));
       addSnesWorldMap(this, 128, 62, "EQUITY MAP", "referral-vault-map", (object) => this.track(object));
     }
-    const marcus = new HistorianNPC(this, "marcus", 42, 58);
+    const marcus = new HistorianNPC(this, "marcus", 42, 88);
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 214, 58, "StateChat").container);
     if (!this.referralGateOpen) {

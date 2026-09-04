@@ -135,6 +135,16 @@ export const PROCESS_ROLES = [
 
 export type ProcessRoleId = (typeof PROCESS_ROLES)[number]["id"];
 
+export const DEFAULT_PROCESS_ROLE = (() => {
+  const role = PROCESS_ROLES.find((candidate) => candidate.id === "compiler");
+  if (!role) throw new Error("The default FRUS Compiler role is missing.");
+  return role;
+})();
+
+export function resolveProcessRole(roleId: string | null) {
+  return PROCESS_ROLES.find((role) => role.id === roleId) ?? DEFAULT_PROCESS_ROLE;
+}
+
 export const PROCESS_STAMPS = [
   { id: "rule", label: "RULE", title: "Golden Rule learned" },
   { id: "archive", label: "SRC", title: "Source provenance verified" },

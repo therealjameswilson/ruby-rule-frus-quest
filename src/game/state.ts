@@ -1,6 +1,6 @@
 import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
 import { getCodexReadout, unlockCodexEntry } from "./codex";
-import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
+import { AREA_REGISTRY, DEFAULT_PROCESS_ROLE, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import {
   applyAgencyEquityResponse,
@@ -292,7 +292,7 @@ export interface DanneItemReadout {
   trueEndingReady: boolean;
 }
 
-const defaultRole = PROCESS_ROLES[0];
+const defaultRole = DEFAULT_PROCESS_ROLE;
 const TRANSIENT_SAVE_SCENES = new Set([
   "BootScene",
   "TapToStartScene",
