@@ -5,6 +5,7 @@ import {
   getGameSaveSummary,
   isSaveableGameScene,
   restoreGameSaveData,
+  SAVE_SCHEMA_VERSION,
   type GameSaveData,
   type GameSaveSummary
 } from "../game/state";
@@ -58,9 +59,9 @@ function parseSave(raw: string | null): GameSaveData | null {
 function migrateSaveData(parsed: Partial<GameSaveData>): GameSaveData | null {
   if (!parsed || typeof parsed !== "object" || !parsed.state) return null;
   const version = Number(parsed.version ?? 0);
-  if (version > 1) return null;
+  if (!Number.isInteger(version) || version < 0 || version > SAVE_SCHEMA_VERSION) return null;
   return {
-    version: 1,
+    version,
     savedAt: parsed.savedAt ?? new Date().toISOString(),
     state: parsed.state as GameSaveData["state"]
   };

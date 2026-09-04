@@ -3,7 +3,9 @@ import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
 import { logLoadedCharacterTextureSizes, preloadCharacters } from "../art/characters";
-import { PALETTE, PROCESS_ROLES, SCENE_ORDER } from "../game/constants";
+import { PALETTE, PROCESS_ROLES } from "../game/constants";
+import { resolveStartScene } from "../game/startScene";
+import { hasSavedGame } from "../systems/save";
 import {
   DANNE_BOSS_SPRITE_ASSET,
   DANNE_IMAGE_ASSETS,
@@ -121,10 +123,7 @@ export class BootScene extends Phaser.Scene {
 
   private getStartScene() {
     const requested = new URLSearchParams(window.location.search).get("scene");
-    if (requested && SCENE_ORDER.includes(requested as (typeof SCENE_ORDER)[number])) {
-      return requested;
-    }
-    return "WarningScene";
+    return resolveStartScene(requested, hasSavedGame());
   }
 
   private applyRoleFromQuery() {
