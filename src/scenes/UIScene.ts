@@ -90,7 +90,7 @@ export class UIScene extends Phaser.Scene {
     this.controls.refreshForScene(this.activeGameplaySceneKey());
     const activeSceneKey = this.activeGameplaySceneKey();
     this.refreshQuestBand(this.time.now, activeSceneKey);
-    if (getInput().selectJustPressed && activeSceneKey) openCodex(this, activeSceneKey);
+    if (getInput().selectJustPressed && activeSceneKey && gameState.mode !== "ending") openCodex(this, activeSceneKey);
     this.scene.bringToTop();
   }
 

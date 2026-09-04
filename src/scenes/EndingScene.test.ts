@@ -1,0 +1,119 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { EndingScene } from "./EndingScene";
+import { BUCKRAM_BINDING_PACKETS, type BuckramBindingStationId, type BuckramBindingStatus } from "../game/buckramBinding";
+import { gameState, resetGameState } from "../game/state";
+import { saveGameNow } from "../systems/save";
+import { adjustReliability } from "../systems/reliability";
+
+vi.mock("phaser", () => ({ default: {
+  Scene: class {}, GameObjects: { Sprite: class {} },
+  Math: { Distance: { Between: (x: number, y: number, a: number, b: number) => Math.hypot(x - a, y - b) } }
+} }));
+vi.mock("../entities/Player", () => ({ Player: class {} }));
+vi.mock("../systems/audio", () => ({ retroAudio: { confirm: vi.fn(), warning: vi.fn(), stamp: vi.fn(), blip: vi.fn() } }));
+vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
+vi.mock("../systems/reliability", () => ({ adjustReliability: vi.fn(), ReliabilityHud: class {} }));
+
+interface Packet {
+  id: string;
+  label: string;
+  shortLabel: string;
+  station: BuckramBindingStationId;
+  status: BuckramBindingStatus;
+  checkCount: number;
+  x: number;
+  y: number;
+}
+
+interface BindingInternals {
+  bindingPackets: Packet[];
+  player: { position: { x: number; y: number } };
+  toast: { show: ReturnType<typeof vi.fn> };
+  reliability: { update: ReturnType<typeof vi.fn> };
+  updateBindingRoomVisuals: ReturnType<typeof vi.fn>;
+  syncRoomTraversal: ReturnType<typeof vi.fn>;
+  syncVisibleState: ReturnType<typeof vi.fn>;
+  findActionBindingStation: ReturnType<typeof vi.fn>;
+  handleBindingPacketAction(packet: Packet): void;
+}
+
+function fixture(step = 0, status: BuckramBindingStatus = "waiting") {
+  const scene = new EndingScene() as unknown as BindingInternals;
+  scene.bindingPackets = BUCKRAM_BINDING_PACKETS.map((packet, index) => ({
+    ...packet, checkCount: packet.checkIds.length,
+    status: index < step ? "sealed" : index === step ? status : "waiting", x: 128, y: 177
+  }));
+  scene.player = { position: { x: 128, y: 190 } };
+  scene.toast = { show: vi.fn() };
+  scene.reliability = { update: vi.fn() };
+  scene.updateBindingRoomVisuals = vi.fn();
+  scene.syncRoomTraversal = vi.fn();
+  scene.syncVisibleState = vi.fn();
+  scene.findActionBindingStation = vi.fn(() => ({ id: scene.bindingPackets[step].station, label: "Test desk", x: 42, y: 102 }));
+  return { scene, packet: scene.bindingPackets[step] };
+}
+
+beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
+
+describe("live binding packet handoffs", () => {
+  it("saves the initial pickup immediately without completing the packet", () => {
+    const { scene, packet } = fixture();
+    scene.handleBindingPacketAction(packet);
+    expect(packet.status).toBe("carried");
+    expect(gameState.sceneProgress).toMatchObject({ buckramBindingStep: 0, buckramBindingStatus: 1 });
+    expect(gameState.heldItem).toBe("Binding Folder: FRONT PACKET");
+    expect(saveGameNow).toHaveBeenCalledOnce();
+    expect(gameState.sceneProgress.frontMatterAssemblyComplete).not.toBe(1);
+  });
+
+  it("keeps a wrong-desk packet in hand, with the existing penalty and no progress", () => {
+    const { scene, packet } = fixture(0, "carried");
+    scene.findActionBindingStation.mockReturnValue({ id: "index-desk", label: "Index", x: 42, y: 164 });
+    scene.handleBindingPacketAction(packet);
+    expect(packet.status).toBe("carried");
+    expect(gameState.heldItem).toBe("Binding Folder: FRONT PACKET");
+    expect(adjustReliability).toHaveBeenCalledWith(-2, expect.any(String));
+    expect(gameState.sceneProgress.buckramBindingStep).toBe(0);
+    expect(saveGameNow).toHaveBeenCalledOnce();
+  });
+
+  it("saves routing separately and requires a second action to seal", () => {
+    const { scene, packet } = fixture(0, "carried");
+    scene.handleBindingPacketAction(packet);
+    expect(packet.status).toBe("routed");
+    expect(gameState.sceneProgress).toMatchObject({ buckramBindingStep: 0, buckramBindingStatus: 2 });
+    expect(gameState.sceneProgress.frontMatterAssemblyComplete).not.toBe(1);
+    expect(gameState.heldItem).toBeNull();
+  });
+
+  it("hands off the next packet at the desk before saving, without duplicate rewards", () => {
+    const { scene, packet } = fixture(0, "routed");
+    scene.player.position = { x: 42, y: 123 };
+    vi.mocked(saveGameNow).mockImplementation(() => {
+      expect(scene.bindingPackets[1].status).toBe("carried");
+      expect(gameState.sceneProgress).toMatchObject({ buckramBindingStep: 1, buckramBindingStatus: 1 });
+      return true;
+    });
+    scene.handleBindingPacketAction(packet);
+    expect(packet.status).toBe("sealed");
+    expect(gameState.heldItem).toBe("Binding Folder: INDEX DOCKET");
+    expect(gameState.sceneProgress.frontMatterAssemblyComplete).toBe(1);
+    expect(gameState.sceneProgress.readerAidRegistersComplete).toBe(1);
+    const points = gameState.documentPoints;
+    scene.handleBindingPacketAction(packet);
+    expect(gameState.documentPoints).toBe(points);
+    expect(saveGameNow).toHaveBeenCalledOnce();
+  });
+
+  it("saves five sealed packets without bypassing final readiness or publishing", () => {
+    vi.mocked(saveGameNow).mockReset();
+    const { scene, packet } = fixture(4, "routed");
+    scene.player.position = { x: 214, y: 181 };
+    scene.handleBindingPacketAction(packet);
+    expect(scene.bindingPackets.every((entry) => entry.status === "sealed")).toBe(true);
+    expect(gameState.sceneProgress).toMatchObject({ buckramBindingStep: 5, buckramBindingStatus: 0, buckramGateOpen: 0 });
+    expect(gameState.finalGateCertification?.status).not.toBe("published");
+    expect(scene.toast.show).toHaveBeenCalledWith("PRESS LOCKED", scene.player.position, "warn", expect.any(Object));
+    expect(saveGameNow).toHaveBeenCalledOnce();
+  });
+});
