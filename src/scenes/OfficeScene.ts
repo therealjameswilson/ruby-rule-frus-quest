@@ -344,7 +344,7 @@ export class OfficeScene extends Phaser.Scene {
     // target inside the strict radius.
     const hintTarget = nearestInteractableHint(this.player.position, activeInteractables);
     const distantQuestCueVisible = Boolean(this.firstQuestCue?.visible);
-    const promptTarget = nearest ?? (distantQuestCueVisible ? null : hintTarget);
+    const promptTarget = this.toast.visible ? null : nearest ?? (distantQuestCueVisible ? null : hintTarget);
     setNearestInteractable(nearest?.label ?? null);
     const approachCue = !distantQuestCueVisible && hintTarget ? this.approachCueFor(hintTarget) : null;
     this.prompt.update(

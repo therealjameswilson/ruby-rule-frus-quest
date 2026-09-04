@@ -70,6 +70,9 @@ describe("Archive A1 source-room progression", () => {
         { sourceNoteStatus: "stamped", annotationStep }, `TAKE ${label}`
       ]),
       [{ sourceNoteStatus: "stamped", annotationCarried: true }, "FILE NOTE AT TABLE"],
+      [{ sourceNoteStatus: "stamped", annotationProgress: {} }, "NOTES 0/3 - EXPLORE"],
+      [{ sourceNoteStatus: "stamped", annotationProgress: { annotationGatheredMask: 6 } }, "NOTES 2/3 - EXPLORE"],
+      [{ sourceNoteStatus: "stamped", annotationProgress: { annotationGatheredMask: 7 } }, "FILE PACKET AT TABLE"],
       [{ sourceNoteStatus: "stamped", annotationComplete: true }, "PICK UP TELEGRAM"],
       [{ sourceNoteStatus: "stamped", annotationComplete: true, collectedDocumentIds: new Set(["telegram"]) }, "PICK UP CROSS-REF"],
       [{ complete: true }, "EXIT EAST - NETWORK"]

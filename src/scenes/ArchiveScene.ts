@@ -34,6 +34,7 @@ import {
   archiveSourceRoomObjective,
   archiveSourceRoomPacketComplete,
   restoredArchiveSourceNoteStatus,
+  restoredArchiveRepoWallCleared,
   restoredArchiveSourceRoomDocumentIds,
   visibleArchiveSourceRoomDocuments,
   type SourceNoteStatus
@@ -71,14 +72,12 @@ import {
   SNES_ROOM_MAP_MARKER_ASSET
 } from "../game/snesAtlas";
 import {
-  annotationDraftingComplete,
   ANNOTATION_DRAFTING_PROMPTS,
-  ANNOTATION_DRAFTING_STATIONS,
-  collectAnnotationDraftingSlip,
-  fileAnnotationDraftingSlip,
-  getAnnotationDraftingStation
+  ANNOTATION_DRAFTING_STATIONS
 } from "../game/annotationDrafting";
 import type { AnnotationDraftingPromptId } from "../game/annotationDrafting";
+import { fileAnnotationPacket, gatherAnnotationNote, readAnnotationPacket } from "../game/annotationPacket";
+import { saveGameNow } from "../systems/save";
 import {
   ARCHIVE_A1_TILEMAP,
   ARCHIVE_DUNGEON_TILES,
@@ -617,6 +616,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private restoreSourceNoteProgress(heldItem: string | null) {
+    for (const document of visibleArchiveSourceRoomDocuments(true)) this.collected.delete(document.id);
     for (const documentId of restoredArchiveSourceRoomDocumentIds(gameState.sceneProgress)) {
       this.collected.add(documentId);
     }
@@ -625,20 +625,20 @@ export class ArchiveScene extends Phaser.Scene {
     }
     if (gameState.inventory.includes("Telegram")) this.collected.add("telegram");
     if (gameState.inventory.includes("Cross-Ref")) this.collected.add("cross-reference");
-    if (this.sourceNoteStatus === "inactive") {
-      this.sourceNoteStatus = restoredArchiveSourceNoteStatus({
-        sceneProgress: gameState.sceneProgress,
-        heldItem,
-        hasArchiveStamp: gameState.processStamps.includes("archive"),
-        sourceNoteCollected: this.collected.has("source-note") || gameState.inventory.includes("Source Note 47")
-      });
-    }
+    this.sourceNoteStatus = restoredArchiveSourceNoteStatus({
+      sceneProgress: gameState.sceneProgress,
+      heldItem,
+      hasArchiveStamp: gameState.processStamps.includes("archive"),
+      sourceNoteCollected: this.collected.has("source-note") || gameState.inventory.includes("Source Note 47")
+    });
+    if (restoredArchiveRepoWallCleared(gameState.sceneProgress)) this.clearedWallIds.add("repo-wall");
+    else this.clearedWallIds.delete("repo-wall");
     if (this.sourceNoteStatus === "carried") setHeldItem("Source Note 47");
     if (this.sourceNoteStatus !== "inactive") this.collected.add("source-note");
     if (this.sourceRoomComplete()) gameState.sceneProgress.archiveSourceRoomComplete = 1;
-    const carriedAnnotation = this.annotationCarriedStation();
-    if (carriedAnnotation && !gameState.sceneProgress.annotationDraftingComplete) {
-      setHeldItem(carriedAnnotation.carriedLabel);
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    if (packet.heldLabel && !packet.complete) {
+      setHeldItem(packet.heldLabel);
     }
   }
 
@@ -1344,9 +1344,9 @@ export class ArchiveScene extends Phaser.Scene {
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0).setDepth(87));
-    this.sourceRoomTerminalStatus = this.track(this.add.text(x, y - 6, "", {
+    this.sourceRoomTerminalStatus = this.track(this.add.text(x, y - 8, "", {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "6px",
       color: PALETTE.creamPaper,
       align: "center"
     }).setOrigin(0.5, 0).setDepth(87));
@@ -1371,8 +1371,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (gameState.sceneProgress.annotationDraftingComplete) return "DOCS OPEN";
     if (this.sourceNoteWallNeedsStamp()) return "NO REPO";
     if (this.sourceNoteStatus === "stamped") {
-      const step = Math.min(3, (gameState.sceneProgress.annotationDraftingStep ?? 0) + 1);
-      return `NOTE ${step}/3`;
+      return `NOTES ${readAnnotationPacket(gameState.sceneProgress).gathered.length}/3`;
     }
     if (this.sourceNoteStatus === "verified") return "STAMP";
     if (this.sourceNoteStatus === "routed") {
@@ -1388,7 +1387,7 @@ export class ArchiveScene extends Phaser.Scene {
     const flag = this.sourceRoomTerminalFlag();
     const clear = flag === "ROOM CLEAR";
     const actionable = flag !== "REPO ?" && flag !== "ROUTE";
-    this.sourceRoomTerminalStatus.setText(flag).setColor(clear ? PALETTE.openNetGreen : PALETTE.creamPaper);
+    this.sourceRoomTerminalStatus.setText(flag.replace(" ", "\n")).setColor(clear ? PALETTE.openNetGreen : PALETTE.creamPaper);
     this.sourceRoomTerminalLamp.setFillStyle(color(clear
       ? PALETTE.openNetGreen
       : actionable
@@ -1588,27 +1587,20 @@ export class ArchiveScene extends Phaser.Scene {
       && !this.sourceNoteWallNeedsStamp()
       && !this.archiveKeyRewardCue?.active
       && !gameState.sceneProgress.annotationDraftingComplete;
-    const step = Math.max(0, Math.min(
-      ANNOTATION_DRAFTING_STATIONS.length,
-      gameState.sceneProgress.annotationDraftingStep ?? 0
-    ));
-    const carried = this.annotationCarriedStation();
+    const packet = readAnnotationPacket(gameState.sceneProgress);
     for (const [index, station] of ANNOTATION_DRAFTING_STATIONS.entries()) {
       const visual = this.annotationStationVisuals.get(station.id);
       if (!visual) continue;
-      const filed = index < step;
-      const held = carried?.id === station.id;
-      const active = !carried && index === step;
-      visual.container.setVisible(visible).setAlpha(active || held ? 1 : filed ? 0.72 : 0.32);
-      visual.card.setStrokeStyle(1, color(filed ? PALETTE.openNetGreen : active || held ? this.annotationAccent(station.id) : PALETTE.stoneGray));
-      visual.ring.setVisible(active || held);
-      visual.accent.setFillStyle(color(filed ? PALETTE.openNetGreen : this.annotationAccent(station.id)));
-      visual.state.setText(filed ? "FILED" : held ? "HELD" : active ? "TAKE" : "...");
-      visual.state.setColor(filed ? PALETTE.openNetGreen : held ? PALETTE.terminalCyan : active ? PALETTE.classNetRed : PALETTE.stoneGray);
-      visual.arrow.setVisible(active);
+      const filed = index < packet.filedCount;
+      const gathered = packet.gathered.some((note) => note.id === station.id);
+      visual.container.setVisible(visible && !gathered).setAlpha(1);
+      visual.card.setStrokeStyle(1, color(this.annotationAccent(station.id)));
+      visual.ring.setVisible(false);
+      visual.state.setText("");
+      visual.arrow.setVisible(!gathered);
       const slot = this.annotationTableSlots.get(station.id);
-      slot?.setVisible(visible).setFillStyle(color(filed ? this.annotationAccent(station.id) : PALETTE.shadowNavy));
-      slot?.setStrokeStyle(1, color(filed ? PALETTE.creamPaper : index === step && held ? PALETTE.goldStamp : PALETTE.stoneGray));
+      slot?.setVisible(visible).setFillStyle(color(gathered ? this.annotationAccent(station.id) : PALETTE.shadowNavy));
+      slot?.setStrokeStyle(1, color(filed ? PALETTE.creamPaper : gathered ? PALETTE.goldStamp : PALETTE.stoneGray));
     }
     this.annotationTableFrame?.setVisible(visible);
   }
@@ -1619,38 +1611,29 @@ export class ArchiveScene extends Phaser.Scene {
     return PALETTE.goldStamp;
   }
 
-  private annotationCarriedStation() {
-    const order = Math.floor(gameState.sceneProgress.annotationDraftingCarried ?? 0);
-    return ANNOTATION_DRAFTING_STATIONS.find((station) => station.order === order) ?? null;
-  }
-
   private restoreAnnotationSlipIcon() {
-    const station = this.annotationCarriedStation();
-    if (!station || gameState.sceneProgress.annotationDraftingComplete || this.currentRoomId !== "A1") return;
-    this.createAnnotationSlipIcon(station.id);
+    if (this.currentRoomId === "A1") this.createAnnotationSlipIcon();
   }
 
-  private createAnnotationSlipIcon(id: AnnotationDraftingPromptId) {
+  private createAnnotationSlipIcon() {
     if (this.annotationSlipIcon?.active) this.annotationSlipIcon.destroy();
-    const station = ANNOTATION_DRAFTING_STATIONS.find((candidate) => candidate.id === id);
-    if (!station) return;
-    const accentColor = this.annotationAccent(id);
-    this.annotationSlipIcon = this.add.container(Math.round(this.player.position.x), Math.round(this.player.position.y - 16), [
-      this.add.ellipse(0, 3, 18, 6, color(PALETTE.black), 0.42),
-      this.add.rectangle(0, 0, 17, 11, color(PALETTE.creamPaper)).setStrokeStyle(1, color(accentColor)),
-      this.add.rectangle(-6, 0, 2, 8, color(accentColor)),
-      this.add.text(2, -4, station.shortLabel.slice(0, 3), {
-        fontFamily: "monospace",
-        fontSize: "4px",
-        color: PALETTE.black
-      }).setOrigin(0.5, 0)
-    ]).setName(`archive-carried-annotation-${id}`).setDepth(280);
+    this.annotationSlipIcon = undefined;
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    if (!packet.held.length || packet.complete) return;
+    this.annotationSlipIcon = this.add.container(0, 0, [
+      this.add.rectangle(1, 2, 12, 10, color(PALETTE.black), 0.65),
+      this.add.rectangle(0, 0, 12, 10, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)),
+      ...ANNOTATION_DRAFTING_STATIONS.map((station, index) => this.add.rectangle(-4 + index * 4, -5, 3, 3,
+        color(packet.gathered.some((note) => note.id === station.id) ? this.annotationAccent(station.id) : PALETTE.stoneGray))),
+      this.add.text(0, -2, String(packet.gathered.length), { fontSize: "6px", color: PALETTE.black }).setOrigin(0.5, 0)
+    ]).setName("archive-carried-annotation-packet");
+    this.updateAnnotationSlipIcon();
   }
 
   private updateAnnotationSlipIcon() {
     if (!this.annotationSlipIcon?.active) return;
     this.annotationSlipIcon
-      .setPosition(Math.round(this.player.position.x), Math.round(this.player.position.y - 16))
+      .setPosition(Math.round(this.player.position.x + 12), Math.round(this.player.position.y - 6))
       .setDepth(Math.round(this.player.position.y) + 5);
   }
 
@@ -1846,6 +1829,7 @@ export class ArchiveScene extends Phaser.Scene {
     wall.clear();
     this.clearReadyWallCue(definition.id);
     if (definition.id === "repo-wall") {
+      gameState.sceneProgress.archiveRepoWallCleared = 1;
       this.showArchiveKeyRewardCue();
     }
     retroAudio.stamp();
@@ -1855,6 +1839,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.reliability.update();
     this.interactables = this.interactables.filter((item) => item.id !== definition.id);
     this.syncWallState();
+    if (definition.id === "repo-wall") saveGameNow();
   }
 
   private clearEnemyById(enemyId: string, message: string) {
@@ -2302,15 +2287,10 @@ export class ArchiveScene extends Phaser.Scene {
         : []),
       ...((this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete)
         ? ANNOTATION_DRAFTING_STATIONS.map((station, index) => {
-            const step = gameState.sceneProgress.annotationDraftingStep ?? 0;
-            const carried = this.annotationCarriedStation();
-            const status = index < step
+            const packet = readAnnotationPacket(gameState.sceneProgress);
+            const status = index < packet.filedCount
               ? "filed"
-              : carried?.id === station.id
-                ? "carried"
-                : index === step
-                  ? "next"
-                  : "queued";
+              : packet.gathered.some((note) => note.id === station.id) ? "in packet" : "available";
             return `Annotation ${station.order}: ${station.label} (${status})`;
           })
         : [])
@@ -2388,29 +2368,24 @@ export class ArchiveScene extends Phaser.Scene {
       const wallTarget = this.interactables.find((item) => item.id === "repo-wall");
       candidates = wallTarget ? [{ ...wallTarget, radius: 38 }] : [];
     } else if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
-      const carried = this.annotationCarriedStation();
-      candidates = carried
-        ? [{
-            id: "annotation-research-table",
-            label: this.researchTable.label,
-            x: this.researchTable.x,
-            y: this.researchTable.y,
-            radius: 54,
-            kind: "document",
-            onInteract: () => undefined
-          }]
-        : ANNOTATION_DRAFTING_STATIONS.map((station) => {
-            const position = ANNOTATION_DRAFTING_STATION_POSITIONS[station.id];
-            return {
-              id: `annotation-station-${station.id}`,
-              label: station.label,
-              x: position.x,
-              y: position.y,
-              radius: 28,
-              kind: "document",
-              onInteract: () => undefined
-            };
-          });
+      const packet = readAnnotationPacket(gameState.sceneProgress);
+      candidates = packet.missing.map((station) => ({
+        id: `annotation-station-${station.id}`,
+        label: station.label,
+        ...ANNOTATION_DRAFTING_STATION_POSITIONS[station.id],
+        radius: 28,
+        kind: "document",
+        onInteract: () => undefined
+      }));
+      if (packet.held.length || packet.ready) candidates.push({
+        id: "annotation-research-table",
+        label: this.researchTable.label,
+        x: this.researchTable.x,
+        y: this.researchTable.y,
+        radius: 54,
+        kind: "document",
+        onInteract: () => undefined
+      });
     } else if (this.sourceNoteStatus === "routed") {
       candidates = SOURCE_NOTE_PROVENANCE_STATIONS.map((station) => {
           const position = SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id];
@@ -2480,12 +2455,9 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.sourceNoteStatus === "verified") return "STAMP SRC NOTE";
     if (this.sourceNoteWallNeedsStamp()) return "STAMP NO REPO";
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
-      const carried = this.annotationCarriedStation();
-      const expected = getAnnotationDraftingStation(gameState.sceneProgress.annotationDraftingStep ?? 0);
-      if (carried) return `FILE ${carried.shortLabel}`;
-      return this.annotationStationId(target) === expected.id
-        ? `TAKE ${expected.shortLabel}`
-        : `FIND ${expected.shortLabel}`;
+      if (target?.id === "annotation-research-table") return "FILE PACKET";
+      const station = ANNOTATION_DRAFTING_STATIONS.find((note) => note.id === this.annotationStationId(target));
+      return station ? `TAKE ${station.shortLabel}` : "FIND NOTES";
     }
     return "ANNOTATION FILED";
   }
@@ -2502,9 +2474,8 @@ export class ArchiveScene extends Phaser.Scene {
 
     const actionTarget = this.sourceNoteActionHint();
     const nearActionTarget = Boolean(actionTarget && this.isNearSourceNoteActionTarget(actionTarget));
-    const carriedAnnotation = this.annotationCarriedStation();
     const verb = this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete
-      ? carriedAnnotation ? "FILE" : "TAKE"
+      ? actionTarget?.id === "annotation-research-table" ? "FILE" : "TAKE"
       : this.verbForSourceNote();
     this.hintText.setText("");
     setNearestInteractable(nearActionTarget ? `${verb} SRC NOTE 47` : null);
@@ -2516,11 +2487,7 @@ export class ArchiveScene extends Phaser.Scene {
       } else if (this.sourceNoteWallNeedsStamp()) {
         setNearestInteractable(nearActionTarget ? "STAMP NO REPO wall" : null);
       } else {
-        const step = Math.max(0, gameState.sceneProgress.annotationDraftingStep ?? 0);
-        const station = getAnnotationDraftingStation(step);
-        setNearestInteractable(nearActionTarget
-          ? carriedAnnotation ? `FILE ${carriedAnnotation.carriedLabel}` : `TAKE ${station.carriedLabel}`
-          : null);
+        setNearestInteractable(nearActionTarget ? this.sourceNotePromptText(actionTarget) : null);
       }
     }
     this.syncSourceNotePhysicalState(nearActionTarget ? actionTarget?.label ?? null : null);
@@ -2533,11 +2500,15 @@ export class ArchiveScene extends Phaser.Scene {
     const target = this.sourceNoteActionHint();
     if (!target || !this.isNearSourceNoteActionTarget(target)) {
       retroAudio.warning();
+      if (this.sourceNoteStatus === "stamped" && !this.sourceNoteWallNeedsStamp()
+        && !readAnnotationPacket(gameState.sceneProgress).ready) {
+        this.toast.show("FIND REMAINING NOTES", this.player.position, "warn");
+        setLatestMessage("Collect the remaining source, context, and selection notes in any order.");
+        return;
+      }
       const expected = this.sourceNoteStatus === "routed"
         ? getSourceNoteProvenanceStation(gameState.sceneProgress.sourceNoteProvenanceStep ?? 0).label
-        : this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete
-          ? this.annotationCarriedStation()?.carriedLabel ?? getAnnotationDraftingStation(gameState.sceneProgress.annotationDraftingStep ?? 0).label
-          : this.researchTable.label;
+        : this.researchTable.label;
       this.toast.show(`FOLLOW GOLD TRAIL TO ${expected.toUpperCase()}`, this.player.position, "warn");
       setLatestMessage(`Follow the gold trail to ${expected}.`);
       return;
@@ -2866,22 +2837,20 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
-      const step = Math.max(0, gameState.sceneProgress.annotationDraftingStep ?? 0);
-      const station = getAnnotationDraftingStation(step);
-      const stationPosition = ANNOTATION_DRAFTING_STATION_POSITIONS[station.id];
-      const carried = this.annotationCarriedStation();
-      const start = carried
-        ? { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 16) }
-        : { x: this.researchTable.x, y: this.researchTable.y };
-      const end = carried
-        ? { x: this.researchTable.x, y: this.researchTable.y }
-        : { ...stationPosition };
-      if (this.hideReachableSourceNoteCue(end, carried ? 54 : 28)) return;
-      const cueKey = `${this.currentRoomId}:annotation:${step}:${carried?.id ?? "none"}:${start.x},${start.y}->${end.x},${end.y}`;
+      const packet = readAnnotationPacket(gameState.sceneProgress);
+      // All remaining notes are visible; only guide the final trip to the table.
+      if (!packet.ready) {
+        this.clearSourceNoteRouteCue();
+        return;
+      }
+      const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
+      const end = { x: this.researchTable.x, y: this.researchTable.y };
+      if (this.hideReachableSourceNoteCue(end, 54)) return;
+      const cueKey = `${this.currentRoomId}:packet:${start.x},${start.y}->${end.x},${end.y}`;
       if (cueKey === this.sourceNoteRouteCueKey) return;
       this.clearSourceNoteRouteCue();
       this.sourceNoteRouteCueKey = cueKey;
-      this.drawSourceNoteRouteCue(carried ? "FILE" : "ANNOTATE", start, end, !carried);
+      this.drawSourceNoteRouteCue("FILE", start, end, false);
       return;
     }
     if (this.sourceNoteStatus !== "carried" && this.sourceNoteStatus !== "routed" && this.sourceNoteStatus !== "verified") {
@@ -2977,78 +2946,65 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
-    const carried = this.annotationCarriedStation();
-    if (carried) {
-      if (target.id !== "annotation-research-table") {
-        retroAudio.warning();
-        this.toast.show("FILE NOTE AT RESEARCH TABLE", this.player.position, "warn");
-        return;
-      }
-      this.fileAnnotationDraftingNote(carried.id);
+    if (target.id === "annotation-research-table") {
+      this.fileAnnotationDraftingNotes();
       return;
     }
 
     const stationId = this.annotationStationId(target);
     if (!stationId) {
       retroAudio.warning();
-      this.toast.show("FOLLOW GOLD TRAIL TO NOTE", this.player.position, "warn");
+      this.toast.show("FIND THE REMAINING NOTES", this.player.position, "warn");
       return;
     }
     this.collectAnnotationDraftingNote(stationId);
   }
 
   private collectAnnotationDraftingNote(stationId: AnnotationDraftingPromptId) {
-    const step = gameState.sceneProgress.annotationDraftingStep ?? 0;
-    const result = collectAnnotationDraftingSlip(step, stationId);
+    const result = gatherAnnotationNote(gameState.sceneProgress, stationId);
     if (!result.ok) {
       retroAudio.warning();
-      this.toast.show(`TAKE ${result.expectedStation.shortLabel} FIRST`, this.player.position, "warn");
+      this.toast.show("NOTE ALREADY COLLECTED", this.player.position, "info");
       setLatestMessage(result.message);
       return;
     }
 
-    gameState.sceneProgress.annotationDraftingCarried = result.station.order;
-    setHeldItem(result.station.carriedLabel);
-    this.createAnnotationSlipIcon(result.station.id);
+    gameState.sceneProgress.annotationGatheredMask = result.gatheredMask;
+    gameState.sceneProgress.annotationDraftingCarried = 0;
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    setHeldItem(packet.heldLabel);
+    this.createAnnotationSlipIcon();
     retroAudio.confirm();
-    this.toast.show(`${result.station.shortLabel} NOTE ACQUIRED`, this.player.position, "info");
+    this.toast.show(`${result.station.shortLabel} ${packet.gathered.length}/3`, this.player.position, "info");
     setLatestMessage(result.message);
     this.updateSourceNoteVerification();
+    saveGameNow();
   }
 
-  private fileAnnotationDraftingNote(stationId: AnnotationDraftingPromptId) {
-    const step = gameState.sceneProgress.annotationDraftingStep ?? 0;
-    const result = fileAnnotationDraftingSlip(step, stationId);
+  private fileAnnotationDraftingNotes() {
+    const result = fileAnnotationPacket(gameState.sceneProgress);
     if (!result.ok) {
       retroAudio.warning();
-      this.toast.show(`FILE ${result.expectedStation.shortLabel} NEXT`, this.player.position, "warn");
+      this.toast.show(result.message, this.player.position, "warn");
       setLatestMessage(result.message);
       return;
     }
 
-    gameState.sceneProgress.annotationDraftingCarried = 0;
-    gameState.sceneProgress.annotationDraftingStep = result.nextStep;
     if (this.annotationSlipIcon?.active) this.annotationSlipIcon.destroy();
     this.annotationSlipIcon = undefined;
     setHeldItem(null);
     retroAudio.stamp();
     this.addVerificationGlow();
 
-    if (result.complete || annotationDraftingComplete(result.nextStep)) {
-      this.completeAnnotationDrafting(result.message);
-      return;
-    }
-
-    const nextStation = getAnnotationDraftingStation(result.nextStep);
-    this.toast.show(`NOTE ${result.nextStep}/3 FILED`, this.player.position, "info");
-    setLatestMessage(`${result.message} Next: ${nextStation.label}.`);
-    this.updateSourceNoteVerification();
+    this.completeAnnotationDrafting(result.message);
   }
 
   private completeAnnotationDrafting(message: string) {
+    if (gameState.sceneProgress.annotationDraftingComplete) return;
     gameState.sceneProgress.annotationDraftingComplete = 1;
     gameState.sceneProgress.annotationDraftingStep = ANNOTATION_DRAFTING_PROMPTS.length;
     gameState.sceneProgress.annotationDraftingCarried = 0;
+    gameState.sceneProgress.annotationGatheredMask = 7;
     for (const documentId of ["source_note_047", "cross_reference_001", "sbu_annotation_001"]) {
       setDocumentWorkflowState(documentId, "ready_for_review", "expanded annotation drafted for provenance, context, and selectivity");
     }
@@ -3061,6 +3017,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.refreshRoomObjective();
     this.reliability.update();
     this.syncAnnotationDraftingStations();
+    this.syncSourceNotePhysicalState(this.researchTable.label, "DONE");
     this.clearSourceNoteRouteCue();
     this.syncWallState();
     this.toast.show(documentCount < 3 ? "DOCUMENTS UNSEALED" : "ANNOTATION FILED", this.player.position, "info");
@@ -3069,6 +3026,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (documentCount >= 3) {
       this.time.delayedCall(420, () => this.finishArchiveIfReady());
     }
+    saveGameNow();
   }
 
   private drawSourceNoteStampMark() {
@@ -3099,27 +3057,22 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private syncSourceNotePhysicalState(nearestStation: string | null, overrideVerb?: "DONE") {
-    if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
-      const step = Math.max(0, gameState.sceneProgress.annotationDraftingStep ?? 0);
-      const carried = this.annotationCarriedStation();
+    if (this.sourceNoteStatus === "stamped") {
+      const packet = readAnnotationPacket(gameState.sceneProgress);
       setPhysicalVerificationState({
-        verb: carried ? "ROUTE" : "CARRY",
-        carriedItem: carried?.carriedLabel ?? null,
+        verb: packet.complete ? "DONE" : packet.ready ? "ROUTE" : "CARRY",
+        carriedItem: packet.heldLabel,
         nearestStation,
-        completed: step,
+        completed: packet.complete ? 3 : packet.gathered.length,
         total: ANNOTATION_DRAFTING_STATIONS.length,
         flags: ANNOTATION_DRAFTING_STATIONS.map((station, index) => ({
           id: `annotation-${station.id}`,
           label: station.carriedLabel,
           kind: "annotation",
           destination: this.researchTable.label,
-          status: index < step
+          status: index < packet.filedCount
             ? "stamped"
-            : carried?.id === station.id
-              ? "carried"
-              : index === step
-                ? "routed"
-                : "waiting"
+            : packet.gathered.some((note) => note.id === station.id) ? "carried" : "waiting"
         }))
       });
       return;
@@ -3129,7 +3082,7 @@ export class ArchiveScene extends Phaser.Scene {
       verb: overrideVerb ?? this.verbForSourceNote(),
       carriedItem: this.sourceNoteStatus === "carried" ? "Source Note 47" : null,
       nearestStation,
-      completed: this.sourceNoteStatus === "stamped" ? 1 : 0,
+      completed: 0,
       total: 1,
       flags: [
         {
@@ -3149,15 +3102,9 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (!gameState.sceneProgress.annotationDraftingComplete) {
-      const station = getAnnotationDraftingStation(gameState.sceneProgress.annotationDraftingStep ?? 0);
       this.refreshRoomObjective();
-      this.dialog.show("ELENA", [
-        "The citation stamp proves the source trail.",
-        "Now carry each annotation note to the manuscript slots."
-      ], () => {
-        this.updateSourceNoteVerification();
-        this.toast.show(`FIND ${station.shortLabel} NOTE`, this.player.position, "info");
-      });
+      this.toast.show("GATHER 3 NOTES - THEN FILE", this.player.position, "info");
+      this.updateSourceNoteVerification();
       return;
     }
     if (this.sourceRoomDocumentCount() < 3) {
@@ -3220,11 +3167,11 @@ export class ArchiveScene extends Phaser.Scene {
     else if (position.x >= PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     if (!direction) return false;
 
-    const carriedAnnotation = this.annotationCarriedStation();
-    if (this.currentRoomId === "A1" && carriedAnnotation && !gameState.sceneProgress.annotationDraftingComplete) {
-      setLatestMessage(`${carriedAnnotation.carriedLabel} belongs in the research-table manuscript slot.`);
-      setObjective(`FILE: return ${carriedAnnotation.carriedLabel} to the research table before leaving A1.`);
-      this.toast.show("FILE NOTE BEFORE LEAVING", this.player.position, "warn");
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    if (this.currentRoomId === "A1" && packet.held.length && !packet.complete) {
+      setLatestMessage("Complete and file the annotation packet before leaving A1.");
+      this.refreshRoomObjective();
+      this.toast.show("FILE PACKET BEFORE LEAVING", this.player.position, "warn");
       this.exitCooldownUntil = this.time.now + 500;
       const push = direction === "north"
         ? { x: position.x, y: PLAY_BOUNDS.top + 18 }
@@ -3314,7 +3261,8 @@ export class ArchiveScene extends Phaser.Scene {
         provenanceStep: gameState.sceneProgress.sourceNoteProvenanceStep ?? 0,
         wallNeedsStamp: this.sourceNoteWallNeedsStamp(),
         annotationStep: gameState.sceneProgress.annotationDraftingStep ?? 0,
-        annotationCarried: Boolean(this.annotationCarriedStation()),
+        annotationCarried: readAnnotationPacket(gameState.sceneProgress).held.length > 0,
+        annotationProgress: gameState.sceneProgress,
         annotationComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
         collectedDocumentIds: this.collected,
         complete: this.sourceRoomComplete()

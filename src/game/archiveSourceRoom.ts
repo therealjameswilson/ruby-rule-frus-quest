@@ -1,7 +1,14 @@
 import { getAnnotationDraftingStation } from "./annotationDrafting";
 import { getSourceNoteProvenanceStation } from "./sourceNoteProvenance";
+import { annotationPacketObjective, readAnnotationPacket } from "./annotationPacket";
 
 export type SourceNoteStatus = "inactive" | "carried" | "routed" | "verified" | "stamped";
+
+export function restoredArchiveRepoWallCleared(progress: Readonly<Record<string, number>>) {
+  // Annotation notes were only reachable after stamping NO REPO in older saves.
+  return progress.archiveRepoWallCleared === 1 || progress.annotationDraftingComplete === 1
+    || readAnnotationPacket(progress).gathered.length > 0;
+}
 
 export function restoredArchiveSourceNoteStatus(input: {
   sceneProgress: Readonly<Record<string, number>>;
@@ -26,6 +33,7 @@ export function archiveSourceRoomObjective(input: {
   annotationStep: number;
   annotationCarried: boolean;
   annotationComplete: boolean;
+  annotationProgress?: Readonly<Record<string, number>>;
   collectedDocumentIds: ReadonlySet<string>;
   complete: boolean;
 }) {
@@ -38,6 +46,7 @@ export function archiveSourceRoomObjective(input: {
   if (input.sourceNoteStatus === "verified") return "STAMP AT TABLE";
   if (input.wallNeedsStamp) return "STAMP REPO WALL";
   if (!input.annotationComplete) {
+    if (input.annotationProgress) return annotationPacketObjective(input.annotationProgress);
     if (input.annotationCarried) return "FILE NOTE AT TABLE";
     return `TAKE ${getAnnotationDraftingStation(input.annotationStep).shortLabel}`;
   }

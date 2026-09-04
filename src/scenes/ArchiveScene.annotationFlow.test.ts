@@ -13,8 +13,8 @@ describe("ArchiveScene physical annotation flow", () => {
   it("keeps annotation in the room instead of reopening a choice modal", () => {
     expect(archiveSceneSource).not.toContain("ChoicePrompt");
     expect(archiveSceneSource).not.toContain("choice.show");
-    expect(archiveSceneSource).toContain("collectAnnotationDraftingSlip");
-    expect(archiveSceneSource).toContain("fileAnnotationDraftingSlip");
+    expect(archiveSceneSource.includes("gatherAnnotationNote")).toBe(true);
+    expect(archiveSceneSource.includes("fileAnnotationPacket")).toBe(true);
   });
 
   it("uses the Citation Stamp on NO REPO before revealing annotation stations", () => {
@@ -23,9 +23,11 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(archiveSceneSource).toContain("NO REPO CLEARED - ANNOTATE");
   });
 
-  it("persists a carried annotation slip through scene progress", () => {
-    expect(archiveSceneSource).toContain("sceneProgress.annotationDraftingCarried");
-    expect(archiveSceneSource).toContain("FILE NOTE BEFORE LEAVING");
+  it("saves discoveries immediately and keeps the packet in the room until filed", () => {
+    const collect = methodSource("collectAnnotationDraftingNote", "fileAnnotationDraftingNotes");
+    expect(collect.includes("sceneProgress.annotationGatheredMask = result.gatheredMask")).toBe(true);
+    expect(collect.includes("saveGameNow()")).toBe(true);
+    expect(archiveSceneSource.includes("FILE PACKET BEFORE LEAVING")).toBe(true);
   });
 
   it("does not mistake owning the Citation Stamp for completing provenance", () => {
