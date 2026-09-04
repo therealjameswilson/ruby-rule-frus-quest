@@ -4,6 +4,7 @@ import { clearChoiceState, setChoiceState, setLatestMessage } from "../game/stat
 import type { ChoiceOption } from "../game/types";
 import { bindPointerDown, getInput } from "../input/InputState";
 import { retroAudio } from "./audio";
+import { choiceLayout } from "./choiceLayout";
 
 type ChoiceCallback = (option: ChoiceOption) => void;
 
@@ -16,29 +17,31 @@ export class ChoicePrompt {
   private readonly container: Phaser.GameObjects.Container;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly sourceText: Phaser.GameObjects.Text;
+  private readonly box: Phaser.GameObjects.Rectangle;
+  private readonly border: Phaser.GameObjects.Rectangle;
   private readonly optionObjects: Phaser.GameObjects.GameObject[] = [];
   private options: ChoiceOption[] = [];
   private onChoose?: ChoiceCallback;
 
   constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    const box = scene.add.rectangle(128, 132, 238, 156, color(PALETTE.black), 0.98);
-    const border = scene.add.rectangle(128, 132, 238, 156).setStrokeStyle(2, color(PALETTE.terminalCyan));
-    this.titleText = scene.add.text(18, 60, "", {
+    const dim = scene.add.rectangle(128, 120, 256, 240, color(PALETTE.black), 0.65);
+    this.box = scene.add.rectangle(128, 120, 238, 156, color(PALETTE.black), 0.98);
+    this.border = scene.add.rectangle(128, 120, 238, 156).setStrokeStyle(1, color(PALETTE.terminalCyan));
+    this.titleText = scene.add.text(20, 60, "", {
       fontFamily: "monospace",
-      fontSize: "7px",
+      fontSize: "8px",
       color: PALETTE.terminalCyan,
-      wordWrap: { width: 220, useAdvancedWrap: true },
       lineSpacing: 2
     });
-    this.sourceText = scene.add.text(18, 96, "", {
+    this.sourceText = scene.add.text(20, 96, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp,
-      wordWrap: { width: 220, useAdvancedWrap: true },
-      lineSpacing: 1
+      lineSpacing: 2
     });
-    this.container = scene.add.container(0, 0, [box, border, this.titleText, this.sourceText]).setDepth(950).setVisible(false);
+    this.container = scene.add.container(0, 0, [dim, this.box, this.border, this.titleText, this.sourceText])
+      .setDepth(950).setScrollFactor(0).setVisible(false);
   }
 
   get active() {
@@ -48,23 +51,27 @@ export class ChoicePrompt {
   show(title: string, options: ChoiceOption[], onChoose: ChoiceCallback) {
     this.options = options;
     this.onChoose = onChoose;
-    const copy = formatChoiceCopy(title);
-    this.titleText.setText(copy.question);
-    this.sourceText.setText(copy.source);
+    const layout = choiceLayout(title, options);
+    this.box.setPosition(128, layout.top + layout.height / 2).setSize(238, layout.height);
+    this.border.setPosition(128, layout.top + layout.height / 2).setSize(238, layout.height);
+    this.titleText.setFontSize(layout.fontSize).setPosition(20, layout.top + layout.questionY).setText(layout.questionText);
+    this.sourceText.setPosition(20, layout.top + layout.contextY).setText(layout.contextText);
     for (const object of this.optionObjects) object.destroy();
     this.optionObjects.length = 0;
 
     options.forEach((option, index) => {
+      const placement = layout.rows[index];
+      const y = layout.top + placement.y;
       const row = this.scene.add
-        .rectangle(128, 129 + index * 18, 218, 15, color(index % 2 === 0 ? PALETTE.shadowNavy : PALETTE.black), 0.98);
+        .rectangle(128, y + placement.height / 2, 218, placement.height, color(index % 2 === 0 ? PALETTE.shadowNavy : PALETTE.black), 0.98);
       row.setStrokeStyle(1, color(PALETTE.stoneDark), 0.8);
       bindPointerDown(row, () => this.choose(option.key));
       const optionText = this.scene.add
-        .text(23, 125 + index * 18, `[ ${option.key} ] ${compactLine(option.label, 32)}`, {
+        .text(25, y + 4, placement.text, {
           fontFamily: "monospace",
-          fontSize: "7px",
+          fontSize: `${layout.fontSize}px`,
           color: PALETTE.creamPaper,
-          wordWrap: { width: 210, useAdvancedWrap: true }
+          lineSpacing: 2
         });
       bindPointerDown(optionText, () => this.choose(option.key));
       this.optionObjects.push(row, optionText);
@@ -90,6 +97,7 @@ export class ChoicePrompt {
   }
 
   private choose(key: string) {
+    if (!this.active) return;
     const option = this.options.find((item) => item.key === key);
     if (!option) return;
     retroAudio.confirm();
@@ -98,21 +106,4 @@ export class ChoicePrompt {
     this.hide();
     callback?.(option);
   }
-}
-
-function formatChoiceCopy(title: string) {
-  const [questionPart, sourcePart = ""] = title.split(/\n\s*\n/);
-  const question = compactLine(questionPart.replace(/\s*\n\s*/g, " - "), 118);
-  const source = sourcePart
-    ? `SOURCE: ${compactLine(sourcePart.replace(/\s*\n\s*/g, " "), 128)}`
-    : "";
-  return { question, source };
-}
-
-function compactLine(value: string, maxChars: number) {
-  const text = value.replace(/\s+/g, " ").trim();
-  if (text.length <= maxChars) return text;
-  const cut = text.slice(0, Math.max(0, maxChars - 3));
-  const lastSpace = cut.lastIndexOf(" ");
-  return `${(lastSpace > 18 ? cut.slice(0, lastSpace) : cut).trim()}...`;
 }

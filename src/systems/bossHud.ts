@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import { ACCESSIBILITY_OVERLAYS } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
-import { DANNE_BOSS_HUD_SLICES, ensureDanneUiSlices } from "../game/danneUiSlices";
 import { setLatestMessage } from "../game/state";
 import { addColorblindModeListener, isColorblindModeEnabled } from "./accessibilitySettings";
 
@@ -31,44 +30,45 @@ class BossHudController {
     this.maxHp = Math.max(1, maxHp);
     this.currentHp = this.maxHp;
     this.phaseCount = Math.max(1, Math.min(4, phaseCount));
-    ensureDanneUiSlices(scene);
-    const bg = scene.add.rectangle(GAME_WIDTH / 2, 23, 232, 47, color(PALETTE.black), 0.01).setScrollFactor(0);
-    this.frame = scene.textures.exists(DANNE_BOSS_HUD_SLICES.empty.key)
-      ? scene.add.image(GAME_WIDTH / 2, 24, DANNE_BOSS_HUD_SLICES.empty.key).setScrollFactor(0)
-      : scene.add.rectangle(GAME_WIDTH / 2, 24, 224, 40, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.classNetRed)).setScrollFactor(0);
-    this.fill = scene.add.rectangle(135, 21, 1, 9, color(PALETTE.buckramHighlight), 0.92)
+    const bg = scene.add.rectangle(GAME_WIDTH / 2, 31, 238, 14, color(PALETTE.black), 0.98).setScrollFactor(0);
+    this.frame = scene.add.rectangle(120, 31, 150, 8, color(PALETTE.deepRuby))
+      .setStrokeStyle(1, color(PALETTE.stoneGray)).setScrollFactor(0);
+    this.fill = scene.add.rectangle(46, 31, 1, 6, color(PALETTE.buckramHighlight), 0.92)
       .setOrigin(0, 0.5)
       .setScrollFactor(0);
     this.fillPattern = scene.textures.exists("hp_cell_full" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
-      ? scene.add.tileSprite(135, 21, 1, 9, "hp_cell_full" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+      ? scene.add.tileSprite(46, 31, 1, 6, "hp_cell_full" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
         .setOrigin(0, 0.5)
         .setScrollFactor(0)
         .setVisible(false)
       : undefined;
-    this.glow = scene.add.rectangle(GAME_WIDTH / 2, 24, 229, 43, color(PALETTE.classNetRed), 0)
-      .setStrokeStyle(2, color(PALETTE.classNetRed), 0)
+    this.glow = scene.add.rectangle(120, 31, 150, 8, color(PALETTE.classNetRed), 0)
+      .setStrokeStyle(1, color(PALETTE.classNetRed), 0)
       .setScrollFactor(0);
     this.criticalIcon = scene.textures.exists("boss_hp_critical_excl" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
-      ? scene.add.image(202, 21, "boss_hp_critical_excl" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+      ? scene.add.image(198, 31, "boss_hp_critical_excl" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+        .setDisplaySize(8, 8)
         .setScrollFactor(0)
         .setVisible(false)
       : undefined;
     this.weaknessIcon = scene.textures.exists("weakness_target" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
-      ? scene.add.image(123, 21, "weakness_target" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+      ? scene.add.image(40, 31, "weakness_target" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+        .setDisplaySize(8, 8)
         .setScrollFactor(0)
         .setVisible(false)
       : undefined;
-    const label = scene.add.text(38, 38, bossId.toUpperCase(), {
+    const label = scene.add.text(12, 28, bossId.toUpperCase(), {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "6px",
       color: PALETTE.creamPaper
-    }).setOrigin(0.5).setScrollFactor(0);
+    }).setScrollFactor(0);
     for (let index = 0; index < this.phaseCount; index += 1) {
-      this.phaseGems.push(scene.add.ellipse(104 + index * 19, 37, 10, 10, color(PALETTE.stoneGray), 0.88)
+      this.phaseGems.push(scene.add.ellipse(207 + index * 10, 31, 6, 6, color(PALETTE.stoneGray), 0.88)
         .setStrokeStyle(1, color(PALETTE.black))
         .setScrollFactor(0));
       const phaseGlyph = scene.textures.exists("boss_phase_spent" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
-        ? scene.add.image(104 + index * 19, 37, "boss_phase_spent" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+        ? scene.add.image(207 + index * 10, 31, "boss_phase_spent" satisfies keyof typeof ACCESSIBILITY_OVERLAYS)
+          .setDisplaySize(8, 8)
           .setScrollFactor(0)
           .setVisible(false)
         : undefined;
@@ -102,12 +102,12 @@ class BossHudController {
     this.currentHp = hp;
     this.currentPhase = currentPhase;
     const ratio = hp / this.maxHp;
-    const fillWidth = Math.max(1, Math.round(113 * ratio));
+    const fillWidth = Math.max(1, Math.round(148 * ratio));
     const highContrast = isColorblindModeEnabled();
-    this.fill.setSize(fillWidth, 9);
-    this.fillPattern?.setSize(fillWidth, 9).setVisible(highContrast && hp > 0);
+    this.fill.setSize(fillWidth, 6).setVisible(hp > 0);
+    this.fillPattern?.setSize(fillWidth, 6).setVisible(highContrast && hp > 0);
     const critical = ratio < 0.25;
-    this.glow.setAlpha(critical ? 0.18 : 0).setStrokeStyle(2, color(PALETTE.classNetRed), critical ? 0.8 : 0);
+    this.glow.setAlpha(critical ? 0.18 : 0).setStrokeStyle(1, color(PALETTE.classNetRed), critical ? 0.8 : 0);
     this.criticalIcon?.setVisible(highContrast && critical && hp > 0);
     this.weaknessIcon?.setVisible(highContrast && hp > 0);
     for (let index = 0; index < this.phaseGems.length; index += 1) {

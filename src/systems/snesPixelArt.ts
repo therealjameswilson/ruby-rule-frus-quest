@@ -171,6 +171,7 @@ interface SnesEmbassyCableRoomTileRoomOptions {
 interface SnesBlackVaultTileRoomOptions {
   depth?: number;
   track?: TrackFn;
+  combatReady?: boolean;
 }
 
 interface SnesSenateHearingChamberTileRoomOptions {
@@ -1169,6 +1170,10 @@ export function addSnesBlackVaultTileRoom(scene: Phaser.Scene, options: SnesBlac
   const container = keepTagged(scene.add.container(0, 0).setDepth(depth), "snes-black-vault-tile-room", options.track);
   const add = <T extends Phaser.GameObjects.GameObject>(object: T, name: string) => {
     container.add(tag(object, name));
+    if (options.combatReady && /review-station|treaty-fragment|room-title|altar-plaque|altar-label|blast-door-label/.test(name)) {
+      // These are painted signposts, not interactables or collision geometry.
+      (object as T & Phaser.GameObjects.Components.Visible).setVisible(false);
+    }
     return object;
   };
 

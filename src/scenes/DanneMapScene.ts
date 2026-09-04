@@ -222,6 +222,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 10, "", {
       fontFamily: "monospace",
       fontSize: "7px",
@@ -418,6 +419,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private drawDanneArenaLayer(phaseIndex: number) {
     if (this.geometry.sceneKey !== "BlackVaultLairScene") return;
     this.danneArena?.destroy();
+    this.danneArena = undefined;
+    // Only the live boss and its attack tells belong in the combat lane.
+    if (this.danneBoss?.isActive) return;
     const secretPhaseAvailable = getTreatyFragmentCount() >= 2;
     this.danneArena = addSnesDanneArena(this, {
       x: 128,
@@ -435,7 +439,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       addSnesCherryBlossomGardenTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
-      addSnesBlackVaultTileRoom(this, { depth: -18 });
+      addSnesBlackVaultTileRoom(this, { depth: -18, combatReady: true });
     }
     if (this.geometry.sceneKey === "SenateHearingChamberScene") {
       addSnesSenateHearingChamberTileRoom(this, { depth: -18 });

@@ -178,18 +178,17 @@ export class DanneBoss {
     this.shortcutChoice = new ChoicePrompt(scene);
     this.retryChoice = new ChoicePrompt(scene);
     this.pressureToast = new FeedbackToast(scene);
-    const clockBg = scene.add.rectangle(128, 55, 224, 23, color(PALETTE.black), 0.88)
-      .setStrokeStyle(1, color(PALETTE.goldStamp))
+    const clockBg = scene.add.rectangle(128, 46, 238, 14, color(PALETTE.black), 0.98)
       .setScrollFactor(0);
-    this.clockFill = scene.add.rectangle(21, 60, 1, 5, color(PALETTE.goldStamp), 0.9)
+    this.clockFill = scene.add.rectangle(12, 51, 1, 2, color(PALETTE.goldStamp), 0.9)
       .setOrigin(0, 0.5)
       .setScrollFactor(0);
-    this.clockText = scene.add.text(21, 46, "", {
+    this.clockText = scene.add.text(12, 41, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper
     }).setScrollFactor(0);
-    this.clockStatusText = scene.add.text(235, 46, "", {
+    this.clockStatusText = scene.add.text(244, 41, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp,
@@ -640,10 +639,10 @@ export class DanneBoss {
     });
     this.statutoryYear = readout.elapsedYears;
     const ratio = Phaser.Math.Clamp(readout.progressRatio, 0, 1);
-    this.clockFill.setSize(Math.max(1, Math.round(214 * ratio)), 5);
+    this.clockFill.setSize(Math.max(1, Math.round(232 * ratio)), 2);
     const urgent = readout.status === "at_risk" || readout.status === "deadline_missed";
     this.clockFill.setFillStyle(color(this.defeated ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp), 0.92);
-    this.clockText.setText(`STATUTORY CLOCK ${readout.elapsedYears.toFixed(1)} / ${readout.deadlineYears} YEARS`);
+    this.clockText.setText(`STATUTORY CLOCK ${readout.elapsedYears.toFixed(1)}/${readout.deadlineYears}`);
     this.clockStatusText
       .setText(this.defeated
         ? "DANN-E CLEARED"
@@ -688,7 +687,7 @@ export class DanneBoss {
       this.clockContainer.setVisible(true);
       showBossHud(this.scene, "danne", this.maxHp, this.phaseCount);
       setBossHp(this.hp, this.phaseIndex());
-      setObjective("Reject the shortcut. Defeat DANN-E, then route the cleared record to the bindery.");
+      this.onPhaseChange?.(this.phase);
       setLatestMessage("Shortcut rejected. DANN-E remains vulnerable to the complete human-reviewed record.");
       retroAudio.warning();
     });

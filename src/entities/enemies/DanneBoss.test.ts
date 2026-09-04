@@ -111,14 +111,15 @@ function fixture(phase: "colossus" | "swarm" | "cloud" = "colossus") {
   };
   const onDefeated = vi.fn();
   const onRetreat = vi.fn();
+  const onPhaseChange = vi.fn();
   const boss = new DanneBoss(scene as unknown as Phaser.Scene, {
     player: player as unknown as Player, secretAscendant: false, quickFight: false,
-    onDefeated, onRetreat, onBadEnding: vi.fn(), onPhaseChange: vi.fn()
+    onDefeated, onRetreat, onBadEnding: vi.fn(), onPhaseChange
   });
   const internals = boss as unknown as BossInternals;
   internals.beginPhase(phase);
   scene.time.now = 1000;
-  return { scene, player, boss, internals, onDefeated, onRetreat };
+  return { scene, player, boss, internals, onDefeated, onRetreat, onPhaseChange };
 }
 
 describe("DANN-E final-review combat", () => {
@@ -244,13 +245,15 @@ describe("DANN-E final-review combat", () => {
   });
 
   it("keeps the clock out of the shortcut choice and restores it on rejection", () => {
-    const { boss, internals } = fixture();
+    const { boss, internals, onPhaseChange } = fixture("cloud");
+    onPhaseChange.mockClear();
     internals.offerShortcut("The statutory deadline expired.");
     expect(boss.inputLocked).toBe(true);
     expect(internals.clockContainer.visible).toBe(false);
     internals.shortcutChoice.choose("B");
     expect(boss.inputLocked).toBe(false);
     expect(internals.clockContainer.visible).toBe(true);
+    expect(onPhaseChange).toHaveBeenCalledExactlyOnceWith("cloud");
     expect(gameState.sceneProgress.danneBadEnding).toBeFalsy();
   });
 
