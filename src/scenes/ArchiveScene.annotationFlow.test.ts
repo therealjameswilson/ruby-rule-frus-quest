@@ -30,7 +30,8 @@ describe("ArchiveScene physical annotation flow", () => {
 
   it("does not mistake owning the Citation Stamp for completing provenance", () => {
     const restore = methodSource("restoreSourceNoteProgress", "enterRoom");
-    expect(restore).toContain("sceneProgress.archiveSourceNoteStamped");
+    expect(restore).toContain("restoredArchiveSourceNoteStatus(");
+    expect(restore).toContain("sceneProgress: gameState.sceneProgress");
     expect(restore).toContain('processStamps.includes("archive")');
     expect(restore).not.toContain('hasProcessItem("citation_stamp")');
   });

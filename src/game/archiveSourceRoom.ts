@@ -1,3 +1,51 @@
+import { getAnnotationDraftingStation } from "./annotationDrafting";
+import { getSourceNoteProvenanceStation } from "./sourceNoteProvenance";
+
+export type SourceNoteStatus = "inactive" | "carried" | "routed" | "verified" | "stamped";
+
+export function restoredArchiveSourceNoteStatus(input: {
+  sceneProgress: Readonly<Record<string, number>>;
+  heldItem: string | null;
+  hasArchiveStamp: boolean;
+  sourceNoteCollected: boolean;
+}): SourceNoteStatus {
+  const progress = input.sceneProgress;
+  if (progress.annotationDraftingComplete || progress.archiveSourceNoteStamped || input.hasArchiveStamp) return "stamped";
+  if (progress.sourceNoteProvenanceComplete) return "verified";
+  if (progress.archiveSourceNoteRouted || (progress.sourceNoteProvenanceStep ?? 0) > 0) return "routed";
+  // Older saves did not record routing before the first ledger. Recover the
+  // note in hand so the table can restart that step without losing the item.
+  if (input.heldItem === "Source Note 47" || input.sourceNoteCollected) return "carried";
+  return "inactive";
+}
+
+export function archiveSourceRoomObjective(input: {
+  sourceNoteStatus: SourceNoteStatus;
+  provenanceStep: number;
+  wallNeedsStamp: boolean;
+  annotationStep: number;
+  annotationCarried: boolean;
+  annotationComplete: boolean;
+  collectedDocumentIds: ReadonlySet<string>;
+  complete: boolean;
+}) {
+  if (input.complete) return "EXIT EAST - NETWORK";
+  if (input.sourceNoteStatus === "inactive") return "PICK UP SOURCE NOTE";
+  if (input.sourceNoteStatus === "carried") return "NOTE TO TABLE";
+  if (input.sourceNoteStatus === "routed") {
+    return `CHECK ${getSourceNoteProvenanceStation(input.provenanceStep).shortLabel}`;
+  }
+  if (input.sourceNoteStatus === "verified") return "STAMP AT TABLE";
+  if (input.wallNeedsStamp) return "STAMP REPO WALL";
+  if (!input.annotationComplete) {
+    if (input.annotationCarried) return "FILE NOTE AT TABLE";
+    return `TAKE ${getAnnotationDraftingStation(input.annotationStep).shortLabel}`;
+  }
+  if (!input.collectedDocumentIds.has("telegram")) return "PICK UP TELEGRAM";
+  if (!input.collectedDocumentIds.has("cross-reference")) return "PICK UP CROSS-REF";
+  return "EXIT EAST - NETWORK";
+}
+
 export type ArchiveSourceRoomDocumentId = "source-note" | "telegram" | "cross-reference";
 
 export interface ArchiveSourceRoomDocumentDefinition {
