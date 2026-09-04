@@ -43,8 +43,14 @@ describe("normal quest climax route", () => {
   it("names the actual return room for both the main and legacy entrances", () => {
     expect(blackVaultReturnRoute(true)).toEqual({ sceneKey: "SilentReadScene", label: "Return to Proof" });
     expect(blackVaultReturnRoute(false)).toEqual({ sceneKey: "ArchiveScene", label: "Return to Archive" });
-    expect(mapSource).toContain("blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead)).label");
-    expect(mapSource).toContain("blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead)).sceneKey");
+    expect(mapSource).toContain("blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead), Boolean(nextArchiveResearchReview())).label");
+    expect(mapSource).toContain("blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead), Boolean(nextArchiveResearchReview())).sceneKey");
+  });
+
+  it("routes an old incomplete research packet back to its repair desk", () => {
+    expect(blackVaultReturnRoute(true, true)).toEqual({ sceneKey: "ArchiveScene", label: "Return to Archive" });
+    expect(blackVaultReturnRoute(false, true)).toEqual({ sceneKey: "ArchiveScene", label: "Return to Archive" });
+    expect(mapSource).toContain("Complete the missing review at the Archive Research Table.");
   });
   it("does not let the unearned reward intercept the boss-core approach", () => {
     const geometry = DANNE_SCENE_GEOMETRY.BlackVaultLairScene;

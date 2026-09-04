@@ -1,8 +1,8 @@
 import type { Interactable, Position } from "./types";
 import { nearestInteractable } from "../systems/interaction";
 
-export function blackVaultReturnRoute(enteredFromProof: boolean) {
-  return enteredFromProof
+export function blackVaultReturnRoute(enteredFromProof: boolean, researchReviewMissing = false) {
+  return enteredFromProof && !researchReviewMissing
     ? { sceneKey: "SilentReadScene", label: "Return to Proof" } as const
     : { sceneKey: "ArchiveScene", label: "Return to Archive" } as const;
 }

@@ -8,6 +8,8 @@ import { choiceLayout } from "./choiceLayout";
 
 type ChoiceCallback = (option: ChoiceOption) => void;
 
+export const CHOICE_PROMPT_OPEN_EVENT = "ruby-rule-choice-prompt-open";
+
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
@@ -49,6 +51,7 @@ export class ChoicePrompt {
   }
 
   show(title: string, options: ChoiceOption[], onChoose: ChoiceCallback) {
+    this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.options = options;
     this.onChoose = onChoose;
     const layout = choiceLayout(title, options);

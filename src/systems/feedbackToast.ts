@@ -8,6 +8,7 @@ import {
   type ToastPlacement
 } from "./feedbackToastPlacement";
 import { snapPixel } from "./pixelPerfect";
+import { CHOICE_PROMPT_OPEN_EVENT } from "./verification";
 
 export {
   computeToastPlacement,
@@ -29,6 +30,7 @@ type ToastTone = "warn" | "info";
 // swallowed before, most importantly the "nothing to interact with" cue when the
 // player presses the primary action away from any target (live audit, 2026-06-15).
 export class FeedbackToast {
+  private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
   private readonly panel: Phaser.GameObjects.Rectangle;
   private readonly border: Phaser.GameObjects.Rectangle;
@@ -37,6 +39,7 @@ export class FeedbackToast {
   private active = false;
 
   constructor(scene: Phaser.Scene, depth = 1200) {
+    this.scene = scene;
     this.panel = scene.add.rectangle(0, 0, 80, 16, color(PALETTE.shadowNavy), 0.96).setOrigin(0.5);
     this.border = scene.add.rectangle(0, 0, 82, 18).setStrokeStyle(1, color(PALETTE.goldStamp)).setOrigin(0.5);
     this.text = scene.add
@@ -51,6 +54,8 @@ export class FeedbackToast {
       .container(0, 0, [this.panel, this.border, this.text])
       .setDepth(depth)
       .setVisible(false);
+    scene.events.on(CHOICE_PROMPT_OPEN_EVENT, this.hideForChoice);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.detachChoiceListener);
   }
 
   get visible() {
@@ -90,7 +95,20 @@ export class FeedbackToast {
     this.container.setAlpha(toastAlpha(this.elapsed));
   }
 
+  hide() {
+    this.active = false;
+    this.container.setVisible(false);
+  }
+
   destroy() {
+    this.detachChoiceListener();
     this.container.destroy();
   }
+
+  private readonly hideForChoice = () => this.hide();
+
+  private readonly detachChoiceListener = () => {
+    this.scene.events.off(CHOICE_PROMPT_OPEN_EVENT, this.hideForChoice);
+    this.scene.events.off(Phaser.Scenes.Events.SHUTDOWN, this.detachChoiceListener);
+  };
 }

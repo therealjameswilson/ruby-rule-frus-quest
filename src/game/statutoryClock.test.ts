@@ -30,7 +30,7 @@ describe("statutory FRUS clock", () => {
     expect(readout.deadlineYears).toBe(STATUTORY_DEADLINE_YEARS);
     expect(readout.yearsRemaining).toBe(10);
     expect(readout.status).toBe("running");
-    expect(readout.sourceUrl).toBe("https://history.state.gov/historicaldocuments/about-frus");
+    expect(readout.sourceUrl).toBe("https://history.state.gov/historicaldocuments/frus1989-92v31/abouttheseries");
   });
 
   it("raises the clock floor as production nears final assembly", () => {

@@ -19,7 +19,7 @@ describe("SilentReadScene physical proofing flow", () => {
     expect(reviewSource).toContain('id: "mechanical-fix"');
     expect(reviewSource).toContain('"visible-bracket"');
     expect(reviewSource).toContain('destination: "editor-desk"');
-    expect(reviewSource).toContain('label: "[Text not declassified]"');
+    expect(reviewSource).toContain('label: "[3 lines not declassified]"');
     expect(sceneSource).toContain("option.value !== decision.correctValue");
     expect(sceneSource).toContain("visible bracket added during human editor verification");
     expect(sceneSource).toContain("clearDocumentUndisclosedDeletion");

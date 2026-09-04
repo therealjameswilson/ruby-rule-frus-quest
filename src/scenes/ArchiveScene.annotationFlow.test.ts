@@ -10,11 +10,33 @@ function methodSource(name: string, nextName: string) {
 }
 
 describe("ArchiveScene physical annotation flow", () => {
-  it("keeps annotation in the room instead of reopening a choice modal", () => {
-    expect(archiveSceneSource).not.toContain("ChoicePrompt");
-    expect(archiveSceneSource).not.toContain("choice.show");
+  it("keeps note gathering spatial, with a single coverage decision at filing", () => {
+    const collect = methodSource("collectAnnotationDraftingNote", "fileAnnotationDraftingNotes");
+    expect(collect).not.toContain("reviewResearchDecision");
+    const file = methodSource("fileAnnotationDraftingNotes", "reviewResearchDecision");
+    expect(file).toContain("nextArchiveResearchReview()");
+    expect(file).toContain("this.reviewResearchDecision(review");
     expect(archiveSceneSource.includes("gatherAnnotationNote")).toBe(true);
     expect(archiveSceneSource.includes("fileAnnotationPacket")).toBe(true);
+  });
+
+  it("earns standards at the source table and lets old saves repair missing reviews", () => {
+    const action = methodSource("handleSourceNoteAction", "sourceNoteWallNeedsStamp");
+    expect(action).toContain('this.reviewResearchDecision("standards"');
+    const documents = methodSource("addDocumentInteractables", "addRoomEnemy");
+    expect(documents).toContain('id: "research-review"');
+    expect(documents).toContain("this.finishMissingResearchReview()");
+    const complete = methodSource("sourceRoomComplete", "sourceRoomDocumentCount");
+    expect(complete).toContain("!nextArchiveResearchReview()");
+  });
+
+  it("freezes movement and DANN-E while considering a research decision", () => {
+    const update = archiveSceneSource.slice(archiveSceneSource.indexOf("  update("));
+    const choice = update.slice(update.indexOf("if (this.researchChoice.active)"), update.indexOf("if (input.menuJustPressed)"));
+    expect(choice).toContain("this.updateDanneLurker(delta, false)");
+    expect(choice).toContain("this.player.update(delta, false)");
+    expect(choice).toContain("this.researchChoice.updateInput()");
+    expect(choice).toContain("return;");
   });
 
   it("uses the Citation Stamp on NO REPO before revealing annotation stations", () => {

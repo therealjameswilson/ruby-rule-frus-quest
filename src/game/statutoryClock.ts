@@ -1,6 +1,7 @@
 import type { StandardViolation } from "../systems/standardsDamage";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 
-export const STATUTORY_CLOCK_SOURCE_URL = "https://history.state.gov/historicaldocuments/about-frus";
+export const STATUTORY_CLOCK_SOURCE_URL = ABOUT_SERIES_SOURCE.url;
 export const STATUTORY_DEADLINE_YEARS = 30;
 export const STATUTORY_START_YEAR = 20;
 export const STATUTORY_COMPLETION_PRESSURE_YEARS = 8.5;

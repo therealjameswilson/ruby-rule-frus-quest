@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   computeToastPlacement,
@@ -47,6 +48,16 @@ describe("computeToastPlacement", () => {
     const bounds = { top: 54, bottom: 214, left: 8, right: 248 };
     const placement = computeToastPlacement({ x: 12, y: 120 }, bounds, 26, 500);
     expect(placement.x).toBe(128);
+  });
+});
+
+describe("choice prompt layering", () => {
+  it("hides transient feedback before a decision opens", () => {
+    const toastSource = readFileSync(new URL("./feedbackToast.ts", import.meta.url), "utf8");
+    const choiceSource = readFileSync(new URL("./verification.ts", import.meta.url), "utf8");
+    expect(choiceSource).toContain("this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT)");
+    expect(toastSource).toContain("scene.events.on(CHOICE_PROMPT_OPEN_EVENT, this.hideForChoice)");
+    expect(toastSource).toContain("this.container.setVisible(false)");
   });
 });
 

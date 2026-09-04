@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 import type { ProcessItemId } from "./constants";
 import { consumeResumePlayerSpawn, createGameSaveData, gameState, resetGameState, restoreGameSaveData, setSceneState } from "./state";
 import {
@@ -33,12 +34,21 @@ describe("physical Silent Read review", () => {
     expect(gameState.documentCandidates).toEqual(saved.state.documentCandidates);
     resetGameState();
   });
-  it("requires visible treatment and an actual source comparison at the two decision desks", () => {
+  it("turns the About the Series rules into four source-linked decisions", () => {
     const bracket = silentReadDecision("mechanical-fix")!;
+    const classifiedSource = silentReadDecision("classified-source")!;
+    const withheldDocument = silentReadDecision("referral-equity")!;
     const date = silentReadDecision("proof-date")!;
     expect(bracket.options.find((option) => option.key === "B")?.value).toBe(bracket.correctValue);
+    expect(classifiedSource.options.find((option) => option.key === "A")?.value).toBe(classifiedSource.correctValue);
+    expect(withheldDocument.options.find((option) => option.key === "A")?.value).toBe(withheldDocument.correctValue);
     expect(date.options.find((option) => option.key === "A")?.value).toBe(date.correctValue);
-    for (const decision of [bracket, date]) {
+    expect(classifiedSource.correctValue).toBe("excerpt");
+    expect(withheldDocument.options[0].label).toContain("source note");
+    expect(withheldDocument.options[0].label).toContain("page count");
+    expect(date.correctValue).toBe("conversation");
+    for (const decision of [bracket, classifiedSource, withheldDocument, date]) {
+      expect(decision.sourceUrl).toBe(ABOUT_SERIES_SOURCE.url);
       expect(decision.options.filter((option) => option.value === decision.correctValue)).toHaveLength(1);
       expect(decision.failureMessage.length).toBeLessThanOrEqual(32);
     }

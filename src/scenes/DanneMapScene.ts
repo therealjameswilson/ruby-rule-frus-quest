@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { registerDanneAnims } from "../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { blackVaultApproachTargets, blackVaultReturnRoute } from "../game/blackVaultApproach";
+import { nextArchiveResearchReview } from "../game/archiveResearchReview";
 import { unlockCodexEntry } from "../game/codex";
 import {
   DANNE_BOSS_SPRITE_ASSET,
@@ -235,7 +236,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       .map((definition) => ({
         id: definition.id,
         label: this.geometry.sceneKey === "BlackVaultLairScene" && definition.action === "return-office"
-          ? blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead)).label
+          ? blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead), Boolean(nextArchiveResearchReview())).label
           : definition.label,
         x: definition.x,
         y: definition.y,
@@ -555,7 +556,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private handleInteraction(definition: DanneSceneInteractionDefinition) {
     if (definition.action === "return-office") {
       const returnTarget = this.geometry.sceneKey === "BlackVaultLairScene"
-        ? blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead)).sceneKey
+        ? blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead), Boolean(nextArchiveResearchReview())).sceneKey
         : this.geometry.exitTarget;
       transitionTo(this, returnTarget);
       return;
@@ -605,7 +606,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
         const missing = readiness.missingSummary.slice(0, 3).join(", ");
         this.dialog.show("BLACK VAULT SEAL", [
           `The final review packet is incomplete: ${missing}.`,
-          "Return with the proofed record, Buckram Key, and Red Pencil."
+          nextArchiveResearchReview()
+            ? "Use the south exit. Complete the missing review at the Archive Research Table."
+            : "Return with the proofed record, Buckram Key, and Red Pencil."
         ]);
         setObjective(`Black Vault locked: ${missing}.`);
         retroAudio.warning();

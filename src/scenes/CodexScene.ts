@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { ABOUT_SERIES_SOURCE } from "../game/aboutSeries";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { CODEX_CATEGORIES, getCodexEntries, getCodexReadout, type CodexCategory, type CodexEntryReadout } from "../game/codex";
 import { gameState, setLatestMessage, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
@@ -66,6 +67,9 @@ export class CodexScene extends Phaser.Scene {
     if (this.time.now >= this.readyAt && (input.pauseJustPressed || input.selectJustPressed || input.bJustPressed)) {
       this.close();
       return;
+    }
+    if (this.time.now >= this.readyAt && (input.aJustPressed || input.confirmJustPressed)) {
+      this.openSelectedSource();
     }
     if (input.navLeftJustPressed) {
       this.categoryIndex = (this.categoryIndex + CODEX_CATEGORIES.length - 1) % CODEX_CATEGORIES.length;
@@ -160,13 +164,13 @@ export class CodexScene extends Phaser.Scene {
   }
 
   private drawEntryList(objects: Phaser.GameObjects.GameObject[], entries: CodexEntryReadout[]) {
-    const visible = entries.slice(this.entryOffset, this.entryOffset + 7);
-    this.addTo(objects, this.add.rectangle(43, 134, 66, 92, color(PALETTE.black), 0.45)
+    const visible = entries.slice(this.entryOffset, this.entryOffset + 5);
+    this.addTo(objects, this.add.rectangle(43, 153, 66, 72, color(PALETTE.black), 0.45)
       .setStrokeStyle(1, color(PALETTE.stoneGray)));
     visible.forEach((entry, visibleIndex) => {
       const index = this.entryOffset + visibleIndex;
       const selected = index === this.entryIndex;
-      const y = 94 + visibleIndex * 13;
+      const y = 121 + visibleIndex * 13;
       const hit = this.add.rectangle(43, y + 5, 66, 13, color(PALETTE.black), 0.01);
       const marker = selected ? ">" : " ";
       const locked = entry.unlocked ? " " : "?";
@@ -200,6 +204,10 @@ export class CodexScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan
     }));
+    if (entry.sourceUrl) {
+      this.drawSourceEntry(objects, entry);
+      return;
+    }
     if (entry.unlocked) this.drawEntryArt(objects, entry);
     else this.drawLockedSilhouette(objects);
     const lore = entry.unlocked ? entry.lore : "Encounter this entry in the field to reveal its notes.";
@@ -210,6 +218,32 @@ export class CodexScene extends Phaser.Scene {
       wordWrap: { width: 126, useAdvancedWrap: true },
       lineSpacing: 1
     }));
+  }
+
+  private drawSourceEntry(objects: Phaser.GameObjects.GameObject[], entry: CodexEntryReadout) {
+    this.addTo(objects, this.add.text(96, 69, `${ABOUT_SERIES_SOURCE.volume}\n${ABOUT_SERIES_SOURCE.topic}`, {
+      fontFamily: "monospace", fontSize: "6px", color: PALETTE.terminalCyan, lineSpacing: 1
+    }));
+    this.addTo(objects, this.add.text(96, 89, entry.lore, {
+      fontFamily: "monospace", fontSize: "6px", color: PALETTE.creamPaper,
+      wordWrap: { width: 126, useAdvancedWrap: true }, lineSpacing: 1
+    }));
+    const sourceButton = this.add.rectangle(162, 199, 132, 44, color(PALETTE.deepRuby))
+      .setStrokeStyle(1, color(PALETTE.goldStamp));
+    bindPointerPress(sourceButton, { down: () => this.openSelectedSource() });
+    this.addTo(objects, sourceButton);
+    const sourceLabel = this.add.text(162, 199, "ABOUT THE SERIES\nhistory.state.gov", {
+      fontFamily: "monospace", fontSize: "6px", color: PALETTE.goldStamp, align: "center", lineSpacing: 3
+    }).setOrigin(0.5);
+    bindPointerPress(sourceLabel, { down: () => this.openSelectedSource() });
+    this.addTo(objects, sourceLabel);
+  }
+
+  private openSelectedSource() {
+    const entry = this.currentEntries()[this.entryIndex];
+    if (!entry?.unlocked || entry.sourceUrl !== ABOUT_SERIES_SOURCE.url) return;
+    swallowNextInputFrame();
+    window.open(entry.sourceUrl, "_blank", "noopener,noreferrer");
   }
 
   private drawEntryArt(objects: Phaser.GameObjects.GameObject[], entry: CodexEntryReadout) {
@@ -264,7 +298,7 @@ export class CodexScene extends Phaser.Scene {
 
   private clampOffset() {
     if (this.entryIndex < this.entryOffset) this.entryOffset = this.entryIndex;
-    if (this.entryIndex >= this.entryOffset + 7) this.entryOffset = this.entryIndex - 6;
+    if (this.entryIndex >= this.entryOffset + 5) this.entryOffset = this.entryIndex - 4;
   }
 
   private close() {

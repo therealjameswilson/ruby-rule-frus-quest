@@ -77,6 +77,9 @@ import {
 } from "../game/annotationDrafting";
 import type { AnnotationDraftingPromptId } from "../game/annotationDrafting";
 import { fileAnnotationPacket, gatherAnnotationNote, readAnnotationPacket } from "../game/annotationPacket";
+import { ARCHIVE_RESEARCH_REVIEWS, nextArchiveResearchReview, recordArchiveResearchReview } from "../game/archiveResearchReview";
+import type { ArchiveResearchReviewId } from "../game/archiveResearchReview";
+import { ChoicePrompt } from "../systems/verification";
 import { saveGameNow } from "../systems/save";
 import {
   ARCHIVE_A1_TILEMAP,
@@ -381,6 +384,7 @@ export class ArchiveScene extends Phaser.Scene {
   private player!: Player;
   private danneLurker!: DanneLurker;
   private dialog!: DialogBox;
+  private researchChoice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -469,6 +473,7 @@ export class ArchiveScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.dialog = new DialogBox(this);
+    this.researchChoice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
@@ -484,7 +489,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.player = new Player(this, 128, 184);
     this.danneLurker = new DanneLurker(this, 214, 74, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
-        || this.inventory.active || this.reliability.active || Boolean(this.archiveKeyRewardCue?.active),
+        || this.inventory.active || this.reliability.active || this.researchChoice.active || Boolean(this.archiveKeyRewardCue?.active),
       waypoints: [
         { x: 214, y: 74 },
         { x: 142, y: 54 },
@@ -496,9 +501,12 @@ export class ArchiveScene extends Phaser.Scene {
 
     this.restoreSourceNoteProgress(restoredHeldItem);
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
-    if (!restoredPlayer) {
+    if (!restoredPlayer && this.sourceNoteStatus === "inactive") {
       this.toast.show("FIND SN47 -> RESEARCH TABLE", this.player.position, "info");
       setLatestMessage("Archive A1: find Source Note 47 and verify it at the research table.");
+    } else if (!restoredPlayer) {
+      this.toast.show(gameState.objective, this.player.position, "info");
+      setLatestMessage(gameState.objective);
     }
   }
 
@@ -506,6 +514,14 @@ export class ArchiveScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.researchChoice.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
+      this.player.update(delta, false);
+      this.researchChoice.updateInput();
+      return;
+    }
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
       retroAudio.toggle();
@@ -1635,6 +1651,17 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private addDocumentInteractables() {
+    if (gameState.sceneProgress.annotationDraftingComplete && nextArchiveResearchReview()
+      && !this.interactables.some((target) => target.id === "research-review")) {
+      this.interactables.push({
+        id: "research-review",
+        ...this.researchTable,
+        label: "Research Table Review",
+        radius: 38,
+        kind: "document",
+        onInteract: () => this.finishMissingResearchReview()
+      });
+    }
     const documents = visibleArchiveSourceRoomDocuments(Boolean(gameState.sceneProgress.annotationDraftingComplete));
     for (const documentData of documents) {
       if (this.collected.has(documentData.id)) continue;
@@ -2535,6 +2562,13 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (this.sourceNoteStatus === "verified") {
+      if (!gameState.processStamps.includes("rule")) {
+        this.reviewResearchDecision("standards", () => {
+          this.sourceNoteStatus = "stamped";
+          this.applySourceNoteStamp();
+        });
+        return;
+      }
       this.sourceNoteStatus = "stamped";
       this.applySourceNoteStamp();
       return;
@@ -2987,6 +3021,12 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
+    const review = nextArchiveResearchReview();
+    if (review) {
+      this.reviewResearchDecision(review, () => this.fileAnnotationDraftingNotes());
+      return;
+    }
+
     if (this.annotationSlipIcon?.active) this.annotationSlipIcon.destroy();
     this.annotationSlipIcon = undefined;
     setHeldItem(null);
@@ -2994,6 +3034,33 @@ export class ArchiveScene extends Phaser.Scene {
     this.addVerificationGlow();
 
     this.completeAnnotationDrafting(result.message);
+  }
+
+  private reviewResearchDecision(id: ArchiveResearchReviewId, onApprove: () => void) {
+    if (this.researchChoice.active) return;
+    const review = ARCHIVE_RESEARCH_REVIEWS[id];
+    this.interactionPrompt.update(0, null);
+    this.clearSourceNoteRouteCue();
+    this.researchChoice.show(`${review.question}\n\n${review.context}`, [...review.options], (option) => {
+      const result = recordArchiveResearchReview(id, option.value);
+      if (result.ok) onApprove();
+      else retroAudio.warning();
+      setLatestMessage(result.message);
+      this.toast.show(result.message, this.player.position, result.ok ? "info" : "warn");
+      saveGameNow();
+    });
+  }
+
+  private finishMissingResearchReview() {
+    const review = nextArchiveResearchReview();
+    if (!review) return;
+    this.reviewResearchDecision(review, () => {
+      if (!nextArchiveResearchReview()) {
+        this.interactables = this.interactables.filter((target) => target.id !== "research-review");
+        this.finishArchiveIfReady();
+      }
+      this.refreshRoomObjective();
+    });
   }
 
   private completeAnnotationDrafting(message: string) {
@@ -3109,6 +3176,11 @@ export class ArchiveScene extends Phaser.Scene {
       this.toast.show("TWO SUPPORTING DOCUMENTS REMAIN", this.player.position, "info");
       return;
     }
+    if (nextArchiveResearchReview()) {
+      this.refreshRoomObjective();
+      this.toast.show("REVIEW AT RESEARCH TABLE", this.player.position, "info");
+      return;
+    }
     setDocumentWorkflowState("telegram_001", "selected");
     setDocumentWorkflowState("cross_reference_001", "selected");
     setDocumentWorkflowState("source_note_047", "ready_for_review");
@@ -3125,12 +3197,12 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private sourceRoomComplete() {
-    return gameState.sceneProgress.archiveSourceRoomComplete === 1
+    return !nextArchiveResearchReview() && (gameState.sceneProgress.archiveSourceRoomComplete === 1
       || archiveSourceRoomPacketComplete({
         sourceNoteStamped: this.sourceNoteStatus === "stamped",
         annotationComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
         collectedDocumentIds: this.collected
-      });
+      }));
   }
 
   private sourceRoomDocumentCount() {
@@ -3253,6 +3325,10 @@ export class ArchiveScene extends Phaser.Scene {
 
   private refreshRoomObjective() {
     if (this.currentRoomId === "A1") {
+      if (gameState.sceneProgress.annotationDraftingComplete && nextArchiveResearchReview()) {
+        setObjective("REVIEW AT RESEARCH TABLE");
+        return;
+      }
       setObjective(archiveSourceRoomObjective({
         sourceNoteStatus: this.sourceNoteStatus,
         provenanceStep: gameState.sceneProgress.sourceNoteProvenanceStep ?? 0,

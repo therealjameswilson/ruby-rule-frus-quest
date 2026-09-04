@@ -1,5 +1,6 @@
 import type { ProcessItemId } from "./constants";
 import type { ChoiceOption } from "./types";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
 import { EDITORIAL_METHODOLOGY_PROMPTS } from "./editorialMethodology";
 import { EDITORIAL_TREATMENT_PROMPTS } from "./editorialTreatment";
@@ -124,6 +125,7 @@ export const SILENT_READ_REVIEW_ITEMS = [
 export const SILENT_READ_REVIEW_TOTAL = SILENT_READ_REVIEW_ITEMS.length;
 
 interface ReviewDecision {
+  sourceUrl: string;
   question: string;
   context: string;
   options: readonly ChoiceOption[];
@@ -134,26 +136,52 @@ interface ReviewDecision {
 
 const REVIEW_DECISIONS: Partial<Record<(typeof SILENT_READ_REVIEW_ITEMS)[number]["id"], ReviewDecision>> = {
   "mechanical-fix": {
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
     question: "A passage is withheld. What prints in its place?",
-    context: "Editor proof: the reader must see where text was removed.",
+    context: "About the Series: withheld text must remain visibly accounted for.",
     options: [
       { key: "A", label: "Close the gap; print nothing", value: "hidden" },
-      { key: "B", label: "[Text not declassified]", value: "visible" }
+      { key: "B", label: "[3 lines not declassified]", value: "visible" }
     ],
     correctValue: "visible",
     successMessage: "VISIBLE BRACKET ADDED",
     failureMessage: "SHOW THE DELETION IN BRACKETS"
   },
-  "proof-date": {
-    question: "Compare the dates. Which belongs in the proof?",
-    context: "Practice source: 1947. Typeset proof: 1974.",
+  "classified-source": {
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
+    question: "An excerpt is published. Is its entire source now public?",
+    context: "About the Series: some excerpts come from still-classified records.",
     options: [
-      { key: "A", label: "1947 - match the source", value: "1947" },
-      { key: "B", label: "1974 - keep the typeset date", value: "1974" }
+      { key: "A", label: "Only the released text is cleared", value: "excerpt" },
+      { key: "B", label: "Yes, release the whole source", value: "whole_source" }
     ],
-    correctValue: "1947",
-    successMessage: "DATE MATCHES THE SOURCE",
-    failureMessage: "COMPARE AGAIN: SOURCE SAYS 1947"
+    correctValue: "excerpt",
+    successMessage: "RELEASE SCOPE VERIFIED",
+    failureMessage: "EXCERPT IS NOT THE WHOLE SOURCE"
+  },
+  "referral-equity": {
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
+    question: "A document is withheld in full. What remains in the volume?",
+    context: "Keep its place in the chronology.",
+    options: [
+      { key: "A", label: "Heading, source note, page count", value: "accounted" },
+      { key: "B", label: "Nothing; remove its entry", value: "disappear" }
+    ],
+    correctValue: "accounted",
+    successMessage: "WITHHELD DOCUMENT ACCOUNTED FOR",
+    failureMessage: "KEEP THE WITHHELD ENTRY VISIBLE"
+  },
+  "proof-date": {
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
+    question: "Which date orders this memorandum of conversation?",
+    context: "Practice record, Washington time: meeting 10 Jan; memo drafted 12 Jan.",
+    options: [
+      { key: "A", label: "10 Jan - the conversation", value: "conversation" },
+      { key: "B", label: "12 Jan - the draft", value: "draft" }
+    ],
+    correctValue: "conversation",
+    successMessage: "CONVERSATION DATE VERIFIED",
+    failureMessage: "USE THE CONVERSATION DATE"
   }
 };
 
