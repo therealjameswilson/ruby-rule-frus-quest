@@ -228,3 +228,58 @@ The Black Vault currently uses this loop to open its west and north blast doors.
 DANN-E is a fictional rogue-AI antagonist. American-flag and State Department motifs in some
 variants reflect the game's U.S. diplomatic-history setting and carry no partisan framing;
 the Senator and Executive forms are deliberately ambiguous.
+
+## Final Review Combat Recovery (2026-09-04)
+
+These rules describe `DanneBoss` in the critical-path Black Vault, not the
+separate room-enemy roster above. Its active tool is the owned Red Pencil (or
+the existing Ruby Pen), with one damage application per active swing. The
+wandering DANN-E's bolt-reflection mechanic is not part of this boss fight.
+
+- Ego bolts cost 10 reliability; swarm contact costs 5. Accepted hits provide
+  1,000 ms of recovery protection. Each phase starts with 900 ms of grace after
+  its cutscene. Projectiles disappear on contact and retain unrounded motion
+  internally, with only their displayed coordinates snapped to pixels.
+- Combat damage is temporary pressure, not a standards-ledger accusation. Its
+  actual clamped amount persists in `sceneProgress.blackVaultCombatDamage`.
+  Retry, retreat, interrupted-fight restoration, and legitimate victory recover
+  only this amount. Separate standards penalties and document flags remain.
+- At zero hearts, A retries the current phase at full boss HP; B returns to the
+  arena entrance. Neither option grants a defeat, removes documents, or repeats
+  completed phases during a retry. The choice consumes its action input. Long
+  waits on Retry do not extend the new phase's grace period.
+- All normal phases retain 180 HP, with Cloud taking half Red Pencil damage.
+  Cloud Shift warns for 800 ms, its stationary spread for 700 ms, and each attack
+  has a 2,000 ms recovery window. A stationary window separates Cloud Shifts so
+  the player can reach and counter the boss before another move.
+- The entrance still requires 70 reliability. The final hit checks the prepared
+  record independently of current combat hearts, so a surviving player is not
+  trapped below the entrance threshold. Publication still requires every
+  original record, tool, standards, and reliability check.
+- The HUD keeps the equipped-tool action visible during combat. Clock and boss
+  chrome hide while choosing retry or the omission shortcut, then restore when
+  combat resumes. Wrong tools do no damage and retain knockback feedback.
+
+### Verification
+
+1. Use the ordinary Black Vault entrance with a prepared record, or the existing
+   `?scene=BlackVaultLairScene` QA seed. Move north to the core and interact.
+2. Take an Ego bolt: one heart is lost, the shot disappears, and immediate
+   overlapping hits do not debit again during recovery.
+3. Attack with the wrong tool, then the Red Pencil. Only the owned Red Pencil's
+   active swing damages this boss, once per swing.
+4. Pause during a telegraph. Shots, the target countdown, and hearts stay still.
+5. Lose all hearts, wait several seconds, then retry. Check current-phase HP,
+   prompt dismissal, ordinary attack timing, unchanged documents, and no reward.
+   Repeat with B to retreat, then enter again.
+6. Defeat Colossus, Swarm, and Cloud without a win shortcut. Complete the five
+   binding packets, publish, and confirm the saved certification is `published`.
+
+The production-browser run completed step 6 using normal 180-HP phases, two
+Cloud retries, and rejection of the deadline omission offer. Combat recovery
+left 96 reliability after the separate deadline penalty; bindery work restored
+it to 100. Unit coverage and 375x667/DPR-3 Chromium touch checks cover hit windows,
+retry/retreat, choice input, and saved pressure. A separate `bossQuick=1` UI test
+verified the deadline choice and a touch Red Pencil hit; it is not the evidence
+for normal boss completion. Real iPhone/Safari and the secret Ascendant route
+remain unverified in this pass.

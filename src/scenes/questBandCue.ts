@@ -1,4 +1,16 @@
 import type { AdventureTrainingReadout } from "../game/types";
+import type { GameState } from "../game/state";
+
+type RiskThreat = Pick<GameState["visibleThreats"][number], "hp" | "enemyState" | "difficultyTier" | "reliabilityRisk" | "bossCombat">;
+
+export function questBandRiskLine(mode: GameState["mode"], threats: readonly RiskThreat[]): string | null {
+  // Boss telegraphs and hearts convey danger; keep the action/decision cue visible.
+  if (mode !== "explore" || threats.some((threat) => threat.bossCombat && (threat.hp ?? 0) > 0)) return null;
+  const hardestThreat = threats
+    .filter((threat) => (threat.hp ?? 0) > 0 && threat.enemyState !== "defeated" && (threat.difficultyTier ?? 0) >= 4)
+    .sort((left, right) => (right.difficultyTier ?? 0) - (left.difficultyTier ?? 0))[0];
+  return hardestThreat ? `RELIABILITY RISK: ${(hardestThreat.reliabilityRisk ?? "high").toUpperCase()}` : null;
+}
 
 export interface QuestBandCrystalSlot {
   index: number;

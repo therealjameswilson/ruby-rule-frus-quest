@@ -135,6 +135,13 @@ interface VisibleThreat {
     boltsReturned: number;
     bolts: { x: number; y: number; returned: boolean }[];
   };
+  bossCombat?: {
+    bolts: Position[];
+    minis: Position[];
+    retryAvailable: boolean;
+    recoverablePressure: number;
+    swarmDamage: number;
+  };
   telegraph?: {
     kind: string;
     label: string;
@@ -1517,22 +1524,27 @@ export function getBlackVaultClimaxReadiness() {
   const hasRedPencil = hasProcessItem("red_pencil");
   const typesetterProofReady = Boolean(gameState.sceneProgress.typesetterProofComplete);
   const bossDefeated = Boolean(gameState.sceneProgress.blackVaultBossCleared);
-  const missingSummary = [
+  const recordMissingSummary = [
     ...missingStamps.map((stamp) => `${stamp.toUpperCase()} stamp`),
     ...(readiness.missingEquityCrystals
       ? [`${readiness.missingEquityCrystals} equity crystal${readiness.missingEquityCrystals === 1 ? "" : "s"}`]
       : readiness.equityCrystalsRequired > 0 ? [] : ["equity map"]),
     ...(readiness.missingFragments ? [`${readiness.missingFragments} cover piece${readiness.missingFragments === 1 ? "" : "s"}`] : []),
     ...(readiness.repositoryCoverageMapReady ? [] : ["repository map"]),
-    ...(readiness.reliabilityReady ? [] : [`reliability ${readiness.reliabilityMinimum}`]),
     ...(readiness.documentsWithUndisclosedDeletion.length ? ["visible brackets"] : []),
     ...(readiness.standardsViolations.length ? ["standards ledger"] : []),
     ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
     ...(hasRedPencil ? [] : ["Red Pencil"]),
     ...(typesetterProofReady ? [] : ["typesetter proof"])
   ];
+  const missingSummary = [
+    ...recordMissingSummary,
+    ...(readiness.reliabilityReady ? [] : [`reliability ${readiness.reliabilityMinimum}`])
+  ];
   return {
     ready: missingSummary.length === 0,
+    recordReady: recordMissingSummary.length === 0,
+    recordMissingSummary,
     bossDefeated,
     requiredTool: "red_pencil" as const,
     requiredStamps,
@@ -1957,6 +1969,11 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     counterplay: threat.counterplay ? {
       ...threat.counterplay,
       bolts: threat.counterplay.bolts.map((bolt) => ({ ...bolt }))
+    } : undefined,
+    bossCombat: threat.bossCombat ? {
+      ...threat.bossCombat,
+      bolts: threat.bossCombat.bolts.map((bolt) => ({ ...bolt })),
+      minis: threat.bossCombat.minis.map((mini) => ({ ...mini }))
     } : undefined,
     telegraph: threat.telegraph
       ? {

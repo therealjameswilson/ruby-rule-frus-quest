@@ -38,15 +38,15 @@ const PHASE_TELEGRAPHS: Record<Exclude<DanneAttackPhase, "cloud">, DanneAttackTe
 const CLOUD_SHIFT: DanneAttackTelegraphSpec = {
   kind: "cloud_shift",
   label: "CLOUD SHIFT",
-  durationMs: 580,
-  cooldownMs: 1350
+  durationMs: 800,
+  cooldownMs: 2000
 };
 
 const CLOUD_SPREAD: DanneAttackTelegraphSpec = {
   kind: "cloud_spread",
   label: "EGO SPREAD LOCK",
-  durationMs: 520,
-  cooldownMs: 1350
+  durationMs: 700,
+  cooldownMs: 2000
 };
 
 export function danneAttackTelegraphSpec(phase: DanneAttackPhase, cloudWillShift = false): DanneAttackTelegraphSpec {

@@ -10,6 +10,15 @@ import {
   type DanneAttackTelegraphKind
 } from "../../game/danneBossTelegraph";
 import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts";
+import {
+  advanceBossBolt,
+  createBossBoltMotion,
+  DANNE_BOSS_DAMAGE,
+  DANNE_BOSS_ENTRY_GRACE_MS,
+  DANNE_BOSS_RECOVERY_MS,
+  type BossBoltMotion,
+  type DanneBossHitKind
+} from "../../game/danneBossCombat";
 import { DANNE_CLOUD_WAYPOINTS } from "../../game/danneSceneCollisions";
 import { unlockCodexEntry } from "../../game/codex";
 import {
@@ -27,6 +36,7 @@ import {
   getBlackVaultClimaxReadiness,
   getTreatyFragmentCount,
   hasDanneItem,
+  hasProcessItem,
   recordDanneVariantDefeated,
   recordUnresolvedEquity,
   resolveStandardsViolationsByType,
@@ -41,17 +51,16 @@ import { getDanneDifficultyProfile, type DanneDifficultyProfile } from "../../sy
 import { applyHitShake } from "../../systems/combatFeedback";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { applyStandardsViolation } from "../../systems/reliability";
+import { recoverDanneBossPressure, takeDanneBossHit } from "../../systems/dannePressure";
+import { FeedbackToast } from "../../systems/feedbackToast";
 import { ChoicePrompt } from "../../systems/verification";
 import { Player } from "../Player";
 
 export type DanneBossPhase = "intro" | "colossus" | "swarm" | "cloud" | "ascendant" | "defeated";
 
-interface EgoBolt {
+interface EgoBolt extends BossBoltMotion {
   sprite: Phaser.GameObjects.Sprite;
-  vx: number;
-  vy: number;
   expiresAt: number;
-  armed: boolean;
 }
 
 interface MiniDanne {
@@ -80,6 +89,7 @@ interface DanneBossOptions {
   quickFight: boolean;
   onDefeated: (trueEnding: boolean) => void;
   onBadEnding: () => void;
+  onRetreat: () => void;
   onPhaseChange: (phase: DanneBossPhase) => void;
   onPlayerHit?: (heavy: boolean) => void;
 }
@@ -96,13 +106,6 @@ function wait(scene: Phaser.Scene, ms: number) {
   });
 }
 
-function vectorToward(from: Position, to: Position, speed: number) {
-  const dx = to.x - from.x;
-  const dy = to.y - from.y;
-  const length = Math.max(1, Math.hypot(dx, dy));
-  return { vx: (dx / length) * speed, vy: (dy / length) * speed };
-}
-
 export class DanneBoss {
   readonly label = "DANN-E";
   readonly spriteKey = DANNE_BOSS_SPRITE_ASSET.key;
@@ -115,6 +118,7 @@ export class DanneBoss {
   private readonly difficulty: DanneDifficultyProfile;
   private readonly onDefeated: (trueEnding: boolean) => void;
   private readonly onBadEnding: () => void;
+  private readonly onRetreat: () => void;
   private readonly onPhaseChange: (phase: DanneBossPhase) => void;
   private readonly onPlayerHit?: (heavy: boolean) => void;
   private readonly sprite: Phaser.GameObjects.Sprite;
@@ -124,6 +128,8 @@ export class DanneBoss {
   private readonly clockText: Phaser.GameObjects.Text;
   private readonly clockStatusText: Phaser.GameObjects.Text;
   private readonly shortcutChoice: ChoicePrompt;
+  private readonly retryChoice: ChoicePrompt;
+  private readonly pressureToast: FeedbackToast;
   private readonly bolts: EgoBolt[] = [];
   private readonly minis: MiniDanne[] = [];
   private phase: DanneBossPhase = "intro";
@@ -135,11 +141,14 @@ export class DanneBoss {
   private nextBoltAt = 0;
   private nextTeleportAt = 0;
   private nextPlayerHitAt = 0;
+  private lastPlayerActionId = -1;
+  private damageGraceUntil = 0;
   private attackTelegraph: ActiveAttackTelegraph | null = null;
   private cloudWaypointIndex = 0;
   private combatPausedAt: number | null = null;
   private phaseTransitioning = false;
   private defeated = false;
+  private disposed = false;
   private boastIndex = 0;
   private readonly recordedPhaseDefeats = new Set<DanneBossPhase>();
   private readonly announcedTelegraphs = new Set<DanneBossPhase>();
@@ -154,6 +163,7 @@ export class DanneBoss {
     this.phaseCount = this.secretAscendant ? 4 : 3;
     this.onDefeated = options.onDefeated;
     this.onBadEnding = options.onBadEnding;
+    this.onRetreat = options.onRetreat;
     this.onPhaseChange = options.onPhaseChange;
     this.onPlayerHit = options.onPlayerHit;
     this.shadow = scene.add.ellipse(BOSS_CENTER.x, BOSS_CENTER.y + 12, 34, 9, color(PALETTE.black), 0.7)
@@ -166,6 +176,8 @@ export class DanneBoss {
     const animKey = danneAnimKey(this.spriteKey, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.shortcutChoice = new ChoicePrompt(scene);
+    this.retryChoice = new ChoicePrompt(scene);
+    this.pressureToast = new FeedbackToast(scene);
     const clockBg = scene.add.rectangle(128, 55, 224, 23, color(PALETTE.black), 0.88)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setScrollFactor(0);
@@ -191,7 +203,7 @@ export class DanneBoss {
   }
 
   get isActive() {
-    return !this.defeated;
+    return !this.defeated && !this.disposed;
   }
 
   get currentPhase() {
@@ -199,7 +211,7 @@ export class DanneBoss {
   }
 
   get inputLocked() {
-    return this.shortcutChoice.active;
+    return this.shortcutChoice.active || this.retryChoice.active;
   }
 
   get position(): Position {
@@ -211,8 +223,14 @@ export class DanneBoss {
   }
 
   update(timeMs: number, deltaMs: number, canAct: boolean) {
-    if (this.defeated) return;
+    if (!this.isActive) return;
+    if (this.retryChoice.active) {
+      if (this.combatPausedAt === null) this.combatPausedAt = timeMs;
+      this.retryChoice.updateInput();
+      return;
+    }
     if (this.shortcutChoice.active) {
+      if (this.combatPausedAt === null) this.combatPausedAt = timeMs;
       this.shortcutChoice.updateInput();
       this.syncStatutoryClockUi();
       return;
@@ -224,9 +242,13 @@ export class DanneBoss {
       return;
     }
     this.resumeCombatTimers(timeMs);
+    this.pressureToast.update(deltaMs, this.player.position);
     this.updateBolts(timeMs, deltaMs);
+    if (this.retryChoice.active) return;
     this.updateMinis(timeMs, deltaMs);
+    if (this.retryChoice.active) return;
     this.updateStatutoryClock(deltaMs);
+    if (this.inputLocked) return;
     this.checkPlayerActionHit(timeMs);
     this.updateAttackPattern(timeMs);
   }
@@ -237,7 +259,7 @@ export class DanneBoss {
       ? {
           kind: this.attackTelegraph.kind,
           label: this.attackTelegraph.label,
-          msRemaining: danneTelegraphRemainingMs(this.attackTelegraph.resolvesAt, this.scene.time.now),
+          msRemaining: danneTelegraphRemainingMs(this.attackTelegraph.resolvesAt, this.combatPausedAt ?? this.scene.time.now),
           target: { ...this.attackTelegraph.target },
           destination: this.attackTelegraph.destination ? { ...this.attackTelegraph.destination } : null
         }
@@ -252,11 +274,18 @@ export class DanneBoss {
       status: `${this.hp}/${this.maxHp} HP; ${this.difficulty.label} tier; ${this.clockReadout()}; ${telegraph ? `${telegraph.label} ${telegraph.msRemaining}ms` : `${this.bolts.length} ego bolts`}; ${this.minis.length} mini-DANN-Es`,
       hp: cleared ? 0 : this.hp,
       maxHp: this.maxHp,
-      damage: 12,
+      damage: DANNE_BOSS_DAMAGE.ego_bolt,
       difficultyTier: this.difficulty.tier === "veteran" ? 6 : 5,
       reliabilityRisk: "critical",
       enemyState: cleared ? "defeated" : this.phase,
       weakness: "red_pencil",
+      bossCombat: {
+        bolts: this.bolts.map((bolt) => ({ x: snapPixel(bolt.x), y: snapPixel(bolt.y) })),
+        minis: this.minis.map((mini) => ({ x: mini.sprite.x, y: mini.sprite.y })),
+        retryAvailable: this.retryChoice.active,
+        recoverablePressure: gameState.sceneProgress.blackVaultCombatDamage ?? 0,
+        swarmDamage: DANNE_BOSS_DAMAGE.swarm
+      },
       telegraph,
       roomClear: {
         roomId: "DV1",
@@ -268,12 +297,15 @@ export class DanneBoss {
   }
 
   destroy() {
+    if (this.disposed) return;
+    this.disposed = true;
     this.clearAttackTelegraph();
+    this.pressureToast.destroy();
     this.sprite.destroy();
     this.shadow.destroy();
     this.clockContainer.destroy();
-    for (const bolt of this.bolts) bolt.sprite.destroy();
-    for (const mini of this.minis) mini.sprite.destroy();
+    this.clearBolts();
+    this.clearMinis();
     hideBossHud();
   }
 
@@ -281,9 +313,11 @@ export class DanneBoss {
     this.phaseTransitioning = true;
     unlockCodexEntry("danne-prime-humanoid");
     await this.showPhaseCutscene("danne-prime-humanoid", "intro", "danne-portrait-archivist");
-    if (this.defeated) return;
+    if (!this.isActive) return;
     this.beginPhase("colossus");
     await this.showPhaseCutscene("danne-colossus-final-form", "colossus");
+    if (!this.isActive) return;
+    this.resetAttackTimers();
     this.phaseTransitioning = false;
   }
 
@@ -294,8 +328,7 @@ export class DanneBoss {
     this.phase = phase;
     unlockCodexEntry(this.variantKeyForPhase(phase));
     this.hp = this.maxHp;
-    this.nextBoltAt = this.scene.time.now + this.cooldown(650);
-    this.nextTeleportAt = phase === "cloud" ? this.scene.time.now : this.scene.time.now + this.cooldown(900);
+    this.resetAttackTimers();
     this.onPhaseChange(phase);
     this.sprite.setVisible(true);
     this.clockContainer.setVisible(true);
@@ -314,7 +347,17 @@ export class DanneBoss {
     this.phaseTransitioning = true;
     this.beginPhase(phase);
     await this.showPhaseCutscene(this.variantKeyForPhase(phase), phase);
+    if (!this.isActive) return;
+    this.resetAttackTimers();
     this.phaseTransitioning = false;
+  }
+
+  private resetAttackTimers() {
+    // New phase timers start now; do not add the preceding cutscene/retry wait again.
+    this.combatPausedAt = null;
+    this.nextBoltAt = this.scene.time.now + DANNE_BOSS_ENTRY_GRACE_MS;
+    this.nextTeleportAt = this.scene.time.now;
+    this.damageGraceUntil = this.scene.time.now + DANNE_BOSS_ENTRY_GRACE_MS;
   }
 
   private async finishFight() {
@@ -331,6 +374,7 @@ export class DanneBoss {
     this.clearAttackTelegraph();
     this.clearBolts();
     this.clearMinis();
+    recoverDanneBossPressure();
     gameState.sceneProgress.blackVaultBossCleared = 1;
     gameState.sceneProgress.blackVaultWestOpen = 1;
     gameState.sceneProgress.blackVaultNorthOpen = 1;
@@ -341,6 +385,7 @@ export class DanneBoss {
     const completeTreatyRecord = getTreatyFragmentCount() >= 3;
     gameState.sceneProgress.blackVaultTreatyRecordComplete = completeTreatyRecord ? 1 : 0;
     await this.showPhaseCutscene("danne-defeated", "defeated", "danne-portrait-archivist");
+    if (this.disposed) return;
     this.onDefeated(completeTreatyRecord);
   }
 
@@ -407,7 +452,8 @@ export class DanneBoss {
     } else if (telegraph.phase === "cloud") {
       if (telegraph.destination) {
         this.moveBossTo(telegraph.destination.x, telegraph.destination.y);
-        this.nextTeleportAt = timeMs + this.cooldown(1800);
+        // Leave one stationary counterattack window between Cloud Shifts.
+        this.nextTeleportAt = timeMs + this.cooldown(telegraph.cooldownMs + 1800);
       }
       this.fireSpreadToward(this.position, telegraph.target, this.speed(64), [-0.28, 0, 0.28]);
     } else {
@@ -474,6 +520,7 @@ export class DanneBoss {
     this.nextBoltAt += pausedMs;
     this.nextTeleportAt += pausedMs;
     this.nextPlayerHitAt += pausedMs;
+    this.damageGraceUntil += pausedMs;
     if (this.attackTelegraph) {
       this.attackTelegraph.startedAt += pausedMs;
       this.attackTelegraph.resolvesAt += pausedMs;
@@ -483,11 +530,12 @@ export class DanneBoss {
 
   private checkPlayerActionHit(timeMs: number) {
     const hitbox = this.player.activeActionHitbox;
-    if (!hitbox || timeMs < this.nextPlayerHitAt) return;
+    if (!hitbox || timeMs < this.nextPlayerHitAt || this.lastPlayerActionId === this.player.actionId) return;
     if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, this.bossBody())) return;
     this.nextPlayerHitAt = timeMs + 260;
+    this.lastPlayerActionId = this.player.actionId;
     const hasRubyPen = gameState.equippedDanneItem === "ruby-pen" && hasDanneItem("ruby-pen");
-    const hasRedPencil = gameState.equippedProcessItem === "red_pencil";
+    const hasRedPencil = this.player.combatReadout.weapon.tool === "red_pencil" && hasProcessItem("red_pencil");
     if (!hasRubyPen && !hasRedPencil) {
       this.player.pushAwayFrom(this.position, 8);
       setLatestMessage("DANN-E resists that tool. Equip the Red Pencil for accountable edits.");
@@ -549,7 +597,7 @@ export class DanneBoss {
 
   private resolveLegitimatePublicationOrHold() {
     const readiness = getBlackVaultClimaxReadiness();
-    if (!readiness.ready) {
+    if (!readiness.recordReady) {
       this.hp = 1;
       setBossHp(this.hp, this.phaseIndex());
       this.sprite.setTint(color(PALETTE.classNetRed));
@@ -599,9 +647,9 @@ export class DanneBoss {
     this.clockStatusText
       .setText(this.defeated
         ? "DANN-E CLEARED"
-        : climax.ready
+        : climax.recordReady
           ? "RECORD READY"
-          : `${climax.missingSummary.length} CHECKS OPEN`)
+          : `${climax.recordMissingSummary.length} CHECKS OPEN`)
       .setColor(this.defeated ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp);
   }
 
@@ -610,6 +658,9 @@ export class DanneBoss {
     this.shortcutOffered = true;
     this.clearAttackTelegraph();
     this.clearBolts();
+    this.pressureToast.update(2000);
+    this.clockContainer.setVisible(false);
+    hideBossHud();
     const options: ChoiceOption[] = [
       { key: "A", label: "Omit contested material", value: "shortcut" },
       { key: "B", label: "Keep Kellogg standards", value: "standards" }
@@ -634,6 +685,8 @@ export class DanneBoss {
       }
       resolveStandardsViolationsByType("missed_30_year_deadline");
       this.hp = Math.max(1, this.hp);
+      this.clockContainer.setVisible(true);
+      showBossHud(this.scene, "danne", this.maxHp, this.phaseCount);
       setBossHp(this.hp, this.phaseIndex());
       setObjective("Reject the shortcut. Defeat DANN-E, then route the cleared record to the bindery.");
       setLatestMessage("Shortcut rejected. DANN-E remains vulnerable to the complete human-reviewed record.");
@@ -679,8 +732,9 @@ export class DanneBoss {
   }
 
   private fireBolt(from: Position, target: Position, speed: number) {
-    const { vx, vy } = vectorToward(from, target, speed);
-    const bolt = this.scene.add.sprite(snapPixel(from.x), snapPixel(from.y - 10), EGO_BOLT.key, Math.abs(vx) > Math.abs(vy) ? 0 : 4)
+    const motion = createBossBoltMotion(from, target, speed);
+    const { vx, vy } = motion;
+    const bolt = this.scene.add.sprite(snapPixel(motion.x), snapPixel(motion.y), EGO_BOLT.key, Math.abs(vx) > Math.abs(vy) ? 0 : 4)
       .setOrigin(0.5)
       .setScale(0.03)
       .setDepth(Math.round(from.y + 4));
@@ -689,10 +743,8 @@ export class DanneBoss {
     bolt.setAngle(Math.round(Phaser.Math.RadToDeg(Math.atan2(vy, vx))));
     this.bolts.push({
       sprite: bolt,
-      vx,
-      vy,
-      expiresAt: this.scene.time.now + 2000,
-      armed: true
+      ...motion,
+      expiresAt: this.scene.time.now + 2000
     });
     retroAudio.egoBoltFire();
   }
@@ -706,19 +758,24 @@ export class DanneBoss {
   }
 
   private updateBolts(timeMs: number, deltaMs: number) {
-    const dt = Math.min(0.05, deltaMs / 1000);
     const footBox = new Phaser.Geom.Rectangle(this.player.position.x - 8, this.player.position.y - 4, 16, 9);
     for (let index = this.bolts.length - 1; index >= 0; index -= 1) {
       const bolt = this.bolts[index];
-      bolt.sprite.setPosition(snapPixel(bolt.sprite.x + bolt.vx * dt), snapPixel(bolt.sprite.y + bolt.vy * dt));
+      if (timeMs >= bolt.expiresAt) {
+        bolt.sprite.destroy();
+        this.bolts.splice(index, 1);
+        continue;
+      }
+      advanceBossBolt(bolt, deltaMs);
+      bolt.sprite.setPosition(snapPixel(bolt.x), snapPixel(bolt.y));
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));
       const boltBox = new Phaser.Geom.Rectangle(bolt.sprite.x - 6, bolt.sprite.y - 6, 12, 12);
-      if (bolt.armed && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
-        bolt.armed = false;
-        this.player.takeHit({ x: bolt.sprite.x, y: bolt.sprite.y }, 12, 800);
-        setLatestMessage("Ego bolt hit. Evidence still requires review.");
-      }
-      if (timeMs >= bolt.expiresAt || bolt.sprite.x < -20 || bolt.sprite.x > GAME_WIDTH + 20 || bolt.sprite.y < 20 || bolt.sprite.y > GAME_HEIGHT + 20) {
+      if (Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
+        bolt.sprite.destroy();
+        this.bolts.splice(index, 1);
+        this.hitPlayer(bolt, "ego_bolt", timeMs);
+        if (this.retryChoice.active) return;
+      } else if (bolt.x < -20 || bolt.x > GAME_WIDTH + 20 || bolt.y < 20 || bolt.y > GAME_HEIGHT + 20) {
         bolt.sprite.destroy();
         this.bolts.splice(index, 1);
       }
@@ -749,9 +806,42 @@ export class DanneBoss {
       mini.sprite.setPosition(snapPixel(x), snapPixel(y));
       mini.sprite.setDepth(Math.round(y));
       if (Phaser.Math.Distance.Between(mini.sprite.x, mini.sprite.y, this.player.position.x, this.player.position.y) < 12) {
-        this.player.takeHit({ x: mini.sprite.x, y: mini.sprite.y }, 9, 700);
+        this.hitPlayer({ x: mini.sprite.x, y: mini.sprite.y }, "swarm", timeMs);
+        if (this.retryChoice.active) return;
       }
     }
+  }
+
+  private hitPlayer(source: Position, kind: DanneBossHitKind, timeMs: number) {
+    if (timeMs < this.damageGraceUntil || !takeDanneBossHit(this.player, source, kind)) return;
+    this.damageGraceUntil = timeMs + DANNE_BOSS_RECOVERY_MS;
+    this.pressureToast.show(kind === "ego_bolt" ? "EGO BOLT -10 REL" : "SWARM -5 REL", this.player.position);
+    if (gameState.reliability <= 0) this.offerRetry();
+  }
+
+  private offerRetry() {
+    if (!this.isAttackPhase(this.phase) || this.retryChoice.active) return;
+    const phase = this.phase;
+    this.clearAttackTelegraph();
+    this.clearBolts();
+    this.clearMinis();
+    this.pressureToast.update(2000);
+    this.clockContainer.setVisible(false);
+    hideBossHud();
+    setObjective("REVIEW INTERRUPTED");
+    this.retryChoice.show("Review interrupted. Your documents are safe.", [
+      { key: "A", label: "Retry this phase", value: "retry" },
+      { key: "B", label: "Leave the arena", value: "leave" }
+    ], (option) => {
+      recoverDanneBossPressure();
+      if (option.value === "leave") {
+        this.onRetreat();
+        return;
+      }
+      this.player.setPosition(128, 188);
+      this.beginPhase(phase);
+      setLatestMessage("Review recovered. Dodge the red lock, then counter with the Red Pencil.");
+    });
   }
 
   private clearBolts() {
@@ -777,6 +867,7 @@ export class DanneBoss {
       still.setScale(scale).setAlpha(0);
     }
     await enterCutscene(this.scene);
+    if (this.disposed) return;
     if (still) {
       this.scene.tweens.add({ targets: still, alpha: 1, duration: 150 });
     }
@@ -784,6 +875,7 @@ export class DanneBoss {
     playLine(this.scene, overrideLine ?? danneBoastForPhase(boastPhase, this.boastIndex), portraitKey);
     this.boastIndex += 1;
     await wait(this.scene, 1150);
+    if (this.disposed) return;
     await exitCutscene(this.scene);
     still?.destroy();
   }

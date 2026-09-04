@@ -19,6 +19,7 @@ import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 import { guideQuestBandObjective, officeQuestBandObjective } from "./openingQuestBand";
+import { questBandRiskLine } from "./questBandCue";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -200,7 +201,7 @@ export class UIScene extends Phaser.Scene {
     const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? getString("hud.none");
     const weapon = gameState.playerCombat.weapon;
     const objectiveLine = this.compactObjective(activeSceneKey);
-    const riskLine = this.compactReliabilityRiskLine();
+    const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
     const actionLine = riskLine ?? this.compactActionLine(toolLabel);
     const actionBadge = !riskLine && this.showCounterAction() ? getSecondaryActionBadge() : getPrimaryActionBadge();
     const signature = [
@@ -263,15 +264,6 @@ export class UIScene extends Phaser.Scene {
     return firstSentence;
   }
 
-  private compactReliabilityRiskLine() {
-    const hardestThreat = gameState.visibleThreats
-      .filter((threat) => (threat.hp ?? 0) > 0 && threat.enemyState !== "defeated" && (threat.difficultyTier ?? 0) >= 4)
-      .sort((left, right) => (right.difficultyTier ?? 0) - (left.difficultyTier ?? 0))[0];
-    if (!hardestThreat) return null;
-    const risk = (hardestThreat.reliabilityRisk ?? "high").toUpperCase();
-    return `RELIABILITY RISK: ${risk}`;
-  }
-
   private compactActionLine(toolLabel: string) {
     if (gameState.mode === "dialog") return getString("hud.nextLine");
     if (gameState.mode === "choice") return getString("hud.confirm");
@@ -279,7 +271,11 @@ export class UIScene extends Phaser.Scene {
       return getString("hud.goLeftTalk");
     }
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
-    if (this.showCounterAction()) return getString("hud.counterDanne");
+    if (this.showCounterAction()) {
+      return gameState.currentScene === "BlackVaultLairScene"
+        ? getString("hud.useTool", { tool: toolLabel })
+        : getString("hud.counterDanne");
+    }
     if (gameState.currentScene === "GuideScene") {
       const stage = getGuideCavernStage(
         hasProcessItem("citation_stamp"),
@@ -294,7 +290,7 @@ export class UIScene extends Phaser.Scene {
   private showCounterAction() {
     return gameState.mode === "explore" && !gameState.nearestInteractable
       && isWeaponTool(gameState.equippedProcessItem) && hasProcessItem(gameState.equippedProcessItem)
-      && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene"].includes(gameState.currentScene);
+      && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene"].includes(gameState.currentScene);
   }
 
   private shouldShowQuestBand(activeSceneKey: string | null) {

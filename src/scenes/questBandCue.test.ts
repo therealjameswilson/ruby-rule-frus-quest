@@ -1,7 +1,22 @@
 import { describe, expect, it } from "vitest";
-import { questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandVerbCode } from "./questBandCue";
+import { questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandRiskLine, questBandVerbCode } from "./questBandCue";
 
 describe("quest band cue helpers", () => {
+  it("keeps combat and choice controls visible instead of repeating the boss risk", () => {
+    const threat = { hp: 180, difficultyTier: 5, enemyState: "cloud", reliabilityRisk: "critical" as const };
+    expect(questBandRiskLine("choice", [threat])).toBeNull();
+    expect(questBandRiskLine("dialog", [threat])).toBeNull();
+    expect(questBandRiskLine("explore", [{ ...threat, bossCombat: {
+      bolts: [], minis: [], retryAvailable: false, recoverablePressure: 10, swarmDamage: 5
+    } }])).toBeNull();
+  });
+
+  it("preserves risk warnings for other hard, living enemies", () => {
+    expect(questBandRiskLine("explore", [{ hp: 8, difficultyTier: 4, enemyState: "chase", reliabilityRisk: "high" }]))
+      .toBe("RELIABILITY RISK: HIGH");
+    expect(questBandRiskLine("explore", [{ hp: 0, difficultyTier: 5, enemyState: "defeated" }])).toBeNull();
+  });
+
   it("compresses long adventure verbs into SNES-sized badge codes", () => {
     expect(questBandVerbCode("EXPLORE")).toBe("GO");
     expect(questBandVerbCode("UNLOCK")).toBe("LOCK");

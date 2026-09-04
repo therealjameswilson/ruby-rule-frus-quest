@@ -69,6 +69,7 @@ import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { recoverDanneBossPressure } from "../systems/dannePressure";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { transitionTo } from "../systems/sceneTransitions";
@@ -189,9 +190,19 @@ export abstract class DanneMapScene extends Phaser.Scene {
     setVisibleThreats([]);
     this.applyDebugGrants();
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
+      recoverDanneBossPressure();
       gameState.sceneProgress.blackVaultClimaxRequired = 1;
       if (hasProcessItem("red_pencil")) equipProcessItem("red_pencil");
     }
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.danneBoss?.destroy();
+      this.danneBoss = undefined;
+      this.redactorDrones = [];
+      this.censorshipWraiths = [];
+      this.marineGuard = undefined;
+      this.danneArena = undefined;
+      this.publicationBoard = undefined;
+    });
     retroAudio.startMusic(this.geometry.sceneKey);
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-100);
@@ -248,6 +259,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    const bossDecisionActive = Boolean(this.danneBoss?.inputLocked);
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
@@ -257,10 +269,11 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     if (isUiDebugEnabled() && input.bJustPressed) this.showBossHudDebug();
-    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    if (input.bJustPressed && !bossDecisionActive) this.attackBuffer.press(this.time.now);
     const frozen = this.hitstop.isFrozen(this.time.now);
     if (!frozen) {
-      this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
+      this.updateDanneEntities(this.time.now, delta, gameState.mode === "explore"
+        && !this.dialog.active && !this.choice.active && !this.inventory.active && !this.reliability.active);
       this.restoreSafePlayerPosition();
     }
 
@@ -273,7 +286,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
 
-    if (this.danneBoss?.inputLocked) {
+    if (bossDecisionActive || this.danneBoss?.inputLocked) {
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.reliability.update();
@@ -919,6 +932,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
       },
       onBadEnding: () => {
         transitionTo(this, "BadEndingScene");
+      },
+      onRetreat: () => {
+        this.scene.restart();
       },
       onPlayerHit: (heavy) => {
         this.hitstop.freezeFor(this.time.now, heavy ? "sword-hit-heavy" : "sword-hit");
