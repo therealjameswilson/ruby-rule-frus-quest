@@ -485,13 +485,12 @@ export class TouchControls {
       const visible = !button.hiddenUntilPressed || pressed;
       button.text.setVisible(visible);
       if (!visible) continue;
-      const idleAlpha = isOneXPortraitCanvas() ? 0.18 : 0.35;
-      const labelAlpha = isOneXPortraitCanvas() ? 0.28 : 0.48;
+      const idleAlpha = 0.45;
+      const labelAlpha = 0.9;
       const alpha = pressed ? 0.75 : idleAlpha;
       const scale = pressed ? 0.9 : 1;
-      const portraitScale = isOneXPortraitCanvas() && !pressed ? 0.82 : 1;
-      const width = Math.round(button.visibleWidth * scale * portraitScale);
-      const height = Math.round(button.visibleHeight * scale * portraitScale);
+      const width = Math.round(button.visibleWidth * scale);
+      const height = Math.round(button.visibleHeight * scale);
       this.graphics.lineStyle(2, color(pressed ? PALETTE.terminalCyan : PALETTE.goldStamp), alpha);
       this.graphics.fillStyle(color(PALETTE.black), alpha);
       if (button.kind === "circle") {
