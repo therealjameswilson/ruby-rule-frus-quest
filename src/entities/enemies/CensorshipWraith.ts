@@ -35,7 +35,7 @@ export class CensorshipWraith extends Enemy {
       spriteKey: WRAITH_ASSET.key,
       fallbackTextureKey: "bureaucratic-wall",
       waypoints,
-      tag: { text: "WRAITH", y: 20, color: PALETTE.creamPaper, backgroundColor: PALETTE.black },
+      tag: { text: "", y: 20, color: PALETTE.creamPaper, backgroundColor: PALETTE.black },
       cue: { text: "INK SWEEP", y: -28, color: PALETTE.creamPaper, backgroundColor: PALETTE.classNetRed },
       shadow: { y: 16, width: 22, height: 7 },
       speed: 15,

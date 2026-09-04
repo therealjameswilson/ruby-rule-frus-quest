@@ -12,10 +12,12 @@ import {
 import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts";
 import {
   advanceBossBolt,
+  aimReturnedBossBolt,
   createBossBoltMotion,
   DANNE_BOSS_DAMAGE,
   DANNE_BOSS_ENTRY_GRACE_MS,
   DANNE_BOSS_RECOVERY_MS,
+  DANNE_BOSS_RETURN,
   type BossBoltMotion,
   type DanneBossHitKind
 } from "../../game/danneBossCombat";
@@ -54,6 +56,7 @@ import { applyStandardsViolation } from "../../systems/reliability";
 import { recoverDanneBossPressure, takeDanneBossHit } from "../../systems/dannePressure";
 import { FeedbackToast } from "../../systems/feedbackToast";
 import { ChoicePrompt } from "../../systems/verification";
+import { isWeaponTool } from "../../systems/weaponState";
 import { Player } from "../Player";
 
 export type DanneBossPhase = "intro" | "colossus" | "swarm" | "cloud" | "ascendant" | "defeated";
@@ -61,6 +64,7 @@ export type DanneBossPhase = "intro" | "colossus" | "swarm" | "cloud" | "ascenda
 interface EgoBolt extends BossBoltMotion {
   sprite: Phaser.GameObjects.Sprite;
   expiresAt: number;
+  returned: boolean;
 }
 
 interface MiniDanne {
@@ -143,6 +147,8 @@ export class DanneBoss {
   private nextPlayerHitAt = 0;
   private lastPlayerActionId = -1;
   private damageGraceUntil = 0;
+  private counterStunnedUntil = 0;
+  private boltsReturned = 0;
   private attackTelegraph: ActiveAttackTelegraph | null = null;
   private cloudWaypointIndex = 0;
   private combatPausedAt: number | null = null;
@@ -243,7 +249,7 @@ export class DanneBoss {
     this.resumeCombatTimers(timeMs);
     this.pressureToast.update(deltaMs, this.player.position);
     this.updateBolts(timeMs, deltaMs);
-    if (this.retryChoice.active) return;
+    if (this.inputLocked || this.phaseTransitioning || this.defeated) return;
     this.updateMinis(timeMs, deltaMs);
     if (this.retryChoice.active) return;
     this.updateStatutoryClock(deltaMs);
@@ -269,7 +275,7 @@ export class DanneBoss {
       y: this.position.y,
       spriteKey: this.spriteKey,
       behavior: this.behaviorLabel(),
-      defeatMethod: "Use the Red Pencil after completing pendants, equities, proofing, and the Buckram Key route.",
+      defeatMethod: "Return Ego bolts with an active tool swing to stun DANN-E, then strike with the Red Pencil. A complete human-reviewed record is still required.",
       status: `${this.hp}/${this.maxHp} HP; ${this.difficulty.label} tier; ${this.clockReadout()}; ${telegraph ? `${telegraph.label} ${telegraph.msRemaining}ms` : `${this.bolts.length} ego bolts`}; ${this.minis.length} mini-DANN-Es`,
       hp: cleared ? 0 : this.hp,
       maxHp: this.maxHp,
@@ -279,7 +285,9 @@ export class DanneBoss {
       enemyState: cleared ? "defeated" : this.phase,
       weakness: "red_pencil",
       bossCombat: {
-        bolts: this.bolts.map((bolt) => ({ x: snapPixel(bolt.x), y: snapPixel(bolt.y) })),
+        bolts: this.bolts.map((bolt) => ({ x: snapPixel(bolt.x), y: snapPixel(bolt.y), returned: bolt.returned })),
+        boltsReturned: this.boltsReturned,
+        counterWindowMs: Math.max(0, this.counterStunnedUntil - (this.combatPausedAt ?? this.scene.time.now)),
         minis: this.minis.map((mini) => ({ x: mini.sprite.x, y: mini.sprite.y })),
         retryAvailable: this.retryChoice.active,
         recoverablePressure: gameState.sceneProgress.blackVaultCombatDamage ?? 0,
@@ -357,6 +365,7 @@ export class DanneBoss {
     this.nextBoltAt = this.scene.time.now + DANNE_BOSS_ENTRY_GRACE_MS;
     this.nextTeleportAt = this.scene.time.now;
     this.damageGraceUntil = this.scene.time.now + DANNE_BOSS_ENTRY_GRACE_MS;
+    this.counterStunnedUntil = 0;
   }
 
   private async finishFight() {
@@ -389,6 +398,11 @@ export class DanneBoss {
   }
 
   private updateAttackPattern(timeMs: number) {
+    if (timeMs < this.counterStunnedUntil) return;
+    if (this.counterStunnedUntil) {
+      this.counterStunnedUntil = 0;
+      this.applyPhaseTint();
+    }
     if (this.attackTelegraph) {
       this.updateAttackTelegraph(timeMs);
       return;
@@ -426,7 +440,7 @@ export class DanneBoss {
       this.announcedTelegraphs.add(phase);
       setLatestMessage(destination
         ? "DANN-E marks a Cloud Shift destination. Leave the red target before the spread fires."
-        : "DANN-E locks an ego-bolt line. Leave the red target, then counterattack.");
+        : "Dodge the red target, or face the Ego bolt and swing your tool to return it.");
     }
     retroAudio.blip();
   }
@@ -520,6 +534,7 @@ export class DanneBoss {
     this.nextTeleportAt += pausedMs;
     this.nextPlayerHitAt += pausedMs;
     this.damageGraceUntil += pausedMs;
+    if (this.counterStunnedUntil) this.counterStunnedUntil += pausedMs;
     if (this.attackTelegraph) {
       this.attackTelegraph.startedAt += pausedMs;
       this.attackTelegraph.resolvesAt += pausedMs;
@@ -743,7 +758,8 @@ export class DanneBoss {
     this.bolts.push({
       sprite: bolt,
       ...motion,
-      expiresAt: this.scene.time.now + 2000
+      expiresAt: this.scene.time.now + 2000,
+      returned: false
     });
     retroAudio.egoBoltFire();
   }
@@ -758,6 +774,8 @@ export class DanneBoss {
 
   private updateBolts(timeMs: number, deltaMs: number) {
     const footBox = new Phaser.Geom.Rectangle(this.player.position.x - 8, this.player.position.y - 4, 16, 9);
+    const tool = this.player.combatReadout.weapon.tool;
+    const swing = isWeaponTool(tool) && hasProcessItem(tool) ? this.player.activeActionHitbox : null;
     for (let index = this.bolts.length - 1; index >= 0; index -= 1) {
       const bolt = this.bolts[index];
       if (timeMs >= bolt.expiresAt) {
@@ -765,11 +783,27 @@ export class DanneBoss {
         this.bolts.splice(index, 1);
         continue;
       }
+      if (bolt.returned) aimReturnedBossBolt(bolt, { x: this.sprite.x, y: this.sprite.y - 12 });
       advanceBossBolt(bolt, deltaMs);
       bolt.sprite.setPosition(snapPixel(bolt.x), snapPixel(bolt.y));
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));
       const boltBox = new Phaser.Geom.Rectangle(bolt.sprite.x - 6, bolt.sprite.y - 6, 12, 12);
-      if (Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
+      // A parry wins over contact on the same frame, just as in earlier rooms.
+      if (!bolt.returned && swing && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, swing)) {
+        bolt.returned = true;
+        bolt.expiresAt = timeMs + DANNE_BOSS_RETURN.lifetimeMs;
+        this.boltsReturned += 1;
+        aimReturnedBossBolt(bolt, { x: this.sprite.x, y: this.sprite.y - 12 });
+        bolt.sprite.setTint(color(PALETTE.terminalCyan));
+        bolt.sprite.setAngle(Math.round(Phaser.Math.RadToDeg(Math.atan2(bolt.vy, bolt.vx))));
+        setLatestMessage("EGO RETURNED!");
+        retroAudio.toolHit(tool);
+      }
+      if (bolt.returned && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, this.bossBody())) {
+        this.takeReturnedBolt(timeMs);
+        return;
+      }
+      if (!bolt.returned && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
         bolt.sprite.destroy();
         this.bolts.splice(index, 1);
         this.hitPlayer(bolt, "ego_bolt", timeMs);
@@ -779,6 +813,23 @@ export class DanneBoss {
         this.bolts.splice(index, 1);
       }
     }
+  }
+
+  private takeReturnedBolt(timeMs: number) {
+    this.clearBolts();
+    this.clearAttackTelegraph();
+    this.counterStunnedUntil = timeMs + DANNE_BOSS_RETURN.stunMs;
+    this.nextBoltAt = Math.max(this.nextBoltAt, this.counterStunnedUntil);
+    this.nextTeleportAt = Math.max(this.nextTeleportAt, this.counterStunnedUntil);
+    this.hp = Math.max(0, this.hp - DANNE_BOSS_RETURN.damage);
+    this.sprite.setTint(color(PALETTE.creamPaper));
+    setBossHp(this.hp, this.phaseIndex());
+    setLatestMessage("Ego refuted. DANN-E is stunned: close in with the Red Pencil!");
+    this.pressureToast.show("EGO REFUTED!", this.player.position, "info");
+    retroAudio.bossHit();
+    applyHitShake(this.scene, "boss-hit");
+    this.onPlayerHit?.(false);
+    this.resolvePhaseHp();
   }
 
   private spawnMiniDannes() {
@@ -796,7 +847,7 @@ export class DanneBoss {
   }
 
   private updateMinis(timeMs: number, deltaMs: number) {
-    if (!this.minis.length) return;
+    if (!this.minis.length || timeMs < this.counterStunnedUntil) return;
     const dt = Math.min(0.05, deltaMs / 1000);
     for (const mini of this.minis) {
       mini.angle += mini.speed * dt * 1.7;

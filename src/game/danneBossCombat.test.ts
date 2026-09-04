@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { advanceBossBolt, createBossBoltMotion } from "./danneBossCombat";
+import { advanceBossBolt, aimReturnedBossBolt, createBossBoltMotion, DANNE_BOSS_RETURN } from "./danneBossCombat";
 
 describe("DANN-E boss projectile motion", () => {
   it.each([30, 60, 120, 144, 240])("travels at the same speed at %i fps without rounding away motion", (fps) => {
@@ -22,5 +22,16 @@ describe("DANN-E boss projectile motion", () => {
     expect(bolt.x).toBe(0);
     advanceBossBolt(bolt, 10000);
     expect(bolt.x).toBe(5);
+  });
+
+  it("aims a return from the bolt itself without applying another muzzle offset", () => {
+    const bolt = { x: 128, y: 160, vx: 0, vy: 50 };
+    aimReturnedBossBolt(bolt, { x: 128, y: 106 });
+    expect(bolt).toEqual({ x: 128, y: 160, vx: 0, vy: -DANNE_BOSS_RETURN.speed });
+    advanceBossBolt(bolt, 50);
+    expect(bolt.y).toBe(152.5);
+    aimReturnedBossBolt(bolt, { x: bolt.x, y: bolt.y });
+    expect(bolt.vx).toBe(0);
+    expect(bolt.vy).toBe(0);
   });
 });

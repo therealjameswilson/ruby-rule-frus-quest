@@ -167,7 +167,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
     interactions: [
       {
         id: "vault-core-trigger",
-        label: "DANN-E Core Trigger",
+        label: "DANN-E Core",
         x: 128,
         y: 122,
         radius: 28,
@@ -192,7 +192,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         // ALTTP "top up at the boss door". Enforced by recoveryReachableBeforeBoss
         // in levelPacing.ts. x=128 falls in the gap between the obsidian rubble.
         id: "vault-reliability-cache",
-        label: "Human Review Cache",
+        label: "Review Cache",
         x: 128,
         y: 182,
         radius: 24,

@@ -136,7 +136,9 @@ interface VisibleThreat {
     bolts: { x: number; y: number; returned: boolean }[];
   };
   bossCombat?: {
-    bolts: Position[];
+    bolts: (Position & { returned?: boolean })[];
+    boltsReturned?: number;
+    counterWindowMs?: number;
     minis: Position[];
     retryAvailable: boolean;
     recoverablePressure: number;

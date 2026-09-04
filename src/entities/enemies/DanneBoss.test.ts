@@ -29,7 +29,7 @@ vi.mock("phaser", () => {
 vi.mock("../Player", () => ({ Player: class {} }));
 vi.mock("../../systems/audio", () => ({ retroAudio: {
   blip: vi.fn(), confirm: vi.fn(), warning: vi.fn(), bossHit: vi.fn(), bossDefeat: vi.fn(),
-  dannePhaseTransition: vi.fn(), danneBoast: vi.fn(), egoBoltFire: vi.fn()
+  dannePhaseTransition: vi.fn(), danneBoast: vi.fn(), egoBoltFire: vi.fn(), toolHit: vi.fn()
 } }));
 vi.mock("../../systems/bossHud", () => ({ hideBossHud: vi.fn(), setBossHp: vi.fn(), showBossHud: vi.fn() }));
 vi.mock("../../systems/combatFeedback", () => ({ applyHitShake: vi.fn() }));
@@ -76,10 +76,11 @@ interface BossInternals {
   updateBolts(time: number, delta: number): void;
   startAttackTelegraph(time: number, phase: "cloud"): void;
   updateAttackTelegraph(time: number): void;
+  updateAttackPattern(time: number): void;
   offerShortcut(reason: string): void;
   clockContainer: Visual;
   shortcutChoice: { active: boolean; choose(key: string): void };
-  bolts: Array<Position & { expiresAt: number; sprite: Visual }>;
+  bolts: Array<Position & { expiresAt: number; sprite: Visual; returned: boolean }>;
   retryChoice: { active: boolean; choose(key: string): void };
 }
 
@@ -163,6 +164,91 @@ describe("DANN-E final-review combat", () => {
     internals.updateBolts(3000, 16);
     expect(gameState.reliability).toBe(100);
     expect(internals.bolts).toHaveLength(0);
+  });
+
+  it.each(["citation_stamp", "red_pencil", "review_folder"])("returns a bolt with an owned active %s before contact damage", (tool) => {
+    const { internals, player, boss } = fixture("cloud");
+    player.combatReadout.weapon.tool = tool;
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(110, 131, 36, 22);
+    internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
+    internals.updateBolts(1000, 16);
+    expect(gameState.reliability).toBe(100);
+    expect(player.takeHit).not.toHaveBeenCalled();
+    expect(internals.bolts[0].returned).toBe(true);
+    expect(boss.readout().bossCombat.boltsReturned).toBe(1);
+    player.activeActionHitbox = null;
+    internals.updateBolts(1050, 50);
+    internals.updateBolts(1100, 50);
+    expect(internals.hp).toBe(152);
+    expect(internals.bolts).toHaveLength(0);
+    expect(boss.readout().bossCombat.counterWindowMs).toBeGreaterThan(0);
+    internals.updateAttackPattern(2499);
+    expect(boss.readout().telegraph).toBeNull();
+    internals.updateAttackPattern(2500);
+    expect(boss.readout().telegraph).not.toBeNull();
+  });
+
+  it("does not return bolts in windup/cooldown or with an unowned tool", () => {
+    const { internals, player } = fixture();
+    player.activeActionHitbox = null;
+    internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
+    internals.updateBolts(1000, 16);
+    expect(gameState.reliability).toBe(90);
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(110, 131, 36, 22);
+    gameState.inventory = gameState.inventory.filter((item) => item !== "Red Pencil");
+    internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
+    internals.updateBolts(1100, 16);
+    expect(internals.bolts).toHaveLength(0);
+    expect(internals.hp).toBe(180);
+  });
+
+  it("clears a returned volley once, then preserves the stun across pause", () => {
+    const { internals, player, boss, scene } = fixture();
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(110, 131, 36, 22);
+    for (let i = 0; i < 3; i += 1) internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
+    internals.updateBolts(1000, 16);
+    internals.updateBolts(1050, 50);
+    internals.updateBolts(1100, 50);
+    expect(internals.hp).toBe(152);
+    expect(internals.bolts).toHaveLength(0);
+    player.activeActionHitbox = null;
+    scene.time.now = 1100;
+    boss.update(1100, 16, false);
+    scene.time.now = 6100;
+    expect(boss.readout().bossCombat.counterWindowMs).toBe(1400);
+    boss.update(6100, 16, true);
+    expect(boss.readout().bossCombat.counterWindowMs).toBe(1400);
+    expect(boss.readout().telegraph).toBeNull();
+  });
+
+  it("does not let a lethal returned bolt leak into the next phase", async () => {
+    const { internals, player, boss, onDefeated } = fixture();
+    internals.hp = 1;
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(110, 131, 36, 22);
+    internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
+    internals.updateBolts(1000, 16);
+    internals.updateBolts(1050, 50);
+    internals.updateBolts(1100, 50);
+    expect(boss.currentPhase).toBe("swarm");
+    expect(internals.hp).toBe(180);
+    expect(boss.readout().bossCombat.counterWindowMs).toBe(0);
+    expect(onDefeated).not.toHaveBeenCalled();
+    await Promise.resolve();
+  });
+
+  it("still blocks a returned-bolt victory when a standards violation is unresolved", () => {
+    const { internals, player, onDefeated } = fixture("cloud");
+    recordStandardsViolation("undisclosed_deletion", "unresolved excision");
+    internals.hp = 1;
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(110, 131, 36, 22);
+    internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
+    internals.updateBolts(1000, 16);
+    internals.updateBolts(1050, 50);
+    internals.updateBolts(1100, 50);
+    expect(internals.hp).toBe(1);
+    expect(onDefeated).not.toHaveBeenCalled();
+    expect(internals.shortcutChoice.active).toBe(true);
+    expect(gameState.sceneProgress.blackVaultBossCleared).toBeFalsy();
   });
 
   it("freezes shots and expiry while paused", () => {
