@@ -3,11 +3,26 @@ import {
   getNetworkRoutePacket,
   NETWORK_ROUTE_ITEM_TOTAL,
   NETWORK_ROUTE_PACKETS,
+  networkRoutingObjective,
   routeNetworkPacket,
   routedItemCount
 } from "./networkRouting";
 
 describe("physical two-network routing", () => {
+  it("keeps pickup, carry, retry, and exit destinations inside the HUD", () => {
+    for (const [step, packet] of NETWORK_ROUTE_PACKETS.entries()) {
+      const pickup = networkRoutingObjective(step, false);
+      const carry = networkRoutingObjective(step, true);
+      expect(pickup).toBe(`${packet.order}/4 TAKE AT SORTER`);
+      expect(carry).toContain(packet.network.toUpperCase());
+      expect(pickup.length).toBeLessThanOrEqual(20);
+      expect(carry.length).toBeLessThanOrEqual(20);
+      const wrong = routeNetworkPacket(step, packet.id, packet.network === "OpenNet" ? "ClassNet" : "OpenNet");
+      expect(networkRoutingObjective(wrong.nextStep, false)).toBe(pickup);
+    }
+    expect(networkRoutingObjective(4, false)).toBe("EXIT EAST - VAULT");
+  });
+
   it("condenses the seven source items into four readable packets", () => {
     expect(NETWORK_ROUTE_PACKETS).toHaveLength(4);
     expect(NETWORK_ROUTE_ITEM_TOTAL).toBe(7);

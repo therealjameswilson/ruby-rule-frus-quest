@@ -85,6 +85,14 @@ export function getNetworkRoutePacket(step: number) {
   ];
 }
 
+export function networkRoutingObjective(step: number, carried: boolean) {
+  if (step >= NETWORK_ROUTE_PACKETS.length) return "EXIT EAST - VAULT";
+  const packet = getNetworkRoutePacket(step);
+  return carried
+    ? `${packet.order}/4 TO ${packet.network.toUpperCase()}`
+    : `${packet.order}/4 TAKE AT SORTER`;
+}
+
 export function routedItemCount(step: number) {
   return NETWORK_ROUTE_PACKETS
     .slice(0, Math.max(0, Math.min(NETWORK_ROUTE_PACKETS.length, step)))

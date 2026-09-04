@@ -407,7 +407,6 @@ export class ArchiveScene extends Phaser.Scene {
   private sourceRoomTerminalStatus?: Phaser.GameObjects.Text;
   private sourceRoomTerminalLamp?: Phaser.GameObjects.Rectangle;
   private naraStacksGateObjects: Phaser.GameObjects.GameObject[] = [];
-  private noRepoStampCue?: Phaser.GameObjects.Container;
   private readyWallCues = new Map<string, Phaser.GameObjects.Container>();
   private archiveKeyRewardCue?: Phaser.GameObjects.Container;
   private secretRewardCue?: Phaser.GameObjects.Container;
@@ -572,7 +571,8 @@ export class ArchiveScene extends Phaser.Scene {
     setNearestInteractable(nearest?.label ?? null);
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
     this.hintText.setText(this.currentRoomId !== "A1" && nearest ? `A: ${toolCue}${nearest.label.toUpperCase()}` : "");
-    this.interactionPrompt.update(delta, nearest ?? hintTarget, undefined,
+    const promptTarget = this.currentRoomId === "A1" && this.toast.visible ? null : nearest ?? hintTarget;
+    this.interactionPrompt.update(delta, promptTarget, undefined,
       nearest?.id === "source-note" ? { text: "TAKE SOURCE NOTE" }
         : nearest ? undefined
           : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
@@ -686,7 +686,6 @@ export class ArchiveScene extends Phaser.Scene {
     this.sourceRoomTerminalLamp = undefined;
     this.ambiguousFlagObjects = [];
     this.naraStacksGateObjects = [];
-    this.noRepoStampCue = undefined;
     this.readyWallCues.clear();
     this.archiveKeyRewardCue = undefined;
     this.bossReadinessObjects = [];
@@ -1841,7 +1840,6 @@ export class ArchiveScene extends Phaser.Scene {
     wall.clear();
     this.clearReadyWallCue(definition.id);
     if (definition.id === "repo-wall") {
-      this.clearNoRepoStampCue();
       this.showArchiveKeyRewardCue();
     }
     retroAudio.stamp();
@@ -2209,7 +2207,6 @@ export class ArchiveScene extends Phaser.Scene {
     }
     this.syncWallInteractables();
     this.syncWallState();
-    this.refreshNoRepoStampCue();
     this.refreshReadyWallCues();
     const activeWall = this.bureaucraticWalls.find((wall) => wall.isTouching(this.player.position, 19));
     if (!activeWall || this.time.now < this.wallContactCooldown) return;
@@ -2349,6 +2346,10 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private updateSourceNoteInteractionPrompt(delta: number) {
+    if (this.toast.visible) {
+      this.interactionPrompt.update(delta, null);
+      return;
+    }
     const hintTarget = this.sourceNoteActionHint();
     const strictTarget = hintTarget && this.isNearSourceNoteActionTarget(hintTarget) ? hintTarget : null;
     const annotationActive = this.sourceNoteStatus === "stamped"
@@ -2660,72 +2661,13 @@ export class ArchiveScene extends Phaser.Scene {
     this.clearSourceNoteRouteCue();
     this.drawNaraStacksGateSeal();
     this.syncRoomTraversalState();
-    this.refreshNoRepoStampCue();
     this.reliability.update();
     setObjective("STAMP NO REPO: use the Citation Stamp on the stone wall.");
-    this.toast.show("CITATION STAMP READY - CLEAR NO REPO", this.player.position, "info");
+    this.toast.show("CITATION STAMP READY", this.player.position, "info");
     this.updateSourceNoteVerification();
     this.syncWallState();
     this.syncRoomTraversalState();
     this.time.delayedCall(0, () => this.syncRoomTraversalState());
-  }
-
-  private refreshNoRepoStampCue() {
-    const wall = this.activeEnemyWalls.get("repo-wall");
-    if (this.currentRoomId !== "A1" || this.sourceNoteStatus !== "stamped" || !wall || wall.isCleared) {
-      this.clearNoRepoStampCue();
-      return;
-    }
-
-    const position = wall.position;
-    const { x, y } = this.readyWallCuePosition(position.x, position.y, 26);
-    if (this.noRepoStampCue?.active) {
-      this.noRepoStampCue.setPosition(x, y);
-      this.noRepoStampCue.setDepth(268);
-      return;
-    }
-
-    const ring = this.add.rectangle(0, 0, 42, 22, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(PALETTE.goldStamp), 0.96)
-      .setName("archive-no-repo-stamp-target-ring");
-    const crossH = this.add.rectangle(0, 0, 30, 2, color(PALETTE.goldStamp), 0.88)
-      .setName("archive-no-repo-stamp-target-cross");
-    const crossV = this.add.rectangle(0, 0, 2, 18, color(PALETTE.creamPaper), 0.82)
-      .setName("archive-no-repo-stamp-target-cross");
-    const plate = this.add.rectangle(0, -19, 34, 9, color(PALETTE.black), 0.9)
-      .setStrokeStyle(1, color(PALETTE.classNetRed), 0.86)
-      .setName("archive-no-repo-stamp-target-plate");
-    const label = this.add.text(0, -23, "STAMP", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp
-    }).setName("archive-no-repo-stamp-target-label")
-      .setOrigin(0.5, 0);
-    const arrow = this.add.triangle(0, 18, 0, 0, 10, 0, 5, 8, color(PALETTE.goldStamp), 0.9)
-      .setName("archive-no-repo-stamp-target-arrow")
-      .setAngle(90);
-    this.noRepoStampCue = this.track(this.add.container(x, y, [
-      ring,
-      crossH,
-      crossV,
-      plate,
-      label,
-      arrow
-    ]).setName("archive-no-repo-stamp-target-cue").setDepth(268));
-    this.tweens.add({
-      targets: this.noRepoStampCue,
-      scaleX: 1.08,
-      scaleY: 1.08,
-      duration: 360,
-      yoyo: true,
-      repeat: -1,
-      ease: "Stepped"
-    });
-  }
-
-  private clearNoRepoStampCue() {
-    if (this.noRepoStampCue?.active) this.noRepoStampCue.destroy();
-    this.noRepoStampCue = undefined;
   }
 
   private refreshReadyWallCues() {
@@ -2909,11 +2851,12 @@ export class ArchiveScene extends Phaser.Scene {
       }
       const start = { x: this.researchTable.x + 20, y: this.researchTable.y - 16 };
       const end = { x: Math.round(wall.position.x), y: Math.round(wall.position.y) };
+      if (this.hideReachableSourceNoteCue(end, 38)) return;
       const cueKey = `${this.currentRoomId}:stamp-wall:${start.x},${start.y}->${end.x},${end.y}`;
       if (cueKey === this.sourceNoteRouteCueKey) return;
       this.clearSourceNoteRouteCue();
       this.sourceNoteRouteCueKey = cueKey;
-      this.drawSourceNoteRouteCue("STAMP", start, end, "STAMP NO REPO", true);
+      this.drawSourceNoteRouteCue("STAMP", start, end, true);
       return;
     }
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
@@ -2927,12 +2870,12 @@ export class ArchiveScene extends Phaser.Scene {
       const end = carried
         ? { x: this.researchTable.x, y: this.researchTable.y }
         : { ...stationPosition };
-      const label = carried ? `FILE ${carried.shortLabel}` : `GET ${station.shortLabel}`;
+      if (this.hideReachableSourceNoteCue(end, carried ? 54 : 28)) return;
       const cueKey = `${this.currentRoomId}:annotation:${step}:${carried?.id ?? "none"}:${start.x},${start.y}->${end.x},${end.y}`;
       if (cueKey === this.sourceNoteRouteCueKey) return;
       this.clearSourceNoteRouteCue();
       this.sourceNoteRouteCueKey = cueKey;
-      this.drawSourceNoteRouteCue(carried ? "FILE" : "ANNOTATE", start, end, label, !carried);
+      this.drawSourceNoteRouteCue(carried ? "FILE" : "ANNOTATE", start, end, !carried);
       return;
     }
     if (this.sourceNoteStatus !== "carried" && this.sourceNoteStatus !== "routed" && this.sourceNoteStatus !== "verified") {
@@ -2954,14 +2897,22 @@ export class ArchiveScene extends Phaser.Scene {
     const end = this.sourceNoteStatus === "routed"
       ? { ...stationPosition }
       : { x: Math.round(this.researchTable.x), y: Math.round(this.researchTable.y) };
-    const label = this.sourceNoteStatus === "routed" ? `CHECK ${station.shortLabel}` : `${this.verbForSourceNote()} HERE`;
     const compactTarget = this.sourceNoteStatus === "routed";
+    if (this.hideReachableSourceNoteCue(end, compactTarget ? 28 : 54)) return;
     const cueKey = `${this.currentRoomId}:${this.sourceNoteStatus}:${step}:${start.x},${start.y}->${end.x},${end.y}`;
     if (cueKey === this.sourceNoteRouteCueKey) return;
 
     this.clearSourceNoteRouteCue();
     this.sourceNoteRouteCueKey = cueKey;
-    this.drawSourceNoteRouteCue(this.verbForSourceNote(), start, end, label, compactTarget);
+    this.drawSourceNoteRouteCue(this.verbForSourceNote(), start, end, compactTarget);
+  }
+
+  private hideReachableSourceNoteCue(target: { x: number; y: number }, radius: number) {
+    const distance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, target.x, target.y);
+    if (distance > radius) return false;
+    // At the destination, the interaction prompt replaces the distant route cue.
+    this.clearSourceNoteRouteCue();
+    return true;
   }
 
   private clearSourceNoteRouteCue() {
@@ -2981,7 +2932,6 @@ export class ArchiveScene extends Phaser.Scene {
     verb: "ROUTE" | "VERIFY" | "STAMP" | "ANNOTATE" | "FILE",
     start: { x: number; y: number },
     end: { x: number; y: number },
-    label: string,
     compactTarget: boolean
   ) {
     const accent = verb === "ROUTE" || verb === "ANNOTATE"
@@ -2993,39 +2943,22 @@ export class ArchiveScene extends Phaser.Scene {
           : PALETTE.classNetRed;
     const targetWidth = compactTarget ? 36 : 78;
     const targetHeight = compactTarget ? 26 : 34;
-    const labelY = compactTarget ? 21 : 32;
-    const labelWidth = Math.max(54, label.length * 4 + 8);
-    this.trackSourceNoteRouteCue(this.add.ellipse(end.x, end.y + Math.round(targetHeight / 3), targetWidth + 10, 18, color(PALETTE.black), 0.34)
-      .setName("archive-source-note-route-shadow")
-      .setDepth(136));
     this.trackSourceNoteRouteCue(this.add.rectangle(end.x, end.y, targetWidth, targetHeight, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(accent))
+      .setStrokeStyle(1, color(accent))
       .setName("archive-source-note-route-table-glow")
       .setDepth(236));
 
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
-    const steps = Math.max(1, Math.min(7, Math.floor(distance / 13)));
+    const steps = Math.max(1, Math.min(4, Math.floor(distance / 22)));
     for (let index = 1; index <= steps; index += 1) {
       const t = index / (steps + 1);
       const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
       const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
-      this.trackSourceNoteRouteCue(this.add.rectangle(x, y, 5, 5, color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.9)
-        .setAngle(45)
+      this.trackSourceNoteRouteCue(this.add.rectangle(x, y, 2, 2, color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.9)
         .setName("archive-source-note-route-dot")
         .setDepth(237));
     }
 
-    this.trackSourceNoteRouteCue(this.add.rectangle(end.x, end.y + labelY, labelWidth, 10, color(PALETTE.black), 0.92)
-      .setStrokeStyle(1, color(accent))
-      .setName("archive-source-note-route-label-frame")
-      .setDepth(238));
-    this.trackSourceNoteRouteCue(this.add.text(end.x, end.y + labelY - 3, label, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: accent
-    }).setName("archive-source-note-route-label")
-      .setOrigin(0.5, 0)
-      .setDepth(239));
   }
 
   private handleAnnotationDraftingAction(target: Interactable) {
@@ -3124,7 +3057,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.syncAnnotationDraftingStations();
     this.clearSourceNoteRouteCue();
     this.syncWallState();
-    this.toast.show(documentCount < 3 ? "SUPPORTING DOCUMENTS UNSEALED" : "ANNOTATION FILED", this.player.position, "info");
+    this.toast.show(documentCount < 3 ? "DOCUMENTS UNSEALED" : "ANNOTATION FILED", this.player.position, "info");
     this.syncSourceRoomTerminalStatus();
     setLatestMessage(`${message} The manuscript can move toward human review once the room packet is complete.`);
     if (documentCount >= 3) {

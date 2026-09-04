@@ -54,4 +54,17 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(archiveSceneSource).toContain('if (target === "N1")');
     expect(archiveSceneSource).toContain('transitionTo(this, "NetworkScene")');
   });
+
+  it("uses one distant target cue and removes it when the action is reachable", () => {
+    const cue = methodSource("drawSourceNoteRouteCue", "handleAnnotationDraftingAction");
+    expect(cue).not.toContain("this.add.text");
+    expect(cue).not.toContain(".setAngle(");
+    expect(archiveSceneSource).not.toContain("noRepoStampCue");
+    const reachable = methodSource("hideReachableSourceNoteCue", "clearSourceNoteRouteCue");
+    expect(reachable).toContain("distance > radius");
+    expect(reachable).toContain("this.clearSourceNoteRouteCue()");
+    const prompt = methodSource("updateSourceNoteInteractionPrompt", "warnIfSourceNoteHintOnly");
+    expect(prompt).toContain("if (this.toast.visible)");
+    expect(prompt).toContain("this.interactionPrompt.update(delta, null)");
+  });
 });

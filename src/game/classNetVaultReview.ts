@@ -85,6 +85,20 @@ export function getClassNetVaultDocket(step: number) {
   ];
 }
 
+export function classNetVaultObjective(step: number, carried: boolean, tokenCollected: boolean) {
+  if (tokenCollected) return "EXIT EAST - REFERRAL";
+  if (step >= CLASSNET_VAULT_DOCKETS.length) return "TAKE CLEARANCE TOKEN";
+  const docket = getClassNetVaultDocket(step);
+  const destination: Record<ClassNetVaultStationId, string> = {
+    human_desk: "HUMAN DESK",
+    release_board: "RELEASE BOARD",
+    decision_ledger: "LEDGER"
+  };
+  return carried
+    ? `${docket.order}/3 TO ${destination[docket.station]}`
+    : `${docket.order}/3 TAKE AT PEDESTAL`;
+}
+
 export function completedClassNetVaultChecks(step: number) {
   return CLASSNET_VAULT_DOCKETS
     .slice(0, Math.max(0, Math.min(CLASSNET_VAULT_DOCKETS.length, step)))

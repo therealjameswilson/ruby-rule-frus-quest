@@ -247,7 +247,9 @@ export class UIScene extends Phaser.Scene {
     if (activeSceneKey === "GuideScene") return guideQuestBandObjective(
       hasProcessItem("citation_stamp"), gameState.volumeFragments.includes("Front Matter Fragment")
     );
-    if (gameState.heldItem && !(activeSceneKey === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "A1")) {
+    const hasCarryDestination = activeSceneKey === "NetworkScene"
+      || (activeSceneKey === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "A1");
+    if (gameState.heldItem && !hasCarryDestination) {
       return getString("hud.carryItem", { item: gameState.heldItem });
     }
     const objective = gameState.objective.replace(/^Mission:\s*/i, "");

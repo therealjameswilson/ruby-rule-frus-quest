@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CLASSNET_VAULT_CHECK_TOTAL,
   CLASSNET_VAULT_DOCKETS,
+  classNetVaultObjective,
   completedClassNetVaultChecks,
   deriveClassNetVaultStep,
   getClassNetVaultDocket,
@@ -9,6 +10,20 @@ import {
 } from "./classNetVaultReview";
 
 describe("physical ClassNet Vault review", () => {
+  it("names each carry destination without truncation and retains reward/exit goals", () => {
+    const destinations = ["HUMAN DESK", "RELEASE BOARD", "LEDGER"];
+    for (const [step, docket] of CLASSNET_VAULT_DOCKETS.entries()) {
+      const pickup = classNetVaultObjective(step, false, false);
+      const carry = classNetVaultObjective(step, true, false);
+      expect(pickup).toBe(`${docket.order}/3 TAKE AT PEDESTAL`);
+      expect(carry).toBe(`${docket.order}/3 TO ${destinations[step]}`);
+      expect(pickup.length).toBeLessThanOrEqual(20);
+      expect(carry.length).toBeLessThanOrEqual(20);
+    }
+    expect(classNetVaultObjective(3, false, false)).toBe("TAKE CLEARANCE TOKEN");
+    expect(classNetVaultObjective(3, false, true)).toBe("EXIT EAST - REFERRAL");
+  });
+
   it("bundles all nine source-backed checks into three physical dockets", () => {
     expect(CLASSNET_VAULT_DOCKETS).toHaveLength(3);
     expect(CLASSNET_VAULT_CHECK_TOTAL).toBe(9);

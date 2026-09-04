@@ -4,8 +4,32 @@ import { describe, expect, it } from "vitest";
 const networkSceneSource = readFileSync(new URL("./NetworkScene.ts", import.meta.url), "utf8");
 const routingSource = readFileSync(new URL("../game/networkRouting.ts", import.meta.url), "utf8");
 const vaultReviewSource = readFileSync(new URL("../game/classNetVaultReview.ts", import.meta.url), "utf8");
+const uiSource = readFileSync(new URL("./UIScene.ts", import.meta.url), "utf8");
+
+function methodSource(name: string, nextName?: string) {
+  const start = networkSceneSource.indexOf(`private ${name}`);
+  const end = nextName ? networkSceneSource.indexOf(`private ${nextName}`, start + 1) : networkSceneSource.length;
+  return networkSceneSource.slice(start, end);
+}
 
 describe("NetworkScene physical routing flow", () => {
+  it("refreshes gate art immediately after either room unlocks", () => {
+    const doors = methodSource("drawRoomDoors", "renderNetworkSplit");
+    expect(doors).toContain("for (const object of this.roomGateObjects)");
+    expect(doors).toContain("if (object.active) object.destroy()");
+    expect(doors).toContain("this.roomGateObjects = []");
+    expect(doors.match(/track: trackGate/g)).toHaveLength(2);
+    expect(methodSource("finishRouting")).toContain("this.drawRoomDoors()");
+    expect(methodSource("collectClearanceToken", "refreshClearanceTokenRouteCue")).toContain("this.drawRoomDoors()");
+  });
+
+  it("keeps the bounded destination objective visible while carrying", () => {
+    expect(networkSceneSource).toContain("networkRoutingObjective(this.currentRoute, true)");
+    expect(networkSceneSource).toContain("return classNetVaultObjective(");
+    expect(uiSource).toContain('const hasCarryDestination = activeSceneKey === "NetworkScene"');
+    expect(uiSource).toContain("gameState.heldItem && !hasCarryDestination");
+  });
+
   it("routes packets in the room instead of opening the legacy seven-question quiz", () => {
     expect(networkSceneSource).toContain("handleRoutingPacketAction");
     expect(networkSceneSource).toContain("routeNetworkPacket");
