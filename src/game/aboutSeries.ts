@@ -18,3 +18,16 @@ export const ABOUT_SERIES_RULES = {
 } as const;
 
 export type AboutSeriesRuleId = keyof typeof ABOUT_SERIES_RULES;
+
+export type IndexReferenceTarget = "page" | "document";
+
+export interface IndexReferenceResult {
+  ok: boolean;
+  message: string;
+}
+
+export function evaluateIndexReferenceTarget(target: IndexReferenceTarget): IndexReferenceResult {
+  return target === "document"
+    ? { ok: true, message: "INDEX ENTRY 87 -> DOCUMENT 87" }
+    : { ok: false, message: "PAGES MOVE - ROUTE TO DOCUMENT" };
+}

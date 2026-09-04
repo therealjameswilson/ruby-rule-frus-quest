@@ -34,7 +34,15 @@ describe("EndingScene physical Buckram Gate", () => {
   it("starts the physical binding loop without activating a choice prompt", () => {
     expect(sceneSource).toContain("this.startPhysicalBindingLoop()");
     expect(sceneSource).not.toContain("new ChoicePrompt");
+    expect(sceneSource).toContain("new IndexRouterOverlay(this)");
     expect(sceneSource).toContain("this.handleBindingPacketAction(activePacket)");
+  });
+
+  it("makes the About-the-Series index rule a physical router at the Index Desk", () => {
+    expect(sceneSource).toContain('packet.id === "index-proof-docket"');
+    expect(sceneSource).toContain("aboutSeriesIndexRoutingComplete");
+    expect(sceneSource).toContain('setObjective("INDEX: ROUTE TO DOC")');
+    expect(sceneSource).toContain('this.toast.show(completionMessage ? "DOC 87 INDEXED"');
   });
 
   it("renders five distinct stations around one human binding press", () => {

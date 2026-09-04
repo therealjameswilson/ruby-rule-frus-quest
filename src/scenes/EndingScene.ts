@@ -67,6 +67,7 @@ import { PublicationSummary } from "../systems/publicationSummary";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
+import { IndexRouterOverlay } from "../systems/indexRouter";
 import type { Interactable } from "../game/types";
 
 function color(hex: string) {
@@ -124,6 +125,7 @@ export class EndingScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private toast!: FeedbackToast;
   private interactionPrompt!: InteractionPrompt;
+  private indexRouter!: IndexRouterOverlay;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private bindingPackets: PhysicalBindingPacket[] = [];
@@ -171,6 +173,7 @@ export class EndingScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.toast = new FeedbackToast(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.indexRouter = new IndexRouterOverlay(this);
     this.objectiveText = addObjectiveText(this);
     this.actionHint = this.add.text(8, 211, "", {
       fontFamily: "monospace",
@@ -212,6 +215,14 @@ export class EndingScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.indexRouter.active) {
+      this.toast.update(delta, this.player.position, GATE_PLAY_BOUNDS);
+      this.interactionPrompt.update(delta, null);
+      this.clearPublicationTableRouteCue();
+      this.player.update(delta, false);
+      this.indexRouter.updateInput(input);
+      return;
+    }
     if (input.menuJustPressed && !this.published) this.inventory.toggle();
     if (input.soundJustPressed) {
       retroAudio.toggle();
@@ -752,15 +763,41 @@ export class EndingScene extends Phaser.Scene {
       setLatestMessage(`SEAL: return to ${station.label}.`);
       return;
     }
+    if (packet.id === "index-proof-docket" && !gameState.sceneProgress.aboutSeriesIndexRoutingComplete) {
+      this.openIndexRouter(packet);
+      return;
+    }
+    this.sealBindingPacket(packet);
+  }
+
+  private openIndexRouter(packet: PhysicalBindingPacket) {
+    this.toast.hide();
+    setGameMode("choice");
+    setObjective("INDEX: ROUTE TO DOC");
+    this.indexRouter.show({
+      onComplete: (message) => {
+        gameState.sceneProgress.aboutSeriesIndexRoutingComplete = 1;
+        setGameMode("explore");
+        this.sealBindingPacket(packet, message);
+      },
+      onCancel: () => {
+        setGameMode("explore");
+        this.updateGateReadout();
+      }
+    });
+  }
+
+  private sealBindingPacket(packet: PhysicalBindingPacket, completionMessage?: string) {
     packet.status = "sealed";
     this.applyBindingPacketReward(packet);
+    if (completionMessage) setLatestMessage(completionMessage);
     retroAudio.stamp();
     const nextPacket = this.getActiveBindingPacket();
     if (nextPacket) {
       nextPacket.status = "carried";
       setHeldItem(`Binding Folder: ${nextPacket.shortLabel}`);
       this.updateCarriedBindingPacket();
-      this.toast.show(`${packet.shortLabel} SEALED`, this.player.position, "info", GATE_PLAY_BOUNDS);
+      this.toast.show(completionMessage ? "DOC 87 INDEXED" : `${packet.shortLabel} SEALED`, this.player.position, "info", GATE_PLAY_BOUNDS);
     } else {
       gameState.sceneProgress.buckramGateOpen = getFinalGateReadiness().buckramGateOpen ? 1 : 0;
       const ready = getFinalGateReadiness().ready && hasProcessItem("buckram_key");

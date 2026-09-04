@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ABOUT_SERIES_RULES, ABOUT_SERIES_SOURCE } from "./aboutSeries";
+import { ABOUT_SERIES_RULES, ABOUT_SERIES_SOURCE, evaluateIndexReferenceTarget } from "./aboutSeries";
 
 describe("About the Series gameplay source", () => {
   it("points to the exact official volume page requested for the game", () => {
@@ -36,5 +36,16 @@ describe("About the Series gameplay source", () => {
     expect(ABOUT_SERIES_RULES.access).toMatch(/excerpts.*still-classified/i);
     expect(ABOUT_SERIES_RULES.index).toMatch(/document numbers.*page numbers/i);
     expect(ABOUT_SERIES_RULES.deadline).toMatch(/30 years/i);
+  });
+
+  it("routes index references to document numbers rather than page numbers", () => {
+    expect(evaluateIndexReferenceTarget("page")).toEqual({
+      ok: false,
+      message: "PAGES MOVE - ROUTE TO DOCUMENT"
+    });
+    expect(evaluateIndexReferenceTarget("document")).toEqual({
+      ok: true,
+      message: "INDEX ENTRY 87 -> DOCUMENT 87"
+    });
   });
 });

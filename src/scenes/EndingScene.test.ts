@@ -28,7 +28,8 @@ interface Packet {
 interface BindingInternals {
   bindingPackets: Packet[];
   player: { position: { x: number; y: number } };
-  toast: { show: ReturnType<typeof vi.fn> };
+  toast: { show: ReturnType<typeof vi.fn>; hide: ReturnType<typeof vi.fn> };
+  indexRouter: { active: boolean; show: ReturnType<typeof vi.fn> };
   reliability: { update: ReturnType<typeof vi.fn> };
   updateBindingRoomVisuals: ReturnType<typeof vi.fn>;
   syncRoomTraversal: ReturnType<typeof vi.fn>;
@@ -44,7 +45,8 @@ function fixture(step = 0, status: BuckramBindingStatus = "waiting") {
     status: index < step ? "sealed" : index === step ? status : "waiting", x: 128, y: 177
   }));
   scene.player = { position: { x: 128, y: 190 } };
-  scene.toast = { show: vi.fn() };
+  scene.toast = { show: vi.fn(), hide: vi.fn() };
+  scene.indexRouter = { active: false, show: vi.fn() };
   scene.reliability = { update: vi.fn() };
   scene.updateBindingRoomVisuals = vi.fn();
   scene.syncRoomTraversal = vi.fn();
@@ -53,7 +55,11 @@ function fixture(step = 0, status: BuckramBindingStatus = "waiting") {
   return { scene, packet: scene.bindingPackets[step] };
 }
 
-beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
+beforeEach(() => {
+  resetGameState();
+  vi.clearAllMocks();
+  vi.mocked(saveGameNow).mockReset();
+});
 
 describe("live binding packet handoffs", () => {
   it("saves the initial pickup immediately without completing the packet", () => {
@@ -102,6 +108,27 @@ describe("live binding packet handoffs", () => {
     const points = gameState.documentPoints;
     scene.handleBindingPacketAction(packet);
     expect(gameState.documentPoints).toBe(points);
+    expect(saveGameNow).toHaveBeenCalledOnce();
+  });
+
+  it("requires the document-number router before sealing the index packet", () => {
+    const { scene, packet } = fixture(1, "routed");
+    scene.player.position = { x: 42, y: 164 };
+    scene.handleBindingPacketAction(packet);
+    expect(packet.status).toBe("routed");
+    expect(scene.indexRouter.show).toHaveBeenCalledOnce();
+    expect(gameState.sceneProgress.indexDocketComplete).not.toBe(1);
+
+    const callbacks = scene.indexRouter.show.mock.calls[0][0] as {
+      onComplete: (message: string) => void;
+      onCancel: () => void;
+    };
+    callbacks.onComplete("INDEX ENTRY 87 -> DOCUMENT 87");
+    expect(gameState.sceneProgress.aboutSeriesIndexRoutingComplete).toBe(1);
+    expect(gameState.sceneProgress.indexDocketComplete).toBe(1);
+    expect(packet.status).toBe("sealed");
+    expect(scene.bindingPackets[2].status).toBe("carried");
+    expect(scene.toast.show).toHaveBeenCalledWith("DOC 87 INDEXED", scene.player.position, "info", expect.any(Object));
     expect(saveGameNow).toHaveBeenCalledOnce();
   });
 
