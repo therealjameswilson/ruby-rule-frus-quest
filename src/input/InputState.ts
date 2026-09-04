@@ -71,6 +71,7 @@ interface InputCallbacks {
   openSpriteGallery?: () => void;
   fastForwardDialog?: () => void;
   handlePauseTouch?: (point: { x: number; y: number }) => boolean;
+  isTouchControlPoint?: (point: { x: number; y: number }) => boolean;
 }
 
 type InputGestureKind = "keyboard" | "pointer" | "gamepad";
@@ -483,6 +484,10 @@ export function handlePauseTouch(point: { x: number; y: number }) {
   return callbacks.handlePauseTouch?.(point) ?? false;
 }
 
+export function isTouchControlPoint(point: { x: number; y: number }) {
+  return callbacks.isTouchControlPoint?.(point) ?? false;
+}
+
 export function addInputGestureListener(callback: InputGestureCallback) {
   inputGestureCallbacks.add(callback);
   return () => inputGestureCallbacks.delete(callback);
@@ -510,6 +515,10 @@ export function isTouchInputCapable() {
 
 export function getPrimaryActionBadge() {
   return isTouchInputCapable() ? "A" : "Z";
+}
+
+export function getSecondaryActionBadge() {
+  return isTouchInputCapable() || gamepadConnected ? "B" : "X";
 }
 
 export function tickInput() {

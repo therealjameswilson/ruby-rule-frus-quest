@@ -118,7 +118,8 @@
     "talkJuniorCompiler": "Parle au Compilateur Junior.",
     "toolLabel": "OUTIL {label}",
     "touchControlsReady": "COMMANDES TACTILES PRÊTES",
-    "useTool": "UTILISER {tool}"
+    "useTool": "UTILISER {tool}",
+    "counterDanne": "FRAPPER / RENVOYER EGO"
   },
   "items": {
     "buckramKey": {

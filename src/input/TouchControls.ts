@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState } from "../game/state";
 import { triggerTouchHaptic } from "../platform/haptics";
-import { handlePauseTouch, setTouchControl, triggerDialogFastForward, type CardinalDirection, type TouchControlKey } from "./InputState";
+import { handlePauseTouch, setTouchControl, triggerDialogFastForward, updateInputCallbacks, type CardinalDirection, type TouchControlKey } from "./InputState";
 
 interface ButtonSpec {
   key: TouchControlKey;
@@ -80,6 +80,7 @@ export class TouchControls {
     this.scene = scene;
     this.graphics = scene.add.graphics().setDepth(20000).setScrollFactor(0);
     this.buttons = this.createButtons();
+    updateInputCallbacks({ isTouchControlPoint: (point) => this.enabled && Boolean(this.findButtonAt(point.x, point.y)) });
     this.installPointerEvents();
     this.setEnabled(isTouchCapable());
   }
@@ -138,6 +139,7 @@ export class TouchControls {
   }
 
   destroy() {
+    updateInputCallbacks({ isTouchControlPoint: undefined });
     this.releaseAll();
     this.overlayFade?.stop();
     this.removePointerEvents();

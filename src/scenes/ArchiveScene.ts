@@ -56,7 +56,8 @@ import {
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
-import { applyDanneLurkerDamage } from "../systems/dannePressure";
+import { takeDanneLurkerHit } from "../systems/dannePressure";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -513,11 +514,13 @@ export class ArchiveScene extends Phaser.Scene {
     if (input.abilityJustPressed) activateRoleAbility(this);
 
     if (this.roomTransitionLocked) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (this.dialog.active) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
@@ -525,6 +528,7 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       this.toast.update(delta, this.player.position);
@@ -532,10 +536,15 @@ export class ArchiveScene extends Phaser.Scene {
     }
     if (input.pauseJustPressed) {
       this.inventory.toggle();
+      this.updateDanneLurker(delta, false);
       return;
     }
 
     this.player.update(delta, true, { bounds: PLAY_BOUNDS, solids: this.roomSolids });
+    if (input.bJustPressed) {
+      const swing = tryEquippedToolSwing(this.player);
+      if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
+    }
     this.updateDanneLurker(delta);
     if (this.checkRoomExit()) return;
 
@@ -595,16 +604,12 @@ export class ArchiveScene extends Phaser.Scene {
     this.objectiveText.setText(gameState.objective);
   }
 
-  private updateDanneLurker(delta: number) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted archive verification.");
+  private updateDanneLurker(delta: number, canPressure = true) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure, this.player.combatReadout);
+    if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted archive verification.")) {
       this.refreshRoomObjective();
       this.reliability.update();
-    } else if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted archive verification.");
+    } else if (result.egoBoltHit && takeDanneLurkerHit(this.player, this.danneLurker.position, "ego_bolt", "DANN-E ego bolt disrupted archive verification.")) {
       this.refreshRoomObjective();
       this.reliability.update();
     }
@@ -644,6 +649,7 @@ export class ArchiveScene extends Phaser.Scene {
       this.clearRoom();
       this.renderCurrentRoom();
       this.player.setPosition(spawn.x, spawn.y);
+      this.danneLurker.enterRoom(this.time.now);
       this.syncRoomTraversalState();
       this.updateVisitedMinimap();
       this.exitCooldownUntil = this.time.now + 280;

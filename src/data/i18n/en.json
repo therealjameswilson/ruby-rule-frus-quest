@@ -26,7 +26,8 @@
     "talkJuniorCompiler": "Talk to the Junior Compiler.",
     "toolLabel": "TOOL {label}",
     "touchControlsReady": "TOUCH CONTROLS READY",
-    "useTool": "USE {tool}"
+    "useTool": "USE {tool}",
+    "counterDanne": "SWING / RETURN EGO BOLTS"
   },
   "language": {
     "changed": "Language set to {language}.",

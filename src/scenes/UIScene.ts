@@ -9,7 +9,8 @@ import { GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasDanneItem, hasProcessItem } from "../game/state";
 import { getVolumeAssemblyReadout } from "../game/state";
 import { getGuideCavernStage, guideCavernActionCue } from "../game/guideCavernFlow";
-import { addGamepadConnectionListener, getInput, getPrimaryActionBadge, updateInputCallbacks } from "../input/InputState";
+import { addGamepadConnectionListener, getInput, getPrimaryActionBadge, getSecondaryActionBadge, updateInputCallbacks } from "../input/InputState";
+import { isWeaponTool } from "../systems/weaponState";
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
 import { getString } from "../systems/i18n";
@@ -201,6 +202,7 @@ export class UIScene extends Phaser.Scene {
     const objectiveLine = this.compactObjective(activeSceneKey);
     const riskLine = this.compactReliabilityRiskLine();
     const actionLine = riskLine ?? this.compactActionLine(toolLabel);
+    const actionBadge = !riskLine && this.showCounterAction() ? getSecondaryActionBadge() : getPrimaryActionBadge();
     const signature = [
       gameState.reliability,
       toolLabel,
@@ -210,6 +212,7 @@ export class UIScene extends Phaser.Scene {
       weapon.cooldownMsRemaining,
       objectiveLine,
       actionLine,
+      actionBadge,
       gameState.nearestInteractable ?? "",
       gameState.heldItem ?? "",
       gameState.mode,
@@ -224,7 +227,7 @@ export class UIScene extends Phaser.Scene {
     this.drawQuestBandToolSlot(Boolean(subscreen.equippedTool ?? hud.equippedItem), weapon.cooldownRatio, weapon.phase);
     this.drawQuestBandVolumeAssembly(volumeAssembly);
     this.questBandText.setText(clampQuestBandText(objectiveLine, QUEST_BAND_LAYOUT.objective.maxChars));
-    this.questBandVerbText.setText(getPrimaryActionBadge());
+    this.questBandVerbText.setText(actionBadge);
     this.questBandCueText.setText(clampQuestBandText(actionLine, QUEST_BAND_LAYOUT.actionCue.maxChars));
     this.questBandCueText.setColor(riskLine ? PALETTE.classNetRed : PALETTE.terminalCyan);
     this.questBandToolText.setText(clampQuestBandText(
@@ -273,6 +276,7 @@ export class UIScene extends Phaser.Scene {
       return getString("hud.goLeftTalk");
     }
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
+    if (this.showCounterAction()) return getString("hud.counterDanne");
     if (gameState.currentScene === "GuideScene") {
       const stage = getGuideCavernStage(
         hasProcessItem("citation_stamp"),
@@ -282,6 +286,12 @@ export class UIScene extends Phaser.Scene {
     }
     if (toolLabel !== getString("hud.none")) return getString("hud.useTool", { tool: toolLabel });
     return getString("hud.findGlowing");
+  }
+
+  private showCounterAction() {
+    return gameState.mode === "explore" && !gameState.nearestInteractable
+      && isWeaponTool(gameState.equippedProcessItem) && hasProcessItem(gameState.equippedProcessItem)
+      && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene"].includes(gameState.currentScene);
   }
 
   private shouldShowQuestBand(activeSceneKey: string | null) {

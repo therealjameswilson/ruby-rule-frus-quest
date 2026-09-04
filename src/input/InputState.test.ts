@@ -2,6 +2,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   getInput,
   getPrimaryActionBadge,
+  getSecondaryActionBadge,
+  isTouchControlPoint,
+  updateInputCallbacks,
   pressKeyForTests,
   releaseKeyForTests,
   resetInput,
@@ -20,6 +23,7 @@ describe("InputState keyboard edges", () => {
   afterEach(() => {
     setNowProviderForTests(null);
     resetInput();
+    updateInputCallbacks({ isTouchControlPoint: undefined });
   });
 
   it("maps Z to A and X/B to the secondary action", () => {
@@ -177,6 +181,14 @@ describe("InputState keyboard edges", () => {
 
   it("advertises the keyboard action key without overloading WASD", () => {
     expect(getPrimaryActionBadge()).toBe("Z");
+    expect(getSecondaryActionBadge()).toBe("X");
+  });
+
+  it("lets the live touch overlay reserve its button zones from pause-menu clicks", () => {
+    expect(isTouchControlPoint({ x: 174, y: 216 })).toBe(false);
+    updateInputCallbacks({ isTouchControlPoint: ({ x, y }) => x === 174 && y === 216 });
+    expect(isTouchControlPoint({ x: 174, y: 216 })).toBe(true);
+    expect(isTouchControlPoint({ x: 205, y: 182 })).toBe(false);
   });
 
   it("keeps just-pressed flags true for exactly one tick while held", () => {

@@ -11,15 +11,20 @@ import {
   DANNE_LURKER_BOLT_SPEED,
   DANNE_LURKER_BOLT_TELEGRAPH_MS,
   DANNE_LURKER_INITIAL_BOLT_DELAY_MS,
+  DANNE_LURKER_TOOL_STUN_MS,
+  DANNE_LURKER_RETURN_STUN_MS,
+  DANNE_LURKER_RETURN_SPEED,
   danneLurkerTelegraphRemainingMs
 } from "../../game/danneLurkerBalance";
 import { FRUS_DANNE_EGO_BOLT_SLOT_COUNT } from "../../game/lttpFrusTranslation";
 import { gameState, setLatestMessage } from "../../game/state";
-import type { Position } from "../../game/types";
+import type { PlayerCombatReadout, Position } from "../../game/types";
+import { getSecondaryActionBadge } from "../../input/InputState";
 import { retroAudio } from "../../systems/audio";
 import { getDanneDifficultyProfile } from "../../systems/newGamePlus";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { frameDeltaSeconds } from "../../systems/smoothMovement";
+import { isWeaponTool, type WeaponToolId } from "../../systems/weaponState";
 import { Enemy } from "./Enemy";
 
 interface DanneLurkerOptions {
@@ -38,6 +43,7 @@ interface EgoBolt {
   expiresAt: number;
   armedAt: number;
   armed: boolean;
+  returnedBy: WeaponToolId | null;
 }
 
 interface EgoBoltTelegraph {
@@ -69,9 +75,14 @@ export class DanneLurker extends Enemy {
   private telegraphExplained = false;
   private lastUpdateAt = 0;
   private pausedAt: number | null = null;
+  private stunnedUntil = 0;
+  private lastCounterSwing = -1;
+  private toolCounters = 0;
+  private boltsReturned = 0;
   private readonly bolts: EgoBolt[] = [];
   private readonly boastText: Phaser.GameObjects.Text;
   private readonly encounterMode: "combat" | "foreshadow";
+  private readonly homePosition: Position;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneLurkerOptions) {
     unlockCodexEntry("enemy-danne-boss");
@@ -89,6 +100,7 @@ export class DanneLurker extends Enemy {
       waypointTolerance: 4
     });
     this.encounterMode = options.encounterMode ?? "combat";
+    this.homePosition = { x, y };
     this.sprite.setOrigin(0.5, 0.82).setScale(0.72);
     const animKey = danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
@@ -106,10 +118,9 @@ export class DanneLurker extends Enemy {
     this.lastUpdateAt = scene.time.now;
   }
 
-  update(timeMs: number, deltaMs: number, player: Position, canPressure: boolean) {
+  update(timeMs: number, deltaMs: number, player: Position, canPressure: boolean, combat?: PlayerCombatReadout) {
     this.resumeAfterUpdateGap(timeMs, deltaMs);
     this.lastUpdateAt = timeMs;
-    this.moveTowardWaypoint(deltaMs);
     if (!canPressure) {
       if (this.pausedAt === null) this.pausedAt = timeMs;
       this.cue.setVisible(false);
@@ -122,8 +133,23 @@ export class DanneLurker extends Enemy {
       this.pausedAt = null;
     }
     const canAttack = this.encounterMode === "combat";
+    if (timeMs >= this.stunnedUntil) this.moveTowardWaypoint(deltaMs);
+    const swing = canAttack && combat?.actionActive && combat.weapon.active
+      && combat.weapon.phase === "active" && isWeaponTool(combat.weapon.tool) && combat.hitbox
+      ? { box: new Phaser.Geom.Rectangle(combat.hitbox.x, combat.hitbox.y, combat.hitbox.width, combat.hitbox.height),
+          tool: combat.weapon.tool, id: combat.weapon.swingId }
+      : null;
+    if (swing && timeMs >= this.stunnedUntil && swing.id !== this.lastCounterSwing
+      && Phaser.Geom.Intersects.RectangleToRectangle(swing.box, this.bodyBounds())) {
+      this.lastCounterSwing = swing.id;
+      this.toolCounters += 1;
+      this.stun(timeMs, DANNE_LURKER_TOOL_STUN_MS, swing.tool, false);
+    }
+    // Resolve counters before contact damage, so an active parry wins the frame.
+    const egoBoltHit = this.updateBolts(timeMs, deltaMs, player, canAttack, swing);
+    const stunned = timeMs < this.stunnedUntil;
     const distance = this.distanceTo(player);
-    const triggered = canAttack && distance <= 25 && timeMs >= this.nextPressureAt;
+    const triggered = canAttack && !stunned && distance <= 25 && timeMs >= this.nextPressureAt;
     if (triggered) {
       this.nextPressureAt = timeMs + this.cooldown(5600);
       this.pressureUntil = timeMs + 1150;
@@ -137,13 +163,13 @@ export class DanneLurker extends Enemy {
       });
     }
     let egoBoltFired = false;
-    if (canAttack && this.egoBoltTelegraph) {
+    if (canAttack && !stunned && this.egoBoltTelegraph) {
       egoBoltFired = this.updateEgoBoltTelegraph(timeMs);
-    } else if (canAttack && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt) {
+    } else if (canAttack && !stunned && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt) {
       this.startEgoBoltTelegraph(timeMs, player);
     }
 
-    const boasted = canPressure && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextBoastAt;
+    const boasted = !stunned && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextBoastAt;
     if (boasted) {
       this.nextBoastAt = timeMs + this.cooldown(EGO_BOAST_COOLDOWN_MS);
       this.boastUntil = timeMs + 1700;
@@ -154,11 +180,12 @@ export class DanneLurker extends Enemy {
       retroAudio.danneBoast();
     }
 
-    const egoBoltHit = this.updateBolts(timeMs, deltaMs, player, canAttack);
-
     const active = timeMs < this.pressureUntil;
-    this.cue.setVisible(active);
-    if (this.egoBoltTelegraph && Math.floor(timeMs / 100) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
+    this.cue.setText(stunned ? "STUN" : "30YR")
+      .setColor(stunned ? PALETTE.terminalCyan : PALETTE.classNetRed)
+      .setVisible(active || (stunned && timeMs >= this.boastUntil));
+    if (stunned) this.sprite.setTint(this.color(Math.floor(timeMs / 120) % 2 === 0 ? PALETTE.creamPaper : PALETTE.terminalCyan));
+    else if (this.egoBoltTelegraph && Math.floor(timeMs / 100) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
     else if (this.egoBoltTelegraph) this.sprite.setTint(this.color(PALETTE.goldStamp));
     else if (active && Math.floor(timeMs / 105) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
     else if (active) this.sprite.setTint(this.color(PALETTE.goldStamp));
@@ -167,12 +194,14 @@ export class DanneLurker extends Enemy {
     const hoverX = Math.sin(timeMs / 260) * 0.7;
     const hoverY = Math.cos(timeMs / 310) * 0.55;
     this.boastText.setVisible(timeMs < this.boastUntil);
-    this.syncRender(timeMs, hoverX, hoverY);
+    this.syncRender(timeMs, stunned ? 0 : hoverX, stunned ? 0 : hoverY);
     return { triggered, pressureActive: active, egoBoltFired, egoBoltHit };
   }
 
   status(timeMs: number) {
+    timeMs = this.pausedAt ?? timeMs;
     if (this.encounterMode === "foreshadow") return "watching; safe preparation room";
+    if (timeMs < this.stunnedUntil) return `stunned ${Math.ceil(this.stunnedUntil - timeMs)}ms`;
     const slotReadout = `${this.bolts.length}/${FRUS_DANNE_EGO_BOLT_SLOT_COUNT} ego slots`;
     if (this.egoBoltTelegraph) {
       return `ego lock ${danneLurkerTelegraphRemainingMs(this.egoBoltTelegraph.resolvesAt, timeMs)}ms; ${slotReadout}`;
@@ -182,7 +211,32 @@ export class DanneLurker extends Enemy {
     return this.bolts.length ? `firing ${slotReadout}` : "lurking";
   }
 
+  enterRoom(timeMs: number) {
+    this.clearEgoBoltTelegraph();
+    this.clearBolts();
+    this.currentX = this.homePosition.x;
+    this.currentY = this.homePosition.y;
+    this.velocityX = 0;
+    this.velocityY = 0;
+    this.waypointIndex = 0;
+    this.pressureUntil = 0;
+    this.stunnedUntil = 0;
+    this.boastUntil = 0;
+    this.pausedAt = null;
+    this.lastUpdateAt = timeMs;
+    this.lastCounterSwing = -1;
+    this.toolCounters = 0;
+    this.boltsReturned = 0;
+    this.nextPressureAt = timeMs + DANNE_LURKER_INITIAL_BOLT_DELAY_MS;
+    this.nextEgoBoltAt = timeMs + DANNE_LURKER_INITIAL_BOLT_DELAY_MS;
+    this.nextBoastAt = timeMs + DANNE_LURKER_INITIAL_BOLT_DELAY_MS;
+    this.cue.setVisible(false);
+    this.boastText.setVisible(false);
+    this.syncRender(timeMs);
+  }
+
   readout(timeMs: number) {
+    timeMs = this.pausedAt ?? timeMs;
     const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
     const telegraph = this.egoBoltTelegraph
       ? {
@@ -200,22 +254,48 @@ export class DanneLurker extends Enemy {
       spriteKey: this.spriteKey,
       behavior: this.encounterMode === "foreshadow"
         ? "watches from the perimeter and boasts; no contact damage or ego bolts"
-        : "lurks near workflow paths, boasts, and fires ego bolts",
+        : "fires ego bolts; tool strikes interrupt him and return his projectiles",
       defeatMethod: this.encounterMode === "foreshadow"
         ? "Prepare in safety. DANN-E attacks in the archives."
-        : "Keep moving through human review; final defeat happens at the Buckram Gate.",
+        : `${getSecondaryActionBadge()}: swing an equipped Stamp, Pencil or Folder to stun DANN-E or return an Ego bolt. Final defeat is at the Buckram Gate.`,
       status: `${this.status(timeMs)}; ${difficulty.label} tier`,
+      counterplay: {
+        stunnedMsRemaining: Math.max(0, Math.ceil(this.stunnedUntil - (this.pausedAt ?? timeMs))),
+        toolCounters: this.toolCounters,
+        boltsReturned: this.boltsReturned,
+        bolts: this.bolts.map((bolt) => ({ x: snapPixel(bolt.x), y: snapPixel(bolt.y), returned: bolt.returnedBy !== null }))
+      },
       telegraph
     };
   }
 
+  private stun(timeMs: number, duration: number, tool: WeaponToolId, returned: boolean) {
+    if (timeMs < this.stunnedUntil) return;
+    this.clearEgoBoltTelegraph();
+    this.stunnedUntil = timeMs + duration;
+    this.pressureUntil = 0;
+    this.velocityX = 0;
+    this.velocityY = 0;
+    this.nextPressureAt = Math.max(this.nextPressureAt, this.stunnedUntil + 500);
+    this.nextEgoBoltAt = Math.max(this.nextEgoBoltAt, this.stunnedUntil + 800);
+    this.nextBoastAt = Math.max(this.nextBoastAt, this.stunnedUntil + 2200);
+    this.boastUntil = timeMs + 750;
+    this.boastText.setText(returned ? "REFUTED!" : "INTERRUPTED!");
+    setLatestMessage(returned ? "Ego bolt returned. DANN-E is stunned!" : "DANN-E interrupted. Keep compiling!");
+    retroAudio.toolHit(tool);
+  }
+
   destroy() {
     this.clearEgoBoltTelegraph();
+    this.clearBolts();
+    super.destroy();
+  }
+
+  private clearBolts() {
     for (const bolt of this.bolts.splice(0)) {
       bolt.sprite.destroy();
       bolt.glow.destroy();
     }
-    super.destroy();
   }
 
   private startEgoBoltTelegraph(timeMs: number, target: Position) {
@@ -255,7 +335,7 @@ export class DanneLurker extends Enemy {
     this.sprite.setTint(this.color(PALETTE.classNetRed));
     if (!this.telegraphExplained) {
       this.telegraphExplained = true;
-      setLatestMessage("DANN-E marks an Ego target. Leave the red brackets before the bolt fires.");
+      setLatestMessage(`Leave the red brackets, or face the bolt and press ${getSecondaryActionBadge()} to return it with your tool.`);
     }
     retroAudio.blip();
   }
@@ -296,6 +376,7 @@ export class DanneLurker extends Enemy {
     this.nextEgoBoltAt += pausedMs;
     this.nextBoastAt += pausedMs;
     this.boastUntil += pausedMs;
+    if (this.stunnedUntil > 0) this.stunnedUntil += pausedMs;
     if (this.egoBoltTelegraph) {
       this.egoBoltTelegraph.startedAt += pausedMs;
       this.egoBoltTelegraph.resolvesAt += pausedMs;
@@ -334,7 +415,8 @@ export class DanneLurker extends Enemy {
       vy,
       expiresAt: this.scene.time.now + 2200,
       armedAt: this.scene.time.now + EGO_BOLT_ARM_MS,
-      armed: true
+      armed: true,
+      returnedBy: null
     });
     retroAudio.egoBoltFire();
     return true;
@@ -345,12 +427,18 @@ export class DanneLurker extends Enemy {
     return Math.max(220, Math.round(baseMs * difficulty.cooldownMultiplier));
   }
 
-  private updateBolts(timeMs: number, deltaMs: number, player: Position, allowHit: boolean) {
+  private updateBolts(timeMs: number, deltaMs: number, player: Position, allowHit: boolean,
+    swing: { box: Phaser.Geom.Rectangle; tool: WeaponToolId } | null) {
     const dt = frameDeltaSeconds(deltaMs);
     const footBox = new Phaser.Geom.Rectangle(player.x - 8, player.y - 4, 16, 9);
     let hit = false;
     for (let index = this.bolts.length - 1; index >= 0; index -= 1) {
       const bolt = this.bolts[index];
+      if (bolt.returnedBy) {
+        const velocity = vectorToward(bolt, { x: this.position.x, y: this.position.y - 5 }, DANNE_LURKER_RETURN_SPEED);
+        bolt.vx = velocity.vx;
+        bolt.vy = velocity.vy;
+      }
       // Keep sub-pixel travel independent of display refresh; snap only the art.
       bolt.x += bolt.vx * dt;
       bolt.y += bolt.vy * dt;
@@ -361,7 +449,24 @@ export class DanneLurker extends Enemy {
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));
       bolt.glow.setDepth(Math.round(bolt.sprite.y + 5));
       const boltBox = new Phaser.Geom.Rectangle(bolt.sprite.x - 6, bolt.sprite.y - 6, 12, 12);
-      if (allowHit && bolt.armed && timeMs >= bolt.armedAt && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
+      if (allowHit && bolt.armed && !bolt.returnedBy && swing
+        && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, swing.box)) {
+        bolt.returnedBy = swing.tool;
+        bolt.expiresAt = timeMs + 2400;
+        this.boltsReturned += 1;
+        bolt.sprite.setTint(this.color(PALETTE.terminalCyan));
+        bolt.glow.setFillStyle(this.color(PALETTE.terminalCyan));
+        const velocity = vectorToward(bolt, this.position, DANNE_LURKER_RETURN_SPEED);
+        const angle = Math.round(Phaser.Math.RadToDeg(Math.atan2(velocity.vy, velocity.vx)));
+        bolt.sprite.setAngle(angle);
+        bolt.glow.setAngle(angle);
+        setLatestMessage("EGO RETURNED!");
+        retroAudio.toolHit(swing.tool);
+      }
+      if (bolt.returnedBy && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, this.bodyBounds())) {
+        this.stun(timeMs, DANNE_LURKER_RETURN_STUN_MS, bolt.returnedBy, true);
+        bolt.armed = false;
+      } else if (allowHit && !bolt.returnedBy && bolt.armed && timeMs >= bolt.armedAt && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
         bolt.armed = false;
         hit = true;
       }

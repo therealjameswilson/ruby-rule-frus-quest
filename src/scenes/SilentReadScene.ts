@@ -36,7 +36,8 @@ import { FeedbackToast } from "../systems/feedbackToast";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
-import { applyDanneLurkerDamage } from "../systems/dannePressure";
+import { takeDanneLurkerHit } from "../systems/dannePressure";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addTinySparkle } from "../systems/roomDressing";
@@ -295,20 +296,27 @@ export class SilentReadScene extends Phaser.Scene {
     if (input.abilityJustPressed) activateRoleAbility(this);
     this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
     if (this.roomTransitionLocked) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (input.pauseJustPressed) {
       this.inventory.toggle();
+      this.updateDanneLurker(delta, false);
       return;
     }
     this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS, solids: this.roomSolids });
+    if (input.bJustPressed) {
+      const swing = tryEquippedToolSwing(this.player);
+      if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn", PROOF_PLAY_BOUNDS);
+    }
     this.updateDanneLurker(delta);
     this.updatePhysicalVerification();
     this.updatePhysicalInteractionPrompt(delta);
@@ -320,16 +328,12 @@ export class SilentReadScene extends Phaser.Scene {
     this.objectiveText.setText("");
   }
 
-  private updateDanneLurker(delta: number) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted proof review.");
+  private updateDanneLurker(delta: number, canPressure = true) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure, this.player.combatReadout);
+    if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted proof review.")) {
       this.toast.show("DANN-E DEADLINE PRESSURE", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.reliability.update();
-    } else if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted proof review.");
+    } else if (result.egoBoltHit && takeDanneLurkerHit(this.player, this.danneLurker.position, "ego_bolt", "DANN-E ego bolt disrupted proof review.")) {
       this.toast.show("EGO BOLT - KEEP PROOFING", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.reliability.update();
     }
@@ -353,6 +357,7 @@ export class SilentReadScene extends Phaser.Scene {
       this.clearRoom();
       this.renderCurrentRoom();
       this.player.setPosition(spawn.x, spawn.y);
+      this.danneLurker.enterRoom(this.time.now);
       this.positionActiveWaitingFlagForRoom();
       this.syncRoomTraversalState();
       this.updateProofMinimap();

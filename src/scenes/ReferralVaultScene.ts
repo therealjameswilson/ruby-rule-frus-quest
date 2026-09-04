@@ -34,7 +34,8 @@ import { retroAudio } from "../systems/audio";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
-import { applyDanneLurkerDamage } from "../systems/dannePressure";
+import { takeDanneLurkerHit } from "../systems/dannePressure";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -226,9 +227,6 @@ export class ReferralVaultScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
-    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
-    this.updateDanneLurker(delta);
-    this.syncThreatState();
     this.toast.update(delta, this.player.position);
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
@@ -239,11 +237,13 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     if (this.roomTransitionLocked) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (this.inventory.active || this.reliability.active) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       handleOpenOverlays(this.inventory, this.reliability);
       this.player.update(delta, false);
@@ -251,9 +251,17 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
     if (input.pauseJustPressed) {
       this.inventory.toggle();
+      this.updateDanneLurker(delta, false);
       return;
     }
     this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS, solids: this.roomSolids });
+    if (input.bJustPressed) {
+      const swing = tryEquippedToolSwing(this.player);
+      if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
+    }
+    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player.position));
+    this.updateDanneLurker(delta);
+    this.syncThreatState();
     this.updateCarriedReviewIcon();
     this.updateReferralInteractionPrompt(delta);
     this.refreshReviewRouteCue();
@@ -282,6 +290,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.clearRoom();
       this.renderCurrentRoom();
       this.player.setPosition(spawn.x, spawn.y);
+      this.danneLurker.enterRoom(this.time.now);
       this.syncRoomTraversalState();
       this.updateReferralMinimap();
       this.exitCooldownUntil = this.time.now + 280;
@@ -843,19 +852,12 @@ export class ReferralVaultScene extends Phaser.Scene {
     );
   }
 
-  private updateDanneLurker(delta: number) {
-    const canPressure = !this.roomTransitionLocked
-      && !this.inventory.active
-      && !this.reliability.active;
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted referral review.");
+  private updateDanneLurker(delta: number, canPressure = true) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure, this.player.combatReadout);
+    if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted referral review.")) {
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
-    } else if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted referral review.");
+    } else if (result.egoBoltHit && takeDanneLurkerHit(this.player, this.danneLurker.position, "ego_bolt", "DANN-E ego bolt disrupted referral review.")) {
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     }

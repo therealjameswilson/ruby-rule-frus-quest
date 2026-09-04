@@ -129,6 +129,12 @@ interface VisibleThreat {
   reliabilityRisk?: string;
   enemyState?: string;
   weakness?: string;
+  counterplay?: {
+    stunnedMsRemaining: number;
+    toolCounters: number;
+    boltsReturned: number;
+    bolts: { x: number; y: number; returned: boolean }[];
+  };
   telegraph?: {
     kind: string;
     label: string;
@@ -1948,6 +1954,10 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     reliabilityRisk: threat.reliabilityRisk,
     enemyState: threat.enemyState,
     weakness: threat.weakness,
+    counterplay: threat.counterplay ? {
+      ...threat.counterplay,
+      bolts: threat.counterplay.bolts.map((bolt) => ({ ...bolt }))
+    } : undefined,
     telegraph: threat.telegraph
       ? {
           ...threat.telegraph,

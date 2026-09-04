@@ -23,7 +23,7 @@ import {
   getWorkflowToolReadout
 } from "../game/state";
 import type { AdventureSubscreenReadout } from "../game/state";
-import { bindPointerPress, getInput, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
+import { bindPointerPress, getInput, isTouchControlPoint, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
 import { isColorblindModeEnabled, toggleColorblindMode } from "./accessibilitySettings";
 import { openCodex } from "./codexOverlay";
@@ -150,7 +150,7 @@ export class InventoryOverlay {
     const dim = scene.add
       .rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black), 0.62)
       .setScrollFactor(0);
-    bindPointerPress(dim, { down: () => this.hide() });
+    this.bindPausePress(dim, () => this.hide());
     const box = scene.add
       .rectangle(128, 120, 240, 216, color(PALETTE.black))
       .setScrollFactor(0);
@@ -176,7 +176,7 @@ export class InventoryOverlay {
       fontSize: "8px",
       color: PALETTE.goldStamp
     }).setScrollFactor(0);
-    bindPointerPress(closeHit, { down: () => this.hide() });
+    this.bindPausePress(closeHit, () => this.hide());
     const codexHit = scene.add
       .rectangle(171, 35, 58, 44, color(PALETTE.black), 0.01)
       .setScrollFactor(0);
@@ -189,11 +189,11 @@ export class InventoryOverlay {
       fontSize: "6px",
       color: PALETTE.terminalCyan
     }).setOrigin(0.5, 0).setScrollFactor(0);
-    bindPointerPress(codexHit, { down: () => this.openCodexFromInventory() });
+    this.bindPausePress(codexHit, () => this.openCodexFromInventory());
     const contrastHit = scene.add
       .rectangle(CONTRAST_HIT.x, CONTRAST_HIT.y, CONTRAST_HIT.width, CONTRAST_HIT.height, color(PALETTE.black), 0.01)
       .setScrollFactor(0);
-    bindPointerPress(contrastHit, { down: () => this.toggleColorblindMode() });
+    this.bindPausePress(contrastHit, () => this.toggleColorblindMode());
     this.colorblindToggleBox = scene.add
       .rectangle(CONTRAST_HIT.x, CONTRAST_HIT.y, 72, 16, color(PALETTE.deepRuby))
       .setStrokeStyle(1, color(PALETTE.goldStamp))
@@ -238,7 +238,7 @@ export class InventoryOverlay {
       color: PALETTE.terminalCyan,
       align: "center"
     }).setOrigin(0.5, 0).setScrollFactor(0);
-    bindPointerPress(languageHit, { down: () => this.changeLanguage() });
+    this.bindPausePress(languageHit, () => this.changeLanguage());
     const popoverBox = scene.add
       .rectangle(204, 88, 80, 62, color(PALETTE.black), 0.94)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
@@ -747,7 +747,7 @@ export class InventoryOverlay {
         color: PALETTE.stoneGray,
         align: "center"
       }).setOrigin(0.5).setScrollFactor(0);
-      bindPointerPress(hit, { down: () => this.tapTool(item.id as ProcessItemId) });
+      this.bindPausePress(hit, () => this.tapTool(item.id as ProcessItemId));
       hit.on("pointerover", () => {
         this.selectedToolId = item.id as ProcessItemId;
         this.renderToolGrid();
@@ -819,8 +819,25 @@ export class InventoryOverlay {
     return objects;
   }
 
+  private lastPausePointerFrame = -1;
+
+  private acceptPausePointer(x: number, y: number) {
+    if (!this.active || isTouchControlPoint({ x, y })) return false;
+    // Object, scene and DOM listeners can deliver the same tap in one frame.
+    const frame = this.scene.game.loop.frame;
+    if (frame === this.lastPausePointerFrame) return false;
+    this.lastPausePointerFrame = frame;
+    return true;
+  }
+
+  private bindPausePress(object: Phaser.GameObjects.Rectangle, action: () => void) {
+    bindPointerPress(object, { down: (pointer) => {
+      if (this.acceptPausePointer(Math.round(pointer.x), Math.round(pointer.y))) action();
+    } });
+  }
+
   private handlePauseTouch(x: number, y: number) {
-    if (!this.active) return false;
+    if (!this.acceptPausePointer(x, y)) return false;
     if (this.hitRect(x, y, CONTRAST_HIT.x, CONTRAST_HIT.y, CONTRAST_HIT.width, CONTRAST_HIT.height)) {
       this.toggleColorblindMode();
       return true;
@@ -990,7 +1007,7 @@ export class InventoryOverlay {
         fontSize: "5px",
         color: PALETTE.stoneGray
       }).setOrigin(0.5).setScrollFactor(0);
-      bindPointerPress(hit, { down: () => this.tapDanneItem(asset.id) });
+      this.bindPausePress(hit, () => this.tapDanneItem(asset.id));
       hit.on("pointerover", () => {
         this.selectedDanneItemId = asset.id;
         this.render();
