@@ -15,8 +15,15 @@ describe("Guide Cavern onboarding flow", () => {
     expect(guideCavernObjective(stage)).toContain("Citation Stamp");
   });
 
-  it("advances to the fragment after the stamp is held", () => {
+  it("teaches the secondary tool action after the stamp is held", () => {
     const stage = getGuideCavernStage(true, false);
+    expect(stage).toBe("counter");
+    expect(guideCavernTargetId(stage)).toBe("ego-seal");
+    expect(guideCavernActionCue(stage)).toBe("SWING STAMP AT RED SEAL");
+  });
+
+  it("reveals the fragment only after the counter lesson", () => {
+    const stage = getGuideCavernStage(true, false, true);
     expect(stage).toBe("fragment");
     expect(guideCavernTargetId(stage)).toBe("fragment");
     expect(guideCavernActionCue(stage)).toBe("TAKE FRUS FRAGMENT");

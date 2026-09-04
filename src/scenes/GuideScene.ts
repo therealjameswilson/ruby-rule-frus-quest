@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
+import { danneAnimKey } from "../art/danne_anims";
 import { getCharacterKeyForNpcId } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { unlockCodexEntry } from "../game/codex";
+import { DANNE_VFX_ASSETS } from "../game/danneAtlas";
 import { SNES_GUIDE_CAVERN_TILE_ASSET } from "../game/snesAtlas";
 import {
   addProcessItem,
@@ -25,7 +27,7 @@ import {
   guideCavernTargetId
 } from "../game/guideCavernFlow";
 import type { Interactable } from "../game/types";
-import { getInput, tickInput } from "../input/InputState";
+import { getInput, getSecondaryActionBadge, tickInput } from "../input/InputState";
 import { Player } from "../entities/Player";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
@@ -42,13 +44,17 @@ import { snapPixel } from "../systems/pixelPerfect";
 import { ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
+import { saveGameNow } from "../systems/save";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
 type GuideCavernTileFrame = (typeof SNES_GUIDE_CAVERN_TILE_ASSET.frames)[number];
+const GUIDE_EGO_BOLT_ASSET = DANNE_VFX_ASSETS[0];
+const GUIDE_EGO_SEAL_BOUNDS = new Phaser.Geom.Rectangle(149, 118, 22, 28);
 
 export class GuideScene extends Phaser.Scene {
   private player!: Player;
@@ -63,11 +69,15 @@ export class GuideScene extends Phaser.Scene {
   private stampLabel!: Phaser.GameObjects.Text;
   private fragmentIcon!: Phaser.GameObjects.Image;
   private fragmentLabel!: Phaser.GameObjects.Text;
+  private egoSeal!: Phaser.GameObjects.Sprite;
+  private egoSealGlow!: Phaser.GameObjects.Rectangle;
   private gateGlow!: Phaser.GameObjects.Rectangle;
   private gateLabel!: Phaser.GameObjects.Text;
   private readonly interactionAssist = new InteractionAssist();
   private hasStamp = false;
+  private hasCounterTraining = false;
   private hasFragment = false;
+  private lastCounterSwingId = -1;
   private interactables: Interactable[] = [];
 
   constructor() {
@@ -77,7 +87,8 @@ export class GuideScene extends Phaser.Scene {
   create() {
     this.hasStamp = hasProcessItem("citation_stamp");
     this.hasFragment = gameState.volumeFragments.includes("Front Matter Fragment");
-    const openingStage = getGuideCavernStage(this.hasStamp, this.hasFragment);
+    this.hasCounterTraining = Boolean(gameState.sceneProgress.guideCitationCounterTrained) || this.hasFragment;
+    const openingStage = this.currentStage();
     setSceneState("GuideScene", "explore", guideCavernObjective(openingStage));
     unlockCodexEntry("npc-archive-specialist");
     retroAudio.startMusic("ArchiveScene");
@@ -97,9 +108,27 @@ export class GuideScene extends Phaser.Scene {
     colleague.play(characterAnimKey(colleagueTexture, "idle-down"));
     this.stampIcon = this.add.image(96, 132, "citation-stamp").setDepth(120);
     this.fragmentIcon = this.add.image(160, 132, "volume-fragment").setDepth(120);
+    this.egoSealGlow = this.add.rectangle(160, 132, 22, 28, color(PALETTE.classNetRed), 0.62)
+      .setStrokeStyle(1, color(PALETTE.goldStamp))
+      .setDepth(122)
+      .setVisible(false);
+    this.egoSeal = this.add.sprite(160, 132, GUIDE_EGO_BOLT_ASSET.key, 0)
+      .setScale(0.045)
+      .setDepth(123)
+      .setVisible(false);
+    const egoSealAnim = danneAnimKey(GUIDE_EGO_BOLT_ASSET.key, "fly");
+    if (this.anims.exists(egoSealAnim)) this.egoSeal.play(egoSealAnim);
     this.tweens.add({ targets: colleague, y: 103, duration: 560, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { colleague.y = snapPixel(colleague.y); } });
     this.tweens.add({ targets: this.stampIcon, y: 130, duration: 460, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.stampIcon.y = snapPixel(this.stampIcon.y); } });
     this.tweens.add({ targets: this.fragmentIcon, y: 130, duration: 580, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.fragmentIcon.y = snapPixel(this.fragmentIcon.y); } });
+    this.tweens.add({
+      targets: this.egoSealGlow,
+      alpha: 0.3,
+      duration: 320,
+      yoyo: true,
+      repeat: -1,
+      ease: "Stepped"
+    });
     this.stampLabel = this.add.text(96, 148, "CITE", {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -164,7 +193,12 @@ export class GuideScene extends Phaser.Scene {
       return;
     }
 
+    if (input.bJustPressed && this.currentStage() === "counter") {
+      const swing = tryEquippedToolSwing(this.player);
+      if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
+    }
     this.player.update(delta, true);
+    this.updateCitationCounterTraining();
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     // Show the prompt/ring from a little further out than the strict interact
@@ -181,6 +215,8 @@ export class GuideScene extends Phaser.Scene {
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) {
       bufferedInteraction.onInteract();
+    } else if (input.aJustPressed && this.currentStage() === "counter") {
+      this.remindCounterInput();
     } else if (input.aJustPressed) {
       const feedback = decideInteractionFeedback(nearest, hintTarget);
       if (feedback.kind === "step-closer") this.nudgeTowardTarget(feedback.target);
@@ -220,9 +256,43 @@ export class GuideScene extends Phaser.Scene {
     addProcessItem("citation_stamp");
     addDocumentPoints(5, "citation stamp claimed");
     retroAudio.confirm();
-    this.toast.show("STAMP READY - TAKE FRAGMENT", this.player.position, "info");
-    setLatestMessage("Citation Stamp acquired: use it on cited fragments.");
+    this.toast.show(`${getSecondaryActionBadge()}: SWING AT RED SEAL`, this.player.position, "info");
+    setLatestMessage("Citation Stamp acquired. Face the red Ego Seal and swing the stamp.");
     this.syncStagePresentation();
+  }
+
+  private updateCitationCounterTraining() {
+    if (this.currentStage() !== "counter") return;
+    const combat = this.player.combatReadout;
+    const hitbox = this.player.activeActionHitbox;
+    if (!combat.actionActive || !combat.weapon.active || combat.weapon.tool !== "citation_stamp" || !hitbox) return;
+    if (combat.weapon.swingId === this.lastCounterSwingId) return;
+    if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, GUIDE_EGO_SEAL_BOUNDS)) return;
+    this.lastCounterSwingId = combat.weapon.swingId;
+    this.hasCounterTraining = true;
+    gameState.sceneProgress.guideCitationCounterTrained = 1;
+    saveGameNow();
+    retroAudio.toolHit("citation_stamp");
+    const burst = this.add.circle(160, 132, 7, color(PALETTE.terminalCyan), 0.38)
+      .setStrokeStyle(2, color(PALETTE.creamPaper))
+      .setDepth(125);
+    this.tweens.add({
+      targets: burst,
+      alpha: 0,
+      scale: 2.4,
+      duration: 220,
+      ease: "Stepped",
+      onComplete: () => burst.destroy()
+    });
+    setLatestMessage("Ego Seal returned. Use the same swing to interrupt DANN-E and return his bolts.");
+    this.toast.show("EGO SEAL RETURNED - FRAGMENT OPEN", this.player.position, "info");
+    this.syncStagePresentation();
+  }
+
+  private remindCounterInput() {
+    retroAudio.blip();
+    this.toast.show(`${getSecondaryActionBadge()}: SWING CITATION STAMP`, this.player.position, "info");
+    setLatestMessage(`Press ${getSecondaryActionBadge()} while facing the red Ego Seal.`);
   }
 
   private takeFragment() {
@@ -262,29 +332,38 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private syncVisibleState() {
-    const stage = getGuideCavernStage(this.hasStamp, this.hasFragment);
+    const stage = this.currentStage();
     const labels = ["Archive Colleague", "30-Year Line", "DANN-E Queue"];
     if (stage === "stamp") labels.push("Citation Stamp");
+    else if (stage === "counter") labels.push("Ego Seal");
     else if (stage === "fragment") labels.push("FRUS Volume Fragment");
     else labels.push("Verification Gate");
     setVisibleEntities(labels);
     setVisibleThreats([
       { label: "30-Year Line", x: 58, y: 164 },
-      { label: "DANN-E Queue", x: 198, y: 164 }
+      { label: "DANN-E Queue", x: 198, y: 164 },
+      ...(stage === "counter" ? [{
+        label: "Ego Seal",
+        x: 160,
+        y: 132,
+        defeatMethod: `${getSecondaryActionBadge()}: swing the Citation Stamp while facing the seal`
+      }] : [])
     ]);
   }
 
   private syncStagePresentation() {
-    const stage = getGuideCavernStage(this.hasStamp, this.hasFragment);
+    const stage = this.currentStage();
     this.stampIcon.setVisible(!this.hasStamp);
     this.stampLabel.setVisible(!this.hasStamp);
     this.fragmentIcon
-      .setVisible(!this.hasFragment)
-      .setAlpha(this.hasStamp ? 1 : 0.25);
+      .setVisible(!this.hasFragment && stage !== "counter")
+      .setAlpha(stage === "fragment" ? 1 : 0.25);
     this.fragmentLabel
-      .setVisible(!this.hasFragment)
-      .setText(this.hasStamp ? "FRAG" : "LOCK")
-      .setColor(this.hasStamp ? PALETTE.goldStamp : PALETTE.stoneGray);
+      .setVisible(!this.hasFragment && stage !== "counter")
+      .setText(stage === "fragment" ? "FRAG" : "LOCK")
+      .setColor(stage === "fragment" ? PALETTE.goldStamp : PALETTE.stoneGray);
+    this.egoSealGlow.setVisible(stage === "counter");
+    this.egoSeal.setVisible(stage === "counter");
     this.gateGlow.setFillStyle(color(this.hasFragment ? PALETTE.openNetGreen : PALETTE.classNetRed));
     this.gateLabel
       .setText(this.hasFragment ? "OPEN\nGATE" : "LOCKED")
@@ -294,7 +373,11 @@ export class GuideScene extends Phaser.Scene {
     this.syncVisibleState();
   }
 
-  private refreshInteractables(stage = getGuideCavernStage(this.hasStamp, this.hasFragment)) {
+  private currentStage() {
+    return getGuideCavernStage(this.hasStamp, this.hasFragment, this.hasCounterTraining);
+  }
+
+  private refreshInteractables(stage = this.currentStage()) {
     const colleague: Interactable = {
       id: "colleague",
       label: "Archive Colleague",
@@ -304,13 +387,13 @@ export class GuideScene extends Phaser.Scene {
       kind: "npc",
       onInteract: () => this.talkColleague()
     };
-    const targets: Record<ReturnType<typeof guideCavernTargetId>, Interactable> = {
+    const targets: Partial<Record<ReturnType<typeof guideCavernTargetId>, Interactable>> = {
       stamp: { id: "stamp", label: "Citation Stamp", x: 96, y: 132, radius: 32, kind: "document", onInteract: () => this.takeStamp() },
       fragment: { id: "fragment", label: "FRUS Volume Fragment", x: 160, y: 132, radius: 32, kind: "document", onInteract: () => this.takeFragment() },
       gate: { id: "gate", label: "Verification Gate", x: 128, y: 198, radius: 32, kind: "door", onInteract: () => this.openGate() }
     };
     const target = targets[guideCavernTargetId(stage)];
-    this.interactables = stage === "stamp" ? [colleague, target] : [target];
+    this.interactables = stage === "stamp" && target ? [colleague, target] : target ? [target] : [];
   }
 
   private drawCaveInterior() {

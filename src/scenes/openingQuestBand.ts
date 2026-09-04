@@ -6,6 +6,10 @@ export function officeQuestBandObjective(context: OfficeStarterRouteContext) {
   return getString(`hud.office.${getOfficeStarterStage(context)}`);
 }
 
-export function guideQuestBandObjective(hasStamp: boolean, hasFragment: boolean) {
-  return getString(`hud.guide.${getGuideCavernStage(hasStamp, hasFragment)}`);
+export function guideQuestBandObjective(
+  hasStamp: boolean,
+  hasFragment: boolean,
+  counterTrained = hasFragment
+) {
+  return getString(`hud.guide.${getGuideCavernStage(hasStamp, hasFragment, counterTrained)}`);
 }

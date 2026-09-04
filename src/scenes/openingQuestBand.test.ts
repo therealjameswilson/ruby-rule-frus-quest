@@ -25,13 +25,18 @@ describe("opening HUD objectives", () => {
       ...[0, 1, 2, 3].map((memoStatus) => ({ juniorIntroduced: true, memoStatus, hasArchiveKey: false })),
       { juniorIntroduced: true, memoStatus: 3, hasArchiveKey: true }
     ].map(officeQuestBandObjective);
-    const guide = [guideQuestBandObjective(false, false), guideQuestBandObjective(true, false), guideQuestBandObjective(true, true)];
+    const guide = [
+      guideQuestBandObjective(false, false),
+      guideQuestBandObjective(true, false),
+      guideQuestBandObjective(true, false, true),
+      guideQuestBandObjective(true, true)
+    ];
     for (const text of [...office, ...guide]) {
       expect(text).not.toMatch(/^hud\./);
       expect(text.length).toBeGreaterThan(0);
       expect(clampQuestBandText(text, QUEST_BAND_LAYOUT.objective.maxChars)).toBe(text);
     }
     expect(new Set(office).size).toBe(6);
-    expect(new Set(guide).size).toBe(3);
+    expect(new Set(guide).size).toBe(4);
   });
 });

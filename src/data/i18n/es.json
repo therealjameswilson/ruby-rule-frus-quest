@@ -102,6 +102,7 @@
     },
     "guide": {
       "stamp": "TOMA SELLO DE CITA",
+      "counter": "ROMPE EL SELLO ROJO",
       "fragment": "TOMA FRAGMENTO FRUS",
       "gate": "ABRE LA PUERTA SUR"
     },

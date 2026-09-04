@@ -203,7 +203,9 @@ export class UIScene extends Phaser.Scene {
     const objectiveLine = this.compactObjective(activeSceneKey);
     const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
     const actionLine = riskLine ?? this.compactActionLine(toolLabel);
-    const actionBadge = !riskLine && this.showCounterAction() ? getSecondaryActionBadge() : getPrimaryActionBadge();
+    const actionBadge = !riskLine && (this.showCounterAction() || this.guideCounterTrainingActive())
+      ? getSecondaryActionBadge()
+      : getPrimaryActionBadge();
     const signature = [
       gameState.reliability,
       toolLabel,
@@ -249,7 +251,9 @@ export class UIScene extends Phaser.Scene {
       });
     }
     if (activeSceneKey === "GuideScene") return guideQuestBandObjective(
-      hasProcessItem("citation_stamp"), gameState.volumeFragments.includes("Front Matter Fragment")
+      hasProcessItem("citation_stamp"),
+      gameState.volumeFragments.includes("Front Matter Fragment"),
+      Boolean(gameState.sceneProgress.guideCitationCounterTrained)
     );
     const hasCarryDestination = activeSceneKey === "NetworkScene"
       || activeSceneKey === "ReferralVaultScene"
@@ -279,7 +283,8 @@ export class UIScene extends Phaser.Scene {
     if (gameState.currentScene === "GuideScene") {
       const stage = getGuideCavernStage(
         hasProcessItem("citation_stamp"),
-        gameState.volumeFragments.includes("Front Matter Fragment")
+        gameState.volumeFragments.includes("Front Matter Fragment"),
+        Boolean(gameState.sceneProgress.guideCitationCounterTrained)
       );
       return guideCavernActionCue(stage);
     }
@@ -291,6 +296,16 @@ export class UIScene extends Phaser.Scene {
     return gameState.mode === "explore" && !gameState.nearestInteractable
       && isWeaponTool(gameState.equippedProcessItem) && hasProcessItem(gameState.equippedProcessItem)
       && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene"].includes(gameState.currentScene);
+  }
+
+  private guideCounterTrainingActive() {
+    if (gameState.currentScene !== "GuideScene" || gameState.mode !== "explore") return false;
+    const hasFragment = gameState.volumeFragments.includes("Front Matter Fragment");
+    return getGuideCavernStage(
+      hasProcessItem("citation_stamp"),
+      hasFragment,
+      Boolean(gameState.sceneProgress.guideCitationCounterTrained) || hasFragment
+    ) === "counter";
   }
 
   private shouldShowQuestBand(activeSceneKey: string | null) {
