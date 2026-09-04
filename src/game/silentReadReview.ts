@@ -1,4 +1,5 @@
 import type { ProcessItemId } from "./constants";
+import type { ChoiceOption } from "./types";
 import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
 import { EDITORIAL_METHODOLOGY_PROMPTS } from "./editorialMethodology";
 import { EDITORIAL_TREATMENT_PROMPTS } from "./editorialTreatment";
@@ -121,6 +122,57 @@ export const SILENT_READ_REVIEW_ITEMS = [
 ] as const satisfies readonly SilentReadReviewItem[];
 
 export const SILENT_READ_REVIEW_TOTAL = SILENT_READ_REVIEW_ITEMS.length;
+
+interface ReviewDecision {
+  question: string;
+  context: string;
+  options: readonly ChoiceOption[];
+  correctValue: string;
+  successMessage: string;
+  failureMessage: string;
+}
+
+const REVIEW_DECISIONS: Partial<Record<(typeof SILENT_READ_REVIEW_ITEMS)[number]["id"], ReviewDecision>> = {
+  "mechanical-fix": {
+    question: "A passage is withheld. What prints in its place?",
+    context: "Editor proof: the reader must see where text was removed.",
+    options: [
+      { key: "A", label: "Close the gap; print nothing", value: "hidden" },
+      { key: "B", label: "[Text not declassified]", value: "visible" }
+    ],
+    correctValue: "visible",
+    successMessage: "VISIBLE BRACKET ADDED",
+    failureMessage: "SHOW THE DELETION IN BRACKETS"
+  },
+  "proof-date": {
+    question: "Compare the dates. Which belongs in the proof?",
+    context: "Practice source: 1947. Typeset proof: 1974.",
+    options: [
+      { key: "A", label: "1947 - match the source", value: "1947" },
+      { key: "B", label: "1974 - keep the typeset date", value: "1974" }
+    ],
+    correctValue: "1947",
+    successMessage: "DATE MATCHES THE SOURCE",
+    failureMessage: "COMPARE AGAIN: SOURCE SAYS 1947"
+  }
+};
+
+export function silentReadDecision(itemId: string): ReviewDecision | undefined {
+  return Object.prototype.hasOwnProperty.call(REVIEW_DECISIONS, itemId)
+    ? REVIEW_DECISIONS[itemId as keyof typeof REVIEW_DECISIONS]
+    : undefined;
+}
+
+export function nextSilentReadStatus(previous: SilentReadReviewPhase, next: SilentReadReviewPhase): SilentReadReviewStatus {
+  // One folder travels between desks; crossing into a new room starts its packet.
+  return previous === "editor" && next !== "editor" ? "waiting" : "carried";
+}
+
+export function silentReadResumeRoom(progress: Readonly<Record<string, number>>, step: number): "E1" | "S1" {
+  if (progress.silentReadRoom === 0) return "E1";
+  if (progress.silentReadRoom === 1) return "S1";
+  return step > 0 ? "S1" : "E1";
+}
 
 const STATION_LABELS: Record<SilentReadStationId, string> = {
   opennet: "OPENNET",

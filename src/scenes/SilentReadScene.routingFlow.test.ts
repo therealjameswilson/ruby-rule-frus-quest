@@ -7,7 +7,9 @@ const reviewSource = readFileSync(new URL("../game/silentReadReview.ts", import.
 describe("SilentReadScene physical proofing flow", () => {
   it("starts in movement mode and never opens the legacy quiz chain", () => {
     expect(sceneSource).toContain("this.startPhysicalVerificationLoop()");
-    expect(sceneSource).not.toContain("ChoicePrompt");
+    const createSource = sceneSource.slice(sceneSource.indexOf("  create()"), sceneSource.indexOf("  private resetTransientState("));
+    expect(createSource).not.toContain("reviewChoice.show");
+    expect(sceneSource).toContain("const decision = silentReadDecision(activeFlag.id)");
     expect(sceneSource).not.toContain("showAiAnnotationReviewChoice");
     expect(sceneSource).not.toContain("showEditorialMethodologyChoice");
     expect(sceneSource).not.toContain("showTypesetterProofChoice");
@@ -17,7 +19,9 @@ describe("SilentReadScene physical proofing flow", () => {
     expect(reviewSource).toContain('id: "mechanical-fix"');
     expect(reviewSource).toContain('"visible-bracket"');
     expect(reviewSource).toContain('destination: "editor-desk"');
-    expect(sceneSource).toContain("human editor added the visible bracketed insertion");
+    expect(reviewSource).toContain('label: "[Text not declassified]"');
+    expect(sceneSource).toContain("option.value !== decision.correctValue");
+    expect(sceneSource).toContain("visible bracket added during human editor verification");
     expect(sceneSource).toContain("clearDocumentUndisclosedDeletion");
   });
 

@@ -108,6 +108,7 @@ export class Player {
   private logicalY: number;
   private velocityX = 0;
   private velocityY = 0;
+  private movementOptions: PlayerMoveOptions = {};
   private readonly scene: Phaser.Scene;
   private readonly weaponState = new WeaponStateController();
   private facing: Direction = "south";
@@ -265,8 +266,22 @@ export class Player {
     const dx = this.logicalX - source.x;
     const dy = this.logicalY - source.y;
     const length = Math.max(1, Math.hypot(dx, dy));
-    this.logicalX = Phaser.Math.Clamp(this.logicalX + (dx / length) * distance, 14, GAME_WIDTH - 14);
-    this.logicalY = Phaser.Math.Clamp(this.logicalY + (dy / length) * distance, 42, GAME_HEIGHT - 20);
+    const startX = this.logicalX;
+    const startY = this.logicalY;
+    const bounds = this.movementOptions.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
+    const solids = this.movementOptions.solids ?? [];
+    const steps = Math.max(1, Math.ceil(Math.abs(distance)));
+    // Sweep the feet through knockback so a hit cannot cross or embed in a wall.
+    for (let step = 1; step <= steps; step += 1) {
+      const travelled = distance * step / steps;
+      const x = Phaser.Math.Clamp(startX + (dx / length) * travelled, bounds.left, bounds.right);
+      const y = Phaser.Math.Clamp(startY + (dy / length) * travelled, bounds.top, bounds.bottom);
+      if (this.collidesAt(x, y, solids)) break;
+      this.logicalX = x;
+      this.logicalY = y;
+    }
+    this.velocityX = 0;
+    this.velocityY = 0;
     this.isMoving = false;
     this.syncRenderPosition();
     setPlayerPosition(this.position);
@@ -318,6 +333,7 @@ export class Player {
       setPlayerFacing(this.facing);
       return;
     }
+    this.movementOptions = options;
     const movementInput = this.resolveMovementInput();
     this.facing = movementInput.facing;
     const dx = movementInput.x;

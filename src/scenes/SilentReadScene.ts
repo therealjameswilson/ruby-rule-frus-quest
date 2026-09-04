@@ -33,6 +33,8 @@ import { Terminal } from "../entities/items/Terminal";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { FeedbackToast } from "../systems/feedbackToast";
+import { ChoicePrompt } from "../systems/verification";
+import { saveGameNow } from "../systems/save";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
@@ -69,6 +71,9 @@ import {
   silentReadObjective,
   silentReadReviewStatusCode,
   silentReadReviewStatusFromCode,
+  silentReadDecision,
+  nextSilentReadStatus,
+  silentReadResumeRoom,
   type SilentReadReviewPhase,
   type SilentReadReviewKind,
   type SilentReadReviewStatus,
@@ -118,7 +123,6 @@ interface PhysicalFlag {
   x: number;
   y: number;
   icon?: Phaser.GameObjects.Image;
-  labelText?: Phaser.GameObjects.Text;
   routedStation?: WorkstationId;
 }
 
@@ -170,7 +174,12 @@ const WORKSTATIONS: Workstation[] = [
   { id: "typeflow-rail", label: "Typeflow Rail", x: 128, y: 164, accent: PALETTE.buckramHighlight, texture: "proof-page", phases: ["production"] }
 ];
 
-const PHYSICAL_FLAGS: Array<Omit<PhysicalFlag, "status" | "x" | "y" | "icon" | "labelText" | "routedStation">> =
+const STATION_TAGS: Record<WorkstationId, string> = {
+  opennet: "OPEN", classnet: "CLASS", "editor-desk": "EDITOR", "referral-tray": "REF",
+  "proof-table": "PROOF", "consultation-desk": "METHOD", "typeflow-rail": "PRINT"
+};
+
+const PHYSICAL_FLAGS: Array<Omit<PhysicalFlag, "status" | "x" | "y" | "icon" | "routedStation">> =
   SILENT_READ_REVIEW_ITEMS.map((item) => ({
     id: item.id,
     label: item.label,
@@ -195,6 +204,7 @@ export class SilentReadScene extends Phaser.Scene {
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private toast!: FeedbackToast;
+  private reviewChoice!: ChoicePrompt;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
@@ -212,6 +222,7 @@ export class SilentReadScene extends Phaser.Scene {
   private physicalFlags: PhysicalFlag[] = [];
   private physicalRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private physicalRouteCueKey = "";
+  private stationLabels: Array<{ text: Phaser.GameObjects.Text; x: number; y: number }> = [];
   private readonly outbox = { x: 128, y: 202 };
 
   constructor() {
@@ -238,12 +249,13 @@ export class SilentReadScene extends Phaser.Scene {
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.toast = new FeedbackToast(this);
+    this.reviewChoice = new ChoicePrompt(this);
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.danneLurker = new DanneLurker(this, 212, 72, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
-        || this.inventory.active || this.reliability.active,
+        || this.inventory.active || this.reliability.active || this.reviewChoice.active,
       waypoints: [
         { x: 212, y: 72 },
         { x: 152, y: 58 },
@@ -259,17 +271,11 @@ export class SilentReadScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setDepth(811).setVisible(false);
     const restoredStep = deriveSilentReadReviewStep(gameState.sceneProgress, new Set(getHeldProcessItemIds()));
-    const restoredRoom: ProofRoomId = gameState.sceneProgress.silentReadRoom === 1 || restoredStep > 0 ? "S1" : "E1";
+    const restoredRoom = silentReadResumeRoom(gameState.sceneProgress, restoredStep);
     this.currentRoomId = restoredRoom;
     this.startPhysicalVerificationLoop();
-    this.enterRoom(restoredRoom, { x: 128, y: 202 }, false);
+    this.enterRoom(restoredRoom, this.player.position, false);
     this.syncThreatState();
-    this.toast.show(
-      restoredRoom === "E1" ? "DRAFT READY" : "REVIEW FILE READY",
-      this.player.position,
-      "info",
-      PROOF_PLAY_BOUNDS
-    );
   }
 
   private resetTransientState() {
@@ -283,6 +289,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.physicalFlags = [];
     this.physicalRouteCueObjects = [];
     this.physicalRouteCueKey = "";
+    this.stationLabels = [];
     this.mapCells = new Map<ProofRoomId, Phaser.GameObjects.Rectangle>();
     this.mapLabels = new Map<ProofRoomId, Phaser.GameObjects.Text>();
   }
@@ -291,6 +298,14 @@ export class SilentReadScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.reviewChoice.active) {
+      this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.player.update(delta, false);
+      this.reviewChoice.updateInput();
+      return;
+    }
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
       retroAudio.toggle();
@@ -384,6 +399,7 @@ export class SilentReadScene extends Phaser.Scene {
       onCovered: applyRoom,
       onComplete: () => {
         this.roomTransitionLocked = false;
+        saveGameNow();
       }
     });
   }
@@ -397,6 +413,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.roomCleanups = [];
     this.roomObjects = [];
     this.roomSolids = [];
+    this.stationLabels = [];
     setNearestInteractable(null);
   }
 
@@ -606,7 +623,7 @@ export class SilentReadScene extends Phaser.Scene {
       ]);
     }
     this.drawWorkstations();
-    this.drawOutbox("STATECHAT OUTBOX");
+    this.drawOutbox();
     if (hasProcessItem("red_pencil")) {
       addSnesTreasurePedestal(this, {
         x: 128,
@@ -618,11 +635,6 @@ export class SilentReadScene extends Phaser.Scene {
         track: (object) => this.track(object),
         depth: 160
       });
-      this.track(this.add.text(128, 136, "RED PENCIL READY - EAST", {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.goldStamp
-      }).setOrigin(0.5).setDepth(171));
       setObjective(this.reviewObjective());
     } else {
       setObjective(this.reviewObjective());
@@ -651,7 +663,7 @@ export class SilentReadScene extends Phaser.Scene {
       this.drawProductionLanes();
     }
     this.drawWorkstations();
-    this.drawOutbox(phase === "production" ? "PUBLICATION OUTBOX" : "REVIEW OUTBOX");
+    this.drawOutbox();
     if (hasProcessItem("buckram_key")) {
       addSnesTreasurePedestal(this, {
         x: 128,
@@ -735,24 +747,20 @@ export class SilentReadScene extends Phaser.Scene {
     )) {
       this.track(this.add.rectangle(station.x, station.y + 1, 40, 18, color(PALETTE.black)).setDepth(150));
       this.track(this.add.rectangle(station.x, station.y, 38, 16, color(PALETTE.deepRuby)).setStrokeStyle(2, color(station.accent)).setDepth(151));
-      this.track(this.add.image(station.x - 11, station.y, station.texture).setDepth(152));
+      this.track(this.add.image(station.x - 11, station.y, station.texture).setDisplaySize(12, 12).setDepth(152));
       this.track(this.add.rectangle(station.x + 9, station.y - 2, 13, 5, color(station.accent)).setDepth(153));
       this.track(this.add.rectangle(station.x + 9, station.y + 4, 13, 2, color(PALETTE.creamPaper)).setDepth(153));
-      this.track(this.add.text(station.x, station.y + 12, station.label.toUpperCase(), {
+      const text = this.track(this.add.text(station.x, station.y + 12, STATION_TAGS[station.id], {
         fontFamily: "monospace",
-        fontSize: "5px",
+        fontSize: "6px",
         color: station.accent
       }).setOrigin(0.5).setDepth(154));
+      this.stationLabels.push({ text, x: station.x, y: station.y + 12 });
     }
   }
 
-  private drawOutbox(label: string) {
-    this.track(this.add.rectangle(this.outbox.x, this.outbox.y, 52, 16, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(149));
-    this.track(this.add.text(this.outbox.x, this.outbox.y + 12, label, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.terminalCyan
-    }).setOrigin(0.5).setDepth(154));
+  private drawOutbox() {
+    this.track(this.add.rectangle(this.outbox.x, this.outbox.y, 28, 12, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(149));
   }
 
   private drawProofMinimap() {
@@ -823,13 +831,8 @@ export class SilentReadScene extends Phaser.Scene {
         y: placed ? station.y - 17 : this.outbox.y - 10,
         routedStation: placed ? station.id : undefined
       };
-      physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture).setDepth(240).setVisible(false);
-      physicalFlag.labelText = this.add.text(physicalFlag.x, physicalFlag.y + 14, flag.shortLabel, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: flag.kind === "mechanical" ? PALETTE.goldStamp : PALETTE.terminalCyan,
-        backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(241).setVisible(false);
+      physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture)
+        .setDisplaySize(12, 12).setDepth(240).setVisible(false);
       return physicalFlag;
     });
     const carried = this.physicalFlags.find((flag) => flag.status === "carried");
@@ -853,6 +856,7 @@ export class SilentReadScene extends Phaser.Scene {
     const index = flag ? this.physicalFlags.indexOf(flag) : SILENT_READ_REVIEW_TOTAL;
     gameState.sceneProgress.silentReadReviewStep = Math.max(0, index);
     gameState.sceneProgress.silentReadReviewStatus = flag ? silentReadReviewStatusCode(flag.status) : 0;
+    saveGameNow();
   }
 
   private positionActiveWaitingFlagForRoom() {
@@ -861,7 +865,6 @@ export class SilentReadScene extends Phaser.Scene {
     activeFlag.x = this.outbox.x;
     activeFlag.y = this.outbox.y - 10;
     activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y);
-    activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14);
   }
 
   private updatePhysicalInteractionPrompt(delta: number) {
@@ -896,8 +899,8 @@ export class SilentReadScene extends Phaser.Scene {
 
     const strictStation = this.findActionWorkstation(activeFlag, 32);
     const hintStation = strictStation ?? this.findActionWorkstation(activeFlag, 42);
-    const strictTarget = strictStation ? this.workstationPromptTarget(strictStation, 36) : null;
-    const hintTarget = hintStation ? this.workstationPromptTarget(hintStation, 28) : null;
+    const strictTarget = strictStation?.id === activeFlag.destination ? this.workstationPromptTarget(strictStation, 36) : null;
+    const hintTarget = hintStation?.id === activeFlag.destination ? this.workstationPromptTarget(hintStation, 28) : null;
     return { strictTarget, hintTarget, strictText: `${this.verbFor(activeFlag)} ${activeFlag.shortLabel}` };
   }
 
@@ -926,6 +929,12 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private updatePhysicalVerification() {
+    for (const label of this.stationLabels) {
+      const dx = Math.abs(this.player.position.x - label.x);
+      const dy = this.player.position.y - label.y;
+      label.text.setVisible(dx > 28 || dy < -10 || dy > 44);
+    }
+    this.updateFlagVisibility();
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) {
       this.clearPhysicalRouteCue();
@@ -937,7 +946,6 @@ export class SilentReadScene extends Phaser.Scene {
 
     if (flagRoom(activeFlag) !== this.currentRoomId) {
       this.clearPhysicalRouteCue();
-      this.updateFlagVisibility();
       const target = PROOF_ROOMS[flagRoom(activeFlag)].title;
       this.actionHint.setText(`NEXT: enter ${target.toUpperCase()}.`);
       setNearestInteractable(null);
@@ -948,15 +956,12 @@ export class SilentReadScene extends Phaser.Scene {
     const nearestStation = this.findNearestWorkstation();
     const carriedFlag = activeFlag.status === "carried" ? activeFlag : null;
     if (carriedFlag?.icon) {
-      carriedFlag.x = Math.round(this.player.position.x);
-      carriedFlag.y = Math.round(this.player.position.y - 15);
+      carriedFlag.x = Math.round(this.player.position.x + 11);
+      carriedFlag.y = Math.round(this.player.position.y - 8);
       carriedFlag.icon.setPosition(carriedFlag.x, carriedFlag.y);
       carriedFlag.icon.setDepth(Math.round(this.player.position.y) + 4);
-      carriedFlag.labelText?.setPosition(carriedFlag.x, carriedFlag.y + 14);
-      carriedFlag.labelText?.setDepth(Math.round(this.player.position.y) + 5);
     }
 
-    this.updateFlagVisibility();
     const verb = this.verbFor(activeFlag);
     this.syncPhysicalState(verb, nearestStation);
     this.updateActionHint(activeFlag, nearestStation);
@@ -1011,13 +1016,9 @@ export class SilentReadScene extends Phaser.Scene {
     if (!routed.ok) {
       retroAudio.warning();
       adjustReliability(-2, `${activeFlag.shortLabel} filed at wrong workstation`);
-      activeFlag.status = "waiting";
+      activeFlag.status = "carried";
       activeFlag.routedStation = undefined;
-      activeFlag.x = this.outbox.x;
-      activeFlag.y = this.outbox.y - 10;
-      activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y);
-      activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14);
-      setHeldItem(null);
+      setHeldItem(`Review Folder: ${activeFlag.shortLabel}`);
       setLatestMessage(`RETRY: ${activeFlag.shortLabel} belongs at ${correctStation.label}.`);
       setObjective(this.reviewObjective());
       this.toast.show("WRONG DESK - RETRY", this.player.position, "warn", PROOF_PLAY_BOUNDS);
@@ -1034,7 +1035,6 @@ export class SilentReadScene extends Phaser.Scene {
       activeFlag.x = nearestStation.x;
       activeFlag.y = nearestStation.y - 17;
       activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y).setDepth(242);
-      activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14).setDepth(243);
       setLatestMessage(`ROUTE: ${activeFlag.shortLabel} placed on ${nearestStation.label}.`);
       setObjective(this.reviewObjective());
       this.savePhysicalReviewProgress(activeFlag);
@@ -1055,15 +1055,23 @@ export class SilentReadScene extends Phaser.Scene {
         if (shouldAdvance) this.advanceAfterStamp();
         return;
       }
-      activeFlag.status = "verified";
-      this.addVerificationMark(nearestStation);
-      setLatestMessage(activeFlag.id === "mechanical-fix"
-        ? "VERIFY: human editor added the visible bracketed insertion."
-        : `VERIFY: human review resolved ${activeFlag.shortLabel}.`);
-      setObjective(this.reviewObjective());
-      this.savePhysicalReviewProgress(activeFlag);
-      retroAudio.confirm();
-      this.updatePhysicalVerification();
+      const decision = silentReadDecision(activeFlag.id);
+      if (decision) {
+        this.interactionPrompt.update(0, null);
+        this.clearPhysicalRouteCue();
+        this.reviewChoice.show(`${decision.question}\n\n${decision.context}`, [...decision.options], (option) => {
+          if (this.getActiveFlag() !== activeFlag || activeFlag.status !== "routed") return;
+          if (option.value !== decision.correctValue) {
+            setLatestMessage(decision.failureMessage);
+            this.toast.show(decision.failureMessage, this.player.position, "warn", PROOF_PLAY_BOUNDS);
+            this.savePhysicalReviewProgress(activeFlag);
+            return;
+          }
+          this.verifyFlag(activeFlag, nearestStation, decision.successMessage);
+        });
+      } else {
+        this.verifyFlag(activeFlag, nearestStation, `${activeFlag.shortLabel} CHECKED`);
+      }
       return;
     }
 
@@ -1076,6 +1084,16 @@ export class SilentReadScene extends Phaser.Scene {
       this.updatePhysicalVerification();
       if (shouldAdvance) this.advanceAfterStamp();
     }
+  }
+
+  private verifyFlag(flag: PhysicalFlag, station: Workstation, message: string) {
+    flag.status = "verified";
+    this.addVerificationMark(station);
+    setLatestMessage(message);
+    setObjective(this.reviewObjective());
+    this.savePhysicalReviewProgress(flag);
+    retroAudio.confirm();
+    this.updatePhysicalVerification();
   }
 
   private applyFlagReward(flag: PhysicalFlag) {
@@ -1165,6 +1183,7 @@ export class SilentReadScene extends Phaser.Scene {
       this.positionActiveWaitingFlagForRoom();
       setObjective(this.reviewObjective());
       this.toast.show("PENCIL READY - EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
+      this.savePhysicalReviewProgress(nextFlag);
       return;
     }
 
@@ -1175,11 +1194,11 @@ export class SilentReadScene extends Phaser.Scene {
       this.toast.show("PUBLICATION DOCKETS READY", this.player.position, "info", PROOF_PLAY_BOUNDS);
     }
 
-    nextFlag.x = this.outbox.x;
-    nextFlag.y = this.outbox.y - 10;
-    nextFlag.icon?.setPosition(nextFlag.x, nextFlag.y).setVisible(true);
-    nextFlag.labelText?.setPosition(nextFlag.x, nextFlag.y + 14).setVisible(true);
+    nextFlag.status = previous ? nextSilentReadStatus(previous.phase, nextFlag.phase) : "waiting";
+    setHeldItem(nextFlag.status === "carried" ? `Review Folder: ${nextFlag.shortLabel}` : null);
     setObjective(this.reviewObjective());
+    this.updatePhysicalVerification();
+    this.savePhysicalReviewProgress(nextFlag);
   }
 
   private awardBuckramKeyAfterTypesetterProof() {
@@ -1196,6 +1215,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.reliability.update();
     this.syncRoomTraversalState();
     this.toast.show("KEY READY - EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
+    this.savePhysicalReviewProgress(null);
   }
 
   private checkRoomExit() {
@@ -1271,7 +1291,6 @@ export class SilentReadScene extends Phaser.Scene {
       color: PALETTE.black
     }).setOrigin(0.5).setDepth(248));
     flag.icon?.setTint(color(PALETTE.stoneGray));
-    flag.labelText?.setColor(PALETTE.stoneGray);
     setLatestMessage(`STAMP: ${flag.shortLabel} human review recorded.`);
   }
 
@@ -1298,23 +1317,11 @@ export class SilentReadScene extends Phaser.Scene {
       const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
       const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
       const routeAccent = index % 2 === 0 ? color(PALETTE.terminalCyan) : color(PALETTE.goldStamp);
-      const shadow = this.add.rectangle(x + 1, y + 1, 9, 9, color(PALETTE.black), 0.78).setDepth(235);
-      const tile = this.add.rectangle(x, y, 7, 7, routeAccent, 0.96).setDepth(236);
-      const shine = this.add.rectangle(x - 2, y - 2, 2, 2, color(PALETTE.creamPaper), 0.9).setDepth(237);
-      this.physicalRouteCueObjects.push(shadow, tile, shine);
+      this.physicalRouteCueObjects.push(this.add.rectangle(x, y, 2, 2, routeAccent, 0.85).setDepth(236));
     }
 
-    const targetLabel = `TO ${station.label.toUpperCase()}`;
-    const targetWidth = Math.max(56, targetLabel.length * 4 + 8);
-    const targetBack = this.add.rectangle(end.x, end.y - 30, targetWidth, 11, color(PALETTE.black), 0.94)
-      .setStrokeStyle(1, color(PALETTE.goldStamp))
-      .setDepth(238);
-    const targetText = this.add.text(end.x, end.y - 34, targetLabel, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.creamPaper
-    }).setOrigin(0.5).setDepth(239);
-    this.physicalRouteCueObjects.push(targetBack, targetText);
+    this.physicalRouteCueObjects.push(this.add.rectangle(end.x, end.y, 42, 22)
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(238));
   }
 
   private clearPhysicalRouteCue() {
@@ -1336,7 +1343,7 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     if (flag.status === "carried") {
-      setNearestInteractable(nearestStation ? `ROUTE to ${nearestStation.label}` : null);
+      setNearestInteractable(nearestStation?.id === flag.destination ? `ROUTE to ${nearestStation.label}` : null);
       this.actionHint.setText(`ROUTE ${flag.shortLabel}: ${correctStation.label}.${stationText}`);
       return;
     }
@@ -1356,7 +1363,6 @@ export class SilentReadScene extends Phaser.Scene {
       const inRoom = flagRoom(flag) === this.currentRoomId;
       const visible = inRoom && flag === activeFlag;
       flag.icon?.setVisible(visible);
-      flag.labelText?.setVisible(visible && flag.status !== "carried");
     }
   }
 
