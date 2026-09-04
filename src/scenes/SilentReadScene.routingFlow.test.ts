@@ -50,4 +50,11 @@ describe("SilentReadScene physical proofing flow", () => {
     expect(sceneSource).toContain("findActionWorkstation(activeFlag, 32)");
     expect(sceneSource).toContain("intendedDistance <= maxDistance + 8");
   });
+
+  it("removes the route plaque when the player reaches the destination prompt", () => {
+    const routeCue = sceneSource.slice(sceneSource.indexOf("  private refreshPhysicalRouteCue("), sceneSource.indexOf("  private clearPhysicalRouteCue("));
+    expect(routeCue).toContain('flag.status !== "carried"');
+    expect(routeCue).toContain("this.isNear(station.x, station.y, 42)");
+    expect(routeCue).toMatch(/this\.clearPhysicalRouteCue\(\);\s*return;/);
+  });
 });

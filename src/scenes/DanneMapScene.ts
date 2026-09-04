@@ -21,7 +21,7 @@ import type {
   DanneSceneGeometry,
   DanneSceneInteractionDefinition
 } from "../game/danneSceneCollisions";
-import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
+import { DANNE_SCENE_GEOMETRY, danneMapInteractionAvailable } from "../game/danneSceneCollisions";
 import {
   addDanneItem,
   addProcessItem,
@@ -218,23 +218,25 @@ export abstract class DanneMapScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(900);
     this.prompt = new InteractionPrompt(this, 930);
-    this.interactables = this.geometry.interactions.map((definition) => ({
-      id: definition.id,
-      label: definition.label,
-      x: definition.x,
-      y: definition.y,
-      radius: definition.radius,
-      kind: definition.kind,
-      onInteract: () => this.handleInteraction(definition)
-    }));
+    this.interactables = this.geometry.interactions
+      .filter((definition) => danneMapInteractionAvailable(definition.action, Boolean(gameState.sceneProgress.blackVaultBossCleared)))
+      .map((definition) => ({
+        id: definition.id,
+        label: definition.label,
+        x: definition.x,
+        y: definition.y,
+        radius: definition.radius,
+        kind: definition.kind,
+        onInteract: () => this.handleInteraction(definition)
+      }));
     this.createDanneEntities();
     this.syncBlackVaultTraversal();
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
       const readiness = getBlackVaultClimaxReadiness();
       setObjective(gameState.sceneProgress.blackVaultBossCleared
-        ? "Black Vault cleared: inspect the quiet core to enter the bindery."
+        ? "CORE TO THE BINDERY"
         : readiness.ready
-          ? "Black Vault: use the review cache, then inspect DANN-E's core."
+          ? this.blackVaultApproachObjective()
           : `Black Vault locked: ${readiness.missingSummary.slice(0, 2).join(", ")}.`);
     }
     this.unlockCodexForScene();
@@ -352,9 +354,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
       if (this.geometry.sceneKey === "BlackVaultLairScene") {
         const readiness = getBlackVaultClimaxReadiness();
         setObjective(gameState.sceneProgress.blackVaultBossCleared
-          ? "Black Vault cleared: inspect the quiet core to enter the bindery."
+          ? "CORE TO THE BINDERY"
           : readiness.ready
-            ? "Black Vault: use the review cache, then inspect DANN-E's core."
+            ? this.blackVaultApproachObjective()
             : `Black Vault locked: ${readiness.missingSummary.slice(0, 2).join(", ")}.`);
       } else {
         setObjective(this.geometry.objective);
@@ -435,6 +437,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private drawInteractionMarkers() {
     for (const interaction of this.geometry.interactions) {
+      if (!danneMapInteractionAvailable(interaction.action, Boolean(gameState.sceneProgress.blackVaultBossCleared))) continue;
       if (interaction.action === "hidden-reading-room-passage") {
         this.drawHiddenPassageSeam(interaction);
         continue;
@@ -446,6 +449,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 3, 7, 3, color(interaction.accent)).setDepth(interaction.y + 1));
       this.interactionMarkerObjects.push(this.add.rectangle(interaction.x + 3, interaction.y - 5, 2, 2, color(PALETTE.creamPaper)).setDepth(interaction.y + 2));
     }
+  }
+
+  private blackVaultApproachObjective() {
+    return gameState.sceneProgress.blackVaultReliabilityCacheUsed ? "INSPECT DANN-E CORE" : "USE REVIEW CACHE";
   }
 
   private drawHiddenPassageSeam(interaction: DanneSceneInteractionDefinition) {
@@ -743,7 +750,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
         "A shelf of vetted human-review notes steadies your hand.",
         "Reliability restored. Top up before facing the DANN-E core."
       ]);
-      setObjective("Reliability restored; face the DANN-E core when ready.");
+      setObjective(this.blackVaultApproachObjective());
       return;
     }
     if (definition.action === "cipher-machine") {
@@ -918,7 +925,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       }
     });
     gameState.sceneProgress.blackVaultBossStarted = 1;
-    setObjective("Black Vault Lair: defeat DANN-E with human-reviewed tools.");
+    setObjective("DANN-E FINAL REVIEW");
     retroAudio.startMusic("DanneBoss", { forceRestart: true });
     this.danneBoss.start();
   }
@@ -992,12 +999,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private objectiveForBossPhase(phase: string) {
-    if (phase === "colossus") return "Black Vault: DODGE RED LOCK; COUNTER.";
-    if (phase === "swarm") return "Black Vault: DODGE CONVERGENCE; COUNTER.";
-    if (phase === "cloud") return "Black Vault: WATCH CYAN SHIFT; LEAVE RED TARGET.";
-    if (phase === "ascendant") return "Black Vault: READ MARKERS; COUNTER BETWEEN VOLLEYS.";
-    if (phase === "defeated") return "Black Vault Lair: DANN-E defeated; route to publication.";
-    return this.geometry.objective;
+    if (phase === "colossus") return "DODGE LOCK - COUNTER";
+    if (phase === "swarm") return "DODGE SWARM - STRIKE";
+    if (phase === "cloud") return "LEAVE RED TARGET";
+    if (phase === "ascendant") return "DODGE VOLLEY - HIT";
+    if (phase === "defeated") return "TO THE BINDERY";
+    return "DANN-E FINAL REVIEW";
   }
 
   private phaseProgressNumber(phase: string) {

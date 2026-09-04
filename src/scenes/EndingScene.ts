@@ -16,6 +16,7 @@ import { TYPESETTER_CORRECTIONS_PROMPTS } from "../game/typesetterCorrections";
 import {
   BUCKRAM_BINDING_PACKETS,
   BUCKRAM_BINDING_TOTAL,
+  buckramBindingObjective,
   buckramBindingStatusCode,
   buckramBindingStatusFromCode,
   deriveBuckramBindingStep,
@@ -58,6 +59,7 @@ import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
+import { saveGameNow } from "../systems/save";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 import { SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
 import { hiddenFirstEditionBonusLabel } from "../game/secretReadingRoom";
@@ -169,7 +171,10 @@ export class EndingScene extends Phaser.Scene {
 
   create() {
     this.resetTransientState();
-    setSceneState("EndingScene", "explore", "Buckram Gate: carry the first binding packet.");
+    this.published = gameState.finalGateCertification?.status === "published";
+    setSceneState("EndingScene", this.published ? "ending" : "explore", this.published
+      ? "Published FRUS cover complete."
+      : "Buckram Gate: carry the first binding packet.");
     retroAudio.startMusic("EndingScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby));
@@ -193,12 +198,16 @@ export class EndingScene extends Phaser.Scene {
 
     this.startPhysicalBindingLoop();
     this.syncRoomTraversal();
-    this.syncVisibleState(false);
-    this.updateGateReadout();
-    if (gameState.finalGateCertification?.status === "published") {
-      this.published = true;
-      this.showPublishedPrize();
-      this.canRestart = true;
+    this.syncVisibleState(this.published);
+    if (this.published) {
+      if (getPublicationOutcomeReadout().id === "published_under_appeal") {
+        this.showContestedPrize();
+        this.canRestart = true;
+      } else {
+        this.finishBindingCeremonyPresentation();
+      }
+    } else {
+      this.updateGateReadout();
     }
   }
 
@@ -351,7 +360,7 @@ export class EndingScene extends Phaser.Scene {
         message
       });
       setNearestInteractable(nearTarget ? `${verb} ${activePacket.shortLabel}` : null);
-      setObjective(`Buckram Gate: ${message}`);
+      setObjective(buckramBindingObjective(activePacket, activePacket.status));
       this.actionHint.setText("");
       return;
     }
@@ -369,11 +378,7 @@ export class EndingScene extends Phaser.Scene {
         : `Buckram Gate locked: ${blocker.detail}.`
     });
     setNearestInteractable(nearPress ? (ready ? "PUBLISH FRUS VOLUME" : "BINDING PRESS LOCKED") : null);
-    setObjective(ready
-      ? nearPress
-        ? "Buckram Gate: press Space to bind and publish the FRUS volume."
-        : "Buckram Gate: carry the Buckram Key to the binding press."
-      : `Buckram Gate locked: ${blocker.short}.`);
+    setObjective(ready ? "PUBLISH AT PRESS" : "PRESS LOCKED");
     this.actionHint.setText("");
   }
 
@@ -468,7 +473,12 @@ export class EndingScene extends Phaser.Scene {
 
     const position = this.bindingCuePosition();
     const target = this.publicationTableTarget(label, position);
-    this.interactionPrompt.update(delta, target, undefined, { badge: "A", text: label });
+    const nearTarget = this.isNear(position.x, position.y, position.radius);
+    this.interactionPrompt.update(delta, nearTarget && !this.toast.visible ? target : null, undefined, { badge: "A", text: label });
+    if (nearTarget) {
+      this.clearPublicationTableRouteCue();
+      return;
+    }
     this.refreshPublicationTableRouteCue(label, position);
   }
 
@@ -892,6 +902,7 @@ export class EndingScene extends Phaser.Scene {
       ? "PUBLISHED UNDER APPEAL - UNRESOLVED EQUITIES RECORDED - NEW GAME+ READY"
       : "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED - NEW GAME+ READY");
     this.syncVisibleState(true);
+    saveGameNow("manual");
     retroAudio.ending();
     if (outcome.id === "published_under_appeal") {
       this.showContestedPrize();
@@ -1028,17 +1039,12 @@ export class EndingScene extends Phaser.Scene {
       depth: 929
     });
     this.drawPublishedPrize(128, 76, 930);
-    this.add.text(128, 5, "BUCKRAM GATE CLEARED", {
+    this.add.text(128, 8, "FRUS VOLUME PUBLISHED", {
       fontFamily: "monospace",
-      fontSize: "11px",
+      fontSize: "8px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 16, "PUBLISHED FRUS COVER", {
-      fontFamily: "monospace",
-      fontSize: "7px",
-      color: PALETTE.creamPaper
-    }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 25, `${gameState.playerProfile.displayName.toUpperCase()} / ${gameState.playerProfile.roleLabel.toUpperCase()}`, {
+    this.add.text(128, 20, `${gameState.playerProfile.displayName.toUpperCase()} / ${gameState.playerProfile.roleLabel.toUpperCase()}`, {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper
@@ -1090,12 +1096,12 @@ export class EndingScene extends Phaser.Scene {
       depth: 925
     });
 
-    this.add.text(128, 5, "CONTESTED DECLASSIFICATION", {
+    this.add.text(128, 8, "CONTESTED DECLASSIFICATION", {
       fontFamily: "monospace",
-      fontSize: "10px",
+      fontSize: "8px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5).setDepth(931);
-    this.add.text(128, 17, "PUBLISHED UNDER APPEAL", {
+    this.add.text(128, 20, "PUBLISHED UNDER APPEAL", {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.creamPaper

@@ -5,11 +5,40 @@ import {
   REFERRAL_EQUITY_PACKETS,
   REFERRAL_TREATMENT_CHECK_TOTAL,
   REFERRAL_TREATMENT_DOCKETS,
+  REFERRAL_TREATMENT_LABELS,
+  referralReviewObjective,
   routeReferralEquityPacket,
   routeReferralTreatmentDocket
 } from "./referralVaultReview";
 
 describe("physical Referral Vault review", () => {
+  it("keeps pickup, destination, retry, and handoff cues within 20 characters", () => {
+    for (const [step, packet] of REFERRAL_EQUITY_PACKETS.entries()) {
+      const pickup = referralReviewObjective("equity", step, false);
+      const carry = referralReviewObjective("equity", step, true);
+      expect(pickup).toBe(`${packet.order}/3 TAKE AT TRAY`);
+      expect(carry).toBe(`${packet.order}/3 TO ${packet.agency}`);
+      const retry = routeReferralEquityPacket(step, packet.id, packet.agency === "CIA" ? "DOD" : "CIA");
+      expect(referralReviewObjective("equity", retry.nextStep, false)).toBe(pickup);
+      expect(Math.max(pickup.length, carry.length)).toBeLessThanOrEqual(20);
+    }
+    for (const [step, docket] of REFERRAL_TREATMENT_DOCKETS.entries()) {
+      expect(referralReviewObjective("treatment", step, false)).toBe(`${docket.order}/3 TAKE AT TRAY`);
+      const carry = referralReviewObjective("treatment", step, true);
+      expect(carry).toContain(REFERRAL_TREATMENT_LABELS[docket.station]);
+      expect(carry.length).toBeLessThanOrEqual(20);
+    }
+    const handoffs = [
+      referralReviewObjective("manifest", 0, false),
+      referralReviewObjective("manifest", 0, true),
+      referralReviewObjective("complete", 3, false),
+      referralReviewObjective("complete", 3, false, true),
+      referralReviewObjective("complete", 3, false, true, true)
+    ];
+    expect(handoffs).toEqual(["TAKE DRAFT AT CHAT", "DRAFT TO HUMAN DESK", "EXIT EAST - SLIP", "TAKE CONCURRENCE", "EXIT EAST - EDITOR"]);
+    expect(handoffs.every((cue) => cue.length <= 20)).toBe(true);
+  });
+
   it("routes three distinct files to three agency equities", () => {
     expect(REFERRAL_EQUITY_PACKETS).toHaveLength(3);
     expect(new Set(REFERRAL_EQUITY_PACKETS.map((packet) => packet.agency)).size).toBe(3);

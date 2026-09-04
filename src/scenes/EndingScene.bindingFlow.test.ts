@@ -3,8 +3,34 @@ import { describe, expect, it } from "vitest";
 
 const sceneSource = readFileSync(new URL("./EndingScene.ts", import.meta.url), "utf8");
 const bindingSource = readFileSync(new URL("../game/buckramBinding.ts", import.meta.url), "utf8");
+const uiSource = readFileSync(new URL("./UIScene.ts", import.meta.url), "utf8");
 
 describe("EndingScene physical Buckram Gate", () => {
+  it("restores publication without recertifying or awarding completion twice", () => {
+    const create = sceneSource.slice(sceneSource.indexOf("  create() {"), sceneSource.indexOf("  private resetTransientState()"));
+    expect(create).toContain('this.published = gameState.finalGateCertification?.status === "published"');
+    expect(create).toContain('this.published ? "ending" : "explore"');
+    expect(create).toContain('getPublicationOutcomeReadout().id === "published_under_appeal"');
+    expect(create).toContain("this.finishBindingCeremonyPresentation()");
+    expect(create).toMatch(/} else \{\s*this\.updateGateReadout\(\);\s*}/);
+    expect(create).not.toContain("this.publishVolume()");
+    expect(create).not.toContain("recordBindingCeremonyCompletion()");
+  });
+
+  it("hides the gameplay band during endings, but not the playable bindery", () => {
+    const visibility = uiSource.slice(uiSource.indexOf("  private shouldShowQuestBand("), uiSource.indexOf("  private drawQuestBandChrome("));
+    expect(visibility).toContain('gameState.mode === "ending"');
+    expect(visibility).not.toContain('"EndingScene"');
+  });
+
+  it("saves the finished outcome before the ceremony instead of waiting for autosave", () => {
+    const publish = sceneSource.slice(sceneSource.indexOf("  private publishVolume()"), sceneSource.indexOf("  private playBindingCeremony()"));
+    const savedAt = publish.indexOf('saveGameNow("manual")');
+    expect(savedAt).toBeGreaterThan(publish.indexOf("finalizeCompletionStats()"));
+    expect(savedAt).toBeGreaterThan(publish.indexOf("sceneProgress.trueEndingPublicationCertified"));
+    expect(savedAt).toBeLessThan(publish.indexOf("this.playBindingCeremony()"));
+  });
+
   it("starts the physical binding loop without activating a choice prompt", () => {
     expect(sceneSource).toContain("this.startPhysicalBindingLoop()");
     expect(sceneSource).not.toContain("new ChoicePrompt");

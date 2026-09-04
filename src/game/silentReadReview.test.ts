@@ -5,11 +5,27 @@ import {
   routeSilentReadReviewItem,
   SILENT_READ_REVIEW_ITEMS,
   SILENT_READ_REVIEW_TOTAL,
+  silentReadObjective,
   silentReadReviewStatusCode,
   silentReadReviewStatusFromCode
 } from "./silentReadReview";
 
 describe("physical Silent Read review", () => {
+  it("keeps each physical action and its station readable in the HUD", () => {
+    for (const item of SILENT_READ_REVIEW_ITEMS) {
+      expect(silentReadObjective(item, "waiting")).toBe(`TAKE ${item.shortLabel}`);
+      expect(silentReadObjective(item, "carried")).toMatch(/^TO /);
+      expect(silentReadObjective(item, "verified")).toMatch(/^STAMP /);
+      expect(silentReadObjective(item, "routed")).toMatch(item.kind === "production" ? /^STAMP / : /^(CHECK |ADD VISIBLE BRACKET)/);
+      for (const status of ["waiting", "carried", "routed", "verified"] as const) {
+        expect(silentReadObjective(item, status).length).toBeLessThanOrEqual(20);
+      }
+    }
+    expect(silentReadObjective(SILENT_READ_REVIEW_ITEMS[0], "routed")).toBe("ADD VISIBLE BRACKET");
+    expect(silentReadObjective(SILENT_READ_REVIEW_ITEMS[1], "waiting", false)).toBe("EXIT EAST - PROOF");
+    expect(silentReadObjective(null, "stamped")).toBe("EXIT EAST - VAULT");
+  });
+
   it("turns the complete review sequence into eight ordered physical objects", () => {
     expect(SILENT_READ_REVIEW_ITEMS.map((item) => item.id)).toEqual([
       "mechanical-fix",

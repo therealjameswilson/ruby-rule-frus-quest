@@ -49,6 +49,8 @@ import {
   getReferralTreatmentDocket,
   REFERRAL_EQUITY_PACKETS,
   REFERRAL_TREATMENT_DOCKETS,
+  REFERRAL_TREATMENT_LABELS,
+  referralReviewObjective,
   routeReferralEquityPacket,
   routeReferralTreatmentDocket
 } from "../game/referralVaultReview";
@@ -727,11 +729,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     container.add(this.add.rectangle(0, 0, 44, 31, color(PALETTE.black), 0.94)
       .setStrokeStyle(2, color(accent)));
     container.add(this.add.image(0, -2, "agency-equity-seal"));
-    container.add(this.add.text(0, -18, agency, {
+    container.add(this.add.text(0, 18, agency, {
       fontFamily: "monospace",
       fontSize: "6px",
-      color: PALETTE.black,
-      backgroundColor: accent
+      color: PALETTE.creamPaper,
+      backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0));
     container.add(this.add.rectangle(0, 10, 22, 4, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
       .setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray)));
@@ -786,10 +788,10 @@ export class ReferralVaultScene extends Phaser.Scene {
     });
     if (!this.concurrenceSlipCollected) {
       this.concurrenceSlipIcon = this.track(this.add.image(128, 132, "concurrence-slip").setDepth(165).setVisible(false));
-      setObjective("Referral Vault: collect the Concurrence Slip in R2.");
+      setObjective(this.referralObjective());
     } else {
       this.track(this.add.image(128, 132, "concurrence-slip").setTint(color(PALETTE.goldStamp)).setDepth(165).setVisible(false));
-      setObjective("Referral Vault: exit east to Silent Read Tower.");
+      setObjective(this.referralObjective());
     }
   }
 
@@ -864,11 +866,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private restoreObjectiveAfterDannePressure() {
-    setObjective(this.currentRoomId === "R1"
-      ? this.referralObjective()
-      : this.concurrenceSlipCollected
-        ? "Referral Vault: exit east to Silent Read Tower."
-        : "Referral Vault: collect the Concurrence Slip in R2.");
+    setObjective(this.referralObjective());
   }
 
   private drawReferralMinimap() {
@@ -946,7 +944,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     const strictTarget = this.concurrenceSlipStrictTarget();
     this.interactionPrompt.update(
       delta,
-      strictTarget ?? hintTarget,
+      this.toast.visible ? null : strictTarget ?? hintTarget,
       undefined,
       strictTarget ? { badge: "A", text: "CONCURRENCE SLIP" } : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined
     );
@@ -981,7 +979,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.concurrenceSlipCollected = true;
     addProcessItem("concurrence_slip");
     setLatestMessage("Concurrence logged after human review. Carry the slip east to proofing.");
-    setObjective("Referral Vault: exit east to Silent Read Tower.");
+    setObjective(this.referralObjective());
     this.concurrenceSlipIcon?.setTint(color(PALETTE.goldStamp));
     this.clearConcurrenceSlipRouteCue();
     addSnesRewardBurst(this, 128, 114, "concurrence-slip", "Concurrence Slip", (object) => this.track(object));
@@ -1079,7 +1077,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (this.currentRoomId === "R1" && direction === "east") {
       if (!this.referralGateOpen) {
         setLatestMessage("Referral gate waits for visible excision review.");
-        setObjective("Resolve agency equity and visible withholding language before entering R2.");
+        setObjective(this.referralObjective());
         this.player.setPosition(REFERRAL_PLAY_BOUNDS.right - 18, position.y);
         this.exitCooldownUntil = this.time.now + 500;
         return false;
@@ -1160,7 +1158,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       target.x,
       target.y
     ) <= (target.radius ?? 44) ? target : null;
-    this.interactionPrompt.update(delta, strictTarget, undefined, strictTarget ? {
+    this.interactionPrompt.update(delta, this.toast.visible ? null : strictTarget, undefined, strictTarget ? {
       badge: "A",
       text: this.referralPromptText(strictTarget)
     } : undefined);
@@ -1275,9 +1273,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private treatmentStationShortLabel(station: ReferralTreatmentStationId) {
-    if (station === "permission_desk") return "PERMIT";
-    if (station === "appeal_ledger") return "APPEAL";
-    return "BRACKET";
+    return REFERRAL_TREATMENT_LABELS[station];
   }
 
   private carriedEquityPacket() {
@@ -1320,7 +1316,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       retroAudio.warning();
       this.toast.show("WRONG EQUITY", this.player.position, "warn");
       setLatestMessage(result.message);
-      setObjective(`RETRY ${packet.order}/3: collect ${packet.label} from the referral tray.`);
+      setObjective(this.referralObjective());
       this.drawEquityPacketAtTray();
       this.syncReferralVisibleEntities();
       this.reliability.update();
@@ -1390,7 +1386,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       retroAudio.warning();
       this.toast.show("WRONG STATION", this.player.position, "warn");
       setLatestMessage(result.message);
-      setObjective(`RETRY ${docket.order}/3: collect ${docket.label} from the treatment tray.`);
+      setObjective(this.referralObjective());
       this.drawTreatmentDocketAtTray();
       this.syncReferralVisibleEntities();
       this.reliability.update();
@@ -1462,23 +1458,11 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private referralObjective() {
-    if (this.referralGateOpen) return "Referral Vault: enter R2 and collect the Concurrence Slip.";
     const stage = this.referralReviewStage();
-    if (stage === "equity") {
-      const packet = getReferralEquityPacket(this.equityStep);
-      return this.carriedEquityPacket()
-        ? `ROUTE ${packet.order}/3: carry ${packet.label} to the ${packet.agency} equity desk.`
-        : `ROUTE ${packet.order}/3: collect ${packet.label} from the referral tray.`;
-    }
-    if (stage === "manifest") {
-      return this.manifestCarried()
-        ? "VERIFY: carry StateChat's draft to the Human Concurrence Desk."
-        : "VERIFY: collect StateChat's draft manifest from the terminal tray.";
-    }
-    const docket = getReferralTreatmentDocket(this.treatmentStep);
-    return this.carriedTreatmentDocket()
-      ? `FILE ${docket.order}/3: carry ${docket.label} to the ${docket.stationLabel}.`
-      : `FILE ${docket.order}/3: collect ${docket.label} from the treatment tray.`;
+    const carried = stage === "equity" ? Boolean(this.carriedEquityPacket())
+      : stage === "manifest" ? this.manifestCarried() : Boolean(this.carriedTreatmentDocket());
+    return referralReviewObjective(stage, stage === "equity" ? this.equityStep : this.treatmentStep,
+      carried, this.currentRoomId === "R2", this.concurrenceSlipCollected);
   }
 
   private redrawReferralRoom(position = this.player.position) {

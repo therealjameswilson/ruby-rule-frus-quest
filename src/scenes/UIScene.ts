@@ -251,6 +251,9 @@ export class UIScene extends Phaser.Scene {
       hasProcessItem("citation_stamp"), gameState.volumeFragments.includes("Front Matter Fragment")
     );
     const hasCarryDestination = activeSceneKey === "NetworkScene"
+      || activeSceneKey === "ReferralVaultScene"
+      || activeSceneKey === "SilentReadScene"
+      || activeSceneKey === "EndingScene"
       || (activeSceneKey === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "A1");
     if (gameState.heldItem && !hasCarryDestination) {
       return getString("hud.carryItem", { item: gameState.heldItem });
@@ -295,7 +298,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   private shouldShowQuestBand(activeSceneKey: string | null) {
-    if (!activeSceneKey) return false;
+    if (!activeSceneKey || gameState.mode === "ending") return false;
     if (this.scene.isActive("CodexScene")) return false;
     return !new Set([
       "BootScene",

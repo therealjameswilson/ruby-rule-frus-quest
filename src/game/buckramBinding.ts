@@ -95,6 +95,23 @@ export const BUCKRAM_BINDING_PACKETS = [
 ] as const satisfies readonly BuckramBindingPacket[];
 
 export const BUCKRAM_BINDING_TOTAL = BUCKRAM_BINDING_PACKETS.length;
+
+const BINDING_STATION_LABELS: Record<BuckramBindingStationId, string> = {
+  "front-matter-bench": "FRONT BENCH",
+  "index-desk": "INDEX DESK",
+  "kellogg-press": "KELLOGG PRESS",
+  "gpo-handoff": "GPO HANDOFF",
+  "public-release-terminal": "PUBLIC TERMINAL"
+};
+
+export function buckramBindingObjective(
+  packet: Pick<BuckramBindingPacket, "shortLabel" | "station">,
+  status: BuckramBindingStatus
+) {
+  if (status === "waiting") return `TAKE ${packet.shortLabel}`;
+  return `${status === "carried" ? "TO" : "SEAL"} ${BINDING_STATION_LABELS[packet.station]}`;
+}
+
 export const BUCKRAM_BINDING_CHECK_TOTAL = BUCKRAM_BINDING_PACKETS.reduce(
   (total, packet) => total + packet.checkIds.length,
   0

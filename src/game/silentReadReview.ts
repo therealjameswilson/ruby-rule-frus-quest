@@ -122,6 +122,32 @@ export const SILENT_READ_REVIEW_ITEMS = [
 
 export const SILENT_READ_REVIEW_TOTAL = SILENT_READ_REVIEW_ITEMS.length;
 
+const STATION_LABELS: Record<SilentReadStationId, string> = {
+  opennet: "OPENNET",
+  classnet: "CLASSNET",
+  "editor-desk": "EDITOR DESK",
+  "referral-tray": "REFERRAL TRAY",
+  "proof-table": "PROOF TABLE",
+  "consultation-desk": "CONSULT DESK",
+  "typeflow-rail": "TYPEFLOW RAIL"
+};
+
+export function silentReadObjective(
+  item: Pick<SilentReadReviewItem, "id" | "shortLabel" | "kind" | "destination"> | null,
+  status: SilentReadReviewStatus,
+  inCurrentRoom = true
+) {
+  if (!item) return "EXIT EAST - VAULT";
+  if (!inCurrentRoom) return "EXIT EAST - PROOF";
+  if (status === "waiting") return `TAKE ${item.shortLabel}`;
+  const station = STATION_LABELS[item.destination];
+  if (status === "carried") return `TO ${station}`;
+  if (status === "routed" && item.kind !== "production") {
+    return item.id === "mechanical-fix" ? "ADD VISIBLE BRACKET" : `CHECK ${station}`;
+  }
+  return `STAMP ${station}`;
+}
+
 export interface SilentReadRouteResult {
   ok: boolean;
   item: SilentReadReviewItem;

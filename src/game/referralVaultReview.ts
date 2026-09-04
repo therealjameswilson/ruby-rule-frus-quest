@@ -135,6 +135,32 @@ export const REFERRAL_TREATMENT_CHECK_TOTAL = REFERRAL_TREATMENT_DOCKETS.reduce(
   0
 );
 
+export const REFERRAL_TREATMENT_LABELS: Record<ReferralTreatmentStationId, string> = {
+  permission_desk: "PERMIT",
+  appeal_ledger: "APPEAL",
+  bracket_press: "BRACKET"
+};
+
+export function referralReviewObjective(
+  stage: "equity" | "manifest" | "treatment" | "complete",
+  step: number,
+  carried: boolean,
+  inRewardRoom = false,
+  slipCollected = false
+) {
+  if (inRewardRoom) return slipCollected ? "EXIT EAST - EDITOR" : "TAKE CONCURRENCE";
+  if (stage === "complete") return "EXIT EAST - SLIP";
+  if (stage === "manifest") return carried ? "DRAFT TO HUMAN DESK" : "TAKE DRAFT AT CHAT";
+  if (stage === "equity") {
+    const packet = getReferralEquityPacket(step);
+    return carried ? `${packet.order}/3 TO ${packet.agency}` : `${packet.order}/3 TAKE AT TRAY`;
+  }
+  const docket = getReferralTreatmentDocket(step);
+  return carried
+    ? `${docket.order}/3 TO ${REFERRAL_TREATMENT_LABELS[docket.station]}`
+    : `${docket.order}/3 TAKE AT TRAY`;
+}
+
 export function getReferralEquityPacket(step: number) {
   return REFERRAL_EQUITY_PACKETS[
     Math.max(0, Math.min(REFERRAL_EQUITY_PACKETS.length - 1, Math.floor(step)))

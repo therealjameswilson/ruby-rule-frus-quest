@@ -4,6 +4,7 @@ import {
   BUCKRAM_BINDING_PACKETS,
   BUCKRAM_BINDING_TOTAL,
   buckramBindingStatusCode,
+  buckramBindingObjective,
   buckramBindingStatusFromCode,
   deriveBuckramBindingStep,
   getBuckramBindingReadout,
@@ -11,6 +12,17 @@ import {
 } from "./buckramBinding";
 
 describe("physical Buckram Gate binding", () => {
+  it("keeps pickup, routing, and sealing destinations within the HUD", () => {
+    for (const packet of BUCKRAM_BINDING_PACKETS) {
+      expect(buckramBindingObjective(packet, "waiting")).toBe(`TAKE ${packet.shortLabel}`);
+      expect(buckramBindingObjective(packet, "carried")).toMatch(/^TO /);
+      expect(buckramBindingObjective(packet, "routed")).toMatch(/^SEAL /);
+      for (const status of ["waiting", "carried", "routed"] as const) {
+        expect(buckramBindingObjective(packet, status).length).toBeLessThanOrEqual(20);
+      }
+    }
+  });
+
   it("bundles every final check into five ordered packets", () => {
     expect(BUCKRAM_BINDING_PACKETS.map((packet) => packet.id)).toEqual([
       "front-matter-packet",

@@ -66,9 +66,11 @@ import {
   routeSilentReadReviewItem,
   SILENT_READ_REVIEW_ITEMS,
   SILENT_READ_REVIEW_TOTAL,
+  silentReadObjective,
   silentReadReviewStatusCode,
   silentReadReviewStatusFromCode,
   type SilentReadReviewPhase,
+  type SilentReadReviewKind,
   type SilentReadReviewStatus,
   type SilentReadStationId
 } from "../game/silentReadReview";
@@ -107,7 +109,7 @@ interface PhysicalFlag {
   id: string;
   label: string;
   shortLabel: string;
-  kind: string;
+  kind: SilentReadReviewKind;
   phase: SilentReadReviewPhase;
   checkCount: number;
   destination: WorkstationId;
@@ -619,9 +621,9 @@ export class SilentReadScene extends Phaser.Scene {
         fontSize: "6px",
         color: PALETTE.goldStamp
       }).setOrigin(0.5).setDepth(171));
-      setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
+      setObjective(this.reviewObjective());
     } else {
-      setObjective("Editor's Labyrinth: carry StateChat's draft to the Editor Desk.");
+      setObjective(this.reviewObjective());
     }
   }
 
@@ -658,12 +660,9 @@ export class SilentReadScene extends Phaser.Scene {
         track: (object) => this.track(object),
         depth: 230
       });
-      setObjective("Silent Read Tower: exit east with Buckram Key.");
+      setObjective(this.reviewObjective());
     } else {
-      const active = this.getActiveFlag();
-      setObjective(active
-        ? `Silent Read Tower: carry ${active.shortLabel} to ${this.stationFor(active.destination).label}.`
-        : "Silent Read Tower: Buckram Key ready for final publication.");
+      setObjective(this.reviewObjective());
     }
   }
 
@@ -839,10 +838,10 @@ export class SilentReadScene extends Phaser.Scene {
     const active = this.getActiveFlag();
     if (active) {
       setLatestMessage("Review Folder carries unresolved issues through accountable human review.");
-      setObjective(`${PROOF_ROOMS[flagRoom(active)].title}: carry ${active.shortLabel} to ${this.stationFor(active.destination).label}.`);
+      setObjective(this.reviewObjective());
     } else {
       if (!hasProcessItem("buckram_key")) addProcessItem("buckram_key");
-      setObjective("Silent Read Tower: exit east with the Buckram Key.");
+      setObjective(this.reviewObjective());
     }
     this.syncVisibleEntities();
     this.updatePhysicalVerification();
@@ -867,7 +866,7 @@ export class SilentReadScene extends Phaser.Scene {
     const prompt = this.physicalPromptTargets();
     this.interactionPrompt.update(
       delta,
-      prompt.strictTarget ?? prompt.hintTarget,
+      this.toast.visible ? null : prompt.strictTarget ?? prompt.hintTarget,
       undefined,
       prompt.strictTarget
         ? { badge: "A", text: prompt.strictText }
@@ -985,7 +984,7 @@ export class SilentReadScene extends Phaser.Scene {
       activeFlag.status = "carried";
       setHeldItem(`Review Folder: ${activeFlag.shortLabel}`);
       setLatestMessage(`CARRY: ${activeFlag.label}.`);
-      setObjective(`ROUTE: place ${activeFlag.shortLabel} on ${this.stationFor(activeFlag.destination).label}.`);
+      setObjective(this.reviewObjective());
       this.savePhysicalReviewProgress(activeFlag);
       retroAudio.blip();
       this.updatePhysicalVerification();
@@ -1018,8 +1017,8 @@ export class SilentReadScene extends Phaser.Scene {
       activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14);
       setHeldItem(null);
       setLatestMessage(`RETRY: ${activeFlag.shortLabel} belongs at ${correctStation.label}.`);
-      setObjective(`RETRY: collect ${activeFlag.shortLabel} from the outbox.`);
-      this.toast.show(`WRONG DESK - USE ${correctStation.label}`, this.player.position, "warn", PROOF_PLAY_BOUNDS);
+      setObjective(this.reviewObjective());
+      this.toast.show("WRONG DESK - RETRY", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.savePhysicalReviewProgress(activeFlag);
       this.reliability.update();
       this.updatePhysicalVerification();
@@ -1035,7 +1034,7 @@ export class SilentReadScene extends Phaser.Scene {
       activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y).setDepth(242);
       activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14).setDepth(243);
       setLatestMessage(`ROUTE: ${activeFlag.shortLabel} placed on ${nearestStation.label}.`);
-      setObjective(`${activeFlag.kind === "production" ? "STAMP" : "VERIFY"}: press Space at ${nearestStation.label}.`);
+      setObjective(this.reviewObjective());
       this.savePhysicalReviewProgress(activeFlag);
       retroAudio.confirm();
       this.updatePhysicalVerification();
@@ -1059,7 +1058,7 @@ export class SilentReadScene extends Phaser.Scene {
       setLatestMessage(activeFlag.id === "mechanical-fix"
         ? "VERIFY: human editor added the visible bracketed insertion."
         : `VERIFY: human review resolved ${activeFlag.shortLabel}.`);
-      setObjective(`STAMP: apply a process stamp at ${nearestStation.label}.`);
+      setObjective(this.reviewObjective());
       this.savePhysicalReviewProgress(activeFlag);
       retroAudio.confirm();
       this.updatePhysicalVerification();
@@ -1162,8 +1161,8 @@ export class SilentReadScene extends Phaser.Scene {
     if (flagRoom(nextFlag) !== this.currentRoomId) {
       this.redrawCurrentRoom();
       this.positionActiveWaitingFlagForRoom();
-      setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
-      this.toast.show("RED PENCIL READY - ENTER EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
+      setObjective(this.reviewObjective());
+      this.toast.show("PENCIL READY - EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
       return;
     }
 
@@ -1178,7 +1177,7 @@ export class SilentReadScene extends Phaser.Scene {
     nextFlag.y = this.outbox.y - 10;
     nextFlag.icon?.setPosition(nextFlag.x, nextFlag.y).setVisible(true);
     nextFlag.labelText?.setPosition(nextFlag.x, nextFlag.y + 14).setVisible(true);
-    setObjective(`Silent Read Tower: carry ${nextFlag.shortLabel} from the review outbox.`);
+    setObjective(this.reviewObjective());
   }
 
   private awardBuckramKeyAfterTypesetterProof() {
@@ -1188,13 +1187,13 @@ export class SilentReadScene extends Phaser.Scene {
     }
     gameState.sceneProgress.silentReadReviewStep = SILENT_READ_REVIEW_TOTAL;
     gameState.sceneProgress.silentReadReviewStatus = 0;
-    setObjective("Silent Read Tower: exit east with Buckram Key.");
+    setObjective(this.reviewObjective());
     this.redrawCurrentRoom();
     addSnesRewardBurst(this, this.outbox.x, this.outbox.y - 24, "buckram-key", "Buckram Key", (object) => this.track(object));
     this.actionHint.setText("DONE: typesetter proof filed. Exit east.");
     this.reliability.update();
     this.syncRoomTraversalState();
-    this.toast.show("BUCKRAM KEY READY - EXIT EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
+    this.toast.show("KEY READY - EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
   }
 
   private checkRoomExit() {
@@ -1276,14 +1275,13 @@ export class SilentReadScene extends Phaser.Scene {
 
   private refreshPhysicalRouteCue(flag: PhysicalFlag) {
     const station = this.stationFor(flag.destination);
-    if (stationRoom(station.id) !== this.currentRoomId || flag.status === "stamped") {
+    if (stationRoom(station.id) !== this.currentRoomId || flag.status !== "carried"
+      || this.isNear(station.x, station.y, 42)) {
       this.clearPhysicalRouteCue();
       return;
     }
 
-    const start = flag.status === "carried"
-      ? { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 15) }
-      : { x: Math.round(flag.x), y: Math.round(flag.y) };
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 15) };
     const end = { x: Math.round(station.x), y: Math.round(station.y) };
     const cueKey = `${this.currentRoomId}:${flag.id}:${flag.status}:${start.x},${start.y}->${station.id}`;
     if (cueKey === this.physicalRouteCueKey) return;
@@ -1396,6 +1394,11 @@ export class SilentReadScene extends Phaser.Scene {
 
   private getActiveFlag() {
     return this.physicalFlags.find((flag) => flag.status !== "stamped") ?? null;
+  }
+
+  private reviewObjective() {
+    const active = this.getActiveFlag();
+    return silentReadObjective(active, active?.status ?? "stamped", !active || flagRoom(active) === this.currentRoomId);
   }
 
   private verbFor(flag: PhysicalFlag): "CARRY" | "ROUTE" | "VERIFY" | "STAMP" {

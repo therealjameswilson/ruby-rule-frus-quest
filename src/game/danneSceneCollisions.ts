@@ -43,6 +43,10 @@ export interface DanneSceneInteractionDefinition {
   accent: string;
 }
 
+export function danneMapInteractionAvailable(action: DanneSceneInteractionAction, bossCleared: boolean) {
+  return action !== "treaty-fragment-vault" || bossCleared;
+}
+
 export interface DannePatrolRouteDefinition {
   id: string;
   points: readonly { x: number; y: number }[];
