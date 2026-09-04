@@ -1,5 +1,18 @@
 {
   "hud": {
+    "office": {
+      "talk_jr": "MEET JR - WEST DESK",
+      "take_memo": "TAKE THE MEMO",
+      "route_memo": "MEMO TO WEST INBOX",
+      "stamp_memo": "STAMP AT INBOX",
+      "recover_key": "ASK JR FOR KEY",
+      "enter_archive": "ARCHIVE - SOUTH DOOR"
+    },
+    "guide": {
+      "stamp": "TAKE CITATION STAMP",
+      "fragment": "TAKE FRUS FRAGMENT",
+      "gate": "OPEN SOUTH GATE"
+    },
     "carryItem": "Carry {item}.",
     "chooseAnswer": "Choose answer.",
     "confirm": "CONFIRM",

@@ -6,7 +6,7 @@ import {
   publicAssetPath
 } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
-import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasProcessItem } from "../game/state";
+import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasDanneItem, hasProcessItem } from "../game/state";
 import { getVolumeAssemblyReadout } from "../game/state";
 import { getGuideCavernStage, guideCavernActionCue } from "../game/guideCavernFlow";
 import { addGamepadConnectionListener, getInput, getPrimaryActionBadge, updateInputCallbacks } from "../input/InputState";
@@ -17,6 +17,7 @@ import { applyIntegerZoom } from "../systems/pixelPerfect";
 import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
+import { guideQuestBandObjective, officeQuestBandObjective } from "./openingQuestBand";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -235,10 +236,18 @@ export class UIScene extends Phaser.Scene {
   private compactObjective(activeSceneKey: string | null) {
     if (gameState.mode === "dialog") return getString("hud.readLine");
     if (gameState.mode === "choice") return getString("hud.chooseAnswer");
-    if (gameState.heldItem) return getString("hud.carryItem", { item: gameState.heldItem });
-    if (activeSceneKey === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
-      return getString("hud.talkJuniorCompiler");
+    if (activeSceneKey === "OfficeScene") {
+      return officeQuestBandObjective({
+        juniorIntroduced: Boolean(gameState.sceneProgress.juniorCompilerIntroduced),
+        memoStatus: gameState.sceneProgress.officeStarterMemoStatus
+          ?? ((gameState.sceneProgress.juniorCompilerFetch ?? 0) >= 3 ? 3 : 0),
+        hasArchiveKey: hasDanneItem("master-declass-key")
+      });
     }
+    if (activeSceneKey === "GuideScene") return guideQuestBandObjective(
+      hasProcessItem("citation_stamp"), gameState.volumeFragments.includes("Front Matter Fragment")
+    );
+    if (gameState.heldItem) return getString("hud.carryItem", { item: gameState.heldItem });
     const objective = gameState.objective.replace(/^Mission:\s*/i, "");
     const firstSentence = objective.split(".")[0]?.trim() || objective.trim();
     return firstSentence;

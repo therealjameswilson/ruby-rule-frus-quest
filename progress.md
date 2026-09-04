@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Browser-first opening playtest (2026-09-03):
+  - Resumed the web game from current remote `main` (`1527a6e`) in a separate clone at `/Users/jameswilson/.codex/workspaces/frus-quest-web` on `codex/web-opening-playtest`; the two Documents checkouts were left untouched because cloud-offloaded Git/source files stalled reads.
+  - Made the Office a safe preparation room: DANN-E still patrols and boasts after JR's introduction, but remains on the north perimeter and never deals contact damage, fires bolts, or overwrites the starter objective. Dungeon lurkers retain their default combat behavior.
+  - Corrected Ego-bolt motion to accumulate sub-pixel positions before snapping the rendered sprites. Previously each frame rounded away slow movement on high-refresh screens; tests now compare 30/60/120/144/240 fps and verify single-hit collision/removal.
+  - Added bounded, stage-specific Office/Guide HUD objectives in English, Spanish, and French. The top band now says `MEET JR - WEST DESK`, `MEMO TO WEST INBOX`, and the actual next gate instead of truncating away the target or repeating a long carried-item name. Legacy missing-key recovery remains represented.
+  - Verification: 121 Vitest files / 631 tests and the production build passed; the required Playwright client completed Title -> compiler setup -> Office memo pickup/routing/stamping -> Guide stamp/fragment/gate -> Archive A1 with reliability 80, 20 document points, Citation Stamp, and the first cover piece. Chrome visual inspection confirmed the readable opening HUD at desktop and 375x667, and an emulated-touch A click triggered the correct interaction feedback.
+  - Capture limitation: the required client's canvas screenshots remained black in both headless and headed WebGL modes. Actual Chrome screenshots were inspected separately; no claim of a complete new end-to-end publication run is made.
+  - Next playtest targets: the A1 arrival initially offers the optional NARA II Stacks interaction despite the mandatory Source Note 47 objective; mobile A/B/Start controls respond but their 1x portrait idle labels are too faint (28% alpha). The remaining dungeons and full publication ending need a fresh browser playthrough.
+
 - Native iPhone packaging pass (2026-07-13):
   - Added a Capacitor 8 iOS wrapper on `codex/iphone-app` without changing the 256x240 Phaser game or the GitHub Pages deployment path.
   - Generated an iPhone-only Swift Package Manager Xcode project with iOS 15 minimum support, automatic signing defaults, portrait/landscape support, full-screen presentation, original opaque FRUS app-icon art, and an original ruby-volume launch screen.

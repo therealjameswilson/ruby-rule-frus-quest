@@ -92,6 +92,19 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
+    "office": {
+      "talk_jr": "HABLA CON JR - OESTE",
+      "take_memo": "TOMA LA NOTA",
+      "route_memo": "NOTA A BANDEJA OESTE",
+      "stamp_memo": "SELLA EN BANDEJA",
+      "recover_key": "PIDE LA LLAVE A JR",
+      "enter_archive": "ARCHIVO - PUERTA SUR"
+    },
+    "guide": {
+      "stamp": "TOMA SELLO DE CITA",
+      "fragment": "TOMA FRAGMENTO FRUS",
+      "gate": "ABRE LA PUERTA SUR"
+    },
     "carryItem": "Lleva {item}.",
     "chooseAnswer": "Elige respuesta.",
     "confirm": "CONFIRMAR",

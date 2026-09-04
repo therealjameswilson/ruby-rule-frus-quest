@@ -92,6 +92,19 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
+    "office": {
+      "talk_jr": "PARLE A JR - OUEST",
+      "take_memo": "PRENDS LA NOTE",
+      "route_memo": "NOTE AU BAC OUEST",
+      "stamp_memo": "TAMPONNE AU BAC",
+      "recover_key": "DEMANDE LA CLE A JR",
+      "enter_archive": "ARCHIVES - PORTE SUD"
+    },
+    "guide": {
+      "stamp": "PRENDS TAMPON SOURCE",
+      "fragment": "PRENDS FRAGMENT FRUS",
+      "gate": "OUVRE LA PORTE SUD"
+    },
     "carryItem": "Porte {item}.",
     "chooseAnswer": "Choisis une réponse.",
     "confirm": "CONFIRMER",

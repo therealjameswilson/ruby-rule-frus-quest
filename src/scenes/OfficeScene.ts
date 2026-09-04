@@ -106,7 +106,6 @@ import { InteractionPrompt } from "../systems/interactionPrompt";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { InventoryOverlay } from "../systems/inventory";
 import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
-import { applyDanneLurkerDamage } from "../systems/dannePressure";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
@@ -158,12 +157,12 @@ export class OfficeScene extends Phaser.Scene {
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
     this.juniorCompiler = new JuniorCompiler(this, 70, 122);
     this.danneLurker = new DanneLurker(this, 218, 78, {
+      encounterMode: "foreshadow",
       waypoints: [
         { x: 218, y: 78 },
         { x: 188, y: 58 },
         { x: 102, y: 58 },
-        { x: 46, y: 132 },
-        { x: 190, y: 186 }
+        { x: 46, y: 58 }
       ]
     });
     this.dialog = new DialogBox(this);
@@ -337,9 +336,7 @@ export class OfficeScene extends Phaser.Scene {
       bounds: { left: 16, right: GAME_WIDTH - 16, top: 42, bottom: GAME_HEIGHT - 18 },
       solids: this.solids
     });
-    const dannePressureUnlocked = Boolean(gameState.sceneProgress.juniorCompilerIntroduced)
-      && this.officeStarterMemoStatus() > 0;
-    this.updateDanneLurker(delta, dannePressureUnlocked);
+    this.updateDanneLurker(delta, Boolean(gameState.sceneProgress.juniorCompilerIntroduced));
     const activeInteractables = this.currentInteractables();
     const nearest = nearestInteractable(this.player.position, activeInteractables);
     // Show the prompt/ring from a little further out than the strict interact
@@ -370,19 +367,8 @@ export class OfficeScene extends Phaser.Scene {
     this.updateFirstQuestCue();
   }
 
-  private updateDanneLurker(delta: number, canPressure: boolean) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 10, 700);
-      applyDanneLurkerDamage("contact", "DANN-E deadline pressure interrupted office workflow.");
-      setObjective("Keep moving: DANN-E pressure cannot replace human review.");
-      this.reliability.update();
-    } else if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt interrupted office workflow.");
-      setObjective("Dodge Ego bolts and keep the human review route moving.");
-      this.reliability.update();
-    }
+  private updateDanneLurker(delta: number, canBoast: boolean) {
+    this.danneLurker.update(this.time.now, delta, this.player.position, canBoast);
     this.syncOfficeThreatState();
   }
 

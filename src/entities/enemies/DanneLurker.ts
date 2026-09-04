@@ -19,16 +19,20 @@ import type { Position } from "../../game/types";
 import { retroAudio } from "../../systems/audio";
 import { getDanneDifficultyProfile } from "../../systems/newGamePlus";
 import { snapPixel } from "../../systems/pixelPerfect";
+import { frameDeltaSeconds } from "../../systems/smoothMovement";
 import { Enemy } from "./Enemy";
 
 interface DanneLurkerOptions {
   waypoints: Position[];
   label?: string;
+  encounterMode?: "combat" | "foreshadow";
 }
 
 interface EgoBolt {
   sprite: Phaser.GameObjects.Sprite;
   glow: Phaser.GameObjects.Rectangle;
+  x: number;
+  y: number;
   vx: number;
   vy: number;
   expiresAt: number;
@@ -67,6 +71,7 @@ export class DanneLurker extends Enemy {
   private pausedAt: number | null = null;
   private readonly bolts: EgoBolt[] = [];
   private readonly boastText: Phaser.GameObjects.Text;
+  private readonly encounterMode: "combat" | "foreshadow";
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneLurkerOptions) {
     unlockCodexEntry("enemy-danne-boss");
@@ -83,6 +88,7 @@ export class DanneLurker extends Enemy {
       acceleration: 58 * difficulty.speedMultiplier,
       waypointTolerance: 4
     });
+    this.encounterMode = options.encounterMode ?? "combat";
     this.sprite.setOrigin(0.5, 0.82).setScale(0.72);
     const animKey = danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
@@ -115,8 +121,9 @@ export class DanneLurker extends Enemy {
       this.shiftAttackTimers(Math.max(0, timeMs - this.pausedAt));
       this.pausedAt = null;
     }
+    const canAttack = this.encounterMode === "combat";
     const distance = this.distanceTo(player);
-    const triggered = canPressure && distance <= 25 && timeMs >= this.nextPressureAt;
+    const triggered = canAttack && distance <= 25 && timeMs >= this.nextPressureAt;
     if (triggered) {
       this.nextPressureAt = timeMs + this.cooldown(5600);
       this.pressureUntil = timeMs + 1150;
@@ -130,9 +137,9 @@ export class DanneLurker extends Enemy {
       });
     }
     let egoBoltFired = false;
-    if (canPressure && this.egoBoltTelegraph) {
+    if (canAttack && this.egoBoltTelegraph) {
       egoBoltFired = this.updateEgoBoltTelegraph(timeMs);
-    } else if (canPressure && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt) {
+    } else if (canAttack && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt) {
       this.startEgoBoltTelegraph(timeMs, player);
     }
 
@@ -147,7 +154,7 @@ export class DanneLurker extends Enemy {
       retroAudio.danneBoast();
     }
 
-    const egoBoltHit = this.updateBolts(timeMs, deltaMs, player, canPressure);
+    const egoBoltHit = this.updateBolts(timeMs, deltaMs, player, canAttack);
 
     const active = timeMs < this.pressureUntil;
     this.cue.setVisible(active);
@@ -165,6 +172,7 @@ export class DanneLurker extends Enemy {
   }
 
   status(timeMs: number) {
+    if (this.encounterMode === "foreshadow") return "watching; safe preparation room";
     const slotReadout = `${this.bolts.length}/${FRUS_DANNE_EGO_BOLT_SLOT_COUNT} ego slots`;
     if (this.egoBoltTelegraph) {
       return `ego lock ${danneLurkerTelegraphRemainingMs(this.egoBoltTelegraph.resolvesAt, timeMs)}ms; ${slotReadout}`;
@@ -190,8 +198,12 @@ export class DanneLurker extends Enemy {
       x: this.position.x,
       y: this.position.y,
       spriteKey: this.spriteKey,
-      behavior: "lurks near workflow paths, boasts, and fires ego bolts",
-      defeatMethod: "Keep moving through human review; final defeat happens at the Buckram Gate.",
+      behavior: this.encounterMode === "foreshadow"
+        ? "watches from the perimeter and boasts; no contact damage or ego bolts"
+        : "lurks near workflow paths, boasts, and fires ego bolts",
+      defeatMethod: this.encounterMode === "foreshadow"
+        ? "Prepare in safety. DANN-E attacks in the archives."
+        : "Keep moving through human review; final defeat happens at the Buckram Gate.",
       status: `${this.status(timeMs)}; ${difficulty.label} tier`,
       telegraph
     };
@@ -316,6 +328,8 @@ export class DanneLurker extends Enemy {
     this.bolts.push({
       sprite: bolt,
       glow,
+      x: startX,
+      y: startY,
       vx,
       vy,
       expiresAt: this.scene.time.now + 2200,
@@ -332,13 +346,16 @@ export class DanneLurker extends Enemy {
   }
 
   private updateBolts(timeMs: number, deltaMs: number, player: Position, allowHit: boolean) {
-    const dt = Math.min(0.05, deltaMs / 1000);
+    const dt = frameDeltaSeconds(deltaMs);
     const footBox = new Phaser.Geom.Rectangle(player.x - 8, player.y - 4, 16, 9);
     let hit = false;
     for (let index = this.bolts.length - 1; index >= 0; index -= 1) {
       const bolt = this.bolts[index];
-      const x = snapPixel(bolt.sprite.x + bolt.vx * dt);
-      const y = snapPixel(bolt.sprite.y + bolt.vy * dt);
+      // Keep sub-pixel travel independent of display refresh; snap only the art.
+      bolt.x += bolt.vx * dt;
+      bolt.y += bolt.vy * dt;
+      const x = snapPixel(bolt.x);
+      const y = snapPixel(bolt.y);
       bolt.sprite.setPosition(x, y);
       bolt.glow.setPosition(x, y);
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));
