@@ -242,6 +242,8 @@ export class SilentReadScene extends Phaser.Scene {
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.danneLurker = new DanneLurker(this, 212, 72, {
+      speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
+        || this.inventory.active || this.reliability.active,
       waypoints: [
         { x: 212, y: 72 },
         { x: 152, y: 58 },

@@ -179,6 +179,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.toast = new FeedbackToast(this);
     this.danneLurker = new DanneLurker(this, 214, 70, {
+      speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
+        || this.inventory.active || this.reliability.active,
       waypoints: [
         { x: 214, y: 70 },
         { x: 154, y: 60 },

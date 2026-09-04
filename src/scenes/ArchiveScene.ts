@@ -483,6 +483,8 @@ export class ArchiveScene extends Phaser.Scene {
     this.toast = new FeedbackToast(this);
     this.player = new Player(this, 128, 184);
     this.danneLurker = new DanneLurker(this, 214, 74, {
+      speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
+        || this.inventory.active || this.reliability.active || Boolean(this.archiveKeyRewardCue?.active),
       waypoints: [
         { x: 214, y: 74 },
         { x: 142, y: 54 },
@@ -762,6 +764,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawAnnotationDraftingStations();
     this.drawAnnotationTableSlots();
     const elena = new HistorianNPC(this, "elena", 42, 72);
+    elena.label.setVisible(false);
     this.roomCleanups.push(() => elena.destroy());
     this.drawCompactSourceRoomTerminal();
 
@@ -1429,12 +1432,6 @@ export class ArchiveScene extends Phaser.Scene {
       this.track(this.add.image(this.researchTable.x - 20, this.researchTable.y - 3, "source-note").setDepth(72));
       this.track(this.add.image(this.researchTable.x + 17, this.researchTable.y - 4, "citation-stamp").setDepth(72));
     }
-    this.track(this.add.text(this.researchTable.x, this.researchTable.y + 14, "RESEARCH TABLE", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp,
-      backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(73));
     this.addSolid(96, 104, 64, 24);
   }
 
@@ -1641,7 +1638,7 @@ export class ArchiveScene extends Phaser.Scene {
     const documents = visibleArchiveSourceRoomDocuments(Boolean(gameState.sceneProgress.annotationDraftingComplete));
     for (const documentData of documents) {
       if (this.collected.has(documentData.id)) continue;
-      const document = new Manuscript(this, documentData.id, documentData.label, documentData.x, documentData.y);
+      const document = new Manuscript(this, documentData.id, documentData.label, documentData.x, documentData.y, false);
       this.roomCleanups.push(() => {
         if (document.container.active) document.container.destroy();
       });
@@ -2322,7 +2319,7 @@ export class ArchiveScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(241);
+    }).setOrigin(0.5).setDepth(241).setVisible(false);
     this.syncWallState();
     this.updateSourceNoteVerification();
     this.refreshSourceNoteRouteCue();
@@ -2613,7 +2610,7 @@ export class ArchiveScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(246));
+    }).setOrigin(0.5).setDepth(246).setVisible(false));
     if (this.sourceNoteStatus === "stamped") this.drawSourceNoteStampMark();
   }
 
@@ -3534,13 +3531,13 @@ export class ArchiveScene extends Phaser.Scene {
     this.track(this.add.ellipse(x + 1, y + 8, 34, 8, color(PALETTE.black), 0.48).setDepth(y - 4));
     this.track(this.add.rectangle(x, y, 42, 18, color(PALETTE.black)).setStrokeStyle(1, color(accent)).setDepth(y - 3));
     this.track(this.add.rectangle(x, y + 4, 30, 8, color(PALETTE.deepRuby)).setDepth(y - 2));
-    this.track(this.add.text(x, y - 8, label, {
+    this.track(this.add.text(x, y - 7, label, {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "6px",
       color: accent,
       align: "center",
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(y - 1));
+    }).setOrigin(0.5, 0).setDepth(y - 1));
   }
 
   private drawWallMap(x: number, y: number, label = "MAP") {

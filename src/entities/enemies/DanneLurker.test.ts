@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { EventEmitter } from "node:events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DANNE_LURKER_BOLT_SPEED, DANNE_LURKER_BOLT_TELEGRAPH_MS, DANNE_LURKER_TOOL_STUN_MS, DANNE_LURKER_RETURN_STUN_MS } from "../../game/danneLurkerBalance";
 import type { PlayerCombatReadout } from "../../game/types";
@@ -12,6 +13,10 @@ const { Visual } = vi.hoisted(() => {
     y = 0;
     visible = true;
     destroyed = false;
+    name = "";
+    text = "";
+    width = 0;
+    height = 0;
     setOrigin() { return this; }
     setScale() { return this; }
     setDepth() { return this; }
@@ -22,7 +27,9 @@ const { Visual } = vi.hoisted(() => {
     setColor() { return this; }
     clearTint() { return this; }
     setAlpha() { return this; }
-    setText() { return this; }
+    setText(text: string) { this.text = text; return this; }
+    setName(name: string) { this.name = name; return this; }
+    setSize(width: number, height: number) { this.width = width; this.height = height; return this; }
     play() { return this; }
     add() { return this; }
     setVisible(visible: boolean) { this.visible = visible; return this; }
@@ -34,6 +41,7 @@ const { Visual } = vi.hoisted(() => {
 
 vi.mock("phaser", () => ({
   default: {
+    Scenes: { Events: { POST_UPDATE: "postupdate", SHUTDOWN: "shutdown" } },
     Math: { RadToDeg: (radians: number) => radians * 180 / Math.PI },
     Geom: {
       Rectangle: class {
@@ -74,11 +82,14 @@ vi.mock("./Enemy", () => ({
   }
 }));
 
-function createEncounter(encounterMode?: "combat" | "foreshadow") {
+function createEncounter(encounterMode?: "combat" | "foreshadow", speechBlocked?: () => boolean) {
   const sprites: InstanceType<typeof Visual>[] = [];
+  const panels: InstanceType<typeof Visual>[] = [];
   const scene = {
     time: { now: 1 },
+    events: new EventEmitter(),
     add: {
+      container: () => { const panel = new Visual(); panels.push(panel); return panel; },
       text: () => new Visual(),
       rectangle: (x: number, y: number) => new Visual().setPosition(x, y),
       sprite: (x: number, y: number) => {
@@ -90,13 +101,64 @@ function createEncounter(encounterMode?: "combat" | "foreshadow") {
     tweens: { add: vi.fn() },
     anims: { exists: () => false }
   };
-  const lurker = new DanneLurker(scene as unknown as Phaser.Scene, 50, 50, { waypoints: [], encounterMode });
+  const lurker = new DanneLurker(scene as unknown as Phaser.Scene, 50, 50, { waypoints: [], encounterMode, speechBlocked });
   const update = (now: number, delta: number, player = { x: 50, y: 50 }, enabled = true, combat?: PlayerCombatReadout) => {
     scene.time.now = now;
-    return lurker.update(now, delta, player, enabled, combat);
+    const result = lurker.update(now, delta, player, enabled, combat);
+    scene.events.emit("postupdate");
+    return result;
   };
-  return { lurker, sprites, update };
+  return { lurker, sprites, update, scene, speech: panels[0] };
 }
+
+describe("DANN-E speech priority", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("yields to feedback created later in the same frame and resumes only while the line is current", () => {
+    let blocked = false;
+    const { update, scene, speech } = createEncounter("foreshadow", () => blocked);
+    update(201, 200, { x: 150, y: 170 });
+    // Move into boast range without covering the space beneath DANN-E.
+    update(217, 16, { x: 100, y: 40 });
+    expect(speech.visible).toBe(true);
+    blocked = true;
+    scene.events.emit("postupdate");
+    expect(speech.visible).toBe(false);
+    blocked = false;
+    scene.events.emit("postupdate");
+    expect(speech.visible).toBe(true);
+    scene.time.now = 2500;
+    scene.events.emit("postupdate");
+    expect(speech.visible).toBe(false);
+  });
+
+  it("suppresses boasts without disabling contact, targeting, or projectiles", () => {
+    const { update, sprites, speech } = createEncounter("combat", () => true);
+    expect(update(17, 16).triggered).toBe(true);
+    for (let now = 33; now < 4000; now += 16) update(now, 16, { x: 100, y: 100 });
+    expect(retroAudio.danneBoast).not.toHaveBeenCalled();
+    expect(retroAudio.egoBoltFire).toHaveBeenCalled();
+    expect(sprites.length).toBeGreaterThan(0);
+    expect(speech.visible).toBe(false);
+  });
+
+  it("hides speech during aiming, pauses, and room changes, and cleans up scene listeners", () => {
+    const { lurker, update, scene, speech } = createEncounter();
+    update(217, 216, { x: 100, y: 40 });
+    expect(speech.visible).toBe(true);
+    for (let now = 233; now <= 1817; now += 16) update(now, 16, { x: 100, y: 40 });
+    expect(lurker.readout(1817).telegraph).not.toBeNull();
+    expect(speech.visible).toBe(false);
+    update(1833, 16, { x: 100, y: 100 }, false);
+    expect(speech.visible).toBe(false);
+    lurker.enterRoom(1849);
+    expect(speech.visible).toBe(false);
+    scene.events.emit("shutdown");
+    expect(speech.destroyed).toBe(true);
+    expect(scene.events.listenerCount("postupdate")).toBe(0);
+    expect(() => lurker.destroy()).not.toThrow();
+  });
+});
 
 describe("DANN-E opening fairness and projectile movement", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -261,6 +323,13 @@ describe("DANN-E tool counterplay", () => {
     update(firedAt + 5000, 16, target, false, toolSwing());
     expect(sprites[0]).toMatchObject(before);
     expect(lurker.readout(firedAt + 5000).counterplay).toMatchObject({ toolCounters: 0, boltsReturned: 0 });
+  });
+
+  it("does not draw a speech panel over an in-flight projectile", () => {
+    const { update, firedAt, sprites, target, speech } = firedEncounter();
+    expect(sprites[0].destroyed).toBe(false);
+    update(firedAt + 16, 16, target);
+    expect(speech.visible).toBe(false);
   });
 
   it("clears old room shots and gives the new doorway a contact/shot grace period", () => {

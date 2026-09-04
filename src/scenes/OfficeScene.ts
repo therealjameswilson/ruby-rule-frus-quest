@@ -158,6 +158,8 @@ export class OfficeScene extends Phaser.Scene {
     this.juniorCompiler = new JuniorCompiler(this, 70, 122);
     this.danneLurker = new DanneLurker(this, 218, 78, {
       encounterMode: "foreshadow",
+      speechBlocked: () => this.toast.visible || this.prompt.visible || this.dialog.active
+        || this.choice.active || this.inventory.active || this.reliability.active,
       waypoints: [
         { x: 218, y: 78 },
         { x: 188, y: 58 },

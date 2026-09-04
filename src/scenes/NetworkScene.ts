@@ -195,6 +195,8 @@ export class NetworkScene extends Phaser.Scene {
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.toast = new FeedbackToast(this);
     this.danneLurker = new DanneLurker(this, 46, 66, {
+      speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
+        || this.inventory.active || this.reliability.active,
       waypoints: [
         { x: 38, y: 82 },
         { x: 218, y: 82 },
