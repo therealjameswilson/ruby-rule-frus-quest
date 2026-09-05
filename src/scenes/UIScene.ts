@@ -23,6 +23,7 @@ import { guideQuestBandObjective, officeQuestBandObjective } from "./openingQues
 import { questBandBossCue, questBandRiskLine } from "./questBandCue";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
+import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -247,8 +248,11 @@ export class UIScene extends Phaser.Scene {
 
   private compactObjective(activeSceneKey: string | null) {
     if (gameState.mode === "dialog") return getString("hud.readLine");
-    if (gameState.mode === "choice") return getString(gameState.currentChoice?.title === REFERRAL_MANIFEST_TITLE
-      ? "hud.reviewRoutes" : "hud.chooseAnswer");
+    if (gameState.mode === "choice") {
+      if (gameState.currentChoice?.title === REFERRAL_MANIFEST_TITLE) return getString("hud.reviewRoutes");
+      if (gameState.currentChoice?.title === PROOF_COMPARISON_TITLE) return getString("hud.compareProof");
+      return getString("hud.chooseAnswer");
+    }
     if (activeSceneKey === "OfficeScene") {
       return officeQuestBandObjective({
         juniorIntroduced: Boolean(gameState.sceneProgress.juniorCompilerIntroduced),

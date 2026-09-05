@@ -49,16 +49,15 @@ describe("physical Silent Read review", () => {
     expect(date.correctValue).toBe("conversation");
     const margin = silentReadDecision("editorial-ledger")!;
     const index = silentReadDecision("printer-copy")!;
-    const proof = silentReadDecision("typesetter-proof")!;
     expect(margin.correctValue).toBe("note_margin");
     expect(index.options[0].label).toBe("Berlin -> Document 18");
-    expect(proof.options[1].label).toBe("Secto 214; 'We may agree.'");
-    for (const decision of [bracket, classifiedSource, withheldDocument, date, margin, index, proof]) {
+    expect(silentReadDecision("typesetter-proof")).toBeUndefined();
+    for (const decision of [bracket, classifiedSource, withheldDocument, date, margin, index]) {
       expect(decision.sourceUrl).toBe(ABOUT_SERIES_SOURCE.url);
       expect(decision.options.filter((option) => option.value === decision.correctValue)).toHaveLength(1);
       expect(decision.failureMessage.length).toBeLessThanOrEqual(32);
     }
-    for (const decision of [margin, index, proof]) {
+    for (const decision of [margin, index]) {
       expect(decision.context).toMatch(/^Practice/);
       expect(decision.options).toHaveLength(2);
       expect(decision.question.length).toBeLessThan(48);

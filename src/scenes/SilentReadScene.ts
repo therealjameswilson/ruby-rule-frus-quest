@@ -36,6 +36,8 @@ import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { ChoicePrompt } from "../systems/verification";
+import { ProofComparisonBoard } from "../systems/proofComparisonBoard";
+import { proofMatchesOriginal, restoreProofRepairs } from "../game/proofComparison";
 import { saveGameNow } from "../systems/save";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
@@ -207,6 +209,7 @@ export class SilentReadScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private toast!: FeedbackToast;
   private reviewChoice!: ChoicePrompt;
+  private proofBoard!: ProofComparisonBoard;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
@@ -255,12 +258,13 @@ export class SilentReadScene extends Phaser.Scene {
     this.reliability = new ReliabilityHud(this);
     this.toast = new FeedbackToast(this);
     this.reviewChoice = new ChoicePrompt(this);
+    this.proofBoard = new ProofComparisonBoard(this);
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.danneLurker = new DanneLurker(this, 212, 72, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
-        || this.inventory.active || this.reliability.active || this.reviewChoice.active,
+        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active,
       waypoints: [
         { x: 212, y: 72 },
         { x: 152, y: 58 },
@@ -303,12 +307,13 @@ export class SilentReadScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
-    if (this.reviewChoice.active) {
+    if (this.reviewChoice.active || this.proofBoard.active) {
       this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
       this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
-      this.reviewChoice.updateInput();
+      if (this.proofBoard.active) this.proofBoard.updateInput();
+      else this.reviewChoice.updateInput();
       return;
     }
     if (input.menuJustPressed) this.inventory.toggle();
@@ -1046,10 +1051,14 @@ export class SilentReadScene extends Phaser.Scene {
       retroAudio.confirm();
       this.updatePhysicalVerification();
       // Placing a decision-bearing file opens its check, never answers or stamps it.
-      if (!silentReadDecision(activeFlag.id)) return;
+      if (!silentReadDecision(activeFlag.id) && activeFlag.id !== "typesetter-proof") return;
     }
 
     if (activeFlag.status === "routed") {
+      if (activeFlag.id === "typesetter-proof") {
+        this.compareTypesetProof(activeFlag, nearestStation);
+        return;
+      }
       const decision = silentReadDecision(activeFlag.id);
       if (decision) {
         this.interactionPrompt.update(0, null);
@@ -1091,6 +1100,24 @@ export class SilentReadScene extends Phaser.Scene {
     this.savePhysicalReviewProgress(flag);
     retroAudio.confirm();
     this.updatePhysicalVerification();
+  }
+
+  private compareTypesetProof(flag: PhysicalFlag, station: Workstation) {
+    if (!hasProcessItem("proof_lens")) {
+      this.toast.show("NEED PROOF LENS", this.player.position, "warn", PROOF_PLAY_BOUNDS);
+      return;
+    }
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.proofBoard.show(restoreProofRepairs(gameState.sceneProgress.silentReadProofRepairs), (repairs) => {
+      gameState.sceneProgress.silentReadProofRepairs = repairs;
+      saveGameNow();
+    }, (repairs) => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed" || !proofMatchesOriginal(repairs)) return;
+      gameState.sceneProgress.silentReadProofRepairs = repairs;
+      gameState.sceneProgress["silentReadDecision_typesetter-proof"] = 1;
+      this.verifyFlag(flag, station, "TEXT AND DESIGNATOR PRESERVED");
+    });
   }
 
   private applyFlagReward(flag: PhysicalFlag) {

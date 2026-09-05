@@ -206,18 +206,6 @@ const REVIEW_DECISIONS: Partial<Record<(typeof SILENT_READ_REVIEW_ITEMS)[number]
     correctValue: "document_number",
     successMessage: "INDEX REFERENCE REPAIRED",
     failureMessage: "INDEX BY DOCUMENT, NOT PAGE"
-  },
-  "typesetter-proof": {
-    sourceUrl: ABOUT_SERIES_SOURCE.url,
-    question: "Choose the faithful typeset proof.",
-    context: "Practice original: Secto 214; 'We may agree.'",
-    options: [
-      { key: "A", label: "214; 'We will agree.'", value: "altered_proof" },
-      { key: "B", label: "Secto 214; 'We may agree.'", value: "faithful_proof" }
-    ],
-    correctValue: "faithful_proof",
-    successMessage: "TEXT AND DESIGNATOR PRESERVED",
-    failureMessage: "KEEP SECTO AND ORIGINAL WORDING"
   }
 };
 
