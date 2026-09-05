@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { ABOUT_SERIES_HANDBOOK_PAGES, ABOUT_SERIES_SOURCE } from "../game/aboutSeries";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { CODEX_CATEGORIES, getCodexEntries, getCodexReadout, type CodexCategory, type CodexEntryReadout } from "../game/codex";
-import { gameState, setLatestMessage, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
+import { gameState, setLatestMessage, setSceneState, setVisibleEntities, setVisibleThreats, syncCompletionStatsPlayTime } from "../game/state";
 import { bindPointerPress, getInput, swallowNextInputFrame, tickInput } from "../input/InputState";
 import { wrapChoiceText } from "../systems/choiceLayout";
 import { saveGameNow } from "../systems/save";
@@ -347,6 +347,7 @@ export class CodexScene extends Phaser.Scene {
   private close() {
     setLatestMessage("Codex closed.");
     swallowNextInputFrame();
+    syncCompletionStatsPlayTime();
     if (this.previousState) Object.assign(gameState, this.previousState);
     if (this.returnScene && this.returnScene !== this.scene.key && this.scene.isPaused(this.returnScene)) {
       this.scene.resume(this.returnScene);

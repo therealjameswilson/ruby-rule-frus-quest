@@ -6,7 +6,7 @@ import {
   createLetterboxBar,
   ensureDanneUiSlices
 } from "../game/danneUiSlices";
-import { clearDialogState, gameState, setDialogState, setLatestMessage } from "../game/state";
+import { clearDialogState, setDialogState, setGameMode, setLatestMessage } from "../game/state";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -73,7 +73,7 @@ export function isCutsceneActive(scene: Phaser.Scene) {
 export async function enterCutscene(scene: Phaser.Scene) {
   const controller = controllerFor(scene) ?? makeController(scene);
   controller.container.setVisible(true);
-  gameState.mode = "dialog";
+  setGameMode("dialog");
   setLatestMessage("Cutscene mode entered.");
   await tweenTo(scene, [controller.topBar, controller.bottomBar], {
     y: (target: Phaser.GameObjects.GameObject) => target === controller.topBar ? 24 : GAME_HEIGHT - 24,

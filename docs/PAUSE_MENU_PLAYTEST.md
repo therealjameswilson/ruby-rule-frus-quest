@@ -68,6 +68,7 @@ the inspected compositor and in-frame renderer captures above are nonblank.
 
 This is a focused menu/playability pass, not a fresh whole-game completion or
 a physical-iPhone certification. The codex itself still needs a readability
-pass. Completion-time accounting still uses wall time, including menus;
-other legacy enemies need the same overlay-freeze audit as the NARA drones.
+pass. Completion-time accounting and a subsequent touch-resume issue are now
+addressed in [Pause Time and Resume](PAUSE_TIME_AND_RESUME.md); other legacy
+enemies need the same overlay-freeze audit as the NARA drones.
 No public deployment was performed.

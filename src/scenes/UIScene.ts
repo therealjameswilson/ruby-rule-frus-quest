@@ -295,7 +295,7 @@ export class UIScene extends Phaser.Scene {
   private showCounterAction() {
     return gameState.mode === "explore" && !gameState.nearestInteractable
       && isWeaponTool(gameState.equippedProcessItem) && hasProcessItem(gameState.equippedProcessItem)
-      && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene"].includes(gameState.currentScene);
+      && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "NaraStacksScene"].includes(gameState.currentScene);
   }
 
   private guideCounterTrainingActive() {

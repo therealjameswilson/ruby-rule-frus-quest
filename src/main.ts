@@ -13,6 +13,7 @@ import {
   getVolumeAssemblyReadout,
   isSecondVolumeRegionUnlocked,
   renderGameToText,
+  setCompletionStatsSuspended,
   setLatestMessage
 } from "./game/state";
 import {
@@ -26,6 +27,7 @@ import { installNativeAppShell, observeNativeAppState, type NativeAppState } fro
 import { retroAudio, type AudioDebugState } from "./systems/audio";
 import { getLanguage } from "./systems/i18n";
 import { getPauseMenuReadout } from "./systems/pauseMenu";
+import { installResumeInput } from "./input/resumeInput";
 import { applyIntegerZoom, computeDeviceIntegerZoom } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
 
@@ -472,12 +474,13 @@ function installTapToResumeOverlay(game: Phaser.Game) {
   let pausedSceneKey: string | null = null;
 
   const pauseForBackground = (reason: "visibility" | "pagehide") => {
-    saveGameNow(reason);
     const sceneKey = gameState.currentScene;
     if (sceneKey && sceneKey !== "BootScene" && sceneKey !== "TapToStartScene") {
+      setCompletionStatsSuspended(true);
       pausedSceneKey = sceneKey;
       if (game.scene.isActive(sceneKey)) game.scene.pause(sceneKey);
     }
+    saveGameNow(reason);
   };
 
   const showResumeOverlay = () => {
@@ -494,29 +497,13 @@ function installTapToResumeOverlay(game: Phaser.Game) {
     overlay.hidden = true;
     if (pausedSceneKey && game.scene.isPaused(pausedSceneKey)) game.scene.resume(pausedSceneKey);
     pausedSceneKey = null;
+    setCompletionStatsSuspended(false);
     swallowNextInputFrame();
     await retroAudio.unlock();
     refreshIntegerScale();
   };
 
-  bindDomPointerDown(overlay, (event) => {
-    void resumeFromOverlay(event);
-  });
-
-  overlay.addEventListener("click", (event) => {
-    if (overlay.hidden) return;
-    void resumeFromOverlay(event);
-  }, { capture: true });
-
-  window.addEventListener("keydown", (event) => {
-    if (overlay.hidden) return;
-    void resumeFromOverlay(event);
-  }, { capture: true });
-
-  window.addEventListener("pointerdown", (event) => {
-    if (overlay.hidden) return;
-    void resumeFromOverlay(event);
-  }, { capture: true });
+  installResumeInput(() => !overlay.hidden, (event) => { void resumeFromOverlay(event); });
 
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) {

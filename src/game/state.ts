@@ -586,6 +586,14 @@ function completionStatsNowMs() {
   return Date.now();
 }
 
+// Browser/native suspension is session state, not part of a saved run.
+let completionStatsSuspended = false;
+
+function completionPlayTimeRunning() {
+  return !completionStatsSuspended && isSaveableGameScene()
+    && (gameState.mode === "explore" || gameState.mode === "dialog" || gameState.mode === "choice");
+}
+
 function createInitialCompletionStats(): CompletionStatsState {
   return {
     runStartedAtMs: completionStatsNowMs(),
@@ -643,7 +651,7 @@ function normalizeCompletionStats(stats?: Partial<CompletionStatsState> | null):
 
 function currentCompletionPlayTimeMs(stats = gameState.completionStats) {
   const normalized = normalizeCompletionStats(stats);
-  if (normalized.completedAtMs !== null) return normalized.totalPlayTimeMs;
+  if (normalized.completedAtMs !== null || !completionPlayTimeRunning()) return normalized.totalPlayTimeMs;
   return normalized.totalPlayTimeMs + Math.max(0, completionStatsNowMs() - normalized.runStartedAtMs);
 }
 
@@ -818,6 +826,7 @@ export function resetGameState(options: { ngPlus?: boolean } = {}) {
 }
 
 export function setSceneState(sceneName: string, mode: GameMode, objective: string) {
+  syncCompletionStatsPlayTime();
   rememberVisitedRooms(gameState.roomTraversal?.visitedRoomIds ?? []);
   gameState.currentScene = sceneName;
   gameState.mode = mode;
@@ -1091,6 +1100,7 @@ export function unlockSecondVolumeRegion(reason = "Second FRUS volume unlocked")
 }
 
 export function setGameMode(mode: GameMode, objective?: string) {
+  syncCompletionStatsPlayTime();
   gameState.mode = mode;
   if (objective) gameState.objective = objective;
   refreshQuestWorkflowState();
@@ -1795,10 +1805,16 @@ export function syncCompletionStatsPlayTime() {
   gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
   if (gameState.completionStats.completedAtMs !== null) return gameState.completionStats.totalPlayTimeMs;
   const now = completionStatsNowMs();
-  const elapsedMs = Math.max(0, now - gameState.completionStats.runStartedAtMs);
+  const elapsedMs = completionPlayTimeRunning() ? Math.max(0, now - gameState.completionStats.runStartedAtMs) : 0;
   gameState.completionStats.totalPlayTimeMs += elapsedMs;
   gameState.completionStats.runStartedAtMs = now;
   return gameState.completionStats.totalPlayTimeMs;
+}
+
+export function setCompletionStatsSuspended(suspended: boolean) {
+  if (completionStatsSuspended === suspended) return;
+  syncCompletionStatsPlayTime();
+  completionStatsSuspended = suspended;
 }
 
 export function recordDanneVariantDefeated(variantId: DanneVariantDefeatId) {
@@ -2835,23 +2851,27 @@ export function seedProgressForScene(sceneName: string) {
 }
 
 export function setDialogState(speaker: string, text: string) {
+  syncCompletionStatsPlayTime();
   gameState.mode = "dialog";
   gameState.activeDialog = { speaker, text };
   gameState.currentChoice = null;
 }
 
 export function clearDialogState(nextMode: GameMode = "explore") {
+  syncCompletionStatsPlayTime();
   gameState.mode = nextMode;
   gameState.activeDialog = null;
 }
 
 export function setChoiceState(title: string, options: ChoiceOption[]) {
+  syncCompletionStatsPlayTime();
   gameState.mode = "choice";
   gameState.currentChoice = { title, options };
   gameState.activeDialog = null;
 }
 
 export function clearChoiceState(nextMode: GameMode = "explore") {
+  syncCompletionStatsPlayTime();
   gameState.mode = nextMode;
   gameState.currentChoice = null;
 }

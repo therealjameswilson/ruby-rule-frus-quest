@@ -13,7 +13,7 @@ import { hiddenFirstEditionBonusLabel } from "../game/secretReadingRoom";
 import {
   equipDanneItem, equipProcessItem, gameState, getAdventureSubscreenReadout,
   getDanneItemReadout, getProcessItemReadout, getRoomGraphReadout,
-  getVolumeAssemblyReadout, setLatestMessage
+  getVolumeAssemblyReadout, setGameMode, setLatestMessage
 } from "../game/state";
 import type { AdventureSubscreenReadout } from "../game/state";
 import { bindPointerPress, getInput, swallowNextInputFrame, updateInputCallbacks } from "../input/InputState";
@@ -97,7 +97,7 @@ export class InventoryOverlay {
   toggle() {
     if (this.active) { this.hide(); return; }
     this.previousMode = gameState.mode;
-    gameState.mode = "pause";
+    setGameMode("pause");
     const tools = this.tools();
     this.toolIndex = Math.max(0, tools.findIndex((item) => item.equipped));
     this.areaIndex = Math.max(0, getAdventureSubscreenReadout().dungeons.findIndex((dungeon) => dungeon.active));
@@ -109,7 +109,7 @@ export class InventoryOverlay {
   hide() {
     if (!this.active) return;
     this.container.setVisible(false);
-    if (this.previousMode) gameState.mode = this.previousMode;
+    if (this.previousMode) setGameMode(this.previousMode);
     this.previousMode = null;
     setPauseMenuReadout(null);
     swallowNextInputFrame();

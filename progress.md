@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Pause fairness and resume-gesture isolation (2026-09-05):
+  - Completion timing now checkpoints scene/mode changes, excludes menus/title/debug/final display and background/resume waiting, and counts dialogue/decisions plus playable binding. Codex return and background save/resume use the same clock. Existing accrued totals, finalized scores and save schema remain intact.
+  - Actual touch replay exposed English becoming Spanish when a resume tap fell onto the paused language row. Added an input-layer shield that stays through pointer-up and consumes compatibility events; keyboard resume suppresses held repeats. A cancelled gesture does not resume, and the next deliberate tap works normally.
+  - Earned-weapon NARA fixture verifies no swing when resuming over B and a real active swing on the next tap. Initial A probe correctly produced contextual interaction instead of attacking; fixed the misleading HUD hint to show the secondary counter button when no document is in range. All fourteen scene routes still render and return from map pause.
+  - 158 files / 1,007 tests and build pass (223 modules, 2,705.22 KB main JS, existing chunk warning). Before: pause/codex/background added approximately 1.2 seconds per 1.2-second sample. Final touch checks add zero in all stopped states, preserve language, and resume without an attack; Continue adds only 449 ms of new active time. Evidence and limitations: docs/PAUSE_TIME_AND_RESUME.md.
+  - Scope remains local, not deployed or newly completed end-to-end. Synthetic visibility events are verified; a real headed-tab hidden-state attempt timed out and is not a pass. Next: legacy enemy overlay freeze, codex readability, actual iPhone Safari, and full-run pacing/playability.
+
 - Readable adventure pause menu (2026-09-05):
   - Replaced the crowded all-in-one inventory with Tools / Map / Log / Settings. Native 8px text (6px room IDs), separate 44px targets, first-tap selection / second-tap equipment, full source pagination, chapter diagrams with lock crosses, and named pendants replace overlapping 4-5px prose. Existing item art, special cards, FRUS shelf, key state, settings and codex remain available.
   - Removed invisible touch-button interception during pause, hid the gameplay HUD while paused, and swallowed closing input. Shared sceneDefaultRoom now supplies the current map marker when an entry has no traversal object. Added transient pauseMenu QA readout; no save schema change.
