@@ -7,6 +7,9 @@ import {
   REFERRAL_TREATMENT_DOCKETS,
   REFERRAL_TREATMENT_LABELS,
   referralReviewObjective,
+  referralBatchPacketAfterRoute,
+  referralBatchDocketAfterRoute,
+  restoreReferralCarryState,
   routeReferralEquityPacket,
   routeReferralTreatmentDocket
 } from "./referralVaultReview";
@@ -16,14 +19,14 @@ describe("physical Referral Vault review", () => {
     for (const [step, packet] of REFERRAL_EQUITY_PACKETS.entries()) {
       const pickup = referralReviewObjective("equity", step, false);
       const carry = referralReviewObjective("equity", step, true);
-      expect(pickup).toBe(`${packet.order}/3 TAKE AT TRAY`);
+      expect(pickup).toBe("TAKE EQUITY BATCH");
       expect(carry).toBe(`${packet.order}/3 TO ${packet.agency}`);
       const retry = routeReferralEquityPacket(step, packet.id, packet.agency === "CIA" ? "DOD" : "CIA");
-      expect(referralReviewObjective("equity", retry.nextStep, false)).toBe(pickup);
+      expect(referralReviewObjective("equity", retry.nextStep, true)).toBe(carry);
       expect(Math.max(pickup.length, carry.length)).toBeLessThanOrEqual(20);
     }
     for (const [step, docket] of REFERRAL_TREATMENT_DOCKETS.entries()) {
-      expect(referralReviewObjective("treatment", step, false)).toBe(`${docket.order}/3 TAKE AT TRAY`);
+      expect(referralReviewObjective("treatment", step, false)).toBe("TAKE REVIEW BATCH");
       const carry = referralReviewObjective("treatment", step, true);
       expect(carry).toContain(REFERRAL_TREATMENT_LABELS[docket.station]);
       expect(carry.length).toBeLessThanOrEqual(20);
@@ -51,12 +54,13 @@ describe("physical Referral Vault review", () => {
     expect(step).toBe(3);
   });
 
-  it("returns a file routed to the wrong equity without advancing", () => {
+  it("keeps a file routed to the wrong equity in hand without advancing", () => {
     const result = routeReferralEquityPacket(0, "intelligence_annex", "DOD");
     expect(result.ok).toBe(false);
     expect(result.nextStep).toBe(0);
     expect(result.complete).toBe(false);
     expect(result.message).toContain("CIA equity desk");
+    expect(result.message).toContain("remains in hand");
   });
 
   it("bundles seven visible-treatment checks into three physical dockets", () => {
@@ -105,5 +109,57 @@ describe("physical Referral Vault review", () => {
       treatmentStep: 3,
       complete: true
     });
+  });
+
+  it("hands off every next equity file and treatment docket, with no extra tray trip", () => {
+    for (const [step, packet] of REFERRAL_EQUITY_PACKETS.entries()) {
+      const correct = routeReferralEquityPacket(step, packet.id, packet.agency);
+      expect(referralBatchPacketAfterRoute(correct)).toEqual(REFERRAL_EQUITY_PACKETS[step + 1] ?? null);
+      const wrong = routeReferralEquityPacket(step, packet.id, packet.agency === "CIA" ? "DOD" : "CIA");
+      expect(referralBatchPacketAfterRoute(wrong)).toEqual(packet);
+    }
+    for (const [step, docket] of REFERRAL_TREATMENT_DOCKETS.entries()) {
+      const correct = routeReferralTreatmentDocket(step, docket.id, docket.station);
+      expect(referralBatchDocketAfterRoute(correct)).toEqual(REFERRAL_TREATMENT_DOCKETS[step + 1] ?? null);
+      const wrong = routeReferralTreatmentDocket(step, docket.id, docket.station === "permission_desk" ? "bracket_press" : "permission_desk");
+      expect(referralBatchDocketAfterRoute(wrong)).toEqual(docket);
+      expect(wrong.message).toContain("remains in hand");
+    }
+  });
+
+  it.each([3, 4, -1, 0.5, NaN, Infinity])("does not award another filing for invalid or finished step %s", (step) => {
+    const equity = routeReferralEquityPacket(step, "white_house_minutes", "NSC");
+    const treatment = routeReferralTreatmentDocket(step, "visible_excision", "bracket_press");
+    expect(equity.ok).toBe(false);
+    expect(treatment.ok).toBe(false);
+    expect(equity.complete).toBe(false);
+    expect(treatment.complete).toBe(false);
+    expect(referralBatchPacketAfterRoute(equity)).toBeNull();
+    expect(referralBatchDocketAfterRoute(treatment)).toBeNull();
+  });
+
+  it("does not advance out-of-order files", () => {
+    expect(routeReferralEquityPacket(0, "white_house_minutes", "NSC")).toMatchObject({ ok: false, nextStep: 0 });
+    expect(routeReferralTreatmentDocket(0, "visible_excision", "bracket_press")).toMatchObject({ ok: false, nextStep: 0 });
+  });
+
+  it("restores only the current stage's carried object and readable label", () => {
+    expect(restoreReferralCarryState({referralEquityRouteStep: 1, referralEquityPacketCarried: 2})).toMatchObject({
+      equityPacket: REFERRAL_EQUITY_PACKETS[1], manifestCarried: false, treatmentDocket: null, heldItem: "Equity Batch: BASE"
+    });
+    expect(restoreReferralCarryState({referralEquityRouteComplete: 1, referralManifestCarried: 1})).toMatchObject({
+      equityPacket: null, manifestCarried: true, treatmentDocket: null, heldItem: "StateChat Draft Manifest"
+    });
+    expect(restoreReferralCarryState({foreignGovernmentPermissionComplete: 1, referralTreatmentDocketCarried: 2})).toMatchObject({
+      equityPacket: null, manifestCarried: false, treatmentDocket: REFERRAL_TREATMENT_DOCKETS[1], heldItem: "Review Batch: APPEAL"
+    });
+  });
+
+  it("keeps old uncarried saves at the tray and discards stale cross-stage carry flags", () => {
+    expect(restoreReferralCarryState({referralEquityRouteStep: 1}).heldItem).toBeNull();
+    expect(restoreReferralCarryState({referralEquityRouteStep: 1, referralEquityPacketCarried: 1, referralManifestCarried: 1, referralTreatmentDocketCarried: 1}).heldItem).toBeNull();
+    const complete = {referralPhysicalReviewComplete: 1, referralEquityPacketCarried: 3, referralManifestCarried: 1, referralTreatmentDocketCarried: 3};
+    expect(restoreReferralCarryState(complete)).toEqual({equityPacket: null, manifestCarried: false, treatmentDocket: null, heldItem: null});
+    expect(restoreReferralCarryState({referralEquityPacketCarried: 1}, true).heldItem).toBeNull();
   });
 });

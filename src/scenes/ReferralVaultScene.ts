@@ -31,6 +31,7 @@ import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
+import { saveGameNow } from "../systems/save";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
@@ -50,13 +51,18 @@ import {
   REFERRAL_EQUITY_PACKETS,
   REFERRAL_TREATMENT_DOCKETS,
   REFERRAL_TREATMENT_LABELS,
+  referralBatchPacketAfterRoute,
+  referralBatchDocketAfterRoute,
+  restoreReferralCarryState,
   referralReviewObjective,
   routeReferralEquityPacket,
   routeReferralTreatmentDocket
 } from "../game/referralVaultReview";
 import type {
   ReferralAgency,
+  ReferralEquityPacket,
   ReferralEquityPacketId,
+  ReferralTreatmentDocket,
   ReferralTreatmentDocketId,
   ReferralTreatmentStationId
 } from "../game/referralVaultReview";
@@ -158,6 +164,13 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   create() {
+    const restoringReferralScene = gameState.currentScene === "ReferralVaultScene";
+    const restoredRoomId: ReferralRoomId = restoringReferralScene
+      && gameState.roomTraversal?.currentRoomId === "R2" ? "R2" : "R1";
+    const restoredPosition = restoringReferralScene ? { ...gameState.player } : null;
+    const restoredVisitedRoomIds = restoringReferralScene
+      ? gameState.roomTraversal?.visitedRoomIds.filter((roomId): roomId is ReferralRoomId => roomId in REFERRAL_ROOMS) ?? []
+      : [];
     setSceneState("ReferralVaultScene", "explore", "Referral Vault: earn the Concurrence Slip.");
     retroAudio.startMusic("ReferralVaultScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
@@ -190,9 +203,11 @@ export class ReferralVaultScene extends Phaser.Scene {
       ]
     });
     this.restoreReferralProgress();
-    this.enterRoom("R1", { x: 128, y: 192 }, false);
+    this.visitedRoomIds = new Set(restoredVisitedRoomIds);
+    this.restoreHeldBatchState(restoredRoomId);
+    this.enterRoom(restoredRoomId, restoredPosition ?? { x: 128, y: 192 }, false);
     if (!this.referralGateOpen) {
-      setLatestMessage("Route each file to its agency equity. StateChat drafts; a human confirms.");
+      setLatestMessage("Carry the equity batch between desks. StateChat drafts; a human confirms.");
     }
   }
 
@@ -226,6 +241,17 @@ export class ReferralVaultScene extends Phaser.Scene {
       gameState.sceneProgress.referralTreatmentDocketCarried = 0;
     }
     if (this.referralGateOpen) this.syncLegacyReferralProgress(REFERRAL_TREATMENT_DOCKETS.length);
+  }
+
+  private restoreHeldBatchState(roomId: ReferralRoomId) {
+    const carry = restoreReferralCarryState({
+      ...gameState.sceneProgress,
+      referralGateOpen: this.referralGateOpen ? 1 : 0
+    }, roomId === "R2");
+    gameState.sceneProgress.referralEquityPacketCarried = carry.equityPacket?.order ?? 0;
+    gameState.sceneProgress.referralManifestCarried = carry.manifestCarried ? 1 : 0;
+    gameState.sceneProgress.referralTreatmentDocketCarried = carry.treatmentDocket?.order ?? 0;
+    setHeldItem(carry.heldItem);
   }
 
   update(_: number, delta: number) {
@@ -298,6 +324,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.syncRoomTraversalState();
       this.updateReferralMinimap();
       this.exitCooldownUntil = this.time.now + 280;
+      saveGameNow();
     };
 
     if (!wipe) {
@@ -981,14 +1008,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.concurrenceSlipCollected = true;
     addProcessItem("concurrence_slip");
     setLatestMessage("Concurrence logged after human review. Carry the slip east to proofing.");
-    setObjective(this.referralObjective());
-    this.concurrenceSlipIcon?.setTint(color(PALETTE.goldStamp));
-    this.clearConcurrenceSlipRouteCue();
+    this.redrawReferralRoom();
     addSnesRewardBurst(this, 128, 114, "concurrence-slip", "Concurrence Slip", (object) => this.track(object));
     retroAudio.stamp();
-    this.syncRoomTraversalState();
-    this.updateReferralMinimap();
     this.toast.show("CONCURRENCE SLIP", this.player.position, "info");
+    saveGameNow();
   }
 
   private refreshConcurrenceSlipRouteCue() {
@@ -1170,17 +1194,15 @@ export class ReferralVaultScene extends Phaser.Scene {
   private referralPromptText(target: Interactable) {
     const stage = this.referralReviewStage();
     if (stage === "equity") {
-      const packet = getReferralEquityPacket(this.equityStep);
       return this.carriedEquityPacket()
         ? `FILE ${target.id.replace("referral-agency-", "")}`
-        : `TAKE ${packet.shortLabel}`;
+        : "TAKE EQUITY BATCH";
     }
     if (stage === "manifest") return this.manifestCarried() ? "HUMAN REVIEW" : "TAKE MANIFEST";
     if (stage === "treatment") {
-      const docket = getReferralTreatmentDocket(this.treatmentStep);
       return this.carriedTreatmentDocket()
         ? `FILE ${this.treatmentStationShortLabel(target.id.replace("referral-treatment-", "") as ReferralTreatmentStationId)}`
-        : `TAKE ${docket.shortLabel}`;
+        : "TAKE REVIEW BATCH";
     }
     return "";
   }
@@ -1294,44 +1316,55 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   private pickUpEquityPacket() {
     const packet = getReferralEquityPacket(this.equityStep);
+    this.carryEquityPacket(packet);
+    retroAudio.confirm();
+    this.toast.show("EQUITY BATCH", this.player.position, "info");
+    setLatestMessage(`${packet.label}: route to ${packet.agency}. The next file stays with you.`);
+    setObjective(this.referralObjective());
+    this.syncReferralVisibleEntities();
+    saveGameNow();
+  }
+
+  private carryEquityPacket(packet: ReferralEquityPacket) {
     gameState.sceneProgress.referralEquityPacketCarried = packet.order;
-    setHeldItem(`${packet.label} Referral File`);
+    setHeldItem(`Equity Batch: ${packet.shortLabel}`);
     if (this.equityPacketWorldIcon?.active) this.equityPacketWorldIcon.destroy();
     this.equityPacketWorldIcon = undefined;
     this.createEquityPacketHeldIcon(packet.id);
-    retroAudio.confirm();
-    setLatestMessage(`${packet.label}: route to the ${packet.agency} equity desk.`);
-    setObjective(this.referralObjective());
-    this.syncReferralVisibleEntities();
   }
 
   private routeEquityPacket(agency: ReferralAgency) {
     const packet = this.carriedEquityPacket();
     if (!packet) return;
     const result = routeReferralEquityPacket(this.equityStep, packet.id, agency);
-    gameState.sceneProgress.referralEquityPacketCarried = 0;
-    setHeldItem(null);
-    if (this.equityPacketHeldIcon?.active) this.equityPacketHeldIcon.destroy();
-    this.equityPacketHeldIcon = undefined;
     if (!result.ok) {
-      adjustReliability(-2, `${result.packet.label} returned from the wrong equity desk`);
+      adjustReliability(-2, `${result.packet.label} caught at the wrong equity desk`);
       retroAudio.warning();
       this.toast.show("WRONG EQUITY", this.player.position, "warn");
       setLatestMessage(result.message);
       setObjective(this.referralObjective());
-      this.drawEquityPacketAtTray();
       this.syncReferralVisibleEntities();
       this.reliability.update();
+      saveGameNow();
       return;
     }
 
+    gameState.sceneProgress.referralEquityPacketCarried = 0;
+    setHeldItem(null);
     this.equityStep = result.nextStep;
     gameState.sceneProgress.referralEquityRouteStep = result.nextStep;
     adjustReliability(3, `${result.packet.label} matched to ${result.packet.agency}`);
     retroAudio.stamp();
     setLatestMessage(result.message);
     if (result.complete) gameState.sceneProgress.referralEquityRouteComplete = 1;
+    const nextPacket = referralBatchPacketAfterRoute(result);
+    if (nextPacket) {
+      this.carryEquityPacket(nextPacket);
+      this.toast.show(`NEXT: ${nextPacket.shortLabel} > ${nextPacket.agency}`, this.player.position, "info");
+      setLatestMessage(`${result.message} Next: ${nextPacket.label} goes to ${nextPacket.agency}.`);
+    } else this.toast.show("EQUITIES ROUTED", this.player.position, "info");
     this.redrawReferralRoom();
+    saveGameNow();
   }
 
   private pickUpManifest() {
@@ -1344,6 +1377,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     setLatestMessage("StateChat drafted the batch. Carry it to the Human Concurrence Desk.");
     setObjective(this.referralObjective());
     this.syncReferralVisibleEntities();
+    saveGameNow();
   }
 
   private fileManifestAtHumanDesk() {
@@ -1360,41 +1394,46 @@ export class ReferralVaultScene extends Phaser.Scene {
     retroAudio.stamp();
     setLatestMessage("Human review confirmed the manifest. Visible treatment comes next.");
     this.redrawReferralRoom();
+    saveGameNow();
   }
 
   private pickUpTreatmentDocket() {
     const docket = getReferralTreatmentDocket(this.treatmentStep);
+    this.carryTreatmentDocket(docket);
+    retroAudio.confirm();
+    this.toast.show("REVIEW BATCH", this.player.position, "info");
+    setLatestMessage(`${docket.label}: file at the ${docket.stationLabel}. The next docket stays with you.`);
+    setObjective(this.referralObjective());
+    this.syncReferralVisibleEntities();
+    saveGameNow();
+  }
+
+  private carryTreatmentDocket(docket: ReferralTreatmentDocket) {
     gameState.sceneProgress.referralTreatmentDocketCarried = docket.order;
-    setHeldItem(docket.label);
+    setHeldItem(`Review Batch: ${docket.shortLabel}`);
     if (this.treatmentDocketWorldIcon?.active) this.treatmentDocketWorldIcon.destroy();
     this.treatmentDocketWorldIcon = undefined;
     this.createTreatmentDocketHeldIcon(docket.id);
-    retroAudio.confirm();
-    setLatestMessage(`${docket.label}: file at the ${docket.stationLabel}.`);
-    setObjective(this.referralObjective());
-    this.syncReferralVisibleEntities();
   }
 
   private routeTreatmentDocket(station: ReferralTreatmentStationId) {
     const docket = this.carriedTreatmentDocket();
     if (!docket) return;
     const result = routeReferralTreatmentDocket(this.treatmentStep, docket.id, station);
-    gameState.sceneProgress.referralTreatmentDocketCarried = 0;
-    setHeldItem(null);
-    if (this.treatmentDocketHeldIcon?.active) this.treatmentDocketHeldIcon.destroy();
-    this.treatmentDocketHeldIcon = undefined;
     if (!result.ok) {
-      adjustReliability(-2, `${result.docket.label} returned from the wrong review station`);
+      adjustReliability(-2, `${result.docket.label} caught at the wrong review station`);
       retroAudio.warning();
       this.toast.show("WRONG STATION", this.player.position, "warn");
       setLatestMessage(result.message);
       setObjective(this.referralObjective());
-      this.drawTreatmentDocketAtTray();
       this.syncReferralVisibleEntities();
       this.reliability.update();
+      saveGameNow();
       return;
     }
 
+    gameState.sceneProgress.referralTreatmentDocketCarried = 0;
+    setHeldItem(null);
     this.treatmentStep = result.nextStep;
     gameState.sceneProgress.referralTreatmentStep = result.nextStep;
     this.syncLegacyReferralProgress(result.nextStep);
@@ -1405,7 +1444,14 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.finishReferralReview();
       return;
     }
+    const nextDocket = referralBatchDocketAfterRoute(result);
+    if (nextDocket) {
+      this.carryTreatmentDocket(nextDocket);
+      this.toast.show(`NEXT: ${REFERRAL_TREATMENT_LABELS[nextDocket.station]}`, this.player.position, "info");
+      setLatestMessage(`${result.message} Next: ${nextDocket.label} goes to the ${nextDocket.stationLabel}.`);
+    }
     this.redrawReferralRoom();
+    saveGameNow();
   }
 
   private awardTreatmentDocket(docketId: ReferralTreatmentDocketId) {
@@ -1456,7 +1502,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.toast.show("REFERRAL GATE OPEN", this.player.position, "info");
     retroAudio.stamp();
     setLatestMessage("Visible treatment complete. The reader sees every withholding decision.");
-    this.redrawReferralRoom({ x: 128, y: 178 });
+    this.redrawReferralRoom();
+    saveGameNow();
   }
 
   private referralObjective() {

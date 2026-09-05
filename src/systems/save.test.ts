@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createGameSaveData, gameState, resetGameState, SAVE_SCHEMA_VERSION, setPlayerProfile, setSceneState } from "../game/state";
 import { DEFAULT_PROCESS_ROLE, PROCESS_ROLES, resolveProcessRole } from "../game/constants";
 import { getCharacterKeyForProcessRole } from "../art/characters";
+import { restoreReferralCarryState } from "../game/referralVaultReview";
 import { getSavedGameSummary, loadSavedGame, readSavedGame, saveGameNow } from "./save";
 
 function createStorage() {
@@ -68,6 +69,29 @@ describe("browser save storage", () => {
     resetGameState();
     expect(loadSavedGame()).toBe("ArchiveScene");
     expect(gameState.heldItem).toBe("Source Note 47");
+  });
+
+  it.each([
+    { room: "R1", progress: { referralEquityRouteStep: 1, referralEquityPacketCarried: 2 }, held: "Equity Batch: BASE" },
+    { room: "R1", progress: { referralEquityRouteComplete: 1, referralManifestCarried: 1 }, held: "StateChat Draft Manifest" },
+    { room: "R1", progress: { foreignGovernmentPermissionComplete: 1, referralTreatmentDocketCarried: 2 }, held: "Review Batch: APPEAL" },
+    { room: "R2", progress: { referralPhysicalReviewComplete: 1 }, held: null }
+  ])("preserves Referral $held in $room through save and Continue", ({ room, progress, held }) => {
+    setSceneState("ReferralVaultScene", "explore", "REFERRAL VAULT");
+    Object.assign(gameState.sceneProgress, progress);
+    gameState.heldItem = held;
+    gameState.player = { x: 62, y: 168 };
+    gameState.playerFacing = "west";
+    gameState.roomTraversal = { currentRoomId: room, roomTitle: "Referral Vault", visitedRoomIds: ["R1", room], exits: { east: "E1" } };
+    expect(saveGameNow()).toBe(true);
+    resetGameState();
+    expect(loadSavedGame()).toBe("ReferralVaultScene");
+    expect(gameState.player).toEqual({ x: 62, y: 168 });
+    expect(gameState.playerFacing).toBe("west");
+    expect(gameState.roomTraversal?.currentRoomId).toBe(room);
+    expect(gameState.sceneProgress).toMatchObject(progress);
+    expect(gameState.heldItem).toBe(held);
+    expect(restoreReferralCarryState(gameState.sceneProgress, room === "R2").heldItem).toBe(held);
   });
 
   it.each([0, 1])("still accepts legacy schema %s", (version) => {

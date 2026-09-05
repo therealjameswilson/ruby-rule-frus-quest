@@ -64,6 +64,9 @@ export interface ReferralPhysicalProgress {
   foreignGovernmentPermissionComplete?: number;
   withholdingAppealComplete?: number;
   referralGateOpen?: number;
+  referralEquityPacketCarried?: number;
+  referralManifestCarried?: number;
+  referralTreatmentDocketCarried?: number;
 }
 
 export interface DerivedReferralPhysicalProgress {
@@ -153,23 +156,23 @@ export function referralReviewObjective(
   if (stage === "manifest") return carried ? "DRAFT TO HUMAN DESK" : "TAKE DRAFT AT CHAT";
   if (stage === "equity") {
     const packet = getReferralEquityPacket(step);
-    return carried ? `${packet.order}/3 TO ${packet.agency}` : `${packet.order}/3 TAKE AT TRAY`;
+    return carried ? `${packet.order}/3 TO ${packet.agency}` : "TAKE EQUITY BATCH";
   }
   const docket = getReferralTreatmentDocket(step);
   return carried
     ? `${docket.order}/3 TO ${REFERRAL_TREATMENT_LABELS[docket.station]}`
-    : `${docket.order}/3 TAKE AT TRAY`;
+    : "TAKE REVIEW BATCH";
 }
 
 export function getReferralEquityPacket(step: number) {
   return REFERRAL_EQUITY_PACKETS[
-    Math.max(0, Math.min(REFERRAL_EQUITY_PACKETS.length - 1, Math.floor(step)))
+    Math.max(0, Math.min(REFERRAL_EQUITY_PACKETS.length - 1, Number.isFinite(step) ? Math.floor(step) : 0))
   ];
 }
 
 export function getReferralTreatmentDocket(step: number) {
   return REFERRAL_TREATMENT_DOCKETS[
-    Math.max(0, Math.min(REFERRAL_TREATMENT_DOCKETS.length - 1, Math.floor(step)))
+    Math.max(0, Math.min(REFERRAL_TREATMENT_DOCKETS.length - 1, Number.isFinite(step) ? Math.floor(step) : 0))
   ];
 }
 
@@ -186,7 +189,8 @@ export function routeReferralEquityPacket(
 ): ReferralEquityRouteResult {
   const expected = getReferralEquityPacket(step);
   const packet = REFERRAL_EQUITY_PACKETS.find((candidate) => candidate.id === packetId) ?? expected;
-  const ok = packet.id === expected.id && agency === packet.agency;
+  const pending = Number.isInteger(step) && step >= 0 && step < REFERRAL_EQUITY_PACKETS.length;
+  const ok = pending && packet.id === expected.id && agency === packet.agency;
   const nextStep = ok ? step + 1 : step;
   return {
     ok,
@@ -194,11 +198,11 @@ export function routeReferralEquityPacket(
     agency,
     nextStep,
     complete: ok && nextStep >= REFERRAL_EQUITY_PACKETS.length,
-    message: ok
+    message: !pending ? "No pending equity file to route." : ok
       ? `${packet.label} routed to the ${agency} equity desk.`
       : packet.id !== expected.id
         ? `${expected.label} is the next file in the referral tray.`
-        : `${packet.label} belongs at the ${packet.agency} equity desk. File returned to the tray.`
+        : `${packet.label} belongs at the ${packet.agency} equity desk. File remains in hand.`
   };
 }
 
@@ -209,7 +213,8 @@ export function routeReferralTreatmentDocket(
 ): ReferralTreatmentRouteResult {
   const expected = getReferralTreatmentDocket(step);
   const docket = REFERRAL_TREATMENT_DOCKETS.find((candidate) => candidate.id === docketId) ?? expected;
-  const ok = docket.id === expected.id && station === docket.station;
+  const pending = Number.isInteger(step) && step >= 0 && step < REFERRAL_TREATMENT_DOCKETS.length;
+  const ok = pending && docket.id === expected.id && station === docket.station;
   const nextStep = ok ? step + 1 : step;
   return {
     ok,
@@ -217,11 +222,42 @@ export function routeReferralTreatmentDocket(
     station,
     nextStep,
     complete: ok && nextStep >= REFERRAL_TREATMENT_DOCKETS.length,
-    message: ok
+    message: !pending ? "No pending treatment docket to file." : ok
       ? docket.successMessage
       : docket.id !== expected.id
         ? `${expected.label} is the next visible-treatment docket.`
-        : `${docket.label} belongs at the ${docket.stationLabel}. Docket returned to the tray.`
+        : `${docket.label} belongs at the ${docket.stationLabel}. Docket remains in hand.`
+  };
+}
+
+export function referralBatchPacketAfterRoute(result: ReferralEquityRouteResult) {
+  if (result.complete) return null;
+  return REFERRAL_EQUITY_PACKETS[result.nextStep] ?? null;
+}
+
+export function referralBatchDocketAfterRoute(result: ReferralTreatmentRouteResult) {
+  if (result.complete) return null;
+  return REFERRAL_TREATMENT_DOCKETS[result.nextStep] ?? null;
+}
+
+export function restoreReferralCarryState(progress: ReferralPhysicalProgress, inRewardRoom = false) {
+  const restored = deriveReferralPhysicalProgress(progress);
+  const equity = !inRewardRoom && !restored.complete && restored.equityStep < REFERRAL_EQUITY_PACKETS.length
+    ? REFERRAL_EQUITY_PACKETS[restored.equityStep] : null;
+  const equityPacket = equity?.order === progress.referralEquityPacketCarried ? equity : null;
+  const manifestCarried = !inRewardRoom && !restored.complete
+    && restored.equityStep === REFERRAL_EQUITY_PACKETS.length && !restored.manifestReviewed
+    && Boolean(progress.referralManifestCarried);
+  const treatment = !inRewardRoom && !restored.complete && restored.manifestReviewed
+    ? REFERRAL_TREATMENT_DOCKETS[restored.treatmentStep] : null;
+  const treatmentDocket = treatment?.order === progress.referralTreatmentDocketCarried ? treatment : null;
+  return {
+    equityPacket,
+    manifestCarried,
+    treatmentDocket,
+    heldItem: equityPacket ? `Equity Batch: ${equityPacket.shortLabel}`
+      : manifestCarried ? "StateChat Draft Manifest"
+        : treatmentDocket ? `Review Batch: ${treatmentDocket.shortLabel}` : null
   };
 }
 
