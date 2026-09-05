@@ -45,6 +45,30 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(archiveSceneSource).toContain("NO REPO CLEARED - ANNOTATE");
   });
 
+  it("checks actual swings before the source-workflow early return", () => {
+    const update = archiveSceneSource.slice(archiveSceneSource.indexOf("  update("), archiveSceneSource.indexOf("private restoreSourceNoteProgress"));
+    expect(update.indexOf("this.updateRepoWallToolHit()")).toBeGreaterThan(update.indexOf("tryEquippedToolSwing(this.player)"));
+    expect(update.indexOf("this.updateRepoWallToolHit()")).toBeLessThan(update.indexOf('if (this.currentRoomId === "A1"'));
+    const hit = methodSource("updateRepoWallToolHit", "wallReadyForProcess");
+    expect(hit).toContain("this.player.activeActionHitbox");
+    expect(hit).toContain("this.player.combatReadout.weapon.tool");
+    expect(hit).toContain("this.lastRepoWallSwing === this.player.actionId");
+    expect(hit).toContain("this.lastRepoWallSwing = this.player.actionId");
+    expect(hit).toContain("wall.isCleared");
+    expect(hit).toContain("this.clearEnemy(definition, wall");
+  });
+
+  it("keeps interaction accessible without bypassing the equipped swing or active hit", () => {
+    const action = methodSource("handleSourceNoteAction", "sourceNoteWallNeedsStamp");
+    expect(action).toContain("this.startRepoWallSwing(wall)");
+    expect(action).not.toContain("this.player.startAction");
+    expect(action).not.toContain("this.handleEnemyInteract");
+    const start = methodSource("startRepoWallSwing", "updateRepoWallToolHit");
+    expect(start).toContain("this.player.faceTowards(wall.position)");
+    expect(start).toContain("tryEquippedToolSwing(this.player)");
+    expect(start).not.toContain("clearEnemy");
+  });
+
   it("saves discoveries immediately and keeps the packet in the room until filed", () => {
     const collect = methodSource("collectAnnotationDraftingNote", "fileAnnotationDraftingNotes");
     expect(collect.includes("sceneProgress.annotationGatheredMask = result.gatheredMask")).toBe(true);

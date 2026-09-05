@@ -1,8 +1,26 @@
 import { getAnnotationDraftingStation } from "./annotationDrafting";
 import { getSourceNoteProvenanceStation } from "./sourceNoteProvenance";
 import { annotationPacketObjective, readAnnotationPacket } from "./annotationPacket";
+import type { ProcessItemId } from "./constants";
 
 export type SourceNoteStatus = "inactive" | "carried" | "routed" | "verified" | "stamped";
+
+type SwingBounds = { x: number; y: number; width: number; height: number };
+
+export function archiveRepoWallSwing(input: {
+  sourceNoteStatus: SourceNoteStatus;
+  hasCitationStamp: boolean;
+  tool: ProcessItemId | null;
+  hitbox: SwingBounds | null;
+  wallBounds: SwingBounds;
+}): "miss" | "review-required" | "stamp-required" | "clear" {
+  const { hitbox: hit, wallBounds: wall } = input;
+  if (!hit || hit.x + hit.width < wall.x || hit.x > wall.x + wall.width
+    || hit.y + hit.height < wall.y || hit.y > wall.y + wall.height) return "miss";
+  if (input.sourceNoteStatus !== "stamped") return "review-required";
+  if (!input.hasCitationStamp || input.tool !== "citation_stamp") return "stamp-required";
+  return "clear";
+}
 
 export function restoredArchiveRepoWallCleared(progress: Readonly<Record<string, number>>) {
   // Annotation notes were only reachable after stamping NO REPO in older saves.

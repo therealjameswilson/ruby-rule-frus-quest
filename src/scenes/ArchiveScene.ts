@@ -32,6 +32,7 @@ import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import {
+  archiveRepoWallSwing,
   archiveSourceRoomDocumentProgressKey,
   archiveSourceRoomObjective,
   archiveSourceRoomPacketComplete,
@@ -402,6 +403,7 @@ export class ArchiveScene extends Phaser.Scene {
   private clearedWallIds = new Set<string>();
   private bureaucraticWalls: BureaucraticWall[] = [];
   private wallContactCooldown = 0;
+  private lastRepoWallSwing = 0;
   private sourceNoteStatus: SourceNoteStatus = "inactive";
   private sourceNoteIcon?: Phaser.GameObjects.Image;
   private sourceNoteLabel?: Phaser.GameObjects.Text;
@@ -448,6 +450,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   create(data?: unknown) {
+    this.lastRepoWallSwing = 0;
     const arrival = readChapterArrival(data, "ArchiveScene", gameState.currentScene);
     const visitedRooms = getVisitedRoomIds(Object.keys(ARCHIVE_ROOMS) as ArchiveRoomId[]);
     const restoredHeldItem = gameState.heldItem;
@@ -570,6 +573,7 @@ export class ArchiveScene extends Phaser.Scene {
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
     }
     this.updateDanneLurker(delta);
+    this.updateRepoWallToolHit();
     if (this.checkRoomExit()) return;
 
     if (this.currentRoomId === "A1"
@@ -1738,22 +1742,11 @@ export class ArchiveScene extends Phaser.Scene {
 
   private handleEnemyInteract(definition: ArchiveEnemyDefinition, wall: BureaucraticWall) {
     if (wall.isCleared) return;
-    wall.markHit();
-
     if (definition.type === "NO REPO") {
-      if (this.sourceNoteStatus === "stamped") {
-        this.clearEnemy(definition, wall, "NO REPO cleared with citation stamp after source-table verification.");
-        return;
-      }
-      retroAudio.warning();
-      this.dialog.show("NO REPO", [
-        "This wall wants a real repository trail.",
-        "Check Source Note 47 at the research table first.",
-        "Only the citation stamp can crack it."
-      ]);
-      setLatestMessage("NO REPO needs source-table verification.");
+      this.startRepoWallSwing(wall);
       return;
     }
+    wall.markHit();
 
     if (definition.type === "FIREWALL") {
       if (this.networkRoutingResolved) {
@@ -1836,6 +1829,10 @@ export class ArchiveScene extends Phaser.Scene {
     const wall = facedWall ?? (nearest?.kind === "enemy" ? this.activeEnemyWalls.get(nearest.id) : undefined);
     const definition = wall ? this.activeEnemyDefs.get(wall.id) : undefined;
     if (!wall && nearest?.kind !== "enemy") return false;
+    if (wall && definition?.type === "NO REPO") {
+      this.startRepoWallSwing(wall);
+      return true;
+    }
     if (!this.player.startAction(gameState.equippedProcessItem)) {
       setLatestMessage("Process tool is cooling down.");
       this.hintText.setText("COOLDOWN");
@@ -2251,6 +2248,38 @@ export class ArchiveScene extends Phaser.Scene {
     else setObjective("Clear stonewalls with the matching human process.");
   }
 
+  private startRepoWallSwing(wall: BureaucraticWall) {
+    this.player.faceTowards(wall.position);
+    const swing = tryEquippedToolSwing(this.player);
+    if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
+  }
+
+  private updateRepoWallToolHit() {
+    const wall = this.activeEnemyWalls.get("repo-wall");
+    const definition = this.activeEnemyDefs.get("repo-wall");
+    if (!wall || !definition || wall.isCleared || this.lastRepoWallSwing === this.player.actionId) return;
+    const result = archiveRepoWallSwing({
+      sourceNoteStatus: this.sourceNoteStatus,
+      hasCitationStamp: hasProcessItem("citation_stamp"),
+      tool: this.player.combatReadout.weapon.tool,
+      hitbox: this.player.activeActionHitbox,
+      wallBounds: wall.bounds
+    });
+    if (result === "miss") return;
+    this.lastRepoWallSwing = this.player.actionId;
+    wall.markHit();
+    if (result !== "clear") {
+      const message = result === "review-required" ? "VERIFY SOURCE AT TABLE FIRST" : "USE CITATION STAMP";
+      this.toast.show(message, this.player.position, "warn");
+      setLatestMessage(message);
+      retroAudio.warning();
+      return;
+    }
+    this.clearEnemy(definition, wall, "NO REPO cleared with citation stamp after source-table verification.");
+    this.toast.show("NO REPO CLEARED - ANNOTATE", this.player.position, "info");
+    this.updateSourceNoteVerification();
+  }
+
   private wallReadyForProcess(definition?: ArchiveEnemyDefinition) {
     if (!definition) return false;
     if (definition.type === "NO REPO") return this.sourceNoteStatus === "stamped";
@@ -2397,7 +2426,7 @@ export class ArchiveScene extends Phaser.Scene {
     let candidates: Interactable[];
     if (this.sourceNoteWallNeedsStamp()) {
       const wallTarget = this.interactables.find((item) => item.id === "repo-wall");
-      candidates = wallTarget ? [{ ...wallTarget, radius: 38 }] : [];
+      candidates = wallTarget ? [{ ...wallTarget, radius: 30 }] : [];
     } else if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
       const packet = readAnnotationPacket(gameState.sceneProgress);
       candidates = packet.missing.map((station) => ({
@@ -2581,15 +2610,8 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (this.sourceNoteWallNeedsStamp() && target.id === "repo-wall") {
-      const definition = this.activeEnemyDefs.get("repo-wall");
       const wall = this.activeEnemyWalls.get("repo-wall");
-      if (definition && wall) {
-        this.player.startAction("citation_stamp");
-        wall.markHit();
-        this.handleEnemyInteract(definition, wall);
-        this.toast.show("NO REPO CLEARED - ANNOTATE", this.player.position, "info");
-        this.updateSourceNoteVerification();
-      }
+      if (wall) this.startRepoWallSwing(wall);
       return;
     }
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
