@@ -40,7 +40,7 @@ export const ABOUT_SERIES_VOLUME_REVIEW = {
   minorExcisions: 26
 } as const;
 
-// Each page fits five lines in the native 6px codex face, above 44px controls.
+// Short sections are paginated by the field guide without shrinking its 8px face.
 export const ABOUT_SERIES_HANDBOOK_PAGES = [
   { title: "YOUR ASSIGNMENT", text: "Document major foreign-policy decisions and diplomacy. Office historians work under the General Editor." },
   { title: "KEEP THE EVIDENCE", text: "Keep material decision facts, even evidence of policy defects. Select for accuracy and historical objectivity." },

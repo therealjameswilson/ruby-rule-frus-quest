@@ -80,8 +80,9 @@ export class InventoryOverlay {
     const panel = scene.add.rectangle(128, 124, 240, 224, color(PALETTE.black)).setScrollFactor(0);
     panel.setStrokeStyle(1, color(PALETTE.goldStamp));
     this.content = scene.add.container(0, 0).setScrollFactor(0);
+    // Pause chrome must cover transient toasts, boss feedback and cutscene bars.
     this.container = scene.add.container(0, 0, [dim, panel, this.content])
-      .setName("pause-menu").setDepth(980).setVisible(false).setScrollFactor(0);
+      .setName("pause-menu").setDepth(2000).setVisible(false).setScrollFactor(0);
     // One capture surface: hidden pages cannot keep invisible hit targets alive.
     bindPointerPress(dim, { down: (pointer) => this.handlePointer(pointer.x, pointer.y) });
     updateInputCallbacks({ handlePauseTouch: (point) => this.handlePointer(point.x, point.y) });

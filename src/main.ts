@@ -27,6 +27,7 @@ import { installNativeAppShell, observeNativeAppState, type NativeAppState } fro
 import { retroAudio, type AudioDebugState } from "./systems/audio";
 import { getLanguage } from "./systems/i18n";
 import { getPauseMenuReadout } from "./systems/pauseMenu";
+import { getCodexViewReadout } from "./systems/codexLayout";
 import { installResumeInput } from "./input/resumeInput";
 import { applyIntegerZoom, computeDeviceIntegerZoom } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
@@ -91,6 +92,7 @@ function renderConciseGameToText() {
       scene: gameState.currentScene,
       mode: gameState.mode,
       pauseMenu: getPauseMenuReadout(),
+      codexView: getCodexViewReadout(),
       objective: gameState.objective,
       language: getLanguage(),
       platform: window.rubyRulePlatform,

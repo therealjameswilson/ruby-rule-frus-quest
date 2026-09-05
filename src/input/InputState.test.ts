@@ -118,6 +118,41 @@ describe("InputState keyboard edges", () => {
     expect(getInput().navDownJustPressed).toBe(true);
   });
 
+  it.each([
+    ["ArrowLeft", "navLeftJustPressed"], ["KeyA", "navLeftJustPressed"],
+    ["ArrowRight", "navRightJustPressed"], ["KeyD", "navRightJustPressed"],
+    ["ArrowUp", "navUpJustPressed"], ["KeyW", "navUpJustPressed"],
+    ["ArrowDown", "navDownJustPressed"], ["KeyS", "navDownJustPressed"]
+  ] as const)("re-arms %s menu taps inside the movement hold", (code, edge) => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    tapDirectionForTests(code);
+    tickInput();
+    expect(getInput()[edge]).toBe(true);
+    const movement = { ...getInput().dir };
+    now += 16;
+    tickInput();
+    expect(getInput()[edge]).toBe(false);
+    now += 24;
+    tapDirectionForTests(code);
+    tickInput();
+    expect(getInput()[edge]).toBe(true);
+    expect(getInput().dir).toEqual(movement);
+    tickInput();
+    expect(getInput()[edge]).toBe(false);
+  });
+
+  it("discards pending navigation when an overlay swallows input", () => {
+    tapDirectionForTests("ArrowDown");
+    swallowNextInputFrame();
+    tickInput();
+    tickInput();
+    expect(getInput().navDownJustPressed).toBe(false);
+    tapDirectionForTests("ArrowDown");
+    tickInput();
+    expect(getInput().navDownJustPressed).toBe(true);
+  });
+
   it("turns a too-short touch A tap into a single interaction edge", () => {
     let now = 3000;
     setNowProviderForTests(() => now);

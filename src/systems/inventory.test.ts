@@ -20,16 +20,23 @@ vi.mock("./audio", () => ({ retroAudio: { blip: vi.fn(), confirm: vi.fn(), warni
 
 class Node {
   visible = true;
+  name = "";
+  depth = 0;
   setScrollFactor() { return this; } setStrokeStyle() { return this; } setOrigin() { return this; }
-  setName() { return this; } setDepth() { return this; } setVisible(value: boolean) { this.visible = value; return this; }
+  setName(value: string) { this.name = value; return this; }
+  setDepth(value: number) { this.depth = value; return this; }
+  setVisible(value: boolean) { this.visible = value; return this; }
   removeAll() { return this; } add() { return this; }
   lineStyle() { return this; } lineBetween() { return this; } fillStyle() { return this; } fillRect() { return this; }
 }
 
 function harness() {
   const loop = { frame: 0 };
+  const containers: Node[] = [];
   const scene = {
-    add: { rectangle: () => new Node(), container: () => new Node(), text: () => new Node(), graphics: () => new Node() },
+    add: { rectangle: () => new Node(), container: () => {
+      const node = new Node(); containers.push(node); return node;
+    }, text: () => new Node(), graphics: () => new Node() },
     textures: { exists: () => false }, input: { on: vi.fn(), off: vi.fn() }, events: { once: vi.fn() }, game: { loop }
   } as unknown as Phaser.Scene;
   const overlay = new InventoryOverlay(scene);
@@ -44,7 +51,7 @@ function harness() {
     overlay.updateInput();
     input[name] = false;
   };
-  return { overlay, tap, key, loop };
+  return { overlay, tap, key, loop, containers };
 }
 
 beforeEach(() => {
@@ -54,6 +61,15 @@ beforeEach(() => {
 });
 
 describe("pause inventory interaction", () => {
+  it("covers the existing 1200-depth feedback and 1700-depth cutscene chrome", () => {
+    const { overlay, containers } = harness();
+    overlay.toggle();
+    const menu = containers.find((node) => node.name === "pause-menu")!;
+    expect(menu.visible).toBe(true);
+    expect(menu.depth).toBeGreaterThan(1700);
+    overlay.hide();
+  });
+
   it("allows empty-inventory players to reach the map and settings with a keyboard", () => {
     const { overlay, key } = harness(); overlay.toggle();
     key("navUpJustPressed"); key("navRightJustPressed");

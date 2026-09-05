@@ -151,6 +151,15 @@ const emptyState: InputState = {
 // visible nudge without changing how held movement or collision works.
 export const TAP_MOVEMENT_HOLD_MS = 110;
 const directionTapLatch = new Map<string, number>();
+// Menu taps must re-arm even while the movement nudge from the last tap persists.
+const pendingNavigationPresses = new Set<CardinalDirection>();
+
+function latchDirectionPress(code: string) {
+  const direction = directionKeyMap[code];
+  if (!direction) return;
+  directionTapLatch.set(code, nowProvider());
+  pendingNavigationPresses.add(direction);
+}
 
 // Action / confirm / cancel keys suffer the same too-short-tap drop as movement
 // did (live audit, 2026-06-15): a keydown+keyup that both land between two
@@ -425,7 +434,7 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
     preventGameKeyDefault(event);
     if (!event.repeat && directionKeyMap[event.code]) {
       lastDirection = directionKeyMap[event.code]!;
-      directionTapLatch.set(event.code, nowProvider());
+      latchDirectionPress(event.code);
     }
     if (!event.repeat && ACTION_LATCH_CODES.has(event.code)) {
       actionTapLatch.set(event.code, nowProvider());
@@ -525,6 +534,7 @@ export function tickInput() {
   previousState = cloneState(currentState);
   if (swallowNextFrame) {
     swallowNextFrame = false;
+    pendingNavigationPresses.clear();
     pendingTypedCharacters.length = 0;
     pendingPointerStarts.length = 0;
     currentState = { ...emptyState, dir: { ...emptyState.dir } };
@@ -602,10 +612,10 @@ export function tickInput() {
     rightJustPressed: justPressed(right, previousState.right),
     upJustPressed: justPressed(up, previousState.up),
     downJustPressed: justPressed(down, previousState.down),
-    navLeftJustPressed: justPressed(navLeft, previousNavLeftDown),
-    navRightJustPressed: justPressed(navRight, previousNavRightDown),
-    navUpJustPressed: justPressed(navUp, previousNavUpDown),
-    navDownJustPressed: justPressed(navDown, previousNavDownDown),
+    navLeftJustPressed: pendingNavigationPresses.has("left") || justPressed(navLeft, previousNavLeftDown),
+    navRightJustPressed: pendingNavigationPresses.has("right") || justPressed(navRight, previousNavRightDown),
+    navUpJustPressed: pendingNavigationPresses.has("up") || justPressed(navUp, previousNavUpDown),
+    navDownJustPressed: pendingNavigationPresses.has("down") || justPressed(navDown, previousNavDownDown),
     confirmJustPressed: justPressed(confirm, previousConfirmDown),
     cancelJustPressed: suppressEscEdgesUntilRelease && escDown ? false : justPressed(cancel, previousCancelDown),
     a,
@@ -649,6 +659,7 @@ export function tickInput() {
   previousNavDownDown = navDown;
   previousConfirmDown = confirm;
   previousCancelDown = cancel;
+  pendingNavigationPresses.clear();
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
 }
@@ -733,6 +744,7 @@ export function resetInput() {
   touchDown.clear();
   touchTapLatch.clear();
   directionTapLatch.clear();
+  pendingNavigationPresses.clear();
   actionTapLatch.clear();
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
@@ -762,7 +774,7 @@ export function setKeyboardDownForTests(codes: readonly string[]) {
 
 export function pressKeyForTests(code: string) {
   keyboardDown.add(code);
-  if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
+  latchDirectionPress(code);
   if (ACTION_LATCH_CODES.has(code)) actionTapLatch.set(code, nowProvider());
 }
 
@@ -775,7 +787,7 @@ export function releaseKeyForTests(code: string) {
 // keydown time but leaves no physical key down. Used to verify tap-buffered
 // movement.
 export function tapDirectionForTests(code: string) {
-  if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
+  latchDirectionPress(code);
 }
 
 // Same idea for the action/confirm/cancel keys: latch the keydown time without
