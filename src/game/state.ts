@@ -56,6 +56,7 @@ import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
 import { getAboutSeriesGameplayReadout } from "./aboutSeries";
+import { readHearingReview } from "./hearingReview";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
 import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound, hiddenReadingRoomDiscovered } from "./secretReadingRoom";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
@@ -2949,6 +2950,7 @@ export function renderGameToText() {
         hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),
         hiddenFirstEditionBonus: hiddenFirstEditionBonusLabel(gameState)
       },
+      hearingReview: gameState.currentScene === "SenateHearingChamberScene" ? readHearingReview(gameState.sceneProgress) : null,
       frusPrize: {
         cover: "ruby FRUS cover",
         piecesEarned: getVolumeAssemblyReadout().earnedCount,

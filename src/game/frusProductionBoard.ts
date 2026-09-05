@@ -311,7 +311,7 @@ export const FRUS_PRODUCTION_BOARD_STEPS = [
     shortLabel: "HAC",
     sourceBasis: "HAC monitors compilation, editing, preparation, declassification procedures, 30-year classified samples, and annual findings.",
     sourceUrl: HAC_URL,
-    gameplayTask: "File the HAC hearing record: process oversight, declassification procedure review, 30-year sample, annual findings, and Kellogg standards."
+    gameplayTask: "File the practice review: inspect a still-classified 30-year sample and account for a withheld document. This exercise is not a Senate or HAC clearance decision."
   },
   {
     id: "ai_annotation_review",

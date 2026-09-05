@@ -13,12 +13,7 @@ import {
   DANNE_RUNTIME_SPRITE_ASSETS,
   DANNE_VFX_ASSETS
 } from "../game/danneAtlas";
-import {
-  evaluateHacHearingAnswer,
-  getHacHearingPrompt,
-  hacHearingComplete,
-  HAC_HEARING_PROMPTS
-} from "../game/hacHearing";
+import { HearingReview } from "../systems/hearingReview";
 import type {
   DanneMapSceneKey,
   DanneRectDefinition,
@@ -158,6 +153,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private passageBusyUntil = 0;
   private leavingReadingPassage = false;
   private collisionDebug?: Phaser.GameObjects.Container;
+  private hearing?: HearingReview;
 
   protected constructor(sceneKey: DanneMapSceneKey) {
     super(sceneKey);
@@ -205,6 +201,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.passageBusyUntil = 0;
     this.leavingReadingPassage = false;
     this.collisionDebug = undefined;
+    this.hearing = undefined;
     this.interactionAssist.clear();
     this.attackBuffer.clear();
     this.hitstop.reset();
@@ -236,7 +233,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.cacheMarkers.length = 0;
     this.drawInteractionMarkers();
     if (isCollisionDebugEnabled()) this.drawCollisionDebug();
-    this.drawLocationCard();
+    if (this.geometry.sceneKey !== "SenateHearingChamberScene") this.drawLocationCard();
 
     this.solids = (this.geometry.sceneKey === "NaraStacksScene"
       ? readingPassageSolids(this.geometry.solids, hiddenReadingRoomDiscovered(gameState))
@@ -280,6 +277,13 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.createDanneEntities();
     this.syncBlackVaultTraversal();
     this.syncReadingRoomTraversal();
+    if (this.geometry.sceneKey === "SenateHearingChamberScene") {
+      this.hearing = new HearingReview(this, this.cacheToast, () => this.player.position);
+      this.hearing.syncTargets(this.interactables);
+      setObjective(this.hearing.objective);
+      setRoomTraversalState({ currentRoomId: "DH1", roomTitle: "Senate Hearing Chamber", roomType: "puzzle",
+        visitedRoomIds: [...new Set([...getVisitedRoomIds(["DH1"]), "DH1"])], exits: { south: "O1" } });
+    }
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
       const readiness = getBlackVaultClimaxReadiness();
       setObjective(gameState.sceneProgress.blackVaultBossCleared
@@ -395,6 +399,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     const bossActive = Boolean(this.danneBoss?.isActive);
+    this.hearing?.syncTargets(this.interactables);
     const targets = this.geometry.sceneKey === "BlackVaultLairScene"
       ? blackVaultApproachTargets(this.player.position, this.interactables, Boolean(gameState.sceneProgress.blackVaultReliabilityCacheUsed))
       : this.interactables;
@@ -402,8 +407,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const hintTarget = bossActive ? null : nearestInteractableHint(this.player.position, targets);
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest && this.geometry.sceneKey !== "BlackVaultLairScene" ? `A: ${nearest.label.toUpperCase()}` : "");
-    this.prompt.update(delta, promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
+    this.hintText.setText(nearest && this.geometry.sceneKey !== "BlackVaultLairScene" && !this.hearing ? `A: ${nearest.label.toUpperCase()}` : "");
+    this.prompt.update(delta, this.hearing ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
     else if (input.aJustPressed) {
@@ -428,9 +433,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
         const nearUnclaimedSecret = this.geometry.sceneKey === "NaraStacksScene"
           && hiddenReadingRoomDiscovered(gameState) && !hiddenFirstEditionFound(gameState)
           && Math.hypot(this.player.position.x - 204, this.player.position.y - 68) < 40;
-        setObjective(nearUnclaimedSecret ? "ENTER READING ROOM" : danneMapExplorationObjective(this.geometry.sceneKey, gameState.inventory));
+        setObjective(this.hearing?.objective ?? (nearUnclaimedSecret ? "ENTER READING ROOM" : danneMapExplorationObjective(this.geometry.sceneKey, gameState.inventory)));
       }
     }
+    this.hearing?.update(nearest);
     this.reliability.update();
     this.syncDanneReadout(this.time.now);
   }
@@ -496,6 +502,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     for (const interaction of this.geometry.interactions) {
       if (!danneMapInteractionAvailable(interaction.action, Boolean(gameState.sceneProgress.blackVaultBossCleared))) continue;
       if (interaction.action === "reliability-cache" && gameState.sceneProgress.blackVaultReliabilityCacheUsed) continue;
+      if (interaction.action === "hearing-exhibit-left" || interaction.action === "hearing-exhibit-right" || interaction.action === "witness-table") continue;
       if (interaction.action === "hidden-reading-room-passage") {
         this.drawHiddenPassageSeam(interaction);
         continue;
@@ -628,6 +635,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private handleInteraction(definition: DanneSceneInteractionDefinition) {
+    if (this.hearing?.handle(definition.action)) return;
     if (definition.action === "return-office") {
       const returnTarget = this.geometry.sceneKey === "BlackVaultLairScene"
         ? blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead), Boolean(nextArchiveResearchReview())).sceneKey
@@ -689,10 +697,6 @@ export abstract class DanneMapScene extends Phaser.Scene {
         return;
       }
       this.startDanneBoss();
-      return;
-    }
-    if (definition.action === "witness-table") {
-      this.showHacHearingChoice();
       return;
     }
     if (definition.action === "nara-stacks-note") {
@@ -784,65 +788,6 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.dialog.show("MARINE GUARD", this.marineGuard?.blockedDialog() ?? "Classified door remains closed.");
       setLatestMessage("Marine guard blocks classified door.");
     }
-  }
-
-  private showHacHearingChoice() {
-    if (gameState.sceneProgress.senateHacReviewComplete) {
-      // Older saves can hold the completed hearing without its collectible.
-      // Claim it once; do not replay the hearing or repeat its reliability bonus.
-      if (addDanneItem("treaty-fragments", 1)) {
-        retroAudio.danneItemPickup("Treaty Fragment II");
-        saveGameNow("manual");
-      }
-      this.dialog.show("WITNESS TABLE", [
-        "The HAC process review is already entered.",
-        "Question, answer, source, and date remain separate.",
-        "Treaty Fragment II is filed from the hearing record."
-      ]);
-      return;
-    }
-
-    const step = gameState.sceneProgress.senateHacReviewStep ?? 0;
-    const prompt = getHacHearingPrompt(step);
-    setObjective(`Senate Hearing: answer HAC review ${step + 1}/${HAC_HEARING_PROMPTS.length}.`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateHacHearingAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        adjustReliability(-3, "HAC hearing correction");
-        this.reliability.update();
-        this.dialog.show("HAC REVIEW", [
-          result.message,
-          "Try again. The hearing record must show the process honestly."
-        ], () => this.showHacHearingChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.senateHacReviewStep = nextStep;
-      setLatestMessage(`HAC hearing check ${nextStep}/${HAC_HEARING_PROMPTS.length}: ${result.prompt.id}.`);
-      if (!hacHearingComplete(nextStep)) {
-        this.dialog.show("HAC REVIEW", [
-          result.message,
-          "The committee has another process question."
-        ], () => this.showHacHearingChoice());
-        return;
-      }
-
-      gameState.sceneProgress.senateHacReviewComplete = 1;
-      const added = addDanneItem("treaty-fragments", 1);
-      if (added) retroAudio.danneItemPickup("Treaty Fragment II");
-      else retroAudio.confirm();
-      setLatestMessage("HAC process review complete: oversight, 30-year sample, and annual findings filed.");
-      adjustReliability(6, "HAC process monitoring answered cleanly");
-      this.reliability.update();
-      saveGameNow("manual");
-      this.dialog.show("WITNESS TABLE", [
-        result.message,
-        "HAC process review entered: compilation, declassification, 30-year sampling, annual findings, and Kellogg standards are visible.",
-        added ? "Treaty Fragment II is filed from the hearing record." : "Treaty Fragment II is already filed."
-      ]);
-    });
   }
 
   private installUiDebugHooks() {

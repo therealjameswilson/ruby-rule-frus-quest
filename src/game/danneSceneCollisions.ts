@@ -10,6 +10,8 @@ export type DanneSceneInteractionAction =
   | "save-point"
   | "boss-trigger"
   | "witness-table"
+  | "hearing-exhibit-left"
+  | "hearing-exhibit-right"
   | "nara-stacks-note"
   | "cipher-machine"
   | "marine-guard"
@@ -237,10 +239,15 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
       { x: 26, y: 46, width: 204, height: 38, label: "committee dais" },
       { x: 46, y: 94, width: 36, height: 32, label: "left counsel table" },
       { x: 174, y: 94, width: 36, height: 32, label: "right counsel table" },
+      { x: 104, y: 126, width: 48, height: 22, label: "witness desk" },
       { x: 28, y: 142, width: 42, height: 30, label: "left gallery benches" },
       { x: 186, y: 142, width: 42, height: 30, label: "right gallery benches" }
     ],
     interactions: [
+      { id: "senate-exhibit-left", label: "Retention Register", x: 64, y: 112, radius: 28,
+        kind: "document", action: "hearing-exhibit-left", accent: PALETTE.creamPaper },
+      { id: "senate-exhibit-right", label: "Release List", x: 192, y: 112, radius: 28,
+        kind: "document", action: "hearing-exhibit-right", accent: PALETTE.creamPaper },
       {
         id: "senate-witness-table",
         label: "Witness Table",
@@ -262,7 +269,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["Witness Table", "Committee Dais", "Office Corridor"]
+    visibleEntities: ["Witness Table", "Left Exhibit", "Right Exhibit", "Office Corridor"]
   },
   NaraStacksScene: {
     sceneKey: "NaraStacksScene",

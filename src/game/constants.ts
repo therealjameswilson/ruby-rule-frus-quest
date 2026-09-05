@@ -394,7 +394,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     title: "Senate Hearing Chamber",
     grid: { x: -1, y: -1 },
     exits: { south: "O1" },
-    roomType: "hint"
+    roomType: "puzzle"
   },
   {
     id: "A1",

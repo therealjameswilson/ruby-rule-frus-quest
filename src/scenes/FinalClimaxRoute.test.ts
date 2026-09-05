@@ -84,13 +84,6 @@ describe("normal quest climax route", () => {
     expect(bossSource).toContain('addDanneItem("treaty-fragments", 2)');
   });
 
-  it("lets a completed legacy hearing claim its missing fragment without a repeat bonus", () => {
-    const completeBranch = mapSource.split("if (gameState.sceneProgress.senateHacReviewComplete) {")[1].split("const step =")[0];
-    expect(completeBranch).toContain('addDanneItem("treaty-fragments", 1)');
-    expect(completeBranch).toContain('saveGameNow("manual")');
-    expect(completeBranch).not.toContain("adjustReliability");
-  });
-
   it("defeats DANN-E from pre-bindery readiness without publishing inside the boss", () => {
     expect(bossSource).toContain("getBlackVaultClimaxReadiness()");
     expect(bossSource).not.toContain("certifyFinalPublicationAfterDanne()");

@@ -1411,11 +1411,6 @@ export function addSnesSenateHearingChamberTileRoom(scene: Phaser.Scene, options
     .setStrokeStyle(1, color(PALETTE.terminalCyan)), "snes-senate-witness-mic-panel");
   add(scene.add.rectangle(119, 127, 6, 5, color(PALETTE.terminalCyan), 0.95), "snes-senate-witness-mic");
   add(scene.add.rectangle(137, 127, 6, 5, color(PALETTE.classNetRed), 0.95), "snes-senate-record-light");
-  add(scene.add.rectangle(119, 139, 12, 10, color(PALETTE.creamPaper), 1)
-    .setStrokeStyle(1, color(PALETTE.deepBrown)), "snes-senate-witness-docket");
-  add(scene.add.rectangle(116, 139, 1, 9, color(PALETTE.classNetRed), 1), "snes-senate-witness-docket-redbar");
-  add(scene.add.rectangle(139, 141, 12, 7, color(PALETTE.goldStamp), 0.9)
-    .setStrokeStyle(1, color(PALETTE.deepBrown)), "snes-senate-hearing-seal");
   add(scene.add.text(128, 151, "WITNESS", {
     fontFamily: "monospace",
     fontSize: "5px",
@@ -1428,15 +1423,6 @@ export function addSnesSenateHearingChamberTileRoom(scene: Phaser.Scene, options
   add(scene.add.rectangle(128, 213, 22, 4, color(PALETTE.goldStamp), 1), "snes-senate-return-stair-top");
   add(scene.add.rectangle(128, 219, 30, 4, color(PALETTE.bronze), 1), "snes-senate-return-stair-mid");
   add(scene.add.rectangle(128, 225, 38, 4, color(PALETTE.deepBrown), 1), "snes-senate-return-stair-bottom");
-
-  add(scene.add.rectangle(128, 177, 84, 10, color(PALETTE.black), 0.86)
-    .setStrokeStyle(1, color(PALETTE.goldStamp)), "snes-senate-hearing-route-plaque");
-  add(scene.add.text(128, 173, "HAC REVIEW RECORD", {
-    fontFamily: "monospace",
-    fontSize: "5px",
-    color: PALETTE.goldStamp,
-    align: "center"
-  }).setOrigin(0.5, 0), "snes-senate-hearing-route-label");
 
   add(scene.add.rectangle(128, 47, 126, 11, color(PALETTE.black), 0.9)
     .setStrokeStyle(1, color(PALETTE.goldStamp)), "snes-senate-room-title-frame");
