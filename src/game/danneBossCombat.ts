@@ -4,7 +4,8 @@ export const DANNE_BOSS_DAMAGE = { ego_bolt: 10, swarm: 5 } as const;
 export type DanneBossHitKind = keyof typeof DANNE_BOSS_DAMAGE;
 export const DANNE_BOSS_RECOVERY_MS = 1000;
 export const DANNE_BOSS_ENTRY_GRACE_MS = 900;
-export const DANNE_BOSS_RETURN = { damage: 28, speed: 150, lifetimeMs: 2400, stunMs: 1400 } as const;
+// Leave time to close the gap, recover the returning swing, and make two edits.
+export const DANNE_BOSS_RETURN = { damage: 28, speed: 150, lifetimeMs: 2400, stunMs: 2000 } as const;
 
 export interface BossBoltMotion extends Position {
   vx: number;

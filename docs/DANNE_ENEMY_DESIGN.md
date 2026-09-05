@@ -234,7 +234,7 @@ the Senator and Executive forms are deliberately ambiguous.
 These rules describe `DanneBoss` in the critical-path Black Vault, not the
 separate room-enemy roster above. Its active tool is the owned Red Pencil (or
 the existing Ruby Pen), with one damage application per active swing. The
-wandering DANN-E's bolt-reflection mechanic is not part of this boss fight.
+current boss also accepts returned Ego bolts; see the counter-loop update below.
 
 - Ego bolts cost 10 reliability; swarm contact costs 5. Accepted hits provide
   1,000 ms of recovery protection. Each phase starts with 900 ms of grace after
@@ -266,8 +266,9 @@ wandering DANN-E's bolt-reflection mechanic is not part of this boss fight.
    `?scene=BlackVaultLairScene` QA seed. Move north to the core and interact.
 2. Take an Ego bolt: one heart is lost, the shot disappears, and immediate
    overlapping hits do not debit again during recovery.
-3. Attack with the wrong tool, then the Red Pencil. Only the owned Red Pencil's
-   active swing damages this boss, once per swing.
+3. Return an Ego bolt to open the core. Attack with the wrong tool, then the Red
+   Pencil. Only the owned Red Pencil's active swing damages the exposed core,
+   once per swing (the existing Ruby Pen upgrade also works).
 4. Pause during a telegraph. Shots, the target countdown, and hearts stay still.
 5. Lose all hearts, wait several seconds, then retry. Check current-phase HP,
    prompt dismissal, ordinary attack timing, unchanged documents, and no reward.
@@ -283,3 +284,28 @@ retry/retreat, choice input, and saved pressure. A separate `bossQuick=1` UI tes
 verified the deadline choice and a touch Red Pencil hit; it is not the evidence
 for normal boss completion. Real iPhone/Safari and the secret Ascendant route
 remain unverified in this pass.
+
+## Live Final-Review Counter Loop (2026-09-05)
+
+This supersedes the earlier free-melee behavior of `DanneBoss`, not the separate
+room-enemy roster. A real earned-save baseline lost 84 of 180 boss HP to three
+Red Pencil swings without any returned bolt. That skipped the Guide lesson.
+
+- Colossus, Swarm, Cloud and Ascendant now protect their cores until a returned
+  Ego bolt actually hits. Any owned combat tool can return a bolt during its
+  active frames. Protected swings recoil, do no damage, and show a short HUD hint.
+- The return still deals 28 damage. It opens a 2,000 ms follow-up window, with
+  the existing pale tint and a shrinking 24x2-pixel timer below the boss. A new
+  Red Pencil swing deals the original 28 damage (14 to Cloud); the Ruby Pen
+  keeps its existing 35-damage upgrade. The returning swing cannot also count
+  as the follow-up. Closing, phase changes, retry, defeat and disposal clear
+  the indicator. Pause freezes the opening rather than consuming it.
+- The earlier 1,400 ms opening was too tight for approach plus weapon recovery
+  in the earned playthrough. Two seconds allows deliberate follow-up strikes
+  without changing player input, movement, enemy HP, incoming damage or the
+  publication clock. A return remains useful even if the player cannot close in.
+- `bossCombat.coreOpen` reports the transient exposure; no new save fields or
+  schema version. Final reviewed-record requirements, temporary pressure
+  recovery, one-time rewards and the binding-room transition are unchanged.
+
+Replay and evidence are documented in [Boss Counter Loop](BOSS_COUNTER_LOOP.md).

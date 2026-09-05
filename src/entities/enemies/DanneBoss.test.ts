@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { gameState, recordStandardsViolation, resetGameState, seedProgressForScene } from "../../game/state";
+import { addDanneItem, gameState, recordStandardsViolation, resetGameState, seedProgressForScene } from "../../game/state";
+import { DANNE_BOSS_RETURN } from "../../game/danneBossCombat";
 import type { ChoiceOption, Position } from "../../game/types";
 import type { Player } from "../Player";
 import { DanneBoss, type DanneBossPhase } from "./DanneBoss";
@@ -65,6 +66,8 @@ class Visual {
 
 interface BossInternals {
   hp: number;
+  coreOpening: Visual;
+  takeReturnedBolt(time: number): void;
   statutoryYear: number;
   beginPhase(phase: Exclude<DanneBossPhase, "intro" | "defeated">): void;
   checkPlayerActionHit(time: number): void;
@@ -81,7 +84,7 @@ interface BossInternals {
   retryChoice: { active: boolean; choose(key: string): void };
 }
 
-function fixture(phase: "colossus" | "swarm" | "cloud" = "colossus") {
+function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus") {
   const scene = {
     time: { now: 0, delayedCall: (_ms: number, callback: () => void) => callback() },
     add: {
@@ -123,23 +126,89 @@ function fixture(phase: "colossus" | "swarm" | "cloud" = "colossus") {
 describe("DANN-E final-review combat", () => {
   beforeEach(() => { vi.clearAllMocks(); resetGameState(); seedProgressForScene("BlackVaultLairScene"); });
 
-  it("damages only with the active owned tool, once per swing", () => {
+  it.each(["colossus", "swarm", "cloud", "ascendant"] as const)("protects the %s core until a bolt is returned", (phase) => {
+    const { player, internals, boss } = fixture(phase);
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(100, 80, 50, 70);
+    for (let i = 0; i < 3; i += 1) {
+      player.actionId += 1;
+      internals.checkPlayerActionHit(1000 + i * 500);
+    }
+    expect(internals.hp).toBe(180);
+    expect(player.pushAwayFrom).toHaveBeenCalledTimes(3);
+    expect(gameState.reliability).toBe(100);
+    expect(boss.readout().bossCombat.coreOpen).toBe(false);
+    expect(boss.readout().bossCombat.feedback?.text).toBe("ARMORED: RETURN A BOLT");
+    expect(internals.coreOpening.visible).toBe(false);
+  });
+
+  it("damages an exposed core only with the active owned tool, once per swing", () => {
     const { player, internals } = fixture();
+    internals.takeReturnedBolt(1000);
+    player.actionId += 1;
     player.activeActionHitbox = new Phaser.Geom.Rectangle(100, 80, 50, 70);
     player.combatReadout.weapon.tool = "citation_stamp";
     internals.checkPlayerActionHit(1000);
-    expect(internals.hp).toBe(180);
+    expect(internals.hp).toBe(152);
     expect(player.pushAwayFrom).toHaveBeenCalled();
     player.combatReadout.weapon.tool = "red_pencil";
     player.actionId += 1;
     internals.checkPlayerActionHit(1400);
-    expect(internals.hp).toBe(152);
+    expect(internals.hp).toBe(124);
     internals.checkPlayerActionHit(1800);
-    expect(internals.hp).toBe(152);
+    expect(internals.hp).toBe(124);
     player.actionId += 1;
     gameState.inventory = gameState.inventory.filter((item) => item !== "Red Pencil");
     internals.checkPlayerActionHit(2200);
+    expect(internals.hp).toBe(124);
+  });
+
+  it("requires a fresh follow-up swing and closes exactly at the opening deadline", () => {
+    const { player, internals, scene, boss } = fixture();
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(100, 80, 50, 70);
+    internals.takeReturnedBolt(1000);
+    expect(internals.coreOpening.visible).toBe(true);
+    internals.checkPlayerActionHit(1100);
     expect(internals.hp).toBe(152);
+    player.actionId += 1;
+    internals.checkPlayerActionHit(1500);
+    expect(internals.hp).toBe(124);
+    scene.time.now = 1000 + DANNE_BOSS_RETURN.stunMs;
+    player.actionId += 1;
+    internals.checkPlayerActionHit(scene.time.now);
+    expect(internals.hp).toBe(124);
+    expect(boss.readout().bossCombat.coreOpen).toBe(false);
+    boss.update(scene.time.now, 16, true);
+    expect(internals.coreOpening.visible).toBe(false);
+  });
+
+  it("allows two separate follow-up hits before re-armoring, but never damage outside active frames", () => {
+    const { player, internals } = fixture();
+    internals.takeReturnedBolt(1000);
+    player.actionId += 1;
+    internals.checkPlayerActionHit(1500);
+    expect(internals.hp).toBe(152);
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(100, 80, 50, 70);
+    internals.checkPlayerActionHit(1800);
+    expect(internals.hp).toBe(124);
+    player.actionId += 1;
+    internals.checkPlayerActionHit(2300);
+    expect(internals.hp).toBe(96);
+    player.actionId += 1;
+    internals.checkPlayerActionHit(3000);
+    expect(internals.hp).toBe(96);
+  });
+
+  it("keeps the Ruby Pen upgrade behind the same counter opening", () => {
+    const { player, internals } = fixture();
+    addDanneItem("ruby-pen");
+    gameState.equippedDanneItem = "ruby-pen";
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(100, 80, 50, 70);
+    internals.checkPlayerActionHit(1000);
+    expect(internals.hp).toBe(180);
+    internals.takeReturnedBolt(1100);
+    player.actionId += 1;
+    internals.checkPlayerActionHit(1500);
+    expect(internals.hp).toBe(117);
   });
 
   it("removes colliding bolts immediately and honors recovery time", () => {
@@ -180,9 +249,9 @@ describe("DANN-E final-review combat", () => {
     expect(internals.bolts).toHaveLength(0);
     expect(boss.readout().bossCombat.counterWindowMs).toBeGreaterThan(0);
     expect(boss.readout().bossCombat.feedback?.text).toBe("EGO RETURNED! STRIKE CORE");
-    internals.updateAttackPattern(2499);
+    internals.updateAttackPattern(1100 + DANNE_BOSS_RETURN.stunMs - 1);
     expect(boss.readout().telegraph).toBeNull();
-    internals.updateAttackPattern(2500);
+    internals.updateAttackPattern(1100 + DANNE_BOSS_RETURN.stunMs);
     expect(boss.readout().telegraph).not.toBeNull();
   });
 
@@ -213,9 +282,11 @@ describe("DANN-E final-review combat", () => {
     scene.time.now = 1100;
     boss.update(1100, 16, false);
     scene.time.now = 6100;
-    expect(boss.readout().bossCombat.counterWindowMs).toBe(1400);
+    expect(boss.readout().bossCombat.counterWindowMs).toBe(DANNE_BOSS_RETURN.stunMs);
+    expect(boss.readout().bossCombat.coreOpen).toBe(true);
+    expect(internals.coreOpening.visible).toBe(true);
     boss.update(6100, 16, true);
-    expect(boss.readout().bossCombat.counterWindowMs).toBe(1400);
+    expect(boss.readout().bossCombat.counterWindowMs).toBe(DANNE_BOSS_RETURN.stunMs);
     expect(boss.readout().telegraph).toBeNull();
   });
 
@@ -246,6 +317,8 @@ describe("DANN-E final-review combat", () => {
     expect(boss.currentPhase).toBe("swarm");
     expect(internals.hp).toBe(180);
     expect(boss.readout().bossCombat.counterWindowMs).toBe(0);
+    expect(boss.readout().bossCombat.coreOpen).toBe(false);
+    expect(internals.coreOpening.visible).toBe(false);
     expect(onDefeated).not.toHaveBeenCalled();
     await Promise.resolve();
   });
@@ -361,6 +434,8 @@ describe("DANN-E final-review combat", () => {
     const { player, internals, onDefeated } = fixture("cloud");
     gameState.reliability = 40;
     gameState.sceneProgress.blackVaultCombatDamage = 60;
+    internals.takeReturnedBolt(1000);
+    player.actionId += 1;
     internals.hp = 1;
     player.activeActionHitbox = new Phaser.Geom.Rectangle(100, 80, 50, 70);
     internals.checkPlayerActionHit(1000);
@@ -375,6 +450,8 @@ describe("DANN-E final-review combat", () => {
   it("still blocks a victory with unresolved standards violations", () => {
     const { player, internals, onDefeated } = fixture("cloud");
     recordStandardsViolation("undisclosed_deletion", "Unbracketed edit");
+    internals.takeReturnedBolt(1000);
+    player.actionId += 1;
     internals.hp = 1;
     player.activeActionHitbox = new Phaser.Geom.Rectangle(100, 80, 50, 70);
     internals.checkPlayerActionHit(1000);

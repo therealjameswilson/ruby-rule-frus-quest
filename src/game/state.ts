@@ -144,6 +144,7 @@ interface VisibleThreat {
   bossCombat?: {
     bolts: (Position & { returned?: boolean })[];
     boltsReturned?: number;
+    coreOpen?: boolean;
     counterWindowMs?: number;
     feedback?: { text: string; tone: "info" | "warn"; msRemaining: number } | null;
     minis: Position[];

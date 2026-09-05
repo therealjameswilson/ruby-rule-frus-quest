@@ -126,6 +126,7 @@ export class DanneBoss {
   private readonly onPlayerHit?: (heavy: boolean) => void;
   private readonly sprite: Phaser.GameObjects.Sprite;
   private readonly shadow: Phaser.GameObjects.Ellipse;
+  private readonly coreOpening: Phaser.GameObjects.Rectangle;
   private readonly clockContainer: Phaser.GameObjects.Container;
   private readonly clockFill: Phaser.GameObjects.Rectangle;
   private readonly clockText: Phaser.GameObjects.Text;
@@ -178,6 +179,8 @@ export class DanneBoss {
       .setScale(1.15)
       .setDepth(BOSS_CENTER.y)
       .setVisible(false);
+    this.coreOpening = scene.add.rectangle(BOSS_CENTER.x - 12, BOSS_CENTER.y + 12, 24, 2, color(PALETTE.creamPaper))
+      .setOrigin(0, 0.5).setVisible(false);
     const animKey = danneAnimKey(this.spriteKey, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.shortcutChoice = new ChoicePrompt(scene);
@@ -257,6 +260,7 @@ export class DanneBoss {
     if (this.inputLocked) return;
     this.checkPlayerActionHit(timeMs);
     this.updateAttackPattern(timeMs);
+    this.syncCoreOpening(timeMs);
   }
 
   readout() {
@@ -276,7 +280,7 @@ export class DanneBoss {
       y: this.position.y,
       spriteKey: this.spriteKey,
       behavior: this.behaviorLabel(),
-      defeatMethod: "Return Ego bolts with an active tool swing to stun DANN-E, then strike with the Red Pencil. A complete human-reviewed record is still required.",
+      defeatMethod: "The core is armored. Return an Ego bolt with an active tool swing, then make a fresh Red Pencil strike before the opening closes. A complete human-reviewed record is still required.",
       status: `${this.hp}/${this.maxHp} HP; ${this.difficulty.label} tier; ${this.clockReadout()}; ${telegraph ? `${telegraph.label} ${telegraph.msRemaining}ms` : `${this.bolts.length} ego bolts`}; ${this.minis.length} mini-DANN-Es`,
       hp: cleared ? 0 : this.hp,
       maxHp: this.maxHp,
@@ -288,6 +292,7 @@ export class DanneBoss {
       bossCombat: {
         bolts: this.bolts.map((bolt) => ({ x: snapPixel(bolt.x), y: snapPixel(bolt.y), returned: bolt.returned })),
         boltsReturned: this.boltsReturned,
+        coreOpen: this.coreOpenAt(this.combatPausedAt ?? this.scene.time.now),
         counterWindowMs: Math.max(0, this.counterStunnedUntil - (this.combatPausedAt ?? this.scene.time.now)),
         feedback: this.combatFeedback ? { ...this.combatFeedback } : null,
         minis: this.minis.map((mini) => ({ x: mini.sprite.x, y: mini.sprite.y })),
@@ -312,6 +317,7 @@ export class DanneBoss {
     this.combatFeedback = null;
     this.sprite.destroy();
     this.shadow.destroy();
+    this.coreOpening.destroy();
     this.clockContainer.destroy();
     this.clearBolts();
     this.clearMinis();
@@ -368,6 +374,7 @@ export class DanneBoss {
     this.nextTeleportAt = this.scene.time.now;
     this.damageGraceUntil = this.scene.time.now + DANNE_BOSS_ENTRY_GRACE_MS;
     this.counterStunnedUntil = 0;
+    this.coreOpening.setVisible(false);
     this.combatFeedback = null;
   }
 
@@ -381,6 +388,7 @@ export class DanneBoss {
     hideBossHud();
     this.sprite.setVisible(false);
     this.shadow.setVisible(false);
+    this.coreOpening.setVisible(false);
     this.clockContainer.setVisible(false);
     this.clearAttackTelegraph();
     this.clearBolts();
@@ -550,10 +558,18 @@ export class DanneBoss {
     if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, this.bossBody())) return;
     this.nextPlayerHitAt = timeMs + 260;
     this.lastPlayerActionId = this.player.actionId;
+    if (!this.coreOpenAt(timeMs)) {
+      this.player.pushAwayFrom(this.position, 6);
+      this.combatFeedback = { text: "ARMORED: RETURN A BOLT", tone: "info", msRemaining: 1100 };
+      setLatestMessage("The core is armored. Return an Ego bolt first, then strike the exposed core with the Red Pencil.");
+      retroAudio.warning();
+      return;
+    }
     const hasRubyPen = gameState.equippedDanneItem === "ruby-pen" && hasDanneItem("ruby-pen");
     const hasRedPencil = this.player.combatReadout.weapon.tool === "red_pencil" && hasProcessItem("red_pencil");
     if (!hasRubyPen && !hasRedPencil) {
       this.player.pushAwayFrom(this.position, 8);
+      this.combatFeedback = { text: "CORE OPEN: USE PENCIL", tone: "info", msRemaining: Math.max(0, this.counterStunnedUntil - timeMs) };
       setLatestMessage("DANN-E resists that tool. Equip the Red Pencil for accountable edits.");
       retroAudio.warning();
       return;
@@ -575,6 +591,19 @@ export class DanneBoss {
     });
     setLatestMessage(`${hasRubyPen ? "Ruby Pen" : "Red Pencil"} review hit DANN-E for ${damage}.`);
     this.resolvePhaseHp();
+  }
+
+  private coreOpenAt(timeMs: number) {
+    return !this.defeated && !this.phaseTransitioning && !this.inputLocked && this.isAttackPhase(this.phase) && timeMs < this.counterStunnedUntil;
+  }
+
+  private syncCoreOpening(timeMs: number) {
+    const open = this.coreOpenAt(timeMs);
+    this.coreOpening.setVisible(open);
+    if (!open) return;
+    const remaining = Math.min(1, (this.counterStunnedUntil - timeMs) / DANNE_BOSS_RETURN.stunMs);
+    this.coreOpening.setPosition(snapPixel(this.sprite.x - 12), snapPixel(this.sprite.y + 12))
+      .setSize(Math.max(1, Math.round(24 * remaining)), 2).setDepth(Math.round(this.sprite.y + 15));
   }
 
   private resolvePhaseHp() {
@@ -675,6 +704,7 @@ export class DanneBoss {
     this.clearAttackTelegraph();
     this.clearBolts();
     this.combatFeedback = null;
+    this.coreOpening.setVisible(false);
     this.clockContainer.setVisible(false);
     hideBossHud();
     const options: ChoiceOption[] = [
@@ -821,6 +851,8 @@ export class DanneBoss {
     this.clearBolts();
     this.clearAttackTelegraph();
     this.counterStunnedUntil = timeMs + DANNE_BOSS_RETURN.stunMs;
+    // The returning swing opens the core; a new swing earns the follow-up hit.
+    this.lastPlayerActionId = this.player.actionId;
     this.nextBoltAt = Math.max(this.nextBoltAt, this.counterStunnedUntil);
     this.nextTeleportAt = Math.max(this.nextTeleportAt, this.counterStunnedUntil);
     this.hp = Math.max(0, this.hp - DANNE_BOSS_RETURN.damage);
@@ -832,6 +864,7 @@ export class DanneBoss {
     applyHitShake(this.scene, "boss-hit");
     this.onPlayerHit?.(false);
     this.resolvePhaseHp();
+    this.syncCoreOpening(timeMs);
   }
 
   private spawnMiniDannes() {
@@ -878,6 +911,7 @@ export class DanneBoss {
     this.clearBolts();
     this.clearMinis();
     this.combatFeedback = null;
+    this.coreOpening.setVisible(false);
     this.clockContainer.setVisible(false);
     hideBossHud();
     setObjective("REVIEW INTERRUPTED");
