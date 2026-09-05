@@ -15,7 +15,9 @@ describe("connected chapter doorways", () => {
     ["R1", "N2", "NetworkScene", 226, 124],
     ["N2", "R1", "ReferralVaultScene", 30, 124],
     ["E1", "R2", "ReferralVaultScene", 226, 124],
-    ["R2", "E1", "SilentReadScene", 30, 124]
+    ["R2", "E1", "SilentReadScene", 30, 124],
+    ["DN1", "DN2", "HiddenReadingRoomScene", 128, 208],
+    ["DN2", "DN1", "NaraStacksScene", 204, 94]
   ])("arrives from %s at %s's actual doorway", (from, to, scene, x, y) => {
     expect(readChapterArrival({ chapterFrom: from, chapterTo: to }, String(scene))).toMatchObject({ to, x, y });
     expect(Object.values(FRUS_ROOM_GRAPH.find((room) => room.id === from)!.exits)).toContain(to);

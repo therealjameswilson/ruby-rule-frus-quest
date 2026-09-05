@@ -305,7 +305,7 @@ export const AREA_REGISTRY = [
     reward: "Citation Stamp",
     rewardType: "item",
     rewardId: "citation_stamp",
-    scenes: ["GuideScene", "ArchiveScene", "NaraStacksScene"]
+    scenes: ["GuideScene", "ArchiveScene", "NaraStacksScene", "HiddenReadingRoomScene"]
   },
   {
     id: "two_networks",
@@ -419,8 +419,18 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "NARA Stacks",
     grid: { x: 0, y: -1 },
-    exits: { south: "A1" },
+    exits: { north: "DN2", south: "A1" },
+    lockedExits: { north: "Concealed reading-room shelf" },
+    requiredItems: { north: "review_folder" },
     roomType: "puzzle"
+  },
+  {
+    id: "DN2",
+    area: "archive_cavern",
+    title: "Hidden Reading Room",
+    grid: { x: 0, y: -2 },
+    exits: { south: "DN1" },
+    roomType: "secret"
   },
   {
     id: "A2",

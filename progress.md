@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical hidden reading-room discovery (2026-09-05):
+  - Reproduced the old instant teleport at NARA's shelf and return to the wrong front doorway. The owned Review Folder now opens a visible, passable shelf during active swing contact. A offers auto-equip/auto-facing but uses the same weapon window; wrong/missing tools do not open it. Discovery and entering are separate actions, with walking entry or A after the reveal.
+  - Added reciprocal DN1/DN2 doorways with a safe return at (204,94), persistent discovery/visits, and map gates that do not reveal the secret from tool ownership alone. Fixed the hidden room's Office-area fallback and missing pause handler; it now shows its Archive map through existing keyboard/touch pause controls.
+  - First edition keeps its one-time +25 and completion bonus, now with a rising book and short toast rather than a two-page dialogue. Removed the claimed-book interaction/ring immediately and after Continue. Arrival buffers reset; debug collision outlines follow the shelf opening.
+  - Production Chromium keyboard and 375x667/DPR-3 touch completed discovery -> Continue -> physical entry -> pause/map -> pickup -> Continue -> correct shelf return -> no duplicate reward -> Archive. Points remain 201 until pickup, then 226. Separate missing-tool input/collision checks pass; all 14 relevant scene-debug entries render without page/console errors. These use a bounded earned pre-boss fixture, not a new full-game completion.
+  - Verification: 151 Vitest files / 958 tests pass; TypeScript and production build pass (218 modules, 2,703.54 KB main JS, existing chunk warning). Required game client collected the first edition; its direct WebGL-buffer capture caveat remains, with inspected compositor/native in-frame images as visual proof. Details, fixture provenance, failed-script corrections, screenshots, and limits: docs/READING_ROOM_DISCOVERY.md.
+  - Local checkpoint only, no public push/deploy. Next: pause-menu density, more physical optional hearing gameplay, transition stalls, paused-time accounting, and real iPhone Safari. The broad fun/adventure goal remains active.
+
 - Connected chapters and late-tool exploration (2026-09-04):
   - Actual pre-boss play reproduced the editor's solid west wall: earlier chapters and their optional records were unreachable. Added physical return gates E1 -> R2, R1 -> N2, N1 -> A1, and A1 -> Office, with matching collision openings and typed, authored arrival pairs. Forward document/tool gates remain intact.
   - Office returns skip the Guide only after both counter training and Front Matter collection. Completed work is not replayed for points. Visited rooms persist across chapters using existing numeric sceneProgress entries; legacy known visits survive and fresh runs clear them. Continue preserves exact rooms/positions and ignores stale Phaser arrival data.

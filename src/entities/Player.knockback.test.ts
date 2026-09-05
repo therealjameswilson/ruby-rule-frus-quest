@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Player } from "./Player";
-import { resetGameState } from "../game/state";
+import { gameState, resetGameState } from "../game/state";
 
 vi.mock("phaser", () => ({ default: { Math: { Clamp: (value: number, min: number, max: number) => Math.min(max, Math.max(min, value)) } } }));
 
@@ -29,6 +29,25 @@ function fixture(x = 200, y = 183) {
 }
 
 beforeEach(() => resetGameState());
+
+describe("interaction auto-facing", () => {
+  it.each([
+    [{ x: 100, y: 80 }, "north"], [{ x: 100, y: 120 }, "south"],
+    [{ x: 80, y: 100 }, "west"], [{ x: 120, y: 100 }, "east"]
+  ] as const)("faces %s without moving the feet", (target, facing) => {
+    const { player } = fixture(100, 100);
+    player.faceTowards(target);
+    expect(player.position).toEqual({ x: 100, y: 100 });
+    expect(player.facingDirection).toBe(facing);
+    expect(gameState.playerFacing).toBe(facing);
+  });
+
+  it("keeps facing when the target is the current position", () => {
+    const { player } = fixture(100, 100);
+    player.faceTowards({ x: 100, y: 100 });
+    expect(player.facingDirection).toBe("east");
+  });
+});
 
 describe("player knockback terrain collision", () => {
   it("preserves the full open-floor push and stops residual movement", () => {

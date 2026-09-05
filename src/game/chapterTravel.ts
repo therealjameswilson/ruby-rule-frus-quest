@@ -1,3 +1,5 @@
+import { READING_PASSAGE } from "./secretReadingRoom";
+
 export interface ChapterTravelData {
   chapterFrom: string;
   chapterTo: string;
@@ -11,7 +13,9 @@ const CHAPTER_DOORWAYS = [
   { from: "R1", to: "N2", scene: "NetworkScene", x: 226, y: 124 },
   { from: "N2", to: "R1", scene: "ReferralVaultScene", x: 30, y: 124 },
   { from: "E1", to: "R2", scene: "ReferralVaultScene", x: 226, y: 124 },
-  { from: "R2", to: "E1", scene: "SilentReadScene", x: 30, y: 124 }
+  { from: "R2", to: "E1", scene: "SilentReadScene", x: 30, y: 124 },
+  { from: "DN1", to: "DN2", scene: "HiddenReadingRoomScene", x: 128, y: 208 },
+  { from: "DN2", to: "DN1", scene: "NaraStacksScene", ...READING_PASSAGE.returnSpawn }
 ] as const;
 
 // Only authored door pairs can supply an arrival. Continue keeps its exact saved spawn.

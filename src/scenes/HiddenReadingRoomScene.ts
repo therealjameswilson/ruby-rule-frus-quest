@@ -1,19 +1,23 @@
 import Phaser from "phaser";
 import { SECRET_READING_ROOM_ASSETS } from "../assets/registry";
 import { Player } from "../entities/Player";
+import { readChapterArrival } from "../game/chapterTravel";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   HIDDEN_FIRST_EDITION_FOUND_FLAG,
   HIDDEN_FIRST_EDITION_LABEL,
+  HIDDEN_READING_ROOM_DISCOVERED_FLAG,
   hiddenFirstEditionFound
 } from "../game/secretReadingRoom";
 import {
   addDocumentPoints,
   addInventoryItem,
   gameState,
+  getVisitedRoomIds,
   setLatestMessage,
   setNearestInteractable,
   setObjective,
+  setRoomTraversalState,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
@@ -21,9 +25,11 @@ import {
 import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
-import { DialogBox } from "../systems/dialog";
+import { FeedbackToast } from "../systems/feedbackToast";
 import { decideInteractionFeedback, InteractionAssist, nearestInteractable, nearestInteractableHint } from "../systems/interaction";
 import { InteractionPrompt } from "../systems/interactionPrompt";
+import { InventoryOverlay } from "../systems/inventory";
+import { handleOpenOverlays } from "../systems/overlayInput";
 import { saveGameNow } from "../systems/save";
 import { transitionTo } from "../systems/sceneTransitions";
 
@@ -81,11 +87,14 @@ function buildReadingRoomTiles() {
 
 export class HiddenReadingRoomScene extends Phaser.Scene {
   private player!: Player;
-  private dialog!: DialogBox;
+  private toast!: FeedbackToast;
   private prompt!: InteractionPrompt;
+  private inventory!: InventoryOverlay;
   private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
   private collectible?: Phaser.GameObjects.Sprite;
+  private inputReadyAt = 0;
+  private leaving = false;
   private readonly solids = [
     new Phaser.Geom.Rectangle(0, ROOM_TOP, 256, 14),
     new Phaser.Geom.Rectangle(0, ROOM_TOP, 14, 208),
@@ -114,16 +123,26 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
     }
   }
 
-  create() {
+  create(data?: unknown) {
+    const arrival = readChapterArrival(data, "HiddenReadingRoomScene", gameState.currentScene);
+    this.leaving = false;
+    this.inputReadyAt = this.time.now + 350;
+    this.interactionAssist.clear();
     this.cameras.main.setBackgroundColor(PALETTE.black);
     setSceneState("HiddenReadingRoomScene", "explore", "Hidden Reading Room: claim the first-edition FRUS volume.");
-    setObjective("Hidden Reading Room: claim the first-edition FRUS volume.");
+    setObjective(hiddenFirstEditionFound(gameState) ? "SOUTH TO STACKS" : "CLAIM FIRST EDITION");
+    gameState.sceneProgress[HIDDEN_READING_ROOM_DISCOVERED_FLAG] = 1;
+    setRoomTraversalState({
+      currentRoomId: "DN2", roomTitle: "Hidden Reading Room", roomType: "secret",
+      visitedRoomIds: [...new Set([...getVisitedRoomIds(["DN1", "DN2"] as const), "DN2"])],
+      exits: { south: "DN1" }
+    });
     setLatestMessage(hiddenFirstEditionFound(gameState)
       ? "Hidden reading room: first edition already filed."
       : "Hidden reading room discovered.");
     setVisibleEntities([
       "Hidden Reading Room",
-      hiddenFirstEditionFound(gameState) ? "First Edition FRUS Volume (filed)" : "First Edition FRUS Volume",
+      hiddenFirstEditionFound(gameState) ? "Empty Book Stand" : "First Edition FRUS Volume",
       "NARA Stacks return threshold"
     ]);
     setVisibleThreats([]);
@@ -133,12 +152,14 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
     this.ensureCollectibleAnimation();
     this.drawCollectible();
     this.player = new Player(this, 128, 208);
-    this.dialog = new DialogBox(this);
+    if (arrival) this.player.setPosition(arrival.x, arrival.y);
+    this.toast = new FeedbackToast(this);
     this.prompt = new InteractionPrompt(this, 940);
+    this.inventory = new InventoryOverlay(this);
     this.interactables = [
       {
         id: "first-edition-frus",
-        label: hiddenFirstEditionFound(gameState) ? "Filed First Edition" : "First Edition FRUS",
+        label: "First Edition FRUS",
         x: COLLECTIBLE_POSITION.x,
         y: COLLECTIBLE_POSITION.y,
         radius: 28,
@@ -152,19 +173,32 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
         y: 224,
         radius: 26,
         kind: "door",
-        onInteract: () => transitionTo(this, "NaraStacksScene")
+        onInteract: () => this.returnToStacks()
       }
     ];
+    if (hiddenFirstEditionFound(gameState)) this.removeCollectedBookInteraction();
     this.drawTitleCard();
+    saveGameNow("manual");
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.toast.destroy());
   }
 
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
-    if (this.dialog.active) {
-      if (input.aJustPressed) this.dialog.advance();
+    this.toast.update(delta, this.player.position);
+    if (this.leaving || this.time.now < this.inputReadyAt) {
       this.player.update(delta, false);
       this.prompt.update(delta, null);
+      return;
+    }
+    if (input.menuJustPressed) this.inventory.toggle();
+    if (handleOpenOverlays(this.inventory)) {
+      this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      return;
+    }
+    if (input.pauseJustPressed) {
+      this.inventory.toggle();
       return;
     }
 
@@ -253,22 +287,38 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
 
   private collectFirstEdition() {
     if (hiddenFirstEditionFound(gameState)) {
-      this.dialog.show("FIRST EDITION", "The first-edition FRUS volume is already filed in the bonus ledger.");
+      this.toast.show("FIRST EDITION FILED", this.player.position, "info");
       return;
     }
     gameState.sceneProgress[HIDDEN_FIRST_EDITION_FOUND_FLAG] = 1;
     addInventoryItem(HIDDEN_FIRST_EDITION_LABEL);
     addDocumentPoints(25, "Hidden first edition found");
     setLatestMessage("Hidden first edition filed: bonus completion recorded.");
-    setObjective("Hidden Reading Room: first edition filed; return to NARA Stacks.");
-    setVisibleEntities(["Hidden Reading Room", "First Edition FRUS Volume (filed)", "NARA Stacks return threshold"]);
-    this.collectible?.destroy();
+    setObjective("SOUTH TO STACKS");
+    setVisibleEntities(["Hidden Reading Room", "Empty Book Stand", "NARA Stacks return threshold"]);
+    const collectible = this.collectible;
+    if (collectible) {
+      this.tweens.add({ targets: collectible, y: collectible.y - 16, alpha: 0, duration: 400,
+        onUpdate: () => collectible.setY(Math.round(collectible.y)), onComplete: () => collectible.destroy() });
+    }
     this.collectible = undefined;
+    this.removeCollectedBookInteraction();
     retroAudio.danneItemPickup("First Edition");
     saveGameNow("manual");
-    this.dialog.show("FIRST EDITION", [
-      "You found a gilded first-edition FRUS volume.",
-      "Bonus stat recorded for the final completion summary."
-    ]);
+    this.toast.show("FIRST EDITION +25", this.player.position, "info");
+  }
+
+  private removeCollectedBookInteraction() {
+    this.interactables = this.interactables.filter((item) => item.id !== "first-edition-frus");
+    this.interactionAssist.clear();
+    setNearestInteractable(null);
+    this.prompt.update(0, null);
+  }
+
+  private returnToStacks() {
+    if (this.leaving || this.time.now < this.inputReadyAt) return;
+    this.leaving = true;
+    saveGameNow("manual");
+    transitionTo(this, "NaraStacksScene", { chapterFrom: "DN2", chapterTo: "DN1" });
   }
 }

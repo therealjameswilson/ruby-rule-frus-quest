@@ -57,7 +57,7 @@ import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
 import { getAboutSeriesGameplayReadout } from "./aboutSeries";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
-import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./secretReadingRoom";
+import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound, hiddenReadingRoomDiscovered } from "./secretReadingRoom";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
 import { VOLUME_CONCEPT_PROMPTS } from "./volumeConcept";
 import type { QuestArchitectureContext } from "./questArchitecture";
@@ -1424,8 +1424,9 @@ export function getRoomGraphReadout() {
         const requiredItem = room.requiredItems?.[direction] ?? null;
         const bossDoor = isBossDoor(room, direction);
         const blackVaultFinalExit = room.id === "DV1" && direction === "east";
+        const readingPassage = room.id === "DN1" && direction === "north";
         const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
-        const canOpen = blackVaultFinalExit
+        const canOpen = readingPassage ? hiddenReadingRoomDiscovered(gameState) : blackVaultFinalExit
           ? Boolean(gameState.sceneProgress.blackVaultBossCleared)
           : bossDoor
           ? canOpenBossDoor(dungeon)
@@ -1437,8 +1438,11 @@ export function getRoomGraphReadout() {
           gateType: bossDoor ? "boss" : requiredItem ? "process_item" : "small_key",
           requiredItem,
           requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
-          blockedMessage: canOpen ? null : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
-          blockedObjective: canOpen ? null : blackVaultFinalExit ? "Black Vault: defeat DANN-E before entering the Buckram Gate." : prompt.objective,
+          blockedMessage: canOpen ? null : readingPassage && heldProcessItems.has("review_folder")
+            ? "Compare the northeast shelf register with the Review Folder."
+            : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
+          blockedObjective: canOpen ? null : readingPassage && heldProcessItems.has("review_folder") ? "COMPARE THE SHELF REGISTER"
+            : blackVaultFinalExit ? "Black Vault: defeat DANN-E before entering the Buckram Gate." : prompt.objective,
           canOpen,
           smallKeys: dungeon.smallKeys,
           bigKeyHeld: dungeon.bigKeyHeld
@@ -1455,7 +1459,8 @@ export function getRoomGraphReadout() {
       requiredItems: room.requiredItems ?? {},
       roomType: room.roomType,
       visited: visitedRoomIds.has(room.id),
-      revealed: revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret" || dungeon.mapRevealed
+      revealed: room.id === "DN2" ? hiddenReadingRoomDiscovered(gameState)
+        : revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret" || dungeon.mapRevealed
     };
   });
 }
@@ -2940,6 +2945,7 @@ export function renderGameToText() {
       volumeFragments: gameState.volumeFragments,
       volumeAssembly: getVolumeAssemblyReadout(),
       secrets: {
+        hiddenReadingRoomDiscovered: hiddenReadingRoomDiscovered(gameState),
         hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),
         hiddenFirstEditionBonus: hiddenFirstEditionBonusLabel(gameState)
       },

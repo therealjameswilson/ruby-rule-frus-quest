@@ -262,6 +262,15 @@ export class Player {
     setPlayerFacing(this.facing);
   }
 
+  faceTowards(target: Position) {
+    const dx = target.x - this.logicalX;
+    const dy = target.y - this.logicalY;
+    if (dx === 0 && dy === 0) return;
+    this.facing = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "west" : "east") : (dy < 0 ? "north" : "south");
+    this.syncRenderPosition();
+    setPlayerFacing(this.facing);
+  }
+
   pushAwayFrom(source: Position, distance = 12) {
     const dx = this.logicalX - source.x;
     const dy = this.logicalY - source.y;

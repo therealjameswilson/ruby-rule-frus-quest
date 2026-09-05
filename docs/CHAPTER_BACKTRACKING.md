@@ -22,7 +22,8 @@ authored three-tile side openings changed.
 
 ## State And Arrival Rules
 
-- `chapterTravel.ts` accepts only eight authored source/destination door pairs.
+- `chapterTravel.ts` originally accepted eight authored source/destination door pairs;
+  the reading-room follow-up adds the reciprocal DN1/DN2 pair (ten total).
   It does not accept arbitrary coordinates or destinations from scene data.
 - Explicit doorway arrivals take precedence over a previous chapter's position.
   Continue keeps its exact saved room and position, including N2, R2, and S1.
@@ -78,7 +79,7 @@ Retained native screenshots are `docs/screenshots/chapter-routing-return.png`,
 This is a local connected-world checkpoint, not a public deployment or a new
 Title-to-ending completion claim. Real iPhone Safari, isolated transition
 stalls, and play-time accounting while an open tab is paused still need work.
-The hidden-room return currently uses NARA's existing south entry rather than
-the secret passage mouth. Art, combat balance, and room objectives are not
+The reading-room follow-up now returns to the secret passage mouth; see
+`READING_ROOM_DISCOVERY.md` for its separate verification. Art, combat balance, and room objectives are not
 redesigned here. Standalone side-scene map markers retain their existing
 current-scene behavior; the new visit history covers the traversable chapters.
