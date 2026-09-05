@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Player } from "./Player";
 import { gameState, resetGameState } from "../game/state";
+import { CombatClock } from "../systems/combatClock";
 
 vi.mock("phaser", () => ({ default: { Math: { Clamp: (value: number, min: number, max: number) => Math.min(max, Math.max(min, value)) } } }));
 
@@ -22,8 +23,8 @@ function fixture(x = 200, y = 183) {
     logicalX: x, logicalY: y, velocityX: 58, velocityY: 0,
     facing: "east", movementOptions: {}, collidesAt: vi.fn(() => false), syncRenderPosition: vi.fn(),
     idleClock: 0, abilityFrameUntil: 0, invulnerableUntil: 0,
-    scene: { time: { now: 0 } }, weaponState: { update: vi.fn() },
-    sprite: { setAngle: vi.fn(), setScale: vi.fn(), clearTint: vi.fn() }
+    scene: { time: { now: 0 } }, weaponState: { update: vi.fn() }, combatClock: new CombatClock(),
+    sprite: { setAngle: vi.fn(), setScale: vi.fn(), clearTint: vi.fn(), setActive: vi.fn() }
   });
   return { player, internals };
 }

@@ -48,7 +48,8 @@ export class RedactorDrone extends Enemy {
     this.playWalk("down");
   }
 
-  update(_timeMs: number, deltaMs: number, player: Player, canAct: boolean) {
+  update(sceneTime: number, deltaMs: number, player: Player, canAct: boolean) {
+    this.setCombatActive(canAct, sceneTime);
     // Gameplay time stops with the map/dialogue. A pending tell retains its
     // remaining reaction window instead of landing during or just after pause.
     if (!canAct || this.dead) return false;

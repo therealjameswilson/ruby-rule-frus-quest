@@ -3,6 +3,7 @@ import { ACCESSIBILITY_OVERLAYS } from "../../assets/registry";
 import { PALETTE } from "../../game/constants";
 import type { Position } from "../../game/types";
 import { isColorblindModeEnabled } from "../../systems/accessibilitySettings";
+import { CombatClock } from "../../systems/combatClock";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { approach, frameDeltaSeconds, setRenderedPosition, snapRenderedPosition } from "../../systems/smoothMovement";
 
@@ -63,6 +64,9 @@ export abstract class Enemy {
   private readonly acceleration: number;
   private readonly waypointTolerance: number;
   private playerHitCooldownUntil = 0;
+  private readonly hitClock = new CombatClock();
+  private combatActive = true;
+  private pausedTweens: Phaser.Tweens.Tween[] = [];
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: EnemyOptions) {
     this.scene = scene;
@@ -164,7 +168,8 @@ export abstract class Enemy {
    * "kill" when the hit is fatal, otherwise "hit".
    */
   tryPlayerHit(now: number, amount = 1, source?: Position, knockbackDistance = 10, cooldownMs = 320): "miss" | "hit" | "kill" {
-    if (this.dead || now < this.playerHitCooldownUntil) return "miss";
+    now = this.hitClock.now(now);
+    if (this.dead || this.hitClock.paused || now < this.playerHitCooldownUntil) return "miss";
     this.playerHitCooldownUntil = now + cooldownMs;
     return this.takeDamage(amount, source, knockbackDistance) ? "kill" : "hit";
   }
@@ -207,6 +212,20 @@ export abstract class Enemy {
     this.currentX += this.velocityX * dt;
     this.currentY += this.velocityY * dt;
     this.sprite.setFlipX(this.velocityX < -0.5);
+  }
+
+  protected setCombatActive(active: boolean, sceneTime: number) {
+    if (this.dead || this.combatActive === active) return;
+    this.combatActive = active;
+    this.hitClock.setPaused(!active, sceneTime);
+    this.sprite.setActive(active);
+    if (!active) {
+      this.pausedTweens = this.scene.tweens.getTweensOf(this.container).filter((tween) => !tween.isPaused());
+      this.pausedTweens.forEach((tween) => tween.pause());
+    } else {
+      this.pausedTweens.forEach((tween) => tween.resume());
+      this.pausedTweens = [];
+    }
   }
 
   protected distanceTo(position: Position) {

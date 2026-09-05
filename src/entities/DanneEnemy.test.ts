@@ -4,6 +4,7 @@ import { retroAudio } from "../systems/audio";
 import { applyRoomClearGate, isRoomCleared } from "../systems/roomClear";
 import type * as DanneEnemyModule from "./DanneEnemy";
 import type { DanneEnemyVariantId } from "./danneVariants";
+import { CombatClock } from "../systems/combatClock";
 
 type DanneEnemyInstance = DanneEnemyModule.DanneEnemy;
 type TestRectangle = {
@@ -43,6 +44,7 @@ let danneEnemyVariant: typeof import("./danneVariants").danneEnemyVariant;
 function dummyVisual() {
   return {
     setVisible: vi.fn().mockReturnThis(),
+    setActive: vi.fn().mockReturnThis(),
     destroy: vi.fn()
   };
 }
@@ -58,7 +60,7 @@ function dummyText() {
 
 function makeEnemy(variantId: DanneEnemyVariantId, hp = 2) {
   const config = danneEnemyVariant(variantId);
-  const body = { enable: true };
+  const body = { enable: true, moves: true, velocity: { x: 12, y: 0 }, setVelocity: vi.fn() };
   const enemy = Object.assign(Object.create(DanneEnemy.prototype), {
     id: `${variantId}-test`,
     roomId: "test-room",
@@ -75,11 +77,18 @@ function makeEnemy(variantId: DanneEnemyVariantId, hp = 2) {
     nextToolHitAt: 0,
     lastPlayerSwingId: -1,
     stunnedUntil: 0,
+    combatClock: new CombatClock(),
+    pausedTweens: [],
+    flashUntil: 0,
+    hasSpottedPlayer: true,
+    meleeStartedAt: null,
+    nextProjectileAt: 10000,
+    waypoints: [],
     projectiles: [],
     scene: {
       time: { now: 1000 },
       add: { text: vi.fn(() => dummyText()) },
-      tweens: { add: vi.fn() }
+      tweens: { add: vi.fn(), getTweensOf: () => [] }
     },
     shadow: dummyVisual(),
     weaknessCue: dummyVisual(),
@@ -98,13 +107,16 @@ function makeEnemy(variantId: DanneEnemyVariantId, hp = 2) {
     arcadeBody: vi.fn(() => body),
     flash: vi.fn(),
     maybeShowTaunt: vi.fn(),
+    playFacingAnim: vi.fn(),
+    clampToRoom: vi.fn(),
+    syncUi: vi.fn(),
     destroy: vi.fn()
   });
   return enemy as unknown as TestEnemy;
 }
 
-function activeHitbox(): Parameters<DanneEnemyInstance["tryPlayerToolHit"]>[0] {
-  return new Phaser.Geom.Rectangle(88, 84, 32, 32) as unknown as Parameters<DanneEnemyInstance["tryPlayerToolHit"]>[0];
+function activeHitbox(): NonNullable<Parameters<DanneEnemyInstance["tryPlayerToolHit"]>[0]> {
+  return new Phaser.Geom.Rectangle(88, 84, 32, 32) as unknown as NonNullable<Parameters<DanneEnemyInstance["tryPlayerToolHit"]>[0]>;
 }
 
 describe("DanneEnemy combat", () => {
@@ -278,5 +290,60 @@ describe("DanneEnemy combat", () => {
     expect(status.cleared).toBe(true);
     expect(isRoomCleared("test-room")).toBe(true);
     expect(gameState.sceneProgress.testGateOpen).toBe(1);
+  });
+
+  it("stops Arcade movement and projectile animation while preserving velocity on resume", () => {
+    const enemy = makeEnemy("danne-mark-i-prototype", 2);
+    const projectile = { sprite: dummyVisual() };
+    const projectiles = [projectile];
+    Object.assign(enemy, { projectiles });
+    const body = (enemy as unknown as { arcadeBody(): { moves: boolean; velocity: { x: number; y: number } } }).arcadeBody();
+    enemy.setCombatPaused(true);
+    expect(body.moves).toBe(false);
+    expect(body.velocity).toEqual({ x: 12, y: 0 });
+    expect(enemy.setActive).toHaveBeenCalledWith(false);
+    expect(projectile.sprite.setActive).toHaveBeenCalledWith(false);
+    enemy.scene.time.now += 30000;
+    expect(enemy.updateEnemy(enemy.scene.time.now, 16, { x: 100, y: 100 }, activeHitbox())).toEqual({ projectileHit: false, contactHit: false });
+    expect(enemy.tryPlayerToolHit(activeHitbox(), "review_folder", { x: 80, y: 100 }, 9)).toBe("miss");
+    expect(enemy.currentHp).toBe(2);
+    enemy.setCombatPaused(false);
+    expect(body.moves).toBe(true);
+    expect(projectile.sprite.setActive).toHaveBeenLastCalledWith(true);
+    expect(projectiles).toHaveLength(1);
+  });
+
+  it("retains enemy hit cooldown instead of clearing it during a long menu", () => {
+    const enemy = makeEnemy("danne-mark-i-prototype", 3);
+    expect(enemy.tryPlayerToolHit(activeHitbox(), "review_folder", { x: 80, y: 100 }, 1)).toBe("damaged");
+    enemy.scene.time.now = 1050;
+    enemy.setCombatPaused(true);
+    enemy.scene.time.now = 11050;
+    enemy.setCombatPaused(false);
+    expect(enemy.tryPlayerToolHit(activeHitbox(), "review_folder", { x: 80, y: 100 }, 2)).toBe("cooldown");
+    enemy.scene.time.now += 120;
+    expect(enemy.tryPlayerToolHit(activeHitbox(), "review_folder", { x: 80, y: 100 }, 2)).toBe("damaged");
+    expect(enemy.currentHp).toBe(1);
+  });
+
+  it("preserves a projectile's remaining lifetime and advances it only during play", () => {
+    const enemy = makeEnemy("danne-mark-i-prototype", 2);
+    const sprite = { ...dummyVisual(), x: 20, y: 40,
+      setPosition: vi.fn(function (this: { x: number; y: number }, x: number, y: number) { this.x = x; this.y = y; return this; }),
+      setDepth: vi.fn().mockReturnThis() };
+    Object.assign(enemy, { projectiles: [{ sprite, vx: 60, vy: 0, expiresAt: 1500, armed: true }] });
+    enemy.setCombatPaused(true);
+    enemy.scene.time.now = 21000;
+    enemy.updateEnemy(21000, 16, { x: 240, y: 230 }, activeHitbox());
+    expect(sprite.x).toBe(20);
+    expect(sprite.destroy).not.toHaveBeenCalled();
+    enemy.setCombatPaused(false);
+    enemy.scene.time.now = 21020;
+    enemy.updateEnemy(21020, 20, { x: 240, y: 230 }, activeHitbox());
+    expect(sprite.x).toBe(21);
+    expect(sprite.destroy).not.toHaveBeenCalled();
+    enemy.scene.time.now = 21500;
+    enemy.updateEnemy(21500, 20, { x: 240, y: 230 }, activeHitbox());
+    expect(sprite.destroy).toHaveBeenCalledOnce();
   });
 });

@@ -310,6 +310,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const input = getInput();
     this.cacheToast.update(delta, this.player.position);
     if (this.leavingReadingPassage || this.time.now < this.passageBusyUntil) {
+      this.updateDanneEntities(this.time.now, delta, false);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       return;
@@ -322,13 +323,13 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.reliability.update();
     }
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
-    if (input.abilityJustPressed) activateRoleAbility(this);
     if (isUiDebugEnabled() && input.bJustPressed) this.showBossHudDebug();
-    if (input.bJustPressed && !bossDecisionActive) this.attackBuffer.press(this.time.now);
     const frozen = this.hitstop.isFrozen(this.time.now);
+    const canAct = gameState.mode === "explore" && !this.dialog.active && !this.choice.active
+      && !this.inventory.active && !this.reliability.active && !bossDecisionActive && !isCutsceneActive(this);
+    this.player.setCombatPaused(!canAct || frozen);
     if (!frozen) {
-      this.updateDanneEntities(this.time.now, delta, gameState.mode === "explore"
-        && !this.dialog.active && !this.choice.active && !this.inventory.active && !this.reliability.active);
+      this.updateDanneEntities(this.time.now, delta, canAct);
       this.restoreSafePlayerPosition();
     }
 
@@ -369,8 +370,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     if (input.pauseJustPressed) {
       this.inventory.toggle();
+      this.player.setCombatPaused(true);
       return;
     }
+
+    if (input.abilityJustPressed) activateRoleAbility(this);
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
 
     // Hitstop: hold actors on the impact frame for a few frames so a clean
     // sword hit crunches. The camera shake / boss flash tweens run on Phaser's
@@ -1004,7 +1009,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
         spriteKey: wraith.spriteKey,
         behavior: "slow float + ink sweep",
         defeatMethod: "Keep distance, strike during the ink-sweep pause, and preserve visible review notes.",
-        status: wraith.status(timeMs)
+        status: wraith.status(timeMs),
+        ...wraith.healthReadout,
+        telegraph: wraith.telegraph
       })),
       ...(this.danneBoss?.isActive ? [this.danneBoss.readout()] : [])
     ]);

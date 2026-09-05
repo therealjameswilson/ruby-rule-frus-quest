@@ -14,6 +14,7 @@ import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 import { approach, frameDeltaSeconds, resolveFacing, resolveMovementVector, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
 import { buildWeaponHitbox, WEAPON_VFX_ASSET, WeaponStateController, weaponTiming } from "../systems/weaponState";
+import { CombatClock } from "../systems/combatClock";
 
 interface MoveBounds {
   left: number;
@@ -111,6 +112,7 @@ export class Player {
   private movementOptions: PlayerMoveOptions = {};
   private readonly scene: Phaser.Scene;
   private readonly weaponState = new WeaponStateController();
+  private readonly combatClock = new CombatClock();
   private facing: Direction = "south";
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -226,7 +228,7 @@ export class Player {
   }
 
   get activeActionHitbox() {
-    return this.weaponState.activeHitbox(this.position, this.facing, this.scene.time.now);
+    return this.weaponState.activeHitbox(this.position, this.facing, this.combatTime);
   }
 
   get actionId() {
@@ -234,11 +236,19 @@ export class Player {
   }
 
   get isInvulnerable() {
-    return this.scene.time.now < this.invulnerableUntil;
+    return this.combatTime < this.invulnerableUntil;
+  }
+
+  private get combatTime() {
+    return this.combatClock.now(this.scene.time.now);
+  }
+
+  setCombatPaused(paused: boolean) {
+    if (this.combatClock.setPaused(paused, this.scene.time.now)) this.sprite.setActive(!paused);
   }
 
   get combatReadout(): PlayerCombatReadout {
-    const now = this.scene.time.now;
+    const now = this.combatTime;
     const hitbox = this.activeActionHitbox;
     const weapon = this.weaponState.readout(now);
     return {
@@ -298,7 +308,7 @@ export class Player {
   }
 
   startAction(tool: ProcessItemId | null = gameState.equippedProcessItem) {
-    const now = this.scene.time.now;
+    const now = this.combatTime;
     const started = this.weaponState.tryStart(tool, now);
     if (!started) return false;
     this.controlState = "attack";
@@ -315,8 +325,8 @@ export class Player {
 
   takeHit(source: Position, distance = 14, invulnerabilityMs = PLAYER_IFRAME_MS) {
     if (this.isInvulnerable) return false;
-    this.invulnerableUntil = this.scene.time.now + invulnerabilityMs;
-    this.hurtUntil = this.scene.time.now + PLAYER_HURT_MS;
+    this.invulnerableUntil = this.combatTime + invulnerabilityMs;
+    this.hurtUntil = this.combatTime + PLAYER_HURT_MS;
     this.controlState = "hurt";
     this.pushAwayFrom(source, distance);
     const heavy = distance >= 15;
@@ -327,8 +337,9 @@ export class Player {
   }
 
   update(deltaMs: number, canMove: boolean, options: PlayerMoveOptions = {}) {
-    this.idleClock += deltaMs;
-    const now = this.scene.time.now;
+    this.setCombatPaused(!canMove);
+    if (canMove) this.idleClock += deltaMs;
+    const now = this.combatTime;
     this.weaponState.update(now);
     if (!canMove) {
       this.isMoving = false;
@@ -441,7 +452,7 @@ export class Player {
   }
 
   private playAbilityFrame() {
-    this.abilityFrameUntil = this.scene.time.now + 420;
+    this.abilityFrameUntil = this.combatTime + 420;
     this.controlState = "use_item";
     if (this.spriteMode === "snesRoleFrame48" || this.spriteMode === "artPack32x48") {
       this.sprite.clearTint();
@@ -473,7 +484,7 @@ export class Player {
     setPlayerCombat(this.combatReadout);
   }
 
-  private currentControlState(now = this.scene.time.now): PlayerControlState {
+  private currentControlState(now = this.combatTime): PlayerControlState {
     if (now < this.hurtUntil) return "hurt";
     if (this.weaponState.phase === "windup" || this.weaponState.phase === "active") return "attack";
     if (this.controlState === "hurt" || this.controlState === "attack") return this.isMoving ? "walk" : "idle";
@@ -532,7 +543,7 @@ export class Player {
   }
 
   private syncActionEffect(hitbox: Phaser.Geom.Rectangle) {
-    const now = this.scene.time.now;
+    const now = this.combatTime;
     const readout = this.weaponState.readout(now);
     const timing = weaponTiming(readout.tool);
     const remainingRatio = timing.activeMs <= 0 ? 0 : Phaser.Math.Clamp(readout.activeMsRemaining / timing.activeMs, 0, 1);
@@ -591,10 +602,10 @@ export class Player {
   private syncInvulnerabilityBlink() {
     if (!this.isInvulnerable) {
       this.sprite.setAlpha(1);
-      if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
+      if (this.combatTime >= this.abilityFrameUntil) this.sprite.clearTint();
       return;
     }
-    const blinkOn = Math.floor(this.scene.time.now / 90) % 2 === 0;
+    const blinkOn = Math.floor(this.combatTime / 90) % 2 === 0;
     this.sprite.setAlpha(blinkOn ? 1 : 0.45);
     this.sprite.setTint(color(PALETTE.classNetRed));
   }
@@ -709,7 +720,7 @@ export class Player {
     if (!this.idleParts.length) return;
     const tick = Math.floor(this.idleClock / 360) % 4;
     const fastTick = Math.floor(this.idleClock / 180) % 4;
-    const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+    const abilityActive = this.combatTime < this.abilityFrameUntil;
     const hideAnimatedCue = this.isMoving && !abilityActive;
     for (const part of this.idleParts) {
       let x = renderX + part.ox;
@@ -755,7 +766,7 @@ export class Player {
 
   private updateRoleFrame() {
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
-      const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+      const abilityActive = this.combatTime < this.abilityFrameUntil;
       const directionSuffix = this.directionSuffix();
       const suffix = abilityActive
         ? this.isActionActive
@@ -772,7 +783,7 @@ export class Player {
     }
     if (this.spriteMode !== "snesRoleFrame48" || !this.roleFrameSheet) return;
     const texture = this.scene.textures.get(this.roleFrameSheet.key);
-    const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+    const abilityActive = this.combatTime < this.abilityFrameUntil;
     const directionFrames: Record<Direction, string> = {
       north: "walk-up",
       south: "walk-down",

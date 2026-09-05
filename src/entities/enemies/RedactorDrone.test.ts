@@ -29,6 +29,7 @@ function node(x = 0, y = 0) {
     setOrigin: vi.fn().mockReturnThis(), setScale: vi.fn().mockReturnThis(), setDepth: vi.fn().mockReturnThis(),
     setSize: vi.fn().mockReturnThis(), setStrokeStyle: vi.fn().mockReturnThis(), setFillStyle: vi.fn().mockReturnThis(),
     setName: vi.fn().mockReturnThis(), setAlpha: vi.fn().mockReturnThis(), setFlipX: vi.fn().mockReturnThis(),
+    setActive: vi.fn().mockReturnThis(),
     setTint: vi.fn().mockReturnThis(), clearTint: vi.fn().mockReturnThis(), destroy: vi.fn(), play: vi.fn()
   };
 }
@@ -36,7 +37,7 @@ function node(x = 0, y = 0) {
 function encounter() {
   const rectangles: ReturnType<typeof node>[] = [];
   const texts: Array<{ text: string; node: ReturnType<typeof node> }> = [];
-  const scene = { textures: { exists: () => false }, anims: { exists: () => false }, tweens: { add: vi.fn() },
+  const scene = { textures: { exists: () => false }, anims: { exists: () => false }, tweens: { add: vi.fn(), getTweensOf: () => [] },
     add: { ellipse: node, sprite: node, container: node,
       rectangle: (x: number, y: number) => { const n = node(x, y); rectangles.push(n); return n; },
       text: (x: number, y: number, text: string) => { const n = node(x, y); texts.push({ text, node: n }); return n; } } };

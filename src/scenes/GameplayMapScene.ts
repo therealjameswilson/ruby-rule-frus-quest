@@ -103,6 +103,7 @@ import {
   type EncounterWaveQueue
 } from "../systems/encounterWaves";
 import { AttackBuffer, HitstopController } from "../systems/hitstop";
+import { CombatClock } from "../systems/combatClock";
 import {
   applyRoomClearGate,
   isRoomCleared,
@@ -267,6 +268,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private readonly attackBuffer = new AttackBuffer();
   private danneBanner?: Phaser.GameObjects.Container;
   private activeMusicCue = "";
+  private combatClock = new CombatClock();
 
   constructor() {
     super("GameplayMapScene");
@@ -298,6 +300,7 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   create() {
+    this.combatClock = new CombatClock();
     this.danneWaveTransition.reset();
     this.hitstop.reset();
     this.attackBuffer.clear();
@@ -370,11 +373,13 @@ export class GameplayMapScene extends Phaser.Scene {
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.routeTransitionLocked) {
+      this.setCombatPaused(true);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       return;
     }
     if (this.dialogPages.length > 0) {
+      this.setCombatPaused(true);
       if (input.aJustPressed) this.advanceMapDialog();
       if (input.bJustPressed || input.pauseJustPressed) this.clearMapDialog();
       this.player.update(delta, false);
@@ -383,21 +388,25 @@ export class GameplayMapScene extends Phaser.Scene {
     }
     if (input.menuJustPressed) this.inventory.toggle();
     if (handleOpenOverlays(this.inventory)) {
+      this.setCombatPaused(true);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       return;
     }
     if (input.pauseJustPressed) {
+      this.setCombatPaused(true);
       this.returnToWorldMap();
       return;
     }
     if (input.bJustPressed || input.abilityJustPressed) this.attackBuffer.press(this.time.now);
     if (this.hitstop.isFrozen(this.time.now)) {
+      this.setCombatPaused(true);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.syncGameplayThreats();
       return;
     }
+    this.setCombatPaused(false);
     if (this.attackBuffer.consume(this.time.now, true)) {
       const toolLabel = gameState.equippedProcessItem?.replace(/_/g, " ").toUpperCase() ?? "FRUS TOOL";
       if (this.player.startAction(gameState.equippedProcessItem)) {
@@ -417,6 +426,10 @@ export class GameplayMapScene extends Phaser.Scene {
       solids: this.solids
     });
     this.handleTriggers();
+    if (this.dialogPages.length > 0 || this.routeTransitionLocked) {
+      this.setCombatPaused(true);
+      return;
+    }
     this.updateFrusFloorCurrentStage();
     this.updateFrusFloorGateStatus();
     this.updateFrusFloorNextGateRoute();
@@ -668,6 +681,13 @@ export class GameplayMapScene extends Phaser.Scene {
     };
   }
 
+  private setCombatPaused(paused: boolean) {
+    this.combatClock.setPaused(paused, this.time.now);
+    this.player.setCombatPaused(paused);
+    for (const enemy of this.danneEnemies) enemy.setCombatPaused(paused);
+    if (paused) this.syncGameplayThreats();
+  }
+
   private updateDanneEncounter(delta: number) {
     if (!this.danneRoomId || !this.danneEnemies.length) return;
     const playerPosition = this.player.position;
@@ -704,7 +724,7 @@ export class GameplayMapScene extends Phaser.Scene {
     }
 
     if (!this.danneEnemies.some((enemy) => !enemy.defeated) && hasPendingEncounterWaves(this.danneWaves)) {
-      if (this.danneWaveTransition.begin(this.time.now)) {
+      if (this.danneWaveTransition.begin(this.combatClock.now(this.time.now))) {
         const nextWave = this.danneWaves.currentWave + 1;
         this.showDanneBanner(`WAVE ${this.danneWaves.currentWave} CLEARED`, `NEXT REVIEW ${nextWave}/${this.danneWaves.totalWaves}`, PALETTE.goldStamp);
         retroAudio.confirm();
@@ -713,7 +733,7 @@ export class GameplayMapScene extends Phaser.Scene {
         this.objectiveOverrideMsRemaining = 700;
         this.updateVisibleMapState();
       }
-      if (!this.danneWaveTransition.consumeIfReady(this.time.now)) return;
+      if (!this.danneWaveTransition.consumeIfReady(this.combatClock.now(this.time.now))) return;
       this.advanceDanneWave();
       setLatestMessage(`DANN-E wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} active.`);
       setObjective("New DANN-E wave: read the weakness glyph, equip its tool, then press B.");
@@ -833,6 +853,7 @@ export class GameplayMapScene extends Phaser.Scene {
         reliabilityRisk: readout.reliabilityRisk,
         enemyState: readout.state,
         weakness: readout.weakness,
+        telegraph: readout.telegraph,
         roomClear: roomStatus
           ? {
               roomId: roomStatus.roomId,
