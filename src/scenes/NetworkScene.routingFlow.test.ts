@@ -44,16 +44,33 @@ describe("NetworkScene physical routing flow", () => {
     expect(networkSceneSource).toContain("sceneProgress.networkRoutingComplete");
   });
 
+  it("restores the saved room, position, and visible carried batch", () => {
+    expect(networkSceneSource).toContain('gameState.currentScene === "NetworkScene"');
+    expect(networkSceneSource).toContain('gameState.roomTraversal?.currentRoomId === "N2"');
+    expect(networkSceneSource).toContain("restoredPosition ?? { x: 128, y: 196 }");
+    expect(methodSource("restoreHeldBatchState", "update")).toContain("Routing Batch:");
+    expect(methodSource("restoreHeldBatchState", "update")).toContain("Review Batch:");
+  });
+
   it("restores the exact room objective after DANN-E pressure", () => {
     expect(networkSceneSource).toContain("restoreObjectiveAfterDannePressure");
     expect(networkSceneSource).toContain("this.beginRouting()");
   });
 
-  it("returns wrong-network packets to the sorter without poisoning the ending", () => {
-    expect(routingSource).toContain("Packet returned to the sorter");
-    expect(networkSceneSource).toContain("drawRoutingPacketAtSorter");
+  it("keeps wrong-network packets in hand for an immediate retry", () => {
+    const routePacket = methodSource("routeCarriedPacket", "updateRoutingRouteText");
+    expect(routingSource).toContain("Packet remains in hand");
+    expect(routePacket).toContain("networkRoutingObjective(this.currentRoute, true)");
+    expect(routePacket).not.toContain("this.drawRoutingPacketAtSorter()");
     expect(networkSceneSource).toContain("WRONG NETWORK");
     expect(networkSceneSource).not.toContain("recordUnresolvedEquity");
+  });
+
+  it("hands off the next routing packet without another sorter trip", () => {
+    const routePacket = methodSource("routeCarriedPacket", "updateRoutingRouteText");
+    expect(routePacket).toContain("networkBatchPacketAfterRoute(result)");
+    expect(routePacket).toContain("this.carryRoutingPacket(nextPacket)");
+    expect(routePacket).toContain("NEXT:");
   });
 
   it("files ClassNet review dockets in the room instead of reopening clearance quizzes", () => {
@@ -69,7 +86,14 @@ describe("NetworkScene physical routing flow", () => {
     expect(networkSceneSource).toContain("sceneProgress.classNetVaultReviewStep");
     expect(networkSceneSource).toContain("sceneProgress.classNetVaultDocketCarried");
     expect(networkSceneSource).toContain("sceneProgress.classNetVaultReviewComplete");
-    expect(vaultReviewSource).toContain("Docket returned to the pedestal");
+    expect(vaultReviewSource).toContain("Docket remains in hand");
+  });
+
+  it("keeps wrong dockets in hand and hands off the next one after correct filing", () => {
+    const routeDocket = methodSource("routeVaultDocket", "awardClassNetDocketPoints");
+    expect(routeDocket).toContain("classNetBatchDocketAfterRoute(result)");
+    expect(routeDocket).toContain("this.carryVaultDocket(nextDocket)");
+    expect(routeDocket).not.toContain("this.drawVaultDocketAtPedestal()");
   });
 
   it("keeps the routing floor readable instead of layering a poster map over play", () => {

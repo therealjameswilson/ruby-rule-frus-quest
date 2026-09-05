@@ -90,7 +90,9 @@ export function networkRoutingObjective(step: number, carried: boolean) {
   const packet = getNetworkRoutePacket(step);
   return carried
     ? `${packet.order}/4 TO ${packet.network.toUpperCase()}`
-    : `${packet.order}/4 TAKE AT SORTER`;
+    : step === 0
+      ? "TAKE ROUTING BATCH"
+      : `RESUME ${packet.order}/4 AT SORTER`;
 }
 
 export function routedItemCount(step: number) {
@@ -121,7 +123,12 @@ export function routeNetworkPacket(
     message: ok
       ? `${packet.label} routed to ${destination}.`
       : currentPacket
-        ? `${packet.label} belongs on ${packet.network}. Packet returned to the sorter.`
+        ? `${packet.label} belongs on ${packet.network}. Packet remains in hand.`
         : `${expected.label} is the next packet in the sorter.`
   };
+}
+
+export function networkBatchPacketAfterRoute(result: NetworkRouteResult): NetworkRoutePacket | null {
+  if (result.complete) return null;
+  return result.ok ? getNetworkRoutePacket(result.nextStep) : result.packet;
 }

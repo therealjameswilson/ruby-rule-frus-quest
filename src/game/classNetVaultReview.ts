@@ -96,7 +96,9 @@ export function classNetVaultObjective(step: number, carried: boolean, tokenColl
   };
   return carried
     ? `${docket.order}/3 TO ${destination[docket.station]}`
-    : `${docket.order}/3 TAKE AT PEDESTAL`;
+    : step === 0
+      ? "TAKE REVIEW BATCH"
+      : `RESUME ${docket.order}/3 AT PED`;
 }
 
 export function completedClassNetVaultChecks(step: number) {
@@ -138,6 +140,11 @@ export function routeClassNetVaultDocket(
       ? docket.successMessage
       : docket.id !== expected.id
         ? `${expected.label} is the next docket in the vault queue.`
-        : `${docket.label} belongs at the ${docket.stationLabel}. Docket returned to the pedestal.`
+        : `${docket.label} belongs at the ${docket.stationLabel}. Docket remains in hand.`
   };
+}
+
+export function classNetBatchDocketAfterRoute(result: ClassNetVaultRouteResult): ClassNetVaultDocket | null {
+  if (result.complete) return null;
+  return result.ok ? getClassNetVaultDocket(result.nextStep) : result.docket;
 }

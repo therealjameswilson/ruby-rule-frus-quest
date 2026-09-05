@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   CLASSNET_VAULT_CHECK_TOTAL,
   CLASSNET_VAULT_DOCKETS,
+  classNetBatchDocketAfterRoute,
   classNetVaultObjective,
   completedClassNetVaultChecks,
   deriveClassNetVaultStep,
@@ -15,7 +16,7 @@ describe("physical ClassNet Vault review", () => {
     for (const [step, docket] of CLASSNET_VAULT_DOCKETS.entries()) {
       const pickup = classNetVaultObjective(step, false, false);
       const carry = classNetVaultObjective(step, true, false);
-      expect(pickup).toBe(`${docket.order}/3 TAKE AT PEDESTAL`);
+      expect(pickup).toBe(step === 0 ? "TAKE REVIEW BATCH" : `RESUME ${docket.order}/3 AT PED`);
       expect(carry).toBe(`${docket.order}/3 TO ${destinations[step]}`);
       expect(pickup.length).toBeLessThanOrEqual(20);
       expect(carry.length).toBeLessThanOrEqual(20);
@@ -37,6 +38,15 @@ describe("physical ClassNet Vault review", () => {
     expect(result.nextStep).toBe(0);
     expect(result.complete).toBe(false);
     expect(result.message).toContain("Human Review Desk");
+    expect(result.message).toContain("remains in hand");
+    expect(classNetBatchDocketAfterRoute(result)?.id).toBe("clearance_lane");
+  });
+
+  it("hands off the next docket without another pedestal trip", () => {
+    const first = routeClassNetVaultDocket(0, "clearance_lane", "human_desk");
+    expect(classNetBatchDocketAfterRoute(first)?.id).toBe("release_standard");
+    const final = routeClassNetVaultDocket(2, "decision_trail", "decision_ledger");
+    expect(classNetBatchDocketAfterRoute(final)).toBeNull();
   });
 
   it("completes only after every docket reaches its matching station", () => {

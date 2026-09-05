@@ -33,6 +33,7 @@ import { DialogBox } from "../systems/dialog";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { saveGameNow } from "../systems/save";
 import { takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { FeedbackToast } from "../systems/feedbackToast";
@@ -44,14 +45,16 @@ import { addSnesGate, addSnesRewardBurst, addSnesRoomIntroBanner, addSnesRoomLay
 import { SNES_NETWORK_TILE_ASSET } from "../game/snesAtlas";
 import {
   getNetworkRoutePacket,
+  networkBatchPacketAfterRoute,
   NETWORK_ROUTE_ITEM_TOTAL,
   NETWORK_ROUTE_PACKETS,
   networkRoutingObjective,
   routeNetworkPacket,
   routedItemCount
 } from "../game/networkRouting";
-import type { NetworkRoutePacketId, RoutingNetwork } from "../game/networkRouting";
+import type { NetworkRoutePacket, NetworkRoutePacketId, RoutingNetwork } from "../game/networkRouting";
 import {
+  classNetBatchDocketAfterRoute,
   CLASSNET_VAULT_CHECK_TOTAL,
   CLASSNET_VAULT_DOCKETS,
   classNetVaultObjective,
@@ -61,6 +64,7 @@ import {
   routeClassNetVaultDocket
 } from "../game/classNetVaultReview";
 import type {
+  ClassNetVaultDocket,
   ClassNetVaultDocketId,
   ClassNetVaultStationId
 } from "../game/classNetVaultReview";
@@ -165,6 +169,15 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   create() {
+    const restoringNetworkScene = gameState.currentScene === "NetworkScene";
+    const restoredRoomId: NetworkRoomId = restoringNetworkScene
+      && gameState.roomTraversal?.currentRoomId === "N2"
+      ? "N2"
+      : "N1";
+    const restoredPosition = restoringNetworkScene ? { ...gameState.player } : null;
+    const restoredVisitedRoomIds = restoringNetworkScene
+      ? gameState.roomTraversal?.visitedRoomIds.filter((roomId): roomId is NetworkRoomId => roomId in NETWORK_ROOMS) ?? []
+      : [];
     setSceneState("NetworkScene", "explore", "Two Networks: earn the Clearance Token.");
     retroAudio.startMusic("NetworkScene");
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
@@ -205,10 +218,12 @@ export class NetworkScene extends Phaser.Scene {
       ]
     });
     this.restoreNetworkProgress();
-    this.enterRoom("N1", { x: 128, y: 196 }, false);
-    this.beginRouting();
-    if (!this.routingComplete) {
-      setLatestMessage("OpenNet takes public material. ClassNet takes protected review packets.");
+    this.visitedRoomIds = new Set(restoredVisitedRoomIds);
+    this.restoreHeldBatchState(restoredRoomId);
+    this.enterRoom(restoredRoomId, restoredPosition ?? { x: 128, y: 196 }, false);
+    if (restoredRoomId === "N1") this.beginRouting();
+    if (restoredRoomId === "N1" && !this.routingComplete) {
+      setLatestMessage("Take the routing batch once. OpenNet takes public material; ClassNet takes protected review packets.");
     }
   }
 
@@ -241,6 +256,16 @@ export class NetworkScene extends Phaser.Scene {
     else if ((gameState.sceneProgress.networkRoutingCarried ?? 0) !== getNetworkRoutePacket(this.currentRoute).order) {
       gameState.sceneProgress.networkRoutingCarried = 0;
     }
+  }
+
+  private restoreHeldBatchState(roomId: NetworkRoomId) {
+    if (roomId === "N1") {
+      const packet = this.routingCarriedPacket();
+      if (packet) setHeldItem(`Routing Batch: ${packet.shortLabel}`);
+      return;
+    }
+    const docket = this.vaultCarriedDocket();
+    if (docket) setHeldItem(`Review Batch: ${docket.shortLabel}`);
   }
 
   update(_: number, delta: number) {
@@ -854,7 +879,7 @@ export class NetworkScene extends Phaser.Scene {
       badge: "A",
       text: carried
         ? `SEND ${target?.id === "network-opennet" ? "OPEN" : "CLASS"}`
-        : `TAKE ${packet?.shortLabel ?? "PACKET"}`
+        : `TAKE ${this.currentRoute === 0 ? "ROUTING BATCH" : packet?.shortLabel ?? "PACKET"}`
     } : undefined);
     setNearestInteractable(strictTarget?.label ?? null);
   }
@@ -884,28 +909,29 @@ export class NetworkScene extends Phaser.Scene {
 
   private pickUpRoutingPacket() {
     const packet = getNetworkRoutePacket(this.currentRoute);
-    gameState.sceneProgress.networkRoutingCarried = packet.order;
-    setHeldItem(`${packet.label} Packet`);
-    if (this.routingPacketWorldIcon?.active) this.routingPacketWorldIcon.destroy();
-    this.routingPacketWorldIcon = undefined;
-    this.createRoutingPacketHeldIcon(packet.id);
+    this.carryRoutingPacket(packet);
     retroAudio.confirm();
-    this.toast.show(`${packet.shortLabel} ACQUIRED`, this.player.position, "info");
-    setLatestMessage(`${packet.label}: ${packet.classification.toUpperCase()}. Route it to ${packet.network}.`);
+    this.toast.show("ROUTING BATCH", this.player.position, "info");
+    setLatestMessage(`${packet.label}: ${packet.classification.toUpperCase()}. Route it to ${packet.network}; the next packet will stay with you.`);
     setObjective(networkRoutingObjective(this.currentRoute, true));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
     this.refreshRoutingRouteCue();
+    saveGameNow();
+  }
+
+  private carryRoutingPacket(packet: NetworkRoutePacket) {
+    gameState.sceneProgress.networkRoutingCarried = packet.order;
+    setHeldItem(`Routing Batch: ${packet.shortLabel}`);
+    if (this.routingPacketWorldIcon?.active) this.routingPacketWorldIcon.destroy();
+    this.routingPacketWorldIcon = undefined;
+    this.createRoutingPacketHeldIcon(packet.id);
   }
 
   private routeCarriedPacket(destination: RoutingNetwork) {
     const packet = this.routingCarriedPacket();
     if (!packet) return;
     const result = routeNetworkPacket(this.currentRoute, packet.id, destination);
-    gameState.sceneProgress.networkRoutingCarried = 0;
-    setHeldItem(null);
-    if (this.routingPacketHeldIcon?.active) this.routingPacketHeldIcon.destroy();
-    this.routingPacketHeldIcon = undefined;
 
     if (!result.ok) {
       adjustReliability(-2, `${result.packet.label} caught at the wrong-network firewall before transmission`);
@@ -913,33 +939,42 @@ export class NetworkScene extends Phaser.Scene {
       this.routeText.setVisible(false);
       this.toast.show("WRONG NETWORK", this.player.position, "warn");
       setLatestMessage(result.message);
-      setObjective(networkRoutingObjective(this.currentRoute, false));
-      this.drawRoutingPacketAtSorter();
+      setObjective(networkRoutingObjective(this.currentRoute, true));
       this.syncNetworkSplitEntities();
       this.refreshRoutingRouteCue();
       this.reliability.update();
+      saveGameNow();
       return;
     }
 
+    gameState.sceneProgress.networkRoutingCarried = 0;
+    setHeldItem(null);
+    if (this.routingPacketHeldIcon?.active) this.routingPacketHeldIcon.destroy();
+    this.routingPacketHeldIcon = undefined;
     this.currentRoute = result.nextStep;
     this.correctRoutes = routedItemCount(result.nextStep);
     gameState.sceneProgress.networkRoutingStep = result.nextStep;
     this.syncRoutingSorterSlots();
     adjustReliability(result.packet.itemLabels.length * 3, `${result.packet.label} routed to ${destination}`);
     retroAudio.stamp();
-    this.toast.show(`${result.packet.shortLabel} > ${destination.toUpperCase()}`, this.player.position, "info");
-    setLatestMessage(result.message);
     if (result.complete) {
+      this.toast.show(`${result.packet.shortLabel} > ${destination.toUpperCase()}`, this.player.position, "info");
+      setLatestMessage(result.message);
       this.finishRouting();
       return;
     }
 
-    setObjective(networkRoutingObjective(this.currentRoute, false));
-    this.drawRoutingPacketAtSorter();
+    const nextPacket = networkBatchPacketAfterRoute(result);
+    if (!nextPacket) return;
+    this.carryRoutingPacket(nextPacket);
+    this.toast.show(`NEXT: ${nextPacket.shortLabel} > ${nextPacket.network.toUpperCase()}`, this.player.position, "info");
+    setLatestMessage(`${result.message} Next: ${nextPacket.label} goes to ${nextPacket.network}.`);
+    setObjective(networkRoutingObjective(this.currentRoute, true));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
     this.refreshRoutingRouteCue();
     this.reliability.update();
+    saveGameNow();
   }
 
   private updateRoutingRouteText() {
@@ -1188,7 +1223,7 @@ export class NetworkScene extends Phaser.Scene {
         ? "TAKE CLEARANCE TOKEN"
         : carried
           ? `FILE ${this.classNetStationShortLabel(target!.id.replace("classnet-station-", "") as ClassNetVaultStationId)}`
-          : `TAKE ${docket?.shortLabel ?? "DOCKET"}`
+          : `TAKE ${this.classNetReviewStep === 0 ? "REVIEW BATCH" : docket?.shortLabel ?? "DOCKET"}`
     } : undefined);
     setNearestInteractable(strictTarget?.label ?? null);
   }
@@ -1241,27 +1276,29 @@ export class NetworkScene extends Phaser.Scene {
 
   private pickUpVaultDocket() {
     const docket = getClassNetVaultDocket(this.classNetReviewStep);
-    gameState.sceneProgress.classNetVaultDocketCarried = docket.order;
-    setHeldItem(`${docket.label} Docket`);
-    if (this.vaultDocketWorldIcon?.active) this.vaultDocketWorldIcon.destroy();
-    this.vaultDocketWorldIcon = undefined;
-    this.createVaultDocketHeldIcon(docket.id);
+    this.carryVaultDocket(docket);
     retroAudio.confirm();
-    setLatestMessage(`${docket.contentsLabel}. File at ${docket.stationLabel}.`);
+    this.toast.show("REVIEW BATCH", this.player.position, "info");
+    setLatestMessage(`${docket.contentsLabel}. File at ${docket.stationLabel}; the next docket will stay with you.`);
     setObjective(this.classNetVaultObjective());
     this.updateClassNetVaultRouteText();
     this.syncClassNetVaultEntities();
     this.refreshClearanceTokenRouteCue();
+    saveGameNow();
+  }
+
+  private carryVaultDocket(docket: ClassNetVaultDocket) {
+    gameState.sceneProgress.classNetVaultDocketCarried = docket.order;
+    setHeldItem(`Review Batch: ${docket.shortLabel}`);
+    if (this.vaultDocketWorldIcon?.active) this.vaultDocketWorldIcon.destroy();
+    this.vaultDocketWorldIcon = undefined;
+    this.createVaultDocketHeldIcon(docket.id);
   }
 
   private routeVaultDocket(station: ClassNetVaultStationId) {
     const docket = this.vaultCarriedDocket();
     if (!docket) return;
     const result = routeClassNetVaultDocket(this.classNetReviewStep, docket.id, station);
-    gameState.sceneProgress.classNetVaultDocketCarried = 0;
-    setHeldItem(null);
-    if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
-    this.vaultDocketHeldIcon = undefined;
 
     if (!result.ok) {
       adjustReliability(-2, `${result.docket.label} returned from the wrong ClassNet station`);
@@ -1270,13 +1307,17 @@ export class NetworkScene extends Phaser.Scene {
       this.toast.show("WRONG DESK", this.player.position, "warn");
       setLatestMessage(result.message);
       setObjective(this.classNetVaultObjective());
-      this.drawVaultDocketAtPedestal();
       this.syncClassNetVaultEntities();
       this.refreshClearanceTokenRouteCue();
       this.reliability.update();
+      saveGameNow();
       return;
     }
 
+    gameState.sceneProgress.classNetVaultDocketCarried = 0;
+    setHeldItem(null);
+    if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
+    this.vaultDocketHeldIcon = undefined;
     this.classNetReviewStep = result.nextStep;
     this.classNetReviewComplete = result.complete;
     gameState.sceneProgress.classNetVaultReviewStep = result.nextStep;
@@ -1294,14 +1335,20 @@ export class NetworkScene extends Phaser.Scene {
       this.syncClassNetVaultEntities();
       this.track(addTinySparkle(this, 116, 120, PALETTE.goldStamp));
       this.track(addTinySparkle(this, 140, 120, PALETTE.terminalCyan));
+      saveGameNow();
       return;
     }
 
-    this.drawVaultDocketAtPedestal();
+    const nextDocket = classNetBatchDocketAfterRoute(result);
+    if (!nextDocket) return;
+    this.carryVaultDocket(nextDocket);
+    this.toast.show(`NEXT: ${nextDocket.shortLabel} > ${this.classNetStationShortLabel(nextDocket.station)}`, this.player.position, "info");
+    setLatestMessage(`${result.message} Next: ${nextDocket.label} goes to ${nextDocket.stationLabel}.`);
     this.updateClassNetVaultRouteText();
     setObjective(this.classNetVaultObjective());
     this.syncClassNetVaultEntities();
     this.refreshClearanceTokenRouteCue();
+    saveGameNow();
   }
 
   private awardClassNetDocketPoints(docketId: ClassNetVaultDocketId) {
@@ -1431,6 +1478,7 @@ export class NetworkScene extends Phaser.Scene {
     retroAudio.stamp();
     this.syncClassNetVaultEntities();
     this.syncRoomTraversalState();
+    saveGameNow();
   }
 
   private refreshClearanceTokenRouteCue() {
@@ -1641,5 +1689,6 @@ export class NetworkScene extends Phaser.Scene {
     this.track(addTinySparkle(this, 160, 152, PALETTE.openNetGreen));
     this.track(addTinySparkle(this, 222, 126, PALETTE.goldStamp));
     retroAudio.stamp();
+    saveGameNow();
   }
 }

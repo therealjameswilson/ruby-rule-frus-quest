@@ -3,6 +3,7 @@ import {
   getNetworkRoutePacket,
   NETWORK_ROUTE_ITEM_TOTAL,
   NETWORK_ROUTE_PACKETS,
+  networkBatchPacketAfterRoute,
   networkRoutingObjective,
   routeNetworkPacket,
   routedItemCount
@@ -13,12 +14,12 @@ describe("physical two-network routing", () => {
     for (const [step, packet] of NETWORK_ROUTE_PACKETS.entries()) {
       const pickup = networkRoutingObjective(step, false);
       const carry = networkRoutingObjective(step, true);
-      expect(pickup).toBe(`${packet.order}/4 TAKE AT SORTER`);
+      expect(pickup).toBe(step === 0 ? "TAKE ROUTING BATCH" : `RESUME ${packet.order}/4 AT SORTER`);
       expect(carry).toContain(packet.network.toUpperCase());
       expect(pickup.length).toBeLessThanOrEqual(20);
       expect(carry.length).toBeLessThanOrEqual(20);
       const wrong = routeNetworkPacket(step, packet.id, packet.network === "OpenNet" ? "ClassNet" : "OpenNet");
-      expect(networkRoutingObjective(wrong.nextStep, false)).toBe(pickup);
+      expect(networkRoutingObjective(wrong.nextStep, true)).toBe(carry);
     }
     expect(networkRoutingObjective(4, false)).toBe("EXIT EAST - VAULT");
   });
@@ -43,6 +44,15 @@ describe("physical two-network routing", () => {
     expect(result.nextStep).toBe(0);
     expect(result.complete).toBe(false);
     expect(result.leakRisk).toBe(false);
+    expect(result.message).toContain("remains in hand");
+    expect(networkBatchPacketAfterRoute(result)?.id).toBe("public_research");
+  });
+
+  it("hands off the next packet without another sorter trip", () => {
+    const first = routeNetworkPacket(0, "public_research", "OpenNet");
+    expect(networkBatchPacketAfterRoute(first)?.id).toBe("public_proof");
+    const final = routeNetworkPacket(3, "classified_review", "ClassNet");
+    expect(networkBatchPacketAfterRoute(final)).toBeNull();
   });
 
   it("identifies a protected packet sent to OpenNet as a leak risk", () => {
