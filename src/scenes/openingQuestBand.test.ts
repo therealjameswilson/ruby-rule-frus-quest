@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { LANGUAGES, setLanguage } from "../systems/i18n";
+import { getString, LANGUAGES, setLanguage } from "../systems/i18n";
 import { officeQuestBandObjective, guideQuestBandObjective } from "./openingQuestBand";
 import { QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 
@@ -38,5 +38,10 @@ describe("opening HUD objectives", () => {
     }
     expect(new Set(office).size).toBe(6);
     expect(new Set(guide).size).toBe(4);
+    for (const cue of ["guideReturned", "guideAim", "guideSwing", "guideRetry"]) {
+      const text = getString(`hud.${cue}`);
+      expect(text).not.toMatch(/^hud\./);
+      expect(text.length).toBeLessThanOrEqual(26);
+    }
   });
 });

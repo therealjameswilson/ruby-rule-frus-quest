@@ -8,14 +8,28 @@ describe("GuideScene Citation Stamp counter lesson", () => {
     expect(source).toContain('input.bJustPressed && this.currentStage() === "counter"');
     expect(source).toContain("tryEquippedToolSwing(this.player)");
     expect(source).toContain("this.player.activeActionHitbox");
-    expect(source).toContain('combat.weapon.tool !== "citation_stamp"');
-    expect(source).toContain("RectangleToRectangle(hitbox, GUIDE_EGO_SEAL_BOUNDS)");
+    expect(source).toContain('combat.weapon.tool === "citation_stamp" && hasProcessItem("citation_stamp")');
+    expect(source).toContain("this.counterTraining.update(delta, this.player.position, hitbox)");
+    expect(source).toContain('if (event !== "complete") return');
+    expect(source).not.toContain("GUIDE_EGO_SEAL_BOUNDS");
   });
 
   it("persists the completed lesson before revealing the fragment", () => {
     expect(source).toContain("gameState.sceneProgress.guideCitationCounterTrained = 1");
     expect(source).toContain("saveGameNow()");
-    expect(source).toContain("EGO SEAL RETURNED - FRAGMENT OPEN");
+    expect(source).toContain("Returned bolt broke the seal. Take the fragment");
     expect(source).toContain('.setVisible(!this.hasFragment && stage !== "counter")');
+  });
+
+  it("clears the transient readout on shutdown and hides the bolt outside the lesson", () => {
+    expect(source).toContain("Phaser.Scenes.Events.SHUTDOWN, () => setGuideCounterReadout(null)");
+    expect(source).toContain("this.practiceBolt.setVisible(false)");
+    expect(source).toContain("if (!this.hasCounterTraining)");
+  });
+
+  it("keeps successful-return feedback off the player and the reward", () => {
+    expect(source).toContain('this.prompt.update(delta, promptTarget?.kind === "npc" ? promptTarget : null)');
+    expect(source).toContain("this.toast.hide()");
+    expect(source).toContain("this.pickupFocus.setPosition(promptTarget.x, promptTarget.y + 7)");
   });
 });

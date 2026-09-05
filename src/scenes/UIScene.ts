@@ -9,6 +9,7 @@ import { GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasDanneItem, hasProcessItem } from "../game/state";
 import { getVolumeAssemblyReadout } from "../game/state";
 import { getGuideCavernStage, guideCavernActionCue } from "../game/guideCavernFlow";
+import { getGuideCounterReadout } from "../game/guideCounterTraining";
 import { addGamepadConnectionListener, getInput, getPrimaryActionBadge, getSecondaryActionBadge, updateInputCallbacks } from "../input/InputState";
 import { isWeaponTool } from "../systems/weaponState";
 import { TouchControls } from "../input/TouchControls";
@@ -289,6 +290,11 @@ export class UIScene extends Phaser.Scene {
         : getString("hud.counterDanne");
     }
     if (gameState.currentScene === "GuideScene") {
+      const lesson = getGuideCounterReadout();
+      if (lesson?.phase === "returned") return getString("hud.guideReturned");
+      if (lesson?.phase === "charging") return getString("hud.guideAim");
+      if (lesson?.phase === "incoming") return getString("hud.guideSwing");
+      if (lesson?.phase === "ready" && lesson.attempts > 0) return getString("hud.guideRetry");
       const stage = getGuideCavernStage(
         hasProcessItem("citation_stamp"),
         gameState.volumeFragments.includes("Front Matter Fragment"),

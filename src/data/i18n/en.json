@@ -1,5 +1,9 @@
 {
   "hud": {
+    "guideReturned": "EGO RETURNED!",
+    "guideAim": "FACE THE GOLD AIM LINE",
+    "guideSwing": "SWING AS BOLT REACHES YOU",
+    "guideRetry": "NO HARM - TRY AGAIN",
     "office": {
       "talk_jr": "MEET JR - WEST DESK",
       "take_memo": "TAKE THE MEMO",
@@ -10,7 +14,7 @@
     },
     "guide": {
       "stamp": "TAKE CITATION STAMP",
-      "counter": "BREAK RED EGO SEAL",
+      "counter": "RETURN DANN-E'S BOLT",
       "fragment": "TAKE FRUS FRAGMENT",
       "gate": "OPEN SOUTH GATE"
     },

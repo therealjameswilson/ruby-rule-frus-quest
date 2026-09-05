@@ -1,6 +1,7 @@
 import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
 import { getPauseMenuReadout } from "../systems/pauseMenu";
 import { getCodexViewReadout } from "../systems/codexLayout";
+import { getGuideCounterReadout } from "./guideCounterTraining";
 import { getCodexReadout, unlockCodexEntry } from "./codex";
 import { AREA_REGISTRY, DEFAULT_PROCESS_ROLE, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
@@ -2998,6 +2999,7 @@ export function renderGameToText() {
       publicationReadiness: getPublicationReadinessReadout(),
       statutoryClock: getStatutoryClockStateReadout(),
       danneCombat: getDanneCombatReadout(),
+      guideCounter: gameState.currentScene === "GuideScene" ? getGuideCounterReadout() : null,
       standardsViolations: unresolvedStandardsViolations(),
       productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,

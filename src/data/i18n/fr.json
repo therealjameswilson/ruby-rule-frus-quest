@@ -92,6 +92,10 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
+    "guideReturned": "EGO RENVOYE!",
+    "guideAim": "FAIS FACE A LA LIGNE OR",
+    "guideSwing": "FRAPPE A L'ARRIVEE DU TIR",
+    "guideRetry": "SANS DEGATS - REESSAIE",
     "office": {
       "talk_jr": "PARLE A JR - OUEST",
       "take_memo": "PRENDS LA NOTE",
@@ -102,7 +106,7 @@
     },
     "guide": {
       "stamp": "PRENDS TAMPON SOURCE",
-      "counter": "BRISE LE SCEAU ROUGE",
+      "counter": "RENVOIE LE TIR D'EGO",
       "fragment": "PRENDS FRAGMENT FRUS",
       "gate": "OUVRE LA PORTE SUD"
     },

@@ -92,6 +92,10 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
+    "guideReturned": "EGO DEVUELTO!",
+    "guideAim": "MIRA LA LINEA DORADA",
+    "guideSwing": "GOLPEA AL LLEGAR EL EGO",
+    "guideRetry": "SIN DANO - REINTENTA",
     "office": {
       "talk_jr": "HABLA CON JR - OESTE",
       "take_memo": "TOMA LA NOTA",
@@ -102,7 +106,7 @@
     },
     "guide": {
       "stamp": "TOMA SELLO DE CITA",
-      "counter": "ROMPE EL SELLO ROJO",
+      "counter": "DEVUELVE EL EGO",
       "fragment": "TOMA FRAGMENTO FRUS",
       "gate": "ABRE LA PUERTA SUR"
     },

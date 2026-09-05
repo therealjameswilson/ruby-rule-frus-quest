@@ -4,7 +4,8 @@ import { danneAnimKey } from "../art/danne_anims";
 import { getCharacterKeyForNpcId } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { unlockCodexEntry } from "../game/codex";
-import { DANNE_VFX_ASSETS } from "../game/danneAtlas";
+import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../game/danneAtlas";
+import { GUIDE_COUNTER, GuideCounterTraining, setGuideCounterReadout } from "../game/guideCounterTraining";
 import { SNES_GUIDE_CAVERN_TILE_ASSET } from "../game/snesAtlas";
 import {
   addProcessItem,
@@ -54,7 +55,6 @@ function color(hex: string) {
 
 type GuideCavernTileFrame = (typeof SNES_GUIDE_CAVERN_TILE_ASSET.frames)[number];
 const GUIDE_EGO_BOLT_ASSET = DANNE_VFX_ASSETS[0];
-const GUIDE_EGO_SEAL_BOUNDS = new Phaser.Geom.Rectangle(149, 118, 22, 28);
 
 export class GuideScene extends Phaser.Scene {
   private player!: Player;
@@ -71,13 +71,16 @@ export class GuideScene extends Phaser.Scene {
   private fragmentLabel!: Phaser.GameObjects.Text;
   private egoSeal!: Phaser.GameObjects.Sprite;
   private egoSealGlow!: Phaser.GameObjects.Rectangle;
+  private practiceBolt!: Phaser.GameObjects.Sprite;
+  private practiceAim!: Phaser.GameObjects.Graphics;
+  private pickupFocus!: Phaser.GameObjects.Rectangle;
+  private counterTraining = new GuideCounterTraining();
   private gateGlow!: Phaser.GameObjects.Rectangle;
   private gateLabel!: Phaser.GameObjects.Text;
   private readonly interactionAssist = new InteractionAssist();
   private hasStamp = false;
   private hasCounterTraining = false;
   private hasFragment = false;
-  private lastCounterSwingId = -1;
   private interactables: Interactable[] = [];
 
   constructor() {
@@ -85,6 +88,9 @@ export class GuideScene extends Phaser.Scene {
   }
 
   create() {
+    this.counterTraining = new GuideCounterTraining();
+    setGuideCounterReadout(null);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setGuideCounterReadout(null));
     this.hasStamp = hasProcessItem("citation_stamp");
     this.hasFragment = gameState.volumeFragments.includes("Front Matter Fragment");
     this.hasCounterTraining = Boolean(gameState.sceneProgress.guideCitationCounterTrained) || this.hasFragment;
@@ -97,9 +103,7 @@ export class GuideScene extends Phaser.Scene {
     drawRoomFrame(this, "ARCHIVE CAVERN", PALETTE.goldStamp, { showLegacyHud: false });
     this.drawCaveInterior();
     this.drawArchiveLamp(86, 88);
-    this.drawArchiveLamp(170, 88);
-    this.drawAntagonistPlaque(58, 164, "30-YR", PALETTE.classNetRed);
-    this.drawAntagonistPlaque(198, 164, "DANN-E", PALETTE.terminalCyan);
+    this.drawArchiveLamp(204, 80);
     const colleagueTexture = getCharacterKeyForNpcId("archive-colleague");
     const colleague = this.add
       .sprite(128, 104, colleagueTexture)
@@ -108,27 +112,28 @@ export class GuideScene extends Phaser.Scene {
     colleague.play(characterAnimKey(colleagueTexture, "idle-down"));
     this.stampIcon = this.add.image(96, 132, "citation-stamp").setDepth(120);
     this.fragmentIcon = this.add.image(160, 132, "volume-fragment").setDepth(120);
-    this.egoSealGlow = this.add.rectangle(160, 132, 22, 28, color(PALETTE.classNetRed), 0.62)
+    this.egoSealGlow = this.add.rectangle(176, 112, 24, 36, color(PALETTE.classNetRed), 0.18)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(122)
       .setVisible(false);
-    this.egoSeal = this.add.sprite(160, 132, GUIDE_EGO_BOLT_ASSET.key, 0)
-      .setScale(0.045)
+    const projectionKey = this.textures.exists(DANNE_BOSS_SPRITE_ASSET.key) ? DANNE_BOSS_SPRITE_ASSET.key : "citation-stamp";
+    this.egoSeal = this.add.sprite(176, 124, projectionKey, 0)
+      .setOrigin(0.5, 0.82)
       .setDepth(123)
       .setVisible(false);
-    const egoSealAnim = danneAnimKey(GUIDE_EGO_BOLT_ASSET.key, "fly");
-    if (this.anims.exists(egoSealAnim)) this.egoSeal.play(egoSealAnim);
+    const projectionAnim = danneAnimKey(projectionKey, "walk-down");
+    if (this.anims.exists(projectionAnim)) this.egoSeal.play(projectionAnim);
+    const boltKey = this.textures.exists(GUIDE_EGO_BOLT_ASSET.key) ? GUIDE_EGO_BOLT_ASSET.key : "citation-stamp";
+    this.practiceBolt = this.add.sprite(176, 112, boltKey, 0)
+      .setDisplaySize(12, 16).setDepth(124).setVisible(false);
+    const boltAnim = danneAnimKey(boltKey, "fly");
+    if (this.anims.exists(boltAnim)) this.practiceBolt.play(boltAnim);
+    this.practiceAim = this.add.graphics().setDepth(65);
+    this.pickupFocus = this.add.rectangle(0, 0, 20, 8, color(PALETTE.goldStamp), 0.2)
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(66).setVisible(false);
     this.tweens.add({ targets: colleague, y: 103, duration: 560, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { colleague.y = snapPixel(colleague.y); } });
     this.tweens.add({ targets: this.stampIcon, y: 130, duration: 460, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.stampIcon.y = snapPixel(this.stampIcon.y); } });
     this.tweens.add({ targets: this.fragmentIcon, y: 130, duration: 580, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.fragmentIcon.y = snapPixel(this.fragmentIcon.y); } });
-    this.tweens.add({
-      targets: this.egoSealGlow,
-      alpha: 0.3,
-      duration: 320,
-      yoyo: true,
-      repeat: -1,
-      ease: "Stepped"
-    });
     this.stampLabel = this.add.text(96, 148, "CITE", {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -160,7 +165,7 @@ export class GuideScene extends Phaser.Scene {
 
     this.syncStagePresentation();
     setLatestMessage(`Archive route ready for ${gameState.playerProfile.displayName}: ${guideCavernActionCue(openingStage).toLowerCase()}.`);
-    this.toast.show(guideCavernActionCue(openingStage), this.player.position, "info");
+    if (openingStage !== "counter") this.toast.show(guideCavernActionCue(openingStage), this.player.position, "info");
   }
 
   update(_: number, delta: number) {
@@ -176,6 +181,8 @@ export class GuideScene extends Phaser.Scene {
     if (input.abilityJustPressed) activateRoleAbility(this);
 
     if (this.dialog.active) {
+      this.setLessonPaused(true);
+      this.pickupFocus.setVisible(false);
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       this.prompt.update(delta, null);
@@ -183,6 +190,8 @@ export class GuideScene extends Phaser.Scene {
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
+      this.setLessonPaused(true);
+      this.pickupFocus.setVisible(false);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.toast.update(delta, this.player.position);
@@ -190,15 +199,17 @@ export class GuideScene extends Phaser.Scene {
     }
     if (input.pauseJustPressed) {
       this.inventory.toggle();
+      this.setLessonPaused(true);
       return;
     }
 
+    this.setLessonPaused(false);
     if (input.bJustPressed && this.currentStage() === "counter") {
       const swing = tryEquippedToolSwing(this.player);
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
     }
     this.player.update(delta, true);
-    this.updateCitationCounterTraining();
+    this.updateCitationCounterTraining(delta);
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     // Show the prompt/ring from a little further out than the strict interact
@@ -210,7 +221,9 @@ export class GuideScene extends Phaser.Scene {
     // The floating prompt carries the contextual action cue; keep the bottom
     // lane reserved for the persistent objective so the two never collide.
     this.hintText.setText("");
-    this.prompt.update(delta, promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
+    this.prompt.update(delta, promptTarget?.kind === "npc" ? promptTarget : null);
+    this.pickupFocus.setVisible(Boolean(promptTarget && promptTarget.kind !== "npc"));
+    if (promptTarget) this.pickupFocus.setPosition(promptTarget.x, promptTarget.y + 7);
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) {
@@ -256,24 +269,54 @@ export class GuideScene extends Phaser.Scene {
     addProcessItem("citation_stamp");
     addDocumentPoints(5, "citation stamp claimed");
     retroAudio.confirm();
-    this.toast.show(`${getSecondaryActionBadge()}: SWING AT RED SEAL`, this.player.position, "info");
-    setLatestMessage("Citation Stamp acquired. Face the red Ego Seal and swing the stamp.");
+    setLatestMessage(`Citation Stamp acquired. Face the incoming red bolt and press ${getSecondaryActionBadge()}. Practice cannot hurt you.`);
     this.syncStagePresentation();
   }
 
-  private updateCitationCounterTraining() {
+  private setLessonPaused(paused: boolean) {
+    this.egoSeal.setActive(!paused);
+    this.practiceBolt.setActive(!paused);
+    if (paused) this.player.setCombatPaused(true);
+  }
+
+  private updateCitationCounterTraining(delta: number) {
     if (this.currentStage() !== "counter") return;
     const combat = this.player.combatReadout;
-    const hitbox = this.player.activeActionHitbox;
-    if (!combat.actionActive || !combat.weapon.active || combat.weapon.tool !== "citation_stamp" || !hitbox) return;
-    if (combat.weapon.swingId === this.lastCounterSwingId) return;
-    if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, GUIDE_EGO_SEAL_BOUNDS)) return;
-    this.lastCounterSwingId = combat.weapon.swingId;
+    const hitbox = combat.weapon.tool === "citation_stamp" && hasProcessItem("citation_stamp")
+      ? this.player.activeActionHitbox : null;
+    const event = this.counterTraining.update(delta, this.player.position, hitbox);
+    const lesson = this.counterTraining.readout();
+    setGuideCounterReadout(lesson);
+    this.practiceAim.clear();
+    if (lesson.phase === "charging" && lesson.target) {
+      const source = GUIDE_COUNTER.source;
+      const distance = Phaser.Math.Distance.Between(source.x, source.y, lesson.target.x, lesson.target.y);
+      this.practiceAim.fillStyle(color(PALETTE.goldStamp), 0.65);
+      for (let offset = 16; offset < distance; offset += 8) {
+        const t = offset / distance;
+        this.practiceAim.fillRect(snapPixel(source.x + (lesson.target.x - source.x) * t), snapPixel(source.y + (lesson.target.y - source.y) * t), 2, 2);
+      }
+      this.practiceAim.lineStyle(1, color(PALETTE.goldStamp), 0.8)
+        .strokeRect(lesson.target.x - 9, lesson.target.y - 6, 18, 12);
+    }
+    this.egoSealGlow.setAlpha(lesson.phase === "charging" ? 0.8 : 0.3);
+    this.practiceBolt.setVisible(Boolean(lesson.bolt));
+    if (lesson.bolt) {
+      this.practiceBolt.setPosition(lesson.bolt.x, lesson.bolt.y)
+        .setTint(color(lesson.bolt.returned ? PALETTE.terminalCyan : PALETTE.creamPaper));
+    }
+    if (event === "fire") retroAudio.egoBoltFire();
+    if (event === "return") {
+      retroAudio.toolHit("citation_stamp");
+      setLatestMessage("Ego returned! Your citation sends DANN-E's claim back to its source.");
+    }
+    if (event === "miss") setLatestMessage(`No harm done. Face the bolt and press ${getSecondaryActionBadge()} as it reaches you.`);
+    if (event !== "complete") return;
     this.hasCounterTraining = true;
     gameState.sceneProgress.guideCitationCounterTrained = 1;
     saveGameNow();
     retroAudio.toolHit("citation_stamp");
-    const burst = this.add.circle(160, 132, 7, color(PALETTE.terminalCyan), 0.38)
+    const burst = this.add.circle(176, 112, 7, color(PALETTE.terminalCyan), 0.38)
       .setStrokeStyle(2, color(PALETTE.creamPaper))
       .setDepth(125);
     this.tweens.add({
@@ -284,15 +327,14 @@ export class GuideScene extends Phaser.Scene {
       ease: "Stepped",
       onComplete: () => burst.destroy()
     });
-    setLatestMessage("Ego Seal returned. Use the same swing to interrupt DANN-E and return his bolts.");
-    this.toast.show("EGO SEAL RETURNED - FRAGMENT OPEN", this.player.position, "info");
+    setLatestMessage("Returned bolt broke the seal. Take the fragment; this counter works against DANN-E in the archives.");
+    this.toast.hide();
     this.syncStagePresentation();
   }
 
   private remindCounterInput() {
     retroAudio.blip();
-    this.toast.show(`${getSecondaryActionBadge()}: SWING CITATION STAMP`, this.player.position, "info");
-    setLatestMessage(`Press ${getSecondaryActionBadge()} while facing the red Ego Seal.`);
+    setLatestMessage(`Face the red bolt and press ${getSecondaryActionBadge()} to swing the Citation Stamp. Practice cannot hurt you.`);
   }
 
   private takeFragment() {
@@ -300,6 +342,10 @@ export class GuideScene extends Phaser.Scene {
       retroAudio.warning();
       this.toast.show("NEED CITATION STAMP", this.player.position, "warn");
       setLatestMessage("Stamp the citation trail before taking the fragment.");
+      return;
+    }
+    if (!this.hasCounterTraining) {
+      this.remindCounterInput();
       return;
     }
     if (this.hasFragment) {
@@ -333,22 +379,18 @@ export class GuideScene extends Phaser.Scene {
 
   private syncVisibleState() {
     const stage = this.currentStage();
-    const labels = ["Archive Colleague", "30-Year Line", "DANN-E Queue"];
+    const labels = ["Archive Colleague"];
     if (stage === "stamp") labels.push("Citation Stamp");
-    else if (stage === "counter") labels.push("Ego Seal");
+    else if (stage === "counter") labels.push("DANN-E Practice Projection");
     else if (stage === "fragment") labels.push("FRUS Volume Fragment");
     else labels.push("Verification Gate");
     setVisibleEntities(labels);
-    setVisibleThreats([
-      { label: "30-Year Line", x: 58, y: 164 },
-      { label: "DANN-E Queue", x: 198, y: 164 },
-      ...(stage === "counter" ? [{
-        label: "Ego Seal",
-        x: 160,
-        y: 132,
-        defeatMethod: `${getSecondaryActionBadge()}: swing the Citation Stamp while facing the seal`
-      }] : [])
-    ]);
+    setVisibleThreats(stage === "counter" ? [{
+      label: "DANN-E Practice Projection", x: 176, y: 124,
+      behavior: "Telegraphs one harmless bolt at a time; missed counters retry without damage.",
+      defeatMethod: `${getSecondaryActionBadge()}: face the moving bolt and return it with the Citation Stamp`,
+      damage: 0
+    }] : []);
   }
 
   private syncStagePresentation() {
@@ -364,6 +406,11 @@ export class GuideScene extends Phaser.Scene {
       .setColor(stage === "fragment" ? PALETTE.goldStamp : PALETTE.stoneGray);
     this.egoSealGlow.setVisible(stage === "counter");
     this.egoSeal.setVisible(stage === "counter");
+    if (stage !== "counter") {
+      this.practiceBolt.setVisible(false);
+      this.practiceAim.clear();
+      setGuideCounterReadout(null);
+    }
     this.gateGlow.setFillStyle(color(this.hasFragment ? PALETTE.openNetGreen : PALETTE.classNetRed));
     this.gateLabel
       .setText(this.hasFragment ? "OPEN\nGATE" : "LOCKED")
@@ -389,7 +436,7 @@ export class GuideScene extends Phaser.Scene {
     };
     const targets: Partial<Record<ReturnType<typeof guideCavernTargetId>, Interactable>> = {
       stamp: { id: "stamp", label: "Citation Stamp", x: 96, y: 132, radius: 32, kind: "document", onInteract: () => this.takeStamp() },
-      fragment: { id: "fragment", label: "FRUS Volume Fragment", x: 160, y: 132, radius: 32, kind: "document", onInteract: () => this.takeFragment() },
+      fragment: { id: "fragment", label: "FRUS Fragment", x: 160, y: 132, radius: 32, kind: "document", onInteract: () => this.takeFragment() },
       gate: { id: "gate", label: "Verification Gate", x: 128, y: 198, radius: 32, kind: "door", onInteract: () => this.openGate() }
     };
     const target = targets[guideCavernTargetId(stage)];
@@ -479,16 +526,6 @@ export class GuideScene extends Phaser.Scene {
       this.add.rectangle(2, 1, 4, 8, color(PALETTE.creamPaper))
     ]);
     this.tweens.add({ targets: flame, y: y - 1, duration: 260, yoyo: true, repeat: -1, ease: "Stepped" });
-  }
-
-  private drawAntagonistPlaque(x: number, y: number, label: string, accent: string) {
-    this.add.rectangle(x, y, 38, 18, color(PALETTE.black), 0.82).setStrokeStyle(1, color(accent), 0.7).setDepth(60);
-    this.add.text(x, y, label, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: accent,
-      align: "center"
-    }).setOrigin(0.5).setAlpha(0.75).setDepth(61);
   }
 
   private drawVerificationGate() {

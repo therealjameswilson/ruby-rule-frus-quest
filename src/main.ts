@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import "./styles/pixel.css";
 import { getAboutSeriesGameplayReadout } from "./game/aboutSeries";
+import { getGuideCounterReadout } from "./game/guideCounterTraining";
 import { readHearingReview } from "./game/hearingReview";
 import { gameConfig } from "./game/config";
 import { getBuckramBindingReadout } from "./game/buckramBinding";
@@ -129,6 +130,7 @@ function renderConciseGameToText() {
       visibleEntities: gameState.visibleEntities.slice(0, 12),
       visibleThreats: gameState.visibleThreats.slice(0, 8),
       danneCombat: getDanneCombatReadout(),
+      guideCounter: gameState.currentScene === "GuideScene" ? getGuideCounterReadout() : null,
       dialog: gameState.activeDialog,
       choice: gameState.currentChoice
         ? {

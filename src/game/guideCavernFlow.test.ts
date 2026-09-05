@@ -19,7 +19,7 @@ describe("Guide Cavern onboarding flow", () => {
     const stage = getGuideCavernStage(true, false);
     expect(stage).toBe("counter");
     expect(guideCavernTargetId(stage)).toBe("ego-seal");
-    expect(guideCavernActionCue(stage)).toBe("SWING STAMP AT RED SEAL");
+    expect(guideCavernActionCue(stage)).toBe("FACE BOLT - SWING STAMP");
   });
 
   it("reveals the fragment only after the counter lesson", () => {
