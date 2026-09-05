@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Human referral-manifest repair (2026-09-05):
+  - Replaced automatic acceptance at the human desk with a three-row editable training manifest. One StateChat destination is wrong; the compiler must repair it and explicitly file. Both arrow directions, keyboard and touch work. Rejected drafts give a short hint without penalties; cancel/reload retains all edits. Routing is explicitly not release approval.
+  - Existing eight-point/seven-reliability reward, treatment batch, Concurrence Slip and exits remain; no new save schema or dependencies. Optional numeric sceneProgress encoding preserves all 27 drafts; completed legacy saves remain honored. Board reading freezes combat and closing cannot swing. Short REVIEW label and native 8px status avoid touch-control overlap.
+  - 168 files / 1,108 tests and production build pass (229 modules; main JS 2,724.06 KB; existing chunk warning). Earned desktop and 375x667/DPR-3 touch replays reach Editor through all Referral tasks, wrong drafts, partial reload, one-time reward and backtracking. Final panel pointer/X/Codex checks and fourteen scene/map routes pass. Inspected native/compositor evidence; required-client direct-buffer capture remains black headed/headless.
+  - Replay/evidence: tools/qa-referral-manifest.mjs and docs/REFERRAL_MANIFEST_REPAIR.md. Local only; no public deployment, new full-game or real-device certification. Next: earned Editor pacing, legacy reward-banner clutter and source-note metadata.
+
 - Human withholding decision at the ClassNet ledger (2026-09-05):
   - Earned-save baseline exposed automatic approval after three desk visits. The first two now explicitly file recorded review paperwork; the final ledger asks one short source-backed question about accounting for a wholly withheld document. The fictional three-page memo is marked as training material. A rejected proposal retains the docket without penalties; the accepted entry reveals the existing Clearance Token. Legacy saves and reward amounts remain unchanged.
   - Player, weapon and DANN-E freeze while reading; answer input cannot swing. Saved unfinished ledger position/docket survives reload. Shortened HUMAN / RELEASE / LEDGER labels fit the existing plates. No new assets, dependencies, schema or room graph.

@@ -23,6 +23,22 @@ describe("ReferralVaultScene physical review flow", () => {
     expect(sceneSource).toContain("Human Concurrence Desk");
     expect(sceneSource).toContain("fileManifestAtHumanDesk");
     expect(sceneSource).not.toContain("Let StateChat decide");
+    const review = methodSource("reviewManifestAtHumanDesk", "fileManifestAtHumanDesk");
+    expect(review).toContain("this.manifestBoard.show");
+    expect(review).toContain("encodeReferralManifest(draft)");
+    expect(review).not.toContain('setDocumentWorkflowState');
+    const file = methodSource("fileManifestAtHumanDesk", "pickUpTreatmentDocket");
+    expect(file.indexOf("firstManifestMismatch(draft)")).toBeLessThan(file.indexOf("this.manifestReviewed = true"));
+    expect(file).toContain("this.manifestReviewed || !this.manifestCarried()");
+  });
+
+  it("stops player and DANN-E before consuming manifest navigation or cancel", () => {
+    const update = sceneSource.slice(sceneSource.indexOf("  update("), sceneSource.indexOf("  private track"));
+    const board = update.slice(update.indexOf("if (this.manifestBoard.active)"), update.indexOf("if (input.fullscreenJustPressed)"));
+    expect(board).toContain("this.updateDanneLurker(delta, false)");
+    expect(board).toContain("this.player.update(delta, false)");
+    expect(board).toContain("this.manifestBoard.updateInput()");
+    expect(board).toContain("return;");
   });
 
   it("turns permission, appeal, and visible excision into physical stations", () => {

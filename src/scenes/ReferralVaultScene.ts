@@ -40,6 +40,8 @@ import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { FeedbackToast } from "../systems/feedbackToast";
+import { ReferralManifestBoard } from "../systems/referralManifestBoard";
+import { encodeReferralManifest, firstManifestMismatch, restoreReferralManifest, type ReferralManifest } from "../game/referralManifest";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addTinySparkle, addVaultBlocks } from "../systems/roomDressing";
@@ -132,6 +134,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private objectiveText!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
   private toast!: FeedbackToast;
+  private manifestBoard!: ReferralManifestBoard;
   private equityStep = 0;
   private manifestReviewed = false;
   private treatmentStep = 0;
@@ -193,9 +196,10 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.toast = new FeedbackToast(this);
+    this.manifestBoard = new ReferralManifestBoard(this);
     this.danneLurker = new DanneLurker(this, 214, 70, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
-        || this.inventory.active || this.reliability.active,
+        || this.manifestBoard.active || this.inventory.active || this.reliability.active,
       waypoints: [
         { x: 214, y: 70 },
         { x: 154, y: 60 },
@@ -260,6 +264,13 @@ export class ReferralVaultScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     this.toast.update(delta, this.player.position);
+    if (this.manifestBoard.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.player.update(delta, false);
+      this.manifestBoard.updateInput();
+      return;
+    }
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
@@ -685,7 +696,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 118
     });
-    this.drawReviewStation(72, 156, "HUMAN CHECK", PALETTE.goldStamp, false, 3);
+    this.drawReviewStation(72, 156, "REVIEW", PALETTE.goldStamp, false, 3);
     this.track(this.add.line(0, 0, 178, 116, 92, 146, color(PALETTE.terminalCyan), 0.8)
       .setLineWidth(2)
       .setOrigin(0)
@@ -1169,7 +1180,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
     if (stage === "manifest") {
       if (!this.manifestCarried()) this.pickUpManifest();
-      else this.fileManifestAtHumanDesk();
+      else this.reviewManifestAtHumanDesk();
       return true;
     }
     if (stage === "treatment") {
@@ -1389,7 +1400,19 @@ export class ReferralVaultScene extends Phaser.Scene {
     saveGameNow();
   }
 
-  private fileManifestAtHumanDesk() {
+  private reviewManifestAtHumanDesk() {
+    if (!this.manifestCarried() || this.manifestReviewed) return;
+    this.interactionPrompt.update(0, null);
+    saveGameNow();
+    this.manifestBoard.show(restoreReferralManifest(gameState.sceneProgress.referralManifestDraftRoutes), (draft) => {
+      gameState.sceneProgress.referralManifestDraftRoutes = encodeReferralManifest(draft);
+      saveGameNow();
+    }, (draft) => this.fileManifestAtHumanDesk(draft));
+  }
+
+  private fileManifestAtHumanDesk(draft: ReferralManifest) {
+    if (this.manifestReviewed || !this.manifestCarried() || firstManifestMismatch(draft)) return;
+    gameState.sceneProgress.referralManifestDraftRoutes = encodeReferralManifest(draft);
     gameState.sceneProgress.referralManifestCarried = 0;
     gameState.sceneProgress.referralManifestReviewComplete = 1;
     this.manifestReviewed = true;
@@ -1398,10 +1421,10 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.manifestHeldIcon = undefined;
     setDocumentWorkflowState("source_note_047", "referred");
     setDocumentWorkflowState("sbu_annotation_001", "referred");
-    addDocumentPoints(8, "agency concurrence checked");
-    adjustReliability(7, "manifest confirmed by human review");
+    addDocumentPoints(8, "referral destinations checked");
+    adjustReliability(7, "draft routing corrected by compiler");
     retroAudio.stamp();
-    setLatestMessage("Human review confirmed the manifest. Visible treatment comes next.");
+    setLatestMessage("Referral destinations verified. Routing is not release approval; visible treatment comes next.");
     this.redrawReferralRoom();
     saveGameNow();
   }

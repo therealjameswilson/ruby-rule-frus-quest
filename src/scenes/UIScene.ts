@@ -22,6 +22,7 @@ import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./ques
 import { guideQuestBandObjective, officeQuestBandObjective } from "./openingQuestBand";
 import { questBandBossCue, questBandRiskLine } from "./questBandCue";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
+import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -246,7 +247,8 @@ export class UIScene extends Phaser.Scene {
 
   private compactObjective(activeSceneKey: string | null) {
     if (gameState.mode === "dialog") return getString("hud.readLine");
-    if (gameState.mode === "choice") return getString("hud.chooseAnswer");
+    if (gameState.mode === "choice") return getString(gameState.currentChoice?.title === REFERRAL_MANIFEST_TITLE
+      ? "hud.reviewRoutes" : "hud.chooseAnswer");
     if (activeSceneKey === "OfficeScene") {
       return officeQuestBandObjective({
         juniorIntroduced: Boolean(gameState.sceneProgress.juniorCompilerIntroduced),
