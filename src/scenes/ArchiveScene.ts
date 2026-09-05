@@ -14,6 +14,7 @@ import {
   getHeldProcessItemIds,
   getTreatyFragmentCount,
   gameState,
+  fileSourceNote47Metadata,
   hasProcessItem,
   recordHiddenCollectibleFound,
   setHeldItem,
@@ -51,6 +52,7 @@ import { DanneLurker } from "../entities/enemies/DanneLurker";
 import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
+import { SourceNoteBoard } from "../systems/sourceNoteBoard";
 import {
   decideInteractionFeedback,
   InteractionAssist,
@@ -92,8 +94,6 @@ import {
 } from "../game/archiveA1Tilemap";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
-  evaluateSourceNoteProvenanceAnswer,
-  getSourceNoteProvenancePrompt,
   getSourceNoteProvenanceStation,
   inspectSourceNoteProvenanceStation,
   SOURCE_NOTE_PROVENANCE_STATIONS
@@ -390,6 +390,7 @@ export class ArchiveScene extends Phaser.Scene {
   private danneLurker!: DanneLurker;
   private dialog!: DialogBox;
   private researchChoice!: ChoicePrompt;
+  private sourceNoteBoard!: SourceNoteBoard;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -483,6 +484,7 @@ export class ArchiveScene extends Phaser.Scene {
 
     this.dialog = new DialogBox(this);
     this.researchChoice = new ChoicePrompt(this);
+    this.sourceNoteBoard = new SourceNoteBoard(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
@@ -498,7 +500,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.player = new Player(this, 128, 184);
     this.danneLurker = new DanneLurker(this, 214, 74, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
-        || this.inventory.active || this.reliability.active || this.researchChoice.active || Boolean(this.archiveKeyRewardCue?.active),
+        || this.inventory.active || this.reliability.active || this.researchChoice.active || this.sourceNoteBoard.active || Boolean(this.archiveKeyRewardCue?.active),
       waypoints: [
         { x: 214, y: 74 },
         { x: 142, y: 54 },
@@ -524,6 +526,14 @@ export class ArchiveScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.sourceNoteBoard.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
+      this.player.update(delta, false);
+      this.sourceNoteBoard.updateInput();
+      return;
+    }
     if (this.researchChoice.active) {
       this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
@@ -2652,33 +2662,30 @@ export class ArchiveScene extends Phaser.Scene {
     this.toast.show(`${result.station.shortLabel} MATCHED ${result.nextStep}/3`, this.player.position, "info");
     this.updateSourceNoteVerification();
     this.syncWallState();
+    saveGameNow();
   }
 
   private reviewFirstFootnote(nextStep: number) {
-    if (this.researchChoice.active) return;
-    const prompt = getSourceNoteProvenancePrompt(nextStep - 1);
+    if (this.sourceNoteBoard.active || this.researchChoice.active) return;
     this.interactionPrompt.update(0, null);
     this.clearSourceNoteRouteCue();
-    this.researchChoice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const evaluation = evaluateSourceNoteProvenanceAnswer(prompt.id, option.value);
-      if (!evaluation.ok) {
-        retroAudio.warning();
-        setLatestMessage(evaluation.message);
-        this.toast.show("FIRST FOOTNOTE INCOMPLETE", this.player.position, "warn");
-        this.updateSourceNoteVerification();
+    this.sourceNoteBoard.show(gameState.sceneProgress.sourceNote47ReadershipCorrected === 1,
+      () => {
+        gameState.sceneProgress.sourceNote47ReadershipCorrected = 1;
         saveGameNow();
-        return;
-      }
-
-      gameState.sceneProgress.aboutSeriesFirstFootnoteComplete = 1;
-      gameState.sceneProgress.sourceNoteProvenanceStep = nextStep;
-      gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
-      this.completeSourceNoteVerification(evaluation.message);
-      saveGameNow();
-    });
+      }, () => {
+        gameState.sceneProgress.aboutSeriesFirstFootnoteComplete = 1;
+        gameState.sceneProgress.sourceNoteProvenanceStep = nextStep;
+        gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
+        this.completeSourceNoteVerification("Source trail filed; unknown metadata remains explicit in the field guide.");
+        saveGameNow();
+      }, () => { this.updateSourceNoteVerification(); saveGameNow(); });
+    saveGameNow();
   }
 
   private completeSourceNoteVerification(message: string) {
+    if (this.sourceNoteStatus === "verified" || this.sourceNoteStatus === "stamped") return;
+    fileSourceNote47Metadata();
     this.sourceNoteStatus = "verified";
     setDocumentWorkflowState("source_note_047", "citation_verified");
     addDocumentPoints(6, "Source Note 47 provenance and first-footnote metadata verified");

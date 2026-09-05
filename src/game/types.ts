@@ -157,6 +157,14 @@ export type AgencyEquity = {
   response: ReviewStatus;
 };
 
+export type FirstFootnoteMetadata = {
+  originalClassification: string | null;
+  distribution: string | null;
+  draftingInformation: string | null;
+  policyBackground: string | null;
+  readership: string | null;
+};
+
 export type DocumentCandidate = {
   id: string;
   title: string;
@@ -165,6 +173,7 @@ export type DocumentCandidate = {
   repository: string;
   collection: string;
   folder: string;
+  firstFootnote?: FirstFootnoteMetadata;
   policyTheme: string;
   significance: number;
   uniqueness: number;

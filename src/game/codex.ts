@@ -4,6 +4,8 @@ import { DANNE_ITEM_CATALOG } from "./danneItemCatalog";
 import { DANNE_RUNTIME_SPRITE_ASSETS, DANNE_VARIANT_ASSETS } from "./danneAtlas";
 import { SNES_ANTAGONIST_ASSETS } from "./snesAtlas";
 import { DANNE_ENEMY_VARIANTS } from "../entities/danneVariants";
+import type { DocumentCandidate } from "./types";
+import { SOURCE_NOTE_47_ID, sourceNote47Pages } from "./sourceNote47";
 
 export type CodexCategory = "Enemies" | "NPCs" | "DANN-E Variants" | "Items";
 
@@ -138,6 +140,13 @@ const ITEM_ENTRIES: readonly CodexEntry[] = [
     sourceUrl: ABOUT_SERIES_SOURCE.url,
     lore: ABOUT_SERIES_HANDBOOK_LORE
   },
+  {
+    id: "item-source-note-47",
+    category: "Items",
+    displayName: "Source Note 47",
+    artKey: "source-note",
+    lore: "Trace and file the fictional training source note in Archive A1."
+  },
   ...DANNE_ITEM_CATALOG.map((item) => ({
     id: `item-${item.id}`,
     category: "Items" as const,
@@ -200,14 +209,19 @@ export function unlockCodexEntry(entryId: string) {
   return false;
 }
 
-export function getCodexEntries(category?: CodexCategory): CodexEntryReadout[] {
+export function getCodexEntries(category?: CodexCategory, documents: readonly DocumentCandidate[] = []): CodexEntryReadout[] {
   return CODEX_ENTRIES
     .filter((entry) => !category || entry.category === category)
-    .map((entry) => ({ ...entry, unlocked: isCodexEntryUnlocked(entry) }));
+    .map((entry) => {
+      if (entry.id !== "item-source-note-47") return { ...entry, unlocked: isCodexEntryUnlocked(entry) };
+      const document = documents.find(candidate => candidate.id === SOURCE_NOTE_47_ID);
+      const unlocked = Boolean(document?.citationComplete && document.firstFootnote && document.repository.trim());
+      return { ...entry, unlocked, lore: unlocked && document ? sourceNote47Pages(document).join("\n\n") : entry.lore };
+    });
 }
 
-export function getCodexReadout() {
-  const entries = getCodexEntries();
+export function getCodexReadout(documents: readonly DocumentCandidate[] = []) {
+  const entries = getCodexEntries(undefined, documents);
   return {
     storageKey: CODEX_STORAGE_KEY,
     unlocked: entries.filter((entry) => entry.unlocked).length,

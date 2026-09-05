@@ -203,7 +203,7 @@ export class CodexScene extends Phaser.Scene {
     this.content.add(art);
   }
 
-  private currentEntries() { return getCodexEntries(CODEX_CATEGORIES[this.categoryIndex]); }
+  private currentEntries() { return getCodexEntries(CODEX_CATEGORIES[this.categoryIndex], gameState.documentCandidates); }
   private isHandbookSelected() { return this.currentEntries()[this.entryIndex]?.sourceUrl === ABOUT_SERIES_SOURCE.url; }
 
   private selectCategory(index: number) {

@@ -33,7 +33,22 @@ try{
  const early=await shot('02-unreviewed-swing');assert(!early.sceneProgress.archiveRepoWallCleared);assert.equal(early.documentPoints,22);
  await move(56,158);await move(56,100);await act('03-repository');
  await move(56,148);await act('04-collection');await move(188,154);await act('05-first-footnote');
- await choose('A');await shot('06-footnote-approved');
+ const note=()=>state().then(s=>s.documentCandidates.find(d=>d.id==='source_note_047'));
+ assert.equal((await note()).repository,'');
+ await context.storageState({path:`${out}/source-note-review-storage.json`});
+ if(mobile)await click(77,158);else{await press('ArrowDown');await press();}
+ const refused=await shot('05-unsupported-filing');assert.equal(refused.mode,'choice');assert.equal(refused.documentPoints,22);assert(!refused.sceneProgress.aboutSeriesFirstFootnoteComplete);
+ if(mobile)await click(128,123);else{await press('ArrowUp');await press();}
+ if(mobile)await click(128,123);else{await press('ArrowUp');await press();}
+ const repaired=await shot('05-repaired-unfiled');assert.equal(repaired.sceneProgress.sourceNote47ReadershipCorrected,1);assert.equal(repaired.documentPoints,22);assert.equal((await note()).repository,'');
+ if(mobile)await click(190,158);else await press('x');
+ const canceled=await state();assert.equal(canceled.mode,'explore');
+ await page.reload();await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');
+ assert.deepEqual((await state()).player,canceled.player);assert.equal((await state()).sceneProgress.sourceNote47ReadershipCorrected,1);assert.equal((await note()).repository,'');
+ await act('05-partial-continue');
+ if(mobile)await click(77,158);else await press();
+ const filed=await shot('06-footnote-approved');assert.equal(filed.documentPoints,28);
+ assert.equal((await note()).repository,'Fictional National Archives Collection');assert.equal((await note()).folder,'Alliance Consultation');assert.equal((await note()).firstFootnote.readership,null);
  await move(128,145);await act('07-standards-review');await choose('A');await shot('08-source-stamped');
  await move(100,176);await move(100,168);await direction('ArrowUp',60);assert.equal((await state()).playerFacing,'north');await shot('09-before-swing');
  await context.storageState({path:`${out}/reviewed-wall.json`});

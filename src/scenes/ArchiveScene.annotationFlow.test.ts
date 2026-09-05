@@ -88,11 +88,17 @@ describe("ArchiveScene physical annotation flow", () => {
     const inspect = methodSource("inspectSourceNoteProvenance", "reviewFirstFootnote");
     expect(inspect).toContain("this.reviewFirstFootnote(result.nextStep)");
     const review = methodSource("reviewFirstFootnote", "completeSourceNoteVerification");
-    expect(review).toContain("evaluateSourceNoteProvenanceAnswer");
-    expect(review).toContain("FIRST FOOTNOTE INCOMPLETE");
+    expect(review).toContain("this.sourceNoteBoard.show");
+    expect(review).toContain("sourceNote47ReadershipCorrected = 1");
     expect(review).toContain("aboutSeriesFirstFootnoteComplete = 1");
     expect(review).toContain("sourceNoteProvenanceComplete = 1");
     expect(review).toContain("saveGameNow()");
+    const complete = methodSource("completeSourceNoteVerification", "drawRoutedSourceNote");
+    expect(complete).toContain("fileSourceNote47Metadata()");
+    expect(complete).toContain('this.sourceNoteStatus === "verified"');
+    const update = archiveSceneSource.slice(archiveSceneSource.indexOf("if (this.sourceNoteBoard.active)"), archiveSceneSource.indexOf("if (this.researchChoice.active)"));
+    expect(update).toContain("this.player.update(delta, false)");
+    expect(update).toContain("this.updateDanneLurker(delta, false)");
   });
 
   it("keeps A1 spatial instead of stacking map and terminal dashboards", () => {

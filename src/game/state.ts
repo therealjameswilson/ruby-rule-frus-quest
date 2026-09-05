@@ -59,6 +59,7 @@ import { RESEARCH_CHARTER_PROMPTS } from "./researchCharter";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
+import { restoreSourceNote47, SOURCE_NOTE_47_ID, sourceNote47ReviewEarned } from "./sourceNote47";
 import { getAboutSeriesGameplayReadout } from "./aboutSeries";
 import { readHearingReview } from "./hearingReview";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
@@ -928,7 +929,8 @@ export function restoreGameSaveData(save: GameSaveData) {
   }
   gameState.secondVolumeUnlocked = Boolean(gameState.secondVolumeUnlocked || gameState.ngPlusUnlocked);
   if (gameState.secondVolumeUnlocked) gameState.sceneProgress.secondVolumeUnlocked = 1;
-  gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
+  gameState.documentCandidates = gameState.documentCandidates.map(document =>
+    restoreSourceNote47(cloneDocumentCandidate(document), gameState.sceneProgress));
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
   gameState.volumeAssembly = normalizeVolumeAssemblyState(gameState.volumeAssembly, gameState.volumeFragments);
@@ -2136,6 +2138,12 @@ export function setDocumentWorkflowState(documentId: string, workflowState: Docu
   return changed?.workflowState ?? null;
 }
 
+export function fileSourceNote47Metadata() {
+  if (!sourceNote47ReviewEarned(gameState.sceneProgress)) return null;
+  return updateDocumentCandidate(SOURCE_NOTE_47_ID,
+    document => restoreSourceNote47(document, gameState.sceneProgress), "Filed human-reviewed training source note");
+}
+
 export function setAgencyEquityResponse(documentId: string, agencyId: string, response: ReviewStatus, reason?: string) {
   const changed = updateDocumentCandidate(documentId, (document) => applyAgencyEquityResponse(document, agencyId, response), reason);
   return changed?.reviewStatus ?? null;
@@ -2966,7 +2974,7 @@ export function renderGameToText() {
       processStamps: gameState.processStamps,
       processItems: getProcessItemReadout(),
       danneItems: getDanneItemReadout(),
-      codex: getCodexReadout(),
+      codex: getCodexReadout(gameState.documentCandidates),
       aboutSeries: getAboutSeriesGameplayReadout(gameState.sceneProgress),
       workflowTools: getWorkflowToolReadout(),
       areaProgress: getAreaProgressReadout(),

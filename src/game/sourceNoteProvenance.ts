@@ -1,5 +1,6 @@
 import type { ChoiceOption } from "./types";
 import { ABOUT_SERIES_FIRST_FOOTNOTE_RULE, ABOUT_SERIES_SOURCE } from "./aboutSeries";
+import { SOURCE_NOTE_47_LOCATOR } from "./sourceNote47";
 
 export type SourceNoteProvenancePromptId =
   | "repository"
@@ -46,7 +47,7 @@ export const SOURCE_NOTE_PROVENANCE_PROMPTS = [
     id: "repository",
     question: "SOURCE NOTE 47: WHICH REPOSITORY CAN SUPPORT THE NOTE?",
     options: [
-      { key: "A", label: "Fictional National Archives Collection", value: "national_archives" },
+      { key: "A", label: SOURCE_NOTE_47_LOCATOR.repository, value: "national_archives" },
       { key: "B", label: "DANN-E guessed a missing repository", value: "danne_guess" },
       { key: "C", label: "No repository needed after routing", value: "none" }
     ],
@@ -59,7 +60,7 @@ export const SOURCE_NOTE_PROVENANCE_PROMPTS = [
     id: "collection",
     question: "SOURCE NOTE 47: WHICH COLLECTION LINE BELONGS IN THE CITATION?",
     options: [
-      { key: "A", label: "Office Files of the Policy Planning Staff", value: "policy_planning" },
+      { key: "A", label: SOURCE_NOTE_47_LOCATOR.collection, value: "policy_planning" },
       { key: "B", label: "Shortcut queue, no collection listed", value: "shortcut" },
       { key: "C", label: "Personal memory of the compiler", value: "memory" }
     ],
@@ -102,7 +103,7 @@ export const SOURCE_NOTE_PROVENANCE_STATIONS = [
     order: 3,
     label: "Folder Tab",
     shortLabel: "FOLDER",
-    evidenceLabel: "ALLIANCE CONSULTATION"
+    evidenceLabel: SOURCE_NOTE_47_LOCATOR.folder.toUpperCase()
   }
 ] as const satisfies readonly SourceNoteProvenanceStation[];
 
