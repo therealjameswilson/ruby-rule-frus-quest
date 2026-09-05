@@ -5,6 +5,8 @@ import { DANNE_RUNTIME_SPRITE_ASSETS } from "../../game/danneAtlas";
 import { unlockCodexEntry } from "../../game/codex";
 import { REDACTOR_DRONE_STAMP_TRIGGER_RADIUS } from "../../game/levelPacing";
 import type { Position } from "../../game/types";
+import { telegraphPhase, type TelegraphTiming } from "../../systems/enemyCombat";
+import { frameDeltaSeconds } from "../../systems/smoothMovement";
 import { Player } from "../Player";
 import { Enemy } from "./Enemy";
 
@@ -13,30 +15,29 @@ const DRONE_ASSET = DANNE_RUNTIME_SPRITE_ASSETS.find((asset) => asset.entityId =
 interface BlackBarProjectile {
   rect: Phaser.GameObjects.Rectangle;
   bounds: Phaser.Geom.Rectangle;
-  armAt: number;
-  expiresAt: number;
-  armed: boolean;
+  startedAt: number;
+  spent: boolean;
 }
 
 // The stamp telegraphs its landing zone before it can redact you, so a player
 // standing on the drop has a fair window to step clear (ALTTP AoE tell).
-const BLACK_BAR_ARM_MS = 260;
+export const DRONE_STAMP_TIMING: TelegraphTiming = { windupMs: 400, activeMs: 600, recoveryMs: 180 };
 
 export class RedactorDrone extends Enemy {
   private nextStampAt = 0;
-  private stampingUntil = 0;
+  private combatTime = 0;
   private projectiles: BlackBarProjectile[] = [];
   private facing: "down" | "up" | "left" | "right" = "down";
 
-  constructor(scene: Phaser.Scene, x: number, y: number, waypoints: Position[]) {
+  constructor(scene: Phaser.Scene, x: number, y: number, waypoints: Position[], private readonly getSolids: () => readonly Phaser.Geom.Rectangle[] = () => []) {
     unlockCodexEntry("enemy-redactor-drone");
     super(scene, x, y, {
       label: "Redactor Drone",
       spriteKey: DRONE_ASSET.key,
       fallbackTextureKey: "bureaucratic-wall",
       waypoints,
-      tag: { text: "DRONE", y: 17, color: PALETTE.classNetRed, backgroundColor: PALETTE.black },
-      cue: { text: "STAMP", y: -22, color: PALETTE.classNetRed, backgroundColor: PALETTE.black },
+      tag: { text: "DRONE", y: 17, color: PALETTE.classNetRed, backgroundColor: PALETTE.black, visible: false },
+      cue: { text: "!", y: -27, color: PALETTE.goldStamp, backgroundColor: PALETTE.black },
       shadow: { y: 12, width: 20, height: 6 },
       speed: 22,
       acceleration: 90,
@@ -47,24 +48,54 @@ export class RedactorDrone extends Enemy {
     this.playWalk("down");
   }
 
-  update(timeMs: number, deltaMs: number, player: Player, canAttack: boolean) {
+  update(_timeMs: number, deltaMs: number, player: Player, canAct: boolean) {
+    // Gameplay time stops with the map/dialogue. A pending tell retains its
+    // remaining reaction window instead of landing during or just after pause.
+    if (!canAct || this.dead) return false;
+    this.combatTime += frameDeltaSeconds(deltaMs) * 1000;
+    const timeMs = this.combatTime;
     this.moveTowardWaypoint(deltaMs);
     this.updateFacing();
     this.playWalk(this.facing);
-    const triggered = canAttack && this.distanceTo(player.position) <= REDACTOR_DRONE_STAMP_TRIGGER_RADIUS && timeMs >= this.nextStampAt;
+    const triggered = this.distanceTo(player.position) <= REDACTOR_DRONE_STAMP_TRIGGER_RADIUS
+      && timeMs >= this.nextStampAt && this.canSee(player.position);
     if (triggered) this.dropBlackBar(timeMs, player.position);
     this.updateProjectiles(timeMs, player);
-    const active = timeMs < this.stampingUntil;
-    this.cue.setVisible(active);
-    if (active && Math.floor(timeMs / 100) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
+    const windingUp = this.projectiles.some((projectile) => telegraphPhase(projectile.startedAt, timeMs, DRONE_STAMP_TIMING) === "windup");
+    this.cue.setVisible(windingUp);
+    if (windingUp && Math.floor(timeMs / 100) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
     else this.sprite.clearTint();
     const hover = Math.sin(timeMs / 180) * 1.2;
     this.syncRender(timeMs, 0, hover);
     return triggered;
   }
 
-  status(timeMs: number) {
-    return timeMs < this.stampingUntil ? "dropping black-bar stamp" : "patrolling";
+  status(_timeMs: number) {
+    const phase = this.projectiles[0] ? telegraphPhase(this.projectiles[0].startedAt, this.combatTime, DRONE_STAMP_TIMING) : "idle";
+    return phase === "windup" ? "stamp warning: leave the marked floor" : phase === "active" ? "black-bar stamp active" : "patrolling";
+  }
+
+  get stampReadout() {
+    return this.projectiles.map((projectile) => ({ x: projectile.rect.x, y: projectile.rect.y,
+      width: projectile.bounds.width, height: projectile.bounds.height,
+      phase: telegraphPhase(projectile.startedAt, this.combatTime, DRONE_STAMP_TIMING),
+      spent: projectile.spent }));
+  }
+
+  get telegraph() {
+    const stamp = this.projectiles[0];
+    if (!stamp) return null;
+    const phase = telegraphPhase(stamp.startedAt, this.combatTime, DRONE_STAMP_TIMING);
+    const end = DRONE_STAMP_TIMING.windupMs + (phase === "windup" ? 0 : DRONE_STAMP_TIMING.activeMs)
+      + (phase === "recovery" ? DRONE_STAMP_TIMING.recoveryMs : 0);
+    return { kind: `stamp-${phase}`, label: phase === "windup" ? "Leave the marked floor" : "Black-bar stamp",
+      msRemaining: Math.max(0, Math.ceil(end - (this.combatTime - stamp.startedAt))),
+      target: { x: stamp.rect.x, y: stamp.rect.y }, destination: null };
+  }
+
+  private canSee(player: Position) {
+    const sight = new Phaser.Geom.Line(this.currentX, this.currentY, player.x, player.y);
+    return !this.getSolids().some((solid) => Phaser.Geom.Intersects.LineToRectangle(sight, solid));
   }
 
   protected onDeath() {
@@ -89,38 +120,33 @@ export class RedactorDrone extends Enemy {
 
   private dropBlackBar(timeMs: number, player: Position) {
     this.nextStampAt = timeMs + 1700;
-    this.stampingUntil = timeMs + 520;
     const x = Math.round(player.x);
-    const y = Math.round(player.y - 8);
+    const y = Math.round(player.y + 1);
     const rect = this.scene.add
-      .rectangle(x, y, 30, 7, this.color(PALETTE.black), 0.88)
-      .setStrokeStyle(1, this.color(PALETTE.classNetRed))
-      .setDepth(y + 8);
+      .rectangle(x, y, 30, 8, this.color(PALETTE.goldStamp), 0.08)
+      .setStrokeStyle(1, this.color(PALETTE.goldStamp))
+      .setDepth(y - 2).setName("nara-stamp-target");
     this.projectiles.push({
       rect,
       bounds: new Phaser.Geom.Rectangle(x - 15, y - 4, 30, 8),
-      armAt: timeMs + BLACK_BAR_ARM_MS,
-      expiresAt: timeMs + 1000,
-      armed: true
-    });
-    this.scene.tweens.add({
-      targets: rect,
-      alpha: 0.35,
-      duration: 120,
-      yoyo: true,
-      repeat: 3,
-      ease: "Stepped"
+      startedAt: timeMs,
+      spent: false
     });
   }
 
   private updateProjectiles(timeMs: number, player: Player) {
     const footBox = new Phaser.Geom.Rectangle(player.position.x - 8, player.position.y - 3, 16, 8);
     this.projectiles = this.projectiles.filter((projectile) => {
-      if (projectile.armed && timeMs >= projectile.armAt && Phaser.Geom.Intersects.RectangleToRectangle(projectile.bounds, footBox)) {
-        projectile.armed = false;
+      const phase = telegraphPhase(projectile.startedAt, timeMs, DRONE_STAMP_TIMING);
+      const active = phase === "active";
+      projectile.rect.setFillStyle(this.color(active ? PALETTE.black : PALETTE.goldStamp), active ? 0.95 : 0.08)
+        .setStrokeStyle(1, this.color(active ? PALETTE.classNetRed : PALETTE.goldStamp))
+        .setAlpha(phase === "recovery" ? 0.3 : 1);
+      if (!projectile.spent && active && Phaser.Geom.Intersects.RectangleToRectangle(projectile.bounds, footBox)) {
+        projectile.spent = true;
         player.takeHit(this.position, 8, 800);
       }
-      if (timeMs >= projectile.expiresAt) {
+      if (phase === "idle") {
         projectile.rect.destroy();
         return false;
       }

@@ -14,6 +14,7 @@ import {
   DANNE_VFX_ASSETS
 } from "../game/danneAtlas";
 import { HearingReview } from "../systems/hearingReview";
+import { NaraStackRecords, naraFragmentCollected } from "../systems/naraStackRecords";
 import type {
   DanneMapSceneKey,
   DanneRectDefinition,
@@ -142,6 +143,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private readonly hitstop = new HitstopController();
   private readonly attackBuffer = new AttackBuffer();
   private redactorDrones: RedactorDrone[] = [];
+  private stackRecords?: NaraStackRecords;
   private censorshipWraiths: CensorshipWraith[] = [];
   private danneBoss?: DanneBoss;
   private marineGuard?: MarineSecurityGuard;
@@ -202,6 +204,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.leavingReadingPassage = false;
     this.collisionDebug = undefined;
     this.hearing = undefined;
+    this.stackRecords = undefined;
     this.interactionAssist.clear();
     this.attackBuffer.clear();
     this.hitstop.reset();
@@ -233,7 +236,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.cacheMarkers.length = 0;
     this.drawInteractionMarkers();
     if (isCollisionDebugEnabled()) this.drawCollisionDebug();
-    if (this.geometry.sceneKey !== "SenateHearingChamberScene") this.drawLocationCard();
+    if (this.geometry.sceneKey !== "SenateHearingChamberScene" && this.geometry.sceneKey !== "NaraStacksScene") this.drawLocationCard();
 
     this.solids = (this.geometry.sceneKey === "NaraStacksScene"
       ? readingPassageSolids(this.geometry.solids, hiddenReadingRoomDiscovered(gameState))
@@ -277,6 +280,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.createDanneEntities();
     this.syncBlackVaultTraversal();
     this.syncReadingRoomTraversal();
+    if (this.geometry.sceneKey === "NaraStacksScene") {
+      this.stackRecords = new NaraStackRecords(this, this.cacheToast, () => this.player.position);
+      this.stackRecords.syncTargets(this.interactables);
+    }
     if (this.geometry.sceneKey === "SenateHearingChamberScene") {
       this.hearing = new HearingReview(this, this.cacheToast, () => this.player.position);
       this.hearing.syncTargets(this.interactables);
@@ -400,6 +407,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     const bossActive = Boolean(this.danneBoss?.isActive);
     this.hearing?.syncTargets(this.interactables);
+    this.stackRecords?.syncTargets(this.interactables);
     const targets = this.geometry.sceneKey === "BlackVaultLairScene"
       ? blackVaultApproachTargets(this.player.position, this.interactables, Boolean(gameState.sceneProgress.blackVaultReliabilityCacheUsed))
       : this.interactables;
@@ -407,8 +415,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const hintTarget = bossActive ? null : nearestInteractableHint(this.player.position, targets);
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest && this.geometry.sceneKey !== "BlackVaultLairScene" && !this.hearing ? `A: ${nearest.label.toUpperCase()}` : "");
-    this.prompt.update(delta, this.hearing ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
+    this.hintText.setText(nearest && this.geometry.sceneKey !== "BlackVaultLairScene" && !this.hearing && !this.stackRecords ? `A: ${nearest.label.toUpperCase()}` : "");
+    this.prompt.update(delta, this.hearing || this.stackRecords ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
     else if (input.aJustPressed) {
@@ -437,6 +445,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
       }
     }
     this.hearing?.update(nearest);
+    this.stackRecords?.syncTargets(this.interactables);
+    this.stackRecords?.update(nearest);
     this.reliability.update();
     this.syncDanneReadout(this.time.now);
   }
@@ -507,6 +517,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
         this.drawHiddenPassageSeam(interaction);
         continue;
       }
+      if (this.geometry.sceneKey === "NaraStacksScene") continue;
       const markerStart = this.interactionMarkerObjects.length;
       this.interactionMarkerObjects.push(this.add.ellipse(interaction.x + 1, interaction.y + 2, 15, 7, color(PALETTE.black), 0.55).setDepth(interaction.y - 4));
       this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y, 13, 13, color(PALETTE.black), 0.82)
@@ -700,20 +711,11 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     if (definition.action === "nara-stacks-note") {
-      this.dialog.show("STACK CONTROL NOTE", [
-        "Watch the drone lanes between the shelves.",
-        "The northeast shelf is absent from this register. Compare it with the Review Folder."
-      ]);
+      this.stackRecords?.handle(definition.action);
       return;
     }
     if (definition.action === "treaty-fragment-nara") {
-      const added = addDanneItem("treaty-fragments", 0);
-      if (added) retroAudio.danneItemPickup("Treaty Fragment I");
-      else retroAudio.confirm();
-      saveGameNow("manual");
-      this.dialog.show("TREATY FRAGMENT I", added
-        ? "Fragment I was filed behind the drone patrol route."
-        : "Fragment I is already in the treaty folder.");
+      this.stackRecords?.handle(definition.action);
       return;
     }
     if (definition.action === "hidden-reading-room-passage") {
@@ -825,7 +827,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (this.geometry.sceneKey === "NaraStacksScene") {
       this.redactorDrones = (this.geometry.patrolRoutes ?? []).map((route) => {
         const [start, ...rest] = route.points;
-        return new RedactorDrone(this, start.x, start.y, [start, ...rest]);
+        return new RedactorDrone(this, start.x, start.y, [start, ...rest], () => this.solids);
       });
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene" && !gameState.sceneProgress.blackVaultBossCleared) {
@@ -975,7 +977,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private syncDanneReadout(timeMs: number) {
-    const visible = this.geometry.visibleEntities.map((label) => label === "Faint Wall Seam"
+    const visible = this.geometry.visibleEntities.filter((label) => this.geometry.sceneKey !== "NaraStacksScene"
+      || label !== "Treaty Fragment I" || !naraFragmentCollected()).map((label) => label === "Faint Wall Seam"
       ? readingPassageLabel(hiddenReadingRoomDiscovered(gameState), hasProcessItem("review_folder")) : label);
     if (this.redactorDrones.length) visible.push(...this.redactorDrones.map((_drone, index) => `Redactor Drone ${index + 1}`));
     if (this.censorshipWraiths.length) visible.push(...this.censorshipWraiths.map((_wraith, index) => `Censorship Wraith ${index + 1}`));
@@ -989,8 +992,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
         y: drone.position.y,
         spriteKey: drone.spriteKey,
         behavior: "patrol + stamp drop",
-        defeatMethod: "Use the Ruby Pen or keep clear of black-bar stamps while routing the manifest.",
-        status: drone.status(timeMs)
+        defeatMethod: "Strike with the equipped review tool, or leave the marked floor before the stamp lands. Shelves block sight.",
+        status: drone.status(timeMs),
+        ...drone.healthReadout,
+        telegraph: drone.telegraph
       })),
       ...this.censorshipWraiths.map((wraith, index) => ({
         label: `Censorship Wraith ${index + 1}`,

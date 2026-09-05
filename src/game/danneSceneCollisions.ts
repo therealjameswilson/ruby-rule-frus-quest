@@ -52,7 +52,7 @@ export function danneMapInteractionAvailable(action: DanneSceneInteractionAction
 
 export function danneMapExplorationObjective(sceneKey: DanneMapSceneKey, inventory: readonly string[]) {
   if (sceneKey === "NaraStacksScene") {
-    return inventory.includes(TREATY_FRAGMENT_LABELS[0]) ? "SOUTH TO ARCHIVE" : "OPTIONAL: FIND FRAGMENT I";
+    return inventory.includes(TREATY_FRAGMENT_LABELS[0]) ? "SOUTH TO ARCHIVE" : "FIND FRAGMENT I";
   }
   if (sceneKey === "SenateHearingChamberScene") {
     return inventory.includes(TREATY_FRAGMENT_LABELS[1]) ? "SOUTH TO OFFICE" : "OPTIONAL: HEARING RECORD";
@@ -297,7 +297,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         // (y=92). The player reads the briefing before wading into the patrol
         // lanes, ALTTP "read the room before the threat". See levelPacing.ts.
         id: "stacks-note",
-        label: "Stack Control Note",
+        label: "Patrol Note",
         x: 128,
         y: 178,
         radius: 24,
@@ -308,9 +308,9 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
       {
         id: "nara-treaty-fragment",
         label: "Treaty Fragment I",
-        x: 204,
-        y: 184,
-        radius: 26,
+        x: 166,
+        y: 64,
+        radius: 18,
         kind: "document",
         action: "treaty-fragment-nara",
         accent: PALETTE.goldStamp

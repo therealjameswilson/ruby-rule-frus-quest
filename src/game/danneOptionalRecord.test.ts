@@ -4,14 +4,14 @@ import { TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 
 describe("optional treaty-record route cues", () => {
   it("names the collectible before discovery and the real exit afterwards", () => {
-    expect(danneMapExplorationObjective("NaraStacksScene", [])).toBe("OPTIONAL: FIND FRAGMENT I");
+    expect(danneMapExplorationObjective("NaraStacksScene", [])).toBe("FIND FRAGMENT I");
     expect(danneMapExplorationObjective("NaraStacksScene", [TREATY_FRAGMENT_LABELS[0]])).toBe("SOUTH TO ARCHIVE");
     expect(danneMapExplorationObjective("SenateHearingChamberScene", [])).toBe("OPTIONAL: HEARING RECORD");
     expect(danneMapExplorationObjective("SenateHearingChamberScene", [TREATY_FRAGMENT_LABELS[1]])).toBe("SOUTH TO OFFICE");
   });
 
   it("does not confuse one fragment with the other", () => {
-    expect(danneMapExplorationObjective("NaraStacksScene", [TREATY_FRAGMENT_LABELS[1]])).toBe("OPTIONAL: FIND FRAGMENT I");
+    expect(danneMapExplorationObjective("NaraStacksScene", [TREATY_FRAGMENT_LABELS[1]])).toBe("FIND FRAGMENT I");
     expect(danneMapExplorationObjective("SenateHearingChamberScene", [TREATY_FRAGMENT_LABELS[0]])).toBe("OPTIONAL: HEARING RECORD");
   });
 

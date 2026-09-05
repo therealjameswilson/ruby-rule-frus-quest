@@ -129,6 +129,10 @@ export abstract class Enemy {
     return this.dead;
   }
 
+  get healthReadout() {
+    return { hp: Math.max(0, this.health), maxHp: this.maxHealth };
+  }
+
   takeDamage(amount = 1, source?: Position, knockbackDistance = 8) {
     if (this.dead) return false;
     this.health -= amount;
