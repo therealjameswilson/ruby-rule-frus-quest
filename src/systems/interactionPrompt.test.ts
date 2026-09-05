@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computePromptPlacement, promptVerbForKind } from "./interactionPromptPlacement";
+import { computePromptPlacement, fitPromptText, promptVerbForKind } from "./interactionPromptPlacement";
 import type { Interactable } from "../game/types";
 
 function make(overrides: Partial<Interactable> = {}): Interactable {
@@ -58,5 +58,30 @@ describe("computePromptPlacement", () => {
   it("can reserve a bottom band for dense in-world UI", () => {
     const placement = computePromptPlacement(make({ x: 100, y: 190 }), { left: 36, right: 220, top: 50, bottom: 92 });
     expect(placement.y).toBe(92);
+  });
+
+  it.each([2, 70, 204, 254])("keeps a measured long panel fully visible at target x=%s", (x) => {
+    const panelWidth = 158;
+    const placement = computePromptPlacement(make({ x }), undefined, panelWidth);
+    expect(placement.x - panelWidth / 2).toBeGreaterThanOrEqual(8);
+    expect(placement.x + panelWidth / 2).toBeLessThanOrEqual(248);
+    expect(placement.ringX).toBe(x);
+  });
+
+  it("fits a nearly full-width panel even when custom anchor bounds conflict", () => {
+    const placement = computePromptPlacement(make({ x: 204 }), { left: 140, right: 220, top: 50 }, 238);
+    expect(placement.x).toBe(128);
+  });
+});
+
+describe("fitPromptText", () => {
+  const measure = (text: string) => text.length * 6;
+  it("preserves ordinary interaction names and verbs in full", () => {
+    expect(fitPromptText("CHECK TREATY FRAGMENT I", measure)).toBe("CHECK TREATY FRAGMENT I");
+  });
+  it("shortens unusually long labels to a visible ellipsis without reducing font size", () => {
+    const label = fitPromptText("CHECK THE COMPLETE DECLASSIFICATION REFERRAL AND CONCURRENCE REGISTER", measure);
+    expect(label).toMatch(/^CHECK .+\.\.\.$/);
+    expect(measure(label)).toBeLessThanOrEqual(220);
   });
 });

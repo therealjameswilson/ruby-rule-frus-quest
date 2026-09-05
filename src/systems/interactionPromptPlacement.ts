@@ -47,6 +47,13 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+export function fitPromptText(value: string, measure: (text: string) => number, maxWidth = GAME_WIDTH - 36) {
+  if (measure(value) <= maxWidth) return value;
+  let short = value;
+  while (short.length > 0 && measure(`${short}...`) > maxWidth) short = short.slice(0, -1);
+  return `${short.trimEnd()}...`;
+}
+
 // Pure placement math: given the nearest interactable, decide whether the prompt
 // shows, what it reads, and where it floats so it stays on-screen and above the
 // target rather than under the player's sprite. Kept free of Phaser so it can be
@@ -54,7 +61,8 @@ function clamp(value: number, min: number, max: number) {
 // touches `navigator` and crashes the suite).
 export function computePromptPlacement(
   nearest: Interactable | null,
-  bounds: PromptPlacementBounds = DEFAULT_PROMPT_BOUNDS
+  bounds: PromptPlacementBounds = DEFAULT_PROMPT_BOUNDS,
+  panelWidth = 0
 ): PromptPlacement {
   if (!nearest) {
     return { visible: false, label: "", verb: "", x: 0, y: 0, ringX: 0, ringY: 0 };
@@ -64,11 +72,14 @@ export function computePromptPlacement(
   // when they stand immediately below an object or workstation.
   const desiredY = nearest.y - 40;
   const bottom = bounds.bottom ?? Number.POSITIVE_INFINITY;
+  const halfWidth = Math.min(GAME_WIDTH - 16, Math.max(0, panelWidth)) / 2;
+  const left = Math.max(bounds.left, halfWidth + 8);
+  const right = Math.min(bounds.right, GAME_WIDTH - halfWidth - 8);
   return {
     visible: true,
     label: nearest.label.toUpperCase(),
     verb,
-    x: clamp(nearest.x, bounds.left, bounds.right),
+    x: left <= right ? clamp(nearest.x, left, right) : GAME_WIDTH / 2,
     y: clamp(desiredY, bounds.top, Math.max(bounds.top, bottom)),
     ringX: nearest.x,
     ringY: nearest.y
