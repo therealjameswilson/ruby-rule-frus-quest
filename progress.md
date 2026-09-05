@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Readable adventure pause menu (2026-09-05):
+  - Replaced the crowded all-in-one inventory with Tools / Map / Log / Settings. Native 8px text (6px room IDs), separate 44px targets, first-tap selection / second-tap equipment, full source pagination, chapter diagrams with lock crosses, and named pendants replace overlapping 4-5px prose. Existing item art, special cards, FRUS shelf, key state, settings and codex remain available.
+  - Removed invisible touch-button interception during pause, hid the gameplay HUD while paused, and swallowed closing input. Shared sceneDefaultRoom now supplies the current map marker when an entry has no traversal object. Added transient pauseMenu QA readout; no save schema change.
+  - 157 Vitest files / 996 tests and production build pass (222 modules, 2,704.03 KB main JS; pre-existing chunk warning). Browser keyboard/mouse and 375x667 touch pass covers every process tool, special cards, maps/log pages, languages, contrast/audio, codex/return, missing tools, and Continue preservation. Seeded Ruby Pen test is menu QA, not an earned gameplay reward. NARA pause-windup/dodge/stagger/two-hit defeat regression passes on touch.
+  - Evidence/limits: docs/PAUSE_MENU_PLAYTEST.md and docs/screenshots/pause-menu-*.png. Local preview http://127.0.0.1:5195/; not publicly deployed. Next: completion-time pause/background accounting, other legacy enemy overlay behavior, codex readability, and remaining sprite fidelity. Whole-game fun/completion goal remains open.
+
 - NARA patrol-room readability and exploration (2026-09-05):
   - Played and reproduced misleading note art (drawn at y92, usable at y178), four permanent enemy labels, duplicate prompts, collected fragment art/hotspots surviving Continue, and drones moving behind the pause map. Stamp collision stopped above stationary feet. Baseline evidence: /private/tmp/frus-nara-before-desktop.
   - Added NaraStackRecords for correctly placed record art, local outline/A cues, short nonblocking note/pickup feedback, and one-time fragment disappearance. Moved Fragment I to the upper aisle at (166,64), beyond both patrol crossings, preserving the open exit and separate Review Folder secret. Existing inventory/save identity and rewards remain unchanged.

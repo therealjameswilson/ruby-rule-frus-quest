@@ -1,4 +1,5 @@
 import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
+import { getPauseMenuReadout } from "../systems/pauseMenu";
 import { getCodexReadout, unlockCodexEntry } from "./codex";
 import { AREA_REGISTRY, DEFAULT_PROCESS_ROLE, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
@@ -17,7 +18,8 @@ import {
   canTraverseExit,
   deriveWorkflowSnapshot,
   getQuestArchitectureReadout,
-  getRevealedShortcutRoomIds
+  getRevealedShortcutRoomIds,
+  sceneDefaultRoom
 } from "./questArchitecture";
 import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
@@ -2581,7 +2583,7 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
     }),
     roomMap: {
       currentAreaId: currentArea.id,
-      currentRoomId: gameState.roomTraversal?.currentRoomId ?? null,
+      currentRoomId: gameState.roomTraversal?.currentRoomId ?? sceneDefaultRoom(gameState.currentScene),
       rooms: FRUS_ROOM_GRAPH
         .filter((room) => room.area === currentArea.id)
         .map((room) => {
@@ -2888,6 +2890,7 @@ export function renderGameToText() {
       lttpFrusTranslation: getLttpFrusTranslationReadout(),
       oneHourTraining: getOneHourTrainingReadout(),
       adventureSubscreen: getAdventureSubscreenReadout(),
+      pauseMenu: getPauseMenuReadout(),
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,
       documentPoints: gameState.documentPoints,

@@ -309,7 +309,7 @@ export class UIScene extends Phaser.Scene {
   }
 
   private shouldShowQuestBand(activeSceneKey: string | null) {
-    if (!activeSceneKey || gameState.mode === "ending") return false;
+    if (!activeSceneKey || gameState.mode === "ending" || gameState.mode === "pause") return false;
     if (this.scene.isActive("CodexScene")) return false;
     return !new Set([
       "BootScene",

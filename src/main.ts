@@ -25,6 +25,7 @@ import {
 import { installNativeAppShell, observeNativeAppState, type NativeAppState } from "./platform/nativeApp";
 import { retroAudio, type AudioDebugState } from "./systems/audio";
 import { getLanguage } from "./systems/i18n";
+import { getPauseMenuReadout } from "./systems/pauseMenu";
 import { applyIntegerZoom, computeDeviceIntegerZoom } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
 
@@ -87,6 +88,7 @@ function renderConciseGameToText() {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",
       scene: gameState.currentScene,
       mode: gameState.mode,
+      pauseMenu: getPauseMenuReadout(),
       objective: gameState.objective,
       language: getLanguage(),
       platform: window.rubyRulePlatform,

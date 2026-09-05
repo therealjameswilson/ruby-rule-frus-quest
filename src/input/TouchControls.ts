@@ -353,6 +353,7 @@ export class TouchControls {
   }
 
   private findButtonAt(x: number, y: number) {
+    if (gameState.mode === "pause") return undefined;
     return this.buttons.find((button) =>
       Math.abs(x - button.x) <= button.hitWidth / 2
       && Math.abs(y - button.y) <= button.hitHeight / 2

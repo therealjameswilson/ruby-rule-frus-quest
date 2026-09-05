@@ -22,6 +22,15 @@ function refresh(scene: string) {
 }
 
 describe("touch controls on publication screens", () => {
+  it("does not let invisible action buttons steal pause menu taps", () => {
+    const controls = Object.create(TouchControls.prototype) as TouchControls;
+    Object.assign(controls, { buttons: [{ key: "a", x: 225, y: 205, hitWidth: 44, hitHeight: 44 }] });
+    const hit = Reflect.get(controls, "findButtonAt") as (x: number, y: number) => { key: string } | undefined;
+    gameState.mode = "explore";
+    expect(hit.call(controls, 225, 205)?.key).toBe("a");
+    gameState.mode = "pause";
+    expect(hit.call(controls, 225, 205)).toBeUndefined();
+  });
   it("leaves the secret reward's own large buttons unobstructed", () => {
     gameState.mode = "ending";
     expect(refresh("TrueEndingScene")).toHaveBeenCalledWith(false);
