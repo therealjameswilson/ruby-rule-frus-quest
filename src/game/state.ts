@@ -143,6 +143,7 @@ interface VisibleThreat {
     bolts: (Position & { returned?: boolean })[];
     boltsReturned?: number;
     counterWindowMs?: number;
+    feedback?: { text: string; tone: "info" | "warn"; msRemaining: number } | null;
     minis: Position[];
     retryAvailable: boolean;
     recoverablePressure: number;
@@ -2014,6 +2015,7 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     } : undefined,
     bossCombat: threat.bossCombat ? {
       ...threat.bossCombat,
+      feedback: threat.bossCombat.feedback ? { ...threat.bossCombat.feedback } : null,
       bolts: threat.bossCombat.bolts.map((bolt) => ({ ...bolt })),
       minis: threat.bossCombat.minis.map((mini) => ({ ...mini }))
     } : undefined,

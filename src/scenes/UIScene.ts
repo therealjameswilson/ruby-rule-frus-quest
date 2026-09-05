@@ -19,7 +19,8 @@ import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 import { guideQuestBandObjective, officeQuestBandObjective } from "./openingQuestBand";
-import { questBandRiskLine } from "./questBandCue";
+import { questBandBossCue, questBandRiskLine } from "./questBandCue";
+import { blackVaultActionLine } from "../game/blackVaultApproach";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -202,8 +203,10 @@ export class UIScene extends Phaser.Scene {
     const weapon = gameState.playerCombat.weapon;
     const objectiveLine = this.compactObjective(activeSceneKey);
     const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
-    const actionLine = riskLine ?? this.compactActionLine(toolLabel);
-    const actionBadge = !riskLine && (this.showCounterAction() || this.guideCounterTrainingActive())
+    const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats);
+    const actionLine = bossCue?.text ?? riskLine ?? this.compactActionLine(toolLabel);
+    const actionBadge = bossCue?.badge === "notice" ? "!"
+      : !riskLine && (bossCue?.badge === "tool" || this.showCounterAction() || this.guideCounterTrainingActive())
       ? getSecondaryActionBadge()
       : getPrimaryActionBadge();
     const signature = [
@@ -216,6 +219,7 @@ export class UIScene extends Phaser.Scene {
       objectiveLine,
       actionLine,
       actionBadge,
+      bossCue?.tone ?? "",
       gameState.nearestInteractable ?? "",
       gameState.heldItem ?? "",
       gameState.mode,
@@ -232,7 +236,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandText.setText(clampQuestBandText(objectiveLine, QUEST_BAND_LAYOUT.objective.maxChars));
     this.questBandVerbText.setText(actionBadge);
     this.questBandCueText.setText(clampQuestBandText(actionLine, QUEST_BAND_LAYOUT.actionCue.maxChars));
-    this.questBandCueText.setColor(riskLine ? PALETTE.classNetRed : PALETTE.terminalCyan);
+    this.questBandCueText.setColor(riskLine || bossCue?.tone === "warn" ? PALETTE.classNetRed : PALETTE.terminalCyan);
     this.questBandToolText.setText(clampQuestBandText(
       getString("hud.toolLabel", { label: toolLabel }),
       QUEST_BAND_LAYOUT.toolLabel.maxChars
@@ -273,6 +277,10 @@ export class UIScene extends Phaser.Scene {
     if (gameState.mode === "choice") return getString("hud.confirm");
     if (gameState.currentScene === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
       return getString("hud.goLeftTalk");
+    }
+    if (gameState.currentScene === "BlackVaultLairScene") {
+      const vaultAction = blackVaultActionLine(gameState.nearestInteractable, Boolean(gameState.sceneProgress.blackVaultBossCleared));
+      if (vaultAction) return vaultAction;
     }
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
     if (this.showCounterAction()) {

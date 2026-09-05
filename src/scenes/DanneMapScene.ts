@@ -3,7 +3,8 @@ import { SECRET_READING_ROOM_ASSETS } from "../assets/registry";
 import { readChapterArrival } from "../game/chapterTravel";
 import { registerDanneAnims } from "../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { blackVaultApproachTargets, blackVaultReturnRoute } from "../game/blackVaultApproach";
+import { blackVaultApproachTargets, blackVaultReturnRoute, blackVaultObjective, reviewCacheRefill } from "../game/blackVaultApproach";
+import { BlackVaultObjects } from "../systems/blackVaultObjects";
 import { nextArchiveResearchReview } from "../game/archiveResearchReview";
 import { unlockCodexEntry } from "../game/codex";
 import {
@@ -94,11 +95,6 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-// One-time reliability top-up granted by the Black Vault human-review cache, in
-// reliability points (2 of the 10 HUD hearts). Sized to soften attrition before
-// the DANN-E boss spike without erasing the fight; adjustReliability clamps to 100.
-const RELIABILITY_CACHE_REFILL = 20;
-
 function isCollisionDebugEnabled() {
   if (typeof window === "undefined") return false;
   return new URLSearchParams(window.location.search).get("debug") === "collision";
@@ -144,6 +140,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private readonly attackBuffer = new AttackBuffer();
   private redactorDrones: RedactorDrone[] = [];
   private stackRecords?: NaraStackRecords;
+  private vaultObjects?: BlackVaultObjects;
   private censorshipWraiths: CensorshipWraith[] = [];
   private danneBoss?: DanneBoss;
   private marineGuard?: MarineSecurityGuard;
@@ -205,6 +202,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.collisionDebug = undefined;
     this.hearing = undefined;
     this.stackRecords = undefined;
+    this.vaultObjects = undefined;
     this.interactionAssist.clear();
     this.attackBuffer.clear();
     this.hitstop.reset();
@@ -261,6 +259,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(900);
     this.prompt = new InteractionPrompt(this, 930);
     this.cacheToast = new FeedbackToast(this);
+    if (this.geometry.sceneKey === "BlackVaultLairScene") this.vaultObjects = new BlackVaultObjects(this);
     this.interactables = this.geometry.interactions
       .filter((definition) => danneMapInteractionAvailable(definition.action, Boolean(gameState.sceneProgress.blackVaultBossCleared)))
       .map((definition) => ({
@@ -308,7 +307,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
-    this.cacheToast.update(delta, this.player.position);
+    this.cacheToast.update(delta, this.geometry.sceneKey === "BlackVaultLairScene" ? { x: 128, y: 88 } : this.player.position);
     if (this.leavingReadingPassage || this.time.now < this.passageBusyUntil) {
       this.updateDanneEntities(this.time.now, delta, false);
       this.player.update(delta, false);
@@ -328,6 +327,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const canAct = gameState.mode === "explore" && !this.dialog.active && !this.choice.active
       && !this.inventory.active && !this.reliability.active && !bossDecisionActive && !isCutsceneActive(this);
     this.player.setCombatPaused(!canAct || frozen);
+    if (!canAct) this.vaultObjects?.update(null, false, Boolean(this.danneBoss?.isActive));
     if (!frozen) {
       this.updateDanneEntities(this.time.now, delta, canAct);
       this.restoreSafePlayerPosition();
@@ -413,6 +413,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const bossActive = Boolean(this.danneBoss?.isActive);
     this.hearing?.syncTargets(this.interactables);
     this.stackRecords?.syncTargets(this.interactables);
+    this.vaultObjects?.syncTargets(this.interactables);
     const targets = this.geometry.sceneKey === "BlackVaultLairScene"
       ? blackVaultApproachTargets(this.player.position, this.interactables, Boolean(gameState.sceneProgress.blackVaultReliabilityCacheUsed))
       : this.interactables;
@@ -421,7 +422,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
     this.hintText.setText(nearest && this.geometry.sceneKey !== "BlackVaultLairScene" && !this.hearing && !this.stackRecords ? `A: ${nearest.label.toUpperCase()}` : "");
-    this.prompt.update(delta, this.hearing || this.stackRecords ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
+    this.prompt.update(delta, this.hearing || this.stackRecords || this.vaultObjects ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
     else if (input.aJustPressed) {
@@ -452,6 +453,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.hearing?.update(nearest);
     this.stackRecords?.syncTargets(this.interactables);
     this.stackRecords?.update(nearest);
+    this.vaultObjects?.update(nearest, gameState.mode === "explore", Boolean(this.danneBoss?.isActive));
     this.reliability.update();
     this.syncDanneReadout(this.time.now);
   }
@@ -514,6 +516,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private drawInteractionMarkers() {
+    if (this.geometry.sceneKey === "BlackVaultLairScene") return;
     for (const interaction of this.geometry.interactions) {
       if (!danneMapInteractionAvailable(interaction.action, Boolean(gameState.sceneProgress.blackVaultBossCleared))) continue;
       if (interaction.action === "reliability-cache" && gameState.sceneProgress.blackVaultReliabilityCacheUsed) continue;
@@ -535,7 +538,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private blackVaultApproachObjective() {
-    return gameState.sceneProgress.blackVaultReliabilityCacheUsed ? "INSPECT DANN-E CORE" : "USE REVIEW CACHE";
+    return blackVaultObjective(Boolean(gameState.sceneProgress.blackVaultReliabilityCacheUsed), gameState.reliability);
   }
 
   private drawHiddenPassageSeam(interaction: DanneSceneInteractionDefinition) {
@@ -765,14 +768,20 @@ export abstract class DanneMapScene extends Phaser.Scene {
         retroAudio.confirm();
         return;
       }
+      if (reviewCacheRefill(gameState.reliability) === 0) {
+        this.cacheToast.show("RELIABILITY FULL", { x: 128, y: 88 }, "info");
+        setLatestMessage("Reliability is full. The review cache remains available.");
+        retroAudio.blip();
+        return;
+      }
       gameState.sceneProgress.blackVaultReliabilityCacheUsed = 1;
-      adjustReliability(RELIABILITY_CACHE_REFILL, "human review cache restored confidence");
+      adjustReliability(reviewCacheRefill(gameState.reliability), "human review cache restored confidence");
       this.reliability.update();
       for (const marker of this.cacheMarkers) {
         (marker as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(false);
       }
       this.interactionAssist.clear();
-      this.cacheToast.show("REVIEW RESTORED", this.player.position, "info");
+      this.cacheToast.show("REVIEW RESTORED", { x: 128, y: 88 }, "info");
       retroAudio.confirm();
       setObjective(this.blackVaultApproachObjective());
       saveGameNow("manual");
@@ -867,6 +876,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     equipProcessItem("red_pencil");
+    this.cacheToast.hide();
+    this.vaultObjects?.update(null, false, true);
     for (const wraith of this.censorshipWraiths) wraith.destroy();
     this.censorshipWraiths = [];
     for (const marker of this.interactionMarkerObjects) {
@@ -985,6 +996,13 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const visible = this.geometry.visibleEntities.filter((label) => this.geometry.sceneKey !== "NaraStacksScene"
       || label !== "Treaty Fragment I" || !naraFragmentCollected()).map((label) => label === "Faint Wall Seam"
       ? readingPassageLabel(hiddenReadingRoomDiscovered(gameState), hasProcessItem("review_folder")) : label);
+    if (this.vaultObjects) {
+      for (const label of ["DANN-E Core Trigger", "Human Review Cache", "Treaty Fragment III"]) {
+        const index = visible.indexOf(label);
+        if (index >= 0) visible.splice(index, 1);
+      }
+      visible.push(...this.vaultObjects.visibleLabels());
+    }
     if (this.redactorDrones.length) visible.push(...this.redactorDrones.map((_drone, index) => `Redactor Drone ${index + 1}`));
     if (this.censorshipWraiths.length) visible.push(...this.censorshipWraiths.map((_wraith, index) => `Censorship Wraith ${index + 1}`));
     if (this.danneBoss?.isActive) visible.push(`DANN-E Boss (${this.danneBoss.currentPhase})`);

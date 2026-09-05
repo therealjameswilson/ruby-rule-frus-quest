@@ -3,6 +3,20 @@ import type { GameState } from "../game/state";
 
 type RiskThreat = Pick<GameState["visibleThreats"][number], "hp" | "enemyState" | "difficultyTier" | "reliabilityRisk" | "bossCombat">;
 
+export function questBandBossCue(mode: GameState["mode"], threats: readonly RiskThreat[]) {
+  if (mode !== "explore") return null;
+  const boss = threats.find((threat) => threat.bossCombat && (threat.hp ?? 0) > 0
+    && threat.enemyState !== "intro" && threat.enemyState !== "defeated");
+  const combat = boss?.bossCombat;
+  if (!combat || combat.retryAvailable) return null;
+  if (combat.feedback && combat.feedback.msRemaining > 0) {
+    return { text: combat.feedback.text, tone: combat.feedback.tone,
+      badge: combat.feedback.tone === "warn" ? "notice" : "tool" } as const;
+  }
+  return { text: (combat.counterWindowMs ?? 0) > 0 ? "CORE OPEN: STRIKE" : "FACE BOLT + SWING",
+    tone: "info", badge: "tool" } as const;
+}
+
 export function questBandRiskLine(mode: GameState["mode"], threats: readonly RiskThreat[]): string | null {
   // Boss telegraphs and hearts convey danger; keep the action/decision cue visible.
   if (mode !== "explore" || threats.some((threat) => threat.bossCombat && (threat.hp ?? 0) > 0)) return null;

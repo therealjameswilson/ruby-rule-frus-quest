@@ -54,7 +54,6 @@ import { applyHitShake } from "../../systems/combatFeedback";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { applyStandardsViolation } from "../../systems/reliability";
 import { recoverDanneBossPressure, takeDanneBossHit } from "../../systems/dannePressure";
-import { FeedbackToast } from "../../systems/feedbackToast";
 import { ChoicePrompt } from "../../systems/verification";
 import { isWeaponTool } from "../../systems/weaponState";
 import { Player } from "../Player";
@@ -133,7 +132,7 @@ export class DanneBoss {
   private readonly clockStatusText: Phaser.GameObjects.Text;
   private readonly shortcutChoice: ChoicePrompt;
   private readonly retryChoice: ChoicePrompt;
-  private readonly pressureToast: FeedbackToast;
+  private combatFeedback: { text: string; tone: "info" | "warn"; msRemaining: number } | null = null;
   private readonly bolts: EgoBolt[] = [];
   private readonly minis: MiniDanne[] = [];
   private phase: DanneBossPhase = "intro";
@@ -183,7 +182,6 @@ export class DanneBoss {
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.shortcutChoice = new ChoicePrompt(scene);
     this.retryChoice = new ChoicePrompt(scene);
-    this.pressureToast = new FeedbackToast(scene);
     const clockBg = scene.add.rectangle(128, 46, 238, 14, color(PALETTE.black), 0.98)
       .setScrollFactor(0);
     this.clockFill = scene.add.rectangle(12, 51, 1, 2, color(PALETTE.goldStamp), 0.9)
@@ -247,7 +245,10 @@ export class DanneBoss {
       return;
     }
     this.resumeCombatTimers(timeMs);
-    this.pressureToast.update(deltaMs, this.player.position);
+    if (this.combatFeedback) {
+      this.combatFeedback.msRemaining = Math.max(0, this.combatFeedback.msRemaining - deltaMs);
+      if (this.combatFeedback.msRemaining === 0) this.combatFeedback = null;
+    }
     this.updateBolts(timeMs, deltaMs);
     if (this.inputLocked || this.phaseTransitioning || this.defeated) return;
     this.updateMinis(timeMs, deltaMs);
@@ -288,6 +289,7 @@ export class DanneBoss {
         bolts: this.bolts.map((bolt) => ({ x: snapPixel(bolt.x), y: snapPixel(bolt.y), returned: bolt.returned })),
         boltsReturned: this.boltsReturned,
         counterWindowMs: Math.max(0, this.counterStunnedUntil - (this.combatPausedAt ?? this.scene.time.now)),
+        feedback: this.combatFeedback ? { ...this.combatFeedback } : null,
         minis: this.minis.map((mini) => ({ x: mini.sprite.x, y: mini.sprite.y })),
         retryAvailable: this.retryChoice.active,
         recoverablePressure: gameState.sceneProgress.blackVaultCombatDamage ?? 0,
@@ -307,7 +309,7 @@ export class DanneBoss {
     if (this.disposed) return;
     this.disposed = true;
     this.clearAttackTelegraph();
-    this.pressureToast.destroy();
+    this.combatFeedback = null;
     this.sprite.destroy();
     this.shadow.destroy();
     this.clockContainer.destroy();
@@ -366,6 +368,7 @@ export class DanneBoss {
     this.nextTeleportAt = this.scene.time.now;
     this.damageGraceUntil = this.scene.time.now + DANNE_BOSS_ENTRY_GRACE_MS;
     this.counterStunnedUntil = 0;
+    this.combatFeedback = null;
   }
 
   private async finishFight() {
@@ -671,7 +674,7 @@ export class DanneBoss {
     this.shortcutOffered = true;
     this.clearAttackTelegraph();
     this.clearBolts();
-    this.pressureToast.update(2000);
+    this.combatFeedback = null;
     this.clockContainer.setVisible(false);
     hideBossHud();
     const options: ChoiceOption[] = [
@@ -824,7 +827,7 @@ export class DanneBoss {
     this.sprite.setTint(color(PALETTE.creamPaper));
     setBossHp(this.hp, this.phaseIndex());
     setLatestMessage("Ego refuted. DANN-E is stunned: close in with the Red Pencil!");
-    this.pressureToast.show("EGO REFUTED!", this.player.position, "info");
+    this.combatFeedback = { text: "EGO RETURNED! STRIKE CORE", tone: "info", msRemaining: DANNE_BOSS_RETURN.stunMs };
     retroAudio.bossHit();
     applyHitShake(this.scene, "boss-hit");
     this.onPlayerHit?.(false);
@@ -864,7 +867,7 @@ export class DanneBoss {
   private hitPlayer(source: Position, kind: DanneBossHitKind, timeMs: number) {
     if (timeMs < this.damageGraceUntil || !takeDanneBossHit(this.player, source, kind)) return;
     this.damageGraceUntil = timeMs + DANNE_BOSS_RECOVERY_MS;
-    this.pressureToast.show(kind === "ego_bolt" ? "EGO BOLT -10 REL" : "SWARM -5 REL", this.player.position);
+    this.combatFeedback = { text: kind === "ego_bolt" ? "EGO BOLT: -10 REL" : "SWARM: -5 REL", tone: "warn", msRemaining: 1400 };
     if (gameState.reliability <= 0) this.offerRetry();
   }
 
@@ -874,7 +877,7 @@ export class DanneBoss {
     this.clearAttackTelegraph();
     this.clearBolts();
     this.clearMinis();
-    this.pressureToast.update(2000);
+    this.combatFeedback = null;
     this.clockContainer.setVisible(false);
     hideBossHud();
     setObjective("REVIEW INTERRUPTED");

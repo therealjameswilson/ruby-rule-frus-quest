@@ -1,6 +1,22 @@
 import type { Interactable, Position } from "./types";
 import { nearestInteractable } from "../systems/interaction";
 
+export function reviewCacheRefill(reliability: number) {
+  return Math.max(0, Math.min(20, 100 - reliability));
+}
+
+export function blackVaultObjective(cacheUsed: boolean, reliability: number) {
+  return !cacheUsed && reviewCacheRefill(reliability) > 0 ? "USE REVIEW CACHE" : "NORTH TO DANN-E";
+}
+
+export function blackVaultActionLine(target: string | null, bossCleared: boolean) {
+  if (target === "Review Cache") return "CHECK REVIEW CACHE";
+  if (target === "DANN-E Core") return bossCleared ? "TO THE BINDERY" : "BEGIN FINAL REVIEW";
+  if (target === "Treaty Fragment III") return "TAKE FRAGMENT III";
+  if (target === "Return to Proof" || target === "Return to Archive") return target.toUpperCase();
+  return null;
+}
+
 export function blackVaultReturnRoute(enteredFromProof: boolean, researchReviewMissing = false) {
   return enteredFromProof && !researchReviewMissing
     ? { sceneKey: "SilentReadScene", label: "Return to Proof" } as const

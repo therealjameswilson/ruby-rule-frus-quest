@@ -34,9 +34,6 @@ vi.mock("../../systems/audio", () => ({ retroAudio: {
 vi.mock("../../systems/bossHud", () => ({ hideBossHud: vi.fn(), setBossHp: vi.fn(), showBossHud: vi.fn() }));
 vi.mock("../../systems/combatFeedback", () => ({ applyHitShake: vi.fn() }));
 vi.mock("../../systems/cutscene", () => ({ enterCutscene: vi.fn(async () => {}), exitCutscene: vi.fn(async () => {}), playLine: vi.fn() }));
-vi.mock("../../systems/feedbackToast", () => ({ FeedbackToast: class {
-  show = vi.fn(); update = vi.fn(); destroy = vi.fn();
-} }));
 vi.mock("../../systems/verification", () => ({ ChoicePrompt: class {
   active = false;
   options: ChoiceOption[] = [];
@@ -182,6 +179,7 @@ describe("DANN-E final-review combat", () => {
     expect(internals.hp).toBe(152);
     expect(internals.bolts).toHaveLength(0);
     expect(boss.readout().bossCombat.counterWindowMs).toBeGreaterThan(0);
+    expect(boss.readout().bossCombat.feedback?.text).toBe("EGO RETURNED! STRIKE CORE");
     internals.updateAttackPattern(2499);
     expect(boss.readout().telegraph).toBeNull();
     internals.updateAttackPattern(2500);
@@ -219,6 +217,22 @@ describe("DANN-E final-review combat", () => {
     boss.update(6100, 16, true);
     expect(boss.readout().bossCombat.counterWindowMs).toBe(1400);
     expect(boss.readout().telegraph).toBeNull();
+  });
+
+  it("reports bounded HUD feedback, preserves it through pause, then clears it during play", () => {
+    const { boss, internals, scene } = fixture();
+    internals.hitPlayer({ x: 128, y: 100 }, "ego_bolt", 1000);
+    expect(boss.readout().bossCombat.feedback).toEqual({ text: "EGO BOLT: -10 REL", tone: "warn", msRemaining: 1400 });
+    boss.readout().bossCombat.feedback!.text = "Mutated snapshot";
+    boss.update(1000, 16, false);
+    scene.time.now = 11000;
+    boss.update(11000, 16, false);
+    expect(boss.readout().bossCombat.feedback).toEqual({ text: "EGO BOLT: -10 REL", tone: "warn", msRemaining: 1400 });
+    boss.update(11000, 16, true);
+    expect(boss.readout().bossCombat.feedback?.msRemaining).toBe(1384);
+    scene.time.now += 1400;
+    boss.update(scene.time.now, 1400, true);
+    expect(boss.readout().bossCombat.feedback).toBeNull();
   });
 
   it("does not let a lethal returned bolt leak into the next phase", async () => {
