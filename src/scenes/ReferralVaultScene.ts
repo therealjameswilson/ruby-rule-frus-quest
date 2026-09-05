@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readChapterArrival } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -18,6 +19,7 @@ import {
   setNearestInteractable,
   setObjective,
   setRoomTraversalState,
+  getVisitedRoomIds,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
@@ -90,7 +92,7 @@ interface ReferralRoom {
   id: ReferralRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, ReferralRoomId | "E1">>;
+  exits: Partial<Record<Direction, ReferralRoomId | "E1" | "N2">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "concurrence_slip">>;
 }
@@ -110,7 +112,7 @@ const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
     id: "R1",
     title: "Equity Gate",
     roomType: "puzzle",
-    exits: { east: "R2" },
+    exits: { west: "N2", east: "R2" },
     lockedExits: { east: "Visible excision gate" }
   },
   R2: {
@@ -163,14 +165,14 @@ export class ReferralVaultScene extends Phaser.Scene {
     super("ReferralVaultScene");
   }
 
-  create() {
+  create(data?: unknown) {
+    const arrival = readChapterArrival(data, "ReferralVaultScene", gameState.currentScene);
     const restoringReferralScene = gameState.currentScene === "ReferralVaultScene";
-    const restoredRoomId: ReferralRoomId = restoringReferralScene
-      && gameState.roomTraversal?.currentRoomId === "R2" ? "R2" : "R1";
-    const restoredPosition = restoringReferralScene ? { ...gameState.player } : null;
-    const restoredVisitedRoomIds = restoringReferralScene
-      ? gameState.roomTraversal?.visitedRoomIds.filter((roomId): roomId is ReferralRoomId => roomId in REFERRAL_ROOMS) ?? []
-      : [];
+    const restoredRoomId: ReferralRoomId = arrival?.to === "R2" || (!arrival && restoringReferralScene
+      && gameState.roomTraversal?.currentRoomId === "R2") ? "R2" : "R1";
+    const restoredPosition = arrival ? { x: arrival.x, y: arrival.y }
+      : restoringReferralScene ? { ...gameState.player } : null;
+    const restoredVisitedRoomIds = getVisitedRoomIds(["R1", "R2"] as const);
     setSceneState("ReferralVaultScene", "explore", "Referral Vault: earn the Concurrence Slip.");
     retroAudio.startMusic("ReferralVaultScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
@@ -591,7 +593,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         hasExit: true,
         unlocked: true,
         accent: PALETTE.goldStamp,
-        exitLabel: "EQUITY",
+        exitLabel: this.currentRoomId === "R1" ? "NETWORK" : "EQUITY",
         track: (object) => this.track(object),
         depth: 65
       });
@@ -1100,6 +1102,13 @@ export class ReferralVaultScene extends Phaser.Scene {
     else if (position.x <= REFERRAL_PLAY_BOUNDS.left + 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
     if (!direction) return false;
 
+    if (this.currentRoomId === "R1" && direction === "west") {
+      this.roomTransitionLocked = true;
+      saveGameNow();
+      transitionTo(this, "NetworkScene", { chapterFrom: "R1", chapterTo: "N2" });
+      return true;
+    }
+
     if (this.currentRoomId === "R1" && direction === "east") {
       if (!this.referralGateOpen) {
         setLatestMessage("Referral gate waits for visible excision review.");
@@ -1128,7 +1137,7 @@ export class ReferralVaultScene extends Phaser.Scene {
         return false;
       }
       this.roomTransitionLocked = true;
-      transitionTo(this, "SilentReadScene");
+      transitionTo(this, "SilentReadScene", { chapterFrom: "R2", chapterTo: "E1" });
       return true;
     }
 

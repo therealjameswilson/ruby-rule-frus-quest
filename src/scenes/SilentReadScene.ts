@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readChapterArrival } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -20,6 +21,7 @@ import {
   setObjective,
   setPhysicalVerificationState,
   setRoomTraversalState,
+  getVisitedRoomIds,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
@@ -130,7 +132,7 @@ interface ProofRoom {
   id: ProofRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, ProofRoomId | "DV1">>;
+  exits: Partial<Record<Direction, ProofRoomId | "DV1" | "R2">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "red_pencil" | "buckram_key">>;
 }
@@ -150,7 +152,7 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
     id: "E1",
     title: "Editor's Labyrinth",
     roomType: "puzzle",
-    exits: { east: "S1" },
+    exits: { west: "R2", east: "S1" },
     lockedExits: { east: "Red Pencil query gate" },
     requiredItems: { east: "red_pencil" }
   },
@@ -229,10 +231,9 @@ export class SilentReadScene extends Phaser.Scene {
     super("SilentReadScene");
   }
 
-  create() {
-    const restoredVisitedRoomIds = gameState.currentScene === "SilentReadScene"
-      ? gameState.roomTraversal?.visitedRoomIds.filter((roomId): roomId is ProofRoomId => roomId === "E1" || roomId === "S1") ?? []
-      : [];
+  create(data?: unknown) {
+    const arrival = readChapterArrival(data, "SilentReadScene", gameState.currentScene);
+    const restoredVisitedRoomIds = getVisitedRoomIds(["E1", "S1"] as const);
     this.resetTransientState();
     this.visitedRoomIds = new Set(restoredVisitedRoomIds);
     setSceneState("SilentReadScene", "explore", "Editor's Labyrinth: earn the Red Pencil.");
@@ -275,10 +276,10 @@ export class SilentReadScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setDepth(811).setVisible(false);
     const restoredStep = deriveSilentReadReviewStep(gameState.sceneProgress, new Set(getHeldProcessItemIds()));
-    const restoredRoom = silentReadResumeRoom(gameState.sceneProgress, restoredStep);
+    const restoredRoom = arrival ? "E1" : silentReadResumeRoom(gameState.sceneProgress, restoredStep);
     this.currentRoomId = restoredRoom;
     this.startPhysicalVerificationLoop();
-    this.enterRoom(restoredRoom, this.player.position, false);
+    this.enterRoom(restoredRoom, arrival ? { x: arrival.x, y: arrival.y } : this.player.position, false);
     this.syncThreatState();
   }
 
@@ -570,7 +571,7 @@ export class SilentReadScene extends Phaser.Scene {
         hasExit: true,
         unlocked: true,
         accent: PALETTE.buckramHighlight,
-        exitLabel: "EDIT",
+        exitLabel: this.currentRoomId === "E1" ? "REF" : "EDIT",
         track: (object) => this.track(object),
         depth: 65
       });
@@ -1221,6 +1222,13 @@ export class SilentReadScene extends Phaser.Scene {
     if (position.x >= PROOF_PLAY_BOUNDS.right - 4 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     else if (position.x <= PROOF_PLAY_BOUNDS.left + 4 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
     if (!direction) return false;
+
+    if (this.currentRoomId === "E1" && direction === "west") {
+      this.roomTransitionLocked = true;
+      saveGameNow();
+      transitionTo(this, "ReferralVaultScene", { chapterFrom: "E1", chapterTo: "R2" });
+      return true;
+    }
 
     if (this.currentRoomId === "E1" && direction === "east") {
       const heldItems = getHeldProcessItemIds();

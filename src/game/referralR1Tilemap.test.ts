@@ -24,7 +24,11 @@ describe("Referral R1 packed tilemap", () => {
     expect(isReferralR1ExitCell(15, 6)).toBe(true);
     expect(isReferralR1WallCell(15, 5)).toBe(false);
     expect(isReferralR1WallCell(15, 3)).toBe(true);
-    expect(isReferralR1WallCell(0, 5)).toBe(true);
+    for (const tileY of [4, 5, 6]) {
+      expect(isReferralR1ExitCell(0, tileY)).toBe(true);
+      expect(isReferralR1WallCell(0, tileY)).toBe(false);
+    }
+    expect(isReferralR1WallCell(0, 3)).toBe(true);
   });
 
   it("marks three agency pads and the intake tray without blocking them", () => {

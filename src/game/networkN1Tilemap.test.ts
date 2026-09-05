@@ -61,7 +61,7 @@ describe("Network N1 packed tilemap", () => {
     expect(ground[9][7]).toBe(packedTileGid(INTERIOR_TILES.sorterPad));
   });
 
-  it("keeps only the east doorway open and derives collision from the remaining border", () => {
+  it("keeps both chapter doorways open and derives collision from the remaining border", () => {
     const layers = buildNetworkN1TileLayers();
     const collisionKeys = new Set(layers.collisionCells.map((cell) => `${cell.tileX},${cell.tileY}`));
 
@@ -73,8 +73,10 @@ describe("Network N1 packed tilemap", () => {
     for (const tileY of [4, 5, 6]) {
       expect(isNetworkN1ExitCell(15, tileY)).toBe(true);
       expect(collisionKeys.has(`15,${tileY}`)).toBe(false);
+      expect(isNetworkN1ExitCell(0, tileY)).toBe(true);
+      expect(collisionKeys.has(`0,${tileY}`)).toBe(false);
     }
-    expect(collisionKeys.has("0,5")).toBe(true);
+    expect(collisionKeys.has("0,3")).toBe(true);
     expect(collisionKeys.has("7,0")).toBe(true);
     expect(collisionKeys.has("7,11")).toBe(true);
   });

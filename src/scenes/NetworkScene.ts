@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readChapterArrival } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -16,6 +17,7 @@ import {
   setNearestInteractable,
   setObjective,
   setRoomTraversalState,
+  getVisitedRoomIds,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
@@ -92,7 +94,7 @@ interface NetworkRoom {
   id: NetworkRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, NetworkRoomId | "R1">>;
+  exits: Partial<Record<Direction, NetworkRoomId | "R1" | "A1">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "clearance_token">>;
 }
@@ -112,7 +114,7 @@ const NETWORK_ROOMS: Record<NetworkRoomId, NetworkRoom> = {
     id: "N1",
     title: "Network Split",
     roomType: "puzzle",
-    exits: { east: "N2" },
+    exits: { west: "A1", east: "N2" },
     lockedExits: { east: "FIREWALL terminal door" }
   },
   N2: {
@@ -168,16 +170,16 @@ export class NetworkScene extends Phaser.Scene {
     super("NetworkScene");
   }
 
-  create() {
+  create(data?: unknown) {
+    const arrival = readChapterArrival(data, "NetworkScene", gameState.currentScene);
     const restoringNetworkScene = gameState.currentScene === "NetworkScene";
-    const restoredRoomId: NetworkRoomId = restoringNetworkScene
-      && gameState.roomTraversal?.currentRoomId === "N2"
+    const restoredRoomId: NetworkRoomId = arrival?.to === "N2" || (!arrival && restoringNetworkScene
+      && gameState.roomTraversal?.currentRoomId === "N2")
       ? "N2"
       : "N1";
-    const restoredPosition = restoringNetworkScene ? { ...gameState.player } : null;
-    const restoredVisitedRoomIds = restoringNetworkScene
-      ? gameState.roomTraversal?.visitedRoomIds.filter((roomId): roomId is NetworkRoomId => roomId in NETWORK_ROOMS) ?? []
-      : [];
+    const restoredPosition = arrival ? { x: arrival.x, y: arrival.y }
+      : restoringNetworkScene ? { ...gameState.player } : null;
+    const restoredVisitedRoomIds = getVisitedRoomIds(["N1", "N2"] as const);
     setSceneState("NetworkScene", "explore", "Two Networks: earn the Clearance Token.");
     retroAudio.startMusic("NetworkScene");
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
@@ -679,7 +681,7 @@ export class NetworkScene extends Phaser.Scene {
         hasExit: true,
         unlocked: true,
         accent: PALETTE.terminalCyan,
-        exitLabel: "SPLIT",
+        exitLabel: this.currentRoomId === "N1" ? "ARCHIVE" : "SPLIT",
         track: trackGate,
         depth: 65
       });
@@ -1564,6 +1566,13 @@ export class NetworkScene extends Phaser.Scene {
     else if (position.x <= NETWORK_PLAY_BOUNDS.left + 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
     if (!direction) return false;
 
+    if (this.currentRoomId === "N1" && direction === "west") {
+      this.roomTransitionLocked = true;
+      saveGameNow();
+      transitionTo(this, "ArchiveScene", { chapterFrom: "N1", chapterTo: "A1" });
+      return true;
+    }
+
     if (this.currentRoomId === "N1" && direction === "east") {
       if (!this.routingComplete) {
         setLatestMessage("FIREWALL blocks the ClassNet vault until routing is clean.");
@@ -1600,7 +1609,7 @@ export class NetworkScene extends Phaser.Scene {
         return false;
       }
       this.roomTransitionLocked = true;
-      transitionTo(this, "ReferralVaultScene");
+      transitionTo(this, "ReferralVaultScene", { chapterFrom: "N2", chapterTo: "R1" });
       return true;
     }
 

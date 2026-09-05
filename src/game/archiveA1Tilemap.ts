@@ -26,7 +26,7 @@ export interface ArchiveA1TileLayers {
   collisionCells: ReadonlyArray<{ tileX: number; tileY: number }>;
 }
 
-const EAST_EXIT_ROWS = new Set([4, 5, 6]);
+const SIDE_EXIT_ROWS = new Set([4, 5, 6]);
 const SOUTH_EXIT_COLUMNS = new Set([7, 8]);
 const FLOOR_ACCENTS = [
   { x: 3, y: 2, tile: ARCHIVE_DUNGEON_TILES.floorWarm },
@@ -42,9 +42,9 @@ function emptyLayer() {
 }
 
 export function isArchiveA1ExitCell(tileX: number, tileY: number) {
-  const eastExit = tileX === ARCHIVE_A1_TILEMAP.columns - 1 && EAST_EXIT_ROWS.has(tileY);
+  const sideExit = (tileX === 0 || tileX === ARCHIVE_A1_TILEMAP.columns - 1) && SIDE_EXIT_ROWS.has(tileY);
   const southExit = tileY === ARCHIVE_A1_TILEMAP.rows - 1 && SOUTH_EXIT_COLUMNS.has(tileX);
-  return eastExit || southExit;
+  return sideExit || southExit;
 }
 
 export function isArchiveA1WallCell(tileX: number, tileY: number) {

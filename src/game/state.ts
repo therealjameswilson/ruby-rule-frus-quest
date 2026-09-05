@@ -815,6 +815,7 @@ export function resetGameState(options: { ngPlus?: boolean } = {}) {
 }
 
 export function setSceneState(sceneName: string, mode: GameMode, objective: string) {
+  rememberVisitedRooms(gameState.roomTraversal?.visitedRoomIds ?? []);
   gameState.currentScene = sceneName;
   gameState.mode = mode;
   gameState.objective = objective;
@@ -1105,6 +1106,7 @@ function currentLockedExitsForInventory(state: RoomTraversalState) {
 }
 
 export function setRoomTraversalState(state: RoomTraversalState | null) {
+  rememberVisitedRooms(state?.visitedRoomIds ?? []);
   const revealedRoomIds = state
     ? new Set([
         ...(state.revealedRoomIds ?? state.visitedRoomIds),
@@ -1120,6 +1122,15 @@ export function setRoomTraversalState(state: RoomTraversalState | null) {
       }
     : null;
   refreshQuestWorkflowState();
+}
+
+function rememberVisitedRooms(roomIds: readonly string[]) {
+  for (const roomId of roomIds) gameState.sceneProgress[`visitedRoom_${roomId}`] = 1;
+}
+
+export function getVisitedRoomIds<RoomId extends string>(roomIds: readonly RoomId[]): RoomId[] {
+  return roomIds.filter((roomId) => gameState.sceneProgress[`visitedRoom_${roomId}`] === 1
+    || gameState.roomTraversal?.visitedRoomIds.includes(roomId));
 }
 
 export function beginSnesTransition(record: Omit<SnesTransitionRecord, "style" | "cellSize">) {
@@ -1358,7 +1369,7 @@ export function getCurrentAreaReadout() {
 }
 
 export function getRoomGraphReadout() {
-  const visitedRoomIds = new Set(gameState.roomTraversal?.visitedRoomIds ?? []);
+  const visitedRoomIds = new Set(getVisitedRoomIds(FRUS_ROOM_GRAPH.map((room) => room.id)));
   const revealedRoomIds = new Set(gameState.roomTraversal?.revealedRoomIds ?? []);
   const heldProcessItems = getHeldProcessItemIds();
   for (const roomId of getRevealedShortcutRoomIds(heldProcessItems)) revealedRoomIds.add(roomId);

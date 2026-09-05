@@ -70,7 +70,8 @@ describe("Archive A1 packed tilemap", () => {
       expect(collisionKeys.has(`${tileX},11`)).toBe(false);
     }
     expect(collisionKeys.has("7,0")).toBe(true);
-    expect(collisionKeys.has("0,5")).toBe(true);
+    for (const tileY of [4, 5, 6]) expect(collisionKeys.has(`0,${tileY}`)).toBe(false);
+    expect(collisionKeys.has("0,3")).toBe(true);
   });
 
   it("converts collision cells to integer world-space tile rectangles", () => {

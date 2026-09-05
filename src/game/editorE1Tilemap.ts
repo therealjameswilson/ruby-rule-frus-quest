@@ -16,7 +16,7 @@ export interface EditorE1TileLayers {
   collisionCells: ReadonlyArray<{ tileX: number; tileY: number }>;
 }
 
-const EAST_EXIT_ROWS = new Set([4, 5, 6]);
+const SIDE_EXIT_ROWS = new Set([4, 5, 6]);
 
 function emptyLayer() {
   return Array.from(
@@ -26,7 +26,7 @@ function emptyLayer() {
 }
 
 export function isEditorE1ExitCell(tileX: number, tileY: number) {
-  return tileX === EDITOR_E1_TILEMAP.columns - 1 && EAST_EXIT_ROWS.has(tileY);
+  return (tileX === 0 || tileX === EDITOR_E1_TILEMAP.columns - 1) && SIDE_EXIT_ROWS.has(tileY);
 }
 
 export function isEditorE1WallCell(tileX: number, tileY: number) {

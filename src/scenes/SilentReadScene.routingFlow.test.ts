@@ -7,7 +7,7 @@ const reviewSource = readFileSync(new URL("../game/silentReadReview.ts", import.
 describe("SilentReadScene physical proofing flow", () => {
   it("starts in movement mode and never opens the legacy quiz chain", () => {
     expect(sceneSource).toContain("this.startPhysicalVerificationLoop()");
-    const createSource = sceneSource.slice(sceneSource.indexOf("  create()"), sceneSource.indexOf("  private resetTransientState("));
+    const createSource = sceneSource.slice(sceneSource.indexOf("  create(data?"), sceneSource.indexOf("  private resetTransientState("));
     expect(createSource).not.toContain("reviewChoice.show");
     expect(sceneSource).toContain("const decision = silentReadDecision(activeFlag.id)");
     expect(sceneSource).not.toContain("showAiAnnotationReviewChoice");
@@ -45,10 +45,9 @@ describe("SilentReadScene physical proofing flow", () => {
   });
 
   it("captures visited proof rooms before scene reset clears the traversal state", () => {
-    const createSource = sceneSource.slice(sceneSource.indexOf("  create()"), sceneSource.indexOf("  private resetTransientState("));
+    const createSource = sceneSource.slice(sceneSource.indexOf("  create(data?"), sceneSource.indexOf("  private resetTransientState("));
     expect(createSource.indexOf("const restoredVisitedRoomIds")).toBeLessThan(createSource.indexOf("this.resetTransientState()"));
-    expect(createSource).toContain('gameState.currentScene === "SilentReadScene"');
-    expect(createSource).toContain('roomId === "E1" || roomId === "S1"');
+    expect(createSource).toContain('getVisitedRoomIds(["E1", "S1"] as const)');
     expect(createSource).toContain("this.visitedRoomIds = new Set(restoredVisitedRoomIds)");
   });
 

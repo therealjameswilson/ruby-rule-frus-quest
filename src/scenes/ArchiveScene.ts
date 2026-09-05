@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readChapterArrival } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { ProcessItemId, RoomType } from "../game/constants";
@@ -22,6 +23,7 @@ import {
   setObjective,
   setPhysicalVerificationState,
   setRoomTraversalState,
+  getVisitedRoomIds,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
@@ -103,7 +105,7 @@ function color(hex: string) {
 
 type Direction = "north" | "south" | "west" | "east";
 type ArchiveRoomId = "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
-type ArchiveExitTarget = ArchiveRoomId | "N1";
+type ArchiveExitTarget = ArchiveRoomId | "N1" | "O1";
 type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "HOLD" | "AMBIGUOUS" | "DANN-E QUEUE";
 type ArchiveDanneRoute = "NaraStacksScene" | "EmbassyCableRoomScene" | "BlackVaultLairScene";
 type ArchivePropFrame = (typeof SNES_ARCHIVE_PROP_ASSET.frames)[number];
@@ -187,7 +189,7 @@ const ARCHIVE_ROOMS: Record<ArchiveRoomId, ArchiveRoom> = {
     id: "A1",
     title: "SOURCE ROOM",
     grid: { x: 0, y: 0 },
-    exits: { east: "N1", south: "B1" },
+    exits: { west: "O1", east: "N1", south: "B1" },
     lockedExits: {
       east: "OPENNET SOURCE-NOTE LOCK",
       south: "REFERRAL GATE"
@@ -445,18 +447,20 @@ export class ArchiveScene extends Phaser.Scene {
     super("ArchiveScene");
   }
 
-  create() {
+  create(data?: unknown) {
+    const arrival = readChapterArrival(data, "ArchiveScene", gameState.currentScene);
+    const visitedRooms = getVisitedRoomIds(Object.keys(ARCHIVE_ROOMS) as ArchiveRoomId[]);
     const restoredHeldItem = gameState.heldItem;
     const archiveReturn = this.consumeArchiveReturnSpawn();
     const restoringArchive = gameState.currentScene === "ArchiveScene";
     const candidateRestoredRoomId = gameState.roomTraversal?.currentRoomId as ArchiveRoomId | undefined;
-    const restoredRoomId = archiveReturn?.roomId
+    const restoredRoomId = (arrival ? "A1" : archiveReturn?.roomId)
       ?? (restoringArchive && candidateRestoredRoomId && ARCHIVE_ROOMS[candidateRestoredRoomId]
       ? candidateRestoredRoomId
       : restoringArchive
         ? "A1"
         : null);
-    const restoredPlayer = archiveReturn
+    const restoredPlayer = arrival ? { x: arrival.x, y: arrival.y } : archiveReturn
       ? { x: archiveReturn.x, y: archiveReturn.y }
       : restoringArchive
       ? { ...gameState.player }
@@ -502,6 +506,7 @@ export class ArchiveScene extends Phaser.Scene {
     });
 
     this.restoreSourceNoteProgress(restoredHeldItem);
+    this.visitedRoomIds = new Set(visitedRooms);
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
     if (!restoredPlayer && this.sourceNoteStatus === "inactive") {
       this.toast.show("FIND SN47 -> RESEARCH TABLE", this.player.position, "info");
@@ -3315,7 +3320,15 @@ export class ArchiveScene extends Phaser.Scene {
     if (target === "N1") {
       gameState.sceneProgress.archiveSourceRoomExited = 1;
       setLatestMessage("Verified source packet routed to Two Networks.");
-      transitionTo(this, "NetworkScene");
+      this.roomTransitionLocked = true;
+      transitionTo(this, "NetworkScene", { chapterFrom: "A1", chapterTo: "N1" });
+      return true;
+    }
+
+    if (target === "O1") {
+      this.roomTransitionLocked = true;
+      saveGameNow();
+      transitionTo(this, "OfficeScene", { chapterFrom: "A1", chapterTo: "O1" });
       return true;
     }
 
@@ -3504,7 +3517,7 @@ export class ArchiveScene extends Phaser.Scene {
     const target = room.exits[direction];
     if (!target) return false;
     if (room.id === "A1" && direction === "east" && !this.sourceRoomComplete()) return false;
-    if (target === "N1") return canTraverseExit(room.id, direction, getHeldProcessItemIds());
+    if (target === "N1" || target === "O1") return canTraverseExit(room.id, direction, getHeldProcessItemIds());
     const targetRoom = ARCHIVE_ROOMS[target];
     if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) return false;
     return canTraverseExit(room.id, direction, getHeldProcessItemIds());
@@ -3529,7 +3542,7 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 61
     });
-    if (target && target !== "N1" && ARCHIVE_ROOMS[target].roomType === "secret") {
+    if (target && target !== "N1" && target !== "O1" && ARCHIVE_ROOMS[target].roomType === "secret") {
       this.drawSecretExitMarker(direction, this.revealedSecretIds.has(target), requiredItem);
     }
     if (!hasExit) {
@@ -3542,6 +3555,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private gateRouteLabel(target: ArchiveExitTarget) {
     if (target === "N1") return "NETWORK";
+    if (target === "O1") return "OFFICE";
     const room = ARCHIVE_ROOMS[target];
     if (room.roomType === "reward") return "REWARD";
     if (room.roomType === "secret") return "SECRET";
@@ -3791,7 +3805,7 @@ export class ArchiveScene extends Phaser.Scene {
     direction: Direction,
     target: ArchiveExitTarget
   ): ArchiveRoomDetailFrame {
-    if (room.roomType === "boss" || (target !== "N1" && ARCHIVE_ROOMS[target].roomType === "boss")) return "threshold_boss";
+    if (room.roomType === "boss" || (target !== "N1" && target !== "O1" && ARCHIVE_ROOMS[target].roomType === "boss")) return "threshold_boss";
     return this.exitIsOpen(room, direction) ? "threshold_open" : "threshold_locked";
   }
 

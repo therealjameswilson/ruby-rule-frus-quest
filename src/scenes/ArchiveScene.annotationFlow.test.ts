@@ -84,10 +84,10 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(finish).toContain("archiveSourceRoomComplete = 1");
     expect(finish).toContain("EXIT EAST");
     expect(finish).not.toContain('transitionTo(this, "NetworkScene")');
-    expect(archiveSceneSource).toContain('exits: { east: "N1", south: "B1" }');
+    expect(archiveSceneSource).toContain('exits: { west: "O1", east: "N1", south: "B1" }');
     expect(archiveSceneSource).toContain('direction === "east" && !this.sourceRoomComplete()');
     expect(archiveSceneSource).toContain('if (target === "N1")');
-    expect(archiveSceneSource).toContain('transitionTo(this, "NetworkScene")');
+    expect(archiveSceneSource).toContain('transitionTo(this, "NetworkScene", { chapterFrom: "A1", chapterTo: "N1" })');
   });
 
   it("uses one distant target cue and removes it when the action is reachable", () => {

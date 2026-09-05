@@ -59,7 +59,7 @@ describe("ReferralVaultScene physical review flow", () => {
   });
 
   it("restores the saved room and player before initialization clears transient state", () => {
-    const create = sceneSource.slice(sceneSource.indexOf("create()"), sceneSource.indexOf("private restoreReferralProgress"));
+    const create = sceneSource.slice(sceneSource.indexOf("create(data?"), sceneSource.indexOf("private restoreReferralProgress"));
     expect(create.indexOf("gameState.roomTraversal?.currentRoomId")).toBeLessThan(create.indexOf("setSceneState("));
     expect(create).toContain("restoredPosition ?? { x: 128, y: 192 }");
     expect(create).toContain("this.visitedRoomIds = new Set(restoredVisitedRoomIds)");

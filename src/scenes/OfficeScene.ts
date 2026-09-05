@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readChapterArrival } from "../game/chapterTravel";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   FRUS_QUEST_FIRST_OBJECTIVE,
@@ -142,7 +143,8 @@ export class OfficeScene extends Phaser.Scene {
     super("OfficeScene");
   }
 
-  create() {
+  create(data?: unknown) {
+    const arrival = readChapterArrival(data, "OfficeScene", gameState.currentScene);
     setSceneState("OfficeScene", "explore", FRUS_QUEST_FIRST_OBJECTIVE);
     setLatestMessage(FRUS_QUEST_MISSION);
     setVisibleThreats([]);
@@ -153,7 +155,7 @@ export class OfficeScene extends Phaser.Scene {
     this.postIntroLabels = [];
     this.drawOfficeInterior();
 
-    const returnSpawn = this.consumeOfficeReturnSpawn();
+    const returnSpawn = arrival ?? this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
     this.juniorCompiler = new JuniorCompiler(this, 70, 122);
     this.danneLurker = new DanneLurker(this, 218, 78, {
@@ -702,6 +704,11 @@ export class OfficeScene extends Phaser.Scene {
       retroAudio.warning();
       setObjective("Return to JR for the key.");
       this.dialog.show("ARCHIVE GUIDE", "Return to JR for the Master Declass Key, then enter the archive.");
+      return;
+    }
+    if (gameState.sceneProgress.guideCitationCounterTrained === 1
+      && gameState.inventory.includes("FRUS Fragment: Front Matter")) {
+      transitionTo(this, "ArchiveScene", { chapterFrom: "O1", chapterTo: "A1" });
       return;
     }
     transitionTo(this, "GuideScene");

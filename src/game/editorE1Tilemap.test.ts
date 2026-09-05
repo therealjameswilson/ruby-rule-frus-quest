@@ -24,7 +24,11 @@ describe("Editor's Labyrinth E1 packed tilemap", () => {
     expect(isEditorE1ExitCell(15, 6)).toBe(true);
     expect(isEditorE1WallCell(15, 5)).toBe(false);
     expect(isEditorE1WallCell(15, 3)).toBe(true);
-    expect(isEditorE1WallCell(0, 5)).toBe(true);
+    for (const tileY of [4, 5, 6]) {
+      expect(isEditorE1ExitCell(0, tileY)).toBe(true);
+      expect(isEditorE1WallCell(0, tileY)).toBe(false);
+    }
+    expect(isEditorE1WallCell(0, 3)).toBe(true);
   });
 
   it("marks the human editor desk and StateChat outbox without blocking either", () => {

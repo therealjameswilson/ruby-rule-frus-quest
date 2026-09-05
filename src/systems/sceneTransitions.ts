@@ -1,6 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
+import type { ChapterTravelData } from "../game/chapterTravel";
 import { beginSnesTransition, completeSnesTransition } from "../game/state";
 import { retroAudio } from "./audio";
 
@@ -8,7 +9,7 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-export function transitionTo(scene: Phaser.Scene, target: string) {
+export function transitionTo(scene: Phaser.Scene, target: string, data?: ChapterTravelData) {
   retroAudio.transition();
   beginSnesTransition({
     fromScene: scene.scene.key,
@@ -19,7 +20,7 @@ export function transitionTo(scene: Phaser.Scene, target: string) {
     label: sceneLabel(target),
     onCovered: () => {
       completeSnesTransition();
-      scene.scene.start(target);
+      scene.scene.start(target, data ?? {});
     }
   });
 }

@@ -401,7 +401,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "Source Entry",
     grid: { x: 0, y: 0 },
-    exits: { north: "DN1", east: "N1", south: "B1" },
+    exits: { north: "DN1", west: "O1", east: "N1", south: "B1" },
     lockedExits: {
       north: "NARA stacks citation lock",
       east: "OpenNet source-note lock",
@@ -545,7 +545,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "two_networks",
     title: "Network Split",
     grid: { x: 4, y: 0 },
-    exits: { east: "N2" },
+    exits: { west: "A1", east: "N2" },
     lockedExits: { east: "ClassNet vault door" },
     roomType: "puzzle"
   },
@@ -564,7 +564,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "referral_vault",
     title: "Equity Gate",
     grid: { x: 4, y: 1 },
-    exits: { east: "R2" },
+    exits: { west: "N2", east: "R2" },
     lockedExits: { east: "Visible-excision gate" },
     roomType: "puzzle"
   },
@@ -583,7 +583,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "editors_labyrinth",
     title: "Editor's Labyrinth",
     grid: { x: 4, y: 2 },
-    exits: { east: "S1" },
+    exits: { west: "R2", east: "S1" },
     lockedExits: { east: "Red-pencil query gate" },
     requiredItems: { east: "red_pencil" },
     roomType: "puzzle"
