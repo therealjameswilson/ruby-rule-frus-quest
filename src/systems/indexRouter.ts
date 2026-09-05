@@ -3,7 +3,7 @@ import { ABOUT_SERIES_RULES, evaluateIndexReferenceTarget, type IndexReferenceTa
 import { PALETTE } from "../game/constants";
 import { clearChoiceState, setChoiceState } from "../game/state";
 import type { InputState } from "../input/InputState";
-import { bindPointerDown } from "../input/InputState";
+import { bindPointerDown, swallowNextInputFrame } from "../input/InputState";
 import { retroAudio } from "./audio";
 
 function color(hex: string) {
@@ -40,14 +40,14 @@ export class IndexRouterOverlay {
       fontFamily: "monospace", fontSize: "8px", color: PALETTE.terminalCyan
     }).setOrigin(0.5, 0));
     objects.push(scene.add.text(128, 84, ABOUT_SERIES_RULES.index.toUpperCase(), {
-      fontFamily: "monospace", fontSize: "6px", color: PALETTE.creamPaper,
+      fontFamily: "monospace", fontSize: "8px", color: PALETTE.creamPaper,
       align: "center", wordWrap: { width: 212, useAdvancedWrap: true }, lineSpacing: 1
     }).setOrigin(0.5, 0));
 
     this.addTarget(objects, "page", 72, "PAGE 87");
     this.addTarget(objects, "document", 184, "DOC 87");
     this.feedback = scene.add.text(128, 151, "MOVE THE ROUTER", {
-      fontFamily: "monospace", fontSize: "6px", color: PALETTE.stoneGray
+      fontFamily: "monospace", fontSize: "8px", color: PALETTE.stoneGray
     }).setOrigin(0.5, 0);
     objects.push(this.feedback);
     objects.push(scene.add.text(128, 178, "LEFT/RIGHT  A CONFIRM  B BACK", {
@@ -71,6 +71,7 @@ export class IndexRouterOverlay {
       { key: "A", label: "LEFT: PAGE 87", value: "page" },
       { key: "B", label: "RIGHT: DOCUMENT 87", value: "document" }
     ]);
+    swallowNextInputFrame();
   }
 
   updateInput(input: Readonly<InputState>) {
@@ -84,6 +85,7 @@ export class IndexRouterOverlay {
   hide() {
     this.container.setVisible(false);
     clearChoiceState();
+    swallowNextInputFrame();
   }
 
   private addTarget(objects: Phaser.GameObjects.GameObject[], target: IndexReferenceTarget, x: number, label: string) {

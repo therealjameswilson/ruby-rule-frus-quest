@@ -24,6 +24,7 @@ import { questBandBossCue, questBandRiskLine } from "./questBandCue";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
 import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
+import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -251,6 +252,7 @@ export class UIScene extends Phaser.Scene {
     if (gameState.mode === "choice") {
       if (gameState.currentChoice?.title === REFERRAL_MANIFEST_TITLE) return getString("hud.reviewRoutes");
       if (gameState.currentChoice?.title === PROOF_COMPARISON_TITLE) return getString("hud.compareProof");
+      if (gameState.currentChoice?.title.startsWith(BINDING_CERTIFICATION_TITLE)) return getString("hud.reviewRecord");
       return getString("hud.chooseAnswer");
     }
     if (activeSceneKey === "OfficeScene") {
@@ -290,6 +292,7 @@ export class UIScene extends Phaser.Scene {
       if (vaultAction) return vaultAction;
     }
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
+    if (gameState.currentScene === "EndingScene") return getString("hud.binderyDelivery");
     if (this.showCounterAction()) {
       return gameState.currentScene === "BlackVaultLairScene"
         ? getString("hud.useTool", { tool: toolLabel })

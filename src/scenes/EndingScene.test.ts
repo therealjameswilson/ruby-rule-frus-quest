@@ -4,6 +4,7 @@ import { BUCKRAM_BINDING_PACKETS, type BuckramBindingStationId, type BuckramBind
 import { gameState, resetGameState } from "../game/state";
 import { saveGameNow } from "../systems/save";
 import { adjustReliability } from "../systems/reliability";
+import { INITIAL_DOCUMENT_CANDIDATES } from "../game/documentWorkflow";
 
 vi.mock("phaser", () => ({ default: {
   Scene: class {}, GameObjects: { Sprite: class {} },
@@ -30,6 +31,7 @@ interface BindingInternals {
   player: { position: { x: number; y: number } };
   toast: { show: ReturnType<typeof vi.fn>; hide: ReturnType<typeof vi.fn> };
   indexRouter: { active: boolean; show: ReturnType<typeof vi.fn> };
+  standardsBoard: { active: boolean; show: ReturnType<typeof vi.fn> };
   reliability: { update: ReturnType<typeof vi.fn> };
   updateBindingRoomVisuals: ReturnType<typeof vi.fn>;
   syncRoomTraversal: ReturnType<typeof vi.fn>;
@@ -47,6 +49,7 @@ function fixture(step = 0, status: BuckramBindingStatus = "waiting") {
   scene.player = { position: { x: 128, y: 190 } };
   scene.toast = { show: vi.fn(), hide: vi.fn() };
   scene.indexRouter = { active: false, show: vi.fn() };
+  scene.standardsBoard = { active: false, show: vi.fn() };
   scene.reliability = { update: vi.fn() };
   scene.updateBindingRoomVisuals = vi.fn();
   scene.syncRoomTraversal = vi.fn();
@@ -83,13 +86,13 @@ describe("live binding packet handoffs", () => {
     expect(saveGameNow).toHaveBeenCalledOnce();
   });
 
-  it("saves routing separately and requires a second action to seal", () => {
+  it("files an ordinary delivery in one action and immediately hands off the next packet", () => {
     const { scene, packet } = fixture(0, "carried");
     scene.handleBindingPacketAction(packet);
-    expect(packet.status).toBe("routed");
-    expect(gameState.sceneProgress).toMatchObject({ buckramBindingStep: 0, buckramBindingStatus: 2 });
-    expect(gameState.sceneProgress.frontMatterAssemblyComplete).not.toBe(1);
-    expect(gameState.heldItem).toBeNull();
+    expect(packet.status).toBe("sealed");
+    expect(gameState.sceneProgress).toMatchObject({ buckramBindingStep: 1, buckramBindingStatus: 1 });
+    expect(gameState.sceneProgress.frontMatterAssemblyComplete).toBe(1);
+    expect(gameState.heldItem).toBe("Binding Folder: INDEX DOCKET");
   });
 
   it("hands off the next packet at the desk before saving, without duplicate rewards", () => {
@@ -130,6 +133,36 @@ describe("live binding packet handoffs", () => {
     expect(scene.bindingPackets[2].status).toBe("carried");
     expect(scene.toast.show).toHaveBeenCalledWith("DOC 87 INDEXED", scene.player.position, "info", expect.any(Object));
     expect(saveGameNow).toHaveBeenCalledOnce();
+  });
+
+  it("opens the index decision upon delivery rather than needing another empty confirmation", () => {
+    const { scene, packet } = fixture(1, "carried");
+    scene.handleBindingPacketAction(packet);
+    expect(packet.status).toBe("routed");
+    expect(scene.indexRouter.show).toHaveBeenCalledOnce();
+    expect(gameState.sceneProgress.indexDocketComplete).not.toBe(1);
+    expect(gameState.sceneProgress.buckramBindingStatus).toBe(2);
+  });
+
+  it("requires human attestation of live evidence, preserves cancellation and prevents duplicate seals", () => {
+    const { scene, packet } = fixture(2, "carried");
+    gameState.documentCandidates = [{ ...INITIAL_DOCUMENT_CANDIDATES[0], selected: true,
+      citationComplete: true, annotationNeeded: false, workflowState: "proofed", reviewStatus: "resolved",
+      equities: [{ agencyId: "test", fictionalName: "Test", issueType: "military", response: "cleared" }] }];
+    scene.handleBindingPacketAction(packet);
+    expect(packet.status).toBe("routed");
+    expect(gameState.sceneProgress.kelloggFinalCertificationComplete).not.toBe(1);
+    const [, onSeal] = scene.standardsBoard.show.mock.calls[0] as [() => { ready: boolean }, () => void, () => void];
+    gameState.documentCandidates[0].undisclosedDeletion = true;
+    onSeal();
+    expect(packet.status).toBe("routed");
+    gameState.documentCandidates[0].undisclosedDeletion = false;
+    onSeal();
+    expect(packet.status).toBe("sealed");
+    expect(gameState.sceneProgress.kelloggFinalCertificationComplete).toBe(1);
+    const points = gameState.documentPoints;
+    onSeal();
+    expect(gameState.documentPoints).toBe(points);
   });
 
   it("saves five sealed packets without bypassing final readiness or publishing", () => {

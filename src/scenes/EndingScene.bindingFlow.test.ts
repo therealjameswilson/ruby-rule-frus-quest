@@ -45,6 +45,16 @@ describe("EndingScene physical Buckram Gate", () => {
     expect(sceneSource).toContain('this.toast.show(completionMessage ? "DOC 87 INDEXED"');
   });
 
+  it("requires a live human standards seal without fabricating document repairs", () => {
+    const open = sceneSource.slice(sceneSource.indexOf("  private openStandardsBoard"), sceneSource.indexOf("  private openIndexRouter"));
+    expect(open).toContain("bindingCertificationEvidence(gameState.documentCandidates, gameState.standardsViolations)");
+    expect(open).toContain('packet.status !== "routed"');
+    expect(open).not.toContain("publishDocument");
+    expect(sceneSource).not.toContain("FINAL CHECKS RECORDED");
+    expect(uiSource).toContain('getString("hud.reviewRecord")');
+    expect(uiSource).toContain('getString("hud.binderyDelivery")');
+  });
+
   it("renders five distinct stations around one human binding press", () => {
     expect(sceneSource).toContain('id: "front-matter-bench"');
     expect(sceneSource).toContain('id: "index-desk"');

@@ -68,6 +68,8 @@ import { InteractionPrompt } from "../systems/interactionPrompt";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 import { IndexRouterOverlay } from "../systems/indexRouter";
+import { BindingCertificationBoard } from "../systems/bindingCertificationBoard";
+import { bindingCertificationEvidence, isLegacyCertificationExercise } from "../game/bindingCertification";
 import type { Interactable } from "../game/types";
 
 function color(hex: string) {
@@ -77,7 +79,6 @@ function color(hex: string) {
 const GATE_PLAY_BOUNDS = { left: 16, right: 240, top: 48, bottom: 220 };
 const BINDERY_INBOX = { x: 128, y: 190, radius: 28 };
 const BINDING_PRESS = { x: 128, y: 148, radius: 28 };
-const KELLOGG_CERTIFICATION_CONTEXT_PREFIX = "Kellogg final certification";
 const FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE: keyof typeof FRUS_VOLUMES = "reward_legendary";
 type BuckramBlockerIcon = "stamp" | "cover" | "equity" | "map" | "apparatus" | "bracket" | "standards" | "reliability" | "key" | "ready";
 interface BuckramBlockerCue {
@@ -126,6 +127,8 @@ export class EndingScene extends Phaser.Scene {
   private toast!: FeedbackToast;
   private interactionPrompt!: InteractionPrompt;
   private indexRouter!: IndexRouterOverlay;
+  private standardsBoard!: BindingCertificationBoard;
+  private assemblingVolume?: Phaser.GameObjects.Sprite;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private bindingPackets: PhysicalBindingPacket[] = [];
@@ -174,6 +177,7 @@ export class EndingScene extends Phaser.Scene {
     this.toast = new FeedbackToast(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.indexRouter = new IndexRouterOverlay(this);
+    this.standardsBoard = new BindingCertificationBoard(this);
     this.objectiveText = addObjectiveText(this);
     this.actionHint = this.add.text(8, 211, "", {
       fontFamily: "monospace",
@@ -209,12 +213,21 @@ export class EndingScene extends Phaser.Scene {
     this.canRestart = false;
     this.published = false;
     this.publicationSummary = undefined;
+    this.assemblingVolume = undefined;
   }
 
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.standardsBoard.active) {
+      this.toast.hide();
+      this.interactionPrompt.update(delta, null);
+      this.clearPublicationTableRouteCue();
+      this.player.update(delta, false);
+      this.standardsBoard.updateInput();
+      return;
+    }
     if (this.indexRouter.active) {
       this.toast.update(delta, this.player.position, GATE_PLAY_BOUNDS);
       this.interactionPrompt.update(delta, null);
@@ -274,7 +287,7 @@ export class EndingScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(141);
     this.bindingProgressText = this.add.text(128, 56, "PACKETS 0/5", {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "8px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5).setDepth(141);
     for (let index = 0; index < BUCKRAM_BINDING_TOTAL; index += 1) {
@@ -284,18 +297,24 @@ export class EndingScene extends Phaser.Scene {
 
     for (const station of BINDING_STATIONS) this.drawBindingStation(station);
 
-    this.bindingPressFrame = this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y, 62, 36, color(PALETTE.black), 0.96)
+    if (this.textures.exists(VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key)) {
+      this.assemblingVolume = this.add.sprite(128, 126, VOLUME_ASSEMBLY_ASSETS.bindingAnimation.key, 0)
+        .setName("bindery-assembling-volume").setDepth(145);
+    }
+    this.bindingPressFrame = this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y, 62, 36, color(PALETTE.black), this.assemblingVolume ? 0 : 0.96)
       .setStrokeStyle(2, color(PALETTE.classNetRed)).setDepth(146);
-    this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y + 10, 52, 8, color(PALETTE.deepRuby))
-      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(147);
-    this.add.image(BINDING_PRESS.x - 20, BINDING_PRESS.y + 6, "buckram-key").setDisplaySize(12, 12).setDepth(148);
-    this.add.image(BINDING_PRESS.x + 20, BINDING_PRESS.y + 6, "citation-stamp").setDisplaySize(12, 12).setDepth(148);
-    this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y - 5, 18, 20, color(PALETTE.deepRuby))
-      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(148);
-    this.add.rectangle(BINDING_PRESS.x - 5, BINDING_PRESS.y - 5, 2, 18, color(PALETTE.buckramHighlight)).setDepth(149);
+    if (!this.assemblingVolume) {
+      this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y + 10, 52, 8, color(PALETTE.deepRuby))
+        .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(147);
+      this.add.image(BINDING_PRESS.x - 20, BINDING_PRESS.y + 6, "buckram-key").setDisplaySize(12, 12).setDepth(148);
+      this.add.image(BINDING_PRESS.x + 20, BINDING_PRESS.y + 6, "citation-stamp").setDisplaySize(12, 12).setDepth(148);
+      this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y - 5, 18, 20, color(PALETTE.deepRuby))
+        .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(148);
+      this.add.rectangle(BINDING_PRESS.x - 5, BINDING_PRESS.y - 5, 2, 18, color(PALETTE.buckramHighlight)).setDepth(149);
+    }
     this.bindingPressLabel = this.add.text(BINDING_PRESS.x, BINDING_PRESS.y + 24, "LOCKED PRESS", {
       fontFamily: "monospace",
-      fontSize: "6px",
+      fontSize: "8px",
       color: PALETTE.classNetRed
     }).setOrigin(0.5).setDepth(149);
 
@@ -303,7 +322,7 @@ export class EndingScene extends Phaser.Scene {
       .setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(145);
     this.add.text(BINDERY_INBOX.x, BINDERY_INBOX.y + 11, "BINDERY INBOX", {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "8px",
       color: PALETTE.terminalCyan
     }).setOrigin(0.5).setDepth(146);
 
@@ -322,7 +341,7 @@ export class EndingScene extends Phaser.Scene {
     this.add.rectangle(station.x + 10, station.y + 4, 10, 2, color(PALETTE.creamPaper)).setDepth(station.y - 1);
     this.add.text(station.x, station.y + 16, station.shortLabel, {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "8px",
       color: station.accent
     }).setOrigin(0.5).setDepth(station.y);
   }
@@ -665,6 +684,8 @@ export class EndingScene extends Phaser.Scene {
   private updateBindingRoomVisuals() {
     const completed = this.bindingPackets.filter((packet) => packet.status === "sealed").length;
     this.bindingProgressText?.setText(`PACKETS ${completed}/${BUCKRAM_BINDING_TOTAL}`);
+    // The public seal belongs to the final ceremony, not merely to five deliveries.
+    this.assemblingVolume?.setFrame(Math.min(completed, 4));
     this.bindingProgressLights.forEach((light, index) => {
       const filled = index < completed;
       light.setFillStyle(color(filled ? PALETTE.openNetGreen : PALETTE.stoneDark));
@@ -679,6 +700,7 @@ export class EndingScene extends Phaser.Scene {
       && getFinalGateReadiness().ready
       && hasProcessItem("buckram_key");
     this.bindingPressFrame?.setStrokeStyle(2, color(ready ? PALETTE.goldStamp : PALETTE.classNetRed));
+    this.bindingPressFrame?.setVisible(!this.assemblingVolume || ready);
     this.bindingPressLabel
       ?.setText(ready ? "PUBLISH READY" : "LOCKED PRESS")
       .setColor(ready ? PALETTE.goldStamp : PALETTE.classNetRed);
@@ -754,6 +776,7 @@ export class EndingScene extends Phaser.Scene {
       this.savePhysicalBindingProgress(packet);
       retroAudio.confirm();
       this.updateBindingPacketVisibility();
+      this.finishBindingDelivery(packet);
       return;
     }
 
@@ -763,11 +786,37 @@ export class EndingScene extends Phaser.Scene {
       setLatestMessage(`SEAL: return to ${station.label}.`);
       return;
     }
+    this.finishBindingDelivery(packet);
+  }
+
+  private finishBindingDelivery(packet: PhysicalBindingPacket) {
     if (packet.id === "index-proof-docket" && !gameState.sceneProgress.aboutSeriesIndexRoutingComplete) {
       this.openIndexRouter(packet);
       return;
     }
+    if (packet.id === "kellogg-certification") {
+      this.openStandardsBoard(packet);
+      return;
+    }
     this.sealBindingPacket(packet);
+  }
+
+  private openStandardsBoard(packet: PhysicalBindingPacket) {
+    this.toast.hide();
+    setGameMode("choice");
+    setObjective("REVIEW FULL RECORD");
+    this.standardsBoard.show(
+      () => bindingCertificationEvidence(gameState.documentCandidates, gameState.standardsViolations),
+      () => {
+        // Only a present human may attest. This does not edit source documents.
+        if (packet !== this.getActiveBindingPacket() || packet.status !== "routed") return;
+        if (!bindingCertificationEvidence(gameState.documentCandidates, gameState.standardsViolations).ready) return;
+        this.resolveKelloggCertificationViolations();
+        setGameMode("explore");
+        this.sealBindingPacket(packet);
+      },
+      () => { setGameMode("explore"); this.updateGateReadout(); }
+    );
   }
 
   private openIndexRouter(packet: PhysicalBindingPacket) {
@@ -788,6 +837,7 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private sealBindingPacket(packet: PhysicalBindingPacket, completionMessage?: string) {
+    if (packet !== this.getActiveBindingPacket() || packet.status !== "routed") return;
     packet.status = "sealed";
     this.applyBindingPacketReward(packet);
     if (completionMessage) setLatestMessage(completionMessage);
@@ -824,7 +874,6 @@ export class EndingScene extends Phaser.Scene {
       gameState.sceneProgress.typesetterCorrectionsStep = TYPESETTER_CORRECTIONS_PROMPTS.length;
       addDocumentPoints(8, "index and typesetter correction docket sealed");
     } else if (packet.id === "kellogg-certification") {
-      this.resolveKelloggCertificationViolations();
       gameState.sceneProgress.kelloggFinalCertificationComplete = 1;
       gameState.sceneProgress.kelloggFinalCertificationCorrectionNeeded = 0;
       gameState.sceneProgress.kelloggFinalCertificationStep = KELLOGG_CERTIFICATION_PROMPTS.length;
@@ -849,12 +898,12 @@ export class EndingScene extends Phaser.Scene {
       addDocumentPoints(10, "public release and citation packet sealed");
     }
     adjustReliability(3, `${packet.shortLabel} completed by accountable human review`);
-    setLatestMessage(`${packet.shortLabel} SEALED - ${packet.checkCount} FINAL CHECKS RECORDED`);
+    setLatestMessage(`${packet.shortLabel} FILED - ${this.bindingPackets.filter(entry => entry.status === "sealed").length}/5 BINDING STATIONS COMPLETE`);
   }
 
- private resolveKelloggCertificationViolations() {
+  private resolveKelloggCertificationViolations() {
     for (const record of unresolvedStandardsViolations()) {
-      if (record.context?.startsWith(KELLOGG_CERTIFICATION_CONTEXT_PREFIX)) resolveStandardsViolation(record.id);
+      if (isLegacyCertificationExercise(record)) resolveStandardsViolation(record.id);
     }
   }
 
