@@ -55,6 +55,7 @@ import { RESEARCH_CHARTER_PROMPTS } from "./researchCharter";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
+import { getAboutSeriesGameplayReadout } from "./aboutSeries";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
 import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./secretReadingRoom";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
@@ -2911,6 +2912,7 @@ export function renderGameToText() {
       processItems: getProcessItemReadout(),
       danneItems: getDanneItemReadout(),
       codex: getCodexReadout(),
+      aboutSeries: getAboutSeriesGameplayReadout(gameState.sceneProgress),
       workflowTools: getWorkflowToolReadout(),
       areaProgress: getAreaProgressReadout(),
       currentArea: getCurrentAreaReadout(),

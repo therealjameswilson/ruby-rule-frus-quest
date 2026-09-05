@@ -1,5 +1,5 @@
 import { ITEM_REGISTRY } from "./constants";
-import { ABOUT_SERIES_RULES, ABOUT_SERIES_SOURCE } from "./aboutSeries";
+import { ABOUT_SERIES_HANDBOOK_LORE, ABOUT_SERIES_SOURCE } from "./aboutSeries";
 import { DANNE_ITEM_CATALOG } from "./danneItemCatalog";
 import { DANNE_RUNTIME_SPRITE_ASSETS, DANNE_VARIANT_ASSETS } from "./danneAtlas";
 import { SNES_ANTAGONIST_ASSETS } from "./snesAtlas";
@@ -133,7 +133,7 @@ const ITEM_ENTRIES: readonly CodexEntry[] = [
     displayName: "Series Handbook",
     startsUnlocked: true,
     sourceUrl: ABOUT_SERIES_SOURCE.url,
-    lore: [ABOUT_SERIES_RULES.text, ABOUT_SERIES_RULES.index, ABOUT_SERIES_RULES.deadline].join("\n\n")
+    lore: ABOUT_SERIES_HANDBOOK_LORE
   },
   ...DANNE_ITEM_CATALOG.map((item) => ({
     id: `item-${item.id}`,

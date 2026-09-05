@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
+import { choiceLayout } from "../systems/choiceLayout";
 import {
   evaluateSourceNoteProvenanceAnswer,
   getSourceNoteProvenancePrompt,
@@ -17,7 +19,7 @@ describe("source note provenance prompts", () => {
       "collection",
       "folder"
     ]);
-    expect(SOURCE_NOTE_PROVENANCE_SOURCE_URL).toContain("history.state.gov");
+    expect(SOURCE_NOTE_PROVENANCE_SOURCE_URL).toBe(ABOUT_SERIES_SOURCE.url);
   });
 
   it("accepts the correct repository, collection, and folder answers", () => {
@@ -67,5 +69,20 @@ describe("source note provenance prompts", () => {
     expect(repository).toMatchObject({ ok: true, complete: false, nextStep: 1 });
     expect(collection).toMatchObject({ ok: true, complete: false, nextStep: 2 });
     expect(folder).toMatchObject({ ok: true, complete: true, nextStep: 3 });
+  });
+
+  it("requires the full first-footnote metadata packet at the final desk", () => {
+    const prompt = getSourceNoteProvenancePrompt(2);
+    expect(prompt.question).toContain("FIRST FOOTNOTE");
+    expect(evaluateSourceNoteProvenanceAnswer("folder", "archive_path_only")).toMatchObject({ ok: false });
+    expect(evaluateSourceNoteProvenanceAnswer("folder", "complete_first_footnote")).toMatchObject({ ok: true });
+    expect(prompt.sourceBasis).toMatch(/classification.*distribution.*drafting.*read/i);
+    const layout = choiceLayout(`${prompt.question}\n\n${prompt.sourceBasis}`, prompt.options);
+    expect(layout.contextText.replace(/\n/g, " ")).toBe(prompt.sourceBasis);
+    expect(layout.questionText.replace(/\n/g, " ")).toBe(prompt.question);
+    expect(layout.height).toBeLessThanOrEqual(180);
+    layout.rows.forEach((row, index) => {
+      expect(row.text.replace(/\n/g, " ")).toBe(`[${prompt.options[index].key}] ${prompt.options[index].label}`);
+    });
   });
 });

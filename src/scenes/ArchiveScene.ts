@@ -89,6 +89,8 @@ import {
 } from "../game/archiveA1Tilemap";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
+  evaluateSourceNoteProvenanceAnswer,
+  getSourceNoteProvenancePrompt,
   getSourceNoteProvenanceStation,
   inspectSourceNoteProvenanceStation,
   SOURCE_NOTE_PROVENANCE_STATIONS
@@ -2606,11 +2608,16 @@ export class ArchiveScene extends Phaser.Scene {
       setLatestMessage(result.message);
       return;
     }
+    if (result.complete && !gameState.sceneProgress.aboutSeriesFirstFootnoteComplete) {
+      this.reviewFirstFootnote(result.nextStep);
+      return;
+    }
     gameState.sceneProgress.sourceNoteProvenanceStep = result.nextStep;
     retroAudio.confirm();
     if (result.complete) {
       gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
       this.completeSourceNoteVerification(result.message);
+      saveGameNow();
       return;
     }
     const nextStation = getSourceNoteProvenanceStation(result.nextStep);
@@ -2620,10 +2627,34 @@ export class ArchiveScene extends Phaser.Scene {
     this.syncWallState();
   }
 
+  private reviewFirstFootnote(nextStep: number) {
+    if (this.researchChoice.active) return;
+    const prompt = getSourceNoteProvenancePrompt(nextStep - 1);
+    this.interactionPrompt.update(0, null);
+    this.clearSourceNoteRouteCue();
+    this.researchChoice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
+      const evaluation = evaluateSourceNoteProvenanceAnswer(prompt.id, option.value);
+      if (!evaluation.ok) {
+        retroAudio.warning();
+        setLatestMessage(evaluation.message);
+        this.toast.show("FIRST FOOTNOTE INCOMPLETE", this.player.position, "warn");
+        this.updateSourceNoteVerification();
+        saveGameNow();
+        return;
+      }
+
+      gameState.sceneProgress.aboutSeriesFirstFootnoteComplete = 1;
+      gameState.sceneProgress.sourceNoteProvenanceStep = nextStep;
+      gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
+      this.completeSourceNoteVerification(evaluation.message);
+      saveGameNow();
+    });
+  }
+
   private completeSourceNoteVerification(message: string) {
     this.sourceNoteStatus = "verified";
     setDocumentWorkflowState("source_note_047", "citation_verified");
-    addDocumentPoints(6, "Source Note 47 provenance matched to repository, collection, and folder");
+    addDocumentPoints(6, "Source Note 47 provenance and first-footnote metadata verified");
     this.addVerificationGlow();
     setLatestMessage("VERIFIED BY HUMAN REVIEW - SOURCE NOTE PROVENANCE");
     setObjective("STAMP: apply citation stamp after human provenance review.");

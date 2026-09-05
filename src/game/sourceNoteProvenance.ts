@@ -1,4 +1,5 @@
 import type { ChoiceOption } from "./types";
+import { ABOUT_SERIES_FIRST_FOOTNOTE_RULE, ABOUT_SERIES_SOURCE } from "./aboutSeries";
 
 export type SourceNoteProvenancePromptId =
   | "repository"
@@ -38,7 +39,7 @@ export interface SourceNoteProvenanceTrailResult {
   message: string;
 }
 
-export const SOURCE_NOTE_PROVENANCE_SOURCE_URL = "https://history.state.gov/historicaldocuments/about-frus";
+export const SOURCE_NOTE_PROVENANCE_SOURCE_URL = ABOUT_SERIES_SOURCE.url;
 
 export const SOURCE_NOTE_PROVENANCE_PROMPTS = [
   {
@@ -69,16 +70,15 @@ export const SOURCE_NOTE_PROVENANCE_PROMPTS = [
   },
   {
     id: "folder",
-    question: "SOURCE NOTE 47: WHICH FOLDER COMPLETES THE PROVENANCE TRAIL?",
+    question: "FIRST FOOTNOTE: KEEP WHICH DETAILS?",
     options: [
-      { key: "A", label: "Alliance Consultation, February 1969", value: "alliance_consultation" },
-      { key: "B", label: "Folder withheld without indication", value: "withheld" },
-      { key: "C", label: "Publish first, cite later", value: "late_cite" }
+      { key: "A", label: "Keep the complete metadata packet", value: "complete_first_footnote" },
+      { key: "B", label: "Keep only the archive path", value: "archive_path_only" }
     ],
-    correctValue: "alliance_consultation",
-    sourceBasis: "Kellogg standards reject undisclosed alteration and material omissions; the reader needs the real trail.",
-    successMessage: "Folder matched: Source Note 47 is ready for a human citation stamp.",
-    failureMessage: "The folder trail must be visible before the note can be stamped."
+    correctValue: "complete_first_footnote",
+    sourceBasis: ABOUT_SERIES_FIRST_FOOTNOTE_RULE,
+    successMessage: "First footnote complete: Source Note 47 is ready for a human citation stamp.",
+    failureMessage: "The first footnote still lacks required provenance and reader evidence."
   }
 ] as const satisfies readonly SourceNoteProvenancePrompt[];
 

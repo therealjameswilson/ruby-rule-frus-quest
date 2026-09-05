@@ -60,6 +60,17 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(restore).not.toContain('hasProcessItem("citation_stamp")');
   });
 
+  it("gates the Citation Stamp behind the About-the-Series first footnote", () => {
+    const inspect = methodSource("inspectSourceNoteProvenance", "reviewFirstFootnote");
+    expect(inspect).toContain("this.reviewFirstFootnote(result.nextStep)");
+    const review = methodSource("reviewFirstFootnote", "completeSourceNoteVerification");
+    expect(review).toContain("evaluateSourceNoteProvenanceAnswer");
+    expect(review).toContain("FIRST FOOTNOTE INCOMPLETE");
+    expect(review).toContain("aboutSeriesFirstFootnoteComplete = 1");
+    expect(review).toContain("sourceNoteProvenanceComplete = 1");
+    expect(review).toContain("saveGameNow()");
+  });
+
   it("keeps A1 spatial instead of stacking map and terminal dashboards", () => {
     const room = methodSource("renderSourceRoom", "renderOpenNetAnnex");
     expect(room).toContain("drawCompactSourceRoomTerminal");

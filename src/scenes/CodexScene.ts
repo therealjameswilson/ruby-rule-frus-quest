@@ -1,10 +1,12 @@
 import Phaser from "phaser";
-import { ABOUT_SERIES_SOURCE } from "../game/aboutSeries";
+import { ABOUT_SERIES_HANDBOOK_PAGES, ABOUT_SERIES_SOURCE } from "../game/aboutSeries";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { CODEX_CATEGORIES, getCodexEntries, getCodexReadout, type CodexCategory, type CodexEntryReadout } from "../game/codex";
 import { gameState, setLatestMessage, setSceneState, setVisibleEntities, setVisibleThreats } from "../game/state";
-import type { GameMode } from "../game/types";
 import { bindPointerPress, getInput, swallowNextInputFrame, tickInput } from "../input/InputState";
+import { wrapChoiceText } from "../systems/choiceLayout";
+import { saveGameNow } from "../systems/save";
+import { captureCodexReturnState } from "../systems/codexOverlay";
 
 interface CodexSceneData {
   returnScene?: string;
@@ -30,9 +32,11 @@ export class CodexScene extends Phaser.Scene {
   private categoryIndex = 0;
   private entryIndex = 0;
   private entryOffset = 0;
+  private handbookPage = 0;
+  private navigationHint?: Phaser.GameObjects.Text;
   private content?: Phaser.GameObjects.Container;
   private readyAt = 0;
-  private previousState: { scene: string; mode: GameMode; objective: string } = { scene: "TitleScene", mode: "title", objective: "" };
+  private previousState?: ReturnType<typeof captureCodexReturnState>;
 
   constructor() {
     super("CodexScene");
@@ -40,17 +44,16 @@ export class CodexScene extends Phaser.Scene {
 
   create(data: CodexSceneData = {}) {
     this.returnScene = data.returnScene ?? "TitleScene";
-    this.previousState = {
-      scene: gameState.currentScene,
-      mode: gameState.mode,
-      objective: gameState.objective
-    };
+    this.previousState = captureCodexReturnState(gameState);
     const preferred = data.category ?? preferredCategoryFromQuery();
     if (preferred) this.categoryIndex = Math.max(0, CODEX_CATEGORIES.indexOf(preferred));
     this.entryIndex = 0;
     this.entryOffset = 0;
+    this.handbookPage = 0;
     this.readyAt = this.time.now + 160;
     if (this.returnScene !== this.scene.key && this.scene.isActive(this.returnScene)) {
+      // The codex is transient: keep a resumable gameplay checkpoint before opening a source tab.
+      saveGameNow();
       this.scene.pause(this.returnScene);
     }
     setSceneState("CodexScene", "pause", "Codex: review enemies, NPCs, DANN-E variants, and tools.");
@@ -72,12 +75,20 @@ export class CodexScene extends Phaser.Scene {
       this.openSelectedSource();
     }
     if (input.navLeftJustPressed) {
+      if (this.isHandbookSelected()) {
+        this.turnHandbookPage(-1);
+        return;
+      }
       this.categoryIndex = (this.categoryIndex + CODEX_CATEGORIES.length - 1) % CODEX_CATEGORIES.length;
       this.entryIndex = 0;
       this.entryOffset = 0;
       this.render();
     }
     if (input.navRightJustPressed) {
+      if (this.isHandbookSelected()) {
+        this.turnHandbookPage(1);
+        return;
+      }
       this.categoryIndex = (this.categoryIndex + 1) % CODEX_CATEGORIES.length;
       this.entryIndex = 0;
       this.entryOffset = 0;
@@ -107,7 +118,7 @@ export class CodexScene extends Phaser.Scene {
       fontSize: "9px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5, 0);
-    this.add.text(128, 223, "LEFT/RIGHT CATEGORY  UP/DOWN ENTRY  TAB/ESC CLOSE", {
+    this.navigationHint = this.add.text(128, 223, "LEFT/RIGHT CATEGORY  UP/DOWN ENTRY  TAB/ESC CLOSE", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.creamPaper
@@ -135,6 +146,9 @@ export class CodexScene extends Phaser.Scene {
     this.drawCategories(objects, category);
     this.drawEntryList(objects, entries);
     if (selected) this.drawEntryDetail(objects, selected);
+    this.navigationHint?.setText(this.isHandbookSelected()
+      ? "LEFT/RIGHT PAGE  UP/DOWN ENTRY  TAB/ESC CLOSE"
+      : "LEFT/RIGHT CATEGORY  UP/DOWN ENTRY  TAB/ESC CLOSE");
     this.drawCounter(objects);
     this.content = this.add.container(0, 0, objects).setDepth(20);
   }
@@ -175,11 +189,11 @@ export class CodexScene extends Phaser.Scene {
       const marker = selected ? ">" : " ";
       const locked = entry.unlocked ? " " : "?";
       const text = `${marker}${locked} ${entry.unlocked ? entry.displayName : "???"}`;
-      const label = this.add.text(13, y, text.slice(0, 22), {
+      const label = this.add.text(13, y, wrapChoiceText(text, 15, 1), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: selected ? PALETTE.goldStamp : entry.unlocked ? PALETTE.creamPaper : PALETTE.stoneGray
-      });
+      }).setName("codex-entry-label");
       bindPointerPress(hit, {
         down: () => {
           this.entryIndex = index;
@@ -205,7 +219,7 @@ export class CodexScene extends Phaser.Scene {
       color: PALETTE.terminalCyan
     }));
     if (entry.sourceUrl) {
-      this.drawSourceEntry(objects, entry);
+      this.drawSourceEntry(objects);
       return;
     }
     if (entry.unlocked) this.drawEntryArt(objects, entry);
@@ -220,14 +234,28 @@ export class CodexScene extends Phaser.Scene {
     }));
   }
 
-  private drawSourceEntry(objects: Phaser.GameObjects.GameObject[], entry: CodexEntryReadout) {
-    this.addTo(objects, this.add.text(96, 69, `${ABOUT_SERIES_SOURCE.volume}\n${ABOUT_SERIES_SOURCE.topic}`, {
-      fontFamily: "monospace", fontSize: "6px", color: PALETTE.terminalCyan, lineSpacing: 1
+  private drawSourceEntry(objects: Phaser.GameObjects.GameObject[]) {
+    const page = ABOUT_SERIES_HANDBOOK_PAGES[this.handbookPage];
+    this.addTo(objects, this.add.text(96, 69, page.title, {
+      fontFamily: "monospace", fontSize: "6px", color: PALETTE.terminalCyan
     }));
-    this.addTo(objects, this.add.text(96, 89, entry.lore, {
+    this.addTo(objects, this.add.text(228, 69, `${this.handbookPage + 1}/${ABOUT_SERIES_HANDBOOK_PAGES.length}`, {
+      fontFamily: "monospace", fontSize: "6px", color: PALETTE.goldStamp
+    }).setOrigin(1, 0));
+    this.addTo(objects, this.add.text(96, 84, page.text, {
       fontFamily: "monospace", fontSize: "6px", color: PALETTE.creamPaper,
       wordWrap: { width: 126, useAdvancedWrap: true }, lineSpacing: 1
     }));
+    for (const direction of [-1, 1] as const) {
+      const x = direction < 0 ? 126 : 198;
+      const button = this.add.rectangle(x, 151, 60, 44, color(PALETTE.shadowNavy))
+        .setStrokeStyle(1, color(PALETTE.goldStamp));
+      bindPointerPress(button, { down: () => this.turnHandbookPage(direction) });
+      const label = this.add.text(x, 151, direction < 0 ? "< BACK" : "NEXT >", {
+        fontFamily: "monospace", fontSize: "6px", color: PALETTE.goldStamp
+      }).setOrigin(0.5);
+      objects.push(button, label);
+    }
     const sourceButton = this.add.rectangle(162, 199, 132, 44, color(PALETTE.deepRuby))
       .setStrokeStyle(1, color(PALETTE.goldStamp));
     bindPointerPress(sourceButton, { down: () => this.openSelectedSource() });
@@ -237,6 +265,21 @@ export class CodexScene extends Phaser.Scene {
     }).setOrigin(0.5);
     bindPointerPress(sourceLabel, { down: () => this.openSelectedSource() });
     this.addTo(objects, sourceLabel);
+    setVisibleEntities([
+      `Series Handbook ${this.handbookPage + 1}/${ABOUT_SERIES_HANDBOOK_PAGES.length}: ${page.title}`,
+      page.text,
+      `Source: ${ABOUT_SERIES_SOURCE.url}`
+    ]);
+  }
+
+  private isHandbookSelected() {
+    return this.currentEntries()[this.entryIndex]?.sourceUrl === ABOUT_SERIES_SOURCE.url;
+  }
+
+  private turnHandbookPage(direction: -1 | 1) {
+    this.handbookPage = (this.handbookPage + direction + ABOUT_SERIES_HANDBOOK_PAGES.length)
+      % ABOUT_SERIES_HANDBOOK_PAGES.length;
+    this.render();
   }
 
   private openSelectedSource() {
@@ -304,12 +347,10 @@ export class CodexScene extends Phaser.Scene {
   private close() {
     setLatestMessage("Codex closed.");
     swallowNextInputFrame();
+    if (this.previousState) Object.assign(gameState, this.previousState);
     if (this.returnScene && this.returnScene !== this.scene.key && this.scene.isPaused(this.returnScene)) {
       this.scene.resume(this.returnScene);
     }
-    gameState.currentScene = this.previousState.scene;
-    gameState.mode = this.previousState.mode;
-    gameState.objective = this.previousState.objective;
     this.scene.stop();
   }
 

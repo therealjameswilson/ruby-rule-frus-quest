@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import "./styles/pixel.css";
+import { getAboutSeriesGameplayReadout } from "./game/aboutSeries";
 import { gameConfig } from "./game/config";
 import { getBuckramBindingReadout } from "./game/buckramBinding";
 import { GAME_HEIGHT, GAME_WIDTH } from "./game/constants";
@@ -97,6 +98,7 @@ function renderConciseGameToText() {
       reliability: gameState.reliability,
       documentPoints: gameState.documentPoints,
       volumeWorkflowState: gameState.volumeWorkflowState,
+      aboutSeries: getAboutSeriesGameplayReadout(gameState.sceneProgress),
       questCounters: gameState.questCounters,
       volumeAssembly: {
         piecesEarned: getVolumeAssemblyReadout().earnedCount,
