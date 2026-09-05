@@ -918,6 +918,10 @@ export function restoreGameSaveData(save: GameSaveData) {
   gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
   gameState.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities);
   gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  // Saving already accrued the active session. Time away must not accrue again on Continue.
+  if (gameState.completionStats.completedAtMs === null) {
+    gameState.completionStats.runStartedAtMs = completionStatsNowMs();
+  }
   gameState.completionStats.volumePiecesCollected = Math.max(
     gameState.completionStats.volumePiecesCollected,
     gameState.volumeFragments.length
@@ -2631,6 +2635,11 @@ export function getProductionStatusReadout() {
 
 export function getProductionBoardReadout() {
   refreshQuestWorkflowState();
+  // The guided route supplies a planned assignment rather than the optional
+  // planning-desk questionnaire. Credit its human stamp and collected packet,
+  // without inventing completion of the old individual questions in the save.
+  const assignmentAccepted = gameState.sceneProgress.officeStarterMemoStatus === 3;
+  const archivePacketCollected = gameState.sceneProgress.archiveSourceRoomComplete === 1;
   return getFrusProductionBoardReadout({
     volumeWorkflowState: gameState.volumeWorkflowState,
     documentCandidates: gameState.documentCandidates.map(cloneDocumentCandidate),
@@ -2657,12 +2666,12 @@ export function getProductionBoardReadout() {
     eo13526ReviewComplete: Boolean(gameState.sceneProgress.eo13526ReviewComplete),
     recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
     researchCharterComplete: Boolean(gameState.sceneProgress.researchCharterComplete),
-    recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
+    recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete) || archivePacketCollected,
     repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
     selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
     policyCoverageAuditComplete: Boolean(gameState.sceneProgress.policyCoverageAuditComplete),
-    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
-    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete),
+    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete) || assignmentAccepted,
+    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete) || assignmentAccepted,
     chapterReleaseComplete: Boolean(gameState.sceneProgress.chapterReleaseComplete),
     digitalReleaseComplete: Boolean(gameState.sceneProgress.digitalReleaseComplete),
     publicCitationComplete: Boolean(gameState.sceneProgress.publicCitationComplete),

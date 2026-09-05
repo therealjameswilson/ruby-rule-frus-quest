@@ -388,7 +388,6 @@ export class DanneBoss {
     gameState.sceneProgress.blackVaultNorthOpen = 1;
     defeatDungeonBoss("buckram_gate", "DANN-E final review hurdle defeated");
     unlockCodexEntry("danne-defeated");
-    this.recordPhaseDefeat("defeated");
     addDanneItem("treaty-fragments", 2);
     const completeTreatyRecord = getTreatyFragmentCount() >= 3;
     gameState.sceneProgress.blackVaultTreatyRecordComplete = completeTreatyRecord ? 1 : 0;
@@ -603,7 +602,7 @@ export class DanneBoss {
     }
   }
 
-  private recordPhaseDefeat(phase: Exclude<DanneBossPhase, "intro">) {
+  private recordPhaseDefeat(phase: Exclude<DanneBossPhase, "intro" | "defeated">) {
     if (this.recordedPhaseDefeats.has(phase)) return;
     this.recordedPhaseDefeats.add(phase);
     recordDanneVariantDefeated(phase);

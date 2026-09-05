@@ -132,6 +132,7 @@ export class TouchControls {
       || activeSceneKey === "WarningScene"
       || activeSceneKey === "RenderDebugScene"
       || activeSceneKey === "DanneGallery"
+      || activeSceneKey === "TrueEndingScene"
       || (activeSceneKey === "EndingScene" && gameState.mode === "ending")
       || activeSceneKey === "SpriteGallery";
     const shouldShow = !hiddenScene && !this.gamepadSuppressed && (isTouchCapable() || this.forceVisible);

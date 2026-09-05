@@ -1,5 +1,6 @@
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { DANNE_MAP_ASSETS } from "./danneAtlas";
+import { TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 import type { Interactable, Position } from "./types";
 
 export type DanneMapSceneKey = (typeof DANNE_MAP_ASSETS)[number]["sceneKey"];
@@ -45,6 +46,16 @@ export interface DanneSceneInteractionDefinition {
 
 export function danneMapInteractionAvailable(action: DanneSceneInteractionAction, bossCleared: boolean) {
   return action !== "treaty-fragment-vault" || bossCleared;
+}
+
+export function danneMapExplorationObjective(sceneKey: DanneMapSceneKey, inventory: readonly string[]) {
+  if (sceneKey === "NaraStacksScene") {
+    return inventory.includes(TREATY_FRAGMENT_LABELS[0]) ? "SOUTH TO ARCHIVE" : "OPTIONAL: FIND FRAGMENT I";
+  }
+  if (sceneKey === "SenateHearingChamberScene") {
+    return inventory.includes(TREATY_FRAGMENT_LABELS[1]) ? "SOUTH TO OFFICE" : "OPTIONAL: HEARING RECORD";
+  }
+  return DANNE_SCENE_GEOMETRY[sceneKey].objective;
 }
 
 export interface DannePatrolRouteDefinition {

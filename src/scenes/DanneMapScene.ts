@@ -23,7 +23,7 @@ import type {
   DanneSceneGeometry,
   DanneSceneInteractionDefinition
 } from "../game/danneSceneCollisions";
-import { DANNE_SCENE_GEOMETRY, danneMapInteractionAvailable } from "../game/danneSceneCollisions";
+import { DANNE_SCENE_GEOMETRY, danneMapExplorationObjective, danneMapInteractionAvailable } from "../game/danneSceneCollisions";
 import {
   addDanneItem,
   addProcessItem,
@@ -185,8 +185,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   create() {
     registerDanneAnims(this);
-    setSceneState(this.geometry.sceneKey, "explore", this.geometry.objective);
-    setObjective(this.geometry.objective);
+    setSceneState(this.geometry.sceneKey, "explore", danneMapExplorationObjective(this.geometry.sceneKey, gameState.inventory));
     setLatestMessage(`${this.geometry.displayName} loaded.`);
     setVisibleEntities([...this.geometry.visibleEntities]);
     setVisibleThreats([]);
@@ -379,8 +378,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
           : readiness.ready
             ? this.blackVaultApproachObjective()
             : `Black Vault locked: ${readiness.missingSummary.slice(0, 2).join(", ")}.`);
-      } else {
-        setObjective(this.geometry.objective);
+      } else if (gameState.mode === "explore") {
+        setObjective(danneMapExplorationObjective(this.geometry.sceneKey, gameState.inventory));
       }
     }
     this.reliability.update();
@@ -632,6 +631,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       const added = addDanneItem("treaty-fragments", 0);
       if (added) retroAudio.danneItemPickup("Treaty Fragment I");
       else retroAudio.confirm();
+      saveGameNow("manual");
       this.dialog.show("TREATY FRAGMENT I", added
         ? "Fragment I was filed behind the drone patrol route."
         : "Fragment I is already in the treaty folder.");
@@ -714,6 +714,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private showHacHearingChoice() {
     if (gameState.sceneProgress.senateHacReviewComplete) {
+      // Older saves can hold the completed hearing without its collectible.
+      // Claim it once; do not replay the hearing or repeat its reliability bonus.
+      if (addDanneItem("treaty-fragments", 1)) {
+        retroAudio.danneItemPickup("Treaty Fragment II");
+        saveGameNow("manual");
+      }
       this.dialog.show("WITNESS TABLE", [
         "The HAC process review is already entered.",
         "Question, answer, source, and date remain separate.",
@@ -756,6 +762,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       setLatestMessage("HAC process review complete: oversight, 30-year sample, and annual findings filed.");
       adjustReliability(6, "HAC process monitoring answered cleanly");
       this.reliability.update();
+      saveGameNow("manual");
       this.dialog.show("WITNESS TABLE", [
         result.message,
         "HAC process review entered: compilation, declassification, 30-year sampling, annual findings, and Kellogg standards are visible.",

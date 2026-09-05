@@ -638,10 +638,10 @@ export class OfficeScene extends Phaser.Scene {
     }
     this.setOfficeStarterMemoStatus(1);
     setHeldItem("Assignment Memo");
-    setLatestMessage("CARRY: Assignment Memo.");
+    setLatestMessage("Assignment: late Cold War series; Opening Contacts, 1989-1992. Carry the supplied plan to INBOX for approval.");
     setObjective("Carry the memo to INBOX.");
     retroAudio.confirm();
-    this.toast.show("MEMO PICKED UP", this.player.position, "info");
+    this.toast.show("FRUS: LATE COLD WAR", this.player.position, "info");
   }
 
   private handleStarterMemoInbox() {
@@ -661,10 +661,10 @@ export class OfficeScene extends Phaser.Scene {
     if (memoStatus === 1) {
       this.setOfficeStarterMemoStatus(2);
       setHeldItem(null);
-      setLatestMessage("ROUTE: memo placed in INBOX.");
+      setLatestMessage("REMIT: Opening Contacts, 1989-1992. Stamp to accept the supplied series plan and volume assignment.");
       setObjective("Stamp the memo at INBOX.");
       retroAudio.confirm();
-      this.toast.show("MEMO ROUTED", this.player.position, "info");
+      this.toast.show("OPENING CONTACTS: 1989-92", this.player.position, "info");
       return;
     }
     if (memoStatus === 2) {

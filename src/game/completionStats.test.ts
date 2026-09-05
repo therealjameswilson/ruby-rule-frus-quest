@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   addVolumeFragment,
+  createGameSaveData,
   finalizeCompletionStats,
   gameState,
   getCompletionStatsReadout,
@@ -9,7 +10,9 @@ import {
   recordHiddenCollectibleFound,
   recordUnresolvedEquity,
   renderGameToText,
-  resetGameState
+  resetGameState,
+  restoreGameSaveData,
+  setSceneState
 } from "./state";
 
 describe("completion stats", () => {
@@ -59,6 +62,33 @@ describe("completion stats", () => {
     expect(later.finalReliabilityScore).toBe(73);
     expect(later.completed).toBe(true);
     expect(later.hiddenCollectibleFound).toBe(true);
+  });
+
+  it("resumes saved play time without counting days spent away from the game", () => {
+    setSceneState("ArchiveScene", "explore", "CHECK SOURCE");
+    vi.advanceTimersByTime(65_000);
+    const save = createGameSaveData();
+    vi.advanceTimersByTime(2 * 24 * 60 * 60 * 1000);
+    expect(restoreGameSaveData(save)).toBe("ArchiveScene");
+    expect(getCompletionStatsReadout().totalPlayTimeMs).toBe(65_000);
+    vi.advanceTimersByTime(5000);
+    expect(getCompletionStatsReadout().totalPlayTimeMs).toBe(70_000);
+    const nextSave = createGameSaveData();
+    vi.advanceTimersByTime(60_000);
+    restoreGameSaveData(nextSave);
+    expect(getCompletionStatsReadout().totalPlayTimeMs).toBe(70_000);
+  });
+
+  it("does not rewrite the clock or scores of an already completed run on Continue", () => {
+    setSceneState("TrueEndingScene", "ending", "PUBLISHED");
+    vi.advanceTimersByTime(120_000);
+    finalizeCompletionStats();
+    const save = createGameSaveData();
+    const recorded = structuredClone(save.state.completionStats);
+    vi.advanceTimersByTime(24 * 60 * 60 * 1000);
+    restoreGameSaveData(save);
+    expect(gameState.completionStats).toEqual(recorded);
+    expect(getCompletionStatsReadout().totalPlayTimeMs).toBe(120_000);
   });
 
   it("branches publication outcome based on unresolved equities", () => {

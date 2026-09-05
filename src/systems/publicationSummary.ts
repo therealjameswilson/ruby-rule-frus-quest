@@ -1,16 +1,20 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { CompletionStatsReadout } from "../game/state";
+import type { TrueEndingCertificate } from "../game/trueEndingCertificate";
 import { bindPointerDown, swallowNextInputFrame, type InputState } from "../input/InputState";
+
+export type PublicationSummaryPage = "volume" | "certificate" | "record";
 
 interface PublicationSummaryOptions {
   compiler: string;
   stats: CompletionStatsReadout;
   volumesCompleted: number;
   textureKeys: readonly string[];
+  certificate?: TrueEndingCertificate;
   onTitle: () => void;
   canAct: () => boolean;
-  onPageChange?: (page: "volume" | "record") => void;
+  onPageChange?: (page: PublicationSummaryPage) => void;
 }
 
 function color(hex: string) {
@@ -19,7 +23,7 @@ function color(hex: string) {
 
 export class PublicationSummary {
   private readonly content: Phaser.GameObjects.Container;
-  private page: "volume" | "record" = "volume";
+  private page: PublicationSummaryPage = "volume";
   private selected = 0;
   private buttons: Phaser.GameObjects.Rectangle[] = [];
 
@@ -35,7 +39,7 @@ export class PublicationSummary {
       this.highlightButtons();
     }
     if (input.cancelJustPressed || input.bJustPressed) {
-      if (this.page === "record") this.activate(0);
+      if (this.page !== "volume") this.showPage("volume");
     } else if (input.aJustPressed || input.startJustPressed) {
       this.activate(this.selected);
     }
@@ -43,12 +47,22 @@ export class PublicationSummary {
 
   private activate(index: number) {
     if (!this.options.canAct()) return;
-    swallowNextInputFrame();
     if (index === 1) {
+      swallowNextInputFrame();
       this.options.onTitle();
       return;
     }
-    this.page = this.page === "volume" ? "record" : "volume";
+    this.showPage(this.nextPage());
+  }
+
+  private nextPage(): PublicationSummaryPage {
+    if (this.page === "volume") return this.options.certificate ? "certificate" : "record";
+    return this.page === "certificate" ? "record" : "volume";
+  }
+
+  private showPage(page: PublicationSummaryPage) {
+    swallowNextInputFrame();
+    this.page = page;
     this.selected = 0;
     this.draw();
   }
@@ -67,9 +81,10 @@ export class PublicationSummary {
     this.content.setData("page", this.page).setName("publication-summary");
     this.content.add(this.scene.add.rectangle(128, 120, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby)));
     if (this.page === "volume") this.drawVolume();
+    else if (this.page === "certificate") this.drawCertificate();
     else this.drawRecord();
 
-    [this.page === "volume" ? "RECORD" : "VOLUME", "TITLE"].forEach((label, index) => {
+    [this.nextPage().toUpperCase(), "TITLE"].forEach((label, index) => {
       const x = index === 0 ? 67 : 189;
       const button = this.scene.add.rectangle(x, 216, 110, 44, color(PALETTE.black))
         .setName(`publication-${label.toLowerCase()}`);
@@ -88,9 +103,9 @@ export class PublicationSummary {
   }
 
   private drawVolume() {
-    const { stats, compiler } = this.options;
+    const { stats, compiler, certificate } = this.options;
     const appealed = stats.publicationOutcome.id === "published_under_appeal";
-    this.text(128, 16, "FRUS VOLUME PUBLISHED", 8, PALETTE.goldStamp);
+    this.text(128, 16, certificate?.title ?? "FRUS VOLUME PUBLISHED", 8, PALETTE.goldStamp);
     this.text(128, 30, `COMPILED BY ${compiler.toUpperCase()}`.slice(0, 38), 6);
     const key = this.options.textureKeys.find((candidate) => this.scene.textures.exists(candidate));
     if (key) {
@@ -105,10 +120,28 @@ export class PublicationSummary {
         .setStrokeStyle(2, color(PALETTE.goldStamp)));
       this.text(128, 92, "FRUS", 8, PALETTE.goldStamp);
     }
-    this.text(128, 171, appealed ? "PUBLISHED UNDER APPEAL" : "PUBLISHED CLEAN", 8, PALETTE.goldStamp);
-    this.text(128, 184, appealed
+    this.text(128, 171, certificate
+      ? certificate.complete ? "COMPLETE TREATY RECORD" : "CERTIFICATION STILL OPEN"
+      : appealed ? "PUBLISHED UNDER APPEAL" : "PUBLISHED CLEAN", 8, PALETTE.goldStamp);
+    this.text(128, 184, certificate
+      ? certificate.complete ? "DANN-E COULD NOT ERASE YOUR WORK." : "OPEN CHECKS REMAIN ON THE RECORD."
+      : appealed
       ? `${stats.unresolvedEquities} UNRESOLVED EQUITIES ON RECORD`
       : "THE RECORD IS NOW PUBLIC.", 6);
+  }
+
+  private drawCertificate() {
+    const certificate = this.options.certificate;
+    if (!certificate) return;
+    this.text(128, 16, "CERTIFICATION RECORD", 8, PALETTE.goldStamp);
+    this.text(128, 31, certificate.complete ? "HUMAN REVIEW COMPLETE" : "OPEN CHECKS SHOWN BELOW", 8);
+    certificate.checklist.forEach((line, index) => {
+      const y = 50 + index * 15;
+      this.text(12, y, line.complete ? "+" : "!", 8, line.complete ? PALETTE.terminalCyan : PALETTE.goldStamp, 0);
+      this.text(26, y, line.label, 8, PALETTE.creamPaper, 0);
+      this.text(240, y, line.value, 8, line.complete ? PALETTE.terminalCyan : PALETTE.goldStamp, 1);
+    });
+    this.text(128, 184, "SOURCE: HISTORY.STATE.GOV", 6, PALETTE.creamPaper);
   }
 
   private drawRecord() {

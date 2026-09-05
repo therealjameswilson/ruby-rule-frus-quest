@@ -354,6 +354,8 @@ describe("DANN-E final-review combat", () => {
     expect(gameState.reliability).toBe(100);
     expect(gameState.sceneProgress.blackVaultCombatDamage).toBe(0);
     expect(gameState.sceneProgress.blackVaultBossCleared).toBe(1);
+    expect(gameState.completionStats.danneVariantsDefeated.cloud).toBe(1);
+    expect(gameState.completionStats.danneVariantsDefeated.defeated).toBeUndefined();
   });
 
   it("still blocks a victory with unresolved standards violations", () => {
