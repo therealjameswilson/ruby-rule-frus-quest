@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { choiceLayout, wrapChoiceText } from "./choiceLayout";
+import { SILENT_READ_REVIEW_ITEMS, silentReadDecision } from "../game/silentReadReview";
 
 describe("choice layout", () => {
   const options = [
@@ -40,5 +41,22 @@ describe("choice layout", () => {
     expect(wrapChoiceText("abcdefghijklmnop", 6, 2)).toBe("abcdef\nghi...");
     expect(wrapChoiceText("", 6, 2)).toBe("");
     expect(wrapChoiceText("one  two\nthree", 9, 3)).toBe("one two\nthree");
+  });
+
+  it.each(SILENT_READ_REVIEW_ITEMS.map((item) => item.id))("keeps proof evidence legible and untruncated for %s", (id) => {
+    const decision = silentReadDecision(id);
+    if (!decision) return;
+    const layout = choiceLayout(`${decision.question}\n\n${decision.context}`, decision.options, 8);
+    expect(layout.fontSize).toBe(8);
+    expect(layout.contextFontSize).toBe(8);
+    expect(layout.contextText.replace(/\n/g, " ")).toBe(decision.context);
+    expect(layout.questionText.replace(/\n/g, " ")).toBe(decision.question);
+    expect(layout.rows[0].y).toBeGreaterThan(layout.contextY + layout.contextText.split("\n").length * 10);
+    expect(layout.height).toBeLessThanOrEqual(180);
+    expect(layout.top).toBeGreaterThanOrEqual(30);
+    expect(layout.top + layout.height).toBeLessThanOrEqual(210);
+    for (const [index, row] of layout.rows.entries()) {
+      expect(row.text.replace(/\n/g, " ")).toBe(`[${decision.options[index].key}] ${decision.options[index].label}`);
+    }
   });
 });

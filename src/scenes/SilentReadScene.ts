@@ -230,7 +230,11 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   create() {
+    const restoredVisitedRoomIds = gameState.currentScene === "SilentReadScene"
+      ? gameState.roomTraversal?.visitedRoomIds.filter((roomId): roomId is ProofRoomId => roomId === "E1" || roomId === "S1") ?? []
+      : [];
     this.resetTransientState();
+    this.visitedRoomIds = new Set(restoredVisitedRoomIds);
     setSceneState("SilentReadScene", "explore", "Editor's Labyrinth: earn the Red Pencil.");
     retroAudio.startMusic("SilentReadScene");
     this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
@@ -1040,21 +1044,11 @@ export class SilentReadScene extends Phaser.Scene {
       this.savePhysicalReviewProgress(activeFlag);
       retroAudio.confirm();
       this.updatePhysicalVerification();
-      return;
+      // Placing a decision-bearing file opens its check, never answers or stamps it.
+      if (!silentReadDecision(activeFlag.id)) return;
     }
 
     if (activeFlag.status === "routed") {
-      if (activeFlag.kind === "production") {
-        activeFlag.status = "stamped";
-        this.addVerificationMark(nearestStation);
-        this.addProcessStampMark(activeFlag, nearestStation);
-        const shouldAdvance = this.applyFlagReward(activeFlag);
-        this.savePhysicalReviewProgress();
-        retroAudio.stamp();
-        this.updatePhysicalVerification();
-        if (shouldAdvance) this.advanceAfterStamp();
-        return;
-      }
       const decision = silentReadDecision(activeFlag.id);
       if (decision) {
         this.interactionPrompt.update(0, null);
@@ -1067,8 +1061,9 @@ export class SilentReadScene extends Phaser.Scene {
             this.savePhysicalReviewProgress(activeFlag);
             return;
           }
+          gameState.sceneProgress[`silentReadDecision_${activeFlag.id}`] = 1;
           this.verifyFlag(activeFlag, nearestStation, decision.successMessage);
-        });
+        }, 8);
       } else {
         this.verifyFlag(activeFlag, nearestStation, `${activeFlag.shortLabel} CHECKED`);
       }
@@ -1090,6 +1085,7 @@ export class SilentReadScene extends Phaser.Scene {
     flag.status = "verified";
     this.addVerificationMark(station);
     setLatestMessage(message);
+    this.toast.show(message, this.player.position, "info", PROOF_PLAY_BOUNDS);
     setObjective(this.reviewObjective());
     this.savePhysicalReviewProgress(flag);
     retroAudio.confirm();
@@ -1130,7 +1126,7 @@ export class SilentReadScene extends Phaser.Scene {
       gameState.sceneProgress.editorialTreatmentStep = EDITORIAL_TREATMENT_PROMPTS.length;
       addDocumentPoints(18, "editorial method and treatment ledger filed");
       adjustReliability(14, "human consultation preserved chronology, meaning, and reader clarity");
-      setLatestMessage(`METHOD LEDGER FILED - ${flag.checkCount} HUMAN CHECKS`);
+      setLatestMessage("METHOD LEDGER FILED - MARGINAL NOTE PRESERVED");
       return true;
     }
     if (flag.id === "printer-copy") {
@@ -1140,7 +1136,7 @@ export class SilentReadScene extends Phaser.Scene {
       gameState.sceneProgress.typesettingPreparationStep = TYPESETTING_PREPARATION_PROMPTS.length;
       addDocumentPoints(14, "cleared printer's copy sequence filed");
       adjustReliability(6, "clearance preceded typesetting and metadata stayed visible");
-      setLatestMessage(`PRINTER COPY FILED - ${flag.checkCount} ORDER CHECKS`);
+      setLatestMessage("PRINTER COPY FILED - INDEX REFERENCE CORRECTED");
       return true;
     }
     if (flag.id === "typesetter-proof") {
@@ -1153,7 +1149,7 @@ export class SilentReadScene extends Phaser.Scene {
       setDocumentWorkflowState("sbu_annotation_001", "proofed");
       setDocumentWorkflowState("proof_page_412", "proofed");
       adjustReliability(10, "typesetter proof preserved document metadata");
-      setLatestMessage(`TYPESETTER PROOF FILED - ${flag.checkCount} COMPARISONS`);
+      setLatestMessage("TYPESETTER PROOF FILED - ORIGINAL TEXT PRESERVED");
       return true;
     }
     if (flag.id === "public-crossref") {
@@ -1348,7 +1344,7 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     if (flag.status === "routed") {
-      const verb = flag.kind === "production" ? "STAMP" : "VERIFY";
+      const verb = "VERIFY";
       setNearestInteractable(nearestStation?.id === flag.destination ? `${verb} ${flag.shortLabel}` : null);
       this.actionHint.setText(`${verb} ${flag.shortLabel}: press Space at ${correctStation.label}.`);
       return;
@@ -1406,13 +1402,14 @@ export class SilentReadScene extends Phaser.Scene {
 
   private reviewObjective() {
     const active = this.getActiveFlag();
+    if (!active && this.currentRoomId === "E1") return "EXIT EAST - PROOF";
     return silentReadObjective(active, active?.status ?? "stamped", !active || flagRoom(active) === this.currentRoomId);
   }
 
   private verbFor(flag: PhysicalFlag): "CARRY" | "ROUTE" | "VERIFY" | "STAMP" {
     if (flag.status === "waiting") return "CARRY";
     if (flag.status === "carried") return "ROUTE";
-    if (flag.status === "routed") return flag.kind === "production" ? "STAMP" : "VERIFY";
+    if (flag.status === "routed") return "VERIFY";
     return "STAMP";
   }
 

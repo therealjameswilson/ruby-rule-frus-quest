@@ -24,18 +24,18 @@ export function wrapChoiceText(value: string, columns: number, maxLines: number)
   return lines.join("\n");
 }
 
-export function choiceLayout(title: string, options: readonly { key: string; label: string }[]) {
+export function choiceLayout(title: string, options: readonly { key: string; label: string }[], contextFontSize: 6 | 8 = 6) {
   const [question = "", ...context] = title.split(/\n\s*\n/);
   const layoutAt = (fontSize: 6 | 8) => {
     const advance = pixelFontMetrics(fontSize).advance;
     const questionText = wrapChoiceText(question, Math.floor(216 / advance), fontSize === 8 ? 4 : 3);
-    const contextText = wrapChoiceText(context.join(" "), 54, 3);
+    const contextText = wrapChoiceText(context.join(" "), Math.floor(216 / pixelFontMetrics(contextFontSize).advance), 3);
     const textHeight = (text: string, size: number) => text ? text.split("\n").length * (size + 2) - 2 : 0;
     let y = 10;
     const questionY = y;
     y += textHeight(questionText, fontSize) + 8;
     const contextY = y;
-    if (contextText) y += textHeight(contextText, 6) + 8;
+    if (contextText) y += textHeight(contextText, contextFontSize) + 8;
     const rows = options.map((option) => {
       const text = wrapChoiceText(`[${option.key}] ${option.label}`, Math.floor(206 / advance), fontSize === 8 ? 3 : 2);
       const height = Math.max(22, textHeight(text, fontSize) + 8);
@@ -44,7 +44,7 @@ export function choiceLayout(title: string, options: readonly { key: string; lab
       return row;
     });
     const height = y + 7;
-    return { fontSize, questionText, contextText, questionY, contextY, rows, height, top: Math.round(120 - height / 2) };
+    return { fontSize, contextFontSize, questionText, contextText, questionY, contextY, rows, height, top: Math.round(120 - height / 2) };
   };
   const regular = layoutAt(8);
   return regular.height <= 180 ? regular : layoutAt(6);

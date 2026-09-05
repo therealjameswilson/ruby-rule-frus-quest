@@ -34,7 +34,7 @@ describe("physical Silent Read review", () => {
     expect(gameState.documentCandidates).toEqual(saved.state.documentCandidates);
     resetGameState();
   });
-  it("turns the About the Series rules into four source-linked decisions", () => {
+  it("turns the About the Series rules into source-linked, concrete decisions", () => {
     const bracket = silentReadDecision("mechanical-fix")!;
     const classifiedSource = silentReadDecision("classified-source")!;
     const withheldDocument = silentReadDecision("referral-equity")!;
@@ -47,12 +47,23 @@ describe("physical Silent Read review", () => {
     expect(withheldDocument.options[0].label).toContain("source note");
     expect(withheldDocument.options[0].label).toContain("page count");
     expect(date.correctValue).toBe("conversation");
-    for (const decision of [bracket, classifiedSource, withheldDocument, date]) {
+    const margin = silentReadDecision("editorial-ledger")!;
+    const index = silentReadDecision("printer-copy")!;
+    const proof = silentReadDecision("typesetter-proof")!;
+    expect(margin.correctValue).toBe("note_margin");
+    expect(index.options[0].label).toBe("Berlin -> Document 18");
+    expect(proof.options[1].label).toBe("Secto 214; 'We may agree.'");
+    for (const decision of [bracket, classifiedSource, withheldDocument, date, margin, index, proof]) {
       expect(decision.sourceUrl).toBe(ABOUT_SERIES_SOURCE.url);
       expect(decision.options.filter((option) => option.value === decision.correctValue)).toHaveLength(1);
       expect(decision.failureMessage.length).toBeLessThanOrEqual(32);
     }
-    expect(silentReadDecision("editorial-ledger")).toBeUndefined();
+    for (const decision of [margin, index, proof]) {
+      expect(decision.context).toMatch(/^Practice/);
+      expect(decision.options).toHaveLength(2);
+      expect(decision.question.length).toBeLessThan(48);
+    }
+    expect(silentReadDecision("public-crossref")).toBeUndefined();
     expect(silentReadDecision("not-a-file")).toBeUndefined();
     expect(silentReadDecision("toString")).toBeUndefined();
   });
@@ -75,7 +86,7 @@ describe("physical Silent Read review", () => {
       expect(silentReadObjective(item, "waiting")).toBe(`TAKE ${item.shortLabel}`);
       expect(silentReadObjective(item, "carried")).toMatch(/^TO /);
       expect(silentReadObjective(item, "verified")).toMatch(/^STAMP /);
-      expect(silentReadObjective(item, "routed")).toMatch(item.kind === "production" ? /^STAMP / : /^(CHECK |ADD VISIBLE BRACKET)/);
+      expect(silentReadObjective(item, "routed")).toMatch(/^(CHECK |ADD VISIBLE BRACKET)/);
       for (const status of ["waiting", "carried", "routed", "verified"] as const) {
         expect(silentReadObjective(item, status).length).toBeLessThanOrEqual(20);
       }
@@ -118,6 +129,23 @@ describe("physical Silent Read review", () => {
     for (const status of ["waiting", "carried", "routed", "verified"] as const) {
       expect(silentReadReviewStatusFromCode(silentReadReviewStatusCode(status))).toBe(status);
     }
+  });
+
+  it.each([-1, 0.5, 8, 99, NaN, Infinity])("rejects invalid or finished routing step %s", (step) => {
+    expect(routeSilentReadReviewItem(step, "typesetter-proof", "proof-table")).toMatchObject({ ok: false, item: null });
+  });
+
+  it.each([2, 3])("restores production status %i without inventing decision credit", (status) => {
+    resetGameState();
+    setSceneState("SilentReadScene", "explore", "Review the proof");
+    Object.assign(gameState.sceneProgress, { silentReadRoom: 1, silentReadReviewStep: 6, silentReadReviewStatus: status, "silentReadDecision_editorial-ledger": 1 });
+    const saved = createGameSaveData();
+    resetGameState();
+    expect(restoreGameSaveData(saved)).toBe("SilentReadScene");
+    expect(gameState.sceneProgress.silentReadReviewStatus).toBe(status);
+    expect(gameState.sceneProgress["silentReadDecision_editorial-ledger"]).toBe(1);
+    expect(gameState.sceneProgress["silentReadDecision_printer-copy"]).toBeUndefined();
+    resetGameState();
   });
 
   it("prefers explicit progress and clamps it to the physical sequence", () => {

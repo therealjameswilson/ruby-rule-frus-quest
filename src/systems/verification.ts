@@ -50,15 +50,15 @@ export class ChoicePrompt {
     return this.container.visible;
   }
 
-  show(title: string, options: ChoiceOption[], onChoose: ChoiceCallback) {
+  show(title: string, options: ChoiceOption[], onChoose: ChoiceCallback, contextFontSize: 6 | 8 = 6) {
     this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.options = options;
     this.onChoose = onChoose;
-    const layout = choiceLayout(title, options);
+    const layout = choiceLayout(title, options, contextFontSize);
     this.box.setPosition(128, layout.top + layout.height / 2).setSize(238, layout.height);
     this.border.setPosition(128, layout.top + layout.height / 2).setSize(238, layout.height);
     this.titleText.setFontSize(layout.fontSize).setPosition(20, layout.top + layout.questionY).setText(layout.questionText);
-    this.sourceText.setPosition(20, layout.top + layout.contextY).setText(layout.contextText);
+    this.sourceText.setFontSize(layout.contextFontSize).setPosition(20, layout.top + layout.contextY).setText(layout.contextText);
     for (const object of this.optionObjects) object.destroy();
     this.optionObjects.length = 0;
 

@@ -44,6 +44,14 @@ describe("SilentReadScene physical proofing flow", () => {
     expect(sceneSource).toContain("sceneProgress.typesetterProofComplete");
   });
 
+  it("captures visited proof rooms before scene reset clears the traversal state", () => {
+    const createSource = sceneSource.slice(sceneSource.indexOf("  create()"), sceneSource.indexOf("  private resetTransientState("));
+    expect(createSource.indexOf("const restoredVisitedRoomIds")).toBeLessThan(createSource.indexOf("this.resetTransientState()"));
+    expect(createSource).toContain('gameState.currentScene === "SilentReadScene"');
+    expect(createSource).toContain('roomId === "E1" || roomId === "S1"');
+    expect(createSource).toContain("this.visitedRoomIds = new Set(restoredVisitedRoomIds)");
+  });
+
   it("keeps DANN-E pressure as a toast without erasing the active route objective", () => {
     expect(sceneSource).toContain("DANN-E DEADLINE PRESSURE");
     expect(sceneSource).toContain("EGO BOLT - KEEP PROOFING");

@@ -55,7 +55,9 @@ interface ReviewInternals {
   updateProofMinimap: ReturnType<typeof vi.fn>;
   redrawCurrentRoom: ReturnType<typeof vi.fn>;
   updateDanneLurker: ReturnType<typeof vi.fn>;
-  physicalPromptTargets(): { strictTarget: unknown; hintTarget: unknown };
+  awardBuckramKeyAfterTypesetterProof: ReturnType<typeof vi.fn>;
+  reviewObjective(): string;
+  physicalPromptTargets(): { strictTarget: unknown; hintTarget: unknown; strictText: string };
   updateActionHint(flag: Flag, station: { id: SilentReadStationId; label: string }): void;
   handlePhysicalAction(): void;
   update(time: number, delta: number): void;
@@ -84,28 +86,68 @@ function fixture(step: number, status: SilentReadReviewStatus) {
   scene.updateProofMinimap = vi.fn();
   scene.redrawCurrentRoom = vi.fn();
   scene.updateDanneLurker = vi.fn();
+  scene.awardBuckramKeyAfterTypesetterProof = vi.fn();
   return { scene, flag };
 }
 
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
 
 describe("live editor and proof decisions", () => {
-  it.each([[0, "A", "B"], [4, "B", "A"]] as const)("keeps decision %i unresolved until corrected and separately stamped", (step, wrong, correct) => {
+  it.each([0, 2, 3, 4, 5, 6, 7])("opens the check on placing file %i without answering or stamping", (step) => {
+    const { scene, flag } = fixture(step, "carried");
+    scene.handlePhysicalAction();
+    expect(flag.status).toBe("routed");
+    expect(scene.reviewChoice.active).toBe(true);
+    expect(scene.applyFlagReward).not.toHaveBeenCalled();
+    expect(gameState.heldItem).toBeNull();
+    expect(gameState.sceneProgress.silentReadReviewStatus).toBe(2);
+    expect(gameState.sceneProgress[`silentReadDecision_${flag.id}`]).toBeUndefined();
+  });
+
+  it("keeps the non-decision cross-reference available for a separate check", () => {
+    const { scene, flag } = fixture(1, "carried");
+    scene.handlePhysicalAction();
+    expect(flag.status).toBe("routed");
+    expect(scene.reviewChoice.active).toBe(false);
+    expect(scene.applyFlagReward).not.toHaveBeenCalled();
+  });
+
+  it.each([[0, "A", "B"], [4, "B", "A"], [5, "A", "B"], [6, "B", "A"], [7, "A", "B"]] as const)("keeps decision %i unresolved until corrected and separately stamped", (step, wrong, correct) => {
     const { scene, flag } = fixture(step, "routed");
     scene.handlePhysicalAction();
     expect(scene.reviewChoice.active).toBe(true);
     scene.reviewChoice.choose(wrong);
     expect(flag.status).toBe("routed");
     expect(scene.applyFlagReward).not.toHaveBeenCalled();
+    expect(gameState.sceneProgress[`silentReadDecision_${flag.id}`]).toBeUndefined();
+    expect(scene.awardBuckramKeyAfterTypesetterProof).not.toHaveBeenCalled();
     scene.handlePhysicalAction();
     scene.reviewChoice.choose(correct);
     expect(flag.status).toBe("verified");
     expect(scene.applyFlagReward).not.toHaveBeenCalled();
+    expect(gameState.sceneProgress[`silentReadDecision_${flag.id}`]).toBe(1);
+    expect(scene.awardBuckramKeyAfterTypesetterProof).not.toHaveBeenCalled();
     scene.handlePhysicalAction();
     expect(flag.status).toBe("stamped");
     expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+    expect(scene.awardBuckramKeyAfterTypesetterProof).toHaveBeenCalledTimes(step === 7 ? 1 : 0);
     scene.reviewChoice.choose(correct);
     expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+  });
+
+  it.each([5, 6, 7])("shows VERIFY rather than STAMP for unreviewed production file %i", (step) => {
+    const { scene, flag } = fixture(step, "routed");
+    expect(scene.physicalPromptTargets().strictText).toBe(`VERIFY ${flag.shortLabel}`);
+    scene.updateActionHint(flag, { id: flag.destination, label: "Test desk" });
+    expect(gameState.nearestInteractable).toBe(`VERIFY ${flag.shortLabel}`);
+  });
+
+  it("names the immediate exit when backtracking after completing the proof", () => {
+    const { scene } = fixture(7, "stamped");
+    scene.currentRoomId = "E1";
+    expect(scene.reviewObjective()).toBe("EXIT EAST - PROOF");
+    scene.currentRoomId = "S1";
+    expect(scene.reviewObjective()).toBe("EXIT EAST - VAULT");
   });
 
   it("hands off the next file at the desk and saves its carried status", () => {
