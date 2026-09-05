@@ -38,6 +38,7 @@ import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { saveGameNow } from "../systems/save";
 import { takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { ChoicePrompt } from "../systems/verification";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -57,6 +58,8 @@ import {
 import type { NetworkRoutePacket, NetworkRoutePacketId, RoutingNetwork } from "../game/networkRouting";
 import {
   classNetBatchDocketAfterRoute,
+  CLASSNET_WITHHOLDING_REVIEW,
+  CLASSNET_VAULT_STATION_LABELS,
   CLASSNET_VAULT_CHECK_TOTAL,
   CLASSNET_VAULT_DOCKETS,
   classNetVaultObjective,
@@ -137,6 +140,7 @@ export class NetworkScene extends Phaser.Scene {
   private routeText!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
   private toast!: FeedbackToast;
+  private ledgerChoice!: ChoicePrompt;
   private currentRoute = 0;
   private correctRoutes = 0;
   private routingComplete = false;
@@ -209,9 +213,10 @@ export class NetworkScene extends Phaser.Scene {
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.toast = new FeedbackToast(this);
+    this.ledgerChoice = new ChoicePrompt(this);
     this.danneLurker = new DanneLurker(this, 46, 66, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
-        || this.inventory.active || this.reliability.active,
+        || this.ledgerChoice.active || this.inventory.active || this.reliability.active,
       waypoints: [
         { x: 38, y: 82 },
         { x: 218, y: 82 },
@@ -275,6 +280,13 @@ export class NetworkScene extends Phaser.Scene {
     const input = getInput();
     this.toast.update(delta, this.player.position);
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.ledgerChoice.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.player.update(delta, false);
+      this.ledgerChoice.updateInput();
+      return;
+    }
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
       retroAudio.toggle();
@@ -1135,9 +1147,7 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private classNetStationShortLabel(station: ClassNetVaultStationId) {
-    if (station === "human_desk") return "HUMAN DESK";
-    if (station === "release_board") return "E.O. BOARD";
-    return "DECISION LOG";
+    return CLASSNET_VAULT_STATION_LABELS[station];
   }
 
   private syncClassNetVaultEntities() {
@@ -1297,10 +1307,26 @@ export class NetworkScene extends Phaser.Scene {
     this.createVaultDocketHeldIcon(docket.id);
   }
 
-  private routeVaultDocket(station: ClassNetVaultStationId) {
+  private routeVaultDocket(station: ClassNetVaultStationId, decision?: string) {
     const docket = this.vaultCarriedDocket();
     if (!docket) return;
-    const result = routeClassNetVaultDocket(this.classNetReviewStep, docket.id, station);
+    const result = routeClassNetVaultDocket(this.classNetReviewStep, docket.id, station, decision);
+
+    if (result.status === "review-required") {
+      this.interactionPrompt.update(0, null);
+      const review = CLASSNET_WITHHOLDING_REVIEW;
+      saveGameNow();
+      this.ledgerChoice.show(`${review.question}\n\n${review.evidence}`, [...review.options], (option) => {
+        this.routeVaultDocket(station, option.value);
+      }, 8);
+      return;
+    }
+    if (result.status === "revision-required") {
+      this.toast.show("KEEP A WITHHOLDING ENTRY", this.player.position, "warn");
+      setLatestMessage(result.message);
+      saveGameNow();
+      return;
+    }
 
     if (!result.ok) {
       adjustReliability(-2, `${result.docket.label} returned from the wrong ClassNet station`);
@@ -1470,7 +1496,7 @@ export class NetworkScene extends Phaser.Scene {
     setHeldItem(null);
     addProcessItem("clearance_token");
     this.drawRoomDoors();
-    setLatestMessage("Clearance Token earned after nine human-review checks were physically filed.");
+    setLatestMessage("Clearance Token earned: review records filed and withholding visibly accounted for.");
     setObjective(this.classNetVaultObjective());
     this.routeText.setVisible(false);
     this.clearanceTokenIcon?.setTint(color(PALETTE.goldStamp)).setAlpha(0.4);

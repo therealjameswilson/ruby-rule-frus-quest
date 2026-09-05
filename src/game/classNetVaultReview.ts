@@ -1,6 +1,8 @@
 import { CLEARANCE_PROCEDURE_PROMPTS } from "./clearanceProcedure";
 import { DECLASSIFICATION_REVIEW_PROMPTS } from "./declassificationReview";
 import { EO13526_REVIEW_PROMPTS } from "./eo13526Review";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
+import type { ChoiceOption } from "./types";
 
 export type ClassNetVaultStationId = "human_desk" | "release_board" | "decision_ledger";
 
@@ -8,6 +10,24 @@ export type ClassNetVaultDocketId =
   | "clearance_lane"
   | "release_standard"
   | "decision_trail";
+
+export const CLASSNET_VAULT_STATION_LABELS: Record<ClassNetVaultStationId, string> = {
+  human_desk: "HUMAN",
+  release_board: "RELEASE",
+  decision_ledger: "LEDGER"
+};
+
+export const CLASSNET_WITHHOLDING_REVIEW = {
+  question: "A memo is withheld in full. What goes in its dated place?",
+  evidence: "TRAINING MEMO: reviewer withheld all 3 pages.",
+  options: [
+    { key: "A", label: "Heading, source note, page count", value: "account_withholding" },
+    { key: "B", label: "Nothing; leave the memo out", value: "omit_entry" }
+  ] satisfies readonly ChoiceOption[],
+  correctValue: "account_withholding",
+  failureMessage: "Withheld text stays closed, but its heading, source note and page count stay in chronological place.",
+  sourceUrl: ABOUT_SERIES_SOURCE.url
+} as const;
 
 export interface ClassNetVaultDocket {
   id: ClassNetVaultDocketId;
@@ -23,6 +43,7 @@ export interface ClassNetVaultDocket {
 
 export interface ClassNetVaultRouteResult {
   ok: boolean;
+  status: "filed" | "wrong-route" | "review-required" | "revision-required";
   docket: ClassNetVaultDocket;
   station: ClassNetVaultStationId;
   nextStep: number;
@@ -47,8 +68,8 @@ export const CLASSNET_VAULT_DOCKETS = [
     station: "human_desk",
     stationLabel: "Human Review Desk",
     checkIds: CLEARANCE_PROCEDURE_PROMPTS.map((prompt) => prompt.id),
-    contentsLabel: "Separate function / era lane / agency referral",
-    successMessage: "Clearance lane filed with accountable human review."
+    contentsLabel: "Recorded reviewer lane and agency referral trail",
+    successMessage: "Recorded human review lane filed; agency referrals remain documented."
   },
   {
     id: "release_standard",
@@ -58,8 +79,8 @@ export const CLASSNET_VAULT_DOCKETS = [
     station: "release_board",
     stationLabel: "Release Standard Board",
     checkIds: EO13526_REVIEW_PROMPTS.map((prompt) => prompt.id),
-    contentsLabel: "Release standard / concurrence / visible accounting",
-    successMessage: "E.O. 13526 release standard filed with visible accounting."
+    contentsLabel: "Recorded release terms and reviewer excision counts",
+    successMessage: "Recorded release terms filed; accounting is checked at the ledger."
   },
   {
     id: "decision_trail",
@@ -69,8 +90,8 @@ export const CLASSNET_VAULT_DOCKETS = [
     station: "decision_ledger",
     stationLabel: "Decision Ledger",
     checkIds: DECLASSIFICATION_REVIEW_PROMPTS.map((prompt) => prompt.id),
-    contentsLabel: "Human equity / ClassNet channel / documented decision",
-    successMessage: "Classified equity decision trail filed for human review."
+    contentsLabel: "Training memo: reviewer withheld 3 pages in full",
+    successMessage: "Withheld memo accounted for in its chronological place."
   }
 ] as const satisfies readonly ClassNetVaultDocket[];
 
@@ -124,20 +145,32 @@ export function deriveClassNetVaultStep(progress: ClassNetVaultLegacyProgress) {
 export function routeClassNetVaultDocket(
   step: number,
   docketId: ClassNetVaultDocketId,
-  station: ClassNetVaultStationId
+  station: ClassNetVaultStationId,
+  decision?: string
 ): ClassNetVaultRouteResult {
   const expected = getClassNetVaultDocket(step);
   const docket = CLASSNET_VAULT_DOCKETS.find((candidate) => candidate.id === docketId) ?? expected;
-  const ok = docket.id === expected.id && station === docket.station;
+  const routeMatches = step < CLASSNET_VAULT_DOCKETS.length
+    && docket.id === expected.id && station === docket.station;
+  const needsReview = docket.id === "decision_trail";
+  const status: ClassNetVaultRouteResult["status"] = !routeMatches ? "wrong-route"
+    : !needsReview ? "filed"
+    : decision === undefined ? "review-required"
+    : decision === CLASSNET_WITHHOLDING_REVIEW.correctValue ? "filed" : "revision-required";
+  const ok = status === "filed";
   const nextStep = ok ? step + 1 : step;
   return {
     ok,
+    status,
     docket,
     station,
     nextStep,
     complete: ok && nextStep >= CLASSNET_VAULT_DOCKETS.length,
     message: ok
       ? docket.successMessage
+      : status === "review-required" ? CLASSNET_WITHHOLDING_REVIEW.question
+      : status === "revision-required" ? CLASSNET_WITHHOLDING_REVIEW.failureMessage
+      : step >= CLASSNET_VAULT_DOCKETS.length ? "All review dockets are already filed."
       : docket.id !== expected.id
         ? `${expected.label} is the next docket in the vault queue.`
         : `${docket.label} belongs at the ${docket.stationLabel}. Docket remains in hand.`

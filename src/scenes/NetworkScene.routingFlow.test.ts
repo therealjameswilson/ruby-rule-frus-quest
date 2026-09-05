@@ -73,13 +73,33 @@ describe("NetworkScene physical routing flow", () => {
     expect(routePacket).toContain("NEXT:");
   });
 
-  it("files ClassNet review dockets in the room instead of reopening clearance quizzes", () => {
+  it("keeps batch filing but requires one concrete accounting decision at the ledger", () => {
     expect(networkSceneSource).toContain("handleClassNetVaultAction");
     expect(networkSceneSource).toContain("routeClassNetVaultDocket");
-    expect(networkSceneSource).not.toContain("ChoicePrompt");
+    expect(networkSceneSource).toContain("ledgerChoice = new ChoicePrompt(this)");
+    const route = methodSource("routeVaultDocket", "awardClassNetDocketPoints");
+    expect(route).toContain('result.status === "review-required"');
+    expect(route).toContain("CLASSNET_WITHHOLDING_REVIEW");
+    expect(route).toContain("this.routeVaultDocket(station, option.value)");
+    expect(route.indexOf('result.status === "review-required"')).toBeLessThan(route.indexOf("this.classNetReviewStep = result.nextStep"));
     expect(networkSceneSource).not.toContain("showClearanceProcedureChoice");
     expect(networkSceneSource).not.toContain("showEo13526ReviewChoice");
     expect(networkSceneSource).not.toContain("showDeclassificationReviewChoice");
+  });
+
+  it("freezes DANN-E and the player while reading and consumes the answer before combat", () => {
+    const update = networkSceneSource.slice(networkSceneSource.indexOf("  update("));
+    const choice = update.slice(update.indexOf("if (this.ledgerChoice.active)"), update.indexOf("if (input.menuJustPressed)"));
+    expect(choice).toContain("this.updateDanneLurker(delta, false)");
+    expect(choice).toContain("this.player.update(delta, false)");
+    expect(choice).toContain("this.ledgerChoice.updateInput()");
+    expect(choice).toContain("return;");
+    const route = methodSource("routeVaultDocket", "awardClassNetDocketPoints");
+    const rejected = route.slice(route.indexOf('result.status === "revision-required"'), route.indexOf("if (!result.ok)"));
+    expect(rejected).not.toContain("adjustReliability");
+    expect(rejected).not.toContain("addDocumentPoints");
+    expect(rejected).toContain("saveGameNow()");
+    expect(rejected).toContain("return;");
   });
 
   it("persists carried docket and completed review state", () => {
