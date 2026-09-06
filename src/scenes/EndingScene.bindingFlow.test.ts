@@ -1,11 +1,25 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { FRUS_ROOM_GRAPH } from "../game/constants";
 
 const sceneSource = readFileSync(new URL("./EndingScene.ts", import.meta.url), "utf8");
 const bindingSource = readFileSync(new URL("../game/buckramBinding.ts", import.meta.url), "utf8");
 const uiSource = readFileSync(new URL("./UIScene.ts", import.meta.url), "utf8");
 
 describe("EndingScene physical Buckram Gate", () => {
+  it("offers a reversible return passage without changing certification or duplicating rewards", () => {
+    expect(FRUS_ROOM_GRAPH.find(room => room.id === "G1")?.exits).toEqual({ west: "DV1" });
+    const leave = sceneSource.slice(sceneSource.indexOf("  private leaveBindery()"), sceneSource.indexOf("  private startPhysicalBindingLoop()"));
+    expect(leave).toContain("this.published || this.leaving");
+    expect(leave).toContain("this.savePhysicalBindingProgress()");
+    expect(leave).toContain('transitionTo(this, "BlackVaultLairScene")');
+    expect(leave).not.toContain("applyBindingPacketReward");
+    expect(leave).not.toContain("resolveStandardsViolation");
+    expect(leave).not.toContain("publishVolume");
+    expect(sceneSource).toContain('exits: this.published ? {} : { west: "DV1" }');
+    expect(sceneSource).toContain('if (this.nearBinderyReturn()) return "RETURN TO VAULT"');
+  });
+
   it("restores publication without recertifying or awarding completion twice", () => {
     const create = sceneSource.slice(sceneSource.indexOf("  create() {"), sceneSource.indexOf("  private resetTransientState()"));
     expect(create).toContain('this.published = gameState.finalGateCertification?.status === "published"');

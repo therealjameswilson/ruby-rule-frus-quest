@@ -79,6 +79,7 @@ function color(hex: string) {
 const GATE_PLAY_BOUNDS = { left: 16, right: 240, top: 48, bottom: 220 };
 const BINDERY_INBOX = { x: 128, y: 190, radius: 28 };
 const BINDING_PRESS = { x: 128, y: 148, radius: 28 };
+const BINDERY_RETURN = { x: 16, y: 205, radius: 18 };
 const FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE: keyof typeof FRUS_VOLUMES = "reward_legendary";
 type BuckramBlockerIcon = "stamp" | "cover" | "equity" | "map" | "apparatus" | "bracket" | "standards" | "reliability" | "key" | "ready";
 interface BuckramBlockerCue {
@@ -141,6 +142,7 @@ export class EndingScene extends Phaser.Scene {
   private publicationTableRouteCueKey = "";
   private canRestart = false;
   private published = false;
+  private leaving = false;
   private publicationSummary?: PublicationSummary;
 
   constructor() {
@@ -212,6 +214,7 @@ export class EndingScene extends Phaser.Scene {
     this.publicationTableRouteCueKey = "";
     this.canRestart = false;
     this.published = false;
+    this.leaving = false;
     this.publicationSummary = undefined;
     this.assemblingVolume = undefined;
   }
@@ -219,6 +222,7 @@ export class EndingScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (this.leaving) { this.player.update(delta, false); return; }
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.standardsBoard.active) {
       this.toast.hide();
@@ -325,7 +329,14 @@ export class EndingScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.terminalCyan
     }).setOrigin(0.5).setDepth(146);
-
+    if (!this.published) {
+      this.add.rectangle(BINDERY_RETURN.x, BINDERY_RETURN.y, 20, 24, color(PALETTE.black))
+        .setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(150);
+      for (let step = 0; step < 3; step++) {
+        this.add.rectangle(10 + step * 5, BINDERY_RETURN.y, 2, 16, color(PALETTE.stoneGray)).setDepth(151);
+      }
+      this.add.text(30, 204, "< VAULT", { fontFamily: "monospace", fontSize: "8px", color: PALETTE.terminalCyan }).setDepth(152);
+    }
   }
 
   private drawBindingStation(station: BindingStation) {
@@ -351,6 +362,14 @@ export class EndingScene extends Phaser.Scene {
     const readiness = getFinalGateReadiness();
     const ready = !activePacket && readiness.ready && hasProcessItem("buckram_key");
     this.updateBindingRoomVisuals();
+
+    if (this.nearBinderyReturn()) {
+      setFinalGateCertificationState({ status: "locked", nearestGate: false, checklistComplete: ready,
+        certifiedBy: null, requiredItem: "Buckram Key", message: "Return passage open. Filed packets stay at the bindery." });
+      setNearestInteractable("RETURN TO VAULT");
+      setObjective("RETURN TO VAULT");
+      return;
+    }
 
     if (activePacket) {
       const station = this.bindingStation(activePacket.station);
@@ -495,6 +514,7 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private publicationTableActionLabel() {
+    if (this.nearBinderyReturn()) return "RETURN TO VAULT";
     const activePacket = this.getActiveBindingPacket();
     if (activePacket) {
       if (activePacket.status === "waiting") return `CARRY ${activePacket.shortLabel}`;
@@ -507,6 +527,7 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private bindingCuePosition() {
+    if (this.nearBinderyReturn()) return BINDERY_RETURN;
     const activePacket = this.getActiveBindingPacket();
     if (!activePacket) return BINDING_PRESS;
     if (activePacket.status === "waiting") return BINDERY_INBOX;
@@ -589,6 +610,7 @@ export class EndingScene extends Phaser.Scene {
   }
 
   private handleGateAction() {
+    if (this.nearBinderyReturn()) { this.leaveBindery(); return; }
     const activePacket = this.getActiveBindingPacket();
     if (activePacket) {
       this.handleBindingPacketAction(activePacket);
@@ -609,6 +631,22 @@ export class EndingScene extends Phaser.Scene {
       return;
     }
     this.publishVolume();
+  }
+
+  private nearBinderyReturn() {
+    return !this.published && this.isNear(BINDERY_RETURN.x, BINDERY_RETURN.y, BINDERY_RETURN.radius);
+  }
+
+  private leaveBindery() {
+    if (this.published || this.leaving) return;
+    this.leaving = true;
+    this.savePhysicalBindingProgress();
+    this.toast.hide();
+    this.interactionPrompt.update(0, null);
+    this.clearPublicationTableRouteCue();
+    setHeldItem(null);
+    setLatestMessage("Filed packets remain here. The cleared vault leads back to proofing.");
+    transitionTo(this, "BlackVaultLairScene");
   }
 
   private startPhysicalBindingLoop() {
@@ -1023,7 +1061,7 @@ export class EndingScene extends Phaser.Scene {
       roomType: "boss",
       visitedRoomIds: ["G1"],
       revealedRoomIds: ["G1"],
-      exits: {},
+      exits: this.published ? {} : { west: "DV1" },
       lockedExits: bindingComplete && readiness.ready && hasProcessItem("buckram_key")
         ? {}
         : { north: bindingComplete ? "Publication gate checklist" : "Seal all five binding packets" },
@@ -1037,6 +1075,7 @@ export class EndingScene extends Phaser.Scene {
       "Buckram Gate",
       "Bindery inbox",
       "Human binding press",
+      ...(!published ? ["Return passage to cleared Black Vault"] : []),
       "Buckram Key",
       "FRUS cover prize",
       "SNES published FRUS prize cover",

@@ -613,7 +613,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "buckram_gate",
     title: "Buckram Gate",
     grid: { x: 4, y: 3 },
-    exits: {},
+    exits: { west: "DV1" },
     lockedExits: { north: "Publication gate" },
     requiredItems: { north: "buckram_key" },
     roomType: "boss"
