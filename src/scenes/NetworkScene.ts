@@ -23,9 +23,8 @@ import {
   setVisibleThreats
 } from "../game/state";
 import type { Interactable } from "../game/types";
-import { getInput, tickInput, type InputState } from "../input/InputState";
+import { getInput, getSecondaryActionBadge, tickInput, type InputState } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
-import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
@@ -80,6 +79,10 @@ import {
   networkN1CollisionRect
 } from "../game/networkN1Tilemap";
 import { packedTileGid } from "../game/packedTileIndex";
+import {
+  NETWORK_CROSSING, NETWORK_DIVIDERS, networkCrossingState, networkCrossingWaypoint,
+  safeNetworkCrossingSpawn, tryOpenNetworkCrossing
+} from "../game/networkCrossing";
 import {
   NETWORK_N2_TILEMAP,
   buildNetworkN2TileLayers,
@@ -167,7 +170,10 @@ export class NetworkScene extends Phaser.Scene {
   private clearanceTokenIcon?: Phaser.GameObjects.Image;
   private clearanceTokenRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private clearanceTokenRouteCueKey = "";
-  private bureaucraticWalls: BureaucraticWall[] = [];
+  private crossingGate?: Phaser.GameObjects.Container;
+  private crossingLamp?: Phaser.GameObjects.Rectangle;
+  private crossingSolid?: Phaser.Geom.Rectangle;
+  private crossingSwing = -1;
   private danneLurker!: DanneLurker;
 
   constructor() {
@@ -215,13 +221,13 @@ export class NetworkScene extends Phaser.Scene {
     this.toast = new FeedbackToast(this);
     this.ledgerChoice = new ChoicePrompt(this);
     this.danneLurker = new DanneLurker(this, 46, 66, {
+      boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
         || this.ledgerChoice.active || this.inventory.active || this.reliability.active,
       waypoints: [
-        { x: 38, y: 82 },
-        { x: 218, y: 82 },
-        { x: 218, y: 202 },
-        { x: 38, y: 202 }
+        { x: 46, y: 66 }, { x: 84, y: 66 }, { x: 84, y: 198 },
+        { x: 212, y: 198 }, { x: 212, y: 66 }, { x: 168, y: 66 },
+        { x: 168, y: 198 }, { x: 46, y: 198 }
       ]
     });
     this.restoreNetworkProgress();
@@ -246,6 +252,7 @@ export class NetworkScene extends Phaser.Scene {
     this.correctRoutes = this.routingComplete
       ? NETWORK_ROUTE_ITEM_TOTAL
       : routedItemCount(this.currentRoute);
+    if (this.routingComplete) gameState.sceneProgress.networkRoutingComplete = 1;
     this.clearanceTokenCollected = hasProcessItem("clearance_token");
     this.classNetReviewStep = this.clearanceTokenCollected
       ? CLASSNET_VAULT_DOCKETS.length
@@ -324,7 +331,7 @@ export class NetworkScene extends Phaser.Scene {
       const swing = tryEquippedToolSwing(this.player);
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
     }
-    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player.position));
+    this.updateStampCrossing();
     this.updateDanneLurker(delta);
     this.syncThreatState();
     if (this.currentRoomId === "N1") {
@@ -360,7 +367,9 @@ export class NetworkScene extends Phaser.Scene {
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
-      this.player.setPosition(spawn.x, spawn.y);
+      const safeSpawn = roomId === "N1"
+        ? safeNetworkCrossingSpawn(spawn, networkCrossingState(gameState.sceneProgress) === "open") : spawn;
+      this.player.setPosition(safeSpawn.x, safeSpawn.y);
       this.danneLurker.enterRoom(this.time.now);
       this.syncRoomTraversalState();
       this.exitCooldownUntil = this.time.now + 280;
@@ -392,12 +401,14 @@ export class NetworkScene extends Phaser.Scene {
     for (const object of this.roomObjects) {
       if (object.active) object.destroy();
     }
-    for (const wall of this.bureaucraticWalls) wall.destroy();
     this.roomCleanups = [];
     this.roomObjects = [];
     this.roomGateObjects = [];
     this.roomSolids = [];
-    this.bureaucraticWalls = [];
+    this.crossingGate = undefined;
+    this.crossingLamp = undefined;
+    this.crossingSolid = undefined;
+    this.crossingSwing = -1;
     this.clearanceTokenIcon = undefined;
     this.vaultDocketWorldIcon = undefined;
     if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
@@ -428,7 +439,7 @@ export class NetworkScene extends Phaser.Scene {
       this.drawNetworkTileField(room.id);
     }
     this.drawRoomDoors();
-    if (room.id === "N1") this.renderNetworkSplit();
+    if (room.id === "N1") this.renderNetworkSplit(packedTilemapRendered);
     else this.renderClassNetVault(packedTilemapRendered);
     this.syncRoomTraversalState();
     this.syncThreatState();
@@ -631,8 +642,6 @@ export class NetworkScene extends Phaser.Scene {
     if (roomId === "N1") {
       this.drawNetworkTileFrame("terminal_pad", 56, 124, 92, "opennet-terminal-pad");
       this.drawNetworkTileFrame("class_terminal", 200, 124, 92, "classnet-terminal-pad");
-      this.drawNetworkTileFrame("firewall_gate", 104, 152, 66, "firewall-left");
-      this.drawNetworkTileFrame("firewall_gate", 152, 152, 66, "firewall-right");
       return;
     }
 
@@ -714,7 +723,8 @@ export class NetworkScene extends Phaser.Scene {
     }
   }
 
-  private renderNetworkSplit() {
+  private renderNetworkSplit(packedTilemapRendered: boolean) {
+    this.drawStampCrossing(packedTilemapRendered);
     this.syncNetworkSplitEntities();
     this.track(addTinySparkle(this, 60, 108, PALETTE.openNetGreen));
     this.track(addTinySparkle(this, 196, 108, PALETTE.classNetRed));
@@ -725,10 +735,6 @@ export class NetworkScene extends Phaser.Scene {
     this.track(new Terminal(this, 196, 124, "ClassNet").container);
     this.drawRoutingSorter();
     if (!this.routingComplete) {
-      this.bureaucraticWalls = [
-        new BureaucraticWall(this, "firewall-open", "FIREWALL", 96, 152, { behavior: "block", accent: PALETTE.classNetRed }),
-        new BureaucraticWall(this, "firewall-class", "FORM 32", 160, 152, { behavior: "block", accent: PALETTE.classNetRed })
-      ];
       this.updateRoutingRouteText();
     } else {
       this.routeText.setVisible(false);
@@ -744,9 +750,79 @@ export class NetworkScene extends Phaser.Scene {
       "OpenNet terminal",
       "ClassNet terminal",
       "Routing sorter",
-      ...(!this.routingComplete ? ["Stone Wall: FIREWALL"] : []),
+      `Service crossing: ${networkCrossingState(gameState.sceneProgress)}`,
       ...(packet ? [`Routing packet ${packet.order}/4: ${packet.label} (${carried ? "carried" : "at sorter"})`] : [])
     ]);
+  }
+
+  private drawStampCrossing(packedTilemapRendered: boolean) {
+    if (!packedTilemapRendered) {
+      for (const rect of NETWORK_DIVIDERS) {
+        this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+        this.track(this.add.rectangle(rect.x, rect.y, rect.width, rect.height, color(PALETTE.stoneDark))
+          .setOrigin(0).setStrokeStyle(2, color(PALETTE.stoneGray)).setDepth(44));
+      }
+    }
+    if (networkCrossingState(gameState.sceneProgress) === "open") return;
+    const rect = NETWORK_CROSSING;
+    this.crossingSolid = new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height);
+    this.roomSolids.push(this.crossingSolid);
+    const gate = this.track(this.add.container(128, 120).setDepth(144).setName("network-stamp-crossing"));
+    this.crossingGate = gate;
+    gate.add(this.add.rectangle(0, 0, 30, 48, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.stoneLight)));
+    for (const y of [-18, -12, 12, 18]) {
+      gate.add(this.add.rectangle(0, y, 24, 2, color(PALETTE.stoneGray)));
+    }
+    gate.add(this.add.rectangle(0, 0, 20, 20, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)));
+    if (this.textures.exists("citation-stamp")) {
+      gate.add(this.add.image(0, 0, "citation-stamp").setDisplaySize(16, 16));
+    } else {
+      gate.add(this.add.rectangle(0, -3, 4, 8, color(PALETTE.goldStamp)));
+      gate.add(this.add.rectangle(0, 3, 12, 4, color(PALETTE.goldStamp)));
+    }
+    this.crossingLamp = this.add.rectangle(0, -22, 10, 3, color(PALETTE.stoneGray));
+    gate.add(this.crossingLamp);
+  }
+
+  private atStampCrossing() {
+    const { x, y } = this.player.position;
+    return this.currentRoomId === "N1" && networkCrossingState(gameState.sceneProgress) !== "open"
+      && x >= 92 && x <= 164 && y >= 104 && y <= 140;
+  }
+
+  private updateStampCrossing() {
+    if (this.currentRoomId !== "N1" || !this.crossingSolid) return;
+    const ready = networkCrossingState(gameState.sceneProgress) === "ready";
+    this.crossingLamp?.setFillStyle(color(ready ? PALETTE.goldStamp : PALETTE.stoneGray));
+    const combat = this.player.combatReadout;
+    if (!combat.actionActive || !combat.weapon.active || combat.weapon.phase !== "active"
+      || !combat.hitbox || combat.weapon.swingId === this.crossingSwing) return;
+    const hitbox = new Phaser.Geom.Rectangle(combat.hitbox.x, combat.hitbox.y, combat.hitbox.width, combat.hitbox.height);
+    if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, this.crossingSolid)) return;
+    this.crossingSwing = combat.weapon.swingId;
+    const result = tryOpenNetworkCrossing(gameState.sceneProgress, combat.weapon.tool, hasProcessItem(combat.weapon.tool));
+    setLatestMessage(result.message);
+    if (!result.opened) {
+      this.toast.show(ready ? "USE THE CITATION STAMP" : "FILE PUBLIC PACKET FIRST", this.player.position, "info");
+      retroAudio.blip();
+      return;
+    }
+    gameState.sceneProgress.networkStampCrossingOpen = 1;
+    this.removeCrossingSeal();
+    this.toast.show("SERVICE CROSSING OPEN", this.player.position, "info");
+    this.track(addTinySparkle(this, 128, 120, PALETTE.goldStamp));
+    retroAudio.stamp();
+    this.clearRoutingRouteCue();
+    this.syncNetworkSplitEntities();
+    saveGameNow();
+  }
+
+  private removeCrossingSeal() {
+    if (this.crossingSolid) this.roomSolids = this.roomSolids.filter(rect => rect !== this.crossingSolid);
+    this.crossingSolid = undefined;
+    this.crossingGate?.destroy();
+    this.crossingGate = undefined;
+    this.crossingLamp = undefined;
   }
 
   private drawRoutingSorter() {
@@ -880,6 +956,14 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private updateRoutingPacketPrompt(delta: number) {
+    if (this.atStampCrossing()) {
+      this.interactionPrompt.update(delta, this.toast.visible ? null : {
+        id: "network-stamp-crossing", label: "Service crossing", x: 128, y: 124,
+        kind: "door", onInteract: () => undefined
+      }, undefined, { badge: getSecondaryActionBadge(), text: "STAMP SEAL" });
+      setNearestInteractable("Service crossing");
+      return;
+    }
     const target = this.routingActionHint();
     const strictTarget = target && Phaser.Math.Distance.Between(
       this.player.position.x,
@@ -900,6 +984,12 @@ export class NetworkScene extends Phaser.Scene {
 
   private handleRoutingPacketAction(input: Readonly<InputState>) {
     if (this.currentRoomId !== "N1" || this.routingComplete || !input.aJustPressed) return false;
+    if (this.atStampCrossing()) {
+      const result = tryOpenNetworkCrossing(gameState.sceneProgress, null, false);
+      setLatestMessage(result.message);
+      this.toast.show(networkCrossingState(gameState.sceneProgress) === "sealed" ? "FILE PUBLIC PACKET FIRST" : `${getSecondaryActionBadge()}: STAMP THE SEAL`, this.player.position, "info");
+      return true;
+    }
     const target = this.routingActionHint();
     if (!target || Phaser.Math.Distance.Between(
       this.player.position.x,
@@ -981,8 +1071,10 @@ export class NetworkScene extends Phaser.Scene {
     const nextPacket = networkBatchPacketAfterRoute(result);
     if (!nextPacket) return;
     this.carryRoutingPacket(nextPacket);
-    this.toast.show(`NEXT: ${nextPacket.shortLabel} > ${nextPacket.network.toUpperCase()}`, this.player.position, "info");
-    setLatestMessage(`${result.message} Next: ${nextPacket.label} goes to ${nextPacket.network}.`);
+    this.toast.show(this.currentRoute === 1 ? "STAMP OPENS CROSSING"
+      : `NEXT: ${nextPacket.shortLabel} > ${nextPacket.network.toUpperCase()}`, this.player.position, "info");
+    setLatestMessage(`${result.message} Next: ${nextPacket.label} goes to ${nextPacket.network}.`
+      + (this.currentRoute === 1 ? " Your Citation Stamp can now open the service crossing." : ""));
     setObjective(networkRoutingObjective(this.currentRoute, true));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
@@ -1002,11 +1094,12 @@ export class NetworkScene extends Phaser.Scene {
     }
     const packet = getNetworkRoutePacket(this.currentRoute);
     const carried = this.routingCarriedPacket();
-    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 14) };
-    const end = carried
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
+    const destination = carried
       ? { x: packet.network === "OpenNet" ? 60 : 196, y: 124 }
-      : { x: 128, y: 178 };
-    const targetDistance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
+      : { x: 128, y: 196 };
+    const end = networkCrossingWaypoint(start, destination, networkCrossingState(gameState.sceneProgress) === "open");
+    const targetDistance = Phaser.Math.Distance.Between(start.x, start.y, destination.x, destination.y);
     if (targetDistance <= (carried ? 38 : 36)) {
       this.clearRoutingRouteCue();
       return;
@@ -1041,10 +1134,8 @@ export class NetworkScene extends Phaser.Scene {
       : network === "ClassNet"
         ? PALETTE.classNetRed
         : PALETTE.goldStamp;
-    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y, network ? 38 : 42, network ? 28 : 24, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(accent), 0.96)
-      .setName("network-routing-target")
-      .setDepth(236));
+    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y, 6, 6, color(accent), 0.8)
+      .setName("network-routing-target").setDepth(46));
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
     const steps = Math.max(1, Math.min(4, Math.floor(distance / 22)));
     for (let index = 1; index <= steps; index += 1) {
@@ -1056,7 +1147,7 @@ export class NetworkScene extends Phaser.Scene {
         3,
         color(index % 2 === 0 ? PALETTE.creamPaper : accent),
         0.9
-      ).setAngle(45).setName("network-routing-dot").setDepth(237));
+      ).setName("network-routing-dot").setDepth(46));
     }
   }
 
@@ -1658,17 +1749,6 @@ export class NetworkScene extends Phaser.Scene {
   private syncThreatState() {
     setVisibleThreats(
       [
-        ...this.bureaucraticWalls
-        .filter((wall) => !wall.isCleared)
-        .map((wall) => ({
-          label: `Stone Wall: ${wall.label}`,
-          x: wall.position.x,
-          y: wall.position.y,
-          spriteKey: wall.spriteKey,
-          behavior: "blocks terminal door",
-          defeatMethod: "Use correct OpenNet/ClassNet routing",
-          status: this.routingComplete ? "cleared" : "active"
-        })),
         this.danneLurker.readout(this.time.now)
       ]
     );
@@ -1714,7 +1794,7 @@ export class NetworkScene extends Phaser.Scene {
     addDocumentPoints(14, "OpenNet/ClassNet routes cleared");
     setLatestMessage("FIREWALL cleared: ClassNet Vault door open.");
     setObjective(networkRoutingObjective(NETWORK_ROUTE_PACKETS.length, false));
-    this.bureaucraticWalls.forEach((wall) => wall.clear());
+    this.removeCrossingSeal();
     this.drawRoomDoors();
     this.syncThreatState();
     this.syncRoomTraversalState();

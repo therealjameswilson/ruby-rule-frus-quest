@@ -82,7 +82,8 @@ vi.mock("./Enemy", () => ({
   }
 }));
 
-function createEncounter(encounterMode?: "combat" | "foreshadow", speechBlocked?: () => boolean) {
+function createEncounter(encounterMode?: "combat" | "foreshadow", speechBlocked?: () => boolean,
+  boltBlocked?: (x: number, y: number) => boolean) {
   const sprites: InstanceType<typeof Visual>[] = [];
   const panels: InstanceType<typeof Visual>[] = [];
   const scene = {
@@ -101,7 +102,7 @@ function createEncounter(encounterMode?: "combat" | "foreshadow", speechBlocked?
     tweens: { add: vi.fn() },
     anims: { exists: () => false }
   };
-  const lurker = new DanneLurker(scene as unknown as Phaser.Scene, 50, 50, { waypoints: [], encounterMode, speechBlocked });
+  const lurker = new DanneLurker(scene as unknown as Phaser.Scene, 50, 50, { waypoints: [], encounterMode, speechBlocked, boltBlocked });
   const update = (now: number, delta: number, player = { x: 50, y: 50 }, enabled = true, combat?: PlayerCombatReadout) => {
     scene.time.now = now;
     const result = lurker.update(now, delta, player, enabled, combat);
@@ -162,6 +163,15 @@ describe("DANN-E speech priority", () => {
 
 describe("DANN-E opening fairness and projectile movement", () => {
   beforeEach(() => vi.clearAllMocks());
+
+  it("stops bolts on a room divider before they can hit the player beyond it", () => {
+    const target = { x: 100, y: 40 };
+    const { sprites, update } = createEncounter("combat", undefined, x => x >= 72 && x <= 88);
+    for (let now = 17; now < 5200; now += 16) expect(update(now, 16, target).egoBoltHit).toBe(false);
+    expect(sprites.length).toBeGreaterThan(0);
+    expect(sprites.some(sprite => sprite.destroyed)).toBe(true);
+    expect(sprites.every(sprite => sprite.x < 73)).toBe(true);
+  });
 
   it("keeps the Office presence and boasts without contact damage or projectiles", () => {
     const { lurker, sprites, update } = createEncounter("foreshadow");

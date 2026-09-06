@@ -33,6 +33,7 @@ interface DanneLurkerOptions {
   label?: string;
   encounterMode?: "combat" | "foreshadow";
   speechBlocked?: () => boolean;
+  boltBlocked?: (x: number, y: number) => boolean;
 }
 
 interface EgoBolt {
@@ -86,6 +87,7 @@ export class DanneLurker extends Enemy {
   private readonly speechPanel: Phaser.GameObjects.Container;
   private readonly speechBack: Phaser.GameObjects.Rectangle;
   private readonly speechBlocked: () => boolean;
+  private readonly boltBlocked: (x: number, y: number) => boolean;
   private readonly speechPlayer = { x: 128, y: 184 };
   private speechHeight = 22;
   private speechEnabled = false;
@@ -110,6 +112,7 @@ export class DanneLurker extends Enemy {
     });
     this.encounterMode = options.encounterMode ?? "combat";
     this.speechBlocked = options.speechBlocked ?? (() => false);
+    this.boltBlocked = options.boltBlocked ?? (() => false);
     this.homePosition = { x, y };
     this.sprite.setOrigin(0.5, 0.82).setScale(0.72);
     const animKey = danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
@@ -485,6 +488,12 @@ export class DanneLurker extends Enemy {
       bolt.y += bolt.vy * dt;
       const x = snapPixel(bolt.x);
       const y = snapPixel(bolt.y);
+      if (this.boltBlocked?.(x, y)) {
+        bolt.sprite.destroy();
+        bolt.glow.destroy();
+        this.bolts.splice(index, 1);
+        continue;
+      }
       bolt.sprite.setPosition(x, y);
       bolt.glow.setPosition(x, y);
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));

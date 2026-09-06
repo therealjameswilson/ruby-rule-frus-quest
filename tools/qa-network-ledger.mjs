@@ -4,6 +4,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? "playwright")
 
 const base = process.env.FRUS_QA_URL ?? "http://127.0.0.1:5195/";
 const root = process.env.FRUS_QA_OUT ?? "/tmp/frus-network-ledger";
+const crossing = process.argv.includes("--crossing");
 assert(process.env.FRUS_QA_STORAGE, "Set FRUS_QA_STORAGE to earned-storage.json from qa-archive-wall.mjs");
 await mkdir(root, { recursive: true });
 const browser = await chromium.launch({ headless: true,
@@ -151,6 +152,22 @@ async function run(label, mobile) {
     let current = await checkpoint("initial");
     assert.equal(current.objective, "TAKE ROUTING BATCH");
 
+    if (crossing) {
+      await move(90, 124);
+      await direction("ArrowRight", 160);
+      assert((await state()).player.x < 112, "The sealed crossing must physically block the player");
+      // A live hit can interrupt windup. Retry the real control, never skip combat.
+      for (let attempt = 0; attempt < 6; attempt += 1) {
+        await direction("ArrowRight", 20);
+        await press("x");
+        if (/public packet/i.test((await state()).latestMessage)) break;
+        await page.waitForTimeout(350);
+      }
+      current = await checkpoint("crossing-needs-public-packet");
+      assert.notEqual(current.sceneProgress.networkStampCrossingOpen, 1);
+      assert.match(current.latestMessage, /public packet/i);
+    }
+
     await move(35,190);await move(128,190);await press();
     current = await checkpoint("routing-batch-held");
     assert.equal(current.sceneProgress.networkRoutingCarried, 1);
@@ -195,6 +212,44 @@ async function run(label, mobile) {
     assert.equal(current.sceneProgress.networkRoutingCarried, 2);
     assert.equal(current.objective, "2/4 TO OPENNET");
 
+    if (crossing) {
+      const before = await state();
+      await move(90, 124);
+      await direction("ArrowRight", 120);
+      if (mobile) await tap(224, 16);
+      else await page.keyboard.press("Escape");
+      await page.waitForTimeout(200);
+      assert.notEqual((await state()).mode, "explore");
+      await checkpoint("crossing-paused");
+      if (mobile) await tap(224, 34);
+      else await page.keyboard.press("Escape");
+      await page.waitForTimeout(200);
+      assert.equal((await state()).mode, "explore");
+      assert.notEqual((await state()).sceneProgress.networkStampCrossingOpen, 1,
+        "Closing pause must not stamp through the menu");
+      for (let attempt = 0; attempt < 6 && (await state()).sceneProgress.networkStampCrossingOpen !== 1; attempt += 1) {
+        await direction("ArrowRight", 20);
+        await press("x");
+        await page.waitForTimeout(250);
+      }
+      current = await checkpoint("stamp-opens-crossing");
+      assert.equal(current.sceneProgress.networkStampCrossingOpen, 1);
+      assert.equal(current.sceneProgress.networkRoutingStep, 1);
+      assert.equal(current.sceneProgress.networkRoutingCarried, 2);
+      assert.equal(current.documentPoints, before.documentPoints);
+      assert.deepEqual(current.inventory, before.inventory);
+      assert.deepEqual(current.documentCandidates, before.documentCandidates);
+      await page.goto(`${base}?text=full`);
+      await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
+      await press("Enter");
+      await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === "NetworkScene");
+      await page.waitForTimeout(700);
+      current = await checkpoint("crossing-persists-on-continue");
+      assert.equal(current.sceneProgress.networkStampCrossingOpen, 1);
+      assert.equal(current.sceneProgress.networkRoutingCarried, 2);
+      await move(60, 146);
+    }
+
     await press();
     current = await checkpoint("packet-three-auto-handoff");
     assert.equal(current.sceneProgress.networkRoutingStep, 2);
@@ -210,9 +265,18 @@ async function run(label, mobile) {
     assert(current.reliability <= reliabilityBeforeWrongNetwork - 2);
     assert.match(current.latestMessage, /remains in hand/i);
 
-    await move(60, 190);
-    await move(196, 190);
-    await move(196, 146);
+    if (crossing) {
+      await move(60, 124);
+      await move(160, 124);
+      current = await checkpoint("walk-through-earned-crossing");
+      assert(current.player.x >= 155);
+      assert.equal(current.sceneProgress.networkRoutingComplete ?? 0, 0, "Shortcut cannot bypass human routing");
+      await move(196, 124);
+    } else {
+      await move(60, 190);
+      await move(196, 190);
+      await move(196, 146);
+    }
     await press();
     current = await checkpoint("packet-four-auto-handoff");
     assert.equal(current.sceneProgress.networkRoutingStep, 3);

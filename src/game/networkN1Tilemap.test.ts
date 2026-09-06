@@ -55,7 +55,9 @@ describe("Network N1 packed tilemap", () => {
     const { ground } = buildNetworkN1TileLayers();
     expect(ground[4][2]).toBe(packedTileGid(INTERIOR_TILES.openNetFloor));
     expect(ground[4][13]).toBe(packedTileGid(INTERIOR_TILES.classNetFloor));
-    expect(ground[4][7]).toBe(packedTileGid(INTERIOR_TILES.centerLane));
+    expect(ground[4][7]).toBe(packedTileGid(INTERIOR_TILES.openNetFloor));
+    expect(ground[4][8]).toBe(packedTileGid(INTERIOR_TILES.classNetFloor));
+    expect(ground[10][7]).toBe(packedTileGid(INTERIOR_TILES.openNetFloor));
     expect(ground[5][3]).toBe(packedTileGid(INTERIOR_TILES.terminalPad));
     expect(ground[5][12]).toBe(packedTileGid(INTERIOR_TILES.terminalPad));
     expect(ground[9][7]).toBe(packedTileGid(INTERIOR_TILES.sorterPad));
