@@ -16,7 +16,7 @@ async function run(mobile) {
   page.on('pageerror', e=>errors.push(String(e)));
   page.on('console', m=>{if(m.type()==='error')errors.push(m.text());});
   const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
-  const choice=()=>page.evaluate(()=>Boolean(window.game.scene.getScene('SilentReadScene').reviewChoice.active || window.game.scene.getScene('SilentReadScene').proofBoard.active));
+  const choice=()=>page.evaluate(()=>Boolean(window.game.scene.getScene('SilentReadScene').reviewChoice.active || window.game.scene.getScene('SilentReadScene').proofBoard.active || window.game.scene.getScene('SilentReadScene').editorialBoard.active));
   async function point(x,y) {
     const b=await page.locator('canvas').first().boundingBox();
     return {x:b.x+x*b.width/256,y:b.y+y*b.height/240,id:1};
@@ -87,7 +87,19 @@ async function run(mobile) {
     await page.waitForTimeout(1200);
     const initial=await shot('initial');
     await move(30,204);await move(128,204);await press();await move(128,185);await press();
-    assert(await choice());await shot('bracket-choice');await press('KeyX');await press();
+    assert(await choice());await shot('bracket-repair');
+    const bracketStart=await state();
+    await press();
+    assert.equal((await state()).choice.options[0].value,'visible_italic');
+    assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+    assert.equal((await state()).documentPoints,bracketStart.documentPoints);
+    await press('KeyX');
+    await resume('bracket-draft-continue');
+    await press(); assert.equal((await state()).choice.options[0].value,'visible_italic');
+    await press();
+    assert.equal((await state()).sceneProgress.silentReadReviewStatus,3);
+    assert.equal((await state()).documentPoints,bracketStart.documentPoints);
+    await shot('bracket-filed-awaits-stamp'); await press();
     assert((await state()).inventory.includes('Red Pencil'));
     await move(215,185);await move(215,124);await move(248,124,'S1');
     await shot('proof-room-entry');

@@ -4,6 +4,8 @@ import { BindingCertificationBoard } from "./bindingCertificationBoard";
 import { bindPointerDown, getInput, swallowNextInputFrame, type InputState } from "../input/InputState";
 import { gameState, resetGameState } from "../game/state";
 import type { BindingCertificationEvidence } from "../game/bindingCertification";
+import { cloneInitialDocumentCandidates } from "../game/documentWorkflow";
+import { EDITORIAL_REPAIR_RECORDS } from "../game/editorialRepair";
 
 vi.mock("phaser", () => ({ default: { Display: { Color: { HexStringToColor: () => ({ color: 0 }) } } } }));
 vi.mock("../input/InputState", () => ({ bindPointerDown: vi.fn(), getInput: vi.fn(() => ({})), swallowNextInputFrame: vi.fn() }));
@@ -48,6 +50,23 @@ function fixture() {
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); vi.mocked(getInput).mockReturnValue({} as InputState); });
 
 describe("bindery human standards board", () => {
+  it.each([false, true])("points a blocked seal toward its next repair station (draft filed: %s)", draftFiled => {
+    const { board, evidence, onSeal, onCancel, pointer, objects } = fixture();
+    const document = cloneInitialDocumentCandidates().find(candidate => candidate.id === "source_note_047")!;
+    document.workflowState = "proofed";
+    document.undisclosedDeletion = true;
+    if (draftFiled) document.editorialRepair = { indication: EDITORIAL_REPAIR_RECORDS[0].indication, style: "italic", status: "draft" };
+    gameState.documentCandidates = [document];
+    evidence.ready = false; evidence.hiddenCuts = 1;
+    board.show(() => evidence, onSeal, onCancel);
+    const hint = draftFiled ? "WEST EXIT -> PROOF TABLE" : "WEST EXIT -> EDITOR DESK";
+    expect(objects.some(object => object.text === hint)).toBe(true);
+    pointer(0);
+    expect(gameState.latestMessage).toContain(hint);
+    expect(document.undisclosedDeletion).toBe(true);
+    expect(onSeal).not.toHaveBeenCalled();
+  });
+
   it("opens with live evidence and swallows the delivery action", () => {
     const { board, evidence, onSeal, onCancel, objects } = fixture();
     board.show(() => evidence, onSeal, onCancel);

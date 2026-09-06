@@ -82,6 +82,8 @@ import {
 } from "../systems/dungeonKeys";
 import type { DungeonStateRegistry } from "../systems/dungeonKeys";
 import { VIOLATION_LABEL } from "../systems/standardsDamage";
+import { nextEditorialRepair, tryEditorialRepair, type EditorialRepairAction } from "./editorialRepair";
+import { SILENT_READ_REVIEW_TOTAL } from "./silentReadReview";
 import type { StandardViolation } from "../systems/standardsDamage";
 import {
   createInitialVolumeAssemblyState,
@@ -2153,6 +2155,7 @@ export function markDocumentUndisclosedDeletion(documentId: string, reason = "un
   const changed = updateDocumentCandidate(documentId, (document) => ({
     ...cloneDocumentCandidate(document),
     undisclosedDeletion: true,
+    editorialRepair: undefined,
     annotationNeeded: true
   }), reason);
   return changed?.undisclosedDeletion ?? false;
@@ -2165,6 +2168,21 @@ export function clearDocumentUndisclosedDeletion(documentId: string, reason = "b
   }), reason);
   if (changed) resolveStandardsViolationForDocument(documentId, "undisclosed_deletion");
   return changed ? !changed.undisclosedDeletion : false;
+}
+
+export function repairEditorialRecord(documentId: string, action: EditorialRepairAction) {
+  const document = gameState.documentCandidates.find(candidate => candidate.id === documentId);
+  if (gameState.sceneProgress.silentReadReviewStep !== SILENT_READ_REVIEW_TOTAL || !document
+    || nextEditorialRepair(gameState.documentCandidates, gameState.standardsViolations)?.documentId !== documentId) {
+    return { ok: false, reason: "NO COMPLETED RECORD TO RECHECK" };
+  }
+  const result = tryEditorialRepair(document, action, getHeldProcessItemIds());
+  if (!result.ok) return { ok: false, reason: result.reason };
+  updateDocumentCandidate(documentId, () => result.document, action === "draft"
+    ? "Human restored the withholding indication; proof check still required"
+    : "Human checked the retained withholding note against the proof");
+  if (action === "proof") resolveStandardsViolationForDocument(documentId, "undisclosed_deletion");
+  return { ok: true };
 }
 
 export function markAsCandidate(documentId: string): void {

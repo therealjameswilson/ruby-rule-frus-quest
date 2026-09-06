@@ -26,6 +26,7 @@ import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
 import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
 import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
+import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editorialRepair";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -255,6 +256,8 @@ export class UIScene extends Phaser.Scene {
       if (gameState.currentChoice?.title === PROOF_COMPARISON_TITLE) return getString("hud.compareProof");
       if (gameState.currentChoice?.title.startsWith(BINDING_CERTIFICATION_TITLE)) return getString("hud.reviewRecord");
       if (gameState.currentChoice?.title === SOURCE_NOTE_47_TITLE) return getString("hud.reviewRecord");
+      if (gameState.currentChoice?.title.startsWith(EDITORIAL_REPAIR_TITLE)
+        || gameState.currentChoice?.title.startsWith(EDITORIAL_RECHECK_TITLE)) return getString("hud.reviewRecord");
       return getString("hud.chooseAnswer");
     }
     if (activeSceneKey === "OfficeScene") {

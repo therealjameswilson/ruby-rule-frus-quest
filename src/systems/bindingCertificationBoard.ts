@@ -2,7 +2,8 @@ import Phaser from "phaser";
 import { ABOUT_SERIES_SOURCE } from "../game/aboutSeries";
 import { PALETTE } from "../game/constants";
 import { BINDING_CERTIFICATION_TITLE, type BindingCertificationEvidence } from "../game/bindingCertification";
-import { clearChoiceState, setChoiceState, setLatestMessage } from "../game/state";
+import { clearChoiceState, gameState, setChoiceState, setLatestMessage } from "../game/state";
+import { editorialRepairDraftMatches, nextEditorialRepair } from "../game/editorialRepair";
 import { bindPointerDown, getInput, swallowNextInputFrame } from "../input/InputState";
 import { retroAudio } from "./audio";
 import { CHOICE_PROMPT_OPEN_EVENT } from "./verification";
@@ -71,8 +72,8 @@ export class BindingCertificationBoard {
     // Re-read live evidence so a stale open panel cannot authorize publication.
     if (!this.evidence?.().ready) {
       this.refresh();
-      this.feedback.setText("REPAIR THE RECORD");
-      setLatestMessage("The standards seal cannot clear missing proofs, open equities, hidden cuts or unresolved violations.");
+      this.feedback.setText(this.repairHint());
+      setLatestMessage(`The standards seal cannot clear missing proofs, open equities, hidden cuts or unresolved violations. ${this.repairHint()}`);
       retroAudio.warning();
       return;
     }
@@ -101,13 +102,20 @@ export class BindingCertificationBoard {
       `OPEN VIOLATIONS ${evidence.unresolved}`
     ];
     this.ledger.setText(lines.join("\n"));
-    this.feedback.setText(evidence.ready ? "ABOUT THE SERIES" : "REPAIR THE RECORD");
+    this.feedback.setText(evidence.ready ? "ABOUT THE SERIES" : this.repairHint());
     this.buttons.forEach((button, index) => button.setStrokeStyle(1,
       color(index === this.selected ? PALETTE.goldStamp : PALETTE.stoneDark)));
     setChoiceState(`${BINDING_CERTIFICATION_TITLE}: ${lines.join("; ")}. Keep major facts and policy defects. Source: ${ABOUT_SERIES_SOURCE.url}`, [
       { key: "A", label: "Seal the full record", value: evidence.ready ? "attest" : "locked" },
       { key: "B", label: "Return to the desk", value: "cancel" }
     ]);
+  }
+
+  private repairHint() {
+    const record = nextEditorialRepair(gameState.documentCandidates, gameState.standardsViolations);
+    if (!record) return "REPAIR THE RECORD";
+    const document = gameState.documentCandidates.find(document => document.id === record.documentId)!;
+    return editorialRepairDraftMatches(document, record) ? "WEST EXIT -> PROOF TABLE" : "WEST EXIT -> EDITOR DESK";
   }
 
   private text(x: number, y: number, value: string, ink: string) {

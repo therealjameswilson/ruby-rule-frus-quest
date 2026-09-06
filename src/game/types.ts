@@ -174,6 +174,7 @@ export type DocumentCandidate = {
   collection: string;
   folder: string;
   firstFootnote?: FirstFootnoteMetadata;
+  editorialRepair?: import("./editorialRepair").EditorialRepair;
   policyTheme: string;
   significance: number;
   uniqueness: number;

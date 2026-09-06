@@ -14,6 +14,7 @@ import {
   getHeldProcessItemIds,
   hasProcessItem,
   clearDocumentUndisclosedDeletion,
+  repairEditorialRecord,
   setHeldItem,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -37,6 +38,8 @@ import { retroAudio } from "../systems/audio";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { ChoicePrompt } from "../systems/verification";
 import { ProofComparisonBoard } from "../systems/proofComparisonBoard";
+import { EditorialRepairBoard } from "../systems/editorialRepairBoard";
+import { EDITORIAL_REPAIR_RECORDS, editorialRepairDraftMatches, nextEditorialRepair } from "../game/editorialRepair";
 import { proofMatchesOriginal, restoreProofRepairs } from "../game/proofComparison";
 import { saveGameNow } from "../systems/save";
 import { InteractionPrompt } from "../systems/interactionPrompt";
@@ -210,6 +213,7 @@ export class SilentReadScene extends Phaser.Scene {
   private toast!: FeedbackToast;
   private reviewChoice!: ChoicePrompt;
   private proofBoard!: ProofComparisonBoard;
+  private editorialBoard!: EditorialRepairBoard;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
@@ -259,12 +263,13 @@ export class SilentReadScene extends Phaser.Scene {
     this.toast = new FeedbackToast(this);
     this.reviewChoice = new ChoicePrompt(this);
     this.proofBoard = new ProofComparisonBoard(this);
+    this.editorialBoard = new EditorialRepairBoard(this);
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.danneLurker = new DanneLurker(this, 212, 72, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
-        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active,
+        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active,
       waypoints: [
         { x: 212, y: 72 },
         { x: 152, y: 58 },
@@ -307,12 +312,13 @@ export class SilentReadScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
-    if (this.reviewChoice.active || this.proofBoard.active) {
+    if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active) {
       this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
       this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
-      if (this.proofBoard.active) this.proofBoard.updateInput();
+      if (this.editorialBoard.active) this.editorialBoard.updateInput();
+      else if (this.proofBoard.active) this.proofBoard.updateInput();
       else this.reviewChoice.updateInput();
       return;
     }
@@ -896,6 +902,16 @@ export class SilentReadScene extends Phaser.Scene {
     hintTarget: Interactable | null;
     strictText: string;
   } {
+    const repair = this.pendingEditorialRepair();
+    if (repair) {
+      const station = this.stationFor(repair.proof ? "proof-table" : "editor-desk");
+      const here = stationRoom(station.id) === this.currentRoomId;
+      return {
+        strictTarget: here && this.isNear(station.x, station.y, 40) ? this.workstationPromptTarget(station, 40) : null,
+        hintTarget: here && this.isNear(station.x, station.y, 50) ? this.workstationPromptTarget(station, 40) : null,
+        strictText: repair.proof ? "RECHECK PROOF" : "REPAIR BRACKET"
+      };
+    }
     const activeFlag = this.getActiveFlag();
     if (!activeFlag || flagRoom(activeFlag) !== this.currentRoomId) {
       return { strictTarget: null, hintTarget: null, strictText: "" };
@@ -948,9 +964,14 @@ export class SilentReadScene extends Phaser.Scene {
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) {
       this.clearPhysicalRouteCue();
-      this.actionHint.setText("DONE: exit east with the Buckram Key.");
-      setNearestInteractable(null);
-      this.syncPhysicalState("DONE", null);
+      const repair = this.pendingEditorialRepair();
+      const carried = repair?.proof ? `Corrected proof: ${repair.record.label}` : null;
+      if (gameState.heldItem !== carried) setHeldItem(carried);
+      setObjective(this.reviewObjective());
+      this.actionHint.setText(this.reviewObjective());
+      const prompt = this.physicalPromptTargets();
+      setNearestInteractable(prompt.strictTarget ? prompt.strictText : null);
+      this.syncPhysicalState(repair ? repair.proof ? "VERIFY" : "ROUTE" : "DONE", null);
       return;
     }
 
@@ -979,6 +1000,7 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private handlePhysicalAction() {
+    if (this.pendingEditorialRepair()) { this.reopenEditorialRecord(); return; }
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) return;
     if (flagRoom(activeFlag) !== this.currentRoomId) {
@@ -1055,6 +1077,10 @@ export class SilentReadScene extends Phaser.Scene {
     }
 
     if (activeFlag.status === "routed") {
+      if (activeFlag.id === "mechanical-fix") {
+        this.repairVisibleBracket(activeFlag, nearestStation);
+        return;
+      }
       if (activeFlag.id === "typesetter-proof") {
         this.compareTypesetProof(activeFlag, nearestStation);
         return;
@@ -1100,6 +1126,56 @@ export class SilentReadScene extends Phaser.Scene {
     this.savePhysicalReviewProgress(flag);
     retroAudio.confirm();
     this.updatePhysicalVerification();
+  }
+
+  private repairVisibleBracket(flag: PhysicalFlag, station: Workstation) {
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.editorialBoard.show(EDITORIAL_REPAIR_RECORDS[0], gameState.sceneProgress.silentReadBracketDraft === 1, false, () => {
+      gameState.sceneProgress.silentReadBracketDraft = 1;
+      saveGameNow();
+    }, () => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed" || gameState.sceneProgress.silentReadBracketDraft !== 1) return;
+      gameState.sceneProgress["silentReadDecision_mechanical-fix"] = 1;
+      this.verifyFlag(flag, station, "WITHHOLDING INDICATION RESTORED");
+    });
+  }
+
+  private pendingEditorialRepair() {
+    if (this.getActiveFlag()) return null;
+    const record = nextEditorialRepair(gameState.documentCandidates, gameState.standardsViolations);
+    if (!record) return null;
+    const document = gameState.documentCandidates.find(document => document.id === record.documentId)!;
+    return { record, proof: editorialRepairDraftMatches(document, record) };
+  }
+
+  private reopenEditorialRecord() {
+    const repair = this.pendingEditorialRepair();
+    if (!repair) return;
+    const station = this.stationFor(repair.proof ? "proof-table" : "editor-desk");
+    if (stationRoom(station.id) !== this.currentRoomId || !this.isNear(station.x, station.y, 40)) {
+      this.toast.show(this.reviewObjective(), this.player.position, "info", PROOF_PLAY_BOUNDS);
+      return;
+    }
+    if (!hasProcessItem(repair.proof ? "proof_lens" : "red_pencil")) {
+      this.toast.show(repair.proof ? "NEED PROOF LENS" : "NEED RED PENCIL", this.player.position, "warn", PROOF_PLAY_BOUNDS);
+      return;
+    }
+    this.interactionPrompt.update(0, null);
+    saveGameNow();
+    this.editorialBoard.show(repair.record, repair.proof, repair.proof, () => undefined, () => {
+      const result = repairEditorialRecord(repair.record.documentId, repair.proof ? "proof" : "draft");
+      if (!result.ok) {
+        this.toast.show(result.reason ?? "RECHECK THE RECORD", this.player.position, "warn", PROOF_PLAY_BOUNDS);
+        return;
+      }
+      this.addVerificationMark(station);
+      this.toast.show(repair.proof ? "CORRECTION FILED" : "DRAFT READY - PROOF TABLE", this.player.position, "info", PROOF_PLAY_BOUNDS);
+      retroAudio.stamp();
+      setObjective(this.reviewObjective());
+      this.syncVisibleEntities();
+      saveGameNow();
+    });
   }
 
   private compareTypesetProof(flag: PhysicalFlag, station: Workstation) {
@@ -1402,7 +1478,7 @@ export class SilentReadScene extends Phaser.Scene {
     const carried = this.physicalFlags.find((flag) => flag.status === "carried");
     setPhysicalVerificationState({
       verb,
-      carriedItem: carried ? `Review Folder: ${carried.shortLabel}` : null,
+      carriedItem: carried ? `Review Folder: ${carried.shortLabel}` : this.pendingEditorialRepair()?.proof ? gameState.heldItem : null,
       nearestStation: nearestStation?.label ?? null,
       completed,
       total: this.physicalFlags.length,
@@ -1427,7 +1503,8 @@ export class SilentReadScene extends Phaser.Scene {
     setVisibleEntities([
       ...roomLabels,
       "Review Folder",
-      ...(active && flagRoom(active) === this.currentRoomId ? [active.label] : [])
+      ...(active && flagRoom(active) === this.currentRoomId ? [active.label] : []),
+      ...(this.pendingEditorialRepair() ? ["Editorial correction: Editor Desk -> Proof Table"] : [])
     ]);
   }
 
@@ -1436,6 +1513,11 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private reviewObjective() {
+    const repair = this.pendingEditorialRepair();
+    if (repair) {
+      if (repair.proof) return this.currentRoomId === "E1" ? "EAST - RECHECK PROOF" : "RECHECK AT PROOF TABLE";
+      return this.currentRoomId === "E1" ? "REPAIR AT EDITOR DESK" : "WEST - EDITOR DESK";
+    }
     const active = this.getActiveFlag();
     if (!active && this.currentRoomId === "E1") return "EXIT EAST - PROOF";
     return silentReadObjective(active, active?.status ?? "stamped", !active || flagRoom(active) === this.currentRoomId);

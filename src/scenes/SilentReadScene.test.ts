@@ -3,6 +3,7 @@ import { SilentReadScene } from "./SilentReadScene";
 import { SILENT_READ_REVIEW_ITEMS, type SilentReadReviewItem, type SilentReadReviewStatus, type SilentReadStationId } from "../game/silentReadReview";
 import { addProcessItem, gameState, resetGameState } from "../game/state";
 import type { ChoiceOption } from "../game/types";
+import type { EditorialRepairRecord } from "../game/editorialRepair";
 
 vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} } } }));
 vi.mock("../entities/Player", () => ({ Player: class {} }));
@@ -50,12 +51,24 @@ class Comparison {
   updateInput = vi.fn();
 }
 
+class Bracket {
+  active = false;
+  repaired = false;
+  onChange?: () => void;
+  onFile?: () => void;
+  show(_record: EditorialRepairRecord, repaired: boolean, _proof: boolean, onChange: () => void, onFile: () => void) {
+    this.active = true; this.repaired = repaired; this.onChange = onChange; this.onFile = onFile;
+  }
+  updateInput = vi.fn();
+}
+
 interface ReviewInternals {
   currentRoomId: "E1" | "S1";
   physicalFlags: Flag[];
   player: { position: { x: number; y: number }; update: ReturnType<typeof vi.fn> };
   reviewChoice: Decision;
   proofBoard: Comparison;
+  editorialBoard: Bracket;
   toast: { show: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
   interactionPrompt: { update: ReturnType<typeof vi.fn> };
   actionHint: { setText: ReturnType<typeof vi.fn> };
@@ -88,6 +101,7 @@ function fixture(step: number, status: SilentReadReviewStatus) {
   scene.player = { position: { x: 128, y: 185 }, update: vi.fn() };
   scene.reviewChoice = new Decision();
   scene.proofBoard = new Comparison();
+  scene.editorialBoard = new Bracket();
   scene.toast = { show: vi.fn(), update: vi.fn() };
   scene.interactionPrompt = { update: vi.fn() };
   scene.actionHint = { setText: vi.fn() };
@@ -113,7 +127,7 @@ describe("live editor and proof decisions", () => {
     const { scene, flag } = fixture(step, "carried");
     scene.handlePhysicalAction();
     expect(flag.status).toBe("routed");
-    expect(scene.reviewChoice.active).toBe(true);
+    expect(step === 0 ? scene.editorialBoard.active : scene.reviewChoice.active).toBe(true);
     expect(scene.applyFlagReward).not.toHaveBeenCalled();
     expect(gameState.heldItem).toBeNull();
     expect(gameState.sceneProgress.silentReadReviewStatus).toBe(2);
@@ -128,7 +142,7 @@ describe("live editor and proof decisions", () => {
     expect(scene.applyFlagReward).not.toHaveBeenCalled();
   });
 
-  it.each([[0, "A", "B"], [4, "B", "A"], [5, "A", "B"], [6, "B", "A"]] as const)("keeps decision %i unresolved until corrected and separately stamped", (step, wrong, correct) => {
+  it.each([[4, "B", "A"], [5, "A", "B"], [6, "B", "A"]] as const)("keeps decision %i unresolved until corrected and separately stamped", (step, wrong, correct) => {
     const { scene, flag } = fixture(step, "routed");
     scene.handlePhysicalAction();
     expect(scene.reviewChoice.active).toBe(true);
@@ -148,6 +162,31 @@ describe("live editor and proof decisions", () => {
     expect(scene.applyFlagReward).toHaveBeenCalledOnce();
     expect(scene.awardBuckramKeyAfterTypesetterProof).not.toHaveBeenCalled();
     scene.reviewChoice.choose(correct);
+    expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+  });
+
+  it("requires a repaired bracket, explicit filing and a separate stamp for the Red Pencil", () => {
+    const { scene, flag } = fixture(0, "carried");
+    scene.handlePhysicalAction();
+    expect(scene.editorialBoard.active).toBe(true);
+    scene.editorialBoard.onFile?.();
+    expect(flag.status).toBe("routed");
+    scene.editorialBoard.onChange?.();
+    expect(gameState.sceneProgress.silentReadBracketDraft).toBe(1);
+    expect(flag.status).toBe("routed");
+    scene.update(100, 16);
+    expect(scene.player.update).toHaveBeenCalledWith(16, false);
+    expect(scene.updateDanneLurker).toHaveBeenCalledWith(16, false);
+    scene.editorialBoard.active = false;
+    scene.handlePhysicalAction();
+    expect(scene.editorialBoard.repaired).toBe(true);
+    scene.editorialBoard.onFile?.();
+    expect(flag.status).toBe("verified");
+    expect(scene.applyFlagReward).not.toHaveBeenCalled();
+    scene.handlePhysicalAction();
+    expect(flag.status).toBe("stamped");
+    expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+    scene.editorialBoard.onFile?.();
     expect(scene.applyFlagReward).toHaveBeenCalledOnce();
   });
 

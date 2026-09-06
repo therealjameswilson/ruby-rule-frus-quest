@@ -62,6 +62,20 @@ describe("SilentReadScene physical proofing flow", () => {
     expect(sceneSource).toContain("intendedDistance <= maxDistance + 8");
   });
 
+  it("uses an editable bracket board and reopens completed records without replaying rewards", () => {
+    expect(sceneSource).toContain("this.editorialBoard = new EditorialRepairBoard(this)");
+    expect(sceneSource).toContain("this.repairVisibleBracket(activeFlag, nearestStation)");
+    expect(sceneSource).toContain("sceneProgress.silentReadBracketDraft = 1");
+    const reopen = sceneSource.slice(sceneSource.indexOf("  private reopenEditorialRecord("), sceneSource.indexOf("  private compareTypesetProof("));
+    expect(reopen).toContain("repairEditorialRecord(");
+    expect(reopen).toContain('repair.proof ? "proof-table" : "editor-desk"');
+    expect(reopen).toContain("saveGameNow()");
+    expect(reopen).not.toContain("applyFlagReward");
+    expect(reopen).not.toContain("addDocumentPoints");
+    const ui = readFileSync(new URL("./UIScene.ts", import.meta.url), "utf8");
+    expect(ui).toMatch(/title\.startsWith\(EDITORIAL_REPAIR_TITLE\)[\s\S]*?title\.startsWith\(EDITORIAL_RECHECK_TITLE\)\) return getString\("hud.reviewRecord"\)/);
+  });
+
   it("removes the route plaque when the player reaches the destination prompt", () => {
     const routeCue = sceneSource.slice(sceneSource.indexOf("  private refreshPhysicalRouteCue("), sceneSource.indexOf("  private clearPhysicalRouteCue("));
     expect(routeCue).toContain('flag.status !== "carried"');

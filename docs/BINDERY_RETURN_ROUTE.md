@@ -47,8 +47,10 @@ grants for an earned snapshot when claiming progression verification.
 
 ## Still Open
 
-This restores navigation, not a general damaged-record correction system.
-Already-completed editorial tasks still need an explicit reopen/recheck path for
-a subsequently damaged record; no automatic historical judgments were added.
+This passage restores navigation, not a general damaged-record correction system.
+The subsequent [editorial repair loop](EDITORIAL_REPAIR_LOOP.md) adds explicit
+reopen/recheck support for two authored withholding-indication training records.
+Other damage still needs evidence-specific repair; no automatic historical
+judgments were added.
 Fresh whole-game pacing, older art consistency and actual iPhone Safari remain
 unverified. This local pass is not a public deployment or whole-game completion.
