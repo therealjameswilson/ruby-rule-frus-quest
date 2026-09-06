@@ -331,7 +331,7 @@ describe("DanneEnemy combat", () => {
     const sprite = { ...dummyVisual(), x: 20, y: 40,
       setPosition: vi.fn(function (this: { x: number; y: number }, x: number, y: number) { this.x = x; this.y = y; return this; }),
       setDepth: vi.fn().mockReturnThis() };
-    Object.assign(enemy, { projectiles: [{ sprite, vx: 60, vy: 0, expiresAt: 1500, armed: true }] });
+    Object.assign(enemy, { projectiles: [{ sprite, x: 20, y: 40, vx: 60, vy: 0, expiresAt: 1500, armed: true }] });
     enemy.setCombatPaused(true);
     enemy.scene.time.now = 21000;
     enemy.updateEnemy(21000, 16, { x: 240, y: 230 }, activeHitbox());
@@ -344,6 +344,40 @@ describe("DanneEnemy combat", () => {
     expect(sprite.destroy).not.toHaveBeenCalled();
     enemy.scene.time.now = 21500;
     enemy.updateEnemy(21500, 20, { x: 240, y: 230 }, activeHitbox());
+    expect(sprite.destroy).toHaveBeenCalledOnce();
+  });
+
+  it.each([30, 60, 120, 144])("keeps slow diagonal bolts moving at the same speed at %i fps", fps => {
+    const enemy = makeEnemy("danne-mark-i-prototype", 2);
+    const sprite = { ...dummyVisual(), x: 20, y: 40,
+      setPosition: vi.fn(function (this: { x: number; y: number }, x: number, y: number) { this.x = x; this.y = y; return this; }),
+      setDepth: vi.fn().mockReturnThis() };
+    const bolt = { sprite, x: 20, y: 40, vx: 24, vy: 18, expiresAt: 4000, armed: true };
+    Object.assign(enemy, { projectiles: [bolt] });
+    for (let frame = 1; frame <= fps; frame++) {
+      enemy.updateEnemy(1000 + frame * 1000 / fps, 1000 / fps, { x: 240, y: 230 }, activeHitbox());
+      expect(Number.isInteger(sprite.x) && Number.isInteger(sprite.y)).toBe(true);
+    }
+    expect(bolt.x).toBeCloseTo(44);
+    expect(bolt.y).toBeCloseTo(58);
+    expect(sprite.x).toBe(44);
+    expect(sprite.y).toBe(58);
+    expect(sprite.destroy).not.toHaveBeenCalled();
+  });
+
+  it("lets a moving bolt hit the player once and removes it", () => {
+    const enemy = makeEnemy("danne-mark-i-prototype", 2);
+    const sprite = { ...dummyVisual(), x: 20, y: 100,
+      setPosition: vi.fn(function (this: { x: number; y: number }, x: number, y: number) { this.x = x; this.y = y; return this; }),
+      setDepth: vi.fn().mockReturnThis() };
+    const bolts = [{ sprite, x: 20, y: 100, vx: 60, vy: 0, expiresAt: 4000, armed: true }];
+    Object.assign(enemy, { projectiles: bolts });
+    let hits = 0;
+    for (let frame = 1; frame <= 120; frame++) {
+      if (enemy.updateEnemy(1000 + frame * 1000 / 60, 1000 / 60, { x: 240, y: 230 }, activeHitbox()).projectileHit) hits++;
+    }
+    expect(hits).toBe(1);
+    expect(bolts).toHaveLength(0);
     expect(sprite.destroy).toHaveBeenCalledOnce();
   });
 });

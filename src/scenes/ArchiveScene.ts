@@ -61,8 +61,8 @@ import {
 } from "../systems/interaction";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
-import { takeDanneLurkerHit } from "../systems/dannePressure";
+import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { applyProcessPressure, takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
@@ -2251,7 +2251,7 @@ export class ArchiveScene extends Phaser.Scene {
     const hit = this.player.takeHit(activeWall.position, definition?.type === "DANN-E QUEUE" ? 22 : 15);
     if (!hit) return;
     this.wallContactCooldown = this.time.now + 1200;
-    applyStandardsViolation("missed_30_year_deadline", `${definition?.type ?? activeWall.label} process wall delayed source work.`);
+    applyProcessPressure(`${definition?.type ?? activeWall.label} collision. The record is unchanged.`);
     this.reliability.update();
     if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");
     else if (definition?.type === "WAIT") setObjective("Resolve the agency response timer at the referral tray.");

@@ -5,6 +5,14 @@ import type { Position } from "../game/types";
 import { DANNE_BOSS_DAMAGE, DANNE_BOSS_RECOVERY_MS, type DanneBossHitKind } from "../game/danneBossCombat";
 import { gameState } from "../game/state";
 
+// Preserve the existing hit cost without treating a collision as a publication decision.
+export const PROCESS_PRESSURE_DAMAGE = 4;
+
+export function applyProcessPressure(context: string) {
+  adjustReliability(-PROCESS_PRESSURE_DAMAGE, context);
+  return PROCESS_PRESSURE_DAMAGE;
+}
+
 export function applyDanneLurkerDamage(kind: DanneLurkerHitKind, context: string) {
   const damage = DANNE_LURKER_RELIABILITY_DAMAGE[kind];
   adjustReliability(-damage, context);

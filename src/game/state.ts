@@ -936,7 +936,10 @@ export function restoreGameSaveData(save: GameSaveData) {
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
   gameState.volumeAssembly = normalizeVolumeAssemblyState(gameState.volumeAssembly, gameState.volumeFragments);
+  const collisionLabelsCorrected = Array.isArray(gameState.standardsViolations)
+    && gameState.standardsViolations.some(record => record && record.unresolved !== false && isLegacyCombatDeadline(record));
   gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
+  if (collisionLabelsCorrected) setLatestMessage("Combat-hit labels corrected. Record review is unchanged.");
   gameState.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities);
   gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
   // Saving already accrued the active session. Time away must not accrue again on Continue.
@@ -1000,6 +1003,23 @@ function standardsViolationId(violation: StandardViolation, context?: string, do
   return `${violation}:${scope || "general"}`;
 }
 
+const LEGACY_COMBAT_DEADLINE_CONTEXTS = new Set([
+  "NO REPO process wall delayed source work.",
+  "FIREWALL process wall delayed source work.",
+  "PENDING process wall delayed source work.",
+  "WAIT process wall delayed source work.",
+  "HOLD process wall delayed source work.",
+  "AMBIGUOUS process wall delayed source work.",
+  "DANN-E QUEUE process wall delayed source work.",
+  "DANN-E ego bolt disrupted room-clear review.",
+  "DANN-E telegraphed pressure strike disrupted room-clear review."
+]);
+
+function isLegacyCombatDeadline(record: StandardsViolationRecord) {
+  return record.violation === "missed_30_year_deadline" && record.documentId == null
+    && LEGACY_COMBAT_DEADLINE_CONTEXTS.has(record.context ?? "");
+}
+
 function normalizeStandardsViolations(records?: StandardsViolationRecord[]) {
   if (!Array.isArray(records)) return [];
   return records
@@ -1010,7 +1030,9 @@ function normalizeStandardsViolations(records?: StandardsViolationRecord[]) {
       label: record.label || VIOLATION_LABEL[record.violation],
       context: record.context ?? null,
       documentId: record.documentId ?? null,
-      unresolved: record.unresolved !== false,
+      // Earlier collision handlers filed false deadline violations. Retain their history
+      // and reliability cost, but never use those hits to block human certification.
+      unresolved: record.unresolved !== false && !isLegacyCombatDeadline(record),
       count: Math.max(1, Math.round(record.count ?? 1))
     }));
 }

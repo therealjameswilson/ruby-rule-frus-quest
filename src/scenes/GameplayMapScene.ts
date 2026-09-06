@@ -92,7 +92,7 @@ import { InteractionPrompt, promptVerbForKind } from "../systems/interactionProm
 import { InventoryOverlay } from "../systems/inventory";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { snapPixel } from "../systems/pixelPerfect";
-import { applyStandardsViolation } from "../systems/reliability";
+import { applyProcessPressure } from "../systems/dannePressure";
 import {
   completeEncounterWaveQueue,
   createEncounterWaveQueue,
@@ -697,7 +697,7 @@ export class GameplayMapScene extends Phaser.Scene {
       const result = enemy.updateEnemy(this.time.now, delta, playerPosition, playerFootBox);
       if ((result.projectileHit || result.contactHit) && this.player.takeHit(enemy.readout(), enemy.damage, 700)) {
         const attack = result.projectileHit ? "ego bolt" : "telegraphed pressure strike";
-        applyStandardsViolation("missed_30_year_deadline", `DANN-E ${attack} disrupted room-clear review.`);
+        applyProcessPressure(`DANN-E ${attack}. The record is unchanged.`);
         setObjective(`Dodge the ${attack}, then counter with the correct FRUS tool.`);
         this.objectiveOverrideMsRemaining = 1100;
       }

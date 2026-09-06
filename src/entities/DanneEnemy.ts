@@ -14,6 +14,7 @@ import {
 import type { Position } from "../game/types";
 import { retroAudio } from "../systems/audio";
 import { CombatClock } from "../systems/combatClock";
+import { advanceBossBolt, type BossBoltMotion } from "../game/danneBossCombat";
 import { telegraphDurationMs, telegraphPhase, type TelegraphPhase, type TelegraphTiming } from "../systems/enemyCombat";
 import { snapPixel } from "../systems/pixelPerfect";
 import type { DanneEnemyVariantConfig } from "./danneVariants";
@@ -39,10 +40,8 @@ interface DanneAiContext {
   deltaMs: number;
 }
 
-interface DanneProjectile {
+interface DanneProjectile extends BossBoltMotion {
   sprite: Phaser.GameObjects.Sprite | Phaser.GameObjects.Rectangle;
-  vx: number;
-  vy: number;
   expiresAt: number;
   armed: boolean;
 }
@@ -370,6 +369,8 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     }
     this.projectiles.push({
       sprite,
+      x: start.x,
+      y: start.y,
       vx: velocity.vx,
       vy: velocity.vy,
       expiresAt: timeMs + 2100,
@@ -511,12 +512,12 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   }
 
   private updateProjectiles(timeMs: number, deltaMs: number, playerFootBox: Phaser.Geom.Rectangle) {
-    const dt = Math.min(0.05, deltaMs / 1000);
     let hit = false;
     for (let index = this.projectiles.length - 1; index >= 0; index -= 1) {
       const projectile = this.projectiles[index];
-      const x = snapPixel(projectile.sprite.x + projectile.vx * dt);
-      const y = snapPixel(projectile.sprite.y + projectile.vy * dt);
+      advanceBossBolt(projectile, deltaMs);
+      const x = snapPixel(projectile.x);
+      const y = snapPixel(projectile.y);
       projectile.sprite.setPosition(x, y);
       projectile.sprite.setDepth(Math.round(y + 8));
       const bounds = new Phaser.Geom.Rectangle(x - 6, y - 6, 12, 12);
