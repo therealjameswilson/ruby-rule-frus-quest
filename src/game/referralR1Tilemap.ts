@@ -26,7 +26,8 @@ function emptyLayer() {
 }
 
 export function isReferralR1ExitCell(tileX: number, tileY: number) {
-  return (tileX === 0 || tileX === REFERRAL_R1_TILEMAP.columns - 1) && SIDE_EXIT_ROWS.has(tileY);
+  return (tileY === 0 && (tileX === 7 || tileX === 8))
+    || (tileX === 0 || tileX === REFERRAL_R1_TILEMAP.columns - 1) && SIDE_EXIT_ROWS.has(tileY);
 }
 
 export function isReferralR1WallCell(tileX: number, tileY: number) {

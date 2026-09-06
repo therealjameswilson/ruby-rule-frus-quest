@@ -128,7 +128,9 @@
     "toolLabel": "HERRAMIENTA {label}",
     "touchControlsReady": "CONTROLES TÁCTILES LISTOS",
     "useTool": "USAR {tool}",
-    "counterDanne": "GOLPEAR / DEVOLVER EGO"
+    "counterDanne": "GOLPEAR / DEVOLVER EGO",
+    "dispatchAisles": "EXPLORA LOS PASILLOS",
+    "dispatchReturn": "AL SUR PARA REVISION"
   },
   "items": {
     "buckramKey": {

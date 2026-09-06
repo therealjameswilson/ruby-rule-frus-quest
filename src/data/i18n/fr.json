@@ -128,7 +128,9 @@
     "toolLabel": "OUTIL {label}",
     "touchControlsReady": "COMMANDES TACTILES PRÊTES",
     "useTool": "UTILISER {tool}",
-    "counterDanne": "FRAPPER / RENVOYER EGO"
+    "counterDanne": "FRAPPER / RENVOYER EGO",
+    "dispatchAisles": "EXPLOREZ LES ALLEES",
+    "dispatchReturn": "AU SUD POUR RELECTURE"
   },
   "items": {
     "buckramKey": {

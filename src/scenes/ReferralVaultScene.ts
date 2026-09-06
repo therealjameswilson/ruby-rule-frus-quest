@@ -2,7 +2,11 @@ import Phaser from "phaser";
 import { readChapterArrival } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
-import type { Direction, RoomType } from "../game/constants";
+import type { Direction, ProcessItemId, RoomType } from "../game/constants";
+import {
+  buildDispatchStackLayers, DISPATCH_STACKS, dispatchAisleOpen, dispatchCopyFound,
+  dispatchObjective, nearbyDispatchTarget
+} from "../game/referralDispatch";
 import {
   addDocumentPoints,
   addProcessItem,
@@ -87,7 +91,7 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-type ReferralRoomId = "R1" | "R2";
+type ReferralRoomId = "R1" | "R2" | "R3";
 type ReferralVaultTileFrame = (typeof SNES_REFERRAL_VAULT_TILE_ASSET.frames)[number];
 
 interface ReferralRoom {
@@ -96,7 +100,7 @@ interface ReferralRoom {
   roomType: RoomType;
   exits: Partial<Record<Direction, ReferralRoomId | "E1" | "N2">>;
   lockedExits?: Partial<Record<Direction, string>>;
-  requiredItems?: Partial<Record<Direction, "concurrence_slip">>;
+  requiredItems?: Partial<Record<Direction, ProcessItemId>>;
 }
 
 const REFERRAL_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
@@ -114,8 +118,9 @@ const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
     id: "R1",
     title: "Equity Gate",
     roomType: "puzzle",
-    exits: { west: "N2", east: "R2" },
-    lockedExits: { east: "Visible excision gate" }
+    exits: { west: "N2", east: "R2", north: "R3" },
+    lockedExits: { east: "Visible excision gate", north: "Dispatch stacks access" },
+    requiredItems: { north: "clearance_token" }
   },
   R2: {
     id: "R2",
@@ -124,7 +129,8 @@ const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
     exits: { west: "R1", east: "E1" },
     lockedExits: { east: "Concurrence Slip handoff" },
     requiredItems: { east: "concurrence_slip" }
-  }
+  },
+  R3: { id: "R3", title: "Dispatch Stacks", roomType: "hint", exits: { south: "R1" } }
 };
 
 export class ReferralVaultScene extends Phaser.Scene {
@@ -172,10 +178,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     const arrival = readChapterArrival(data, "ReferralVaultScene", gameState.currentScene);
     const restoringReferralScene = gameState.currentScene === "ReferralVaultScene";
     const restoredRoomId: ReferralRoomId = arrival?.to === "R2" || (!arrival && restoringReferralScene
-      && gameState.roomTraversal?.currentRoomId === "R2") ? "R2" : "R1";
+      && gameState.roomTraversal?.currentRoomId === "R2") ? "R2"
+        : !arrival && restoringReferralScene && gameState.roomTraversal?.currentRoomId === "R3" ? "R3" : "R1";
     const restoredPosition = arrival ? { x: arrival.x, y: arrival.y }
       : restoringReferralScene ? { ...gameState.player } : null;
-    const restoredVisitedRoomIds = getVisitedRoomIds(["R1", "R2"] as const);
+    const restoredVisitedRoomIds = getVisitedRoomIds(["R1", "R2", "R3"] as const);
     setSceneState("ReferralVaultScene", "explore", "Referral Vault: earn the Concurrence Slip.");
     retroAudio.startMusic("ReferralVaultScene");
     this.cameras.main.setBackgroundColor(PALETTE.deepRuby);
@@ -212,7 +219,9 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.visitedRoomIds = new Set(restoredVisitedRoomIds);
     this.restoreHeldBatchState(restoredRoomId);
     this.enterRoom(restoredRoomId, restoredPosition ?? { x: 128, y: 192 }, false);
-    if (!this.referralGateOpen) {
+    if (restoredRoomId === "R3") {
+      setLatestMessage("Compare the dispatch copy with the draft. The south door returns to review.");
+    } else if (!this.referralGateOpen) {
       setLatestMessage("Carry the equity batch between desks. StateChat drafts; a human confirms.");
     }
   }
@@ -310,7 +319,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.refreshReviewRouteCue();
     const handledRoomAction = this.currentRoomId === "R1"
       ? this.handleReferralReviewAction(input)
-      : this.handleConcurrenceSlipAction(input);
+      : this.currentRoomId === "R3" ? this.handleDispatchAction(input) : this.handleConcurrenceSlipAction(input);
     if (handledRoomAction) {
       this.reliability.update();
       this.objectiveText.setText("");
@@ -333,7 +342,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.clearRoom();
       this.renderCurrentRoom();
       this.player.setPosition(spawn.x, spawn.y);
-      this.danneLurker.enterRoom(this.time.now);
+      this.danneLurker.enterRoom(this.time.now, roomId !== "R3");
       this.syncRoomTraversalState();
       this.updateReferralMinimap();
       this.exitCooldownUntil = this.time.now + 280;
@@ -397,11 +406,14 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
     const packedTilemapRendered = this.renderReferralTilemap(room.id);
     if (!packedTilemapRendered) {
-      addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "vault", track: (object) => this.track(object) });
-      this.drawReferralVaultTileField(room.id);
+      if (room.id === "R3") this.renderDispatchFallback();
+      else {
+        addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "vault", track: (object) => this.track(object) });
+        this.drawReferralVaultTileField(room.id);
+      }
     }
     this.drawRoomDoors();
-    if (!packedTilemapRendered) {
+    if (!packedTilemapRendered && room.id !== "R3") {
       addSnesRoomCompass(this, {
         x: 216,
         y: 62,
@@ -415,7 +427,8 @@ export class ReferralVaultScene extends Phaser.Scene {
       });
     }
     if (room.id === "R1") this.renderEquityGate(packedTilemapRendered);
-    else this.renderConcurrenceChamber(packedTilemapRendered);
+    else if (room.id === "R2") this.renderConcurrenceChamber(packedTilemapRendered);
+    else this.renderDispatchStacks();
     this.syncRoomTraversalState();
     this.syncThreatState();
   }
@@ -430,7 +443,12 @@ export class ReferralVaultScene extends Phaser.Scene {
           layers: buildReferralR1TileLayers(),
           collisionRect: referralR1CollisionRect
         }
-      : {
+      : roomId === "R3" ? {
+          id: "referral-r3",
+          map: REFERRAL_R1_TILEMAP,
+          layers: buildDispatchStackLayers(dispatchAisleOpen(gameState.sceneProgress)),
+          collisionRect: referralR1CollisionRect
+        } : {
           id: "referral-r2",
           map: REFERRAL_R2_TILEMAP,
           layers: buildReferralR2TileLayers(),
@@ -501,7 +519,8 @@ export class ReferralVaultScene extends Phaser.Scene {
         packedTileGid(INTERIOR_TILES.wallPanel),
         packedTileGid(INTERIOR_TILES.wallMetal),
         packedTileGid(INTERIOR_TILES.wallBrick),
-        packedTileGid(INTERIOR_TILES.wallBlue)
+        packedTileGid(INTERIOR_TILES.wallBlue),
+        packedTileGid(19)
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
@@ -598,6 +617,14 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   private drawRoomDoors() {
     const room = REFERRAL_ROOMS[this.currentRoomId];
+    if (room.exits.north || room.exits.south) {
+      const direction = room.exits.north ? "north" : "south";
+      addSnesGate(this, {
+        direction, hasExit: true, unlocked: canTraverseExit(room.id, direction, getHeldProcessItemIds()),
+        exitLabel: direction === "north" ? "STACKS" : "REVIEW", lockLabel: "TOKEN",
+        track: object => this.track(object), depth: 65
+      });
+    }
     if (room.exits.west) {
       addSnesGate(this, {
         direction: "west",
@@ -627,6 +654,7 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   private compassLockedExits(room: ReferralRoom) {
     const locked: Partial<Record<Direction, string>> = {};
+    if (room.id === "R1" && !hasProcessItem("clearance_token")) locked.north = "Clearance Token";
     if (room.id === "R1" && room.exits.east && !this.referralGateOpen) {
       locked.east = room.lockedExits?.east ?? "EQTY";
     }
@@ -657,6 +685,70 @@ export class ReferralVaultScene extends Phaser.Scene {
     else this.drawReferralCompleteStage(packedTilemapRendered);
     setObjective(this.referralObjective());
     this.syncReferralVisibleEntities();
+  }
+
+  private renderDispatchFallback() {
+    this.track(this.add.rectangle(128, 128, 256, 192, color(PALETTE.creamPaper)).setDepth(-12));
+    for (const cell of buildDispatchStackLayers(dispatchAisleOpen(gameState.sceneProgress)).collisionCells) {
+      const rect = referralR1CollisionRect(cell);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+      this.track(this.add.rectangle(rect.x + 8, rect.y + 8, 16, 16, color(PALETTE.stoneDark))
+        .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(44));
+    }
+  }
+
+  private renderDispatchStacks() {
+    const found = dispatchCopyFound(gameState.sceneProgress);
+    const open = dispatchAisleOpen(gameState.sceneProgress);
+    const { receipt, crank, index } = DISPATCH_STACKS;
+    this.track(this.add.ellipse(receipt.x, receipt.y + 12, 24, 4, color(PALETTE.black), 0.3).setDepth(46));
+    this.track(this.createManifestIcon(receipt.x, receipt.y, false).setAlpha(found ? 0.4 : 1).setDepth(70));
+    this.track(this.add.rectangle(crank.x, crank.y, 14, 12, color(PALETTE.stoneDark))
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(70));
+    this.track(this.add.rectangle(crank.x, crank.y, open ? 8 : 2, open ? 2 : 8, color(PALETTE.goldStamp)).setDepth(71));
+    this.track(this.add.rectangle(crank.x + (open ? 4 : 0), crank.y - (open ? 0 : 4), 4, 4,
+      color(open ? PALETTE.terminalCyan : PALETTE.creamPaper)).setDepth(72));
+    this.track(this.createManifestIcon(index.x, index.y, true).setDepth(70));
+    const equity = this.carriedEquityPacket();
+    const treatment = this.carriedTreatmentDocket();
+    if (equity) this.createEquityPacketHeldIcon(equity.id);
+    else if (this.manifestCarried()) this.createManifestHeldIcon();
+    else if (treatment) this.createTreatmentDocketHeldIcon(treatment.id);
+    setObjective(this.referralObjective());
+    setVisibleEntities([
+      `Dispatch copy: ${found ? "recovered; WH minutes -> NSC" : "north shelf"}`,
+      `Shelf crank: ${open ? "return aisle open" : "north side; opens return aisle"}`,
+      "Stack index: walk around either end of the shelves",
+      "South exit: Equity Gate"
+    ]);
+  }
+
+  private dispatchLabel(id: "receipt" | "crank" | "index") {
+    return id === "receipt" ? dispatchCopyFound(gameState.sceneProgress) ? "READ DISPATCH COPY" : "TAKE DISPATCH COPY"
+      : id === "crank" ? dispatchAisleOpen(gameState.sceneProgress) ? "RETURN AISLE OPEN" : "TURN SHELF CRANK"
+        : "READ STACK INDEX";
+  }
+
+  private handleDispatchAction(input: Readonly<InputState>) {
+    if (!input.aJustPressed) return false;
+    const id = nearbyDispatchTarget(this.player.position);
+    if (!id) return false;
+    if (id === "receipt") {
+      gameState.sceneProgress.referralDispatchCopyFound = 1;
+      this.toast.show("COPY: WH MINUTES > NSC", this.player.position, "info");
+      setLatestMessage("Training dispatch copy: White House Minutes routed to NSC. Compare it with the draft at the human desk. Routing is not release approval.");
+    } else if (id === "crank") {
+      gameState.sceneProgress.referralDispatchAisleOpen = 1;
+      this.toast.show("RETURN AISLE OPEN", this.player.position, "info");
+      setLatestMessage("The shelves roll apart. The center aisle now leads straight back to review.");
+    } else {
+      this.toast.show("DISPATCH COPY: NORTH", this.player.position, "info");
+      setLatestMessage("The dispatch copy is beyond the shelves. Both side aisles reach it. A crank on the far side opens a shorter return.");
+    }
+    retroAudio.confirm();
+    this.redrawReferralRoom();
+    saveGameNow();
+    return true;
   }
 
   private referralReviewStage() {
@@ -880,6 +972,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private syncThreatState() {
+    if (this.currentRoomId === "R3") { setVisibleThreats([]); return; }
     setVisibleThreats(
       [
         ...this.bureaucraticWalls.filter((wall) => !wall.isCleared).map((wall) => ({
@@ -897,7 +990,8 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private updateDanneLurker(delta: number, canPressure = true) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure, this.player.combatReadout);
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position,
+      canPressure && this.currentRoomId !== "R3", this.player.combatReadout);
     if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted referral review.")) {
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
@@ -912,7 +1006,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private drawReferralMinimap() {
-    (["R1", "R2"] as ReferralRoomId[]).forEach((roomId, index) => {
+    (["R1", "R2", "R3"] as ReferralRoomId[]).forEach((roomId, index) => {
       const x = 16 + index * 11;
       const cell = this.add.rectangle(x, 16, 8, 7, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(805);
       const label = this.add.text(x, 12, roomId, {
@@ -937,6 +1031,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private syncRoomTraversalState() {
     const room = REFERRAL_ROOMS[this.currentRoomId];
     const lockedExits: Partial<Record<Direction, string>> = {};
+    if (room.id === "R1" && !hasProcessItem("clearance_token")) lockedExits.north = "Clearance Token";
     if (room.id === "R1" && !this.referralGateOpen) lockedExits.east = room.lockedExits?.east;
     if (room.id === "R2" && !canTraverseExit(room.id, "east", getHeldProcessItemIds())) {
       lockedExits.east = room.lockedExits?.east;
@@ -1111,7 +1206,26 @@ export class ReferralVaultScene extends Phaser.Scene {
     let direction: Direction | null = null;
     if (position.x >= REFERRAL_PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     else if (position.x <= REFERRAL_PLAY_BOUNDS.left + 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
+    else if (position.x >= 120 && position.x <= 136 && position.y <= REFERRAL_PLAY_BOUNDS.top + 2) direction = "north";
+    else if (position.x >= 120 && position.x <= 136 && position.y >= 210) direction = "south";
     if (!direction) return false;
+
+    if (this.currentRoomId === "R1" && direction === "north") {
+      if (!canTraverseExit("R1", "north", getHeldProcessItemIds())) {
+        const prompt = blockedExitPrompt("R1", "north", getHeldProcessItemIds());
+        this.toast.show("NEED CLEARANCE TOKEN", this.player.position, "warn");
+        setLatestMessage(prompt.message);
+        this.player.setPosition(position.x, 62);
+        this.exitCooldownUntil = this.time.now + 500;
+        return true;
+      }
+      this.enterRoom("R3", { x: 128, y: 194 }, true, "north");
+      return true;
+    }
+    if (this.currentRoomId === "R3" && direction === "south") {
+      this.enterRoom("R1", { x: 128, y: 62 }, true, "south");
+      return true;
+    }
 
     if (this.currentRoomId === "R1" && direction === "west") {
       this.roomTransitionLocked = true;
@@ -1193,6 +1307,13 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private updateReferralInteractionPrompt(delta: number) {
+    if (this.currentRoomId === "R3") {
+      const id = nearbyDispatchTarget(this.player.position);
+      const target = id ? this.referralTrayTarget(`dispatch-${id}`, this.dispatchLabel(id), DISPATCH_STACKS[id].x, DISPATCH_STACKS[id].y) : null;
+      this.interactionPrompt.update(delta, this.toast.visible ? null : target);
+      setNearestInteractable(target?.label ?? null);
+      return;
+    }
     if (this.currentRoomId === "R2") {
       this.updateConcurrenceSlipPrompt(delta);
       return;
@@ -1260,6 +1381,9 @@ export class ReferralVaultScene extends Phaser.Scene {
         : this.referralTrayTarget("referral-equity-tray", "Referral file", 128, 174);
     }
     if (stage === "manifest") {
+      if (this.manifestCarried() && !dispatchCopyFound(gameState.sceneProgress)) {
+        return this.referralTrayTarget("dispatch-north", "Dispatch Stacks", 128, 48);
+      }
       return this.manifestCarried()
         ? this.referralTrayTarget("referral-human-desk", "Human Concurrence Desk", 72, 156)
         : this.referralTrayTarget("referral-manifest-tray", "StateChat draft manifest", 178, 116);
@@ -1394,7 +1518,9 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.manifestWorldIcon = undefined;
     this.createManifestHeldIcon();
     retroAudio.confirm();
-    setLatestMessage("StateChat drafted the batch. Carry it to the Human Concurrence Desk.");
+    setLatestMessage(dispatchCopyFound(gameState.sceneProgress)
+      ? "Compare the draft with your dispatch copy at the Human Concurrence Desk."
+      : "StateChat drafted the batch. Find the dispatch copy in the north stacks before human review.");
     setObjective(this.referralObjective());
     this.syncReferralVisibleEntities();
     saveGameNow();
@@ -1407,11 +1533,12 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.manifestBoard.show(restoreReferralManifest(gameState.sceneProgress.referralManifestDraftRoutes), (draft) => {
       gameState.sceneProgress.referralManifestDraftRoutes = encodeReferralManifest(draft);
       saveGameNow();
-    }, (draft) => this.fileManifestAtHumanDesk(draft));
+    }, (draft) => this.fileManifestAtHumanDesk(draft), dispatchCopyFound(gameState.sceneProgress));
   }
 
   private fileManifestAtHumanDesk(draft: ReferralManifest) {
-    if (this.manifestReviewed || !this.manifestCarried() || firstManifestMismatch(draft)) return;
+    if (this.manifestReviewed || !this.manifestCarried() || firstManifestMismatch(draft)
+      || !dispatchCopyFound(gameState.sceneProgress)) return;
     gameState.sceneProgress.referralManifestDraftRoutes = encodeReferralManifest(draft);
     gameState.sceneProgress.referralManifestCarried = 0;
     gameState.sceneProgress.referralManifestReviewComplete = 1;
@@ -1539,7 +1666,10 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private referralObjective() {
+    if (this.currentRoomId === "R3") return dispatchObjective(gameState.sceneProgress);
     const stage = this.referralReviewStage();
+    if (this.currentRoomId === "R1" && stage === "manifest" && this.manifestCarried()
+      && !dispatchCopyFound(gameState.sceneProgress)) return "NORTH - DISPATCH COPY";
     const carried = stage === "equity" ? Boolean(this.carriedEquityPacket())
       : stage === "manifest" ? this.manifestCarried() : Boolean(this.carriedTreatmentDocket());
     return referralReviewObjective(stage, stage === "equity" ? this.equityStep : this.treatmentStep,

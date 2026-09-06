@@ -16,7 +16,7 @@ async function run(mobile) {
   const cdp = await context.newCDPSession(page);
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
-  page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  page.on('console', m => { if (m.type() === 'error') errors.push(`${m.text()} ${m.location().url ?? ''}`.trim()); });
   const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
   async function point(x,y) {
     const b = await page.locator('canvas').first().boundingBox();
@@ -66,6 +66,9 @@ async function run(mobile) {
     await writeFile(`${path}.json`,JSON.stringify(s,null,2));
     await context.storageState({path: `${out}/earned-storage.json`});
     if(name === 'manifest-held') await context.storageState({path: `${out}/manifest-held-storage.json`});
+    if(name === 'dispatch-stacks-entry') await context.storageState({path: `${out}/dispatch-entry-storage.json`});
+    if(name === 'dispatch-copy-recovered') await context.storageState({path: `${out}/dispatch-copy-storage.json`});
+    if(name === 'return-aisle-open') await context.storageState({path: `${out}/dispatch-open-storage.json`});
     console.log(label,name,JSON.stringify({scene:s.scene,room:s.roomTraversal?.currentRoomId,objective:s.objective,held:s.heldItem,progress:Object.fromEntries(Object.entries(s.sceneProgress).filter(([key])=>/referral|Permission|Appeal/.test(key))),player:s.player,reliability:s.reliability}));
     return s;
   }
@@ -76,6 +79,25 @@ async function run(mobile) {
     await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ReferralVaultScene');
     await page.waitForTimeout(950);
   }
+  async function checkCarriedStacksVisit(iconKey, name) {
+    const before = await state();
+    await move(128,183); await move(128,62); await move(128,42,'R3');
+    await resume();
+    const resumed = await shot(name);
+    assert.equal(resumed.roomTraversal.currentRoomId,'R3');
+    assert.equal(resumed.heldItem,before.heldItem);
+    assert.equal(resumed.documentPoints,before.documentPoints);
+    assert.deepEqual(resumed.inventory,before.inventory);
+    assert.deepEqual(resumed.documentCandidates,before.documentCandidates);
+    assert(await page.evaluate(key => {
+      const scene = window.game.scene.getScene('ReferralVaultScene');
+      const icon = scene[key];
+      return icon?.active && icon.visible && Math.abs(icon.x - scene.player.position.x) <= 1;
+    }, iconKey), `${name}: carried batch must remain visible`);
+    await move(128,213,'R1');
+    assert.equal((await state()).heldItem,before.heldItem);
+    await move(128,183);
+  }
   try {
     await resume();
     await shot('initial');
@@ -83,6 +105,7 @@ async function run(mobile) {
     await press();
     let s=await shot('equity-held');
     assert.equal(s.sceneProgress.referralEquityPacketCarried,1);
+    await checkCarriedStacksVisit('equityPacketHeldIcon','equity-visible-in-stacks');
     await move(60,185);
     await move(60,164);
     await press();
@@ -101,7 +124,9 @@ async function run(mobile) {
     assert.equal(s.heldItem,'Equity Batch: BASE');
     assert.equal(s.objective,'2/3 TO DOD');
     assert(Math.hypot(s.player.x-beforeResume.player.x,s.player.y-beforeResume.player.y)<=2);
-    let beforeWrong=s.reliability;
+    // Live pressure can knock the player beyond the desk after the prior save.
+    await move(60,164);
+    let beforeWrong=(await state()).reliability;
     await press();
     s=await shot('wrong-equity-kept-in-hand');
     assert.equal(s.sceneProgress.referralEquityPacketCarried,2);
@@ -124,7 +149,72 @@ async function run(mobile) {
     await resume();
     s=await shot('manifest-resumed');
     assert.equal(s.heldItem,'StateChat Draft Manifest');
+    assert.equal(s.objective,'NORTH - DISPATCH COPY');
+    await move(196,183); await move(75,183); await press();
+    const withoutCopy=await shot('review-needs-original-copy');
+    assert.equal(withoutCopy.mode,'choice');
+    await click(128,178);
+    s=await state();
+    assert.match(s.latestMessage,/not its own evidence/);
+    assert(!s.sceneProgress.referralManifestReviewComplete);
+    assert.equal(s.documentPoints,withoutCopy.documentPoints);
+    await press('Escape');
+    await move(128,183); await move(128,62); await move(128,42,'R3');
+    s=await shot('dispatch-stacks-entry');
+    assert.equal(s.roomTraversal.currentRoomId,'R3');
+    assert.equal(s.heldItem,'StateChat Draft Manifest');
+    assert.equal(s.visibleThreats.length,0);
+    const beforePause={player:s.player,points:s.documentPoints,reliability:s.reliability,swing:s.playerCombat.weapon.swingId};
+    if(mobile) await touch(224,16); else await press('Escape');
+    await page.waitForTimeout(200);
+    assert.equal((await state()).mode,'pause');
+    const mapControl=(await state()).pauseMenu.controls.find(control=>control.id==='map');
+    await click(mapControl.x,mapControl.y);
+    await shot('dispatch-chapter-map');
+    await page.waitForTimeout(1200);
+    assert.deepEqual((await state()).player,beforePause.player);
+    const closeControl=(await state()).pauseMenu.controls.find(control=>control.id==='close');
+    await click(closeControl.x,closeControl.y);
+    assert.equal((await state()).mode,'explore');
+    assert.equal((await state()).playerCombat.weapon.swingId,beforePause.swing);
+    const beforeCopy={points:s.documentPoints,inventory:s.inventory,documents:s.documentCandidates,route:s.sceneProgress.referralManifestDraftRoutes};
+    // The near side cannot reach through shelves or use the far-side crank.
+    await move(128,170);
+    for(let i=0;i<8;i++) await direction('ArrowUp');
+    await press();
+    s=await shot('shelves-block-direct-route');
+    assert(s.player.y>=163);
+    assert(!s.sceneProgress.referralDispatchCopyFound);
+    assert(!s.sceneProgress.referralDispatchAisleOpen);
+    await move(48,177); await press();
+    assert.match((await state()).latestMessage,/Both side aisles/);
+    const aisleX=mobile ? 208 : 48;
+    await move(aisleX,177); await move(aisleX,82); await move(128,82); await press();
+    s=await shot('dispatch-copy-recovered');
+    assert.equal(s.sceneProgress.referralDispatchCopyFound,1);
+    assert.equal(s.documentPoints,beforeCopy.points);
+    assert.deepEqual(s.inventory,beforeCopy.inventory);
+    assert.deepEqual(s.documentCandidates,beforeCopy.documents);
+    assert.equal(s.sceneProgress.referralManifestDraftRoutes,beforeCopy.route);
+    assert(!s.sceneProgress.referralManifestReviewComplete);
+    assert.equal(s.heldItem,'StateChat Draft Manifest');
+    await press();
+    assert.equal((await state()).documentPoints,beforeCopy.points);
+    await move(176,82); await press();
+    s=await shot('return-aisle-open');
+    assert.equal(s.sceneProgress.referralDispatchAisleOpen,1);
+    const savedStack=s;
+    await resume();
+    s=await shot('stacks-continue');
+    assert.equal(s.roomTraversal.currentRoomId,'R3');
+    assert.equal(s.sceneProgress.referralDispatchAisleOpen,1);
+    assert.equal(s.sceneProgress.referralDispatchCopyFound,1);
+    assert(Math.hypot(s.player.x-savedStack.player.x,s.player.y-savedStack.player.y)<=2);
+    await move(128,82); await move(128,213,'R1');
+    s=await shot('direct-return-to-review');
+    assert.equal(s.roomTraversal.currentRoomId,'R1');
     assert.equal(s.objective,'DRAFT TO HUMAN DESK');
+    assert.equal(s.documentPoints,beforeCopy.points);
     await move(196,183); await move(75,183); await press();
     s=await shot('manifest-review-open');
     assert.equal(s.mode,'choice');
@@ -190,6 +280,7 @@ async function run(mobile) {
     s=await shot('treatment-batch-held');
     assert.equal(s.sceneProgress.referralTreatmentDocketCarried,1);
     assert.equal(s.objective,'1/3 TO PERMIT');
+    await checkCarriedStacksVisit('treatmentDocketHeldIcon','review-batch-visible-in-stacks');
     await move(60,185); await press();
     s=await shot('appeal-auto-handoff');
     assert.equal(s.sceneProgress.referralTreatmentDocketCarried,2);
@@ -252,6 +343,14 @@ async function run(mobile) {
     const metrics=await page.evaluate(()=>({mobile:window.rubyRuleMobileMetrics,overflow:document.documentElement.scrollWidth>innerWidth}));
     assert.equal(metrics.overflow,false);
     await writeFile(`${out}/metrics.json`,JSON.stringify(metrics,null,2));
+  } catch (error) {
+    await page.screenshot({path:`${out}/failure.png`});
+    await writeFile(`${out}/failure.json`,JSON.stringify({
+      message:String(error),
+      state:await state().catch(error=>({unavailable:String(error)})),
+      page:await page.evaluate(()=>({url:location.href,body:document.body.innerText,canvases:document.querySelectorAll('canvas').length}))
+    },null,2));
+    throw error;
   } finally {
     try { await writeFile(`${out}/errors.json`,JSON.stringify(errors,null,2)); }
     finally { await context.close(); }

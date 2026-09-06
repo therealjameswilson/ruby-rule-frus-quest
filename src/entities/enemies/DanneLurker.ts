@@ -231,7 +231,8 @@ export class DanneLurker extends Enemy {
     return this.bolts.length ? `firing ${slotReadout}` : "lurking";
   }
 
-  enterRoom(timeMs: number) {
+  enterRoom(timeMs: number, visible = true) {
+    this.container.setVisible(visible);
     this.clearEgoBoltTelegraph();
     this.clearBolts();
     this.currentX = this.homePosition.x;

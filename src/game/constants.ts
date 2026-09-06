@@ -574,9 +574,18 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "referral_vault",
     title: "Equity Gate",
     grid: { x: 4, y: 1 },
-    exits: { west: "N2", east: "R2" },
-    lockedExits: { east: "Visible-excision gate" },
+    exits: { west: "N2", east: "R2", north: "R3" },
+    lockedExits: { east: "Visible-excision gate", north: "Dispatch stacks access" },
+    requiredItems: { north: "clearance_token" },
     roomType: "puzzle"
+  },
+  {
+    id: "R3",
+    area: "referral_vault",
+    title: "Dispatch Stacks",
+    grid: { x: 4, y: -1 },
+    exits: { south: "R1" },
+    roomType: "hint"
   },
   {
     id: "R2",

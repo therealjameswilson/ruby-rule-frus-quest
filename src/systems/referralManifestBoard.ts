@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { clearChoiceState, setChoiceState, setLatestMessage } from "../game/state";
 import { REFERRAL_EQUITY_PACKETS } from "../game/referralVaultReview";
+import { DISPATCH_STACKS } from "../game/referralDispatch";
 import { changeManifestRoute, firstManifestMismatch, initialReferralManifest, REFERRAL_MANIFEST_LABELS, REFERRAL_MANIFEST_TITLE, type ReferralManifest } from "../game/referralManifest";
 import { bindPointerDown, getInput, swallowNextInputFrame } from "../input/InputState";
 import { retroAudio } from "./audio";
@@ -16,6 +17,8 @@ export class ReferralManifestBoard {
   private readonly routes: Phaser.GameObjects.Text[] = [];
   private readonly fileButton: Phaser.GameObjects.Rectangle;
   private readonly feedback: Phaser.GameObjects.Text;
+  private readonly source: Phaser.GameObjects.Text;
+  private evidenceAvailable = false;
   private manifest = initialReferralManifest();
   private selected = 0;
   private onChange?: (manifest: ReferralManifest) => void;
@@ -30,7 +33,7 @@ export class ReferralManifestBoard {
         .setStrokeStyle(1, color(PALETTE.terminalCyan))
     ]);
     this.text(20, 43, "REVIEW MANIFEST", PALETTE.terminalCyan);
-    this.text(20, 57, "STATECHAT DRAFT / TRAINING", PALETTE.goldStamp);
+    this.source = this.text(20, 57, "STATECHAT DRAFT / TRAINING", PALETTE.goldStamp);
     this.text(24, 69, "DOCUMENT", PALETTE.creamPaper, 6);
     this.text(177, 69, "AGENCY", PALETTE.creamPaper, 6);
     const close = scene.add.rectangle(230, 50, 30, 30, color(PALETTE.black), 0);
@@ -65,11 +68,13 @@ export class ReferralManifestBoard {
 
   get active() { return this.container.visible; }
 
-  show(manifest: ReferralManifest, onChange: (manifest: ReferralManifest) => void, onApprove: (manifest: ReferralManifest) => void) {
+  show(manifest: ReferralManifest, onChange: (manifest: ReferralManifest) => void, onApprove: (manifest: ReferralManifest) => void, evidenceAvailable = false) {
     this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.manifest = { ...manifest };
     this.onChange = onChange;
     this.onApprove = onApprove;
+    this.evidenceAvailable = evidenceAvailable;
+    this.source.setText(evidenceAvailable ? DISPATCH_STACKS.evidence : "SOURCE COPY: NORTH STACKS");
     this.selected = 0;
     this.feedback.setText("ROUTING ONLY\nNOT RELEASE APPROVAL");
     this.container.setVisible(true);
@@ -115,6 +120,12 @@ export class ReferralManifestBoard {
 
   private submit() {
     if (!this.active) return;
+    if (!this.evidenceAvailable) {
+      this.feedback.setText("FIND THE DISPATCH COPY\nNORTH OF THE EQUITY ROOM");
+      setLatestMessage("The draft is not its own evidence. Find the dispatch copy in the north stacks, then compare and file it here.");
+      retroAudio.warning();
+      return;
+    }
     const mismatch = firstManifestMismatch(this.manifest);
     if (mismatch) {
       this.selected = REFERRAL_EQUITY_PACKETS.findIndex(packet => packet.id === mismatch.id);

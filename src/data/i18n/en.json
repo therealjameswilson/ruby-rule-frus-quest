@@ -36,7 +36,9 @@
     "toolLabel": "TOOL {label}",
     "touchControlsReady": "TOUCH CONTROLS READY",
     "useTool": "USE {tool}",
-    "counterDanne": "SWING / RETURN EGO BOLTS"
+    "counterDanne": "SWING / RETURN EGO BOLTS",
+    "dispatchAisles": "EXPLORE THE SIDE AISLES",
+    "dispatchReturn": "SOUTH TO HUMAN REVIEW"
   },
   "language": {
     "changed": "Language set to {language}.",

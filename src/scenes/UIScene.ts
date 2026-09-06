@@ -23,6 +23,7 @@ import { guideQuestBandObjective, officeQuestBandObjective } from "./openingQues
 import { questBandBossCue, questBandRiskLine } from "./questBandCue";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
+import { dispatchAisleOpen } from "../game/referralDispatch";
 import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
 import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
@@ -297,6 +298,9 @@ export class UIScene extends Phaser.Scene {
       if (vaultAction) return vaultAction;
     }
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
+    if (gameState.currentScene === "ReferralVaultScene" && gameState.roomTraversal?.currentRoomId === "R3") {
+      return getString(dispatchAisleOpen(gameState.sceneProgress) ? "hud.dispatchReturn" : "hud.dispatchAisles");
+    }
     if (gameState.currentScene === "EndingScene") return getString("hud.binderyDelivery");
     if (this.showCounterAction()) {
       return gameState.currentScene === "BlackVaultLairScene"
@@ -322,6 +326,7 @@ export class UIScene extends Phaser.Scene {
 
   private showCounterAction() {
     return gameState.mode === "explore" && !gameState.nearestInteractable
+      && !(gameState.currentScene === "ReferralVaultScene" && gameState.roomTraversal?.currentRoomId === "R3")
       && isWeaponTool(gameState.equippedProcessItem) && hasProcessItem(gameState.equippedProcessItem)
       && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "NaraStacksScene"].includes(gameState.currentScene);
   }
