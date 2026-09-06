@@ -2,6 +2,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright')
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
 const mobile = process.argv.includes('--mobile');
+const coaching = process.argv.includes('--coaching');
 const out = process.env.FRUS_QA_OUT ?? `/tmp/frus-live-counter-${mobile ? 'mobile' : 'desktop'}`;
 const base = process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/';
 await mkdir(out, { recursive: true });
@@ -76,9 +77,27 @@ try {
     await move(128, 200);
     await press();
     await scene('GuideScene');
+    if (coaching) {
+        // Input-only perimeter check: the player must stay on the room's floor.
+        await direction('ArrowRight', 2500);
+        await direction('ArrowDown', 2500);
+        assert.deepEqual((await state()).player, { x: 216, y: 180 });
+        await shot('00-south-east-wall');
+        await direction('ArrowLeft', 4000);
+        await direction('ArrowUp', 2500);
+        assert.deepEqual((await state()).player, { x: 40, y: 70 });
+        await shot('00-north-west-wall');
+    }
     await move(96, 154);
     await press();
     await shot('01-stamp-earned');
+    if (coaching) {
+        await direction('ArrowLeft', 20);
+        await press('x', 100);
+        assert.equal((await state()).guideCounter.cue, 'faceEast');
+        assert(!(await state()).sceneProgress.guideCitationCounterTrained);
+        await shot('01-face-the-bolt');
+    }
     const baseline = await state();
     await phase('incoming');
     await shot('02-live-bolt');
@@ -108,8 +127,29 @@ try {
     // A is interaction, not the counter. It must not clear the lesson.
     await press();
     assert(!((await state()).sceneProgress.guideCitationCounterTrained));
-    await move(176, 174);
-    await direction('ArrowUp', 20);
+    if (coaching) {
+        // Follow the displayed direction and timing cue at the pickup position,
+        // without knowing bolt coordinates or moving to a precomputed counter spot.
+        const cues = { faceNorth: 'ArrowUp', faceSouth: 'ArrowDown', faceEast: 'ArrowRight', faceWest: 'ArrowLeft' };
+        for (let n = 0; n < 80; n++) {
+            const cue = (await state()).guideCounter?.cue;
+            if (cues[cue]) await direction(cues[cue], 20);
+            if ((await state()).guideCounter?.cue === 'swing') break;
+            await page.waitForTimeout(100);
+        }
+        assert.equal((await state()).guideCounter.cue, 'swing');
+        // Act immediately so screenshot capture cannot consume the timing window.
+        await press('x', 10);
+        await page.waitForFunction(() => {
+            const s = JSON.parse(window.render_game_to_text());
+            return s.guideCounter?.phase === 'returned' || s.sceneProgress.guideCitationCounterTrained === 1;
+        }, null, { timeout: 2000, polling: 'raf' });
+        await shot('06-coached-counter');
+        await page.waitForTimeout(900);
+    } else {
+        await move(176, 174);
+        await direction('ArrowUp', 20);
+    }
     for (let attempt = 0; attempt < 8 && !((await state()).sceneProgress.guideCitationCounterTrained); attempt++) {
         await page.waitForFunction(() => { const s = JSON.parse(window.render_game_to_text()), b = s.guideCounter?.bolt; return b && !b.returned && Math.abs(b.x - s.player.x) < 10 && b.y < s.player.y - 27 && b.y > s.player.y - 43; }, null, { timeout: 12000, polling: 'raf' });
         if (mobile) {
@@ -154,6 +194,7 @@ try {
     assert.equal((await state()).sceneProgress.guideCitationCounterTrained, 1);
     assert.equal((await state()).guideCounter, null);
     await shot('08-continued-gate');
+    await context.storageState({ path: `${out}/earned-guide-storage.json` });
     await move(128, 182);
     await press();
     await scene('ArchiveScene');

@@ -92,6 +92,17 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
+    "guideCoach": {
+      "faceNorth": "REGARDE VERS LE HAUT",
+      "faceSouth": "REGARDE VERS LE BAS",
+      "faceEast": "REGARDE VERS LA DROITE",
+      "faceWest": "REGARDE VERS LA GAUCHE",
+      "stepBack": "RECULE POUR LE RENVOI",
+      "wait": "PRET - ATTENDS LE TIR",
+      "swing": "FRAPPE MAINTENANT!",
+      "recover": "TAMPON EN RECHARGE",
+      "returned": "EGO RENVOYE!"
+    },
     "guideReturned": "EGO RENVOYE!",
     "guideAim": "FAIS FACE A LA LIGNE OR",
     "guideSwing": "FRAPPE A L'ARRIVEE DU TIR",

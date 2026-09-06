@@ -1,5 +1,16 @@
 {
   "hud": {
+    "guideCoach": {
+      "faceNorth": "FACE UP TOWARD THE BOLT",
+      "faceSouth": "FACE DOWN TOWARD THE BOLT",
+      "faceEast": "FACE RIGHT TOWARD THE BOLT",
+      "faceWest": "FACE LEFT TOWARD THE BOLT",
+      "stepBack": "STEP BACK FOR A CLEAR SHOT",
+      "wait": "READY - WAIT FOR THE BOLT",
+      "swing": "SWING NOW!",
+      "recover": "STAMP RECOVERING",
+      "returned": "EGO RETURNED!"
+    },
     "guideReturned": "EGO RETURNED!",
     "guideAim": "FACE THE GOLD AIM LINE",
     "guideSwing": "SWING AS BOLT REACHES YOU",

@@ -92,6 +92,17 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
+    "guideCoach": {
+      "faceNorth": "MIRA ARRIBA HACIA EL RAYO",
+      "faceSouth": "MIRA ABAJO HACIA EL RAYO",
+      "faceEast": "MIRA A LA DERECHA",
+      "faceWest": "MIRA A LA IZQUIERDA",
+      "stepBack": "RETROCEDE PARA RECIBIRLO",
+      "wait": "LISTO - ESPERA EL RAYO",
+      "swing": "GOLPEA AHORA!",
+      "recover": "SELLO RECARGANDO",
+      "returned": "EGO DEVUELTO!"
+    },
     "guideReturned": "EGO DEVUELTO!",
     "guideAim": "MIRA LA LINEA DORADA",
     "guideSwing": "GOLPEA AL LLEGAR EL EGO",

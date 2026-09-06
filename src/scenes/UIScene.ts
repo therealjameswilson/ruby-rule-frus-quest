@@ -309,6 +309,7 @@ export class UIScene extends Phaser.Scene {
     }
     if (gameState.currentScene === "GuideScene") {
       const lesson = getGuideCounterReadout();
+      if (lesson?.cue) return getString(`hud.guideCoach.${lesson.cue}`);
       if (lesson?.phase === "returned") return getString("hud.guideReturned");
       if (lesson?.phase === "charging") return getString("hud.guideAim");
       if (lesson?.phase === "incoming") return getString("hud.guideSwing");

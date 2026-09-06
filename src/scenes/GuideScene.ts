@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { characterAnimKey } from "../art/character_anims";
 import { danneAnimKey } from "../art/danne_anims";
 import { getCharacterKeyForNpcId } from "../art/characters";
@@ -6,6 +7,9 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { unlockCodexEntry } from "../game/codex";
 import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../game/danneAtlas";
 import { GUIDE_COUNTER, GuideCounterTraining, setGuideCounterReadout } from "../game/guideCounterTraining";
+import { guideCounterCue } from "../game/guideCounterCoaching";
+import { buildGuideCavernLayers, GUIDE_CAVERN_BOUNDS, GUIDE_CAVERN_ROOM, GUIDE_CAVERN_TILES } from "../game/guideCavernRoom";
+import { packedTileGid } from "../game/packedTileIndex";
 import { SNES_GUIDE_CAVERN_TILE_ASSET } from "../game/snesAtlas";
 import {
   addProcessItem,
@@ -48,6 +52,7 @@ import { handleOpenOverlays } from "../systems/overlayInput";
 import { saveGameNow } from "../systems/save";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { buildWeaponHitbox } from "../systems/weaponState";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -100,10 +105,12 @@ export class GuideScene extends Phaser.Scene {
     retroAudio.startMusic("ArchiveScene");
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-30);
-    drawRoomFrame(this, "ARCHIVE CAVERN", PALETTE.goldStamp, { showLegacyHud: false });
-    this.drawCaveInterior();
-    this.drawArchiveLamp(86, 88);
-    this.drawArchiveLamp(204, 80);
+    if (!this.drawPackedCavern()) {
+      drawRoomFrame(this, "ARCHIVE CAVERN", PALETTE.goldStamp, { showLegacyHud: false });
+      this.drawCaveInterior();
+      this.drawArchiveLamp(86, 88);
+      this.drawArchiveLamp(204, 80);
+    }
     const colleagueTexture = getCharacterKeyForNpcId("archive-colleague");
     const colleague = this.add
       .sprite(128, 104, colleagueTexture)
@@ -149,6 +156,11 @@ export class GuideScene extends Phaser.Scene {
     this.drawVerificationGate();
 
     this.player = new Player(this, 128, 160);
+    // Old saves may place the player beyond the former painted-only walls.
+    this.player.setPosition(
+      Phaser.Math.Clamp(this.player.position.x, GUIDE_CAVERN_BOUNDS.left, GUIDE_CAVERN_BOUNDS.right),
+      Phaser.Math.Clamp(this.player.position.y, GUIDE_CAVERN_BOUNDS.top, GUIDE_CAVERN_BOUNDS.bottom)
+    );
     this.dialog = new DialogBox(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
@@ -208,7 +220,7 @@ export class GuideScene extends Phaser.Scene {
       const swing = tryEquippedToolSwing(this.player);
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
     }
-    this.player.update(delta, true);
+    this.player.update(delta, true, { bounds: GUIDE_CAVERN_BOUNDS });
     this.updateCitationCounterTraining(delta);
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
@@ -286,8 +298,14 @@ export class GuideScene extends Phaser.Scene {
       ? this.player.activeActionHitbox : null;
     const event = this.counterTraining.update(delta, this.player.position, hitbox);
     const lesson = this.counterTraining.readout();
+    lesson.cue = guideCounterCue(lesson, this.player.position, this.player.facingDirection, combat.weapon.canSwing);
     setGuideCounterReadout(lesson);
     this.practiceAim.clear();
+    if (lesson.cue === "wait" || lesson.cue === "swing") {
+      const reach = buildWeaponHitbox(this.player.position, this.player.facingDirection, "citation_stamp");
+      this.practiceAim.lineStyle(1, color(lesson.cue === "swing" ? PALETTE.terminalCyan : PALETTE.goldStamp), 0.8)
+        .strokeRect(reach.x, reach.y, reach.width, reach.height);
+    }
     if (lesson.phase === "charging" && lesson.target) {
       const source = GUIDE_COUNTER.source;
       const distance = Phaser.Math.Distance.Between(source.x, source.y, lesson.target.x, lesson.target.y);
@@ -494,6 +512,26 @@ export class GuideScene extends Phaser.Scene {
       this.add.rectangle(227, y, 12, 10, color(PALETTE.sepiaInk)).setDepth(-5);
     }
     this.add.rectangle(128, 202, 40, 11, color(PALETTE.black)).setDepth(45);
+  }
+
+  private drawPackedCavern() {
+    const asset = GAMEPLAY_TILESETS.archiveDungeonNative;
+    if (!this.textures.exists(asset.key)) return false;
+    const { x, y, columns, rows } = GUIDE_CAVERN_ROOM;
+    const map = this.make.tilemap({ width: columns, height: rows, tileWidth: asset.tileSize, tileHeight: asset.tileSize });
+    const tileset = map.addTilesetImage(asset.manifestKey, asset.key, asset.tileSize, asset.tileSize, asset.margin, asset.spacing, asset.firstGid);
+    if (!tileset) { map.destroy(); return false; }
+    const ground = map.createBlankLayer("guide-ground", tileset, x, y);
+    const walls = map.createBlankLayer("guide-walls", tileset, x, y);
+    const decoration = map.createBlankLayer("guide-decoration", tileset, x, y);
+    if (!ground || !walls || !decoration) { map.destroy(); return false; }
+    const layers = buildGuideCavernLayers();
+    ground.putTilesAt(layers.ground, 0, 0).setDepth(-8);
+    walls.putTilesAt(layers.walls, 0, 0)
+      .setCollision([packedTileGid(GUIDE_CAVERN_TILES.wall), packedTileGid(GUIDE_CAVERN_TILES.corner)]).setDepth(44);
+    decoration.putTilesAt(layers.decoration, 0, 0).setDepth(45);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => map.destroy());
+    return true;
   }
 
   private drawGuideCavernTileFrame(

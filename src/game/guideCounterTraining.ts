@@ -1,5 +1,6 @@
 import { advanceBossBolt, aimReturnedBossBolt, createBossBoltMotion, type BossBoltMotion } from "./danneBossCombat";
 import type { Position } from "./types";
+import type { GuideCounterCue } from "./guideCounterCoaching";
 
 export const GUIDE_COUNTER = {
   source: { x: 176, y: 112 },
@@ -15,6 +16,7 @@ interface Bounds extends Position { width: number; height: number }
 interface TrainingBolt extends BossBoltMotion { returned: boolean }
 
 export interface GuideCounterReadout {
+  cue?: GuideCounterCue;
   phase: CounterPhase;
   remainingMs: number;
   target: Position | null;
