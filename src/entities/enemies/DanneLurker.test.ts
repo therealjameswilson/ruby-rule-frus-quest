@@ -51,7 +51,8 @@ vi.mock("phaser", () => ({
         RectangleToRectangle: (
           a: { x: number; y: number; width: number; height: number },
           b: { x: number; y: number; width: number; height: number }
-        ) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
+        ) => a.width > 0 && a.height > 0 && b.width > 0 && b.height > 0
+          && a.x <= b.x + b.width && a.x + a.width >= b.x && a.y <= b.y + b.height && a.y + a.height >= b.y
       }
     }
   }
@@ -188,6 +189,52 @@ describe("DANN-E opening fairness and projectile movement", () => {
     const { update } = createEncounter();
     expect(update(17, 16).triggered).toBe(true);
     expect(update(33, 16).triggered).toBe(false);
+  });
+
+  it.each([
+    ["left", 32, 50],
+    ["right", 68, 50],
+    ["above", 50, 30],
+    ["below", 50, 60],
+    ["diagonal", 69, 65]
+  ] as const)("allows a close pass %s without contact damage", (_side, x, y) => {
+    const { update } = createEncounter();
+    expect(Math.hypot(x - 50, y - 50)).toBeLessThan(25);
+    expect(update(17, 16, { x, y }).triggered).toBe(false);
+    // A near miss must not consume the cooldown of a subsequent real contact.
+    expect(update(33, 16).triggered).toBe(true);
+  });
+
+  it.each([
+    ["left edge", 33, 50],
+    ["right edge", 67, 50],
+    ["top edge", 50, 31],
+    ["bottom edge", 50, 59]
+  ] as const)("recognizes touching the %s, matching Phaser terrain collision", (_side, x, y) => {
+    const { update } = createEncounter();
+    expect(update(17, 16, { x, y }).triggered).toBe(true);
+  });
+
+  it.each([
+    ["left", 34, 50],
+    ["right", 66, 50],
+    ["above", 50, 32],
+    ["below", 50, 58],
+    ["corner", 66, 58]
+  ] as const)("recognizes a one-pixel overlap from the %s", (_side, x, y) => {
+    const { update } = createEncounter();
+    expect(update(17, 16, { x, y }).triggered).toBe(true);
+    expect(update(33, 16, { x, y }).triggered).toBe(false);
+  });
+
+  it("keeps the contact cooldown independent of leaving and re-entering the body", () => {
+    const { update } = createEncounter();
+    expect(update(17, 16).triggered).toBe(true);
+    for (let now = 33; now < 5617; now += 16) {
+      const player = now < 1000 ? { x: 68, y: 50 } : { x: 50, y: 50 };
+      expect(update(now, 16, player).triggered).toBe(false);
+    }
+    expect(update(5617, 16).triggered).toBe(true);
   });
 
   it("pauses attack timers while interaction blocks pressure", () => {

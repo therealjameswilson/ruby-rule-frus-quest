@@ -118,3 +118,72 @@ has been achieved.
 ![Archive contact on touch](screenshots/process-pressure-wall-touch.png)
 ![Live Ego-bolt hit on touch](screenshots/process-pressure-bolt-touch.png)
 ![Earned clean publication](screenshots/process-pressure-publication.png)
+
+## DANN-E Contact Fairness (2026-09-08)
+
+The earned Referral entry reproduced a phantom hit: at player (88, 162),
+DANN-E at about (69, 147) deducted reliability from 91 to 90 without touching.
+The player's foot rectangle began at (80, 159); DANN-E's body ended at
+(77.88, 153.04). The old 25-pixel radius treated that visible gap as contact.
+
+`DanneLurker.update` now intersects the same 16x8 foot rectangle used by
+`Player` terrain collision with the enemy's existing body. Touching rectangle
+edges counts as contact, as in Phaser's terrain check. The five close-pass
+regressions failed before the fix and pass afterward. Fifteen additional
+cases cover near misses on four sides and diagonally, real overlaps, touching
+edges, and the unchanged contact cooldown. The Phaser test double now matches
+the engine's inclusive rectangle-edge behavior.
+
+Preserved: one-point contact damage, two-point Ego bolts, invulnerability,
+active-window tool counters before contact, pauses, doorway grace, safe Office
+foreshadowing, and the quiet Dispatch Stacks. Combat still does not create a
+standards violation. No inventory, document, room graph or save changes.
+
+### Current Verification
+
+- Full suite: 182 files / 1,295 tests pass. Build passes, 244 modules, main JS
+  2,775.57 KB (+0.09 KB). Existing large-chunk warning only.
+- Real-input keyboard and 375x667/DPR-3 simulated touch contact replays each
+  show zero phantom damaging contacts and one deliberate damaging contact.
+  Both interrupt DANN-E using the earned Citation Stamp; touch holds direction
+  and B simultaneously. The touch observer also records 203 nearby frames
+  without contact. Documents, document points and standards stay unchanged.
+- Full keyboard Referral replay passes through routing, intentional mistakes,
+  the Dispatch Stacks copy and shortcut, editable human review, cancellations,
+  Continue, reward and backtracking. Editor handoff: 114 document points,
+  100 reliability, Concurrence Slip held, no standards violations.
+- Fourteen scene debug routes render and pass pause/map return checks, with no
+  page or console errors. The required skill client moves and swings in the
+  actual room; native-renderer and compositor captures were inspected because
+  its direct WebGL-buffer screenshot is black.
+
+Replay with an earned Referral-entry `FRUS_QA_STORAGE`, plus the installed
+`PLAYWRIGHT_MODULE`, `CHROMIUM_EXECUTABLE`, `FRUS_QA_URL` and `FRUS_QA_OUT`:
+
+```sh
+node tools/qa-danne-contact.mjs --observe # Record an unmodified baseline
+node tools/qa-danne-contact.mjs           # Assert contact and Stamp counter
+node tools/qa-danne-contact.mjs --mobile  # Simultaneous D-pad and tool input
+node tools/qa-referral-manifest.mjs       # Complete chapter regression
+```
+
+The contact observer wraps the real update without changing inputs, results,
+positions or progression. It records the pre-knockback player footprint,
+enemy body, and reliability before/after the same frame. This is browser
+simulation, not real-iPhone Safari or latency certification, and is not a
+complete optional-world playthrough or a claim that the fun goal is finished.
+
+Evidence: `/private/tmp/frus-contact-before-0908`,
+`frus-contact-desktop-fixed-0908`, `frus-contact-touch-final-0908`,
+`frus-referral-contact-regression-0908`, `frus-contact-required-0908`, and
+`frus-contact-scenes-0908` under the same temporary root.
+
+![Before: damage while passing the patrol](screenshots/danne-contact-before.png)
+![After: touch movement and Stamp counter](screenshots/danne-contact-counter-touch.png)
+
+Remaining concrete follow-up: the required-client capture at (53, 150) shows
+the compiler hidden by the CIA station. Referral's station containers use a
+fixed depth of 150 rather than their physical foot position, and R1's furniture
+lacks matching solid footprints. Reconcile those together, preserving roomy
+approaches and the existing interactions. Also check the crowded Editor entry
+card seen at the chapter handoff. These are not repaired by the contact fix.

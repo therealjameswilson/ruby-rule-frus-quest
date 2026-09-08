@@ -169,7 +169,11 @@ export class DanneLurker extends Enemy {
     const egoBoltHit = this.updateBolts(timeMs, deltaMs, player, canAttack, swing);
     const stunned = timeMs < this.stunnedUntil;
     const distance = this.distanceTo(player);
-    const triggered = canAttack && !stunned && distance <= 25 && timeMs >= this.nextPressureAt;
+    // Match Player's terrain footprint: proximity alone is not a damaging hit.
+    const triggered = canAttack && !stunned && timeMs >= this.nextPressureAt
+      && Phaser.Geom.Intersects.RectangleToRectangle(
+        new Phaser.Geom.Rectangle(player.x - 8, player.y - 3, 16, 8), this.bodyBounds()
+      );
     if (triggered) {
       this.nextPressureAt = timeMs + this.cooldown(5600);
       this.pressureUntil = timeMs + 1150;
