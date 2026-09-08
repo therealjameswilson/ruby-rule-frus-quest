@@ -8,6 +8,13 @@ const crossing = process.argv.includes("--crossing");
 const ledgerOnly = process.argv.includes("--ledger-only");
 const completedReturn = process.argv.includes("--completed-return");
 const pointerBoard = process.argv.includes("--pointer");
+const rotate = process.argv.includes("--rotate");
+const mobileViewport = {
+  width: Number(process.env.FRUS_QA_WIDTH ?? 375), height: Number(process.env.FRUS_QA_HEIGHT ?? 667)
+};
+const mobileDpr = Number(process.env.FRUS_QA_DPR ?? 3);
+assert(Object.values(mobileViewport).every(value => Number.isInteger(value) && value > 0)
+  && Number.isFinite(mobileDpr) && mobileDpr > 0);
 assert(process.env.FRUS_QA_STORAGE, "Set FRUS_QA_STORAGE to earned-storage.json from qa-archive-wall.mjs");
 await mkdir(root, { recursive: true });
 const browser = await chromium.launch({ headless: true,
@@ -18,10 +25,10 @@ async function run(label, mobile) {
   await mkdir(out, { recursive: true });
   const context = await browser.newContext({
     storageState: JSON.parse(await readFile(process.env.FRUS_QA_STORAGE, "utf8")),
-    viewport: mobile ? { width: 375, height: 667 } : { width: 1024, height: 960 },
+    viewport: mobile ? mobileViewport : { width: 1024, height: 960 },
     hasTouch: mobile,
     isMobile: mobile,
-    deviceScaleFactor: mobile ? 3 : 1
+    deviceScaleFactor: mobile ? mobileDpr : 1
   });
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
@@ -392,6 +399,14 @@ async function run(label, mobile) {
     assert.equal(current.sceneProgress.classNetVaultDocketCarried, 3);
     assert(!current.sceneProgress.classNetVaultReviewComplete);
     assert(!current.inventory.includes("Clearance Token"));
+    if (rotate) {
+      await page.setViewportSize({ width: mobileViewport.height, height: mobileViewport.width });
+      await page.waitForTimeout(700);
+      const rotated = await checkpoint("ledger-landscape");
+      assert.deepEqual(rotated.player, current.player);
+      assert.equal(rotated.reliability, current.reliability);
+      assert.equal(rotated.mode, "choice");
+    }
     const layout = await page.evaluate(() => {
       const board = window.game.scene.getScene("NetworkScene").children.getByName("withholding-chronology-board");
       const scale = window.game.canvas.getBoundingClientRect().width / 256;
@@ -447,6 +462,14 @@ async function run(label, mobile) {
     assert(!draft.sceneProgress.classNetVaultReviewComplete);
     assert.equal(draft.documentPoints, current.documentPoints);
     assert.deepEqual(draft.documentCandidates, current.documentCandidates);
+    if (rotate) {
+      await page.setViewportSize(mobileViewport);
+      await page.waitForTimeout(700);
+      const restored = await checkpoint("draft-portrait");
+      assert.equal(restored.sceneProgress.classNetWithholdingSlot, 2);
+      assert.equal(restored.reliability, draft.reliability);
+      assert.equal(restored.mode, "choice");
+    }
     if (mobile) await tap(228, 54);
     else await page.keyboard.press("Escape", { delay: 200 });
     await page.waitForTimeout(120);

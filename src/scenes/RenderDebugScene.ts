@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
-import { isIntegerScale } from "../systems/pixelPerfect";
+import { measurePixelScale } from "../systems/pixelPerfect";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -54,20 +54,17 @@ export class RenderDebugScene extends Phaser.Scene {
     const scaleX = rect.width / GAME_WIDTH;
     const scaleY = rect.height / GAME_HEIGHT;
     const rawDpr = window.devicePixelRatio || 1;
-    const roundedDpr = metrics?.dpr ?? Math.max(1, Math.round(rawDpr));
-    const physicalX = scaleX * roundedDpr;
-    const physicalY = scaleY * roundedDpr;
     // The scale controller reports its target in device pixels per game pixel.
-    const target = metrics?.integerZoomTarget ?? Math.max(1, Math.round(physicalX));
-    const exact = isIntegerScale(physicalX) && isIntegerScale(physicalY)
-      && Math.abs(physicalX - target) < 0.001 && Math.abs(physicalY - target) < 0.001;
+    const target = metrics?.integerZoomTarget ?? 1;
+    const proof = measurePixelScale(rect, rawDpr, target, window.visualViewport?.scale ?? 1);
+    const exact = proof.integerZoom;
     this.metricsText.setText([
-      `INTERNAL: ${GAME_WIDTH}x${GAME_HEIGHT}   DPR: ${rawDpr.toFixed(2)}`,
+      `INTERNAL: ${GAME_WIDTH}x${GAME_HEIGHT}   DPR: ${rawDpr.toFixed(3)}`,
       `CSS: ${Math.round(rect.width)}x${Math.round(rect.height)}`,
       `BACKING: ${canvas.width}x${canvas.height}`,
       `CSS ZOOM: ${scaleX.toFixed(3)}x${scaleY.toFixed(3)}`,
-      `1PX: ${physicalX.toFixed(2)} DEVICE / ${target} TARGET`,
-      `CHECK: ${exact ? "PASS" : "CHECK"}   NEAREST / NATIVE TEXT`
+      `1PX: ${proof.physicalPixelsX.toFixed(2)}x${proof.physicalPixelsY.toFixed(2)} DEVICE / ${target} TARGET`,
+      `CHECK: ${exact ? "PASS" : "CHECK"}   ORIGIN: ${proof.originAligned ? "ALIGNED" : "OFFSET"}`
     ]);
     setLatestMessage(`Pixel proof ${exact ? "pass" : "check"}; 1px=${target} device px`);
   }

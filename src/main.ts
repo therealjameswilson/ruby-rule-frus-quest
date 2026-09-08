@@ -30,7 +30,7 @@ import { getLanguage } from "./systems/i18n";
 import { getPauseMenuReadout } from "./systems/pauseMenu";
 import { getCodexViewReadout } from "./systems/codexLayout";
 import { installResumeInput } from "./input/resumeInput";
-import { applyIntegerZoom, computeDeviceIntegerZoom } from "./systems/pixelPerfect";
+import { applyIntegerZoom, configureIntegerGameShellScale, measurePixelScale, normalizeDevicePixelRatio } from "./systems/pixelPerfect";
 import { getSaveDebugState, installAutosaveLifecycle, saveGameNow } from "./systems/save";
 
 declare global {
@@ -68,6 +68,12 @@ interface MobileDebugMetrics {
   computedZoom: number;
   integerZoomTarget: number;
   integerZoom: boolean;
+  physicalPixelsX: number;
+  physicalPixelsY: number;
+  canvasDeviceLeft: number;
+  canvasDeviceTop: number;
+  originAligned: boolean;
+  viewportScale: number;
   scaleGuardAdjustments: number;
   pixelProofVisible: boolean;
   firstFrameMs: number | null;
@@ -174,6 +180,12 @@ window.rubyRuleMobileMetrics = {
   computedZoom: 0,
   integerZoomTarget: 1,
   integerZoom: false,
+  physicalPixelsX: 0,
+  physicalPixelsY: 0,
+  canvasDeviceLeft: 0,
+  canvasDeviceTop: 0,
+  originAligned: false,
+  viewportScale: 1,
   scaleGuardAdjustments: 0,
   pixelProofVisible: false,
   firstFrameMs: null
@@ -181,7 +193,6 @@ window.rubyRuleMobileMetrics = {
 
 const mobileDebugFrames: Array<{ time: number; fps: number; ms: number }> = [];
 let phaserGame: Phaser.Game | undefined;
-const CSS_LAYOUT_EPSILON = 0.02;
 
 function resetMobilePerformanceMetrics() {
   const metrics = window.rubyRuleMobileMetrics;
@@ -212,18 +223,17 @@ function getGameCanvas() {
 function updateMobileCanvasMetrics() {
   const metrics = window.rubyRuleMobileMetrics!;
   const canvas = getGameCanvas();
-  metrics.dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
+  const dpr = normalizeDevicePixelRatio(window.devicePixelRatio);
+  // Moving displays can change density without a resize or media-query event.
+  if (metrics.dpr !== dpr) scheduleIntegerScaleRefresh();
+  metrics.dpr = dpr;
   if (!canvas) return;
   const rect = canvas.getBoundingClientRect();
   metrics.canvasCssWidth = rect.width;
   metrics.canvasCssHeight = rect.height;
   metrics.canvasBackingWidth = canvas.width;
   metrics.canvasBackingHeight = canvas.height;
-  metrics.computedZoom = rect.width / GAME_WIDTH;
-  // Phaser keeps a logical 256x240 backing buffer. Crispness comes from the
-  // displayed CSS zoom resolving to a whole physical-pixel multiple.
-  const physicalPixelsPerGamePixel = (rect.width / GAME_WIDTH) * metrics.dpr;
-  metrics.integerZoom = Math.abs(physicalPixelsPerGamePixel - Math.round(physicalPixelsPerGamePixel)) < 0.001;
+  Object.assign(metrics, measurePixelScale(rect, metrics.dpr, metrics.integerZoomTarget, window.visualViewport?.scale ?? 1));
 }
 
 function installMobileDebugHud() {
@@ -314,7 +324,8 @@ function installMobileDebugHud() {
         + `HIST <=16.7 ${histogram.under16} | <=20 ${histogram.under20} | <=33.4 ${histogram.under33} | >33.4 ${histogram.over33}\n`
         + `INPUT ${metrics.lastInputLatencyMs === null ? "--" : `${metrics.lastInputLatencyMs.toFixed(1)}ms`} | POINTERS ${metrics.activePointerCount}\n`
         + `GAMEPAD ${gamepad?.connected ? gamepad.id ?? "connected" : "none"} | DIR ${gamepad?.direction ?? "--"} | BTN ${gamepad?.pressedButtons.join(",") || "--"}\n`
-        + `DPR ${metrics.dpr.toFixed(2)} | ZOOM ${metrics.computedZoom.toFixed(3)} ${metrics.integerZoom ? "INT" : "FRAC"} | TARGET ${metrics.integerZoomTarget}x\n`
+        + `DPR ${metrics.dpr.toFixed(3)} | CSS ZOOM ${metrics.computedZoom.toFixed(3)} | TARGET ${metrics.integerZoomTarget}x\n`
+        + `DEVICE ${metrics.physicalPixelsX.toFixed(3)}x${metrics.physicalPixelsY.toFixed(3)} ${metrics.integerZoom ? "PASS" : "CHECK"} | ORIGIN ${metrics.originAligned ? "ALIGNED" : "OFFSET"}\n`
         + `CSS ${metrics.canvasCssWidth.toFixed(1)}x${metrics.canvasCssHeight.toFixed(1)} | BUFFER ${metrics.canvasBackingWidth}x${metrics.canvasBackingHeight}\n`
         + `GUARD ${metrics.scaleGuardAdjustments} | PROOF ${metrics.pixelProofVisible ? "ON" : "OFF"}\n`
         + `FIRST FRAME ${metrics.firstFrameMs === null ? "--" : `${metrics.firstFrameMs.toFixed(1)}ms`}`;
@@ -529,58 +540,20 @@ function installTapToResumeOverlay(game: Phaser.Game) {
   }).catch(() => undefined);
 }
 
-function calculateIntegerGameShellScale() {
-  const shell = document.getElementById("game-shell");
-  const bodyStyle = window.getComputedStyle(document.body);
-  const paddingX = parseFloat(bodyStyle.paddingLeft || "0") + parseFloat(bodyStyle.paddingRight || "0");
-  const paddingY = parseFloat(bodyStyle.paddingTop || "0") + parseFloat(bodyStyle.paddingBottom || "0");
-  const availableWidth = Math.max(160, window.innerWidth - paddingX);
-  const availableHeight = Math.max(160, window.innerHeight - paddingY);
-  const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
-  const rawScale = Math.min(availableWidth / GAME_WIDTH, availableHeight / GAME_HEIGHT);
-  const deviceZoom = computeDeviceIntegerZoom(availableWidth, availableHeight, dpr);
-  // CSS scale can be fractional on high-DPR screens; the device-pixel zoom stays integer.
-  const scale = deviceZoom / dpr;
-  return { shell, rawScale, scale, deviceZoom };
-}
-
-function configureIntegerGameShellScale() {
-  const { shell, rawScale, scale, deviceZoom } = calculateIntegerGameShellScale();
-  if (!shell) return scale;
-  shell.style.width = `${Math.max(1, GAME_WIDTH * scale)}px`;
-  shell.style.height = `${Math.max(1, GAME_HEIGHT * scale)}px`;
-  shell.dataset.scale = String(scale);
-  shell.dataset.rawScale = rawScale.toFixed(3);
-  shell.dataset.integerScale = "true";
-  window.rubyRuleMobileMetrics!.integerZoomTarget = deviceZoom;
-  return scale;
-}
-
+let enforcingIntegerScale = false;
 function enforceIntegerCanvasScale() {
-  configureIntegerGameShellScale();
-  if (!phaserGame) return;
-  const beforeAdjustments = window.rubyRuleMobileMetrics!.scaleGuardAdjustments;
-  const result = applyIntegerZoom(phaserGame);
-  const metrics = window.rubyRuleMobileMetrics!;
-  metrics.computedZoom = result.computedZoom;
-  metrics.integerZoomTarget = result.integerZoomTarget;
-  metrics.integerZoom = result.integerZoom;
-  metrics.dpr = result.dpr;
-  metrics.canvasCssWidth = result.canvasCssWidth;
-  metrics.canvasCssHeight = result.canvasCssHeight;
-  metrics.canvasBackingWidth = result.canvasBackingWidth;
-  metrics.canvasBackingHeight = result.canvasBackingHeight;
-  const canvas = getGameCanvas();
-  const rect = canvas?.getBoundingClientRect();
-  if (
-    rect
-    && (
-      Math.abs(rect.width - result.canvasCssWidth) > CSS_LAYOUT_EPSILON
-      || Math.abs(rect.height - result.canvasCssHeight) > CSS_LAYOUT_EPSILON
-    )
-  ) {
-    metrics.scaleGuardAdjustments = beforeAdjustments + 1;
-  }
+  if (!phaserGame || enforcingIntegerScale) return;
+  enforcingIntegerScale = true;
+  try {
+    const metrics = window.rubyRuleMobileMetrics!;
+    const before = phaserGame.canvas.getBoundingClientRect();
+    Object.assign(metrics, applyIntegerZoom(phaserGame));
+    const after = phaserGame.canvas.getBoundingClientRect();
+    if (Math.abs(before.x - after.x) > 0.02 || Math.abs(before.y - after.y) > 0.02
+      || Math.abs(before.width - after.width) > 0.02 || Math.abs(before.height - after.height) > 0.02) {
+      metrics.scaleGuardAdjustments++;
+    }
+  } finally { enforcingIntegerScale = false; }
 }
 
 function refreshIntegerScale() {
@@ -706,4 +679,5 @@ updateInputCallbacks({
 installCanvasTouchLock();
 installKeyboardFocusGuard();
 refreshIntegerScale();
-game.scale.on("resize", () => window.requestAnimationFrame(enforceIntegerCanvasScale));
+// Restore native CSS layout before painting; setZoom may emit resize again.
+game.scale.on("resize", enforceIntegerCanvasScale);

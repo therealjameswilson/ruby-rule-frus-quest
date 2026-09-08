@@ -1,0 +1,1519 @@
+{
+  "date": "2026-09-08",
+  "previewBundle": "index-Mu4knrUg.js",
+  "errors": [],
+  "cases": [
+    {
+      "name": "iphone-initial",
+      "viewport": [
+        393,
+        852
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        26,
+        266,
+        341.3333435058594,
+        320
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.0000001192092896,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "iphone-rotated",
+      "viewport": [
+        852,
+        393
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        255.3333282470703,
+        36.66666793823242,
+        341.3333740234375,
+        320
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.000000476837158,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "iphone-restored",
+      "viewport": [
+        393,
+        852
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        26,
+        266,
+        341.3333435058594,
+        320
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.0000001192092896,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "iphone-safe-area",
+      "viewport": [
+        393,
+        852
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        34,
+        272.6666564941406,
+        341.3333435058594,
+        319.9999694824219
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.0000001192092896,
+        3.9999996185302735
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "iphone-browser-chrome",
+      "viewport": [
+        393,
+        772
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        34,
+        232.6666717529297,
+        341.3333435058594,
+        320
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.0000001192092896,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "small-iphone-initial",
+      "viewport": [
+        375,
+        667
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        17,
+        173.6666717529297,
+        341.3333435058594,
+        320
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.0000001192092896,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "small-iphone-rotated",
+      "viewport": [
+        667,
+        375
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        163,
+        27.66666603088379,
+        341.3333435058594,
+        320
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.0000001192092896,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "small-iphone-restored",
+      "viewport": [
+        375,
+        667
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        17,
+        173.6666717529297,
+        341.3333435058594,
+        320
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.0000001192092896,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "small-iphone-safe-area",
+      "viewport": [
+        375,
+        667
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        67.66666412353516,
+        220,
+        256,
+        240
+      ],
+      "target": 3,
+      "physicalScale": [
+        3,
+        3
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 9
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "small-iphone-browser-chrome",
+      "viewport": [
+        375,
+        587
+      ],
+      "dpr": 3,
+      "displayedCanvas": [
+        67.66666412353516,
+        180,
+        256,
+        240
+      ],
+      "target": 3,
+      "physicalScale": [
+        3,
+        3
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 9
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "pixel-initial",
+      "viewport": [
+        412,
+        915
+      ],
+      "dpr": 2.625,
+      "displayedCanvas": [
+        11.047618865966797,
+        274.6666564941406,
+        390.0952453613281,
+        365.7143249511719
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.000000074505806,
+        4.000000429153443
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "pixel-rotated",
+      "viewport": [
+        915,
+        412
+      ],
+      "dpr": 2.625,
+      "displayedCanvas": [
+        262.4761962890625,
+        23.238094329833984,
+        390.09521484375,
+        365.71429443359375
+      ],
+      "target": 4,
+      "physicalScale": [
+        3.999999761581421,
+        4.000000095367431
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "pixel-restored",
+      "viewport": [
+        412,
+        915
+      ],
+      "dpr": 2.625,
+      "displayedCanvas": [
+        11.047618865966797,
+        274.6666564941406,
+        390.0952453613281,
+        365.7143249511719
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.000000074505806,
+        4.000000429153443
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "pixel-safe-area",
+      "viewport": [
+        412,
+        915
+      ],
+      "dpr": 2.625,
+      "displayedCanvas": [
+        67.80952453613281,
+        326.8571472167969,
+        292.57147216796875,
+        274.2857360839844
+      ],
+      "target": 3,
+      "physicalScale": [
+        3.000000447034836,
+        3.000000238418579
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 9
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "pixel-browser-chrome",
+      "viewport": [
+        412,
+        835
+      ],
+      "dpr": 2.625,
+      "displayedCanvas": [
+        67.80952453613281,
+        286.8571472167969,
+        292.57147216796875,
+        274.2857360839844
+      ],
+      "target": 3,
+      "physicalScale": [
+        3.000000447034836,
+        3.000000238418579
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 9
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "tablet-initial",
+      "viewport": [
+        1024,
+        768
+      ],
+      "dpr": 2,
+      "displayedCanvas": [
+        128,
+        24,
+        768,
+        720
+      ],
+      "target": 6,
+      "physicalScale": [
+        6,
+        6
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 9216
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 36
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 9216
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "tablet-rotated",
+      "viewport": [
+        768,
+        1024
+      ],
+      "dpr": 2,
+      "displayedCanvas": [
+        64,
+        212,
+        640,
+        600
+      ],
+      "target": 5,
+      "physicalScale": [
+        5,
+        5
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 25
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "tablet-restored",
+      "viewport": [
+        1024,
+        768
+      ],
+      "dpr": 2,
+      "displayedCanvas": [
+        128,
+        24,
+        768,
+        720
+      ],
+      "target": 6,
+      "physicalScale": [
+        6,
+        6
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 9216
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 36
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 9216
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "tablet-safe-area",
+      "viewport": [
+        1024,
+        768
+      ],
+      "dpr": 2,
+      "displayedCanvas": [
+        200,
+        90.5,
+        640,
+        600
+      ],
+      "target": 5,
+      "physicalScale": [
+        5,
+        5
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 25
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "tablet-browser-chrome",
+      "viewport": [
+        1024,
+        688
+      ],
+      "dpr": 2,
+      "displayedCanvas": [
+        200,
+        50.5,
+        640,
+        600
+      ],
+      "target": 5,
+      "physicalScale": [
+        5,
+        5
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 25
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "desktop-initial",
+      "viewport": [
+        1280,
+        960
+      ],
+      "dpr": 1,
+      "displayedCanvas": [
+        128,
+        0,
+        1024,
+        960
+      ],
+      "target": 4,
+      "physicalScale": [
+        4,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "desktop-rotated",
+      "viewport": [
+        960,
+        1280
+      ],
+      "dpr": 1,
+      "displayedCanvas": [
+        96,
+        280,
+        768,
+        720
+      ],
+      "target": 3,
+      "physicalScale": [
+        3,
+        3
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 9
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 2304
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "desktop-restored",
+      "viewport": [
+        1280,
+        960
+      ],
+      "dpr": 1,
+      "displayedCanvas": [
+        128,
+        0,
+        1024,
+        960
+      ],
+      "target": 4,
+      "physicalScale": [
+        4,
+        4
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "desktop-125-initial",
+      "viewport": [
+        1281,
+        961
+      ],
+      "dpr": 1.25,
+      "displayedCanvas": [
+        128.8000030517578,
+        0.800000011920929,
+        1024,
+        960
+      ],
+      "target": 5,
+      "physicalScale": [
+        5,
+        5
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 25
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "desktop-125-rotated",
+      "viewport": [
+        961,
+        1281
+      ],
+      "dpr": 1.25,
+      "displayedCanvas": [
+        71.19999694824219,
+        256.79998779296875,
+        819.2000122070312,
+        768.0000610351562
+      ],
+      "target": 4,
+      "physicalScale": [
+        4.000000059604645,
+        4.0000003178914385
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 16
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 4096
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "desktop-125-restored",
+      "viewport": [
+        1281,
+        961
+      ],
+      "dpr": 1.25,
+      "displayedCanvas": [
+        128.8000030517578,
+        0.800000011920929,
+        1024,
+        960
+      ],
+      "target": 5,
+      "physicalScale": [
+        5,
+        5
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 25
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "desktop-125-density-2.625",
+      "viewport": [
+        1281,
+        961
+      ],
+      "dpr": 2.625,
+      "displayedCanvas": [
+        152.76190185546875,
+        23.238094329833984,
+        975.2380981445312,
+        914.2857055664062
+      ],
+      "target": 10,
+      "physicalScale": [
+        10.000000029802322,
+        9.999999904632569
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 25600
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 100
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 25600
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    },
+    {
+      "name": "desktop-125-density-1.25",
+      "viewport": [
+        1281,
+        961
+      ],
+      "dpr": 1.25,
+      "displayedCanvas": [
+        128.8000030517578,
+        0.800000011920929,
+        1024,
+        960
+      ],
+      "target": 5,
+      "physicalScale": [
+        5,
+        5
+      ],
+      "backing": [
+        256,
+        240
+      ],
+      "marks": [
+        {
+          "name": "checker-and-origin-texel",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        },
+        {
+          "name": "single-texel",
+          "mismatched": 0,
+          "checkedPixels": 25
+        },
+        {
+          "name": "diagonal",
+          "mismatched": 0,
+          "checkedPixels": 6400
+        }
+      ],
+      "checks": {
+        "actualDpr": true,
+        "screenshotPhysicalSize": true,
+        "integerWidth": true,
+        "integerHeight": true,
+        "alignedX": true,
+        "alignedY": true,
+        "nativeBuffer": true,
+        "logicalSize": true,
+        "inSafeArea": true,
+        "noOverflow": true,
+        "exactNativeMarks": true,
+        "uniformChecker": true
+      }
+    }
+  ]
+}
