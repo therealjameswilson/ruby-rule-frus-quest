@@ -76,6 +76,13 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(archiveSceneSource.includes("FILE PACKET BEFORE LEAVING")).toBe(true);
   });
 
+  it("does not send a complete carried packet back into the stacks", () => {
+    const hint = methodSource("sourceNoteActionHint", "isNearSourceNoteActionTarget");
+    expect(hint).toContain('})) : packet.ready ? [] : [{');
+    expect(hint).toContain('this.currentRoomId === "A1" && (packet.held.length || packet.ready)');
+    expect(hint).toContain('id: "annotation-research-table"');
+  });
+
   it("does not mistake owning the Citation Stamp for completing provenance", () => {
     const restore = methodSource("restoreSourceNoteProgress", "enterRoom");
     expect(restore).toContain("restoredArchiveSourceNoteStatus(");
@@ -106,7 +113,13 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(room).toContain("drawCompactSourceRoomTerminal");
     expect(room).not.toContain("addSnesWorldMap");
     expect(room).not.toContain("addTerminalPanel");
-    expect(archiveSceneSource).toContain('if (room.id !== "A1")');
+    expect(archiveSceneSource.includes('if (room.id !== "A1" && room.id !== "AS")')).toBe(true);
+    const sourceRoom = methodSource("renderSourceRoom", "renderArchiveA1Tilemap");
+    expect(sourceRoom).not.toContain("drawAnnotationDraftingStations");
+    const stacks = methodSource("renderAnnotationStacks()", "enterAnnotationStacks");
+    expect(stacks).toContain("drawAnnotationDraftingStations");
+    expect(stacks).toContain("restoreAnnotationSlipIcon");
+    expect(stacks).not.toContain("drawResearchTable");
   });
 
   it("opens the next chapter through the physical east exit", () => {
@@ -114,7 +127,7 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(finish).toContain("archiveSourceRoomComplete = 1");
     expect(finish).toContain("EXIT EAST");
     expect(finish).not.toContain('transitionTo(this, "NetworkScene")');
-    expect(archiveSceneSource).toContain('exits: { west: "O1", east: "N1", south: "B1" }');
+    expect(archiveSceneSource.includes('exits: { north: "AS", west: "O1", east: "N1", south: "B1" }')).toBe(true);
     expect(archiveSceneSource).toContain('direction === "east" && !this.sourceRoomComplete()');
     expect(archiveSceneSource).toContain('if (target === "N1")');
     expect(archiveSceneSource).toContain('transitionTo(this, "NetworkScene", { chapterFrom: "A1", chapterTo: "N1" })');

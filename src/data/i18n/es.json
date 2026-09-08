@@ -92,6 +92,7 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
+    "annotationAisles": "PASILLOS / MESA AL SUR",
     "guideCoach": {
       "faceNorth": "MIRA ARRIBA HACIA EL RAYO",
       "faceSouth": "MIRA ABAJO HACIA EL RAYO",

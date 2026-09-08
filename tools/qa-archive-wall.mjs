@@ -29,6 +29,9 @@ async function choose(key){
 try{
  await page.goto(new URL('?text=full',base).href);await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');await shot('00-earned-archive');
  await act('01-source-note');await move(128,158);await act('02-research-table');
+ await move(80,158);await move(80,72);await move(128,72);await direction('ArrowUp',650);
+ const locked=await shot('02-stacks-locked');assert.equal(locked.roomTraversal.currentRoomId,'A1');assert(!locked.sceneProgress.archiveRepoWallCleared);assert.equal(locked.documentPoints,22);
+ await move(80,72);await move(80,176);
  await move(100,176);await move(100,168);await direction('ArrowUp',60);await press('x');await page.waitForTimeout(450);
  const early=await shot('02-unreviewed-swing');assert(!early.sceneProgress.archiveRepoWallCleared);assert.equal(early.documentPoints,22);
  await move(56,158);await move(56,100);await act('03-repository');
@@ -60,8 +63,22 @@ try{
  await page.reload();await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');
  const resumed=await shot('09-cleared-wall-continue');assert.equal(resumed.sceneProgress.archiveRepoWallCleared,1);assert.equal(resumed.documentPoints,points);
  await page.waitForTimeout(1600);await shot('10-annotation-route');
- await move(188,154);await act('11-selectivity');await move(56,148);await act('12-context');await move(56,100);await act('13-source');
- await move(56,148);await move(128,145);await act('14-file-packet');await choose('B');await shot('15-annotation-filed');
+ await move(80,164);await move(80,72);await move(128,72);await act('10-enter-stacks');await page.waitForTimeout(850);
+ assert.equal((await state()).roomTraversal.currentRoomId,'AS');await shot('10-stacks-entry');
+ await move(208,190);await move(208,98);await act('11-selectivity');
+ const partial=await state();assert.equal(partial.sceneProgress.annotationGatheredMask,4);assert.equal(partial.documentPoints,points);
+ await context.storageState({path:`${out}/partial-stacks-storage.json`});
+ await press('m');const paused=await state();assert.equal(paused.mode,'pause');await page.waitForTimeout(650);assert.deepEqual((await state()).player,paused.player);await shot('11-stacks-paused');await press('m');
+ await page.reload();await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');
+ const continued=await shot('11-stacks-continue');assert.equal(continued.roomTraversal.currentRoomId,'AS');assert.deepEqual(continued.player,partial.player);assert.equal(continued.heldItem,partial.heldItem);
+ await move(208,76);await move(128,76);await act('12-context');
+ await direction('ArrowUp',750);await page.waitForTimeout(500);assert.equal((await state()).roomTraversal.currentRoomId,'AS');assert(!(await state()).sceneProgress.annotationDraftingComplete);
+ await move(128,76);await move(48,76);await act('13-source');
+ assert.equal((await state()).sceneProgress.annotationGatheredMask,7);assert.equal((await state()).documentPoints,points);
+ await move(48,190);await move(128,192);await move(128,220,'A1');
+ const returned=await shot('13-returned-packet');assert.equal(returned.heldItem,'Annotation packet 3/3');assert(!returned.sceneProgress.annotationDraftingComplete);assert.notEqual(returned.nearestInteractable,'ENTER NOTE STACKS');
+ await move(80,72);await move(80,145);await move(128,145);await act('14-file-packet');await choose('B');await shot('15-annotation-filed');
+ await context.storageState({path:`${out}/filed-packet-storage.json`});
  await move(68,144);await act('16-telegram');await move(188,144);await act('17-crossref');
  await move(216,144);await move(216,120);await move(248,120,'NetworkScene');await shot('18-network-entry');
  assert.equal((await state()).scene,'NetworkScene');assert.deepEqual(errors,[]);console.log('PASS Archive critical path');

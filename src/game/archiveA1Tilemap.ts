@@ -43,8 +43,8 @@ function emptyLayer() {
 
 export function isArchiveA1ExitCell(tileX: number, tileY: number) {
   const sideExit = (tileX === 0 || tileX === ARCHIVE_A1_TILEMAP.columns - 1) && SIDE_EXIT_ROWS.has(tileY);
-  const southExit = tileY === ARCHIVE_A1_TILEMAP.rows - 1 && SOUTH_EXIT_COLUMNS.has(tileX);
-  return sideExit || southExit;
+  const verticalExit = (tileY === 0 || tileY === ARCHIVE_A1_TILEMAP.rows - 1) && SOUTH_EXIT_COLUMNS.has(tileX);
+  return sideExit || verticalExit;
 }
 
 export function isArchiveA1WallCell(tileX: number, tileY: number) {

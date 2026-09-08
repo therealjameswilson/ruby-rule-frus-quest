@@ -278,7 +278,7 @@ export class UIScene extends Phaser.Scene {
       || activeSceneKey === "ReferralVaultScene"
       || activeSceneKey === "SilentReadScene"
       || activeSceneKey === "EndingScene"
-      || (activeSceneKey === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "A1");
+      || (activeSceneKey === "ArchiveScene" && ["A1", "AS"].includes(gameState.roomTraversal?.currentRoomId ?? ""));
     if (gameState.heldItem && !hasCarryDestination) {
       return getString("hud.carryItem", { item: gameState.heldItem });
     }
@@ -300,6 +300,9 @@ export class UIScene extends Phaser.Scene {
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
     if (gameState.currentScene === "ReferralVaultScene" && gameState.roomTraversal?.currentRoomId === "R3") {
       return getString(dispatchAisleOpen(gameState.sceneProgress) ? "hud.dispatchReturn" : "hud.dispatchAisles");
+    }
+    if (gameState.currentScene === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "AS") {
+      return getString("hud.annotationAisles");
     }
     if (gameState.currentScene === "EndingScene") return getString("hud.binderyDelivery");
     if (this.showCounterAction()) {

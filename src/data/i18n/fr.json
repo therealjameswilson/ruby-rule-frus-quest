@@ -92,6 +92,7 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
+    "annotationAisles": "ALLEES / TABLE AU SUD",
     "guideCoach": {
       "faceNorth": "REGARDE VERS LE HAUT",
       "faceSouth": "REGARDE VERS LE BAS",

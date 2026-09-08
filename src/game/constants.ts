@@ -401,9 +401,9 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "Source Entry",
     grid: { x: 0, y: 0 },
-    exits: { north: "DN1", west: "O1", east: "N1", south: "B1" },
+    exits: { north: "AS", west: "O1", east: "N1", south: "B1" },
     lockedExits: {
-      north: "NARA stacks citation lock",
+      north: "Annotation stacks citation lock",
       east: "OpenNet source-note lock",
       south: "Referral gate"
     },
@@ -415,11 +415,20 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     roomType: "normal"
   },
   {
+    id: "AS",
+    area: "archive_cavern",
+    title: "Annotation Stacks",
+    grid: { x: 0, y: -1 },
+    exits: { north: "DN1", south: "A1" },
+    lockedExits: { north: "File annotation packet at the research table" },
+    roomType: "puzzle"
+  },
+  {
     id: "DN1",
     area: "archive_cavern",
     title: "NARA Stacks",
-    grid: { x: 0, y: -1 },
-    exits: { north: "DN2", south: "A1" },
+    grid: { x: 0, y: -2 },
+    exits: { north: "DN2", south: "AS" },
     lockedExits: { north: "Concealed reading-room shelf" },
     requiredItems: { north: "review_folder" },
     roomType: "puzzle"
@@ -428,7 +437,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     id: "DN2",
     area: "archive_cavern",
     title: "Hidden Reading Room",
-    grid: { x: 0, y: -2 },
+    grid: { x: 0, y: -3 },
     exits: { south: "DN1" },
     roomType: "secret"
   },

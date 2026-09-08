@@ -1,5 +1,6 @@
 {
   "hud": {
+    "annotationAisles": "NOTES / TABLE SOUTH",
     "guideCoach": {
       "faceNorth": "FACE UP TOWARD THE BOLT",
       "faceSouth": "FACE DOWN TOWARD THE BOLT",

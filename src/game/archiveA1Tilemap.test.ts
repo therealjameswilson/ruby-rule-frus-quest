@@ -51,7 +51,7 @@ describe("Archive A1 packed tilemap", () => {
     expect(layers.ground[1][1]).toBe(packedTileGid(0));
   });
 
-  it("keeps east and south exits open while deriving collision from every other border tile", () => {
+  it("keeps chapter exits open, including the two-tile north annotation doorway", () => {
     const layers = buildArchiveA1TileLayers();
     const collisionKeys = new Set(layers.collisionCells.map((cell) => `${cell.tileX},${cell.tileY}`));
 
@@ -69,7 +69,10 @@ describe("Archive A1 packed tilemap", () => {
       expect(isArchiveA1ExitCell(tileX, 11)).toBe(true);
       expect(collisionKeys.has(`${tileX},11`)).toBe(false);
     }
-    expect(collisionKeys.has("7,0")).toBe(true);
+    for (const tileX of [7, 8]) {
+      expect(isArchiveA1ExitCell(tileX, 0)).toBe(true);
+      expect(collisionKeys.has(`${tileX},0`)).toBe(false);
+    }
     for (const tileY of [4, 5, 6]) expect(collisionKeys.has(`0,${tileY}`)).toBe(false);
     expect(collisionKeys.has("0,3")).toBe(true);
   });

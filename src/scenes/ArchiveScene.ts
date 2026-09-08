@@ -82,13 +82,13 @@ import {
 } from "../game/annotationDrafting";
 import type { AnnotationDraftingPromptId } from "../game/annotationDrafting";
 import { fileAnnotationPacket, gatherAnnotationNote, readAnnotationPacket } from "../game/annotationPacket";
+import { ANNOTATION_STACKS, annotationStacksOpen, annotationStacksObjective, buildAnnotationStackLayers } from "../game/annotationStacks";
 import { ARCHIVE_RESEARCH_REVIEWS, nextArchiveResearchReview, recordArchiveResearchReview } from "../game/archiveResearchReview";
 import type { ArchiveResearchReviewId } from "../game/archiveResearchReview";
 import { ChoicePrompt } from "../systems/verification";
 import { saveGameNow } from "../systems/save";
 import {
   ARCHIVE_A1_TILEMAP,
-  ARCHIVE_DUNGEON_TILES,
   archiveA1CollisionRect,
   buildArchiveA1TileLayers
 } from "../game/archiveA1Tilemap";
@@ -105,8 +105,8 @@ function color(hex: string) {
 }
 
 type Direction = "north" | "south" | "west" | "east";
-type ArchiveRoomId = "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
-type ArchiveExitTarget = ArchiveRoomId | "N1" | "O1";
+type ArchiveRoomId = "AS" | "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
+type ArchiveExitTarget = ArchiveRoomId | "N1" | "O1" | "DN1";
 type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "HOLD" | "AMBIGUOUS" | "DANN-E QUEUE";
 type ArchiveDanneRoute = "NaraStacksScene" | "EmbassyCableRoomScene" | "BlackVaultLairScene";
 type ArchivePropFrame = (typeof SNES_ARCHIVE_PROP_ASSET.frames)[number];
@@ -118,11 +118,7 @@ const SOURCE_NOTE_PROVENANCE_STATION_POSITIONS: Record<SourceNoteProvenancePromp
   folder: { x: 200, y: 154 }
 };
 
-const ANNOTATION_DRAFTING_STATION_POSITIONS: Record<AnnotationDraftingPromptId, { x: number; y: number }> = {
-  published_provenance: { x: 56, y: 86 },
-  contextual_annotation: { x: 56, y: 154 },
-  selectivity_mitigation: { x: 200, y: 154 }
-};
+const ANNOTATION_DRAFTING_STATION_POSITIONS = ANNOTATION_STACKS.stations;
 
 interface SourceNoteProvenanceStationVisual {
   container: Phaser.GameObjects.Container;
@@ -168,6 +164,7 @@ const DOOR_X_MAX = 144;
 const DOOR_Y_MIN = 104;
 const DOOR_Y_MAX = 136;
 const ARCHIVE_RETURN_ROOM_CODES: Record<ArchiveRoomId, number> = {
+  AS: 13,
   A1: 1,
   A2: 2,
   A3: 3,
@@ -186,16 +183,26 @@ const ARCHIVE_RETURN_ROOM_BY_CODE = Object.fromEntries(
 ) as Record<number, ArchiveRoomId>;
 
 const ARCHIVE_ROOMS: Record<ArchiveRoomId, ArchiveRoom> = {
+  AS: {
+    id: "AS",
+    title: "ANNOTATION STACKS",
+    grid: { x: 0, y: -1 },
+    exits: { south: "A1", north: "DN1" },
+    lockedExits: { north: "File the annotation packet first" },
+    roomType: "puzzle"
+  },
   A1: {
     id: "A1",
     title: "SOURCE ROOM",
     grid: { x: 0, y: 0 },
-    exits: { west: "O1", east: "N1", south: "B1" },
+    exits: { north: "AS", west: "O1", east: "N1", south: "B1" },
     lockedExits: {
+      north: "Stamp NO REPO to open Annotation Stacks",
       east: "OPENNET SOURCE-NOTE LOCK",
       south: "REFERRAL GATE"
     },
     requiredItems: {
+      north: "citation_stamp",
       east: "citation_stamp",
       south: "concurrence_slip"
     },
@@ -586,6 +593,22 @@ export class ArchiveScene extends Phaser.Scene {
     this.updateRepoWallToolHit();
     if (this.checkRoomExit()) return;
 
+    if (this.currentRoomId === "AS") {
+      this.updateAnnotationSlipIcon();
+      this.syncAnnotationDraftingStations();
+      const target = this.sourceNoteActionHint();
+      const near = target && this.isNearSourceNoteActionTarget(target) ? target : null;
+      setNearestInteractable(near ? this.sourceNotePromptText(near) : null);
+      this.interactionPrompt.update(delta, this.toast.visible ? null : near, undefined,
+        near ? { text: this.sourceNotePromptText(near) } : undefined);
+      this.hintText.setText("");
+      this.refreshRoomObjective();
+      this.toast.update(delta, this.player.position);
+      this.reliability.update();
+      if (input.aJustPressed && near) this.handleAnnotationDraftingAction(near);
+      return;
+    }
+
     if (this.currentRoomId === "A1"
       && this.sourceNoteStatus !== "inactive"
       && (this.sourceNoteStatus !== "stamped" || !gameState.sceneProgress.annotationDraftingComplete)) {
@@ -643,7 +666,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private updateDanneLurker(delta: number, canPressure = true) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure, this.player.combatReadout);
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure && this.currentRoomId !== "AS", this.player.combatReadout);
     if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted archive verification.")) {
       this.refreshRoomObjective();
       this.reliability.update();
@@ -688,7 +711,7 @@ export class ArchiveScene extends Phaser.Scene {
       this.clearRoom();
       this.renderCurrentRoom();
       this.player.setPosition(spawn.x, spawn.y);
-      this.danneLurker.enterRoom(this.time.now);
+      this.danneLurker.enterRoom(this.time.now, roomId !== "AS");
       this.syncRoomTraversalState();
       this.updateVisitedMinimap();
       this.exitCooldownUntil = this.time.now + 280;
@@ -753,23 +776,27 @@ export class ArchiveScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(this.currentRoomId === "A2" || this.currentRoomId === "B2" ? PALETTE.shadowNavy : PALETTE.archiveAmber);
     this.roomTitleText.setText(`${room.id} ${room.title}`);
     addSnesRoomIntroBanner(this, {
-      title: `${room.id} ${room.title}`,
+      title: room.id === "AS" ? room.title : `${room.id} ${room.title}`,
       subtitle: "ARCHIVE CAVERN",
-      accent: room.roomType === "reward" || room.roomType === "secret" ? PALETTE.goldStamp : PALETTE.buckramRed,
+      accent: room.id === "AS" ? PALETTE.terminalCyan
+        : room.roomType === "reward" || room.roomType === "secret" ? PALETTE.goldStamp : PALETTE.buckramRed,
       track: (object) => this.track(object)
     });
     this.drawRoomExits(room);
-    const packedTilemapRendered = room.id === "A1" && this.renderArchiveA1Tilemap();
+    const packedTilemapRendered = (room.id === "A1" || room.id === "AS") && this.renderArchiveA1Tilemap();
     if (!packedTilemapRendered) {
-      addSnesRoomLayer(this, {
-        roomId: room.id,
-        roomType: room.roomType,
-        theme: this.currentRoomId === "A2" ? "network" : this.currentRoomId === "B2" ? "proof" : "archive",
-        track: (object) => this.track(object)
-      });
-      this.drawArchiveRoomDetailLayer(room);
+      if (room.id === "AS") this.renderAnnotationStacksFallback();
+      else {
+        addSnesRoomLayer(this, {
+          roomId: room.id,
+          roomType: room.roomType,
+          theme: this.currentRoomId === "A2" ? "network" : this.currentRoomId === "B2" ? "proof" : "archive",
+          track: (object) => this.track(object)
+        });
+        this.drawArchiveRoomDetailLayer(room);
+      }
     }
-    if (room.id !== "A1") {
+    if (room.id !== "A1" && room.id !== "AS") {
       addSnesRoomCompass(this, {
         x: 216,
         y: 62,
@@ -782,7 +809,8 @@ export class ArchiveScene extends Phaser.Scene {
         depth: 143
       });
     }
-    if (room.id === "A1") this.renderSourceRoom();
+    if (room.id === "AS") this.renderAnnotationStacks();
+    else if (room.id === "A1") this.renderSourceRoom();
     else if (room.id === "A2") this.renderOpenNetAnnex();
     else if (room.id === "A3" || room.id === "B3") this.renderHintRoom(room);
     else if (room.id === "B1") this.renderStacksRoom();
@@ -798,7 +826,6 @@ export class ArchiveScene extends Phaser.Scene {
   private renderSourceRoom() {
     this.drawResearchTable();
     this.drawSourceNoteProvenanceStations();
-    this.drawAnnotationDraftingStations();
     this.drawAnnotationTableSlots();
     const elena = new HistorianNPC(this, "elena", 42, 84);
     elena.label.setVisible(false);
@@ -806,15 +833,15 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawCompactSourceRoomTerminal();
 
     this.addDocumentInteractables();
-    this.drawArchiveDoor(128, 207, "NARA II", PALETTE.terminalCyan);
+    this.drawArchiveDoor(128, 52, "NOTES", PALETTE.terminalCyan);
     this.interactables.push({
       id: "nara-stacks-stairs",
-      label: "NARA II Stacks",
+      label: "Annotation Stacks",
       x: 128,
-      y: 201,
-      radius: 14,
+      y: 56,
+      radius: 22,
       kind: "door",
-      onInteract: () => this.tryRouteToNaraStacks()
+      onInteract: () => this.enterAnnotationStacks()
     });
     this.addRoomEnemy("repo-wall");
     if (this.sourceNoteStatus !== "inactive" && !this.sourceNoteIcon?.active) {
@@ -827,7 +854,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private renderArchiveA1Tilemap() {
-    const asset = GAMEPLAY_TILESETS.archiveDungeonNative;
+    const stacks = this.currentRoomId === "AS";
+    const asset = stacks ? GAMEPLAY_TILESETS.interiorsNative : GAMEPLAY_TILESETS.archiveDungeonNative;
     if (!this.textures.exists(asset.key)) return false;
 
     const map = this.make.tilemap({
@@ -888,14 +916,10 @@ export class ArchiveScene extends Phaser.Scene {
       return false;
     }
 
-    const layers = buildArchiveA1TileLayers();
+    const layers = stacks ? buildAnnotationStackLayers() : buildArchiveA1TileLayers();
     ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
     walls.putTilesAt(layers.walls, 0, 0, true)
-      .setCollision([
-        packedTileGid(ARCHIVE_DUNGEON_TILES.wallDark),
-        packedTileGid(ARCHIVE_DUNGEON_TILES.wallStone),
-        packedTileGid(ARCHIVE_DUNGEON_TILES.wallLight)
-      ])
+      .setCollisionByExclusion([-1])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
     for (const cell of layers.collisionCells) {
@@ -910,6 +934,30 @@ export class ArchiveScene extends Phaser.Scene {
       map.destroy();
     });
     return true;
+  }
+
+  private renderAnnotationStacksFallback() {
+    this.track(this.add.rectangle(128, 128, 256, 192, color(PALETTE.creamPaper)).setDepth(-16));
+    for (const cell of buildAnnotationStackLayers().collisionCells) {
+      const rect = archiveA1CollisionRect(cell);
+      this.addSolid(rect.x, rect.y, rect.width, rect.height);
+      this.track(this.add.rectangle(rect.x, rect.y, rect.width, rect.height, color(PALETTE.sepiaInk))
+        .setOrigin(0).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(44));
+    }
+  }
+
+  private renderAnnotationStacks() {
+    this.drawAnnotationDraftingStations();
+    this.restoreAnnotationSlipIcon();
+    this.syncSourceNotePhysicalState(null);
+  }
+
+  private enterAnnotationStacks() {
+    if (!annotationStacksOpen(gameState.sceneProgress)) {
+      this.toast.show("STAMP NO REPO TO OPEN STACKS", this.player.position, "warn");
+      return;
+    }
+    this.enterRoom("AS", ANNOTATION_STACKS.entry, true, "north");
   }
 
   private renderOpenNetAnnex() {
@@ -1568,7 +1616,7 @@ export class ArchiveScene extends Phaser.Scene {
         ...symbol,
         state,
         arrow
-      ]).setName(`archive-annotation-station-${station.id}`).setDepth(263));
+      ]).setName(`archive-annotation-station-${station.id}`).setDepth(position.y - 1));
       this.annotationStationVisuals.set(station.id, { container, card, ring, state, arrow, accent });
     }
     this.syncAnnotationDraftingStations();
@@ -1616,7 +1664,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private syncAnnotationDraftingStations() {
-    const visible = this.currentRoomId === "A1"
+    const visible = (this.currentRoomId === "A1" || this.currentRoomId === "AS")
       && this.sourceNoteStatus === "stamped"
       && !this.sourceNoteWallNeedsStamp()
       && !this.archiveKeyRewardCue?.active
@@ -1646,7 +1694,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private restoreAnnotationSlipIcon() {
-    if (this.currentRoomId === "A1") this.createAnnotationSlipIcon();
+    if (this.currentRoomId === "A1" || this.currentRoomId === "AS") this.createAnnotationSlipIcon();
   }
 
   private createAnnotationSlipIcon() {
@@ -1868,6 +1916,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.clearReadyWallCue(definition.id);
     if (definition.id === "repo-wall") {
       gameState.sceneProgress.archiveRepoWallCleared = 1;
+      this.drawNaraStacksGateSeal();
       this.showArchiveKeyRewardCue();
     }
     retroAudio.stamp();
@@ -2176,45 +2225,17 @@ export class ArchiveScene extends Phaser.Scene {
     return this.track(object);
   }
 
-  private tryRouteToNaraStacks() {
-    if (this.sourceNoteGateOpen()) {
-      this.routeToDanneMap("NaraStacksScene", "A1", 128, 188);
-      return;
-    }
-
-    retroAudio.warning();
-    const message = this.sourceNoteStatus === "inactive"
-      ? "Pick up Source Note 47 before leaving the source room."
-      : this.sourceNoteStatus === "carried"
-        ? "Route Source Note 47 to the research table before taking the stairs."
-        : this.sourceNoteStatus === "routed"
-          ? "Verify Source Note 47 provenance before taking the stairs."
-          : "Stamp Source Note 47 before taking the stairs.";
-    setLatestMessage("Source Note 47 locks the NARA II stair route.");
-    this.refreshRoomObjective();
-    this.dialog.show("NARA II STAIRS", [
-      "Visible route. Not open yet.",
-      message,
-      "The next archive wing opens after the first citation stamp."
-    ]);
-  }
-
-  private sourceNoteGateOpen() {
-    return this.sourceNoteStatus === "stamped"
-      || hasProcessItem("citation_stamp");
-  }
-
   private drawNaraStacksGateSeal() {
     this.clearNaraStacksGateSeal();
-    if (this.sourceNoteGateOpen()) {
-      this.trackNaraStacksGateSeal(this.add.rectangle(128, 217, 30, 2, color(PALETTE.terminalCyan), 0.9)
+    if (annotationStacksOpen(gameState.sceneProgress)) {
+      this.trackNaraStacksGateSeal(this.add.rectangle(128, 62, 30, 2, color(PALETTE.terminalCyan), 0.9)
         .setName("archive-nara-stairs-open-seal").setDepth(218));
       return;
     }
 
-    this.trackNaraStacksGateSeal(this.add.rectangle(155, 201, 6, 6, color(PALETTE.black))
+    this.trackNaraStacksGateSeal(this.add.rectangle(155, 49, 6, 6, color(PALETTE.black))
       .setStrokeStyle(1, color(PALETTE.goldStamp)).setName("archive-nara-stairs-lock-shackle").setDepth(218));
-    this.trackNaraStacksGateSeal(this.add.rectangle(155, 205, 10, 6, color(PALETTE.goldStamp))
+    this.trackNaraStacksGateSeal(this.add.rectangle(155, 53, 10, 6, color(PALETTE.goldStamp))
       .setName("archive-nara-stairs-lock-body").setDepth(219));
   }
 
@@ -2337,7 +2358,7 @@ export class ArchiveScene extends Phaser.Scene {
           status: this.enemyStatus(definition)
         };
       });
-    setVisibleThreats([...activeThreats, this.danneLurker.readout(this.time.now)]);
+    setVisibleThreats(this.currentRoomId === "AS" ? [] : [...activeThreats, this.danneLurker.readout(this.time.now)]);
     setVisibleEntities([
       `Room ${this.currentRoomId}`,
       ...this.interactables.map((item) => item.label),
@@ -2431,7 +2452,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private sourceNoteActionHint(): Interactable | null {
-    if (this.currentRoomId !== "A1") return null;
+    if (this.currentRoomId !== "A1" && this.currentRoomId !== "AS") return null;
+    if (this.currentRoomId === "AS" && readAnnotationPacket(gameState.sceneProgress).complete) return null;
     if (this.archiveKeyRewardCue?.active) return null;
     let candidates: Interactable[];
     if (this.sourceNoteWallNeedsStamp()) {
@@ -2439,15 +2461,18 @@ export class ArchiveScene extends Phaser.Scene {
       candidates = wallTarget ? [{ ...wallTarget, radius: 30 }] : [];
     } else if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
       const packet = readAnnotationPacket(gameState.sceneProgress);
-      candidates = packet.missing.map((station) => ({
+      candidates = this.currentRoomId === "AS" ? packet.missing.map((station) => ({
         id: `annotation-station-${station.id}`,
         label: station.label,
         ...ANNOTATION_DRAFTING_STATION_POSITIONS[station.id],
         radius: 28,
         kind: "document",
         onInteract: () => undefined
-      }));
-      if (packet.held.length || packet.ready) candidates.push({
+      })) : packet.ready ? [] : [{
+        id: "annotation-stacks-door", label: "Annotation Stacks", x: 128, y: 56, radius: 22,
+        kind: "door", onInteract: () => this.enterAnnotationStacks()
+      }];
+      if (this.currentRoomId === "A1" && (packet.held.length || packet.ready)) candidates.push({
         id: "annotation-research-table",
         label: this.researchTable.label,
         x: this.researchTable.x,
@@ -2525,6 +2550,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.sourceNoteStatus === "verified") return "STAMP SRC NOTE";
     if (this.sourceNoteWallNeedsStamp()) return "STAMP NO REPO";
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
+      if (target?.id === "annotation-stacks-door") return "ENTER NOTE STACKS";
       if (target?.id === "annotation-research-table") return "FILE PACKET";
       const station = ANNOTATION_DRAFTING_STATIONS.find((note) => note.id === this.annotationStationId(target));
       return station ? `TAKE ${station.shortLabel}` : "FIND NOTES";
@@ -2533,6 +2559,13 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private updateSourceNoteVerification() {
+    if (this.currentRoomId === "AS") {
+      this.updateAnnotationSlipIcon();
+      this.syncAnnotationDraftingStations();
+      this.syncSourceNotePhysicalState(null);
+      this.refreshRoomObjective();
+      return;
+    }
     this.syncSourceRoomTerminalStatus();
     if (this.sourceNoteStatus === "carried" && this.sourceNoteIcon) {
       const x = Math.round(this.player.position.x);
@@ -2552,7 +2585,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.refreshRoomObjective();
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
       if (this.archiveKeyRewardCue?.active) {
-        setObjective("NARA SHORTCUT OPEN");
+        setObjective("ANNOTATION STACKS OPEN");
         setNearestInteractable(null);
       } else if (this.sourceNoteWallNeedsStamp()) {
         setNearestInteractable(nearActionTarget ? "STAMP NO REPO wall" : null);
@@ -2572,8 +2605,8 @@ export class ArchiveScene extends Phaser.Scene {
       retroAudio.warning();
       if (this.sourceNoteStatus === "stamped" && !this.sourceNoteWallNeedsStamp()
         && !readAnnotationPacket(gameState.sceneProgress).ready) {
-        this.toast.show("FIND REMAINING NOTES", this.player.position, "warn");
-        setLatestMessage("Collect the remaining source, context, and selection notes in any order.");
+        this.toast.show("NORTH DOOR: ANNOTATION STACKS", this.player.position, "info");
+        setLatestMessage("The north door leads to source, context, and selection notes. Bring the packet back for human review.");
         return;
       }
       const expected = this.sourceNoteStatus === "routed"
@@ -2863,7 +2896,7 @@ export class ArchiveScene extends Phaser.Scene {
       color: PALETTE.creamPaper
     }).setOrigin(0.5, 0.5)
       .setName("archive-chapter-key-reward-count");
-    const route = this.add.text(0, 10, "NARA II ROUTE OPEN", {
+    const route = this.add.text(0, 10, "ANNOTATION STACKS OPEN", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
@@ -2904,7 +2937,7 @@ export class ArchiveScene extends Phaser.Scene {
         }
       });
     });
-    setObjective("NARA shortcut open. Finish the A1 annotation packet to advance east.");
+    setObjective("NORTH: NOTE STACKS");
   }
 
   private refreshSourceNoteRouteCue() {
@@ -3042,6 +3075,10 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
+    if (target.id === "annotation-stacks-door") {
+      this.enterAnnotationStacks();
+      return;
+    }
     if (target.id === "annotation-research-table") {
       this.fileAnnotationDraftingNotes();
       return;
@@ -3301,6 +3338,34 @@ export class ArchiveScene extends Phaser.Scene {
     else if (position.x >= PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     if (!direction) return false;
 
+    if (this.currentRoomId === "A1" && direction === "north") {
+      if (annotationStacksOpen(gameState.sceneProgress)) {
+        this.enterAnnotationStacks();
+        return true;
+      }
+      this.toast.show("STAMP NO REPO TO OPEN STACKS", this.player.position, "info");
+      this.player.setPosition(position.x, 68);
+      this.exitCooldownUntil = this.time.now + 500;
+      return false;
+    }
+
+    if (this.currentRoomId === "AS") {
+      if (direction === "south") {
+        this.enterRoom("A1", ANNOTATION_STACKS.returnToSource, true, "south");
+        return true;
+      }
+      if (direction === "north") {
+        if (!readAnnotationPacket(gameState.sceneProgress).complete) {
+          this.toast.show("SOUTH: FILE NOTES BEFORE NARA", this.player.position, "info");
+          this.player.setPosition(position.x, 62);
+          this.exitCooldownUntil = this.time.now + 500;
+          return false;
+        }
+        this.routeToDanneMap("NaraStacksScene", "AS", 128, 64);
+        return true;
+      }
+    }
+
     const packet = readAnnotationPacket(gameState.sceneProgress);
     if (this.currentRoomId === "A1" && packet.held.length && !packet.complete) {
       setLatestMessage("Complete and file the annotation packet before leaving A1.");
@@ -3340,7 +3405,7 @@ export class ArchiveScene extends Phaser.Scene {
 
     const currentRoom = ARCHIVE_ROOMS[this.currentRoomId];
     const target = currentRoom.exits[direction];
-    if (!target) {
+    if (!target || target === "DN1") {
       setLatestMessage(`No ${direction} route from room ${this.currentRoomId}`);
       this.exitCooldownUntil = this.time.now + 360;
       return false;
@@ -3397,7 +3462,15 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private refreshRoomObjective() {
+    if (this.currentRoomId === "AS") {
+      setObjective(annotationStacksObjective(gameState.sceneProgress));
+      return;
+    }
     if (this.currentRoomId === "A1") {
+      if (annotationStacksOpen(gameState.sceneProgress) && !readAnnotationPacket(gameState.sceneProgress).ready) {
+        setObjective("NORTH: NOTE STACKS");
+        return;
+      }
       if (gameState.sceneProgress.annotationDraftingComplete && nextArchiveResearchReview()) {
         setObjective("REVIEW AT RESEARCH TABLE");
         return;
@@ -3545,8 +3618,10 @@ export class ArchiveScene extends Phaser.Scene {
   private exitIsOpen(room: ArchiveRoom, direction: Direction) {
     const target = room.exits[direction];
     if (!target) return false;
+    if (room.id === "A1" && direction === "north") return annotationStacksOpen(gameState.sceneProgress);
+    if (room.id === "AS") return direction === "south" || readAnnotationPacket(gameState.sceneProgress).complete;
     if (room.id === "A1" && direction === "east" && !this.sourceRoomComplete()) return false;
-    if (target === "N1" || target === "O1") return canTraverseExit(room.id, direction, getHeldProcessItemIds());
+    if (target === "N1" || target === "O1" || target === "DN1") return canTraverseExit(room.id, direction, getHeldProcessItemIds());
     const targetRoom = ARCHIVE_ROOMS[target];
     if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) return false;
     return canTraverseExit(room.id, direction, getHeldProcessItemIds());
@@ -3571,7 +3646,7 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 61
     });
-    if (target && target !== "N1" && target !== "O1" && ARCHIVE_ROOMS[target].roomType === "secret") {
+    if (target && target !== "N1" && target !== "O1" && target !== "DN1" && ARCHIVE_ROOMS[target].roomType === "secret") {
       this.drawSecretExitMarker(direction, this.revealedSecretIds.has(target), requiredItem);
     }
     if (!hasExit) {
@@ -3583,6 +3658,9 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private gateRouteLabel(target: ArchiveExitTarget) {
+    if (target === "AS") return "NOTES";
+    if (target === "DN1") return "NARA";
+    if (this.currentRoomId === "AS" && target === "A1") return "TABLE";
     if (target === "N1") return "NETWORK";
     if (target === "O1") return "OFFICE";
     const room = ARCHIVE_ROOMS[target];
@@ -3834,7 +3912,7 @@ export class ArchiveScene extends Phaser.Scene {
     direction: Direction,
     target: ArchiveExitTarget
   ): ArchiveRoomDetailFrame {
-    if (room.roomType === "boss" || (target !== "N1" && target !== "O1" && ARCHIVE_ROOMS[target].roomType === "boss")) return "threshold_boss";
+    if (room.roomType === "boss" || (target !== "N1" && target !== "O1" && target !== "DN1" && ARCHIVE_ROOMS[target].roomType === "boss")) return "threshold_boss";
     return this.exitIsOpen(room, direction) ? "threshold_open" : "threshold_locked";
   }
 

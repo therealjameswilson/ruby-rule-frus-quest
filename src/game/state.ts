@@ -2,6 +2,7 @@ import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/character
 import { getPauseMenuReadout } from "../systems/pauseMenu";
 import { getCodexViewReadout } from "../systems/codexLayout";
 import { getGuideCounterReadout } from "./guideCounterTraining";
+import { annotationStacksOpen } from "./annotationStacks";
 import { getCodexReadout, unlockCodexEntry } from "./codex";
 import { AREA_REGISTRY, DEFAULT_PROCESS_ROLE, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
@@ -1468,8 +1469,12 @@ export function getRoomGraphReadout() {
         const bossDoor = isBossDoor(room, direction);
         const blackVaultFinalExit = room.id === "DV1" && direction === "east";
         const readingPassage = room.id === "DN1" && direction === "north";
+        const annotationEntry = room.id === "A1" && direction === "north";
+        const annotationExit = room.id === "AS" && direction === "north";
         const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
-        const canOpen = readingPassage ? hiddenReadingRoomDiscovered(gameState) : blackVaultFinalExit
+        const canOpen = annotationEntry ? annotationStacksOpen(gameState.sceneProgress)
+          : annotationExit ? gameState.sceneProgress.annotationDraftingComplete === 1
+          : readingPassage ? hiddenReadingRoomDiscovered(gameState) : blackVaultFinalExit
           ? Boolean(gameState.sceneProgress.blackVaultBossCleared)
           : bossDoor
           ? canOpenBossDoor(dungeon)
@@ -1478,13 +1483,17 @@ export function getRoomGraphReadout() {
             : canOpenLockedDoor(dungeon);
         return [direction, {
           label: lockedExits[direction] ?? "Locked route",
-          gateType: bossDoor ? "boss" : requiredItem ? "process_item" : "small_key",
+          gateType: bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
           requiredItem,
           requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
-          blockedMessage: canOpen ? null : readingPassage && heldProcessItems.has("review_folder")
+          blockedMessage: canOpen ? null : annotationEntry ? "Verify Source Note 47 and stamp the NO REPO wall to open the stacks."
+            : annotationExit ? "Bring the annotation packet south to the human research table before visiting NARA."
+            : readingPassage && heldProcessItems.has("review_folder")
             ? "Compare the northeast shelf register with the Review Folder."
             : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
-          blockedObjective: canOpen ? null : readingPassage && heldProcessItems.has("review_folder") ? "COMPARE THE SHELF REGISTER"
+          blockedObjective: canOpen ? null : annotationEntry ? "STAMP NO REPO TO OPEN STACKS"
+            : annotationExit ? "SOUTH: FILE AT TABLE"
+            : readingPassage && heldProcessItems.has("review_folder") ? "COMPARE THE SHELF REGISTER"
             : blackVaultFinalExit ? "Black Vault: defeat DANN-E before entering the Buckram Gate." : prompt.objective,
           canOpen,
           smallKeys: dungeon.smallKeys,
