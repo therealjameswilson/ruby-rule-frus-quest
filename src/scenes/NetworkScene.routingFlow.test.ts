@@ -76,11 +76,11 @@ describe("NetworkScene physical routing flow", () => {
   it("keeps batch filing but requires one concrete accounting decision at the ledger", () => {
     expect(networkSceneSource).toContain("handleClassNetVaultAction");
     expect(networkSceneSource).toContain("routeClassNetVaultDocket");
-    expect(networkSceneSource).toContain("ledgerChoice = new ChoicePrompt(this)");
+    expect(networkSceneSource).toContain("ledgerChoice = new WithholdingChronologyBoard(this)");
     const route = methodSource("routeVaultDocket", "awardClassNetDocketPoints");
     expect(route).toContain('result.status === "review-required"');
-    expect(route).toContain("CLASSNET_WITHHOLDING_REVIEW");
-    expect(route).toContain("this.routeVaultDocket(station, option.value)");
+    expect(route).toContain("gameState.sceneProgress.classNetWithholdingSlot = slot");
+    expect(route).toContain("this.routeVaultDocket(station, slot)");
     expect(route.indexOf('result.status === "review-required"')).toBeLessThan(route.indexOf("this.classNetReviewStep = result.nextStep"));
     expect(networkSceneSource).not.toContain("showClearanceProcedureChoice");
     expect(networkSceneSource).not.toContain("showEo13526ReviewChoice");

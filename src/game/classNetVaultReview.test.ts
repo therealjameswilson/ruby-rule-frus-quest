@@ -11,7 +11,6 @@ import {
   getClassNetVaultDocket,
   routeClassNetVaultDocket
 } from "./classNetVaultReview";
-import { choiceLayout } from "../systems/choiceLayout";
 import { pixelFontMetrics } from "../systems/pixelFontMetrics";
 import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 
@@ -50,7 +49,7 @@ describe("physical ClassNet Vault review", () => {
   it("hands off the next docket without another pedestal trip", () => {
     const first = routeClassNetVaultDocket(0, "clearance_lane", "human_desk");
     expect(classNetBatchDocketAfterRoute(first)?.id).toBe("release_standard");
-    const final = routeClassNetVaultDocket(2, "decision_trail", "decision_ledger", "account_withholding");
+    const final = routeClassNetVaultDocket(2, "decision_trail", "decision_ledger", 2);
     expect(classNetBatchDocketAfterRoute(final)).toBeNull();
   });
 
@@ -59,7 +58,7 @@ describe("physical ClassNet Vault review", () => {
     for (const docket of CLASSNET_VAULT_DOCKETS) {
       expect(getClassNetVaultDocket(step).id).toBe(docket.id);
       const result = routeClassNetVaultDocket(step, docket.id, docket.station,
-        docket.id === "decision_trail" ? "account_withholding" : undefined);
+        docket.id === "decision_trail" ? 2 : undefined);
       expect(result.ok).toBe(true);
       step = result.nextStep;
       expect(result.complete).toBe(step === CLASSNET_VAULT_DOCKETS.length);
@@ -75,21 +74,21 @@ describe("physical ClassNet Vault review", () => {
     expect(classNetVaultObjective(pending.nextStep, true, false)).toBe("3/3 TO LEDGER");
   });
 
-  it.each(["omit_entry", "", "invented_approval"])("keeps a rejected %s proposal retryable", (decision) => {
+  it.each([0, 1, 3, NaN, Infinity, 2.5])("keeps a rejected %s placement retryable", (decision) => {
     const rejected = routeClassNetVaultDocket(2, "decision_trail", "decision_ledger", decision);
     expect(rejected).toMatchObject({ ok: false, status: "revision-required", nextStep: 2, complete: false });
     expect(classNetBatchDocketAfterRoute(rejected)?.id).toBe("decision_trail");
     expect(rejected.message).toContain("chronological place");
-    expect(routeClassNetVaultDocket(2, "decision_trail", "decision_ledger", "account_withholding"))
+    expect(routeClassNetVaultDocket(2, "decision_trail", "decision_ledger", 2))
       .toMatchObject({ ok: true, status: "filed", nextStep: 3, complete: true });
   });
 
   it("cannot use a correct answer to bypass station order or earn completion twice", () => {
     for (const step of [0, 1, 3]) {
-      expect(routeClassNetVaultDocket(step, "decision_trail", "decision_ledger", "account_withholding"))
+      expect(routeClassNetVaultDocket(step, "decision_trail", "decision_ledger", 2))
         .toMatchObject({ ok: false, status: "wrong-route", nextStep: step, complete: false });
     }
-    expect(routeClassNetVaultDocket(2, "decision_trail", "human_desk", "account_withholding"))
+    expect(routeClassNetVaultDocket(2, "decision_trail", "human_desk", 2))
       .toMatchObject({ ok: false, status: "wrong-route", nextStep: 2 });
   });
 
@@ -97,14 +96,6 @@ describe("physical ClassNet Vault review", () => {
     const review = CLASSNET_WITHHOLDING_REVIEW;
     expect(review.sourceUrl).toBe(ABOUT_SERIES_SOURCE.url);
     expect(review.evidence).toContain("TRAINING MEMO");
-    const layout = choiceLayout(`${review.question}\n\n${review.evidence}`, review.options, 8);
-    expect(layout.fontSize).toBe(8);
-    expect(layout.contextFontSize).toBe(8);
-    expect(layout.height).toBeLessThanOrEqual(180);
-    expect(layout.rows).toHaveLength(2);
-    for (const text of [layout.questionText, layout.contextText, ...layout.rows.map(row => row.text)]) {
-      expect(text).not.toContain("...");
-    }
     for (const label of Object.values(CLASSNET_VAULT_STATION_LABELS)) {
       expect(label.length * pixelFontMetrics(8).advance).toBeLessThanOrEqual(52);
     }

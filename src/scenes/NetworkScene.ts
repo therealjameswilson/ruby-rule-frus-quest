@@ -37,7 +37,7 @@ import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { saveGameNow } from "../systems/save";
 import { takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
-import { ChoicePrompt } from "../systems/verification";
+import { WithholdingChronologyBoard } from "../systems/withholdingChronologyBoard";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -57,7 +57,6 @@ import {
 import type { NetworkRoutePacket, NetworkRoutePacketId, RoutingNetwork } from "../game/networkRouting";
 import {
   classNetBatchDocketAfterRoute,
-  CLASSNET_WITHHOLDING_REVIEW,
   CLASSNET_VAULT_STATION_LABELS,
   CLASSNET_VAULT_CHECK_TOTAL,
   CLASSNET_VAULT_DOCKETS,
@@ -143,7 +142,7 @@ export class NetworkScene extends Phaser.Scene {
   private routeText!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
   private toast!: FeedbackToast;
-  private ledgerChoice!: ChoicePrompt;
+  private ledgerChoice!: WithholdingChronologyBoard;
   private currentRoute = 0;
   private correctRoutes = 0;
   private routingComplete = false;
@@ -219,7 +218,7 @@ export class NetworkScene extends Phaser.Scene {
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.toast = new FeedbackToast(this);
-    this.ledgerChoice = new ChoicePrompt(this);
+    this.ledgerChoice = new WithholdingChronologyBoard(this);
     this.danneLurker = new DanneLurker(this, 46, 66, {
       boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
@@ -1398,18 +1397,18 @@ export class NetworkScene extends Phaser.Scene {
     this.createVaultDocketHeldIcon(docket.id);
   }
 
-  private routeVaultDocket(station: ClassNetVaultStationId, decision?: string) {
+  private routeVaultDocket(station: ClassNetVaultStationId, decision?: number) {
     const docket = this.vaultCarriedDocket();
     if (!docket) return;
     const result = routeClassNetVaultDocket(this.classNetReviewStep, docket.id, station, decision);
 
     if (result.status === "review-required") {
       this.interactionPrompt.update(0, null);
-      const review = CLASSNET_WITHHOLDING_REVIEW;
       saveGameNow();
-      this.ledgerChoice.show(`${review.question}\n\n${review.evidence}`, [...review.options], (option) => {
-        this.routeVaultDocket(station, option.value);
-      }, 8);
+      this.ledgerChoice.show(gameState.sceneProgress.classNetWithholdingSlot, (slot) => {
+        gameState.sceneProgress.classNetWithholdingSlot = slot;
+        saveGameNow();
+      }, (slot) => this.routeVaultDocket(station, slot));
       return;
     }
     if (result.status === "revision-required") {

@@ -92,6 +92,7 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
+    "restoreChronology": "ORDONNE LE DOSSIER",
     "annotationAisles": "ALLEES / TABLE AU SUD",
     "guideCoach": {
       "faceNorth": "REGARDE VERS LE HAUT",

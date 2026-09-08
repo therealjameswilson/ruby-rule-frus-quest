@@ -28,6 +28,7 @@ import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
 import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
 import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editorialRepair";
+import { WITHHOLDING_CHRONOLOGY_TITLE } from "../game/withholdingChronology";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -253,6 +254,7 @@ export class UIScene extends Phaser.Scene {
   private compactObjective(activeSceneKey: string | null) {
     if (gameState.mode === "dialog") return getString("hud.readLine");
     if (gameState.mode === "choice") {
+      if (gameState.currentChoice?.title === WITHHOLDING_CHRONOLOGY_TITLE) return getString("hud.restoreChronology");
       if (gameState.currentChoice?.title === REFERRAL_MANIFEST_TITLE) return getString("hud.reviewRoutes");
       if (gameState.currentChoice?.title === PROOF_COMPARISON_TITLE) return getString("hud.compareProof");
       if (gameState.currentChoice?.title.startsWith(BINDING_CERTIFICATION_TITLE)) return getString("hud.reviewRecord");

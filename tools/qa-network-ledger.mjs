@@ -5,6 +5,9 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? "playwright")
 const base = process.env.FRUS_QA_URL ?? "http://127.0.0.1:5195/";
 const root = process.env.FRUS_QA_OUT ?? "/tmp/frus-network-ledger";
 const crossing = process.argv.includes("--crossing");
+const ledgerOnly = process.argv.includes("--ledger-only");
+const completedReturn = process.argv.includes("--completed-return");
+const pointerBoard = process.argv.includes("--pointer");
 assert(process.env.FRUS_QA_STORAGE, "Set FRUS_QA_STORAGE to earned-storage.json from qa-archive-wall.mjs");
 await mkdir(root, { recursive: true });
 const browser = await chromium.launch({ headless: true,
@@ -128,17 +131,32 @@ async function run(label, mobile) {
     return current;
   }
 
-  async function choose(key) {
+  async function shiftEntry(direction) {
     assert.equal((await state()).mode, "choice");
-    if (mobile) {
-      const row = await page.evaluate(key => {
-        const choice = window.game.scene.getScene("NetworkScene").ledgerChoice;
-        const index = choice.options.findIndex(option => option.key === key);
-        const row = choice.optionObjects[index * 2];
-        return { x: row.x, y: row.y };
-      }, key);
-      await tap(row.x, row.y);
-    } else await press(key === "A" ? "Space" : "x");
+    // Exercise the generous hit target outside the visible arrow button.
+    if (mobile) await tap(direction < 0 ? 14 : 193, 168);
+    else if (pointerBoard) {
+      const target = await point(direction < 0 ? 14 : 193, 168);
+      await page.mouse.click(target.x, target.y);
+    }
+    else await press(direction < 0 ? "ArrowLeft" : "ArrowRight");
+    await page.waitForTimeout(150);
+  }
+
+  async function fileEntry() {
+    assert.equal((await state()).mode, "choice");
+    if (mobile) await tap(104, 168);
+    else if (pointerBoard) {
+      const target = await point(104, 168);
+      await page.mouse.click(target.x, target.y);
+    }
+    else {
+      // Read selection only; actual input must select and file the entry.
+      if (await page.evaluate(() => window.game.scene.getScene("NetworkScene").ledgerChoice.selected !== "file")) {
+        await press("ArrowDown");
+      }
+      await press();
+    }
     await page.waitForTimeout(150);
   }
 
@@ -146,205 +164,227 @@ async function run(label, mobile) {
     await page.goto(`${base}?text=full`);
     await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === 'TapToStartScene');
     await press("Enter");
-    await page.waitForFunction(() => window.render_game_to_text
-      && JSON.parse(window.render_game_to_text()).scene === "NetworkScene");
+    await page.waitForFunction(scene => window.render_game_to_text
+      && JSON.parse(window.render_game_to_text()).scene === scene,
+    completedReturn ? "ReferralVaultScene" : "NetworkScene");
     await page.waitForTimeout(1200);
     let current = await checkpoint("initial");
-    assert.equal(current.objective, "TAKE ROUTING BATCH");
-
-    if (crossing) {
-      await move(90, 124);
-      await direction("ArrowRight", 160);
-      assert((await state()).player.x < 112, "The sealed crossing must physically block the player");
-      // A live hit can interrupt windup. Retry the real control, never skip combat.
-      for (let attempt = 0; attempt < 6; attempt += 1) {
-        await direction("ArrowRight", 20);
-        await press("x");
-        if (/public packet/i.test((await state()).latestMessage)) break;
-        await page.waitForTimeout(350);
-      }
-      current = await checkpoint("crossing-needs-public-packet");
-      assert.notEqual(current.sceneProgress.networkStampCrossingOpen, 1);
-      assert.match(current.latestMessage, /public packet/i);
+    if (completedReturn) {
+      const earned = { points: current.documentPoints, inventory: current.inventory,
+        documents: current.documentCandidates };
+      assert(current.inventory.includes("Clearance Token"));
+      assert.equal(current.sceneProgress.classNetWithholdingSlot, undefined,
+        "Use an actual completed pre-puzzle save to test compatibility");
+      await move(8, 124, "NetworkScene");
+      current = await checkpoint("legacy-completed-return");
+      assert.equal(current.roomTraversal.currentRoomId, "N2");
+      assert.equal(current.sceneProgress.classNetVaultReviewComplete, 1);
+      await move(216, 194); await move(195, 194); await press();
+      current = await checkpoint("legacy-ledger-stays-complete");
+      assert.equal(current.mode, "explore");
+      assert.equal(current.objective, "EXIT EAST - REFERRAL");
+      assert.deepEqual({ points: current.documentPoints, inventory: current.inventory,
+        documents: current.documentCandidates }, earned);
+      assert.deepEqual(errors, []);
+      return;
     }
+    if (!ledgerOnly) {
+      assert.equal(current.objective, "TAKE ROUTING BATCH");
 
-    await move(35,190);await move(128,190);await press();
-    current = await checkpoint("routing-batch-held");
-    assert.equal(current.sceneProgress.networkRoutingCarried, 1);
-    assert.equal(current.objective, "1/4 TO OPENNET");
-
-    await move(60, 190);
-    await move(60, 146);
-    await press();
-    current = await checkpoint("packet-two-auto-handoff");
-    assert.equal(current.sceneProgress.networkRoutingStep, 1);
-    assert.equal(current.sceneProgress.networkRoutingCarried, 2);
-    assert.equal(current.objective, "2/4 TO OPENNET");
-
-    const savedRoute = await page.evaluate(() => {
-      const raw = localStorage.getItem("rubyRuleFrusQuestSave");
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      return {
-        scene: parsed.state.currentScene,
-        step: parsed.state.sceneProgress.networkRoutingStep,
-        carried: parsed.state.sceneProgress.networkRoutingCarried,
-        objective: parsed.state.objective
-      };
-    });
-    console.log(label, "saved-route", JSON.stringify(savedRoute));
-    assert.deepEqual(savedRoute, {
-      scene: "NetworkScene",
-      step: 1,
-      carried: 2,
-      objective: "2/4 TO OPENNET"
-    });
-
-    await page.goto(`${base}?text=full`);
-    await page.waitForFunction(() => window.render_game_to_text
-      && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
-    await press("Enter");
-    await page.waitForFunction(() => window.render_game_to_text
-      && JSON.parse(window.render_game_to_text()).scene === "NetworkScene");
-    await page.waitForTimeout(900);
-    current = await checkpoint("packet-two-restored");
-    assert.equal(current.sceneProgress.networkRoutingStep, 1);
-    assert.equal(current.sceneProgress.networkRoutingCarried, 2);
-    assert.equal(current.objective, "2/4 TO OPENNET");
-
-    if (crossing) {
-      const before = await state();
-      await move(90, 124);
-      await direction("ArrowRight", 120);
-      if (mobile) await tap(224, 16);
-      else await page.keyboard.press("Escape");
-      await page.waitForTimeout(200);
-      assert.notEqual((await state()).mode, "explore");
-      await checkpoint("crossing-paused");
-      if (mobile) await tap(224, 34);
-      else await page.keyboard.press("Escape");
-      await page.waitForTimeout(200);
-      assert.equal((await state()).mode, "explore");
-      assert.notEqual((await state()).sceneProgress.networkStampCrossingOpen, 1,
-        "Closing pause must not stamp through the menu");
-      for (let attempt = 0; attempt < 6 && (await state()).sceneProgress.networkStampCrossingOpen !== 1; attempt += 1) {
-        await direction("ArrowRight", 20);
-        await press("x");
-        await page.waitForTimeout(250);
+      if (crossing) {
+        await move(90, 124);
+        await direction("ArrowRight", 160);
+        assert((await state()).player.x < 112, "The sealed crossing must physically block the player");
+        // A live hit can interrupt windup. Retry the real control, never skip combat.
+        for (let attempt = 0; attempt < 6; attempt += 1) {
+          await direction("ArrowRight", 20);
+          await press("x");
+          if (/public packet/i.test((await state()).latestMessage)) break;
+          await page.waitForTimeout(350);
+        }
+        current = await checkpoint("crossing-needs-public-packet");
+        assert.notEqual(current.sceneProgress.networkStampCrossingOpen, 1);
+        assert.match(current.latestMessage, /public packet/i);
       }
-      current = await checkpoint("stamp-opens-crossing");
-      assert.equal(current.sceneProgress.networkStampCrossingOpen, 1);
+
+      await move(35,190);await move(128,190);await press();
+      current = await checkpoint("routing-batch-held");
+      assert.equal(current.sceneProgress.networkRoutingCarried, 1);
+      assert.equal(current.objective, "1/4 TO OPENNET");
+
+      await move(60, 190);
+      await move(60, 146);
+      await press();
+      current = await checkpoint("packet-two-auto-handoff");
       assert.equal(current.sceneProgress.networkRoutingStep, 1);
       assert.equal(current.sceneProgress.networkRoutingCarried, 2);
-      assert.equal(current.documentPoints, before.documentPoints);
-      assert.deepEqual(current.inventory, before.inventory);
-      assert.deepEqual(current.documentCandidates, before.documentCandidates);
+      assert.equal(current.objective, "2/4 TO OPENNET");
+
+      const savedRoute = await page.evaluate(() => {
+        const raw = localStorage.getItem("rubyRuleFrusQuestSave");
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        return {
+          scene: parsed.state.currentScene,
+          step: parsed.state.sceneProgress.networkRoutingStep,
+          carried: parsed.state.sceneProgress.networkRoutingCarried,
+          objective: parsed.state.objective
+        };
+      });
+      console.log(label, "saved-route", JSON.stringify(savedRoute));
+      assert.deepEqual(savedRoute, {
+        scene: "NetworkScene",
+        step: 1,
+        carried: 2,
+        objective: "2/4 TO OPENNET"
+      });
+
       await page.goto(`${base}?text=full`);
-      await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
+      await page.waitForFunction(() => window.render_game_to_text
+        && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
       await press("Enter");
-      await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === "NetworkScene");
-      await page.waitForTimeout(700);
-      current = await checkpoint("crossing-persists-on-continue");
-      assert.equal(current.sceneProgress.networkStampCrossingOpen, 1);
+      await page.waitForFunction(() => window.render_game_to_text
+        && JSON.parse(window.render_game_to_text()).scene === "NetworkScene");
+      await page.waitForTimeout(900);
+      current = await checkpoint("packet-two-restored");
+      assert.equal(current.sceneProgress.networkRoutingStep, 1);
       assert.equal(current.sceneProgress.networkRoutingCarried, 2);
-      await move(60, 146);
+      assert.equal(current.objective, "2/4 TO OPENNET");
+
+      if (crossing) {
+        const before = await state();
+        await move(90, 124);
+        await direction("ArrowRight", 120);
+        if (mobile) await tap(224, 16);
+        else await page.keyboard.press("Escape");
+        await page.waitForTimeout(200);
+        assert.notEqual((await state()).mode, "explore");
+        await checkpoint("crossing-paused");
+        if (mobile) await tap(224, 34);
+        else await page.keyboard.press("Escape");
+        await page.waitForTimeout(200);
+        assert.equal((await state()).mode, "explore");
+        assert.notEqual((await state()).sceneProgress.networkStampCrossingOpen, 1,
+          "Closing pause must not stamp through the menu");
+        for (let attempt = 0; attempt < 6 && (await state()).sceneProgress.networkStampCrossingOpen !== 1; attempt += 1) {
+          await direction("ArrowRight", 20);
+          await press("x");
+          await page.waitForTimeout(250);
+        }
+        current = await checkpoint("stamp-opens-crossing");
+        assert.equal(current.sceneProgress.networkStampCrossingOpen, 1);
+        assert.equal(current.sceneProgress.networkRoutingStep, 1);
+        assert.equal(current.sceneProgress.networkRoutingCarried, 2);
+        assert.equal(current.documentPoints, before.documentPoints);
+        assert.deepEqual(current.inventory, before.inventory);
+        assert.deepEqual(current.documentCandidates, before.documentCandidates);
+        await page.goto(`${base}?text=full`);
+        await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
+        await press("Enter");
+        await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === "NetworkScene");
+        await page.waitForTimeout(700);
+        current = await checkpoint("crossing-persists-on-continue");
+        assert.equal(current.sceneProgress.networkStampCrossingOpen, 1);
+        assert.equal(current.sceneProgress.networkRoutingCarried, 2);
+        await move(60, 146);
+      }
+
+      await press();
+      current = await checkpoint("packet-three-auto-handoff");
+      assert.equal(current.sceneProgress.networkRoutingStep, 2);
+      assert.equal(current.sceneProgress.networkRoutingCarried, 3);
+      assert.equal(current.objective, "3/4 TO CLASSNET");
+      const reliabilityBeforeWrongNetwork = current.reliability;
+
+      await press();
+      current = await checkpoint("wrong-network-immediate-retry");
+      assert.equal(current.sceneProgress.networkRoutingStep, 2);
+      assert.equal(current.sceneProgress.networkRoutingCarried, 3);
+      assert.equal(current.objective, "3/4 TO CLASSNET");
+      assert(current.reliability <= reliabilityBeforeWrongNetwork - 2);
+      assert.match(current.latestMessage, /remains in hand/i);
+
+      if (crossing) {
+        await move(60, 124);
+        await move(160, 124);
+        current = await checkpoint("walk-through-earned-crossing");
+        assert(current.player.x >= 155);
+        assert.equal(current.sceneProgress.networkRoutingComplete ?? 0, 0, "Shortcut cannot bypass human routing");
+        await move(196, 124);
+      } else {
+        await move(60, 190);
+        await move(196, 190);
+        await move(196, 146);
+      }
+      await press();
+      current = await checkpoint("packet-four-auto-handoff");
+      assert.equal(current.sceneProgress.networkRoutingStep, 3);
+      assert.equal(current.sceneProgress.networkRoutingCarried, 4);
+      assert.equal(current.objective, "4/4 TO CLASSNET");
+
+      await press();
+      current = await checkpoint("routing-room-cleared");
+      assert.equal(current.sceneProgress.networkRoutingComplete, 1);
+      assert.equal(current.sceneProgress.networkRoutingCarried, 0);
+      assert.equal(current.objective, "EXIT EAST - VAULT");
+
+      await move(216, 190);
+      await move(216, 124);
+      await move(248, 124, "N2");
+      current = await checkpoint("classnet-entry");
+      assert.equal(current.objective, "TAKE REVIEW BATCH");
+
+      await move(128, 164);
+      await press();
+      current = await checkpoint("review-batch-held");
+      assert.equal(current.sceneProgress.classNetVaultDocketCarried, 1);
+      assert.equal(current.objective, "1/3 TO HUMAN DESK");
+
+      await move(61, 195);
+      await press();
+      current = await checkpoint("docket-two-auto-handoff");
+      assert.equal(current.sceneProgress.classNetVaultReviewStep, 1);
+      assert.equal(current.sceneProgress.classNetVaultDocketCarried, 2);
+      assert.equal(current.objective, "2/3 TO RELEASE BOARD");
+      const savedVaultPosition = { ...current.player };
+
+      await page.goto(`${base}?text=full`);
+      await page.waitForFunction(() => window.render_game_to_text
+        && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
+      await press("Enter");
+      await page.waitForFunction(() => window.render_game_to_text
+        && JSON.parse(window.render_game_to_text()).scene === "NetworkScene");
+      await page.waitForTimeout(900);
+      current = await checkpoint("docket-two-restored-in-vault");
+      assert.equal(current.roomTraversal?.currentRoomId, "N2");
+      assert.equal(current.sceneProgress.classNetVaultReviewStep, 1);
+      assert.equal(current.sceneProgress.classNetVaultDocketCarried, 2);
+      assert.equal(current.objective, "2/3 TO RELEASE BOARD");
+      assert.equal(current.heldItem, "Review Batch: E.O.");
+      assert(Math.hypot(current.player.x - savedVaultPosition.x, current.player.y - savedVaultPosition.y) <= 2);
+      const reliabilityBeforeWrongDesk = current.reliability;
+
+      await press();
+      current = await checkpoint("wrong-desk-immediate-retry");
+      assert.equal(current.sceneProgress.classNetVaultReviewStep, 1);
+      assert.equal(current.sceneProgress.classNetVaultDocketCarried, 2);
+      assert.equal(current.objective, "2/3 TO RELEASE BOARD");
+      assert(current.reliability <= reliabilityBeforeWrongDesk - 2);
+      assert.match(current.latestMessage, /remains in hand/i);
+
+      await move(92, 164);
+      await move(92, 110);
+      await move(128, 110);
+      await press();
+      current = await checkpoint("docket-three-auto-handoff");
+      assert.equal(current.sceneProgress.classNetVaultReviewStep, 2);
+      assert.equal(current.sceneProgress.classNetVaultDocketCarried, 3);
+      assert.equal(current.objective, "3/3 TO LEDGER");
+
+      await move(92, 110);
+      await move(92, 164);
+      await move(195, 195);
     }
-
-    await press();
-    current = await checkpoint("packet-three-auto-handoff");
-    assert.equal(current.sceneProgress.networkRoutingStep, 2);
-    assert.equal(current.sceneProgress.networkRoutingCarried, 3);
-    assert.equal(current.objective, "3/4 TO CLASSNET");
-    const reliabilityBeforeWrongNetwork = current.reliability;
-
-    await press();
-    current = await checkpoint("wrong-network-immediate-retry");
-    assert.equal(current.sceneProgress.networkRoutingStep, 2);
-    assert.equal(current.sceneProgress.networkRoutingCarried, 3);
-    assert.equal(current.objective, "3/4 TO CLASSNET");
-    assert(current.reliability <= reliabilityBeforeWrongNetwork - 2);
-    assert.match(current.latestMessage, /remains in hand/i);
-
-    if (crossing) {
-      await move(60, 124);
-      await move(160, 124);
-      current = await checkpoint("walk-through-earned-crossing");
-      assert(current.player.x >= 155);
-      assert.equal(current.sceneProgress.networkRoutingComplete ?? 0, 0, "Shortcut cannot bypass human routing");
-      await move(196, 124);
-    } else {
-      await move(60, 190);
-      await move(196, 190);
-      await move(196, 146);
-    }
-    await press();
-    current = await checkpoint("packet-four-auto-handoff");
-    assert.equal(current.sceneProgress.networkRoutingStep, 3);
-    assert.equal(current.sceneProgress.networkRoutingCarried, 4);
-    assert.equal(current.objective, "4/4 TO CLASSNET");
-
-    await press();
-    current = await checkpoint("routing-room-cleared");
-    assert.equal(current.sceneProgress.networkRoutingComplete, 1);
-    assert.equal(current.sceneProgress.networkRoutingCarried, 0);
-    assert.equal(current.objective, "EXIT EAST - VAULT");
-
-    await move(216, 190);
-    await move(216, 124);
-    await move(248, 124, "N2");
-    current = await checkpoint("classnet-entry");
-    assert.equal(current.objective, "TAKE REVIEW BATCH");
-
-    await move(128, 164);
-    await press();
-    current = await checkpoint("review-batch-held");
-    assert.equal(current.sceneProgress.classNetVaultDocketCarried, 1);
-    assert.equal(current.objective, "1/3 TO HUMAN DESK");
-
-    await move(61, 195);
-    await press();
-    current = await checkpoint("docket-two-auto-handoff");
-    assert.equal(current.sceneProgress.classNetVaultReviewStep, 1);
-    assert.equal(current.sceneProgress.classNetVaultDocketCarried, 2);
-    assert.equal(current.objective, "2/3 TO RELEASE BOARD");
-    const savedVaultPosition = { ...current.player };
-
-    await page.goto(`${base}?text=full`);
-    await page.waitForFunction(() => window.render_game_to_text
-      && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
-    await press("Enter");
-    await page.waitForFunction(() => window.render_game_to_text
-      && JSON.parse(window.render_game_to_text()).scene === "NetworkScene");
-    await page.waitForTimeout(900);
-    current = await checkpoint("docket-two-restored-in-vault");
-    assert.equal(current.roomTraversal?.currentRoomId, "N2");
-    assert.equal(current.sceneProgress.classNetVaultReviewStep, 1);
-    assert.equal(current.sceneProgress.classNetVaultDocketCarried, 2);
-    assert.equal(current.objective, "2/3 TO RELEASE BOARD");
-    assert.equal(current.heldItem, "Review Batch: E.O.");
-    assert(Math.hypot(current.player.x - savedVaultPosition.x, current.player.y - savedVaultPosition.y) <= 2);
-    const reliabilityBeforeWrongDesk = current.reliability;
-
-    await press();
-    current = await checkpoint("wrong-desk-immediate-retry");
-    assert.equal(current.sceneProgress.classNetVaultReviewStep, 1);
-    assert.equal(current.sceneProgress.classNetVaultDocketCarried, 2);
-    assert.equal(current.objective, "2/3 TO RELEASE BOARD");
-    assert(current.reliability <= reliabilityBeforeWrongDesk - 2);
-    assert.match(current.latestMessage, /remains in hand/i);
-
-    await move(92, 164);
-    await move(92, 110);
-    await move(128, 110);
-    await press();
-    current = await checkpoint("docket-three-auto-handoff");
-    assert.equal(current.sceneProgress.classNetVaultReviewStep, 2);
-    assert.equal(current.sceneProgress.classNetVaultDocketCarried, 3);
-    assert.equal(current.objective, "3/3 TO LEDGER");
-
-    await move(92, 110);
-    await move(92, 164);
-    await move(195, 195);
     await press();
     current = await checkpoint("withheld-memo-decision");
     assert.equal(current.mode, "choice");
@@ -352,20 +392,66 @@ async function run(label, mobile) {
     assert.equal(current.sceneProgress.classNetVaultDocketCarried, 3);
     assert(!current.sceneProgress.classNetVaultReviewComplete);
     assert(!current.inventory.includes("Clearance Token"));
+    const layout = await page.evaluate(() => {
+      const board = window.game.scene.getScene("NetworkScene").children.getByName("withholding-chronology-board");
+      const scale = window.game.canvas.getBoundingClientRect().width / 256;
+      return board.list.filter(object => object.input).map(object => {
+        const hit = object.input.hitArea;
+        return { name: object.name, x: object.x - object.width * object.originX + hit.x,
+          y: object.y - object.height * object.originY + hit.y,
+          width: hit.width, height: hit.height, cssWidth: hit.width * scale, cssHeight: hit.height * scale };
+      });
+    });
+    assert.equal(layout.length, 4);
+    for (const button of layout) {
+      assert(button.cssWidth >= 44 && button.cssHeight >= 44, `${button.name}: touch target too small`);
+      assert(button.x >= 0 && button.y >= 30 && button.x + button.width <= 256);
+      for (const other of layout.filter(other => other !== button)) {
+        assert(button.x + button.width <= other.x || other.x + other.width <= button.x
+          || button.y + button.height <= other.y || other.y + other.height <= button.y,
+        `${button.name} overlaps ${other.name}`);
+      }
+      // Existing touch A and B capture these regions before forwarding board input.
+      for (const control of [{ x: 196, y: 176, width: 58, height: 58 }, { x: 150, y: 192, width: 48, height: 48 }]) {
+        assert(button.x + button.width <= control.x || control.x + control.width <= button.x
+          || button.y + button.height <= control.y || control.y + control.height <= button.y,
+        `${button.name} overlaps the touch controls`);
+      }
+    }
+    await writeFile(`${out}/board-layout.json`, JSON.stringify(layout, null, 2));
     const frozen = { player: current.player, combat: current.playerCombat, threats: current.visibleThreats, reliability: current.reliability };
     await page.waitForTimeout(2200);
     const reading = await state();
     assert.deepEqual({ player: reading.player, combat: reading.playerCombat, threats: reading.visibleThreats, reliability: reading.reliability }, frozen);
     await context.storageState({path:`${out}/pending-ledger.json`});
-    await choose("B");
+    await fileEntry();
+    assert.match((await state()).latestMessage, /KEEP A WITHHOLDING ENTRY/);
+    await shiftEntry(1);
+    await fileEntry();
+    assert.match((await state()).latestMessage, /CONVERSATION TIME/);
+    await shiftEntry(1);
+    await shiftEntry(1);
+    await fileEntry();
     const rejected = await checkpoint("withholding-entry-needs-revision");
-    assert.equal(rejected.mode, "explore");
+    assert.equal(rejected.mode, "choice");
+    assert.equal(rejected.sceneProgress.classNetWithholdingSlot, 3);
     assert.equal(rejected.sceneProgress.classNetVaultReviewStep, 2);
     assert.equal(rejected.sceneProgress.classNetVaultDocketCarried, 3);
     assert.equal(rejected.documentPoints, current.documentPoints);
     assert.equal(rejected.reliability, current.reliability);
     assert.equal(rejected.playerCombat.weapon.swingId, current.playerCombat.weapon.swingId, "Answer must not start a tool swing");
     assert(!rejected.sceneProgress.classNetVaultReviewComplete);
+    await shiftEntry(-1);
+    const draft = await checkpoint("correct-draft-not-filed");
+    assert.equal(draft.sceneProgress.classNetWithholdingSlot, 2);
+    assert(!draft.sceneProgress.classNetVaultReviewComplete);
+    assert.equal(draft.documentPoints, current.documentPoints);
+    assert.deepEqual(draft.documentCandidates, current.documentCandidates);
+    if (mobile) await tap(228, 54);
+    else await page.keyboard.press("Escape", { delay: 200 });
+    await page.waitForTimeout(120);
+    assert.equal((await state()).mode, "explore");
+    assert.equal((await state()).playerCombat.weapon.swingId, current.playerCombat.weapon.swingId);
     await page.reload();
     await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
     await press("Enter");
@@ -376,9 +462,16 @@ async function run(label, mobile) {
     assert.equal(current.sceneProgress.classNetVaultReviewStep, 2);
     assert.equal(current.sceneProgress.classNetVaultDocketCarried, 3);
     assert(!current.sceneProgress.classNetVaultReviewComplete);
+    assert.equal(current.sceneProgress.classNetWithholdingSlot, 2);
     await press();
     assert.equal((await state()).mode, "choice");
-    await choose("A");
+    await shiftEntry(-1);
+    await press();
+    assert.equal((await state()).sceneProgress.classNetWithholdingSlot, 2,
+      "A advances exactly one slot and does not file or swing");
+    assert(!(await state()).sceneProgress.classNetVaultReviewComplete);
+    await checkpoint("restored-draft-ready-to-file");
+    await fileEntry();
     current = await checkpoint("review-room-cleared");
     assert.equal(current.sceneProgress.classNetVaultReviewComplete, 1);
     assert.equal(current.sceneProgress.classNetVaultDocketCarried, 0);

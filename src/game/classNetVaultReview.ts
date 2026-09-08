@@ -2,7 +2,7 @@ import { CLEARANCE_PROCEDURE_PROMPTS } from "./clearanceProcedure";
 import { DECLASSIFICATION_REVIEW_PROMPTS } from "./declassificationReview";
 import { EO13526_REVIEW_PROMPTS } from "./eo13526Review";
 import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
-import type { ChoiceOption } from "./types";
+import { validateWithholdingEntry } from "./withholdingChronology";
 
 export type ClassNetVaultStationId = "human_desk" | "release_board" | "decision_ledger";
 
@@ -20,11 +20,6 @@ export const CLASSNET_VAULT_STATION_LABELS: Record<ClassNetVaultStationId, strin
 export const CLASSNET_WITHHOLDING_REVIEW = {
   question: "A memo is withheld in full. What goes in its dated place?",
   evidence: "TRAINING MEMO: reviewer withheld all 3 pages.",
-  options: [
-    { key: "A", label: "Heading, source note, page count", value: "account_withholding" },
-    { key: "B", label: "Nothing; leave the memo out", value: "omit_entry" }
-  ] satisfies readonly ChoiceOption[],
-  correctValue: "account_withholding",
   failureMessage: "Withheld text stays closed, but its heading, source note and page count stay in chronological place.",
   sourceUrl: ABOUT_SERIES_SOURCE.url
 } as const;
@@ -146,7 +141,7 @@ export function routeClassNetVaultDocket(
   step: number,
   docketId: ClassNetVaultDocketId,
   station: ClassNetVaultStationId,
-  decision?: string
+  decision?: number
 ): ClassNetVaultRouteResult {
   const expected = getClassNetVaultDocket(step);
   const docket = CLASSNET_VAULT_DOCKETS.find((candidate) => candidate.id === docketId) ?? expected;
@@ -156,7 +151,7 @@ export function routeClassNetVaultDocket(
   const status: ClassNetVaultRouteResult["status"] = !routeMatches ? "wrong-route"
     : !needsReview ? "filed"
     : decision === undefined ? "review-required"
-    : decision === CLASSNET_WITHHOLDING_REVIEW.correctValue ? "filed" : "revision-required";
+    : validateWithholdingEntry(decision).ok ? "filed" : "revision-required";
   const ok = status === "filed";
   const nextStep = ok ? step + 1 : step;
   return {

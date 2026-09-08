@@ -92,6 +92,7 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
+    "restoreChronology": "ORDENA EL REGISTRO",
     "annotationAisles": "PASILLOS / MESA AL SUR",
     "guideCoach": {
       "faceNorth": "MIRA ARRIBA HACIA EL RAYO",
