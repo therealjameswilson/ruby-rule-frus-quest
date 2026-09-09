@@ -93,8 +93,14 @@ describe("ArchiveScene physical annotation flow", () => {
 
   it("gates the Citation Stamp behind the About-the-Series first footnote", () => {
     const inspect = methodSource("inspectSourceNoteProvenance", "reviewFirstFootnote");
-    expect(inspect).toContain("this.reviewFirstFootnote(result.nextStep)");
+    expect(inspect).toContain("sourceNoteProvenanceMask = result.foundMask");
+    expect(inspect).not.toContain("completeSourceNoteVerification(");
+    expect(inspect).not.toContain("sourceNoteProvenanceComplete = 1");
+    const action = methodSource("handleSourceNoteAction", "sourceNoteWallNeedsStamp");
+    expect(action).toContain('readSourceNoteTrail(gameState.sceneProgress).ready && target.id === "source-note-research-table"');
+    expect(action).toContain("this.reviewFirstFootnote()");
     const review = methodSource("reviewFirstFootnote", "completeSourceNoteVerification");
+    expect(review).toContain("!readSourceNoteTrail(gameState.sceneProgress).ready");
     expect(review).toContain("this.sourceNoteBoard.show");
     expect(review).toContain("sourceNote47ReadershipCorrected = 1");
     expect(review).toContain("aboutSeriesFirstFootnoteComplete = 1");

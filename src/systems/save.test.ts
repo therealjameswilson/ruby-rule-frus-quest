@@ -3,6 +3,7 @@ import { createGameSaveData, gameState, resetGameState, SAVE_SCHEMA_VERSION, set
 import { DEFAULT_PROCESS_ROLE, PROCESS_ROLES, resolveProcessRole } from "../game/constants";
 import { getCharacterKeyForProcessRole } from "../art/characters";
 import { restoreReferralCarryState } from "../game/referralVaultReview";
+import { readSourceNoteTrail } from "../game/sourceNoteProvenance";
 import { getSavedGameSummary, loadSavedGame, readSavedGame, saveGameNow } from "./save";
 
 function createStorage() {
@@ -69,6 +70,19 @@ describe("browser save storage", () => {
     resetGameState();
     expect(loadSavedGame()).toBe("ArchiveScene");
     expect(gameState.heldItem).toBe("Source Note 47");
+  });
+
+  it.each([4, 6, 7])("preserves freely gathered source clues (%s) without awarding review", (mask) => {
+    gameState.sceneProgress.sourceNoteProvenanceMask = mask;
+    gameState.sceneProgress.sourceNoteProvenanceStep = readSourceNoteTrail(gameState.sceneProgress).found.length;
+    gameState.sceneProgress.archiveSourceNoteRouted = 1;
+    const before = readSourceNoteTrail(gameState.sceneProgress);
+    expect(saveGameNow()).toBe(true);
+    resetGameState();
+    expect(loadSavedGame()).toBe("ArchiveScene");
+    expect(readSourceNoteTrail(gameState.sceneProgress)).toEqual(before);
+    expect(gameState.sceneProgress.sourceNoteProvenanceComplete).toBeUndefined();
+    expect(gameState.sceneProgress.aboutSeriesFirstFootnoteComplete).toBeUndefined();
   });
 
   it.each([

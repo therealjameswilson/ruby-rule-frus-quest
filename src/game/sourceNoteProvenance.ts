@@ -35,8 +35,8 @@ export interface SourceNoteProvenanceTrailResult {
   ok: boolean;
   complete: boolean;
   nextStep: number;
+  foundMask: number;
   station: SourceNoteProvenanceStation;
-  expectedStation: SourceNoteProvenanceStation;
   message: string;
 }
 
@@ -88,14 +88,14 @@ export const SOURCE_NOTE_PROVENANCE_STATIONS = [
     id: "repository",
     order: 1,
     label: "Repository Ledger",
-    shortLabel: "REPO",
+    shortLabel: "ARCHIVE",
     evidenceLabel: "NATIONAL ARCHIVES"
   },
   {
     id: "collection",
     order: 2,
     label: "Collection Register",
-    shortLabel: "COLL",
+    shortLabel: "FILES",
     evidenceLabel: "POLICY PLANNING"
   },
   {
@@ -122,44 +122,42 @@ export function getSourceNoteProvenanceStation(step: number) {
   ];
 }
 
+type Progress = Readonly<Record<string, number>>;
+const ALL_CLUES = (1 << SOURCE_NOTE_PROVENANCE_STATIONS.length) - 1;
+
+function boundedInteger(value: number | undefined, max: number) {
+  return typeof value === "number" && Number.isFinite(value)
+    ? Math.max(0, Math.min(max, Math.floor(value))) : 0;
+}
+
+export function readSourceNoteTrail(progress: Progress) {
+  // Older saves inspected a prefix. Once a mask exists, the step is a count,
+  // not an index: combining it with prefix bits would invent unvisited clues.
+  const legacyMask = (1 << boundedInteger(progress.sourceNoteProvenanceStep, 3)) - 1;
+  const foundMask = progress.sourceNoteProvenanceComplete === 1 ? ALL_CLUES
+    : progress.sourceNoteProvenanceMask === undefined ? legacyMask
+      : boundedInteger(progress.sourceNoteProvenanceMask, ALL_CLUES);
+  const found = SOURCE_NOTE_PROVENANCE_STATIONS.filter(station => foundMask & (1 << (station.order - 1)));
+  const missing = SOURCE_NOTE_PROVENANCE_STATIONS.filter(station => !(foundMask & (1 << (station.order - 1))));
+  return { foundMask, found, missing, ready: missing.length === 0 };
+}
+
 export function inspectSourceNoteProvenanceStation(
-  step: number,
+  progress: Progress,
   stationId: SourceNoteProvenancePromptId
 ): SourceNoteProvenanceTrailResult {
-  const safeStep = Number.isFinite(step) ? Math.floor(step) : 0;
-  const normalizedStep = Math.max(0, Math.min(SOURCE_NOTE_PROVENANCE_STATIONS.length, safeStep));
-  const expectedStation = getSourceNoteProvenanceStation(normalizedStep);
-  const station = SOURCE_NOTE_PROVENANCE_STATIONS.find((candidate) => candidate.id === stationId)
-    ?? expectedStation;
-  if (normalizedStep >= SOURCE_NOTE_PROVENANCE_STATIONS.length) {
-    return {
-      ok: true,
-      complete: true,
-      nextStep: SOURCE_NOTE_PROVENANCE_STATIONS.length,
-      station,
-      expectedStation,
-      message: "The repository, collection, and folder trail is already complete."
-    };
-  }
-  if (station.id !== expectedStation.id) {
-    return {
-      ok: false,
-      complete: false,
-      nextStep: normalizedStep,
-      station,
-      expectedStation,
-      message: `Trace the ${expectedStation.label.toLowerCase()} next.`
-    };
-  }
-  const nextStep = normalizedStep + 1;
-  const prompt = getSourceNoteProvenancePrompt(normalizedStep);
+  const trail = readSourceNoteTrail(progress);
+  const station = SOURCE_NOTE_PROVENANCE_STATIONS.find(candidate => candidate.id === stationId)!;
+  const bit = 1 << (station.order - 1);
+  const ok = !(trail.foundMask & bit);
+  const nextStep = trail.found.length + (ok ? 1 : 0);
   return {
-    ok: true,
-    complete: sourceNoteProvenanceComplete(nextStep),
+    ok,
+    complete: nextStep === SOURCE_NOTE_PROVENANCE_STATIONS.length,
     nextStep,
+    foundMask: trail.foundMask | bit,
     station,
-    expectedStation,
-    message: prompt.successMessage
+    message: `${station.label}: ${SOURCE_NOTE_47_LOCATOR[station.id]}. ${ok ? "Clue recorded" : "Already recorded"}; check it at the research table.`
   };
 }
 

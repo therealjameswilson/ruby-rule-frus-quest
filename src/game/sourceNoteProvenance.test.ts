@@ -6,6 +6,7 @@ import {
   getSourceNoteProvenancePrompt,
   getSourceNoteProvenanceStation,
   inspectSourceNoteProvenanceStation,
+  readSourceNoteTrail,
   sourceNoteProvenanceComplete,
   SOURCE_NOTE_PROVENANCE_PROMPTS,
   SOURCE_NOTE_PROVENANCE_SOURCE_URL,
@@ -52,23 +53,45 @@ describe("source note provenance prompts", () => {
       "collection",
       "folder"
     ]);
-    expect(getSourceNoteProvenanceStation(0).shortLabel).toBe("REPO");
+    expect(getSourceNoteProvenanceStation(0).shortLabel).toBe("ARCHIVE");
     expect(getSourceNoteProvenanceStation(2).shortLabel).toBe("FOLDER");
-    expect(getSourceNoteProvenanceStation(Number.NaN).shortLabel).toBe("REPO");
+    expect(getSourceNoteProvenanceStation(Number.NaN).shortLabel).toBe("ARCHIVE");
   });
 
-  it("advances only when the physical stations are inspected in provenance order", () => {
-    const outOfOrder = inspectSourceNoteProvenanceStation(0, "folder");
-    expect(outOfOrder).toMatchObject({ ok: false, complete: false, nextStep: 0 });
-    expect(outOfOrder.message).toContain("repository ledger");
+  const orders = [
+    ["repository", "collection", "folder"], ["repository", "folder", "collection"],
+    ["collection", "repository", "folder"], ["collection", "folder", "repository"],
+    ["folder", "repository", "collection"], ["folder", "collection", "repository"]
+  ] as const;
+  it.each(orders)("records clues freely: %s, %s, %s", (...order) => {
+    const progress: Record<string, number> = {};
+    order.forEach((id, index) => {
+      const result = inspectSourceNoteProvenanceStation(progress, id);
+      expect(result).toMatchObject({ ok: true, complete: index === 2, nextStep: index + 1 });
+      progress.sourceNoteProvenanceMask = result.foundMask;
+      progress.sourceNoteProvenanceStep = result.nextStep;
+      expect(inspectSourceNoteProvenanceStation(progress, id))
+        .toMatchObject({ ok: false, nextStep: index + 1, foundMask: result.foundMask });
+      expect(readSourceNoteTrail(progress).found).toHaveLength(index + 1);
+    });
+    expect(readSourceNoteTrail(progress)).toMatchObject({ ready: true, foundMask: 7 });
+    expect(progress.sourceNoteProvenanceComplete).toBeUndefined();
+    expect(progress.aboutSeriesFirstFootnoteComplete).toBeUndefined();
+  });
 
-    const repository = inspectSourceNoteProvenanceStation(0, "repository");
-    const collection = inspectSourceNoteProvenanceStation(repository.nextStep, "collection");
-    const folder = inspectSourceNoteProvenanceStation(collection.nextStep, "folder");
+  it("restores old prefix saves without adding phantom clues to new masks", () => {
+    expect(readSourceNoteTrail({ sourceNoteProvenanceStep: 2 }).found.map(clue => clue.id))
+      .toEqual(["repository", "collection"]);
+    expect(readSourceNoteTrail({ sourceNoteProvenanceStep: 1, sourceNoteProvenanceMask: 4 }).found.map(clue => clue.id))
+      .toEqual(["folder"]);
+    expect(readSourceNoteTrail({ sourceNoteProvenanceComplete: 1 })).toMatchObject({ ready: true, foundMask: 7 });
+  });
 
-    expect(repository).toMatchObject({ ok: true, complete: false, nextStep: 1 });
-    expect(collection).toMatchObject({ ok: true, complete: false, nextStep: 2 });
-    expect(folder).toMatchObject({ ok: true, complete: true, nextStep: 3 });
+  it("does not read corrupt progress as earned evidence", () => {
+    for (const value of [Number.NaN, Infinity, -1]) {
+      expect(readSourceNoteTrail({ sourceNoteProvenanceStep: value }).found).toEqual([]);
+      expect(readSourceNoteTrail({ sourceNoteProvenanceStep: 2, sourceNoteProvenanceMask: value }).found).toEqual([]);
+    }
   });
 
   it("requires the full first-footnote metadata packet at the final desk", () => {

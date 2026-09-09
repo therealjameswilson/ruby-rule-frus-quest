@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Free source-trail discovery (2026-09-08):
+  - Opening play exposed arbitrary station ordering and opaque A1 instructions. Archive, collection and folder clues now work in any order, with readable clue counts and recorded/unread markers. Gathering is separate from the existing human evidence review at the research table; the citation stamp and wall swing remain required. Widened clue cards after screenshot inspection.
+  - Added an individual-clue mask in existing sceneProgress; old prefix saves and completed reviews retain credit. All six orders, repeated reads, partial save/Continue and no automatic approval are covered. Full suite: 187 files / 1,375 tests; build passes. Keyboard folder-first, keyboard archive-first and touch folder-first routes reach Network with 55 earned points. Unsupported filing, corrected-but-unfiled Continue, wall/reward invariants and touch evidence readback pass. Installed client native/compositor output inspected. See docs/SOURCE_TRAIL_DISCOVERY.md.
+  - Goal remains active; local only. Next: the adjacent three-note annotation loop may feel too similar to source-clue gathering. Continue novice-paced play and diversify that physical research action; do not equate a passing route with a fun whole game.
+
 - Physical bindery finale (2026-09-08):
   - Replaced floating workstation panels with solid native-tile benches, a solid press and inbox, front-edge sorting, quiet four-variant stone floor and furniture-aware floor guidance. Inbox shifts south four pixels for a 32px corridor; all station locations/decisions and +40 packet points stay intact. Large assembly sheet remains in the ceremony, not the walking floor. Legacy blocked positions recover with the existing helper; no schema change.
   - Full earned keyboard/touch finales publish at 241 points and survive Continue. Real movement probes stop at the inbox/bench without losing a packet. Corrected obsolete QA assumptions about packet reliability healing and walking through furniture; no gameplay requirement bypass. Build passes (250 modules / 2,788.75 KB), 187 files / 1,365 tests pass. Final contrast-only floor change inspected through the installed client's actual native/compositor rendering. Documentation: docs/BINDERY_FURNITURE.md.

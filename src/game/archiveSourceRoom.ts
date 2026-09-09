@@ -1,5 +1,5 @@
 import { getAnnotationDraftingStation } from "./annotationDrafting";
-import { getSourceNoteProvenanceStation } from "./sourceNoteProvenance";
+import { readSourceNoteTrail } from "./sourceNoteProvenance";
 import { annotationPacketObjective, readAnnotationPacket } from "./annotationPacket";
 import type { ProcessItemId } from "./constants";
 
@@ -37,7 +37,7 @@ export function restoredArchiveSourceNoteStatus(input: {
   const progress = input.sceneProgress;
   if (progress.annotationDraftingComplete || progress.archiveSourceNoteStamped || input.hasArchiveStamp) return "stamped";
   if (progress.sourceNoteProvenanceComplete) return "verified";
-  if (progress.archiveSourceNoteRouted || (progress.sourceNoteProvenanceStep ?? 0) > 0) return "routed";
+  if (progress.archiveSourceNoteRouted || readSourceNoteTrail(progress).found.length > 0) return "routed";
   // Older saves did not record routing before the first ledger. Recover the
   // note in hand so the table can restart that step without losing the item.
   if (input.heldItem === "Source Note 47" || input.sourceNoteCollected) return "carried";
@@ -47,6 +47,7 @@ export function restoredArchiveSourceNoteStatus(input: {
 export function archiveSourceRoomObjective(input: {
   sourceNoteStatus: SourceNoteStatus;
   provenanceStep: number;
+  provenanceProgress?: Readonly<Record<string, number>>;
   wallNeedsStamp: boolean;
   annotationStep: number;
   annotationCarried: boolean;
@@ -59,7 +60,8 @@ export function archiveSourceRoomObjective(input: {
   if (input.sourceNoteStatus === "inactive") return "PICK UP SOURCE NOTE";
   if (input.sourceNoteStatus === "carried") return "NOTE TO TABLE";
   if (input.sourceNoteStatus === "routed") {
-    return `CHECK ${getSourceNoteProvenanceStation(input.provenanceStep).shortLabel}`;
+    const trail = readSourceNoteTrail(input.provenanceProgress ?? { sourceNoteProvenanceStep: input.provenanceStep });
+    return trail.ready ? "CHECK TRAIL AT TABLE" : `SOURCE CLUES ${trail.found.length}/3`;
   }
   if (input.sourceNoteStatus === "verified") return "STAMP AT TABLE";
   if (input.wallNeedsStamp) return "STAMP REPO WALL";

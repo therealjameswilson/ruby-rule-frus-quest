@@ -34,8 +34,24 @@ try{
  await move(80,72);await move(80,176);
  await move(100,176);await move(100,168);await direction('ArrowUp',60);await press('x');await page.waitForTimeout(450);
  const early=await shot('02-unreviewed-swing');assert(!early.sceneProgress.archiveRepoWallCleared);assert.equal(early.documentPoints,22);
- await move(56,158);await move(56,100);await act('03-repository');
- await move(56,148);await act('04-collection');await move(188,154);await act('05-first-footnote');
+ const freeOrder=process.argv.includes('--free-order');
+ if(freeOrder){
+  await move(188,168);await move(188,154);const first=await act('03-folder-first');
+  assert.equal(first.sceneProgress.sourceNoteProvenanceMask,4);assert.equal(first.documentPoints,22);assert.equal(first.mode,'explore');
+  await act('03-folder-repeat');assert.equal((await state()).sceneProgress.sourceNoteProvenanceStep,1);
+  await context.storageState({path:`${out}/partial-source-trail-storage.json`});
+  await page.reload();await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');
+  const resumed=await shot('03-folder-continue');assert.equal(resumed.sceneProgress.sourceNoteProvenanceMask,4);assert.equal(resumed.sceneProgress.sourceNoteProvenanceStep,1);
+  assert(!resumed.sceneProgress.sourceNoteProvenanceComplete);assert(!resumed.sceneProgress.aboutSeriesFirstFootnoteComplete);
+  await move(56,154);await act('04-collection');await move(56,100);await act('05-repository-last');
+ }else{
+  await move(56,158);await move(56,100);await act('03-repository');
+  await move(56,148);await act('04-collection');await move(188,154);await act('05-folder');
+ }
+ const gathered=await shot('05-trail-gathered');assert.equal(gathered.sceneProgress.sourceNoteProvenanceMask,7);
+ assert.equal(gathered.mode,'explore');assert.equal(gathered.documentPoints,22);
+ assert(!gathered.sceneProgress.sourceNoteProvenanceComplete);assert(!gathered.sceneProgress.archiveRepoWallCleared);
+ await move(freeOrder?80:188,145);await move(128,145);await act('05-first-footnote');
  const note=()=>state().then(s=>s.documentCandidates.find(d=>d.id==='source_note_047'));
  assert.equal((await note()).repository,'');
  await context.storageState({path:`${out}/source-note-review-storage.json`});

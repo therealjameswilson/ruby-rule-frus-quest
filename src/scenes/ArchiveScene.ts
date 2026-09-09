@@ -94,7 +94,7 @@ import {
 } from "../game/archiveA1Tilemap";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
-  getSourceNoteProvenanceStation,
+  readSourceNoteTrail,
   inspectSourceNoteProvenanceStation,
   SOURCE_NOTE_PROVENANCE_STATIONS
 } from "../game/sourceNoteProvenance";
@@ -1463,8 +1463,8 @@ export class ArchiveScene extends Phaser.Scene {
     }
     if (this.sourceNoteStatus === "verified") return "STAMP";
     if (this.sourceNoteStatus === "routed") {
-      const step = Math.min(3, (gameState.sceneProgress.sourceNoteProvenanceStep ?? 0) + 1);
-      return `TRACE ${step}/3`;
+      const trail = readSourceNoteTrail(gameState.sceneProgress);
+      return trail.ready ? "REVIEW" : `CLUES ${trail.found.length}/3`;
     }
     if (this.sourceNoteStatus === "carried") return "ROUTE";
     return "REPO ?";
@@ -1523,24 +1523,19 @@ export class ArchiveScene extends Phaser.Scene {
   private drawSourceNoteProvenanceStations() {
     for (const station of SOURCE_NOTE_PROVENANCE_STATIONS) {
       const position = SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id];
-      const shadow = this.add.rectangle(1, 2, 28, 20, color(PALETTE.black), 0.58);
-      const ring = this.add.rectangle(0, 0, 32, 24, color(PALETTE.black), 0)
+      const shadow = this.add.rectangle(1, 2, 38, 20, color(PALETTE.black), 0.58);
+      const ring = this.add.rectangle(0, 0, 42, 24, color(PALETTE.black), 0)
         .setStrokeStyle(2, color(PALETTE.goldStamp), 0.95)
         .setVisible(false);
-      const card = this.add.rectangle(0, 0, 26, 18, color(PALETTE.creamPaper), 1)
+      const card = this.add.rectangle(0, 0, 36, 18, color(PALETTE.creamPaper), 1)
         .setStrokeStyle(1, color(PALETTE.stoneGray));
-      const margin = this.add.rectangle(-9, 0, 2, 14, color(PALETTE.deepRuby));
-      const order = this.add.text(-6, -7, String(station.order), {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.black
-      }).setOrigin(0.5, 0);
-      const label = this.add.text(3, -7, station.shortLabel, {
+      const margin = this.add.rectangle(-15, 0, 2, 14, color(PALETTE.deepRuby));
+      const label = this.add.text(2, -7, station.shortLabel, {
         fontFamily: "monospace",
         fontSize: "4px",
         color: PALETTE.black
       }).setOrigin(0.5, 0);
-      const state = this.add.text(3, 2, "", {
+      const state = this.add.text(2, 2, "", {
         fontFamily: "monospace",
         fontSize: "4px",
         color: PALETTE.terminalCyan
@@ -1552,7 +1547,6 @@ export class ArchiveScene extends Phaser.Scene {
         ring,
         card,
         margin,
-        order,
         label,
         state,
         arrow
@@ -1565,19 +1559,16 @@ export class ArchiveScene extends Phaser.Scene {
   private syncSourceNoteProvenanceStations() {
     const visible = this.currentRoomId === "A1"
       && (this.sourceNoteStatus === "routed" || this.sourceNoteStatus === "verified");
-    const step = Math.max(0, Math.min(
-      SOURCE_NOTE_PROVENANCE_STATIONS.length,
-      gameState.sceneProgress.sourceNoteProvenanceStep ?? 0
-    ));
-    for (const [index, station] of SOURCE_NOTE_PROVENANCE_STATIONS.entries()) {
+    const trail = readSourceNoteTrail(gameState.sceneProgress);
+    for (const station of SOURCE_NOTE_PROVENANCE_STATIONS) {
       const visual = this.provenanceStationVisuals.get(station.id);
       if (!visual) continue;
-      const complete = index < step;
-      const active = this.sourceNoteStatus === "routed" && index === step;
+      const complete = trail.found.some(clue => clue.id === station.id);
+      const active = this.sourceNoteStatus === "routed" && !complete;
       visual.container.setVisible(visible).setAlpha(active ? 1 : complete ? 0.82 : 0.38);
       visual.card.setStrokeStyle(1, color(complete ? PALETTE.openNetGreen : active ? PALETTE.goldStamp : PALETTE.stoneGray));
       visual.ring.setVisible(active);
-      visual.state.setText(complete ? "OK" : active ? "NEXT" : "...");
+      visual.state.setText(complete ? "FOUND" : active ? "READ" : "...");
       visual.state.setColor(complete ? PALETTE.openNetGreen : active ? PALETTE.classNetRed : PALETTE.stoneGray);
       visual.arrow.setVisible(active);
     }
@@ -2370,10 +2361,9 @@ export class ArchiveScene extends Phaser.Scene {
       ...(this.currentRoomId === "B2" && this.ambiguousSplit && !this.clearedWallIds.has("ambiguous-flag") ? ["Split ambiguity flag A", "Split ambiguity flag B"] : []),
       ...(this.sourceNoteStatus !== "inactive" ? ["Source Note 47 verification object"] : []),
       ...((this.sourceNoteStatus === "routed" || this.sourceNoteStatus === "verified")
-        ? SOURCE_NOTE_PROVENANCE_STATIONS.map((station, index) => {
-            const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
-            const status = index < step ? "matched" : index === step && this.sourceNoteStatus === "routed" ? "next" : "queued";
-            return `Provenance ${station.order}: ${station.label} (${status})`;
+        ? SOURCE_NOTE_PROVENANCE_STATIONS.map((station) => {
+            const found = readSourceNoteTrail(gameState.sceneProgress).found.some(clue => clue.id === station.id);
+            return `Source clue: ${station.label} (${found ? "recorded" : "available"})`;
           })
         : []),
       ...((this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete)
@@ -2405,7 +2395,7 @@ export class ArchiveScene extends Phaser.Scene {
     gameState.sceneProgress.archiveSourceNoteCollected = 1;
     setDocumentWorkflowState("source_note_047", "source_note_needed");
     setHeldItem("Source Note 47");
-    setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
+    setLatestMessage("The source note is missing its archive trail. Bring it to the research table.");
     setObjective("ROUTE: carry Source Note 47 to research table.");
     this.sourceNoteIcon = this.add.image(this.player.position.x, this.player.position.y - 15, "source-note").setDepth(240);
     this.sourceNoteLabel = this.add.text(this.player.position.x, this.player.position.y - 1, "SRC NOTE 47", {
@@ -2481,7 +2471,7 @@ export class ArchiveScene extends Phaser.Scene {
         kind: "document",
         onInteract: () => undefined
       });
-    } else if (this.sourceNoteStatus === "routed") {
+    } else if (this.sourceNoteStatus === "routed" && !readSourceNoteTrail(gameState.sceneProgress).ready) {
       candidates = SOURCE_NOTE_PROVENANCE_STATIONS.map((station) => {
           const position = SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id];
           return {
@@ -2541,11 +2531,10 @@ export class ArchiveScene extends Phaser.Scene {
   private sourceNotePromptText(target: Interactable | null = null) {
     if (this.sourceNoteStatus === "carried") return "ROUTE SRC NOTE";
     if (this.sourceNoteStatus === "routed") {
-      const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
-      const expected = getSourceNoteProvenanceStation(step);
-      return this.sourceNoteStationId(target) === expected.id
-        ? `CHECK ${expected.shortLabel}`
-        : `TRACE ${expected.shortLabel} FIRST`;
+      const trail = readSourceNoteTrail(gameState.sceneProgress);
+      if (trail.ready) return "CHECK SOURCE TRAIL";
+      const station = SOURCE_NOTE_PROVENANCE_STATIONS.find(clue => clue.id === this.sourceNoteStationId(target));
+      return station ? `READ ${station.shortLabel}` : "FIND SOURCE CLUES";
     }
     if (this.sourceNoteStatus === "verified") return "STAMP SRC NOTE";
     if (this.sourceNoteWallNeedsStamp()) return "STAMP NO REPO";
@@ -2610,7 +2599,7 @@ export class ArchiveScene extends Phaser.Scene {
         return;
       }
       const expected = this.sourceNoteStatus === "routed"
-        ? getSourceNoteProvenanceStation(gameState.sceneProgress.sourceNoteProvenanceStep ?? 0).label
+        ? readSourceNoteTrail(gameState.sceneProgress).missing[0]?.label ?? this.researchTable.label
         : this.researchTable.label;
       this.toast.show(`FOLLOW GOLD TRAIL TO ${expected.toUpperCase()}`, this.player.position, "warn");
       setLatestMessage(`Follow the gold trail to ${expected}.`);
@@ -2622,20 +2611,24 @@ export class ArchiveScene extends Phaser.Scene {
       this.sourceNoteIcon?.setPosition(this.researchTable.x - 16, this.researchTable.y - 17).setDepth(245);
       this.sourceNoteLabel?.setPosition(this.researchTable.x, this.researchTable.y - 4).setDepth(246);
       setHeldItem(null);
-      setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
+      setLatestMessage("Find the archive, collection, and folder clues. Explore in any order, then check the trail here.");
       retroAudio.confirm();
       if (gameState.sceneProgress.sourceNoteProvenanceComplete) {
         this.completeSourceNoteVerification("Repository, collection, and folder trail restored from the human review record.");
         return;
       }
       gameState.sceneProgress.sourceNoteProvenanceStep = Math.max(0, gameState.sceneProgress.sourceNoteProvenanceStep ?? 0);
-      this.toast.show("TRACE 1/3: REPOSITORY", this.player.position, "info");
+      this.toast.show("FIND THREE SOURCE CLUES", this.player.position, "info");
       this.updateSourceNoteVerification();
       this.syncWallState();
       this.refreshSourceNoteRouteCue();
       return;
     }
     if (this.sourceNoteStatus === "routed") {
+      if (readSourceNoteTrail(gameState.sceneProgress).ready && target.id === "source-note-research-table") {
+        this.reviewFirstFootnote();
+        return;
+      }
       const stationId = this.sourceNoteStationId(target);
       if (stationId) this.inspectSourceNoteProvenance(stationId);
       return;
@@ -2670,36 +2663,23 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private inspectSourceNoteProvenance(stationId: SourceNoteProvenancePromptId) {
-    const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
-    const result = inspectSourceNoteProvenanceStation(step, stationId);
+    const result = inspectSourceNoteProvenanceStation(gameState.sceneProgress, stationId);
+    setLatestMessage(result.message);
     if (!result.ok) {
-      retroAudio.warning();
-      this.toast.show(`TRACE ${result.expectedStation.shortLabel} FIRST`, this.player.position, "warn");
-      setLatestMessage(result.message);
+      this.toast.show(`${result.station.evidenceLabel}\nCLUE ALREADY RECORDED`, this.player.position, "info");
       return;
     }
-    if (result.complete && !gameState.sceneProgress.aboutSeriesFirstFootnoteComplete) {
-      this.reviewFirstFootnote(result.nextStep);
-      return;
-    }
+    gameState.sceneProgress.sourceNoteProvenanceMask = result.foundMask;
     gameState.sceneProgress.sourceNoteProvenanceStep = result.nextStep;
     retroAudio.confirm();
-    if (result.complete) {
-      gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
-      this.completeSourceNoteVerification(result.message);
-      saveGameNow();
-      return;
-    }
-    const nextStation = getSourceNoteProvenanceStation(result.nextStep);
-    setLatestMessage(`${result.station.label} matched. Next: ${nextStation.label}.`);
-    this.toast.show(`${result.station.shortLabel} MATCHED ${result.nextStep}/3`, this.player.position, "info");
+    this.toast.show(`${result.station.evidenceLabel}\n${result.complete ? "TRAIL READY - BACK TO TABLE" : `SOURCE CLUES ${result.nextStep}/3`}`, this.player.position, "info");
     this.updateSourceNoteVerification();
     this.syncWallState();
     saveGameNow();
   }
 
-  private reviewFirstFootnote(nextStep: number) {
-    if (this.sourceNoteBoard.active || this.researchChoice.active) return;
+  private reviewFirstFootnote() {
+    if (!readSourceNoteTrail(gameState.sceneProgress).ready || this.sourceNoteBoard.active || this.researchChoice.active) return;
     this.interactionPrompt.update(0, null);
     this.clearSourceNoteRouteCue();
     this.sourceNoteBoard.show(gameState.sceneProgress.sourceNote47ReadershipCorrected === 1,
@@ -2708,7 +2688,7 @@ export class ArchiveScene extends Phaser.Scene {
         saveGameNow();
       }, () => {
         gameState.sceneProgress.aboutSeriesFirstFootnoteComplete = 1;
-        gameState.sceneProgress.sourceNoteProvenanceStep = nextStep;
+        gameState.sceneProgress.sourceNoteProvenanceStep = SOURCE_NOTE_PROVENANCE_STATIONS.length;
         gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
         this.completeSourceNoteVerification("Source trail filed; unknown metadata remains explicit in the field guide.");
         saveGameNow();
@@ -2987,9 +2967,9 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
-    const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
-    const station = getSourceNoteProvenanceStation(step);
-    const stationPosition = SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id];
+    const trail = readSourceNoteTrail(gameState.sceneProgress);
+    const station = trail.missing[0];
+    const tracing = this.sourceNoteStatus === "routed" && station !== undefined;
     const start = this.sourceNoteStatus === "carried"
       ? { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 15) }
       : this.sourceNoteStatus === "verified"
@@ -2998,12 +2978,12 @@ export class ArchiveScene extends Phaser.Scene {
           x: Math.round(this.sourceNoteIcon?.x ?? this.researchTable.x - 16),
           y: Math.round(this.sourceNoteIcon?.y ?? this.researchTable.y - 17)
         };
-    const end = this.sourceNoteStatus === "routed"
-      ? { ...stationPosition }
+    const end = tracing
+      ? { ...SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id] }
       : { x: Math.round(this.researchTable.x), y: Math.round(this.researchTable.y) };
-    const compactTarget = this.sourceNoteStatus === "routed";
+    const compactTarget = tracing;
     if (this.hideReachableSourceNoteCue(end, compactTarget ? 28 : 54)) return;
-    const cueKey = `${this.currentRoomId}:${this.sourceNoteStatus}:${step}:${start.x},${start.y}->${end.x},${end.y}`;
+    const cueKey = `${this.currentRoomId}:${this.sourceNoteStatus}:${trail.foundMask}:${start.x},${start.y}->${end.x},${end.y}`;
     if (cueKey === this.sourceNoteRouteCueKey) return;
 
     this.clearSourceNoteRouteCue();
@@ -3478,6 +3458,7 @@ export class ArchiveScene extends Phaser.Scene {
       setObjective(archiveSourceRoomObjective({
         sourceNoteStatus: this.sourceNoteStatus,
         provenanceStep: gameState.sceneProgress.sourceNoteProvenanceStep ?? 0,
+        provenanceProgress: gameState.sceneProgress,
         wallNeedsStamp: this.sourceNoteWallNeedsStamp(),
         annotationStep: gameState.sceneProgress.annotationDraftingStep ?? 0,
         annotationCarried: readAnnotationPacket(gameState.sceneProgress).held.length > 0,
