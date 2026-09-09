@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { danneAnimKey } from "../../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
-import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
+import { DANNE_BOSS_PORTRAIT_ASSET, DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
 import {
   danneAttackTelegraphSpec,
   danneTelegraphPulseOn,
@@ -357,7 +357,7 @@ export class DanneBoss {
   private async runIntro() {
     this.phaseTransitioning = true;
     unlockCodexEntry("danne-prime-humanoid");
-    await this.showPhaseCutscene("danne-prime-humanoid", "intro", "danne-portrait-archivist");
+    await this.showPhaseCutscene("danne-prime-humanoid", "intro");
     if (!this.isActive) return;
     this.beginPhase("colossus");
     await this.showPhaseCutscene("danne-colossus-final-form", "colossus");
@@ -432,7 +432,7 @@ export class DanneBoss {
     addDanneItem("treaty-fragments", 2);
     const completeTreatyRecord = getTreatyFragmentCount() >= 3;
     gameState.sceneProgress.blackVaultTreatyRecordComplete = completeTreatyRecord ? 1 : 0;
-    await this.showPhaseCutscene("danne-defeated", "defeated", "danne-portrait-archivist");
+    await this.showPhaseCutscene("danne-defeated", "defeated");
     if (this.disposed) return;
     this.onDefeated(completeTreatyRecord);
   }
@@ -1013,7 +1013,7 @@ export class DanneBoss {
   private async showPhaseCutscene(
     variantKey: string,
     boastPhase: DanneBoastPhase,
-    portraitKey = "danne-portrait-archivist",
+    portraitKey = DANNE_BOSS_PORTRAIT_ASSET.key,
     overrideLine?: string
   ) {
     this.boastVisible = true;

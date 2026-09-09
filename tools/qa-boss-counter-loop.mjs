@@ -25,6 +25,22 @@ try{
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
  await shot('entry');await move(128,144);await press();
  if(process.argv.includes('--boast-skip')) {
+   async function assertBossPortrait() {
+     const keys=await page.evaluate(()=>{
+       const result=[];
+       function visit(nodes) {
+         for(const node of nodes) {
+           if(!node.visible)continue;
+           if(node.texture)result.push(node.texture.key);
+           if(Array.isArray(node.list))visit(node.list);
+         }
+       }
+       visit(window.game.scene.getScene('BlackVaultLairScene').children.list);
+       return result;
+     });
+     assert(keys.includes('pack-danne-boss-portrait'),'DANN-E must speak with the robot portrait');
+     assert(!keys.includes('danne-portrait-archivist'),'An ally must not appear to speak the boss boast');
+   }
    await page.waitForFunction(()=>{
      const s=JSON.parse(window.render_game_to_text());
      const ui=window.game.scene.getScene('UIScene');
@@ -38,12 +54,14 @@ try{
      return Boolean(s.dialog?.text) && ui.questBandText.text==='Read line.'
        && ui.questBandCueText.text==='NEXT LINE' && ui.questBandVerbText.text!=='';
    });
+   await assertBossPortrait();
    const intro=await shot('intro-boast');
    await page.waitForTimeout(400);
    assert.deepEqual((await state()).player,intro.player);
    assert.equal((await state()).sceneProgress.statutoryClockTenths,intro.sceneProgress.statutoryClockTenths);
    await press();
    await page.waitForFunction(()=>{const b=window.game.scene.getScene('BlackVaultLairScene').danneBoss;return b?.currentPhase==='colossus'&&Boolean(b.finishBoast);});
+   await assertBossPortrait();
    const line=await shot('colossus-boast');
    await page.waitForTimeout(1200);
    assert(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.phaseDialogueActive),'Readable line must outlast the old 1.15-second hold');

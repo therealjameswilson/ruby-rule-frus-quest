@@ -329,7 +329,15 @@ export const DANNE_VARIANT_ASSETS = [
   phase: DanneVariantPhase;
 }>;
 
+export const DANNE_BOSS_PORTRAIT_ASSET = {
+  id: "danne-boss-portrait",
+  key: "pack-danne-boss-portrait",
+  path: "assets/art-pack/sprites/dann_e_boss_portrait.png",
+  displayName: "DANN-E"
+} as const;
+
 export const DANNE_IMAGE_ASSETS = [
+  DANNE_BOSS_PORTRAIT_ASSET,
   DANNE_WARNING_SCREEN_ASSET,
   ...DANNE_MAP_ASSETS,
   ...DANNE_PORTRAIT_ASSETS,
@@ -339,6 +347,7 @@ export const DANNE_IMAGE_ASSETS = [
 ] as const;
 
 export const DANNE_GALLERY_ASSETS = [
+  { category: "PORTRAIT", ...DANNE_BOSS_PORTRAIT_ASSET },
   { category: "SCREEN", ...DANNE_WARNING_SCREEN_ASSET },
   ...DANNE_MAP_ASSETS.map((asset) => ({ category: "MAP", ...asset })),
   ...DANNE_PORTRAIT_ASSETS.map((asset) => ({ category: "PORTRAIT", ...asset })),

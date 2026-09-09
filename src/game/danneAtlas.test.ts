@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
-import { DANNE_BOSS_SPRITE_ASSET, DANNE_SPRITE_ASSETS } from "./danneAtlas";
+import { DANNE_BOSS_PORTRAIT_ASSET, DANNE_BOSS_SPRITE_ASSET, DANNE_IMAGE_ASSETS, DANNE_SPRITE_ASSETS } from "./danneAtlas";
 
 function pngSize(path: string) {
   const png = readFileSync(`public/${path.replace(/^assets\//, "assets/")}`);
@@ -8,6 +8,11 @@ function pngSize(path: string) {
 }
 
 describe("DANN-E gallery sprite sheets", () => {
+  it("preloads the existing robot speaker portrait separately from allied portraits", () => {
+    expect(DANNE_IMAGE_ASSETS).toContain(DANNE_BOSS_PORTRAIT_ASSET);
+    expect(pngSize(DANNE_BOSS_PORTRAIT_ASSET.path)).toEqual({ width: 1024, height: 1024 });
+    expect(DANNE_BOSS_PORTRAIT_ASSET.key).toBe("pack-danne-boss-portrait");
+  });
   it("keeps every sheet an exact integer multiple of its declared frame grid", () => {
     for (const asset of DANNE_SPRITE_ASSETS) {
       const { width, height } = pngSize(asset.path);

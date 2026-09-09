@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Boss speaker attribution (2026-09-09):
+  - Replaced the allied archivist portrait on all DANN-E boasts with the existing robot bust, registered and preloaded through danneAtlas. Missing-texture fallback remains; combat/save behavior unchanged.
+  - Build and 195 files / 1,459 tests pass. Earned touch probe verifies real portrait keys, safe dialogue advance and resumed combat; standard keyboard client and native screenshots inspected.
+  - See docs/BOSS_SPEAKER_ATTRIBUTION.md. Local only. Next: unaided counter discovery and adventure pacing remain unproven.
+
 - Cutscene prompt timing (2026-09-09):
   - Investigated a keyboard capture showing READ LINE without text: dialog mode precedes the 300 ms cutscene entrance tween. HUD now waits for nonblank active dialogue before showing reading/action/badge cues.
   - Build and 195 files / 1,458 tests pass. Touch and keyboard scoped boast probes exercise quiet entrance, readable lines, safe advance and resumed combat. First desktop test expected uppercase render appearance instead of stored localized text; corrected and reran. Native captures inspected; no combat/save changes.

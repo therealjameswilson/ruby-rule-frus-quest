@@ -5,7 +5,8 @@ import { DANNE_BOSS_RETURN } from "../../game/danneBossCombat";
 import type { ChoiceOption, Position } from "../../game/types";
 import type { Player } from "../Player";
 import { DanneBoss, type DanneBossPhase } from "./DanneBoss";
-import { exitCutscene } from "../../systems/cutscene";
+import { exitCutscene, playLine } from "../../systems/cutscene";
+import { DANNE_BOSS_PORTRAIT_ASSET } from "../../game/danneAtlas";
 import { clampQuestBandText, QUEST_BAND_LAYOUT } from "../../scenes/questBandLayout";
 
 vi.mock("phaser", () => {
@@ -168,6 +169,7 @@ describe("DANN-E final-review combat", () => {
     const pending = internals.showPhaseCutscene("missing-art", "intro");
     await Promise.resolve();
     expect(boss.phaseDialogueActive).toBe(true);
+    expect(playLine).toHaveBeenCalledWith(scene, expect.any(String), DANNE_BOSS_PORTRAIT_ASSET.key);
     expect(boss.advanceBoast()).toBe(false);
     scene.time.now += 250;
     expect(boss.advanceBoast()).toBe(true);
