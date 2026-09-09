@@ -974,10 +974,14 @@ export class NetworkScene extends Phaser.Scene {
       return;
     }
     if (this.atStampCrossing()) {
+      const ready = networkCrossingState(gameState.sceneProgress) === "ready";
       this.interactionPrompt.update(delta, this.toast.visible ? null : {
         id: "network-stamp-crossing", label: "Service crossing", x: 128, y: 124,
         kind: "door", onInteract: () => undefined
-      }, undefined, { badge: getSecondaryActionBadge(), text: "STAMP SEAL" });
+      }, undefined, {
+        badge: ready ? getSecondaryActionBadge() : "!",
+        text: ready ? "STAMP SEAL" : "FILE PUBLIC FIRST"
+      });
       setNearestInteractable("Service crossing");
       return;
     }

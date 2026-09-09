@@ -13,6 +13,12 @@ function methodSource(name: string, nextName?: string) {
 }
 
 describe("NetworkScene physical routing flow", () => {
+  it("offers the crossing swing only after its public-packet prerequisite", () => {
+    const prompt = methodSource("updateRoutingPacketPrompt", "handleRoutingPacketAction");
+    expect(prompt).toContain('networkCrossingState(gameState.sceneProgress) === "ready"');
+    expect(prompt).toContain('badge: ready ? getSecondaryActionBadge() : "!"');
+    expect(prompt).toContain('text: ready ? "STAMP SEAL" : "FILE PUBLIC FIRST"');
+  });
   it("refreshes gate art immediately after either room unlocks", () => {
     const doors = methodSource("drawRoomDoors", "renderNetworkSplit");
     expect(doors).toContain("for (const object of this.roomGateObjects)");

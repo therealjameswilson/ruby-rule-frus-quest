@@ -232,6 +232,11 @@ async function run(label, mobile) {
         await move(90, 124);
         await direction("ArrowRight", 160);
         assert((await state()).player.x < 112, "The sealed crossing must physically block the player");
+        await page.waitForFunction(() => {
+          const prompt = window.game.scene.getScene("NetworkScene").interactionPrompt;
+          return prompt.visible && prompt.currentText === "FILE PUBLIC FIRST";
+        });
+        await checkpoint("crossing-prerequisite-prompt");
         // A live hit can interrupt windup. Retry the real control, never skip combat.
         for (let attempt = 0; attempt < 6; attempt += 1) {
           await direction("ArrowRight", 20);
@@ -323,6 +328,11 @@ async function run(label, mobile) {
         const before = await state();
         await move(90, 124);
         await direction("ArrowRight", 120);
+        await page.waitForFunction(() => {
+          const prompt = window.game.scene.getScene("NetworkScene").interactionPrompt;
+          return prompt.visible && prompt.currentText === "STAMP SEAL";
+        });
+        await checkpoint("crossing-ready-prompt");
         if (mobile) await tap(224, 16);
         else await page.keyboard.press("Escape");
         await page.waitForTimeout(200);

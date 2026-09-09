@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Network crossing clarity (2026-09-09):
+  - Played the earned touch Network path through Referral, including routing errors, Marcus help, shortcut opening, partial Continue, withholding review and token reward. Found the sealed crossing advertised STAMP SEAL before the public-packet prerequisite.
+  - Prompt now shows ! FILE PUBLIC FIRST while sealed, and the actual secondary-button STAMP SEAL action when ready. No rules or save changes. Browser audit explicitly captures and asserts both states.
+  - Build passes (255 modules / 2,802.58 KB); 195 files / 1,455 tests pass. Full post-change touch replay reaches Referral, no browser errors. Native screenshots inspected and retained; installed browser client checks keyboard movement. See docs/NETWORK_DISCOVERY_AUDIT.md. Local only; unaided comprehension and the broader fun goal remain unproven.
+
 - Archive discovery and marker lifetime (2026-09-09):
   - Played the full earned Archive path with touch, including out-of-order source clues, partial Continue, evidence correction, stamping, cart parking, annotation filing and Two Networks entry. Reproduced a moving-trail retention bug: 2,131 destroyed markers remained in the room list after one walk.
   - Removed duplicate ownership of transient markers; the same walk now keeps the room list at 64 objects and retains no additional destroyed markers. Added --route-lifetime browser regression and a structural cleanup test. Puzzle/save/input rules unchanged.
