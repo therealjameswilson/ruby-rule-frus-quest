@@ -187,3 +187,7 @@ fixed depth of 150 rather than their physical foot position, and R1's furniture
 lacks matching solid footprints. Reconcile those together, preserving roomy
 approaches and the existing interactions. Also check the crowded Editor entry
 card seen at the chapter handoff. These are not repaired by the contact fix.
+
+The subsequent [physical workstation pass](REFERRAL_FURNITURE.md) addresses
+the Referral desk collision/depth problem, preserves old saves and verifies
+keyboard/touch chapter completion. The Editor entry-card follow-up remains.

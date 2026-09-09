@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { referralWalkRoute } from "../src/game/referralFurniture.ts";
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? "playwright");
 const base = process.env.FRUS_QA_URL ?? "http://127.0.0.1:5195/";
 const out = process.env.FRUS_QA_OUT ?? "/tmp/frus-danne-contact";
@@ -54,8 +55,14 @@ async function swingToward(key) {
   await page.waitForTimeout(160);
 }
 async function stepToward(x, y) {
-  const p = (await state()).player, dx = x - p.x, dy = y - p.y;
-  if (Math.hypot(dx, dy) < 3) { await page.waitForTimeout(100); return; }
+  const {p,solids}=await page.evaluate(()=>{const scene=window.game.scene.getScene("ReferralVaultScene");return {
+    p:{x:scene.player.logicalX,y:scene.player.logicalY},
+    solids:scene.roomSolids.map(({x,y,width,height})=>({x,y,width,height}))};});
+  if (Math.hypot(x-p.x, y-p.y) < 3) { await page.waitForTimeout(100); return; }
+  const route=referralWalkRoute(p,{x,y},solids);
+  const target=route.find(point=>Math.hypot(point.x-p.x,point.y-p.y)>2) ?? route.at(-1);
+  assert(target,`No aisle to patrol at ${x},${y}`);
+  const dx=target.x-p.x,dy=target.y-p.y;
   await direction(Math.abs(dx) > Math.abs(dy) ? dx > 0 ? "ArrowRight" : "ArrowLeft" : dy > 0 ? "ArrowDown" : "ArrowUp");
 }
 async function shot(name) {

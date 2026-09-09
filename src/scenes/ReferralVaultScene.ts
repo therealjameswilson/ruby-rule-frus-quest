@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { readChapterArrival } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
-import { PALETTE } from "../game/constants";
+import { GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId, RoomType } from "../game/constants";
 import {
   buildDispatchStackLayers, DISPATCH_STACKS, dispatchAisleOpen, dispatchCopyFound,
@@ -75,6 +75,7 @@ import type {
   ReferralTreatmentStationId
 } from "../game/referralVaultReview";
 import { INTERIOR_TILES } from "../game/networkN1Tilemap";
+import { REFERRAL_DESK, REFERRAL_PATROL, referralDeskBounds, referralStationApproach, referralWalkRoute, safeReferralPosition } from "../game/referralFurniture";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
   REFERRAL_R1_TILEMAP,
@@ -207,13 +208,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.danneLurker = new DanneLurker(this, 214, 70, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
         || this.manifestBoard.active || this.inventory.active || this.reliability.active,
-      waypoints: [
-        { x: 214, y: 70 },
-        { x: 154, y: 60 },
-        { x: 68, y: 104 },
-        { x: 68, y: 190 },
-        { x: 188, y: 188 }
-      ]
+      boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
+      waypoints: [...REFERRAL_PATROL]
     });
     this.restoreReferralProgress();
     this.visitedRoomIds = new Set(restoredVisitedRoomIds);
@@ -341,7 +337,8 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
-      this.player.setPosition(spawn.x, spawn.y);
+      const safeSpawn = roomId === "R1" ? safeReferralPosition(spawn, this.roomSolids) : spawn;
+      this.player.setPosition(safeSpawn.x, safeSpawn.y);
       this.danneLurker.enterRoom(this.time.now, roomId !== "R3");
       this.syncRoomTraversalState();
       this.updateReferralMinimap();
@@ -858,18 +855,14 @@ export class ReferralVaultScene extends Phaser.Scene {
   ) {
     const filed = forceFiled || index < this.equityStep;
     const accent = filed ? PALETTE.openNetGreen : PALETTE.goldStamp;
-    const container = this.track(this.add.container(x, y).setDepth(150).setName(`referral-agency-${agency}`));
-    container.add(this.add.ellipse(0, 12, 48, 9, color(PALETTE.black), 0.42));
-    container.add(this.add.rectangle(0, 0, 44, 31, color(PALETTE.black), 0.94)
-      .setStrokeStyle(2, color(accent)));
-    container.add(this.add.image(0, -2, "agency-equity-seal"));
-    container.add(this.add.text(0, 18, agency, {
+    const container = this.drawPhysicalDesk(x, y, `referral-agency-${agency}`, accent);
+    container.add(this.add.text(0, -6, agency, {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0));
-    container.add(this.add.rectangle(0, 10, 22, 4, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
+    container.add(this.add.rectangle(0, 4, 18, 3, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
       .setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray)));
   }
 
@@ -881,25 +874,42 @@ export class ReferralVaultScene extends Phaser.Scene {
     filed: boolean,
     checks: number
   ) {
-    const width = label.length > 9 ? 58 : 52;
-    const container = this.track(this.add.container(x, y).setDepth(150).setName(`referral-station-${label}`));
-    container.add(this.add.ellipse(0, 11, width, 9, color(PALETTE.black), 0.42));
-    container.add(this.add.rectangle(0, 0, width, 27, color(PALETTE.black), 0.94)
-      .setStrokeStyle(2, color(accent)));
-    container.add(this.add.text(0, -10, label, {
+    const container = this.drawPhysicalDesk(x, y, `referral-station-${label}`, accent);
+    container.add(this.add.text(0, -6, label, {
       fontFamily: "monospace",
       fontSize: "5px",
-      color: accent
+      color: PALETTE.creamPaper,
+      backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0));
     for (let index = 0; index < checks; index += 1) {
       container.add(this.add.rectangle(
         (index - (checks - 1) / 2) * 9,
-        6,
+        4,
         6,
         4,
         color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark)
       ).setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray)));
     }
+  }
+
+  private drawPhysicalDesk(x: number, y: number, name: string, accent: string) {
+    const bounds = referralDeskBounds(x, y);
+    this.roomSolids.push(new Phaser.Geom.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height));
+    this.track(this.add.ellipse(x, y + 9, 32, 4, color(PALETTE.black), 0.3).setDepth(46));
+    const container = this.track(this.add.container(x, y).setDepth(bounds.y + bounds.height).setName(name));
+    const asset = GAMEPLAY_TILESETS.interiorsNative;
+    if (this.textures.exists(asset.key)) {
+      const texture = this.textures.get(asset.key);
+      if (!texture.has(REFERRAL_DESK.frame)) texture.add(REFERRAL_DESK.frame, 0,
+        REFERRAL_DESK.tileIndex % asset.columns * asset.tileSize,
+        Math.floor(REFERRAL_DESK.tileIndex / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
+      container.add(this.add.image(-8, 0, asset.key, REFERRAL_DESK.frame));
+      container.add(this.add.image(8, 0, asset.key, REFERRAL_DESK.frame));
+    } else {
+      container.add(this.add.rectangle(0, 0, bounds.width, bounds.height, color(PALETTE.black), 0.94));
+    }
+    container.add(this.add.rectangle(0, 0, bounds.width, bounds.height, 0, 0).setStrokeStyle(1, color(accent)));
+    return container;
   }
 
   private renderConcurrenceChamber(packedTilemapRendered = false) {
@@ -1325,7 +1335,10 @@ export class ReferralVaultScene extends Phaser.Scene {
       target.x,
       target.y
     ) <= (target.radius ?? 44) ? target : null;
-    this.interactionPrompt.update(delta, this.toast.visible ? null : strictTarget, undefined, strictTarget ? {
+    this.interactionPrompt.update(delta, this.toast.visible ? null : strictTarget, {
+      left: 36, right: GAME_WIDTH - 36, top: 50,
+      bottom: Math.floor(this.player.sprite.getBounds().top) - 16
+    }, strictTarget ? {
       badge: "A",
       text: this.referralPromptText(strictTarget)
     } : undefined);
@@ -1680,7 +1693,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     const nextPosition = { x: Math.round(position.x), y: Math.round(position.y) };
     this.clearRoom();
     this.renderCurrentRoom(false);
-    this.player.setPosition(nextPosition.x, nextPosition.y);
+    const safePosition = this.currentRoomId === "R1" ? safeReferralPosition(nextPosition, this.roomSolids) : nextPosition;
+    this.player.setPosition(safePosition.x, safePosition.y);
     this.syncRoomTraversalState();
     this.updateReferralMinimap();
     this.reliability.update();
@@ -1825,12 +1839,12 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.clearReviewRouteCue();
       return;
     }
-    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 12) };
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
     if (Phaser.Math.Distance.Between(start.x, start.y, target.x, target.y) <= 40) {
       this.clearReviewRouteCue();
       return;
     }
-    const key = `${target.id}:${start.x},${start.y}`;
+    const key = `${target.id}:${Math.floor(start.x / 8)},${Math.floor(start.y / 8)}`;
     if (key === this.reviewRouteCueKey) return;
     this.clearReviewRouteCue();
     this.reviewRouteCueKey = key;
@@ -1858,22 +1872,31 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private drawReviewRouteCue(start: { x: number; y: number }, target: Interactable, accent: string) {
-    this.trackReviewRouteCue(this.add.rectangle(target.x, target.y, 52, 34, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(accent))
+    this.trackReviewRouteCue(this.add.rectangle(target.x, target.y, 36, 20, color(PALETTE.black), 0)
+      .setStrokeStyle(1, color(accent))
       .setName("referral-review-route-target")
-      .setDepth(236));
-    const distance = Phaser.Math.Distance.Between(start.x, start.y, target.x, target.y);
+      .setDepth(48));
+    // A snapped render position can touch an inclusive collision edge even when the logical feet are clear.
+    const cueStart = safeReferralPosition(start, this.roomSolids);
+    const route = referralWalkRoute(cueStart, referralStationApproach(target, this.roomSolids), this.roomSolids);
+    const nodes = [cueStart, ...route];
+    const lengths = route.map((point, i) => Phaser.Math.Distance.Between(nodes[i].x, nodes[i].y, point.x, point.y));
+    const distance = lengths.reduce((total, length) => total + length, 0);
     const steps = Math.max(1, Math.min(7, Math.floor(distance / 13)));
     for (let index = 1; index <= steps; index += 1) {
-      const t = index / (steps + 1);
+      let remaining = distance * index / (steps + 1);
+      let segment = 0;
+      while (segment < lengths.length - 1 && remaining > lengths[segment]) remaining -= lengths[segment++];
+      if (!lengths[segment]) continue;
+      const t = remaining / lengths[segment];
       this.trackReviewRouteCue(this.add.rectangle(
-        Math.round(Phaser.Math.Linear(start.x, target.x, t)),
-        Math.round(Phaser.Math.Linear(start.y, target.y, t)),
-        5,
-        5,
+        Math.round(Phaser.Math.Linear(nodes[segment].x, nodes[segment + 1].x, t)),
+        Math.round(Phaser.Math.Linear(nodes[segment].y, nodes[segment + 1].y, t)),
+        3,
+        3,
         color(index % 2 === 0 ? PALETTE.creamPaper : accent),
         0.92
-      ).setAngle(45).setName("referral-review-route-dot").setDepth(237));
+      ).setName("referral-review-route-dot").setDepth(48));
     }
   }
 }

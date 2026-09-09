@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { referralWalkRoute } from '../src/game/referralFurniture.ts';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 
 const base = process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/';
@@ -46,8 +47,17 @@ async function run(mobile) {
     for(let i=0;i<180;i++) {
       const before=await state();
       if(destination && (before.scene===destination || before.roomTraversal?.currentRoomId===destination)) { await page.waitForTimeout(450); return; }
-      const dx=x-before.player.x,dy=y-before.player.y;
+      let dx=x-before.player.x,dy=y-before.player.y;
       if(!destination && Math.hypot(dx,dy)<5) return;
+      if (before.roomTraversal?.currentRoomId === 'R1') {
+        const {solids,feet} = await page.evaluate(() => {const scene=window.game.scene.getScene('ReferralVaultScene');return {
+          solids:scene.roomSolids.map(({x,y,width,height})=>({x,y,width,height})),
+          feet:{x:scene.player.logicalX,y:scene.player.logicalY}};});
+        const route = referralWalkRoute(feet, {x,y}, solids);
+        const next = route.find(point => Math.hypot(point.x-feet.x,point.y-feet.y)>2) ?? route.at(-1);
+        assert(next, `No clear aisle from ${JSON.stringify(feet)} to ${x},${y}`);
+        dx=next.x-feet.x;dy=next.y-feet.y;
+      }
       await direction(Math.abs(dx)>Math.abs(dy) ? dx>0?'ArrowRight':'ArrowLeft' : dy>0?'ArrowDown':'ArrowUp');
       const after=await state();
       stalled=Math.hypot(after.player.x-before.player.x,after.player.y-before.player.y)<1?stalled+1:0;
@@ -311,7 +321,7 @@ async function run(mobile) {
     assert.equal(s.objective,'EXIT EAST - SLIP');
     assert(s.processStamps.includes('referral'));
     assert(Math.hypot(s.player.x-beforeClear.x,s.player.y-beforeClear.y)<3,'Completion must not teleport player');
-    await move(220,185); await move(220,124); await move(248,124,'R2');
+    await move(226,185); await move(226,124); await move(248,124,'R2');
     s=await shot('concurrence-room-entry');
     assert.equal(s.objective,'TAKE CONCURRENCE');
     await resume();
