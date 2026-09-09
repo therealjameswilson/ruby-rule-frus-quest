@@ -171,6 +171,21 @@ try {
   current = await shot("published-continue");
   assert.deepEqual(current.completionStats, completionStats);
   assert.equal(current.documentPoints, points + 40);
+  const missed = Boolean(initial.sceneProgress.statutoryDeadlineMissed);
+  assert.equal(current.statutoryClock.deadlineMissed, missed);
+  assert.equal(current.statutoryClock.label, missed ? "Published after the 30-year deadline" : "Published within the 30-year mandate");
+  const summaryPage = () => page.evaluate(() => window.game.scene.getScenes(true)
+    .map(scene => scene.children.getByName('publication-summary')).find(Boolean)?.getData('page'));
+  for(let i=0;i<2 && await summaryPage()!=='record';i++) {
+    if(mobile)await tap(67,216);else await key('Space');
+  }
+  assert.equal(await summaryPage(),'record');
+  const recordText = await page.evaluate(() => window.game.scene.getScenes(true)
+    .map(scene => scene.children.getByName('publication-summary')).find(Boolean).list
+    .filter(node => typeof node.text==='string').map(node=>node.text));
+  assert(recordText.includes('DEADLINE'));
+  assert(recordText.includes(missed?'MISSED':'MET'));
+  await shot('deadline-record');
   assert.deepEqual(errors, []);
   await writeFile(`${out}/result.json`, JSON.stringify({ mobile, startPoints: points, finalPoints: current.documentPoints,
     completedPackets: current.buckramBinding.completed, certification: current.finalGateCertification, errors }, null, 2));

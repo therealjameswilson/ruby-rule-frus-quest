@@ -33,6 +33,7 @@ import {
   finalizeCompletionStats,
   gameState,
   getCompletionStatsReadout,
+  getStatutoryClockStateReadout,
   getFinalGateReadiness,
   getPublicationOutcomeReadout,
   getTreatyFragmentCount,
@@ -1127,6 +1128,7 @@ export class EndingScene extends Phaser.Scene {
 
   private showPublicationSummary(appealed: boolean) {
     this.publicationSummary = new PublicationSummary(this, {
+      clock: getStatutoryClockStateReadout(),
       compiler: gameState.playerProfile.displayName,
       stats: getCompletionStatsReadout(),
       volumesCompleted: gameState.volumesCompleted,

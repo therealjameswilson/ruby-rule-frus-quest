@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { CompletionStatsReadout } from "../game/state";
 import type { TrueEndingCertificate } from "../game/trueEndingCertificate";
+import type { StatutoryClockReadout } from "../game/statutoryClock";
 import { bindPointerDown, swallowNextInputFrame, type InputState } from "../input/InputState";
 
 export type PublicationSummaryPage = "volume" | "certificate" | "record";
@@ -9,6 +10,7 @@ export type PublicationSummaryPage = "volume" | "certificate" | "record";
 interface PublicationSummaryOptions {
   compiler: string;
   stats: CompletionStatsReadout;
+  clock: StatutoryClockReadout;
   volumesCompleted: number;
   textureKeys: readonly string[];
   certificate?: TrueEndingCertificate;
@@ -145,20 +147,21 @@ export class PublicationSummary {
   }
 
   private drawRecord() {
-    const { stats, volumesCompleted } = this.options;
+    const { stats, volumesCompleted, clock } = this.options;
     this.text(128, 16, "PUBLICATION RECORD", 8, PALETTE.goldStamp);
     this.text(128, 31, stats.publicationOutcome.label.toUpperCase(), 6);
     const rows = [
       ["TIME", stats.totalPlayTime],
       ["RELIABILITY", `${stats.finalReliabilityScore}/100`],
+      ["DEADLINE", clock.deadlineMissed ? "MISSED" : clock.status === "published" ? "MET" : "PENDING"],
       ["DANN-E DEFEATED", String(stats.danneVariantsDefeated.total)],
       ["COVER PIECES", `${stats.volumePiecesCollected}/${stats.volumePiecesTotal}`],
       ["FIRST EDITION", stats.hiddenCollectibleFound ? "FOUND" : "NOT FOUND"],
       ["VOLUMES FINISHED", String(volumesCompleted)]
     ];
     rows.forEach(([label, value], index) => {
-      this.text(16, 50 + index * 16, label, 8, PALETTE.creamPaper, 0);
-      this.text(240, 50 + index * 16, value, 8, PALETTE.goldStamp, 1);
+      this.text(16, 48 + index * 14, label, 8, PALETTE.creamPaper, 0);
+      this.text(240, 48 + index * 14, value, 8, PALETTE.goldStamp, 1);
     });
     this.text(128, 152, "SKILLS PRACTICED", 6, PALETTE.terminalCyan);
     ["RESEARCH AND SOURCE NOTES", "REFERRALS AND VISIBLE REDACTIONS", "HUMAN REVIEW, PROOFING, PUBLICATION"].forEach((line, index) => {

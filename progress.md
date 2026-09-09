@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Publication deadline record (2026-09-09):
+  - Fixed late publication being mislabeled as within the 30-year mandate. Derived deadlineMissed survives opened/published status, and both ending record pages show a separate Met/Missed/Pending row. No new punishment, retry-clock reset, appeal reclassification or save migration.
+  - Build passes (255 modules / 2,801.22 KB); 193 files / 1,436 tests pass. Earned on-time keyboard and late touch saves finish all five bindery packets, publish at 241 points and Continue without duplicated stats/rewards or browser errors. Both deadline rows inspected at native/mobile sizes. Installed client independently reopens the earned late publication. See docs/PUBLICATION_DEADLINE_RECORD.md.
+  - Local only. Next: phase-boast readability and first-attempt guidance, then player-based evaluation of deadline learning margin. Finishing these scripted earned routes does not establish whole-game fun or real-iPhone performance.
+
 - Cloud warning readability (2026-09-09):
   - Replaced Cloud's faint dotted lanes with three outlined continuous pixel paths and gold direction arrows; cyan next-perch corners remain. Low pulse stays at 0.85 alpha. One raster graphic per warning, no per-frame geometry allocations; actual targets, timing, damage, return windows and clock unchanged.
   - Build passes (255 modules / 2,801.01 KB); 193 files / 1,433 tests pass. Earned keyboard route reaches bindery in 61.25 s without retry; normal touch route in 70.651 s with one retry. Neither misses deadline; records, points and rewards survive Continue without browser errors. Initial optional touch satellite stress attempt failed before Cloud and is recorded separately. Installed client and native/mobile screenshots inspected. See docs/CLOUD_WARNING_READABILITY.md.

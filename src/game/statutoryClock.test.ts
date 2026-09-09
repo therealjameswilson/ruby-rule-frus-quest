@@ -87,5 +87,20 @@ describe("statutory FRUS clock", () => {
 
     expect(readout.status).toBe("published");
     expect(readout.label).toBe("Published within the 30-year mandate");
+    expect(readout.deadlineMissed).toBe(false);
+  });
+
+  it.each([27.5, 30])("retains a recorded deadline miss after the gate opens at %s", elapsedYears => {
+    const input = { elapsedYears, readiness: readiness({ buckramGateOpen: true, completionRatio: 1, missingSummary: [] }), deadlineDamageApplied: true };
+    const open = getStatutoryClockReadout(input);
+    expect(open.status).toBe("buckram_gate_open");
+    expect(open.deadlineMissed).toBe(true);
+    expect(open.label).toContain("deadline missed");
+    expect(open.shortcutOffered).toBe(false);
+    const published = getStatutoryClockReadout({ ...input, finalGatePublished: true });
+    expect(published.status).toBe("published");
+    expect(published.deadlineMissed).toBe(true);
+    expect(published.label).toBe("Published after the 30-year deadline");
+    expect(published.shortcutViolation).toBeNull();
   });
 });

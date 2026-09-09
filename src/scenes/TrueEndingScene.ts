@@ -4,6 +4,7 @@ import { SNES_PUBLISHED_FRUS_PRIZE_ASSET } from "../game/snesAtlas";
 import {
   gameState,
   getCompletionStatsReadout,
+  getStatutoryClockStateReadout,
   getDanneItemReadout,
   getFinalGateReadiness,
   getProductionBoardReadout,
@@ -67,6 +68,7 @@ export class TrueEndingScene extends Phaser.Scene {
       : "The certification record still shows open checks.");
     retroAudio.startMusic("EndingScene");
     this.summary = new PublicationSummary(this, {
+      clock: getStatutoryClockStateReadout(),
       compiler: gameState.playerProfile.displayName,
       stats: getCompletionStatsReadout(),
       volumesCompleted: gameState.volumesCompleted,

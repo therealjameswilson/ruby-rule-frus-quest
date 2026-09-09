@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getCompletionStatsReadout, resetGameState } from "../game/state";
+import { gameState, getCompletionStatsReadout, getStatutoryClockStateReadout, resetGameState } from "../game/state";
 import { swallowNextInputFrame, type InputState } from "../input/InputState";
 import { PublicationSummary } from "./publicationSummary";
 import type { TrueEndingCertificate } from "../game/trueEndingCertificate";
@@ -57,7 +57,7 @@ function fixture(appealed = false, hasTexture = true, certificate?: TrueEndingCe
   const onTitle = vi.fn();
   const canAct = vi.fn(() => true);
   const onPageChange = vi.fn();
-  const summary = new PublicationSummary(scene, { compiler: "Sam", stats, volumesCompleted: 1, textureKeys: ["hero"], certificate, onTitle, canAct, onPageChange });
+  const summary = new PublicationSummary(scene, { compiler: "Sam", stats, clock: getStatutoryClockStateReadout(), volumesCompleted: 1, textureKeys: ["hero"], certificate, onTitle, canAct, onPageChange });
   const press = (name: string) => content.children.find((node) => node.name === `publication-${name}`)?.press?.();
   return { summary, content, onTitle, canAct, press, onPageChange };
 }
@@ -66,6 +66,18 @@ const input = (fields: Partial<InputState>) => fields as Readonly<InputState>;
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
 
 describe("publication reward and record pages", () => {
+  it("shows a missed deadline without relabeling the record as under appeal", () => {
+    gameState.sceneProgress.statutoryDeadlineMissed = 1;
+    const { content, press } = fixture();
+    press("record");
+    const text = content.children.map(node => node.text);
+    expect(text).toContain("MISSED");
+    expect(text).toContain("DEADLINE");
+    expect(text).not.toContain("MET");
+    const row = content.children.find(node => node.text === "DEADLINE")!;
+    expect(row.y).toBe(76);
+    expect(content.children.find(node => node.text === "VOLUMES FINISHED")!.y).toBeLessThan(152);
+  });
   it("shows the native hero without stats covering it", () => {
     const { content } = fixture();
     expect(content.children.find((node) => node.name === "published-frus-volume-hero")?.scale).toBe(1);
