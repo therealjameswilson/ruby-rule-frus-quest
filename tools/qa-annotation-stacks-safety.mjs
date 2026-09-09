@@ -47,19 +47,19 @@ try {
         await move(216, 76); await move(128, 72); await press(); await page.waitForTimeout(900);
         assert.equal((await state()).roomTraversal.currentRoomId, 'AS');
         assert.equal((await state()).sceneProgress.annotationDraftingComplete, 1);
-        await move(128, 40, 'NaraStacksScene'); await shot('nara-route');
+        await move(108, 192); await move(108, 72); await move(128, 72); await move(128, 40, 'NaraStacksScene'); await shot('nara-route');
         await move(128, 207); await press(); await page.waitForTimeout(1200);
         assert.equal((await state()).roomTraversal.currentRoomId, 'AS');
         assert(Math.abs((await state()).player.y - 64) < 3);
         await shot('nara-return');
-        await move(128, 220, 'A1');
+        await move(108, 64); await move(108, 192); await move(128, 192); await move(128, 220, 'A1');
       } else {
         assert.equal(before.roomTraversal.currentRoomId, 'AS');
         assert.equal(before.sceneProgress.annotationGatheredMask, 4);
         if (fallback) assert.equal(await page.evaluate(() => window.game.textures.exists('pack-tiles-interiors-native')), false);
-        await move(208, 190); await move(128, 190); await move(128, 150);
+        await move(208, 190); await move(108, 190); await move(108, 150);
         await hold('ArrowLeft', 800); assert((await state()).player.x >= 100, 'Shelf must be solid');
-        await move(128, 150); await move(128, 220, 'A1');
+        await move(108, 150); await move(108, 190); await move(128, 190); await move(128, 220, 'A1');
         assert.equal((await state()).heldItem, before.heldItem);
         await move(80, 72); await move(80, 145); await move(128, 145); await press();
         assert(!(await state()).sceneProgress.annotationDraftingComplete);

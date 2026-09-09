@@ -99,6 +99,8 @@ import {
   SOURCE_NOTE_PROVENANCE_STATIONS
 } from "../game/sourceNoteProvenance";
 import type { SourceNoteProvenancePromptId } from "../game/sourceNoteProvenance";
+import { ANNOTATION_CART, annotationCartBounds, pushAnnotationCart, readAnnotationCart } from "../game/annotationCart";
+import { safeWorkstationPosition } from "../game/workstationGeometry";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -418,6 +420,8 @@ export class ArchiveScene extends Phaser.Scene {
   private sourceNoteRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private sourceNoteRouteCueKey = "";
   private provenanceStationVisuals = new Map<SourceNoteProvenancePromptId, SourceNoteProvenanceStationVisual>();
+  private annotationCartVisual?: Phaser.GameObjects.Container;
+  private annotationCartSolid?: Phaser.Geom.Rectangle;
   private annotationStationVisuals = new Map<AnnotationDraftingPromptId, AnnotationDraftingStationVisual>();
   private annotationTableSlots = new Map<AnnotationDraftingPromptId, Phaser.GameObjects.Rectangle>();
   private annotationTableFrame?: Phaser.GameObjects.Rectangle;
@@ -710,7 +714,8 @@ export class ArchiveScene extends Phaser.Scene {
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
-      this.player.setPosition(spawn.x, spawn.y);
+      const safeSpawn = roomId === "AS" ? safeWorkstationPosition(spawn, this.roomSolids) : spawn;
+      this.player.setPosition(safeSpawn.x, safeSpawn.y);
       this.danneLurker.enterRoom(this.time.now, roomId !== "AS");
       this.syncRoomTraversalState();
       this.updateVisitedMinimap();
@@ -759,6 +764,8 @@ export class ArchiveScene extends Phaser.Scene {
     this.bossReadinessObjects = [];
     this.blackVaultDoorObjects = [];
     this.roomSolids = [];
+    this.annotationCartVisual = undefined;
+    this.annotationCartSolid = undefined;
     this.interactables = [];
     this.bureaucraticWalls = [];
     this.activeEnemyDefs.clear();
@@ -947,9 +954,63 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private renderAnnotationStacks() {
+    this.drawAnnotationCart();
     this.drawAnnotationDraftingStations();
     this.restoreAnnotationSlipIcon();
     this.syncSourceNotePhysicalState(null);
+  }
+
+  private drawAnnotationCart() {
+    const { position, parked } = readAnnotationCart(gameState.sceneProgress);
+    const lane = this.add.graphics().setDepth(46);
+    lane.lineStyle(1, color(PALETTE.goldStamp), 0.55);
+    lane.strokeRect(114, 101, 44, 70);
+    lane.lineStyle(2, color(PALETTE.terminalCyan));
+    lane.strokeRect(ANNOTATION_CART.bay.x - 13, ANNOTATION_CART.bay.y - 9, 26, 18);
+    this.track(lane);
+    const parts: Phaser.GameObjects.GameObject[] = [
+      this.add.ellipse(0, 8, 28, 8, color(PALETTE.black), 0.4),
+      this.add.rectangle(-8, 7, 5, 5, color(PALETTE.black)),
+      this.add.rectangle(8, 7, 5, 5, color(PALETTE.black)),
+      this.add.rectangle(0, 0, 26, 15, color(PALETTE.black)),
+      this.add.rectangle(0, -1, 22, 12, color(PALETTE.stoneGray)),
+      this.add.rectangle(0, -6, 22, 2, color(PALETTE.creamPaper)),
+      this.add.rectangle(0, 5, 22, 2, color(PALETTE.sepiaInk)),
+      this.add.rectangle(-8, -2, 4, 8, color(PALETTE.deepRuby)),
+      this.add.rectangle(-3, -2, 4, 8, color(PALETTE.buckramRed)),
+      this.add.rectangle(3, -2, 5, 8, color(PALETTE.creamPaper)),
+      this.add.rectangle(3, -4, 3, 1, color(PALETTE.goldStamp)),
+      this.add.rectangle(11, -9, 3, 8, color(PALETTE.stoneGray))
+    ];
+    this.annotationCartVisual = this.track(this.add.container(position.x, position.y, parts)
+      .setName("annotation-context-cart").setDepth(position.y + 8));
+    const bounds = annotationCartBounds(position);
+    this.annotationCartSolid = new Phaser.Geom.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+    this.roomSolids.push(this.annotationCartSolid);
+    this.interactables.push({ id: "annotation-return-cart", label: parked ? "Parked Context Cart" : "Context Cart",
+      x: position.x, y: position.y, radius: ANNOTATION_CART.radius, kind: "document", onInteract: () => this.moveAnnotationCart() });
+  }
+
+  private moveAnnotationCart() {
+    const result = pushAnnotationCart(gameState.sceneProgress, this.player.position);
+    setLatestMessage(result.message);
+    if (!result.moved) {
+      this.toast.show(result.message, this.player.position, "info");
+      return;
+    }
+    gameState.sceneProgress.annotationCartX = result.position.x;
+    gameState.sceneProgress.annotationCartY = result.position.y;
+    gameState.sceneProgress.annotationCartParked = result.parked ? 1 : 0;
+    this.annotationCartVisual?.setPosition(result.position.x, result.position.y).setDepth(result.position.y + 8);
+    const bounds = annotationCartBounds(result.position);
+    this.annotationCartSolid?.setTo(bounds.x, bounds.y, bounds.width, bounds.height);
+    const target = this.interactables.find(item => item.id === "annotation-return-cart");
+    if (target) { target.x = result.position.x; target.y = result.position.y; }
+    retroAudio.confirm();
+    if (result.parked) this.toast.show("PARKED - TAKE CONTEXT NOTE", this.player.position, "info");
+    this.syncAnnotationDraftingStations();
+    this.syncWallState();
+    saveGameNow();
   }
 
   private enterAnnotationStacks() {
@@ -1578,13 +1639,13 @@ export class ArchiveScene extends Phaser.Scene {
     for (const station of ANNOTATION_DRAFTING_STATIONS) {
       const position = ANNOTATION_DRAFTING_STATION_POSITIONS[station.id];
       const accentColor = this.annotationAccent(station.id);
-      const shadow = this.add.rectangle(1, 2, 30, 22, color(PALETTE.black), 0.58);
-      const ring = this.add.rectangle(0, 0, 34, 26, color(PALETTE.black), 0)
+      const shadow = this.add.rectangle(1, 2, 38, 22, color(PALETTE.black), 0.58);
+      const ring = this.add.rectangle(0, 0, 42, 26, color(PALETTE.black), 0)
         .setStrokeStyle(2, color(accentColor), 0.96)
         .setVisible(false);
-      const card = this.add.rectangle(0, 0, 28, 20, color(PALETTE.creamPaper), 1)
+      const card = this.add.rectangle(0, 0, 36, 20, color(PALETTE.creamPaper), 1)
         .setStrokeStyle(1, color(PALETTE.stoneGray));
-      const accent = this.add.rectangle(-10, 0, 3, 16, color(accentColor));
+      const accent = this.add.rectangle(-14, 0, 3, 16, color(accentColor));
       const label = this.add.text(2, -8, station.shortLabel, {
         fontFamily: "monospace",
         fontSize: "4px",
@@ -1666,7 +1727,8 @@ export class ArchiveScene extends Phaser.Scene {
       if (!visual) continue;
       const filed = index < packet.filedCount;
       const gathered = packet.gathered.some((note) => note.id === station.id);
-      visual.container.setVisible(visible && !gathered).setAlpha(1);
+      const accessible = station.id !== "contextual_annotation" || readAnnotationCart(gameState.sceneProgress).parked;
+      visual.container.setVisible(visible && !gathered && accessible).setAlpha(1);
       visual.card.setStrokeStyle(1, color(this.annotationAccent(station.id)));
       visual.ring.setVisible(false);
       visual.state.setText("");
@@ -2451,7 +2513,9 @@ export class ArchiveScene extends Phaser.Scene {
       candidates = wallTarget ? [{ ...wallTarget, radius: 30 }] : [];
     } else if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
       const packet = readAnnotationPacket(gameState.sceneProgress);
-      candidates = this.currentRoomId === "AS" ? packet.missing.map((station) => ({
+      candidates = this.currentRoomId === "AS" ? packet.missing
+        .filter(station => station.id !== "contextual_annotation" || readAnnotationCart(gameState.sceneProgress).parked)
+        .map((station) => ({
         id: `annotation-station-${station.id}`,
         label: station.label,
         ...ANNOTATION_DRAFTING_STATION_POSITIONS[station.id],
@@ -2471,6 +2535,10 @@ export class ArchiveScene extends Phaser.Scene {
         kind: "document",
         onInteract: () => undefined
       });
+      if (this.currentRoomId === "AS" && !readAnnotationCart(gameState.sceneProgress).parked) {
+        const cart = this.interactables.find(item => item.id === "annotation-return-cart");
+        if (cart) candidates.push(cart);
+      }
     } else if (this.sourceNoteStatus === "routed" && !readSourceNoteTrail(gameState.sceneProgress).ready) {
       candidates = SOURCE_NOTE_PROVENANCE_STATIONS.map((station) => {
           const position = SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id];
@@ -2539,6 +2607,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.sourceNoteStatus === "verified") return "STAMP SRC NOTE";
     if (this.sourceNoteWallNeedsStamp()) return "STAMP NO REPO";
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
+      if (target?.id === "annotation-return-cart") return "PUSH CONTEXT CART";
       if (target?.id === "annotation-stacks-door") return "ENTER NOTE STACKS";
       if (target?.id === "annotation-research-table") return "FILE PACKET";
       const station = ANNOTATION_DRAFTING_STATIONS.find((note) => note.id === this.annotationStationId(target));
@@ -3055,6 +3124,11 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
+    if (target.id === "annotation-return-cart") {
+      this.moveAnnotationCart();
+      return;
+    }
+
     if (target.id === "annotation-stacks-door") {
       this.enterAnnotationStacks();
       return;
@@ -3074,6 +3148,10 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private collectAnnotationDraftingNote(stationId: AnnotationDraftingPromptId) {
+    if (stationId === "contextual_annotation" && !readAnnotationCart(gameState.sceneProgress).parked) {
+      this.toast.show("PARK THE CONTEXT CART FIRST", this.player.position, "info");
+      return;
+    }
     const result = gatherAnnotationNote(gameState.sceneProgress, stationId);
     if (!result.ok) {
       retroAudio.warning();

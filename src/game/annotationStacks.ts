@@ -4,6 +4,7 @@ import { restoredArchiveRepoWallCleared } from "./archiveSourceRoom";
 import { INTERIOR_TILES } from "./networkN1Tilemap";
 import { EMPTY_TILE, packedTileGid } from "./packedTileIndex";
 import type { ArchiveA1TileLayers } from "./archiveA1Tilemap";
+import { ANNOTATION_CART, readAnnotationCart } from "./annotationCart";
 
 export const ANNOTATION_STACKS = {
   roomId: "AS",
@@ -11,7 +12,7 @@ export const ANNOTATION_STACKS = {
   returnToSource: { x: 128, y: 68 },
   stations: {
     published_provenance: { x: 48, y: 80 },
-    contextual_annotation: { x: 128, y: 72 },
+    contextual_annotation: ANNOTATION_CART.bay,
     selectivity_mitigation: { x: 208, y: 80 }
   } satisfies Record<AnnotationDraftingPromptId, { x: number; y: number }>
 } as const;
@@ -23,7 +24,8 @@ export function annotationStacksOpen(progress: Readonly<Record<string, number>>)
 export function annotationStacksObjective(progress: Readonly<Record<string, number>>) {
   const packet = readAnnotationPacket(progress);
   return packet.complete ? "NORTH: NARA STACKS"
-    : packet.ready ? "SOUTH: FILE NOTES" : `FIND NOTES ${packet.gathered.length}/3`;
+    : !readAnnotationCart(progress).parked ? "PARK CONTEXT CART"
+      : packet.ready ? "SOUTH: FILE NOTES" : `FIND NOTES ${packet.gathered.length}/3`;
 }
 
 export function buildAnnotationStackLayers(): ArchiveA1TileLayers {

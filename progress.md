@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical context cart (2026-09-09):
+  - Annotation Stacks now requires pushing a solid cart into its cyan bay before collecting the context note. One-tile pushes, no timer or penalty, eight recoverable positions; existing collection and human filing remain separate. Fixed push-at-contact range after real walking QA. Widened note cards for readable labels.
+  - Existing sceneProgress saves partial cart movement; legacy earned notes remain valid and blocked old spawn positions recover. Build passes; 188 test files / 1,380 tests pass. Full earned keyboard and touch routes reach Network with 55 points and no console errors; partial save, fallback tiles and old-completed routes pass. See docs/ANNOTATION_RETURN_CART.md.
+  - Local only; the full fun-game goal remains active. Next: novice-paced Network/referral play, emphasizing varied physical decisions and clear next actions.
+
 - Free source-trail discovery (2026-09-08):
   - Opening play exposed arbitrary station ordering and opaque A1 instructions. Archive, collection and folder clues now work in any order, with readable clue counts and recorded/unread markers. Gathering is separate from the existing human evidence review at the research table; the citation stamp and wall swing remain required. Widened clue cards after screenshot inspection.
   - Added an individual-clue mask in existing sceneProgress; old prefix saves and completed reviews retain credit. All six orders, repeated reads, partial save/Continue and no automatic approval are covered. Full suite: 187 files / 1,375 tests; build passes. Keyboard folder-first, keyboard archive-first and touch folder-first routes reach Network with 55 earned points. Unsupported filing, corrected-but-unfiled Continue, wall/reward invariants and touch evidence readback pass. Installed client native/compositor output inspected. See docs/SOURCE_TRAIL_DISCOVERY.md.
