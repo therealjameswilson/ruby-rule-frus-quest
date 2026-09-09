@@ -10,6 +10,16 @@ function methodSource(name: string, nextName: string) {
 }
 
 describe("ReferralVaultScene physical review flow", () => {
+  it("shows dispatch actions directly instead of prefixing them with CHECK", () => {
+    const prompts = methodSource("updateReferralInteractionPrompt", "referralPromptText");
+    const dispatch = prompts.slice(0, prompts.indexOf('if (this.currentRoomId === "R2")'));
+    expect(dispatch).toContain("this.dispatchLabel(id)");
+    expect(dispatch).toContain("target ? { text: target.label } : undefined");
+    const labels = methodSource("dispatchLabel", "handleDispatchAction");
+    for (const action of ["READ DISPATCH COPY", "TAKE DISPATCH COPY", "TURN SHELF CRANK", "READ STACK INDEX"]) {
+      expect(labels).toContain(action);
+    }
+  });
   it("routes agency files in the room instead of opening the legacy referral quiz", () => {
     expect(sceneSource).toContain("handleReferralReviewAction");
     expect(sceneSource).toContain("routeReferralEquityPacket");

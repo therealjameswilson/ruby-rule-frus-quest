@@ -1321,7 +1321,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (this.currentRoomId === "R3") {
       const id = nearbyDispatchTarget(this.player.position);
       const target = id ? this.referralTrayTarget(`dispatch-${id}`, this.dispatchLabel(id), DISPATCH_STACKS[id].x, DISPATCH_STACKS[id].y) : null;
-      this.interactionPrompt.update(delta, this.toast.visible ? null : target);
+      this.interactionPrompt.update(delta, this.toast.visible ? null : target, undefined,
+        target ? { text: target.label } : undefined);
       setNearestInteractable(target?.label ?? null);
       return;
     }

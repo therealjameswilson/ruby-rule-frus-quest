@@ -23,6 +23,14 @@ try {
     if (fallback) await page.route('**/tileset_interiors_16x16_native.png', route => route.abort());
     const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
     const press = async key => { await page.keyboard.press(key, { delay: 50 }); await page.waitForTimeout(180); };
+    async function promptShot(label, expected) {
+      await page.waitForFunction(expected => {
+        const prompt = window.game.scene.getScene('ReferralVaultScene').interactionPrompt;
+        return prompt.visible && prompt.currentText === expected;
+      }, expected);
+      const image = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(image => resolve(image.src))));
+      await writeFile(`${out}/${name}-${label}-native.png`, Buffer.from(image.split(',')[1], 'base64'));
+    }
     async function move(x, y, room) {
       for (let i = 0; i < 220; i++) {
         const s = await state();
@@ -57,6 +65,8 @@ try {
         assert.equal(before.sceneProgress.referralDispatchCopyFound, 1);
         assert(!before.sceneProgress.referralDispatchAisleOpen);
         if (fallback) assert.equal(await page.evaluate(() => window.game.textures.exists('pack-tiles-interiors-native')), false);
+        await move(128,82); await promptShot('copy-prompt','READ DISPATCH COPY');
+        await move(176,82); await promptShot('crank-prompt','TURN SHELF CRANK');
         await move(208, 82); await move(208, 180); await move(128, 213, 'R1');
         assert.equal((await state()).heldItem, 'StateChat Draft Manifest');
         await move(128, 42, 'R3');
@@ -64,6 +74,7 @@ try {
         await move(128, 170);
         for (let i = 0; i < 10; i++) await press('ArrowUp');
         assert((await state()).player.y >= 163);
+        await move(48,180); await promptShot('index-prompt','READ STACK INDEX');
       }
       const s = await state();
       assert.deepEqual(s.inventory, before.inventory);

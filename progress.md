@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Referral dispatch clarity (2026-09-09):
+  - Earned touch Referral replay completed 38 checkpoints through the editor handoff with no browser errors, including partial Continue, original-copy recovery, shortcut opening and the tool reward.
+  - Removed duplicate CHECK prefixes from authored READ/TAKE/TURN dispatch prompts. Both normal and fallback-art browser cases assert the text, closed-shelf collision, side-aisle return and unchanged inventory/points/documents.
+  - Build and 195 files / 1,456 tests pass. Native screenshots inspected. Installed client verified keyboard resume/movement but stopped outside index range; separate browser assertions prove prompt visibility. See docs/REFERRAL_DISCOVERY_AUDIT.md. Local only. Next: editor handoff and unaided chapter comprehension; fun remains unproven.
+
 - Network crossing clarity (2026-09-09):
   - Played the earned touch Network path through Referral, including routing errors, Marcus help, shortcut opening, partial Continue, withholding review and token reward. Found the sealed crossing advertised STAMP SEAL before the public-packet prerequisite.
   - Prompt now shows ! FILE PUBLIC FIRST while sealed, and the actual secondary-button STAMP SEAL action when ready. No rules or save changes. Browser audit explicitly captures and asserts both states.
