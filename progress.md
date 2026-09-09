@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Cloud warning readability (2026-09-09):
+  - Replaced Cloud's faint dotted lanes with three outlined continuous pixel paths and gold direction arrows; cyan next-perch corners remain. Low pulse stays at 0.85 alpha. One raster graphic per warning, no per-frame geometry allocations; actual targets, timing, damage, return windows and clock unchanged.
+  - Build passes (255 modules / 2,801.01 KB); 193 files / 1,433 tests pass. Earned keyboard route reaches bindery in 61.25 s without retry; normal touch route in 70.651 s with one retry. Neither misses deadline; records, points and rewards survive Continue without browser errors. Initial optional touch satellite stress attempt failed before Cloud and is recorded separately. Installed client and native/mobile screenshots inspected. See docs/CLOUD_WARNING_READABILITY.md.
+  - Local only. Next: examine deadline fairness across repeated learning/retries and brief phase-boast reading time. Faster scripted completion is not proof of player success, real-iPhone performance or full-game fun.
+
 - Earned Black Vault audit (2026-09-09):
   - Continued both earned Editor saves through Colossus, Swarm and Cloud to the bindery, then Continue. Revised keyboard route: 83.911 s, one retry, nine fresh core hits, reliability 100. Touch 375x667 DPR 3: 103.459 s, one retry, seven fresh hits, deadline missed and reliability 94. No browser errors, record changes or duplicate rewards; publication remains unfinished.
   - Corrected replay approach to stop at Pencil reach and distinguish expired/tight openings from valid-hit windows; no runtime balance changes. Initial touch failure retained in docs/EARNED_BLACK_VAULT_AUDIT.md. Installed game client opening and mobile Cloud warning inspected; syntax check passes. Prior build/tests unchanged, not rerun.

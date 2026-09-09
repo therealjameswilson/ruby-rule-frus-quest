@@ -24,6 +24,7 @@ import {
   type DanneBossHitKind
 } from "../../game/danneBossCombat";
 import { DANNE_CLOUD_WAYPOINTS } from "../../game/danneSceneCollisions";
+import { cloudWarningGeometry } from "../../game/cloudWarning";
 import { unlockCodexEntry } from "../../game/codex";
 import {
   advanceStatutoryClock,
@@ -88,7 +89,7 @@ interface ActiveAttackTelegraph {
   target: Position;
   destination: Position | null;
   cooldownMs: number;
-  markers: Phaser.GameObjects.Rectangle[];
+  markers: Array<Phaser.GameObjects.Rectangle | Phaser.GameObjects.Graphics>;
 }
 
 interface DanneBossOptions {
@@ -463,7 +464,7 @@ export class DanneBoss {
     if (!this.announcedTelegraphs.has(phase)) {
       this.announcedTelegraphs.add(phase);
       setLatestMessage(destination
-        ? "Cyan corners mark DANN-E's next perch. Three dotted lanes warn where the Ego spread will fly."
+        ? "Cyan corners mark DANN-E's next perch. Three bright arrows show where the Ego spread will fly."
         : "Dodge the red target, or face the Ego bolt and swing your tool to return it.");
     }
     retroAudio.blip();
@@ -473,7 +474,7 @@ export class DanneBoss {
     const telegraph = this.attackTelegraph;
     if (!telegraph) return;
     const pulseOn = danneTelegraphPulseOn(telegraph.startedAt, timeMs);
-    for (const marker of telegraph.markers) marker.setAlpha(pulseOn ? 0.95 : 0.34);
+    for (const marker of telegraph.markers) marker.setAlpha(telegraph.phase === "cloud" ? pulseOn ? 1 : 0.85 : pulseOn ? 0.95 : 0.34);
     this.sprite.setAlpha(pulseOn ? 1 : 0.66);
     if (timeMs < telegraph.resolvesAt) return;
 
@@ -501,7 +502,7 @@ export class DanneBoss {
   }
 
   private createAttackTelegraphMarkers(source: Position, target: Position, destination: Position | null, phase: DanneAttackPhase) {
-    const markers: Phaser.GameObjects.Rectangle[] = [];
+    const markers: Array<Phaser.GameObjects.Rectangle | Phaser.GameObjects.Graphics> = [];
     const add = (x: number, y: number, width: number, height: number, fill: string) => {
       const marker = this.scene.add.rectangle(snapPixel(x), snapPixel(y), width, height, color(fill), 0.95)
         .setDepth(940);
@@ -520,7 +521,20 @@ export class DanneBoss {
 
     bracket(target, PALETTE.classNetRed, 10);
     if (destination) bracket(destination, PALETTE.terminalCyan, 14);
-    const lanes = phase === "cloud" ? bossSpreadTargets(source, target, DANNE_CLOUD_SPREAD) : [target];
+    if (phase === "cloud") {
+      const graphic = this.scene.add.graphics().setDepth(939);
+      const lanes = cloudWarningGeometry(source, target);
+      graphic.fillStyle(color(PALETTE.black), 1);
+      for (const lane of lanes) for (const point of [...lane.path, ...lane.arrow]) graphic.fillRect(point.x - 1, point.y - 1, 3, 3);
+      graphic.fillStyle(color(PALETTE.creamPaper), 1);
+      for (const lane of lanes) for (const point of lane.path) graphic.fillRect(point.x, point.y, 1, 1);
+      graphic.fillStyle(color(PALETTE.goldStamp), 1);
+      for (const lane of lanes) for (const point of lane.arrow) graphic.fillRect(point.x, point.y, 1, 1);
+      markers.push(graphic);
+      add(source.x, source.y - 10, 5, 5, PALETTE.buckramHighlight);
+      return markers;
+    }
+    const lanes = [target];
     for (const endpoint of lanes) {
       for (let step = 1; step <= 6; step += 1) {
         const ratio = step / 7;

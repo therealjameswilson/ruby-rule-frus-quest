@@ -54,17 +54,20 @@ vi.mock("../../systems/verification", () => ({ ChoicePrompt: class {
 class Visual {
   active = true;
   visible = true;
+  alpha = 1;
   constructor(public x = 0, public y = 0) {}
   setPosition(x: number, y: number) { this.x = x; this.y = y; return this; }
   setOrigin() { return this; } setScale() { return this; } setDepth() { return this; }
   setVisible(visible: boolean) { this.visible = visible; return this; } setStrokeStyle() { return this; } setScrollFactor() { return this; }
   setText() { return this; } setSize() { return this; } setFillStyle() { return this; }
   setColor() { return this; } setTint() { return this; } clearTint() { return this; }
-  setAlpha() { return this; } setAngle() { return this; }
+  setAlpha(alpha: number) { this.alpha = alpha; return this; } setAngle() { return this; }
+  fillStyle() { return this; } fillRect() { return this; }
   destroy() { this.active = false; }
 }
 
 interface BossInternals {
+  attackTelegraph: { markers: Visual[] } | null;
   hp: number;
   coreOpening: Visual;
   takeReturnedBolt(time: number): void;
@@ -90,6 +93,7 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
   const scene = {
     time: { now: 0, delayedCall: (_ms: number, callback: () => void) => callback() },
     add: {
+      graphics: () => new Visual(),
       sprite: (x: number, y: number) => new Visual(x, y),
       ellipse: (x: number, y: number) => new Visual(x, y),
       rectangle: (x: number, y: number) => new Visual(x, y),
@@ -541,6 +545,17 @@ describe("DANN-E final-review combat", () => {
       expect(bolt.vx * dy - bolt.vy * dx).toBeCloseTo(0, 7);
       expect(bolt.vx * dx + bolt.vy * dy).toBeGreaterThan(0);
     });
+  });
+
+  it("keeps Cloud lanes visible on the low pulse and disposes them when firing", () => {
+    const { internals } = fixture("cloud");
+    internals.startAttackTelegraph(1000, "cloud");
+    const markers = internals.attackTelegraph!.markers;
+    expect(markers).toHaveLength(18); // Two brackets, one raster graphic, one muzzle.
+    internals.updateAttackTelegraph(1090);
+    expect(markers.every(marker => marker.alpha >= 0.85 && marker.active)).toBe(true);
+    internals.updateAttackTelegraph(1800);
+    expect(markers.every(marker => !marker.active)).toBe(true);
   });
 
   it("keeps the clock out of the shortcut choice and restores it on rejection", () => {
