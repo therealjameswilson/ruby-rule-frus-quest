@@ -35,7 +35,7 @@ try{
  if(baseline){assert.equal(boss(spam).bossCombat.boltsReturned,0);assert(boss(spam).hp<180);}
  else {
   if(boss(spam).bossCombat.boltsReturned===0)assert.equal(boss(spam).hp,180);
-  let cycles=0,retries=0;const started=Date.now(),phases=new Set();
+  let cycles=0,retries=0,freshCoreHits=0,tightApproaches=0;const started=Date.now(),phases=new Set();
   while(Date.now()-started<240000){
     const s=await state(),b=boss(s);if(s.scene==='EndingScene')break;
     if(s.mode!=='explore'){
@@ -91,12 +91,15 @@ try{
       await press('m');await page.waitForTimeout(100);const paused=await state(),pb=boss(paused);await shot('core-open-paused');await page.waitForTimeout(1800);assert.deepEqual(boss(await state()).bossCombat,pb.bossCombat);await press('Escape');await page.waitForTimeout(80);
       assert.equal((await state()).playerCombat.weapon.swingId,paused.playerCombat.weapon.swingId);
     }
-    await move(128,face==='ArrowDown'?142:130);await direction(face,25);
+    // Stop at pencil reach instead of walking into the boss sprite.
+    await move(128,face==='ArrowUp'?145:face==='ArrowDown'?142:130);await direction(face,25);
     const beforeHit=await state(),h=boss(beforeHit);if(beforeHit.mode!=='explore'||h?.enemyState!==r.enemyState)continue;
     await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).playerCombat.weapon.canSwing,{},{timeout:800});
     await press('x');await page.waitForTimeout(180);const hit=await state(),hb=boss(hit);
     console.log(JSON.stringify({cycle:cycles,phase:hb?.enemyState,hp:hb?.hp,rel:hit.reliability,window:hb?.bossCombat.counterWindowMs}));
-    if(cycles===1)assert(hb?.hp<h.hp||hit.mode!=='explore','A fresh swing must damage the open core');
+    if(hb?.enemyState===h.enemyState && hb.hp<h.hp && hb.bossCombat.boltsReturned===h.bossCombat.boltsReturned)freshCoreHits++;
+    if(h.bossCombat.counterWindowMs>=600)assert(hb?.hp<h.hp||hit.mode!=='explore','A fresh swing must damage the open core');
+    else tightApproaches++;
     if(hit.mode==='explore'&&hb?.bossCombat.coreOpen){
       await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).playerCombat.weapon.canSwing,{},{timeout:800});
       if(boss(await state())?.bossCombat.coreOpen)await press('x');await page.waitForTimeout(150);
@@ -107,7 +110,8 @@ try{
   assert.equal(end.sceneProgress.blackVaultCombatDamage,0);assert(end.reliability>0);assert.equal(end.documentPoints,spam.documentPoints);
   assert.deepEqual(end.documentCandidates,spam.documentCandidates);
   for(const phase of ['colossus','swarm','cloud'])assert.equal(end.completionStats.danneVariantsDefeated.counts[phase],1);
-  const completion={cycles,retries,phases:[...phases],seconds:(Date.now()-started)/1000,deadlineMissed:Boolean(end.sceneProgress.statutoryDeadlineMissed)};
+  assert(freshCoreHits>0,'The route must demonstrate fresh melee damage, not only returned bolts');
+  const completion={cycles,retries,freshCoreHits,tightApproaches,phases:[...phases],seconds:(Date.now()-started)/1000,deadlineMissed:Boolean(end.sceneProgress.statutoryDeadlineMissed)};
   log.push({label:'fight-summary',...completion});
   await context.storageState({path:`${out}/earned-bindery-storage.json`});
   await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');

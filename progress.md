@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned Black Vault audit (2026-09-09):
+  - Continued both earned Editor saves through Colossus, Swarm and Cloud to the bindery, then Continue. Revised keyboard route: 83.911 s, one retry, nine fresh core hits, reliability 100. Touch 375x667 DPR 3: 103.459 s, one retry, seven fresh hits, deadline missed and reliability 94. No browser errors, record changes or duplicate rewards; publication remains unfinished.
+  - Corrected replay approach to stop at Pencil reach and distinguish expired/tight openings from valid-hit windows; no runtime balance changes. Initial touch failure retained in docs/EARNED_BLACK_VAULT_AUDIT.md. Installed game client opening and mobile Cloud warning inspected; syntax check passes. Prior build/tests unchanged, not rerun.
+  - Next: improve faint Cloud warning contrast and direction cues, then recheck deadline margin during learning/retry. Local only; scripted combat is not first-player fun, real-iPhone validation or whole-game completion.
+
 - Editor release-scope puzzle (2026-09-09):
   - Replaced the published-excerpt question with independent Print/Hold markings. Fictional release evidence authorizes B only; the player corrects A and C, explicitly files, then stamps for the existing reward. Partial drafts persist without changing source classification or awarding early approval.
   - Build passes (254 modules / 2,800.03 KB); 192 files / 1,429 tests pass. Complete earned keyboard and simulated-touch chapter routes reach Black Vault with exactly 87 points gained, no browser errors or duplicate rewards. Installed game client reopened and edited the earned draft; native/mobile captures inspected. See docs/EDITOR_RELEASE_SCOPE.md.
