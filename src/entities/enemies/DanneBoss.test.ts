@@ -6,6 +6,7 @@ import type { ChoiceOption, Position } from "../../game/types";
 import type { Player } from "../Player";
 import { DanneBoss, type DanneBossPhase } from "./DanneBoss";
 import { exitCutscene } from "../../systems/cutscene";
+import { clampQuestBandText, QUEST_BAND_LAYOUT } from "../../scenes/questBandLayout";
 
 vi.mock("phaser", () => {
   class Rectangle {
@@ -133,6 +134,32 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
 
 describe("DANN-E final-review combat", () => {
   beforeEach(() => { vi.clearAllMocks(); resetGameState(); seedProgressForScene("BlackVaultLairScene"); });
+
+  it.each(["colossus", "swarm", "cloud", "ascendant"] as const)("prioritizes the live core opening in %s guidance", phase => {
+    const { scene, boss, internals } = fixture(phase);
+    const armoredObjective = boss.combatObjective;
+    expect(armoredObjective).not.toContain("CORE");
+    internals.takeReturnedBolt(scene.time.now);
+    expect(boss.combatObjective).toBe("PENCIL THE CORE");
+    expect(clampQuestBandText(boss.combatObjective, QUEST_BAND_LAYOUT.objective.maxChars)).toBe(boss.combatObjective);
+    scene.time.now += DANNE_BOSS_RETURN.stunMs + 1;
+    expect(boss.combatObjective).toBe(armoredObjective);
+    expect(boss.combatObjective.length).toBeLessThanOrEqual(15);
+  });
+
+  it("gives an actionable return instruction while the core is armored", () => {
+    expect(fixture().boss.combatObjective).toBe("FACE + SWING");
+    expect(fixture("swarm").boss.combatObjective).toBe("PENCIL MINIS");
+  });
+
+  it("warns about Cloud lanes before returning to the bolt instruction", () => {
+    const { scene, boss, internals } = fixture("cloud");
+    scene.time.now = 100000;
+    internals.startAttackTelegraph(scene.time.now, "cloud");
+    expect(boss.combatObjective).toBe("DODGE LANES");
+    internals.updateAttackTelegraph(scene.time.now + 5000);
+    expect(boss.combatObjective).toBe("FACE + SWING");
+  });
 
   it("advances an owned boast only once after its input guard", async () => {
     const { scene, boss, internals } = fixture();

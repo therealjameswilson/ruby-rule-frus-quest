@@ -225,6 +225,14 @@ export class DanneBoss {
   get activeMiniCount() { return this.minis.length; }
   get phaseDialogueActive() { return this.boastVisible; }
 
+  get combatObjective() {
+    const now = this.combatPausedAt ?? this.scene.time.now;
+    if (this.coreOpenAt(now)) return "PENCIL THE CORE";
+    if (this.attackTelegraph?.kind === "cloud_shift") return "DODGE LANES";
+    if (this.phase === "swarm" && this.activeMiniCount) return "PENCIL MINIS";
+    return "FACE + SWING";
+  }
+
   advanceBoast() {
     if (!this.finishBoast || this.scene.time.now < this.boastReadyAt) return false;
     this.finishBoast();

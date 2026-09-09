@@ -85,7 +85,7 @@ try{
         assert((swarm?.bossCombat.minisDispersed??0)>prior,'Actual tool swings must disperse satellites');
         assert.equal(cleared.documentPoints,initial.documentPoints,'No farming rewards from satellites');
         assert.deepEqual(cleared.documentCandidates,initial.documentCandidates);
-        if(swarm?.enemyState==='swarm'&&!swarm.bossCombat.minis.length)assert.equal(cleared.objective,'RETURN EGO BOLTS');
+        if(swarm?.enemyState==='swarm'&&!swarm.bossCombat.minis.length)assert.equal(cleared.objective,swarm.bossCombat.coreOpen?'PENCIL THE CORE':'FACE + SWING');
         continue;
       }
     }
@@ -105,6 +105,8 @@ try{
     const returned=await state(),r=boss(returned);if(!r||returned.mode!=='explore'||!r.bossCombat.coreOpen)continue;
     cycles++;
     if(cycles===1){
+      await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).objective==='PENCIL THE CORE',{},{timeout:1000});
+      await shot('core-open-guidance');
       await press('m');await page.waitForTimeout(100);const paused=await state(),pb=boss(paused);await shot('core-open-paused');await page.waitForTimeout(1800);assert.deepEqual(boss(await state()).bossCombat,pb.bossCombat);await press('Escape');await page.waitForTimeout(80);
       assert.equal((await state()).playerCombat.weapon.swingId,paused.playerCombat.weapon.swingId);
     }

@@ -414,8 +414,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     const bossActive = Boolean(this.danneBoss?.isActive);
-    if (bossActive && this.danneBoss?.currentPhase === "swarm") {
-      setObjective(this.danneBoss.activeMiniCount ? "PENCIL CLEARS MINIS" : "RETURN EGO BOLTS");
+    if (bossActive && this.danneBoss) {
+      setObjective(this.danneBoss.combatObjective);
     }
     this.hearing?.syncTargets(this.interactables);
     this.stackRecords?.syncTargets(this.interactables);

@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Live boss guidance (2026-09-09):
+  - HUD now follows real core openings, Cloud lane warnings and remaining Swarm satellites. Short prompts survive the existing HUD clamp: PENCIL THE CORE / DODGE LANES / PENCIL MINIS / FACE + SWING. No extra timers, gameplay balance or save changes.
+  - Build passes (255 modules / 2,801.91 KB); 194 files / 1,447 tests pass. Final earned touch run clears all phases in 59.899 clock seconds with zero retries, seven fresh openings, then bindery/Continue without errors or duplicated rewards. Actual opening screenshot inspected; installed client also run. See docs/LIVE_BOSS_GUIDANCE.md.
+  - Initial longer objective truncated before Pencil and was corrected. One intermediate touch fight reset to the entrance during Swarm and failed; retained, not counted as success. NEXT PRIORITY: reproduce whether combat B can accidentally choose Leave on the retry prompt. Local only; real-device and first-player usability still unproven.
+
 - Compact cutscene layout (2026-09-09):
   - Replaced ornate cutscene bars/frame with quiet black/gold chrome and the 8 px bitmap tier. Portrait and text have an explicit gap. Touch dialogue sits above A/B; mobile phase illustration is smaller to clear the raised frame. Source art and other UI unchanged.
   - Build passes (255 modules / 2,801.73 KB); 194 files / 1,441 tests pass. Final earned touch route clears all boss phases in 53.4 clock seconds without retry, then bindery/Continue with unchanged records/rewards and no browser errors. Installed-client desktop and mobile screenshots inspected. Intermediate A-button/text and portrait/frame overlaps were fixed before retaining final screenshots. See docs/COMPACT_CUTSCENE_LAYOUT.md.
