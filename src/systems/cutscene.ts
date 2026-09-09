@@ -1,12 +1,7 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import {
-  DANNE_LETTERBOX_SLICES,
-  createDanneScrollFrame,
-  createLetterboxBar,
-  ensureDanneUiSlices
-} from "../game/danneUiSlices";
 import { clearDialogState, setDialogState, setGameMode, setLatestMessage } from "../game/state";
+import { isTouchInputCapable } from "../input/InputState";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -20,6 +15,7 @@ interface CutsceneController {
   textFrame: Phaser.GameObjects.Container;
   lineText: Phaser.GameObjects.Text;
   portrait?: Phaser.GameObjects.Image;
+  dialogueOffset: number;
 }
 
 const controllers = new WeakMap<Phaser.Scene, CutsceneController>();
@@ -41,24 +37,26 @@ function controllerFor(scene: Phaser.Scene) {
 }
 
 function makeController(scene: Phaser.Scene) {
-  ensureDanneUiSlices(scene);
-  const topBar = createLetterboxBar(scene, DANNE_LETTERBOX_SLICES.top.key, -24)
-    .setDepth(1600);
-  const bottomBar = createLetterboxBar(scene, DANNE_LETTERBOX_SLICES.bottom.key, GAME_HEIGHT + 24)
-    .setDepth(1600);
-  const frame = createDanneScrollFrame(scene, 28, GAME_HEIGHT - 54, GAME_WIDTH - 56, 42, PALETTE.black);
-  const frameContainer = scene.add.container(0, 0, frame.objects).setDepth(1610).setVisible(false).setScrollFactor(0);
-  const lineText = scene.add.text(48, GAME_HEIGHT - 45, "", {
+  const dialogueOffset = isTouchInputCapable() ? 64 : 0;
+  const topBar = scene.add.rectangle(GAME_WIDTH / 2, -24, GAME_WIDTH, 16, color(PALETTE.black))
+    .setDepth(1600).setScrollFactor(0);
+  const bottomBar = scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT + 24, GAME_WIDTH, 48, color(PALETTE.black))
+    .setDepth(1600).setScrollFactor(0);
+  // Solid integer-sized insets keep chrome out of the portrait and reading area.
+  const border = scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 32 - dialogueOffset, GAME_WIDTH - 16, 48, color(PALETTE.goldStamp));
+  const fill = scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 32 - dialogueOffset, GAME_WIDTH - 18, 46, color(PALETTE.black));
+  const frameContainer = scene.add.container(0, 0, [border, fill]).setDepth(1610).setVisible(false).setScrollFactor(0);
+  const lineText = scene.add.text(52, GAME_HEIGHT - 46 - dialogueOffset, "", {
     fontFamily: "monospace",
-    fontSize: "7px",
+    fontSize: "8px",
     color: PALETTE.creamPaper,
-    wordWrap: { width: 174, useAdvancedWrap: true },
+    wordWrap: { width: GAME_WIDTH - 72, useAdvancedWrap: true },
     lineSpacing: 1
   }).setDepth(1611).setVisible(false).setScrollFactor(0);
   const container = scene.add.container(0, 0, [topBar, bottomBar, frameContainer, lineText])
     .setDepth(1600)
     .setScrollFactor(0);
-  const controller: CutsceneController = { scene, container, topBar, bottomBar, textFrame: frameContainer, lineText };
+  const controller: CutsceneController = { scene, container, topBar, bottomBar, textFrame: frameContainer, lineText, dialogueOffset };
   controllers.set(scene, controller);
   scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
     controllers.delete(scene);
@@ -76,7 +74,7 @@ export async function enterCutscene(scene: Phaser.Scene) {
   setGameMode("dialog");
   setLatestMessage("Cutscene mode entered.");
   await tweenTo(scene, [controller.topBar, controller.bottomBar], {
-    y: (target: Phaser.GameObjects.GameObject) => target === controller.topBar ? 24 : GAME_HEIGHT - 24,
+    y: (target: Phaser.GameObjects.GameObject) => target === controller.topBar ? 32 : GAME_HEIGHT - 24,
     duration: 300,
     ease: "Cubic.easeOut"
   });
@@ -104,7 +102,7 @@ export function playLine(scene: Phaser.Scene, text: string, portraitKey?: string
   controller.lineText.setText(text).setVisible(true);
   if (portraitKey && scene.textures.exists(portraitKey)) {
     if (!controller.portrait) {
-      controller.portrait = scene.add.image(39, GAME_HEIGHT - 35, portraitKey)
+      controller.portrait = scene.add.image(32, GAME_HEIGHT - 32 - controller.dialogueOffset, portraitKey)
         .setDepth(1612)
         .setScrollFactor(0);
       controller.container.add(controller.portrait);

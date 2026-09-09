@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Compact cutscene layout (2026-09-09):
+  - Replaced ornate cutscene bars/frame with quiet black/gold chrome and the 8 px bitmap tier. Portrait and text have an explicit gap. Touch dialogue sits above A/B; mobile phase illustration is smaller to clear the raised frame. Source art and other UI unchanged.
+  - Build passes (255 modules / 2,801.73 KB); 194 files / 1,441 tests pass. Final earned touch route clears all boss phases in 53.4 clock seconds without retry, then bindery/Continue with unchanged records/rewards and no browser errors. Installed-client desktop and mobile screenshots inspected. Intermediate A-button/text and portrait/frame overlaps were fixed before retaining final screenshots. See docs/COMPACT_CUTSCENE_LAYOUT.md.
+  - Local only. Next: first-time combat guidance and player-observed deadline learning margin. Existing art still varies in clarity; scripted completion is not evidence of whole-game fun or real-iPhone performance.
+
 - DANN-E phase-boast pacing (2026-09-09):
   - Shortened phase lines to 48 characters maximum; reading holds now run 1.8-3.2 seconds. Boss-owned A/confirm advance fixes the independent-cutscene-close race, consumes the input and cleans up pending waits on destruction.
   - Build passed (255 modules / 2,801.66 KB); 193 files / 1,439 tests passed. Earned keyboard and simulated-touch fights finish all three phases and Continue from the bindery without errors or duplicate rewards. Keyboard: 55.561 seconds, zero retries; touch: 75.092 seconds, one retry. Manual/automatic advance, frozen reading clock and no unintended swing verified. Native/mobile and installed-client captures inspected. See docs/DANNE_BOAST_PACING.md.

@@ -10,7 +10,7 @@ import {
   type DanneAttackTelegraphKind
 } from "../../game/danneBossTelegraph";
 import { danneBoastForPhase, danneBoastHoldMs, type DanneBoastPhase } from "../../game/danneBoasts";
-import { swallowNextInputFrame } from "../../input/InputState";
+import { isTouchInputCapable, swallowNextInputFrame } from "../../input/InputState";
 import {
   advanceBossBolt,
   aimReturnedBossBolt,
@@ -1009,12 +1009,13 @@ export class DanneBoss {
     overrideLine?: string
   ) {
     this.boastVisible = true;
+    const touch = isTouchInputCapable();
     const still = this.scene.textures.exists(variantKey)
-      ? this.scene.add.image(GAME_WIDTH / 2, 86, variantKey).setDepth(1620).setScrollFactor(0)
+      ? this.scene.add.image(GAME_WIDTH / 2, touch ? 78 : 86, variantKey).setDepth(1620).setScrollFactor(0)
       : null;
     if (still) {
       const source = this.scene.textures.get(variantKey).getSourceImage() as { width?: number; height?: number };
-      const scale = Math.min(118 / Math.max(1, source.width ?? 1024), 88 / Math.max(1, source.height ?? 1024));
+      const scale = Math.min(118 / Math.max(1, source.width ?? 1024), (touch ? 72 : 88) / Math.max(1, source.height ?? 1024));
       still.setScale(scale).setAlpha(0);
     }
     try {
