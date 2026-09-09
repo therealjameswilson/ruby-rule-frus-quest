@@ -112,6 +112,7 @@ export class GuideScene extends Phaser.Scene {
       this.drawArchiveLamp(204, 80);
     }
     const colleagueTexture = getCharacterKeyForNpcId("archive-colleague");
+    this.add.ellipse(128, 106, 14, 4, color(PALETTE.black), 0.3).setDepth(103);
     const colleague = this.add
       .sprite(128, 104, colleagueTexture)
       .setOrigin(0.5, 0.9)
@@ -138,7 +139,6 @@ export class GuideScene extends Phaser.Scene {
     this.practiceAim = this.add.graphics().setDepth(65);
     this.pickupFocus = this.add.rectangle(0, 0, 20, 8, color(PALETTE.goldStamp), 0.2)
       .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(66).setVisible(false);
-    this.tweens.add({ targets: colleague, y: 103, duration: 560, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { colleague.y = snapPixel(colleague.y); } });
     this.tweens.add({ targets: this.stampIcon, y: 130, duration: 460, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.stampIcon.y = snapPixel(this.stampIcon.y); } });
     this.tweens.add({ targets: this.fragmentIcon, y: 130, duration: 580, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.fragmentIcon.y = snapPixel(this.fragmentIcon.y); } });
     this.stampLabel = this.add.text(96, 148, "CITE", {

@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Grounded archivist refresh (2026-09-09):
+  - Audited the old archivist reference: five visual rows and opaque backdrop disagree with the manifest. Preserved originals; generated a coherent silver-haired archivist and imported through the existing native-sheet pipeline. Same texture/NPC keys and gameplay. Removed Guide colleague bobbing and added a small ground shadow.
+  - Build passes (255 modules / 2,802.52 KB); 195 files / 1,453 tests pass. Fresh simulated-touch opening and existing-save installed browser client pass; screenshots inspected, no browser errors. See docs/art/archivist_refresh.md and assets/LICENSES.md.
+  - Local only. Next: playtest Archive document discovery and unaided comprehension, rather than treating art consistency as proof of the broader fun goal.
+
 - First reward instruction (2026-09-09):
   - Corrected the Guide objective that incorrectly said to use the Stamp to collect the fragment. Visible reward now says Front Matter and the prompt uses interact. Saved identifiers, ten-point reward and gate rules unchanged; no extra dialog.
   - Build passes (255 modules / 2,802.57 KB); 195 files / 1,452 tests pass. Fresh touch route explicitly tries tool swing (no pickup), then A (pickup), repeat interaction (no duplicate), Continue and Archive. No browser errors. Native/mobile screenshots and installed-client existing-save resume inspected. Evidence appended to docs/OPENING_EXPERIENCE_AUDIT.md.

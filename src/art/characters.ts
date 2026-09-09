@@ -22,7 +22,7 @@ export const BASE_CHARACTERS = {
   reviewer: "assets/art-pack/sprites/refreshed/sprite_reviewer.png",
   senior_reviewer: "assets/art-pack/sprites/native/sprite_senior_reviewer.png",
   general_editor: "assets/art-pack/sprites/refreshed/sprite_general_editor.png",
-  archivist: "assets/art-pack/sprites/native/sprite_archivist.png",
+  archivist: "assets/art-pack/sprites/refreshed/sprite_archivist.png",
   records_officer: "assets/art-pack/sprites/native/sprite_records_officer.png",
   security_officer: "assets/art-pack/sprites/native/sprite_security_officer.png",
   statechat_terminal: "assets/art-pack/sprites/native/sprite_statechat_terminal.png"

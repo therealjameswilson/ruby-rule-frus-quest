@@ -302,7 +302,7 @@ describe("native sprite sheet frame content", () => {
     });
   }
 
-  it.each(["declassification_coordinator", "general_editor", "reviewer"] as const)("imports %s with binary alpha and consistent feet", (key) => {
+  it.each(["declassification_coordinator", "general_editor", "reviewer", "archivist"] as const)("imports %s with binary alpha and consistent feet", (key) => {
     const png = decodePng(resolve(publicDir, BASE_CHARACTERS[key]));
     const colors = new Set<string>();
     for (let i = 0; i < png.rgba.length; i += 4) {

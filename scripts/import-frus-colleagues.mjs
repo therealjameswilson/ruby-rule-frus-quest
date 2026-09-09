@@ -6,6 +6,7 @@ import { inflateSync, deflateSync } from "node:zlib";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const sources = [
+  { id: "archivist", rows: [0, 390, 770, 1130, 1536], background: "magenta" },
   { id: "declassification_coordinator", rows: [0, 408, 776, 1100, 1536], background: "light" },
   { id: "general_editor", rows: [0, 442, 804, 1120, 1536], background: "magenta" },
   { id: "reviewer", rows: [0, 410, 776, 1112, 1536], background: "magenta" }

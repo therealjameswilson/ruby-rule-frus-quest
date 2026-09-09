@@ -16,6 +16,7 @@ No project-wide redistribution license is currently declared in this repository.
 | `assets/character-sources/declassification_coordinator.png` | `public/assets/art-pack/sprites/refreshed/sprite_declassification_coordinator.png` | Marcus, review folder and badge |
 | `assets/character-sources/general_editor.png` | `public/assets/art-pack/sprites/refreshed/sprite_general_editor.png` | Priya, ruby FRUS volume |
 | `assets/character-sources/reviewer.png` | `public/assets/art-pack/sprites/refreshed/sprite_reviewer.png` | Reviewer, proof folder |
+| `assets/character-sources/archivist.png` | `public/assets/art-pack/sprites/refreshed/sprite_archivist.png` | Archivist, silver hair, reading glasses and ruby volume; generated 2026-09-09 |
 
 Generation date: 2026-09-04. Prompts and import details are in
 `docs/art/colleague_refresh.md`. Source boards are not served by Vite; only the
