@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
+import { workstationWalkRoute } from '../src/game/workstationGeometry.ts';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 
 const base = process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/';
@@ -44,8 +45,17 @@ async function run(mobile) {
     for(let i=0;i<180;i++) {
       const before=await state();
       if(dest&&(before.scene===dest||before.roomTraversal?.currentRoomId===dest)){await page.waitForTimeout(550);return;}
-      const dx=x-before.player.x,dy=y-before.player.y;
+      let dx=x-before.player.x,dy=y-before.player.y;
       if(!dest&&Math.hypot(dx,dy)<5)return;
+      if(before.scene==='SilentReadScene') {
+        const {solids,feet}=await page.evaluate(()=>{const scene=window.game.scene.getScene('SilentReadScene');return {
+          solids:scene.roomSolids.map(({x,y,width,height})=>({x,y,width,height})),
+          feet:{x:scene.player.logicalX,y:scene.player.logicalY}};});
+        const route=workstationWalkRoute(feet,{x,y},solids,{x:[28,96,160,228],y:[80,132,184,198]});
+        const next=route.find(p=>Math.hypot(p.x-feet.x,p.y-feet.y)>2)??route.at(-1);
+        assert(next,`No clear proof aisle from ${JSON.stringify(feet)} to ${x},${y}`);
+        dx=next.x-feet.x;dy=next.y-feet.y;
+      }
       await direction(Math.abs(dx)>Math.abs(dy)?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp');
       const after=await state();
       stalled=Math.hypot(after.player.x-before.player.x,after.player.y-before.player.y)<1?stalled+1:0;
@@ -107,7 +117,7 @@ async function run(mobile) {
     await press(); const hint=await shot('priya-hint');
     assert.match(hint.latestMessage,/Priya: TAKE THE DRAFT BELOW ME/);
     assert.deepEqual(earned(hint),earned(initial));
-    await move(30,204);await move(56,204);await press();
+    await move(30,198);await move(56,198);await press();
     assert.equal((await state()).sceneProgress.silentReadReviewStatus,1);
     assert.equal((await state()).heldItem,'Review Folder: EDITOR DRAFT');
     await shot('draft-carried');
@@ -131,15 +141,15 @@ async function run(mobile) {
     assert((await state()).inventory.includes('Red Pencil'));
     await move(215,185);await move(215,124);await move(248,124,'S1');
     await shot('proof-room-entry');
-    await move(128,204);await press();
+    await move(128,198);await press();
     const stages=[
-      {id:1,x:42,y:196,answer:null},
-      {id:2,x:216,y:196,answer:'Space'},
-      {id:3,x:78,y:181,answer:'Space'},
-      {id:4,x:194,y:187,answer:'Space'},
-      {id:5,x:62,y:187,answer:'KeyX'},
-      {id:6,x:128,y:187,answer:'Space'},
-      {id:7,x:194,y:187,answer:'KeyX'}
+      {id:1,x:48,y:124,answer:null},
+      {id:2,x:208,y:124,answer:'Space'},
+      {id:3,x:64,y:180,answer:'Space'},
+      {id:4,x:192,y:180,answer:'Space'},
+      {id:5,x:64,y:124,answer:'KeyX'},
+      {id:6,x:128,y:180,answer:'Space'},
+      {id:7,x:192,y:180,answer:'KeyX'}
     ];
     for(const stage of stages) {
       if(stage.id===5)await resume('resume-carried-method-ledger');

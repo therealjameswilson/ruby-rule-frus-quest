@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical Editor/proof desks (2026-09-08):
+  - Replaced walk-through floating workstation panels with native 32x16 desks, actual solids, front-edge sorting, on-desk papers and compact stamps. Evidence/production stations now leave clear aisles. Floor cues route around furniture; DANN-E's nine-waypoint patrol and bolts respect it. Shared geometry preserves Referral's helper API and layouts. Save positions recover only when blocked; no changed workflow decisions, rewards or schema.
+  - Final build passes (247 modules / 2,781.22 KB main JS; existing chunk warning). Full suite passes 184 files / 1,325 tests. Complete keyboard and simulated-touch chapter replays reach Black Vault with the expected 87 earned points; final highlight-only rendering fix is separately checked by the installed client and mobile furniture replay. All nine observed patrol indices have zero solid overlaps. The position-only legacy fixture recovers (192,167) to (192,172) without document changes.
+  - Final client screenshot shows action opening the proof comparison at the solid desk. Native/compositor captures inspected; direct WebGL screenshot is black. Extended mobile safety walking incurs ordinary enemy damage (100 to 89), not a collision regression or no-damage proof. Details: docs/PROOF_FURNITURE.md. Goal remains active; next assess repeated review travel and fresh-player pacing, then remaining visual coherence. No public deployment.
+
 - Clear physical Editor handoff (2026-09-08):
   - Replaced the crowded duplicate chapter banner with one short wall title. The first pickup is now visibly an EDITOR DRAFT, not the Red Pencil reward. Moved its E1 outbox to (56,192), separated from the Editor desk at (128,166), so carrying requires an actual short walk. S1 positions, workflow decisions, rewards, gates and save schema remain unchanged.
   - Priya now responds to A with a stateful one-line hint; nearby actionable documents take priority. Hints grant nothing and do not complete a review. A too far from work now gives visible feedback. Waiting paper has a small arrow; carried route dots stay on the floor. Prompts and opt-in actor-aware toasts clear the compiler's actual sprite bounds. Other scenes' toast placement is unchanged.

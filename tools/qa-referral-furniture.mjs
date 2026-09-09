@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { REFERRAL_PATROL, referralWalkRoute, referralDeskBounds, referralFeetBlocked } from '../src/game/referralFurniture.ts';
+import { workstationWalkRoute, workstationBounds as referralDeskBounds,
+  workstationFeetBlocked as referralFeetBlocked } from '../src/game/workstationGeometry.ts';
+const referralWalkRoute = (from, to, solids) => workstationWalkRoute(from, to, solids, {x:[30,98,160,226],y:[96,180]});
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 const base = process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/';
 const out = process.env.FRUS_QA_OUT ?? '/tmp/frus-referral-furniture';
@@ -113,7 +115,7 @@ try {
     assert(behind.player.y<122-5);
     assert(await page.evaluate(()=>{const s=window.game.scene.getScene('ReferralVaultScene');return s.player.sprite.depth<s.children.getByName('referral-agency-CIA').depth;}));
     assert.deepEqual(behind.standardsViolations,initial.standardsViolations);
-    await page.waitForFunction(count=>window.patrolWaypoints.size===count,REFERRAL_PATROL.length,{timeout:40000});
+    await page.waitForFunction(()=>window.patrolWaypoints.size===6,null,{timeout:40000});
     const patrol=await page.evaluate(()=>({waypoints:[...window.patrolWaypoints],contacts:window.patrolSolidContacts}));
     await writeFile(`${out}/patrol.json`,JSON.stringify(patrol,null,2));
     assert.deepEqual(patrol.contacts,[],'DANN-E must complete the patrol without passing through furniture or walls');

@@ -88,6 +88,8 @@ import {
   type SilentReadStationId
 } from "../game/silentReadReview";
 import { INTERIOR_TILES } from "../game/networkN1Tilemap";
+import { PROOF_PATROL, PROOF_STATION_POSITIONS, proofWalkRoute } from "../game/proofFurniture";
+import { WORKSTATION_DESK, workstationBounds, workstationApproach, safeWorkstationPosition } from "../game/workstationGeometry";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
   EDITOR_E1_TILEMAP,
@@ -177,13 +179,13 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
 };
 
 const WORKSTATIONS: Workstation[] = [
-  { id: "opennet", label: "OpenNet", x: 42, y: 180, accent: PALETTE.openNetGreen, texture: "opennet-terminal", phases: ["evidence"] },
-  { id: "classnet", label: "ClassNet", x: 214, y: 180, accent: PALETTE.classNetRed, texture: "classnet-terminal", phases: ["evidence"] },
+  { id: "opennet", label: "OpenNet", ...PROOF_STATION_POSITIONS.opennet, accent: PALETTE.openNetGreen, texture: "opennet-terminal", phases: ["evidence"] },
+  { id: "classnet", label: "ClassNet", ...PROOF_STATION_POSITIONS.classnet, accent: PALETTE.classNetRed, texture: "classnet-terminal", phases: ["evidence"] },
   { id: "editor-desk", label: "Editor Desk", ...EDITOR_DESK_POSITION, accent: PALETTE.buckramHighlight, texture: "red-pencil", phases: ["editor"] },
-  { id: "referral-tray", label: "Referral Tray", x: 78, y: 158, accent: PALETTE.goldStamp, texture: "concurrence-slip", phases: ["evidence"] },
-  { id: "proof-table", label: "Proof Table", x: 194, y: 164, accent: PALETTE.terminalCyan, texture: "proof-page", phases: ["evidence", "production"] },
-  { id: "consultation-desk", label: "Consult Desk", x: 62, y: 164, accent: PALETTE.goldStamp, texture: "review-folder", phases: ["production"] },
-  { id: "typeflow-rail", label: "Typeflow Rail", x: 128, y: 164, accent: PALETTE.buckramHighlight, texture: "proof-page", phases: ["production"] }
+  { id: "referral-tray", label: "Referral Tray", ...PROOF_STATION_POSITIONS["referral-tray"], accent: PALETTE.goldStamp, texture: "concurrence-slip", phases: ["evidence"] },
+  { id: "proof-table", label: "Proof Table", ...PROOF_STATION_POSITIONS["proof-table"], accent: PALETTE.terminalCyan, texture: "proof-page", phases: ["evidence", "production"] },
+  { id: "consultation-desk", label: "Consult Desk", ...PROOF_STATION_POSITIONS["consultation-desk"], accent: PALETTE.goldStamp, texture: "review-folder", phases: ["production"] },
+  { id: "typeflow-rail", label: "Typeflow Rail", ...PROOF_STATION_POSITIONS["typeflow-rail"], accent: PALETTE.buckramHighlight, texture: "proof-page", phases: ["production"] }
 ];
 
 const STATION_TAGS: Record<WorkstationId, string> = {
@@ -273,17 +275,12 @@ export class SilentReadScene extends Phaser.Scene {
     this.editorialBoard = new EditorialRepairBoard(this);
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
-    this.interactionPrompt = new InteractionPrompt(this, 950);
-    this.danneLurker = new DanneLurker(this, 212, 72, {
+    this.interactionPrompt = new InteractionPrompt(this, 950, 61);
+    this.danneLurker = new DanneLurker(this, PROOF_PATROL[0].x, PROOF_PATROL[0].y, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
         || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active,
-      waypoints: [
-        { x: 212, y: 72 },
-        { x: 152, y: 58 },
-        { x: 62, y: 94 },
-        { x: 70, y: 190 },
-        { x: 190, y: 186 }
-      ]
+      boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
+      waypoints: PROOF_PATROL
     });
     this.actionHint = this.add.text(8, 211, "", {
       fontFamily: "monospace",
@@ -398,7 +395,8 @@ export class SilentReadScene extends Phaser.Scene {
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
-      this.player.setPosition(spawn.x, spawn.y);
+      const safeSpawn = safeWorkstationPosition(spawn, this.roomSolids);
+      this.player.setPosition(safeSpawn.x, safeSpawn.y);
       this.danneLurker.enterRoom(this.time.now);
       this.positionActiveWaitingFlagForRoom();
       this.syncRoomTraversalState();
@@ -443,6 +441,8 @@ export class SilentReadScene extends Phaser.Scene {
   private redrawCurrentRoom() {
     this.clearRoom();
     this.renderCurrentRoom(false);
+    const safePosition = safeWorkstationPosition(this.player.position, this.roomSolids);
+    this.player.setPosition(safePosition.x, safePosition.y);
     this.positionActiveWaitingFlagForRoom();
     this.syncVisibleEntities();
   }
@@ -486,7 +486,6 @@ export class SilentReadScene extends Phaser.Scene {
 
   private renderProofTilemap(roomId: ProofRoomId) {
     const asset = GAMEPLAY_TILESETS.interiorsNative;
-    if (!this.textures.exists(asset.key)) return false;
     const definition = roomId === "E1"
       ? {
           id: "editor-e1",
@@ -497,9 +496,14 @@ export class SilentReadScene extends Phaser.Scene {
       : {
           id: "silent-s1",
           map: SILENT_S1_TILEMAP,
-          layers: buildSilentS1TileLayers(),
+          layers: buildSilentS1TileLayers(this.activeReviewPhase() === "production" ? "production" : "evidence"),
           collisionRect: silentS1CollisionRect
         };
+    for (const cell of definition.layers.collisionCells) {
+      const rect = definition.collisionRect(cell);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+    }
+    if (!this.textures.exists(asset.key)) return false;
     const map = this.make.tilemap({
       width: definition.map.columns,
       height: definition.map.rows,
@@ -571,10 +575,6 @@ export class SilentReadScene extends Phaser.Scene {
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
-    for (const cell of layers.collisionCells) {
-      const rect = definition.collisionRect(cell);
-      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
-    }
     this.roomCleanups.push(() => {
       ground.destroy();
       walls.destroy();
@@ -771,17 +771,27 @@ export class SilentReadScene extends Phaser.Scene {
     for (const station of WORKSTATIONS.filter((candidate) =>
       stationRoom(candidate.id) === this.currentRoomId && candidate.phases.includes(phase)
     )) {
-      this.track(this.add.rectangle(station.x, station.y + 1, 40, 18, color(PALETTE.black)).setDepth(150));
-      this.track(this.add.rectangle(station.x, station.y, 38, 16, color(PALETTE.deepRuby)).setStrokeStyle(2, color(station.accent)).setDepth(151));
-      this.track(this.add.image(station.x - 11, station.y, station.texture).setDisplaySize(12, 12).setDepth(152));
-      this.track(this.add.rectangle(station.x + 9, station.y - 2, 13, 5, color(station.accent)).setDepth(153));
-      this.track(this.add.rectangle(station.x + 9, station.y + 4, 13, 2, color(PALETTE.creamPaper)).setDepth(153));
-      const text = this.track(this.add.text(station.x, station.y + 12, STATION_TAGS[station.id], {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: station.accent
-      }).setOrigin(0.5).setDepth(154));
-      this.stationLabels.push({ text, x: station.x, y: station.y + 12 });
+      const bounds = workstationBounds(station.x, station.y);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height));
+      this.track(this.add.ellipse(station.x, station.y + 9, 32, 4, color(PALETTE.black), 0.3).setDepth(46));
+      const desk = this.track(this.add.container(station.x, station.y).setDepth(station.y + 8).setName(`proof-desk-${station.id}`));
+      const asset = GAMEPLAY_TILESETS.interiorsNative;
+      if (this.textures.exists(asset.key)) {
+        const frame = "proof-desk", texture = this.textures.get(asset.key);
+        if (!texture.has(frame)) texture.add(frame, 0, WORKSTATION_DESK.tileIndex % asset.columns * asset.tileSize,
+          Math.floor(WORKSTATION_DESK.tileIndex / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
+        desk.add([this.add.image(-8, 0, asset.key, frame), this.add.image(8, 0, asset.key, frame)]);
+      } else {
+        desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
+      }
+      desk.add(this.add.rectangle(0, 0, 32, 16, 0, 0).setStrokeStyle(1, color(station.accent)));
+      desk.add(this.add.image(-9, 1, station.texture).setDisplaySize(10, 10));
+      desk.add(this.add.rectangle(7, 2, 10, 6, color(PALETTE.creamPaper)));
+      const text = this.add.text(0, -7, STATION_TAGS[station.id], {
+        fontFamily: "monospace", fontSize: "5px", color: PALETTE.creamPaper, backgroundColor: PALETTE.black
+      }).setOrigin(0.5, 0);
+      desk.add(text);
+      this.stationLabels.push({ text, x: station.x, y: station.y - 7 });
     }
   }
 
@@ -854,11 +864,11 @@ export class SilentReadScene extends Phaser.Scene {
         ...flag,
         status,
         x: placed ? station.x : this.outbox.x,
-        y: placed ? station.y - 17 : this.outbox.y - 10,
+        y: placed ? station.y - 3 : this.outbox.y - 10,
         routedStation: placed ? station.id : undefined
       };
       physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture)
-        .setDisplaySize(12, 12).setDepth(240).setVisible(false);
+        .setDisplaySize(12, 12).setDepth(placed ? station.y + 9 : 240).setVisible(false);
       return physicalFlag;
     });
     const carried = this.physicalFlags.find((flag) => flag.status === "carried");
@@ -1098,8 +1108,8 @@ export class SilentReadScene extends Phaser.Scene {
       setHeldItem(null);
       activeFlag.routedStation = nearestStation.id;
       activeFlag.x = nearestStation.x;
-      activeFlag.y = nearestStation.y - 17;
-      activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y).setDepth(242);
+      activeFlag.y = nearestStation.y - 3;
+      activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y).setDepth(correctStation.y + 9);
       setLatestMessage(`ROUTE: ${activeFlag.shortLabel} placed on ${nearestStation.label}.`);
       setObjective(this.reviewObjective());
       this.savePhysicalReviewProgress(activeFlag);
@@ -1421,15 +1431,10 @@ export class SilentReadScene extends Phaser.Scene {
 
   private addProcessStampMark(flag: PhysicalFlag, station: Workstation) {
     const stationStampCount = this.physicalFlags.filter((candidate) => candidate.status === "stamped" && candidate.destination === station.id).length;
-    const x = station.x - 14 + ((stationStampCount - 1) % 3) * 14;
-    const y = station.y + 22 + Math.floor((stationStampCount - 1) / 3) * 7;
-    this.track(this.add.rectangle(x, y, 12, 6, color(PALETTE.goldStamp)).setStrokeStyle(1, color(PALETTE.black)).setDepth(246));
-    this.track(this.add.rectangle(x, y + 2, 10, 2, color(PALETTE.buckramHighlight)).setDepth(247));
-    this.track(this.add.text(x, y - 3, "OK", {
-      fontFamily: "monospace",
-      fontSize: "4px",
-      color: PALETTE.black
-    }).setOrigin(0.5).setDepth(248));
+    const x = station.x - 10 + ((stationStampCount - 1) % 3) * 10;
+    const y = station.y + 4;
+    this.track(this.add.rectangle(x, y, 6, 4, color(PALETTE.goldStamp))
+      .setStrokeStyle(1, color(PALETTE.black)).setDepth(station.y + 10));
     flag.icon?.setTint(color(PALETTE.stoneGray));
     setLatestMessage(`STAMP: ${flag.shortLabel} human review recorded.`);
   }
@@ -1445,20 +1450,23 @@ export class SilentReadScene extends Phaser.Scene {
 
     const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
     const end = { x: Math.round(waiting ? flag.x : station.x), y: Math.round(waiting ? flag.y : station.y) };
-    const cueKey = `${this.currentRoomId}:${flag.id}:${flag.status}:${start.x},${start.y}->${station.id}`;
+    const cueKey = `${this.currentRoomId}:${flag.id}:${flag.status}:${waiting ? "tray" : `${Math.floor(start.x / 8)},${Math.floor(start.y / 8)}`}->${station.id}`;
     if (cueKey === this.physicalRouteCueKey) return;
 
     this.clearPhysicalRouteCue();
     this.physicalRouteCueKey = cueKey;
 
-    const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
-    const steps = waiting || distance < 42 ? 0 : Math.min(8, Math.floor(distance / 14));
-    for (let index = 1; index <= steps; index += 1) {
-      const t = index / (steps + 1);
-      const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
-      const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
-      const routeAccent = index % 2 === 0 ? color(PALETTE.terminalCyan) : color(PALETTE.goldStamp);
-      this.physicalRouteCueObjects.push(this.add.rectangle(x, y, 2, 2, routeAccent, 0.85).setDepth(60));
+    const route = waiting ? [] : proofWalkRoute(start, workstationApproach(end, this.roomSolids), this.roomSolids);
+    let previous = start;
+    for (const next of route) {
+      const steps = Math.floor(Phaser.Math.Distance.Between(previous.x, previous.y, next.x, next.y) / 14);
+      for (let index = 1; index <= steps; index++) {
+        const t = index / (steps + 1);
+        const x = Math.round(Phaser.Math.Linear(previous.x, next.x, t));
+        const y = Math.round(Phaser.Math.Linear(previous.y, next.y, t));
+        this.physicalRouteCueObjects.push(this.add.rectangle(x, y, 2, 2, color(PALETTE.goldStamp), 0.85).setDepth(60));
+      }
+      previous = next;
     }
 
     this.physicalRouteCueObjects.push(this.add.rectangle(end.x, end.y, waiting ? 20 : 42, waiting ? 18 : 22)

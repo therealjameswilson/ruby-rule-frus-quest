@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { referralWalkRoute } from "../src/game/referralFurniture.ts";
+import { workstationWalkRoute } from "../src/game/workstationGeometry.ts";
+const referralWalkRoute = (from, to, solids) => workstationWalkRoute(from, to, solids, {x:[30,98,160,226],y:[96,180]});
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? "playwright");
 const base = process.env.FRUS_QA_URL ?? "http://127.0.0.1:5195/";
 const out = process.env.FRUS_QA_OUT ?? "/tmp/frus-danne-contact";

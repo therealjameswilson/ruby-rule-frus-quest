@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, readFile } from 'node:fs/promises';
-import { referralWalkRoute } from '../src/game/referralFurniture.ts';
+import { workstationWalkRoute } from '../src/game/workstationGeometry.ts';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 
 const base = process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/';
@@ -53,7 +53,7 @@ async function run(mobile) {
         const {solids,feet} = await page.evaluate(() => {const scene=window.game.scene.getScene('ReferralVaultScene');return {
           solids:scene.roomSolids.map(({x,y,width,height})=>({x,y,width,height})),
           feet:{x:scene.player.logicalX,y:scene.player.logicalY}};});
-        const route = referralWalkRoute(feet, {x,y}, solids);
+        const route = workstationWalkRoute(feet, {x,y}, solids, {x:[30,98,160,226],y:[96,180]});
         const next = route.find(point => Math.hypot(point.x-feet.x,point.y-feet.y)>2) ?? route.at(-1);
         assert(next, `No clear aisle from ${JSON.stringify(feet)} to ${x},${y}`);
         dx=next.x-feet.x;dy=next.y-feet.y;
