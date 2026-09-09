@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Editor chronology puzzle (2026-09-09):
+  - Replaced the date question with a movable three-record chronology using fictional meeting/draft evidence grounded in About the Series. Unfiled placement saves independently; only explicit filing verifies and the existing stamp grants rewards. Shared board preserves Network's separate withholding task. HUD now says RESTORE CHRONOLOGY.
+  - Build passes (252 modules / 2,796.25 KB); 190 files / 1,404 tests pass. Earned keyboard/touch chapter replays each gain exactly 87 points and enter Black Vault; wrong-order rejection, draft Continue, no early approval and no repeat rewards verified with no browser errors. Final HUD touch replay verified filing at unchanged 141 points. See docs/EDITOR_CHRONOLOGY_PUZZLE.md.
+  - Local only. Next: release-scope comparison instead of a two-choice question; four middle prompts remain. Do not claim whole-game fun or real-iPhone QA from these scripted runs.
+
 - Earned Editor pacing audit (2026-09-09):
   - Keyboard and simulated-touch routes from the actual Referral saves both completed eight tasks, gained exactly 87 points (114 to 201), continued partial drafts, backtracked without duplicate rewards and entered Black Vault. Zero browser errors. Installed game client reopened the earned proof; native and touch screenshots inspected.
   - Distinct editable bracket/source-match/proof tasks work; five middle two-choice checks still feel quiz-like. Next implementation: replace the date question with a movable chronology entry using meeting-time evidence, explicit filing and saved unfiled placement. Preserve reward and tool boundaries. See docs/EDITOR_PACING_AUDIT.md.

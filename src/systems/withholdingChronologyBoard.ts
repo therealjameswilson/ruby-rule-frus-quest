@@ -11,7 +11,18 @@ const color = (hex: string) => Phaser.Display.Color.HexStringToColor(hex).color;
 export const WITHHOLDING_BOARD_LAYOUT = { cardX: [52, 128, 204], cardY: 135, cardWidth: 68,
   cardHeight: 34, buttonY: 168, feedbackY: 191 } as const;
 
-export class WithholdingChronologyBoard {
+export interface ChronologyBoardCase {
+  title: string;
+  heading: string;
+  evidence: readonly [string, string, string, string, string];
+  initialMessage: string;
+  restore: (value: number | undefined) => WithholdingSlot;
+  shift: (slot: WithholdingSlot, direction: -1 | 1) => WithholdingSlot;
+  sequence: (slot: WithholdingSlot) => ReadonlyArray<{ id: string; label: string; date: string; time: string }>;
+  validate: (slot: number) => { ok: boolean; message: string };
+}
+
+export class ChronologyBoard {
   private readonly container: Phaser.GameObjects.Container;
   private readonly cards: Phaser.GameObjects.Rectangle[] = [];
   private readonly words: Phaser.GameObjects.Text[] = [];
@@ -22,7 +33,7 @@ export class WithholdingChronologyBoard {
   private onChange?: (slot: WithholdingSlot) => void;
   private onApprove?: (slot: WithholdingSlot) => void;
 
-  constructor(private readonly scene: Phaser.Scene) {
+  constructor(private readonly scene: Phaser.Scene, private readonly task: ChronologyBoardCase) {
     this.container = scene.add.container(0, 0).setName("withholding-chronology-board")
       .setDepth(950).setScrollFactor(0).setVisible(false);
     this.container.add([
@@ -30,13 +41,13 @@ export class WithholdingChronologyBoard {
       scene.add.rectangle(128, 125, 238, 182, color(PALETTE.black), 0.98)
         .setStrokeStyle(1, color(PALETTE.terminalCyan))
     ]);
-    this.text(20, 43, "WITHHOLDING LEDGER", PALETTE.terminalCyan);
+    this.text(20, 43, task.heading, PALETTE.terminalCyan);
     this.text(20, 56, "FICTIONAL TRAINING CASE", PALETTE.goldStamp, 6);
-    this.text(20, 67, WITHHOLDING_EVIDENCE.heading, PALETTE.creamPaper);
-    this.text(20, 78, WITHHOLDING_EVIDENCE.drafted, PALETTE.creamPaper);
-    this.text(20, 89, WITHHOLDING_EVIDENCE.sourceNote, PALETTE.creamPaper);
-    this.text(20, 100, WITHHOLDING_EVIDENCE.pages, PALETTE.goldStamp);
-    this.text(20, 112, WITHHOLDING_EVIDENCE.clock, PALETTE.terminalCyan, 6);
+    this.text(20, 67, task.evidence[0], PALETTE.creamPaper);
+    this.text(20, 78, task.evidence[1], PALETTE.creamPaper);
+    this.text(20, 89, task.evidence[2], PALETTE.creamPaper);
+    this.text(20, 100, task.evidence[3], PALETTE.goldStamp);
+    this.text(20, 112, task.evidence[4], PALETTE.terminalCyan, 6);
     for (const x of WITHHOLDING_BOARD_LAYOUT.cardX) {
       const card = scene.add.rectangle(x, WITHHOLDING_BOARD_LAYOUT.cardY,
         WITHHOLDING_BOARD_LAYOUT.cardWidth, WITHHOLDING_BOARD_LAYOUT.cardHeight, color(PALETTE.shadowNavy));
@@ -67,11 +78,11 @@ export class WithholdingChronologyBoard {
 
   show(slot: number | undefined, onChange: (slot: WithholdingSlot) => void, onApprove: (slot: WithholdingSlot) => void) {
     this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
-    this.slot = restoreWithholdingSlot(slot);
+    this.slot = this.task.restore(slot);
     this.onChange = onChange;
     this.onApprove = onApprove;
     this.selected = "sequence";
-    this.feedback.setText(this.slot ? "DRAFT KEPT - NOT FILED" : "WITHHELD ENTRY MISSING");
+    this.feedback.setText(slot === undefined || !this.slot ? this.task.initialMessage : "DRAFT KEPT - NOT FILED");
     this.container.setVisible(true);
     this.refresh();
     swallowNextInputFrame();
@@ -101,19 +112,19 @@ export class WithholdingChronologyBoard {
   private shift(direction: -1 | 1) {
     if (!this.active) return;
     this.selected = "sequence";
-    const next = shiftWithholdingSlot(this.slot, direction);
+    const next = this.task.shift(this.slot, direction);
     if (next !== this.slot) {
       this.slot = next;
       this.onChange?.(next);
       retroAudio.blip();
     }
-    this.feedback.setText(this.slot ? "DRAFT EDITED - NOT FILED" : "WITHHELD ENTRY MISSING");
+    this.feedback.setText(this.slot ? "DRAFT EDITED - NOT FILED" : this.task.initialMessage);
     this.refresh();
   }
 
   private submit() {
     if (!this.active) return;
-    const result = validateWithholdingEntry(this.slot);
+    const result = this.task.validate(this.slot);
     if (!result.ok) {
       this.feedback.setText(result.message);
       setLatestMessage(result.message.replace("\n", "; "));
@@ -125,7 +136,7 @@ export class WithholdingChronologyBoard {
   }
 
   private refresh() {
-    const records = withholdingSequence(this.slot);
+    const records = this.task.sequence(this.slot);
     for (let index = 0; index < 3; index++) {
       const record = records[index];
       const withheld = record?.id === "memcon";
@@ -135,7 +146,7 @@ export class WithholdingChronologyBoard {
         .setColor(withheld ? PALETTE.goldStamp : PALETTE.creamPaper);
     }
     this.fileButton.setStrokeStyle(1, color(this.selected === "file" ? PALETTE.goldStamp : PALETTE.stoneGray));
-    setChoiceState(WITHHOLDING_CHRONOLOGY_TITLE, records.map((record, index) => ({
+    setChoiceState(this.task.title, records.map((record, index) => ({
       key: (["A", "B", "C"] as const)[index], label: `${record.label} ${record.date} ${record.time}`, value: record.id
     })));
   }
@@ -153,5 +164,17 @@ export class WithholdingChronologyBoard {
       (button.height - 44) / 2, width, 44), hitAreaCallback: Phaser.Geom.Rectangle.Contains,
       useHandCursor: true });
     bindPointerDown(button, callback);
+  }
+}
+
+export class WithholdingChronologyBoard extends ChronologyBoard {
+  constructor(scene: Phaser.Scene) {
+    super(scene, {
+      title: WITHHOLDING_CHRONOLOGY_TITLE, heading: "WITHHOLDING LEDGER",
+      evidence: [WITHHOLDING_EVIDENCE.heading, WITHHOLDING_EVIDENCE.drafted,
+        WITHHOLDING_EVIDENCE.sourceNote, WITHHOLDING_EVIDENCE.pages, WITHHOLDING_EVIDENCE.clock],
+      initialMessage: "WITHHELD ENTRY MISSING", restore: restoreWithholdingSlot,
+      shift: shiftWithholdingSlot, sequence: withholdingSequence, validate: validateWithholdingEntry
+    });
   }
 }

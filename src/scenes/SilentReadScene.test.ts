@@ -70,6 +70,7 @@ interface ReviewInternals {
   proofBoard: Comparison;
   editorialBoard: Bracket;
   crossReferenceBoard: Comparison;
+  chronologyBoard: Comparison;
   toast: { show: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
   interactionPrompt: { update: ReturnType<typeof vi.fn> };
   actionHint: { setText: ReturnType<typeof vi.fn> };
@@ -104,6 +105,7 @@ function fixture(step: number, status: SilentReadReviewStatus) {
   scene.proofBoard = new Comparison();
   scene.editorialBoard = new Bracket();
   scene.crossReferenceBoard = new Comparison();
+  scene.chronologyBoard = new Comparison();
   scene.toast = { show: vi.fn(), update: vi.fn() };
   scene.interactionPrompt = { update: vi.fn() };
   scene.actionHint = { setText: vi.fn() };
@@ -129,7 +131,7 @@ describe("live editor and proof decisions", () => {
     const { scene, flag } = fixture(step, "carried");
     scene.handlePhysicalAction();
     expect(flag.status).toBe("routed");
-    expect(step === 0 ? scene.editorialBoard.active : scene.reviewChoice.active).toBe(true);
+    expect(step === 0 ? scene.editorialBoard.active : step === 4 ? scene.chronologyBoard.active : scene.reviewChoice.active).toBe(true);
     expect(scene.applyFlagReward).not.toHaveBeenCalled();
     expect(gameState.heldItem).toBeNull();
     expect(gameState.sceneProgress.silentReadReviewStatus).toBe(2);
@@ -173,7 +175,34 @@ describe("live editor and proof decisions", () => {
     expect(scene.applyFlagReward).toHaveBeenCalledOnce();
   });
 
-  it.each([[4, "B", "A"], [5, "A", "B"], [6, "B", "A"]] as const)("keeps decision %i unresolved until corrected and separately stamped", (step, wrong, correct) => {
+  it("keeps chronology unapproved until a saved correct placement is filed and stamped", () => {
+    const { scene, flag } = fixture(4, "carried");
+    scene.handlePhysicalAction();
+    expect(scene.chronologyBoard.active).toBe(true);
+    scene.chronologyBoard.onApprove?.(2);
+    expect(flag.status).toBe("routed");
+    scene.chronologyBoard.onChange?.(1); scene.chronologyBoard.onApprove?.(1);
+    expect(flag.status).toBe("routed");
+    scene.chronologyBoard.onChange?.(2);
+    expect(gameState.sceneProgress.silentReadChronologySlot).toBe(2);
+    scene.chronologyBoard.active = false; scene.handlePhysicalAction();
+    expect(scene.chronologyBoard.repairs).toBe(2);
+    scene.update(100, 16);
+    expect(scene.chronologyBoard.updateInput).toHaveBeenCalledOnce();
+    expect(scene.player.update).toHaveBeenCalledWith(16, false);
+    expect(scene.updateDanneLurker).toHaveBeenCalledWith(16, false);
+    scene.chronologyBoard.onApprove?.(2);
+    expect(flag.status).toBe("verified");
+    expect(scene.applyFlagReward).not.toHaveBeenCalled();
+    expect(gameState.sceneProgress["silentReadDecision_proof-date"]).toBe(1);
+    scene.handlePhysicalAction();
+    expect(flag.status).toBe("stamped"); expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+    scene.chronologyBoard.onApprove?.(2); scene.chronologyBoard.onChange?.(1);
+    expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+    expect(gameState.sceneProgress.silentReadChronologySlot).toBe(2);
+  });
+
+  it.each([[5, "A", "B"], [6, "B", "A"]] as const)("keeps decision %i unresolved until corrected and separately stamped", (step, wrong, correct) => {
     const { scene, flag } = fixture(step, "routed");
     scene.handlePhysicalAction();
     expect(scene.reviewChoice.active).toBe(true);
@@ -313,7 +342,7 @@ describe("live editor and proof decisions", () => {
   });
 
   it("swallows the answer frame and freezes movement and DANN-E during a decision", () => {
-    const { scene, flag } = fixture(4, "routed");
+    const { scene, flag } = fixture(6, "routed");
     scene.handlePhysicalAction();
     scene.findActionWorkstation.mockClear();
     scene.update(100, 16);

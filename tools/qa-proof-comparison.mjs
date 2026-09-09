@@ -17,7 +17,7 @@ async function run(mobile) {
   page.on('pageerror', e=>errors.push(String(e)));
   page.on('console', m=>{if(m.type()==='error')errors.push(m.text());});
   const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
-  const choice=()=>page.evaluate(()=>Boolean(window.game.scene.getScene('SilentReadScene').reviewChoice.active || window.game.scene.getScene('SilentReadScene').proofBoard.active || window.game.scene.getScene('SilentReadScene').editorialBoard.active || window.game.scene.getScene('SilentReadScene').crossReferenceBoard.active));
+  const choice=()=>page.evaluate(()=>Boolean(window.game.scene.getScene('SilentReadScene').reviewChoice.active || window.game.scene.getScene('SilentReadScene').proofBoard.active || window.game.scene.getScene('SilentReadScene').editorialBoard.active || window.game.scene.getScene('SilentReadScene').crossReferenceBoard.active || window.game.scene.getScene('SilentReadScene').chronologyBoard.active));
   async function point(x,y) {
     const b=await page.locator('canvas').first().boundingBox();
     return {x:b.x+x*b.width/256,y:b.y+y*b.height/240,id:1};
@@ -48,9 +48,11 @@ async function run(mobile) {
       let dx=x-before.player.x,dy=y-before.player.y;
       if(!dest&&Math.hypot(dx,dy)<5)return;
       if(before.scene==='SilentReadScene') {
-        const {solids,feet}=await page.evaluate(()=>{const scene=window.game.scene.getScene('SilentReadScene');return {
+        const {solids,feet,room,locked}=await page.evaluate(()=>{const scene=window.game.scene.getScene('SilentReadScene');return {
+          room:scene.currentRoomId,locked:scene.roomTransitionLocked,
           solids:scene.roomSolids.map(({x,y,width,height})=>({x,y,width,height})),
           feet:{x:scene.player.logicalX,y:scene.player.logicalY}};});
+        if(locked || room!==before.roomTraversal?.currentRoomId){await page.waitForTimeout(100);continue;}
         const route=workstationWalkRoute(feet,{x,y},solids,{x:[28,96,160,228],y:[80,132,184,198]});
         const next=route.find(p=>Math.hypot(p.x-feet.x,p.y-feet.y)>2)??route.at(-1);
         assert(next,`No clear proof aisle from ${JSON.stringify(feet)} to ${x},${y}`);
@@ -189,6 +191,32 @@ async function run(mobile) {
         assert.equal((await state()).sceneProgress['silentReadDecision_public-crossref'],1);
         assert.equal((await state()).documentPoints,initialCatalog.documentPoints);
         await shot('cross-reference-filed-awaits-stamp');
+      } else if(stage.id === 4) {
+        const initialChronology=await shot('chronology-open');
+        await context.storageState({path:`${out}/pending-chronology-storage.json`});
+        const paused=s=>({player:s.player,combat:s.playerCombat,threats:s.visibleThreats,points:s.documentPoints,reliability:s.reliability});
+        await page.waitForTimeout(1200);assert.deepEqual(paused(await state()),paused(initialChronology));
+        async function click(x,y){if(mobile)await touch(x,y);else{const p=await point(x,y);await page.mouse.click(p.x,p.y);}await page.waitForTimeout(180);}
+        await click(104,168);
+        assert(await choice());assert.match((await state()).latestMessage,/NOT THE DRAFT DATE/);
+        assert.equal((await state()).documentPoints,initialChronology.documentPoints);
+        assert.equal((await state()).sceneProgress.silentReadChronologySlot,undefined);
+        await shot('chronology-wrong-sequence');
+        if(mobile)await click(34,168);else await page.keyboard.press('ArrowLeft',{delay:50});
+        await page.waitForTimeout(180);
+        assert.equal((await state()).sceneProgress.silentReadChronologySlot,2);
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+        assert(!(await state()).sceneProgress['silentReadDecision_proof-date']);
+        await shot('chronology-correct-unfiled');
+        await press('KeyX');assert.equal((await state()).mode,'explore');
+        assert.equal((await state()).playerCombat.weapon.swingId,initialChronology.playerCombat.weapon.swingId);
+        await resume('chronology-draft-continue');await press();
+        assert.equal((await state()).choice.options[1].value,'memcon');
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+        if(mobile)await click(104,168);else{await page.keyboard.press('ArrowDown',{delay:50});await press();}
+        assert.equal((await state()).sceneProgress['silentReadDecision_proof-date'],1);
+        assert.equal((await state()).documentPoints,initialChronology.documentPoints);
+        await shot('chronology-filed-awaits-stamp');
       } else if(stage.id === 7) {
         const initialProof=await shot('proof-comparison-open');
         await context.storageState({path:`${out}/pending-proof-storage.json`});

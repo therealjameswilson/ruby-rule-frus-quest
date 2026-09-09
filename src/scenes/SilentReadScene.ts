@@ -91,6 +91,9 @@ import { INTERIOR_TILES } from "../game/networkN1Tilemap";
 import { PROOF_PATROL, PROOF_STATION_POSITIONS, proofWalkRoute } from "../game/proofFurniture";
 import { crossReferenceMatches, restoreCrossReferenceDraft } from "../game/crossReferenceCatalog";
 import { CrossReferenceBoard } from "../systems/crossReferenceBoard";
+import { ChronologyBoard } from "../systems/withholdingChronologyBoard";
+import { EDITOR_CHRONOLOGY_TITLE, EDITOR_CHRONOLOGY_EVIDENCE, restoreEditorChronology,
+  shiftEditorChronology, editorChronologySequence, validateEditorChronology } from "../game/editorChronology";
 import { WORKSTATION_DESK, workstationBounds, workstationApproach, safeWorkstationPosition } from "../game/workstationGeometry";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
@@ -224,6 +227,7 @@ export class SilentReadScene extends Phaser.Scene {
   private proofBoard!: ProofComparisonBoard;
   private editorialBoard!: EditorialRepairBoard;
   private crossReferenceBoard!: CrossReferenceBoard;
+  private chronologyBoard!: ChronologyBoard;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
@@ -277,12 +281,17 @@ export class SilentReadScene extends Phaser.Scene {
     this.proofBoard = new ProofComparisonBoard(this);
     this.editorialBoard = new EditorialRepairBoard(this);
     this.crossReferenceBoard = new CrossReferenceBoard(this);
+    this.chronologyBoard = new ChronologyBoard(this, {
+      title: EDITOR_CHRONOLOGY_TITLE, heading: "REPAIR CHRONOLOGY", evidence: EDITOR_CHRONOLOGY_EVIDENCE,
+      initialMessage: "MEMCON IS OUT OF ORDER", restore: restoreEditorChronology,
+      shift: shiftEditorChronology, sequence: editorChronologySequence, validate: validateEditorChronology
+    });
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950, 61);
     this.danneLurker = new DanneLurker(this, PROOF_PATROL[0].x, PROOF_PATROL[0].y, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
-        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active,
+        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active,
       boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
       waypoints: PROOF_PATROL
     });
@@ -320,12 +329,13 @@ export class SilentReadScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
-    if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active) {
+    if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active) {
       this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
       this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
-      if (this.crossReferenceBoard.active) this.crossReferenceBoard.updateInput();
+      if (this.chronologyBoard.active) this.chronologyBoard.updateInput();
+      else if (this.crossReferenceBoard.active) this.crossReferenceBoard.updateInput();
       else if (this.editorialBoard.active) this.editorialBoard.updateInput();
       else if (this.proofBoard.active) this.proofBoard.updateInput();
       else this.reviewChoice.updateInput();
@@ -1121,10 +1131,14 @@ export class SilentReadScene extends Phaser.Scene {
       retroAudio.confirm();
       this.updatePhysicalVerification();
       // Placing a decision-bearing file opens its check, never answers or stamps it.
-      if (!silentReadDecision(activeFlag.id) && activeFlag.id !== "typesetter-proof" && activeFlag.id !== "public-crossref") return;
+      if (!silentReadDecision(activeFlag.id) && activeFlag.id !== "typesetter-proof" && activeFlag.id !== "public-crossref" && activeFlag.id !== "proof-date") return;
     }
 
     if (activeFlag.status === "routed") {
+      if (activeFlag.id === "proof-date") {
+        this.repairChronology(activeFlag, nearestStation);
+        return;
+      }
       if (activeFlag.id === "public-crossref") {
         this.matchCrossReference(activeFlag, nearestStation);
         return;
@@ -1178,6 +1192,21 @@ export class SilentReadScene extends Phaser.Scene {
     this.savePhysicalReviewProgress(flag);
     retroAudio.confirm();
     this.updatePhysicalVerification();
+  }
+
+  private repairChronology(flag: PhysicalFlag, station: Workstation) {
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.chronologyBoard.show(gameState.sceneProgress.silentReadChronologySlot, slot => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed") return;
+      gameState.sceneProgress.silentReadChronologySlot = restoreEditorChronology(slot);
+      saveGameNow();
+    }, slot => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed"
+        || !validateEditorChronology(slot).ok || gameState.sceneProgress.silentReadChronologySlot !== slot) return;
+      gameState.sceneProgress["silentReadDecision_proof-date"] = 1;
+      this.verifyFlag(flag, station, "CHRONOLOGY FILED");
+    });
   }
 
   private matchCrossReference(flag: PhysicalFlag, station: Workstation) {

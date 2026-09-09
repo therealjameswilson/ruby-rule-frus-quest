@@ -171,18 +171,6 @@ const REVIEW_DECISIONS: Partial<Record<(typeof SILENT_READ_REVIEW_ITEMS)[number]
     successMessage: "WITHHELD DOCUMENT ACCOUNTED FOR",
     failureMessage: "KEEP THE WITHHELD ENTRY VISIBLE"
   },
-  "proof-date": {
-    sourceUrl: ABOUT_SERIES_SOURCE.url,
-    question: "Which date orders this memorandum of conversation?",
-    context: "Practice record, Washington time: meeting 10 Jan; memo drafted 12 Jan.",
-    options: [
-      { key: "A", label: "10 Jan - the conversation", value: "conversation" },
-      { key: "B", label: "12 Jan - the draft", value: "draft" }
-    ],
-    correctValue: "conversation",
-    successMessage: "CONVERSATION DATE VERIFIED",
-    failureMessage: "USE THE CONVERSATION DATE"
-  },
   "editorial-ledger": {
     sourceUrl: ABOUT_SERIES_SOURCE.url,
     question: "The proof lost a marginal note. Repair it.",
