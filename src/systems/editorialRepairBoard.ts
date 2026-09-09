@@ -107,13 +107,13 @@ export class EditorialRepairBoard {
     if (!this.record) return;
     this.title.setText(this.record.label);
     this.evidence.setText(this.record.evidence);
-    this.indication.setText(this.repaired ? this.record.indication : "[ INDICATION MISSING ]");
+    this.indication.setText(this.repaired ? this.record.indication : "+ ADD WITHHOLDING INDICATION");
     const action = this.proof ? "FILE PROOF" : "FILE DRAFT";
     this.fileLabel.setText(action);
     this.feedback.setText(this.repaired ? "ITALIC / WITHHOLDING" : "ONE MISSING INDICATION");
     this.fields.forEach((field, index) => field.setStrokeStyle(1, color(index === this.selected ? PALETTE.goldStamp : PALETTE.stoneGray)));
     setChoiceState(`${this.proof ? EDITORIAL_RECHECK_TITLE : EDITORIAL_REPAIR_TITLE} ${this.record.label}. ${this.record.evidence}. Fictional training record.`, [
-      { key: "A", label: this.repaired ? this.record.indication : "Indication missing", value: this.repaired ? "visible_italic" : "missing" },
+      { key: "A", label: this.repaired ? this.record.indication : "Add withholding indication", value: this.repaired ? "visible_italic" : "missing" },
       { key: "B", label: action, value: this.proof ? "file_proof" : "file_draft" },
       { key: "C", label: "RETURN", value: "cancel" }
     ]);

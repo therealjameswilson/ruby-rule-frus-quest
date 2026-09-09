@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Editor repair affordance (2026-09-09):
+  - Full earned touch Editor/Proof baseline reached Black Vault, 87 points awarded, no browser errors; partial puzzles and Continue exercised.
+  - Changed read-only-looking INDICATION MISSING control to + ADD WITHHOLDING INDICATION. Actual indication still replaces the command; filing remains separate.
+  - Build / 195 files / 1,457 tests pass. Post-change editor-only touch replay asserts rendered command, carry/correction Continue and Red Pencil reward. Native screenshot inspected. See docs/EDITOR_DISCOVERY_AUDIT.md. Next: earned Black Vault encounter; unaided pacing remains unproven.
+
 - Referral dispatch clarity (2026-09-09):
   - Earned touch Referral replay completed 38 checkpoints through the editor handoff with no browser errors, including partial Continue, original-copy recovery, shortcut opening and the tool reward.
   - Removed duplicate CHECK prefixes from authored READ/TAKE/TURN dispatch prompts. Both normal and fallback-art browser cases assert the text, closed-shelf collision, side-aisle return and unchanged inventory/points/documents.

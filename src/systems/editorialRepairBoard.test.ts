@@ -46,6 +46,15 @@ function fixture(proof = false) {
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); vi.mocked(getInput).mockReturnValue({} as InputState); });
 
 describe("editable withholding indication board", () => {
+  it("names the repair action and replaces it with the authored indication after repair", () => {
+    const f = fixture(); f.open();
+    expect(f.objects.some(object => object.text === "+ ADD WITHHOLDING INDICATION")).toBe(true);
+    f.pointer(0);
+    expect(f.objects.some(object => object.text === "+ ADD WITHHOLDING INDICATION")).toBe(false);
+    expect(f.objects.some(object => object.text === EDITORIAL_REPAIR_RECORDS[0].indication)).toBe(true);
+    expect(f.file).not.toHaveBeenCalled();
+  });
+
   it("requires separate repair and filing presses, then ignores hidden input", () => {
     const f = fixture(); f.open();
     expect(f.change).not.toHaveBeenCalled(); expect(f.file).not.toHaveBeenCalled();

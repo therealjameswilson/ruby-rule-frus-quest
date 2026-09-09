@@ -128,6 +128,9 @@ async function run(mobile) {
     assert(!(await choice()),'The pickup cannot also reach the Editor desk');
     await move(128,185);await press();
     assert(await choice());await shot('bracket-repair');
+    await context.storageState({path:`${out}/pending-bracket-storage.json`});
+    assert.equal((await state()).choice.options[0].label, 'Add withholding indication');
+    assert.equal(await page.evaluate(()=>window.game.scene.getScene('SilentReadScene').editorialBoard.indication.text), '+ ADD WITHHOLDING INDICATION');
     const bracketStart=await state();
     await press();
     assert.equal((await state()).choice.options[0].value,'visible_italic');
@@ -141,6 +144,12 @@ async function run(mobile) {
     assert.equal((await state()).documentPoints,bracketStart.documentPoints);
     await shot('bracket-filed-awaits-stamp'); await press();
     assert((await state()).inventory.includes('Red Pencil'));
+    if (process.argv.includes('--editor-only')) {
+      await shot('editor-tool-earned');
+      assert.deepEqual(errors, []);
+      await writeFile(`${out}/result.json`,JSON.stringify({errors,scope:'Editor draft, repair, Continue, filing and Red Pencil'},null,2));
+      return;
+    }
     await move(215,185);await move(215,124);await move(248,124,'S1');
     await shot('proof-room-entry');
     await move(128,198);await press();
