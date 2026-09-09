@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Imprecise boss-input probe (2026-09-09):
+  - Added optional --imprecise to the existing boss QA: 16 uneven fixed-cadence swings, no bolt/HP/opening reads driving attacks. Normal full-fight path remains separate.
+  - Earned touch probe: 180 -> 40 HP, 3 returns, 10 reliability lost after approach, no retry. Keyboard: 180 -> 96 HP, 1 return, 20 lost, no retry. Both preserve documents/points and have no browser errors; native screenshots inspected.
+  - This knows the tool and approach, so it is not a novice test or device comparison. No balance changes warranted from this evidence alone. User feedback requested about recognizing button/tool, return timing and reaching core. See docs/BOSS_IMPRECISE_INPUT_AUDIT.md. Goal remains active.
+
 - Earned finale audit (2026-09-09):
   - Touch boss run from earned Editor save completed three normal phases in 56.97 measured counter-loop seconds, six fresh core hits, zero retries; boasts, pause, swarm dispersal, Cloud warnings and Continue passed with no browser errors.
   - Earned bindery run published and resumed correctly: 201 -> 241 points, documents and stats preserved. Corrected outdated 38-prompts implication: live bindery has five grouped deliveries and two decision screens.

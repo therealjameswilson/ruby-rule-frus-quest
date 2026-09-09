@@ -62,6 +62,21 @@ try{
    assert(retried.reliability>0);
  }
  await move(128,136);await direction('ArrowUp',25);await shot('core-approach');
+ if(process.argv.includes('--imprecise')) {
+   const before=await state();
+   // Fixed uneven cadence: no projectile, HP or opening reads drive these inputs.
+   const cadence=[420,760,500,620];
+   for(let i=0;i<16;i++) {
+     if(i%4===0)await direction('ArrowUp',80);
+     await press('x');await page.waitForTimeout(cadence[i%cadence.length]);
+   }
+   const after=await shot('imprecise-swings'),b=boss(after);
+   assert.deepEqual(after.documentCandidates,before.documentCandidates);
+   assert.equal(after.documentPoints,before.documentPoints);
+   log.push({label:'imprecise-summary',swingsAttempted:16,phase:b?.enemyState,
+     hp:b?.hp,returns:b?.bossCombat.boltsReturned,reliabilityLost:before.reliability-after.reliability,
+     retryAvailable:b?.bossCombat.retryAvailable,scope:'Fixed uneven swings; not an unaided human playtest'});
+ } else {
  for(let i=0;i<3;i++){
    const before=boss(await state());await press('x');await page.waitForTimeout(180);const after=boss(await state());
    if(!baseline&&!before.bossCombat.coreOpen&&before.bossCombat.boltsReturned===after.bossCombat.boltsReturned)assert.equal(after.hp,before.hp,'Protected melee without a return must not damage');
@@ -159,6 +174,7 @@ try{
   assert.equal(resumed.documentPoints,end.documentPoints);assert.deepEqual(resumed.inventory,end.inventory);
   assert.deepEqual(resumed.completionStats.danneVariantsDefeated,end.completionStats.danneVariantsDefeated);
   console.log('earned fight complete',JSON.stringify(completion));
+ }
  }
  assert.deepEqual(errors,[]);
 }catch(e){await shot('failure').catch(()=>{});throw e;}
