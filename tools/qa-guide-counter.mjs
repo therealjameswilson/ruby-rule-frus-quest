@@ -5,6 +5,7 @@ const mobile = process.argv.includes('--mobile');
 const coaching = process.argv.includes('--coaching');
 const out = process.env.FRUS_QA_OUT ?? `/tmp/frus-live-counter-${mobile ? 'mobile' : 'desktop'}`;
 const base = process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/';
+const auditStarted = Date.now();
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ headless: true, ...(process.env.CHROMIUM_EXECUTABLE ? { executablePath: process.env.CHROMIUM_EXECUTABLE } : {}) });
 const context = await browser.newContext({ viewport: mobile ? { width: 375, height: 667 } : { width: 1024, height: 960 }, hasTouch: mobile, isMobile: mobile, deviceScaleFactor: mobile ? 3 : 1 });
@@ -43,11 +44,12 @@ async function move(x, y) { for (let n = 0; n < 120; n++) {
     await direction(Math.abs(dx) > Math.abs(dy) ? dx > 0 ? 'ArrowRight' : 'ArrowLeft' : dy > 0 ? 'ArrowDown' : 'ArrowUp');
 } throw Error(`movement failed ${x},${y}`); }
 async function scene(key) { await page.waitForFunction(key => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === key, key); await page.waitForTimeout(650); }
-async function shot(label) { const s = await state(); results.push({ label, state: s }); const data = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src)))); await writeFile(`${out}/${label}-native.png`, Buffer.from(data.split(',')[1], 'base64')); await page.screenshot({ path: `${out}/${label}.png` }); await context.storageState({ path: `${out}/earned-storage.json` }); console.log(label, s.scene, s.guideCounter?.phase, s.guideCounter?.attempts, s.reliability); }
+async function shot(label) { const s = await state(); results.push({ label, elapsedMs: Date.now() - auditStarted, state: s }); const data = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src)))); await writeFile(`${out}/${label}-native.png`, Buffer.from(data.split(',')[1], 'base64')); await page.screenshot({ path: `${out}/${label}.png` }); await context.storageState({ path: `${out}/earned-storage.json` }); console.log(label, s.scene, s.guideCounter?.phase, s.guideCounter?.attempts, s.reliability); }
 async function phase(value) { await page.waitForFunction(value => JSON.parse(window.render_game_to_text()).guideCounter?.phase === value, value, { timeout: 12000, polling: 'raf' }); }
 try {
     await page.goto(new URL('?text=full', base).href);
     await scene('WarningScene');
+    await shot('opening-warning');
     assert.equal(await page.evaluate(() => localStorage.getItem('rubyRuleFrusQuestSave')), null);
     await page.waitForTimeout(1200);
     if (mobile)
@@ -60,20 +62,25 @@ try {
     else
         await press('Enter');
     await scene('CharacterCreateScene');
+    await shot('opening-compiler');
     if (mobile)
         await click(128, 190);
     else
         await press('Enter');
     await scene('OfficeScene');
+    await shot('opening-office');
     await move(128, 122);
     await move(70, 122);
     await press();
+    await shot('opening-assignment');
     await move(128, 138);
     await press();
+    await shot('opening-memo');
     await move(128, 185);
     await move(60, 185);
     await press();
     await press();
+    await shot('opening-door-unlocked');
     await move(128, 200);
     await press();
     await scene('GuideScene');

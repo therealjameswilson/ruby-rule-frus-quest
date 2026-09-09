@@ -78,7 +78,7 @@ export class CharacterCreateScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.goldStamp
     }).setName("character-create-compiler-ability").setOrigin(0.5, 0);
-    this.add.text(128, 153, "TRACE SOURCES. BUILD THE VOLUME.", {
+    this.add.text(128, 153, "FIND SOURCES. VERIFY. PUBLISH.", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper

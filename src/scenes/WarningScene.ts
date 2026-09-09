@@ -19,7 +19,7 @@ export class WarningScene extends Phaser.Scene {
 
   create() {
     setSceneState("WarningScene", "title", "Fictional DANN-E warning before title.");
-    setLatestMessage("Recover the FRUS volumes. DANN-E is a fictional rogue AI.");
+    setLatestMessage("Compile, verify, and publish a FRUS volume. DANN-E is a fictional rogue AI.");
     setVisibleEntities([
       DANNE_WARNING_SCREEN_ASSET.key,
       "three recovered FRUS volumes",
@@ -70,7 +70,7 @@ export class WarningScene extends Phaser.Scene {
       color: PALETTE.goldStamp,
       fontStyle: "bold"
     }).setName("warning-quest-title").setOrigin(0.5, 0).setResolution(2).setDepth(2);
-    this.add.text(128, 22, "RECOVER THE FRUS VOLUMES", {
+    this.add.text(128, 22, "COMPILE. VERIFY. PUBLISH.", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper

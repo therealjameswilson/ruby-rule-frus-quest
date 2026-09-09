@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Opening mission clarity and fresh-route audit (2026-09-09):
+  - Fresh touch route passed office memo handling, safe counter miss, facing/timing coaching, fragment reward, pause, Continue and Archive entry without injected progress. Added warning/compiler/office milestone screenshots and clearly labeled elapsed wall-time audit data.
+  - Replaced conflicting recover-volumes wording with COMPILE. VERIFY. PUBLISH.; compiler remit now FIND SOURCES. VERIFY. PUBLISH. No new compulsory dialog, quiz, art or gameplay rules. Native fresh desktop/mobile screens inspected. Build passes (255 modules / 2,802.45 KB); 195 files / 1,452 tests pass. Final complete touch replay passes without browser errors. See docs/OPENING_EXPERIENCE_AUDIT.md.
+  - Local only. Next: test whether the archive source-note task reads as discovery, and distinguish collectible pieces from the volume being published. Coordinate-aware scripted play does not establish unaided first-player comprehension, fun or real-iPhone performance.
+
 - Boss retry input guard (2026-09-09):
   - Reproduced the combat-B-to-Leave hazard in the actual ChoicePrompt: two focused tests failed before the fix. Boss retry now opts into 300 ms settling plus neutral action input before a fresh choice. Pointer rows share the guard; ordinary choices remain immediate.
   - Build passes (255 modules / 2,802.43 KB); final full suite 195 files / 1,452 tests passes. Held-touch B through real lethal damage leaves the menu open; release + A retries the same phase with records/points intact. Full fight then reaches bindery/Continue, no errors or duplicate rewards. Deadline missed after intentional damage/retries remains recorded; reliability 94. Native/mobile and installed-client captures inspected. See docs/BOSS_RETRY_INPUT_GUARD.md.
