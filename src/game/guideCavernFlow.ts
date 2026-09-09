@@ -14,14 +14,14 @@ export function getGuideCavernStage(
 const GUIDE_CAVERN_OBJECTIVES: Record<GuideCavernStage, string> = {
   stamp: "Archive Cavern: take the glowing Citation Stamp.",
   counter: "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
-  fragment: "Archive Cavern: use the stamp to claim the FRUS fragment.",
+  fragment: "Archive Cavern: interact with the Front Matter to collect it.",
   gate: "Archive Cavern: open the south Verification Gate."
 };
 
 const GUIDE_CAVERN_ACTION_CUES: Record<GuideCavernStage, string> = {
   stamp: "FIND GOLD STAMP",
   counter: "FACE BOLT - SWING STAMP",
-  fragment: "TAKE FRUS FRAGMENT",
+  fragment: "TAKE FRONT MATTER",
   gate: "OPEN SOUTH GATE"
 };
 

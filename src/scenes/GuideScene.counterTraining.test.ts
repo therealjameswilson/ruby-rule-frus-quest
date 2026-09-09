@@ -17,7 +17,7 @@ describe("GuideScene Citation Stamp counter lesson", () => {
   it("persists the completed lesson before revealing the fragment", () => {
     expect(source).toContain("gameState.sceneProgress.guideCitationCounterTrained = 1");
     expect(source).toContain("saveGameNow()");
-    expect(source).toContain("Returned bolt broke the seal. Take the fragment");
+    expect(source).toContain("Returned bolt broke the seal. Interact with the Front Matter");
     expect(source).toContain('.setVisible(!this.hasFragment && stage !== "counter")');
   });
 

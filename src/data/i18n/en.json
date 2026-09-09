@@ -28,7 +28,7 @@
     "guide": {
       "stamp": "TAKE CITATION STAMP",
       "counter": "RETURN DANN-E'S BOLT",
-      "fragment": "TAKE FRUS FRAGMENT",
+      "fragment": "TAKE FRONT MATTER",
       "gate": "OPEN SOUTH GATE"
     },
     "carryItem": "Carry {item}.",

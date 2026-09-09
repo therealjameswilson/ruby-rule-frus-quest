@@ -186,8 +186,11 @@ try {
     assert.equal(cleared.guideCounter, null);
     await shot('07-fragment-revealed');
     await move(160, 154);
+    await press('x');
+    assert(!(await state()).volumeFragments.includes('Front Matter Fragment'), 'A tool swing is not the pickup action');
     await press();
     assert((await state()).volumeFragments.includes('Front Matter Fragment'));
+    await shot('07-front-matter-collected');
     const earned = await state();
     await press();
     assert.equal((await state()).documentPoints, earned.documentPoints);

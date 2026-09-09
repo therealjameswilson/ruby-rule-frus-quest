@@ -26,7 +26,9 @@ describe("Guide Cavern onboarding flow", () => {
     const stage = getGuideCavernStage(true, false, true);
     expect(stage).toBe("fragment");
     expect(guideCavernTargetId(stage)).toBe("fragment");
-    expect(guideCavernActionCue(stage)).toBe("TAKE FRUS FRAGMENT");
+    expect(guideCavernActionCue(stage)).toBe("TAKE FRONT MATTER");
+    expect(guideCavernObjective(stage)).toContain("interact");
+    expect(guideCavernObjective(stage)).not.toContain("use the stamp");
   });
 
   it("advances to the gate only after both rewards are held", () => {

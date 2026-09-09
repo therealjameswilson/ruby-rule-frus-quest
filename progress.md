@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- First reward instruction (2026-09-09):
+  - Corrected the Guide objective that incorrectly said to use the Stamp to collect the fragment. Visible reward now says Front Matter and the prompt uses interact. Saved identifiers, ten-point reward and gate rules unchanged; no extra dialog.
+  - Build passes (255 modules / 2,802.57 KB); 195 files / 1,452 tests pass. Fresh touch route explicitly tries tool swing (no pickup), then A (pickup), repeat interaction (no duplicate), Continue and Archive. No browser errors. Native/mobile screenshots and installed-client existing-save resume inspected. Evidence appended to docs/OPENING_EXPERIENCE_AUDIT.md.
+  - Local only. Next: Guide NPC visibly uses an older art style than the hero; audit the existing character registry before replacing art. Archive discovery and unaided player comprehension remain to evaluate.
+
 - Opening mission clarity and fresh-route audit (2026-09-09):
   - Fresh touch route passed office memo handling, safe counter miss, facing/timing coaching, fragment reward, pause, Continue and Archive entry without injected progress. Added warning/compiler/office milestone screenshots and clearly labeled elapsed wall-time audit data.
   - Replaced conflicting recover-volumes wording with COMPILE. VERIFY. PUBLISH.; compiler remit now FIND SOURCES. VERIFY. PUBLISH. No new compulsory dialog, quiz, art or gameplay rules. Native fresh desktop/mobile screens inspected. Build passes (255 modules / 2,802.45 KB); 195 files / 1,452 tests pass. Final complete touch replay passes without browser errors. See docs/OPENING_EXPERIENCE_AUDIT.md.

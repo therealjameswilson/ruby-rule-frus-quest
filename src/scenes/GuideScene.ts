@@ -345,7 +345,7 @@ export class GuideScene extends Phaser.Scene {
       ease: "Stepped",
       onComplete: () => burst.destroy()
     });
-    setLatestMessage("Returned bolt broke the seal. Take the fragment; this counter works against DANN-E in the archives.");
+    setLatestMessage("Returned bolt broke the seal. Interact with the Front Matter to collect it; this counter works against DANN-E in the archives.");
     this.toast.hide();
     this.syncStagePresentation();
   }
@@ -377,8 +377,8 @@ export class GuideScene extends Phaser.Scene {
     addVolumeFragment("Front Matter Fragment");
     addDocumentPoints(10, "front matter fragment secured");
     retroAudio.stamp();
-    this.toast.show("FRAGMENT CITED - OPEN GATE", this.player.position, "info");
-    setLatestMessage("FRUS fragment secured: the gate can open.");
+    this.toast.show("FRONT MATTER FOUND", this.player.position, "info");
+    setLatestMessage("Front Matter recovered: one part of your future FRUS volume. The south gate is open; the source records still need research and review.");
     this.syncStagePresentation();
   }
 
@@ -420,7 +420,7 @@ export class GuideScene extends Phaser.Scene {
       .setAlpha(stage === "fragment" ? 1 : 0.25);
     this.fragmentLabel
       .setVisible(!this.hasFragment && stage !== "counter")
-      .setText(stage === "fragment" ? "FRAG" : "LOCK")
+      .setText(stage === "fragment" ? "FRONT MATTER" : "LOCK")
       .setColor(stage === "fragment" ? PALETTE.goldStamp : PALETTE.stoneGray);
     this.egoSealGlow.setVisible(stage === "counter");
     this.egoSeal.setVisible(stage === "counter");
@@ -454,7 +454,7 @@ export class GuideScene extends Phaser.Scene {
     };
     const targets: Partial<Record<ReturnType<typeof guideCavernTargetId>, Interactable>> = {
       stamp: { id: "stamp", label: "Citation Stamp", x: 96, y: 132, radius: 32, kind: "document", onInteract: () => this.takeStamp() },
-      fragment: { id: "fragment", label: "FRUS Fragment", x: 160, y: 132, radius: 32, kind: "document", onInteract: () => this.takeFragment() },
+      fragment: { id: "fragment", label: "Front Matter", x: 160, y: 132, radius: 32, kind: "document", onInteract: () => this.takeFragment() },
       gate: { id: "gate", label: "Verification Gate", x: 128, y: 198, radius: 32, kind: "door", onInteract: () => this.openGate() }
     };
     const target = targets[guideCavernTargetId(stage)];

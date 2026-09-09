@@ -44,3 +44,25 @@ retained under `/private/tmp/frus-opening-revisit-touch-0909/` and
 
 The scripted route establishes functionality, not fun or real-device performance.
 Do not respond to these open questions by adding more compulsory explanation.
+
+## First reward follow-up
+
+The Guide's full objective incorrectly asked the player to use the Stamp to
+claim the fragment even though its interaction handler uses A/interact. Corrected
+that instruction, the English HUD cue, pickup label and short reward toast to
+identify Front Matter. The saved inventory/fragment identifiers, ten-point reward
+and gate requirements remain unchanged. The message distinguishes this recovered
+part from the future volume, which still needs research and review.
+
+The replay now tries a tool swing at the revealed pickup and verifies that it
+does not collect it, then uses interact and verifies collection. It still checks
+repeat interaction for duplicate points, Continue and Archive entry. No new
+dialogue or puzzle was added. Other language HUD translations remain unchanged.
+
+Follow-up verification: build passes (255 modules / 2,802.57 KB), full suite
+195 files / 1,452 tests passes after correcting one stale copy assertion. Fresh
+touch replay passes the swing-versus-interact check, repeated pickup, Continue
+and Archive entry without browser errors. Native reveal and mobile collection
+captures inspected under `/private/tmp/frus-front-matter-touch-0909/`; the
+installed client also reopens a previously earned Guide save. The guide NPC's
+older art remains visibly inconsistent with the hero and is a separate follow-up.
