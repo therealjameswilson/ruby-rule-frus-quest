@@ -17,7 +17,7 @@ async function run(mobile) {
   page.on('pageerror', e=>errors.push(String(e)));
   page.on('console', m=>{if(m.type()==='error')errors.push(m.text());});
   const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
-  const choice=()=>page.evaluate(()=>Boolean(window.game.scene.getScene('SilentReadScene').reviewChoice.active || window.game.scene.getScene('SilentReadScene').proofBoard.active || window.game.scene.getScene('SilentReadScene').editorialBoard.active || window.game.scene.getScene('SilentReadScene').crossReferenceBoard.active || window.game.scene.getScene('SilentReadScene').chronologyBoard.active));
+  const choice=()=>page.evaluate(()=>Boolean(window.game.scene.getScene('SilentReadScene').reviewChoice.active || window.game.scene.getScene('SilentReadScene').proofBoard.active || window.game.scene.getScene('SilentReadScene').editorialBoard.active || window.game.scene.getScene('SilentReadScene').crossReferenceBoard.active || window.game.scene.getScene('SilentReadScene').chronologyBoard.active || window.game.scene.getScene('SilentReadScene').releaseScopeBoard.active));
   async function point(x,y) {
     const b=await page.locator('canvas').first().boundingBox();
     return {x:b.x+x*b.width/256,y:b.y+y*b.height/240,id:1};
@@ -191,6 +191,31 @@ async function run(mobile) {
         assert.equal((await state()).sceneProgress['silentReadDecision_public-crossref'],1);
         assert.equal((await state()).documentPoints,initialCatalog.documentPoints);
         await shot('cross-reference-filed-awaits-stamp');
+      } else if(stage.id === 2) {
+        const initialScope=await shot('release-scope-open');
+        await context.storageState({path:`${out}/pending-release-scope-storage.json`});
+        const frozen=s=>({player:s.player,combat:s.playerCombat,threats:s.visibleThreats,points:s.documentPoints,reliability:s.reliability});
+        await page.waitForTimeout(1200);assert.deepEqual(frozen(await state()),frozen(initialScope));
+        async function click(x,y){if(mobile)await touch(x,y);else{const p=await point(x,y);await page.mouse.click(p.x,p.y);}await page.waitForTimeout(180);}
+        await click(128,169); assert.match((await state()).latestMessage,/NOT CLEARED/);
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+        await click(52,121); assert.equal((await state()).sceneProgress.silentReadReleaseScope,6);
+        await click(128,169); assert(await choice());
+        await press('KeyX'); await resume('release-scope-partial-continue'); await press();
+        assert.equal((await state()).choice.options[0].value,'hold');
+        if(mobile)await click(204,121);else{await page.keyboard.press('ArrowRight',{delay:50});await page.waitForTimeout(80);await page.keyboard.press('ArrowRight',{delay:50});await press();}
+        assert.equal((await state()).sceneProgress.silentReadReleaseScope,2);
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+        assert(!(await state()).sceneProgress['silentReadDecision_classified-source']);
+        assert.deepEqual((await state()).documentCandidates,initialScope.documentCandidates);
+        await shot('release-scope-correct-unfiled');
+        await press('KeyX'); assert.equal((await state()).playerCombat.weapon.swingId,initialScope.playerCombat.weapon.swingId);
+        await resume('release-scope-correct-continue');await press();
+        assert.deepEqual((await state()).choice.options.map(option=>option.value),['hold','print','hold']);
+        await click(128,169);
+        assert.equal((await state()).sceneProgress['silentReadDecision_classified-source'],1);
+        assert.equal((await state()).documentPoints,initialScope.documentPoints);
+        await shot('release-scope-filed-awaits-stamp');
       } else if(stage.id === 4) {
         const initialChronology=await shot('chronology-open');
         await context.storageState({path:`${out}/pending-chronology-storage.json`});

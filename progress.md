@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Editor release-scope puzzle (2026-09-09):
+  - Replaced the published-excerpt question with independent Print/Hold markings. Fictional release evidence authorizes B only; the player corrects A and C, explicitly files, then stamps for the existing reward. Partial drafts persist without changing source classification or awarding early approval.
+  - Build passes (254 modules / 2,800.03 KB); 192 files / 1,429 tests pass. Complete earned keyboard and simulated-touch chapter routes reach Black Vault with exactly 87 points gained, no browser errors or duplicate rewards. Installed game client reopened and edited the earned draft; native/mobile captures inspected. See docs/EDITOR_RELEASE_SCOPE.md.
+  - Local only. Next: audit the earned Black Vault encounter and the pacing shift back to movement/threat avoidance. Three Editor questions remain; do not replace every interaction with another modal. First-player usability, real-iPhone performance and whole-game fun remain unproven.
+
 - Editor chronology puzzle (2026-09-09):
   - Replaced the date question with a movable three-record chronology using fictional meeting/draft evidence grounded in About the Series. Unfiled placement saves independently; only explicit filing verifies and the existing stamp grants rewards. Shared board preserves Network's separate withholding task. HUD now says RESTORE CHRONOLOGY.
   - Build passes (252 modules / 2,796.25 KB); 190 files / 1,404 tests pass. Earned keyboard/touch chapter replays each gain exactly 87 points and enter Black Vault; wrong-order rejection, draft Continue, no early approval and no repeat rewards verified with no browser errors. Final HUD touch replay verified filing at unchanged 141 points. See docs/EDITOR_CHRONOLOGY_PUZZLE.md.

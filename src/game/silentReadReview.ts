@@ -147,18 +147,6 @@ const REVIEW_DECISIONS: Partial<Record<(typeof SILENT_READ_REVIEW_ITEMS)[number]
     successMessage: "VISIBLE BRACKET ADDED",
     failureMessage: "SHOW THE DELETION IN BRACKETS"
   },
-  "classified-source": {
-    sourceUrl: ABOUT_SERIES_SOURCE.url,
-    question: "An excerpt is published. Is its entire source now public?",
-    context: "About the Series: some excerpts come from still-classified records.",
-    options: [
-      { key: "A", label: "Only the released text is cleared", value: "excerpt" },
-      { key: "B", label: "Yes, release the whole source", value: "whole_source" }
-    ],
-    correctValue: "excerpt",
-    successMessage: "RELEASE SCOPE VERIFIED",
-    failureMessage: "EXCERPT IS NOT THE WHOLE SOURCE"
-  },
   "referral-equity": {
     sourceUrl: ABOUT_SERIES_SOURCE.url,
     question: "A document is withheld in full. What remains in the volume?",

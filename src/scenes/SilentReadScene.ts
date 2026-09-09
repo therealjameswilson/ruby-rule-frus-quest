@@ -92,6 +92,8 @@ import { PROOF_PATROL, PROOF_STATION_POSITIONS, proofWalkRoute } from "../game/p
 import { crossReferenceMatches, restoreCrossReferenceDraft } from "../game/crossReferenceCatalog";
 import { CrossReferenceBoard } from "../systems/crossReferenceBoard";
 import { ChronologyBoard } from "../systems/withholdingChronologyBoard";
+import { ReleaseScopeBoard } from "../systems/releaseScopeBoard";
+import { restoreReleaseScope, validateReleaseScope } from "../game/releaseScope";
 import { EDITOR_CHRONOLOGY_TITLE, EDITOR_CHRONOLOGY_EVIDENCE, restoreEditorChronology,
   shiftEditorChronology, editorChronologySequence, validateEditorChronology } from "../game/editorChronology";
 import { WORKSTATION_DESK, workstationBounds, workstationApproach, safeWorkstationPosition } from "../game/workstationGeometry";
@@ -228,6 +230,7 @@ export class SilentReadScene extends Phaser.Scene {
   private editorialBoard!: EditorialRepairBoard;
   private crossReferenceBoard!: CrossReferenceBoard;
   private chronologyBoard!: ChronologyBoard;
+  private releaseScopeBoard!: ReleaseScopeBoard;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
@@ -281,6 +284,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.proofBoard = new ProofComparisonBoard(this);
     this.editorialBoard = new EditorialRepairBoard(this);
     this.crossReferenceBoard = new CrossReferenceBoard(this);
+    this.releaseScopeBoard = new ReleaseScopeBoard(this);
     this.chronologyBoard = new ChronologyBoard(this, {
       title: EDITOR_CHRONOLOGY_TITLE, heading: "REPAIR CHRONOLOGY", evidence: EDITOR_CHRONOLOGY_EVIDENCE,
       initialMessage: "MEMCON IS OUT OF ORDER", restore: restoreEditorChronology,
@@ -291,7 +295,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.interactionPrompt = new InteractionPrompt(this, 950, 61);
     this.danneLurker = new DanneLurker(this, PROOF_PATROL[0].x, PROOF_PATROL[0].y, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
-        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active,
+        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active || this.releaseScopeBoard.active,
       boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
       waypoints: PROOF_PATROL
     });
@@ -329,12 +333,13 @@ export class SilentReadScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
-    if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active) {
+    if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active || this.releaseScopeBoard.active) {
       this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
       this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
-      if (this.chronologyBoard.active) this.chronologyBoard.updateInput();
+      if (this.releaseScopeBoard.active) this.releaseScopeBoard.updateInput();
+      else if (this.chronologyBoard.active) this.chronologyBoard.updateInput();
       else if (this.crossReferenceBoard.active) this.crossReferenceBoard.updateInput();
       else if (this.editorialBoard.active) this.editorialBoard.updateInput();
       else if (this.proofBoard.active) this.proofBoard.updateInput();
@@ -1131,10 +1136,14 @@ export class SilentReadScene extends Phaser.Scene {
       retroAudio.confirm();
       this.updatePhysicalVerification();
       // Placing a decision-bearing file opens its check, never answers or stamps it.
-      if (!silentReadDecision(activeFlag.id) && activeFlag.id !== "typesetter-proof" && activeFlag.id !== "public-crossref" && activeFlag.id !== "proof-date") return;
+      if (!silentReadDecision(activeFlag.id) && activeFlag.id !== "typesetter-proof" && activeFlag.id !== "public-crossref" && activeFlag.id !== "proof-date" && activeFlag.id !== "classified-source") return;
     }
 
     if (activeFlag.status === "routed") {
+      if (activeFlag.id === "classified-source") {
+        this.markReleaseScope(activeFlag, nearestStation);
+        return;
+      }
       if (activeFlag.id === "proof-date") {
         this.repairChronology(activeFlag, nearestStation);
         return;
@@ -1192,6 +1201,21 @@ export class SilentReadScene extends Phaser.Scene {
     this.savePhysicalReviewProgress(flag);
     retroAudio.confirm();
     this.updatePhysicalVerification();
+  }
+
+  private markReleaseScope(flag: PhysicalFlag, station: Workstation) {
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.releaseScopeBoard.show(gameState.sceneProgress.silentReadReleaseScope, mask => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed") return;
+      gameState.sceneProgress.silentReadReleaseScope = restoreReleaseScope(mask);
+      saveGameNow();
+    }, mask => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed"
+        || !validateReleaseScope(mask).ok || gameState.sceneProgress.silentReadReleaseScope !== mask) return;
+      gameState.sceneProgress["silentReadDecision_classified-source"] = 1;
+      this.verifyFlag(flag, station, "RELEASE SCOPE VERIFIED");
+    });
   }
 
   private repairChronology(flag: PhysicalFlag, station: Workstation) {

@@ -58,13 +58,11 @@ describe("physical Silent Read review", () => {
   });
   it("turns the About the Series rules into source-linked, concrete decisions", () => {
     const bracket = silentReadDecision("mechanical-fix")!;
-    const classifiedSource = silentReadDecision("classified-source")!;
+    expect(silentReadDecision("classified-source")).toBeUndefined();
     const withheldDocument = silentReadDecision("referral-equity")!;
     expect(silentReadDecision("proof-date")).toBeUndefined();
     expect(bracket.options.find((option) => option.key === "B")?.value).toBe(bracket.correctValue);
-    expect(classifiedSource.options.find((option) => option.key === "A")?.value).toBe(classifiedSource.correctValue);
     expect(withheldDocument.options.find((option) => option.key === "A")?.value).toBe(withheldDocument.correctValue);
-    expect(classifiedSource.correctValue).toBe("excerpt");
     expect(withheldDocument.options[0].label).toContain("source note");
     expect(withheldDocument.options[0].label).toContain("page count");
     const margin = silentReadDecision("editorial-ledger")!;
@@ -72,7 +70,7 @@ describe("physical Silent Read review", () => {
     expect(margin.correctValue).toBe("note_margin");
     expect(index.options[0].label).toBe("Berlin -> Document 18");
     expect(silentReadDecision("typesetter-proof")).toBeUndefined();
-    for (const decision of [bracket, classifiedSource, withheldDocument, margin, index]) {
+    for (const decision of [bracket, withheldDocument, margin, index]) {
       expect(decision.sourceUrl).toBe(ABOUT_SERIES_SOURCE.url);
       expect(decision.options.filter((option) => option.value === decision.correctValue)).toHaveLength(1);
       expect(decision.failureMessage.length).toBeLessThanOrEqual(32);

@@ -71,6 +71,7 @@ interface ReviewInternals {
   editorialBoard: Bracket;
   crossReferenceBoard: Comparison;
   chronologyBoard: Comparison;
+  releaseScopeBoard: Comparison;
   toast: { show: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
   interactionPrompt: { update: ReturnType<typeof vi.fn> };
   actionHint: { setText: ReturnType<typeof vi.fn> };
@@ -106,6 +107,7 @@ function fixture(step: number, status: SilentReadReviewStatus) {
   scene.editorialBoard = new Bracket();
   scene.crossReferenceBoard = new Comparison();
   scene.chronologyBoard = new Comparison();
+  scene.releaseScopeBoard = new Comparison();
   scene.toast = { show: vi.fn(), update: vi.fn() };
   scene.interactionPrompt = { update: vi.fn() };
   scene.actionHint = { setText: vi.fn() };
@@ -131,7 +133,8 @@ describe("live editor and proof decisions", () => {
     const { scene, flag } = fixture(step, "carried");
     scene.handlePhysicalAction();
     expect(flag.status).toBe("routed");
-    expect(step === 0 ? scene.editorialBoard.active : step === 4 ? scene.chronologyBoard.active : scene.reviewChoice.active).toBe(true);
+    expect(step === 0 ? scene.editorialBoard.active : step === 4 ? scene.chronologyBoard.active
+      : step === 2 ? scene.releaseScopeBoard.active : scene.reviewChoice.active).toBe(true);
     expect(scene.applyFlagReward).not.toHaveBeenCalled();
     expect(gameState.heldItem).toBeNull();
     expect(gameState.sceneProgress.silentReadReviewStatus).toBe(2);
@@ -172,6 +175,29 @@ describe("live editor and proof decisions", () => {
     expect(flag.status).toBe("stamped");
     expect(scene.applyFlagReward).toHaveBeenCalledOnce();
     scene.crossReferenceBoard.onApprove?.(2);
+    expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+  });
+
+  it("requires saved excerpt-only markings, filing and a separate stamp", () => {
+    const { scene, flag } = fixture(2, "carried"); scene.handlePhysicalAction();
+    expect(scene.releaseScopeBoard.active).toBe(true);
+    scene.releaseScopeBoard.onApprove?.(2); expect(flag.status).toBe("routed");
+    scene.releaseScopeBoard.onChange?.(7); scene.releaseScopeBoard.onApprove?.(7);
+    expect(flag.status).toBe("routed");
+    scene.releaseScopeBoard.onChange?.(2);
+    expect(gameState.sceneProgress.silentReadReleaseScope).toBe(2);
+    scene.releaseScopeBoard.active = false; scene.handlePhysicalAction();
+    expect(scene.releaseScopeBoard.repairs).toBe(2);
+    scene.update(100, 16);
+    expect(scene.releaseScopeBoard.updateInput).toHaveBeenCalledOnce();
+    expect(scene.player.update).toHaveBeenCalledWith(16, false);
+    expect(scene.updateDanneLurker).toHaveBeenCalledWith(16, false);
+    scene.releaseScopeBoard.onApprove?.(2);
+    expect(flag.status).toBe("verified"); expect(scene.applyFlagReward).not.toHaveBeenCalled();
+    scene.handlePhysicalAction(); expect(flag.status).toBe("stamped");
+    expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+    scene.releaseScopeBoard.onChange?.(7); scene.releaseScopeBoard.onApprove?.(2);
+    expect(gameState.sceneProgress.silentReadReleaseScope).toBe(2);
     expect(scene.applyFlagReward).toHaveBeenCalledOnce();
   });
 
