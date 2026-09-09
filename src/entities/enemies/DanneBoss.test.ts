@@ -17,7 +17,7 @@ vi.mock("phaser", () => {
   return { default: {
     Display: { Color: { HexStringToColor: (hex: string) => ({ color: parseInt(hex.replace("#", ""), 16) }) } },
     Geom: { Rectangle, Intersects: { RectangleToRectangle: (a: Rectangle, b: Rectangle) => (
-      a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top
+      a.left <= b.right && a.right >= b.left && a.top <= b.bottom && a.bottom >= b.top
     ) } },
     Math: {
       Clamp: (n: number, min: number, max: number) => Math.min(max, Math.max(min, n)),
@@ -74,7 +74,9 @@ interface BossInternals {
   hitPlayer(position: Position, kind: "ego_bolt" | "swarm", time: number): void;
   fireBolt(from: Position, target: Position, speed: number): void;
   updateBolts(time: number, delta: number): void;
-  startAttackTelegraph(time: number, phase: "cloud"): void;
+  updateMinis(time: number, delta: number): void;
+  minis: Array<{ sprite: Visual; angle: number; radius: number; speed: number; stunnedUntil: number; lastActionId: number }>;
+  startAttackTelegraph(time: number, phase: "cloud" | "swarm"): void;
   updateAttackTelegraph(time: number): void;
   updateAttackPattern(time: number): void;
   offerShortcut(reason: string): void;
@@ -125,6 +127,111 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
 
 describe("DANN-E final-review combat", () => {
   beforeEach(() => { vi.clearAllMocks(); resetGameState(); seedProgressForScene("BlackVaultLairScene"); });
+
+  it("spawns four distinct satellites, not an overlapping center pile", () => {
+    const { boss } = fixture("swarm");
+    const minis = boss.readout().bossCombat.minis;
+    expect(new Set(minis.map(m => `${m.x},${m.y}`)).size).toBe(4);
+    expect(new Set(minis.map(m => m.id)).size).toBe(4);
+    expect(minis.every(m => m.weakness === "red_pencil")).toBe(true);
+  });
+
+  it("disperses a satellite with an owned active Pencil swing without granting boss progress or loot", () => {
+    const { internals, player, boss } = fixture("swarm");
+    const before = { points: gameState.documentPoints, inventory: [...gameState.inventory], hp: internals.hp };
+    const target = internals.minis[0].sprite;
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(target.x - 6, target.y - 14, 12, 16);
+    internals.updateMinis(1000, 0);
+    expect(internals.minis).toHaveLength(3);
+    expect(boss.readout().bossCombat.minisDispersed).toBe(1);
+    internals.updateMinis(1001, 0);
+    expect(boss.readout().bossCombat.minisDispersed).toBe(1);
+    expect({ points: gameState.documentPoints, inventory: gameState.inventory, hp: internals.hp }).toEqual(before);
+    expect(boss.readout().bossCombat.coreOpen).toBe(false);
+  });
+
+  it("lets a different owned tool stun but not disperse, once per swing", () => {
+    const { internals, player, boss } = fixture("swarm");
+    const target = internals.minis[0];
+    player.combatReadout.weapon.tool = "citation_stamp";
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(target.sprite.x - 6, target.sprite.y - 14, 12, 16);
+    internals.updateMinis(1000, 0);
+    expect(internals.minis).toHaveLength(4);
+    expect(target.stunnedUntil).toBe(1650);
+    internals.updateMinis(1100, 0);
+    expect(target.stunnedUntil).toBe(1650);
+    expect(boss.readout().bossCombat.minisDispersed).toBe(0);
+  });
+
+  it("does not disperse from idle or an unowned tool", () => {
+    const { internals, player } = fixture("swarm");
+    internals.updateMinis(1000, 0);
+    expect(internals.minis).toHaveLength(4);
+    gameState.inventory = gameState.inventory.filter(item => item !== "Red Pencil");
+    const target = internals.minis[0].sprite;
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(target.x - 6, target.y - 14, 12, 16);
+    internals.updateMinis(1000, 0);
+    expect(internals.minis).toHaveLength(4);
+  });
+
+  it("preserves an individual satellite stun through pause", () => {
+    const { internals, player, boss, scene } = fixture("swarm");
+    const target = internals.minis[0];
+    player.combatReadout.weapon.tool = "citation_stamp";
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(target.sprite.x - 6, target.sprite.y - 14, 12, 16);
+    internals.updateMinis(1000, 0);
+    player.activeActionHitbox = null;
+    boss.update(1000, 0, false);
+    scene.time.now = 6000;
+    expect(boss.readout().bossCombat.minis[0].stunnedMs).toBe(650);
+    boss.update(6000, 0, true);
+    expect(target.stunnedUntil).toBe(6650);
+    expect(boss.readout().bossCombat.minis[0].stunnedMs).toBe(650);
+  });
+
+  it("keeps stunned satellites from firing while the main boss can attack", () => {
+    const { internals } = fixture("swarm");
+    for (const mini of internals.minis) mini.stunnedUntil = 10000;
+    internals.startAttackTelegraph(1000, "swarm");
+    internals.updateAttackTelegraph(5000);
+    expect(internals.bolts).toHaveLength(1);
+    internals.startAttackTelegraph(11000, "swarm");
+    internals.updateAttackTelegraph(15000);
+    expect(internals.bolts).toHaveLength(4);
+  });
+
+  it("lets the player clear frozen satellites during a returned-bolt opening", () => {
+    const { internals, player, boss } = fixture("swarm");
+    internals.takeReturnedBolt(1000);
+    const target = internals.minis[0].sprite;
+    player.actionId++;
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(target.x - 6, target.y - 14, 12, 16);
+    internals.updateMinis(1100, 16);
+    expect(internals.minis).toHaveLength(3);
+    expect(boss.readout().bossCombat.coreOpen).toBe(true);
+  });
+
+  it("prioritizes a counter over satellite contact on the same frame", () => {
+    const { internals, player } = fixture("swarm");
+    const target = internals.minis[0].sprite;
+    player.setPosition(target.x, target.y);
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(target.x - 6, target.y - 14, 12, 16);
+    internals.updateMinis(3000, 0);
+    expect(internals.minis).toHaveLength(3);
+    expect(player.takeHit).not.toHaveBeenCalled();
+  });
+
+  it("does not damage across a vertical gap between the visible feet", () => {
+    const { internals, player, scene } = fixture("swarm");
+    const target = internals.minis[0].sprite;
+    scene.time.now = 3000;
+    player.setPosition(target.x, target.y + 10);
+    internals.updateMinis(3000, 0);
+    expect(player.takeHit).not.toHaveBeenCalled();
+    player.setPosition(target.x, target.y + 7);
+    internals.updateMinis(3000, 0);
+    expect(player.takeHit).toHaveBeenCalledOnce();
+  });
 
   it.each(["colossus", "swarm", "cloud", "ascendant"] as const)("protects the %s core until a bolt is returned", (phase) => {
     const { player, internals, boss } = fixture(phase);

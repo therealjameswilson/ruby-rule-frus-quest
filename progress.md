@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Dispersible Black Vault satellites (2026-09-08):
+  - Red Pencil active swings now disperse mini-DANN-Es; other owned weapons stun for 650 ms. Counters precede contact, stunned minis do not fire, pause preserves stun, and initial orbits are distinct. Feet-based contact avoids damage across empty vertical space. No rewards, core damage, publication bypass or save migration from dispersal.
+  - Live keyboard and 375x667 simulated-touch replays clear all four. Touch reaches the bindery after one Cloud retry, with documents/points unchanged, no missed deadline, and successful Continue. Build passes (249 modules / 2,787.13 KB main JS); 186 files / 1,356 tests pass. Installed client vault-entry native/compositor captures inspected. Evidence and reproduction: docs/DANNE_SWARM_COUNTER.md.
+  - Local only. Overall goal remains active. Next evaluate Cloud approach/readability and the binding payoff, then novice full-run pacing; simulated touch is not real Safari certification.
+  - Final keyboard fight also reaches bindery and survives Continue: 77.682 seconds, one Cloud retry, all four satellites dispersed, no document/points changes or missed deadline. Fourteen scene/pause/map routes pass without browser errors. Touch fight: 91.778 seconds, one retry. Neither is a novice-speed benchmark.
+
 - OpenNet document matching (2026-09-08):
   - Replaced the empty public-crossref verification press with a three-record catalog. Match record type and conversation date, pin a document, explicitly file, then separately stamp. Fictional training records are labeled; the source basis is the actual About the Series. Wrong matches give specific hints without damage. An optional numeric draft survives Continue; existing verified/completed saves stay credited. No added travel, rewards or schema change.
   - Final build passes: 249 modules / 2,785.41 KB main JS (+4.19 KB), existing chunk warning. 186 files / 1,347 tests pass. Complete initial-layout keyboard/mouse chapter replay reaches Black Vault with 87 earned points. First touch run caught a real File/B overlap; redesigned as three side-by-side cards, with filing above A/B and outside the D-pad zone. Added regression checks and explicit cancel-unfiled assertion. Final installed-client native/compositor image shows Document 18 pinned, still unfiled. Direct WebGL capture remains black.

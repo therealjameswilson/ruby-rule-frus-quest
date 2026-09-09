@@ -151,7 +151,8 @@ interface VisibleThreat {
     coreOpen?: boolean;
     counterWindowMs?: number;
     feedback?: { text: string; tone: "info" | "warn"; msRemaining: number } | null;
-    minis: Position[];
+    minis: (Position & { id?: number; weakness?: string; stunnedMs?: number })[];
+    minisDispersed?: number;
     retryAvailable: boolean;
     recoverablePressure: number;
     swarmDamage: number;

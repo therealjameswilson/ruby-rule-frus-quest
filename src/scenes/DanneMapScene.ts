@@ -411,6 +411,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     const bossActive = Boolean(this.danneBoss?.isActive);
+    if (bossActive && this.danneBoss?.currentPhase === "swarm") {
+      setObjective(this.danneBoss.activeMiniCount ? "PENCIL CLEARS MINIS" : "RETURN EGO BOLTS");
+    }
     this.hearing?.syncTargets(this.interactables);
     this.stackRecords?.syncTargets(this.interactables);
     this.vaultObjects?.syncTargets(this.interactables);
@@ -1037,7 +1040,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private objectiveForBossPhase(phase: string) {
     if (phase === "colossus") return "RETURN EGO BOLTS";
-    if (phase === "swarm") return "STUN THE SWARM";
+    if (phase === "swarm") return "PENCIL CLEARS MINIS";
     if (phase === "cloud") return "REFUTE THE CLOUD";
     if (phase === "ascendant") return "RETURN EGO BOLTS";
     if (phase === "defeated") return "TO THE BINDERY";

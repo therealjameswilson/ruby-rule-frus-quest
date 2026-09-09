@@ -68,9 +68,12 @@ interface EgoBolt extends BossBoltMotion {
 
 interface MiniDanne {
   sprite: Phaser.GameObjects.Sprite;
+  id: number;
   angle: number;
   radius: number;
   speed: number;
+  lastActionId: number;
+  stunnedUntil: number;
 }
 
 interface ActiveAttackTelegraph {
@@ -149,6 +152,8 @@ export class DanneBoss {
   private damageGraceUntil = 0;
   private counterStunnedUntil = 0;
   private boltsReturned = 0;
+  private nextMiniId = 0;
+  private minisDispersed = 0;
   private attackTelegraph: ActiveAttackTelegraph | null = null;
   private cloudWaypointIndex = 0;
   private combatPausedAt: number | null = null;
@@ -215,6 +220,8 @@ export class DanneBoss {
   get currentPhase() {
     return this.phase;
   }
+
+  get activeMiniCount() { return this.minis.length; }
 
   get inputLocked() {
     return this.shortcutChoice.active || this.retryChoice.active;
@@ -295,7 +302,9 @@ export class DanneBoss {
         coreOpen: this.coreOpenAt(this.combatPausedAt ?? this.scene.time.now),
         counterWindowMs: Math.max(0, this.counterStunnedUntil - (this.combatPausedAt ?? this.scene.time.now)),
         feedback: this.combatFeedback ? { ...this.combatFeedback } : null,
-        minis: this.minis.map((mini) => ({ x: mini.sprite.x, y: mini.sprite.y })),
+        minis: this.minis.map((mini) => ({ id: mini.id, x: mini.sprite.x, y: mini.sprite.y,
+          weakness: "red_pencil", stunnedMs: Math.max(0, mini.stunnedUntil - (this.combatPausedAt ?? this.scene.time.now)) })),
+        minisDispersed: this.minisDispersed,
         retryAvailable: this.retryChoice.active,
         recoverablePressure: gameState.sceneProgress.blackVaultCombatDamage ?? 0,
         swarmDamage: DANNE_BOSS_DAMAGE.swarm
@@ -469,7 +478,7 @@ export class DanneBoss {
       this.fireBolt(telegraph.source, telegraph.target, this.speed(58));
     } else if (telegraph.phase === "swarm") {
       this.fireBolt(telegraph.source, telegraph.target, this.speed(62));
-      for (const mini of this.minis.slice(0, 2)) {
+      for (const mini of this.minis.filter(mini => timeMs >= mini.stunnedUntil).slice(0, 2)) {
         this.fireBolt({ x: mini.sprite.x, y: mini.sprite.y }, telegraph.target, this.speed(50));
       }
     } else if (telegraph.phase === "cloud") {
@@ -545,6 +554,7 @@ export class DanneBoss {
     this.nextPlayerHitAt += pausedMs;
     this.damageGraceUntil += pausedMs;
     if (this.counterStunnedUntil) this.counterStunnedUntil += pausedMs;
+    for (const mini of this.minis) if (mini.stunnedUntil) mini.stunnedUntil += pausedMs;
     if (this.attackTelegraph) {
       this.attackTelegraph.startedAt += pausedMs;
       this.attackTelegraph.resolvesAt += pausedMs;
@@ -871,26 +881,56 @@ export class DanneBoss {
     this.clearMinis();
     const starts = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
     for (const [index, angle] of starts.entries()) {
-      const mini = this.scene.add.sprite(BOSS_CENTER.x, BOSS_CENTER.y, this.spriteKey)
+      const mini = this.scene.add.sprite(snapPixel(BOSS_CENTER.x + Math.cos(angle) * 42),
+        snapPixel(BOSS_CENTER.y + 14 + Math.sin(angle) * 42 * 0.55), this.spriteKey)
         .setOrigin(0.5, 0.82)
         .setScale(0.52)
         .setDepth(BOSS_CENTER.y + index + 1);
       const animKey = danneAnimKey(this.spriteKey, "walk-down");
       if (this.scene.anims.exists(animKey)) mini.play(animKey);
-      this.minis.push({ sprite: mini, angle, radius: 42, speed: index % 2 === 0 ? 1 : -1 });
+      this.minis.push({ sprite: mini, id: ++this.nextMiniId, angle, radius: 42,
+        speed: index % 2 === 0 ? 1 : -1, lastActionId: -1, stunnedUntil: 0 });
     }
   }
 
   private updateMinis(timeMs: number, deltaMs: number) {
-    if (!this.minis.length || timeMs < this.counterStunnedUntil) return;
+    if (!this.minis.length) return;
     const dt = Math.min(0.05, deltaMs / 1000);
-    for (const mini of this.minis) {
-      mini.angle += mini.speed * dt * 1.7;
+    const tool = this.player.combatReadout.weapon.tool;
+    const swing = isWeaponTool(tool) && hasProcessItem(tool) ? this.player.activeActionHitbox : null;
+    const pencil = tool === "red_pencil" || (gameState.equippedDanneItem === "ruby-pen" && hasDanneItem("ruby-pen"));
+    const feet = new Phaser.Geom.Rectangle(this.player.position.x - 8, this.player.position.y - 4, 16, 9);
+    for (let index = this.minis.length - 1; index >= 0; index--) {
+      const mini = this.minis[index];
+      const stunned = timeMs < Math.max(mini.stunnedUntil, this.counterStunnedUntil);
+      if (!stunned) mini.angle += mini.speed * dt * 1.7;
       const x = BOSS_CENTER.x + Math.cos(mini.angle) * mini.radius;
       const y = BOSS_CENTER.y + 14 + Math.sin(mini.angle) * (mini.radius * 0.55);
       mini.sprite.setPosition(snapPixel(x), snapPixel(y));
       mini.sprite.setDepth(Math.round(y));
-      if (Phaser.Math.Distance.Between(mini.sprite.x, mini.sprite.y, this.player.position.x, this.player.position.y) < 12) {
+      const body = new Phaser.Geom.Rectangle(mini.sprite.x - 6, mini.sprite.y - 14, 12, 16);
+      // Counter the actual active swing before contact, even during the core opening.
+      if (swing && mini.lastActionId !== this.player.actionId && Phaser.Geom.Intersects.RectangleToRectangle(swing, body)) {
+        mini.lastActionId = this.player.actionId;
+        if (pencil) {
+          this.minis.splice(index, 1);
+          this.minisDispersed++;
+          mini.sprite.setTint(color(PALETTE.creamPaper));
+          this.scene.tweens.add({ targets: mini.sprite, alpha: 0, duration: 160, onComplete: () => mini.sprite.destroy() });
+          this.combatFeedback = { text: this.minis.length ? "MINI DISPERSED" : "SWARM CLEARED: RETURN BOLTS", tone: "info", msRemaining: 1200 };
+          setLatestMessage("Red Pencil disperses a mini-DANN-E. The main core still requires a returned Ego bolt.");
+        } else {
+          mini.stunnedUntil = timeMs + 650;
+          mini.sprite.setTint(color(PALETTE.terminalCyan));
+          this.combatFeedback = { text: "MINI STUNNED: USE PENCIL", tone: "info", msRemaining: 1000 };
+        }
+        retroAudio.toolHit(tool);
+        continue;
+      }
+      if (stunned) continue;
+      if (mini.stunnedUntil) { mini.stunnedUntil = 0; mini.sprite.clearTint(); }
+      const miniFeet = new Phaser.Geom.Rectangle(mini.sprite.x - 4, mini.sprite.y - 4, 8, 8);
+      if (Phaser.Geom.Intersects.RectangleToRectangle(miniFeet, feet)) {
         this.hitPlayer({ x: mini.sprite.x, y: mini.sprite.y }, "swarm", timeMs);
         if (this.retryChoice.active) return;
       }

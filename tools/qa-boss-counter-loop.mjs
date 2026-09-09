@@ -44,7 +44,25 @@ try{
       await page.waitForTimeout(100);continue;
     }
     if(!b){await page.waitForTimeout(100);continue;}
-    if(!phases.has(b.enemyState)){phases.add(b.enemyState);await shot(`phase-${b.enemyState}`);}
+    if(!phases.has(b.enemyState)){
+      phases.add(b.enemyState);await shot(`phase-${b.enemyState}`);
+      if(b.enemyState==='swarm' && process.argv.includes('--disperse')) {
+        const initial=await state(),prior=boss(initial).bossCombat.minisDispersed??0;
+        await move(128,174);await direction('ArrowUp',25);
+        const until=Date.now()+16000;
+        while(Date.now()<until) {
+          const s=await state(),swarm=boss(s);
+          if(s.mode!=='explore'||swarm?.enemyState!=='swarm'||!swarm.bossCombat.minis.length)break;
+          await press('x');await page.waitForTimeout(440);
+        }
+        const cleared=await shot('swarm-countered'),swarm=boss(cleared);
+        assert((swarm?.bossCombat.minisDispersed??0)>prior,'Actual tool swings must disperse satellites');
+        assert.equal(cleared.documentPoints,initial.documentPoints,'No farming rewards from satellites');
+        assert.deepEqual(cleared.documentCandidates,initial.documentCandidates);
+        if(swarm?.enemyState==='swarm'&&!swarm.bossCombat.minis.length)assert.equal(cleared.objective,'RETURN EGO BOLTS');
+        continue;
+      }
+    }
     const face=b.y>160?'ArrowDown':b.x<100?'ArrowLeft':b.x>156?'ArrowRight':'ArrowUp';
     // Fight from the central aisle, not the solid rubble below Cloud's side perches.
     await move(128,face==='ArrowUp'?174:142);await direction(face,25);
