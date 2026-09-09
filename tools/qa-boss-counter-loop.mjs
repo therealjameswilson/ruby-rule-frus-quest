@@ -25,7 +25,19 @@ try{
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
  await shot('entry');await move(128,144);await press();
  if(process.argv.includes('--boast-skip')) {
+   await page.waitForFunction(()=>{
+     const s=JSON.parse(window.render_game_to_text());
+     const ui=window.game.scene.getScene('UIScene');
+     return s.mode==='dialog' && !s.dialog && ui.questBandText.text===''
+       && ui.questBandCueText.text==='' && ui.questBandVerbText.text==='';
+   },{},{timeout:1000,polling:'raf'});
+   await shot('boast-arrival');
    await page.waitForFunction(()=>Boolean(window.game.scene.getScene('BlackVaultLairScene').danneBoss?.finishBoast));
+   await page.waitForFunction(()=>{
+     const s=JSON.parse(window.render_game_to_text()),ui=window.game.scene.getScene('UIScene');
+     return Boolean(s.dialog?.text) && ui.questBandText.text==='Read line.'
+       && ui.questBandCueText.text==='NEXT LINE' && ui.questBandVerbText.text!=='';
+   });
    const intro=await shot('intro-boast');
    await page.waitForTimeout(400);
    assert.deepEqual((await state()).player,intro.player);

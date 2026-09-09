@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { questBandBossCue, questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandRiskLine, questBandVerbCode } from "./questBandCue";
+import { questBandAwaitingDialog, questBandBossCue, questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandRiskLine, questBandVerbCode } from "./questBandCue";
 
 describe("quest band cue helpers", () => {
+  it("withholds reading prompts until a dialog has actual text", () => {
+    expect(questBandAwaitingDialog("dialog", null)).toBe(true);
+    expect(questBandAwaitingDialog("dialog", { speaker: "CUTSCENE", text: "  " })).toBe(true);
+    expect(questBandAwaitingDialog("dialog", { speaker: "CUTSCENE", text: "The record survives." })).toBe(false);
+    for (const mode of ["explore", "choice", "pause"] as const) expect(questBandAwaitingDialog(mode, null)).toBe(false);
+  });
+
   const boss: Parameters<typeof questBandBossCue>[1][number] = { hp: 180, enemyState: "colossus", bossCombat: {
     bolts: [], minis: [], retryAvailable: false, recoverablePressure: 0, swarmDamage: 5
   } };

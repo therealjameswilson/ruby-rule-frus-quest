@@ -20,7 +20,7 @@ import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 import { guideQuestBandObjective, officeQuestBandObjective } from "./openingQuestBand";
-import { questBandBossCue, questBandRiskLine } from "./questBandCue";
+import { questBandAwaitingDialog, questBandBossCue, questBandRiskLine } from "./questBandCue";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
 import { dispatchAisleOpen } from "../game/referralDispatch";
@@ -212,11 +212,12 @@ export class UIScene extends Phaser.Scene {
 
     const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? getString("hud.none");
     const weapon = gameState.playerCombat.weapon;
-    const objectiveLine = this.compactObjective(activeSceneKey);
+    const awaitingDialog = questBandAwaitingDialog(gameState.mode, gameState.activeDialog);
+    const objectiveLine = awaitingDialog ? "" : this.compactObjective(activeSceneKey);
     const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
     const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats);
-    const actionLine = bossCue?.text ?? riskLine ?? this.compactActionLine(toolLabel);
-    const actionBadge = bossCue?.badge === "notice" ? "!"
+    const actionLine = awaitingDialog ? "" : bossCue?.text ?? riskLine ?? this.compactActionLine(toolLabel);
+    const actionBadge = awaitingDialog ? "" : bossCue?.badge === "notice" ? "!"
       : !riskLine && (bossCue?.badge === "tool" || this.showCounterAction() || this.guideCounterTrainingActive())
       ? getSecondaryActionBadge()
       : getPrimaryActionBadge();

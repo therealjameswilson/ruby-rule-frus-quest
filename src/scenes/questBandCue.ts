@@ -3,6 +3,10 @@ import type { GameState } from "../game/state";
 
 type RiskThreat = Pick<GameState["visibleThreats"][number], "hp" | "enemyState" | "difficultyTier" | "reliabilityRisk" | "bossCombat">;
 
+export function questBandAwaitingDialog(mode: GameState["mode"], dialog: GameState["activeDialog"]): boolean {
+  return mode === "dialog" && !dialog?.text.trim();
+}
+
 export function questBandBossCue(mode: GameState["mode"], threats: readonly RiskThreat[]) {
   if (mode !== "explore") return null;
   const boss = threats.find((threat) => threat.bossCombat && (threat.hp ?? 0) > 0

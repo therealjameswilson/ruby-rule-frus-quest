@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Cutscene prompt timing (2026-09-09):
+  - Investigated a keyboard capture showing READ LINE without text: dialog mode precedes the 300 ms cutscene entrance tween. HUD now waits for nonblank active dialogue before showing reading/action/badge cues.
+  - Build and 195 files / 1,458 tests pass. Touch and keyboard scoped boast probes exercise quiet entrance, readable lines, safe advance and resumed combat. First desktop test expected uppercase render appearance instead of stored localized text; corrected and reran. Native captures inspected; no combat/save changes.
+  - See docs/CUTSCENE_PROMPT_TIMING.md. Local only; novice counter comprehension and overall fun remain unproven.
+
 - Imprecise boss-input probe (2026-09-09):
   - Added optional --imprecise to the existing boss QA: 16 uneven fixed-cadence swings, no bolt/HP/opening reads driving attacks. Normal full-fight path remains separate.
   - Earned touch probe: 180 -> 40 HP, 3 returns, 10 reliability lost after approach, no retry. Keyboard: 180 -> 96 HP, 1 return, 20 lost, no retry. Both preserve documents/points and have no browser errors; native screenshots inspected.
