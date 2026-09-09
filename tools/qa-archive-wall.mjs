@@ -28,7 +28,19 @@ async function choose(key){
 }
 try{
  await page.goto(new URL('?text=full',base).href);await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');await shot('00-earned-archive');
- await act('01-source-note');await move(128,158);await act('02-research-table');
+ await act('01-source-note');
+ if(process.argv.includes('--route-lifetime')){
+  const counts=()=>page.evaluate(()=>{const s=window.game.scene.getScene('ArchiveScene');return {tracked:s.roomObjects.length,retired:s.roomObjects.filter(o=>!o.active).length,route:s.sourceNoteRouteCueObjects.length};});
+  const before=await counts();
+  await move(56,184);await move(56,100);await move(56,184);
+  await move(188,184);await move(188,100);await move(188,184);
+  const after=await counts();
+  await shot('01-carried-route-lifetime');
+  await writeFile(`${out}/route-lifetime.json`,JSON.stringify({before,after},null,2));
+  assert(after.retired<=before.retired+5,'Moving source trail must not retain destroyed markers in room cleanup');
+  assert(after.tracked<=before.tracked+10,'Guidance marker ownership must stay bounded while walking');
+ }
+ await move(128,158);await act('02-research-table');
  await move(80,158);await move(80,72);await move(128,72);await direction('ArrowUp',650);
  const locked=await shot('02-stacks-locked');assert.equal(locked.roomTraversal.currentRoomId,'A1');assert(!locked.sceneProgress.archiveRepoWallCleared);assert.equal(locked.documentPoints,22);
  await move(80,72);await move(80,176);

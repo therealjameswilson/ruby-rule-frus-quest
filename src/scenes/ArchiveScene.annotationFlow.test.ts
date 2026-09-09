@@ -10,6 +10,16 @@ function methodSource(name: string, nextName: string) {
 }
 
 describe("ArchiveScene physical annotation flow", () => {
+  it("gives moving route markers one owner and clears them on room exit", () => {
+    const track = methodSource("trackSourceNoteRouteCue", "drawSourceNoteRouteCue");
+    expect(track).toContain("this.sourceNoteRouteCueObjects.push(object)");
+    expect(track).not.toContain("this.track(object)");
+    const clear = methodSource("clearSourceNoteRouteCue", "trackSourceNoteRouteCue");
+    expect(clear).toContain("object.destroy()");
+    expect(clear).toContain("this.sourceNoteRouteCueObjects = []");
+    const room = methodSource("clearRoom", "");
+    expect(room).toContain("this.clearSourceNoteRouteCue()");
+  });
   it("keeps note gathering spatial, with a single coverage decision at filing", () => {
     const collect = methodSource("collectAnnotationDraftingNote", "fileAnnotationDraftingNotes");
     expect(collect).not.toContain("reviewResearchDecision");

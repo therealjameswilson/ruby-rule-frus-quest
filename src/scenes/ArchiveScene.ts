@@ -3078,7 +3078,9 @@ export class ArchiveScene extends Phaser.Scene {
 
   private trackSourceNoteRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
     this.sourceNoteRouteCueObjects.push(object);
-    return this.track(object);
+    // The moving trail has its own cleanup, also called by clearRoom. Tracking
+    // every replacement in roomObjects retains destroyed markers until exit.
+    return object;
   }
 
   private drawSourceNoteRouteCue(

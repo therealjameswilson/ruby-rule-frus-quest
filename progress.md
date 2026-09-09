@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Archive discovery and marker lifetime (2026-09-09):
+  - Played the full earned Archive path with touch, including out-of-order source clues, partial Continue, evidence correction, stamping, cart parking, annotation filing and Two Networks entry. Reproduced a moving-trail retention bug: 2,131 destroyed markers remained in the room list after one walk.
+  - Removed duplicate ownership of transient markers; the same walk now keeps the room list at 64 objects and retains no additional destroyed markers. Added --route-lifetime browser regression and a structural cleanup test. Puzzle/save/input rules unchanged.
+  - Build passes; 195 files / 1,454 tests pass. Post-fix full touch route reaches Network, no browser errors; installed client collects and carries the source note with trail visible. See docs/ARCHIVE_DISCOVERY_AUDIT.md. Local only. Next: unaided discovery clarity and Network routing; this is not a measured FPS improvement or proof of overall fun.
+
 - Grounded archivist refresh (2026-09-09):
   - Audited the old archivist reference: five visual rows and opaque backdrop disagree with the manifest. Preserved originals; generated a coherent silver-haired archivist and imported through the existing native-sheet pipeline. Same texture/NPC keys and gameplay. Removed Guide colleague bobbing and added a small ground shadow.
   - Build passes (255 modules / 2,802.52 KB); 195 files / 1,453 tests pass. Fresh simulated-touch opening and existing-save installed browser client pass; screenshots inspected, no browser errors. See docs/art/archivist_refresh.md and assets/LICENSES.md.
