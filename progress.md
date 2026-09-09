@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned Editor pacing audit (2026-09-09):
+  - Keyboard and simulated-touch routes from the actual Referral saves both completed eight tasks, gained exactly 87 points (114 to 201), continued partial drafts, backtracked without duplicate rewards and entered Black Vault. Zero browser errors. Installed game client reopened the earned proof; native and touch screenshots inspected.
+  - Distinct editable bracket/source-match/proof tasks work; five middle two-choice checks still feel quiz-like. Next implementation: replace the date question with a movable chronology entry using meeting-time evidence, explicit filing and saved unfiled placement. Preserve reward and tool boundaries. See docs/EDITOR_PACING_AUDIT.md.
+  - Evidence-only turn: no gameplay change, build/test rerun or deployment; prior verified build unchanged. Scripted known-answer play is not first-player usability or proof of whole-game fun.
+
 - Referral walking-guide lifetime (2026-09-09):
   - Active R1 guidance now reuses one Graphics object, preserving furniture-aware routing and releasing it on room exit. Fixed the QA transition race that mixed old-room routing with new-room geometry; no gameplay or save bypass.
   - Build and all 1,382 tests pass. Full earned keyboard and simulated-touch routes reach Editor, with source-copy recovery, explicit manifest filing, carried-item Continue, physical Slip pickup and backtracking verified. No browser errors; 34-39 tracked room objects and at most one guide. Installed client native/compositor images inspected. See docs/REFERRAL_GUIDE_LIFETIME.md.
