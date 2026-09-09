@@ -50,9 +50,11 @@ async function run(mobile) {
       let dx=x-before.player.x,dy=y-before.player.y;
       if(!destination && Math.hypot(dx,dy)<5) return;
       if (before.roomTraversal?.currentRoomId === 'R1') {
-        const {solids,feet} = await page.evaluate(() => {const scene=window.game.scene.getScene('ReferralVaultScene');return {
+        const {solids,feet,room,locked} = await page.evaluate(() => {const scene=window.game.scene.getScene('ReferralVaultScene');return {
+          room:scene.currentRoomId,locked:scene.roomTransitionLocked,
           solids:scene.roomSolids.map(({x,y,width,height})=>({x,y,width,height})),
           feet:{x:scene.player.logicalX,y:scene.player.logicalY}};});
+        if (locked || room !== 'R1') { await page.waitForTimeout(100); continue; }
         const route = workstationWalkRoute(feet, {x,y}, solids, {x:[30,98,160,226],y:[96,180]});
         const next = route.find(point => Math.hypot(point.x-feet.x,point.y-feet.y)>2) ?? route.at(-1);
         assert(next, `No clear aisle from ${JSON.stringify(feet)} to ${x},${y}`);
@@ -66,9 +68,22 @@ async function run(mobile) {
     throw new Error(`Movement timeout ${x},${y}`);
   }
   let index=0;
+  let reviewObjectBaseline;
   async function shot(name) {
     await page.waitForTimeout(250);
     const s=await state();
+    if (s.scene === 'ReferralVaultScene' && s.roomTraversal?.currentRoomId === 'R1') {
+      const resources = await page.evaluate(() => {
+        const scene = window.game.scene.getScene('ReferralVaultScene');
+        return { tracked:scene.roomObjects.length,
+          guides:scene.roomObjects.filter(object=>object.name==='referral-review-guide').length };
+      });
+      reviewObjectBaseline ??= resources.tracked;
+      assert(resources.guides <= 1, 'R1 must reuse a single walking guide');
+      assert(resources.tracked <= reviewObjectBaseline + 64,
+        `Walking must not retain destroyed route markers: ${JSON.stringify(resources)}`);
+      await writeFile(`${out}/guide-resources-${name}.json`,JSON.stringify(resources));
+    }
     const path=`${out}/${String(index++).padStart(2,'0')}-${name}`;
     const native=await page.evaluate(()=>new Promise(resolve=>window.game.renderer.snapshot(image=>resolve(image.src))));
     await writeFile(`${path}-native.png`,Buffer.from(native.split(',')[1],'base64'));

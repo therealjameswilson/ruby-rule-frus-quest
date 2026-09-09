@@ -151,7 +151,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private manifestHeldIcon?: Phaser.GameObjects.Container;
   private treatmentDocketWorldIcon?: Phaser.GameObjects.Container;
   private treatmentDocketHeldIcon?: Phaser.GameObjects.Container;
-  private reviewRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private reviewRouteCue?: Phaser.GameObjects.Graphics;
   private reviewRouteCueKey = "";
   private referralGateOpen = false;
   private concurrenceSlipCollected = false;
@@ -375,6 +375,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     for (const wall of this.bureaucraticWalls) wall.destroy();
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.reviewRouteCue = undefined;
     this.roomSolids = [];
     this.bureaucraticWalls = [];
     this.concurrenceSlipIcon = undefined;
@@ -1852,16 +1853,8 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private clearReviewRouteCue() {
-    for (const object of this.reviewRouteCueObjects) {
-      if (object.active) object.destroy();
-    }
-    this.reviewRouteCueObjects = [];
+    this.reviewRouteCue?.clear();
     this.reviewRouteCueKey = "";
-  }
-
-  private trackReviewRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
-    this.reviewRouteCueObjects.push(object);
-    return this.track(object);
   }
 
   private reviewTargetAccent(target: Interactable) {
@@ -1872,10 +1865,9 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private drawReviewRouteCue(start: { x: number; y: number }, target: Interactable, accent: string) {
-    this.trackReviewRouteCue(this.add.rectangle(target.x, target.y, 36, 20, color(PALETTE.black), 0)
-      .setStrokeStyle(1, color(accent))
-      .setName("referral-review-route-target")
-      .setDepth(48));
+    const cue = this.reviewRouteCue ??= this.track(this.add.graphics()
+      .setName("referral-review-guide").setDepth(48));
+    cue.lineStyle(1, color(accent)).strokeRect(target.x - 18, target.y - 10, 36, 20);
     // A snapped render position can touch an inclusive collision edge even when the logical feet are clear.
     const cueStart = safeReferralPosition(start, this.roomSolids);
     const route = referralWalkRoute(cueStart, referralStationApproach(target, this.roomSolids), this.roomSolids);
@@ -1889,14 +1881,9 @@ export class ReferralVaultScene extends Phaser.Scene {
       while (segment < lengths.length - 1 && remaining > lengths[segment]) remaining -= lengths[segment++];
       if (!lengths[segment]) continue;
       const t = remaining / lengths[segment];
-      this.trackReviewRouteCue(this.add.rectangle(
-        Math.round(Phaser.Math.Linear(nodes[segment].x, nodes[segment + 1].x, t)),
-        Math.round(Phaser.Math.Linear(nodes[segment].y, nodes[segment + 1].y, t)),
-        3,
-        3,
-        color(index % 2 === 0 ? PALETTE.creamPaper : accent),
-        0.92
-      ).setName("referral-review-route-dot").setDepth(48));
+      cue.fillStyle(color(index % 2 === 0 ? PALETTE.creamPaper : accent), 0.92).fillRect(
+        Math.round(Phaser.Math.Linear(nodes[segment].x, nodes[segment + 1].x, t)) - 1,
+        Math.round(Phaser.Math.Linear(nodes[segment].y, nodes[segment + 1].y, t)) - 1, 3, 3);
     }
   }
 }

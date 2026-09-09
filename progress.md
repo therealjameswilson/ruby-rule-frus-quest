@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Referral walking-guide lifetime (2026-09-09):
+  - Active R1 guidance now reuses one Graphics object, preserving furniture-aware routing and releasing it on room exit. Fixed the QA transition race that mixed old-room routing with new-room geometry; no gameplay or save bypass.
+  - Build and all 1,382 tests pass. Full earned keyboard and simulated-touch routes reach Editor, with source-copy recovery, explicit manifest filing, carried-item Continue, physical Slip pickup and backtracking verified. No browser errors; 34-39 tracked room objects and at most one guide. Installed client native/compositor images inspected. See docs/REFERRAL_GUIDE_LIFETIME.md.
+  - Local only. Next: play the earned Editor route and assess its pacing and distinct decisions. This verifies bounded guidance and traversal, not measured FPS or whole-game fun.
+
 - Packet-reading routing (2026-09-09):
   - First packet remains guided. Later HUD objectives show packet markings; terminal signs explain public/protected lanes. Optional Marcus interaction explains the current packet and restores its route hint. A rejected send also provides a hint without dropping the batch; the existing penalty remains. Hints save per packet and do not award progress.
   - All 1,382 tests and build pass (251 modules / 2,794.82 KB). Full earned keyboard/touch routes verify optional help, hint Continue/expiry, wrong-network recovery and vault completion to Referral with no console errors. Screenshot review caught touch buttons covering Marcus's help; Network now opts into dialogue above the controls, with actual text/frame bounds tested. See docs/ROUTING_PACKET_JUDGMENT.md. Installed client debug rendering and real-route native captures inspected.
