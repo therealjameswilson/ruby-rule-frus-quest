@@ -37,6 +37,13 @@ try {
     await page.keyboard.up(name); await page.waitForTimeout(100);
   };
   const action = async () => mobile ? tap(225, 205) : key("Space");
+  const pushUp = async () => {
+    if (mobile) {
+      await touch([[40,178]], "touchStart"); await touch([[40,152]], "touchMove");
+      await page.waitForTimeout(600); await touch([], "touchEnd");
+    } else await key("ArrowUp",600);
+    await page.waitForTimeout(100);
+  };
   const move = async (x, y) => {
     for (let tries = 0; tries < 65; tries += 1) {
       const p = (await state()).player, dx = x - p.x, dy = y - p.y;
@@ -65,7 +72,7 @@ try {
     await page.goto(`${url}?text=full`);
     await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === "TapToStartScene");
     if (mobile) await tap(86, 154); else await key("Enter");
-    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === "EndingScene");
+    await page.waitForFunction(() => ["EndingScene", "TrueEndingScene"].includes(JSON.parse(window.render_game_to_text()).scene));
     await page.waitForTimeout(1300);
   };
   await resume();
@@ -73,26 +80,32 @@ try {
   assert.equal(initial.buckramBinding.completed, 0);
   assert.equal(initial.sceneProgress.blackVaultBossCleared, 1);
   const points = initial.documentPoints;
-  await move(128, 209); await action();
+  await move(128, 209); await pushUp();
+  assert((await state()).player.y >= 204, "The inbox must be solid at the player's feet");
+  await action();
   assert.equal((await state()).buckramBinding.status, "carried");
-  await move(42, 124); await action();
+  await move(78, 214); await move(78, 124); await move(42, 124); await pushUp();
+  assert((await state()).player.y >= 114, "The front bench must stop walking through its surface");
+  assert.equal((await state()).buckramBinding.status, "carried");
+  await shot("bench-collision"); await action();
   assert.equal((await state()).buckramBinding.completed, 1);
   assert.equal((await state()).documentPoints, points + 8);
   await shot("front-filed");
 
-  await move(42, 164); await action();
+  const afterFrontReliability = (await state()).reliability;
+  await move(78, 124); await move(78, 184); await move(42, 184); await action();
   assert.equal((await state()).mode, "choice");
   assert.equal((await state()).buckramBinding.status, "routed");
   await action(); // The initial page-number route is deliberately wrong.
   assert.equal((await state()).buckramBinding.completed, 1);
-  assert.equal((await state()).reliability, initial.reliability);
+  assert.equal((await state()).reliability, afterFrontReliability);
   await shot("index-retry");
   if (mobile) { await tap(184, 126); await tap(184, 126); }
   else { await key("ArrowRight"); await action(); }
   assert.equal((await state()).buckramBinding.completed, 2);
   assert.equal((await state()).documentPoints, points + 16);
 
-  await move(128, 111); await action();
+  await move(78, 184); await move(78, 124); await move(128, 124); await move(128, 111); await action();
   let current = await shot("human-seal");
   assert.equal(current.mode, "choice");
   assert.equal(current.buckramBinding.completed, 2);
@@ -136,22 +149,22 @@ try {
   assert.equal(current.documentPoints, points + 22);
   await shot("human-sealed");
 
-  await move(214, 119); await action();
+  await move(128, 126); await move(214, 126); await move(214, 119); await action();
   assert.equal((await state()).buckramBinding.completed, 4);
   await shot("gpo-filed");
-  await move(214, 164); await action();
+  await move(178, 126); await move(178, 184); await move(214, 184); await action();
   current = await shot("press-ready");
   assert.equal(current.buckramBinding.completed, 5);
   assert.equal(current.finalGateCertification.status, "ready");
   assert.equal(current.documentPoints, points + 40);
   assert.notEqual(current.finalGateCertification.status, "published");
   await context.storageState({ path: `${out}/earned-press-storage.json` });
-  await move(128, 164); await action();
+  await move(178, 184); await move(178, 174); await move(128, 174); await move(128, 164); await action();
   await page.waitForTimeout(1700);
   current = await shot("published");
   assert.equal(current.finalGateCertification.status, "published");
   assert.equal(current.documentPoints, points + 40);
-  assert.equal(current.reliability, initial.reliability);
+  assert.equal(current.reliability, Math.min(100, initial.reliability + 15));
   const completionStats = current.completionStats;
   await context.storageState({ path: `${out}/earned-publication-storage.json` });
   await resume();

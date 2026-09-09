@@ -81,7 +81,8 @@ try {
     assert.equal(s.completionStats.completed, initial.completionStats.completed);
     assert.equal(s.completionStats.completedAt, initial.completionStats.completedAt);
   };
-  await move(80, 205); await move(20, 205);
+  // The bindery press is solid; use its west aisle instead of crossing its top.
+  await move(78, 126); await move(80, 205); await move(20, 205);
   const doorway = await shot("doorway");
   if (baseline) {
     await action(); await action();
@@ -101,7 +102,7 @@ try {
     assert(!vault.visibleThreats.some(threat => threat.status === "blocking" && threat.hp > 0));
     await move(128, 214); await action(); await scene("SilentReadScene");
     unchanged(await shot("proofing-return"));
-    await move(215, 128); await move(246, 128, "BlackVaultLairScene"); await scene("BlackVaultLairScene");
+    await move(228, 202); await move(228, 128); await move(246, 128, "BlackVaultLairScene"); await scene("BlackVaultLairScene");
     await move(128, 134); await action();
     for (let step = 0; step < 8 && (await state()).scene !== "EndingScene"; step++) await action();
     await scene("EndingScene");

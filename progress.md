@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical bindery finale (2026-09-08):
+  - Replaced floating workstation panels with solid native-tile benches, a solid press and inbox, front-edge sorting, quiet four-variant stone floor and furniture-aware floor guidance. Inbox shifts south four pixels for a 32px corridor; all station locations/decisions and +40 packet points stay intact. Large assembly sheet remains in the ceremony, not the walking floor. Legacy blocked positions recover with the existing helper; no schema change.
+  - Full earned keyboard/touch finales publish at 241 points and survive Continue. Real movement probes stop at the inbox/bench without losing a packet. Corrected obsolete QA assumptions about packet reliability healing and walking through furniture; no gameplay requirement bypass. Build passes (250 modules / 2,788.75 KB), 187 files / 1,365 tests pass. Final contrast-only floor change inspected through the installed client's actual native/compositor rendering. Documentation: docs/BINDERY_FURNITURE.md.
+  - Overall goal remains active. Local only. Next: novice-paced full adventure and whether the post-boss lap feels satisfying, not merely functional. Real Safari/performance unverified.
+  - Final pending-certification touch round trip (bindery -> cleared vault -> proofing -> bindery -> Continue) passes with all workflow/inventory/points/boss counts unchanged. Updated the QA's old direct path to use open aisles in both the new bindery and previously furnished proof room. Fourteen scene/pause/map checks pass with no browser errors.
+
 - Honest Cloud spread warnings (2026-09-08):
   - Found a real aim mismatch: spread targets originated at boss feet but bolts launched 10 px above. One shared muzzle-based endpoint calculation now drives both warning and shots; Cloud shows all three dotted lanes, and aim remains locked when the player moves. Existing Ascendant spread shares the corrected origin. HP/damage/speed/timing, saves and rewards unchanged.
   - Build passes (249 modules / 2,787.41 KB main JS); 186 files / 1,361 tests pass. Earned-save touch fight reaches bindery and Continue in 84.432 seconds with one retry, no missed deadline or changed documents/points. Installed client actual boss-entry native/compositor inspected. Actual Cloud warning screenshot shows three lanes from the cyan-marked next perch. Details: docs/DANNE_CLOUD_LANES.md.
