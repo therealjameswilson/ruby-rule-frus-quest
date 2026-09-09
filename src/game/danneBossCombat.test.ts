@@ -1,7 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { advanceBossBolt, aimReturnedBossBolt, createBossBoltMotion, DANNE_BOSS_RETURN } from "./danneBossCombat";
+import { advanceBossBolt, aimReturnedBossBolt, bossSpreadTargets, createBossBoltMotion, DANNE_BOSS_RETURN, DANNE_CLOUD_SPREAD } from "./danneBossCombat";
 
 describe("DANN-E boss projectile motion", () => {
+  it.each([{ x: 128, y: 170 }, { x: 64, y: 100 }, { x: 180, y: 80 }, { x: 128, y: 50 }])(
+    "keeps spread headings symmetric around the actual muzzle-to-target ray ($x,$y)", (target) => {
+      const from = { x: 128, y: 118 };
+      const endpoints = bossSpreadTargets(from, target, DANNE_CLOUD_SPREAD);
+      const aim = Math.atan2(target.y - 108, target.x - 128);
+      endpoints.forEach((endpoint, index) => {
+        const bolt = createBossBoltMotion(from, endpoint, 64);
+        expect(bolt.vx).toBeCloseTo(Math.cos(aim + DANNE_CLOUD_SPREAD[index]) * 64, 8);
+        expect(bolt.vy).toBeCloseTo(Math.sin(aim + DANNE_CLOUD_SPREAD[index]) * 64, 8);
+        expect(Math.hypot(bolt.vx, bolt.vy)).toBeCloseTo(64, 8);
+      });
+    }
+  );
+
   it.each([30, 60, 120, 144, 240])("travels at the same speed at %i fps without rounding away motion", (fps) => {
     const bolt = createBossBoltMotion({ x: 100, y: 100 }, { x: 140, y: 120 }, 50);
     for (let frame = 0; frame < fps; frame += 1) advanceBossBolt(bolt, 1000 / fps);

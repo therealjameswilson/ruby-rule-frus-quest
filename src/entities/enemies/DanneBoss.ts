@@ -13,7 +13,9 @@ import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts
 import {
   advanceBossBolt,
   aimReturnedBossBolt,
+  bossSpreadTargets,
   createBossBoltMotion,
+  DANNE_CLOUD_SPREAD,
   DANNE_BOSS_DAMAGE,
   DANNE_BOSS_ENTRY_GRACE_MS,
   DANNE_BOSS_RECOVERY_MS,
@@ -278,6 +280,9 @@ export class DanneBoss {
           label: this.attackTelegraph.label,
           msRemaining: danneTelegraphRemainingMs(this.attackTelegraph.resolvesAt, this.combatPausedAt ?? this.scene.time.now),
           target: { ...this.attackTelegraph.target },
+          lanes: this.attackTelegraph.phase === "cloud"
+            ? bossSpreadTargets(this.attackTelegraph.source, this.attackTelegraph.target, DANNE_CLOUD_SPREAD)
+            : [{ ...this.attackTelegraph.target }],
           destination: this.attackTelegraph.destination ? { ...this.attackTelegraph.destination } : null
         }
       : null;
@@ -452,13 +457,13 @@ export class DanneBoss {
       target: { ...target },
       destination: destination ? { ...destination } : null,
       cooldownMs: spec.cooldownMs,
-      markers: this.createAttackTelegraphMarkers(source, target, destination)
+      markers: this.createAttackTelegraphMarkers(source, target, destination, phase)
     };
     this.sprite.setTint(color(PALETTE.classNetRed));
     if (!this.announcedTelegraphs.has(phase)) {
       this.announcedTelegraphs.add(phase);
       setLatestMessage(destination
-        ? "DANN-E marks a Cloud Shift destination. Leave the red target before the spread fires."
+        ? "Cyan corners mark DANN-E's next perch. Three dotted lanes warn where the Ego spread will fly."
         : "Dodge the red target, or face the Ego bolt and swing your tool to return it.");
     }
     retroAudio.blip();
@@ -487,7 +492,7 @@ export class DanneBoss {
         // Leave one stationary counterattack window between Cloud Shifts.
         this.nextTeleportAt = timeMs + this.cooldown(telegraph.cooldownMs + 1800);
       }
-      this.fireSpreadToward(this.position, telegraph.target, this.speed(64), [-0.28, 0, 0.28]);
+      this.fireSpreadToward(this.position, telegraph.target, this.speed(64), DANNE_CLOUD_SPREAD);
     } else {
       this.fireSpreadToward(this.position, telegraph.target, this.speed(72), [-0.5, -0.18, 0.18, 0.5]);
       for (const corner of DANNE_CLOUD_WAYPOINTS) this.fireBolt(corner, telegraph.target, this.speed(48));
@@ -495,7 +500,7 @@ export class DanneBoss {
     this.nextBoltAt = timeMs + this.cooldown(telegraph.cooldownMs);
   }
 
-  private createAttackTelegraphMarkers(source: Position, target: Position, destination: Position | null) {
+  private createAttackTelegraphMarkers(source: Position, target: Position, destination: Position | null, phase: DanneAttackPhase) {
     const markers: Phaser.GameObjects.Rectangle[] = [];
     const add = (x: number, y: number, width: number, height: number, fill: string) => {
       const marker = this.scene.add.rectangle(snapPixel(x), snapPixel(y), width, height, color(fill), 0.95)
@@ -515,15 +520,18 @@ export class DanneBoss {
 
     bracket(target, PALETTE.classNetRed, 10);
     if (destination) bracket(destination, PALETTE.terminalCyan, 14);
-    for (let step = 1; step <= 6; step += 1) {
-      const ratio = step / 7;
-      add(
-        source.x + (target.x - source.x) * ratio,
-        source.y - 10 + (target.y - (source.y - 10)) * ratio,
-        2,
-        2,
-        step % 2 === 0 ? PALETTE.goldStamp : PALETTE.classNetRed
-      );
+    const lanes = phase === "cloud" ? bossSpreadTargets(source, target, DANNE_CLOUD_SPREAD) : [target];
+    for (const endpoint of lanes) {
+      for (let step = 1; step <= 6; step += 1) {
+        const ratio = step / 7;
+        add(
+          source.x + (endpoint.x - source.x) * ratio,
+          source.y - 10 + (endpoint.y - (source.y - 10)) * ratio,
+          2,
+          2,
+          step % 2 === 0 ? PALETTE.goldStamp : PALETTE.classNetRed
+        );
+      }
     }
     add(source.x, source.y - 10, 5, 5, PALETTE.buckramHighlight);
     return markers;
@@ -777,13 +785,8 @@ export class DanneBoss {
   }
 
   private fireSpreadToward(from: Position, target: Position, speed: number, angleOffsets: readonly number[]) {
-    const baseAngle = Phaser.Math.Angle.Between(from.x, from.y, target.x, target.y);
-    for (const offset of angleOffsets) {
-      const target = {
-        x: from.x + Math.cos(baseAngle + offset) * 48,
-        y: from.y + Math.sin(baseAngle + offset) * 48
-      };
-      this.fireBolt(from, target, speed);
+    for (const endpoint of bossSpreadTargets(from, target, angleOffsets)) {
+      this.fireBolt(from, endpoint, speed);
     }
   }
 

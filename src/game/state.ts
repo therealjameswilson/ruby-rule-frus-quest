@@ -162,6 +162,7 @@ interface VisibleThreat {
     label: string;
     msRemaining: number;
     target: Position;
+    lanes?: Position[];
     destination: Position | null;
   } | null;
   roomClear?: {

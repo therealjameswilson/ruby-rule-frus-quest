@@ -82,7 +82,7 @@ interface BossInternals {
   offerShortcut(reason: string): void;
   clockContainer: Visual;
   shortcutChoice: { active: boolean; choose(key: string): void };
-  bolts: Array<Position & { expiresAt: number; sprite: Visual; returned: boolean }>;
+  bolts: Array<Position & { vx: number; vy: number; expiresAt: number; sprite: Visual; returned: boolean }>;
   retryChoice: { active: boolean; choose(key: string): void };
 }
 
@@ -522,6 +522,25 @@ describe("DANN-E final-review combat", () => {
     internals.updateAttackTelegraph(4500);
     internals.startAttackTelegraph(6500, "cloud");
     expect(boss.readout().telegraph?.kind).toBe("cloud_shift");
+  });
+
+  it("fires all three Cloud bolts along their locked warning lanes even after the player moves", () => {
+    const { scene, player, boss, internals } = fixture("cloud");
+    internals.startAttackTelegraph(1000, "cloud");
+    const warning = boss.readout().telegraph!;
+    expect(warning.lanes).toHaveLength(3);
+    player.setPosition(180, 200);
+    expect(boss.readout().telegraph?.target).toEqual(warning.target);
+    scene.time.now = 1800;
+    internals.updateAttackTelegraph(1800);
+    expect(internals.bolts).toHaveLength(3);
+    internals.bolts.forEach((bolt, index) => {
+      const endpoint = warning.lanes[index];
+      const dx = endpoint.x - bolt.x;
+      const dy = endpoint.y - bolt.y;
+      expect(bolt.vx * dy - bolt.vy * dx).toBeCloseTo(0, 7);
+      expect(bolt.vx * dx + bolt.vy * dy).toBeGreaterThan(0);
+    });
   });
 
   it("keeps the clock out of the shortcut choice and restores it on rejection", () => {

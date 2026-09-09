@@ -46,6 +46,15 @@ try{
     if(!b){await page.waitForTimeout(100);continue;}
     if(!phases.has(b.enemyState)){
       phases.add(b.enemyState);await shot(`phase-${b.enemyState}`);
+      if(b.enemyState==='cloud' && process.argv.includes('--cloud-warning')) {
+        await page.waitForFunction(()=>{
+          const s=JSON.parse(window.render_game_to_text()),b=s.visibleThreats.find(t=>t.bossCombat);
+          return b?.telegraph?.kind==='cloud_shift' && b.telegraph.msRemaining>300;
+        },{},{timeout:10000,polling:'raf'});
+        const warning=await shot('cloud-warning'),lanes=boss(warning).telegraph.lanes;
+        assert.equal(lanes.length,3,'Cloud warns about every spread lane');
+        assert.equal(new Set(lanes.map(p=>`${p.x},${p.y}`)).size,3);
+      }
       if(b.enemyState==='swarm' && process.argv.includes('--disperse')) {
         const initial=await state(),prior=boss(initial).bossCombat.minisDispersed??0;
         await move(128,174);await direction('ArrowUp',25);

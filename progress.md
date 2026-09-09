@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Honest Cloud spread warnings (2026-09-08):
+  - Found a real aim mismatch: spread targets originated at boss feet but bolts launched 10 px above. One shared muzzle-based endpoint calculation now drives both warning and shots; Cloud shows all three dotted lanes, and aim remains locked when the player moves. Existing Ascendant spread shares the corrected origin. HP/damage/speed/timing, saves and rewards unchanged.
+  - Build passes (249 modules / 2,787.41 KB main JS); 186 files / 1,361 tests pass. Earned-save touch fight reaches bindery and Continue in 84.432 seconds with one retry, no missed deadline or changed documents/points. Installed client actual boss-entry native/compositor inspected. Actual Cloud warning screenshot shows three lanes from the cyan-marked next perch. Details: docs/DANNE_CLOUD_LANES.md.
+  - Overall adventure goal remains active. This corrects misleading information, not a proven pacing cure: investigate retreat/repositioning and novice understanding of the counter window next. Local only, no real-iPhone certification.
+  - Final keyboard fight and Continue pass too (76.564 seconds, one Cloud retry, unchanged documents/points, no missed deadline). Fourteen scene/pause/map checks pass; no browser errors in the full fights or scene checks.
+
 - Dispersible Black Vault satellites (2026-09-08):
   - Red Pencil active swings now disperse mini-DANN-Es; other owned weapons stun for 650 ms. Counters precede contact, stunned minis do not fire, pause preserves stun, and initial orbits are distinct. Feet-based contact avoids damage across empty vertical space. No rewards, core damage, publication bypass or save migration from dispersal.
   - Live keyboard and 375x667 simulated-touch replays clear all four. Touch reaches the bindery after one Cloud retry, with documents/points unchanged, no missed deadline, and successful Continue. Build passes (249 modules / 2,787.13 KB main JS); 186 files / 1,356 tests pass. Installed client vault-entry native/compositor captures inspected. Evidence and reproduction: docs/DANNE_SWARM_COUNTER.md.
