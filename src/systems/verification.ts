@@ -24,9 +24,13 @@ export class ChoicePrompt {
   private readonly optionObjects: Phaser.GameObjects.GameObject[] = [];
   private options: ChoiceOption[] = [];
   private onChoose?: ChoiceCallback;
+  private readonly settleMs: number;
+  private readyAt = 0;
+  private inputArmed = true;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, options: { settleMs?: number } = {}) {
     this.scene = scene;
+    this.settleMs = Math.max(0, options.settleMs ?? 0);
     const dim = scene.add.rectangle(128, 120, 256, 240, color(PALETTE.black), 0.65);
     this.box = scene.add.rectangle(128, 120, 238, 156, color(PALETTE.black), 0.98);
     this.border = scene.add.rectangle(128, 120, 238, 156).setStrokeStyle(1, color(PALETTE.terminalCyan));
@@ -51,6 +55,8 @@ export class ChoicePrompt {
   }
 
   show(title: string, options: ChoiceOption[], onChoose: ChoiceCallback, contextFontSize: 6 | 8 = 6) {
+    this.readyAt = this.scene.time.now + this.settleMs;
+    this.inputArmed = this.settleMs === 0;
     this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.options = options;
     this.onChoose = onChoose;
@@ -88,6 +94,14 @@ export class ChoicePrompt {
   updateInput() {
     if (!this.active) return;
     const input = getInput();
+    if (!this.inputArmed) {
+      // A combat press must be released before it can become a menu choice.
+      const pressed = input.a || input.b || input.aJustPressed || input.bJustPressed
+        || input.confirmJustPressed || input.cancelJustPressed || input.choiceAJustPressed
+        || input.choiceBJustPressed || input.choiceCJustPressed || input.choiceDJustPressed;
+      if (this.scene.time.now >= this.readyAt && !pressed) this.inputArmed = true;
+      return;
+    }
     if (input.aJustPressed || input.confirmJustPressed || input.choiceAJustPressed) this.choose("A");
     else if (input.bJustPressed || input.cancelJustPressed || input.choiceBJustPressed) this.choose("B");
     else if (input.choiceCJustPressed) this.choose("C");
@@ -100,7 +114,7 @@ export class ChoicePrompt {
   }
 
   private choose(key: string) {
-    if (!this.active) return;
+    if (!this.active || !this.inputArmed || this.scene.time.now < this.readyAt) return;
     const option = this.options.find((item) => item.key === key);
     if (!option) return;
     retroAudio.confirm();

@@ -190,7 +190,7 @@ export class DanneBoss {
     const animKey = danneAnimKey(this.spriteKey, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.shortcutChoice = new ChoicePrompt(scene);
-    this.retryChoice = new ChoicePrompt(scene);
+    this.retryChoice = new ChoicePrompt(scene, { settleMs: 300 });
     const clockBg = scene.add.rectangle(128, 46, 238, 14, color(PALETTE.black), 0.98)
       .setScrollFactor(0);
     this.clockFill = scene.add.rectangle(12, 51, 1, 2, color(PALETTE.goldStamp), 0.9)

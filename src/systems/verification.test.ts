@@ -1,0 +1,98 @@
+import type Phaser from "phaser";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ChoicePrompt } from "./verification";
+import { bindPointerDown } from "../input/InputState";
+
+const controls = vi.hoisted(() => ({ a: false, b: false, aJustPressed: false, bJustPressed: false }));
+vi.mock("../input/InputState", () => ({ getInput: () => controls, bindPointerDown: vi.fn() }));
+vi.mock("./audio", () => ({ retroAudio: { confirm: vi.fn() } }));
+vi.mock("../game/state", () => ({ clearChoiceState: vi.fn(), setChoiceState: vi.fn(), setLatestMessage: vi.fn() }));
+vi.mock("phaser", () => ({ default: { Display: { Color: { HexStringToColor: () => ({ color: 0 }) } } } }));
+
+class Visual {
+  visible = false;
+  setStrokeStyle() { return this; }
+  setDepth() { return this; }
+  setScrollFactor() { return this; }
+  setVisible(visible: boolean) { this.visible = visible; return this; }
+  setPosition() { return this; }
+  setSize() { return this; }
+  setFontSize() { return this; }
+  setText() { return this; }
+  add() { return this; }
+  destroy() {}
+}
+
+function fixture(settleMs = 300) {
+  const clock = { now: 1000 };
+  const scene = {
+    time: clock,
+    events: { emit: vi.fn() },
+    add: { rectangle: () => new Visual(), text: () => new Visual(), container: () => new Visual() }
+  } as unknown as Phaser.Scene;
+  const prompt = new ChoicePrompt(scene, { settleMs });
+  const callback = vi.fn();
+  const show = () => prompt.show("Review interrupted.", [
+    { key: "A", label: "Retry", value: "retry" },
+    { key: "B", label: "Leave", value: "leave" }
+  ], callback);
+  show();
+  return { prompt, callback, clock, show };
+}
+
+describe("choice transition input guard", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Object.assign(controls, { a: false, b: false, aJustPressed: false, bJustPressed: false });
+  });
+
+  it("does not interpret the combat B edge as an immediate retreat", () => {
+    controls.b = controls.bJustPressed = true;
+    const { prompt, callback } = fixture();
+    prompt.updateInput();
+    expect(callback).not.toHaveBeenCalled();
+    expect(prompt.active).toBe(true);
+  });
+
+  it("requires release after settling, then accepts a fresh deliberate press", () => {
+    controls.b = controls.bJustPressed = true;
+    const { prompt, callback, clock } = fixture();
+    clock.now += 1000;
+    prompt.updateInput();
+    expect(callback).not.toHaveBeenCalled();
+    controls.b = controls.bJustPressed = false;
+    prompt.updateInput();
+    controls.a = controls.aJustPressed = true;
+    prompt.updateInput();
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({ value: "retry" }));
+  });
+
+  it("leaves ordinary existing choices immediate", () => {
+    controls.b = controls.bJustPressed = true;
+    const { prompt, callback } = fixture(0);
+    prompt.updateInput();
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({ value: "leave" }));
+  });
+
+  it("guards pointer choices too, but allows deliberate retreat after neutral input", () => {
+    const { prompt, callback, clock } = fixture();
+    const clickLeave = vi.mocked(bindPointerDown).mock.calls[2][1] as () => void;
+    clickLeave();
+    expect(callback).not.toHaveBeenCalled();
+    clock.now += 300;
+    prompt.updateInput();
+    clickLeave();
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({ value: "leave" }));
+  });
+
+  it("rearms the guard every time the prompt is shown", () => {
+    const { prompt, callback, clock, show } = fixture();
+    clock.now += 300;
+    prompt.updateInput();
+    prompt.hide();
+    show();
+    controls.b = controls.bJustPressed = true;
+    prompt.updateInput();
+    expect(callback).not.toHaveBeenCalled();
+  });
+});

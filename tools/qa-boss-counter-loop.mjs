@@ -42,6 +42,25 @@ try{
    assert.equal((await state()).playerCombat.weapon.swingId,intro.playerCombat.weapon.swingId);
  }
  await page.waitForFunction(()=>{const s=JSON.parse(window.render_game_to_text());return s.mode==='explore'&&s.visibleThreats.some(t=>t.enemyState==='colossus');});await page.waitForTimeout(2400);
+ if(process.argv.includes('--retry-guard')) {
+   await move(128,130);
+   if(mobile)await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[await point(174,216)]});
+   else await page.keyboard.down('x');
+   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).visibleThreats.some(t=>t.bossCombat?.retryAvailable),{},{timeout:90000});
+   await page.waitForTimeout(500);
+   const interrupted=await shot('retry-held-input');
+   assert(boss(interrupted)?.bossCombat.retryAvailable,'Held combat input must not choose retreat');
+   if(mobile)await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+   else await page.keyboard.up('x');
+   await page.waitForTimeout(100);
+   await press();
+   await page.waitForFunction(()=>{const s=JSON.parse(window.render_game_to_text());return s.mode==='explore'&&s.visibleThreats.some(t=>t.bossCombat&&!t.bossCombat.retryAvailable);});
+   const retried=await shot('retry-deliberate');
+   assert.equal(boss(retried).enemyState,boss(interrupted).enemyState);
+   assert.deepEqual(retried.documentCandidates,interrupted.documentCandidates);
+   assert.equal(retried.documentPoints,interrupted.documentPoints);
+   assert(retried.reliability>0);
+ }
  await move(128,136);await direction('ArrowUp',25);await shot('core-approach');
  for(let i=0;i<3;i++){
    const before=boss(await state());await press('x');await page.waitForTimeout(180);const after=boss(await state());

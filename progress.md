@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Boss retry input guard (2026-09-09):
+  - Reproduced the combat-B-to-Leave hazard in the actual ChoicePrompt: two focused tests failed before the fix. Boss retry now opts into 300 ms settling plus neutral action input before a fresh choice. Pointer rows share the guard; ordinary choices remain immediate.
+  - Build passes (255 modules / 2,802.43 KB); final full suite 195 files / 1,452 tests passes. Held-touch B through real lethal damage leaves the menu open; release + A retries the same phase with records/points intact. Full fight then reaches bindery/Continue, no errors or duplicate rewards. Deadline missed after intentional damage/retries remains recorded; reliability 94. Native/mobile and installed-client captures inspected. See docs/BOSS_RETRY_INPUT_GUARD.md.
+  - The later Cloud menu saw two automated A attempts on one retry because the first was early; QA retry count currently counts attempts, not distinct defeats. Local only. Next: evaluate first-player difficulty and deadline learning margin with this interruption bug removed; no full-game fun or real-iPhone claim.
+
 - Live boss guidance (2026-09-09):
   - HUD now follows real core openings, Cloud lane warnings and remaining Swarm satellites. Short prompts survive the existing HUD clamp: PENCIL THE CORE / DODGE LANES / PENCIL MINIS / FACE + SWING. No extra timers, gameplay balance or save changes.
   - Build passes (255 modules / 2,801.91 KB); 194 files / 1,447 tests pass. Final earned touch run clears all phases in 59.899 clock seconds with zero retries, seven fresh openings, then bindery/Continue without errors or duplicated rewards. Actual opening screenshot inspected; installed client also run. See docs/LIVE_BOSS_GUIDANCE.md.
