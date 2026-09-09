@@ -3,6 +3,16 @@ import type { Direction } from "../game/constants";
 import type { Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "./pixelPerfect";
 
+// Keep the player's movement feel in one testable place. The short three-frame
+// ramp softens starts and direction changes without making the character feel
+// heavy, while the stronger release rate stops the player within two frames so
+// interaction and collision positioning remain precise on the 256x240 grid.
+export const PLAYER_MOVEMENT_TUNING = {
+  speed: 58,
+  acceleration: 1200,
+  deceleration: 1800
+} as const;
+
 export function approach(current: number, target: number, maxDelta: number) {
   if (current < target) return Math.min(current + maxDelta, target);
   if (current > target) return Math.max(current - maxDelta, target);

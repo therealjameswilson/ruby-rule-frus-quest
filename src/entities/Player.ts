@@ -12,7 +12,7 @@ import { PLAYER_HURT_MS, PLAYER_IFRAME_MS, toHitboxReadout } from "../systems/co
 import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
-import { approach, frameDeltaSeconds, resolveFacing, resolveMovementVector, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
+import { approach, frameDeltaSeconds, PLAYER_MOVEMENT_TUNING, resolveFacing, resolveMovementVector, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
 import { buildWeaponHitbox, WEAPON_VFX_ASSET, WeaponStateController, weaponTiming } from "../systems/weaponState";
 import { CombatClock } from "../systems/combatClock";
 
@@ -75,15 +75,9 @@ interface ActionColors {
 
 export class Player {
   readonly sprite: Phaser.GameObjects.Sprite;
-  private readonly speed = 58;
-  // ALTTP overworld walking is essentially instantaneous: full speed on the
-  // first press, a hard stop on release. The previous 720/900 rates left a
-  // ~5-frame ease-in and a ~4-frame glide (~2px of drift after key release)
-  // that read as floaty. These rates reach full speed in ~1.5 frames and stop
-  // in ~1 frame, keeping the sub-pixel smoothing without the sluggish ramp or
-  // the post-release slide.
-  private readonly acceleration = 2300;
-  private readonly deceleration = 4000;
+  private readonly speed = PLAYER_MOVEMENT_TUNING.speed;
+  private readonly acceleration = PLAYER_MOVEMENT_TUNING.acceleration;
+  private readonly deceleration = PLAYER_MOVEMENT_TUNING.deceleration;
   private readonly cornerNudgePixels = 3;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;

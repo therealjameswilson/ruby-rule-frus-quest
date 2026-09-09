@@ -5247,3 +5247,20 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   objective advances to `Pick up the Assignment Memo.`
 - Verification: full Vitest suite `604/604`; production build passes (known
   Vite large-chunk warning only).
+
+## 2026-09-09 — Smoother main-player movement
+
+- Replaced the near-instant two-frame acceleration and one-frame hard stop with
+  a short three-frame acceleration ramp and two-frame release ramp.
+- Kept the established 58 px/s top speed, normalised diagonal speed, sticky
+  facing, pixel-snapped rendering, collision bounds, and attack slowdown.
+- Centralised the movement constants in `PLAYER_MOVEMENT_TUNING` so the live
+  controller and numerical regression tests cannot silently diverge.
+- Added checks for eased starts, sub-pixel stopping drift, and smooth direction
+  reversal; the complete suite passes (195 files / 1,458 tests).
+- Production TypeScript/build passes. The required automated gameplay client
+  completed right/left/diagonal, boundary, and combat movement with no console
+  or page errors; its
+  direct WebGL canvas capture was black, so the same local build was visually
+  inspected in Chrome, where the Office and player rendered correctly before
+  and after movement.
