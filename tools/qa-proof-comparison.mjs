@@ -17,7 +17,7 @@ async function run(mobile) {
   page.on('pageerror', e=>errors.push(String(e)));
   page.on('console', m=>{if(m.type()==='error')errors.push(m.text());});
   const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
-  const choice=()=>page.evaluate(()=>Boolean(window.game.scene.getScene('SilentReadScene').reviewChoice.active || window.game.scene.getScene('SilentReadScene').proofBoard.active || window.game.scene.getScene('SilentReadScene').editorialBoard.active));
+  const choice=()=>page.evaluate(()=>Boolean(window.game.scene.getScene('SilentReadScene').reviewChoice.active || window.game.scene.getScene('SilentReadScene').proofBoard.active || window.game.scene.getScene('SilentReadScene').editorialBoard.active || window.game.scene.getScene('SilentReadScene').crossReferenceBoard.active));
   async function point(x,y) {
     const b=await page.locator('canvas').first().boundingBox();
     return {x:b.x+x*b.width/256,y:b.y+y*b.height/240,id:1};
@@ -158,7 +158,38 @@ async function run(mobile) {
       if(stage.answer)assert(await choice(),'Placing file must immediately open its check');
       if(stage.id===2||stage.id===5)await resume(`resume-routed-${stage.id}`);
       if(!(await choice()))await press();
-      if(stage.id === 7) {
+      if(stage.id === 1) {
+        assert(await choice());
+        const initialCatalog=await shot('cross-reference-open');
+        await context.storageState({path:`${out}/pending-catalog-storage.json`});
+        const paused=s=>({player:s.player,combat:s.playerCombat,threats:s.visibleThreats,points:s.documentPoints,reliability:s.reliability});
+        await page.waitForTimeout(1500);assert.deepEqual(paused(await state()),paused(initialCatalog));
+        async function click(x,y){if(mobile)await touch(x,y);else{const p=await point(x,y);await page.mouse.click(p.x,p.y,{delay:45});}await page.waitForTimeout(180);}
+        await click(128,182);assert(await choice());
+        assert.equal((await state()).sceneProgress.silentReadCrossReferenceDraft,undefined);
+        await click(54,120);await click(128,182);
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+        assert.equal((await state()).documentPoints,initialCatalog.documentPoints);
+        await shot('cross-reference-wrong-type');
+        await click(202,120);await click(128,182);
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+        await press('KeyX');await resume('cross-reference-wrong-draft-continue');await press();
+        assert.equal((await state()).choice.options[2].value,'pinned');
+        if(mobile)await click(102,120);else{await page.keyboard.press('ArrowUp',{delay:50});await press();}
+        assert.equal((await state()).sceneProgress.silentReadCrossReferenceDraft,2);
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+        await shot('cross-reference-correct-unfiled');
+        await press('KeyX');
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2,'Touch cancel must not file');
+        assert.equal((await state()).playerCombat.weapon.swingId,initialCatalog.playerCombat.weapon.swingId);
+        await resume('cross-reference-correct-draft-continue');await press();
+        assert.equal((await state()).choice.options[1].value,'pinned');
+        assert.equal((await state()).sceneProgress.silentReadReviewStatus,2);
+        await click(128,182);
+        assert.equal((await state()).sceneProgress['silentReadDecision_public-crossref'],1);
+        assert.equal((await state()).documentPoints,initialCatalog.documentPoints);
+        await shot('cross-reference-filed-awaits-stamp');
+      } else if(stage.id === 7) {
         const initialProof=await shot('proof-comparison-open');
         await context.storageState({path:`${out}/pending-proof-storage.json`});
         const paused=s=>({player:s.player,combat:s.playerCombat,threats:s.visibleThreats,points:s.documentPoints,reliability:s.reliability});

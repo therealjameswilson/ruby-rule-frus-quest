@@ -27,6 +27,7 @@ import { dispatchAisleOpen } from "../game/referralDispatch";
 import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
 import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
+import { CROSS_REFERENCE_TITLE } from "../game/crossReferenceCatalog";
 import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editorialRepair";
 import { WITHHOLDING_CHRONOLOGY_TITLE } from "../game/withholdingChronology";
 
@@ -258,7 +259,8 @@ export class UIScene extends Phaser.Scene {
       if (gameState.currentChoice?.title === REFERRAL_MANIFEST_TITLE) return getString("hud.reviewRoutes");
       if (gameState.currentChoice?.title === PROOF_COMPARISON_TITLE) return getString("hud.compareProof");
       if (gameState.currentChoice?.title.startsWith(BINDING_CERTIFICATION_TITLE)) return getString("hud.reviewRecord");
-      if (gameState.currentChoice?.title === SOURCE_NOTE_47_TITLE) return getString("hud.reviewRecord");
+      if (gameState.currentChoice?.title === SOURCE_NOTE_47_TITLE
+        || gameState.currentChoice?.title === CROSS_REFERENCE_TITLE) return getString("hud.reviewRecord");
       if (gameState.currentChoice?.title.startsWith(EDITORIAL_REPAIR_TITLE)
         || gameState.currentChoice?.title.startsWith(EDITORIAL_RECHECK_TITLE)) return getString("hud.reviewRecord");
       return getString("hud.chooseAnswer");

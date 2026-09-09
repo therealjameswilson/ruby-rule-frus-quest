@@ -89,6 +89,8 @@ import {
 } from "../game/silentReadReview";
 import { INTERIOR_TILES } from "../game/networkN1Tilemap";
 import { PROOF_PATROL, PROOF_STATION_POSITIONS, proofWalkRoute } from "../game/proofFurniture";
+import { crossReferenceMatches, restoreCrossReferenceDraft } from "../game/crossReferenceCatalog";
+import { CrossReferenceBoard } from "../systems/crossReferenceBoard";
 import { WORKSTATION_DESK, workstationBounds, workstationApproach, safeWorkstationPosition } from "../game/workstationGeometry";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
@@ -221,6 +223,7 @@ export class SilentReadScene extends Phaser.Scene {
   private reviewChoice!: ChoicePrompt;
   private proofBoard!: ProofComparisonBoard;
   private editorialBoard!: EditorialRepairBoard;
+  private crossReferenceBoard!: CrossReferenceBoard;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
@@ -273,12 +276,13 @@ export class SilentReadScene extends Phaser.Scene {
     this.reviewChoice = new ChoicePrompt(this);
     this.proofBoard = new ProofComparisonBoard(this);
     this.editorialBoard = new EditorialRepairBoard(this);
+    this.crossReferenceBoard = new CrossReferenceBoard(this);
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950, 61);
     this.danneLurker = new DanneLurker(this, PROOF_PATROL[0].x, PROOF_PATROL[0].y, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
-        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active,
+        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active,
       boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
       waypoints: PROOF_PATROL
     });
@@ -316,12 +320,13 @@ export class SilentReadScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
-    if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active) {
+    if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active) {
       this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
       this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
-      if (this.editorialBoard.active) this.editorialBoard.updateInput();
+      if (this.crossReferenceBoard.active) this.crossReferenceBoard.updateInput();
+      else if (this.editorialBoard.active) this.editorialBoard.updateInput();
       else if (this.proofBoard.active) this.proofBoard.updateInput();
       else this.reviewChoice.updateInput();
       return;
@@ -1116,10 +1121,14 @@ export class SilentReadScene extends Phaser.Scene {
       retroAudio.confirm();
       this.updatePhysicalVerification();
       // Placing a decision-bearing file opens its check, never answers or stamps it.
-      if (!silentReadDecision(activeFlag.id) && activeFlag.id !== "typesetter-proof") return;
+      if (!silentReadDecision(activeFlag.id) && activeFlag.id !== "typesetter-proof" && activeFlag.id !== "public-crossref") return;
     }
 
     if (activeFlag.status === "routed") {
+      if (activeFlag.id === "public-crossref") {
+        this.matchCrossReference(activeFlag, nearestStation);
+        return;
+      }
       if (activeFlag.id === "mechanical-fix") {
         this.repairVisibleBracket(activeFlag, nearestStation);
         return;
@@ -1169,6 +1178,21 @@ export class SilentReadScene extends Phaser.Scene {
     this.savePhysicalReviewProgress(flag);
     retroAudio.confirm();
     this.updatePhysicalVerification();
+  }
+
+  private matchCrossReference(flag: PhysicalFlag, station: Workstation) {
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.crossReferenceBoard.show(restoreCrossReferenceDraft(gameState.sceneProgress.silentReadCrossReferenceDraft), draft => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed") return;
+      gameState.sceneProgress.silentReadCrossReferenceDraft = restoreCrossReferenceDraft(draft);
+      saveGameNow();
+    }, draft => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed"
+        || !crossReferenceMatches(draft) || gameState.sceneProgress.silentReadCrossReferenceDraft !== draft) return;
+      gameState.sceneProgress["silentReadDecision_public-crossref"] = 1;
+      this.verifyFlag(flag, station, "CROSS-REFERENCE MATCHED");
+    });
   }
 
   private repairVisibleBracket(flag: PhysicalFlag, station: Workstation) {

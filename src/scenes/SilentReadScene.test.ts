@@ -69,6 +69,7 @@ interface ReviewInternals {
   reviewChoice: Decision;
   proofBoard: Comparison;
   editorialBoard: Bracket;
+  crossReferenceBoard: Comparison;
   toast: { show: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
   interactionPrompt: { update: ReturnType<typeof vi.fn> };
   actionHint: { setText: ReturnType<typeof vi.fn> };
@@ -102,6 +103,7 @@ function fixture(step: number, status: SilentReadReviewStatus) {
   scene.reviewChoice = new Decision();
   scene.proofBoard = new Comparison();
   scene.editorialBoard = new Bracket();
+  scene.crossReferenceBoard = new Comparison();
   scene.toast = { show: vi.fn(), update: vi.fn() };
   scene.interactionPrompt = { update: vi.fn() };
   scene.actionHint = { setText: vi.fn() };
@@ -134,12 +136,41 @@ describe("live editor and proof decisions", () => {
     expect(gameState.sceneProgress[`silentReadDecision_${flag.id}`]).toBeUndefined();
   });
 
-  it("keeps the non-decision cross-reference available for a separate check", () => {
+  it("opens a cross-reference catalog on placement without completing the review", () => {
     const { scene, flag } = fixture(1, "carried");
     scene.handlePhysicalAction();
     expect(flag.status).toBe("routed");
     expect(scene.reviewChoice.active).toBe(false);
+    expect(scene.crossReferenceBoard.active).toBe(true);
     expect(scene.applyFlagReward).not.toHaveBeenCalled();
+  });
+
+  it("persists a pinned reference but requires the matching record, filing and stamping", () => {
+    const { scene, flag } = fixture(1, "carried");
+    scene.handlePhysicalAction();
+    scene.crossReferenceBoard.onChange?.(1);
+    scene.crossReferenceBoard.onApprove?.(1);
+    expect(flag.status).toBe("routed");
+    scene.crossReferenceBoard.onApprove?.(2);
+    expect(flag.status).toBe("routed");
+    scene.crossReferenceBoard.onChange?.(2);
+    expect(gameState.sceneProgress.silentReadCrossReferenceDraft).toBe(2);
+    scene.crossReferenceBoard.active = false;
+    scene.handlePhysicalAction();
+    expect(scene.crossReferenceBoard.repairs).toBe(2);
+    expect(flag.status).toBe("routed");
+    scene.update(100, 16);
+    expect(scene.crossReferenceBoard.updateInput).toHaveBeenCalledOnce();
+    expect(scene.player.update).toHaveBeenCalledWith(16, false);
+    expect(scene.updateDanneLurker).toHaveBeenCalledWith(16, false);
+    scene.crossReferenceBoard.onApprove?.(2);
+    expect(flag.status).toBe("verified");
+    expect(scene.applyFlagReward).not.toHaveBeenCalled();
+    scene.handlePhysicalAction();
+    expect(flag.status).toBe("stamped");
+    expect(scene.applyFlagReward).toHaveBeenCalledOnce();
+    scene.crossReferenceBoard.onApprove?.(2);
+    expect(scene.applyFlagReward).toHaveBeenCalledOnce();
   });
 
   it.each([[4, "B", "A"], [5, "A", "B"], [6, "B", "A"]] as const)("keeps decision %i unresolved until corrected and separately stamped", (step, wrong, correct) => {
