@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- DANN-E phase-boast pacing (2026-09-09):
+  - Shortened phase lines to 48 characters maximum; reading holds now run 1.8-3.2 seconds. Boss-owned A/confirm advance fixes the independent-cutscene-close race, consumes the input and cleans up pending waits on destruction.
+  - Build passed (255 modules / 2,801.66 KB); 193 files / 1,439 tests passed. Earned keyboard and simulated-touch fights finish all three phases and Continue from the bindery without errors or duplicate rewards. Keyboard: 55.561 seconds, zero retries; touch: 75.092 seconds, one retry. Manual/automatic advance, frozen reading clock and no unintended swing verified. Native/mobile and installed-client captures inspected. See docs/DANNE_BOAST_PACING.md.
+  - Local only. Remaining: simplify crowded cutscene chrome, observe first-attempt guidance and deadline learning margin. Scripted completion does not prove whole-game fun or real-iPhone performance.
+
 - Publication deadline record (2026-09-09):
   - Fixed late publication being mislabeled as within the 30-year mandate. Derived deadlineMissed survives opened/published status, and both ending record pages show a separate Met/Missed/Pending row. No new punishment, retry-clock reset, appeal reclassification or save migration.
   - Build passes (255 modules / 2,801.22 KB); 193 files / 1,436 tests pass. Earned on-time keyboard and late touch saves finish all five bindery packets, publish at 241 points and Continue without duplicated stats/rewards or browser errors. Both deadline rows inspected at native/mobile sizes. Installed client independently reopens the earned late publication. See docs/PUBLICATION_DEADLINE_RECORD.md.

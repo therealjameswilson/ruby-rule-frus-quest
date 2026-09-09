@@ -4,11 +4,21 @@ import {
   DANNE_VARIANT_BOASTS,
   DANNE_VARIANT_IDS,
   danneBoastForPhase,
+  danneBoastHoldMs,
   danneBoastsForVariantPhase,
   danneVariantBoast
 } from "./danneBoasts";
 
 describe("harmonized DANN-E boasts", () => {
+  it("keeps phase lines short with bounded reading time", () => {
+    for (const line of Object.values(DANNE_PHASE_BOASTS).flat()) {
+      expect(line.length).toBeLessThanOrEqual(48);
+      expect(danneBoastHoldMs(line)).toBeGreaterThanOrEqual(1800);
+      expect(danneBoastHoldMs(line)).toBeLessThanOrEqual(3200);
+    }
+    expect(danneBoastHoldMs("One two three four five six seven eight nine ten")).toBe(2900);
+    expect(danneBoastHoldMs("word ".repeat(100))).toBe(3200);
+  });
   it("retains all eight illustrated variants and their full catalogs", () => {
     expect(DANNE_VARIANT_IDS).toEqual([
       "prime",

@@ -334,7 +334,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
 
     if (isCutsceneActive(this)) {
-      if (input.aJustPressed) exitCutscene(this);
+      if (input.aJustPressed || input.confirmJustPressed) {
+        if (this.danneBoss?.phaseDialogueActive) this.danneBoss.advanceBoast();
+        else void exitCutscene(this);
+      }
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.reliability.update();

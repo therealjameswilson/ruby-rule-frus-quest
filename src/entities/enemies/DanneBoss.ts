@@ -9,7 +9,8 @@ import {
   type DanneAttackPhase,
   type DanneAttackTelegraphKind
 } from "../../game/danneBossTelegraph";
-import { danneBoastForPhase, type DanneBoastPhase } from "../../game/danneBoasts";
+import { danneBoastForPhase, danneBoastHoldMs, type DanneBoastPhase } from "../../game/danneBoasts";
+import { swallowNextInputFrame } from "../../input/InputState";
 import {
   advanceBossBolt,
   aimReturnedBossBolt,
@@ -109,12 +110,6 @@ function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-function wait(scene: Phaser.Scene, ms: number) {
-  return new Promise<void>((resolve) => {
-    scene.time.delayedCall(ms, () => resolve());
-  });
-}
-
 export class DanneBoss {
   readonly label = "DANN-E";
   readonly spriteKey = DANNE_BOSS_SPRITE_ASSET.key;
@@ -164,6 +159,9 @@ export class DanneBoss {
   private defeated = false;
   private disposed = false;
   private boastIndex = 0;
+  private boastVisible = false;
+  private boastReadyAt = 0;
+  private finishBoast?: () => void;
   private readonly recordedPhaseDefeats = new Set<DanneBossPhase>();
   private readonly announcedTelegraphs = new Set<DanneBossPhase>();
 
@@ -225,6 +223,14 @@ export class DanneBoss {
   }
 
   get activeMiniCount() { return this.minis.length; }
+  get phaseDialogueActive() { return this.boastVisible; }
+
+  advanceBoast() {
+    if (!this.finishBoast || this.scene.time.now < this.boastReadyAt) return false;
+    this.finishBoast();
+    swallowNextInputFrame();
+    return true;
+  }
 
   get inputLocked() {
     return this.shortcutChoice.active || this.retryChoice.active;
@@ -328,6 +334,7 @@ export class DanneBoss {
   destroy() {
     if (this.disposed) return;
     this.disposed = true;
+    this.finishBoast?.();
     this.clearAttackTelegraph();
     this.combatFeedback = null;
     this.sprite.destroy();
@@ -1001,6 +1008,7 @@ export class DanneBoss {
     portraitKey = "danne-portrait-archivist",
     overrideLine?: string
   ) {
+    this.boastVisible = true;
     const still = this.scene.textures.exists(variantKey)
       ? this.scene.add.image(GAME_WIDTH / 2, 86, variantKey).setDepth(1620).setScrollFactor(0)
       : null;
@@ -1009,18 +1017,33 @@ export class DanneBoss {
       const scale = Math.min(118 / Math.max(1, source.width ?? 1024), 88 / Math.max(1, source.height ?? 1024));
       still.setScale(scale).setAlpha(0);
     }
-    await enterCutscene(this.scene);
-    if (this.disposed) return;
-    if (still) {
-      this.scene.tweens.add({ targets: still, alpha: 1, duration: 150 });
+    try {
+      await enterCutscene(this.scene);
+      if (this.disposed) return;
+      if (still) this.scene.tweens.add({ targets: still, alpha: 1, duration: 150 });
+      retroAudio.danneBoast();
+      const line = overrideLine ?? danneBoastForPhase(boastPhase, this.boastIndex);
+      this.boastIndex += 1;
+      playLine(this.scene, line, portraitKey);
+      await new Promise<void>(resolve => {
+        let timer: Phaser.Time.TimerEvent | undefined;
+        const finish = () => {
+          if (this.finishBoast !== finish) return;
+          this.finishBoast = undefined;
+          timer?.remove(false);
+          resolve();
+        };
+        this.finishBoast = finish;
+        this.boastReadyAt = this.scene.time.now + 250;
+        timer = this.scene.time.delayedCall(danneBoastHoldMs(line), finish);
+      });
+      if (this.disposed) return;
+      await exitCutscene(this.scene);
+      swallowNextInputFrame();
+    } finally {
+      this.boastVisible = false;
+      still?.destroy();
     }
-    retroAudio.danneBoast();
-    playLine(this.scene, overrideLine ?? danneBoastForPhase(boastPhase, this.boastIndex), portraitKey);
-    this.boastIndex += 1;
-    await wait(this.scene, 1150);
-    if (this.disposed) return;
-    await exitCutscene(this.scene);
-    still?.destroy();
   }
 
   private moveBossTo(x: number, y: number) {

@@ -24,7 +24,24 @@ try{
  if(mobile)await touch(86,154);else await press('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
  await shot('entry');await move(128,144);await press();
- await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).visibleThreats.some(t=>t.enemyState==='colossus'));await page.waitForTimeout(2400);
+ if(process.argv.includes('--boast-skip')) {
+   await page.waitForFunction(()=>Boolean(window.game.scene.getScene('BlackVaultLairScene').danneBoss?.finishBoast));
+   const intro=await shot('intro-boast');
+   await page.waitForTimeout(400);
+   assert.deepEqual((await state()).player,intro.player);
+   assert.equal((await state()).sceneProgress.statutoryClockTenths,intro.sceneProgress.statutoryClockTenths);
+   await press();
+   await page.waitForFunction(()=>{const b=window.game.scene.getScene('BlackVaultLairScene').danneBoss;return b?.currentPhase==='colossus'&&Boolean(b.finishBoast);});
+   const line=await shot('colossus-boast');
+   await page.waitForTimeout(1200);
+   assert(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.phaseDialogueActive),'Readable line must outlast the old 1.15-second hold');
+   assert.deepEqual((await state()).player,line.player);
+   assert.equal((await state()).sceneProgress.statutoryClockTenths,line.sceneProgress.statutoryClockTenths);
+   await press();
+   await page.waitForFunction(()=>!window.game.scene.getScene('BlackVaultLairScene').danneBoss.phaseDialogueActive);
+   assert.equal((await state()).playerCombat.weapon.swingId,intro.playerCombat.weapon.swingId);
+ }
+ await page.waitForFunction(()=>{const s=JSON.parse(window.render_game_to_text());return s.mode==='explore'&&s.visibleThreats.some(t=>t.enemyState==='colossus');});await page.waitForTimeout(2400);
  await move(128,136);await direction('ArrowUp',25);await shot('core-approach');
  for(let i=0;i<3;i++){
    const before=boss(await state());await press('x');await page.waitForTimeout(180);const after=boss(await state());

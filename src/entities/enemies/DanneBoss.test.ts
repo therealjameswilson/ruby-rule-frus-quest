@@ -5,6 +5,7 @@ import { DANNE_BOSS_RETURN } from "../../game/danneBossCombat";
 import type { ChoiceOption, Position } from "../../game/types";
 import type { Player } from "../Player";
 import { DanneBoss, type DanneBossPhase } from "./DanneBoss";
+import { exitCutscene } from "../../systems/cutscene";
 
 vi.mock("phaser", () => {
   class Rectangle {
@@ -67,6 +68,7 @@ class Visual {
 }
 
 interface BossInternals {
+  showPhaseCutscene(key: string, phase: "intro"): Promise<void>;
   attackTelegraph: { markers: Visual[] } | null;
   hp: number;
   coreOpening: Visual;
@@ -131,6 +133,34 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
 
 describe("DANN-E final-review combat", () => {
   beforeEach(() => { vi.clearAllMocks(); resetGameState(); seedProgressForScene("BlackVaultLairScene"); });
+
+  it("advances an owned boast only once after its input guard", async () => {
+    const { scene, boss, internals } = fixture();
+    let timeout: () => void = () => {};
+    vi.spyOn(scene.time, "delayedCall").mockImplementation((_ms, callback) => { timeout = callback; });
+    const pending = internals.showPhaseCutscene("missing-art", "intro");
+    await Promise.resolve();
+    expect(boss.phaseDialogueActive).toBe(true);
+    expect(boss.advanceBoast()).toBe(false);
+    scene.time.now += 250;
+    expect(boss.advanceBoast()).toBe(true);
+    expect(boss.advanceBoast()).toBe(false);
+    timeout();
+    await pending;
+    expect(exitCutscene).toHaveBeenCalledOnce();
+    expect(boss.phaseDialogueActive).toBe(false);
+  });
+
+  it("settles a waiting boast on scene destruction without exiting another scene", async () => {
+    const { scene, boss, internals } = fixture();
+    vi.spyOn(scene.time, "delayedCall").mockImplementation(() => {});
+    const pending = internals.showPhaseCutscene("missing-art", "intro");
+    await Promise.resolve();
+    boss.destroy();
+    await pending;
+    expect(exitCutscene).not.toHaveBeenCalled();
+    expect(boss.phaseDialogueActive).toBe(false);
+  });
 
   it("spawns four distinct satellites, not an overlapping center pile", () => {
     const { boss } = fixture("swarm");
