@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Bounded Network guidance (2026-09-09):
+  - Found moving route markers continuously recreated and retained as destroyed references until room exit. N1/N2 now each reuse one Graphics guide; N2 dots sit under characters, with integer edges. No routing, rewards or save changes.
+  - Build passes (251 modules / 2,792.22 KB), all 1,380 tests pass. Full earned keyboard and simulated-touch routes reach Referral Vault with no console errors. New browser assertions verify at most one guide per room and bounded tracked objects (N1: 27-48, N2: 39-61, including completion rewards). See docs/NETWORK_GUIDE_LIFETIME.md.
+  - Local only. Next: reduce the central future-token label/batch-toast competition and test whether players make meaningful routing decisions rather than follow supplied answers. No claim of measured FPS improvement or whole-game fun completion.
+
 - Physical context cart (2026-09-09):
   - Annotation Stacks now requires pushing a solid cart into its cyan bay before collecting the context note. One-tile pushes, no timer or penalty, eight recoverable positions; existing collection and human filing remain separate. Fixed push-at-contact range after real walking QA. Widened note cards for readable labels.
   - Existing sceneProgress saves partial cart movement; legacy earned notes remain valid and blocked old spawn positions recover. Build passes; 188 test files / 1,380 tests pass. Full earned keyboard and touch routes reach Network with 55 points and no console errors; partial save, fallback tiles and old-completed routes pass. See docs/ANNOTATION_RETURN_CART.md.

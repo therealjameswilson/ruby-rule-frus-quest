@@ -39,6 +39,7 @@ async function run(label, mobile) {
   });
   const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
   let screenshotIndex = 0;
+  const roomObjectBaselines = new Map();
 
   async function point(x, y, pointerId = 1) {
     const bounds = await page.locator("canvas").first().boundingBox();
@@ -121,6 +122,19 @@ async function run(label, mobile) {
   async function checkpoint(name) {
     await page.waitForTimeout(240);
     const current = await state();
+    if (current.scene === "NetworkScene") {
+      const resources = await page.evaluate(() => {
+        const scene = window.game.scene.getScene("NetworkScene");
+        return { room: scene.currentRoomId, tracked: scene.roomObjects.length,
+          guides: scene.roomObjects.filter(object => object.name === "network-routing-guide"
+            || object.name === "network-clearance-guide").length };
+      });
+      if (!roomObjectBaselines.has(resources.room)) roomObjectBaselines.set(resources.room, resources.tracked);
+      assert(resources.tracked <= roomObjectBaselines.get(resources.room) + 40,
+        `Walking must not accumulate destroyed route markers: ${JSON.stringify(resources)}`);
+      assert(resources.guides <= 1, "Each room reuses one route guide");
+      await writeFile(`${out}/guide-resources-${name}.json`, JSON.stringify(resources));
+    }
     const path = `${out}/${String(screenshotIndex++).padStart(2, "0")}-${name}`;
     const native = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(image => resolve(image.src))));
     await writeFile(`${path}-native.png`, Buffer.from(native.split(",")[1], "base64"));

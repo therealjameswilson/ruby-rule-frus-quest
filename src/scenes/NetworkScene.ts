@@ -149,7 +149,7 @@ export class NetworkScene extends Phaser.Scene {
   private routingPacketWorldIcon?: Phaser.GameObjects.Container;
   private routingPacketHeldIcon?: Phaser.GameObjects.Container;
   private routingSorterSlots: Phaser.GameObjects.Rectangle[] = [];
-  private routingRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private routingRouteCue?: Phaser.GameObjects.Graphics;
   private routingRouteCueKey = "";
   private classNetReviewStep = 0;
   private classNetReviewComplete = false;
@@ -167,7 +167,7 @@ export class NetworkScene extends Phaser.Scene {
   private roomTransitionLocked = false;
   private exitCooldownUntil = 0;
   private clearanceTokenIcon?: Phaser.GameObjects.Image;
-  private clearanceTokenRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private clearanceTokenRouteCue?: Phaser.GameObjects.Graphics;
   private clearanceTokenRouteCueKey = "";
   private crossingGate?: Phaser.GameObjects.Container;
   private crossingLamp?: Phaser.GameObjects.Rectangle;
@@ -402,6 +402,8 @@ export class NetworkScene extends Phaser.Scene {
     }
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.routingRouteCue = undefined;
+    this.clearanceTokenRouteCue = undefined;
     this.roomGateObjects = [];
     this.roomSolids = [];
     this.crossingGate = undefined;
@@ -1111,16 +1113,8 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private clearRoutingRouteCue() {
-    for (const object of this.routingRouteCueObjects) {
-      if (object.active) object.destroy();
-    }
-    this.routingRouteCueObjects = [];
+    this.routingRouteCue?.clear();
     this.routingRouteCueKey = "";
-  }
-
-  private trackRoutingRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
-    this.routingRouteCueObjects.push(object);
-    return this.track(object);
   }
 
   private drawRoutingRouteCue(
@@ -1133,20 +1127,16 @@ export class NetworkScene extends Phaser.Scene {
       : network === "ClassNet"
         ? PALETTE.classNetRed
         : PALETTE.goldStamp;
-    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y, 6, 6, color(accent), 0.8)
-      .setName("network-routing-target").setDepth(46));
+    const cue = this.routingRouteCue ??= this.track(this.add.graphics()
+      .setName("network-routing-guide").setDepth(46));
+    cue.fillStyle(color(accent), 0.8).fillRect(end.x - 3, end.y - 3, 6, 6);
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
     const steps = Math.max(1, Math.min(4, Math.floor(distance / 22)));
     for (let index = 1; index <= steps; index += 1) {
       const t = index / (steps + 1);
-      this.trackRoutingRouteCue(this.add.rectangle(
-        Math.round(Phaser.Math.Linear(start.x, end.x, t)),
-        Math.round(Phaser.Math.Linear(start.y, end.y, t)),
-        3,
-        3,
-        color(index % 2 === 0 ? PALETTE.creamPaper : accent),
-        0.9
-      ).setName("network-routing-dot").setDepth(46));
+      cue.fillStyle(color(index % 2 === 0 ? PALETTE.creamPaper : accent), 0.9).fillRect(
+        Math.round(Phaser.Math.Linear(start.x, end.x, t)) - 1,
+        Math.round(Phaser.Math.Linear(start.y, end.y, t)) - 1, 3, 3);
     }
   }
 
@@ -1636,16 +1626,8 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private clearClearanceTokenRouteCue() {
-    for (const object of this.clearanceTokenRouteCueObjects) {
-      if (object.active) object.destroy();
-    }
-    this.clearanceTokenRouteCueObjects = [];
+    this.clearanceTokenRouteCue?.clear();
     this.clearanceTokenRouteCueKey = "";
-  }
-
-  private trackClearanceTokenRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
-    this.clearanceTokenRouteCueObjects.push(object);
-    return this.track(object);
   }
 
   private drawClearanceTokenRouteCue(
@@ -1653,13 +1635,9 @@ export class NetworkScene extends Phaser.Scene {
     end: { x: number; y: number },
     accent: string
   ) {
-    this.trackClearanceTokenRouteCue(this.add.ellipse(end.x, end.y + 13, 58, 12, color(PALETTE.black), 0.3)
-      .setName("network-clearance-token-route-shadow")
-      .setDepth(136));
-    this.trackClearanceTokenRouteCue(this.add.rectangle(end.x, end.y, 58, 29, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(accent))
-      .setName("network-clearance-token-route-target-glow")
-      .setDepth(236));
+    const cue = this.clearanceTokenRouteCue ??= this.track(this.add.graphics()
+      .setName("network-clearance-guide").setDepth(46));
+    cue.lineStyle(2, color(accent)).strokeRect(end.x - 29, end.y - 14, 58, 28);
 
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
     const steps = Math.max(1, Math.min(7, Math.floor(distance / 13)));
@@ -1667,9 +1645,8 @@ export class NetworkScene extends Phaser.Scene {
       const t = index / (steps + 1);
       const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
       const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
-      this.trackClearanceTokenRouteCue(this.add.rectangle(x, y, 5, 5, color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.92)
-        .setName("network-clearance-token-route-dot")
-        .setDepth(237));
+      cue.fillStyle(color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.92)
+        .fillRect(x - 2, y - 2, 5, 5);
     }
 
   }
