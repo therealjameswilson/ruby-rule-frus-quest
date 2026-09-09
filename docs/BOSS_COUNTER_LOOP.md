@@ -95,8 +95,10 @@ longer mistakes legitimate counter damage for free melee damage.
 
 ## Next
 
-The bindery still contains 38 checks across five packets, with tiny station
-labels. Its post-boss pacing is the next priority. Mixed character art, the
+The original audit counted 38 underlying checks across five packets. The
+September 9 earned replay confirms these are not 38 separate live prompts:
+the bindery uses five deliveries, an index correction and a standards sign-off.
+See `FINALE_DISCOVERY_AUDIT.md` for current evidence. Mixed character art, the
 source-note metadata trail and real-device input/performance testing also
 remain. This checkpoint is local only, not a public deployment or completion
 of the broader fun/adventure goal.

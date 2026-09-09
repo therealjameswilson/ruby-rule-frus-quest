@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned finale audit (2026-09-09):
+  - Touch boss run from earned Editor save completed three normal phases in 56.97 measured counter-loop seconds, six fresh core hits, zero retries; boasts, pause, swarm dispersal, Cloud warnings and Continue passed with no browser errors.
+  - Earned bindery run published and resumed correctly: 201 -> 241 points, documents and stats preserved. Corrected outdated 38-prompts implication: live bindery has five grouped deliveries and two decision screens.
+  - Found Vault and Inbox text overlapping; moved return label above its stair, added actual-bounds browser assertion. No gameplay/save changes. Build and 1,457 tests pass. See docs/FINALE_DISCOVERY_AUDIT.md. Unaided fun and physical-device behavior remain unproven.
+
 - Editor repair affordance (2026-09-09):
   - Full earned touch Editor/Proof baseline reached Black Vault, 87 points awarded, no browser errors; partial puzzles and Continue exercised.
   - Changed read-only-looking INDICATION MISSING control to + ADD WITHHOLDING INDICATION. Actual indication still replaces the command; filing remains separate.

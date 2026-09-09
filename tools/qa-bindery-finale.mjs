@@ -77,6 +77,14 @@ try {
   };
   await resume();
   const initial = await shot("entry");
+  const labelsSeparate = await page.evaluate(() => {
+    const scene = window.game.scene.getScene("EndingScene");
+    const inbox = scene.children.getByName("bindery-inbox-label").getBounds();
+    const exit = scene.children.getByName("bindery-return-label").getBounds();
+    return inbox.right <= exit.left || exit.right <= inbox.left
+      || inbox.bottom <= exit.top || exit.bottom <= inbox.top;
+  });
+  assert(labelsSeparate, "Vault and inbox labels must not overlap");
   assert.equal(initial.buckramBinding.completed, 0);
   assert.equal(initial.sceneProgress.blackVaultBossCleared, 1);
   const points = initial.documentPoints;

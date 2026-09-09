@@ -332,14 +332,15 @@ export class EndingScene extends Phaser.Scene {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.terminalCyan
-    }).setOrigin(0.5).setDepth(146);
+    }).setOrigin(0.5).setDepth(146).setName("bindery-inbox-label");
     if (!this.published) {
       this.add.rectangle(BINDERY_RETURN.x, BINDERY_RETURN.y, 20, 24, color(PALETTE.black))
         .setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(150);
       for (let step = 0; step < 3; step++) {
         this.add.rectangle(10 + step * 5, BINDERY_RETURN.y, 2, 16, color(PALETTE.stoneGray)).setDepth(151);
       }
-      this.add.text(30, 204, "< VAULT", { fontFamily: "monospace", fontSize: "8px", color: PALETTE.terminalCyan }).setDepth(152);
+      this.add.text(12, 182, "< VAULT", { fontFamily: "monospace", fontSize: "8px", color: PALETTE.terminalCyan })
+        .setDepth(152).setName("bindery-return-label");
     }
   }
 
