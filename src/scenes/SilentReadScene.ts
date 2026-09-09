@@ -51,7 +51,7 @@ import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesGate, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
+import { addSnesGate, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
 import {
   AI_ANNOTATION_REVIEW_PROMPTS,
 } from "../game/aiAnnotationReview";
@@ -72,6 +72,7 @@ import {
 } from "../game/typeflowOrder";
 import {
   deriveSilentReadReviewStep,
+  editorHint,
   routeSilentReadReviewItem,
   SILENT_READ_REVIEW_ITEMS,
   SILENT_READ_REVIEW_TOTAL,
@@ -90,6 +91,9 @@ import { INTERIOR_TILES } from "../game/networkN1Tilemap";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
   EDITOR_E1_TILEMAP,
+  EDITOR_DRAFT_OUTBOX,
+  EDITOR_DESK_POSITION,
+  EDITOR_PRIYA_POSITION,
   buildEditorE1TileLayers,
   editorE1CollisionRect
 } from "../game/editorE1Tilemap";
@@ -143,6 +147,7 @@ interface ProofRoom {
 }
 
 const PROOF_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
+const PROOF_OUTBOX = { x: 128, y: 202 };
 const DOOR_Y_MIN = 100;
 const DOOR_Y_MAX = 150;
 const EXIT_SPAWNS: Record<Direction, { x: number; y: number }> = {
@@ -174,7 +179,7 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
 const WORKSTATIONS: Workstation[] = [
   { id: "opennet", label: "OpenNet", x: 42, y: 180, accent: PALETTE.openNetGreen, texture: "opennet-terminal", phases: ["evidence"] },
   { id: "classnet", label: "ClassNet", x: 214, y: 180, accent: PALETTE.classNetRed, texture: "classnet-terminal", phases: ["evidence"] },
-  { id: "editor-desk", label: "Editor Desk", x: 128, y: 166, accent: PALETTE.buckramHighlight, texture: "red-pencil", phases: ["editor"] },
+  { id: "editor-desk", label: "Editor Desk", ...EDITOR_DESK_POSITION, accent: PALETTE.buckramHighlight, texture: "red-pencil", phases: ["editor"] },
   { id: "referral-tray", label: "Referral Tray", x: 78, y: 158, accent: PALETTE.goldStamp, texture: "concurrence-slip", phases: ["evidence"] },
   { id: "proof-table", label: "Proof Table", x: 194, y: 164, accent: PALETTE.terminalCyan, texture: "proof-page", phases: ["evidence", "production"] },
   { id: "consultation-desk", label: "Consult Desk", x: 62, y: 164, accent: PALETTE.goldStamp, texture: "review-folder", phases: ["production"] },
@@ -232,7 +237,9 @@ export class SilentReadScene extends Phaser.Scene {
   private physicalRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private physicalRouteCueKey = "";
   private stationLabels: Array<{ text: Phaser.GameObjects.Text; x: number; y: number }> = [];
-  private readonly outbox = { x: 128, y: 202 };
+  private get outbox() {
+    return this.currentRoomId === "E1" ? EDITOR_DRAFT_OUTBOX : PROOF_OUTBOX;
+  }
 
   constructor() {
     super("SilentReadScene");
@@ -260,7 +267,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.player = new Player(this, 128, 202);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
-    this.toast = new FeedbackToast(this);
+    this.toast = new FeedbackToast(this, 1200, () => this.player.sprite.getBounds());
     this.reviewChoice = new ChoicePrompt(this);
     this.proofBoard = new ProofComparisonBoard(this);
     this.editorialBoard = new EditorialRepairBoard(this);
@@ -444,12 +451,15 @@ export class SilentReadScene extends Phaser.Scene {
     const room = PROOF_ROOMS[this.currentRoomId];
     this.roomTitleText.setText(`${room.id} ${room.title}`);
     if (showIntro) {
-      addSnesRoomIntroBanner(this, {
-        title: `${room.id} ${room.title}`,
-        subtitle: room.id.startsWith("E") ? "EDITOR'S LABYRINTH" : "SILENT READ TOWER",
-        accent: PALETTE.buckramRed,
-        track: (object) => this.track(object)
-      });
+      const banner = this.track(this.add.container(128, 39).setDepth(820).setName("proof-room-arrival"));
+      banner.add([
+        this.add.rectangle(0, 0, 184, 12, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)),
+        this.add.text(0, 0, room.title.toUpperCase(), {
+          fontFamily: "monospace", fontSize: "8px", color: PALETTE.creamPaper
+        }).setOrigin(0.5)
+      ]);
+      this.tweens.add({ targets: banner, alpha: 0, delay: 1000, duration: 180,
+        onComplete: () => { if (banner.active) banner.destroy(); } });
     }
     const packedTilemapRendered = this.renderProofTilemap(room.id);
     if (!packedTilemapRendered) {
@@ -624,7 +634,7 @@ export class SilentReadScene extends Phaser.Scene {
         "BRACKETS PRINT"
       ], PALETTE.terminalCyan);
     }
-    const priya = new HistorianNPC(this, "priya", 36, 88);
+    const priya = new HistorianNPC(this, "priya", EDITOR_PRIYA_POSITION.x, EDITOR_PRIYA_POSITION.y);
     this.roomCleanups.push(() => priya.destroy());
     if (!packedTilemapRendered) {
       this.drawPage(72, 114, "DRAFT QUERY", [
@@ -885,16 +895,24 @@ export class SilentReadScene extends Phaser.Scene {
 
   private updatePhysicalInteractionPrompt(delta: number) {
     const prompt = this.physicalPromptTargets();
+    const target = prompt.strictTarget ?? this.priyaTarget() ?? prompt.hintTarget;
     this.interactionPrompt.update(
       delta,
-      this.toast.visible ? null : prompt.strictTarget ?? prompt.hintTarget,
-      undefined,
+      this.toast.visible ? null : target,
+      { left: 36, right: 220, top: 50, bottom: Math.floor(this.player.sprite.getBounds().top) - 16 },
       prompt.strictTarget
         ? { badge: "A", text: prompt.strictText }
+        : target?.id === "editor-priya"
+        ? { badge: "A", text: "ASK PRIYA" }
         : prompt.hintTarget
         ? { badge: "!", text: "STEP CLOSER" }
         : undefined
     );
+  }
+
+  private priyaTarget(): Interactable | null {
+    if (this.currentRoomId !== "E1" || !this.isNear(EDITOR_PRIYA_POSITION.x, EDITOR_PRIYA_POSITION.y, 36)) return null;
+    return { id: "editor-priya", label: "Priya", ...EDITOR_PRIYA_POSITION, radius: 36, kind: "npc", onInteract: () => undefined };
   }
 
   private physicalPromptTargets(): {
@@ -970,7 +988,7 @@ export class SilentReadScene extends Phaser.Scene {
       setObjective(this.reviewObjective());
       this.actionHint.setText(this.reviewObjective());
       const prompt = this.physicalPromptTargets();
-      setNearestInteractable(prompt.strictTarget ? prompt.strictText : null);
+      setNearestInteractable(prompt.strictTarget ? prompt.strictText : this.priyaTarget() ? "ASK PRIYA" : null);
       this.syncPhysicalState(repair ? repair.proof ? "VERIFY" : "ROUTE" : "DONE", null);
       return;
     }
@@ -979,7 +997,7 @@ export class SilentReadScene extends Phaser.Scene {
       this.clearPhysicalRouteCue();
       const target = PROOF_ROOMS[flagRoom(activeFlag)].title;
       this.actionHint.setText(`NEXT: enter ${target.toUpperCase()}.`);
-      setNearestInteractable(null);
+      setNearestInteractable(this.priyaTarget() ? "ASK PRIYA" : null);
       this.syncPhysicalState("ROUTE", null);
       return;
     }
@@ -996,10 +1014,21 @@ export class SilentReadScene extends Phaser.Scene {
     const verb = this.verbFor(activeFlag);
     this.syncPhysicalState(verb, nearestStation);
     this.updateActionHint(activeFlag, nearestStation);
+    const prompt = this.physicalPromptTargets();
+    setNearestInteractable(prompt.strictTarget ? prompt.strictText : this.priyaTarget() ? "ASK PRIYA" : null);
     this.refreshPhysicalRouteCue(activeFlag);
   }
 
   private handlePhysicalAction() {
+    if (!this.physicalPromptTargets().strictTarget && this.priyaTarget()) {
+      const active = this.getActiveFlag();
+      const repair = this.pendingEditorialRepair();
+      const hint = editorHint(active?.phase === "editor" ? active.status : null, repair ? repair.proof ? "proof" : "draft" : null);
+      setLatestMessage(`Priya: ${hint}`);
+      this.toast.show(hint, this.player.position, "info", PROOF_PLAY_BOUNDS);
+      retroAudio.blip();
+      return;
+    }
     if (this.pendingEditorialRepair()) { this.reopenEditorialRecord(); return; }
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) return;
@@ -1014,10 +1043,12 @@ export class SilentReadScene extends Phaser.Scene {
         if (this.isNear(activeFlag.x, activeFlag.y, 38)) {
           retroAudio.blip();
           setLatestMessage(`Step closer to ${activeFlag.shortLabel}.`);
+          this.toast.show("STEP CLOSER TO THE FILE", this.player.position, "info", PROOF_PLAY_BOUNDS);
           return;
         }
         retroAudio.warning();
         setLatestMessage(`CARRY: move to ${activeFlag.shortLabel}.`);
+        this.toast.show(`TAKE ${activeFlag.shortLabel}`, this.player.position, "info", PROOF_PLAY_BOUNDS);
         return;
       }
       activeFlag.status = "carried";
@@ -1036,10 +1067,12 @@ export class SilentReadScene extends Phaser.Scene {
       if (hintStation) {
         retroAudio.blip();
         setLatestMessage(`Step closer to ${hintStation.label}.`);
+        this.toast.show("STEP CLOSER TO THE DESK", this.player.position, "info", PROOF_PLAY_BOUNDS);
         return;
       }
       retroAudio.warning();
       setLatestMessage(`${this.verbFor(activeFlag)}: stand beside the correct workstation.`);
+      this.toast.show(this.reviewObjective(), this.player.position, "info", PROOF_PLAY_BOUNDS);
       return;
     }
     const correctStation = this.stationFor(activeFlag.destination);
@@ -1403,14 +1436,15 @@ export class SilentReadScene extends Phaser.Scene {
 
   private refreshPhysicalRouteCue(flag: PhysicalFlag) {
     const station = this.stationFor(flag.destination);
-    if (stationRoom(station.id) !== this.currentRoomId || flag.status !== "carried"
-      || this.isNear(station.x, station.y, 42)) {
+    const waiting = flag.status === "waiting";
+    if (stationRoom(station.id) !== this.currentRoomId || (!waiting && (flag.status !== "carried"
+      || this.isNear(station.x, station.y, 42)))) {
       this.clearPhysicalRouteCue();
       return;
     }
 
-    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 15) };
-    const end = { x: Math.round(station.x), y: Math.round(station.y) };
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
+    const end = { x: Math.round(waiting ? flag.x : station.x), y: Math.round(waiting ? flag.y : station.y) };
     const cueKey = `${this.currentRoomId}:${flag.id}:${flag.status}:${start.x},${start.y}->${station.id}`;
     if (cueKey === this.physicalRouteCueKey) return;
 
@@ -1418,17 +1452,21 @@ export class SilentReadScene extends Phaser.Scene {
     this.physicalRouteCueKey = cueKey;
 
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
-    const steps = Math.max(1, Math.min(8, Math.floor(distance / 14)));
+    const steps = waiting || distance < 42 ? 0 : Math.min(8, Math.floor(distance / 14));
     for (let index = 1; index <= steps; index += 1) {
       const t = index / (steps + 1);
       const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
       const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
       const routeAccent = index % 2 === 0 ? color(PALETTE.terminalCyan) : color(PALETTE.goldStamp);
-      this.physicalRouteCueObjects.push(this.add.rectangle(x, y, 2, 2, routeAccent, 0.85).setDepth(236));
+      this.physicalRouteCueObjects.push(this.add.rectangle(x, y, 2, 2, routeAccent, 0.85).setDepth(60));
     }
 
-    this.physicalRouteCueObjects.push(this.add.rectangle(end.x, end.y, 42, 22)
-      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(238));
+    this.physicalRouteCueObjects.push(this.add.rectangle(end.x, end.y, waiting ? 20 : 42, waiting ? 18 : 22)
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(61));
+    if (waiting) {
+      this.physicalRouteCueObjects.push(this.add.triangle(end.x, end.y - 16, 0, 0, 8, 0, 4, 6, color(PALETTE.black)).setDepth(62));
+      this.physicalRouteCueObjects.push(this.add.triangle(end.x, end.y - 17, 0, 0, 6, 0, 3, 4, color(PALETTE.creamPaper)).setDepth(63));
+    }
   }
 
   private clearPhysicalRouteCue() {

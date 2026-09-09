@@ -6,10 +6,27 @@ import {
   FEEDBACK_TOAST_HOLD_MS,
   FEEDBACK_TOAST_TOTAL_MS,
   isToastExpired,
-  toastAlpha
+  toastAlpha,
+  toastAnchorForActor
 } from "./feedbackToastPlacement";
 
 describe("computeToastPlacement", () => {
+  it.each([16, 24, 48])("clears a %ipx actor using rendered bounds", height => {
+    const actor = { top: 180 - height, bottom: 180 };
+    const placement = computeToastPlacement(toastAnchorForActor({ x: 128, y: 180 }, actor));
+    expect(placement.y + 9).toBeLessThan(actor.top);
+    expect(Number.isInteger(placement.y)).toBe(true);
+  });
+
+  it("moves below the actor when there is no room above its head", () => {
+    const bounds = { top: 42, bottom: 220, left: 14, right: 242 };
+    const actor = { top: 30.5, bottom: 78.5 };
+    const placement = computeToastPlacement(toastAnchorForActor({ x: 36, y: 78 }, actor, bounds), bounds);
+    expect(placement.y - 9).toBeGreaterThan(actor.bottom);
+    expect(placement.y - 9).toBeGreaterThan(bounds.top);
+    expect(Number.isInteger(placement.y)).toBe(true);
+  });
+
   it("floats the toast above the anchor by the default gap", () => {
     const placement = computeToastPlacement({ x: 128, y: 184 });
     expect(placement.x).toBe(128);

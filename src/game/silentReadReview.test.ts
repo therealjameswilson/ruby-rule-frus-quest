@@ -4,6 +4,7 @@ import type { ProcessItemId } from "./constants";
 import { consumeResumePlayerSpawn, createGameSaveData, gameState, resetGameState, restoreGameSaveData, setSceneState } from "./state";
 import {
   deriveSilentReadReviewStep,
+  editorHint,
   routeSilentReadReviewItem,
   SILENT_READ_REVIEW_ITEMS,
   SILENT_READ_REVIEW_TOTAL,
@@ -16,6 +17,27 @@ import {
 } from "./silentReadReview";
 
 describe("physical Silent Read review", () => {
+  it("distinguishes the carried draft from the Red Pencil reward", () => {
+    const draft = SILENT_READ_REVIEW_ITEMS[0];
+    expect(draft.shortLabel).toBe("EDITOR DRAFT");
+    expect(draft.texture).toBe("proof-page");
+    expect(silentReadObjective(draft, "waiting")).toBe("TAKE EDITOR DRAFT");
+  });
+
+  it("gives Priya a short hint for each earned editor state", () => {
+    expect(editorHint("waiting")).toBe("TAKE THE DRAFT BELOW ME");
+    expect(editorHint("carried")).toBe("BRING IT TO THE EDITOR DESK");
+    expect(editorHint("routed")).toBe("RESTORE THE MISSING BRACKET");
+    expect(editorHint("verified")).toBe("STAMP THE CHECKED DRAFT");
+    expect(editorHint(null)).toBe("PENCIL READY. GO EAST");
+    expect(editorHint(null, "draft")).toBe("EDITOR DESK: REPAIR THE CUT");
+    expect(editorHint(null, "proof")).toBe("PROOF TABLE: RECHECK THE CUT");
+    for (const status of [null, "waiting", "carried", "routed", "verified", "stamped"] as const) {
+      for (const repair of [null, "draft", "proof"] as const) {
+        expect(editorHint(status, repair).length).toBeLessThanOrEqual(30);
+      }
+    }
+  });
   it.each([[0, 2, 1], [1, 4, 2]])("round-trips room %i, step %i, status %i through the real save boundary", (room, step, status) => {
     resetGameState();
     setSceneState("SilentReadScene", "explore", "Review the packet");

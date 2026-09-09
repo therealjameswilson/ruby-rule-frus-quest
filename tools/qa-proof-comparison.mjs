@@ -61,6 +61,20 @@ async function run(mobile) {
     await writeFile(`${path}-native.png`,Buffer.from(native.split(',')[1],'base64'));
     await context.storageState({path:`${out}/earned-storage.json`});
     await page.screenshot({path:`${path}.png`});await writeFile(`${path}.json`,JSON.stringify(s,null,2));
+    if(s.scene==='SilentReadScene'&&s.mode==='explore') {
+      const geometry=await page.evaluate(()=>{
+        const scene=window.game.scene.getScene('SilentReadScene'), player=scene.player.sprite.getBounds();
+        const bounds=r=>({left:r.left,right:r.right,top:r.top,bottom:r.bottom});
+        return {player:bounds(player), panels:[scene.toast,scene.interactionPrompt].filter(p=>p.visible)
+          .map(p=>bounds(p.container.getBounds()))};
+      });
+      await writeFile(`${path}-geometry.json`,JSON.stringify(geometry,null,2));
+      for(const panel of geometry.panels) {
+        assert(panel.bottom<=geometry.player.top||panel.top>=geometry.player.bottom
+          ||panel.right<=geometry.player.left||panel.left>=geometry.player.right,`${name}: feedback obscures player`);
+        assert(panel.left>=0&&panel.right<=256,`${name}: feedback clips canvas`);
+      }
+    }
     console.log(name,JSON.stringify({scene:s.scene,room:s.roomTraversal,objective:s.objective,player:s.player,progress:s.sceneProgress.silentReadReviewStep,status:s.sceneProgress.silentReadReviewStatus,points:s.documentPoints,held:s.heldItem}));
     return s;
   }
@@ -84,9 +98,23 @@ async function run(mobile) {
     await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
     if(mobile)await touch(86,154);else await page.keyboard.press('Enter',{delay:50});
     await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='SilentReadScene');
+    await shot('arrival');
     await page.waitForTimeout(1200);
     const initial=await shot('initial');
-    await move(30,204);await move(128,204);await press();await move(128,185);await press();
+    const earned=s=>({points:s.documentPoints, inventory:s.inventory, documents:s.documentCandidates,
+      step:s.sceneProgress.silentReadReviewStep, status:s.sceneProgress.silentReadReviewStatus});
+    await move(36,114); assert.equal((await state()).nearestInteractable, 'ASK PRIYA');
+    await press(); const hint=await shot('priya-hint');
+    assert.match(hint.latestMessage,/Priya: TAKE THE DRAFT BELOW ME/);
+    assert.deepEqual(earned(hint),earned(initial));
+    await move(30,204);await move(56,204);await press();
+    assert.equal((await state()).sceneProgress.silentReadReviewStatus,1);
+    assert.equal((await state()).heldItem,'Review Folder: EDITOR DRAFT');
+    await shot('draft-carried');
+    await resume('draft-carry-continue');
+    await press();assert.equal((await state()).sceneProgress.silentReadReviewStatus,1);
+    assert(!(await choice()),'The pickup cannot also reach the Editor desk');
+    await move(128,185);await press();
     assert(await choice());await shot('bracket-repair');
     const bracketStart=await state();
     await press();

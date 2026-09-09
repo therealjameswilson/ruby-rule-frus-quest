@@ -4,6 +4,8 @@ import {
   computeToastPlacement,
   isToastExpired,
   toastAlpha,
+  toastAnchorForActor,
+  FEEDBACK_TOAST_GAP,
   type ToastAnchorBounds,
   type ToastPlacement
 } from "./feedbackToastPlacement";
@@ -38,7 +40,7 @@ export class FeedbackToast {
   private elapsed = 0;
   private active = false;
 
-  constructor(scene: Phaser.Scene, depth = 1200) {
+  constructor(scene: Phaser.Scene, depth = 1200, private readonly actorBounds?: () => { top: number; bottom: number }) {
     this.scene = scene;
     this.panel = scene.add.rectangle(0, 0, 80, 16, color(PALETTE.shadowNavy), 0.96).setOrigin(0.5);
     this.border = scene.add.rectangle(0, 0, 82, 18).setStrokeStyle(1, color(PALETTE.goldStamp)).setOrigin(0.5);
@@ -78,7 +80,8 @@ export class FeedbackToast {
   }
 
   private place(anchor: ToastPlacement, bounds?: ToastAnchorBounds) {
-    const placement = computeToastPlacement(anchor, bounds, 26, this.border.displayWidth / 2);
+    const adjusted = this.actorBounds ? toastAnchorForActor(anchor, this.actorBounds(), bounds) : anchor;
+    const placement = computeToastPlacement(adjusted, bounds, FEEDBACK_TOAST_GAP, this.border.displayWidth / 2);
     this.container.setPosition(snapPixel(placement.x), snapPixel(placement.y));
   }
 

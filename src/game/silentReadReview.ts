@@ -37,11 +37,11 @@ export const SILENT_READ_REVIEW_ITEMS = [
   {
     id: "mechanical-fix",
     label: "StateChat Mechanical Fix and Visible Bracket",
-    shortLabel: "DRAFT + [ ]",
+    shortLabel: "EDITOR DRAFT",
     kind: "mechanical",
     phase: "editor",
     destination: "editor-desk",
-    texture: "red-pencil",
+    texture: "proof-page",
     checkIds: [...promptIds(AI_ANNOTATION_REVIEW_PROMPTS), "visible-bracket"]
   },
   {
@@ -250,6 +250,16 @@ export function silentReadObjective(
     return item.id === "mechanical-fix" ? "ADD VISIBLE BRACKET" : `CHECK ${station}`;
   }
   return `STAMP ${station}`;
+}
+
+export function editorHint(status: SilentReadReviewStatus | null, repair: "draft" | "proof" | null = null) {
+  if (repair === "draft") return "EDITOR DESK: REPAIR THE CUT";
+  if (repair === "proof") return "PROOF TABLE: RECHECK THE CUT";
+  if (status === "waiting") return "TAKE THE DRAFT BELOW ME";
+  if (status === "carried") return "BRING IT TO THE EDITOR DESK";
+  if (status === "routed") return "RESTORE THE MISSING BRACKET";
+  if (status === "verified") return "STAMP THE CHECKED DRAFT";
+  return "PENCIL READY. GO EAST";
 }
 
 export interface SilentReadRouteResult {
