@@ -6,7 +6,8 @@ const base = process.env.FRUS_QA_URL ?? "http://127.0.0.1:5195/";
 const root = process.env.FRUS_QA_OUT ?? "/tmp/frus-network-ledger";
 const crossing = process.argv.includes("--crossing");
 const ledgerOnly = process.argv.includes("--ledger-only");
-const completedReturn = process.argv.includes("--completed-return");
+const currentCompletedReturn = process.argv.includes("--current-completed-return");
+const completedReturn = process.argv.includes("--completed-return") || currentCompletedReturn;
 const pointerBoard = process.argv.includes("--pointer");
 const rotate = process.argv.includes("--rotate");
 const mobileViewport = {
@@ -133,6 +134,17 @@ async function run(label, mobile) {
       assert(resources.tracked <= roomObjectBaselines.get(resources.room) + 40,
         `Walking must not accumulate destroyed route markers: ${JSON.stringify(resources)}`);
       assert(resources.guides <= 1, "Each room reuses one route guide");
+      if (resources.room === "N2") {
+        const center = await page.evaluate(() => {
+          const scene = window.game.scene.getScene("NetworkScene");
+          return { reward: scene.vaultReward.visible, inbox: scene.vaultInbox.visible,
+            ready: scene.classNetReviewComplete, collected: scene.clearanceTokenCollected };
+        });
+        assert.equal(center.reward, center.ready && !center.collected,
+          "The reward must appear only after deliberate review and disappear on pickup");
+        assert.equal(center.inbox, !center.reward, "Inbox and reward must never compete");
+        await writeFile(`${out}/vault-center-${name}.json`, JSON.stringify(center));
+      }
       await writeFile(`${out}/guide-resources-${name}.json`, JSON.stringify(resources));
     }
     const path = `${out}/${String(screenshotIndex++).padStart(2, "0")}-${name}`;
@@ -194,8 +206,10 @@ async function run(label, mobile) {
       const earned = { points: current.documentPoints, inventory: current.inventory,
         documents: current.documentCandidates };
       assert(current.inventory.includes("Clearance Token"));
-      assert.equal(current.sceneProgress.classNetWithholdingSlot, undefined,
-        "Use an actual completed pre-puzzle save to test compatibility");
+      if (!currentCompletedReturn) {
+        assert.equal(current.sceneProgress.classNetWithholdingSlot, undefined,
+          "Use an actual completed pre-puzzle save to test compatibility");
+      }
       await move(8, 124, "NetworkScene");
       current = await checkpoint("legacy-completed-return");
       assert.equal(current.roomTraversal.currentRoomId, "N2");

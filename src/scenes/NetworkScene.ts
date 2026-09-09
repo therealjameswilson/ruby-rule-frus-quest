@@ -167,6 +167,8 @@ export class NetworkScene extends Phaser.Scene {
   private roomTransitionLocked = false;
   private exitCooldownUntil = 0;
   private clearanceTokenIcon?: Phaser.GameObjects.Image;
+  private vaultInbox?: Phaser.GameObjects.Container;
+  private vaultReward?: Phaser.GameObjects.Container;
   private clearanceTokenRouteCue?: Phaser.GameObjects.Graphics;
   private clearanceTokenRouteCueKey = "";
   private crossingGate?: Phaser.GameObjects.Container;
@@ -411,6 +413,8 @@ export class NetworkScene extends Phaser.Scene {
     this.crossingSolid = undefined;
     this.crossingSwing = -1;
     this.clearanceTokenIcon = undefined;
+    this.vaultInbox = undefined;
+    this.vaultReward = undefined;
     this.vaultDocketWorldIcon = undefined;
     if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
     this.vaultDocketHeldIcon = undefined;
@@ -1141,7 +1145,6 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private renderClassNetVault(packedTilemapRendered = false) {
-    this.syncClassNetVaultEntities();
     if (!packedTilemapRendered) {
       for (let x = 54; x <= 202; x += 24) {
         this.track(this.add.rectangle(x, 96, 14, 18, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(84));
@@ -1149,6 +1152,14 @@ export class NetworkScene extends Phaser.Scene {
       }
     }
     this.drawClassNetStations();
+    this.vaultInbox = this.track(this.add.container(128, 132, [
+      this.add.ellipse(0, 7, 40, 8, color(PALETTE.black), 0.35),
+      this.add.rectangle(0, 0, 36, 14, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.stoneGray)),
+      this.add.rectangle(0, -4, 30, 2, color(PALETTE.creamPaper)),
+      this.add.rectangle(0, 5, 34, 3, color(PALETTE.sepiaInk))
+    ]).setName("network-review-inbox").setDepth(134));
+    const reward = this.vaultReward = this.track(this.add.container(0, 0)
+      .setName("network-clearance-reward").setDepth(138));
     addSnesTreasurePedestal(this, {
       x: 128,
       y: 132,
@@ -1157,15 +1168,16 @@ export class NetworkScene extends Phaser.Scene {
       collected: this.clearanceTokenCollected,
       accent: PALETTE.classNetRed,
       track: (object) => {
-        this.track(object);
+        reward.add(object);
         if (object.name === "snes-treasure-icon" && object instanceof Phaser.GameObjects.Image) {
           this.clearanceTokenIcon = object;
-          if (!this.classNetReviewComplete && !this.clearanceTokenCollected) object.setAlpha(0.18);
         }
         return object;
       },
       depth: 138
     });
+    reward.sort("depth");
+    this.syncClassNetVaultEntities();
     if (this.clearanceTokenCollected) {
       this.routeText.setVisible(false);
       setObjective(this.classNetVaultObjective());
@@ -1231,6 +1243,9 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private syncClassNetVaultEntities() {
+    const rewardReady = this.classNetReviewComplete && !this.clearanceTokenCollected;
+    this.vaultReward?.setVisible(rewardReady);
+    this.vaultInbox?.setVisible(!rewardReady);
     const docket = this.classNetReviewComplete ? null : getClassNetVaultDocket(this.classNetReviewStep);
     const carried = this.vaultCarriedDocket();
     setVisibleEntities([
@@ -1238,10 +1253,11 @@ export class NetworkScene extends Phaser.Scene {
       "Human Review Desk",
       "E.O. 13526 Release Standard Board",
       "Equity Decision Ledger",
-      "Clearance Token pedestal",
+      rewardReady ? "Clearance Token ready to collect" : this.clearanceTokenCollected
+        ? "Empty review inbox; Clearance Token collected" : "Review batch inbox",
       "Referral handoff gate",
       ...(docket ? [
-        `ClassNet docket ${docket.order}/3: ${docket.label} (${carried ? "carried" : "at pedestal"}; ${docket.checkIds.length} checks)`
+        `ClassNet docket ${docket.order}/3: ${docket.label} (${carried ? "carried" : "at inbox"}; ${docket.checkIds.length} checks)`
       ] : [])
     ]);
   }

@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Vault task-to-reward reveal (2026-09-09):
+  - During ClassNet review, a small document inbox replaces the large future-token case and label. Deliberately filing the completed ledger reveals the existing token display; pickup removes it again. Rendered debug entities reflect this state. No new save flags or automatic review decisions.
+  - Build passes (251 modules / 2,792.94 KB); 188 files / 1,380 tests pass. Earned keyboard/touch routes verify inbox/reward exclusivity, unfiled draft Continue, deliberate reveal, pickup and Referral exit with no console errors. See docs/VAULT_REWARD_REVEAL.md and retained native screenshots.
+  - Local only. Goal remains active. Next: genuine classification reasoning in the routing chapter, without removing helpful directions just to make navigation harder.
+
 - Bounded Network guidance (2026-09-09):
   - Found moving route markers continuously recreated and retained as destroyed references until room exit. N1/N2 now each reuse one Graphics guide; N2 dots sit under characters, with integer edges. No routing, rewards or save changes.
   - Build passes (251 modules / 2,792.22 KB), all 1,380 tests pass. Full earned keyboard and simulated-touch routes reach Referral Vault with no console errors. New browser assertions verify at most one guide per room and bounded tracked objects (N1: 27-48, N2: 39-61, including completion rewards). See docs/NETWORK_GUIDE_LIFETIME.md.
