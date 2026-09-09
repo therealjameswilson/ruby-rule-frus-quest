@@ -11,6 +11,8 @@ export interface NetworkRoutePacket {
   order: 1 | 2 | 3 | 4;
   label: string;
   shortLabel: string;
+  marking: string;
+  routingClue: string;
   classification: "unclassified" | "sbu" | "classified";
   network: RoutingNetwork;
   itemLabels: readonly string[];
@@ -32,6 +34,8 @@ export const NETWORK_ROUTE_PACKETS = [
     order: 1,
     label: "Published Research",
     shortLabel: "PUBLIC",
+    marking: "PUBLISHED",
+    routingClue: "Already published. OpenNet carries this public research.",
     classification: "unclassified",
     network: "OpenNet",
     itemLabels: [
@@ -44,6 +48,8 @@ export const NETWORK_ROUTE_PACKETS = [
     order: 2,
     label: "Unclassified Proof",
     shortLabel: "PROOF",
+    marking: "PUBLIC PROOF",
+    routingClue: "This proof is unclassified and prepared for publication. Use OpenNet.",
     classification: "unclassified",
     network: "OpenNet",
     itemLabels: ["Typeset unclassified proof"]
@@ -53,6 +59,8 @@ export const NETWORK_ROUTE_PACKETS = [
     order: 3,
     label: "SBU Review Folder",
     shortLabel: "SBU",
+    marking: "INTERNAL REVIEW",
+    routingClue: "This folder is still under internal review, not a public copy. This exercise routes it on ClassNet.",
     classification: "sbu",
     network: "ClassNet",
     itemLabels: [
@@ -65,6 +73,8 @@ export const NETWORK_ROUTE_PACKETS = [
     order: 4,
     label: "Classified Review",
     shortLabel: "CLASS",
+    marking: "CLASSIFIED",
+    routingClue: "The source note and its attachment are classified. Keep them on ClassNet for review.",
     classification: "classified",
     network: "ClassNet",
     itemLabels: [
@@ -85,11 +95,19 @@ export function getNetworkRoutePacket(step: number) {
   ];
 }
 
-export function networkRoutingObjective(step: number, carried: boolean) {
+export function networkRouteGuidance(step: number, hintOrder = 0): RoutingNetwork | null {
+  if (step >= NETWORK_ROUTE_PACKETS.length) return null;
+  const packet = getNetworkRoutePacket(step);
+  return step === 0 || hintOrder === packet.order ? packet.network : null;
+}
+
+export function networkRoutingObjective(step: number, carried: boolean, hintOrder = 0) {
   if (step >= NETWORK_ROUTE_PACKETS.length) return "EXIT EAST - VAULT";
   const packet = getNetworkRoutePacket(step);
   return carried
-    ? `${packet.order}/4 TO ${packet.network.toUpperCase()}`
+    ? networkRouteGuidance(step, hintOrder)
+      ? `${packet.order}/4 TO ${packet.network.toUpperCase()}`
+      : `${packet.order}/4 ${packet.marking}`
     : step === 0
       ? "TAKE ROUTING BATCH"
       : `RESUME ${packet.order}/4 AT SORTER`;

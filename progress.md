@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Packet-reading routing (2026-09-09):
+  - First packet remains guided. Later HUD objectives show packet markings; terminal signs explain public/protected lanes. Optional Marcus interaction explains the current packet and restores its route hint. A rejected send also provides a hint without dropping the batch; the existing penalty remains. Hints save per packet and do not award progress.
+  - All 1,382 tests and build pass (251 modules / 2,794.82 KB). Full earned keyboard/touch routes verify optional help, hint Continue/expiry, wrong-network recovery and vault completion to Referral with no console errors. Screenshot review caught touch buttons covering Marcus's help; Network now opts into dialogue above the controls, with actual text/frame bounds tested. See docs/ROUTING_PACKET_JUDGMENT.md. Installed client debug rendering and real-route native captures inspected.
+  - Local only. Still an introductory matching task, not proof of whole-game fun. Next: check whether a new player discovers the signs/help naturally and whether the referral chapter offers enough distinct action.
+
 - Vault task-to-reward reveal (2026-09-09):
   - During ClassNet review, a small document inbox replaces the large future-token case and label. Deliberately filing the completed ledger reveals the existing token display; pickup removes it again. Rendered debug entities reflect this state. No new save flags or automatic review decisions.
   - Build passes (251 modules / 2,792.94 KB); 188 files / 1,380 tests pass. Earned keyboard/touch routes verify inbox/reward exclusivity, unfiled draft Continue, deliberate reveal, pickup and Referral exit with no console errors. See docs/VAULT_REWARD_REVEAL.md and retained native screenshots.

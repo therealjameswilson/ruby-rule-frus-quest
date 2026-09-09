@@ -23,8 +23,8 @@ describe("NetworkScene physical routing flow", () => {
     expect(methodSource("collectClearanceToken", "refreshClearanceTokenRouteCue")).toContain("this.drawRoomDoors()");
   });
 
-  it("keeps the bounded destination objective visible while carrying", () => {
-    expect(networkSceneSource).toContain("networkRoutingObjective(this.currentRoute, true)");
+  it("keeps the bounded packet marking or assisted destination visible while carrying", () => {
+    expect(networkSceneSource).toContain("networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder)");
     expect(networkSceneSource).toContain("return classNetVaultObjective(");
     expect(uiSource).toContain('const hasCarryDestination = activeSceneKey === "NetworkScene"');
     expect(uiSource).toContain("gameState.heldItem && !hasCarryDestination");
@@ -60,7 +60,8 @@ describe("NetworkScene physical routing flow", () => {
   it("keeps wrong-network packets in hand for an immediate retry", () => {
     const routePacket = methodSource("routeCarriedPacket", "updateRoutingRouteText");
     expect(routingSource).toContain("Packet remains in hand");
-    expect(routePacket).toContain("networkRoutingObjective(this.currentRoute, true)");
+    expect(routePacket).toContain("networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder)");
+    expect(routePacket).toContain("networkRoutingHintOrder = result.packet.order");
     expect(routePacket).not.toContain("this.drawRoutingPacketAtSorter()");
     expect(networkSceneSource).toContain("WRONG NETWORK");
     expect(networkSceneSource).not.toContain("recordUnresolvedEquity");

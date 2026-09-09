@@ -25,12 +25,12 @@ export class DialogBox {
   private fastForwardTimer?: Phaser.Time.TimerEvent;
   private releaseTimer?: Phaser.Time.TimerEvent;
 
-  constructor(scene: Phaser.Scene) {
+  constructor(scene: Phaser.Scene, options: { aboveTouchControls?: boolean } = {}) {
     this.scene = scene;
     const touch = isTouchInputCapable();
     const fontSize = touch ? 8 : 7;
     const frameHeight = touch ? 48 : 42;
-    const frameY = GAME_HEIGHT - frameHeight - 4;
+    const frameY = GAME_HEIGHT - frameHeight - 4 - (touch && options.aboveTouchControls ? 64 : 0);
     const speakerY = frameY + 5;
     const bodyY = speakerY + 11;
     const frame = createDanneScrollFrame(scene, 6, frameY, GAME_WIDTH - 12, frameHeight);

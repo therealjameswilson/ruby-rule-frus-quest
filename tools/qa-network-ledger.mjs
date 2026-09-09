@@ -10,6 +10,8 @@ const currentCompletedReturn = process.argv.includes("--current-completed-return
 const completedReturn = process.argv.includes("--completed-return") || currentCompletedReturn;
 const pointerBoard = process.argv.includes("--pointer");
 const rotate = process.argv.includes("--rotate");
+const routingHelpOnly = process.argv.includes("--routing-help-only");
+const routingHelp = process.argv.includes("--routing-help") || routingHelpOnly;
 const mobileViewport = {
   width: Number(process.env.FRUS_QA_WIDTH ?? 375), height: Number(process.env.FRUS_QA_HEIGHT ?? 667)
 };
@@ -253,7 +255,7 @@ async function run(label, mobile) {
       current = await checkpoint("packet-two-auto-handoff");
       assert.equal(current.sceneProgress.networkRoutingStep, 1);
       assert.equal(current.sceneProgress.networkRoutingCarried, 2);
-      assert.equal(current.objective, "2/4 TO OPENNET");
+      assert.equal(current.objective, "2/4 PUBLIC PROOF");
 
       const savedRoute = await page.evaluate(() => {
         const raw = localStorage.getItem("rubyRuleFrusQuestSave");
@@ -271,7 +273,7 @@ async function run(label, mobile) {
         scene: "NetworkScene",
         step: 1,
         carried: 2,
-        objective: "2/4 TO OPENNET"
+        objective: "2/4 PUBLIC PROOF"
       });
 
       await page.goto(`${base}?text=full`);
@@ -284,7 +286,38 @@ async function run(label, mobile) {
       current = await checkpoint("packet-two-restored");
       assert.equal(current.sceneProgress.networkRoutingStep, 1);
       assert.equal(current.sceneProgress.networkRoutingCarried, 2);
-      assert.equal(current.objective, "2/4 TO OPENNET");
+      assert.equal(current.objective, "2/4 PUBLIC PROOF");
+
+      if (routingHelp) {
+        const before = { points: current.documentPoints, documents: current.documentCandidates, inventory: current.inventory };
+        await move(38, 92);
+        await press();
+        current = await checkpoint("marcus-explains-marking");
+        assert.equal(current.mode, "dialog");
+        assert.equal(current.sceneProgress.networkRoutingHintOrder, 2);
+        assert.equal(current.sceneProgress.networkRoutingStep, 1);
+        assert.equal(current.sceneProgress.networkRoutingCarried, 2);
+        assert.equal(current.objective, "2/4 TO OPENNET");
+        if (mobile) {
+          const bounds = await page.evaluate(() => {
+            const dialog = window.game.scene.getScene("NetworkScene").dialog;
+            const body = dialog.bodyText.getBounds();
+            const frame = dialog.container.getBounds();
+            return { bodyBottom: body.bottom, frameBottom: frame.bottom };
+          });
+          assert(bounds.bodyBottom <= 174 && bounds.frameBottom <= 174,
+            "Marcus's help must sit above the touch buttons");
+        }
+        assert.deepEqual({ points: current.documentPoints, documents: current.documentCandidates, inventory: current.inventory }, before);
+        for (let advance = 0; advance < 8 && (await state()).mode === "dialog"; advance++) await press();
+        assert.equal((await state()).mode, "explore");
+        await move(60, 146);
+        if (routingHelpOnly) {
+          await checkpoint("marcus-help-dismissed");
+          assert.deepEqual(errors, []);
+          return;
+        }
+      }
 
       if (crossing) {
         const before = await state();
@@ -328,7 +361,7 @@ async function run(label, mobile) {
       current = await checkpoint("packet-three-auto-handoff");
       assert.equal(current.sceneProgress.networkRoutingStep, 2);
       assert.equal(current.sceneProgress.networkRoutingCarried, 3);
-      assert.equal(current.objective, "3/4 TO CLASSNET");
+      assert.equal(current.objective, "3/4 INTERNAL REVIEW");
       const reliabilityBeforeWrongNetwork = current.reliability;
 
       await press();
@@ -355,7 +388,7 @@ async function run(label, mobile) {
       current = await checkpoint("packet-four-auto-handoff");
       assert.equal(current.sceneProgress.networkRoutingStep, 3);
       assert.equal(current.sceneProgress.networkRoutingCarried, 4);
-      assert.equal(current.objective, "4/4 TO CLASSNET");
+      assert.equal(current.objective, "4/4 CLASSIFIED");
 
       await press();
       current = await checkpoint("routing-room-cleared");

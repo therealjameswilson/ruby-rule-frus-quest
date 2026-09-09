@@ -51,6 +51,7 @@ import {
   NETWORK_ROUTE_ITEM_TOTAL,
   NETWORK_ROUTE_PACKETS,
   networkRoutingObjective,
+  networkRouteGuidance,
   routeNetworkPacket,
   routedItemCount
 } from "../game/networkRouting";
@@ -213,7 +214,7 @@ export class NetworkScene extends Phaser.Scene {
       fixedWidth: 96
     }).setOrigin(0.5).setDepth(820).setVisible(false);
     this.player = new Player(this, 128, 196);
-    this.dialog = new DialogBox(this);
+    this.dialog = new DialogBox(this, { aboveTouchControls: true });
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
@@ -738,6 +739,10 @@ export class NetworkScene extends Phaser.Scene {
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 60, 124, "OpenNet").container);
     this.track(new Terminal(this, 196, 124, "ClassNet").container);
+    for (const [x, text] of [[60, "PUBLIC COPIES"], [196, "PROTECTED REVIEW"]] as const) {
+      this.track(this.add.text(x, 150, text, { fontFamily: "monospace", fontSize: "4px",
+        color: PALETTE.creamPaper, backgroundColor: PALETTE.black }).setOrigin(0.5, 0).setDepth(124));
+    }
     this.drawRoutingSorter();
     if (!this.routingComplete) {
       this.updateRoutingRouteText();
@@ -751,12 +756,12 @@ export class NetworkScene extends Phaser.Scene {
     const packet = this.routingComplete ? null : getNetworkRoutePacket(this.currentRoute);
     const carried = this.routingCarriedPacket();
     setVisibleEntities([
-      "Marcus",
+      "Marcus: ask about the current packet",
       "OpenNet terminal",
       "ClassNet terminal",
       "Routing sorter",
       `Service crossing: ${networkCrossingState(gameState.sceneProgress)}`,
-      ...(packet ? [`Routing packet ${packet.order}/4: ${packet.label} (${carried ? "carried" : "at sorter"})`] : [])
+      ...(packet ? [`Routing packet ${packet.order}/4: ${packet.label} (${carried ? "carried" : "at sorter"}); marking: ${packet.marking}`] : [])
     ]);
   }
 
@@ -961,6 +966,13 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private updateRoutingPacketPrompt(delta: number) {
+    if (this.atRoutingGuide()) {
+      this.interactionPrompt.update(delta, this.toast.visible ? null : {
+        id: "network-marcus-guide", label: "Marcus", x: 38, y: 88, kind: "npc", onInteract: () => undefined
+      }, undefined, { badge: "A", text: "ASK ABOUT PACKET" });
+      setNearestInteractable("Marcus: routing help");
+      return;
+    }
     if (this.atStampCrossing()) {
       this.interactionPrompt.update(delta, this.toast.visible ? null : {
         id: "network-stamp-crossing", label: "Service crossing", x: 128, y: 124,
@@ -989,6 +1001,16 @@ export class NetworkScene extends Phaser.Scene {
 
   private handleRoutingPacketAction(input: Readonly<InputState>) {
     if (this.currentRoomId !== "N1" || this.routingComplete || !input.aJustPressed) return false;
+    if (this.atRoutingGuide()) {
+      const packet = getNetworkRoutePacket(this.currentRoute);
+      gameState.sceneProgress.networkRoutingHintOrder = packet.order;
+      this.dialog.show("Marcus", packet.routingClue);
+      setLatestMessage(packet.routingClue);
+      this.restoreObjectiveAfterDannePressure();
+      this.clearRoutingRouteCue();
+      saveGameNow();
+      return true;
+    }
     if (this.atStampCrossing()) {
       const result = tryOpenNetworkCrossing(gameState.sceneProgress, null, false);
       setLatestMessage(result.message);
@@ -1003,7 +1025,7 @@ export class NetworkScene extends Phaser.Scene {
       target.y
     ) > (target.radius ?? 34)) {
       retroAudio.blip();
-      setLatestMessage("Follow the lit cable to the highlighted target.");
+      setLatestMessage("Read the packet marking and terminal signs. Marcus can help.");
       return true;
     }
     const carried = this.routingCarriedPacket();
@@ -1021,8 +1043,8 @@ export class NetworkScene extends Phaser.Scene {
     this.carryRoutingPacket(packet);
     retroAudio.confirm();
     this.toast.show("ROUTING BATCH", this.player.position, "info");
-    setLatestMessage(`${packet.label}: ${packet.classification.toUpperCase()}. Route it to ${packet.network}; the next packet will stay with you.`);
-    setObjective(networkRoutingObjective(this.currentRoute, true));
+    setLatestMessage(packet.routingClue);
+    setObjective(networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
     this.refreshRoutingRouteCue();
@@ -1043,12 +1065,13 @@ export class NetworkScene extends Phaser.Scene {
     const result = routeNetworkPacket(this.currentRoute, packet.id, destination);
 
     if (!result.ok) {
+      gameState.sceneProgress.networkRoutingHintOrder = result.packet.order;
       adjustReliability(-2, `${result.packet.label} caught at the wrong-network firewall before transmission`);
       retroAudio.warning();
       this.routeText.setVisible(false);
       this.toast.show("WRONG NETWORK", this.player.position, "warn");
-      setLatestMessage(result.message);
-      setObjective(networkRoutingObjective(this.currentRoute, true));
+      setLatestMessage(`${result.message} ${result.packet.routingClue}`);
+      setObjective(networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder));
       this.syncNetworkSplitEntities();
       this.refreshRoutingRouteCue();
       this.reliability.update();
@@ -1077,10 +1100,10 @@ export class NetworkScene extends Phaser.Scene {
     if (!nextPacket) return;
     this.carryRoutingPacket(nextPacket);
     this.toast.show(this.currentRoute === 1 ? "STAMP OPENS CROSSING"
-      : `NEXT: ${nextPacket.shortLabel} > ${nextPacket.network.toUpperCase()}`, this.player.position, "info");
-    setLatestMessage(`${result.message} Next: ${nextPacket.label} goes to ${nextPacket.network}.`
+      : `NEXT: ${nextPacket.marking}`, this.player.position, "info");
+    setLatestMessage(`${result.message} Next marking: ${nextPacket.marking}. Match it to a terminal; ask Marcus for help.`
       + (this.currentRoute === 1 ? " Your Citation Stamp can now open the service crossing." : ""));
-    setObjective(networkRoutingObjective(this.currentRoute, true));
+    setObjective(networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
     this.refreshRoutingRouteCue();
@@ -1092,6 +1115,11 @@ export class NetworkScene extends Phaser.Scene {
     this.routeText.setVisible(false);
   }
 
+  private atRoutingGuide() {
+    return this.currentRoomId === "N1" && !this.routingComplete && this.player.position.y < 100
+      && Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 38, 88) <= 20;
+  }
+
   private refreshRoutingRouteCue() {
     if (this.currentRoomId !== "N1" || this.routingComplete) {
       this.clearRoutingRouteCue();
@@ -1099,6 +1127,11 @@ export class NetworkScene extends Phaser.Scene {
     }
     const packet = getNetworkRoutePacket(this.currentRoute);
     const carried = this.routingCarriedPacket();
+    const guidance = networkRouteGuidance(this.currentRoute, gameState.sceneProgress.networkRoutingHintOrder);
+    if (carried && !guidance) {
+      this.clearRoutingRouteCue();
+      return;
+    }
     const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
     const destination = carried
       ? { x: packet.network === "OpenNet" ? 60 : 196, y: 124 }
@@ -1732,7 +1765,7 @@ export class NetworkScene extends Phaser.Scene {
       this.updateRoutingRouteText();
       return;
     }
-    setObjective(networkRoutingObjective(this.currentRoute, Boolean(this.routingCarriedPacket())));
+    setObjective(networkRoutingObjective(this.currentRoute, Boolean(this.routingCarriedPacket()), gameState.sceneProgress.networkRoutingHintOrder));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
     this.refreshRoutingRouteCue();
