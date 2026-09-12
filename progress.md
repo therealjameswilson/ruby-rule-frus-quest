@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Direct hero movement (2026-09-12):
+  - User requested smoother Link-inspired control. Walking is now 72 px/s with immediate start/stop/reversal, normalized diagonals, retained swing slowdown, gentle edge assistance and animation based on actual travel. Removed full-wall grid attraction and three-pixel sideways snaps.
+  - 196 files / 1,468 tests pass; build passes. Keyboard and 375x667 touch Office probes verify movement, release, collision and integer rendering; native screenshots inspected. See docs/PLAYER_MOVEMENT_FEEL.md.
+  - Initial disk-full failure resolved by removing only regenerable Node compilation cache. Prior unfinished boss cue edits remain separate from this movement checkpoint. Not deployed; campaign pacing and unaided play remain to be checked.
+
 - Boss speaker attribution (2026-09-09):
   - Replaced the allied archivist portrait on all DANN-E boasts with the existing robot bust, registered and preloaded through danneAtlas. Missing-texture fallback remains; combat/save behavior unchanged.
   - Build and 195 files / 1,459 tests pass. Earned touch probe verifies real portrait keys, safe dialogue advance and resumed combat; standard keyboard client and native screenshots inspected.

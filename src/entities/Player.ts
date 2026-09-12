@@ -3,7 +3,6 @@ import { characterAnimKey } from "../art/character_anims";
 import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId } from "../game/constants";
-import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
 import { consumeResumePlayerSpawn, gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
@@ -12,7 +11,7 @@ import { PLAYER_HURT_MS, PLAYER_IFRAME_MS, toHitboxReadout } from "../systems/co
 import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
-import { approach, frameDeltaSeconds, PLAYER_MOVEMENT_TUNING, resolveFacing, resolveMovementVector, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
+import { frameDeltaSeconds, PLAYER_MOVEMENT_TUNING, resolveFacing, resolveMovementVector, resolveWalkingVelocity, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
 import { buildWeaponHitbox, WEAPON_VFX_ASSET, WeaponStateController, weaponTiming } from "../systems/weaponState";
 import { CombatClock } from "../systems/combatClock";
 
@@ -76,8 +75,6 @@ interface ActionColors {
 export class Player {
   readonly sprite: Phaser.GameObjects.Sprite;
   private readonly speed = PLAYER_MOVEMENT_TUNING.speed;
-  private readonly acceleration = PLAYER_MOVEMENT_TUNING.acceleration;
-  private readonly deceleration = PLAYER_MOVEMENT_TUNING.deceleration;
   private readonly cornerNudgePixels = 3;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
@@ -352,15 +349,13 @@ export class Player {
     this.facing = movementInput.facing;
     const dx = movementInput.x;
     const dy = movementInput.y;
-    const inputMoving = movementInput.moving;
     const dt = frameDeltaSeconds(deltaMs);
     const movementScale = this.weaponState.movementScale(now);
-    const targetVelocityX = dx * this.speed * movementScale;
-    const targetVelocityY = dy * this.speed * movementScale;
-    const velocityRate = inputMoving ? this.acceleration : this.deceleration;
-    this.velocityX = approach(this.velocityX, targetVelocityX, velocityRate * dt);
-    this.velocityY = approach(this.velocityY, targetVelocityY, velocityRate * dt);
-    const moving = Math.abs(this.velocityX) > 0.1 || Math.abs(this.velocityY) > 0.1;
+    const velocity = resolveWalkingVelocity(getInput().dir, movementScale);
+    this.velocityX = velocity.x;
+    this.velocityY = velocity.y;
+    const startX = this.logicalX;
+    const startY = this.logicalY;
     const bounds = options.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
     const solids = options.solids ?? [];
     const attemptedX = this.logicalX + this.velocityX * dt;
@@ -372,9 +367,8 @@ export class Player {
         this.logicalX = nextX;
         if (nextX !== attemptedX) this.velocityX = 0;
       } else {
-        if (!this.tryCornerNudge("x", nextX, this.logicalY, bounds, solids)) {
+        if (dy !== 0 || !this.tryCornerNudge("x", nextX, this.logicalY, bounds, solids, this.speed * movementScale * dt)) {
           this.velocityX = 0;
-          this.applyHalfTileCorrection(this.facing, bounds, solids);
         }
       }
     }
@@ -383,12 +377,12 @@ export class Player {
         this.logicalY = nextY;
         if (nextY !== attemptedY) this.velocityY = 0;
       } else {
-        if (!this.tryCornerNudge("y", this.logicalX, nextY, bounds, solids)) {
+        if (dx !== 0 || !this.tryCornerNudge("y", this.logicalX, nextY, bounds, solids, this.speed * movementScale * dt)) {
           this.velocityY = 0;
-          this.applyHalfTileCorrection(this.facing, bounds, solids);
         }
       }
     }
+    const moving = Math.abs(this.logicalX - startX) > 0.001 || Math.abs(this.logicalY - startY) > 0.001;
     if (moving) {
       this.walkClock += deltaMs;
       this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && dx < 0);
@@ -412,19 +406,7 @@ export class Player {
     return solids.some((solid) => Phaser.Geom.Intersects.RectangleToRectangle(footBox, solid));
   }
 
-  private applyHalfTileCorrection(direction: Direction, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[]) {
-    if (!solids.length) return;
-    const corrected = applyHalfTileMovementCorrection({
-      position: { x: this.logicalX, y: this.logicalY },
-      direction,
-      bounds,
-      canOccupy: (position) => !this.collidesAt(position.x, position.y, solids)
-    });
-    this.logicalX = corrected.x;
-    this.logicalY = corrected.y;
-  }
-
-  private tryCornerNudge(axis: "x" | "y", targetX: number, targetY: number, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[]) {
+  private tryCornerNudge(axis: "x" | "y", targetX: number, targetY: number, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[], maxStep: number) {
     if (!solids.length) return false;
     const offsets = [-this.cornerNudgePixels, this.cornerNudgePixels];
     for (const offset of offsets) {
@@ -435,8 +417,14 @@ export class Player {
         ? Phaser.Math.Clamp(this.logicalY + offset, bounds.top, bounds.bottom)
         : Phaser.Math.Clamp(targetY, bounds.top, bounds.bottom);
       if (!this.collidesAt(nudgedX, nudgedY, solids)) {
-        this.logicalX = nudgedX;
-        this.logicalY = nudgedY;
+        // Ease around a nearby open edge, never snap three pixels sideways or
+        // drift toward an unrelated grid line along a completely solid wall.
+        const step = Math.sign(offset) * Math.min(Math.abs(offset), maxStep, 1);
+        const slideX = axis === "y" ? Phaser.Math.Clamp(this.logicalX + step, bounds.left, bounds.right) : this.logicalX;
+        const slideY = axis === "x" ? Phaser.Math.Clamp(this.logicalY + step, bounds.top, bounds.bottom) : this.logicalY;
+        if (this.collidesAt(slideX, slideY, solids)) continue;
+        this.logicalX = slideX;
+        this.logicalY = slideY;
         if (axis === "x") this.velocityX = 0;
         else this.velocityY = 0;
         return true;

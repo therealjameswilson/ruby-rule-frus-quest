@@ -6,6 +6,7 @@ import {
   PLAYER_MOVEMENT_TUNING,
   resolveFacing,
   resolveMovementVector,
+  resolveWalkingVelocity,
   snapRenderedPosition
 } from "./smoothMovement";
 
@@ -105,55 +106,19 @@ describe("snapRenderedPosition", () => {
   });
 });
 
-// Numerically reproduces the velocity integration in Player.update. The
-// shared tuning constants keep this test and the live controller from drifting
-// apart as the movement feel is refined.
 describe("overworld movement feel", () => {
   const SPEED = PLAYER_MOVEMENT_TUNING.speed;
-  const ACCELERATION = PLAYER_MOVEMENT_TUNING.acceleration;
-  const DECELERATION = PLAYER_MOVEMENT_TUNING.deceleration;
-  const FRAME_MS = 1000 / 60;
-
-  const step = (velocity: number, target: number, holding: boolean) => {
-    const dt = frameDeltaSeconds(FRAME_MS);
-    const rate = holding ? ACCELERATION : DECELERATION;
-    return approach(velocity, target, rate * dt);
-  };
-
-  it("eases into full walking speed over three frames", () => {
-    let velocity = 0;
-    const firstFrame = step(velocity, SPEED, true);
-    expect(firstFrame).toBeGreaterThan(0);
-    expect(firstFrame).toBeLessThan(SPEED);
-    velocity = step(firstFrame, SPEED, true);
-    expect(velocity).toBeLessThan(SPEED);
-    velocity = step(velocity, SPEED, true);
-    expect(velocity).toBe(SPEED);
+  it("starts at full speed on the first frame", () => {
+    expect(resolveWalkingVelocity({ x: 1, y: 0 })).toEqual({ x: SPEED, y: 0 });
   });
-
-  it("stops within two frames of release with less than one pixel of glide", () => {
-    let velocity: number = SPEED;
-    let glide = 0;
-    let frames = 0;
-    while (velocity > 0 && frames < 10) {
-      velocity = step(velocity, 0, false);
-      glide += velocity * frameDeltaSeconds(FRAME_MS);
-      frames += 1;
-    }
-    expect(frames).toBeLessThanOrEqual(2);
-    expect(glide).toBeLessThan(1);
+  it("stops on release without a coast frame", () => {
+    expect(resolveWalkingVelocity({ x: 0, y: 0 })).toEqual({ x: 0, y: 0 });
   });
-
-  it("blends through a reversal instead of snapping direction instantly", () => {
-    let velocity: number = SPEED;
-    const samples: number[] = [];
-    while (velocity !== -SPEED && samples.length < 10) {
-      velocity = step(velocity, -SPEED, true);
-      samples.push(velocity);
-    }
-    expect(samples[0]).toBeGreaterThan(0);
-    expect(samples.some((sample) => sample <= 0)).toBe(true);
-    expect(samples.at(-1)).toBe(-SPEED);
-    expect(samples.length).toBeLessThanOrEqual(6);
+  it("reverses immediately instead of carrying momentum against input", () => {
+    expect(resolveWalkingVelocity({ x: -1, y: 0 })).toEqual({ x: -SPEED, y: 0 });
+  });
+  it("preserves equal diagonal speed and tool-swing movement weight", () => {
+    const diagonal = resolveWalkingVelocity({ x: 1, y: -1 }, 0.6);
+    expect(Math.hypot(diagonal.x, diagonal.y)).toBeCloseTo(SPEED * 0.6);
   });
 });

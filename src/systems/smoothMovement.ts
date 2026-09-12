@@ -3,15 +3,17 @@ import type { Direction } from "../game/constants";
 import type { Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "./pixelPerfect";
 
-// Keep the player's movement feel in one testable place. The short three-frame
-// ramp softens starts and direction changes without making the character feel
-// heavy, while the stronger release rate stops the player within two frames so
-// interaction and collision positioning remain precise on the 256x240 grid.
+// Direct ground control: input determines this frame's velocity, with no glide
+// on release or residual motion opposite a newly pressed direction.
 export const PLAYER_MOVEMENT_TUNING = {
-  speed: 58,
-  acceleration: 1200,
-  deceleration: 1800
+  speed: 72
 } as const;
+
+export function resolveWalkingVelocity(dir: { x: number; y: number }, scale = 1) {
+  const vector = resolveMovementVector(dir);
+  const speed = PLAYER_MOVEMENT_TUNING.speed * Math.max(0, Math.min(1, scale));
+  return { x: vector.x * speed, y: vector.y * speed };
+}
 
 export function approach(current: number, target: number, maxDelta: number) {
   if (current < target) return Math.min(current + maxDelta, target);
