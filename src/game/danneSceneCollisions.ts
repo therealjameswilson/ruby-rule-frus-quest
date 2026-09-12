@@ -293,13 +293,12 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
     interactions: [
       {
         // Pacing: the note warns about the drone patrols, so it sits in the
-        // lower entry aisle by the spawn (128,205) rather than on drone-route-a
-        // (y=92). The player reads the briefing before wading into the patrol
-        // lanes, ALTTP "read the room before the threat". See levelPacing.ts.
+        // entry pocket beside spawn (128,205), outside the 44px stamp range
+        // of the lower sweep at y=152. See levelPacing.ts.
         id: "stacks-note",
         label: "Patrol Note",
-        x: 128,
-        y: 178,
+        x: 140,
+        y: 202,
         radius: 24,
         kind: "document",
         action: "nara-stacks-note",

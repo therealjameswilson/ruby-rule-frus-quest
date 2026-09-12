@@ -57,7 +57,7 @@ describe("NARA Stacks pacing invariants", () => {
     const note = nara.interactions.find((interaction) => interaction.id === "stacks-note");
     expect(note).toBeDefined();
     const clearance = minDistanceToPatrolRoutes(note!, nara.patrolRoutes);
-    expect(clearance).toBeGreaterThanOrEqual(PATROL_HOTSPOT_MIN_CLEARANCE);
+    expect(clearance).toBeGreaterThan(REDACTOR_DRONE_STAMP_TRIGGER_RADIUS);
     // Read-before-threat: the note is nearer the spawn than the first sweep lane.
     const spawnToNote = Math.hypot(note!.x - nara.spawn.x, note!.y - nara.spawn.y);
     expect(spawnToNote).toBeLessThan(spawnPatrolClearance(nara));

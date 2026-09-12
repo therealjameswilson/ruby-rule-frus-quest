@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- NARA read-before-threat placement (2026-09-12):
+  - Reproduced the briefing knocking a stationary reader from (128,177) to (122,196). The note at y=178 was only 26px from the lower patrol, inside its 44px targeting radius; the old 12px hotspot-clearance check missed this.
+  - Moved the note to (140,202), beside the entry and 50px from the sweep. Kept interaction reach, drone AI, attack timing and all rewards unchanged. Strengthened the note-specific pacing assertion to exceed actual attack range, rather than merely avoid the patrol line.
+  - Runtime held the reader at (140,201) for nine seconds, then walking into the aisle produced normal knockback from (140,155) to (166,168). Both clue pages work directly from spawn via keyboard and simulated touch. Native briefing/aisle/clue and installed-client screenshots inspected; no browser errors. 29 focused tests and build pass.
+  - Evidence: /private/tmp/frus-nara-briefing-before/, /private/tmp/frus-nara-briefing-after/, /private/tmp/frus-nara-briefing-client/, /private/tmp/frus-secret-clue-safe-touch/. The first probe incorrectly expected reliability damage: current drone/wraith attacks call Player.takeHit(), which only handles knockback/i-frames. Review the intended damage model before changing this separate issue. Earned-folder secret discovery remains unverified. Local only.
+
 - Discoverable second-page secret clue (2026-09-12):
   - The NARA entry note alternated patrol advice and a northeast-shelf Review Folder clue, but its unchanged Patrol Note label never indicated a second reading. Actual-input browser check reproduced that missing signal.
   - Sync the note's interaction label to its existing page state: Patrol Note 1/2, then Shelf Clue 2/2. No new progression flags, auto-unlocks, tools or extra dialogue; returning to a pending second page preserves its label.
