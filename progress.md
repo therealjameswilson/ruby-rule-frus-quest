@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Guide-to-Archive input continuity (2026-09-12):
+  - Extended the earned-save doorway QA beyond scene arrival: wait for entry chrome, collect Source Note 47 using the actual A button/Space, assert exactly two points, remain in explore mode, and walk left immediately during pickup feedback. Browser console errors are now checked as well as page errors.
+  - Keyboard and 375x667 touch simulation pass without progress injection or teleporting. Native touch pickup screenshot inspected: carried note, highlighted table, short carry toast and open walking space. Evidence /private/tmp/frus-guide-archive-pickup/ and /private/tmp/frus-guide-archive-keyboard/.
+  - This is continuity/regression evidence, not proof of unaided comprehension or physical iPhone performance. No runtime changes were needed in this pass.
+
 - Walk-through Guide gate (2026-09-12):
   - Earned south gate now transitions when the player walks toward it; button interaction remains available. Requires the gate stage and southward input, so Continue at the boundary does not auto-exit. Transition lock prevents repeated inputs queuing multiple delayed scene changes.
   - Updated English, Spanish and French gate cues. Added stage/direction/bounds tests and repeated-activation coverage; 12 focused tests and production build pass, with the existing bundle-size warning.
