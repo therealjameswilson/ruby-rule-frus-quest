@@ -373,12 +373,14 @@ export class GameplayMapScene extends Phaser.Scene {
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.routeTransitionLocked) {
+      this.attackBuffer.clear();
       this.setCombatPaused(true);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       return;
     }
     if (this.dialogPages.length > 0) {
+      this.attackBuffer.clear();
       this.setCombatPaused(true);
       if (input.aJustPressed) this.advanceMapDialog();
       if (input.bJustPressed || input.pauseJustPressed) this.clearMapDialog();
@@ -388,12 +390,14 @@ export class GameplayMapScene extends Phaser.Scene {
     }
     if (input.menuJustPressed) this.inventory.toggle();
     if (handleOpenOverlays(this.inventory)) {
+      this.attackBuffer.clear();
       this.setCombatPaused(true);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       return;
     }
     if (input.pauseJustPressed) {
+      this.attackBuffer.clear();
       this.setCombatPaused(true);
       this.returnToWorldMap();
       return;
@@ -407,7 +411,7 @@ export class GameplayMapScene extends Phaser.Scene {
       return;
     }
     this.setCombatPaused(false);
-    if (this.attackBuffer.consume(this.time.now, true)) {
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing)) {
       const toolLabel = gameState.equippedProcessItem?.replace(/_/g, " ").toUpperCase() ?? "FRUS TOOL";
       if (this.player.startAction(gameState.equippedProcessItem)) {
         setLatestMessage(`Tool action: ${toolLabel}.`);

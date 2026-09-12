@@ -309,6 +309,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const input = getInput();
     this.cacheToast.update(delta, this.geometry.sceneKey === "BlackVaultLairScene" ? { x: 128, y: 88 } : this.player.position);
     if (this.leavingReadingPassage || this.time.now < this.passageBusyUntil) {
+      this.attackBuffer.clear();
       this.updateDanneEntities(this.time.now, delta, false);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
@@ -326,6 +327,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     const frozen = this.hitstop.isFrozen(this.time.now);
     const canAct = gameState.mode === "explore" && !this.dialog.active && !this.choice.active
       && !this.inventory.active && !this.reliability.active && !bossDecisionActive && !isCutsceneActive(this);
+    if (!canAct) this.attackBuffer.clear();
     this.player.setCombatPaused(!canAct || frozen);
     if (!canAct) this.vaultObjects?.update(null, false, Boolean(this.danneBoss?.isActive));
     if (!frozen) {
@@ -334,6 +336,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
 
     if (isCutsceneActive(this)) {
+      this.attackBuffer.clear();
       if (input.aJustPressed || input.confirmJustPressed) {
         if (this.danneBoss?.phaseDialogueActive) this.danneBoss.advanceBoast();
         else void exitCutscene(this);
@@ -346,6 +349,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
 
     if (bossDecisionActive || this.danneBoss?.inputLocked) {
+      this.attackBuffer.clear();
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.reliability.update();
@@ -372,6 +376,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
+      this.attackBuffer.clear();
       this.inventory.toggle();
       this.player.setCombatPaused(true);
       return;
@@ -405,7 +410,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     } else {
       this.lastGoodPosition = this.player.position;
     }
-    if (this.attackBuffer.consume(this.time.now, true)) this.useDanneItemAction();
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing)) this.useDanneItemAction();
     this.resolvePlayerMeleeHits(this.time.now);
     this.resolveReadingPassage();
     if (this.geometry.sceneKey === "NaraStacksScene" && hiddenReadingRoomDiscovered(gameState)

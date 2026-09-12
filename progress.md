@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Attack recovery grace (2026-09-12):
+  - Combat-map scenes now consume their existing 110ms attack buffer only when the weapon can swing. Menus/dialogue/transitions clear it; time-zero no longer invents an action. Weapon timings and damage unchanged.
+  - All 1,479 tests / 196 files and build pass. Both map types pass late queue/early expiry/menu cancellation on keyboard and simulated-touch tool input (M opens menus in this probe). Native screenshots and installed-client smoke inspected. See docs/ATTACK_RECOVERY_GRACE.md for failed QA timing investigations and final evidence.
+  - Follow-up: audit the existing 90ms short-tap latch, which merges very rapid presses; unchanged here. Fun and unaided comprehension still require player evidence. No deployment.
+
 - Committed tool-swing facing (2026-09-12):
   - Directional movement no longer rotates the hitbox during windup/active; recovery permits turning and existing slowed footwork remains available. Fallback sprite mirroring follows facing. Two regression cases reproduced the previous rotation.
   - Full 1,477 tests / 196 files and build pass. Keyboard/touch directional-swing probes and installed client pass; native captures inspected. Earned touch boss run clears all three phases with seven fresh core hits, no retries or deadline miss, then Continue restores bindery. Cloud cost reliability; this is not novice-comprehension evidence. See docs/PLAYER_MOVEMENT_FEEL.md. No deployment.
