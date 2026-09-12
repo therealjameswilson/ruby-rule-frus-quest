@@ -47,3 +47,8 @@ export function officeStarterObjective(stage: OfficeStarterStage) {
 export function officeStarterTarget(stage: OfficeStarterStage) {
   return TARGETS[stage];
 }
+
+export function officeQuestArrowPosition(x: number, targetTop: number, timeMs: number) {
+  const bounce = Math.round((1 - Math.cos(timeMs * Math.PI / 520)) * 1.5);
+  return { x: Math.round(x), y: Math.round(targetTop) - 6 - bounce };
+}

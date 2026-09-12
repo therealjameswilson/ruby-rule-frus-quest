@@ -77,6 +77,16 @@ try {
         return ui.questBandCueText.text==='FOLLOW GOLD ARROW' && ui.questBandVerbText.text==='!';
       });
       assert(await page.evaluate(()=>window.game.scene.getScene('OfficeScene').firstQuestCue.visible));
+      const cue = await page.evaluate(() => {
+        const office = window.game.scene.getScene('OfficeScene');
+        const target = office.currentGuidedTarget();
+        const junior = ['talk_jr', 'recover_key'].includes(office.officeStarterStage());
+        const arrow = office.firstQuestCue.getBounds();
+        return { x: office.firstQuestCue.x, y: office.firstQuestCue.y,
+          bottom: arrow.bottom, top: junior ? office.juniorCompiler.visualTop : target.y - 13 };
+      });
+      assert(Number.isInteger(cue.x) && Number.isInteger(cue.y), 'Quest arrow must stay pixel-snapped');
+      assert(cue.bottom < cue.top, 'Quest arrow must be above the target, not inside the character art');
     }
     await assertOfficeApproach();
     await shot('opening-office');

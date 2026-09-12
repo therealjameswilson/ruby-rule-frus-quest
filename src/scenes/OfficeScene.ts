@@ -5,7 +5,7 @@ import {
   FRUS_QUEST_FIRST_OBJECTIVE,
   FRUS_QUEST_MISSION
 } from "../game/mission";
-import { getOfficeStarterStage, officeStarterObjective, officeStarterTarget } from "../game/officeStarterRoute";
+import { getOfficeStarterStage, officeStarterObjective, officeStarterTarget, officeQuestArrowPosition } from "../game/officeStarterRoute";
 import {
   addDocumentPoints,
   addDanneItem,
@@ -481,21 +481,13 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private createFirstQuestCue() {
-    const arrow = this.add.triangle(0, -8, 0, 0, 7, 0, 3.5, 6, color(PALETTE.goldStamp), 0.96)
+    const arrow = this.add.triangle(0, 0, 0, 0, 8, 0, 4, 6, color(PALETTE.goldStamp), 1)
       .setName("office-first-quest-arrow")
       .setStrokeStyle(1, color(PALETTE.black));
     this.firstQuestCue = this.add.container(this.juniorCompiler.x, this.juniorCompiler.y - 11, [arrow])
       .setName("office-first-quest-cue")
       .setDepth(850)
       .setVisible(false);
-    this.tweens.add({
-      targets: this.firstQuestCue,
-      y: this.juniorCompiler.y - 14,
-      duration: 520,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut"
-    });
     this.updateFirstQuestCue();
   }
 
@@ -515,7 +507,9 @@ export class OfficeScene extends Phaser.Scene {
       && !closeToTarget
     );
     if (this.firstQuestCue && target) {
-      this.firstQuestCue.setPosition(target.x, target.y - 11);
+      const targetTop = targetId === "junior" ? this.juniorCompiler.visualTop : target.y - 13;
+      const position = officeQuestArrowPosition(target.x, targetTop, this.time.now);
+      this.firstQuestCue.setPosition(position.x, position.y);
     }
     this.firstQuestCue?.setVisible(visible);
     this.updateFirstRoomProgressVisibility();

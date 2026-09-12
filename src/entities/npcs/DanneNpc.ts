@@ -83,6 +83,10 @@ export abstract class DanneNpc {
     return this.container.y;
   }
 
+  get visualTop() {
+    return this.sprite.getBounds().top;
+  }
+
   update(timeMs: number) {
     const renderPosition = setRenderedPosition(this.container, this.baseX, this.baseY + Math.sin(timeMs / 620) * 0.45);
     this.container.setDepth(renderPosition.y);

@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- First-objective cue visibility (2026-09-12):
+  - Visual opening review found FOLLOW GOLD ARROW pointing to a cue lost inside the compiler's taller art. Anchor the cue above the actual NPC sprite bounds; use one integer-snapped bounce instead of a competing absolute-position tween. Other target cues retain their compact spacing. No save/progression changes.
+  - Added two position regressions and live opening checks for arrow/target separation and integer coordinates. Focused tests: 15 pass; production build passes with existing chunk warning. Native mobile Office and installed-client movement screenshots inspected.
+  - Fresh touch opening passes assignment, memo/inbox, Guide training with harmless miss and pause, reward, Continue and Archive entry. Evidence: /private/tmp/frus-clear-quest-arrow/ and /private/tmp/frus-quest-arrow-client/. Retained docs/screenshots/clear-first-objective-arrow.png.
+  - Remaining opening review questions: JR abbreviation has no visible name label, title says VERIFY instead of BEGIN, and keyboard movement discoverability needs observation. These are not yet fixed or proof of novice comprehension. Local only.
+
 - Refined-control boss and publication regression (2026-09-12):
   - Earned simulated-touch fight passes Colossus, Swarm and Cloud in a 51.422s measured loop, five fresh core hits, zero retries/deadline miss. Sixteen uneven Cloud swings return six bolts, reduce HP 180 to 68 and cost 20 reliability; no document changes. Native core and Cloud screenshots inspected.
   - Earned bindery passes five packet deliveries, bench collision, correction retry, human seal, pending/completed Continue and publication. Points 201 to 241; no browser errors. Native seal/publication inspected. Evidence: /private/tmp/frus-refined-boss/ and /private/tmp/frus-refined-bindery/.
