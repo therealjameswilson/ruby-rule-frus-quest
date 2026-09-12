@@ -7,7 +7,8 @@ import {
   HIDDEN_FIRST_EDITION_FOUND_FLAG,
   HIDDEN_FIRST_EDITION_LABEL,
   HIDDEN_READING_ROOM_DISCOVERED_FLAG,
-  hiddenFirstEditionFound
+  hiddenFirstEditionFound,
+  reachedReadingRoomReturn
 } from "../game/secretReadingRoom";
 import {
   addDocumentPoints,
@@ -206,6 +207,10 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
       bounds: { left: 18, right: GAME_WIDTH - 18, top: ROOM_TOP + 18, bottom: GAME_HEIGHT - 18 },
       solids: this.solids
     });
+    if (reachedReadingRoomReturn(this.player.position)) {
+      this.returnToStacks();
+      return;
+    }
     const nearest = nearestInteractable(this.player.position, this.interactables);
     const hint = nearestInteractableHint(this.player.position, this.interactables);
     setNearestInteractable(nearest?.label ?? null);

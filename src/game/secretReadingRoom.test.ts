@@ -3,12 +3,20 @@ import { canRevealReadingPassage, HIDDEN_READING_ROOM_DISCOVERED_FLAG, hiddenFir
 import { addProcessItem, createGameSaveData, gameState, getAdventureSubscreenReadout, getRoomGraphReadout, getVisitedRoomIds, resetGameState, restoreGameSaveData, setRoomTraversalState, setSceneState } from "./state";
 import { DANNE_SCENE_GEOMETRY } from "./danneSceneCollisions";
 import { buildWeaponHitbox, WeaponStateController } from "../systems/weaponState";
+import { reachedReadingRoomReturn } from "./secretReadingRoom";
 
 beforeEach(() => resetGameState());
 
 describe("physical reading-room discovery", () => {
   const position = { x: 204, y: 88 };
   const hitbox = buildWeaponHitbox(position, "north", "review_folder");
+
+  it("returns only at the open threshold, not on arrival or at the side walls", () => {
+    expect(reachedReadingRoomReturn({ x: 128, y: 208 })).toBe(false);
+    expect(reachedReadingRoomReturn({ x: 128, y: 221 })).toBe(false);
+    for (const x of [120, 128, 136]) expect(reachedReadingRoomReturn({ x, y: 222 })).toBe(true);
+    for (const x of [112, 119, 137, 144]) expect(reachedReadingRoomReturn({ x, y: 222 })).toBe(false);
+  });
 
   it("requires a held Review Folder and a contacting active swing", () => {
     expect(canRevealReadingPassage(false, true, "review_folder", hitbox)).toBe(true);

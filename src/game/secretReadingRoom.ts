@@ -2,6 +2,7 @@ import type { GameState } from "./state";
 import type { ProcessItemId } from "./constants";
 import type { DanneRectDefinition } from "./danneSceneCollisions";
 import type { Position } from "./types";
+import { GAME_HEIGHT } from "./constants";
 
 export const HIDDEN_READING_ROOM_SCENE = "HiddenReadingRoomScene" as const;
 export const HIDDEN_READING_ROOM_DISCOVERED_FLAG = "hiddenReadingRoomDiscovered" as const;
@@ -33,6 +34,12 @@ export function readingPassageSolids(solids: readonly DanneRectDefinition[], ope
 
 export function insideReadingPassage(position: Position) {
   return position.x >= 196 && position.x <= 212 && position.y >= 52 && position.y <= 80;
+}
+
+export function reachedReadingRoomReturn(position: Position) {
+  // The 32px doorway must contain the player's 16px-wide foot body.
+  return position.x >= 120 && position.x <= 136
+    && position.y >= GAME_HEIGHT - 18 && position.y <= GAME_HEIGHT;
 }
 
 export function readingPassageLabel(discovered: boolean, hasFolder: boolean) {

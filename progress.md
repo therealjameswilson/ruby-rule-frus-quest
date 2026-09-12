@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Secret-room walk-through return (2026-09-12):
+  - Playing the hidden First Edition room exposed a movement inconsistency: SOUTH TO STACKS left the player at y=222 in an open doorway until Interact was pressed. The before browser assertion failed; the native screenshot confirmed the blocked-feeling return.
+  - Added a foot-body-sized south threshold that invokes the existing return transition. Button interaction remains available; arrival at y=208 and side-wall contact do not trigger it. No reward, save-schema or discovery-gate changes.
+  - 12 secret passage/threshold/save tests and build pass. Keyboard and simulated touch collected +25 points, walked back to NARA, re-entered without duplicating the reward, and verified the stored collection flag. Native pickup/return/revisit screenshots and installed-client return inspected; no browser errors.
+  - Evidence: /private/tmp/frus-reading-room-before/, /private/tmp/frus-reading-room-keyboard/, /private/tmp/frus-reading-room-touch/, /private/tmp/frus-reading-room-client/. This starts from a debug hidden-room fixture, so it does not prove the clue is discoverable or the Review Folder is earned naturally. Those remain the next exploration checks. Local only.
+
 - Actionable Archive gate guidance (2026-09-12):
   - Reproduced east-gate bump replacing PICK UP SOURCE NOTE with a clipped generic objective and SOURCE PACKET INCOMPLETE toast. The before browser assertion failed and native screenshot confirmed the loss of useful guidance.
   - East gate and both north-door entry paths now reuse refreshRoomObjective() for the next concrete task. A player without a source note sees PICK UP SOURCE NOTE; carrying it yields NOTE TO TABLE, rather than a premature stamp instruction. Unlock rules, inventory and movement are unchanged.
