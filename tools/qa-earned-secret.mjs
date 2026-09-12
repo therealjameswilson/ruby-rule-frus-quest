@@ -1,4 +1,4 @@
-// Earned inventory, debug scene placement. All discovery/pickup changes use input.
+// Earned inventory; native NARA saves need no debug placement. All rewards use input.
 import assert from 'node:assert/strict';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
@@ -7,6 +7,7 @@ const storageState = JSON.parse(await readFile(process.env.FRUS_QA_STORAGE, 'utf
 const saved = JSON.parse(storageState.origins.flatMap(o => o.localStorage).find(e => e.name === 'rubyRuleFrusQuestSave').value);
 assert.ok(saved.state.inventory.includes('Review Folder'));
 assert.ok(!saved.state.sceneProgress.hiddenReadingRoomDiscovered, 'Use a save before discovery');
+const debugScenePlacement = saved.state.currentScene !== 'NaraStacksScene';
 const out = process.env.FRUS_QA_OUT ?? '/private/tmp/frus-earned-secret';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
@@ -41,7 +42,9 @@ try {
   await page.waitForFunction(scene => window.game.scene.isActive(scene), saved.state.currentScene);
   await page.waitForTimeout(500);
   // Continue loads the real save first; only location is changed for this fixture.
-  await page.evaluate(scene => window.game.scene.getScene(scene).scene.start('NaraStacksScene'), saved.state.currentScene);
+  if (debugScenePlacement) {
+    await page.evaluate(scene => window.game.scene.getScene(scene).scene.start('NaraStacksScene'), saved.state.currentScene);
+  }
   await page.waitForTimeout(1800);
   const initial = await state();
   assert.ok(initial.inventory.includes('Review Folder'));
@@ -73,7 +76,7 @@ try {
   await shot('returned');
   assert.deepEqual(errors, []);
   await writeFile(`${out}/earned-storage.json`, JSON.stringify(await context.storageState(), null, 2));
-  await writeFile(`${out}/result.json`, JSON.stringify({ debugScenePlacement: true, toolEarned: true, beforePoints: initial.documentPoints,
+  await writeFile(`${out}/result.json`, JSON.stringify({ debugScenePlacement, toolEarned: true, beforePoints: initial.documentPoints,
     afterPoints: reward.documentPoints, discovered: true, collected: true, errors }, null, 2));
   console.log('Earned Folder opens the physical shelf; First Edition +25; return to NARA succeeds');
 } finally { await browser.close(); }

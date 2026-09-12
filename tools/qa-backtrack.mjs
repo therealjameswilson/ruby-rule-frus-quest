@@ -80,7 +80,16 @@ try {
   assert.equal((await state()).scene, 'ArchiveScene');
   assert.equal((await state()).documentPoints, initial.documentPoints);
   assert.ok((await state()).inventory.includes('Review Folder'));
+  await walk(128, 56);
+  await page.keyboard.press('Space', { delay: 50 });
+  await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).roomTraversal?.currentRoomId === 'AS');
+  await page.waitForTimeout(800); await shot('08-annotation');
+  await walk(128, 56); await hold('ArrowUp', 500);
+  await page.waitForFunction(() => window.game.scene.isActive('NaraStacksScene'));
+  await page.waitForTimeout(900); await shot('09-nara');
+  assert.equal((await state()).documentPoints, initial.documentPoints);
+  assert.ok((await state()).inventory.includes('Review Folder'));
   assert.deepEqual(errors, []);
   await writeFile(`${out}/earned-storage.json`, JSON.stringify(await context.storageState(), null, 2));
-  console.log('Actual backtracking reaches Archive with earned tool and points intact');
+  console.log('Actual backtracking reaches NARA with earned tool and points intact');
 } finally { await browser.close(); }

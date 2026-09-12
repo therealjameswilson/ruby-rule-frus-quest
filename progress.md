@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned optional-route completion (2026-09-12):
+  - Extended qa-backtrack through the Archive north door and Annotation Stacks into NARA. Ten actual-input checkpoints retain 201 points and the earned Review Folder, with no task replay or debug relocation.
+  - qa-earned-secret now continues a native NARA save without debug placement (older remote-scene fixtures retain explicit placement). Used the backtracking output save to read both clue pages, walk to the northeast shelf, swing the Folder, enter, collect First Edition (+25), and walk back. result.json confirms debugScenePlacement:false, 201 -> 226 points, discovery/collection and no browser errors.
+  - Inspected native Annotation/NARA/clue/passage/reward/return screenshots under /private/tmp/frus-backtrack-nara/ and /private/tmp/frus-secret-full-route/. This closes the earned backtracking-to-secret coverage gap across two saved sessions. It does not prove unaided discovery or full-route touch parity. No runtime changes; prior build remains applicable. Next prioritize fresh-player comprehension rather than repeating this known route.
+
 - Earned backtracking verification (2026-09-12):
   - Added tools/qa-backtrack.mjs: Continue from the earned editor-completion save, then actual keyboard movement from Black Vault through Proof, Editorial, both Referral and both Network rooms to Archive. Read-only collision inspection chooses walking waypoints; no scene jumps or progress injection.
   - All eight checkpoints retain 201 document points; Review Folder remains owned, completed tasks do not block return travel, and no browser errors were recorded. Final native Archive screenshot inspected. Evidence: /private/tmp/frus-backtrack/.
