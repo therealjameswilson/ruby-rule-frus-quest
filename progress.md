@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Cart contact feedback (2026-09-12):
+  - Added a whole-pixel gold pressure cue during hold-to-push, above characters and cleared by release, push or pause. Corrected initial character occlusion after inspecting the native screenshot.
+  - All 1,472 tests / 196 files and production build pass. Real-keyboard earned-save probe confirms pressure, push and pause reset without extra rewards; no browser errors. See docs/CART_CONTACT_PUSH.md. Local only, not deployed.
+
 - Physical annotation cart pushing (2026-09-12):
   - Added optional 250ms cardinal contact hold to push the cart one tile; existing interact push, lane, parking, note collection and saves preserved. Release/direction/overlay resets prevent accidental accumulated pushes. Fixed live-discovered rounding-edge and off-center direction bugs with unit assertions.
   - Full 1,471 tests / 196 files and production build pass. Earned full touch Archive route passed; final off-center correction rechecked from earned partial stacks through cart completion. Installed keyboard client moved cart north three tiles using held input, without auto-collection or off-lane movement. See docs/CART_CONTACT_PUSH.md and /private/tmp/frus-cart-final-touch/.

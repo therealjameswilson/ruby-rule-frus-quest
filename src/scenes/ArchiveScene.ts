@@ -422,6 +422,8 @@ export class ArchiveScene extends Phaser.Scene {
   private provenanceStationVisuals = new Map<SourceNoteProvenancePromptId, SourceNoteProvenanceStationVisual>();
   private annotationCartVisual?: Phaser.GameObjects.Container;
   private readonly annotationCartPushHold = new AnnotationCartPushHold();
+  private annotationCartPressure?: Phaser.GameObjects.Container;
+  private annotationCartPressureFill?: Phaser.GameObjects.Rectangle;
   private annotationCartSolid?: Phaser.Geom.Rectangle;
   private annotationStationVisuals = new Map<AnnotationDraftingPromptId, AnnotationDraftingStationVisual>();
   private annotationTableSlots = new Map<AnnotationDraftingPromptId, Phaser.GameObjects.Rectangle>();
@@ -538,7 +540,10 @@ export class ArchiveScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (gameState.mode !== "explore" || this.currentRoomId !== "AS" || this.roomTransitionLocked
-      || input.aJustPressed || input.pauseJustPressed || input.menuJustPressed) this.annotationCartPushHold.reset();
+      || input.aJustPressed || input.pauseJustPressed || input.menuJustPressed) {
+      this.annotationCartPushHold.reset();
+      this.annotationCartPressure?.setVisible(false);
+    }
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.sourceNoteBoard.active) {
       this.updateDanneLurker(delta, false);
@@ -604,6 +609,8 @@ export class ArchiveScene extends Phaser.Scene {
       const contact = !input.aJustPressed && !input.bJustPressed && this.player.combatReadout.weapon.canSwing
         && annotationCartContactPush(gameState.sceneProgress, this.player.position, input.dir);
       if (this.annotationCartPushHold.update(delta, contact, input.dir)) this.moveAnnotationCart(input.dir);
+      this.annotationCartPressure?.setVisible(this.annotationCartPushHold.pressurePixels > 0);
+      this.annotationCartPressureFill?.setSize(this.annotationCartPushHold.pressurePixels, 1);
       this.updateAnnotationSlipIcon();
       this.syncAnnotationDraftingStations();
       const target = this.sourceNoteActionHint();
@@ -771,6 +778,8 @@ export class ArchiveScene extends Phaser.Scene {
     this.blackVaultDoorObjects = [];
     this.roomSolids = [];
     this.annotationCartVisual = undefined;
+    this.annotationCartPressure = undefined;
+    this.annotationCartPressureFill = undefined;
     this.annotationCartSolid = undefined;
     this.interactables = [];
     this.bureaucraticWalls = [];
@@ -990,6 +999,11 @@ export class ArchiveScene extends Phaser.Scene {
     ];
     this.annotationCartVisual = this.track(this.add.container(position.x, position.y, parts)
       .setName("annotation-context-cart").setDepth(position.y + 8));
+    this.annotationCartPressureFill = this.add.rectangle(-6, 0, 1, 1, color(PALETTE.goldStamp)).setOrigin(0, 0);
+    this.annotationCartPressure = this.track(this.add.container(position.x, position.y - 13, [
+      this.add.rectangle(0, 0, 14, 3, color(PALETTE.black)),
+      this.annotationCartPressureFill
+    ]).setName("annotation-cart-pressure").setDepth(940).setVisible(false));
     const bounds = annotationCartBounds(position);
     this.annotationCartSolid = new Phaser.Geom.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
     this.roomSolids.push(this.annotationCartSolid);
@@ -999,6 +1013,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private moveAnnotationCart(direction?: { x: number; y: number }) {
     this.annotationCartPushHold.reset();
+    this.annotationCartPressure?.setVisible(false);
     const result = pushAnnotationCart(gameState.sceneProgress, this.player.position, direction);
     setLatestMessage(result.message);
     if (!result.moved) {
@@ -1009,6 +1024,7 @@ export class ArchiveScene extends Phaser.Scene {
     gameState.sceneProgress.annotationCartY = result.position.y;
     gameState.sceneProgress.annotationCartParked = result.parked ? 1 : 0;
     this.annotationCartVisual?.setPosition(result.position.x, result.position.y).setDepth(result.position.y + 8);
+    this.annotationCartPressure?.setPosition(result.position.x, result.position.y - 13);
     const bounds = annotationCartBounds(result.position);
     this.annotationCartSolid?.setTo(bounds.x, bounds.y, bounds.width, bounds.height);
     const target = this.interactables.find(item => item.id === "annotation-return-cart");

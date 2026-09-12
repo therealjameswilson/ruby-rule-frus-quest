@@ -34,6 +34,18 @@ describe("Annotation Stacks return cart", () => {
     hold.update(0, false, up);
     expect(hold.update(50, true, up)).toBe(false);
   });
+
+  it("exposes an integer pressure cue only during an unfinished hold", () => {
+    const hold = new AnnotationCartPushHold(), up = { x: 0, y: -1 };
+    expect(hold.pressurePixels).toBe(0);
+    hold.update(50, true, up);
+    expect(hold.pressurePixels).toBe(3);
+    for (let i = 0; i < 4; i++) hold.update(50, true, up);
+    expect(hold.pressurePixels).toBe(0);
+    hold.update(50, true, up);
+    hold.update(10, false, up);
+    expect(hold.pressurePixels).toBe(0);
+  });
   it("requires physical pushes, not tool ownership or proximity", () => {
     expect(readAnnotationCart({})).toEqual({ position: ANNOTATION_CART.start, parked: false });
     expect(pushAnnotationCart({}, { x: 128, y: 192 }).moved).toBe(false);

@@ -20,7 +20,7 @@ can move another tile after reaching contact again; walking past does not.
 
 ## Verification
 
-All 196 test files / 1,471 tests pass. Production build passes, with the
+All 196 test files / 1,472 tests pass. Production build passes, with the
 existing large-chunk warning. Tests cover contact, off-center pressure,
 wrong directions, diagonal input, timing resets, legal routes and saves.
 
@@ -49,3 +49,14 @@ Evidence: `/private/tmp/frus-cart-hold-final/`,
 `/private/tmp/frus-cart-hold-touch/` and `/private/tmp/frus-cart-hold-verified/`.
 This is simulated touch and scripted keyboard, not physical-device or novice
 enjoyment evidence. Local only; no public deployment.
+
+## Contact Feedback
+
+A 12px gold indicator fills in whole pixels during contact, above the character
+layer so the hero cannot obscure it. It hides on release, successful push or
+pause; no new text or dialog is added. `tools/qa-cart-pressure.mjs` tests this
+from an earned partial-stacks save using real keyboard movement. The final
+native capture shows 4px of pressure, then a successful push to cart Y144;
+release and pause reset the cue without awarding points or collecting a note.
+Browser errors: none. Evidence: `/private/tmp/frus-cart-pressure-final/` and
+`docs/screenshots/cart-contact-pressure.png`.

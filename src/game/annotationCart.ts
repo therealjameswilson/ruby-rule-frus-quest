@@ -22,6 +22,8 @@ export class AnnotationCartPushHold {
   private x = 0;
   private y = 0;
 
+  get pressurePixels() { return Math.min(12, Math.ceil(this.elapsed / CART_PUSH_HOLD_MS * 12)); }
+
   reset() { this.elapsed = 0; this.x = 0; this.y = 0; }
 
   update(deltaMs: number, contact: boolean, direction: Position) {
