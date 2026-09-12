@@ -29,7 +29,7 @@
       "stamp": "TAKE CITATION STAMP",
       "counter": "RETURN DANN-E'S BOLT",
       "fragment": "TAKE FRONT MATTER",
-      "gate": "WALK SOUTH TO ARCHIVE"
+      "gate": "SOUTH: ARCHIVE"
     },
     "carryItem": "Carry {item}.",
     "chooseAnswer": "Choose answer.",

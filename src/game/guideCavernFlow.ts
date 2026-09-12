@@ -29,7 +29,7 @@ const GUIDE_CAVERN_ACTION_CUES: Record<GuideCavernStage, string> = {
   stamp: "FIND GOLD STAMP",
   counter: "FACE BOLT - SWING STAMP",
   fragment: "TAKE FRONT MATTER",
-  gate: "WALK SOUTH TO ARCHIVE"
+  gate: "SOUTH: ARCHIVE"
 };
 
 export function guideCavernObjective(stage: GuideCavernStage) {

@@ -36,7 +36,7 @@ describe("Guide Cavern onboarding flow", () => {
     const stage = getGuideCavernStage(true, true);
     expect(stage).toBe("gate");
     expect(guideCavernTargetId(stage)).toBe("gate");
-    expect(guideCavernActionCue(stage)).toBe("WALK SOUTH TO ARCHIVE");
+    expect(guideCavernActionCue(stage)).toBe("SOUTH: ARCHIVE");
   });
 
   it("walks through the earned gate only when moving south in its doorway", () => {
