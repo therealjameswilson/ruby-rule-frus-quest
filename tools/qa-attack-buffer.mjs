@@ -3,6 +3,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 const out = process.env.FRUS_QA_OUT ?? '/tmp/frus-attack-buffer';
 const touch = process.argv.includes('--touch');
+const gap = process.argv.includes('--rapid') ? 35 : 110;
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_EXECUTABLE });
 const results = [];
@@ -43,10 +44,10 @@ try {
     await writeFile(`${out}/${sceneKey}.png`, Buffer.from(image.split(',')[1], 'base64'));
     await ready(); await page.waitForTimeout(150);
     assert.equal((await weapon()).swingId, initial + 2, 'One tap queues exactly one swing');
-    await press('x'); await page.waitForTimeout(110); await press('x');
+    await press('x'); await page.waitForTimeout(gap); await press('x');
     await ready(); await page.waitForTimeout(160);
     assert.equal((await weapon()).swingId, initial + 3, 'Too-early taps expire');
-    await press('x'); await page.waitForTimeout(110); await press('x');
+    await press('x'); await page.waitForTimeout(gap); await press('x');
     await page.waitForFunction(key => window.game.scene.getScene(key).attackBuffer.bufferedUntil !== null, sceneKey, { polling: 'raf', timeout: 1000 });
     assert.notEqual(await page.evaluate(key => window.game.scene.getScene(key).attackBuffer.bufferedUntil, sceneKey), null, 'Cancellation starts with a genuinely queued tap');
     assert.equal((await weapon()).swingId, initial + 4, 'Queued tap has not fired before pause');
@@ -56,7 +57,7 @@ try {
     await page.waitForTimeout(150); await press('m'); await ready(); await page.waitForTimeout(160);
     assert.equal((await weapon()).swingId, initial + 4, 'Pause clears a pending swing');
     assert.deepEqual(errors, []);
-    results.push({ sceneKey, toolInput: touch ? 'touch' : 'keyboard', pauseInput: 'keyboard', lateTapQueuedOnce: true, earlyTapExpired: true, pauseCleared: true, errors });
+    results.push({ sceneKey, toolInput: touch ? 'touch' : 'keyboard', pauseInput: 'keyboard', gap, lateTapQueuedOnce: true, earlyTapExpired: true, pauseCleared: true, errors });
     await page.close();
   }
 } finally {

@@ -309,6 +309,47 @@ describe("InputState keyboard edges", () => {
     expect(getInput().aJustReleased).toBe(true);
   });
 
+  it.each([
+    ["KeyZ", "aJustPressed"], ["KeyX", "bJustPressed"],
+    ["Enter", "confirmJustPressed"], ["Escape", "cancelJustPressed"]
+  ] as const)("preserves two distinct %s taps inside the short-tap latch", (code, edge) => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    tapActionForTests(code); tickInput();
+    expect(getInput()[edge]).toBe(true);
+    now += 16; tickInput();
+    expect(getInput()[edge]).toBe(false);
+    now += 16; tapActionForTests(code); tickInput();
+    expect(getInput()[edge]).toBe(true);
+    now += 16; tickInput();
+    expect(getInput()[edge]).toBe(false);
+  });
+
+  it.each([["space", "aJustPressed"], ["b", "bJustPressed"]] as const)("re-arms a fresh touch %s press without repeating a held button", (key, edge) => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    setTouchControl(key, true); tickInput();
+    expect(getInput()[edge]).toBe(true);
+    now += 16; setTouchControl(key, true); tickInput();
+    expect(getInput()[edge]).toBe(false);
+    setTouchControl(key, false);
+    now += 16; setTouchControl(key, true); tickInput();
+    expect(getInput()[edge]).toBe(true);
+  });
+
+  it("clears queued fresh edges when an overlay swallows input", () => {
+    tapActionForTests("KeyZ");
+    tapActionForTests("KeyX");
+    setTouchControl("space", true);
+    setTouchControl("b", true);
+    swallowNextInputFrame();
+    tickInput(); tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+    expect(getInput().bJustPressed).toBe(false);
+    expect(getInput().confirmJustPressed).toBe(false);
+    expect(getInput().cancelJustPressed).toBe(false);
+  });
+
   it("turns a too-short Escape tap into a single pause/cancel edge", () => {
     let now = 2000;
     setNowProviderForTests(() => now);

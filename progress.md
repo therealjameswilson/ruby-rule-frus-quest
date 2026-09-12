@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Distinct rapid action edges (2026-09-12):
+  - Fresh keyboard/touch presses now re-arm one-tick action edges inside the existing 90ms latch. Held states, movement latches and gamepad polling unchanged; reset/swallow clears pending edges. Six reproduced failures plus overlay regression now pass.
+  - All 1,486 tests / 196 files and build pass. Rapid keyboard/touch tool probes pass in both combat maps. Fresh touch opening reaches Archive through training/reward/Continue without browser errors; native screenshots and installed-client capture inspected. See docs/FRESH_ACTION_EDGES.md. No deployment or new claim of unaided fun.
+  - Keyboard opening also passes through coached counter, reward and Continue into Archive; native counter capture inspected. Both opening routes start without saves.
+
 - Attack recovery grace (2026-09-12):
   - Combat-map scenes now consume their existing 110ms attack buffer only when the weapon can swing. Menus/dialogue/transitions clear it; time-zero no longer invents an action. Weapon timings and damage unchanged.
   - All 1,479 tests / 196 files and build pass. Both map types pass late queue/early expiry/menu cancellation on keyboard and simulated-touch tool input (M opens menus in this probe). Native screenshots and installed-client smoke inspected. See docs/ATTACK_RECOVERY_GRACE.md for failed QA timing investigations and final evidence.

@@ -30,6 +30,6 @@ completed swing; subsequent probes revealed the existing 90ms short-tap latch
 merges very close presses. Final early-tap/cancellation tests leave 110ms
 between presses and verify a genuinely pending buffer before testing removal.
 
-The short-tap latch is unchanged. Whether its merged rapid taps feel natural
-needs a separate input audit. No new campaign completion or novice enjoyment
+The subsequent fresh-edge correction is documented in `FRESH_ACTION_EDGES.md`;
+it preserves the latch but no longer merges distinct taps. No new campaign completion or novice enjoyment
 claim is made by this focused check. Local only; not deployed.
