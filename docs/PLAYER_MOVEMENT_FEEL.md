@@ -58,3 +58,26 @@ This verifies that faster movement preserves the opening interactions and
 first room transition. The scripts know the route, so this is not evidence
 that an unaided new player understands the adventure, nor a full-campaign
 completion or physical-device test. No gameplay retuning was needed here.
+
+## Earned Archive Regression
+
+The simulated-touch `qa-archive-wall.mjs --mobile` run continued from the
+fresh opening save after the movement change. All 39 checkpoints passed
+and reached NetworkScene with 55 document points and 73 reliability.
+The run starts with 20 points and 80 reliability; deliberate wrong-route
+and early-swing checks take time under live enemy pressure.
+
+Verified: locked stairs; no unreviewed stamp bypass; all source-trail clues;
+refusal to file unsupported readership; corrected-but-unfiled Continue;
+source approval and wall clearing; repeated-swing reward protection;
+annotation-stack entry; partial-packet Continue; cart contact collision;
+four deliberate cart pushes and intermediate-position Continue; parked-cart
+context access; three-note packet return/filing; telegram/cross-reference
+pickups; east exit to Two Networks. No browser errors or injected progress.
+
+Native cart-contact and Network-entry images were inspected and retained as
+`screenshots/movement-archive-cart.png` and
+`screenshots/movement-network-entry.png`. The earned continuation is at
+`/private/tmp/frus-faster-archive-touch/earned-storage.json` for subsequent
+local QA. It is temporary, not a shipped save. No gameplay edits were needed.
+Next: Network traversal, choices and gated exits with this controller.

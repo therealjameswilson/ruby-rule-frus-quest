@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Faster movement Archive continuation (2026-09-12):
+  - Earned touch save from the fresh opening passed all 39 qa-archive-wall checkpoints through NetworkScene: review gates, partial saves, wall stamping, cart collision/routing, note-packet return, pickups and east exit. No browser errors; ends at 55 points / 73 reliability under live enemy pressure.
+  - Native cart and Network images inspected. No gameplay adjustment needed. See docs/PLAYER_MOVEMENT_FEEL.md; next earned save is /private/tmp/frus-faster-archive-touch/earned-storage.json for Network checks. Temporary QA evidence, not shipped progress; no deployment.
+
 - Faster movement opening regression (2026-09-12):
   - Fresh no-save keyboard/coaching and simulated-touch routes pass Warning -> Title -> Compiler -> Office tasks -> Guide counter -> fragment -> reload/Continue -> Archive.
   - Checked perimeter bounds, wrong-facing coaching, harmless miss, pause freeze, interaction versus tool input and persistent reward. Reliability stays 80; no browser errors. Native screenshots inspected; see docs/PLAYER_MOVEMENT_FEEL.md.
