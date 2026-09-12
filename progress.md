@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Native touch compiler-name entry (2026-09-12):
+  - Added input/CompilerNameInput.ts: a labeled native dialog/textbox opened synchronously from the touch name tap. Done updates the existing ten-letter name, Cancel preserves it, empty still defaults to Sam at confirmation. Desktop canvas editing stays unchanged. Dialog and visual-viewport listeners are removed on scene shutdown.
+  - Shared InputState suspends keyboard/touch/gamepad sampling while native editing is active and swallows dismissal, keeping Z/X letters and Enter/Done from triggering gameplay. Dialog uses 44px buttons, a 16px input and a scrollable visual-viewport-constrained height; no canvas resolution changes.
+  - 200 files / 1,517 tests pass; final production build passes with existing chunk warning. qa-native-name verifies focus, real typing, Enter stays in creation, Cancel restores, Done updates, rotation, fitting a 160px-high viewport, and touch Begin reaches Office without a residual dialog. Desktop qa-compiler-name and installed gameplay client confirmation/movement pass. Native desktop and mobile portrait/landscape/Office screenshots inspected; no browser errors.
+  - Evidence: /private/tmp/frus-native-name/, /private/tmp/frus-name-desktop-regression/, /private/tmp/frus-native-name-client/. Initial browser locator matched both labeled dialog and textbox; refined to textbox role. Software keyboard appearance and Safari interruption behavior still require a physical iPhone; Chrome emulation cannot prove those. Local only.
+
 - Focused name-field shortcut correction (2026-09-12):
   - Fresh opening review found CharacterCreate processed confirm/cancel before typed letters. Browser reproduction typing ezrax left only e: Z blurred the field through the shared confirm binding.
   - Added shouldEndCharacterNameEditing: accepted letters take priority while focused, so Z/X remain name characters. Non-letter confirm/cancel still ends editing; a subsequent Enter begins play. Shared InputState and gameplay bindings are unchanged.

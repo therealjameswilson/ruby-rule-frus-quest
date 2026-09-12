@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   getInput,
+  setNativeTextEntryActive,
   getPrimaryActionBadge,
   getSecondaryActionBadge,
   isTouchControlPoint,
@@ -21,9 +22,30 @@ import {
 
 describe("InputState keyboard edges", () => {
   afterEach(() => {
+    setNativeTextEntryActive(false);
     setNowProviderForTests(null);
     resetInput();
     updateInputCallbacks({ isTouchControlPoint: undefined });
+  });
+
+  it("suspends all game input during native text entry and swallows dismissal", () => {
+    setNativeTextEntryActive(true);
+    setKeyboardDownForTests(["KeyZ", "ArrowLeft", "Escape"]);
+    setTouchControl("space", true);
+    for (let frame = 0; frame < 3; frame++) {
+      tickInput();
+      expect(getInput().aJustPressed).toBe(false);
+      expect(getInput().pauseJustPressed).toBe(false);
+      expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    }
+    setNativeTextEntryActive(false);
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    tickInput();
+    pressKeyForTests("KeyZ");
+    tickInput();
+    expect(getInput().aJustPressed).toBe(true);
   });
 
   it("maps Z to A and X/B to the secondary action", () => {

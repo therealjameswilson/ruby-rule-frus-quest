@@ -210,6 +210,12 @@ let lastGamepadLabel: string | null = null;
 let lastGamepadEvent = "idle";
 let swallowNextFrame = false;
 let suppressEscEdgesUntilRelease = false;
+let nativeTextEntryActive = false;
+
+export function setNativeTextEntryActive(active: boolean) {
+  nativeTextEntryActive = active;
+  swallowNextInputFrame();
+}
 let gamepadSnapshot: GamepadSnapshot = {
   connected: false,
   index: null,
@@ -412,6 +418,7 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   initialized = true;
 
   window.addEventListener("keydown", (event) => {
+    if (nativeTextEntryActive) return;
     if (!event.repeat) notifyInputGesture("keyboard");
     if (event.key === "F11" && !event.repeat) {
       event.preventDefault();
@@ -451,12 +458,14 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   });
 
   window.addEventListener("keyup", (event) => {
+    if (nativeTextEntryActive) return;
     preventGameKeyDefault(event);
     keyboardDown.delete(event.code);
     if (event.code === "Escape") suppressEscEdgesUntilRelease = false;
   });
 
   window.addEventListener("pointerdown", (event) => {
+    if (nativeTextEntryActive) return;
     notifyInputGesture("pointer");
     pendingPointerStarts.push({ x: event.clientX, y: event.clientY });
     const metrics = window.rubyRuleMobileMetrics;
@@ -537,7 +546,7 @@ export function getSecondaryActionBadge() {
 
 export function tickInput() {
   previousState = cloneState(currentState);
-  if (swallowNextFrame) {
+  if (nativeTextEntryActive || swallowNextFrame) {
     swallowNextFrame = false;
     pendingActionPresses.clear();
     pendingTouchPresses.clear();

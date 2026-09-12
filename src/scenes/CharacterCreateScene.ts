@@ -3,7 +3,8 @@ import { characterAnimKey } from "../art/character_anims";
 import { getCharacterKeyForProcessRole } from "../art/characters";
 import { DEFAULT_PROCESS_ROLE as COMPILER_ROLE, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState, setLatestMessage, setPlayerProfile, setSceneState, setVisibleEntities } from "../game/state";
-import { bindPointerDown, getInput, tickInput } from "../input/InputState";
+import { bindPointerDown, getInput, tickInput, isTouchInputCapable } from "../input/InputState";
+import { CompilerNameInput } from "../input/CompilerNameInput";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 import {
@@ -24,6 +25,7 @@ export class CharacterCreateScene extends Phaser.Scene {
   private sprite!: Phaser.GameObjects.Sprite;
   private locked = false;
   private nameFocused = false;
+  private nativeNameInput = new CompilerNameInput();
   private ngPlusBadge?: Phaser.GameObjects.Text;
 
   constructor() {
@@ -31,6 +33,7 @@ export class CharacterCreateScene extends Phaser.Scene {
   }
 
   create() {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.nativeNameInput.destroy());
     setSceneState("CharacterCreateScene", "choice", "Name your FRUS Compiler and begin the volume.");
     this.displayName = this.readInitialName();
     this.locked = false;
@@ -163,6 +166,13 @@ export class CharacterCreateScene extends Phaser.Scene {
 
   private focusNameField() {
     if (this.locked) return;
+    if (isTouchInputCapable()) {
+      this.nativeNameInput.open(this.displayName, name => {
+        if (name !== null) this.displayName = name;
+        this.blurNameField();
+      });
+      return;
+    }
     this.nameFocused = true;
     this.renderName();
   }
@@ -186,7 +196,7 @@ export class CharacterCreateScene extends Phaser.Scene {
   }
 
   private confirm() {
-    if (this.locked) return;
+    if (this.locked || this.nativeNameInput.active) return;
     this.locked = true;
     const displayName = normalizeCharacterDisplayName(this.displayName);
     retroAudio.confirm();
