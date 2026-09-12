@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Faster movement Network continuation (2026-09-12):
+  - Earned Archive save passes 29 keyboard/pointer Network checkpoints through ReferralVaultScene: public-first crossing, pause isolation, packet/docket handoffs, retry paths, explicit ledger filing, partial-save Continue and Clearance Token exit. No browser errors; 82 reliability at exit.
+  - Native crossing and ledger screens inspected. No gameplay changes. Next save: /private/tmp/frus-faster-network/desktop/earned-storage.json. Scope is informed scripted play, not unaided discovery; see docs/PLAYER_MOVEMENT_FEEL.md.
+
 - Faster movement Archive continuation (2026-09-12):
   - Earned touch save from the fresh opening passed all 39 qa-archive-wall checkpoints through NetworkScene: review gates, partial saves, wall stamping, cart collision/routing, note-packet return, pickups and east exit. No browser errors; ends at 55 points / 73 reliability under live enemy pressure.
   - Native cart and Network images inspected. No gameplay adjustment needed. See docs/PLAYER_MOVEMENT_FEEL.md; next earned save is /private/tmp/frus-faster-archive-touch/earned-storage.json for Network checks. Temporary QA evidence, not shipped progress; no deployment.

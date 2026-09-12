@@ -81,3 +81,22 @@ Native cart-contact and Network-entry images were inspected and retained as
 `/private/tmp/frus-faster-archive-touch/earned-storage.json` for subsequent
 local QA. It is temporary, not a shipped save. No gameplay edits were needed.
 Next: Network traversal, choices and gated exits with this controller.
+
+## Earned Network Regression
+
+`qa-network-ledger.mjs --crossing --pointer` continued the earned Archive
+save on keyboard movement and pointer choices. All 29 checkpoints completed
+through ReferralVaultScene with 82 reliability and no browser errors.
+
+The route verifies public-first crossing requirements, stamp opening and
+pause-input isolation, saved crossing state, four routing packets, immediate
+retry after a wrong network, three protected-review dockets, wrong-desk
+retry, explicit ledger editing versus filing, unfiled-draft Continue,
+Clearance Token pickup and the east referral exit. No game-state injection
+or gameplay edits were used. Native crossing and ledger screenshots were
+inspected; the earned next save is
+`/private/tmp/frus-faster-network/desktop/earned-storage.json`.
+
+This run is keyboard/pointer, not simulated touch. It exercises known routes
+and intentional mistakes, not unaided discovery. Next: Referral traversal
+and remaining campaign checks after the movement change.
