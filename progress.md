@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Refined-control Archive regression (2026-09-12):
+  - Replayed the earned touch Archive route after the latest movement/action changes, through source review, partial-save Continue, physical cart pushes, packet filing and the east exit. Reached Network with 55 points / 82 reliability; no browser errors or gameplay fixes needed.
+  - Native source review, policy choice, held-cart and Network-entry images inspected. Evidence and next earned save: /private/tmp/frus-refined-archive/. Later chapters need the same current-input regression; unaided enjoyment remains unproven. No deployment.
+
 - Short-press movement release (2026-09-12):
   - Live baseline found 6px keyboard / 1px touch travel after a short press was released. Consume each direction latch after its first sample; held input and otherwise-missed between-frame taps still work. Action behavior unchanged.
   - Post-release drift is now zero in both probes. All 1,488 tests / 196 files and build pass. Keyboard/touch furniture and pixel-alignment checks, installed-client movement and fresh touch opening through Continue/Archive pass. Native images inspected; see docs/PLAYER_MOVEMENT_FEEL.md. No deployment; broader new campaign QA and unaided-player evidence remain outstanding.

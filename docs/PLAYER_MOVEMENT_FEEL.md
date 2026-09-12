@@ -77,6 +77,27 @@ errors. Native continued-gate capture inspected. Evidence:
 production build passes with the existing bundle warning. No new full-campaign
 or physical-phone claim; not deployed.
 
+## Refined Controls: Earned Archive Route
+
+After the corner-rate, swing-facing, recovery-buffer, fresh-edge and short-
+release fixes, the touch Archive route was repeated from the newly earned
+opening save, without injecting progress. `qa-archive-wall.mjs --mobile
+--hold-cart` reaches Two Networks with 55 document points and 82 reliability.
+No browser errors or new gameplay fixes were needed.
+
+The run covers locked stairs, premature tool use, three source clues, refusal
+of unsupported readership, corrected-but-unfiled Continue, human approval,
+wall clearing, duplicate reward protection, annotation entry, partial packet
+Continue, cart contact/held push, intermediate cart Continue, deliberate
+parking and note pickup, complete packet filing, telegram/cross-reference
+pickups and eastward transition. Native research-choice, policy-review, held-
+cart and Network-entry captures were inspected.
+
+Evidence: `/private/tmp/frus-refined-archive/`; its `earned-storage.json` is
+the next Network checkpoint. This is known-route simulated touch, not an
+unaided playtest. Later chapters still need rechecking with the latest input
+changes. No public deployment.
+
 ## Committed Swing Facing
 
 Directional input no longer rotates an attack during its windup or active
