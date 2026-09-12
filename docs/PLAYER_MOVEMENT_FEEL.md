@@ -4,6 +4,35 @@ Updated September 12, 2026 in response to the request for smoother,
 Link-inspired hero control. This is original movement tuning, not a claim
 of reproducing Nintendo's controller code.
 
+## Current Verification Boundary
+
+As of runtime commit `691acf4`, the full suite passes: 1,498 tests across
+198 files. The production build passes with the existing large-chunk warning.
+The sections below are chronological evidence, not a list of simultaneously
+outstanding tasks; older "next" notes describe the state at that checkpoint.
+
+- Movement: keyboard and simulated touch verify immediate release, reversal,
+  diagonal collision, corner guidance, integer rendering and both 8 fps walk
+  poses. Tool-facing and rapid-input regressions remain in the passing suite.
+- Opening: the goal/start command is localized, language clicks do not start
+  the quest, the title is free of gameplay touch controls, the quest arrow is
+  above character art, and stale proximity feedback yields to a reachable
+  action without hiding new assignment/reward messages.
+  The combined fresh touch route passes through assignment, memo delivery,
+  coached counter/miss/pause, reward, Continue and Archive entry. Evidence:
+  `/private/tmp/frus-opening-consolidated/`; native counter and entry inspected.
+- Campaign: earned checkpoint tests reached publication at `477d5b1`, including
+  an uneven-timing Cloud segment and persisted final certification. Later work
+  changes opening presentation, feedback and walk cadence, not boss rules.
+- Unproven: unaided first-time comprehension, sustained enjoyment, physical
+  iPhone feel/performance, and whether optional exploration is rewarding enough.
+  Passing automation is not evidence that these goals are achieved.
+
+The next design decisions should use observed hesitation, repeated failed
+actions and disengagement, rather than another identical successful campaign
+script. Keep the original FRUS research-to-publication goal and adventure
+structure intact. No public deployment was performed in this verification pass.
+
 ## Changes
 
 - Walking speed: 58 to 72 logical pixels per second.

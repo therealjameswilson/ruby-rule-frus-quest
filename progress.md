@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Consolidated regression boundary (2026-09-12):
+  - Full suite on runtime 691acf4: 198 files / 1,498 tests pass. Fresh simulated-touch opening with all recent fixes passes assignment, memo delivery, coached counter, harmless miss, pause, reward, Continue and Archive entry. Native counter and Archive screenshots inspected; evidence /private/tmp/frus-opening-consolidated/.
+  - Added a current verification boundary to docs/PLAYER_MOVEMENT_FEEL.md, separating older chronological next-step notes from current evidence. Unaided comprehension, sustained fun, physical-device feel and optional-exploration value remain unproven. Asked for the player's first specific hesitation/disengagement point; no deployment.
+
 - Reachable-action feedback priority (2026-09-12):
   - Reproduced a stale NOTHING TO INTERACT WITH panel hiding the newly reachable compiler prompt after a short approach. The old browser check failed with the toast still visible despite a valid target.
   - Mark only proximity feedback as dismissible on reaching an interaction. Office dismisses it before rendering the reachable prompt; normal assignment/reward/review messages remain timed and readable. No input, range, save or quest changes.
