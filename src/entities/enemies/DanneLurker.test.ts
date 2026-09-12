@@ -7,7 +7,7 @@ import { WeaponStateController, type WeaponToolId } from "../../systems/weaponSt
 import { retroAudio } from "../../systems/audio";
 import { DanneLurker } from "./DanneLurker";
 
-const { Visual } = vi.hoisted(() => {
+const { Visual, patrolStep } = vi.hoisted(() => {
   class Visual {
     x = 0;
     y = 0;
@@ -37,7 +37,7 @@ const { Visual } = vi.hoisted(() => {
     setPosition(x: number, y: number) { this.x = x; this.y = y; return this; }
     destroy() { this.destroyed = true; }
   }
-  return { Visual };
+  return { Visual, patrolStep: vi.fn() };
 });
 
 vi.mock("phaser", () => ({
@@ -75,7 +75,7 @@ vi.mock("./Enemy", () => ({
     spriteKey = "danne-boss-combat";
     constructor(public scene: Phaser.Scene, public currentX: number, public currentY: number) {}
     get position() { return { x: this.currentX, y: this.currentY }; }
-    moveTowardWaypoint() {}
+    moveTowardWaypoint() { patrolStep(); }
     bodyBounds() { return { x: this.currentX - 9, y: this.currentY - 14, width: 18, height: 20 }; }
     syncRender() {}
     color() { return 0; }
@@ -244,6 +244,20 @@ describe("DANN-E opening fairness and projectile movement", () => {
     expect(update(10017, 16, { x: 100, y: 40 }, false).egoBoltFired).toBe(false);
     expect(update(10033, 16, { x: 100, y: 40 }).egoBoltFired).toBe(false);
     expect(sprites).toHaveLength(0);
+  });
+
+  it("holds the advertised firing position through windup and resumes patrol after firing", () => {
+    const { update, lurker } = createEncounter();
+    const target = { x: 100, y: 40 };
+    for (let now = 17; now <= 1809; now += 16) update(now, 16, target);
+    expect(lurker.readout(1809).telegraph).not.toBeNull();
+    patrolStep.mockClear();
+    const fireAt = 1809 + DANNE_LURKER_BOLT_TELEGRAPH_MS;
+    for (let now = 1825; now < fireAt; now += 16) update(now, 16, { x: 110, y: 90 });
+    expect(update(fireAt, 0, target).egoBoltFired).toBe(true);
+    expect(patrolStep).not.toHaveBeenCalled();
+    update(fireAt + 16, 16, target);
+    expect(patrolStep).toHaveBeenCalledOnce();
   });
 
   it.each([30, 60, 120, 144, 240])("moves a slow bolt at the same speed at %i fps while drawing whole pixels", (fps) => {

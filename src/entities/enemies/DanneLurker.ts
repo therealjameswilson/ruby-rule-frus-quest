@@ -153,7 +153,8 @@ export class DanneLurker extends Enemy {
       this.pausedAt = null;
     }
     const canAttack = this.encounterMode === "combat";
-    if (timeMs >= this.stunnedUntil) this.moveTowardWaypoint(deltaMs);
+    // The warning lane must keep the same firing origin until the bolt launches.
+    if (timeMs >= this.stunnedUntil && !this.egoBoltTelegraph) this.moveTowardWaypoint(deltaMs);
     const swing = canAttack && combat?.actionActive && combat.weapon.active
       && combat.weapon.phase === "active" && isWeaponTool(combat.weapon.tool) && combat.hitbox
       ? { box: new Phaser.Geom.Rectangle(combat.hitbox.x, combat.hitbox.y, combat.hitbox.width, combat.hitbox.height),
@@ -218,7 +219,8 @@ export class DanneLurker extends Enemy {
 
     const hoverX = Math.sin(timeMs / 260) * 0.7;
     const hoverY = Math.cos(timeMs / 310) * 0.55;
-    this.syncRender(timeMs, stunned ? 0 : hoverX, stunned ? 0 : hoverY);
+    const holdingAim = stunned || this.egoBoltTelegraph !== null;
+    this.syncRender(timeMs, holdingAim ? 0 : hoverX, holdingAim ? 0 : hoverY);
     return { triggered, pressureActive: active, egoBoltFired, egoBoltHit };
   }
 

@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Fair DANN-E firing windup (2026-09-12):
+  - Found patrol movement continued after the warning lane was drawn, changing the shot origin. Added a failing regression (39 patrol steps during windup), then held patrol and hover while aiming. Patrol resumes after launch; target snapshot, warning duration, projectile speed, damage and counter rules are unchanged.
+  - 44 focused tests and production build pass (existing bundle warning). Extended qa-danne-contact.mjs to observe real windup origins without changing enemy inputs/results and save a native warning screenshot.
+  - Earned Referral touch replay: 140 windup frames, four shots, zero origin drift; zero phantom hits, 189 safe close-pass frames, actual damaging contact and successful Citation Stamp stun. Document state/points/standards unchanged. No browser errors. Warning and counter screenshots inspected in /private/tmp/frus-lurker-steady-windup/.
+  - Installed gameplay client Referral movement/idle smoke completed with native render inspected (/private/tmp/frus-windup-client/). Local only; this is a targeted fairness improvement, not a complete difficulty or physical-device claim.
+
 - Guide-to-Archive input continuity (2026-09-12):
   - Extended the earned-save doorway QA beyond scene arrival: wait for entry chrome, collect Source Note 47 using the actual A button/Space, assert exactly two points, remain in explore mode, and walk left immediately during pickup feedback. Browser console errors are now checked as well as page errors.
   - Keyboard and 375x667 touch simulation pass without progress injection or teleporting. Native touch pickup screenshot inspected: carried note, highlighted table, short carry toast and open walking space. Evidence /private/tmp/frus-guide-archive-pickup/ and /private/tmp/frus-guide-archive-keyboard/.

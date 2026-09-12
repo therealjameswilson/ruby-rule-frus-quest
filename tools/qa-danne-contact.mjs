@@ -83,11 +83,22 @@ try {
     const scene = window.game.scene.getScene("ReferralVaultScene"), lurker = scene.danneLurker;
     const original = lurker.update.bind(lurker);
     window.contactTrace = [];
+    window.aimTrace = [];
     window.safePassFrames = 0;
     let pending = null;
     // Observe the real update before knockback. Do not change its inputs or results.
     lurker.update = (...args) => {
-      const player = { ...args[2] }, result = original(...args);
+      const player = { ...args[2] };
+      const aiming = lurker.readout(args[0]).telegraph !== null;
+      const origin = { ...lurker.position };
+      const result = original(...args);
+      if (args[3] && aiming) {
+        window.aimTrace.push({ origin, after: { ...lurker.position }, fired: result.egoBoltFired });
+        if (!window.aimScreenshotRequested) {
+          window.aimScreenshotRequested = true;
+          window.game.renderer.snapshot(image => { window.aimScreenshot = image.src; });
+        }
+      }
       const body = lurker.bodyBounds(), foot = { x: player.x - 8, y: player.y - 3, width: 16, height: 8 };
       const overlap = foot.x <= body.x + body.width && foot.x + foot.width >= body.x
         && foot.y <= body.y + body.height && foot.y + foot.height >= body.y;
@@ -136,6 +147,13 @@ try {
     await shot("tool-counter");
   }
   const trace = await page.evaluate(() => window.contactTrace);
+  const aimTrace = await page.evaluate(() => window.aimTrace);
+  await writeFile(`${out}/aim-trace.json`, JSON.stringify(aimTrace, null, 2));
+  const aimImage = await page.evaluate(() => window.aimScreenshot);
+  if (aimImage) await writeFile(`${out}/windup-native.png`, Buffer.from(aimImage.split(',')[1], 'base64'));
+  assert(aimTrace.length > 0, 'Encounter must exercise the firing windup');
+  assert(aimTrace.some(frame => frame.fired), 'Encounter must launch a telegraphed bolt');
+  for (const frame of aimTrace) assert.deepEqual(frame.after, frame.origin, 'Warning origin cannot drift before firing');
   const after = await state();
   await writeFile(`${out}/contact-trace.json`, JSON.stringify(trace, null, 2));
   assert.deepEqual(after.documentCandidates, before.documentCandidates);
