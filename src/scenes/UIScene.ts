@@ -19,7 +19,7 @@ import { applyIntegerZoom } from "../systems/pixelPerfect";
 import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
-import { guideQuestBandObjective, officeQuestBandObjective } from "./openingQuestBand";
+import { guideQuestBandObjective, officeApproachCue, officeQuestBandObjective } from "./openingQuestBand";
 import { questBandAwaitingDialog, questBandBossCue, questBandRiskLine } from "./questBandCue";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
@@ -216,8 +216,10 @@ export class UIScene extends Phaser.Scene {
     const objectiveLine = awaitingDialog ? "" : this.compactObjective(activeSceneKey);
     const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
     const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats);
-    const actionLine = awaitingDialog ? "" : bossCue?.text ?? riskLine ?? this.compactActionLine(toolLabel);
+    const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable);
+    const actionLine = awaitingDialog ? "" : bossCue?.text ?? riskLine ?? approachCue?.text ?? this.compactActionLine(toolLabel);
     const actionBadge = awaitingDialog ? "" : bossCue?.badge === "notice" ? "!"
+      : !bossCue && !riskLine && approachCue ? approachCue.badge
       : !riskLine && (bossCue?.badge === "tool" || this.showCounterAction() || this.guideCounterTrainingActive())
       ? getSecondaryActionBadge()
       : getPrimaryActionBadge();

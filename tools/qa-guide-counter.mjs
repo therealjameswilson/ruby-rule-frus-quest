@@ -41,7 +41,10 @@ async function move(x, y) { for (let n = 0; n < 120; n++) {
     if (Math.hypot(dx, dy) < 5)
         return;
     assert.equal(s.mode, 'explore');
-    await direction(Math.abs(dx) > Math.abs(dy) ? dx > 0 ? 'ArrowRight' : 'ArrowLeft' : dy > 0 ? 'ArrowDown' : 'ArrowUp');
+    // Taper input near the target so a fixed burst cannot oscillate across
+    // the arrival radius with the faster controller and real-time scheduling.
+    const duration = Math.max(20, Math.min(85, Math.max(Math.abs(dx), Math.abs(dy)) * 7));
+    await direction(Math.abs(dx) > Math.abs(dy) ? dx > 0 ? 'ArrowRight' : 'ArrowLeft' : dy > 0 ? 'ArrowDown' : 'ArrowUp', duration);
 } throw Error(`movement failed ${x},${y}`); }
 async function scene(key) { await page.waitForFunction(key => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === key, key); await page.waitForTimeout(650); }
 async function shot(label) { const s = await state(); results.push({ label, elapsedMs: Date.now() - auditStarted, state: s }); const data = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src)))); await writeFile(`${out}/${label}-native.png`, Buffer.from(data.split(',')[1], 'base64')); await page.screenshot({ path: `${out}/${label}.png` }); await context.storageState({ path: `${out}/earned-storage.json` }); console.log(label, s.scene, s.guideCounter?.phase, s.guideCounter?.attempts, s.reliability); }
@@ -68,6 +71,14 @@ try {
     else
         await press('Enter');
     await scene('OfficeScene');
+    async function assertOfficeApproach() {
+      await page.waitForFunction(() => {
+        const ui=window.game.scene.getScene('UIScene');
+        return ui.questBandCueText.text==='FOLLOW GOLD ARROW' && ui.questBandVerbText.text==='!';
+      });
+      assert(await page.evaluate(()=>window.game.scene.getScene('OfficeScene').firstQuestCue.visible));
+    }
+    await assertOfficeApproach();
     await shot('opening-office');
     await move(128, 122);
     await move(70, 122);
@@ -75,9 +86,14 @@ try {
     await shot('opening-assignment');
     await move(128, 138);
     await press();
+    await assertOfficeApproach();
     await shot('opening-memo');
     await move(128, 185);
     await move(60, 185);
+    await page.waitForFunction(()=>{
+      const ui=window.game.scene.getScene('UIScene');
+      return ui.questBandCueText.text.includes('ROUTE MEMO') && ui.questBandVerbText.text!=='!';
+    });
     await press();
     await press();
     await shot('opening-door-unlocked');

@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Office approach cue (2026-09-12):
+  - Replaced misleading primary-action badge when no Office target is reachable with a notice and FOLLOW GOLD ARROW; localized EN/ES/FR. Target arrow now uses actual interaction radius instead of fixed 34px. Reachable action cues and dialog/choice behavior preserved; no extra dialog or save change.
+  - Full 1,469 tests / 196 files and build pass. Fresh touch opening passes 17 checkpoints through Archive, actual HUD/arrow assertions and no browser errors. Installed keyboard client smoke and native images inspected. QA movement bursts now taper near destinations after fixed bursts oscillated at an already-reachable door; runtime movement unchanged.
+  - See docs/OFFICE_APPROACH_CUE.md. Evidence /private/tmp/frus-office-approach-verified/. First-player feedback remains pending. No deployment.
+
 - Cloud untimed-input audit (2026-09-12):
   - Added --cloud-imprecise to earned boss QA: 16 uneven swings, direction from visible relative enemy position, no projectile/timer reads driving timing. Touch: 3 returns, HP 180 to 96, reliability 90 to 70. Keyboard: 6 returns, HP 180 to 40, reliability stays 90. Neither probe needs retry; documents/points unchanged; no browser errors.
   - Both subsequent timing-aware runs finish Cloud and Continue in the bindery. Native captures inspected. No combat values changed; see docs/BOSS_IMPRECISE_INPUT_AUDIT.md. Next: first-player comprehension and feedback, not more claims of fun from known-route automation. Local only, not deployed.

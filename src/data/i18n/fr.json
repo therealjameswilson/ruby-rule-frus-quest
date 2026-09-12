@@ -132,6 +132,7 @@
     "confirm": "CONFIRMER",
     "controllerConnected": "MANETTE CONNECTÉE",
     "findGlowing": "TROUVE UN BUREAU OU UNE PORTE LUMINEUSE",
+    "followQuestArrow": "SUIVEZ LA FLECHE DOREE",
     "goLeftTalk": "PARLE À JR",
     "interact": "INTERAGIR : {label}",
     "nextLine": "LIGNE SUIVANTE",

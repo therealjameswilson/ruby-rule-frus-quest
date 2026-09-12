@@ -1,11 +1,19 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { getString, LANGUAGES, setLanguage } from "../systems/i18n";
-import { officeQuestBandObjective, guideQuestBandObjective } from "./openingQuestBand";
+import { officeApproachCue, officeQuestBandObjective, guideQuestBandObjective } from "./openingQuestBand";
 import { QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 
 afterEach(() => setLanguage("en"));
 
 describe("opening HUD objectives", () => {
+  it("shows a movement notice only when the office has no reachable action", () => {
+    expect(officeApproachCue("OfficeScene", "explore", null))
+      .toEqual({ text: "FOLLOW GOLD ARROW", badge: "!" });
+    expect(officeApproachCue("OfficeScene", "explore", "Route Memo")).toBeNull();
+    expect(officeApproachCue("OfficeScene", "dialog", null)).toBeNull();
+    expect(officeApproachCue("OfficeScene", "choice", null)).toBeNull();
+    expect(officeApproachCue("GuideScene", "explore", null)).toBeNull();
+  });
   it("names the destination while carrying the memo instead of truncating its title", () => {
     expect(officeQuestBandObjective({ juniorIntroduced: true, memoStatus: 1, hasArchiveKey: false }))
       .toBe("MEMO TO WEST INBOX");
@@ -20,6 +28,9 @@ describe("opening HUD objectives", () => {
 
   it.each(LANGUAGES)("fits every opening stage in %s without losing the target", (language) => {
     setLanguage(language);
+    const approach = officeApproachCue("OfficeScene", "explore", null)!;
+    expect(approach.text).not.toMatch(/^hud\./);
+    expect(clampQuestBandText(approach.text, QUEST_BAND_LAYOUT.actionCue.maxChars)).toBe(approach.text);
     const office = [
       { juniorIntroduced: false, memoStatus: 0, hasArchiveKey: false },
       ...[0, 1, 2, 3].map((memoStatus) => ({ juniorIntroduced: true, memoStatus, hasArchiveKey: false })),

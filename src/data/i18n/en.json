@@ -40,6 +40,7 @@
     "confirm": "CONFIRM",
     "controllerConnected": "CONTROLLER CONNECTED",
     "findGlowing": "FIND A GLOWING DESK OR DOOR",
+    "followQuestArrow": "FOLLOW GOLD ARROW",
     "goLeftTalk": "TALK TO JR",
     "interact": "INTERACT: {label}",
     "nextLine": "NEXT LINE",

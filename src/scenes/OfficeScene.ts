@@ -501,8 +501,11 @@ export class OfficeScene extends Phaser.Scene {
 
   private updateFirstQuestCue() {
     const target = this.currentGuidedTarget();
+    const targetId = officeStarterTarget(this.officeStarterStage()).id;
+    const interactableId = { junior: "junior-compiler", memo: "starter-memo", inbox: "production-inbox", archive: "archive-guide-door" }[targetId];
+    const radius = this.currentInteractables().find(item => item.id === interactableId)?.radius ?? 0;
     const closeToTarget = this.player && target
-      ? Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, target.x, target.y) <= 34
+      ? Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, target.x, target.y) <= radius
       : false;
     const visible = Boolean(
       this.firstQuestCue
