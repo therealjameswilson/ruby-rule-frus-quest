@@ -121,6 +121,27 @@ Evidence: `/private/tmp/frus-refined-network/mobile/`. Continue from its
 `earned-storage.json` for Referral verification. Known-route automation does
 not prove unaided comprehension or enjoyment. Local only; not deployed.
 
+## Refined Controls: Earned Referral Route
+
+The current Network save passed `qa-referral-manifest.mjs --mobile`: all 38
+checkpoints reached SilentReadScene with 114 document points, 100 reliability
+and no browser errors. No runtime changes were needed.
+
+Coverage includes equity handoffs, wrong-desk retries with packets retained,
+carried-batch stacks visits and Continue, dispatch-copy prerequisite, blocked
+shelves, side-aisle navigation, crank shortcut and its saved state, incorrect
+manifest rejection, partial/corrected-but-unfiled Continue, explicit human
+filing, permission/appeal/bracketing dockets, Concurrence Slip collection,
+reward Continue, backtracking without refiling and editor entry. Native stacks,
+open shortcut, corrected manifest and editor-entry captures were inspected.
+
+Evidence and the next earned checkpoint:
+`/private/tmp/frus-refined-referral/mobile-375x667-dpr3/earned-storage.json`.
+Retained endpoint: `screenshots/refined-controls-editor-entry.png`.
+This is scripted simulated touch, not unaided enjoyment or physical-device
+evidence. Editor/proof and final combat still need the latest-control pass.
+Local only; no public deployment.
+
 ## Committed Swing Facing
 
 Directional input no longer rotates an attack during its windup or active

@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Refined-control Referral regression (2026-09-12):
+  - All 38 earned touch checkpoints pass through agency routing, dispatch-copy exploration/shortcut, manifest correction and explicit filing, treatment dockets, reward, Continue and backtracking into Editor. Ends at 114 points / 100 reliability; no browser errors or runtime changes.
+  - Native stacks, shortcut, manifest and editor-entry art inspected. Next earned save: /private/tmp/frus-refined-referral/mobile-375x667-dpr3/earned-storage.json. Continue current-input regression through editor/proof and final combat. No deployment or unaided/physical-phone claim.
+
 - Refined-control Two Networks regression (2026-09-12):
   - Earned touch/pointer route passes 29 checkpoints through routing, stamp shortcut, wrong-network/desk retries, carried/draft Continue, ledger correction and deliberate filing, token pickup and Referral entry. Ends at 81 points / 93 reliability; no browser errors or gameplay changes.
   - Native crossing, wrong-desk, restored-ledger and Referral images inspected; touch enabled/no overflow at 375x667 DPR3. Evidence and next save: /private/tmp/frus-refined-network/mobile/. Next verify Referral with these controls. No deployment or physical-device/unaided-fun claim.
