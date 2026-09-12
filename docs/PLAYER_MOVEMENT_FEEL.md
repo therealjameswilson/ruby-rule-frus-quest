@@ -98,6 +98,29 @@ the next Network checkpoint. This is known-route simulated touch, not an
 unaided playtest. Later chapters still need rechecking with the latest input
 changes. No public deployment.
 
+## Refined Controls: Earned Two Networks Route
+
+The earned Archive save passed `qa-network-ledger.mjs --mobile --pointer
+--crossing` with the latest controls. All 29 checkpoints passed, reaching
+ReferralVaultScene with 81 document points and 93 reliability. No browser
+errors or gameplay adjustments were needed.
+
+Coverage includes the sealed crossing and prerequisite message, four routing
+packets, wrong-network retry, stamp-opened shortcut, crossing and carried-packet
+Continue, walking through the shortcut, three review dockets, wrong-desk retry,
+withholding-ledger rejection/correction, corrected-but-unfiled Continue,
+explicit filing, reward visibility/pickup and the Referral exit. Native crossing,
+wrong-desk, restored-ledger and Referral-entry captures were inspected.
+
+The endpoint reports touch controls enabled and no horizontal overflow at
+375x667/DPR3. Its roughly 60 FPS sample is desktop-browser simulation, not
+physical-iPhone evidence. The existing renderer reports four device pixels
+per game pixel; no render changes were made in this pass.
+
+Evidence: `/private/tmp/frus-refined-network/mobile/`. Continue from its
+`earned-storage.json` for Referral verification. Known-route automation does
+not prove unaided comprehension or enjoyment. Local only; not deployed.
+
 ## Committed Swing Facing
 
 Directional input no longer rotates an attack during its windup or active

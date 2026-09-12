@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Refined-control Two Networks regression (2026-09-12):
+  - Earned touch/pointer route passes 29 checkpoints through routing, stamp shortcut, wrong-network/desk retries, carried/draft Continue, ledger correction and deliberate filing, token pickup and Referral entry. Ends at 81 points / 93 reliability; no browser errors or gameplay changes.
+  - Native crossing, wrong-desk, restored-ledger and Referral images inspected; touch enabled/no overflow at 375x667 DPR3. Evidence and next save: /private/tmp/frus-refined-network/mobile/. Next verify Referral with these controls. No deployment or physical-device/unaided-fun claim.
+
 - Refined-control Archive regression (2026-09-12):
   - Replayed the earned touch Archive route after the latest movement/action changes, through source review, partial-save Continue, physical cart pushes, packet filing and the east exit. Reached Network with 55 points / 82 reliability; no browser errors or gameplay fixes needed.
   - Native source review, policy choice, held-cart and Network-entry images inspected. Evidence and next earned save: /private/tmp/frus-refined-archive/. Later chapters need the same current-input regression; unaided enjoyment remains unproven. No deployment.
