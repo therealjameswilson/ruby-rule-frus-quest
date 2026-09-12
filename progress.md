@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned backtracking verification (2026-09-12):
+  - Added tools/qa-backtrack.mjs: Continue from the earned editor-completion save, then actual keyboard movement from Black Vault through Proof, Editorial, both Referral and both Network rooms to Archive. Read-only collision inspection chooses walking waypoints; no scene jumps or progress injection.
+  - All eight checkpoints retain 201 document points; Review Folder remains owned, completed tasks do not block return travel, and no browser errors were recorded. Final native Archive screenshot inspected. Evidence: /private/tmp/frus-backtrack/.
+  - This verifies completed-room backtracking from an earned checkpoint, not uninterrupted fresh play or the remaining Archive-to-NARA secret approach. No runtime or deployment changes.
+
 - Earned-tool physical secret verification (2026-09-12):
   - Added tools/qa-earned-secret.mjs. Loads the previously earned editor-run save through actual Continue, then changes only scene placement to NARA for this fixture. No tool, discovery, reward or document flags are injected.
   - Actual keyboard input reads both clue pages, walks the aisles, uses the owned Review Folder on the northeast shelf, opens the passage, enters the hidden room, collects First Edition and walks back. Document points 201 -> 226; discovery and collection flags set by gameplay; no browser errors. Clue/passage/reward/return native screenshots inspected under /private/tmp/frus-earned-secret/.
