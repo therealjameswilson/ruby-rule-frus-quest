@@ -37,3 +37,24 @@ regenerable Node compilation cache was removed, then verification reran.
 Source assets, saves and screenshots were preserved.
 
 Local preview: http://127.0.0.1:5195/. Not deployed.
+
+## Fresh Opening Regression
+
+After the movement commit, `qa-guide-counter.mjs` passed on both keyboard
+(`--coaching`) and simulated touch (`--mobile`). Both start without a save,
+create a compiler, talk to JR, collect the memo, deliver it, enter Guide,
+complete the counter lesson, collect the Front Matter Fragment, reload,
+Continue and enter ArchiveScene. No progress was injected.
+
+- Touch: 17 checkpoints, including a harmless miss, frozen projectile during
+  pause, returned bolt and persistent reward. No browser errors.
+- Keyboard: also checks opposite room boundaries, intentionally faces away,
+  then follows the displayed facing/timing cues for the counter. No browser
+  errors. Reliability remains 80 on both routes.
+- Native screenshots inspected: saved gate on touch, coached counter on
+  keyboard, and Archive entry. Retained in `screenshots/movement-opening-*.png`.
+
+This verifies that faster movement preserves the opening interactions and
+first room transition. The scripts know the route, so this is not evidence
+that an unaided new player understands the adventure, nor a full-campaign
+completion or physical-device test. No gameplay retuning was needed here.

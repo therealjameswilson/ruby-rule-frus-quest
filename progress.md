@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Faster movement opening regression (2026-09-12):
+  - Fresh no-save keyboard/coaching and simulated-touch routes pass Warning -> Title -> Compiler -> Office tasks -> Guide counter -> fragment -> reload/Continue -> Archive.
+  - Checked perimeter bounds, wrong-facing coaching, harmless miss, pause freeze, interaction versus tool input and persistent reward. Reliability stays 80; no browser errors. Native screenshots inspected; see docs/PLAYER_MOVEMENT_FEEL.md.
+  - No new gameplay edits required. These are informed scripted routes, not unaided-player comprehension evidence. Next: continue campaign interaction checks with the faster controller.
+
 - Direct hero movement (2026-09-12):
   - User requested smoother Link-inspired control. Walking is now 72 px/s with immediate start/stop/reversal, normalized diagonals, retained swing slowdown, gentle edge assistance and animation based on actual travel. Removed full-wall grid attraction and three-pixel sideways snaps.
   - 196 files / 1,468 tests pass; build passes. Keyboard and 375x667 touch Office probes verify movement, release, collision and integer rendering; native screenshots inspected. See docs/PLAYER_MOVEMENT_FEEL.md.
