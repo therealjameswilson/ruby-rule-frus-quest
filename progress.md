@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Actionable Archive gate guidance (2026-09-12):
+  - Reproduced east-gate bump replacing PICK UP SOURCE NOTE with a clipped generic objective and SOURCE PACKET INCOMPLETE toast. The before browser assertion failed and native screenshot confirmed the loss of useful guidance.
+  - East gate and both north-door entry paths now reuse refreshRoomObjective() for the next concrete task. A player without a source note sees PICK UP SOURCE NOTE; carrying it yields NOTE TO TABLE, rather than a premature stamp instruction. Unlock rules, inventory and movement are unchanged.
+  - Actual keyboard approaches pass all four east/north x uncollected/carried cases. Four native screenshots inspected; installed gameplay client also exercised the east bump and north interaction with no captured errors. 14 focused objective/caption tests and final build pass (existing bundle warning).
+  - Evidence: /private/tmp/frus-locked-route-before/, /private/tmp/frus-locked-route-final/, /private/tmp/frus-locked-route-client/, /private/tmp/frus-locked-north-client/. Debug-entry checks, not campaign completion or physical-device QA. Next: assess gate guidance at later packet/review stages and whether the player can locate the named task unaided. Local only.
+
 - Gate-caption readability (2026-09-12):
   - Live bounds corrected the initial screenshot diagnosis: PACK was not outside the canvas, but fixed-width plaques crowded gate symbols; longer route names exceeded their frames. Shared captions now measure native text, use padded even-width frames and inset side plaques clear of gate glyphs. No collision, room-unlock or save changes.
   - Nine directional/locked/open/wall regressions plus the atlas test pass (10 tests); production build passes with the existing chunk-size warning. Installed Playwright client moved in Archive, and separate desktop/375x667 phone checks verified all four actual caption bounds without browser errors. Native and phone screenshots inspected at /private/tmp/frus-gate-captions/ and /private/tmp/frus-gate-caption-client/.

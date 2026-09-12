@@ -1038,7 +1038,8 @@ export class ArchiveScene extends Phaser.Scene {
 
   private enterAnnotationStacks() {
     if (!annotationStacksOpen(gameState.sceneProgress)) {
-      this.toast.show("STAMP NO REPO TO OPEN STACKS", this.player.position, "warn");
+      this.refreshRoomObjective();
+      this.toast.show(gameState.objective, this.player.position, "info");
       return;
     }
     this.enterRoom("AS", ANNOTATION_STACKS.entry, true, "north");
@@ -3426,7 +3427,8 @@ export class ArchiveScene extends Phaser.Scene {
         this.enterAnnotationStacks();
         return true;
       }
-      this.toast.show("STAMP NO REPO TO OPEN STACKS", this.player.position, "info");
+      this.refreshRoomObjective();
+      this.toast.show(gameState.objective, this.player.position, "info");
       this.player.setPosition(position.x, 68);
       this.exitCooldownUntil = this.time.now + 500;
       return false;
@@ -3468,10 +3470,8 @@ export class ArchiveScene extends Phaser.Scene {
 
     if (this.currentRoomId === "A1" && direction === "east" && !this.sourceRoomComplete()) {
       setLatestMessage("The east network route opens only after the A1 source packet is complete.");
-      setObjective(this.sourceNoteStatus === "inactive"
-        ? "FIND: collect Source Note 47 in A1."
-        : "COMPLETE A1: verify, annotate, and collect the supporting documents.");
-      this.toast.show("SOURCE PACKET INCOMPLETE", this.player.position, "warn");
+      this.refreshRoomObjective();
+      this.toast.show(gameState.objective, this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
       this.player.setPosition(PLAY_BOUNDS.right - 18, position.y);
       return false;
