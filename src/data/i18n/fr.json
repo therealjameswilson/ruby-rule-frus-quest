@@ -121,7 +121,7 @@
       "stamp": "PRENDS TAMPON SOURCE",
       "counter": "RENVOIE LE TIR D'EGO",
       "fragment": "PRENDS FRAGMENT FRUS",
-      "gate": "OUVRE LA PORTE SUD"
+      "gate": "VERS ARCHIVES AU SUD"
     },
     "carryItem": "Porte {item}.",
     "chooseAnswer": "Choisis une réponse.",

@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Walk-through Guide gate (2026-09-12):
+  - Earned south gate now transitions when the player walks toward it; button interaction remains available. Requires the gate stage and southward input, so Continue at the boundary does not auto-exit. Transition lock prevents repeated inputs queuing multiple delayed scene changes.
+  - Updated English, Spanish and French gate cues. Added stage/direction/bounds tests and repeated-activation coverage; 12 focused tests and production build pass, with the existing bundle-size warning.
+  - Actual earned-save keyboard walking, 375x667 touch walking and button interaction all reach Archive with points unchanged and no page errors. Native Archive screenshots inspected. Installed gameplay client confirms an unearned gate still holds the player in Guide at y=180.
+  - Evidence: /private/tmp/frus-guide-walk-exit/, /private/tmp/frus-guide-walk-touch/, /private/tmp/frus-guide-interact-exit/, /private/tmp/frus-guide-locked-exit-client/. Local only; physical iPhone QA not claimed.
+
 - Readable returned Ego Bolts (2026-09-12):
   - Played the fresh coached counter lesson and inspected the return frame: cyan multiply-tint over red artwork produced a subdued dark-green projectile. Changed returned bolts to cyan fill-tint silhouettes in Guide, DanneLurker and DanneBoss; incoming artwork, speed, collision, timing, audio and damage are unchanged.
   - 89 counter integration tests and build pass. Added an explicit Guide return-render assertion; updated sprite mocks for Phaser's fill-tint API. Initial build caught the mock practiceBolt missing from LessonScene's declared type; corrected it and rebuilt successfully.

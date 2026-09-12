@@ -231,7 +231,7 @@ try {
     assert.equal((await state()).guideCounter, null);
     await shot('08-continued-gate');
     await context.storageState({ path: `${out}/earned-guide-storage.json` });
-    await move(128, 182);
+    await move(128, 170);
     await press();
     await scene('ArchiveScene');
     await shot('09-archive-entry');

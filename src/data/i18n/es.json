@@ -121,7 +121,7 @@
       "stamp": "TOMA SELLO DE CITA",
       "counter": "DEVUELVE EL EGO",
       "fragment": "TOMA FRAGMENTO FRUS",
-      "gate": "ABRE LA PUERTA SUR"
+      "gate": "VE AL ARCHIVO AL SUR"
     },
     "carryItem": "Lleva {item}.",
     "chooseAnswer": "Elige respuesta.",

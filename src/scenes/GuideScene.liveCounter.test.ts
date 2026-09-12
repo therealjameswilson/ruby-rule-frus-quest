@@ -11,7 +11,7 @@ vi.mock("phaser", () => ({ default: {
 } }));
 vi.mock("../entities/Player", () => ({ Player: class {} }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
-vi.mock("../systems/audio", () => ({ retroAudio: { toolHit: vi.fn(), egoBoltFire: vi.fn(), blip: vi.fn(), warning: vi.fn() } }));
+vi.mock("../systems/audio", () => ({ retroAudio: { toolHit: vi.fn(), egoBoltFire: vi.fn(), blip: vi.fn(), warning: vi.fn(), confirm: vi.fn() } }));
 
 interface LessonScene {
   practiceBolt: ReturnType<typeof graphic>;
@@ -27,6 +27,7 @@ interface LessonScene {
   syncStagePresentation: ReturnType<typeof vi.fn>;
   updateCitationCounterTraining(delta: number): void;
   takeFragment(): void;
+  openGate(): void;
 }
 
 function graphic() {
@@ -53,6 +54,13 @@ beforeEach(() => {
 });
 
 describe("GuideScene live counter integration", () => {
+  it("schedules one exit even when the earned gate is activated repeatedly", () => {
+    const guide = scene();
+    const delayedCall = vi.fn();
+    Object.assign(guide, { hasFragment: true, time: { delayedCall }, setLessonPaused: vi.fn() });
+    guide.openGate(); guide.openGate(); guide.openGate();
+    expect(delayedCall).toHaveBeenCalledOnce();
+  });
   it.each(["red_pencil", "citation_stamp"])("rejects %s without the owned active Citation Stamp counter", (tool) => {
     const guide = scene();
     if (tool === "red_pencil") addProcessItem("red_pencil");

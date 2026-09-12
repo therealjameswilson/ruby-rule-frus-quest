@@ -3,7 +3,8 @@ import {
   getGuideCavernStage,
   guideCavernActionCue,
   guideCavernObjective,
-  guideCavernTargetId
+  guideCavernTargetId,
+  reachedGuideExit
 } from "./guideCavernFlow";
 
 describe("Guide Cavern onboarding flow", () => {
@@ -35,6 +36,16 @@ describe("Guide Cavern onboarding flow", () => {
     const stage = getGuideCavernStage(true, true);
     expect(stage).toBe("gate");
     expect(guideCavernTargetId(stage)).toBe("gate");
-    expect(guideCavernActionCue(stage)).toBe("OPEN SOUTH GATE");
+    expect(guideCavernActionCue(stage)).toBe("WALK SOUTH TO ARCHIVE");
+  });
+
+  it("walks through the earned gate only when moving south in its doorway", () => {
+    expect(reachedGuideExit("gate", { x: 128, y: 180 }, true)).toBe(true);
+    expect(reachedGuideExit("gate", { x: 128, y: 180 }, false)).toBe(false);
+    expect(reachedGuideExit("gate", { x: 100, y: 180 }, true)).toBe(false);
+    expect(reachedGuideExit("gate", { x: 128, y: 170 }, true)).toBe(false);
+    for (const stage of ["stamp", "counter", "fragment"] as const) {
+      expect(reachedGuideExit(stage, { x: 128, y: 180 }, true)).toBe(false);
+    }
   });
 });

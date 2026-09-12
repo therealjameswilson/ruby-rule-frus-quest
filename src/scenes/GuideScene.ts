@@ -29,7 +29,8 @@ import {
   getGuideCavernStage,
   guideCavernActionCue,
   guideCavernObjective,
-  guideCavernTargetId
+  guideCavernTargetId,
+  reachedGuideExit
 } from "../game/guideCavernFlow";
 import type { Interactable } from "../game/types";
 import { getInput, getSecondaryActionBadge, tickInput } from "../input/InputState";
@@ -86,6 +87,7 @@ export class GuideScene extends Phaser.Scene {
   private hasStamp = false;
   private hasCounterTraining = false;
   private hasFragment = false;
+  private exiting = false;
   private interactables: Interactable[] = [];
 
   constructor() {
@@ -93,6 +95,7 @@ export class GuideScene extends Phaser.Scene {
   }
 
   create() {
+    this.exiting = false;
     this.counterTraining = new GuideCounterTraining();
     setGuideCounterReadout(null);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setGuideCounterReadout(null));
@@ -183,6 +186,13 @@ export class GuideScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (this.exiting) {
+      this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      this.pickupFocus.setVisible(false);
+      this.toast.update(delta, this.player.position);
+      return;
+    }
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
@@ -221,6 +231,10 @@ export class GuideScene extends Phaser.Scene {
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
     }
     this.player.update(delta, true, { bounds: GUIDE_CAVERN_BOUNDS });
+    if (reachedGuideExit(this.currentStage(), this.player.position, input.dir.y > 0)) {
+      this.openGate();
+      return;
+    }
     this.updateCitationCounterTraining(delta);
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
@@ -384,12 +398,15 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private openGate() {
+    if (this.exiting) return;
     if (!this.hasFragment) {
       retroAudio.warning();
       this.toast.show("NEED CITED FRAGMENT", this.player.position, "warn");
       setLatestMessage("The Verification Gate needs a cited fragment.");
       return;
     }
+    this.exiting = true;
+    this.setLessonPaused(true);
     retroAudio.confirm();
     this.toast.show("CITATION ACCEPTED", this.player.position, "info");
     setLatestMessage("Citation accepted. Confidence carries forward.");
