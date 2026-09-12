@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned-tool physical secret verification (2026-09-12):
+  - Added tools/qa-earned-secret.mjs. Loads the previously earned editor-run save through actual Continue, then changes only scene placement to NARA for this fixture. No tool, discovery, reward or document flags are injected.
+  - Actual keyboard input reads both clue pages, walks the aisles, uses the owned Review Folder on the northeast shelf, opens the passage, enters the hidden room, collects First Edition and walks back. Document points 201 -> 226; discovery and collection flags set by gameplay; no browser errors. Clue/passage/reward/return native screenshots inspected under /private/tmp/frus-earned-secret/.
+  - Fixture corrections: direct debug entry autosaved fresh state before loading; now Continue runs first. Waiting for the saved scene name was insufficient because it changes before activation; now wait for actual scene.isActive plus transition completion. Weapon verification uses playerCombat.weapon.tool, the existing readout field.
+  - The earned Folder-to-reward encounter is now proven with debug location setup. This is not an uninterrupted earned backtracking route, unaided clue discovery, or full touch passage test. Prior touch reward/return and clue-page checks remain separate. No runtime or deployment changes.
+
 - Combat consequence audit (2026-09-12):
   - Traced every production Player.takeHit caller. The method itself is physical feedback/i-frames only; Archive and gameplay-map enemies debit 4 through applyProcessPressure, lurkers use their balance table, and the main boss debits/recoverably records 10/5. Drone and wraith attacks have no debit.
   - Added docs/COMBAT_PRESSURE_AUDIT.md with the exact contract, test limitation and safe follow-up sequence. A universal Player debit would double-charge existing callers; adding expansion damage without a zero-heart room retry would be incomplete. No gameplay/balance change made based on an unverified intent assumption.
