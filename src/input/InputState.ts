@@ -146,12 +146,12 @@ const emptyState: InputState = {
 // keypress from a cloud/automation browser) can be added to and removed from
 // `keyboardDown` between two tickInput() samples, so the held check never sees
 // it and the player visibly does not move (live audit, 2026-06-15). Latch each
-// direction code's most-recent keydown time; tickInput treats a direction as
-// "down" while its latch is fresh, turning an imperceptible tap into a small,
-// visible nudge without changing how held movement or collision works.
+// direction code's most-recent keydown time until the next sample. Consume it
+// after that sample so a released key cannot cause another 110ms of movement.
+// This is an expiry for unobserved taps, not a minimum movement duration.
 export const TAP_MOVEMENT_HOLD_MS = 110;
 const directionTapLatch = new Map<string, number>();
-// Menu taps must re-arm even while the movement nudge from the last tap persists.
+// Menu taps re-arm independently of whether a direction is still held.
 const pendingNavigationPresses = new Set<CardinalDirection>();
 
 function latchDirectionPress(code: string) {
@@ -238,7 +238,7 @@ function isKeyboardDown(...codes: string[]) {
 }
 
 // True when a direction code is physically held, or was tapped within the last
-// TAP_MOVEMENT_HOLD_MS so a too-short tap still registers as a brief hold.
+// TAP_MOVEMENT_HOLD_MS and has not yet been sampled.
 function isDirectionActive(...codes: string[]) {
   if (isKeyboardDown(...codes)) return true;
   const now = nowProvider();
@@ -671,6 +671,11 @@ export function tickInput() {
   previousNavDownDown = navDown;
   previousConfirmDown = confirm;
   previousCancelDown = cancel;
+  directionTapLatch.clear();
+  touchTapLatch.delete("left");
+  touchTapLatch.delete("right");
+  touchTapLatch.delete("up");
+  touchTapLatch.delete("down");
   pendingActionPresses.clear();
   pendingTouchPresses.clear();
   pendingNavigationPresses.clear();

@@ -53,6 +53,30 @@ diagonal sliding and integer-render checks with no browser errors. Native
 captures were inspected at `/private/tmp/frus-corner-rate/`. Frame-rate
 equivalence is a controller unit test, not a physical-device benchmark.
 
+## Short-Press Release Correction
+
+The input-layer direction latch previously outlasted a released short press,
+despite the player's immediate-stop controller. A live 30ms-press probe measured
+6px of additional keyboard travel and 1px of touch travel after release.
+Direction latches are now consumed after one input sample. Held input still
+drives movement; an otherwise missed between-frame tap gets one sample, not a
+forced 110ms nudge. Action latches and fresh-action edges are unchanged.
+
+`qa-movement-release.mjs` now measures zero post-release drift for both input
+sources. Baseline: `/private/tmp/frus-release-before/`; after:
+`/private/tmp/frus-release-after/`. Native touch capture inspected.
+The keyboard/touch movement probe also passes furniture collision, diagonal
+sliding and integer rendering. The installed game client exercised short taps
+and movement; native capture inspected. Evidence:
+`/private/tmp/frus-release-movement/` and `/private/tmp/frus-release-client/`.
+
+Fresh simulated-touch opening passes assignment, memo, counter training,
+intentional miss, pause, reward and Continue into Archive without browser
+errors. Native continued-gate capture inspected. Evidence:
+`/private/tmp/frus-release-opening/`. Full suite: 1,488 tests / 196 files;
+production build passes with the existing bundle warning. No new full-campaign
+or physical-phone claim; not deployed.
+
 ## Committed Swing Facing
 
 Directional input no longer rotates an attack during its windup or active

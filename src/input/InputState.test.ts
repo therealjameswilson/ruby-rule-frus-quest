@@ -43,7 +43,7 @@ describe("InputState keyboard edges", () => {
     expect(getInput().bJustPressed).toBe(true);
   });
 
-  it("turns a too-short direction tap into a brief visible hold", () => {
+  it("samples a between-frame direction tap once without a forced hold", () => {
     let now = 1000;
     setNowProviderForTests(() => now);
     // A tap that latches the keydown time but leaves no key physically held,
@@ -52,14 +52,38 @@ describe("InputState keyboard edges", () => {
     tickInput();
     expect(getInput().dir).toEqual({ x: 1, y: 0 });
 
-    // Still moving a frame later, inside the hold window.
-    now += TAP_MOVEMENT_HOLD_MS - 10;
+    // The tap was observed; its safety latch must not add movement on release.
+    now += 16;
     tickInput();
-    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
 
     // After the hold window elapses, the latch releases and movement stops.
     now += 20;
     tickInput();
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+  });
+
+  it("stops a sampled short key press on release and reverses without stale input", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    pressKeyForTests("ArrowRight"); tickInput();
+    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+    now += 16; releaseKeyForTests("ArrowRight"); tickInput();
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    now += 16; pressKeyForTests("ArrowLeft"); tickInput();
+    expect(getInput().dir).toEqual({ x: -1, y: 0 });
+  });
+
+  it("stops touch movement immediately and preserves an unsampled touch tap", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    setTouchControl("right", true); tickInput();
+    now += 16; setTouchControl("right", false); tickInput();
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    setTouchControl("left", true); setTouchControl("left", false);
+    now += 16; tickInput();
+    expect(getInput().dir).toEqual({ x: -1, y: 0 });
+    now += 16; tickInput();
     expect(getInput().dir).toEqual({ x: 0, y: 0 });
   });
 

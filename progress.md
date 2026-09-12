@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Short-press movement release (2026-09-12):
+  - Live baseline found 6px keyboard / 1px touch travel after a short press was released. Consume each direction latch after its first sample; held input and otherwise-missed between-frame taps still work. Action behavior unchanged.
+  - Post-release drift is now zero in both probes. All 1,488 tests / 196 files and build pass. Keyboard/touch furniture and pixel-alignment checks, installed-client movement and fresh touch opening through Continue/Archive pass. Native images inspected; see docs/PLAYER_MOVEMENT_FEEL.md. No deployment; broader new campaign QA and unaided-player evidence remain outstanding.
+
 - Distinct rapid action edges (2026-09-12):
   - Fresh keyboard/touch presses now re-arm one-tick action edges inside the existing 90ms latch. Held states, movement latches and gamepad polling unchanged; reset/swallow clears pending edges. Six reproduced failures plus overlay regression now pass.
   - All 1,486 tests / 196 files and build pass. Rapid keyboard/touch tool probes pass in both combat maps. Fresh touch opening reaches Archive through training/reward/Continue without browser errors; native screenshots and installed-client capture inspected. See docs/FRESH_ACTION_EDGES.md. No deployment or new claim of unaided fun.
