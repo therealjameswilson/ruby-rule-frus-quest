@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Walking animation cadence (2026-09-12):
+  - Align the shared native character walk animations with the requested 8 fps cadence (previously 6 fps). Idle/action timings, movement speed, collisions and weapon windows are unchanged; existing NPC walk animations use the same cadence.
+  - New registration regression verifies every normal/veteran character's directional cadence, unchanged idle/action rates and repeat registration. Browser movement QA samples actual frame names/rates and confirms both foot poses on keyboard and touch, along with release, furniture and integer-position checks. No browser errors; native touch and installed-client captures inspected.
+  - Evidence: /private/tmp/frus-walk-cadence/ and /private/tmp/frus-walk-cadence-client/. Build passes with the existing chunk warning after correcting a strict-type error in the new test fixture. No deployment; subjective feel still needs player feedback.
+
 - Title goal and command clarity (2026-09-12):
   - Clean title now says PUBLISH A FRUS VOLUME and BEGIN QUEST, with Spanish/French translations, preserving the book artwork and history.state.gov credit. Removes the hardcoded VERIFY prompt.
   - Live mouse review exposed language selection advancing into character creation after scene restart. Swallow the initiating input before restart; mouse and touch language cycles now remain on title and a separate Begin click starts the game.

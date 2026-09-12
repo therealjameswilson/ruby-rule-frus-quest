@@ -39,6 +39,7 @@ try {
         const p = scene.player;
         window.movementSamples.push({ x: p.logicalX, y: p.logicalY, vx: p.velocityX, vy: p.velocityY,
           renderX: p.sprite.x, renderY: p.sprite.y, animation: p.animationState,
+          frame: p.sprite.frame.name, frameRate: p.sprite.anims.currentAnim?.frameRate,
           blocked: scene.solids.some(r => p.logicalX + 8 >= r.x && p.logicalX - 8 <= r.right && p.logicalY + 5 >= r.y && p.logicalY - 3 <= r.bottom) });
       });
     });
@@ -67,6 +68,11 @@ try {
     assert(samples.every(s => Number.isInteger(s.renderX) && Number.isInteger(s.renderY)), 'Render positions stay pixel aligned');
     assert(samples.every(s => !s.blocked), 'Feet must remain outside furniture');
     assert(samples.some(s => s.vx === 72) && samples.some(s => s.vx === -72));
+    for (const direction of ['right', 'left']) {
+      const walking = samples.filter(s => s.animation === `walk_${direction}`);
+      assert(walking.every(s => s.frameRate === 8), 'Walking uses the eight-fps cadence');
+      assert(new Set(walking.map(s => s.frame)).size === 2, 'Both foot poses must render while walking');
+    }
     const label = mobile ? 'touch' : 'keyboard';
     const native = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src))));
     await writeFile(`${out}/${label}-native.png`, Buffer.from(native.split(',')[1], 'base64'));
