@@ -62,7 +62,7 @@ function migrateSaveData(parsed: Partial<GameSaveData>): GameSaveData | null {
   if (!Number.isInteger(version) || version < 0 || version > SAVE_SCHEMA_VERSION) return null;
   return {
     version,
-    savedAt: parsed.savedAt ?? new Date().toISOString(),
+    savedAt: typeof parsed.savedAt === "string" ? parsed.savedAt : new Date(0).toISOString(),
     state: parsed.state as GameSaveData["state"]
   };
 }
@@ -70,6 +70,7 @@ function migrateSaveData(parsed: Partial<GameSaveData>): GameSaveData | null {
 function writeSave(raw: string, reason: SaveReason, save: GameSaveData) {
   try {
     storage("localStorage").setItem(SAVE_KEY, raw);
+    removeStorage("sessionStorage");
     storageKind = "localStorage";
     lastSaveResult = { ok: true, reason, storage: storageKind, savedAt: save.savedAt };
     return true;
@@ -103,14 +104,16 @@ function writeSave(raw: string, reason: SaveReason, save: GameSaveData) {
 export function readSavedGame() {
   if (typeof window === "undefined") return null;
   const local = parseSave(readStorage("localStorage"));
+  const session = parseSave(readStorage("sessionStorage"));
+  // A quota fallback may coexist with an older successful local save.
+  const savedTime = (save: GameSaveData | null) => save ? Date.parse(save.savedAt) || 0 : 0;
+  if (session && (!local || savedTime(session) > savedTime(local))) {
+    storageKind = "sessionStorage";
+    return session;
+  }
   if (local) {
     storageKind = "localStorage";
     return local;
-  }
-  const session = parseSave(readStorage("sessionStorage"));
-  if (session) {
-    storageKind = "sessionStorage";
-    return session;
   }
   return null;
 }

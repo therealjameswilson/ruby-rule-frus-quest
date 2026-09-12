@@ -4,7 +4,7 @@ import { DEFAULT_PROCESS_ROLE, PROCESS_ROLES, resolveProcessRole } from "../game
 import { getCharacterKeyForProcessRole } from "../art/characters";
 import { restoreReferralCarryState } from "../game/referralVaultReview";
 import { readSourceNoteTrail } from "../game/sourceNoteProvenance";
-import { getSavedGameSummary, loadSavedGame, readSavedGame, saveGameNow } from "./save";
+import { getSaveDebugState, getSavedGameSummary, loadSavedGame, readSavedGame, saveGameNow } from "./save";
 
 function createStorage() {
   const values = new Map<string, string>();
@@ -22,11 +22,50 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
   resetGameState();
   vi.unstubAllGlobals();
 });
 
 describe("browser save storage", () => {
+  it("continues the newer fallback save after local storage rejects a write", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-12T10:00:00Z"));
+    gameState.inventory = ["Citation Stamp", "Review Folder"];
+    gameState.equippedProcessItem = "citation_stamp";
+    expect(saveGameNow()).toBe(true);
+    vi.setSystemTime(new Date("2026-09-12T10:01:00Z"));
+    gameState.equippedProcessItem = "review_folder";
+    gameState.documentPoints = 55;
+    vi.spyOn(window.localStorage, "setItem").mockImplementation(() => { throw new Error("Quota exceeded"); });
+    vi.spyOn(console, "warn").mockImplementation(() => undefined);
+    expect(saveGameNow()).toBe(true);
+    resetGameState();
+    expect(loadSavedGame()).toBe("ArchiveScene");
+    expect(gameState.equippedProcessItem).toBe("review_folder");
+    expect(gameState.documentPoints).toBe(55);
+    expect(getSaveDebugState().storage).toBe("sessionStorage");
+  });
+
+  it("prefers newer local saves and removes obsolete fallback data after writing", () => {
+    const old = { ...createGameSaveData(), savedAt: "2026-09-12T10:00:00Z" };
+    const current = { ...old, savedAt: "2026-09-12T10:01:00Z" };
+    window.sessionStorage.setItem("rubyRuleFrusQuestSave", JSON.stringify(old));
+    window.localStorage.setItem("rubyRuleFrusQuestSave", JSON.stringify(current));
+    expect(readSavedGame()?.savedAt).toBe(current.savedAt);
+    expect(saveGameNow()).toBe(true);
+    expect(window.sessionStorage.getItem("rubyRuleFrusQuestSave")).toBeNull();
+  });
+
+  it("does not give an undated legacy save a fresh timestamp ahead of a dated fallback", () => {
+    const legacy = { version: 0, state: createGameSaveData().state };
+    const fallback = { ...createGameSaveData(), savedAt: "2026-09-12T10:00:00Z" };
+    window.localStorage.setItem("rubyRuleFrusQuestSave", JSON.stringify(legacy));
+    window.sessionStorage.setItem("rubyRuleFrusQuestSave", JSON.stringify(fallback));
+    expect(readSavedGame()?.savedAt).toBe(fallback.savedAt);
+  });
+
   it("starts new and unspecified debug profiles as the same compiler", () => {
     expect(DEFAULT_PROCESS_ROLE.id).toBe("compiler");
     expect(gameState.playerProfile.roleId).toBe("compiler");

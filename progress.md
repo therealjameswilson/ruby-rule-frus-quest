@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Prevent fallback-save rewind (2026-09-12):
+  - Save/resume review found readSavedGame always preferred localStorage even after a newer sessionStorage fallback succeeded. Three deterministic regressions reproduced reverted equipment, obsolete fallback retention and undated legacy saves receiving a misleading fresh timestamp.
+  - Continue now selects the newer valid timestamp (local wins ties), undated legacy saves use epoch rather than read-time, and successful local writes remove obsolete session fallback data. No schema/inventory migration change.
+  - qa-save-fallback.mjs uses an earned Archive save, equips Review Folder via inventory, injects only a local-write quota failure, reloads and Continues. Old local Red Pencil/new session Folder coexist before Continue; Folder restores with all 201 points and later successful local saving clears fallback. Native inventory screenshot inspected; no browser errors.
+  - Full suite 200 files / 1,525 tests and production build pass (existing chunk warning). Installed gameplay client fresh Office movement/interaction passes, native screenshot inspected. Evidence /private/tmp/frus-save-fallback/ and /private/tmp/frus-fallback-client/. Session storage still cannot survive closing the browser tab when persistent storage is unavailable; this fix prevents rewind within its supported lifetime, not unlimited storage durability. Local only.
+
 - Consistent inventory Back action (2026-09-12):
   - Reproduced keyboard X doing nothing on the Master Declass Key detail card. Shared overlay handling listened to cancel (Escape/touch/gamepad), but not the keyboard secondary-tool edge.
   - Added InventoryOverlay.back(): details -> tool grid -> gameplay. Routed B/X through it; the touch Back button uses the same path. Escape/Tab/close still exit directly. Every dismissal is swallowed and the caller stays frozen for that frame.
