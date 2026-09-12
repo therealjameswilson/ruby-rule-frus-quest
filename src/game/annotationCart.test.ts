@@ -1,11 +1,39 @@
 import { describe, expect, it } from "vitest";
-import { ANNOTATION_CART, annotationCartBounds, pushAnnotationCart, readAnnotationCart } from "./annotationCart";
+import { ANNOTATION_CART, AnnotationCartPushHold, annotationCartContactPush, annotationCartBounds, pushAnnotationCart, readAnnotationCart } from "./annotationCart";
 import { buildAnnotationStackLayers, annotationStacksObjective } from "./annotationStacks";
 import { archiveA1CollisionRect } from "./archiveA1Tilemap";
 import { workstationFeetBlocked, safeWorkstationPosition } from "./workstationGeometry";
 import { createGameSaveData, gameState, resetGameState, restoreGameSaveData } from "./state";
 
 describe("Annotation Stacks return cart", () => {
+  it("requires cardinal pressure against the cart, not proximity or passing beside it", () => {
+    expect(annotationCartContactPush({}, { x: 128, y: 170 }, { x: 0, y: -1 })).toBe(true);
+    expect(annotationCartContactPush({}, { x: 128, y: 169 }, { x: 0, y: -1 })).toBe(true);
+    expect(annotationCartContactPush({}, { x: 118, y: 169 }, { x: 0, y: -1 })).toBe(true);
+    expect(pushAnnotationCart({}, { x: 118, y: 169 }, { x: 0, y: -1 }))
+      .toMatchObject({ moved: true, position: { x: 128, y: 144 } });
+    expect(annotationCartContactPush({}, { x: 128, y: 168 }, { x: 0, y: -1 })).toBe(false);
+    expect(annotationCartContactPush({}, { x: 110, y: 160 }, { x: 1, y: 0 })).toBe(true);
+    for (const dir of [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 1, y: -1 }]) {
+      expect(annotationCartContactPush({}, { x: 128, y: 170 }, dir)).toBe(false);
+    }
+    expect(annotationCartContactPush({}, { x: 128, y: 185 }, { x: 0, y: -1 })).toBe(false);
+    expect(annotationCartContactPush({}, { x: 146, y: 160 }, { x: -1, y: 0 })).toBe(false);
+    expect(annotationCartContactPush({ annotationCartParked: 1 }, { x: 144, y: 122 }, { x: 0, y: -1 })).toBe(false);
+  });
+
+  it("requires a fresh deliberate hold after release, direction change or pause", () => {
+    const hold = new AnnotationCartPushHold(), up = { x: 0, y: -1 };
+    for (let i = 0; i < 4; i++) expect(hold.update(50, true, up)).toBe(false);
+    expect(hold.update(50, true, up)).toBe(true);
+    expect(hold.update(50, true, up)).toBe(false);
+    hold.reset();
+    expect(hold.update(5000, true, up)).toBe(false);
+    for (let i = 0; i < 3; i++) hold.update(50, true, up);
+    expect(hold.update(50, true, { x: 1, y: 0 })).toBe(false);
+    hold.update(0, false, up);
+    expect(hold.update(50, true, up)).toBe(false);
+  });
   it("requires physical pushes, not tool ownership or proximity", () => {
     expect(readAnnotationCart({})).toEqual({ position: ANNOTATION_CART.start, parked: false });
     expect(pushAnnotationCart({}, { x: 128, y: 192 }).moved).toBe(false);

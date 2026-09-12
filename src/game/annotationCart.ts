@@ -1,5 +1,40 @@
 import type { Position } from "./types";
 import { readAnnotationPacket } from "./annotationPacket";
+import { workstationFeetBlocked } from "./workstationGeometry";
+
+export const CART_PUSH_HOLD_MS = 250;
+
+export function annotationCartContactPush(progress: Readonly<Record<string, number>>, player: Position, direction: Position) {
+  if (Math.abs(direction.x) + Math.abs(direction.y) !== 1) return false;
+  const cart = readAnnotationCart(progress);
+  const result = pushAnnotationCart(progress, player, direction);
+  if (!result.moved || Math.sign(result.position.x - cart.position.x) !== direction.x
+    || Math.sign(result.position.y - cart.position.y) !== direction.y) return false;
+  const bounds = [annotationCartBounds(cart.position)];
+  // Player exposes pixel-snapped feet; allow the one-pixel rounding edge,
+  // without treating a position inside the cart as a valid approach.
+  return !workstationFeetBlocked({ x: player.x - direction.x, y: player.y - direction.y }, bounds)
+    && workstationFeetBlocked({ x: player.x + direction.x * 3, y: player.y + direction.y * 3 }, bounds);
+}
+
+export class AnnotationCartPushHold {
+  private elapsed = 0;
+  private x = 0;
+  private y = 0;
+
+  reset() { this.elapsed = 0; this.x = 0; this.y = 0; }
+
+  update(deltaMs: number, contact: boolean, direction: Position) {
+    if (!contact) { this.reset(); return false; }
+    if (direction.x !== this.x || direction.y !== this.y) this.elapsed = 0;
+    this.x = direction.x;
+    this.y = direction.y;
+    this.elapsed += Math.max(0, Math.min(50, deltaMs));
+    if (this.elapsed < CART_PUSH_HOLD_MS) return false;
+    this.reset();
+    return true;
+  }
+}
 
 export const ANNOTATION_CART = {
   start: { x: 128, y: 160 },
@@ -22,11 +57,15 @@ export function annotationCartBounds(position: Position) {
   return { x: position.x - 9, y: position.y - 6, width: 18, height: 12 };
 }
 
-export function pushAnnotationCart(progress: Readonly<Record<string, number>>, player: Position) {
+export function pushAnnotationCart(progress: Readonly<Record<string, number>>, player: Position, direction?: Position) {
   const cart = readAnnotationCart(progress);
   if (cart.parked) return { ...cart, moved: false, message: "Cart parked. Take its context note." };
   const dx = cart.position.x - player.x, dy = cart.position.y - player.y;
-  const horizontal = Math.abs(dx) > Math.abs(dy);
+  const horizontal = direction ? direction.x !== 0 : Math.abs(dx) > Math.abs(dy);
+  if (direction && (Math.abs(direction.x) + Math.abs(direction.y) !== 1
+    || (horizontal ? Math.sign(dx) !== direction.x : Math.sign(dy) !== direction.y))) {
+    return { ...cart, moved: false, message: "Push toward the cart." };
+  }
   if (Math.hypot(dx, dy) > ANNOTATION_CART.radius || (horizontal ? Math.abs(dx) < 16 : Math.abs(dy) < 8)) {
     return { ...cart, moved: false, message: "Stand beside the cart to push it." };
   }

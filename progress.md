@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Physical annotation cart pushing (2026-09-12):
+  - Added optional 250ms cardinal contact hold to push the cart one tile; existing interact push, lane, parking, note collection and saves preserved. Release/direction/overlay resets prevent accidental accumulated pushes. Fixed live-discovered rounding-edge and off-center direction bugs with unit assertions.
+  - Full 1,471 tests / 196 files and production build pass. Earned full touch Archive route passed; final off-center correction rechecked from earned partial stacks through cart completion. Installed keyboard client moved cart north three tiles using held input, without auto-collection or off-lane movement. See docs/CART_CONTACT_PUSH.md and /private/tmp/frus-cart-final-touch/.
+  - No deployment. This makes the room manipulation more direct, not proof of whole-game fun. Further visual push feedback and player-comprehension evidence remain useful.
+
 - Office approach cue (2026-09-12):
   - Replaced misleading primary-action badge when no Office target is reachable with a notice and FOLLOW GOLD ARROW; localized EN/ES/FR. Target arrow now uses actual interaction radius instead of fixed 34px. Reachable action cues and dialog/choice behavior preserved; no extra dialog or save change.
   - Full 1,469 tests / 196 files and build pass. Fresh touch opening passes 17 checkpoints through Archive, actual HUD/arrow assertions and no browser errors. Installed keyboard client smoke and native images inspected. QA movement bursts now taper near destinations after fixed bursts oscillated at an already-reachable door; runtime movement unchanged.

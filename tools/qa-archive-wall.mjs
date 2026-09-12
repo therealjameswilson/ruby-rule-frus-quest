@@ -17,7 +17,22 @@ async function touch(x,y,dx=0,dy=0,ms=45){await cdp.send('Input.dispatchTouchEve
 async function click(x,y){if(mobile)await touch(x,y);else{const p=await point(x,y);await page.mouse.click(p.x,p.y,{delay:45});}await page.waitForTimeout(100);}
 async function press(key='Space'){if(mobile)await touch(...(key==='x'?[174,216]:key==='m'?[224,16]:[225,205]));else await page.keyboard.press(key,{delay:45});await page.waitForTimeout(160);}
 async function direction(key,ms=85){if(mobile){const[dx,dy]={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];await touch(40,178,dx,dy,ms);}else{await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}await page.waitForTimeout(20);}
-async function move(x,y,destination){let stalled=0;for(let n=0;n<150;n++){const s=await state();if(destination&&(s.scene===destination||s.roomTraversal?.currentRoomId===destination)){await page.waitForTimeout(600);return;}const dx=x-s.player.x,dy=y-s.player.y;if(!destination&&Math.hypot(dx,dy)<5)return;assert.equal(s.mode,'explore');await direction(Math.abs(dx)>Math.abs(dy)?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp');const a=await state();stalled=Math.hypot(a.player.x-s.player.x,a.player.y-s.player.y)<1?stalled+1:0;if(stalled>10)throw Error(`Blocked ${JSON.stringify(a.player)} toward ${x},${y}; ${a.objective}`);}throw Error('Movement failed');}
+async function move(x,y,destination){
+ let stalled=0;
+ for(let n=0;n<150;n++){
+  const s=await state();
+  if(destination&&(s.scene===destination||s.roomTraversal?.currentRoomId===destination)){await page.waitForTimeout(600);return;}
+  const dx=x-s.player.x,dy=y-s.player.y;
+  if(!destination&&Math.hypot(dx,dy)<5)return;
+  assert.equal(s.mode,'explore');
+  const duration=Math.max(20,Math.min(85,Math.max(Math.abs(dx),Math.abs(dy))*7));
+  await direction(Math.abs(dx)>Math.abs(dy)?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',duration);
+  const a=await state();
+  stalled=Math.hypot(a.player.x-s.player.x,a.player.y-s.player.y)<1?stalled+1:0;
+  if(stalled>10)throw Error(`Blocked ${JSON.stringify(a.player)} toward ${x},${y}; ${a.objective}`);
+ }
+ throw Error('Movement failed');
+}
 async function scene(key){await page.waitForFunction(key=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene===key,key);await page.waitForTimeout(750);}
 async function shot(label){const s=await state();results.push({label,state:s});const img=await page.evaluate(()=>new Promise(resolve=>window.game.renderer.snapshot(i=>resolve(i.src))));await writeFile(`${out}/${label}-native.png`,Buffer.from(img.split(',')[1],'base64'));await page.screenshot({path:`${out}/${label}.png`});await context.storageState({path:`${out}/earned-storage.json`});console.log(label,JSON.stringify({scene:s.scene,mode:s.mode,player:s.player,objective:s.objective,reliability:s.reliability,points:s.documentPoints,held:s.heldItem,choice:s.choice}));return s;}
 async function act(label){await press();return shot(label);}
@@ -28,6 +43,8 @@ async function choose(key){
 }
 try{
  await page.goto(new URL('?text=full',base).href);await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');await shot('00-earned-archive');
+ let points=43;
+ if(!process.argv.includes('--cart-only')) {
  await act('01-source-note');
  if(process.argv.includes('--route-lifetime')){
   const counts=()=>page.evaluate(()=>{const s=window.game.scene.getScene('ArchiveScene');return {tracked:s.roomObjects.length,retired:s.roomObjects.filter(o=>!o.active).length,route:s.sourceNoteRouteCueObjects.length};});
@@ -86,7 +103,7 @@ try{
  if(process.argv.includes('--interact'))await direction('ArrowDown',45);
  await press(process.argv.includes('--interact')?'Space':'x');await page.waitForTimeout(450);const swung=await shot('09-after-swing');
  assert.equal(swung.sceneProgress.archiveRepoWallCleared,1,'Equipped Citation Stamp swing must clear the reviewed wall');
- const points=swung.documentPoints;assert.equal(points,43);
+ points=swung.documentPoints;assert.equal(points,43);
  await press('x');await page.waitForTimeout(450);assert.equal((await state()).documentPoints,points,'Repeated swings must not duplicate rewards');
  await page.reload();await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');
  const resumed=await shot('09-cleared-wall-continue');assert.equal(resumed.sceneProgress.archiveRepoWallCleared,1);assert.equal(resumed.documentPoints,points);
@@ -99,10 +116,22 @@ try{
  await press('m');const paused=await state();assert.equal(paused.mode,'pause');await page.waitForTimeout(650);assert.deepEqual((await state()).player,paused.player);await shot('11-stacks-paused');await press('m');
  await page.reload();await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');
  const continued=await shot('11-stacks-continue');assert.equal(continued.roomTraversal.currentRoomId,'AS');assert.deepEqual(continued.player,partial.player);assert.equal(continued.heldItem,partial.heldItem);
- await move(208,190);await move(128,192);await direction('ArrowUp',800);
+ } else {
+  const resumed=await state();
+  assert.equal(resumed.roomTraversal.currentRoomId,'AS');
+  assert.equal(resumed.sceneProgress.annotationGatheredMask,4);
+  assert.equal(resumed.sceneProgress.annotationCartY??160,160);
+  assert(!resumed.sceneProgress.annotationCartParked);
+  points=resumed.documentPoints;
+ }
+ await move(208,190);await move(128,192);await direction('ArrowUp',400);
  const contact=await shot('12-cart-collision');assert(contact.player.y>=169,'Feet must stop below the cart');
  assert.equal(contact.sceneProgress.annotationGatheredMask,4);assert.equal(contact.documentPoints,points);
- await act('12-cart-north');assert.equal((await state()).sceneProgress.annotationCartY,144);
+ assert.equal(contact.sceneProgress.annotationCartY??160,160,'A brief bump must not push');
+ if(process.argv.includes('--hold-cart')) {
+   await direction('ArrowUp',450);await shot('12-cart-held-north');
+ } else await act('12-cart-north');
+ assert.equal((await state()).sceneProgress.annotationCartY,144);
  await move(108,176);await move(108,144);await act('12-cart-east');
  assert.equal((await state()).sceneProgress.annotationCartX,144);
  await context.storageState({path:`${out}/partial-cart-storage.json`});

@@ -99,7 +99,7 @@ import {
   SOURCE_NOTE_PROVENANCE_STATIONS
 } from "../game/sourceNoteProvenance";
 import type { SourceNoteProvenancePromptId } from "../game/sourceNoteProvenance";
-import { ANNOTATION_CART, annotationCartBounds, pushAnnotationCart, readAnnotationCart } from "../game/annotationCart";
+import { ANNOTATION_CART, AnnotationCartPushHold, annotationCartContactPush, annotationCartBounds, pushAnnotationCart, readAnnotationCart } from "../game/annotationCart";
 import { safeWorkstationPosition } from "../game/workstationGeometry";
 
 function color(hex: string) {
@@ -421,6 +421,7 @@ export class ArchiveScene extends Phaser.Scene {
   private sourceNoteRouteCueKey = "";
   private provenanceStationVisuals = new Map<SourceNoteProvenancePromptId, SourceNoteProvenanceStationVisual>();
   private annotationCartVisual?: Phaser.GameObjects.Container;
+  private readonly annotationCartPushHold = new AnnotationCartPushHold();
   private annotationCartSolid?: Phaser.Geom.Rectangle;
   private annotationStationVisuals = new Map<AnnotationDraftingPromptId, AnnotationDraftingStationVisual>();
   private annotationTableSlots = new Map<AnnotationDraftingPromptId, Phaser.GameObjects.Rectangle>();
@@ -536,6 +537,8 @@ export class ArchiveScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (gameState.mode !== "explore" || this.currentRoomId !== "AS" || this.roomTransitionLocked
+      || input.aJustPressed || input.pauseJustPressed || input.menuJustPressed) this.annotationCartPushHold.reset();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.sourceNoteBoard.active) {
       this.updateDanneLurker(delta, false);
@@ -598,6 +601,9 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.checkRoomExit()) return;
 
     if (this.currentRoomId === "AS") {
+      const contact = !input.aJustPressed && !input.bJustPressed && this.player.combatReadout.weapon.canSwing
+        && annotationCartContactPush(gameState.sceneProgress, this.player.position, input.dir);
+      if (this.annotationCartPushHold.update(delta, contact, input.dir)) this.moveAnnotationCart(input.dir);
       this.updateAnnotationSlipIcon();
       this.syncAnnotationDraftingStations();
       const target = this.sourceNoteActionHint();
@@ -991,8 +997,9 @@ export class ArchiveScene extends Phaser.Scene {
       x: position.x, y: position.y, radius: ANNOTATION_CART.radius, kind: "document", onInteract: () => this.moveAnnotationCart() });
   }
 
-  private moveAnnotationCart() {
-    const result = pushAnnotationCart(gameState.sceneProgress, this.player.position);
+  private moveAnnotationCart(direction?: { x: number; y: number }) {
+    this.annotationCartPushHold.reset();
+    const result = pushAnnotationCart(gameState.sceneProgress, this.player.position, direction);
     setLatestMessage(result.message);
     if (!result.moved) {
       this.toast.show(result.message, this.player.position, "info");
