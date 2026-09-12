@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Faster movement Editor/Proof continuation (2026-09-12):
+  - Earned Referral save passes 51 simulated-touch checkpoints through BlackVaultLairScene with no browser errors: draft carry/repair, all seven proof checks, furniture collision, wrong/incomplete choices, partial-save Continue, isolated choice input, Buckram Key and backtracking. Earned 87 points; ends at 201 points / 100 reliability.
+  - Native repair, proof-room and vault-entry screens inspected; two images retained. No gameplay edit. Next earned save: /private/tmp/frus-faster-editor/mobile/earned-storage.json for boss counter and binding QA. No deployment; informed automation is not unaided-player evidence.
+
 - Faster movement Referral continuation (2026-09-12):
   - All 38 earned simulated-touch checkpoints pass through SilentReadScene with 91 reliability and no browser errors, including shelf collision, shortcuts, filing, retry paths, Continue, reward pickup and backtracking.
   - Corrected the no-teleport QA assertion to measure completion synchronously instead of including subsequent live enemy movement. Actual completion stays at (198, 185). No gameplay changes; native editor entry inspected. Evidence: /private/tmp/frus-faster-referral-verified/mobile-375x667-dpr3/. Not deployed; remaining editor/boss movement QA is pending.

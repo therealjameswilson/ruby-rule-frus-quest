@@ -121,3 +121,26 @@ Evidence and the next earned save are under
 These are temporary QA artifacts. Remaining editor and boss checks are not
 yet verified with the faster controller; scripted touch is not real-device
 or unaided-player evidence. No deployment was performed.
+
+## Earned Editor and Proof Regression
+
+`qa-proof-comparison.mjs --mobile` continued the earned Referral save through
+51 checkpoints to BlackVaultLairScene. It earned 87 document points (114 to
+201), ended at 100 reliability, and reported no browser errors. All motion
+and choices used simulated touch; no progress was injected.
+
+The run covers the editor hint and draft pickup, carried-draft Continue,
+visible withholding repair, explicit filing, Red Pencil pickup, proof-room
+furniture collision, seven review checks, deliberate wrong/incomplete
+submissions, partial-draft Continue, frozen combat during choices, no
+choice-input swing leakage, Buckram Key pickup, backtracking without duplicate
+rewards, and the Black Vault handoff. Native repair, proof-room and vault-entry
+screenshots were inspected. No gameplay change was needed for this pass.
+
+Temporary evidence and the earned boss-entry save are at
+`/private/tmp/frus-faster-editor/mobile/`. Retained images:
+`screenshots/movement-proof-room.png` and
+`screenshots/movement-black-vault-entry.png`.
+Next: exercise boss counters, miss/recovery, and the binding ceremony with
+the faster controller. These known-route checks do not prove unaided
+comprehension, real-device performance, or whole-game fun.
