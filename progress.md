@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Combat consequence audit (2026-09-12):
+  - Traced every production Player.takeHit caller. The method itself is physical feedback/i-frames only; Archive and gameplay-map enemies debit 4 through applyProcessPressure, lurkers use their balance table, and the main boss debits/recoverably records 10/5. Drone and wraith attacks have no debit.
+  - Added docs/COMBAT_PRESSURE_AUDIT.md with the exact contract, test limitation and safe follow-up sequence. A universal Player debit would double-charge existing callers; adding expansion damage without a zero-heart room retry would be incomplete. No gameplay/balance change made based on an unverified intent assumption.
+  - 23 existing drone/wraith/pressure tests pass. Next: earned-folder secret route, or a complete consequence/recovery pass for expansion encounters rather than an isolated damage increase. Local only.
+
 - NARA read-before-threat placement (2026-09-12):
   - Reproduced the briefing knocking a stationary reader from (128,177) to (122,196). The note at y=178 was only 26px from the lower patrol, inside its 44px targeting radius; the old 12px hotspot-clearance check missed this.
   - Moved the note to (140,202), beside the entry and 50px from the sweep. Kept interaction reach, drone AI, attack timing and all rewards unchanged. Strengthened the note-specific pacing assertion to exceed actual attack range, rather than merely avoid the patrol line.
