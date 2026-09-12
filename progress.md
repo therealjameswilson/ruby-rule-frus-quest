@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Discoverable second-page secret clue (2026-09-12):
+  - The NARA entry note alternated patrol advice and a northeast-shelf Review Folder clue, but its unchanged Patrol Note label never indicated a second reading. Actual-input browser check reproduced that missing signal.
+  - Sync the note's interaction label to its existing page state: Patrol Note 1/2, then Shelf Clue 2/2. No new progression flags, auto-unlocks, tools or extra dialogue; returning to a pending second page preserves its label.
+  - 17 records/secret tests and build pass. Browser read both pages, checked next-label changes and no discovery granted; native screenshots and installed-client screenshot inspected. Evidence /private/tmp/frus-secret-clue-before/, /private/tmp/frus-secret-clue-after/, /private/tmp/frus-secret-clue-client/.
+  - Initial test approach was too short and targeted the stairwell; corrected it to reach and assert the actual note before reading. Captures show a hit flash near the note: next investigate briefing/patrol pacing, plus actual earned-folder discovery. This is not a complete earned secret route or proof of unaided discovery. Local only.
+
 - Secret-room walk-through return (2026-09-12):
   - Playing the hidden First Edition room exposed a movement inconsistency: SOUTH TO STACKS left the player at y=222 in an open doorway until Interact was pressed. The before browser assertion failed; the native screenshot confirmed the blocked-feeling return.
   - Added a foot-body-sized south threshold that invokes the existing return transition. Button interaction remains available; arrival at y=208 and side-wall contact do not trigger it. No reward, save-schema or discovery-gate changes.

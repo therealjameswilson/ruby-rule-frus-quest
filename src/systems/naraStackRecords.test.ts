@@ -42,11 +42,25 @@ describe("NARA physical note and fragment", () => {
   });
 
   it("reads two short hints without entering a dialogue or granting progression", () => {
-    const { records: room, toast } = records();
-    room.handle("nara-stacks-note"); room.handle("nara-stacks-note");
+    const { records: room, toast, targets } = records();
+    const note = targets.find((target) => target.id === "stacks-note")!;
+    room.syncTargets(targets);
+    expect(note.label).toBe("Patrol Note 1/2");
+    room.handle("nara-stacks-note"); room.syncTargets(targets);
+    expect(note.label).toBe("Shelf Clue 2/2");
+    room.handle("nara-stacks-note"); room.syncTargets(targets);
+    expect(note.label).toBe("Patrol Note 1/2");
     expect(toast.show.mock.calls.map((call) => call[0])).toEqual(["DODGE THE STAMP MARKS", "NE SHELF: REVIEW FOLDER"]);
     expect(gameState.mode).toBe("explore"); expect(gameState.inventory).toEqual([]);
     expect(gameState.sceneProgress.hiddenReadingRoomDiscovered).toBeUndefined();
+  });
+
+  it("restores the pending clue label on returning without modifying the map definition", () => {
+    gameState.sceneProgress.naraStackNotePage = 1;
+    const { records: room, targets } = records();
+    room.syncTargets(targets);
+    expect(targets.find((target) => target.id === "stacks-note")?.label).toBe("Shelf Clue 2/2");
+    expect(DANNE_SCENE_GEOMETRY.NaraStacksScene.interactions.find((target) => target.id === "stacks-note")?.label).toBe("Patrol Note");
   });
 
   it("collects exactly once, saves, removes the paper and hotspot, and leaves the stair and seam alone", () => {

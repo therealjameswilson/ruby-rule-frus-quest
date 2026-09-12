@@ -40,6 +40,8 @@ export class NaraStackRecords {
   }
 
   syncTargets(targets: Interactable[]) {
+    const note = targets.find((target) => target.id === "stacks-note");
+    if (note) note.label = gameState.sceneProgress.naraStackNotePage ? "Shelf Clue 2/2" : "Patrol Note 1/2";
     if (!naraFragmentCollected()) return;
     const index = targets.findIndex((target) => target.id === "nara-treaty-fragment");
     if (index >= 0) targets.splice(index, 1);
