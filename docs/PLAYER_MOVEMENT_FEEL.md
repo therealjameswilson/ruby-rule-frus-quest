@@ -17,6 +17,24 @@ of reproducing Nintendo's controller code.
 - Walk animation reflects actual movement, not walking in place against a desk.
 - Subpixel logical positions and pixel-snapped rendering remain separate.
 
+## Latest-Control Editor Regression
+
+The earned Referral checkpoint passed all 51 editor/proof checkpoints with
+the short-release and fresh-action fixes. Simulated touch carried the draft,
+repaired the visible bracket, completed cross-reference, release-scope,
+chronology and proof decisions, and reached BlackVaultLairScene. Partial and
+corrected-but-unfiled work survived Continue; filing and stamping remained
+separate actions. Backtracking did not duplicate rewards. Points increased
+from 114 to 201 and reliability ended at 100, with no browser errors.
+
+Native corrected-proof and vault-entry images were inspected. Temporary
+evidence and the next earned save are in
+`/private/tmp/frus-refined-editor/mobile/`; retained endpoint image:
+`screenshots/refined-controls-black-vault-entry.png`. No runtime change was
+needed. The final boss and bindery still need a regression on these latest
+input changes; earlier completion evidence predates them. This is scripted
+touch coverage, not physical-device or unaided-player evidence. Not deployed.
+
 ## Verification
 
 - Full suite: 196 files / 1,468 tests passing, including live Player start,

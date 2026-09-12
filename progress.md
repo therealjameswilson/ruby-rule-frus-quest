@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Refined-control editor/proof regression (2026-09-12):
+  - All 51 earned simulated-touch checkpoints pass through draft carry, bracket repair, cross-reference, release scope, chronology, proof corrections, deliberate filing/stamping, Continue and backtracking to Black Vault. Ends at 201 points / 100 reliability; no browser errors or runtime changes.
+  - Native corrected-proof and vault-entry images inspected. Evidence and next earned save: /private/tmp/frus-refined-editor/mobile/. Latest-control boss/bindery regression remains outstanding; no deployment or physical-device/unaided-fun claim.
+
 - Refined-control Referral regression (2026-09-12):
   - All 38 earned touch checkpoints pass through agency routing, dispatch-copy exploration/shortcut, manifest correction and explicit filing, treatment dockets, reward, Continue and backtracking into Editor. Ends at 114 points / 100 reliability; no browser errors or runtime changes.
   - Native stacks, shortcut, manifest and editor-entry art inspected. Next earned save: /private/tmp/frus-refined-referral/mobile-375x667-dpr3/earned-storage.json. Continue current-input regression through editor/proof and final combat. No deployment or unaided/physical-phone claim.
