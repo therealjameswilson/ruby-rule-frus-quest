@@ -44,6 +44,36 @@ try {
       });
     });
     const start = (await state()).player;
+    if (process.argv.includes('--interaction-hint')) {
+      async function action() {
+        if (mobile) {
+          const box = await page.locator('canvas').first().boundingBox();
+          await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{
+            x: box.x + 225 * box.width / 256, y: box.y + 205 * box.height / 240, id: 2
+          }] });
+          await page.waitForTimeout(45);
+          await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        } else await page.keyboard.press('Space', { delay: 45 });
+        await page.waitForTimeout(80);
+      }
+      await action();
+      assert(await page.evaluate(() => window.game.scene.getScene('OfficeScene').toast.visible));
+      await direction(0, -1, 500);
+      const feedback = await page.evaluate(() => {
+        const scene = window.game.scene.getScene('OfficeScene');
+        return { toast: scene.toast.visible, prompt: scene.prompt.visible,
+          nearest: JSON.parse(window.render_game_to_text()).nearestInteractable };
+      });
+      await page.screenshot({ path: `${out}/${mobile ? 'touch' : 'keyboard'}-interaction-hint.png` });
+      assert(feedback.nearest, 'The short approach must reach the compiler');
+      assert.equal(feedback.toast, false, 'Stale proximity feedback must yield to the reachable action');
+      assert.equal(feedback.prompt, true, 'Show the action as soon as it is reachable');
+      await action();
+      assert.equal((await state()).sceneProgress.juniorCompilerIntroduced, 1, 'The revealed Talk action must work');
+      assert(await page.evaluate(() => window.game.scene.getScene('OfficeScene').toast.visible),
+        'New assignment feedback must retain its reading time');
+      await direction(0, 1, 500);
+    }
     await direction(1, 0, 350);
     const right = (await state()).player;
     assert(right.x > start.x + 15, 'Walking must respond on either input source');

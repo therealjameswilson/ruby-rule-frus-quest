@@ -343,6 +343,7 @@ export class OfficeScene extends Phaser.Scene {
     this.updateDanneLurker(delta, Boolean(gameState.sceneProgress.juniorCompilerIntroduced));
     const activeInteractables = this.currentInteractables();
     const nearest = nearestInteractable(this.player.position, activeInteractables);
+    if (nearest) this.toast.dismissInteractionHint();
     // Show the prompt/ring from a little further out than the strict interact
     // radius so it is impossible to miss on approach, but only allow acting on a
     // target inside the strict radius.
@@ -457,7 +458,7 @@ export class OfficeScene extends Phaser.Scene {
     retroAudio.blip();
     // Float a prominent, long-lived toast above the player instead of briefly
     // swapping the low-contrast bottom hint, which the live audit could not see.
-    this.toast.show("NOTHING TO INTERACT WITH", this.player.position, "warn");
+    this.toast.showInteractionHint("NOTHING TO INTERACT WITH", this.player.position, "warn");
     setLatestMessage("Nothing to interact with here.");
   }
 
@@ -466,7 +467,7 @@ export class OfficeScene extends Phaser.Scene {
     // hair outside the strict interact radius. Tell them to step in instead of
     // the misleading "nothing to interact with".
     retroAudio.blip();
-    this.toast.show(`STEP CLOSER TO ${target.label.toUpperCase()}`, this.player.position, "info");
+    this.toast.showInteractionHint(`STEP CLOSER TO ${target.label.toUpperCase()}`, this.player.position, "info");
     setLatestMessage(`Step closer to ${target.label}.`);
   }
 

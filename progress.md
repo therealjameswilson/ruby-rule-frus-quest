@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Reachable-action feedback priority (2026-09-12):
+  - Reproduced a stale NOTHING TO INTERACT WITH panel hiding the newly reachable compiler prompt after a short approach. The old browser check failed with the toast still visible despite a valid target.
+  - Mark only proximity feedback as dismissible on reaching an interaction. Office dismisses it before rendering the reachable prompt; normal assignment/reward/review messages remain timed and readable. No input, range, save or quest changes.
+  - 17 toast tests and build pass; keyboard/touch proximity, movement, sprite cadence and collision probes pass without browser errors. Before/after touch screenshots and the installed-client capture inspected. Evidence: /private/tmp/frus-interaction-hint-before/, /private/tmp/frus-interaction-hint-after/, /private/tmp/frus-interaction-hint-client/. Local only.
+  - Final probe also uses the revealed Talk action and verifies assignment receipt plus preserved new feedback on both inputs: /private/tmp/frus-interaction-hint-final/.
+
 - Walking animation cadence (2026-09-12):
   - Align the shared native character walk animations with the requested 8 fps cadence (previously 6 fps). Idle/action timings, movement speed, collisions and weapon windows are unchanged; existing NPC walk animations use the same cadence.
   - New registration regression verifies every normal/veteran character's directional cadence, unchanged idle/action rates and repeat registration. Browser movement QA samples actual frame names/rates and confirms both foot poses on keyboard and touch, along with release, furniture and integer-position checks. No browser errors; native touch and installed-client captures inspected.

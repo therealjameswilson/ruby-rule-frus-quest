@@ -39,6 +39,7 @@ export class FeedbackToast {
   private readonly text: Phaser.GameObjects.Text;
   private elapsed = 0;
   private active = false;
+  private interactionHint = false;
 
   constructor(scene: Phaser.Scene, depth = 1200, private readonly actorBounds?: () => { top: number; bottom: number }) {
     this.scene = scene;
@@ -65,6 +66,7 @@ export class FeedbackToast {
   }
 
   show(message: string, anchor: ToastPlacement, tone: ToastTone = "warn", bounds?: ToastAnchorBounds) {
+    this.interactionHint = false;
     this.elapsed = 0;
     this.active = true;
     const upper = message.toUpperCase();
@@ -77,6 +79,15 @@ export class FeedbackToast {
     this.text.setColor(tone === "warn" ? PALETTE.creamPaper : PALETTE.terminalCyan);
     this.place(anchor, bounds);
     this.container.setAlpha(1).setVisible(true);
+  }
+
+  showInteractionHint(message: string, anchor: ToastPlacement, tone: ToastTone = "warn") {
+    this.show(message, anchor, tone);
+    this.interactionHint = true;
+  }
+
+  dismissInteractionHint() {
+    if (this.interactionHint) this.hide();
   }
 
   private place(anchor: ToastPlacement, bounds?: ToastAnchorBounds) {
@@ -100,6 +111,7 @@ export class FeedbackToast {
 
   hide() {
     this.active = false;
+    this.interactionHint = false;
     this.container.setVisible(false);
   }
 
