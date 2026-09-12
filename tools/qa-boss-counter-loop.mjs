@@ -154,6 +154,32 @@ try{
         assert.equal(lanes.length,3,'Cloud warns about every spread lane');
         assert.equal(new Set(lanes.map(p=>`${p.x},${p.y}`)).size,3);
       }
+      if(b.enemyState==='cloud' && process.argv.includes('--cloud-imprecise')) {
+        await move(128,150);
+        const before=await shot('cloud-untimed-start');
+        const cadence=[420,760,500,620];
+        let attempts=0;
+        for(let i=0;i<16;i++) {
+          const visible=await state(),enemy=boss(visible);
+          if(visible.mode!=='explore'||enemy?.enemyState!=='cloud')break;
+          // Use visible relative position only. No bolt, HP, telegraph timer
+          // or core-window reads select the direction or timing of a swing.
+          const dx=enemy.x-visible.player.x,dy=enemy.y-visible.player.y;
+          await direction(Math.abs(dx)>Math.abs(dy)?dx<0?'ArrowLeft':'ArrowRight':dy<0?'ArrowUp':'ArrowDown',25);
+          await press('x');attempts++;
+          await page.waitForTimeout(cadence[i%cadence.length]);
+        }
+        const after=await shot('cloud-untimed-end'),enemy=boss(after);
+        assert.deepEqual(after.documentCandidates,before.documentCandidates);
+        assert.equal(after.documentPoints,before.documentPoints);
+        log.push({label:'cloud-untimed-summary',attempts,
+          hpBefore:boss(before).hp,hpAfter:enemy?.hp,
+          returned: (enemy?.bossCombat.boltsReturned??0)-boss(before).bossCombat.boltsReturned,
+          reliabilityBefore:before.reliability,reliabilityAfter:after.reliability,
+          retryAvailable:enemy?.bossCombat.retryAvailable,
+          scope:'Uneven untimed swings using visible enemy position; not an unaided human test'});
+        continue;
+      }
       if(b.enemyState==='swarm' && process.argv.includes('--disperse')) {
         const initial=await state(),prior=boss(initial).bossCombat.minisDispersed??0;
         await move(128,174);await direction('ArrowUp',25);

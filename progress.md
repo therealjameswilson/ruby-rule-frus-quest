@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Cloud untimed-input audit (2026-09-12):
+  - Added --cloud-imprecise to earned boss QA: 16 uneven swings, direction from visible relative enemy position, no projectile/timer reads driving timing. Touch: 3 returns, HP 180 to 96, reliability 90 to 70. Keyboard: 6 returns, HP 180 to 40, reliability stays 90. Neither probe needs retry; documents/points unchanged; no browser errors.
+  - Both subsequent timing-aware runs finish Cloud and Continue in the bindery. Native captures inspected. No combat values changed; see docs/BOSS_IMPRECISE_INPUT_AUDIT.md. Next: first-player comprehension and feedback, not more claims of fun from known-route automation. Local only, not deployed.
+
 - Faster movement boss/publication checkpoint (2026-09-12):
   - Clarified armored-core HUD to RETURN THE BOLT; live HUD and state asserted. First touch fight exhausted Cloud reliability twice and exposed retry QA counting guarded taps as restarts. Fixed test counting only; combat difficulty unchanged.
   - Rerun clears three phases with six fresh core hits, zero retries, no deadline miss; victory Continue passes. Earned bindery run completes five packets and publishes clean, 201 to 241 points, no browser errors. Native screenshots inspected; focused 45 boss tests and build pass. Installed client debug movement smoke also passes.
