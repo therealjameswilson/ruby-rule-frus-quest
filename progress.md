@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Optional Stacks retreat (2026-09-12):
+  - Earned Archive replay reproduced B1 WAIT trapping northward retreat as well as forward exits. Optional exploration now permits returning north before resolving the tray, while east/south remain gated. Blocked-route toast and enemy description explain the return route; south rejection stays near the exit rather than displacing the player to the room center.
+  - qa-backtrack.mjs --stacks-retreat enters B1 from a genuinely earned A1 save, attempts the blocked south exit, then walks north to A1. Before failed to return; after returns with 201 points intact and the main objective restored. No browser errors. Native blocked/returned screenshots inspected in /private/tmp/frus-stacks-retreat-after/.
+  - 14 Archive regression tests and production build pass (existing bundle warning). Requested questArchitecture.test.ts does not exist, so it contributed no tests; traversal proof here is the actual browser replay. Installed gameplay client fresh Archive pickup/movement and native render also checked (/private/tmp/frus-stacks-retreat-client/).
+  - Local only. Other optional rooms and physical mobile retreat remain unverified; this does not claim a full optional-route audit.
+
 - Fair DANN-E firing windup (2026-09-12):
   - Found patrol movement continued after the warning lane was drawn, changing the shot origin. Added a failing regression (39 patrol steps during windup), then held patrol and hover while aiming. Patrol resumes after launch; target snapshot, warning duration, projectile speed, damage and counter rules are unchanged.
   - 44 focused tests and production build pass (existing bundle warning). Extended qa-danne-contact.mjs to observe real windup origins without changing enemy inputs/results and save a native warning screenshot.

@@ -363,7 +363,7 @@ const ARCHIVE_ENEMIES: ArchiveEnemyDefinition[] = [
     x: 68,
     y: 162,
     behavior: "freeze",
-    behaviorText: "freezes exits temporarily",
+    behaviorText: "blocks forward exits; north returns",
     defeatMethod: "Resolve agency response timer",
     accent: PALETTE.terminalCyan
   },
@@ -2470,7 +2470,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (definition.type === "NO REPO") return this.sourceNoteStatus === "stamped" ? "citation stamp ready" : "needs source table";
     if (definition.type === "FIREWALL") return this.networkRoutingResolved ? "routing ready" : "wrong network blocks door";
     if (definition.type === "PENDING") return this.referralManifestDelivered ? "manifest delivered" : "awaiting manifest";
-    if (definition.type === "WAIT") return this.agencyTimerResolved ? "timer resolved" : "exits frozen";
+    if (definition.type === "WAIT") return this.agencyTimerResolved ? "timer resolved" : "forward exits blocked; north returns";
     if (definition.type === "AMBIGUOUS") return this.specialistDecisionMade ? "specialist ready" : this.ambiguousSplit ? "split flags waiting" : "unsplit";
     if (definition.type === "DANN-E QUEUE") return this.goldenRuleDecisionMade ? "human decision ready" : "pushing backward";
     return "active";
@@ -3477,11 +3477,13 @@ export class ArchiveScene extends Phaser.Scene {
       return false;
     }
 
-    if (this.currentRoomId === "B1" && this.activeEnemyWalls.has("wait-timer") && !this.agencyTimerResolved) {
-      setLatestMessage("WAIT freezes exits until the agency response timer is resolved.");
+    if (this.currentRoomId === "B1" && direction !== "north"
+      && this.activeEnemyWalls.has("wait-timer") && !this.agencyTimerResolved) {
+      setLatestMessage("Resolve WAIT at the referral tray to proceed, or return north to the Source Room.");
       setObjective("Resolve agency response timer at the referral tray.");
+      this.toast.show("WAIT: TRAY / NORTH TO RETURN", this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
-      const push = direction === "north" ? { x: 128, y: 58 } : direction === "east" ? { x: 228, y: 120 } : { x: 128, y: 120 };
+      const push = direction === "east" ? { x: 228, y: 120 } : { x: 128, y: 190 };
       this.player.setPosition(push.x, push.y);
       return false;
     }

@@ -5,6 +5,7 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright')
 assert(process.env.FRUS_QA_STORAGE);
 const storageState = JSON.parse(await readFile(process.env.FRUS_QA_STORAGE, 'utf8'));
 const out = process.env.FRUS_QA_OUT ?? '/private/tmp/frus-backtrack';
+const stacksRetreat = process.argv.includes('--stacks-retreat');
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
 try {
@@ -66,9 +67,25 @@ try {
   await page.goto('http://127.0.0.1:5195/?text=full');
   await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
   await page.keyboard.press('Enter');
-  await page.waitForFunction(() => window.game.scene.isActive('BlackVaultLairScene'));
+  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat ? 'ArchiveScene' : 'BlackVaultLairScene');
   await page.waitForTimeout(800);
   const initial = await state();
+  if (stacksRetreat) {
+    assert.equal(initial.roomTraversal.currentRoomId, 'A1');
+    await walk(128, 208); await hold('ArrowDown', 400);
+    await page.waitForTimeout(900); await shot('stacks-entry');
+    assert.equal((await state()).roomTraversal.currentRoomId, 'B1');
+    await walk(128, 208); await hold('ArrowDown', 400);
+    await page.waitForTimeout(600); await shot('stacks-forward-locked');
+    assert.equal((await state()).roomTraversal.currentRoomId, 'B1', 'WAIT still blocks forward progress');
+    await walk(128, 56); await hold('ArrowUp', 400);
+    await page.waitForTimeout(900); await shot('stacks-retreat');
+    const returned = await state();
+    assert.equal(returned.roomTraversal.currentRoomId, 'A1', 'Optional Stacks must allow retreat before solving WAIT');
+    assert.equal(returned.documentPoints, initial.documentPoints);
+    assert.deepEqual(errors, []);
+    console.log('Unsolved optional Stacks allows retreat with progress unchanged');
+  } else {
   await shot('00-vault');
   await walk(128, 212); await page.keyboard.press('Space', { delay: 50 });
   await page.waitForFunction(() => window.game.scene.isActive('SilentReadScene'));
@@ -92,4 +109,5 @@ try {
   assert.deepEqual(errors, []);
   await writeFile(`${out}/earned-storage.json`, JSON.stringify(await context.storageState(), null, 2));
   console.log('Actual backtracking reaches NARA with earned tool and points intact');
+  }
 } finally { await browser.close(); }
