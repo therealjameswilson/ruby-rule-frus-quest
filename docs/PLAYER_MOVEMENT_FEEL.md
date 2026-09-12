@@ -100,3 +100,24 @@ inspected; the earned next save is
 This run is keyboard/pointer, not simulated touch. It exercises known routes
 and intentional mistakes, not unaided discovery. Next: Referral traversal
 and remaining campaign checks after the movement change.
+
+## Earned Referral Regression
+
+The simulated-touch `qa-referral-manifest.mjs --mobile` continuation passed
+38 checkpoints from the earned Network save to SilentReadScene, with 91
+reliability and no browser errors. This covers agency handoffs, wrong-desk
+retry, the dispatch-copy shelf route and return shortcut, partial-save
+Continue, explicit manifest filing, treatment dockets, Concurrence Slip
+collection, backtracking without duplicate rewards, and the editor exit.
+
+The first run exposed a timing-confounded test: its no-teleport assertion
+included later live frames during which enemy knockback can occur. The test
+now measures the actual completion method synchronously, without changing
+gameplay or injecting progress. The successful rerun measured exactly
+`(198, 185)` before and after completion. Native editor-entry art was inspected.
+
+Evidence and the next earned save are under
+`/private/tmp/frus-faster-referral-verified/mobile-375x667-dpr3/`.
+These are temporary QA artifacts. Remaining editor and boss checks are not
+yet verified with the faster controller; scripted touch is not real-device
+or unaided-player evidence. No deployment was performed.

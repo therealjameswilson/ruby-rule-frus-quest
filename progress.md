@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Faster movement Referral continuation (2026-09-12):
+  - All 38 earned simulated-touch checkpoints pass through SilentReadScene with 91 reliability and no browser errors, including shelf collision, shortcuts, filing, retry paths, Continue, reward pickup and backtracking.
+  - Corrected the no-teleport QA assertion to measure completion synchronously instead of including subsequent live enemy movement. Actual completion stays at (198, 185). No gameplay changes; native editor entry inspected. Evidence: /private/tmp/frus-faster-referral-verified/mobile-375x667-dpr3/. Not deployed; remaining editor/boss movement QA is pending.
+
 - Faster movement Network continuation (2026-09-12):
   - Earned Archive save passes 29 keyboard/pointer Network checkpoints through ReferralVaultScene: public-first crossing, pause isolation, packet/docket handoffs, retry paths, explicit ledger filing, partial-save Continue and Clearance Token exit. No browser errors; 82 reliability at exit.
   - Native crossing and ledger screens inspected. No gameplay changes. Next save: /private/tmp/frus-faster-network/desktop/earned-storage.json. Scope is informed scripted play, not unaided discovery; see docs/PLAYER_MOVEMENT_FEEL.md.

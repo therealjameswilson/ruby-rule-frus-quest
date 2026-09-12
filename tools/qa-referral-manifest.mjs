@@ -327,7 +327,19 @@ async function run(mobile) {
     assert.equal(s.sceneProgress.withholdingAppealComplete,1);
     assert.equal(s.objective,'3/3 TO BRACKET');
     await move(196,185);
-    const beforeClear=(await state()).player;
+    // Measure the completion itself, not later live frames in which a nearby
+    // enemy can legitimately knock the player back while a screenshot runs.
+    await page.evaluate(() => {
+      const scene = window.game.scene.getScene('ReferralVaultScene');
+      const finish = scene.finishReferralReview;
+      window.referralCompletionMovement = null;
+      scene.finishReferralReview = function (...args) {
+        const before = this.player.position;
+        const result = finish.apply(this, args);
+        window.referralCompletionMovement = { before, after: this.player.position };
+        return result;
+      };
+    });
     await press();
     s=await shot('visible-treatment-gate-open');
     assert.equal(s.sceneProgress.referralPhysicalReviewComplete,1);
@@ -335,7 +347,11 @@ async function run(mobile) {
     assert.equal(s.heldItem,null);
     assert.equal(s.objective,'EXIT EAST - SLIP');
     assert(s.processStamps.includes('referral'));
-    assert(Math.hypot(s.player.x-beforeClear.x,s.player.y-beforeClear.y)<3,'Completion must not teleport player');
+    const completionMovement = await page.evaluate(() => window.referralCompletionMovement);
+    assert(completionMovement, 'Actual referral completion must run');
+    assert(Math.hypot(completionMovement.after.x-completionMovement.before.x,
+      completionMovement.after.y-completionMovement.before.y)<3,'Completion must not teleport player');
+    await writeFile(`${out}/completion-movement.json`, JSON.stringify(completionMovement, null, 2));
     await move(226,185); await move(226,124); await move(248,124,'R2');
     s=await shot('concurrence-room-entry');
     assert.equal(s.objective,'TAKE CONCURRENCE');
