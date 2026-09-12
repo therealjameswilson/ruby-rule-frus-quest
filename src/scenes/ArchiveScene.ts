@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { ARCHIVE_SECRET_IDS, hasArchiveSecret, recordArchiveSecret } from "../game/archiveSecrets";
 import { readChapterArrival } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -468,6 +469,17 @@ export class ArchiveScene extends Phaser.Scene {
     this.lastRepoWallSwing = 0;
     const arrival = readChapterArrival(data, "ArchiveScene", gameState.currentScene);
     const visitedRooms = getVisitedRoomIds(Object.keys(ARCHIVE_ROOMS) as ArchiveRoomId[]);
+    for (const room of ARCHIVE_SECRET_IDS) {
+      const legacyReward = room === "C3"
+        ? gameState.volumeFragments.includes("Hidden Cache Fragment")
+        : gameState.completionStats.hiddenCollectibleLabel === "Hidden Reliability Well";
+      if (legacyReward) recordArchiveSecret(gameState.sceneProgress, room, "collected");
+      else if (visitedRooms.includes(room)) recordArchiveSecret(gameState.sceneProgress, room, "revealed");
+      this.revealedSecretIds.delete(room);
+      this.collected.delete(`secret-${room}`);
+      if (hasArchiveSecret(gameState.sceneProgress, room, "revealed")) this.revealedSecretIds.add(room);
+      if (hasArchiveSecret(gameState.sceneProgress, room, "collected")) this.collected.add(`secret-${room}`);
+    }
     const restoredHeldItem = gameState.heldItem;
     const archiveReturn = this.consumeArchiveReturnSpawn();
     const restoringArchive = gameState.currentScene === "ArchiveScene";
@@ -1272,7 +1284,8 @@ export class ArchiveScene extends Phaser.Scene {
       kind: "document",
       onInteract: () => {
         const key = `secret-${room.id}`;
-        if (this.collected.has(key)) {
+        if (this.collected.has(key)
+          || !recordArchiveSecret(gameState.sceneProgress, room.id === "C3" ? "C3" : "D2", "collected")) {
           setLatestMessage(`${room.id} secret reward already filed.`);
           setObjective("Return to the marked Archive route; this hidden room is complete.");
           this.dialog.show("SECRET", "This hidden room has already yielded its clue.");
@@ -1294,6 +1307,7 @@ export class ArchiveScene extends Phaser.Scene {
         retroAudio.confirm();
         this.showSecretRewardCue(room.id);
         this.dialog.show("SECRET", room.id === "C3" ? "A cover fragment was filed where only a careful reader would look." : "The well restores confidence because the check was physical.");
+        saveGameNow();
       }
     });
   }
@@ -1351,8 +1365,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private revealSecretRoom(roomId: ArchiveRoomId, message: string) {
-    if (!ARCHIVE_ROOMS[roomId] || ARCHIVE_ROOMS[roomId].roomType !== "secret") return;
-    if (this.revealedSecretIds.has(roomId)) {
+    if (roomId !== "C3" && roomId !== "D2") return;
+    if (this.revealedSecretIds.has(roomId) || !recordArchiveSecret(gameState.sceneProgress, roomId, "revealed")) {
       setLatestMessage(`${roomId} secret route already mapped.`);
       this.dialog.show("SECRET", "That hidden route is already marked on the archive map.");
       this.updateVisitedMinimap();
@@ -1369,6 +1383,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.dialog.show("SECRET", message);
     this.updateVisitedMinimap();
     this.syncRoomTraversalState();
+    saveGameNow();
   }
 
   private showSecretRevealCue(roomId: ArchiveRoomId) {

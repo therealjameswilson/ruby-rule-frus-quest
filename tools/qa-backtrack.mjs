@@ -6,6 +6,7 @@ assert(process.env.FRUS_QA_STORAGE);
 const storageState = JSON.parse(await readFile(process.env.FRUS_QA_STORAGE, 'utf8'));
 const out = process.env.FRUS_QA_OUT ?? '/private/tmp/frus-backtrack';
 const stacksRetreat = process.argv.includes('--stacks-retreat');
+const wellLoop = process.argv.includes('--well-loop');
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
 try {
@@ -67,10 +68,39 @@ try {
   await page.goto('http://127.0.0.1:5195/?text=full');
   await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
   await page.keyboard.press('Enter');
-  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat ? 'ArchiveScene' : 'BlackVaultLairScene');
+  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop ? 'ArchiveScene' : 'BlackVaultLairScene');
   await page.waitForTimeout(800);
   const initial = await state();
-  if (stacksRetreat) {
+  if (wellLoop) {
+    const go = async (direction, room) => {
+      const [x, y, key] = { south: [128, 208, 'ArrowDown'], east: [232, 120, 'ArrowRight'] }[direction];
+      await walk(x, y); await hold(key, 400); await page.waitForTimeout(900);
+      await shot(`room-${room}`); assert.equal((await state()).roomTraversal.currentRoomId, room);
+    };
+    const interact = async () => {
+      await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+      for (let i = 0; i < 12 && (await state()).dialog; i++) {
+        await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+      }
+      assert.equal((await state()).mode, 'explore');
+    };
+    await go('south', 'B1');
+    await walk(128, 112); await interact();
+    await go('south', 'C1');
+    await walk(128, 144); await interact();
+    await go('south', 'D1'); await go('east', 'D2');
+    await walk(128, 160); await interact(); await shot('well-collected');
+    const collected = await state();
+    await context.storageState({ path: `${out}/earned-well-storage.json` });
+    await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
+    await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
+    await page.waitForTimeout(900);
+    assert.equal((await state()).roomTraversal.currentRoomId, 'D2');
+    await interact(); await shot('well-repeat-after-continue');
+    assert.equal((await state()).documentPoints, collected.documentPoints, 'Hidden well must award points only once across Continue');
+    assert.deepEqual(errors, []);
+    console.log('Earned hidden well survives Continue without duplicate reward');
+  } else if (stacksRetreat) {
     assert.equal(initial.roomTraversal.currentRoomId, 'A1');
     await walk(128, 208); await hold('ArrowDown', 400);
     await page.waitForTimeout(900); await shot('stacks-entry');

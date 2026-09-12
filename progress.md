@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Persistent Archive secrets (2026-09-12):
+  - Played earned A1 -> B1 tray -> C1 cracked wall -> D1 -> D2 well. Before: collected 219 points, Continue and repeated pickup produced 225. Discovery/collection Sets were scene-only.
+  - Added typed C3/D2 milestones in existing sceneProgress, restoring local render Sets before room construction and saving each discovery/reward immediately. Recognizable legacy fragment/completion-label evidence restores collected rewards; previously visited secret rooms restore discovery. No save-schema change.
+  - Actual earned route now remains at 219 after Continue/repeated interaction. Evidence /private/tmp/frus-well-before/ and /private/tmp/frus-well-after/. C3 uses the same helper with deterministic round-trip coverage; its complete physical route is not claimed tested here. Legacy restoration wiring still needs a dedicated browser fixture.
+  - Full suite initially found the prior Guide English cue truncating away ARCHIVE. Shortened to SOUTH: ARCHIVE in a separate HUD fix. Final 201 files / 1,531 tests and production build pass (existing bundle warning). Installed gameplay-client Archive smoke and native screenshot inspected.
+  - Remaining visual issue from the well screenshot: optional rooms still have competing map labels/panels. Local only; no deployment changes.
+
 - Optional Stacks retreat (2026-09-12):
   - Earned Archive replay reproduced B1 WAIT trapping northward retreat as well as forward exits. Optional exploration now permits returning north before resolving the tray, while east/south remain gated. Blocked-route toast and enemy description explain the return route; south rejection stays near the exit rather than displacing the player to the room center.
   - qa-backtrack.mjs --stacks-retreat enters B1 from a genuinely earned A1 save, attempts the blocked south exit, then walks north to A1. Before failed to return; after returns with 201 points intact and the main objective restored. No browser errors. Native blocked/returned screenshots inspected in /private/tmp/frus-stacks-retreat-after/.
