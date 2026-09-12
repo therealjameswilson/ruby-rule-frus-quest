@@ -11,7 +11,7 @@ function fixture() {
   const player = Object.create(Player.prototype) as Player;
   const internals = {
     logicalX: 100, logicalY: 100, velocityX: 0, velocityY: 0,
-    speed: 72, cornerNudgePixels: 3, facing: "south", movementOptions: {},
+    cornerNudgePixels: 3, facing: "south", movementOptions: {},
     walkClock: 0, idleClock: 0, abilityFrameUntil: 0, invulnerableUntil: 0, hurtUntil: 0,
     scene: { time: { now: 0 } }, combatClock: new CombatClock(),
     weaponState: { update: vi.fn(), movementScale: () => 1, phase: "idle" },
@@ -59,7 +59,7 @@ describe("live player movement", () => {
     expect(player.animationState).toBe("idle_right");
   });
 
-  it("rounds an open corner gently, at most one lateral pixel per frame", () => {
+  it("rounds an open corner gently, one lateral pixel per 60Hz frame", () => {
     const { player, coords, internals } = fixture();
     internals.collidesAt.mockImplementation((x, y) => x > 100 && y > 98);
     input.dir.x = 1;
@@ -70,6 +70,15 @@ describe("live player movement", () => {
     expect(coords.logicalY).toBe(98);
     player.update(1000 / 60, true, { solids: [{}] as never[] });
     expect(coords.logicalX).toBeGreaterThan(100);
+  });
+
+  it.each([30, 60, 120])("guides around a corner at the same rate at %s FPS", fps => {
+    const { player, coords, internals } = fixture();
+    internals.collidesAt.mockImplementation((x, y) => x > 100 && y > 98);
+    input.dir.x = 1;
+    for (let i = 0; i < fps / 30; i++) player.update(1000 / fps, true, { solids: [{}] as never[] });
+    expect(coords.logicalY).toBeCloseTo(98);
+    expect(coords.logicalX).toBe(100);
   });
 
   it("slides along a wall in the held diagonal direction without opposite nudges", () => {

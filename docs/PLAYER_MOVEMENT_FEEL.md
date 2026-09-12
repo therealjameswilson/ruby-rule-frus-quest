@@ -10,7 +10,7 @@ of reproducing Nintendo's controller code.
 - Immediate starts, stops and reversals replace acceleration and release glide.
 - Diagonals retain equal total speed and sticky cardinal facing.
 - Tool swings retain their movement slowdown.
-- Nearby open corners guide the hero sideways at most one pixel per frame,
+- Nearby open corners guide the hero sideways at 60 pixels per second,
   rather than snapping three pixels sideways. Solid walls no longer attract
   the hero toward unrelated half-tile grid lines.
 - Diagonal input slides along terrain without opposite-direction corner assists.
@@ -37,6 +37,21 @@ regenerable Node compilation cache was removed, then verification reran.
 Source assets, saves and screenshots were preserved.
 
 Local preview: http://127.0.0.1:5195/. Not deployed.
+
+## Corner Guidance Frame-Rate Correction
+
+The original one-pixel-per-frame ceiling made lateral guidance 30px/s at
+30 FPS, 60px/s at 60 FPS, and 72px/s at 120 FPS. Regression tests reproduced
+different positions after equal elapsed time at 30 and 120 FPS. Guidance now
+uses a separate 60px/s rate multiplied by clamped delta and the existing tool
+movement scale. The 60 FPS feel and three-pixel edge search are unchanged.
+Logical positions remain fractional; rendering remains pixel-snapped.
+
+All 1,475 tests / 196 files and the production build pass. The keyboard and
+375x667 simulated-touch Office movement probes pass release, wall collision,
+diagonal sliding and integer-render checks with no browser errors. Native
+captures were inspected at `/private/tmp/frus-corner-rate/`. Frame-rate
+equivalence is a controller unit test, not a physical-device benchmark.
 
 ## Fresh Opening Regression
 

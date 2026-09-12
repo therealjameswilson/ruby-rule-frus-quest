@@ -74,7 +74,6 @@ interface ActionColors {
 
 export class Player {
   readonly sprite: Phaser.GameObjects.Sprite;
-  private readonly speed = PLAYER_MOVEMENT_TUNING.speed;
   private readonly cornerNudgePixels = 3;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
@@ -367,7 +366,7 @@ export class Player {
         this.logicalX = nextX;
         if (nextX !== attemptedX) this.velocityX = 0;
       } else {
-        if (dy !== 0 || !this.tryCornerNudge("x", nextX, this.logicalY, bounds, solids, this.speed * movementScale * dt)) {
+        if (dy !== 0 || !this.tryCornerNudge("x", nextX, this.logicalY, bounds, solids, PLAYER_MOVEMENT_TUNING.cornerGuideSpeed * movementScale * dt)) {
           this.velocityX = 0;
         }
       }
@@ -377,7 +376,7 @@ export class Player {
         this.logicalY = nextY;
         if (nextY !== attemptedY) this.velocityY = 0;
       } else {
-        if (dx !== 0 || !this.tryCornerNudge("y", this.logicalX, nextY, bounds, solids, this.speed * movementScale * dt)) {
+        if (dx !== 0 || !this.tryCornerNudge("y", this.logicalX, nextY, bounds, solids, PLAYER_MOVEMENT_TUNING.cornerGuideSpeed * movementScale * dt)) {
           this.velocityY = 0;
         }
       }
@@ -419,7 +418,7 @@ export class Player {
       if (!this.collidesAt(nudgedX, nudgedY, solids)) {
         // Ease around a nearby open edge, never snap three pixels sideways or
         // drift toward an unrelated grid line along a completely solid wall.
-        const step = Math.sign(offset) * Math.min(Math.abs(offset), maxStep, 1);
+        const step = Math.sign(offset) * Math.min(Math.abs(offset), maxStep);
         const slideX = axis === "y" ? Phaser.Math.Clamp(this.logicalX + step, bounds.left, bounds.right) : this.logicalX;
         const slideY = axis === "x" ? Phaser.Math.Clamp(this.logicalY + step, bounds.top, bounds.bottom) : this.logicalY;
         if (this.collidesAt(slideX, slideY, solids)) continue;

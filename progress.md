@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Time-based corner guidance (2026-09-12):
+  - Reproduced a 30/120 FPS mismatch caused by the lateral one-pixel-per-frame cap. Replaced it with 60px/s times clamped delta and tool slowdown, preserving the 60 FPS feel and collision rules. Added three frame-rate regression cases.
+  - All 1,475 tests / 196 files and build pass. Keyboard and simulated-touch Office probes pass with no browser errors; native captures inspected. See docs/PLAYER_MOVEMENT_FEEL.md. No deployment; unaided-player comprehension remains unproven.
+
 - Cart contact feedback (2026-09-12):
   - Added a whole-pixel gold pressure cue during hold-to-push, above characters and cleared by release, push or pause. Corrected initial character occlusion after inspecting the native screenshot.
   - All 1,472 tests / 196 files and production build pass. Real-keyboard earned-save probe confirms pressure, push and pause reset without extra rewards; no browser errors. See docs/CART_CONTACT_PUSH.md. Local only, not deployed.
