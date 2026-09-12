@@ -5,7 +5,8 @@ import {
 } from "./characterCreateCopy";
 import {
   normalizeCharacterDisplayName,
-  shouldConfirmCharacterCreateInput
+  shouldConfirmCharacterCreateInput,
+  shouldEndCharacterNameEditing
 } from "./characterCreateInput";
 
 const idleInput = {
@@ -15,6 +16,15 @@ const idleInput = {
 };
 
 describe("CharacterCreateScene input helpers", () => {
+  it.each(["z", "Z", "x", "X", "ezrax"])("keeps %s in the focused name field despite action edges", (typedText) => {
+    expect(shouldEndCharacterNameEditing({ confirmJustPressed: true, cancelJustPressed: true, typedText })).toBe(false);
+  });
+
+  it("ends name editing on non-letter confirm or cancel without starting play", () => {
+    expect(shouldEndCharacterNameEditing({ confirmJustPressed: true, cancelJustPressed: false, typedText: "" })).toBe(true);
+    expect(shouldEndCharacterNameEditing({ confirmJustPressed: false, cancelJustPressed: true, typedText: "" })).toBe(true);
+    expect(shouldEndCharacterNameEditing({ confirmJustPressed: false, cancelJustPressed: false, typedText: "" })).toBe(false);
+  });
   it("presents one clear FRUS Compiler identity", () => {
     expect(FRUS_COMPILER_ROLE_ID).toBe("compiler");
     expect(CHARACTER_CREATE_TITLE).toBe("CREATE YOUR FRUS COMPILER");

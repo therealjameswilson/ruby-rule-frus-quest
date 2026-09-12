@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Focused name-field shortcut correction (2026-09-12):
+  - Fresh opening review found CharacterCreate processed confirm/cancel before typed letters. Browser reproduction typing ezrax left only e: Z blurred the field through the shared confirm binding.
+  - Added shouldEndCharacterNameEditing: accepted letters take priority while focused, so Z/X remain name characters. Non-letter confirm/cancel still ends editing; a subsequent Enter begins play. Shared InputState and gameplay bindings are unchanged.
+  - Added helper regressions and tools/qa-compiler-name.mjs with real click/typing, first-Enter stays in creation, second-Enter reaches Office. Before/after native screenshots inspected under /private/tmp/frus-compiler-name-before/ and /private/tmp/frus-compiler-name-after/. No browser errors. 46 focused tests and production build pass (existing chunk-size warning). Installed gameplay client default-name confirmation and Office movement also pass; native capture inspected.
+  - Remaining opening gap: canvas-only name focus does not summon a phone software keyboard. Add an accessible native text-input bridge in a separate focused pass, preserving desktop input and keyboard-dismissal behavior. Local only.
+
 - Earned optional-route completion (2026-09-12):
   - Extended qa-backtrack through the Archive north door and Annotation Stacks into NARA. Ten actual-input checkpoints retain 201 points and the earned Review Folder, with no task replay or debug relocation.
   - qa-earned-secret now continues a native NARA save without debug placement (older remote-scene fixtures retain explicit placement). Used the backtracking output save to read both clue pages, walk to the northeast shelf, swing the Folder, enter, collect First Edition (+25), and walk back. result.json confirms debugScenePlacement:false, 201 -> 226 points, discovery/collection and no browser errors.

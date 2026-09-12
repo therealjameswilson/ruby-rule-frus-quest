@@ -10,7 +10,7 @@ import {
   CHARACTER_CREATE_TITLE,
   FRUS_COMPILER_ROLE_ID
 } from "./characterCreateCopy";
-import { normalizeCharacterDisplayName, shouldConfirmCharacterCreateInput } from "./characterCreateInput";
+import { normalizeCharacterDisplayName, shouldConfirmCharacterCreateInput, shouldEndCharacterNameEditing } from "./characterCreateInput";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -116,11 +116,10 @@ export class CharacterCreateScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (this.nameFocused) {
-      if (input.confirmJustPressed) {
+      if (shouldEndCharacterNameEditing(input)) {
         this.blurNameField();
         return;
       }
-      if (input.cancelJustPressed) this.blurNameField();
       if (input.backspaceJustPressed) this.backspaceName();
       for (const letter of input.typedText) this.handleTypedLetter(letter);
     } else if (shouldConfirmCharacterCreateInput(input)) {

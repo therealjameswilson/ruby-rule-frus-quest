@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
+const out = process.env.FRUS_QA_OUT ?? '/private/tmp/frus-compiler-name';
+await mkdir(out, { recursive: true });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
+try {
+  const page = await browser.newPage();
+  const errors = [];
+  page.on('pageerror', error => errors.push(String(error)));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  await page.goto('http://127.0.0.1:5195/?scene=CharacterCreateScene');
+  await page.waitForFunction(() => window.game?.scene.isActive('CharacterCreateScene'));
+  await page.waitForTimeout(700);
+  const box = await page.locator('canvas').first().boundingBox();
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height * 124 / 240);
+  await page.keyboard.type('ezrax', { delay: 140 });
+  await page.waitForTimeout(300);
+  const name = await page.evaluate(() => window.game.scene.getScene('CharacterCreateScene').children.getByName('character-create-name').text);
+  const image = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src))));
+  await writeFile(`${out}/name.png`, Buffer.from(image.split(',')[1], 'base64'));
+  await writeFile(`${out}/result.json`, JSON.stringify({ name, errors }, null, 2));
+  assert.match(name, /^NAME: ezrax\|?$/);
+  await page.keyboard.press('Enter');
+  await page.waitForTimeout(180);
+  assert.equal(await page.evaluate(() => window.game.scene.isActive('CharacterCreateScene')), true, 'First Enter ends name editing only');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.game.scene.isActive('OfficeScene'));
+  assert.deepEqual(errors, []);
+  console.log('Z/X remain name letters; Enter ends editing; next Enter starts Office');
+} finally { await browser.close(); }
