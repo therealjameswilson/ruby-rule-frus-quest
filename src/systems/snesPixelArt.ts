@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
+import { GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
 import { SNES_ARCHIVE_TILE_ASSET, SNES_GATE_GLYPH_ASSET } from "../game/snesAtlas";
 
@@ -371,22 +371,27 @@ function addGateGlyph(
 }
 
 function addGateSeal(scene: Phaser.Scene, x: number, y: number, label: string, track?: TrackFn, depth = 68) {
-  keepTagged(scene.add.rectangle(x, y, 24, 11, color(PALETTE.black), 0.96).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(depth), "snes-gate-lock-seal", track);
-  keepTagged(scene.add.text(x, y - 4, label, {
-    fontFamily: "monospace",
-    fontSize: "5px",
-    color: PALETTE.classNetRed
-  }).setOrigin(0.5, 0).setDepth(depth + 1), "snes-gate-lock-label", track);
+  addGateCaption(scene, x, y, label, PALETTE.classNetRed, true, track, depth);
 }
 
 function addGateRoutePlaque(scene: Phaser.Scene, x: number, y: number, label: string, accent: string, track?: TrackFn, depth = 68) {
   const trimmed = label.replace(/\s+/g, " ").trim().slice(0, 8).toUpperCase();
-  keepTagged(scene.add.rectangle(x, y, 28, 11, color(PALETTE.black), 0.9).setStrokeStyle(1, color(accent)).setDepth(depth), "snes-gate-route-plaque", track);
-  keepTagged(scene.add.text(x, y - 4, trimmed, {
+  addGateCaption(scene, x, y, trimmed, accent, false, track, depth);
+}
+
+function addGateCaption(scene: Phaser.Scene, x: number, y: number, label: string, accent: string, locked: boolean, track: TrackFn | undefined, depth: number) {
+  const text = scene.add.text(0, 0, label, {
     fontFamily: "monospace",
-    fontSize: "5px",
+    fontSize: "6px",
     color: accent
-  }).setOrigin(0.5, 0).setDepth(depth + 1), "snes-gate-route-label", track);
+  }).setOrigin(0, 0).setDepth(depth + 1);
+  const width = Math.ceil(Math.max(locked ? 24 : 28, text.width + 6) / 2) * 2;
+  // Leave the side gate glyphs visible; keep both text and frame on whole pixels.
+  const centerX = Math.round(Math.max(18 + width / 2, Math.min(GAME_WIDTH - 18 - width / 2, x)));
+  text.setPosition(Math.round(centerX - text.width / 2), Math.round(y - text.height / 2));
+  keepTagged(scene.add.rectangle(centerX, y, width, 12, color(PALETTE.black), locked ? 0.96 : 0.9)
+    .setStrokeStyle(1, color(accent)).setDepth(depth), locked ? "snes-gate-lock-seal" : "snes-gate-route-plaque", track);
+  keepTagged(text, locked ? "snes-gate-lock-label" : "snes-gate-route-label", track);
 }
 
 export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasureOptions) {
