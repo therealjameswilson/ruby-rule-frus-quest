@@ -230,7 +230,7 @@ export class DanneBoss {
     if (this.coreOpenAt(now)) return "PENCIL THE CORE";
     if (this.attackTelegraph?.kind === "cloud_shift") return "DODGE LANES";
     if (this.phase === "swarm" && this.activeMiniCount) return "PENCIL MINIS";
-    return "FACE + SWING";
+    return "RETURN THE BOLT";
   }
 
   advanceBoast() {

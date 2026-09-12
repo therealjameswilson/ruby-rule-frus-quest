@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Faster movement boss/publication checkpoint (2026-09-12):
+  - Clarified armored-core HUD to RETURN THE BOLT; live HUD and state asserted. First touch fight exhausted Cloud reliability twice and exposed retry QA counting guarded taps as restarts. Fixed test counting only; combat difficulty unchanged.
+  - Rerun clears three phases with six fresh core hits, zero retries, no deadline miss; victory Continue passes. Earned bindery run completes five packets and publishes clean, 201 to 241 points, no browser errors. Native screenshots inspected; focused 45 boss tests and build pass. Installed client debug movement smoke also passes.
+  - Evidence: /private/tmp/frus-faster-boss-verified/ and /private/tmp/frus-faster-bindery/. Full chained campaign after movement tuning reaches publication, not proof of novice fun or real-device parity. Next: less scripted Cloud forgiveness and unaided comprehension. No deployment.
+
 - Faster movement Editor/Proof continuation (2026-09-12):
   - Earned Referral save passes 51 simulated-touch checkpoints through BlackVaultLairScene with no browser errors: draft carry/repair, all seven proof checks, furniture collision, wrong/incomplete choices, partial-save Continue, isolated choice input, Buckram Key and backtracking. Earned 87 points; ends at 201 points / 100 reliability.
   - Native repair, proof-room and vault-entry screens inspected; two images retained. No gameplay edit. Next earned save: /private/tmp/frus-faster-editor/mobile/earned-storage.json for boss counter and binding QA. No deployment; informed automation is not unaided-player evidence.

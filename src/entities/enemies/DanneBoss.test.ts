@@ -149,7 +149,7 @@ describe("DANN-E final-review combat", () => {
   });
 
   it("gives an actionable return instruction while the core is armored", () => {
-    expect(fixture().boss.combatObjective).toBe("FACE + SWING");
+    expect(fixture().boss.combatObjective).toBe("RETURN THE BOLT");
     expect(fixture("swarm").boss.combatObjective).toBe("PENCIL MINIS");
   });
 
@@ -159,7 +159,7 @@ describe("DANN-E final-review combat", () => {
     internals.startAttackTelegraph(scene.time.now, "cloud");
     expect(boss.combatObjective).toBe("DODGE LANES");
     internals.updateAttackTelegraph(scene.time.now + 5000);
-    expect(boss.combatObjective).toBe("FACE + SWING");
+    expect(boss.combatObjective).toBe("RETURN THE BOLT");
   });
 
   it("advances an owned boast only once after its input guard", async () => {

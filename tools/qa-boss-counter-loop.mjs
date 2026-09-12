@@ -91,7 +91,13 @@ try{
    assert.equal(retried.documentPoints,interrupted.documentPoints);
    assert(retried.reliability>0);
  }
- await move(128,136);await direction('ArrowUp',25);await shot('core-approach');
+ await move(128,136);await direction('ArrowUp',25);
+ if(!baseline)await page.waitForFunction(()=>{
+   const ui=window.game.scene.getScene('UIScene');
+   return JSON.parse(window.render_game_to_text()).objective==='RETURN THE BOLT'
+     && ui.questBandText.text==='RETURN THE BOLT';
+ },{},{timeout:2000});
+ await shot('core-approach');
  if(process.argv.includes('--imprecise')) {
    const before=await state();
    // Fixed uneven cadence: no projectile, HP or opening reads drive these inputs.
@@ -121,7 +127,19 @@ try{
     const s=await state(),b=boss(s);if(s.scene==='EndingScene')break;
     if(s.mode!=='explore'){
       if(s.choice?.options?.some(o=>o.value==='standards')){await press('x');}
-      else if(b?.bossCombat.retryAvailable){assert(++retries<=3,'Repeated retries need investigation');await shot(`retry-${retries}`);await press();await page.waitForTimeout(300);assert.deepEqual((await state()).documentCandidates,spam.documentCandidates);}
+      else if(b?.bossCombat.retryAvailable){
+        assert(retries<3,'Repeated retries need investigation');
+        // Respect the prompt's 300ms input guard; count confirmed restarts,
+        // not repeated taps on the same newly opened prompt.
+        await page.waitForTimeout(350);
+        await shot(`retry-${retries+1}`);await press();
+        await page.waitForFunction(()=>{
+          const s=JSON.parse(window.render_game_to_text());
+          return s.reliability>0&&!s.visibleThreats.some(t=>t.bossCombat?.retryAvailable);
+        },{},{timeout:2000});
+        retries++;
+        assert.deepEqual((await state()).documentCandidates,spam.documentCandidates);
+      }
       await page.waitForTimeout(100);continue;
     }
     if(!b){await page.waitForTimeout(100);continue;}
@@ -149,7 +167,7 @@ try{
         assert((swarm?.bossCombat.minisDispersed??0)>prior,'Actual tool swings must disperse satellites');
         assert.equal(cleared.documentPoints,initial.documentPoints,'No farming rewards from satellites');
         assert.deepEqual(cleared.documentCandidates,initial.documentCandidates);
-        if(swarm?.enemyState==='swarm'&&!swarm.bossCombat.minis.length)assert.equal(cleared.objective,swarm.bossCombat.coreOpen?'PENCIL THE CORE':'FACE + SWING');
+        if(swarm?.enemyState==='swarm'&&!swarm.bossCombat.minis.length)assert.equal(cleared.objective,swarm.bossCombat.coreOpen?'PENCIL THE CORE':'RETURN THE BOLT');
         continue;
       }
     }

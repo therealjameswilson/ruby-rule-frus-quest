@@ -144,3 +144,39 @@ Temporary evidence and the earned boss-entry save are at
 Next: exercise boss counters, miss/recovery, and the binding ceremony with
 the faster controller. These known-route checks do not prove unaided
 comprehension, real-device performance, or whole-game fun.
+
+## Earned Boss and Publication Regression
+
+The boss's armored-core objective now says `RETURN THE BOLT`, replacing the
+ambiguous `FACE + SWING`. The browser test checks the actual HUD text as well
+as reported state. Existing exposed-core and swarm instructions are unchanged.
+
+The first earned touch boss run reached Cloud but exhausted reliability
+twice. Its retry limit then counted taps swallowed by the prompt's 300ms
+guard as additional retries. The QA script now waits out that guard and counts
+only confirmed restarts. No damage, HP, enemy timing, or retry limit was reduced.
+This initial failure remains evidence that Cloud's forgiveness needs a less
+timing-aware playtest, not proof of a harmless false alarm throughout the fight.
+
+The full rerun passed Colossus, Swarm and Cloud in 59.925 seconds after opening
+strikes, with six verified fresh core hits, no retries and no missed deadline.
+It checks boss portrait attribution, boast input isolation, swarm dispersal,
+cloud lane warnings, pause freezing the counter window, no document changes
+from combat, and persisted victory after Continue. Evidence:
+`/private/tmp/frus-faster-boss-verified/`. The earlier failed run remains in
+`/private/tmp/frus-faster-boss/`.
+
+The resulting earned save passed `qa-bindery-finale.mjs --mobile`: all five
+packets, bench collision, correction retry, human certification, publication
+and Continue. Points increased from 201 to 241 exactly; browser errors were
+empty. Evidence: `/private/tmp/frus-faster-bindery/`. Retained images show the
+armored-core instruction and publication. The installed web-game client also
+loaded and moved in the Black Vault debug route; its native image was inspected.
+That separate debug smoke check is not earned campaign evidence.
+
+Focused boss tests: 45 passed. Production build passed with the existing
+large-chunk warning (main JS 2,802.51 kB). The chained faster-controller campaign
+now reaches publication; it is informed automation across saved chapter
+checkpoints, not an uninterrupted novice playthrough or real-device QA.
+Next: a less scripted Cloud miss/recovery probe and an unaided-comprehension
+pass. No public deployment was performed.
