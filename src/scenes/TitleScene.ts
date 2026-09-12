@@ -9,7 +9,7 @@ import {
 } from "../game/mission";
 import { getNewGamePlusReadout, resetGameState, setLatestMessage, setSceneState } from "../game/state";
 import { getSkipWarningPreference, setSkipWarningPreference } from "../game/warningSettings";
-import { bindPointerPress, getInput, tickInput } from "../input/InputState";
+import { bindPointerPress, getInput, swallowNextInputFrame, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { cycleLanguage, getLanguage, getString } from "../systems/i18n";
 import { transitionTo } from "../systems/sceneTransitions";
@@ -141,9 +141,15 @@ export class TitleScene extends Phaser.Scene {
       color: PALETTE.creamPaper
     }).setName("title-clean-art-subtitle").setOrigin(0.5, 0).setDepth(42).setResolution(2);
 
+    this.add.text(128, 42, getString("title.volumeGoal"), {
+      fontFamily: "monospace",
+      fontSize: "5px",
+      color: PALETTE.creamPaper
+    }).setName("title-clean-art-goal").setOrigin(0.5, 0).setDepth(42).setResolution(2);
+
     const readout = getNewGamePlusReadout();
     if (!readout.unlocked) {
-      this.add.text(128, 201, "PRESS START TO VERIFY", {
+      this.add.text(128, 201, getString("title.beginQuest"), {
         fontFamily: "monospace",
         fontSize: "8px",
         color: PALETTE.terminalCyan
@@ -780,6 +786,7 @@ export class TitleScene extends Phaser.Scene {
     const language = cycleLanguage();
     retroAudio.confirm();
     this.registry.set("ruby-rule-language", language);
+    swallowNextInputFrame();
     this.scene.restart();
   }
 

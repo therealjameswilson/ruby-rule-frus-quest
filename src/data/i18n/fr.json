@@ -291,6 +291,8 @@
     "unlockAudio": "Touche ou appuie sur start pour activer l'audio."
   },
   "title": {
+    "beginQuest": "COMMENCER LA QUÊTE",
+    "volumeGoal": "PUBLIE UN VOLUME FRUS",
     "arch": "ARCH",
     "archiveTerminal": "TERMINAL DES ARCHIVES",
     "conf": "-CONF-",

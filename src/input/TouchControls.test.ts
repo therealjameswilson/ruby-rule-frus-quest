@@ -22,6 +22,11 @@ function refresh(scene: string) {
 }
 
 describe("touch controls on publication screens", () => {
+  it("leaves title commands clear but restores controls for character creation", () => {
+    expect(refresh("TitleScene")).toHaveBeenCalledWith(false);
+    expect(refresh("CharacterCreateScene")).toHaveBeenCalledWith(true);
+    expect(refresh("OfficeScene")).toHaveBeenCalledWith(true);
+  });
   it("does not let invisible action buttons steal pause menu taps", () => {
     const controls = Object.create(TouchControls.prototype) as TouchControls;
     Object.assign(controls, { buttons: [{ key: "a", x: 225, y: 205, hitWidth: 44, hitHeight: 44 }] });

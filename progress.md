@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Title goal and command clarity (2026-09-12):
+  - Clean title now says PUBLISH A FRUS VOLUME and BEGIN QUEST, with Spanish/French translations, preserving the book artwork and history.state.gov credit. Removes the hardcoded VERIFY prompt.
+  - Live mouse review exposed language selection advancing into character creation after scene restart. Swallow the initiating input before restart; mouse and touch language cycles now remain on title and a separate Begin click starts the game.
+  - Mobile screenshots exposed A/B controls covering translated text. Hide gameplay controls on TitleScene; restore them in character creation/gameplay. Touch QA asserts both states; native English/Spanish/French images inspected, including unobstructed final French.
+  - 59 focused tests and build pass (existing large-chunk warning). Evidence: /private/tmp/frus-title-language-mouse/, /private/tmp/frus-title-language-touch-final/. This improves concrete opening friction, not proof of unaided enjoyment. No deployment.
+
 - First-objective cue visibility (2026-09-12):
   - Visual opening review found FOLLOW GOLD ARROW pointing to a cue lost inside the compiler's taller art. Anchor the cue above the actual NPC sprite bounds; use one integer-snapped bounce instead of a competing absolute-position tween. Other target cues retain their compact spacing. No save/progression changes.
   - Added two position regressions and live opening checks for arrow/target separation and integer coordinates. Focused tests: 15 pass; production build passes with existing chunk warning. Native mobile Office and installed-client movement screenshots inspected.

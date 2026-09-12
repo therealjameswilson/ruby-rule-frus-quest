@@ -6,6 +6,15 @@ import { QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 afterEach(() => setLanguage("en"));
 
 describe("opening HUD objectives", () => {
+  it.each(LANGUAGES)("keeps the clean title's goal and begin command concise in %s", (language) => {
+    setLanguage(language);
+    for (const key of ["title.beginQuest", "title.volumeGoal"]) {
+      const text = getString(key);
+      expect(text).not.toBe(key);
+      expect(text.length).toBeGreaterThan(0);
+      expect(text.length).toBeLessThanOrEqual(26);
+    }
+  });
   it("shows a movement notice only when the office has no reachable action", () => {
     expect(officeApproachCue("OfficeScene", "explore", null))
       .toEqual({ text: "FOLLOW GOLD ARROW", badge: "!" });

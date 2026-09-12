@@ -104,6 +104,8 @@
     "treaty": "TREATY"
   },
   "title": {
+    "beginQuest": "BEGIN QUEST",
+    "volumeGoal": "PUBLISH A FRUS VOLUME",
     "arch": "ARCH",
     "archiveTerminal": "ARCHIVE TERMINAL",
     "conf": "-CONF-",
