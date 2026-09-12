@@ -23,6 +23,7 @@ const { Visual } = vi.hoisted(() => {
     setAngle() { return this; }
     setStrokeStyle() { return this; }
     setTint() { return this; }
+    setTintFill() { return this; }
     setFillStyle() { return this; }
     setColor() { return this; }
     clearTint() { return this; }

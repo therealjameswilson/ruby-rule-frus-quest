@@ -14,6 +14,7 @@ vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
 vi.mock("../systems/audio", () => ({ retroAudio: { toolHit: vi.fn(), egoBoltFire: vi.fn(), blip: vi.fn(), warning: vi.fn() } }));
 
 interface LessonScene {
+  practiceBolt: ReturnType<typeof graphic>;
   counterTraining: GuideCounterTraining;
   hasStamp: boolean;
   hasFragment: boolean;
@@ -29,7 +30,7 @@ interface LessonScene {
 }
 
 function graphic() {
-  return Object.fromEntries(["clear", "fillStyle", "fillRect", "lineStyle", "strokeRect", "setAlpha", "setVisible", "setPosition", "setTint", "setStrokeStyle", "setDepth"].map((key) => [key, vi.fn().mockReturnThis()]));
+  return Object.fromEntries(["clear", "fillStyle", "fillRect", "lineStyle", "strokeRect", "setAlpha", "setVisible", "setPosition", "setTint", "setTintFill", "setStrokeStyle", "setDepth"].map((key) => [key, vi.fn().mockReturnThis()]));
 }
 function scene() {
   return Object.assign(new GuideScene(), {
@@ -84,6 +85,7 @@ describe("GuideScene live counter integration", () => {
     guide.player.activeActionHitbox = { x: bolt.x - 8, y: bolt.y - 8, width: 16, height: 16 };
     guide.updateCitationCounterTraining(10);
     expect(guide.counterTraining.readout().phase).toBe("returned");
+    expect(guide.practiceBolt.setTintFill).toHaveBeenCalled();
     expect(gameState.sceneProgress.guideCitationCounterTrained).toBeUndefined();
     guide.player.activeActionHitbox = null;
     advance(guide, 3000);

@@ -868,7 +868,7 @@ export class DanneBoss {
         bolt.expiresAt = timeMs + DANNE_BOSS_RETURN.lifetimeMs;
         this.boltsReturned += 1;
         aimReturnedBossBolt(bolt, { x: this.sprite.x, y: this.sprite.y - 12 });
-        bolt.sprite.setTint(color(PALETTE.terminalCyan));
+        bolt.sprite.setTintFill(color(PALETTE.terminalCyan));
         bolt.sprite.setAngle(Math.round(Phaser.Math.RadToDeg(Math.atan2(bolt.vy, bolt.vx))));
         setLatestMessage("EGO RETURNED!");
         retroAudio.toolHit(tool);

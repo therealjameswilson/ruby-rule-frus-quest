@@ -320,8 +320,9 @@ export class GuideScene extends Phaser.Scene {
     this.egoSealGlow.setAlpha(lesson.phase === "charging" ? 0.8 : 0.3);
     this.practiceBolt.setVisible(Boolean(lesson.bolt));
     if (lesson.bolt) {
-      this.practiceBolt.setPosition(lesson.bolt.x, lesson.bolt.y)
-        .setTint(color(lesson.bolt.returned ? PALETTE.terminalCyan : PALETTE.creamPaper));
+      this.practiceBolt.setPosition(lesson.bolt.x, lesson.bolt.y);
+      if (lesson.bolt.returned) this.practiceBolt.setTintFill(color(PALETTE.terminalCyan));
+      else this.practiceBolt.setTint(color(PALETTE.creamPaper));
     }
     if (event === "fire") retroAudio.egoBoltFire();
     if (event === "return") {

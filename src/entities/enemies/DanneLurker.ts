@@ -509,7 +509,7 @@ export class DanneLurker extends Enemy {
         bolt.returnedBy = swing.tool;
         bolt.expiresAt = timeMs + 2400;
         this.boltsReturned += 1;
-        bolt.sprite.setTint(this.color(PALETTE.terminalCyan));
+        bolt.sprite.setTintFill(this.color(PALETTE.terminalCyan));
         bolt.glow.setFillStyle(this.color(PALETTE.terminalCyan));
         const velocity = vectorToward(bolt, this.position, DANNE_LURKER_RETURN_SPEED);
         const angle = Math.round(Phaser.Math.RadToDeg(Math.atan2(velocity.vy, velocity.vx)));

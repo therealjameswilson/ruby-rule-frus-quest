@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Readable returned Ego Bolts (2026-09-12):
+  - Played the fresh coached counter lesson and inspected the return frame: cyan multiply-tint over red artwork produced a subdued dark-green projectile. Changed returned bolts to cyan fill-tint silhouettes in Guide, DanneLurker and DanneBoss; incoming artwork, speed, collision, timing, audio and damage are unchanged.
+  - 89 counter integration tests and build pass. Added an explicit Guide return-render assertion; updated sprite mocks for Phaser's fill-tint API. Initial build caught the mock practiceBolt missing from LessonScene's declared type; corrected it and rebuilt successfully.
+  - Fresh touch coaching run completes warning -> compiler -> Office -> Guide, harmless miss, paused bolt, cue-timed counter, fragment pickup, Continue and Archive. Reliability stays 80, no extra points from the counter, no browser errors. Before/after native return screenshots and installed gameplay-client screenshot inspected: /private/tmp/frus-counter-feedback/, /private/tmp/frus-counter-feedback-after/, /private/tmp/frus-counter-feedback-client/.
+  - Runtime visual proof is the Guide's WebGL renderer. Lurker/boss use the same API with integration tests, but this pass did not replay the final boss or claim Canvas fallback tint support. Local only.
+
 - Prevent fallback-save rewind (2026-09-12):
   - Save/resume review found readSavedGame always preferred localStorage even after a newer sessionStorage fallback succeeded. Three deterministic regressions reproduced reverted equipment, obsolete fallback retention and undated legacy saves receiving a misleading fresh timestamp.
   - Continue now selects the newer valid timestamp (local wins ties), undated legacy saves use epoch rather than read-time, and successful local writes remove obsolete session fallback data. No schema/inventory migration change.

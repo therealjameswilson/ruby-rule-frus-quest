@@ -63,7 +63,7 @@ class Visual {
   setOrigin() { return this; } setScale() { return this; } setDepth() { return this; }
   setVisible(visible: boolean) { this.visible = visible; return this; } setStrokeStyle() { return this; } setScrollFactor() { return this; }
   setText() { return this; } setSize() { return this; } setFillStyle() { return this; }
-  setColor() { return this; } setTint() { return this; } clearTint() { return this; }
+  setColor() { return this; } setTint() { return this; } setTintFill() { return this; } clearTint() { return this; }
   setAlpha(alpha: number) { this.alpha = alpha; return this; } setAngle() { return this; }
   fillStyle() { return this; } fillRect() { return this; }
   destroy() { this.active = false; }
