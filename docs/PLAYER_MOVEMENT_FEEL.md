@@ -53,6 +53,31 @@ diagonal sliding and integer-render checks with no browser errors. Native
 captures were inspected at `/private/tmp/frus-corner-rate/`. Frame-rate
 equivalence is a controller unit test, not a physical-device benchmark.
 
+## Committed Swing Facing
+
+Directional input no longer rotates an attack during its windup or active
+window. Movement still responds, with the existing tool slowdown; facing
+unlocks in cooldown. Fallback sprite mirroring follows facing rather than
+sideways movement so it agrees with the hitbox. No attack durations, reach,
+damage, buffering, inventory or save behavior changed.
+
+Two regression cases first failed on the old controller, then passed.
+The full suite passes 1,477 tests / 196 files; production build passes with
+the existing bundle warning. `qa-swing-facing.mjs` exercises keyboard and
+simulated touch at 375x667 in the debug vault: a south-facing swing while
+moving west retains a south hitbox, then permits west facing in cooldown.
+Native captures inspected; no browser errors. Temporary evidence is at
+`/private/tmp/frus-swing-facing/` and `/private/tmp/frus-swing-facing-touch/`.
+The installed game client also exercised a vault swing and movement.
+
+The earned touch boss regression then cleared Colossus, Swarm and Cloud,
+verified seven fresh core hits, and reached the bindery in 54.406 seconds
+after its opening checks, without retry or missed deadline. Continue restored
+the bindery. Cloud reduced reliability to 60 before the existing victory
+recovery; the fight was not damage-free. Evidence: `/private/tmp/frus-swing-boss/`.
+This is scripted earned-save QA, not unaided play or physical-phone evidence.
+Retained touch image: `screenshots/swing-facing-touch.png`. Local only.
+
 ## Fresh Opening Regression
 
 After the movement commit, `qa-guide-counter.mjs` passed on both keyboard

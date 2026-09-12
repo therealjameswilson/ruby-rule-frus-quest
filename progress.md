@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Committed tool-swing facing (2026-09-12):
+  - Directional movement no longer rotates the hitbox during windup/active; recovery permits turning and existing slowed footwork remains available. Fallback sprite mirroring follows facing. Two regression cases reproduced the previous rotation.
+  - Full 1,477 tests / 196 files and build pass. Keyboard/touch directional-swing probes and installed client pass; native captures inspected. Earned touch boss run clears all three phases with seven fresh core hits, no retries or deadline miss, then Continue restores bindery. Cloud cost reliability; this is not novice-comprehension evidence. See docs/PLAYER_MOVEMENT_FEEL.md. No deployment.
+
 - Time-based corner guidance (2026-09-12):
   - Reproduced a 30/120 FPS mismatch caused by the lateral one-pixel-per-frame cap. Replaced it with 60px/s times clamped delta and tool slowdown, preserving the 60 FPS feel and collision rules. Added three frame-rate regression cases.
   - All 1,475 tests / 196 files and build pass. Keyboard and simulated-touch Office probes pass with no browser errors; native captures inspected. See docs/PLAYER_MOVEMENT_FEEL.md. No deployment; unaided-player comprehension remains unproven.

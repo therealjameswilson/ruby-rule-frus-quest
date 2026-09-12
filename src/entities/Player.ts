@@ -345,7 +345,10 @@ export class Player {
     }
     this.movementOptions = options;
     const movementInput = this.resolveMovementInput();
-    this.facing = movementInput.facing;
+    // Keep a committed swing readable while still allowing evasive footwork.
+    if (this.weaponState.phase !== "windup" && this.weaponState.phase !== "active") {
+      this.facing = movementInput.facing;
+    }
     const dx = movementInput.x;
     const dy = movementInput.y;
     const dt = frameDeltaSeconds(deltaMs);
@@ -384,7 +387,7 @@ export class Player {
     const moving = Math.abs(this.logicalX - startX) > 0.001 || Math.abs(this.logicalY - startY) > 0.001;
     if (moving) {
       this.walkClock += deltaMs;
-      this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && dx < 0);
+      this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && this.facing === "west");
     } else {
       this.walkClock = 0;
     }

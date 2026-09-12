@@ -49,6 +49,18 @@ describe("live player movement", () => {
     expect(player.animationState).toBe("idle_left");
   });
 
+  it.each(["windup", "active"])("keeps attack facing during %s while allowing sideways movement", phase => {
+    const { player, coords, internals } = fixture();
+    internals.weaponState.phase = phase;
+    input.dir.x = 1;
+    player.update(1000 / 60, true);
+    expect(player.facingDirection).toBe("south");
+    expect(coords.logicalX).toBeGreaterThan(100);
+    internals.weaponState.phase = "cooldown";
+    player.update(1000 / 60, true);
+    expect(player.facingDirection).toBe("east");
+  });
+
   it("does not walk in place or drift sideways against a solid wall", () => {
     const { player, coords, internals } = fixture();
     internals.collidesAt.mockImplementation(x => x > 100);
