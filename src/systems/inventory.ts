@@ -116,6 +116,15 @@ export class InventoryOverlay {
     swallowNextInputFrame();
   }
 
+  back() {
+    if (!this.active) return;
+    if (!this.detailOpen) { this.hide(); return; }
+    this.detailOpen = false;
+    retroAudio.blip();
+    this.render();
+    swallowNextInputFrame();
+  }
+
   updateInput() {
     if (!this.active) return;
     const input = getInput();
@@ -298,7 +307,7 @@ export class InventoryOverlay {
     this.text(20, 164, pauseTextPages(item.description, 36, 3)[0]);
     this.box(128, 211, 64, 18, PALETTE.deepRuby, PALETTE.goldStamp);
     this.text(128, 207, getString("pause.back"), PALETTE.goldStamp, true);
-    this.control({ id: "back", x: 128, y: 206, width: 80, height: 44 }, () => { this.detailOpen = false; this.render(); });
+    this.control({ id: "back", x: 128, y: 206, width: 80, height: 44 }, () => this.back());
   }
 
   private pager(title: string, count: string) {

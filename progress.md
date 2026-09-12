@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Consistent inventory Back action (2026-09-12):
+  - Reproduced keyboard X doing nothing on the Master Declass Key detail card. Shared overlay handling listened to cancel (Escape/touch/gamepad), but not the keyboard secondary-tool edge.
+  - Added InventoryOverlay.back(): details -> tool grid -> gameplay. Routed B/X through it; the touch Back button uses the same path. Escape/Tab/close still exit directly. Every dismissal is swallowed and the caller stays frozen for that frame.
+  - 62 focused inventory/overlay/input tests and build pass. qa-pause-back.mjs loads an earned Archive save, opens item details, backs to grid, closes, asserts unchanged swing id/points/position, then verifies movement. Keyboard and 375x667 touch checks pass with no browser errors; native detail/grid/resumed screenshots inspected. Installed gameplay client movement/secondary-action smoke also passes, native capture inspected.
+  - Evidence /private/tmp/frus-pause-back-before/, /private/tmp/frus-pause-back-after/, /private/tmp/frus-pause-back-touch/, /private/tmp/frus-pause-back-client/. Fixture initially lacked text=full, so combat readout was absent; enabled it before testing swing counters. Touch QA uses visible Back/Close buttons; touch B routing has deterministic coverage, not a physical controller claim. No deployment changes.
+
 - Native touch compiler-name entry (2026-09-12):
   - Added input/CompilerNameInput.ts: a labeled native dialog/textbox opened synchronously from the touch name tap. Done updates the existing ten-letter name, Cancel preserves it, empty still defaults to Sam at confirmation. Desktop canvas editing stays unchanged. Dialog and visual-viewport listeners are removed on scene shutdown.
   - Shared InputState suspends keyboard/touch/gamepad sampling while native editing is active and swallows dismissal, keeping Z/X letters and Enter/Done from triggering gameplay. Dialog uses 44px buttons, a 16px input and a scrollable visual-viewport-constrained height; no canvas resolution changes.

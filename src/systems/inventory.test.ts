@@ -96,6 +96,20 @@ describe("pause inventory interaction", () => {
     expect(gameState.equippedProcessItem).toBeNull(); expect(gameState.inventory).toEqual([]); overlay.hide();
   });
 
+  it("backs out of item details before closing the menu", () => {
+    gameState.inventory.push("Master Declass Key");
+    const { overlay, tap } = harness();
+    overlay.toggle(); tap("tool-8"); tap("tool-8");
+    expect(getPauseMenuReadout()?.detailOpen).toBe(true);
+    overlay.back();
+    expect(getPauseMenuReadout()?.detailOpen).toBe(false);
+    expect(overlay.active).toBe(true);
+    expect(gameState.mode).toBe("pause");
+    overlay.back();
+    expect(overlay.active).toBe(false);
+    expect(gameState.mode).toBe("explore");
+  });
+
   it("removes all item hit targets when another page is shown", () => {
     gameState.inventory.push("Review Folder");
     const { overlay, tap, loop } = harness(); overlay.toggle(); tap("settings"); loop.frame++;

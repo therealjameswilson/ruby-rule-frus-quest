@@ -3,6 +3,7 @@ import {
   getInput,
   pressKeyForTests,
   resetInput,
+  setTouchControl,
   setKeyboardDownForTests,
   tickInput
 } from "../input/InputState";
@@ -20,6 +21,9 @@ function makeInventory(active: boolean) {
       return open;
     },
     hide() {
+      open = false;
+    },
+    back() {
       open = false;
     }
   } as unknown as InventoryOverlay & { hide: () => void };
@@ -86,6 +90,26 @@ describe("handleOpenOverlays", () => {
 
     expect(handleOpenOverlays(inventory, reliability)).toBe(true);
     expect(reliability.active).toBe(false);
+  });
+
+  it.each(["KeyX", "KeyB", "ShiftLeft"])("routes %s through back and swallows its attack edge", (key) => {
+    const inventory = makeInventory(true);
+    pressKeyForTests(key); tickInput();
+    expect(getInput().bJustPressed).toBe(true);
+    expect(handleOpenOverlays(inventory)).toBe(true);
+    expect(inventory.active).toBe(false);
+    tickInput();
+    expect(getInput().bJustPressed).toBe(false);
+  });
+
+  it("routes touch B through back without also attacking", () => {
+    const inventory = makeInventory(true);
+    setTouchControl("b", true); tickInput();
+    expect(getInput().cancelJustPressed).toBe(true);
+    expect(handleOpenOverlays(inventory)).toBe(true);
+    expect(inventory.active).toBe(false);
+    tickInput();
+    expect(getInput().bJustPressed).toBe(false);
   });
 
   // Regression for the gameplay-scene wiring: a scene that freezes itself while
