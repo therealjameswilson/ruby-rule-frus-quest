@@ -17,6 +17,40 @@ of reproducing Nintendo's controller code.
 - Walk animation reflects actual movement, not walking in place against a desk.
 - Subpixel logical positions and pixel-snapped rendering remain separate.
 
+## Latest-Control Boss Regression
+
+The earned editor save passed `qa-boss-counter-loop.mjs --mobile
+--cloud-imprecise` with the current short-release and fresh-action controls.
+Colossus, Swarm and Cloud were defeated without retries or a missed deadline.
+The timing-aware portion verified five fresh melee hits after returned bolts;
+the measured fight loop lasted 51.422 seconds. Pause froze the exposed-core
+window and Continue preserved victory without changing the source documents.
+
+In Cloud, a separate sixteen-swing segment used fixed uneven delays and only
+the enemy's visible position to choose facing. It returned six bolts, reduced
+HP from 180 to 68 and cost 20 reliability (90 to 70). The subsequent fight
+reached 60 reliability before victory recovery restored 100. This demonstrates
+some recovery margin, not that arbitrary inputs or a first-time player will
+succeed. No difficulty values or runtime behavior were changed for this test.
+
+Native exposed-core and Cloud-result screenshots were inspected. Temporary
+evidence: `/private/tmp/frus-refined-boss/`. This remains simulated touch and
+known-route automation, not a physical-phone or unaided-enjoyment claim.
+
+The resulting earned bindery save passed `qa-bindery-finale.mjs --mobile`:
+five physical packet deliveries, solid benches, incorrect-index retry, human
+standards certification, pending-seal Continue, publication and completed-save
+Continue. Document points increased exactly from 201 to 241; browser errors
+were empty. Native certification and publication screenshots were inspected.
+Evidence: `/private/tmp/frus-refined-bindery/`. Retained screenshots are
+`screenshots/refined-controls-cloud-recovery.png` and
+`screenshots/refined-controls-publication.png`.
+
+The latest-control campaign is now verified from fresh opening to publication
+across earned checkpoint saves. No progress was injected. No runtime edits
+were needed in these two checks, and nothing was deployed. Next priority is
+an unaided-comprehension playtest rather than another identical scripted run.
+
 ## Latest-Control Editor Regression
 
 The earned Referral checkpoint passed all 51 editor/proof checkpoints with

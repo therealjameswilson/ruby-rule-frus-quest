@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Refined-control boss and publication regression (2026-09-12):
+  - Earned simulated-touch fight passes Colossus, Swarm and Cloud in a 51.422s measured loop, five fresh core hits, zero retries/deadline miss. Sixteen uneven Cloud swings return six bolts, reduce HP 180 to 68 and cost 20 reliability; no document changes. Native core and Cloud screenshots inspected.
+  - Earned bindery passes five packet deliveries, bench collision, correction retry, human seal, pending/completed Continue and publication. Points 201 to 241; no browser errors. Native seal/publication inspected. Evidence: /private/tmp/frus-refined-boss/ and /private/tmp/frus-refined-bindery/.
+  - Latest controls now have fresh-opening-to-publication coverage across earned saves, not an uninterrupted or unaided playthrough. No runtime changes or deployment. Next: unaided-comprehension evidence, not another identical scripted campaign.
+
 - Refined-control editor/proof regression (2026-09-12):
   - All 51 earned simulated-touch checkpoints pass through draft carry, bracket repair, cross-reference, release scope, chronology, proof corrections, deliberate filing/stamping, Continue and backtracking to Black Vault. Ends at 201 points / 100 reliability; no browser errors or runtime changes.
   - Native corrected-proof and vault-entry images inspected. Evidence and next earned save: /private/tmp/frus-refined-editor/mobile/. Latest-control boss/bindery regression remains outstanding; no deployment or physical-device/unaided-fun claim.
