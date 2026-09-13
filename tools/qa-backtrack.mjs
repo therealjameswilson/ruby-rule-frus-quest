@@ -10,21 +10,49 @@ const wellLoop = process.argv.includes('--well-loop');
 const cacheLoop = process.argv.includes('--cache-loop');
 const stacksPersist = process.argv.includes('--stacks-persist');
 const proofLoop = process.argv.includes('--proof-loop');
+const mobile = process.argv.includes('--mobile');
+const landscape = process.argv.includes('--landscape');
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
 try {
-  const context = await browser.newContext({ storageState });
+  const context = await browser.newContext({ storageState, ...(mobile ? {
+    viewport: landscape ? { width: 667, height: 375 } : { width: 375, height: 667 },
+    hasTouch: true, isMobile: true, deviceScaleFactor: 3
+  } : {}) });
   const page = await context.newPage();
+  const cdp = mobile ? await context.newCDPSession(page) : null;
   const errors = [], checkpoints = [];
   page.on('pageerror', e => errors.push(String(e)));
   page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
   const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
-  const hold = async (key, ms) => { await page.keyboard.down(key); await page.waitForTimeout(ms); await page.keyboard.up(key); await page.waitForTimeout(35); };
+  const canvasPoint = async (x, y) => {
+    const box = await page.locator('canvas').first().boundingBox();
+    assert(box, 'Game canvas must be visible');
+    return { x: box.x + box.width * x / 256, y: box.y + box.height * y / 240, id: 1 };
+  };
+  const press = async key => {
+    if (!mobile) return page.keyboard.press(key, { delay: 50 });
+    const point = await canvasPoint(...(key === 'Enter' ? [128, 120] : [225, 205]));
+    await page.touchscreen.tap(point.x, point.y);
+  };
+  const hold = async (key, ms) => {
+    if (cdp) {
+      const [dx, dy] = { ArrowLeft: [-26, 0], ArrowRight: [26, 0], ArrowUp: [0, -26], ArrowDown: [0, 26] }[key];
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [await canvasPoint(40, 164)] });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [await canvasPoint(40 + dx, 164 + dy)] });
+      await page.waitForTimeout(ms);
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    } else {
+      await page.keyboard.down(key); await page.waitForTimeout(ms); await page.keyboard.up(key);
+    }
+    await page.waitForTimeout(35);
+  };
   const shot = async label => {
     const s = await state();
     checkpoints.push({ label, scene: s.scene, room: s.roomTraversal?.currentRoomId, player: s.player, objective: s.objective, points: s.documentPoints });
     const image = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src))));
     await writeFile(`${out}/${label}.png`, Buffer.from(image.split(',')[1], 'base64'));
+    if (mobile) await page.screenshot({ path: `${out}/${label}-viewport.png` });
     await writeFile(`${out}/checkpoints.json`, JSON.stringify({ checkpoints, errors }, null, 2));
     console.log(JSON.stringify(checkpoints.at(-1)));
   };
@@ -62,23 +90,25 @@ try {
         const dx = target.x - current.player.x, dy = target.y - current.player.y;
         if (Math.abs(dx) <= 2 && Math.abs(dy) <= 2) { reached = true; break; }
         const horizontal = Math.abs(dx) > 2;
+        // Touch dispatch itself spans frames; use shorter corrections, not wider arrival tolerances.
+        const pulse = Math.abs(horizontal ? dx : dy) / 72 * 1000;
         await hold(horizontal ? dx < 0 ? 'ArrowLeft' : 'ArrowRight' : dy < 0 ? 'ArrowUp' : 'ArrowDown',
-          Math.min(180, Math.max(25, Math.abs(horizontal ? dx : dy) / 72 * 1000)));
+          mobile ? Math.min(140, Math.max(1, pulse * 0.5)) : Math.min(180, Math.max(25, pulse)));
       }
       if (!reached) { await shot('stuck'); assert.fail(`Cannot reach ${JSON.stringify(target)}`); }
     }
   }
   await page.goto('http://127.0.0.1:5195/?text=full');
   await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
-  await page.keyboard.press('Enter');
+  await press('Enter');
   await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop || cacheLoop || stacksPersist || proofLoop ? 'ArchiveScene' : 'BlackVaultLairScene');
   await page.waitForTimeout(800);
   const initial = await state();
   if (proofLoop) {
     const interact = async () => {
-      await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+      await press('Space'); await page.waitForTimeout(250);
       for (let i = 0; i < 12 && (await state()).dialog; i++) {
-        await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+        await press('Space'); await page.waitForTimeout(250);
       }
     };
     await walk(128, 208); await hold('ArrowDown', 400); await page.waitForTimeout(900);
@@ -93,7 +123,7 @@ try {
     await walk(92, 184); await interact(); await shot('proof-flags');
     assert.equal((await state()).objective, 'ASK SPECIALIST');
     await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
-    await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
+    await press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
     await page.waitForTimeout(900);
     assert.equal((await state()).objective, 'ASK SPECIALIST', 'Both readings survive Continue');
     await walk(72, 92); await interact(); await shot('proof-reviewed');
@@ -106,6 +136,27 @@ try {
     await walk(232, 120); await hold('ArrowRight', 400); await page.waitForTimeout(900);
     await shot('proof-next-room');
     assert.equal((await state()).roomTraversal.currentRoomId, 'B3');
+    if (cdp) {
+      const beforeSwing = await state();
+      const origin = await canvasPoint(40, 164), direction = await canvasPoint(40, 190);
+      const button = { ...await canvasPoint(174, 216), id: 2 };
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [origin] });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [direction] });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [direction, button] });
+      await page.waitForTimeout(100);
+      const controls = await page.evaluate(() => window.rubyRuleTouchControls);
+      assert.equal(controls.dpadDirection, 'down');
+      assert(controls.pressedButtons.includes('b'), 'Tool and D-pad must have independent pointer ownership');
+      assert.notEqual(controls.weaponPhase, 'idle', 'The touch tool button starts a swing while moving');
+      assert((await state()).player.y > beforeSwing.player.y + 2, 'The swing must not drop directional input');
+      await shot('touch-move-and-swing');
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      await page.waitForTimeout(100);
+      const released = await page.evaluate(() => window.rubyRuleTouchControls);
+      assert.equal(released.dpadDirection, null);
+      assert.deepEqual(released.pressedButtons, []);
+      await writeFile(`${out}/touch-controls.json`, JSON.stringify({ controls, released }, null, 2));
+    }
     assert.deepEqual(errors, []);
   } else if (wellLoop || cacheLoop) {
     const reward = cacheLoop ? 'cache' : 'well';
@@ -115,9 +166,9 @@ try {
       await shot(`room-${room}`); assert.equal((await state()).roomTraversal.currentRoomId, room);
     };
     const interact = async () => {
-      await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+      await press('Space'); await page.waitForTimeout(250);
       for (let i = 0; i < 12 && (await state()).dialog; i++) {
-        await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+        await press('Space'); await page.waitForTimeout(250);
       }
       assert.equal((await state()).mode, 'explore');
     };
@@ -125,7 +176,7 @@ try {
     await walk(128, 112); await interact();
     if (cacheLoop) {
       await go('east', 'B2'); await go('east', 'B3'); await go('north', 'A3');
-      await walk(112, 132); await page.keyboard.press('Space', { delay: 50 });
+      await walk(112, 132); await press('Space');
       await page.waitForTimeout(300); await shot('archivist-clue');
       assert.match(JSON.stringify((await state()).dialog), /left shelf/i);
       await interact();
@@ -141,7 +192,7 @@ try {
     if (cacheLoop) assert(collected.volumeFragments.includes('Hidden Cache Fragment'));
     await context.storageState({ path: `${out}/earned-${reward}-storage.json` });
     await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
-    await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
+    await press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
     await page.waitForTimeout(900);
     assert.equal((await state()).roomTraversal.currentRoomId, cacheLoop ? 'C3' : 'D2');
     await interact(); await shot(`${reward}-repeat-after-continue`);
@@ -159,7 +210,7 @@ try {
       .filter(object => object.active && object.name?.startsWith('snes-gate-glyph-')).map(object => object.name));
     await shot('stacks-locked-gates');
     assert((await gateNames()).includes('snes-gate-glyph-south-locked'), 'Unsolved WAIT must look locked');
-    await walk(128, 112); await page.keyboard.press('Space', { delay: 50 });
+    await walk(128, 112); await press('Space');
     await page.waitForTimeout(250);
     const solved = await state();
     assert(!solved.dialog, 'Filing the tray should not interrupt movement with a dialogue');
@@ -173,17 +224,17 @@ try {
     assert((await state()).player.x < solved.player.x - 3, 'Movement remains responsive during the filing toast');
     await walk(128, 112);
     await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
-    await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
+    await press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
     await page.waitForTimeout(900); await shot('stacks-continue');
     const restored = await state();
     assert.equal(restored.roomTraversal.currentRoomId, 'B1');
     assert(await page.evaluate(() => !window.game.scene.getScene('ArchiveScene').interactables.some(item => item.id === 'stacks-manifest')),
       'Continue must keep the completed tray quiet');
     assert(!restored.visibleThreats.some(t => t.label === 'WAIT' || t.label === 'PENDING'), 'Solved Stacks walls must not respawn after Continue');
-    await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+    await press('Space'); await page.waitForTimeout(250);
     assert.equal((await state()).documentPoints, solved.documentPoints, 'Repeat manifest must not award another wall-clear reward');
     for (let i = 0; i < 12 && (await state()).dialog; i++) {
-      await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+      await press('Space'); await page.waitForTimeout(250);
     }
     await walk(128, 208); await hold('ArrowDown', 400); await page.waitForTimeout(900);
     await shot('stacks-open-after-continue');
@@ -207,7 +258,7 @@ try {
     console.log('Unsolved optional Stacks allows retreat with progress unchanged');
   } else {
   await shot('00-vault');
-  await walk(128, 212); await page.keyboard.press('Space', { delay: 50 });
+  await walk(128, 212); await press('Space');
   await page.waitForFunction(() => window.game.scene.isActive('SilentReadScene'));
   await page.waitForTimeout(800); await shot('01-proof');
   for (let i = 0; i < 6; i++) {
@@ -218,7 +269,7 @@ try {
   assert.equal((await state()).documentPoints, initial.documentPoints);
   assert.ok((await state()).inventory.includes('Review Folder'));
   await walk(128, 56);
-  await page.keyboard.press('Space', { delay: 50 });
+  await press('Space');
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).roomTraversal?.currentRoomId === 'AS');
   await page.waitForTimeout(800); await shot('08-annotation');
   await walk(128, 56); await hold('ArrowUp', 500);

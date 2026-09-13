@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Archive touch review parity (2026-09-12):
+  - Extended earned-save qa-backtrack.mjs with --mobile / --landscape, real CDP touch gestures, native and viewport screenshots, and no keyboard input on mobile. Initial fine steering overshot because touch dispatch spans frames; telemetry confirmed correct directions. Shorter driver corrections preserve original collision and arrival tolerances, without changing runtime input or movement.
+  - 375x667 and 667x375 at DPR 3 both pass B1 filing -> B2 early refusals -> examination -> Continue -> specialist -> record -> B3. Both also pass simultaneous D-pad/B tool windup movement and complete finger release. Exactly 201 -> 213 points and no browser errors. Native/viewport screenshots inspected in /private/tmp/frus-proof-touch-final/ and /private/tmp/frus-proof-touch-landscape-final/.
+  - Keyboard --stacks-retreat regression passes with 201 points unchanged. Build and node --check pass. Functional Chromium emulation only; not physical iPhone or latency/FPS proof. Reproduction and boundaries documented in docs/mobile/archive-review-touch.md. No gameplay change or deployment in this QA pass.
+
 - Proof chamber review loop (2026-09-12):
   - Reproduced specialist credit without examining the document. B2 now requires examination before specialist review and review before recording the Golden Rule decision. D3 behavior and legacy saved clears remain unchanged.
   - Replaced implementation-language poster/duplicate compass with an existing specialist NPC. Short objectives follow examination, review, recording and east exit. Examination is a toast, not a modal; completed examination stops advertising interaction. Optional-room collision feedback preserves the puzzle objective.
