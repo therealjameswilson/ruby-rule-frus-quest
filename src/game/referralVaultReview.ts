@@ -161,7 +161,9 @@ export function referralGuideHint(stage: ReferralReviewStage, step: number, carr
     };
   }
   if (!carried) return {
-    short: "BATCH: SOUTH TRAY", message: "Take the batch from the south tray, then find the original dispatch in the north stacks."
+    short: "BATCH: SOUTH TRAY", message: stage === "equity"
+      ? "Take the batch from the south tray, then find the original dispatch in the north stacks."
+      : "Take the review batch from the south tray. Bring it to the highlighted treatment station; keep each decision visible."
   };
   if (stage === "equity") {
     return { short: "BATCH: NORTH STACKS", message: "Carry the batch to the original dispatch in the north stacks. It prepares the referrals together; check and file the draft yourself. Routing does not grant release approval. Individual agency desks remain available." };

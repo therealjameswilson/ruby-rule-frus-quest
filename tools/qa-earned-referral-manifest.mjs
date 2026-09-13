@@ -26,6 +26,18 @@ try{
  assert(!(await state()).sceneProgress.referralManifestReviewComplete);
  await key('ArrowLeft');await shot('corrected');await key('ArrowDown');await key();await page.waitForTimeout(500);
  assert.equal((await state()).sceneProgress.referralManifestReviewComplete,1);await shot('filed');
+ if(process.argv.includes('--guide-check')){
+   const before=await state();
+   await move(104,76);await move(60,76);await key();await shot('treatment-guide');
+   const after=await state();
+   assert.match(after.latestMessage,/review batch from the south tray/);
+   assert.doesNotMatch(after.latestMessage,/north|dispatch|equity/i);
+   assert.equal(after.objective,'TAKE REVIEW BATCH');
+   assert.equal(after.documentPoints,before.documentPoints);
+   assert.equal(after.sceneProgress.referralTreatmentStep,before.sceneProgress.referralTreatmentStep);
+   assert(!after.sceneProgress.referralTreatmentDocketCarried);
+   await move(104,76);await move(104,156);
+ }
  await key();assert.equal((await state()).sceneProgress.referralTreatmentDocketCarried,1);
  await move(104,180);await move(80,180);await key();assert.equal((await state()).sceneProgress.referralTreatmentStep,1);
  await move(128,180);await move(128,152);await key();assert.equal((await state()).sceneProgress.referralTreatmentStep,2);

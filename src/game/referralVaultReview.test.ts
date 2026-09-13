@@ -16,6 +16,16 @@ import {
 } from "./referralVaultReview";
 
 describe("physical Referral Vault review", () => {
+  it.each([0, 1, 2])("keeps empty-handed treatment step %s pointed at review, not completed source discovery", step => {
+    for (const dispatchFound of [false, true]) {
+      const hint = referralGuideHint("treatment", step, false, dispatchFound);
+      expect(hint.message).toContain("review batch from the south tray");
+      expect(hint.message).toContain("treatment station");
+      expect(hint.message).not.toMatch(/north|dispatch|equity/i);
+      expect(referralReviewObjective("treatment", step, false)).toBe("TAKE REVIEW BATCH");
+    }
+    expect(referralGuideHint("equity", step, false).message).toContain("north stacks");
+  });
   it("gives compact advice for each review stage without changing the task", () => {
     expect(referralGuideHint("equity", 0, false).short).toBe("BATCH: SOUTH TRAY");
     for (const [step, packet] of REFERRAL_EQUITY_PACKETS.entries()) {
