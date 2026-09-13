@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Actionable optional-room objectives (2026-09-12):
+  - Added short state-aware objectives for B1/C1/D1/D2/C3 instead of generic room-code exploration text. The earned well route now reads TRAY: FILE SLIP -> STAMP THE CRACK -> WELL: SOUTH/EAST -> EAST: WELL -> TAKE WELL REWARD -> WEST: RETURN. Puzzle/reward actions refresh the cue immediately and Continue restores the appropriate stage.
+  - Pure tests cover partial vs complete manifest, discovered vs collected secrets, return direction, <=16 character limits and no replacement for A1/AS. 17 focused tests and production build pass (existing bundle warning).
+  - Actual earned well-route replay preserves 219 points after Continue and reports correct cues at each checkpoint. Native C1 and collected-well screenshots inspected in /private/tmp/frus-well-directions/; installed gameplay client confirms main Archive pickup/movement still works (/private/tmp/frus-optional-cues-client/).
+  - No puzzle rules, inventory or save format changes. Other optional-room types retain their prior objectives; C3 shares deterministic cue coverage but was not physically played this pass. Local only.
+
 - Persistent Archive wall challenges (2026-09-12):
   - Earned B1 manifest replay reproduced WAIT/PENDING respawning after Continue. Added per-wall sceneProgress flags, rebuilt cleared walls and dependent puzzle booleans on scene creation, persisted the intermediate ambiguity split, and made wall rewards conditional on first clear. All wall clears save immediately; existing A1 source-note restoration remains authoritative for NO REPO.
   - qa-backtrack.mjs --stacks-persist now enters/solves B1, reloads, verifies absent WAIT/PENDING, repeats manifest without extra points, then physically walks through the south gate to C1. Before failed; after stays at 207 points and reaches C1 with no browser errors. Native solved/Continue/next-room images inspected. Evidence /private/tmp/frus-stacks-save-before/, /private/tmp/frus-stacks-save-after/, /private/tmp/frus-stacks-save-route/.

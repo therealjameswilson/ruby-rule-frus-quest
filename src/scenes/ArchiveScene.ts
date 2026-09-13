@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { archiveOptionalObjective } from "../game/archiveOptionalObjective";
 import { ARCHIVE_SECRET_IDS, hasArchiveSecret, recordArchiveSecret } from "../game/archiveSecrets";
 import { readChapterArrival } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
@@ -1291,7 +1292,7 @@ export class ArchiveScene extends Phaser.Scene {
         if (this.collected.has(key)
           || !recordArchiveSecret(gameState.sceneProgress, room.id === "C3" ? "C3" : "D2", "collected")) {
           setLatestMessage(`${room.id} secret reward already filed.`);
-          setObjective("Return to the marked Archive route; this hidden room is complete.");
+          this.refreshRoomObjective();
           this.dialog.show("SECRET", "This hidden room has already yielded its clue.");
           return;
         }
@@ -1311,6 +1312,7 @@ export class ArchiveScene extends Phaser.Scene {
         retroAudio.confirm();
         this.showSecretRewardCue(room.id);
         this.dialog.show("SECRET", room.id === "C3" ? "A cover fragment was filed where only a careful reader would look." : "The well restores confidence because the check was physical.");
+        this.refreshRoomObjective();
         saveGameNow();
       }
     });
@@ -1382,6 +1384,7 @@ export class ArchiveScene extends Phaser.Scene {
     addDocumentPoints(3, `${roomId} secret revealed`);
     setLatestMessage(message);
     setObjective(`Secret route ${roomId} revealed; follow the map marker.`);
+    if (this.currentRoomId === "C1") this.refreshRoomObjective();
     retroAudio.confirm();
     this.showSecretRevealCue(roomId);
     this.dialog.show("SECRET", message);
@@ -2059,7 +2062,7 @@ export class ArchiveScene extends Phaser.Scene {
     ]);
     this.clearEnemyById("pending-manifest", "PENDING cleared after manifest delivery to the referral tray.");
     this.clearEnemyById("wait-timer", "WAIT cleared after agency response timer resolution.");
-    setObjective("Referral manifest delivered; exits unfrozen.");
+    this.refreshRoomObjective();
   }
 
   private splitAmbiguousFlag() {
@@ -3507,7 +3510,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.currentRoomId === "B1" && direction !== "north"
       && this.activeEnemyWalls.has("wait-timer") && !this.agencyTimerResolved) {
       setLatestMessage("Resolve WAIT at the referral tray to proceed, or return north to the Source Room.");
-      setObjective("Resolve agency response timer at the referral tray.");
+      this.refreshRoomObjective();
       this.toast.show("WAIT: TRAY / NORTH TO RETURN", this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
       const push = direction === "east" ? { x: 228, y: 120 } : { x: 128, y: 190 };
@@ -3574,6 +3577,11 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private refreshRoomObjective() {
+    const optionalObjective = archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress);
+    if (optionalObjective) {
+      setObjective(optionalObjective);
+      return;
+    }
     if (this.currentRoomId === "AS") {
       setObjective(annotationStacksObjective(gameState.sceneProgress));
       return;
