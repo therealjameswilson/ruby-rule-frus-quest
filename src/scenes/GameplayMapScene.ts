@@ -648,7 +648,7 @@ export class GameplayMapScene extends Phaser.Scene {
       if (!this.danneWaveTransition.pending && !hasPendingEncounterWaves(this.danneWaves)) return null;
       return {
         actionHint: "NEXT WAVE",
-        objective: `Wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} cleared. Next review file incoming.`
+        objective: `NEXT WAVE ${this.danneWaves.currentWave + 1}/${this.danneWaves.totalWaves}`
       };
     }
     const player = this.player.position;
@@ -670,18 +670,18 @@ export class GameplayMapScene extends Phaser.Scene {
     if (!acquired) {
       return {
         actionHint: `DODGE - NEED ${shortTool}`,
-        objective: `${readout.label}: find ${weaknessLabel}; ${status.defeatedEnemyCount}/${status.requiredEnemyCount} cleared.`
+        objective: `FIND ${weaknessLabel}`
       };
     }
     if (!equipped) {
       return {
         actionHint: `M EQUIP ${shortTool}`,
-        objective: `${readout.label}: equip ${weaknessLabel}, then press B.`
+        objective: `EQUIP ${weaknessLabel}`
       };
     }
     return {
       actionHint: `B USE ${shortTool}`,
-      objective: `${readout.label}: use ${weaknessLabel}; ${status.defeatedEnemyCount}/${status.requiredEnemyCount} cleared.`
+      objective: `${shortTool}: ${status.defeatedEnemyCount}/${status.requiredEnemyCount} CLEARED`
     };
   }
 

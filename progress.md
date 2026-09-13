@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Encounter readiness at a glance (2026-09-13):
+  - Previous turn made progress with wrong-tool feedback. Inspected normal GameplayMapScene counter cues: enemy-name prefixes consumed the 20-character HUD before the required action. Shortened objectives to FIND/EQUIP plus full tool name, then short tool plus cleared/required progress when equipped. Between-wave cue names the upcoming wave.
+  - Tests exercise all three tools in missing/acquired/equipped states and the next-wave cue against the real text clamp. 22 focused enemy/HUD tests pass; build passes with existing chunk warning.
+  - Installed gameplay client capture inspected. Isolated debug routes verify actual UIScene text for FIND REVIEW FOLDER, EQUIP REVIEW FOLDER and FOLDER: 0/2 CLEARED, no page errors; native images /private/tmp/frus-readiness/. No inventory mutation outside existing debug-grant query parameters; not an earned-route playthrough.
+  - Local only. Larger remaining issue: optional legacy maps remain overly detailed at this resolution. Their second HUD row still defaults to generic desk guidance when unarmed; compare encounter-aware action cues before altering geometry/art. No change to combat rules, room gates or save schema.
+
 - Readable wrong-tool counter feedback (2026-09-13):
   - Previous turn made progress with immediate pause freezing. Audited enemy feedback and found GameplayMapScene put required-tool advice after the first sentence; UIScene.compactObjective therefore displayed only Wrong counter.
   - Wrong-tool objective now directly names EQUIP plus the required tool. Existing detailed enemy message, damage, knockback, room gates and saves are unchanged. Behavioral tests exercise scene feedback through UIScene sentence selection and the real character clamp for Stamp, Pencil and Folder, preserving explore mode.
