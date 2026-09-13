@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned final encounter and publication verification (2026-09-12):
+  - Runtime 67dda1b: played from earned proof-completion save through Colossus/Swarm/Cloud to bindery. Seven fresh open-core melee hits, no retries; pause, phase dialogue, record integrity and victory Continue assertions pass. No console errors. /private/tmp/frus-final-earned/.
+  - Keyboard AND portrait-touch full binding route passes: wrong index retry, human-certification cancellation/Continue, all five handoffs, final press publication and persisted summary. 201 -> 241 points, published clean, 100 reliability and deadline met. Native panels inspected. /private/tmp/frus-final-publication/ and /private/tmp/frus-final-publication-touch/.
+  - Uneven touch swings reached Swarm with two returned bolts and 75 reliability; no documentary changes. /private/tmp/frus-final-imprecise-touch/. This is not unaided human QA, and full touch boss completion remains unverified.
+  - Added docs/FINAL_ENCOUNTER_PLAYTEST.md with evidence and remaining design/QA limits. No runtime changes this pass. Next: assess first-time comprehension of the counter mechanic and full touch boss path, then binding pacing. Goal remains active; local results are not public deployment evidence.
+
 - Safe proof decision cancellation (2026-09-12):
   - Silent Read's three generic document decisions now opt into Escape/Start cancellation and offer an explicit Back row. Cancel does not select answer B, verify a marginal note, stamp a file, or award points. Deliberate answers retain the separate verification/stamping sequence.
   - Regression coverage reproduces the prior accidental approval; current full suite passes 202 files / 1,556 tests including movement changes. Build passed with the existing bundle warning.
