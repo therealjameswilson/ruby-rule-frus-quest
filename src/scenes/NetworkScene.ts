@@ -796,6 +796,10 @@ export class NetworkScene extends Phaser.Scene {
 
   private atStampCrossing() {
     const { x, y } = this.player.position;
+    // Filing a carried packet takes primary-action priority in overlapping
+    // terminal/seal ranges. The tool swing still checks the seal independently.
+    const target = this.routingCarriedPacket() ? this.routingActionHint() : null;
+    if (target && Phaser.Math.Distance.Between(x, y, target.x, target.y) <= (target.radius ?? 34)) return false;
     return this.currentRoomId === "N1" && networkCrossingState(gameState.sceneProgress) !== "open"
       && x >= 92 && x <= 164 && y >= 104 && y <= 140;
   }

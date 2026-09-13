@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned network route and interaction overlap (2026-09-13):
+  - Collected Telegram/Cross-Ref from the earned filed-packet save and physically reached NetworkScene. First harness expected obsolete A2 and stopped after a short burst interrupted by DANN-E; corrected destination to NetworkScene and allowed recovery. No gate-code fix was warranted. Promoted tools/qa-earned-network.mjs.
+  - Public routing/crossing initially passed, but a repeat exposed overlapping primary-action targets: at x96/y140 the service crossing intercepted delivery even though the carried packet's terminal was within reach. atStampCrossing now yields to an in-range routing terminal when carrying a packet; tool-swing hit checks stay unchanged. Added direct method regressions for sealed/ready crossing overlap, no packet, and out-of-range terminal.
+  - Full earned routing retry passed: four deliveries, Citation Stamp crossing, physical N2 ClassNet Vault arrival, no page errors. Native completion/arrival screenshots inspected at /private/tmp/frus-network-crossing-earned/; exported earned-storage.json is the next handoff. Promoted tools/qa-earned-network-routing.mjs. Browser standard client passed and native screenshot inspected at /private/tmp/frus-network-priority-client/.
+  - 211 files / 1,624 tests and production build pass (existing chunk warning). No save schema changes or public deployment. Next: play N2 review batch through earned Clearance Token; whole-game and novice-human enjoyment remain unverified.
+
 - Directional choices and earned packet filing (2026-09-13):
   - Continued the earned three-note save into the source-map review. Twice pressing Down then confirm submitted A: ChoicePrompt did not implement directional selection at all (not an opening-delay problem). Added Up/Down navigation, gold selected-row outline, confirmation of selected answer, and reset-on-show; preserved direct A/B/C/D and existing cancel/settle semantics. Added navigation/wrap and direct-shortcut regression tests.
   - Wrong-answer source-map feedback visibly overflowed the canvas. Archive reviews now show a short actionable cue while keeping the full message in state. Successful filing unsealed the supporting documents; native choice/filed screenshots inspected at /private/tmp/frus-file-annotation/. No page errors in the earned run. Promoted tools/qa-file-annotation.mjs with configurable earned storage/browser paths.
