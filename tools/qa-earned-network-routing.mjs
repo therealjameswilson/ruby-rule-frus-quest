@@ -7,7 +7,9 @@ const out=process.env.FRUS_QA_OUT ?? '/private/tmp/frus-network-crossing-earned'
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE});
 const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE,viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
+const eastGate = async () => (await state()).roomGraph.find(room => room.id === 'N1').lockedExitState.east;
 const cdp=mobile?await context.newCDPSession(page):null;
 const key=async(k='Space',ms=50)=>{
  if(mobile){
@@ -30,6 +32,7 @@ try{
 
 
  await shot('arrival');
+ assert.equal((await eastGate()).canOpen,false);
  await move(96,178);await key();await shot('public-carried');
  assert.equal((await state()).sceneProgress.networkRoutingCarried,1);
  await move(96,140);await key();await shot('public-filed');
@@ -40,8 +43,10 @@ try{
  assert.equal((await state()).sceneProgress.networkRoutingStep,2);
  await move(164,124);await key();
  assert.equal((await state()).sceneProgress.networkRoutingStep,3);
+ assert.equal((await eastGate()).canOpen,false,'All four packets must be filed before the map opens the vault');
  await key();await page.waitForTimeout(600);
  assert.equal((await state()).sceneProgress.networkRoutingComplete,1);await shot('routing-complete');
+ assert.equal((await eastGate()).canOpen,true,'Completed routing must open the map gate as well as the physical vault door');
  await move(216,124);await key('ArrowRight',1200);
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).roomTraversal.currentRoomId==='N2');
  await page.waitForTimeout(700);await shot('vault-arrival');

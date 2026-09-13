@@ -1,17 +1,38 @@
 import { describe, expect, it } from "vitest";
-import { createGameSaveData, gameState, resetGameState, restoreGameSaveData } from "./state";
+import { createGameSaveData, gameState, getRoomGraphReadout, resetGameState, restoreGameSaveData } from "./state";
 import {
   getNetworkRoutePacket,
   NETWORK_ROUTE_ITEM_TOTAL,
   NETWORK_ROUTE_PACKETS,
   networkBatchPacketAfterRoute,
   networkRoutingObjective,
+  networkRoutingComplete,
   networkRouteGuidance,
   routeNetworkPacket,
   routedItemCount
 } from "./networkRouting";
 
 describe("physical two-network routing", () => {
+  it("uses completed routing rather than small keys for the vault map gate", () => {
+    resetGameState();
+    const gate = () => getRoomGraphReadout().find(room => room.id === "N1")!.lockedExitState.east;
+    gameState.dungeons.two_networks.smallKeys = 20;
+    gameState.sceneProgress.networkRoutingStep = 3;
+    expect(gate().canOpen).toBe(false);
+    expect(gate().gateType).toBe("workflow");
+    expect(gate().blockedMessage).toContain("routing the batch");
+    gameState.sceneProgress.networkRoutingComplete = 1;
+    expect(gate().canOpen).toBe(true);
+    const save = createGameSaveData();
+    resetGameState(); restoreGameSaveData(save);
+    expect(gate().canOpen).toBe(true);
+    resetGameState();
+    gameState.processStamps.push("network");
+    expect(gate().canOpen).toBe(true);
+    expect(networkRoutingComplete({}, false)).toBe(false);
+    expect(networkRoutingComplete({}, true)).toBe(true);
+    resetGameState();
+  });
   it("restores a packet-specific hint without resolving any documents", () => {
     resetGameState();
     Object.assign(gameState.sceneProgress, { networkRoutingStep: 2, networkRoutingCarried: 3, networkRoutingHintOrder: 3 });

@@ -3,6 +3,7 @@ import { getPauseMenuReadout } from "../systems/pauseMenu";
 import { getCodexViewReadout } from "../systems/codexLayout";
 import { getGuideCounterReadout } from "./guideCounterTraining";
 import { annotationStacksOpen } from "./annotationStacks";
+import { networkRoutingComplete } from "./networkRouting";
 import { readAnnotationPacket } from "./annotationPacket";
 import { archiveSourceRoomExitReady, restoredArchiveSourceNoteStatus, restoredArchiveSourceRoomDocumentIds } from "./archiveSourceRoom";
 import { getCodexReadout, unlockCodexEntry } from "./codex";
@@ -1495,9 +1496,11 @@ export function getRoomGraphReadout() {
         const annotationEntry = room.id === "A1" && direction === "north";
         const annotationExit = room.id === "AS" && direction === "north";
         const sourcePacketExit = room.id === "A1" && direction === "east";
+        const networkBatchExit = room.id === "N1" && direction === "east";
         const unfiledPacketExit = packetHeld && direction !== "north";
         const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
-        const canOpen = unfiledPacketExit ? false : sourcePacketExit ? sourceExitReady
+        const canOpen = networkBatchExit ? networkRoutingComplete(gameState.sceneProgress, gameState.processStamps.includes("network"))
+          : unfiledPacketExit ? false : sourcePacketExit ? sourceExitReady
           : annotationEntry ? annotationStacksOpen(gameState.sceneProgress)
           : annotationExit ? gameState.sceneProgress.annotationDraftingComplete === 1
           : readingPassage ? hiddenReadingRoomDiscovered(gameState) : blackVaultFinalExit
@@ -1509,17 +1512,19 @@ export function getRoomGraphReadout() {
             : canOpenLockedDoor(dungeon);
         return [direction, {
           label: unfiledPacketExit ? "Unfiled annotation packet" : lockedExits[direction] ?? "Locked route",
-          gateType: bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
+          gateType: networkBatchExit ? "workflow" : bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
           requiredItem,
           requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
-          blockedMessage: canOpen ? null : unfiledPacketExit ? "File the carried annotation notes at the research table before leaving."
+          blockedMessage: canOpen ? null : networkBatchExit ? "Finish routing the batch through OpenNet and ClassNet."
+            : unfiledPacketExit ? "File the carried annotation notes at the research table before leaving."
             : sourcePacketExit ? "File the annotation packet, collect both supporting documents, and complete the research-table reviews."
             : annotationEntry ? "Verify Source Note 47 and stamp the NO REPO wall to open the stacks."
             : annotationExit ? "Bring the annotation packet south to the human research table before visiting NARA."
             : readingPassage && heldProcessItems.has("review_folder")
             ? "Compare the northeast shelf register with the Review Folder."
             : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
-          blockedObjective: canOpen ? null : unfiledPacketExit ? "FILE PACKET AT TABLE"
+          blockedObjective: canOpen ? null : networkBatchExit ? "FINISH ROUTING BATCH"
+            : unfiledPacketExit ? "FILE PACKET AT TABLE"
             : sourcePacketExit ? "COMPLETE SOURCE PACKET"
             : annotationEntry ? "STAMP NO REPO TO OPEN STACKS"
             : annotationExit ? "SOUTH: FILE AT TABLE"

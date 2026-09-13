@@ -51,6 +51,7 @@ import {
   NETWORK_ROUTE_ITEM_TOTAL,
   NETWORK_ROUTE_PACKETS,
   networkRoutingObjective,
+  networkRoutingComplete,
   networkRouteGuidance,
   routeNetworkPacket,
   routedItemCount
@@ -243,8 +244,7 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private restoreNetworkProgress() {
-    this.routingComplete = Boolean(gameState.sceneProgress.networkRoutingComplete)
-      || gameState.processStamps.includes("network");
+    this.routingComplete = networkRoutingComplete(gameState.sceneProgress, gameState.processStamps.includes("network"));
     this.currentRoute = this.routingComplete
       ? NETWORK_ROUTE_PACKETS.length
       : Math.max(0, Math.min(

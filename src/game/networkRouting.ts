@@ -1,5 +1,9 @@
 export type RoutingNetwork = "OpenNet" | "ClassNet";
 
+export function networkRoutingComplete(progress: Readonly<Record<string, number>>, hasNetworkStamp: boolean) {
+  return Boolean(progress.networkRoutingComplete) || hasNetworkStamp;
+}
+
 export type NetworkRoutePacketId =
   | "public_research"
   | "public_proof"

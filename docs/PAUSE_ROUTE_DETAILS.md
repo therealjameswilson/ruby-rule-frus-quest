@@ -65,3 +65,24 @@ OFFICE afterward, without reloading. The fixed filing capture under
 page/console errors. Full suite: 224 files / 1,695 tests; build passes with the
 existing large-chunk warning. These are scripted keyboard checks, not unaided
 player enjoyment or physical-phone evidence.
+
+## Network Routing Gate
+
+The earned touch replay reproduced the opposite mismatch in N1: the physical
+vault opened after the fourth delivery, while the map still described a locked
+small-key door. Both restoration and the map now use `networkRoutingComplete`,
+including the legacy Network stamp. The map identifies a workflow gate and asks
+for the routing batch, not an unrelated key.
+
+`qa-earned-network-routing.mjs --mobile` asserts closed before the batch and
+after three deliveries, then open after the fourth. The pre-fix run failed the
+last assertion (`/private/tmp/frus-network-map-before/`); the fixed run passed
+through the physical east crossing, vault reload and resumed movement
+(`/private/tmp/frus-network-map-fixed/`). Native completion and phone-shaped
+restored-vault captures were inspected, with no captured browser errors. Unit
+coverage includes small keys not bypassing routing, completion, save/restore and
+legacy stamps. Full suite: 224 files / 1,696 tests; production build passes.
+
+Next audit target: the N2 west return while carrying a review docket. Gameplay
+blocks that return, while `drawRoomDoors` currently renders west as always open.
+That has been identified in source, not yet repaired or physically re-tested.
