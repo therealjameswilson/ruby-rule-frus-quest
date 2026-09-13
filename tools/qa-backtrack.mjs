@@ -127,19 +127,24 @@ try {
     assert((await gateNames()).includes('snes-gate-glyph-south-locked'), 'Unsolved WAIT must look locked');
     await walk(128, 112); await page.keyboard.press('Space', { delay: 50 });
     await page.waitForTimeout(250);
-    for (let i = 0; i < 12 && (await state()).dialog; i++) {
-      await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
-    }
     const solved = await state();
+    assert(!solved.dialog, 'Filing the tray should not interrupt movement with a dialogue');
+    assert(await page.evaluate(() => !window.game.scene.getScene('ArchiveScene').interactables.some(item => item.id === 'stacks-manifest')),
+      'A finished tray must stop advertising interaction');
     assert.equal(solved.documentPoints, initial.documentPoints + 6);
     await shot('stacks-solved');
     assert((await gateNames()).includes('snes-gate-glyph-south-open'), 'Solving WAIT must visibly open the gate immediately');
     assert(!(await gateNames()).includes('snes-gate-glyph-south-locked'), 'Old locked gate art must be removed');
+    await hold('ArrowLeft', 150);
+    assert((await state()).player.x < solved.player.x - 3, 'Movement remains responsive during the filing toast');
+    await walk(128, 112);
     await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
     await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
     await page.waitForTimeout(900); await shot('stacks-continue');
     const restored = await state();
     assert.equal(restored.roomTraversal.currentRoomId, 'B1');
+    assert(await page.evaluate(() => !window.game.scene.getScene('ArchiveScene').interactables.some(item => item.id === 'stacks-manifest')),
+      'Continue must keep the completed tray quiet');
     assert(!restored.visibleThreats.some(t => t.label === 'WAIT' || t.label === 'PENDING'), 'Solved Stacks walls must not respawn after Continue');
     await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
     assert.equal((await state()).documentPoints, solved.documentPoints, 'Repeat manifest must not award another wall-clear reward');

@@ -1118,10 +1118,11 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawDocumentStack(124, 166, true);
     this.drawDocumentStack(188, 159, false);
     this.drawDesk(128, 138, "TRAY");
-    this.track(this.add.image(128, 119, "referral-manifest").setDepth(140));
     this.addSolid(96, 128, 64, 28);
     this.addRoomEnemy("pending-manifest");
     this.addRoomEnemy("wait-timer");
+    if (this.referralManifestDelivered && this.agencyTimerResolved) return;
+    this.track(this.add.image(128, 119, "referral-manifest").setDepth(140).setName("archive-unfiled-manifest"));
     this.interactables.push({
       id: "stacks-manifest",
       label: "Referral tray",
@@ -2072,17 +2073,16 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private deliverReferralManifest() {
+    if (this.referralManifestDelivered && this.agencyTimerResolved) return;
     this.referralManifestDelivered = true;
     this.agencyTimerResolved = true;
     addProcessItem("concurrence_slip");
-    this.dialog.show("REFERRAL TRAY", [
-      "Manifest delivered.",
-      "Agency response timer resolved.",
-      "Pending work can move again."
-    ]);
+    this.interactables = this.interactables.filter(item => item.id !== "stacks-manifest");
+    this.children.getByName("archive-unfiled-manifest")?.destroy();
     this.clearEnemyById("pending-manifest", "PENDING cleared after manifest delivery to the referral tray.");
     this.clearEnemyById("wait-timer", "WAIT cleared after agency response timer resolution.");
     this.refreshRoomObjective();
+    this.toast.show("FILED - ROUTES OPEN", this.player.position, "info");
   }
 
   private splitAmbiguousFlag() {

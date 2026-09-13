@@ -145,6 +145,16 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(archiveSceneSource).toContain('ARCHIVE_ROOMS[this.currentRoomId].roomType !== "secret" && nearest');
   });
 
+  it("files the referral tray without a modal and retires the completed interaction", () => {
+    const render = methodSource("renderStacksRoom", "renderProofChamber");
+    expect(render).toContain("if (this.referralManifestDelivered && this.agencyTimerResolved) return;");
+    const file = methodSource("deliverReferralManifest", "splitAmbiguousFlag");
+    expect(file).not.toContain("this.dialog.show");
+    expect(file).toContain('item.id !== "stacks-manifest"');
+    expect(file).toContain('this.toast.show("FILED - ROUTES OPEN"');
+    expect(file).toContain("if (this.referralManifestDelivered && this.agencyTimerResolved) return;");
+  });
+
   it("leaves the hint-room north doorway free of the duplicate wall-map collision box", () => {
     const hint = methodSource("renderHintRoom", "renderPuzzleRoom");
     expect(hint).toContain("addSnesMapTablet");

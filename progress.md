@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Nonblocking referral completion (2026-09-12):
+  - The earned Stacks replay reproduced a finished referral tray still advertising interaction. Replaced its three-page confirmation with a short FILED - ROUTES OPEN toast. Filing removes the loose manifest and interaction target; the desk remains. Re-entry/Continue recreates neither when both saved wall tasks are complete. A repeat-call guard prevents redundant completion work.
+  - Browser regression now asserts no modal after filing, no completed target before/after Continue, and immediate left movement during the toast. Actual route still earns exactly six points, keeps gates open, and walks south to C1 after Continue. Screenshots inspected in /private/tmp/frus-tray-after/; before failure in /private/tmp/frus-tray-before/.
+  - Full suite passes: 202 files / 1,536 tests. Build passes with existing chunk-size warning. Installed gameplay client pickup/movement smoke and native screenshot inspected (/private/tmp/frus-tray-client/). No browser errors on the earned route. Keyboard desktop only; local, not deployed.
+  - Next playtest target: B2's permanent implementation-language panel and its specialist/Golden Rule decisions; verify actual optional route before redesigning those interactions.
+
 - Archive WAIT doorway feedback (2026-09-12):
   - Reproduced an open-looking south gate that still blocked travel before resolving the referral tray. B1 east/south gates and lock reporting now respect WAIT; north retreat stays open. Resolving WAIT destroys stale gate art and redraws the unlocked routes immediately. Removed B1's redundant static compass to avoid outdated lock indicators.
   - Extended --stacks-persist browser QA with named locked/open glyph assertions. Actual input resolves the tray (201 -> 207 points), Continue preserves the clear, repeated interaction gives no extra reward, and south travel reaches C1. Before/after screenshots: /private/tmp/frus-stacks-gate-before/ and /private/tmp/frus-stacks-gate-after/.
