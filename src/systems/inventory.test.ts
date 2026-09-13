@@ -1,6 +1,6 @@
 import type Phaser from "phaser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { gameState, getAdventureSubscreenReadout, resetGameState } from "../game/state";
+import { gameState, getAdventureSubscreenReadout, resetGameState, setRoomTraversalState, setSceneState } from "../game/state";
 import { InventoryOverlay } from "./inventory";
 import { getPauseMenuReadout } from "./pauseMenu";
 
@@ -62,6 +62,44 @@ beforeEach(() => {
 });
 
 describe("pause inventory interaction", () => {
+  it("opens named route requirements with touch or confirm and returns to the map without unpausing", () => {
+    setSceneState("ArchiveScene", "explore", "PICK UP SOURCE NOTE");
+    setRoomTraversalState({ currentRoomId: "A1", roomTitle: "Source Entry", roomType: "normal", visitedRoomIds: ["A1"], exits: { north: "AS" } });
+    const { overlay, tap, key, texts } = harness();
+    overlay.toggle(); tap("map"); tap("routes");
+    expect(getPauseMenuReadout()?.detailOpen).toBe(true);
+    expect(texts).toContain("NORTH: ANNOTATION STACKS");
+    expect(texts).toContain("LOCKED");
+    expect(texts.join(" ")).toContain("Verify Source Note 47");
+    tap("next");
+    expect(texts).toContain("WEST: OFFICE HUB");
+    expect(texts).toContain("OPEN");
+    tap("back");
+    expect(overlay.active).toBe(true);
+    expect(getPauseMenuReadout()?.detailOpen).toBe(false);
+    key("confirmJustPressed");
+    expect(getPauseMenuReadout()?.detailOpen).toBe(true);
+    overlay.back();
+    gameState.sceneProgress.archiveRepoWallCleared = 1;
+    const marker = texts.length;
+    tap("routes");
+    expect(texts.slice(marker)).toContain("OPEN");
+    expect(texts.slice(marker)).not.toContain("LOCKED");
+    overlay.back(); overlay.hide();
+    expect(gameState.mode).toBe("explore");
+  });
+
+  it("does not expose the hidden reading room in route details before discovery", () => {
+    setSceneState("NaraStacksScene", "explore", "SEARCH STACKS");
+    setRoomTraversalState({ currentRoomId: "DN1", roomTitle: "NARA Stacks", roomType: "puzzle", visitedRoomIds: ["DN1"], exits: { north: "DN2", south: "AS" } });
+    const { overlay, tap, texts } = harness();
+    overlay.toggle(); tap("map"); tap("routes");
+    tap("next");
+    expect(texts.join(" ")).not.toContain("HIDDEN READING ROOM");
+    expect(texts).toContain("SOUTH: ANNOTATION STACKS");
+    overlay.hide();
+  });
+
   it("shows the live objective only on the current chapter map", () => {
     gameState.objective = "PICK UP SOURCE NOTE";
     const { overlay, tap, texts } = harness();

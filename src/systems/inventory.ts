@@ -69,6 +69,7 @@ export class InventoryOverlay {
   private toolIndex = 0;
   private detailOpen = false;
   private areaIndex = 0;
+  private mapExitIndex = 0;
   private recordIndex = 0;
   private settingsIndex = 0;
   private controls: Control[] = [];
@@ -139,6 +140,9 @@ export class InventoryOverlay {
         if (this.detailOpen) { this.detailOpen = false; this.render(); }
         else this.activateTool();
       } else if (this.page === "settings") this.settingAction(this.settingsIndex);
+      else if (this.page === "map" && !this.detailOpen) {
+        if (!this.openMapRoutes()) { this.cycleContent(1); this.render(); }
+      }
       else { this.cycleContent(1); this.render(); }
     }
   }
@@ -170,7 +174,12 @@ export class InventoryOverlay {
 
   private cycleContent(delta: number) {
     const subscreen = getAdventureSubscreenReadout();
-    if (this.page === "map") this.areaIndex = (this.areaIndex + delta + subscreen.dungeons.length) % subscreen.dungeons.length;
+    if (this.page === "map") {
+      if (this.detailOpen) {
+        const count = this.mapRoutes(subscreen).length;
+        this.mapExitIndex = count ? (this.mapExitIndex + delta + count) % count : 0;
+      } else this.areaIndex = (this.areaIndex + delta + subscreen.dungeons.length) % subscreen.dungeons.length;
+    }
     if (this.page === "record") {
       const count = this.records(subscreen).length;
       this.recordIndex = (this.recordIndex + delta + count) % count;
@@ -324,9 +333,15 @@ export class InventoryOverlay {
   private renderMap(subscreen: AdventureSubscreenReadout) {
     const dungeon = subscreen.dungeons[this.areaIndex];
     if (!dungeon) return;
+    if (this.detailOpen) { this.renderMapRoute(subscreen); return; }
     const currentRoom = subscreen.roomMap.rooms.find((room) => room.id === subscreen.roomMap.currentRoomId);
     const where = dungeon.active && currentRoom ? ` ${currentRoom.title.toUpperCase()}` : "";
-    this.pager(dungeon.displayName, `${this.areaIndex + 1}/${subscreen.dungeons.length}${where}`);
+    const location = `${this.areaIndex + 1}/${subscreen.dungeons.length}${where}`;
+    this.pager(dungeon.displayName, location.length > 22 ? `${location.slice(0, 19)}...` : location);
+    if (dungeon.active && currentRoom) {
+      this.text(192, 90, ">", PALETTE.goldStamp);
+      this.control({ id: "routes", x: 128, y: 90, width: 140, height: 44 }, () => this.openMapRoutes());
+    }
     const rooms = getRoomGraphReadout().filter((room) => room.area === dungeon.areaId && room.revealed);
     const grids = layoutPauseRooms(rooms.map((room) => ({ ...room, grid: FRUS_ROOM_GRAPH.find((definition) => definition.id === room.id)!.grid })));
     const graphics = this.scene.add.graphics().setScrollFactor(0);
@@ -367,6 +382,46 @@ export class InventoryOverlay {
     const objective = dungeon.active ? pauseMapObjective(gameState.objective) : "";
     this.text(128, objective ? 214 : 220, objective || getString("pause.mapLegend"),
       objective ? PALETTE.terminalCyan : PALETTE.stoneGray, true);
+  }
+
+  private mapRoutes(subscreen: AdventureSubscreenReadout) {
+    if (!subscreen.dungeons[this.areaIndex]?.active) return [];
+    const rooms = getRoomGraphReadout();
+    const current = rooms.find(room => room.id === subscreen.roomMap.currentRoomId);
+    if (!current) return [];
+    return Object.entries(current.exits).flatMap(([direction, id]) => {
+      const target = rooms.find(room => room.id === id);
+      // A route inspector must not expose undiscovered secret rooms.
+      if (!target?.revealed) return [];
+      return [{ direction, target, gate: current.lockedExitState[direction] }];
+    });
+  }
+
+  private openMapRoutes() {
+    if (!this.mapRoutes(getAdventureSubscreenReadout()).length) return false;
+    this.mapExitIndex = 0;
+    this.detailOpen = true;
+    this.focus = "content";
+    retroAudio.blip();
+    this.render();
+    return true;
+  }
+
+  private renderMapRoute(subscreen: AdventureSubscreenReadout) {
+    const routes = this.mapRoutes(subscreen);
+    this.mapExitIndex = Math.min(this.mapExitIndex, Math.max(0, routes.length - 1));
+    const route = routes[this.mapExitIndex];
+    const current = subscreen.roomMap.rooms.find(room => room.id === subscreen.roomMap.currentRoomId);
+    this.pager(current?.title ?? "Routes", `${this.mapExitIndex + 1}/${routes.length}`);
+    if (route) {
+      this.text(128, 109, pauseTextPages(`${route.direction.toUpperCase()}: ${route.target.title.toUpperCase()}`, 32, 2)[0], PALETTE.goldStamp, true);
+      const locked = route.gate && !route.gate.canOpen;
+      this.text(128, 141, locked ? "LOCKED" : "OPEN", locked ? PALETTE.classNetRed : PALETTE.terminalCyan, true);
+      this.text(20, 156, pauseTextPages(locked ? route.gate.blockedMessage ?? route.gate.label : "The route is open.", 36, 4)[0]);
+    }
+    this.box(128, 211, 64, 18, PALETTE.deepRuby, PALETTE.goldStamp);
+    this.text(128, 207, getString("pause.back"), PALETTE.goldStamp, true);
+    this.control({ id: "back", x: 128, y: 211, width: 80, height: 44 }, () => this.back());
   }
 
   private records(subscreen: AdventureSubscreenReadout): RecordCard[] {
