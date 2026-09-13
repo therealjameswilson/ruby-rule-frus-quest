@@ -4,6 +4,7 @@
     "readingRoomExit": "EXIT: SOUTH DOOR",
     "restoreChronology": "RESTORE CHRONOLOGY",
     "annotationAisles": "NOTES / TABLE SOUTH",
+    "annotationExits": "NARA NORTH / ARCHIVE SOUTH",
     "guideCoach": {
       "faceNorth": "FACE UP TOWARD THE BOLT",
       "faceSouth": "FACE DOWN TOWARD THE BOLT",

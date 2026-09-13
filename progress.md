@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Natural optional route and completed-room guidance (2026-09-13):
+  - Previous turn was progress with safe-room hints and touch checks. Closed its debug-placement gap: keyboard backtracking from earned pre-boss save through S1/E1/R2/R1/N2/N1/A1/AS reaches NARA with 201 points and Review Folder intact. That arrival save passes full touch secret discovery/reward/return/reload with debugScenePlacement false, 226 points and one first-edition copy. Added --natural-entry guard using actual saved visit flag.
+  - Native AS screenshot exposed stale NOTES / TABLE SOUTH after completed notes; changed HUD to NARA NORTH / ARCHIVE SOUTH only when readAnnotationPacket reports complete. Unfiled notes and nearest-interaction priority preserved. Three languages updated; four behavioral tests added.
+  - Repeated full physical return route with visible HUD assertion, no errors. /private/tmp/frus-natural-secret-route-after/ and /private/tmp/frus-natural-secret-touch/. Native corrected AS and reward screenshots inspected; installed Archive gameplay client capture inspected at /private/tmp/frus-exploration-client/.
+  - All 203 test files / 1,571 tests and build pass (existing chunk warning). docs/EXPLORATION_PLAYTEST.md distinguishes automated route evidence from unaided discovery and physical-device testing. Local only. Next: evaluate optional-room combat/reward pacing and whether first-time players notice the branch without waypoint-driven navigation.
+
 - Optional reading-room touch audit (2026-09-13):
   - Previous turn made progress with save-aware bindery guidance. Inspected the optional NARA shelf clue, Review Folder hitbox opening, first-edition reward and return passage. Existing keyboard route passed: /private/tmp/frus-secret-audit/.
   - Found a real safe-room cue mismatch after collection: USE FOLDER despite no tool action in this room. Added English/Spanish/French book/exit hints, keeping nearby interactions first. Behavioral UIScene test covers waiting, collected legacy inventory and nearby door states.

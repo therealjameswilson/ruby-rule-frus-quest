@@ -92,6 +92,7 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
+    "annotationExits": "NARA NORTE / ARCHIVO SUR",
     "readingRoomBook": "LIBRO: PASILLO CENTRAL",
     "readingRoomExit": "SALIDA: PUERTA SUR",
     "restoreChronology": "ORDENA EL REGISTRO",

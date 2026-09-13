@@ -28,6 +28,7 @@ import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
 import { buckramBindingDestination } from "../game/buckramBinding";
 import { hiddenFirstEditionFound } from "../game/secretReadingRoom";
+import { readAnnotationPacket } from "../game/annotationPacket";
 import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
 import { CROSS_REFERENCE_TITLE } from "../game/crossReferenceCatalog";
 import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editorialRepair";
@@ -315,7 +316,7 @@ export class UIScene extends Phaser.Scene {
       return getString(dispatchAisleOpen(gameState.sceneProgress) ? "hud.dispatchReturn" : "hud.dispatchAisles");
     }
     if (gameState.currentScene === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "AS") {
-      return getString("hud.annotationAisles");
+      return getString(readAnnotationPacket(gameState.sceneProgress).complete ? "hud.annotationExits" : "hud.annotationAisles");
     }
     if (gameState.currentScene === "EndingScene") {
       return getString(`hud.bindery.${buckramBindingDestination(gameState.sceneProgress)}`);

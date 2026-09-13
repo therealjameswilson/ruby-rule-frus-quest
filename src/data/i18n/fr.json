@@ -92,6 +92,7 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
+    "annotationExits": "NARA NORD / ARCHIVES SUD",
     "readingRoomBook": "LIVRE: ALLEE CENTRALE",
     "readingRoomExit": "SORTIE: PORTE AU SUD",
     "restoreChronology": "ORDONNE LE DOSSIER",

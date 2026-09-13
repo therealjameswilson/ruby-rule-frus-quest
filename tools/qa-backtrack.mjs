@@ -314,7 +314,9 @@ try {
   await walk(128, 56);
   await press('Space');
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).roomTraversal?.currentRoomId === 'AS');
-  await page.waitForTimeout(800); await shot('08-annotation');
+  await page.waitForTimeout(800);
+  await page.waitForFunction(() => window.game.scene.getScene('UIScene').questBandCueText.text === 'NARA NORTH / ARCHIVE SOUTH');
+  await shot('08-annotation');
   await walk(128, 56); await hold('ArrowUp', 500);
   await page.waitForFunction(() => window.game.scene.isActive('NaraStacksScene'));
   await page.waitForTimeout(900); await shot('09-nara');

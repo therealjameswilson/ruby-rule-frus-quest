@@ -8,6 +8,10 @@ const saved = JSON.parse(storageState.origins.flatMap(o => o.localStorage).find(
 assert.ok(saved.state.inventory.includes('Review Folder'));
 assert.ok(!saved.state.sceneProgress.hiddenReadingRoomDiscovered, 'Use a save before discovery');
 const debugScenePlacement = saved.state.currentScene !== 'NaraStacksScene';
+if (process.argv.includes('--natural-entry')) {
+  assert.equal(debugScenePlacement, false, 'Natural-entry QA requires a save earned by walking into NARA');
+  assert.ok(saved.state.sceneProgress.visitedRoom_AS, 'The earned route must have visited Annotation Stacks');
+}
 const mobile = process.argv.includes('--mobile');
 const out = process.env.FRUS_QA_OUT ?? '/private/tmp/frus-earned-secret';
 await mkdir(out, { recursive: true });
