@@ -11,7 +11,7 @@ vi.mock("phaser", () => ({ default: {
 } }));
 vi.mock("../entities/Player", () => ({ Player: class {} }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
-vi.mock("../systems/audio", () => ({ retroAudio: { toolHit: vi.fn(), egoBoltFire: vi.fn(), blip: vi.fn(), warning: vi.fn(), confirm: vi.fn() } }));
+vi.mock("../systems/audio", () => ({ retroAudio: { toolHit: vi.fn(), egoBoltFire: vi.fn(), blip: vi.fn(), warning: vi.fn(), confirm: vi.fn(), stamp: vi.fn() } }));
 
 interface LessonScene {
   practiceBolt: ReturnType<typeof graphic>;
@@ -54,6 +54,27 @@ beforeEach(() => {
 });
 
 describe("GuideScene live counter integration", () => {
+  it("reveals the earned fragment once without a blocking dialog or delayed award", () => {
+    const guide = scene();
+    const reward = { y: 132, setName: vi.fn().mockReturnThis(), setDepth: vi.fn().mockReturnThis(), destroy: vi.fn() };
+    const image = vi.fn().mockReturnValue(reward), tween = vi.fn(), show = vi.fn();
+    Object.assign(guide, { hasCounterTraining: true, add: { image }, tweens: { add: tween }, dialog: { show } });
+    const points = gameState.documentPoints;
+    guide.takeFragment();
+    expect(gameState.volumeFragments).toContain("Front Matter Fragment");
+    expect(gameState.documentPoints).toBe(points + 10);
+    expect(image).toHaveBeenCalledWith(160, 132, "volume-fragment");
+    expect(show).not.toHaveBeenCalled();
+    expect(guide.syncStagePresentation).toHaveBeenCalledOnce();
+    reward.y = 123.6;
+    tween.mock.calls[0][0].onUpdate();
+    expect(reward.y).toBe(124);
+    guide.takeFragment();
+    expect(image).toHaveBeenCalledOnce();
+    expect(gameState.documentPoints).toBe(points + 10);
+    tween.mock.calls[1][0].onComplete();
+    expect(reward.destroy).toHaveBeenCalledOnce();
+  });
   it("points to the first tool without opening a dialogue or awarding it", () => {
     const guide = scene() as unknown as { talkColleague(): void; toast: { show: ReturnType<typeof vi.fn> } };
     const show = vi.fn();

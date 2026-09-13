@@ -232,6 +232,10 @@ try {
     assert(!(await state()).volumeFragments.includes('Front Matter Fragment'), 'A tool swing is not the pickup action');
     await press();
     assert((await state()).volumeFragments.includes('Front Matter Fragment'));
+    assert(await page.evaluate(() => window.game.scene.getScene('GuideScene').children.getByName('front-matter-reveal')?.visible));
+    const pickupPosition = (await state()).player;
+    await direction('ArrowDown', 100);
+    assert((await state()).player.y > pickupPosition.y + 3, 'Reward reveal must not lock movement');
     await shot('07-front-matter-collected');
     const earned = await state();
     await press();

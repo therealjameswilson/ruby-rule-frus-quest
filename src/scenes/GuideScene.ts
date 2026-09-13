@@ -389,6 +389,16 @@ export class GuideScene extends Phaser.Scene {
     addVolumeFragment("Front Matter Fragment");
     addDocumentPoints(10, "front matter fragment secured");
     retroAudio.stamp();
+    const reward = this.add.image(160, 132, "volume-fragment")
+      .setName("front-matter-reveal").setDepth(125);
+    this.tweens.add({
+      targets: reward, y: 114, duration: 240,
+      onUpdate: () => { reward.y = snapPixel(reward.y); }
+    });
+    this.tweens.add({
+      targets: reward, alpha: 0, delay: 1000, duration: 300,
+      onComplete: () => reward.destroy()
+    });
     this.toast.show("FRONT MATTER FOUND", this.player.position, "info");
     setLatestMessage("Front Matter recovered: one part of your future FRUS volume. The south gate is open; the source records still need research and review.");
     this.syncStagePresentation();
