@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { DANNE_LURKER_RELIABILITY_DAMAGE } from "../game/danneLurkerBalance";
-import { recoverDanneBossPressure, takeDanneBossHit, takeDanneLurkerHit } from "./dannePressure";
+import { recoverDanneBossPressure, recoverDanneLurkerPressure, takeDanneBossHit, takeDanneLurkerHit } from "./dannePressure";
 import { adjustReliability } from "./reliability";
 import { createGameSaveData, gameState, resetGameState, restoreGameSaveData, setSceneState } from "../game/state";
 import { DANNE_BOSS_DAMAGE, DANNE_BOSS_RECOVERY_MS } from "../game/danneBossCombat";
@@ -41,6 +41,34 @@ describe("recoverable final-review pressure", () => {
     expect(player.takeHit).toHaveBeenCalledWith({ x: 10, y: 20 }, kind === "ego_bolt" ? 12 : 9, DANNE_BOSS_RECOVERY_MS);
     expect(gameState.reliability).toBe(100 - DANNE_BOSS_DAMAGE[kind]);
     expect(gameState.sceneProgress.blackVaultCombatDamage).toBe(DANNE_BOSS_DAMAGE[kind]);
+  });
+
+  it("returns recover actual lurker damage only, without farming or cancelling other losses", () => {
+    takeDanneLurkerHit({ takeHit: () => true }, { x: 0, y: 0 }, "ego_bolt", "test");
+    gameState.reliability -= 10;
+    expect(recoverDanneLurkerPressure()).toBe(2);
+    expect(gameState.reliability).toBe(90);
+    expect(recoverDanneLurkerPressure()).toBe(0);
+    expect(gameState.reliability).toBe(90);
+  });
+
+  it("recovers at most one bolt hit at a time and preserves debt through saves", () => {
+    setSceneState("ReferralVaultScene", "explore", "Review");
+    for (let i = 0; i < 3; i++) takeDanneLurkerHit({ takeHit: () => true }, { x: 0, y: 0 }, "ego_bolt", "test");
+    const saved = createGameSaveData(); resetGameState(); restoreGameSaveData(saved);
+    expect(recoverDanneLurkerPressure()).toBe(2);
+    expect(gameState.sceneProgress.danneRecoverablePressure).toBe(4);
+    expect(gameState.documentCandidates).toEqual(saved.state.documentCandidates);
+    expect(gameState.inventory).toEqual(saved.state.inventory);
+  });
+
+  it("does not count rejected hits or damage beyond zero as recoverable", () => {
+    gameState.reliability = 1;
+    takeDanneLurkerHit({ takeHit: () => false }, { x: 0, y: 0 }, "ego_bolt", "test");
+    expect(recoverDanneLurkerPressure()).toBe(0);
+    takeDanneLurkerHit({ takeHit: () => true }, { x: 0, y: 0 }, "ego_bolt", "test");
+    expect(recoverDanneLurkerPressure()).toBe(1);
+    expect(recoverDanneLurkerPressure()).toBe(0);
   });
 
   it("restores only combat damage, not a separate standards penalty, and only once", () => {

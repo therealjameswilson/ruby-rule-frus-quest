@@ -5,6 +5,7 @@ import { DANNE_LURKER_BOLT_SPEED, DANNE_LURKER_BOLT_TELEGRAPH_MS, DANNE_LURKER_T
 import type { PlayerCombatReadout } from "../../game/types";
 import { WeaponStateController, type WeaponToolId } from "../../systems/weaponState";
 import { retroAudio } from "../../systems/audio";
+import { recoverDanneLurkerPressure } from "../../systems/dannePressure";
 import { DanneLurker } from "./DanneLurker";
 
 const { Visual, patrolStep } = vi.hoisted(() => {
@@ -60,6 +61,7 @@ vi.mock("phaser", () => ({
 }));
 vi.mock("../../game/state", () => ({ gameState: { danneDifficultyTier: "standard" }, setLatestMessage: vi.fn() }));
 vi.mock("../../game/codex", () => ({ unlockCodexEntry: vi.fn() }));
+vi.mock("../../systems/dannePressure", () => ({ recoverDanneLurkerPressure: vi.fn(() => 0) }));
 vi.mock("../../input/InputState", () => ({ getSecondaryActionBadge: () => "X" }));
 vi.mock("../../systems/audio", () => ({
   retroAudio: { danneBoast: vi.fn(), egoBoltFire: vi.fn(), blip: vi.fn(), toolHit: vi.fn() }
@@ -321,6 +323,7 @@ describe("DANN-E tool counterplay", () => {
     expect(update(17, 16, { x: 50, y: 50 }, true, toolSwing(tool))).toMatchObject({ triggered: false, egoBoltHit: false });
     expect(lurker.readout(17).counterplay).toMatchObject({ toolCounters: 1, stunnedMsRemaining: DANNE_LURKER_TOOL_STUN_MS });
     expect(retroAudio.toolHit).toHaveBeenCalledWith(tool);
+    expect(recoverDanneLurkerPressure).not.toHaveBeenCalled();
     for (let now = 33; now <= 1905; now += 16) {
       update(now, 16, { x: 50, y: 50 }, true, toolSwing(tool));
     }
@@ -374,6 +377,7 @@ describe("DANN-E tool counterplay", () => {
     expect(update(returnedAt, 0, player, true, swing).egoBoltHit).toBe(false);
     expect(lurker.readout(returnedAt).counterplay).toMatchObject({ boltsReturned: 1, toolCounters: 0 });
     expect(lurker.readout(returnedAt).counterplay.bolts[0].returned).toBe(true);
+    expect(recoverDanneLurkerPressure).not.toHaveBeenCalled();
     let hitTime = 0;
     for (let elapsed = 16; elapsed <= 800; elapsed += 16) {
       expect(update(returnedAt + elapsed, 16, player, true, swing).egoBoltHit).toBe(false);
@@ -385,6 +389,7 @@ describe("DANN-E tool counterplay", () => {
     expect(hitTime).toBeGreaterThan(returnedAt);
     expect(lurker.readout(hitTime).counterplay).toMatchObject({ boltsReturned: 1, stunnedMsRemaining: DANNE_LURKER_RETURN_STUN_MS, bolts: [] });
     expect(bolt.destroyed).toBe(true);
+    expect(recoverDanneLurkerPressure).toHaveBeenCalledOnce();
     expect(retroAudio.toolHit).toHaveBeenCalledTimes(2);
   });
 

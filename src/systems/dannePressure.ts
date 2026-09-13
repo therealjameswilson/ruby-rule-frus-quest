@@ -15,8 +15,19 @@ export function applyProcessPressure(context: string) {
 
 export function applyDanneLurkerDamage(kind: DanneLurkerHitKind, context: string) {
   const damage = DANNE_LURKER_RELIABILITY_DAMAGE[kind];
+  const before = gameState.reliability;
   adjustReliability(-damage, context);
+  gameState.sceneProgress.danneRecoverablePressure = Math.min(100,
+    (gameState.sceneProgress.danneRecoverablePressure ?? 0) + Math.max(0, before - gameState.reliability));
   return damage;
+}
+
+export function recoverDanneLurkerPressure() {
+  const outstanding = Math.max(0, Math.min(100, gameState.sceneProgress.danneRecoverablePressure ?? 0));
+  const recovered = Math.min(DANNE_LURKER_RELIABILITY_DAMAGE.ego_bolt, outstanding, 100 - gameState.reliability);
+  if (recovered > 0) adjustReliability(recovered, "Returned Ego bolt: combat pressure recovered");
+  gameState.sceneProgress.danneRecoverablePressure = outstanding - recovered;
+  return recovered;
 }
 
 export function takeDanneLurkerHit(player: Pick<Player, "takeHit">, source: Position, kind: DanneLurkerHitKind, context: string) {

@@ -24,7 +24,15 @@ function color(hex: string) {
 }
 
 export function adjustReliability(amount: number, reason: string) {
+  const before = gameState.reliability;
   gameState.reliability = Phaser.Math.Clamp(gameState.reliability + amount, 0, 100);
+  // Healing already repays combat pressure; it must not remain banked for a
+  // later counter to erase unrelated editorial losses.
+  const restored = Math.max(0, gameState.reliability - before);
+  if (restored > 0 && gameState.sceneProgress.danneRecoverablePressure) {
+    gameState.sceneProgress.danneRecoverablePressure = Math.max(0,
+      gameState.sceneProgress.danneRecoverablePressure - restored);
+  }
   const sign = amount >= 0 ? "+" : "";
   setLatestMessage(`${sign}${amount} reliability: ${reason}`);
   refreshQuestWorkflowState();

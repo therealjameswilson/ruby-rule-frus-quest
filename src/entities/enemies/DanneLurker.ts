@@ -22,6 +22,7 @@ import type { PlayerCombatReadout, Position } from "../../game/types";
 import { getSecondaryActionBadge } from "../../input/InputState";
 import { retroAudio } from "../../systems/audio";
 import { getDanneDifficultyProfile } from "../../systems/newGamePlus";
+import { recoverDanneLurkerPressure } from "../../systems/dannePressure";
 import { snapPixel } from "../../systems/pixelPerfect";
 import { frameDeltaSeconds } from "../../systems/smoothMovement";
 import { isWeaponTool, type WeaponToolId } from "../../systems/weaponState";
@@ -308,8 +309,11 @@ export class DanneLurker extends Enemy {
     this.nextEgoBoltAt = Math.max(this.nextEgoBoltAt, this.stunnedUntil + 800);
     this.nextBoastAt = Math.max(this.nextBoastAt, this.stunnedUntil + 2200);
     this.boastUntil = timeMs + 750;
-    this.setSpeech(returned ? "REFUTED!" : "INTERRUPTED!", PALETTE.terminalCyan);
-    setLatestMessage(returned ? "Ego bolt returned. DANN-E is stunned!" : "DANN-E interrupted. Keep compiling!");
+    const recovered = returned ? recoverDanneLurkerPressure() : 0;
+    this.setSpeech(recovered > 0 ? `REFUTED! +${recovered}` : returned ? "REFUTED!" : "INTERRUPTED!", PALETTE.terminalCyan);
+    setLatestMessage(recovered > 0
+      ? `Ego returned: ${recovered} reliability recovered from combat pressure. DANN-E is stunned; editorial decisions are unchanged.`
+      : returned ? "Ego bolt returned. DANN-E is stunned!" : "DANN-E interrupted. Keep compiling!");
     retroAudio.toolHit(tool);
   }
 
