@@ -15,6 +15,16 @@ This debug-tool encounter check is not an earned-route or novice-playtest claim.
 
 ## Swing Identity Contract
 
+Follow-up browser proof (2026-09-13): `qa-swing-menu-identity.mjs` opens the
+real tool menu during a Folder windup/active phase, selects and equips Pencil,
+then resumes. Observed enemy-check arguments retain Folder for that swing and
+use Pencil on the next input. No callbacks, damage outcomes or progression
+were changed by the observer. This debug-tool check verifies live identity
+across pause/resume, not that these particular swings damaged an enemy.
+Native menu/next-swing captures inspected; no browser errors. Evidence:
+`/private/tmp/frus-swing-menu-identity/`. This closes the mid-swing browser
+coverage limitation in the earlier note below.
+
 Enemy weakness checks use the tool captured by the player's weapon controller
 at swing start, matching that swing's hitbox and VFX. Changing the equipped item
 from a menu does not transform an attack already in flight; the next swing uses
