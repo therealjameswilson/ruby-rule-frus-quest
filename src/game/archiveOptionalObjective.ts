@@ -2,6 +2,13 @@ import { hasArchiveSecret } from "./archiveSecrets";
 
 export function archiveOptionalObjective(roomId: string, progress: Record<string, number>): string | null {
   switch (roomId) {
+    case "A3":
+      if (hasArchiveSecret(progress, "C3", "collected")) return "SOUTH: RETURN";
+      if (hasArchiveSecret(progress, "C3", "revealed")) return "CACHE: 2 SOUTH";
+      return progress.archiveCacheClueHeard === 1 ? "CHECK LEFT SHELF" : "ASK ARCHIVIST";
+    case "B3":
+      if (hasArchiveSecret(progress, "C3", "collected")) return "WEST: RETURN";
+      return hasArchiveSecret(progress, "C3", "revealed") ? "SOUTH: CACHE" : "NORTH: ARCHIVIST";
     case "B1":
       return progress["archiveWall_pending-manifest"] === 1 && progress["archiveWall_wait-timer"] === 1
         ? "SOUTH: CRACK" : "TRAY: FILE SLIP";

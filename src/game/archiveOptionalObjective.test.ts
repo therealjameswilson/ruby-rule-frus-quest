@@ -3,6 +3,21 @@ import { archiveOptionalObjective } from "./archiveOptionalObjective";
 import { recordArchiveSecret } from "./archiveSecrets";
 
 describe("optional Archive directions", () => {
+  it("remembers the shelf clue without granting discovery and guides the cache return", () => {
+    const progress: Record<string, number> = {};
+    expect(archiveOptionalObjective("B3", progress)).toBe("NORTH: ARCHIVIST");
+    expect(archiveOptionalObjective("A3", progress)).toBe("ASK ARCHIVIST");
+    progress.archiveCacheClueHeard = 1;
+    expect(archiveOptionalObjective("A3", progress)).toBe("CHECK LEFT SHELF");
+    expect(archiveOptionalObjective("B3", progress)).toBe("NORTH: ARCHIVIST");
+    recordArchiveSecret(progress, "C3", "revealed");
+    expect(archiveOptionalObjective("A3", progress)).toBe("CACHE: 2 SOUTH");
+    expect(archiveOptionalObjective("B3", progress)).toBe("SOUTH: CACHE");
+    recordArchiveSecret(progress, "C3", "collected");
+    expect(archiveOptionalObjective("A3", progress)).toBe("SOUTH: RETURN");
+    expect(archiveOptionalObjective("B3", progress)).toBe("WEST: RETURN");
+    expect(archiveOptionalObjective("A3", JSON.parse(JSON.stringify(progress)))).toBe("SOUTH: RETURN");
+  });
   it("directs the player through the earned well route and back", () => {
     const progress: Record<string, number> = {};
     expect(archiveOptionalObjective("B1", progress)).toBe("TRAY: FILE SLIP");
@@ -23,7 +38,7 @@ describe("optional Archive directions", () => {
   it("fits compact HUDs and leaves unrelated chapter objectives alone", () => {
     for (const progress of [{}, { "archiveWall_pending-manifest": 1, "archiveWall_wait-timer": 1,
       archiveSecretD2_revealed: 1, archiveSecretD2_collected: 1, archiveSecretC3_collected: 1 }] as Record<string, number>[]) {
-      for (const room of ["B1", "B2", "C1", "D1", "D2", "C3"]) {
+      for (const room of ["A3", "B3", "B1", "B2", "C1", "D1", "D2", "C3"]) {
         expect(archiveOptionalObjective(room, progress)?.length).toBeLessThanOrEqual(16);
       }
     }

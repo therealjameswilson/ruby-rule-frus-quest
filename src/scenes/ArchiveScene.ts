@@ -1202,6 +1202,11 @@ export class ArchiveScene extends Phaser.Scene {
           : revealed ? "The cache is through the south door." : "Visit the archivist north for a hidden route.";
         this.dialog.show("ARCHIVIST", clue);
         setLatestMessage(clue);
+        if (room.id === "A3" && gameState.sceneProgress.archiveCacheClueHeard !== 1) {
+          gameState.sceneProgress.archiveCacheClueHeard = 1;
+          this.refreshRoomObjective();
+          saveGameNow();
+        }
       }
     });
     this.drawDocumentStack(88, 166, true);
@@ -1399,7 +1404,7 @@ export class ArchiveScene extends Phaser.Scene {
     addDocumentPoints(3, `${roomId} secret revealed`);
     setLatestMessage(message);
     setObjective(`Secret route ${roomId} revealed; follow the map marker.`);
-    if (this.currentRoomId === "C1") this.refreshRoomObjective();
+    if (archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress)) this.refreshRoomObjective();
     retroAudio.confirm();
     this.showSecretRevealCue(roomId);
     this.dialog.show("SECRET", message);

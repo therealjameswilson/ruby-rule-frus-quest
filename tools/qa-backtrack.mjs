@@ -237,11 +237,19 @@ try {
     await walk(128, 112); await interact();
     if (cacheLoop) {
       await go('east', 'B2'); await go('east', 'B3'); await go('north', 'A3');
+      assert.equal((await state()).objective, 'ASK ARCHIVIST');
       await walk(112, 132); await press('Space');
       await page.waitForTimeout(300); await shot('archivist-clue');
       assert.match(JSON.stringify((await state()).dialog), /left shelf/i);
       await interact();
+      assert.equal((await state()).objective, 'CHECK LEFT SHELF');
+      await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
+      await press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
+      await page.waitForTimeout(900);
+      assert.equal((await state()).objective, 'CHECK LEFT SHELF', 'Heard clue survives Continue');
+      await shot('remembered-clue');
       await walk(48, 108); await interact();
+      assert.equal((await state()).objective, 'CACHE: 2 SOUTH');
       await go('south', 'B3'); await go('south', 'C3');
     } else {
       await go('south', 'C1');
@@ -268,6 +276,7 @@ try {
     if (cacheLoop) {
       assert.deepEqual((await state()).volumeFragments, collected.volumeFragments);
       await go('north', 'B3');
+      assert.equal((await state()).objective, 'WEST: RETURN');
     }
     assert.deepEqual(errors, []);
     console.log(`Earned hidden ${reward} survives Continue without duplicate reward`);
