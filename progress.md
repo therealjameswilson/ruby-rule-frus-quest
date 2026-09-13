@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Link-inspired player wall sliding (2026-09-13):
+  - Current request focuses on main-character movement. Retained immediate start/stop/reversal, normalized open diagonals, sticky facing, sub-pixel collision positions and pixel-snapped rendering. At wall/boundary contact, diagonal input now spends walking speed on the free axis instead of slowing to 71 percent. Tool movement weight remains applied; closed corners still block both axes. Existing unrelated NARA route edits left intact.
+  - Focused movement tests: 47 passed. Full suite: 209 files / 1,605 tests passed. Production build passed with existing large-chunk warning.
+  - Installed Playwright gameplay client exercised OfficeScene cardinal movement, diagonal input, reversal and release. Native capture inspected at /private/tmp/frus-player-client-native/native.png; final state idle_left, no client error artifact. Art remains crisp; no real-device or full-game playthrough claim. Evidence at /private/tmp/frus-wall-slide-client/.
+  - Local preview only: http://127.0.0.1:5195/. Not pushed or deployed. Next: user playtest the shared movement change through narrow dungeon passages before changing overall speed or collision footprint.
+
 - Full optional NARA encounter and reachable exit (2026-09-13):
   - Previous turn made progress with readable taunts. Played both legacy NARA waves using physical keyboard movement/swings and pointer menu selection. Initial test omitted the required second tap; changed the misleading READY footer to input-aware confirm/tap-again guidance, distinguishing equippable tools from view-only key items. Menu behavior unchanged; EN/ES/FR and behavioral assertions updated.
   - Two-wave completion exposed a real unreachable elevator: live center (129,173), radius 19, inside the (118,155,24,28) solid attached to the south wall. All accessible approaches were outside range. Moved the Tiled activation zone to the front edge, retaining collision/art/target. Paired with clear-floor arrival (source 945,744), avoiding automatic doorway separation landing inside the catalog desk after the trigger move. Added a parsed-map geometry/route regression.

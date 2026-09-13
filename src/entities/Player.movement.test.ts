@@ -122,7 +122,41 @@ describe("live player movement", () => {
     input.dir = { x: 1, y: 1 };
     player.update(1000 / 60, true, { solids: [{}] as never[] });
     expect(coords.logicalX).toBe(100);
-    expect(coords.logicalY).toBeCloseTo(100 + 1.2 * Math.SQRT1_2);
+    expect(coords.logicalY).toBeCloseTo(101.2);
+  });
+
+  it.each([30, 60, 120])("slides at walking speed without sticking at %s FPS", fps => {
+    const { player, coords, internals } = fixture();
+    internals.collidesAt.mockImplementation((_x, y) => y > 100);
+    input.dir = { x: -1, y: 1 };
+    for (let i = 0; i < fps; i++) player.update(1000 / fps, true, { solids: [{}] as never[] });
+    expect(coords.logicalX).toBeCloseTo(28);
+    expect(coords.logicalY).toBe(100);
+    input.dir = { x: 0, y: 0 };
+    player.update(1000 / fps, true);
+    expect(coords.logicalX).toBeCloseTo(28);
+  });
+
+  it("keeps open diagonals normalized and stops at a closed corner", () => {
+    const { player, coords, internals } = fixture();
+    input.dir = { x: 1, y: 1 };
+    player.update(1000 / 60, true);
+    expect(Math.hypot(coords.logicalX - 100, coords.logicalY - 100)).toBeCloseTo(1.2);
+    coords.logicalX = 100;
+    coords.logicalY = 100;
+    internals.collidesAt.mockImplementation((x, y) => x > 100 || y > 100);
+    player.update(1000 / 60, true, { solids: [{}] as never[] });
+    expect(coords.logicalX).toBe(100);
+    expect(coords.logicalY).toBe(100);
+  });
+
+  it("slides along room bounds and respects tool movement weight", () => {
+    const { player, coords, internals } = fixture();
+    internals.weaponState.movementScale = () => 0.5;
+    input.dir = { x: 1, y: -1 };
+    player.update(1000 / 60, true, { bounds: { left: 20, right: 100, top: 20, bottom: 180 } });
+    expect(coords.logicalX).toBe(100);
+    expect(coords.logicalY).toBeCloseTo(99.4);
   });
 
   it.each(["x", "y"] as const)("chooses the nearer open edge when moving on %s", axis => {

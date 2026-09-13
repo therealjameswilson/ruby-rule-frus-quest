@@ -360,6 +360,23 @@ export class Player {
     const startY = this.logicalY;
     const bounds = options.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
     const solids = options.solids ?? [];
+    if (dx !== 0 && dy !== 0) {
+      // Once flush against a wall, spend the walking speed on the free axis.
+      // Probe only contact, not the full step, so approaching corners cannot
+      // accelerate diagonals or skip the clear portion of a collision step.
+      const probeX = this.logicalX + Math.sign(dx) * 0.001;
+      const probeY = this.logicalY + Math.sign(dy) * 0.001;
+      const blockedX = probeX < bounds.left || probeX > bounds.right || this.collidesAt(probeX, this.logicalY, solids);
+      const blockedY = probeY < bounds.top || probeY > bounds.bottom || this.collidesAt(this.logicalX, probeY, solids);
+      const speed = PLAYER_MOVEMENT_TUNING.speed * movementScale;
+      if (blockedX && !blockedY) {
+        this.velocityX = 0;
+        this.velocityY = Math.sign(dy) * speed;
+      } else if (blockedY && !blockedX) {
+        this.velocityX = Math.sign(dx) * speed;
+        this.velocityY = 0;
+      }
+    }
     const attemptedX = this.logicalX + this.velocityX * dt;
     const attemptedY = this.logicalY + this.velocityY * dt;
     const nextX = Phaser.Math.Clamp(attemptedX, bounds.left, bounds.right);
