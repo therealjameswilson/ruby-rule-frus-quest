@@ -436,7 +436,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.prompt.update(delta, this.hearing || this.stackRecords || this.vaultObjects ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
-    else if (input.aJustPressed) {
+    else if (input.aJustPressed && bossActive) {
+      this.danneBoss?.explainCounter();
+    } else if (input.aJustPressed) {
       const feedback = decideInteractionFeedback(nearest, hintTarget);
       if (feedback.kind === "step-closer") {
         retroAudio.blip();

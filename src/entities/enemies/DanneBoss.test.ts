@@ -136,6 +136,24 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
 describe("DANN-E final-review combat", () => {
   beforeEach(() => { vi.clearAllMocks(); resetGameState(); seedProgressForScene("BlackVaultLairScene"); });
 
+  it("explains the live counter without approving documents or starting a swing", () => {
+    const { boss, internals, scene, player } = fixture();
+    const documents = structuredClone(gameState.documentCandidates);
+    const hp = internals.hp;
+    boss.explainCounter();
+    expect(gameState.latestMessage).toContain("Face an incoming Ego bolt");
+    expect(internals.hp).toBe(hp);
+    expect(player.actionId).toBe(1);
+    expect(boss.inputLocked).toBe(false);
+    expect(gameState.documentCandidates).toEqual(documents);
+    internals.takeReturnedBolt(scene.time.now);
+    const openedHp = internals.hp;
+    boss.explainCounter();
+    expect(gameState.latestMessage).toContain("fresh Red Pencil strike");
+    expect(internals.hp).toBe(openedHp);
+    expect(boss.inputLocked).toBe(false);
+  });
+
   it.each(["colossus", "swarm", "cloud", "ascendant"] as const)("prioritizes the live core opening in %s guidance", phase => {
     const { scene, boss, internals } = fixture(phase);
     const armoredObjective = boss.combatObjective;

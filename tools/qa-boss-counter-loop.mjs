@@ -98,6 +98,16 @@ try{
      && ui.questBandText.text==='RETURN THE BOLT';
  },{},{timeout:2000});
  await shot('core-approach');
+ if(process.argv.includes('--combat-help')) {
+   const before=await state();
+   await press();await page.waitForTimeout(80);
+   const after=await shot('combat-help');
+   assert.equal(after.mode,'explore','Combat help must not interrupt movement');
+   assert(after.latestMessage.includes('Face an incoming Ego bolt'));
+   assert.deepEqual(after.documentCandidates,before.documentCandidates);
+   assert.equal(after.documentPoints,before.documentPoints);
+   assert.equal(after.playerCombat.weapon.swingId,before.playerCombat.weapon.swingId);
+ }
  if(process.argv.includes('--imprecise')) {
    const before=await state();
    // Fixed uneven cadence: no projectile, HP or opening reads drive these inputs.

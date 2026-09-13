@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Full touch boss and contextual help (2026-09-12):
+  - Earned portrait-touch fight completed Colossus, Swarm and Cloud, pause/boast checks and victory Continue with no retries. Seven fresh open-core hits. Cloud drove reliability to 20 before recovery; compare keyboard 80, but one automated run does not establish a balance defect. /private/tmp/frus-final-full-touch/.
+  - Found A during combat used the generic Nothing to interact with response. It now requests a short HUD counter reminder with the current secondary-button badge and full latestMessage. Open core instead explains a fresh Pencil strike. No pause, swing, rewards or document mutation.
+  - 46 boss tests and production build pass (existing bundle warning). Added --combat-help QA: portrait touch checks response, explore mode, no stray swing/record change, then uneven swings reach Swarm. Native capture inspected: /private/tmp/frus-boss-help-touch/. Installed gameplay client passed and native Black Vault image inspected: /private/tmp/frus-boss-help-client/.
+  - Local only. Next: first-time comprehension and Cloud touch forgiveness using less precisely timed play; keep the larger fun goal active.
+
 - Earned final encounter and publication verification (2026-09-12):
   - Runtime 67dda1b: played from earned proof-completion save through Colossus/Swarm/Cloud to bindery. Seven fresh open-core melee hits, no retries; pause, phase dialogue, record integrity and victory Continue assertions pass. No console errors. /private/tmp/frus-final-earned/.
   - Keyboard AND portrait-touch full binding route passes: wrong index retry, human-certification cancellation/Continue, all five handoffs, final press publication and persisted summary. 201 -> 241 points, published clean, 100 reliability and deadline met. Native panels inspected. /private/tmp/frus-final-publication/ and /private/tmp/frus-final-publication-touch/.

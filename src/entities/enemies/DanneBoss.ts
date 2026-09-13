@@ -10,7 +10,7 @@ import {
   type DanneAttackTelegraphKind
 } from "../../game/danneBossTelegraph";
 import { danneBoastForPhase, danneBoastHoldMs, type DanneBoastPhase } from "../../game/danneBoasts";
-import { isTouchInputCapable, swallowNextInputFrame } from "../../input/InputState";
+import { getSecondaryActionBadge, isTouchInputCapable, swallowNextInputFrame } from "../../input/InputState";
 import {
   advanceBossBolt,
   aimReturnedBossBolt,
@@ -238,6 +238,19 @@ export class DanneBoss {
     this.finishBoast();
     swallowNextInputFrame();
     return true;
+  }
+
+  explainCounter() {
+    const button = getSecondaryActionBadge();
+    const open = this.coreOpenAt(this.combatPausedAt ?? this.scene.time.now);
+    this.combatFeedback = {
+      text: open ? `${button}: PENCIL THE CORE` : `FACE BOLT + ${button} SWING`,
+      tone: "info",
+      msRemaining: 1800
+    };
+    setLatestMessage(open
+      ? `Move within reach and press ${button} for a fresh Red Pencil strike before the core closes.`
+      : `Face an incoming Ego bolt and press ${button} to swing. Its return opens DANN-E's core for the Red Pencil.`);
   }
 
   get inputLocked() {

@@ -48,7 +48,11 @@ and combat timing. This is functional evidence, not an unaided human fun test.
 ## Remaining Bar
 
 - Do not claim a full unaided first-time playthrough or physical iPhone QA.
-- Verify the full boss encounter on touch, not only its opening phase.
+- Full touch boss follow-up passed all three phases with seven fresh melee hits,
+  no retries, and persisted victory: `/private/tmp/frus-final-full-touch/`.
+  Cloud reduced reliability to 20 before victory recovery (keyboard ended combat
+  at 80). This single automated comparison warrants further touch-difficulty
+  observation, not an immediate balance conclusion.
 - Observe whether a new player understands facing and returning the bolt without
   runtime readouts. Functional success alone does not establish readable combat.
 - Evaluate whether the five final handoffs feel like a satisfying conclusion or
