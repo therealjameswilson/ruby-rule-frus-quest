@@ -7,6 +7,7 @@ const storageState = JSON.parse(await readFile(process.env.FRUS_QA_STORAGE, 'utf
 const out = process.env.FRUS_QA_OUT ?? '/private/tmp/frus-backtrack';
 const stacksRetreat = process.argv.includes('--stacks-retreat');
 const wellLoop = process.argv.includes('--well-loop');
+const cacheLoop = process.argv.includes('--cache-loop');
 const stacksPersist = process.argv.includes('--stacks-persist');
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
@@ -69,12 +70,13 @@ try {
   await page.goto('http://127.0.0.1:5195/?text=full');
   await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
   await page.keyboard.press('Enter');
-  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop || stacksPersist ? 'ArchiveScene' : 'BlackVaultLairScene');
+  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop || cacheLoop || stacksPersist ? 'ArchiveScene' : 'BlackVaultLairScene');
   await page.waitForTimeout(800);
   const initial = await state();
-  if (wellLoop) {
+  if (wellLoop || cacheLoop) {
+    const reward = cacheLoop ? 'cache' : 'well';
     const go = async (direction, room) => {
-      const [x, y, key] = { south: [128, 208, 'ArrowDown'], east: [232, 120, 'ArrowRight'] }[direction];
+      const [x, y, key] = { north: [128, 56, 'ArrowUp'], south: [128, 208, 'ArrowDown'], east: [232, 120, 'ArrowRight'] }[direction];
       await walk(x, y); await hold(key, 400); await page.waitForTimeout(900);
       await shot(`room-${room}`); assert.equal((await state()).roomTraversal.currentRoomId, room);
     };
@@ -87,20 +89,31 @@ try {
     };
     await go('south', 'B1');
     await walk(128, 112); await interact();
-    await go('south', 'C1');
-    await walk(128, 144); await interact();
-    await go('south', 'D1'); await go('east', 'D2');
-    await walk(128, 160); await interact(); await shot('well-collected');
+    if (cacheLoop) {
+      await go('east', 'B2'); await go('east', 'B3'); await go('north', 'A3');
+      await walk(48, 108); await interact();
+      await go('south', 'B3'); await go('south', 'C3');
+    } else {
+      await go('south', 'C1');
+      await walk(128, 144); await interact();
+      await go('south', 'D1'); await go('east', 'D2');
+    }
+    await walk(128, 160); await interact(); await shot(`${reward}-collected`);
     const collected = await state();
-    await context.storageState({ path: `${out}/earned-well-storage.json` });
+    if (cacheLoop) assert(collected.volumeFragments.includes('Hidden Cache Fragment'));
+    await context.storageState({ path: `${out}/earned-${reward}-storage.json` });
     await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
     await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
     await page.waitForTimeout(900);
-    assert.equal((await state()).roomTraversal.currentRoomId, 'D2');
-    await interact(); await shot('well-repeat-after-continue');
-    assert.equal((await state()).documentPoints, collected.documentPoints, 'Hidden well must award points only once across Continue');
+    assert.equal((await state()).roomTraversal.currentRoomId, cacheLoop ? 'C3' : 'D2');
+    await interact(); await shot(`${reward}-repeat-after-continue`);
+    assert.equal((await state()).documentPoints, collected.documentPoints, 'Hidden treasure must award points only once across Continue');
+    if (cacheLoop) {
+      assert.deepEqual((await state()).volumeFragments, collected.volumeFragments);
+      await go('north', 'B3');
+    }
     assert.deepEqual(errors, []);
-    console.log('Earned hidden well survives Continue without duplicate reward');
+    console.log(`Earned hidden ${reward} survives Continue without duplicate reward`);
   } else if (stacksPersist) {
     await walk(128, 208); await hold('ArrowDown', 400); await page.waitForTimeout(900);
     assert.equal((await state()).roomTraversal.currentRoomId, 'B1');

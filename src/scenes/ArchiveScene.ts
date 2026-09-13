@@ -1175,7 +1175,6 @@ export class ArchiveScene extends Phaser.Scene {
   private renderHintRoom(room: ArchiveRoom) {
     this.drawBookcase(48, 78, 42, 54);
     this.drawBookcase(208, 78, 42, 54);
-    this.drawWallMap(128, 58, room.id);
     addSnesMapTablet(this, {
       x: 128,
       y: 151,

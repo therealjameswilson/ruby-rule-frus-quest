@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Hidden Source Cache route verified (2026-09-12):
+  - Extended qa-backtrack.mjs with --cache-loop: earned A1 -> B1 manifest -> B2 -> B3 -> A3 shelf clue -> B3 -> C3 treasure -> Continue -> B3 return. First attempt found B3 north physically blocked by the wall-map collision box at x104..152/y48..76.
+  - Removed the redundant wall map from hint-room rendering, preserving the central map tablet and HUD navigation. Added a scene composition regression protecting that doorway from the duplicate box. No collision bypass or player teleport was used.
+  - Full earned route now works: discovery 207 -> 210, treasure 210 -> 220, Continue/repeat stays 220 with identical volume fragments; north return reaches B3. No browser errors. Native A3/cache/return screenshots inspected in /private/tmp/frus-cache-route-fixed/; failing route evidence /private/tmp/frus-cache-route/.
+  - 21 focused tests and production build pass (existing chunk warning). Installed gameplay client main Archive pickup/movement and native render checked (/private/tmp/frus-cache-door-client/). C3 now has physical discovery, reward, persistence and return proof rather than only shared-code coverage. Keyboard desktop only for this optional route; no physical-iPhone claim. Local only.
+
 - Actionable optional-room objectives (2026-09-12):
   - Added short state-aware objectives for B1/C1/D1/D2/C3 instead of generic room-code exploration text. The earned well route now reads TRAY: FILE SLIP -> STAMP THE CRACK -> WELL: SOUTH/EAST -> EAST: WELL -> TAKE WELL REWARD -> WEST: RETURN. Puzzle/reward actions refresh the cue immediately and Continue restores the appropriate stage.
   - Pure tests cover partial vs complete manifest, discovered vs collected secrets, return direction, <=16 character limits and no replacement for A1/AS. 17 focused tests and production build pass (existing bundle warning).

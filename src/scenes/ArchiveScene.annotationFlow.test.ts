@@ -145,6 +145,12 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(archiveSceneSource).toContain('ARCHIVE_ROOMS[this.currentRoomId].roomType !== "secret" && nearest');
   });
 
+  it("leaves the hint-room north doorway free of the duplicate wall-map collision box", () => {
+    const hint = methodSource("renderHintRoom", "renderPuzzleRoom");
+    expect(hint).toContain("addSnesMapTablet");
+    expect(hint).not.toContain("this.drawWallMap(");
+  });
+
   it("opens the next chapter through the physical east exit", () => {
     const finish = methodSource("finishArchiveIfReady", "sourceRoomComplete");
     expect(finish).toContain("archiveSourceRoomComplete = 1");
