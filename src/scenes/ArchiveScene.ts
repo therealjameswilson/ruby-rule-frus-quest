@@ -777,6 +777,7 @@ export class ArchiveScene extends Phaser.Scene {
       onCovered: applyRoom,
       onComplete: () => {
         this.roomTransitionLocked = false;
+        saveGameNow("scene");
       }
     });
   }

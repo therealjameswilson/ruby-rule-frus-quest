@@ -41,6 +41,16 @@ try{
  await move(72,154);await move(72,76);await move(128,76);await press();
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).roomTraversal.currentRoomId==='AS');
  await page.waitForTimeout(1000);await shot('annotation-entry');
- assert.deepEqual(errors,[]);console.log('PASS earned source trail, standards decision, stamp, tool-cleared wall and Annotation Stacks entry');
+ await page.reload();
+ await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
+ await press('Enter');
+ await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ArchiveScene');
+ await page.waitForTimeout(1000);
+ assert.equal((await state()).roomTraversal.currentRoomId,'AS');
+ const restoredY=(await state()).player.y;
+ await press('ArrowUp');
+ assert((await state()).player.y<restoredY,'restored room must accept movement');
+ await shot('annotation-restored');
+ assert.deepEqual(errors,[]);console.log('PASS earned source trail, standards decision, stamp, tool-cleared wall, Annotation Stacks entry and reload');
  await context.storageState({path:`${out}/earned-storage.json`});
 }finally{await shot('last');await browser.close();}
