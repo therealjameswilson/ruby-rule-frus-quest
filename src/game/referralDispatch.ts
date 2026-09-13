@@ -16,6 +16,10 @@ type Progress = Readonly<Record<string, number>>;
 export const dispatchCopyFound = (progress: Progress) => progress.referralDispatchCopyFound === 1;
 export const dispatchAisleOpen = (progress: Progress) => progress.referralDispatchAisleOpen === 1;
 
+export function canPrepareDispatchBatch(step: number, carried: boolean, found: boolean) {
+  return carried && found && Number.isInteger(step) && step >= 0 && step < 3;
+}
+
 export function dispatchShelfCell(x: number, y: number, open: boolean) {
   return x >= 4 && x <= 11 && y >= 4 && y <= 7 && !(open && (x === 7 || x === 8));
 }

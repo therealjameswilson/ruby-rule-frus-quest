@@ -10,6 +10,15 @@ function methodSource(name: string, nextName: string) {
 }
 
 describe("ReferralVaultScene physical review flow", () => {
+  it("uses the dispatch discovery to prepare a draft, never to grant release or human approval", () => {
+    const action = methodSource("handleDispatchAction", "referralReviewStage");
+    expect(action).toContain("canPrepareDispatchBatch");
+    expect(action).toContain("Boolean(this.carriedEquityPacket())");
+    expect(action).toContain("this.pickUpManifest()");
+    expect(action).not.toContain("referralManifestReviewComplete = 1");
+    expect(action).not.toContain("referralEquityRouteComplete = 1");
+    expect(action).not.toContain("awardProcessStamp");
+  });
   it("lets Marcus help without filing the nearby station or changing progress", () => {
     const action = methodSource("handleReferralReviewAction", "updateReferralInteractionPrompt");
     const guide = action.slice(action.indexOf("if (this.atReferralGuide())"), action.indexOf("if (this.referralGateOpen)"));

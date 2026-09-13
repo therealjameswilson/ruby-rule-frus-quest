@@ -52,9 +52,15 @@ publication checkpoint is `earned-publication-storage.json` in the last folder.
    publication and stable completion stats. Incomplete/legacy records still use
    their desks; `qa-bindery-finale.mjs` retains that older-route coverage. Assess
    this new pacing with a human player; simulated touch is not physical iPhone QA.
-2. Audit delivery-only stretches. Retain errands when they teach geography or
-   set up a discovery; replace repeated walk-confirm-stamp beats with fewer,
-   consequential interactions.
+2. Referral now rewards finding the original dispatch with a prepared batch
+   draft, replacing three mandatory agency deliveries on the preferred route.
+   The north-stacks clue and shelf shortcut have a direct progression payoff.
+   The player still corrects WH Minutes routing and files at the human desk;
+   source discovery does not approve release. Original desks remain available.
+   `qa-referral-discovery-batch.mjs` and `qa-earned-referral-manifest.mjs` passed
+   from earned Clearance progress through reload, rejection/correction, treatment,
+   Concurrence Slip and proofing arrival. Remaining treatment deliveries should
+   be assessed for meaningful choices, not just walking and confirmation.
 3. Simulated touch now passes the full earned DANN-E route with Swarm dispersion
    and a deliberately uneven Cloud segment: 16 swings reduced Cloud HP 180 to
    96, returned four bolts, and cost 20 reliability. Full fight finished without

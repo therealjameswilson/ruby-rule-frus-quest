@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildDispatchStackLayers, dispatchAisleOpen, dispatchCopyFound, DISPATCH_STACKS, dispatchObjective, nearbyDispatchTarget } from "./referralDispatch";
+import { buildDispatchStackLayers, canPrepareDispatchBatch, dispatchAisleOpen, dispatchCopyFound, DISPATCH_STACKS, dispatchObjective, nearbyDispatchTarget } from "./referralDispatch";
 import { createGameSaveData, gameState, resetGameState, restoreGameSaveData } from "./state";
 import { buildReferralR1TileLayers, isReferralR1ExitCell } from "./referralR1Tilemap";
 import { canTraverseExit } from "./questArchitecture";
@@ -7,6 +7,14 @@ import { FRUS_ROOM_GRAPH } from "./constants";
 import { pixelFontMetrics } from "../systems/pixelFontMetrics";
 
 describe("Dispatch Stacks evidence trip", () => {
+  it("prepares only a physically carried pending batch using recovered evidence", () => {
+    for (const step of [0, 1, 2]) {
+      expect(canPrepareDispatchBatch(step, true, true)).toBe(true);
+      expect(canPrepareDispatchBatch(step, false, true)).toBe(false);
+      expect(canPrepareDispatchBatch(step, true, false)).toBe(false);
+    }
+    for (const step of [-1, 3, 4, 0.5, NaN]) expect(canPrepareDispatchBatch(step, true, true)).toBe(false);
+  });
   it("provides a tool-gated outward path and an unconditional return in the room graph", () => {
     expect(FRUS_ROOM_GRAPH.find(room => room.id === "R1")?.exits.north).toBe("R3");
     expect(FRUS_ROOM_GRAPH.find(room => room.id === "R3")?.exits.south).toBe("R1");

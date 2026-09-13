@@ -161,11 +161,10 @@ export function referralGuideHint(stage: ReferralReviewStage, step: number, carr
     };
   }
   if (!carried) return {
-    short: "BATCH: SOUTH TRAY", message: "Take the batch from the south tray. Carry each file to its matching desk; the next stays with you."
+    short: "BATCH: SOUTH TRAY", message: "Take the batch from the south tray, then find the original dispatch in the north stacks."
   };
   if (stage === "equity") {
-    const packet = getReferralEquityPacket(step);
-    return { short: `${packet.shortLabel} > ${packet.agency}`, message: `${packet.label}: match the ${packet.agency} equity desk. Routing does not grant release approval.` };
+    return { short: "BATCH: NORTH STACKS", message: "Carry the batch to the original dispatch in the north stacks. It prepares the referrals together; check and file the draft yourself. Routing does not grant release approval. Individual agency desks remain available." };
   }
   const docket = getReferralTreatmentDocket(step);
   return { short: `FILE AT ${REFERRAL_TREATMENT_LABELS[docket.station]}`, message: `${docket.label}: take it to the ${docket.stationLabel}. Keep the treatment visible in the record.` };
@@ -182,8 +181,7 @@ export function referralReviewObjective(
   if (stage === "complete") return "EXIT EAST - SLIP";
   if (stage === "manifest") return carried ? "DRAFT TO HUMAN DESK" : "TAKE DRAFT AT CHAT";
   if (stage === "equity") {
-    const packet = getReferralEquityPacket(step);
-    return carried ? `${packet.order}/3 TO ${packet.agency}` : "TAKE EQUITY BATCH";
+    return carried ? "TO DISPATCH STACKS" : "TAKE EQUITY BATCH";
   }
   const docket = getReferralTreatmentDocket(step);
   return carried

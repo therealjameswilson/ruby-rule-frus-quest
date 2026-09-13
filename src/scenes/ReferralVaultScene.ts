@@ -4,7 +4,7 @@ import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId, RoomType } from "../game/constants";
 import {
-  buildDispatchStackLayers, DISPATCH_STACKS, dispatchAisleOpen, dispatchCopyFound,
+  buildDispatchStackLayers, DISPATCH_STACKS, dispatchAisleOpen, dispatchCopyFound, canPrepareDispatchBatch,
   dispatchObjective, nearbyDispatchTarget
 } from "../game/referralDispatch";
 import {
@@ -219,7 +219,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (restoredRoomId === "R3") {
       setLatestMessage("Compare the dispatch copy with the draft. The south door returns to review.");
     } else if (!this.referralGateOpen) {
-      setLatestMessage("Carry the equity batch between desks. StateChat drafts; a human confirms.");
+      setLatestMessage("Take the south-tray batch to the north Dispatch Stacks. Find the source, then check and file the draft yourself.");
     }
   }
 
@@ -734,6 +734,14 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (!id) return false;
     if (id === "receipt") {
       gameState.sceneProgress.referralDispatchCopyFound = 1;
+      if (canPrepareDispatchBatch(this.equityStep, Boolean(this.carriedEquityPacket()), true)) {
+        // Source recovery prepares the batch; only human filing dispatches it.
+        this.equityStep = REFERRAL_EQUITY_PACKETS.length;
+        gameState.sceneProgress.referralEquityRouteStep = this.equityStep;
+        gameState.sceneProgress.referralEquityPacketCarried = 0;
+        gameState.sceneProgress.referralDispatchBatchPrepared = 1;
+        this.pickUpManifest();
+      }
       this.toast.show("COPY: WH MINUTES > NSC", this.player.position, "info");
       setLatestMessage("Training dispatch copy: White House Minutes routed to NSC. Compare it with the draft at the human desk. Routing is not release approval.");
     } else if (id === "crank") {
@@ -1414,9 +1422,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     const stage = this.referralReviewStage();
     if (stage === "equity") {
       const carried = this.carriedEquityPacket();
-      return carried
-        ? this.agencyTarget(carried.agency)
-        : this.referralTrayTarget("referral-equity-tray", "Referral file", 128, 174);
+      if (carried) return this.referralTrayTarget("dispatch-north", "Dispatch Stacks", 128, 48);
+      return this.referralTrayTarget("referral-equity-tray", "Referral file", 128, 174);
     }
     if (stage === "manifest") {
       if (this.manifestCarried() && !dispatchCopyFound(gameState.sceneProgress)) {
@@ -1501,7 +1508,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.carryEquityPacket(packet);
     retroAudio.confirm();
     this.toast.show("EQUITY BATCH", this.player.position, "info");
-    setLatestMessage(`${packet.label}: route to ${packet.agency}. The next file stays with you.`);
+    setLatestMessage("Batch collected. Go north to the Dispatch Stacks; the original dispatch prepares your draft for human review.");
     setObjective(this.referralObjective());
     this.syncReferralVisibleEntities();
     saveGameNow();
@@ -1580,6 +1587,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     gameState.sceneProgress.referralManifestDraftRoutes = encodeReferralManifest(draft);
     gameState.sceneProgress.referralManifestCarried = 0;
     gameState.sceneProgress.referralManifestReviewComplete = 1;
+    gameState.sceneProgress.referralEquityRouteComplete = 1;
     this.manifestReviewed = true;
     setHeldItem(null);
     if (this.manifestHeldIcon?.active) this.manifestHeldIcon.destroy();

@@ -20,7 +20,7 @@ describe("physical Referral Vault review", () => {
     expect(referralGuideHint("equity", 0, false).short).toBe("BATCH: SOUTH TRAY");
     for (const [step, packet] of REFERRAL_EQUITY_PACKETS.entries()) {
       const hint = referralGuideHint("equity", step, true);
-      expect(hint.short).toBe(`${packet.shortLabel} > ${packet.agency}`);
+      expect(hint.short).toBe("BATCH: NORTH STACKS");
       expect(hint.short.length).toBeLessThanOrEqual(22);
       expect(hint.message).toContain("does not grant release approval");
     }
@@ -40,7 +40,7 @@ describe("physical Referral Vault review", () => {
       const pickup = referralReviewObjective("equity", step, false);
       const carry = referralReviewObjective("equity", step, true);
       expect(pickup).toBe("TAKE EQUITY BATCH");
-      expect(carry).toBe(`${packet.order}/3 TO ${packet.agency}`);
+      expect(carry).toBe("TO DISPATCH STACKS");
       const retry = routeReferralEquityPacket(step, packet.id, packet.agency === "CIA" ? "DOD" : "CIA");
       expect(referralReviewObjective("equity", retry.nextStep, true)).toBe(carry);
       expect(Math.max(pickup.length, carry.length)).toBeLessThanOrEqual(20);
