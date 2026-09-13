@@ -3352,6 +3352,8 @@ export class ArchiveScene extends Phaser.Scene {
     gameState.sceneProgress.annotationDraftingStep = ANNOTATION_DRAFTING_PROMPTS.length;
     gameState.sceneProgress.annotationDraftingCarried = 0;
     gameState.sceneProgress.annotationGatheredMask = 7;
+    this.drawRoomExits(ARCHIVE_ROOMS[this.currentRoomId]);
+    this.syncRoomTraversalState();
     for (const documentId of ["source_note_047", "cross_reference_001", "sbu_annotation_001"]) {
       setDocumentWorkflowState(documentId, "ready_for_review", "expanded annotation drafted for provenance, context, and selectivity");
     }

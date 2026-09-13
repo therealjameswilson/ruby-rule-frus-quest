@@ -47,3 +47,21 @@ Unit coverage checks incomplete reviews, completion evidence without a cached
 flag, save/restore, and carried notes. The full suite passes 224 files / 1,694
 tests; build passes with the existing large-chunk warning. This is not a new
 physical traversal of every room-graph edge or a deployment.
+
+## Physical Filing and Crossing Replay
+
+An earned carried-packet save was replayed through the table review and filing,
+then through both supporting-document pickups and the actual east threshold into
+Two Networks. `qa-earned-network.mjs` now requires earned storage and checks the
+map stays locked after filing and after the first document, then opens with the
+completed packet. It also captures console errors.
+
+The filing capture exposed a stale Office doorway sign: it still read LOCK even
+after the carrying restriction ended. Filing now redraws the gates and refreshes
+traversal immediately. `qa-file-annotation.mjs` asserts LOCK before filing and
+OFFICE afterward, without reloading. The fixed filing capture under
+`/private/tmp/frus-packet-gate-filing-fixed/` and successful Network arrival under
+`/private/tmp/frus-packet-gate-crossing/` were inspected. Both runs had no captured
+page/console errors. Full suite: 224 files / 1,695 tests; build passes with the
+existing large-chunk warning. These are scripted keyboard checks, not unaided
+player enjoyment or physical-phone evidence.

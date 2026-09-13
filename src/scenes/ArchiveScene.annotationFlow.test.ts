@@ -10,6 +10,11 @@ function methodSource(name: string, nextName: string) {
 }
 
 describe("ArchiveScene physical annotation flow", () => {
+  it("refreshes gate art and map traversal after filing the carried packet", () => {
+    const complete = methodSource("completeAnnotationDrafting", "drawSourceNoteStampMark");
+    expect(complete.indexOf("annotationDraftingComplete = 1")).toBeLessThan(complete.indexOf("this.drawRoomExits("));
+    expect(complete).toContain("this.syncRoomTraversalState()");
+  });
   it("gives moving route markers one owner and clears them on room exit", () => {
     const track = methodSource("trackSourceNoteRouteCue", "drawSourceNoteRouteCue");
     expect(track).toContain("this.sourceNoteRouteCueObjects.push(object)");

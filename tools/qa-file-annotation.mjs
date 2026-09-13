@@ -1,10 +1,14 @@
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+assert(process.env.FRUS_QA_STORAGE, 'Provide an earned carried-annotation checkpoint');
 const out=process.env.FRUS_QA_OUT ?? '/private/tmp/frus-file-annotation';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE});
 const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+const westLabels = () => page.evaluate(() => window.game.scene.getScene('ArchiveScene').gateArt.get('west')
+  .filter(object => typeof object.text === 'string').map(object => object.text));
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const key=async(k='Space',ms=50)=>{await page.keyboard.down(k);await page.waitForTimeout(ms);await page.keyboard.up(k);await page.waitForTimeout(150);};
 const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
@@ -14,10 +18,13 @@ try{
  await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ArchiveScene');await page.waitForTimeout(1000);
  assert.equal((await state()).sceneProgress.annotationGatheredMask,7);await shot('arrival');
+ assert((await westLabels()).includes('LOCK'), 'Carried packet should visibly lock the Office return');
  await move(72,76);await move(72,154);await move(128,154);await key();await shot('review');
  console.log(JSON.stringify((await state()).choice));
  await page.waitForTimeout(500);await key('ArrowDown');await key();await page.waitForTimeout(600);await shot('filed');
  assert.equal((await state()).sceneProgress.annotationDraftingComplete,1);
+ assert((await westLabels()).includes('OFFICE'), 'Filing must restore the Office sign without reloading the room');
+ assert(!(await westLabels()).includes('LOCK'));
  assert.equal((await state()).objective,'PICK UP TELEGRAM');
  assert.match((await state()).latestMessage,/Source, context, and selection notes filed together/);
  await context.storageState({path:`${out}/earned-storage.json`});
