@@ -64,6 +64,10 @@ publication checkpoint is `earned-publication-storage.json` in the last folder.
    confirm-to-file action. Inspection alone and an away-facing swing leave the
    gate closed; a correct active strike prints the marker and opens it. Repeated
    strikes do not repeat points. The earned route passes through the next chapter.
+   The same harness with `--mobile --guide-check` now passes using touch only
+   at 375x667, including a missed swing, re-approach and the physical stamp.
+   Phone screenshots show review text and gate feedback clear of A/B controls.
+   This is simulated Chrome input, not physical iPhone verification.
    Permission and appeal deliveries still need assessment for meaningful choices.
 3. Simulated touch now passes the full earned DANN-E route with Swarm dispersion
    and a deliberately uneven Cloud segment: 16 swings reduced Cloud HP 180 to
