@@ -712,7 +712,7 @@ export class GameplayMapScene extends Phaser.Scene {
         this.player.actionId
       );
       if (hitResult === "wrong-tool") {
-        setObjective(`Wrong counter. Equip ${enemy.readout().weakness.replace(/_/g, " ").toUpperCase()} for ${enemy.readout().label}.`);
+        setObjective(`EQUIP ${enemy.weakness.replace(/_/g, " ").toUpperCase()}`);
         this.objectiveOverrideMsRemaining = 1250;
       } else if (hitResult === "damaged") {
         this.hitstop.freezeFor(this.time.now, "sword-hit");

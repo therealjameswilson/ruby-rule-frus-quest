@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Readable wrong-tool counter feedback (2026-09-13):
+  - Previous turn made progress with immediate pause freezing. Audited enemy feedback and found GameplayMapScene put required-tool advice after the first sentence; UIScene.compactObjective therefore displayed only Wrong counter.
+  - Wrong-tool objective now directly names EQUIP plus the required tool. Existing detailed enemy message, damage, knockback, room gates and saves are unchanged. Behavioral tests exercise scene feedback through UIScene sentence selection and the real character clamp for Stamp, Pencil and Folder, preserving explore mode.
+  - 18 focused enemy/HUD tests and production build pass (existing chunk warning). Installed gameplay client ran; native NARA map inspected. Physical keyboard wrong-tool swing on Mark I shows EQUIP REVIEW FOLDER with HP unchanged and no page errors: /private/tmp/frus-counter-feedback-routed/native.png and result.json. Uses explicit debug-granted tools, not earned progression.
+  - Two preliminary live runs failed to reach/finish the hit within the scripted route budget. Used collision-aware physical aisle navigation and sufficient active-frame time; did not move the player through state mutation. Earlier capture at /private/tmp/frus-counter-feedback/ remains a failed check.
+  - Local only. Next: legacy GameplayMapScene NARA is visually dense and its ordinary long objectives still truncate; compare its optional encounter readability with the cleaner main-route NaraStacksScene before changing room layout or progression.
+
 - Immediate combat pause (2026-09-13):
   - Reproduced an extra enemy-update frame when Escape opens the inventory; menu input already froze immediately. Include pauseJustPressed in the shared canAct guard, preserving existing overlay and input handling. Two regression cases pass for Escape and menu input.
   - Full suite: 204 files / 1,574 tests pass. Production build passes with the existing chunk warning. Installed NARA gameplay client ran and native capture was inspected.
