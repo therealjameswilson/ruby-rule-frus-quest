@@ -38,8 +38,22 @@ async function shot(label){const s=await state();results.push({label,state:s});c
 async function act(label){await press();return shot(label);}
 async function choose(key){
  const before=await state();assert.equal(before.mode,'choice');
- if(mobile){const p=await page.evaluate(key=>{const c=window.game.scene.getScene('ArchiveScene').researchChoice;const i=c.options.findIndex(o=>o.key===key),r=c.optionObjects[i*2];return{x:r.x,y:r.y};},key);await click(p.x,p.y);}else await press(key==='A'?'Space':'x');
+ if(mobile){const p=await page.evaluate(key=>{const c=window.game.scene.getScene('ArchiveScene').researchChoice;const i=c.options.findIndex(o=>o.key===key),r=c.optionObjects[i*2];return{x:r.x,y:r.y};},key);await click(p.x,p.y);}else await press(key==='A'?'Space':key==='C'?'c':'x');
  await page.waitForTimeout(250);
+}
+async function cancelReview(label){
+ const before=await state();assert.equal(before.mode,'choice');
+ const unchanged=async()=>{
+  const after=await state();assert.equal(after.mode,'explore');
+  assert.equal(after.documentPoints,before.documentPoints);
+  for(const flag of ['archiveStandardsReviewComplete','archiveCoverageReviewComplete','repositoryCoverageMapComplete','annotationDraftingComplete'])assert.equal(after.sceneProgress[flag],before.sceneProgress[flag],flag);
+  assert.deepEqual(after.processStamps,before.processStamps);
+  assert.equal(after.playerCombat.weapon.swingId,before.playerCombat.weapon.swingId);
+ };
+ if(mobile)await click(224,16);else await press('Escape');
+ await unchanged();await act(`${label}-reopened`);
+ await choose('C');await unchanged();await act(`${label}-after-back`);
+ assert.equal((await state()).mode,'choice');
 }
 try{
  await page.goto(new URL('?text=full',base).href);await scene('TapToStartScene');if(mobile)await click(86,154);else await press('Enter');await scene('ArchiveScene');await shot('00-earned-archive');
@@ -97,7 +111,7 @@ try{
  if(mobile)await click(77,158);else await press();
  const filed=await shot('06-footnote-approved');assert.equal(filed.documentPoints,28);
  assert.equal((await note()).repository,'Fictional National Archives Collection');assert.equal((await note()).folder,'Alliance Consultation');assert.equal((await note()).firstFootnote.readership,null);
- await move(128,145);await act('07-standards-review');await choose('A');await shot('08-source-stamped');
+ await move(128,145);await act('07-standards-review');await cancelReview('07-standards');await choose('A');await shot('08-source-stamped');
  await move(100,176);await move(100,168);await direction('ArrowUp',60);assert.equal((await state()).playerFacing,'north');await shot('09-before-swing');
  await context.storageState({path:`${out}/reviewed-wall.json`});
  if(process.argv.includes('--interact'))await direction('ArrowDown',45);
@@ -151,7 +165,7 @@ try{
  assert.equal((await state()).sceneProgress.annotationGatheredMask,7);assert.equal((await state()).documentPoints,points);
  await move(48,190);await move(128,192);await move(128,220,'A1');
  const returned=await shot('13-returned-packet');assert.equal(returned.heldItem,'Annotation packet 3/3');assert(!returned.sceneProgress.annotationDraftingComplete);assert.notEqual(returned.nearestInteractable,'ENTER NOTE STACKS');
- await move(80,72);await move(80,145);await move(128,145);await act('14-file-packet');await choose('B');await shot('15-annotation-filed');
+ await move(80,72);await move(80,145);await move(128,145);await act('14-file-packet');await cancelReview('14-coverage');await choose('B');await shot('15-annotation-filed');
  await context.storageState({path:`${out}/filed-packet-storage.json`});
  await move(68,144);await act('16-telegram');await move(188,144);await act('17-crossref');
  await move(216,144);await move(216,120);await move(248,120,'NetworkScene');await shot('18-network-entry');

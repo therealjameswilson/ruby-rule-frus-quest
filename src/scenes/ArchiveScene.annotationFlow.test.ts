@@ -156,11 +156,19 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(gate).toContain('this.currentRoomId === "B2" && !this.specialistDecisionMade');
   });
 
-  it("gives the player time to move after leaving the meaning review", () => {
-    const resume = methodSource("resumeMeaningReview", "useGoldenRuleGate");
+  it("gives the player time to move after leaving an Archive review", () => {
+    const resume = methodSource("resumeArchiveReview", "useGoldenRuleGate");
     expect(resume).toContain("this.time.now + 600");
     expect(archiveSceneSource).toContain("this.time.now >= this.reviewResumeUntil");
     expect(archiveSceneSource).toContain("Math.max(this.wallContactCooldown, this.reviewResumeUntil)");
+  });
+
+  it("cancels standards and coverage reviews without recording an answer", () => {
+    const review = methodSource("reviewResearchDecision", "finishMissingResearchReview");
+    expect(review).toContain('label: "Back to the room"');
+    expect(review).toContain('if (option.value === "back")');
+    expect(review).toMatch(/if \(option.value === "back"\) \{\s*this.resumeArchiveReview\(\);\s*return;\s*\}\s*const result = recordArchiveResearchReview/);
+    expect(review).toContain("}, 6, () => this.resumeArchiveReview())");
   });
 
   it("files the referral tray without a modal and retires the completed interaction", () => {

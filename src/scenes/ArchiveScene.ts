@@ -2129,7 +2129,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.hintText.setText("");
     this.researchChoice.show(`${review.question}\n\n${review.context}`, [...review.options], option => {
       if (option.value === "back") {
-        this.resumeMeaningReview();
+        this.resumeArchiveReview();
         return;
       }
       const approved = option.value === review.correctValue;
@@ -2137,14 +2137,14 @@ export class ArchiveScene extends Phaser.Scene {
         this.specialistDecisionMade = true;
         this.clearEnemyById("ambiguous-flag", "Source uncertainty preserved by human review.");
       } else retroAudio.warning();
-      this.resumeMeaningReview();
+      this.resumeArchiveReview();
       const message = approved ? review.successMessage : review.failureMessage;
       setLatestMessage(message);
       this.toast.show(message, this.player.position, approved ? "info" : "warn");
-    }, 8, () => this.resumeMeaningReview());
+    }, 8, () => this.resumeArchiveReview());
   }
 
-  private resumeMeaningReview() {
+  private resumeArchiveReview() {
     this.reviewResumeUntil = this.time.now + 600;
     this.refreshRoomObjective();
   }
@@ -3310,14 +3310,22 @@ export class ArchiveScene extends Phaser.Scene {
     const review = ARCHIVE_RESEARCH_REVIEWS[id];
     this.interactionPrompt.update(0, null);
     this.clearSourceNoteRouteCue();
-    this.researchChoice.show(`${review.question}\n\n${review.context}`, [...review.options], (option) => {
+    this.researchChoice.show(`${review.question}\n\n${review.context}`, [
+      ...review.options,
+      { key: "C", label: "Back to the room", value: "back" }
+    ], (option) => {
+      if (option.value === "back") {
+        this.resumeArchiveReview();
+        return;
+      }
       const result = recordArchiveResearchReview(id, option.value);
       if (result.ok) onApprove();
       else retroAudio.warning();
+      this.resumeArchiveReview();
       setLatestMessage(result.message);
       this.toast.show(result.message, this.player.position, result.ok ? "info" : "warn");
       saveGameNow();
-    });
+    }, 6, () => this.resumeArchiveReview());
   }
 
   private finishMissingResearchReview() {

@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Main Archive review cancellation (2026-09-12):
+  - Standards and repository-coverage reviews now opt into safe Escape/Start cancellation and provide a visible Back row. Cancel returns before recording any answer, preserving stamps, points, packet state, and swing count. Actual A/B answers retain their existing effects. Shared 600 ms review recovery gives room to move without immediate contact damage.
+  - Extended qa-archive-wall.mjs to cancel/reopen both questions twice, deliberately approve, continue through the cart/annotation puzzle, reload saved progress, and enter Network. Keyboard and simulated portrait touch verify earned progression, not injected flags. Screenshots and checkpoints: /private/tmp/frus-main-review-cancel/ and /private/tmp/frus-main-review-cancel-touch/.
+  - Inspected native standards/coverage screens, phone coverage layout, and installed gameplay-client native movement screenshot (/private/tmp/frus-main-review-client/). Full suite passes: 202 files / 1,545 tests. Strengthened source assertion also passes. Production build passes with the existing bundle warning.
+  - Local only; physical iPhone unverified. Continue auditing other ChoicePrompt callers individually rather than globally changing answer-B semantics.
+
 - Safe meaning-review cancellation (2026-09-12):
   - Reproduced Escape selecting correct answer B and awarding three points. ChoicePrompt now supports an opt-in cancel callback through pause/menu input, swallowing the closing input. B face-button answer selection remains distinct; other existing prompts retain their behavior, including when reusing the same instance. This review opts in and also offers a visible Back row.
   - Touch replay exposed an immediate enemy hit after returning from the review, making a wrong practice answer appear penalized. Added a 600 ms recovery window for this review only, suppressing DANN-E pressure and wall contact without freezing movement or awarding anything. Wrong-answer accounting now compares immediately before/after the answer, not across intervening active-room time.
