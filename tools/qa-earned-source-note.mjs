@@ -26,7 +26,21 @@ try{
  assert(!(await state()).sceneProgress.aboutSeriesFirstFootnoteComplete);
  await press('ArrowUp');await press();await shot('corrected');
  await press();await shot('filed');assert.equal((await state()).sceneProgress.aboutSeriesFirstFootnoteComplete,1);
- await press();await shot('stamped');
- assert.deepEqual(errors,[]);console.log('PASS earned source trail and repaired readership claim');
+ await press();await shot('standards-decision');
+ assert.equal((await state()).choice.options[0].value,'retain');
+ assert(!(await state()).sceneProgress.archiveSourceNoteStamped);
+ await press();await page.waitForTimeout(600);await shot('stamped');
+ assert.equal((await state()).sceneProgress.archiveSourceNoteStamped,1);
+ assert((await state()).volumeFragments.includes('Source Note Fragment'));
+ for(let i=0;i<12&&!(await state()).sceneProgress.archiveRepoWallCleared;i++) {
+   await press();await page.waitForTimeout(450);
+ }
+ assert.equal((await state()).sceneProgress.archiveRepoWallCleared,1);
+ await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='NORTH: ANNOTATION STACKS');
+ await shot('route-open');await press();await page.waitForTimeout(700);
+ await move(72,154);await move(72,76);await move(128,76);await press();
+ await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).roomTraversal.currentRoomId==='AS');
+ await page.waitForTimeout(1000);await shot('annotation-entry');
+ assert.deepEqual(errors,[]);console.log('PASS earned source trail, standards decision, stamp, tool-cleared wall and Annotation Stacks entry');
  await context.storageState({path:`${out}/earned-storage.json`});
 }finally{await shot('last');await browser.close();}

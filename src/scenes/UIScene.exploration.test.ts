@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { UIScene } from "./UIScene";
-import { gameState, resetGameState, setRoomTraversalState, setSceneState } from "../game/state";
+import { addProcessItem, equipProcessItem, gameState, resetGameState, setRoomTraversalState, setSceneState } from "../game/state";
 
 vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} } } }));
 
@@ -12,6 +12,19 @@ beforeEach(() => {
 
 describe("annotation exploration cues", () => {
   const cue = () => (new UIScene() as unknown as { compactActionLine(tool: string): string }).compactActionLine("FOLDER");
+
+  it("replaces generic combat advice with the newly unlocked north route", () => {
+    setRoomTraversalState({ currentRoomId: "A1", roomTitle: "Source Room", roomType: "normal", visitedRoomIds: ["A1"], exits: { north: "AS" } });
+    addProcessItem("citation_stamp");
+    equipProcessItem("citation_stamp");
+    const counter = () => (new UIScene() as unknown as { showCounterAction(): boolean }).showCounterAction();
+    expect(counter()).toBe(true);
+    gameState.sceneProgress.archiveRepoWallCleared = 1;
+    expect(cue()).toBe("NORTH: ANNOTATION STACKS");
+    expect(counter()).toBe(false);
+    gameState.nearestInteractable = "Research Table";
+    expect(cue()).toBe("INTERACT: RESEARCH TABLE");
+  });
 
   it.each([{}, { annotationGatheredMask: 7 }])("keeps the work route until the packet is filed: %j", progress => {
     Object.assign(gameState.sceneProgress, progress);

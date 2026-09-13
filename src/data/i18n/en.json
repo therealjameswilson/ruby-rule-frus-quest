@@ -7,6 +7,7 @@
     "readingRoomExit": "EXIT: SOUTH DOOR",
     "restoreChronology": "RESTORE CHRONOLOGY",
     "annotationAisles": "NOTES / TABLE SOUTH",
+    "annotationNorth": "NORTH: ANNOTATION STACKS",
     "annotationExits": "NARA NORTH / ARCHIVE SOUTH",
     "guideCoach": {
       "faceNorth": "FACE UP TOWARD THE BOLT",

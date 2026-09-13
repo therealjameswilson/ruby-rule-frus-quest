@@ -29,6 +29,7 @@ import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
 import { buckramBindingDestination } from "../game/buckramBinding";
 import { hiddenFirstEditionFound } from "../game/secretReadingRoom";
 import { readAnnotationPacket } from "../game/annotationPacket";
+import { annotationStacksOpen } from "../game/annotationStacks";
 import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
 import { CROSS_REFERENCE_TITLE } from "../game/crossReferenceCatalog";
 import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editorialRepair";
@@ -319,6 +320,7 @@ export class UIScene extends Phaser.Scene {
     if (gameState.currentScene === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "AS") {
       return getString(readAnnotationPacket(gameState.sceneProgress).complete ? "hud.annotationExits" : "hud.annotationAisles");
     }
+    if (this.annotationRouteReady()) return getString("hud.annotationNorth");
     if (gameState.currentScene === "EndingScene") {
       return getString(`hud.bindery.${buckramBindingDestination(gameState.sceneProgress)}`);
     }
@@ -364,9 +366,15 @@ export class UIScene extends Phaser.Scene {
 
   private showCounterAction() {
     return gameState.mode === "explore" && !gameState.nearestInteractable
+      && !this.annotationRouteReady()
       && !(gameState.currentScene === "ReferralVaultScene" && gameState.roomTraversal?.currentRoomId === "R3")
       && isWeaponTool(gameState.equippedProcessItem) && hasProcessItem(gameState.equippedProcessItem)
       && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "NaraStacksScene"].includes(gameState.currentScene);
+  }
+
+  private annotationRouteReady() {
+    return gameState.currentScene === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "A1"
+      && annotationStacksOpen(gameState.sceneProgress) && !gameState.sceneProgress.annotationDraftingComplete;
   }
 
   private guideCounterTrainingActive() {

@@ -100,6 +100,7 @@
     "readingRoomExit": "SORTIE: PORTE AU SUD",
     "restoreChronology": "ORDONNE LE DOSSIER",
     "annotationAisles": "ALLEES / TABLE AU SUD",
+    "annotationNorth": "NORD: ANNOTATIONS",
     "guideCoach": {
       "faceNorth": "REGARDE VERS LE HAUT",
       "faceSouth": "REGARDE VERS LE BAS",

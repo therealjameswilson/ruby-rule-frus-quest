@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned stamp-to-route payoff (2026-09-13):
+  - Previous turn improved source-note repair. Audited its stamped.json and found the final press opened the standards decision, not a completed stamp; earlier provenance/repair assertions were valid, but stamp completion was not yet proved. Extended tools/qa-earned-source-note.mjs to assert unearned stamp before the retain-evidence choice, then actual stamp flag and Source Note Fragment after confirmation, followed by physical tool clearance of NO REPO and walking into AS.
+  - The new route passed and exposed misleading default HUD combat advice after the barrier fell. A1 now advertises NORTH: ANNOTATION STACKS while that work remains, before generic counter text; nearby interactions keep priority, and the counter action badge is disabled only for this route-ready state. Added EN/ES/FR copy and an equipped-weapon regression.
+  - Earned-route repeat passed and asserted rendered UIScene text. Native route-open and AS-entry screenshots inspected at /private/tmp/frus-source-unlock-final/; no page errors. 13 focused HUD tests and build pass (existing chunk warning). Standard gameplay client completed at /private/tmp/frus-north-route-client/. No save schema or research decision rules changed. Local only.
+  - Next: continue from this genuinely earned AS save through the physical context-cart puzzle, note collection, and reward filing. Do not describe standards-dialog opening as completed stamping again.
+
 - Earned Archive provenance route and explicit repair action (2026-09-13):
   - Previous turn verified the fresh opening. Continued its earned Archive storage with no grants or scene jumps. Real input picks up Source Note 47, routes it, gathers collection/repository/folder in non-prefix order, returns to the board, attempts unsupported filing, repairs readership and separately files/stamps the note.
   - Native board inspection showed the clickable draft stated the problem but not its action. Added REMOVE UNSUPPORTED CLAIM beneath the draft, changing to EVIDENCE LIMIT RETAINED after repair; unchanged button bounds, confirmation logic, source metadata and save rules. Added explicit-label regression.
