@@ -59,8 +59,12 @@ publication checkpoint is `earned-publication-storage.json` in the last folder.
    source discovery does not approve release. Original desks remain available.
    `qa-referral-discovery-batch.mjs` and `qa-earned-referral-manifest.mjs` passed
    from earned Clearance progress through reload, rejection/correction, treatment,
-   Concurrence Slip and proofing arrival. Remaining treatment deliveries should
-   be assessed for meaningful choices, not just walking and confirmation.
+   Concurrence Slip and proofing arrival. The final bracket press now requires
+   physical Citation Stamp contact with the reviewed proof instead of another
+   confirm-to-file action. Inspection alone and an away-facing swing leave the
+   gate closed; a correct active strike prints the marker and opens it. Repeated
+   strikes do not repeat points. The earned route passes through the next chapter.
+   Permission and appeal deliveries still need assessment for meaningful choices.
 3. Simulated touch now passes the full earned DANN-E route with Swarm dispersion
    and a deliberately uneven Cloud segment: 16 swings reduced Cloud HP 180 to
    96, returned four bolts, and cost 20 reliability. Full fight finished without

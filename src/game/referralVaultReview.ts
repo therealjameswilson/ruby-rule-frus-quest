@@ -169,6 +169,9 @@ export function referralGuideHint(stage: ReferralReviewStage, step: number, carr
     return { short: "BATCH: NORTH STACKS", message: "Carry the batch to the original dispatch in the north stacks. It prepares the referrals together; check and file the draft yourself. Routing does not grant release approval. Individual agency desks remain available." };
   }
   const docket = getReferralTreatmentDocket(step);
+  if (docket.id === "visible_excision") return {
+    short: "STAMP BRACKET PRESS", message: "Bring the proof to the bracket press. Use the Citation Stamp to print the visible withholding marker."
+  };
   return { short: `FILE AT ${REFERRAL_TREATMENT_LABELS[docket.station]}`, message: `${docket.label}: take it to the ${docket.stationLabel}. Keep the treatment visible in the record.` };
 }
 
@@ -187,7 +190,7 @@ export function referralReviewObjective(
   }
   const docket = getReferralTreatmentDocket(step);
   return carried
-    ? `${docket.order}/3 TO ${REFERRAL_TREATMENT_LABELS[docket.station]}`
+    ? docket.id === "visible_excision" ? "STAMP BRACKET PRESS" : `${docket.order}/3 TO ${REFERRAL_TREATMENT_LABELS[docket.station]}`
     : "TAKE REVIEW BATCH";
 }
 

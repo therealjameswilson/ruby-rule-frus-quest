@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { readChapterArrival } from "../game/chapterTravel";
+import { referralBracketStrike } from "../game/referralBracketPress";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId, RoomType } from "../game/constants";
@@ -136,6 +137,7 @@ const REFERRAL_ROOMS: Record<ReferralRoomId, ReferralRoom> = {
 };
 
 export class ReferralVaultScene extends Phaser.Scene {
+  private lastBracketSwing = -1;
   private player!: Player;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
@@ -177,6 +179,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   create(data?: unknown) {
+    this.lastBracketSwing = -1;
     const arrival = readChapterArrival(data, "ReferralVaultScene", gameState.currentScene);
     const restoringReferralScene = gameState.currentScene === "ReferralVaultScene";
     const restoredRoomId: ReferralRoomId = arrival?.to === "R2" || (!arrival && restoringReferralScene
@@ -310,6 +313,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
     this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player.position));
     this.updateDanneLurker(delta);
+    this.updateBracketPressHit();
     this.syncThreatState();
     this.updateCarriedReviewIcon();
     this.updateReferralInteractionPrompt(delta);
@@ -330,6 +334,27 @@ export class ReferralVaultScene extends Phaser.Scene {
   private track<T extends Phaser.GameObjects.GameObject>(object: T) {
     this.roomObjects.push(object);
     return object;
+  }
+
+  private updateBracketPressHit() {
+    if (this.currentRoomId !== "R1" || this.referralGateOpen || this.lastBracketSwing === this.player.actionId) return;
+    const result = referralBracketStrike({
+      reviewed: this.manifestReviewed, step: this.treatmentStep,
+      carried: gameState.sceneProgress.referralTreatmentDocketCarried ?? 0,
+      ownsStamp: hasProcessItem("citation_stamp"),
+      tool: this.player.combatReadout.weapon.tool,
+      hitbox: this.player.activeActionHitbox
+    });
+    if (result === "miss") return;
+    this.lastBracketSwing = this.player.actionId;
+    if (result === "wrong-tool") {
+      this.toast.show("USE CITATION STAMP", this.player.position, "warn");
+      setLatestMessage("The bracket press needs your Citation Stamp. The reviewed proof stays in hand.");
+      retroAudio.blip();
+      return;
+    }
+    this.routeTreatmentDocket("bracket_press", true);
+    addSnesRewardBurst(this, 196, 156, "citation-stamp", "[Text not declassified]", (object) => this.track(object));
   }
 
   private enterRoom(roomId: ReferralRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
@@ -1387,6 +1412,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     }
     if (stage === "manifest") return this.manifestCarried() ? "HUMAN REVIEW" : "TAKE MANIFEST";
     if (stage === "treatment") {
+      if (this.carriedTreatmentDocket()?.id === "visible_excision" && target.id === "referral-treatment-bracket_press") return "INSPECT PRESS";
       return this.carriedTreatmentDocket()
         ? `FILE ${this.treatmentStationShortLabel(target.id.replace("referral-treatment-", "") as ReferralTreatmentStationId)}`
         : "TAKE REVIEW BATCH";
@@ -1621,9 +1647,15 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.createTreatmentDocketHeldIcon(docket.id);
   }
 
-  private routeTreatmentDocket(station: ReferralTreatmentStationId) {
+  private routeTreatmentDocket(station: ReferralTreatmentStationId, printed = false) {
     const docket = this.carriedTreatmentDocket();
     if (!docket) return;
+    if (docket.id === "visible_excision" && station === "bracket_press" && !printed) {
+      this.player.faceTowards({ x: 196, y: 156 });
+      this.toast.show("STAMP THE BRACKET PRESS", this.player.position, "info");
+      setLatestMessage("Use your Citation Stamp on the press to print [Text not declassified]. This marks withholding; it does not release the hidden text.");
+      return;
+    }
     const result = routeReferralTreatmentDocket(this.treatmentStep, docket.id, station);
     if (!result.ok) {
       adjustReliability(-2, `${result.docket.label} caught at the wrong review station`);

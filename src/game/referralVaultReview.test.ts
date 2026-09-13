@@ -40,7 +40,7 @@ describe("physical Referral Vault review", () => {
     expect(referralGuideHint("treatment", 0, false).short).toBe("BATCH: SOUTH TRAY");
     for (const [step, docket] of REFERRAL_TREATMENT_DOCKETS.entries()) {
       const hint = referralGuideHint("treatment", step, true);
-      expect(hint.short).toBe(`FILE AT ${REFERRAL_TREATMENT_LABELS[docket.station]}`);
+      expect(hint.short).toBe(docket.id === "visible_excision" ? "STAMP BRACKET PRESS" : `FILE AT ${REFERRAL_TREATMENT_LABELS[docket.station]}`);
       expect(hint.short.length).toBeLessThanOrEqual(22);
     }
     expect(referralGuideHint("complete", 3, false).short).toBe("EAST: SLIP ROOM");
