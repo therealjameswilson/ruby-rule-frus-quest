@@ -3,6 +3,7 @@ import { PALETTE } from "../game/constants";
 import { SNES_BUREAUCRATIC_WALL_ASSETS } from "../game/snesAtlas";
 import type { Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
+import { wallFollowFactor } from "../systems/wallMotion";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -145,9 +146,9 @@ export class BureaucraticWall {
     desiredX = Phaser.Math.Clamp(desiredX, this.x - maxDrift, this.x + maxDrift);
     desiredY = Phaser.Math.Clamp(desiredY, this.y - maxDrift, this.y + maxDrift);
     const baseSpeed = this.behavior === "slow-chase" ? 10 : this.behavior === "wander" ? 16 : this.behavior === "horizontal-patrol" ? 20 : this.behavior === "push" ? 18 : 7;
-    const speed = (timeMs < this.alertUntil ? 32 : baseSpeed) * (deltaMs / 1000);
-    this.currentX = Phaser.Math.Linear(this.currentX, desiredX, Phaser.Math.Clamp(speed, 0.02, 0.22));
-    this.currentY = Phaser.Math.Linear(this.currentY, desiredY, Phaser.Math.Clamp(speed, 0.02, 0.22));
+    const follow = wallFollowFactor(timeMs < this.alertUntil ? 32 : baseSpeed, deltaMs);
+    this.currentX = Phaser.Math.Linear(this.currentX, desiredX, follow);
+    this.currentY = Phaser.Math.Linear(this.currentY, desiredY, follow);
     const bob = Math.sin((timeMs + this.wobbleOffset) / (this.behavior === "freeze" ? 90 : 180)) * (this.behavior === "freeze" ? 0.7 : 1.3);
     const renderX = snapPixel(this.currentX);
     const renderY = snapPixel(this.currentY + bob);

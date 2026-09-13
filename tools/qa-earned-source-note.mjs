@@ -32,9 +32,12 @@ try{
  await press();await page.waitForTimeout(600);await shot('stamped');
  assert.equal((await state()).sceneProgress.archiveSourceNoteStamped,1);
  assert((await state()).volumeFragments.includes('Source Note Fragment'));
- for(let i=0;i<12&&!(await state()).sceneProgress.archiveRepoWallCleared;i++) {
+ const firstSwing=(await state()).playerCombat.weapon.swingId;
+ let wallAttempts=0;
+ for(;wallAttempts<3&&!(await state()).sceneProgress.archiveRepoWallCleared;wallAttempts++) {
    await press();await page.waitForTimeout(450);
  }
+ await writeFile(`${out}/wall-clear.json`,JSON.stringify({attempts:wallAttempts,swings:(await state()).playerCombat.weapon.swingId-firstSwing},null,2));
  assert.equal((await state()).sceneProgress.archiveRepoWallCleared,1);
  await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='NORTH: ANNOTATION STACKS');
  await shot('route-open');await press();await page.waitForTimeout(700);
