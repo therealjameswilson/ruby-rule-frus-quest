@@ -264,9 +264,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.visitedRoomIds = new Set(restoredVisitedRoomIds);
     setSceneState("SilentReadScene", "explore", "Editor's Labyrinth: earn the Red Pencil.");
     retroAudio.startMusic("SilentReadScene");
-    this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
-    this.add.rectangle(128, 120, 256, 240, color(PALETTE.sepiaInk));
-    this.add.rectangle(128, 120, 248, 232, color(PALETTE.creamPaper));
+    this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawRoomFrame(this, "EDITOR / READ", PALETTE.deepRuby, { showLegacyHud: false });
     this.drawProofMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
@@ -583,8 +581,7 @@ export class SilentReadScene extends Phaser.Scene {
     }
 
     const layers = definition.layers;
-    // SilentReadScene has a legacy cream backing panel at depth 0. Keep the
-    // real floor above it while remaining well below walls and entities.
+    // Keep the floor below walls and entities; the room frame owns the backing.
     ground.putTilesAt(layers.ground, 0, 0, false).setDepth(1);
     walls.putTilesAt(layers.walls, 0, 0, true)
       .setCollision([
