@@ -51,12 +51,12 @@ try {
     const image = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src))));
     await writeFile(`${out}/${name}.png`, Buffer.from(image.split(',')[1], 'base64'));
   };
-  const moveTo = async (x, y) => {
+  const moveTo = async (x, y, tolerance = 4) => {
     for (let i = 0; i < 80; i++) {
       const p = (await state()).player;
       const dx = x - p.x, dy = y - p.y;
-      if (Math.abs(dx) <= 4 && Math.abs(dy) <= 4) return;
-      const horizontal = Math.abs(dx) > 4;
+      if (Math.abs(dx) <= tolerance && Math.abs(dy) <= tolerance) return;
+      const horizontal = Math.abs(dx) > tolerance;
       const key = horizontal ? dx < 0 ? 'ArrowLeft' : 'ArrowRight' : dy < 0 ? 'ArrowUp' : 'ArrowDown';
       const ms = Math.min(140, Math.max(25, Math.abs(horizontal ? dx : dy) / 72 * 1000));
       await direction(key, ms);
@@ -80,14 +80,16 @@ try {
   await action(); await page.waitForTimeout(2100); await action();
   await shot('clue');
   await moveTo(140, 154);
-  await moveTo(166, 154);
-  await moveTo(166, 92);
+  // The 22px aisle has only six pixels of center clearance for a 16px body.
+  await moveTo(167, 154, 2);
+  await moveTo(167, 92, 2);
   await moveTo(204, 92);
   await action();
   await page.waitForTimeout(700);
   await shot('passage');
   assert.equal((await state()).sceneProgress.hiddenReadingRoomDiscovered, 1);
   assert.equal((await state()).playerCombat.weapon.tool, 'review_folder');
+  await moveTo(204, 92, 2);
   await action();
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === 'HiddenReadingRoomScene');
   await page.waitForTimeout(1600);
@@ -101,6 +103,21 @@ try {
   await moveTo(128, 221);
   await direction('ArrowDown', 100);
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === 'NaraStacksScene');
+  if (process.argv.includes('--pause-return')) {
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).visibleThreats.some(enemy =>
+      enemy.telegraph?.kind === 'stamp-windup' && enemy.telegraph.msRemaining > 250));
+    if (mobile) await touch(224, 16); else await page.keyboard.press('Escape', { delay: 50 });
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).mode === 'pause');
+    const paused = await state();
+    await page.waitForTimeout(1200);
+    const held = await state();
+    assert.deepEqual(held.visibleThreats, paused.visibleThreats, 'Pause must preserve patrols and stamp timers');
+    assert.deepEqual(held.player, paused.player, 'Pending stamps cannot move the player while paused');
+    assert.equal(held.documentPoints, reward.documentPoints);
+    await shot('return-paused');
+    if (mobile) await touch(224, 34); else await page.keyboard.press('Escape', { delay: 50 });
+    await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).mode === 'explore');
+  }
   if (process.argv.includes('--escape-return')) {
     const arrival = await state();
     assert.equal(arrival.playerCombat.invulnerable, false, 'Return must not land on an immediate hit');
@@ -127,7 +144,7 @@ try {
   await shot('continued');
   assert.deepEqual(errors, []);
   await writeFile(`${out}/earned-storage.json`, JSON.stringify(await context.storageState(), null, 2));
-  await writeFile(`${out}/result.json`, JSON.stringify({ mobile, debugScenePlacement, returnEscapeChecked: process.argv.includes('--escape-return'), toolEarned: true, beforePoints: initial.documentPoints,
+  await writeFile(`${out}/result.json`, JSON.stringify({ mobile, debugScenePlacement, returnPauseChecked: process.argv.includes('--pause-return'), returnEscapeChecked: process.argv.includes('--escape-return'), toolEarned: true, beforePoints: initial.documentPoints,
     afterPoints: reward.documentPoints, discovered: true, collected: true, errors }, null, 2));
   console.log('Earned Folder opens the physical shelf; First Edition +25; return to NARA succeeds');
 } finally { await browser.close(); }

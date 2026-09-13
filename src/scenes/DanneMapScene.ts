@@ -326,7 +326,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (isUiDebugEnabled() && input.bJustPressed) this.showBossHudDebug();
     const frozen = this.hitstop.isFrozen(this.time.now);
     const canAct = gameState.mode === "explore" && !this.dialog.active && !this.choice.active
-      && !this.inventory.active && !this.reliability.active && !bossDecisionActive && !isCutsceneActive(this);
+      && !input.pauseJustPressed && !this.inventory.active && !this.reliability.active
+      && !bossDecisionActive && !isCutsceneActive(this);
     if (!canAct) this.attackBuffer.clear();
     this.player.setCombatPaused(!canAct || frozen);
     if (!canAct) this.vaultObjects?.update(null, false, Boolean(this.danneBoss?.isActive));

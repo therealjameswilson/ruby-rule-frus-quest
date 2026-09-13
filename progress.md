@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Immediate combat pause (2026-09-13):
+  - Reproduced an extra enemy-update frame when Escape opens the inventory; menu input already froze immediately. Include pauseJustPressed in the shared canAct guard, preserving existing overlay and input handling. Two regression cases pass for Escape and menu input.
+  - Full suite: 204 files / 1,574 tests pass. Production build passes with the existing chunk warning. Installed NARA gameplay client ran and native capture was inspected.
+  - Live earned-route check passes with --natural-entry --pause-return: pending stamp and player remain unchanged for 1.2 seconds paused, resume works, secret reward/return/reload preserve 201 -> 226 points and one collectible. No browser errors. Native pause capture inspected at /private/tmp/frus-pause-stamp-reapproach/return-paused.png.
+  - QA navigation needed a tighter center tolerance in the narrow shelf aisle and a physical re-approach after drone knockback; no collision geometry, save flags or player position was bypassed. Earlier failed route artifacts remain under /private/tmp/frus-pause-stamp-after/.
+  - Local only. Next: evaluate unaided exploratory movement and encounter rhythm; automated route success is not evidence of first-time-player comprehension or physical iPhone performance.
+
 - Fair NARA return window (2026-09-13):
   - Previous turn progressed through a natural optional route. Tested the next concern rather than assuming it: --escape-return failed twice using actual portrait-touch input after secret-room exit. Diagnostic arrival at (204,94) already had a stamp with 384 ms left; sidestep took a hit. /private/tmp/frus-secret-return-observed/.
   - NARA supplies an 800 ms initial attack delay to RedactorDrone. Patrol/player motion stay active; normal warnings and repeat timing unchanged. Pause does not spend combat-time grace. No changes to bosses, rewards or saves; no permanent shield.
