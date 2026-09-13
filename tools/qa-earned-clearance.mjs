@@ -1,10 +1,12 @@
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
+assert(process.env.FRUS_QA_STORAGE, 'Provide the preceding earned checkpoint via FRUS_QA_STORAGE');
 const out=process.env.FRUS_QA_OUT ?? '/private/tmp/frus-earned-clearance';await mkdir(out,{recursive:true});
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE});
 const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const key=async(k='Space',ms=50)=>{await page.keyboard.down(k);await page.waitForTimeout(ms);await page.keyboard.up(k);await page.waitForTimeout(150);};
 const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
@@ -33,6 +35,21 @@ try{
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ReferralVaultScene');
  await page.waitForTimeout(700);await shot('referral-arrival');
 
+ const arrived=await state();
+ assert.equal(arrived.roomTraversal.currentRoomId,'R1');
+ await page.reload();
+ await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
+ await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ReferralVaultScene');
+ await page.waitForTimeout(500);
+ const restored=await state();
+ assert.equal(restored.roomTraversal.currentRoomId,'R1');
+ assert.equal(restored.sceneProgress.classNetVaultReviewComplete,1);
+ assert(restored.inventory.includes('Clearance Token'));
+ assert.equal(restored.documentPoints,arrived.documentPoints,'Reload must not award the review again');
+ await shot('referral-restored');
+ await key('ArrowDown',150);
+ assert((await state()).player.y>restored.player.y,'Movement must resume after the handoff reload');
+
  await context.storageState({path:`${out}/earned-storage.json`});
- assert.deepEqual(errors,[]);console.log('PASS earned review batch, missing-entry rejection, chronology repair, Clearance Token and referral arrival');
+ assert.deepEqual(errors,[]);console.log('PASS earned review batch, missing-entry rejection, chronology repair, Clearance Token, referral arrival and reload');
 }finally{await shot('last');await browser.close();}
