@@ -1,5 +1,24 @@
 # Earned Playthrough Review
 
+## Finale After Tool-Ownership Checks
+
+On 2026-09-13, replayed the earned pre-boss checkpoint after both map families
+adopted owned-tool checks. Touch simulation at 375x667 DPR3 passed simultaneous
+movement/swing, boast skip, paused core-window preservation, and all three
+phases. The instrumented fight loop took 55.721 seconds with five cycles,
+zero retries and no missed deadline. This is not a human completion-time claim.
+
+Continued from that run's bindery save through seal cancellation/reload, page
+assembly, human seal, separate publication press and published-state reload.
+The result retained 241 document points, all five cover pieces, reliability
+100, deadline met and clean publication. No page or console errors. Native
+Cloud, published-volume and record screenshots were inspected.
+
+Evidence: `/private/tmp/frus-owned-full-boss/` and
+`/private/tmp/frus-owned-publication/earned-publication-storage.json`.
+This is a scripted earned-finale regression, not a fresh unaided playthrough
+or physical-iPhone performance test. No runtime changes or deployment this pass.
+
 ## Earned Proofing Input Parity
 
 On 2026-09-13, replayed editor correction using touch and an earned Referral
