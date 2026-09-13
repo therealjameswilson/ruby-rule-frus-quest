@@ -38,7 +38,7 @@ import {
   archiveRepoWallSwing,
   archiveSourceRoomDocumentProgressKey,
   archiveSourceRoomObjective,
-  archiveSourceRoomPacketComplete,
+  archiveSourceRoomExitReady,
   restoredArchiveSourceNoteStatus,
   restoredArchiveRepoWallCleared,
   restoredArchiveSourceRoomDocumentIds,
@@ -3481,12 +3481,12 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private sourceRoomComplete() {
-    return !nextArchiveResearchReview() && (gameState.sceneProgress.archiveSourceRoomComplete === 1
-      || archiveSourceRoomPacketComplete({
-        sourceNoteStamped: this.sourceNoteStatus === "stamped",
-        annotationComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
-        collectedDocumentIds: this.collected
-      }));
+    return archiveSourceRoomExitReady({
+      sceneProgress: gameState.sceneProgress,
+      standardsReviewed: gameState.processStamps.includes("rule"),
+      sourceNoteStamped: this.sourceNoteStatus === "stamped",
+      collectedDocumentIds: this.collected
+    });
   }
 
   private sourceRoomDocumentCount() {
@@ -3810,6 +3810,8 @@ export class ArchiveScene extends Phaser.Scene {
   private exitIsOpen(room: ArchiveRoom, direction: Direction) {
     const target = room.exits[direction];
     if (!target) return false;
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    if (room.id === "A1" && direction !== "north" && packet.held.length && !packet.complete) return false;
     if (room.id === "B1" && direction !== "north" && !this.agencyTimerResolved) return false;
     if (room.id === "A1" && direction === "north") return annotationStacksOpen(gameState.sceneProgress);
     if (room.id === "AS") return direction === "south" || readAnnotationPacket(gameState.sceneProgress).complete;

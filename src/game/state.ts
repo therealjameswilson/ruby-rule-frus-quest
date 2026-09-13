@@ -3,6 +3,8 @@ import { getPauseMenuReadout } from "../systems/pauseMenu";
 import { getCodexViewReadout } from "../systems/codexLayout";
 import { getGuideCounterReadout } from "./guideCounterTraining";
 import { annotationStacksOpen } from "./annotationStacks";
+import { readAnnotationPacket } from "./annotationPacket";
+import { archiveSourceRoomExitReady, restoredArchiveSourceNoteStatus, restoredArchiveSourceRoomDocumentIds } from "./archiveSourceRoom";
 import { getCodexReadout, unlockCodexEntry } from "./codex";
 import { AREA_REGISTRY, DEFAULT_PROCESS_ROLE, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
@@ -1418,6 +1420,20 @@ export function getRoomGraphReadout() {
   const visitedRoomIds = new Set(getVisitedRoomIds(FRUS_ROOM_GRAPH.map((room) => room.id)));
   const revealedRoomIds = new Set(gameState.roomTraversal?.revealedRoomIds ?? []);
   const heldProcessItems = getHeldProcessItemIds();
+  const sourceDocuments = new Set<string>(restoredArchiveSourceRoomDocumentIds(gameState.sceneProgress));
+  if (gameState.inventory.includes("Telegram")) sourceDocuments.add("telegram");
+  if (gameState.inventory.includes("Cross-Ref")) sourceDocuments.add("cross-reference");
+  const sourceStatus = restoredArchiveSourceNoteStatus({
+    sceneProgress: gameState.sceneProgress, heldItem: gameState.heldItem,
+    hasArchiveStamp: gameState.processStamps.includes("archive"),
+    sourceNoteCollected: sourceDocuments.has("source-note") || gameState.inventory.includes("Source Note 47")
+  });
+  if (sourceStatus !== "inactive") sourceDocuments.add("source-note");
+  const sourceExitReady = archiveSourceRoomExitReady({
+    sceneProgress: gameState.sceneProgress, standardsReviewed: gameState.processStamps.includes("rule"),
+    sourceNoteStamped: sourceStatus === "stamped", collectedDocumentIds: sourceDocuments
+  });
+  const annotationPacket = readAnnotationPacket(gameState.sceneProgress);
   for (const roomId of getRevealedShortcutRoomIds(heldProcessItems)) revealedRoomIds.add(roomId);
   if (gameState.currentScene === "OfficeScene") {
     visitedRoomIds.add("O1");
@@ -1465,16 +1481,24 @@ export function getRoomGraphReadout() {
   return FRUS_ROOM_GRAPH.map((room) => {
     const dungeon = gameState.dungeons[room.area];
     const lockedExits = room.lockedExits ?? {};
+    const packetHeld = room.id === "A1" && annotationPacket.held.length > 0 && !annotationPacket.complete;
+    const gatedDirections = new Set(Object.keys(lockedExits) as Direction[]);
+    if (packetHeld) for (const direction of Object.keys(room.exits) as Direction[]) {
+      if (direction !== "north") gatedDirections.add(direction);
+    }
     const lockedExitState = Object.fromEntries(
-      (Object.keys(lockedExits) as Direction[]).map((direction) => {
+      [...gatedDirections].map((direction) => {
         const requiredItem = room.requiredItems?.[direction] ?? null;
         const bossDoor = isBossDoor(room, direction);
         const blackVaultFinalExit = room.id === "DV1" && direction === "east";
         const readingPassage = room.id === "DN1" && direction === "north";
         const annotationEntry = room.id === "A1" && direction === "north";
         const annotationExit = room.id === "AS" && direction === "north";
+        const sourcePacketExit = room.id === "A1" && direction === "east";
+        const unfiledPacketExit = packetHeld && direction !== "north";
         const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
-        const canOpen = annotationEntry ? annotationStacksOpen(gameState.sceneProgress)
+        const canOpen = unfiledPacketExit ? false : sourcePacketExit ? sourceExitReady
+          : annotationEntry ? annotationStacksOpen(gameState.sceneProgress)
           : annotationExit ? gameState.sceneProgress.annotationDraftingComplete === 1
           : readingPassage ? hiddenReadingRoomDiscovered(gameState) : blackVaultFinalExit
           ? Boolean(gameState.sceneProgress.blackVaultBossCleared)
@@ -1484,16 +1508,20 @@ export function getRoomGraphReadout() {
             ? canTraverseExit(room.id, direction, heldProcessItems)
             : canOpenLockedDoor(dungeon);
         return [direction, {
-          label: lockedExits[direction] ?? "Locked route",
+          label: unfiledPacketExit ? "Unfiled annotation packet" : lockedExits[direction] ?? "Locked route",
           gateType: bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
           requiredItem,
           requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
-          blockedMessage: canOpen ? null : annotationEntry ? "Verify Source Note 47 and stamp the NO REPO wall to open the stacks."
+          blockedMessage: canOpen ? null : unfiledPacketExit ? "File the carried annotation notes at the research table before leaving."
+            : sourcePacketExit ? "File the annotation packet, collect both supporting documents, and complete the research-table reviews."
+            : annotationEntry ? "Verify Source Note 47 and stamp the NO REPO wall to open the stacks."
             : annotationExit ? "Bring the annotation packet south to the human research table before visiting NARA."
             : readingPassage && heldProcessItems.has("review_folder")
             ? "Compare the northeast shelf register with the Review Folder."
             : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
-          blockedObjective: canOpen ? null : annotationEntry ? "STAMP NO REPO TO OPEN STACKS"
+          blockedObjective: canOpen ? null : unfiledPacketExit ? "FILE PACKET AT TABLE"
+            : sourcePacketExit ? "COMPLETE SOURCE PACKET"
+            : annotationEntry ? "STAMP NO REPO TO OPEN STACKS"
             : annotationExit ? "SOUTH: FILE AT TABLE"
             : readingPassage && heldProcessItems.has("review_folder") ? "COMPARE THE SHELF REGISTER"
             : blackVaultFinalExit ? "Black Vault: defeat DANN-E before entering the Buckram Gate." : prompt.objective,

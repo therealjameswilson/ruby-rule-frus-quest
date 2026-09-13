@@ -137,3 +137,17 @@ export function archiveSourceRoomPacketComplete(input: {
     && input.annotationComplete
     && ARCHIVE_SOURCE_ROOM_DOCUMENTS.every((document) => input.collectedDocumentIds.has(document.id));
 }
+
+export function archiveSourceRoomExitReady(input: {
+  sceneProgress: Readonly<Record<string, number>>;
+  standardsReviewed: boolean;
+  sourceNoteStamped: boolean;
+  collectedDocumentIds: ReadonlySet<string>;
+}) {
+  return input.standardsReviewed && Boolean(input.sceneProgress.repositoryCoverageMapComplete)
+    && (input.sceneProgress.archiveSourceRoomComplete === 1 || archiveSourceRoomPacketComplete({
+      sourceNoteStamped: input.sourceNoteStamped,
+      annotationComplete: Boolean(input.sceneProgress.annotationDraftingComplete),
+      collectedDocumentIds: input.collectedDocumentIds
+    }));
+}

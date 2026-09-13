@@ -7,8 +7,7 @@ const storage = JSON.parse(await readFile(process.env.FRUS_QA_STORAGE, 'utf8'));
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
 try {
-  const page = await browser.newPage({ viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true, deviceScaleFactor: 3 });
-  await page.addInitScript(saved => { for (const [key, value] of Object.entries(saved)) localStorage.setItem(key, value); }, storage);
+  const page = await browser.newPage({ storageState: storage, viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true, deviceScaleFactor: 3 });
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
@@ -26,9 +25,12 @@ try {
     const data = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(image => resolve(image.src))));
     await writeFile(`${out}/${label}.png`, Buffer.from(data.split(',')[1], 'base64'));
   };
-  await page.goto('http://127.0.0.1:5195/?scene=ArchiveScene&text=full');
+  await page.goto('http://127.0.0.1:5195/?text=full');
+  await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === 'TapToStartScene');
+  await page.keyboard.press('Enter');
   await page.waitForFunction(() => window.game?.scene.isActive('ArchiveScene'));
   await page.waitForTimeout(900);
+  assert((await state()).inventory.includes('Citation Stamp'), 'The earned opening inventory must be restored');
   await page.keyboard.press('Escape');
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).pauseMenu);
   await tap('map'); await shot('map');
@@ -41,6 +43,10 @@ try {
   assert((await texts()).includes('WEST: OFFICE HUB'));
   assert((await texts()).includes('OPEN'));
   await shot('west-open');
+  await tap('next');
+  assert((await texts()).includes('EAST: NETWORK SPLIT'));
+  assert((await texts()).includes('LOCKED'), 'Owning the Citation Stamp alone must not mark the source-packet exit open');
+  await shot('east-packet-locked');
   await tap('back');
   assert.equal((await state()).pauseMenu.detailOpen, false);
   await page.keyboard.press('Enter');

@@ -37,7 +37,8 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(documents).toContain('id: "research-review"');
     expect(documents).toContain("this.finishMissingResearchReview()");
     const complete = methodSource("sourceRoomComplete", "sourceRoomDocumentCount");
-    expect(complete).toContain("!nextArchiveResearchReview()");
+    expect(complete).toContain("archiveSourceRoomExitReady({");
+    expect(complete).toContain('standardsReviewed: gameState.processStamps.includes("rule")');
   });
 
   it("freezes movement and DANN-E while considering a research decision", () => {
