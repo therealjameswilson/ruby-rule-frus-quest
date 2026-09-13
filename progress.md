@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Fresh earned opening on keyboard and touch (2026-09-13):
+  - Previous turn made progress with checkpoints and the re-entry fix. Replayed main opening with three fresh browser profiles and no debug grants/scene jumps: keyboard, 375x667/DPR3 touch, and cue-guided keyboard. All reached Archive at 80 reliability, no captured console/page errors.
+  - Verified Office memo loop, earned Stamp, harmless miss, pause freezes bolt, no close-triggered swing, correct counter, fragment reveal/collection, no repeated interaction points, reload/Continue persistence and Archive handoff. Touch asserts simultaneous D-pad/B. Coaching run starts from pickup area, intentionally faces away, follows displayed cues, and succeeds without the preselected counter spot.
+  - Native reward/coached-counter/Archive captures and full mobile viewport inspected. docs/OPENING_PLAYABILITY_CHECK.md records scope and artifacts at /private/tmp/frus-opening-{current,touch-current,coached-current}/. No runtime changes this turn; evidence advances the next audit from opening controls to earned Archive progression. No real-device, novice-human, FPS or whole-game completion claim.
+  - Next: use earned-storage.json from the Archive handoff to play the source-note and provenance route. Archive arrival has competing transient labels worth assessing in context. Public build unchanged.
+
 - Retained NARA review waves and re-entry control fix (2026-09-13):
   - Previous turn made progress on duplicate rewards. Added prefix-complete wave restoration from saved room/enemy claims for NARA only; preserves original encounter totals and skips fully earned waves, not partial ones. Room completion still needs remaining enemies defeated. Existing save schema retained.
   - Expanded real-input wave QA with FRUS_QA_RETREAT=1. Initial run restored 1/2 correctly but failed to open inventory: GameplayMapScene kept routeTransitionLocked after reuse, freezing all input while appearing loaded. Reset the transient lock in init and added regression. Prior unarmed re-entry evidence only inspected state/render; strengthened it to demand physical movement.
