@@ -1193,6 +1193,14 @@ export class SilentReadScene extends Phaser.Scene {
       retroAudio.stamp();
       this.updatePhysicalVerification();
       if (shouldAdvance) this.advanceAfterStamp();
+      // These rewards cross a room/layout boundary; show them after its cleanup.
+      if (activeFlag.id === "mechanical-fix") {
+        this.toast.hide();
+        addSnesRewardBurst(this, 128, 72, "red-pencil", "Red Pencil", (object) => this.track(object), 600);
+      } else if (activeFlag.id === "proof-date") {
+        this.toast.hide();
+        addSnesRewardBurst(this, 128, 72, "proof-lens", "Proof Lens", (object) => this.track(object), 600);
+      }
     }
   }
 
@@ -1332,7 +1340,6 @@ export class SilentReadScene extends Phaser.Scene {
       equipProcessItem("red_pencil");
       addDocumentPoints(12, "StateChat plan reviewed and visibly bracketed by human editor");
       adjustReliability(8, "AI proposal remained inside SOP with a visible bracket");
-      addSnesRewardBurst(this, 128, 136, "red-pencil", "Red Pencil", (object) => this.track(object));
       setLatestMessage("MECHANICAL FIX ACCEPTED - VISIBLE BRACKET RECORDED");
       return true;
     }
@@ -1340,7 +1347,6 @@ export class SilentReadScene extends Phaser.Scene {
       awardProcessStamp("proof");
       setDocumentWorkflowState("proof_page_412", "proofed");
       addProcessItem("proof_lens");
-      addSnesRewardBurst(this, 128, 104, "proof-lens", "Proof Lens", (object) => this.track(object));
       addVolumeFragment("Proof Fragment");
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");

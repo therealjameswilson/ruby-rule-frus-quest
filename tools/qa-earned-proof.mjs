@@ -37,8 +37,9 @@ try {
  assert(!(await state()).inventory.includes('Proof Lens'));
  await key('ArrowLeft');await key('ArrowDown');await key();await shot('chronology-filed');
  assert(!(await state()).inventory.includes('Proof Lens'));
- await key();await page.waitForTimeout(400);await shot('lens-earned');
+ await key();await page.waitForTimeout(100);await shot('lens-earned');
  assert((await state()).inventory.includes('Proof Lens'));
+ assert(await page.evaluate(()=>window.game.scene.getScene('SilentReadScene').children.list.some(object=>object.name==='snes-reward-burst'&&object.active)), 'Proof Lens reward must survive the production-layout redraw');
  assert.equal((await state()).sceneProgress.silentReadReviewStep,5);
  await context.storageState({path:`${out}/earned-storage.json`});
  await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');

@@ -425,7 +425,7 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
   }
 }
 
-export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, textureKey: string, label: string, track?: TrackFn) {
+export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, textureKey: string, label: string, track?: TrackFn, holdMs = 0) {
   const container = keepTagged(scene.add.container(x, y).setDepth(900), "snes-reward-burst", track);
   container.add(scene.add.ellipse(0, 4, 58, 18, color(PALETTE.black), 0.68));
   container.add(scene.add.rectangle(0, -8, 46, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp)));
@@ -446,6 +446,7 @@ export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, te
     y: y - 10,
     alpha: 0,
     duration: 900,
+    delay: Math.max(0, holdMs),
     ease: "Cubic.easeOut",
     onComplete: () => container.destroy()
   });

@@ -10,6 +10,7 @@ vi.mock("../entities/Player", () => ({ Player: class {} }));
 vi.mock("../entities/enemies/DanneLurker", () => ({ DanneLurker: class {} }));
 vi.mock("../systems/audio", () => ({ retroAudio: { confirm: vi.fn(), warning: vi.fn(), stamp: vi.fn(), blip: vi.fn() } }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
+vi.mock("../systems/snesPixelArt", () => ({ addSnesRewardBurst: vi.fn() }));
 vi.mock("../systems/reliability", () => ({ adjustReliability: vi.fn(), canAutoApplyProposal: vi.fn(), ReliabilityHud: class {} }));
 vi.mock("../input/InputState", () => ({ tickInput: vi.fn(), getInput: () => ({ aJustPressed: true }), bindPointerDown: vi.fn() }));
 
@@ -79,7 +80,7 @@ interface ReviewInternals {
   crossReferenceBoard: Comparison;
   chronologyBoard: Comparison;
   releaseScopeBoard: Comparison;
-  toast: { show: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn> };
+  toast: { show: ReturnType<typeof vi.fn>; update: ReturnType<typeof vi.fn>; hide: ReturnType<typeof vi.fn> };
   interactionPrompt: { update: ReturnType<typeof vi.fn> };
   actionHint: { setText: ReturnType<typeof vi.fn> };
   reliability: { update: ReturnType<typeof vi.fn> };
@@ -115,7 +116,7 @@ function fixture(step: number, status: SilentReadReviewStatus) {
   scene.crossReferenceBoard = new Comparison();
   scene.chronologyBoard = new Comparison();
   scene.releaseScopeBoard = new Comparison();
-  scene.toast = { show: vi.fn(), update: vi.fn() };
+  scene.toast = { show: vi.fn(), update: vi.fn(), hide: vi.fn() };
   scene.interactionPrompt = { update: vi.fn() };
   scene.actionHint = { setText: vi.fn() };
   scene.reliability = { update: vi.fn() };
