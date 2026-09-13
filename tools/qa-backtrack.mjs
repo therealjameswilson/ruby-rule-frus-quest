@@ -11,6 +11,7 @@ const cacheLoop = process.argv.includes('--cache-loop');
 const stacksPersist = process.argv.includes('--stacks-persist');
 const proofLoop = process.argv.includes('--proof-loop');
 const mobile = process.argv.includes('--mobile');
+const blockedDetour = process.argv.includes('--blocked-detour');
 const landscape = process.argv.includes('--landscape');
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
@@ -101,10 +102,27 @@ try {
   await page.goto('http://127.0.0.1:5195/?text=full');
   await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
   await press('Enter');
-  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop || cacheLoop || stacksPersist || proofLoop ? 'ArchiveScene' : 'BlackVaultLairScene');
+  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop || cacheLoop || stacksPersist || proofLoop || blockedDetour ? 'ArchiveScene' : 'BlackVaultLairScene');
   await page.waitForTimeout(800);
   const initial = await state();
-  if (proofLoop) {
+  if (blockedDetour) {
+    assert.equal(initial.roomTraversal.currentRoomId, 'A1');
+    assert(!initial.inventory.includes('Concurrence Slip'));
+    await walk(128, 208); await hold('ArrowDown', 400);
+    const blocked = await state();
+    assert.equal(blocked.roomTraversal.currentRoomId, 'A1');
+    assert.equal(blocked.objective, initial.objective, 'An optional lock must not replace the current research task');
+    assert.match(blocked.latestMessage, /Concurrence Slip/);
+    assert.equal(blocked.documentPoints, initial.documentPoints);
+    await shot('blocked-detour');
+    await hold('ArrowUp', 220);
+    await page.waitForTimeout(1800);
+    assert((await state()).player.y < blocked.player.y - 5, 'The rejected detour must allow retreat');
+    assert.equal((await state()).objective, initial.objective);
+    await shot('retreat-to-task');
+    assert.deepEqual(errors, []);
+    console.log('PASS early touch detour explains missing tool, preserves task and allows retreat');
+  } else if (proofLoop) {
     const interact = async () => {
       await press('Space'); await page.waitForTimeout(250);
       for (let i = 0; i < 12 && (await state()).dialog; i++) {

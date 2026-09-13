@@ -3614,7 +3614,8 @@ export class ArchiveScene extends Phaser.Scene {
     const targetRoom = ARCHIVE_ROOMS[target];
     if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) {
       setLatestMessage("A hidden wall has not been revealed.");
-      setObjective("Find a secret trigger before entering that room.");
+      this.refreshRoomObjective();
+      this.toast.show("FIND THE HIDDEN TRIGGER", this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
       this.player.setPosition(position.x, position.y);
       return false;
@@ -3624,7 +3625,8 @@ export class ArchiveScene extends Phaser.Scene {
     if (!canTraverseExit(currentRoom.id, direction, heldItems)) {
       const prompt = blockedExitPrompt(currentRoom.id, direction, heldItems);
       setLatestMessage(prompt.message);
-      setObjective(prompt.objective);
+      this.refreshRoomObjective();
+      this.toast.show(prompt.message, this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
       const push = direction === "north"
         ? { x: position.x, y: PLAY_BOUNDS.top + 18 }
