@@ -1,5 +1,8 @@
 {
   "hud": {
+    "encounterEvade": "EVADE; FIND {tool}",
+    "encounterEquip": "TOOLS: EQUIP {tool}",
+    "encounterCounter": "COUNTER WITH {tool}",
     "readingRoomBook": "BOOK: CENTER AISLE",
     "readingRoomExit": "EXIT: SOUTH DOOR",
     "restoreChronology": "RESTORE CHRONOLOGY",

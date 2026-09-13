@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Contextual encounter action row (2026-09-13):
+  - Previous turn made progress with the NARA floor pilot. Verified unarmed GameplayMapScene combat still showed FIND A GLOWING DESK OR DOOR beneath the tool objective. Added a scene-scoped action cue choosing the nearest living non-boss enemy: evade/find when missing, tools/equip when owned, counter with the secondary-action badge when equipped.
+  - Nearby interactions, non-explore modes, other scenes and boss-specific feedback keep their existing priority. English/Spanish/French cue strings added. No combat, inventory or save changes.
+  - 17 focused HUD/boss-cue tests and build pass (existing chunk warning). Three isolated debug-grant routes assert actual first and second HUD rows; native missing/equipped images inspected under /private/tmp/frus-readiness-action/. Installed gameplay client completes at /private/tmp/frus-encounter-action-client/. No page errors; not earned progression or physical-device QA.
+  - Local only. Remaining visual issue: small flow plaques and taunt boxes still compete at the top of the legacy map; evaluate these against enemy warning visibility before removing useful information.
+
 - NARA floor readability pilot (2026-09-13):
   - Previous turn made progress with compact readiness cues. Compared dense legacy map with duplicate translucent floor grid hidden; screenshot showed little benefit because most detail is baked into art. Implemented a scoped native-tile pilot instead.
   - GameplayMapScene NARA alone now draws existing native archive floor tiles in fully clear cells. Source obstacle/border art, one-pixel blocker margin, actors/features and all collision/quest/save data retained. Original drawing is fallback if native texture/layer unavailable; map destroyed on shutdown. Other maps unchanged.

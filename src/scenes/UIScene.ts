@@ -219,9 +219,10 @@ export class UIScene extends Phaser.Scene {
     const objectiveLine = awaitingDialog ? "" : this.compactObjective(activeSceneKey);
     const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
     const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats);
+    const encounterCue = this.gameplayCombatCue();
     const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable);
-    const actionLine = awaitingDialog ? "" : bossCue?.text ?? riskLine ?? approachCue?.text ?? this.compactActionLine(toolLabel);
-    const actionBadge = awaitingDialog ? "" : bossCue?.badge === "notice" ? "!"
+    const actionLine = awaitingDialog ? "" : bossCue?.text ?? encounterCue?.text ?? riskLine ?? approachCue?.text ?? this.compactActionLine(toolLabel);
+    const actionBadge = awaitingDialog ? "" : !bossCue && encounterCue ? encounterCue.badge : bossCue?.badge === "notice" ? "!"
       : !bossCue && !riskLine && approachCue ? approachCue.badge
       : !riskLine && (bossCue?.badge === "tool" || this.showCounterAction() || this.guideCounterTrainingActive())
       ? getSecondaryActionBadge()
@@ -345,6 +346,20 @@ export class UIScene extends Phaser.Scene {
     }
     if (toolLabel !== getString("hud.none")) return getString("hud.useTool", { tool: toolLabel });
     return getString("hud.findGlowing");
+  }
+
+  private gameplayCombatCue() {
+    if (gameState.currentScene !== "GameplayMapScene" || gameState.mode !== "explore" || gameState.nearestInteractable) return null;
+    const threats = gameState.visibleThreats.filter(t => (t.hp ?? 0) > 0 && t.enemyState !== "defeated" && !t.bossCombat);
+    const player = gameState.player;
+    const target = threats.reduce<typeof threats[number] | undefined>((nearest, t) => !nearest
+      || Math.hypot(t.x - player.x, t.y - player.y) < Math.hypot(nearest.x - player.x, nearest.y - player.y) ? t : nearest, undefined);
+    const tool = target?.weakness;
+    if (tool !== "citation_stamp" && tool !== "red_pencil" && tool !== "review_folder") return null;
+    const label = tool === "citation_stamp" ? "STAMP" : tool === "red_pencil" ? "PENCIL" : "FOLDER";
+    if (!hasProcessItem(tool)) return { text: getString("hud.encounterEvade", { tool: label }), badge: "!" };
+    if (gameState.equippedProcessItem !== tool) return { text: getString("hud.encounterEquip", { tool: label }), badge: "!" };
+    return { text: getString("hud.encounterCounter", { tool: label }), badge: getSecondaryActionBadge() };
   }
 
   private showCounterAction() {
