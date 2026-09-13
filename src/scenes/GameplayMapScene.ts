@@ -100,6 +100,7 @@ import {
   hasPendingEncounterWaves,
   nextEncounterWave,
   resolveEncounterCompletion,
+  resumeCompletedWaves,
   type EncounterWaveQueue
 } from "../systems/encounterWaves";
 import { AttackBuffer, HitstopController } from "../systems/hitstop";
@@ -108,6 +109,7 @@ import {
   applyRoomClearGate,
   isRoomCleared,
   roomClearFlag,
+  enemyRewardFlag,
   roomClearStatus
 } from "../systems/roomClear";
 import { playRubyMosaicTransition } from "../systems/sceneTransitions";
@@ -263,6 +265,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private danneRoomId = "";
   private danneRoomUnlockedFlags: string[] = [];
   private danneWaves: EncounterWaveQueue<DanneSpawnPlan> = createEncounterWaveQueue([]);
+  private restoredDanneDefeats = 0;
   private readonly danneWaveTransition = new EncounterWaveTransition();
   private readonly hitstop = new HitstopController();
   private readonly attackBuffer = new AttackBuffer();
@@ -275,6 +278,7 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   init(data: GameplayMapSceneData) {
+    this.routeTransitionLocked = false;
     const params = new URLSearchParams(window.location.search);
     const queryMap = typedMapKey(params.get("map") ?? undefined);
     const requestedMap = data.mapKey ?? queryMap;
@@ -486,6 +490,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.danneRoomId = "";
     this.danneRoomUnlockedFlags = [];
     this.danneWaves = createEncounterWaveQueue([]);
+    this.restoredDanneDefeats = 0;
     if (this.mapKey === "black_vault") {
       this.danneRoomId = "black_vault";
       this.danneRoomUnlockedFlags = ["blackVaultBossCleared", "blackVaultWestOpen", "blackVaultNorthOpen"];
@@ -540,7 +545,15 @@ export class GameplayMapScene extends Phaser.Scene {
         this.danneWaves = completeEncounterWaveQueue(this.danneWaves);
         return;
       }
+      const restored = resumeCompletedWaves(this.danneWaves, plan => Boolean(gameState.sceneProgress[enemyRewardFlag(this.danneRoomId, plan.id)]));
+      this.danneWaves = restored.queue;
+      this.restoredDanneDefeats = restored.defeated;
+      if (!hasPendingEncounterWaves(this.danneWaves)) {
+        applyRoomClearGate(this.danneRoomId, [], this.danneRoomUnlockedFlags, "Room cleared: completed reviews retained.");
+        return;
+      }
       this.advanceDanneWave();
+      if (restored.defeated > 0) setLatestMessage("First review retained. Counter the remaining Swarm with the Citation Stamp.");
       return;
     }
 
@@ -627,7 +640,7 @@ export class GameplayMapScene extends Phaser.Scene {
           : 0);
     const completion = resolveEncounterCompletion(
       expectedEnemyCount,
-      status.defeatedEnemyCount,
+      status.defeatedEnemyCount + this.restoredDanneDefeats,
       isRoomCleared(this.danneRoomId || this.mapKey),
       hasPendingEncounterWaves(this.danneWaves) || this.danneWaveTransition.pending
     );

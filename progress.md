@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Retained NARA review waves and re-entry control fix (2026-09-13):
+  - Previous turn made progress on duplicate rewards. Added prefix-complete wave restoration from saved room/enemy claims for NARA only; preserves original encounter totals and skips fully earned waves, not partial ones. Room completion still needs remaining enemies defeated. Existing save schema retained.
+  - Expanded real-input wave QA with FRUS_QA_RETREAT=1. Initial run restored 1/2 correctly but failed to open inventory: GameplayMapScene kept routeTransitionLocked after reuse, freezing all input while appearing loaded. Reset the transient lock in init and added regression. Prior unarmed re-entry evidence only inspected state/render; strengthened it to demand physical movement.
+  - Repeated checkpoint QA passed first-wave defeat, physical retreat, re-entry with only Swarm, 1/2 progress, unchanged points, real menu Stamp equip, second-wave defeat and exit. End: 68 reliability, 8 points, 2/2 cleared. Native screenshots inspected in /private/tmp/frus-nara-checkpoint-fixed/. Failed run retained at /private/tmp/frus-nara-checkpoint/.
+  - Strengthened unarmed route passes at /private/tmp/frus-nara-retreat-movement/. Standard gameplay client passes and native image inspected. Full suite: 209 files / 1,611 tests; production build passes with existing chunk warning. Local only, debug-tool combat, no earned-route or physical-device claim. Next: replay the main earned-tool journey and judge pacing, rather than expanding optional-room content before its role is clear.
+
 - One-time encounter rewards across retries (2026-09-13):
   - Previous turn made progress on unarmed retreat. Source audit found each recreated DanneEnemy paid document points again, allowing repeated first-wave rewards after retreat. Added a room/enemy-scoped reward claim in existing persisted sceneProgress; JSON tuple keys avoid ambiguous ID concatenation. Claims do not clear rooms or prevent enemies being defeated on retry. New runs reset claims; existing saves with no claims remain compatible.
   - Enemy test verifies recreated enemy defeat/no duplicate points/different-room reward, while save test verifies claim survives actual storage save/load, other enemy remains unclaimed, no room-clear flag is awarded, and new-run reset. Full suite: 209 files / 1,607 tests. Build passes with existing chunk warning.

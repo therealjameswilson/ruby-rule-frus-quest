@@ -33,12 +33,41 @@ try {
  await page.goto('http://127.0.0.1:5195/?scene=GameplayMapScene&map=nara_stacks&give=combat-tools&equip=review_folder&text=full');
  await page.waitForFunction(()=>window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene==='GameplayMapScene');
  await page.waitForTimeout(1200);const before=await state();let changedTool=false;
+ let checkpointVerified=false;
  await shot('entry');
  for(let i=0;i<500;i++) {
   const s=await state();if(s.danneCombat.roomClear.cleared)break;
   assert.equal(s.mode,'explore');
   const e=s.visibleThreats.find(t=>t.hp>0);if(!e){await page.waitForTimeout(150);continue;}
   if(e.weakness==='citation_stamp'&&!changedTool) {
+   if(process.env.FRUS_QA_RETREAT==='1'&&!checkpointVerified) {
+    const points=s.documentPoints;
+    for(let j=0;j<150;j++) {
+      if((await state()).nearestInteractable==='Freight Elevator Exit')break;
+      const door=await page.evaluate(()=>{const d=window.game.scene.getScene('GameplayMapScene').doors.find(d=>d.id==='world_exit');return {x:d.x,y:d.y,radius:d.radius};});
+      await step([{x:door.x,y:door.y-door.radius+2}]);
+    }
+    assert.equal((await state()).nearestInteractable,'Freight Elevator Exit');
+    await page.keyboard.press('Space',{delay:40});
+    await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='WorldMapScene');
+    await page.waitForTimeout(400);
+    for(let j=0;j<8;j++) {
+      if(await page.evaluate(()=>window.game.scene.getScene('WorldMapScene').selectedDistrictNumber===3))break;
+      await page.keyboard.press('ArrowDown',{delay:50});await page.waitForTimeout(100);
+    }
+    await page.keyboard.press('Space',{delay:40});
+    await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='GameplayMapScene');
+    await page.waitForTimeout(1200);
+    const resumed=await state();
+    assert.equal(resumed.documentPoints,points);
+    assert.equal(resumed.danneCombat.activeEnemyCount,1);
+    assert.equal(resumed.danneCombat.roomClear.defeated,1);
+    assert.equal(resumed.danneCombat.roomClear.required,2);
+    assert.equal(resumed.danneCombat.roomClear.cleared,false);
+    assert.equal(resumed.visibleThreats.find(t=>t.hp>0).weakness,'citation_stamp');
+    await shot('checkpoint-resumed');
+    checkpointVerified=true;
+   }
    await shot('second-wave');await page.keyboard.press('m',{delay:40});
    await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).mode==='pause');
    const r=await page.locator('canvas').first().boundingBox();
@@ -54,6 +83,7 @@ try {
  }
  const cleared=await state();await shot('cleared');
  assert(cleared.danneCombat.roomClear.cleared,'Both waves must clear');assert(changedTool);
+ if(process.env.FRUS_QA_RETREAT==='1')assert(checkpointVerified,'Must exercise physical retreat and checkpoint re-entry');
  assert.deepEqual(cleared.documentCandidates,before.documentCandidates);
  assert.deepEqual(cleared.standardsViolations,before.standardsViolations);
  await writeFile(`${out}/cleared.json`,JSON.stringify(cleared,null,2));

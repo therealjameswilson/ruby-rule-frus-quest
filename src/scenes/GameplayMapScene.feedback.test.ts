@@ -72,6 +72,18 @@ describe("encounter readiness cues", () => {
 });
 
 describe("NARA combat retreat", () => {
+  it("releases the previous doorway lock when the scene is re-entered", () => {
+    const scene = new GameplayMapScene();
+    Object.assign(scene, { routeTransitionLocked: true });
+    vi.stubGlobal("window", { location: { search: "" } });
+    try {
+      scene.init({ mapKey: "nara_stacks" });
+      expect((scene as unknown as { routeTransitionLocked: boolean }).routeTransitionLocked).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it("keeps only the world-map exit available until the room is clear", () => {
     const scene = new GameplayMapScene();
     const exit = { id: "world_exit", target: { scene: "WorldMapScene" } };

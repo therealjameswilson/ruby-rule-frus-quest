@@ -68,8 +68,18 @@ Named enemy rewards are now claimed once per room/enemy in saved scene progress.
 Enemy recreation cannot multiply document points; new runs reset the claims.
 Enemy and actual save-storage tests cover retry and reload behavior. A complete
 two-wave input replay still awards eight points and opens the exit. Browser
-partial-wave retreat remains a follow-up; individual enemies currently respawn
-when returning to an uncleared encounter.
+partial-wave retreat now has a dedicated mode: run `tools/qa-nara-waves.mjs`
+with `FRUS_QA_RETREAT=1`. It defeats Mark I, physically leaves, returns to the
+remaining Swarm, verifies 1/2 completion without added points, equips the Stamp,
+finishes and exits. Completed NARA waves resume from saved reward claims;
+partially completed waves restart. Other encounters retain their current rules.
+
+This longer check exposed a retained doorway-transition lock on scene reuse:
+re-entry rendered correctly but disabled movement and menus. `init()` now
+releases it. The unarmed retreat QA additionally requires actual movement
+after re-entry. Both browser routes pass; the checkpoint run ended with eight
+points, 68 reliability and 2/2 cleared. Native evidence:
+`/private/tmp/frus-nara-checkpoint-fixed/`. This remains debug-tool combat QA.
 
 ### Scope Limits
 

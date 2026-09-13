@@ -72,6 +72,10 @@ try {
   assert.equal(reentry.danneCombat.activeEnemyCount, 1);
   assert.equal(reentry.danneCombat.roomClear.cleared, false);
   assert.deepEqual(reentry.inventory, []);
+  await page.keyboard.down("ArrowDown");
+  await page.waitForTimeout(100);
+  await page.keyboard.up("ArrowDown");
+  assert((await state()).player.y > reentry.player.y, "Re-entered scene must accept movement, not merely render");
   assert.deepEqual(errors, []);
   await writeFile(`${out}/reentry.json`, JSON.stringify(reentry, null, 2));
   await shot("reentry");
