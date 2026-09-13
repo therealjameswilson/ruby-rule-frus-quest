@@ -1,5 +1,40 @@
 # Earned Playthrough Review
 
+## Current Movement Build Recheck
+
+Rechecked after `384612b` (tool reveals) using the freshly rebuilt earned chain
+through Archive, Network, Referral, editor and production. No direct progress
+grants or debug scene starts were used for these endgame runs.
+
+- `qa-boss-counter-loop.mjs --mobile --boast-skip --multitouch --disperse
+  --cloud-imprecise`: 375x667 Chrome touch simulation. Two fingers preserved
+  movement and swing ownership; lifting the swing finger retained the D-pad.
+  Dialogue and pause froze the clock/core window without leaking a swing.
+- Colossus, Swarm and Cloud cleared in 58.964 seconds of the harness's combat
+  loop, five instrumented counter cycles, four fresh melee core hits, zero
+  retries, deadline met. This is not total play time or human completion time.
+- The Cloud segment used visible enemy position and a fixed uneven cadence,
+  without projectile/window timing reads: 16 swings, three returned bolts,
+  HP 180 -> 96, reliability 58 -> 28. Remaining fight inputs were instrumented.
+  Victory recovered combat-only pressure to the entry reliability of 98;
+  documents and points were unchanged. Each defeated variant counted once.
+- `qa-bindery-assembly.mjs --mobile`: reviewed pages -> explicit human seal ->
+  separate publication press. Cancellation and pending-seal reload preserved
+  progress. Publication finished at 241 points, reliability 100, five assembled
+  packets, clean certification and deadline met. Published-save reload kept
+  stats, inventory and points stable. No captured page/console errors.
+- Inspected native combat cues, Cloud aftermath, human certification and the
+  published-volume screen. Evidence: `/private/tmp/frus-current-touch-boss/`
+  and `/private/tmp/frus-current-touch-publication/`. Both directories are local
+  temporary artifacts, not deployment assets. The latter's
+  `earned-publication-storage.json` is the current completed checkpoint.
+
+No runtime change was justified by this pass. The prior full build and 1,681
+tests remain the latest compile/unit verification. This strengthens current
+main-route evidence, not physical-device, unaided usability, optional-route,
+or overall enjoyment claims. Next assess optional exploration and first-time
+cue comprehension instead of repeating only the successful critical path.
+
 ## Verified Route
 
 The September 13 local build completed the earned checkpoint chain from the
