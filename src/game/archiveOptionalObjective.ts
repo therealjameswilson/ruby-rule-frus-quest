@@ -10,6 +10,7 @@ export function archiveOptionalObjective(roomId: string, progress: Record<string
       if (hasArchiveSecret(progress, "C3", "collected")) return "WEST: RETURN";
       return hasArchiveSecret(progress, "C3", "revealed") ? "SOUTH: CACHE" : "NORTH: ARCHIVIST";
     case "B1":
+      if (hasArchiveSecret(progress, "D2", "collected")) return "NORTH: RETURN";
       return progress["archiveWall_pending-manifest"] === 1 && progress["archiveWall_wait-timer"] === 1
         ? "SOUTH: CRACK" : "TRAY: FILE SLIP";
     case "B2":
@@ -18,8 +19,10 @@ export function archiveOptionalObjective(roomId: string, progress: Record<string
       }
       return progress["archiveWall_danne-queue"] === 1 ? "EAST: HINT ROOM" : "SOUTH: RECORD IT";
     case "C1":
+      if (hasArchiveSecret(progress, "D2", "collected")) return "NORTH: RETURN";
       return hasArchiveSecret(progress, "D2", "revealed") ? "WELL: SOUTH/EAST" : "STAMP THE CRACK";
     case "D1":
+      if (hasArchiveSecret(progress, "D2", "collected")) return "NORTH: RETURN";
       return hasArchiveSecret(progress, "D2", "revealed") ? "EAST: WELL" : "NORTH: CRACK";
     case "D2":
       return hasArchiveSecret(progress, "D2", "collected") ? "WEST: RETURN" : "TAKE WELL REWARD";

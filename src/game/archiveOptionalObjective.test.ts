@@ -33,6 +33,7 @@ describe("optional Archive directions", () => {
     expect(archiveOptionalObjective("D2", progress)).toBe("TAKE WELL REWARD");
     recordArchiveSecret(progress, "D2", "collected");
     expect(archiveOptionalObjective("D2", progress)).toBe("WEST: RETURN");
+    for (const room of ["D1", "C1", "B1"]) expect(archiveOptionalObjective(room, progress)).toBe("NORTH: RETURN");
   });
 
   it("fits compact HUDs and leaves unrelated chapter objectives alone", () => {

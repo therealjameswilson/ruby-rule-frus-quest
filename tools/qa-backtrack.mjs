@@ -222,7 +222,7 @@ try {
   } else if (wellLoop || cacheLoop) {
     const reward = cacheLoop ? 'cache' : 'well';
     const go = async (direction, room) => {
-      const [x, y, key] = { north: [128, 56, 'ArrowUp'], south: [128, 208, 'ArrowDown'], east: [232, 120, 'ArrowRight'] }[direction];
+      const [x, y, key] = { north: [128, 56, 'ArrowUp'], south: [128, 208, 'ArrowDown'], east: [232, 120, 'ArrowRight'], west: [24, 120, 'ArrowLeft'] }[direction];
       await walk(x, y); await hold(key, 400); await page.waitForTimeout(900);
       await shot(`room-${room}`); assert.equal((await state()).roomTraversal.currentRoomId, room);
     };
@@ -277,6 +277,16 @@ try {
       assert.deepEqual((await state()).volumeFragments, collected.volumeFragments);
       await go('north', 'B3');
       assert.equal((await state()).objective, 'WEST: RETURN');
+    } else {
+      assert.equal((await state()).reliability, collected.reliability, 'The well must not heal again on repeated interaction');
+      await go('west', 'D1');
+      assert.equal((await state()).objective, 'NORTH: RETURN');
+      await go('north', 'C1');
+      assert.equal((await state()).objective, 'NORTH: RETURN');
+      await go('north', 'B1');
+      assert.equal((await state()).objective, 'NORTH: RETURN');
+      await go('north', 'A1');
+      assert.equal((await state()).documentPoints, collected.documentPoints, 'Returning to research keeps the earned reward');
     }
     assert.deepEqual(errors, []);
     console.log(`Earned hidden ${reward} survives Continue without duplicate reward`);

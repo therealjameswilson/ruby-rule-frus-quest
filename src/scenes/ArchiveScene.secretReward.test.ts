@@ -15,7 +15,8 @@ vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
 
 describe("Archive secret reward flow", () => {
-  it.each(["C3", "D2"])("awards %s once without blocking movement on first or repeated collection", (id) => {
+  it.each([["C3", 80], ["D2", 80], ["D2", 97]] as const)("awards %s once at reliability %i without blocking movement", (id, reliability) => {
+    gameState.reliability = reliability;
     const scene = new ArchiveScene();
     const dialog = { show: vi.fn() }, toast = { show: vi.fn() }, cue = vi.fn();
     const interactables: Interactable[] = [];
@@ -30,12 +31,15 @@ describe("Archive secret reward flow", () => {
     const points = gameState.documentPoints;
     interactables[0].onInteract();
     expect(gameState.documentPoints).toBe(points + (id === "C3" ? 10 : 6));
+    const healed = id === "D2" ? Math.min(100, reliability + 8) : reliability;
+    expect(gameState.reliability).toBe(healed);
     if (id === "C3") expect(gameState.volumeFragments).toContain("Hidden Cache Fragment");
     expect(cue).toHaveBeenCalledExactlyOnceWith(id);
     expect(saveGameNow).toHaveBeenCalledOnce();
     expect(dialog.show).not.toHaveBeenCalled();
     expect((scene as unknown as { interactables: Interactable[] }).interactables).toHaveLength(0);
     interactables[0].onInteract();
+    expect(gameState.reliability).toBe(healed);
     expect(gameState.documentPoints).toBe(points + (id === "C3" ? 10 : 6));
     expect(cue).toHaveBeenCalledOnce();
     expect(dialog.show).not.toHaveBeenCalled();
