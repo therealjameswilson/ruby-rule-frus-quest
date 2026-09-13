@@ -31,6 +31,14 @@ try{
  await move(216,124);await key('ArrowRight',1200);
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).roomTraversal.currentRoomId==='N2');
  await page.waitForTimeout(700);await shot('vault-arrival');
+ await page.reload();
+ await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
+ await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='NetworkScene');await page.waitForTimeout(800);
+ assert.equal((await state()).roomTraversal.currentRoomId,'N2');
+ const restoredX=(await state()).player.x;
+ await key('ArrowRight',100);
+ assert((await state()).player.x>restoredX);
+ await shot('vault-restored');
 
  await context.storageState({path:`${out}/earned-storage.json`});
  assert.deepEqual(errors,[]);console.log('PASS four earned routing deliveries, Citation Stamp crossing and ClassNet Vault arrival');

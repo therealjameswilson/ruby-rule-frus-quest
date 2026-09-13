@@ -392,6 +392,7 @@ export class NetworkScene extends Phaser.Scene {
       onCovered: applyRoom,
       onComplete: () => {
         this.roomTransitionLocked = false;
+        saveGameNow("scene");
       }
     });
   }
