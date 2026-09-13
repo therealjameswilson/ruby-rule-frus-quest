@@ -45,6 +45,26 @@ and combat timing. This is functional evidence, not an unaided human fun test.
 - Full touch binding and publication: `/private/tmp/frus-final-publication-touch/`.
 - Scripts: `tools/qa-boss-counter-loop.mjs`, `tools/qa-bindery-finale.mjs`.
 
+## Nearest-Edge Movement Regression
+
+After the nearest-first corner steering change on 2026-09-12:
+
+- Full suite: 202 test files, 1,564 tests passed.
+- Fresh portrait-touch opening passed through memo filing, a harmless counter
+  miss, pause, returned bolt, reward and Archive entry. Evidence:
+  `/private/tmp/frus-corner-opening/`.
+- Earned portrait-touch boss route defeated all three phases without retries or
+  a missed deadline. Five fresh open-core hits; Continue preserved the result.
+- The sixteen uneven Cloud swings reduced HP from 180 to 68 and returned six
+  bolts; reliability fell from 90 to 70. Later precisely timed inputs completed
+  the fight. No documentary record or document-point changes, no browser errors.
+- Native tutorial, archive, Cloud and resumed bindery screenshots inspected.
+  Evidence: `/private/tmp/frus-corner-boss/`. This remains browser simulation,
+  not physical-device or first-time human evidence.
+- Follow-up found in the resumed bindery: objective says TAKE FRONT PACKET but
+  the secondary HUD hint says VISIT THE LEFT DESK. Investigate the guidance
+  source; the initial packet is at the inbox, not the left station.
+
 ## Touch Forgiveness Follow-Up
 
 Runtime `fbb83d9`, same earned entry, 375x667 / DPR 3:

@@ -124,4 +124,32 @@ describe("live player movement", () => {
     expect(coords.logicalX).toBe(100);
     expect(coords.logicalY).toBeCloseTo(100 + 1.2 * Math.SQRT1_2);
   });
+
+  it.each(["x", "y"] as const)("chooses the nearer open edge when moving on %s", axis => {
+    const { player, coords, internals } = fixture();
+    internals.collidesAt.mockImplementation((x, y) => {
+      const forward = axis === "x" ? x : y;
+      const lateral = axis === "x" ? y : x;
+      return forward > 100 && lateral > 97 && lateral < 101;
+    });
+    input.dir[axis] = 1;
+    player.update(1000 / 60, true, { solids: [{}] as never[] });
+    expect(axis === "x" ? coords.logicalY : coords.logicalX).toBe(101);
+    player.update(1000 / 60, true, { solids: [{}] as never[] });
+    expect(axis === "x" ? coords.logicalX : coords.logicalY).toBeGreaterThan(100);
+  });
+
+  it.each([30, 60, 120])("does not steer past a one-pixel opening at %s FPS", fps => {
+    const { player, coords, internals } = fixture();
+    internals.collidesAt.mockImplementation((x, y) => x > 100 && y > 99);
+    input.dir.x = 1;
+    for (let i = 0; i < Math.ceil(fps / 60); i++) {
+      player.update(1000 / fps, true, { solids: [{}] as never[] });
+    }
+    expect(coords.logicalY).toBe(99);
+    input.dir.x = 0;
+    player.update(1000 / fps, true);
+    expect(coords.logicalY).toBe(99);
+    expect(player.animationState).toBe("idle_right");
+  });
 });

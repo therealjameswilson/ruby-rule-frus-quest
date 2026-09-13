@@ -427,26 +427,29 @@ export class Player {
 
   private tryCornerNudge(axis: "x" | "y", targetX: number, targetY: number, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[], maxStep: number) {
     if (!solids.length) return false;
-    const offsets = [-this.cornerNudgePixels, this.cornerNudgePixels];
-    for (const offset of offsets) {
-      const nudgedX = axis === "y"
-        ? Phaser.Math.Clamp(this.logicalX + offset, bounds.left, bounds.right)
-        : Phaser.Math.Clamp(targetX, bounds.left, bounds.right);
-      const nudgedY = axis === "x"
-        ? Phaser.Math.Clamp(this.logicalY + offset, bounds.top, bounds.bottom)
-        : Phaser.Math.Clamp(targetY, bounds.top, bounds.bottom);
-      if (!this.collidesAt(nudgedX, nudgedY, solids)) {
-        // Ease around a nearby open edge, never snap three pixels sideways or
-        // drift toward an unrelated grid line along a completely solid wall.
-        const step = Math.sign(offset) * Math.min(Math.abs(offset), maxStep);
-        const slideX = axis === "y" ? Phaser.Math.Clamp(this.logicalX + step, bounds.left, bounds.right) : this.logicalX;
-        const slideY = axis === "x" ? Phaser.Math.Clamp(this.logicalY + step, bounds.top, bounds.bottom) : this.logicalY;
-        if (this.collidesAt(slideX, slideY, solids)) continue;
-        this.logicalX = slideX;
-        this.logicalY = slideY;
-        if (axis === "x") this.velocityX = 0;
-        else this.velocityY = 0;
-        return true;
+    // Search nearest-first on both sides: a fixed negative-first three-pixel
+    // probe can pull the player away from the opening they almost cleared.
+    for (let distance = 1; distance <= this.cornerNudgePixels; distance += 1) {
+      for (let sign = -1; sign <= 1; sign += 2) {
+        const offset = sign * distance;
+        const nudgedX = axis === "y"
+          ? Phaser.Math.Clamp(this.logicalX + offset, bounds.left, bounds.right)
+          : Phaser.Math.Clamp(targetX, bounds.left, bounds.right);
+        const nudgedY = axis === "x"
+          ? Phaser.Math.Clamp(this.logicalY + offset, bounds.top, bounds.bottom)
+          : Phaser.Math.Clamp(targetY, bounds.top, bounds.bottom);
+        if (!this.collidesAt(nudgedX, nudgedY, solids)) {
+          // Stop guiding as soon as this edge clears, including at low FPS.
+          const step = sign * Math.min(distance, maxStep);
+          const slideX = axis === "y" ? Phaser.Math.Clamp(this.logicalX + step, bounds.left, bounds.right) : this.logicalX;
+          const slideY = axis === "x" ? Phaser.Math.Clamp(this.logicalY + step, bounds.top, bounds.bottom) : this.logicalY;
+          if (this.collidesAt(slideX, slideY, solids)) continue;
+          this.logicalX = slideX;
+          this.logicalY = slideY;
+          if (axis === "x") this.velocityX = 0;
+          else this.velocityY = 0;
+          return true;
+        }
       }
     }
     return false;

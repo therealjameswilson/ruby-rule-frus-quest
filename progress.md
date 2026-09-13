@@ -2,6 +2,18 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Movement integration regression (2026-09-12):
+  - Previous turn made runtime/test progress; continued with full-suite and earned touch-route verification rather than declaring the larger fun goal complete.
+  - All 202 test files / 1,564 tests pass. Fresh portrait-touch opening passes memo filing, harmless counter miss, pause, return, pickup, Continue and Archive entry: /private/tmp/frus-corner-opening/.
+  - Full earned touch boss route with uneven Cloud sample passes. Sixteen uneven swings: HP 180 -> 68, six returns, reliability 90 -> 70. Full route: five fresh core hits, no retries or missed deadline; victory and inventory persist on Continue. No record/point mutations or browser errors. /private/tmp/frus-corner-boss/. Native milestone screenshots inspected; docs/FINAL_ENCOUNTER_PLAYTEST.md records exact limits.
+  - Next concrete issue: resumed bindery objective TAKE FRONT PACKET conflicts with secondary HUD VISIT THE LEFT DESK. Trace hint selection and make the inbox/next-station guidance agree, without weakening the index repair or human certification. Local only; not deployed.
+
+- Nearest-edge player steering (2026-09-12):
+  - User requested smoother Link-inspired movement. Preserved immediate starts/stops/reversal, normalized diagonals, sticky facing, collision bounds and weapon timing. Corner assistance now searches both sides nearest-first rather than always preferring a three-pixel negative offset, and limits its step to the opening distance.
+  - Five new movement cases: both axes choose the closer edge; 30/60/120 FPS do not overshoot a one-pixel clearance or drift after release. Three cases failed before the fix. All 46 focused movement/smoothing/weapon tests and production build pass (existing bundle-size warning).
+  - Live keyboard and simulated 375x667 phone-touch movement passed: starts, reversal, no coasting, desk collision and diagonal sliding, integer render positions, both walk frames at eight FPS, no browser errors. Native keyboard and touch viewport screenshots inspected at /private/tmp/frus-nearest-corner/. Installed gameplay client run: /private/tmp/frus-corner-client/.
+  - Local only, not deployed. Physical iPhone feel still needs user feedback; no save, progression or combat changes.
+
 - Office finished-task focus cleanup (2026-09-12):
   - Reproduced fresh keyboard opening with --office-cues. The suspected stale Route Memo label did not persist: nearest target and HUD become Stamp Memo within the bounded check. No label-timing change made.
   - Confirmed a separate defect: unlocking the archive reinstated all original interactables, including the collected memo and stamped inbox. Failing behavioral regression proved both still active. Filter them by their existing memo status while leaving colleague, archive and other desks unchanged; no source targets or save state mutated.
