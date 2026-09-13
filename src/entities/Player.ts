@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { characterAnimKey } from "../art/character_anims";
+import { characterAnimKey, FRAMES } from "../art/character_anims";
 import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId } from "../game/constants";
@@ -405,7 +405,9 @@ export class Player {
     }
     const moving = Math.abs(this.logicalX - startX) > 0.001 || Math.abs(this.logicalY - startY) > 0.001;
     if (moving) {
-      this.walkClock += deltaMs;
+      // Keep the stride tied to ground covered, including slow tool footwork.
+      this.walkClock += Math.hypot(this.logicalX - startX, this.logicalY - startY)
+        / PLAYER_MOVEMENT_TUNING.speed * 1000;
       this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && this.facing === "west");
     } else {
       this.walkClock = 0;
@@ -472,6 +474,15 @@ export class Player {
           if (this.collidesAt(slideX, slideY, solids)) continue;
           this.logicalX = slideX;
           this.logicalY = slideY;
+          // Spend only the unused part of the blocked step after clearing the
+          // edge. This avoids a one-frame stop without adding corner speed.
+          const remaining = Math.max(0, Math.abs(axis === "x" ? targetX - slideX : targetY - slideY) - Math.abs(step));
+          const forwardX = axis === "x" ? slideX + Math.sign(targetX - slideX) * remaining : slideX;
+          const forwardY = axis === "y" ? slideY + Math.sign(targetY - slideY) * remaining : slideY;
+          if (!this.collidesAt(forwardX, forwardY, solids)) {
+            this.logicalX = forwardX;
+            this.logicalY = forwardY;
+          }
           if (axis === "x") this.velocityX = 0;
           else this.velocityY = 0;
           return true;
@@ -798,6 +809,13 @@ export class Player {
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
       const abilityActive = this.combatTime < this.abilityFrameUntil;
       const directionSuffix = this.directionSuffix();
+      if (this.isMoving && !abilityActive) {
+        // Preserve the stride phase across turns instead of restarting the
+        // two-frame walk on every direction change.
+        this.sprite.anims.stop();
+        this.sprite.setFrame(FRAMES.walk[directionSuffix][Math.floor(this.walkClock / 125) % 2]);
+        return;
+      }
       const suffix = abilityActive
         ? this.isActionActive
           ? "interact"
