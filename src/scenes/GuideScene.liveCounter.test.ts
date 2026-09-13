@@ -3,6 +3,7 @@ import { GuideScene } from "./GuideScene";
 import { GUIDE_COUNTER, GuideCounterTraining, setGuideCounterReadout } from "../game/guideCounterTraining";
 import { addProcessItem, gameState, resetGameState } from "../game/state";
 import { saveGameNow } from "../systems/save";
+import { getSecondaryActionBadge } from "../input/InputState";
 
 vi.mock("phaser", () => ({ default: {
   Scene: class {}, GameObjects: { Sprite: class {} },
@@ -28,6 +29,10 @@ interface LessonScene {
   updateCitationCounterTraining(delta: number): void;
   takeFragment(): void;
   openGate(): void;
+  remindCounterInput(): void;
+  updateCounterSwing(pressed: boolean): void;
+  setLessonPaused(paused: boolean): void;
+  toast: { show: ReturnType<typeof vi.fn> };
 }
 
 function graphic() {
@@ -54,6 +59,55 @@ beforeEach(() => {
 });
 
 describe("GuideScene live counter integration", () => {
+  it("remembers a late swing once but expires a too-early press", () => {
+    const guide = scene(), time = { now: 0 }, startAction = vi.fn(() => true);
+    const combat = { state: "idle", weapon: { tool: "citation_stamp", canSwing: false } };
+    addProcessItem("citation_stamp");
+    gameState.equippedProcessItem = "citation_stamp";
+    Object.assign(guide, { time, player: { ...guide.player, startAction, combatReadout: combat } });
+    guide.updateCounterSwing(true);
+    expect(startAction).not.toHaveBeenCalled();
+    time.now = 90;
+    combat.weapon.canSwing = true;
+    guide.updateCounterSwing(false);
+    guide.updateCounterSwing(false);
+    expect(startAction).toHaveBeenCalledExactlyOnceWith("citation_stamp");
+    combat.weapon.canSwing = false;
+    guide.updateCounterSwing(true);
+    time.now = 210;
+    combat.weapon.canSwing = true;
+    guide.updateCounterSwing(false);
+    expect(startAction).toHaveBeenCalledOnce();
+  });
+  it.each(["pause", "stage"])("clears pending swings on %s", interruption => {
+    const guide = scene(), time = { now: 0 }, startAction = vi.fn(() => true);
+    const combat = { state: "idle", weapon: { tool: "citation_stamp", canSwing: false } };
+    addProcessItem("citation_stamp");
+    gameState.equippedProcessItem = "citation_stamp";
+    Object.assign(guide, { time, egoSeal: { setActive: vi.fn() }, practiceBolt: { setActive: vi.fn() },
+      player: { ...guide.player, startAction, combatReadout: combat, setCombatPaused: vi.fn() } });
+    guide.updateCounterSwing(true);
+    if (interruption === "pause") guide.setLessonPaused(true);
+    else {
+      guide.hasCounterTraining = true;
+      guide.updateCounterSwing(false);
+      guide.hasCounterTraining = false;
+    }
+    time.now = 80;
+    combat.weapon.canSwing = true;
+    guide.updateCounterSwing(false);
+    expect(startAction).not.toHaveBeenCalled();
+  });
+  it("visibly corrects the interaction button without awarding or pausing the lesson", () => {
+    const guide = scene();
+    gameState.mode = "explore";
+    const lesson = guide.counterTraining.readout();
+    guide.remindCounterInput();
+    expect(guide.toast.show).toHaveBeenCalledWith(`USE ${getSecondaryActionBadge()} TO RETURN BOLT`, guide.player.position, "info");
+    expect(guide.counterTraining.readout()).toEqual(lesson);
+    expect(gameState.mode).toBe("explore");
+    expect(gameState.sceneProgress.guideCitationCounterTrained).toBeUndefined();
+  });
   it("reveals the earned fragment once without a blocking dialog or delayed award", () => {
     const guide = scene();
     const reward = { y: 132, setName: vi.fn().mockReturnThis(), setDepth: vi.fn().mockReturnThis(), destroy: vi.fn() };

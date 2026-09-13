@@ -90,8 +90,39 @@ try {
     }
     await assertOfficeApproach();
     await shot('opening-office');
+    if (process.argv.includes('--muted-travel')) {
+      await page.keyboard.press('n', { delay: 45 });
+      await page.waitForTimeout(100);
+      assert.equal(await page.evaluate(() => window.rubyRuleAudioDebug().enabled), false);
+    }
+    if (process.argv.includes('--early-route')) {
+      await move(128, 215);
+      assert.equal(await page.evaluate(() => window.game.scene.getScene('OfficeScene').prompt.currentText), 'CHECK ARCHIVE LOCK');
+      await shot('early-door-prompt');
+      await press();
+      assert.equal((await state()).mode, 'explore', 'A locked door check must not block movement');
+      assert(!(await state()).sceneProgress.juniorCompilerIntroduced, 'The warning cannot grant the assignment');
+      const before = (await state()).player;
+      await shot('early-door-hint');
+      await direction('ArrowRight', 140);
+      assert((await state()).player.x > before.x + 5, 'The hero can walk away while the hint is visible');
+      await move(128, 185);
+    }
     await move(128, 122);
-    await move(70, 122);
+    if (process.argv.includes('--nearby-jr')) {
+      await press();
+      assert(!(await state()).sceneProgress.juniorCompilerIntroduced, 'The briefing must not trigger across the room');
+      assert.equal((await state()).mode, 'explore');
+      await shot('jr-out-of-reach');
+    }
+    await move(90, 122);
+    if (process.argv.includes('--nearby-jr')) {
+      await direction('ArrowLeft', 110);
+      const hero = (await state()).player;
+      assert(hero.x >= 82, 'JR feet must stop a direct walk through the colleague');
+      await shot('jr-feet-contact');
+    }
+    await move(100, 122);
     await press();
     await shot('opening-assignment');
     assert.match((await state()).latestMessage, /publish a reliable FRUS volume/);
@@ -126,6 +157,20 @@ try {
     await move(128, 200);
     await press();
     await scene('GuideScene');
+    if (process.argv.includes('--muted-travel')) {
+      const muted = await page.evaluate(() => window.rubyRuleAudioDebug());
+      assert.equal(muted.enabled, false);
+      assert.equal(muted.musicTimerActive, false);
+      await page.keyboard.press('n', { delay: 45 });
+      await page.waitForTimeout(300);
+      const audio = await page.evaluate(() => window.rubyRuleAudioDebug());
+      results.push({ label: 'unmuted-after-travel', audio });
+      assert.equal(audio.currentSceneKey, 'ArchiveScene', 'Guide requests the Archive theme; unmuting must not restore Office');
+      assert.equal(audio.currentThemeKey, 'archiveDungeon');
+      assert.equal(audio.contextState, 'running');
+      assert.equal(audio.musicTimerActive, true);
+      await shot('guide-music-restored');
+    }
     if (coaching) {
         // Input-only perimeter check: the player must stay on the room's floor.
         await direction('ArrowRight', 2500);
@@ -176,6 +221,9 @@ try {
     // A is interaction, not the counter. It must not clear the lesson.
     await press();
     assert(!((await state()).sceneProgress.guideCitationCounterTrained));
+    assert.equal((await state()).mode, 'explore');
+    assert(await page.evaluate(() => window.game.scene.getScene('GuideScene').toast.visible), 'Wrong button guidance must be visible, not just an internal message');
+    await shot('05-use-swing-button');
     if (coaching) {
         // Follow the displayed direction and timing cue at the pickup position,
         // without knowing bolt coordinates or moving to a precomputed counter spot.

@@ -1,8 +1,18 @@
 import { describe, expect, it } from "vitest";
-import { DANNE_LURKER_BOASTS } from "../game/danneBoasts";
+import { DANNE_LURKER_BOASTS, danneCombatBoastsForVariantPhase } from "../game/danneBoasts";
 import { combatSpeechPlacement, combatSpeechText, COMBAT_SPEECH_BOUNDS, COMBAT_SPEECH_WIDTH } from "./combatSpeechPlacement";
 
 describe("combat speech layout", () => {
+  it.each(["reveal", "prototype", "colossus", "cloud", "infiltrator", "swarm", "defeated", "ascendant"] as const)(
+    "preserves every %s combat punchline including its speaker prefix", phase => {
+      for (const message of danneCombatBoastsForVariantPhase(phase)) {
+        const layout = combatSpeechText(message);
+        expect(layout.text.replace(/\s+/g, " ")).toBe(`DANN-E: ${message}`.replace(/\s+/g, " "));
+        expect(layout.text.split("\n").length).toBeLessThanOrEqual(2);
+        for (const line of layout.text.split("\n")) expect(line.length * 4 + 8).toBeLessThanOrEqual(COMBAT_SPEECH_WIDTH);
+      }
+    }
+  );
   it.each([...DANNE_LURKER_BOASTS, "INTERRUPTED!", "REFUTED!"])("fits the complete line %s at native 6px", (message) => {
     const layout = combatSpeechText(message);
     expect(layout.text.replace(/\n/g, " ")).toBe(`DANN-E: ${message}`);

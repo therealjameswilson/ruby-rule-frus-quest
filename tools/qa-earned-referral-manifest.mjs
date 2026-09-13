@@ -78,10 +78,20 @@ try{
  }
  await key();await key('ArrowDown');await key('ArrowDown');await key();
  assert.equal((await state()).sceneProgress.referralTreatmentStep,2);await shot('treatment-filed');
+ if(process.argv.includes('--wrong-desk')){
+  const before=await state();await key();
+  assert.equal((await state()).sceneProgress.referralTreatmentStep,2);
+  assert.equal((await state()).sceneProgress.referralTreatmentDocketCarried,before.sceneProgress.referralTreatmentDocketCarried);
+  assert.equal((await state()).reliability,before.reliability-2);
+  assert.equal(await page.evaluate(()=>window.game.scene.getScene('ReferralVaultScene').toast.text.text),'USE BRACKET PRESS');
+  await shot('wrong-desk-correction');
+ }
  await move(128,180);await move(176,180);await key();
  assert.equal((await state()).sceneProgress.referralTreatmentStep,2);
  assert(!(await state()).sceneProgress.referralPhysicalReviewComplete);
  assert.equal((await eastGate()).canOpen,false,'Drafted treatment must not open the gate before printing');
+ await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='STAMP THE BRACKET PRESS');
+ assert.equal(await page.evaluate(()=>window.game.scene.getScene('UIScene').questBandVerbText.text),mobile?'B':'X');
  await shot('press-ready');
  await key('ArrowDown',30);await key('x');await page.waitForTimeout(450);
  assert.equal((await state()).sceneProgress.referralTreatmentStep,2,'A swing facing away must not print');

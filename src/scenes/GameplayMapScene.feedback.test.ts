@@ -3,6 +3,7 @@ import { GameplayMapScene } from "./GameplayMapScene";
 import { UIScene } from "./UIScene";
 import { addProcessItem, equipProcessItem, gameState, resetGameState, setSceneState } from "../game/state";
 import { QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
+import { getSecondaryActionBadge } from "../input/InputState";
 
 vi.mock("phaser", () => ({ default: {
   Scene: class {}, GameObjects: { Sprite: class {} },
@@ -112,12 +113,16 @@ describe("encounter readiness cues", () => {
       expect(clampQuestBandText(cue(), QUEST_BAND_LAYOUT.objective.maxChars)).toBe(expected);
     };
     const name = weakness.replace(/_/g, " ").toUpperCase();
-    assertVisible(`FIND ${name}`);
+    assertVisible(weakness === "review_folder" ? "FOLDER: ARCHIVE B2"
+      : weakness === "red_pencil" ? "PENCIL: EDITOR E1" : "STAMP: GUIDE CAVERN");
     addProcessItem(weakness);
     gameState.equippedProcessItem = null;
     assertVisible(`EQUIP ${name}`);
-    equipProcessItem(weakness);
+    const actionHint = () => (scene as unknown as { currentDanneCombatCue(): { actionHint: string } }).currentDanneCombatCue().actionHint;
     const short = weakness === "citation_stamp" ? "STAMP" : weakness === "red_pencil" ? "PENCIL" : "FOLDER";
+    expect(actionHint()).toBe(`TOOLS: EQUIP ${short}`);
+    equipProcessItem(weakness);
+    expect(actionHint()).toBe(`${getSecondaryActionBadge()} USE ${short}`);
     assertVisible(`${short}: 1/2 CLEARED`);
   });
 });
@@ -135,12 +140,12 @@ describe("NARA combat retreat", () => {
     }
   });
 
-  it("keeps only the world-map exit available until the room is clear", () => {
+  it.each(["nara_stacks", "capitol_hill"])("keeps only the %s world-map exit available until the room is clear", mapKey => {
     const scene = new GameplayMapScene();
     const exit = { id: "world_exit", target: { scene: "WorldMapScene" } };
     const vault = { id: "vault_a_route", target: { scene: "GameplayMapScene" } };
     const reward = { id: "catalog" };
-    Object.assign(scene, { mapKey: "nara_stacks", doors: [exit, vault], interactables: [exit, vault, reward] });
+    Object.assign(scene, { mapKey, doors: [exit, vault], interactables: [exit, vault, reward] });
     const allowed = (scene as unknown as { availableCombatInteractables(locked: boolean): unknown[] }).availableCombatInteractables.bind(scene);
     expect(allowed(true)).toEqual([exit]);
     expect(allowed(false)).toEqual([exit, vault, reward]);

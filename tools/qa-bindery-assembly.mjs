@@ -5,6 +5,8 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE || "playwright")
 const storageFile = process.env.FRUS_QA_STORAGE;
 if (!storageFile) throw new Error("FRUS_QA_STORAGE must point to an earned bindery storage snapshot.");
 const mobile = process.argv.includes("--mobile");
+const cpuThrottle = Number(process.env.FRUS_QA_CPU_THROTTLE ?? 1);
+assert(Number.isFinite(cpuThrottle) && cpuThrottle >= 1, "CPU throttle must be at least one");
 const out = process.env.FRUS_QA_OUT || "/tmp/frus-bindery-assembly";
 const url = process.env.FRUS_QA_URL || "http://127.0.0.1:5195/";
 const origin = new URL(url).origin;
@@ -18,6 +20,7 @@ try {
     hasTouch: mobile, isMobile: mobile, deviceScaleFactor: mobile ? 3 : 1 });
   const page = await context.newPage();
   const cdp = await context.newCDPSession(page);
+  await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuThrottle });
   const errors = [];
   page.on("pageerror", error => errors.push(String(error)));
   page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
@@ -50,14 +53,14 @@ try {
       if (Math.hypot(dx, dy) < 5) return;
       const horizontal = Math.abs(dx) > Math.abs(dy);
       const sign = Math.sign(horizontal ? dx : dy);
-      const ms = Math.min(230, Math.max(50, Math.max(Math.abs(dx), Math.abs(dy)) * 11));
+      const ms = Math.min(180, Math.max(16, Math.max(Math.abs(dx), Math.abs(dy)) * 6));
       if (mobile) {
         await touch([[40, 178]], "touchStart");
         await touch([[40 + (horizontal ? sign * 26 : 0), 178 + (horizontal ? 0 : sign * 26)]], "touchMove");
         await page.waitForTimeout(ms); await touch([], "touchEnd"); await page.waitForTimeout(80);
       } else await key(horizontal ? sign > 0 ? "ArrowRight" : "ArrowLeft" : sign > 0 ? "ArrowDown" : "ArrowUp", ms);
     }
-    throw new Error(`Could not walk to ${x},${y}`);
+    throw new Error(`Could not walk to ${x},${y}; player=${JSON.stringify((await state()).player)}`);
   };
   const shot = async name => {
     const current = await state();
@@ -174,7 +177,7 @@ try {
   assert(recordText.includes(missed?'MISSED':'MET'));
   await shot('deadline-record');
   assert.deepEqual(errors, []);
-  await writeFile(`${out}/result.json`, JSON.stringify({ mobile, startPoints: points, finalPoints: current.documentPoints,
+  await writeFile(`${out}/result.json`, JSON.stringify({ mobile, cpuThrottle, startPoints: points, finalPoints: current.documentPoints,
     completedPackets: current.buckramBinding.completed, certification: current.finalGateCertification, errors }, null, 2));
   console.log(JSON.stringify({ mobile, finalPoints: current.documentPoints, certification: current.finalGateCertification.status, errors }));
 } finally { await browser.close(); }

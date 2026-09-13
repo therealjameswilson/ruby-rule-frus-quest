@@ -61,6 +61,7 @@ import { recoverDanneBossPressure, takeDanneBossHit } from "../../systems/danneP
 import { ChoicePrompt } from "../../systems/verification";
 import { isWeaponTool } from "../../systems/weaponState";
 import { Player } from "../Player";
+import { readDanneBossCheckpoint, writeDanneBossCheckpoint } from "../../game/danneBossCheckpoint";
 
 export type DanneBossPhase = "intro" | "colossus" | "swarm" | "cloud" | "ascendant" | "defeated";
 
@@ -164,14 +165,23 @@ export class DanneBoss {
   private finishBoast?: () => void;
   private readonly recordedPhaseDefeats = new Set<DanneBossPhase>();
   private readonly announcedTelegraphs = new Set<DanneBossPhase>();
+  private readonly resumeCheckpoint: ReturnType<typeof readDanneBossCheckpoint>;
 
   constructor(scene: Phaser.Scene, options: DanneBossOptions) {
     this.scene = scene;
+    this.deadlineDamageApplied = Boolean(gameState.sceneProgress.statutoryDeadlineMissed);
+    const storedTenths = gameState.sceneProgress.statutoryClockTenths;
+    this.statutoryYear = this.deadlineDamageApplied ? STATUTORY_DEADLINE_YEARS
+      : Number.isFinite(storedTenths)
+        ? Phaser.Math.Clamp(storedTenths / 10, STATUTORY_START_YEAR, STATUTORY_DEADLINE_YEARS)
+        : STATUTORY_START_YEAR;
     this.player = options.player;
     this.secretAscendant = options.secretAscendant;
     this.quickFight = options.quickFight;
     this.difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
     this.maxHp = Math.round((options.quickFight ? 48 : 180) * this.difficulty.hpMultiplier);
+    this.resumeCheckpoint = options.quickFight ? null
+      : readDanneBossCheckpoint(gameState.sceneProgress, this.maxHp, this.secretAscendant);
     this.phaseCount = this.secretAscendant ? 4 : 3;
     this.onDefeated = options.onDefeated;
     this.onBadEnding = options.onBadEnding;
@@ -369,6 +379,16 @@ export class DanneBoss {
 
   private async runIntro() {
     this.phaseTransitioning = true;
+    if (this.resumeCheckpoint) {
+      const { phase, hp } = this.resumeCheckpoint;
+      this.beginPhase(phase, hp);
+      await this.showPhaseCutscene(this.variantKeyForPhase(phase), phase,
+        DANNE_BOSS_PORTRAIT_ASSET.key, "Review resumed. Your counter progress is kept.");
+      if (!this.isActive) return;
+      this.resetAttackTimers();
+      this.phaseTransitioning = false;
+      return;
+    }
     unlockCodexEntry("danne-prime-humanoid");
     await this.showPhaseCutscene("danne-prime-humanoid", "intro");
     if (!this.isActive) return;
@@ -379,15 +399,16 @@ export class DanneBoss {
     this.phaseTransitioning = false;
   }
 
-  private beginPhase(phase: Exclude<DanneBossPhase, "intro" | "defeated">) {
+  private beginPhase(phase: Exclude<DanneBossPhase, "intro" | "defeated">, remainingHp = this.maxHp) {
     this.clearAttackTelegraph();
     this.clearBolts();
     this.combatPausedAt = null;
     this.phase = phase;
     unlockCodexEntry(this.variantKeyForPhase(phase));
-    this.hp = this.maxHp;
+    this.hp = Math.max(1, Math.min(this.maxHp, remainingHp));
     this.resetAttackTimers();
     this.onPhaseChange(phase);
+    writeDanneBossCheckpoint(gameState.sceneProgress, phase, this.hp);
     this.sprite.setVisible(true);
     this.clockContainer.setVisible(true);
     this.applyPhaseTint();
@@ -651,6 +672,13 @@ export class DanneBoss {
     });
     setLatestMessage(`${hasRubyPen ? "Ruby Pen" : "Red Pencil"} review hit DANN-E for ${damage}.`);
     this.resolvePhaseHp();
+    this.saveCombatCheckpoint();
+  }
+
+  private saveCombatCheckpoint() {
+    if (this.isAttackPhase(this.phase) && !this.defeated) {
+      writeDanneBossCheckpoint(gameState.sceneProgress, this.phase, this.hp);
+    }
   }
 
   private coreOpenAt(timeMs: number) {
@@ -919,6 +947,7 @@ export class DanneBoss {
     applyHitShake(this.scene, "boss-hit");
     this.onPlayerHit?.(false);
     this.resolvePhaseHp();
+    this.saveCombatCheckpoint();
     this.syncCoreOpening(timeMs);
   }
 
@@ -992,6 +1021,7 @@ export class DanneBoss {
   private offerRetry() {
     if (!this.isAttackPhase(this.phase) || this.retryChoice.active) return;
     const phase = this.phase;
+    const remainingHp = this.hp;
     this.clearAttackTelegraph();
     this.clearBolts();
     this.clearMinis();
@@ -1000,7 +1030,7 @@ export class DanneBoss {
     this.clockContainer.setVisible(false);
     hideBossHud();
     setObjective("REVIEW INTERRUPTED");
-    this.retryChoice.show("Review interrupted. Your documents are safe.", [
+    this.retryChoice.show("Review interrupted. Counter progress is kept.", [
       { key: "A", label: "Retry this phase", value: "retry" },
       { key: "B", label: "Leave the arena", value: "leave" }
     ], (option) => {
@@ -1010,8 +1040,8 @@ export class DanneBoss {
         return;
       }
       this.player.setPosition(128, 188);
-      this.beginPhase(phase);
-      setLatestMessage("Review recovered. Dodge the red lock, then counter with the Red Pencil.");
+      this.beginPhase(phase, remainingHp);
+      setLatestMessage("Counter progress kept. Dodge the red lock, then counter with the Red Pencil.");
     });
   }
 

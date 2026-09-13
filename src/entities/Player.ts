@@ -272,9 +272,14 @@ export class Player {
   }
 
   pushAwayFrom(source: Position, distance = 12) {
-    const dx = this.logicalX - source.x;
-    const dy = this.logicalY - source.y;
-    const length = Math.max(1, Math.hypot(dx, dy));
+    let dx = this.logicalX - source.x;
+    let dy = this.logicalY - source.y;
+    // Exact overlap has no source direction; recoil backward without turning.
+    if (dx === 0 && dy === 0) {
+      dx = this.facing === "east" ? -1 : this.facing === "west" ? 1 : 0;
+      dy = this.facing === "south" ? -1 : this.facing === "north" ? 1 : 0;
+    }
+    const length = Math.hypot(dx, dy);
     const startX = this.logicalX;
     const startY = this.logicalY;
     const bounds = this.movementOptions.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
@@ -468,7 +473,10 @@ export class Player {
             if (this.collidesAt(x, y, solids)) blockedOffset = offset;
             else clearOffset = offset;
           }
-          const step = sign * Math.min(clearOffset, maxStep);
+          // Approaching the wall already spent part of this frame's movement.
+          // Corner guidance may redirect only the distance that remains.
+          const unusedDistance = Math.abs(axis === "x" ? targetX - this.logicalX : targetY - this.logicalY);
+          const step = sign * Math.min(clearOffset, maxStep, unusedDistance);
           const slideX = axis === "y" ? Phaser.Math.Clamp(this.logicalX + step, bounds.left, bounds.right) : this.logicalX;
           const slideY = axis === "x" ? Phaser.Math.Clamp(this.logicalY + step, bounds.top, bounds.bottom) : this.logicalY;
           if (this.collidesAt(slideX, slideY, solids)) continue;

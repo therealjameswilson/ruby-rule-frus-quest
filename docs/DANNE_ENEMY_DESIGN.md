@@ -299,10 +299,15 @@ current boss also accepts returned Ego bolts; see the counter-loop update below.
   actual clamped amount persists in `sceneProgress.blackVaultCombatDamage`.
   Retry, retreat, interrupted-fight restoration, and legitimate victory recover
   only this amount. Separate standards penalties and document flags remain.
-- At zero hearts, A retries the current phase at full boss HP; B returns to the
+- At zero hearts, A retries the current phase with earned boss damage retained; B returns to the
   arena entrance. Neither option grants a defeat, removes documents, or repeats
   completed phases during a retry. The choice consumes its action input. Long
   waits on Retry do not extend the new phase's grace period.
+- Reload/re-entry restores the saved phase and remaining HP, with cleared
+  projectiles, a short recap, and normal entry grace. It preserves elapsed
+  deadline time and does not reapply an already-recorded deadline penalty.
+  Checkpoints use existing numeric scene-progress fields; legacy phase-only
+  saves resume that phase at full HP. A normal new phase still starts at full HP.
 - All normal phases retain 180 HP, with Cloud taking half Red Pencil damage.
   Cloud Shift warns for 800 ms, its stationary spread for 700 ms, and each attack
   has a 2,000 ms recovery window. A stationary window separates Cloud Shifts so

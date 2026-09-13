@@ -92,7 +92,7 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
-    "encounterEvade": "ESQUIVA; BUSCA {tool}",
+    "encounterEvade": "RETIRATE; FALTA {tool}",
     "encounterEquip": "EQUIPA {tool}",
     "encounterCounter": "CONTRAATACA: {tool}",
     "encounterExplore": "EXPLORA RUTAS ABIERTAS",

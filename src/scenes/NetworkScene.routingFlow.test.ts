@@ -77,7 +77,7 @@ describe("NetworkScene physical routing flow", () => {
     expect(routePacket).toContain("networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder)");
     expect(routePacket).toContain("networkRoutingHintOrder = result.packet.order");
     expect(routePacket).not.toContain("this.drawRoutingPacketAtSorter()");
-    expect(networkSceneSource).toContain("WRONG NETWORK");
+    expect(networkSceneSource).toContain('ROUTE TO ${result.packet.network.toUpperCase()}');
     expect(networkSceneSource).not.toContain("recordUnresolvedEquity");
   });
 

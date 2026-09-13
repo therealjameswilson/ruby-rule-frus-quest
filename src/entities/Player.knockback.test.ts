@@ -51,6 +51,30 @@ describe("interaction auto-facing", () => {
 });
 
 describe("player knockback terrain collision", () => {
+  it.each([
+    ["north", 100, 112], ["south", 100, 88],
+    ["east", 88, 100], ["west", 112, 100]
+  ] as const)("separates an overlapping hit opposite %s facing", (facing, x, y) => {
+    const { player } = fixture(100, 100);
+    Object.assign(player, { facing });
+    player.pushAwayFrom({ x: 100, y: 100 }, 12);
+    expect(player.position).toEqual({ x, y });
+    expect(player.facingDirection).toBe(facing);
+  });
+
+  it("keeps full knockback strength for subpixel contact", () => {
+    const { player } = fixture(100, 100);
+    player.pushAwayFrom({ x: 99.75, y: 100 }, 12);
+    expect(player.position).toEqual({ x: 112, y: 100 });
+  });
+
+  it("does not force overlapping contact through a wall behind the hero", () => {
+    const { player, internals } = fixture(100, 100);
+    internals.collidesAt.mockImplementation((x: number) => x < 96);
+    player.pushAwayFrom({ x: 100, y: 100 }, 12);
+    expect(player.position).toEqual({ x: 96, y: 100 });
+  });
+
   it("preserves the full open-floor push and stops residual movement", () => {
     const { player, internals } = fixture();
     player.pushAwayFrom({ x: 180, y: 183 }, 12);

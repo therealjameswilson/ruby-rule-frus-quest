@@ -101,8 +101,22 @@ try {
  await page.keyboard.press('Space',{delay:40});
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='WorldMapScene');
  await page.waitForTimeout(350);
- await shot('exit');assert.deepEqual(errors,[]);
- console.log('NARA two waves, menu tool swap, record invariants and exit pass. Debug-granted tools.');
+ await shot('exit');
+ const pointsAfterClear = (await state()).documentPoints;
+ for(let j=0;j<8;j++) {
+   if(await page.evaluate(()=>window.game.scene.getScene('WorldMapScene').selectedDistrictNumber===3))break;
+   await page.keyboard.press('ArrowDown',{delay:50});await page.waitForTimeout(100);
+ }
+ await page.keyboard.press('Space',{delay:40});
+ await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='GameplayMapScene');
+ await page.waitForTimeout(1200);
+ const revisit=await state();
+ assert.equal(revisit.danneCombat.roomClear.cleared,true);
+ assert.equal(revisit.danneCombat.activeEnemyCount,0);
+ assert.equal(revisit.documentPoints,pointsAfterClear,'Revisiting a cleared room must not duplicate rewards');
+ await shot('cleared-revisit');
+ assert.deepEqual(errors,[]);
+ console.log('NARA two waves, menu tool swap, record invariants, exit and cleared revisit pass. Debug-granted tools.');
 } finally {
  await writeFile(`${out}/last.json`,JSON.stringify(await state(),null,2));await shot('last');
  await browser.close();

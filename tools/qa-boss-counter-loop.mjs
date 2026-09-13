@@ -4,12 +4,15 @@ const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright')
 const storagePath = process.env.FRUS_QA_STORAGE;
 if (!storagePath) throw new Error('FRUS_QA_STORAGE must name an earned Black Vault entry storage file.');
 const mobile=process.argv.includes('--mobile'), baseline=process.argv.includes('--baseline');
+const cpuThrottle=Number(process.env.FRUS_QA_CPU_THROTTLE ?? 1);
+assert(Number.isFinite(cpuThrottle) && cpuThrottle>=1, 'CPU throttle must be at least one');
 const out=process.env.FRUS_QA_OUT??`/tmp/frus-boss-rhythm-${baseline?'before':'after'}-${mobile?'touch':'desktop'}`;
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_EXECUTABLE});
 const context=await browser.newContext({storageState:JSON.parse(await readFile(storagePath,'utf8')),
   viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
 const page=await context.newPage(),cdp=await context.newCDPSession(page),errors=[],log=[];
+await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpuThrottle});
 page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const boss=s=>s.visibleThreats.find(t=>t.bossCombat);
@@ -17,7 +20,7 @@ async function point(x,y){const b=await page.locator('canvas').first().boundingB
 async function touch(x,y,dx=0,dy=0,ms=55){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[await point(x,y)]});if(dx||dy)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[await point(x+dx,y+dy)]});await page.waitForTimeout(ms);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
 async function press(key='Space'){if(mobile)await touch(...(key==='x'?[174,216]:key==='m'?[224,16]:key==='Escape'?[224,34]:[225,205]));else await page.keyboard.press(key,{delay:55});}
 async function direction(key,ms=70){if(mobile){const [dx,dy]={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];await touch(40,178,dx,dy,ms);}else{await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}await page.waitForTimeout(20);}
-async function move(x,y){for(let i=0;i<50;i++){const s=await state(),dx=x-s.player.x,dy=y-s.player.y;if(s.mode!=='explore'||Math.hypot(dx,dy)<4)return;await direction(Math.abs(dx)>Math.abs(dy)?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.max(45,Math.min(260,Math.max(Math.abs(dx),Math.abs(dy))*11)));}throw Error('Movement stalled');}
+async function move(x,y){for(let i=0;i<50;i++){const s=await state(),dx=x-s.player.x,dy=y-s.player.y;if(s.mode!=='explore'||Math.hypot(dx,dy)<4)return;await direction(Math.abs(dx)>Math.abs(dy)?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.max(16,Math.min(180,Math.max(Math.abs(dx),Math.abs(dy))*6)));}throw Error('Movement stalled');}
 async function shot(label){const s=await state();const img=await page.evaluate(()=>new Promise(resolve=>window.game.renderer.snapshot(i=>resolve(i.src))));await writeFile(`${out}/${label}-native.png`,Buffer.from(img.split(',')[1],'base64'));await page.screenshot({path:`${out}/${label}.png`});await writeFile(`${out}/${label}.json`,JSON.stringify(s,null,2));const entry={label,scene:s.scene,p:s.player,rel:s.reliability,phase:boss(s)?.enemyState,hp:boss(s)?.hp,returns:boss(s)?.bossCombat.boltsReturned,window:boss(s)?.bossCombat.counterWindowMs};log.push(entry);console.log(JSON.stringify(entry));return s;}
 try{
  await page.goto(`${process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/'}?text=full`);await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
@@ -95,7 +98,16 @@ try{
    await page.waitForFunction(()=>!window.game.scene.getScene('BlackVaultLairScene').danneBoss.phaseDialogueActive);
    assert.equal((await state()).playerCombat.weapon.swingId,intro.playerCombat.weapon.swingId);
  }
- await page.waitForFunction(()=>{const s=JSON.parse(window.render_game_to_text());return s.mode==='explore'&&s.visibleThreats.some(t=>t.enemyState==='colossus');});await page.waitForTimeout(2400);
+ await page.waitForFunction(()=>{const s=JSON.parse(window.render_game_to_text());return s.mode==='explore'&&s.visibleThreats.some(t=>t.enemyState==='colossus');});
+ if(process.argv.includes('--spacing')) {
+   await move(128,150);
+   await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='STEP BACK; FACE BOLT', {}, {timeout:3000});
+   await shot('spacing-too-close');
+   await move(128,176);
+   await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='FACE BOLT + SWING', {}, {timeout:3000});
+   await shot('spacing-counter-distance');
+ }
+ await page.waitForTimeout(2400);
  if(process.argv.includes('--retry-guard')) {
    await move(128,130);
    if(mobile)await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[await point(174,216)]});
@@ -132,7 +144,22 @@ try{
    assert.equal(after.documentPoints,before.documentPoints);
    assert.equal(after.playerCombat.weapon.swingId,before.playerCombat.weapon.swingId);
  }
- if(process.argv.includes('--imprecise')) {
+ if(process.argv.includes('--clock-resume')) {
+   const elapsed = await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.statutoryYear);
+   assert(elapsed>21.6,'The live clock must have advanced before testing reload');
+   await page.reload();
+   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
+   if(mobile)await touch(86,154);else await press('Enter');
+   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');
+   await page.waitForTimeout(800);
+   await move(128,144);await press();
+   await page.waitForFunction(()=>Boolean(window.game.scene.getScene('BlackVaultLairScene').danneBoss?.finishBoast));
+   const restored=await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.statutoryYear);
+   assert(restored>=Math.floor(elapsed*10)/10,'Re-entering the boss cannot rewind the saved deadline');
+   assert(restored<=elapsed+0.5,'Loading and introduction must not consume combat time');
+   await shot('clock-restored');
+   log.push({label:'clock-resume-summary',elapsed,restored});
+ } else if(process.argv.includes('--imprecise')) {
    const before=await state();
    // Fixed uneven cadence: no projectile, HP or opening reads drive these inputs.
    const cadence=[420,760,500,620];
@@ -156,7 +183,7 @@ try{
  if(baseline){assert.equal(boss(spam).bossCombat.boltsReturned,0);assert(boss(spam).hp<180);}
  else {
   if(boss(spam).bossCombat.boltsReturned===0)assert.equal(boss(spam).hp,180);
-  let cycles=0,retries=0,freshCoreHits=0,tightApproaches=0;const started=Date.now(),phases=new Set();
+  let cycles=0,retries=0,freshCoreHits=0,tightApproaches=0,reloadedPhase=false;const started=Date.now(),phases=new Set();
   while(Date.now()-started<240000){
     const s=await state(),b=boss(s);if(s.scene==='EndingScene')break;
     if(s.mode!=='explore'){
@@ -166,12 +193,13 @@ try{
         // Respect the prompt's 300ms input guard; count confirmed restarts,
         // not repeated taps on the same newly opened prompt.
         await page.waitForTimeout(350);
-        await shot(`retry-${retries+1}`);await press();
+        const interrupted=await shot(`retry-${retries+1}`);await press();
         await page.waitForFunction(()=>{
           const s=JSON.parse(window.render_game_to_text());
           return s.reliability>0&&!s.visibleThreats.some(t=>t.bossCombat?.retryAvailable);
         },{},{timeout:2000});
         retries++;
+        assert.equal(boss(await state()).hp,boss(interrupted).hp,'Retry must retain damage earned in this phase');
         assert.deepEqual((await state()).documentCandidates,spam.documentCandidates);
       }
       await page.waitForTimeout(100);continue;
@@ -251,7 +279,8 @@ try{
     const returned=await state(),r=boss(returned);if(!r||returned.mode!=='explore'||!r.bossCombat.coreOpen)continue;
     cycles++;
     if(cycles===1){
-      await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).objective==='PENCIL THE CORE',{},{timeout:1000});
+      await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).objective==='PENCIL THE CORE'
+        && window.game.scene.getScene('UIScene').questBandText.text==='PENCIL THE CORE',{},{timeout:1000});
       await shot('core-open-guidance');
       await press('m');await page.waitForTimeout(100);const paused=await state(),pb=boss(paused);await shot('core-open-paused');await page.waitForTimeout(1800);assert.deepEqual(boss(await state()).bossCombat,pb.bossCombat);await press('Escape');await page.waitForTimeout(80);
       assert.equal((await state()).playerCombat.weapon.swingId,paused.playerCombat.weapon.swingId);
@@ -269,6 +298,36 @@ try{
       await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).playerCombat.weapon.canSwing,{},{timeout:800});
       if(boss(await state())?.bossCombat.coreOpen)await press('x');await page.waitForTimeout(150);
     }
+    if(process.argv.includes('--preserve-retry') && cycles===1) {
+      // Earn a counter first, then deliberately take pressure without attacking.
+      // No health or damage state is injected to reach the retry prompt.
+      await move(128,130);
+      await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).visibleThreats.some(t=>t.bossCombat?.retryAvailable), {}, {timeout:60000});
+    }
+    if(process.argv.includes('--phase-resume') && !reloadedPhase) {
+      const current=await state(),enemy=boss(current);
+      if(current.mode==='explore' && enemy?.enemyState==='cloud' && enemy.hp>0 && enemy.hp<180) {
+        await press('m');
+        await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).mode==='pause');
+        const checkpoint=await shot('phase-before-reload');
+        await page.reload();
+        await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
+        if(mobile)await touch(86,154);else await press('Enter');
+        await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');
+        await page.waitForTimeout(800);
+        await move(128,144);await press();
+        await page.waitForFunction(()=>Boolean(window.game.scene.getScene('BlackVaultLairScene').danneBoss?.finishBoast));
+        const restored=await shot('phase-restored');
+        assert.equal(boss(restored).enemyState,'cloud');
+        assert.equal(boss(restored).hp,boss(checkpoint).hp);
+        assert.deepEqual(restored.completionStats.danneVariantsDefeated,checkpoint.completionStats.danneVariantsDefeated);
+        assert.deepEqual(restored.documentCandidates,checkpoint.documentCandidates);
+        assert(restored.sceneProgress.statutoryClockTenths>=checkpoint.sceneProgress.statutoryClockTenths);
+        await press();
+        await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).mode==='explore');
+        reloadedPhase=true;
+      }
+    }
   }
   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='EndingScene',{},{timeout:6000});await page.waitForTimeout(1200);
   const end=await shot('bindery-entry');assert.equal(end.sceneProgress.blackVaultBossCleared,1);assert.equal(end.sceneProgress.danneBadEnding||0,0);
@@ -276,6 +335,7 @@ try{
   assert.deepEqual(end.documentCandidates,spam.documentCandidates);
   for(const phase of ['colossus','swarm','cloud'])assert.equal(end.completionStats.danneVariantsDefeated.counts[phase],1);
   assert(freshCoreHits>0,'The route must demonstrate fresh melee damage, not only returned bolts');
+  if(process.argv.includes('--phase-resume'))assert(reloadedPhase,'Must actually reload a damaged Cloud phase');
   const completion={cycles,retries,freshCoreHits,tightApproaches,phases:[...phases],seconds:(Date.now()-started)/1000,deadlineMissed:Boolean(end.sceneProgress.statutoryDeadlineMissed)};
   log.push({label:'fight-summary',...completion});
   await context.storageState({path:`${out}/earned-bindery-storage.json`});
@@ -290,4 +350,4 @@ try{
  }
  assert.deepEqual(errors,[]);
 }catch(e){await shot('failure').catch(()=>{});throw e;}
-finally{await writeFile(`${out}/result.json`,JSON.stringify({errors,log},null,2));await browser.close();}
+finally{await writeFile(`${out}/result.json`,JSON.stringify({cpuThrottle,errors,log},null,2));await browser.close();}

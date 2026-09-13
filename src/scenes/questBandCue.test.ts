@@ -1,7 +1,32 @@
 import { describe, expect, it } from "vitest";
-import { questBandAwaitingDialog, questBandBossCue, questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandRiskLine, questBandVerbCode } from "./questBandCue";
+import { questBandAwaitingDialog, questBandBossCue, questBandBracketCue, questBandCrossingCue, questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandRiskLine, questBandVerbCode } from "./questBandCue";
 
 describe("quest band cue helpers", () => {
+  it("shows the swing button for the reviewed bracket proof, not interact", () => {
+    const ready = { referralTreatmentStep: 2, referralTreatmentDocketCarried: 3 };
+    expect(questBandBracketCue("explore", "Bracket Press", ready, true, "B"))
+      .toEqual({ text: "STAMP THE BRACKET PRESS", badge: "B" });
+    expect(questBandBracketCue("explore", "Bracket Press", ready, true, "X")?.badge).toBe("X");
+    expect(questBandBracketCue("explore", "Bracket Press", ready, false, "B"))
+      .toEqual({ text: "EQUIP CITATION STAMP", badge: "!" });
+    for (const mode of ["choice", "dialog", "pause"] as const)
+      expect(questBandBracketCue(mode, "Bracket Press", ready, true, "B")).toBeNull();
+    for (const progress of [{}, { ...ready, referralTreatmentStep: 0 },
+      { ...ready, referralTreatmentDocketCarried: 0 }, { ...ready, referralPhysicalReviewComplete: 1 }])
+      expect(questBandBracketCue("explore", "Bracket Press", progress, true, "B")).toBeNull();
+    expect(questBandBracketCue("explore", "Human Desk", ready, true, "B")).toBeNull();
+  });
+  it("names the crossing requirement and uses the tool button only when ready", () => {
+    expect(questBandCrossingCue("explore", "Service crossing", "sealed", true, "B"))
+      .toEqual({ text: "FILE PUBLIC PACKET FIRST", badge: "!" });
+    expect(questBandCrossingCue("explore", "Service crossing", "ready", true, "B"))
+      .toEqual({ text: "STAMP THE SEAL", badge: "B" });
+    expect(questBandCrossingCue("explore", "Service crossing", "ready", false, "X"))
+      .toEqual({ text: "EQUIP CITATION STAMP", badge: "!" });
+    expect(questBandCrossingCue("explore", "Service crossing", "open", true, "X")).toBeNull();
+    expect(questBandCrossingCue("choice", "Service crossing", "sealed", true, "B")).toBeNull();
+    expect(questBandCrossingCue("explore", "OpenNet", "sealed", true, "B")).toBeNull();
+  });
   it("withholds reading prompts until a dialog has actual text", () => {
     expect(questBandAwaitingDialog("dialog", null)).toBe(true);
     expect(questBandAwaitingDialog("dialog", { speaker: "CUTSCENE", text: "  " })).toBe(true);
@@ -28,6 +53,18 @@ describe("quest band cue helpers", () => {
     expect(questBandBossCue("explore", [{ ...boss, bossCombat: { ...boss.bossCombat!, retryAvailable: true } }])).toBeNull();
     expect(questBandBossCue("explore", [{ ...hit, bossCombat: { ...hit.bossCombat, feedback: { ...hit.bossCombat.feedback, msRemaining: 0 } } }])?.text)
       .toBe("FACE BOLT + SWING");
+  });
+
+  it("asks for counter spacing only while the core is closed and nearby", () => {
+    const nearby = { ...boss, x: 128, y: 118 };
+    expect(questBandBossCue("explore", [nearby], { x: 128, y: 145 }))
+      .toEqual({ text: "STEP BACK; FACE BOLT", tone: "info", badge: "notice" });
+    expect(questBandBossCue("explore", [nearby], { x: 128, y: 170 })?.text)
+      .toBe("FACE BOLT + SWING");
+    expect(questBandBossCue("explore", [{ ...nearby,
+      bossCombat: { ...nearby.bossCombat!, counterWindowMs: 900 }
+    }], { x: 128, y: 145 })?.text).toBe("CORE OPEN: STRIKE");
+    expect(questBandBossCue("pause", [nearby], { x: 128, y: 145 })).toBeNull();
   });
 
   it("keeps combat and choice controls visible instead of repeating the boss risk", () => {

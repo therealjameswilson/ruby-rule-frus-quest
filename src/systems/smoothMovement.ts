@@ -6,8 +6,8 @@ import { setPixelPosition, snapPixel } from "./pixelPerfect";
 // Direct ground control: input determines this frame's velocity, with no glide
 // on release or residual motion opposite a newly pressed direction.
 export const PLAYER_MOVEMENT_TUNING = {
-  speed: 72,
-  cornerGuideSpeed: 60,
+  speed: 90,
+  cornerGuideSpeed: 75,
   feetWidth: 12,
   feetHeight: 8,
   feetOffsetY: -3

@@ -15,7 +15,7 @@ import {
 import { bindPointerPress, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { isRoomCleared } from "../systems/roomClear";
-import { naraRoutePreparation } from "../game/gameplayMapFlow";
+import { capitolRoutePreparation, naraRoutePreparation } from "../game/gameplayMapFlow";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -558,12 +558,14 @@ export class WorldMapScene extends Phaser.Scene {
 
     this.addDestinationGlyph(card, district.destinationScene, Boolean(district.destinationScene), Boolean(district.locked), { x: 94, y: -10 });
 
-    if (district.destinationScene === "nara_stacks" && !district.locked) {
-      const preparation = naraRoutePreparation(hasProcessItem("citation_stamp"), hasProcessItem("review_folder"), isRoomCleared("nara_stacks_patrol"));
+    if ((district.destinationScene === "nara_stacks" || district.destinationScene === "capitol_hill") && !district.locked) {
+      const preparation = district.destinationScene === "nara_stacks"
+        ? naraRoutePreparation(hasProcessItem("citation_stamp"), hasProcessItem("review_folder"), isRoomCleared("nara_stacks_patrol"))
+        : capitolRoutePreparation(hasProcessItem("review_folder"), isRoomCleared("capitol_executive_pressure"));
       card.add(this.add.text(-112, 2, preparation.text, {
         fontFamily: "monospace", fontSize: "6px",
         color: preparation.ready ? PALETTE.terminalCyan : PALETTE.goldStamp
-      }).setOrigin(0, 0).setName("nara-route-preparation"));
+      }).setOrigin(0, 0).setName(district.destinationScene === "nara_stacks" ? "nara-route-preparation" : "capitol-route-preparation"));
     }
 
     this.routePreview = card;

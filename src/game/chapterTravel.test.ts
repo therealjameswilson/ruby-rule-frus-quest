@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { readChapterArrival } from "./chapterTravel";
+import { readChapterArrival, requestsDoorExit } from "./chapterTravel";
 import { FRUS_ROOM_GRAPH } from "./constants";
 import { canTraverseExit } from "./questArchitecture";
 import { createGameSaveData, gameState, getRoomGraphReadout, getVisitedRoomIds, resetGameState, restoreGameSaveData, setRoomTraversalState, setSceneState } from "./state";
@@ -7,6 +7,14 @@ import { createGameSaveData, gameState, getRoomGraphReadout, getVisitedRoomIds, 
 beforeEach(() => resetGameState());
 
 describe("connected chapter doorways", () => {
+  it.each(["north", "south", "west", "east"] as const)("requires movement toward the %s exit", direction => {
+    const dir = { x: direction === "west" ? -1 : direction === "east" ? 1 : 0,
+      y: direction === "north" ? -1 : direction === "south" ? 1 : 0 };
+    expect(requestsDoorExit(direction, { x: 0, y: 0 })).toBe(false);
+    expect(requestsDoorExit(direction, dir)).toBe(true);
+    expect(requestsDoorExit(direction, { x: -dir.x, y: -dir.y })).toBe(false);
+    expect(requestsDoorExit(direction, { x: dir.y, y: dir.x })).toBe(false);
+  });
   it.each([
     ["A1", "O1", "OfficeScene", 128, 196],
     ["O1", "A1", "ArchiveScene", 30, 120],

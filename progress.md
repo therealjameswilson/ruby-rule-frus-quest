@@ -2,6 +2,520 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Quiet exploration prompts (2026-09-13): GameplayMapScene no longer shows an
+  unsolicited out-of-range STEP CLOSER panel during ordinary exploration.
+  In-range interaction prompts remain; pressing A requests the existing short
+  approach feedback. The guided production floor retains its next-workstation
+  cue. Matched movement replays inspected at native resolution: free walking
+  leaves the hero unobstructed, explicit Space produces STEP CLOSER and the
+  corresponding objective. Evidence /private/tmp/frus-quiet-exploration/ and
+  /private/tmp/frus-requested-approach/. All 15 feedback tests and build pass
+  (existing bundle warning). Local only, no progression/save changes.
+
+- Touch interruption regression (2026-09-13): BlackVaultLairScene and
+  GameplayMapScene pass rapid/late attack buffering, pause cancellation,
+  background/resume input swallowing, resumed movement and stop-on-release.
+  Expanded qa-attack-buffer results to report the lifecycle/movement assertions
+  explicitly (null when not exercised). Replayed the expanded report; all
+  checks pass, no console/page errors, diff check clean. Inspected native
+  resumed gameplay screenshot. Evidence /private/tmp/frus-current-interruption-report/.
+  Debug encounter fixtures and synthetic browser lifecycle, not earned progression
+  or physical iPhone certification. Runtime unchanged; local only.
+
+- Earned touch finale regression (2026-09-13): replayed DANN-E from the earned
+  pre-boss save using simulated mobile touch. Seven counter cycles and seven
+  fresh core hits completed Colossus, Swarm and Cloud with no retries in 54.82s;
+  the deadline remained intact. Reliability did fall during the fight, so this
+  is not a damage-free claim. Reload/Continue returned correctly to the bindery.
+  From that newly earned save, completed five assembly packets, human sealing
+  and publication: points 201 -> 241, published certification and reload checks
+  pass, no browser errors. Inspected native publication/record screenshots:
+  PUBLISHED CLEAN, DEADLINE MET, cover pieces 5/5. Evidence
+  /private/tmp/frus-current-earned-finale/ and
+  /private/tmp/frus-current-earned-publication/. Validation only this pass;
+  no runtime changes, deployment or physical-iPhone claim.
+
+- Equipped exploration loop regression (2026-09-13): replayed both NARA waves
+  with normal keyboard movement, tool swings and inventory clicks. Initial
+  counter-tools are explicitly debug-granted. Mid-wave retreat retains one
+  defeated enemy and the second wave; inventory swap to Citation Stamp clears
+  the remaining wave. HUD hands off to TO CATALOG DESK. Expanded the replay to
+  leave and revisit the fully cleared room: zero active enemies, room still
+  cleared, unchanged document points (no duplicate payout). Document candidates
+  and standards violations remain unchanged throughout. No page exceptions.
+  Native handoff/revisit screenshots inspected. Evidence
+  /private/tmp/frus-nara-cleared-revisit/. Runtime unchanged this pass; this is
+  encounter regression proof, not an earned-start or subjective enjoyment claim.
+
+- Combat-first nearby hints (2026-09-13): an out-of-range doorway's unsolicited
+  STEP CLOSER prompt no longer supersedes counter guidance during a live encounter.
+  Real in-range interactions retain priority; pressing A near a target still
+  requests the short approach explanation. Removed the residual desktop-only
+  M TOOLS suffix from the lower combat hint. Same debug-equipped Capitol movement
+  replay now visibly shows X USE FOLDER with no approach panel over the hero.
+  Touch World Map -> Capitol -> in-range exit -> return -> re-entry passes, with
+  no reward or room-clear bypass. Native combat/exit images inspected. Full
+  237 files / 1,817 tests, build and diff check pass (existing chunk warning).
+  Evidence /private/tmp/frus-combat-prompt-priority/ and
+  /private/tmp/frus-combat-priority-retreat/. Local only.
+
+- Consistent counter instructions (2026-09-13): GameplayMapScene's lower combat
+  hint now uses getSecondaryActionBadge rather than hardcoded B, matching the
+  main HUD's X keyboard / B touch-controller convention. Unequipped guidance
+  says TOOLS: EQUIP rather than desktop-only M EQUIP. Existing inventory and
+  swing input paths unchanged. All three tool states covered by the 23 passing
+  scene/HUD tests. Debug-equipped Capitol movement/render smoke and build pass;
+  native image inspected. Debug grants are presentation QA, not earned progress.
+  Evidence /private/tmp/frus-counter-badge-visible/. Local only.
+
+- Map touch clutter (2026-09-13): removed the unused B overlay and its hit area
+  only on WorldMapScene; A still selects and closes pop-ups. B restores on
+  gameplay entry. Any held B is released when its button is hidden. This clears
+  the destination-card label previously underneath the B circle. Unit coverage
+  verifies hit-area removal/restoration; all 10 TouchControls tests pass. Mobile
+  Capitol route explicitly asserts B hidden on map and visible after entry,
+  then completes retreat/re-entry. Native preview and desktop map smoke inspected.
+  Build passes with existing chunk warning. Evidence
+  /private/tmp/frus-map-touch-controls-verified/ and /private/tmp/frus-map-control-smoke/.
+  No keyboard/gamepad mappings changed; local only, not deployed.
+
+- Capitol preparation preview (2026-09-13): world-map destination card now
+  mirrors NARA's existing readiness feedback. Missing folder: FOR COMBAT: BRING
+  FOLDER; owned folder: REVIEW FOLDER READY; saved cleared encounter: DANN-E
+  CLEARED. Does not lock exploration or grant/equip tools. Four tests cover the
+  state combinations; both route-preparation suites pass (9 tests). Touch replay
+  verifies the visible warning before entry, retreat and uncleared re-entry.
+  Native preview and standard map-selection smoke inspected; build passes with
+  existing chunk-size warning. Evidence /private/tmp/frus-capitol-preparation-touch/
+  and /private/tmp/frus-preparation-map-smoke/. Local, not deployed.
+
+- Touch retreat parity (2026-09-13): extended qa-nara-retreat with --mobile
+  using CDP touchStart/move/end for floating D-pad and A, not keyboard on a narrow
+  viewport. Both NARA and Capitol pass World Map selection, unarmed arrival,
+  walk-to-exit, return, re-entry and resumed movement at 375x667 / DPR3. Inventory,
+  document points and stamps are unchanged; enemies stay uncleared. Phone Capitol
+  and native NARA exit screenshots inspected; prompts remain actionable above
+  controls. No page exceptions. Evidence /private/tmp/frus-capitol-retreat-touch/
+  and /private/tmp/frus-nara-retreat-touch/. Full current suite: 236 files / 1,812
+  passing tests. Runtime unchanged this pass; emulation is not physical Safari QA.
+
+- Under-equipped exploration recovery (2026-09-13): optional combat objectives
+  now name real tool sources (Guide Cavern stamp, Archive B2 folder, Editor E1
+  pencil). English/Spanish/French missing-tool cues advise retreat instead of
+  searching the current combat room. Found Capitol's live-enemy lock also hid
+  the World Map exit: it now shares NARA's retreat-only exception, leaving reward
+  and forward gates locked. Keyboard World Map -> Capitol -> retreat -> re-entry
+  passes without tool/progress injection, with unchanged inventory/points/stamps
+  and a still-uncleared enemy. NARA retreat regression also passes; no browser
+  errors. Source HUD and retreat native screenshots inspected. Full suite before
+  the exit-rule addition: 1,811 tests; final focused exit/HUD suite: 23 tests.
+  Build passes with existing chunk warning. Evidence /private/tmp/frus-capitol-retreat/
+  and /private/tmp/frus-tool-source-retreat/. Local only; no deployment.
+
+- Combat roster readability audit (2026-09-13): verified all 24 real combat
+  boasts from all eight variants through combatSpeechText and the live bitmap
+  renderer. None loses words or clips its 96x22 bubble. The previously shortened
+  sentence was an intentionally overlong presentation fixture, not shipped copy;
+  no unnecessary dialogue rewrite made. Eight new layout cases include the
+  speaker prefix. 22 focused tests pass. Browser --roster capture passes all 24
+  with no errors; prototype and swarm native images inspected. Fixture freezes
+  and positions one enemy and cancels its attack for repeatable text measurement;
+  it does not prove combat balance or earned progression. Evidence:
+  /private/tmp/frus-speech-roster/. Runtime unchanged this pass; not deployed.
+
+- Regular DANN-E combat speech (2026-09-13): replaced the fixed unwrapped
+  120px bubble with the existing 96px/two-line combat speech layout. Placement
+  follows the enemy while avoiding hero/enemy silhouettes and reserved UI;
+  melee windup/active/recovery and live projectiles suppress boasts. Fade
+  completion only clears the bubble it owns. Existing lurker behavior unchanged.
+  Added behavior coverage for movement, melee/projectile suppression and return.
+  Browser presentation fixture forces a long boast in Capitol Hill without
+  granting progress; its bitmap-adapted text measures 82x12 inside the 96x22
+  bubble. Native fixture and normal moving-encounter screenshots inspected;
+  no browser errors. Evidence /private/tmp/frus-danne-speech/ and
+  /private/tmp/frus-speech-gameplay-smoke/. Full 1,803 tests and build pass;
+  existing bundle warning remains. Local only, not a completed enjoyment audit.
+
+- Consistent contact recoil (2026-09-13): exact overlapping hits now recoil
+  opposite the hero's facing, and subpixel-separated sources retain full push
+  strength. Existing swept terrain/bounds checks remain intact. Six tests first
+  failed against the old method and now pass, including a wall behind the hero.
+  Full suite: 236 files / 1,802 tests; build passes with existing chunk warning.
+  Earned Referral touch replay passed: 0 phantom hits, 1 damaging body contact,
+  290 safe close-pass frames, Citation Stamp interruption, unchanged document
+  progress and no browser errors. Its first run targeted an inaccessible patrol
+  position; replay now waits for a reachable approach without weakening assertions.
+  Evidence /private/tmp/frus-contact-recoil-touch-retry/; native contact/counter
+  images and standard Office movement screenshot inspected. Exact overlap is
+  unit-tested, not claimed as reproduced naturally by the browser encounter.
+  Local only; physical iPhone play and overall enjoyment remain unverified.
+
+- Muted room-travel regression (2026-09-13): audio now remembers requested room
+  and combat themes while muted without creating a context or starting playback.
+  Reproduced Office music incorrectly returning after travel to Guide, then
+  verified the earned opening restores Guide's intentionally requested Archive
+  theme. Two unit tests cover muted room/combat selection. Browser proof checks
+  a running AudioContext and scheduler, not physical speaker latency; full route
+  continues through live-bolt training, reward, Continue and Archive without
+  browser errors. Evidence /private/tmp/frus-muted-travel-verified/; native
+  screenshot and standard movement smoke inspected. All 1,796 tests across 236
+  files and production build pass (existing chunk-size warning remains).
+  Changes remain local, uncommitted and undeployed.
+
+- Browser review-correction proof (2026-09-13): extended earned-clearance and
+  earned-referral-manifest QA with --wrong-desk. Keyboard ClassNet misdelivery
+  shows USE RELEASE STANDARD BOARD; touch Referral misdelivery shows USE BRACKET
+  PRESS. Both preserve the held docket and step, apply only the existing two-point
+  cost, and recover through the correct gate/reward route. ClassNet also verifies
+  the missing-withholding rejection, corrected chronology, Clearance Token and
+  Referral Continue; touch Referral finishes the press, Concurrence Slip and
+  Silent Read arrival. No browser errors; native correction screenshots inspected.
+  Evidence /private/tmp/frus-review-desk-correction/ and
+  /private/tmp/frus-treatment-desk-correction/. Runtime unchanged; no deployment.
+
+- Actionable routing-error feedback (2026-09-13): replaced generic WRONG
+  NETWORK/DESK/STATION toasts with the correct network or review station from
+  the existing packet/docket definition. Penalties, progression and held items
+  are unchanged. Six behavior tests check all four packet classes plus ClassNet
+  and Referral corrections. Touch QA deliberately sent a protected packet to
+  OpenNet, saw ROUTE TO CLASSNET, retained the packet, lost the existing two
+  reliability points, then recovered through vault arrival and Continue.
+  Evidence /private/tmp/frus-routing-correction-visible/; native correction
+  screenshot inspected. Standard Network smoke and build pass; 1,794 tests
+  pass. Review-station wording is unit-tested; its changed toast was not separately
+  exercised in a browser this pass. No deployment.
+
+- Earned workflow recheck after swing buffering (2026-09-13): resumed earlier
+  earned checkpoints rather than granting tools/progress. Touch Network routing
+  passes all four deliveries, stamp crossing, physical/map gate agreement and
+  N2 arrival/Continue. This is a stamp-seal puzzle, not a bolt-return test.
+  Touch Referral passes rejected/corrected manifest, reviewed treatment,
+  wrong-facing swing rejection, bracket press, no duplicate reward on repeated
+  swings, Concurrence Slip pickup and Silent Read arrival. Native results
+  inspected; no browser errors. Evidence /private/tmp/frus-buffered-network-route/
+  and /private/tmp/frus-buffered-referral-route/. Runtime unchanged this pass;
+  the preceding build and 1,788-test result still apply. No deployment.
+
+- Background input cancellation (2026-09-13): lifecycle QA reproduced a
+  queued attack surviving pagehide because paused scenes no longer update.
+  Added installAttackBufferLifecycle: immediate clear on pause/sleep and clear
+  plus listener removal on shutdown. Wired all seven attack-buffer scene owners
+  (Guide, four production chapters, DanneMapScene, GameplayMapScene). Tests
+  verify all lifecycle events and reinstall/cleanup without listener buildup.
+  Extended qa-attack-buffer.mjs --background with actual pagehide/pageshow event
+  dispatch, visible resume overlay, immediate buffer-null assertion and no extra
+  attack after touch/keyboard resume. All seven scene routes pass with no console
+  errors; five touch routes and two keyboard routes. These are browser lifecycle
+  proxies, not physical Safari or OS suspension certification.
+  Evidence /private/tmp/frus-queued-background-guide/,
+  /private/tmp/frus-queued-background-chapters/ and
+  /private/tmp/frus-queued-background-boss/. Native resumed views inspected;
+  standard Network smoke passes. Build and 1,788 tests pass. No deployment.
+
+- Chapter swing consistency (2026-09-13): Archive, Network, Referral and
+  Silent Read still used raw bJustPressed attempts and dropped late cooldown
+  taps. They now reuse the existing 110ms AttackBuffer, consumed after player
+  update and cleared on scene/room entry, transitions, menus and each board.
+  Document interactions and weapon timings are unchanged. Eleven live scene
+  update tests cover pending-input cancellation across the research/review boards.
+  Keyboard and touch timing QA passes all four chapters (late tap once, early
+  expiry, pause cancellation, touch move/release). Archive resumes an earned
+  stamp save; other rooms use existing debug fixtures, not earned walkthroughs.
+  Evidence /private/tmp/frus-chapter-swing-touch/ and
+  /private/tmp/frus-chapter-swing-keyboard/. All four native views inspected;
+  standard Network client passed. Build and 1,784 tests pass. No deployment.
+
+- Consistent first-combat swing timing (2026-09-13): reproduced a discarded
+  late-cooldown tap in GuideScene after acquiring its stamp normally. Later
+  combat scenes already used AttackBuffer; Guide now reuses the same 110ms
+  grace window after updating the player's weapon clock. Pending presses clear
+  on menus/dialogue, scene creation/exit and leaving the counter stage.
+  Unit coverage verifies single consumption, expiry and interruption cleanup.
+  tools/qa-attack-buffer.mjs --guide verifies keyboard/touch late taps, expired
+  early taps, pause cancellation and touch movement recovery. Guide fixtures
+  acquire the stamp by input; the generic-map grant is not supported there.
+  Evidence /private/tmp/frus-guide-buffer-after/ and
+  /private/tmp/frus-guide-buffer-keyboard/. Fresh coached touch opening through
+  reward/Continue/Archive passes in /private/tmp/frus-buffered-guide-full-route/.
+  Standard client and native screenshots inspected. Build and 1,773 tests pass;
+  no weapon timing changes, save changes, commit or public deployment.
+
+- Visible first-counter correction (2026-09-13): pressing interaction during
+  the Guide counter lesson previously changed only the internal latestMessage.
+  It now also shows a short input-aware USE B/X TO RETURN BOLT toast, without
+  pausing the lesson or granting a return. Added unit and browser visibility
+  assertions. Fresh simulated-touch route completed by following direction and
+  swing coaching at the pickup position, with no precomputed counter location.
+  Evidence /private/tmp/frus-visible-counter-guidance/; native toast inspected.
+  Build, standard Guide smoke and 1,770 tests pass. No deployment.
+  Browser compatibility test tools/qa-office-legacy-spawn.mjs also verifies
+  an explicitly constructed old overlapping Office save resumes beside JR,
+  preserves points/reliability, and can move. Evidence
+  /private/tmp/frus-office-legacy-spawn/; this is a fixture, not an earned route.
+
+- JR's physical presence (2026-09-13): added a 12x8 feet-only Office solid
+  so walking toward the colleague no longer passes through his feet. Nearby
+  conversation remains forgiving; the opening QA now talks from the aisle.
+  Older saves overlapping the new footprint are moved beside JR on scene entry;
+  safe spawns are unchanged. No save-schema or reward changes.
+  Keyboard and simulated-touch fresh opening through Archive both pass,
+  including collision contact, memo task, counter lesson, reward and Continue.
+  Evidence: /private/tmp/frus-jr-feet/ and /private/tmp/frus-jr-feet-keyboard/.
+  Native screenshots inspected; production build and 1,769 tests pass.
+  Legacy overlapping-spawn recovery is unit-tested, not browser-save-tested.
+  Standard browser smoke rerun after recovery. No commit or deployment.
+
+- Nearby first briefing (2026-09-13): reduced JR's introductory radius from
+  72px to 36px so action across the office cannot start a remote conversation.
+  Unbriefed no-target input now points to JR at the west desk instead of a
+  generic failure. The gold arrow and later task-specific ranges remain intact.
+  Unit check and fresh mobile route verify distant action preserves progress,
+  near interaction works, memo/Guide/counter/reward/Continue all succeed.
+  Evidence /private/tmp/frus-nearby-briefing/. Build and 1,765 tests pass;
+  standard office smoke passes. No deployment or save-schema changes.
+
+- Fixed held-thumb rotation (2026-09-13): landscape movement/inventory passed,
+  but rotating during a held drag left the old pointer captured (reproduced).
+  TouchControls now releases touch state and redraws on window resize and
+  orientationchange, with symmetric listener cleanup. Lifecycle unit test,
+  both rotation directions, fresh-touch recovery, no-drift, desk collision,
+  whole-pixel rendering and desktop movement pass. Evidence /private/tmp/frus-rotation-after/
+  and /private/tmp/frus-rotation-portrait-after/. Standard client passes; build
+  and all 1,764 tests pass. No deployment; physical Safari still unverified.
+
+- Throttled publication continuation (2026-09-13): extended bindery QA with
+  validated CPU throttling and continued the just-earned boss save at 4x with
+  touch controls. Cancel/no-attack, cold pending-seal resume, 44px decision
+  targets, human seal, separate publication, deadline record and final Continue
+  all pass. Published clean at 241 points, 5/5 packets, deadline MET; no errors
+  or duplicate rewards. Inspected native seal, volume and record screens.
+  Evidence /private/tmp/frus-throttled-publication/. QA-only; no deployment.
+
+- Throttled earned boss route (2026-09-13): added validated CPU throttle control
+  to the existing boss QA harness and recorded it in results. Full 4x-throttled
+  mobile run passes independent two-finger movement/swing, protected/no-damage,
+  return/open-core/fresh-hit, paused exposure, Cloud124HP reload, all three
+  phases and bindery Continue. Seven cycles/seven fresh hits/no retries;
+  77.284s scripted fight loop, deadline met, no errors or duplicate rewards.
+  Evidence /private/tmp/frus-throttled-earned-boss/. Updated mobile performance
+  documentation with exact scope; this is not physical-device certification.
+  QA-only changes; no new runtime tuning or public deployment.
+
+- Moving performance evidence (2026-09-13): expanded the existing profiler with
+  touch/mobile input, CPU throttling, movement-state evidence and actual Phaser
+  frame throughput, plus guaranteed browser cleanup. Twenty-second 4x-throttled
+  runs measured 59.99 loop updates/s in Office and 60.03 in NARA with four
+  threats; 75/75 adjacent samples moved and both stayed in explore. No JS page
+  errors; four ReadPixels warnings per run remain recorded. Added scope and
+  caveats in docs/mobile/moving-performance.md. Evidence /private/tmp/frus-moving-perf/.
+  Script syntax and diff whitespace checks pass. No runtime/gameplay changes;
+  physical-device and sustained combat performance still require verification.
+
+- Honest locked-door prompt (2026-09-13): office uses the existing prompt
+  override to show CHECK ARCHIVE LOCK before the Master Declass Key is earned,
+  instead of promising ENTER. Normal entry wording remains after unlock.
+  Fresh touch QA asserts and captures the actual prompt, then completes memo,
+  Guide counter, reward and Continue into Archive with no console errors.
+  Evidence /private/tmp/frus-opening-lock-language/. Build and 1,763 tests pass.
+  No public deployment or save-schema change.
+
+- Inspectable opening gate (2026-09-13): locked archive door remains a real
+  interaction before assignment completion. Its effective reach is one tile
+  (10px plus shared 6px assistance), preserving the spawn's JR arrow cue.
+  Premature door/memo/inbox feedback uses short nonblocking toasts; actual
+  dialogue and earned key requirements remain unchanged. Added 10 focused
+  tests covering gate visibility, progress preservation and nonmodal guidance.
+  Fresh mobile path passes: inspect locked door, walk away during toast,
+  meet JR, route/stamp memo, counter bolt, collect fragment, reload/Continue,
+  enter Archive. Evidence /private/tmp/frus-opening-nonblocking/.
+  Build and all 1,763 tests pass. Changes remain local and uncommitted.
+
+- Cold-start ownership audit (2026-09-13): all eight routes and cutscene UI debug
+  pass with explicit item-card/shelf texture assertions. Title asset bodies are
+  now 13,899,764 bytes (down 9,521,845 / 40.7%); Office 13,399,013. Expansion
+  maps retain pickup cards and gallery retains DANN-E originals. Added field-
+  guide preload regression for unlocked Ruby Pen versus locked cards. Updated
+  docs/STARTUP_ASSET_LOADING.md with exact route totals and verification scope.
+  Evidence /private/tmp/frus-inventory-startup-proof/. No public deployment.
+
+- Nonblocking equipment (2026-09-13): removed the optional-art loading gate
+  from core tool navigation/equipping. Missing expansion icons show a small
+  pending marker; item details retain their text and provide art retry on error.
+  Loading/error unit cases verify the Review Folder remains equipable.
+  Earned Silent Read save with delayed PNG downloads passes touch equip,
+  frozen pause state, early close and cached reopen checks. Evidence:
+  /private/tmp/frus-inventory-earned-immediate/. Early archive saves correctly
+  lack the Folder; expansion NARA legitimately preloads cards for its pickups.
+  Standard gameplay smoke passes. Build and all 1,752 tests pass; no deployment.
+
+- Movement final verification (2026-09-13): Chromium keyboard and simulated
+  375x667 touch checks pass for 90 px/s walking, immediate reversal/release,
+  furniture collision, whole-pixel rendering, walk frames and thumb-boundary
+  hysteresis. Evidence /tmp/frus-player-movement/results.json and native shots.
+  Standard web-game movement smoke passes at /private/tmp/frus-movement-final-standard.
+  Build passes; all 231 test files / 1,750 tests pass. Changes remain local.
+
+- Inventory-owned artwork loading (2026-09-13): three expansion item cards and
+  records shelf now load on pause demand, with loading/error/retry states.
+  Expansion maps and unlocked codex retain explicit preload ownership.
+  Delayed-download mobile proof confirms pause freezes play, closing before
+  completion stays closed, reopening uses cached art and all thumbnails render.
+  Evidence /private/tmp/frus-inventory-demand/result.json. Loader tests cover
+  retry and shutdown cleanup; menu navigation tests use an explicit ready fixture.
+  Next: remeasure cold route payloads and test restored earned inventory on slow
+  connections before publishing this loading change. No deployment performed.
+
+- Per-file startup profiling (2026-09-13): extended demand-loading output with
+  sorted assetRequests (path/encoded bytes), reran all eight scenes and UI-debug
+  successfully. Title remains23,421,609 bytes. The three expansion item cards
+  total7,734,720 (33%); inventory renders their locked thumbnails and details,
+  so Boot-only removal would cause missing art on both fresh and restored runs.
+  Documented inventory-owned paused loading as the next useful boundary, also
+  covering the1,787,125-byte records shelf; Guide/shared bolts must remain ready
+  for first combat. Ending art is only4,628bytes, not a useful deferral target.
+  Evidence /private/tmp/frus-startup-breakdown/result.json; syntax check passes.
+  No runtime change or additional payload reduction in this audit; no deployment.
+
+- Deferred boss letterbox art (2026-09-13): verified only DanneBoss and expansion
+  UI-debug cutscenes consume the1,597,049-byte letterbox sheet. Removed it from
+  shared Boot images; Black Vault/UI-debug preload it with the boss HUD and
+  gallery keeps full registry membership. Source art, texture keys, controls,
+  gameplay and saves unchanged. Actual preload/cached-return tests and all1,747
+  tests/build pass. Eight isolated route checks show title25,018,658 ->23,421,609
+  bytes and Office24,517,907 ->22,920,858; boss/gallery unchanged. Actual earned
+  touch intro/Colossus dialogue plus partial imprecise combat and standard NARA
+  gameplay passed without browser errors; screenshots inspected. Evidence:
+  /private/tmp/frus-letterbox-{before,after}/, /private/tmp/frus-letterbox-boss/,
+  /private/tmp/frus-letterbox-standard/. Startup remains heavy; no physical-network
+  speed claim or deployment. docs/STARTUP_ASSET_LOADING.md updated.
+
+- Current-movement optional discovery pass (2026-09-13): physically backtracked
+  the earned pre-boss save through Proof, Editor, Referral, Networks, Archive,
+  Annotation Stacks and NARA on touch, preserving201 points and Review Folder.
+  qa-backtrack's two-pixel waypoint correction oscillated three pixels off in
+  Referral R1; four-pixel mobile route tolerance fixes the harness while actual
+  collision and transition assertions remain. Full rerun reached NARA without
+  debug relocation. Earned secret touch test then followed the shelf clue,
+  opened the passage with Folder, collected First Edition(+25), moved during
+  the reveal, exited, sidestepped arrival pressure and reloaded with226points
+  and exactly one collectible. No console/page errors. Native direction cue,
+  clue, reward and escaped-return screenshots inspected under
+  /private/tmp/frus-brisk-exploration-return-fixed/ and
+  /private/tmp/frus-brisk-hidden-reading/. Both retain earned saves. Script
+  syntax/diff checks pass; no runtime change, deployment or physical-device
+  claim. Unassisted discoverability still needs human play feedback.
+
+- Earned boss and publication completion (2026-09-13): used the latest production
+  checkpoint for real touch two-pointer movement/swing checks and a separate
+  uneven-cadence attack probe (16 swings, no false damage through protection,
+  documents/points unchanged). Full cue-driven touch fight then cleared Colossus,
+  Swarm and Cloud: 7 cycles, 7 fresh core hits, 0 retries, 65.825s automated
+  combat loop, deadline met. Cloud reload retained124 HP; bindery Continue
+  preserved rewards and defeat counts. Finished touch binding, pending-seal
+  recovery, publication and Continue:241 points, published clean,5/5pieces,
+  deadline MET, no console/page errors. Inspected native core cue and bindery,
+  plus published/record mobile screenshots. Evidence:
+  /private/tmp/frus-brisk-earned-boss/ (imprecise probe),
+  /private/tmp/frus-brisk-earned-boss-complete/ (full fight),
+  /private/tmp/frus-brisk-final-publication/ (final result and earned save).
+  This closes the current earned critical-path regression chain, not first-time
+  human usability, subjective enjoyment, physical-device QA or optional secrets.
+  No runtime changes or deployment in this verification pass; diff check passes.
+
+- Earned editor through vault touch pass (2026-09-13): continued the current
+  referral checkpoint through invisible-deletion rejection, bracket repair,
+  draft reload, Red Pencil, proofing comparisons, chronology correction,
+  Proof Lens and production handoff. Extended qa-earned-production with CDP
+  touch and console-error capture. Initial menu navigation tapped the overlapping
+  RETURN choice at the floating-pad origin; use visible answer taps for generic
+  choices, retaining actual direction/button input elsewhere. Full production
+  touch rerun passed margin/index verification, altered-proof rejection, Buckram
+  Key and Black Vault arrival with no captured console/page errors. Native
+  repair, tool rewards, chronology, proof and vault screenshots inspected under
+  /private/tmp/frus-brisk-editor/, /private/tmp/frus-brisk-proof/ and
+  /private/tmp/frus-brisk-production-touch/. Next earned boss checkpoint is the
+  latter's earned-storage.json. Syntax and diff checks pass; no runtime changes
+  in this pass, no deployment, and no claim of real-device or unaided-player QA.
+
+- Referral press cue and reward forgiveness (2026-09-13): the earned touch
+  manifest/treatment run exposed two frictions. Ready bracket press displayed
+  primary INTERACT despite requiring a secondary-tool swing; HUD now names STAMP
+  THE BRACKET PRESS with the correct platform button (or EQUIP CITATION STAMP),
+  only for the held, reviewed proof. Concurrence pickup rejected x96/y136 just
+  outside its 32px radius; added a four-pixel margin and made prompt and action
+  share the strict target check. Unit coverage preserves no-autopickup, distant
+  rejection, collected-state behavior and dialog/combat cue priority. Full230
+  files/1,747 tests and production build pass (existing chunk-size warning).
+  Earned touch replay with guide inspection, unfinished treatment reload,
+  wrong-facing press swing, successful print, duplicate-reward prevention,
+  Concurrence pickup and editor arrival passed with no console/page errors.
+  Inspected native ready/reward screenshots at /private/tmp/frus-brisk-manifest-fixed/;
+  standard gameplay client also passed, native snapshot inspected. Next earned
+  checkpoint: /private/tmp/frus-brisk-manifest-fixed/earned-storage.json.
+  No commit, push or deployment; not physical-device testing.
+
+- Earned clearance and referral movement pass (2026-09-13): continued the
+  Network N2 save through all review stations, deliberate missing-entry rejection,
+  chronology correction, Clearance Token, Referral arrival and reload. Then
+  completed equity routing, dispatch evidence retrieval, shelf shortcut and return
+  on keyboard and simulated mobile touch. Extended qa-earned-referral-dispatch
+  with real CDP touch input and console-error capture. Its original exact-coordinate
+  steering oscillated around x32 on mobile; use 5px mobile tolerance and bounded
+  distance-proportional bursts, preserving actual gameplay inputs and assertions.
+  The full touch rerun passed with no captured console/page errors. Native review,
+  shortcut and returned-room screenshots inspected. Evidence lives under
+  /private/tmp/frus-brisk-clearance/, /private/tmp/frus-brisk-referral/ and
+  /private/tmp/frus-brisk-referral-touch/. Next earned checkpoint for manifest
+  review: the latter's earned-storage.json. Script syntax check passes; no runtime
+  changes, publication, or physical-device certification in this pass.
+
+- Shared doorway intent (2026-09-13): reproduced idle threshold exits in Archive,
+  Referral Vault, and Silent Read handler tests. Centralized outward-input checks
+  in chapterTravel.requestsDoorExit and applied them across all four chapters,
+  including Network. Idle/inward movement cannot accidentally change chapters;
+  intentional outward movement still traverses. Full 230 files / 1,745 tests and
+  production build pass. Isolated mobile browser fixtures passed idle plus actual
+  touch exits in all four scenes with no console/page errors. Network requires
+  walking 18px from its arrival point; QA holds the gesture 350ms, not 100ms.
+  Native screenshots: /private/tmp/frus-doorway-idle/; standard gameplay client
+  also completed and its native Referral Vault snapshot was inspected. These
+  doorstep fixtures are regression tests, not earned gameplay or physical-device
+  certification. Changes remain local and uncommitted; no deployment.
+
+- Network cue and doorway recovery (2026-09-13): earned supporting-document route and touch four-packet routing initially passed, but native arrival showed generic INTERACT: SERVICE CROSSING for a lock/tool gate. HUD now shows FILE PUBLIC PACKET FIRST with notice badge, then STAMP THE SEAL with secondary-action badge (or EQUIP CITATION STAMP if unequipped); normal dialogs/other targets and combat cue priority remain. Longer cue inspection exposed a real Continue defect: saved Network entrance x32 idled into automatic Archive return after cooldown. Network exits now require outward horizontal input, retaining intentional walk-through transitions while allowing reading/inward movement. Handler tests cover idle/inward saves and existing forward/backtracking gates. Earned touch test waits3s after Continue, verifies both rendered cues/badges, completes all four deliveries and vault reload/movement. Native lock/ready and standard-client captures inspected at /private/tmp/frus-network-cues-safe-resume/ and /private/tmp/frus-network-safe-standard/. Full230 files/1,739 tests and build pass, no browser errors or deployment. Further journey resumes from /private/tmp/frus-network-cues-safe-resume/earned-storage.json.
+
+- Earned annotation journey (2026-09-13): continued the new first-research checkpoint on touch through cart contact pushing, mid-puzzle reload (position retained, not prematurely parked), side alignment, parking, all three notes and return to A1. Continued its earned save on keyboard to file the packet; Office sign changes LOCK -> OFFICE immediately and the next objective is PICK UP TELEGRAM. Native parked/review/filed screenshots inspected under /private/tmp/frus-steady-annotation/ and /private/tmp/frus-steady-file-annotation/. Added console-error capture to the cart harness, then reran the full touch cart/reload/notes path under /private/tmp/frus-steady-annotation-console/ successfully with no captured console/page errors. No runtime change or deployment; script syntax/diff checks pass. Further journey testing can resume from /private/tmp/frus-steady-file-annotation/earned-storage.json.
+
+- Fresh opening through first research gate (2026-09-13): after touch direction stabilization, completed a fresh touch Warning -> Compiler -> Office assignment/memo/inbox -> Guide. Tested boundaries, harmless miss, incoming-bolt pause, cue-led return, nonblocking front-matter reward, Continue and Archive entry with reliability80 unchanged and no browser errors. Continued that exact earned save on keyboard through source/repository/collection/folder evidence, unsupported-claim rejection/correction, standards retain decision, Citation Stamp wall clearance, Annotation Stacks entry and reload/movement. Both QA scripts pass; native exit/reward/rejection/restored-room captures inspected at /private/tmp/frus-steady-pad-opening/ and /private/tmp/frus-steady-source-trail/. This confirms the first journey with current controls, not unaided-player enjoyment or a touch-only full chapter. No runtime edits/deployment in this verification pass. Next meaningful journey coverage is Annotation Stacks onward with the newly earned save.
+
+- Stable floating-pad turns (2026-09-13): the existing four-way touch selector switched at exactly abs(dx)==abs(dy), allowing tiny thumb fluctuations to alternate axes. Added a six-degree angular retention margin, without a timer or changes to the12px center dead zone; deliberate turns/reversals/release remain immediate. Preserved four-way touch and normalized keyboard diagonals. Unit cases cover boundary retention, deliberate turns, fresh direction and reversal/release. Chrome CDP touch gestures cross and recross boundaries, deliberately turn, reverse and center; actual debug direction and stopped position assertions pass alongside keyboard/furniture checks. Native touch and standard-client captures inspected at /private/tmp/frus-touch-direction-margin/ and /private/tmp/frus-touch-margin-standard/. All230 files/1,736 tests and build pass; no browser errors, no public deployment, physical-iPhone feel remains unverified.
+
+- Touch-only combat pause/resume (2026-09-13): removed the remaining keyboard dependency from mobile attack-buffer QA. Touch B queues a swing, touch Start opens inventory and clears it, the reported close target resumes, and a fresh floating D-pad gesture moves the player then stops without drift or an extra attack. Both BlackVaultLairScene and GameplayMapScene pass with rapid35ms taps, no browser errors, and native paused/resumed screenshots inspected at /private/tmp/frus-touch-only-resume/. Explicit combat-tool debug fixtures are used; this is input parity evidence, not an earned journey or real-iPhone certification. Added reusable screenshots and assertions; script syntax and diff checks pass. No runtime gameplay changes or deployment in this pass; latest runtime build and1,732 tests remain passing.
+
+- Defer boss-only HUD sheet (2026-09-13): moved the 1,497,183-byte boss health-bar art out of shared startup images into Black Vault preload, preserving gallery and explicit UI-debug ownership plus cached returns. Asset paths/keys and art unchanged. Title asset payload 26,515,841 -> 25,018,658 bytes; Office 26,015,090 -> 24,517,907; Black Vault/gallery unchanged. Eight-route demand-loading checks and actual X HUD-debug activation pass without browser errors; native title/HUD and required standard NARA captures inspected under /private/tmp/frus-boss-ui-{before,after,final}/ and /private/tmp/frus-boss-ui-standard/. Unit normal/debug/cache checks, all 1,732 tests and build pass. No deployment or physical-phone load-time claim. Remaining title payload is still about25MB, so mobile loading is not solved.
+
+- Movement/action handoff audit (2026-09-13): touch strafing retains active swing facing/hitbox and restores turning during cooldown; native active-swing screenshot inspected at /private/tmp/frus-brisk-facing-touch/. Rapid 35ms-gap attack QA initially timed out because GameplayMapScene's generic debug route starts without equipment; storage on a debug URL is reset by Boot, and attempted separate-module restoration did not establish live inventory. Removed that approach. Harness now explicitly uses supported give=combat-tools/equip fixture, records phase-transition diagnostics and failure screenshots, and captures console errors. Both keyboard and touch pass both BlackVaultLairScene and GameplayMapScene: late tap queues once, early tap expires, keyboard menu cancels queued swing. Results/native screenshots at /private/tmp/frus-brisk-attack-fixture/ and /private/tmp/frus-brisk-attack-fixture-keyboard/. This is isolated input QA with debug equipment, not earned traversal or physical-device proof. No runtime change this pass; script syntax/diff checks pass, latest runtime build and 1,731 tests remain passing. No deployment.
+
+- Corner movement budget (2026-09-13): reproduced a partial-approach corner burst at 30/60/120 FPS (60 FPS travelled 2.45px for a 1.5px step). Corner guidance now redirects only the remaining distance after approaching the wall, preserving total travel rather than adding sideways speed. Regression covers both axes, both signs and normal/half-speed tool movement. All 230 files / 1,731 tests and production build pass (existing large-chunk warning). Keyboard/touch Office wall/release/slide browser QA passed with no errors; native touch and required standard-client screenshots inspected at /private/tmp/frus-corner-budget/ and /private/tmp/frus-corner-standard/. No public deployment. Physical-device and unaided fun remain unverified.
+
+- Resumed publication verification (2026-09-13): continued the earned Cloud-checkpoint boss victory through touch bindery assembly, certification, publication and Continue/reload. Completed with 241 points, published certification, five cover pieces, deadline MET and no browser errors; native publication and record screens visually inspected at /private/tmp/frus-resumed-publication-final/. Updated the bindery QA steering to shorter distance-aware input bursts for the faster hero after the old 50ms minimum overshot a target. No gameplay change in this verification pass. Reconciled boss recovery documentation with retained retry damage and persisted phase/HP/time. QA script syntax and diff checks pass; latest runtime suite/build remain 230 files / 1,728 tests passing. This used an earned checkpoint, not a fresh full-game or physical-iPhone playthrough. No public deployment.
+
+- Durable DANN-E phase checkpoint (2026-09-13): added typed checkpoint helper over existing numeric sceneProgress fields (blackVaultBossPhase/blackVaultBossHp), written on phase start and earned returned-bolt/melee damage. Constructor captures validated saved phase/HP; resume skips earlier phases, shows one short recap, clears attacks and starts normal entry grace without rewinding deadline. Completed/bad-ending/invalid/unearned secret checkpoints do not resume; legacy phase-only saves start that phase at full HP. Unit serialization and real boss resume tests cover old saves, bounds, no reward grant, and unchanged clock. Earned touch run damaged Cloud to124HP, paused/reloaded/Continued/re-entered and restored Cloud124, identical documents/defeat stats, unchanged saved time. Finished all phases and bindery reload in56.937s instrumented loop, seven cycles, zero retries, six fresh core hits, deadline met; no browser errors. Native recap and standard room inspected at /private/tmp/frus-boss-phase-resume/ and /private/tmp/frus-checkpoint-standard/. Build and230 files/1,728 tests pass. No public deployment or claim of physical-device/unaided enjoyment.
+
+- Restore saved boss deadline (2026-09-13): DanneBoss wrote statutoryClockTenths but always recreated itself at year20 with deadlineDamageApplied=false. Constructor now restores/clamps stored tenths and honors statutoryDeadlineMissed, including older saves with only that flag. Prevents time reset on arena re-entry and duplicate deadline debit; missing time retains existing fresh-start behavior. Tests cover restored elapsed advance, no duplicate damage/violation/shortcut and flag-only saves. Actual touch fight -> page reload/autosave -> Continue -> re-enter boss preserves 21.834986 years as saved21.8 (existing tenths precision); no browser errors. Restored intro and standard Black Vault native captures inspected at /private/tmp/frus-boss-clock-resume/ and /private/tmp/frus-clock-standard/. Build and 229 files / 1,724 tests pass. No save-schema/deadline-duration change or public deployment. Remaining design concern: re-entering the arena still restarts encounter phases even though deadline time is retained; avoid treating that as full mid-fight continuation.
+
+- Keep earned counter damage on retry (2026-09-13): same-phase retries previously restored DANN-E to 180HP while retaining deadline time, erasing successful counters after late mistakes. offerRetry now captures remaining HP and beginPhase accepts that value only for retry; ordinary new phases still start full. Retry copy states counter progress is kept. No clock rewind, standards refund, reward shortcut, save-schema change or change to tool/damage rules. Unit tests cover 12HP retry, research/inventory preservation, unchanged clock, no boss-clear reward and full-health new phase. Live earned-checkpoint touch run deliberately took a defeat after a successful counter; browser asserts retained HP on every retry (Colossus68, Swarm96, Cloud68). All phases and bindery reload complete: eight cycles, three retries including deliberate one, seven fresh core hits, 122.177s, deadline missed. Not a comparative speed or novice-success benchmark. Retry modal and standard Black Vault native captures inspected at /private/tmp/frus-boss-retry-progress/ and /private/tmp/frus-retry-standard/. 229 files / 1,721 tests and build pass; no browser errors/deployment. Deadline pressure during learning remains a design question; preserve truthful missed-deadline reporting.
+
+- Boss counter-spacing cue (2026-09-13): added STEP BACK; FACE BOLT when within 42px of a closed-core DANN-E, matching the lesson's spacing guidance. Existing transient feedback retains priority; open-core attacks, pause, distance and missing-coordinate fallback are preserved. UIScene supplies player position; tests cover near/far/open/pause. Actual touch approach at y151 displays spacing advice, backing to y175 restores FACE BOLT + SWING; both native captures inspected. Full earned-checkpoint fight eventually passed Colossus/Swarm/Cloud and bindery reload with no browser errors, but took 110.621s, 10 cycles and two retries, and missed the statutory deadline: this is evidence of remaining Cloud pressure/timing concerns, not polished balance. Prior zero-retry run is not sufficient to dismiss this variation. Results /private/tmp/frus-boss-spacing/; standard Guide capture inspected /private/tmp/frus-spacing-standard/. All 229 files / 1,720 tests/build/diff pass. No deployment. Next: inspect how retry pressure and the statutory clock interact before changing damage or timing.
+
+- Deferred final-boss portrait (2026-09-13): removed the 1,502,165-byte DANN-E speaker image from shared Boot assets; Black Vault explicitly loads it with variants, and full gallery registry membership is retained. Actual preload tests cover room ownership and cached NARA/Black Vault returns. Eight fresh browser contexts verify ownership, runtime sheets, no errors and exact per-route savings: title 28,018,006 -> 26,515,841 bytes; Office 27,517,255 -> 26,015,090; boss/gallery unchanged. Native earned-checkpoint intro/Colossus portrait and standard NARA gameplay inspected. The partial fixed-cadence boss probe did not win (16 swings, no returns, reliability48); used only as portrait/guard verification, not fun or balance proof. Full 229 files / 1,719 tests and build pass. Updated startup documentation with current measurements; captures at /private/tmp/frus-boss-portrait-{before,after}/, /private/tmp/frus-demand-boss-speaker/, /private/tmp/frus-demand-speaker-standard/. No deployment. Remaining startup cards/UI/VFX are still heavy.
+
+- Immediate combat guidance and brisk boss verification (2026-09-13): actual exposed-core screenshot showed stale RETURN THE BOLT despite state PENCIL THE CORE. UIScene's 120ms throttle now yields immediately to changes in objective/action/badge/tool/mode while keeping unchanged meter updates throttled and signature guarded. Actual refresh-handler regression verifies next-frame objective changes. Boss QA now checks visible HUD text, and tap duration tapers near destinations (old minimum45ms oscillated with faster movement). Final previously-earned Black Vault touch run clears Colossus/Swarm/Cloud in 54.957s instrumented time, five cycles, zero retries, four fresh core hits, deadline not missed; two-finger movement/swing, boast input guard, pause, uneven Cloud counters, bindery entry/reload all pass with no browser errors. Native core-open cue and standard Archive captures inspected in /private/tmp/frus-brisk-boss-final/ and /private/tmp/frus-immediate-cue-standard/. Build and 229 files / 1,717 tests pass (existing bundle warning). No public deployment; not a fresh full-game or physical-device/unaided fun assessment.
+
+- Brisk movement opening regression (2026-09-13): continued from the verified speed change with a fresh, earned 375x667 touch run (qa-guide-counter --mobile --coaching --office-cues). Warning -> compiler creation -> Office assignment/memo/inbox -> Guide perimeter -> Stamp -> harmless missed bolt -> pause/resume -> displayed-cue counter -> fragment -> immediate movement -> Continue/reload -> Archive all pass. Reliability remains 80; no browser errors. Native returned-bolt, collected-fragment/open gate and Archive-entry images inspected under /private/tmp/frus-brisk-guide/. This verifies the opening with the new pace, not full-game balance or physical-device enjoyment. User feedback on speed requested asynchronously; no answer yet. Public deployment unchanged.
+
+- Brisk hero movement (2026-09-13): raised shared walking speed from 72 to 90 px/s and corner guidance from 60 to 75 px/s for quicker traversal without acceleration or release drift. Preserved normalized diagonals, sticky facing, tool weight, feet collision, subpixel simulation and integer rendering. Movement tests now derive expected distances from shared tuning; browser QA uses current 12x8 feet and a position-aware desk approach instead of obsolete timed navigation/current-animation-rate assumptions. All 228 files / 1,716 tests and build pass (existing bundle-size warning). Desktop and simulated 375x667 touch checks pass both walk poses, exact release stop, wall sliding, no furniture overlap, integer sprite positions and no browser errors; native captures inspected in /private/tmp/frus-brisk-movement/ and standard client /private/tmp/frus-brisk-standard/. Local preview only; physical-phone feel and public deployment not verified in this pass.
+
 - Collected treasure visual state (2026-09-13): shared pedestal previously retained its icon and sparkles when collected, misleading return visits. It now exposes markCollected, hides pickup art and shows FILED while preserving the empty case; initial collected state uses the same path, including texture fallbacks. Archive secret pickup updates it immediately. Removed D1's redundant permanent STAMP REWARD ROOM / SOURCE STAMP poster; existing room-entry title and navigation remain. New helper tests cover uncollected/collected/repeated transitions and fallback; full 228 files / 1,716 tests/build pass. Earned touch well route asserts immediate empty pedestal, nonblocking reward, repeat/reload protection and full return to A1 at 219 points; no browser errors. Native D1/collected well and standard Archive captures inspected in /private/tmp/frus-well-empty-pedestal/ and /private/tmp/frus-pedestal-standard/. No deployment; physical-device/unaided enjoyment unverified.
 
 - Well detour return directions (2026-09-13): source inspection disproved the apparent quiet-room HUD issue: DANN-E remains a live patrol/bolt threat in optional Archive rooms, so counter guidance is retained. Earned 375x667 touch well loop now verifies complete D2 -> D1 -> C1 -> B1 -> A1 return, not only reward/reload. First run exposed surrounding objectives directing players back toward an already collected well; collected-state cues now point north toward research. Added exact +8 healing, 100 cap and no repeat healing to secret-handler tests. Seven focused tests/build/diff pass. Final earned touch route preserves 201 -> 219 points across Continue/repeat/return with no browser errors, ending A1 EXIT EAST - NETWORK. Native D1 and standard main Archive captures inspected in /private/tmp/frus-well-return-directions/ and /private/tmp/frus-well-return-standard/. Local only; physical-device/unaided enjoyment remain unverified.

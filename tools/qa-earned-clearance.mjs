@@ -29,6 +29,14 @@ try{
  assert(!(await gateLabels()).includes('SPLIT'));
  await shot('return-locked');
  await move(80,150);await key();await shot('human-filed');assert.equal((await state()).sceneProgress.classNetVaultReviewStep,1);
+ if(process.argv.includes('--wrong-desk')){
+  const before=await state();await key();
+  assert.equal((await state()).sceneProgress.classNetVaultReviewStep,1);
+  assert.equal((await state()).sceneProgress.classNetVaultDocketCarried,before.sceneProgress.classNetVaultDocketCarried);
+  assert.equal((await state()).reliability,before.reliability-2);
+  assert.equal(await page.evaluate(()=>window.game.scene.getScene('NetworkScene').toast.text.text),'USE RELEASE STANDARD BOARD');
+  await shot('wrong-desk-correction');
+ }
  await move(96,96);await key();await shot('release-filed');assert.equal((await state()).sceneProgress.classNetVaultReviewStep,2);
  await move(164,96);await move(176,150);await key();await shot('ledger');
  console.log(JSON.stringify((await state()).choice));

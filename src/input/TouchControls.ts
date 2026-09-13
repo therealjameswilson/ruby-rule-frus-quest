@@ -58,6 +58,19 @@ function clampToCanvas(point: Phaser.Math.Vector2) {
   return point;
 }
 
+const TOUCH_TURN_RATIO = Math.tan(51 * Math.PI / 180);
+
+export function resolveTouchDirection(dx: number, dy: number, previous: CardinalDirection | null): CardinalDirection | null {
+  if (Math.hypot(dx, dy) < 12) return null;
+  // Keep a six-degree margin past a diagonal boundary to absorb thumb jitter.
+  // Reversal and release remain immediate; there is no timing/debounce delay.
+  const horizontal: CardinalDirection = dx < 0 ? "left" : "right";
+  const vertical: CardinalDirection = dy < 0 ? "up" : "down";
+  if (previous === horizontal && Math.abs(dy) <= Math.abs(dx) * TOUCH_TURN_RATIO) return previous;
+  if (previous === vertical && Math.abs(dx) <= Math.abs(dy) * TOUCH_TURN_RATIO) return previous;
+  return Math.abs(dx) > Math.abs(dy) ? horizontal : vertical;
+}
+
 export class TouchControls {
   private readonly scene: Phaser.Scene;
   private readonly graphics: Phaser.GameObjects.Graphics;
@@ -225,6 +238,8 @@ export class TouchControls {
     window.addEventListener("pointermove", this.handleDomPointerMove, { passive: false });
     window.addEventListener("pointerup", this.handleDomPointerUp, { passive: false });
     window.addEventListener("pointercancel", this.handleDomPointerUp, { passive: false });
+    window.addEventListener("resize", this.handleViewportChange);
+    window.addEventListener("orientationchange", this.handleViewportChange);
     this.scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.destroy();
     });
@@ -241,7 +256,15 @@ export class TouchControls {
     window.removeEventListener("pointermove", this.handleDomPointerMove);
     window.removeEventListener("pointerup", this.handleDomPointerUp);
     window.removeEventListener("pointercancel", this.handleDomPointerUp);
+    window.removeEventListener("resize", this.handleViewportChange);
+    window.removeEventListener("orientationchange", this.handleViewportChange);
   }
+
+  private readonly handleViewportChange = () => {
+    // A held thumb's canvas coordinates are no longer valid after layout moves.
+    this.releaseAll();
+    this.redraw();
+  };
 
   private handlePointerDown(pointer: Phaser.Input.Pointer) {
     if (!this.enabled) return;
@@ -356,9 +379,13 @@ export class TouchControls {
   private findButtonAt(x: number, y: number) {
     if (gameState.mode === "pause") return undefined;
     return this.buttons.find((button) =>
-      Math.abs(x - button.x) <= button.hitWidth / 2
+      this.buttonAvailable(button) && Math.abs(x - button.x) <= button.hitWidth / 2
       && Math.abs(y - button.y) <= button.hitHeight / 2
     );
+  }
+
+  private buttonAvailable(button: ButtonSpec) {
+    return gameState.currentScene !== "WorldMapScene" || button.key !== "b";
   }
 
   private pressButton(button: ButtonState, pointerId: number) {
@@ -416,12 +443,7 @@ export class TouchControls {
   private updateDpadDirection() {
     const dx = this.dpadCurrent.x - this.dpadOrigin.x;
     const dy = this.dpadCurrent.y - this.dpadOrigin.y;
-    let nextDirection: CardinalDirection | null = null;
-    if (Math.hypot(dx, dy) >= 12) {
-      nextDirection = Math.abs(dx) > Math.abs(dy)
-        ? dx < 0 ? "left" : "right"
-        : dy < 0 ? "up" : "down";
-    }
+    const nextDirection = resolveTouchDirection(dx, dy, this.dpadDirection);
     if (nextDirection === this.dpadDirection) return;
     if (this.dpadDirection) setTouchControl(this.dpadDirection, false);
     this.dpadDirection = nextDirection;
@@ -487,6 +509,11 @@ export class TouchControls {
 
   private drawButtons() {
     for (const button of this.buttons) {
+      if (!this.buttonAvailable(button)) {
+        if (button.pointerId !== null) this.releaseButton(button);
+        button.text.setVisible(false);
+        continue;
+      }
       const pressed = button.pointerId !== null;
       const visible = !button.hiddenUntilPressed || pressed;
       button.text.setVisible(visible);

@@ -18,6 +18,7 @@ import {
 import type { AdventureSubscreenReadout } from "../game/state";
 import { bindPointerPress, getInput, getPrimaryActionBadge, swallowNextInputFrame, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
+import { InventoryArtLoader } from "./inventoryArt";
 import { isColorblindModeEnabled, toggleColorblindMode } from "./accessibilitySettings";
 import { openCodex } from "./codexOverlay";
 import { cycleLanguage, getLanguage, getString } from "./i18n";
@@ -60,6 +61,7 @@ type Control = PauseHit & { action: () => void };
 
 /** A single focus model drives keyboard, gamepad and pointer interactions. */
 export class InventoryOverlay {
+  private readonly artLoader: InventoryArtLoader;
   private readonly container: Phaser.GameObjects.Container;
   private readonly content: Phaser.GameObjects.Container;
   private previousMode: GameMode | null = null;
@@ -77,6 +79,7 @@ export class InventoryOverlay {
   private message = "";
 
   constructor(private readonly scene: Phaser.Scene) {
+    this.artLoader = new InventoryArtLoader(scene, () => { if (this.active) this.render(); });
     const dim = scene.add.rectangle(128, 120, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black), 0.75).setScrollFactor(0);
     const panel = scene.add.rectangle(128, 124, 240, 224, color(PALETTE.black)).setScrollFactor(0);
     panel.setStrokeStyle(1, color(PALETTE.goldStamp));
@@ -89,6 +92,7 @@ export class InventoryOverlay {
     updateInputCallbacks({ handlePauseTouch: (point) => this.handlePointer(point.x, point.y) });
     scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.onScenePointer, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.artLoader.destroy();
       scene.input.off(Phaser.Input.Events.POINTER_DOWN, this.onScenePointer, this);
       if (this.active) this.hide();
     });
@@ -105,6 +109,7 @@ export class InventoryOverlay {
     this.areaIndex = Math.max(0, getAdventureSubscreenReadout().dungeons.findIndex((dungeon) => dungeon.active));
     this.focus = "content"; this.detailOpen = false; this.message = "";
     this.container.setVisible(true);
+    this.artLoader.load();
     this.render();
   }
 
@@ -268,6 +273,7 @@ export class InventoryOverlay {
       if (asset) {
         const key = ensureItemThumbnail(this.scene, asset);
         if (key) this.art(hit.x, hit.y - 5, key, undefined, tool.acquired ? 1 : 0.25);
+        else this.text(hit.x, hit.y - 9, this.artLoader.status === "error" ? "?" : "...", PALETTE.stoneGray, true);
       } else {
         this.art(hit.x, hit.y - 5, SNES_WORKFLOW_TOOL_RELIC_ASSET.key, TOOL_FRAMES[tool.id as ProcessItemId], tool.acquired ? 1 : 0.25);
       }
@@ -312,6 +318,12 @@ export class InventoryOverlay {
     this.text(128, 63, item.displayName.toUpperCase(), PALETTE.goldStamp, true);
     const image = this.art(128, 112, item.key);
     if (image) image.setScale(Math.min(64 / image.width, 64 / image.height));
+    else {
+      this.text(128, 108, this.artLoader.status === "error" ? "RETRY ART" : "LOADING ART", PALETTE.stoneGray, true);
+      if (this.artLoader.status === "error") this.control({ id: "retry-art", x: 128, y: 112, width: 100, height: 44 }, () => {
+        this.artLoader.load(); this.render();
+      });
+    }
     const status = item.id === "treaty-fragments" ? `${item.count} / ${item.total}` : item.equipped ? getString("pause.equipped") : item.tier.toUpperCase();
     this.text(128, 151, status, PALETTE.terminalCyan, true);
     this.text(20, 164, pauseTextPages(item.description, 36, 3)[0]);
@@ -483,6 +495,10 @@ export class InventoryOverlay {
       this.text(20, 213, `${getString("pause.board")} ${subscreen.productionBoard.completed}/${subscreen.productionBoard.total}`);
     }
     if (card.art === "shelf") {
+      if (this.artLoader.status !== "ready") {
+        this.text(128, 143, this.artLoader.status === "error" ? "ART UNAVAILABLE" : "LOADING SHELF", PALETTE.goldStamp, true);
+        return;
+      }
       const key: keyof typeof FRUS_VOLUMES = "ui_row_six";
       const image = this.art(128, 143, key);
       if (image) image.setCrop(105, 470, 1500, 410).setScale(0.125);

@@ -80,7 +80,7 @@ import {
 } from "../game/state";
 import type { Interactable } from "../game/types";
 import type { Position } from "../game/types";
-import { getInput, getPrimaryActionBadge, tickInput } from "../input/InputState";
+import { getInput, getPrimaryActionBadge, getSecondaryActionBadge, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import {
@@ -105,6 +105,7 @@ import {
   type EncounterWaveQueue
 } from "../systems/encounterWaves";
 import { AttackBuffer, HitstopController } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { CombatClock } from "../systems/combatClock";
 import {
   applyRoomClearGate,
@@ -309,6 +310,7 @@ export class GameplayMapScene extends Phaser.Scene {
     this.danneWaveTransition.reset();
     this.hitstop.reset();
     this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
     this.danneBanner?.destroy();
     this.danneBanner = undefined;
     this.tileData = this.readTileData();
@@ -443,7 +445,11 @@ export class GameplayMapScene extends Phaser.Scene {
     const combatLocked = this.isDanneEncounterLocked();
     const available = this.availableCombatInteractables(combatLocked);
     const nearest = nearestInteractable(this.player.position, available);
-    const hintTarget = this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, available));
+    const showApproachHint = (this.mapKey === "frus_floor" && !combatCue)
+      || input.aJustPressed || this.objectiveOverrideMsRemaining > 0;
+    const hintTarget = showApproachHint
+      ? this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, available))
+      : null;
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
     this.prompt.update(delta, promptTarget, {
@@ -458,7 +464,7 @@ export class GameplayMapScene extends Phaser.Scene {
       : hintTarget
         ? `STEP CLOSER: ${hintTarget.label.toUpperCase()}`
         : combatCue
-          ? `${combatCue.actionHint}  M TOOLS`
+          ? combatCue.actionHint
           : `${actionBadge} INTERACT  ESC WORLD MAP`);
     const feedback = decideInteractionFeedback(nearest, hintTarget);
     const showedStepCloserFeedback = input.aJustPressed && feedback.kind === "step-closer";
@@ -688,19 +694,24 @@ export class GameplayMapScene extends Phaser.Scene {
     const equipped = gameState.equippedProcessItem === readout.weakness;
     const status = this.currentDanneRoomStatus();
     if (!acquired) {
+      const source = readout.weakness === "review_folder"
+        ? "FOLDER: ARCHIVE B2"
+        : readout.weakness === "red_pencil"
+          ? "PENCIL: EDITOR E1"
+          : "STAMP: GUIDE CAVERN";
       return {
-        actionHint: `DODGE - NEED ${shortTool}`,
-        objective: `FIND ${weaknessLabel}`
+        actionHint: `RETREAT - NEED ${shortTool}`,
+        objective: source
       };
     }
     if (!equipped) {
       return {
-        actionHint: `M EQUIP ${shortTool}`,
+        actionHint: `TOOLS: EQUIP ${shortTool}`,
         objective: `EQUIP ${weaknessLabel}`
       };
     }
     return {
-      actionHint: `B USE ${shortTool}`,
+      actionHint: `${getSecondaryActionBadge()} USE ${shortTool}`,
       objective: `${shortTool}: ${status.defeatedEnemyCount}/${status.requiredEnemyCount} CLEARED`
     };
   }
@@ -817,7 +828,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private availableCombatInteractables(locked: boolean): Interactable[] {
     if (!locked) return this.interactables;
     // Retreat is not progression: keep the forward vault and reward interactions locked.
-    return this.mapKey === "nara_stacks"
+    return this.mapKey === "nara_stacks" || this.mapKey === "capitol_hill"
       ? this.doors.filter(door => door.target.scene === "WorldMapScene")
       : [];
   }

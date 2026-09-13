@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { readChapterArrival } from "../game/chapterTravel";
+import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -37,6 +37,8 @@ import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { saveGameNow } from "../systems/save";
 import { takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { AttackBuffer } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { WithholdingChronologyBoard } from "../systems/withholdingChronologyBoard";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
@@ -168,6 +170,7 @@ export class NetworkScene extends Phaser.Scene {
   private roomSolids: Phaser.Geom.Rectangle[] = [];
   private roomTitleText!: Phaser.GameObjects.Text;
   private roomTransitionLocked = false;
+  private readonly attackBuffer = new AttackBuffer();
   private exitCooldownUntil = 0;
   private clearanceTokenIcon?: Phaser.GameObjects.Image;
   private vaultInbox?: Phaser.GameObjects.Container;
@@ -185,6 +188,8 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   create(data?: unknown) {
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
     const arrival = readChapterArrival(data, "NetworkScene", gameState.currentScene);
     const restoringNetworkScene = gameState.currentScene === "NetworkScene";
     const restoredRoomId: NetworkRoomId = arrival?.to === "N2" || (!arrival && restoringNetworkScene
@@ -288,6 +293,9 @@ export class NetworkScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (gameState.mode !== "explore" || input.menuJustPressed || input.pauseJustPressed
+      || this.roomTransitionLocked || this.ledgerChoice.active || this.dialog.active
+      || this.inventory.active || this.reliability.active) this.attackBuffer.clear();
     this.toast.update(delta, this.player.position);
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.ledgerChoice.active) {
@@ -330,7 +338,8 @@ export class NetworkScene extends Phaser.Scene {
       return;
     }
     this.player.update(delta, true, { bounds: NETWORK_PLAY_BOUNDS, solids: this.roomSolids });
-    if (input.bJustPressed) {
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing && this.player.combatReadout.state !== "hurt")) {
       const swing = tryEquippedToolSwing(this.player);
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
     }
@@ -365,6 +374,7 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private enterRoom(roomId: NetworkRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    this.attackBuffer.clear();
     const applyRoom = () => {
       this.currentRoomId = roomId;
       this.visitedRoomIds.add(roomId);
@@ -1081,7 +1091,7 @@ export class NetworkScene extends Phaser.Scene {
       adjustReliability(-2, `${result.packet.label} caught at the wrong-network firewall before transmission`);
       retroAudio.warning();
       this.routeText.setVisible(false);
-      this.toast.show("WRONG NETWORK", this.player.position, "warn");
+      this.toast.show(`ROUTE TO ${result.packet.network.toUpperCase()}`, this.player.position, "warn");
       setLatestMessage(`${result.message} ${result.packet.routingClue}`);
       setObjective(networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder));
       this.syncNetworkSplitEntities();
@@ -1474,7 +1484,7 @@ export class NetworkScene extends Phaser.Scene {
       adjustReliability(-2, `${result.docket.label} returned from the wrong ClassNet station`);
       retroAudio.warning();
       this.routeText.setVisible(false);
-      this.toast.show("WRONG DESK", this.player.position, "warn");
+      this.toast.show(`USE ${result.docket.stationLabel.toUpperCase()}`, this.player.position, "warn");
       setLatestMessage(result.message);
       setObjective(this.classNetVaultObjective());
       this.syncClassNetVaultEntities();
@@ -1722,6 +1732,10 @@ export class NetworkScene extends Phaser.Scene {
     if (position.x >= NETWORK_PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     else if (position.x <= NETWORK_PLAY_BOUNDS.left + 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
     if (!direction) return false;
+
+    // A Continue spawn may lie on the doorway threshold. Require an outward
+    // movement request so reading the room cannot immediately send you back.
+    if (!requestsDoorExit(direction, getInput().dir)) return false;
 
     if (this.currentRoomId === "N1" && direction === "west") {
       this.roomTransitionLocked = true;

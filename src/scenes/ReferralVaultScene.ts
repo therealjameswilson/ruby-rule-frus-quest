@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { readChapterArrival } from "../game/chapterTravel";
+import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { referralBracketStrike } from "../game/referralBracketPress";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
@@ -44,6 +44,8 @@ import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { AttackBuffer } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { ReferralManifestBoard } from "../systems/referralManifestBoard";
 import { ReferralTreatmentBoard } from "../systems/referralTreatmentBoard";
@@ -170,6 +172,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private mapLabels = new Map<ReferralRoomId, Phaser.GameObjects.Text>();
   private roomTitleText!: Phaser.GameObjects.Text;
   private roomTransitionLocked = false;
+  private readonly attackBuffer = new AttackBuffer();
   private exitCooldownUntil = 0;
   private concurrenceSlipIcon?: Phaser.GameObjects.Image;
   private concurrenceSlipRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
@@ -182,6 +185,8 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   create(data?: unknown) {
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
     this.lastBracketSwing = -1;
     const arrival = readChapterArrival(data, "ReferralVaultScene", gameState.currentScene);
     const restoringReferralScene = gameState.currentScene === "ReferralVaultScene";
@@ -276,6 +281,9 @@ export class ReferralVaultScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (gameState.mode !== "explore" || input.menuJustPressed || input.pauseJustPressed
+      || this.roomTransitionLocked || this.manifestBoard.active || this.treatmentBoard.active
+      || this.inventory.active || this.reliability.active) this.attackBuffer.clear();
     this.toast.update(delta, this.player.position);
     if (this.manifestBoard.active) {
       this.updateDanneLurker(delta, false);
@@ -318,7 +326,8 @@ export class ReferralVaultScene extends Phaser.Scene {
       return;
     }
     this.player.update(delta, true, { bounds: REFERRAL_PLAY_BOUNDS, solids: this.roomSolids });
-    if (input.bJustPressed) {
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing && this.player.combatReadout.state !== "hurt")) {
       const swing = tryEquippedToolSwing(this.player);
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
     }
@@ -369,6 +378,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private enterRoom(roomId: ReferralRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    this.attackBuffer.clear();
     const applyRoom = () => {
       this.currentRoomId = roomId;
       this.visitedRoomIds.add(roomId);
@@ -1116,7 +1126,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       setNearestInteractable(null);
       return false;
     }
-    const nearSlip = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) <= 32;
+    const nearSlip = this.concurrenceSlipStrictTarget() !== null;
     if (!nearSlip) {
       setNearestInteractable(null);
       if (input.aJustPressed && this.concurrenceSlipHintTarget()) {
@@ -1145,8 +1155,9 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   private concurrenceSlipStrictTarget(): Interactable | null {
     if (this.currentRoomId !== "R2" || this.concurrenceSlipCollected) return null;
-    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 32) return null;
-    return this.concurrenceSlipTarget(32);
+    // Give a stopped thumb approach a four-pixel margin around the pedestal.
+    if (Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 128, 132) > 36) return null;
+    return this.concurrenceSlipTarget(36);
   }
 
   private concurrenceSlipHintTarget(): Interactable | null {
@@ -1265,6 +1276,8 @@ export class ReferralVaultScene extends Phaser.Scene {
     else if (position.x >= 120 && position.x <= 136 && position.y <= REFERRAL_PLAY_BOUNDS.top + 2) direction = "north";
     else if (position.x >= 120 && position.x <= 136 && position.y >= 210) direction = "south";
     if (!direction) return false;
+
+    if (!requestsDoorExit(direction, getInput().dir)) return false;
 
     if (this.currentRoomId === "R1" && direction === "north") {
       if (!canTraverseExit("R1", "north", getHeldProcessItemIds())) {
@@ -1693,7 +1706,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (!result.ok) {
       adjustReliability(-2, `${result.docket.label} caught at the wrong review station`);
       retroAudio.warning();
-      this.toast.show("WRONG STATION", this.player.position, "warn");
+      this.toast.show(`USE ${result.docket.stationLabel.toUpperCase()}`, this.player.position, "warn");
       setLatestMessage(result.message);
       setObjective(this.referralObjective());
       this.syncReferralVisibleEntities();

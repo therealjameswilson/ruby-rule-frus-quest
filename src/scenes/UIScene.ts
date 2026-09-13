@@ -1,7 +1,6 @@
 import Phaser from "phaser";
 import {
   ACCESSIBILITY_OVERLAYS,
-  FRUS_VOLUMES,
   UI_PACK,
   publicAssetPath
 } from "../assets/registry";
@@ -20,7 +19,8 @@ import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 import { guideExitApproachCue, guideQuestBandObjective, officeApproachCue, officeQuestBandObjective } from "./openingQuestBand";
-import { questBandAwaitingDialog, questBandBossCue, questBandRiskLine } from "./questBandCue";
+import { questBandAwaitingDialog, questBandBossCue, questBandBracketCue, questBandCrossingCue, questBandRiskLine } from "./questBandCue";
+import { networkCrossingState } from "../game/networkCrossing";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
 import { TREATMENT_REVIEW_TITLE } from "../game/referralTreatmentDraft";
@@ -53,6 +53,7 @@ export class UIScene extends Phaser.Scene {
   private questBandCueText!: Phaser.GameObjects.Text;
   private removeColorblindModeListener?: () => void;
   private questBandSignature = "";
+  private questBandDecisionSignature = "";
   private questBandLastRefresh = 0;
 
   constructor() {
@@ -60,9 +61,6 @@ export class UIScene extends Phaser.Scene {
   }
 
   preload() {
-    if (!this.textures.exists("ui_row_six")) {
-      this.load.image("ui_row_six", publicAssetPath(FRUS_VOLUMES.ui_row_six));
-    }
     for (const [key, path] of Object.entries(UI_PACK)) {
       if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
     }
@@ -86,6 +84,7 @@ export class UIScene extends Phaser.Scene {
     });
     this.removeColorblindModeListener = addColorblindModeListener(() => {
       this.questBandSignature = "";
+      this.questBandDecisionSignature = "";
       this.questBandLastRefresh = 0;
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -212,25 +211,33 @@ export class UIScene extends Phaser.Scene {
     const hud = getAdventureHudReadout();
     const subscreen = getAdventureSubscreenReadout();
     const volumeAssembly = getVolumeAssemblyReadout();
-    if (now - this.questBandLastRefresh < 120) return;
-    this.questBandLastRefresh = now;
 
     const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? getString("hud.none");
     const weapon = gameState.playerCombat.weapon;
     const awaitingDialog = questBandAwaitingDialog(gameState.mode, gameState.activeDialog);
     const objectiveLine = awaitingDialog ? "" : this.compactObjective(activeSceneKey);
     const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
-    const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats);
+    const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats, gameState.player);
     const encounterCue = this.gameplayCombatCue();
     const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable)
       ?? guideExitApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable,
-        gameState.volumeFragments.includes("Front Matter Fragment"));
+        gameState.volumeFragments.includes("Front Matter Fragment"))
+      ?? (activeSceneKey === "NetworkScene" ? questBandCrossingCue(gameState.mode, gameState.nearestInteractable,
+        networkCrossingState(gameState.sceneProgress), gameState.equippedProcessItem === "citation_stamp",
+        getSecondaryActionBadge()) : null)
+      ?? (activeSceneKey === "ReferralVaultScene" ? questBandBracketCue(gameState.mode, gameState.nearestInteractable,
+        gameState.sceneProgress, gameState.equippedProcessItem === "citation_stamp", getSecondaryActionBadge()) : null);
     const actionLine = awaitingDialog ? "" : bossCue?.text ?? encounterCue?.text ?? riskLine ?? approachCue?.text ?? this.compactActionLine(toolLabel);
     const actionBadge = awaitingDialog ? "" : !bossCue && encounterCue ? encounterCue.badge : bossCue?.badge === "notice" ? "!"
       : !bossCue && !riskLine && approachCue ? approachCue.badge
       : !riskLine && (bossCue?.badge === "tool" || this.showCounterAction() || this.guideCounterTrainingActive())
       ? getSecondaryActionBadge()
       : getPrimaryActionBadge();
+    // Counter windows and facing cues must not wait for the meter refresh.
+    const decisionSignature = [objectiveLine, actionLine, actionBadge, toolLabel, gameState.mode].join("|");
+    if (decisionSignature === this.questBandDecisionSignature && now - this.questBandLastRefresh < 120) return;
+    this.questBandDecisionSignature = decisionSignature;
+    this.questBandLastRefresh = now;
     const signature = [
       gameState.reliability,
       toolLabel,

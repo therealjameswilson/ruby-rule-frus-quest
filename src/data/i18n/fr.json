@@ -92,7 +92,7 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
-    "encounterEvade": "ESQUIVE; TROUVE {tool}",
+    "encounterEvade": "REPLI; IL FAUT {tool}",
     "encounterEquip": "EQUIPE {tool}",
     "encounterCounter": "CONTRE AVEC {tool}",
     "encounterExplore": "EXPLORE LES PASSAGES",

@@ -2,6 +2,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Player } from "./Player";
 import { resetGameState } from "../game/state";
 import { CombatClock } from "../systems/combatClock";
+import { PLAYER_MOVEMENT_TUNING, walkingFeetOverlap } from "../systems/smoothMovement";
+
+const SPEED = PLAYER_MOVEMENT_TUNING.speed;
 
 const input = vi.hoisted(() => ({ dir: { x: 0, y: 0 } }));
 vi.mock("../input/InputState", () => ({ getInput: () => input }));
@@ -27,6 +30,42 @@ function fixture() {
 beforeEach(() => { resetGameState(); input.dir = { x: 0, y: 0 }; });
 
 describe("live player movement", () => {
+  it.each([30, 60, 120])("stops at an NPC's feet and can immediately walk away at %s FPS", fps => {
+    const { player, coords, internals } = fixture();
+    const feet = { x: 64, y: 119, width: 12, height: 8 };
+    coords.logicalX = 90;
+    coords.logicalY = 122;
+    internals.collidesAt.mockImplementation((x, y) => walkingFeetOverlap(x, y, feet));
+    input.dir.x = -1;
+    for (let frame = 0; frame < fps; frame++) {
+      player.update(1000 / fps, true, { solids: [{}] as never[] });
+      expect(walkingFeetOverlap(coords.logicalX, coords.logicalY, feet)).toBe(false);
+    }
+    expect(coords.logicalX).toBeCloseTo(82, 2);
+    expect(coords.logicalY).toBe(122);
+    input.dir.x = 1;
+    player.update(1000 / fps, true, { solids: [{}] as never[] });
+    expect(coords.logicalX).toBeCloseTo(82 + SPEED / fps, 2);
+  });
+
+  it.each([30, 60, 120])("keeps corner assistance inside the remaining movement budget at %s FPS", fps => {
+    for (const axis of ["x", "y"] as const) for (const sign of [-1, 1]) for (const scale of [0.5, 1]) {
+      const { player, coords, internals } = fixture();
+      const step = SPEED * scale / fps;
+      internals.weaponState.movementScale = () => scale;
+      if (axis === "x") coords.logicalX = 100 - sign * step * 0.8;
+      else coords.logicalY = 100 - sign * step * 0.8;
+      const start = { x: coords.logicalX, y: coords.logicalY };
+      internals.collidesAt.mockImplementation((x, y) =>
+        sign * ((axis === "x" ? x : y) - 100) > 0 && (axis === "x" ? y : x) > 98);
+      input.dir = { x: axis === "x" ? sign : 0, y: axis === "y" ? sign : 0 };
+      player.update(1000 / fps, true, { solids: [{}] as never[] });
+      const travelled = Math.abs(coords.logicalX - start.x) + Math.abs(coords.logicalY - start.y);
+      expect(travelled).toBeLessThanOrEqual(step + 0.001);
+      expect(axis === "x" ? coords.logicalY : coords.logicalX).toBeLessThan(100);
+    }
+  });
+
   it.each([30, 60, 120])("clears fractional doorway edges without overshooting at %s FPS", fps => {
     const { player, coords, internals } = fixture();
     internals.collidesAt.mockImplementation((x, y) => x > 100 && y > 99.75);
@@ -35,7 +74,7 @@ describe("live player movement", () => {
     expect(coords.logicalY).toBeLessThanOrEqual(99.75);
     expect(coords.logicalY).toBeGreaterThan(99.749);
     expect(coords.logicalX).toBeGreaterThan(100);
-    expect(Math.abs(coords.logicalX - 100) + Math.abs(coords.logicalY - 100)).toBeLessThanOrEqual(72 / fps + 0.0001);
+    expect(Math.abs(coords.logicalX - 100) + Math.abs(coords.logicalY - 100)).toBeLessThanOrEqual(SPEED / fps + 0.0001);
     player.update(1000 / fps, true, { solids: [{}] as never[] });
     expect(coords.logicalX).toBeGreaterThan(100);
   });
@@ -64,7 +103,7 @@ describe("live player movement", () => {
     expect(coords.logicalY).toBe(100);
     input.dir.x = -1;
     player.update(1000 / fps, true);
-    expect(coords.logicalX).toBeCloseTo(105.3 - 72 / fps, 2);
+    expect(coords.logicalX).toBeCloseTo(105.3 - SPEED / fps, 2);
   });
 
   it.each(["x", "y"] as const)("keeps a partial negative %s step without entering the wall", axis => {
@@ -81,7 +120,7 @@ describe("live player movement", () => {
     const { player, coords } = fixture();
     input.dir.x = 1;
     for (let i = 0; i < fps; i++) player.update(1000 / fps, true);
-    expect(coords.logicalX).toBeCloseTo(172);
+    expect(coords.logicalX).toBeCloseTo(100 + SPEED);
     expect(coords.logicalY).toBe(100);
   });
 
@@ -89,7 +128,7 @@ describe("live player movement", () => {
     const { player, coords } = fixture();
     input.dir.x = 1;
     player.update(1000 / 60, true);
-    expect(coords.logicalX).toBeCloseTo(101.2);
+    expect(coords.logicalX).toBeCloseTo(100 + SPEED / 60);
     input.dir.x = -1;
     player.update(1000 / 60, true);
     expect(coords.logicalX).toBeCloseTo(100);
@@ -121,13 +160,13 @@ describe("live player movement", () => {
     expect(player.animationState).toBe("idle_right");
   });
 
-  it("rounds an open corner gently, one lateral pixel per 60Hz frame", () => {
+  it("rounds an open corner gently without an instant sideways snap", () => {
     const { player, coords, internals } = fixture();
     internals.collidesAt.mockImplementation((x, y) => x > 100 && y > 98);
     input.dir.x = 1;
     player.update(1000 / 60, true, { solids: [{}] as never[] });
     expect(coords.logicalX).toBe(100);
-    expect(coords.logicalY).toBe(99);
+    expect(coords.logicalY).toBe(100 - PLAYER_MOVEMENT_TUNING.cornerGuideSpeed / 60);
     player.update(1000 / 60, true, { solids: [{}] as never[] });
     expect(coords.logicalY).toBe(98);
     player.update(1000 / 60, true, { solids: [{}] as never[] });
@@ -141,7 +180,7 @@ describe("live player movement", () => {
     for (let i = 0; i < fps / 30; i++) player.update(1000 / fps, true, { solids: [{}] as never[] });
     expect(coords.logicalY).toBeCloseTo(98);
     expect(coords.logicalX).toBeGreaterThan(100);
-    expect(coords.logicalX).toBeLessThanOrEqual(100.4 + 0.0001);
+    expect(coords.logicalX).toBeLessThanOrEqual(100 + SPEED / 30 - 2 + 0.0001);
   });
 
   it("paces the stride by distance rather than elapsed time during slow movement", () => {
@@ -185,26 +224,28 @@ describe("live player movement", () => {
     input.dir = { x: 1, y: 1 };
     player.update(1000 / 60, true, { solids: [{}] as never[] });
     expect(coords.logicalX).toBe(100);
-    expect(coords.logicalY).toBeCloseTo(101.2);
+    expect(coords.logicalY).toBeCloseTo(100 + SPEED / 60);
   });
 
   it.each([30, 60, 120])("slides at walking speed without sticking at %s FPS", fps => {
     const { player, coords, internals } = fixture();
     internals.collidesAt.mockImplementation((_x, y) => y > 100);
     input.dir = { x: -1, y: 1 };
-    for (let i = 0; i < fps; i++) player.update(1000 / fps, true, { solids: [{}] as never[] });
-    expect(coords.logicalX).toBeCloseTo(28);
+    for (let i = 0; i < fps; i++) player.update(1000 / fps, true, {
+      solids: [{}] as never[], bounds: { left: 0, right: 240, top: 40, bottom: 220 }
+    });
+    expect(coords.logicalX).toBeCloseTo(100 - SPEED);
     expect(coords.logicalY).toBe(100);
     input.dir = { x: 0, y: 0 };
     player.update(1000 / fps, true);
-    expect(coords.logicalX).toBeCloseTo(28);
+    expect(coords.logicalX).toBeCloseTo(100 - SPEED);
   });
 
   it("keeps open diagonals normalized and stops at a closed corner", () => {
     const { player, coords, internals } = fixture();
     input.dir = { x: 1, y: 1 };
     player.update(1000 / 60, true);
-    expect(Math.hypot(coords.logicalX - 100, coords.logicalY - 100)).toBeCloseTo(1.2);
+    expect(Math.hypot(coords.logicalX - 100, coords.logicalY - 100)).toBeCloseTo(SPEED / 60);
     coords.logicalX = 100;
     coords.logicalY = 100;
     internals.collidesAt.mockImplementation((x, y) => x > 100 || y > 100);
@@ -219,7 +260,7 @@ describe("live player movement", () => {
     input.dir = { x: 1, y: -1 };
     player.update(1000 / 60, true, { bounds: { left: 20, right: 100, top: 20, bottom: 180 } });
     expect(coords.logicalX).toBe(100);
-    expect(coords.logicalY).toBeCloseTo(99.4);
+    expect(coords.logicalY).toBeCloseTo(100 - SPEED * 0.5 / 60);
   });
 
   it.each(["x", "y"] as const)("chooses the nearer open edge when moving on %s", axis => {

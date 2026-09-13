@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { CodexScene } from "./CodexScene";
 import { gameState, resetGameState } from "../game/state";
-import { DANNE_PORTRAIT_ASSETS, DANNE_VARIANT_ASSETS } from "../game/danneAtlas";
+import { DANNE_ITEM_ASSETS, DANNE_PORTRAIT_ASSETS, DANNE_VARIANT_ASSETS } from "../game/danneAtlas";
+import { unlockCodexEntry } from "../game/codex";
 
 vi.mock("phaser", () => ({ default: { Scene: class {} } }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
@@ -9,6 +10,28 @@ vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
 beforeEach(() => resetGameState());
 
 describe("field-guide loading safety", () => {
+  it("loads an unlocked item card on demand without fetching locked item cards", () => {
+    const storage = new Map<string, string>();
+    vi.stubGlobal("window", { localStorage: {
+      getItem: (key: string) => storage.get(key) ?? null,
+      setItem: (key: string, value: string) => storage.set(key, value)
+    } });
+    try {
+      unlockCodexEntry("item-ruby-pen");
+      const image = vi.fn();
+      const label = { setOrigin: vi.fn().mockReturnThis(), setName: vi.fn().mockReturnThis() };
+      const camera = { setBackgroundColor: vi.fn().mockReturnThis(), setRoundPixels: vi.fn().mockReturnThis() };
+      const guide = Object.assign(new CodexScene(), {
+        textures: { exists: () => false }, load: { image }, add: { text: () => label }, cameras: { main: camera }
+      });
+      guide.preload();
+      const ruby = DANNE_ITEM_ASSETS.find(asset => asset.itemId === "ruby-pen")!;
+      expect(image).toHaveBeenCalledWith(ruby.key, ruby.path);
+      for (const asset of DANNE_ITEM_ASSETS.filter(asset => asset !== ruby)) {
+        expect(image).not.toHaveBeenCalledWith(asset.key, asset.path);
+      }
+    } finally { vi.unstubAllGlobals(); }
+  });
   it("pauses the parent before queuing unlocked portraits and leaves locked variants unloaded", () => {
     const order: string[] = [];
     const label = { setOrigin: vi.fn().mockReturnThis(), setName: vi.fn().mockReturnThis() };

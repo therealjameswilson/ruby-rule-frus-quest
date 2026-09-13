@@ -5,7 +5,7 @@ const source = readFileSync(new URL("./GuideScene.ts", import.meta.url), "utf8")
 
 describe("GuideScene Citation Stamp counter lesson", () => {
   it("starts a real secondary-tool swing and requires its active Citation Stamp hitbox", () => {
-    expect(source).toContain('input.bJustPressed && this.currentStage() === "counter"');
+    expect(source).toContain('this.updateCounterSwing(input.bJustPressed)');
     expect(source).toContain("tryEquippedToolSwing(this.player)");
     expect(source).toContain("this.player.activeActionHitbox");
     expect(source).toContain('combat.weapon.tool === "citation_stamp" && hasProcessItem("citation_stamp")');

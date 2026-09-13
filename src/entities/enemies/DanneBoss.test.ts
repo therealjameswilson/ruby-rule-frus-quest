@@ -70,12 +70,14 @@ class Visual {
 }
 
 interface BossInternals {
+  runIntro(): Promise<void>;
   showPhaseCutscene(key: string, phase: "intro"): Promise<void>;
   attackTelegraph: { markers: Visual[] } | null;
   hp: number;
   coreOpening: Visual;
   takeReturnedBolt(time: number): void;
   statutoryYear: number;
+  updateStatutoryClock(deltaMs: number): void;
   beginPhase(phase: Exclude<DanneBossPhase, "intro" | "defeated">): void;
   checkPlayerActionHit(time: number): void;
   hitPlayer(position: Position, kind: "ego_bolt" | "swarm", time: number): void;
@@ -135,6 +137,48 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
 
 describe("DANN-E final-review combat", () => {
   beforeEach(() => { vi.clearAllMocks(); resetGameState(); seedProgressForScene("BlackVaultLairScene"); });
+
+  it("restores elapsed deadline time when the boss is recreated from saved state", () => {
+    gameState.sceneProgress.statutoryClockTenths = 278;
+    const { internals } = fixture();
+    expect(internals.statutoryYear).toBe(27.8);
+    internals.updateStatutoryClock(100);
+    expect(internals.statutoryYear).toBeGreaterThan(27.8);
+  });
+
+  it("resumes the saved phase and health without replaying earlier phases or rewards", async () => {
+    gameState.sceneProgress.blackVaultBossPhase = 3;
+    gameState.sceneProgress.blackVaultBossHp = 68;
+    gameState.sceneProgress.statutoryClockTenths = 278;
+    const { boss, internals, onDefeated } = fixture("cloud");
+    await internals.runIntro();
+    expect(boss.currentPhase).toBe("cloud");
+    expect(internals.hp).toBe(68);
+    expect(internals.statutoryYear).toBe(27.8);
+    expect(internals.bolts).toHaveLength(0);
+    expect(onDefeated).not.toHaveBeenCalled();
+    expect(playLine).toHaveBeenCalledWith(expect.anything(),
+      "Review resumed. Your counter progress is kept.", DANNE_BOSS_PORTRAIT_ASSET.key);
+  });
+
+  it("retains a saved missed deadline without applying its damage twice", () => {
+    gameState.sceneProgress.statutoryClockTenths = 300;
+    gameState.sceneProgress.statutoryDeadlineMissed = 1;
+    const reliability = gameState.reliability;
+    const violations = structuredClone(gameState.standardsViolations);
+    const { internals } = fixture();
+    internals.updateStatutoryClock(1000);
+    expect(internals.statutoryYear).toBe(30);
+    expect(gameState.reliability).toBe(reliability);
+    expect(gameState.standardsViolations).toEqual(violations);
+    expect(internals.shortcutChoice.active).toBe(false);
+  });
+
+  it("honors a missed-deadline flag even if an older save has no elapsed time", () => {
+    delete gameState.sceneProgress.statutoryClockTenths;
+    gameState.sceneProgress.statutoryDeadlineMissed = 1;
+    expect(fixture().internals.statutoryYear).toBe(30);
+  });
 
   it("explains the live counter without approving documents or starting a swing", () => {
     const { boss, internals, scene, player } = fixture();
@@ -547,6 +591,7 @@ describe("DANN-E final-review combat", () => {
     gameState.reliability = 5;
     gameState.sceneProgress.blackVaultCombatDamage = 95;
     internals.statutoryYear = 25;
+    internals.hp = 12;
     internals.hitPlayer({ x: 100, y: 100 }, "swarm", 1000);
     expect(boss.inputLocked).toBe(true);
     expect(boss.readout().bossCombat.retryAvailable).toBe(true);
@@ -555,13 +600,20 @@ describe("DANN-E final-review combat", () => {
     internals.retryChoice.choose("A");
     expect(boss.currentPhase).toBe("swarm");
     expect(boss.inputLocked).toBe(false);
-    expect(internals.hp).toBe(180);
+    expect(internals.hp).toBe(12);
     expect(internals.statutoryYear).toBe(25);
     expect(gameState.reliability).toBe(100);
     expect(player.position).toEqual({ x: 128, y: 188 });
     expect(gameState.documentCandidates).toEqual(documents);
     expect(gameState.inventory).toEqual(inventory);
     expect(gameState.sceneProgress.blackVaultBossCleared).toBeFalsy();
+  });
+
+  it("starts a new phase at full health rather than carrying retry damage forward", () => {
+    const { internals } = fixture("colossus");
+    internals.hp = 12;
+    internals.beginPhase("cloud");
+    expect(internals.hp).toBe(180);
   });
 
   it("lets a failed attempt retreat without granting a boss reward", () => {

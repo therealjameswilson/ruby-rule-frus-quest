@@ -31,16 +31,34 @@ try{
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='NetworkScene');await page.waitForTimeout(1000);
 
 
+ await page.waitForTimeout(3000);
+ assert.equal((await state()).scene,'NetworkScene','Reading a continued doorway save must not return to Archive');
+ await move(96,124);
+ await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='FILE PUBLIC PACKET FIRST');
+ assert.equal(await page.evaluate(()=>window.game.scene.getScene('UIScene').questBandVerbText.text),'!');
  await shot('arrival');
  assert.equal((await eastGate()).canOpen,false);
  await move(96,178);await key();await shot('public-carried');
  assert.equal((await state()).sceneProgress.networkRoutingCarried,1);
  await move(96,140);await key();await shot('public-filed');
  assert.equal((await state()).sceneProgress.networkRoutingStep,1);
- await move(96,124);await key('ArrowRight',100);await key('x');await page.waitForTimeout(600);await shot('crossing');
+ await move(96,124);await key('ArrowRight',100);
+ await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='STAMP THE SEAL');
+ assert.equal(await page.evaluate(()=>window.game.scene.getScene('UIScene').questBandVerbText.text),mobile?'B':'X');
+ await shot('crossing-ready');
+ await key('x');await page.waitForTimeout(600);await shot('crossing');
  assert.equal((await state()).sceneProgress.networkStampCrossingOpen,1);
  await move(96,124);await key();
  assert.equal((await state()).sceneProgress.networkRoutingStep,2);
+ if(process.argv.includes('--wrong-route')){
+  const before=await state();
+  await key();
+  assert.equal((await state()).sceneProgress.networkRoutingStep,2);
+  assert.equal((await state()).sceneProgress.networkRoutingCarried,before.sceneProgress.networkRoutingCarried);
+  assert.equal((await state()).reliability,before.reliability-2);
+  assert.equal(await page.evaluate(()=>window.game.scene.getScene('NetworkScene').toast.text.text),'ROUTE TO CLASSNET');
+  await shot('wrong-network-correction');
+ }
  await move(164,124);await key();
  assert.equal((await state()).sceneProgress.networkRoutingStep,3);
  assert.equal((await eastGate()).canOpen,false,'All four packets must be filed before the map opens the vault');

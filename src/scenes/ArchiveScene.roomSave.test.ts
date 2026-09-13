@@ -7,6 +7,7 @@ import { gameState, resetGameState, setObjective } from "../game/state";
 vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} } } }));
 vi.mock("../systems/sceneTransitions", () => ({ transitionArchiveRoom: vi.fn() }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
+vi.mock("../input/InputState", () => ({ getInput: () => ({ dir: { x: 0, y: 1 } }) }));
 
 describe("archive room autosave", () => {
   it("keeps the active task when an optional tool gate rejects travel", () => {

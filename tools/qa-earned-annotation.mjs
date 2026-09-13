@@ -7,6 +7,7 @@ const out=process.env.FRUS_QA_OUT ?? '/tmp/frus-earned-annotation';await mkdir(o
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE});
 const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE,viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
 const page=await context.newPage();const cdp=mobile?await context.newCDPSession(page):null;const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));if(mobile)await page.screenshot({path:`${out}/${name}-phone.png`});};
 const key=async(k,ms=50)=>{

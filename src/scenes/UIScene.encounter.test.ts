@@ -14,7 +14,7 @@ beforeEach(() => {
 
 describe("encounter action guidance", () => {
   it("advises evasion when the required tool is absent", () => {
-    expect(cue()).toEqual({ text: "EVADE; FIND FOLDER", badge: "!" });
+    expect(cue()).toEqual({ text: "RETREAT; NEED FOLDER", badge: "!" });
   });
   it("distinguishes owning a counter from equipping it", () => {
     addProcessItem("review_folder"); gameState.equippedProcessItem = null;
@@ -25,9 +25,9 @@ describe("encounter action guidance", () => {
   });
   it("follows the nearest living enemy instead of roster order", () => {
     gameState.visibleThreats.push({ label: "Cloud", x: 128, y: 160, hp: 2, weakness: "citation_stamp", enemyState: "patrol" });
-    expect(cue()?.text).toBe("EVADE; FIND STAMP");
+    expect(cue()?.text).toBe("RETREAT; NEED STAMP");
     gameState.visibleThreats[1].enemyState = "defeated";
-    expect(cue()?.text).toBe("EVADE; FIND FOLDER");
+    expect(cue()?.text).toBe("RETREAT; NEED FOLDER");
   });
   it.each(["dialog", "choice", "pause"] as const)("stays out of %s prompts", mode => {
     gameState.mode = mode; expect(cue()).toBeNull();

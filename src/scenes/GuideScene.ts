@@ -53,6 +53,8 @@ import { handleOpenOverlays } from "../systems/overlayInput";
 import { saveGameNow } from "../systems/save";
 import { addObjectiveText, drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { AttackBuffer } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { buildWeaponHitbox } from "../systems/weaponState";
 
 function color(hex: string) {
@@ -81,6 +83,7 @@ export class GuideScene extends Phaser.Scene {
   private practiceAim!: Phaser.GameObjects.Graphics;
   private pickupFocus!: Phaser.GameObjects.Rectangle;
   private counterTraining = new GuideCounterTraining();
+  private readonly attackBuffer = new AttackBuffer();
   private gateGlow!: Phaser.GameObjects.Rectangle;
   private gateLabel!: Phaser.GameObjects.Text;
   private readonly interactionAssist = new InteractionAssist();
@@ -96,6 +99,8 @@ export class GuideScene extends Phaser.Scene {
 
   create() {
     this.exiting = false;
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
     this.counterTraining = new GuideCounterTraining();
     setGuideCounterReadout(null);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => setGuideCounterReadout(null));
@@ -187,6 +192,7 @@ export class GuideScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (this.exiting) {
+      this.attackBuffer.clear();
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.pickupFocus.setVisible(false);
@@ -226,11 +232,8 @@ export class GuideScene extends Phaser.Scene {
     }
 
     this.setLessonPaused(false);
-    if (input.bJustPressed && this.currentStage() === "counter") {
-      const swing = tryEquippedToolSwing(this.player);
-      if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
-    }
     this.player.update(delta, true, { bounds: GUIDE_CAVERN_BOUNDS });
+    this.updateCounterSwing(input.bJustPressed);
     if (reachedGuideExit(this.currentStage(), this.player.position, input.dir.y > 0)) {
       this.openGate();
       return;
@@ -299,7 +302,22 @@ export class GuideScene extends Phaser.Scene {
   private setLessonPaused(paused: boolean) {
     this.egoSeal.setActive(!paused);
     this.practiceBolt.setActive(!paused);
-    if (paused) this.player.setCombatPaused(true);
+    if (paused) {
+      this.attackBuffer.clear();
+      this.player.setCombatPaused(true);
+    }
+  }
+
+  private updateCounterSwing(pressed: boolean) {
+    if (this.currentStage() !== "counter") {
+      this.attackBuffer.clear();
+      return;
+    }
+    if (pressed) this.attackBuffer.press(this.time.now);
+    const combat = this.player.combatReadout;
+    if (!this.attackBuffer.consume(this.time.now, combat.weapon.canSwing && combat.state !== "hurt")) return;
+    const swing = tryEquippedToolSwing(this.player);
+    if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
   }
 
   private updateCitationCounterTraining(delta: number) {
@@ -364,6 +382,7 @@ export class GuideScene extends Phaser.Scene {
 
   private remindCounterInput() {
     retroAudio.blip();
+    this.toast.show(`USE ${getSecondaryActionBadge()} TO RETURN BOLT`, this.player.position, "info");
     setLatestMessage(`Face the red bolt and press ${getSecondaryActionBadge()} to swing the Citation Stamp. Practice cannot hurt you.`);
   }
 

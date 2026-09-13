@@ -233,6 +233,27 @@ describe("DanneEnemy combat", () => {
     vi.spyOn(retroAudio, "warning").mockImplementation(() => undefined);
   });
 
+  it("moves a boast away from the hero and hides it during attacks", () => {
+    const enemy = makeEnemy("danne-mark-i-prototype", 2);
+    const bubble = { setVisible: vi.fn(), setPosition: vi.fn() };
+    Object.assign(enemy, { tauntBubble: bubble, tauntHeight: 22 });
+    const speech = enemy as unknown as { syncTauntBubble(player: { x: number; y: number }): void };
+    speech.syncTauntBubble({ x: 200, y: 180 });
+    expect(bubble.setVisible).toHaveBeenLastCalledWith(true);
+    expect(bubble.setPosition).toHaveBeenLastCalledWith(52, 119);
+    speech.syncTauntBubble({ x: 100, y: 160 });
+    expect(bubble.setPosition).toHaveBeenLastCalledWith(118, 76);
+    Object.assign(enemy, { meleeStartedAt: 1000 });
+    speech.syncTauntBubble({ x: 200, y: 180 });
+    expect(bubble.setVisible).toHaveBeenLastCalledWith(false);
+    Object.assign(enemy, { meleeStartedAt: null, projectiles: [{}] });
+    speech.syncTauntBubble({ x: 200, y: 180 });
+    expect(bubble.setVisible).toHaveBeenLastCalledWith(false);
+    Object.assign(enemy, { projectiles: [] });
+    speech.syncTauntBubble({ x: 200, y: 180 });
+    expect(bubble.setVisible).toHaveBeenLastCalledWith(true);
+  });
+
   it("takes damage from the matching FRUS tool", () => {
     const enemy = makeEnemy("danne-mark-i-prototype", 2);
 

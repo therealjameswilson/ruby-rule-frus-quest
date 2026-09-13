@@ -341,6 +341,13 @@ export function gameplayMapRouteReadout(target: { scene: string; mapKey?: Gamepl
   return `${prefix} ${target.scene.replace(/Scene$/, "").replace(/([a-z])([A-Z])/g, "$1 $2").toUpperCase()}`;
 }
 
+export function capitolRoutePreparation(hasFolder: boolean, cleared: boolean) {
+  if (cleared) return { text: "DANN-E CLEARED", ready: true };
+  return hasFolder
+    ? { text: "REVIEW FOLDER READY", ready: true }
+    : { text: "FOR COMBAT: BRING FOLDER", ready: false };
+}
+
 export function naraRoutePreparation(hasStamp: boolean, hasFolder: boolean, cleared: boolean) {
   if (cleared) return { text: "DANN-E PATROLS CLEARED", ready: true };
   if (hasStamp && hasFolder) return { text: "FOLDER + STAMP READY", ready: true };

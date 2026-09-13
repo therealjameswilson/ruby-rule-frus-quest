@@ -96,6 +96,7 @@ import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
+import { walkingFeetOverlap } from "../systems/smoothMovement";
 import { DialogBox } from "../systems/dialog";
 import {
   InteractionAssist,
@@ -176,11 +177,15 @@ export class OfficeScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.prompt = new InteractionPrompt(this);
     this.toast = new FeedbackToast(this);
+    const juniorFeet = new Phaser.Geom.Rectangle(this.juniorCompiler.x - 6, this.juniorCompiler.y - 3, 12, 8);
+    this.clearJuniorSpawn(juniorFeet);
     this.solids = [
       new Phaser.Geom.Rectangle(45, 72, 64, 34),
       new Phaser.Geom.Rectangle(147, 72, 65, 34),
       new Phaser.Geom.Rectangle(43, 138, 65, 32),
-      new Phaser.Geom.Rectangle(150, 138, 66, 32)
+      new Phaser.Geom.Rectangle(150, 138, 66, 32),
+      // Block only JR's feet, leaving the aisle and space behind him walkable.
+      juniorFeet
     ];
     this.interactables = [
       {
@@ -352,11 +357,13 @@ export class OfficeScene extends Phaser.Scene {
     const promptTarget = this.toast.visible ? null : nearest ?? (distantQuestCueVisible ? null : hintTarget);
     setNearestInteractable(nearest?.label ?? null);
     const approachCue = !distantQuestCueVisible && hintTarget ? this.approachCueFor(hintTarget) : null;
+    const lockedDoorPrompt = nearest?.id === "archive-guide-door" && !hasDanneItem("master-declass-key");
     this.prompt.update(
       delta,
       promptTarget,
       undefined,
-      nearest ? undefined : hintTarget && approachCue ? { badge: "!", text: approachCue } : undefined
+      lockedDoorPrompt ? { text: "CHECK ARCHIVE LOCK" }
+        : nearest ? undefined : hintTarget && approachCue ? { badge: "!", text: approachCue } : undefined
     );
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
@@ -391,6 +398,7 @@ export class OfficeScene extends Phaser.Scene {
       const archive = this.interactables.find((interactable) => interactable.id === "archive-guide-door");
       if (!routeUnlocked) {
         const focused: Interactable[] = [];
+        if (archive) focused.push({ ...archive, radius: 10 });
         if (memoStatus === 0 && memo) focused.push({ ...memo, radius: 36 });
         if ((memoStatus === 1 || memoStatus === 2) && inbox) {
           focused.push({
@@ -417,7 +425,8 @@ export class OfficeScene extends Phaser.Scene {
       });
     }
     const junior = this.interactables.find((interactable) => interactable.id === "junior-compiler");
-    return junior ? [{ ...junior, radius: 72 }] : [];
+    const archive = this.interactables.find((interactable) => interactable.id === "archive-guide-door");
+    return [...(junior ? [{ ...junior, radius: 36 }] : []), ...(archive ? [{ ...archive, radius: 10 }] : [])];
   }
 
   private currentOfficeObjective() {
@@ -431,6 +440,14 @@ export class OfficeScene extends Phaser.Scene {
       hasArchiveKey: hasDanneItem("master-declass-key")
     });
     return officeStarterTarget(stage).label;
+  }
+
+  private clearJuniorSpawn(feet: Phaser.Geom.Rectangle) {
+    const { x, y } = this.player.position;
+    // Older saves allowed standing inside JR; resume in the open aisle beside him.
+    if (walkingFeetOverlap(x, y, feet)) {
+      this.player.setPosition(this.juniorCompiler.x + 30, this.juniorCompiler.y);
+    }
   }
 
   private talkJuniorCompiler() {
@@ -463,6 +480,11 @@ export class OfficeScene extends Phaser.Scene {
 
   private flashNoTargetHint() {
     retroAudio.blip();
+    if (!gameState.sceneProgress.juniorCompilerIntroduced) {
+      this.toast.showInteractionHint("TALK TO JR AT WEST DESK", this.player.position, "info");
+      setLatestMessage("Follow the gold arrow to JR at the west desk.");
+      return;
+    }
     // Float a prominent, long-lived toast above the player instead of briefly
     // swapping the low-contrast bottom hint, which the live audit could not see.
     this.toast.showInteractionHint("NOTHING TO INTERACT WITH", this.player.position, "warn");
@@ -635,7 +657,7 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.dialog.show("OFFICE CHECK", "Talk to JR first. Then pick up the memo.");
+      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
@@ -655,14 +677,14 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.dialog.show("OFFICE CHECK", "Talk to JR first. Then use INBOX.");
+      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
     if (memoStatus === 0) {
       retroAudio.warning();
       setObjective("Pick up the Assignment Memo.");
-      this.dialog.show("INBOX", "Pick up the memo first.");
+      this.toast.show("TAKE THE MEMO FIRST", this.player.position, "info");
       return;
     }
     if (memoStatus === 1) {
@@ -694,21 +716,20 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.dialog.show("ARCHIVE GUIDE", "Talk to JR first. They will open the first production route.");
+      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
     if (memoStatus < 3) {
-      const next = this.nextJuniorStationLabel(memoStatus);
       retroAudio.warning();
       setObjective(this.currentOfficeObjective());
-      this.dialog.show("ARCHIVE GUIDE", `Finish the first route before entering the archive: ${next}.`);
+      this.toast.show(memoStatus === 0 ? "TAKE THE MEMO FIRST" : memoStatus === 1 ? "CARRY MEMO TO INBOX" : "STAMP MEMO AT INBOX", this.player.position, "info");
       return;
     }
     if (!hasDanneItem("master-declass-key")) {
       retroAudio.warning();
       setObjective("Return to JR for the key.");
-      this.dialog.show("ARCHIVE GUIDE", "Return to JR for the Master Declass Key, then enter the archive.");
+      this.toast.show("RETURN TO JR FOR THE KEY", this.player.position, "info");
       return;
     }
     if (gameState.sceneProgress.guideCitationCounterTrained === 1

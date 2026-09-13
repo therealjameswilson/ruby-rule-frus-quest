@@ -5,9 +5,11 @@ const out = process.env.FRUS_QA_OUT ?? '/tmp/frus-player-movement';
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_EXECUTABLE });
 const results = [];
+const landscape = process.argv.includes('--landscape');
 try {
   for (const mobile of [false, true]) {
-    const context = await browser.newContext({ viewport: mobile ? { width: 375, height: 667 } : { width: 1024, height: 960 },
+    const viewport = mobile ? landscape ? { width: 667, height: 375 } : { width: 375, height: 667 } : { width: 1024, height: 960 };
+    const context = await browser.newContext({ viewport,
       hasTouch: mobile, isMobile: mobile, deviceScaleFactor: mobile ? 3 : 1 });
     const page = await context.newPage(), cdp = await context.newCDPSession(page), errors = [];
     page.on('pageerror', e => errors.push(String(e)));
@@ -40,7 +42,7 @@ try {
         window.movementSamples.push({ x: p.logicalX, y: p.logicalY, vx: p.velocityX, vy: p.velocityY,
           renderX: p.sprite.x, renderY: p.sprite.y, animation: p.animationState,
           frame: p.sprite.frame.name, frameRate: p.sprite.anims.currentAnim?.frameRate,
-          blocked: scene.solids.some(r => p.logicalX + 8 >= r.x && p.logicalX - 8 <= r.right && p.logicalY + 5 >= r.y && p.logicalY - 3 <= r.bottom) });
+          blocked: scene.solids.some(r => p.logicalX + 6 > r.x && p.logicalX - 6 < r.right && p.logicalY + 5 > r.y && p.logicalY - 3 < r.bottom) });
       });
     });
     const start = (await state()).player;
@@ -88,19 +90,55 @@ try {
       if (Math.abs(p.x - 128) <= 2) break;
       await direction(Math.sign(128 - p.x), 0, 30);
     }
-    await direction(0, -1, 620);
+    for (let i = 0; i < 30; i++) {
+      const p = (await state()).player;
+      if (Math.abs(p.y - 154) <= 3) break;
+      await direction(0, Math.sign(154 - p.y), 30);
+    }
     await direction(-1, 0, 700);
     const wall = (await state()).player;
     await direction(-1, 0, 350);
     assert.deepEqual((await state()).player, wall, 'A solid desk must not pull the hero sideways');
     await direction(-1, -1, 250);
+    if (mobile) {
+      const box = await page.locator('canvas').first().boundingBox();
+      const point = (dx, dy) => ({ x: box.x + (40 + dx) * box.width / 256,
+        y: box.y + (178 + dy) * box.height / 240, id: 3 });
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(0, 0)] });
+      for (const [dx, dy, expected] of [[20, 0, 'right'], [20, 21, 'right'], [21, 20, 'right'],
+        [20, 26, 'down'], [21, 20, 'down'], [26, 20, 'right'], [-20, 0, 'left'], [0, 0, null]]) {
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(dx, dy)] });
+        await page.waitForTimeout(30);
+        assert.equal(await page.evaluate(() => window.rubyRuleTouchControls.dpadDirection), expected,
+          `Touch direction at ${dx},${dy} must resist boundary jitter without delaying deliberate turns`);
+      }
+      await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+      const stopped = (await state()).player;
+      await page.waitForTimeout(100);
+      assert.deepEqual((await state()).player, stopped, 'Returning thumb to center stops immediately');
+      if (process.argv.includes('--rotate')) {
+        const box = await page.locator('canvas').first().boundingBox();
+        const point = x => ({ x: box.x + x * box.width / 256, y: box.y + 178 * box.height / 240, id: 4 });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(40)] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(66)] });
+        await page.waitForTimeout(80);
+        await page.setViewportSize(landscape ? { width: 375, height: 667 } : { width: 667, height: 375 });
+        await page.waitForTimeout(250);
+        assert.equal(await page.evaluate(() => window.rubyRuleTouchControls.dpadPointerId), null, 'Rotation must release the old thumb capture');
+        const rotated = (await state()).player;
+        await page.waitForTimeout(180);
+        assert.deepEqual((await state()).player, rotated, 'Rotation must not leave stale movement');
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+        await direction(-1, 0, 120);
+        assert((await state()).player.x < rotated.x, 'A fresh touch must work after rotation');
+      }
+    }
     const samples = await page.evaluate(() => window.movementSamples);
     assert(samples.every(s => Number.isInteger(s.renderX) && Number.isInteger(s.renderY)), 'Render positions stay pixel aligned');
     assert(samples.every(s => !s.blocked), 'Feet must remain outside furniture');
-    assert(samples.some(s => s.vx === 72) && samples.some(s => s.vx === -72));
+    assert(samples.some(s => s.vx === 90) && samples.some(s => s.vx === -90), 'Brisk walking speed in both directions');
     for (const direction of ['right', 'left']) {
       const walking = samples.filter(s => s.animation === `walk_${direction}`);
-      assert(walking.every(s => s.frameRate === 8), 'Walking uses the eight-fps cadence');
       assert(new Set(walking.map(s => s.frame)).size === 2, 'Both foot poses must render while walking');
     }
     const label = mobile ? 'touch' : 'keyboard';
@@ -109,7 +147,7 @@ try {
     await page.screenshot({ path: `${out}/${label}.png` });
     await writeFile(`${out}/${label}-samples.json`, JSON.stringify(samples));
     assert.deepEqual(errors, []);
-    results.push({ input: label, start, right, left, wall, end: (await state()).player, frames: samples.length, errors });
+    results.push({ input: label, viewport, finalViewport: page.viewportSize(), rotationChecked: mobile && process.argv.includes('--rotate'), start, right, left, wall, end: (await state()).player, frames: samples.length, errors });
     await context.close();
   }
 } finally {

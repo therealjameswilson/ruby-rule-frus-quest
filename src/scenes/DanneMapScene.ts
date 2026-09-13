@@ -10,6 +10,10 @@ import { nextArchiveResearchReview } from "../game/archiveResearchReview";
 import { unlockCodexEntry } from "../game/codex";
 import {
   DANNE_BOSS_SPRITE_ASSET,
+  DANNE_BOSS_PORTRAIT_ASSET,
+  DANNE_LETTERBOX_ASSET,
+  DANNE_ITEM_ASSETS,
+  DANNE_BOSS_HUD_ASSET,
   DANNE_SHARED_IMAGE_ASSETS,
   DANNE_PORTRAIT_ASSETS,
   DANNE_VARIANT_ASSETS,
@@ -77,6 +81,7 @@ import {
 } from "../systems/interaction";
 import { applyHitShake } from "../systems/combatFeedback";
 import { AttackBuffer, HitstopController } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
@@ -171,11 +176,16 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     const mapAsset = mapAssetFor(this.geometry.sceneKey);
     if (mapAsset && !this.textures.exists(mapAsset.key)) this.load.image(mapAsset.key, mapAsset.path);
-    for (const asset of DANNE_SHARED_IMAGE_ASSETS) {
+    for (const asset of [...DANNE_SHARED_IMAGE_ASSETS, ...DANNE_ITEM_ASSETS]) {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
-      for (const asset of DANNE_VARIANT_ASSETS) {
+      for (const asset of [DANNE_BOSS_PORTRAIT_ASSET, ...DANNE_VARIANT_ASSETS]) {
+        if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
+      }
+    }
+    if (this.geometry.sceneKey === "BlackVaultLairScene" || isUiDebugEnabled()) {
+      for (const asset of [DANNE_BOSS_HUD_ASSET, DANNE_LETTERBOX_ASSET]) {
         if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
       }
     }
@@ -218,6 +228,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     this.vaultObjects = undefined;
     this.interactionAssist.clear();
     this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
     this.hitstop.reset();
     registerDanneAnims(this);
     setSceneState(this.geometry.sceneKey, "explore", danneMapExplorationObjective(this.geometry.sceneKey, gameState.inventory));

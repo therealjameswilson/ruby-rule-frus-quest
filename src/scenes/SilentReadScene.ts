@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { readChapterArrival } from "../game/chapterTravel";
+import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -47,6 +47,8 @@ import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
 import { takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { AttackBuffer } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addTinySparkle } from "../systems/roomDressing";
@@ -244,6 +246,7 @@ export class SilentReadScene extends Phaser.Scene {
   private mapCells = new Map<ProofRoomId, Phaser.GameObjects.Rectangle>();
   private mapLabels = new Map<ProofRoomId, Phaser.GameObjects.Text>();
   private roomTransitionLocked = false;
+  private readonly attackBuffer = new AttackBuffer();
   private exitCooldownUntil = 0;
   private physicalFlags: PhysicalFlag[] = [];
   private physicalRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
@@ -258,6 +261,8 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   create(data?: unknown) {
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
     const arrival = readChapterArrival(data, "SilentReadScene", gameState.currentScene);
     const restoredVisitedRoomIds = getVisitedRoomIds(["E1", "S1"] as const);
     this.resetTransientState();
@@ -330,6 +335,10 @@ export class SilentReadScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (gameState.mode !== "explore" || input.menuJustPressed || input.pauseJustPressed
+      || this.roomTransitionLocked || this.reviewChoice.active || this.proofBoard.active
+      || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active
+      || this.releaseScopeBoard.active || this.inventory.active || this.reliability.active) this.attackBuffer.clear();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active || this.releaseScopeBoard.active) {
       this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
@@ -370,7 +379,8 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS, solids: this.roomSolids });
-    if (input.bJustPressed) {
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing && this.player.combatReadout.state !== "hurt")) {
       const swing = tryEquippedToolSwing(this.player);
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn", PROOF_PLAY_BOUNDS);
     }
@@ -407,6 +417,7 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private enterRoom(roomId: ProofRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    this.attackBuffer.clear();
     const applyRoom = () => {
       this.currentRoomId = roomId;
       gameState.sceneProgress.silentReadRoom = roomId === "S1" ? 1 : 0;
@@ -1455,6 +1466,8 @@ export class SilentReadScene extends Phaser.Scene {
     if (position.x >= PROOF_PLAY_BOUNDS.right - 4 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     else if (position.x <= PROOF_PLAY_BOUNDS.left + 4 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
     if (!direction) return false;
+
+    if (!requestsDoorExit(direction, getInput().dir)) return false;
 
     if (this.currentRoomId === "E1" && direction === "west") {
       this.roomTransitionLocked = true;

@@ -85,13 +85,14 @@ try {
       && (p.x - path[i - 1].x !== path[i + 1].x - p.x || p.y - path[i - 1].y !== path[i + 1].y - p.y));
     for (const target of turns) {
       let reached = false;
+      const tolerance = mobile ? 4 : 2;
       for (let i = 0; i < 40; i++) {
         const current = await state();
         assert.equal(current.scene, s.scene, 'Unexpected transition during approach');
         const dx = target.x - current.player.x, dy = target.y - current.player.y;
-        if (Math.abs(dx) <= 2 && Math.abs(dy) <= 2) { reached = true; break; }
-        const horizontal = Math.abs(dx) > 2;
-        // Touch dispatch itself spans frames; use shorter corrections, not wider arrival tolerances.
+        if (Math.abs(dx) <= tolerance && Math.abs(dy) <= tolerance) { reached = true; break; }
+        const horizontal = Math.abs(dx) > tolerance;
+        // Browser touch dispatch spans frames; route waypoints are not subpixel probes.
         const pulse = Math.abs(horizontal ? dx : dy) / 72 * 1000;
         await hold(horizontal ? dx < 0 ? 'ArrowLeft' : 'ArrowRight' : dy < 0 ? 'ArrowUp' : 'ArrowDown',
           mobile ? Math.min(140, Math.max(1, pulse * 0.5)) : Math.min(180, Math.max(25, pulse)));

@@ -62,7 +62,8 @@ async function stepToward(x, y) {
   if (Math.hypot(x-p.x, y-p.y) < 3) { await page.waitForTimeout(100); return; }
   const route=referralWalkRoute(p,{x,y},solids);
   const target=route.find(point=>Math.hypot(point.x-p.x,point.y-p.y)>2) ?? route.at(-1);
-  assert(target,`No aisle to patrol at ${x},${y}`);
+  // A moving patrol can temporarily stand beyond a walkable approach.
+  if (!target) { await page.waitForTimeout(100); return; }
   const dx=target.x-p.x,dy=target.y-p.y;
   await direction(Math.abs(dx) > Math.abs(dy) ? dx > 0 ? "ArrowRight" : "ArrowLeft" : dy > 0 ? "ArrowDown" : "ArrowUp");
 }

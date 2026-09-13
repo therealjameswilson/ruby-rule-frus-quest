@@ -1,6 +1,6 @@
 {
   "hud": {
-    "encounterEvade": "EVADE; FIND {tool}",
+    "encounterEvade": "RETREAT; NEED {tool}",
     "encounterEquip": "TOOLS: EQUIP {tool}",
     "encounterCounter": "COUNTER WITH {tool}",
     "encounterExplore": "EXPLORE OPEN ROUTES",

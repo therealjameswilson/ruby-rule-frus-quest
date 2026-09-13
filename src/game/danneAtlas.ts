@@ -200,25 +200,29 @@ export const DANNE_ITEM_ASSETS = DANNE_ITEM_CATALOG.map((item) => ({
   description: string;
 }>;
 
+export const DANNE_BOSS_HUD_ASSET = {
+  id: "boss-healthbar",
+  key: "danne-ui-boss-healthbar",
+  path: "assets/art-pack/danne-pack/ui/18_ui_boss_healthbar.png",
+  useCase: "DANN-E boss healthbar with phase gems"
+} as const;
+
+export const DANNE_LETTERBOX_ASSET = {
+  id: "letterbox-bars",
+  key: "danne-ui-letterbox-bars",
+  path: "assets/art-pack/danne-pack/ui/21_ui_letterbox_bars.png",
+  useCase: "Cutscene letterbox bars"
+} as const;
+
 export const DANNE_UI_ASSETS = [
-  {
-    id: "boss-healthbar",
-    key: "danne-ui-boss-healthbar",
-    path: "assets/art-pack/danne-pack/ui/18_ui_boss_healthbar.png",
-    useCase: "DANN-E boss healthbar with phase gems"
-  },
+  DANNE_BOSS_HUD_ASSET,
   {
     id: "scroll-corners",
     key: "danne-ui-scroll-corners",
     path: "assets/art-pack/danne-pack/ui/20_ui_scroll_corners.png",
     useCase: "Dialog scroll corner and edge chrome"
   },
-  {
-    id: "letterbox-bars",
-    key: "danne-ui-letterbox-bars",
-    path: "assets/art-pack/danne-pack/ui/21_ui_letterbox_bars.png",
-    useCase: "Cutscene letterbox bars"
-  }
+  DANNE_LETTERBOX_ASSET
 ] as const;
 
 export const DANNE_VFX_ASSETS = [
@@ -338,14 +342,12 @@ export const DANNE_BOSS_PORTRAIT_ASSET = {
 
 // Map paintings are loaded by their room or the gallery, not before the title.
 export const DANNE_SHARED_IMAGE_ASSETS = [
-  DANNE_BOSS_PORTRAIT_ASSET,
   DANNE_WARNING_SCREEN_ASSET,
-  ...DANNE_ITEM_ASSETS,
-  ...DANNE_UI_ASSETS
+  ...DANNE_UI_ASSETS.filter(asset => asset.id === "scroll-corners")
 ] as const;
 
-export const DANNE_CODEX_IMAGE_ASSETS = [...DANNE_PORTRAIT_ASSETS, ...DANNE_VARIANT_ASSETS] as const;
-export const DANNE_IMAGE_ASSETS = [...DANNE_SHARED_IMAGE_ASSETS, ...DANNE_MAP_ASSETS, ...DANNE_CODEX_IMAGE_ASSETS] as const;
+export const DANNE_CODEX_IMAGE_ASSETS = [...DANNE_PORTRAIT_ASSETS, ...DANNE_VARIANT_ASSETS, ...DANNE_ITEM_ASSETS] as const;
+export const DANNE_IMAGE_ASSETS = [DANNE_BOSS_PORTRAIT_ASSET, DANNE_BOSS_HUD_ASSET, DANNE_LETTERBOX_ASSET, ...DANNE_SHARED_IMAGE_ASSETS, ...DANNE_MAP_ASSETS, ...DANNE_CODEX_IMAGE_ASSETS] as const;
 
 export const DANNE_GALLERY_ASSETS = [
   { category: "PORTRAIT", ...DANNE_BOSS_PORTRAIT_ASSET },

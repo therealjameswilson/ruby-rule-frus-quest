@@ -1,5 +1,22 @@
-import type { AdventureTrainingReadout } from "../game/types";
+import type { AdventureTrainingReadout, Position } from "../game/types";
 import type { GameState } from "../game/state";
+import type { NetworkCrossingState } from "../game/networkCrossing";
+
+export function questBandBracketCue(mode: GameState["mode"], nearest: string | null,
+  progress: GameState["sceneProgress"], stampEquipped: boolean, toolBadge: string) {
+  if (mode !== "explore" || nearest !== "Bracket Press" || progress.referralTreatmentStep !== 2
+    || progress.referralTreatmentDocketCarried !== 3 || progress.referralPhysicalReviewComplete) return null;
+  return stampEquipped ? { text: "STAMP THE BRACKET PRESS", badge: toolBadge }
+    : { text: "EQUIP CITATION STAMP", badge: "!" };
+}
+
+export function questBandCrossingCue(mode: GameState["mode"], nearest: string | null,
+  crossing: NetworkCrossingState, stampEquipped: boolean, toolBadge: string) {
+  if (mode !== "explore" || nearest !== "Service crossing" || crossing === "open") return null;
+  if (crossing === "sealed") return { text: "FILE PUBLIC PACKET FIRST", badge: "!" };
+  return stampEquipped ? { text: "STAMP THE SEAL", badge: toolBadge }
+    : { text: "EQUIP CITATION STAMP", badge: "!" };
+}
 
 type RiskThreat = Pick<GameState["visibleThreats"][number], "hp" | "enemyState" | "difficultyTier" | "reliabilityRisk" | "bossCombat">;
 
@@ -7,7 +24,11 @@ export function questBandAwaitingDialog(mode: GameState["mode"], dialog: GameSta
   return mode === "dialog" && !dialog?.text.trim();
 }
 
-export function questBandBossCue(mode: GameState["mode"], threats: readonly RiskThreat[]) {
+export function questBandBossCue(
+  mode: GameState["mode"],
+  threats: readonly (RiskThreat & Partial<Position>)[],
+  player?: Position
+) {
   if (mode !== "explore") return null;
   const boss = threats.find((threat) => threat.bossCombat && (threat.hp ?? 0) > 0
     && threat.enemyState !== "intro" && threat.enemyState !== "defeated");
@@ -16,6 +37,11 @@ export function questBandBossCue(mode: GameState["mode"], threats: readonly Risk
   if (combat.feedback && combat.feedback.msRemaining > 0) {
     return { text: combat.feedback.text, tone: combat.feedback.tone,
       badge: combat.feedback.tone === "warn" ? "notice" : "tool" } as const;
+  }
+  if (!(combat.counterWindowMs && combat.counterWindowMs > 0) && player
+    && boss.x !== undefined && boss.y !== undefined
+    && Math.hypot(boss.x - player.x, boss.y - player.y) < 42) {
+    return { text: "STEP BACK; FACE BOLT", tone: "info", badge: "notice" } as const;
   }
   return { text: (combat.counterWindowMs ?? 0) > 0 ? "CORE OPEN: STRIKE" : "FACE BOLT + SWING",
     tone: "info", badge: "tool" } as const;

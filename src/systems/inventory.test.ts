@@ -8,6 +8,7 @@ const input = vi.hoisted(() => ({ navUpJustPressed: false, navDownJustPressed: f
   navRightJustPressed: false, aJustPressed: false, confirmJustPressed: false }));
 const callbacks = vi.hoisted(() => ({ handlePauseTouch: (_point: { x: number; y: number }) => false }));
 const swallowed = vi.hoisted(() => vi.fn());
+const artState = vi.hoisted(() => ({ status: "ready" }));
 vi.mock("phaser", () => ({ default: {
   Display: { Color: { HexStringToColor: () => ({ color: 0 }) } },
   Input: { Events: { POINTER_DOWN: "pointerdown" } }, Scenes: { Events: { SHUTDOWN: "shutdown" } }
@@ -17,6 +18,12 @@ vi.mock("../input/InputState", () => ({
   updateInputCallbacks: (next: typeof callbacks) => Object.assign(callbacks, next)
 }));
 vi.mock("./audio", () => ({ retroAudio: { blip: vi.fn(), confirm: vi.fn(), warning: vi.fn(), isEnabled: false, toggle: vi.fn() } }));
+// Loader lifecycle is covered separately; these tests exercise menu navigation.
+vi.mock("./inventoryArt", () => ({ InventoryArtLoader: class {
+  get status() { return artState.status; }
+  load() {}
+  destroy() {}
+} }));
 
 class Node {
   visible = true;
@@ -56,12 +63,29 @@ function harness() {
 }
 
 beforeEach(() => {
+  artState.status = "ready";
   resetGameState(); gameState.mode = "explore";
   for (const name of Object.keys(input) as Array<keyof typeof input>) input[name] = false;
   vi.clearAllMocks();
 });
 
 describe("pause inventory interaction", () => {
+  it.each(["loading", "error"])("keeps core tools navigable when optional art is %s", (status) => {
+    artState.status = status;
+    gameState.inventory.push("Citation Stamp", "Review Folder");
+    gameState.equippedProcessItem = "citation_stamp";
+    const { overlay, key, tap } = harness();
+    overlay.toggle();
+    const initial = getPauseMenuReadout()?.selectedTool;
+    expect(getPauseMenuReadout()?.controls.some(control => control.id === "tool-0")).toBe(true);
+    key("navRightJustPressed");
+    expect(getPauseMenuReadout()?.selectedTool).not.toBe(initial);
+    expect(getPauseMenuReadout()?.focus).toBe("content");
+    tap("tool-2"); tap("tool-2");
+    expect(gameState.equippedProcessItem).toBe("review_folder");
+    overlay.hide();
+    expect(gameState.mode).toBe("explore");
+  });
   it("opens named route requirements with touch or confirm and returns to the map without unpausing", () => {
     setSceneState("ArchiveScene", "explore", "PICK UP SOURCE NOTE");
     setRoomTraversalState({ currentRoomId: "A1", roomTitle: "Source Entry", roomType: "normal", visitedRoomIds: ["A1"], exits: { north: "AS" } });

@@ -8,11 +8,14 @@ import { addProcessItem, gameState, resetGameState } from "../game/state";
 import { transitionTo } from "../systems/sceneTransitions";
 import { saveGameNow } from "../systems/save";
 
-vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} } } }));
+vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} },
+  Math: { Distance: { Between: (x: number, y: number, tx: number, ty: number) => Math.hypot(tx - x, ty - y) } } } }));
 vi.mock("../entities/Player", () => ({ Player: class {} }));
 vi.mock("../systems/sceneTransitions", () => ({ transitionTo: vi.fn() }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
 vi.mock("../systems/audio", () => ({ retroAudio: { warning: vi.fn(), confirm: vi.fn() } }));
+const input = vi.hoisted(() => ({ dir: { x: -1, y: 0 } }));
+vi.mock("../input/InputState", () => ({ getInput: () => input }));
 
 interface DoorScene {
   currentRoomId: string;
@@ -37,9 +40,32 @@ function doorScene(scene: object, roomId: string, x = 14): DoorScene {
   }) as unknown as DoorScene;
 }
 
-beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
+beforeEach(() => { resetGameState(); vi.clearAllMocks(); input.dir = { x: -1, y: 0 }; });
 
 describe("live cross-chapter exit handlers", () => {
+  it("uses the same forgiving reward reach for the prompt and pickup", () => {
+    const scene = Object.assign(new ReferralVaultScene(), {
+      currentRoomId: "R2", concurrenceSlipCollected: false,
+      player: { position: { x: 96, y: 136 } }, collectConcurrenceSlip: vi.fn()
+    }) as unknown as {
+      player: { position: { x: number; y: number } }; concurrenceSlipCollected: boolean;
+      concurrenceSlipStrictTarget(): { radius: number } | null;
+      handleConcurrenceSlipAction(input: { aJustPressed: boolean }): boolean;
+      collectConcurrenceSlip: ReturnType<typeof vi.fn>;
+    };
+    expect(scene.concurrenceSlipStrictTarget()?.radius).toBe(36);
+    expect(scene.handleConcurrenceSlipAction({ aJustPressed: false })).toBe(false);
+    expect(scene.collectConcurrenceSlip).not.toHaveBeenCalled();
+    expect(scene.handleConcurrenceSlipAction({ aJustPressed: true })).toBe(true);
+    expect(scene.collectConcurrenceSlip).toHaveBeenCalledOnce();
+    scene.player.position = { x: 91, y: 132 };
+    expect(scene.concurrenceSlipStrictTarget()).toBeNull();
+    scene.player.position = { x: 96, y: 136 };
+    scene.concurrenceSlipCollected = true;
+    expect(scene.concurrenceSlipStrictTarget()).toBeNull();
+    expect(scene.handleConcurrenceSlipAction({ aJustPressed: true })).toBe(false);
+    expect(scene.collectConcurrenceSlip).toHaveBeenCalledOnce();
+  });
   it("states the goal on first assignment and preserves practical hints on repeat", () => {
     const scene = Object.assign(new OfficeScene(), {
       player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn() },
@@ -92,6 +118,7 @@ describe("live cross-chapter exit handlers", () => {
   });
 
   it.each([[NetworkScene, "N1"], [ReferralVaultScene, "R1"], [SilentReadScene, "E1"], [SilentReadScene, "S1"]] as const)("keeps %s/%s's unfinished forward gate closed", (Scene, room) => {
+    input.dir.x = 1;
     const scene = doorScene(new Scene(), room, 242);
     expect(scene.checkRoomExit()).toBe(false);
     expect(transitionTo).not.toHaveBeenCalled();
@@ -99,10 +126,22 @@ describe("live cross-chapter exit handlers", () => {
   });
 
   it.each([[NetworkScene, "N2", "clearance_token", "ReferralVaultScene", "R1"], [ReferralVaultScene, "R2", "concurrence_slip", "SilentReadScene", "E1"]] as const)("passes an exact doorway on the earned %s/%s forward route", (Scene, room, tool, target, to) => {
+    input.dir.x = 1;
     addProcessItem(tool);
     const scene = doorScene(new Scene(), room, 242);
     expect(scene.checkRoomExit()).toBe(true);
     expect(transitionTo).toHaveBeenCalledExactlyOnceWith(scene, target, { chapterFrom: room, chapterTo: to });
+  });
+
+  it.each([["A1", ArchiveScene, 8], ["N1", NetworkScene, 32],
+    ["R1", ReferralVaultScene, 14], ["E1", SilentReadScene, 14]] as const)("does not bounce an idle %s doorway save", (room, Scene, x) => {
+    const scene = doorScene(new Scene(), room, x);
+    input.dir.x = 0;
+    expect(scene.checkRoomExit()).toBe(false);
+    input.dir.x = 1;
+    expect(scene.checkRoomExit()).toBe(false);
+    expect(transitionTo).not.toHaveBeenCalled();
+    expect(saveGameNow).not.toHaveBeenCalled();
   });
 
   it("bypasses the completed Guide on return but never skips new-player training", () => {

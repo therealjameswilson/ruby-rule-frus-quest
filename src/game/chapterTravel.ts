@@ -1,4 +1,13 @@
 import { READING_PASSAGE } from "./secretReadingRoom";
+import type { Direction } from "./constants";
+import type { Position } from "./types";
+
+export function requestsDoorExit(direction: Direction, input: Position) {
+  if (direction === "north") return input.y < 0;
+  if (direction === "south") return input.y > 0;
+  if (direction === "west") return input.x < 0;
+  return input.x > 0;
+}
 
 export interface ChapterTravelData {
   chapterFrom: string;

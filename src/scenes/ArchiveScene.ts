@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { archiveOptionalObjective } from "../game/archiveOptionalObjective";
 import { ARCHIVE_SECRET_IDS, hasArchiveSecret, recordArchiveSecret } from "../game/archiveSecrets";
-import { readChapterArrival } from "../game/chapterTravel";
+import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { ProcessItemId, RoomType } from "../game/constants";
@@ -66,6 +66,8 @@ import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
 import { applyProcessPressure, takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { AttackBuffer } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -454,6 +456,7 @@ export class ArchiveScene extends Phaser.Scene {
   private mapMarkers = new Map<ArchiveRoomId, Phaser.GameObjects.Text>();
   private archiveCompassRelicLabel?: Phaser.GameObjects.Text;
   private roomTransitionLocked = false;
+  private readonly attackBuffer = new AttackBuffer();
   private exitCooldownUntil = 0;
   private revealedSecretIds = new Set<ArchiveRoomId>();
   private networkRoutingResolved = false;
@@ -469,6 +472,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   create(data?: unknown) {
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
     this.lastRepoWallSwing = 0;
     this.clearedWallIds = new Set(ARCHIVE_ENEMIES
       .filter(definition => gameState.sceneProgress[`archiveWall_${definition.id}`] === 1)
@@ -563,6 +568,9 @@ export class ArchiveScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (gameState.mode !== "explore" || input.menuJustPressed || input.pauseJustPressed
+      || this.roomTransitionLocked || this.sourceNoteBoard.active || this.researchChoice.active
+      || this.dialog.active || this.inventory.active || this.reliability.active) this.attackBuffer.clear();
     if (gameState.mode !== "explore" || this.currentRoomId !== "AS" || this.roomTransitionLocked
       || input.aJustPressed || input.pauseJustPressed || input.menuJustPressed) {
       this.annotationCartPushHold.reset();
@@ -621,7 +629,8 @@ export class ArchiveScene extends Phaser.Scene {
     }
 
     this.player.update(delta, true, { bounds: PLAY_BOUNDS, solids: this.roomSolids });
-    if (input.bJustPressed) {
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing && this.player.combatReadout.state !== "hurt")) {
       const swing = tryEquippedToolSwing(this.player);
       if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
     }
@@ -749,6 +758,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private enterRoom(roomId: ArchiveRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    this.attackBuffer.clear();
     const applyRoom = () => {
       this.currentRoomId = roomId;
       this.visitedRoomIds.add(roomId);
@@ -3521,6 +3531,8 @@ export class ArchiveScene extends Phaser.Scene {
     else if (position.x <= PLAY_BOUNDS.left + 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
     else if (position.x >= PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     if (!direction) return false;
+
+    if (!requestsDoorExit(direction, getInput().dir)) return false;
 
     if (this.currentRoomId === "A1" && direction === "north") {
       if (annotationStacksOpen(gameState.sceneProgress)) {

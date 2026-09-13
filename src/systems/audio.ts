@@ -478,7 +478,11 @@ class RetroAudio {
   }
 
   crossfadeToMusic(sceneKey: string, options: { forceRestart?: boolean } = {}) {
-    if (!this.enabled || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
+    if (!this.enabled) {
+      this.startMusic(sceneKey, options);
+      return;
+    }
     this.prepare();
     const { key, theme } = this.resolveTheme(sceneKey);
     if (this.currentThemeKey === key && !options.forceRestart) {
@@ -502,15 +506,21 @@ class RetroAudio {
   }
 
   startMusic(sceneKey: string, options: { forceRestart?: boolean } = {}) {
-    if (!this.enabled || typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
+    const { key, theme } = this.resolveTheme(sceneKey);
+    this.currentSceneKey = sceneKey;
+    this.currentTheme = theme;
+    // Muting silences playback, not room/theme selection for the next unmute.
+    if (!this.enabled) {
+      this.currentThemeKey = key;
+      this.pendingSceneKey = null;
+      return;
+    }
     if (this.crossfadeTimer !== null) {
       window.clearTimeout(this.crossfadeTimer);
       this.crossfadeTimer = null;
     }
     this.prepare();
-    const { key, theme } = this.resolveTheme(sceneKey);
-    this.currentSceneKey = sceneKey;
-    this.currentTheme = theme;
 
     if (!this.unlocked) {
       this.pendingSceneKey = sceneKey;

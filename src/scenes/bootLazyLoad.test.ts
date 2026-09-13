@@ -24,7 +24,8 @@ describe("boot payload stays lazy", () => {
     expect(sceneSource("TitleScene.ts")).toContain("SCREENS");
     expect(sceneSource("WorldMapScene.ts")).toContain("OVERWORLD_REGIONS");
     expect(sceneSource("GameplayMapScene.ts")).toContain("GAMEPLAY_MAPS");
-    expect(sceneSource("UIScene.ts")).toContain("FRUS_VOLUMES.ui_row_six");
+    expect(sceneSource("UIScene.ts")).not.toContain("FRUS_VOLUMES.ui_row_six");
+    expect(sceneSource("../systems/inventoryArt.ts")).toContain("FRUS_VOLUMES.ui_row_six");
   });
 });
 
