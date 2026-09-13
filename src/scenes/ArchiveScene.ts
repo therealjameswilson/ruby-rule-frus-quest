@@ -669,7 +669,8 @@ export class ArchiveScene extends Phaser.Scene {
     const hintTarget = nearestInteractableHint(this.player.position, interactionTargets);
     setNearestInteractable(nearest?.label ?? null);
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
-    this.hintText.setText(this.currentRoomId !== "A1" && nearest ? `A: ${toolCue}${nearest.label.toUpperCase()}` : "");
+    this.hintText.setText(this.currentRoomId !== "A1" && ARCHIVE_ROOMS[this.currentRoomId].roomType !== "secret" && nearest
+      ? `A: ${toolCue}${nearest.label.toUpperCase()}` : "");
     const promptTarget = this.currentRoomId === "A1" && this.toast.visible ? null : nearest ?? hintTarget;
     this.interactionPrompt.update(delta, promptTarget, undefined,
       nearest?.id === "source-note" ? { text: "TAKE SOURCE NOTE" }
@@ -830,7 +831,7 @@ export class ArchiveScene extends Phaser.Scene {
         this.drawArchiveRoomDetailLayer(room);
       }
     }
-    if (room.id !== "A1" && room.id !== "AS") {
+    if (room.id !== "A1" && room.id !== "AS" && room.roomType !== "secret") {
       addSnesRoomCompass(this, {
         x: 216,
         y: 62,
@@ -1269,12 +1270,6 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 146
     });
-    this.track(addTerminalPanel(this, 128, 62, [
-      room.id === "C3" ? "HIDDEN CACHE" : "RELIABILITY WELL",
-      "NOT ON FIRST MAP",
-      "FOUND BY READING",
-      "NOT BY GUESSING"
-    ], PALETTE.goldStamp));
     this.interactables.push({
       id: `${room.id}-secret-reward`,
       label: room.id === "C3" ? "Lore card" : "Reliability refill",

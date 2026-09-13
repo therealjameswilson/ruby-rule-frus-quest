@@ -1875,7 +1875,9 @@ function addSnesWallDepth(
 
 function archiveFloorTileFrame(variant: number, options: SnesRoomLayerOptions): SnesArchiveTileFrame | null {
   if (!archiveTilesEnabled(options)) return null;
-  if (options.roomType === "boss" || options.roomType === "secret") return variant < 2 ? "floor_ruby" : "floor_shadow";
+  if (options.roomType === "boss" || (options.roomType === "secret" && options.theme !== "archive")) {
+    return variant < 2 ? "floor_ruby" : "floor_shadow";
+  }
   if (variant === 0) return "floor_base";
   if (variant === 1 || variant === 2) return "floor_crack";
   if (variant === 3) return "floor_dot";

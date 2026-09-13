@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Quieter Archive treasure rooms (2026-09-12):
+  - Removed the explanatory poster, secondary in-room compass panel, and duplicate bottom interaction line from C3/D2 secret rooms. Existing minimap, entry title, exit signs, treasure art and nearby interaction prompt remain. Archive-themed secret floors now use existing stone variants rather than the busy ruby/shadow tile pattern; other themes/boss floors unchanged.
+  - Replayed earned A1 -> B1 -> C1 -> D1 -> D2 pickup and Continue: 219 points remain 219 after repeat. Native before /private/tmp/frus-well-after/well-repeat-after-continue.png and after /private/tmp/frus-well-quiet/well-repeat-after-continue.png inspected. This is direct D2 visual proof; C3 shares rendering but was not separately walked this pass.
+  - Updated the pre-existing source-level compass guard assertion and added secret-layout regression coverage. All 201 files / 1,532 tests pass; production build passes with the existing bundle warning. Installed gameplay client main Archive pickup/movement and native render checked (/private/tmp/frus-quiet-secret-client/).
+  - No gameplay/save/reward changes in this pass. Local only; no asset files modified.
+
 - Persistent Archive secrets (2026-09-12):
   - Played earned A1 -> B1 tray -> C1 cracked wall -> D1 -> D2 well. Before: collected 219 points, Continue and repeated pickup produced 225. Discovery/collection Sets were scene-only.
   - Added typed C3/D2 milestones in existing sceneProgress, restoring local render Sets before room construction and saving each discovery/reward immediately. Recognizable legacy fragment/completion-label evidence restores collected rewards; previously visited secret rooms restore discovery. No save-schema change.

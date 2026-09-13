@@ -129,13 +129,20 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(room).toContain("drawCompactSourceRoomTerminal");
     expect(room).not.toContain("addSnesWorldMap");
     expect(room).not.toContain("addTerminalPanel");
-    expect(archiveSceneSource.includes('if (room.id !== "A1" && room.id !== "AS")')).toBe(true);
+    expect(archiveSceneSource.includes('if (room.id !== "A1" && room.id !== "AS" && room.roomType !== "secret")')).toBe(true);
     const sourceRoom = methodSource("renderSourceRoom", "renderArchiveA1Tilemap");
     expect(sourceRoom).not.toContain("drawAnnotationDraftingStations");
     const stacks = methodSource("renderAnnotationStacks()", "enterAnnotationStacks");
     expect(stacks).toContain("drawAnnotationDraftingStations");
     expect(stacks).toContain("restoreAnnotationSlipIcon");
     expect(stacks).not.toContain("drawResearchTable");
+  });
+
+  it("keeps secret treasure rooms free of explanatory posters and duplicate bottom prompts", () => {
+    const secret = methodSource("renderSecretRoom", "renderRewardRoom");
+    expect(secret).toContain("addSnesTreasurePedestal");
+    expect(secret).not.toContain("addTerminalPanel");
+    expect(archiveSceneSource).toContain('ARCHIVE_ROOMS[this.currentRoomId].roomType !== "secret" && nearest');
   });
 
   it("opens the next chapter through the physical east exit", () => {
