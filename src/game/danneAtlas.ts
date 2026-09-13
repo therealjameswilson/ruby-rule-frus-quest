@@ -336,15 +336,17 @@ export const DANNE_BOSS_PORTRAIT_ASSET = {
   displayName: "DANN-E"
 } as const;
 
-export const DANNE_IMAGE_ASSETS = [
+// Map paintings are loaded by their room or the gallery, not before the title.
+export const DANNE_SHARED_IMAGE_ASSETS = [
   DANNE_BOSS_PORTRAIT_ASSET,
   DANNE_WARNING_SCREEN_ASSET,
-  ...DANNE_MAP_ASSETS,
   ...DANNE_PORTRAIT_ASSETS,
   ...DANNE_ITEM_ASSETS,
   ...DANNE_UI_ASSETS,
   ...DANNE_VARIANT_ASSETS
 ] as const;
+
+export const DANNE_IMAGE_ASSETS = [...DANNE_SHARED_IMAGE_ASSETS, ...DANNE_MAP_ASSETS] as const;
 
 export const DANNE_GALLERY_ASSETS = [
   { category: "PORTRAIT", ...DANNE_BOSS_PORTRAIT_ASSET },

@@ -9,7 +9,7 @@ import { nextArchiveResearchReview } from "../game/archiveResearchReview";
 import { unlockCodexEntry } from "../game/codex";
 import {
   DANNE_BOSS_SPRITE_ASSET,
-  DANNE_IMAGE_ASSETS,
+  DANNE_SHARED_IMAGE_ASSETS,
   DANNE_MAP_ASSETS,
   DANNE_RUNTIME_SPRITE_ASSETS,
   DANNE_VFX_ASSETS
@@ -168,8 +168,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
     const mapAsset = mapAssetFor(this.geometry.sceneKey);
     if (mapAsset && !this.textures.exists(mapAsset.key)) this.load.image(mapAsset.key, mapAsset.path);
-    for (const asset of DANNE_IMAGE_ASSETS) {
-      if (!this.textures.exists(asset.key) && asset.key !== mapAsset?.key) this.load.image(asset.key, asset.path);
+    for (const asset of DANNE_SHARED_IMAGE_ASSETS) {
+      if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
     }
     for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
       if (!this.textures.exists(asset.key)) {

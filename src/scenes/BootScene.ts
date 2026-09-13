@@ -9,6 +9,7 @@ import { hasSavedGame } from "../systems/save";
 import {
   DANNE_BOSS_SPRITE_ASSET,
   DANNE_IMAGE_ASSETS,
+  DANNE_SHARED_IMAGE_ASSETS,
   DANNE_RUNTIME_SPRITE_ASSETS,
   DANNE_SPRITE_ASSETS,
   DANNE_VFX_ASSETS
@@ -136,15 +137,10 @@ export class BootScene extends Phaser.Scene {
   }
 
   private preloadDannePack() {
-    for (const asset of DANNE_IMAGE_ASSETS) {
+    for (const asset of DANNE_SHARED_IMAGE_ASSETS) {
       this.load.image(asset.key, asset.path);
     }
-    for (const asset of DANNE_SPRITE_ASSETS) {
-      this.load.spritesheet(asset.key, asset.path, {
-        frameWidth: asset.frameW,
-        frameHeight: asset.frameH
-      });
-    }
+    // Live actors use the runtime sheets below; original sheets belong to DanneGallery.
     for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
       this.load.image(asset.key, asset.path);
     }
