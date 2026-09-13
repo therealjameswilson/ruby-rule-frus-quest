@@ -52,8 +52,11 @@ try {
     await writeFile(`${out}/${name}.png`, Buffer.from(image.split(',')[1], 'base64'));
   };
   const moveTo = async (x, y, tolerance = 4) => {
+    const startingScene = (await state()).scene;
     for (let i = 0; i < 80; i++) {
-      const p = (await state()).player;
+      const current = await state();
+      if (current.scene !== startingScene) return;
+      const p = current.player;
       const dx = x - p.x, dy = y - p.y;
       if (Math.abs(dx) <= tolerance && Math.abs(dy) <= tolerance) return;
       const horizontal = Math.abs(dx) > tolerance;
@@ -80,7 +83,7 @@ try {
   await action(); await page.waitForTimeout(2100); await action();
   await shot('clue');
   await moveTo(140, 154);
-  // The 22px aisle has only six pixels of center clearance for a 16px body.
+  // Follow the clear aisle between the shelves.
   await moveTo(167, 154, 2);
   await moveTo(167, 92, 2);
   await moveTo(204, 92);
@@ -89,8 +92,8 @@ try {
   await shot('passage');
   assert.equal((await state()).sceneProgress.hiddenReadingRoomDiscovered, 1);
   assert.equal((await state()).playerCombat.weapon.tool, 'review_folder');
-  await moveTo(204, 92, 2);
-  await action();
+  if ((await state()).scene === 'NaraStacksScene') await moveTo(204, 92, 2);
+  if ((await state()).scene === 'NaraStacksScene') await action();
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === 'HiddenReadingRoomScene');
   await page.waitForTimeout(1600);
   await moveTo(128, 148);

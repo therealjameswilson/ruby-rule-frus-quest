@@ -2,6 +2,37 @@
 
 Local browser verification, 2026-09-13. No public deployment.
 
+## Current Footprint Recheck
+
+The hidden room's south trigger still required the old 16px feet alignment
+after walking feet narrowed to 12px. Actual keyboard movement at x138 reached
+y222 but stayed in HiddenReadingRoomScene. The visible 32px doorway was clear.
+`reachedReadingRoomReturn` now derives its horizontal clearance from
+`PLAYER_MOVEMENT_TUNING.feetWidth`: x118 through x138, not x120 through x136.
+The vertical threshold and walls are unchanged; out-of-door positions remain
+blocked. Unit tests cover both new margins and outside edges.
+
+`qa-reading-room-return.mjs --edge-return` reproduces the old failure and now
+passes keyboard at the right margin. `--mobile --edge-return --left-edge` passes
+from an asserted x118 touch approach. Both collect +25, return, revisit without
+duplicating the reward and verify persistence. These are explicit debug-room
+fixtures for edge collision, not proof of earning the secret. Position traces
+are retained because exact touch probes can overshoot their narrow margin.
+
+The separate earned run uses the previously walked NARA checkpoint from the
+route below, on the current runtime, with `--mobile --natural-entry --escape-return`.
+It passes Folder discovery, first edition, return sidestep and reload; 201 ->
+226 points, one inventory entry, no browser errors. Its movement helper now
+stops when the scene changes and does not steer toward NARA coordinates after
+already arriving in the hidden room. No progression is granted by this change.
+
+Evidence: `/private/tmp/frus-secret-edge-before/`,
+`/private/tmp/frus-secret-edge-fixed/`,
+`/private/tmp/frus-secret-left-edge-touch-final/`, and
+`/private/tmp/frus-secret-current-earned-fixed/`. Native failure/return,
+reward/sidestep and standard-client screenshots inspected. Build and 1,681 tests
+pass. Physical iPhone and unaided discovery remain unverified.
+
 ## Earned Route
 
 Started with the earned pre-boss save at

@@ -3,6 +3,7 @@ import type { ProcessItemId } from "./constants";
 import type { DanneRectDefinition } from "./danneSceneCollisions";
 import type { Position } from "./types";
 import { GAME_HEIGHT } from "./constants";
+import { PLAYER_MOVEMENT_TUNING } from "../systems/smoothMovement";
 
 export const HIDDEN_READING_ROOM_SCENE = "HiddenReadingRoomScene" as const;
 export const HIDDEN_READING_ROOM_DISCOVERED_FLAG = "hiddenReadingRoomDiscovered" as const;
@@ -37,8 +38,9 @@ export function insideReadingPassage(position: Position) {
 }
 
 export function reachedReadingRoomReturn(position: Position) {
-  // The 32px doorway must contain the player's 16px-wide foot body.
-  return position.x >= 120 && position.x <= 136
+  // Match the visible 32px opening to the current walking footprint.
+  const halfFeet = PLAYER_MOVEMENT_TUNING.feetWidth / 2;
+  return position.x >= 112 + halfFeet && position.x <= 144 - halfFeet
     && position.y >= GAME_HEIGHT - 18 && position.y <= GAME_HEIGHT;
 }
 

@@ -17,9 +17,10 @@ try {
   const hold = async (key, ms) => {
     if (!mobile) { await page.keyboard.down(key); await page.waitForTimeout(ms); await page.keyboard.up(key); return; }
     const b = await page.locator('canvas').first().boundingBox();
-    const p = dy => ({ x: b.x + 40 * b.width / 256, y: b.y + (178 + dy) * b.height / 240, id: 1 });
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p(0)] });
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [p(key === 'ArrowUp' ? -26 : 26)] });
+    const p = (dx,dy) => ({ x: b.x + (40+dx) * b.width / 256, y: b.y + (178+dy) * b.height / 240, id: 1 });
+    const offset={ArrowUp:[0,-26],ArrowDown:[0,26],ArrowLeft:[-26,0],ArrowRight:[26,0]}[key];
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p(0,0)] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [p(...offset)] });
     await page.waitForTimeout(ms);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
   };
@@ -45,6 +46,23 @@ try {
   await shot('collected');
   assert.equal(collected.sceneProgress.hiddenFirstEditionFound, 1);
   assert.equal(collected.documentPoints, initial.documentPoints + 25);
+  if(process.argv.includes('--edge-return')) {
+    const target=process.argv.includes('--left-edge')?119:137;
+    const edgeX=x=>target===119?x>=118&&x<=119:x>=137&&x<=138;
+    const positions=[];
+    for(let i=0;i<25;i++) {
+      const x=(await state()).player.x,dx=target-x;
+      positions.push(x);
+      if(edgeX(x))break;
+      // Account for touch dispatch overhead; the position assertion proves the margin.
+      await hold(dx>0?'ArrowRight':'ArrowLeft',Math.max(mobile?0:12,Math.min(140,Math.abs(dx)/72*1000)-(mobile?30:0)));
+      await page.waitForTimeout(40);
+    }
+    const edge=await state();
+    await writeFile(`${out}/edge-approach.json`,JSON.stringify(edge,null,2));
+    await writeFile(`${out}/edge-input.json`,JSON.stringify({target,positions,actual:edge.player},null,2));
+    assert(edgeX(edge.player.x),'Edge probe must walk within the two-pixel newly clear margin');
+  }
   await hold('ArrowDown', 1200);
   await page.waitForTimeout(800);
   const returned = await state();

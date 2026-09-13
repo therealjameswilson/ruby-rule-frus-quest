@@ -14,8 +14,9 @@ describe("physical reading-room discovery", () => {
   it("returns only at the open threshold, not on arrival or at the side walls", () => {
     expect(reachedReadingRoomReturn({ x: 128, y: 208 })).toBe(false);
     expect(reachedReadingRoomReturn({ x: 128, y: 221 })).toBe(false);
-    for (const x of [120, 128, 136]) expect(reachedReadingRoomReturn({ x, y: 222 })).toBe(true);
-    for (const x of [112, 119, 137, 144]) expect(reachedReadingRoomReturn({ x, y: 222 })).toBe(false);
+    for (const x of [118, 119, 120, 128, 136, 137, 138]) expect(reachedReadingRoomReturn({ x, y: 222 })).toBe(true);
+    for (const x of [112, 117, 139, 144]) expect(reachedReadingRoomReturn({ x, y: 222 })).toBe(false);
+    expect(reachedReadingRoomReturn({ x: 128, y: 241 })).toBe(false);
   });
 
   it("requires a held Review Folder and a contacting active swing", () => {
