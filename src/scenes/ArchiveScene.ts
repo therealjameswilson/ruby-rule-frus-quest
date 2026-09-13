@@ -680,9 +680,10 @@ export class ArchiveScene extends Phaser.Scene {
     const hintTarget = nearestInteractableHint(this.player.position, interactionTargets);
     setNearestInteractable(nearest?.label ?? null);
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
-    this.hintText.setText(this.currentRoomId !== "A1" && ARCHIVE_ROOMS[this.currentRoomId].roomType !== "secret" && nearest
+    const suppressPrompt = (this.currentRoomId === "A1" || this.currentRoomId === "B2") && this.toast.visible;
+    this.hintText.setText(!suppressPrompt && this.currentRoomId !== "A1" && ARCHIVE_ROOMS[this.currentRoomId].roomType !== "secret" && nearest
       ? `A: ${toolCue}${nearest.label.toUpperCase()}` : "");
-    const promptTarget = this.currentRoomId === "A1" && this.toast.visible ? null : nearest ?? hintTarget;
+    const promptTarget = suppressPrompt ? null : nearest ?? hintTarget;
     this.interactionPrompt.update(delta, promptTarget, undefined,
       nearest?.id === "source-note" ? { text: "TAKE SOURCE NOTE" }
         : nearest ? undefined
@@ -843,7 +844,7 @@ export class ArchiveScene extends Phaser.Scene {
         this.drawArchiveRoomDetailLayer(room);
       }
     }
-    if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.roomType !== "secret") {
+    if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.id !== "B2" && room.roomType !== "secret") {
       addSnesRoomCompass(this, {
         x: 216,
         y: 62,
@@ -1137,20 +1138,18 @@ export class ArchiveScene extends Phaser.Scene {
   private renderProofChamber() {
     this.drawDesk(74, 128, "PROOF");
     this.drawDesk(182, 128, "CLASS");
-    this.track(this.add.image(74, 106, "proof-page").setDepth(130));
+    const specialist = new HistorianNPC(this, "elena", 74, 102);
+    specialist.label.setVisible(false);
+    this.roomCleanups.push(() => specialist.destroy());
     this.track(this.add.image(182, 106, "classnet-terminal").setDepth(130));
-    this.track(addTerminalPanel(this, 128, 68, [
-      "B2 CHAMBER",
-      "NO SCROLLING",
-      "ONE ROOM",
-      "EDGE GATES",
-      "HARD CUT"
-    ], PALETTE.classNetRed));
     this.drawRubyVolumeStack(128, 173, 3);
     this.drawGoldenRuleGate();
     this.addRoomEnemy("ambiguous-flag");
     this.addRoomEnemy("danne-queue");
-    if (this.ambiguousSplit && !this.clearedWallIds.has("ambiguous-flag")) this.drawAmbiguousFlags();
+    if (this.ambiguousSplit && !this.clearedWallIds.has("ambiguous-flag")) {
+      this.drawAmbiguousFlags();
+      this.interactables = this.interactables.filter(item => item.id !== "ambiguous-flag");
+    }
     this.addSolid(34, 104, 80, 36);
     this.addSolid(142, 104, 80, 36);
     this.addSolid(84, 40, 24, 68);
@@ -1161,7 +1160,7 @@ export class ArchiveScene extends Phaser.Scene {
       x: 74,
       y: 118,
       radius: 34,
-      kind: "document",
+      kind: "npc",
       onInteract: () => this.resolveAmbiguousWithSpecialist()
     });
     this.interactables.push({
@@ -2086,20 +2085,19 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private splitAmbiguousFlag() {
-    if (!this.ambiguousSplit) {
-      this.ambiguousSplit = true;
-      gameState.sceneProgress.archiveAmbiguousSplit = 1;
-      addProcessItem("review_folder");
-      this.drawAmbiguousFlags();
+    if (this.ambiguousSplit) {
+      this.refreshRoomObjective();
+      return;
     }
+    this.ambiguousSplit = true;
+    gameState.sceneProgress.archiveAmbiguousSplit = 1;
+    addProcessItem("review_folder");
+    this.drawAmbiguousFlags();
+    this.interactables = this.interactables.filter(item => item.id !== "ambiguous-flag");
     retroAudio.warning();
-    this.dialog.show("AMBIGUOUS", [
-      "The flag splits into two plausible readings.",
-      "Plausible is not enough.",
-      "Bring both flags to the human specialist."
-    ]);
+    this.toast.show("TWO READINGS FOUND", this.player.position, "info");
     setLatestMessage("AMBIGUOUS split into two flags.");
-    setObjective("Bring split flags to the human specialist.");
+    this.refreshRoomObjective();
     this.syncWallState();
     saveGameNow();
   }
@@ -2114,8 +2112,13 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private resolveAmbiguousWithSpecialist() {
-    if (!this.ambiguousSplit && !this.activeEnemyWalls.has("ambiguous-flag")) {
-      this.dialog.show("HUMAN SPECIALIST", "No ambiguous flags are waiting.");
+    if (this.specialistDecisionMade) {
+      this.dialog.show("HUMAN SPECIALIST", "Review is complete. Record it at the south gate.");
+      return;
+    }
+    if (!this.ambiguousSplit) {
+      this.dialog.show("HUMAN SPECIALIST", "Examine the flagged document below my desk. Bring me both readings.");
+      this.refreshRoomObjective();
       return;
     }
     this.specialistDecisionMade = true;
@@ -2125,10 +2128,19 @@ export class ArchiveScene extends Phaser.Scene {
       "The ambiguity wall is cleared."
     ]);
     this.clearEnemyById("ambiguous-flag", "AMBIGUOUS cleared by the correct human specialist.");
-    setObjective("Ambiguous flags resolved by human review.");
+    this.refreshRoomObjective();
   }
 
   private useGoldenRuleGate() {
+    if (this.currentRoomId === "B2" && !this.specialistDecisionMade) {
+      this.toast.show("HUMAN REVIEW FIRST", this.player.position, "info");
+      this.refreshRoomObjective();
+      return;
+    }
+    if (this.currentRoomId === "B2" && this.goldenRuleDecisionMade) {
+      this.refreshRoomObjective();
+      return;
+    }
     this.goldenRuleDecisionMade = true;
     this.dialog.show("GOLDEN RULE GATE", [
       "AI queues may assist.",
@@ -2141,7 +2153,8 @@ export class ArchiveScene extends Phaser.Scene {
       this.drawBlackVaultDoorSeal();
     }
     setLatestMessage("Black Vault route open by Golden Rule decision.");
-    setObjective("Black Vault route open: press A at the open door.");
+    if (this.currentRoomId === "B2") this.refreshRoomObjective();
+    else setObjective("Black Vault route open: press A at the open door.");
   }
 
   private consumeArchiveReturnSpawn() {
@@ -2392,7 +2405,8 @@ export class ArchiveScene extends Phaser.Scene {
       this.wallContactCooldown = this.time.now + 620;
       setNearestInteractable(`${definition?.type ?? "WALL"}: use ${this.readyWallActionLabel(definition)}`);
       setLatestMessage(`${definition?.type ?? "Process wall"} is ready for ${this.readyWallActionLabel(definition)}.`);
-      setObjective("Press A near the process wall to apply the verified human workflow step.");
+      if (archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress)) this.refreshRoomObjective();
+      else setObjective("Press A near the process wall to apply the verified human workflow step.");
       return;
     }
     activeWall.markHit();
@@ -2401,7 +2415,8 @@ export class ArchiveScene extends Phaser.Scene {
     this.wallContactCooldown = this.time.now + 1200;
     applyProcessPressure(`${definition?.type ?? activeWall.label} collision. The record is unchanged.`);
     this.reliability.update();
-    if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");
+    if (archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress)) this.refreshRoomObjective();
+    else if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");
     else if (definition?.type === "WAIT") setObjective("Resolve the agency response timer at the referral tray.");
     else setObjective("Clear stonewalls with the matching human process.");
   }

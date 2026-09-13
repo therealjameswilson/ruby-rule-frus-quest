@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Proof chamber review loop (2026-09-12):
+  - Reproduced specialist credit without examining the document. B2 now requires examination before specialist review and review before recording the Golden Rule decision. D3 behavior and legacy saved clears remain unchanged.
+  - Replaced implementation-language poster/duplicate compass with an existing specialist NPC. Short objectives follow examination, review, recording and east exit. Examination is a toast, not a modal; completed examination stops advertising interaction. Optional-room collision feedback preserves the puzzle objective.
+  - Actual --proof-loop input verifies early refusals, examination, Continue with both readings, specialist clear, gate decision and exit to B3; points 201 -> 213, no browser errors. Screenshots inspected in /private/tmp/frus-proof-contact-fixed/; initial failure /private/tmp/frus-proof-before/. Installed game client and native movement screenshot checked in /private/tmp/frus-proof-contact-client/.
+  - Full suite: 202 files / 1,538 tests pass. Build passes with existing chunk warning. Desktop keyboard only; local, not deployed.
+
 - Nonblocking referral completion (2026-09-12):
   - The earned Stacks replay reproduced a finished referral tray still advertising interaction. Replaced its three-page confirmation with a short FILED - ROUTES OPEN toast. Filing removes the loose manifest and interaction target; the desk remains. Re-entry/Continue recreates neither when both saved wall tasks are complete. A repeat-call guard prevents redundant completion work.
   - Browser regression now asserts no modal after filing, no completed target before/after Continue, and immediate left movement during the toast. Actual route still earns exactly six points, keeps gates open, and walks south to C1 after Continue. Screenshots inspected in /private/tmp/frus-tray-after/; before failure in /private/tmp/frus-tray-before/.

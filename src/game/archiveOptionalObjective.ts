@@ -5,6 +5,11 @@ export function archiveOptionalObjective(roomId: string, progress: Record<string
     case "B1":
       return progress["archiveWall_pending-manifest"] === 1 && progress["archiveWall_wait-timer"] === 1
         ? "SOUTH: CRACK" : "TRAY: FILE SLIP";
+    case "B2":
+      if (progress["archiveWall_ambiguous-flag"] !== 1) {
+        return progress.archiveAmbiguousSplit === 1 ? "ASK SPECIALIST" : "EXAMINE FLAG";
+      }
+      return progress["archiveWall_danne-queue"] === 1 ? "EAST: HINT ROOM" : "SOUTH: RECORD IT";
     case "C1":
       return hasArchiveSecret(progress, "D2", "revealed") ? "WELL: SOUTH/EAST" : "STAMP THE CRACK";
     case "D1":

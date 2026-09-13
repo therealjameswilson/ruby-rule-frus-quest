@@ -9,6 +9,7 @@ const stacksRetreat = process.argv.includes('--stacks-retreat');
 const wellLoop = process.argv.includes('--well-loop');
 const cacheLoop = process.argv.includes('--cache-loop');
 const stacksPersist = process.argv.includes('--stacks-persist');
+const proofLoop = process.argv.includes('--proof-loop');
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
 try {
@@ -70,10 +71,43 @@ try {
   await page.goto('http://127.0.0.1:5195/?text=full');
   await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
   await page.keyboard.press('Enter');
-  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop || cacheLoop || stacksPersist ? 'ArchiveScene' : 'BlackVaultLairScene');
+  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop || cacheLoop || stacksPersist || proofLoop ? 'ArchiveScene' : 'BlackVaultLairScene');
   await page.waitForTimeout(800);
   const initial = await state();
-  if (wellLoop || cacheLoop) {
+  if (proofLoop) {
+    const interact = async () => {
+      await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+      for (let i = 0; i < 12 && (await state()).dialog; i++) {
+        await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+      }
+    };
+    await walk(128, 208); await hold('ArrowDown', 400); await page.waitForTimeout(900);
+    await walk(128, 112); await interact();
+    await walk(232, 120); await hold('ArrowRight', 400); await page.waitForTimeout(900);
+    assert.equal((await state()).roomTraversal.currentRoomId, 'B2');
+    await shot('proof-entry');
+    await walk(72, 92); await interact(); await shot('proof-early-specialist');
+    assert((await state()).visibleThreats.some(t => t.label === 'AMBIGUOUS'), 'Specialist cannot clear flags before the document is examined');
+    await walk(128, 192); await interact();
+    assert((await state()).visibleThreats.some(t => t.label === 'DANN-E QUEUE'), 'The gate cannot record a review that has not happened');
+    await walk(92, 184); await interact(); await shot('proof-flags');
+    assert.equal((await state()).objective, 'ASK SPECIALIST');
+    await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
+    await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
+    await page.waitForTimeout(900);
+    assert.equal((await state()).objective, 'ASK SPECIALIST', 'Both readings survive Continue');
+    await walk(72, 92); await interact(); await shot('proof-reviewed');
+    assert.equal((await state()).objective, 'SOUTH: RECORD IT');
+    assert(!(await state()).visibleThreats.some(t => t.label === 'AMBIGUOUS'));
+    await walk(128, 192); await interact(); await shot('proof-recorded');
+    assert.equal((await state()).objective, 'EAST: HINT ROOM');
+    assert(!(await state()).visibleThreats.some(t => t.label === 'DANN-E QUEUE'));
+    assert.equal((await state()).documentPoints, initial.documentPoints + 12, 'Only four wall clears award points');
+    await walk(232, 120); await hold('ArrowRight', 400); await page.waitForTimeout(900);
+    await shot('proof-next-room');
+    assert.equal((await state()).roomTraversal.currentRoomId, 'B3');
+    assert.deepEqual(errors, []);
+  } else if (wellLoop || cacheLoop) {
     const reward = cacheLoop ? 'cache' : 'well';
     const go = async (direction, room) => {
       const [x, y, key] = { north: [128, 56, 'ArrowUp'], south: [128, 208, 'ArrowDown'], east: [232, 120, 'ArrowRight'] }[direction];

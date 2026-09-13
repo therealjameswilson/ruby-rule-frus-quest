@@ -129,7 +129,7 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(room).toContain("drawCompactSourceRoomTerminal");
     expect(room).not.toContain("addSnesWorldMap");
     expect(room).not.toContain("addTerminalPanel");
-    expect(archiveSceneSource.includes('if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.roomType !== "secret")')).toBe(true);
+    expect(archiveSceneSource.includes('if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.id !== "B2" && room.roomType !== "secret")')).toBe(true);
     const sourceRoom = methodSource("renderSourceRoom", "renderArchiveA1Tilemap");
     expect(sourceRoom).not.toContain("drawAnnotationDraftingStations");
     const stacks = methodSource("renderAnnotationStacks()", "enterAnnotationStacks");
@@ -143,6 +143,17 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(secret).toContain("addSnesTreasurePedestal");
     expect(secret).not.toContain("addTerminalPanel");
     expect(archiveSceneSource).toContain('ARCHIVE_ROOMS[this.currentRoomId].roomType !== "secret" && nearest');
+  });
+
+  it("gives the proof chamber an interactive specialist instead of implementation notes", () => {
+    const room = methodSource("renderProofChamber", "renderHintRoom");
+    expect(room).not.toContain("addTerminalPanel");
+    expect(room).toContain('new HistorianNPC(this, "elena"');
+    expect(room).toContain("this.roomCleanups.push(() => specialist.destroy())");
+    const review = methodSource("resolveAmbiguousWithSpecialist", "useGoldenRuleGate");
+    expect(review.indexOf("if (!this.ambiguousSplit)")).toBeLessThan(review.indexOf("this.specialistDecisionMade = true"));
+    const gate = methodSource("useGoldenRuleGate", "consumeArchiveReturnSpawn");
+    expect(gate).toContain('this.currentRoomId === "B2" && !this.specialistDecisionMade');
   });
 
   it("files the referral tray without a modal and retires the completed interaction", () => {
