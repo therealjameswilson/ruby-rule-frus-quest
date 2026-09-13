@@ -1,5 +1,20 @@
 # Earned Playthrough Review
 
+## Published Volume To New Game+
+
+The 2026-09-13 earned published checkpoint passed a touch-only return through
+Ending -> Title -> New Game+ -> compiler confirmation -> fresh Office -> reload.
+Completion count was preserved, NG+ stayed active, points reset to zero, the
+Proof Lens was absent and fresh certification was null. The first harness
+incorrectly expected a non-null certification object; it now asserts the actual
+fresh-run contract. No runtime fix was needed and no browser errors occurred.
+
+`tools/qa-completed-title.mjs` retains this regression. Native title, compiler
+and reloaded Office screenshots inspected in `/private/tmp/frus-completed-title-final/`.
+This uses the earned published save in an isolated Chrome touch context. It
+does not prove physical-iPhone behavior or a full NG+ playthrough; the veteran
+sprite's visual-family/scale consistency is a follow-up inspection item.
+
 ## Finale After Tool-Ownership Checks
 
 On 2026-09-13, replayed the earned pre-boss checkpoint after both map families
