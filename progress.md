@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Directional choices and earned packet filing (2026-09-13):
+  - Continued the earned three-note save into the source-map review. Twice pressing Down then confirm submitted A: ChoicePrompt did not implement directional selection at all (not an opening-delay problem). Added Up/Down navigation, gold selected-row outline, confirmation of selected answer, and reset-on-show; preserved direct A/B/C/D and existing cancel/settle semantics. Added navigation/wrap and direct-shortcut regression tests.
+  - Wrong-answer source-map feedback visibly overflowed the canvas. Archive reviews now show a short actionable cue while keeping the full message in state. Successful filing unsealed the supporting documents; native choice/filed screenshots inspected at /private/tmp/frus-file-annotation/. No page errors in the earned run. Promoted tools/qa-file-annotation.mjs with configurable earned storage/browser paths.
+  - Standard browser client passed at /private/tmp/frus-choice-navigation-client/ and native capture inspected. Full suite 210 files / 1,621 tests and production build pass (existing size warning). Next: collect the supporting documents and follow the east network route; no next-tool or whole-game completion claim. Local only.
+
 - Earned annotation puzzle and room persistence (2026-09-13):
   - Verified the pending Archive room-transition save fix: save after destination/spawn apply and transition unlock, not while covered. The existing scene-save lifecycle alone missed internal room changes. Added callback-order unit coverage and extended tools/qa-earned-source-note.mjs to reload after AS entry, assert the destination, and physically move after Continue. Browser run passed at /private/tmp/frus-source-reload-check/; restored native screenshot inspected.
   - Continued earned AS save without inventory grants: pushed cart north, parked it east, collected all three notes, then walked south into A1. Native parked-cart and return screenshots inspected at /private/tmp/frus-earned-annotation/. Initial return assertion failed because the harness pressed interact short of the doorway; corrected to walk through it, then passed. The packet still needs filing; this does not establish completed annotation or the next tool reward.

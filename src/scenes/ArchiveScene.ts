@@ -3324,7 +3324,9 @@ export class ArchiveScene extends Phaser.Scene {
       else retroAudio.warning();
       this.resumeArchiveReview();
       setLatestMessage(result.message);
-      this.toast.show(result.message, this.player.position, result.ok ? "info" : "warn");
+      const cue = result.ok ? "REVIEW RECORDED"
+        : id === "coverage" ? "MAP REPOSITORIES + ACCESS GAPS" : "RETAIN THE FULL POLICY RECORD";
+      this.toast.show(cue, this.player.position, result.ok ? "info" : "warn");
       saveGameNow();
     }, 6, () => this.resumeArchiveReview());
   }

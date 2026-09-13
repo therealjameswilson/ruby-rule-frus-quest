@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChoicePrompt } from "./verification";
 import { bindPointerDown, swallowNextInputFrame } from "../input/InputState";
 
-const controls = vi.hoisted(() => ({ a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false }));
+const controls = vi.hoisted(() => ({ a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false, navDownJustPressed: false, navUpJustPressed: false, choiceAJustPressed: false }));
 vi.mock("../input/InputState", () => ({ getInput: () => controls, bindPointerDown: vi.fn(), swallowNextInputFrame: vi.fn() }));
 vi.mock("./audio", () => ({ retroAudio: { confirm: vi.fn() } }));
 vi.mock("../game/state", () => ({ clearChoiceState: vi.fn(), setChoiceState: vi.fn(), setLatestMessage: vi.fn() }));
@@ -43,7 +43,33 @@ function fixture(settleMs = 300, onCancel?: () => void) {
 describe("choice transition input guard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.assign(controls, { a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false });
+    Object.assign(controls, { a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false, navDownJustPressed: false, navUpJustPressed: false, choiceAJustPressed: false });
+  });
+
+  it.each(["navDownJustPressed", "navUpJustPressed"] as const)("selects with %s and confirms the highlighted answer", key => {
+    const { prompt, callback } = fixture(0);
+    controls[key] = true;
+    prompt.updateInput();
+    expect(callback).not.toHaveBeenCalled();
+    controls[key] = false;
+    controls.aJustPressed = true;
+    prompt.updateInput();
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({ key: "B" }));
+  });
+
+  it("keeps direct A shortcuts and resets selection on reopening", () => {
+    const { prompt, callback, show } = fixture(0);
+    controls.navDownJustPressed = true;
+    prompt.updateInput();
+    controls.navDownJustPressed = false;
+    controls.choiceAJustPressed = true;
+    prompt.updateInput();
+    expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ key: "A" }));
+    controls.choiceAJustPressed = false;
+    show();
+    controls.aJustPressed = true;
+    prompt.updateInput();
+    expect(callback).toHaveBeenLastCalledWith(expect.objectContaining({ key: "A" }));
   });
 
   it.each(["pauseJustPressed", "menuJustPressed"] as const)("cancels opt-in reviews through %s without submitting B", key => {

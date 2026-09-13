@@ -23,6 +23,8 @@ export class ChoicePrompt {
   private readonly border: Phaser.GameObjects.Rectangle;
   private readonly optionObjects: Phaser.GameObjects.GameObject[] = [];
   private options: ChoiceOption[] = [];
+  private selectedIndex = 0;
+  private readonly rows: Phaser.GameObjects.Rectangle[] = [];
   private onChoose?: ChoiceCallback;
   private onCancel?: () => void;
   private readonly settleMs: number;
@@ -60,6 +62,8 @@ export class ChoicePrompt {
     this.inputArmed = this.settleMs === 0;
     this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.options = options;
+    this.selectedIndex = 0;
+    this.rows.length = 0;
     this.onChoose = onChoose;
     this.onCancel = onCancel;
     const layout = choiceLayout(title, options, contextFontSize);
@@ -76,6 +80,7 @@ export class ChoicePrompt {
       const row = this.scene.add
         .rectangle(128, y + placement.height / 2, 218, placement.height, color(index % 2 === 0 ? PALETTE.shadowNavy : PALETTE.black), 0.98);
       row.setStrokeStyle(1, color(PALETTE.stoneDark), 0.8);
+      this.rows.push(row);
       bindPointerDown(row, () => this.choose(option.key));
       const optionText = this.scene.add
         .text(25, y + 4, placement.text, {
@@ -89,6 +94,7 @@ export class ChoicePrompt {
       this.container.add([row, optionText]);
     });
 
+    this.refreshSelection();
     this.container.setVisible(true);
     setChoiceState(title, options);
   }
@@ -111,7 +117,13 @@ export class ChoicePrompt {
       cancel();
       return;
     }
-    if (input.aJustPressed || input.confirmJustPressed || input.choiceAJustPressed) this.choose("A");
+    if (input.navDownJustPressed || input.navUpJustPressed) {
+      const step = input.navDownJustPressed ? 1 : -1;
+      this.selectedIndex = (this.selectedIndex + step + this.options.length) % this.options.length;
+      this.refreshSelection();
+    }
+    if (input.choiceAJustPressed) this.choose("A");
+    else if (input.aJustPressed || input.confirmJustPressed) this.choose(this.options[this.selectedIndex]?.key ?? "A");
     else if (input.bJustPressed || input.cancelJustPressed || input.choiceBJustPressed) this.choose("B");
     else if (input.choiceCJustPressed) this.choose("C");
     else if (input.choiceDJustPressed) this.choose("D");
@@ -120,6 +132,12 @@ export class ChoicePrompt {
   hide() {
     this.container.setVisible(false);
     clearChoiceState();
+  }
+
+  private refreshSelection() {
+    this.rows.forEach((row, index) => row.setStrokeStyle(1,
+      color(index === this.selectedIndex ? PALETTE.goldStamp : PALETTE.stoneDark),
+      index === this.selectedIndex ? 1 : 0.8));
   }
 
   private choose(key: string) {
