@@ -23,7 +23,31 @@ try{
  await page.goto(`${process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/'}?text=full`);await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
  if(mobile)await touch(86,154);else await press('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
- await shot('entry');await move(128,144);await press();
+ await shot('entry');
+ if(mobile && process.argv.includes('--multitouch')) {
+   await move(128,180);
+   const before=await state();
+   const origin=await point(40,178),moved=await point(40,152),swing={...await point(174,216),id:2};
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[origin]});
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[moved]});
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[moved,swing]});
+   await page.waitForTimeout(100);
+   const active=await state();
+   const controls=await page.evaluate(()=>window.rubyRuleTouchControls);
+   assert(controls.dpadPointerId!==null&&controls.dpadDirection!==null,'Movement pointer must remain captured');
+   assert(controls.pressedButtons.includes('b'),'Second pointer must hold the tool button');
+   assert(active.player.y<before.player.y,'Walking continues while a second finger swings');
+   assert(active.playerCombat.weapon.swingId>before.playerCombat.weapon.swingId,'The simultaneous tool press must actually swing');
+   await shot('two-finger-swing');
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[moved]});
+   await page.waitForTimeout(120);
+   assert((await state()).player.y<active.player.y,'Releasing the tool must not cancel the D-pad');
+   await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+   await page.waitForTimeout(100);
+   const released=await page.evaluate(()=>window.rubyRuleTouchControls);
+   assert.equal(released.dpadPointerId,null);assert.deepEqual(released.pressedButtons,[]);
+ }
+ await move(128,144);await press();
  if(process.argv.includes('--boast-skip')) {
    async function assertBossPortrait() {
      const keys=await page.evaluate(()=>{

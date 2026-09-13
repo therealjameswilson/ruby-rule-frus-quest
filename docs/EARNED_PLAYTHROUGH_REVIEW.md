@@ -55,8 +55,15 @@ publication checkpoint is `earned-publication-storage.json` in the last folder.
 2. Audit delivery-only stretches. Retain errands when they teach geography or
    set up a discovery; replace repeated walk-confirm-stamp beats with fewer,
    consequential interactions.
-3. Test DANN-E using visible cues and imperfect human timing, including touch.
-   The passing scripted counter route is not a substitute for this.
+3. Simulated touch now passes the full earned DANN-E route with Swarm dispersion
+   and a deliberately uneven Cloud segment: 16 swings reduced Cloud HP 180 to
+   96, returned four bolts, and cost 20 reliability. Full fight finished without
+   retry or missed deadline; four fresh melee core hits were recorded. Outside
+   that uneven segment the harness still uses precise state timing. A separate
+   two-pointer check verifies walking and swinging together and retaining the
+   D-pad when the swing finger lifts. Neither test substitutes for a real person
+   reading the cues or a physical iPhone check. No difficulty adjustment was
+   justified by these runs.
 4. Observe a fresh player without directions. Measure where they hesitate,
    whether the next destination is apparent, and whether new tools feel useful.
 

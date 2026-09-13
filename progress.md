@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned touch combat and imperfect-counter evidence (2026-09-13):
+  - Played tools/qa-boss-counter-loop.mjs on simulated phone controls from /private/tmp/frus-earned-production/earned-storage.json with --mobile --boast-skip --disperse --cloud-imprecise. Colossus, Swarm and Cloud cleared without retry or missed deadline; persisted bindery arrival. Five instrumented cycles, four fresh core hits; no browser errors.
+  - Cloud's deliberately uneven segment used only visible relative enemy position for facing, not projectile/core timings: 16 swings, HP 180->96, four returned bolts, reliability 88->68, no retry. Full route outside that segment remains instrumented; do not claim an unaided human or physical-device playtest.
+  - Added --multitouch QA: two simultaneous pointers must retain direction and tool-button ownership, move player and increment real swing ID; lifting tool finger must preserve movement; final release clears both. Second run --mobile --boast-skip --multitouch --imprecise passes, advancing uneven opening swings to Swarm HP124 at reliability88. Native two-finger and Cloud screenshots inspected.
+  - Evidence directories /private/tmp/frus-earned-touch-boss/ and /private/tmp/frus-earned-two-finger-boss/. No runtime edits warranted by these tests; no build/unit-suite rerun this QA-only turn. Previous full suite/build remains the prior verification. Next focus: delivery-only research/referral stretches, replacing repetition with consequential spatial discoveries, not indiscriminate combat nerfs. No deployment; overall fun goal remains active.
+
 - Shorter earned bindery payoff (2026-09-13):
   - Added canAssembleBindingPacket: requires defeated boss and completed printer preparation/typesetter proof; never infers Kellogg certification. Earned inbox pickup assembles front matter/index; live human certification assembles GPO/public handoff. Publication still requires its own ready-checked press action. Four repeated deliveries and the duplicate index exercise are removed from this earned route.
   - Preserved five-step save representation, reward totals, incomplete/legacy desk route, return passage, and unresolved-evidence guard. Small original packet sprites travel from benches to press with integer-rendered positions. No source-document edits or automatic certification.
