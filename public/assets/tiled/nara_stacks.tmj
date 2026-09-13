@@ -35,7 +35,7 @@
       "name": "doors",
       "type": "objectgroup",
       "objects": [
-        { "id": 14, "name": "world_exit", "type": "door", "x": 710, "y": 820, "width": 130, "height": 85, "properties": [
+        { "id": 14, "name": "world_exit", "type": "door", "x": 710, "y": 710, "width": 130, "height": 85, "properties": [
           { "name": "label", "type": "string", "value": "Freight Elevator Exit" },
           { "name": "targetScene", "type": "string", "value": "WorldMapScene" }
         ] },
@@ -52,7 +52,7 @@
       "name": "spawns",
       "type": "objectgroup",
       "objects": [
-        { "id": 16, "name": "entry", "type": "spawn", "point": true, "x": 768, "y": 810 },
+        { "id": 16, "name": "entry", "type": "spawn", "point": true, "x": 945, "y": 744 },
         { "id": 17, "name": "catalog", "type": "spawn", "point": true, "x": 768, "y": 615 }
       ]
     },

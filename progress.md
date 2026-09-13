@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Full optional NARA encounter and reachable exit (2026-09-13):
+  - Previous turn made progress with readable taunts. Played both legacy NARA waves using physical keyboard movement/swings and pointer menu selection. Initial test omitted the required second tap; changed the misleading READY footer to input-aware confirm/tap-again guidance, distinguishing equippable tools from view-only key items. Menu behavior unchanged; EN/ES/FR and behavioral assertions updated.
+  - Two-wave completion exposed a real unreachable elevator: live center (129,173), radius 19, inside the (118,155,24,28) solid attached to the south wall. All accessible approaches were outside range. Moved the Tiled activation zone to the front edge, retaining collision/art/target. Paired with clear-floor arrival (source 945,744), avoiding automatic doorway separation landing inside the catalog desk after the trigger move. Added a parsed-map geometry/route regression.
+  - Checked-in tools/qa-nara-waves.mjs uses existing debug tool grants, real input, logical collision-aware aisle planning, both correct counters, menu confirmation and WorldMap exit. Final repeat passes at 56 reliability, 8 document points, 2/2 cleared; document candidates and standards violations unchanged. /private/tmp/frus-nara-waves-final/. Native selected-tool footer and settled exit inspected; no page errors. Earlier failed/terminated harness runs remain evidence, not passes.
+  - Full suite passes: 208 files / 1,594 tests. Build passes (existing chunk warning). Standard gameplay client completed at /private/tmp/frus-inventory-confirm-client/. Local only; no physical-device or earned-tool acquisition claim.
+  - Next: verify the optional legacy encounter's entry from the actual region-select route with earned tools, and assess whether its reward/return loop adds value to the main compilation journey rather than competing with it.
+
 - Readable DANN-E combat boasts (2026-09-13):
   - Previous turn made progress with evade/equip/counter guidance. Audited the remaining crowded taunt box: full monologues used 5px text, negative line spacing and an upward tween that could intrude on the HUD.
   - Added three short combat-specific boasts per existing variant, each at most two deliberate 18-character lines. Full variant lore catalog and scripted boss transition API remain unchanged. DanneEnemy uses 8px text, zero negative spacing, a 120px frame and height-aware top clearance; fades no longer move text toward the HUD. Existing frequency throttles, combat and saves unchanged.

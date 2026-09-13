@@ -33,6 +33,23 @@ for missing, unequipped and equipped tools. No page errors were observed.
 
 ## Remaining Work
 
+### Encounter Follow-Up
+
+The full two-wave keyboard replay now lives in `tools/qa-nara-waves.mjs`.
+It grants starting tools through the existing debug URL, defeats Mark I with
+the Folder, equips the Stamp through the real pause menu, clears the Swarm,
+checks documentary invariants, and interacts with the freight elevator.
+
+That test exposed an unreachable elevator activation zone embedded in its
+solid. The zone now sits on the walkable front edge, and the authored arrival
+is on clear floor beside it. Collision walls and destination are unchanged.
+`naraElevator.test.ts` reads the actual Tiled data and verifies a clear approach,
+arrival and route. The latest replay reached the world map at 56 reliability
+with 8 points and both enemies cleared. Evidence: `/private/tmp/frus-nara-waves-final/`.
+This remains a debug-tool encounter test, not an earned progression playthrough.
+
+### Scope Limits
+
 The source map's tiny border labels and some decorative wall details remain.
 This is a visual pilot, not a replacement for reviewing optional-room layout,
 unaided player comprehension or physical-device performance. Compare room
