@@ -18,6 +18,8 @@ try{
  console.log(JSON.stringify((await state()).choice));
  await page.waitForTimeout(500);await key('ArrowDown');await key();await page.waitForTimeout(600);await shot('filed');
  assert.equal((await state()).sceneProgress.annotationDraftingComplete,1);
+ assert.equal((await state()).objective,'PICK UP TELEGRAM');
+ assert.match((await state()).latestMessage,/Source, context, and selection notes filed together/);
  await context.storageState({path:`${out}/earned-storage.json`});
  assert.deepEqual(errors,[]);console.log('PASS earned annotation packet filed');
 }finally{await shot('last');await browser.close();}

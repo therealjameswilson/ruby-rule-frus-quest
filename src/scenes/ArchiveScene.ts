@@ -3320,13 +3320,15 @@ export class ArchiveScene extends Phaser.Scene {
         return;
       }
       const result = recordArchiveResearchReview(id, option.value);
-      if (result.ok) onApprove();
-      else retroAudio.warning();
+      if (!result.ok) retroAudio.warning();
       this.resumeArchiveReview();
       setLatestMessage(result.message);
       const cue = result.ok ? "REVIEW RECORDED"
         : id === "coverage" ? "MAP REPOSITORIES + ACCESS GAPS" : "RETAIN THE FULL POLICY RECORD";
       this.toast.show(cue, this.player.position, result.ok ? "info" : "warn");
+      // The approved action may unlock a route or reveal documents. Let its
+      // more specific feedback take precedence over the review receipt.
+      if (result.ok) onApprove();
       saveGameNow();
     }, 6, () => this.resumeArchiveReview());
   }
