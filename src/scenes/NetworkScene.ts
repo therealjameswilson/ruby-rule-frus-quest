@@ -1008,7 +1008,7 @@ export class NetworkScene extends Phaser.Scene {
     if (this.atRoutingGuide()) {
       const packet = getNetworkRoutePacket(this.currentRoute);
       gameState.sceneProgress.networkRoutingHintOrder = packet.order;
-      this.dialog.show("Marcus", packet.routingClue);
+      this.toast.show(`${packet.shortLabel} > ${packet.network}`, this.player.position, "info");
       setLatestMessage(packet.routingClue);
       this.restoreObjectiveAfterDannePressure();
       this.clearRoutingRouteCue();

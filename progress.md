@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Nonblocking Network routing help (2026-09-12):
+  - Played the earned Two Networks path through the stamp-opened crossing, routing batch, withholding chronology puzzle, Clearance Token, and Referral entrance. Baseline passed with no browser errors, but Marcus's routine hint used a tiny modal dialogue that interrupted movement (/private/tmp/frus-network-playtest/desktop/).
+  - Replaced that interruption with a short packet-to-network toast, retaining the full routingClue in latestMessage, the saved hint flag, and destination guidance. No routing rewards, requirements, or save schema changed.
+  - Extended qa-network-ledger.mjs --routing-help-only to require explore mode, visible bounded toast, retained explanation, unchanged documents/inventory/points, and immediate movement without dismissing a dialogue. Keyboard and simulated portrait touch pass in /private/tmp/frus-network-hint-after/ and /private/tmp/frus-network-hint-touch/. Native screenshots inspected; no browser errors.
+  - 25 focused tests and production build pass (existing bundle warning). Installed gameplay client Network movement/native screenshot checked (/private/tmp/frus-network-hint-client/). Local only; physical iPhone unverified. Earned next-zone checkpoint: /private/tmp/frus-network-playtest/desktop/earned-storage.json.
+
 - Main Archive review cancellation (2026-09-12):
   - Standards and repository-coverage reviews now opt into safe Escape/Start cancellation and provide a visible Back row. Cancel returns before recording any answer, preserving stamps, points, packet state, and swing count. Actual A/B answers retain their existing effects. Shared 600 ms review recovery gives room to move without immediate contact damage.
   - Extended qa-archive-wall.mjs to cancel/reopen both questions twice, deliberately approve, continue through the cart/annotation puzzle, reload saved progress, and enter Network. Keyboard and simulated portrait touch verify earned progression, not injected flags. Screenshots and checkpoints: /private/tmp/frus-main-review-cancel/ and /private/tmp/frus-main-review-cancel-touch/.

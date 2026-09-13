@@ -13,6 +13,14 @@ function methodSource(name: string, nextName?: string) {
 }
 
 describe("NetworkScene physical routing flow", () => {
+  it("offers Marcus's routing hint without stopping exploration", () => {
+    const action = methodSource("handleRoutingPacketAction", "pickUpRoutingPacket");
+    expect(action).not.toContain("this.dialog.show");
+    expect(action).toContain('this.toast.show(`${packet.shortLabel} > ${packet.network}`');
+    expect(action).toContain("setLatestMessage(packet.routingClue)");
+    expect(action).toContain("networkRoutingHintOrder = packet.order");
+    expect(action).toContain("saveGameNow()");
+  });
   it("offers the crossing swing only after its public-packet prerequisite", () => {
     const prompt = methodSource("updateRoutingPacketPrompt", "handleRoutingPacketAction");
     expect(prompt).toContain('networkCrossingState(gameState.sceneProgress) === "ready"');

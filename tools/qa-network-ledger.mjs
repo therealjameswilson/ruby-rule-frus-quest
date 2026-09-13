@@ -298,24 +298,24 @@ async function run(label, mobile) {
         await move(38, 92);
         await press();
         current = await checkpoint("marcus-explains-marking");
-        assert.equal(current.mode, "dialog");
+        assert.equal(current.mode, "explore");
         assert.equal(current.sceneProgress.networkRoutingHintOrder, 2);
         assert.equal(current.sceneProgress.networkRoutingStep, 1);
         assert.equal(current.sceneProgress.networkRoutingCarried, 2);
         assert.equal(current.objective, "2/4 TO OPENNET");
-        if (mobile) {
-          const bounds = await page.evaluate(() => {
-            const dialog = window.game.scene.getScene("NetworkScene").dialog;
-            const body = dialog.bodyText.getBounds();
-            const frame = dialog.container.getBounds();
-            return { bodyBottom: body.bottom, frameBottom: frame.bottom };
-          });
-          assert(bounds.bodyBottom <= 174 && bounds.frameBottom <= 174,
-            "Marcus's help must sit above the touch buttons");
-        }
+        const hint = await page.evaluate(() => {
+          const scene = window.game.scene.getScene("NetworkScene");
+          const bounds = scene.toast.container.getBounds();
+          return { visible: scene.toast.visible, text: scene.toast.text.text,
+            left: bounds.left, right: bounds.right, bottom: bounds.bottom, dialog: scene.dialog.active };
+        });
+        assert.equal(hint.text, "PROOF > OPENNET");
+        assert(hint.visible && !hint.dialog);
+        assert(hint.left >= 0 && hint.right <= 256 && hint.bottom <= 174);
+        assert.match(current.latestMessage, /unclassified.*publication.*OpenNet/i);
         assert.deepEqual({ points: current.documentPoints, documents: current.documentCandidates, inventory: current.inventory }, before);
-        for (let advance = 0; advance < 8 && (await state()).mode === "dialog"; advance++) await press();
-        assert.equal((await state()).mode, "explore");
+        await direction("ArrowDown", 120);
+        assert((await state()).player.y > current.player.y + 2, "Player can walk immediately while the hint is visible");
         await move(60, 146);
         if (routingHelpOnly) {
           await checkpoint("marcus-help-dismissed");
