@@ -22,7 +22,8 @@ describe("wrong-tool combat feedback", () => {
     const scene = new GameplayMapScene();
     Object.assign(scene, {
       time: { now: 1000 }, danneRoomId: "nara_stacks",
-      player: { position: { x: 100, y: 100 }, activeActionHitbox: null, actionId: 1 },
+      player: { position: { x: 100, y: 100 }, activeActionHitbox: null, actionId: 1,
+        combatReadout: { weapon: { tool: "citation_stamp" } } },
       danneEnemies: [{ defeated: false, weakness,
         updateEnemy: () => ({ projectileHit: false, contactHit: false }),
         tryPlayerToolHit: () => "wrong-tool"
@@ -34,6 +35,26 @@ describe("wrong-tool combat feedback", () => {
     expect(gameState.objective).toBe(expected);
     expect(clampQuestBandText(compact, QUEST_BAND_LAYOUT.objective.maxChars)).toBe(expected);
     expect(gameState.mode).toBe("explore");
+  });
+});
+
+describe("swing tool identity", () => {
+  it.each(["citation_stamp", "red_pencil", "review_folder"] as const)("resolves the active %s swing, not the newly equipped item", tool => {
+    addProcessItem("citation_stamp");
+    addProcessItem("red_pencil");
+    equipProcessItem(tool === "red_pencil" ? "citation_stamp" : "red_pencil");
+    const hitbox = { x: 112, y: 92, width: 20, height: 16 };
+    const tryPlayerToolHit = vi.fn(() => "miss");
+    const scene = new GameplayMapScene();
+    Object.assign(scene, {
+      time: { now: 1000 }, danneRoomId: "nara_stacks",
+      player: { position: { x: 100, y: 100 }, activeActionHitbox: hitbox, actionId: 8,
+        combatReadout: { weapon: { tool } } },
+      danneEnemies: [{ defeated: false, updateEnemy: () => ({ projectileHit: false, contactHit: false }), tryPlayerToolHit }]
+    });
+    (scene as unknown as { updateDanneEncounter(delta: number): void }).updateDanneEncounter(16);
+    expect(tryPlayerToolHit).toHaveBeenCalledWith(hitbox, tool, { x: 100, y: 100 }, 8);
+    expect(gameState.equippedProcessItem).not.toBe(tool);
   });
 });
 

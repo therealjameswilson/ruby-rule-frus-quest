@@ -1,5 +1,20 @@
 # DANN-E Enemy Design
 
+## Swing Identity Contract
+
+Enemy weakness checks use the tool captured by the player's weapon controller
+at swing start, matching that swing's hitbox and VFX. Changing the equipped item
+from a menu does not transform an attack already in flight; the next swing uses
+the new selection. Damage, knockback and cooldown rules remain unchanged.
+
+Verified 2026-09-13 with three scene regression cases (Stamp, Pencil, Folder),
+existing enemy damage tests, and the browser's two-wave NARA/menu-swap/exit
+route. The browser route grants tools for QA and does not specifically time a
+menu swap inside an active frame; that case is covered by the scene tests.
+Build and all 1,703 tests pass. Native route and standard swing captures inspected
+under `/private/tmp/frus-swing-identity-waves/` and
+`/private/tmp/frus-swing-identity-client/`. No public deployment.
+
 Design reference for the eight canonical **DANN-E** variants (Document Annihilating
 Neural Network Executable), the rogue-AI antagonist of *Ruby Rule: The FRUS Quest*.
 This doc is written for Codex implementation: each variant lists concrete stats and

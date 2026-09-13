@@ -706,6 +706,7 @@ export class GameplayMapScene extends Phaser.Scene {
   private updateDanneEncounter(delta: number) {
     if (!this.danneRoomId || !this.danneEnemies.length) return;
     const playerPosition = this.player.position;
+    const swingTool = this.player.combatReadout.weapon.tool;
     const playerFootBox = new Phaser.Geom.Rectangle(playerPosition.x - 8, playerPosition.y - 3, 16, 8);
     for (const enemy of this.danneEnemies) {
       if (enemy.defeated) continue;
@@ -718,7 +719,7 @@ export class GameplayMapScene extends Phaser.Scene {
       }
       const hitResult = enemy.tryPlayerToolHit(
         this.player.activeActionHitbox,
-        gameState.equippedProcessItem,
+        swingTool,
         playerPosition,
         this.player.actionId
       );
