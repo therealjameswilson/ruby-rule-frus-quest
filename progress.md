@@ -2,6 +2,11 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Archive WAIT doorway feedback (2026-09-12):
+  - Reproduced an open-looking south gate that still blocked travel before resolving the referral tray. B1 east/south gates and lock reporting now respect WAIT; north retreat stays open. Resolving WAIT destroys stale gate art and redraws the unlocked routes immediately. Removed B1's redundant static compass to avoid outdated lock indicators.
+  - Extended --stacks-persist browser QA with named locked/open glyph assertions. Actual input resolves the tray (201 -> 207 points), Continue preserves the clear, repeated interaction gives no extra reward, and south travel reaches C1. Before/after screenshots: /private/tmp/frus-stacks-gate-before/ and /private/tmp/frus-stacks-gate-after/.
+  - 21 focused tests and production build pass with the existing bundle warning. Keyboard desktop route verified; local only, not deployed.
+
 - Inhabited Archive clue rooms (2026-09-12):
   - Replaced A3/B3's large permanent ARCHIVE COLLEAGUE poster with an existing Marcus character sprite and nearby Archivist interaction. Labels remain hidden until interaction; the short clue identifies the left shelf before discovery and the south route afterward. The central map tablet and exits remain visible. NPC cleanup is registered with room teardown.
   - Extended the earned cache replay to approach the archivist, open and verify the left-shelf dialogue, dismiss it, discover the shelf, collect the fragment, Continue and return north. Route completes at 220 points without duplicate rewards or browser errors. Native conversation screenshot inspected: /private/tmp/frus-cache-archivist/archivist-clue.png.

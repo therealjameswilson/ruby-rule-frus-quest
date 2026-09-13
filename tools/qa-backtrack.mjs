@@ -121,6 +121,10 @@ try {
   } else if (stacksPersist) {
     await walk(128, 208); await hold('ArrowDown', 400); await page.waitForTimeout(900);
     assert.equal((await state()).roomTraversal.currentRoomId, 'B1');
+    const gateNames = () => page.evaluate(() => window.game.scene.getScene('ArchiveScene').children.list
+      .filter(object => object.active && object.name?.startsWith('snes-gate-glyph-')).map(object => object.name));
+    await shot('stacks-locked-gates');
+    assert((await gateNames()).includes('snes-gate-glyph-south-locked'), 'Unsolved WAIT must look locked');
     await walk(128, 112); await page.keyboard.press('Space', { delay: 50 });
     await page.waitForTimeout(250);
     for (let i = 0; i < 12 && (await state()).dialog; i++) {
@@ -129,6 +133,8 @@ try {
     const solved = await state();
     assert.equal(solved.documentPoints, initial.documentPoints + 6);
     await shot('stacks-solved');
+    assert((await gateNames()).includes('snes-gate-glyph-south-open'), 'Solving WAIT must visibly open the gate immediately');
+    assert(!(await gateNames()).includes('snes-gate-glyph-south-locked'), 'Old locked gate art must be removed');
     await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
     await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
     await page.waitForTimeout(900); await shot('stacks-continue');

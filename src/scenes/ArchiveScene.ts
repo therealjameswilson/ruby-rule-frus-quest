@@ -443,6 +443,7 @@ export class ArchiveScene extends Phaser.Scene {
   private currentRoomId: ArchiveRoomId = "A1";
   private visitedRoomIds = new Set<ArchiveRoomId>();
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
+  private gateArt = new Map<Direction, Phaser.GameObjects.GameObject[]>();
   private ambiguousFlagObjects: Phaser.GameObjects.GameObject[] = [];
   private roomCleanups: Array<() => void> = [];
   private roomSolids: Phaser.Geom.Rectangle[] = [];
@@ -785,6 +786,7 @@ export class ArchiveScene extends Phaser.Scene {
     }
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.gateArt.clear();
     this.provenanceStationVisuals.clear();
     this.annotationStationVisuals.clear();
     this.annotationTableSlots.clear();
@@ -841,7 +843,7 @@ export class ArchiveScene extends Phaser.Scene {
         this.drawArchiveRoomDetailLayer(room);
       }
     }
-    if (room.id !== "A1" && room.id !== "AS" && room.roomType !== "secret") {
+    if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.roomType !== "secret") {
       addSnesRoomCompass(this, {
         x: 216,
         y: 62,
@@ -2039,6 +2041,15 @@ export class ArchiveScene extends Phaser.Scene {
     this.reliability.update();
     this.interactables = this.interactables.filter((item) => item.id !== definition.id);
     this.syncWallState();
+    if (definition.type === "WAIT" && this.currentRoomId === "B1") {
+      const room = ARCHIVE_ROOMS.B1;
+      for (const direction of ["east", "south"] as const) {
+        const target = room.exits[direction];
+        this.drawGate(direction, true, this.exitIsOpen(room, direction), room.requiredItems?.[direction],
+          target ? this.gateRouteLabel(target) : undefined, target);
+      }
+      this.syncRoomTraversalState();
+    }
     saveGameNow();
   }
 
@@ -3728,7 +3739,8 @@ export class ArchiveScene extends Phaser.Scene {
         : target
           ? this.gateRouteLabel(target)
           : undefined;
-      const lockLabel = room.id === "A1" && direction === "east" && !this.sourceRoomComplete()
+      const lockLabel = room.id === "B1" && direction !== "north" && !this.agencyTimerResolved ? "WAIT"
+        : room.id === "A1" && direction === "east" && !this.sourceRoomComplete()
         ? "PACK"
         : undefined;
       this.drawGate(direction, hasExit, hasExit ? this.exitIsOpen(room, direction) : false, room.requiredItems?.[direction], routeLabel, target, lockLabel);
@@ -3739,7 +3751,8 @@ export class ArchiveScene extends Phaser.Scene {
     const locked: Partial<Record<Direction, string>> = {};
     (["north", "south", "west", "east"] as Direction[]).forEach((direction) => {
       if (room.exits[direction] && !this.exitIsOpen(room, direction)) {
-        locked[direction] = room.lockedExits?.[direction] ?? room.requiredItems?.[direction] ?? "LOCK";
+        locked[direction] = room.id === "B1" && direction !== "north" && !this.agencyTimerResolved ? "WAIT"
+          : room.lockedExits?.[direction] ?? room.requiredItems?.[direction] ?? "LOCK";
       }
     });
     return locked;
@@ -3748,6 +3761,7 @@ export class ArchiveScene extends Phaser.Scene {
   private exitIsOpen(room: ArchiveRoom, direction: Direction) {
     const target = room.exits[direction];
     if (!target) return false;
+    if (room.id === "B1" && direction !== "north" && !this.agencyTimerResolved) return false;
     if (room.id === "A1" && direction === "north") return annotationStacksOpen(gameState.sceneProgress);
     if (room.id === "AS") return direction === "south" || readAnnotationPacket(gameState.sceneProgress).complete;
     if (room.id === "A1" && direction === "east" && !this.sourceRoomComplete()) return false;
@@ -3766,6 +3780,11 @@ export class ArchiveScene extends Phaser.Scene {
     target?: ArchiveExitTarget,
     lockLabelOverride?: string
   ) {
+    const previous = this.gateArt.get(direction) ?? [];
+    for (const object of previous) object.destroy();
+    this.roomObjects = this.roomObjects.filter(object => !previous.includes(object));
+    const art: Phaser.GameObjects.GameObject[] = [];
+    this.gateArt.set(direction, art);
     addSnesGate(this, {
       direction,
       hasExit,
@@ -3773,7 +3792,7 @@ export class ArchiveScene extends Phaser.Scene {
       accent: unlocked ? PALETTE.goldStamp : PALETTE.stoneGray,
       lockLabel: lockLabelOverride ?? (requiredItem ? requiredItem.split("_")[0].slice(0, 4).toUpperCase() : "LOCK"),
       exitLabel,
-      track: (object) => this.track(object),
+      track: (object) => { art.push(object); return this.track(object); },
       depth: 61
     });
     if (target && target !== "N1" && target !== "O1" && target !== "DN1" && ARCHIVE_ROOMS[target].roomType === "secret") {
