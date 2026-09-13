@@ -15,6 +15,14 @@ This debug-tool encounter check is not an earned-route or novice-playtest claim.
 
 ## Swing Identity Contract
 
+Gameplay-map input uses `tryEquippedToolSwing` before starting the weapon
+controller. Empty, noncombat or unowned slots cannot normalize into a free
+Citation Stamp. The scene gives a short equip prompt; owned tools keep their
+existing timing and attack buffering. Browser proof now attempts an empty-slot
+swing before the menu-swap fixture and asserts the swing counter does not
+advance. Native feedback inspected at `/private/tmp/frus-owned-swing/`.
+Build and 1,705 tests pass (2026-09-13).
+
 Follow-up browser proof (2026-09-13): `qa-swing-menu-identity.mjs` opens the
 real tool menu during a Folder windup/active phase, selects and equips Pencil,
 then resumes. Observed enemy-check arguments retain Folder for that swing and

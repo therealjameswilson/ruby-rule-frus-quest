@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { characterAnimKey } from "../art/character_anims";
 import {
   ART_PACK_FOOT_OFFSET_Y,
@@ -416,12 +417,7 @@ export class GameplayMapScene extends Phaser.Scene {
     }
     this.setCombatPaused(false);
     if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing)) {
-      const toolLabel = gameState.equippedProcessItem?.replace(/_/g, " ").toUpperCase() ?? "FRUS TOOL";
-      if (this.player.startAction(gameState.equippedProcessItem)) {
-        setLatestMessage(`Tool action: ${toolLabel}.`);
-      } else {
-        setLatestMessage(`${toolLabel} is cooling down.`);
-      }
+      this.startEquippedSwing();
     }
 
     this.player.update(delta, true, {
@@ -483,6 +479,19 @@ export class GameplayMapScene extends Phaser.Scene {
       setObjective(combatCue?.objective ?? MAP_OBJECTIVES[this.mapKey]);
     }
     this.syncGameplayThreats();
+  }
+
+  private startEquippedSwing() {
+    const result = tryEquippedToolSwing(this.player);
+    if (result.started) {
+      const tool = this.player.combatReadout.weapon.label;
+      setLatestMessage(`Tool action: ${tool}.`);
+    } else if (result.reason) {
+      setLatestMessage(result.reason);
+      setObjective("EQUIP AN OWNED TOOL");
+      this.objectiveOverrideMsRemaining = 1250;
+      retroAudio.warning();
+    }
   }
 
   private createDanneEncounter() {

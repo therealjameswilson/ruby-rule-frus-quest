@@ -39,6 +39,24 @@ describe("wrong-tool combat feedback", () => {
 });
 
 describe("swing tool identity", () => {
+  it("requires an owned combat tool before starting the map's swing", () => {
+    const startAction = vi.fn(() => true);
+    const scene = new GameplayMapScene();
+    Object.assign(scene, { player: { startAction,
+      combatReadout: { state: "idle", weapon: { tool: "citation_stamp", label: "Citation Stamp" } } } });
+    const swing = () => (scene as unknown as { startEquippedSwing(): void }).startEquippedSwing();
+    for (const tool of [null, "clearance_token", "citation_stamp"] as const) {
+      gameState.equippedProcessItem = tool;
+      swing();
+      expect(startAction).not.toHaveBeenCalled();
+      expect(gameState.objective).toBe("EQUIP AN OWNED TOOL");
+    }
+    addProcessItem("citation_stamp");
+    equipProcessItem("citation_stamp");
+    swing();
+    expect(startAction).toHaveBeenCalledExactlyOnceWith("citation_stamp");
+  });
+
   it.each(["citation_stamp", "red_pencil", "review_folder"] as const)("resolves the active %s swing, not the newly equipped item", tool => {
     addProcessItem("citation_stamp");
     addProcessItem("red_pencil");
