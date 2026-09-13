@@ -31,7 +31,7 @@ export class SourceNoteBoard {
     this.text(20, 53, "REPO  NATIONAL ARCHIVES\nCOLL  POLICY PLANNING\nFILE  ALLIANCE CONSULTATION", PALETTE.creamPaper).setLineSpacing(4);
     this.text(20, 96, "NO READERSHIP EVIDENCE FOUND", PALETTE.terminalCyan);
     this.button(128, 123, 216, 34, () => this.repair());
-    this.reader = this.text(28, 119, "", PALETTE.creamPaper);
+    this.reader = this.text(28, 113, "", PALETTE.creamPaper).setLineSpacing(4);
     this.button(77, 158, 112, 34, () => this.submit());
     this.text(50, 154, "FILE NOTE", PALETTE.creamPaper);
     this.button(190, 158, 100, 34, () => this.hide());
@@ -101,7 +101,7 @@ export class SourceNoteBoard {
 
   private refresh() {
     const readers = this.repaired ? "READERS: NOT ESTABLISHED" : "DRAFT: PRESIDENT READ IT";
-    this.reader.setText(readers);
+    this.reader.setText(`${readers}\n${this.repaired ? "EVIDENCE LIMIT RETAINED" : "REMOVE UNSUPPORTED CLAIM"}`);
     this.feedback.setText(this.repaired ? "UNKNOWN IS NOT A DENIAL" : "ONE UNSUPPORTED CLAIM");
     this.fields.forEach((field, index) => field.setStrokeStyle(1, color(index === this.selected ? PALETTE.goldStamp : PALETTE.stoneGray)));
     setChoiceState(SOURCE_NOTE_47_TITLE, [

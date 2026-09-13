@@ -69,6 +69,14 @@ describe("source note evidence repair board", () => {
     f.pointer(1); expect(f.onFile).toHaveBeenCalledOnce();
   });
 
+  it("names the repair action before selection and the retained evidence limit afterward", () => {
+    const f = fixture(); f.open();
+    expect(f.objects.some(object => object.text === "DRAFT: PRESIDENT READ IT\nREMOVE UNSUPPORTED CLAIM")).toBe(true);
+    f.pointer(0);
+    expect(f.objects.some(object => object.text === "READERS: NOT ESTABLISHED\nEVIDENCE LIMIT RETAINED")).toBe(true);
+    expect(f.onFile).not.toHaveBeenCalled();
+  });
+
   it("allows pointer repair and filing and resumes a repaired but unfiled packet", () => {
     const f = fixture(true); f.open(); f.pointer(0); f.pointer(1);
     expect(f.onChange).not.toHaveBeenCalled(); expect(f.onFile).toHaveBeenCalledOnce();

@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned Archive provenance route and explicit repair action (2026-09-13):
+  - Previous turn verified the fresh opening. Continued its earned Archive storage with no grants or scene jumps. Real input picks up Source Note 47, routes it, gathers collection/repository/folder in non-prefix order, returns to the board, attempts unsupported filing, repairs readership and separately files/stamps the note.
+  - Native board inspection showed the clickable draft stated the problem but not its action. Added REMOVE UNSUPPORTED CLAIM beneath the draft, changing to EVIDENCE LIMIT RETAINED after repair; unchanged button bounds, confirmation logic, source metadata and save rules. Added explicit-label regression.
+  - Earned route repeated successfully; native before/after board states inspected at /private/tmp/frus-earned-source-note/. Promoted script to tools/qa-earned-source-note.mjs using FRUS_QA_STORAGE, PLAYWRIGHT_MODULE, CHROMIUM_EXECUTABLE and optional FRUS_QA_OUT. Syntax check passes. Existing opening QA produces a compatible earned-storage.json at Archive handoff.
+  - 21 focused provenance/board tests and production build pass (existing chunk warning). Installed gameplay client completed at /private/tmp/frus-source-board-client/; native image inspected. Local only; no physical-device board verification, no novice comprehension claim. Next: continue the earned stamped note into annotation and the next tool reward, assessing whether the additional tasks meaningfully change exploration.
+
 - Fresh earned opening on keyboard and touch (2026-09-13):
   - Previous turn made progress with checkpoints and the re-entry fix. Replayed main opening with three fresh browser profiles and no debug grants/scene jumps: keyboard, 375x667/DPR3 touch, and cue-guided keyboard. All reached Archive at 80 reliability, no captured console/page errors.
   - Verified Office memo loop, earned Stamp, harmless miss, pause freezes bolt, no close-triggered swing, correct counter, fragment reveal/collection, no repeated interaction points, reload/Continue persistence and Archive handoff. Touch asserts simultaneous D-pad/B. Coaching run starts from pickup area, intentionally faces away, follows displayed cues, and succeeds without the preselected counter spot.
