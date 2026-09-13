@@ -68,7 +68,13 @@ publication checkpoint is `earned-publication-storage.json` in the last folder.
    at 375x667, including a missed swing, re-approach and the physical stamp.
    Phone screenshots show review text and gate feedback clear of A/B controls.
    This is simulated Chrome input, not physical iPhone verification.
-   Permission and appeal deliveries still need assessment for meaningful choices.
+   Permission and appeal now share a compact draft-repair board at the permission
+   desk: fictional pending-consent and whole-withholding evidence requires HOLD
+   and APPEAL rather than PRINT and OMIT. Explicit filing records both stages and
+   hands over the bracket proof, removing one desk trip without automatic consent.
+   Earned keyboard and touch routes pass rejection, partial correction, cancel,
+   reload-without-filing, explicit filing, physical stamp and next-room arrival.
+   Human testing must still establish whether the choices are engaging and clear.
 3. Simulated touch now passes the full earned DANN-E route with Swarm dispersion
    and a deliberately uneven Cloud segment: 16 swings reduced Cloud HP 180 to
    96, returned four bolts, and cost 20 reliability. Full fight finished without

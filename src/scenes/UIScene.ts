@@ -23,6 +23,7 @@ import { guideQuestBandObjective, officeApproachCue, officeQuestBandObjective } 
 import { questBandAwaitingDialog, questBandBossCue, questBandRiskLine } from "./questBandCue";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
+import { TREATMENT_REVIEW_TITLE } from "../game/referralTreatmentDraft";
 import { dispatchAisleOpen } from "../game/referralDispatch";
 import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
@@ -268,6 +269,7 @@ export class UIScene extends Phaser.Scene {
       if (gameState.currentChoice?.title === WITHHOLDING_CHRONOLOGY_TITLE
         || gameState.currentChoice?.title === EDITOR_CHRONOLOGY_TITLE) return getString("hud.restoreChronology");
       if (gameState.currentChoice?.title === REFERRAL_MANIFEST_TITLE) return getString("hud.reviewRoutes");
+      if (gameState.currentChoice?.title === TREATMENT_REVIEW_TITLE) return "REVIEW TREATMENT";
       if (gameState.currentChoice?.title === PROOF_COMPARISON_TITLE) return getString("hud.compareProof");
       if (gameState.currentChoice?.title.startsWith(BINDING_CERTIFICATION_TITLE)) return getString("hud.reviewRecord");
       if (gameState.currentChoice?.title === SOURCE_NOTE_47_TITLE

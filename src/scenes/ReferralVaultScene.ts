@@ -46,6 +46,8 @@ import { takeDanneLurkerHit } from "../systems/dannePressure";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { ReferralManifestBoard } from "../systems/referralManifestBoard";
+import { ReferralTreatmentBoard } from "../systems/referralTreatmentBoard";
+import { encodeTreatmentDraft, restoreTreatmentDraft, treatmentDraftProblem } from "../game/referralTreatmentDraft";
 import { encodeReferralManifest, firstManifestMismatch, restoreReferralManifest, type ReferralManifest } from "../game/referralManifest";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -145,6 +147,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   private interactionPrompt!: InteractionPrompt;
   private toast!: FeedbackToast;
   private manifestBoard!: ReferralManifestBoard;
+  private treatmentBoard!: ReferralTreatmentBoard;
   private equityStep = 0;
   private manifestReviewed = false;
   private treatmentStep = 0;
@@ -209,9 +212,10 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.toast = new FeedbackToast(this);
     this.manifestBoard = new ReferralManifestBoard(this);
+    this.treatmentBoard = new ReferralTreatmentBoard(this);
     this.danneLurker = new DanneLurker(this, 214, 70, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
-        || this.manifestBoard.active || this.inventory.active || this.reliability.active,
+        || this.manifestBoard.active || this.treatmentBoard.active || this.inventory.active || this.reliability.active,
       boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
       waypoints: [...REFERRAL_PATROL]
     });
@@ -278,6 +282,13 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       this.manifestBoard.updateInput();
+      return;
+    }
+    if (this.treatmentBoard.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.player.update(delta, false);
+      this.treatmentBoard.updateInput();
       return;
     }
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
@@ -1355,7 +1366,11 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (stage === "treatment") {
       const carried = this.carriedTreatmentDocket();
       if (!carried) this.pickUpTreatmentDocket();
-      else this.routeTreatmentDocket(target.id.replace("referral-treatment-", "") as ReferralTreatmentStationId);
+      else {
+        const station = target.id.replace("referral-treatment-", "") as ReferralTreatmentStationId;
+        if (carried.id !== "visible_excision" && station === carried.station) this.reviewTreatmentDraft();
+        else this.routeTreatmentDocket(station);
+      }
       return true;
     }
     return false;
@@ -1413,6 +1428,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (stage === "manifest") return this.manifestCarried() ? "HUMAN REVIEW" : "TAKE MANIFEST";
     if (stage === "treatment") {
       if (this.carriedTreatmentDocket()?.id === "visible_excision" && target.id === "referral-treatment-bracket_press") return "INSPECT PRESS";
+      if (this.carriedTreatmentDocket() && this.treatmentStep < 2) return "REVIEW TREATMENT";
       return this.carriedTreatmentDocket()
         ? `FILE ${this.treatmentStationShortLabel(target.id.replace("referral-treatment-", "") as ReferralTreatmentStationId)}`
         : "TAKE REVIEW BATCH";
@@ -1645,6 +1661,23 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (this.treatmentDocketWorldIcon?.active) this.treatmentDocketWorldIcon.destroy();
     this.treatmentDocketWorldIcon = undefined;
     this.createTreatmentDocketHeldIcon(docket.id);
+  }
+
+  private reviewTreatmentDraft() {
+    const draft = restoreTreatmentDraft(gameState.sceneProgress.referralTreatmentDraft);
+    if (this.treatmentStep >= 1) draft.permission = "HOLD";
+    gameState.sceneProgress.referralTreatmentDraft = encodeTreatmentDraft(draft);
+    this.treatmentBoard.show(draft, (next) => {
+      gameState.sceneProgress.referralTreatmentDraft = encodeTreatmentDraft(next);
+      saveGameNow();
+    }, () => {
+      if (!this.manifestReviewed || !this.carriedTreatmentDocket()
+        || treatmentDraftProblem(restoreTreatmentDraft(gameState.sceneProgress.referralTreatmentDraft))) return;
+      if (this.treatmentStep === 0) this.routeTreatmentDocket("permission_desk");
+      if (this.treatmentStep === 1) this.routeTreatmentDocket("appeal_ledger");
+      setLatestMessage("Foreign note held pending permission; withheld document retained for human appeal. Stamp the bracket press to finish the visible proof.");
+    });
+    saveGameNow();
   }
 
   private routeTreatmentDocket(station: ReferralTreatmentStationId, printed = false) {

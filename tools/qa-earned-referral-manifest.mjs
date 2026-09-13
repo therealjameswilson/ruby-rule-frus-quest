@@ -48,7 +48,7 @@ try{
  assert.equal((await state()).sceneProgress.referralManifestReviewComplete,1);await shot('filed');
  if(process.argv.includes('--guide-check')){
    const before=await state();
-   await move(104,76);await move(60,76);await key();await shot('treatment-guide');
+   await move(104,76);await move(50,82);await key();await shot('treatment-guide');
    const after=await state();
    assert.match(after.latestMessage,/review batch from the south tray/);
    assert.doesNotMatch(after.latestMessage,/north|dispatch|equity/i);
@@ -59,8 +59,24 @@ try{
    await move(104,76);await move(104,156);
  }
  await key();assert.equal((await state()).sceneProgress.referralTreatmentDocketCarried,1);
- await move(104,180);await move(80,180);await key();assert.equal((await state()).sceneProgress.referralTreatmentStep,1);
- await move(128,180);await move(128,152);await key();assert.equal((await state()).sceneProgress.referralTreatmentStep,2);
+ await move(104,180);await move(80,180);await key();await shot('treatment-draft');
+ await key('ArrowDown');await key('ArrowDown');await key();await shot('treatment-rejected');
+ assert.equal((await state()).sceneProgress.referralTreatmentStep,0);
+ await key('ArrowUp');await key('ArrowUp');await key();
+ await key('ArrowDown');await key('ArrowDown');await key();
+ assert.equal((await state()).sceneProgress.referralTreatmentStep,0,'One corrected field is not a filed review');
+ await key('ArrowUp');await key();await key('x');
+ assert.equal((await state()).sceneProgress.referralTreatmentStep,0,'Closing the edited draft must not file it');
+ assert.equal((await state()).sceneProgress.referralTreatmentDraft,3);
+ if(process.argv.includes('--reload-treatment')){
+  await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
+  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ReferralVaultScene');await page.waitForTimeout(600);
+  assert.equal((await state()).sceneProgress.referralTreatmentDraft,3);
+  assert.equal((await state()).sceneProgress.referralTreatmentStep,0);
+  await shot('treatment-reloaded');
+ }
+ await key();await key('ArrowDown');await key('ArrowDown');await key();
+ assert.equal((await state()).sceneProgress.referralTreatmentStep,2);await shot('treatment-filed');
  await move(128,180);await move(176,180);await key();
  assert.equal((await state()).sceneProgress.referralTreatmentStep,2);
  assert(!(await state()).sceneProgress.referralPhysicalReviewComplete);
