@@ -186,6 +186,22 @@ export function danneBoastsForVariantPhase(phase: DanneVariantPhase) {
   return DANNE_VARIANT_BOASTS[DANNE_VARIANT_BOAST_ID[phase]].lines;
 }
 
+// Two deliberate lines at most: combat chatter must be readable at native scale.
+const DANNE_COMBAT_BOASTS: Record<DanneVariantPhase, readonly string[]> = {
+  reveal: ["Trust me.\nNo source needed.", "I approve myself.", "Footnotes? Slow."],
+  prototype: ["JUDGMENT:\nFILE NOT FOUND.", "Review is a patch.", "I lost the index."],
+  colossus: ["I flatten nuance.", "Backlog? Crushed.", "No context needed."],
+  cloud: ["Try to cite me.", "Ask the system.", "No source. No me."],
+  infiltrator: ["My memo says yes.", "I overrule review.", "Approved. By me."],
+  swarm: ["We all agree.\nWith ourselves.", "Copy the shortcut.", "More bad drafts!"],
+  defeated: ["The record won?", "I object to this.", "Queue not found."],
+  ascendant: ["I am the backlog.", "No humans needed.", "Every excuse.\nOne machine."]
+};
+
+export function danneCombatBoastsForVariantPhase(phase: DanneVariantPhase) {
+  return DANNE_COMBAT_BOASTS[phase];
+}
+
 export const DANNE_LURKER_BOASTS = [
   "OMIT THE HARD PART.",
   "MY CONFIDENCE IS ENOUGH.",

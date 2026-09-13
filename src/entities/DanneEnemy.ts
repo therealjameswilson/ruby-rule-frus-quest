@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { danneAnimKey } from "../art/danne_anims";
-import { danneBoastsForVariantPhase } from "../game/danneBoasts";
+import { danneCombatBoastsForVariantPhase } from "../game/danneBoasts";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, type ProcessItemId } from "../game/constants";
 import { unlockCodexEntry } from "../game/codex";
 import { DANNE_VFX_ASSETS } from "../game/danneAtlas";
@@ -186,7 +186,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.id = options.id;
     this.roomId = options.roomId;
     this.config = options.config;
-    this.boastLines = danneBoastsForVariantPhase(options.config.phase);
+    this.boastLines = danneCombatBoastsForVariantPhase(options.config.phase);
     this.maxHp = options.config.maxHp;
     this.hp = options.config.maxHp;
     this.speed = options.config.speed;
@@ -464,19 +464,18 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
 
   private showTauntBubble(line: string) {
     this.tauntBubble?.destroy();
-    const bubbleWidth = 104;
+    const bubbleWidth = 120;
     const x = snapPixel(Phaser.Math.Clamp(this.x, bubbleWidth / 2 + 4, GAME_WIDTH - bubbleWidth / 2 - 4));
-    const y = snapPixel(Phaser.Math.Clamp(this.y - 46, 32, GAME_HEIGHT - 58));
     const text = this.scene.add.text(0, 0, line, {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "8px",
       color: PALETTE.creamPaper,
       align: "center",
-      wordWrap: { width: bubbleWidth - 12, useAdvancedWrap: true },
-      lineSpacing: -1
+      lineSpacing: 0
     }).setOrigin(0.5);
     const textBounds = text.getBounds();
     const height = Math.max(18, Math.ceil(textBounds.height) + 8);
+    const y = snapPixel(Phaser.Math.Clamp(this.y - 46, 26 + height / 2, GAME_HEIGHT - 58));
     const back = this.scene.add.rectangle(0, 0, bubbleWidth, height, color(PALETTE.black), 0.9)
       .setStrokeStyle(1, color(PALETTE.goldStamp), 0.95);
     const header = this.scene.add.rectangle(0, -height / 2 + 2, bubbleWidth - 4, 2, color(PALETTE.deepRuby), 0.82);
@@ -489,14 +488,12 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.scene.tweens.add({
       targets: this.tauntBubble,
       alpha: 1,
-      y: y - 2,
       duration: 90,
       ease: "Stepped"
     });
     this.scene.tweens.add({
       targets: this.tauntBubble,
       alpha: 0,
-      y: y - 9,
       delay: 2050,
       duration: 240,
       ease: "Stepped",

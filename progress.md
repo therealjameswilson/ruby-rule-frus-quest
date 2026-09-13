@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Readable DANN-E combat boasts (2026-09-13):
+  - Previous turn made progress with evade/equip/counter guidance. Audited the remaining crowded taunt box: full monologues used 5px text, negative line spacing and an upward tween that could intrude on the HUD.
+  - Added three short combat-specific boasts per existing variant, each at most two deliberate 18-character lines. Full variant lore catalog and scripted boss transition API remain unchanged. DanneEnemy uses 8px text, zero negative spacing, a 120px frame and height-aware top clearance; fades no longer move text toward the HUD. Existing frequency throttles, combat and saves unchanged.
+  - 18 focused boast/enemy tests and build pass (existing chunk warning). Standard gameplay client completed; inspected native natural-aggro bubble REVIEW IS A PATCH, readable beneath HUD and above the actor, at /private/tmp/frus-player-client-native/native.png; artifacts /private/tmp/frus-short-boast-client/. Other variants' line limits are unit-tested, not individually browser-captured.
+  - Local only. Next: exercise the full optional encounter and exit with these combined readability changes, including a correct tool and the next wave, before treating the optional route as polished.
+
 - Contextual encounter action row (2026-09-13):
   - Previous turn made progress with the NARA floor pilot. Verified unarmed GameplayMapScene combat still showed FIND A GLOWING DESK OR DOOR beneath the tool objective. Added a scene-scoped action cue choosing the nearest living non-boss enemy: evade/find when missing, tools/equip when owned, counter with the secondary-action badge when equipped.
   - Nearby interactions, non-explore modes, other scenes and boss-specific feedback keep their existing priority. English/Spanish/French cue strings added. No combat, inventory or save changes.
