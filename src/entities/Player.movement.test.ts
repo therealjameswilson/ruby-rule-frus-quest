@@ -11,7 +11,7 @@ function fixture() {
   const player = Object.create(Player.prototype) as Player;
   const internals = {
     logicalX: 100, logicalY: 100, velocityX: 0, velocityY: 0,
-    cornerNudgePixels: 3, facing: "south", movementOptions: {},
+    cornerNudgePixels: 4, facing: "south", movementOptions: {},
     walkClock: 0, idleClock: 0, abilityFrameUntil: 0, invulnerableUntil: 0, hurtUntil: 0,
     scene: { time: { now: 0 } }, combatClock: new CombatClock(),
     weaponState: { update: vi.fn(), movementScale: () => 1, phase: "idle" },
@@ -27,6 +27,31 @@ function fixture() {
 beforeEach(() => { resetGameState(); input.dir = { x: 0, y: 0 }; });
 
 describe("live player movement", () => {
+  it.each([30, 60, 120])("clears fractional doorway edges without overshooting at %s FPS", fps => {
+    const { player, coords, internals } = fixture();
+    internals.collidesAt.mockImplementation((x, y) => x > 100 && y > 99.75);
+    input.dir.x = 1;
+    player.update(1000 / fps, true, { solids: [{}] as never[] });
+    expect(coords.logicalY).toBeLessThanOrEqual(99.75);
+    expect(coords.logicalY).toBeGreaterThan(99.749);
+    player.update(1000 / fps, true, { solids: [{}] as never[] });
+    expect(coords.logicalX).toBeGreaterThan(100);
+  });
+
+  it("guides through a doorway within a quarter tile but not beyond it", () => {
+    const { player, coords, internals } = fixture();
+    internals.collidesAt.mockImplementation((x, y) => x > 100 && y > 96);
+    input.dir.x = 1;
+    for (let i = 0; i < 5; i++) player.update(1000 / 60, true, { solids: [{}] as never[] });
+    expect(coords.logicalY).toBe(96);
+    expect(coords.logicalX).toBeGreaterThan(100);
+    coords.logicalX = 100;
+    coords.logicalY = 101;
+    player.update(1000 / 60, true, { solids: [{}] as never[] });
+    expect(coords.logicalX).toBe(100);
+    expect(coords.logicalY).toBe(101);
+  });
+
   it.each([30, 60, 120])("approaches an obstacle without a frame-sized gap at %s FPS", fps => {
     const { player, coords, internals } = fixture();
     internals.collidesAt.mockImplementation(x => x >= 105.3);

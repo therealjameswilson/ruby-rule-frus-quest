@@ -74,7 +74,7 @@ interface ActionColors {
 
 export class Player {
   readonly sprite: Phaser.GameObjects.Sprite;
-  private readonly cornerNudgePixels = 3;
+  private readonly cornerNudgePixels = 4;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
   private readonly actionTrail: Phaser.GameObjects.Rectangle;
@@ -456,8 +456,18 @@ export class Player {
           ? Phaser.Math.Clamp(this.logicalY + offset, bounds.top, bounds.bottom)
           : Phaser.Math.Clamp(targetY, bounds.top, bounds.bottom);
         if (!this.collidesAt(nudgedX, nudgedY, solids)) {
-          // Stop guiding as soon as this edge clears, including at low FPS.
-          const step = sign * Math.min(distance, maxStep);
+          // Resolve fractional clearance before guiding so a nearly aligned
+          // doorway doesn't pull the feet a whole extra pixel sideways.
+          let blockedOffset = 0;
+          let clearOffset = distance;
+          for (let i = 0; i < 12; i += 1) {
+            const offset = (blockedOffset + clearOffset) / 2;
+            const x = axis === "y" ? this.logicalX + sign * offset : targetX;
+            const y = axis === "x" ? this.logicalY + sign * offset : targetY;
+            if (this.collidesAt(x, y, solids)) blockedOffset = offset;
+            else clearOffset = offset;
+          }
+          const step = sign * Math.min(clearOffset, maxStep);
           const slideX = axis === "y" ? Phaser.Math.Clamp(this.logicalX + step, bounds.left, bounds.right) : this.logicalX;
           const slideY = axis === "x" ? Phaser.Math.Clamp(this.logicalY + step, bounds.top, bounds.bottom) : this.logicalY;
           if (this.collidesAt(slideX, slideY, solids)) continue;
