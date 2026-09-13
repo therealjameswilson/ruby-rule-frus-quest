@@ -91,6 +91,10 @@ try {
     await walk(128, 112); await interact();
     if (cacheLoop) {
       await go('east', 'B2'); await go('east', 'B3'); await go('north', 'A3');
+      await walk(112, 132); await page.keyboard.press('Space', { delay: 50 });
+      await page.waitForTimeout(300); await shot('archivist-clue');
+      assert.match(JSON.stringify((await state()).dialog), /left shelf/i);
+      await interact();
       await walk(48, 108); await interact();
       await go('south', 'B3'); await go('south', 'C3');
     } else {

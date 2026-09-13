@@ -149,6 +149,10 @@ describe("ArchiveScene physical annotation flow", () => {
     const hint = methodSource("renderHintRoom", "renderPuzzleRoom");
     expect(hint).toContain("addSnesMapTablet");
     expect(hint).not.toContain("this.drawWallMap(");
+    expect(hint).not.toContain("addTerminalPanel");
+    expect(hint).toContain('new HistorianNPC(this, "marcus"');
+    expect(hint).toContain('this.dialog.show("ARCHIVIST", clue)');
+    expect(hint).toContain("this.roomCleanups.push(() => archivist.destroy())");
   });
 
   it("opens the next chapter through the physical east exit", () => {

@@ -1185,10 +1185,20 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 118
     });
-    const lines = room.id === "A3"
-      ? ["THE BOX WITHOUT", "A NUMBER HOLDS", "NO PROVENANCE."]
-      : ["GREEN IS OPEN.", "RED HAS TEETH.", "READ THE GATE."];
-    this.track(addTerminalPanel(this, 128, 112, ["ARCHIVE COLLEAGUE", ...lines], PALETTE.goldStamp));
+    const archivist = new HistorianNPC(this, "marcus", 112, 108);
+    archivist.label.setVisible(false);
+    this.roomCleanups.push(() => archivist.destroy());
+    this.interactables.push({
+      id: `${room.id}-archivist`, label: "Archivist", x: 112, y: 108, radius: 28, kind: "npc",
+      onInteract: () => {
+        const revealed = this.revealedSecretIds.has("C3");
+        const clue = room.id === "A3"
+          ? revealed ? "The hidden cache is two rooms south." : "Check the left shelf. An unnumbered box is tucked behind it."
+          : revealed ? "The cache is through the south door." : "Visit the archivist north for a hidden route.";
+        this.dialog.show("ARCHIVIST", clue);
+        setLatestMessage(clue);
+      }
+    });
     this.drawDocumentStack(88, 166, true);
     this.drawRubyVolumeStack(178, 166, 2);
     this.interactables.push({

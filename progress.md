@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Inhabited Archive clue rooms (2026-09-12):
+  - Replaced A3/B3's large permanent ARCHIVE COLLEAGUE poster with an existing Marcus character sprite and nearby Archivist interaction. Labels remain hidden until interaction; the short clue identifies the left shelf before discovery and the south route afterward. The central map tablet and exits remain visible. NPC cleanup is registered with room teardown.
+  - Extended the earned cache replay to approach the archivist, open and verify the left-shelf dialogue, dismiss it, discover the shelf, collect the fragment, Continue and return north. Route completes at 220 points without duplicate rewards or browser errors. Native conversation screenshot inspected: /private/tmp/frus-cache-archivist/archivist-clue.png.
+  - 21 focused tests and build pass (existing bundle warning); source composition checks retain the tablet, require interactive NPC/cleanup and prohibit the old poster. Installed gameplay client main Archive pickup/movement and native render checked (/private/tmp/frus-archivist-client/).
+  - Reuses existing art and dialogue/input systems. No new assets or dependencies. Keyboard-route verification only; local, not deployed.
+
 - Hidden Source Cache route verified (2026-09-12):
   - Extended qa-backtrack.mjs with --cache-loop: earned A1 -> B1 manifest -> B2 -> B3 -> A3 shelf clue -> B3 -> C3 treasure -> Continue -> B3 return. First attempt found B3 north physically blocked by the wall-map collision box at x104..152/y48..76.
   - Removed the redundant wall map from hint-room rendering, preserving the central map tablet and HUD navigation. Added a scene composition regression protecting that doorway from the duplicate box. No collision bypass or player teleport was used.
