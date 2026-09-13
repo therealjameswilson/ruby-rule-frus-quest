@@ -63,6 +63,7 @@ import {
   CLASSNET_VAULT_CHECK_TOTAL,
   CLASSNET_VAULT_DOCKETS,
   classNetVaultObjective,
+  carriedClassNetVaultDocket,
   completedClassNetVaultChecks,
   deriveClassNetVaultStep,
   getClassNetVaultDocket,
@@ -704,10 +705,12 @@ export class NetworkScene extends Phaser.Scene {
     };
     const room = NETWORK_ROOMS[this.currentRoomId];
     if (room.exits.west) {
+      const mustFile = this.currentRoomId === "N2" && Boolean(this.vaultCarriedDocket());
       addSnesGate(this, {
         direction: "west",
         hasExit: true,
-        unlocked: true,
+        unlocked: !mustFile,
+        lockLabel: "FILE",
         accent: PALETTE.terminalCyan,
         exitLabel: this.currentRoomId === "N1" ? "ARCHIVE" : "SPLIT",
         track: trackGate,
@@ -1420,8 +1423,7 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private vaultCarriedDocket() {
-    const order = Math.floor(gameState.sceneProgress.classNetVaultDocketCarried ?? 0);
-    return CLASSNET_VAULT_DOCKETS.find((docket) => docket.order === order) ?? null;
+    return carriedClassNetVaultDocket(gameState.sceneProgress);
   }
 
   private pickUpVaultDocket() {
@@ -1439,6 +1441,8 @@ export class NetworkScene extends Phaser.Scene {
 
   private carryVaultDocket(docket: ClassNetVaultDocket) {
     gameState.sceneProgress.classNetVaultDocketCarried = docket.order;
+    this.drawRoomDoors();
+    this.syncRoomTraversalState();
     setHeldItem(`Review Batch: ${docket.shortLabel}`);
     if (this.vaultDocketWorldIcon?.active) this.vaultDocketWorldIcon.destroy();
     this.vaultDocketWorldIcon = undefined;
@@ -1494,6 +1498,8 @@ export class NetworkScene extends Phaser.Scene {
     setLatestMessage(result.message);
     if (result.complete) {
       gameState.sceneProgress.classNetVaultReviewComplete = 1;
+      this.drawRoomDoors();
+      this.syncRoomTraversalState();
       this.clearanceTokenIcon?.setAlpha(1);
       this.routeText.setVisible(false);
       setObjective(this.classNetVaultObjective());

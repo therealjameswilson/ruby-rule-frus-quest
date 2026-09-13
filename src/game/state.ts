@@ -4,6 +4,7 @@ import { getCodexViewReadout } from "../systems/codexLayout";
 import { getGuideCounterReadout } from "./guideCounterTraining";
 import { annotationStacksOpen } from "./annotationStacks";
 import { networkRoutingComplete } from "./networkRouting";
+import { carriedClassNetVaultDocket } from "./classNetVaultReview";
 import { readAnnotationPacket } from "./annotationPacket";
 import { archiveSourceRoomExitReady, restoredArchiveSourceNoteStatus, restoredArchiveSourceRoomDocumentIds } from "./archiveSourceRoom";
 import { getCodexReadout, unlockCodexEntry } from "./codex";
@@ -1483,7 +1484,9 @@ export function getRoomGraphReadout() {
     const dungeon = gameState.dungeons[room.area];
     const lockedExits = room.lockedExits ?? {};
     const packetHeld = room.id === "A1" && annotationPacket.held.length > 0 && !annotationPacket.complete;
+    const vaultDocket = room.id === "N2" ? carriedClassNetVaultDocket(gameState.sceneProgress) : null;
     const gatedDirections = new Set(Object.keys(lockedExits) as Direction[]);
+    if (vaultDocket) gatedDirections.add("west");
     if (packetHeld) for (const direction of Object.keys(room.exits) as Direction[]) {
       if (direction !== "north") gatedDirections.add(direction);
     }
@@ -1497,9 +1500,10 @@ export function getRoomGraphReadout() {
         const annotationExit = room.id === "AS" && direction === "north";
         const sourcePacketExit = room.id === "A1" && direction === "east";
         const networkBatchExit = room.id === "N1" && direction === "east";
+        const unfiledVaultExit = direction === "west" && Boolean(vaultDocket);
         const unfiledPacketExit = packetHeld && direction !== "north";
         const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
-        const canOpen = networkBatchExit ? networkRoutingComplete(gameState.sceneProgress, gameState.processStamps.includes("network"))
+        const canOpen = unfiledVaultExit ? false : networkBatchExit ? networkRoutingComplete(gameState.sceneProgress, gameState.processStamps.includes("network"))
           : unfiledPacketExit ? false : sourcePacketExit ? sourceExitReady
           : annotationEntry ? annotationStacksOpen(gameState.sceneProgress)
           : annotationExit ? gameState.sceneProgress.annotationDraftingComplete === 1
@@ -1511,11 +1515,12 @@ export function getRoomGraphReadout() {
             ? canTraverseExit(room.id, direction, heldProcessItems)
             : canOpenLockedDoor(dungeon);
         return [direction, {
-          label: unfiledPacketExit ? "Unfiled annotation packet" : lockedExits[direction] ?? "Locked route",
-          gateType: networkBatchExit ? "workflow" : bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
+          label: unfiledVaultExit ? "Unfiled review docket" : unfiledPacketExit ? "Unfiled annotation packet" : lockedExits[direction] ?? "Locked route",
+          gateType: networkBatchExit || unfiledVaultExit ? "workflow" : bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
           requiredItem,
           requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
-          blockedMessage: canOpen ? null : networkBatchExit ? "Finish routing the batch through OpenNet and ClassNet."
+          blockedMessage: canOpen ? null : unfiledVaultExit ? `File ${vaultDocket!.label} at ${vaultDocket!.stationLabel} before returning to the Network Split.`
+            : networkBatchExit ? "Finish routing the batch through OpenNet and ClassNet."
             : unfiledPacketExit ? "File the carried annotation notes at the research table before leaving."
             : sourcePacketExit ? "File the annotation packet, collect both supporting documents, and complete the research-table reviews."
             : annotationEntry ? "Verify Source Note 47 and stamp the NO REPO wall to open the stacks."
@@ -1523,7 +1528,8 @@ export function getRoomGraphReadout() {
             : readingPassage && heldProcessItems.has("review_folder")
             ? "Compare the northeast shelf register with the Review Folder."
             : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
-          blockedObjective: canOpen ? null : networkBatchExit ? "FINISH ROUTING BATCH"
+          blockedObjective: canOpen ? null : unfiledVaultExit ? "FILE REVIEW DOCKET"
+            : networkBatchExit ? "FINISH ROUTING BATCH"
             : unfiledPacketExit ? "FILE PACKET AT TABLE"
             : sourcePacketExit ? "COMPLETE SOURCE PACKET"
             : annotationEntry ? "STAMP NO REPO TO OPEN STACKS"

@@ -83,6 +83,20 @@ restored-vault captures were inspected, with no captured browser errors. Unit
 coverage includes small keys not bypassing routing, completion, save/restore and
 legacy stamps. Full suite: 224 files / 1,696 tests; production build passes.
 
-Next audit target: the N2 west return while carrying a review docket. Gameplay
-blocks that return, while `drawRoomDoors` currently renders west as always open.
-That has been identified in source, not yet repaired or physically re-tested.
+## Carried Vault Docket
+
+The N2 return mismatch is now corrected. A shared carried-docket lookup drives
+the existing gameplay check and map restriction. The west gate shows FILE while
+a valid docket is held, with the pause route naming its destination desk. Gate
+art and traversal refresh on pickup and final filing; the return reopens before
+the Clearance Token is collected. Invalid/empty docket orders do not lock it.
+
+The earned `qa-earned-clearance.mjs` replay now checks the initial SPLIT sign,
+FILE plus the map restriction after pickup, and the restored SPLIT sign after
+review without leaving the room. It passed through rejected missing chronology,
+correction, token pickup, Referral arrival and reload. Native locked and reopened
+captures under `/private/tmp/frus-vault-return-fixed/` were inspected. No browser
+errors were captured. Unit tests cover all docket orders, invalid/empty orders,
+and persistence. Full suite: 225 files / 1,698 tests; production build passes
+with the existing chunk warning. This did not add a new gameplay restriction or
+change save schemas. It remains scripted browser evidence, not physical-phone QA.

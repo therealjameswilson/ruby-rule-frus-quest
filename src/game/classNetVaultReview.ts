@@ -101,6 +101,11 @@ export function getClassNetVaultDocket(step: number) {
   ];
 }
 
+export function carriedClassNetVaultDocket(progress: Readonly<Record<string, number>>) {
+  const order = Math.floor(progress.classNetVaultDocketCarried ?? 0);
+  return CLASSNET_VAULT_DOCKETS.find(docket => docket.order === order) ?? null;
+}
+
 export function classNetVaultObjective(step: number, carried: boolean, tokenCollected: boolean) {
   if (tokenCollected) return "EXIT EAST - REFERRAL";
   if (step >= CLASSNET_VAULT_DOCKETS.length) return "TAKE CLEARANCE TOKEN";

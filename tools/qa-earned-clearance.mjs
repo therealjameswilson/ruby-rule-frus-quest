@@ -8,6 +8,9 @@ const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
+const gateLabels = () => page.evaluate(() => window.game.scene.getScene('NetworkScene').roomGateObjects
+ .filter(object => typeof object.text === 'string').map(object => object.text));
+const westGate = async () => (await state()).roomGraph.find(room => room.id === 'N2').lockedExitState.west;
 const key=async(k='Space',ms=50)=>{await page.keyboard.down(k);await page.waitForTimeout(ms);await page.keyboard.up(k);await page.waitForTimeout(150);};
 const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
 async function move(x,y){for(let i=0;i<100;i++){const p=(await state()).player,dx=x-p.x,dy=y-p.y;if(Math.abs(dx)<3&&Math.abs(dy)<3)return;const h=Math.abs(dx)>=3;await key(h?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.min(100,Math.max(20,Math.abs(h?dx:dy)/72*1000)));}throw Error(`Cannot walk to ${x},${y}`);}
@@ -19,7 +22,12 @@ try{
 
 
  assert.equal((await state()).roomTraversal.currentRoomId,'N2');await shot('arrival');
+ assert((await gateLabels()).includes('SPLIT'));
  await move(96,132);await key();assert.equal((await state()).sceneProgress.classNetVaultDocketCarried,1);
+ assert.equal((await westGate()).canOpen,false);
+ assert((await gateLabels()).includes('FILE'));
+ assert(!(await gateLabels()).includes('SPLIT'));
+ await shot('return-locked');
  await move(80,150);await key();await shot('human-filed');assert.equal((await state()).sceneProgress.classNetVaultReviewStep,1);
  await move(96,96);await key();await shot('release-filed');assert.equal((await state()).sceneProgress.classNetVaultReviewStep,2);
  await move(164,96);await move(176,150);await key();await shot('ledger');
@@ -28,6 +36,9 @@ try{
  assert(!(await state()).sceneProgress.classNetVaultReviewComplete);
  await key('ArrowRight');await key('ArrowRight');await shot('chronology-corrected');
  await key('ArrowDown');await key();await page.waitForTimeout(600);await shot('review-complete');
+ assert.equal(await westGate(),undefined,'Finished review should remove the return restriction');
+ assert((await gateLabels()).includes('SPLIT'),'Return sign should refresh without re-entering the room');
+ assert(!(await gateLabels()).includes('FILE'));
  assert.equal((await state()).sceneProgress.classNetVaultReviewComplete,1);
  await move(164,132);await key();await shot('token');
  assert((await state()).inventory.includes('Clearance Token'));
