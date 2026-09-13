@@ -434,6 +434,7 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private talkJuniorCompiler() {
+    const firstAssignment = !gameState.sceneProgress.juniorCompilerIntroduced;
     retroAudio.confirm();
     gameState.sceneProgress.juniorCompilerIntroduced = 1;
     this.updateFirstQuestCue();
@@ -454,8 +455,10 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     setObjective(this.currentOfficeObjective());
-    setLatestMessage("Pick up the memo, carry it to INBOX, then stamp it.");
-    this.toast.show("PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
+    setLatestMessage(firstAssignment
+      ? "Your mission: recover the records DANN-E threatens and publish a reliable FRUS volume. Start with the memo; carry it to INBOX and stamp it to open the archive."
+      : "Pick up the memo, carry it to INBOX, then stamp it.");
+    this.toast.show(firstAssignment ? "PUBLISH A FRUS VOLUME" : "PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
   }
 
   private flashNoTargetHint() {

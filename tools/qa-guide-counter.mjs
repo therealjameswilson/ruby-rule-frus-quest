@@ -94,6 +94,7 @@ try {
     await move(70, 122);
     await press();
     await shot('opening-assignment');
+    assert.match((await state()).latestMessage, /publish a reliable FRUS volume/);
     await move(128, 138);
     await press();
     await assertOfficeApproach();

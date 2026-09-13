@@ -34,6 +34,11 @@ publication checkpoint is `earned-publication-storage.json` in the last folder.
 
 ## What Works
 
+- The first assignment now states PUBLISH A FRUS VOLUME in its existing toast,
+  while the HUD keeps the immediate memo objective. Repeat talk restores practical
+  instructions. Fresh touch opening still reaches the Archive, including a missed
+  counter and pause/resume. No additional blocking dialogue was added.
+
 - A physical source clue changes a draft and opens a route: this is the strongest
   fit between archival research and adventure-game discovery.
 - Cart routing and the Dispatch Stacks return shortcut reward spatial play.

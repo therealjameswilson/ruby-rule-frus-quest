@@ -12,7 +12,7 @@ vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: cl
 vi.mock("../entities/Player", () => ({ Player: class {} }));
 vi.mock("../systems/sceneTransitions", () => ({ transitionTo: vi.fn() }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
-vi.mock("../systems/audio", () => ({ retroAudio: { warning: vi.fn() } }));
+vi.mock("../systems/audio", () => ({ retroAudio: { warning: vi.fn(), confirm: vi.fn() } }));
 
 interface DoorScene {
   currentRoomId: string;
@@ -40,6 +40,23 @@ function doorScene(scene: object, roomId: string, x = 14): DoorScene {
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
 
 describe("live cross-chapter exit handlers", () => {
+  it("states the goal on first assignment and preserves practical hints on repeat", () => {
+    const scene = Object.assign(new OfficeScene(), {
+      player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn() },
+      updateFirstQuestCue: vi.fn(), officeStarterMemoStatus: () => 0,
+      currentOfficeObjective: () => "TAKE THE MEMO"
+    }) as unknown as { talkJuniorCompiler(): void; toast: { show: ReturnType<typeof vi.fn> } };
+    const points = gameState.documentPoints;
+    const inventory = [...gameState.inventory];
+    scene.talkJuniorCompiler();
+    expect(scene.toast.show).toHaveBeenLastCalledWith("PUBLISH A FRUS VOLUME", { x: 64, y: 100 }, "info");
+    expect(gameState.sceneProgress.juniorCompilerIntroduced).toBe(1);
+    expect(gameState.latestMessage).toContain("publish a reliable FRUS volume");
+    scene.talkJuniorCompiler();
+    expect(scene.toast.show).toHaveBeenLastCalledWith("PICK MEMO -> INBOX -> STAMP", { x: 64, y: 100 }, "info");
+    expect(gameState.documentPoints).toBe(points);
+    expect(gameState.inventory).toEqual(inventory);
+  });
   it("retires finished Office tasks without hiding the colleague, door or other desks", () => {
     const scene = new OfficeScene() as unknown as {
       officeStarterMemoStatus(): number;
