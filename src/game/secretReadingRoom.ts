@@ -34,7 +34,10 @@ export function readingPassageSolids(solids: readonly DanneRectDefinition[], ope
 }
 
 export function insideReadingPassage(position: Position) {
-  return position.x >= 196 && position.x <= 212 && position.y >= 52 && position.y <= 80;
+  const { opening } = READING_PASSAGE;
+  const halfFeet = PLAYER_MOVEMENT_TUNING.feetWidth / 2;
+  return position.x >= opening.x + halfFeet && position.x <= opening.x + opening.width - halfFeet
+    && position.y >= opening.y && position.y <= opening.y + opening.height;
 }
 
 export function reachedReadingRoomReturn(position: Position) {

@@ -35,6 +35,22 @@ try {
     const image = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src))));
     await writeFile(`${out}/${name}.png`, Buffer.from(image.split(',')[1], 'base64'));
   };
+  const approachEdge = async (target, min, max, label) => {
+    const edgeX=x=>x>=min&&x<=max;
+    const positions=[];
+    for(let i=0;i<25;i++) {
+      const x=(await state()).player.x,dx=target-x;
+      positions.push(x);
+      if(edgeX(x))break;
+      // Account for touch dispatch overhead; the position assertion proves the margin.
+      await hold(dx>0?'ArrowRight':'ArrowLeft',Math.max(mobile?0:12,Math.min(140,Math.abs(dx)/72*1000)-(mobile?30:0)));
+      await page.waitForTimeout(40);
+    }
+    const edge=await state();
+    await writeFile(`${out}/${label}-approach.json`,JSON.stringify(edge,null,2));
+    await writeFile(`${out}/${label}-input.json`,JSON.stringify({target,positions,actual:edge.player},null,2));
+    assert(edgeX(edge.player.x),'Edge probe must walk within the two-pixel newly clear margin');
+  };
   await page.goto('http://127.0.0.1:5195/?scene=HiddenReadingRoomScene&text=full');
   await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === 'HiddenReadingRoomScene');
   await page.waitForTimeout(1700);
@@ -47,21 +63,8 @@ try {
   assert.equal(collected.sceneProgress.hiddenFirstEditionFound, 1);
   assert.equal(collected.documentPoints, initial.documentPoints + 25);
   if(process.argv.includes('--edge-return')) {
-    const target=process.argv.includes('--left-edge')?119:137;
-    const edgeX=x=>target===119?x>=118&&x<=119:x>=137&&x<=138;
-    const positions=[];
-    for(let i=0;i<25;i++) {
-      const x=(await state()).player.x,dx=target-x;
-      positions.push(x);
-      if(edgeX(x))break;
-      // Account for touch dispatch overhead; the position assertion proves the margin.
-      await hold(dx>0?'ArrowRight':'ArrowLeft',Math.max(mobile?0:12,Math.min(140,Math.abs(dx)/72*1000)-(mobile?30:0)));
-      await page.waitForTimeout(40);
-    }
-    const edge=await state();
-    await writeFile(`${out}/edge-approach.json`,JSON.stringify(edge,null,2));
-    await writeFile(`${out}/edge-input.json`,JSON.stringify({target,positions,actual:edge.player},null,2));
-    assert(edgeX(edge.player.x),'Edge probe must walk within the two-pixel newly clear margin');
+    if(process.argv.includes('--left-edge')) await approachEdge(119,118,119,'edge');
+    else await approachEdge(137,137,138,'edge');
   }
   await hold('ArrowDown', 1200);
   await page.waitForTimeout(800);
@@ -72,8 +75,14 @@ try {
   assert.equal(returned.scene, 'NaraStacksScene', 'Walking through the south threshold should return to the stacks');
   assert.equal(returned.sceneProgress.hiddenFirstEditionFound, 1);
   assert.equal(returned.documentPoints, collected.documentPoints);
+  if(process.argv.includes('--edge-entry')) {
+    if(process.argv.includes('--left-edge')) await approachEdge(195,194,195,'entry-edge');
+    else await approachEdge(213,213,214,'entry-edge');
+  }
   await hold('ArrowUp', 400);
   await page.waitForTimeout(1200);
+  await shot('reentry');
+  await writeFile(`${out}/reentry.json`,JSON.stringify(await state(),null,2));
   assert.equal((await state()).scene, 'HiddenReadingRoomScene');
   await hold('ArrowUp', 850);
   await action();

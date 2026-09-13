@@ -51,6 +51,8 @@ describe("physical reading-room discovery", () => {
     ]);
     expect(original.find((rect) => rect.label === READING_PASSAGE.shelfLabel)?.width).toBe(54);
     expect(insideReadingPassage({ x: 204, y: 80 })).toBe(true);
+    for (const x of [194, 195, 213, 214]) expect(insideReadingPassage({ x, y: 80 })).toBe(true);
+    for (const x of [193, 215]) expect(insideReadingPassage({ x, y: 80 })).toBe(false);
     expect(insideReadingPassage(READING_PASSAGE.returnSpawn)).toBe(false);
     expect(insideReadingPassage({ x: 180, y: 68 })).toBe(false);
   });

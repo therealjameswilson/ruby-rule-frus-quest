@@ -4,6 +4,24 @@ Local browser verification, 2026-09-13. No public deployment.
 
 ## Current Footprint Recheck
 
+The subsequent entrance check exposed the same old width in two places:
+`insideReadingPassage` and `DanneMapScene.isPlayerPositionWalkable`. Keyboard
+approach at x214 stopped at y84 outside the open shelf, with no hit state.
+The map's additional 16px collision check was rejecting steps that the player's
+12px walking feet allowed. It now uses `walkingFeetOverlap`; the polygon
+boundary remains mandatory. The entrance derives clearance from the opening
+and current feet width (x194..214). Solid overlap still blocks x193/x215.
+
+`qa-reading-room-return.mjs --edge-entry` reproduces the baseline and passes
+afterward; `--mobile --edge-entry --left-edge` also enters from an asserted x194.
+Collection, return, revisit and no-duplicate checks remain intact. Evidence:
+`/private/tmp/frus-secret-entry-{before,fixed,left-touch}/`. This is a debug-room
+collision fixture, not a new earned exploration run. The shared map change also
+passed actual two-pointer movement and uneven counters in Black Vault, reaching
+Swarm HP124 with reliability78 and no retry: `/private/tmp/frus-map-footprint-boss/`.
+This short combat regression is not a full fight. Native entry, NARA client and
+combat screenshots inspected. Full suite now 221 files / 1,683 tests; build passes.
+
 The hidden room's south trigger still required the old 16px feet alignment
 after walking feet narrowed to 12px. Actual keyboard movement at x138 reached
 y222 but stayed in HiddenReadingRoomScene. The visible 32px doorway was clear.

@@ -55,6 +55,7 @@ import {
 } from "../game/secretReadingRoom";
 import type { Interactable, Position } from "../game/types";
 import { Player } from "../entities/Player";
+import { walkingFeetOverlap } from "../systems/smoothMovement";
 import { CensorshipWraith } from "../entities/enemies/CensorshipWraith";
 import { DanneBoss } from "../entities/enemies/DanneBoss";
 import { RedactorDrone, DRONE_ENTRY_GRACE_MS } from "../entities/enemies/RedactorDrone";
@@ -474,8 +475,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private isPlayerPositionWalkable(position: Position) {
     if (!polygonContains(position, this.geometry)) return false;
-    const footBox = new Phaser.Geom.Rectangle(position.x - 8, position.y - 3, 16, 8);
-    return !this.solids.some((solid) => Phaser.Geom.Intersects.RectangleToRectangle(footBox, solid));
+    return !this.solids.some((solid) => walkingFeetOverlap(position.x, position.y, solid));
   }
 
   private restoreSafePlayerPosition() {
