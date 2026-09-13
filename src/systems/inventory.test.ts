@@ -62,6 +62,18 @@ beforeEach(() => {
 });
 
 describe("pause inventory interaction", () => {
+  it("shows the live objective only on the current chapter map", () => {
+    gameState.objective = "PICK UP SOURCE NOTE";
+    const { overlay, tap, texts } = harness();
+    overlay.toggle(); tap("map");
+    expect(texts.at(-1)).toBe(gameState.objective);
+    tap("next");
+    expect(texts.at(-1)).toContain("LOCKED");
+    gameState.objective = "RETURN TO THE DESK";
+    tap("previous");
+    expect(texts.at(-1)).toBe(gameState.objective);
+    overlay.hide();
+  });
   it("covers the existing 1200-depth feedback and 1700-depth cutscene chrome", () => {
     const { overlay, containers } = harness();
     overlay.toggle();

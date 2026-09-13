@@ -72,3 +72,23 @@ pass. Completion-time accounting and a subsequent touch-resume issue are now
 addressed in [Pause Time and Resume](PAUSE_TIME_AND_RESUME.md); other legacy
 enemies need the same overlay-freeze audit as the NARA drones.
 No public deployment was performed.
+# Current-chapter objective check (2026-09-13)
+
+An isolated Chrome context restored the cue-led opening's earned Archive save at
+375x667/DPR3. The map showed room codes, locks, and dungeon status but no current
+task. The active chapter now shows the live objective beneath its status rows;
+other chapter pages (or an empty objective) retain the existing legend. The Log
+continues to hold the full objective. Long map objectives wrap to two lines with
+an ellipsis rather than shrinking the font or crossing the panel boundary.
+
+Before/after native captures: `/private/tmp/frus-map-current/before.png` and
+`/private/tmp/frus-map-current/map.png`. The after capture shows `PICK UP SOURCE
+NOTE` without overlapping the status rows. No page or console errors were
+captured. Tests cover wrapping, current-versus-other chapter behavior, and a
+changed objective when returning to the current chapter. All 221 test files /
+1,685 tests and the build pass; the existing bundle-size warning remains.
+The standard browser client also ran in Archive and its native capture was
+inspected. This is simulated-mobile layout evidence, not physical-device or
+first-time-player comprehension proof. Room-code discoverability remains a
+usability question for a fresh player; no map, gate, save, or progression data
+was changed.

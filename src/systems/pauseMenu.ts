@@ -49,6 +49,11 @@ export function pauseTextPages(text: string, columns = 36, rows = 10): string[] 
   return pages.length ? pages : [""];
 }
 
+export function pauseMapObjective(objective: string): string {
+  const pages = pauseTextPages(objective.replace(/\s+/g, " ").trim(), 36, 2);
+  return pages.length > 1 ? `${pages[0].slice(0, -3).trimEnd()}...` : pages[0];
+}
+
 export function layoutPauseRooms<T extends { id: string; grid: { x: number; y: number } }>(rooms: readonly T[]) {
   if (!rooms.length) return [];
   const minX = Math.min(...rooms.map((room) => room.grid.x));

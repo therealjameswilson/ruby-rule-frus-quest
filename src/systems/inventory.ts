@@ -23,7 +23,7 @@ import { openCodex } from "./codexOverlay";
 import { cycleLanguage, getLanguage, getString } from "./i18n";
 import {
   layoutPauseRooms, movePauseTool, PAUSE_HEADER, PAUSE_NEXT, PAUSE_PAGES, PAUSE_PREVIOUS,
-  pauseHitAt, pauseTextPages, pauseToolHit, setPauseMenuReadout
+  pauseHitAt, pauseMapObjective, pauseTextPages, pauseToolHit, setPauseMenuReadout
 } from "./pauseMenu";
 import type { PauseDirection, PauseHit, PausePage } from "./pauseMenu";
 
@@ -364,7 +364,9 @@ export class InventoryOverlay {
       this.art(x, y, SNES_DUNGEON_STATUS_RELIC_ASSET.key, state.frame, state.held ? 1 : 0.4);
       this.text(x + 10, y - 4, state.label, state.held ? PALETTE.goldStamp : PALETTE.white);
     });
-    this.text(128, 220, getString("pause.mapLegend"), PALETTE.stoneGray, true);
+    const objective = dungeon.active ? pauseMapObjective(gameState.objective) : "";
+    this.text(128, objective ? 214 : 220, objective || getString("pause.mapLegend"),
+      objective ? PALETTE.terminalCyan : PALETTE.stoneGray, true);
   }
 
   private records(subscreen: AdventureSubscreenReadout): RecordCard[] {

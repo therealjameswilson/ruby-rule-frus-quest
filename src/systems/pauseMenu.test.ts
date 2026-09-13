@@ -1,9 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { FRUS_ROOM_GRAPH } from "../game/constants";
 import { getString, LANGUAGES, setLanguage } from "./i18n";
-import { layoutPauseRooms, movePauseTool, PAUSE_HEADER, PAUSE_NEXT, PAUSE_PREVIOUS, pauseHitAt, pauseTextPages, pauseToolHit } from "./pauseMenu";
+import { layoutPauseRooms, movePauseTool, PAUSE_HEADER, PAUSE_NEXT, PAUSE_PREVIOUS, pauseHitAt, pauseMapObjective, pauseTextPages, pauseToolHit } from "./pauseMenu";
 
 describe("readable pause layout", () => {
+  it("keeps the map objective within two lines and marks omitted text", () => {
+    expect(pauseMapObjective("PICK UP SOURCE NOTE")).toBe("PICK UP SOURCE NOTE");
+    expect(pauseMapObjective("  PICK UP\nSOURCE NOTE  ")).toBe("PICK UP SOURCE NOTE");
+    expect(pauseMapObjective("")).toBe("");
+    const long = pauseMapObjective("Recover the source note and verify every citation before returning to the desk to file the complete annotated document set.");
+    expect(long.endsWith("...")).toBe(true);
+    expect(long.split("\n")).toHaveLength(2);
+    for (const line of long.split("\n")) expect(line.length).toBeLessThanOrEqual(36);
+  });
   it("gives every tab and item its own non-overlapping 44px touch target", () => {
     const hits = [...PAUSE_HEADER, ...Array.from({ length: 10 }, (_, index) => pauseToolHit(index))];
     for (const hit of hits) {
