@@ -105,8 +105,23 @@ try {
       return ui.questBandCueText.text.includes('ROUTE MEMO') && ui.questBandVerbText.text!=='!';
     });
     await press();
+    if (process.argv.includes('--office-cues')) {
+      await shot('opening-memo-filed');
+      await page.waitForFunction(() => {
+        const ui=window.game.scene.getScene('UIScene');
+        return JSON.parse(window.render_game_to_text()).nearestInteractable === 'Stamp Memo'
+          && ui.questBandCueText.text.includes('STAMP MEMO');
+      }, {}, { timeout: 2000 });
+      assert.equal((await state()).sceneProgress.officeStarterMemoStatus, 2);
+    }
     await press();
     await shot('opening-door-unlocked');
+    if (process.argv.includes('--office-cues')) {
+      const activeIds = await page.evaluate(() => window.game.scene.getScene('OfficeScene').currentInteractables().map(target => target.id));
+      assert(!activeIds.includes('starter-memo'), 'Completed memo must not retake interaction focus');
+      assert(!activeIds.includes('production-inbox'), 'Stamped inbox must retire its opening-task prompt');
+      assert(activeIds.includes('archive-guide-door') && activeIds.includes('junior-compiler'));
+    }
     await move(128, 200);
     await press();
     await scene('GuideScene');

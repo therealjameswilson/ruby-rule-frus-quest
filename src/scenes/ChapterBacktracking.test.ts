@@ -40,6 +40,22 @@ function doorScene(scene: object, roomId: string, x = 14): DoorScene {
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
 
 describe("live cross-chapter exit handlers", () => {
+  it("retires finished Office tasks without hiding the colleague, door or other desks", () => {
+    const scene = new OfficeScene() as unknown as {
+      officeStarterMemoStatus(): number;
+      interactables: Array<{ id: string; label: string }>;
+      currentInteractables(): Array<{ id: string; label: string }>;
+    };
+    scene.officeStarterMemoStatus = () => 3;
+    const ids = ["starter-memo", "production-inbox", "junior-compiler", "archive-guide-door", "scope-charter-desk"];
+    scene.interactables = ids.map(id => ({ id, label: id }));
+    gameState.sceneProgress.juniorCompilerIntroduced = 1;
+    gameState.inventory.push("Master Declass Key");
+    const before = structuredClone(gameState);
+    expect(scene.currentInteractables().map(target => target.id)).toEqual(ids.slice(2));
+    expect(gameState).toEqual(before);
+    expect(scene.interactables.map(target => target.id)).toEqual(ids);
+  });
   it.each([
     [ArchiveScene, "A1", "OfficeScene", "O1"],
     [NetworkScene, "N1", "ArchiveScene", "A1"],

@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Office finished-task focus cleanup (2026-09-12):
+  - Reproduced fresh keyboard opening with --office-cues. The suspected stale Route Memo label did not persist: nearest target and HUD become Stamp Memo within the bounded check. No label-timing change made.
+  - Confirmed a separate defect: unlocking the archive reinstated all original interactables, including the collected memo and stamped inbox. Failing behavioral regression proved both still active. Filter them by their existing memo status while leaving colleague, archive and other desks unchanged; no source targets or save state mutated.
+  - Added opening QA assertions for stamp cue/status and retired completed targets. Full portrait-touch fresh route passes through harmless counter miss, pause, return, fragment, Continue and Archive entry. /private/tmp/frus-office-cues-after/. Native filing and unlocked-door screenshots inspected; no browser errors.
+  - 30 focused opening/backtracking tests and build pass (existing chunk warning). Installed gameplay client Office screenshot inspected: /private/tmp/frus-office-retired-client/. Local only. Next: evaluate the bindery's five handoffs for pacing and retain its meaningful index/certification decisions rather than repeating empty actions.
+
 - Visible opening playtest and first-tool guidance (2026-09-12):
   - Fresh isolated browser: followed rendered Title -> compiler -> Office prompts, spoke to JR, took memo, routed/stamped it and entered Guide. Navigation decisions used native screenshots, not quest flags or hidden target coordinates. Existing familiarity still means this is not a first-time participant study.
   - In Guide, approaching the visible colleague before the gold stamp opened three modal lines about deadlines, judgment and the toolbelt, without pointing to the current task. Replaced with nonblocking TAKE THE GOLD STAMP toast; full latestMessage gives leftward location, harmless counter explanation and preserves the editorial-judgment point.

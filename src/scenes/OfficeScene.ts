@@ -402,7 +402,11 @@ export class OfficeScene extends Phaser.Scene {
         if (junior) focused.push({ ...junior, radius: memoStatus >= 3 ? 34 : 18 });
         return focused;
       }
-      return this.interactables.map((interactable) => {
+      return this.interactables.filter((interactable) => {
+        if (interactable.id === "starter-memo") return memoStatus === 0;
+        if (interactable.id === "production-inbox") return memoStatus < 3;
+        return true;
+      }).map((interactable) => {
         if (interactable.id === "junior-compiler") {
           return {
             ...interactable,
