@@ -54,6 +54,19 @@ beforeEach(() => {
 });
 
 describe("GuideScene live counter integration", () => {
+  it("points to the first tool without opening a dialogue or awarding it", () => {
+    const guide = scene() as unknown as { talkColleague(): void; toast: { show: ReturnType<typeof vi.fn> } };
+    const show = vi.fn();
+    Object.assign(guide, { hasStamp: false, dialog: { show } });
+    const inventory = [...gameState.inventory];
+    const points = gameState.documentPoints;
+    guide.talkColleague();
+    expect(show).not.toHaveBeenCalled();
+    expect(guide.toast.show).toHaveBeenCalledWith("TAKE THE GOLD STAMP", expect.any(Object), "info");
+    expect(gameState.latestMessage).toContain("Practice cannot hurt you");
+    expect(gameState.inventory).toEqual(inventory);
+    expect(gameState.documentPoints).toBe(points);
+  });
   it("schedules one exit even when the earned gate is activated repeatedly", () => {
     const guide = scene();
     const delayedCall = vi.fn();

@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Visible opening playtest and first-tool guidance (2026-09-12):
+  - Fresh isolated browser: followed rendered Title -> compiler -> Office prompts, spoke to JR, took memo, routed/stamped it and entered Guide. Navigation decisions used native screenshots, not quest flags or hidden target coordinates. Existing familiarity still means this is not a first-time participant study.
+  - In Guide, approaching the visible colleague before the gold stamp opened three modal lines about deadlines, judgment and the toolbelt, without pointing to the current task. Replaced with nonblocking TAKE THE GOLD STAMP toast; full latestMessage gives leftward location, harmless counter explanation and preserves the editorial-judgment point.
+  - Browser verified explore mode, immediate left movement, unchanged points and no page errors after talking. /private/tmp/frus-colleague-hint-after.png inspected. Installed gameplay client passed; native capture inspected at /private/tmp/frus-player-client-native/native.png, artifacts /private/tmp/frus-colleague-client/.
+  - 10 focused Guide tests and production build pass (existing bundle warning). No new art, inventory or save schema changes. Local only.
+  - Follow-up: Office HUD appeared to retain Route Memo after placement while objective read Stamp at Inbox; reproduce before changing because currentInteractables already has state-based labels. Counter lesson visible face/wait/swing cues were observed but this screenshot-driven session did not complete it. Assess the initial success rhythm and final binding pacing next.
+
 - Cloud touch forgiveness and retry audit (2026-09-12):
   - Two earned phone-touch runs used sixteen fixed-cadence Cloud swings, orienting only by visible enemy position. First: Cloud HP 180 -> 124, reliability 90 -> 60; second: HP 180 -> 96, reliability 90 -> 70. Both subsequently reached victory and Continue without retries or missed deadlines. /private/tmp/frus-cloud-uneven-touch/ and /private/tmp/frus-cloud-uneven-guarded/.
   - Strengthened --cloud-imprecise to require attempted swings, positive reliability and actual boss damage/phase progress, alongside record/point invariants. Script syntax check passes; strengthened browser route passes with no errors. Native sample inspected.

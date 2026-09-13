@@ -277,11 +277,8 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private talkColleague() {
-    this.dialog.show("ARCHIVE COLLEAGUE", [
-      "The 30-year line is a deadline, not a decision-maker.",
-      "DANN-E can queue a task. It cannot own judgment.",
-      "Our toolbelt: stamp, pencil, folder, token, slip, lens, and buckram key."
-    ]);
+    this.toast.show("TAKE THE GOLD STAMP", this.player.position, "info");
+    setLatestMessage("Take the gold Citation Stamp to the left, then face and return the practice bolt. Practice cannot hurt you. The 30-year line is a deadline, not a decision-maker; DANN-E cannot own editorial judgment.");
   }
 
   private takeStamp() {
