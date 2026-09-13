@@ -81,6 +81,18 @@ export function nextEncounterWave<T>(queue: EncounterWaveQueue<T>): EncounterWav
   };
 }
 
+export function resumeCompletedWaves<T>(initial: EncounterWaveQueue<T>, completed: (entry: T) => boolean) {
+  let queue = initial;
+  let defeated = 0;
+  while (queue.pendingWaves.length && queue.pendingWaves[0].every(completed)) {
+    const step = nextEncounterWave(queue);
+    if (!step) break;
+    defeated += step.wave.length;
+    queue = step.queue;
+  }
+  return { queue, defeated };
+}
+
 export function hasPendingEncounterWaves<T>(queue: EncounterWaveQueue<T>) {
   return queue.pendingWaves.length > 0;
 }

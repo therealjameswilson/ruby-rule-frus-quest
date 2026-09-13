@@ -15,7 +15,7 @@ export class Manuscript {
   readonly x: number;
   readonly y: number;
 
-  constructor(scene: Phaser.Scene, id: string, label: string, x: number, y: number) {
+  constructor(scene: Phaser.Scene, id: string, label: string, x: number, y: number, showLabel = true) {
     this.id = id;
     this.label = label;
     this.x = x;
@@ -28,7 +28,7 @@ export class Manuscript {
         color: PALETTE.creamPaper,
         backgroundColor: PALETTE.black
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(0.5, 0).setVisible(showLabel);
     this.container = scene.add.container(x, y, [image, text]).setDepth(y);
     scene.tweens.add({
       targets: image,

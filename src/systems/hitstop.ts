@@ -73,7 +73,7 @@ export const ATTACK_BUFFER_MS = 110;
  * clean input is never silently dropped. `consume` fires at most once per press.
  */
 export class AttackBuffer {
-  private bufferedUntil = 0;
+  private bufferedUntil: number | null = null;
 
   press(now: number, windowMs = ATTACK_BUFFER_MS): void {
     if (!Number.isFinite(now)) return;
@@ -81,12 +81,12 @@ export class AttackBuffer {
   }
 
   consume(now: number, canAct: boolean): boolean {
-    if (!canAct || !Number.isFinite(now) || now > this.bufferedUntil) return false;
-    this.bufferedUntil = 0;
+    if (!canAct || !Number.isFinite(now) || this.bufferedUntil === null || now > this.bufferedUntil) return false;
+    this.bufferedUntil = null;
     return true;
   }
 
   clear(): void {
-    this.bufferedUntil = 0;
+    this.bufferedUntil = null;
   }
 }

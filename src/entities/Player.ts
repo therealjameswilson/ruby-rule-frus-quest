@@ -1,9 +1,8 @@
 import Phaser from "phaser";
-import { characterAnimKey } from "../art/character_anims";
+import { characterAnimKey, FRAMES } from "../art/character_anims";
 import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId } from "../game/constants";
-import { applyHalfTileMovementCorrection } from "../game/questArchitecture";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
 import { consumeResumePlayerSpawn, gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
@@ -12,8 +11,9 @@ import { PLAYER_HURT_MS, PLAYER_IFRAME_MS, toHitboxReadout } from "../systems/co
 import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
-import { approach, frameDeltaSeconds, resolveFacing, resolveMovementVector, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
+import { frameDeltaSeconds, PLAYER_MOVEMENT_TUNING, resolveFacing, resolveMovementVector, resolveWalkingVelocity, setRenderedPosition, snapRenderedPosition, walkingFeetOverlap } from "../systems/smoothMovement";
 import { buildWeaponHitbox, WEAPON_VFX_ASSET, WeaponStateController, weaponTiming } from "../systems/weaponState";
+import { CombatClock } from "../systems/combatClock";
 
 interface MoveBounds {
   left: number;
@@ -74,16 +74,7 @@ interface ActionColors {
 
 export class Player {
   readonly sprite: Phaser.GameObjects.Sprite;
-  private readonly speed = 58;
-  // ALTTP overworld walking is essentially instantaneous: full speed on the
-  // first press, a hard stop on release. The previous 720/900 rates left a
-  // ~5-frame ease-in and a ~4-frame glide (~2px of drift after key release)
-  // that read as floaty. These rates reach full speed in ~1.5 frames and stop
-  // in ~1 frame, keeping the sub-pixel smoothing without the sluggish ramp or
-  // the post-release slide.
-  private readonly acceleration = 2300;
-  private readonly deceleration = 4000;
-  private readonly cornerNudgePixels = 3;
+  private readonly cornerNudgePixels = 4;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly actionHitboxVisual: Phaser.GameObjects.Rectangle;
   private readonly actionTrail: Phaser.GameObjects.Rectangle;
@@ -108,8 +99,10 @@ export class Player {
   private logicalY: number;
   private velocityX = 0;
   private velocityY = 0;
+  private movementOptions: PlayerMoveOptions = {};
   private readonly scene: Phaser.Scene;
   private readonly weaponState = new WeaponStateController();
+  private readonly combatClock = new CombatClock();
   private facing: Direction = "south";
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
@@ -225,7 +218,7 @@ export class Player {
   }
 
   get activeActionHitbox() {
-    return this.weaponState.activeHitbox(this.position, this.facing, this.scene.time.now);
+    return this.weaponState.activeHitbox(this.position, this.facing, this.combatTime);
   }
 
   get actionId() {
@@ -233,11 +226,19 @@ export class Player {
   }
 
   get isInvulnerable() {
-    return this.scene.time.now < this.invulnerableUntil;
+    return this.combatTime < this.invulnerableUntil;
+  }
+
+  private get combatTime() {
+    return this.combatClock.now(this.scene.time.now);
+  }
+
+  setCombatPaused(paused: boolean) {
+    if (this.combatClock.setPaused(paused, this.scene.time.now)) this.sprite.setActive(!paused);
   }
 
   get combatReadout(): PlayerCombatReadout {
-    const now = this.scene.time.now;
+    const now = this.combatTime;
     const hitbox = this.activeActionHitbox;
     const weapon = this.weaponState.readout(now);
     return {
@@ -261,12 +262,40 @@ export class Player {
     setPlayerFacing(this.facing);
   }
 
+  faceTowards(target: Position) {
+    const dx = target.x - this.logicalX;
+    const dy = target.y - this.logicalY;
+    if (dx === 0 && dy === 0) return;
+    this.facing = Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "west" : "east") : (dy < 0 ? "north" : "south");
+    this.syncRenderPosition();
+    setPlayerFacing(this.facing);
+  }
+
   pushAwayFrom(source: Position, distance = 12) {
-    const dx = this.logicalX - source.x;
-    const dy = this.logicalY - source.y;
-    const length = Math.max(1, Math.hypot(dx, dy));
-    this.logicalX = Phaser.Math.Clamp(this.logicalX + (dx / length) * distance, 14, GAME_WIDTH - 14);
-    this.logicalY = Phaser.Math.Clamp(this.logicalY + (dy / length) * distance, 42, GAME_HEIGHT - 20);
+    let dx = this.logicalX - source.x;
+    let dy = this.logicalY - source.y;
+    // Exact overlap has no source direction; recoil backward without turning.
+    if (dx === 0 && dy === 0) {
+      dx = this.facing === "east" ? -1 : this.facing === "west" ? 1 : 0;
+      dy = this.facing === "south" ? -1 : this.facing === "north" ? 1 : 0;
+    }
+    const length = Math.hypot(dx, dy);
+    const startX = this.logicalX;
+    const startY = this.logicalY;
+    const bounds = this.movementOptions.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
+    const solids = this.movementOptions.solids ?? [];
+    const steps = Math.max(1, Math.ceil(Math.abs(distance)));
+    // Sweep the feet through knockback so a hit cannot cross or embed in a wall.
+    for (let step = 1; step <= steps; step += 1) {
+      const travelled = distance * step / steps;
+      const x = Phaser.Math.Clamp(startX + (dx / length) * travelled, bounds.left, bounds.right);
+      const y = Phaser.Math.Clamp(startY + (dy / length) * travelled, bounds.top, bounds.bottom);
+      if (this.collidesAt(x, y, solids)) break;
+      this.logicalX = x;
+      this.logicalY = y;
+    }
+    this.velocityX = 0;
+    this.velocityY = 0;
     this.isMoving = false;
     this.syncRenderPosition();
     setPlayerPosition(this.position);
@@ -274,7 +303,7 @@ export class Player {
   }
 
   startAction(tool: ProcessItemId | null = gameState.equippedProcessItem) {
-    const now = this.scene.time.now;
+    const now = this.combatTime;
     const started = this.weaponState.tryStart(tool, now);
     if (!started) return false;
     this.controlState = "attack";
@@ -291,8 +320,8 @@ export class Player {
 
   takeHit(source: Position, distance = 14, invulnerabilityMs = PLAYER_IFRAME_MS) {
     if (this.isInvulnerable) return false;
-    this.invulnerableUntil = this.scene.time.now + invulnerabilityMs;
-    this.hurtUntil = this.scene.time.now + PLAYER_HURT_MS;
+    this.invulnerableUntil = this.combatTime + invulnerabilityMs;
+    this.hurtUntil = this.combatTime + PLAYER_HURT_MS;
     this.controlState = "hurt";
     this.pushAwayFrom(source, distance);
     const heavy = distance >= 15;
@@ -303,8 +332,9 @@ export class Player {
   }
 
   update(deltaMs: number, canMove: boolean, options: PlayerMoveOptions = {}) {
-    this.idleClock += deltaMs;
-    const now = this.scene.time.now;
+    this.setCombatPaused(!canMove);
+    if (canMove) this.idleClock += deltaMs;
+    const now = this.combatTime;
     this.weaponState.update(now);
     if (!canMove) {
       this.isMoving = false;
@@ -318,21 +348,40 @@ export class Player {
       setPlayerFacing(this.facing);
       return;
     }
+    this.movementOptions = options;
     const movementInput = this.resolveMovementInput();
-    this.facing = movementInput.facing;
+    // Keep a committed swing readable while still allowing evasive footwork.
+    if (this.weaponState.phase !== "windup" && this.weaponState.phase !== "active") {
+      this.facing = movementInput.facing;
+    }
     const dx = movementInput.x;
     const dy = movementInput.y;
-    const inputMoving = movementInput.moving;
     const dt = frameDeltaSeconds(deltaMs);
     const movementScale = this.weaponState.movementScale(now);
-    const targetVelocityX = dx * this.speed * movementScale;
-    const targetVelocityY = dy * this.speed * movementScale;
-    const velocityRate = inputMoving ? this.acceleration : this.deceleration;
-    this.velocityX = approach(this.velocityX, targetVelocityX, velocityRate * dt);
-    this.velocityY = approach(this.velocityY, targetVelocityY, velocityRate * dt);
-    const moving = Math.abs(this.velocityX) > 0.1 || Math.abs(this.velocityY) > 0.1;
+    const velocity = resolveWalkingVelocity(getInput().dir, movementScale);
+    this.velocityX = velocity.x;
+    this.velocityY = velocity.y;
+    const startX = this.logicalX;
+    const startY = this.logicalY;
     const bounds = options.bounds ?? { left: 14, right: GAME_WIDTH - 14, top: 42, bottom: GAME_HEIGHT - 20 };
     const solids = options.solids ?? [];
+    if (dx !== 0 && dy !== 0) {
+      // Once flush against a wall, spend the walking speed on the free axis.
+      // Probe only contact, not the full step, so approaching corners cannot
+      // accelerate diagonals or skip the clear portion of a collision step.
+      const probeX = this.logicalX + Math.sign(dx) * 0.001;
+      const probeY = this.logicalY + Math.sign(dy) * 0.001;
+      const blockedX = probeX < bounds.left || probeX > bounds.right || this.collidesAt(probeX, this.logicalY, solids);
+      const blockedY = probeY < bounds.top || probeY > bounds.bottom || this.collidesAt(this.logicalX, probeY, solids);
+      const speed = PLAYER_MOVEMENT_TUNING.speed * movementScale;
+      if (blockedX && !blockedY) {
+        this.velocityX = 0;
+        this.velocityY = Math.sign(dy) * speed;
+      } else if (blockedY && !blockedX) {
+        this.velocityX = Math.sign(dx) * speed;
+        this.velocityY = 0;
+      }
+    }
     const attemptedX = this.logicalX + this.velocityX * dt;
     const attemptedY = this.logicalY + this.velocityY * dt;
     const nextX = Phaser.Math.Clamp(attemptedX, bounds.left, bounds.right);
@@ -342,9 +391,9 @@ export class Player {
         this.logicalX = nextX;
         if (nextX !== attemptedX) this.velocityX = 0;
       } else {
-        if (!this.tryCornerNudge("x", nextX, this.logicalY, bounds, solids)) {
+        this.logicalX = this.approachObstacle("x", nextX, solids);
+        if (dy !== 0 || !this.tryCornerNudge("x", nextX, this.logicalY, bounds, solids, PLAYER_MOVEMENT_TUNING.cornerGuideSpeed * movementScale * dt)) {
           this.velocityX = 0;
-          this.applyHalfTileCorrection(this.facing, bounds, solids);
         }
       }
     }
@@ -353,15 +402,18 @@ export class Player {
         this.logicalY = nextY;
         if (nextY !== attemptedY) this.velocityY = 0;
       } else {
-        if (!this.tryCornerNudge("y", this.logicalX, nextY, bounds, solids)) {
+        this.logicalY = this.approachObstacle("y", nextY, solids);
+        if (dx !== 0 || !this.tryCornerNudge("y", this.logicalX, nextY, bounds, solids, PLAYER_MOVEMENT_TUNING.cornerGuideSpeed * movementScale * dt)) {
           this.velocityY = 0;
-          this.applyHalfTileCorrection(this.facing, bounds, solids);
         }
       }
     }
+    const moving = Math.abs(this.logicalX - startX) > 0.001 || Math.abs(this.logicalY - startY) > 0.001;
     if (moving) {
-      this.walkClock += deltaMs;
-      this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && dx < 0);
+      // Keep the stride tied to ground covered, including slow tool footwork.
+      this.walkClock += Math.hypot(this.logicalX - startX, this.logicalY - startY)
+        / PLAYER_MOVEMENT_TUNING.speed * 1000;
+      this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && this.facing === "west");
     } else {
       this.walkClock = 0;
     }
@@ -376,47 +428,80 @@ export class Player {
     setPlayerFacing(this.facing);
   }
 
+  private approachObstacle(axis: "x" | "y", target: number, solids: Phaser.Geom.Rectangle[]) {
+    let clear = axis === "x" ? this.logicalX : this.logicalY;
+    let blocked = target;
+    // Preserve the clear part of this frame's step instead of stopping a whole
+    // frame short. Keep physics sub-pixel; only the visible sprite is snapped.
+    for (let i = 0; i < 12; i += 1) {
+      const midpoint = (clear + blocked) / 2;
+      const x = axis === "x" ? midpoint : this.logicalX;
+      const y = axis === "y" ? midpoint : this.logicalY;
+      if (this.collidesAt(x, y, solids)) blocked = midpoint;
+      else clear = midpoint;
+    }
+    return clear;
+  }
+
   private collidesAt(x: number, y: number, solids: Phaser.Geom.Rectangle[]) {
     if (!solids.length) return false;
-    const footBox = new Phaser.Geom.Rectangle(x - 8, y - 3, 16, 8);
-    return solids.some((solid) => Phaser.Geom.Intersects.RectangleToRectangle(footBox, solid));
+    return solids.some((solid) => walkingFeetOverlap(x, y, solid));
   }
 
-  private applyHalfTileCorrection(direction: Direction, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[]) {
-    if (!solids.length) return;
-    const corrected = applyHalfTileMovementCorrection({
-      position: { x: this.logicalX, y: this.logicalY },
-      direction,
-      bounds,
-      canOccupy: (position) => !this.collidesAt(position.x, position.y, solids)
-    });
-    this.logicalX = corrected.x;
-    this.logicalY = corrected.y;
-  }
-
-  private tryCornerNudge(axis: "x" | "y", targetX: number, targetY: number, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[]) {
+  private tryCornerNudge(axis: "x" | "y", targetX: number, targetY: number, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[], maxStep: number) {
     if (!solids.length) return false;
-    const offsets = [-this.cornerNudgePixels, this.cornerNudgePixels];
-    for (const offset of offsets) {
-      const nudgedX = axis === "y"
-        ? Phaser.Math.Clamp(this.logicalX + offset, bounds.left, bounds.right)
-        : Phaser.Math.Clamp(targetX, bounds.left, bounds.right);
-      const nudgedY = axis === "x"
-        ? Phaser.Math.Clamp(this.logicalY + offset, bounds.top, bounds.bottom)
-        : Phaser.Math.Clamp(targetY, bounds.top, bounds.bottom);
-      if (!this.collidesAt(nudgedX, nudgedY, solids)) {
-        this.logicalX = nudgedX;
-        this.logicalY = nudgedY;
-        if (axis === "x") this.velocityX = 0;
-        else this.velocityY = 0;
-        return true;
+    // Search nearest-first on both sides: a fixed negative-first three-pixel
+    // probe can pull the player away from the opening they almost cleared.
+    for (let distance = 1; distance <= this.cornerNudgePixels; distance += 1) {
+      for (let sign = -1; sign <= 1; sign += 2) {
+        const offset = sign * distance;
+        const nudgedX = axis === "y"
+          ? Phaser.Math.Clamp(this.logicalX + offset, bounds.left, bounds.right)
+          : Phaser.Math.Clamp(targetX, bounds.left, bounds.right);
+        const nudgedY = axis === "x"
+          ? Phaser.Math.Clamp(this.logicalY + offset, bounds.top, bounds.bottom)
+          : Phaser.Math.Clamp(targetY, bounds.top, bounds.bottom);
+        if (!this.collidesAt(nudgedX, nudgedY, solids)) {
+          // Resolve fractional clearance before guiding so a nearly aligned
+          // doorway doesn't pull the feet a whole extra pixel sideways.
+          let blockedOffset = 0;
+          let clearOffset = distance;
+          for (let i = 0; i < 12; i += 1) {
+            const offset = (blockedOffset + clearOffset) / 2;
+            const x = axis === "y" ? this.logicalX + sign * offset : targetX;
+            const y = axis === "x" ? this.logicalY + sign * offset : targetY;
+            if (this.collidesAt(x, y, solids)) blockedOffset = offset;
+            else clearOffset = offset;
+          }
+          // Approaching the wall already spent part of this frame's movement.
+          // Corner guidance may redirect only the distance that remains.
+          const unusedDistance = Math.abs(axis === "x" ? targetX - this.logicalX : targetY - this.logicalY);
+          const step = sign * Math.min(clearOffset, maxStep, unusedDistance);
+          const slideX = axis === "y" ? Phaser.Math.Clamp(this.logicalX + step, bounds.left, bounds.right) : this.logicalX;
+          const slideY = axis === "x" ? Phaser.Math.Clamp(this.logicalY + step, bounds.top, bounds.bottom) : this.logicalY;
+          if (this.collidesAt(slideX, slideY, solids)) continue;
+          this.logicalX = slideX;
+          this.logicalY = slideY;
+          // Spend only the unused part of the blocked step after clearing the
+          // edge. This avoids a one-frame stop without adding corner speed.
+          const remaining = Math.max(0, Math.abs(axis === "x" ? targetX - slideX : targetY - slideY) - Math.abs(step));
+          const forwardX = axis === "x" ? slideX + Math.sign(targetX - slideX) * remaining : slideX;
+          const forwardY = axis === "y" ? slideY + Math.sign(targetY - slideY) * remaining : slideY;
+          if (!this.collidesAt(forwardX, forwardY, solids)) {
+            this.logicalX = forwardX;
+            this.logicalY = forwardY;
+          }
+          if (axis === "x") this.velocityX = 0;
+          else this.velocityY = 0;
+          return true;
+        }
       }
     }
     return false;
   }
 
   private playAbilityFrame() {
-    this.abilityFrameUntil = this.scene.time.now + 420;
+    this.abilityFrameUntil = this.combatTime + 420;
     this.controlState = "use_item";
     if (this.spriteMode === "snesRoleFrame48" || this.spriteMode === "artPack32x48") {
       this.sprite.clearTint();
@@ -448,7 +533,7 @@ export class Player {
     setPlayerCombat(this.combatReadout);
   }
 
-  private currentControlState(now = this.scene.time.now): PlayerControlState {
+  private currentControlState(now = this.combatTime): PlayerControlState {
     if (now < this.hurtUntil) return "hurt";
     if (this.weaponState.phase === "windup" || this.weaponState.phase === "active") return "attack";
     if (this.controlState === "hurt" || this.controlState === "attack") return this.isMoving ? "walk" : "idle";
@@ -507,7 +592,7 @@ export class Player {
   }
 
   private syncActionEffect(hitbox: Phaser.Geom.Rectangle) {
-    const now = this.scene.time.now;
+    const now = this.combatTime;
     const readout = this.weaponState.readout(now);
     const timing = weaponTiming(readout.tool);
     const remainingRatio = timing.activeMs <= 0 ? 0 : Phaser.Math.Clamp(readout.activeMsRemaining / timing.activeMs, 0, 1);
@@ -566,10 +651,10 @@ export class Player {
   private syncInvulnerabilityBlink() {
     if (!this.isInvulnerable) {
       this.sprite.setAlpha(1);
-      if (this.scene.time.now >= this.abilityFrameUntil) this.sprite.clearTint();
+      if (this.combatTime >= this.abilityFrameUntil) this.sprite.clearTint();
       return;
     }
-    const blinkOn = Math.floor(this.scene.time.now / 90) % 2 === 0;
+    const blinkOn = Math.floor(this.combatTime / 90) % 2 === 0;
     this.sprite.setAlpha(blinkOn ? 1 : 0.45);
     this.sprite.setTint(color(PALETTE.classNetRed));
   }
@@ -684,7 +769,7 @@ export class Player {
     if (!this.idleParts.length) return;
     const tick = Math.floor(this.idleClock / 360) % 4;
     const fastTick = Math.floor(this.idleClock / 180) % 4;
-    const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+    const abilityActive = this.combatTime < this.abilityFrameUntil;
     const hideAnimatedCue = this.isMoving && !abilityActive;
     for (const part of this.idleParts) {
       let x = renderX + part.ox;
@@ -730,8 +815,15 @@ export class Player {
 
   private updateRoleFrame() {
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
-      const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+      const abilityActive = this.combatTime < this.abilityFrameUntil;
       const directionSuffix = this.directionSuffix();
+      if (this.isMoving && !abilityActive) {
+        // Preserve the stride phase across turns instead of restarting the
+        // two-frame walk on every direction change.
+        this.sprite.anims.stop();
+        this.sprite.setFrame(FRAMES.walk[directionSuffix][Math.floor(this.walkClock / 125) % 2]);
+        return;
+      }
       const suffix = abilityActive
         ? this.isActionActive
           ? "interact"
@@ -747,7 +839,7 @@ export class Player {
     }
     if (this.spriteMode !== "snesRoleFrame48" || !this.roleFrameSheet) return;
     const texture = this.scene.textures.get(this.roleFrameSheet.key);
-    const abilityActive = this.scene.time.now < this.abilityFrameUntil;
+    const abilityActive = this.combatTime < this.abilityFrameUntil;
     const directionFrames: Record<Direction, string> = {
       north: "walk-up",
       south: "walk-down",

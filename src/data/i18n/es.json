@@ -92,11 +92,64 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
+    "encounterEvade": "RETIRATE; FALTA {tool}",
+    "encounterEquip": "EQUIPA {tool}",
+    "encounterCounter": "CONTRAATACA: {tool}",
+    "encounterExplore": "EXPLORA RUTAS ABIERTAS",
+    "annotationExits": "NARA NORTE / ARCHIVO SUR",
+    "readingRoomBook": "LIBRO: PASILLO CENTRAL",
+    "readingRoomExit": "SALIDA: PUERTA SUR",
+    "restoreChronology": "ORDENA EL REGISTRO",
+    "annotationAisles": "PASILLOS / MESA AL SUR",
+    "annotationNorth": "NORTE: NOTAS",
+    "guideCoach": {
+      "faceNorth": "MIRA ARRIBA HACIA EL RAYO",
+      "faceSouth": "MIRA ABAJO HACIA EL RAYO",
+      "faceEast": "MIRA A LA DERECHA",
+      "faceWest": "MIRA A LA IZQUIERDA",
+      "stepBack": "RETROCEDE PARA RECIBIRLO",
+      "wait": "LISTO - ESPERA EL RAYO",
+      "swing": "GOLPEA AHORA!",
+      "recover": "SELLO RECARGANDO",
+      "returned": "EGO DEVUELTO!"
+    },
+    "guideReturned": "EGO DEVUELTO!",
+    "guideAim": "MIRA LA LINEA DORADA",
+    "guideSwing": "GOLPEA AL LLEGAR EL EGO",
+    "guideRetry": "SIN DANO - REINTENTA",
+    "office": {
+      "talk_jr": "HABLA CON JR - OESTE",
+      "take_memo": "TOMA LA NOTA",
+      "route_memo": "NOTA A BANDEJA OESTE",
+      "stamp_memo": "SELLA EN BANDEJA",
+      "recover_key": "PIDE LA LLAVE A JR",
+      "enter_archive": "ARCHIVO - PUERTA SUR"
+    },
+    "guide": {
+      "stamp": "TOMA SELLO DE CITA",
+      "counter": "DEVUELVE EL EGO",
+      "fragment": "TOMA FRAGMENTO FRUS",
+      "gate": "VE AL ARCHIVO AL SUR"
+    },
     "carryItem": "Lleva {item}.",
     "chooseAnswer": "Elige respuesta.",
+    "reviewRoutes": "REVISA LAS RUTAS",
+    "compareProof": "COMPARA ORIGINAL",
+    "reviewRecord": "REVISA EL REGISTRO",
+    "bindery": {
+      "inbox": "PAQUETE: BANDEJA SUR",
+      "front-matter-bench": "PORTADA: ARRIBA IZQ.",
+      "index-desk": "INDICE: ABAJO IZQ.",
+      "kellogg-press": "SELLO: ARRIBA CENTRO",
+      "gpo-handoff": "GPO: ARRIBA DER.",
+      "public-release-terminal": "PUBLICO: ABAJO DER.",
+      "binding-press": "REVISA PRENSA CENTRAL"
+    },
     "confirm": "CONFIRMAR",
     "controllerConnected": "MANDO CONECTADO",
     "findGlowing": "BUSCA UN ESCRITORIO O PUERTA BRILLANTE",
+    "followQuestArrow": "SIGUE LA FLECHA DORADA",
+    "walkOpenGate": "CRUZA LA PUERTA ABIERTA",
     "goLeftTalk": "HABLA CON JR",
     "interact": "INTERACTUAR: {label}",
     "nextLine": "SIGUIENTE LÍNEA",
@@ -105,7 +158,10 @@
     "talkJuniorCompiler": "Habla con el Compilador Junior.",
     "toolLabel": "HERRAMIENTA {label}",
     "touchControlsReady": "CONTROLES TÁCTILES LISTOS",
-    "useTool": "USAR {tool}"
+    "useTool": "USAR {tool}",
+    "counterDanne": "GOLPEAR / DEVOLVER EGO",
+    "dispatchAisles": "EXPLORA LOS PASILLOS",
+    "dispatchReturn": "AL SUR PARA REVISION"
   },
   "items": {
     "buckramKey": {
@@ -178,6 +234,26 @@
     "title": "CENTRO DE OFICINA"
   },
   "pause": {
+    "tabs": { "tools": "EQUIPO", "map": "MAPA", "record": "DIARIO", "settings": "AJUSTE" },
+    "equipped": "EQUIPADO",
+    "ready": "{action} / TOCA OTRA VEZ: EQUIPA",
+    "inspect": "{action} / TOCA OTRA VEZ: VER",
+    "missing": "NO ENCONTRADO",
+    "back": "VOLVER",
+    "keys": "LLAVES",
+    "big": "GRAN LLAVE",
+    "map": "MAPA",
+    "review": "REVISION",
+    "mapLegend": "@ TU  ! REVISION  X CERRADO",
+    "discoveries": "HALLAZGOS",
+    "task": "TAREA DE COMPILACION",
+    "pendants": { "objectivity": "OBJETIVIDAD", "provenance": "FUENTES", "review": "REVISION" },
+    "progress": "TU VOLUMEN",
+    "done": "COMPLETO",
+    "binding": "ENCUADERNACION",
+    "shelf": "ESTANTE",
+    "contrast": "ALTO CONTRASTE / DALTONISMO",
+    "sound": "SONIDO",
     "board": "TABLERO",
     "certifyBuckramGate": "CERTIFICAR PUERTA BUCKRAM",
     "close": "X",
@@ -233,6 +309,8 @@
     "unlockAudio": "Toca o pulsa start para activar el audio."
   },
   "title": {
+    "beginQuest": "EMPEZAR MISIÓN",
+    "volumeGoal": "PUBLICA UN VOLUMEN FRUS",
     "arch": "ARCH",
     "archiveTerminal": "TERMINAL DEL ARCHIVO",
     "conf": "-CONF-",

@@ -4,10 +4,13 @@ import {
   computeToastPlacement,
   isToastExpired,
   toastAlpha,
+  toastAnchorForActor,
+  FEEDBACK_TOAST_GAP,
   type ToastAnchorBounds,
   type ToastPlacement
 } from "./feedbackToastPlacement";
 import { snapPixel } from "./pixelPerfect";
+import { CHOICE_PROMPT_OPEN_EVENT } from "./verification";
 
 export {
   computeToastPlacement,
@@ -29,14 +32,17 @@ type ToastTone = "warn" | "info";
 // swallowed before, most importantly the "nothing to interact with" cue when the
 // player presses the primary action away from any target (live audit, 2026-06-15).
 export class FeedbackToast {
+  private readonly scene: Phaser.Scene;
   private readonly container: Phaser.GameObjects.Container;
   private readonly panel: Phaser.GameObjects.Rectangle;
   private readonly border: Phaser.GameObjects.Rectangle;
   private readonly text: Phaser.GameObjects.Text;
   private elapsed = 0;
   private active = false;
+  private interactionHint = false;
 
-  constructor(scene: Phaser.Scene, depth = 1200) {
+  constructor(scene: Phaser.Scene, depth = 1200, private readonly actorBounds?: () => { top: number; bottom: number }) {
+    this.scene = scene;
     this.panel = scene.add.rectangle(0, 0, 80, 16, color(PALETTE.shadowNavy), 0.96).setOrigin(0.5);
     this.border = scene.add.rectangle(0, 0, 82, 18).setStrokeStyle(1, color(PALETTE.goldStamp)).setOrigin(0.5);
     this.text = scene.add
@@ -51,6 +57,8 @@ export class FeedbackToast {
       .container(0, 0, [this.panel, this.border, this.text])
       .setDepth(depth)
       .setVisible(false);
+    scene.events.on(CHOICE_PROMPT_OPEN_EVENT, this.hideForChoice);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.detachChoiceListener);
   }
 
   get visible() {
@@ -58,6 +66,7 @@ export class FeedbackToast {
   }
 
   show(message: string, anchor: ToastPlacement, tone: ToastTone = "warn", bounds?: ToastAnchorBounds) {
+    this.interactionHint = false;
     this.elapsed = 0;
     this.active = true;
     const upper = message.toUpperCase();
@@ -72,8 +81,18 @@ export class FeedbackToast {
     this.container.setAlpha(1).setVisible(true);
   }
 
+  showInteractionHint(message: string, anchor: ToastPlacement, tone: ToastTone = "warn") {
+    this.show(message, anchor, tone);
+    this.interactionHint = true;
+  }
+
+  dismissInteractionHint() {
+    if (this.interactionHint) this.hide();
+  }
+
   private place(anchor: ToastPlacement, bounds?: ToastAnchorBounds) {
-    const placement = computeToastPlacement(anchor, bounds, 26, this.border.displayWidth / 2);
+    const adjusted = this.actorBounds ? toastAnchorForActor(anchor, this.actorBounds(), bounds) : anchor;
+    const placement = computeToastPlacement(adjusted, bounds, FEEDBACK_TOAST_GAP, this.border.displayWidth / 2);
     this.container.setPosition(snapPixel(placement.x), snapPixel(placement.y));
   }
 
@@ -90,7 +109,21 @@ export class FeedbackToast {
     this.container.setAlpha(toastAlpha(this.elapsed));
   }
 
+  hide() {
+    this.active = false;
+    this.interactionHint = false;
+    this.container.setVisible(false);
+  }
+
   destroy() {
+    this.detachChoiceListener();
     this.container.destroy();
   }
+
+  private readonly hideForChoice = () => this.hide();
+
+  private readonly detachChoiceListener = () => {
+    this.scene.events.off(CHOICE_PROMPT_OPEN_EVENT, this.hideForChoice);
+    this.scene.events.off(Phaser.Scenes.Events.SHUTDOWN, this.detachChoiceListener);
+  };
 }

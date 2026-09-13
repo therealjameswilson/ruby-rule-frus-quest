@@ -32,7 +32,7 @@ export interface NetworkN1TileLayers {
   collisionCells: ReadonlyArray<{ tileX: number; tileY: number }>;
 }
 
-const EAST_EXIT_ROWS = new Set([4, 5, 6]);
+const SIDE_EXIT_ROWS = new Set([4, 5, 6]);
 
 function emptyLayer() {
   return Array.from(
@@ -42,7 +42,7 @@ function emptyLayer() {
 }
 
 export function isNetworkN1ExitCell(tileX: number, tileY: number) {
-  return tileX === NETWORK_N1_TILEMAP.columns - 1 && EAST_EXIT_ROWS.has(tileY);
+  return (tileX === 0 || tileX === NETWORK_N1_TILEMAP.columns - 1) && SIDE_EXIT_ROWS.has(tileY);
 }
 
 export function isNetworkN1WallCell(tileX: number, tileY: number) {
@@ -50,15 +50,25 @@ export function isNetworkN1WallCell(tileX: number, tileY: number) {
     || tileX === NETWORK_N1_TILEMAP.columns - 1
     || tileY === 0
     || tileY === NETWORK_N1_TILEMAP.rows - 1;
-  return border && !isNetworkN1ExitCell(tileX, tileY);
+  return (border && !isNetworkN1ExitCell(tileX, tileY)) || isNetworkN1DividerCell(tileX, tileY);
 }
 
-function groundTile(tileX: number) {
-  if (tileX === 7 || tileX === 8) return INTERIOR_TILES.centerLane;
+export function isNetworkN1DividerCell(tileX: number, tileY: number) {
+  return (tileX === 7 || tileX === 8) && (tileY >= 1 && tileY <= 3 || tileY === 7 || tileY === 8);
+}
+
+function groundTile(tileX: number, tileY: number) {
+  if (tileX === 7 || tileX === 8) {
+    if (tileY >= 4 && tileY <= 6 || tileY >= 9 && tileY <= 10) {
+      return tileX === 7 ? INTERIOR_TILES.openNetFloor : INTERIOR_TILES.classNetFloor;
+    }
+    return INTERIOR_TILES.centerLane;
+  }
   return tileX < 7 ? INTERIOR_TILES.openNetFloor : INTERIOR_TILES.classNetFloor;
 }
 
 function wallTile(tileX: number, tileY: number) {
+  if (isNetworkN1DividerCell(tileX, tileY)) return INTERIOR_TILES.wallMetal;
   const corner = (tileX === 0 || tileX === NETWORK_N1_TILEMAP.columns - 1)
     && (tileY === 0 || tileY === NETWORK_N1_TILEMAP.rows - 1);
   if (corner) return INTERIOR_TILES.wallPanel;
@@ -69,7 +79,7 @@ function wallTile(tileX: number, tileY: number) {
 export function buildNetworkN1TileLayers(): NetworkN1TileLayers {
   const ground: number[][] = Array.from(
     { length: NETWORK_N1_TILEMAP.rows },
-    () => Array.from({ length: NETWORK_N1_TILEMAP.columns }, (_, tileX) => packedTileGid(groundTile(tileX)))
+    (_, tileY) => Array.from({ length: NETWORK_N1_TILEMAP.columns }, (_, tileX) => packedTileGid(groundTile(tileX, tileY)))
   );
   const walls = emptyLayer();
   const decoration = emptyLayer();

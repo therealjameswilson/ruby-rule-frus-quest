@@ -5,7 +5,7 @@ export const FRUS_QUEST_LOOP =
   "Find documents, verify sources, clear equities, proof pages, then bind the volume.";
 
 export const FRUS_QUEST_STAKES =
-  "Reliability hearts fall when Kellogg standards are violated.";
+  "DANN-E hits cost reliability hearts. Unsafe edits also block publication until corrected.";
 
 export const FRUS_QUEST_FIRST_OBJECTIVE =
   "Mission: publish a reliable FRUS volume. First: talk to JR.";

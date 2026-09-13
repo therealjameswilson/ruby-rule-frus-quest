@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { WeaponStateController } from "./weaponState";
 import {
   ATTACK_BUFFER_MS,
   AttackBuffer,
@@ -90,6 +91,25 @@ describe("HitstopController", () => {
 });
 
 describe("AttackBuffer", () => {
+  it("does not invent or repeat a press at scene time zero", () => {
+    const buffer = new AttackBuffer();
+    expect(buffer.consume(0, true)).toBe(false);
+    buffer.press(0);
+    expect(buffer.consume(0, true)).toBe(true);
+    expect(buffer.consume(0, true)).toBe(false);
+    buffer.clear();
+    expect(buffer.consume(0, true)).toBe(false);
+  });
+
+  it("holds a late cooldown tap until the weapon is ready, once only", () => {
+    const buffer = new AttackBuffer(), weapon = new WeaponStateController();
+    weapon.tryStart("citation_stamp", 1000);
+    buffer.press(1340);
+    expect(buffer.consume(1340, weapon.readout(1340).canSwing)).toBe(false);
+    expect(buffer.consume(1395, weapon.readout(1395).canSwing)).toBe(true);
+    expect(weapon.tryStart("citation_stamp", 1395)).toBe(true);
+    expect(buffer.consume(1790, weapon.readout(1790).canSwing)).toBe(false);
+  });
   it("fires a press that lands within the grace window", () => {
     const buffer = new AttackBuffer();
     buffer.press(1000);

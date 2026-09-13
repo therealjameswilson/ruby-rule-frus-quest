@@ -1,7 +1,11 @@
 import { afterEach, describe, expect, it } from "vitest";
 import {
   getInput,
+  setNativeTextEntryActive,
   getPrimaryActionBadge,
+  getSecondaryActionBadge,
+  isTouchControlPoint,
+  updateInputCallbacks,
   pressKeyForTests,
   releaseKeyForTests,
   resetInput,
@@ -18,8 +22,30 @@ import {
 
 describe("InputState keyboard edges", () => {
   afterEach(() => {
+    setNativeTextEntryActive(false);
     setNowProviderForTests(null);
     resetInput();
+    updateInputCallbacks({ isTouchControlPoint: undefined });
+  });
+
+  it("suspends all game input during native text entry and swallows dismissal", () => {
+    setNativeTextEntryActive(true);
+    setKeyboardDownForTests(["KeyZ", "ArrowLeft", "Escape"]);
+    setTouchControl("space", true);
+    for (let frame = 0; frame < 3; frame++) {
+      tickInput();
+      expect(getInput().aJustPressed).toBe(false);
+      expect(getInput().pauseJustPressed).toBe(false);
+      expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    }
+    setNativeTextEntryActive(false);
+    tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    tickInput();
+    pressKeyForTests("KeyZ");
+    tickInput();
+    expect(getInput().aJustPressed).toBe(true);
   });
 
   it("maps Z to A and X/B to the secondary action", () => {
@@ -39,7 +65,7 @@ describe("InputState keyboard edges", () => {
     expect(getInput().bJustPressed).toBe(true);
   });
 
-  it("turns a too-short direction tap into a brief visible hold", () => {
+  it("samples a between-frame direction tap once without a forced hold", () => {
     let now = 1000;
     setNowProviderForTests(() => now);
     // A tap that latches the keydown time but leaves no key physically held,
@@ -48,14 +74,38 @@ describe("InputState keyboard edges", () => {
     tickInput();
     expect(getInput().dir).toEqual({ x: 1, y: 0 });
 
-    // Still moving a frame later, inside the hold window.
-    now += TAP_MOVEMENT_HOLD_MS - 10;
+    // The tap was observed; its safety latch must not add movement on release.
+    now += 16;
     tickInput();
-    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
 
     // After the hold window elapses, the latch releases and movement stops.
     now += 20;
     tickInput();
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+  });
+
+  it("stops a sampled short key press on release and reverses without stale input", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    pressKeyForTests("ArrowRight"); tickInput();
+    expect(getInput().dir).toEqual({ x: 1, y: 0 });
+    now += 16; releaseKeyForTests("ArrowRight"); tickInput();
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    now += 16; pressKeyForTests("ArrowLeft"); tickInput();
+    expect(getInput().dir).toEqual({ x: -1, y: 0 });
+  });
+
+  it("stops touch movement immediately and preserves an unsampled touch tap", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    setTouchControl("right", true); tickInput();
+    now += 16; setTouchControl("right", false); tickInput();
+    expect(getInput().dir).toEqual({ x: 0, y: 0 });
+    setTouchControl("left", true); setTouchControl("left", false);
+    now += 16; tickInput();
+    expect(getInput().dir).toEqual({ x: -1, y: 0 });
+    now += 16; tickInput();
     expect(getInput().dir).toEqual({ x: 0, y: 0 });
   });
 
@@ -110,6 +160,41 @@ describe("InputState keyboard edges", () => {
 
     setTouchControl("right", false);
     setTouchControl("down", true);
+    tickInput();
+    expect(getInput().navDownJustPressed).toBe(true);
+  });
+
+  it.each([
+    ["ArrowLeft", "navLeftJustPressed"], ["KeyA", "navLeftJustPressed"],
+    ["ArrowRight", "navRightJustPressed"], ["KeyD", "navRightJustPressed"],
+    ["ArrowUp", "navUpJustPressed"], ["KeyW", "navUpJustPressed"],
+    ["ArrowDown", "navDownJustPressed"], ["KeyS", "navDownJustPressed"]
+  ] as const)("re-arms %s menu taps inside the movement hold", (code, edge) => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    tapDirectionForTests(code);
+    tickInput();
+    expect(getInput()[edge]).toBe(true);
+    const movement = { ...getInput().dir };
+    now += 16;
+    tickInput();
+    expect(getInput()[edge]).toBe(false);
+    now += 24;
+    tapDirectionForTests(code);
+    tickInput();
+    expect(getInput()[edge]).toBe(true);
+    expect(getInput().dir).toEqual(movement);
+    tickInput();
+    expect(getInput()[edge]).toBe(false);
+  });
+
+  it("discards pending navigation when an overlay swallows input", () => {
+    tapDirectionForTests("ArrowDown");
+    swallowNextInputFrame();
+    tickInput();
+    tickInput();
+    expect(getInput().navDownJustPressed).toBe(false);
+    tapDirectionForTests("ArrowDown");
     tickInput();
     expect(getInput().navDownJustPressed).toBe(true);
   });
@@ -177,6 +262,14 @@ describe("InputState keyboard edges", () => {
 
   it("advertises the keyboard action key without overloading WASD", () => {
     expect(getPrimaryActionBadge()).toBe("Z");
+    expect(getSecondaryActionBadge()).toBe("X");
+  });
+
+  it("lets the live touch overlay reserve its button zones from pause-menu clicks", () => {
+    expect(isTouchControlPoint({ x: 174, y: 216 })).toBe(false);
+    updateInputCallbacks({ isTouchControlPoint: ({ x, y }) => x === 174 && y === 216 });
+    expect(isTouchControlPoint({ x: 174, y: 216 })).toBe(true);
+    expect(isTouchControlPoint({ x: 205, y: 182 })).toBe(false);
   });
 
   it("keeps just-pressed flags true for exactly one tick while held", () => {
@@ -260,6 +353,47 @@ describe("InputState keyboard edges", () => {
     tickInput();
     expect(getInput().a).toBe(false);
     expect(getInput().aJustReleased).toBe(true);
+  });
+
+  it.each([
+    ["KeyZ", "aJustPressed"], ["KeyX", "bJustPressed"],
+    ["Enter", "confirmJustPressed"], ["Escape", "cancelJustPressed"]
+  ] as const)("preserves two distinct %s taps inside the short-tap latch", (code, edge) => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    tapActionForTests(code); tickInput();
+    expect(getInput()[edge]).toBe(true);
+    now += 16; tickInput();
+    expect(getInput()[edge]).toBe(false);
+    now += 16; tapActionForTests(code); tickInput();
+    expect(getInput()[edge]).toBe(true);
+    now += 16; tickInput();
+    expect(getInput()[edge]).toBe(false);
+  });
+
+  it.each([["space", "aJustPressed"], ["b", "bJustPressed"]] as const)("re-arms a fresh touch %s press without repeating a held button", (key, edge) => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    setTouchControl(key, true); tickInput();
+    expect(getInput()[edge]).toBe(true);
+    now += 16; setTouchControl(key, true); tickInput();
+    expect(getInput()[edge]).toBe(false);
+    setTouchControl(key, false);
+    now += 16; setTouchControl(key, true); tickInput();
+    expect(getInput()[edge]).toBe(true);
+  });
+
+  it("clears queued fresh edges when an overlay swallows input", () => {
+    tapActionForTests("KeyZ");
+    tapActionForTests("KeyX");
+    setTouchControl("space", true);
+    setTouchControl("b", true);
+    swallowNextInputFrame();
+    tickInput(); tickInput();
+    expect(getInput().aJustPressed).toBe(false);
+    expect(getInput().bJustPressed).toBe(false);
+    expect(getInput().confirmJustPressed).toBe(false);
+    expect(getInput().cancelJustPressed).toBe(false);
   });
 
   it("turns a too-short Escape tap into a single pause/cancel edge", () => {

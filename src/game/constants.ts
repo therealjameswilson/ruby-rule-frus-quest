@@ -135,6 +135,16 @@ export const PROCESS_ROLES = [
 
 export type ProcessRoleId = (typeof PROCESS_ROLES)[number]["id"];
 
+export const DEFAULT_PROCESS_ROLE = (() => {
+  const role = PROCESS_ROLES.find((candidate) => candidate.id === "compiler");
+  if (!role) throw new Error("The default FRUS Compiler role is missing.");
+  return role;
+})();
+
+export function resolveProcessRole(roleId: string | null) {
+  return PROCESS_ROLES.find((role) => role.id === roleId) ?? DEFAULT_PROCESS_ROLE;
+}
+
 export const PROCESS_STAMPS = [
   { id: "rule", label: "RULE", title: "Golden Rule learned" },
   { id: "archive", label: "SRC", title: "Source provenance verified" },
@@ -295,7 +305,7 @@ export const AREA_REGISTRY = [
     reward: "Citation Stamp",
     rewardType: "item",
     rewardId: "citation_stamp",
-    scenes: ["GuideScene", "ArchiveScene", "NaraStacksScene"]
+    scenes: ["GuideScene", "ArchiveScene", "NaraStacksScene", "HiddenReadingRoomScene"]
   },
   {
     id: "two_networks",
@@ -384,16 +394,16 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     title: "Senate Hearing Chamber",
     grid: { x: -1, y: -1 },
     exits: { south: "O1" },
-    roomType: "hint"
+    roomType: "puzzle"
   },
   {
     id: "A1",
     area: "archive_cavern",
     title: "Source Entry",
     grid: { x: 0, y: 0 },
-    exits: { north: "DN1", east: "N1", south: "B1" },
+    exits: { north: "AS", west: "O1", east: "N1", south: "B1" },
     lockedExits: {
-      north: "NARA stacks citation lock",
+      north: "Annotation stacks citation lock",
       east: "OpenNet source-note lock",
       south: "Referral gate"
     },
@@ -405,12 +415,31 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     roomType: "normal"
   },
   {
+    id: "AS",
+    area: "archive_cavern",
+    title: "Annotation Stacks",
+    grid: { x: 0, y: -1 },
+    exits: { north: "DN1", south: "A1" },
+    lockedExits: { north: "File annotation packet at the research table" },
+    roomType: "puzzle"
+  },
+  {
     id: "DN1",
     area: "archive_cavern",
     title: "NARA Stacks",
-    grid: { x: 0, y: -1 },
-    exits: { south: "A1" },
+    grid: { x: 0, y: -2 },
+    exits: { north: "DN2", south: "AS" },
+    lockedExits: { north: "Concealed reading-room shelf" },
+    requiredItems: { north: "review_folder" },
     roomType: "puzzle"
+  },
+  {
+    id: "DN2",
+    area: "archive_cavern",
+    title: "Hidden Reading Room",
+    grid: { x: 0, y: -3 },
+    exits: { south: "DN1" },
+    roomType: "secret"
   },
   {
     id: "A2",
@@ -535,7 +564,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "two_networks",
     title: "Network Split",
     grid: { x: 4, y: 0 },
-    exits: { east: "N2" },
+    exits: { west: "A1", east: "N2" },
     lockedExits: { east: "ClassNet vault door" },
     roomType: "puzzle"
   },
@@ -554,9 +583,18 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "referral_vault",
     title: "Equity Gate",
     grid: { x: 4, y: 1 },
-    exits: { east: "R2" },
-    lockedExits: { east: "Visible-excision gate" },
+    exits: { west: "N2", east: "R2", north: "R3" },
+    lockedExits: { east: "Visible-excision gate", north: "Dispatch stacks access" },
+    requiredItems: { north: "clearance_token" },
     roomType: "puzzle"
+  },
+  {
+    id: "R3",
+    area: "referral_vault",
+    title: "Dispatch Stacks",
+    grid: { x: 4, y: -1 },
+    exits: { south: "R1" },
+    roomType: "hint"
   },
   {
     id: "R2",
@@ -573,7 +611,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "editors_labyrinth",
     title: "Editor's Labyrinth",
     grid: { x: 4, y: 2 },
-    exits: { east: "S1" },
+    exits: { west: "R2", east: "S1" },
     lockedExits: { east: "Red-pencil query gate" },
     requiredItems: { east: "red_pencil" },
     roomType: "puzzle"
@@ -593,7 +631,7 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "buckram_gate",
     title: "Buckram Gate",
     grid: { x: 4, y: 3 },
-    exits: {},
+    exits: { west: "DV1" },
     lockedExits: { north: "Publication gate" },
     requiredItems: { north: "buckram_key" },
     roomType: "boss"

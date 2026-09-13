@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   computeToastPlacement,
@@ -5,10 +6,27 @@ import {
   FEEDBACK_TOAST_HOLD_MS,
   FEEDBACK_TOAST_TOTAL_MS,
   isToastExpired,
-  toastAlpha
+  toastAlpha,
+  toastAnchorForActor
 } from "./feedbackToastPlacement";
 
 describe("computeToastPlacement", () => {
+  it.each([16, 24, 48])("clears a %ipx actor using rendered bounds", height => {
+    const actor = { top: 180 - height, bottom: 180 };
+    const placement = computeToastPlacement(toastAnchorForActor({ x: 128, y: 180 }, actor));
+    expect(placement.y + 9).toBeLessThan(actor.top);
+    expect(Number.isInteger(placement.y)).toBe(true);
+  });
+
+  it("moves below the actor when there is no room above its head", () => {
+    const bounds = { top: 42, bottom: 220, left: 14, right: 242 };
+    const actor = { top: 30.5, bottom: 78.5 };
+    const placement = computeToastPlacement(toastAnchorForActor({ x: 36, y: 78 }, actor, bounds), bounds);
+    expect(placement.y - 9).toBeGreaterThan(actor.bottom);
+    expect(placement.y - 9).toBeGreaterThan(bounds.top);
+    expect(Number.isInteger(placement.y)).toBe(true);
+  });
+
   it("floats the toast above the anchor by the default gap", () => {
     const placement = computeToastPlacement({ x: 128, y: 184 });
     expect(placement.x).toBe(128);
@@ -47,6 +65,16 @@ describe("computeToastPlacement", () => {
     const bounds = { top: 54, bottom: 214, left: 8, right: 248 };
     const placement = computeToastPlacement({ x: 12, y: 120 }, bounds, 26, 500);
     expect(placement.x).toBe(128);
+  });
+});
+
+describe("choice prompt layering", () => {
+  it("hides transient feedback before a decision opens", () => {
+    const toastSource = readFileSync(new URL("./feedbackToast.ts", import.meta.url), "utf8");
+    const choiceSource = readFileSync(new URL("./verification.ts", import.meta.url), "utf8");
+    expect(choiceSource).toContain("this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT)");
+    expect(toastSource).toContain("scene.events.on(CHOICE_PROMPT_OPEN_EVENT, this.hideForChoice)");
+    expect(toastSource).toContain("this.container.setVisible(false)");
   });
 });
 

@@ -22,6 +22,11 @@ describe("DANN-E attack telegraphs", () => {
     expect(danneAttackTelegraphSpec("cloud", false).kind).toBe("cloud_spread");
   });
 
+  it("allows a full dodge and counterattack against Cloud Form", () => {
+    expect(danneAttackTelegraphSpec("cloud", true)).toMatchObject({ durationMs: 800, cooldownMs: 2000 });
+    expect(danneAttackTelegraphSpec("cloud", false)).toMatchObject({ durationMs: 700, cooldownMs: 2000 });
+  });
+
   it("clamps the countdown and pulses deterministically", () => {
     expect(danneTelegraphRemainingMs(1500, 1100)).toBe(400);
     expect(danneTelegraphRemainingMs(1500, 1600)).toBe(0);

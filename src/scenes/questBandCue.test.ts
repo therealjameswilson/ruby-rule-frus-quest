@@ -1,7 +1,87 @@
 import { describe, expect, it } from "vitest";
-import { questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandVerbCode } from "./questBandCue";
+import { questBandAwaitingDialog, questBandBossCue, questBandBracketCue, questBandCrossingCue, questBandCoverFragmentSlots, questBandCrystalSlots, questBandCueLine, questBandRiskLine, questBandVerbCode } from "./questBandCue";
 
 describe("quest band cue helpers", () => {
+  it("shows the swing button for the reviewed bracket proof, not interact", () => {
+    const ready = { referralTreatmentStep: 2, referralTreatmentDocketCarried: 3 };
+    expect(questBandBracketCue("explore", "Bracket Press", ready, true, "B"))
+      .toEqual({ text: "STAMP THE BRACKET PRESS", badge: "B" });
+    expect(questBandBracketCue("explore", "Bracket Press", ready, true, "X")?.badge).toBe("X");
+    expect(questBandBracketCue("explore", "Bracket Press", ready, false, "B"))
+      .toEqual({ text: "EQUIP CITATION STAMP", badge: "!" });
+    for (const mode of ["choice", "dialog", "pause"] as const)
+      expect(questBandBracketCue(mode, "Bracket Press", ready, true, "B")).toBeNull();
+    for (const progress of [{}, { ...ready, referralTreatmentStep: 0 },
+      { ...ready, referralTreatmentDocketCarried: 0 }, { ...ready, referralPhysicalReviewComplete: 1 }])
+      expect(questBandBracketCue("explore", "Bracket Press", progress, true, "B")).toBeNull();
+    expect(questBandBracketCue("explore", "Human Desk", ready, true, "B")).toBeNull();
+  });
+  it("names the crossing requirement and uses the tool button only when ready", () => {
+    expect(questBandCrossingCue("explore", "Service crossing", "sealed", true, "B"))
+      .toEqual({ text: "FILE PUBLIC PACKET FIRST", badge: "!" });
+    expect(questBandCrossingCue("explore", "Service crossing", "ready", true, "B"))
+      .toEqual({ text: "STAMP THE SEAL", badge: "B" });
+    expect(questBandCrossingCue("explore", "Service crossing", "ready", false, "X"))
+      .toEqual({ text: "EQUIP CITATION STAMP", badge: "!" });
+    expect(questBandCrossingCue("explore", "Service crossing", "open", true, "X")).toBeNull();
+    expect(questBandCrossingCue("choice", "Service crossing", "sealed", true, "B")).toBeNull();
+    expect(questBandCrossingCue("explore", "OpenNet", "sealed", true, "B")).toBeNull();
+  });
+  it("withholds reading prompts until a dialog has actual text", () => {
+    expect(questBandAwaitingDialog("dialog", null)).toBe(true);
+    expect(questBandAwaitingDialog("dialog", { speaker: "CUTSCENE", text: "  " })).toBe(true);
+    expect(questBandAwaitingDialog("dialog", { speaker: "CUTSCENE", text: "The record survives." })).toBe(false);
+    for (const mode of ["explore", "choice", "pause"] as const) expect(questBandAwaitingDialog(mode, null)).toBe(false);
+  });
+
+  const boss: Parameters<typeof questBandBossCue>[1][number] = { hp: 180, enemyState: "colossus", bossCombat: {
+    bolts: [], minis: [], retryAvailable: false, recoverablePressure: 0, swarmDamage: 5
+  } };
+
+  it("keeps bolt-counter guidance in the HUD, then names the open attack window", () => {
+    expect(questBandBossCue("explore", [boss])).toEqual({ text: "FACE BOLT + SWING", tone: "info", badge: "tool" });
+    expect(questBandBossCue("explore", [{ ...boss, bossCombat: { ...boss.bossCombat!, counterWindowMs: 500 } }])?.text)
+      .toBe("CORE OPEN: STRIKE");
+  });
+
+  it("shows brief damage feedback without stealing the dialogue or retry controls", () => {
+    const hit = { ...boss, bossCombat: { ...boss.bossCombat!, feedback: { text: "EGO BOLT: -10 REL", tone: "warn" as const, msRemaining: 500 } } };
+    expect(questBandBossCue("explore", [hit])).toEqual({ text: "EGO BOLT: -10 REL", tone: "warn", badge: "notice" });
+    for (const mode of ["dialog", "choice", "pause"] as const) expect(questBandBossCue(mode, [hit])).toBeNull();
+    expect(questBandBossCue("explore", [{ ...boss, hp: 0 }])).toBeNull();
+    expect(questBandBossCue("explore", [{ ...boss, enemyState: "intro" }])).toBeNull();
+    expect(questBandBossCue("explore", [{ ...boss, bossCombat: { ...boss.bossCombat!, retryAvailable: true } }])).toBeNull();
+    expect(questBandBossCue("explore", [{ ...hit, bossCombat: { ...hit.bossCombat, feedback: { ...hit.bossCombat.feedback, msRemaining: 0 } } }])?.text)
+      .toBe("FACE BOLT + SWING");
+  });
+
+  it("asks for counter spacing only while the core is closed and nearby", () => {
+    const nearby = { ...boss, x: 128, y: 118 };
+    expect(questBandBossCue("explore", [nearby], { x: 128, y: 145 }))
+      .toEqual({ text: "STEP BACK; FACE BOLT", tone: "info", badge: "notice" });
+    expect(questBandBossCue("explore", [nearby], { x: 128, y: 170 })?.text)
+      .toBe("FACE BOLT + SWING");
+    expect(questBandBossCue("explore", [{ ...nearby,
+      bossCombat: { ...nearby.bossCombat!, counterWindowMs: 900 }
+    }], { x: 128, y: 145 })?.text).toBe("CORE OPEN: STRIKE");
+    expect(questBandBossCue("pause", [nearby], { x: 128, y: 145 })).toBeNull();
+  });
+
+  it("keeps combat and choice controls visible instead of repeating the boss risk", () => {
+    const threat = { hp: 180, difficultyTier: 5, enemyState: "cloud", reliabilityRisk: "critical" as const };
+    expect(questBandRiskLine("choice", [threat])).toBeNull();
+    expect(questBandRiskLine("dialog", [threat])).toBeNull();
+    expect(questBandRiskLine("explore", [{ ...threat, bossCombat: {
+      bolts: [], minis: [], retryAvailable: false, recoverablePressure: 10, swarmDamage: 5
+    } }])).toBeNull();
+  });
+
+  it("preserves risk warnings for other hard, living enemies", () => {
+    expect(questBandRiskLine("explore", [{ hp: 8, difficultyTier: 4, enemyState: "chase", reliabilityRisk: "high" }]))
+      .toBe("RELIABILITY RISK: HIGH");
+    expect(questBandRiskLine("explore", [{ hp: 0, difficultyTier: 5, enemyState: "defeated" }])).toBeNull();
+  });
+
   it("compresses long adventure verbs into SNES-sized badge codes", () => {
     expect(questBandVerbCode("EXPLORE")).toBe("GO");
     expect(questBandVerbCode("UNLOCK")).toBe("LOCK");

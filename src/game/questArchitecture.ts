@@ -741,12 +741,13 @@ function buildTileLayout(roomType: string) {
   return rows;
 }
 
-function sceneDefaultRoom(sceneName: string) {
+export function sceneDefaultRoom(sceneName: string) {
   if (sceneName === "OfficeScene") return "O1";
   if (sceneName === "CherryBlossomGardenScene") return "DG1";
   if (sceneName === "SenateHearingChamberScene") return "DH1";
   if (sceneName === "GuideScene" || sceneName === "ArchiveScene") return "A1";
   if (sceneName === "NaraStacksScene") return "DN1";
+  if (sceneName === "HiddenReadingRoomScene") return "DN2";
   if (sceneName === "EmbassyCableRoomScene") return "DE1";
   if (sceneName === "NetworkScene") return "N1";
   if (sceneName === "ReferralVaultScene") return "R1";

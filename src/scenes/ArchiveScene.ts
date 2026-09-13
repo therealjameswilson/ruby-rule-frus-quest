@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+import { archiveOptionalObjective } from "../game/archiveOptionalObjective";
+import { ARCHIVE_SECRET_IDS, hasArchiveSecret, recordArchiveSecret } from "../game/archiveSecrets";
+import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { ProcessItemId, RoomType } from "../game/constants";
@@ -13,6 +16,7 @@ import {
   getHeldProcessItemIds,
   getTreatyFragmentCount,
   gameState,
+  fileSourceNote47Metadata,
   hasProcessItem,
   recordHiddenCollectibleFound,
   setHeldItem,
@@ -22,6 +26,7 @@ import {
   setObjective,
   setPhysicalVerificationState,
   setRoomTraversalState,
+  getVisitedRoomIds,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
@@ -30,11 +35,17 @@ import type { Interactable } from "../game/types";
 import { getInput, tickInput } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
 import {
+  archiveRepoWallSwing,
   archiveSourceRoomDocumentProgressKey,
-  archiveSourceRoomPacketComplete,
+  archiveSourceRoomObjective,
+  archiveSourceRoomExitReady,
+  restoredArchiveSourceNoteStatus,
+  restoredArchiveRepoWallCleared,
   restoredArchiveSourceRoomDocumentIds,
-  visibleArchiveSourceRoomDocuments
+  visibleArchiveSourceRoomDocuments,
+  type SourceNoteStatus
 } from "../game/archiveSourceRoom";
+import { archiveSourceInteractionTargets } from "./archiveSourceInteraction";
 import { Manuscript } from "../entities/items/Manuscript";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { Player } from "../entities/Player";
@@ -43,6 +54,7 @@ import { DanneLurker } from "../entities/enemies/DanneLurker";
 import type { BureaucraticWallBehavior } from "../entities/BureaucraticWall";
 import { retroAudio } from "../systems/audio";
 import { DialogBox } from "../systems/dialog";
+import { SourceNoteBoard } from "../systems/sourceNoteBoard";
 import {
   decideInteractionFeedback,
   InteractionAssist,
@@ -51,8 +63,11 @@ import {
 } from "../systems/interaction";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
-import { adjustReliability, applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
-import { applyDanneLurkerDamage } from "../systems/dannePressure";
+import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { applyProcessPressure, takeDanneLurkerHit } from "../systems/dannePressure";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { AttackBuffer } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -66,36 +81,38 @@ import {
   SNES_ROOM_MAP_MARKER_ASSET
 } from "../game/snesAtlas";
 import {
-  annotationDraftingComplete,
   ANNOTATION_DRAFTING_PROMPTS,
-  ANNOTATION_DRAFTING_STATIONS,
-  collectAnnotationDraftingSlip,
-  fileAnnotationDraftingSlip,
-  getAnnotationDraftingStation
+  ANNOTATION_DRAFTING_STATIONS
 } from "../game/annotationDrafting";
 import type { AnnotationDraftingPromptId } from "../game/annotationDrafting";
+import { fileAnnotationPacket, gatherAnnotationNote, readAnnotationPacket } from "../game/annotationPacket";
+import { ANNOTATION_STACKS, annotationStacksOpen, annotationStacksObjective, buildAnnotationStackLayers } from "../game/annotationStacks";
+import { ARCHIVE_MEANING_REVIEW, ARCHIVE_RESEARCH_REVIEWS, nextArchiveResearchReview, recordArchiveResearchReview } from "../game/archiveResearchReview";
+import type { ArchiveResearchReviewId } from "../game/archiveResearchReview";
+import { ChoicePrompt } from "../systems/verification";
+import { saveGameNow } from "../systems/save";
 import {
   ARCHIVE_A1_TILEMAP,
-  ARCHIVE_DUNGEON_TILES,
   archiveA1CollisionRect,
   buildArchiveA1TileLayers
 } from "../game/archiveA1Tilemap";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
-  getSourceNoteProvenanceStation,
+  readSourceNoteTrail,
   inspectSourceNoteProvenanceStation,
   SOURCE_NOTE_PROVENANCE_STATIONS
 } from "../game/sourceNoteProvenance";
 import type { SourceNoteProvenancePromptId } from "../game/sourceNoteProvenance";
+import { ANNOTATION_CART, AnnotationCartPushHold, annotationCartContactPush, annotationCartBounds, pushAnnotationCart, readAnnotationCart } from "../game/annotationCart";
+import { safeWorkstationPosition } from "../game/workstationGeometry";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
 
-type SourceNoteStatus = "inactive" | "carried" | "routed" | "verified" | "stamped";
 type Direction = "north" | "south" | "west" | "east";
-type ArchiveRoomId = "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
-type ArchiveExitTarget = ArchiveRoomId | "N1";
+type ArchiveRoomId = "AS" | "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
+type ArchiveExitTarget = ArchiveRoomId | "N1" | "O1" | "DN1";
 type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "HOLD" | "AMBIGUOUS" | "DANN-E QUEUE";
 type ArchiveDanneRoute = "NaraStacksScene" | "EmbassyCableRoomScene" | "BlackVaultLairScene";
 type ArchivePropFrame = (typeof SNES_ARCHIVE_PROP_ASSET.frames)[number];
@@ -107,11 +124,7 @@ const SOURCE_NOTE_PROVENANCE_STATION_POSITIONS: Record<SourceNoteProvenancePromp
   folder: { x: 200, y: 154 }
 };
 
-const ANNOTATION_DRAFTING_STATION_POSITIONS: Record<AnnotationDraftingPromptId, { x: number; y: number }> = {
-  published_provenance: { x: 56, y: 86 },
-  contextual_annotation: { x: 56, y: 154 },
-  selectivity_mitigation: { x: 200, y: 154 }
-};
+const ANNOTATION_DRAFTING_STATION_POSITIONS = ANNOTATION_STACKS.stations;
 
 interface SourceNoteProvenanceStationVisual {
   container: Phaser.GameObjects.Container;
@@ -157,6 +170,7 @@ const DOOR_X_MAX = 144;
 const DOOR_Y_MIN = 104;
 const DOOR_Y_MAX = 136;
 const ARCHIVE_RETURN_ROOM_CODES: Record<ArchiveRoomId, number> = {
+  AS: 13,
   A1: 1,
   A2: 2,
   A3: 3,
@@ -175,16 +189,26 @@ const ARCHIVE_RETURN_ROOM_BY_CODE = Object.fromEntries(
 ) as Record<number, ArchiveRoomId>;
 
 const ARCHIVE_ROOMS: Record<ArchiveRoomId, ArchiveRoom> = {
+  AS: {
+    id: "AS",
+    title: "ANNOTATION STACKS",
+    grid: { x: 0, y: -1 },
+    exits: { south: "A1", north: "DN1" },
+    lockedExits: { north: "File the annotation packet first" },
+    roomType: "puzzle"
+  },
   A1: {
     id: "A1",
     title: "SOURCE ROOM",
     grid: { x: 0, y: 0 },
-    exits: { east: "N1", south: "B1" },
+    exits: { north: "AS", west: "O1", east: "N1", south: "B1" },
     lockedExits: {
+      north: "Stamp NO REPO to open Annotation Stacks",
       east: "OPENNET SOURCE-NOTE LOCK",
       south: "REFERRAL GATE"
     },
     requiredItems: {
+      north: "citation_stamp",
       east: "citation_stamp",
       south: "concurrence_slip"
     },
@@ -343,7 +367,7 @@ const ARCHIVE_ENEMIES: ArchiveEnemyDefinition[] = [
     x: 68,
     y: 162,
     behavior: "freeze",
-    behaviorText: "freezes exits temporarily",
+    behaviorText: "blocks forward exits; north returns",
     defeatMethod: "Resolve agency response timer",
     accent: PALETTE.terminalCyan
   },
@@ -378,6 +402,8 @@ export class ArchiveScene extends Phaser.Scene {
   private player!: Player;
   private danneLurker!: DanneLurker;
   private dialog!: DialogBox;
+  private researchChoice!: ChoicePrompt;
+  private sourceNoteBoard!: SourceNoteBoard;
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private objectiveText!: Phaser.GameObjects.Text;
@@ -391,12 +417,18 @@ export class ArchiveScene extends Phaser.Scene {
   private clearedWallIds = new Set<string>();
   private bureaucraticWalls: BureaucraticWall[] = [];
   private wallContactCooldown = 0;
+  private lastRepoWallSwing = 0;
   private sourceNoteStatus: SourceNoteStatus = "inactive";
   private sourceNoteIcon?: Phaser.GameObjects.Image;
   private sourceNoteLabel?: Phaser.GameObjects.Text;
   private sourceNoteRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private sourceNoteRouteCueKey = "";
   private provenanceStationVisuals = new Map<SourceNoteProvenancePromptId, SourceNoteProvenanceStationVisual>();
+  private annotationCartVisual?: Phaser.GameObjects.Container;
+  private readonly annotationCartPushHold = new AnnotationCartPushHold();
+  private annotationCartPressure?: Phaser.GameObjects.Container;
+  private annotationCartPressureFill?: Phaser.GameObjects.Rectangle;
+  private annotationCartSolid?: Phaser.Geom.Rectangle;
   private annotationStationVisuals = new Map<AnnotationDraftingPromptId, AnnotationDraftingStationVisual>();
   private annotationTableSlots = new Map<AnnotationDraftingPromptId, Phaser.GameObjects.Rectangle>();
   private annotationTableFrame?: Phaser.GameObjects.Rectangle;
@@ -404,7 +436,6 @@ export class ArchiveScene extends Phaser.Scene {
   private sourceRoomTerminalStatus?: Phaser.GameObjects.Text;
   private sourceRoomTerminalLamp?: Phaser.GameObjects.Rectangle;
   private naraStacksGateObjects: Phaser.GameObjects.GameObject[] = [];
-  private noRepoStampCue?: Phaser.GameObjects.Container;
   private readyWallCues = new Map<string, Phaser.GameObjects.Container>();
   private archiveKeyRewardCue?: Phaser.GameObjects.Container;
   private secretRewardCue?: Phaser.GameObjects.Container;
@@ -414,6 +445,7 @@ export class ArchiveScene extends Phaser.Scene {
   private currentRoomId: ArchiveRoomId = "A1";
   private visitedRoomIds = new Set<ArchiveRoomId>();
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
+  private gateArt = new Map<Direction, Phaser.GameObjects.GameObject[]>();
   private ambiguousFlagObjects: Phaser.GameObjects.GameObject[] = [];
   private roomCleanups: Array<() => void> = [];
   private roomSolids: Phaser.Geom.Rectangle[] = [];
@@ -424,6 +456,7 @@ export class ArchiveScene extends Phaser.Scene {
   private mapMarkers = new Map<ArchiveRoomId, Phaser.GameObjects.Text>();
   private archiveCompassRelicLabel?: Phaser.GameObjects.Text;
   private roomTransitionLocked = false;
+  private readonly attackBuffer = new AttackBuffer();
   private exitCooldownUntil = 0;
   private revealedSecretIds = new Set<ArchiveRoomId>();
   private networkRoutingResolved = false;
@@ -431,23 +464,50 @@ export class ArchiveScene extends Phaser.Scene {
   private agencyTimerResolved = false;
   private ambiguousSplit = false;
   private specialistDecisionMade = false;
+  private reviewResumeUntil = 0;
   private goldenRuleDecisionMade = false;
 
   constructor() {
     super("ArchiveScene");
   }
 
-  create() {
+  create(data?: unknown) {
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
+    this.lastRepoWallSwing = 0;
+    this.clearedWallIds = new Set(ARCHIVE_ENEMIES
+      .filter(definition => gameState.sceneProgress[`archiveWall_${definition.id}`] === 1)
+      .map(definition => definition.id));
+    this.networkRoutingResolved = this.clearedWallIds.has("firewall-door");
+    this.referralManifestDelivered = this.clearedWallIds.has("pending-manifest");
+    this.agencyTimerResolved = this.clearedWallIds.has("wait-timer");
+    this.specialistDecisionMade = this.clearedWallIds.has("ambiguous-flag");
+    this.goldenRuleDecisionMade = this.clearedWallIds.has("danne-queue");
+    this.ambiguousSplit = !this.specialistDecisionMade && gameState.sceneProgress.archiveAmbiguousSplit === 1;
+    const arrival = readChapterArrival(data, "ArchiveScene", gameState.currentScene);
+    const visitedRooms = getVisitedRoomIds(Object.keys(ARCHIVE_ROOMS) as ArchiveRoomId[]);
+    for (const room of ARCHIVE_SECRET_IDS) {
+      const legacyReward = room === "C3"
+        ? gameState.volumeFragments.includes("Hidden Cache Fragment")
+        : gameState.completionStats.hiddenCollectibleLabel === "Hidden Reliability Well";
+      if (legacyReward) recordArchiveSecret(gameState.sceneProgress, room, "collected");
+      else if (visitedRooms.includes(room)) recordArchiveSecret(gameState.sceneProgress, room, "revealed");
+      this.revealedSecretIds.delete(room);
+      this.collected.delete(`secret-${room}`);
+      if (hasArchiveSecret(gameState.sceneProgress, room, "revealed")) this.revealedSecretIds.add(room);
+      if (hasArchiveSecret(gameState.sceneProgress, room, "collected")) this.collected.add(`secret-${room}`);
+    }
+    const restoredHeldItem = gameState.heldItem;
     const archiveReturn = this.consumeArchiveReturnSpawn();
     const restoringArchive = gameState.currentScene === "ArchiveScene";
     const candidateRestoredRoomId = gameState.roomTraversal?.currentRoomId as ArchiveRoomId | undefined;
-    const restoredRoomId = archiveReturn?.roomId
+    const restoredRoomId = (arrival ? "A1" : archiveReturn?.roomId)
       ?? (restoringArchive && candidateRestoredRoomId && ARCHIVE_ROOMS[candidateRestoredRoomId]
       ? candidateRestoredRoomId
       : restoringArchive
         ? "A1"
         : null);
-    const restoredPlayer = archiveReturn
+    const restoredPlayer = arrival ? { x: arrival.x, y: arrival.y } : archiveReturn
       ? { x: archiveReturn.x, y: archiveReturn.y }
       : restoringArchive
       ? { ...gameState.player }
@@ -466,6 +526,8 @@ export class ArchiveScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(902).setVisible(false);
 
     this.dialog = new DialogBox(this);
+    this.researchChoice = new ChoicePrompt(this);
+    this.sourceNoteBoard = new SourceNoteBoard(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
@@ -480,6 +542,8 @@ export class ArchiveScene extends Phaser.Scene {
     this.toast = new FeedbackToast(this);
     this.player = new Player(this, 128, 184);
     this.danneLurker = new DanneLurker(this, 214, 74, {
+      speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
+        || this.inventory.active || this.reliability.active || this.researchChoice.active || this.sourceNoteBoard.active || Boolean(this.archiveKeyRewardCue?.active),
       waypoints: [
         { x: 214, y: 74 },
         { x: 142, y: 54 },
@@ -489,18 +553,46 @@ export class ArchiveScene extends Phaser.Scene {
       ]
     });
 
-    this.restoreSourceNoteProgress();
+    this.restoreSourceNoteProgress(restoredHeldItem);
+    this.visitedRoomIds = new Set(visitedRooms);
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
-    if (!restoredPlayer) {
+    if (!restoredPlayer && this.sourceNoteStatus === "inactive") {
       this.toast.show("FIND SN47 -> RESEARCH TABLE", this.player.position, "info");
       setLatestMessage("Archive A1: find Source Note 47 and verify it at the research table.");
+    } else if (!restoredPlayer) {
+      this.toast.show(gameState.objective, this.player.position, "info");
+      setLatestMessage(gameState.objective);
     }
   }
 
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (gameState.mode !== "explore" || input.menuJustPressed || input.pauseJustPressed
+      || this.roomTransitionLocked || this.sourceNoteBoard.active || this.researchChoice.active
+      || this.dialog.active || this.inventory.active || this.reliability.active) this.attackBuffer.clear();
+    if (gameState.mode !== "explore" || this.currentRoomId !== "AS" || this.roomTransitionLocked
+      || input.aJustPressed || input.pauseJustPressed || input.menuJustPressed) {
+      this.annotationCartPushHold.reset();
+      this.annotationCartPressure?.setVisible(false);
+    }
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.sourceNoteBoard.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
+      this.player.update(delta, false);
+      this.sourceNoteBoard.updateInput();
+      return;
+    }
+    if (this.researchChoice.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.toast.update(delta, this.player.position);
+      this.player.update(delta, false);
+      this.researchChoice.updateInput();
+      return;
+    }
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
       retroAudio.toggle();
@@ -510,11 +602,13 @@ export class ArchiveScene extends Phaser.Scene {
     if (input.abilityJustPressed) activateRoleAbility(this);
 
     if (this.roomTransitionLocked) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (this.dialog.active) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
@@ -522,6 +616,7 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       this.toast.update(delta, this.player.position);
@@ -529,12 +624,40 @@ export class ArchiveScene extends Phaser.Scene {
     }
     if (input.pauseJustPressed) {
       this.inventory.toggle();
+      this.updateDanneLurker(delta, false);
       return;
     }
 
     this.player.update(delta, true, { bounds: PLAY_BOUNDS, solids: this.roomSolids });
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing && this.player.combatReadout.state !== "hurt")) {
+      const swing = tryEquippedToolSwing(this.player);
+      if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
+    }
     this.updateDanneLurker(delta);
+    this.updateRepoWallToolHit();
     if (this.checkRoomExit()) return;
+
+    if (this.currentRoomId === "AS") {
+      const contact = !input.aJustPressed && !input.bJustPressed && this.player.combatReadout.weapon.canSwing
+        && annotationCartContactPush(gameState.sceneProgress, this.player.position, input.dir);
+      if (this.annotationCartPushHold.update(delta, contact, input.dir)) this.moveAnnotationCart(input.dir);
+      this.annotationCartPressure?.setVisible(this.annotationCartPushHold.pressurePixels > 0);
+      this.annotationCartPressureFill?.setSize(this.annotationCartPushHold.pressurePixels, 1);
+      this.updateAnnotationSlipIcon();
+      this.syncAnnotationDraftingStations();
+      const target = this.sourceNoteActionHint();
+      const near = target && this.isNearSourceNoteActionTarget(target) ? target : null;
+      setNearestInteractable(near ? this.sourceNotePromptText(near) : null);
+      this.interactionPrompt.update(delta, this.toast.visible ? null : near, undefined,
+        near ? { text: this.sourceNotePromptText(near) } : undefined);
+      this.hintText.setText("");
+      this.refreshRoomObjective();
+      this.toast.update(delta, this.player.position);
+      this.reliability.update();
+      if (input.aJustPressed && near) this.handleAnnotationDraftingAction(near);
+      return;
+    }
 
     if (this.currentRoomId === "A1"
       && this.sourceNoteStatus !== "inactive"
@@ -559,16 +682,22 @@ export class ArchiveScene extends Phaser.Scene {
     }
     this.updateBureaucraticWalls(delta);
     this.reliability.update();
-    const workflowInteraction = nearestWorkflowInteraction(this.player.position, this.interactables, getAvailableWorkflowTools());
+    const interactionTargets = this.currentRoomId === "A1"
+      ? archiveSourceInteractionTargets(this.player.position, this.interactables)
+      : this.interactables;
+    const workflowInteraction = nearestWorkflowInteraction(this.player.position, interactionTargets, getAvailableWorkflowTools());
     const nearest = workflowInteraction.interactable;
-    const hintTarget = nearestInteractableHint(this.player.position, this.interactables);
+    const hintTarget = nearestInteractableHint(this.player.position, interactionTargets);
     setNearestInteractable(nearest?.label ?? null);
     const toolCue = workflowInteraction.tool ? `${workflowInteraction.tool.shortLabel}: ` : "";
-    this.hintText.setText(nearest ? `A: ${toolCue}${nearest.label.toUpperCase()}` : "");
-    this.interactionPrompt.update(delta, nearest ?? hintTarget, undefined, nearest ? undefined : hintTarget ? {
-      badge: "!",
-      text: "STEP CLOSER"
-    } : undefined);
+    const suppressPrompt = (this.currentRoomId === "A1" || this.currentRoomId === "B2") && this.toast.visible;
+    this.hintText.setText(!suppressPrompt && this.currentRoomId !== "A1" && ARCHIVE_ROOMS[this.currentRoomId].roomType !== "secret" && nearest
+      ? `A: ${toolCue}${nearest.label.toUpperCase()}` : "");
+    const promptTarget = suppressPrompt ? null : nearest ?? hintTarget;
+    this.interactionPrompt.update(delta, promptTarget, undefined,
+      nearest?.id === "source-note" ? { text: "TAKE SOURCE NOTE" }
+        : nearest ? undefined
+          : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (input.aJustPressed && !bufferedInteraction && this.tryEnemyAction(nearest ?? undefined)) return;
@@ -588,23 +717,21 @@ export class ArchiveScene extends Phaser.Scene {
     this.objectiveText.setText(gameState.objective);
   }
 
-  private updateDanneLurker(delta: number) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted archive verification.");
-      setObjective("Archive Cavern: verify sources by human review, not DANN-E pressure.");
+  private updateDanneLurker(delta: number, canPressure = true) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position,
+      canPressure && this.currentRoomId !== "AS" && this.time.now >= this.reviewResumeUntil, this.player.combatReadout);
+    if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted archive verification.")) {
+      this.refreshRoomObjective();
       this.reliability.update();
-    } else if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted archive verification.");
-      setObjective("Archive Cavern: dodge Ego bolts and keep verifying sources.");
+    } else if (result.egoBoltHit && takeDanneLurkerHit(this.player, this.danneLurker.position, "ego_bolt", "DANN-E ego bolt disrupted archive verification.")) {
+      this.refreshRoomObjective();
       this.reliability.update();
     }
     this.syncWallState();
   }
 
-  private restoreSourceNoteProgress() {
+  private restoreSourceNoteProgress(heldItem: string | null) {
+    for (const document of visibleArchiveSourceRoomDocuments(true)) this.collected.delete(document.id);
     for (const documentId of restoredArchiveSourceRoomDocumentIds(gameState.sceneProgress)) {
       this.collected.add(documentId);
     }
@@ -613,34 +740,33 @@ export class ArchiveScene extends Phaser.Scene {
     }
     if (gameState.inventory.includes("Telegram")) this.collected.add("telegram");
     if (gameState.inventory.includes("Cross-Ref")) this.collected.add("cross-reference");
-    if (this.sourceNoteStatus === "inactive") {
-      if (gameState.sceneProgress.annotationDraftingComplete
-        || gameState.sceneProgress.archiveSourceNoteStamped
-        || gameState.processStamps.includes("archive")) {
-        this.sourceNoteStatus = "stamped";
-      } else if (gameState.sceneProgress.sourceNoteProvenanceComplete) {
-        this.sourceNoteStatus = "verified";
-      } else if ((gameState.sceneProgress.sourceNoteProvenanceStep ?? 0) > 0) {
-        this.sourceNoteStatus = "routed";
-      } else if (gameState.heldItem === "Source Note 47") {
-        this.sourceNoteStatus = "carried";
-      }
-    }
+    this.sourceNoteStatus = restoredArchiveSourceNoteStatus({
+      sceneProgress: gameState.sceneProgress,
+      heldItem,
+      hasArchiveStamp: gameState.processStamps.includes("archive"),
+      sourceNoteCollected: this.collected.has("source-note") || gameState.inventory.includes("Source Note 47")
+    });
+    if (restoredArchiveRepoWallCleared(gameState.sceneProgress)) this.clearedWallIds.add("repo-wall");
+    else this.clearedWallIds.delete("repo-wall");
+    if (this.sourceNoteStatus === "carried") setHeldItem("Source Note 47");
     if (this.sourceNoteStatus !== "inactive") this.collected.add("source-note");
     if (this.sourceRoomComplete()) gameState.sceneProgress.archiveSourceRoomComplete = 1;
-    const carriedAnnotation = this.annotationCarriedStation();
-    if (carriedAnnotation && !gameState.sceneProgress.annotationDraftingComplete) {
-      setHeldItem(carriedAnnotation.carriedLabel);
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    if (packet.heldLabel && !packet.complete) {
+      setHeldItem(packet.heldLabel);
     }
   }
 
   private enterRoom(roomId: ArchiveRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    this.attackBuffer.clear();
     const applyRoom = () => {
       this.currentRoomId = roomId;
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
-      this.player.setPosition(spawn.x, spawn.y);
+      const safeSpawn = roomId === "AS" ? safeWorkstationPosition(spawn, this.roomSolids) : spawn;
+      this.player.setPosition(safeSpawn.x, safeSpawn.y);
+      this.danneLurker.enterRoom(this.time.now, roomId !== "AS");
       this.syncRoomTraversalState();
       this.updateVisitedMinimap();
       this.exitCooldownUntil = this.time.now + 280;
@@ -661,6 +787,7 @@ export class ArchiveScene extends Phaser.Scene {
       onCovered: applyRoom,
       onComplete: () => {
         this.roomTransitionLocked = false;
+        saveGameNow("scene");
       }
     });
   }
@@ -673,6 +800,7 @@ export class ArchiveScene extends Phaser.Scene {
     }
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.gateArt.clear();
     this.provenanceStationVisuals.clear();
     this.annotationStationVisuals.clear();
     this.annotationTableSlots.clear();
@@ -683,12 +811,15 @@ export class ArchiveScene extends Phaser.Scene {
     this.sourceRoomTerminalLamp = undefined;
     this.ambiguousFlagObjects = [];
     this.naraStacksGateObjects = [];
-    this.noRepoStampCue = undefined;
     this.readyWallCues.clear();
     this.archiveKeyRewardCue = undefined;
     this.bossReadinessObjects = [];
     this.blackVaultDoorObjects = [];
     this.roomSolids = [];
+    this.annotationCartVisual = undefined;
+    this.annotationCartPressure = undefined;
+    this.annotationCartPressureFill = undefined;
+    this.annotationCartSolid = undefined;
     this.interactables = [];
     this.bureaucraticWalls = [];
     this.activeEnemyDefs.clear();
@@ -706,23 +837,27 @@ export class ArchiveScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(this.currentRoomId === "A2" || this.currentRoomId === "B2" ? PALETTE.shadowNavy : PALETTE.archiveAmber);
     this.roomTitleText.setText(`${room.id} ${room.title}`);
     addSnesRoomIntroBanner(this, {
-      title: `${room.id} ${room.title}`,
+      title: room.id === "AS" ? room.title : `${room.id} ${room.title}`,
       subtitle: "ARCHIVE CAVERN",
-      accent: room.roomType === "reward" || room.roomType === "secret" ? PALETTE.goldStamp : PALETTE.buckramRed,
+      accent: room.id === "AS" ? PALETTE.terminalCyan
+        : room.roomType === "reward" || room.roomType === "secret" ? PALETTE.goldStamp : PALETTE.buckramRed,
       track: (object) => this.track(object)
     });
     this.drawRoomExits(room);
-    const packedTilemapRendered = room.id === "A1" && this.renderArchiveA1Tilemap();
+    const packedTilemapRendered = (room.id === "A1" || room.id === "AS") && this.renderArchiveA1Tilemap();
     if (!packedTilemapRendered) {
-      addSnesRoomLayer(this, {
-        roomId: room.id,
-        roomType: room.roomType,
-        theme: this.currentRoomId === "A2" ? "network" : this.currentRoomId === "B2" ? "proof" : "archive",
-        track: (object) => this.track(object)
-      });
-      this.drawArchiveRoomDetailLayer(room);
+      if (room.id === "AS") this.renderAnnotationStacksFallback();
+      else {
+        addSnesRoomLayer(this, {
+          roomId: room.id,
+          roomType: room.roomType,
+          theme: this.currentRoomId === "A2" ? "network" : this.currentRoomId === "B2" ? "proof" : "archive",
+          track: (object) => this.track(object)
+        });
+        this.drawArchiveRoomDetailLayer(room);
+      }
     }
-    if (room.id !== "A1") {
+    if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.id !== "B2" && room.roomType !== "secret") {
       addSnesRoomCompass(this, {
         x: 216,
         y: 62,
@@ -735,7 +870,8 @@ export class ArchiveScene extends Phaser.Scene {
         depth: 143
       });
     }
-    if (room.id === "A1") this.renderSourceRoom();
+    if (room.id === "AS") this.renderAnnotationStacks();
+    else if (room.id === "A1") this.renderSourceRoom();
     else if (room.id === "A2") this.renderOpenNetAnnex();
     else if (room.id === "A3" || room.id === "B3") this.renderHintRoom(room);
     else if (room.id === "B1") this.renderStacksRoom();
@@ -751,25 +887,25 @@ export class ArchiveScene extends Phaser.Scene {
   private renderSourceRoom() {
     this.drawResearchTable();
     this.drawSourceNoteProvenanceStations();
-    this.drawAnnotationDraftingStations();
     this.drawAnnotationTableSlots();
-    const elena = new HistorianNPC(this, "elena", 42, 72);
+    const elena = new HistorianNPC(this, "elena", 42, 84);
+    elena.label.setVisible(false);
     this.roomCleanups.push(() => elena.destroy());
     this.drawCompactSourceRoomTerminal();
 
     this.addDocumentInteractables();
-    this.drawArchiveDoor(128, 201, "NARA II\nSTAIRS", PALETTE.terminalCyan);
+    this.drawArchiveDoor(128, 52, "NOTES", PALETTE.terminalCyan);
     this.interactables.push({
       id: "nara-stacks-stairs",
-      label: "NARA II Stacks",
+      label: "Annotation Stacks",
       x: 128,
-      y: 201,
-      radius: 14,
+      y: 56,
+      radius: 22,
       kind: "door",
-      onInteract: () => this.tryRouteToNaraStacks()
+      onInteract: () => this.enterAnnotationStacks()
     });
     this.addRoomEnemy("repo-wall");
-    if (this.sourceNoteStatus === "routed" || this.sourceNoteStatus === "verified" || this.sourceNoteStatus === "stamped") {
+    if (this.sourceNoteStatus !== "inactive" && !this.sourceNoteIcon?.active) {
       this.drawRoutedSourceNote();
     }
     this.restoreAnnotationSlipIcon();
@@ -779,7 +915,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private renderArchiveA1Tilemap() {
-    const asset = GAMEPLAY_TILESETS.archiveDungeonNative;
+    const stacks = this.currentRoomId === "AS";
+    const asset = stacks ? GAMEPLAY_TILESETS.interiorsNative : GAMEPLAY_TILESETS.archiveDungeonNative;
     if (!this.textures.exists(asset.key)) return false;
 
     const map = this.make.tilemap({
@@ -840,14 +977,10 @@ export class ArchiveScene extends Phaser.Scene {
       return false;
     }
 
-    const layers = buildArchiveA1TileLayers();
+    const layers = stacks ? buildAnnotationStackLayers() : buildArchiveA1TileLayers();
     ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
     walls.putTilesAt(layers.walls, 0, 0, true)
-      .setCollision([
-        packedTileGid(ARCHIVE_DUNGEON_TILES.wallDark),
-        packedTileGid(ARCHIVE_DUNGEON_TILES.wallStone),
-        packedTileGid(ARCHIVE_DUNGEON_TILES.wallLight)
-      ])
+      .setCollisionByExclusion([-1])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
     for (const cell of layers.collisionCells) {
@@ -862,6 +995,93 @@ export class ArchiveScene extends Phaser.Scene {
       map.destroy();
     });
     return true;
+  }
+
+  private renderAnnotationStacksFallback() {
+    this.track(this.add.rectangle(128, 128, 256, 192, color(PALETTE.creamPaper)).setDepth(-16));
+    for (const cell of buildAnnotationStackLayers().collisionCells) {
+      const rect = archiveA1CollisionRect(cell);
+      this.addSolid(rect.x, rect.y, rect.width, rect.height);
+      this.track(this.add.rectangle(rect.x, rect.y, rect.width, rect.height, color(PALETTE.sepiaInk))
+        .setOrigin(0).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(44));
+    }
+  }
+
+  private renderAnnotationStacks() {
+    this.drawAnnotationCart();
+    this.drawAnnotationDraftingStations();
+    this.restoreAnnotationSlipIcon();
+    this.syncSourceNotePhysicalState(null);
+  }
+
+  private drawAnnotationCart() {
+    const { position, parked } = readAnnotationCart(gameState.sceneProgress);
+    const lane = this.add.graphics().setDepth(46);
+    lane.lineStyle(1, color(PALETTE.goldStamp), 0.55);
+    lane.strokeRect(114, 101, 44, 70);
+    lane.lineStyle(2, color(PALETTE.terminalCyan));
+    lane.strokeRect(ANNOTATION_CART.bay.x - 13, ANNOTATION_CART.bay.y - 9, 26, 18);
+    this.track(lane);
+    const parts: Phaser.GameObjects.GameObject[] = [
+      this.add.ellipse(0, 8, 28, 8, color(PALETTE.black), 0.4),
+      this.add.rectangle(-8, 7, 5, 5, color(PALETTE.black)),
+      this.add.rectangle(8, 7, 5, 5, color(PALETTE.black)),
+      this.add.rectangle(0, 0, 26, 15, color(PALETTE.black)),
+      this.add.rectangle(0, -1, 22, 12, color(PALETTE.stoneGray)),
+      this.add.rectangle(0, -6, 22, 2, color(PALETTE.creamPaper)),
+      this.add.rectangle(0, 5, 22, 2, color(PALETTE.sepiaInk)),
+      this.add.rectangle(-8, -2, 4, 8, color(PALETTE.deepRuby)),
+      this.add.rectangle(-3, -2, 4, 8, color(PALETTE.buckramRed)),
+      this.add.rectangle(3, -2, 5, 8, color(PALETTE.creamPaper)),
+      this.add.rectangle(3, -4, 3, 1, color(PALETTE.goldStamp)),
+      this.add.rectangle(11, -9, 3, 8, color(PALETTE.stoneGray))
+    ];
+    this.annotationCartVisual = this.track(this.add.container(position.x, position.y, parts)
+      .setName("annotation-context-cart").setDepth(position.y + 8));
+    this.annotationCartPressureFill = this.add.rectangle(-6, 0, 1, 1, color(PALETTE.goldStamp)).setOrigin(0, 0);
+    this.annotationCartPressure = this.track(this.add.container(position.x, position.y - 13, [
+      this.add.rectangle(0, 0, 14, 3, color(PALETTE.black)),
+      this.annotationCartPressureFill
+    ]).setName("annotation-cart-pressure").setDepth(940).setVisible(false));
+    const bounds = annotationCartBounds(position);
+    this.annotationCartSolid = new Phaser.Geom.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height);
+    this.roomSolids.push(this.annotationCartSolid);
+    this.interactables.push({ id: "annotation-return-cart", label: parked ? "Parked Context Cart" : "Context Cart",
+      x: position.x, y: position.y, radius: ANNOTATION_CART.radius, kind: "document", onInteract: () => this.moveAnnotationCart() });
+  }
+
+  private moveAnnotationCart(direction?: { x: number; y: number }) {
+    this.annotationCartPushHold.reset();
+    this.annotationCartPressure?.setVisible(false);
+    const result = pushAnnotationCart(gameState.sceneProgress, this.player.position, direction);
+    setLatestMessage(result.message);
+    if (!result.moved) {
+      this.toast.show(result.message, this.player.position, "info");
+      return;
+    }
+    gameState.sceneProgress.annotationCartX = result.position.x;
+    gameState.sceneProgress.annotationCartY = result.position.y;
+    gameState.sceneProgress.annotationCartParked = result.parked ? 1 : 0;
+    this.annotationCartVisual?.setPosition(result.position.x, result.position.y).setDepth(result.position.y + 8);
+    this.annotationCartPressure?.setPosition(result.position.x, result.position.y - 13);
+    const bounds = annotationCartBounds(result.position);
+    this.annotationCartSolid?.setTo(bounds.x, bounds.y, bounds.width, bounds.height);
+    const target = this.interactables.find(item => item.id === "annotation-return-cart");
+    if (target) { target.x = result.position.x; target.y = result.position.y; }
+    retroAudio.confirm();
+    if (result.parked) this.toast.show("PARKED - TAKE CONTEXT NOTE", this.player.position, "info");
+    this.syncAnnotationDraftingStations();
+    this.syncWallState();
+    saveGameNow();
+  }
+
+  private enterAnnotationStacks() {
+    if (!annotationStacksOpen(gameState.sceneProgress)) {
+      this.refreshRoomObjective();
+      this.toast.show(gameState.objective, this.player.position, "info");
+      return;
+    }
+    this.enterRoom("AS", ANNOTATION_STACKS.entry, true, "north");
   }
 
   private renderOpenNetAnnex() {
@@ -912,10 +1132,11 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawDocumentStack(124, 166, true);
     this.drawDocumentStack(188, 159, false);
     this.drawDesk(128, 138, "TRAY");
-    this.track(this.add.image(128, 119, "referral-manifest").setDepth(140));
     this.addSolid(96, 128, 64, 28);
     this.addRoomEnemy("pending-manifest");
     this.addRoomEnemy("wait-timer");
+    if (this.referralManifestDelivered && this.agencyTimerResolved) return;
+    this.track(this.add.image(128, 119, "referral-manifest").setDepth(140).setName("archive-unfiled-manifest"));
     this.interactables.push({
       id: "stacks-manifest",
       label: "Referral tray",
@@ -930,20 +1151,18 @@ export class ArchiveScene extends Phaser.Scene {
   private renderProofChamber() {
     this.drawDesk(74, 128, "PROOF");
     this.drawDesk(182, 128, "CLASS");
-    this.track(this.add.image(74, 106, "proof-page").setDepth(130));
+    const specialist = new HistorianNPC(this, "elena", 74, 102);
+    specialist.label.setVisible(false);
+    this.roomCleanups.push(() => specialist.destroy());
     this.track(this.add.image(182, 106, "classnet-terminal").setDepth(130));
-    this.track(addTerminalPanel(this, 128, 68, [
-      "B2 CHAMBER",
-      "NO SCROLLING",
-      "ONE ROOM",
-      "EDGE GATES",
-      "HARD CUT"
-    ], PALETTE.classNetRed));
     this.drawRubyVolumeStack(128, 173, 3);
     this.drawGoldenRuleGate();
     this.addRoomEnemy("ambiguous-flag");
     this.addRoomEnemy("danne-queue");
-    if (this.ambiguousSplit && !this.clearedWallIds.has("ambiguous-flag")) this.drawAmbiguousFlags();
+    if (this.ambiguousSplit && !this.clearedWallIds.has("ambiguous-flag")) {
+      this.drawAmbiguousFlags();
+      this.interactables = this.interactables.filter(item => item.id !== "ambiguous-flag");
+    }
     this.addSolid(34, 104, 80, 36);
     this.addSolid(142, 104, 80, 36);
     this.addSolid(84, 40, 24, 68);
@@ -954,7 +1173,7 @@ export class ArchiveScene extends Phaser.Scene {
       x: 74,
       y: 118,
       radius: 34,
-      kind: "document",
+      kind: "npc",
       onInteract: () => this.resolveAmbiguousWithSpecialist()
     });
     this.interactables.push({
@@ -971,7 +1190,6 @@ export class ArchiveScene extends Phaser.Scene {
   private renderHintRoom(room: ArchiveRoom) {
     this.drawBookcase(48, 78, 42, 54);
     this.drawBookcase(208, 78, 42, 54);
-    this.drawWallMap(128, 58, room.id);
     addSnesMapTablet(this, {
       x: 128,
       y: 151,
@@ -982,10 +1200,25 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 118
     });
-    const lines = room.id === "A3"
-      ? ["THE BOX WITHOUT", "A NUMBER HOLDS", "NO PROVENANCE."]
-      : ["GREEN IS OPEN.", "RED HAS TEETH.", "READ THE GATE."];
-    this.track(addTerminalPanel(this, 128, 112, ["ARCHIVE COLLEAGUE", ...lines], PALETTE.goldStamp));
+    const archivist = new HistorianNPC(this, "marcus", 112, 108);
+    archivist.label.setVisible(false);
+    this.roomCleanups.push(() => archivist.destroy());
+    this.interactables.push({
+      id: `${room.id}-archivist`, label: "Archivist", x: 112, y: 108, radius: 28, kind: "npc",
+      onInteract: () => {
+        const revealed = this.revealedSecretIds.has("C3");
+        const clue = room.id === "A3"
+          ? revealed ? "The hidden cache is two rooms south." : "Check the left shelf. An unnumbered box is tucked behind it."
+          : revealed ? "The cache is through the south door." : "Visit the archivist north for a hidden route.";
+        this.dialog.show("ARCHIVIST", clue);
+        setLatestMessage(clue);
+        if (room.id === "A3" && gameState.sceneProgress.archiveCacheClueHeard !== 1) {
+          gameState.sceneProgress.archiveCacheClueHeard = 1;
+          this.refreshRoomObjective();
+          saveGameNow();
+        }
+      }
+    });
     this.drawDocumentStack(88, 166, true);
     this.drawRubyVolumeStack(178, 166, 2);
     this.interactables.push({
@@ -1067,7 +1300,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawRubyVolumeStack(78, 130, 4);
     this.drawDocumentStack(170, 118, true);
     this.drawSparkle(128, 92, PALETTE.goldStamp);
-    addSnesTreasurePedestal(this, {
+    const pedestal = addSnesTreasurePedestal(this, {
       x: 128,
       y: 132,
       textureKey: room.id === "C3" ? "volume-fragment" : "citation-stamp",
@@ -1076,28 +1309,26 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 146
     });
-    this.track(addTerminalPanel(this, 128, 62, [
-      room.id === "C3" ? "HIDDEN CACHE" : "RELIABILITY WELL",
-      "NOT ON FIRST MAP",
-      "FOUND BY READING",
-      "NOT BY GUESSING"
-    ], PALETTE.goldStamp));
+    if (this.collected.has(`secret-${room.id}`)) return;
     this.interactables.push({
       id: `${room.id}-secret-reward`,
-      label: room.id === "C3" ? "Lore card" : "Reliability refill",
+      label: room.id === "C3" ? "FRUS fragment" : "Reliability refill",
       x: 128,
       y: 132,
       radius: 42,
       kind: "document",
       onInteract: () => {
         const key = `secret-${room.id}`;
-        if (this.collected.has(key)) {
+        if (this.collected.has(key)
+          || !recordArchiveSecret(gameState.sceneProgress, room.id === "C3" ? "C3" : "D2", "collected")) {
           setLatestMessage(`${room.id} secret reward already filed.`);
-          setObjective("Return to the marked Archive route; this hidden room is complete.");
-          this.dialog.show("SECRET", "This hidden room has already yielded its clue.");
+          this.refreshRoomObjective();
+          this.toast.show("REWARD ALREADY FILED", this.player.position, "info");
           return;
         }
         this.collected.add(key);
+        pedestal.markCollected();
+        this.interactables = this.interactables.filter(item => item.id !== `${room.id}-secret-reward`);
         addDocumentPoints(room.id === "C3" ? 10 : 6, room.id === "C3" ? "hidden source cache" : "hidden reliability well");
         if (room.id === "D2") {
           adjustReliability(8, "hidden reliability refill");
@@ -1112,7 +1343,8 @@ export class ArchiveScene extends Phaser.Scene {
         }
         retroAudio.confirm();
         this.showSecretRewardCue(room.id);
-        this.dialog.show("SECRET", room.id === "C3" ? "A cover fragment was filed where only a careful reader would look." : "The well restores confidence because the check was physical.");
+        this.refreshRoomObjective();
+        saveGameNow();
       }
     });
   }
@@ -1129,13 +1361,6 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 150
     });
-    this.track(this.add.rectangle(128, 162, 122, 26, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(111));
-    this.track(this.add.text(128, 154, "STAMP REWARD ROOM\nSOURCE STAMP: HUMAN VERIFIED", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp,
-      align: "center"
-    }).setOrigin(0.5).setDepth(112));
   }
 
   private renderBossGateRoom() {
@@ -1170,8 +1395,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private revealSecretRoom(roomId: ArchiveRoomId, message: string) {
-    if (!ARCHIVE_ROOMS[roomId] || ARCHIVE_ROOMS[roomId].roomType !== "secret") return;
-    if (this.revealedSecretIds.has(roomId)) {
+    if (roomId !== "C3" && roomId !== "D2") return;
+    if (this.revealedSecretIds.has(roomId) || !recordArchiveSecret(gameState.sceneProgress, roomId, "revealed")) {
       setLatestMessage(`${roomId} secret route already mapped.`);
       this.dialog.show("SECRET", "That hidden route is already marked on the archive map.");
       this.updateVisitedMinimap();
@@ -1183,11 +1408,13 @@ export class ArchiveScene extends Phaser.Scene {
     addDocumentPoints(3, `${roomId} secret revealed`);
     setLatestMessage(message);
     setObjective(`Secret route ${roomId} revealed; follow the map marker.`);
+    if (archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress)) this.refreshRoomObjective();
     retroAudio.confirm();
     this.showSecretRevealCue(roomId);
     this.dialog.show("SECRET", message);
     this.updateVisitedMinimap();
     this.syncRoomTraversalState();
+    saveGameNow();
   }
 
   private showSecretRevealCue(roomId: ArchiveRoomId) {
@@ -1336,9 +1563,9 @@ export class ArchiveScene extends Phaser.Scene {
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0).setDepth(87));
-    this.sourceRoomTerminalStatus = this.track(this.add.text(x, y - 6, "", {
+    this.sourceRoomTerminalStatus = this.track(this.add.text(x, y - 8, "", {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "6px",
       color: PALETTE.creamPaper,
       align: "center"
     }).setOrigin(0.5, 0).setDepth(87));
@@ -1363,13 +1590,12 @@ export class ArchiveScene extends Phaser.Scene {
     if (gameState.sceneProgress.annotationDraftingComplete) return "DOCS OPEN";
     if (this.sourceNoteWallNeedsStamp()) return "NO REPO";
     if (this.sourceNoteStatus === "stamped") {
-      const step = Math.min(3, (gameState.sceneProgress.annotationDraftingStep ?? 0) + 1);
-      return `NOTE ${step}/3`;
+      return `NOTES ${readAnnotationPacket(gameState.sceneProgress).gathered.length}/3`;
     }
-    if (this.sourceNoteStatus === "verified") return "STAMP";
+    if (this.sourceNoteStatus === "verified") return gameState.processStamps.includes("rule") ? "STAMP" : "REVIEW";
     if (this.sourceNoteStatus === "routed") {
-      const step = Math.min(3, (gameState.sceneProgress.sourceNoteProvenanceStep ?? 0) + 1);
-      return `TRACE ${step}/3`;
+      const trail = readSourceNoteTrail(gameState.sceneProgress);
+      return trail.ready ? "REVIEW" : `CLUES ${trail.found.length}/3`;
     }
     if (this.sourceNoteStatus === "carried") return "ROUTE";
     return "REPO ?";
@@ -1380,7 +1606,7 @@ export class ArchiveScene extends Phaser.Scene {
     const flag = this.sourceRoomTerminalFlag();
     const clear = flag === "ROOM CLEAR";
     const actionable = flag !== "REPO ?" && flag !== "ROUTE";
-    this.sourceRoomTerminalStatus.setText(flag).setColor(clear ? PALETTE.openNetGreen : PALETTE.creamPaper);
+    this.sourceRoomTerminalStatus.setText(flag.replace(" ", "\n")).setColor(clear ? PALETTE.openNetGreen : PALETTE.creamPaper);
     this.sourceRoomTerminalLamp.setFillStyle(color(clear
       ? PALETTE.openNetGreen
       : actionable
@@ -1422,36 +1648,25 @@ export class ArchiveScene extends Phaser.Scene {
       this.track(this.add.image(this.researchTable.x - 20, this.researchTable.y - 3, "source-note").setDepth(72));
       this.track(this.add.image(this.researchTable.x + 17, this.researchTable.y - 4, "citation-stamp").setDepth(72));
     }
-    this.track(this.add.text(this.researchTable.x, this.researchTable.y + 14, "RESEARCH TABLE", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp,
-      backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(73));
     this.addSolid(96, 104, 64, 24);
   }
 
   private drawSourceNoteProvenanceStations() {
     for (const station of SOURCE_NOTE_PROVENANCE_STATIONS) {
       const position = SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id];
-      const shadow = this.add.rectangle(1, 2, 28, 20, color(PALETTE.black), 0.58);
-      const ring = this.add.rectangle(0, 0, 32, 24, color(PALETTE.black), 0)
+      const shadow = this.add.rectangle(1, 2, 38, 20, color(PALETTE.black), 0.58);
+      const ring = this.add.rectangle(0, 0, 42, 24, color(PALETTE.black), 0)
         .setStrokeStyle(2, color(PALETTE.goldStamp), 0.95)
         .setVisible(false);
-      const card = this.add.rectangle(0, 0, 26, 18, color(PALETTE.creamPaper), 1)
+      const card = this.add.rectangle(0, 0, 36, 18, color(PALETTE.creamPaper), 1)
         .setStrokeStyle(1, color(PALETTE.stoneGray));
-      const margin = this.add.rectangle(-9, 0, 2, 14, color(PALETTE.deepRuby));
-      const order = this.add.text(-6, -7, String(station.order), {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.black
-      }).setOrigin(0.5, 0);
-      const label = this.add.text(3, -7, station.shortLabel, {
+      const margin = this.add.rectangle(-15, 0, 2, 14, color(PALETTE.deepRuby));
+      const label = this.add.text(2, -7, station.shortLabel, {
         fontFamily: "monospace",
         fontSize: "4px",
         color: PALETTE.black
       }).setOrigin(0.5, 0);
-      const state = this.add.text(3, 2, "", {
+      const state = this.add.text(2, 2, "", {
         fontFamily: "monospace",
         fontSize: "4px",
         color: PALETTE.terminalCyan
@@ -1463,7 +1678,6 @@ export class ArchiveScene extends Phaser.Scene {
         ring,
         card,
         margin,
-        order,
         label,
         state,
         arrow
@@ -1476,19 +1690,16 @@ export class ArchiveScene extends Phaser.Scene {
   private syncSourceNoteProvenanceStations() {
     const visible = this.currentRoomId === "A1"
       && (this.sourceNoteStatus === "routed" || this.sourceNoteStatus === "verified");
-    const step = Math.max(0, Math.min(
-      SOURCE_NOTE_PROVENANCE_STATIONS.length,
-      gameState.sceneProgress.sourceNoteProvenanceStep ?? 0
-    ));
-    for (const [index, station] of SOURCE_NOTE_PROVENANCE_STATIONS.entries()) {
+    const trail = readSourceNoteTrail(gameState.sceneProgress);
+    for (const station of SOURCE_NOTE_PROVENANCE_STATIONS) {
       const visual = this.provenanceStationVisuals.get(station.id);
       if (!visual) continue;
-      const complete = index < step;
-      const active = this.sourceNoteStatus === "routed" && index === step;
+      const complete = trail.found.some(clue => clue.id === station.id);
+      const active = this.sourceNoteStatus === "routed" && !complete;
       visual.container.setVisible(visible).setAlpha(active ? 1 : complete ? 0.82 : 0.38);
       visual.card.setStrokeStyle(1, color(complete ? PALETTE.openNetGreen : active ? PALETTE.goldStamp : PALETTE.stoneGray));
       visual.ring.setVisible(active);
-      visual.state.setText(complete ? "OK" : active ? "NEXT" : "...");
+      visual.state.setText(complete ? "FOUND" : active ? "READ" : "...");
       visual.state.setColor(complete ? PALETTE.openNetGreen : active ? PALETTE.classNetRed : PALETTE.stoneGray);
       visual.arrow.setVisible(active);
     }
@@ -1498,13 +1709,13 @@ export class ArchiveScene extends Phaser.Scene {
     for (const station of ANNOTATION_DRAFTING_STATIONS) {
       const position = ANNOTATION_DRAFTING_STATION_POSITIONS[station.id];
       const accentColor = this.annotationAccent(station.id);
-      const shadow = this.add.rectangle(1, 2, 30, 22, color(PALETTE.black), 0.58);
-      const ring = this.add.rectangle(0, 0, 34, 26, color(PALETTE.black), 0)
+      const shadow = this.add.rectangle(1, 2, 38, 22, color(PALETTE.black), 0.58);
+      const ring = this.add.rectangle(0, 0, 42, 26, color(PALETTE.black), 0)
         .setStrokeStyle(2, color(accentColor), 0.96)
         .setVisible(false);
-      const card = this.add.rectangle(0, 0, 28, 20, color(PALETTE.creamPaper), 1)
+      const card = this.add.rectangle(0, 0, 36, 20, color(PALETTE.creamPaper), 1)
         .setStrokeStyle(1, color(PALETTE.stoneGray));
-      const accent = this.add.rectangle(-10, 0, 3, 16, color(accentColor));
+      const accent = this.add.rectangle(-14, 0, 3, 16, color(accentColor));
       const label = this.add.text(2, -8, station.shortLabel, {
         fontFamily: "monospace",
         fontSize: "4px",
@@ -1527,7 +1738,7 @@ export class ArchiveScene extends Phaser.Scene {
         ...symbol,
         state,
         arrow
-      ]).setName(`archive-annotation-station-${station.id}`).setDepth(263));
+      ]).setName(`archive-annotation-station-${station.id}`).setDepth(position.y - 1));
       this.annotationStationVisuals.set(station.id, { container, card, ring, state, arrow, accent });
     }
     this.syncAnnotationDraftingStations();
@@ -1575,32 +1786,26 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private syncAnnotationDraftingStations() {
-    const visible = this.currentRoomId === "A1"
+    const visible = (this.currentRoomId === "A1" || this.currentRoomId === "AS")
       && this.sourceNoteStatus === "stamped"
       && !this.sourceNoteWallNeedsStamp()
       && !this.archiveKeyRewardCue?.active
       && !gameState.sceneProgress.annotationDraftingComplete;
-    const step = Math.max(0, Math.min(
-      ANNOTATION_DRAFTING_STATIONS.length,
-      gameState.sceneProgress.annotationDraftingStep ?? 0
-    ));
-    const carried = this.annotationCarriedStation();
+    const packet = readAnnotationPacket(gameState.sceneProgress);
     for (const [index, station] of ANNOTATION_DRAFTING_STATIONS.entries()) {
       const visual = this.annotationStationVisuals.get(station.id);
       if (!visual) continue;
-      const filed = index < step;
-      const held = carried?.id === station.id;
-      const active = !carried && index === step;
-      visual.container.setVisible(visible).setAlpha(active || held ? 1 : filed ? 0.72 : 0.32);
-      visual.card.setStrokeStyle(1, color(filed ? PALETTE.openNetGreen : active || held ? this.annotationAccent(station.id) : PALETTE.stoneGray));
-      visual.ring.setVisible(active || held);
-      visual.accent.setFillStyle(color(filed ? PALETTE.openNetGreen : this.annotationAccent(station.id)));
-      visual.state.setText(filed ? "FILED" : held ? "HELD" : active ? "TAKE" : "...");
-      visual.state.setColor(filed ? PALETTE.openNetGreen : held ? PALETTE.terminalCyan : active ? PALETTE.classNetRed : PALETTE.stoneGray);
-      visual.arrow.setVisible(active);
+      const filed = index < packet.filedCount;
+      const gathered = packet.gathered.some((note) => note.id === station.id);
+      const accessible = station.id !== "contextual_annotation" || readAnnotationCart(gameState.sceneProgress).parked;
+      visual.container.setVisible(visible && !gathered && accessible).setAlpha(1);
+      visual.card.setStrokeStyle(1, color(this.annotationAccent(station.id)));
+      visual.ring.setVisible(false);
+      visual.state.setText("");
+      visual.arrow.setVisible(!gathered);
       const slot = this.annotationTableSlots.get(station.id);
-      slot?.setVisible(visible).setFillStyle(color(filed ? this.annotationAccent(station.id) : PALETTE.shadowNavy));
-      slot?.setStrokeStyle(1, color(filed ? PALETTE.creamPaper : index === step && held ? PALETTE.goldStamp : PALETTE.stoneGray));
+      slot?.setVisible(visible).setFillStyle(color(gathered ? this.annotationAccent(station.id) : PALETTE.shadowNavy));
+      slot?.setStrokeStyle(1, color(filed ? PALETTE.creamPaper : gathered ? PALETTE.goldStamp : PALETTE.stoneGray));
     }
     this.annotationTableFrame?.setVisible(visible);
   }
@@ -1611,46 +1816,48 @@ export class ArchiveScene extends Phaser.Scene {
     return PALETTE.goldStamp;
   }
 
-  private annotationCarriedStation() {
-    const order = Math.floor(gameState.sceneProgress.annotationDraftingCarried ?? 0);
-    return ANNOTATION_DRAFTING_STATIONS.find((station) => station.order === order) ?? null;
-  }
-
   private restoreAnnotationSlipIcon() {
-    const station = this.annotationCarriedStation();
-    if (!station || gameState.sceneProgress.annotationDraftingComplete || this.currentRoomId !== "A1") return;
-    this.createAnnotationSlipIcon(station.id);
+    if (this.currentRoomId === "A1" || this.currentRoomId === "AS") this.createAnnotationSlipIcon();
   }
 
-  private createAnnotationSlipIcon(id: AnnotationDraftingPromptId) {
+  private createAnnotationSlipIcon() {
     if (this.annotationSlipIcon?.active) this.annotationSlipIcon.destroy();
-    const station = ANNOTATION_DRAFTING_STATIONS.find((candidate) => candidate.id === id);
-    if (!station) return;
-    const accentColor = this.annotationAccent(id);
-    this.annotationSlipIcon = this.add.container(Math.round(this.player.position.x), Math.round(this.player.position.y - 16), [
-      this.add.ellipse(0, 3, 18, 6, color(PALETTE.black), 0.42),
-      this.add.rectangle(0, 0, 17, 11, color(PALETTE.creamPaper)).setStrokeStyle(1, color(accentColor)),
-      this.add.rectangle(-6, 0, 2, 8, color(accentColor)),
-      this.add.text(2, -4, station.shortLabel.slice(0, 3), {
-        fontFamily: "monospace",
-        fontSize: "4px",
-        color: PALETTE.black
-      }).setOrigin(0.5, 0)
-    ]).setName(`archive-carried-annotation-${id}`).setDepth(280);
+    this.annotationSlipIcon = undefined;
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    if (!packet.held.length || packet.complete) return;
+    this.annotationSlipIcon = this.add.container(0, 0, [
+      this.add.rectangle(1, 2, 12, 10, color(PALETTE.black), 0.65),
+      this.add.rectangle(0, 0, 12, 10, color(PALETTE.creamPaper)).setStrokeStyle(1, color(PALETTE.sepiaInk)),
+      ...ANNOTATION_DRAFTING_STATIONS.map((station, index) => this.add.rectangle(-4 + index * 4, -5, 3, 3,
+        color(packet.gathered.some((note) => note.id === station.id) ? this.annotationAccent(station.id) : PALETTE.stoneGray))),
+      this.add.text(0, -2, String(packet.gathered.length), { fontSize: "6px", color: PALETTE.black }).setOrigin(0.5, 0)
+    ]).setName("archive-carried-annotation-packet");
+    this.updateAnnotationSlipIcon();
   }
 
   private updateAnnotationSlipIcon() {
     if (!this.annotationSlipIcon?.active) return;
     this.annotationSlipIcon
-      .setPosition(Math.round(this.player.position.x), Math.round(this.player.position.y - 16))
+      .setPosition(Math.round(this.player.position.x + 12), Math.round(this.player.position.y - 6))
       .setDepth(Math.round(this.player.position.y) + 5);
   }
 
   private addDocumentInteractables() {
+    if (gameState.sceneProgress.annotationDraftingComplete && nextArchiveResearchReview()
+      && !this.interactables.some((target) => target.id === "research-review")) {
+      this.interactables.push({
+        id: "research-review",
+        ...this.researchTable,
+        label: "Research Table Review",
+        radius: 38,
+        kind: "document",
+        onInteract: () => this.finishMissingResearchReview()
+      });
+    }
     const documents = visibleArchiveSourceRoomDocuments(Boolean(gameState.sceneProgress.annotationDraftingComplete));
     for (const documentData of documents) {
       if (this.collected.has(documentData.id)) continue;
-      const document = new Manuscript(this, documentData.id, documentData.label, documentData.x, documentData.y);
+      const document = new Manuscript(this, documentData.id, documentData.label, documentData.x, documentData.y, false);
       this.roomCleanups.push(() => {
         if (document.container.active) document.container.destroy();
       });
@@ -1706,7 +1913,7 @@ export class ArchiveScene extends Phaser.Scene {
     }
     const documentCount = this.sourceRoomDocumentCount();
     if (documentCount < 3) {
-      setObjective(`Collect document tiles: ${documentCount}/3.`);
+      this.refreshRoomObjective();
       this.toast.show(`${document.label} filed`, this.player.position, "info");
       setLatestMessage(`${document.label} filed. Keep collecting document tiles.`);
       return;
@@ -1716,22 +1923,11 @@ export class ArchiveScene extends Phaser.Scene {
 
   private handleEnemyInteract(definition: ArchiveEnemyDefinition, wall: BureaucraticWall) {
     if (wall.isCleared) return;
-    wall.markHit();
-
     if (definition.type === "NO REPO") {
-      if (this.sourceNoteStatus === "stamped") {
-        this.clearEnemy(definition, wall, "NO REPO cleared with citation stamp after source-table verification.");
-        return;
-      }
-      retroAudio.warning();
-      this.dialog.show("NO REPO", [
-        "This wall wants a real repository trail.",
-        "Check Source Note 47 at the research table first.",
-        "Only the citation stamp can crack it."
-      ]);
-      setLatestMessage("NO REPO needs source-table verification.");
+      this.startRepoWallSwing(wall);
       return;
     }
+    wall.markHit();
 
     if (definition.type === "FIREWALL") {
       if (this.networkRoutingResolved) {
@@ -1814,6 +2010,10 @@ export class ArchiveScene extends Phaser.Scene {
     const wall = facedWall ?? (nearest?.kind === "enemy" ? this.activeEnemyWalls.get(nearest.id) : undefined);
     const definition = wall ? this.activeEnemyDefs.get(wall.id) : undefined;
     if (!wall && nearest?.kind !== "enemy") return false;
+    if (wall && definition?.type === "NO REPO") {
+      this.startRepoWallSwing(wall);
+      return true;
+    }
     if (!this.player.startAction(gameState.equippedProcessItem)) {
       setLatestMessage("Process tool is cooling down.");
       this.hintText.setText("COOLDOWN");
@@ -1831,6 +2031,9 @@ export class ArchiveScene extends Phaser.Scene {
 
   private clearEnemy(definition: ArchiveEnemyDefinition, wall: BureaucraticWall, message: string) {
     if (wall.isCleared) return;
+    const progressKey = `archiveWall_${definition.id}`;
+    const firstClear = gameState.sceneProgress[progressKey] !== 1;
+    gameState.sceneProgress[progressKey] = 1;
     this.clearedWallIds.add(definition.id);
     this.activeEnemyWalls.delete(definition.id);
     this.activeEnemyDefs.delete(definition.id);
@@ -1838,16 +2041,29 @@ export class ArchiveScene extends Phaser.Scene {
     wall.clear();
     this.clearReadyWallCue(definition.id);
     if (definition.id === "repo-wall") {
-      this.clearNoRepoStampCue();
+      gameState.sceneProgress.archiveRepoWallCleared = 1;
+      this.drawNaraStacksGateSeal();
       this.showArchiveKeyRewardCue();
     }
     retroAudio.stamp();
-    addDocumentPoints(3, `${definition.type} process wall cleared`);
-    adjustReliability(2, message);
+    if (firstClear) {
+      addDocumentPoints(3, `${definition.type} process wall cleared`);
+      adjustReliability(2, message);
+    }
     setLatestMessage(message);
     this.reliability.update();
     this.interactables = this.interactables.filter((item) => item.id !== definition.id);
     this.syncWallState();
+    if (definition.type === "WAIT" && this.currentRoomId === "B1") {
+      const room = ARCHIVE_ROOMS.B1;
+      for (const direction of ["east", "south"] as const) {
+        const target = room.exits[direction];
+        this.drawGate(direction, true, this.exitIsOpen(room, direction), room.requiredItems?.[direction],
+          target ? this.gateRouteLabel(target) : undefined, target);
+      }
+      this.syncRoomTraversalState();
+    }
+    saveGameNow();
   }
 
   private clearEnemyById(enemyId: string, message: string) {
@@ -1869,38 +2085,39 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private deliverReferralManifest() {
+    if (this.referralManifestDelivered && this.agencyTimerResolved) return;
     this.referralManifestDelivered = true;
     this.agencyTimerResolved = true;
     addProcessItem("concurrence_slip");
-    this.dialog.show("REFERRAL TRAY", [
-      "Manifest delivered.",
-      "Agency response timer resolved.",
-      "Pending work can move again."
-    ]);
+    this.interactables = this.interactables.filter(item => item.id !== "stacks-manifest");
+    this.children.getByName("archive-unfiled-manifest")?.destroy();
     this.clearEnemyById("pending-manifest", "PENDING cleared after manifest delivery to the referral tray.");
     this.clearEnemyById("wait-timer", "WAIT cleared after agency response timer resolution.");
-    setObjective("Referral manifest delivered; exits unfrozen.");
+    this.refreshRoomObjective();
+    this.toast.show("FILED - ROUTES OPEN", this.player.position, "info");
   }
 
   private splitAmbiguousFlag() {
-    if (!this.ambiguousSplit) {
-      this.ambiguousSplit = true;
-      addProcessItem("review_folder");
-      this.drawAmbiguousFlags();
+    if (this.ambiguousSplit) {
+      this.refreshRoomObjective();
+      return;
     }
+    this.ambiguousSplit = true;
+    gameState.sceneProgress.archiveAmbiguousSplit = 1;
+    addProcessItem("review_folder");
+    this.drawAmbiguousFlags();
+    this.interactables = this.interactables.filter(item => item.id !== "ambiguous-flag");
     retroAudio.warning();
-    this.dialog.show("AMBIGUOUS", [
-      "The flag splits into two plausible readings.",
-      "Plausible is not enough.",
-      "Bring both flags to the human specialist."
-    ]);
+    this.toast.show("TWO READINGS FOUND", this.player.position, "info");
     setLatestMessage("AMBIGUOUS split into two flags.");
-    setObjective("Bring split flags to the human specialist.");
+    this.refreshRoomObjective();
     this.syncWallState();
+    saveGameNow();
   }
 
   private clearAmbiguousFlags() {
     this.ambiguousSplit = false;
+    gameState.sceneProgress.archiveAmbiguousSplit = 0;
     for (const object of this.ambiguousFlagObjects) {
       if (object.active) object.destroy();
     }
@@ -1908,21 +2125,51 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private resolveAmbiguousWithSpecialist() {
-    if (!this.ambiguousSplit && !this.activeEnemyWalls.has("ambiguous-flag")) {
-      this.dialog.show("HUMAN SPECIALIST", "No ambiguous flags are waiting.");
+    if (this.specialistDecisionMade) {
+      this.dialog.show("HUMAN SPECIALIST", "Review is complete. Record it at the south gate.");
       return;
     }
-    this.specialistDecisionMade = true;
-    this.dialog.show("HUMAN SPECIALIST", [
-      "Two flags reviewed.",
-      "Meaning is resolved by human judgment.",
-      "The ambiguity wall is cleared."
-    ]);
-    this.clearEnemyById("ambiguous-flag", "AMBIGUOUS cleared by the correct human specialist.");
-    setObjective("Ambiguous flags resolved by human review.");
+    if (!this.ambiguousSplit) {
+      this.dialog.show("HUMAN SPECIALIST", "Examine the flagged document below my desk. Bring me both readings.");
+      this.refreshRoomObjective();
+      return;
+    }
+    if (this.researchChoice.active) return;
+    const review = ARCHIVE_MEANING_REVIEW;
+    this.interactionPrompt.update(0, null);
+    this.hintText.setText("");
+    this.researchChoice.show(`${review.question}\n\n${review.context}`, [...review.options], option => {
+      if (option.value === "back") {
+        this.resumeArchiveReview();
+        return;
+      }
+      const approved = option.value === review.correctValue;
+      if (approved) {
+        this.specialistDecisionMade = true;
+        this.clearEnemyById("ambiguous-flag", "Source uncertainty preserved by human review.");
+      } else retroAudio.warning();
+      this.resumeArchiveReview();
+      const message = approved ? review.successMessage : review.failureMessage;
+      setLatestMessage(message);
+      this.toast.show(message, this.player.position, approved ? "info" : "warn");
+    }, 8, () => this.resumeArchiveReview());
+  }
+
+  private resumeArchiveReview() {
+    this.reviewResumeUntil = this.time.now + 600;
+    this.refreshRoomObjective();
   }
 
   private useGoldenRuleGate() {
+    if (this.currentRoomId === "B2" && !this.specialistDecisionMade) {
+      this.toast.show("HUMAN REVIEW FIRST", this.player.position, "info");
+      this.refreshRoomObjective();
+      return;
+    }
+    if (this.currentRoomId === "B2" && this.goldenRuleDecisionMade) {
+      this.refreshRoomObjective();
+      return;
+    }
     this.goldenRuleDecisionMade = true;
     this.dialog.show("GOLDEN RULE GATE", [
       "AI queues may assist.",
@@ -1935,7 +2182,8 @@ export class ArchiveScene extends Phaser.Scene {
       this.drawBlackVaultDoorSeal();
     }
     setLatestMessage("Black Vault route open by Golden Rule decision.");
-    setObjective("Black Vault route open: press A at the open door.");
+    if (this.currentRoomId === "B2") this.refreshRoomObjective();
+    else setObjective("Black Vault route open: press A at the open door.");
   }
 
   private consumeArchiveReturnSpawn() {
@@ -2146,54 +2394,18 @@ export class ArchiveScene extends Phaser.Scene {
     return this.track(object);
   }
 
-  private tryRouteToNaraStacks() {
-    if (this.sourceNoteGateOpen()) {
-      this.routeToDanneMap("NaraStacksScene", "A1", 128, 188);
-      return;
-    }
-
-    retroAudio.warning();
-    const message = this.sourceNoteStatus === "inactive"
-      ? "Pick up Source Note 47 before leaving the source room."
-      : this.sourceNoteStatus === "carried"
-        ? "Route Source Note 47 to the research table before taking the stairs."
-        : this.sourceNoteStatus === "routed"
-          ? "Verify Source Note 47 provenance before taking the stairs."
-          : "Stamp Source Note 47 before taking the stairs.";
-    setLatestMessage("Source Note 47 locks the NARA II stair route.");
-    setObjective("Archive Cavern: verify and stamp Source Note 47 before taking the NARA II stairs.");
-    this.dialog.show("NARA II STAIRS", [
-      "Visible route. Not open yet.",
-      message,
-      "The next archive wing opens after the first citation stamp."
-    ]);
-  }
-
-  private sourceNoteGateOpen() {
-    return this.sourceNoteStatus === "stamped"
-      || hasProcessItem("citation_stamp");
-  }
-
   private drawNaraStacksGateSeal() {
     this.clearNaraStacksGateSeal();
-    if (this.sourceNoteGateOpen()) {
-      this.trackNaraStacksGateSeal(this.add.rectangle(128, 191, 42, 4, color(PALETTE.terminalCyan), 0.9).setName("archive-nara-stairs-open-seal").setDepth(170));
-      this.trackNaraStacksGateSeal(this.add.text(128, 190, "OPEN", {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.black
-      }).setName("archive-nara-stairs-open-label").setOrigin(0.5).setDepth(171));
+    if (annotationStacksOpen(gameState.sceneProgress)) {
+      this.trackNaraStacksGateSeal(this.add.rectangle(128, 62, 30, 2, color(PALETTE.terminalCyan), 0.9)
+        .setName("archive-nara-stairs-open-seal").setDepth(218));
       return;
     }
 
-    this.trackNaraStacksGateSeal(this.add.rectangle(128, 191, 60, 10, color(PALETTE.black), 0.88).setStrokeStyle(1, color(PALETTE.classNetRed)).setName("archive-nara-stairs-source-lock-seal").setDepth(170));
-    this.trackNaraStacksGateSeal(this.add.text(128, 188, "SOURCE LOCK", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.classNetRed
-    }).setName("archive-nara-stairs-source-lock-label").setOrigin(0.5, 0).setDepth(171));
-    this.trackNaraStacksGateSeal(this.add.rectangle(104, 196, 8, 2, color(PALETTE.goldStamp), 1).setName("archive-nara-stairs-source-lock-rivet").setDepth(172));
-    this.trackNaraStacksGateSeal(this.add.rectangle(152, 196, 8, 2, color(PALETTE.goldStamp), 1).setName("archive-nara-stairs-source-lock-rivet").setDepth(172));
+    this.trackNaraStacksGateSeal(this.add.rectangle(155, 49, 6, 6, color(PALETTE.black))
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setName("archive-nara-stairs-lock-shackle").setDepth(218));
+    this.trackNaraStacksGateSeal(this.add.rectangle(155, 53, 10, 6, color(PALETTE.goldStamp))
+      .setName("archive-nara-stairs-lock-body").setDepth(219));
   }
 
   private clearNaraStacksGateSeal() {
@@ -2214,27 +2426,60 @@ export class ArchiveScene extends Phaser.Scene {
     }
     this.syncWallInteractables();
     this.syncWallState();
-    this.refreshNoRepoStampCue();
     this.refreshReadyWallCues();
     const activeWall = this.bureaucraticWalls.find((wall) => wall.isTouching(this.player.position, 19));
-    if (!activeWall || this.time.now < this.wallContactCooldown) return;
+    if (!activeWall || this.time.now < Math.max(this.wallContactCooldown, this.reviewResumeUntil)) return;
     const definition = this.activeEnemyDefs.get(activeWall.id);
     if (this.wallReadyForProcess(definition)) {
       this.wallContactCooldown = this.time.now + 620;
       setNearestInteractable(`${definition?.type ?? "WALL"}: use ${this.readyWallActionLabel(definition)}`);
       setLatestMessage(`${definition?.type ?? "Process wall"} is ready for ${this.readyWallActionLabel(definition)}.`);
-      setObjective("Press A near the process wall to apply the verified human workflow step.");
+      if (archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress)) this.refreshRoomObjective();
+      else setObjective("Press A near the process wall to apply the verified human workflow step.");
       return;
     }
     activeWall.markHit();
     const hit = this.player.takeHit(activeWall.position, definition?.type === "DANN-E QUEUE" ? 22 : 15);
     if (!hit) return;
     this.wallContactCooldown = this.time.now + 1200;
-    applyStandardsViolation("missed_30_year_deadline", `${definition?.type ?? activeWall.label} process wall delayed source work.`);
+    applyProcessPressure(`${definition?.type ?? activeWall.label} collision. The record is unchanged.`);
     this.reliability.update();
-    if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");
+    if (archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress)) this.refreshRoomObjective();
+    else if (definition?.type === "DANN-E QUEUE") setObjective("Use the Golden Rule gate for a human decision.");
     else if (definition?.type === "WAIT") setObjective("Resolve the agency response timer at the referral tray.");
     else setObjective("Clear stonewalls with the matching human process.");
+  }
+
+  private startRepoWallSwing(wall: BureaucraticWall) {
+    this.player.faceTowards(wall.position);
+    const swing = tryEquippedToolSwing(this.player);
+    if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
+  }
+
+  private updateRepoWallToolHit() {
+    const wall = this.activeEnemyWalls.get("repo-wall");
+    const definition = this.activeEnemyDefs.get("repo-wall");
+    if (!wall || !definition || wall.isCleared || this.lastRepoWallSwing === this.player.actionId) return;
+    const result = archiveRepoWallSwing({
+      sourceNoteStatus: this.sourceNoteStatus,
+      hasCitationStamp: hasProcessItem("citation_stamp"),
+      tool: this.player.combatReadout.weapon.tool,
+      hitbox: this.player.activeActionHitbox,
+      wallBounds: wall.bounds
+    });
+    if (result === "miss") return;
+    this.lastRepoWallSwing = this.player.actionId;
+    wall.markHit();
+    if (result !== "clear") {
+      const message = result === "review-required" ? "VERIFY SOURCE AT TABLE FIRST" : "USE CITATION STAMP";
+      this.toast.show(message, this.player.position, "warn");
+      setLatestMessage(message);
+      retroAudio.warning();
+      return;
+    }
+    this.clearEnemy(definition, wall, "NO REPO cleared with citation stamp after source-table verification.");
+    this.toast.show("NO REPO CLEARED - ANNOTATE", this.player.position, "info");
+    this.updateSourceNoteVerification();
   }
 
   private wallReadyForProcess(definition?: ArchiveEnemyDefinition) {
@@ -2284,7 +2529,7 @@ export class ArchiveScene extends Phaser.Scene {
           status: this.enemyStatus(definition)
         };
       });
-    setVisibleThreats([...activeThreats, this.danneLurker.readout(this.time.now)]);
+    setVisibleThreats(this.currentRoomId === "AS" ? [] : [...activeThreats, this.danneLurker.readout(this.time.now)]);
     setVisibleEntities([
       `Room ${this.currentRoomId}`,
       ...this.interactables.map((item) => item.label),
@@ -2296,23 +2541,17 @@ export class ArchiveScene extends Phaser.Scene {
       ...(this.currentRoomId === "B2" && this.ambiguousSplit && !this.clearedWallIds.has("ambiguous-flag") ? ["Split ambiguity flag A", "Split ambiguity flag B"] : []),
       ...(this.sourceNoteStatus !== "inactive" ? ["Source Note 47 verification object"] : []),
       ...((this.sourceNoteStatus === "routed" || this.sourceNoteStatus === "verified")
-        ? SOURCE_NOTE_PROVENANCE_STATIONS.map((station, index) => {
-            const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
-            const status = index < step ? "matched" : index === step && this.sourceNoteStatus === "routed" ? "next" : "queued";
-            return `Provenance ${station.order}: ${station.label} (${status})`;
+        ? SOURCE_NOTE_PROVENANCE_STATIONS.map((station) => {
+            const found = readSourceNoteTrail(gameState.sceneProgress).found.some(clue => clue.id === station.id);
+            return `Source clue: ${station.label} (${found ? "recorded" : "available"})`;
           })
         : []),
       ...((this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete)
         ? ANNOTATION_DRAFTING_STATIONS.map((station, index) => {
-            const step = gameState.sceneProgress.annotationDraftingStep ?? 0;
-            const carried = this.annotationCarriedStation();
-            const status = index < step
+            const packet = readAnnotationPacket(gameState.sceneProgress);
+            const status = index < packet.filedCount
               ? "filed"
-              : carried?.id === station.id
-                ? "carried"
-                : index === step
-                  ? "next"
-                  : "queued";
+              : packet.gathered.some((note) => note.id === station.id) ? "in packet" : "available";
             return `Annotation ${station.order}: ${station.label} (${status})`;
           })
         : [])
@@ -2325,7 +2564,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (definition.type === "NO REPO") return this.sourceNoteStatus === "stamped" ? "citation stamp ready" : "needs source table";
     if (definition.type === "FIREWALL") return this.networkRoutingResolved ? "routing ready" : "wrong network blocks door";
     if (definition.type === "PENDING") return this.referralManifestDelivered ? "manifest delivered" : "awaiting manifest";
-    if (definition.type === "WAIT") return this.agencyTimerResolved ? "timer resolved" : "exits frozen";
+    if (definition.type === "WAIT") return this.agencyTimerResolved ? "timer resolved" : "forward exits blocked; north returns";
     if (definition.type === "AMBIGUOUS") return this.specialistDecisionMade ? "specialist ready" : this.ambiguousSplit ? "split flags waiting" : "unsplit";
     if (definition.type === "DANN-E QUEUE") return this.goldenRuleDecisionMade ? "human decision ready" : "pushing backward";
     return "active";
@@ -2336,7 +2575,7 @@ export class ArchiveScene extends Phaser.Scene {
     gameState.sceneProgress.archiveSourceNoteCollected = 1;
     setDocumentWorkflowState("source_note_047", "source_note_needed");
     setHeldItem("Source Note 47");
-    setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
+    setLatestMessage("The source note is missing its archive trail. Bring it to the research table.");
     setObjective("ROUTE: carry Source Note 47 to research table.");
     this.sourceNoteIcon = this.add.image(this.player.position.x, this.player.position.y - 15, "source-note").setDepth(240);
     this.sourceNoteLabel = this.add.text(this.player.position.x, this.player.position.y - 1, "SRC NOTE 47", {
@@ -2344,7 +2583,7 @@ export class ArchiveScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(241);
+    }).setOrigin(0.5).setDepth(241).setVisible(false);
     this.syncWallState();
     this.updateSourceNoteVerification();
     this.refreshSourceNoteRouteCue();
@@ -2354,6 +2593,10 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private updateSourceNoteInteractionPrompt(delta: number) {
+    if (this.toast.visible) {
+      this.interactionPrompt.update(delta, null);
+      return;
+    }
     const hintTarget = this.sourceNoteActionHint();
     const strictTarget = hintTarget && this.isNearSourceNoteActionTarget(hintTarget) ? hintTarget : null;
     const annotationActive = this.sourceNoteStatus === "stamped"
@@ -2379,37 +2622,42 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private sourceNoteActionHint(): Interactable | null {
-    if (this.currentRoomId !== "A1") return null;
+    if (this.currentRoomId !== "A1" && this.currentRoomId !== "AS") return null;
+    if (this.currentRoomId === "AS" && readAnnotationPacket(gameState.sceneProgress).complete) return null;
     if (this.archiveKeyRewardCue?.active) return null;
     let candidates: Interactable[];
     if (this.sourceNoteWallNeedsStamp()) {
       const wallTarget = this.interactables.find((item) => item.id === "repo-wall");
-      candidates = wallTarget ? [{ ...wallTarget, radius: 38 }] : [];
+      candidates = wallTarget ? [{ ...wallTarget, radius: 30 }] : [];
     } else if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
-      const carried = this.annotationCarriedStation();
-      candidates = carried
-        ? [{
-            id: "annotation-research-table",
-            label: this.researchTable.label,
-            x: this.researchTable.x,
-            y: this.researchTable.y,
-            radius: 54,
-            kind: "document",
-            onInteract: () => undefined
-          }]
-        : ANNOTATION_DRAFTING_STATIONS.map((station) => {
-            const position = ANNOTATION_DRAFTING_STATION_POSITIONS[station.id];
-            return {
-              id: `annotation-station-${station.id}`,
-              label: station.label,
-              x: position.x,
-              y: position.y,
-              radius: 28,
-              kind: "document",
-              onInteract: () => undefined
-            };
-          });
-    } else if (this.sourceNoteStatus === "routed") {
+      const packet = readAnnotationPacket(gameState.sceneProgress);
+      candidates = this.currentRoomId === "AS" ? packet.missing
+        .filter(station => station.id !== "contextual_annotation" || readAnnotationCart(gameState.sceneProgress).parked)
+        .map((station) => ({
+        id: `annotation-station-${station.id}`,
+        label: station.label,
+        ...ANNOTATION_DRAFTING_STATION_POSITIONS[station.id],
+        radius: 28,
+        kind: "document",
+        onInteract: () => undefined
+      })) : packet.ready ? [] : [{
+        id: "annotation-stacks-door", label: "Annotation Stacks", x: 128, y: 56, radius: 22,
+        kind: "door", onInteract: () => this.enterAnnotationStacks()
+      }];
+      if (this.currentRoomId === "A1" && (packet.held.length || packet.ready)) candidates.push({
+        id: "annotation-research-table",
+        label: this.researchTable.label,
+        x: this.researchTable.x,
+        y: this.researchTable.y,
+        radius: 54,
+        kind: "document",
+        onInteract: () => undefined
+      });
+      if (this.currentRoomId === "AS" && !readAnnotationCart(gameState.sceneProgress).parked) {
+        const cart = this.interactables.find(item => item.id === "annotation-return-cart");
+        if (cart) candidates.push(cart);
+      }
+    } else if (this.sourceNoteStatus === "routed" && !readSourceNoteTrail(gameState.sceneProgress).ready) {
       candidates = SOURCE_NOTE_PROVENANCE_STATIONS.map((station) => {
           const position = SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id];
           return {
@@ -2469,26 +2717,31 @@ export class ArchiveScene extends Phaser.Scene {
   private sourceNotePromptText(target: Interactable | null = null) {
     if (this.sourceNoteStatus === "carried") return "ROUTE SRC NOTE";
     if (this.sourceNoteStatus === "routed") {
-      const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
-      const expected = getSourceNoteProvenanceStation(step);
-      return this.sourceNoteStationId(target) === expected.id
-        ? `CHECK ${expected.shortLabel}`
-        : `TRACE ${expected.shortLabel} FIRST`;
+      const trail = readSourceNoteTrail(gameState.sceneProgress);
+      if (trail.ready) return "CHECK SOURCE TRAIL";
+      const station = SOURCE_NOTE_PROVENANCE_STATIONS.find(clue => clue.id === this.sourceNoteStationId(target));
+      return station ? `READ ${station.shortLabel}` : "FIND SOURCE CLUES";
     }
-    if (this.sourceNoteStatus === "verified") return "STAMP SRC NOTE";
+    if (this.sourceNoteStatus === "verified") return gameState.processStamps.includes("rule") ? "STAMP SRC NOTE" : "REVIEW CABLE";
     if (this.sourceNoteWallNeedsStamp()) return "STAMP NO REPO";
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
-      const carried = this.annotationCarriedStation();
-      const expected = getAnnotationDraftingStation(gameState.sceneProgress.annotationDraftingStep ?? 0);
-      if (carried) return `FILE ${carried.shortLabel}`;
-      return this.annotationStationId(target) === expected.id
-        ? `TAKE ${expected.shortLabel}`
-        : `FIND ${expected.shortLabel}`;
+      if (target?.id === "annotation-return-cart") return "PUSH CONTEXT CART";
+      if (target?.id === "annotation-stacks-door") return "ENTER NOTE STACKS";
+      if (target?.id === "annotation-research-table") return "FILE PACKET";
+      const station = ANNOTATION_DRAFTING_STATIONS.find((note) => note.id === this.annotationStationId(target));
+      return station ? `TAKE ${station.shortLabel}` : "FIND NOTES";
     }
     return "ANNOTATION FILED";
   }
 
   private updateSourceNoteVerification() {
+    if (this.currentRoomId === "AS") {
+      this.updateAnnotationSlipIcon();
+      this.syncAnnotationDraftingStations();
+      this.syncSourceNotePhysicalState(null);
+      this.refreshRoomObjective();
+      return;
+    }
     this.syncSourceRoomTerminalStatus();
     if (this.sourceNoteStatus === "carried" && this.sourceNoteIcon) {
       const x = Math.round(this.player.position.x);
@@ -2500,36 +2753,20 @@ export class ArchiveScene extends Phaser.Scene {
 
     const actionTarget = this.sourceNoteActionHint();
     const nearActionTarget = Boolean(actionTarget && this.isNearSourceNoteActionTarget(actionTarget));
-    const carriedAnnotation = this.annotationCarriedStation();
     const verb = this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete
-      ? carriedAnnotation ? "FILE" : "TAKE"
+      ? actionTarget?.id === "annotation-research-table" ? "FILE" : "TAKE"
       : this.verbForSourceNote();
     this.hintText.setText("");
     setNearestInteractable(nearActionTarget ? `${verb} SRC NOTE 47` : null);
-    if (this.sourceNoteStatus === "carried") {
-      setObjective("ROUTE: carry Source Note 47 to research table in A1.");
-    } else if (this.sourceNoteStatus === "routed") {
-      const step = Math.max(0, gameState.sceneProgress.sourceNoteProvenanceStep ?? 0);
-      const station = getSourceNoteProvenanceStation(step);
-      setObjective(`VERIFY ${step + 1}/3: inspect ${station.label}.`);
-    } else if (this.sourceNoteStatus === "verified") {
-      setObjective("STAMP: return to the research table and apply the Citation Stamp.");
-    } else if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
+    this.refreshRoomObjective();
+    if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
       if (this.archiveKeyRewardCue?.active) {
-        setObjective("ROUTE OPEN: Citation Stamp unlocked the NARA II path.");
+        setObjective("ANNOTATION STACKS OPEN");
         setNearestInteractable(null);
       } else if (this.sourceNoteWallNeedsStamp()) {
-        setObjective("STAMP NO REPO: use the Citation Stamp on the stone wall.");
         setNearestInteractable(nearActionTarget ? "STAMP NO REPO wall" : null);
       } else {
-        const step = Math.max(0, gameState.sceneProgress.annotationDraftingStep ?? 0);
-        const station = getAnnotationDraftingStation(step);
-        setObjective(carriedAnnotation
-          ? `FILE ${step + 1}/3: carry ${carriedAnnotation.carriedLabel} to the research table.`
-          : `ANNOTATE ${step + 1}/3: collect ${station.label}.`);
-        setNearestInteractable(nearActionTarget
-          ? carriedAnnotation ? `FILE ${carriedAnnotation.carriedLabel}` : `TAKE ${station.carriedLabel}`
-          : null);
+        setNearestInteractable(nearActionTarget ? this.sourceNotePromptText(actionTarget) : null);
       }
     }
     this.syncSourceNotePhysicalState(nearActionTarget ? actionTarget?.label ?? null : null);
@@ -2542,53 +2779,62 @@ export class ArchiveScene extends Phaser.Scene {
     const target = this.sourceNoteActionHint();
     if (!target || !this.isNearSourceNoteActionTarget(target)) {
       retroAudio.warning();
+      if (this.sourceNoteStatus === "stamped" && !this.sourceNoteWallNeedsStamp()
+        && !readAnnotationPacket(gameState.sceneProgress).ready) {
+        this.toast.show("NORTH DOOR: ANNOTATION STACKS", this.player.position, "info");
+        setLatestMessage("The north door leads to source, context, and selection notes. Bring the packet back for human review.");
+        return;
+      }
       const expected = this.sourceNoteStatus === "routed"
-        ? getSourceNoteProvenanceStation(gameState.sceneProgress.sourceNoteProvenanceStep ?? 0).label
-        : this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete
-          ? this.annotationCarriedStation()?.carriedLabel ?? getAnnotationDraftingStation(gameState.sceneProgress.annotationDraftingStep ?? 0).label
-          : this.researchTable.label;
+        ? readSourceNoteTrail(gameState.sceneProgress).missing[0]?.label ?? this.researchTable.label
+        : this.researchTable.label;
       this.toast.show(`FOLLOW GOLD TRAIL TO ${expected.toUpperCase()}`, this.player.position, "warn");
       setLatestMessage(`Follow the gold trail to ${expected}.`);
       return;
     }
     if (this.sourceNoteStatus === "carried") {
       this.sourceNoteStatus = "routed";
+      gameState.sceneProgress.archiveSourceNoteRouted = 1;
       this.sourceNoteIcon?.setPosition(this.researchTable.x - 16, this.researchTable.y - 17).setDepth(245);
       this.sourceNoteLabel?.setPosition(this.researchTable.x, this.researchTable.y - 4).setDepth(246);
       setHeldItem(null);
-      setLatestMessage("EVIDENCE-BOUND: HUMAN CHECK REQUIRED");
+      setLatestMessage("Find the archive, collection, and folder clues. Explore in any order, then check the trail here.");
       retroAudio.confirm();
       if (gameState.sceneProgress.sourceNoteProvenanceComplete) {
         this.completeSourceNoteVerification("Repository, collection, and folder trail restored from the human review record.");
         return;
       }
       gameState.sceneProgress.sourceNoteProvenanceStep = Math.max(0, gameState.sceneProgress.sourceNoteProvenanceStep ?? 0);
-      this.toast.show("TRACE 1/3: REPOSITORY", this.player.position, "info");
+      this.toast.show("FIND THREE SOURCE CLUES", this.player.position, "info");
       this.updateSourceNoteVerification();
       this.syncWallState();
       this.refreshSourceNoteRouteCue();
       return;
     }
     if (this.sourceNoteStatus === "routed") {
+      if (readSourceNoteTrail(gameState.sceneProgress).ready && target.id === "source-note-research-table") {
+        this.reviewFirstFootnote();
+        return;
+      }
       const stationId = this.sourceNoteStationId(target);
       if (stationId) this.inspectSourceNoteProvenance(stationId);
       return;
     }
     if (this.sourceNoteStatus === "verified") {
+      if (!gameState.processStamps.includes("rule")) {
+        this.reviewResearchDecision("standards", () => {
+          this.sourceNoteStatus = "stamped";
+          this.applySourceNoteStamp();
+        });
+        return;
+      }
       this.sourceNoteStatus = "stamped";
       this.applySourceNoteStamp();
       return;
     }
     if (this.sourceNoteWallNeedsStamp() && target.id === "repo-wall") {
-      const definition = this.activeEnemyDefs.get("repo-wall");
       const wall = this.activeEnemyWalls.get("repo-wall");
-      if (definition && wall) {
-        this.player.startAction("citation_stamp");
-        wall.markHit();
-        this.handleEnemyInteract(definition, wall);
-        this.toast.show("NO REPO CLEARED - ANNOTATE", this.player.position, "info");
-        this.updateSourceNoteVerification();
-      }
+      if (wall) this.startRepoWallSwing(wall);
       return;
     }
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
@@ -2604,43 +2850,57 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private inspectSourceNoteProvenance(stationId: SourceNoteProvenancePromptId) {
-    const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
-    const result = inspectSourceNoteProvenanceStation(step, stationId);
+    const result = inspectSourceNoteProvenanceStation(gameState.sceneProgress, stationId);
+    setLatestMessage(result.message);
     if (!result.ok) {
-      retroAudio.warning();
-      this.toast.show(`TRACE ${result.expectedStation.shortLabel} FIRST`, this.player.position, "warn");
-      setLatestMessage(result.message);
+      this.toast.show(`${result.station.evidenceLabel}\nCLUE ALREADY RECORDED`, this.player.position, "info");
       return;
     }
+    gameState.sceneProgress.sourceNoteProvenanceMask = result.foundMask;
     gameState.sceneProgress.sourceNoteProvenanceStep = result.nextStep;
     retroAudio.confirm();
-    if (result.complete) {
-      gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
-      this.completeSourceNoteVerification(result.message);
-      return;
-    }
-    const nextStation = getSourceNoteProvenanceStation(result.nextStep);
-    setLatestMessage(`${result.station.label} matched. Next: ${nextStation.label}.`);
-    this.toast.show(`${result.station.shortLabel} MATCHED ${result.nextStep}/3`, this.player.position, "info");
+    this.toast.show(`${result.station.evidenceLabel}\n${result.complete ? "TRAIL READY - BACK TO TABLE" : `SOURCE CLUES ${result.nextStep}/3`}`, this.player.position, "info");
     this.updateSourceNoteVerification();
     this.syncWallState();
+    saveGameNow();
+  }
+
+  private reviewFirstFootnote() {
+    if (!readSourceNoteTrail(gameState.sceneProgress).ready || this.sourceNoteBoard.active || this.researchChoice.active) return;
+    this.interactionPrompt.update(0, null);
+    this.clearSourceNoteRouteCue();
+    this.sourceNoteBoard.show(gameState.sceneProgress.sourceNote47ReadershipCorrected === 1,
+      () => {
+        gameState.sceneProgress.sourceNote47ReadershipCorrected = 1;
+        saveGameNow();
+      }, () => {
+        gameState.sceneProgress.aboutSeriesFirstFootnoteComplete = 1;
+        gameState.sceneProgress.sourceNoteProvenanceStep = SOURCE_NOTE_PROVENANCE_STATIONS.length;
+        gameState.sceneProgress.sourceNoteProvenanceComplete = 1;
+        this.completeSourceNoteVerification("Source trail filed; unknown metadata remains explicit in the field guide.");
+        saveGameNow();
+      }, () => { this.updateSourceNoteVerification(); saveGameNow(); });
+    saveGameNow();
   }
 
   private completeSourceNoteVerification(message: string) {
+    if (this.sourceNoteStatus === "verified" || this.sourceNoteStatus === "stamped") return;
+    fileSourceNote47Metadata();
     this.sourceNoteStatus = "verified";
     setDocumentWorkflowState("source_note_047", "citation_verified");
-    addDocumentPoints(6, "Source Note 47 provenance matched to repository, collection, and folder");
+    addDocumentPoints(6, "Source Note 47 provenance and first-footnote metadata verified");
     this.addVerificationGlow();
     setLatestMessage("VERIFIED BY HUMAN REVIEW - SOURCE NOTE PROVENANCE");
-    setObjective("STAMP: apply citation stamp after human provenance review.");
+    const standardsReviewed = gameState.processStamps.includes("rule");
+    setObjective(standardsReviewed ? "STAMP AT TABLE" : "REVIEW AT TABLE");
     retroAudio.confirm();
     this.reliability.update();
     this.syncSourceNoteProvenanceStations();
     this.updateSourceNoteVerification();
     this.syncWallState();
     this.refreshSourceNoteRouteCue();
-    this.toast.show("SN47 VERIFIED - STAMP NEXT", this.player.position, "info");
-    setLatestMessage(`${message} Apply the citation stamp to lock the source note.`);
+    this.toast.show(standardsReviewed ? "SN47 VERIFIED - STAMP NEXT" : "SOURCE VERIFIED - REVIEW CABLE", this.player.position, "info");
+    setLatestMessage(`${message} ${standardsReviewed ? "Apply the citation stamp to lock the source note." : "Interact with the table to review the cable before stamping."}`);
   }
 
   private drawRoutedSourceNote() {
@@ -2650,7 +2910,7 @@ export class ArchiveScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(246));
+    }).setOrigin(0.5).setDepth(246).setVisible(false));
     if (this.sourceNoteStatus === "stamped") this.drawSourceNoteStampMark();
   }
 
@@ -2675,72 +2935,13 @@ export class ArchiveScene extends Phaser.Scene {
     this.clearSourceNoteRouteCue();
     this.drawNaraStacksGateSeal();
     this.syncRoomTraversalState();
-    this.refreshNoRepoStampCue();
     this.reliability.update();
     setObjective("STAMP NO REPO: use the Citation Stamp on the stone wall.");
-    this.toast.show("CITATION STAMP READY - CLEAR NO REPO", this.player.position, "info");
+    this.toast.show("CITATION STAMP READY", this.player.position, "info");
     this.updateSourceNoteVerification();
     this.syncWallState();
     this.syncRoomTraversalState();
     this.time.delayedCall(0, () => this.syncRoomTraversalState());
-  }
-
-  private refreshNoRepoStampCue() {
-    const wall = this.activeEnemyWalls.get("repo-wall");
-    if (this.currentRoomId !== "A1" || this.sourceNoteStatus !== "stamped" || !wall || wall.isCleared) {
-      this.clearNoRepoStampCue();
-      return;
-    }
-
-    const position = wall.position;
-    const { x, y } = this.readyWallCuePosition(position.x, position.y, 26);
-    if (this.noRepoStampCue?.active) {
-      this.noRepoStampCue.setPosition(x, y);
-      this.noRepoStampCue.setDepth(268);
-      return;
-    }
-
-    const ring = this.add.rectangle(0, 0, 42, 22, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(PALETTE.goldStamp), 0.96)
-      .setName("archive-no-repo-stamp-target-ring");
-    const crossH = this.add.rectangle(0, 0, 30, 2, color(PALETTE.goldStamp), 0.88)
-      .setName("archive-no-repo-stamp-target-cross");
-    const crossV = this.add.rectangle(0, 0, 2, 18, color(PALETTE.creamPaper), 0.82)
-      .setName("archive-no-repo-stamp-target-cross");
-    const plate = this.add.rectangle(0, -19, 34, 9, color(PALETTE.black), 0.9)
-      .setStrokeStyle(1, color(PALETTE.classNetRed), 0.86)
-      .setName("archive-no-repo-stamp-target-plate");
-    const label = this.add.text(0, -23, "STAMP", {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.goldStamp
-    }).setName("archive-no-repo-stamp-target-label")
-      .setOrigin(0.5, 0);
-    const arrow = this.add.triangle(0, 18, 0, 0, 10, 0, 5, 8, color(PALETTE.goldStamp), 0.9)
-      .setName("archive-no-repo-stamp-target-arrow")
-      .setAngle(90);
-    this.noRepoStampCue = this.track(this.add.container(x, y, [
-      ring,
-      crossH,
-      crossV,
-      plate,
-      label,
-      arrow
-    ]).setName("archive-no-repo-stamp-target-cue").setDepth(268));
-    this.tweens.add({
-      targets: this.noRepoStampCue,
-      scaleX: 1.08,
-      scaleY: 1.08,
-      duration: 360,
-      yoyo: true,
-      repeat: -1,
-      ease: "Stepped"
-    });
-  }
-
-  private clearNoRepoStampCue() {
-    if (this.noRepoStampCue?.active) this.noRepoStampCue.destroy();
-    this.noRepoStampCue = undefined;
   }
 
   private refreshReadyWallCues() {
@@ -2863,7 +3064,7 @@ export class ArchiveScene extends Phaser.Scene {
       color: PALETTE.creamPaper
     }).setOrigin(0.5, 0.5)
       .setName("archive-chapter-key-reward-count");
-    const route = this.add.text(0, 10, "NARA II ROUTE OPEN", {
+    const route = this.add.text(0, 10, "ANNOTATION STACKS OPEN", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
@@ -2904,7 +3105,7 @@ export class ArchiveScene extends Phaser.Scene {
         }
       });
     });
-    setObjective("NARA shortcut open. Finish the A1 annotation packet to advance east.");
+    setObjective("NORTH: NOTE STACKS");
   }
 
   private refreshSourceNoteRouteCue() {
@@ -2924,30 +3125,29 @@ export class ArchiveScene extends Phaser.Scene {
       }
       const start = { x: this.researchTable.x + 20, y: this.researchTable.y - 16 };
       const end = { x: Math.round(wall.position.x), y: Math.round(wall.position.y) };
+      if (this.hideReachableSourceNoteCue(end, 38)) return;
       const cueKey = `${this.currentRoomId}:stamp-wall:${start.x},${start.y}->${end.x},${end.y}`;
       if (cueKey === this.sourceNoteRouteCueKey) return;
       this.clearSourceNoteRouteCue();
       this.sourceNoteRouteCueKey = cueKey;
-      this.drawSourceNoteRouteCue("STAMP", start, end, "STAMP NO REPO", true);
+      this.drawSourceNoteRouteCue("STAMP", start, end, true);
       return;
     }
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
-      const step = Math.max(0, gameState.sceneProgress.annotationDraftingStep ?? 0);
-      const station = getAnnotationDraftingStation(step);
-      const stationPosition = ANNOTATION_DRAFTING_STATION_POSITIONS[station.id];
-      const carried = this.annotationCarriedStation();
-      const start = carried
-        ? { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 16) }
-        : { x: this.researchTable.x, y: this.researchTable.y };
-      const end = carried
-        ? { x: this.researchTable.x, y: this.researchTable.y }
-        : { ...stationPosition };
-      const label = carried ? `FILE ${carried.shortLabel}` : `GET ${station.shortLabel}`;
-      const cueKey = `${this.currentRoomId}:annotation:${step}:${carried?.id ?? "none"}:${start.x},${start.y}->${end.x},${end.y}`;
+      const packet = readAnnotationPacket(gameState.sceneProgress);
+      // All remaining notes are visible; only guide the final trip to the table.
+      if (!packet.ready) {
+        this.clearSourceNoteRouteCue();
+        return;
+      }
+      const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
+      const end = { x: this.researchTable.x, y: this.researchTable.y };
+      if (this.hideReachableSourceNoteCue(end, 54)) return;
+      const cueKey = `${this.currentRoomId}:packet:${start.x},${start.y}->${end.x},${end.y}`;
       if (cueKey === this.sourceNoteRouteCueKey) return;
       this.clearSourceNoteRouteCue();
       this.sourceNoteRouteCueKey = cueKey;
-      this.drawSourceNoteRouteCue(carried ? "FILE" : "ANNOTATE", start, end, label, !carried);
+      this.drawSourceNoteRouteCue("FILE", start, end, false);
       return;
     }
     if (this.sourceNoteStatus !== "carried" && this.sourceNoteStatus !== "routed" && this.sourceNoteStatus !== "verified") {
@@ -2955,9 +3155,9 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
-    const step = gameState.sceneProgress.sourceNoteProvenanceStep ?? 0;
-    const station = getSourceNoteProvenanceStation(step);
-    const stationPosition = SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id];
+    const trail = readSourceNoteTrail(gameState.sceneProgress);
+    const station = trail.missing[0];
+    const tracing = this.sourceNoteStatus === "routed" && station !== undefined;
     const start = this.sourceNoteStatus === "carried"
       ? { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 15) }
       : this.sourceNoteStatus === "verified"
@@ -2966,17 +3166,25 @@ export class ArchiveScene extends Phaser.Scene {
           x: Math.round(this.sourceNoteIcon?.x ?? this.researchTable.x - 16),
           y: Math.round(this.sourceNoteIcon?.y ?? this.researchTable.y - 17)
         };
-    const end = this.sourceNoteStatus === "routed"
-      ? { ...stationPosition }
+    const end = tracing
+      ? { ...SOURCE_NOTE_PROVENANCE_STATION_POSITIONS[station.id] }
       : { x: Math.round(this.researchTable.x), y: Math.round(this.researchTable.y) };
-    const label = this.sourceNoteStatus === "routed" ? `CHECK ${station.shortLabel}` : `${this.verbForSourceNote()} HERE`;
-    const compactTarget = this.sourceNoteStatus === "routed";
-    const cueKey = `${this.currentRoomId}:${this.sourceNoteStatus}:${step}:${start.x},${start.y}->${end.x},${end.y}`;
+    const compactTarget = tracing;
+    if (this.hideReachableSourceNoteCue(end, compactTarget ? 28 : 54)) return;
+    const cueKey = `${this.currentRoomId}:${this.sourceNoteStatus}:${trail.foundMask}:${start.x},${start.y}->${end.x},${end.y}`;
     if (cueKey === this.sourceNoteRouteCueKey) return;
 
     this.clearSourceNoteRouteCue();
     this.sourceNoteRouteCueKey = cueKey;
-    this.drawSourceNoteRouteCue(this.verbForSourceNote(), start, end, label, compactTarget);
+    this.drawSourceNoteRouteCue(this.verbForSourceNote(), start, end, compactTarget);
+  }
+
+  private hideReachableSourceNoteCue(target: { x: number; y: number }, radius: number) {
+    const distance = Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, target.x, target.y);
+    if (distance > radius) return false;
+    // At the destination, the interaction prompt replaces the distant route cue.
+    this.clearSourceNoteRouteCue();
+    return true;
   }
 
   private clearSourceNoteRouteCue() {
@@ -2989,14 +3197,15 @@ export class ArchiveScene extends Phaser.Scene {
 
   private trackSourceNoteRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
     this.sourceNoteRouteCueObjects.push(object);
-    return this.track(object);
+    // The moving trail has its own cleanup, also called by clearRoom. Tracking
+    // every replacement in roomObjects retains destroyed markers until exit.
+    return object;
   }
 
   private drawSourceNoteRouteCue(
     verb: "ROUTE" | "VERIFY" | "STAMP" | "ANNOTATE" | "FILE",
     start: { x: number; y: number },
     end: { x: number; y: number },
-    label: string,
     compactTarget: boolean
   ) {
     const accent = verb === "ROUTE" || verb === "ANNOTATE"
@@ -3008,39 +3217,22 @@ export class ArchiveScene extends Phaser.Scene {
           : PALETTE.classNetRed;
     const targetWidth = compactTarget ? 36 : 78;
     const targetHeight = compactTarget ? 26 : 34;
-    const labelY = compactTarget ? 21 : 32;
-    const labelWidth = Math.max(54, label.length * 4 + 8);
-    this.trackSourceNoteRouteCue(this.add.ellipse(end.x, end.y + Math.round(targetHeight / 3), targetWidth + 10, 18, color(PALETTE.black), 0.34)
-      .setName("archive-source-note-route-shadow")
-      .setDepth(136));
     this.trackSourceNoteRouteCue(this.add.rectangle(end.x, end.y, targetWidth, targetHeight, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(accent))
+      .setStrokeStyle(1, color(accent))
       .setName("archive-source-note-route-table-glow")
       .setDepth(236));
 
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
-    const steps = Math.max(1, Math.min(7, Math.floor(distance / 13)));
+    const steps = Math.max(1, Math.min(4, Math.floor(distance / 22)));
     for (let index = 1; index <= steps; index += 1) {
       const t = index / (steps + 1);
       const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
       const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
-      this.trackSourceNoteRouteCue(this.add.rectangle(x, y, 5, 5, color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.9)
-        .setAngle(45)
+      this.trackSourceNoteRouteCue(this.add.rectangle(x, y, 2, 2, color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.9)
         .setName("archive-source-note-route-dot")
         .setDepth(237));
     }
 
-    this.trackSourceNoteRouteCue(this.add.rectangle(end.x, end.y + labelY, labelWidth, 10, color(PALETTE.black), 0.92)
-      .setStrokeStyle(1, color(accent))
-      .setName("archive-source-note-route-label-frame")
-      .setDepth(238));
-    this.trackSourceNoteRouteCue(this.add.text(end.x, end.y + labelY - 3, label, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: accent
-    }).setName("archive-source-note-route-label")
-      .setOrigin(0.5, 0)
-      .setDepth(239));
   }
 
   private handleAnnotationDraftingAction(target: Interactable) {
@@ -3053,78 +3245,125 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
-    const carried = this.annotationCarriedStation();
-    if (carried) {
-      if (target.id !== "annotation-research-table") {
-        retroAudio.warning();
-        this.toast.show("FILE NOTE AT RESEARCH TABLE", this.player.position, "warn");
-        return;
-      }
-      this.fileAnnotationDraftingNote(carried.id);
+    if (target.id === "annotation-return-cart") {
+      this.moveAnnotationCart();
+      return;
+    }
+
+    if (target.id === "annotation-stacks-door") {
+      this.enterAnnotationStacks();
+      return;
+    }
+    if (target.id === "annotation-research-table") {
+      this.fileAnnotationDraftingNotes();
       return;
     }
 
     const stationId = this.annotationStationId(target);
     if (!stationId) {
       retroAudio.warning();
-      this.toast.show("FOLLOW GOLD TRAIL TO NOTE", this.player.position, "warn");
+      this.toast.show("FIND THE REMAINING NOTES", this.player.position, "warn");
       return;
     }
     this.collectAnnotationDraftingNote(stationId);
   }
 
   private collectAnnotationDraftingNote(stationId: AnnotationDraftingPromptId) {
-    const step = gameState.sceneProgress.annotationDraftingStep ?? 0;
-    const result = collectAnnotationDraftingSlip(step, stationId);
+    if (stationId === "contextual_annotation" && !readAnnotationCart(gameState.sceneProgress).parked) {
+      this.toast.show("PARK THE CONTEXT CART FIRST", this.player.position, "info");
+      return;
+    }
+    const result = gatherAnnotationNote(gameState.sceneProgress, stationId);
     if (!result.ok) {
       retroAudio.warning();
-      this.toast.show(`TAKE ${result.expectedStation.shortLabel} FIRST`, this.player.position, "warn");
+      this.toast.show("NOTE ALREADY COLLECTED", this.player.position, "info");
       setLatestMessage(result.message);
       return;
     }
 
-    gameState.sceneProgress.annotationDraftingCarried = result.station.order;
-    setHeldItem(result.station.carriedLabel);
-    this.createAnnotationSlipIcon(result.station.id);
+    gameState.sceneProgress.annotationGatheredMask = result.gatheredMask;
+    gameState.sceneProgress.annotationDraftingCarried = 0;
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    setHeldItem(packet.heldLabel);
+    this.createAnnotationSlipIcon();
     retroAudio.confirm();
-    this.toast.show(`${result.station.shortLabel} NOTE ACQUIRED`, this.player.position, "info");
+    this.toast.show(`${result.station.shortLabel} ${packet.gathered.length}/3`, this.player.position, "info");
     setLatestMessage(result.message);
     this.updateSourceNoteVerification();
+    saveGameNow();
   }
 
-  private fileAnnotationDraftingNote(stationId: AnnotationDraftingPromptId) {
-    const step = gameState.sceneProgress.annotationDraftingStep ?? 0;
-    const result = fileAnnotationDraftingSlip(step, stationId);
+  private fileAnnotationDraftingNotes() {
+    const result = fileAnnotationPacket(gameState.sceneProgress);
     if (!result.ok) {
       retroAudio.warning();
-      this.toast.show(`FILE ${result.expectedStation.shortLabel} NEXT`, this.player.position, "warn");
+      this.toast.show(result.message, this.player.position, "warn");
       setLatestMessage(result.message);
       return;
     }
 
-    gameState.sceneProgress.annotationDraftingCarried = 0;
-    gameState.sceneProgress.annotationDraftingStep = result.nextStep;
+    const review = nextArchiveResearchReview();
+    if (review) {
+      this.reviewResearchDecision(review, () => this.fileAnnotationDraftingNotes());
+      return;
+    }
+
     if (this.annotationSlipIcon?.active) this.annotationSlipIcon.destroy();
     this.annotationSlipIcon = undefined;
     setHeldItem(null);
     retroAudio.stamp();
     this.addVerificationGlow();
 
-    if (result.complete || annotationDraftingComplete(result.nextStep)) {
-      this.completeAnnotationDrafting(result.message);
-      return;
-    }
+    this.completeAnnotationDrafting(result.message);
+  }
 
-    const nextStation = getAnnotationDraftingStation(result.nextStep);
-    this.toast.show(`NOTE ${result.nextStep}/3 FILED`, this.player.position, "info");
-    setLatestMessage(`${result.message} Next: ${nextStation.label}.`);
-    this.updateSourceNoteVerification();
+  private reviewResearchDecision(id: ArchiveResearchReviewId, onApprove: () => void) {
+    if (this.researchChoice.active) return;
+    const review = ARCHIVE_RESEARCH_REVIEWS[id];
+    this.interactionPrompt.update(0, null);
+    this.clearSourceNoteRouteCue();
+    this.researchChoice.show(`${review.question}\n\n${review.context}`, [
+      ...review.options,
+      { key: "C", label: "Back to the room", value: "back" }
+    ], (option) => {
+      if (option.value === "back") {
+        this.resumeArchiveReview();
+        return;
+      }
+      const result = recordArchiveResearchReview(id, option.value);
+      if (!result.ok) retroAudio.warning();
+      this.resumeArchiveReview();
+      setLatestMessage(result.message);
+      const cue = result.ok ? "REVIEW RECORDED"
+        : id === "coverage" ? "MAP REPOSITORIES + ACCESS GAPS" : "RETAIN THE FULL POLICY RECORD";
+      this.toast.show(cue, this.player.position, result.ok ? "info" : "warn");
+      // The approved action may unlock a route or reveal documents. Let its
+      // more specific feedback take precedence over the review receipt.
+      if (result.ok) onApprove();
+      saveGameNow();
+    }, 6, () => this.resumeArchiveReview());
+  }
+
+  private finishMissingResearchReview() {
+    const review = nextArchiveResearchReview();
+    if (!review) return;
+    this.reviewResearchDecision(review, () => {
+      if (!nextArchiveResearchReview()) {
+        this.interactables = this.interactables.filter((target) => target.id !== "research-review");
+        this.finishArchiveIfReady();
+      }
+      this.refreshRoomObjective();
+    });
   }
 
   private completeAnnotationDrafting(message: string) {
+    if (gameState.sceneProgress.annotationDraftingComplete) return;
     gameState.sceneProgress.annotationDraftingComplete = 1;
     gameState.sceneProgress.annotationDraftingStep = ANNOTATION_DRAFTING_PROMPTS.length;
     gameState.sceneProgress.annotationDraftingCarried = 0;
+    gameState.sceneProgress.annotationGatheredMask = 7;
+    this.drawRoomExits(ARCHIVE_ROOMS[this.currentRoomId]);
+    this.syncRoomTraversalState();
     for (const documentId of ["source_note_047", "cross_reference_001", "sbu_annotation_001"]) {
       setDocumentWorkflowState(documentId, "ready_for_review", "expanded annotation drafted for provenance, context, and selectivity");
     }
@@ -3134,19 +3373,19 @@ export class ArchiveScene extends Phaser.Scene {
     this.addDocumentInteractables();
     setLatestMessage("Expanded annotation filed: provenance, context, and selectivity are visible.");
     const documentCount = this.sourceRoomDocumentCount();
-    setObjective(documentCount < 3
-      ? "COLLECT TELEGRAM + CROSS-REF."
-      : "Room packet complete. Review the filed annotation with Elena.");
+    this.refreshRoomObjective();
     this.reliability.update();
     this.syncAnnotationDraftingStations();
+    this.syncSourceNotePhysicalState(this.researchTable.label, "DONE");
     this.clearSourceNoteRouteCue();
     this.syncWallState();
-    this.toast.show(documentCount < 3 ? "SUPPORTING DOCUMENTS UNSEALED" : "ANNOTATION FILED", this.player.position, "info");
+    this.toast.show(documentCount < 3 ? "DOCUMENTS UNSEALED" : "ANNOTATION FILED", this.player.position, "info");
     this.syncSourceRoomTerminalStatus();
     setLatestMessage(`${message} The manuscript can move toward human review once the room packet is complete.`);
     if (documentCount >= 3) {
       this.time.delayedCall(420, () => this.finishArchiveIfReady());
     }
+    saveGameNow();
   }
 
   private drawSourceNoteStampMark() {
@@ -3173,31 +3412,27 @@ export class ArchiveScene extends Phaser.Scene {
   private verbForSourceNote(): "ROUTE" | "VERIFY" | "STAMP" {
     if (this.sourceNoteStatus === "carried") return "ROUTE";
     if (this.sourceNoteStatus === "routed") return "VERIFY";
+    if (this.sourceNoteStatus === "verified" && !gameState.processStamps.includes("rule")) return "VERIFY";
     return "STAMP";
   }
 
   private syncSourceNotePhysicalState(nearestStation: string | null, overrideVerb?: "DONE") {
-    if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
-      const step = Math.max(0, gameState.sceneProgress.annotationDraftingStep ?? 0);
-      const carried = this.annotationCarriedStation();
+    if (this.sourceNoteStatus === "stamped") {
+      const packet = readAnnotationPacket(gameState.sceneProgress);
       setPhysicalVerificationState({
-        verb: carried ? "ROUTE" : "CARRY",
-        carriedItem: carried?.carriedLabel ?? null,
+        verb: packet.complete ? "DONE" : packet.ready ? "ROUTE" : "CARRY",
+        carriedItem: packet.heldLabel,
         nearestStation,
-        completed: step,
+        completed: packet.complete ? 3 : packet.gathered.length,
         total: ANNOTATION_DRAFTING_STATIONS.length,
         flags: ANNOTATION_DRAFTING_STATIONS.map((station, index) => ({
           id: `annotation-${station.id}`,
           label: station.carriedLabel,
           kind: "annotation",
           destination: this.researchTable.label,
-          status: index < step
+          status: index < packet.filedCount
             ? "stamped"
-            : carried?.id === station.id
-              ? "carried"
-              : index === step
-                ? "routed"
-                : "waiting"
+            : packet.gathered.some((note) => note.id === station.id) ? "carried" : "waiting"
         }))
       });
       return;
@@ -3207,7 +3442,7 @@ export class ArchiveScene extends Phaser.Scene {
       verb: overrideVerb ?? this.verbForSourceNote(),
       carriedItem: this.sourceNoteStatus === "carried" ? "Source Note 47" : null,
       nearestStation,
-      completed: this.sourceNoteStatus === "stamped" ? 1 : 0,
+      completed: 0,
       total: 1,
       flags: [
         {
@@ -3223,24 +3458,23 @@ export class ArchiveScene extends Phaser.Scene {
 
   private finishArchiveIfReady() {
     if (this.sourceNoteStatus !== "stamped") {
-      setObjective("Archive Cavern: pick up Source Note 47 in A1.");
+      this.refreshRoomObjective();
       return;
     }
     if (!gameState.sceneProgress.annotationDraftingComplete) {
-      const station = getAnnotationDraftingStation(gameState.sceneProgress.annotationDraftingStep ?? 0);
-      setObjective(`ANNOTATE: collect ${station.label}, then file it at the research table.`);
-      this.dialog.show("ELENA", [
-        "The citation stamp proves the source trail.",
-        "Now carry each annotation note to the manuscript slots."
-      ], () => {
-        this.updateSourceNoteVerification();
-        this.toast.show(`FIND ${station.shortLabel} NOTE`, this.player.position, "info");
-      });
+      this.refreshRoomObjective();
+      this.toast.show("GATHER 3 NOTES - THEN FILE", this.player.position, "info");
+      this.updateSourceNoteVerification();
       return;
     }
     if (this.sourceRoomDocumentCount() < 3) {
-      setObjective("COLLECT TELEGRAM + CROSS-REF.");
+      this.refreshRoomObjective();
       this.toast.show("TWO SUPPORTING DOCUMENTS REMAIN", this.player.position, "info");
+      return;
+    }
+    if (nextArchiveResearchReview()) {
+      this.refreshRoomObjective();
+      this.toast.show("REVIEW AT RESEARCH TABLE", this.player.position, "info");
       return;
     }
     setDocumentWorkflowState("telegram_001", "selected");
@@ -3248,7 +3482,7 @@ export class ArchiveScene extends Phaser.Scene {
     setDocumentWorkflowState("source_note_047", "ready_for_review");
     gameState.sceneProgress.archiveSourceRoomComplete = 1;
     setHeldItem(null);
-    setObjective("EXIT EAST: carry the verified packet to Two Networks.");
+    this.refreshRoomObjective();
     setLatestMessage("SOURCE ROOM CLEAR: the east network route is open.");
     this.toast.show("SOURCE ROOM CLEAR - EXIT EAST", this.player.position, "info");
     addSnesRewardBurst(this, 222, 120, "citation-stamp", "Network Route", (object) => this.track(object));
@@ -3259,12 +3493,12 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private sourceRoomComplete() {
-    return gameState.sceneProgress.archiveSourceRoomComplete === 1
-      || archiveSourceRoomPacketComplete({
-        sourceNoteStamped: this.sourceNoteStatus === "stamped",
-        annotationComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
-        collectedDocumentIds: this.collected
-      });
+    return archiveSourceRoomExitReady({
+      sceneProgress: gameState.sceneProgress,
+      standardsReviewed: gameState.processStamps.includes("rule"),
+      sourceNoteStamped: this.sourceNoteStatus === "stamped",
+      collectedDocumentIds: this.collected
+    });
   }
 
   private sourceRoomDocumentCount() {
@@ -3298,11 +3532,42 @@ export class ArchiveScene extends Phaser.Scene {
     else if (position.x >= PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     if (!direction) return false;
 
-    const carriedAnnotation = this.annotationCarriedStation();
-    if (this.currentRoomId === "A1" && carriedAnnotation && !gameState.sceneProgress.annotationDraftingComplete) {
-      setLatestMessage(`${carriedAnnotation.carriedLabel} belongs in the research-table manuscript slot.`);
-      setObjective(`FILE: return ${carriedAnnotation.carriedLabel} to the research table before leaving A1.`);
-      this.toast.show("FILE NOTE BEFORE LEAVING", this.player.position, "warn");
+    if (!requestsDoorExit(direction, getInput().dir)) return false;
+
+    if (this.currentRoomId === "A1" && direction === "north") {
+      if (annotationStacksOpen(gameState.sceneProgress)) {
+        this.enterAnnotationStacks();
+        return true;
+      }
+      this.refreshRoomObjective();
+      this.toast.show(gameState.objective, this.player.position, "info");
+      this.player.setPosition(position.x, 68);
+      this.exitCooldownUntil = this.time.now + 500;
+      return false;
+    }
+
+    if (this.currentRoomId === "AS") {
+      if (direction === "south") {
+        this.enterRoom("A1", ANNOTATION_STACKS.returnToSource, true, "south");
+        return true;
+      }
+      if (direction === "north") {
+        if (!readAnnotationPacket(gameState.sceneProgress).complete) {
+          this.toast.show("SOUTH: FILE NOTES BEFORE NARA", this.player.position, "info");
+          this.player.setPosition(position.x, 62);
+          this.exitCooldownUntil = this.time.now + 500;
+          return false;
+        }
+        this.routeToDanneMap("NaraStacksScene", "AS", 128, 64);
+        return true;
+      }
+    }
+
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    if (this.currentRoomId === "A1" && packet.held.length && !packet.complete) {
+      setLatestMessage("Complete and file the annotation packet before leaving A1.");
+      this.refreshRoomObjective();
+      this.toast.show("FILE PACKET BEFORE LEAVING", this.player.position, "warn");
       this.exitCooldownUntil = this.time.now + 500;
       const push = direction === "north"
         ? { x: position.x, y: PLAY_BOUNDS.top + 18 }
@@ -3317,27 +3582,27 @@ export class ArchiveScene extends Phaser.Scene {
 
     if (this.currentRoomId === "A1" && direction === "east" && !this.sourceRoomComplete()) {
       setLatestMessage("The east network route opens only after the A1 source packet is complete.");
-      setObjective(this.sourceNoteStatus === "inactive"
-        ? "FIND: collect Source Note 47 in A1."
-        : "COMPLETE A1: verify, annotate, and collect the supporting documents.");
-      this.toast.show("SOURCE PACKET INCOMPLETE", this.player.position, "warn");
+      this.refreshRoomObjective();
+      this.toast.show(gameState.objective, this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
       this.player.setPosition(PLAY_BOUNDS.right - 18, position.y);
       return false;
     }
 
-    if (this.currentRoomId === "B1" && this.activeEnemyWalls.has("wait-timer") && !this.agencyTimerResolved) {
-      setLatestMessage("WAIT freezes exits until the agency response timer is resolved.");
-      setObjective("Resolve agency response timer at the referral tray.");
+    if (this.currentRoomId === "B1" && direction !== "north"
+      && this.activeEnemyWalls.has("wait-timer") && !this.agencyTimerResolved) {
+      setLatestMessage("Resolve WAIT at the referral tray to proceed, or return north to the Source Room.");
+      this.refreshRoomObjective();
+      this.toast.show("WAIT: TRAY / NORTH TO RETURN", this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
-      const push = direction === "north" ? { x: 128, y: 58 } : direction === "east" ? { x: 228, y: 120 } : { x: 128, y: 120 };
+      const push = direction === "east" ? { x: 228, y: 120 } : { x: 128, y: 190 };
       this.player.setPosition(push.x, push.y);
       return false;
     }
 
     const currentRoom = ARCHIVE_ROOMS[this.currentRoomId];
     const target = currentRoom.exits[direction];
-    if (!target) {
+    if (!target || target === "DN1") {
       setLatestMessage(`No ${direction} route from room ${this.currentRoomId}`);
       this.exitCooldownUntil = this.time.now + 360;
       return false;
@@ -3346,14 +3611,23 @@ export class ArchiveScene extends Phaser.Scene {
     if (target === "N1") {
       gameState.sceneProgress.archiveSourceRoomExited = 1;
       setLatestMessage("Verified source packet routed to Two Networks.");
-      transitionTo(this, "NetworkScene");
+      this.roomTransitionLocked = true;
+      transitionTo(this, "NetworkScene", { chapterFrom: "A1", chapterTo: "N1" });
+      return true;
+    }
+
+    if (target === "O1") {
+      this.roomTransitionLocked = true;
+      saveGameNow();
+      transitionTo(this, "OfficeScene", { chapterFrom: "A1", chapterTo: "O1" });
       return true;
     }
 
     const targetRoom = ARCHIVE_ROOMS[target];
     if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) {
       setLatestMessage("A hidden wall has not been revealed.");
-      setObjective("Find a secret trigger before entering that room.");
+      this.refreshRoomObjective();
+      this.toast.show("FIND THE HIDDEN TRIGGER", this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
       this.player.setPosition(position.x, position.y);
       return false;
@@ -3363,7 +3637,8 @@ export class ArchiveScene extends Phaser.Scene {
     if (!canTraverseExit(currentRoom.id, direction, heldItems)) {
       const prompt = blockedExitPrompt(currentRoom.id, direction, heldItems);
       setLatestMessage(prompt.message);
-      setObjective(prompt.objective);
+      this.refreshRoomObjective();
+      this.toast.show(prompt.message, this.player.position, "info");
       this.exitCooldownUntil = this.time.now + 500;
       const push = direction === "north"
         ? { x: position.x, y: PLAY_BOUNDS.top + 18 }
@@ -3386,24 +3661,38 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private refreshRoomObjective() {
+    const optionalObjective = archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress);
+    if (optionalObjective) {
+      setObjective(optionalObjective);
+      return;
+    }
+    if (this.currentRoomId === "AS") {
+      setObjective(annotationStacksObjective(gameState.sceneProgress));
+      return;
+    }
     if (this.currentRoomId === "A1") {
-      if (this.sourceRoomComplete()) {
-        setObjective("EXIT EAST: carry the verified packet to Two Networks.");
+      if (annotationStacksOpen(gameState.sceneProgress) && !readAnnotationPacket(gameState.sceneProgress).ready) {
+        setObjective("NORTH: NOTE STACKS");
         return;
       }
-      if (this.sourceNoteStatus !== "inactive" && this.sourceNoteStatus !== "stamped") {
-        this.updateSourceNoteVerification();
+      if (gameState.sceneProgress.annotationDraftingComplete && nextArchiveResearchReview()) {
+        setObjective("REVIEW AT RESEARCH TABLE");
         return;
       }
-      if (this.sourceNoteStatus !== "stamped") {
-        setObjective("Archive Cavern: collect Source Note 47 in A1.");
-        return;
-      }
-      const documentCount = this.sourceRoomDocumentCount();
-      if (documentCount < 3) {
-        setObjective(`COLLECT DOCUMENTS ${documentCount}/3.`);
-        return;
-      }
+      setObjective(archiveSourceRoomObjective({
+        sourceNoteStatus: this.sourceNoteStatus,
+        standardsReviewed: gameState.processStamps.includes("rule"),
+        provenanceStep: gameState.sceneProgress.sourceNoteProvenanceStep ?? 0,
+        provenanceProgress: gameState.sceneProgress,
+        wallNeedsStamp: this.sourceNoteWallNeedsStamp(),
+        annotationStep: gameState.sceneProgress.annotationDraftingStep ?? 0,
+        annotationCarried: readAnnotationPacket(gameState.sceneProgress).held.length > 0,
+        annotationProgress: gameState.sceneProgress,
+        annotationComplete: Boolean(gameState.sceneProgress.annotationDraftingComplete),
+        collectedDocumentIds: this.collected,
+        complete: this.sourceRoomComplete()
+      }));
+      return;
     }
     setObjective(`Explore room ${this.currentRoomId}; exits ${this.exitHint().replace("EXITS: ", "")}.`);
   }
@@ -3515,7 +3804,8 @@ export class ArchiveScene extends Phaser.Scene {
         : target
           ? this.gateRouteLabel(target)
           : undefined;
-      const lockLabel = room.id === "A1" && direction === "east" && !this.sourceRoomComplete()
+      const lockLabel = room.id === "B1" && direction !== "north" && !this.agencyTimerResolved ? "WAIT"
+        : room.id === "A1" && direction === "east" && !this.sourceRoomComplete()
         ? "PACK"
         : undefined;
       this.drawGate(direction, hasExit, hasExit ? this.exitIsOpen(room, direction) : false, room.requiredItems?.[direction], routeLabel, target, lockLabel);
@@ -3526,7 +3816,8 @@ export class ArchiveScene extends Phaser.Scene {
     const locked: Partial<Record<Direction, string>> = {};
     (["north", "south", "west", "east"] as Direction[]).forEach((direction) => {
       if (room.exits[direction] && !this.exitIsOpen(room, direction)) {
-        locked[direction] = room.lockedExits?.[direction] ?? room.requiredItems?.[direction] ?? "LOCK";
+        locked[direction] = room.id === "B1" && direction !== "north" && !this.agencyTimerResolved ? "WAIT"
+          : room.lockedExits?.[direction] ?? room.requiredItems?.[direction] ?? "LOCK";
       }
     });
     return locked;
@@ -3535,8 +3826,13 @@ export class ArchiveScene extends Phaser.Scene {
   private exitIsOpen(room: ArchiveRoom, direction: Direction) {
     const target = room.exits[direction];
     if (!target) return false;
+    const packet = readAnnotationPacket(gameState.sceneProgress);
+    if (room.id === "A1" && direction !== "north" && packet.held.length && !packet.complete) return false;
+    if (room.id === "B1" && direction !== "north" && !this.agencyTimerResolved) return false;
+    if (room.id === "A1" && direction === "north") return annotationStacksOpen(gameState.sceneProgress);
+    if (room.id === "AS") return direction === "south" || readAnnotationPacket(gameState.sceneProgress).complete;
     if (room.id === "A1" && direction === "east" && !this.sourceRoomComplete()) return false;
-    if (target === "N1") return canTraverseExit(room.id, direction, getHeldProcessItemIds());
+    if (target === "N1" || target === "O1" || target === "DN1") return canTraverseExit(room.id, direction, getHeldProcessItemIds());
     const targetRoom = ARCHIVE_ROOMS[target];
     if (targetRoom.roomType === "secret" && !this.revealedSecretIds.has(target)) return false;
     return canTraverseExit(room.id, direction, getHeldProcessItemIds());
@@ -3551,6 +3847,11 @@ export class ArchiveScene extends Phaser.Scene {
     target?: ArchiveExitTarget,
     lockLabelOverride?: string
   ) {
+    const previous = this.gateArt.get(direction) ?? [];
+    for (const object of previous) object.destroy();
+    this.roomObjects = this.roomObjects.filter(object => !previous.includes(object));
+    const art: Phaser.GameObjects.GameObject[] = [];
+    this.gateArt.set(direction, art);
     addSnesGate(this, {
       direction,
       hasExit,
@@ -3558,10 +3859,10 @@ export class ArchiveScene extends Phaser.Scene {
       accent: unlocked ? PALETTE.goldStamp : PALETTE.stoneGray,
       lockLabel: lockLabelOverride ?? (requiredItem ? requiredItem.split("_")[0].slice(0, 4).toUpperCase() : "LOCK"),
       exitLabel,
-      track: (object) => this.track(object),
+      track: (object) => { art.push(object); return this.track(object); },
       depth: 61
     });
-    if (target && target !== "N1" && ARCHIVE_ROOMS[target].roomType === "secret") {
+    if (target && target !== "N1" && target !== "O1" && target !== "DN1" && ARCHIVE_ROOMS[target].roomType === "secret") {
       this.drawSecretExitMarker(direction, this.revealedSecretIds.has(target), requiredItem);
     }
     if (!hasExit) {
@@ -3573,7 +3874,11 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private gateRouteLabel(target: ArchiveExitTarget) {
+    if (target === "AS") return "NOTES";
+    if (target === "DN1") return "NARA";
+    if (this.currentRoomId === "AS" && target === "A1") return "TABLE";
     if (target === "N1") return "NETWORK";
+    if (target === "O1") return "OFFICE";
     const room = ARCHIVE_ROOMS[target];
     if (room.roomType === "reward") return "REWARD";
     if (room.roomType === "secret") return "SECRET";
@@ -3670,13 +3975,13 @@ export class ArchiveScene extends Phaser.Scene {
     this.track(this.add.ellipse(x + 1, y + 8, 34, 8, color(PALETTE.black), 0.48).setDepth(y - 4));
     this.track(this.add.rectangle(x, y, 42, 18, color(PALETTE.black)).setStrokeStyle(1, color(accent)).setDepth(y - 3));
     this.track(this.add.rectangle(x, y + 4, 30, 8, color(PALETTE.deepRuby)).setDepth(y - 2));
-    this.track(this.add.text(x, y - 8, label, {
+    this.track(this.add.text(x, y - 7, label, {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "6px",
       color: accent,
       align: "center",
       backgroundColor: PALETTE.black
-    }).setOrigin(0.5).setDepth(y - 1));
+    }).setOrigin(0.5, 0).setDepth(y - 1));
   }
 
   private drawWallMap(x: number, y: number, label = "MAP") {
@@ -3823,7 +4128,7 @@ export class ArchiveScene extends Phaser.Scene {
     direction: Direction,
     target: ArchiveExitTarget
   ): ArchiveRoomDetailFrame {
-    if (room.roomType === "boss" || (target !== "N1" && ARCHIVE_ROOMS[target].roomType === "boss")) return "threshold_boss";
+    if (room.roomType === "boss" || (target !== "N1" && target !== "O1" && target !== "DN1" && ARCHIVE_ROOMS[target].roomType === "boss")) return "threshold_boss";
     return this.exitIsOpen(room, direction) ? "threshold_open" : "threshold_locked";
   }
 

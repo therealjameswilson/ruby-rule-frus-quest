@@ -13,6 +13,17 @@ export function roomClearFlag(roomId: string) {
   return `roomClear:${roomId}`;
 }
 
+export function enemyRewardFlag(roomId: string, enemyId: string) {
+  return `enemyReward:${JSON.stringify([roomId, enemyId])}`;
+}
+
+export function claimEnemyReward(roomId: string, enemyId: string) {
+  const flag = enemyRewardFlag(roomId, enemyId);
+  if (gameState.sceneProgress[flag]) return false;
+  gameState.sceneProgress[flag] = 1;
+  return true;
+}
+
 export function isRoomCleared(roomId: string) {
   return Boolean(gameState.sceneProgress[roomClearFlag(roomId)]);
 }

@@ -3,8 +3,10 @@ import type { Direction } from "../game/constants";
 import {
   approach,
   frameDeltaSeconds,
+  PLAYER_MOVEMENT_TUNING,
   resolveFacing,
   resolveMovementVector,
+  resolveWalkingVelocity,
   snapRenderedPosition
 } from "./smoothMovement";
 
@@ -104,39 +106,19 @@ describe("snapRenderedPosition", () => {
   });
 });
 
-// Numerically reproduces the velocity integration in Player.update using the
-// same helpers and the tuned constants, so the ALTTP-crispness targets (a near
-// instant ramp and no post-release glide) are guarded against silent drift if
-// the acceleration/deceleration are ever retuned.
 describe("overworld movement feel", () => {
-  const SPEED = 58;
-  const ACCELERATION = 2300;
-  const DECELERATION = 4000;
-  const FRAME_MS = 1000 / 60;
-
-  const step = (velocity: number, target: number, holding: boolean) => {
-    const dt = frameDeltaSeconds(FRAME_MS);
-    const rate = holding ? ACCELERATION : DECELERATION;
-    return approach(velocity, target, rate * dt);
-  };
-
-  it("reaches full walking speed within two frames of holding a direction", () => {
-    let velocity = 0;
-    velocity = step(velocity, SPEED, true);
-    velocity = step(velocity, SPEED, true);
-    expect(velocity).toBe(SPEED);
+  const SPEED = PLAYER_MOVEMENT_TUNING.speed;
+  it("starts at full speed on the first frame", () => {
+    expect(resolveWalkingVelocity({ x: 1, y: 0 })).toEqual({ x: SPEED, y: 0 });
   });
-
-  it("stops within a single frame of release with negligible glide", () => {
-    let velocity = SPEED;
-    let glide = 0;
-    let frames = 0;
-    while (velocity > 0 && frames < 10) {
-      velocity = step(velocity, 0, false);
-      glide += velocity * frameDeltaSeconds(FRAME_MS);
-      frames += 1;
-    }
-    expect(frames).toBeLessThanOrEqual(1);
-    expect(glide).toBeLessThan(0.5);
+  it("stops on release without a coast frame", () => {
+    expect(resolveWalkingVelocity({ x: 0, y: 0 })).toEqual({ x: 0, y: 0 });
+  });
+  it("reverses immediately instead of carrying momentum against input", () => {
+    expect(resolveWalkingVelocity({ x: -1, y: 0 })).toEqual({ x: -SPEED, y: 0 });
+  });
+  it("preserves equal diagonal speed and tool-swing movement weight", () => {
+    const diagonal = resolveWalkingVelocity({ x: 1, y: -1 }, 0.6);
+    expect(Math.hypot(diagonal.x, diagonal.y)).toBeCloseTo(SPEED * 0.6);
   });
 });

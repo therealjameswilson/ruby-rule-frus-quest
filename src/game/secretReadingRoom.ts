@@ -1,9 +1,55 @@
 import type { GameState } from "./state";
+import type { ProcessItemId } from "./constants";
+import type { DanneRectDefinition } from "./danneSceneCollisions";
+import type { Position } from "./types";
+import { GAME_HEIGHT } from "./constants";
+import { PLAYER_MOVEMENT_TUNING } from "../systems/smoothMovement";
 
 export const HIDDEN_READING_ROOM_SCENE = "HiddenReadingRoomScene" as const;
 export const HIDDEN_READING_ROOM_DISCOVERED_FLAG = "hiddenReadingRoomDiscovered" as const;
 export const HIDDEN_FIRST_EDITION_FOUND_FLAG = "hiddenFirstEditionFound" as const;
 export const HIDDEN_FIRST_EDITION_LABEL = "First Edition FRUS Volume" as const;
+export const READING_PASSAGE = {
+  shelfLabel: "shelf row three",
+  opening: { x: 188, y: 52, width: 32, height: 28 },
+  returnSpawn: { x: 204, y: 94 }
+} as const;
+
+type Hitbox = { x: number; y: number; width: number; height: number };
+
+export function canRevealReadingPassage(discovered: boolean, hasFolder: boolean, tool: ProcessItemId | null, hitbox: Hitbox | null) {
+  if (discovered || !hasFolder || tool !== "review_folder" || !hitbox) return false;
+  const opening = READING_PASSAGE.opening;
+  return hitbox.x < opening.x + opening.width && hitbox.x + hitbox.width > opening.x
+    && hitbox.y < opening.y + opening.height && hitbox.y + hitbox.height > opening.y;
+}
+
+export function readingPassageSolids(solids: readonly DanneRectDefinition[], opened: boolean): readonly DanneRectDefinition[] {
+  if (!opened) return solids;
+  return solids.flatMap((solid) => solid.label === READING_PASSAGE.shelfLabel ? [
+    { ...solid, width: READING_PASSAGE.opening.x - solid.x },
+    { ...solid, x: READING_PASSAGE.opening.x + READING_PASSAGE.opening.width,
+      width: solid.x + solid.width - READING_PASSAGE.opening.x - READING_PASSAGE.opening.width }
+  ] : [solid]);
+}
+
+export function insideReadingPassage(position: Position) {
+  const { opening } = READING_PASSAGE;
+  const halfFeet = PLAYER_MOVEMENT_TUNING.feetWidth / 2;
+  return position.x >= opening.x + halfFeet && position.x <= opening.x + opening.width - halfFeet
+    && position.y >= opening.y && position.y <= opening.y + opening.height;
+}
+
+export function reachedReadingRoomReturn(position: Position) {
+  // Match the visible 32px opening to the current walking footprint.
+  const halfFeet = PLAYER_MOVEMENT_TUNING.feetWidth / 2;
+  return position.x >= 112 + halfFeet && position.x <= 144 - halfFeet
+    && position.y >= GAME_HEIGHT - 18 && position.y <= GAME_HEIGHT;
+}
+
+export function readingPassageLabel(discovered: boolean, hasFolder: boolean) {
+  return discovered ? "Reading Room" : hasFolder ? "Unlisted Shelf" : "Faint Wall Seam";
+}
 
 export function hiddenReadingRoomDiscovered(state: Pick<GameState, "sceneProgress">) {
   return Boolean(state.sceneProgress[HIDDEN_READING_ROOM_DISCOVERED_FLAG]);

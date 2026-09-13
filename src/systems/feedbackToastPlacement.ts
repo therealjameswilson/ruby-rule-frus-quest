@@ -7,6 +7,7 @@ import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";
 export const FEEDBACK_TOAST_HOLD_MS = 1600;
 export const FEEDBACK_TOAST_FADE_MS = 400;
 export const FEEDBACK_TOAST_TOTAL_MS = FEEDBACK_TOAST_HOLD_MS + FEEDBACK_TOAST_FADE_MS;
+export const FEEDBACK_TOAST_GAP = 26;
 
 export interface ToastAnchorBounds {
   /** Smallest Y the toast may float to (keeps it below the top HUD band). */
@@ -33,13 +34,24 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+// Tall character art needs its actual bounds, not a fixed offset from the feet.
+export function toastAnchorForActor(
+  anchor: ToastPlacement,
+  actor: { top: number; bottom: number },
+  bounds: ToastAnchorBounds = DEFAULT_TOAST_BOUNDS
+): ToastPlacement {
+  const above = Math.floor(actor.top) - 14;
+  const center = above >= bounds.top ? above : Math.ceil(actor.bottom) + 14;
+  return { x: anchor.x, y: center + FEEDBACK_TOAST_GAP };
+}
+
 // Float the toast a fixed gap above the player's head so it reads as "coming
 // from the player" while staying clear of the sprite and both HUD bands. Pure
 // math so it can be unit-tested without Phaser.
 export function computeToastPlacement(
   anchor: ToastPlacement,
   bounds: ToastAnchorBounds = DEFAULT_TOAST_BOUNDS,
-  gapAbove = 26,
+  gapAbove = FEEDBACK_TOAST_GAP,
   halfWidth = 0
 ): ToastPlacement {
   const availableHalfWidth = Math.max(0, (bounds.right - bounds.left) / 2);

@@ -117,6 +117,14 @@ to clear 32×48 silhouettes with no loose-paper clutter. It preserves the exact
 4×4 frame order above, binary transparency, aligned foot points, and hard pixel
 edges.
 
+The September 2026 colleague refresh uses native 128x192 sheets in
+`sprites/refreshed/` for `sprite_declassification_coordinator.png`,
+`sprite_general_editor.png`, and `sprite_reviewer.png`. Their 32x48 frame order
+is unchanged. These replace the runtime paths only; original `sprites/native/`
+and display exports remain preserved. See `docs/art/colleague_refresh.md` and
+`assets/LICENSES.md` for source boards, original generation prompts, reproducible
+import details, and provenance. No additional large source board is preloaded.
+
 The illustrated DANN-E master is a 3×4 pose board rather than a packed runtime
 grid. Its gameplay-safe derivative lives at
 `sprites/runtime/sprite_dann_e.png`: 128×192, 4×4 frames at 32×48, binary

@@ -95,6 +95,35 @@ export const BUCKRAM_BINDING_PACKETS = [
 ] as const satisfies readonly BuckramBindingPacket[];
 
 export const BUCKRAM_BINDING_TOTAL = BUCKRAM_BINDING_PACKETS.length;
+
+// The earned finale assembles already-reviewed work instead of repeating it.
+// Older/incomplete records retain their individual desks and repair exercises.
+export function canAssembleBindingPacket(packetId: string, progress: Readonly<Record<string, number>>) {
+  if (!progress.blackVaultBossCleared || !progress.typesetterProofComplete
+    || !progress.typeflowOrderComplete || !progress.typesettingPreparationComplete) return false;
+  if (packetId === "front-matter-packet" || packetId === "index-proof-docket") return true;
+  if (packetId === "gpo-binding-packet" || packetId === "public-release-packet") {
+    return Boolean(progress.kelloggFinalCertificationComplete);
+  }
+  return false; // Human certification is never inferred from earlier progress.
+}
+
+const BINDING_STATION_LABELS: Record<BuckramBindingStationId, string> = {
+  "front-matter-bench": "FRONT BENCH",
+  "index-desk": "INDEX DESK",
+  "kellogg-press": "KELLOGG PRESS",
+  "gpo-handoff": "GPO HANDOFF",
+  "public-release-terminal": "PUBLIC TERMINAL"
+};
+
+export function buckramBindingObjective(
+  packet: Pick<BuckramBindingPacket, "shortLabel" | "station">,
+  status: BuckramBindingStatus
+) {
+  if (status === "waiting") return `TAKE ${packet.shortLabel}`;
+  return `${status === "carried" ? "TO" : "SEAL"} ${BINDING_STATION_LABELS[packet.station]}`;
+}
+
 export const BUCKRAM_BINDING_CHECK_TOTAL = BUCKRAM_BINDING_PACKETS.reduce(
   (total, packet) => total + packet.checkIds.length,
   0
@@ -175,4 +204,11 @@ export function getBuckramBindingReadout(sceneProgress: Readonly<Record<string, 
     activePacketLabel: activePacket?.shortLabel ?? null,
     complete: step >= BUCKRAM_BINDING_TOTAL
   };
+}
+
+export function buckramBindingDestination(sceneProgress: Readonly<Record<string, number>>) {
+  const progress = getBuckramBindingReadout(sceneProgress);
+  if (progress.complete) return "binding-press";
+  if (progress.status === "waiting") return "inbox";
+  return BUCKRAM_BINDING_PACKETS[progress.step].station;
 }

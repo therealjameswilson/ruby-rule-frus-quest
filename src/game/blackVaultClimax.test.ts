@@ -48,7 +48,18 @@ describe("Black Vault climax progression", () => {
     const climax = getBlackVaultClimaxReadiness();
 
     expect(climax.ready).toBe(false);
+    expect(climax.recordReady).toBe(false);
     expect(climax.missingSummary).toContain("Red Pencil");
+  });
+
+  it("separates prepared records from combat hearts without weakening publication", () => {
+    gameState.reliability = 40;
+    expect(getBlackVaultClimaxReadiness()).toMatchObject({ ready: false, recordReady: true, recordMissingSummary: [] });
+    completeBindingApparatus();
+    gameState.sceneProgress.blackVaultBossCleared = 1;
+    expect(getFinalGateReadiness()).toMatchObject({ ready: false, reliabilityReady: false });
+    recordStandardsViolation("undisclosed_deletion", "Unbracketed edit");
+    expect(getBlackVaultClimaxReadiness().recordReady).toBe(false);
   });
 
   it("keeps the publication gate closed after apparatus work until DANN-E is defeated", () => {

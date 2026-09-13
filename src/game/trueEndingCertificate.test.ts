@@ -21,7 +21,7 @@ function input(overrides: Partial<Parameters<typeof buildTrueEndingCertificate>[
     reliability: 95,
     documentPoints: 100,
     treatyFragmentsCollected: TRUE_ENDING_TREATY_FRAGMENTS_REQUIRED,
-    publicationBoardCompleted: 25,
+    publicationBoardCompleted: 26,
     publicationBoardTotal: 26,
     publicationApparatusCompleted: 6,
     publicationApparatusTotal: 6,
@@ -79,5 +79,13 @@ describe("true ending certificate", () => {
       complete: false
     });
     expect(certificate.summaryLines.join(" ")).toContain("public-record gate");
+  });
+
+  it("does not certify even one unfinished production-board step", () => {
+    const certificate = buildTrueEndingCertificate(input({ publicationBoardCompleted: 25 }));
+    expect(certificate.complete).toBe(false);
+    expect(certificate.checklist.find((line) => line.label === "PRODUCTION BOARD")).toMatchObject({
+      value: "25/26", complete: false
+    });
   });
 });

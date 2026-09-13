@@ -10,3 +10,10 @@ export function shouldConfirmCharacterCreateInput(
 ) {
   return input.confirmJustPressed || input.aJustPressed || input.startJustPressed;
 }
+
+export function shouldEndCharacterNameEditing(
+  input: Pick<InputState, "confirmJustPressed" | "cancelJustPressed" | "typedText">
+) {
+  // Z/X also produce gameplay edges; in a focused name field they are letters.
+  return !/[a-zA-Z]/.test(input.typedText) && (input.confirmJustPressed || input.cancelJustPressed);
+}

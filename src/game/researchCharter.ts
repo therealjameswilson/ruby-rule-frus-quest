@@ -1,4 +1,5 @@
 import type { ChoiceOption } from "./types";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 
 export type ResearchCharterPromptId =
   | "scope_first"
@@ -21,7 +22,7 @@ export interface ResearchCharterEvaluation {
   message: string;
 }
 
-export const RESEARCH_CHARTER_SOURCE_URL = "https://history.state.gov/historicaldocuments/about-frus";
+export const RESEARCH_CHARTER_SOURCE_URL = ABOUT_SERIES_SOURCE.url;
 
 export const RESEARCH_CHARTER_PROMPTS = [
   {
@@ -33,7 +34,7 @@ export const RESEARCH_CHARTER_PROMPTS = [
       { key: "C", label: "Publish the first folder found", value: "random_folder" }
     ],
     correctValue: "scope",
-    sourceBasis: "OH historians plan the overall scope and content of individual volumes before research and compilation.",
+    sourceBasis: "The Office staff plans, researches, compiles, and edits each volume under the General Editor.",
     successMessage: "Correct: define the scope before the archive run.",
     failureMessage: "Scope cannot be guessed by a queue or the first folder on the cart."
   },
@@ -46,7 +47,7 @@ export const RESEARCH_CHARTER_PROMPTS = [
       { key: "C", label: "Only records that fit the cleanest story", value: "clean_story" }
     ],
     correctValue: "scope_sources_questions",
-    sourceBasis: "OH historians plan scope and content before collecting and selecting records for a reliable volume.",
+    sourceBasis: "The statute requires all records needed for comprehensive documentation of major decisions and actions.",
     successMessage: "Correct: the charter preserves the route from scope to evidence.",
     failureMessage: "The charter cannot start from a narrowed or cleaned-up record."
   },

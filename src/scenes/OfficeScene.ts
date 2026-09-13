@@ -1,10 +1,11 @@
 import Phaser from "phaser";
+import { readChapterArrival } from "../game/chapterTravel";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
   FRUS_QUEST_FIRST_OBJECTIVE,
   FRUS_QUEST_MISSION
 } from "../game/mission";
-import { getOfficeStarterStage, officeStarterObjective, officeStarterTarget } from "../game/officeStarterRoute";
+import { getOfficeStarterStage, officeStarterObjective, officeStarterTarget, officeQuestArrowPosition } from "../game/officeStarterRoute";
 import {
   addDocumentPoints,
   addDanneItem,
@@ -95,6 +96,7 @@ import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
+import { walkingFeetOverlap } from "../systems/smoothMovement";
 import { DialogBox } from "../systems/dialog";
 import {
   InteractionAssist,
@@ -106,7 +108,6 @@ import { InteractionPrompt } from "../systems/interactionPrompt";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { InventoryOverlay } from "../systems/inventory";
 import { applyStandardsViolation, ReliabilityHud } from "../systems/reliability";
-import { applyDanneLurkerDamage } from "../systems/dannePressure";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { drawRoomFrame, transitionTo } from "../systems/sceneTransitions";
@@ -143,7 +144,8 @@ export class OfficeScene extends Phaser.Scene {
     super("OfficeScene");
   }
 
-  create() {
+  create(data?: unknown) {
+    const arrival = readChapterArrival(data, "OfficeScene", gameState.currentScene);
     setSceneState("OfficeScene", "explore", FRUS_QUEST_FIRST_OBJECTIVE);
     setLatestMessage(FRUS_QUEST_MISSION);
     setVisibleThreats([]);
@@ -154,16 +156,18 @@ export class OfficeScene extends Phaser.Scene {
     this.postIntroLabels = [];
     this.drawOfficeInterior();
 
-    const returnSpawn = this.consumeOfficeReturnSpawn();
+    const returnSpawn = arrival ?? this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
     this.juniorCompiler = new JuniorCompiler(this, 70, 122);
     this.danneLurker = new DanneLurker(this, 218, 78, {
+      encounterMode: "foreshadow",
+      speechBlocked: () => this.toast.visible || this.prompt.visible || this.dialog.active
+        || this.choice.active || this.inventory.active || this.reliability.active,
       waypoints: [
         { x: 218, y: 78 },
         { x: 188, y: 58 },
         { x: 102, y: 58 },
-        { x: 46, y: 132 },
-        { x: 190, y: 186 }
+        { x: 46, y: 58 }
       ]
     });
     this.dialog = new DialogBox(this);
@@ -173,11 +177,15 @@ export class OfficeScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.prompt = new InteractionPrompt(this);
     this.toast = new FeedbackToast(this);
+    const juniorFeet = new Phaser.Geom.Rectangle(this.juniorCompiler.x - 6, this.juniorCompiler.y - 3, 12, 8);
+    this.clearJuniorSpawn(juniorFeet);
     this.solids = [
       new Phaser.Geom.Rectangle(45, 72, 64, 34),
       new Phaser.Geom.Rectangle(147, 72, 65, 34),
       new Phaser.Geom.Rectangle(43, 138, 65, 32),
-      new Phaser.Geom.Rectangle(150, 138, 66, 32)
+      new Phaser.Geom.Rectangle(150, 138, 66, 32),
+      // Block only JR's feet, leaving the aisle and space behind him walkable.
+      juniorFeet
     ];
     this.interactables = [
       {
@@ -337,24 +345,25 @@ export class OfficeScene extends Phaser.Scene {
       bounds: { left: 16, right: GAME_WIDTH - 16, top: 42, bottom: GAME_HEIGHT - 18 },
       solids: this.solids
     });
-    const dannePressureUnlocked = Boolean(gameState.sceneProgress.juniorCompilerIntroduced)
-      && this.officeStarterMemoStatus() > 0;
-    this.updateDanneLurker(delta, dannePressureUnlocked);
+    this.updateDanneLurker(delta, Boolean(gameState.sceneProgress.juniorCompilerIntroduced));
     const activeInteractables = this.currentInteractables();
     const nearest = nearestInteractable(this.player.position, activeInteractables);
+    if (nearest) this.toast.dismissInteractionHint();
     // Show the prompt/ring from a little further out than the strict interact
     // radius so it is impossible to miss on approach, but only allow acting on a
     // target inside the strict radius.
     const hintTarget = nearestInteractableHint(this.player.position, activeInteractables);
     const distantQuestCueVisible = Boolean(this.firstQuestCue?.visible);
-    const promptTarget = nearest ?? (distantQuestCueVisible ? null : hintTarget);
+    const promptTarget = this.toast.visible ? null : nearest ?? (distantQuestCueVisible ? null : hintTarget);
     setNearestInteractable(nearest?.label ?? null);
     const approachCue = !distantQuestCueVisible && hintTarget ? this.approachCueFor(hintTarget) : null;
+    const lockedDoorPrompt = nearest?.id === "archive-guide-door" && !hasDanneItem("master-declass-key");
     this.prompt.update(
       delta,
       promptTarget,
       undefined,
-      nearest ? undefined : hintTarget && approachCue ? { badge: "!", text: approachCue } : undefined
+      lockedDoorPrompt ? { text: "CHECK ARCHIVE LOCK" }
+        : nearest ? undefined : hintTarget && approachCue ? { badge: "!", text: approachCue } : undefined
     );
     this.toast.update(delta, this.player.position);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
@@ -370,19 +379,8 @@ export class OfficeScene extends Phaser.Scene {
     this.updateFirstQuestCue();
   }
 
-  private updateDanneLurker(delta: number, canPressure: boolean) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 10, 700);
-      applyDanneLurkerDamage("contact", "DANN-E deadline pressure interrupted office workflow.");
-      setObjective("Keep moving: DANN-E pressure cannot replace human review.");
-      this.reliability.update();
-    } else if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt interrupted office workflow.");
-      setObjective("Dodge Ego bolts and keep the human review route moving.");
-      this.reliability.update();
-    }
+  private updateDanneLurker(delta: number, canBoast: boolean) {
+    this.danneLurker.update(this.time.now, delta, this.player.position, canBoast);
     this.syncOfficeThreatState();
   }
 
@@ -400,6 +398,7 @@ export class OfficeScene extends Phaser.Scene {
       const archive = this.interactables.find((interactable) => interactable.id === "archive-guide-door");
       if (!routeUnlocked) {
         const focused: Interactable[] = [];
+        if (archive) focused.push({ ...archive, radius: 10 });
         if (memoStatus === 0 && memo) focused.push({ ...memo, radius: 36 });
         if ((memoStatus === 1 || memoStatus === 2) && inbox) {
           focused.push({
@@ -411,7 +410,11 @@ export class OfficeScene extends Phaser.Scene {
         if (junior) focused.push({ ...junior, radius: memoStatus >= 3 ? 34 : 18 });
         return focused;
       }
-      return this.interactables.map((interactable) => {
+      return this.interactables.filter((interactable) => {
+        if (interactable.id === "starter-memo") return memoStatus === 0;
+        if (interactable.id === "production-inbox") return memoStatus < 3;
+        return true;
+      }).map((interactable) => {
         if (interactable.id === "junior-compiler") {
           return {
             ...interactable,
@@ -422,7 +425,8 @@ export class OfficeScene extends Phaser.Scene {
       });
     }
     const junior = this.interactables.find((interactable) => interactable.id === "junior-compiler");
-    return junior ? [{ ...junior, radius: 72 }] : [];
+    const archive = this.interactables.find((interactable) => interactable.id === "archive-guide-door");
+    return [...(junior ? [{ ...junior, radius: 36 }] : []), ...(archive ? [{ ...archive, radius: 10 }] : [])];
   }
 
   private currentOfficeObjective() {
@@ -438,7 +442,16 @@ export class OfficeScene extends Phaser.Scene {
     return officeStarterTarget(stage).label;
   }
 
+  private clearJuniorSpawn(feet: Phaser.Geom.Rectangle) {
+    const { x, y } = this.player.position;
+    // Older saves allowed standing inside JR; resume in the open aisle beside him.
+    if (walkingFeetOverlap(x, y, feet)) {
+      this.player.setPosition(this.juniorCompiler.x + 30, this.juniorCompiler.y);
+    }
+  }
+
   private talkJuniorCompiler() {
+    const firstAssignment = !gameState.sceneProgress.juniorCompilerIntroduced;
     retroAudio.confirm();
     gameState.sceneProgress.juniorCompilerIntroduced = 1;
     this.updateFirstQuestCue();
@@ -459,15 +472,22 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     setObjective(this.currentOfficeObjective());
-    setLatestMessage("Pick up the memo, carry it to INBOX, then stamp it.");
-    this.toast.show("PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
+    setLatestMessage(firstAssignment
+      ? "Your mission: recover the records DANN-E threatens and publish a reliable FRUS volume. Start with the memo; carry it to INBOX and stamp it to open the archive."
+      : "Pick up the memo, carry it to INBOX, then stamp it.");
+    this.toast.show(firstAssignment ? "PUBLISH A FRUS VOLUME" : "PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
   }
 
   private flashNoTargetHint() {
     retroAudio.blip();
+    if (!gameState.sceneProgress.juniorCompilerIntroduced) {
+      this.toast.showInteractionHint("TALK TO JR AT WEST DESK", this.player.position, "info");
+      setLatestMessage("Follow the gold arrow to JR at the west desk.");
+      return;
+    }
     // Float a prominent, long-lived toast above the player instead of briefly
     // swapping the low-contrast bottom hint, which the live audit could not see.
-    this.toast.show("NOTHING TO INTERACT WITH", this.player.position, "warn");
+    this.toast.showInteractionHint("NOTHING TO INTERACT WITH", this.player.position, "warn");
     setLatestMessage("Nothing to interact with here.");
   }
 
@@ -476,7 +496,7 @@ export class OfficeScene extends Phaser.Scene {
     // hair outside the strict interact radius. Tell them to step in instead of
     // the misleading "nothing to interact with".
     retroAudio.blip();
-    this.toast.show(`STEP CLOSER TO ${target.label.toUpperCase()}`, this.player.position, "info");
+    this.toast.showInteractionHint(`STEP CLOSER TO ${target.label.toUpperCase()}`, this.player.position, "info");
     setLatestMessage(`Step closer to ${target.label}.`);
   }
 
@@ -491,28 +511,23 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private createFirstQuestCue() {
-    const arrow = this.add.triangle(0, -8, 0, 0, 7, 0, 3.5, 6, color(PALETTE.goldStamp), 0.96)
+    const arrow = this.add.triangle(0, 0, 0, 0, 8, 0, 4, 6, color(PALETTE.goldStamp), 1)
       .setName("office-first-quest-arrow")
       .setStrokeStyle(1, color(PALETTE.black));
     this.firstQuestCue = this.add.container(this.juniorCompiler.x, this.juniorCompiler.y - 11, [arrow])
       .setName("office-first-quest-cue")
       .setDepth(850)
       .setVisible(false);
-    this.tweens.add({
-      targets: this.firstQuestCue,
-      y: this.juniorCompiler.y - 14,
-      duration: 520,
-      yoyo: true,
-      repeat: -1,
-      ease: "Sine.easeInOut"
-    });
     this.updateFirstQuestCue();
   }
 
   private updateFirstQuestCue() {
     const target = this.currentGuidedTarget();
+    const targetId = officeStarterTarget(this.officeStarterStage()).id;
+    const interactableId = { junior: "junior-compiler", memo: "starter-memo", inbox: "production-inbox", archive: "archive-guide-door" }[targetId];
+    const radius = this.currentInteractables().find(item => item.id === interactableId)?.radius ?? 0;
     const closeToTarget = this.player && target
-      ? Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, target.x, target.y) <= 34
+      ? Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, target.x, target.y) <= radius
       : false;
     const visible = Boolean(
       this.firstQuestCue
@@ -522,7 +537,9 @@ export class OfficeScene extends Phaser.Scene {
       && !closeToTarget
     );
     if (this.firstQuestCue && target) {
-      this.firstQuestCue.setPosition(target.x, target.y - 11);
+      const targetTop = targetId === "junior" ? this.juniorCompiler.visualTop : target.y - 13;
+      const position = officeQuestArrowPosition(target.x, targetTop, this.time.now);
+      this.firstQuestCue.setPosition(position.x, position.y);
     }
     this.firstQuestCue?.setVisible(visible);
     this.updateFirstRoomProgressVisibility();
@@ -640,7 +657,7 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.dialog.show("OFFICE CHECK", "Talk to JR first. Then pick up the memo.");
+      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
@@ -650,33 +667,33 @@ export class OfficeScene extends Phaser.Scene {
     }
     this.setOfficeStarterMemoStatus(1);
     setHeldItem("Assignment Memo");
-    setLatestMessage("CARRY: Assignment Memo.");
+    setLatestMessage("Assignment: late Cold War series; Opening Contacts, 1989-1992. Carry the supplied plan to INBOX for approval.");
     setObjective("Carry the memo to INBOX.");
     retroAudio.confirm();
-    this.toast.show("MEMO PICKED UP", this.player.position, "info");
+    this.toast.show("FRUS: LATE COLD WAR", this.player.position, "info");
   }
 
   private handleStarterMemoInbox() {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.dialog.show("OFFICE CHECK", "Talk to JR first. Then use INBOX.");
+      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
     if (memoStatus === 0) {
       retroAudio.warning();
       setObjective("Pick up the Assignment Memo.");
-      this.dialog.show("INBOX", "Pick up the memo first.");
+      this.toast.show("TAKE THE MEMO FIRST", this.player.position, "info");
       return;
     }
     if (memoStatus === 1) {
       this.setOfficeStarterMemoStatus(2);
       setHeldItem(null);
-      setLatestMessage("ROUTE: memo placed in INBOX.");
+      setLatestMessage("REMIT: Opening Contacts, 1989-1992. Stamp to accept the supplied series plan and volume assignment.");
       setObjective("Stamp the memo at INBOX.");
       retroAudio.confirm();
-      this.toast.show("MEMO ROUTED", this.player.position, "info");
+      this.toast.show("OPENING CONTACTS: 1989-92", this.player.position, "info");
       return;
     }
     if (memoStatus === 2) {
@@ -699,21 +716,25 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.dialog.show("ARCHIVE GUIDE", "Talk to JR first. They will open the first production route.");
+      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
     if (memoStatus < 3) {
-      const next = this.nextJuniorStationLabel(memoStatus);
       retroAudio.warning();
       setObjective(this.currentOfficeObjective());
-      this.dialog.show("ARCHIVE GUIDE", `Finish the first route before entering the archive: ${next}.`);
+      this.toast.show(memoStatus === 0 ? "TAKE THE MEMO FIRST" : memoStatus === 1 ? "CARRY MEMO TO INBOX" : "STAMP MEMO AT INBOX", this.player.position, "info");
       return;
     }
     if (!hasDanneItem("master-declass-key")) {
       retroAudio.warning();
       setObjective("Return to JR for the key.");
-      this.dialog.show("ARCHIVE GUIDE", "Return to JR for the Master Declass Key, then enter the archive.");
+      this.toast.show("RETURN TO JR FOR THE KEY", this.player.position, "info");
+      return;
+    }
+    if (gameState.sceneProgress.guideCitationCounterTrained === 1
+      && gameState.inventory.includes("FRUS Fragment: Front Matter")) {
+      transitionTo(this, "ArchiveScene", { chapterFrom: "O1", chapterTo: "A1" });
       return;
     }
     transitionTo(this, "GuideScene");

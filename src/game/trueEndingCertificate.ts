@@ -56,7 +56,7 @@ export function buildTrueEndingCertificate(input: TrueEndingCertificateInput): T
   const apparatusComplete = input.publicationApparatusTotal > 0
     && input.publicationApparatusCompleted >= input.publicationApparatusTotal;
   const boardComplete = input.publicationBoardTotal > 0
-    && input.publicationBoardCompleted >= input.publicationBoardTotal - 1;
+    && input.publicationBoardCompleted >= input.publicationBoardTotal;
   const reliabilityComplete = input.reliability >= 70;
   const fragmentsComplete = input.volumeFragments.length >= 5;
   const complete = pendantsComplete

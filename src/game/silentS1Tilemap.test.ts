@@ -33,11 +33,13 @@ describe("Silent Read S1 packed tilemap", () => {
     const terminalPad = packedTileGid(INTERIOR_TILES.terminalPad);
     const deskPad = packedTileGid(INTERIOR_TILES.sorterPad);
 
-    expect(layers.ground[8][2]).toBe(terminalPad);
-    expect(layers.ground[8][12]).toBe(terminalPad);
-    expect(layers.ground[6][3]).toBe(deskPad);
-    expect(layers.ground[6][7]).toBe(deskPad);
-    expect(layers.ground[6][11]).toBe(deskPad);
+    expect(layers.ground[4][2]).toBe(terminalPad);
+    expect(layers.ground[4][12]).toBe(terminalPad);
+    expect(layers.ground[8][3]).toBe(deskPad);
+    expect(layers.ground[8][11]).toBe(deskPad);
+    const production = buildSilentS1TileLayers("production");
+    expect(production.ground[4][3]).toBe(deskPad);
+    expect(production.ground[8][7]).toBe(deskPad);
     expect(layers.ground[9][7]).toBe(terminalPad);
   });
 

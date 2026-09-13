@@ -1,15 +1,16 @@
 import Phaser from "phaser";
 import {
   ACCESSIBILITY_OVERLAYS,
-  FRUS_VOLUMES,
   UI_PACK,
   publicAssetPath
 } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
-import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasProcessItem } from "../game/state";
+import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasDanneItem, hasProcessItem } from "../game/state";
 import { getVolumeAssemblyReadout } from "../game/state";
 import { getGuideCavernStage, guideCavernActionCue } from "../game/guideCavernFlow";
-import { addGamepadConnectionListener, getInput, getPrimaryActionBadge, updateInputCallbacks } from "../input/InputState";
+import { getGuideCounterReadout } from "../game/guideCounterTraining";
+import { addGamepadConnectionListener, getInput, getPrimaryActionBadge, getSecondaryActionBadge, updateInputCallbacks } from "../input/InputState";
+import { isWeaponTool } from "../systems/weaponState";
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
 import { getString } from "../systems/i18n";
@@ -17,6 +18,25 @@ import { applyIntegerZoom } from "../systems/pixelPerfect";
 import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
+import { guideExitApproachCue, guideQuestBandObjective, officeApproachCue, officeQuestBandObjective } from "./openingQuestBand";
+import { questBandAwaitingDialog, questBandBossCue, questBandBracketCue, questBandCrossingCue, questBandRiskLine } from "./questBandCue";
+import { networkCrossingState } from "../game/networkCrossing";
+import { blackVaultActionLine } from "../game/blackVaultApproach";
+import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
+import { TREATMENT_REVIEW_TITLE } from "../game/referralTreatmentDraft";
+import { dispatchAisleOpen } from "../game/referralDispatch";
+import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
+import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
+import { buckramBindingDestination } from "../game/buckramBinding";
+import { hiddenFirstEditionFound } from "../game/secretReadingRoom";
+import { readAnnotationPacket } from "../game/annotationPacket";
+import { annotationStacksOpen } from "../game/annotationStacks";
+import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
+import { CROSS_REFERENCE_TITLE } from "../game/crossReferenceCatalog";
+import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editorialRepair";
+import { WITHHOLDING_CHRONOLOGY_TITLE } from "../game/withholdingChronology";
+import { EDITOR_CHRONOLOGY_TITLE } from "../game/editorChronology";
+import { RELEASE_SCOPE_TITLE } from "../game/releaseScope";
 
 export class UIScene extends Phaser.Scene {
   private controls!: TouchControls;
@@ -33,6 +53,7 @@ export class UIScene extends Phaser.Scene {
   private questBandCueText!: Phaser.GameObjects.Text;
   private removeColorblindModeListener?: () => void;
   private questBandSignature = "";
+  private questBandDecisionSignature = "";
   private questBandLastRefresh = 0;
 
   constructor() {
@@ -40,9 +61,6 @@ export class UIScene extends Phaser.Scene {
   }
 
   preload() {
-    if (!this.textures.exists("ui_row_six")) {
-      this.load.image("ui_row_six", publicAssetPath(FRUS_VOLUMES.ui_row_six));
-    }
     for (const [key, path] of Object.entries(UI_PACK)) {
       if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
     }
@@ -66,6 +84,7 @@ export class UIScene extends Phaser.Scene {
     });
     this.removeColorblindModeListener = addColorblindModeListener(() => {
       this.questBandSignature = "";
+      this.questBandDecisionSignature = "";
       this.questBandLastRefresh = 0;
     });
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -87,7 +106,7 @@ export class UIScene extends Phaser.Scene {
     this.controls.refreshForScene(this.activeGameplaySceneKey());
     const activeSceneKey = this.activeGameplaySceneKey();
     this.refreshQuestBand(this.time.now, activeSceneKey);
-    if (getInput().selectJustPressed && activeSceneKey) openCodex(this, activeSceneKey);
+    if (getInput().selectJustPressed && activeSceneKey && gameState.mode !== "ending") openCodex(this, activeSceneKey);
     this.scene.bringToTop();
   }
 
@@ -192,14 +211,33 @@ export class UIScene extends Phaser.Scene {
     const hud = getAdventureHudReadout();
     const subscreen = getAdventureSubscreenReadout();
     const volumeAssembly = getVolumeAssemblyReadout();
-    if (now - this.questBandLastRefresh < 120) return;
-    this.questBandLastRefresh = now;
 
     const toolLabel = subscreen.equippedTool?.shortLabel ?? hud.equippedItem?.shortLabel ?? getString("hud.none");
     const weapon = gameState.playerCombat.weapon;
-    const objectiveLine = this.compactObjective(activeSceneKey);
-    const riskLine = this.compactReliabilityRiskLine();
-    const actionLine = riskLine ?? this.compactActionLine(toolLabel);
+    const awaitingDialog = questBandAwaitingDialog(gameState.mode, gameState.activeDialog);
+    const objectiveLine = awaitingDialog ? "" : this.compactObjective(activeSceneKey);
+    const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
+    const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats, gameState.player);
+    const encounterCue = this.gameplayCombatCue();
+    const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable)
+      ?? guideExitApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable,
+        gameState.volumeFragments.includes("Front Matter Fragment"))
+      ?? (activeSceneKey === "NetworkScene" ? questBandCrossingCue(gameState.mode, gameState.nearestInteractable,
+        networkCrossingState(gameState.sceneProgress), gameState.equippedProcessItem === "citation_stamp",
+        getSecondaryActionBadge()) : null)
+      ?? (activeSceneKey === "ReferralVaultScene" ? questBandBracketCue(gameState.mode, gameState.nearestInteractable,
+        gameState.sceneProgress, gameState.equippedProcessItem === "citation_stamp", getSecondaryActionBadge()) : null);
+    const actionLine = awaitingDialog ? "" : bossCue?.text ?? encounterCue?.text ?? riskLine ?? approachCue?.text ?? this.compactActionLine(toolLabel);
+    const actionBadge = awaitingDialog ? "" : !bossCue && encounterCue ? encounterCue.badge : bossCue?.badge === "notice" ? "!"
+      : !bossCue && !riskLine && approachCue ? approachCue.badge
+      : !riskLine && (bossCue?.badge === "tool" || this.showCounterAction() || this.guideCounterTrainingActive())
+      ? getSecondaryActionBadge()
+      : getPrimaryActionBadge();
+    // Counter windows and facing cues must not wait for the meter refresh.
+    const decisionSignature = [objectiveLine, actionLine, actionBadge, toolLabel, gameState.mode].join("|");
+    if (decisionSignature === this.questBandDecisionSignature && now - this.questBandLastRefresh < 120) return;
+    this.questBandDecisionSignature = decisionSignature;
+    this.questBandLastRefresh = now;
     const signature = [
       gameState.reliability,
       toolLabel,
@@ -209,6 +247,8 @@ export class UIScene extends Phaser.Scene {
       weapon.cooldownMsRemaining,
       objectiveLine,
       actionLine,
+      actionBadge,
+      bossCue?.tone ?? "",
       gameState.nearestInteractable ?? "",
       gameState.heldItem ?? "",
       gameState.mode,
@@ -223,9 +263,9 @@ export class UIScene extends Phaser.Scene {
     this.drawQuestBandToolSlot(Boolean(subscreen.equippedTool ?? hud.equippedItem), weapon.cooldownRatio, weapon.phase);
     this.drawQuestBandVolumeAssembly(volumeAssembly);
     this.questBandText.setText(clampQuestBandText(objectiveLine, QUEST_BAND_LAYOUT.objective.maxChars));
-    this.questBandVerbText.setText(getPrimaryActionBadge());
+    this.questBandVerbText.setText(actionBadge);
     this.questBandCueText.setText(clampQuestBandText(actionLine, QUEST_BAND_LAYOUT.actionCue.maxChars));
-    this.questBandCueText.setColor(riskLine ? PALETTE.classNetRed : PALETTE.terminalCyan);
+    this.questBandCueText.setColor(riskLine || bossCue?.tone === "warn" ? PALETTE.classNetRed : PALETTE.terminalCyan);
     this.questBandToolText.setText(clampQuestBandText(
       getString("hud.toolLabel", { label: toolLabel }),
       QUEST_BAND_LAYOUT.toolLabel.maxChars
@@ -234,23 +274,44 @@ export class UIScene extends Phaser.Scene {
 
   private compactObjective(activeSceneKey: string | null) {
     if (gameState.mode === "dialog") return getString("hud.readLine");
-    if (gameState.mode === "choice") return getString("hud.chooseAnswer");
-    if (gameState.heldItem) return getString("hud.carryItem", { item: gameState.heldItem });
-    if (activeSceneKey === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
-      return getString("hud.talkJuniorCompiler");
+    if (gameState.mode === "choice") {
+      if (gameState.currentChoice?.title === WITHHOLDING_CHRONOLOGY_TITLE
+        || gameState.currentChoice?.title === EDITOR_CHRONOLOGY_TITLE) return getString("hud.restoreChronology");
+      if (gameState.currentChoice?.title === REFERRAL_MANIFEST_TITLE) return getString("hud.reviewRoutes");
+      if (gameState.currentChoice?.title === TREATMENT_REVIEW_TITLE) return "REVIEW TREATMENT";
+      if (gameState.currentChoice?.title === PROOF_COMPARISON_TITLE) return getString("hud.compareProof");
+      if (gameState.currentChoice?.title.startsWith(BINDING_CERTIFICATION_TITLE)) return getString("hud.reviewRecord");
+      if (gameState.currentChoice?.title === SOURCE_NOTE_47_TITLE
+        || gameState.currentChoice?.title === RELEASE_SCOPE_TITLE
+        || gameState.currentChoice?.title === CROSS_REFERENCE_TITLE) return getString("hud.reviewRecord");
+      if (gameState.currentChoice?.title.startsWith(EDITORIAL_REPAIR_TITLE)
+        || gameState.currentChoice?.title.startsWith(EDITORIAL_RECHECK_TITLE)) return getString("hud.reviewRecord");
+      return getString("hud.chooseAnswer");
+    }
+    if (activeSceneKey === "OfficeScene") {
+      return officeQuestBandObjective({
+        juniorIntroduced: Boolean(gameState.sceneProgress.juniorCompilerIntroduced),
+        memoStatus: gameState.sceneProgress.officeStarterMemoStatus
+          ?? ((gameState.sceneProgress.juniorCompilerFetch ?? 0) >= 3 ? 3 : 0),
+        hasArchiveKey: hasDanneItem("master-declass-key")
+      });
+    }
+    if (activeSceneKey === "GuideScene") return guideQuestBandObjective(
+      hasProcessItem("citation_stamp"),
+      gameState.volumeFragments.includes("Front Matter Fragment"),
+      Boolean(gameState.sceneProgress.guideCitationCounterTrained)
+    );
+    const hasCarryDestination = activeSceneKey === "NetworkScene"
+      || activeSceneKey === "ReferralVaultScene"
+      || activeSceneKey === "SilentReadScene"
+      || activeSceneKey === "EndingScene"
+      || (activeSceneKey === "ArchiveScene" && ["A1", "AS"].includes(gameState.roomTraversal?.currentRoomId ?? ""));
+    if (gameState.heldItem && !hasCarryDestination) {
+      return getString("hud.carryItem", { item: gameState.heldItem });
     }
     const objective = gameState.objective.replace(/^Mission:\s*/i, "");
     const firstSentence = objective.split(".")[0]?.trim() || objective.trim();
     return firstSentence;
-  }
-
-  private compactReliabilityRiskLine() {
-    const hardestThreat = gameState.visibleThreats
-      .filter((threat) => (threat.hp ?? 0) > 0 && threat.enemyState !== "defeated" && (threat.difficultyTier ?? 0) >= 4)
-      .sort((left, right) => (right.difficultyTier ?? 0) - (left.difficultyTier ?? 0))[0];
-    if (!hardestThreat) return null;
-    const risk = (hardestThreat.reliabilityRisk ?? "high").toUpperCase();
-    return `RELIABILITY RISK: ${risk}`;
   }
 
   private compactActionLine(toolLabel: string) {
@@ -259,11 +320,40 @@ export class UIScene extends Phaser.Scene {
     if (gameState.currentScene === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
       return getString("hud.goLeftTalk");
     }
+    if (gameState.currentScene === "BlackVaultLairScene") {
+      const vaultAction = blackVaultActionLine(gameState.nearestInteractable, Boolean(gameState.sceneProgress.blackVaultBossCleared));
+      if (vaultAction) return vaultAction;
+    }
     if (gameState.nearestInteractable) return getString("hud.interact", { label: gameState.nearestInteractable.toUpperCase().slice(0, 22) });
+    if (gameState.currentScene === "ReferralVaultScene" && gameState.roomTraversal?.currentRoomId === "R3") {
+      return getString(dispatchAisleOpen(gameState.sceneProgress) ? "hud.dispatchReturn" : "hud.dispatchAisles");
+    }
+    if (gameState.currentScene === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "AS") {
+      return getString(readAnnotationPacket(gameState.sceneProgress).complete ? "hud.annotationExits" : "hud.annotationAisles");
+    }
+    if (this.annotationRouteReady()) return getString("hud.annotationNorth");
+    if (gameState.currentScene === "EndingScene") {
+      return getString(`hud.bindery.${buckramBindingDestination(gameState.sceneProgress)}`);
+    }
+    if (gameState.currentScene === "HiddenReadingRoomScene") {
+      return getString(hiddenFirstEditionFound(gameState) ? "hud.readingRoomExit" : "hud.readingRoomBook");
+    }
+    if (this.showCounterAction()) {
+      return gameState.currentScene === "BlackVaultLairScene"
+        ? getString("hud.useTool", { tool: toolLabel })
+        : getString("hud.counterDanne");
+    }
     if (gameState.currentScene === "GuideScene") {
+      const lesson = getGuideCounterReadout();
+      if (lesson?.cue) return getString(`hud.guideCoach.${lesson.cue}`);
+      if (lesson?.phase === "returned") return getString("hud.guideReturned");
+      if (lesson?.phase === "charging") return getString("hud.guideAim");
+      if (lesson?.phase === "incoming") return getString("hud.guideSwing");
+      if (lesson?.phase === "ready" && lesson.attempts > 0) return getString("hud.guideRetry");
       const stage = getGuideCavernStage(
         hasProcessItem("citation_stamp"),
-        gameState.volumeFragments.includes("Front Matter Fragment")
+        gameState.volumeFragments.includes("Front Matter Fragment"),
+        Boolean(gameState.sceneProgress.guideCitationCounterTrained)
       );
       return guideCavernActionCue(stage);
     }
@@ -271,8 +361,48 @@ export class UIScene extends Phaser.Scene {
     return getString("hud.findGlowing");
   }
 
+  private gameplayCombatCue() {
+    if (gameState.currentScene !== "GameplayMapScene" || gameState.mode !== "explore" || gameState.nearestInteractable) return null;
+    const threats = gameState.visibleThreats.filter(t => (t.hp ?? 0) > 0 && t.enemyState !== "defeated" && !t.bossCombat);
+    const player = gameState.player;
+    const target = threats.reduce<typeof threats[number] | undefined>((nearest, t) => !nearest
+      || Math.hypot(t.x - player.x, t.y - player.y) < Math.hypot(nearest.x - player.x, nearest.y - player.y) ? t : nearest, undefined);
+    if (!target && gameState.visibleThreats.some(threat => threat.roomClear?.cleared)) {
+      return { text: getString("hud.encounterExplore"), badge: getPrimaryActionBadge() };
+    }
+    const tool = target?.weakness;
+    if (tool !== "citation_stamp" && tool !== "red_pencil" && tool !== "review_folder") return null;
+    const label = tool === "citation_stamp" ? "STAMP" : tool === "red_pencil" ? "PENCIL" : "FOLDER";
+    if (!hasProcessItem(tool)) return { text: getString("hud.encounterEvade", { tool: label }), badge: "!" };
+    if (gameState.equippedProcessItem !== tool) return { text: getString("hud.encounterEquip", { tool: label }), badge: "!" };
+    return { text: getString("hud.encounterCounter", { tool: label }), badge: getSecondaryActionBadge() };
+  }
+
+  private showCounterAction() {
+    return gameState.mode === "explore" && !gameState.nearestInteractable
+      && !this.annotationRouteReady()
+      && !(gameState.currentScene === "ReferralVaultScene" && gameState.roomTraversal?.currentRoomId === "R3")
+      && isWeaponTool(gameState.equippedProcessItem) && hasProcessItem(gameState.equippedProcessItem)
+      && ["ArchiveScene", "NetworkScene", "ReferralVaultScene", "SilentReadScene", "BlackVaultLairScene", "NaraStacksScene"].includes(gameState.currentScene);
+  }
+
+  private annotationRouteReady() {
+    return gameState.currentScene === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "A1"
+      && annotationStacksOpen(gameState.sceneProgress) && !gameState.sceneProgress.annotationDraftingComplete;
+  }
+
+  private guideCounterTrainingActive() {
+    if (gameState.currentScene !== "GuideScene" || gameState.mode !== "explore") return false;
+    const hasFragment = gameState.volumeFragments.includes("Front Matter Fragment");
+    return getGuideCavernStage(
+      hasProcessItem("citation_stamp"),
+      hasFragment,
+      Boolean(gameState.sceneProgress.guideCitationCounterTrained) || hasFragment
+    ) === "counter";
+  }
+
   private shouldShowQuestBand(activeSceneKey: string | null) {
-    if (!activeSceneKey) return false;
+    if (!activeSceneKey || gameState.mode === "ending" || gameState.mode === "pause") return false;
     if (this.scene.isActive("CodexScene")) return false;
     return !new Set([
       "BootScene",

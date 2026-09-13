@@ -4,11 +4,36 @@ import {
   DANNE_VARIANT_BOASTS,
   DANNE_VARIANT_IDS,
   danneBoastForPhase,
+  danneBoastHoldMs,
   danneBoastsForVariantPhase,
+  danneCombatBoastsForVariantPhase,
   danneVariantBoast
 } from "./danneBoasts";
 
 describe("harmonized DANN-E boasts", () => {
+  it("fits every combat variant into two readable 18-character lines", () => {
+    for (const phase of ["reveal", "prototype", "colossus", "cloud", "infiltrator", "swarm", "defeated", "ascendant"] as const) {
+      const lines = danneCombatBoastsForVariantPhase(phase);
+      expect(lines.length).toBeGreaterThanOrEqual(3);
+      for (const boast of lines) {
+        const rows = boast.split("\n");
+        expect(rows.length).toBeLessThanOrEqual(2);
+        for (const row of rows) {
+          expect(row.length).toBeGreaterThan(0);
+          expect(row.length).toBeLessThanOrEqual(18);
+        }
+      }
+    }
+  });
+  it("keeps phase lines short with bounded reading time", () => {
+    for (const line of Object.values(DANNE_PHASE_BOASTS).flat()) {
+      expect(line.length).toBeLessThanOrEqual(48);
+      expect(danneBoastHoldMs(line)).toBeGreaterThanOrEqual(1800);
+      expect(danneBoastHoldMs(line)).toBeLessThanOrEqual(3200);
+    }
+    expect(danneBoastHoldMs("One two three four five six seven eight nine ten")).toBe(2900);
+    expect(danneBoastHoldMs("word ".repeat(100))).toBe(3200);
+  });
   it("retains all eight illustrated variants and their full catalogs", () => {
     expect(DANNE_VARIANT_IDS).toEqual([
       "prime",

@@ -9,6 +9,11 @@ export const EDITOR_E1_TILEMAP = {
   y: 32
 } as const;
 
+// The pickup and Editor desk have separate reach zones: carrying is a short walk.
+export const EDITOR_DRAFT_OUTBOX = { x: 56, y: 192 } as const;
+export const EDITOR_DESK_POSITION = { x: 128, y: 166 } as const;
+export const EDITOR_PRIYA_POSITION = { x: 36, y: 88 } as const;
+
 export interface EditorE1TileLayers {
   ground: number[][];
   walls: number[][];
@@ -16,7 +21,7 @@ export interface EditorE1TileLayers {
   collisionCells: ReadonlyArray<{ tileX: number; tileY: number }>;
 }
 
-const EAST_EXIT_ROWS = new Set([4, 5, 6]);
+const SIDE_EXIT_ROWS = new Set([4, 5, 6]);
 
 function emptyLayer() {
   return Array.from(
@@ -26,7 +31,7 @@ function emptyLayer() {
 }
 
 export function isEditorE1ExitCell(tileX: number, tileY: number) {
-  return tileX === EDITOR_E1_TILEMAP.columns - 1 && EAST_EXIT_ROWS.has(tileY);
+  return (tileX === 0 || tileX === EDITOR_E1_TILEMAP.columns - 1) && SIDE_EXIT_ROWS.has(tileY);
 }
 
 export function isEditorE1WallCell(tileX: number, tileY: number) {
@@ -66,7 +71,7 @@ export function buildEditorE1TileLayers(): EditorE1TileLayers {
 
   fillRect(ground, 7, 0, 2, EDITOR_E1_TILEMAP.rows, INTERIOR_TILES.redCarpetFloor);
   fillRect(ground, 7, 7, 2, 2, INTERIOR_TILES.terminalPad);
-  fillRect(ground, 7, 9, 2, 2, INTERIOR_TILES.sorterPad);
+  fillRect(ground, 3, 9, 1, 2, INTERIOR_TILES.sorterPad);
 
   for (let tileY = 0; tileY < EDITOR_E1_TILEMAP.rows; tileY += 1) {
     for (let tileX = 0; tileX < EDITOR_E1_TILEMAP.columns; tileX += 1) {

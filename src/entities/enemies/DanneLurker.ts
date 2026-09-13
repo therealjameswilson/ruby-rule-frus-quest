@@ -11,29 +11,43 @@ import {
   DANNE_LURKER_BOLT_SPEED,
   DANNE_LURKER_BOLT_TELEGRAPH_MS,
   DANNE_LURKER_INITIAL_BOLT_DELAY_MS,
+  DANNE_LURKER_TOOL_STUN_MS,
+  DANNE_LURKER_RETURN_STUN_MS,
+  DANNE_LURKER_RETURN_SPEED,
   danneLurkerTelegraphRemainingMs
 } from "../../game/danneLurkerBalance";
 import { FRUS_DANNE_EGO_BOLT_SLOT_COUNT } from "../../game/lttpFrusTranslation";
 import { gameState, setLatestMessage } from "../../game/state";
-import type { Position } from "../../game/types";
+import type { PlayerCombatReadout, Position } from "../../game/types";
+import { getSecondaryActionBadge } from "../../input/InputState";
 import { retroAudio } from "../../systems/audio";
 import { getDanneDifficultyProfile } from "../../systems/newGamePlus";
+import { recoverDanneLurkerPressure } from "../../systems/dannePressure";
 import { snapPixel } from "../../systems/pixelPerfect";
+import { frameDeltaSeconds } from "../../systems/smoothMovement";
+import { isWeaponTool, type WeaponToolId } from "../../systems/weaponState";
 import { Enemy } from "./Enemy";
+import { combatSpeechPlacement, combatSpeechText, COMBAT_SPEECH_WIDTH } from "../../systems/combatSpeechPlacement";
 
 interface DanneLurkerOptions {
   waypoints: Position[];
   label?: string;
+  encounterMode?: "combat" | "foreshadow";
+  speechBlocked?: () => boolean;
+  boltBlocked?: (x: number, y: number) => boolean;
 }
 
 interface EgoBolt {
   sprite: Phaser.GameObjects.Sprite;
   glow: Phaser.GameObjects.Rectangle;
+  x: number;
+  y: number;
   vx: number;
   vy: number;
   expiresAt: number;
   armedAt: number;
   armed: boolean;
+  returnedBy: WeaponToolId | null;
 }
 
 interface EgoBoltTelegraph {
@@ -65,8 +79,22 @@ export class DanneLurker extends Enemy {
   private telegraphExplained = false;
   private lastUpdateAt = 0;
   private pausedAt: number | null = null;
+  private stunnedUntil = 0;
+  private lastCounterSwing = -1;
+  private toolCounters = 0;
+  private boltsReturned = 0;
   private readonly bolts: EgoBolt[] = [];
   private readonly boastText: Phaser.GameObjects.Text;
+  private readonly speechPanel: Phaser.GameObjects.Container;
+  private readonly speechBack: Phaser.GameObjects.Rectangle;
+  private readonly speechBlocked: () => boolean;
+  private readonly boltBlocked: (x: number, y: number) => boolean;
+  private readonly speechPlayer = { x: 128, y: 184 };
+  private speechHeight = 22;
+  private speechEnabled = false;
+  private speechDestroyed = false;
+  private readonly encounterMode: "combat" | "foreshadow";
+  private readonly homePosition: Position;
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneLurkerOptions) {
     unlockCodexEntry("enemy-danne-boss");
@@ -83,31 +111,41 @@ export class DanneLurker extends Enemy {
       acceleration: 58 * difficulty.speedMultiplier,
       waypointTolerance: 4
     });
+    this.encounterMode = options.encounterMode ?? "combat";
+    this.speechBlocked = options.speechBlocked ?? (() => false);
+    this.boltBlocked = options.boltBlocked ?? (() => false);
+    this.homePosition = { x, y };
     this.sprite.setOrigin(0.5, 0.82).setScale(0.72);
     const animKey = danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
-    this.boastText = scene.add.text(0, -32, "", {
+    this.speechBack = scene.add.rectangle(0, 0, COMBAT_SPEECH_WIDTH, this.speechHeight, this.color(PALETTE.black), 0.96)
+      .setOrigin(0).setStrokeStyle(1, this.color(PALETTE.goldStamp));
+    this.boastText = scene.add.text(COMBAT_SPEECH_WIDTH / 2, 4, "", {
       fontFamily: "monospace",
-      fontSize: "8px",
+      fontSize: "6px",
       color: PALETTE.creamPaper,
-      backgroundColor: PALETTE.black,
       align: "center",
-      wordWrap: { width: 96, useAdvancedWrap: true }
-    }).setOrigin(0.5, 1).setVisible(false);
-    this.container.add(this.boastText);
+      lineSpacing: 2
+    }).setOrigin(0.5, 0);
+    this.speechPanel = scene.add.container(0, 0, [this.speechBack, this.boastText])
+      .setName("danne-lurker-speech").setDepth(930).setVisible(false);
+    scene.events.on(Phaser.Scenes.Events.POST_UPDATE, this.syncSpeech);
+    scene.events.once(Phaser.Scenes.Events.SHUTDOWN, this.destroySpeech);
     this.nextBoastAt = scene.time.now + 160;
     this.nextEgoBoltAt = scene.time.now + DANNE_LURKER_INITIAL_BOLT_DELAY_MS;
     this.lastUpdateAt = scene.time.now;
   }
 
-  update(timeMs: number, deltaMs: number, player: Position, canPressure: boolean) {
+  update(timeMs: number, deltaMs: number, player: Position, canPressure: boolean, combat?: PlayerCombatReadout) {
+    this.speechPlayer.x = player.x;
+    this.speechPlayer.y = player.y;
+    this.speechEnabled = canPressure;
     this.resumeAfterUpdateGap(timeMs, deltaMs);
     this.lastUpdateAt = timeMs;
-    this.moveTowardWaypoint(deltaMs);
     if (!canPressure) {
       if (this.pausedAt === null) this.pausedAt = timeMs;
       this.cue.setVisible(false);
-      this.boastText.setVisible(false);
+      this.speechPanel.setVisible(false);
       this.syncRender(timeMs, 0, 0);
       return { triggered: false, pressureActive: false, egoBoltFired: false, egoBoltHit: false };
     }
@@ -115,8 +153,29 @@ export class DanneLurker extends Enemy {
       this.shiftAttackTimers(Math.max(0, timeMs - this.pausedAt));
       this.pausedAt = null;
     }
+    const canAttack = this.encounterMode === "combat";
+    // The warning lane must keep the same firing origin until the bolt launches.
+    if (timeMs >= this.stunnedUntil && !this.egoBoltTelegraph) this.moveTowardWaypoint(deltaMs);
+    const swing = canAttack && combat?.actionActive && combat.weapon.active
+      && combat.weapon.phase === "active" && isWeaponTool(combat.weapon.tool) && combat.hitbox
+      ? { box: new Phaser.Geom.Rectangle(combat.hitbox.x, combat.hitbox.y, combat.hitbox.width, combat.hitbox.height),
+          tool: combat.weapon.tool, id: combat.weapon.swingId }
+      : null;
+    if (swing && timeMs >= this.stunnedUntil && swing.id !== this.lastCounterSwing
+      && Phaser.Geom.Intersects.RectangleToRectangle(swing.box, this.bodyBounds())) {
+      this.lastCounterSwing = swing.id;
+      this.toolCounters += 1;
+      this.stun(timeMs, DANNE_LURKER_TOOL_STUN_MS, swing.tool, false);
+    }
+    // Resolve counters before contact damage, so an active parry wins the frame.
+    const egoBoltHit = this.updateBolts(timeMs, deltaMs, player, canAttack, swing);
+    const stunned = timeMs < this.stunnedUntil;
     const distance = this.distanceTo(player);
-    const triggered = canPressure && distance <= 25 && timeMs >= this.nextPressureAt;
+    // Match Player's terrain footprint: proximity alone is not a damaging hit.
+    const triggered = canAttack && !stunned && timeMs >= this.nextPressureAt
+      && Phaser.Geom.Intersects.RectangleToRectangle(
+        new Phaser.Geom.Rectangle(player.x - 8, player.y - 3, 16, 8), this.bodyBounds()
+      );
     if (triggered) {
       this.nextPressureAt = timeMs + this.cooldown(5600);
       this.pressureUntil = timeMs + 1150;
@@ -130,28 +189,30 @@ export class DanneLurker extends Enemy {
       });
     }
     let egoBoltFired = false;
-    if (canPressure && this.egoBoltTelegraph) {
+    if (canAttack && !stunned && this.egoBoltTelegraph) {
       egoBoltFired = this.updateEgoBoltTelegraph(timeMs);
-    } else if (canPressure && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt) {
+    } else if (canAttack && !stunned && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextEgoBoltAt) {
       this.startEgoBoltTelegraph(timeMs, player);
     }
 
-    const boasted = canPressure && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextBoastAt;
+    const boasted = !stunned && !this.speechBlocked() && !this.egoBoltTelegraph && this.bolts.length === 0
+      && distance <= DANNE_LURKER_ATTACK_RANGE && timeMs >= this.nextBoastAt;
     if (boasted) {
       this.nextBoastAt = timeMs + this.cooldown(EGO_BOAST_COOLDOWN_MS);
       this.boastUntil = timeMs + 1700;
       const boast = danneLurkerBoast(this.boastIndex);
       this.boastIndex += 1;
-      this.boastText.setText(boast).setVisible(true);
+      this.setSpeech(boast);
       setLatestMessage(`DANN-E boasts: ${boast}`);
       retroAudio.danneBoast();
     }
 
-    const egoBoltHit = this.updateBolts(timeMs, deltaMs, player, canPressure);
-
     const active = timeMs < this.pressureUntil;
-    this.cue.setVisible(active);
-    if (this.egoBoltTelegraph && Math.floor(timeMs / 100) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
+    this.cue.setText(stunned ? "STUN" : "30YR")
+      .setColor(stunned ? PALETTE.terminalCyan : PALETTE.classNetRed)
+      .setVisible(active || (stunned && (timeMs >= this.boastUntil || this.speechBlocked())));
+    if (stunned) this.sprite.setTint(this.color(Math.floor(timeMs / 120) % 2 === 0 ? PALETTE.creamPaper : PALETTE.terminalCyan));
+    else if (this.egoBoltTelegraph && Math.floor(timeMs / 100) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
     else if (this.egoBoltTelegraph) this.sprite.setTint(this.color(PALETTE.goldStamp));
     else if (active && Math.floor(timeMs / 105) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));
     else if (active) this.sprite.setTint(this.color(PALETTE.goldStamp));
@@ -159,12 +220,15 @@ export class DanneLurker extends Enemy {
 
     const hoverX = Math.sin(timeMs / 260) * 0.7;
     const hoverY = Math.cos(timeMs / 310) * 0.55;
-    this.boastText.setVisible(timeMs < this.boastUntil);
-    this.syncRender(timeMs, hoverX, hoverY);
+    const holdingAim = stunned || this.egoBoltTelegraph !== null;
+    this.syncRender(timeMs, holdingAim ? 0 : hoverX, holdingAim ? 0 : hoverY);
     return { triggered, pressureActive: active, egoBoltFired, egoBoltHit };
   }
 
   status(timeMs: number) {
+    timeMs = this.pausedAt ?? timeMs;
+    if (this.encounterMode === "foreshadow") return "watching; safe preparation room";
+    if (timeMs < this.stunnedUntil) return `stunned ${Math.ceil(this.stunnedUntil - timeMs)}ms`;
     const slotReadout = `${this.bolts.length}/${FRUS_DANNE_EGO_BOLT_SLOT_COUNT} ego slots`;
     if (this.egoBoltTelegraph) {
       return `ego lock ${danneLurkerTelegraphRemainingMs(this.egoBoltTelegraph.resolvesAt, timeMs)}ms; ${slotReadout}`;
@@ -174,7 +238,34 @@ export class DanneLurker extends Enemy {
     return this.bolts.length ? `firing ${slotReadout}` : "lurking";
   }
 
+  enterRoom(timeMs: number, visible = true) {
+    this.container.setVisible(visible);
+    this.clearEgoBoltTelegraph();
+    this.clearBolts();
+    this.currentX = this.homePosition.x;
+    this.currentY = this.homePosition.y;
+    this.velocityX = 0;
+    this.velocityY = 0;
+    this.waypointIndex = 0;
+    this.pressureUntil = 0;
+    this.stunnedUntil = 0;
+    this.boastUntil = 0;
+    this.pausedAt = null;
+    this.lastUpdateAt = timeMs;
+    this.lastCounterSwing = -1;
+    this.toolCounters = 0;
+    this.boltsReturned = 0;
+    this.nextPressureAt = timeMs + DANNE_LURKER_INITIAL_BOLT_DELAY_MS;
+    this.nextEgoBoltAt = timeMs + DANNE_LURKER_INITIAL_BOLT_DELAY_MS;
+    this.nextBoastAt = timeMs + DANNE_LURKER_INITIAL_BOLT_DELAY_MS;
+    this.cue.setVisible(false);
+    this.speechPanel.setVisible(false);
+    this.speechEnabled = false;
+    this.syncRender(timeMs);
+  }
+
   readout(timeMs: number) {
+    timeMs = this.pausedAt ?? timeMs;
     const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
     const telegraph = this.egoBoltTelegraph
       ? {
@@ -190,20 +281,76 @@ export class DanneLurker extends Enemy {
       x: this.position.x,
       y: this.position.y,
       spriteKey: this.spriteKey,
-      behavior: "lurks near workflow paths, boasts, and fires ego bolts",
-      defeatMethod: "Keep moving through human review; final defeat happens at the Buckram Gate.",
+      behavior: this.encounterMode === "foreshadow"
+        ? "watches from the perimeter and boasts; no contact damage or ego bolts"
+        : "fires ego bolts; tool strikes interrupt him and return his projectiles",
+      defeatMethod: this.encounterMode === "foreshadow"
+        ? "Prepare in safety. DANN-E attacks in the archives."
+        : `${getSecondaryActionBadge()}: swing an equipped Stamp, Pencil or Folder to stun DANN-E or return an Ego bolt. Final defeat is at the Buckram Gate.`,
       status: `${this.status(timeMs)}; ${difficulty.label} tier`,
+      counterplay: {
+        stunnedMsRemaining: Math.max(0, Math.ceil(this.stunnedUntil - (this.pausedAt ?? timeMs))),
+        toolCounters: this.toolCounters,
+        boltsReturned: this.boltsReturned,
+        bolts: this.bolts.map((bolt) => ({ x: snapPixel(bolt.x), y: snapPixel(bolt.y), returned: bolt.returnedBy !== null }))
+      },
       telegraph
     };
   }
 
-  destroy() {
+  private stun(timeMs: number, duration: number, tool: WeaponToolId, returned: boolean) {
+    if (timeMs < this.stunnedUntil) return;
     this.clearEgoBoltTelegraph();
+    this.stunnedUntil = timeMs + duration;
+    this.pressureUntil = 0;
+    this.velocityX = 0;
+    this.velocityY = 0;
+    this.nextPressureAt = Math.max(this.nextPressureAt, this.stunnedUntil + 500);
+    this.nextEgoBoltAt = Math.max(this.nextEgoBoltAt, this.stunnedUntil + 800);
+    this.nextBoastAt = Math.max(this.nextBoastAt, this.stunnedUntil + 2200);
+    this.boastUntil = timeMs + 750;
+    const recovered = returned ? recoverDanneLurkerPressure() : 0;
+    this.setSpeech(recovered > 0 ? `REFUTED! +${recovered}` : returned ? "REFUTED!" : "INTERRUPTED!", PALETTE.terminalCyan);
+    setLatestMessage(recovered > 0
+      ? `Ego returned: ${recovered} reliability recovered from combat pressure. DANN-E is stunned; editorial decisions are unchanged.`
+      : returned ? "Ego bolt returned. DANN-E is stunned!" : "DANN-E interrupted. Keep compiling!");
+    retroAudio.toolHit(tool);
+  }
+
+  destroy() {
+    if (this.speechDestroyed) return;
+    this.speechDestroyed = true;
+    this.scene.events.off(Phaser.Scenes.Events.POST_UPDATE, this.syncSpeech);
+    this.scene.events.off(Phaser.Scenes.Events.SHUTDOWN, this.destroySpeech);
+    this.speechPanel.destroy();
+    this.clearEgoBoltTelegraph();
+    this.clearBolts();
+    super.destroy();
+  }
+
+  private readonly destroySpeech = () => this.destroy();
+
+  private setSpeech(message: string, accent: string = PALETTE.goldStamp) {
+    const layout = combatSpeechText(message);
+    this.boastText.setText(layout.text);
+    this.speechHeight = layout.height;
+    this.speechBack.setSize(COMBAT_SPEECH_WIDTH, layout.height).setStrokeStyle(1, this.color(accent));
+  }
+
+  private readonly syncSpeech = () => {
+    if (this.speechDestroyed) return;
+    const visible = this.speechEnabled && this.scene.time.now < this.boastUntil
+      && !this.speechBlocked() && !this.egoBoltTelegraph && this.bolts.length === 0;
+    const placement = visible ? combatSpeechPlacement(this.position, this.speechPlayer, this.speechHeight) : null;
+    this.speechPanel.setVisible(placement !== null);
+    if (placement) this.speechPanel.setPosition(placement.x, placement.y);
+  };
+
+  private clearBolts() {
     for (const bolt of this.bolts.splice(0)) {
       bolt.sprite.destroy();
       bolt.glow.destroy();
     }
-    super.destroy();
   }
 
   private startEgoBoltTelegraph(timeMs: number, target: Position) {
@@ -243,7 +390,7 @@ export class DanneLurker extends Enemy {
     this.sprite.setTint(this.color(PALETTE.classNetRed));
     if (!this.telegraphExplained) {
       this.telegraphExplained = true;
-      setLatestMessage("DANN-E marks an Ego target. Leave the red brackets before the bolt fires.");
+      setLatestMessage(`Leave the red brackets, or face the bolt and press ${getSecondaryActionBadge()} to return it with your tool.`);
     }
     retroAudio.blip();
   }
@@ -284,6 +431,7 @@ export class DanneLurker extends Enemy {
     this.nextEgoBoltAt += pausedMs;
     this.nextBoastAt += pausedMs;
     this.boastUntil += pausedMs;
+    if (this.stunnedUntil > 0) this.stunnedUntil += pausedMs;
     if (this.egoBoltTelegraph) {
       this.egoBoltTelegraph.startedAt += pausedMs;
       this.egoBoltTelegraph.resolvesAt += pausedMs;
@@ -316,11 +464,14 @@ export class DanneLurker extends Enemy {
     this.bolts.push({
       sprite: bolt,
       glow,
+      x: startX,
+      y: startY,
       vx,
       vy,
       expiresAt: this.scene.time.now + 2200,
       armedAt: this.scene.time.now + EGO_BOLT_ARM_MS,
-      armed: true
+      armed: true,
+      returnedBy: null
     });
     retroAudio.egoBoltFire();
     return true;
@@ -331,20 +482,52 @@ export class DanneLurker extends Enemy {
     return Math.max(220, Math.round(baseMs * difficulty.cooldownMultiplier));
   }
 
-  private updateBolts(timeMs: number, deltaMs: number, player: Position, allowHit: boolean) {
-    const dt = Math.min(0.05, deltaMs / 1000);
+  private updateBolts(timeMs: number, deltaMs: number, player: Position, allowHit: boolean,
+    swing: { box: Phaser.Geom.Rectangle; tool: WeaponToolId } | null) {
+    const dt = frameDeltaSeconds(deltaMs);
     const footBox = new Phaser.Geom.Rectangle(player.x - 8, player.y - 4, 16, 9);
     let hit = false;
     for (let index = this.bolts.length - 1; index >= 0; index -= 1) {
       const bolt = this.bolts[index];
-      const x = snapPixel(bolt.sprite.x + bolt.vx * dt);
-      const y = snapPixel(bolt.sprite.y + bolt.vy * dt);
+      if (bolt.returnedBy) {
+        const velocity = vectorToward(bolt, { x: this.position.x, y: this.position.y - 5 }, DANNE_LURKER_RETURN_SPEED);
+        bolt.vx = velocity.vx;
+        bolt.vy = velocity.vy;
+      }
+      // Keep sub-pixel travel independent of display refresh; snap only the art.
+      bolt.x += bolt.vx * dt;
+      bolt.y += bolt.vy * dt;
+      const x = snapPixel(bolt.x);
+      const y = snapPixel(bolt.y);
+      if (this.boltBlocked?.(x, y)) {
+        bolt.sprite.destroy();
+        bolt.glow.destroy();
+        this.bolts.splice(index, 1);
+        continue;
+      }
       bolt.sprite.setPosition(x, y);
       bolt.glow.setPosition(x, y);
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));
       bolt.glow.setDepth(Math.round(bolt.sprite.y + 5));
       const boltBox = new Phaser.Geom.Rectangle(bolt.sprite.x - 6, bolt.sprite.y - 6, 12, 12);
-      if (allowHit && bolt.armed && timeMs >= bolt.armedAt && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
+      if (allowHit && bolt.armed && !bolt.returnedBy && swing
+        && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, swing.box)) {
+        bolt.returnedBy = swing.tool;
+        bolt.expiresAt = timeMs + 2400;
+        this.boltsReturned += 1;
+        bolt.sprite.setTintFill(this.color(PALETTE.terminalCyan));
+        bolt.glow.setFillStyle(this.color(PALETTE.terminalCyan));
+        const velocity = vectorToward(bolt, this.position, DANNE_LURKER_RETURN_SPEED);
+        const angle = Math.round(Phaser.Math.RadToDeg(Math.atan2(velocity.vy, velocity.vx)));
+        bolt.sprite.setAngle(angle);
+        bolt.glow.setAngle(angle);
+        setLatestMessage("EGO RETURNED!");
+        retroAudio.toolHit(swing.tool);
+      }
+      if (bolt.returnedBy && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, this.bodyBounds())) {
+        this.stun(timeMs, DANNE_LURKER_RETURN_STUN_MS, bolt.returnedBy, true);
+        bolt.armed = false;
+      } else if (allowHit && !bolt.returnedBy && bolt.armed && timeMs >= bolt.armedAt && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
         bolt.armed = false;
         hit = true;
       }

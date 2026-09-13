@@ -14,7 +14,7 @@ Internal resolution: GAME_WIDTH × GAME_HEIGHT = 256 × 240 (see src/game/consta
 
 Tile size: 16 px (TILE_SIZE in src/game/questArchitecture.ts).
 
-Scaling: device-pixel integer-only. The runtime picks the largest whole-number deviceZoom that fits the viewport. CSS zoom may equal deviceZoom / round(devicePixelRatio) on high-DPR phones.
+Scaling: device-pixel integer-only. The runtime picks the largest whole-number deviceZoom that fits inside the viewport's safe area. CSS zoom equals deviceZoom / devicePixelRatio. Use the actual positive DPR, including values such as 2.625; never round it.
 
 Why this matters
 Pixel art looks soft/blurry whenever a 16 px tile lands on fractional device pixels. The three classic causes — and how we avoid them:
@@ -23,7 +23,7 @@ Canvas2D upscaling. Use WebGL. gameConfig.type is Phaser.AUTO so WebGL nearest-n
 
 Non-integer device zoom. Never combine a fixed zoom with Phaser.Scale.FIT; FIT can rescale to fractional physical pixels. We use Phaser.Scale.NONE and compute an integer deviceZoom ourselves.
 
-High-DPR scaling. Phaser keeps its fixed logical backing buffer and the CSS size is GAME_* × (deviceZoom / round(dpr)), so the browser maps every game pixel to exactly deviceZoom physical pixels without interpolation. Do not resize the WebGL backing canvas after startup.
+High-DPR scaling. Phaser keeps its fixed logical backing buffer. The canvas also has native GAME_* CSS layout dimensions and a compositor scale of deviceZoom / dpr. Its displayed rectangle is GAME_* × deviceZoom / dpr. This avoids browser rounding of fractional CSS layout widths before rasterization, which can distort pixels near the far edge even when the origin checkerboard looks correct. Do not resize the WebGL backing canvas after startup.
 
 Required configuration
 src/game/config.ts
@@ -43,19 +43,23 @@ computeIntegerZoom(viewW, viewH) = max(1, floor(min(viewW/GAME_WIDTH, viewH/GAME
 computeDeviceIntegerZoom(viewW, viewH, dpr) = max(1, floor(min((viewW*dpr)/GAME_WIDTH, (viewH*dpr)/GAME_HEIGHT)))
 
 applyIntegerZoom(game):
-cssZoom = deviceZoom / round(devicePixelRatio)
+cssZoom = deviceZoom / devicePixelRatio
 
 game.scale.setZoom(cssZoom) only when the value changed
 
-canvas CSS size = GAME_WIDTH*cssZoom × GAME_HEIGHT*cssZoom
+canvas CSS layout size = GAME_WIDTH × GAME_HEIGHT; transform-origin = 0 0; transform = scale(cssZoom)
+
+canvas displayed CSS rectangle = GAME_WIDTH*cssZoom × GAME_HEIGHT*cssZoom
 
 canvas backing size remains GAME_WIDTH × GAME_HEIGHT (owned by Phaser)
 
 
-Call it on boot and on window resize / orientationchange (wired in src/main.ts).
+The shell is centered within the padded visual viewport on whole device pixels. Position it with translate3d, not fractional layout-only left/top offsets, which can soften the outer edge. One layout helper owns both shell placement and scale.
+
+Call it on boot, window resize / orientationchange, visual-viewport resize, and actual DPR changes (wired in src/main.ts). Correct Phaser resize events synchronously before paint, guarding re-entry from setZoom. Refresh Phaser pointer bounds and displayScale from the displayed canvas rectangle; logical world coordinates remain unchanged.
 
 CSS (src/styles/pixel.css)
-#game-shell { width:auto; height:auto; max-width:100vw; max-height:100dvh; } (JS owns final sizing; do not hard-code 768×720.)
+#game-shell { position:fixed; width:auto; height:auto; max-width:100vw; max-height:100dvh; } (JS owns final sizing and compositor placement; do not hard-code 768×720.)
 
 #game-shell canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
 
@@ -86,14 +90,16 @@ A single-texel test sprite at the origin stays sharp.
 
 The on-screen readout shows: devicePixelRatio, CSS zoom, integer deviceZoom target, canvas CSS size, and logical backing size — and that 1 game px == deviceZoom device px.
 
-window.rubyRuleMobileMetrics exposes computedZoom, integerZoomTarget, integerZoom, dpr, canvasCss*, canvasBacking*, and scaleGuardAdjustments for the same checks at runtime.
+window.rubyRuleMobileMetrics exposes computedZoom, integerZoomTarget, integerZoom, dpr, canvasCss*, canvasBacking*, physicalPixelsX/Y, canvasDeviceLeft/Top, originAligned, viewportScale, and scaleGuardAdjustments. The readout checks actual geometry, both axes, origin alignment and browser magnification; it is not a substitute for inspecting screenshot pixels.
+
+tools/qa-pixel-scale.mjs compares native checkerboard, single-texel and far-corner diagonal pixels against compositor screenshots. It also checks rotation, safe-area padding, reduced viewport height and live DPR changes. See docs/mobile/device-pixel-scaling.md for evidence and browser-emulation limits.
 
 Checklist before merging render/art changes
 Renderer is Phaser.AUTO (WebGL preferred).
 
-CSS zoom × rounded DPR is an integer at every tested viewport size and DPR.
+CSS zoom × actual DPR is an integer at every tested viewport size and DPR. The displayed origin is device-pixel aligned.
 
-Canvas backing remains GAME size; CSS size = GAME size × deviceZoom / round(dpr).
+Canvas backing and CSS layout remain GAME size; displayed CSS rectangle = GAME size × deviceZoom / dpr.
 
 cameras.main.roundPixels === true.
 

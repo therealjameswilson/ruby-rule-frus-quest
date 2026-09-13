@@ -6,10 +6,32 @@ import {
   EncounterWaveTransition,
   hasPendingEncounterWaves,
   nextEncounterWave,
-  resolveEncounterCompletion
+  resolveEncounterCompletion,
+  resumeCompletedWaves
 } from "./encounterWaves";
 
 describe("encounterWaves", () => {
+  it("resumes after a completed wave without shrinking the encounter totals", () => {
+    const initial = createEncounterWaveQueue([["mark-i"], ["swarm"]]);
+    const restored = resumeCompletedWaves(initial, id => id === "mark-i");
+    expect(restored.defeated).toBe(1);
+    expect(restored.queue).toMatchObject({ currentWave: 1, totalWaves: 2, totalEntries: 2, pendingWaves: [["swarm"]] });
+    expect(initial.currentWave).toBe(0);
+    expect(resolveEncounterCompletion(2, restored.defeated, false, true).cleared).toBe(false);
+  });
+
+  it("does not skip a partial wave or an incomplete earlier wave", () => {
+    const queue = createEncounterWaveQueue([["prime", "cloud"], ["swarm"]]);
+    expect(resumeCompletedWaves(queue, id => id !== "cloud")).toEqual({ queue, defeated: 0 });
+  });
+
+  it("restores a fully earned encounter without creating more enemies", () => {
+    const restored = resumeCompletedWaves(createEncounterWaveQueue([["mark-i"], ["swarm"]]), () => true);
+    expect(restored.defeated).toBe(2);
+    expect(nextEncounterWave(restored.queue)).toBeNull();
+    expect(resolveEncounterCompletion(2, restored.defeated, false, false).cleared).toBe(true);
+  });
+
   it("preserves the full encounter count while yielding one wave at a time", () => {
     const initial = createEncounterWaveQueue([["mark-i"], ["swarm", "cloud"]]);
 

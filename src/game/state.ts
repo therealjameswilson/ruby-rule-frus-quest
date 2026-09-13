@@ -1,6 +1,14 @@
 import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
+import { getPauseMenuReadout } from "../systems/pauseMenu";
+import { getCodexViewReadout } from "../systems/codexLayout";
+import { getGuideCounterReadout } from "./guideCounterTraining";
+import { annotationStacksOpen } from "./annotationStacks";
+import { networkRoutingComplete } from "./networkRouting";
+import { carriedClassNetVaultDocket } from "./classNetVaultReview";
+import { readAnnotationPacket } from "./annotationPacket";
+import { archiveSourceRoomExitReady, restoredArchiveSourceNoteStatus, restoredArchiveSourceRoomDocumentIds } from "./archiveSourceRoom";
 import { getCodexReadout, unlockCodexEntry } from "./codex";
-import { AREA_REGISTRY, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
+import { AREA_REGISTRY, DEFAULT_PROCESS_ROLE, FRUS_ROOM_GRAPH, ITEM_REGISTRY, PROCESS_ROLES, PROCESS_STAMPS, SCENE_ORDER } from "./constants";
 import type { AreaId, Direction, ProcessItemId, ProcessStampId, RoomType } from "./constants";
 import {
   applyAgencyEquityResponse,
@@ -17,7 +25,8 @@ import {
   canTraverseExit,
   deriveWorkflowSnapshot,
   getQuestArchitectureReadout,
-  getRevealedShortcutRoomIds
+  getRevealedShortcutRoomIds,
+  sceneDefaultRoom
 } from "./questArchitecture";
 import { getSnesAtlasReadout, getSnesRoleFrameSheet } from "./snesAtlas";
 import { DANNE_ITEM_CATALOG, TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
@@ -55,8 +64,11 @@ import { RESEARCH_CHARTER_PROMPTS } from "./researchCharter";
 import { RELEASE_CALENDAR_PROMPTS } from "./releaseCalendar";
 import { SELECTION_DOCKET_PROMPTS } from "./selectionDocket";
 import { SOURCE_NOTE_PROVENANCE_PROMPTS } from "./sourceNoteProvenance";
+import { restoreSourceNote47, SOURCE_NOTE_47_ID, sourceNote47ReviewEarned } from "./sourceNote47";
+import { getAboutSeriesGameplayReadout } from "./aboutSeries";
+import { readHearingReview } from "./hearingReview";
 import { getStatutoryClockReadout, STATUTORY_START_YEAR } from "./statutoryClock";
-import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound } from "./secretReadingRoom";
+import { hiddenFirstEditionBonusLabel, hiddenFirstEditionFound, hiddenReadingRoomDiscovered } from "./secretReadingRoom";
 import { buildTrueEndingCertificate } from "./trueEndingCertificate";
 import { VOLUME_CONCEPT_PROMPTS } from "./volumeConcept";
 import type { QuestArchitectureContext } from "./questArchitecture";
@@ -75,6 +87,8 @@ import {
 } from "../systems/dungeonKeys";
 import type { DungeonStateRegistry } from "../systems/dungeonKeys";
 import { VIOLATION_LABEL } from "../systems/standardsDamage";
+import { nextEditorialRepair, tryEditorialRepair, type EditorialRepairAction } from "./editorialRepair";
+import { SILENT_READ_REVIEW_TOTAL } from "./silentReadReview";
 import type { StandardViolation } from "../systems/standardsDamage";
 import {
   createInitialVolumeAssemblyState,
@@ -129,11 +143,30 @@ interface VisibleThreat {
   reliabilityRisk?: string;
   enemyState?: string;
   weakness?: string;
+  counterplay?: {
+    stunnedMsRemaining: number;
+    toolCounters: number;
+    boltsReturned: number;
+    bolts: { x: number; y: number; returned: boolean }[];
+  };
+  bossCombat?: {
+    bolts: (Position & { returned?: boolean })[];
+    boltsReturned?: number;
+    coreOpen?: boolean;
+    counterWindowMs?: number;
+    feedback?: { text: string; tone: "info" | "warn"; msRemaining: number } | null;
+    minis: (Position & { id?: number; weakness?: string; stunnedMs?: number })[];
+    minisDispersed?: number;
+    retryAvailable: boolean;
+    recoverablePressure: number;
+    swarmDamage: number;
+  };
   telegraph?: {
     kind: string;
     label: string;
     msRemaining: number;
     target: Position;
+    lanes?: Position[];
     destination: Position | null;
   } | null;
   roomClear?: {
@@ -279,7 +312,7 @@ export interface DanneItemReadout {
   trueEndingReady: boolean;
 }
 
-const defaultRole = PROCESS_ROLES[0];
+const defaultRole = DEFAULT_PROCESS_ROLE;
 const TRANSIENT_SAVE_SCENES = new Set([
   "BootScene",
   "TapToStartScene",
@@ -567,6 +600,14 @@ function completionStatsNowMs() {
   return Date.now();
 }
 
+// Browser/native suspension is session state, not part of a saved run.
+let completionStatsSuspended = false;
+
+function completionPlayTimeRunning() {
+  return !completionStatsSuspended && isSaveableGameScene()
+    && (gameState.mode === "explore" || gameState.mode === "dialog" || gameState.mode === "choice");
+}
+
 function createInitialCompletionStats(): CompletionStatsState {
   return {
     runStartedAtMs: completionStatsNowMs(),
@@ -624,7 +665,7 @@ function normalizeCompletionStats(stats?: Partial<CompletionStatsState> | null):
 
 function currentCompletionPlayTimeMs(stats = gameState.completionStats) {
   const normalized = normalizeCompletionStats(stats);
-  if (normalized.completedAtMs !== null) return normalized.totalPlayTimeMs;
+  if (normalized.completedAtMs !== null || !completionPlayTimeRunning()) return normalized.totalPlayTimeMs;
   return normalized.totalPlayTimeMs + Math.max(0, completionStatsNowMs() - normalized.runStartedAtMs);
 }
 
@@ -799,6 +840,8 @@ export function resetGameState(options: { ngPlus?: boolean } = {}) {
 }
 
 export function setSceneState(sceneName: string, mode: GameMode, objective: string) {
+  syncCompletionStatsPlayTime();
+  rememberVisitedRooms(gameState.roomTraversal?.visitedRoomIds ?? []);
   gameState.currentScene = sceneName;
   gameState.mode = mode;
   gameState.objective = objective;
@@ -895,13 +938,21 @@ export function restoreGameSaveData(save: GameSaveData) {
   }
   gameState.secondVolumeUnlocked = Boolean(gameState.secondVolumeUnlocked || gameState.ngPlusUnlocked);
   if (gameState.secondVolumeUnlocked) gameState.sceneProgress.secondVolumeUnlocked = 1;
-  gameState.documentCandidates = gameState.documentCandidates.map(cloneDocumentCandidate);
+  gameState.documentCandidates = gameState.documentCandidates.map(document =>
+    restoreSourceNote47(cloneDocumentCandidate(document), gameState.sceneProgress));
   gameState.documentWorkflow = gameState.documentCandidates.map(documentToWorkflowDocument);
   gameState.dungeons = normalizeDungeonStates(gameState.dungeons);
   gameState.volumeAssembly = normalizeVolumeAssemblyState(gameState.volumeAssembly, gameState.volumeFragments);
+  const collisionLabelsCorrected = Array.isArray(gameState.standardsViolations)
+    && gameState.standardsViolations.some(record => record && record.unresolved !== false && isLegacyCombatDeadline(record));
   gameState.standardsViolations = normalizeStandardsViolations(gameState.standardsViolations);
+  if (collisionLabelsCorrected) setLatestMessage("Combat-hit labels corrected. Record review is unchanged.");
   gameState.unresolvedEquities = normalizeUnresolvedEquityCount(gameState.unresolvedEquities);
   gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
+  // Saving already accrued the active session. Time away must not accrue again on Continue.
+  if (gameState.completionStats.completedAtMs === null) {
+    gameState.completionStats.runStartedAtMs = completionStatsNowMs();
+  }
   gameState.completionStats.volumePiecesCollected = Math.max(
     gameState.completionStats.volumePiecesCollected,
     gameState.volumeFragments.length
@@ -959,6 +1010,23 @@ function standardsViolationId(violation: StandardViolation, context?: string, do
   return `${violation}:${scope || "general"}`;
 }
 
+const LEGACY_COMBAT_DEADLINE_CONTEXTS = new Set([
+  "NO REPO process wall delayed source work.",
+  "FIREWALL process wall delayed source work.",
+  "PENDING process wall delayed source work.",
+  "WAIT process wall delayed source work.",
+  "HOLD process wall delayed source work.",
+  "AMBIGUOUS process wall delayed source work.",
+  "DANN-E QUEUE process wall delayed source work.",
+  "DANN-E ego bolt disrupted room-clear review.",
+  "DANN-E telegraphed pressure strike disrupted room-clear review."
+]);
+
+function isLegacyCombatDeadline(record: StandardsViolationRecord) {
+  return record.violation === "missed_30_year_deadline" && record.documentId == null
+    && LEGACY_COMBAT_DEADLINE_CONTEXTS.has(record.context ?? "");
+}
+
 function normalizeStandardsViolations(records?: StandardsViolationRecord[]) {
   if (!Array.isArray(records)) return [];
   return records
@@ -969,7 +1037,9 @@ function normalizeStandardsViolations(records?: StandardsViolationRecord[]) {
       label: record.label || VIOLATION_LABEL[record.violation],
       context: record.context ?? null,
       documentId: record.documentId ?? null,
-      unresolved: record.unresolved !== false,
+      // Earlier collision handlers filed false deadline violations. Retain their history
+      // and reliability cost, but never use those hits to block human certification.
+      unresolved: record.unresolved !== false && !isLegacyCombatDeadline(record),
       count: Math.max(1, Math.round(record.count ?? 1))
     }));
 }
@@ -1067,6 +1137,7 @@ export function unlockSecondVolumeRegion(reason = "Second FRUS volume unlocked")
 }
 
 export function setGameMode(mode: GameMode, objective?: string) {
+  syncCompletionStatsPlayTime();
   gameState.mode = mode;
   if (objective) gameState.objective = objective;
   refreshQuestWorkflowState();
@@ -1085,6 +1156,7 @@ function currentLockedExitsForInventory(state: RoomTraversalState) {
 }
 
 export function setRoomTraversalState(state: RoomTraversalState | null) {
+  rememberVisitedRooms(state?.visitedRoomIds ?? []);
   const revealedRoomIds = state
     ? new Set([
         ...(state.revealedRoomIds ?? state.visitedRoomIds),
@@ -1100,6 +1172,15 @@ export function setRoomTraversalState(state: RoomTraversalState | null) {
       }
     : null;
   refreshQuestWorkflowState();
+}
+
+function rememberVisitedRooms(roomIds: readonly string[]) {
+  for (const roomId of roomIds) gameState.sceneProgress[`visitedRoom_${roomId}`] = 1;
+}
+
+export function getVisitedRoomIds<RoomId extends string>(roomIds: readonly RoomId[]): RoomId[] {
+  return roomIds.filter((roomId) => gameState.sceneProgress[`visitedRoom_${roomId}`] === 1
+    || gameState.roomTraversal?.visitedRoomIds.includes(roomId));
 }
 
 export function beginSnesTransition(record: Omit<SnesTransitionRecord, "style" | "cellSize">) {
@@ -1338,9 +1419,23 @@ export function getCurrentAreaReadout() {
 }
 
 export function getRoomGraphReadout() {
-  const visitedRoomIds = new Set(gameState.roomTraversal?.visitedRoomIds ?? []);
+  const visitedRoomIds = new Set(getVisitedRoomIds(FRUS_ROOM_GRAPH.map((room) => room.id)));
   const revealedRoomIds = new Set(gameState.roomTraversal?.revealedRoomIds ?? []);
   const heldProcessItems = getHeldProcessItemIds();
+  const sourceDocuments = new Set<string>(restoredArchiveSourceRoomDocumentIds(gameState.sceneProgress));
+  if (gameState.inventory.includes("Telegram")) sourceDocuments.add("telegram");
+  if (gameState.inventory.includes("Cross-Ref")) sourceDocuments.add("cross-reference");
+  const sourceStatus = restoredArchiveSourceNoteStatus({
+    sceneProgress: gameState.sceneProgress, heldItem: gameState.heldItem,
+    hasArchiveStamp: gameState.processStamps.includes("archive"),
+    sourceNoteCollected: sourceDocuments.has("source-note") || gameState.inventory.includes("Source Note 47")
+  });
+  if (sourceStatus !== "inactive") sourceDocuments.add("source-note");
+  const sourceExitReady = archiveSourceRoomExitReady({
+    sceneProgress: gameState.sceneProgress, standardsReviewed: gameState.processStamps.includes("rule"),
+    sourceNoteStamped: sourceStatus === "stamped", collectedDocumentIds: sourceDocuments
+  });
+  const annotationPacket = readAnnotationPacket(gameState.sceneProgress);
   for (const roomId of getRevealedShortcutRoomIds(heldProcessItems)) revealedRoomIds.add(roomId);
   if (gameState.currentScene === "OfficeScene") {
     visitedRoomIds.add("O1");
@@ -1388,13 +1483,33 @@ export function getRoomGraphReadout() {
   return FRUS_ROOM_GRAPH.map((room) => {
     const dungeon = gameState.dungeons[room.area];
     const lockedExits = room.lockedExits ?? {};
+    const packetHeld = room.id === "A1" && annotationPacket.held.length > 0 && !annotationPacket.complete;
+    const vaultDocket = room.id === "N2" ? carriedClassNetVaultDocket(gameState.sceneProgress) : null;
+    const gatedDirections = new Set(Object.keys(lockedExits) as Direction[]);
+    if (vaultDocket) gatedDirections.add("west");
+    if (packetHeld) for (const direction of Object.keys(room.exits) as Direction[]) {
+      if (direction !== "north") gatedDirections.add(direction);
+    }
     const lockedExitState = Object.fromEntries(
-      (Object.keys(lockedExits) as Direction[]).map((direction) => {
+      [...gatedDirections].map((direction) => {
         const requiredItem = room.requiredItems?.[direction] ?? null;
         const bossDoor = isBossDoor(room, direction);
         const blackVaultFinalExit = room.id === "DV1" && direction === "east";
+        const readingPassage = room.id === "DN1" && direction === "north";
+        const annotationEntry = room.id === "A1" && direction === "north";
+        const annotationExit = room.id === "AS" && direction === "north";
+        const sourcePacketExit = room.id === "A1" && direction === "east";
+        const networkBatchExit = room.id === "N1" && direction === "east";
+        const referralReviewExit = room.id === "R1" && direction === "east";
+        const unfiledVaultExit = direction === "west" && Boolean(vaultDocket);
+        const unfiledPacketExit = packetHeld && direction !== "north";
         const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
-        const canOpen = blackVaultFinalExit
+        const canOpen = referralReviewExit ? gameState.processStamps.includes("referral")
+          : unfiledVaultExit ? false : networkBatchExit ? networkRoutingComplete(gameState.sceneProgress, gameState.processStamps.includes("network"))
+          : unfiledPacketExit ? false : sourcePacketExit ? sourceExitReady
+          : annotationEntry ? annotationStacksOpen(gameState.sceneProgress)
+          : annotationExit ? gameState.sceneProgress.annotationDraftingComplete === 1
+          : readingPassage ? hiddenReadingRoomDiscovered(gameState) : blackVaultFinalExit
           ? Boolean(gameState.sceneProgress.blackVaultBossCleared)
           : bossDoor
           ? canOpenBossDoor(dungeon)
@@ -1402,12 +1517,29 @@ export function getRoomGraphReadout() {
             ? canTraverseExit(room.id, direction, heldProcessItems)
             : canOpenLockedDoor(dungeon);
         return [direction, {
-          label: lockedExits[direction] ?? "Locked route",
-          gateType: bossDoor ? "boss" : requiredItem ? "process_item" : "small_key",
+          label: unfiledVaultExit ? "Unfiled review docket" : unfiledPacketExit ? "Unfiled annotation packet" : lockedExits[direction] ?? "Locked route",
+          gateType: referralReviewExit || networkBatchExit || unfiledVaultExit ? "workflow" : bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
           requiredItem,
           requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
-          blockedMessage: canOpen ? null : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
-          blockedObjective: canOpen ? null : blackVaultFinalExit ? "Black Vault: defeat DANN-E before entering the Buckram Gate." : prompt.objective,
+          blockedMessage: canOpen ? null : referralReviewExit ? "Resolve the agency manifest, file visible treatment, and stamp the review press."
+            : unfiledVaultExit ? `File ${vaultDocket!.label} at ${vaultDocket!.stationLabel} before returning to the Network Split.`
+            : networkBatchExit ? "Finish routing the batch through OpenNet and ClassNet."
+            : unfiledPacketExit ? "File the carried annotation notes at the research table before leaving."
+            : sourcePacketExit ? "File the annotation packet, collect both supporting documents, and complete the research-table reviews."
+            : annotationEntry ? "Verify Source Note 47 and stamp the NO REPO wall to open the stacks."
+            : annotationExit ? "Bring the annotation packet south to the human research table before visiting NARA."
+            : readingPassage && heldProcessItems.has("review_folder")
+            ? "Compare the northeast shelf register with the Review Folder."
+            : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
+          blockedObjective: canOpen ? null : referralReviewExit ? "COMPLETE VISIBLE TREATMENT"
+            : unfiledVaultExit ? "FILE REVIEW DOCKET"
+            : networkBatchExit ? "FINISH ROUTING BATCH"
+            : unfiledPacketExit ? "FILE PACKET AT TABLE"
+            : sourcePacketExit ? "COMPLETE SOURCE PACKET"
+            : annotationEntry ? "STAMP NO REPO TO OPEN STACKS"
+            : annotationExit ? "SOUTH: FILE AT TABLE"
+            : readingPassage && heldProcessItems.has("review_folder") ? "COMPARE THE SHELF REGISTER"
+            : blackVaultFinalExit ? "Black Vault: defeat DANN-E before entering the Buckram Gate." : prompt.objective,
           canOpen,
           smallKeys: dungeon.smallKeys,
           bigKeyHeld: dungeon.bigKeyHeld
@@ -1424,7 +1556,8 @@ export function getRoomGraphReadout() {
       requiredItems: room.requiredItems ?? {},
       roomType: room.roomType,
       visited: visitedRoomIds.has(room.id),
-      revealed: revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret" || dungeon.mapRevealed
+      revealed: room.id === "DN2" ? hiddenReadingRoomDiscovered(gameState)
+        : revealedRoomIds.has(room.id) || visitedRoomIds.has(room.id) || room.roomType !== "secret" || dungeon.mapRevealed
     };
   });
 }
@@ -1511,22 +1644,27 @@ export function getBlackVaultClimaxReadiness() {
   const hasRedPencil = hasProcessItem("red_pencil");
   const typesetterProofReady = Boolean(gameState.sceneProgress.typesetterProofComplete);
   const bossDefeated = Boolean(gameState.sceneProgress.blackVaultBossCleared);
-  const missingSummary = [
+  const recordMissingSummary = [
     ...missingStamps.map((stamp) => `${stamp.toUpperCase()} stamp`),
     ...(readiness.missingEquityCrystals
       ? [`${readiness.missingEquityCrystals} equity crystal${readiness.missingEquityCrystals === 1 ? "" : "s"}`]
       : readiness.equityCrystalsRequired > 0 ? [] : ["equity map"]),
     ...(readiness.missingFragments ? [`${readiness.missingFragments} cover piece${readiness.missingFragments === 1 ? "" : "s"}`] : []),
     ...(readiness.repositoryCoverageMapReady ? [] : ["repository map"]),
-    ...(readiness.reliabilityReady ? [] : [`reliability ${readiness.reliabilityMinimum}`]),
     ...(readiness.documentsWithUndisclosedDeletion.length ? ["visible brackets"] : []),
     ...(readiness.standardsViolations.length ? ["standards ledger"] : []),
     ...(readiness.buckramKeyHeld ? [] : ["Buckram Key"]),
     ...(hasRedPencil ? [] : ["Red Pencil"]),
     ...(typesetterProofReady ? [] : ["typesetter proof"])
   ];
+  const missingSummary = [
+    ...recordMissingSummary,
+    ...(readiness.reliabilityReady ? [] : [`reliability ${readiness.reliabilityMinimum}`])
+  ];
   return {
     ready: missingSummary.length === 0,
+    recordReady: recordMissingSummary.length === 0,
+    recordMissingSummary,
     bossDefeated,
     requiredTool: "red_pencil" as const,
     requiredStamps,
@@ -1751,10 +1889,16 @@ export function syncCompletionStatsPlayTime() {
   gameState.completionStats = normalizeCompletionStats(gameState.completionStats);
   if (gameState.completionStats.completedAtMs !== null) return gameState.completionStats.totalPlayTimeMs;
   const now = completionStatsNowMs();
-  const elapsedMs = Math.max(0, now - gameState.completionStats.runStartedAtMs);
+  const elapsedMs = completionPlayTimeRunning() ? Math.max(0, now - gameState.completionStats.runStartedAtMs) : 0;
   gameState.completionStats.totalPlayTimeMs += elapsedMs;
   gameState.completionStats.runStartedAtMs = now;
   return gameState.completionStats.totalPlayTimeMs;
+}
+
+export function setCompletionStatsSuspended(suspended: boolean) {
+  if (completionStatsSuspended === suspended) return;
+  syncCompletionStatsPlayTime();
+  completionStatsSuspended = suspended;
 }
 
 export function recordDanneVariantDefeated(variantId: DanneVariantDefeatId) {
@@ -1948,6 +2092,16 @@ export function setVisibleThreats(threats: VisibleThreat[]) {
     reliabilityRisk: threat.reliabilityRisk,
     enemyState: threat.enemyState,
     weakness: threat.weakness,
+    counterplay: threat.counterplay ? {
+      ...threat.counterplay,
+      bolts: threat.counterplay.bolts.map((bolt) => ({ ...bolt }))
+    } : undefined,
+    bossCombat: threat.bossCombat ? {
+      ...threat.bossCombat,
+      feedback: threat.bossCombat.feedback ? { ...threat.bossCombat.feedback } : null,
+      bolts: threat.bossCombat.bolts.map((bolt) => ({ ...bolt })),
+      minis: threat.bossCombat.minis.map((mini) => ({ ...mini }))
+    } : undefined,
     telegraph: threat.telegraph
       ? {
           ...threat.telegraph,
@@ -2062,6 +2216,12 @@ export function setDocumentWorkflowState(documentId: string, workflowState: Docu
   return changed?.workflowState ?? null;
 }
 
+export function fileSourceNote47Metadata() {
+  if (!sourceNote47ReviewEarned(gameState.sceneProgress)) return null;
+  return updateDocumentCandidate(SOURCE_NOTE_47_ID,
+    document => restoreSourceNote47(document, gameState.sceneProgress), "Filed human-reviewed training source note");
+}
+
 export function setAgencyEquityResponse(documentId: string, agencyId: string, response: ReviewStatus, reason?: string) {
   const changed = updateDocumentCandidate(documentId, (document) => applyAgencyEquityResponse(document, agencyId, response), reason);
   return changed?.reviewStatus ?? null;
@@ -2071,6 +2231,7 @@ export function markDocumentUndisclosedDeletion(documentId: string, reason = "un
   const changed = updateDocumentCandidate(documentId, (document) => ({
     ...cloneDocumentCandidate(document),
     undisclosedDeletion: true,
+    editorialRepair: undefined,
     annotationNeeded: true
   }), reason);
   return changed?.undisclosedDeletion ?? false;
@@ -2083,6 +2244,21 @@ export function clearDocumentUndisclosedDeletion(documentId: string, reason = "b
   }), reason);
   if (changed) resolveStandardsViolationForDocument(documentId, "undisclosed_deletion");
   return changed ? !changed.undisclosedDeletion : false;
+}
+
+export function repairEditorialRecord(documentId: string, action: EditorialRepairAction) {
+  const document = gameState.documentCandidates.find(candidate => candidate.id === documentId);
+  if (gameState.sceneProgress.silentReadReviewStep !== SILENT_READ_REVIEW_TOTAL || !document
+    || nextEditorialRepair(gameState.documentCandidates, gameState.standardsViolations)?.documentId !== documentId) {
+    return { ok: false, reason: "NO COMPLETED RECORD TO RECHECK" };
+  }
+  const result = tryEditorialRepair(document, action, getHeldProcessItemIds());
+  if (!result.ok) return { ok: false, reason: result.reason };
+  updateDocumentCandidate(documentId, () => result.document, action === "draft"
+    ? "Human restored the withholding indication; proof check still required"
+    : "Human checked the retained withholding note against the proof");
+  if (action === "proof") resolveStandardsViolationForDocument(documentId, "undisclosed_deletion");
+  return { ok: true };
 }
 
 export function markAsCandidate(documentId: string): void {
@@ -2530,7 +2706,7 @@ export function getAdventureSubscreenReadout(): AdventureSubscreenReadout {
     }),
     roomMap: {
       currentAreaId: currentArea.id,
-      currentRoomId: gameState.roomTraversal?.currentRoomId ?? null,
+      currentRoomId: gameState.roomTraversal?.currentRoomId ?? sceneDefaultRoom(gameState.currentScene),
       rooms: FRUS_ROOM_GRAPH
         .filter((room) => room.area === currentArea.id)
         .map((room) => {
@@ -2601,6 +2777,11 @@ export function getProductionStatusReadout() {
 
 export function getProductionBoardReadout() {
   refreshQuestWorkflowState();
+  // The guided route supplies a planned assignment rather than the optional
+  // planning-desk questionnaire. Credit its human stamp and collected packet,
+  // without inventing completion of the old individual questions in the save.
+  const assignmentAccepted = gameState.sceneProgress.officeStarterMemoStatus === 3;
+  const archivePacketCollected = gameState.sceneProgress.archiveSourceRoomComplete === 1;
   return getFrusProductionBoardReadout({
     volumeWorkflowState: gameState.volumeWorkflowState,
     documentCandidates: gameState.documentCandidates.map(cloneDocumentCandidate),
@@ -2627,12 +2808,12 @@ export function getProductionBoardReadout() {
     eo13526ReviewComplete: Boolean(gameState.sceneProgress.eo13526ReviewComplete),
     recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
     researchCharterComplete: Boolean(gameState.sceneProgress.researchCharterComplete),
-    recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete),
+    recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete) || archivePacketCollected,
     repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
     selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
     policyCoverageAuditComplete: Boolean(gameState.sceneProgress.policyCoverageAuditComplete),
-    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete),
-    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete),
+    seriesConceptComplete: Boolean(gameState.sceneProgress.seriesConceptComplete) || assignmentAccepted,
+    volumeConceptComplete: Boolean(gameState.sceneProgress.volumeConceptComplete) || assignmentAccepted,
     chapterReleaseComplete: Boolean(gameState.sceneProgress.chapterReleaseComplete),
     digitalReleaseComplete: Boolean(gameState.sceneProgress.digitalReleaseComplete),
     publicCitationComplete: Boolean(gameState.sceneProgress.publicCitationComplete),
@@ -2777,23 +2958,27 @@ export function seedProgressForScene(sceneName: string) {
 }
 
 export function setDialogState(speaker: string, text: string) {
+  syncCompletionStatsPlayTime();
   gameState.mode = "dialog";
   gameState.activeDialog = { speaker, text };
   gameState.currentChoice = null;
 }
 
 export function clearDialogState(nextMode: GameMode = "explore") {
+  syncCompletionStatsPlayTime();
   gameState.mode = nextMode;
   gameState.activeDialog = null;
 }
 
 export function setChoiceState(title: string, options: ChoiceOption[]) {
+  syncCompletionStatsPlayTime();
   gameState.mode = "choice";
   gameState.currentChoice = { title, options };
   gameState.activeDialog = null;
 }
 
 export function clearChoiceState(nextMode: GameMode = "explore") {
+  syncCompletionStatsPlayTime();
   gameState.mode = nextMode;
   gameState.currentChoice = null;
 }
@@ -2832,6 +3017,8 @@ export function renderGameToText() {
       lttpFrusTranslation: getLttpFrusTranslationReadout(),
       oneHourTraining: getOneHourTrainingReadout(),
       adventureSubscreen: getAdventureSubscreenReadout(),
+      pauseMenu: getPauseMenuReadout(),
+      codexView: getCodexViewReadout(),
       productionHud: getProductionStatusReadout(),
       heldItem: gameState.heldItem,
       documentPoints: gameState.documentPoints,
@@ -2881,7 +3068,8 @@ export function renderGameToText() {
       processStamps: gameState.processStamps,
       processItems: getProcessItemReadout(),
       danneItems: getDanneItemReadout(),
-      codex: getCodexReadout(),
+      codex: getCodexReadout(gameState.documentCandidates),
+      aboutSeries: getAboutSeriesGameplayReadout(gameState.sceneProgress),
       workflowTools: getWorkflowToolReadout(),
       areaProgress: getAreaProgressReadout(),
       currentArea: getCurrentAreaReadout(),
@@ -2889,9 +3077,11 @@ export function renderGameToText() {
       volumeFragments: gameState.volumeFragments,
       volumeAssembly: getVolumeAssemblyReadout(),
       secrets: {
+        hiddenReadingRoomDiscovered: hiddenReadingRoomDiscovered(gameState),
         hiddenFirstEditionFound: hiddenFirstEditionFound(gameState),
         hiddenFirstEditionBonus: hiddenFirstEditionBonusLabel(gameState)
       },
+      hearingReview: gameState.currentScene === "SenateHearingChamberScene" ? readHearingReview(gameState.sceneProgress) : null,
       frusPrize: {
         cover: "ruby FRUS cover",
         piecesEarned: getVolumeAssemblyReadout().earnedCount,
@@ -2912,6 +3102,7 @@ export function renderGameToText() {
       publicationReadiness: getPublicationReadinessReadout(),
       statutoryClock: getStatutoryClockStateReadout(),
       danneCombat: getDanneCombatReadout(),
+      guideCounter: gameState.currentScene === "GuideScene" ? getGuideCounterReadout() : null,
       standardsViolations: unresolvedStandardsViolations(),
       productionBoard: getProductionBoardReadout(),
       finalGateCertification: gameState.finalGateCertification,

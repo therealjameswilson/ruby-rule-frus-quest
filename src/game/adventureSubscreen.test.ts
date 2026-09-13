@@ -1,12 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   getAdventureSubscreenReadout,
+  gameState,
   renderGameToText,
   resetGameState
 } from "./state";
 import type { AdventureSubscreenReadout } from "./state";
 
 describe("adventure subscreen source card", () => {
+  it("marks the current chapter room even when a debug entry has no traversal object", () => {
+    resetGameState(); gameState.currentScene = "NaraStacksScene"; gameState.roomTraversal = null;
+    expect(getAdventureSubscreenReadout().roomMap.currentRoomId).toBe("DN1");
+  });
   it("keeps the next FRUS Production Board task tied to its source basis and URL", () => {
     resetGameState();
 

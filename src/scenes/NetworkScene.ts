@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -16,14 +17,14 @@ import {
   setNearestInteractable,
   setObjective,
   setRoomTraversalState,
+  getVisitedRoomIds,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
 } from "../game/state";
 import type { Interactable } from "../game/types";
-import { getInput, tickInput, type InputState } from "../input/InputState";
+import { getInput, getSecondaryActionBadge, tickInput, type InputState } from "../input/InputState";
 import { blockedExitPrompt, canTraverseExit, getRevealedShortcutRoomIds } from "../game/questArchitecture";
-import { BureaucraticWall } from "../entities/BureaucraticWall";
 import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { Player } from "../entities/Player";
 import { Terminal } from "../entities/items/Terminal";
@@ -33,7 +34,12 @@ import { DialogBox } from "../systems/dialog";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
-import { applyDanneLurkerDamage } from "../systems/dannePressure";
+import { saveGameNow } from "../systems/save";
+import { takeDanneLurkerHit } from "../systems/dannePressure";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { AttackBuffer } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
+import { WithholdingChronologyBoard } from "../systems/withholdingChronologyBoard";
 import { FeedbackToast } from "../systems/feedbackToast";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
@@ -43,21 +49,30 @@ import { addSnesGate, addSnesRewardBurst, addSnesRoomIntroBanner, addSnesRoomLay
 import { SNES_NETWORK_TILE_ASSET } from "../game/snesAtlas";
 import {
   getNetworkRoutePacket,
+  networkBatchPacketAfterRoute,
   NETWORK_ROUTE_ITEM_TOTAL,
   NETWORK_ROUTE_PACKETS,
+  networkRoutingObjective,
+  networkRoutingComplete,
+  networkRouteGuidance,
   routeNetworkPacket,
   routedItemCount
 } from "../game/networkRouting";
-import type { NetworkRoutePacketId, RoutingNetwork } from "../game/networkRouting";
+import type { NetworkRoutePacket, NetworkRoutePacketId, RoutingNetwork } from "../game/networkRouting";
 import {
+  classNetBatchDocketAfterRoute,
+  CLASSNET_VAULT_STATION_LABELS,
   CLASSNET_VAULT_CHECK_TOTAL,
   CLASSNET_VAULT_DOCKETS,
+  classNetVaultObjective,
+  carriedClassNetVaultDocket,
   completedClassNetVaultChecks,
   deriveClassNetVaultStep,
   getClassNetVaultDocket,
   routeClassNetVaultDocket
 } from "../game/classNetVaultReview";
 import type {
+  ClassNetVaultDocket,
   ClassNetVaultDocketId,
   ClassNetVaultStationId
 } from "../game/classNetVaultReview";
@@ -68,6 +83,10 @@ import {
   networkN1CollisionRect
 } from "../game/networkN1Tilemap";
 import { packedTileGid } from "../game/packedTileIndex";
+import {
+  NETWORK_CROSSING, NETWORK_DIVIDERS, networkCrossingState, networkCrossingWaypoint,
+  safeNetworkCrossingSpawn, tryOpenNetworkCrossing
+} from "../game/networkCrossing";
 import {
   NETWORK_N2_TILEMAP,
   buildNetworkN2TileLayers,
@@ -85,7 +104,7 @@ interface NetworkRoom {
   id: NetworkRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, NetworkRoomId | "R1">>;
+  exits: Partial<Record<Direction, NetworkRoomId | "R1" | "A1">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "clearance_token">>;
 }
@@ -105,7 +124,7 @@ const NETWORK_ROOMS: Record<NetworkRoomId, NetworkRoom> = {
     id: "N1",
     title: "Network Split",
     roomType: "puzzle",
-    exits: { east: "N2" },
+    exits: { west: "A1", east: "N2" },
     lockedExits: { east: "FIREWALL terminal door" }
   },
   N2: {
@@ -119,6 +138,7 @@ const NETWORK_ROOMS: Record<NetworkRoomId, NetworkRoom> = {
 };
 
 export class NetworkScene extends Phaser.Scene {
+  private roomGateObjects: Phaser.GameObjects.GameObject[] = [];
   private player!: Player;
   private dialog!: DialogBox;
   private inventory!: InventoryOverlay;
@@ -127,13 +147,14 @@ export class NetworkScene extends Phaser.Scene {
   private routeText!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
   private toast!: FeedbackToast;
+  private ledgerChoice!: WithholdingChronologyBoard;
   private currentRoute = 0;
   private correctRoutes = 0;
   private routingComplete = false;
   private routingPacketWorldIcon?: Phaser.GameObjects.Container;
   private routingPacketHeldIcon?: Phaser.GameObjects.Container;
   private routingSorterSlots: Phaser.GameObjects.Rectangle[] = [];
-  private routingRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private routingRouteCue?: Phaser.GameObjects.Graphics;
   private routingRouteCueKey = "";
   private classNetReviewStep = 0;
   private classNetReviewComplete = false;
@@ -149,18 +170,35 @@ export class NetworkScene extends Phaser.Scene {
   private roomSolids: Phaser.Geom.Rectangle[] = [];
   private roomTitleText!: Phaser.GameObjects.Text;
   private roomTransitionLocked = false;
+  private readonly attackBuffer = new AttackBuffer();
   private exitCooldownUntil = 0;
   private clearanceTokenIcon?: Phaser.GameObjects.Image;
-  private clearanceTokenRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
+  private vaultInbox?: Phaser.GameObjects.Container;
+  private vaultReward?: Phaser.GameObjects.Container;
+  private clearanceTokenRouteCue?: Phaser.GameObjects.Graphics;
   private clearanceTokenRouteCueKey = "";
-  private bureaucraticWalls: BureaucraticWall[] = [];
+  private crossingGate?: Phaser.GameObjects.Container;
+  private crossingLamp?: Phaser.GameObjects.Rectangle;
+  private crossingSolid?: Phaser.Geom.Rectangle;
+  private crossingSwing = -1;
   private danneLurker!: DanneLurker;
 
   constructor() {
     super("NetworkScene");
   }
 
-  create() {
+  create(data?: unknown) {
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
+    const arrival = readChapterArrival(data, "NetworkScene", gameState.currentScene);
+    const restoringNetworkScene = gameState.currentScene === "NetworkScene";
+    const restoredRoomId: NetworkRoomId = arrival?.to === "N2" || (!arrival && restoringNetworkScene
+      && gameState.roomTraversal?.currentRoomId === "N2")
+      ? "N2"
+      : "N1";
+    const restoredPosition = arrival ? { x: arrival.x, y: arrival.y }
+      : restoringNetworkScene ? { ...gameState.player } : null;
+    const restoredVisitedRoomIds = getVisitedRoomIds(["N1", "N2"] as const);
     setSceneState("NetworkScene", "explore", "Two Networks: earn the Clearance Token.");
     retroAudio.startMusic("NetworkScene");
     this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
@@ -183,32 +221,36 @@ export class NetworkScene extends Phaser.Scene {
       fixedWidth: 96
     }).setOrigin(0.5).setDepth(820).setVisible(false);
     this.player = new Player(this, 128, 196);
-    this.dialog = new DialogBox(this);
+    this.dialog = new DialogBox(this, { aboveTouchControls: true });
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
     this.toast = new FeedbackToast(this);
+    this.ledgerChoice = new WithholdingChronologyBoard(this);
     this.danneLurker = new DanneLurker(this, 46, 66, {
+      boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
+      speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
+        || this.ledgerChoice.active || this.inventory.active || this.reliability.active,
       waypoints: [
-        { x: 38, y: 82 },
-        { x: 218, y: 82 },
-        { x: 218, y: 202 },
-        { x: 38, y: 202 }
+        { x: 46, y: 66 }, { x: 84, y: 66 }, { x: 84, y: 198 },
+        { x: 212, y: 198 }, { x: 212, y: 66 }, { x: 168, y: 66 },
+        { x: 168, y: 198 }, { x: 46, y: 198 }
       ]
     });
     this.restoreNetworkProgress();
-    this.enterRoom("N1", { x: 128, y: 196 }, false);
-    this.beginRouting();
-    if (!this.routingComplete) {
-      setLatestMessage("OpenNet takes public material. ClassNet takes protected review packets.");
+    this.visitedRoomIds = new Set(restoredVisitedRoomIds);
+    this.restoreHeldBatchState(restoredRoomId);
+    this.enterRoom(restoredRoomId, restoredPosition ?? { x: 128, y: 196 }, false);
+    if (restoredRoomId === "N1") this.beginRouting();
+    if (restoredRoomId === "N1" && !this.routingComplete) {
+      setLatestMessage("Take the routing batch once. OpenNet takes public material; ClassNet takes protected review packets.");
     }
   }
 
   private restoreNetworkProgress() {
-    this.routingComplete = Boolean(gameState.sceneProgress.networkRoutingComplete)
-      || gameState.processStamps.includes("network");
+    this.routingComplete = networkRoutingComplete(gameState.sceneProgress, gameState.processStamps.includes("network"));
     this.currentRoute = this.routingComplete
       ? NETWORK_ROUTE_PACKETS.length
       : Math.max(0, Math.min(
@@ -218,6 +260,7 @@ export class NetworkScene extends Phaser.Scene {
     this.correctRoutes = this.routingComplete
       ? NETWORK_ROUTE_ITEM_TOTAL
       : routedItemCount(this.currentRoute);
+    if (this.routingComplete) gameState.sceneProgress.networkRoutingComplete = 1;
     this.clearanceTokenCollected = hasProcessItem("clearance_token");
     this.classNetReviewStep = this.clearanceTokenCollected
       ? CLASSNET_VAULT_DOCKETS.length
@@ -237,14 +280,31 @@ export class NetworkScene extends Phaser.Scene {
     }
   }
 
+  private restoreHeldBatchState(roomId: NetworkRoomId) {
+    if (roomId === "N1") {
+      const packet = this.routingCarriedPacket();
+      if (packet) setHeldItem(`Routing Batch: ${packet.shortLabel}`);
+      return;
+    }
+    const docket = this.vaultCarriedDocket();
+    if (docket) setHeldItem(`Review Batch: ${docket.shortLabel}`);
+  }
+
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
-    this.bureaucraticWalls.forEach((wall) => wall.update(this.time.now, delta, this.player?.position));
-    this.updateDanneLurker(delta);
-    this.syncThreatState();
+    if (gameState.mode !== "explore" || input.menuJustPressed || input.pauseJustPressed
+      || this.roomTransitionLocked || this.ledgerChoice.active || this.dialog.active
+      || this.inventory.active || this.reliability.active) this.attackBuffer.clear();
     this.toast.update(delta, this.player.position);
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.ledgerChoice.active) {
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.player.update(delta, false);
+      this.ledgerChoice.updateInput();
+      return;
+    }
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
       retroAudio.toggle();
@@ -253,17 +313,20 @@ export class NetworkScene extends Phaser.Scene {
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
     if (input.abilityJustPressed) activateRoleAbility(this);
     if (this.roomTransitionLocked) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (this.dialog.active) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       if (input.aJustPressed) this.dialog.advance();
       this.player.update(delta, false);
       return;
     }
     if (this.inventory.active || this.reliability.active) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       handleOpenOverlays(this.inventory, this.reliability);
       this.player.update(delta, false);
@@ -271,9 +334,18 @@ export class NetworkScene extends Phaser.Scene {
     }
     if (input.pauseJustPressed) {
       this.inventory.toggle();
+      this.updateDanneLurker(delta, false);
       return;
     }
     this.player.update(delta, true, { bounds: NETWORK_PLAY_BOUNDS, solids: this.roomSolids });
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing && this.player.combatReadout.state !== "hurt")) {
+      const swing = tryEquippedToolSwing(this.player);
+      if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
+    }
+    this.updateStampCrossing();
+    this.updateDanneLurker(delta);
+    this.syncThreatState();
     if (this.currentRoomId === "N1") {
       this.updateRoutingPacketIcon();
       this.updateRoutingPacketPrompt(delta);
@@ -302,12 +374,16 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private enterRoom(roomId: NetworkRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    this.attackBuffer.clear();
     const applyRoom = () => {
       this.currentRoomId = roomId;
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
-      this.player.setPosition(spawn.x, spawn.y);
+      const safeSpawn = roomId === "N1"
+        ? safeNetworkCrossingSpawn(spawn, networkCrossingState(gameState.sceneProgress) === "open") : spawn;
+      this.player.setPosition(safeSpawn.x, safeSpawn.y);
+      this.danneLurker.enterRoom(this.time.now);
       this.syncRoomTraversalState();
       this.exitCooldownUntil = this.time.now + 280;
     };
@@ -327,6 +403,7 @@ export class NetworkScene extends Phaser.Scene {
       onCovered: applyRoom,
       onComplete: () => {
         this.roomTransitionLocked = false;
+        saveGameNow("scene");
       }
     });
   }
@@ -338,12 +415,19 @@ export class NetworkScene extends Phaser.Scene {
     for (const object of this.roomObjects) {
       if (object.active) object.destroy();
     }
-    for (const wall of this.bureaucraticWalls) wall.destroy();
     this.roomCleanups = [];
     this.roomObjects = [];
+    this.routingRouteCue = undefined;
+    this.clearanceTokenRouteCue = undefined;
+    this.roomGateObjects = [];
     this.roomSolids = [];
-    this.bureaucraticWalls = [];
+    this.crossingGate = undefined;
+    this.crossingLamp = undefined;
+    this.crossingSolid = undefined;
+    this.crossingSwing = -1;
     this.clearanceTokenIcon = undefined;
+    this.vaultInbox = undefined;
+    this.vaultReward = undefined;
     this.vaultDocketWorldIcon = undefined;
     if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
     this.vaultDocketHeldIcon = undefined;
@@ -373,7 +457,7 @@ export class NetworkScene extends Phaser.Scene {
       this.drawNetworkTileField(room.id);
     }
     this.drawRoomDoors();
-    if (room.id === "N1") this.renderNetworkSplit();
+    if (room.id === "N1") this.renderNetworkSplit(packedTilemapRendered);
     else this.renderClassNetVault(packedTilemapRendered);
     this.syncRoomTraversalState();
     this.syncThreatState();
@@ -576,8 +660,6 @@ export class NetworkScene extends Phaser.Scene {
     if (roomId === "N1") {
       this.drawNetworkTileFrame("terminal_pad", 56, 124, 92, "opennet-terminal-pad");
       this.drawNetworkTileFrame("class_terminal", 200, 124, 92, "classnet-terminal-pad");
-      this.drawNetworkTileFrame("firewall_gate", 104, 152, 66, "firewall-left");
-      this.drawNetworkTileFrame("firewall_gate", 152, 152, 66, "firewall-right");
       return;
     }
 
@@ -623,15 +705,25 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private drawRoomDoors() {
+    for (const object of this.roomGateObjects) {
+      if (object.active) object.destroy();
+    }
+    this.roomGateObjects = [];
+    const trackGate = <T extends Phaser.GameObjects.GameObject>(object: T) => {
+      this.roomGateObjects.push(object);
+      return this.track(object);
+    };
     const room = NETWORK_ROOMS[this.currentRoomId];
     if (room.exits.west) {
+      const mustFile = this.currentRoomId === "N2" && Boolean(this.vaultCarriedDocket());
       addSnesGate(this, {
         direction: "west",
         hasExit: true,
-        unlocked: true,
+        unlocked: !mustFile,
+        lockLabel: "FILE",
         accent: PALETTE.terminalCyan,
-        exitLabel: "SPLIT",
-        track: (object) => this.track(object),
+        exitLabel: this.currentRoomId === "N1" ? "ARCHIVE" : "SPLIT",
+        track: trackGate,
         depth: 65
       });
     }
@@ -645,31 +737,32 @@ export class NetworkScene extends Phaser.Scene {
         accent,
         lockLabel: this.currentRoomId === "N1" ? "ROUT" : "TOKN",
         exitLabel: this.currentRoomId === "N1" ? "VAULT" : "REF",
-        track: (object) => this.track(object),
+        track: trackGate,
         depth: 65
       });
     }
   }
 
-  private renderNetworkSplit() {
+  private renderNetworkSplit(packedTilemapRendered: boolean) {
+    this.drawStampCrossing(packedTilemapRendered);
     this.syncNetworkSplitEntities();
     this.track(addTinySparkle(this, 60, 108, PALETTE.openNetGreen));
     this.track(addTinySparkle(this, 196, 108, PALETTE.classNetRed));
-    const marcus = new HistorianNPC(this, "marcus", 128, 76);
+    const marcus = new HistorianNPC(this, "marcus", 38, 88);
     marcus.label.setVisible(false);
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 60, 124, "OpenNet").container);
     this.track(new Terminal(this, 196, 124, "ClassNet").container);
+    for (const [x, text] of [[60, "PUBLIC COPIES"], [196, "PROTECTED REVIEW"]] as const) {
+      this.track(this.add.text(x, 150, text, { fontFamily: "monospace", fontSize: "4px",
+        color: PALETTE.creamPaper, backgroundColor: PALETTE.black }).setOrigin(0.5, 0).setDepth(124));
+    }
     this.drawRoutingSorter();
     if (!this.routingComplete) {
-      this.bureaucraticWalls = [
-        new BureaucraticWall(this, "firewall-open", "FIREWALL", 96, 152, { behavior: "block", accent: PALETTE.classNetRed }),
-        new BureaucraticWall(this, "firewall-class", "FORM 32", 160, 152, { behavior: "block", accent: PALETTE.classNetRed })
-      ];
       this.updateRoutingRouteText();
     } else {
       this.routeText.setVisible(false);
-      setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
+      setObjective(networkRoutingObjective(NETWORK_ROUTE_PACKETS.length, false));
     }
   }
 
@@ -677,13 +770,87 @@ export class NetworkScene extends Phaser.Scene {
     const packet = this.routingComplete ? null : getNetworkRoutePacket(this.currentRoute);
     const carried = this.routingCarriedPacket();
     setVisibleEntities([
-      "Marcus",
+      "Marcus: ask about the current packet",
       "OpenNet terminal",
       "ClassNet terminal",
       "Routing sorter",
-      ...(!this.routingComplete ? ["Stone Wall: FIREWALL"] : []),
-      ...(packet ? [`Routing packet ${packet.order}/4: ${packet.label} (${carried ? "carried" : "at sorter"})`] : [])
+      `Service crossing: ${networkCrossingState(gameState.sceneProgress)}`,
+      ...(packet ? [`Routing packet ${packet.order}/4: ${packet.label} (${carried ? "carried" : "at sorter"}); marking: ${packet.marking}`] : [])
     ]);
+  }
+
+  private drawStampCrossing(packedTilemapRendered: boolean) {
+    if (!packedTilemapRendered) {
+      for (const rect of NETWORK_DIVIDERS) {
+        this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+        this.track(this.add.rectangle(rect.x, rect.y, rect.width, rect.height, color(PALETTE.stoneDark))
+          .setOrigin(0).setStrokeStyle(2, color(PALETTE.stoneGray)).setDepth(44));
+      }
+    }
+    if (networkCrossingState(gameState.sceneProgress) === "open") return;
+    const rect = NETWORK_CROSSING;
+    this.crossingSolid = new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height);
+    this.roomSolids.push(this.crossingSolid);
+    const gate = this.track(this.add.container(128, 120).setDepth(144).setName("network-stamp-crossing"));
+    this.crossingGate = gate;
+    gate.add(this.add.rectangle(0, 0, 30, 48, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.stoneLight)));
+    for (const y of [-18, -12, 12, 18]) {
+      gate.add(this.add.rectangle(0, y, 24, 2, color(PALETTE.stoneGray)));
+    }
+    gate.add(this.add.rectangle(0, 0, 20, 20, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)));
+    if (this.textures.exists("citation-stamp")) {
+      gate.add(this.add.image(0, 0, "citation-stamp").setDisplaySize(16, 16));
+    } else {
+      gate.add(this.add.rectangle(0, -3, 4, 8, color(PALETTE.goldStamp)));
+      gate.add(this.add.rectangle(0, 3, 12, 4, color(PALETTE.goldStamp)));
+    }
+    this.crossingLamp = this.add.rectangle(0, -22, 10, 3, color(PALETTE.stoneGray));
+    gate.add(this.crossingLamp);
+  }
+
+  private atStampCrossing() {
+    const { x, y } = this.player.position;
+    // Filing a carried packet takes primary-action priority in overlapping
+    // terminal/seal ranges. The tool swing still checks the seal independently.
+    const target = this.routingCarriedPacket() ? this.routingActionHint() : null;
+    if (target && Phaser.Math.Distance.Between(x, y, target.x, target.y) <= (target.radius ?? 34)) return false;
+    return this.currentRoomId === "N1" && networkCrossingState(gameState.sceneProgress) !== "open"
+      && x >= 92 && x <= 164 && y >= 104 && y <= 140;
+  }
+
+  private updateStampCrossing() {
+    if (this.currentRoomId !== "N1" || !this.crossingSolid) return;
+    const ready = networkCrossingState(gameState.sceneProgress) === "ready";
+    this.crossingLamp?.setFillStyle(color(ready ? PALETTE.goldStamp : PALETTE.stoneGray));
+    const combat = this.player.combatReadout;
+    if (!combat.actionActive || !combat.weapon.active || combat.weapon.phase !== "active"
+      || !combat.hitbox || combat.weapon.swingId === this.crossingSwing) return;
+    const hitbox = new Phaser.Geom.Rectangle(combat.hitbox.x, combat.hitbox.y, combat.hitbox.width, combat.hitbox.height);
+    if (!Phaser.Geom.Intersects.RectangleToRectangle(hitbox, this.crossingSolid)) return;
+    this.crossingSwing = combat.weapon.swingId;
+    const result = tryOpenNetworkCrossing(gameState.sceneProgress, combat.weapon.tool, hasProcessItem(combat.weapon.tool));
+    setLatestMessage(result.message);
+    if (!result.opened) {
+      this.toast.show(ready ? "USE THE CITATION STAMP" : "FILE PUBLIC PACKET FIRST", this.player.position, "info");
+      retroAudio.blip();
+      return;
+    }
+    gameState.sceneProgress.networkStampCrossingOpen = 1;
+    this.removeCrossingSeal();
+    this.toast.show("SERVICE CROSSING OPEN", this.player.position, "info");
+    this.track(addTinySparkle(this, 128, 120, PALETTE.goldStamp));
+    retroAudio.stamp();
+    this.clearRoutingRouteCue();
+    this.syncNetworkSplitEntities();
+    saveGameNow();
+  }
+
+  private removeCrossingSeal() {
+    if (this.crossingSolid) this.roomSolids = this.roomSolids.filter(rect => rect !== this.crossingSolid);
+    this.crossingSolid = undefined;
+    this.crossingGate?.destroy();
+    this.crossingGate = undefined;
+    this.crossingLamp = undefined;
   }
 
   private drawRoutingSorter() {
@@ -817,6 +984,25 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private updateRoutingPacketPrompt(delta: number) {
+    if (this.atRoutingGuide()) {
+      this.interactionPrompt.update(delta, this.toast.visible ? null : {
+        id: "network-marcus-guide", label: "Marcus", x: 38, y: 88, kind: "npc", onInteract: () => undefined
+      }, undefined, { badge: "A", text: "ASK ABOUT PACKET" });
+      setNearestInteractable("Marcus: routing help");
+      return;
+    }
+    if (this.atStampCrossing()) {
+      const ready = networkCrossingState(gameState.sceneProgress) === "ready";
+      this.interactionPrompt.update(delta, this.toast.visible ? null : {
+        id: "network-stamp-crossing", label: "Service crossing", x: 128, y: 124,
+        kind: "door", onInteract: () => undefined
+      }, undefined, {
+        badge: ready ? getSecondaryActionBadge() : "!",
+        text: ready ? "STAMP SEAL" : "FILE PUBLIC FIRST"
+      });
+      setNearestInteractable("Service crossing");
+      return;
+    }
     const target = this.routingActionHint();
     const strictTarget = target && Phaser.Math.Distance.Between(
       this.player.position.x,
@@ -826,17 +1012,33 @@ export class NetworkScene extends Phaser.Scene {
     ) <= (target.radius ?? 34) ? target : null;
     const carried = this.routingCarriedPacket();
     const packet = this.routingComplete ? null : getNetworkRoutePacket(this.currentRoute);
-    this.interactionPrompt.update(delta, strictTarget, undefined, strictTarget ? {
+    this.interactionPrompt.update(delta, this.toast.visible ? null : strictTarget, undefined, strictTarget ? {
       badge: "A",
       text: carried
         ? `SEND ${target?.id === "network-opennet" ? "OPEN" : "CLASS"}`
-        : `TAKE ${packet?.shortLabel ?? "PACKET"}`
+        : `TAKE ${this.currentRoute === 0 ? "ROUTING BATCH" : packet?.shortLabel ?? "PACKET"}`
     } : undefined);
     setNearestInteractable(strictTarget?.label ?? null);
   }
 
   private handleRoutingPacketAction(input: Readonly<InputState>) {
     if (this.currentRoomId !== "N1" || this.routingComplete || !input.aJustPressed) return false;
+    if (this.atRoutingGuide()) {
+      const packet = getNetworkRoutePacket(this.currentRoute);
+      gameState.sceneProgress.networkRoutingHintOrder = packet.order;
+      this.toast.show(`${packet.shortLabel} > ${packet.network}`, this.player.position, "info");
+      setLatestMessage(packet.routingClue);
+      this.restoreObjectiveAfterDannePressure();
+      this.clearRoutingRouteCue();
+      saveGameNow();
+      return true;
+    }
+    if (this.atStampCrossing()) {
+      const result = tryOpenNetworkCrossing(gameState.sceneProgress, null, false);
+      setLatestMessage(result.message);
+      this.toast.show(networkCrossingState(gameState.sceneProgress) === "sealed" ? "FILE PUBLIC PACKET FIRST" : `${getSecondaryActionBadge()}: STAMP THE SEAL`, this.player.position, "info");
+      return true;
+    }
     const target = this.routingActionHint();
     if (!target || Phaser.Math.Distance.Between(
       this.player.position.x,
@@ -845,7 +1047,7 @@ export class NetworkScene extends Phaser.Scene {
       target.y
     ) > (target.radius ?? 34)) {
       retroAudio.blip();
-      setLatestMessage("Follow the lit cable to the highlighted target.");
+      setLatestMessage("Read the packet marking and terminal signs. Marcus can help.");
       return true;
     }
     const carried = this.routingCarriedPacket();
@@ -860,67 +1062,84 @@ export class NetworkScene extends Phaser.Scene {
 
   private pickUpRoutingPacket() {
     const packet = getNetworkRoutePacket(this.currentRoute);
-    gameState.sceneProgress.networkRoutingCarried = packet.order;
-    setHeldItem(`${packet.label} Packet`);
-    if (this.routingPacketWorldIcon?.active) this.routingPacketWorldIcon.destroy();
-    this.routingPacketWorldIcon = undefined;
-    this.createRoutingPacketHeldIcon(packet.id);
+    this.carryRoutingPacket(packet);
     retroAudio.confirm();
-    this.toast.show(`${packet.shortLabel} ACQUIRED`, this.player.position, "info");
-    setLatestMessage(`${packet.label}: ${packet.classification.toUpperCase()}. Route it to ${packet.network}.`);
-    setObjective(`ROUTE ${packet.order}/4: carry ${packet.label} to ${packet.network}.`);
+    this.toast.show("ROUTING BATCH", this.player.position, "info");
+    setLatestMessage(packet.routingClue);
+    setObjective(networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
     this.refreshRoutingRouteCue();
+    saveGameNow();
+  }
+
+  private carryRoutingPacket(packet: NetworkRoutePacket) {
+    gameState.sceneProgress.networkRoutingCarried = packet.order;
+    setHeldItem(`Routing Batch: ${packet.shortLabel}`);
+    if (this.routingPacketWorldIcon?.active) this.routingPacketWorldIcon.destroy();
+    this.routingPacketWorldIcon = undefined;
+    this.createRoutingPacketHeldIcon(packet.id);
   }
 
   private routeCarriedPacket(destination: RoutingNetwork) {
     const packet = this.routingCarriedPacket();
     if (!packet) return;
     const result = routeNetworkPacket(this.currentRoute, packet.id, destination);
+
+    if (!result.ok) {
+      gameState.sceneProgress.networkRoutingHintOrder = result.packet.order;
+      adjustReliability(-2, `${result.packet.label} caught at the wrong-network firewall before transmission`);
+      retroAudio.warning();
+      this.routeText.setVisible(false);
+      this.toast.show(`ROUTE TO ${result.packet.network.toUpperCase()}`, this.player.position, "warn");
+      setLatestMessage(`${result.message} ${result.packet.routingClue}`);
+      setObjective(networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder));
+      this.syncNetworkSplitEntities();
+      this.refreshRoutingRouteCue();
+      this.reliability.update();
+      saveGameNow();
+      return;
+    }
+
     gameState.sceneProgress.networkRoutingCarried = 0;
     setHeldItem(null);
     if (this.routingPacketHeldIcon?.active) this.routingPacketHeldIcon.destroy();
     this.routingPacketHeldIcon = undefined;
-
-    if (!result.ok) {
-      adjustReliability(-2, `${result.packet.label} caught at the wrong-network firewall before transmission`);
-      retroAudio.warning();
-      this.routeText.setVisible(false);
-      this.toast.show("WRONG NETWORK", this.player.position, "warn");
-      setLatestMessage(result.message);
-      setObjective(`RETRY ${packet.order}/4: collect ${packet.label} from the sorter.`);
-      this.drawRoutingPacketAtSorter();
-      this.syncNetworkSplitEntities();
-      this.refreshRoutingRouteCue();
-      this.reliability.update();
-      return;
-    }
-
     this.currentRoute = result.nextStep;
     this.correctRoutes = routedItemCount(result.nextStep);
     gameState.sceneProgress.networkRoutingStep = result.nextStep;
     this.syncRoutingSorterSlots();
     adjustReliability(result.packet.itemLabels.length * 3, `${result.packet.label} routed to ${destination}`);
     retroAudio.stamp();
-    this.toast.show(`${result.packet.shortLabel} > ${destination.toUpperCase()}`, this.player.position, "info");
-    setLatestMessage(result.message);
     if (result.complete) {
+      this.toast.show(`${result.packet.shortLabel} > ${destination.toUpperCase()}`, this.player.position, "info");
+      setLatestMessage(result.message);
       this.finishRouting();
       return;
     }
 
-    const nextPacket = getNetworkRoutePacket(result.nextStep);
-    setObjective(`ROUTE ${nextPacket.order}/4: collect ${nextPacket.label} from the sorter.`);
-    this.drawRoutingPacketAtSorter();
+    const nextPacket = networkBatchPacketAfterRoute(result);
+    if (!nextPacket) return;
+    this.carryRoutingPacket(nextPacket);
+    this.toast.show(this.currentRoute === 1 ? "STAMP OPENS CROSSING"
+      : `NEXT: ${nextPacket.marking}`, this.player.position, "info");
+    setLatestMessage(`${result.message} Next marking: ${nextPacket.marking}. Match it to a terminal; ask Marcus for help.`
+      + (this.currentRoute === 1 ? " Your Citation Stamp can now open the service crossing." : ""));
+    setObjective(networkRoutingObjective(this.currentRoute, true, gameState.sceneProgress.networkRoutingHintOrder));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
     this.refreshRoutingRouteCue();
     this.reliability.update();
+    saveGameNow();
   }
 
   private updateRoutingRouteText() {
     this.routeText.setVisible(false);
+  }
+
+  private atRoutingGuide() {
+    return this.currentRoomId === "N1" && !this.routingComplete && this.player.position.y < 100
+      && Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 38, 88) <= 20;
   }
 
   private refreshRoutingRouteCue() {
@@ -930,11 +1149,17 @@ export class NetworkScene extends Phaser.Scene {
     }
     const packet = getNetworkRoutePacket(this.currentRoute);
     const carried = this.routingCarriedPacket();
-    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 14) };
-    const end = carried
+    const guidance = networkRouteGuidance(this.currentRoute, gameState.sceneProgress.networkRoutingHintOrder);
+    if (carried && !guidance) {
+      this.clearRoutingRouteCue();
+      return;
+    }
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
+    const destination = carried
       ? { x: packet.network === "OpenNet" ? 60 : 196, y: 124 }
-      : { x: 128, y: 178 };
-    const targetDistance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
+      : { x: 128, y: 196 };
+    const end = networkCrossingWaypoint(start, destination, networkCrossingState(gameState.sceneProgress) === "open");
+    const targetDistance = Phaser.Math.Distance.Between(start.x, start.y, destination.x, destination.y);
     if (targetDistance <= (carried ? 38 : 36)) {
       this.clearRoutingRouteCue();
       return;
@@ -947,16 +1172,8 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private clearRoutingRouteCue() {
-    for (const object of this.routingRouteCueObjects) {
-      if (object.active) object.destroy();
-    }
-    this.routingRouteCueObjects = [];
+    this.routingRouteCue?.clear();
     this.routingRouteCueKey = "";
-  }
-
-  private trackRoutingRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
-    this.routingRouteCueObjects.push(object);
-    return this.track(object);
   }
 
   private drawRoutingRouteCue(
@@ -969,27 +1186,20 @@ export class NetworkScene extends Phaser.Scene {
       : network === "ClassNet"
         ? PALETTE.classNetRed
         : PALETTE.goldStamp;
-    this.trackRoutingRouteCue(this.add.rectangle(end.x, end.y, network ? 38 : 42, network ? 28 : 24, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(accent), 0.96)
-      .setName("network-routing-target")
-      .setDepth(236));
+    const cue = this.routingRouteCue ??= this.track(this.add.graphics()
+      .setName("network-routing-guide").setDepth(46));
+    cue.fillStyle(color(accent), 0.8).fillRect(end.x - 3, end.y - 3, 6, 6);
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
     const steps = Math.max(1, Math.min(4, Math.floor(distance / 22)));
     for (let index = 1; index <= steps; index += 1) {
       const t = index / (steps + 1);
-      this.trackRoutingRouteCue(this.add.rectangle(
-        Math.round(Phaser.Math.Linear(start.x, end.x, t)),
-        Math.round(Phaser.Math.Linear(start.y, end.y, t)),
-        3,
-        3,
-        color(index % 2 === 0 ? PALETTE.creamPaper : accent),
-        0.9
-      ).setAngle(45).setName("network-routing-dot").setDepth(237));
+      cue.fillStyle(color(index % 2 === 0 ? PALETTE.creamPaper : accent), 0.9).fillRect(
+        Math.round(Phaser.Math.Linear(start.x, end.x, t)) - 1,
+        Math.round(Phaser.Math.Linear(start.y, end.y, t)) - 1, 3, 3);
     }
   }
 
   private renderClassNetVault(packedTilemapRendered = false) {
-    this.syncClassNetVaultEntities();
     if (!packedTilemapRendered) {
       for (let x = 54; x <= 202; x += 24) {
         this.track(this.add.rectangle(x, 96, 14, 18, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(84));
@@ -997,6 +1207,14 @@ export class NetworkScene extends Phaser.Scene {
       }
     }
     this.drawClassNetStations();
+    this.vaultInbox = this.track(this.add.container(128, 132, [
+      this.add.ellipse(0, 7, 40, 8, color(PALETTE.black), 0.35),
+      this.add.rectangle(0, 0, 36, 14, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.stoneGray)),
+      this.add.rectangle(0, -4, 30, 2, color(PALETTE.creamPaper)),
+      this.add.rectangle(0, 5, 34, 3, color(PALETTE.sepiaInk))
+    ]).setName("network-review-inbox").setDepth(134));
+    const reward = this.vaultReward = this.track(this.add.container(0, 0)
+      .setName("network-clearance-reward").setDepth(138));
     addSnesTreasurePedestal(this, {
       x: 128,
       y: 132,
@@ -1005,24 +1223,25 @@ export class NetworkScene extends Phaser.Scene {
       collected: this.clearanceTokenCollected,
       accent: PALETTE.classNetRed,
       track: (object) => {
-        this.track(object);
+        reward.add(object);
         if (object.name === "snes-treasure-icon" && object instanceof Phaser.GameObjects.Image) {
           this.clearanceTokenIcon = object;
-          if (!this.classNetReviewComplete && !this.clearanceTokenCollected) object.setAlpha(0.18);
         }
         return object;
       },
       depth: 138
     });
+    reward.sort("depth");
+    this.syncClassNetVaultEntities();
     if (this.clearanceTokenCollected) {
       this.routeText.setVisible(false);
-      setObjective("Two Networks: exit east to the Referral Vault.");
+      setObjective(this.classNetVaultObjective());
       return;
     }
     if (this.classNetReviewComplete) {
       this.clearanceTokenIcon?.setAlpha(1);
       this.routeText.setVisible(false);
-      setObjective("Two Networks: collect the Clearance Token from the center pedestal.");
+      setObjective(this.classNetVaultObjective());
       return;
     }
     const carried = this.vaultCarriedDocket();
@@ -1075,12 +1294,13 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private classNetStationShortLabel(station: ClassNetVaultStationId) {
-    if (station === "human_desk") return "HUMAN DESK";
-    if (station === "release_board") return "E.O. BOARD";
-    return "DECISION LOG";
+    return CLASSNET_VAULT_STATION_LABELS[station];
   }
 
   private syncClassNetVaultEntities() {
+    const rewardReady = this.classNetReviewComplete && !this.clearanceTokenCollected;
+    this.vaultReward?.setVisible(rewardReady);
+    this.vaultInbox?.setVisible(!rewardReady);
     const docket = this.classNetReviewComplete ? null : getClassNetVaultDocket(this.classNetReviewStep);
     const carried = this.vaultCarriedDocket();
     setVisibleEntities([
@@ -1088,10 +1308,11 @@ export class NetworkScene extends Phaser.Scene {
       "Human Review Desk",
       "E.O. 13526 Release Standard Board",
       "Equity Decision Ledger",
-      "Clearance Token pedestal",
+      rewardReady ? "Clearance Token ready to collect" : this.clearanceTokenCollected
+        ? "Empty review inbox; Clearance Token collected" : "Review batch inbox",
       "Referral handoff gate",
       ...(docket ? [
-        `ClassNet docket ${docket.order}/3: ${docket.label} (${carried ? "carried" : "at pedestal"}; ${docket.checkIds.length} checks)`
+        `ClassNet docket ${docket.order}/3: ${docket.label} (${carried ? "carried" : "at inbox"}; ${docket.checkIds.length} checks)`
       ] : [])
     ]);
   }
@@ -1159,13 +1380,13 @@ export class NetworkScene extends Phaser.Scene {
     ) <= (target.radius ?? 44) ? target : null;
     const carried = this.vaultCarriedDocket();
     const docket = this.classNetReviewComplete ? null : getClassNetVaultDocket(this.classNetReviewStep);
-    this.interactionPrompt.update(delta, strictTarget, undefined, strictTarget ? {
+    this.interactionPrompt.update(delta, this.toast.visible ? null : strictTarget, undefined, strictTarget ? {
       badge: "A",
       text: this.classNetReviewComplete
         ? "TAKE CLEARANCE TOKEN"
         : carried
           ? `FILE ${this.classNetStationShortLabel(target!.id.replace("classnet-station-", "") as ClassNetVaultStationId)}`
-          : `TAKE ${docket?.shortLabel ?? "DOCKET"}`
+          : `TAKE ${this.classNetReviewStep === 0 ? "REVIEW BATCH" : docket?.shortLabel ?? "DOCKET"}`
     } : undefined);
     setNearestInteractable(strictTarget?.label ?? null);
   }
@@ -1212,48 +1433,71 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private vaultCarriedDocket() {
-    const order = Math.floor(gameState.sceneProgress.classNetVaultDocketCarried ?? 0);
-    return CLASSNET_VAULT_DOCKETS.find((docket) => docket.order === order) ?? null;
+    return carriedClassNetVaultDocket(gameState.sceneProgress);
   }
 
   private pickUpVaultDocket() {
     const docket = getClassNetVaultDocket(this.classNetReviewStep);
-    gameState.sceneProgress.classNetVaultDocketCarried = docket.order;
-    setHeldItem(`${docket.label} Docket`);
-    if (this.vaultDocketWorldIcon?.active) this.vaultDocketWorldIcon.destroy();
-    this.vaultDocketWorldIcon = undefined;
-    this.createVaultDocketHeldIcon(docket.id);
+    this.carryVaultDocket(docket);
     retroAudio.confirm();
-    setLatestMessage(`${docket.contentsLabel}. File at ${docket.stationLabel}.`);
+    this.toast.show("REVIEW BATCH", this.player.position, "info");
+    setLatestMessage(`${docket.contentsLabel}. File at ${docket.stationLabel}; the next docket will stay with you.`);
     setObjective(this.classNetVaultObjective());
     this.updateClassNetVaultRouteText();
     this.syncClassNetVaultEntities();
     this.refreshClearanceTokenRouteCue();
+    saveGameNow();
   }
 
-  private routeVaultDocket(station: ClassNetVaultStationId) {
+  private carryVaultDocket(docket: ClassNetVaultDocket) {
+    gameState.sceneProgress.classNetVaultDocketCarried = docket.order;
+    this.drawRoomDoors();
+    this.syncRoomTraversalState();
+    setHeldItem(`Review Batch: ${docket.shortLabel}`);
+    if (this.vaultDocketWorldIcon?.active) this.vaultDocketWorldIcon.destroy();
+    this.vaultDocketWorldIcon = undefined;
+    this.createVaultDocketHeldIcon(docket.id);
+  }
+
+  private routeVaultDocket(station: ClassNetVaultStationId, decision?: number) {
     const docket = this.vaultCarriedDocket();
     if (!docket) return;
-    const result = routeClassNetVaultDocket(this.classNetReviewStep, docket.id, station);
-    gameState.sceneProgress.classNetVaultDocketCarried = 0;
-    setHeldItem(null);
-    if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
-    this.vaultDocketHeldIcon = undefined;
+    const result = routeClassNetVaultDocket(this.classNetReviewStep, docket.id, station, decision);
+
+    if (result.status === "review-required") {
+      this.interactionPrompt.update(0, null);
+      saveGameNow();
+      this.ledgerChoice.show(gameState.sceneProgress.classNetWithholdingSlot, (slot) => {
+        gameState.sceneProgress.classNetWithholdingSlot = slot;
+        saveGameNow();
+      }, (slot) => this.routeVaultDocket(station, slot));
+      return;
+    }
+    if (result.status === "revision-required") {
+      this.toast.show("KEEP A WITHHOLDING ENTRY", this.player.position, "warn");
+      setLatestMessage(result.message);
+      saveGameNow();
+      return;
+    }
 
     if (!result.ok) {
       adjustReliability(-2, `${result.docket.label} returned from the wrong ClassNet station`);
       retroAudio.warning();
       this.routeText.setVisible(false);
-      this.toast.show("WRONG DESK", this.player.position, "warn");
+      this.toast.show(`USE ${result.docket.stationLabel.toUpperCase()}`, this.player.position, "warn");
       setLatestMessage(result.message);
-      setObjective(`RETRY ${docket.order}/3: collect ${docket.label} from the pedestal.`);
-      this.drawVaultDocketAtPedestal();
+      setObjective(this.classNetVaultObjective());
       this.syncClassNetVaultEntities();
       this.refreshClearanceTokenRouteCue();
       this.reliability.update();
+      saveGameNow();
       return;
     }
 
+    gameState.sceneProgress.classNetVaultDocketCarried = 0;
+    setHeldItem(null);
+    if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
+    this.vaultDocketHeldIcon = undefined;
     this.classNetReviewStep = result.nextStep;
     this.classNetReviewComplete = result.complete;
     gameState.sceneProgress.classNetVaultReviewStep = result.nextStep;
@@ -1264,21 +1508,29 @@ export class NetworkScene extends Phaser.Scene {
     setLatestMessage(result.message);
     if (result.complete) {
       gameState.sceneProgress.classNetVaultReviewComplete = 1;
+      this.drawRoomDoors();
+      this.syncRoomTraversalState();
       this.clearanceTokenIcon?.setAlpha(1);
       this.routeText.setVisible(false);
-      setObjective("Two Networks: collect the Clearance Token from the center pedestal.");
+      setObjective(this.classNetVaultObjective());
       this.clearClearanceTokenRouteCue();
       this.syncClassNetVaultEntities();
       this.track(addTinySparkle(this, 116, 120, PALETTE.goldStamp));
       this.track(addTinySparkle(this, 140, 120, PALETTE.terminalCyan));
+      saveGameNow();
       return;
     }
 
-    this.drawVaultDocketAtPedestal();
+    const nextDocket = classNetBatchDocketAfterRoute(result);
+    if (!nextDocket) return;
+    this.carryVaultDocket(nextDocket);
+    this.toast.show(`NEXT: ${nextDocket.shortLabel} > ${this.classNetStationShortLabel(nextDocket.station)}`, this.player.position, "info");
+    setLatestMessage(`${result.message} Next: ${nextDocket.label} goes to ${nextDocket.stationLabel}.`);
     this.updateClassNetVaultRouteText();
     setObjective(this.classNetVaultObjective());
     this.syncClassNetVaultEntities();
     this.refreshClearanceTokenRouteCue();
+    saveGameNow();
   }
 
   private awardClassNetDocketPoints(docketId: ClassNetVaultDocketId) {
@@ -1322,12 +1574,11 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private classNetVaultObjective() {
-    if (this.clearanceTokenCollected) return "Two Networks: exit east to the Referral Vault.";
-    if (this.classNetReviewComplete) return "Two Networks: collect the Clearance Token from the center pedestal.";
-    const docket = getClassNetVaultDocket(this.classNetReviewStep);
-    return this.vaultCarriedDocket()
-      ? `FILE ${docket.order}/3: carry ${docket.label} to ${docket.stationLabel}.`
-      : `FILE ${docket.order}/3: collect ${docket.label} from the center pedestal.`;
+    return classNetVaultObjective(
+      this.classNetReviewComplete ? CLASSNET_VAULT_DOCKETS.length : this.classNetReviewStep,
+      Boolean(this.vaultCarriedDocket()),
+      this.clearanceTokenCollected
+    );
   }
 
   private updateClassNetVaultRouteText() {
@@ -1398,8 +1649,9 @@ export class NetworkScene extends Phaser.Scene {
     this.clearanceTokenCollected = true;
     setHeldItem(null);
     addProcessItem("clearance_token");
-    setLatestMessage("Clearance Token earned after nine human-review checks were physically filed.");
-    setObjective("Two Networks: exit east to the Referral Vault.");
+    this.drawRoomDoors();
+    setLatestMessage("Clearance Token earned: review records filed and withholding visibly accounted for.");
+    setObjective(this.classNetVaultObjective());
     this.routeText.setVisible(false);
     this.clearanceTokenIcon?.setTint(color(PALETTE.goldStamp)).setAlpha(0.4);
     this.clearClearanceTokenRouteCue();
@@ -1408,6 +1660,7 @@ export class NetworkScene extends Phaser.Scene {
     retroAudio.stamp();
     this.syncClassNetVaultEntities();
     this.syncRoomTraversalState();
+    saveGameNow();
   }
 
   private refreshClearanceTokenRouteCue() {
@@ -1447,16 +1700,8 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private clearClearanceTokenRouteCue() {
-    for (const object of this.clearanceTokenRouteCueObjects) {
-      if (object.active) object.destroy();
-    }
-    this.clearanceTokenRouteCueObjects = [];
+    this.clearanceTokenRouteCue?.clear();
     this.clearanceTokenRouteCueKey = "";
-  }
-
-  private trackClearanceTokenRouteCue<T extends Phaser.GameObjects.GameObject>(object: T) {
-    this.clearanceTokenRouteCueObjects.push(object);
-    return this.track(object);
   }
 
   private drawClearanceTokenRouteCue(
@@ -1464,13 +1709,9 @@ export class NetworkScene extends Phaser.Scene {
     end: { x: number; y: number },
     accent: string
   ) {
-    this.trackClearanceTokenRouteCue(this.add.ellipse(end.x, end.y + 13, 58, 12, color(PALETTE.black), 0.3)
-      .setName("network-clearance-token-route-shadow")
-      .setDepth(136));
-    this.trackClearanceTokenRouteCue(this.add.rectangle(end.x, end.y, 58, 29, color(PALETTE.black), 0)
-      .setStrokeStyle(2, color(accent))
-      .setName("network-clearance-token-route-target-glow")
-      .setDepth(236));
+    const cue = this.clearanceTokenRouteCue ??= this.track(this.add.graphics()
+      .setName("network-clearance-guide").setDepth(46));
+    cue.lineStyle(2, color(accent)).strokeRect(end.x - 29, end.y - 14, 58, 28);
 
     const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
     const steps = Math.max(1, Math.min(7, Math.floor(distance / 13)));
@@ -1478,9 +1719,8 @@ export class NetworkScene extends Phaser.Scene {
       const t = index / (steps + 1);
       const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
       const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
-      this.trackClearanceTokenRouteCue(this.add.rectangle(x, y, 5, 5, color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.92)
-        .setName("network-clearance-token-route-dot")
-        .setDepth(237));
+      cue.fillStyle(color(index % 2 === 0 ? PALETTE.goldStamp : accent), 0.92)
+        .fillRect(x - 2, y - 2, 5, 5);
     }
 
   }
@@ -1492,6 +1732,17 @@ export class NetworkScene extends Phaser.Scene {
     if (position.x >= NETWORK_PLAY_BOUNDS.right - 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     else if (position.x <= NETWORK_PLAY_BOUNDS.left + 1 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
     if (!direction) return false;
+
+    // A Continue spawn may lie on the doorway threshold. Require an outward
+    // movement request so reading the room cannot immediately send you back.
+    if (!requestsDoorExit(direction, getInput().dir)) return false;
+
+    if (this.currentRoomId === "N1" && direction === "west") {
+      this.roomTransitionLocked = true;
+      saveGameNow();
+      transitionTo(this, "ArchiveScene", { chapterFrom: "N1", chapterTo: "A1" });
+      return true;
+    }
 
     if (this.currentRoomId === "N1" && direction === "east") {
       if (!this.routingComplete) {
@@ -1529,7 +1780,7 @@ export class NetworkScene extends Phaser.Scene {
         return false;
       }
       this.roomTransitionLocked = true;
-      transitionTo(this, "ReferralVaultScene");
+      transitionTo(this, "ReferralVaultScene", { chapterFrom: "N2", chapterTo: "R1" });
       return true;
     }
 
@@ -1539,14 +1790,11 @@ export class NetworkScene extends Phaser.Scene {
 
   private beginRouting() {
     if (this.routingComplete) {
-      setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
+      setObjective(networkRoutingObjective(NETWORK_ROUTE_PACKETS.length, false));
       this.updateRoutingRouteText();
       return;
     }
-    const packet = getNetworkRoutePacket(this.currentRoute);
-    setObjective(this.routingCarriedPacket()
-      ? `ROUTE ${packet.order}/4: carry ${packet.label} to ${packet.network}.`
-      : `ROUTE ${packet.order}/4: collect ${packet.label} from the sorter.`);
+    setObjective(networkRoutingObjective(this.currentRoute, Boolean(this.routingCarriedPacket()), gameState.sceneProgress.networkRoutingHintOrder));
     this.updateRoutingRouteText();
     this.syncNetworkSplitEntities();
     this.refreshRoutingRouteCue();
@@ -1555,36 +1803,17 @@ export class NetworkScene extends Phaser.Scene {
   private syncThreatState() {
     setVisibleThreats(
       [
-        ...this.bureaucraticWalls
-        .filter((wall) => !wall.isCleared)
-        .map((wall) => ({
-          label: `Stone Wall: ${wall.label}`,
-          x: wall.position.x,
-          y: wall.position.y,
-          spriteKey: wall.spriteKey,
-          behavior: "blocks terminal door",
-          defeatMethod: "Use correct OpenNet/ClassNet routing",
-          status: this.routingComplete ? "cleared" : "active"
-        })),
         this.danneLurker.readout(this.time.now)
       ]
     );
   }
 
-  private updateDanneLurker(delta: number) {
-    const canPressure = !this.roomTransitionLocked
-      && !this.dialog.active
-      && !this.inventory.active
-      && !this.reliability.active;
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted network routing.");
+  private updateDanneLurker(delta: number, canPressure = true) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure, this.player.combatReadout);
+    if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted network routing.")) {
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
-    } else if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted network routing.");
+    } else if (result.egoBoltHit && takeDanneLurkerHit(this.player, this.danneLurker.position, "ego_bolt", "DANN-E ego bolt disrupted network routing.")) {
       this.restoreObjectiveAfterDannePressure();
       this.reliability.update();
     }
@@ -1595,9 +1824,7 @@ export class NetworkScene extends Phaser.Scene {
       this.beginRouting();
       return;
     }
-    setObjective(this.clearanceTokenCollected
-      ? "Two Networks: exit east to the Referral Vault."
-      : this.classNetVaultObjective());
+    setObjective(this.classNetVaultObjective());
   }
 
   private finishRouting() {
@@ -1620,8 +1847,9 @@ export class NetworkScene extends Phaser.Scene {
     addVolumeFragment("Routing Fragment");
     addDocumentPoints(14, "OpenNet/ClassNet routes cleared");
     setLatestMessage("FIREWALL cleared: ClassNet Vault door open.");
-    setObjective("Two Networks: enter the ClassNet Vault through the east gate.");
-    this.bureaucraticWalls.forEach((wall) => wall.clear());
+    setObjective(networkRoutingObjective(NETWORK_ROUTE_PACKETS.length, false));
+    this.removeCrossingSeal();
+    this.drawRoomDoors();
     this.syncThreatState();
     this.syncRoomTraversalState();
     this.routeText.setVisible(false);
@@ -1630,5 +1858,6 @@ export class NetworkScene extends Phaser.Scene {
     this.track(addTinySparkle(this, 160, 152, PALETTE.openNetGreen));
     this.track(addTinySparkle(this, 222, 126, PALETTE.goldStamp));
     retroAudio.stamp();
+    saveGameNow();
   }
 }

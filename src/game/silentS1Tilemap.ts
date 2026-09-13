@@ -1,6 +1,8 @@
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { INTERIOR_TILES } from "./networkN1Tilemap";
 import { EMPTY_TILE, packedTileGid } from "./packedTileIndex";
+import { PROOF_STATION_POSITIONS } from "./proofFurniture";
+import type { SilentReadStationId } from "./silentReadReview";
 
 export const SILENT_S1_TILEMAP = {
   columns: 16,
@@ -56,7 +58,7 @@ function fillRect(layer: number[][], x: number, y: number, width: number, height
   }
 }
 
-export function buildSilentS1TileLayers(): SilentS1TileLayers {
+export function buildSilentS1TileLayers(phase: "evidence" | "production" = "evidence"): SilentS1TileLayers {
   const ground: number[][] = Array.from(
     { length: SILENT_S1_TILEMAP.rows },
     () => Array<number>(SILENT_S1_TILEMAP.columns).fill(packedTileGid(INTERIOR_TILES.darkWoodAltFloor))
@@ -66,11 +68,14 @@ export function buildSilentS1TileLayers(): SilentS1TileLayers {
   const collisionCells: Array<{ tileX: number; tileY: number }> = [];
 
   fillRect(ground, 7, 0, 2, SILENT_S1_TILEMAP.rows, INTERIOR_TILES.centerLane);
-  fillRect(ground, 2, 8, 2, 2, INTERIOR_TILES.terminalPad);
-  fillRect(ground, 12, 8, 2, 2, INTERIOR_TILES.terminalPad);
-  fillRect(ground, 3, 6, 2, 2, INTERIOR_TILES.sorterPad);
-  fillRect(ground, 7, 6, 2, 2, INTERIOR_TILES.sorterPad);
-  fillRect(ground, 11, 6, 2, 2, INTERIOR_TILES.sorterPad);
+  const stations: SilentReadStationId[] = phase === "evidence"
+    ? ["opennet", "classnet", "referral-tray", "proof-table"]
+    : ["consultation-desk", "typeflow-rail", "proof-table"];
+  for (const id of stations) {
+    const station = PROOF_STATION_POSITIONS[id];
+    fillRect(ground, (station.x - 16) / 16, Math.floor((station.y - 32) / 16), 2, 2,
+      id === "opennet" || id === "classnet" ? INTERIOR_TILES.terminalPad : INTERIOR_TILES.sorterPad);
+  }
   fillRect(ground, 7, 9, 2, 2, INTERIOR_TILES.terminalPad);
 
   for (let tileY = 0; tileY < SILENT_S1_TILEMAP.rows; tileY += 1) {

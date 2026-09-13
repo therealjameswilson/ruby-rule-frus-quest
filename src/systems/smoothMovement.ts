@@ -3,6 +3,30 @@ import type { Direction } from "../game/constants";
 import type { Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "./pixelPerfect";
 
+// Direct ground control: input determines this frame's velocity, with no glide
+// on release or residual motion opposite a newly pressed direction.
+export const PLAYER_MOVEMENT_TUNING = {
+  speed: 90,
+  cornerGuideSpeed: 75,
+  feetWidth: 12,
+  feetHeight: 8,
+  feetOffsetY: -3
+} as const;
+
+export function walkingFeetOverlap(x: number, y: number, solid: { x: number; y: number; width: number; height: number }) {
+  const left = x - PLAYER_MOVEMENT_TUNING.feetWidth / 2;
+  const top = y + PLAYER_MOVEMENT_TUNING.feetOffsetY;
+  // Touching edges are safe: rejecting contact makes tile-wide passages snag.
+  return left < solid.x + solid.width && left + PLAYER_MOVEMENT_TUNING.feetWidth > solid.x
+    && top < solid.y + solid.height && top + PLAYER_MOVEMENT_TUNING.feetHeight > solid.y;
+}
+
+export function resolveWalkingVelocity(dir: { x: number; y: number }, scale = 1) {
+  const vector = resolveMovementVector(dir);
+  const speed = PLAYER_MOVEMENT_TUNING.speed * Math.max(0, Math.min(1, scale));
+  return { x: vector.x * speed, y: vector.y * speed };
+}
+
 export function approach(current: number, target: number, maxDelta: number) {
   if (current < target) return Math.min(current + maxDelta, target);
   if (current > target) return Math.max(current - maxDelta, target);

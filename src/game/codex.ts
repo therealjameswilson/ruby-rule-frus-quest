@@ -1,7 +1,11 @@
 import { ITEM_REGISTRY } from "./constants";
+import { ABOUT_SERIES_HANDBOOK_LORE, ABOUT_SERIES_SOURCE } from "./aboutSeries";
 import { DANNE_ITEM_CATALOG } from "./danneItemCatalog";
 import { DANNE_RUNTIME_SPRITE_ASSETS, DANNE_VARIANT_ASSETS } from "./danneAtlas";
 import { SNES_ANTAGONIST_ASSETS } from "./snesAtlas";
+import { DANNE_ENEMY_VARIANTS } from "../entities/danneVariants";
+import type { DocumentCandidate } from "./types";
+import { SOURCE_NOTE_47_ID, sourceNote47Pages } from "./sourceNote47";
 
 export type CodexCategory = "Enemies" | "NPCs" | "DANN-E Variants" | "Items";
 
@@ -13,6 +17,7 @@ export interface CodexEntry {
   spriteSheet?: boolean;
   startsUnlocked?: boolean;
   lore: string;
+  sourceUrl?: string;
 }
 
 export interface CodexEntryReadout extends CodexEntry {
@@ -31,7 +36,7 @@ const DANNE_ENEMY_ENTRIES: readonly CodexEntry[] = [
     displayName: "Redactor Drone",
     artKey: runtimeSpriteKey("redactor-drone"),
     spriteSheet: true,
-    lore: "A hovering automated redaction unit. It drops black-bar stamps that linger before fading."
+    lore: "A hovering redaction unit. Leave the marked floor before its stamp lands; shelves block its sight. Strike with an owned review tool while it recovers."
   },
   {
     id: "enemy-censorship-wraith",
@@ -39,7 +44,7 @@ const DANNE_ENEMY_ENTRIES: readonly CodexEntry[] = [
     displayName: "Censorship Wraith",
     artKey: runtimeSpriteKey("censorship-wraith"),
     spriteSheet: true,
-    lore: "A slow vault threat with an ink-sweep attack. Keep spacing and wait for the review window."
+    lore: "A slow vault threat. Its gold floor mark warns of an ink sweep. Retreat before the mark turns red, then close in and strike during recovery."
   },
   ...SNES_ANTAGONIST_ASSETS.map((asset) => ({
     id: `enemy-${asset.id.replace(/_/g, "-")}`,
@@ -54,7 +59,7 @@ const DANNE_ENEMY_ENTRIES: readonly CodexEntry[] = [
     displayName: "DANN-E",
     artKey: "danne-boss-combat",
     spriteSheet: true,
-    lore: "Document Annihilating Neural Network Executable. Final boss; fires ego bolts and boasts between phases."
+    lore: "Document Annihilating Neural Network Executable.\n\nFace an incoming Ego bolt and swing an owned tool to return it. While DANN-E is stunned, close in with the Red Pencil.\n\nCombat cannot replace human review. Publish with a complete record and no unresolved standards violations."
   }
 ];
 
@@ -121,10 +126,27 @@ const DANNE_VARIANT_ENTRIES: readonly CodexEntry[] = DANNE_VARIANT_ASSETS.map((a
   category: "DANN-E Variants" as const,
   displayName: asset.displayName,
   artKey: asset.key,
-  lore: `DANN-E ${asset.phase} form. Locked until encountered in the warning, vault, or boss sequence.`
+  lore: `Field encounters: ${DANNE_ENEMY_VARIANTS[asset.variantId].behavior}. ${DANNE_ENEMY_VARIANTS[asset.variantId].defeatMethod}`
+    + (["colossus", "cloud", "swarm", "ascendant"].includes(asset.phase)
+      ? "\n\nBlack Vault final review: return Ego bolts to stun DANN-E, then strike with the Red Pencil. Preserve a complete reviewed record." : "")
 }));
 
 const ITEM_ENTRIES: readonly CodexEntry[] = [
+  {
+    id: "item-series-handbook",
+    category: "Items",
+    displayName: "Series Handbook",
+    startsUnlocked: true,
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
+    lore: ABOUT_SERIES_HANDBOOK_LORE
+  },
+  {
+    id: "item-source-note-47",
+    category: "Items",
+    displayName: "Source Note 47",
+    artKey: "source-note",
+    lore: "Trace and file the fictional training source note in Archive A1."
+  },
   ...DANNE_ITEM_CATALOG.map((item) => ({
     id: `item-${item.id}`,
     category: "Items" as const,
@@ -187,14 +209,19 @@ export function unlockCodexEntry(entryId: string) {
   return false;
 }
 
-export function getCodexEntries(category?: CodexCategory): CodexEntryReadout[] {
+export function getCodexEntries(category?: CodexCategory, documents: readonly DocumentCandidate[] = []): CodexEntryReadout[] {
   return CODEX_ENTRIES
     .filter((entry) => !category || entry.category === category)
-    .map((entry) => ({ ...entry, unlocked: isCodexEntryUnlocked(entry) }));
+    .map((entry) => {
+      if (entry.id !== "item-source-note-47") return { ...entry, unlocked: isCodexEntryUnlocked(entry) };
+      const document = documents.find(candidate => candidate.id === SOURCE_NOTE_47_ID);
+      const unlocked = Boolean(document?.citationComplete && document.firstFootnote && document.repository.trim());
+      return { ...entry, unlocked, lore: unlocked && document ? sourceNote47Pages(document).join("\n\n") : entry.lore };
+    });
 }
 
-export function getCodexReadout() {
-  const entries = getCodexEntries();
+export function getCodexReadout(documents: readonly DocumentCandidate[] = []) {
+  const entries = getCodexEntries(undefined, documents);
   return {
     storageKey: CODEX_STORAGE_KEY,
     unlocked: entries.filter((entry) => entry.unlocked).length,

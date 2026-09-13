@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 import {
   evaluateResearchCharterAnswer,
   getResearchCharterPrompt,
   researchCharterComplete,
-  RESEARCH_CHARTER_PROMPTS
+  RESEARCH_CHARTER_PROMPTS,
+  RESEARCH_CHARTER_SOURCE_URL
 } from "./researchCharter";
 
 describe("research charter prompts", () => {
@@ -13,6 +15,7 @@ describe("research charter prompts", () => {
       "research_route",
       "kellogg_selection"
     ]);
+    expect(RESEARCH_CHARTER_SOURCE_URL).toBe(ABOUT_SERIES_SOURCE.url);
   });
 
   it("accepts the correct FRUS production answer for every prompt", () => {

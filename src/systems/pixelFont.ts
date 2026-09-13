@@ -1,12 +1,7 @@
 import Phaser from "phaser";
+import { PIXEL_FONT_KEY, SMALL_PIXEL_FONT_KEY, SMALL_GLYPHS, pixelFontMetrics } from "./pixelFontMetrics";
 
-export const PIXEL_FONT_KEY = "ruby-rule-bitmap-font";
-const PIXEL_FONT_TEXTURE_KEY = "ruby-rule-bitmap-font-texture";
-const GLYPH_WIDTH = 5;
-const GLYPH_HEIGHT = 7;
-const CELL_WIDTH = 6;
-const CELL_HEIGHT = 8;
-const FONT_SIZE = 8;
+export { PIXEL_FONT_KEY } from "./pixelFontMetrics";
 
 const GLYPHS: Record<string, readonly string[]> = {
   " ": [".....", ".....", ".....", ".....", ".....", ".....", "....."],
@@ -123,11 +118,6 @@ type PatchedFactoryPrototype = Phaser.GameObjects.GameObjectFactory & {
   __rubyRuleOriginalText?: TextFactory;
 };
 
-function getPattern(character: string) {
-  const normalized = normalizeGlyph(character);
-  return GLYPHS[normalized] ?? GLYPHS["?"];
-}
-
 function normalizeGlyph(character: string) {
   const replacement = EXTRA_CHAR_NORMALIZATION.get(character);
   if (replacement) return replacement.toUpperCase();
@@ -137,15 +127,6 @@ function normalizeGlyph(character: string) {
 function normalizeTextValue(value: string | string[]) {
   const text = Array.isArray(value) ? value.join("\n") : value;
   return [...String(text)].map((character) => EXTRA_CHAR_NORMALIZATION.get(character) ?? character).join("");
-}
-
-function parseFontSize(size: TextStyle["fontSize"] | undefined) {
-  if (typeof size === "number" && Number.isFinite(size)) return Math.max(4, Math.round(size));
-  if (typeof size === "string") {
-    const parsed = Number.parseFloat(size);
-    if (Number.isFinite(parsed)) return Math.max(4, Math.round(parsed));
-  }
-  return FONT_SIZE;
 }
 
 function parseTint(color: TextStyle["color"] | string | undefined) {
@@ -170,8 +151,8 @@ function parseAlign(align: TextStyle["align"] | undefined) {
 
 function applyBitmapTextStyle(bitmapText: Phaser.GameObjects.BitmapText, style?: TextStyle) {
   if (!style) return bitmapText;
-  bitmapText.setFontSize(parseFontSize(style.fontSize));
-  bitmapText.setTint(parseTint(style.color));
+  if (style.fontSize !== undefined) bitmapText.setFontSize(pixelFontMetrics(style.fontSize).fontSize);
+  if (style.color !== undefined) bitmapText.setTint(parseTint(style.color));
   if (style.align === "center") bitmapText.setCenterAlign();
   if (style.align === "right") bitmapText.setRightAlign();
   if (style.align === "left") bitmapText.setLeftAlign();
@@ -188,6 +169,14 @@ function applyBitmapTextStyle(bitmapText: Phaser.GameObjects.BitmapText, style?:
 function installCompatibilityMethods(bitmapText: Phaser.GameObjects.BitmapText) {
   const text = bitmapText as PixelTextObject;
   const originalSetText = bitmapText.setText.bind(bitmapText);
+  const originalSetFontSize = bitmapText.setFontSize.bind(bitmapText);
+
+  bitmapText.setFontSize = (size: number) => {
+    const metrics = pixelFontMetrics(size);
+    if (bitmapText.font !== metrics.key) bitmapText.setFont(metrics.key, metrics.fontSize);
+    originalSetFontSize(metrics.fontSize);
+    return bitmapText;
+  };
 
   text.setText = (value) => {
     originalSetText(normalizeTextValue(value));
@@ -223,7 +212,14 @@ function installCompatibilityMethods(bitmapText: Phaser.GameObjects.BitmapText) 
   return text;
 }
 
-function buildFont(scene: Phaser.Scene) {
+function buildFont(scene: Phaser.Scene, small: boolean) {
+  const fontKey = small ? SMALL_PIXEL_FONT_KEY : PIXEL_FONT_KEY;
+  const textureKey = `${fontKey}-texture`;
+  const glyphWidth = small ? 3 : 5;
+  const glyphHeight = small ? 5 : 7;
+  const cellWidth = glyphWidth + 1;
+  const cellHeight = glyphHeight + 1;
+  const glyphs = small ? SMALL_GLYPHS : GLYPHS;
   const characters = [
     ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
     ..."abcdefghijklmnopqrstuvwxyz",
@@ -233,8 +229,8 @@ function buildFont(scene: Phaser.Scene) {
   const uniqueCharacters = [...new Set(characters)];
   const columns = 16;
   const rows = Math.ceil(uniqueCharacters.length / columns);
-  const width = columns * CELL_WIDTH;
-  const height = rows * CELL_HEIGHT;
+  const width = columns * cellWidth;
+  const height = rows * cellHeight;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -246,9 +242,9 @@ function buildFont(scene: Phaser.Scene) {
 
   const chars: Record<number, RuntimeBitmapFontCharacterData> = {};
   uniqueCharacters.forEach((character, index) => {
-    const x = (index % columns) * CELL_WIDTH;
-    const y = Math.floor(index / columns) * CELL_HEIGHT;
-    const pattern = getPattern(character);
+    const x = (index % columns) * cellWidth;
+    const y = Math.floor(index / columns) * cellHeight;
+    const pattern = glyphs[normalizeGlyph(character)] ?? glyphs["?"];
     pattern.forEach((row, rowIndex) => {
       [...row].forEach((pixel, colIndex) => {
         if (pixel === "#") context.fillRect(x + colIndex, y + rowIndex, 1, 1);
@@ -259,42 +255,42 @@ function buildFont(scene: Phaser.Scene) {
     chars[code] = {
       x,
       y,
-      width: isSpace ? 3 : GLYPH_WIDTH,
-      height: GLYPH_HEIGHT,
-      centerX: Math.floor(GLYPH_WIDTH / 2),
-      centerY: Math.floor(GLYPH_HEIGHT / 2),
+      width: isSpace ? glyphWidth - 2 : glyphWidth,
+      height: glyphHeight,
+      centerX: Math.floor(glyphWidth / 2),
+      centerY: Math.floor(glyphHeight / 2),
       xOffset: 0,
       yOffset: 0,
-      xAdvance: isSpace ? 4 : CELL_WIDTH,
+      xAdvance: isSpace ? cellWidth - 2 : cellWidth,
       data: {},
       kerning: {},
       u0: x / width,
       v0: y / height,
-      u1: (x + (isSpace ? 3 : GLYPH_WIDTH)) / width,
-      v1: (y + GLYPH_HEIGHT) / height
+      u1: (x + (isSpace ? glyphWidth - 2 : glyphWidth)) / width,
+      v1: (y + glyphHeight) / height
     };
   });
 
-  const texture = scene.textures.addCanvas(PIXEL_FONT_TEXTURE_KEY, canvas);
+  const texture = scene.textures.addCanvas(textureKey, canvas);
   texture?.setFilter(Phaser.Textures.FilterMode.NEAREST);
 
   const fontData: BitmapFontData = {
-    font: PIXEL_FONT_KEY,
-    size: FONT_SIZE,
-    lineHeight: CELL_HEIGHT,
+    font: fontKey,
+    size: cellHeight,
+    lineHeight: cellHeight,
     retroFont: true,
     chars
   };
-  scene.cache.bitmapFont.add(PIXEL_FONT_KEY, {
+  scene.cache.bitmapFont.add(fontKey, {
     data: fontData,
-    texture: PIXEL_FONT_TEXTURE_KEY,
+    texture: textureKey,
     frame: null
   });
 }
 
 export function ensurePixelBitmapFont(scene: Phaser.Scene) {
-  if (scene.cache.bitmapFont.has(PIXEL_FONT_KEY)) return;
-  buildFont(scene);
+  if (!scene.cache.bitmapFont.has(PIXEL_FONT_KEY)) buildFont(scene, false);
+  if (!scene.cache.bitmapFont.has(SMALL_PIXEL_FONT_KEY)) buildFont(scene, true);
 }
 
 export function installPixelTextFactory() {
@@ -314,16 +310,17 @@ export function installPixelTextFactory() {
     if (!scene.cache.bitmapFont.has(PIXEL_FONT_KEY)) {
       return originalText.call(this, x, y, text, style);
     }
+    const metrics = pixelFontMetrics(style?.fontSize);
     const bitmapText = this.bitmapText(
       Math.round(x),
       Math.round(y),
-      PIXEL_FONT_KEY,
+      metrics.key,
       normalizeTextValue(text),
-      parseFontSize(style?.fontSize),
+      metrics.fontSize,
       parseAlign(style?.align)
     );
-    applyBitmapTextStyle(bitmapText, style);
     installCompatibilityMethods(bitmapText);
+    applyBitmapTextStyle(bitmapText, style);
     return bitmapText as unknown as Phaser.GameObjects.Text;
   } as TextFactory;
   factoryPrototype.__rubyRulePixelTextPatched = true;

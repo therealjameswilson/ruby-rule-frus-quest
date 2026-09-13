@@ -1,5 +1,60 @@
 # DANN-E Enemy Design
 
+## Victory Handoff
+
+After final room clearance, the compact objective reads `ROUTES OPEN` and the
+action band invites exploration instead of repeating a tool attack. Nearby
+interactions take priority; a pending wave does not get the exploration cue.
+NARA then points to `TO CATALOG DESK`. English, Spanish and French exploration
+strings are present. No room-clear requirements or rewards changed.
+
+The two-wave browser replay asserts the rendered objective and cleared-room
+cue, then walks out. Final screenshot inspected at
+`/private/tmp/frus-victory-handoff-final/exploration-handoff.png` (2026-09-13).
+This debug-tool encounter check is not an earned-route or novice-playtest claim.
+
+## Swing Identity Contract
+
+The same owned-tool gate also covers ordinary strikes in `DanneMapScene`;
+the separately owned Ruby Pen retains its alternate attack path. Hidden shelf
+interactions already require the Review Folder. The browser regression checks
+both gameplay-map and NARA expansion empty-slot input. An earned touch boss
+opening also passed simultaneous movement/swing, boast skip and one returned
+bolt (Colossus HP180 -> 152); this is not a complete fight replay. Evidence:
+`/private/tmp/frus-expansion-owned-swing/` and `/private/tmp/frus-owned-tool-boss/`.
+Build and 1,706 tests pass (2026-09-13); native feedback/core captures inspected.
+
+Gameplay-map input uses `tryEquippedToolSwing` before starting the weapon
+controller. Empty, noncombat or unowned slots cannot normalize into a free
+Citation Stamp. The scene gives a short equip prompt; owned tools keep their
+existing timing and attack buffering. Browser proof now attempts an empty-slot
+swing before the menu-swap fixture and asserts the swing counter does not
+advance. Native feedback inspected at `/private/tmp/frus-owned-swing/`.
+Build and 1,705 tests pass (2026-09-13).
+
+Follow-up browser proof (2026-09-13): `qa-swing-menu-identity.mjs` opens the
+real tool menu during a Folder windup/active phase, selects and equips Pencil,
+then resumes. Observed enemy-check arguments retain Folder for that swing and
+use Pencil on the next input. No callbacks, damage outcomes or progression
+were changed by the observer. This debug-tool check verifies live identity
+across pause/resume, not that these particular swings damaged an enemy.
+Native menu/next-swing captures inspected; no browser errors. Evidence:
+`/private/tmp/frus-swing-menu-identity/`. This closes the mid-swing browser
+coverage limitation in the earlier note below.
+
+Enemy weakness checks use the tool captured by the player's weapon controller
+at swing start, matching that swing's hitbox and VFX. Changing the equipped item
+from a menu does not transform an attack already in flight; the next swing uses
+the new selection. Damage, knockback and cooldown rules remain unchanged.
+
+Verified 2026-09-13 with three scene regression cases (Stamp, Pencil, Folder),
+existing enemy damage tests, and the browser's two-wave NARA/menu-swap/exit
+route. The browser route grants tools for QA and does not specifically time a
+menu swap inside an active frame; that case is covered by the scene tests.
+Build and all 1,703 tests pass. Native route and standard swing captures inspected
+under `/private/tmp/frus-swing-identity-waves/` and
+`/private/tmp/frus-swing-identity-client/`. No public deployment.
+
 Design reference for the eight canonical **DANN-E** variants (Document Annihilating
 Neural Network Executable), the rogue-AI antagonist of *Ruby Rule: The FRUS Quest*.
 This doc is written for Codex implementation: each variant lists concrete stats and
@@ -228,3 +283,89 @@ The Black Vault currently uses this loop to open its west and north blast doors.
 DANN-E is a fictional rogue-AI antagonist. American-flag and State Department motifs in some
 variants reflect the game's U.S. diplomatic-history setting and carry no partisan framing;
 the Senator and Executive forms are deliberately ambiguous.
+
+## Final Review Combat Recovery (2026-09-04)
+
+These rules describe `DanneBoss` in the critical-path Black Vault, not the
+separate room-enemy roster above. Its active tool is the owned Red Pencil (or
+the existing Ruby Pen), with one damage application per active swing. The
+current boss also accepts returned Ego bolts; see the counter-loop update below.
+
+- Ego bolts cost 10 reliability; swarm contact costs 5. Accepted hits provide
+  1,000 ms of recovery protection. Each phase starts with 900 ms of grace after
+  its cutscene. Projectiles disappear on contact and retain unrounded motion
+  internally, with only their displayed coordinates snapped to pixels.
+- Combat damage is temporary pressure, not a standards-ledger accusation. Its
+  actual clamped amount persists in `sceneProgress.blackVaultCombatDamage`.
+  Retry, retreat, interrupted-fight restoration, and legitimate victory recover
+  only this amount. Separate standards penalties and document flags remain.
+- At zero hearts, A retries the current phase with earned boss damage retained; B returns to the
+  arena entrance. Neither option grants a defeat, removes documents, or repeats
+  completed phases during a retry. The choice consumes its action input. Long
+  waits on Retry do not extend the new phase's grace period.
+- Reload/re-entry restores the saved phase and remaining HP, with cleared
+  projectiles, a short recap, and normal entry grace. It preserves elapsed
+  deadline time and does not reapply an already-recorded deadline penalty.
+  Checkpoints use existing numeric scene-progress fields; legacy phase-only
+  saves resume that phase at full HP. A normal new phase still starts at full HP.
+- All normal phases retain 180 HP, with Cloud taking half Red Pencil damage.
+  Cloud Shift warns for 800 ms, its stationary spread for 700 ms, and each attack
+  has a 2,000 ms recovery window. A stationary window separates Cloud Shifts so
+  the player can reach and counter the boss before another move.
+- The entrance still requires 70 reliability. The final hit checks the prepared
+  record independently of current combat hearts, so a surviving player is not
+  trapped below the entrance threshold. Publication still requires every
+  original record, tool, standards, and reliability check.
+- The HUD keeps the equipped-tool action visible during combat. Clock and boss
+  chrome hide while choosing retry or the omission shortcut, then restore when
+  combat resumes. Wrong tools do no damage and retain knockback feedback.
+
+### Verification
+
+1. Use the ordinary Black Vault entrance with a prepared record, or the existing
+   `?scene=BlackVaultLairScene` QA seed. Move north to the core and interact.
+2. Take an Ego bolt: one heart is lost, the shot disappears, and immediate
+   overlapping hits do not debit again during recovery.
+3. Return an Ego bolt to open the core. Attack with the wrong tool, then the Red
+   Pencil. Only the owned Red Pencil's active swing damages the exposed core,
+   once per swing (the existing Ruby Pen upgrade also works).
+4. Pause during a telegraph. Shots, the target countdown, and hearts stay still.
+5. Lose all hearts, wait several seconds, then retry. Check current-phase HP,
+   prompt dismissal, ordinary attack timing, unchanged documents, and no reward.
+   Repeat with B to retreat, then enter again.
+6. Defeat Colossus, Swarm, and Cloud without a win shortcut. Complete the five
+   binding packets, publish, and confirm the saved certification is `published`.
+
+The production-browser run completed step 6 using normal 180-HP phases, two
+Cloud retries, and rejection of the deadline omission offer. Combat recovery
+left 96 reliability after the separate deadline penalty; bindery work restored
+it to 100. Unit coverage and 375x667/DPR-3 Chromium touch checks cover hit windows,
+retry/retreat, choice input, and saved pressure. A separate `bossQuick=1` UI test
+verified the deadline choice and a touch Red Pencil hit; it is not the evidence
+for normal boss completion. Real iPhone/Safari and the secret Ascendant route
+remain unverified in this pass.
+
+## Live Final-Review Counter Loop (2026-09-05)
+
+This supersedes the earlier free-melee behavior of `DanneBoss`, not the separate
+room-enemy roster. A real earned-save baseline lost 84 of 180 boss HP to three
+Red Pencil swings without any returned bolt. That skipped the Guide lesson.
+
+- Colossus, Swarm, Cloud and Ascendant now protect their cores until a returned
+  Ego bolt actually hits. Any owned combat tool can return a bolt during its
+  active frames. Protected swings recoil, do no damage, and show a short HUD hint.
+- The return still deals 28 damage. It opens a 2,000 ms follow-up window, with
+  the existing pale tint and a shrinking 24x2-pixel timer below the boss. A new
+  Red Pencil swing deals the original 28 damage (14 to Cloud); the Ruby Pen
+  keeps its existing 35-damage upgrade. The returning swing cannot also count
+  as the follow-up. Closing, phase changes, retry, defeat and disposal clear
+  the indicator. Pause freezes the opening rather than consuming it.
+- The earlier 1,400 ms opening was too tight for approach plus weapon recovery
+  in the earned playthrough. Two seconds allows deliberate follow-up strikes
+  without changing player input, movement, enemy HP, incoming damage or the
+  publication clock. A return remains useful even if the player cannot close in.
+- `bossCombat.coreOpen` reports the transient exposure; no new save fields or
+  schema version. Final reviewed-record requirements, temporary pressure
+  recovery, one-time rewards and the binding-room transition are unchanged.
+
+Replay and evidence are documented in [Boss Counter Loop](BOSS_COUNTER_LOOP.md).

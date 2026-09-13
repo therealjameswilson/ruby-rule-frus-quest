@@ -1,6 +1,7 @@
 import type { StandardViolation } from "../systems/standardsDamage";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 
-export const STATUTORY_CLOCK_SOURCE_URL = "https://history.state.gov/historicaldocuments/about-frus";
+export const STATUTORY_CLOCK_SOURCE_URL = ABOUT_SERIES_SOURCE.url;
 export const STATUTORY_DEADLINE_YEARS = 30;
 export const STATUTORY_START_YEAR = 20;
 export const STATUTORY_COMPLETION_PRESSURE_YEARS = 8.5;
@@ -33,6 +34,7 @@ export interface StatutoryClockInput {
 }
 
 export interface StatutoryClockReadout {
+  deadlineMissed: boolean;
   sourceBasis: string;
   sourceUrl: string;
   elapsedYears: number;
@@ -77,21 +79,22 @@ export function getStatutoryClockReadout(input: StatutoryClockInput): StatutoryC
   );
   const yearsRemaining = Math.max(0, STATUTORY_DEADLINE_YEARS - elapsedYears);
   const missingSummary = [...input.readiness.missingSummary];
-  const deadlineMissed = elapsedYears >= STATUTORY_DEADLINE_YEARS && !input.readiness.buckramGateOpen;
+  const deadlineMissed = Boolean(input.deadlineDamageApplied)
+    || elapsedYears >= STATUTORY_DEADLINE_YEARS && !input.readiness.buckramGateOpen;
   const status: StatutoryClockStatus = input.finalGatePublished
     ? "published"
     : input.readiness.buckramGateOpen
       ? "buckram_gate_open"
-      : deadlineMissed || input.deadlineDamageApplied
+      : deadlineMissed
         ? "deadline_missed"
         : elapsedYears >= STATUTORY_AT_RISK_YEAR
           ? "at_risk"
           : "running";
   const suffix = missingSummary.length ? `; missing ${missingSummary.join(", ")}` : "";
   const label = status === "published"
-    ? "Published within the 30-year mandate"
+    ? deadlineMissed ? "Published after the 30-year deadline" : "Published within the 30-year mandate"
     : status === "buckram_gate_open"
-      ? `Buckram Gate open at ${elapsedYears.toFixed(1)} / 30 years`
+      ? deadlineMissed ? "Buckram Gate open; 30-year deadline missed" : `Buckram Gate open at ${elapsedYears.toFixed(1)} / 30 years`
       : status === "deadline_missed"
         ? `30-year deadline missed${suffix}`
         : status === "at_risk"
@@ -99,6 +102,7 @@ export function getStatutoryClockReadout(input: StatutoryClockInput): StatutoryC
           : `Statutory Clock running: ${elapsedYears.toFixed(1)} / 30 years${suffix}`;
 
   return {
+    deadlineMissed,
     sourceBasis: "FRUS statute mandates publication of volumes 30 years after the events they document.",
     sourceUrl: STATUTORY_CLOCK_SOURCE_URL,
     elapsedYears,

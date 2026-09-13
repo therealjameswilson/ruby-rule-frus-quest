@@ -57,7 +57,7 @@ describe("NARA Stacks pacing invariants", () => {
     const note = nara.interactions.find((interaction) => interaction.id === "stacks-note");
     expect(note).toBeDefined();
     const clearance = minDistanceToPatrolRoutes(note!, nara.patrolRoutes);
-    expect(clearance).toBeGreaterThanOrEqual(PATROL_HOTSPOT_MIN_CLEARANCE);
+    expect(clearance).toBeGreaterThan(REDACTOR_DRONE_STAMP_TRIGGER_RADIUS);
     // Read-before-threat: the note is nearer the spawn than the first sweep lane.
     const spawnToNote = Math.hypot(note!.x - nara.spawn.x, note!.y - nara.spawn.y);
     expect(spawnToNote).toBeLessThan(spawnPatrolClearance(nara));
@@ -65,6 +65,14 @@ describe("NARA Stacks pacing invariants", () => {
 
   it("keeps the spawn outside drone stamp range so arrival is not a free hit", () => {
     expect(spawnPatrolClearance(nara)).toBeGreaterThanOrEqual(REDACTOR_DRONE_STAMP_TRIGGER_RADIUS);
+  });
+
+  it("places the reward beyond both crossings, in a reachable upper aisle", () => {
+    const fragment = nara.interactions.find((interaction) => interaction.id === "nara-treaty-fragment")!;
+    expect(fragment.y).toBeLessThan(92);
+    expect(fragment.radius).toBeLessThan(92 - fragment.y);
+    expect(nara.solids.some((solid) => fragment.x - 8 < solid.x + solid.width && fragment.x + 8 > solid.x
+      && fragment.y - 3 < solid.y + solid.height && fragment.y + 5 > solid.y)).toBe(false);
   });
 });
 

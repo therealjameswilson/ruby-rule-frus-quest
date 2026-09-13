@@ -10,6 +10,24 @@ export interface IntegerZoomMetrics {
   canvasCssHeight: number;
   canvasBackingWidth: number;
   canvasBackingHeight: number;
+  physicalPixelsX: number;
+  physicalPixelsY: number;
+  canvasDeviceLeft: number;
+  canvasDeviceTop: number;
+  originAligned: boolean;
+  viewportScale: number;
+}
+
+export interface PixelViewport {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  dpr: number;
+}
+
+export function normalizeDevicePixelRatio(dpr: number) {
+  return Number.isFinite(dpr) && dpr > 0 ? dpr : 1;
 }
 
 export function snapPixel(value: number) {
@@ -39,21 +57,78 @@ export function computeIntegerZoom(viewW: number, viewH: number) {
 // game pixel to a whole number of device pixels, so SNES art stays crisp. On
 // dpr=1 desktops this is identical to computeIntegerZoom.
 export function computeDeviceIntegerZoom(viewW: number, viewH: number, dpr: number) {
-  const safeDpr = Math.max(1, dpr);
+  const safeDpr = normalizeDevicePixelRatio(dpr);
   const deviceW = viewW * safeDpr;
   const deviceH = viewH * safeDpr;
   return Math.max(1, Math.floor(Math.min(deviceW / GAME_WIDTH, deviceH / GAME_HEIGHT)));
 }
 
-function getViewportSize() {
+export function computeIntegerCanvasLayout(viewport: PixelViewport) {
+  const dpr = normalizeDevicePixelRatio(viewport.dpr);
+  const deviceZoom = computeDeviceIntegerZoom(viewport.width, viewport.height, dpr);
+  const cssZoom = deviceZoom / dpr;
+  const width = GAME_WIDTH * cssZoom;
+  const height = GAME_HEIGHT * cssZoom;
+  const center = (start: number, available: number, size: number) => {
+    const minimum = Math.ceil(start * dpr);
+    const maximum = Math.max(minimum, Math.floor((start + available - size) * dpr + 1e-8));
+    return Math.max(minimum, Math.min(maximum, Math.round((start + (available - size) / 2) * dpr))) / dpr;
+  };
+  return { dpr, deviceZoom, cssZoom, width, height,
+    x: center(viewport.x, viewport.width, width), y: center(viewport.y, viewport.height, height) };
+}
+
+function getViewport(): PixelViewport {
   const bodyStyle = window.getComputedStyle(document.body);
   const paddingX = parseFloat(bodyStyle.paddingLeft || "0") + parseFloat(bodyStyle.paddingRight || "0");
   const paddingY = parseFloat(bodyStyle.paddingTop || "0") + parseFloat(bodyStyle.paddingBottom || "0");
   const viewport = window.visualViewport;
   return {
-    width: Math.max(160, (viewport?.width ?? window.innerWidth) - paddingX),
-    height: Math.max(160, (viewport?.height ?? window.innerHeight) - paddingY)
+    x: (viewport?.offsetLeft ?? 0) + parseFloat(bodyStyle.paddingLeft || "0"),
+    y: (viewport?.offsetTop ?? 0) + parseFloat(bodyStyle.paddingTop || "0"),
+    width: Math.max(1, (viewport?.width ?? window.innerWidth) - paddingX),
+    height: Math.max(1, (viewport?.height ?? window.innerHeight) - paddingY),
+    dpr: normalizeDevicePixelRatio(window.devicePixelRatio)
   };
+}
+
+export function configureIntegerGameShellScale() {
+  const layout = computeIntegerCanvasLayout(getViewport());
+  const shell = document.getElementById("game-shell");
+  if (shell) {
+    shell.style.width = `${layout.width}px`;
+    shell.style.height = `${layout.height}px`;
+    shell.style.left = "0";
+    shell.style.top = "0";
+    // Position in the compositor: layout-only offsets can round to CSS pixels
+    // before a fractional DPR is applied, softening even integer-sized texels.
+    shell.style.transform = `translate3d(${layout.x}px, ${layout.y}px, 0)`;
+    shell.dataset.scale = String(layout.cssZoom);
+    shell.dataset.deviceScale = String(layout.deviceZoom);
+  }
+  return layout;
+}
+
+export function measurePixelScale(
+  rect: { x: number; y: number; width: number; height: number },
+  rawDpr: number,
+  target: number,
+  viewportScale = 1
+) {
+  const dpr = normalizeDevicePixelRatio(rawDpr);
+  const effectiveDpr = dpr * viewportScale;
+  const physicalPixelsX = rect.width / GAME_WIDTH * effectiveDpr;
+  const physicalPixelsY = rect.height / GAME_HEIGHT * effectiveDpr;
+  const canvasDeviceLeft = rect.x * effectiveDpr;
+  const canvasDeviceTop = rect.y * effectiveDpr;
+  // CSS layout can quantize positions to 1/64 CSS px. Never tolerate half a device pixel.
+  const positionTolerance = Math.min(0.1, effectiveDpr / 64 + 1e-6);
+  const aligned = (position: number) => Math.abs(position - Math.round(position)) <= positionTolerance;
+  const originAligned = aligned(canvasDeviceLeft) && aligned(canvasDeviceTop);
+  return { computedZoom: rect.width / GAME_WIDTH, dpr, physicalPixelsX, physicalPixelsY,
+    canvasDeviceLeft, canvasDeviceTop, originAligned, viewportScale,
+    integerZoom: target >= 1 && isIntegerScale(target) && originAligned
+      && Math.abs(physicalPixelsX - target) < 0.001 && Math.abs(physicalPixelsY - target) < 0.001 };
 }
 
 function roundActiveCameras(game: Phaser.Game) {
@@ -65,33 +140,33 @@ function roundActiveCameras(game: Phaser.Game) {
 }
 
 export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
-  const { width, height } = getViewportSize();
-  const dpr = Math.max(1, Math.round(window.devicePixelRatio || 1));
-  const deviceZoom = computeDeviceIntegerZoom(width, height, dpr);
-  // CSS zoom may be fractional (e.g. 4/3 on an iPhone), but the backing store is
-  // an exact integer multiple of the base resolution, so each game pixel still
-  // maps to `deviceZoom` physical pixels and stays crisp.
-  const cssZoom = deviceZoom / dpr;
-  const canvasCssWidth = GAME_WIDTH * cssZoom;
-  const canvasCssHeight = GAME_HEIGHT * cssZoom;
+  const { cssZoom, deviceZoom, dpr } = configureIntegerGameShellScale();
   const canvas = game.canvas;
 
+  game.scale.getParentBounds();
   if (Math.abs(game.scale.zoom - cssZoom) > 0.001) game.scale.setZoom(cssZoom);
-  canvas.style.width = `${canvasCssWidth}px`;
-  canvas.style.height = `${canvasCssHeight}px`;
+  // Keep the painted surface native-sized; fractional CSS widths may be rounded
+  // before rasterization. Scale the compositor layer instead of its layout box.
+  canvas.style.width = `${GAME_WIDTH}px`;
+  canvas.style.height = `${GAME_HEIGHT}px`;
+  canvas.style.transformOrigin = "0 0";
+  canvas.style.transform = `scale(${cssZoom})`;
+  canvas.style.margin = "0";
   // Phaser owns the logical drawing buffer and camera viewports. Resizing either
   // after WebGL initialization clears the buffer and moves the 256x240 camera
   // into physical-pixel space. CSS nearest-neighbor scaling still maps each
   // logical pixel to exactly `deviceZoom` physical pixels.
   roundActiveCameras(game);
+  // Refresh pointer mapping after CSS positioning, without resizing the logical world.
+  game.scale.updateBounds();
+  const rect = canvas.getBoundingClientRect();
+  game.scale.displayScale.set(GAME_WIDTH / rect.width, GAME_HEIGHT / rect.height);
 
   return {
-    computedZoom: cssZoom,
+    ...measurePixelScale(rect, dpr, deviceZoom, window.visualViewport?.scale ?? 1),
     integerZoomTarget: deviceZoom,
-    integerZoom: isIntegerScale(cssZoom * dpr),
-    dpr,
-    canvasCssWidth,
-    canvasCssHeight,
+    canvasCssWidth: rect.width,
+    canvasCssHeight: rect.height,
     canvasBackingWidth: canvas.width,
     canvasBackingHeight: canvas.height
   };

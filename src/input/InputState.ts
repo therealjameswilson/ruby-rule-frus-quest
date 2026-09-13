@@ -71,6 +71,7 @@ interface InputCallbacks {
   openSpriteGallery?: () => void;
   fastForwardDialog?: () => void;
   handlePauseTouch?: (point: { x: number; y: number }) => boolean;
+  isTouchControlPoint?: (point: { x: number; y: number }) => boolean;
 }
 
 type InputGestureKind = "keyboard" | "pointer" | "gamepad";
@@ -145,11 +146,20 @@ const emptyState: InputState = {
 // keypress from a cloud/automation browser) can be added to and removed from
 // `keyboardDown` between two tickInput() samples, so the held check never sees
 // it and the player visibly does not move (live audit, 2026-06-15). Latch each
-// direction code's most-recent keydown time; tickInput treats a direction as
-// "down" while its latch is fresh, turning an imperceptible tap into a small,
-// visible nudge without changing how held movement or collision works.
+// direction code's most-recent keydown time until the next sample. Consume it
+// after that sample so a released key cannot cause another 110ms of movement.
+// This is an expiry for unobserved taps, not a minimum movement duration.
 export const TAP_MOVEMENT_HOLD_MS = 110;
 const directionTapLatch = new Map<string, number>();
+// Menu taps re-arm independently of whether a direction is still held.
+const pendingNavigationPresses = new Set<CardinalDirection>();
+
+function latchDirectionPress(code: string) {
+  const direction = directionKeyMap[code];
+  if (!direction) return;
+  directionTapLatch.set(code, nowProvider());
+  pendingNavigationPresses.add(direction);
+}
 
 // Action / confirm / cancel keys suffer the same too-short-tap drop as movement
 // did (live audit, 2026-06-15): a keydown+keyup that both land between two
@@ -172,6 +182,12 @@ const ACTION_LATCH_CODES = new Set<string>([
   "Tab"
 ]);
 const actionTapLatch = new Map<string, number>();
+const pendingActionPresses = new Set<string>();
+function latchActionPress(code: string) {
+  if (!ACTION_LATCH_CODES.has(code)) return;
+  actionTapLatch.set(code, nowProvider());
+  pendingActionPresses.add(code);
+}
 let nowProvider: () => number = () =>
   typeof performance !== "undefined" ? performance.now() : Date.now();
 
@@ -180,6 +196,7 @@ let previousState: InputState = { ...emptyState, dir: { ...emptyState.dir } };
 const keyboardDown = new Set<string>();
 const touchDown = new Set<TouchControlKey>();
 const touchTapLatch = new Map<TouchControlKey, number>();
+const pendingTouchPresses = new Set<TouchControlKey>();
 const pendingTypedCharacters: string[] = [];
 const pendingPointerStarts: Array<{ x: number; y: number }> = [];
 const activePointerIds = new Set<number>();
@@ -193,6 +210,12 @@ let lastGamepadLabel: string | null = null;
 let lastGamepadEvent = "idle";
 let swallowNextFrame = false;
 let suppressEscEdgesUntilRelease = false;
+let nativeTextEntryActive = false;
+
+export function setNativeTextEntryActive(active: boolean) {
+  nativeTextEntryActive = active;
+  swallowNextInputFrame();
+}
 let gamepadSnapshot: GamepadSnapshot = {
   connected: false,
   index: null,
@@ -221,7 +244,7 @@ function isKeyboardDown(...codes: string[]) {
 }
 
 // True when a direction code is physically held, or was tapped within the last
-// TAP_MOVEMENT_HOLD_MS so a too-short tap still registers as a brief hold.
+// TAP_MOVEMENT_HOLD_MS and has not yet been sampled.
 function isDirectionActive(...codes: string[]) {
   if (isKeyboardDown(...codes)) return true;
   const now = nowProvider();
@@ -395,6 +418,7 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   initialized = true;
 
   window.addEventListener("keydown", (event) => {
+    if (nativeTextEntryActive) return;
     if (!event.repeat) notifyInputGesture("keyboard");
     if (event.key === "F11" && !event.repeat) {
       event.preventDefault();
@@ -424,11 +448,9 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
     preventGameKeyDefault(event);
     if (!event.repeat && directionKeyMap[event.code]) {
       lastDirection = directionKeyMap[event.code]!;
-      directionTapLatch.set(event.code, nowProvider());
+      latchDirectionPress(event.code);
     }
-    if (!event.repeat && ACTION_LATCH_CODES.has(event.code)) {
-      actionTapLatch.set(event.code, nowProvider());
-    }
+    if (!event.repeat && !keyboardDown.has(event.code)) latchActionPress(event.code);
     keyboardDown.add(event.code);
     if (!event.repeat && /^[a-zA-Z]$/.test(event.key) && !event.metaKey && !event.ctrlKey && !event.altKey) {
       pendingTypedCharacters.push(event.key);
@@ -436,12 +458,14 @@ export function initializeInput(nextCallbacks: InputCallbacks = {}) {
   });
 
   window.addEventListener("keyup", (event) => {
+    if (nativeTextEntryActive) return;
     preventGameKeyDefault(event);
     keyboardDown.delete(event.code);
     if (event.code === "Escape") suppressEscEdgesUntilRelease = false;
   });
 
   window.addEventListener("pointerdown", (event) => {
+    if (nativeTextEntryActive) return;
     notifyInputGesture("pointer");
     pendingPointerStarts.push({ x: event.clientX, y: event.clientY });
     const metrics = window.rubyRuleMobileMetrics;
@@ -483,6 +507,10 @@ export function handlePauseTouch(point: { x: number; y: number }) {
   return callbacks.handlePauseTouch?.(point) ?? false;
 }
 
+export function isTouchControlPoint(point: { x: number; y: number }) {
+  return callbacks.isTouchControlPoint?.(point) ?? false;
+}
+
 export function addInputGestureListener(callback: InputGestureCallback) {
   inputGestureCallbacks.add(callback);
   return () => inputGestureCallbacks.delete(callback);
@@ -512,10 +540,17 @@ export function getPrimaryActionBadge() {
   return isTouchInputCapable() ? "A" : "Z";
 }
 
+export function getSecondaryActionBadge() {
+  return isTouchInputCapable() || gamepadConnected ? "B" : "X";
+}
+
 export function tickInput() {
   previousState = cloneState(currentState);
-  if (swallowNextFrame) {
+  if (nativeTextEntryActive || swallowNextFrame) {
     swallowNextFrame = false;
+    pendingActionPresses.clear();
+    pendingTouchPresses.clear();
+    pendingNavigationPresses.clear();
     pendingTypedCharacters.length = 0;
     pendingPointerStarts.length = 0;
     currentState = { ...emptyState, dir: { ...emptyState.dir } };
@@ -583,6 +618,11 @@ export function tickInput() {
   const choiceD = isKeyboardDown("KeyD");
   const backspace = isKeyboardDown("Backspace");
 
+  // A second physical press must re-arm even while the first tap is latched.
+  const freshA = pendingActionPresses.has("Space") || pendingActionPresses.has("Enter") || pendingActionPresses.has("KeyZ") || pendingTouchPresses.has("space");
+  const freshB = pendingActionPresses.has("ShiftLeft") || pendingActionPresses.has("ShiftRight") || pendingActionPresses.has("KeyX") || pendingActionPresses.has("KeyB") || pendingTouchPresses.has("b");
+  const freshEscape = pendingActionPresses.has("Escape");
+
   currentState = {
     dir,
     left,
@@ -593,22 +633,22 @@ export function tickInput() {
     rightJustPressed: justPressed(right, previousState.right),
     upJustPressed: justPressed(up, previousState.up),
     downJustPressed: justPressed(down, previousState.down),
-    navLeftJustPressed: justPressed(navLeft, previousNavLeftDown),
-    navRightJustPressed: justPressed(navRight, previousNavRightDown),
-    navUpJustPressed: justPressed(navUp, previousNavUpDown),
-    navDownJustPressed: justPressed(navDown, previousNavDownDown),
-    confirmJustPressed: justPressed(confirm, previousConfirmDown),
-    cancelJustPressed: suppressEscEdgesUntilRelease && escDown ? false : justPressed(cancel, previousCancelDown),
+    navLeftJustPressed: pendingNavigationPresses.has("left") || justPressed(navLeft, previousNavLeftDown),
+    navRightJustPressed: pendingNavigationPresses.has("right") || justPressed(navRight, previousNavRightDown),
+    navUpJustPressed: pendingNavigationPresses.has("up") || justPressed(navUp, previousNavUpDown),
+    navDownJustPressed: pendingNavigationPresses.has("down") || justPressed(navDown, previousNavDownDown),
+    confirmJustPressed: freshA || justPressed(confirm, previousConfirmDown),
+    cancelJustPressed: suppressEscEdgesUntilRelease && escDown ? false : freshEscape || pendingTouchPresses.has("b") || justPressed(cancel, previousCancelDown),
     a,
-    aJustPressed: justPressed(a, previousState.a),
+    aJustPressed: freshA || justPressed(a, previousState.a),
     aJustReleased: justReleased(a, previousState.a),
     b,
-    bJustPressed: justPressed(b, previousState.b),
+    bJustPressed: freshB || justPressed(b, previousState.b),
     bJustReleased: justReleased(b, previousState.b),
     start,
-    startJustPressed: justPressed(start, previousState.start),
+    startJustPressed: pendingActionPresses.has("Enter") || pendingTouchPresses.has("start") || justPressed(start, previousState.start),
     select,
-    selectJustPressed: justPressed(select, previousState.select),
+    selectJustPressed: pendingActionPresses.has("Tab") || pendingTouchPresses.has("select") || justPressed(select, previousState.select),
     ability,
     abilityJustPressed: justPressed(ability, previousState.ability),
     menu,
@@ -620,7 +660,7 @@ export function tickInput() {
     fullscreen,
     fullscreenJustPressed: justPressed(fullscreen, previousState.fullscreen),
     pause,
-    pauseJustPressed: suppressEscEdgesUntilRelease && escDown ? false : justPressed(pause, previousState.pause),
+    pauseJustPressed: suppressEscEdgesUntilRelease && escDown ? false : freshEscape || justPressed(pause, previousState.pause),
     choiceAJustPressed: justPressed(choiceA, isKeyboardDownFromPrevious("choiceA")),
     choiceBJustPressed: justPressed(choiceB, isKeyboardDownFromPrevious("choiceB")),
     choiceCJustPressed: justPressed(choiceC, isKeyboardDownFromPrevious("choiceC")),
@@ -640,6 +680,14 @@ export function tickInput() {
   previousNavDownDown = navDown;
   previousConfirmDown = confirm;
   previousCancelDown = cancel;
+  directionTapLatch.clear();
+  touchTapLatch.delete("left");
+  touchTapLatch.delete("right");
+  touchTapLatch.delete("up");
+  touchTapLatch.delete("down");
+  pendingActionPresses.clear();
+  pendingTouchPresses.clear();
+  pendingNavigationPresses.clear();
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
 }
@@ -668,6 +716,7 @@ export function getInput(): Readonly<InputState> {
 
 export function setTouchControl(key: TouchControlKey, pressed: boolean) {
   if (pressed) {
+    if (!touchDown.has(key)) pendingTouchPresses.add(key);
     touchDown.add(key);
     touchTapLatch.set(key, nowProvider());
     if (key === "left" || key === "right" || key === "up" || key === "down") lastDirection = key;
@@ -724,7 +773,10 @@ export function resetInput() {
   touchDown.clear();
   touchTapLatch.clear();
   directionTapLatch.clear();
+  pendingNavigationPresses.clear();
   actionTapLatch.clear();
+  pendingActionPresses.clear();
+  pendingTouchPresses.clear();
   pendingTypedCharacters.length = 0;
   pendingPointerStarts.length = 0;
   activePointerIds.clear();
@@ -752,9 +804,9 @@ export function setKeyboardDownForTests(codes: readonly string[]) {
 }
 
 export function pressKeyForTests(code: string) {
+  if (!keyboardDown.has(code)) latchActionPress(code);
   keyboardDown.add(code);
-  if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
-  if (ACTION_LATCH_CODES.has(code)) actionTapLatch.set(code, nowProvider());
+  latchDirectionPress(code);
 }
 
 export function releaseKeyForTests(code: string) {
@@ -766,14 +818,14 @@ export function releaseKeyForTests(code: string) {
 // keydown time but leaves no physical key down. Used to verify tap-buffered
 // movement.
 export function tapDirectionForTests(code: string) {
-  if (directionKeyMap[code]) directionTapLatch.set(code, nowProvider());
+  latchDirectionPress(code);
 }
 
 // Same idea for the action/confirm/cancel keys: latch the keydown time without
 // leaving the key physically down, so a too-short A/Escape/B tap still produces
 // a single rising edge on the next tickInput().
 export function tapActionForTests(code: string) {
-  if (ACTION_LATCH_CODES.has(code)) actionTapLatch.set(code, nowProvider());
+  latchActionPress(code);
 }
 
 export function setNowProviderForTests(provider: (() => number) | null) {

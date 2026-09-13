@@ -1,4 +1,6 @@
 import type { ProcessItemId } from "./constants";
+import type { ChoiceOption } from "./types";
+import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 import { AI_ANNOTATION_REVIEW_PROMPTS } from "./aiAnnotationReview";
 import { EDITORIAL_METHODOLOGY_PROMPTS } from "./editorialMethodology";
 import { EDITORIAL_TREATMENT_PROMPTS } from "./editorialTreatment";
@@ -35,11 +37,11 @@ export const SILENT_READ_REVIEW_ITEMS = [
   {
     id: "mechanical-fix",
     label: "StateChat Mechanical Fix and Visible Bracket",
-    shortLabel: "DRAFT + [ ]",
+    shortLabel: "EDITOR DRAFT",
     kind: "mechanical",
     phase: "editor",
     destination: "editor-desk",
-    texture: "red-pencil",
+    texture: "proof-page",
     checkIds: [...promptIds(AI_ANNOTATION_REVIEW_PROMPTS), "visible-bracket"]
   },
   {
@@ -122,9 +124,123 @@ export const SILENT_READ_REVIEW_ITEMS = [
 
 export const SILENT_READ_REVIEW_TOTAL = SILENT_READ_REVIEW_ITEMS.length;
 
+interface ReviewDecision {
+  sourceUrl: string;
+  question: string;
+  context: string;
+  options: readonly ChoiceOption[];
+  correctValue: string;
+  successMessage: string;
+  failureMessage: string;
+}
+
+const REVIEW_DECISIONS: Partial<Record<(typeof SILENT_READ_REVIEW_ITEMS)[number]["id"], ReviewDecision>> = {
+  "mechanical-fix": {
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
+    question: "A passage is withheld. What prints in its place?",
+    context: "About the Series: withheld text must remain visibly accounted for.",
+    options: [
+      { key: "A", label: "Close the gap; print nothing", value: "hidden" },
+      { key: "B", label: "[3 lines not declassified]", value: "visible" }
+    ],
+    correctValue: "visible",
+    successMessage: "VISIBLE BRACKET ADDED",
+    failureMessage: "SHOW THE DELETION IN BRACKETS"
+  },
+  "referral-equity": {
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
+    question: "A document is withheld in full. What remains in the volume?",
+    context: "Keep its place in the chronology.",
+    options: [
+      { key: "A", label: "Heading, source note, page count", value: "accounted" },
+      { key: "B", label: "Nothing; remove its entry", value: "disappear" }
+    ],
+    correctValue: "accounted",
+    successMessage: "WITHHELD DOCUMENT ACCOUNTED FOR",
+    failureMessage: "KEEP THE WITHHELD ENTRY VISIBLE"
+  },
+  "editorial-ledger": {
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
+    question: "The proof lost a marginal note. Repair it.",
+    context: "Practice original: margin says 'Seen by President'. Proof: no note.",
+    options: [
+      { key: "A", label: "Leave the margin out", value: "omit_margin" },
+      { key: "B", label: "Describe it in a footnote", value: "note_margin" }
+    ],
+    correctValue: "note_margin",
+    successMessage: "MARGINAL NOTE RESTORED",
+    failureMessage: "PRESERVE THE MARGINAL NOTE"
+  },
+  "printer-copy": {
+    sourceUrl: ABOUT_SERIES_SOURCE.url,
+    question: "Repair this index reference.",
+    context: "Practice entry: Berlin -> page 74. The source is Document 18.",
+    options: [
+      { key: "A", label: "Berlin -> Document 18", value: "document_number" },
+      { key: "B", label: "Keep Berlin -> page 74", value: "page_number" }
+    ],
+    correctValue: "document_number",
+    successMessage: "INDEX REFERENCE REPAIRED",
+    failureMessage: "INDEX BY DOCUMENT, NOT PAGE"
+  }
+};
+
+export function silentReadDecision(itemId: string): ReviewDecision | undefined {
+  return Object.prototype.hasOwnProperty.call(REVIEW_DECISIONS, itemId)
+    ? REVIEW_DECISIONS[itemId as keyof typeof REVIEW_DECISIONS]
+    : undefined;
+}
+
+export function nextSilentReadStatus(previous: SilentReadReviewPhase, next: SilentReadReviewPhase): SilentReadReviewStatus {
+  // One folder travels between desks; crossing into a new room starts its packet.
+  return previous === "editor" && next !== "editor" ? "waiting" : "carried";
+}
+
+export function silentReadResumeRoom(progress: Readonly<Record<string, number>>, step: number): "E1" | "S1" {
+  if (progress.silentReadRoom === 0) return "E1";
+  if (progress.silentReadRoom === 1) return "S1";
+  return step > 0 ? "S1" : "E1";
+}
+
+const STATION_LABELS: Record<SilentReadStationId, string> = {
+  opennet: "OPENNET",
+  classnet: "CLASSNET",
+  "editor-desk": "EDITOR DESK",
+  "referral-tray": "REFERRAL TRAY",
+  "proof-table": "PROOF TABLE",
+  "consultation-desk": "CONSULT DESK",
+  "typeflow-rail": "TYPEFLOW RAIL"
+};
+
+export function silentReadObjective(
+  item: Pick<SilentReadReviewItem, "id" | "shortLabel" | "kind" | "destination"> | null,
+  status: SilentReadReviewStatus,
+  inCurrentRoom = true
+) {
+  if (!item) return "EXIT EAST - VAULT";
+  if (!inCurrentRoom) return "EXIT EAST - PROOF";
+  if (status === "waiting") return `TAKE ${item.shortLabel}`;
+  const station = STATION_LABELS[item.destination];
+  if (status === "carried") return `TO ${station}`;
+  if (status === "routed") {
+    return item.id === "mechanical-fix" ? "ADD VISIBLE BRACKET" : `CHECK ${station}`;
+  }
+  return `STAMP ${station}`;
+}
+
+export function editorHint(status: SilentReadReviewStatus | null, repair: "draft" | "proof" | null = null) {
+  if (repair === "draft") return "EDITOR DESK: REPAIR THE CUT";
+  if (repair === "proof") return "PROOF TABLE: RECHECK THE CUT";
+  if (status === "waiting") return "TAKE THE DRAFT BELOW ME";
+  if (status === "carried") return "BRING IT TO THE EDITOR DESK";
+  if (status === "routed") return "RESTORE THE MISSING BRACKET";
+  if (status === "verified") return "STAMP THE CHECKED DRAFT";
+  return "PENCIL READY. GO EAST";
+}
+
 export interface SilentReadRouteResult {
   ok: boolean;
-  item: SilentReadReviewItem;
+  item: SilentReadReviewItem | null;
   reason?: string;
 }
 
@@ -133,7 +249,10 @@ export function routeSilentReadReviewItem(
   itemId: string,
   stationId: SilentReadStationId
 ): SilentReadRouteResult {
-  const item = SILENT_READ_REVIEW_ITEMS[Math.max(0, Math.min(SILENT_READ_REVIEW_TOTAL - 1, step))];
+  if (!Number.isInteger(step) || step < 0 || step >= SILENT_READ_REVIEW_TOTAL) {
+    return { ok: false, item: null, reason: "No unresolved review file at this step." };
+  }
+  const item = SILENT_READ_REVIEW_ITEMS[step];
   if (item.id !== itemId) {
     return { ok: false, item, reason: `${item.label} must be handled before ${itemId}.` };
   }

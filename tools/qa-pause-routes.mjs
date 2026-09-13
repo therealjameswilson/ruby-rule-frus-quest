@@ -1,0 +1,64 @@
+import assert from 'node:assert/strict';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
+const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
+const out = process.env.FRUS_QA_OUT ?? '/private/tmp/frus-pause-routes';
+assert(process.env.FRUS_QA_STORAGE, 'Provide an earned Archive Source Entry save');
+const storage = JSON.parse(await readFile(process.env.FRUS_QA_STORAGE, 'utf8'));
+await mkdir(out, { recursive: true });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
+try {
+  const page = await browser.newPage({ storageState: storage, viewport: { width: 375, height: 667 }, hasTouch: true, isMobile: true, deviceScaleFactor: 3 });
+  const errors = [];
+  page.on('pageerror', error => errors.push(String(error)));
+  page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
+  const tap = async id => {
+    const hit = (await state()).pauseMenu.controls.find(control => control.id === id);
+    assert(hit, `Missing ${id}`);
+    const box = await page.locator('canvas').first().boundingBox();
+    await page.touchscreen.tap(box.x + hit.x * box.width / 256, box.y + hit.y * box.height / 240);
+    await page.waitForTimeout(120);
+  };
+  const texts = () => page.evaluate(() => window.game.scene.getScene('ArchiveScene').children.getByName('pause-menu').list
+    .flatMap(child => child.list ?? []).filter(child => child.name === 'pause-text').map(child => child.text));
+  const shot = async label => {
+    const data = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(image => resolve(image.src))));
+    await writeFile(`${out}/${label}.png`, Buffer.from(data.split(',')[1], 'base64'));
+  };
+  await page.goto('http://127.0.0.1:5195/?text=full');
+  await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === 'TapToStartScene');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.game?.scene.isActive('ArchiveScene'));
+  await page.waitForTimeout(900);
+  assert((await state()).inventory.includes('Citation Stamp'), 'The earned opening inventory must be restored');
+  await page.keyboard.press('Escape');
+  await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).pauseMenu);
+  await tap('map'); await shot('map');
+  const before = await state();
+  await tap('routes');
+  assert((await texts()).includes('NORTH: ANNOTATION STACKS'));
+  assert((await texts()).includes('LOCKED'));
+  await shot('north-locked');
+  await tap('next');
+  assert((await texts()).includes('WEST: OFFICE HUB'));
+  assert((await texts()).includes('OPEN'));
+  await shot('west-open');
+  await tap('next');
+  assert((await texts()).includes('EAST: NETWORK SPLIT'));
+  assert((await texts()).includes('LOCKED'), 'Owning the Citation Stamp alone must not mark the source-packet exit open');
+  await shot('east-packet-locked');
+  await tap('back');
+  assert.equal((await state()).pauseMenu.detailOpen, false);
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).pauseMenu?.detailOpen);
+  assert.equal((await state()).pauseMenu.detailOpen, true);
+  await tap('back'); await tap('close');
+  const after = await state();
+  assert.equal(after.mode, 'explore');
+  assert.deepEqual(after.player, before.player);
+  assert.equal(after.reliability, before.reliability);
+  assert.equal(after.playerCombat.weapon.swingId, before.playerCombat.weapon.swingId);
+  assert.deepEqual(errors, []);
+  await writeFile(`${out}/result.json`, JSON.stringify({ before, after, errors }, null, 2));
+  console.log('PASS touch route requirements, keyboard opening, map back, clean resume');
+} finally { await browser.close(); }

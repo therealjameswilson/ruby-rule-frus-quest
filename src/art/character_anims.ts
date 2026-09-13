@@ -29,7 +29,7 @@ export function registerCharacterAnims(scene: Phaser.Scene) {
     };
     for (const direction of Object.keys(FRAMES.idle) as DirectionName[]) {
       mk(`idle-${direction}`, [FRAMES.idle[direction]], 1, -1);
-      mk(`walk-${direction}`, [...FRAMES.walk[direction]], 6, -1);
+      mk(`walk-${direction}`, [...FRAMES.walk[direction]], 8, -1);
     }
     mk("interact", [FRAMES.action.interact], 6, 0);
     mk("reading", [FRAMES.action.reading], 6, 0);

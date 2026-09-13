@@ -1,27 +1,35 @@
 import Phaser from "phaser";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { SECRET_READING_ROOM_ASSETS } from "../assets/registry";
+import { readChapterArrival } from "../game/chapterTravel";
 import { registerDanneAnims } from "../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
+import { blackVaultApproachTargets, blackVaultReturnRoute, blackVaultObjective, reviewCacheRefill } from "../game/blackVaultApproach";
+import { BlackVaultObjects } from "../systems/blackVaultObjects";
+import { nextArchiveResearchReview } from "../game/archiveResearchReview";
 import { unlockCodexEntry } from "../game/codex";
 import {
   DANNE_BOSS_SPRITE_ASSET,
-  DANNE_IMAGE_ASSETS,
+  DANNE_BOSS_PORTRAIT_ASSET,
+  DANNE_LETTERBOX_ASSET,
+  DANNE_ITEM_ASSETS,
+  DANNE_BOSS_HUD_ASSET,
+  DANNE_SHARED_IMAGE_ASSETS,
+  DANNE_PORTRAIT_ASSETS,
+  DANNE_VARIANT_ASSETS,
   DANNE_MAP_ASSETS,
   DANNE_RUNTIME_SPRITE_ASSETS,
   DANNE_VFX_ASSETS
 } from "../game/danneAtlas";
-import {
-  evaluateHacHearingAnswer,
-  getHacHearingPrompt,
-  hacHearingComplete,
-  HAC_HEARING_PROMPTS
-} from "../game/hacHearing";
+import { HearingReview } from "../systems/hearingReview";
+import { NaraStackRecords, naraFragmentCollected } from "../systems/naraStackRecords";
 import type {
   DanneMapSceneKey,
   DanneRectDefinition,
   DanneSceneGeometry,
   DanneSceneInteractionDefinition
 } from "../game/danneSceneCollisions";
-import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
+import { DANNE_SCENE_GEOMETRY, danneMapExplorationObjective, danneMapInteractionAvailable } from "../game/danneSceneCollisions";
 import {
   addDanneItem,
   addProcessItem,
@@ -31,6 +39,7 @@ import {
   gameState,
   getBlackVaultClimaxReadiness,
   getTreatyFragmentCount,
+  getVisitedRoomIds,
   hasDanneItem,
   hasProcessItem,
   setLatestMessage,
@@ -44,19 +53,26 @@ import {
 import {
   HIDDEN_READING_ROOM_DISCOVERED_FLAG,
   HIDDEN_READING_ROOM_SCENE,
-  hiddenReadingRoomDiscovered
+  hiddenReadingRoomDiscovered,
+  hiddenFirstEditionFound,
+  canRevealReadingPassage,
+  insideReadingPassage,
+  readingPassageLabel,
+  readingPassageSolids
 } from "../game/secretReadingRoom";
 import type { Interactable, Position } from "../game/types";
 import { Player } from "../entities/Player";
+import { walkingFeetOverlap } from "../systems/smoothMovement";
 import { CensorshipWraith } from "../entities/enemies/CensorshipWraith";
 import { DanneBoss } from "../entities/enemies/DanneBoss";
-import { RedactorDrone } from "../entities/enemies/RedactorDrone";
+import { RedactorDrone, DRONE_ENTRY_GRACE_MS } from "../entities/enemies/RedactorDrone";
 import { MarineSecurityGuard } from "../entities/npcs/MarineSecurityGuard";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { showBossHud, setBossHp } from "../systems/bossHud";
 import { drawCutsceneDebugNote, enterCutscene, exitCutscene, isCutsceneActive, playLine } from "../systems/cutscene";
 import { DialogBox } from "../systems/dialog";
+import { FeedbackToast } from "../systems/feedbackToast";
 import {
   decideInteractionFeedback,
   InteractionAssist,
@@ -65,10 +81,12 @@ import {
 } from "../systems/interaction";
 import { applyHitShake } from "../systems/combatFeedback";
 import { AttackBuffer, HitstopController } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { snapPixel } from "../systems/pixelPerfect";
 import { adjustReliability, ReliabilityHud } from "../systems/reliability";
+import { recoverDanneBossPressure } from "../systems/dannePressure";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { transitionTo } from "../systems/sceneTransitions";
@@ -76,7 +94,6 @@ import { saveGameNow } from "../systems/save";
 import {
   addSnesBlackVaultTileRoom,
   addSnesCherryBlossomGardenTileRoom,
-  addSnesDanneArena,
   addSnesEmbassyCableRoomTileRoom,
   addSnesNaraStacksTileRoom,
   addSnesSenateHearingChamberTileRoom
@@ -86,11 +103,6 @@ import { ChoicePrompt } from "../systems/verification";
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
-
-// One-time reliability top-up granted by the Black Vault human-review cache, in
-// reliability points (2 of the 10 HUD hearts). Sized to soften attrition before
-// the DANN-E boss spike without erasing the fight; adjustReliability clamps to 100.
-const RELIABILITY_CACHE_REFILL = 20;
 
 function isCollisionDebugEnabled() {
   if (typeof window === "undefined") return false;
@@ -128,6 +140,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private reliability!: ReliabilityHud;
   private hintText!: Phaser.GameObjects.Text;
   private prompt!: InteractionPrompt;
+  private cacheToast!: FeedbackToast;
   private readonly geometry: DanneSceneGeometry;
   private solids: Phaser.Geom.Rectangle[] = [];
   private interactables: Interactable[] = [];
@@ -135,14 +148,20 @@ export abstract class DanneMapScene extends Phaser.Scene {
   private readonly hitstop = new HitstopController();
   private readonly attackBuffer = new AttackBuffer();
   private redactorDrones: RedactorDrone[] = [];
+  private stackRecords?: NaraStackRecords;
+  private vaultObjects?: BlackVaultObjects;
   private censorshipWraiths: CensorshipWraith[] = [];
   private danneBoss?: DanneBoss;
   private marineGuard?: MarineSecurityGuard;
-  private danneArena?: Phaser.GameObjects.Container;
-  private publicationBoard?: Phaser.GameObjects.Container;
+  private readonly cacheMarkers: Phaser.GameObjects.GameObject[] = [];
   private readonly interactionMarkerObjects: Phaser.GameObjects.GameObject[] = [];
   private marineDoorCleared = false;
   private lastGoodPosition: Position;
+  private passageMarkerObjects: Phaser.GameObjects.GameObject[] = [];
+  private passageBusyUntil = 0;
+  private leavingReadingPassage = false;
+  private collisionDebug?: Phaser.GameObjects.Container;
+  private hearing?: HearingReview;
 
   protected constructor(sceneKey: DanneMapSceneKey) {
     super(sceneKey);
@@ -151,10 +170,28 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   preload() {
+    if (this.geometry.sceneKey === "NaraStacksScene") {
+      const asset = SECRET_READING_ROOM_ASSETS.tilesetNative;
+      if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
+    }
     const mapAsset = mapAssetFor(this.geometry.sceneKey);
     if (mapAsset && !this.textures.exists(mapAsset.key)) this.load.image(mapAsset.key, mapAsset.path);
-    for (const asset of DANNE_IMAGE_ASSETS) {
-      if (!this.textures.exists(asset.key) && asset.key !== mapAsset?.key) this.load.image(asset.key, asset.path);
+    for (const asset of [...DANNE_SHARED_IMAGE_ASSETS, ...DANNE_ITEM_ASSETS]) {
+      if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
+    }
+    if (this.geometry.sceneKey === "BlackVaultLairScene") {
+      for (const asset of [DANNE_BOSS_PORTRAIT_ASSET, ...DANNE_VARIANT_ASSETS]) {
+        if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
+      }
+    }
+    if (this.geometry.sceneKey === "BlackVaultLairScene" || isUiDebugEnabled()) {
+      for (const asset of [DANNE_BOSS_HUD_ASSET, DANNE_LETTERBOX_ASSET]) {
+        if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
+      }
+    }
+    if (isUiDebugEnabled()) {
+      const historian = DANNE_PORTRAIT_ASSETS[0];
+      if (!this.textures.exists(historian.key)) this.load.image(historian.key, historian.path);
     }
     for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
       if (!this.textures.exists(asset.key)) {
@@ -180,37 +217,64 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
   }
 
-  create() {
+  create(data?: unknown) {
+    const arrival = readChapterArrival(data, this.geometry.sceneKey, gameState.currentScene);
+    this.passageMarkerObjects = [];
+    this.passageBusyUntil = 0;
+    this.leavingReadingPassage = false;
+    this.collisionDebug = undefined;
+    this.hearing = undefined;
+    this.stackRecords = undefined;
+    this.vaultObjects = undefined;
+    this.interactionAssist.clear();
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
+    this.hitstop.reset();
     registerDanneAnims(this);
-    setSceneState(this.geometry.sceneKey, "explore", this.geometry.objective);
-    setObjective(this.geometry.objective);
+    setSceneState(this.geometry.sceneKey, "explore", danneMapExplorationObjective(this.geometry.sceneKey, gameState.inventory));
     setLatestMessage(`${this.geometry.displayName} loaded.`);
     setVisibleEntities([...this.geometry.visibleEntities]);
     setVisibleThreats([]);
     this.applyDebugGrants();
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
+      recoverDanneBossPressure();
       gameState.sceneProgress.blackVaultClimaxRequired = 1;
       if (hasProcessItem("red_pencil")) equipProcessItem("red_pencil");
     }
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.danneBoss?.destroy();
+      this.danneBoss = undefined;
+      this.redactorDrones = [];
+      this.censorshipWraiths = [];
+      this.marineGuard = undefined;
+      this.cacheToast.destroy();
+    });
     retroAudio.startMusic(this.geometry.sceneKey);
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black)).setDepth(-100);
     this.drawMapBackground();
     this.drawSnesTileRoomLayer();
-    this.drawDanneArenaLayer(0);
     this.interactionMarkerObjects.length = 0;
+    this.cacheMarkers.length = 0;
     this.drawInteractionMarkers();
     if (isCollisionDebugEnabled()) this.drawCollisionDebug();
-    this.drawLocationCard();
-    this.drawBlackVaultPublicationBoard();
+    if (this.geometry.sceneKey !== "SenateHearingChamberScene" && this.geometry.sceneKey !== "NaraStacksScene") this.drawLocationCard();
 
-    this.solids = this.geometry.solids.map(rectToPhaser);
-    this.player = new Player(this, this.geometry.spawn.x, this.geometry.spawn.y);
+    this.solids = (this.geometry.sceneKey === "NaraStacksScene"
+      ? readingPassageSolids(this.geometry.solids, hiddenReadingRoomDiscovered(gameState))
+      : this.geometry.solids).map(rectToPhaser);
+    this.player = new Player(this, arrival?.x ?? this.geometry.spawn.x, arrival?.y ?? this.geometry.spawn.y);
+    if (arrival) {
+      this.player.setPosition(arrival.x, arrival.y);
+      this.player.faceTowards({ x: arrival.x, y: arrival.y + 16 });
+      this.passageBusyUntil = this.time.now + 350;
+    }
     this.lastGoodPosition = this.player.position;
     this.dialog = new DialogBox(this);
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
+    this.reliability.setSummaryVisible(false);
     this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 10, "", {
       fontFamily: "monospace",
       fontSize: "7px",
@@ -218,23 +282,44 @@ export abstract class DanneMapScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(900);
     this.prompt = new InteractionPrompt(this, 930);
-    this.interactables = this.geometry.interactions.map((definition) => ({
-      id: definition.id,
-      label: definition.label,
-      x: definition.x,
-      y: definition.y,
-      radius: definition.radius,
-      kind: definition.kind,
-      onInteract: () => this.handleInteraction(definition)
-    }));
+    this.cacheToast = new FeedbackToast(this);
+    if (this.geometry.sceneKey === "BlackVaultLairScene") this.vaultObjects = new BlackVaultObjects(this);
+    this.interactables = this.geometry.interactions
+      .filter((definition) => danneMapInteractionAvailable(definition.action, Boolean(gameState.sceneProgress.blackVaultBossCleared)))
+      .map((definition) => ({
+        id: definition.id,
+        label: this.geometry.sceneKey === "BlackVaultLairScene" && definition.action === "return-office"
+          ? blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead), Boolean(nextArchiveResearchReview())).label
+          : definition.action === "hidden-reading-room-passage"
+            ? readingPassageLabel(hiddenReadingRoomDiscovered(gameState), hasProcessItem("review_folder"))
+            : definition.label,
+        x: definition.x,
+        y: definition.y,
+        radius: definition.radius,
+        kind: definition.action === "hidden-reading-room-passage" && !hiddenReadingRoomDiscovered(gameState)
+          ? "document" : definition.kind,
+        onInteract: () => this.handleInteraction(definition)
+      }));
     this.createDanneEntities();
     this.syncBlackVaultTraversal();
+    this.syncReadingRoomTraversal();
+    if (this.geometry.sceneKey === "NaraStacksScene") {
+      this.stackRecords = new NaraStackRecords(this, this.cacheToast, () => this.player.position);
+      this.stackRecords.syncTargets(this.interactables);
+    }
+    if (this.geometry.sceneKey === "SenateHearingChamberScene") {
+      this.hearing = new HearingReview(this, this.cacheToast, () => this.player.position);
+      this.hearing.syncTargets(this.interactables);
+      setObjective(this.hearing.objective);
+      setRoomTraversalState({ currentRoomId: "DH1", roomTitle: "Senate Hearing Chamber", roomType: "puzzle",
+        visitedRoomIds: [...new Set([...getVisitedRoomIds(["DH1"]), "DH1"])], exits: { south: "O1" } });
+    }
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
       const readiness = getBlackVaultClimaxReadiness();
       setObjective(gameState.sceneProgress.blackVaultBossCleared
-        ? "Black Vault cleared: inspect the quiet core to enter the bindery."
+        ? "CORE TO THE BINDERY"
         : readiness.ready
-          ? "Black Vault: use the review cache, then inspect DANN-E's core."
+          ? this.blackVaultApproachObjective()
           : `Black Vault locked: ${readiness.missingSummary.slice(0, 2).join(", ")}.`);
     }
     this.unlockCodexForScene();
@@ -246,6 +331,15 @@ export abstract class DanneMapScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    this.cacheToast.update(delta, this.geometry.sceneKey === "BlackVaultLairScene" ? { x: 128, y: 88 } : this.player.position);
+    if (this.leavingReadingPassage || this.time.now < this.passageBusyUntil) {
+      this.attackBuffer.clear();
+      this.updateDanneEntities(this.time.now, delta, false);
+      this.player.update(delta, false);
+      this.prompt.update(delta, null);
+      return;
+    }
+    const bossDecisionActive = Boolean(this.danneBoss?.inputLocked);
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
@@ -253,17 +347,25 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.reliability.update();
     }
     if (input.reliabilityJustPressed) this.reliability.toggleDetails();
-    if (input.abilityJustPressed) activateRoleAbility(this);
     if (isUiDebugEnabled() && input.bJustPressed) this.showBossHudDebug();
-    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
     const frozen = this.hitstop.isFrozen(this.time.now);
+    const canAct = gameState.mode === "explore" && !this.dialog.active && !this.choice.active
+      && !input.pauseJustPressed && !this.inventory.active && !this.reliability.active
+      && !bossDecisionActive && !isCutsceneActive(this);
+    if (!canAct) this.attackBuffer.clear();
+    this.player.setCombatPaused(!canAct || frozen);
+    if (!canAct) this.vaultObjects?.update(null, false, Boolean(this.danneBoss?.isActive));
     if (!frozen) {
-      this.updateDanneEntities(this.time.now, delta, !this.dialog.active && !this.inventory.active && !this.reliability.active);
+      this.updateDanneEntities(this.time.now, delta, canAct);
       this.restoreSafePlayerPosition();
     }
 
     if (isCutsceneActive(this)) {
-      if (input.aJustPressed) exitCutscene(this);
+      this.attackBuffer.clear();
+      if (input.aJustPressed || input.confirmJustPressed) {
+        if (this.danneBoss?.phaseDialogueActive) this.danneBoss.advanceBoast();
+        else void exitCutscene(this);
+      }
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.reliability.update();
@@ -271,7 +373,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
 
-    if (this.danneBoss?.inputLocked) {
+    if (bossDecisionActive || this.danneBoss?.inputLocked) {
+      this.attackBuffer.clear();
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.reliability.update();
@@ -298,9 +401,14 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     if (input.pauseJustPressed) {
+      this.attackBuffer.clear();
       this.inventory.toggle();
+      this.player.setCombatPaused(true);
       return;
     }
+
+    if (input.abilityJustPressed) activateRoleAbility(this);
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
 
     // Hitstop: hold actors on the impact frame for a few frames so a clean
     // sword hit crunches. The camera shake / boss flash tweens run on Phaser's
@@ -327,18 +435,35 @@ export abstract class DanneMapScene extends Phaser.Scene {
     } else {
       this.lastGoodPosition = this.player.position;
     }
-    if (this.attackBuffer.consume(this.time.now, true)) this.useDanneItemAction();
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing)) this.useDanneItemAction();
     this.resolvePlayerMeleeHits(this.time.now);
+    this.resolveReadingPassage();
+    if (this.geometry.sceneKey === "NaraStacksScene" && hiddenReadingRoomDiscovered(gameState)
+      && this.time.now >= this.passageBusyUntil && insideReadingPassage(this.player.position)) {
+      this.enterReadingPassage();
+      return;
+    }
     const bossActive = Boolean(this.danneBoss?.isActive);
-    const nearest = bossActive ? null : nearestInteractable(this.player.position, this.interactables);
-    const hintTarget = bossActive ? null : nearestInteractableHint(this.player.position, this.interactables);
+    if (bossActive && this.danneBoss) {
+      setObjective(this.danneBoss.combatObjective);
+    }
+    this.hearing?.syncTargets(this.interactables);
+    this.stackRecords?.syncTargets(this.interactables);
+    this.vaultObjects?.syncTargets(this.interactables);
+    const targets = this.geometry.sceneKey === "BlackVaultLairScene"
+      ? blackVaultApproachTargets(this.player.position, this.interactables, Boolean(gameState.sceneProgress.blackVaultReliabilityCacheUsed))
+      : this.interactables;
+    const nearest = bossActive ? null : nearestInteractable(this.player.position, targets);
+    const hintTarget = bossActive ? null : nearestInteractableHint(this.player.position, targets);
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
-    this.hintText.setText(nearest ? `A: ${nearest.label.toUpperCase()}` : "");
-    this.prompt.update(delta, promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
+    this.hintText.setText(nearest && this.geometry.sceneKey !== "BlackVaultLairScene" && !this.hearing && !this.stackRecords ? `A: ${nearest.label.toUpperCase()}` : "");
+    this.prompt.update(delta, this.hearing || this.stackRecords || this.vaultObjects ? null : promptTarget, undefined, nearest ? undefined : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     const bufferedInteraction = this.interactionAssist.update(this.time.now, input.aJustPressed, nearest);
     if (bufferedInteraction) bufferedInteraction.onInteract();
-    else if (input.aJustPressed) {
+    else if (input.aJustPressed && bossActive) {
+      this.danneBoss?.explainCounter();
+    } else if (input.aJustPressed) {
       const feedback = decideInteractionFeedback(nearest, hintTarget);
       if (feedback.kind === "step-closer") {
         retroAudio.blip();
@@ -352,22 +477,28 @@ export abstract class DanneMapScene extends Phaser.Scene {
       if (this.geometry.sceneKey === "BlackVaultLairScene") {
         const readiness = getBlackVaultClimaxReadiness();
         setObjective(gameState.sceneProgress.blackVaultBossCleared
-          ? "Black Vault cleared: inspect the quiet core to enter the bindery."
+          ? "CORE TO THE BINDERY"
           : readiness.ready
-            ? "Black Vault: use the review cache, then inspect DANN-E's core."
+            ? this.blackVaultApproachObjective()
             : `Black Vault locked: ${readiness.missingSummary.slice(0, 2).join(", ")}.`);
-      } else {
-        setObjective(this.geometry.objective);
+      } else if (gameState.mode === "explore") {
+        const nearUnclaimedSecret = this.geometry.sceneKey === "NaraStacksScene"
+          && hiddenReadingRoomDiscovered(gameState) && !hiddenFirstEditionFound(gameState)
+          && Math.hypot(this.player.position.x - 204, this.player.position.y - 68) < 40;
+        setObjective(this.hearing?.objective ?? (nearUnclaimedSecret ? "ENTER READING ROOM" : danneMapExplorationObjective(this.geometry.sceneKey, gameState.inventory)));
       }
     }
+    this.hearing?.update(nearest);
+    this.stackRecords?.syncTargets(this.interactables);
+    this.stackRecords?.update(nearest);
+    this.vaultObjects?.update(nearest, gameState.mode === "explore", Boolean(this.danneBoss?.isActive));
     this.reliability.update();
     this.syncDanneReadout(this.time.now);
   }
 
   private isPlayerPositionWalkable(position: Position) {
     if (!polygonContains(position, this.geometry)) return false;
-    const footBox = new Phaser.Geom.Rectangle(position.x - 8, position.y - 3, 16, 8);
-    return !this.solids.some((solid) => Phaser.Geom.Intersects.RectangleToRectangle(footBox, solid));
+    return !this.solids.some((solid) => walkingFeetOverlap(position.x, position.y, solid));
   }
 
   private restoreSafePlayerPosition() {
@@ -376,6 +507,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private drawMapBackground() {
+    // The playable vault already has its own room art and matching collision.
+    // Do not expose a strip of the concept map beneath its HUD.
+    if (this.geometry.sceneKey === "BlackVaultLairScene") return;
     const asset = mapAssetFor(this.geometry.sceneKey);
     if (!asset || !this.textures.exists(asset.key)) {
       this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH - 20, GAME_HEIGHT - 36, color(PALETTE.deepRuby))
@@ -400,27 +534,12 @@ export abstract class DanneMapScene extends Phaser.Scene {
       .setDepth(-20);
   }
 
-  private drawDanneArenaLayer(phaseIndex: number) {
-    if (this.geometry.sceneKey !== "BlackVaultLairScene") return;
-    this.danneArena?.destroy();
-    const secretPhaseAvailable = getTreatyFragmentCount() >= 2;
-    this.danneArena = addSnesDanneArena(this, {
-      x: 128,
-      y: 122,
-      phaseIndex,
-      phaseCount: secretPhaseAvailable ? 4 : 3,
-      gateOpen: Boolean(gameState.sceneProgress.blackVaultBossCleared),
-      shortcutOffered: Boolean(gameState.sceneProgress.danneBadEnding || gameState.sceneProgress.concealedPolicyDefect),
-      depth: -8
-    });
-  }
-
   private drawSnesTileRoomLayer() {
     if (this.geometry.sceneKey === "CherryBlossomGardenScene") {
       addSnesCherryBlossomGardenTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
-      addSnesBlackVaultTileRoom(this, { depth: -18 });
+      addSnesBlackVaultTileRoom(this, { depth: -18, combatReady: true });
     }
     if (this.geometry.sceneKey === "SenateHearingChamberScene") {
       addSnesSenateHearingChamberTileRoom(this, { depth: -18 });
@@ -434,44 +553,75 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private drawInteractionMarkers() {
+    if (this.geometry.sceneKey === "BlackVaultLairScene") return;
     for (const interaction of this.geometry.interactions) {
+      if (!danneMapInteractionAvailable(interaction.action, Boolean(gameState.sceneProgress.blackVaultBossCleared))) continue;
+      if (interaction.action === "reliability-cache" && gameState.sceneProgress.blackVaultReliabilityCacheUsed) continue;
+      if (interaction.action === "hearing-exhibit-left" || interaction.action === "hearing-exhibit-right" || interaction.action === "witness-table") continue;
       if (interaction.action === "hidden-reading-room-passage") {
         this.drawHiddenPassageSeam(interaction);
         continue;
       }
+      if (this.geometry.sceneKey === "NaraStacksScene") continue;
+      const markerStart = this.interactionMarkerObjects.length;
       this.interactionMarkerObjects.push(this.add.ellipse(interaction.x + 1, interaction.y + 2, 15, 7, color(PALETTE.black), 0.55).setDepth(interaction.y - 4));
       this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y, 13, 13, color(PALETTE.black), 0.82)
         .setStrokeStyle(1, color(interaction.accent))
         .setDepth(interaction.y));
       this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 3, 7, 3, color(interaction.accent)).setDepth(interaction.y + 1));
       this.interactionMarkerObjects.push(this.add.rectangle(interaction.x + 3, interaction.y - 5, 2, 2, color(PALETTE.creamPaper)).setDepth(interaction.y + 2));
+      if (interaction.action === "reliability-cache") this.cacheMarkers.push(...this.interactionMarkerObjects.slice(markerStart));
     }
   }
 
+  private blackVaultApproachObjective() {
+    return blackVaultObjective(Boolean(gameState.sceneProgress.blackVaultReliabilityCacheUsed), gameState.reliability);
+  }
+
   private drawHiddenPassageSeam(interaction: DanneSceneInteractionDefinition) {
+    for (const object of this.passageMarkerObjects) object.destroy();
+    this.passageMarkerObjects = [];
     const discovered = hiddenReadingRoomDiscovered(gameState);
-    const accent = discovered ? PALETTE.goldStamp : PALETTE.stoneLight;
-    const alpha = discovered ? 0.92 : 0.42;
-    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 4, 18, 3, color(PALETTE.black), 0.45)
+    if (discovered) {
+      const asset = SECRET_READING_ROOM_ASSETS.tilesetNative;
+      const frame = "reading-passage-door";
+      if (this.textures.exists(asset.key)) {
+        const texture = this.textures.get(asset.key);
+        // Tile 11 is the same native doorway used by the reading-room threshold.
+        if (!texture.has(frame)) texture.add(frame, 0, (11 % asset.columns) * asset.tileSize,
+          Math.floor(11 / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
+        for (const x of [interaction.x - 8, interaction.x + 8]) {
+          for (const y of [interaction.y - 8, interaction.y + 8]) {
+            this.passageMarkerObjects.push(this.add.image(x, y, asset.key, frame).setDepth(70)
+              .setName("nara-reading-passage-open"));
+          }
+        }
+      } else {
+        this.passageMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y, 32, 32, color(PALETTE.black))
+          .setDepth(70).setName("nara-reading-passage-open"));
+      }
+      for (const x of [interaction.x - 17, interaction.x + 17]) {
+        this.passageMarkerObjects.push(this.add.rectangle(x, interaction.y, 2, 32, color(PALETTE.goldStamp)).setDepth(71));
+      }
+      for (const y of [interaction.y + 7, interaction.y + 11, interaction.y + 15]) {
+        this.passageMarkerObjects.push(this.add.rectangle(interaction.x, y, 28, 1, color(PALETTE.stoneLight)).setDepth(71));
+      }
+      return;
+    }
+    const accent = PALETTE.stoneLight;
+    const alpha = 0.42;
+    this.passageMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 4, 18, 3, color(PALETTE.black), 0.45)
       .setDepth(interaction.y + 1)
       .setName("nara-hidden-reading-room-shadow"));
-    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x - 7, interaction.y - 8, 2, 9, color(accent), alpha)
+    this.passageMarkerObjects.push(this.add.rectangle(interaction.x - 7, interaction.y - 8, 2, 9, color(accent), alpha)
       .setDepth(interaction.y + 2)
       .setName("nara-hidden-reading-room-seam"));
-    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 5, 7, 2, color(accent), alpha)
+    this.passageMarkerObjects.push(this.add.rectangle(interaction.x, interaction.y - 5, 7, 2, color(accent), alpha)
       .setDepth(interaction.y + 2)
       .setName("nara-hidden-reading-room-seam"));
-    this.interactionMarkerObjects.push(this.add.rectangle(interaction.x + 6, interaction.y - 2, 2, 7, color(accent), alpha)
+    this.passageMarkerObjects.push(this.add.rectangle(interaction.x + 6, interaction.y - 2, 2, 7, color(accent), alpha)
       .setDepth(interaction.y + 2)
       .setName("nara-hidden-reading-room-seam"));
-    if (discovered) {
-      this.interactionMarkerObjects.push(this.add.text(interaction.x, interaction.y + 7, "SECRET", {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.goldStamp,
-        backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(interaction.y + 3).setName("nara-hidden-reading-room-label"));
-    }
   }
 
   private drawLocationCard() {
@@ -505,84 +655,11 @@ export abstract class DanneMapScene extends Phaser.Scene {
     });
   }
 
-  private drawBlackVaultPublicationBoard() {
-    if (this.geometry.sceneKey !== "BlackVaultLairScene") return;
-    this.publicationBoard?.destroy();
-    const readiness = getBlackVaultClimaxReadiness();
-    const crystalsRequired = Math.max(1, readiness.equityCrystalsRequired);
-    const rows = [
-      {
-        label: "STAMP",
-        value: `${readiness.requiredStamps.length - readiness.missingStamps.length}/${readiness.requiredStamps.length}`,
-        ready: readiness.missingStamps.length === 0
-      },
-      {
-        label: "CRYS",
-        value: `${readiness.equityCrystalsCollected}/${crystalsRequired}`,
-        ready: readiness.equityCrystalsRequired > 0 && readiness.equityCrystalsCollected >= readiness.equityCrystalsRequired
-      },
-      {
-        label: "COVER",
-        value: `${readiness.coverPiecesCollected}/${readiness.coverPiecesRequired}`,
-        ready: readiness.coverPiecesCollected >= readiness.coverPiecesRequired
-      },
-      {
-        label: "KEY",
-        value: readiness.buckramKeyHeld ? "YES" : "NO",
-        ready: readiness.buckramKeyHeld
-      },
-      {
-        label: "TOOL",
-        value: readiness.hasRedPencil ? "RED" : "NO",
-        ready: readiness.hasRedPencil
-      }
-    ] as const;
-    const firstMissing = readiness.ready
-      ? "READY: FACE CORE"
-      : `NEED ${readiness.missingSummary[0] ?? "FINAL REVIEW"}`.toUpperCase();
-    const board = this.add.container(51, 77)
-      .setDepth(260)
-      .setName("black-vault-publication-board");
-    board.add(this.add.rectangle(0, 0, 88, 73, color(PALETTE.black), 0.94)
-      .setStrokeStyle(2, color(readiness.ready ? PALETTE.openNetGreen : PALETTE.goldStamp))
-      .setName("black-vault-publication-board-back"));
-    board.add(this.add.text(0, -34, "CERT DOCKET", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: readiness.ready ? PALETTE.openNetGreen : PALETTE.goldStamp
-    }).setOrigin(0.5, 0).setName("black-vault-publication-board-title"));
-    rows.forEach((row, index) => {
-      const y = -22 + index * 10;
-      const accent = row.ready ? PALETTE.openNetGreen : PALETTE.classNetRed;
-      board.add(this.add.rectangle(-36, y + 4, 5, 5, color(accent), 1)
-        .setStrokeStyle(1, color(PALETTE.black))
-        .setName("black-vault-publication-board-light"));
-      board.add(this.add.text(-29, y, row.label, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.creamPaper
-      }).setOrigin(0, 0).setName("black-vault-publication-board-row"));
-      board.add(this.add.text(34, y, row.value, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: row.ready ? PALETTE.goldStamp : PALETTE.stoneLight,
-        align: "right"
-      }).setOrigin(1, 0).setName("black-vault-publication-board-value"));
-    });
-    board.add(this.add.rectangle(0, 29, 77, 9, color(readiness.ready ? PALETTE.openNetGreen : PALETTE.deepRuby), 1)
-      .setStrokeStyle(1, color(readiness.ready ? PALETTE.goldStamp : PALETTE.classNetRed))
-      .setName("black-vault-publication-board-need-back"));
-    board.add(this.add.text(0, 25, firstMissing.slice(0, 21), {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: readiness.ready ? PALETTE.black : PALETTE.creamPaper,
-      align: "center"
-    }).setOrigin(0.5, 0).setName("black-vault-publication-board-need"));
-    this.publicationBoard = board;
-  }
-
   private drawCollisionDebug() {
+    this.collisionDebug?.destroy();
+    this.collisionDebug = this.add.container(0, 0).setDepth(1100);
     const graphics = this.add.graphics().setDepth(1100);
+    this.collisionDebug.add(graphics);
     graphics.lineStyle(1, color(PALETTE.openNetGreen), 0.95);
     const points = this.geometry.walkable.points;
     for (let index = 0; index < points.length; index += 1) {
@@ -591,14 +668,17 @@ export abstract class DanneMapScene extends Phaser.Scene {
       graphics.lineBetween(a.x, a.y, b.x, b.y);
     }
     graphics.lineStyle(1, color(PALETTE.classNetRed), 0.9);
-    for (const solid of this.geometry.solids) {
+    const solids = this.geometry.sceneKey === "NaraStacksScene"
+      ? readingPassageSolids(this.geometry.solids, hiddenReadingRoomDiscovered(gameState))
+      : this.geometry.solids;
+    for (const solid of solids) {
       graphics.strokeRect(solid.x, solid.y, solid.width, solid.height);
-      this.add.text(solid.x + 1, solid.y + 1, solid.label.toUpperCase().slice(0, 12), {
+      this.collisionDebug.add(this.add.text(solid.x + 1, solid.y + 1, solid.label.toUpperCase().slice(0, 12), {
         fontFamily: "monospace",
         fontSize: "5px",
         color: PALETTE.classNetRed,
         backgroundColor: PALETTE.black
-      }).setDepth(1101);
+      }).setDepth(1101));
     }
     for (const route of this.geometry.patrolRoutes ?? []) {
       graphics.lineStyle(1, color(PALETTE.terminalCyan), 0.9);
@@ -611,10 +691,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private handleInteraction(definition: DanneSceneInteractionDefinition) {
+    if (this.hearing?.handle(definition.action)) return;
     if (definition.action === "return-office") {
       const returnTarget = this.geometry.sceneKey === "BlackVaultLairScene"
-        && gameState.sceneProgress.blackVaultEnteredFromSilentRead
-        ? "SilentReadScene"
+        ? blackVaultReturnRoute(Boolean(gameState.sceneProgress.blackVaultEnteredFromSilentRead), Boolean(nextArchiveResearchReview())).sceneKey
         : this.geometry.exitTarget;
       transitionTo(this, returnTarget);
       return;
@@ -664,7 +744,9 @@ export abstract class DanneMapScene extends Phaser.Scene {
         const missing = readiness.missingSummary.slice(0, 3).join(", ");
         this.dialog.show("BLACK VAULT SEAL", [
           `The final review packet is incomplete: ${missing}.`,
-          "Return with the proofed record, Buckram Key, and Red Pencil."
+          nextArchiveResearchReview()
+            ? "Use the south exit. Complete the missing review at the Archive Research Table."
+            : "Return with the proofed record, Buckram Key, and Red Pencil."
         ]);
         setObjective(`Black Vault locked: ${missing}.`);
         retroAudio.warning();
@@ -673,42 +755,29 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.startDanneBoss();
       return;
     }
-    if (definition.action === "witness-table") {
-      this.showHacHearingChoice();
-      return;
-    }
     if (definition.action === "nara-stacks-note") {
-      this.dialog.show("STACK CONTROL NOTE", [
-        "Four redactor-drone patrol routes cross the stack aisle.",
-        "File the stack manifest before moving boxes through the route."
-      ]);
+      this.stackRecords?.handle(definition.action);
       return;
     }
     if (definition.action === "treaty-fragment-nara") {
-      const added = addDanneItem("treaty-fragments", 0);
-      if (added) retroAudio.danneItemPickup("Treaty Fragment I");
-      else retroAudio.confirm();
-      this.dialog.show("TREATY FRAGMENT I", added
-        ? "Fragment I was filed behind the drone patrol route."
-        : "Fragment I is already in the treaty folder.");
+      this.stackRecords?.handle(definition.action);
       return;
     }
     if (definition.action === "hidden-reading-room-passage") {
+      if (hiddenReadingRoomDiscovered(gameState)) {
+        this.enterReadingPassage();
+        return;
+      }
       if (!hasProcessItem("review_folder")) {
         retroAudio.warning();
-        this.dialog.show("FAINT WALL SEAM", [
-          "A shelf wall sounds hollow, but the route needs a review-folder cross-check.",
-          "Return with the Review Folder to compare the stack register against the wall seam."
-        ]);
+        this.cacheToast.show("NEEDS REVIEW FOLDER", this.player.position, "info");
         setLatestMessage("Hidden reading-room seam needs Review Folder.");
         return;
       }
-      gameState.sceneProgress[HIDDEN_READING_ROOM_DISCOVERED_FLAG] = 1;
-      retroAudio.confirm();
-      setLatestMessage("Secret reading-room passage opened.");
-      setObjective("Secret passage opened: enter the hidden reading room.");
-      saveGameNow("manual");
-      transitionTo(this, HIDDEN_READING_ROOM_SCENE);
+      if (!this.player.combatReadout.weapon.canSwing) return;
+      equipProcessItem("review_folder");
+      this.player.faceTowards(definition);
+      this.player.startAction("review_folder");
       return;
     }
     if (definition.action === "treaty-fragment-vault") {
@@ -736,14 +805,23 @@ export abstract class DanneMapScene extends Phaser.Scene {
         retroAudio.confirm();
         return;
       }
+      if (reviewCacheRefill(gameState.reliability) === 0) {
+        this.cacheToast.show("RELIABILITY FULL", { x: 128, y: 88 }, "info");
+        setLatestMessage("Reliability is full. The review cache remains available.");
+        retroAudio.blip();
+        return;
+      }
       gameState.sceneProgress.blackVaultReliabilityCacheUsed = 1;
-      adjustReliability(RELIABILITY_CACHE_REFILL, "human review cache restored confidence");
+      adjustReliability(reviewCacheRefill(gameState.reliability), "human review cache restored confidence");
       this.reliability.update();
-      this.dialog.show("HUMAN REVIEW CACHE", [
-        "A shelf of vetted human-review notes steadies your hand.",
-        "Reliability restored. Top up before facing the DANN-E core."
-      ]);
-      setObjective("Reliability restored; face the DANN-E core when ready.");
+      for (const marker of this.cacheMarkers) {
+        (marker as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(false);
+      }
+      this.interactionAssist.clear();
+      this.cacheToast.show("REVIEW RESTORED", { x: 128, y: 88 }, "info");
+      retroAudio.confirm();
+      setObjective(this.blackVaultApproachObjective());
+      saveGameNow("manual");
       return;
     }
     if (definition.action === "cipher-machine") {
@@ -763,58 +841,6 @@ export abstract class DanneMapScene extends Phaser.Scene {
       this.dialog.show("MARINE GUARD", this.marineGuard?.blockedDialog() ?? "Classified door remains closed.");
       setLatestMessage("Marine guard blocks classified door.");
     }
-  }
-
-  private showHacHearingChoice() {
-    if (gameState.sceneProgress.senateHacReviewComplete) {
-      this.dialog.show("WITNESS TABLE", [
-        "The HAC process review is already entered.",
-        "Question, answer, source, and date remain separate.",
-        "Treaty Fragment II is filed from the hearing record."
-      ]);
-      return;
-    }
-
-    const step = gameState.sceneProgress.senateHacReviewStep ?? 0;
-    const prompt = getHacHearingPrompt(step);
-    setObjective(`Senate Hearing: answer HAC review ${step + 1}/${HAC_HEARING_PROMPTS.length}.`);
-    this.choice.show(`${prompt.question}\n\n${prompt.sourceBasis}`, [...prompt.options], (option) => {
-      const result = evaluateHacHearingAnswer(prompt.id, option.value);
-      if (!result.ok) {
-        retroAudio.warning();
-        adjustReliability(-3, "HAC hearing correction");
-        this.reliability.update();
-        this.dialog.show("HAC REVIEW", [
-          result.message,
-          "Try again. The hearing record must show the process honestly."
-        ], () => this.showHacHearingChoice());
-        return;
-      }
-
-      const nextStep = step + 1;
-      gameState.sceneProgress.senateHacReviewStep = nextStep;
-      setLatestMessage(`HAC hearing check ${nextStep}/${HAC_HEARING_PROMPTS.length}: ${result.prompt.id}.`);
-      if (!hacHearingComplete(nextStep)) {
-        this.dialog.show("HAC REVIEW", [
-          result.message,
-          "The committee has another process question."
-        ], () => this.showHacHearingChoice());
-        return;
-      }
-
-      gameState.sceneProgress.senateHacReviewComplete = 1;
-      const added = addDanneItem("treaty-fragments", 1);
-      if (added) retroAudio.danneItemPickup("Treaty Fragment II");
-      else retroAudio.confirm();
-      setLatestMessage("HAC process review complete: oversight, 30-year sample, and annual findings filed.");
-      adjustReliability(6, "HAC process monitoring answered cleanly");
-      this.reliability.update();
-      this.dialog.show("WITNESS TABLE", [
-        result.message,
-        "HAC process review entered: compilation, declassification, 30-year sampling, annual findings, and Kellogg standards are visible.",
-        added ? "Treaty Fragment II is filed from the hearing record." : "Treaty Fragment II is already filed."
-      ]);
-    });
   }
 
   private installUiDebugHooks() {
@@ -852,7 +878,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (this.geometry.sceneKey === "NaraStacksScene") {
       this.redactorDrones = (this.geometry.patrolRoutes ?? []).map((route) => {
         const [start, ...rest] = route.points;
-        return new RedactorDrone(this, start.x, start.y, [start, ...rest]);
+        return new RedactorDrone(this, start.x, start.y, [start, ...rest], () => this.solids, DRONE_ENTRY_GRACE_MS);
       });
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene" && !gameState.sceneProgress.blackVaultBossCleared) {
@@ -887,9 +913,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
       return;
     }
     equipProcessItem("red_pencil");
+    this.cacheToast.hide();
+    this.vaultObjects?.update(null, false, true);
     for (const wraith of this.censorshipWraiths) wraith.destroy();
     this.censorshipWraiths = [];
-    this.publicationBoard?.setVisible(false);
     for (const marker of this.interactionMarkerObjects) {
       (marker as Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Visible).setVisible(false);
     }
@@ -900,7 +927,6 @@ export abstract class DanneMapScene extends Phaser.Scene {
       quickFight,
       onPhaseChange: (phase) => {
         gameState.sceneProgress.blackVaultBossPhase = phase === "defeated" ? 99 : this.phaseProgressNumber(phase);
-        this.drawDanneArenaLayer(Math.max(0, this.phaseProgressNumber(phase) - 1));
         setObjective(this.objectiveForBossPhase(phase));
       },
       onDefeated: (completeTreatyRecord) => {
@@ -913,12 +939,15 @@ export abstract class DanneMapScene extends Phaser.Scene {
       onBadEnding: () => {
         transitionTo(this, "BadEndingScene");
       },
+      onRetreat: () => {
+        this.scene.restart();
+      },
       onPlayerHit: (heavy) => {
         this.hitstop.freezeFor(this.time.now, heavy ? "sword-hit-heavy" : "sword-hit");
       }
     });
     gameState.sceneProgress.blackVaultBossStarted = 1;
-    setObjective("Black Vault Lair: defeat DANN-E with human-reviewed tools.");
+    setObjective("DANN-E FINAL REVIEW");
     retroAudio.startMusic("DanneBoss", { forceRestart: true });
     this.danneBoss.start();
   }
@@ -953,6 +982,45 @@ export abstract class DanneMapScene extends Phaser.Scene {
     }
   }
 
+  private resolveReadingPassage() {
+    if (this.geometry.sceneKey !== "NaraStacksScene" || hiddenReadingRoomDiscovered(gameState)) return;
+    const hitbox = this.player.activeActionHitbox;
+    if (!hitbox || !canRevealReadingPassage(false, hasProcessItem("review_folder"), this.player.combatReadout.weapon.tool, hitbox)) return;
+    gameState.sceneProgress[HIDDEN_READING_ROOM_DISCOVERED_FLAG] = 1;
+    this.solids = readingPassageSolids(this.geometry.solids, true).map(rectToPhaser);
+    const definition = this.geometry.interactions.find((item) => item.action === "hidden-reading-room-passage");
+    if (definition) this.drawHiddenPassageSeam(definition);
+    if (isCollisionDebugEnabled()) this.drawCollisionDebug();
+    const interaction = this.interactables.find((item) => item.id === definition?.id);
+    if (interaction) {
+      interaction.label = readingPassageLabel(true, true);
+      interaction.kind = "door";
+    }
+    this.passageBusyUntil = this.time.now + 360;
+    this.cacheToast.show("HIDDEN PASSAGE OPEN", this.player.position, "info");
+    retroAudio.toolHit("review_folder");
+    setLatestMessage("The shelf register reveals a hidden reading room.");
+    this.syncReadingRoomTraversal();
+    saveGameNow("manual");
+  }
+
+  private enterReadingPassage() {
+    if (this.leavingReadingPassage || this.time.now < this.passageBusyUntil) return;
+    this.leavingReadingPassage = true;
+    saveGameNow("manual");
+    transitionTo(this, HIDDEN_READING_ROOM_SCENE, { chapterFrom: "DN1", chapterTo: "DN2" });
+  }
+
+  private syncReadingRoomTraversal() {
+    if (this.geometry.sceneKey !== "NaraStacksScene") return;
+    const opened = hiddenReadingRoomDiscovered(gameState);
+    setRoomTraversalState({
+      currentRoomId: "DN1", roomTitle: "NARA Stacks", roomType: "puzzle",
+      visitedRoomIds: [...new Set([...getVisitedRoomIds(["DN1", "DN2"] as const), "DN1"])],
+      exits: opened ? { north: "DN2", south: "A1" } : { south: "A1" }
+    });
+  }
+
   private updateDanneEntities(timeMs: number, deltaMs: number, canAct: boolean) {
     for (const drone of this.redactorDrones) drone.update(timeMs, deltaMs, this.player, canAct);
     for (const wraith of this.censorshipWraiths) wraith.update(timeMs, deltaMs, this.player, canAct);
@@ -962,7 +1030,16 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private syncDanneReadout(timeMs: number) {
-    const visible = [...this.geometry.visibleEntities];
+    const visible = this.geometry.visibleEntities.filter((label) => this.geometry.sceneKey !== "NaraStacksScene"
+      || label !== "Treaty Fragment I" || !naraFragmentCollected()).map((label) => label === "Faint Wall Seam"
+      ? readingPassageLabel(hiddenReadingRoomDiscovered(gameState), hasProcessItem("review_folder")) : label);
+    if (this.vaultObjects) {
+      for (const label of ["DANN-E Core Trigger", "Human Review Cache", "Treaty Fragment III"]) {
+        const index = visible.indexOf(label);
+        if (index >= 0) visible.splice(index, 1);
+      }
+      visible.push(...this.vaultObjects.visibleLabels());
+    }
     if (this.redactorDrones.length) visible.push(...this.redactorDrones.map((_drone, index) => `Redactor Drone ${index + 1}`));
     if (this.censorshipWraiths.length) visible.push(...this.censorshipWraiths.map((_wraith, index) => `Censorship Wraith ${index + 1}`));
     if (this.danneBoss?.isActive) visible.push(`DANN-E Boss (${this.danneBoss.currentPhase})`);
@@ -975,8 +1052,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
         y: drone.position.y,
         spriteKey: drone.spriteKey,
         behavior: "patrol + stamp drop",
-        defeatMethod: "Use the Ruby Pen or keep clear of black-bar stamps while routing the manifest.",
-        status: drone.status(timeMs)
+        defeatMethod: "Strike with the equipped review tool, or leave the marked floor before the stamp lands. Shelves block sight.",
+        status: drone.status(timeMs),
+        ...drone.healthReadout,
+        telegraph: drone.telegraph
       })),
       ...this.censorshipWraiths.map((wraith, index) => ({
         label: `Censorship Wraith ${index + 1}`,
@@ -985,19 +1064,21 @@ export abstract class DanneMapScene extends Phaser.Scene {
         spriteKey: wraith.spriteKey,
         behavior: "slow float + ink sweep",
         defeatMethod: "Keep distance, strike during the ink-sweep pause, and preserve visible review notes.",
-        status: wraith.status(timeMs)
+        status: wraith.status(timeMs),
+        ...wraith.healthReadout,
+        telegraph: wraith.telegraph
       })),
       ...(this.danneBoss?.isActive ? [this.danneBoss.readout()] : [])
     ]);
   }
 
   private objectiveForBossPhase(phase: string) {
-    if (phase === "colossus") return "Black Vault: DODGE RED LOCK; COUNTER.";
-    if (phase === "swarm") return "Black Vault: DODGE CONVERGENCE; COUNTER.";
-    if (phase === "cloud") return "Black Vault: WATCH CYAN SHIFT; LEAVE RED TARGET.";
-    if (phase === "ascendant") return "Black Vault: READ MARKERS; COUNTER BETWEEN VOLLEYS.";
-    if (phase === "defeated") return "Black Vault Lair: DANN-E defeated; route to publication.";
-    return this.geometry.objective;
+    if (phase === "colossus") return "RETURN EGO BOLTS";
+    if (phase === "swarm") return "PENCIL CLEARS MINIS";
+    if (phase === "cloud") return "REFUTE THE CLOUD";
+    if (phase === "ascendant") return "RETURN EGO BOLTS";
+    if (phase === "defeated") return "TO THE BINDERY";
+    return "DANN-E FINAL REVIEW";
   }
 
   private phaseProgressNumber(phase: string) {
@@ -1053,8 +1134,14 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private useDanneItemAction() {
     const usingRubyPen = gameState.equippedDanneItem === "ruby-pen" && hasDanneItem("ruby-pen");
-    if (!this.player.startAction(gameState.equippedProcessItem)) {
-      setLatestMessage("Equipped review tool is cooling down.");
+    const swing = usingRubyPen
+      ? { started: this.player.startAction(gameState.equippedProcessItem), reason: undefined }
+      : tryEquippedToolSwing(this.player);
+    if (!swing.started) {
+      if (swing.reason) {
+        setLatestMessage(swing.reason);
+        this.cacheToast.show("EQUIP AN OWNED TOOL", this.player.position, "info");
+      }
       return;
     }
     if (!usingRubyPen) {

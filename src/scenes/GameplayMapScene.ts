@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { characterAnimKey } from "../art/character_anims";
 import {
   ART_PACK_FOOT_OFFSET_Y,
@@ -79,7 +80,7 @@ import {
 } from "../game/state";
 import type { Interactable } from "../game/types";
 import type { Position } from "../game/types";
-import { getInput, getPrimaryActionBadge, tickInput } from "../input/InputState";
+import { getInput, getPrimaryActionBadge, getSecondaryActionBadge, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import {
@@ -92,7 +93,7 @@ import { InteractionPrompt, promptVerbForKind } from "../systems/interactionProm
 import { InventoryOverlay } from "../systems/inventory";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { snapPixel } from "../systems/pixelPerfect";
-import { applyStandardsViolation } from "../systems/reliability";
+import { applyProcessPressure } from "../systems/dannePressure";
 import {
   completeEncounterWaveQueue,
   createEncounterWaveQueue,
@@ -100,13 +101,17 @@ import {
   hasPendingEncounterWaves,
   nextEncounterWave,
   resolveEncounterCompletion,
+  resumeCompletedWaves,
   type EncounterWaveQueue
 } from "../systems/encounterWaves";
 import { AttackBuffer, HitstopController } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
+import { CombatClock } from "../systems/combatClock";
 import {
   applyRoomClearGate,
   isRoomCleared,
   roomClearFlag,
+  enemyRewardFlag,
   roomClearStatus
 } from "../systems/roomClear";
 import { playRubyMosaicTransition } from "../systems/sceneTransitions";
@@ -194,7 +199,7 @@ const MAP_LABELS: Record<GameplayMapKey, string> = {
 
 const MAP_OBJECTIVES: Record<GameplayMapKey, string> = {
   historian_office: "Visit the Archive Guide or inspect the FRUS bookshelf.",
-  nara_stacks: "Check the catalog desk and note the gated Red Zone.",
+  nara_stacks: "TO CATALOG DESK",
   foggy_bottom: "Stay on the sidewalks and enter the Truman Building.",
   west_wing: "Find the Situation Room gate and review room entrances.",
   black_vault: "Approach the obelisk core when the record is ready.",
@@ -262,17 +267,20 @@ export class GameplayMapScene extends Phaser.Scene {
   private danneRoomId = "";
   private danneRoomUnlockedFlags: string[] = [];
   private danneWaves: EncounterWaveQueue<DanneSpawnPlan> = createEncounterWaveQueue([]);
+  private restoredDanneDefeats = 0;
   private readonly danneWaveTransition = new EncounterWaveTransition();
   private readonly hitstop = new HitstopController();
   private readonly attackBuffer = new AttackBuffer();
   private danneBanner?: Phaser.GameObjects.Container;
   private activeMusicCue = "";
+  private combatClock = new CombatClock();
 
   constructor() {
     super("GameplayMapScene");
   }
 
   init(data: GameplayMapSceneData) {
+    this.routeTransitionLocked = false;
     const params = new URLSearchParams(window.location.search);
     const queryMap = typedMapKey(params.get("map") ?? undefined);
     const requestedMap = data.mapKey ?? queryMap;
@@ -298,9 +306,11 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   create() {
+    this.combatClock = new CombatClock();
     this.danneWaveTransition.reset();
     this.hitstop.reset();
     this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
     this.danneBanner?.destroy();
     this.danneBanner = undefined;
     this.tileData = this.readTileData();
@@ -370,11 +380,15 @@ export class GameplayMapScene extends Phaser.Scene {
     const input = getInput();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.routeTransitionLocked) {
+      this.attackBuffer.clear();
+      this.setCombatPaused(true);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       return;
     }
     if (this.dialogPages.length > 0) {
+      this.attackBuffer.clear();
+      this.setCombatPaused(true);
       if (input.aJustPressed) this.advanceMapDialog();
       if (input.bJustPressed || input.pauseJustPressed) this.clearMapDialog();
       this.player.update(delta, false);
@@ -383,28 +397,29 @@ export class GameplayMapScene extends Phaser.Scene {
     }
     if (input.menuJustPressed) this.inventory.toggle();
     if (handleOpenOverlays(this.inventory)) {
+      this.attackBuffer.clear();
+      this.setCombatPaused(true);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       return;
     }
     if (input.pauseJustPressed) {
+      this.attackBuffer.clear();
+      this.setCombatPaused(true);
       this.returnToWorldMap();
       return;
     }
     if (input.bJustPressed || input.abilityJustPressed) this.attackBuffer.press(this.time.now);
     if (this.hitstop.isFrozen(this.time.now)) {
+      this.setCombatPaused(true);
       this.player.update(delta, false);
       this.prompt.update(delta, null);
       this.syncGameplayThreats();
       return;
     }
-    if (this.attackBuffer.consume(this.time.now, true)) {
-      const toolLabel = gameState.equippedProcessItem?.replace(/_/g, " ").toUpperCase() ?? "FRUS TOOL";
-      if (this.player.startAction(gameState.equippedProcessItem)) {
-        setLatestMessage(`Tool action: ${toolLabel}.`);
-      } else {
-        setLatestMessage(`${toolLabel} is cooling down.`);
-      }
+    this.setCombatPaused(false);
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing)) {
+      this.startEquippedSwing();
     }
 
     this.player.update(delta, true, {
@@ -417,18 +432,24 @@ export class GameplayMapScene extends Phaser.Scene {
       solids: this.solids
     });
     this.handleTriggers();
+    if (this.dialogPages.length > 0 || this.routeTransitionLocked) {
+      this.setCombatPaused(true);
+      return;
+    }
     this.updateFrusFloorCurrentStage();
     this.updateFrusFloorGateStatus();
     this.updateFrusFloorNextGateRoute();
     this.updateFrusFloorNextGateInteractable();
     this.updateDanneEncounter(delta);
     const combatCue = this.currentDanneCombatCue();
-    const nearestCandidate = nearestInteractable(this.player.position, this.interactables);
     const combatLocked = this.isDanneEncounterLocked();
-    const nearest = combatLocked ? null : nearestCandidate;
-    const hintTarget = combatLocked
-      ? null
-      : this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, this.interactables));
+    const available = this.availableCombatInteractables(combatLocked);
+    const nearest = nearestInteractable(this.player.position, available);
+    const showApproachHint = (this.mapKey === "frus_floor" && !combatCue)
+      || input.aJustPressed || this.objectiveOverrideMsRemaining > 0;
+    const hintTarget = showApproachHint
+      ? this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, available))
+      : null;
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
     this.prompt.update(delta, promptTarget, {
@@ -443,7 +464,7 @@ export class GameplayMapScene extends Phaser.Scene {
       : hintTarget
         ? `STEP CLOSER: ${hintTarget.label.toUpperCase()}`
         : combatCue
-          ? `${combatCue.actionHint}  M TOOLS`
+          ? combatCue.actionHint
           : `${actionBadge} INTERACT  ESC WORLD MAP`);
     const feedback = decideInteractionFeedback(nearest, hintTarget);
     const showedStepCloserFeedback = input.aJustPressed && feedback.kind === "step-closer";
@@ -466,11 +487,25 @@ export class GameplayMapScene extends Phaser.Scene {
     this.syncGameplayThreats();
   }
 
+  private startEquippedSwing() {
+    const result = tryEquippedToolSwing(this.player);
+    if (result.started) {
+      const tool = this.player.combatReadout.weapon.label;
+      setLatestMessage(`Tool action: ${tool}.`);
+    } else if (result.reason) {
+      setLatestMessage(result.reason);
+      setObjective("EQUIP AN OWNED TOOL");
+      this.objectiveOverrideMsRemaining = 1250;
+      retroAudio.warning();
+    }
+  }
+
   private createDanneEncounter() {
     this.clearDanneEnemies();
     this.danneRoomId = "";
     this.danneRoomUnlockedFlags = [];
     this.danneWaves = createEncounterWaveQueue([]);
+    this.restoredDanneDefeats = 0;
     if (this.mapKey === "black_vault") {
       this.danneRoomId = "black_vault";
       this.danneRoomUnlockedFlags = ["blackVaultBossCleared", "blackVaultWestOpen", "blackVaultNorthOpen"];
@@ -525,7 +560,15 @@ export class GameplayMapScene extends Phaser.Scene {
         this.danneWaves = completeEncounterWaveQueue(this.danneWaves);
         return;
       }
+      const restored = resumeCompletedWaves(this.danneWaves, plan => Boolean(gameState.sceneProgress[enemyRewardFlag(this.danneRoomId, plan.id)]));
+      this.danneWaves = restored.queue;
+      this.restoredDanneDefeats = restored.defeated;
+      if (!hasPendingEncounterWaves(this.danneWaves)) {
+        applyRoomClearGate(this.danneRoomId, [], this.danneRoomUnlockedFlags, "Room cleared: completed reviews retained.");
+        return;
+      }
       this.advanceDanneWave();
+      if (restored.defeated > 0) setLatestMessage("First review retained. Counter the remaining Swarm with the Citation Stamp.");
       return;
     }
 
@@ -612,7 +655,7 @@ export class GameplayMapScene extends Phaser.Scene {
           : 0);
     const completion = resolveEncounterCompletion(
       expectedEnemyCount,
-      status.defeatedEnemyCount,
+      status.defeatedEnemyCount + this.restoredDanneDefeats,
       isRoomCleared(this.danneRoomId || this.mapKey),
       hasPendingEncounterWaves(this.danneWaves) || this.danneWaveTransition.pending
     );
@@ -631,7 +674,7 @@ export class GameplayMapScene extends Phaser.Scene {
       if (!this.danneWaveTransition.pending && !hasPendingEncounterWaves(this.danneWaves)) return null;
       return {
         actionHint: "NEXT WAVE",
-        objective: `Wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} cleared. Next review file incoming.`
+        objective: `NEXT WAVE ${this.danneWaves.currentWave + 1}/${this.danneWaves.totalWaves}`
       };
     }
     const player = this.player.position;
@@ -651,44 +694,57 @@ export class GameplayMapScene extends Phaser.Scene {
     const equipped = gameState.equippedProcessItem === readout.weakness;
     const status = this.currentDanneRoomStatus();
     if (!acquired) {
+      const source = readout.weakness === "review_folder"
+        ? "FOLDER: ARCHIVE B2"
+        : readout.weakness === "red_pencil"
+          ? "PENCIL: EDITOR E1"
+          : "STAMP: GUIDE CAVERN";
       return {
-        actionHint: `DODGE - NEED ${shortTool}`,
-        objective: `${readout.label}: find ${weaknessLabel}; ${status.defeatedEnemyCount}/${status.requiredEnemyCount} cleared.`
+        actionHint: `RETREAT - NEED ${shortTool}`,
+        objective: source
       };
     }
     if (!equipped) {
       return {
-        actionHint: `M EQUIP ${shortTool}`,
-        objective: `${readout.label}: equip ${weaknessLabel}, then press B.`
+        actionHint: `TOOLS: EQUIP ${shortTool}`,
+        objective: `EQUIP ${weaknessLabel}`
       };
     }
     return {
-      actionHint: `B USE ${shortTool}`,
-      objective: `${readout.label}: use ${weaknessLabel}; ${status.defeatedEnemyCount}/${status.requiredEnemyCount} cleared.`
+      actionHint: `${getSecondaryActionBadge()} USE ${shortTool}`,
+      objective: `${shortTool}: ${status.defeatedEnemyCount}/${status.requiredEnemyCount} CLEARED`
     };
+  }
+
+  private setCombatPaused(paused: boolean) {
+    this.combatClock.setPaused(paused, this.time.now);
+    this.player.setCombatPaused(paused);
+    for (const enemy of this.danneEnemies) enemy.setCombatPaused(paused);
+    if (paused) this.syncGameplayThreats();
   }
 
   private updateDanneEncounter(delta: number) {
     if (!this.danneRoomId || !this.danneEnemies.length) return;
     const playerPosition = this.player.position;
+    const swingTool = this.player.combatReadout.weapon.tool;
     const playerFootBox = new Phaser.Geom.Rectangle(playerPosition.x - 8, playerPosition.y - 3, 16, 8);
     for (const enemy of this.danneEnemies) {
       if (enemy.defeated) continue;
       const result = enemy.updateEnemy(this.time.now, delta, playerPosition, playerFootBox);
       if ((result.projectileHit || result.contactHit) && this.player.takeHit(enemy.readout(), enemy.damage, 700)) {
         const attack = result.projectileHit ? "ego bolt" : "telegraphed pressure strike";
-        applyStandardsViolation("missed_30_year_deadline", `DANN-E ${attack} disrupted room-clear review.`);
+        applyProcessPressure(`DANN-E ${attack}. The record is unchanged.`);
         setObjective(`Dodge the ${attack}, then counter with the correct FRUS tool.`);
         this.objectiveOverrideMsRemaining = 1100;
       }
       const hitResult = enemy.tryPlayerToolHit(
         this.player.activeActionHitbox,
-        gameState.equippedProcessItem,
+        swingTool,
         playerPosition,
         this.player.actionId
       );
       if (hitResult === "wrong-tool") {
-        setObjective(`Wrong counter. Equip ${enemy.readout().weakness.replace(/_/g, " ").toUpperCase()} for ${enemy.readout().label}.`);
+        setObjective(`EQUIP ${enemy.weakness.replace(/_/g, " ").toUpperCase()}`);
         this.objectiveOverrideMsRemaining = 1250;
       } else if (hitResult === "damaged") {
         this.hitstop.freezeFor(this.time.now, "sword-hit");
@@ -704,7 +760,7 @@ export class GameplayMapScene extends Phaser.Scene {
     }
 
     if (!this.danneEnemies.some((enemy) => !enemy.defeated) && hasPendingEncounterWaves(this.danneWaves)) {
-      if (this.danneWaveTransition.begin(this.time.now)) {
+      if (this.danneWaveTransition.begin(this.combatClock.now(this.time.now))) {
         const nextWave = this.danneWaves.currentWave + 1;
         this.showDanneBanner(`WAVE ${this.danneWaves.currentWave} CLEARED`, `NEXT REVIEW ${nextWave}/${this.danneWaves.totalWaves}`, PALETTE.goldStamp);
         retroAudio.confirm();
@@ -713,7 +769,7 @@ export class GameplayMapScene extends Phaser.Scene {
         this.objectiveOverrideMsRemaining = 700;
         this.updateVisibleMapState();
       }
-      if (!this.danneWaveTransition.consumeIfReady(this.time.now)) return;
+      if (!this.danneWaveTransition.consumeIfReady(this.combatClock.now(this.time.now))) return;
       this.advanceDanneWave();
       setLatestMessage(`DANN-E wave ${this.danneWaves.currentWave}/${this.danneWaves.totalWaves} active.`);
       setObjective("New DANN-E wave: read the weakness glyph, equip its tool, then press B.");
@@ -730,6 +786,8 @@ export class GameplayMapScene extends Phaser.Scene {
         : "Room cleared: DANN-E pressure resolved."
     );
     if (!wasCleared && status.cleared) {
+      setObjective("ROUTES OPEN");
+      this.objectiveOverrideMsRemaining = 1150;
       retroAudio.confirm();
       applyHitShake(this, "boss-defeat", 0.42);
       this.showDanneBanner("RECORD CLEARED", "ROUTES UNLOCKED", PALETTE.openNetGreen);
@@ -765,6 +823,14 @@ export class GameplayMapScene extends Phaser.Scene {
       || hasPendingEncounterWaves(this.danneWaves)
       || this.danneWaveTransition.pending
     ));
+  }
+
+  private availableCombatInteractables(locked: boolean): Interactable[] {
+    if (!locked) return this.interactables;
+    // Retreat is not progression: keep the forward vault and reward interactions locked.
+    return this.mapKey === "nara_stacks" || this.mapKey === "capitol_hill"
+      ? this.doors.filter(door => door.target.scene === "WorldMapScene")
+      : [];
   }
 
   private showDanneBanner(title: string, subtitle: string, accent: string) {
@@ -833,6 +899,7 @@ export class GameplayMapScene extends Phaser.Scene {
         reliabilityRisk: readout.reliabilityRisk,
         enemyState: readout.state,
         weakness: readout.weakness,
+        telegraph: readout.telegraph,
         roomClear: roomStatus
           ? {
               roomId: roomStatus.roomId,

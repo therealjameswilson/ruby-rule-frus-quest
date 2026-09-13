@@ -1,13 +1,7 @@
 import Phaser from "phaser";
-import { characterAnimKey } from "../art/character_anims";
-import { CHARACTER_KEYS } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import {
-  SNES_ANTAGONIST_ASSETS,
-  SNES_BUREAUCRATIC_WALL_ASSETS
-} from "../game/snesAtlas";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
-import { isIntegerScale } from "../systems/pixelPerfect";
+import { measurePixelScale } from "../systems/pixelPerfect";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -22,117 +16,33 @@ export class RenderDebugScene extends Phaser.Scene {
   }
 
   create() {
-    setSceneState("RenderDebugScene", "debug", "Inspect pixel-art render scaling.");
-    setVisibleEntities([
-      "single-texel proof 1x",
-      "single-texel proof 2x",
-      "single-texel proof 3x",
-      "single-texel proof 4x",
-      ...CHARACTER_KEYS.map((key) => `${key} 32x48 art-pack sheet`),
-      ...SNES_ANTAGONIST_ASSETS.map((asset) => `${asset.displayName} antagonist sprite`),
-      ...SNES_BUREAUCRATIC_WALL_ASSETS.map((wall) => `${wall.type} wall sprite`)
-    ]);
-    this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
+    setSceneState("RenderDebugScene", "debug", "Inspect native glyphs and pixel scaling.");
+    setVisibleEntities(["16x16 checkerboard", "origin single texel", "native 6px and 8px text", "1x-4x texels"]);
+    this.cameras.main.setBackgroundColor(PALETTE.black);
     this.cameras.main.roundPixels = true;
     this.markPixelProofVisible(true);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.markPixelProofVisible(false));
-    this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.shadowNavy));
     this.createPixelProofMarks();
-    this.add.rectangle(128, 18, 238, 24, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp));
-    this.add.text(128, 11, "PIXEL RENDER DEBUG", {
-      fontFamily: "monospace",
-      fontSize: "10px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5);
-
-    this.add.rectangle(11, 34, 154, 58, color(PALETTE.black), 0.9).setOrigin(0, 0).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(4);
-    this.metricsText = this.add.text(14, 37, "", {
-      fontFamily: "monospace",
-      fontSize: "4px",
-      color: PALETTE.creamPaper,
-      lineSpacing: 0
-    }).setDepth(5);
-
-    this.add.rectangle(128, 119, 236, 48, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(1);
-    SNES_BUREAUCRATIC_WALL_ASSETS.forEach((wall, index) => {
-      const x = 25 + index * 34;
-      this.add.image(x, 115, wall.key).setDepth(2);
-      this.add.text(x, 133, wall.type.replace("DANN-E QUEUE", "DANN-E").slice(0, 7), {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.creamPaper
-      }).setOrigin(0.5).setDepth(2);
+    const label = (x: number, y: number, text: string, size = 8, tint: string = PALETTE.creamPaper) => this.add.text(x, y, text, {
+      fontSize: `${size}px`, color: tint, lineSpacing: 2
     });
-    this.add.text(128, 91, "BUREAUCRATIC WALL SPRITES", {
-      fontFamily: "monospace",
-      fontSize: "7px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(2);
-
-    CHARACTER_KEYS.slice(0, 5).forEach((key, index) => {
-      const x = 28 + index * 26;
-      this.add.sprite(x, 84, key).setOrigin(0.5, 0.9).setScale(1).play(characterAnimKey(key, index % 2 === 0 ? "idle-down" : "reading")).setDepth(2);
-      this.add.text(x, 98, key.split("_")[0].slice(0, 4).toUpperCase(), {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.goldStamp,
-        backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(2);
-    });
-
-    SNES_ANTAGONIST_ASSETS.forEach((asset, index) => {
-      if (!this.textures.exists(asset.key)) return;
-      const x = 177 + index * 21;
-      const label = asset.displayName
-        .replace("Federal Government Shutdown", "SHUT")
-        .replace("Navy Hill Mice", "MICE")
-        .replace("HAC Member", "HAC")
-        .replace("Bees", "BEES")
-        .slice(0, 5);
-      this.add.image(x, 64, asset.key).setDepth(2);
-      this.add.text(x, 80, label, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.goldStamp,
-        backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(2);
-    });
-
-    CHARACTER_KEYS.slice(5).forEach((key, index) => {
-      const x = 30 + index * 30;
-      this.add.sprite(x, 165, key).setOrigin(0.5, 0.9).setScale(1).play(characterAnimKey(key, index % 2 === 0 ? "walk-down" : "approval")).setDepth(2);
-      this.add.text(x, 181, key.split("_")[0].slice(0, 4).toUpperCase(), {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: PALETTE.goldStamp,
-        backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(2);
-    });
-
-    this.add.rectangle(128, 194, 232, 40, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(1);
-    this.add.text(128, 178, "SINGLE-TEXEL PROOF SCALE", {
-      fontFamily: "monospace",
-      fontSize: "7px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5).setDepth(2);
+    label(24, 6, "PIXEL + TEXT PROOF", 8, PALETTE.goldStamp);
+    this.metricsText = label(12, 30, "", 6);
+    this.add.rectangle(128, 90, 232, 1, color(PALETTE.stoneDark));
+    label(12, 98, "READ / EDIT / PUBLISH");
+    label(12, 114, "SMALL: ABCDEFGHIJKLMNOPQRSTUVWXYZ", 6);
+    label(12, 126, "0123456789 [A] CONTINUE [B] BACK", 6);
+    label(12, 142, "B E F H M N S  12/30");
+    this.add.rectangle(128, 157, 232, 1, color(PALETTE.stoneDark));
     [1, 2, 3, 4].forEach((scale, index) => {
-      const x = 34 + index * 62;
-      const size = scale * 4;
-      this.add.rectangle(x, 196, size, size, color(PALETTE.buckramHighlight)).setOrigin(0.5).setDepth(2);
-      this.add.rectangle(x, 196, size + 2, size + 2).setOrigin(0.5).setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(2);
-      this.add.text(x, 213, `${scale}X`, {
-        fontFamily: "monospace",
-        fontSize: "7px",
-        color: PALETTE.goldStamp
-      }).setOrigin(0.5).setDepth(2);
+      const x = 24 + index * 50;
+      this.add.image(x, 174, this.proofTextureKey).setOrigin(0).setScale(scale);
+      label(x - 2, 190, `${scale}X`, 6, PALETTE.goldStamp);
     });
-
-    this.add.text(128, 228, "DIRECT URL: ?scene=RenderDebugScene", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.terminalCyan
-    }).setOrigin(0.5);
-
+    const diagonal = this.add.graphics();
+    diagonal.fillStyle(color(PALETTE.terminalCyan));
+    for (let index = 0; index < 16; index += 1) diagonal.fillRect(222 + index, 170 + index, 1, 1);
+    label(12, 212, "SPRITES: ?scene=SpriteGallery", 6, PALETTE.terminalCyan);
     this.updateMetrics();
     this.time.addEvent({ delay: 250, loop: true, callback: () => this.updateMetrics() });
   }
@@ -144,36 +54,19 @@ export class RenderDebugScene extends Phaser.Scene {
     const scaleX = rect.width / GAME_WIDTH;
     const scaleY = rect.height / GAME_HEIGHT;
     const rawDpr = window.devicePixelRatio || 1;
-    const roundedDpr = metrics?.dpr ?? Math.max(1, Math.round(rawDpr));
-    const backingPerGamePixelX = canvas.width / GAME_WIDTH;
-    const backingPerGamePixelY = canvas.height / GAME_HEIGHT;
-    const physicalPixelsPerGamePixelX = scaleX * roundedDpr;
-    const physicalPixelsPerGamePixelY = scaleY * roundedDpr;
-    // Phaser owns a logical-size backing buffer. CSS nearest-neighbor scaling
-    // is crisp when the final CSS scale times DPR is a whole number.
-    const integerZoomTarget = metrics?.integerZoomTarget ?? Math.max(1, Math.round(physicalPixelsPerGamePixelX));
-    const expectedDevicePixels = integerZoomTarget;
-    const sameScale = Math.abs(scaleX - scaleY) < 0.001;
-    const physicalScaleIsInteger = isIntegerScale(physicalPixelsPerGamePixelX) && isIntegerScale(physicalPixelsPerGamePixelY);
-    const exactDeviceMapping = (
-      sameScale
-      && physicalScaleIsInteger
-      && Math.abs(physicalPixelsPerGamePixelX - expectedDevicePixels) < 0.001
-      && Math.abs(physicalPixelsPerGamePixelY - expectedDevicePixels) < 0.001
-    );
-    const displayScale = sameScale ? scaleX.toFixed(3) : `${scaleX.toFixed(3)} x ${scaleY.toFixed(3)}`;
+    // The scale controller reports its target in device pixels per game pixel.
+    const target = metrics?.integerZoomTarget ?? 1;
+    const proof = measurePixelScale(rect, rawDpr, target, window.visualViewport?.scale ?? 1);
+    const exact = proof.integerZoom;
     this.metricsText.setText([
-      "ORIGIN: 16x16 CHECKER + RED 1PX @0,0",
-      `DPR: ${rawDpr.toFixed(3)} RAW / ${roundedDpr} ROUND`,
-      `CSS: ${Math.round(rect.width)}x${Math.round(rect.height)}  BUF: ${canvas.width}x${canvas.height}`,
-      `INTERNAL: ${GAME_WIDTH}x${GAME_HEIGHT}`,
-      `ZOOM: ${integerZoomTarget} TARGET / ${displayScale} COMPUTED`,
-      `1PX: ${expectedDevicePixels} DEVICE PX EXPECTED`,
-      `PHYSICAL: ${physicalPixelsPerGamePixelX.toFixed(3)}x${physicalPixelsPerGamePixelY.toFixed(3)}`,
-      `BACKING: ${backingPerGamePixelX.toFixed(3)}x${backingPerGamePixelY.toFixed(3)} LOGICAL`,
-      `CHECK: ${exactDeviceMapping ? "PASS" : "CHECK"}  FLAGS: PIXEL/NEAREST`
+      `INTERNAL: ${GAME_WIDTH}x${GAME_HEIGHT}   DPR: ${rawDpr.toFixed(3)}`,
+      `CSS: ${Math.round(rect.width)}x${Math.round(rect.height)}`,
+      `BACKING: ${canvas.width}x${canvas.height}`,
+      `CSS ZOOM: ${scaleX.toFixed(3)}x${scaleY.toFixed(3)}`,
+      `1PX: ${proof.physicalPixelsX.toFixed(2)}x${proof.physicalPixelsY.toFixed(2)} DEVICE / ${target} TARGET`,
+      `CHECK: ${exact ? "PASS" : "CHECK"}   ORIGIN: ${proof.originAligned ? "ALIGNED" : "OFFSET"}`
     ]);
-    setLatestMessage(`Pixel proof ${exactDeviceMapping ? "pass" : "check"}; 1px=${expectedDevicePixels} device px`);
+    setLatestMessage(`Pixel proof ${exact ? "pass" : "check"}; 1px=${target} device px`);
   }
 
   private createPixelProofMarks() {
@@ -184,12 +77,10 @@ export class RenderDebugScene extends Phaser.Scene {
         checker.fillRect(x, y, 1, 1);
       }
     }
-    checker.lineStyle(1, color(PALETTE.terminalCyan), 1).strokeRect(0, 0, 16, 16);
-
     if (!this.textures.exists(this.proofTextureKey)) {
       const texture = this.textures.createCanvas(this.proofTextureKey, 1, 1);
-      const context = texture?.getContext();
-      if (texture && context) {
+      if (texture) {
+        const context = texture.getContext();
         context.imageSmoothingEnabled = false;
         context.fillStyle = PALETTE.buckramHighlight;
         context.fillRect(0, 0, 1, 1);
@@ -197,8 +88,7 @@ export class RenderDebugScene extends Phaser.Scene {
         texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
       }
     }
-
-    this.add.image(0, 0, this.proofTextureKey).setOrigin(0, 0).setDepth(2001).setScrollFactor(0);
+    this.add.image(0, 0, this.proofTextureKey).setOrigin(0).setDepth(2001).setScrollFactor(0);
   }
 
   private markPixelProofVisible(visible: boolean) {

@@ -1,5 +1,6 @@
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { DANNE_MAP_ASSETS } from "./danneAtlas";
+import { TREATY_FRAGMENT_LABELS } from "./danneItemCatalog";
 import type { Interactable, Position } from "./types";
 
 export type DanneMapSceneKey = (typeof DANNE_MAP_ASSETS)[number]["sceneKey"];
@@ -9,6 +10,8 @@ export type DanneSceneInteractionAction =
   | "save-point"
   | "boss-trigger"
   | "witness-table"
+  | "hearing-exhibit-left"
+  | "hearing-exhibit-right"
   | "nara-stacks-note"
   | "cipher-machine"
   | "marine-guard"
@@ -41,6 +44,20 @@ export interface DanneSceneInteractionDefinition {
   kind: Interactable["kind"];
   action: DanneSceneInteractionAction;
   accent: string;
+}
+
+export function danneMapInteractionAvailable(action: DanneSceneInteractionAction, bossCleared: boolean) {
+  return action !== "treaty-fragment-vault" || bossCleared;
+}
+
+export function danneMapExplorationObjective(sceneKey: DanneMapSceneKey, inventory: readonly string[]) {
+  if (sceneKey === "NaraStacksScene") {
+    return inventory.includes(TREATY_FRAGMENT_LABELS[0]) ? "SOUTH TO ARCHIVE" : "FIND FRAGMENT I";
+  }
+  if (sceneKey === "SenateHearingChamberScene") {
+    return inventory.includes(TREATY_FRAGMENT_LABELS[1]) ? "SOUTH TO OFFICE" : "OPTIONAL: HEARING RECORD";
+  }
+  return DANNE_SCENE_GEOMETRY[sceneKey].objective;
 }
 
 export interface DannePatrolRouteDefinition {
@@ -163,7 +180,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
     interactions: [
       {
         id: "vault-core-trigger",
-        label: "DANN-E Core Trigger",
+        label: "DANN-E Core",
         x: 128,
         y: 122,
         radius: 28,
@@ -188,7 +205,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         // ALTTP "top up at the boss door". Enforced by recoveryReachableBeforeBoss
         // in levelPacing.ts. x=128 falls in the gap between the obsidian rubble.
         id: "vault-reliability-cache",
-        label: "Human Review Cache",
+        label: "Review Cache",
         x: 128,
         y: 182,
         radius: 24,
@@ -222,10 +239,15 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
       { x: 26, y: 46, width: 204, height: 38, label: "committee dais" },
       { x: 46, y: 94, width: 36, height: 32, label: "left counsel table" },
       { x: 174, y: 94, width: 36, height: 32, label: "right counsel table" },
+      { x: 104, y: 126, width: 48, height: 22, label: "witness desk" },
       { x: 28, y: 142, width: 42, height: 30, label: "left gallery benches" },
       { x: 186, y: 142, width: 42, height: 30, label: "right gallery benches" }
     ],
     interactions: [
+      { id: "senate-exhibit-left", label: "Retention Register", x: 64, y: 112, radius: 28,
+        kind: "document", action: "hearing-exhibit-left", accent: PALETTE.creamPaper },
+      { id: "senate-exhibit-right", label: "Release List", x: 192, y: 112, radius: 28,
+        kind: "document", action: "hearing-exhibit-right", accent: PALETTE.creamPaper },
       {
         id: "senate-witness-table",
         label: "Witness Table",
@@ -247,7 +269,7 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
         accent: PALETTE.creamPaper
       }
     ],
-    visibleEntities: ["Witness Table", "Committee Dais", "Office Corridor"]
+    visibleEntities: ["Witness Table", "Left Exhibit", "Right Exhibit", "Office Corridor"]
   },
   NaraStacksScene: {
     sceneKey: "NaraStacksScene",
@@ -271,13 +293,12 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
     interactions: [
       {
         // Pacing: the note warns about the drone patrols, so it sits in the
-        // lower entry aisle by the spawn (128,205) rather than on drone-route-a
-        // (y=92). The player reads the briefing before wading into the patrol
-        // lanes, ALTTP "read the room before the threat". See levelPacing.ts.
+        // entry pocket beside spawn (128,205), outside the 44px stamp range
+        // of the lower sweep at y=152. See levelPacing.ts.
         id: "stacks-note",
-        label: "Stack Control Note",
-        x: 128,
-        y: 178,
+        label: "Patrol Note",
+        x: 140,
+        y: 202,
         radius: 24,
         kind: "document",
         action: "nara-stacks-note",
@@ -286,9 +307,9 @@ export const DANNE_SCENE_GEOMETRY: Record<DanneMapSceneKey, DanneSceneGeometry> 
       {
         id: "nara-treaty-fragment",
         label: "Treaty Fragment I",
-        x: 204,
-        y: 184,
-        radius: 26,
+        x: 166,
+        y: 64,
+        radius: 18,
         kind: "document",
         action: "treaty-fragment-nara",
         accent: PALETTE.goldStamp

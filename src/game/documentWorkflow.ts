@@ -212,6 +212,8 @@ export function cloneDocumentCandidate(document: DocumentCandidate): DocumentCan
   return {
     ...document,
     undisclosedDeletion: document.undisclosedDeletion ?? false,
+    ...(document.firstFootnote ? { firstFootnote: { ...document.firstFootnote } } : {}),
+    ...(document.editorialRepair ? { editorialRepair: { ...document.editorialRepair } } : {}),
     equities: document.equities.map((equityRecord) => ({ ...equityRecord }))
   };
 }

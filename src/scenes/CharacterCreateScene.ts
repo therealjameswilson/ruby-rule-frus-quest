@@ -1,26 +1,21 @@
 import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
 import { getCharacterKeyForProcessRole } from "../art/characters";
-import { GAME_HEIGHT, GAME_WIDTH, PALETTE, PROCESS_ROLES } from "../game/constants";
+import { DEFAULT_PROCESS_ROLE as COMPILER_ROLE, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState, setLatestMessage, setPlayerProfile, setSceneState, setVisibleEntities } from "../game/state";
-import { bindPointerDown, getInput, tickInput } from "../input/InputState";
+import { bindPointerDown, getInput, tickInput, isTouchInputCapable } from "../input/InputState";
+import { CompilerNameInput } from "../input/CompilerNameInput";
 import { retroAudio } from "../systems/audio";
 import { transitionTo } from "../systems/sceneTransitions";
 import {
   CHARACTER_CREATE_TITLE,
   FRUS_COMPILER_ROLE_ID
 } from "./characterCreateCopy";
-import { normalizeCharacterDisplayName, shouldConfirmCharacterCreateInput } from "./characterCreateInput";
+import { normalizeCharacterDisplayName, shouldConfirmCharacterCreateInput, shouldEndCharacterNameEditing } from "./characterCreateInput";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
 }
-
-const COMPILER_ROLE = (() => {
-  const role = PROCESS_ROLES.find((candidate) => candidate.id === FRUS_COMPILER_ROLE_ID);
-  if (!role) throw new Error("The FRUS Compiler role is missing from PROCESS_ROLES.");
-  return role;
-})();
 
 export class CharacterCreateScene extends Phaser.Scene {
   private displayName = "";
@@ -30,6 +25,7 @@ export class CharacterCreateScene extends Phaser.Scene {
   private sprite!: Phaser.GameObjects.Sprite;
   private locked = false;
   private nameFocused = false;
+  private nativeNameInput = new CompilerNameInput();
   private ngPlusBadge?: Phaser.GameObjects.Text;
 
   constructor() {
@@ -37,6 +33,7 @@ export class CharacterCreateScene extends Phaser.Scene {
   }
 
   create() {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.nativeNameInput.destroy());
     setSceneState("CharacterCreateScene", "choice", "Name your FRUS Compiler and begin the volume.");
     this.displayName = this.readInitialName();
     this.locked = false;
@@ -84,7 +81,7 @@ export class CharacterCreateScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.goldStamp
     }).setName("character-create-compiler-ability").setOrigin(0.5, 0);
-    this.add.text(128, 153, "TRACE SOURCES. BUILD THE VOLUME.", {
+    this.add.text(128, 153, "FIND SOURCES. VERIFY. PUBLISH.", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper
@@ -122,11 +119,10 @@ export class CharacterCreateScene extends Phaser.Scene {
     tickInput();
     const input = getInput();
     if (this.nameFocused) {
-      if (input.confirmJustPressed) {
+      if (shouldEndCharacterNameEditing(input)) {
         this.blurNameField();
         return;
       }
-      if (input.cancelJustPressed) this.blurNameField();
       if (input.backspaceJustPressed) this.backspaceName();
       for (const letter of input.typedText) this.handleTypedLetter(letter);
     } else if (shouldConfirmCharacterCreateInput(input)) {
@@ -170,6 +166,13 @@ export class CharacterCreateScene extends Phaser.Scene {
 
   private focusNameField() {
     if (this.locked) return;
+    if (isTouchInputCapable()) {
+      this.nativeNameInput.open(this.displayName, name => {
+        if (name !== null) this.displayName = name;
+        this.blurNameField();
+      });
+      return;
+    }
     this.nameFocused = true;
     this.renderName();
   }
@@ -193,7 +196,7 @@ export class CharacterCreateScene extends Phaser.Scene {
   }
 
   private confirm() {
-    if (this.locked) return;
+    if (this.locked || this.nativeNameInput.active) return;
     this.locked = true;
     const displayName = normalizeCharacterDisplayName(this.displayName);
     retroAudio.confirm();

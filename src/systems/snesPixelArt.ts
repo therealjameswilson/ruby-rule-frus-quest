@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { PALETTE } from "../game/constants";
+import { GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
 import { SNES_ARCHIVE_TILE_ASSET, SNES_GATE_GLYPH_ASSET } from "../game/snesAtlas";
 
@@ -171,6 +171,7 @@ interface SnesEmbassyCableRoomTileRoomOptions {
 interface SnesBlackVaultTileRoomOptions {
   depth?: number;
   track?: TrackFn;
+  combatReady?: boolean;
 }
 
 interface SnesSenateHearingChamberTileRoomOptions {
@@ -370,22 +371,27 @@ function addGateGlyph(
 }
 
 function addGateSeal(scene: Phaser.Scene, x: number, y: number, label: string, track?: TrackFn, depth = 68) {
-  keepTagged(scene.add.rectangle(x, y, 24, 11, color(PALETTE.black), 0.96).setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(depth), "snes-gate-lock-seal", track);
-  keepTagged(scene.add.text(x, y - 4, label, {
-    fontFamily: "monospace",
-    fontSize: "5px",
-    color: PALETTE.classNetRed
-  }).setOrigin(0.5, 0).setDepth(depth + 1), "snes-gate-lock-label", track);
+  addGateCaption(scene, x, y, label, PALETTE.classNetRed, true, track, depth);
 }
 
 function addGateRoutePlaque(scene: Phaser.Scene, x: number, y: number, label: string, accent: string, track?: TrackFn, depth = 68) {
   const trimmed = label.replace(/\s+/g, " ").trim().slice(0, 8).toUpperCase();
-  keepTagged(scene.add.rectangle(x, y, 28, 11, color(PALETTE.black), 0.9).setStrokeStyle(1, color(accent)).setDepth(depth), "snes-gate-route-plaque", track);
-  keepTagged(scene.add.text(x, y - 4, trimmed, {
+  addGateCaption(scene, x, y, trimmed, accent, false, track, depth);
+}
+
+function addGateCaption(scene: Phaser.Scene, x: number, y: number, label: string, accent: string, locked: boolean, track: TrackFn | undefined, depth: number) {
+  const text = scene.add.text(0, 0, label, {
     fontFamily: "monospace",
-    fontSize: "5px",
+    fontSize: "6px",
     color: accent
-  }).setOrigin(0.5, 0).setDepth(depth + 1), "snes-gate-route-label", track);
+  }).setOrigin(0, 0).setDepth(depth + 1);
+  const width = Math.ceil(Math.max(locked ? 24 : 28, text.width + 6) / 2) * 2;
+  // Leave the side gate glyphs visible; keep both text and frame on whole pixels.
+  const centerX = Math.round(Math.max(18 + width / 2, Math.min(GAME_WIDTH - 18 - width / 2, x)));
+  text.setPosition(Math.round(centerX - text.width / 2), Math.round(y - text.height / 2));
+  keepTagged(scene.add.rectangle(centerX, y, width, 12, color(PALETTE.black), locked ? 0.96 : 0.9)
+    .setStrokeStyle(1, color(accent)).setDepth(depth), locked ? "snes-gate-lock-seal" : "snes-gate-route-plaque", track);
+  keepTagged(text, locked ? "snes-gate-lock-label" : "snes-gate-route-label", track);
 }
 
 export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasureOptions) {
@@ -393,13 +399,13 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
   const depth = options.depth ?? 130;
   const accent = options.accent ?? PALETTE.goldStamp;
   const label = options.label.slice(0, 16).toUpperCase();
-  const glowAlpha = options.collected ? 0.28 : 0.62;
+  const pickupArt: Array<Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle> = [];
   keepTagged(scene.add.ellipse(options.x, options.y + 18, 62, 16, color(PALETTE.black), 0.72).setDepth(depth - 4), "snes-treasure-shadow", track);
   keepTagged(scene.add.rectangle(options.x, options.y + 12, 56, 18, color(PALETTE.deepRuby), 1).setStrokeStyle(2, color(accent)).setDepth(depth - 3), "snes-treasure-plinth", track);
   keepTagged(scene.add.rectangle(options.x, options.y + 2, 40, 18, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth - 2), "snes-treasure-case", track);
   keepTagged(scene.add.rectangle(options.x, options.y - 11, 28, 5, color(accent), 1).setDepth(depth - 1), "snes-treasure-lid", track);
   keepTagged(scene.add.rectangle(options.x, options.y + 21, 72, 9, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth + 2), "snes-treasure-label-frame", track);
-  keepTagged(scene.add.text(options.x, options.y + 17, label, {
+  const caption = keepTagged(scene.add.text(options.x, options.y + 17, label, {
     fontFamily: "monospace",
     fontSize: "5px",
     color: options.collected ? PALETTE.stoneLight : accent,
@@ -407,19 +413,24 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
   }).setOrigin(0.5, 0).setDepth(depth + 3), "snes-treasure-label", track);
 
   if (scene.textures.exists(options.textureKey)) {
-    const icon = keepTagged(scene.add.image(options.x, options.y - 1, options.textureKey).setDepth(depth + 1), "snes-treasure-icon", track);
-    if (options.collected && "setTint" in icon) icon.setTint(color(PALETTE.goldStamp));
+    pickupArt.push(keepTagged(scene.add.image(options.x, options.y - 1, options.textureKey).setDepth(depth + 1), "snes-treasure-icon", track));
   } else {
-    keepTagged(scene.add.rectangle(options.x, options.y - 1, 16, 16, color(accent), 1).setDepth(depth + 1), "snes-treasure-icon-fallback", track);
+    pickupArt.push(keepTagged(scene.add.rectangle(options.x, options.y - 1, 16, 16, color(accent), 1).setDepth(depth + 1), "snes-treasure-icon-fallback", track));
   }
 
   for (const [dx, dy] of [[-24, -8], [24, -7], [-16, 8], [16, 8]] as const) {
-    keepTagged(scene.add.rectangle(options.x + dx, options.y + dy, 3, 3, color(accent), glowAlpha).setDepth(depth), "snes-treasure-spark", track);
-    keepTagged(scene.add.rectangle(options.x + dx + 1, options.y + dy + 1, 1, 1, color(PALETTE.white), glowAlpha).setDepth(depth + 1), "snes-treasure-spark-core", track);
+    pickupArt.push(keepTagged(scene.add.rectangle(options.x + dx, options.y + dy, 3, 3, color(accent), 0.62).setDepth(depth), "snes-treasure-spark", track));
+    pickupArt.push(keepTagged(scene.add.rectangle(options.x + dx + 1, options.y + dy + 1, 1, 1, color(PALETTE.white), 0.62).setDepth(depth + 1), "snes-treasure-spark-core", track));
   }
+  const markCollected = () => {
+    for (const object of pickupArt) object.setVisible(false);
+    caption.setText("FILED").setColor(PALETTE.stoneLight);
+  };
+  if (options.collected) markCollected();
+  return { markCollected };
 }
 
-export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, textureKey: string, label: string, track?: TrackFn) {
+export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, textureKey: string, label: string, track?: TrackFn, holdMs = 0) {
   const container = keepTagged(scene.add.container(x, y).setDepth(900), "snes-reward-burst", track);
   container.add(scene.add.ellipse(0, 4, 58, 18, color(PALETTE.black), 0.68));
   container.add(scene.add.rectangle(0, -8, 46, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp)));
@@ -440,6 +451,7 @@ export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, te
     y: y - 10,
     alpha: 0,
     duration: 900,
+    delay: Math.max(0, holdMs),
     ease: "Cubic.easeOut",
     onComplete: () => container.destroy()
   });
@@ -1169,6 +1181,10 @@ export function addSnesBlackVaultTileRoom(scene: Phaser.Scene, options: SnesBlac
   const container = keepTagged(scene.add.container(0, 0).setDepth(depth), "snes-black-vault-tile-room", options.track);
   const add = <T extends Phaser.GameObjects.GameObject>(object: T, name: string) => {
     container.add(tag(object, name));
+    if (options.combatReady && /review-station|treaty-fragment|room-title|altar-plaque|altar-label|blast-door-label/.test(name)) {
+      // These are painted signposts, not interactables or collision geometry.
+      (object as T & Phaser.GameObjects.Components.Visible).setVisible(false);
+    }
     return object;
   };
 
@@ -1406,11 +1422,6 @@ export function addSnesSenateHearingChamberTileRoom(scene: Phaser.Scene, options
     .setStrokeStyle(1, color(PALETTE.terminalCyan)), "snes-senate-witness-mic-panel");
   add(scene.add.rectangle(119, 127, 6, 5, color(PALETTE.terminalCyan), 0.95), "snes-senate-witness-mic");
   add(scene.add.rectangle(137, 127, 6, 5, color(PALETTE.classNetRed), 0.95), "snes-senate-record-light");
-  add(scene.add.rectangle(119, 139, 12, 10, color(PALETTE.creamPaper), 1)
-    .setStrokeStyle(1, color(PALETTE.deepBrown)), "snes-senate-witness-docket");
-  add(scene.add.rectangle(116, 139, 1, 9, color(PALETTE.classNetRed), 1), "snes-senate-witness-docket-redbar");
-  add(scene.add.rectangle(139, 141, 12, 7, color(PALETTE.goldStamp), 0.9)
-    .setStrokeStyle(1, color(PALETTE.deepBrown)), "snes-senate-hearing-seal");
   add(scene.add.text(128, 151, "WITNESS", {
     fontFamily: "monospace",
     fontSize: "5px",
@@ -1423,15 +1434,6 @@ export function addSnesSenateHearingChamberTileRoom(scene: Phaser.Scene, options
   add(scene.add.rectangle(128, 213, 22, 4, color(PALETTE.goldStamp), 1), "snes-senate-return-stair-top");
   add(scene.add.rectangle(128, 219, 30, 4, color(PALETTE.bronze), 1), "snes-senate-return-stair-mid");
   add(scene.add.rectangle(128, 225, 38, 4, color(PALETTE.deepBrown), 1), "snes-senate-return-stair-bottom");
-
-  add(scene.add.rectangle(128, 177, 84, 10, color(PALETTE.black), 0.86)
-    .setStrokeStyle(1, color(PALETTE.goldStamp)), "snes-senate-hearing-route-plaque");
-  add(scene.add.text(128, 173, "HAC REVIEW RECORD", {
-    fontFamily: "monospace",
-    fontSize: "5px",
-    color: PALETTE.goldStamp,
-    align: "center"
-  }).setOrigin(0.5, 0), "snes-senate-hearing-route-label");
 
   add(scene.add.rectangle(128, 47, 126, 11, color(PALETTE.black), 0.9)
     .setStrokeStyle(1, color(PALETTE.goldStamp)), "snes-senate-room-title-frame");
@@ -1550,10 +1552,9 @@ export function addSnesNaraStacksTileRoom(scene: Phaser.Scene, options: SnesNara
 
   for (let y = 52; y <= 212; y += 16) {
     for (let x = 16; x <= 240; x += 16) {
-      const variant = ((x / 16) + (y / 16)) % 4;
-      const fill = variant === 0 ? PALETTE.stoneGray : variant === 1 ? PALETTE.stoneLight : PALETTE.stoneDark;
-      add(scene.add.rectangle(x, y, 16, 16, color(fill), 1), "snes-nara-floor-tile");
-      add(scene.add.rectangle(x - 7, y - 7, 2, 1, color(PALETTE.stoneLight), 0.55), "snes-nara-floor-scuff");
+      const variant = ((x - 16) / 16 + (y - 52) / 16) % 4;
+      add(scene.add.rectangle(x, y, 16, 16, color(PALETTE.stoneDark), 1), "snes-nara-floor-tile");
+      if (variant === 0) add(scene.add.rectangle(x - 4, y - 4, 2, 1, color(PALETTE.stoneLight), 0.28), "snes-nara-floor-scuff");
       if (variant === 2) add(scene.add.rectangle(x + 5, y + 4, 3, 1, color(PALETTE.black), 0.34), "snes-nara-floor-crack");
     }
   }
@@ -1596,9 +1597,9 @@ export function addSnesNaraStacksTileRoom(scene: Phaser.Scene, options: SnesNara
     }
     add(scene.add.rectangle(cx, shelf.y + 13, 18, 12, color(PALETTE.creamPaper), 0.96)
       .setStrokeStyle(1, color(PALETTE.black)), "snes-nara-shelf-row-plaque");
-    add(scene.add.text(cx, shelf.y + 8, `ROW ${shelf.label}`, {
+    add(scene.add.text(cx, shelf.y + 8, shelf.label, {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "8px",
       color: PALETTE.black,
       align: "center"
     }).setOrigin(0.5, 0), "snes-nara-shelf-row-label");
@@ -1621,25 +1622,12 @@ export function addSnesNaraStacksTileRoom(scene: Phaser.Scene, options: SnesNara
     { x: 24, y: 138, w: 3, h: 96 },
     { x: 232, y: 138, w: 3, h: 96 }
   ] as const) {
-    add(scene.add.rectangle(rail.x, rail.y, rail.w, rail.h, color(PALETTE.classNetRed), 0.42), "snes-nara-drone-patrol-rail");
-    add(scene.add.rectangle(rail.x, rail.y, Math.max(rail.w, 5), Math.max(rail.h, 5), color(PALETTE.black), 0)
-      .setStrokeStyle(1, color(PALETTE.classNetRed), 0.44), "snes-nara-drone-patrol-outline");
+    const horizontal = rail.w > rail.h;
+    for (let offset = -40; offset <= 40; offset += 16) {
+      add(scene.add.rectangle(rail.x + (horizontal ? offset : 0), rail.y + (horizontal ? 0 : offset),
+        horizontal ? 3 : 1, horizontal ? 1 : 3, color(PALETTE.stoneLight), 0.45), "snes-nara-drone-patrol-rail");
+    }
   }
-
-  add(scene.add.rectangle(128, 92, 24, 18, color(PALETTE.black), 0.9)
-    .setStrokeStyle(2, color(PALETTE.terminalCyan)), "snes-nara-stack-note-station");
-  add(scene.add.rectangle(124, 90, 10, 12, color(PALETTE.creamPaper), 1)
-    .setStrokeStyle(1, color(PALETTE.sepiaInk)), "snes-nara-stack-note-page");
-  add(scene.add.rectangle(121, 90, 1, 11, color(PALETTE.classNetRed), 1), "snes-nara-stack-note-margin");
-  add(scene.add.rectangle(134, 90, 7, 4, color(PALETTE.terminalCyan), 0.96), "snes-nara-stack-note-cue");
-
-  add(scene.add.rectangle(204, 184, 18, 14, color(PALETTE.black), 0.92)
-    .setStrokeStyle(2, color(PALETTE.goldStamp)), "snes-nara-treaty-fragment-frame");
-  add(scene.add.rectangle(202, 183, 8, 10, color(PALETTE.creamPaper), 1)
-    .setStrokeStyle(1, color(PALETTE.deepBrown)), "snes-nara-treaty-fragment-page-a");
-  add(scene.add.rectangle(207, 186, 8, 10, color(PALETTE.creamPaper), 1)
-    .setStrokeStyle(1, color(PALETTE.deepBrown)), "snes-nara-treaty-fragment-page-b");
-  add(scene.add.rectangle(207, 187, 5, 1, color(PALETTE.classNetRed), 1), "snes-nara-treaty-fragment-redline");
 
   add(scene.add.rectangle(128, 219, 40, 16, color(PALETTE.black), 0.82)
     .setStrokeStyle(1, color(PALETTE.creamPaper)), "snes-nara-return-threshold");
@@ -1647,11 +1635,11 @@ export function addSnesNaraStacksTileRoom(scene: Phaser.Scene, options: SnesNara
   add(scene.add.rectangle(128, 219, 30, 4, color(PALETTE.bronze), 1), "snes-nara-return-stair-mid");
   add(scene.add.rectangle(128, 225, 38, 4, color(PALETTE.deepBrown), 1), "snes-nara-return-stair-bottom");
 
-  add(scene.add.rectangle(128, 47, 92, 11, color(PALETTE.black), 0.9)
+  add(scene.add.rectangle(128, 44, 120, 11, color(PALETTE.black), 0.9)
     .setStrokeStyle(1, color(PALETTE.goldStamp)), "snes-nara-room-title-frame");
-  add(scene.add.text(128, 43, "NARA II STACKS", {
+  add(scene.add.text(128, 39, "NARA II STACKS", {
     fontFamily: "monospace",
-    fontSize: "6px",
+    fontSize: "8px",
     color: PALETTE.goldStamp,
     align: "center"
   }).setOrigin(0.5, 0), "snes-nara-room-title");
@@ -1893,7 +1881,9 @@ function addSnesWallDepth(
 
 function archiveFloorTileFrame(variant: number, options: SnesRoomLayerOptions): SnesArchiveTileFrame | null {
   if (!archiveTilesEnabled(options)) return null;
-  if (options.roomType === "boss" || options.roomType === "secret") return variant < 2 ? "floor_ruby" : "floor_shadow";
+  if (options.roomType === "boss" || (options.roomType === "secret" && options.theme !== "archive")) {
+    return variant < 2 ? "floor_ruby" : "floor_shadow";
+  }
   if (variant === 0) return "floor_base";
   if (variant === 1 || variant === 2) return "floor_crack";
   if (variant === 3) return "floor_dot";

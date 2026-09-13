@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -13,6 +14,7 @@ import {
   getHeldProcessItemIds,
   hasProcessItem,
   clearDocumentUndisclosedDeletion,
+  repairEditorialRecord,
   setHeldItem,
   setDocumentWorkflowState,
   setLatestMessage,
@@ -20,6 +22,7 @@ import {
   setObjective,
   setPhysicalVerificationState,
   setRoomTraversalState,
+  getVisitedRoomIds,
   setSceneState,
   setVisibleEntities,
   setVisibleThreats
@@ -33,15 +36,24 @@ import { Terminal } from "../entities/items/Terminal";
 import { HistorianNPC } from "../entities/npcs/HistorianNPC";
 import { retroAudio } from "../systems/audio";
 import { FeedbackToast } from "../systems/feedbackToast";
+import { ChoicePrompt } from "../systems/verification";
+import { ProofComparisonBoard } from "../systems/proofComparisonBoard";
+import { EditorialRepairBoard } from "../systems/editorialRepairBoard";
+import { EDITORIAL_REPAIR_RECORDS, editorialRepairDraftMatches, nextEditorialRepair } from "../game/editorialRepair";
+import { proofMatchesOriginal, restoreProofRepairs } from "../game/proofComparison";
+import { saveGameNow } from "../systems/save";
 import { InteractionPrompt } from "../systems/interactionPrompt";
 import { InventoryOverlay } from "../systems/inventory";
 import { adjustReliability, canAutoApplyProposal, ReliabilityHud } from "../systems/reliability";
-import { applyDanneLurkerDamage } from "../systems/dannePressure";
+import { takeDanneLurkerHit } from "../systems/dannePressure";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
+import { AttackBuffer } from "../systems/hitstop";
+import { installAttackBufferLifecycle } from "../systems/sceneAttackBuffer";
 import { activateRoleAbility } from "../systems/roleAbility";
 import { handleOpenOverlays } from "../systems/overlayInput";
 import { addTinySparkle } from "../systems/roomDressing";
 import { addObjectiveText, drawRoomFrame, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
-import { addSnesGate, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
+import { addSnesGate, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
 import {
   AI_ANNOTATION_REVIEW_PROMPTS,
 } from "../game/aiAnnotationReview";
@@ -62,19 +74,37 @@ import {
 } from "../game/typeflowOrder";
 import {
   deriveSilentReadReviewStep,
+  editorHint,
   routeSilentReadReviewItem,
   SILENT_READ_REVIEW_ITEMS,
   SILENT_READ_REVIEW_TOTAL,
+  silentReadObjective,
   silentReadReviewStatusCode,
   silentReadReviewStatusFromCode,
+  silentReadDecision,
+  nextSilentReadStatus,
+  silentReadResumeRoom,
   type SilentReadReviewPhase,
+  type SilentReadReviewKind,
   type SilentReadReviewStatus,
   type SilentReadStationId
 } from "../game/silentReadReview";
 import { INTERIOR_TILES } from "../game/networkN1Tilemap";
+import { PROOF_PATROL, PROOF_STATION_POSITIONS, proofWalkRoute } from "../game/proofFurniture";
+import { crossReferenceMatches, restoreCrossReferenceDraft } from "../game/crossReferenceCatalog";
+import { CrossReferenceBoard } from "../systems/crossReferenceBoard";
+import { ChronologyBoard } from "../systems/withholdingChronologyBoard";
+import { ReleaseScopeBoard } from "../systems/releaseScopeBoard";
+import { restoreReleaseScope, validateReleaseScope } from "../game/releaseScope";
+import { EDITOR_CHRONOLOGY_TITLE, EDITOR_CHRONOLOGY_EVIDENCE, restoreEditorChronology,
+  shiftEditorChronology, editorChronologySequence, validateEditorChronology } from "../game/editorChronology";
+import { WORKSTATION_DESK, workstationBounds, workstationApproach, safeWorkstationPosition } from "../game/workstationGeometry";
 import { packedTileGid } from "../game/packedTileIndex";
 import {
   EDITOR_E1_TILEMAP,
+  EDITOR_DRAFT_OUTBOX,
+  EDITOR_DESK_POSITION,
+  EDITOR_PRIYA_POSITION,
   buildEditorE1TileLayers,
   editorE1CollisionRect
 } from "../game/editorE1Tilemap";
@@ -106,7 +136,7 @@ interface PhysicalFlag {
   id: string;
   label: string;
   shortLabel: string;
-  kind: string;
+  kind: SilentReadReviewKind;
   phase: SilentReadReviewPhase;
   checkCount: number;
   destination: WorkstationId;
@@ -115,7 +145,6 @@ interface PhysicalFlag {
   x: number;
   y: number;
   icon?: Phaser.GameObjects.Image;
-  labelText?: Phaser.GameObjects.Text;
   routedStation?: WorkstationId;
 }
 
@@ -123,12 +152,13 @@ interface ProofRoom {
   id: ProofRoomId;
   title: string;
   roomType: RoomType;
-  exits: Partial<Record<Direction, ProofRoomId | "DV1">>;
+  exits: Partial<Record<Direction, ProofRoomId | "DV1" | "R2">>;
   lockedExits?: Partial<Record<Direction, string>>;
   requiredItems?: Partial<Record<Direction, "red_pencil" | "buckram_key">>;
 }
 
 const PROOF_PLAY_BOUNDS = { left: 14, right: 242, top: 42, bottom: 220 };
+const PROOF_OUTBOX = { x: 128, y: 202 };
 const DOOR_Y_MIN = 100;
 const DOOR_Y_MAX = 150;
 const EXIT_SPAWNS: Record<Direction, { x: number; y: number }> = {
@@ -143,7 +173,7 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
     id: "E1",
     title: "Editor's Labyrinth",
     roomType: "puzzle",
-    exits: { east: "S1" },
+    exits: { west: "R2", east: "S1" },
     lockedExits: { east: "Red Pencil query gate" },
     requiredItems: { east: "red_pencil" }
   },
@@ -158,16 +188,21 @@ const PROOF_ROOMS: Record<ProofRoomId, ProofRoom> = {
 };
 
 const WORKSTATIONS: Workstation[] = [
-  { id: "opennet", label: "OpenNet", x: 42, y: 180, accent: PALETTE.openNetGreen, texture: "opennet-terminal", phases: ["evidence"] },
-  { id: "classnet", label: "ClassNet", x: 214, y: 180, accent: PALETTE.classNetRed, texture: "classnet-terminal", phases: ["evidence"] },
-  { id: "editor-desk", label: "Editor Desk", x: 128, y: 166, accent: PALETTE.buckramHighlight, texture: "red-pencil", phases: ["editor"] },
-  { id: "referral-tray", label: "Referral Tray", x: 78, y: 158, accent: PALETTE.goldStamp, texture: "concurrence-slip", phases: ["evidence"] },
-  { id: "proof-table", label: "Proof Table", x: 194, y: 164, accent: PALETTE.terminalCyan, texture: "proof-page", phases: ["evidence", "production"] },
-  { id: "consultation-desk", label: "Consult Desk", x: 62, y: 164, accent: PALETTE.goldStamp, texture: "review-folder", phases: ["production"] },
-  { id: "typeflow-rail", label: "Typeflow Rail", x: 128, y: 164, accent: PALETTE.buckramHighlight, texture: "proof-page", phases: ["production"] }
+  { id: "opennet", label: "OpenNet", ...PROOF_STATION_POSITIONS.opennet, accent: PALETTE.openNetGreen, texture: "opennet-terminal", phases: ["evidence"] },
+  { id: "classnet", label: "ClassNet", ...PROOF_STATION_POSITIONS.classnet, accent: PALETTE.classNetRed, texture: "classnet-terminal", phases: ["evidence"] },
+  { id: "editor-desk", label: "Editor Desk", ...EDITOR_DESK_POSITION, accent: PALETTE.buckramHighlight, texture: "red-pencil", phases: ["editor"] },
+  { id: "referral-tray", label: "Referral Tray", ...PROOF_STATION_POSITIONS["referral-tray"], accent: PALETTE.goldStamp, texture: "concurrence-slip", phases: ["evidence"] },
+  { id: "proof-table", label: "Proof Table", ...PROOF_STATION_POSITIONS["proof-table"], accent: PALETTE.terminalCyan, texture: "proof-page", phases: ["evidence", "production"] },
+  { id: "consultation-desk", label: "Consult Desk", ...PROOF_STATION_POSITIONS["consultation-desk"], accent: PALETTE.goldStamp, texture: "review-folder", phases: ["production"] },
+  { id: "typeflow-rail", label: "Typeflow Rail", ...PROOF_STATION_POSITIONS["typeflow-rail"], accent: PALETTE.buckramHighlight, texture: "proof-page", phases: ["production"] }
 ];
 
-const PHYSICAL_FLAGS: Array<Omit<PhysicalFlag, "status" | "x" | "y" | "icon" | "labelText" | "routedStation">> =
+const STATION_TAGS: Record<WorkstationId, string> = {
+  opennet: "OPEN", classnet: "CLASS", "editor-desk": "EDITOR", "referral-tray": "REF",
+  "proof-table": "PROOF", "consultation-desk": "METHOD", "typeflow-rail": "PRINT"
+};
+
+const PHYSICAL_FLAGS: Array<Omit<PhysicalFlag, "status" | "x" | "y" | "icon" | "routedStation">> =
   SILENT_READ_REVIEW_ITEMS.map((item) => ({
     id: item.id,
     label: item.label,
@@ -192,6 +227,12 @@ export class SilentReadScene extends Phaser.Scene {
   private inventory!: InventoryOverlay;
   private reliability!: ReliabilityHud;
   private toast!: FeedbackToast;
+  private reviewChoice!: ChoicePrompt;
+  private proofBoard!: ProofComparisonBoard;
+  private editorialBoard!: EditorialRepairBoard;
+  private crossReferenceBoard!: CrossReferenceBoard;
+  private chronologyBoard!: ChronologyBoard;
+  private releaseScopeBoard!: ReleaseScopeBoard;
   private objectiveText!: Phaser.GameObjects.Text;
   private actionHint!: Phaser.GameObjects.Text;
   private interactionPrompt!: InteractionPrompt;
@@ -205,23 +246,30 @@ export class SilentReadScene extends Phaser.Scene {
   private mapCells = new Map<ProofRoomId, Phaser.GameObjects.Rectangle>();
   private mapLabels = new Map<ProofRoomId, Phaser.GameObjects.Text>();
   private roomTransitionLocked = false;
+  private readonly attackBuffer = new AttackBuffer();
   private exitCooldownUntil = 0;
   private physicalFlags: PhysicalFlag[] = [];
   private physicalRouteCueObjects: Phaser.GameObjects.GameObject[] = [];
   private physicalRouteCueKey = "";
-  private readonly outbox = { x: 128, y: 202 };
+  private stationLabels: Array<{ text: Phaser.GameObjects.Text; x: number; y: number }> = [];
+  private get outbox() {
+    return this.currentRoomId === "E1" ? EDITOR_DRAFT_OUTBOX : PROOF_OUTBOX;
+  }
 
   constructor() {
     super("SilentReadScene");
   }
 
-  create() {
+  create(data?: unknown) {
+    this.attackBuffer.clear();
+    installAttackBufferLifecycle(this.events, this.attackBuffer);
+    const arrival = readChapterArrival(data, "SilentReadScene", gameState.currentScene);
+    const restoredVisitedRoomIds = getVisitedRoomIds(["E1", "S1"] as const);
     this.resetTransientState();
+    this.visitedRoomIds = new Set(restoredVisitedRoomIds);
     setSceneState("SilentReadScene", "explore", "Editor's Labyrinth: earn the Red Pencil.");
     retroAudio.startMusic("SilentReadScene");
-    this.cameras.main.setBackgroundColor(PALETTE.creamPaper);
-    this.add.rectangle(128, 120, 256, 240, color(PALETTE.sepiaInk));
-    this.add.rectangle(128, 120, 248, 232, color(PALETTE.creamPaper));
+    this.cameras.main.setBackgroundColor(PALETTE.shadowNavy);
     drawRoomFrame(this, "EDITOR / READ", PALETTE.deepRuby, { showLegacyHud: false });
     this.drawProofMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
@@ -234,18 +282,25 @@ export class SilentReadScene extends Phaser.Scene {
     this.player = new Player(this, 128, 202);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
-    this.toast = new FeedbackToast(this);
+    this.toast = new FeedbackToast(this, 1200, () => this.player.sprite.getBounds());
+    this.reviewChoice = new ChoicePrompt(this);
+    this.proofBoard = new ProofComparisonBoard(this);
+    this.editorialBoard = new EditorialRepairBoard(this);
+    this.crossReferenceBoard = new CrossReferenceBoard(this);
+    this.releaseScopeBoard = new ReleaseScopeBoard(this);
+    this.chronologyBoard = new ChronologyBoard(this, {
+      title: EDITOR_CHRONOLOGY_TITLE, heading: "REPAIR CHRONOLOGY", evidence: EDITOR_CHRONOLOGY_EVIDENCE,
+      initialMessage: "MEMCON IS OUT OF ORDER", restore: restoreEditorChronology,
+      shift: shiftEditorChronology, sequence: editorChronologySequence, validate: validateEditorChronology
+    });
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
-    this.interactionPrompt = new InteractionPrompt(this, 950);
-    this.danneLurker = new DanneLurker(this, 212, 72, {
-      waypoints: [
-        { x: 212, y: 72 },
-        { x: 152, y: 58 },
-        { x: 62, y: 94 },
-        { x: 70, y: 190 },
-        { x: 190, y: 186 }
-      ]
+    this.interactionPrompt = new InteractionPrompt(this, 950, 61);
+    this.danneLurker = new DanneLurker(this, PROOF_PATROL[0].x, PROOF_PATROL[0].y, {
+      speechBlocked: () => this.toast.visible || this.interactionPrompt.visible
+        || this.inventory.active || this.reliability.active || this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active || this.releaseScopeBoard.active,
+      boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
+      waypoints: PROOF_PATROL
     });
     this.actionHint = this.add.text(8, 211, "", {
       fontFamily: "monospace",
@@ -254,17 +309,11 @@ export class SilentReadScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setDepth(811).setVisible(false);
     const restoredStep = deriveSilentReadReviewStep(gameState.sceneProgress, new Set(getHeldProcessItemIds()));
-    const restoredRoom: ProofRoomId = gameState.sceneProgress.silentReadRoom === 1 || restoredStep > 0 ? "S1" : "E1";
+    const restoredRoom = arrival ? "E1" : silentReadResumeRoom(gameState.sceneProgress, restoredStep);
     this.currentRoomId = restoredRoom;
     this.startPhysicalVerificationLoop();
-    this.enterRoom(restoredRoom, { x: 128, y: 202 }, false);
+    this.enterRoom(restoredRoom, arrival ? { x: arrival.x, y: arrival.y } : this.player.position, false);
     this.syncThreatState();
-    this.toast.show(
-      restoredRoom === "E1" ? "DRAFT READY" : "REVIEW FILE READY",
-      this.player.position,
-      "info",
-      PROOF_PLAY_BOUNDS
-    );
   }
 
   private resetTransientState() {
@@ -278,6 +327,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.physicalFlags = [];
     this.physicalRouteCueObjects = [];
     this.physicalRouteCueKey = "";
+    this.stationLabels = [];
     this.mapCells = new Map<ProofRoomId, Phaser.GameObjects.Rectangle>();
     this.mapLabels = new Map<ProofRoomId, Phaser.GameObjects.Text>();
   }
@@ -285,7 +335,24 @@ export class SilentReadScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    if (gameState.mode !== "explore" || input.menuJustPressed || input.pauseJustPressed
+      || this.roomTransitionLocked || this.reviewChoice.active || this.proofBoard.active
+      || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active
+      || this.releaseScopeBoard.active || this.inventory.active || this.reliability.active) this.attackBuffer.clear();
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
+    if (this.reviewChoice.active || this.proofBoard.active || this.editorialBoard.active || this.crossReferenceBoard.active || this.chronologyBoard.active || this.releaseScopeBoard.active) {
+      this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
+      this.updateDanneLurker(delta, false);
+      this.interactionPrompt.update(delta, null);
+      this.player.update(delta, false);
+      if (this.releaseScopeBoard.active) this.releaseScopeBoard.updateInput();
+      else if (this.chronologyBoard.active) this.chronologyBoard.updateInput();
+      else if (this.crossReferenceBoard.active) this.crossReferenceBoard.updateInput();
+      else if (this.editorialBoard.active) this.editorialBoard.updateInput();
+      else if (this.proofBoard.active) this.proofBoard.updateInput();
+      else this.reviewChoice.updateInput();
+      return;
+    }
     if (input.menuJustPressed) this.inventory.toggle();
     if (input.soundJustPressed) {
       retroAudio.toggle();
@@ -295,20 +362,28 @@ export class SilentReadScene extends Phaser.Scene {
     if (input.abilityJustPressed) activateRoleAbility(this);
     this.toast.update(delta, this.player.position, PROOF_PLAY_BOUNDS);
     if (this.roomTransitionLocked) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (handleOpenOverlays(this.inventory, this.reliability)) {
+      this.updateDanneLurker(delta, false);
       this.interactionPrompt.update(delta, null);
       this.player.update(delta, false);
       return;
     }
     if (input.pauseJustPressed) {
       this.inventory.toggle();
+      this.updateDanneLurker(delta, false);
       return;
     }
     this.player.update(delta, true, { bounds: PROOF_PLAY_BOUNDS, solids: this.roomSolids });
+    if (input.bJustPressed) this.attackBuffer.press(this.time.now);
+    if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing && this.player.combatReadout.state !== "hurt")) {
+      const swing = tryEquippedToolSwing(this.player);
+      if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn", PROOF_PLAY_BOUNDS);
+    }
     this.updateDanneLurker(delta);
     this.updatePhysicalVerification();
     this.updatePhysicalInteractionPrompt(delta);
@@ -320,16 +395,12 @@ export class SilentReadScene extends Phaser.Scene {
     this.objectiveText.setText("");
   }
 
-  private updateDanneLurker(delta: number) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, true);
-    if (result.triggered) {
-      this.player.takeHit(this.danneLurker.position, 11, 700);
-      applyDanneLurkerDamage("contact", "DANN-E deadline pressure disrupted proof review.");
+  private updateDanneLurker(delta: number, canPressure = true) {
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure, this.player.combatReadout);
+    if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted proof review.")) {
       this.toast.show("DANN-E DEADLINE PRESSURE", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.reliability.update();
-    } else if (result.egoBoltHit) {
-      this.player.takeHit(this.danneLurker.position, 9, 700);
-      applyDanneLurkerDamage("ego_bolt", "DANN-E ego bolt disrupted proof review.");
+    } else if (result.egoBoltHit && takeDanneLurkerHit(this.player, this.danneLurker.position, "ego_bolt", "DANN-E ego bolt disrupted proof review.")) {
       this.toast.show("EGO BOLT - KEEP PROOFING", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.reliability.update();
     }
@@ -346,13 +417,16 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private enterRoom(roomId: ProofRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
+    this.attackBuffer.clear();
     const applyRoom = () => {
       this.currentRoomId = roomId;
       gameState.sceneProgress.silentReadRoom = roomId === "S1" ? 1 : 0;
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
-      this.player.setPosition(spawn.x, spawn.y);
+      const safeSpawn = safeWorkstationPosition(spawn, this.roomSolids);
+      this.player.setPosition(safeSpawn.x, safeSpawn.y);
+      this.danneLurker.enterRoom(this.time.now);
       this.positionActiveWaitingFlagForRoom();
       this.syncRoomTraversalState();
       this.updateProofMinimap();
@@ -375,6 +449,7 @@ export class SilentReadScene extends Phaser.Scene {
       onCovered: applyRoom,
       onComplete: () => {
         this.roomTransitionLocked = false;
+        saveGameNow();
       }
     });
   }
@@ -388,12 +463,15 @@ export class SilentReadScene extends Phaser.Scene {
     this.roomCleanups = [];
     this.roomObjects = [];
     this.roomSolids = [];
+    this.stationLabels = [];
     setNearestInteractable(null);
   }
 
   private redrawCurrentRoom() {
     this.clearRoom();
     this.renderCurrentRoom(false);
+    const safePosition = safeWorkstationPosition(this.player.position, this.roomSolids);
+    this.player.setPosition(safePosition.x, safePosition.y);
     this.positionActiveWaitingFlagForRoom();
     this.syncVisibleEntities();
   }
@@ -402,12 +480,15 @@ export class SilentReadScene extends Phaser.Scene {
     const room = PROOF_ROOMS[this.currentRoomId];
     this.roomTitleText.setText(`${room.id} ${room.title}`);
     if (showIntro) {
-      addSnesRoomIntroBanner(this, {
-        title: `${room.id} ${room.title}`,
-        subtitle: room.id.startsWith("E") ? "EDITOR'S LABYRINTH" : "SILENT READ TOWER",
-        accent: PALETTE.buckramRed,
-        track: (object) => this.track(object)
-      });
+      const banner = this.track(this.add.container(128, 39).setDepth(820).setName("proof-room-arrival"));
+      banner.add([
+        this.add.rectangle(0, 0, 184, 12, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)),
+        this.add.text(0, 0, room.title.toUpperCase(), {
+          fontFamily: "monospace", fontSize: "8px", color: PALETTE.creamPaper
+        }).setOrigin(0.5)
+      ]);
+      this.tweens.add({ targets: banner, alpha: 0, delay: 1000, duration: 180,
+        onComplete: () => { if (banner.active) banner.destroy(); } });
     }
     const packedTilemapRendered = this.renderProofTilemap(room.id);
     if (!packedTilemapRendered) {
@@ -434,7 +515,6 @@ export class SilentReadScene extends Phaser.Scene {
 
   private renderProofTilemap(roomId: ProofRoomId) {
     const asset = GAMEPLAY_TILESETS.interiorsNative;
-    if (!this.textures.exists(asset.key)) return false;
     const definition = roomId === "E1"
       ? {
           id: "editor-e1",
@@ -445,9 +525,14 @@ export class SilentReadScene extends Phaser.Scene {
       : {
           id: "silent-s1",
           map: SILENT_S1_TILEMAP,
-          layers: buildSilentS1TileLayers(),
+          layers: buildSilentS1TileLayers(this.activeReviewPhase() === "production" ? "production" : "evidence"),
           collisionRect: silentS1CollisionRect
         };
+    for (const cell of definition.layers.collisionCells) {
+      const rect = definition.collisionRect(cell);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
+    }
+    if (!this.textures.exists(asset.key)) return false;
     const map = this.make.tilemap({
       width: definition.map.columns,
       height: definition.map.rows,
@@ -507,8 +592,7 @@ export class SilentReadScene extends Phaser.Scene {
     }
 
     const layers = definition.layers;
-    // SilentReadScene has a legacy cream backing panel at depth 0. Keep the
-    // real floor above it while remaining well below walls and entities.
+    // Keep the floor below walls and entities; the room frame owns the backing.
     ground.putTilesAt(layers.ground, 0, 0, false).setDepth(1);
     walls.putTilesAt(layers.walls, 0, 0, true)
       .setCollision([
@@ -519,10 +603,6 @@ export class SilentReadScene extends Phaser.Scene {
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
-    for (const cell of layers.collisionCells) {
-      const rect = definition.collisionRect(cell);
-      this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
-    }
     this.roomCleanups.push(() => {
       ground.destroy();
       walls.destroy();
@@ -540,7 +620,7 @@ export class SilentReadScene extends Phaser.Scene {
         hasExit: true,
         unlocked: true,
         accent: PALETTE.buckramHighlight,
-        exitLabel: "EDIT",
+        exitLabel: this.currentRoomId === "E1" ? "REF" : "EDIT",
         track: (object) => this.track(object),
         depth: 65
       });
@@ -582,7 +662,7 @@ export class SilentReadScene extends Phaser.Scene {
         "BRACKETS PRINT"
       ], PALETTE.terminalCyan);
     }
-    const priya = new HistorianNPC(this, "priya", 28, 52);
+    const priya = new HistorianNPC(this, "priya", EDITOR_PRIYA_POSITION.x, EDITOR_PRIYA_POSITION.y);
     this.roomCleanups.push(() => priya.destroy());
     if (!packedTilemapRendered) {
       this.drawPage(72, 114, "DRAFT QUERY", [
@@ -597,7 +677,7 @@ export class SilentReadScene extends Phaser.Scene {
       ]);
     }
     this.drawWorkstations();
-    this.drawOutbox("STATECHAT OUTBOX");
+    this.drawOutbox();
     if (hasProcessItem("red_pencil")) {
       addSnesTreasurePedestal(this, {
         x: 128,
@@ -609,14 +689,9 @@ export class SilentReadScene extends Phaser.Scene {
         track: (object) => this.track(object),
         depth: 160
       });
-      this.track(this.add.text(128, 136, "RED PENCIL READY - EAST", {
-        fontFamily: "monospace",
-        fontSize: "6px",
-        color: PALETTE.goldStamp
-      }).setOrigin(0.5).setDepth(171));
-      setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
+      setObjective(this.reviewObjective());
     } else {
-      setObjective("Editor's Labyrinth: carry StateChat's draft to the Editor Desk.");
+      setObjective(this.reviewObjective());
     }
   }
 
@@ -642,7 +717,7 @@ export class SilentReadScene extends Phaser.Scene {
       this.drawProductionLanes();
     }
     this.drawWorkstations();
-    this.drawOutbox(phase === "production" ? "PUBLICATION OUTBOX" : "REVIEW OUTBOX");
+    this.drawOutbox();
     if (hasProcessItem("buckram_key")) {
       addSnesTreasurePedestal(this, {
         x: 128,
@@ -653,12 +728,9 @@ export class SilentReadScene extends Phaser.Scene {
         track: (object) => this.track(object),
         depth: 230
       });
-      setObjective("Silent Read Tower: exit east with Buckram Key.");
+      setObjective(this.reviewObjective());
     } else {
-      const active = this.getActiveFlag();
-      setObjective(active
-        ? `Silent Read Tower: carry ${active.shortLabel} to ${this.stationFor(active.destination).label}.`
-        : "Silent Read Tower: Buckram Key ready for final publication.");
+      setObjective(this.reviewObjective());
     }
   }
 
@@ -727,26 +799,32 @@ export class SilentReadScene extends Phaser.Scene {
     for (const station of WORKSTATIONS.filter((candidate) =>
       stationRoom(candidate.id) === this.currentRoomId && candidate.phases.includes(phase)
     )) {
-      this.track(this.add.rectangle(station.x, station.y + 1, 40, 18, color(PALETTE.black)).setDepth(150));
-      this.track(this.add.rectangle(station.x, station.y, 38, 16, color(PALETTE.deepRuby)).setStrokeStyle(2, color(station.accent)).setDepth(151));
-      this.track(this.add.image(station.x - 11, station.y, station.texture).setDepth(152));
-      this.track(this.add.rectangle(station.x + 9, station.y - 2, 13, 5, color(station.accent)).setDepth(153));
-      this.track(this.add.rectangle(station.x + 9, station.y + 4, 13, 2, color(PALETTE.creamPaper)).setDepth(153));
-      this.track(this.add.text(station.x, station.y + 12, station.label.toUpperCase(), {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: station.accent
-      }).setOrigin(0.5).setDepth(154));
+      const bounds = workstationBounds(station.x, station.y);
+      this.roomSolids.push(new Phaser.Geom.Rectangle(bounds.x, bounds.y, bounds.width, bounds.height));
+      this.track(this.add.ellipse(station.x, station.y + 9, 32, 4, color(PALETTE.black), 0.3).setDepth(46));
+      const desk = this.track(this.add.container(station.x, station.y).setDepth(station.y + 8).setName(`proof-desk-${station.id}`));
+      const asset = GAMEPLAY_TILESETS.interiorsNative;
+      if (this.textures.exists(asset.key)) {
+        const frame = "proof-desk", texture = this.textures.get(asset.key);
+        if (!texture.has(frame)) texture.add(frame, 0, WORKSTATION_DESK.tileIndex % asset.columns * asset.tileSize,
+          Math.floor(WORKSTATION_DESK.tileIndex / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
+        desk.add([this.add.image(-8, 0, asset.key, frame), this.add.image(8, 0, asset.key, frame)]);
+      } else {
+        desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
+      }
+      desk.add(this.add.rectangle(0, 0, 32, 16, 0, 0).setStrokeStyle(1, color(station.accent)));
+      desk.add(this.add.image(-9, 1, station.texture).setDisplaySize(10, 10));
+      desk.add(this.add.rectangle(7, 2, 10, 6, color(PALETTE.creamPaper)));
+      const text = this.add.text(0, -7, STATION_TAGS[station.id], {
+        fontFamily: "monospace", fontSize: "5px", color: PALETTE.creamPaper, backgroundColor: PALETTE.black
+      }).setOrigin(0.5, 0);
+      desk.add(text);
+      this.stationLabels.push({ text, x: station.x, y: station.y - 7 });
     }
   }
 
-  private drawOutbox(label: string) {
-    this.track(this.add.rectangle(this.outbox.x, this.outbox.y, 52, 16, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(149));
-    this.track(this.add.text(this.outbox.x, this.outbox.y + 12, label, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.terminalCyan
-    }).setOrigin(0.5).setDepth(154));
+  private drawOutbox() {
+    this.track(this.add.rectangle(this.outbox.x, this.outbox.y, 28, 12, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(149));
   }
 
   private drawProofMinimap() {
@@ -814,16 +892,11 @@ export class SilentReadScene extends Phaser.Scene {
         ...flag,
         status,
         x: placed ? station.x : this.outbox.x,
-        y: placed ? station.y - 17 : this.outbox.y - 10,
+        y: placed ? station.y - 3 : this.outbox.y - 10,
         routedStation: placed ? station.id : undefined
       };
-      physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture).setDepth(240).setVisible(false);
-      physicalFlag.labelText = this.add.text(physicalFlag.x, physicalFlag.y + 14, flag.shortLabel, {
-        fontFamily: "monospace",
-        fontSize: "5px",
-        color: flag.kind === "mechanical" ? PALETTE.goldStamp : PALETTE.terminalCyan,
-        backgroundColor: PALETTE.black
-      }).setOrigin(0.5).setDepth(241).setVisible(false);
+      physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture)
+        .setDisplaySize(12, 12).setDepth(placed ? station.y + 9 : 240).setVisible(false);
       return physicalFlag;
     });
     const carried = this.physicalFlags.find((flag) => flag.status === "carried");
@@ -834,10 +907,10 @@ export class SilentReadScene extends Phaser.Scene {
     const active = this.getActiveFlag();
     if (active) {
       setLatestMessage("Review Folder carries unresolved issues through accountable human review.");
-      setObjective(`${PROOF_ROOMS[flagRoom(active)].title}: carry ${active.shortLabel} to ${this.stationFor(active.destination).label}.`);
+      setObjective(this.reviewObjective());
     } else {
       if (!hasProcessItem("buckram_key")) addProcessItem("buckram_key");
-      setObjective("Silent Read Tower: exit east with the Buckram Key.");
+      setObjective(this.reviewObjective());
     }
     this.syncVisibleEntities();
     this.updatePhysicalVerification();
@@ -847,6 +920,7 @@ export class SilentReadScene extends Phaser.Scene {
     const index = flag ? this.physicalFlags.indexOf(flag) : SILENT_READ_REVIEW_TOTAL;
     gameState.sceneProgress.silentReadReviewStep = Math.max(0, index);
     gameState.sceneProgress.silentReadReviewStatus = flag ? silentReadReviewStatusCode(flag.status) : 0;
+    saveGameNow();
   }
 
   private positionActiveWaitingFlagForRoom() {
@@ -855,21 +929,28 @@ export class SilentReadScene extends Phaser.Scene {
     activeFlag.x = this.outbox.x;
     activeFlag.y = this.outbox.y - 10;
     activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y);
-    activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14);
   }
 
   private updatePhysicalInteractionPrompt(delta: number) {
     const prompt = this.physicalPromptTargets();
+    const target = prompt.strictTarget ?? this.priyaTarget() ?? prompt.hintTarget;
     this.interactionPrompt.update(
       delta,
-      prompt.strictTarget ?? prompt.hintTarget,
-      undefined,
+      this.toast.visible ? null : target,
+      { left: 36, right: 220, top: 50, bottom: Math.floor(this.player.sprite.getBounds().top) - 16 },
       prompt.strictTarget
         ? { badge: "A", text: prompt.strictText }
+        : target?.id === "editor-priya"
+        ? { badge: "A", text: "ASK PRIYA" }
         : prompt.hintTarget
         ? { badge: "!", text: "STEP CLOSER" }
         : undefined
     );
+  }
+
+  private priyaTarget(): Interactable | null {
+    if (this.currentRoomId !== "E1" || !this.isNear(EDITOR_PRIYA_POSITION.x, EDITOR_PRIYA_POSITION.y, 36)) return null;
+    return { id: "editor-priya", label: "Priya", ...EDITOR_PRIYA_POSITION, radius: 36, kind: "npc", onInteract: () => undefined };
   }
 
   private physicalPromptTargets(): {
@@ -877,6 +958,16 @@ export class SilentReadScene extends Phaser.Scene {
     hintTarget: Interactable | null;
     strictText: string;
   } {
+    const repair = this.pendingEditorialRepair();
+    if (repair) {
+      const station = this.stationFor(repair.proof ? "proof-table" : "editor-desk");
+      const here = stationRoom(station.id) === this.currentRoomId;
+      return {
+        strictTarget: here && this.isNear(station.x, station.y, 40) ? this.workstationPromptTarget(station, 40) : null,
+        hintTarget: here && this.isNear(station.x, station.y, 50) ? this.workstationPromptTarget(station, 40) : null,
+        strictText: repair.proof ? "RECHECK PROOF" : "REPAIR BRACKET"
+      };
+    }
     const activeFlag = this.getActiveFlag();
     if (!activeFlag || flagRoom(activeFlag) !== this.currentRoomId) {
       return { strictTarget: null, hintTarget: null, strictText: "" };
@@ -890,8 +981,8 @@ export class SilentReadScene extends Phaser.Scene {
 
     const strictStation = this.findActionWorkstation(activeFlag, 32);
     const hintStation = strictStation ?? this.findActionWorkstation(activeFlag, 42);
-    const strictTarget = strictStation ? this.workstationPromptTarget(strictStation, 36) : null;
-    const hintTarget = hintStation ? this.workstationPromptTarget(hintStation, 28) : null;
+    const strictTarget = strictStation?.id === activeFlag.destination ? this.workstationPromptTarget(strictStation, 36) : null;
+    const hintTarget = hintStation?.id === activeFlag.destination ? this.workstationPromptTarget(hintStation, 28) : null;
     return { strictTarget, hintTarget, strictText: `${this.verbFor(activeFlag)} ${activeFlag.shortLabel}` };
   }
 
@@ -920,21 +1011,31 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   private updatePhysicalVerification() {
+    for (const label of this.stationLabels) {
+      const dx = Math.abs(this.player.position.x - label.x);
+      const dy = this.player.position.y - label.y;
+      label.text.setVisible(dx > 28 || dy < -10 || dy > 44);
+    }
+    this.updateFlagVisibility();
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) {
       this.clearPhysicalRouteCue();
-      this.actionHint.setText("DONE: exit east with the Buckram Key.");
-      setNearestInteractable(null);
-      this.syncPhysicalState("DONE", null);
+      const repair = this.pendingEditorialRepair();
+      const carried = repair?.proof ? `Corrected proof: ${repair.record.label}` : null;
+      if (gameState.heldItem !== carried) setHeldItem(carried);
+      setObjective(this.reviewObjective());
+      this.actionHint.setText(this.reviewObjective());
+      const prompt = this.physicalPromptTargets();
+      setNearestInteractable(prompt.strictTarget ? prompt.strictText : this.priyaTarget() ? "ASK PRIYA" : null);
+      this.syncPhysicalState(repair ? repair.proof ? "VERIFY" : "ROUTE" : "DONE", null);
       return;
     }
 
     if (flagRoom(activeFlag) !== this.currentRoomId) {
       this.clearPhysicalRouteCue();
-      this.updateFlagVisibility();
       const target = PROOF_ROOMS[flagRoom(activeFlag)].title;
       this.actionHint.setText(`NEXT: enter ${target.toUpperCase()}.`);
-      setNearestInteractable(null);
+      setNearestInteractable(this.priyaTarget() ? "ASK PRIYA" : null);
       this.syncPhysicalState("ROUTE", null);
       return;
     }
@@ -942,22 +1043,31 @@ export class SilentReadScene extends Phaser.Scene {
     const nearestStation = this.findNearestWorkstation();
     const carriedFlag = activeFlag.status === "carried" ? activeFlag : null;
     if (carriedFlag?.icon) {
-      carriedFlag.x = Math.round(this.player.position.x);
-      carriedFlag.y = Math.round(this.player.position.y - 15);
+      carriedFlag.x = Math.round(this.player.position.x + 11);
+      carriedFlag.y = Math.round(this.player.position.y - 8);
       carriedFlag.icon.setPosition(carriedFlag.x, carriedFlag.y);
       carriedFlag.icon.setDepth(Math.round(this.player.position.y) + 4);
-      carriedFlag.labelText?.setPosition(carriedFlag.x, carriedFlag.y + 14);
-      carriedFlag.labelText?.setDepth(Math.round(this.player.position.y) + 5);
     }
 
-    this.updateFlagVisibility();
     const verb = this.verbFor(activeFlag);
     this.syncPhysicalState(verb, nearestStation);
     this.updateActionHint(activeFlag, nearestStation);
+    const prompt = this.physicalPromptTargets();
+    setNearestInteractable(prompt.strictTarget ? prompt.strictText : this.priyaTarget() ? "ASK PRIYA" : null);
     this.refreshPhysicalRouteCue(activeFlag);
   }
 
   private handlePhysicalAction() {
+    if (!this.physicalPromptTargets().strictTarget && this.priyaTarget()) {
+      const active = this.getActiveFlag();
+      const repair = this.pendingEditorialRepair();
+      const hint = editorHint(active?.phase === "editor" ? active.status : null, repair ? repair.proof ? "proof" : "draft" : null);
+      setLatestMessage(`Priya: ${hint}`);
+      this.toast.show(hint, this.player.position, "info", PROOF_PLAY_BOUNDS);
+      retroAudio.blip();
+      return;
+    }
+    if (this.pendingEditorialRepair()) { this.reopenEditorialRecord(); return; }
     const activeFlag = this.getActiveFlag();
     if (!activeFlag) return;
     if (flagRoom(activeFlag) !== this.currentRoomId) {
@@ -971,16 +1081,18 @@ export class SilentReadScene extends Phaser.Scene {
         if (this.isNear(activeFlag.x, activeFlag.y, 38)) {
           retroAudio.blip();
           setLatestMessage(`Step closer to ${activeFlag.shortLabel}.`);
+          this.toast.show("STEP CLOSER TO THE FILE", this.player.position, "info", PROOF_PLAY_BOUNDS);
           return;
         }
         retroAudio.warning();
         setLatestMessage(`CARRY: move to ${activeFlag.shortLabel}.`);
+        this.toast.show(`TAKE ${activeFlag.shortLabel}`, this.player.position, "info", PROOF_PLAY_BOUNDS);
         return;
       }
       activeFlag.status = "carried";
       setHeldItem(`Review Folder: ${activeFlag.shortLabel}`);
       setLatestMessage(`CARRY: ${activeFlag.label}.`);
-      setObjective(`ROUTE: place ${activeFlag.shortLabel} on ${this.stationFor(activeFlag.destination).label}.`);
+      setObjective(this.reviewObjective());
       this.savePhysicalReviewProgress(activeFlag);
       retroAudio.blip();
       this.updatePhysicalVerification();
@@ -993,10 +1105,12 @@ export class SilentReadScene extends Phaser.Scene {
       if (hintStation) {
         retroAudio.blip();
         setLatestMessage(`Step closer to ${hintStation.label}.`);
+        this.toast.show("STEP CLOSER TO THE DESK", this.player.position, "info", PROOF_PLAY_BOUNDS);
         return;
       }
       retroAudio.warning();
       setLatestMessage(`${this.verbFor(activeFlag)}: stand beside the correct workstation.`);
+      this.toast.show(this.reviewObjective(), this.player.position, "info", PROOF_PLAY_BOUNDS);
       return;
     }
     const correctStation = this.stationFor(activeFlag.destination);
@@ -1005,16 +1119,12 @@ export class SilentReadScene extends Phaser.Scene {
     if (!routed.ok) {
       retroAudio.warning();
       adjustReliability(-2, `${activeFlag.shortLabel} filed at wrong workstation`);
-      activeFlag.status = "waiting";
+      activeFlag.status = "carried";
       activeFlag.routedStation = undefined;
-      activeFlag.x = this.outbox.x;
-      activeFlag.y = this.outbox.y - 10;
-      activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y);
-      activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14);
-      setHeldItem(null);
+      setHeldItem(`Review Folder: ${activeFlag.shortLabel}`);
       setLatestMessage(`RETRY: ${activeFlag.shortLabel} belongs at ${correctStation.label}.`);
-      setObjective(`RETRY: collect ${activeFlag.shortLabel} from the outbox.`);
-      this.toast.show(`WRONG DESK - USE ${correctStation.label}`, this.player.position, "warn", PROOF_PLAY_BOUNDS);
+      setObjective(this.reviewObjective());
+      this.toast.show("WRONG DESK - RETRY", this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.savePhysicalReviewProgress(activeFlag);
       this.reliability.update();
       this.updatePhysicalVerification();
@@ -1026,38 +1136,63 @@ export class SilentReadScene extends Phaser.Scene {
       setHeldItem(null);
       activeFlag.routedStation = nearestStation.id;
       activeFlag.x = nearestStation.x;
-      activeFlag.y = nearestStation.y - 17;
-      activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y).setDepth(242);
-      activeFlag.labelText?.setPosition(activeFlag.x, activeFlag.y + 14).setDepth(243);
+      activeFlag.y = nearestStation.y - 3;
+      activeFlag.icon?.setPosition(activeFlag.x, activeFlag.y).setDepth(correctStation.y + 9);
       setLatestMessage(`ROUTE: ${activeFlag.shortLabel} placed on ${nearestStation.label}.`);
-      setObjective(`${activeFlag.kind === "production" ? "STAMP" : "VERIFY"}: press Space at ${nearestStation.label}.`);
+      setObjective(this.reviewObjective());
       this.savePhysicalReviewProgress(activeFlag);
       retroAudio.confirm();
       this.updatePhysicalVerification();
-      return;
+      // Placing a decision-bearing file opens its check, never answers or stamps it.
+      if (!silentReadDecision(activeFlag.id) && activeFlag.id !== "typesetter-proof" && activeFlag.id !== "public-crossref" && activeFlag.id !== "proof-date" && activeFlag.id !== "classified-source") return;
     }
 
     if (activeFlag.status === "routed") {
-      if (activeFlag.kind === "production") {
-        activeFlag.status = "stamped";
-        this.addVerificationMark(nearestStation);
-        this.addProcessStampMark(activeFlag, nearestStation);
-        const shouldAdvance = this.applyFlagReward(activeFlag);
-        this.savePhysicalReviewProgress();
-        retroAudio.stamp();
-        this.updatePhysicalVerification();
-        if (shouldAdvance) this.advanceAfterStamp();
+      if (activeFlag.id === "classified-source") {
+        this.markReleaseScope(activeFlag, nearestStation);
         return;
       }
-      activeFlag.status = "verified";
-      this.addVerificationMark(nearestStation);
-      setLatestMessage(activeFlag.id === "mechanical-fix"
-        ? "VERIFY: human editor added the visible bracketed insertion."
-        : `VERIFY: human review resolved ${activeFlag.shortLabel}.`);
-      setObjective(`STAMP: apply a process stamp at ${nearestStation.label}.`);
-      this.savePhysicalReviewProgress(activeFlag);
-      retroAudio.confirm();
-      this.updatePhysicalVerification();
+      if (activeFlag.id === "proof-date") {
+        this.repairChronology(activeFlag, nearestStation);
+        return;
+      }
+      if (activeFlag.id === "public-crossref") {
+        this.matchCrossReference(activeFlag, nearestStation);
+        return;
+      }
+      if (activeFlag.id === "mechanical-fix") {
+        this.repairVisibleBracket(activeFlag, nearestStation);
+        return;
+      }
+      if (activeFlag.id === "typesetter-proof") {
+        this.compareTypesetProof(activeFlag, nearestStation);
+        return;
+      }
+      const decision = silentReadDecision(activeFlag.id);
+      if (decision) {
+        this.interactionPrompt.update(0, null);
+        this.clearPhysicalRouteCue();
+        this.reviewChoice.show(`${decision.question}\n\n${decision.context}`, [
+          ...decision.options,
+          { key: "C", label: "Back to the room", value: "back" }
+        ], (option) => {
+          if (option.value === "back") {
+            setObjective(this.reviewObjective());
+            return;
+          }
+          if (this.getActiveFlag() !== activeFlag || activeFlag.status !== "routed") return;
+          if (option.value !== decision.correctValue) {
+            setLatestMessage(decision.failureMessage);
+            this.toast.show(decision.failureMessage, this.player.position, "warn", PROOF_PLAY_BOUNDS);
+            this.savePhysicalReviewProgress(activeFlag);
+            return;
+          }
+          gameState.sceneProgress[`silentReadDecision_${activeFlag.id}`] = 1;
+          this.verifyFlag(activeFlag, nearestStation, decision.successMessage);
+        }, 8, () => setObjective(this.reviewObjective()));
+      } else {
+        this.verifyFlag(activeFlag, nearestStation, `${activeFlag.shortLabel} CHECKED`);
+      }
       return;
     }
 
@@ -1069,7 +1204,139 @@ export class SilentReadScene extends Phaser.Scene {
       retroAudio.stamp();
       this.updatePhysicalVerification();
       if (shouldAdvance) this.advanceAfterStamp();
+      // These rewards cross a room/layout boundary; show them after its cleanup.
+      if (activeFlag.id === "mechanical-fix") {
+        this.toast.hide();
+        addSnesRewardBurst(this, 128, 72, "red-pencil", "Red Pencil", (object) => this.track(object), 600);
+      } else if (activeFlag.id === "proof-date") {
+        this.toast.hide();
+        addSnesRewardBurst(this, 128, 72, "proof-lens", "Proof Lens", (object) => this.track(object), 600);
+      }
     }
+  }
+
+  private verifyFlag(flag: PhysicalFlag, station: Workstation, message: string) {
+    flag.status = "verified";
+    this.addVerificationMark(station);
+    setLatestMessage(message);
+    this.toast.show(message, this.player.position, "info", PROOF_PLAY_BOUNDS);
+    setObjective(this.reviewObjective());
+    this.savePhysicalReviewProgress(flag);
+    retroAudio.confirm();
+    this.updatePhysicalVerification();
+  }
+
+  private markReleaseScope(flag: PhysicalFlag, station: Workstation) {
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.releaseScopeBoard.show(gameState.sceneProgress.silentReadReleaseScope, mask => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed") return;
+      gameState.sceneProgress.silentReadReleaseScope = restoreReleaseScope(mask);
+      saveGameNow();
+    }, mask => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed"
+        || !validateReleaseScope(mask).ok || gameState.sceneProgress.silentReadReleaseScope !== mask) return;
+      gameState.sceneProgress["silentReadDecision_classified-source"] = 1;
+      this.verifyFlag(flag, station, "RELEASE SCOPE VERIFIED");
+    });
+  }
+
+  private repairChronology(flag: PhysicalFlag, station: Workstation) {
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.chronologyBoard.show(gameState.sceneProgress.silentReadChronologySlot, slot => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed") return;
+      gameState.sceneProgress.silentReadChronologySlot = restoreEditorChronology(slot);
+      saveGameNow();
+    }, slot => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed"
+        || !validateEditorChronology(slot).ok || gameState.sceneProgress.silentReadChronologySlot !== slot) return;
+      gameState.sceneProgress["silentReadDecision_proof-date"] = 1;
+      this.verifyFlag(flag, station, "CHRONOLOGY FILED");
+    });
+  }
+
+  private matchCrossReference(flag: PhysicalFlag, station: Workstation) {
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.crossReferenceBoard.show(restoreCrossReferenceDraft(gameState.sceneProgress.silentReadCrossReferenceDraft), draft => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed") return;
+      gameState.sceneProgress.silentReadCrossReferenceDraft = restoreCrossReferenceDraft(draft);
+      saveGameNow();
+    }, draft => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed"
+        || !crossReferenceMatches(draft) || gameState.sceneProgress.silentReadCrossReferenceDraft !== draft) return;
+      gameState.sceneProgress["silentReadDecision_public-crossref"] = 1;
+      this.verifyFlag(flag, station, "CROSS-REFERENCE MATCHED");
+    });
+  }
+
+  private repairVisibleBracket(flag: PhysicalFlag, station: Workstation) {
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.editorialBoard.show(EDITORIAL_REPAIR_RECORDS[0], gameState.sceneProgress.silentReadBracketDraft === 1, false, () => {
+      gameState.sceneProgress.silentReadBracketDraft = 1;
+      saveGameNow();
+    }, () => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed" || gameState.sceneProgress.silentReadBracketDraft !== 1) return;
+      gameState.sceneProgress["silentReadDecision_mechanical-fix"] = 1;
+      this.verifyFlag(flag, station, "WITHHOLDING INDICATION RESTORED");
+    });
+  }
+
+  private pendingEditorialRepair() {
+    if (this.getActiveFlag()) return null;
+    const record = nextEditorialRepair(gameState.documentCandidates, gameState.standardsViolations);
+    if (!record) return null;
+    const document = gameState.documentCandidates.find(document => document.id === record.documentId)!;
+    return { record, proof: editorialRepairDraftMatches(document, record) };
+  }
+
+  private reopenEditorialRecord() {
+    const repair = this.pendingEditorialRepair();
+    if (!repair) return;
+    const station = this.stationFor(repair.proof ? "proof-table" : "editor-desk");
+    if (stationRoom(station.id) !== this.currentRoomId || !this.isNear(station.x, station.y, 40)) {
+      this.toast.show(this.reviewObjective(), this.player.position, "info", PROOF_PLAY_BOUNDS);
+      return;
+    }
+    if (!hasProcessItem(repair.proof ? "proof_lens" : "red_pencil")) {
+      this.toast.show(repair.proof ? "NEED PROOF LENS" : "NEED RED PENCIL", this.player.position, "warn", PROOF_PLAY_BOUNDS);
+      return;
+    }
+    this.interactionPrompt.update(0, null);
+    saveGameNow();
+    this.editorialBoard.show(repair.record, repair.proof, repair.proof, () => undefined, () => {
+      const result = repairEditorialRecord(repair.record.documentId, repair.proof ? "proof" : "draft");
+      if (!result.ok) {
+        this.toast.show(result.reason ?? "RECHECK THE RECORD", this.player.position, "warn", PROOF_PLAY_BOUNDS);
+        return;
+      }
+      this.addVerificationMark(station);
+      this.toast.show(repair.proof ? "CORRECTION FILED" : "DRAFT READY - PROOF TABLE", this.player.position, "info", PROOF_PLAY_BOUNDS);
+      retroAudio.stamp();
+      setObjective(this.reviewObjective());
+      this.syncVisibleEntities();
+      saveGameNow();
+    });
+  }
+
+  private compareTypesetProof(flag: PhysicalFlag, station: Workstation) {
+    if (!hasProcessItem("proof_lens")) {
+      this.toast.show("NEED PROOF LENS", this.player.position, "warn", PROOF_PLAY_BOUNDS);
+      return;
+    }
+    this.interactionPrompt.update(0, null);
+    this.clearPhysicalRouteCue();
+    this.proofBoard.show(restoreProofRepairs(gameState.sceneProgress.silentReadProofRepairs), (repairs) => {
+      gameState.sceneProgress.silentReadProofRepairs = repairs;
+      saveGameNow();
+    }, (repairs) => {
+      if (this.getActiveFlag() !== flag || flag.status !== "routed" || !proofMatchesOriginal(repairs)) return;
+      gameState.sceneProgress.silentReadProofRepairs = repairs;
+      gameState.sceneProgress["silentReadDecision_typesetter-proof"] = 1;
+      this.verifyFlag(flag, station, "TEXT AND DESIGNATOR PRESERVED");
+    });
   }
 
   private applyFlagReward(flag: PhysicalFlag) {
@@ -1084,7 +1351,6 @@ export class SilentReadScene extends Phaser.Scene {
       equipProcessItem("red_pencil");
       addDocumentPoints(12, "StateChat plan reviewed and visibly bracketed by human editor");
       adjustReliability(8, "AI proposal remained inside SOP with a visible bracket");
-      addSnesRewardBurst(this, 128, 136, "red-pencil", "Red Pencil", (object) => this.track(object));
       setLatestMessage("MECHANICAL FIX ACCEPTED - VISIBLE BRACKET RECORDED");
       return true;
     }
@@ -1092,7 +1358,6 @@ export class SilentReadScene extends Phaser.Scene {
       awardProcessStamp("proof");
       setDocumentWorkflowState("proof_page_412", "proofed");
       addProcessItem("proof_lens");
-      addSnesRewardBurst(this, 128, 104, "proof-lens", "Proof Lens", (object) => this.track(object));
       addVolumeFragment("Proof Fragment");
       addDocumentPoints(16, "evidence-bound factual discrepancy physically verified");
       adjustReliability(12, "human caught factual discrepancy");
@@ -1106,7 +1371,7 @@ export class SilentReadScene extends Phaser.Scene {
       gameState.sceneProgress.editorialTreatmentStep = EDITORIAL_TREATMENT_PROMPTS.length;
       addDocumentPoints(18, "editorial method and treatment ledger filed");
       adjustReliability(14, "human consultation preserved chronology, meaning, and reader clarity");
-      setLatestMessage(`METHOD LEDGER FILED - ${flag.checkCount} HUMAN CHECKS`);
+      setLatestMessage("METHOD LEDGER FILED - MARGINAL NOTE PRESERVED");
       return true;
     }
     if (flag.id === "printer-copy") {
@@ -1116,7 +1381,7 @@ export class SilentReadScene extends Phaser.Scene {
       gameState.sceneProgress.typesettingPreparationStep = TYPESETTING_PREPARATION_PROMPTS.length;
       addDocumentPoints(14, "cleared printer's copy sequence filed");
       adjustReliability(6, "clearance preceded typesetting and metadata stayed visible");
-      setLatestMessage(`PRINTER COPY FILED - ${flag.checkCount} ORDER CHECKS`);
+      setLatestMessage("PRINTER COPY FILED - INDEX REFERENCE CORRECTED");
       return true;
     }
     if (flag.id === "typesetter-proof") {
@@ -1129,7 +1394,7 @@ export class SilentReadScene extends Phaser.Scene {
       setDocumentWorkflowState("sbu_annotation_001", "proofed");
       setDocumentWorkflowState("proof_page_412", "proofed");
       adjustReliability(10, "typesetter proof preserved document metadata");
-      setLatestMessage(`TYPESETTER PROOF FILED - ${flag.checkCount} COMPARISONS`);
+      setLatestMessage("TYPESETTER PROOF FILED - ORIGINAL TEXT PRESERVED");
       return true;
     }
     if (flag.id === "public-crossref") {
@@ -1157,8 +1422,9 @@ export class SilentReadScene extends Phaser.Scene {
     if (flagRoom(nextFlag) !== this.currentRoomId) {
       this.redrawCurrentRoom();
       this.positionActiveWaitingFlagForRoom();
-      setObjective("Editor's Labyrinth: enter east to the Silent Read Tower.");
-      this.toast.show("RED PENCIL READY - ENTER EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
+      setObjective(this.reviewObjective());
+      this.toast.show("PENCIL READY - EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
+      this.savePhysicalReviewProgress(nextFlag);
       return;
     }
 
@@ -1169,11 +1435,11 @@ export class SilentReadScene extends Phaser.Scene {
       this.toast.show("PUBLICATION DOCKETS READY", this.player.position, "info", PROOF_PLAY_BOUNDS);
     }
 
-    nextFlag.x = this.outbox.x;
-    nextFlag.y = this.outbox.y - 10;
-    nextFlag.icon?.setPosition(nextFlag.x, nextFlag.y).setVisible(true);
-    nextFlag.labelText?.setPosition(nextFlag.x, nextFlag.y + 14).setVisible(true);
-    setObjective(`Silent Read Tower: carry ${nextFlag.shortLabel} from the review outbox.`);
+    nextFlag.status = previous ? nextSilentReadStatus(previous.phase, nextFlag.phase) : "waiting";
+    setHeldItem(nextFlag.status === "carried" ? `Review Folder: ${nextFlag.shortLabel}` : null);
+    setObjective(this.reviewObjective());
+    this.updatePhysicalVerification();
+    this.savePhysicalReviewProgress(nextFlag);
   }
 
   private awardBuckramKeyAfterTypesetterProof() {
@@ -1183,13 +1449,14 @@ export class SilentReadScene extends Phaser.Scene {
     }
     gameState.sceneProgress.silentReadReviewStep = SILENT_READ_REVIEW_TOTAL;
     gameState.sceneProgress.silentReadReviewStatus = 0;
-    setObjective("Silent Read Tower: exit east with Buckram Key.");
+    setObjective(this.reviewObjective());
     this.redrawCurrentRoom();
     addSnesRewardBurst(this, this.outbox.x, this.outbox.y - 24, "buckram-key", "Buckram Key", (object) => this.track(object));
     this.actionHint.setText("DONE: typesetter proof filed. Exit east.");
     this.reliability.update();
     this.syncRoomTraversalState();
-    this.toast.show("BUCKRAM KEY READY - EXIT EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
+    this.toast.show("KEY READY - EAST", this.player.position, "info", PROOF_PLAY_BOUNDS);
+    this.savePhysicalReviewProgress(null);
   }
 
   private checkRoomExit() {
@@ -1199,6 +1466,15 @@ export class SilentReadScene extends Phaser.Scene {
     if (position.x >= PROOF_PLAY_BOUNDS.right - 4 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "east";
     else if (position.x <= PROOF_PLAY_BOUNDS.left + 4 && position.y >= DOOR_Y_MIN && position.y <= DOOR_Y_MAX) direction = "west";
     if (!direction) return false;
+
+    if (!requestsDoorExit(direction, getInput().dir)) return false;
+
+    if (this.currentRoomId === "E1" && direction === "west") {
+      this.roomTransitionLocked = true;
+      saveGameNow();
+      transitionTo(this, "ReferralVaultScene", { chapterFrom: "E1", chapterTo: "R2" });
+      return true;
+    }
 
     if (this.currentRoomId === "E1" && direction === "east") {
       const heldItems = getHeldProcessItemIds();
@@ -1255,61 +1531,50 @@ export class SilentReadScene extends Phaser.Scene {
 
   private addProcessStampMark(flag: PhysicalFlag, station: Workstation) {
     const stationStampCount = this.physicalFlags.filter((candidate) => candidate.status === "stamped" && candidate.destination === station.id).length;
-    const x = station.x - 14 + ((stationStampCount - 1) % 3) * 14;
-    const y = station.y + 22 + Math.floor((stationStampCount - 1) / 3) * 7;
-    this.track(this.add.rectangle(x, y, 12, 6, color(PALETTE.goldStamp)).setStrokeStyle(1, color(PALETTE.black)).setDepth(246));
-    this.track(this.add.rectangle(x, y + 2, 10, 2, color(PALETTE.buckramHighlight)).setDepth(247));
-    this.track(this.add.text(x, y - 3, "OK", {
-      fontFamily: "monospace",
-      fontSize: "4px",
-      color: PALETTE.black
-    }).setOrigin(0.5).setDepth(248));
+    const x = station.x - 10 + ((stationStampCount - 1) % 3) * 10;
+    const y = station.y + 4;
+    this.track(this.add.rectangle(x, y, 6, 4, color(PALETTE.goldStamp))
+      .setStrokeStyle(1, color(PALETTE.black)).setDepth(station.y + 10));
     flag.icon?.setTint(color(PALETTE.stoneGray));
-    flag.labelText?.setColor(PALETTE.stoneGray);
     setLatestMessage(`STAMP: ${flag.shortLabel} human review recorded.`);
   }
 
   private refreshPhysicalRouteCue(flag: PhysicalFlag) {
     const station = this.stationFor(flag.destination);
-    if (stationRoom(station.id) !== this.currentRoomId || flag.status === "stamped") {
+    const waiting = flag.status === "waiting";
+    if (stationRoom(station.id) !== this.currentRoomId || (!waiting && (flag.status !== "carried"
+      || this.isNear(station.x, station.y, 42)))) {
       this.clearPhysicalRouteCue();
       return;
     }
 
-    const start = flag.status === "carried"
-      ? { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y - 15) }
-      : { x: Math.round(flag.x), y: Math.round(flag.y) };
-    const end = { x: Math.round(station.x), y: Math.round(station.y) };
-    const cueKey = `${this.currentRoomId}:${flag.id}:${flag.status}:${start.x},${start.y}->${station.id}`;
+    const start = { x: Math.round(this.player.position.x), y: Math.round(this.player.position.y) };
+    const end = { x: Math.round(waiting ? flag.x : station.x), y: Math.round(waiting ? flag.y : station.y) };
+    const cueKey = `${this.currentRoomId}:${flag.id}:${flag.status}:${waiting ? "tray" : `${Math.floor(start.x / 8)},${Math.floor(start.y / 8)}`}->${station.id}`;
     if (cueKey === this.physicalRouteCueKey) return;
 
     this.clearPhysicalRouteCue();
     this.physicalRouteCueKey = cueKey;
 
-    const distance = Phaser.Math.Distance.Between(start.x, start.y, end.x, end.y);
-    const steps = Math.max(1, Math.min(8, Math.floor(distance / 14)));
-    for (let index = 1; index <= steps; index += 1) {
-      const t = index / (steps + 1);
-      const x = Math.round(Phaser.Math.Linear(start.x, end.x, t));
-      const y = Math.round(Phaser.Math.Linear(start.y, end.y, t));
-      const routeAccent = index % 2 === 0 ? color(PALETTE.terminalCyan) : color(PALETTE.goldStamp);
-      const shadow = this.add.rectangle(x + 1, y + 1, 9, 9, color(PALETTE.black), 0.78).setDepth(235);
-      const tile = this.add.rectangle(x, y, 7, 7, routeAccent, 0.96).setDepth(236);
-      const shine = this.add.rectangle(x - 2, y - 2, 2, 2, color(PALETTE.creamPaper), 0.9).setDepth(237);
-      this.physicalRouteCueObjects.push(shadow, tile, shine);
+    const route = waiting ? [] : proofWalkRoute(start, workstationApproach(end, this.roomSolids), this.roomSolids);
+    let previous = start;
+    for (const next of route) {
+      const steps = Math.floor(Phaser.Math.Distance.Between(previous.x, previous.y, next.x, next.y) / 14);
+      for (let index = 1; index <= steps; index++) {
+        const t = index / (steps + 1);
+        const x = Math.round(Phaser.Math.Linear(previous.x, next.x, t));
+        const y = Math.round(Phaser.Math.Linear(previous.y, next.y, t));
+        this.physicalRouteCueObjects.push(this.add.rectangle(x, y, 2, 2, color(PALETTE.goldStamp), 0.85).setDepth(60));
+      }
+      previous = next;
     }
 
-    const targetLabel = `TO ${station.label.toUpperCase()}`;
-    const targetWidth = Math.max(56, targetLabel.length * 4 + 8);
-    const targetBack = this.add.rectangle(end.x, end.y - 30, targetWidth, 11, color(PALETTE.black), 0.94)
-      .setStrokeStyle(1, color(PALETTE.goldStamp))
-      .setDepth(238);
-    const targetText = this.add.text(end.x, end.y - 34, targetLabel, {
-      fontFamily: "monospace",
-      fontSize: "5px",
-      color: PALETTE.creamPaper
-    }).setOrigin(0.5).setDepth(239);
-    this.physicalRouteCueObjects.push(targetBack, targetText);
+    this.physicalRouteCueObjects.push(this.add.rectangle(end.x, end.y, waiting ? 20 : 42, waiting ? 18 : 22)
+      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(61));
+    if (waiting) {
+      this.physicalRouteCueObjects.push(this.add.triangle(end.x, end.y - 16, 0, 0, 8, 0, 4, 6, color(PALETTE.black)).setDepth(62));
+      this.physicalRouteCueObjects.push(this.add.triangle(end.x, end.y - 17, 0, 0, 6, 0, 3, 4, color(PALETTE.creamPaper)).setDepth(63));
+    }
   }
 
   private clearPhysicalRouteCue() {
@@ -1331,12 +1596,12 @@ export class SilentReadScene extends Phaser.Scene {
       return;
     }
     if (flag.status === "carried") {
-      setNearestInteractable(nearestStation ? `ROUTE to ${nearestStation.label}` : null);
+      setNearestInteractable(nearestStation?.id === flag.destination ? `ROUTE to ${nearestStation.label}` : null);
       this.actionHint.setText(`ROUTE ${flag.shortLabel}: ${correctStation.label}.${stationText}`);
       return;
     }
     if (flag.status === "routed") {
-      const verb = flag.kind === "production" ? "STAMP" : "VERIFY";
+      const verb = "VERIFY";
       setNearestInteractable(nearestStation?.id === flag.destination ? `${verb} ${flag.shortLabel}` : null);
       this.actionHint.setText(`${verb} ${flag.shortLabel}: press Space at ${correctStation.label}.`);
       return;
@@ -1351,7 +1616,6 @@ export class SilentReadScene extends Phaser.Scene {
       const inRoom = flagRoom(flag) === this.currentRoomId;
       const visible = inRoom && flag === activeFlag;
       flag.icon?.setVisible(visible);
-      flag.labelText?.setVisible(visible && flag.status !== "carried");
     }
   }
 
@@ -1360,7 +1624,7 @@ export class SilentReadScene extends Phaser.Scene {
     const carried = this.physicalFlags.find((flag) => flag.status === "carried");
     setPhysicalVerificationState({
       verb,
-      carriedItem: carried ? `Review Folder: ${carried.shortLabel}` : null,
+      carriedItem: carried ? `Review Folder: ${carried.shortLabel}` : this.pendingEditorialRepair()?.proof ? gameState.heldItem : null,
       nearestStation: nearestStation?.label ?? null,
       completed,
       total: this.physicalFlags.length,
@@ -1385,7 +1649,8 @@ export class SilentReadScene extends Phaser.Scene {
     setVisibleEntities([
       ...roomLabels,
       "Review Folder",
-      ...(active && flagRoom(active) === this.currentRoomId ? [active.label] : [])
+      ...(active && flagRoom(active) === this.currentRoomId ? [active.label] : []),
+      ...(this.pendingEditorialRepair() ? ["Editorial correction: Editor Desk -> Proof Table"] : [])
     ]);
   }
 
@@ -1393,10 +1658,21 @@ export class SilentReadScene extends Phaser.Scene {
     return this.physicalFlags.find((flag) => flag.status !== "stamped") ?? null;
   }
 
+  private reviewObjective() {
+    const repair = this.pendingEditorialRepair();
+    if (repair) {
+      if (repair.proof) return this.currentRoomId === "E1" ? "EAST - RECHECK PROOF" : "RECHECK AT PROOF TABLE";
+      return this.currentRoomId === "E1" ? "REPAIR AT EDITOR DESK" : "WEST - EDITOR DESK";
+    }
+    const active = this.getActiveFlag();
+    if (!active && this.currentRoomId === "E1") return "EXIT EAST - PROOF";
+    return silentReadObjective(active, active?.status ?? "stamped", !active || flagRoom(active) === this.currentRoomId);
+  }
+
   private verbFor(flag: PhysicalFlag): "CARRY" | "ROUTE" | "VERIFY" | "STAMP" {
     if (flag.status === "waiting") return "CARRY";
     if (flag.status === "carried") return "ROUTE";
-    if (flag.status === "routed") return flag.kind === "production" ? "STAMP" : "VERIFY";
+    if (flag.status === "routed") return "VERIFY";
     return "STAMP";
   }
 

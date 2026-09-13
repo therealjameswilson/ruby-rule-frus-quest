@@ -92,11 +92,64 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
+    "encounterEvade": "REPLI; IL FAUT {tool}",
+    "encounterEquip": "EQUIPE {tool}",
+    "encounterCounter": "CONTRE AVEC {tool}",
+    "encounterExplore": "EXPLORE LES PASSAGES",
+    "annotationExits": "NARA NORD / ARCHIVES SUD",
+    "readingRoomBook": "LIVRE: ALLEE CENTRALE",
+    "readingRoomExit": "SORTIE: PORTE AU SUD",
+    "restoreChronology": "ORDONNE LE DOSSIER",
+    "annotationAisles": "ALLEES / TABLE AU SUD",
+    "annotationNorth": "NORD: ANNOTATIONS",
+    "guideCoach": {
+      "faceNorth": "REGARDE VERS LE HAUT",
+      "faceSouth": "REGARDE VERS LE BAS",
+      "faceEast": "REGARDE VERS LA DROITE",
+      "faceWest": "REGARDE VERS LA GAUCHE",
+      "stepBack": "RECULE POUR LE RENVOI",
+      "wait": "PRET - ATTENDS LE TIR",
+      "swing": "FRAPPE MAINTENANT!",
+      "recover": "TAMPON EN RECHARGE",
+      "returned": "EGO RENVOYE!"
+    },
+    "guideReturned": "EGO RENVOYE!",
+    "guideAim": "FAIS FACE A LA LIGNE OR",
+    "guideSwing": "FRAPPE A L'ARRIVEE DU TIR",
+    "guideRetry": "SANS DEGATS - REESSAIE",
+    "office": {
+      "talk_jr": "PARLE A JR - OUEST",
+      "take_memo": "PRENDS LA NOTE",
+      "route_memo": "NOTE AU BAC OUEST",
+      "stamp_memo": "TAMPONNE AU BAC",
+      "recover_key": "DEMANDE LA CLE A JR",
+      "enter_archive": "ARCHIVES - PORTE SUD"
+    },
+    "guide": {
+      "stamp": "PRENDS TAMPON SOURCE",
+      "counter": "RENVOIE LE TIR D'EGO",
+      "fragment": "PRENDS FRAGMENT FRUS",
+      "gate": "VERS ARCHIVES AU SUD"
+    },
     "carryItem": "Porte {item}.",
     "chooseAnswer": "Choisis une réponse.",
+    "reviewRoutes": "VERIFIE LES ROUTES",
+    "compareProof": "COMPARE ORIGINAL",
+    "reviewRecord": "VERIFIE LE DOSSIER",
+    "bindery": {
+      "inbox": "DOSSIER: BAC AU SUD",
+      "front-matter-bench": "DEBUT: EN HAUT A GAUCHE",
+      "index-desk": "INDEX: EN BAS A GAUCHE",
+      "kellogg-press": "SCEAU: EN HAUT AU CENTRE",
+      "gpo-handoff": "GPO: EN HAUT A DROITE",
+      "public-release-terminal": "PUBLIC: EN BAS A DROITE",
+      "binding-press": "VOIR PRESSE CENTRALE"
+    },
     "confirm": "CONFIRMER",
     "controllerConnected": "MANETTE CONNECTÉE",
     "findGlowing": "TROUVE UN BUREAU OU UNE PORTE LUMINEUSE",
+    "followQuestArrow": "SUIVEZ LA FLECHE DOREE",
+    "walkOpenGate": "PASSEZ LA PORTE OUVERTE",
     "goLeftTalk": "PARLE À JR",
     "interact": "INTERAGIR : {label}",
     "nextLine": "LIGNE SUIVANTE",
@@ -105,7 +158,10 @@
     "talkJuniorCompiler": "Parle au Compilateur Junior.",
     "toolLabel": "OUTIL {label}",
     "touchControlsReady": "COMMANDES TACTILES PRÊTES",
-    "useTool": "UTILISER {tool}"
+    "useTool": "UTILISER {tool}",
+    "counterDanne": "FRAPPER / RENVOYER EGO",
+    "dispatchAisles": "EXPLOREZ LES ALLEES",
+    "dispatchReturn": "AU SUD POUR RELECTURE"
   },
   "items": {
     "buckramKey": {
@@ -178,6 +234,26 @@
     "title": "CENTRE DE BUREAU"
   },
   "pause": {
+    "tabs": { "tools": "OUTILS", "map": "CARTE", "record": "SUIVI", "settings": "REGLER" },
+    "equipped": "EQUIPE",
+    "ready": "{action} / RETOUCHE: EQUIPER",
+    "inspect": "{action} / RETOUCHE: VOIR",
+    "missing": "INTROUVABLE",
+    "back": "RETOUR",
+    "keys": "CLES",
+    "big": "GRANDE CLE",
+    "map": "CARTE",
+    "review": "REVISION",
+    "mapLegend": "@ VOUS  ! REVUE  X FERME",
+    "discoveries": "DECOUVERTES",
+    "task": "TACHE DE COMPILATION",
+    "pendants": { "objectivity": "OBJECTIVITE", "provenance": "SOURCES", "review": "REVISION" },
+    "progress": "VOTRE VOLUME",
+    "done": "TERMINE",
+    "binding": "RELIURE",
+    "shelf": "ETAGERE",
+    "contrast": "CONTRASTE / DALTONISME",
+    "sound": "SON",
     "board": "TABLEAU",
     "certifyBuckramGate": "CERTIFIER LA PORTE BUCKRAM",
     "close": "X",
@@ -233,6 +309,8 @@
     "unlockAudio": "Touche ou appuie sur start pour activer l'audio."
   },
   "title": {
+    "beginQuest": "COMMENCER LA QUÊTE",
+    "volumeGoal": "PUBLIE UN VOLUME FRUS",
     "arch": "ARCH",
     "archiveTerminal": "TERMINAL DES ARCHIVES",
     "conf": "-CONF-",

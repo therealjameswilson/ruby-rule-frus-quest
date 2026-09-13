@@ -252,10 +252,8 @@ function largestInteriorRowGap(
 }
 
 describe("native sprite sheet frame content", () => {
-  const spriteDir = resolve(
-    dirname(fileURLToPath(import.meta.url)),
-    "../../public/assets/art-pack/sprites/native"
-  );
+  const publicDir = resolve(dirname(fileURLToPath(import.meta.url)), "../../public");
+  const spriteDir = resolve(publicDir, "assets/art-pack/sprites/native");
   const sheetFiles = readdirSync(spriteDir).filter((file) => file.endsWith(".png"));
   // Every cell an animation actually plays: idle, walk, and the action poses.
   const referencedFrames = Array.from(
@@ -279,9 +277,10 @@ describe("native sprite sheet frame content", () => {
     expect(veteranFiles.length).toBe(Object.keys(VETERAN_CHARACTERS).length);
   });
 
-  for (const file of sheetFiles) {
-    it(`renders every referenced frame in ${file} as a complete body, not a fragment`, () => {
-      const png = decodePng(resolve(spriteDir, file));
+  for (const [key, assetPath] of Object.entries(BASE_CHARACTERS)) {
+    it(`renders every registered frame in ${key} as a complete body, not a fragment`, () => {
+      const file = assetPath;
+      const png = decodePng(resolve(publicDir, assetPath));
       expect(png.width).toBe(SHEET_WIDTH);
       expect(png.height).toBe(SHEET_HEIGHT);
       for (const frame of referencedFrames) {
@@ -302,4 +301,40 @@ describe("native sprite sheet frame content", () => {
       }
     });
   }
+
+  it.each(["declassification_coordinator", "general_editor", "reviewer", "archivist"] as const)("imports %s with binary alpha and consistent feet", (key) => {
+    const png = decodePng(resolve(publicDir, BASE_CHARACTERS[key]));
+    const colors = new Set<string>();
+    for (let i = 0; i < png.rgba.length; i += 4) {
+      const [r, g, b, a] = png.rgba.subarray(i, i + 4);
+      expect([0, 255]).toContain(a);
+      if (a === 0) continue;
+      expect(r > 100 && b > 90 && g < 80 && r > g * 2.5 && b > g * 2.5, "chroma backdrop or fringe must not enter live frames").toBe(false);
+      colors.add(`${r},${g},${b}`);
+    }
+    expect(colors.size).toBeGreaterThan(16);
+    for (const frame of referencedFrames) {
+      const bounds = frameBounds(png, frame);
+      expect(bounds.minY).toBeGreaterThanOrEqual(5);
+      expect(bounds.maxY).toBeGreaterThanOrEqual(43);
+      expect(bounds.maxY).toBeLessThanOrEqual(44);
+    }
+    expect(frameBounds(png, 15).opaque).toBe(0);
+  });
+
+  it("keeps the registered veteran compiler at full character scale with clean alpha", () => {
+    const png = decodePng(resolve(publicDir, VETERAN_CHARACTERS.compiler_veteran));
+    expect([png.width, png.height]).toEqual([SHEET_WIDTH, SHEET_HEIGHT]);
+    for (let i = 3; i < png.rgba.length; i += 4) expect([0, 255]).toContain(png.rgba[i]);
+    for (const frame of referencedFrames) {
+      const bounds = frameBounds(png, frame);
+      expect(bounds.opaque).toBeGreaterThan(120);
+      expect(bounds.minY).toBeGreaterThanOrEqual(5);
+      expect(bounds.maxY).toBeGreaterThanOrEqual(43);
+      expect(bounds.maxY).toBeLessThanOrEqual(44);
+      expect(bounds.maxY - bounds.minY + 1).toBeGreaterThanOrEqual(30);
+      expect(largestInteriorRowGap(png, frame)).toBeLessThanOrEqual(1);
+    }
+    expect(frameBounds(png, 15).opaque).toBe(0);
+  });
 });

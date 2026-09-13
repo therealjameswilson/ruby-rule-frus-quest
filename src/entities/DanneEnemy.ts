@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { danneAnimKey } from "../art/danne_anims";
-import { danneBoastsForVariantPhase } from "../game/danneBoasts";
+import { danneCombatBoastsForVariantPhase } from "../game/danneBoasts";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE, type ProcessItemId } from "../game/constants";
 import { unlockCodexEntry } from "../game/codex";
 import { DANNE_VFX_ASSETS } from "../game/danneAtlas";
@@ -13,6 +13,10 @@ import {
 } from "../game/state";
 import type { Position } from "../game/types";
 import { retroAudio } from "../systems/audio";
+import { CombatClock } from "../systems/combatClock";
+import { combatSpeechPlacement, combatSpeechText, COMBAT_SPEECH_WIDTH } from "../systems/combatSpeechPlacement";
+import { claimEnemyReward } from "../systems/roomClear";
+import { advanceBossBolt, type BossBoltMotion } from "../game/danneBossCombat";
 import { telegraphDurationMs, telegraphPhase, type TelegraphPhase, type TelegraphTiming } from "../systems/enemyCombat";
 import { snapPixel } from "../systems/pixelPerfect";
 import type { DanneEnemyVariantConfig } from "./danneVariants";
@@ -38,10 +42,8 @@ interface DanneAiContext {
   deltaMs: number;
 }
 
-interface DanneProjectile {
+interface DanneProjectile extends BossBoltMotion {
   sprite: Phaser.GameObjects.Sprite | Phaser.GameObjects.Rectangle;
-  vx: number;
-  vy: number;
   expiresAt: number;
   armed: boolean;
 }
@@ -143,6 +145,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private readonly config: DanneEnemyVariantConfig;
   private readonly boastLines: readonly string[];
   private tauntBubble?: Phaser.GameObjects.Container;
+  private tauntHeight = 22;
   private hasSpottedPlayer = false;
   private nextTauntAt = 0;
   private stunnedUntil = 0;
@@ -155,13 +158,38 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private meleeDirection = { x: 0, y: 1 };
   private lastAttackPhase: TelegraphPhase = "idle";
   private attackAnimUntil = 0;
+  private flashUntil = 0;
+  private readonly combatClock = new CombatClock();
+  private pausedBodyMoves = true;
+  private pausedTweens: Phaser.Tweens.Tween[] = [];
+
+  private get combatTime() {
+    return this.combatClock.now(this.scene.time.now);
+  }
+
+  setCombatPaused(paused: boolean) {
+    if (this.defeated || !this.combatClock.setPaused(paused, this.scene.time.now)) return;
+    const body = this.arcadeBody();
+    if (paused) this.pausedBodyMoves = body.moves;
+    body.moves = paused ? false : this.pausedBodyMoves;
+    this.setActive(!paused);
+    for (const projectile of this.projectiles) projectile.sprite.setActive(!paused);
+    if (paused) {
+      const targets = this.tauntBubble ? [this, this.tauntBubble] : [this];
+      this.pausedTweens = this.scene.tweens.getTweensOf(targets).filter((tween) => !tween.isPaused());
+      this.pausedTweens.forEach((tween) => tween.pause());
+    } else {
+      this.pausedTweens.forEach((tween) => tween.resume());
+      this.pausedTweens = [];
+    }
+  }
 
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneEnemyOptions) {
     super(scene, x, y, scene.textures.exists(options.config.textureKey) ? options.config.textureKey : "snes-wall-danne-queue");
     this.id = options.id;
     this.roomId = options.roomId;
     this.config = options.config;
-    this.boastLines = danneBoastsForVariantPhase(options.config.phase);
+    this.boastLines = danneCombatBoastsForVariantPhase(options.config.phase);
     this.maxHp = options.config.maxHp;
     this.hp = options.config.maxHp;
     this.speed = options.config.speed;
@@ -276,7 +304,12 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   }
 
   updateEnemy(timeMs: number, deltaMs: number, player: Position, playerFootBox: Phaser.Geom.Rectangle): DanneEnemyUpdateResult {
-    if (this.defeated) return { projectileHit: false, contactHit: false };
+    if (this.defeated || this.combatClock.paused) return { projectileHit: false, contactHit: false };
+    timeMs = this.combatClock.now(timeMs);
+    if (this.flashUntil > 0 && timeMs >= this.flashUntil) {
+      this.clearTint();
+      this.flashUntil = 0;
+    }
     const playerDistance = Phaser.Math.Distance.Between(this.x, this.y, player.x, player.y);
     const spottedNow = !this.hasSpottedPlayer && playerDistance <= this.aggroRadius;
     if (spottedNow) {
@@ -299,21 +332,23 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.clampToRoom();
     const contactHit = this.resolveMeleeAttack(timeMs, playerFootBox);
     this.syncUi(timeMs);
+    const projectileHit = this.updateProjectiles(timeMs, deltaMs, playerFootBox);
+    this.syncTauntBubble(player);
     return {
-      projectileHit: this.updateProjectiles(timeMs, deltaMs, playerFootBox),
+      projectileHit,
       contactHit
     };
   }
 
   tryPlayerToolHit(hitbox: Phaser.Geom.Rectangle | null, equippedTool: ProcessItemId | null, source: Position, swingId: number) {
-    if (this.defeated || !hitbox || !Phaser.Geom.Intersects.RectangleToRectangle(this.getHurtbox(), hitbox)) return "miss" as const;
+    if (this.defeated || this.combatClock.paused || !hitbox || !Phaser.Geom.Intersects.RectangleToRectangle(this.getHurtbox(), hitbox)) return "miss" as const;
     if (swingId === this.lastPlayerSwingId) return "cooldown" as const;
-    if (this.scene.time.now < this.nextToolHitAt) return "cooldown" as const;
+    if (this.combatTime < this.nextToolHitAt) return "cooldown" as const;
     this.lastPlayerSwingId = swingId;
-    this.nextToolHitAt = this.scene.time.now + 170;
+    this.nextToolHitAt = this.combatTime + 170;
     const correctTool = equippedTool === this.weakness;
     this.knockbackFrom(source, correctTool ? 7 : 12);
-    this.stunnedUntil = this.scene.time.now + STUN_MS;
+    this.stunnedUntil = this.combatTime + STUN_MS;
     if (!correctTool) {
       this.flash(PALETTE.stoneGray);
       setLatestMessage(`${this.config.displayName} resists. Need ${this.weaknessLabel()}.`);
@@ -339,6 +374,8 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     }
     this.projectiles.push({
       sprite,
+      x: start.x,
+      y: start.y,
       vx: velocity.vx,
       vy: velocity.vy,
       expiresAt: timeMs + 2100,
@@ -395,6 +432,11 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       reliabilityRisk: this.config.reliabilityRisk,
       state: this.state,
       attackPhase: this.lastAttackPhase,
+      telegraph: this.meleeStartedAt === null ? null : {
+        kind: `pressure-${this.meleePhase(this.combatTime)}`, label: "PRESSURE STRIKE",
+        msRemaining: Math.max(0, Math.round(this.meleeStartedAt + MELEE_TELEGRAPH.windupMs - this.combatTime)),
+        target: { x: Math.round(this.meleeHitbox().centerX), y: Math.round(this.meleeHitbox().centerY) }, destination: null
+      },
       weakness: this.weakness,
       behavior: this.config.behavior,
       defeatMethod: this.config.defeatMethod
@@ -410,7 +452,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
       this.defeat();
     } else {
       retroAudio.bossHit();
-      this.maybeShowTaunt(this.scene.time.now, 0.56);
+      this.maybeShowTaunt(this.combatTime, 0.56);
       setLatestMessage(`${this.config.displayName}: ${this.hp}/${this.maxHp} HP.`);
     }
   }
@@ -418,56 +460,60 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private maybeShowTaunt(timeMs: number, chance: number) {
     if (this.meleeSequenceActive || !this.boastLines.length || timeMs < this.nextTauntAt || Math.random() > chance) return;
     const sceneNextTauntAt = SCENE_TAUNT_NEXT_AT.get(this.scene) ?? 0;
-    if (timeMs < sceneNextTauntAt) return;
+    if (this.scene.time.now < sceneNextTauntAt) return;
     const line = this.boastLines[Phaser.Math.Between(0, this.boastLines.length - 1)];
     this.showTauntBubble(line);
     this.nextTauntAt = timeMs + Phaser.Math.Between(4000, 6000);
-    SCENE_TAUNT_NEXT_AT.set(this.scene, timeMs + SCENE_TAUNT_THROTTLE_MS);
+    SCENE_TAUNT_NEXT_AT.set(this.scene, this.scene.time.now + SCENE_TAUNT_THROTTLE_MS);
   }
 
   private showTauntBubble(line: string) {
     this.tauntBubble?.destroy();
-    const bubbleWidth = 104;
-    const x = snapPixel(Phaser.Math.Clamp(this.x, bubbleWidth / 2 + 4, GAME_WIDTH - bubbleWidth / 2 - 4));
-    const y = snapPixel(Phaser.Math.Clamp(this.y - 46, 32, GAME_HEIGHT - 58));
-    const text = this.scene.add.text(0, 0, line, {
+    const layout = combatSpeechText(line);
+    const bubbleWidth = COMBAT_SPEECH_WIDTH;
+    const text = this.scene.add.text(bubbleWidth / 2, 4, layout.text, {
       fontFamily: "monospace",
-      fontSize: "5px",
+      fontSize: "6px",
       color: PALETTE.creamPaper,
       align: "center",
-      wordWrap: { width: bubbleWidth - 12, useAdvancedWrap: true },
-      lineSpacing: -1
-    }).setOrigin(0.5);
-    const textBounds = text.getBounds();
-    const height = Math.max(18, Math.ceil(textBounds.height) + 8);
+      lineSpacing: 0
+    }).setOrigin(0.5, 0);
+    const height = layout.height;
+    this.tauntHeight = height;
     const back = this.scene.add.rectangle(0, 0, bubbleWidth, height, color(PALETTE.black), 0.9)
+      .setOrigin(0)
       .setStrokeStyle(1, color(PALETTE.goldStamp), 0.95);
-    const header = this.scene.add.rectangle(0, -height / 2 + 2, bubbleWidth - 4, 2, color(PALETTE.deepRuby), 0.82);
-    const pointer = this.scene.add.triangle(0, height / 2 + 4, 0, 0, 6, 0, 3, 5, color(PALETTE.black), 0.9)
-      .setStrokeStyle(1, color(PALETTE.goldStamp), 0.85);
-    this.tauntBubble = this.scene.add.container(x, y, [back, header, text, pointer])
+    const bubble = this.scene.add.container(0, 0, [back, text])
       .setName(`danne-taunt-${this.id}`)
       .setDepth(960)
+      .setVisible(false)
       .setAlpha(0);
+    this.tauntBubble = bubble;
     this.scene.tweens.add({
       targets: this.tauntBubble,
       alpha: 1,
-      y: y - 2,
       duration: 90,
       ease: "Stepped"
     });
     this.scene.tweens.add({
       targets: this.tauntBubble,
       alpha: 0,
-      y: y - 9,
       delay: 2050,
       duration: 240,
       ease: "Stepped",
       onComplete: () => {
-        this.tauntBubble?.destroy();
-        this.tauntBubble = undefined;
+        bubble.destroy();
+        if (this.tauntBubble === bubble) this.tauntBubble = undefined;
       }
     });
+  }
+
+  private syncTauntBubble(player: Position) {
+    if (!this.tauntBubble) return;
+    const placement = !this.meleeSequenceActive && this.projectiles.length === 0
+      ? combatSpeechPlacement(this, player, this.tauntHeight) : null;
+    this.tauntBubble.setVisible(placement !== null);
+    if (placement) this.tauntBubble.setPosition(placement.x, placement.y);
   }
 
   private getHurtbox() {
@@ -475,12 +521,12 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   }
 
   private updateProjectiles(timeMs: number, deltaMs: number, playerFootBox: Phaser.Geom.Rectangle) {
-    const dt = Math.min(0.05, deltaMs / 1000);
     let hit = false;
     for (let index = this.projectiles.length - 1; index >= 0; index -= 1) {
       const projectile = this.projectiles[index];
-      const x = snapPixel(projectile.sprite.x + projectile.vx * dt);
-      const y = snapPixel(projectile.sprite.y + projectile.vy * dt);
+      advanceBossBolt(projectile, deltaMs);
+      const x = snapPixel(projectile.x);
+      const y = snapPixel(projectile.y);
       projectile.sprite.setPosition(x, y);
       projectile.sprite.setDepth(Math.round(y + 8));
       const bounds = new Phaser.Geom.Rectangle(x - 6, y - 6, 12, 12);
@@ -531,6 +577,10 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   }
 
   private spawnLoot() {
+    if (!claimEnemyReward(this.roomId, this.id)) {
+      setLatestMessage(`${this.config.displayName} cleared. Reward already collected.`);
+      return;
+    }
     const loot = this.config.loot;
     if (loot.documentPoints) addDocumentPoints(loot.documentPoints, `${this.config.displayName} defeated`);
     if (loot.processStamp) awardProcessStamp(loot.processStamp);
@@ -557,13 +607,11 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
 
   private flash(hex: string) {
     this.setTint(color(hex));
-    this.scene.time.delayedCall(90, () => {
-      if (this.active && !this.defeated) this.clearTint();
-    });
+    this.flashUntil = this.combatTime + 90;
   }
 
   private playFacingAnim() {
-    if (this.scene.time.now < this.attackAnimUntil) return;
+    if (this.combatTime < this.attackAnimUntil) return;
     const body = this.arcadeBody();
     const vx = body.velocity.x;
     const vy = body.velocity.y;
@@ -584,7 +632,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
     this.setDepth(Math.round(this.y));
   }
 
-  private syncUi(timeMs = this.scene.time.now) {
+  private syncUi(timeMs = this.combatTime) {
     const x = snapPixel(this.x);
     const y = snapPixel(this.y);
     const topY = snapPixel(y - this.displayHeight * this.originY);
@@ -618,7 +666,7 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   private playAttackAnim(durationMs: number) {
     const key = danneAnimKey(this.config.textureKey, "attack");
     if (!this.scene.anims.exists(key)) return;
-    this.attackAnimUntil = this.scene.time.now + durationMs;
+    this.attackAnimUntil = this.combatTime + durationMs;
     this.play(key, true);
   }
 
