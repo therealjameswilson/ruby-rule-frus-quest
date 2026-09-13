@@ -7,6 +7,7 @@ import {
   BUCKRAM_BINDING_CHECK_TOTAL,
   BUCKRAM_BINDING_PACKETS,
   BUCKRAM_BINDING_TOTAL,
+  canAssembleBindingPacket,
   buckramBindingStatusCode,
   buckramBindingObjective,
   buckramBindingDestination,
@@ -17,6 +18,29 @@ import {
 } from "./buckramBinding";
 
 describe("physical Buckram Gate binding", () => {
+  const earned = { blackVaultBossCleared: 1, typesetterProofComplete: 1,
+    typeflowOrderComplete: 1, typesettingPreparationComplete: 1 };
+
+  it("assembles reviewed pages but never infers human certification", () => {
+    expect(canAssembleBindingPacket("front-matter-packet", earned)).toBe(true);
+    expect(canAssembleBindingPacket("index-proof-docket", earned)).toBe(true);
+    expect(canAssembleBindingPacket("kellogg-certification", { ...earned, kelloggFinalCertificationComplete: 1 })).toBe(false);
+    expect(canAssembleBindingPacket("unknown", earned)).toBe(false);
+  });
+
+  it("requires proofing and boss milestones and retains incomplete-save desks", () => {
+    expect(canAssembleBindingPacket("front-matter-packet", {})).toBe(false);
+    for (const key of Object.keys(earned)) {
+      expect(canAssembleBindingPacket("index-proof-docket", { ...earned, [key]: 0 })).toBe(false);
+    }
+  });
+
+  it("prepares the handoff only after the final human seal", () => {
+    for (const id of ["gpo-binding-packet", "public-release-packet"]) {
+      expect(canAssembleBindingPacket(id, earned)).toBe(false);
+      expect(canAssembleBindingPacket(id, { ...earned, kelloggFinalCertificationComplete: 1 })).toBe(true);
+    }
+  });
   it("points waiting packets to the inbox and saved deliveries to their own station", () => {
     for (const [step, packet] of BUCKRAM_BINDING_PACKETS.entries()) {
       expect(buckramBindingDestination({ buckramBindingStep: step })).toBe("inbox");

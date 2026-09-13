@@ -18,6 +18,7 @@ import { TYPESETTER_CORRECTIONS_PROMPTS } from "../game/typesetterCorrections";
 import {
   BUCKRAM_BINDING_PACKETS,
   BUCKRAM_BINDING_TOTAL,
+  canAssembleBindingPacket,
   buckramBindingObjective,
   buckramBindingStatusCode,
   buckramBindingStatusFromCode,
@@ -789,7 +790,8 @@ export class EndingScene extends Phaser.Scene {
       packet.status = "carried";
       setHeldItem(`Binding Folder: ${packet.shortLabel}`);
       setLatestMessage(`CARRY: ${packet.label}.`);
-      this.savePhysicalBindingProgress(packet);
+      this.assembleEarnedPackets();
+      this.savePhysicalBindingProgress();
       retroAudio.blip();
       this.updateBindingPacketVisibility();
       return;
@@ -892,6 +894,7 @@ export class EndingScene extends Phaser.Scene {
     this.applyBindingPacketReward(packet);
     if (completionMessage) setLatestMessage(completionMessage);
     retroAudio.stamp();
+    this.assembleEarnedPackets();
     const nextPacket = this.getActiveBindingPacket();
     if (nextPacket) {
       nextPacket.status = "carried";
@@ -908,6 +911,35 @@ export class EndingScene extends Phaser.Scene {
     this.syncRoomTraversal();
     this.syncVisibleState(false);
     this.savePhysicalBindingProgress();
+  }
+
+  private assembleEarnedPackets() {
+    let packet = this.getActiveBindingPacket();
+    let assembled = 0;
+    while (packet && canAssembleBindingPacket(packet.id, gameState.sceneProgress)) {
+      packet.status = "sealed";
+      this.applyBindingPacketReward(packet);
+      const station = this.bindingStation(packet.station);
+      if (this.textures.exists(packet.texture)) {
+        const leaf = this.add.image(station.x, station.y, packet.texture)
+          .setDisplaySize(12, 12).setDepth(250);
+        this.tweens.add({ targets: leaf, x: BINDING_PRESS.x, y: BINDING_PRESS.y,
+          duration: 480, delay: assembled * 120,
+          onUpdate: () => leaf.setPosition(Math.round(leaf.x), Math.round(leaf.y)),
+          onComplete: () => leaf.destroy() });
+      }
+      assembled++;
+      packet = this.getActiveBindingPacket();
+    }
+    if (!assembled) return;
+    // Keep an in-progress certification routed when restoring an older save.
+    if (packet && packet.status === "waiting") packet.status = "carried";
+    setHeldItem(packet?.status === "carried" ? `Binding Folder: ${packet.shortLabel}` : null);
+    this.updateBindingPacketVisibility();
+    this.updateBindingRoomVisuals();
+    this.syncRoomTraversal();
+    setLatestMessage(packet ? "REVIEWED PAGES ASSEMBLED - YOUR SEAL REMAINS" : "CERTIFIED RECORD ASSEMBLED - PRESS TO PUBLISH");
+    this.toast.show(packet ? "READY FOR YOUR SEAL" : "PRESS READY", this.player.position, "info", GATE_PLAY_BOUNDS);
   }
 
   private applyBindingPacketReward(packet: PhysicalBindingPacket) {

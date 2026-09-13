@@ -27,6 +27,7 @@ interface Packet {
 }
 
 interface BindingInternals {
+  textures: { exists: ReturnType<typeof vi.fn> };
   bindingPackets: Packet[];
   player: { position: { x: number; y: number } };
   toast: { show: ReturnType<typeof vi.fn>; hide: ReturnType<typeof vi.fn> };
@@ -42,6 +43,7 @@ interface BindingInternals {
 
 function fixture(step = 0, status: BuckramBindingStatus = "waiting") {
   const scene = new EndingScene() as unknown as BindingInternals;
+  scene.textures = { exists: vi.fn(() => false) };
   scene.bindingPackets = BUCKRAM_BINDING_PACKETS.map((packet, index) => ({
     ...packet, checkCount: packet.checkIds.length,
     status: index < step ? "sealed" : index === step ? status : "waiting", x: 128, y: 177
@@ -65,6 +67,49 @@ beforeEach(() => {
 });
 
 describe("live binding packet handoffs", () => {
+  function earnedProof() {
+    Object.assign(gameState.sceneProgress, { blackVaultBossCleared: 1, typesetterProofComplete: 1,
+      typeflowOrderComplete: 1, typesettingPreparationComplete: 1 });
+  }
+
+  it("assembles earned pages on pickup, saves at the human seal, and cannot farm rewards", () => {
+    earnedProof();
+    const { scene, packet } = fixture();
+    const points = gameState.documentPoints;
+    scene.handleBindingPacketAction(packet);
+    expect(gameState.documentPoints).toBe(points + 16);
+    expect(gameState.sceneProgress).toMatchObject({ buckramBindingStep: 2, buckramBindingStatus: 1 });
+    expect(scene.bindingPackets.map(p => p.status)).toEqual(["sealed", "sealed", "carried", "waiting", "waiting"]);
+    expect(gameState.sceneProgress.kelloggFinalCertificationComplete).not.toBe(1);
+    expect(scene.standardsBoard.show).not.toHaveBeenCalled();
+    expect(saveGameNow).toHaveBeenCalledOnce();
+    scene.handleBindingPacketAction(packet);
+    expect(gameState.documentPoints).toBe(points + 16);
+    expect(saveGameNow).toHaveBeenCalledOnce();
+  });
+
+  it("assembles remaining packets only on actual certification and leaves publication explicit", () => {
+    earnedProof();
+    const { scene, packet } = fixture(2, "carried");
+    const points = gameState.documentPoints;
+    scene.handleBindingPacketAction(packet);
+    expect(scene.standardsBoard.show).toHaveBeenCalledOnce();
+    expect(gameState.documentPoints).toBe(points);
+    const certify = scene.standardsBoard.show.mock.calls[0][1] as () => void;
+    certify();
+    expect(gameState.sceneProgress.kelloggFinalCertificationComplete).not.toBe(1);
+    expect(gameState.documentPoints).toBe(points);
+    gameState.documentCandidates = [{ ...INITIAL_DOCUMENT_CANDIDATES[0], selected: true,
+      citationComplete: true, annotationNeeded: false, workflowState: "proofed", reviewStatus: "resolved",
+      equities: [{ agencyId: "test", fictionalName: "Test", issueType: "military", response: "cleared" }] }];
+    certify();
+    expect(gameState.sceneProgress.kelloggFinalCertificationComplete).toBe(1);
+    expect(gameState.sceneProgress.buckramBindingStep).toBe(5);
+    expect(gameState.documentPoints).toBe(points + 24);
+    expect(gameState.finalGateCertification?.status).not.toBe("published");
+    certify();
+    expect(gameState.documentPoints).toBe(points + 24);
+  });
   it("saves the initial pickup immediately without completing the packet", () => {
     const { scene, packet } = fixture();
     scene.handleBindingPacketAction(packet);

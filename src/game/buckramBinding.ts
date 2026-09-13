@@ -96,6 +96,18 @@ export const BUCKRAM_BINDING_PACKETS = [
 
 export const BUCKRAM_BINDING_TOTAL = BUCKRAM_BINDING_PACKETS.length;
 
+// The earned finale assembles already-reviewed work instead of repeating it.
+// Older/incomplete records retain their individual desks and repair exercises.
+export function canAssembleBindingPacket(packetId: string, progress: Readonly<Record<string, number>>) {
+  if (!progress.blackVaultBossCleared || !progress.typesetterProofComplete
+    || !progress.typeflowOrderComplete || !progress.typesettingPreparationComplete) return false;
+  if (packetId === "front-matter-packet" || packetId === "index-proof-docket") return true;
+  if (packetId === "gpo-binding-packet" || packetId === "public-release-packet") {
+    return Boolean(progress.kelloggFinalCertificationComplete);
+  }
+  return false; // Human certification is never inferred from earlier progress.
+}
+
 const BINDING_STATION_LABELS: Record<BuckramBindingStationId, string> = {
   "front-matter-bench": "FRONT BENCH",
   "index-desk": "INDEX DESK",

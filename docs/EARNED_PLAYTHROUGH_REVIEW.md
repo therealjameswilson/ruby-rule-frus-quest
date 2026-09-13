@@ -44,10 +44,14 @@ publication checkpoint is `earned-publication-storage.json` in the last folder.
 
 ## Next Design Work
 
-1. Shorten the post-boss bindery. Five more station deliveries dissipate the
-   climax, and index repair duplicates the preceding production task. Preserve
-   accountable final certification and an explicit publication action, but make
-   the rest a visible assembly payoff for work already earned.
+1. The post-boss bindery is now shortened for earned, proof-complete saves:
+   collect the reviewed pages, give the human seal, then use the publication
+   press. Page sprites gather from their benches, and all five persisted packet
+   milestones/rewards remain intact. `qa-bindery-assembly.mjs` passed keyboard
+   and simulated touch at 375x667, including cancellation, certification reload,
+   publication and stable completion stats. Incomplete/legacy records still use
+   their desks; `qa-bindery-finale.mjs` retains that older-route coverage. Assess
+   this new pacing with a human player; simulated touch is not physical iPhone QA.
 2. Audit delivery-only stretches. Retain errands when they teach geography or
    set up a discovery; replace repeated walk-confirm-stamp beats with fewer,
    consequential interactions.

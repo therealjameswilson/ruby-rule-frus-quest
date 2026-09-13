@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Shorter earned bindery payoff (2026-09-13):
+  - Added canAssembleBindingPacket: requires defeated boss and completed printer preparation/typesetter proof; never infers Kellogg certification. Earned inbox pickup assembles front matter/index; live human certification assembles GPO/public handoff. Publication still requires its own ready-checked press action. Four repeated deliveries and the duplicate index exercise are removed from this earned route.
+  - Preserved five-step save representation, reward totals, incomplete/legacy desk route, return passage, and unresolved-evidence guard. Small original packet sprites travel from benches to press with integer-rendered positions. No source-document edits or automatic certification.
+  - Added eligibility and scene behavior tests for missing milestones, missing live evidence, explicit certification/publication separation, immediate checkpoint, and repeated action/reward protection. Full suite 212 files / 1,630 tests passes; build passes with existing chunk warning.
+  - tools/qa-bindery-assembly.mjs passed keyboard and simulated touch 375x667 from earned boss storage. Both publish at 241 points, no browser errors, unchanged certification/inventory/stats on reload. Native assembled-page, publication, and full touch certification screenshots inspected under /private/tmp/frus-bindery-assembly-{desktop,touch}/. Initial QA retained the old right-bench approach and attempted to cross furniture from the seal desk; changed its route to the clear aisle, no collision change needed.
+  - Standard game-client smoke passed at /private/tmp/frus-bindery-assembly-client/; native screenshot inspected. This is an actual pacing change, not a full-goal completion claim. Next inspect remaining delivery-only stretches and imperfect visible-cue boss play. No public deployment.
+
 - Earned publication reached (2026-09-13):
   - Continued earned S1 step-5 save through marginal-note and index decisions, rejected the altered typeset proof, repaired designator and wording, filed then stamped to earn Buckram Key. Physically crossed into BlackVaultLairScene; retained tools/qa-earned-production.mjs with required earned storage input.
   - Existing boss counter harness passed on that exact earned save: colossus/swarm/cloud, seven cycles and seven fresh core hits, zero retries, no missed deadline. Reload retained bindery arrival. This is instrumented timing QA, not an unaided human difficulty claim.
