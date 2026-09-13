@@ -16,7 +16,7 @@ import {
   getVolumeAssemblyReadout, setGameMode, setLatestMessage
 } from "../game/state";
 import type { AdventureSubscreenReadout } from "../game/state";
-import { bindPointerPress, getInput, swallowNextInputFrame, updateInputCallbacks } from "../input/InputState";
+import { bindPointerPress, getInput, getPrimaryActionBadge, swallowNextInputFrame, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
 import { isColorblindModeEnabled, toggleColorblindMode } from "./accessibilitySettings";
 import { openCodex } from "./codexOverlay";
@@ -276,7 +276,8 @@ export class InventoryOverlay {
     });
     if (selected) {
       this.text(128, 207, selected.displayName.toUpperCase(), PALETTE.goldStamp, true);
-      const status = this.message || getString(selected.equipped ? "pause.equipped" : selected.acquired ? "pause.ready" : "pause.missing");
+      const readyKey = DANNE_ITEM_CATALOG.some(item => item.id === selected.id) && selected.id !== "ruby-pen" ? "pause.inspect" : "pause.ready";
+      const status = this.message || getString(selected.equipped ? "pause.equipped" : selected.acquired ? readyKey : "pause.missing", { action: getPrimaryActionBadge() });
       this.text(128, 219, status, PALETTE.white, true);
     }
   }

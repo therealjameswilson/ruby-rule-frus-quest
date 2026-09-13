@@ -233,7 +233,8 @@
   "pause": {
     "tabs": { "tools": "OUTILS", "map": "CARTE", "record": "SUIVI", "settings": "REGLER" },
     "equipped": "EQUIPE",
-    "ready": "PRET",
+    "ready": "{action} / RETOUCHE: EQUIPER",
+    "inspect": "{action} / RETOUCHE: VOIR",
     "missing": "INTROUVABLE",
     "back": "RETOUR",
     "keys": "CLES",

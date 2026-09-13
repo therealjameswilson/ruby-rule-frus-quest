@@ -84,7 +84,8 @@
   "pause": {
     "tabs": { "tools": "TOOLS", "map": "MAP", "record": "LOG", "settings": "SET" },
     "equipped": "EQUIPPED",
-    "ready": "READY",
+    "ready": "{action} / TAP AGAIN TO EQUIP",
+    "inspect": "{action} / TAP AGAIN TO VIEW",
     "missing": "NOT FOUND",
     "back": "BACK",
     "keys": "KEYS",

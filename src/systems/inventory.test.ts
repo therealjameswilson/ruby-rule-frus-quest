@@ -13,7 +13,7 @@ vi.mock("phaser", () => ({ default: {
   Input: { Events: { POINTER_DOWN: "pointerdown" } }, Scenes: { Events: { SHUTDOWN: "shutdown" } }
 } }));
 vi.mock("../input/InputState", () => ({
-  bindPointerPress: vi.fn(), getInput: () => input, swallowNextInputFrame: swallowed,
+  bindPointerPress: vi.fn(), getInput: () => input, getPrimaryActionBadge: () => "A", swallowNextInputFrame: swallowed,
   updateInputCallbacks: (next: typeof callbacks) => Object.assign(callbacks, next)
 }));
 vi.mock("./audio", () => ({ retroAudio: { blip: vi.fn(), confirm: vi.fn(), warning: vi.fn(), isEnabled: false, toggle: vi.fn() } }));
@@ -33,10 +33,11 @@ class Node {
 function harness() {
   const loop = { frame: 0 };
   const containers: Node[] = [];
+  const texts: string[] = [];
   const scene = {
     add: { rectangle: () => new Node(), container: () => {
       const node = new Node(); containers.push(node); return node;
-    }, text: () => new Node(), graphics: () => new Node() },
+    }, text: (_x: number, _y: number, text: string) => { texts.push(text); return new Node(); }, graphics: () => new Node() },
     textures: { exists: () => false }, input: { on: vi.fn(), off: vi.fn() }, events: { once: vi.fn() }, game: { loop }
   } as unknown as Phaser.Scene;
   const overlay = new InventoryOverlay(scene);
@@ -51,7 +52,7 @@ function harness() {
     overlay.updateInput();
     input[name] = false;
   };
-  return { overlay, tap, key, loop, containers };
+  return { overlay, tap, key, loop, containers, texts };
 }
 
 beforeEach(() => {
@@ -83,12 +84,14 @@ describe("pause inventory interaction", () => {
   it("selects on first tap, equips on the next tap, and ignores duplicate delivery", () => {
     gameState.inventory.push("Citation Stamp", "Review Folder");
     gameState.equippedProcessItem = "citation_stamp";
-    const { overlay, tap } = harness(); overlay.toggle(); tap("tool-2");
+    const { overlay, tap, texts } = harness(); overlay.toggle(); tap("tool-2");
     expect(gameState.equippedProcessItem).toBe("citation_stamp");
+    expect(texts.at(-1)).toBe("A / TAP AGAIN TO EQUIP");
     const hit = getPauseMenuReadout()!.controls.find((control) => control.id === "tool-2")!;
     callbacks.handlePauseTouch(hit);
     expect(gameState.equippedProcessItem).toBe("citation_stamp");
-    tap("tool-2"); expect(gameState.equippedProcessItem).toBe("review_folder"); overlay.hide();
+    tap("tool-2"); expect(gameState.equippedProcessItem).toBe("review_folder");
+    expect(texts.at(-1)).toBe("EQUIPPED"); overlay.hide();
   });
 
   it("does not grant or equip locked items", () => {
@@ -98,8 +101,10 @@ describe("pause inventory interaction", () => {
 
   it("backs out of item details before closing the menu", () => {
     gameState.inventory.push("Master Declass Key");
-    const { overlay, tap } = harness();
-    overlay.toggle(); tap("tool-8"); tap("tool-8");
+    const { overlay, tap, texts } = harness();
+    overlay.toggle(); tap("tool-8");
+    expect(texts.at(-1)).toBe("A / TAP AGAIN TO VIEW");
+    tap("tool-8");
     expect(getPauseMenuReadout()?.detailOpen).toBe(true);
     overlay.back();
     expect(getPauseMenuReadout()?.detailOpen).toBe(false);

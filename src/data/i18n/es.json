@@ -233,7 +233,8 @@
   "pause": {
     "tabs": { "tools": "EQUIPO", "map": "MAPA", "record": "DIARIO", "settings": "AJUSTE" },
     "equipped": "EQUIPADO",
-    "ready": "LISTO",
+    "ready": "{action} / TOCA OTRA VEZ: EQUIPA",
+    "inspect": "{action} / TOCA OTRA VEZ: VER",
     "missing": "NO ENCONTRADO",
     "back": "VOLVER",
     "keys": "LLAVES",
