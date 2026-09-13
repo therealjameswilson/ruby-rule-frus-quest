@@ -1500,10 +1500,12 @@ export function getRoomGraphReadout() {
         const annotationExit = room.id === "AS" && direction === "north";
         const sourcePacketExit = room.id === "A1" && direction === "east";
         const networkBatchExit = room.id === "N1" && direction === "east";
+        const referralReviewExit = room.id === "R1" && direction === "east";
         const unfiledVaultExit = direction === "west" && Boolean(vaultDocket);
         const unfiledPacketExit = packetHeld && direction !== "north";
         const prompt = blockedExitPrompt(room.id, direction, heldProcessItems);
-        const canOpen = unfiledVaultExit ? false : networkBatchExit ? networkRoutingComplete(gameState.sceneProgress, gameState.processStamps.includes("network"))
+        const canOpen = referralReviewExit ? gameState.processStamps.includes("referral")
+          : unfiledVaultExit ? false : networkBatchExit ? networkRoutingComplete(gameState.sceneProgress, gameState.processStamps.includes("network"))
           : unfiledPacketExit ? false : sourcePacketExit ? sourceExitReady
           : annotationEntry ? annotationStacksOpen(gameState.sceneProgress)
           : annotationExit ? gameState.sceneProgress.annotationDraftingComplete === 1
@@ -1516,10 +1518,11 @@ export function getRoomGraphReadout() {
             : canOpenLockedDoor(dungeon);
         return [direction, {
           label: unfiledVaultExit ? "Unfiled review docket" : unfiledPacketExit ? "Unfiled annotation packet" : lockedExits[direction] ?? "Locked route",
-          gateType: networkBatchExit || unfiledVaultExit ? "workflow" : bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
+          gateType: referralReviewExit || networkBatchExit || unfiledVaultExit ? "workflow" : bossDoor ? "boss" : requiredItem || annotationExit ? "process_item" : "small_key",
           requiredItem,
           requiredItemLabel: requiredItem ? getProcessItemDefinition(requiredItem)?.displayName ?? requiredItem : null,
-          blockedMessage: canOpen ? null : unfiledVaultExit ? `File ${vaultDocket!.label} at ${vaultDocket!.stationLabel} before returning to the Network Split.`
+          blockedMessage: canOpen ? null : referralReviewExit ? "Resolve the agency manifest, file visible treatment, and stamp the review press."
+            : unfiledVaultExit ? `File ${vaultDocket!.label} at ${vaultDocket!.stationLabel} before returning to the Network Split.`
             : networkBatchExit ? "Finish routing the batch through OpenNet and ClassNet."
             : unfiledPacketExit ? "File the carried annotation notes at the research table before leaving."
             : sourcePacketExit ? "File the annotation packet, collect both supporting documents, and complete the research-table reviews."
@@ -1528,7 +1531,8 @@ export function getRoomGraphReadout() {
             : readingPassage && heldProcessItems.has("review_folder")
             ? "Compare the northeast shelf register with the Review Folder."
             : blackVaultFinalExit ? "Defeat DANN-E's final review to open the bindery route." : prompt.message,
-          blockedObjective: canOpen ? null : unfiledVaultExit ? "FILE REVIEW DOCKET"
+          blockedObjective: canOpen ? null : referralReviewExit ? "COMPLETE VISIBLE TREATMENT"
+            : unfiledVaultExit ? "FILE REVIEW DOCKET"
             : networkBatchExit ? "FINISH ROUTING BATCH"
             : unfiledPacketExit ? "FILE PACKET AT TABLE"
             : sourcePacketExit ? "COMPLETE SOURCE PACKET"

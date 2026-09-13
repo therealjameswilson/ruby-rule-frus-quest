@@ -11,6 +11,7 @@ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 const cdp=mobile?await context.newCDPSession(page):null;
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
+const eastGate = async () => (await state()).roomGraph.find(room => room.id === 'R1').lockedExitState.east;
 const touch=async(type,points)=>{
  const box=await page.locator('canvas').first().boundingBox();
  await cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points.map(([x,y])=>({x:box.x+x*box.width/256,y:box.y+y*box.height/240,id:1}))});
@@ -80,6 +81,7 @@ try{
  await move(128,180);await move(176,180);await key();
  assert.equal((await state()).sceneProgress.referralTreatmentStep,2);
  assert(!(await state()).sceneProgress.referralPhysicalReviewComplete);
+ assert.equal((await eastGate()).canOpen,false,'Drafted treatment must not open the gate before printing');
  await shot('press-ready');
  await key('ArrowDown',30);await key('x');await page.waitForTimeout(450);
  assert.equal((await state()).sceneProgress.referralTreatmentStep,2,'A swing facing away must not print');
@@ -87,6 +89,7 @@ try{
  await key();
  await key('x');await page.waitForTimeout(500);await shot('treatment-complete');
  assert.equal((await state()).sceneProgress.referralPhysicalReviewComplete,1);
+ assert.equal((await eastGate()).canOpen,true,'Printing the reviewed treatment must also open the map gate');
  const printedPoints=(await state()).documentPoints;
  await key('x');await page.waitForTimeout(500);
  assert.equal((await state()).documentPoints,printedPoints,'Repeated swings must not duplicate press rewards');

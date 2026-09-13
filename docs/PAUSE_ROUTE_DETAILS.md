@@ -100,3 +100,23 @@ errors were captured. Unit tests cover all docket orders, invalid/empty orders,
 and persistence. Full suite: 225 files / 1,698 tests; production build passes
 with the existing chunk warning. This did not add a new gameplay restriction or
 change save schemas. It remains scripted browser evidence, not physical-phone QA.
+
+## Referral Review Gate
+
+The R1 east map gate also used small-key status instead of the Referral stamp
+that actually opens the scene door. An earlier earned treatment capture showed
+the stamp and completed physical review alongside a false locked map state.
+The readout now checks that earned stamp and describes the manifest, visible
+treatment and review press. Small keys or a drafted-but-unprinted treatment do
+not substitute for review completion.
+
+The current earned chain passed dispatch evidence, shelf shortcut and return,
+then touch-only manifest correction, NPC guidance, treatment reload, wrong-facing
+press rejection, successful printing, Concurrence Slip and proofing arrival.
+`qa-earned-referral-manifest.mjs` asserts locked before printing and open after.
+Native completion and proof-arrival captures under
+`/private/tmp/frus-referral-map-fixed/` were inspected; no errors were captured.
+Unit tests cover drafts, unrelated keys and save persistence. Full suite:
+226 files / 1,699 tests; build passes with the existing chunk warning. The earlier
+dispatch replay is `/private/tmp/frus-referral-current-dispatch/`. No progression
+requirements changed, and this is not a physical-device or unaided-fun claim.
