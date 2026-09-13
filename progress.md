@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned publication reached (2026-09-13):
+  - Continued earned S1 step-5 save through marginal-note and index decisions, rejected the altered typeset proof, repaired designator and wording, filed then stamped to earn Buckram Key. Physically crossed into BlackVaultLairScene; retained tools/qa-earned-production.mjs with required earned storage input.
+  - Existing boss counter harness passed on that exact earned save: colossus/swarm/cloud, seven cycles and seven fresh core hits, zero retries, no missed deadline. Reload retained bindery arrival. This is instrumented timing QA, not an unaided human difficulty claim.
+  - Existing bindery-finale harness passed through all five stations, wrong index recovery, pending certification reload, separate press action, clean publication, and completion reload. Final points 241, reliability 100, cover pieces 5/5, three variant defeats, deadline met. Captured no browser errors. Native published/record screens inspected at /private/tmp/frus-earned-publication/. Saved earned-publication-storage.json there.
+  - Fresh production build passes with existing chunk warning. No runtime code changed this turn; prior 1,625 unit-test result not rerun. Added docs/EARNED_PLAYTHROUGH_REVIEW.md distinguishing successful earned chain from human fun/QA claims.
+  - Next concrete design target: shorten redundant post-boss bindery deliveries and repeated index task while retaining explicit human certification/publication. Then imperfect visible-cue/touch boss play and fresh-player comprehension. Goal remains active; no public deployment.
+
 - Earned editorial and proofing handoff (2026-09-13):
   - Removed obsolete full-screen cream/sepia backing rectangles from SilentReadScene; they left an empty cream footer below the tilemap. Room frame now owns the backing, with floor still below walls and entities. No save/input/gameplay schema changes.
   - Retained tools/qa-earned-editor.mjs: earned E1 draft pickup, rejected invisible withholding, added bracket, filed separately, stamped to earn Red Pencil, walked east to S1. Requires FRUS_QA_STORAGE from the preceding earned referral checkpoint.
