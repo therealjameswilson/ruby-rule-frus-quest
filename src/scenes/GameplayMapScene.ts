@@ -440,12 +440,10 @@ export class GameplayMapScene extends Phaser.Scene {
     this.updateFrusFloorNextGateInteractable();
     this.updateDanneEncounter(delta);
     const combatCue = this.currentDanneCombatCue();
-    const nearestCandidate = nearestInteractable(this.player.position, this.interactables);
     const combatLocked = this.isDanneEncounterLocked();
-    const nearest = combatLocked ? null : nearestCandidate;
-    const hintTarget = combatLocked
-      ? null
-      : this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, this.interactables));
+    const available = this.availableCombatInteractables(combatLocked);
+    const nearest = nearestInteractable(this.player.position, available);
+    const hintTarget = this.frusFloorPromptHintTarget(nearest, nearestInteractableHint(this.player.position, available));
     const promptTarget = nearest ?? hintTarget;
     setNearestInteractable(nearest?.label ?? null);
     this.prompt.update(delta, promptTarget, {
@@ -789,6 +787,14 @@ export class GameplayMapScene extends Phaser.Scene {
       || hasPendingEncounterWaves(this.danneWaves)
       || this.danneWaveTransition.pending
     ));
+  }
+
+  private availableCombatInteractables(locked: boolean): Interactable[] {
+    if (!locked) return this.interactables;
+    // Retreat is not progression: keep the forward vault and reward interactions locked.
+    return this.mapKey === "nara_stacks"
+      ? this.doors.filter(door => door.target.scene === "WorldMapScene")
+      : [];
   }
 
   private showDanneBanner(title: string, subtitle: string, accent: string) {

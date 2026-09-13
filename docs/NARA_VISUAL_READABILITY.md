@@ -50,6 +50,23 @@ This remains a debug-tool encounter test, not an earned progression playthrough.
 
 ### Scope Limits
 
+### Preparation and Retreat
+
+The region-select preview now names missing Folder/Stamp tools before entering
+the optional NARA encounter. It does not lock exploration behind equipment.
+During combat the return elevator remains usable, while forward vault routes,
+NPC interactions and rewards keep their existing encounter lock.
+
+`tools/qa-nara-retreat.mjs` starts with an empty browser profile and no debug
+tool grants. It selects Bonn, checks the preparation text, enters NARA, walks
+to the elevator, returns and re-enters. It asserts unchanged inventory, points
+and stamps, and an active uncleared patrol on return. Set `PLAYWRIGHT_MODULE`
+and `CHROMIUM_EXECUTABLE` for a non-local Playwright installation;
+`FRUS_QA_URL` and `FRUS_QA_OUT` optionally choose server and evidence directory.
+Native captures from the passing run: `/private/tmp/frus-nara-retreat/`.
+This proves unarmed retreat, not partial-wave reward persistence or the full
+earned-tool route. Those remain follow-up checks.
+
 The source map's tiny border labels and some decorative wall details remain.
 This is a visual pilot, not a replacement for reviewing optional-room layout,
 unaided player comprehension or physical-device performance. Compare room

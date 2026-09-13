@@ -70,3 +70,18 @@ describe("encounter readiness cues", () => {
     assertVisible(`${short}: 1/2 CLEARED`);
   });
 });
+
+describe("NARA combat retreat", () => {
+  it("keeps only the world-map exit available until the room is clear", () => {
+    const scene = new GameplayMapScene();
+    const exit = { id: "world_exit", target: { scene: "WorldMapScene" } };
+    const vault = { id: "vault_a_route", target: { scene: "GameplayMapScene" } };
+    const reward = { id: "catalog" };
+    Object.assign(scene, { mapKey: "nara_stacks", doors: [exit, vault], interactables: [exit, vault, reward] });
+    const allowed = (scene as unknown as { availableCombatInteractables(locked: boolean): unknown[] }).availableCombatInteractables.bind(scene);
+    expect(allowed(true)).toEqual([exit]);
+    expect(allowed(false)).toEqual([exit, vault, reward]);
+    Object.assign(scene, { mapKey: "black_vault" });
+    expect(allowed(true)).toEqual([]);
+  });
+});

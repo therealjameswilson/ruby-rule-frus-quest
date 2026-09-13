@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Optional NARA preparation and safe retreat (2026-09-13):
+  - Previous goal turn made progress on movement. Revalidated pending NARA edits against the current tree: preview names missing combat tools, and only NARA's WorldMap return door bypasses encounter interaction suppression. Forward routes and rewards remain gated. Preserved movement separately in local commit 6cc61ad.
+  - Promoted real-input route QA to tools/qa-nara-retreat.mjs. Fresh browser, no grants: select Bonn, inspect preparation, enter unarmed, walk to elevator, retreat, verify unchanged points/inventory/stamps, re-enter and verify active uncleared patrol. Passing native captures inspected at /private/tmp/frus-nara-retreat/. No page errors.
+  - First expanded QA failed because its re-entry assumed region selection reset; source confirms Phaser reuses selected district. Corrected the harness to inspect selection, then repeated successfully. This was a test assumption failure, not a falsely claimed gameplay pass.
+  - The immediately preceding full suite on these runtime edits passed 209 files / 1,605 tests and build; this turn added QA/docs only. Local only, no deployment. Next: check partial-wave retreat for duplicate defeat rewards and replay optional routes with tools earned through the main compilation quest.
+
 - Link-inspired player wall sliding (2026-09-13):
   - Current request focuses on main-character movement. Retained immediate start/stop/reversal, normalized open diagonals, sticky facing, sub-pixel collision positions and pixel-snapped rendering. At wall/boundary contact, diagonal input now spends walking speed on the free axis instead of slowing to 71 percent. Tool movement weight remains applied; closed corners still block both axes. Existing unrelated NARA route edits left intact.
   - Focused movement tests: 47 passed. Full suite: 209 files / 1,605 tests passed. Production build passed with existing large-chunk warning.

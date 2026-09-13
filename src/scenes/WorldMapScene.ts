@@ -4,6 +4,7 @@ import { DISTRICTS, REGION_LABELS, REGION_ORDER, districtsForRegion, type Distri
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { SNES_ROUTE_ARROW_RELIC_ASSET, SNES_WORLD_ATLAS_RELIC_ASSET } from "../game/snesAtlas";
 import {
+  hasProcessItem,
   isSecondVolumeRegionUnlocked,
   setLatestMessage,
   setNearestInteractable,
@@ -13,6 +14,8 @@ import {
 } from "../game/state";
 import { bindPointerPress, getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
+import { isRoomCleared } from "../systems/roomClear";
+import { naraRoutePreparation } from "../game/gameplayMapFlow";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -554,6 +557,14 @@ export class WorldMapScene extends Phaser.Scene {
     card.add(verbText);
 
     this.addDestinationGlyph(card, district.destinationScene, Boolean(district.destinationScene), Boolean(district.locked), { x: 94, y: -10 });
+
+    if (district.destinationScene === "nara_stacks" && !district.locked) {
+      const preparation = naraRoutePreparation(hasProcessItem("citation_stamp"), hasProcessItem("review_folder"), isRoomCleared("nara_stacks_patrol"));
+      card.add(this.add.text(-112, 2, preparation.text, {
+        fontFamily: "monospace", fontSize: "6px",
+        color: preparation.ready ? PALETTE.terminalCyan : PALETTE.goldStamp
+      }).setOrigin(0, 0).setName("nara-route-preparation"));
+    }
 
     this.routePreview = card;
   }
