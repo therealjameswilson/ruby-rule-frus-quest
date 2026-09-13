@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Player obstacle approach smoothing (2026-09-12):
+  - Preserve the clear portion of a blocked movement step with a bounded contact search, eliminating frame-sized gaps beside furniture. Existing instant start/stop/reversal, normalized diagonals, sticky facing, corner assistance and committed tool swings remain unchanged. Physics stays sub-pixel; render positions remain snapped.
+  - Added positive/negative axis and 30/60/120 FPS contact regression coverage. 37 focused movement tests pass; production build passes with the existing chunk warning.
+  - Actual keyboard and simulated portrait-touch movement pass with no drift, no furniture penetration, both walking poses and no browser errors. Native and phone screenshots inspected: /private/tmp/frus-movement-contact/. Installed gameplay client also passed and native capture inspected: /private/tmp/frus-contact-client/.
+  - Local only, not deployed. Unrelated pending SilentRead review changes left intact. Physical iPhone feel and broader room playthrough remain follow-up checks.
+
 - Responsive Referral colleague (2026-09-12):
   - Earned desktop Referral playthrough reached Editor after agency routing, dispatch discovery/shortcut, draft correction, visible treatment, reward, Continue and backtracking (/private/tmp/frus-referral-playtest/desktop/). Found Marcus was rendered but never interacted; actual A beside him produced no response. Failing reproduction: /private/tmp/frus-referral-guide-before/.
   - Added a bounded NPC interaction ahead of nearby desk filing, with short stage-specific hints from referralVaultReview.ts. Guidance covers pickup, agency destination, dispatch evidence, human comparison, treatment, and east reward room. It never awards progress or mutates documents; full explanation stays in latestMessage. Existing room/task architecture unchanged.

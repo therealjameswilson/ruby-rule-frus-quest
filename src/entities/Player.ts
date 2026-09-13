@@ -369,6 +369,7 @@ export class Player {
         this.logicalX = nextX;
         if (nextX !== attemptedX) this.velocityX = 0;
       } else {
+        this.logicalX = this.approachObstacle("x", nextX, solids);
         if (dy !== 0 || !this.tryCornerNudge("x", nextX, this.logicalY, bounds, solids, PLAYER_MOVEMENT_TUNING.cornerGuideSpeed * movementScale * dt)) {
           this.velocityX = 0;
         }
@@ -379,6 +380,7 @@ export class Player {
         this.logicalY = nextY;
         if (nextY !== attemptedY) this.velocityY = 0;
       } else {
+        this.logicalY = this.approachObstacle("y", nextY, solids);
         if (dx !== 0 || !this.tryCornerNudge("y", this.logicalX, nextY, bounds, solids, PLAYER_MOVEMENT_TUNING.cornerGuideSpeed * movementScale * dt)) {
           this.velocityY = 0;
         }
@@ -400,6 +402,21 @@ export class Player {
     this.syncRenderPosition();
     setPlayerPosition(this.position);
     setPlayerFacing(this.facing);
+  }
+
+  private approachObstacle(axis: "x" | "y", target: number, solids: Phaser.Geom.Rectangle[]) {
+    let clear = axis === "x" ? this.logicalX : this.logicalY;
+    let blocked = target;
+    // Preserve the clear part of this frame's step instead of stopping a whole
+    // frame short. Keep physics sub-pixel; only the visible sprite is snapped.
+    for (let i = 0; i < 12; i += 1) {
+      const midpoint = (clear + blocked) / 2;
+      const x = axis === "x" ? midpoint : this.logicalX;
+      const y = axis === "y" ? midpoint : this.logicalY;
+      if (this.collidesAt(x, y, solids)) blocked = midpoint;
+      else clear = midpoint;
+    }
+    return clear;
   }
 
   private collidesAt(x: number, y: number, solids: Phaser.Geom.Rectangle[]) {

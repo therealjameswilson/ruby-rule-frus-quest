@@ -27,6 +27,29 @@ function fixture() {
 beforeEach(() => { resetGameState(); input.dir = { x: 0, y: 0 }; });
 
 describe("live player movement", () => {
+  it.each([30, 60, 120])("approaches an obstacle without a frame-sized gap at %s FPS", fps => {
+    const { player, coords, internals } = fixture();
+    internals.collidesAt.mockImplementation(x => x >= 105.3);
+    input.dir.x = 1;
+    for (let i = 0; i < fps; i++) player.update(1000 / fps, true, { solids: [{}] as never[] });
+    expect(coords.logicalX).toBeLessThan(105.3);
+    expect(coords.logicalX).toBeGreaterThan(105.299);
+    expect(coords.logicalY).toBe(100);
+    input.dir.x = -1;
+    player.update(1000 / fps, true);
+    expect(coords.logicalX).toBeCloseTo(105.3 - 72 / fps, 2);
+  });
+
+  it.each(["x", "y"] as const)("keeps a partial negative %s step without entering the wall", axis => {
+    const { player, coords, internals } = fixture();
+    internals.collidesAt.mockImplementation((x, y) => (axis === "x" ? x : y) <= 99.5);
+    input.dir[axis] = -1;
+    player.update(1000 / 30, true, { solids: [{}] as never[] });
+    const position = axis === "x" ? coords.logicalX : coords.logicalY;
+    expect(position).toBeGreaterThan(99.5);
+    expect(position).toBeLessThan(99.501);
+  });
+
   it.each([30, 60, 120])("travels the same distance at %s frames per second", fps => {
     const { player, coords } = fixture();
     input.dir.x = 1;
