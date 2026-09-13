@@ -1,5 +1,37 @@
 # Pause Time and Resume Gestures
 
+## Current NARA / Field Guide Regression
+
+On 2026-09-13, `tools/qa-codex-combat-pause.mjs` caught a live NARA drone stamp
+during windup, waited 1.8 seconds in pause, opened the field guide through touch
+settings, waited another 1.8 seconds, inspected its enemy entry, then closed and
+moved away. All four enemy positions, HP and the remaining stamp warning were
+identical throughout both stopped states. Closing preserved a live reaction
+window, did not swing or hit the player, and the subsequent movement burst
+avoided the stamp. Reliability stayed 80, but hit-state checks (not that meter
+alone) establish the dodge. The script asserts invulnerability before close,
+immediately after movement, and after the remaining active window.
+
+The first harness falsely described a dodge because it checked only reliability:
+the screenshot showed a hit flash after its movement went toward the marked
+floor. Drone knockback does not itself debit reliability. The final harness
+moves away from the target and explicitly catches hit/invulnerability state.
+No runtime bug was reproduced and no gameplay code was changed.
+
+Final native captures and readouts: `/private/tmp/frus-codex-combat-pause-final/`.
+The field-guide list/detail and resumed-room captures were inspected at native
+size; this one unlocked entry fit without overlap. No page/console errors.
+This uses a debug-room fixture, keyboard setup/dodge, and touch menu controls at
+375x667/DPR3, not a physical iPhone or a touch-only combat certification.
+
+Source audit found no production imports/instantiations of BeeSwarm, NavyHillMice,
+HacMember or FederalShutdown. Their old update methods are not live gameplay and
+were left alone. Active drone, wraith, boss, lurker and GameplayMap combat paths
+have pause guards; this new browser test verifies NARA/field-guide behavior only,
+not all of those paths. Full codex-catalog readability is still not established.
+The latest runtime verification remains 221 files / 1,685 tests plus a passing
+build; this QA-only change additionally passed Node syntax checking.
+
 ## Player-Facing Fixes
 
 Completion time now counts the playable adventure, including dialogue,
