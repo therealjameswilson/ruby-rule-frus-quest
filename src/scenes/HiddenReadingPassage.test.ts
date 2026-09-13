@@ -64,6 +64,24 @@ function passageScene(): PassageScene {
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
 
 describe("live reading passage handlers", () => {
+  it("rejects unowned ordinary expansion-map swings but permits an earned Folder", () => {
+    const startAction = vi.fn(() => true);
+    const scene = Object.assign(new NaraStacksScene(), {
+      player: { position: { x: 128, y: 150 }, startAction, combatReadout: { state: "idle" } },
+      cacheToast: { show: vi.fn() }
+    }) as unknown as { useDanneItemAction(): void; cacheToast: { show: ReturnType<typeof vi.fn> } };
+    for (const tool of [null, "clearance_token", "review_folder"] as const) {
+      gameState.equippedProcessItem = tool;
+      scene.useDanneItemAction();
+      expect(startAction).not.toHaveBeenCalled();
+    }
+    expect(scene.cacheToast.show).toHaveBeenCalledTimes(3);
+    addProcessItem("review_folder");
+    gameState.equippedProcessItem = "review_folder";
+    scene.useDanneItemAction();
+    expect(startAction).toHaveBeenCalledExactlyOnceWith("review_folder");
+  });
+
   it("gives a short missing-tool hint without opening or transitioning", () => {
     const scene = passageScene();
     scene.handleInteraction(definition);

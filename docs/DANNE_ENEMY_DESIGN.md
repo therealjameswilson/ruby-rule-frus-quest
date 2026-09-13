@@ -15,6 +15,15 @@ This debug-tool encounter check is not an earned-route or novice-playtest claim.
 
 ## Swing Identity Contract
 
+The same owned-tool gate also covers ordinary strikes in `DanneMapScene`;
+the separately owned Ruby Pen retains its alternate attack path. Hidden shelf
+interactions already require the Review Folder. The browser regression checks
+both gameplay-map and NARA expansion empty-slot input. An earned touch boss
+opening also passed simultaneous movement/swing, boast skip and one returned
+bolt (Colossus HP180 -> 152); this is not a complete fight replay. Evidence:
+`/private/tmp/frus-expansion-owned-swing/` and `/private/tmp/frus-owned-tool-boss/`.
+Build and 1,706 tests pass (2026-09-13); native feedback/core captures inspected.
+
 Gameplay-map input uses `tryEquippedToolSwing` before starting the weapon
 controller. Empty, noncombat or unowned slots cannot normalize into a free
 Citation Stamp. The scene gives a short equip prompt; owned tools keep their

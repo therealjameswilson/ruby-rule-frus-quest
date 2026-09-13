@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { SECRET_READING_ROOM_ASSETS } from "../assets/registry";
 import { readChapterArrival } from "../game/chapterTravel";
 import { registerDanneAnims } from "../art/danne_anims";
@@ -1122,8 +1123,14 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private useDanneItemAction() {
     const usingRubyPen = gameState.equippedDanneItem === "ruby-pen" && hasDanneItem("ruby-pen");
-    if (!this.player.startAction(gameState.equippedProcessItem)) {
-      setLatestMessage("Equipped review tool is cooling down.");
+    const swing = usingRubyPen
+      ? { started: this.player.startAction(gameState.equippedProcessItem), reason: undefined }
+      : tryEquippedToolSwing(this.player);
+    if (!swing.started) {
+      if (swing.reason) {
+        setLatestMessage(swing.reason);
+        this.cacheToast.show("EQUIP AN OWNED TOOL", this.player.position, "info");
+      }
       return;
     }
     if (!usingRubyPen) {

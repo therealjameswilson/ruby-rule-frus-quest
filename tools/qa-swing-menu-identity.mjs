@@ -15,16 +15,18 @@ async function shot(name) {
   await writeFile(`${out}/${name}.json`, JSON.stringify(await state(), null, 2));
 }
 try {
-  await page.goto('http://127.0.0.1:5195/?scene=GameplayMapScene&map=nara_stacks&text=full');
-  await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === 'GameplayMapScene');
-  await page.waitForTimeout(1200);
-  const empty = await state();
-  assert(!empty.inventory.includes('Citation Stamp'));
-  await page.keyboard.press('x', { delay: 30 });
-  await page.waitForTimeout(250);
-  assert.equal((await state()).playerCombat.weapon.swingId, empty.playerCombat.weapon.swingId,
-    'Empty inventory must not normalize into a free Stamp swing');
-  await shot('unowned-tool-blocked');
+  for (const scene of ['GameplayMapScene', 'NaraStacksScene']) {
+    await page.goto(`http://127.0.0.1:5195/?scene=${scene}&map=nara_stacks&text=full`);
+    await page.waitForFunction(scene => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === scene, scene);
+    await page.waitForTimeout(1200);
+    const empty = await state();
+    assert(!empty.inventory.includes('Citation Stamp'));
+    await page.keyboard.press('x', { delay: 30 });
+    await page.waitForTimeout(250);
+    assert.equal((await state()).playerCombat.weapon.swingId, empty.playerCombat.weapon.swingId,
+      `${scene}: empty inventory must not normalize into a free Stamp swing`);
+    await shot(`${scene}-unowned-tool-blocked`);
+  }
   await page.goto('http://127.0.0.1:5195/?scene=GameplayMapScene&map=nara_stacks&give=combat-tools&equip=review_folder&text=full');
   await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === 'GameplayMapScene');
   await page.waitForTimeout(1200);
