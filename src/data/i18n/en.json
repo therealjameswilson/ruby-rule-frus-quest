@@ -36,7 +36,15 @@
     "reviewRoutes": "CHECK DRAFT ROUTES",
     "compareProof": "COMPARE ORIGINAL",
     "reviewRecord": "REVIEW FULL RECORD",
-    "binderyDelivery": "VISIT THE LIT DESK",
+    "bindery": {
+      "inbox": "PACKET: SOUTH INBOX",
+      "front-matter-bench": "FRONT BENCH: UPPER LEFT",
+      "index-desk": "INDEX DESK: LOWER LEFT",
+      "kellogg-press": "SEAL DESK: TOP CENTER",
+      "gpo-handoff": "GPO DESK: UPPER RIGHT",
+      "public-release-terminal": "PUBLIC DESK: LOWER RIGHT",
+      "binding-press": "CHECK THE CENTRAL PRESS"
+    },
     "confirm": "CONFIRM",
     "controllerConnected": "CONTROLLER CONNECTED",
     "findGlowing": "FIND A GLOWING DESK OR DOOR",

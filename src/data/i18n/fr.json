@@ -128,7 +128,15 @@
     "reviewRoutes": "VERIFIE LES ROUTES",
     "compareProof": "COMPARE ORIGINAL",
     "reviewRecord": "VERIFIE LE DOSSIER",
-    "binderyDelivery": "VA AU BUREAU MARQUE",
+    "bindery": {
+      "inbox": "DOSSIER: BAC AU SUD",
+      "front-matter-bench": "DEBUT: EN HAUT A GAUCHE",
+      "index-desk": "INDEX: EN BAS A GAUCHE",
+      "kellogg-press": "SCEAU: EN HAUT AU CENTRE",
+      "gpo-handoff": "GPO: EN HAUT A DROITE",
+      "public-release-terminal": "PUBLIC: EN BAS A DROITE",
+      "binding-press": "VOIR PRESSE CENTRALE"
+    },
     "confirm": "CONFIRMER",
     "controllerConnected": "MANETTE CONNECTÉE",
     "findGlowing": "TROUVE UN BUREAU OU UNE PORTE LUMINEUSE",

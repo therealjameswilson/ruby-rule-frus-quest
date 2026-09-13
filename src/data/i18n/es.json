@@ -128,7 +128,15 @@
     "reviewRoutes": "REVISA LAS RUTAS",
     "compareProof": "COMPARA ORIGINAL",
     "reviewRecord": "REVISA EL REGISTRO",
-    "binderyDelivery": "VE A LA MESA MARCADA",
+    "bindery": {
+      "inbox": "PAQUETE: BANDEJA SUR",
+      "front-matter-bench": "PORTADA: ARRIBA IZQ.",
+      "index-desk": "INDICE: ABAJO IZQ.",
+      "kellogg-press": "SELLO: ARRIBA CENTRO",
+      "gpo-handoff": "GPO: ARRIBA DER.",
+      "public-release-terminal": "PUBLICO: ABAJO DER.",
+      "binding-press": "REVISA PRENSA CENTRAL"
+    },
     "confirm": "CONFIRMAR",
     "controllerConnected": "MANDO CONECTADO",
     "findGlowing": "BUSCA UN ESCRITORIO O PUERTA BRILLANTE",

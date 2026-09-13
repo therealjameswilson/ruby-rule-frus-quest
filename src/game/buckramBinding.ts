@@ -193,3 +193,10 @@ export function getBuckramBindingReadout(sceneProgress: Readonly<Record<string, 
     complete: step >= BUCKRAM_BINDING_TOTAL
   };
 }
+
+export function buckramBindingDestination(sceneProgress: Readonly<Record<string, number>>) {
+  const progress = getBuckramBindingReadout(sceneProgress);
+  if (progress.complete) return "binding-press";
+  if (progress.status === "waiting") return "inbox";
+  return BUCKRAM_BINDING_PACKETS[progress.step].station;
+}

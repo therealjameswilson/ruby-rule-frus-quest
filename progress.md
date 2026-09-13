@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Save-aware bindery directions (2026-09-12):
+  - Previous turn was progress: movement commit plus broad regression evidence. Traced the bindery hint to hud.binderyDelivery. Correction to the screenshot reading below: source says LIT DESK, not LEFT DESK. It still wrongly directs waiting players to a desk instead of the inbox.
+  - Added typed destination derivation from the existing saved packet step/status. HUD now names the south inbox, individual station or central press; nearby interactions and dialog/choice hints retain priority. Updated English/Spanish/French cues. No gate, reward, save schema or certification changes.
+  - Added state/legacy-save/localized-width tests and live HUD assertions in qa-bindery-finale.mjs. Full earned portrait-touch sequence passes wrong index answer, certification cancel/reload, approval, publication and Continue: published, 241 points, no browser errors. /private/tmp/frus-bindery-guidance-touch/. Native cues and published summary inspected.
+  - All 202 test files / 1,566 tests pass; production build passes with existing chunk warning. Installed gameplay client EndingScene run and native capture inspected: /private/tmp/frus-bindery-cue-client/. Local only, not deployed. Next: assess discovery and optional exploration along the chapter route, beyond this tested critical path.
+
 - Movement integration regression (2026-09-12):
   - Previous turn made runtime/test progress; continued with full-suite and earned touch-route verification rather than declaring the larger fun goal complete.
   - All 202 test files / 1,564 tests pass. Fresh portrait-touch opening passes memo filing, harmless counter miss, pause, return, pickup, Continue and Archive entry: /private/tmp/frus-corner-opening/.

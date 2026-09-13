@@ -62,8 +62,23 @@ After the nearest-first corner steering change on 2026-09-12:
   Evidence: `/private/tmp/frus-corner-boss/`. This remains browser simulation,
   not physical-device or first-time human evidence.
 - Follow-up found in the resumed bindery: objective says TAKE FRONT PACKET but
-  the secondary HUD hint says VISIT THE LEFT DESK. Investigate the guidance
-  source; the initial packet is at the inbox, not the left station.
+  the secondary HUD hint says VISIT THE LIT DESK (initially misread as LEFT).
+  The initial packet is at the inbox, not a workstation.
+
+## Bindery Guidance Follow-Up
+
+- Replaced the generic desk hint with a destination derived from saved packet
+  progress: inbox while waiting, the named station while carried/routed, and
+  central press after all deliveries. Nearby interaction and decision cues
+  retain priority. English, Spanish and French cues fit the existing HUD.
+- Full earned touch binding route passed with explicit visible-HUD assertions
+  before and after pickup. Wrong index response, cancel/reload certification,
+  deliberate approval, publication and Continue preserved their prior behavior.
+- Result: published, 241 document points, no browser errors. Native inbox,
+  front-destination and completed-publication screenshots inspected at
+  `/private/tmp/frus-bindery-guidance-touch/`.
+- Full suite: 202 files / 1,566 tests passed. Build passed with the existing
+  chunk-size warning. Local browser evidence only; not a deployment.
 
 ## Touch Forgiveness Follow-Up
 

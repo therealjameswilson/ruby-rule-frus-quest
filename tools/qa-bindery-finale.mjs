@@ -76,6 +76,7 @@ try {
     await page.waitForTimeout(1300);
   };
   await resume();
+  await page.waitForFunction(() => window.game.scene.getScene("UIScene").questBandCueText.text === "PACKET: SOUTH INBOX");
   const initial = await shot("entry");
   const labelsSeparate = await page.evaluate(() => {
     const scene = window.game.scene.getScene("EndingScene");
@@ -92,7 +93,10 @@ try {
   assert((await state()).player.y >= 204, "The inbox must be solid at the player's feet");
   await action();
   assert.equal((await state()).buckramBinding.status, "carried");
-  await move(78, 214); await move(78, 124); await move(42, 124); await pushUp();
+  await move(78, 214);
+  await page.waitForFunction(() => window.game.scene.getScene("UIScene").questBandCueText.text === "FRONT BENCH: UPPER LEFT");
+  await shot("front-destination");
+  await move(78, 124); await move(42, 124); await pushUp();
   assert((await state()).player.y >= 114, "The front bench must stop walking through its surface");
   assert.equal((await state()).buckramBinding.status, "carried");
   await shot("bench-collision"); await action();

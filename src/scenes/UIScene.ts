@@ -26,6 +26,7 @@ import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
 import { dispatchAisleOpen } from "../game/referralDispatch";
 import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
+import { buckramBindingDestination } from "../game/buckramBinding";
 import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
 import { CROSS_REFERENCE_TITLE } from "../game/crossReferenceCatalog";
 import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editorialRepair";
@@ -315,7 +316,9 @@ export class UIScene extends Phaser.Scene {
     if (gameState.currentScene === "ArchiveScene" && gameState.roomTraversal?.currentRoomId === "AS") {
       return getString("hud.annotationAisles");
     }
-    if (gameState.currentScene === "EndingScene") return getString("hud.binderyDelivery");
+    if (gameState.currentScene === "EndingScene") {
+      return getString(`hud.bindery.${buckramBindingDestination(gameState.sceneProgress)}`);
+    }
     if (this.showCounterAction()) {
       return gameState.currentScene === "BlackVaultLairScene"
         ? getString("hud.useTool", { tool: toolLabel })

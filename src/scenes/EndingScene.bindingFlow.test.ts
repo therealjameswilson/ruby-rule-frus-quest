@@ -66,7 +66,7 @@ describe("EndingScene physical Buckram Gate", () => {
     expect(open).not.toContain("publishDocument");
     expect(sceneSource).not.toContain("FINAL CHECKS RECORDED");
     expect(uiSource).toContain('getString("hud.reviewRecord")');
-    expect(uiSource).toContain('getString("hud.binderyDelivery")');
+    expect(uiSource).toContain('buckramBindingDestination(gameState.sceneProgress)');
   });
 
   it("renders five distinct stations around one human binding press", () => {

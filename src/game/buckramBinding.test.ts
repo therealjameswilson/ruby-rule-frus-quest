@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
+import en from "../data/i18n/en.json";
+import es from "../data/i18n/es.json";
+import fr from "../data/i18n/fr.json";
+import { QUEST_BAND_LAYOUT } from "../scenes/questBandLayout";
 import {
   BUCKRAM_BINDING_CHECK_TOTAL,
   BUCKRAM_BINDING_PACKETS,
   BUCKRAM_BINDING_TOTAL,
   buckramBindingStatusCode,
   buckramBindingObjective,
+  buckramBindingDestination,
   buckramBindingStatusFromCode,
   deriveBuckramBindingStep,
   getBuckramBindingReadout,
@@ -12,6 +17,33 @@ import {
 } from "./buckramBinding";
 
 describe("physical Buckram Gate binding", () => {
+  it("points waiting packets to the inbox and saved deliveries to their own station", () => {
+    for (const [step, packet] of BUCKRAM_BINDING_PACKETS.entries()) {
+      expect(buckramBindingDestination({ buckramBindingStep: step })).toBe("inbox");
+      for (const status of [1, 2]) {
+        const saved = { buckramBindingStep: step, buckramBindingStatus: status };
+        expect(buckramBindingDestination(saved)).toBe(packet.station);
+        expect(saved).toEqual({ buckramBindingStep: step, buckramBindingStatus: status });
+      }
+    }
+    expect(buckramBindingDestination({ buckramBindingStep: 5 })).toBe("binding-press");
+    expect(buckramBindingDestination({})).toBe("inbox");
+  });
+
+  it("has a fitting localized cue for every destination, including legacy saves", () => {
+    const legacy = { frontMatterAssemblyComplete: 1, readerAidRegistersComplete: 1, buckramBindingStatus: 2 };
+    expect(buckramBindingDestination(legacy)).toBe("index-desk");
+    for (const locale of [en, es, fr]) {
+      for (let step = 0; step <= BUCKRAM_BINDING_TOTAL; step++) {
+        for (const status of [0, 1, 2]) {
+          const destination = buckramBindingDestination({ buckramBindingStep: step, buckramBindingStatus: status });
+          const cue = locale.hud.bindery[destination];
+          expect(cue.length).toBeGreaterThan(0);
+          expect(cue.length).toBeLessThanOrEqual(QUEST_BAND_LAYOUT.actionCue.maxChars);
+        }
+      }
+    }
+  });
   it("keeps pickup, routing, and sealing destinations within the HUD", () => {
     for (const packet of BUCKRAM_BINDING_PACKETS) {
       expect(buckramBindingObjective(packet, "waiting")).toBe(`TAKE ${packet.shortLabel}`);
