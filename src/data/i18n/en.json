@@ -1,5 +1,7 @@
 {
   "hud": {
+    "readingRoomBook": "BOOK: CENTER AISLE",
+    "readingRoomExit": "EXIT: SOUTH DOOR",
     "restoreChronology": "RESTORE CHRONOLOGY",
     "annotationAisles": "NOTES / TABLE SOUTH",
     "guideCoach": {

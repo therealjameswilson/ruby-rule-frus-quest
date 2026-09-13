@@ -92,6 +92,8 @@
     "verifyGate": "PORTE DE\nVÉRIF."
   },
   "hud": {
+    "readingRoomBook": "LIVRE: ALLEE CENTRALE",
+    "readingRoomExit": "SORTIE: PORTE AU SUD",
     "restoreChronology": "ORDONNE LE DOSSIER",
     "annotationAisles": "ALLEES / TABLE AU SUD",
     "guideCoach": {

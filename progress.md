@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Optional reading-room touch audit (2026-09-13):
+  - Previous turn made progress with save-aware bindery guidance. Inspected the optional NARA shelf clue, Review Folder hitbox opening, first-edition reward and return passage. Existing keyboard route passed: /private/tmp/frus-secret-audit/.
+  - Found a real safe-room cue mismatch after collection: USE FOLDER despite no tool action in this room. Added English/Spanish/French book/exit hints, keeping nearby interactions first. Behavioral UIScene test covers waiting, collected legacy inventory and nearby door states.
+  - Extended qa-earned-secret.mjs with real touch direction/action input, a 375x667 viewport and reload assertions. Initial touch run stopped four pixels from an over-precise scripted waypoint while the book was already interactable; inspected screenshot, widened navigation tolerance to four pixels (no gameplay collision/radius change), retained actual reward/door/save assertions.
+  - Touch route now passes: shelf revealed with earned Review Folder, first edition +25 (201 -> 226), south return and Continue preserve discovery and one inventory copy. No browser errors. /private/tmp/frus-secret-touch-after/. Native clue/reward/continued screenshots inspected; installed gameplay client HiddenReadingRoomScene capture inspected at /private/tmp/frus-secret-cue-client/.
+  - Scope limit: earned inventory but debug scene placement into NARA, not a naturally discovered full chapter detour or a physical-device test. Build passes (existing chunk warning). Local only; next exploration check should follow the actual Archive -> NARA entrance and its clue rather than debug placement.
+
 - Save-aware bindery directions (2026-09-12):
   - Previous turn was progress: movement commit plus broad regression evidence. Traced the bindery hint to hud.binderyDelivery. Correction to the screenshot reading below: source says LIT DESK, not LEFT DESK. It still wrongly directs waiting players to a desk instead of the inbox.
   - Added typed destination derivation from the existing saved packet step/status. HUD now names the south inbox, individual station or central press; nearby interactions and dialog/choice hints retain priority. Updated English/Spanish/French cues. No gate, reward, save schema or certification changes.

@@ -27,6 +27,7 @@ import { dispatchAisleOpen } from "../game/referralDispatch";
 import { PROOF_COMPARISON_TITLE } from "../game/proofComparison";
 import { BINDING_CERTIFICATION_TITLE } from "../game/bindingCertification";
 import { buckramBindingDestination } from "../game/buckramBinding";
+import { hiddenFirstEditionFound } from "../game/secretReadingRoom";
 import { SOURCE_NOTE_47_TITLE } from "../game/sourceNote47";
 import { CROSS_REFERENCE_TITLE } from "../game/crossReferenceCatalog";
 import { EDITORIAL_RECHECK_TITLE, EDITORIAL_REPAIR_TITLE } from "../game/editorialRepair";
@@ -318,6 +319,9 @@ export class UIScene extends Phaser.Scene {
     }
     if (gameState.currentScene === "EndingScene") {
       return getString(`hud.bindery.${buckramBindingDestination(gameState.sceneProgress)}`);
+    }
+    if (gameState.currentScene === "HiddenReadingRoomScene") {
+      return getString(hiddenFirstEditionFound(gameState) ? "hud.readingRoomExit" : "hud.readingRoomBook");
     }
     if (this.showCounterAction()) {
       return gameState.currentScene === "BlackVaultLairScene"

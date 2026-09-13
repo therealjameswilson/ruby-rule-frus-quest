@@ -92,6 +92,8 @@
     "verifyGate": "PUERTA DE\nVERIF."
   },
   "hud": {
+    "readingRoomBook": "LIBRO: PASILLO CENTRAL",
+    "readingRoomExit": "SALIDA: PUERTA SUR",
     "restoreChronology": "ORDENA EL REGISTRO",
     "annotationAisles": "PASILLOS / MESA AL SUR",
     "guideCoach": {

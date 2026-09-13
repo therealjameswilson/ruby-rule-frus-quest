@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NaraStacksScene } from "./NaraStacksScene";
 import { HiddenReadingRoomScene } from "./HiddenReadingRoomScene";
+import { UIScene } from "./UIScene";
 import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
 import type { DanneSceneInteractionDefinition } from "../game/danneSceneCollisions";
 import { addProcessItem, gameState, resetGameState, setSceneState } from "../game/state";
@@ -17,6 +18,19 @@ vi.mock("../entities/Player", () => ({ Player: class {} }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
 vi.mock("../systems/sceneTransitions", () => ({ transitionTo: vi.fn() }));
 vi.mock("../systems/audio", () => ({ retroAudio: { warning: vi.fn(), toolHit: vi.fn(), danneItemPickup: vi.fn() } }));
+
+describe("safe reading room guidance", () => {
+  it("points to the book then the exit, never to a nonfunctional tool action", () => {
+    resetGameState();
+    setSceneState("HiddenReadingRoomScene", "explore", "CLAIM FIRST EDITION");
+    const ui = new UIScene() as unknown as { compactActionLine(tool: string): string };
+    expect(ui.compactActionLine("FOLDER")).toBe("BOOK: CENTER AISLE");
+    gameState.inventory.push(HIDDEN_FIRST_EDITION_LABEL);
+    expect(ui.compactActionLine("FOLDER")).toBe("EXIT: SOUTH DOOR");
+    gameState.nearestInteractable = "Return to NARA Stacks";
+    expect(ui.compactActionLine("FOLDER")).toContain("INTERACT:");
+  });
+});
 
 interface PassageScene {
   time: { now: number };
