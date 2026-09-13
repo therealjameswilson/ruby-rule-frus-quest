@@ -47,6 +47,7 @@ export function restoredArchiveSourceNoteStatus(input: {
 export function archiveSourceRoomObjective(input: {
   sourceNoteStatus: SourceNoteStatus;
   provenanceStep: number;
+  standardsReviewed?: boolean;
   provenanceProgress?: Readonly<Record<string, number>>;
   wallNeedsStamp: boolean;
   annotationStep: number;
@@ -63,7 +64,7 @@ export function archiveSourceRoomObjective(input: {
     const trail = readSourceNoteTrail(input.provenanceProgress ?? { sourceNoteProvenanceStep: input.provenanceStep });
     return trail.ready ? "CHECK TRAIL AT TABLE" : `SOURCE CLUES ${trail.found.length}/3`;
   }
-  if (input.sourceNoteStatus === "verified") return "STAMP AT TABLE";
+  if (input.sourceNoteStatus === "verified") return input.standardsReviewed ? "STAMP AT TABLE" : "REVIEW AT TABLE";
   if (input.wallNeedsStamp) return "STAMP REPO WALL";
   if (!input.annotationComplete) {
     if (input.annotationProgress) return annotationPacketObjective(input.annotationProgress);

@@ -64,7 +64,8 @@ describe("Archive A1 source-room progression", () => {
       ...[0, 1, 2, 3].map((provenanceStep): [Partial<typeof base>, string] => [
         { sourceNoteStatus: "routed", provenanceStep }, provenanceStep === 3 ? "CHECK TRAIL AT TABLE" : `SOURCE CLUES ${provenanceStep}/3`
       ]),
-      [{ sourceNoteStatus: "verified" }, "STAMP AT TABLE"],
+      [{ sourceNoteStatus: "verified" }, "REVIEW AT TABLE"],
+      [{ sourceNoteStatus: "verified", standardsReviewed: true }, "STAMP AT TABLE"],
       [{ sourceNoteStatus: "stamped", wallNeedsStamp: true }, "STAMP REPO WALL"],
       ...["SOURCE", "CONTEXT", "SELECT"].map((label, annotationStep): [Partial<typeof base>, string] => [
         { sourceNoteStatus: "stamped", annotationStep }, `TAKE ${label}`

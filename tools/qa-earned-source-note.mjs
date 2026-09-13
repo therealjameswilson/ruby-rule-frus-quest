@@ -6,6 +6,7 @@ const out=process.env.FRUS_QA_OUT ?? '/private/tmp/frus-earned-source-note';awai
 const browser=await chromium.launch({executablePath:process.env.CHROMIUM_EXECUTABLE});
 const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
 const press=async key=>{await page.keyboard.press(key||'Space',{delay:50});await page.waitForTimeout(200);};
@@ -26,6 +27,7 @@ try{
  assert(!(await state()).sceneProgress.aboutSeriesFirstFootnoteComplete);
  await press('ArrowUp');await press();await shot('corrected');
  await press();await shot('filed');assert.equal((await state()).sceneProgress.aboutSeriesFirstFootnoteComplete,1);
+ assert.equal((await state()).objective,'REVIEW AT TABLE','Filed source trail must cue the remaining review, not a tool swing');
  await press();await shot('standards-decision');
  assert.equal((await state()).choice.options[0].value,'retain');
  assert(!(await state()).sceneProgress.archiveSourceNoteStamped);

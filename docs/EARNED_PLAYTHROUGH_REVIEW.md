@@ -1,5 +1,33 @@
 # Earned Playthrough Review
 
+## Cue-Led Archive Check
+
+On 2026-09-13, restored the cue-led opening's earned save in isolated Chrome
+and followed visible screenshots through source pickup, table routing, three
+provenance clues, correction of the unsupported readership claim, source filing,
+the standards decision, and physical NO REPO wall clearance. No hidden runtime
+positions guided this manual segment. The operator is familiar with the game;
+this remains a cue check rather than a first-time-player study. The central
+table required walking around it but did not block the route. No page or console
+errors were captured. Endpoint screenshot and save are in
+`/private/tmp/frus-cue-led-archive/`.
+
+One concrete mismatch: after filing the source trail, `STAMP AT TABLE` suggested
+a tool swing even though interacting still opened the standards decision. An
+attempted X swing did not advance that step. For players who have not earned
+the rule stamp, the objective now says `REVIEW AT TABLE`, the interaction says
+`REVIEW CABLE`, the terminal says `REVIEW`, and the filing feedback directs them
+to review. Players with the rule stamp retain the stamping cues. Physical wall
+stamping, rewards, reviews and save flags are unchanged.
+
+The earned-source QA now asserts the review objective at filing and captures
+console errors. It passed the decision, stamp, wall clearance, stacks entry,
+reload and resumed movement. Native `filed.png` and `route-open.png` under
+`/private/tmp/frus-source-review-cue/` were inspected. The standard Archive client
+also passed visual inspection. All 221 files / 1,685 tests and the build pass,
+with the existing chunk-size warning. This local check does not establish
+physical-phone performance or unaided enjoyment of the whole game.
+
 ## Cue-Led Opening Check
 
 After `bf9fb55`, used a fresh isolated browser context and native screenshots

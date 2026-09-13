@@ -1582,7 +1582,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.sourceNoteStatus === "stamped") {
       return `NOTES ${readAnnotationPacket(gameState.sceneProgress).gathered.length}/3`;
     }
-    if (this.sourceNoteStatus === "verified") return "STAMP";
+    if (this.sourceNoteStatus === "verified") return gameState.processStamps.includes("rule") ? "STAMP" : "REVIEW";
     if (this.sourceNoteStatus === "routed") {
       const trail = readSourceNoteTrail(gameState.sceneProgress);
       return trail.ready ? "REVIEW" : `CLUES ${trail.found.length}/3`;
@@ -2712,7 +2712,7 @@ export class ArchiveScene extends Phaser.Scene {
       const station = SOURCE_NOTE_PROVENANCE_STATIONS.find(clue => clue.id === this.sourceNoteStationId(target));
       return station ? `READ ${station.shortLabel}` : "FIND SOURCE CLUES";
     }
-    if (this.sourceNoteStatus === "verified") return "STAMP SRC NOTE";
+    if (this.sourceNoteStatus === "verified") return gameState.processStamps.includes("rule") ? "STAMP SRC NOTE" : "REVIEW CABLE";
     if (this.sourceNoteWallNeedsStamp()) return "STAMP NO REPO";
     if (this.sourceNoteStatus === "stamped" && !gameState.sceneProgress.annotationDraftingComplete) {
       if (target?.id === "annotation-return-cart") return "PUSH CONTEXT CART";
@@ -2881,15 +2881,16 @@ export class ArchiveScene extends Phaser.Scene {
     addDocumentPoints(6, "Source Note 47 provenance and first-footnote metadata verified");
     this.addVerificationGlow();
     setLatestMessage("VERIFIED BY HUMAN REVIEW - SOURCE NOTE PROVENANCE");
-    setObjective("STAMP: apply citation stamp after human provenance review.");
+    const standardsReviewed = gameState.processStamps.includes("rule");
+    setObjective(standardsReviewed ? "STAMP AT TABLE" : "REVIEW AT TABLE");
     retroAudio.confirm();
     this.reliability.update();
     this.syncSourceNoteProvenanceStations();
     this.updateSourceNoteVerification();
     this.syncWallState();
     this.refreshSourceNoteRouteCue();
-    this.toast.show("SN47 VERIFIED - STAMP NEXT", this.player.position, "info");
-    setLatestMessage(`${message} Apply the citation stamp to lock the source note.`);
+    this.toast.show(standardsReviewed ? "SN47 VERIFIED - STAMP NEXT" : "SOURCE VERIFIED - REVIEW CABLE", this.player.position, "info");
+    setLatestMessage(`${message} ${standardsReviewed ? "Apply the citation stamp to lock the source note." : "Interact with the table to review the cable before stamping."}`);
   }
 
   private drawRoutedSourceNote() {
@@ -3399,6 +3400,7 @@ export class ArchiveScene extends Phaser.Scene {
   private verbForSourceNote(): "ROUTE" | "VERIFY" | "STAMP" {
     if (this.sourceNoteStatus === "carried") return "ROUTE";
     if (this.sourceNoteStatus === "routed") return "VERIFY";
+    if (this.sourceNoteStatus === "verified" && !gameState.processStamps.includes("rule")) return "VERIFY";
     return "STAMP";
   }
 
@@ -3663,6 +3665,7 @@ export class ArchiveScene extends Phaser.Scene {
       }
       setObjective(archiveSourceRoomObjective({
         sourceNoteStatus: this.sourceNoteStatus,
+        standardsReviewed: gameState.processStamps.includes("rule"),
         provenanceStep: gameState.sceneProgress.sourceNoteProvenanceStep ?? 0,
         provenanceProgress: gameState.sceneProgress,
         wallNeedsStamp: this.sourceNoteWallNeedsStamp(),
