@@ -399,13 +399,13 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
   const depth = options.depth ?? 130;
   const accent = options.accent ?? PALETTE.goldStamp;
   const label = options.label.slice(0, 16).toUpperCase();
-  const glowAlpha = options.collected ? 0.28 : 0.62;
+  const pickupArt: Array<Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle> = [];
   keepTagged(scene.add.ellipse(options.x, options.y + 18, 62, 16, color(PALETTE.black), 0.72).setDepth(depth - 4), "snes-treasure-shadow", track);
   keepTagged(scene.add.rectangle(options.x, options.y + 12, 56, 18, color(PALETTE.deepRuby), 1).setStrokeStyle(2, color(accent)).setDepth(depth - 3), "snes-treasure-plinth", track);
   keepTagged(scene.add.rectangle(options.x, options.y + 2, 40, 18, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth - 2), "snes-treasure-case", track);
   keepTagged(scene.add.rectangle(options.x, options.y - 11, 28, 5, color(accent), 1).setDepth(depth - 1), "snes-treasure-lid", track);
   keepTagged(scene.add.rectangle(options.x, options.y + 21, 72, 9, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth + 2), "snes-treasure-label-frame", track);
-  keepTagged(scene.add.text(options.x, options.y + 17, label, {
+  const caption = keepTagged(scene.add.text(options.x, options.y + 17, label, {
     fontFamily: "monospace",
     fontSize: "5px",
     color: options.collected ? PALETTE.stoneLight : accent,
@@ -413,16 +413,21 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
   }).setOrigin(0.5, 0).setDepth(depth + 3), "snes-treasure-label", track);
 
   if (scene.textures.exists(options.textureKey)) {
-    const icon = keepTagged(scene.add.image(options.x, options.y - 1, options.textureKey).setDepth(depth + 1), "snes-treasure-icon", track);
-    if (options.collected && "setTint" in icon) icon.setTint(color(PALETTE.goldStamp));
+    pickupArt.push(keepTagged(scene.add.image(options.x, options.y - 1, options.textureKey).setDepth(depth + 1), "snes-treasure-icon", track));
   } else {
-    keepTagged(scene.add.rectangle(options.x, options.y - 1, 16, 16, color(accent), 1).setDepth(depth + 1), "snes-treasure-icon-fallback", track);
+    pickupArt.push(keepTagged(scene.add.rectangle(options.x, options.y - 1, 16, 16, color(accent), 1).setDepth(depth + 1), "snes-treasure-icon-fallback", track));
   }
 
   for (const [dx, dy] of [[-24, -8], [24, -7], [-16, 8], [16, 8]] as const) {
-    keepTagged(scene.add.rectangle(options.x + dx, options.y + dy, 3, 3, color(accent), glowAlpha).setDepth(depth), "snes-treasure-spark", track);
-    keepTagged(scene.add.rectangle(options.x + dx + 1, options.y + dy + 1, 1, 1, color(PALETTE.white), glowAlpha).setDepth(depth + 1), "snes-treasure-spark-core", track);
+    pickupArt.push(keepTagged(scene.add.rectangle(options.x + dx, options.y + dy, 3, 3, color(accent), 0.62).setDepth(depth), "snes-treasure-spark", track));
+    pickupArt.push(keepTagged(scene.add.rectangle(options.x + dx + 1, options.y + dy + 1, 1, 1, color(PALETTE.white), 0.62).setDepth(depth + 1), "snes-treasure-spark-core", track));
   }
+  const markCollected = () => {
+    for (const object of pickupArt) object.setVisible(false);
+    caption.setText("FILED").setColor(PALETTE.stoneLight);
+  };
+  if (options.collected) markCollected();
+  return { markCollected };
 }
 
 export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, textureKey: string, label: string, track?: TrackFn, holdMs = 0) {

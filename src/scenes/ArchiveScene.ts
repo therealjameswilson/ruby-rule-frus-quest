@@ -1290,7 +1290,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.drawRubyVolumeStack(78, 130, 4);
     this.drawDocumentStack(170, 118, true);
     this.drawSparkle(128, 92, PALETTE.goldStamp);
-    addSnesTreasurePedestal(this, {
+    const pedestal = addSnesTreasurePedestal(this, {
       x: 128,
       y: 132,
       textureKey: room.id === "C3" ? "volume-fragment" : "citation-stamp",
@@ -1317,6 +1317,7 @@ export class ArchiveScene extends Phaser.Scene {
           return;
         }
         this.collected.add(key);
+        pedestal.markCollected();
         this.interactables = this.interactables.filter(item => item.id !== `${room.id}-secret-reward`);
         addDocumentPoints(room.id === "C3" ? 10 : 6, room.id === "C3" ? "hidden source cache" : "hidden reliability well");
         if (room.id === "D2") {
@@ -1350,13 +1351,6 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 150
     });
-    this.track(this.add.rectangle(128, 162, 122, 26, color(PALETTE.black)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(111));
-    this.track(this.add.text(128, 154, "STAMP REWARD ROOM\nSOURCE STAMP: HUMAN VERIFIED", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp,
-      align: "center"
-    }).setOrigin(0.5).setDepth(112));
   }
 
   private renderBossGateRoom() {

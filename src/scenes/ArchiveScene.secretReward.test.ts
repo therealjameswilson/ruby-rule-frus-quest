@@ -8,7 +8,7 @@ vi.mock("phaser", () => ({ default: {
   Scene: class {}, GameObjects: { Sprite: class {} },
   Math: { Clamp: (value: number, min: number, max: number) => Math.max(min, Math.min(max, value)) }
 } }));
-vi.mock("../systems/snesPixelArt", () => ({ addSnesTreasurePedestal: vi.fn() }));
+vi.mock("../systems/snesPixelArt", () => ({ addSnesTreasurePedestal: vi.fn(() => ({ markCollected: vi.fn() })) }));
 vi.mock("../systems/audio", () => ({ retroAudio: { confirm: vi.fn() } }));
 vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
 

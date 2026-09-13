@@ -261,6 +261,7 @@ try {
     await shot(`${reward}-collected`);
     const collected = await state();
     assert(await page.evaluate(() => !window.game.scene.getScene('ArchiveScene').interactables.some(item => item.id.endsWith('-secret-reward'))), 'Collected treasure stops advertising interaction');
+    assert(await page.evaluate(() => !window.game.scene.getScene('ArchiveScene').children.list.some(item => item.visible && /^snes-treasure-(icon|spark)/.test(item.name))), 'Collected pedestal is visibly empty immediately');
     await hold('ArrowLeft', 140);
     assert((await state()).player.x < collected.player.x - 4, 'The player can leave during the reward celebration');
     if (cacheLoop) assert(collected.volumeFragments.includes('Hidden Cache Fragment'));
