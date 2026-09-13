@@ -149,6 +149,7 @@
     "controllerConnected": "MANETTE CONNECTÉE",
     "findGlowing": "TROUVE UN BUREAU OU UNE PORTE LUMINEUSE",
     "followQuestArrow": "SUIVEZ LA FLECHE DOREE",
+    "walkOpenGate": "PASSEZ LA PORTE OUVERTE",
     "goLeftTalk": "PARLE À JR",
     "interact": "INTERAGIR : {label}",
     "nextLine": "LIGNE SUIVANTE",

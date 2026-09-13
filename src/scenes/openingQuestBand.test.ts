@@ -1,11 +1,20 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { getString, LANGUAGES, setLanguage } from "../systems/i18n";
-import { officeApproachCue, officeQuestBandObjective, guideQuestBandObjective } from "./openingQuestBand";
+import { guideExitApproachCue, officeApproachCue, officeQuestBandObjective, guideQuestBandObjective } from "./openingQuestBand";
 import { QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 
 afterEach(() => setLanguage("en"));
 
 describe("opening HUD objectives", () => {
+  it("gives walking guidance only after earning the fragment and away from a reachable action", () => {
+    expect(guideExitApproachCue("GuideScene", "explore", null, true))
+      .toEqual({ text: "WALK THROUGH OPEN GATE", badge: "!" });
+    expect(guideExitApproachCue("GuideScene", "explore", null, false)).toBeNull();
+    expect(guideExitApproachCue("GuideScene", "explore", "Verification Gate", true)).toBeNull();
+    expect(guideExitApproachCue("GuideScene", "dialog", null, true)).toBeNull();
+    expect(guideExitApproachCue("GuideScene", "pause", null, true)).toBeNull();
+    expect(guideExitApproachCue("ArchiveScene", "explore", null, true)).toBeNull();
+  });
   it.each(LANGUAGES)("keeps the clean title's goal and begin command concise in %s", (language) => {
     setLanguage(language);
     for (const key of ["title.beginQuest", "title.volumeGoal"]) {
@@ -38,6 +47,10 @@ describe("opening HUD objectives", () => {
   it.each(LANGUAGES)("fits every opening stage in %s without losing the target", (language) => {
     setLanguage(language);
     const approach = officeApproachCue("OfficeScene", "explore", null)!;
+    const exit = guideExitApproachCue("GuideScene", "explore", null, true)!;
+    expect(exit.text).not.toMatch(/^hud\./);
+    expect(clampQuestBandText(exit.text, QUEST_BAND_LAYOUT.actionCue.maxChars)).toBe(exit.text);
+    expect(exit.text).not.toBe(guideQuestBandObjective(true, true));
     expect(approach.text).not.toMatch(/^hud\./);
     expect(clampQuestBandText(approach.text, QUEST_BAND_LAYOUT.actionCue.maxChars)).toBe(approach.text);
     const office = [

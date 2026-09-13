@@ -232,6 +232,10 @@ try {
     assert(!(await state()).volumeFragments.includes('Front Matter Fragment'), 'A tool swing is not the pickup action');
     await press();
     assert((await state()).volumeFragments.includes('Front Matter Fragment'));
+    await page.waitForFunction(() => {
+      const ui = window.game.scene.getScene('UIScene');
+      return ui.questBandCueText.text === 'WALK THROUGH OPEN GATE' && ui.questBandVerbText.text === '!';
+    });
     assert(await page.evaluate(() => window.game.scene.getScene('GuideScene').children.getByName('front-matter-reveal')?.visible));
     const pickupPosition = (await state()).player;
     await direction('ArrowDown', 100);

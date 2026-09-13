@@ -19,7 +19,7 @@ import { applyIntegerZoom } from "../systems/pixelPerfect";
 import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
-import { guideQuestBandObjective, officeApproachCue, officeQuestBandObjective } from "./openingQuestBand";
+import { guideExitApproachCue, guideQuestBandObjective, officeApproachCue, officeQuestBandObjective } from "./openingQuestBand";
 import { questBandAwaitingDialog, questBandBossCue, questBandRiskLine } from "./questBandCue";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
@@ -222,7 +222,9 @@ export class UIScene extends Phaser.Scene {
     const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
     const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats);
     const encounterCue = this.gameplayCombatCue();
-    const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable);
+    const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable)
+      ?? guideExitApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable,
+        gameState.volumeFragments.includes("Front Matter Fragment"));
     const actionLine = awaitingDialog ? "" : bossCue?.text ?? encounterCue?.text ?? riskLine ?? approachCue?.text ?? this.compactActionLine(toolLabel);
     const actionBadge = awaitingDialog ? "" : !bossCue && encounterCue ? encounterCue.badge : bossCue?.badge === "notice" ? "!"
       : !bossCue && !riskLine && approachCue ? approachCue.badge

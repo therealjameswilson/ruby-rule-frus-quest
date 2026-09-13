@@ -8,6 +8,12 @@ export function officeApproachCue(scene: string | null, mode: string, nearest: s
     : null;
 }
 
+export function guideExitApproachCue(scene: string | null, mode: string, nearest: string | null, hasFragment: boolean) {
+  return scene === "GuideScene" && mode === "explore" && !nearest && hasFragment
+    ? { text: getString("hud.walkOpenGate"), badge: "!" }
+    : null;
+}
+
 export function officeQuestBandObjective(context: OfficeStarterRouteContext) {
   return getString(`hud.office.${getOfficeStarterStage(context)}`);
 }

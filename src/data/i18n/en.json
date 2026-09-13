@@ -57,6 +57,7 @@
     "controllerConnected": "CONTROLLER CONNECTED",
     "findGlowing": "FIND A GLOWING DESK OR DOOR",
     "followQuestArrow": "FOLLOW GOLD ARROW",
+    "walkOpenGate": "WALK THROUGH OPEN GATE",
     "goLeftTalk": "TALK TO JR",
     "interact": "INTERACT: {label}",
     "nextLine": "NEXT LINE",
