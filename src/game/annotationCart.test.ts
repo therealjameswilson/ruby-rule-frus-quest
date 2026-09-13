@@ -13,13 +13,23 @@ describe("Annotation Stacks return cart", () => {
     expect(pushAnnotationCart({}, { x: 118, y: 169 }, { x: 0, y: -1 }))
       .toMatchObject({ moved: true, position: { x: 128, y: 144 } });
     expect(annotationCartContactPush({}, { x: 128, y: 168 }, { x: 0, y: -1 })).toBe(false);
-    expect(annotationCartContactPush({}, { x: 110, y: 160 }, { x: 1, y: 0 })).toBe(true);
+    expect(annotationCartContactPush({}, { x: 110, y: 160 }, { x: 1, y: 0 })).toBe(false);
+    expect(annotationCartContactPush({}, { x: 113, y: 160 }, { x: 1, y: 0 })).toBe(true);
     for (const dir of [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 0 }, { x: 1, y: -1 }]) {
       expect(annotationCartContactPush({}, { x: 128, y: 170 }, dir)).toBe(false);
     }
     expect(annotationCartContactPush({}, { x: 128, y: 185 }, { x: 0, y: -1 })).toBe(false);
     expect(annotationCartContactPush({}, { x: 146, y: 160 }, { x: -1, y: 0 })).toBe(false);
     expect(annotationCartContactPush({ annotationCartParked: 1 }, { x: 144, y: 122 }, { x: 0, y: -1 })).toBe(false);
+  });
+
+  it("parks from the live 12-pixel feet contact after pushing north", () => {
+    const progress = { annotationCartX: 128, annotationCartY: 112 };
+    const player = { x: 113, y: 111 }, right = { x: 1, y: 0 };
+    expect(annotationCartContactPush(progress, player, right)).toBe(true);
+    expect(pushAnnotationCart(progress, player, right)).toMatchObject({ moved: true, parked: true, position: ANNOTATION_CART.bay });
+    expect(annotationCartContactPush(progress, { x: 114, y: 111 }, right)).toBe(false);
+    expect(annotationCartContactPush(progress, player, { x: -1, y: 0 })).toBe(false);
   });
 
   it("requires a fresh deliberate hold after release, direction change or pause", () => {

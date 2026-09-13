@@ -1,6 +1,6 @@
 import type { Position } from "./types";
 import { readAnnotationPacket } from "./annotationPacket";
-import { workstationFeetBlocked } from "./workstationGeometry";
+import { PLAYER_MOVEMENT_TUNING, walkingFeetOverlap } from "../systems/smoothMovement";
 
 export const CART_PUSH_HOLD_MS = 250;
 
@@ -10,11 +10,11 @@ export function annotationCartContactPush(progress: Readonly<Record<string, numb
   const result = pushAnnotationCart(progress, player, direction);
   if (!result.moved || Math.sign(result.position.x - cart.position.x) !== direction.x
     || Math.sign(result.position.y - cart.position.y) !== direction.y) return false;
-  const bounds = [annotationCartBounds(cart.position)];
-  // Player exposes pixel-snapped feet; allow the one-pixel rounding edge,
-  // without treating a position inside the cart as a valid approach.
-  return !workstationFeetBlocked({ x: player.x - direction.x, y: player.y - direction.y }, bounds)
-    && workstationFeetBlocked({ x: player.x + direction.x * 3, y: player.y + direction.y * 3 }, bounds);
+  const bounds = annotationCartBounds(cart.position);
+  // Use the same feet as terrain movement: conservative routing margins can
+  // otherwise classify a valid side contact as being inside the cart.
+  return !walkingFeetOverlap(player.x, player.y, bounds)
+    && walkingFeetOverlap(player.x + direction.x * 3, player.y + direction.y * 3, bounds);
 }
 
 export class AnnotationCartPushHold {
@@ -68,7 +68,8 @@ export function pushAnnotationCart(progress: Readonly<Record<string, number>>, p
     || (horizontal ? Math.sign(dx) !== direction.x : Math.sign(dy) !== direction.y))) {
     return { ...cart, moved: false, message: "Push toward the cart." };
   }
-  if (Math.hypot(dx, dy) > ANNOTATION_CART.radius || (horizontal ? Math.abs(dx) < 16 : Math.abs(dy) < 8)) {
+  const horizontalContact = annotationCartBounds(cart.position).width / 2 + PLAYER_MOVEMENT_TUNING.feetWidth / 2;
+  if (Math.hypot(dx, dy) > ANNOTATION_CART.radius || (horizontal ? Math.abs(dx) < horizontalContact : Math.abs(dy) < 8)) {
     return { ...cart, moved: false, message: "Stand beside the cart to push it." };
   }
   // Push away from the player's feet, so the same direct action works on touch
