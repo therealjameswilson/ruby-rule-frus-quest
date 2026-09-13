@@ -45,6 +45,28 @@ and combat timing. This is functional evidence, not an unaided human fun test.
 - Full touch binding and publication: `/private/tmp/frus-final-publication-touch/`.
 - Scripts: `tools/qa-boss-counter-loop.mjs`, `tools/qa-bindery-finale.mjs`.
 
+## Touch Forgiveness Follow-Up
+
+Runtime `fbb83d9`, same earned entry, 375x667 / DPR 3:
+
+- First sixteen-swing Cloud sample: HP 180 -> 124, four returned bolts,
+  reliability 90 -> 60. Continued to victory without retry and reloaded it.
+  Evidence: `/private/tmp/frus-cloud-uneven-touch/`.
+- Second sixteen-swing sample: HP 180 -> 96, three returned bolts,
+  reliability 90 -> 70. Continued to victory and reload with no retry or missed
+  deadline. Evidence: `/private/tmp/frus-cloud-uneven-guarded/`.
+- The uneven-input check now requires actual progress and positive reliability,
+  in addition to unchanged documents and points. Swing cadence is fixed; only
+  visible relative boss position determines facing. Outside that sample, the
+  route still uses precise runtime reads, so it is not an unaided human test.
+- Deliberately exhausted reliability while holding touch B. The retry dialog
+  remained open instead of selecting retreat. Releasing B and pressing A
+  restarted Colossus with reliability 100, unchanged documents and points;
+  subsequent uneven swings reached Swarm. Native retry panels inspected.
+  Evidence: `/private/tmp/frus-boss-retry-touch/`.
+- No damage, speed, or timing changes based on these samples. Differences between
+  automation runs are not enough to identify a touch-specific balance defect.
+
 ## Remaining Bar
 
 - Do not claim a full unaided first-time playthrough or physical iPhone QA.

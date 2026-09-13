@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Cloud touch forgiveness and retry audit (2026-09-12):
+  - Two earned phone-touch runs used sixteen fixed-cadence Cloud swings, orienting only by visible enemy position. First: Cloud HP 180 -> 124, reliability 90 -> 60; second: HP 180 -> 96, reliability 90 -> 70. Both subsequently reached victory and Continue without retries or missed deadlines. /private/tmp/frus-cloud-uneven-touch/ and /private/tmp/frus-cloud-uneven-guarded/.
+  - Strengthened --cloud-imprecise to require attempted swings, positive reliability and actual boss damage/phase progress, alongside record/point invariants. Script syntax check passes; strengthened browser route passes with no errors. Native sample inspected.
+  - Held touch B through reliability exhaustion: retry remained open; fresh A recovered Colossus at 100 reliability without altering documents or points, then uneven swings reached Swarm. Native retry and resumed gameplay inspected. /private/tmp/frus-boss-retry-touch/.
+  - No runtime balance changes: evidence shows imperfect inputs can progress, not a proven touch-specific defect. Added exact scope/results to docs/FINAL_ENCOUNTER_PLAYTEST.md. Local only; next priority is opening/tutorial comprehension from visible cues without state-driven navigation, and whether the binding finale overextends its welcome.
+
 - Full touch boss and contextual help (2026-09-12):
   - Earned portrait-touch fight completed Colossus, Swarm and Cloud, pause/boast checks and victory Continue with no retries. Seven fresh open-core hits. Cloud drove reliability to 20 before recovery; compare keyboard 80, but one automated run does not establish a balance defect. /private/tmp/frus-final-full-touch/.
   - Found A during combat used the generic Nothing to interact with response. It now requests a short HUD counter reminder with the current secondary-button badge and full latestMessage. Open core instead explains a fresh Pencil strike. No pause, swing, rewards or document mutation.

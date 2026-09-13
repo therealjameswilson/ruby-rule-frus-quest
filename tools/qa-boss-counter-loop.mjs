@@ -182,6 +182,10 @@ try{
         const after=await shot('cloud-untimed-end'),enemy=boss(after);
         assert.deepEqual(after.documentCandidates,before.documentCandidates);
         assert.equal(after.documentPoints,before.documentPoints);
+        assert(attempts > 0, 'The uneven-input check must actually attempt swings');
+        assert(after.reliability > 0, 'This short counter practice must leave room to recover');
+        assert(after.sceneProgress.blackVaultBossCleared || (enemy && (enemy.enemyState !== 'cloud' || enemy.hp < boss(before).hp)),
+          'Uneven visible-facing swings must demonstrate actual progress, not just survive');
         log.push({label:'cloud-untimed-summary',attempts,
           hpBefore:boss(before).hp,hpAfter:enemy?.hp,
           returned: (enemy?.bossCombat.boltsReturned??0)-boss(before).bossCombat.boltsReturned,
