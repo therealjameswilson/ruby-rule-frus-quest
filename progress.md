@@ -2,6 +2,9 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Earned Network touch parity (2026-09-13): current annotation checkpoint passed supporting-document pickups and the east chapter exit; /private/tmp/frus-current-network-entry/. Extended qa-earned-network-routing.mjs with --mobile, 375x667/DPR3, real CDP touch for every action/direction, phone screenshots and an explicit earned-save requirement.
+  - Touch-only run passed four routing deliveries, physical Citation Stamp service crossing, ClassNet Vault arrival, reload to N2 and resumed movement; /private/tmp/frus-network-routing-touch/earned-storage.json continues the earned chain. Phone crossing and native restored-vault images inspected. No gameplay fault reproduced in this section; no runtime changes warranted. QA-only turn; prior runtime build and 1,678-test pass remain the latest build/unit verification. Simulated Chrome touch, not physical iPhone QA; local only.
+
 - Archive review handoff clarity (2026-09-13): earned annotation filing exposed generic REVIEW RECORDED feedback overwriting DOCUMENTS UNSEALED and its explanation. Run approved-action feedback after the generic receipt so revealed documents/route changes remain visible. Wrong answers retain their corrective hints and do not invoke approval. Added live handler tests for both paths; no review requirements or rewards changed.
   - Earned packet filing before/after screenshots inspected: /private/tmp/frus-annotation-handoff/filed.png versus /private/tmp/frus-annotation-handoff-fixed/filed.png. The fixed run keeps PICK UP TELEGRAM and the specific packet-filing message; qa-file-annotation.mjs now asserts both. Standard Archive client screenshot also inspected. Full suite 219 files / 1,678 tests passes; build passes with existing chunk warning. Local only.
 
