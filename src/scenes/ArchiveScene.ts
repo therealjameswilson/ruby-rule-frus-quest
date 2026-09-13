@@ -85,7 +85,7 @@ import {
 import type { AnnotationDraftingPromptId } from "../game/annotationDrafting";
 import { fileAnnotationPacket, gatherAnnotationNote, readAnnotationPacket } from "../game/annotationPacket";
 import { ANNOTATION_STACKS, annotationStacksOpen, annotationStacksObjective, buildAnnotationStackLayers } from "../game/annotationStacks";
-import { ARCHIVE_RESEARCH_REVIEWS, nextArchiveResearchReview, recordArchiveResearchReview } from "../game/archiveResearchReview";
+import { ARCHIVE_MEANING_REVIEW, ARCHIVE_RESEARCH_REVIEWS, nextArchiveResearchReview, recordArchiveResearchReview } from "../game/archiveResearchReview";
 import type { ArchiveResearchReviewId } from "../game/archiveResearchReview";
 import { ChoicePrompt } from "../systems/verification";
 import { saveGameNow } from "../systems/save";
@@ -2121,14 +2121,21 @@ export class ArchiveScene extends Phaser.Scene {
       this.refreshRoomObjective();
       return;
     }
-    this.specialistDecisionMade = true;
-    this.dialog.show("HUMAN SPECIALIST", [
-      "Two flags reviewed.",
-      "Meaning is resolved by human judgment.",
-      "The ambiguity wall is cleared."
-    ]);
-    this.clearEnemyById("ambiguous-flag", "AMBIGUOUS cleared by the correct human specialist.");
-    this.refreshRoomObjective();
+    if (this.researchChoice.active) return;
+    const review = ARCHIVE_MEANING_REVIEW;
+    this.interactionPrompt.update(0, null);
+    this.hintText.setText("");
+    this.researchChoice.show(`${review.question}\n\n${review.context}`, [...review.options], option => {
+      const approved = option.value === review.correctValue;
+      if (approved) {
+        this.specialistDecisionMade = true;
+        this.clearEnemyById("ambiguous-flag", "Source uncertainty preserved by human review.");
+      } else retroAudio.warning();
+      this.refreshRoomObjective();
+      const message = approved ? review.successMessage : review.failureMessage;
+      setLatestMessage(message);
+      this.toast.show(message, this.player.position, approved ? "info" : "warn");
+    }, 8);
   }
 
   private useGoldenRuleGate() {

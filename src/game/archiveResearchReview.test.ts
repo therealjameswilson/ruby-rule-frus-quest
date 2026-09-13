@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
-import { ARCHIVE_RESEARCH_REVIEWS, nextArchiveResearchReview, recordArchiveResearchReview } from "./archiveResearchReview";
+import { ARCHIVE_MEANING_REVIEW, ARCHIVE_RESEARCH_REVIEWS, nextArchiveResearchReview, recordArchiveResearchReview } from "./archiveResearchReview";
 import { addProcessItem, awardProcessStamp, createGameSaveData, gameState, getBlackVaultClimaxReadiness, resetGameState, restoreGameSaveData } from "./state";
 
 function verifySource() {
@@ -10,6 +10,16 @@ function verifySource() {
 
 describe("main-route research prerequisites", () => {
   beforeEach(() => resetGameState());
+
+  it("makes the optional meaning review preserve uncertainty in an explicitly fictional practice cable", () => {
+    const review = ARCHIVE_MEANING_REVIEW;
+    expect(review.context).toBe('Practice cable: "Talks might resume."');
+    expect(review.options.filter(option => option.value === review.correctValue)).toEqual([
+      { key: "B", label: "Talks might resume.", value: "uncertainty" }
+    ]);
+    expect(review.options[0].value).not.toBe(review.correctValue);
+    expect(review.failureMessage).toBe("MIGHT IS NOT WILL");
+  });
 
   it("does not award a standards seal for owning a tool without checking provenance", () => {
     addProcessItem("citation_stamp");

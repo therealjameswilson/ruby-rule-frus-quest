@@ -10,6 +10,7 @@ This is functional input coverage, not physical Safari, audio-latency or FPS cer
 | Specialist and recording gate refuse premature review | Pass | Pass |
 | Examine document, Continue, retain both readings | Pass | Pass |
 | Complete specialist review and record decision | Pass | Pass |
+| Reject overstated wording, retry faithfully, no accidental B swing | Pass | Pass |
 | Walk east into the next room | Pass | Pass |
 | Hold D-pad and B simultaneously; move during tool windup | Pass | Pass |
 | Release both fingers without stuck input | Pass | Pass |
@@ -42,6 +43,9 @@ telemetry showed correct directions, so no runtime movement change was made.
 
 ## Evidence And Limits
 
+- Editorial wording decision replay: `/private/tmp/frus-meaning-touch/` and
+  `/private/tmp/frus-meaning-landscape/`; the landscape run also reloads after
+  correct approval and verifies the approval and its points persist.
 - Portrait: `/private/tmp/frus-proof-touch-final/`.
 - Landscape: `/private/tmp/frus-proof-touch-landscape-final/`.
 - Keyboard locked-route and retreat regression: `/private/tmp/frus-touch-driver-keyboard/`.

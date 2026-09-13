@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Source-meaning review decision (2026-09-12):
+  - B2's specialist now asks the player to compare two readings of an explicitly fictional practice cable. Changing might to will is rejected with a short hint and no reliability penalty; preserving uncertainty clears the ambiguity wall through the existing save/reward path. Opening the review alone no longer awards approval. Existing saved approvals remain valid.
+  - Reuses ChoicePrompt and typed review definitions in archiveResearchReview.ts. One compact question/source/two-option layout; no new assets or dependencies. Successful B selection does not also swing the equipped tool. Existing choice update branch pauses movement and DANN-E pressure while reading.
+  - Extended --proof-loop to make a wrong choice, verify no points/reliability loss, reopen, choose correctly, verify no swing, Continue with approval and finish the room. Keyboard, portrait touch and landscape touch pass with 201 -> 213 points and no browser errors. Approval-after-Continue extension verified in landscape; earlier keyboard/portrait passes verified Continue with the two readings before approval.
+  - Native choice and phone viewport screenshots inspected in /private/tmp/frus-meaning-keyboard/, /private/tmp/frus-meaning-touch/ and /private/tmp/frus-meaning-landscape/. Installed game client native movement smoke inspected in /private/tmp/frus-meaning-client/. Full suite: 202 files / 1,539 tests pass; build passes with existing chunk warning. Local, not deployed; physical iPhone unverified.
+
 - Archive touch review parity (2026-09-12):
   - Extended earned-save qa-backtrack.mjs with --mobile / --landscape, real CDP touch gestures, native and viewport screenshots, and no keyboard input on mobile. Initial fine steering overshot because touch dispatch spans frames; telemetry confirmed correct directions. Shorter driver corrections preserve original collision and arrival tolerances, without changing runtime input or movement.
   - 375x667 and 667x375 at DPR 3 both pass B1 filing -> B2 early refusals -> examination -> Continue -> specialist -> record -> B3. Both also pass simultaneous D-pad/B tool windup movement and complete finger release. Exactly 201 -> 213 points and no browser errors. Native/viewport screenshots inspected in /private/tmp/frus-proof-touch-final/ and /private/tmp/frus-proof-touch-landscape-final/.

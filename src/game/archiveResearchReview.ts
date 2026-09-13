@@ -15,6 +15,18 @@ interface ArchiveResearchReview {
   failureMessage: string;
 }
 
+export const ARCHIVE_MEANING_REVIEW = {
+  question: "Which wording keeps the meaning?",
+  context: 'Practice cable: "Talks might resume."',
+  options: [
+    { key: "A", label: "Talks will resume.", value: "certainty" },
+    { key: "B", label: "Talks might resume.", value: "uncertainty" }
+  ],
+  correctValue: "uncertainty",
+  successMessage: "MEANING PRESERVED",
+  failureMessage: "MIGHT IS NOT WILL"
+} as const satisfies Omit<ArchiveResearchReview, "sourceUrl">;
+
 export const ARCHIVE_RESEARCH_REVIEWS = {
   standards: {
     sourceUrl: ABOUT_SERIES_SOURCE.url,
