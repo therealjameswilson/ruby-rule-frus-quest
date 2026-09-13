@@ -7,6 +7,7 @@ const storageState = JSON.parse(await readFile(process.env.FRUS_QA_STORAGE, 'utf
 const out = process.env.FRUS_QA_OUT ?? '/private/tmp/frus-backtrack';
 const stacksRetreat = process.argv.includes('--stacks-retreat');
 const wellLoop = process.argv.includes('--well-loop');
+const stacksPersist = process.argv.includes('--stacks-persist');
 await mkdir(out, { recursive: true });
 const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
 try {
@@ -68,7 +69,7 @@ try {
   await page.goto('http://127.0.0.1:5195/?text=full');
   await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
   await page.keyboard.press('Enter');
-  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop ? 'ArchiveScene' : 'BlackVaultLairScene');
+  await page.waitForFunction(scene => window.game.scene.isActive(scene), stacksRetreat || wellLoop || stacksPersist ? 'ArchiveScene' : 'BlackVaultLairScene');
   await page.waitForTimeout(800);
   const initial = await state();
   if (wellLoop) {
@@ -100,6 +101,33 @@ try {
     assert.equal((await state()).documentPoints, collected.documentPoints, 'Hidden well must award points only once across Continue');
     assert.deepEqual(errors, []);
     console.log('Earned hidden well survives Continue without duplicate reward');
+  } else if (stacksPersist) {
+    await walk(128, 208); await hold('ArrowDown', 400); await page.waitForTimeout(900);
+    assert.equal((await state()).roomTraversal.currentRoomId, 'B1');
+    await walk(128, 112); await page.keyboard.press('Space', { delay: 50 });
+    await page.waitForTimeout(250);
+    for (let i = 0; i < 12 && (await state()).dialog; i++) {
+      await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+    }
+    const solved = await state();
+    assert.equal(solved.documentPoints, initial.documentPoints + 6);
+    await shot('stacks-solved');
+    await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
+    await page.keyboard.press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
+    await page.waitForTimeout(900); await shot('stacks-continue');
+    const restored = await state();
+    assert.equal(restored.roomTraversal.currentRoomId, 'B1');
+    assert(!restored.visibleThreats.some(t => t.label === 'WAIT' || t.label === 'PENDING'), 'Solved Stacks walls must not respawn after Continue');
+    await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+    assert.equal((await state()).documentPoints, solved.documentPoints, 'Repeat manifest must not award another wall-clear reward');
+    for (let i = 0; i < 12 && (await state()).dialog; i++) {
+      await page.keyboard.press('Space', { delay: 50 }); await page.waitForTimeout(250);
+    }
+    await walk(128, 208); await hold('ArrowDown', 400); await page.waitForTimeout(900);
+    await shot('stacks-open-after-continue');
+    assert.equal((await state()).roomTraversal.currentRoomId, 'C1', 'Solved south exit remains open after Continue');
+    assert.deepEqual(errors, []);
+    console.log('Optional Stacks remains solved across Continue without repeat rewards');
   } else if (stacksRetreat) {
     assert.equal(initial.roomTraversal.currentRoomId, 'A1');
     await walk(128, 208); await hold('ArrowDown', 400);

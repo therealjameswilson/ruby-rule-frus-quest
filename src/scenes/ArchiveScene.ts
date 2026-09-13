@@ -467,6 +467,15 @@ export class ArchiveScene extends Phaser.Scene {
 
   create(data?: unknown) {
     this.lastRepoWallSwing = 0;
+    this.clearedWallIds = new Set(ARCHIVE_ENEMIES
+      .filter(definition => gameState.sceneProgress[`archiveWall_${definition.id}`] === 1)
+      .map(definition => definition.id));
+    this.networkRoutingResolved = this.clearedWallIds.has("firewall-door");
+    this.referralManifestDelivered = this.clearedWallIds.has("pending-manifest");
+    this.agencyTimerResolved = this.clearedWallIds.has("wait-timer");
+    this.specialistDecisionMade = this.clearedWallIds.has("ambiguous-flag");
+    this.goldenRuleDecisionMade = this.clearedWallIds.has("danne-queue");
+    this.ambiguousSplit = !this.specialistDecisionMade && gameState.sceneProgress.archiveAmbiguousSplit === 1;
     const arrival = readChapterArrival(data, "ArchiveScene", gameState.currentScene);
     const visitedRooms = getVisitedRoomIds(Object.keys(ARCHIVE_ROOMS) as ArchiveRoomId[]);
     for (const room of ARCHIVE_SECRET_IDS) {
@@ -1995,6 +2004,9 @@ export class ArchiveScene extends Phaser.Scene {
 
   private clearEnemy(definition: ArchiveEnemyDefinition, wall: BureaucraticWall, message: string) {
     if (wall.isCleared) return;
+    const progressKey = `archiveWall_${definition.id}`;
+    const firstClear = gameState.sceneProgress[progressKey] !== 1;
+    gameState.sceneProgress[progressKey] = 1;
     this.clearedWallIds.add(definition.id);
     this.activeEnemyWalls.delete(definition.id);
     this.activeEnemyDefs.delete(definition.id);
@@ -2007,13 +2019,15 @@ export class ArchiveScene extends Phaser.Scene {
       this.showArchiveKeyRewardCue();
     }
     retroAudio.stamp();
-    addDocumentPoints(3, `${definition.type} process wall cleared`);
-    adjustReliability(2, message);
+    if (firstClear) {
+      addDocumentPoints(3, `${definition.type} process wall cleared`);
+      adjustReliability(2, message);
+    }
     setLatestMessage(message);
     this.reliability.update();
     this.interactables = this.interactables.filter((item) => item.id !== definition.id);
     this.syncWallState();
-    if (definition.id === "repo-wall") saveGameNow();
+    saveGameNow();
   }
 
   private clearEnemyById(enemyId: string, message: string) {
@@ -2051,6 +2065,7 @@ export class ArchiveScene extends Phaser.Scene {
   private splitAmbiguousFlag() {
     if (!this.ambiguousSplit) {
       this.ambiguousSplit = true;
+      gameState.sceneProgress.archiveAmbiguousSplit = 1;
       addProcessItem("review_folder");
       this.drawAmbiguousFlags();
     }
@@ -2063,10 +2078,12 @@ export class ArchiveScene extends Phaser.Scene {
     setLatestMessage("AMBIGUOUS split into two flags.");
     setObjective("Bring split flags to the human specialist.");
     this.syncWallState();
+    saveGameNow();
   }
 
   private clearAmbiguousFlags() {
     this.ambiguousSplit = false;
+    gameState.sceneProgress.archiveAmbiguousSplit = 0;
     for (const object of this.ambiguousFlagObjects) {
       if (object.active) object.destroy();
     }

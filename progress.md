@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Persistent Archive wall challenges (2026-09-12):
+  - Earned B1 manifest replay reproduced WAIT/PENDING respawning after Continue. Added per-wall sceneProgress flags, rebuilt cleared walls and dependent puzzle booleans on scene creation, persisted the intermediate ambiguity split, and made wall rewards conditional on first clear. All wall clears save immediately; existing A1 source-note restoration remains authoritative for NO REPO.
+  - qa-backtrack.mjs --stacks-persist now enters/solves B1, reloads, verifies absent WAIT/PENDING, repeats manifest without extra points, then physically walks through the south gate to C1. Before failed; after stays at 207 points and reaches C1 with no browser errors. Native solved/Continue/next-room images inspected. Evidence /private/tmp/frus-stacks-save-before/, /private/tmp/frus-stacks-save-after/, /private/tmp/frus-stacks-save-route/.
+  - All 201 files / 1,532 tests and production build pass (existing bundle warning). Installed gameplay client fresh Archive pickup/movement and native render checked (/private/tmp/frus-wall-save-client/).
+  - Direct browser proof covers B1; other wall types share the persistence path but were not individually replayed here. Historical clears with no saved evidence cannot be reconstructed from merely owning a tool. Local only.
+
 - Quieter Archive treasure rooms (2026-09-12):
   - Removed the explanatory poster, secondary in-room compass panel, and duplicate bottom interaction line from C3/D2 secret rooms. Existing minimap, entry title, exit signs, treasure art and nearby interaction prompt remain. Archive-themed secret floors now use existing stone variants rather than the busy ruby/shadow tile pattern; other themes/boss floors unchanged.
   - Replayed earned A1 -> B1 -> C1 -> D1 -> D2 pickup and Continue: 219 points remain 219 after repeat. Native before /private/tmp/frus-well-after/well-repeat-after-continue.png and after /private/tmp/frus-well-quiet/well-repeat-after-continue.png inspected. This is direct D2 visual proof; C3 shares rendering but was not separately walked this pass.
