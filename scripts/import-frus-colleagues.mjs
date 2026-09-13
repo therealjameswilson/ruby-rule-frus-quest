@@ -6,6 +6,8 @@ import { inflateSync, deflateSync } from "node:zlib";
 
 const root = fileURLToPath(new URL("../", import.meta.url));
 const sources = [
+  { id: "compiler_veteran", rows: [0, 390, 760, 1120, 1536], background: "checkerboard",
+    frameOrder: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 15] },
   { id: "archivist", rows: [0, 390, 770, 1130, 1536], background: "magenta" },
   { id: "declassification_coordinator", rows: [0, 408, 776, 1100, 1536], background: "light" },
   { id: "general_editor", rows: [0, 442, 804, 1120, 1536], background: "magenta" },
@@ -80,7 +82,8 @@ function removeBackdrop({ width, height, rgba }, kind) {
     if (seen[i]) return;
     seen[i] = 1;
     const [r, g, b, a] = rgba.subarray(i * 4, i * 4 + 4);
-    const background = Math.min(r, g, b) > 205 && Math.max(r, g, b) - Math.min(r, g, b) < 22;
+    const background = Math.min(r, g, b) > (kind === "checkerboard" ? 175 : 205)
+      && Math.max(r, g, b) - Math.min(r, g, b) < 22;
     if (a < 128 || background) { rgba[i * 4 + 3] = 0; queue.push(i); }
   };
   // Only remove edge-connected backdrop, preserving eye whites and folder pages.
@@ -99,7 +102,8 @@ for (const source of sources) {
   if (png.width !== 1024 || png.height !== 1536) throw Error(`Unexpected dimensions for ${source.id}`);
   removeBackdrop(png, source.background);
   const frames = Array.from({ length: 15 }, (_, i) => {
-    const row = Math.floor(i / 4), col = i % 4;
+    const sourceFrame = source.frameOrder?.[i] ?? i;
+    const row = Math.floor(sourceFrame / 4), col = sourceFrame % 4;
     const bounds = { left: 1024, top: 1536, right: 0, bottom: 0 };
     for (let y = source.rows[row]; y < source.rows[row + 1]; y++) for (let x = col * 256; x < (col + 1) * 256; x++) {
       if (!png.rgba[(y * png.width + x) * 4 + 3]) continue;

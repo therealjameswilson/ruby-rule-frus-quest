@@ -13,6 +13,7 @@ No project-wide redistribution license is currently declared in this repository.
 
 | Source Board | Runtime Export | Subject |
 | --- | --- | --- |
+| `assets/character-sources/compiler_veteran.png` | `public/assets/art-pack/sprites/refreshed/sprite_compiler_veteran.png` | Veteran compiler, silver hair and ruby jacket; generated 2026-09-13 from the current compiler reference |
 | `assets/character-sources/declassification_coordinator.png` | `public/assets/art-pack/sprites/refreshed/sprite_declassification_coordinator.png` | Marcus, review folder and badge |
 | `assets/character-sources/general_editor.png` | `public/assets/art-pack/sprites/refreshed/sprite_general_editor.png` | Priya, ruby FRUS volume |
 | `assets/character-sources/reviewer.png` | `public/assets/art-pack/sprites/refreshed/sprite_reviewer.png` | Reviewer, proof folder |

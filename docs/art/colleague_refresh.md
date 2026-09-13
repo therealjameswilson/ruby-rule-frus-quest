@@ -7,6 +7,34 @@ cardigan, and proof folder. DANN-E and the compiler are unchanged.
 
 ## Runtime Contract
 
+### Veteran Compiler Refresh (2026-09-13)
+
+The compiler's New Game+ sheet now uses the same shaded art family as the
+normal compiler: silver hair, a ruby jacket, gold lapel accent and FRUS book.
+The original veteran sheet is preserved under `ng-plus/native/`. Registry key,
+32x48 frame size, player feet collision and save/profile identity are unchanged.
+
+The built-in image generator edited the normal compiler reference into a
+1024x1536 pose board. Prompt constraints were a 4x4 direction/stride grid,
+silver hair, ruby jacket, crisp native pixels, transparent background and no
+borrowed game characters. It returned a light checkerboard instead of alpha;
+the edge-connected backdrop importer produces binary transparency. This board
+needs a neutral-gray threshold of 175, versus 205 for the earlier light board;
+the first import left specks that inflated bounds and shrank the character.
+The source stays outside the public build in `assets/character-sources/`.
+
+Idle/walk use source cells 0-11. Interaction/reading use 12/13. Source cell 14
+incorrectly faces backward, so approval uses forward-facing cell 15 instead;
+runtime cell 15 stays blank. Action silhouettes are still subdued, not a
+verified raised-hand victory or open-book reading pose. Future art work should
+improve those three poses without changing the shared animation indices.
+
+Earned publication -> touch New Game+ -> fresh Office -> reload passes in
+phone-sized Chrome, including all four walking directions, registered texture
+identity and integer positions. Final native captures are in
+`/private/tmp/frus-veteran-refresh-clean/`. The 26 sprite tests and build pass.
+This is browser emulation, not a physical-phone or novice-enjoyment result.
+
 - Registered keys remain `declassification_coordinator`, `general_editor`, and
   `reviewer`, loaded through `src/art/characters.ts`. No new scene-local path.
 - Native sheets: 128x192 RGBA, sixteen 32x48 cells, fifteen used poses and one

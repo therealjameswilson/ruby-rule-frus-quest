@@ -321,4 +321,20 @@ describe("native sprite sheet frame content", () => {
     }
     expect(frameBounds(png, 15).opaque).toBe(0);
   });
+
+  it("keeps the registered veteran compiler at full character scale with clean alpha", () => {
+    const png = decodePng(resolve(publicDir, VETERAN_CHARACTERS.compiler_veteran));
+    expect([png.width, png.height]).toEqual([SHEET_WIDTH, SHEET_HEIGHT]);
+    for (let i = 3; i < png.rgba.length; i += 4) expect([0, 255]).toContain(png.rgba[i]);
+    for (const frame of referencedFrames) {
+      const bounds = frameBounds(png, frame);
+      expect(bounds.opaque).toBeGreaterThan(120);
+      expect(bounds.minY).toBeGreaterThanOrEqual(5);
+      expect(bounds.maxY).toBeGreaterThanOrEqual(43);
+      expect(bounds.maxY).toBeLessThanOrEqual(44);
+      expect(bounds.maxY - bounds.minY + 1).toBeGreaterThanOrEqual(30);
+      expect(largestInteriorRowGap(png, frame)).toBeLessThanOrEqual(1);
+    }
+    expect(frameBounds(png, 15).opaque).toBe(0);
+  });
 });

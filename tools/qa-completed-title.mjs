@@ -60,6 +60,28 @@ try {
   assert.equal((await state()).newGamePlus.active, true);
   assert.equal((await state()).newGamePlus.volumesCompleted, published.newGamePlus.volumesCompleted);
   await shot('fresh-office-reloaded');
+  for (const [key, frames] of [
+    ['ArrowUp', [6, 7]], ['ArrowLeft', [8, 9]],
+    ['ArrowRight', [10, 11]], ['ArrowDown', [4, 5]]
+  ]) {
+    const before = await page.evaluate(() => {
+      const sprite = window.game.scene.getScene('OfficeScene').player.sprite;
+      return { x: sprite.x, y: sprite.y };
+    });
+    await page.keyboard.down(key);
+    await page.waitForTimeout(180);
+    const pose = await page.evaluate(() => {
+      const sprite = window.game.scene.getScene('OfficeScene').player.sprite;
+      return { key: sprite.texture.key, frame: Number(sprite.frame.name), x: sprite.x, y: sprite.y };
+    });
+    assert.equal(pose.key, 'compiler_veteran');
+    assert(frames.includes(pose.frame), `${key} uses its walk poses`);
+    assert(Number.isInteger(pose.x) && Number.isInteger(pose.y), 'Render position is pixel-snapped');
+    assert(Math.hypot(pose.x - before.x, pose.y - before.y) > 3, `${key} moves the hero`);
+    await shot(`veteran-${key}`);
+    await page.keyboard.up(key);
+    await page.waitForTimeout(80);
+  }
   assert.deepEqual(errors, []);
   console.log('PASS earned publication -> title -> touch New Game+ -> fresh Office -> reload, completion count preserved');
 } finally { await browser.close(); }

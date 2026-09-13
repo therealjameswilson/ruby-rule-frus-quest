@@ -29,7 +29,7 @@ export const BASE_CHARACTERS = {
 } as const;
 
 export const VETERAN_CHARACTERS = {
-  compiler_veteran: "assets/art-pack/ng-plus/native/sprite_compiler_veteran.png",
+  compiler_veteran: "assets/art-pack/sprites/refreshed/sprite_compiler_veteran.png",
   editor_veteran: "assets/art-pack/ng-plus/native/sprite_editor_veteran.png",
   declassification_coordinator_veteran: "assets/art-pack/ng-plus/native/sprite_declass_reviewer_veteran.png",
   reviewer_veteran: "assets/art-pack/ng-plus/native/sprite_proofreader_veteran.png",
