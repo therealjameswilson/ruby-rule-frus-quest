@@ -10,6 +10,11 @@ try {
   const errors = [];
   page.on('pageerror', error => errors.push(String(error)));
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
+  const slowPortraits = process.argv.includes('--slow-portraits');
+  if (slowPortraits) await page.route('**/danne-pack/portraits/**', async route => {
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    await route.continue();
+  });
   const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
   const enemies = () => page.evaluate(() => window.game.scene.getScene('NaraStacksScene').redactorDrones.map(drone => ({
     position: drone.position, telegraph: drone.telegraph, health: drone.healthReadout
@@ -42,6 +47,13 @@ try {
   await tap((await state()).pauseMenu.controls.find(control => control.id === 'settings'));
   await page.waitForTimeout(180);
   await tap((await state()).pauseMenu.controls.find(control => control.id === 'setting-3'));
+  if (slowPortraits) {
+    await page.waitForFunction(() => window.game.scene.getScene('CodexScene').children.getByName('codex-loading')?.active);
+    await page.waitForTimeout(1000);
+    assert.deepEqual(await enemies(), paused, 'Parent encounter must freeze before portrait downloads finish');
+    assert.equal(await page.evaluate(() => window.game.scene.isPaused('NaraStacksScene')), true);
+    await shot('guide-loading');
+  }
   await page.waitForFunction(() => window.game.scene.isActive('CodexScene'));
   const inGuide = await enemies();
   await page.waitForTimeout(1800);

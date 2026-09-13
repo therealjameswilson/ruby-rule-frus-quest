@@ -100,6 +100,16 @@ large-chunk warning remains. Detailed local evidence is under
 
 ## Limits and Next Work
 
+### Demand-loaded Field Guide (2026-09-13)
+
+Field-guide pause now starts in `init`, before portrait network requests.
+`qa-codex-combat-pause.mjs --slow-portraits` delays requests two seconds and
+checks the loading screen, frozen encounter, clean close and remaining dodge
+window. `/private/tmp/frus-codex-slow-final/` passed; the loading capture shows
+only the field-guide message, without gameplay HUD or touch controls. Cached
+portraits skip this screen. Unit coverage asserts pause-before-load ordering,
+return-state preservation, unlocked-only requests and the cached path.
+
 Background checks deliver visibility events in a browser; they are not a physical
 iPhone certification. A headed browser-tab switch did not produce `document.hidden`
 in this automation environment and timed out, so it is not counted as a pass.

@@ -18,17 +18,20 @@ try {
     await page.waitForFunction(key => window.game?.scene.isActive(key), sceneKey);
     await page.waitForTimeout(250);
     const result = await page.evaluate(async () => {
-      const { DANNE_MAP_ASSETS, DANNE_SPRITE_ASSETS, DANNE_RUNTIME_SPRITE_ASSETS } = await import('/src/game/danneAtlas.ts');
+      const { DANNE_MAP_ASSETS, DANNE_SPRITE_ASSETS, DANNE_RUNTIME_SPRITE_ASSETS, DANNE_VARIANT_ASSETS, DANNE_PORTRAIT_ASSETS } = await import('/src/game/danneAtlas.ts');
       const textures = window.game.textures;
       const check = assets => assets.map(asset => ({ key: asset.key, sceneKey: asset.sceneKey,
         exists: textures.exists(asset.key), frames: textures.exists(asset.key) ? textures.get(asset.key).getFrameNames().length : 0 }));
       return { maps: check(DANNE_MAP_ASSETS), originals: check(DANNE_SPRITE_ASSETS), runtime: check(DANNE_RUNTIME_SPRITE_ASSETS),
+        variants: check(DANNE_VARIANT_ASSETS), portraits: check(DANNE_PORTRAIT_ASSETS),
         assetBytes: performance.getEntriesByType('resource').filter(entry => new URL(entry.name).pathname.startsWith('/assets/'))
           .reduce((bytes, entry) => bytes + entry.encodedBodySize, 0) };
     });
     for (const map of result.maps) assert.equal(map.exists, sceneKey === 'DanneGallery' || map.sceneKey === sceneKey, `${sceneKey}: ${map.key}`);
     for (const original of result.originals) assert.equal(original.exists, sceneKey === 'DanneGallery', `${sceneKey}: original only belongs in gallery`);
     for (const runtime of result.runtime) assert(runtime.exists && runtime.frames >= 16, `${sceneKey}: live actor frames must remain available`);
+    for (const variant of result.variants) assert.equal(variant.exists, sceneKey === 'BlackVaultLairScene' || sceneKey === 'DanneGallery');
+    for (const portrait of result.portraits) assert.equal(portrait.exists, sceneKey === 'DanneGallery');
     assert.deepEqual(errors, [], sceneKey);
     const data = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(image => resolve(image.src))));
     await writeFile(`${out}/${sceneKey}.png`, Buffer.from(data.split(',')[1], 'base64'));

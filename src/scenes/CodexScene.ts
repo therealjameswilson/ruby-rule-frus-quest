@@ -2,6 +2,7 @@ import Phaser from "phaser";
 import { ABOUT_SERIES_SOURCE } from "../game/aboutSeries";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { CODEX_CATEGORIES, getCodexEntries, type CodexCategory, type CodexEntryReadout } from "../game/codex";
+import { DANNE_CODEX_IMAGE_ASSETS } from "../game/danneAtlas";
 import { gameState, setLatestMessage, setSceneState, setVisibleEntities, setVisibleThreats, syncCompletionStatsPlayTime } from "../game/state";
 import { bindPointerPress, getInput, swallowNextInputFrame, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
@@ -38,12 +39,37 @@ export class CodexScene extends Phaser.Scene {
   private readyAt = 0;
   private lastPointerFrame = -1;
   private previousState?: ReturnType<typeof captureCodexReturnState>;
+  private loadingText?: Phaser.GameObjects.Text;
 
   constructor() { super("CodexScene"); }
 
-  create(data: CodexSceneData = {}) {
+  init(data: CodexSceneData = {}) {
     this.returnScene = data.returnScene ?? "TitleScene";
     this.previousState = captureCodexReturnState(gameState);
+    // Stop the encounter before network loading, not only after create runs.
+    if (this.returnScene !== this.scene.key && this.scene.isActive(this.returnScene)) {
+      saveGameNow();
+      this.scene.pause(this.returnScene);
+    }
+    setSceneState("CodexScene", "pause", "FRUS field guide");
+  }
+
+  preload() {
+    const known = new Set(CODEX_CATEGORIES.flatMap(category => getCodexEntries(category, gameState.documentCandidates))
+      .filter(entry => entry.unlocked).map(entry => entry.artKey));
+    const missing = DANNE_CODEX_IMAGE_ASSETS.filter(asset => known.has(asset.key) && !this.textures.exists(asset.key));
+    if (missing.length) {
+      this.cameras.main.setBackgroundColor(PALETTE.black).setRoundPixels(true);
+      this.loadingText = this.add.text(128, 116, "OPENING FIELD GUIDE", {
+        fontFamily: "monospace", fontSize: "8px", color: PALETTE.goldStamp
+      }).setOrigin(0.5).setName("codex-loading");
+      for (const asset of missing) this.load.image(asset.key, asset.path);
+    }
+  }
+
+  create(data: CodexSceneData = {}) {
+    this.loadingText?.destroy();
+    this.loadingText = undefined;
     const preferred = data.category ?? preferredCategoryFromQuery();
     this.categoryIndex = preferred ? Math.max(0, CODEX_CATEGORIES.indexOf(preferred)) : 0;
     this.entryIndex = 0;
@@ -51,11 +77,6 @@ export class CodexScene extends Phaser.Scene {
     this.detailOpen = false;
     this.lastPointerFrame = -1;
     this.readyAt = this.time.now + 160;
-    if (this.returnScene !== this.scene.key && this.scene.isActive(this.returnScene)) {
-      saveGameNow();
-      this.scene.pause(this.returnScene);
-    }
-    setSceneState("CodexScene", "pause", "FRUS field guide");
     setLatestMessage("Field guide opened.");
     setVisibleThreats([]);
     this.cameras.main.setBackgroundColor(PALETTE.black).setRoundPixels(true);
