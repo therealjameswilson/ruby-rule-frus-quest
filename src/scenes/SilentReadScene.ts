@@ -1164,7 +1164,14 @@ export class SilentReadScene extends Phaser.Scene {
       if (decision) {
         this.interactionPrompt.update(0, null);
         this.clearPhysicalRouteCue();
-        this.reviewChoice.show(`${decision.question}\n\n${decision.context}`, [...decision.options], (option) => {
+        this.reviewChoice.show(`${decision.question}\n\n${decision.context}`, [
+          ...decision.options,
+          { key: "C", label: "Back to the room", value: "back" }
+        ], (option) => {
+          if (option.value === "back") {
+            setObjective(this.reviewObjective());
+            return;
+          }
           if (this.getActiveFlag() !== activeFlag || activeFlag.status !== "routed") return;
           if (option.value !== decision.correctValue) {
             setLatestMessage(decision.failureMessage);
@@ -1174,7 +1181,7 @@ export class SilentReadScene extends Phaser.Scene {
           }
           gameState.sceneProgress[`silentReadDecision_${activeFlag.id}`] = 1;
           this.verifyFlag(activeFlag, nearestStation, decision.successMessage);
-        }, 8);
+        }, 8, () => setObjective(this.reviewObjective()));
       } else {
         this.verifyFlag(activeFlag, nearestStation, `${activeFlag.shortLabel} CHECKED`);
       }

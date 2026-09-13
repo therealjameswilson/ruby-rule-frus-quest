@@ -24,10 +24,12 @@ class Decision {
   active = false;
   options: ChoiceOption[] = [];
   callback?: (option: ChoiceOption) => void;
-  show(_title: string, options: ChoiceOption[], callback: (option: ChoiceOption) => void) {
+  onCancel?: () => void;
+  show(_title: string, options: ChoiceOption[], callback: (option: ChoiceOption) => void, _fontSize = 6, onCancel?: () => void) {
     this.active = true;
     this.options = options;
     this.callback = callback;
+    this.onCancel = onCancel;
   }
   choose(key: string) {
     const option = this.options.find((candidate) => candidate.key === key)!;
@@ -35,6 +37,11 @@ class Decision {
     this.callback?.(option);
   }
   updateInput() { this.choose("A"); }
+  cancel() {
+    if (!this.onCancel) { this.choose("B"); return; }
+    this.active = false;
+    this.onCancel();
+  }
 }
 
 class Comparison {
@@ -129,6 +136,21 @@ function fixture(step: number, status: SilentReadReviewStatus) {
 beforeEach(() => { resetGameState(); vi.clearAllMocks(); });
 
 describe("live editor and proof decisions", () => {
+  it.each([3, 5, 6])("cancels decision %i without verifying, stamping, or awarding credit", step => {
+    const { scene, flag } = fixture(step, "routed");
+    const documents = structuredClone(gameState.documentCandidates);
+    for (const back of [false, true]) {
+      scene.handlePhysicalAction();
+      if (back) scene.reviewChoice.choose("C");
+      else scene.reviewChoice.cancel();
+      expect(scene.reviewChoice.active).toBe(false);
+      expect(flag.status).toBe("routed");
+      expect(gameState.sceneProgress[`silentReadDecision_${flag.id}`]).toBeUndefined();
+      expect(scene.applyFlagReward).not.toHaveBeenCalled();
+      expect(scene.addVerificationMark).not.toHaveBeenCalled();
+      expect(gameState.documentCandidates).toEqual(documents);
+    }
+  });
   it.each([0, 2, 3, 4, 5, 6])("opens the check on placing file %i without answering or stamping", (step) => {
     const { scene, flag } = fixture(step, "carried");
     scene.handlePhysicalAction();

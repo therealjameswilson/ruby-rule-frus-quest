@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Safe proof decision cancellation (2026-09-12):
+  - Silent Read's three generic document decisions now opt into Escape/Start cancellation and offer an explicit Back row. Cancel does not select answer B, verify a marginal note, stamp a file, or award points. Deliberate answers retain the separate verification/stamping sequence.
+  - Regression coverage reproduces the prior accidental approval; current full suite passes 202 files / 1,556 tests including movement changes. Build passed with the existing bundle warning.
+  - Earned keyboard chapter replay completed bracket repair, proof decisions, separate stamps, Continue/backtracking and Black Vault entry: /private/tmp/frus-proof-cancel-after/desktop/. Current touch replay of all three earned pending decisions verifies Start/Back cancellation and deliberate approval without stamping: /private/tmp/frus-proof-cancel-touch/. No browser errors; native and portrait layouts inspected.
+  - Installed gameplay client also passed in SilentReadScene: /private/tmp/frus-proof-cancel-client/, native capture inspected. Changes remain local. Next full-play checkpoint is the earned Black Vault save in /private/tmp/frus-proof-cancel-after/desktop/earned-storage.json; final encounter fun and completion remain unproven.
+
 - Player obstacle approach smoothing (2026-09-12):
   - Preserve the clear portion of a blocked movement step with a bounded contact search, eliminating frame-sized gaps beside furniture. Existing instant start/stop/reversal, normalized diagonals, sticky facing, corner assistance and committed tool swings remain unchanged. Physics stays sub-pixel; render positions remain snapped.
   - Added positive/negative axis and 30/60/120 FPS contact regression coverage. 37 focused movement tests pass; production build passes with the existing chunk warning.

@@ -283,6 +283,28 @@ async function run(mobile) {
         await shot('proof-filed-awaits-stamp');
       } else if(stage.answer) {
         assert(await choice());await shot(`decision-${stage.id}`);
+        await context.storageState({path:`${out}/pending-decision-${stage.id}-storage.json`});
+        if(process.argv.includes('--cancel-decisions')) {
+          const before=await state();
+          const unchanged=async()=>{
+            const after=await state();
+            assert.equal(after.mode,'explore');
+            assert.equal(after.sceneProgress.silentReadReviewStatus,2);
+            assert.deepEqual(after.sceneProgress,before.sceneProgress);
+            assert.equal(after.documentPoints,before.documentPoints);
+            assert.deepEqual(after.documentCandidates,before.documentCandidates);
+            assert.equal(after.playerCombat.weapon.swingId,before.playerCombat.weapon.swingId);
+          };
+          if(mobile)await touch(224,16);else await page.keyboard.press('Escape',{delay:45});
+          await page.waitForTimeout(180);await unchanged();await press();assert(await choice());
+          const back=await page.evaluate(()=>{
+            const row=window.game.scene.getScene('SilentReadScene').reviewChoice.optionObjects[4].getBounds();
+            return {x:row.centerX,y:row.centerY};
+          });
+          if(mobile)await touch(back.x,back.y);else{const p=await point(back.x,back.y);await page.mouse.click(p.x,p.y);}
+          await page.waitForTimeout(180);await unchanged();await press();assert(await choice());
+          await shot(`canceled-and-reopened-${stage.id}`);
+        }
         if(stage.id>=5) {
           const before=await state();
           await press(stage.answer==='Space'?'KeyX':'Space');
