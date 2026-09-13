@@ -1,5 +1,26 @@
 # Earned Playthrough Review
 
+## Earned Proofing Input Parity
+
+On 2026-09-13, replayed editor correction using touch and an earned Referral
+save, including reload of an unfiled bracket and physical entry into proofing.
+Then replayed proofing from that same earned checkpoint with both keyboard
+and 375x667 DPR3 Chrome touch simulation. Both runs rejected the wrong source
+reference, an overbroad release and draft-date chronology, then accepted the
+corrections, awarded the Proof Lens and restored the production handoff on reload.
+No page or console errors were captured.
+
+The first touch harness run did not genuinely test chronology rejection:
+its presumed floating D-pad origin landed on the board's left-arrow button.
+The corrected harness taps the visible File/shift controls and asserts that
+invalid filing leaves the board open. No gameplay fix was required.
+
+Inspected the native rejection/reloaded screens and phone-sized reward capture
+under `/private/tmp/frus-touch-proof-corrected/`. Keyboard evidence lives in
+`/private/tmp/frus-keyboard-proof-recheck/`; the preceding editor checkpoint is
+`/private/tmp/frus-current-editor-pass/earned-storage.json`. These are scripted
+Chrome checks, not physical-iPhone or first-time-player enjoyment evidence.
+
 ## Cue-Led Archive Check
 
 On 2026-09-13, restored the cue-led opening's earned save in isolated Chrome
