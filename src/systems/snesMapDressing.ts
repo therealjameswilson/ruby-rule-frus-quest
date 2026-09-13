@@ -1,5 +1,7 @@
 import Phaser from "phaser";
 import type { GameplayMapKey } from "../assets/registry";
+import { GAMEPLAY_TILESETS } from "../assets/registry";
+import { archiveWalkFloor } from "../game/archiveWalkFloor";
 import { PALETTE } from "../game/constants";
 import {
   FRUS_PRODUCTION_FLOOR_STEPS,
@@ -145,12 +147,28 @@ export function drawSnesMapDressing(
   ensureSnesMapDressingTextures(scene);
   const style = MAP_STYLES[mapKey];
   drawFrame(scene, fitRect, style);
-  drawFloorLayer(scene, fitRect, style);
+  if (mapKey !== "nara_stacks" || !drawArchiveWalkFloor(scene, fitRect, options.solids)) {
+    drawFloorLayer(scene, fitRect, style);
+  }
   drawSolidLayer(scene, options.solids, style);
   const flowPlaque = drawMapFlowPlaque(scene, fitRect, GAMEPLAY_MAP_FLOW_STEPS[mapKey]);
   if (mapKey === "frus_floor") drawFrusProductionFloorRail(scene, fitRect);
   drawFeatureLayer(scene, options.features);
   return { flowPlaque };
+}
+
+function drawArchiveWalkFloor(scene: Phaser.Scene, bounds: FitRectLike, solids: Phaser.Geom.Rectangle[]) {
+  const asset = GAMEPLAY_TILESETS.archiveDungeonNative;
+  if (!scene.textures.exists(asset.key)) return false;
+  const floor = archiveWalkFloor(bounds, solids);
+  if (!floor.data.length || !floor.data[0].length) return false;
+  const map = scene.make.tilemap({ data: floor.data, tileWidth: asset.tileSize, tileHeight: asset.tileSize });
+  const tiles = map.addTilesetImage(asset.manifestKey, asset.key, asset.tileSize, asset.tileSize, asset.margin, asset.spacing, asset.firstGid);
+  const layer = tiles && map.createLayer(0, tiles, floor.x, floor.y);
+  if (!layer) { map.destroy(); return false; }
+  layer.setName("nara-walkable-floor").setDepth(-19);
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => map.destroy());
+  return true;
 }
 
 function ensureSnesMapDressingTextures(scene: Phaser.Scene) {

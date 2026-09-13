@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- NARA floor readability pilot (2026-09-13):
+  - Previous turn made progress with compact readiness cues. Compared dense legacy map with duplicate translucent floor grid hidden; screenshot showed little benefit because most detail is baked into art. Implemented a scoped native-tile pilot instead.
+  - GameplayMapScene NARA alone now draws existing native archive floor tiles in fully clear cells. Source obstacle/border art, one-pixel blocker margin, actors/features and all collision/quest/save data retained. Original drawing is fallback if native texture/layer unavailable; map destroyed on shutdown. Other maps unchanged.
+  - 14 focused geometry/tile/HUD tests and production build pass (existing chunk warning). Installed gameplay client and three readiness routes pass; physical collision-aware walking plus resisted Pencil strike on Mark I passes with HP unchanged, correct HUD and no page errors. Debug-granted tools, not a full earned replay. Native comparisons inspected and preserved in docs/screenshots/nara-walk-floor-{before,after}.png.
+  - docs/NARA_VISUAL_READABILITY.md records design, frame indices, evidence and remaining gaps. Local only. Next: assess readable enemy/interaction silhouettes and the small overlaid flow plaques before expanding the pilot; the whole-game fun goal remains unproven.
+
 - Encounter readiness at a glance (2026-09-13):
   - Previous turn made progress with wrong-tool feedback. Inspected normal GameplayMapScene counter cues: enemy-name prefixes consumed the 20-character HUD before the required action. Shortened objectives to FIND/EQUIP plus full tool name, then short tool plus cleared/required progress when equipped. Between-wave cue names the upcoming wave.
   - Tests exercise all three tools in missing/acquired/equipped states and the next-wave cue against the real text clamp. 22 focused enemy/HUD tests pass; build passes with existing chunk warning.
