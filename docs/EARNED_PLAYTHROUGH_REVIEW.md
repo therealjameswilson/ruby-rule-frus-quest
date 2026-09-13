@@ -1,5 +1,30 @@
 # Earned Playthrough Review
 
+## Cue-Led Opening Check
+
+After `bf9fb55`, used a fresh isolated browser context and native screenshots
+to navigate Title -> compiler creation -> Office -> Guide -> Archive. Movement
+directions and interaction targets were selected from the visible game, not
+the earned-route scripts or hidden runtime coordinates. Only the endpoint state
+was read for verification. The operator already knew the game; this is not a
+novice study. Code containing opening mission strings was inspected beforehand.
+
+Visible handoffs were understandable in this check: publish a volume, meet JR,
+take memo, west inbox, stamp, south door, Citation Stamp, face right/return bolt,
+front matter, south archive. Four unevenly timed tool presses returned the
+tutorial bolt without projectile/window readouts. The Archive endpoint showed
+PICK UP SOURCE NOTE, 20 document points, reliability71, Master Declass Key,
+Citation Stamp and the Front Matter fragment. The run included idle time while
+screenshots were inspected; reliability loss was not localized to a specific
+encounter. No page errors were captured; console-error capture was not enabled
+for this manual session.
+
+Evidence: `/private/tmp/frus-cue-led-opening/{archive.png,result.json,earned-storage.json}`.
+The browser was closed after exporting evidence; the user's existing save was
+not modified. No runtime edits were warranted by this opening check. Real
+first-time-player feedback is still needed, especially on whether the review
+steps feel rewarding. An optional feedback question was sent to the user.
+
 ## Current Movement Build Recheck
 
 Rechecked after `384612b` (tool reveals) using the freshly rebuilt earned chain
