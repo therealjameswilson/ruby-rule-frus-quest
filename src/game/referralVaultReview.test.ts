@@ -7,6 +7,7 @@ import {
   REFERRAL_TREATMENT_DOCKETS,
   REFERRAL_TREATMENT_LABELS,
   referralReviewObjective,
+  referralGuideHint,
   referralBatchPacketAfterRoute,
   referralBatchDocketAfterRoute,
   restoreReferralCarryState,
@@ -15,6 +16,25 @@ import {
 } from "./referralVaultReview";
 
 describe("physical Referral Vault review", () => {
+  it("gives compact advice for each review stage without changing the task", () => {
+    expect(referralGuideHint("equity", 0, false).short).toBe("BATCH: SOUTH TRAY");
+    for (const [step, packet] of REFERRAL_EQUITY_PACKETS.entries()) {
+      const hint = referralGuideHint("equity", step, true);
+      expect(hint.short).toBe(`${packet.shortLabel} > ${packet.agency}`);
+      expect(hint.short.length).toBeLessThanOrEqual(22);
+      expect(hint.message).toContain("does not grant release approval");
+    }
+    expect(referralGuideHint("manifest", 0, false).short).toBe("DRAFT: STATECHAT");
+    expect(referralGuideHint("manifest", 0, true).short).toBe("COPY: NORTH STACKS");
+    expect(referralGuideHint("manifest", 0, true, true).short).toBe("DRAFT: HUMAN DESK");
+    expect(referralGuideHint("treatment", 0, false).short).toBe("BATCH: SOUTH TRAY");
+    for (const [step, docket] of REFERRAL_TREATMENT_DOCKETS.entries()) {
+      const hint = referralGuideHint("treatment", step, true);
+      expect(hint.short).toBe(`FILE AT ${REFERRAL_TREATMENT_LABELS[docket.station]}`);
+      expect(hint.short.length).toBeLessThanOrEqual(22);
+    }
+    expect(referralGuideHint("complete", 3, false).short).toBe("EAST: SLIP ROOM");
+  });
   it("keeps pickup, destination, retry, and handoff cues within 20 characters", () => {
     for (const [step, packet] of REFERRAL_EQUITY_PACKETS.entries()) {
       const pickup = referralReviewObjective("equity", step, false);

@@ -63,6 +63,7 @@ import {
   referralBatchDocketAfterRoute,
   restoreReferralCarryState,
   referralReviewObjective,
+  referralGuideHint,
   routeReferralEquityPacket,
   routeReferralTreatmentDocket
 } from "../game/referralVaultReview";
@@ -1282,8 +1283,18 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   private handleReferralReviewAction(input: Readonly<InputState>) {
-    if (this.currentRoomId !== "R1" || this.referralGateOpen) return false;
+    if (this.currentRoomId !== "R1") return false;
     if (!input.aJustPressed) return false;
+    if (this.atReferralGuide()) {
+      const stage = this.referralReviewStage();
+      const hint = referralGuideHint(stage, stage === "equity" ? this.equityStep : this.treatmentStep,
+        Boolean(this.carriedEquityPacket() || this.manifestCarried() || this.carriedTreatmentDocket()),
+        dispatchCopyFound(gameState.sceneProgress));
+      this.toast.show(hint.short, this.player.position, "info");
+      setLatestMessage(hint.message);
+      return true;
+    }
+    if (this.referralGateOpen) return false;
     const target = this.referralActionTarget();
     if (!target || Phaser.Math.Distance.Between(
       this.player.position.x,
@@ -1330,6 +1341,13 @@ export class ReferralVaultScene extends Phaser.Scene {
       this.updateConcurrenceSlipPrompt(delta);
       return;
     }
+    if (this.atReferralGuide()) {
+      this.interactionPrompt.update(delta, this.toast.visible ? null : {
+        id: "referral-marcus-guide", label: "Marcus", x: 42, y: 88, kind: "npc", onInteract: () => undefined
+      }, undefined, { badge: "A", text: "ASK MARCUS" });
+      setNearestInteractable("Marcus: referral help");
+      return;
+    }
     const target = this.referralActionTarget();
     const strictTarget = target && Phaser.Math.Distance.Between(
       this.player.position.x,
@@ -1345,6 +1363,11 @@ export class ReferralVaultScene extends Phaser.Scene {
       text: this.referralPromptText(strictTarget)
     } : undefined);
     setNearestInteractable(strictTarget?.label ?? null);
+  }
+
+  private atReferralGuide() {
+    return this.currentRoomId === "R1" && this.player.position.y < 106
+      && Phaser.Math.Distance.Between(this.player.position.x, this.player.position.y, 42, 88) <= 24;
   }
 
   private referralPromptText(target: Interactable) {

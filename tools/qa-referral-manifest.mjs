@@ -126,6 +126,31 @@ async function run(mobile) {
   try {
     await resume();
     await shot('initial');
+    if (process.argv.includes('--guide-only')) {
+      await move(42,94);
+      const before=await state();
+      await press();
+      const after=await shot('marcus-guidance');
+      assert.equal(after.mode,'explore');
+      const hint=await page.evaluate(()=>{
+        const scene=window.game.scene.getScene('ReferralVaultScene');
+        const bounds=scene.toast.container.getBounds();
+        return {visible:scene.toast.visible,text:scene.toast.text.text,left:bounds.left,right:bounds.right,bottom:bounds.bottom};
+      });
+      assert(hint.visible,'Marcus must respond to interaction');
+      assert.equal(hint.text,process.env.FRUS_QA_GUIDE_TEXT??'BATCH: SOUTH TRAY');
+      assert.equal(after.nearestInteractable,'Marcus: referral help');
+      assert(hint.left>=0&&hint.right<=256&&hint.bottom<=174);
+      assert.equal(after.documentPoints,before.documentPoints);
+      assert.deepEqual(after.documentCandidates,before.documentCandidates);
+      assert.deepEqual(after.inventory,before.inventory);
+      assert.deepEqual(after.sceneProgress,before.sceneProgress);
+      assert.equal(after.heldItem,before.heldItem);
+      await direction('ArrowDown');
+      assert((await state()).player.y>after.player.y+2,'The guide must not stop movement');
+      await writeFile(`${out}/guide.json`,JSON.stringify(hint,null,2));
+      return;
+    }
     await move(34,180); await move(128,180);
     await press();
     let s=await shot('equity-held');

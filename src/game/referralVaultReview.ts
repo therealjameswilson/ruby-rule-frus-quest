@@ -144,8 +144,35 @@ export const REFERRAL_TREATMENT_LABELS: Record<ReferralTreatmentStationId, strin
   bracket_press: "BRACKET"
 };
 
+export type ReferralReviewStage = "equity" | "manifest" | "treatment" | "complete";
+
+export function referralGuideHint(stage: ReferralReviewStage, step: number, carried: boolean, dispatchFound = false) {
+  if (stage === "complete") return {
+    short: "EAST: SLIP ROOM", message: "The review gate is open. The Concurrence Slip awaits in the east room."
+  };
+  if (stage === "manifest") {
+    if (!carried) return {
+      short: "DRAFT: STATECHAT", message: "Take StateChat's draft at the terminal. A generated routing list still needs your source check."
+    };
+    return dispatchFound ? {
+      short: "DRAFT: HUMAN DESK", message: "Compare the dispatch copy with the draft at the human desk. Routing is not release approval."
+    } : {
+      short: "COPY: NORTH STACKS", message: "Find the original dispatch copy beyond the north shelves. The draft cannot verify itself."
+    };
+  }
+  if (!carried) return {
+    short: "BATCH: SOUTH TRAY", message: "Take the batch from the south tray. Carry each file to its matching desk; the next stays with you."
+  };
+  if (stage === "equity") {
+    const packet = getReferralEquityPacket(step);
+    return { short: `${packet.shortLabel} > ${packet.agency}`, message: `${packet.label}: match the ${packet.agency} equity desk. Routing does not grant release approval.` };
+  }
+  const docket = getReferralTreatmentDocket(step);
+  return { short: `FILE AT ${REFERRAL_TREATMENT_LABELS[docket.station]}`, message: `${docket.label}: take it to the ${docket.stationLabel}. Keep the treatment visible in the record.` };
+}
+
 export function referralReviewObjective(
-  stage: "equity" | "manifest" | "treatment" | "complete",
+  stage: ReferralReviewStage,
   step: number,
   carried: boolean,
   inRewardRoom = false,

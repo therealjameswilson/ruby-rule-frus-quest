@@ -10,6 +10,16 @@ function methodSource(name: string, nextName: string) {
 }
 
 describe("ReferralVaultScene physical review flow", () => {
+  it("lets Marcus help without filing the nearby station or changing progress", () => {
+    const action = methodSource("handleReferralReviewAction", "updateReferralInteractionPrompt");
+    const guide = action.slice(action.indexOf("if (this.atReferralGuide())"), action.indexOf("if (this.referralGateOpen)"));
+    expect(guide).toContain("referralGuideHint");
+    expect(guide).toContain("this.toast.show(hint.short");
+    expect(guide).toContain("return true;");
+    expect(guide).not.toContain("saveGameNow");
+    expect(guide).not.toContain("routeEquityPacket");
+    expect(methodSource("updateReferralInteractionPrompt", "atReferralGuide")).toContain('text: "ASK MARCUS"');
+  });
   it("shows dispatch actions directly instead of prefixing them with CHECK", () => {
     const prompts = methodSource("updateReferralInteractionPrompt", "referralPromptText");
     const dispatch = prompts.slice(0, prompts.indexOf('if (this.currentRoomId === "R2")'));

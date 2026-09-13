@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Responsive Referral colleague (2026-09-12):
+  - Earned desktop Referral playthrough reached Editor after agency routing, dispatch discovery/shortcut, draft correction, visible treatment, reward, Continue and backtracking (/private/tmp/frus-referral-playtest/desktop/). Found Marcus was rendered but never interacted; actual A beside him produced no response. Failing reproduction: /private/tmp/frus-referral-guide-before/.
+  - Added a bounded NPC interaction ahead of nearby desk filing, with short stage-specific hints from referralVaultReview.ts. Guidance covers pickup, agency destination, dispatch evidence, human comparison, treatment, and east reward room. It never awards progress or mutates documents; full explanation stays in latestMessage. Existing room/task architecture unchanged.
+  - Added --guide-only QA to verify visible bounded response, no document/inventory/progress/held-item changes and immediate movement. Keyboard initial-stage pass: /private/tmp/frus-referral-guide-after/. Earned manifest-stage phone-touch pass: /private/tmp/frus-referral-guide-manifest/. Native screenshots inspected. Full suite: 202 files / 1,548 tests. Build passes with existing bundle warning.
+  - Installed gameplay client Referral movement/native screenshot: /private/tmp/frus-referral-guide-client/. Local, not publicly deployed; physical iPhone unverified. Next earned chapter checkpoint: /private/tmp/frus-referral-playtest/desktop/earned-storage.json (Editor entry).
+
 - Nonblocking Network routing help (2026-09-12):
   - Played the earned Two Networks path through the stamp-opened crossing, routing batch, withholding chronology puzzle, Clearance Token, and Referral entrance. Baseline passed with no browser errors, but Marcus's routine hint used a tiny modal dialogue that interrupted movement (/private/tmp/frus-network-playtest/desktop/).
   - Replaced that interruption with a short packet-to-network toast, retaining the full routingClue in latestMessage, the saved hint flag, and destination guidance. No routing rewards, requirements, or save schema changed.
