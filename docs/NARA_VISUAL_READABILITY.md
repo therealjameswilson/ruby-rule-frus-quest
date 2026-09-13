@@ -48,8 +48,6 @@ arrival and route. The latest replay reached the world map at 56 reliability
 with 8 points and both enemies cleared. Evidence: `/private/tmp/frus-nara-waves-final/`.
 This remains a debug-tool encounter test, not an earned progression playthrough.
 
-### Scope Limits
-
 ### Preparation and Retreat
 
 The region-select preview now names missing Folder/Stamp tools before entering
@@ -64,8 +62,16 @@ and stamps, and an active uncleared patrol on return. Set `PLAYWRIGHT_MODULE`
 and `CHROMIUM_EXECUTABLE` for a non-local Playwright installation;
 `FRUS_QA_URL` and `FRUS_QA_OUT` optionally choose server and evidence directory.
 Native captures from the passing run: `/private/tmp/frus-nara-retreat/`.
-This proves unarmed retreat, not partial-wave reward persistence or the full
-earned-tool route. Those remain follow-up checks.
+This proves unarmed retreat, not the full earned-tool route.
+
+Named enemy rewards are now claimed once per room/enemy in saved scene progress.
+Enemy recreation cannot multiply document points; new runs reset the claims.
+Enemy and actual save-storage tests cover retry and reload behavior. A complete
+two-wave input replay still awards eight points and opens the exit. Browser
+partial-wave retreat remains a follow-up; individual enemies currently respawn
+when returning to an uncleared encounter.
+
+### Scope Limits
 
 The source map's tiny border labels and some decorative wall details remain.
 This is a visual pilot, not a replacement for reviewing optional-room layout,

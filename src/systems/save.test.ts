@@ -5,6 +5,7 @@ import { getCharacterKeyForProcessRole } from "../art/characters";
 import { restoreReferralCarryState } from "../game/referralVaultReview";
 import { readSourceNoteTrail } from "../game/sourceNoteProvenance";
 import { getSaveDebugState, getSavedGameSummary, loadSavedGame, readSavedGame, saveGameNow } from "./save";
+import { claimEnemyReward, isRoomCleared } from "./roomClear";
 
 function createStorage() {
   const values = new Map<string, string>();
@@ -29,6 +30,18 @@ afterEach(() => {
 });
 
 describe("browser save storage", () => {
+  it("retains enemy reward claims without clearing the room and resets them for a new run", () => {
+    expect(claimEnemyReward("nara_stacks_patrol", "nara-mark-i")).toBe(true);
+    expect(saveGameNow()).toBe(true);
+    resetGameState();
+    expect(loadSavedGame()).toBe("ArchiveScene");
+    expect(claimEnemyReward("nara_stacks_patrol", "nara-mark-i")).toBe(false);
+    expect(claimEnemyReward("nara_stacks_patrol", "nara-swarm")).toBe(true);
+    expect(isRoomCleared("nara_stacks_patrol")).toBe(false);
+    resetGameState();
+    expect(claimEnemyReward("nara_stacks_patrol", "nara-mark-i")).toBe(true);
+  });
+
   it("continues the newer fallback save after local storage rejects a write", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-09-12T10:00:00Z"));

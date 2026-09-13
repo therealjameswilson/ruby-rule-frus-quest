@@ -14,6 +14,7 @@ import {
 import type { Position } from "../game/types";
 import { retroAudio } from "../systems/audio";
 import { CombatClock } from "../systems/combatClock";
+import { claimEnemyReward } from "../systems/roomClear";
 import { advanceBossBolt, type BossBoltMotion } from "../game/danneBossCombat";
 import { telegraphDurationMs, telegraphPhase, type TelegraphPhase, type TelegraphTiming } from "../systems/enemyCombat";
 import { snapPixel } from "../systems/pixelPerfect";
@@ -565,6 +566,10 @@ export class DanneEnemy extends Phaser.GameObjects.Sprite {
   }
 
   private spawnLoot() {
+    if (!claimEnemyReward(this.roomId, this.id)) {
+      setLatestMessage(`${this.config.displayName} cleared. Reward already collected.`);
+      return;
+    }
     const loot = this.config.loot;
     if (loot.documentPoints) addDocumentPoints(loot.documentPoints, `${this.config.displayName} defeated`);
     if (loot.processStamp) awardProcessStamp(loot.processStamp);

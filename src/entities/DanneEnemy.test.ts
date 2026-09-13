@@ -292,6 +292,22 @@ describe("DanneEnemy combat", () => {
     expect(gameState.sceneProgress.testGateOpen).toBe(1);
   });
 
+  it("does not pay a recreated enemy twice after retreat", () => {
+    makeEnemy("danne-mark-i-prototype", 1).defeat();
+    const earned = gameState.documentPoints;
+    expect(earned).toBeGreaterThan(0);
+    const retry = makeEnemy("danne-mark-i-prototype", 1);
+    retry.defeat();
+    expect(retry.defeated).toBe(true);
+    expect(retry.destroy).toHaveBeenCalled();
+    expect(gameState.documentPoints).toBe(earned);
+    expect(isRoomCleared("test-room")).toBe(false);
+    const differentRoom = makeEnemy("danne-mark-i-prototype", 1);
+    Object.assign(differentRoom, { roomId: "other-room" });
+    differentRoom.defeat();
+    expect(gameState.documentPoints).toBe(earned * 2);
+  });
+
   it("stops Arcade movement and projectile animation while preserving velocity on resume", () => {
     const enemy = makeEnemy("danne-mark-i-prototype", 2);
     const projectile = { sprite: dummyVisual() };

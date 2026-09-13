@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- One-time encounter rewards across retries (2026-09-13):
+  - Previous turn made progress on unarmed retreat. Source audit found each recreated DanneEnemy paid document points again, allowing repeated first-wave rewards after retreat. Added a room/enemy-scoped reward claim in existing persisted sceneProgress; JSON tuple keys avoid ambiguous ID concatenation. Claims do not clear rooms or prevent enemies being defeated on retry. New runs reset claims; existing saves with no claims remain compatible.
+  - Enemy test verifies recreated enemy defeat/no duplicate points/different-room reward, while save test verifies claim survives actual storage save/load, other enemy remains unclaimed, no room-clear flag is awarded, and new-run reset. Full suite: 209 files / 1,607 tests. Build passes with existing chunk warning.
+  - Standard gameplay client captured unarmed NARA with no errors; native image inspected. Real-input tools/qa-nara-waves.mjs passed both waves, menu tool swap, documentary invariants and exit with normal 8 points, 72 reliability, 2/2 clear. Native clear image and saved claim keys inspected at /private/tmp/frus-nara-reward-waves/. This used debug starting tools, not earned progression. Retry idempotency/save proved by deterministic tests, not a browser partial-wave retreat.
+  - Local only. Next: consider preserving completed wave progress across retreat so retries are not repetitive, then validate an earned-tool journey. The broader fun goal is still unproven.
+
 - Optional NARA preparation and safe retreat (2026-09-13):
   - Previous goal turn made progress on movement. Revalidated pending NARA edits against the current tree: preview names missing combat tools, and only NARA's WorldMap return door bypasses encounter interaction suppression. Forward routes and rewards remain gated. Preserved movement separately in local commit 6cc61ad.
   - Promoted real-input route QA to tools/qa-nara-retreat.mjs. Fresh browser, no grants: select Bonn, inspect preparation, enter unarmed, walk to elevator, retreat, verify unchanged points/inventory/stamps, re-enter and verify active uncleared patrol. Passing native captures inspected at /private/tmp/frus-nara-retreat/. No page errors.
