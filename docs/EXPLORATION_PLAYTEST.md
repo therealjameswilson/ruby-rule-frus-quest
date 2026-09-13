@@ -2,6 +2,22 @@
 
 Local browser verification, 2026-09-13. No public deployment.
 
+## Treasure Reveal
+
+The First Edition's old 400ms fade barely showed the earned book. It now lifts
+to y88 over 240ms, stays visible until the fade begins at 1140ms, and fades over
+400ms. The original four-frame asset, immediate save, +25 reward and south exit
+remain unchanged. No dialogue or movement lock was added.
+
+The earned touch route now checks that the reveal is visible and the player
+can move while it remains on screen. Collection, return sidestep, reload and
+one-copy persistence pass. Its navigation helper needed four-pixel touch
+tolerance after a run stopped three pixels from an aisle waypoint; separate
+door-edge collision probes remain exact. Reward screenshot inspected in
+`/private/tmp/frus-secret-reveal-movement-fixed/`; standard NARA client also
+inspected. Build and 226 files / 1,700 tests pass. This improves the visible
+payoff, but is not evidence of unaided discovery or physical-device performance.
+
 ## Current Footprint Recheck
 
 The subsequent entrance check exposed the same old width in two places:

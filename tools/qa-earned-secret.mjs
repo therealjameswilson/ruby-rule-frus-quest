@@ -52,6 +52,8 @@ try {
     await writeFile(`${out}/${name}.png`, Buffer.from(image.split(',')[1], 'base64'));
   };
   const moveTo = async (x, y, tolerance = 4) => {
+    // Real touch dispatch spans frames; route traversal is not a subpixel probe.
+    if (mobile) tolerance = Math.max(4, tolerance);
     const startingScene = (await state()).scene;
     for (let i = 0; i < 80; i++) {
       const current = await state();
@@ -103,6 +105,12 @@ try {
   const reward = await state();
   assert.equal(reward.sceneProgress.hiddenFirstEditionFound, 1);
   assert.equal(reward.documentPoints, initial.documentPoints + 25);
+  const revealVisible = () => page.evaluate(() => window.game.scene.getScene('HiddenReadingRoomScene').children.list
+    .some(object => object.name === 'first-edition-reveal' && object.active && object.alpha > 0));
+  assert(await revealVisible(), 'The earned book should remain visible during its treasure reveal');
+  await direction('ArrowDown', 150);
+  assert((await state()).player.y > reward.player.y + 4, 'Treasure reveal must not lock movement');
+  assert(await revealVisible(), 'Movement should resume while the book is still visible');
   await moveTo(128, 221);
   await direction('ArrowDown', 100);
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === 'NaraStacksScene');

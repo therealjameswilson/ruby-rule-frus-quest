@@ -303,8 +303,11 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
     setVisibleEntities(["Hidden Reading Room", "Empty Book Stand", "NARA Stacks return threshold"]);
     const collectible = this.collectible;
     if (collectible) {
-      this.tweens.add({ targets: collectible, y: collectible.y - 16, alpha: 0, duration: 400,
-        onUpdate: () => collectible.setY(Math.round(collectible.y)), onComplete: () => collectible.destroy() });
+      collectible.setDepth(901).setName("first-edition-reveal");
+      this.tweens.add({ targets: collectible, y: 88, duration: 240,
+        onUpdate: () => collectible.setY(Math.round(collectible.y)) });
+      this.tweens.add({ targets: collectible, alpha: 0, delay: 1140, duration: 400,
+        onComplete: () => collectible.destroy() });
     }
     this.collectible = undefined;
     this.removeCollectedBookInteraction();

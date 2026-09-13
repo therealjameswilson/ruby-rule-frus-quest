@@ -142,4 +142,24 @@ describe("first edition and matching return door", () => {
     expect(transitionTo).toHaveBeenCalledExactlyOnceWith(scene, "NaraStacksScene", { chapterFrom: "DN2", chapterTo: "DN1" });
     expect(saveGameNow).toHaveBeenCalledOnce();
   });
+
+  it("holds the book visibly without delaying the save or duplicating the reveal", () => {
+    const collectible = { y: 126, setDepth: vi.fn().mockReturnThis(), setName: vi.fn().mockReturnThis(),
+      setY: vi.fn(), destroy: vi.fn() };
+    const tweens = { add: vi.fn() };
+    const scene = Object.assign(readingRoom(), { collectible, tweens });
+    scene.collectFirstEdition();
+    scene.collectFirstEdition();
+    expect(collectible.setName).toHaveBeenCalledExactlyOnceWith("first-edition-reveal");
+    expect(tweens.add).toHaveBeenCalledTimes(2);
+    expect(tweens.add.mock.calls[0][0]).toMatchObject({ targets: collectible, y: 88, duration: 240 });
+    expect(tweens.add.mock.calls[1][0]).toMatchObject({ targets: collectible, alpha: 0, delay: 1140, duration: 400 });
+    expect(saveGameNow).toHaveBeenCalledOnce();
+    expect(gameState.activeDialog).toBeNull();
+    collectible.y = 88.4;
+    tweens.add.mock.calls[0][0].onUpdate();
+    expect(collectible.setY).toHaveBeenCalledWith(88);
+    tweens.add.mock.calls[1][0].onComplete();
+    expect(collectible.destroy).toHaveBeenCalledOnce();
+  });
 });
