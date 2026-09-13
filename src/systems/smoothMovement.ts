@@ -7,8 +7,19 @@ import { setPixelPosition, snapPixel } from "./pixelPerfect";
 // on release or residual motion opposite a newly pressed direction.
 export const PLAYER_MOVEMENT_TUNING = {
   speed: 72,
-  cornerGuideSpeed: 60
+  cornerGuideSpeed: 60,
+  feetWidth: 12,
+  feetHeight: 8,
+  feetOffsetY: -3
 } as const;
+
+export function walkingFeetOverlap(x: number, y: number, solid: { x: number; y: number; width: number; height: number }) {
+  const left = x - PLAYER_MOVEMENT_TUNING.feetWidth / 2;
+  const top = y + PLAYER_MOVEMENT_TUNING.feetOffsetY;
+  // Touching edges are safe: rejecting contact makes tile-wide passages snag.
+  return left < solid.x + solid.width && left + PLAYER_MOVEMENT_TUNING.feetWidth > solid.x
+    && top < solid.y + solid.height && top + PLAYER_MOVEMENT_TUNING.feetHeight > solid.y;
+}
 
 export function resolveWalkingVelocity(dir: { x: number; y: number }, scale = 1) {
   const vector = resolveMovementVector(dir);

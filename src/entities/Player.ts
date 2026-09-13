@@ -11,7 +11,7 @@ import { PLAYER_HURT_MS, PLAYER_IFRAME_MS, toHitboxReadout } from "../systems/co
 import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
-import { frameDeltaSeconds, PLAYER_MOVEMENT_TUNING, resolveFacing, resolveMovementVector, resolveWalkingVelocity, setRenderedPosition, snapRenderedPosition } from "../systems/smoothMovement";
+import { frameDeltaSeconds, PLAYER_MOVEMENT_TUNING, resolveFacing, resolveMovementVector, resolveWalkingVelocity, setRenderedPosition, snapRenderedPosition, walkingFeetOverlap } from "../systems/smoothMovement";
 import { buildWeaponHitbox, WEAPON_VFX_ASSET, WeaponStateController, weaponTiming } from "../systems/weaponState";
 import { CombatClock } from "../systems/combatClock";
 
@@ -438,8 +438,7 @@ export class Player {
 
   private collidesAt(x: number, y: number, solids: Phaser.Geom.Rectangle[]) {
     if (!solids.length) return false;
-    const footBox = new Phaser.Geom.Rectangle(x - 8, y - 3, 16, 8);
-    return solids.some((solid) => Phaser.Geom.Intersects.RectangleToRectangle(footBox, solid));
+    return solids.some((solid) => walkingFeetOverlap(x, y, solid));
   }
 
   private tryCornerNudge(axis: "x" | "y", targetX: number, targetY: number, bounds: MoveBounds, solids: Phaser.Geom.Rectangle[], maxStep: number) {
