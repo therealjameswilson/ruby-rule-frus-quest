@@ -1294,9 +1294,10 @@ export class ArchiveScene extends Phaser.Scene {
       track: (object) => this.track(object),
       depth: 146
     });
+    if (this.collected.has(`secret-${room.id}`)) return;
     this.interactables.push({
       id: `${room.id}-secret-reward`,
-      label: room.id === "C3" ? "Lore card" : "Reliability refill",
+      label: room.id === "C3" ? "FRUS fragment" : "Reliability refill",
       x: 128,
       y: 132,
       radius: 42,
@@ -1307,10 +1308,11 @@ export class ArchiveScene extends Phaser.Scene {
           || !recordArchiveSecret(gameState.sceneProgress, room.id === "C3" ? "C3" : "D2", "collected")) {
           setLatestMessage(`${room.id} secret reward already filed.`);
           this.refreshRoomObjective();
-          this.dialog.show("SECRET", "This hidden room has already yielded its clue.");
+          this.toast.show("REWARD ALREADY FILED", this.player.position, "info");
           return;
         }
         this.collected.add(key);
+        this.interactables = this.interactables.filter(item => item.id !== `${room.id}-secret-reward`);
         addDocumentPoints(room.id === "C3" ? 10 : 6, room.id === "C3" ? "hidden source cache" : "hidden reliability well");
         if (room.id === "D2") {
           adjustReliability(8, "hidden reliability refill");
@@ -1325,7 +1327,6 @@ export class ArchiveScene extends Phaser.Scene {
         }
         retroAudio.confirm();
         this.showSecretRewardCue(room.id);
-        this.dialog.show("SECRET", room.id === "C3" ? "A cover fragment was filed where only a careful reader would look." : "The well restores confidence because the check was physical.");
         this.refreshRoomObjective();
         saveGameNow();
       }

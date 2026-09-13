@@ -248,15 +248,22 @@ try {
       await walk(128, 144); await interact();
       await go('south', 'D1'); await go('east', 'D2');
     }
-    await walk(128, 160); await interact(); await shot(`${reward}-collected`);
+    await walk(128, 160); await press('Space'); await page.waitForTimeout(250);
+    assert.equal((await state()).mode, 'explore', 'The reward celebration must not require a dialogue dismissal');
+    await shot(`${reward}-collected`);
     const collected = await state();
+    assert(await page.evaluate(() => !window.game.scene.getScene('ArchiveScene').interactables.some(item => item.id.endsWith('-secret-reward'))), 'Collected treasure stops advertising interaction');
+    await hold('ArrowLeft', 140);
+    assert((await state()).player.x < collected.player.x - 4, 'The player can leave during the reward celebration');
     if (cacheLoop) assert(collected.volumeFragments.includes('Hidden Cache Fragment'));
     await context.storageState({ path: `${out}/earned-${reward}-storage.json` });
     await page.reload(); await page.waitForFunction(() => window.game?.scene.isActive('TapToStartScene'));
     await press('Enter'); await page.waitForFunction(() => window.game.scene.isActive('ArchiveScene'));
     await page.waitForTimeout(900);
     assert.equal((await state()).roomTraversal.currentRoomId, cacheLoop ? 'C3' : 'D2');
-    await interact(); await shot(`${reward}-repeat-after-continue`);
+    await press('Space'); await page.waitForTimeout(250);
+    assert.equal((await state()).mode, 'explore', 'An already filed reward must not open a repeat dialogue');
+    await shot(`${reward}-repeat-after-continue`);
     assert.equal((await state()).documentPoints, collected.documentPoints, 'Hidden treasure must award points only once across Continue');
     if (cacheLoop) {
       assert.deepEqual((await state()).volumeFragments, collected.volumeFragments);
