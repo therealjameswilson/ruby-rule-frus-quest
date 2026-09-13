@@ -59,6 +59,18 @@ describe("swing tool identity", () => {
 });
 
 describe("encounter readiness cues", () => {
+  it("replaces combat advice only after the final gate is cleared", () => {
+    const ui = new UIScene() as unknown as { gameplayCombatCue(): { text: string } | null };
+    gameState.visibleThreats = [{ label: "DANN-E ROOM GATE", x: 128, y: 32,
+      roomClear: { roomId: "nara_stacks", defeated: 2, required: 2, cleared: true } }];
+    expect(ui.gameplayCombatCue()?.text).toBe("EXPLORE OPEN ROUTES");
+    gameState.nearestInteractable = "Catalog Desk";
+    expect(ui.gameplayCombatCue()).toBeNull();
+    gameState.nearestInteractable = null;
+    gameState.visibleThreats[0].roomClear!.cleared = false;
+    expect(ui.gameplayCombatCue()).toBeNull();
+  });
+
   it("names the upcoming review wave without clipping", () => {
     const scene = new GameplayMapScene();
     Object.assign(scene, {

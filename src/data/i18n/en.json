@@ -3,6 +3,7 @@
     "encounterEvade": "EVADE; FIND {tool}",
     "encounterEquip": "TOOLS: EQUIP {tool}",
     "encounterCounter": "COUNTER WITH {tool}",
+    "encounterExplore": "EXPLORE OPEN ROUTES",
     "readingRoomBook": "BOOK: CENTER AISLE",
     "readingRoomExit": "EXIT: SOUTH DOOR",
     "restoreChronology": "RESTORE CHRONOLOGY",

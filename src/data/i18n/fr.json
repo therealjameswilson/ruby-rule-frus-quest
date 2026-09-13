@@ -95,6 +95,7 @@
     "encounterEvade": "ESQUIVE; TROUVE {tool}",
     "encounterEquip": "EQUIPE {tool}",
     "encounterCounter": "CONTRE AVEC {tool}",
+    "encounterExplore": "EXPLORE LES PASSAGES",
     "annotationExits": "NARA NORD / ARCHIVES SUD",
     "readingRoomBook": "LIVRE: ALLEE CENTRALE",
     "readingRoomExit": "SORTIE: PORTE AU SUD",

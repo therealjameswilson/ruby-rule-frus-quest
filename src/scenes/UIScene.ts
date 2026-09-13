@@ -358,6 +358,9 @@ export class UIScene extends Phaser.Scene {
     const player = gameState.player;
     const target = threats.reduce<typeof threats[number] | undefined>((nearest, t) => !nearest
       || Math.hypot(t.x - player.x, t.y - player.y) < Math.hypot(nearest.x - player.x, nearest.y - player.y) ? t : nearest, undefined);
+    if (!target && gameState.visibleThreats.some(threat => threat.roomClear?.cleared)) {
+      return { text: getString("hud.encounterExplore"), badge: getPrimaryActionBadge() };
+    }
     const tool = target?.weakness;
     if (tool !== "citation_stamp" && tool !== "red_pencil" && tool !== "review_folder") return null;
     const label = tool === "citation_stamp" ? "STAMP" : tool === "red_pencil" ? "PENCIL" : "FOLDER";

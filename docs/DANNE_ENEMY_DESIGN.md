@@ -1,5 +1,18 @@
 # DANN-E Enemy Design
 
+## Victory Handoff
+
+After final room clearance, the compact objective reads `ROUTES OPEN` and the
+action band invites exploration instead of repeating a tool attack. Nearby
+interactions take priority; a pending wave does not get the exploration cue.
+NARA then points to `TO CATALOG DESK`. English, Spanish and French exploration
+strings are present. No room-clear requirements or rewards changed.
+
+The two-wave browser replay asserts the rendered objective and cleared-room
+cue, then walks out. Final screenshot inspected at
+`/private/tmp/frus-victory-handoff-final/exploration-handoff.png` (2026-09-13).
+This debug-tool encounter check is not an earned-route or novice-playtest claim.
+
 ## Swing Identity Contract
 
 Enemy weakness checks use the tool captured by the player's weapon controller

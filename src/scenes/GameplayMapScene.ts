@@ -197,7 +197,7 @@ const MAP_LABELS: Record<GameplayMapKey, string> = {
 
 const MAP_OBJECTIVES: Record<GameplayMapKey, string> = {
   historian_office: "Visit the Archive Guide or inspect the FRUS bookshelf.",
-  nara_stacks: "Check the catalog desk and note the gated Red Zone.",
+  nara_stacks: "TO CATALOG DESK",
   foggy_bottom: "Stay on the sidewalks and enter the Truman Building.",
   west_wing: "Find the Situation Room gate and review room entrances.",
   black_vault: "Approach the obelisk core when the record is ready.",
@@ -766,6 +766,8 @@ export class GameplayMapScene extends Phaser.Scene {
         : "Room cleared: DANN-E pressure resolved."
     );
     if (!wasCleared && status.cleared) {
+      setObjective("ROUTES OPEN");
+      this.objectiveOverrideMsRemaining = 1150;
       retroAudio.confirm();
       applyHitShake(this, "boss-defeat", 0.42);
       this.showDanneBanner("RECORD CLEARED", "ROUTES UNLOCKED", PALETTE.openNetGreen);

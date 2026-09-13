@@ -95,6 +95,7 @@
     "encounterEvade": "ESQUIVA; BUSCA {tool}",
     "encounterEquip": "EQUIPA {tool}",
     "encounterCounter": "CONTRAATACA: {tool}",
+    "encounterExplore": "EXPLORA RUTAS ABIERTAS",
     "annotationExits": "NARA NORTE / ARCHIVO SUR",
     "readingRoomBook": "LIBRO: PASILLO CENTRAL",
     "readingRoomExit": "SALIDA: PUERTA SUR",

@@ -83,6 +83,12 @@ try {
  }
  const cleared=await state();await shot('cleared');
  assert(cleared.danneCombat.roomClear.cleared,'Both waves must clear');assert(changedTool);
+ await page.waitForTimeout(1300);
+ const handoff=await state();
+ assert.equal(handoff.objective,'TO CATALOG DESK');
+ assert.equal(await page.evaluate(()=>window.game.scene.getScene('UIScene').questBandText.text),'TO CATALOG DESK');
+ if(!handoff.nearestInteractable)assert.equal(await page.evaluate(()=>window.game.scene.getScene('UIScene').questBandCueText.text),'EXPLORE OPEN ROUTES');
+ await shot('exploration-handoff');
  if(process.env.FRUS_QA_RETREAT==='1')assert(checkpointVerified,'Must exercise physical retreat and checkpoint re-entry');
  assert.deepEqual(cleared.documentCandidates,before.documentCandidates);
  assert.deepEqual(cleared.standardsViolations,before.standardsViolations);
