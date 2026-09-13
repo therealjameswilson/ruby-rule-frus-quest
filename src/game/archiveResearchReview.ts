@@ -20,7 +20,8 @@ export const ARCHIVE_MEANING_REVIEW = {
   context: 'Practice cable: "Talks might resume."',
   options: [
     { key: "A", label: "Talks will resume.", value: "certainty" },
-    { key: "B", label: "Talks might resume.", value: "uncertainty" }
+    { key: "B", label: "Talks might resume.", value: "uncertainty" },
+    { key: "C", label: "Back to the room", value: "back" }
   ],
   correctValue: "uncertainty",
   successMessage: "MEANING PRESERVED",

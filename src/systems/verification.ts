@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { clearChoiceState, setChoiceState, setLatestMessage } from "../game/state";
 import type { ChoiceOption } from "../game/types";
-import { bindPointerDown, getInput } from "../input/InputState";
+import { bindPointerDown, getInput, swallowNextInputFrame } from "../input/InputState";
 import { retroAudio } from "./audio";
 import { choiceLayout } from "./choiceLayout";
 
@@ -24,6 +24,7 @@ export class ChoicePrompt {
   private readonly optionObjects: Phaser.GameObjects.GameObject[] = [];
   private options: ChoiceOption[] = [];
   private onChoose?: ChoiceCallback;
+  private onCancel?: () => void;
   private readonly settleMs: number;
   private readyAt = 0;
   private inputArmed = true;
@@ -54,12 +55,13 @@ export class ChoicePrompt {
     return this.container.visible;
   }
 
-  show(title: string, options: ChoiceOption[], onChoose: ChoiceCallback, contextFontSize: 6 | 8 = 6) {
+  show(title: string, options: ChoiceOption[], onChoose: ChoiceCallback, contextFontSize: 6 | 8 = 6, onCancel?: () => void) {
     this.readyAt = this.scene.time.now + this.settleMs;
     this.inputArmed = this.settleMs === 0;
     this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.options = options;
     this.onChoose = onChoose;
+    this.onCancel = onCancel;
     const layout = choiceLayout(title, options, contextFontSize);
     this.box.setPosition(128, layout.top + layout.height / 2).setSize(238, layout.height);
     this.border.setPosition(128, layout.top + layout.height / 2).setSize(238, layout.height);
@@ -100,6 +102,13 @@ export class ChoicePrompt {
         || input.confirmJustPressed || input.cancelJustPressed || input.choiceAJustPressed
         || input.choiceBJustPressed || input.choiceCJustPressed || input.choiceDJustPressed;
       if (this.scene.time.now >= this.readyAt && !pressed) this.inputArmed = true;
+      return;
+    }
+    if (this.onCancel && (input.pauseJustPressed || input.menuJustPressed)) {
+      const cancel = this.onCancel;
+      this.hide();
+      swallowNextInputFrame();
+      cancel();
       return;
     }
     if (input.aJustPressed || input.confirmJustPressed || input.choiceAJustPressed) this.choose("A");

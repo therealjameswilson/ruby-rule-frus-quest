@@ -1,10 +1,10 @@
 import type Phaser from "phaser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChoicePrompt } from "./verification";
-import { bindPointerDown } from "../input/InputState";
+import { bindPointerDown, swallowNextInputFrame } from "../input/InputState";
 
-const controls = vi.hoisted(() => ({ a: false, b: false, aJustPressed: false, bJustPressed: false }));
-vi.mock("../input/InputState", () => ({ getInput: () => controls, bindPointerDown: vi.fn() }));
+const controls = vi.hoisted(() => ({ a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false }));
+vi.mock("../input/InputState", () => ({ getInput: () => controls, bindPointerDown: vi.fn(), swallowNextInputFrame: vi.fn() }));
 vi.mock("./audio", () => ({ retroAudio: { confirm: vi.fn() } }));
 vi.mock("../game/state", () => ({ clearChoiceState: vi.fn(), setChoiceState: vi.fn(), setLatestMessage: vi.fn() }));
 vi.mock("phaser", () => ({ default: { Display: { Color: { HexStringToColor: () => ({ color: 0 }) } } } }));
@@ -23,7 +23,7 @@ class Visual {
   destroy() {}
 }
 
-function fixture(settleMs = 300) {
+function fixture(settleMs = 300, onCancel?: () => void) {
   const clock = { now: 1000 };
   const scene = {
     time: clock,
@@ -35,7 +35,7 @@ function fixture(settleMs = 300) {
   const show = () => prompt.show("Review interrupted.", [
     { key: "A", label: "Retry", value: "retry" },
     { key: "B", label: "Leave", value: "leave" }
-  ], callback);
+  ], callback, 6, onCancel);
   show();
   return { prompt, callback, clock, show };
 }
@@ -43,7 +43,38 @@ function fixture(settleMs = 300) {
 describe("choice transition input guard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.assign(controls, { a: false, b: false, aJustPressed: false, bJustPressed: false });
+    Object.assign(controls, { a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false });
+  });
+
+  it.each(["pauseJustPressed", "menuJustPressed"] as const)("cancels opt-in reviews through %s without submitting B", key => {
+    const cancel = vi.fn();
+    const { prompt, callback } = fixture(0, cancel);
+    controls[key] = true;
+    controls.cancelJustPressed = true;
+    prompt.updateInput();
+    expect(prompt.active).toBe(false);
+    expect(callback).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledOnce();
+    expect(swallowNextInputFrame).toHaveBeenCalledOnce();
+  });
+
+  it("still submits a deliberate B face-button answer in a cancellable review", () => {
+    const cancel = vi.fn();
+    const { prompt, callback } = fixture(0, cancel);
+    controls.bJustPressed = controls.cancelJustPressed = true;
+    prompt.updateInput();
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({ key: "B" }));
+    expect(cancel).not.toHaveBeenCalled();
+  });
+
+  it("does not carry cancellation into another existing choice shown by the same prompt", () => {
+    const cancel = vi.fn();
+    const { prompt, callback } = fixture(0, cancel);
+    prompt.show("Existing choice", [{ key: "B", label: "Leave", value: "leave" }], callback);
+    controls.pauseJustPressed = controls.cancelJustPressed = true;
+    prompt.updateInput();
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({ key: "B" }));
+    expect(cancel).not.toHaveBeenCalled();
   });
 
   it("does not interpret the combat B edge as an immediate retreat", () => {

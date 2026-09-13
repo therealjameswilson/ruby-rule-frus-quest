@@ -156,6 +156,13 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(gate).toContain('this.currentRoomId === "B2" && !this.specialistDecisionMade');
   });
 
+  it("gives the player time to move after leaving the meaning review", () => {
+    const resume = methodSource("resumeMeaningReview", "useGoldenRuleGate");
+    expect(resume).toContain("this.time.now + 600");
+    expect(archiveSceneSource).toContain("this.time.now >= this.reviewResumeUntil");
+    expect(archiveSceneSource).toContain("Math.max(this.wallContactCooldown, this.reviewResumeUntil)");
+  });
+
   it("files the referral tray without a modal and retires the completed interaction", () => {
     const render = methodSource("renderStacksRoom", "renderProofChamber");
     expect(render).toContain("if (this.referralManifestDelivered && this.agencyTimerResolved) return;");

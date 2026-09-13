@@ -32,7 +32,7 @@ try {
   };
   const press = async key => {
     if (!mobile) return page.keyboard.press(key, { delay: 50 });
-    const point = await canvasPoint(...(key === 'Enter' ? [128, 120] : key === 'KeyX' ? [174, 216] : [225, 205]));
+    const point = await canvasPoint(...(key === 'Enter' ? [128, 120] : key === 'Escape' ? [224, 16] : key === 'KeyX' ? [174, 216] : [225, 205]));
     await page.touchscreen.tap(point.x, point.y);
   };
   const hold = async (key, ms) => {
@@ -131,10 +131,34 @@ try {
     const pendingReview = await state();
     assert.match(pendingReview.choice?.title ?? '', /Which wording keeps the meaning/);
     assert.equal(pendingReview.documentPoints, initial.documentPoints + 6, 'Opening the review does not award approval');
+    await press('Escape'); await page.waitForTimeout(250);
+    assert.equal((await state()).documentPoints, pendingReview.documentPoints, 'Escape/Start must cancel review, not select the correct answer');
+    assert(!(await state()).choice);
+    assert.equal((await state()).mode, 'explore', 'Cancel must not open a pause menu underneath');
+    assert.equal((await state()).objective, 'ASK SPECIALIST');
+    await press('Space'); await page.waitForTimeout(250);
+    assert((await state()).choice, 'Cancelled review can be reopened');
+    const backCenter = await page.evaluate(() => {
+      const bounds = window.game.scene.getScene('ArchiveScene').researchChoice.optionObjects[4].getBounds();
+      return { x: bounds.centerX, y: bounds.centerY };
+    });
+    const backPoint = await canvasPoint(backCenter.x, backCenter.y);
+    if (mobile) await page.touchscreen.tap(backPoint.x, backPoint.y);
+    else await page.mouse.click(backPoint.x, backPoint.y);
+    await page.waitForTimeout(250); await shot('proof-review-cancelled');
+    assert(!(await state()).choice, 'Visible Back option closes the review');
+    assert.equal((await state()).documentPoints, pendingReview.documentPoints);
+    assert.equal((await state()).playerCombat.weapon.swingId, pendingReview.playerCombat.weapon.swingId);
+    const cancelledPosition = (await state()).player;
+    await hold('ArrowRight', 100);
+    assert((await state()).player.x > cancelledPosition.x + 2, 'Recovery after cancelling must not lock movement');
+    await walk(72, 92);
+    await press('Space'); await page.waitForTimeout(250);
+    const beforeWrongAnswer = await state();
     await press('Space'); await page.waitForTimeout(250); await shot('proof-meaning-retry');
     const retry = await state();
     assert.equal(retry.documentPoints, pendingReview.documentPoints, 'Overstating certainty must not earn approval');
-    assert.equal(retry.reliability, pendingReview.reliability, 'A practice mistake does not cost reliability');
+    assert.equal(retry.reliability, beforeWrongAnswer.reliability, 'A practice mistake does not cost reliability');
     assert(retry.visibleThreats.some(t => t.label === 'AMBIGUOUS'));
     assert.equal(retry.objective, 'ASK SPECIALIST');
     await press('Space'); await page.waitForTimeout(250);

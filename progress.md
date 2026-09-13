@@ -2,6 +2,13 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Safe meaning-review cancellation (2026-09-12):
+  - Reproduced Escape selecting correct answer B and awarding three points. ChoicePrompt now supports an opt-in cancel callback through pause/menu input, swallowing the closing input. B face-button answer selection remains distinct; other existing prompts retain their behavior, including when reusing the same instance. This review opts in and also offers a visible Back row.
+  - Touch replay exposed an immediate enemy hit after returning from the review, making a wrong practice answer appear penalized. Added a 600 ms recovery window for this review only, suppressing DANN-E pressure and wall contact without freezing movement or awarding anything. Wrong-answer accounting now compares immediately before/after the answer, not across intervening active-room time.
+  - Browser QA verifies Escape/Start and visible Back cancellation, reopening, wrong answer, deliberate B approval, no stray swing/pause, Continue with approval and exit. Keyboard + portrait/landscape touch pass. Landscape explicitly checks movement after cancel; both phone modes retain simultaneous movement/tool input. No browser errors; 201 -> 213 points only for actual clears.
+  - Evidence: /private/tmp/frus-review-escape-before/ (award bug), /private/tmp/frus-review-escape-fixed/, /private/tmp/frus-review-cancel-grace/, /private/tmp/frus-review-cancel-landscape/. Native review/retry screenshots inspected. Installed gameplay client native movement checked in /private/tmp/frus-review-grace-client/.
+  - Full suite: 202 files / 1,544 tests pass. Build passes with existing chunk warning. Local, not deployed; physical iPhone unverified. Other prompts' Escape semantics still need per-caller cancellation audits before changing defaults.
+
 - Source-meaning review decision (2026-09-12):
   - B2's specialist now asks the player to compare two readings of an explicitly fictional practice cable. Changing might to will is rejected with a short hint and no reliability penalty; preserving uncertainty clears the ambiguity wall through the existing save/reward path. Opening the review alone no longer awards approval. Existing saved approvals remain valid.
   - Reuses ChoicePrompt and typed review definitions in archiveResearchReview.ts. One compact question/source/two-option layout; no new assets or dependencies. Successful B selection does not also swing the equipped tool. Existing choice update branch pauses movement and DANN-E pressure while reading.

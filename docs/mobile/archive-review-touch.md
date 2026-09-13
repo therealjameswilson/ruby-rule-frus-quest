@@ -11,6 +11,7 @@ This is functional input coverage, not physical Safari, audio-latency or FPS cer
 | Examine document, Continue, retain both readings | Pass | Pass |
 | Complete specialist review and record decision | Pass | Pass |
 | Reject overstated wording, retry faithfully, no accidental B swing | Pass | Pass |
+| Start or visible Back cancels without approval or opening pause | Pass | Pass |
 | Walk east into the next room | Pass | Pass |
 | Hold D-pad and B simultaneously; move during tool windup | Pass | Pass |
 | Release both fingers without stuck input | Pass | Pass |
@@ -43,6 +44,10 @@ telemetry showed correct directions, so no runtime movement change was made.
 
 ## Evidence And Limits
 
+- Cancellation regression: `/private/tmp/frus-review-cancel-grace/` (portrait)
+  and `/private/tmp/frus-review-cancel-landscape/` (landscape). The latter also
+  verifies movement during the 600 ms post-review recovery window. Keyboard
+  Escape and mouse Back: `/private/tmp/frus-review-escape-fixed/`.
 - Editorial wording decision replay: `/private/tmp/frus-meaning-touch/` and
   `/private/tmp/frus-meaning-landscape/`; the landscape run also reloads after
   correct approval and verifies the approval and its points persist.

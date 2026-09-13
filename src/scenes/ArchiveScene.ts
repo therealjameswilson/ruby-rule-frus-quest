@@ -461,6 +461,7 @@ export class ArchiveScene extends Phaser.Scene {
   private agencyTimerResolved = false;
   private ambiguousSplit = false;
   private specialistDecisionMade = false;
+  private reviewResumeUntil = 0;
   private goldenRuleDecisionMade = false;
 
   constructor() {
@@ -708,7 +709,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private updateDanneLurker(delta: number, canPressure = true) {
-    const result = this.danneLurker.update(this.time.now, delta, this.player.position, canPressure && this.currentRoomId !== "AS", this.player.combatReadout);
+    const result = this.danneLurker.update(this.time.now, delta, this.player.position,
+      canPressure && this.currentRoomId !== "AS" && this.time.now >= this.reviewResumeUntil, this.player.combatReadout);
     if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted archive verification.")) {
       this.refreshRoomObjective();
       this.reliability.update();
@@ -2126,16 +2128,25 @@ export class ArchiveScene extends Phaser.Scene {
     this.interactionPrompt.update(0, null);
     this.hintText.setText("");
     this.researchChoice.show(`${review.question}\n\n${review.context}`, [...review.options], option => {
+      if (option.value === "back") {
+        this.resumeMeaningReview();
+        return;
+      }
       const approved = option.value === review.correctValue;
       if (approved) {
         this.specialistDecisionMade = true;
         this.clearEnemyById("ambiguous-flag", "Source uncertainty preserved by human review.");
       } else retroAudio.warning();
-      this.refreshRoomObjective();
+      this.resumeMeaningReview();
       const message = approved ? review.successMessage : review.failureMessage;
       setLatestMessage(message);
       this.toast.show(message, this.player.position, approved ? "info" : "warn");
-    }, 8);
+    }, 8, () => this.resumeMeaningReview());
+  }
+
+  private resumeMeaningReview() {
+    this.reviewResumeUntil = this.time.now + 600;
+    this.refreshRoomObjective();
   }
 
   private useGoldenRuleGate() {
@@ -2406,7 +2417,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.syncWallState();
     this.refreshReadyWallCues();
     const activeWall = this.bureaucraticWalls.find((wall) => wall.isTouching(this.player.position, 19));
-    if (!activeWall || this.time.now < this.wallContactCooldown) return;
+    if (!activeWall || this.time.now < Math.max(this.wallContactCooldown, this.reviewResumeUntil)) return;
     const definition = this.activeEnemyDefs.get(activeWall.id);
     if (this.wallReadyForProcess(definition)) {
       this.wallContactCooldown = this.time.now + 620;
