@@ -22,6 +22,7 @@ interface BlackBarProjectile {
 // The stamp telegraphs its landing zone before it can redact you, so a player
 // standing on the drop has a fair window to step clear (ALTTP AoE tell).
 export const DRONE_STAMP_TIMING: TelegraphTiming = { windupMs: 400, activeMs: 600, recoveryMs: 180 };
+export const DRONE_ENTRY_GRACE_MS = 800;
 
 export class RedactorDrone extends Enemy {
   private nextStampAt = 0;
@@ -29,7 +30,7 @@ export class RedactorDrone extends Enemy {
   private projectiles: BlackBarProjectile[] = [];
   private facing: "down" | "up" | "left" | "right" = "down";
 
-  constructor(scene: Phaser.Scene, x: number, y: number, waypoints: Position[], private readonly getSolids: () => readonly Phaser.Geom.Rectangle[] = () => []) {
+  constructor(scene: Phaser.Scene, x: number, y: number, waypoints: Position[], private readonly getSolids: () => readonly Phaser.Geom.Rectangle[] = () => [], initialAttackDelayMs = 0) {
     unlockCodexEntry("enemy-redactor-drone");
     super(scene, x, y, {
       label: "Redactor Drone",
@@ -44,6 +45,9 @@ export class RedactorDrone extends Enemy {
       waypointTolerance: 3,
       health: 2
     });
+    // Delay only the first attack after room entry; patrol and player control
+    // stay live, and paused time does not spend the arrival reaction window.
+    this.nextStampAt = Math.max(0, initialAttackDelayMs);
     this.sprite.setOrigin(0.5, 0.82).setScale(0.18);
     this.playWalk("down");
   }

@@ -57,7 +57,7 @@ import type { Interactable, Position } from "../game/types";
 import { Player } from "../entities/Player";
 import { CensorshipWraith } from "../entities/enemies/CensorshipWraith";
 import { DanneBoss } from "../entities/enemies/DanneBoss";
-import { RedactorDrone } from "../entities/enemies/RedactorDrone";
+import { RedactorDrone, DRONE_ENTRY_GRACE_MS } from "../entities/enemies/RedactorDrone";
 import { MarineSecurityGuard } from "../entities/npcs/MarineSecurityGuard";
 import { getInput, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
@@ -854,7 +854,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
     if (this.geometry.sceneKey === "NaraStacksScene") {
       this.redactorDrones = (this.geometry.patrolRoutes ?? []).map((route) => {
         const [start, ...rest] = route.points;
-        return new RedactorDrone(this, start.x, start.y, [start, ...rest], () => this.solids);
+        return new RedactorDrone(this, start.x, start.y, [start, ...rest], () => this.solids, DRONE_ENTRY_GRACE_MS);
       });
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene" && !gameState.sceneProgress.blackVaultBossCleared) {

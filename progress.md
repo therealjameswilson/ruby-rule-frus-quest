@@ -2,6 +2,12 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Fair NARA return window (2026-09-13):
+  - Previous turn progressed through a natural optional route. Tested the next concern rather than assuming it: --escape-return failed twice using actual portrait-touch input after secret-room exit. Diagnostic arrival at (204,94) already had a stamp with 384 ms left; sidestep took a hit. /private/tmp/frus-secret-return-observed/.
+  - NARA supplies an 800 ms initial attack delay to RedactorDrone. Patrol/player motion stay active; normal warnings and repeat timing unchanged. Pause does not spend combat-time grace. No changes to bosses, rewards or saves; no permanent shield.
+  - Same natural-entry touch route passes after change: escape (204,94) -> (161,94), no invulnerability/hit state, points remain 226, reward/return/reload preserved. /private/tmp/frus-secret-return-protected/. Native before/after captures inspected. Added regression for moving patrol during grace, pause and normal first attack; installed NARA gameplay client capture inspected at /private/tmp/frus-nara-entry-client/.
+  - Build passes with existing chunk warning. Local only. Next: evaluate room-to-room rhythm with normal exploratory play, including choosing whether to fight or evade these optional patrols, rather than relying solely on optimized test routes.
+
 - Natural optional route and completed-room guidance (2026-09-13):
   - Previous turn was progress with safe-room hints and touch checks. Closed its debug-placement gap: keyboard backtracking from earned pre-boss save through S1/E1/R2/R1/N2/N1/A1/AS reaches NARA with 201 points and Review Folder intact. That arrival save passes full touch secret discovery/reward/return/reload with debugScenePlacement false, 226 points and one first-edition copy. Added --natural-entry guard using actual saved visit flag.
   - Native AS screenshot exposed stale NOTES / TABLE SOUTH after completed notes; changed HUD to NARA NORTH / ARCHIVE SOUTH only when readAnnotationPacket reports complete. Unfiled notes and nearest-interaction priority preserved. Three languages updated; four behavioral tests added.

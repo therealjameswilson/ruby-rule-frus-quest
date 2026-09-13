@@ -101,6 +101,17 @@ try {
   await moveTo(128, 221);
   await direction('ArrowDown', 100);
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === 'NaraStacksScene');
+  if (process.argv.includes('--escape-return')) {
+    const arrival = await state();
+    assert.equal(arrival.playerCombat.invulnerable, false, 'Return must not land on an immediate hit');
+    await direction('ArrowLeft', 550);
+    const escaped = await state();
+    await writeFile(`${out}/return-escape.json`, JSON.stringify({ arrival, escaped }, null, 2));
+    await shot('return-escaped');
+    assert(escaped.player.x < arrival.player.x - 20, 'Return control must let the player step clear');
+    assert.equal(escaped.playerCombat.invulnerable, false, 'A prompt sidestep must avoid the arrival stamp');
+    assert.equal(escaped.documentPoints, reward.documentPoints);
+  }
   await page.waitForTimeout(800);
   await shot('returned');
   await page.reload();
@@ -116,7 +127,7 @@ try {
   await shot('continued');
   assert.deepEqual(errors, []);
   await writeFile(`${out}/earned-storage.json`, JSON.stringify(await context.storageState(), null, 2));
-  await writeFile(`${out}/result.json`, JSON.stringify({ mobile, debugScenePlacement, toolEarned: true, beforePoints: initial.documentPoints,
+  await writeFile(`${out}/result.json`, JSON.stringify({ mobile, debugScenePlacement, returnEscapeChecked: process.argv.includes('--escape-return'), toolEarned: true, beforePoints: initial.documentPoints,
     afterPoints: reward.documentPoints, discovered: true, collected: true, errors }, null, 2));
   console.log('Earned Folder opens the physical shelf; First Edition +25; return to NARA succeeds');
 } finally { await browser.close(); }

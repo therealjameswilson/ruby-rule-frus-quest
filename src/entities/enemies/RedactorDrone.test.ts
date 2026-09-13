@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type Phaser from "phaser";
 import type { Player } from "../Player";
-import { RedactorDrone, DRONE_STAMP_TIMING } from "./RedactorDrone";
+import { RedactorDrone, DRONE_STAMP_TIMING, DRONE_ENTRY_GRACE_MS } from "./RedactorDrone";
 
 const geometry = vi.hoisted(() => ({ blocked: false }));
 vi.mock("phaser", () => ({ default: {
@@ -34,7 +34,7 @@ function node(x = 0, y = 0) {
   };
 }
 
-function encounter() {
+function encounter(initialAttackDelayMs = 0) {
   const rectangles: ReturnType<typeof node>[] = [];
   const texts: Array<{ text: string; node: ReturnType<typeof node> }> = [];
   const scene = { textures: { exists: () => false }, anims: { exists: () => false }, tweens: { add: vi.fn(), getTweensOf: () => [] },
@@ -42,7 +42,7 @@ function encounter() {
       rectangle: (x: number, y: number) => { const n = node(x, y); rectangles.push(n); return n; },
       text: (x: number, y: number, text: string) => { const n = node(x, y); texts.push({ text, node: n }); return n; } } };
   let solids = [{} as Phaser.Geom.Rectangle];
-  const drone = new RedactorDrone(scene as unknown as Phaser.Scene, 128, 152, [{ x: 128, y: 152 }, { x: 160, y: 152 }], () => solids);
+  const drone = new RedactorDrone(scene as unknown as Phaser.Scene, 128, 152, [{ x: 128, y: 152 }, { x: 160, y: 152 }], () => solids, initialAttackDelayMs);
   const player = { position: { x: 128, y: 153 }, takeHit: vi.fn() };
   let time = 0;
   const tick = (ms: number, active = true) => {
@@ -54,6 +54,22 @@ function encounter() {
 beforeEach(() => { geometry.blocked = false; });
 
 describe("live Redactor Drone stamp loop", () => {
+  it("patrols during entry grace, preserves it through pause, then gives the normal warning", () => {
+    const { drone, player, tick } = encounter(DRONE_ENTRY_GRACE_MS);
+    const start = drone.position;
+    tick(DRONE_ENTRY_GRACE_MS - 20);
+    expect(drone.position).not.toEqual(start);
+    expect(drone.stampReadout).toEqual([]);
+    tick(5000, false);
+    expect(drone.stampReadout).toEqual([]);
+    expect(player.takeHit).not.toHaveBeenCalled();
+    tick(20);
+    expect(drone.stampReadout[0].phase).toBe("windup");
+    tick(DRONE_STAMP_TIMING.windupMs - 20);
+    expect(player.takeHit).not.toHaveBeenCalled();
+    tick(20);
+    expect(player.takeHit).toHaveBeenCalledOnce();
+  });
   it("marks the feet, grants a complete windup, and hits a stationary player once", () => {
     const { drone, player, tick } = encounter();
     tick(20);
