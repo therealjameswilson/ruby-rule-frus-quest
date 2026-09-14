@@ -33,6 +33,11 @@ try {
  await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='SilentReadScene');await page.waitForTimeout(700);
  assert.equal((await state()).sceneProgress.silentReadReviewStep,5);await shot('arrival');
+ if(process.argv.includes('--wrong-desk')){
+  await move(192,140);await key();await shot('wrong-desk-correction');
+  assert.equal((await state()).sceneProgress.silentReadReviewStep,5);
+  assert.equal(await page.evaluate(()=>window.game.scene.getScene('SilentReadScene').toast.text.text),'USE CONSULT DESK');
+ }
  await move(96,132);await move(64,132);await key();await shot('margin-question');
  // Generic choices are directly tappable; the floating-pad origin overlaps
  // the bottom answer, so do not simulate menu navigation through that area.

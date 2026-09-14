@@ -6,9 +6,6 @@ import { DanneNpc } from "./DanneNpc";
 const JUNIOR_COMPILER_ASSET = DANNE_RUNTIME_SPRITE_ASSETS.find((asset) => asset.entityId === "junior-compiler")!;
 
 export class JuniorCompiler extends DanneNpc {
-  private nextPoseAt = 0;
-  private reading = false;
-
   constructor(scene: Phaser.Scene, x: number, y: number) {
     unlockCodexEntry("npc-junior-compiler");
     super(scene, JUNIOR_COMPILER_ASSET, "Junior Compiler", x, y, {
@@ -17,14 +14,8 @@ export class JuniorCompiler extends DanneNpc {
       labelY: 22,
       shadowY: 16
     });
-  }
-
-  override update(timeMs: number) {
-    super.update(timeMs);
-    if (timeMs < this.nextPoseAt) return;
-    this.nextPoseAt = timeMs + 1500;
-    this.reading = !this.reading;
-    this.play(this.reading ? "attack" : "walk-down", !this.reading);
+    // Keep the desk colleague visibly reading, distinct from the compiler hero.
+    this.play("attack");
   }
 
   dialogLines() {

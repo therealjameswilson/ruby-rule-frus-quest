@@ -98,7 +98,9 @@ try {
   if ((await state()).scene === 'NaraStacksScene') await action();
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).scene === 'HiddenReadingRoomScene');
   await page.waitForTimeout(1600);
-  await moveTo(128, 148);
+  // The collectible has a forgiving interaction radius; touch need not land
+  // on an exact floor pixel before claiming it.
+  await moveTo(128, 148, 8);
   await action(); await page.waitForTimeout(500);
   await page.waitForFunction(() => window.game.scene.getScene('UIScene').questBandCueText.text === 'EXIT: SOUTH DOOR');
   await shot('reward');

@@ -1,6 +1,17 @@
 import type { GameplayMapKey } from "../assets/registry";
 import { ITEM_REGISTRY, PALETTE, type ProcessItemId } from "./constants";
 
+export const GAMEPLAY_MAP_SHORT_NAMES: Record<GameplayMapKey, string> = {
+  historian_office: "HISTORIAN OFFICE",
+  nara_stacks: "NARA II STACKS",
+  foggy_bottom: "FOGGY BOTTOM",
+  west_wing: "WHITE HOUSE WING",
+  black_vault: "BLACK VAULT",
+  frus_floor: "FRUS PRODUCTION",
+  embassy: "EMBASSY COMPOUND",
+  capitol_hill: "CAPITOL HEARING"
+};
+
 export interface GameplayMapFlowStep {
   code: string;
   title: string;
