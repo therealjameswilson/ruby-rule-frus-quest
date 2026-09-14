@@ -38,7 +38,7 @@ async function move(x,y){
  throw Error(`Cannot walk to ${x},${y}`);
 }
 try{
- await page.goto('http://127.0.0.1:5195/?text=full');
+ await page.goto(new URL('?text=full',process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/').href);
  await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ReferralVaultScene');await page.waitForTimeout(1000);
 
@@ -48,6 +48,14 @@ try{
  assert.equal((await state()).roomTraversal.currentRoomId,'R1');await shot('arrival');
  await move(32,174);await move(96,174);await key();assert.equal((await state()).sceneProgress.referralEquityPacketCarried,1);
  await move(80,148);await key();assert.equal((await state()).sceneProgress.referralEquityRouteStep,1);
+ if(process.argv.includes('--wrong-desk')){
+  const before=await state();await key();
+  assert.equal((await state()).sceneProgress.referralEquityRouteStep,1);
+  assert.equal((await state()).sceneProgress.referralEquityPacketCarried,before.sceneProgress.referralEquityPacketCarried);
+  assert.equal((await state()).reliability,before.reliability-2);
+  assert.match(await page.evaluate(()=>window.game.scene.getScene('ReferralVaultScene').toast.text.text),/^ROUTE TO /);
+  await shot('wrong-agency-correction');
+ }
  await move(128,156);await key();assert.equal((await state()).sceneProgress.referralEquityRouteStep,2);
  await move(176,148);await key();assert.equal((await state()).sceneProgress.referralEquityRouteComplete,1);await shot('routed');
  await key();await shot('manifest');assert.equal((await state()).sceneProgress.referralManifestCarried,1);

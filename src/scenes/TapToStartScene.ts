@@ -1,7 +1,8 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { setSceneState } from "../game/state";
-import { addInputGestureListener, bindPointerPress, getInput, tickInput } from "../input/InputState";
+import { resumeLabel } from "../game/resumeLabel";
+import { addInputGestureListener, bindPointerPress, getInput, getPrimaryActionBadge, isTouchInputCapable, swallowNextInputFrame, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { clearSavedGame, getSavedGameSummary, loadSavedGame } from "../systems/save";
 
@@ -16,12 +17,17 @@ export class TapToStartScene extends Phaser.Scene {
   private selectedAction: "continue" | "new" = "continue";
   private continueText?: Phaser.GameObjects.Text;
   private newGameText?: Phaser.GameObjects.Text;
+  private confirmingNew = false;
+  private heading?: Phaser.GameObjects.Text;
 
   constructor() {
     super("TapToStartScene");
   }
 
   create() {
+    this.started = false;
+    this.confirmingNew = false;
+    this.selectedAction = "continue";
     setSceneState("TapToStartScene", "title", "Tap or press start to unlock audio.");
     const saveSummary = getSavedGameSummary();
     this.hasSave = Boolean(saveSummary);
@@ -38,12 +44,12 @@ export class TapToStartScene extends Phaser.Scene {
       fontSize: "18px",
       color: PALETTE.goldStamp
     }).setOrigin(0.5);
-    this.add.text(128, 104, this.hasSave ? "CONTINUE QUEST?" : "PRESS START", {
+    this.heading = this.add.text(128, 104, this.hasSave ? "CONTINUE QUEST?" : "PRESS START", {
       fontFamily: "monospace",
       fontSize: "12px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
-    this.add.text(128, 126, this.hasSave && saveSummary ? `${saveSummary.currentScene}  DOC ${saveSummary.documentPoints}` : "TAP ONCE TO UNLOCK SOUND", {
+    this.add.text(128, 126, this.hasSave && saveSummary ? resumeLabel(saveSummary.currentScene, saveSummary.documentPoints) : "TAP ONCE TO UNLOCK SOUND", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.terminalCyan
@@ -64,10 +70,14 @@ export class TapToStartScene extends Phaser.Scene {
         this.renderChoice();
       }
       if (input.bJustPressed) {
-        this.selectedAction = "new";
+        this.confirmingNew = false;
+        this.selectedAction = "continue";
         this.renderChoice();
+        return;
       }
-      if (input.aJustPressed || input.startJustPressed || input.pointerPrimaryJustPressed) void this.confirmSaveChoice();
+      // Save actions have explicit pointer targets; background taps must not
+      // activate a keyboard-selected destructive choice.
+      if (input.aJustPressed || input.startJustPressed) void this.confirmSaveChoice();
       return;
     }
     if (input.aJustPressed || input.startJustPressed || input.pointerPrimaryJustPressed) void this.startTitle();
@@ -109,7 +119,7 @@ export class TapToStartScene extends Phaser.Scene {
       fontSize: "8px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5);
-    this.add.text(128, 178, "LEFT/RIGHT SELECT  Z/ENTER", {
+    this.add.text(128, 178, isTouchInputCapable() ? "TAP YOUR CHOICE" : `LEFT/RIGHT SELECT  ${getPrimaryActionBadge()}`, {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper
@@ -118,12 +128,28 @@ export class TapToStartScene extends Phaser.Scene {
   }
 
   private renderChoice() {
+    this.heading?.setText(this.confirmingNew ? "REPLACE SAVED RUN?" : "CONTINUE QUEST?");
+    this.continueText?.setText(this.confirmingNew ? "BACK" : "CONTINUE");
+    this.newGameText?.setText(this.confirmingNew ? "REPLACE" : "NEW GAME");
     this.continueText?.setColor(this.selectedAction === "continue" ? PALETTE.goldStamp : PALETTE.creamPaper);
     this.newGameText?.setColor(this.selectedAction === "new" ? PALETTE.goldStamp : PALETTE.creamPaper);
   }
 
   private async confirmSaveChoice() {
     if (this.started) return;
+    if (this.selectedAction === "new" && !this.confirmingNew) {
+      this.confirmingNew = true;
+      this.selectedAction = "continue";
+      this.renderChoice();
+      swallowNextInputFrame();
+      return;
+    }
+    if (this.confirmingNew && this.selectedAction === "continue") {
+      this.confirmingNew = false;
+      this.renderChoice();
+      swallowNextInputFrame();
+      return;
+    }
     this.started = true;
     this.removeGestureListener?.();
     await retroAudio.unlock();

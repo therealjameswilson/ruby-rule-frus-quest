@@ -537,7 +537,7 @@ export function isTouchInputCapable() {
 }
 
 export function getPrimaryActionBadge() {
-  return isTouchInputCapable() ? "A" : "Z";
+  return isTouchInputCapable() || gamepadConnected ? "A" : "Z";
 }
 
 export function getSecondaryActionBadge() {

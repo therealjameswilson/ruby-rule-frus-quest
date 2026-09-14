@@ -74,7 +74,8 @@ try{
  await move(128,158);await act('02-research-table');
  await move(80,158);await move(80,72);await move(128,72);await direction('ArrowUp',650);
  const locked=await shot('02-stacks-locked');assert.equal(locked.roomTraversal.currentRoomId,'A1');assert(!locked.sceneProgress.archiveRepoWallCleared);assert.equal(locked.documentPoints,22);
- await move(80,72);await move(80,176);
+ // Step out of the narrow north doorway before traversing the room wall.
+ await move(128,72);await move(80,72);await move(80,176);
  await move(100,176);await move(100,168);await direction('ArrowUp',60);await press('x');await page.waitForTimeout(450);
  const early=await shot('02-unreviewed-swing');assert(!early.sceneProgress.archiveRepoWallCleared);assert.equal(early.documentPoints,22);
  const freeOrder=process.argv.includes('--free-order');

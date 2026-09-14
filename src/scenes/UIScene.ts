@@ -9,7 +9,7 @@ import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasDan
 import { getVolumeAssemblyReadout } from "../game/state";
 import { getGuideCavernStage, guideCavernActionCue } from "../game/guideCavernFlow";
 import { getGuideCounterReadout } from "../game/guideCounterTraining";
-import { addGamepadConnectionListener, getInput, getPrimaryActionBadge, getSecondaryActionBadge, updateInputCallbacks } from "../input/InputState";
+import { addGamepadConnectionListener, getGamepadDebugState, getInput, getPrimaryActionBadge, getSecondaryActionBadge, isTouchInputCapable, updateInputCallbacks } from "../input/InputState";
 import { isWeaponTool } from "../systems/weaponState";
 import { TouchControls } from "../input/TouchControls";
 import { openCodex } from "../systems/codexOverlay";
@@ -71,11 +71,14 @@ export class UIScene extends Phaser.Scene {
 
   create() {
     this.controls = new TouchControls(this);
+    this.controls.setGamepadSuppressed(getGamepadDebugState().connected);
     this.createQuestBand();
     this.createGamepadToast();
     this.removeGamepadListener = addGamepadConnectionListener((connected) => {
       this.controls.setGamepadSuppressed(connected);
-      this.showGamepadToast(connected ? getString("hud.controllerConnected") : getString("hud.touchControlsReady"));
+      this.showGamepadToast(connected ? getString("hud.controllerConnected")
+        : isTouchInputCapable() || this.controls.isForceVisible
+          ? getString("hud.touchControlsReady") : getString("hud.keyboardControlsReady"));
     });
     updateInputCallbacks({
       toggleTouchOverlay: () => {

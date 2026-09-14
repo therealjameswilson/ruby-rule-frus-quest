@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NetworkScene } from "./NetworkScene";
 import { ReferralVaultScene } from "./ReferralVaultScene";
+import { SilentReadScene } from "./SilentReadScene";
+import { SILENT_READ_REVIEW_ITEMS } from "../game/silentReadReview";
 import { gameState, resetGameState } from "../game/state";
 import { getNetworkRoutePacket } from "../game/networkRouting";
 import { getClassNetVaultDocket } from "../game/classNetVaultReview";
-import { getReferralTreatmentDocket } from "../game/referralVaultReview";
+import { getReferralEquityPacket, getReferralTreatmentDocket } from "../game/referralVaultReview";
 
 vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} },
   Math: { Clamp: (value: number, min: number, max: number) => Math.max(min, Math.min(max, value)) } } }));
@@ -27,6 +29,43 @@ function feedback(scene: object) {
 beforeEach(() => { resetGameState(); gameState.mode = "explore"; });
 
 describe("visible routing corrections", () => {
+  it("names the proofing workstation without losing the carried review", () => {
+    const item = SILENT_READ_REVIEW_ITEMS.find(candidate => candidate.id === "editorial-ledger")!;
+    const flag = { ...item, status: "carried", routedStation: undefined };
+    const scene = new SilentReadScene(), toast = feedback(scene);
+    const save = vi.fn();
+    Object.assign(scene, {
+      currentRoomId: "S1", physicalFlags: SILENT_READ_REVIEW_ITEMS.map(candidate => candidate.id === item.id ? flag : candidate),
+      physicalPromptTargets: () => ({ strictTarget: {} }), pendingEditorialRepair: () => null,
+      getActiveFlag: () => flag, findActionWorkstation: () => ({ id: "proof-table" }),
+      stationFor: () => ({ id: item.destination, label: "Consult Desk" }),
+      reviewObjective: () => "TO CONSULT DESK", savePhysicalReviewProgress: save,
+      updatePhysicalVerification: vi.fn()
+    });
+    const reliability = gameState.reliability;
+    (scene as unknown as { handlePhysicalAction(): void }).handlePhysicalAction();
+    expect(toast.show).toHaveBeenCalledWith("USE CONSULT DESK", { x: 100, y: 120 }, "warn", expect.any(Object));
+    expect(flag.status).toBe("carried");
+    expect(flag.routedStation).toBeUndefined();
+    expect(save).toHaveBeenCalledWith(flag);
+    expect(gameState.reliability).toBe(reliability - 2);
+    expect(gameState.mode).toBe("explore");
+  });
+
+  it.each([0, 1, 2])("names the correct agency for equity packet %i without consuming it", step => {
+    const scene = new ReferralVaultScene(), toast = feedback(scene), packet = getReferralEquityPacket(step);
+    Object.assign(scene, { equityStep: step, carriedEquityPacket: () => packet });
+    gameState.sceneProgress.referralEquityPacketCarried = packet.order;
+    gameState.sceneProgress.referralEquityRouteStep = step;
+    const reliability = gameState.reliability;
+    (scene as unknown as { routeEquityPacket(agency: string): void }).routeEquityPacket(packet.agency === "CIA" ? "DOD" : "CIA");
+    expect(toast.show).toHaveBeenCalledWith(`ROUTE TO ${packet.agency.toUpperCase()}`, { x: 100, y: 120 }, "warn");
+    expect(gameState.sceneProgress.referralEquityPacketCarried).toBe(packet.order);
+    expect(gameState.sceneProgress.referralEquityRouteStep).toBe(step);
+    expect(gameState.reliability).toBe(reliability - 2);
+    expect(gameState.mode).toBe("explore");
+  });
+
   it.each([0, 1, 2, 3])("names the correct network for packet %i without filing it", step => {
     const scene = new NetworkScene(), toast = feedback(scene), packet = getNetworkRoutePacket(step);
     Object.assign(scene, { currentRoute: step, routingCarriedPacket: () => packet });

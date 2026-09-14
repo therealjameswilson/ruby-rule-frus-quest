@@ -19,6 +19,35 @@ beforeEach(() => {
 });
 
 describe("wrong-tool combat feedback", () => {
+  it.each([false, true])("labels dialogue with the actual action buttons (touch=%s)", touch => {
+    vi.stubGlobal("window", {});
+    vi.stubGlobal("navigator", { maxTouchPoints: touch ? 5 : 0 });
+    try {
+      const hint = vi.fn();
+      const scene = new GameplayMapScene();
+      Object.assign(scene, { dialogPages: ["Follow the source trail."], dialogIndex: 0,
+        dialogSpeaker: "Archivist", hintText: { setText: hint },
+        dialogSpeakerText: { setText: vi.fn() }, dialogBodyText: { setText: vi.fn() } });
+      (scene as unknown as { renderMapDialog(): void }).renderMapDialog();
+      expect(hint).toHaveBeenCalledWith(touch ? "A NEXT  B CLOSE" : "Z NEXT  X CLOSE");
+      expect(gameState.activeDialog?.text).toBe("Follow the source trail.");
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it.each([false, true])("uses available controls in exploration hints (touch=%s)", touch => {
+    vi.stubGlobal("window", {});
+    vi.stubGlobal("navigator", { maxTouchPoints: touch ? 5 : 0 });
+    try {
+      const scene = new GameplayMapScene() as unknown as { explorationHint(): string; explorationHintY(): number };
+      expect(scene.explorationHint()).toBe(touch ? "A INTERACT  USE WORLD EXIT" : "Z INTERACT  ESC WORLD MAP");
+      expect(scene.explorationHintY()).toBe(touch ? 232 : 211);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it.each(["citation_stamp", "red_pencil", "review_folder"] as const)("keeps %s visible in the compact HUD", weakness => {
     const scene = new GameplayMapScene();
     Object.assign(scene, {

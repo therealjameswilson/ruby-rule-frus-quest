@@ -47,6 +47,7 @@ import {
   frusProductionFloorStepForRatio,
   frusProductionFloorTaskReadout,
   gameplayMapFlowReadout,
+  GAMEPLAY_MAP_SHORT_NAMES,
   gameplayMapRouteBadgeLabel,
   gameplayMapRouteReadout,
   type FrusProductionFloorGateContext,
@@ -378,6 +379,7 @@ export class GameplayMapScene extends Phaser.Scene {
   update(_: number, delta: number) {
     tickInput();
     const input = getInput();
+    this.hintText.setY(this.explorationHintY());
     if (input.fullscreenJustPressed) this.scale.toggleFullscreen();
     if (this.routeTransitionLocked) {
       this.attackBuffer.clear();
@@ -465,7 +467,7 @@ export class GameplayMapScene extends Phaser.Scene {
         ? `STEP CLOSER: ${hintTarget.label.toUpperCase()}`
         : combatCue
           ? combatCue.actionHint
-          : `${actionBadge} INTERACT  ESC WORLD MAP`);
+          : this.explorationHint());
     const feedback = decideInteractionFeedback(nearest, hintTarget);
     const showedStepCloserFeedback = input.aJustPressed && feedback.kind === "step-closer";
     if (showedStepCloserFeedback) {
@@ -1001,7 +1003,7 @@ export class GameplayMapScene extends Phaser.Scene {
 
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - BOTTOM_SAFE_BAND / 2, GAME_WIDTH, BOTTOM_SAFE_BAND, color(PALETTE.black), 0.96).setDepth(900);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - BOTTOM_SAFE_BAND, GAME_WIDTH, 2, color(PALETTE.goldStamp)).setDepth(901);
-    this.hintText = this.add.text(GAME_WIDTH / 2, GAME_HEIGHT - 29, `${getPrimaryActionBadge()} INTERACT  ESC WORLD MAP`, {
+    this.hintText = this.add.text(GAME_WIDTH / 2, this.explorationHintY(), this.explorationHint(), {
       fontFamily: "monospace",
       fontSize: "7px",
       color: PALETTE.goldStamp,
@@ -1270,7 +1272,7 @@ export class GameplayMapScene extends Phaser.Scene {
       scene: "GameplayMapScene",
       mapKey: this.mapKey
     });
-    const title = MAP_LABELS[this.mapKey].toUpperCase();
+    const title = GAMEPLAY_MAP_SHORT_NAMES[this.mapKey];
     const width = 118;
     const banner = this.add.container(GAME_WIDTH - width / 2 - 7, TOP_SAFE_BAND + 17)
       .setName("gameplay-map-entry-banner")
@@ -1286,7 +1288,7 @@ export class GameplayMapScene extends Phaser.Scene {
       fontSize: "7px",
       color: PALETTE.terminalCyan
     }).setName("gameplay-map-entry-banner-code").setOrigin(0, 0));
-    banner.add(this.add.text(-width / 2 + 6, 2, title.slice(0, 19), {
+    banner.add(this.add.text(-width / 2 + 6, 2, title, {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper
@@ -3938,7 +3940,7 @@ export class GameplayMapScene extends Phaser.Scene {
 
   private renderMapDialog() {
     const text = this.dialogPages[this.dialogIndex] ?? "";
-    this.hintText.setText("A NEXT  B CLOSE");
+    this.hintText.setText(`${getPrimaryActionBadge()} NEXT  ${getSecondaryActionBadge()} CLOSE`);
     this.dialogSpeakerText.setText(`${this.dialogSpeaker}:`);
     this.dialogBodyText.setText(text);
     setDialogState(this.dialogSpeaker, text);
@@ -3960,8 +3962,17 @@ export class GameplayMapScene extends Phaser.Scene {
     this.dialogIndex = 0;
     this.dialogSpeakerText.setText("");
     this.dialogBodyText.setText("");
-    this.hintText.setText(`${getPrimaryActionBadge()} INTERACT  ESC WORLD MAP`);
+    this.hintText.setText(this.explorationHint());
     clearDialogState();
+  }
+
+  private explorationHint() {
+    const returnHint = getSecondaryActionBadge() === "B" ? "USE WORLD EXIT" : "ESC WORLD MAP";
+    return `${getPrimaryActionBadge()} INTERACT  ${returnHint}`;
+  }
+
+  private explorationHintY() {
+    return GAME_HEIGHT - (getSecondaryActionBadge() === "B" ? 8 : 29);
   }
 
   private returnToWorldMap() {

@@ -1124,7 +1124,7 @@ export class SilentReadScene extends Phaser.Scene {
       setHeldItem(`Review Folder: ${activeFlag.shortLabel}`);
       setLatestMessage(`RETRY: ${activeFlag.shortLabel} belongs at ${correctStation.label}.`);
       setObjective(this.reviewObjective());
-      this.toast.show("WRONG DESK - RETRY", this.player.position, "warn", PROOF_PLAY_BOUNDS);
+      this.toast.show(`USE ${correctStation.label.toUpperCase()}`, this.player.position, "warn", PROOF_PLAY_BOUNDS);
       this.savePhysicalReviewProgress(activeFlag);
       this.reliability.update();
       this.updatePhysicalVerification();

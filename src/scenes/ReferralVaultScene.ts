@@ -1584,7 +1584,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (!result.ok) {
       adjustReliability(-2, `${result.packet.label} caught at the wrong equity desk`);
       retroAudio.warning();
-      this.toast.show("WRONG EQUITY", this.player.position, "warn");
+      this.toast.show(`ROUTE TO ${result.packet.agency.toUpperCase()}`, this.player.position, "warn");
       setLatestMessage(result.message);
       setObjective(this.referralObjective());
       this.syncReferralVisibleEntities();

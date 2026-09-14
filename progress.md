@@ -2,6 +2,268 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Background-click save guard (2026-09-13): saved-run menus now accept pointer
+  actions only through their explicit Continue/Back/New/Replace hit targets.
+  Previously a background click could confirm a keyboard-selected Replace choice.
+  Extended isolated browser QA to select Replace, click outside buttons and verify
+  the serialized save remains intact and confirmation stays open. Keyboard/mouse
+  cancellation and explicit replacement pass. Build and standard startup smoke
+  pass; native opening inspected. Evidence /private/tmp/frus-save-background-guard/,
+  /private/tmp/frus-save-background-touch/, /private/tmp/frus-save-background-smoke/.
+  Fresh no-save tap-to-start behavior is unchanged. Not deployed.
+
+- Proofing pacing audit (2026-09-13): inspected all eight SILENT_READ_REVIEW_ITEMS
+  and handlePhysicalAction rather than assuming repeated inputs were redundant.
+  Every current item has either a concrete edit board or a source-backed decision;
+  placement opens that check in the same action. Correct decisions leave verified
+  drafts; the next explicit filing action earns the reward and advances. The
+  apparent generic placement/verify fallback is not used by today's roster.
+  Do not remove the final filing step merely to reduce button counts: it preserves
+  the draft/approval distinction exercised by saved-draft and reward tests. No
+  runtime change. A first-time observer is still needed to assess comprehension
+  and perceived decision density; do not claim that the earned scripted route
+  establishes those subjective outcomes. Next investigate navigation or combat
+  from a visible failure instead of further speculative proofing simplification.
+
+- Optional first-edition touch audit (2026-09-13): patrol note exposes Shelf Clue
+  2/2 and the readable NE SHELF: REVIEW FOLDER hint without granting discovery.
+  Using earned inventory with debug placement into NARA, opened the shelf, claimed
+  First Edition (+25), moved during its reveal, returned and sidestepped the patrol,
+  then reloaded with one collectible and unchanged points. No browser errors.
+  Initial exact-coordinate touch probe oscillated six pixels from target while
+  CHECK FIRST EDITION was visible; relaxed only that test arrival tolerance to 8,
+  rerun passed. Native clue and reward inspected. Evidence:
+  /private/tmp/frus-secret-clue-current/ and
+  /private/tmp/frus-optional-edition-current-retry/. This proves the side-room loop,
+  not natural discovery of the detour from the main route. No runtime change or
+  deployment. Avoid duplicating the already-visible clue merely because the
+  scripted critical path intentionally bypassed optional exploration.
+
+- Saved-run input parity (2026-09-13): added qa-save-confirmation.mjs using
+  isolated copies of earned storage. Keyboard and real touch events both verify
+  Back preserves the serialized save exactly and explicit replacement reaches
+  Title with the save cleared. No user's browser save was deleted. Phone capture
+  exposed keyboard-only hints; replaced them with TAP YOUR CHOICE on touch and
+  the primary action badge on desktop. Touch flow rerun passed with an assertion
+  for the visible hint. Full suite before this hint-only edit: 241 files / 1,831
+  tests pass; build and standard opening smoke after edit pass. Evidence:
+  /private/tmp/frus-save-confirmation-touch-final/,
+  /private/tmp/frus-save-confirmation-keyboard/, /private/tmp/frus-startup-hint-smoke/.
+  Phone confirmation inspected. Local only; not deployed.
+
+- Protect returning players' saves (2026-09-13): New Game in TapToStart now asks
+  REPLACE SAVED RUN? with Back selected, rather than immediately clearing progress.
+  Cancel returns to Continue. Confirmation/back transitions swallow their input
+  frame to prevent pointer fall-through; create resets transient menu state.
+  Focused test verifies no clear/load on initial request or Back and exactly one
+  clear on explicit replacement. In-app browser verified New Game -> confirmation
+  -> Back with the existing save untouched. Build and standard opening smoke pass;
+  native opening inspected (/private/tmp/frus-save-confirmation-smoke/).
+  Local only; no deployment. Actual destructive browser replacement was not used
+  against the user's save (covered by the isolated unit test instead).
+
+- Distinct office colleague pose (2026-09-13): visual-only browser review exposed
+  Junior Compiler periodically using the exact hero idle pose. Removed the 1.5s
+  idle/reading toggle; colleague stays in the existing reading pose, keeping the
+  book silhouette distinct without adding labels or replacing art. Base NPC depth,
+  shadow and update behavior remain intact. Standard browser movement burst with
+  idle holds inspected at native resolution; colleague reads while hero moves.
+  Twelve office feedback tests and build pass. Evidence:
+  /private/tmp/frus-colleague-reading-smoke/. The in-app keypress API did not
+  support held CDP input, so this was not an unaided complete office playthrough;
+  the standard game client verified movement instead. Not deployed.
+
+- Player-facing resume clarity (2026-09-13): inspected the ordinary opening in
+  the in-app browser without reading game-state coordinates. Continue exposed
+  OFFICESCENE DOC 0. Added a small typed resume-label helper using existing area
+  names with explicit Office, editorial, vault and bindery labels; unknown scenes
+  fall back to SAVED QUEST. No save schema or resume flow changes. Browser now
+  shows NAVY HILL OFFICE | 0 PTS; clicking Continue loads the saved office and its
+  MEMO TO WEST INBOX objective. Two helper tests, build and standard fresh-opening
+  smoke pass (/private/tmp/frus-resume-label-smoke/). Native opening inspected.
+  Not deployed. Continue the visual-only navigation review from the office next.
+
+- Earned touch finale verification (2026-09-13): used the production checkpoint
+  for Colossus, Swarm and Cloud. Simultaneous D-pad/tool input, skippable robot
+  boasts, paused counter window and damaged-Cloud reload all passed. Seven counter
+  cycles, seven fresh core hits, zero death retries, 71.035 seconds measured fight
+  segment (includes reload), deadline not missed. Then completed bindery assembly,
+  certification and publication with 241 document points; continued publication
+  save preserves stats and DEADLINE MET. No browser console/page errors in either
+  run. Native counter cue, bindery entry and final record screenshots inspected.
+  Evidence: /private/tmp/frus-earned-boss-current/ and
+  /private/tmp/frus-earned-binding-current/. Full suite: 239 files / 1,828 tests
+  pass. No runtime changes/deployment in this pass. Automated player reads state:
+  this proves earned touch completion, not first-time comprehension or real-device
+  performance. Next prioritize an unaided navigation/decision-density review
+  rather than repeating this now-covered critical-path replay.
+
+- Proofing workstation recovery and earned production (2026-09-13): replaced
+  WRONG DESK - RETRY with USE plus the correct workstation name. Behavioral test
+  verifies carried review retention, saved state, explore mode and the existing
+  -2 penalty; all ten routing correction tests pass. Extended earned production
+  runner with an optional wrong-desk detour. First attempt stopped just outside
+  the wrong desk radius and correctly showed STEP CLOSER; moved test target to
+  y140 and reran. Touch run then recovered, rejected altered proof, earned Buckram
+  Key and entered Black Vault without console/page errors or progression grants.
+  Native correction and vault screenshots inspected. Build and standard browser
+  smoke pass. Evidence /private/tmp/frus-earned-production-current-retry/ and
+  /private/tmp/frus-proof-correction-smoke/. Local changes, not deployed. Next earned
+  checkpoint is the production run's earned-storage.json for the final encounter.
+
+- Earned editor and proofing touch regression (2026-09-13): completed Editor E1
+  bracket repair with a deliberate invisible-deletion rejection and partial-draft
+  reload, earned Red Pencil, then entered S1. Corrected a bad reference, rejected
+  over-release and an incorrect proof date, earned Proof Lens, and reloaded the
+  production handoff successfully. Both runs passed with no console/page errors;
+  inspected native rejection and reward captures. Initial proof runner correctly
+  rejected the E1 checkpoint: it requires the editor checkpoint, not direct referral
+  output. Evidence: /private/tmp/frus-earned-editor-current/ and
+  /private/tmp/frus-earned-proof-current-retry/ (next earned-storage.json).
+  No runtime edits or deployment. Next continue production dockets from this save;
+  proof that the route works is not proof that its decision density is enjoyable.
+
+- Earned referral-to-proof touch regression (2026-09-13): continued the earned
+  dispatch save without tool grants through manifest correction, treatment review,
+  partial-draft reload, wrong-desk recovery, directional bracket stamping, the
+  Concurrence Slip reward and arrival in Silent Read. Repeated stamping does not
+  duplicate points; the room-graph gate stays locked until approved printing.
+  Browser run passed with no console/page errors. Inspected the phone rejection
+  panel and native proof-arrival screenshot. Evidence and next earned checkpoint:
+  /private/tmp/frus-earned-manifest-current/. All 239 test files / 1,827 tests pass;
+  build passes with the existing large-bundle warning, and git diff --check passes.
+  No new gameplay changes or deployment in this verification pass. Next: continue
+  this earned save through proofing and assess whether decisions interrupt movement
+  too frequently; real-device feel and player enjoyment remain unverified.
+
+- Actionable referral equity errors (2026-09-13): R1 equity desks now show
+  ROUTE TO the expected agency instead of WRONG EQUITY. Three packet cases
+  verify retained packet/step, expected -2 penalty and no modal interruption;
+  all nine routing correction tests pass. Touch replay from the earned public
+  ClassNet save (only storage origin rebased to localhost) intentionally uses
+  the wrong desk, recovers, completes equity routing, finds dispatch evidence,
+  opens the shelf shortcut and returns. No console/page errors. Native correction
+  and return images inspected; build and standard referral smoke pass.
+  Evidence /private/tmp/frus-referral-agency-correction/ and
+  /private/tmp/frus-referral-feedback-smoke/. Local fix, not publicly deployed.
+
+- Published ClassNet review (2026-09-13): continued the earned public Network
+  save with actual keyboard inputs. Wrong-desk attempt retains review step and
+  docket, applies the expected -2, and displays USE RELEASE STANDARD BOARD.
+  Missing chronology entry is rejected; repair completes review, refreshes
+  return signage, earns Clearance Token and opens ReferralVaultScene R1.
+  Reload preserves review, tool and points; resumed movement works. No browser
+  console/page errors. Native correction and restored-referral screenshots
+  inspected. Added FRUS_QA_URL to qa-earned-clearance for public verification.
+  Evidence /private/tmp/frus-published-clearance/. Runtime unchanged; this leg
+  used keyboard, not touch. Public release unchanged.
+
+- Published Network routing (2026-09-13): continued the earned public Archive
+  save through four routing deliveries, Citation Stamp crossing and ClassNet
+  Vault entry. Deliberate wrong-network attempt says ROUTE TO CLASSNET, retains
+  the carried packet and routing step, and applies only the expected -2 penalty.
+  Physical and room-graph gates open only after all four deliveries. Reload
+  preserves N2 arrival and movement works immediately. No console/page errors;
+  native correction and restored-vault screenshots inspected. Added FRUS_QA_URL
+  support to the routing runner; runtime unchanged. Evidence
+  /private/tmp/frus-published-network-touch/. Simulated touch, earned save,
+  no debug progression grants; public release unchanged.
+
+- Complete entry-card names (2026-09-13): replaced arbitrary 19-character
+  truncation with deliberate short titles for all eight gameplay maps. Full
+  map names remain unchanged elsewhere. Entry card now reads HISTORIAN OFFICE
+  rather than OFFICE OF THE HISTO. Registry coverage/uniqueness/length test and
+  build pass; standard movement replay's native image inspected. Evidence
+  /private/tmp/frus-readable-location/. Local only; public release unchanged.
+
+- Map dialogue input labels (2026-09-13): replaced hardcoded A NEXT / B CLOSE
+  with shared primary/secondary action badges. Keyboard now shows Z/X; touch
+  and controller remain A/B. Two render-method tests verify labels and retained
+  dialogue content (19 feedback tests pass). Browser fixture opens two map
+  dialogue pages, verifies the displayed Z/X text, advances with actual Z and
+  closes with actual X. Screenshot /private/tmp/frus-dialog-label.png inspected;
+  standard movement smoke and build pass. No story/input/save changes; local only.
+
+- Published Archive critical path (2026-09-13): continued the public-site earned
+  opening save with simulated mobile touch. Initial replay incorrectly tried
+  to walk sideways through the north doorway wall; changed only the QA route
+  to step south first. This normal-input retreat succeeds. Full retry passes
+  source clues, refusal of unsupported readership, correction/reload, standards
+  review, stamp-opened wall, cart collision/pushing/persistence, annotation
+  coverage, telegram/cross-reference and Network entry. Points 20 -> 55;
+  reliability 80 -> 85 with intervening hazard damage (not damage-free).
+  No console/page errors. Native decision and Network entry images inspected.
+  Evidence /private/tmp/frus-published-archive-touch-retry/. Public runtime
+  unchanged; qa-archive-wall.mjs route correction is local. This tests the
+  earned workflow, not whether a first-time human finds all clues unaided.
+
+- Phone footer clearance (2026-09-13): GameplayMapScene places hints at y232
+  for touch/controller, below the visible A/B circles and inside the bottom HUD
+  band; desktop retains y211. Position refreshes with input-device changes and
+  also applies during dialogue. Native touch screenshot confirms the complete
+  USE WORLD EXIT cue no longer passes through B; desktop image unchanged.
+  Touch attack/menu/movement QA passes, all 238 files / 1,821 tests and build
+  pass (existing bundle warning). Evidence /private/tmp/frus-footer-clearance/
+  and /private/tmp/frus-footer-desktop-regression/. Local only, not deployed.
+
+- Device-aware exploration footer (2026-09-13): replaced the keyboard-only
+  Escape instruction on touch/controller with USE WORLD EXIT. Desktop keeps
+  ESC WORLD MAP. Shared scene helper covers creation, exploration update and
+  dialogue dismissal; no exits/input/gates changed. Added two device cases;
+  all 17 feedback tests and build pass. Touch attack/menu/movement regressions
+  pass in both encounter scenes; native touch/desktop images inspected.
+  Evidence /private/tmp/frus-device-exploration-hints/ and
+  /private/tmp/frus-device-hints-desktop/. Local only; public version unchanged.
+
+- Phone/controller startup fix (2026-09-13): mobile handoff QA reproduced touch
+  buttons staying visible when the controller was connected before UIScene's
+  listener registration. UIScene now initializes suppression from the existing
+  controller snapshot. Expanded qa-controller-handoff --mobile checks hidden
+  buttons while connected, restored buttons and touch-ready toast on disconnect,
+  actual CDP D-pad movement, immediate release stop and retained assignment.
+  Replay passes after the fix; native screenshot inspected. Build, desktop
+  movement smoke and diff check pass. Evidence
+  /private/tmp/frus-phone-controller-handoff-fixed/ and
+  /private/tmp/frus-overlay-startup-smoke/. Simulated API/controller plus real
+  browser touch events, not physical Bluetooth testing. Public release unchanged.
+
+- Device-aware disconnect toast (2026-09-13): UIScene now says KEYBOARD CONTROLS
+  READY after a desktop controller disconnect, retaining the touch message on
+  touch-capable devices or a forced touch overlay. Added English/Spanish/French
+  keyboard-ready strings. Browser controller replay asserts the actual toast,
+  A/Z badge change and successful keyboard movement. Native image inspected;
+  standard movement smoke, build and diff check pass. Evidence
+  /private/tmp/frus-controller-toast/ and /private/tmp/frus-toast-desktop-smoke/.
+  Local next-update change; public release unchanged.
+
+- Browser controller handoff (2026-09-13): added qa-controller-handoff using a
+  standard Gamepad API fixture. Normal D-pad movement reaches JR; release stops
+  drift; HUD shows A; button 0 receives the assignment. Disconnect updates HUD
+  to Z and ArrowRight immediately moves the compiler. All assertions pass with
+  no console/page errors. Native handoff screenshot inspected. Evidence
+  /private/tmp/frus-controller-handoff/. Debug Office route, no direct position
+  or quest mutation. API simulation only, not physical Bluetooth certification.
+  No additional runtime changes or deployment.
+
+- Controller action-label correction (2026-09-13): reproduced primary badge Z
+  on a connected gamepad while secondary correctly showed B. Primary now uses
+  the same touch-or-controller selection; disconnect restores desktop Z/X and
+  retains phone A/B. Two new lifecycle label tests plus existing input tests
+  pass (40 total); build and desktop movement/render smoke pass. No input mapping
+  or save changes. Browser evidence /private/tmp/frus-controller-label-regression/.
+  Controller lifecycle is mocked unit coverage, not physical controller QA.
+  Local next-update fix only; public release 476f862 unchanged.
+
+- Published fresh-start touch verification (2026-09-13): after release 476f862
+  deployed successfully to GitHub Pages, replayed the public URL with a fresh
+  375x667 touch browser and no saved progress/debug grants. Warning -> title ->
+  compiler -> assignment/memo -> earned Citation Stamp -> harmless missed bolt
+  -> paused incoming bolt -> returned bolt -> fragment/front matter -> Continue
+  -> Archive all pass. Reliability remains 80, no console/page errors. Inspected
+  phone opening and native Archive screenshots. Evidence
+  /private/tmp/frus-published-opening-touch/. No runtime changes in this pass;
+  this verifies simulated touch on the public release, not physical iPhone QA.
+
 - Quiet exploration prompts (2026-09-13): GameplayMapScene no longer shows an
   unsolicited out-of-range STEP CLOSER panel during ordinary exploration.
   In-range interaction prompts remain; pressing A requests the existing short
