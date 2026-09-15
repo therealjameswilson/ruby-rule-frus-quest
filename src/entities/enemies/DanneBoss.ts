@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { SodaCanAttack } from "../../systems/sodaCanAttack";
 import { danneAnimKey } from "../../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
 import { DANNE_BOSS_PORTRAIT_ASSET, DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../../game/danneAtlas";
@@ -149,6 +150,7 @@ export class DanneBoss {
   private nextPlayerHitAt = 0;
   private lastPlayerActionId = -1;
   private damageGraceUntil = 0;
+  private readonly soda: SodaCanAttack;
   private counterStunnedUntil = 0;
   private boltsReturned = 0;
   private nextMiniId = 0;
@@ -222,6 +224,19 @@ export class DanneBoss {
       .setScrollFactor(0)
       .setVisible(false);
     unlockCodexEntry("enemy-danne-boss");
+    this.soda = new SodaCanAttack(scene, () => this.player.position, () => this.position, flavor => {
+      if (!this.coreOpenAt(scene.time.now)) {
+        this.combatFeedback = { text: `${flavor} FIZZ! CORE ARMORED`, tone: "info", msRemaining: 1100 };
+        setLatestMessage(`${flavor} soda splashes DANN-E's armor. Return an Ego Bolt to expose his core first.`);
+        return;
+      }
+      this.hp = Math.max(0, this.hp - 10);
+      setBossHp(this.hp, this.phaseIndex());
+      this.combatFeedback = { text: `${flavor} FIZZ: 10 DAMAGE`, tone: "info", msRemaining: 1100 };
+      setLatestMessage(`${flavor} soda hits DANN-E's exposed core for 10 damage!`);
+      this.resolvePhaseHp();
+      this.saveCombatCheckpoint();
+    });
   }
 
   get isActive() {
@@ -276,6 +291,8 @@ export class DanneBoss {
   }
 
   update(timeMs: number, deltaMs: number, canAct: boolean) {
+    this.soda.update(deltaMs, canAct && this.isActive && !this.inputLocked && !this.phaseTransitioning
+      && this.isAttackPhase(this.phase) && !this.retryChoice.active && !this.shortcutChoice.active);
     if (!this.isActive) return;
     if (this.retryChoice.active) {
       if (this.combatPausedAt === null) this.combatPausedAt = timeMs;
@@ -363,6 +380,7 @@ export class DanneBoss {
   }
 
   destroy() {
+    this.soda.destroy();
     if (this.disposed) return;
     this.disposed = true;
     this.finishBoast?.();
@@ -648,19 +666,21 @@ export class DanneBoss {
     }
     const hasRubyPen = gameState.equippedDanneItem === "ruby-pen" && hasDanneItem("ruby-pen");
     const hasRedPencil = this.player.combatReadout.weapon.tool === "red_pencil" && hasProcessItem("red_pencil");
-    if (!hasRubyPen && !hasRedPencil) {
+    const hasStapler = this.player.combatReadout.weapon.tool === "stapler" && hasProcessItem("stapler");
+    if (!hasRubyPen && !hasRedPencil && !hasStapler) {
       this.player.pushAwayFrom(this.position, 8);
       this.combatFeedback = { text: "CORE OPEN: USE PENCIL", tone: "info", msRemaining: Math.max(0, this.counterStunnedUntil - timeMs) };
       setLatestMessage("DANN-E resists that tool. Equip the Red Pencil for accountable edits.");
       retroAudio.warning();
       return;
     }
-    const baseDamage = hasRubyPen ? 35 : 28;
+    const baseDamage = hasRubyPen ? 35 : hasStapler ? 18 : 28;
     const damage = this.phase === "cloud" ? Math.ceil(baseDamage / 2) : baseDamage;
     this.hp = Math.max(0, this.hp - damage);
     setBossHp(this.hp, this.phaseIndex());
     applyHitShake(this.scene, "boss-hit");
-    retroAudio.bossHit();
+    if (hasStapler) retroAudio.toolHit("stapler");
+    else retroAudio.bossHit();
     this.onPlayerHit?.(hasRubyPen);
     this.scene.tweens.add({
       targets: this.sprite,
@@ -670,7 +690,7 @@ export class DanneBoss {
       repeat: 2,
       ease: "Stepped"
     });
-    setLatestMessage(`${hasRubyPen ? "Ruby Pen" : "Red Pencil"} review hit DANN-E for ${damage}.`);
+    setLatestMessage(`${hasRubyPen ? "Ruby Pen" : hasStapler ? "Stapler Sword" : "Red Pencil"} hit DANN-E for ${damage}.`);
     this.resolvePhaseHp();
     this.saveCombatCheckpoint();
   }

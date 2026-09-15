@@ -374,7 +374,7 @@ export class UIScene extends Phaser.Scene {
       return { text: getString("hud.encounterExplore"), badge: getPrimaryActionBadge() };
     }
     const tool = target?.weakness;
-    if (tool !== "citation_stamp" && tool !== "red_pencil" && tool !== "review_folder") return null;
+    if (tool !== "citation_stamp" && tool !== "red_pencil" && tool !== "review_folder" && tool !== "stapler") return null;
     const label = tool === "citation_stamp" ? "STAMP" : tool === "red_pencil" ? "PENCIL" : "FOLDER";
     if (!hasProcessItem(tool)) return { text: getString("hud.encounterEvade", { tool: label }), badge: "!" };
     if (gameState.equippedProcessItem !== tool) return { text: getString("hud.encounterEquip", { tool: label }), badge: "!" };

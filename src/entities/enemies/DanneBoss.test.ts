@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { addDanneItem, gameState, recordStandardsViolation, resetGameState, seedProgressForScene } from "../../game/state";
+import { addDanneItem, addProcessItem, gameState, recordStandardsViolation, resetGameState, seedProgressForScene } from "../../game/state";
 import { DANNE_BOSS_RETURN } from "../../game/danneBossCombat";
 import type { ChoiceOption, Position } from "../../game/types";
 import type { Player } from "../Player";
@@ -8,6 +8,13 @@ import { DanneBoss, type DanneBossPhase } from "./DanneBoss";
 import { exitCutscene, playLine } from "../../systems/cutscene";
 import { DANNE_BOSS_PORTRAIT_ASSET } from "../../game/danneAtlas";
 import { clampQuestBandText, QUEST_BAND_LAYOUT } from "../../scenes/questBandLayout";
+
+const sodaHits = vi.hoisted(() => [] as Array<(flavor: string) => void>);
+vi.mock("../../systems/sodaCanAttack", () => ({ SodaCanAttack: class {
+  constructor(_scene: unknown, _origin: unknown, _target: unknown, hit: (flavor: string) => void) { sodaHits.push(hit); }
+  update() {}
+  destroy() {}
+} }));
 
 vi.mock("phaser", () => {
   class Rectangle {
@@ -137,6 +144,32 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
 
 describe("DANN-E final-review combat", () => {
   beforeEach(() => { vi.clearAllMocks(); resetGameState(); seedProgressForScene("BlackVaultLairScene"); });
+
+  it("soda respects armor and damages only an exposed core", () => {
+    const { boss, internals } = fixture();
+    const hit = sodaHits[sodaHits.length - 1];
+    const hp = boss.readout().hp;
+    hit("LIME");
+    expect(boss.readout().hp).toBe(hp);
+    Object.assign(internals, { counterStunnedUntil: 3000 });
+    hit("BERRY");
+    expect(boss.readout().hp).toBe(hp - 10);
+  });
+
+  it("an owned stapler hits an exposed core once per swing", () => {
+    const { player, internals } = fixture();
+    addProcessItem("stapler");
+    player.combatReadout.weapon.tool = "stapler";
+    player.activeActionHitbox = new Phaser.Geom.Rectangle(100, 80, 50, 70);
+    internals.checkPlayerActionHit(1000);
+    expect(internals.hp).toBe(180);
+    internals.takeReturnedBolt(1500);
+    player.actionId += 1;
+    internals.checkPlayerActionHit(1600);
+    expect(internals.hp).toBe(134);
+    internals.checkPlayerActionHit(2000);
+    expect(internals.hp).toBe(134);
+  });
 
   it("restores elapsed deadline time when the boss is recreated from saved state", () => {
     gameState.sceneProgress.statutoryClockTenths = 278;

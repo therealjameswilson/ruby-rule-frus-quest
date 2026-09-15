@@ -4,7 +4,7 @@ import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForPro
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId } from "../game/constants";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
-import { consumeResumePlayerSpawn, gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
+import { addProcessItem, consumeResumePlayerSpawn, gameState, setPlayerAnimationState, setPlayerCombat, setPlayerFacing, setPlayerPosition } from "../game/state";
 import type { PlayerAnimationState, PlayerCombatReadout, PlayerControlState, Position } from "../game/types";
 import { getInput } from "../input/InputState";
 import { PLAYER_HURT_MS, PLAYER_IFRAME_MS, toHitboxReadout } from "../systems/combat";
@@ -174,9 +174,11 @@ export class Player {
       .setStrokeStyle(1, color(PALETTE.black))
       .setDepth(900)
       .setVisible(false);
-    if (scene.textures.exists(WEAPON_VFX_ASSET.key)) {
+    if (scene.textures.exists(WEAPON_VFX_ASSET.key) || scene.textures.exists("pack-stapler")) {
       this.weaponVfxSprite = scene.add
-        .sprite(snapPixel(this.logicalX), snapPixel(this.logicalY), WEAPON_VFX_ASSET.key, 17)
+        .sprite(snapPixel(this.logicalX), snapPixel(this.logicalY),
+          scene.textures.exists(WEAPON_VFX_ASSET.key) ? WEAPON_VFX_ASSET.key : "pack-stapler",
+          scene.textures.exists(WEAPON_VFX_ASSET.key) ? 17 : 0)
         .setOrigin(0.5)
         .setScale(0.085)
         .setAlpha(0.76)
@@ -184,6 +186,7 @@ export class Player {
         .setVisible(false);
     }
     this.createIdleCue(scene);
+    addProcessItem("stapler");
     this.createWalkCycleCue(scene);
     scene.events.on("role-ability-frame", this.playAbilityFrame, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -638,11 +641,16 @@ export class Player {
         centerX + signX * Math.round(hitbox.width * 0.52),
         centerY + signY * Math.round(hitbox.height * 0.52)
       );
+    if (!this.scene.textures.exists(timing.vfxTextureKey)) {
+      this.weaponVfxSprite?.setVisible(false);
+      return;
+    }
     this.weaponVfxSprite
       ?.setVisible(true)
+      .setTexture(readout.tool === "stapler" ? "pack-stapler" : WEAPON_VFX_ASSET.key)
       .setFrame(timing.vfxFrame)
       .setAlpha(Math.min(0.9, alpha + 0.1))
-      .setScale(readout.tool === "review_folder" ? 0.1 : readout.tool === "red_pencil" ? 0.082 : 0.075)
+      .setScale(readout.tool === "stapler" ? 1 : readout.tool === "review_folder" ? 0.1 : readout.tool === "red_pencil" ? 0.082 : 0.075)
       .setAngle(this.facing === "west" ? -90 : this.facing === "east" ? 90 : this.facing === "north" ? 180 : 0)
       .setDepth(depth + 3)
       .setPosition(centerX, centerY);

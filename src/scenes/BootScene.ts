@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { createStaplerTexture } from "../art/stapler";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { registerCharacterAnims } from "../art/character_anims";
 import { registerDanneAnims } from "../art/danne_anims";
@@ -91,6 +92,7 @@ export class BootScene extends Phaser.Scene {
     retroAudio.prepare();
     this.installNearestTextureFilterGuard();
     this.createTextures();
+    createStaplerTexture(this);
     ensurePixelBitmapFont(this);
     installPixelTextFactory();
     this.createManualDanneRuntimeFrames();

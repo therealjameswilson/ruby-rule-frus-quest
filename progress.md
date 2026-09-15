@@ -2,6 +2,27 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Stapler Sword (2026-09-15): starter melee tool registered in the existing
+  process-item inventory, with original 16px ruby/steel art, 55ms windup,
+  160ms active window, 220ms cooldown, directional hitbox and click/clack cues.
+  B swings it; it can return practice/boss Ego Bolts and hit exposed boss cores
+  for 18 damage (9 in Cloud). It does not unlock document-workflow gates.
+  Existing saves gain the item when spawning a player without changing schema.
+  Full suite: 243 files / 1841 tests pass; production build passes. Earned touch
+  opening through stapler return, fragment, Continue and Archive passes without
+  browser errors: /private/tmp/frus-stapler-touch/. Includes prior soda changes.
+  Committed on request; publication is a separate step.
+
+- Flavored soda-water attacks (2026-09-15): added a dedicated touch/click SODA
+  command in the Guide practice encounter and DANN-E boss fight. Lime, berry,
+  grapefruit cans cycle with 900ms cooldown, visible travel and fizz impact.
+  Practice hits do not award the counter lesson; boss hits do 10 damage only
+  during an exposed-core window. Input and in-flight timers freeze during pause;
+  no inventory/save schema changes. Original code-drawn can art. Isolated mobile
+  fixture verifies touch throw, cooldown, flavor cycling, impact and pause;
+  screenshot /private/tmp/frus-soda-flight.png. Boss armor/damage covered in unit
+  tests. Not deployed.
+
 - Ego Bolt lesson (2026-09-15): practice Citation Stamp swings now use existing
   faceTowards before committing a swing; timing and active-hitbox overlap remain
   required. HUD and feedback explicitly name Ego Bolts. Incoming bolts are red,

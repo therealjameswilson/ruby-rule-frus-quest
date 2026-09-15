@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { SodaCanAttack } from "../systems/sodaCanAttack";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { characterAnimKey } from "../art/character_anims";
 import { danneAnimKey } from "../art/danne_anims";
@@ -83,6 +84,7 @@ export class GuideScene extends Phaser.Scene {
   private practiceAim!: Phaser.GameObjects.Graphics;
   private pickupFocus!: Phaser.GameObjects.Rectangle;
   private counterTraining = new GuideCounterTraining();
+  private soda?: SodaCanAttack;
   private readonly attackBuffer = new AttackBuffer();
   private gateGlow!: Phaser.GameObjects.Rectangle;
   private gateLabel!: Phaser.GameObjects.Text;
@@ -145,6 +147,12 @@ export class GuideScene extends Phaser.Scene {
     const boltAnim = danneAnimKey(boltKey, "fly");
     if (this.anims.exists(boltAnim)) this.practiceBolt.play(boltAnim);
     this.practiceAim = this.add.graphics().setDepth(65);
+    this.soda = new SodaCanAttack(this, () => this.player.position, () => GUIDE_COUNTER.source, flavor => {
+      this.egoSeal.setTintFill(0x82b548);
+      this.time.delayedCall(160, () => this.egoSeal.clearTint());
+      this.toast.show(`${flavor} FIZZ HIT!`, this.player.position, "info");
+      setLatestMessage(`${flavor} soda splashes DANN-E! Return his Ego Bolt with B to break the training seal.`);
+    });
     this.pickupFocus = this.add.rectangle(0, 0, 20, 8, color(PALETTE.goldStamp), 0.2)
       .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(66).setVisible(false);
     this.tweens.add({ targets: this.stampIcon, y: 130, duration: 460, yoyo: true, repeat: -1, ease: "Stepped", onUpdate: () => { this.stampIcon.y = snapPixel(this.stampIcon.y); } });
@@ -239,6 +247,7 @@ export class GuideScene extends Phaser.Scene {
       return;
     }
     this.updateCitationCounterTraining(delta);
+    this.soda?.update(delta, this.currentStage() === "counter");
     this.reliability.update();
     const nearest = nearestInteractable(this.player.position, this.interactables);
     // Show the prompt/ring from a little further out than the strict interact
@@ -303,6 +312,7 @@ export class GuideScene extends Phaser.Scene {
     this.egoSeal.setActive(!paused);
     this.practiceBolt.setActive(!paused);
     if (paused) {
+      this.soda?.update(0, false);
       this.attackBuffer.clear();
       this.player.setCombatPaused(true);
     }
@@ -324,7 +334,7 @@ export class GuideScene extends Phaser.Scene {
   private updateCitationCounterTraining(delta: number) {
     if (this.currentStage() !== "counter") return;
     const combat = this.player.combatReadout;
-    const hitbox = combat.weapon.tool === "citation_stamp" && hasProcessItem("citation_stamp")
+    const hitbox = (combat.weapon.tool === "citation_stamp" || combat.weapon.tool === "stapler") && hasProcessItem(combat.weapon.tool)
       ? this.player.activeActionHitbox : null;
     const event = this.counterTraining.update(delta, this.player.position, hitbox);
     const lesson = this.counterTraining.readout();
@@ -388,7 +398,7 @@ export class GuideScene extends Phaser.Scene {
   private remindCounterInput() {
     retroAudio.blip();
     this.toast.show(`${getSecondaryActionBadge()}: RETURN EGO BOLT`, this.player.position, "info");
-    setLatestMessage(`Press ${getSecondaryActionBadge()} as the red Ego Bolt reaches you. Your Citation Stamp faces it automatically. Practice cannot hurt you.`);
+    setLatestMessage(`Press ${getSecondaryActionBadge()} as the red Ego Bolt reaches you. Your Stamp or Stapler faces it automatically. Practice cannot hurt you.`);
   }
 
   private takeFragment() {

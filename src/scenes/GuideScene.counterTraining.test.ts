@@ -8,7 +8,8 @@ describe("GuideScene Citation Stamp counter lesson", () => {
     expect(source).toContain('this.updateCounterSwing(input.bJustPressed)');
     expect(source).toContain("tryEquippedToolSwing(this.player)");
     expect(source).toContain("this.player.activeActionHitbox");
-    expect(source).toContain('combat.weapon.tool === "citation_stamp" && hasProcessItem("citation_stamp")');
+    expect(source).toContain('combat.weapon.tool === "stapler"');
+    expect(source).toContain('hasProcessItem(combat.weapon.tool)');
     expect(source).toContain("this.counterTraining.update(delta, this.player.position, hitbox)");
     expect(source).toContain('if (event !== "complete") return');
     expect(source).not.toContain("GUIDE_EGO_SEAL_BOUNDS");
