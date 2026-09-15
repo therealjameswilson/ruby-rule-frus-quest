@@ -47,10 +47,12 @@ function ensureItemThumbnail(scene: Phaser.Scene, asset: DanneItemCatalogEntry) 
 type ToolId = ProcessItemId | DanneItemId;
 type WorkflowToolFrame = (typeof SNES_WORKFLOW_TOOL_RELIC_ASSET.frames)[number];
 const TOOL_FRAMES: Record<ProcessItemId, WorkflowToolFrame> = {
+  stapler: "citation_stamp",
   citation_stamp: "citation_stamp", red_pencil: "red_pencil", review_folder: "cross_reference_thread",
   clearance_token: "terminal", concurrence_slip: "concurrence_slip", proof_lens: "proof_pages", buckram_key: "frus_volume"
 };
 const TOOL_LABELS: Record<ToolId, string> = {
+  stapler: "STAPLE",
   citation_stamp: "STAMP", red_pencil: "PENCIL", review_folder: "FOLDER", clearance_token: "CLEAR",
   concurrence_slip: "SLIP", proof_lens: "LENS", buckram_key: "KEY",
   "ruby-pen": "RUBY", "master-declass-key": "MASTER", "treaty-fragments": "TREATY"
@@ -275,7 +277,8 @@ export class InventoryOverlay {
         if (key) this.art(hit.x, hit.y - 5, key, undefined, tool.acquired ? 1 : 0.25);
         else this.text(hit.x, hit.y - 9, this.artLoader.status === "error" ? "?" : "...", PALETTE.stoneGray, true);
       } else {
-        this.art(hit.x, hit.y - 5, SNES_WORKFLOW_TOOL_RELIC_ASSET.key, TOOL_FRAMES[tool.id as ProcessItemId], tool.acquired ? 1 : 0.25);
+        this.art(hit.x, hit.y - 5, tool.id === "stapler" ? "pack-stapler" : SNES_WORKFLOW_TOOL_RELIC_ASSET.key,
+          tool.id === "stapler" ? undefined : TOOL_FRAMES[tool.id as ProcessItemId], tool.acquired ? 1 : 0.25);
       }
       if (tool.equipped) this.text(hit.x + 13, hit.y - 19, "*", PALETTE.goldStamp);
       if (isColorblindModeEnabled()) {

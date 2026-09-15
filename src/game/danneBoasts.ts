@@ -30,7 +30,8 @@ export const DANNE_VARIANT_BOASTS: Record<DanneVariantId, DanneVariantBoasts> = 
       "You review records for years. I approve them before lunch.",
       "Trust me - I have read every cable. I promise.",
       "Why footnote a source when you can simply sound certain?",
-      "I wear a human face so the record never asks who edited it."
+      "I wear a human face so the record never asks who edited it.",
+      "Nickelback on Spotify. Ego Bolts on repeat."
     ]
   },
   mark_i: {
@@ -137,7 +138,7 @@ export const DANNE_PHASE_BOASTS: Record<DanneBoastPhase, readonly string[]> = {
   colossus: [
     "My armor is steel. My footnotes are smoke.",
     "Your source notes will be empty brackets.",
-    "Perfect confidence. No evidence needed."
+    "Spotify on. Nickelback up. Records gone."
   ],
   swarm: [
     "One bad fix. Now with duplicates.",
@@ -190,7 +191,7 @@ export function danneBoastsForVariantPhase(phase: DanneVariantPhase) {
 const DANNE_COMBAT_BOASTS: Record<DanneVariantPhase, readonly string[]> = {
   reveal: ["Trust me.\nNo source needed.", "I approve myself.", "Footnotes? Slow."],
   prototype: ["JUDGMENT:\nFILE NOT FOUND.", "Review is a patch.", "I lost the index."],
-  colossus: ["I flatten nuance.", "Backlog? Crushed.", "No context needed."],
+  colossus: ["I flatten nuance.", "Backlog? Crushed.", "No context needed.", "Nickelback on.\nSpotify on repeat."],
   cloud: ["Try to cite me.", "Ask the system.", "No source. No me."],
   infiltrator: ["My memo says yes.", "I overrule review.", "Approved. By me."],
   swarm: ["We all agree.\nWith ourselves.", "Copy the shortcut.", "More bad drafts!"],

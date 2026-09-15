@@ -31,7 +31,7 @@ try {
   await page.waitForTimeout(1000);
   const before = await state();
   await page.keyboard.press('Escape'); await page.waitForTimeout(250);
-  const hit = (await state()).pauseMenu.controls.find(c => c.id === 'tool-8');
+  const hit = (await state()).pauseMenu.controls.find(c => c.id === 'tool-9');
   await click(hit.x, hit.y); await click(hit.x, hit.y);
   assert.equal((await state()).pauseMenu.detailOpen, true);
   await shot('detail');

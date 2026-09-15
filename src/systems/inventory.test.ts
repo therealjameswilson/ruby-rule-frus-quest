@@ -176,9 +176,9 @@ describe("pause inventory interaction", () => {
   it("backs out of item details before closing the menu", () => {
     gameState.inventory.push("Master Declass Key");
     const { overlay, tap, texts } = harness();
-    overlay.toggle(); tap("tool-8");
+    overlay.toggle(); tap("tool-9");
     expect(texts.at(-1)).toBe("A / TAP AGAIN TO VIEW");
-    tap("tool-8");
+    tap("tool-9");
     expect(getPauseMenuReadout()?.detailOpen).toBe(true);
     overlay.back();
     expect(getPauseMenuReadout()?.detailOpen).toBe(false);

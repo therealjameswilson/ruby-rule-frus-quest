@@ -391,6 +391,11 @@ class RetroAudio {
   }
 
   toolWindup(tool: ProcessItemId) {
+    if (tool === "stapler") {
+      setAudioStatus("stapler click");
+      this.sequence([180, 720], 0.025, 0.01, 0.035, "square");
+      return;
+    }
     if (tool === "red_pencil") {
       setAudioStatus("red pencil windup");
       this.sequence([440, 554], 0.035, 0.018, 0.026, "triangle");
@@ -406,6 +411,11 @@ class RetroAudio {
   }
 
   toolHit(tool: ProcessItemId) {
+    if (tool === "stapler") {
+      setAudioStatus("stapler clack");
+      this.sequence([900, 160, 110], 0.025, 0.01, 0.05, "square");
+      return;
+    }
     if (tool === "red_pencil") {
       setAudioStatus("red pencil hit");
       this.sequence([880, 660, 988], 0.035, 0.022, 0.04, "triangle");

@@ -3,7 +3,7 @@ import type { Direction, ProcessItemId } from "../game/constants";
 import type { Position } from "../game/types";
 
 export type WeaponPhase = "idle" | "windup" | "active" | "cooldown";
-export type WeaponToolId = Extract<ProcessItemId, "citation_stamp" | "red_pencil" | "review_folder">;
+export type WeaponToolId = Extract<ProcessItemId, "citation_stamp" | "red_pencil" | "review_folder" | "stapler">;
 
 export interface WeaponTiming {
   label: string;
@@ -41,9 +41,14 @@ export const WEAPON_VFX_ASSET = {
   frameHeight: 256
 } as const;
 
-export const WEAPON_TOOLS = ["citation_stamp", "red_pencil", "review_folder"] as const;
+export const WEAPON_TOOLS = ["citation_stamp", "red_pencil", "review_folder", "stapler"] as const;
 
 export const WEAPON_TIMINGS: Record<WeaponToolId, WeaponTiming> = {
+  stapler: {
+    label: "Stapler Sword", windupMs: 55, activeMs: 160, cooldownMs: 220, movementScale: 0.8,
+    vfxTextureKey: "pack-stapler", vfxFrame: 0,
+    hitbox: { width: 28, height: 18, reach: 20 }
+  },
   citation_stamp: {
     label: "Citation Stamp",
     windupMs: 70,

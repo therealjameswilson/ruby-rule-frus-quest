@@ -282,6 +282,12 @@ export const ITEM_REGISTRY = [
     zeldaFunction: "Opens final publication gate",
     frusMeaning: "Volume certified",
     aliases: []
+  },
+  {
+    id: "stapler", displayName: "Stapler Sword", label: "Stapler Sword", shortLabel: "STAPLE",
+    icon: "pack-stapler", texture: "pack-stapler", roomUnlocks: [], blockerWeaknesses: [],
+    pickupDialog: ["Stapler Sword ready.", "Swing with B. Return Ego Bolts and strike exposed cores."],
+    hudSlot: 7, zeldaFunction: "Close-range sword", frusMeaning: "Keep the record together", aliases: []
   }
 ] as const;
 

@@ -20,8 +20,20 @@ describe("weaponState", () => {
     expect(isWeaponTool("citation_stamp")).toBe(true);
     expect(isWeaponTool("red_pencil")).toBe(true);
     expect(isWeaponTool("review_folder")).toBe(true);
+    expect(isWeaponTool("stapler")).toBe(true);
     expect(isWeaponTool("proof_lens")).toBe(false);
     expect(normalizeWeaponTool(null)).toBe("citation_stamp");
+  });
+
+  it("gives the stapler active frames and prevents cooldown cancellation", () => {
+    const weapon = new weaponState.WeaponStateController();
+    expect(weapon.tryStart("stapler", 0)).toBe(true);
+    expect(weapon.activeHitbox({ x: 100, y: 100 }, "east", 54)).toBeNull();
+    expect(weapon.activeHitbox({ x: 100, y: 100 }, "east", 56)).not.toBeNull();
+    expect(weapon.activeHitbox({ x: 100, y: 100 }, "east", 216)).toBeNull();
+    expect(weapon.tryStart("stapler", 216)).toBe(false);
+    weapon.update(436);
+    expect(weapon.tryStart("stapler", 436)).toBe(true);
   });
 
   it("keeps the hitbox absent until the active frame window", () => {
