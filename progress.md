@@ -2,6 +2,14 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- iPhone warning entry (2026-09-15): replaced keyboard-only-looking prompt with
+  an explicit 208x44 tappable Continue button, showing TAP TO CONTINUE on touch.
+  Kept tap-anywhere and keyboard/controller entry. Audio unlock no longer blocks
+  navigation; reset the entry guard on scene recreation. Regression test covers
+  unresolved Safari audio resume. Build passes; isolated 375x667 touch and desktop
+  Enter both reach TitleScene without page errors. Screenshots in
+  /private/tmp/frus-warning-iphone.png and frus-warning-desktop.png. Not deployed.
+
 - Background-click save guard (2026-09-13): saved-run menus now accept pointer
   actions only through their explicit Continue/Back/New/Replace hit targets.
   Previously a background click could confirm a keyboard-selected Replace choice.

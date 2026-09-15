@@ -3,7 +3,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { DANNE_WARNING_SCREEN_ASSET } from "../game/danneAtlas";
 import { setLatestMessage, setSceneState, setVisibleEntities } from "../game/state";
 import { getSkipWarningPreference } from "../game/warningSettings";
-import { getInput, swallowNextInputFrame, tickInput } from "../input/InputState";
+import { bindPointerPress, getInput, isTouchInputCapable, swallowNextInputFrame, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 
 function color(hex: string) {
@@ -18,6 +18,7 @@ export class WarningScene extends Phaser.Scene {
   }
 
   create() {
+    this.started = false;
     setSceneState("WarningScene", "title", "Fictional DANN-E warning before title.");
     setLatestMessage("Compile, verify, and publish a FRUS volume. DANN-E is a fictional rogue AI.");
     setVisibleEntities([
@@ -25,7 +26,7 @@ export class WarningScene extends Phaser.Scene {
       "three recovered FRUS volumes",
       "DANN-E",
       "history.state.gov shoutout",
-      "TAP / Z / ENTER"
+      "TAP TO CONTINUE"
     ]);
     if (getSkipWarningPreference()) {
       this.scene.start("TitleScene");
@@ -35,6 +36,7 @@ export class WarningScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.black);
     this.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT / 2, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black));
     this.drawQuestWarning();
+    this.drawContinueButton();
     this.cameras.main.fadeIn(600, 0, 0, 0);
     this.time.delayedCall(8000, () => void this.begin(false));
   }
@@ -76,40 +78,38 @@ export class WarningScene extends Phaser.Scene {
       color: PALETTE.creamPaper
     }).setName("warning-quest-subtitle").setOrigin(0.5, 0).setResolution(2).setDepth(2);
 
-    this.add.rectangle(128, 223, 256, 34, color(PALETTE.black), 0.9)
+    this.add.rectangle(128, 207, 256, 66, color(PALETTE.black), 0.96)
       .setName("warning-quest-prompt-band")
       .setDepth(1);
-    this.add.rectangle(128, 206, 238, 1, color(PALETTE.goldStamp), 0.92)
+    this.add.rectangle(128, 174, 238, 1, color(PALETTE.goldStamp), 0.92)
       .setName("warning-quest-prompt-rule")
       .setDepth(2);
-    this.add.text(128, 210, "DANN-E ERASES THE RECORD.", {
+    this.add.text(128, 177, "DANN-E ERASES THE RECORD.", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.terminalCyan
     }).setName("warning-quest-stakes").setOrigin(0.5, 0).setResolution(2).setDepth(2);
-    this.add.text(128, 220, "EXPLORE HISTORY.STATE.GOV", {
+    this.add.text(128, 187, "EXPLORE HISTORY.STATE.GOV", {
       fontFamily: "monospace",
       fontSize: "8px",
       color: PALETTE.creamPaper
     }).setName("warning-history-state-shoutout").setOrigin(0.5, 0).setResolution(2).setDepth(2);
-    const prompt = this.add.text(128, 229, "TAP / Z / ENTER", {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.goldStamp,
-      fontStyle: "bold"
-    }).setName("warning-quest-prompt").setOrigin(0.5, 0).setResolution(2).setDepth(2);
-
-    this.tweens.add({
-      targets: prompt,
-      alpha: 0.4,
-      duration: 500,
-      yoyo: true,
-      repeat: -1
-    });
 
     this.addQuestSpark(128, 101, 0);
     this.addQuestSpark(83, 142, 180);
     this.addQuestSpark(173, 142, 360);
+  }
+
+  private drawContinueButton() {
+    const button = this.add.rectangle(128, 217, 208, 44, color(PALETTE.deepRuby))
+      .setName("warning-continue-button").setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(3);
+    this.add.text(128, 217, isTouchInputCapable() ? "TAP TO CONTINUE" : "CONTINUE  [Z / ENTER]", {
+      fontFamily: "monospace", fontSize: "8px", color: PALETTE.creamPaper, fontStyle: "bold"
+    }).setName("warning-continue-label").setOrigin(0.5).setResolution(2).setDepth(4);
+    bindPointerPress(button, { down: () => {
+      button.setFillStyle(color(PALETTE.goldStamp));
+      void this.begin(true);
+    } });
   }
 
   private addQuestSpark(x: number, y: number, delay: number) {
@@ -161,7 +161,7 @@ export class WarningScene extends Phaser.Scene {
       fontSize: "4px",
       color: PALETTE.creamPaper
     }).setName("warning-history-state-shoutout").setOrigin(0.5, 0).setResolution(2);
-    this.add.text(128, 172, "TAP / Z / ENTER", {
+    this.add.text(128, 172, "TAP BELOW TO CONTINUE", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.goldStamp
@@ -172,8 +172,8 @@ export class WarningScene extends Phaser.Scene {
     if (this.started) return;
     this.started = true;
     if (fromGesture) {
-      await retroAudio.unlock();
-      retroAudio.confirm();
+      // Navigation must not depend on Safari completing AudioContext.resume().
+      void retroAudio.unlock().then(() => retroAudio.confirm()).catch(() => undefined);
     }
     this.cameras.main.fadeOut(400, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
