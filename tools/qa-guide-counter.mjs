@@ -188,9 +188,9 @@ try {
     if (coaching) {
         await direction('ArrowLeft', 20);
         await press('x', 100);
-        assert.equal((await state()).guideCounter.cue, 'faceEast');
+        assert.equal((await state()).playerFacing, 'east');
         assert(!(await state()).sceneProgress.guideCitationCounterTrained);
-        await shot('01-face-the-bolt');
+        await shot('01-auto-face-ego-bolt');
     }
     const baseline = await state();
     await phase('incoming');
@@ -225,12 +225,9 @@ try {
     assert(await page.evaluate(() => window.game.scene.getScene('GuideScene').toast.visible), 'Wrong button guidance must be visible, not just an internal message');
     await shot('05-use-swing-button');
     if (coaching) {
-        // Follow the displayed direction and timing cue at the pickup position,
-        // without knowing bolt coordinates or moving to a precomputed counter spot.
-        const cues = { faceNorth: 'ArrowUp', faceSouth: 'ArrowDown', faceEast: 'ArrowRight', faceWest: 'ArrowLeft' };
+        // Deliberately face away. The timed B swing must aim back at the bolt.
+        await direction('ArrowLeft', 20);
         for (let n = 0; n < 80; n++) {
-            const cue = (await state()).guideCounter?.cue;
-            if (cues[cue]) await direction(cues[cue], 20);
             if ((await state()).guideCounter?.cue === 'swing') break;
             await page.waitForTimeout(100);
         }

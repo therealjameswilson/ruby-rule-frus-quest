@@ -60,11 +60,11 @@ beforeEach(() => {
 
 describe("GuideScene live counter integration", () => {
   it("remembers a late swing once but expires a too-early press", () => {
-    const guide = scene(), time = { now: 0 }, startAction = vi.fn(() => true);
+    const guide = scene(), time = { now: 0 }, startAction = vi.fn(() => true), faceTowards = vi.fn();
     const combat = { state: "idle", weapon: { tool: "citation_stamp", canSwing: false } };
     addProcessItem("citation_stamp");
     gameState.equippedProcessItem = "citation_stamp";
-    Object.assign(guide, { time, player: { ...guide.player, startAction, combatReadout: combat } });
+    Object.assign(guide, { time, player: { ...guide.player, startAction, faceTowards, combatReadout: combat } });
     guide.updateCounterSwing(true);
     expect(startAction).not.toHaveBeenCalled();
     time.now = 90;
@@ -72,6 +72,7 @@ describe("GuideScene live counter integration", () => {
     guide.updateCounterSwing(false);
     guide.updateCounterSwing(false);
     expect(startAction).toHaveBeenCalledExactlyOnceWith("citation_stamp");
+    expect(faceTowards).toHaveBeenCalledExactlyOnceWith(GUIDE_COUNTER.source);
     combat.weapon.canSwing = false;
     guide.updateCounterSwing(true);
     time.now = 210;
@@ -103,7 +104,7 @@ describe("GuideScene live counter integration", () => {
     gameState.mode = "explore";
     const lesson = guide.counterTraining.readout();
     guide.remindCounterInput();
-    expect(guide.toast.show).toHaveBeenCalledWith(`USE ${getSecondaryActionBadge()} TO RETURN BOLT`, guide.player.position, "info");
+    expect(guide.toast.show).toHaveBeenCalledWith(`${getSecondaryActionBadge()}: RETURN EGO BOLT`, guide.player.position, "info");
     expect(guide.counterTraining.readout()).toEqual(lesson);
     expect(gameState.mode).toBe("explore");
     expect(gameState.sceneProgress.guideCitationCounterTrained).toBeUndefined();

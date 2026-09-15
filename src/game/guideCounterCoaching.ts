@@ -10,6 +10,15 @@ const FACE_CUES: Record<Direction, GuideCounterCue> = {
   north: "faceNorth", south: "faceSouth", east: "faceEast", west: "faceWest"
 };
 
+export function guideCounterFacing(lesson: GuideCounterReadout, player: Position): Direction {
+  const source = lesson.bolt ?? GUIDE_COUNTER.source;
+  const dx = source.x - player.x;
+  const dy = source.y - player.y;
+  return Math.abs(dx) > Math.abs(dy)
+    ? dx < 0 ? "west" : "east"
+    : dy < 0 ? "north" : "south";
+}
+
 // Predict only the lesson prompt. Actual returns still require the player's active hitbox.
 export function guideCounterCue(
   lesson: GuideCounterReadout,
@@ -22,9 +31,7 @@ export function guideCounterCue(
   const dx = source.x - player.x;
   const dy = source.y - player.y;
   if (!lesson.bolt && Math.hypot(dx, dy) < 42) return "stepBack";
-  const direction: Direction = Math.abs(dx) > Math.abs(dy)
-    ? dx < 0 ? "west" : "east"
-    : dy < 0 ? "north" : "south";
+  const direction = guideCounterFacing(lesson, player);
   if (facing !== direction) return FACE_CUES[direction];
   if (!canSwing) return "recover";
   if (lesson.phase !== "incoming" || !lesson.bolt || !lesson.target) return "wait";

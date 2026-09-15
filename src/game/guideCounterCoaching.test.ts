@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Direction } from "./constants";
-import { guideCounterCue } from "./guideCounterCoaching";
+import { guideCounterCue, guideCounterFacing } from "./guideCounterCoaching";
 import { GuideCounterTraining, type GuideCounterReadout } from "./guideCounterTraining";
 import { WeaponStateController } from "../systems/weaponState";
 
@@ -10,6 +10,26 @@ function lesson(boltY: number): GuideCounterReadout {
 }
 
 describe("practice counter coaching", () => {
+  it.each([{ x: 176, y: 174 }, { x: 96, y: 154 }, { x: 216, y: 112 }, { x: 176, y: 70 }])(
+    "auto-facing a timed swing returns the Ego Bolt to DANN-E from %j", player => {
+      const training = new GuideCounterTraining();
+      const weapon = new WeaponStateController();
+      let facing: Direction = "south";
+      let returned = false, completed = false;
+      for (let now = 0; now < 7000; now += 10) {
+        const current = training.readout();
+        const aim = guideCounterFacing(current, player);
+        if (guideCounterCue(current, player, aim, weapon.readout(now).canSwing) === "swing") {
+          if (weapon.tryStart("citation_stamp", now)) facing = aim;
+        }
+        const event = training.update(10, player, weapon.activeHitbox(player, facing, now));
+        if (event === "return") returned = true;
+        if (event === "complete") { completed = true; break; }
+      }
+      expect(returned).toBe(true);
+      expect(completed).toBe(true);
+    }
+  );
   it("names the missing facing input instead of inviting a swing away from the bolt", () => {
     expect(guideCounterCue(lesson(132), { x: 176, y: 174 }, "south", true)).toBe("faceNorth");
     const ready = new GuideCounterTraining().readout();

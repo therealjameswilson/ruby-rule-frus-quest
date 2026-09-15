@@ -108,8 +108,8 @@
       "faceEast": "REGARDE VERS LA DROITE",
       "faceWest": "REGARDE VERS LA GAUCHE",
       "stepBack": "RECULE POUR LE RENVOI",
-      "wait": "PRET - ATTENDS LE TIR",
-      "swing": "FRAPPE MAINTENANT!",
+      "wait": "TIR EGO EN APPROCHE",
+      "swing": "RENVOIE LE TIR EGO!",
       "recover": "TAMPON EN RECHARGE",
       "returned": "EGO RENVOYE!"
     },

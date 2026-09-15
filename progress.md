@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Ego Bolt lesson (2026-09-15): practice Citation Stamp swings now use existing
+  faceTowards before committing a swing; timing and active-hitbox overlap remain
+  required. HUD and feedback explicitly name Ego Bolts. Incoming bolts are red,
+  returns cyan and home back to DANN-E before awarding the fragment. Added four
+  cardinal return-to-source tests and scene-facing assertion. Touch earned-opening
+  QA passes with an intentionally wrong initial facing, harmless miss, pause,
+  return flight, fragment pickup, Continue and Archive entry. Evidence:
+  /private/tmp/frus-ego-return-touch-final/. No save schema changes; not deployed.
+
 - iPhone warning entry (2026-09-15): replaced keyboard-only-looking prompt with
   an explicit 208x44 tappable Continue button, showing TAP TO CONTINUE on touch.
   Kept tap-anywhere and keyboard/controller entry. Audio unlock no longer blocks

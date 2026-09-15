@@ -7,7 +7,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { unlockCodexEntry } from "../game/codex";
 import { DANNE_BOSS_SPRITE_ASSET, DANNE_VFX_ASSETS } from "../game/danneAtlas";
 import { GUIDE_COUNTER, GuideCounterTraining, setGuideCounterReadout } from "../game/guideCounterTraining";
-import { guideCounterCue } from "../game/guideCounterCoaching";
+import { guideCounterCue, guideCounterFacing } from "../game/guideCounterCoaching";
 import { buildGuideCavernLayers, GUIDE_CAVERN_BOUNDS, GUIDE_CAVERN_ROOM, GUIDE_CAVERN_TILES } from "../game/guideCavernRoom";
 import { packedTileGid } from "../game/packedTileIndex";
 import { SNES_GUIDE_CAVERN_TILE_ASSET } from "../game/snesAtlas";
@@ -295,7 +295,7 @@ export class GuideScene extends Phaser.Scene {
     addProcessItem("citation_stamp");
     addDocumentPoints(5, "citation stamp claimed");
     retroAudio.confirm();
-    setLatestMessage(`Citation Stamp acquired. Face the incoming red bolt and press ${getSecondaryActionBadge()}. Practice cannot hurt you.`);
+    setLatestMessage(`Citation Stamp acquired. Press ${getSecondaryActionBadge()} as the incoming red Ego Bolt reaches you. Your swing aims at it. Practice cannot hurt you.`);
     this.syncStagePresentation();
   }
 
@@ -316,6 +316,7 @@ export class GuideScene extends Phaser.Scene {
     if (pressed) this.attackBuffer.press(this.time.now);
     const combat = this.player.combatReadout;
     if (!this.attackBuffer.consume(this.time.now, combat.weapon.canSwing && combat.state !== "hurt")) return;
+    this.player.faceTowards(this.counterTraining.readout().bolt ?? GUIDE_COUNTER.source);
     const swing = tryEquippedToolSwing(this.player);
     if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");
   }
@@ -327,11 +328,12 @@ export class GuideScene extends Phaser.Scene {
       ? this.player.activeActionHitbox : null;
     const event = this.counterTraining.update(delta, this.player.position, hitbox);
     const lesson = this.counterTraining.readout();
-    lesson.cue = guideCounterCue(lesson, this.player.position, this.player.facingDirection, combat.weapon.canSwing);
+    const counterFacing = guideCounterFacing(lesson, this.player.position);
+    lesson.cue = guideCounterCue(lesson, this.player.position, counterFacing, combat.weapon.canSwing);
     setGuideCounterReadout(lesson);
     this.practiceAim.clear();
     if (lesson.cue === "wait" || lesson.cue === "swing") {
-      const reach = buildWeaponHitbox(this.player.position, this.player.facingDirection, "citation_stamp");
+      const reach = buildWeaponHitbox(this.player.position, counterFacing, "citation_stamp");
       this.practiceAim.lineStyle(1, color(lesson.cue === "swing" ? PALETTE.terminalCyan : PALETTE.goldStamp), 0.8)
         .strokeRect(reach.x, reach.y, reach.width, reach.height);
     }
@@ -351,14 +353,17 @@ export class GuideScene extends Phaser.Scene {
     if (lesson.bolt) {
       this.practiceBolt.setPosition(lesson.bolt.x, lesson.bolt.y);
       if (lesson.bolt.returned) this.practiceBolt.setTintFill(color(PALETTE.terminalCyan));
-      else this.practiceBolt.setTint(color(PALETTE.creamPaper));
+      else this.practiceBolt.setTint(color(PALETTE.classNetRed));
     }
-    if (event === "fire") retroAudio.egoBoltFire();
+    if (event === "fire") {
+      retroAudio.egoBoltFire();
+      setLatestMessage(`Incoming Ego Bolt! Press ${getSecondaryActionBadge()} as it reaches you to return it to DANN-E.`);
+    }
     if (event === "return") {
       retroAudio.toolHit("citation_stamp");
-      setLatestMessage("Ego returned! Your citation sends DANN-E's claim back to its source.");
+      setLatestMessage("Ego Bolt returned to DANN-E! Watch it hit his seal.");
     }
-    if (event === "miss") setLatestMessage(`No harm done. Face the bolt and press ${getSecondaryActionBadge()} as it reaches you.`);
+    if (event === "miss") setLatestMessage(`No harm done. Press ${getSecondaryActionBadge()} as the Ego Bolt reaches you. Your stamp aims toward it.`);
     if (event !== "complete") return;
     this.hasCounterTraining = true;
     gameState.sceneProgress.guideCitationCounterTrained = 1;
@@ -382,8 +387,8 @@ export class GuideScene extends Phaser.Scene {
 
   private remindCounterInput() {
     retroAudio.blip();
-    this.toast.show(`USE ${getSecondaryActionBadge()} TO RETURN BOLT`, this.player.position, "info");
-    setLatestMessage(`Face the red bolt and press ${getSecondaryActionBadge()} to swing the Citation Stamp. Practice cannot hurt you.`);
+    this.toast.show(`${getSecondaryActionBadge()}: RETURN EGO BOLT`, this.player.position, "info");
+    setLatestMessage(`Press ${getSecondaryActionBadge()} as the red Ego Bolt reaches you. Your Citation Stamp faces it automatically. Practice cannot hurt you.`);
   }
 
   private takeFragment() {
@@ -449,8 +454,8 @@ export class GuideScene extends Phaser.Scene {
     setVisibleEntities(labels);
     setVisibleThreats(stage === "counter" ? [{
       label: "DANN-E Practice Projection", x: 176, y: 124,
-      behavior: "Telegraphs one harmless bolt at a time; missed counters retry without damage.",
-      defeatMethod: `${getSecondaryActionBadge()}: face the moving bolt and return it with the Citation Stamp`,
+      behavior: "Fires incoming red Ego Bolts; returned cyan Ego Bolts fly back to DANN-E. Misses retry without damage.",
+      defeatMethod: `${getSecondaryActionBadge()}: timed Citation Stamp swing auto-faces the Ego Bolt and returns it to DANN-E`,
       damage: 0
     }] : []);
   }

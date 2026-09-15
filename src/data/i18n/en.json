@@ -16,10 +16,10 @@
       "faceEast": "FACE RIGHT TOWARD THE BOLT",
       "faceWest": "FACE LEFT TOWARD THE BOLT",
       "stepBack": "STEP BACK FOR A CLEAR SHOT",
-      "wait": "READY - WAIT FOR THE BOLT",
-      "swing": "SWING NOW!",
+      "wait": "EGO BOLT INCOMING - WAIT",
+      "swing": "RETURN EGO BOLT NOW!",
       "recover": "STAMP RECOVERING",
-      "returned": "EGO RETURNED!"
+      "returned": "EGO BOLT BACK TO DANN-E!"
     },
     "guideReturned": "EGO RETURNED!",
     "guideAim": "FACE THE GOLD AIM LINE",
@@ -35,7 +35,7 @@
     },
     "guide": {
       "stamp": "TAKE CITATION STAMP",
-      "counter": "RETURN DANN-E'S BOLT",
+      "counter": "RETURN EGO BOLTS",
       "fragment": "TAKE FRONT MATTER",
       "gate": "SOUTH: ARCHIVE"
     },

@@ -108,8 +108,8 @@
       "faceEast": "MIRA A LA DERECHA",
       "faceWest": "MIRA A LA IZQUIERDA",
       "stepBack": "RETROCEDE PARA RECIBIRLO",
-      "wait": "LISTO - ESPERA EL RAYO",
-      "swing": "GOLPEA AHORA!",
+      "wait": "RAYO EGO EN CAMINO",
+      "swing": "DEVUELVE EL RAYO EGO!",
       "recover": "SELLO RECARGANDO",
       "returned": "EGO DEVUELTO!"
     },
