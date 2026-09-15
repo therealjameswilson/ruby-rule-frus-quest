@@ -59,7 +59,7 @@ const DANNE_ENEMY_ENTRIES: readonly CodexEntry[] = [
     displayName: "DANN-E",
     artKey: "danne-boss-combat",
     spriteSheet: true,
-    lore: "Document Annihilating Neural Network Executable.\n\nFace an incoming Ego bolt and swing an owned tool to return it. While DANN-E is stunned, close in with the Red Pencil.\n\nCombat cannot replace human review. Publish with a complete record and no unresolved standards violations."
+    lore: "Document Annihilating Neural Network Executable.\n\nOften listens to Nickelback on Spotify while rehearsing his next boast.\n\nFace an incoming Ego bolt and swing an owned tool to return it. While DANN-E is stunned, close in with the Red Pencil.\n\nCombat cannot replace human review. Publish with a complete record and no unresolved standards violations."
   }
 ];
 

@@ -2,6 +2,10 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- DANN-E music flavor (2026-09-15): codex notes that he often listens to
+  Nickelback on Spotify. Added short Prime, Colossus phase and combat lines.
+  Fictional character detail only; no lyrics, streamed audio or Spotify access.
+
 - Stapler Sword (2026-09-15): starter melee tool registered in the existing
   process-item inventory, with original 16px ruby/steel art, 55ms windup,
   160ms active window, 220ms cooldown, directional hitbox and click/clack cues.
