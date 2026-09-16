@@ -187,6 +187,7 @@ export class OfficeScene extends Phaser.Scene {
       // Block only JR's feet, leaving the aisle and space behind him walkable.
       juniorFeet
     ];
+    this.clearUnsafeSpawn();
     this.interactables = [
       {
         id: "junior-compiler",
@@ -447,6 +448,16 @@ export class OfficeScene extends Phaser.Scene {
     // Older saves allowed standing inside JR; resume in the open aisle beside him.
     if (walkingFeetOverlap(x, y, feet)) {
       this.player.setPosition(this.juniorCompiler.x + 30, this.juniorCompiler.y);
+    }
+  }
+
+  private clearUnsafeSpawn() {
+    const { x, y } = this.player.position;
+    // Legacy room art allowed saves in the wall trim or inside a desk.
+    // Recover to the open entrance aisle without changing quest progress.
+    if (x < 40 || x > 216 || y < 58 || y > 218
+      || this.solids.some((solid) => walkingFeetOverlap(x, y, solid))) {
+      this.player.setPosition(128, 196);
     }
   }
 

@@ -2,6 +2,21 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Browser anti-stuck pass (2026-09-15): resumed the existing in-app-browser
+  Office run. Confirmed the cart dialogue overlapped scroll chrome and hid its
+  instructions; added two-line pagination, safe corner padding, native 8px
+  text and page counts. Verified all three cart pages and tap-to-close in the
+  user's browser. A legacy saved position at (37,80) appeared in wall trim
+  beside a desk; Office creation now recovers wall/desk spawns to (128,196),
+  preserving safe positions and quest progress. Verified recovery via Continue,
+  memo route/stamp, Office exit, Citation Stamp pickup, harmless missed bolts,
+  timed stapler return, Front Matter pickup and onward arrival in Archive.
+  Full suite: 244 files / 1848 tests pass; production build passes. Later
+  chapters remain to be replayed in this browser session; no full-game
+  softlock-free claim. Local changes only, not published. Two browser tabs
+  were open on the same origin and the Continue points summary changed between
+  reloads; investigate stale-tab saves separately before claiming save parity.
+
 - DANN-E music flavor (2026-09-15): codex notes that he often listens to
   Nickelback on Spotify. Added short Prime, Colossus phase and combat lines.
   Fictional character detail only; no lyrics, streamed audio or Spotify access.
