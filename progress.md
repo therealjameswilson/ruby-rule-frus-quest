@@ -2,6 +2,15 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Artwork sharpness (2026-09-16): added a reversible WebGL camera post-process
+  using a 0.10-strength five-tap unsharp mask at native render resolution.
+  Preserves center alpha, rejects differently transparent neighbor samples,
+  limits edge overshoot and leaves flat colors unchanged. Applies once to each
+  active camera, including later scene cameras; retains nearest-neighbor and
+  existing Canvas fallback. No source PNGs, sprite sizes or gameplay changed.
+  Office native capture inspected; 245 test files / 1851 tests pass. This is
+  a ten-percent filter strength, not a measurable ten-percent resolution gain.
+
 - Browser anti-stuck pass (2026-09-15): resumed the existing in-app-browser
   Office run. Confirmed the cart dialogue overlapped scroll chrome and hid its
   instructions; added two-line pagination, safe corner padding, native 8px
