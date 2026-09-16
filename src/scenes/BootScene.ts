@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { installArtSharpness } from "../systems/artSharpness";
 import { createStaplerTexture } from "../art/stapler";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { registerCharacterAnims } from "../art/character_anims";
@@ -114,6 +115,7 @@ export class BootScene extends Phaser.Scene {
     registerCharacterAnims(this);
     registerDanneAnims(this);
     this.applyNearestTextureFilters();
+    installArtSharpness(this.game);
     const startScene = this.getStartScene();
     this.scene.launch("UIScene");
     if (startScene !== "TitleScene" && startScene !== "TapToStartScene" && startScene !== "WarningScene") {
