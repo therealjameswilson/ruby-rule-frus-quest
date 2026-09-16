@@ -13,6 +13,7 @@ vi.mock("../systems/save", () => ({ saveGameNow: vi.fn() }));
 interface FeedbackScene {
   player: { position: { x: number; y: number }; setPosition: ReturnType<typeof vi.fn> };
   clearJuniorSpawn(feet: { x: number; y: number; width: number; height: number }): void;
+  clearUnsafeSpawn(): void;
   toast: { show: ReturnType<typeof vi.fn>; showInteractionHint: ReturnType<typeof vi.fn> };
   dialog: { show: ReturnType<typeof vi.fn> };
   handleStarterMemo(): void;
@@ -25,6 +26,7 @@ function harness() {
   return Object.assign(new OfficeScene(), {
     player: { position: { x: 128, y: 190 }, setPosition: vi.fn() },
     juniorCompiler: { x: 70, y: 122 },
+    solids: [{ x: 45, y: 72, width: 64, height: 34 }],
     interactables: [{ id: "archive-guide-door" }, { id: "junior-compiler" }, { id: "starter-memo" }],
     toast: { show: vi.fn(), showInteractionHint: vi.fn() }, dialog: { show: vi.fn() }
   }) as unknown as FeedbackScene;
@@ -32,6 +34,19 @@ function harness() {
 beforeEach(() => { resetGameState(); gameState.mode = "explore"; vi.clearAllMocks(); });
 
 describe("opening route feedback", () => {
+  it.each([{ x: 37, y: 80 }, { x: 70, y: 90 }, { x: 230, y: 120 }])(
+    "recovers a legacy wall or desk save at %o", position => {
+      const scene = harness();
+      scene.player.position = position;
+      scene.clearUnsafeSpawn();
+      expect(scene.player.setPosition).toHaveBeenCalledWith(128, 196);
+      expect(gameState.sceneProgress.juniorCompilerIntroduced).not.toBe(1);
+    });
+  it("preserves an unobstructed saved position", () => {
+    const scene = harness();
+    scene.clearUnsafeSpawn();
+    expect(scene.player.setPosition).not.toHaveBeenCalled();
+  });
   it("rescues an old overlapping spawn without moving a safe spawn", () => {
     const scene = harness();
     const feet = { x: 64, y: 119, width: 12, height: 8 };

@@ -10,6 +10,7 @@ import {
   updateInputCallbacks
 } from "../input/InputState";
 import { retroAudio } from "./audio";
+import { dialogHeading, dialogPages } from "./dialogPages";
 
 type CompleteCallback = () => void;
 
@@ -28,22 +29,22 @@ export class DialogBox {
   constructor(scene: Phaser.Scene, options: { aboveTouchControls?: boolean } = {}) {
     this.scene = scene;
     const touch = isTouchInputCapable();
-    const fontSize = touch ? 8 : 7;
-    const frameHeight = touch ? 48 : 42;
+    const fontSize = 8;
+    const frameHeight = 60;
     const frameY = GAME_HEIGHT - frameHeight - 4 - (touch && options.aboveTouchControls ? 64 : 0);
-    const speakerY = frameY + 5;
-    const bodyY = speakerY + 11;
+    const speakerY = frameY + 10;
+    const bodyY = frameY + 24;
     const frame = createDanneScrollFrame(scene, 6, frameY, GAME_WIDTH - 12, frameHeight);
-    this.speakerText = scene.add.text(14, speakerY, "", {
+    this.speakerText = scene.add.text(34, speakerY, "", {
       fontFamily: "monospace",
       fontSize: `${fontSize}px`,
       color: PALETTE.goldStamp
     }).setScrollFactor(0);
-    this.bodyText = scene.add.text(14, bodyY, "", {
+    this.bodyText = scene.add.text(34, bodyY, "", {
       fontFamily: "monospace",
       fontSize: `${fontSize}px`,
       color: PALETTE.creamPaper,
-      wordWrap: { width: 228, useAdvancedWrap: true },
+      wordWrap: { width: 188, useAdvancedWrap: true },
       lineSpacing: 0
     }).setScrollFactor(0);
     bindPointerPress(frame.hitArea, {
@@ -65,7 +66,7 @@ export class DialogBox {
 
   show(speaker: string, pages: string[] | string, onComplete?: CompleteCallback) {
     this.speaker = speaker;
-    this.pages = Array.isArray(pages) ? pages : [pages];
+    this.pages = dialogPages(pages);
     this.index = 0;
     this.onComplete = onComplete;
     this.container.setVisible(true);
@@ -95,7 +96,7 @@ export class DialogBox {
 
   private renderPage() {
     const text = this.pages[this.index] ?? "";
-    this.speakerText.setText(`${this.speaker}:`);
+    this.speakerText.setText(dialogHeading(this.speaker, this.index, this.pages.length));
     this.bodyText.setText(text);
     retroAudio.blip();
     setDialogState(this.speaker, text);
