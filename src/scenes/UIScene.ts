@@ -19,7 +19,7 @@ import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
 import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
 import { guideExitApproachCue, guideQuestBandObjective, officeApproachCue, officeQuestBandObjective } from "./openingQuestBand";
-import { questBandAwaitingDialog, questBandBossCue, questBandBracketCue, questBandCrossingCue, questBandRiskLine } from "./questBandCue";
+import { questBandAwaitingDialog, questBandBossCue, questBandBracketCue, questBandCrossingCue, questBandRiskLine, questBandRecoveryCue } from "./questBandCue";
 import { networkCrossingState } from "../game/networkCrossing";
 import { blackVaultActionLine } from "../game/blackVaultApproach";
 import { REFERRAL_MANIFEST_TITLE } from "../game/referralManifest";
@@ -222,6 +222,9 @@ export class UIScene extends Phaser.Scene {
     const riskLine = questBandRiskLine(gameState.mode, gameState.visibleThreats);
     const bossCue = questBandBossCue(gameState.mode, gameState.visibleThreats, gameState.player);
     const encounterCue = this.gameplayCombatCue();
+    const recoveryCue = questBandRecoveryCue(gameState.mode, gameState.reliability,
+      gameState.sceneProgress.danneRecoverablePressure ?? 0, Boolean(weapon.tool),
+      gameState.nearestInteractable, getSecondaryActionBadge());
     const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable)
       ?? guideExitApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable,
         gameState.volumeFragments.includes("Front Matter Fragment"))
@@ -230,9 +233,10 @@ export class UIScene extends Phaser.Scene {
         getSecondaryActionBadge()) : null)
       ?? (activeSceneKey === "ReferralVaultScene" ? questBandBracketCue(gameState.mode, gameState.nearestInteractable,
         gameState.sceneProgress, gameState.equippedProcessItem === "citation_stamp", getSecondaryActionBadge()) : null);
-    const actionLine = awaitingDialog ? "" : bossCue?.text ?? encounterCue?.text ?? riskLine ?? approachCue?.text ?? this.compactActionLine(toolLabel);
+    const actionLine = awaitingDialog ? "" : bossCue?.text ?? encounterCue?.text ?? approachCue?.text ?? recoveryCue?.text ?? riskLine ?? this.compactActionLine(toolLabel);
     const actionBadge = awaitingDialog ? "" : !bossCue && encounterCue ? encounterCue.badge : bossCue?.badge === "notice" ? "!"
-      : !bossCue && !riskLine && approachCue ? approachCue.badge
+      : !bossCue && approachCue ? approachCue.badge
+      : !bossCue && !encounterCue && !approachCue && recoveryCue ? recoveryCue.badge
       : !riskLine && (bossCue?.badge === "tool" || this.showCounterAction() || this.guideCounterTrainingActive())
       ? getSecondaryActionBadge()
       : getPrimaryActionBadge();

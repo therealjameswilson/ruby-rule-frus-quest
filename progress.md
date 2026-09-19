@@ -2,6 +2,19 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Archive playtest follow-up (2026-09-19): corrected the post-Stamp distant
+  interaction hint to identify the moving stone block rather than redirecting
+  to the already-completed research table. StateChat now says STAMP READY
+  instead of duplicating the obstacle's NO REPO label. Added low-reliability
+  HUD guidance for returning Ego bolts, while preserving nearby interactions,
+  combat telegraphs, decisions, editorial penalties and existing save data.
+  Added six recovery-cue cases; full suite: 246 files / 1857 tests passed;
+  production build passed (existing large-chunk warning remains).
+  Standard browser client ran at isolated port 5196; its WebGL capture was
+  black. Native in-app browser rendering was inspected instead, including
+  a synthetic zero-reliability fixture displaying RETURN EGO BOLTS TO HEAL.
+  User's port-5195 save was not modified by the fixture. No publication made.
+
 - Artwork sharpness (2026-09-16): added a reversible WebGL camera post-process
   using a 0.10-strength five-tap unsharp mask at native render resolution.
   Preserves center alpha, rejects differently transparent neighbor samples,

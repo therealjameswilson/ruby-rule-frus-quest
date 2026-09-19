@@ -2,6 +2,16 @@ import type { AdventureTrainingReadout, Position } from "../game/types";
 import type { GameState } from "../game/state";
 import type { NetworkCrossingState } from "../game/networkCrossing";
 
+export function questBandRecoveryCue(mode: GameState["mode"], reliability: number,
+  recoverablePressure: number, hasTool: boolean, nearest: string | null, toolBadge: string) {
+  // Never cover a decision or a nearby interaction with a persistent warning.
+  if (mode !== "explore" || reliability > 20 || nearest) return null;
+  if (recoverablePressure > 0) return hasTool
+    ? { text: "RETURN EGO BOLTS TO HEAL", badge: toolBadge }
+    : { text: "EQUIP A TOOL TO RETURN BOLTS", badge: "!" };
+  return { text: "LOW RELIABILITY: REVIEW NOTES", badge: "!" };
+}
+
 export function questBandBracketCue(mode: GameState["mode"], nearest: string | null,
   progress: GameState["sceneProgress"], stampEquipped: boolean, toolBadge: string) {
   if (mode !== "explore" || nearest !== "Bracket Press" || progress.referralTreatmentStep !== 2
