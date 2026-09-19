@@ -1588,7 +1588,7 @@ export class ArchiveScene extends Phaser.Scene {
   private sourceRoomTerminalFlag() {
     if (this.sourceRoomComplete()) return "ROOM CLEAR";
     if (gameState.sceneProgress.annotationDraftingComplete) return "DOCS OPEN";
-    if (this.sourceNoteWallNeedsStamp()) return "NO REPO";
+    if (this.sourceNoteWallNeedsStamp()) return "STAMP\nREADY";
     if (this.sourceNoteStatus === "stamped") {
       return `NOTES ${readAnnotationPacket(gameState.sceneProgress).gathered.length}/3`;
     }
@@ -2779,6 +2779,11 @@ export class ArchiveScene extends Phaser.Scene {
     const target = this.sourceNoteActionHint();
     if (!target || !this.isNearSourceNoteActionTarget(target)) {
       retroAudio.warning();
+      if (this.sourceNoteWallNeedsStamp()) {
+        this.toast.show("STAMP THE MOVING STONE BLOCK", this.player.position, "info");
+        setLatestMessage("Use the Citation Stamp on the moving stone block, not the StateChat screen. Follow the gold trail.");
+        return;
+      }
       if (this.sourceNoteStatus === "stamped" && !this.sourceNoteWallNeedsStamp()
         && !readAnnotationPacket(gameState.sceneProgress).ready) {
         this.toast.show("NORTH DOOR: ANNOTATION STACKS", this.player.position, "info");
