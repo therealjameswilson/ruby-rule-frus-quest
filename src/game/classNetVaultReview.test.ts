@@ -16,12 +16,12 @@ import { ABOUT_SERIES_SOURCE } from "./aboutSeries";
 
 describe("physical ClassNet Vault review", () => {
   it("names each carry destination without truncation and retains reward/exit goals", () => {
-    const destinations = ["HUMAN DESK", "RELEASE BOARD", "LEDGER"];
+    const destinations = ["VERIFY REVIEW LANE", "CHECK RELEASE TERMS", "LOG WITHHELD RECORD"];
     for (const [step, docket] of CLASSNET_VAULT_DOCKETS.entries()) {
       const pickup = classNetVaultObjective(step, false, false);
       const carry = classNetVaultObjective(step, true, false);
-      expect(pickup).toBe(step === 0 ? "TAKE REVIEW BATCH" : `RESUME ${docket.order}/3 AT PED`);
-      expect(carry).toBe(`${docket.order}/3 TO ${destinations[step]}`);
+      expect(pickup).toBe("TAKE REVIEW RECORDS");
+      expect(carry).toBe(destinations[step]);
       expect(pickup.length).toBeLessThanOrEqual(20);
       expect(carry.length).toBeLessThanOrEqual(20);
     }
@@ -71,7 +71,7 @@ describe("physical ClassNet Vault review", () => {
     expect(pending).toMatchObject({ ok: false, status: "review-required", nextStep: 2, complete: false });
     expect(classNetBatchDocketAfterRoute(pending)?.id).toBe("decision_trail");
     expect(completedClassNetVaultChecks(pending.nextStep)).toBe(6);
-    expect(classNetVaultObjective(pending.nextStep, true, false)).toBe("3/3 TO LEDGER");
+    expect(classNetVaultObjective(pending.nextStep, true, false)).toBe("LOG WITHHELD RECORD");
   });
 
   it.each([0, 1, 3, NaN, Infinity, 2.5])("keeps a rejected %s placement retryable", (decision) => {

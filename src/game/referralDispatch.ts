@@ -59,6 +59,6 @@ export function nearbyDispatchTarget(position: Position): DispatchTarget | null 
 }
 
 export function dispatchObjective(progress: Progress) {
-  if (!dispatchCopyFound(progress)) return "FIND DISPATCH COPY";
+  if (!dispatchCopyFound(progress)) return "FIND ORIGINAL COPY";
   return dispatchAisleOpen(progress) ? "SOUTH TO REVIEW" : "TURN SHELF CRANK";
 }

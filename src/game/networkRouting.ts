@@ -110,10 +110,10 @@ export function networkRoutingObjective(step: number, carried: boolean, hintOrde
   const packet = getNetworkRoutePacket(step);
   return carried
     ? networkRouteGuidance(step, hintOrder)
-      ? `${packet.order}/4 TO ${packet.network.toUpperCase()}`
+      ? `ROUTE ${packet.order}/4: ${packet.network.toUpperCase()}`
       : `${packet.order}/4 ${packet.marking}`
     : step === 0
-      ? "TAKE ROUTING BATCH"
+      ? "SORT RESEARCH FILES"
       : `RESUME ${packet.order}/4 AT SORTER`;
 }
 

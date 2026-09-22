@@ -2899,7 +2899,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.addVerificationGlow();
     setLatestMessage("VERIFIED BY HUMAN REVIEW - SOURCE NOTE PROVENANCE");
     const standardsReviewed = gameState.processStamps.includes("rule");
-    setObjective(standardsReviewed ? "STAMP AT TABLE" : "REVIEW AT TABLE");
+    setObjective(standardsReviewed ? "FILE VERIFIED SOURCE" : "REVIEW SOURCE NOTE");
     retroAudio.confirm();
     this.reliability.update();
     this.syncSourceNoteProvenanceStations();
@@ -3698,12 +3698,12 @@ export class ArchiveScene extends Phaser.Scene {
         return;
       }
       if (gameState.sceneProgress.annotationDraftingComplete && nextArchiveResearchReview()) {
-        setObjective("REVIEW AT RESEARCH TABLE");
+        setObjective("REVIEW SOURCE NOTE");
         return;
       }
       if (this.sourceRoomComplete() && gameState.sceneProgress.compilerSopVersion === 1
         && !compilerCheckpointComplete(gameState.sceneProgress, "review_submission")) {
-        setObjective("EAST: MANUSCRIPT REVIEW");
+        setObjective("EAST: VOLUME REVIEW");
         return;
       }
       setObjective(archiveSourceRoomObjective({

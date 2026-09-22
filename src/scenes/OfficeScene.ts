@@ -159,6 +159,8 @@ export class OfficeScene extends Phaser.Scene {
     this.postIntroLabels = [];
     this.drawOfficeInterior();
     this.drawOfficialReferenceBooks();
+    this.add.rectangle(40,190,15,24,0xaad579).setStrokeStyle(1,0xf9edc6).setDepth(25);
+    this.add.text(42,176,"OUTSIDE",{fontFamily:"monospace",fontSize:"6px",color:"#fff6cf",backgroundColor:"#234c39"}).setOrigin(.5).setDepth(26);
 
     const returnSpawn = arrival ?? this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
@@ -360,7 +362,10 @@ export class OfficeScene extends Phaser.Scene {
       solids: this.solids
     });
     this.updateDanneLurker(delta, Boolean(gameState.sceneProgress.juniorCompilerIntroduced));
-    const activeInteractables = this.currentInteractables();
+    const activeInteractables: Interactable[] = [...this.currentInteractables(), {
+      id: "research-world-door", label: "Outside: Research World", x: 42, y: 190, radius: 19, kind: "door",
+      onInteract: () => { gameState.sceneProgress.researchWorldZone = 1; transitionTo(this,"ResearchWorldScene"); }
+    }];
     const nearest = nearestInteractable(this.player.position, activeInteractables);
     if (nearest) this.toast.dismissInteractionHint();
     // Show the prompt/ring from a little further out than the strict interact

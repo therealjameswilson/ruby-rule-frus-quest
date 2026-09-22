@@ -2,6 +2,81 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- DANN-E movie disguise studies (2026-09-22): generated 20 separate original
+  transparent PNG concepts with the built-in image tool, each inspired by a
+  different verified Ben Affleck film. These are character studies, not walk
+  cycles; the current in-game sprite is unchanged. Gallery supports enlargement,
+  previous/next, PNG downloads, shortlist filtering and clear. All 20 images
+  inspected together; desktop and 390px browser checks passed image loading,
+  modal navigation, shortlist/reset, with no page errors. Assets, variants.json,
+  full prompts and gallery saved in public/assets/research-world/danne-variants/.
+  Preview: http://127.0.0.1:5202/assets/research-world/danne-variants/
+  Saved in canonical checkout. Not published.
+
+- Research World expansion (2026-09-22): seven bright outdoor areas, an
+  always-available west-side OUTSIDE door in the Office, walkable DC-area
+  connections, free rail to four presidential-library regions, and return
+  signs to Washington / Office. 16 landmarks: Archives I/II, Library of
+  Congress, Georgetown, and 12 presidential libraries. A persistent discovery
+  journal records visits and sourced holdings descriptions with original
+  research exercises. No production stamps or clearance are awarded by visits.
+  Civilian DANN-E faces the player in four poses and politely obstructs research
+  in three dialogue variants; there is no outdoor combat. Garden, archivist,
+  satchel, journal, rail and scenery all support optional exploration.
+  Built-in image generation created 3 PNG originals: sunny park landscape,
+  16-building atlas and 16-cell character/prop atlas (33 art elements in use).
+  Assets, full prompts and official research sources are in
+  public/assets/research-world/. Scene slices the atlases at actual dimensions.
+  Validation: 252 test files / 1,896 tests pass; build and diff check pass.
+  Desktop and 375x667 touch browser checks passed entry before the tutorial,
+  reversible DC boundaries, civilian DANN-E, rail travel/cancel (touch X), all
+  16 A-button discoveries, persistent saves, pause/resume, no production awards,
+  and return to Office and back. No browser errors. Region fixtures position
+  players for entrance checks; this is not a complete earned-game walkthrough.
+  Full-page screenshots inspected in /tmp/research-world-qa. Required game
+  client movement passed; direct WebGL screenshots remain black. Physical
+  iPhone Safari not tested. Preview: http://127.0.0.1:5202/?scene=ResearchWorldScene
+  Saved to canonical checkout. This expansion has not been published.
+
+- Grounded walking fix (2026-09-22): native player walk poses contained
+  inconsistent transparent foot padding (compiler side steps floated 9-10px).
+  Cache opaque foot offsets once at player creation and align idle/walk poses
+  to a shared baseline. No bitmap changes, movement-speed or collision changes.
+  Full suite: 251 files / 1,891 tests pass; build and diff checks pass.
+  Browser checks: four directions, frame offsets and return to idle on desktop
+  and simulated 375x667 iPhone, no page errors. Full-page walking captures
+  inspected; skill-client direct WebGL capture remains black. No physical
+  iPhone test. Preview on port 5202; this fix has not been published.
+
+- FRUS dungeon objective refinement (2026-09-22): objective text now names
+  repository/collection/folder verification, annotation evidence, agency equity,
+  referral lists, excisions, permission, appeal records, proof reconciliation,
+  reader aids, printer packets, and release files. Missing-source objectives
+  follow the actual provenance mask, including non-sequential discovery.
+  Existing action prompts, puzzle gates, rewards, and human review remain intact.
+  Validation: 250 test files / 1,885 tests pass; production build and diff checks
+  pass. Game-client input check passed; its direct WebGL screenshot is black.
+  Full-page desktop and 375x667 touch fixture screenshots inspected: repository
+  objective fits the HUD, no page errors. This is objective wording QA, not a
+  full earned dungeon playthrough or physical iPhone Safari verification.
+  Preview: http://127.0.0.1:5202/. This update is not yet published.
+
+- Public release verified (2026-09-22): PR #112 merged as
+  f80349e068e34aa670bde3f6f969c554fbc6f8c2. GitHub Pages deployment
+  35782136448 succeeded. Live URL:
+  https://therealjameswilson.github.io/ruby-rule-frus-quest/?v=f80349e
+  Published intro, compiler mission, official-book exhibit, head-visibility
+  changes, and iPhone MENU fix. Public HTML serves index-BMfIH9ae.js.
+  Isolated public-browser tests passed all intro pages/back/skip/Office on
+  desktop and two iPhone sizes, plus the full touch suite at three phone sizes
+  (menus, multitouch movement/attack, rotation, name entry, research retry).
+  Screenshots inspected; zero reported browser errors. Artifacts:
+  /tmp/ruby-public-intro and /tmp/ruby-public-iphone. Physical iPhone Safari
+  and full earned mission playthrough remain outside this verification.
+  Release source was committed in /tmp/ruby-rule-resume-20260922 on
+  codex/danne-intro-iphone-release. Original checkout retains its existing
+  local changes; reconcile with merged main before the next release.
+
 - DANN-E campaign intro (2026-09-22): new games now go from character creation
   to eight short story cards before the Office. Original copy covers DANN-E's
   ego and malevolence across planning, research, selection/annotation, review,

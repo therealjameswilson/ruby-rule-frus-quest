@@ -182,16 +182,16 @@ export function referralReviewObjective(
   inRewardRoom = false,
   slipCollected = false
 ) {
-  if (inRewardRoom) return slipCollected ? "EXIT EAST - EDITOR" : "TAKE CONCURRENCE";
+  if (inRewardRoom) return slipCollected ? "EXIT EAST - EDITOR" : "FILE CONCURRENCE";
   if (stage === "complete") return "EXIT EAST - SLIP";
-  if (stage === "manifest") return carried ? "DRAFT TO HUMAN DESK" : "TAKE DRAFT AT CHAT";
+  if (stage === "manifest") return carried ? "VERIFY REFERRAL LIST" : "TAKE REFERRAL DRAFT";
   if (stage === "equity") {
-    return carried ? "TO DISPATCH STACKS" : "TAKE EQUITY BATCH";
+    return carried ? "TRACE AGENCY EQUITY" : "TAKE EQUITY FILES";
   }
   const docket = getReferralTreatmentDocket(step);
   return carried
-    ? docket.id === "visible_excision" ? "STAMP BRACKET PRESS" : `${docket.order}/3 TO ${REFERRAL_TREATMENT_LABELS[docket.station]}`
-    : "TAKE REVIEW BATCH";
+    ? docket.id === "visible_excision" ? "MARK EXCISED TEXT" : docket.id === "permission_note" ? "RECORD PERMISSION" : "DOCUMENT APPEAL"
+    : "TAKE REVIEW RECORDS";
 }
 
 export function getReferralEquityPacket(step: number) {
