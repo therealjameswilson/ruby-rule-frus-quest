@@ -201,6 +201,6 @@ export class CharacterCreateScene extends Phaser.Scene {
     const displayName = normalizeCharacterDisplayName(this.displayName);
     retroAudio.confirm();
     setPlayerProfile(displayName, COMPILER_ROLE);
-    transitionTo(this, "OfficeScene");
+    transitionTo(this, "DanneIntroScene");
   }
 }

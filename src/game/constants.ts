@@ -650,6 +650,7 @@ export const SCENE_ORDER = [
   "TitleScene",
   "WorldMapScene",
   "CharacterCreateScene",
+  "DanneIntroScene",
   "OfficeScene",
   "GuideScene",
   "ArchiveScene",

@@ -1,14 +1,14 @@
 export const FRUS_QUEST_MISSION =
-  "Publish a reliable FRUS volume before the 30-year deadline.";
+  "Research, compile, and revise a reliable FRUS volume; publish within 30 years of the events.";
 
 export const FRUS_QUEST_LOOP =
-  "Find documents, verify sources, clear equities, proof pages, then bind the volume.";
+  "Approve a research plan, investigate sources, select and annotate, complete two reviews, revise, then submit to DPD before clearance and publication.";
 
 export const FRUS_QUEST_STAKES =
   "DANN-E hits cost reliability hearts. Unsafe edits also block publication until corrected.";
 
 export const FRUS_QUEST_FIRST_OBJECTIVE =
-  "Mission: publish a reliable FRUS volume. First: talk to JR.";
+  "Compile a reliable FRUS volume. First: get the assignment from JR.";
 
 export const FRUS_QUEST_TITLE_PROMPT =
   "MISSION: PUBLISH A RELIABLE FRUS VOLUME";
@@ -17,7 +17,7 @@ export const FRUS_QUEST_PLAYER_GOAL =
   "GOAL: PUBLISH ONE RELIABLE FRUS VOLUME";
 
 export const FRUS_QUEST_PLAYER_LOOP =
-  "TALK -> CARRY DOCS -> VERIFY -> STAMP";
+  "RESEARCH -> COMPILE -> REVIEW -> REVISE";
 
 export const FRUS_QUEST_PLAYER_STAKES =
   "HEARTS = RELIABILITY; BAD SHORTCUTS HURT";

@@ -25,6 +25,9 @@ try {
   await page.waitForTimeout(180);
   assert.equal(await page.evaluate(() => window.game.scene.isActive('CharacterCreateScene')), true, 'First Enter ends name editing only');
   await page.keyboard.press('Enter');
+  await page.waitForFunction(() => window.game.scene.isActive('DanneIntroScene'));
+  await page.waitForTimeout(350);
+  await page.keyboard.press('Escape');
   await page.waitForFunction(() => window.game.scene.isActive('OfficeScene'));
   assert.deepEqual(errors, []);
   console.log('Z/X remain name letters; Enter ends editing; next Enter starts Office');

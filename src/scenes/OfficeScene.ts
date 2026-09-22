@@ -1,4 +1,7 @@
 import Phaser from "phaser";
+import { OFFICIAL_FRUS_ART } from "../assets/officialFrus";
+import { compilerCheckpointComplete, getCompilerMissionReadout } from "../game/compilerMission";
+import { runCompilerCheckpoint } from "../systems/compilerCheckpoint";
 import { readChapterArrival } from "../game/chapterTravel";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import {
@@ -94,7 +97,7 @@ import type { Interactable } from "../game/types";
 import { Player } from "../entities/Player";
 import { DanneLurker } from "../entities/enemies/DanneLurker";
 import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
-import { getInput, tickInput } from "../input/InputState";
+import { getInput, isTouchInputCapable, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { walkingFeetOverlap } from "../systems/smoothMovement";
 import { DialogBox } from "../systems/dialog";
@@ -155,6 +158,7 @@ export class OfficeScene extends Phaser.Scene {
     this.hideLegacyRoomHud();
     this.postIntroLabels = [];
     this.drawOfficeInterior();
+    this.drawOfficialReferenceBooks();
 
     const returnSpawn = arrival ?? this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
@@ -170,7 +174,7 @@ export class OfficeScene extends Phaser.Scene {
         { x: 46, y: 58 }
       ]
     });
-    this.dialog = new DialogBox(this);
+    this.dialog = new DialogBox(this, { aboveTouchControls: true });
     this.choice = new ChoicePrompt(this);
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
@@ -251,6 +255,15 @@ export class OfficeScene extends Phaser.Scene {
         radius: 34,
         kind: "terminal",
         onInteract: () => this.openProductionBoard()
+      },
+      {
+        id: "official-frus-reference",
+        label: "Published FRUS Books",
+        x: 124,
+        y: 70,
+        radius: 14,
+        kind: "document",
+        onInteract: () => this.openOfficialReferenceBooks()
       },
       {
         id: "archive-guide-door",
@@ -343,7 +356,7 @@ export class OfficeScene extends Phaser.Scene {
     }
 
     this.player.update(delta, true, {
-      bounds: { left: 16, right: GAME_WIDTH - 16, top: 42, bottom: GAME_HEIGHT - 18 },
+      bounds: { left: 40, right: 216, top: 68, bottom: 218 },
       solids: this.solids
     });
     this.updateDanneLurker(delta, Boolean(gameState.sceneProgress.juniorCompilerIntroduced));
@@ -484,7 +497,7 @@ export class OfficeScene extends Phaser.Scene {
     }
     setObjective(this.currentOfficeObjective());
     setLatestMessage(firstAssignment
-      ? "Your mission: recover the records DANN-E threatens and publish a reliable FRUS volume. Start with the memo; carry it to INBOX and stamp it to open the archive."
+      ? "Your mission: publish a reliable FRUS volume. As compiler, plan research, select and annotate records, complete two reviews, and revise before DPD submission. First: carry the assignment memo to INBOX for research approval."
       : "Pick up the memo, carry it to INBOX, then stamp it.");
     this.toast.show(firstAssignment ? "PUBLISH A FRUS VOLUME" : "PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
   }
@@ -708,13 +721,18 @@ export class OfficeScene extends Phaser.Scene {
       return;
     }
     if (memoStatus === 2) {
+      gameState.sceneProgress.compilerSopVersion = 1;
+      if (!compilerCheckpointComplete(gameState.sceneProgress, "research_plan")) {
+        runCompilerCheckpoint(this.choice, this.dialog, "research_plan", () => this.handleStarterMemoInbox());
+        return;
+      }
       this.setOfficeStarterMemoStatus(3);
       setHeldItem(null);
       addDocumentPoints(5, "opening assignment memo stamped");
       const added = addDanneItem("master-declass-key");
       if (added) retroAudio.danneItemPickup("Master Declass Key");
       retroAudio.stamp();
-      setLatestMessage("STAMPED: Archive Guide door open.");
+      setLatestMessage("Research plan approved. Archive access unlocked; access is not declassification or permission to publish.");
       setObjective("Archive Guide open. Go south.");
       this.showArchiveUnlockBurst();
       this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
@@ -1337,7 +1355,43 @@ export class OfficeScene extends Phaser.Scene {
     });
   }
 
+  private drawOfficialReferenceBooks() {
+    OFFICIAL_FRUS_ART.forEach((asset, index) => {
+      if (!this.textures.exists(asset.key)) return;
+      this.add.image(118 + index * 14, 60, asset.key)
+        .setDisplaySize(12, 18)
+        .setName(`office-reference-${asset.key}`)
+        .setDepth(-10);
+    });
+  }
+
+  private openOfficialReferenceBooks() {
+    const touch = isTouchInputCapable();
+    const coverHeight = touch ? 54 : 96;
+    const coverY = touch ? 69 : 98;
+    const labelY = touch ? 98 : 152;
+    const exhibit = this.add.container(0, 0).setDepth(850).setScrollFactor(0);
+    exhibit.add(this.add.rectangle(128, touch ? 73 : 105, 232, touch ? 74 : 134, color(PALETTE.black), 0.98));
+    OFFICIAL_FRUS_ART.forEach((asset, index) => {
+      const x = 76 + index * 104;
+      if (this.textures.exists(asset.key)) {
+        exhibit.add(this.add.image(x, coverY, asset.key).setDisplaySize(coverHeight * 2 / 3, coverHeight));
+      }
+      exhibit.add(this.add.text(x, labelY, asset.label, {
+        fontFamily: "monospace", fontSize: "5px", color: PALETTE.goldStamp
+      }).setOrigin(0.5, 0));
+    });
+    exhibit.add(this.add.text(128, labelY + 8, "HISTORY.STATE.GOV", {
+      fontFamily: "monospace", fontSize: "5px", color: PALETTE.creamPaper
+    }).setOrigin(0.5, 0));
+    this.dialog.show("REFERENCE LIBRARY", [
+      "Real publication covers from the Office of the Historian: START I and the history of the FRUS series.",
+      "These are reference books, not your fictional volume. Explore history.state.gov. Independent game; no government endorsement."
+    ], () => exhibit.destroy(true));
+  }
+
   private openProductionBoard() {
+    const compiler = getCompilerMissionReadout(gameState.sceneProgress);
     const board = getProductionBoardReadout();
     const next = board.nextStep;
     const statusPages: string[] = [];
@@ -1351,6 +1405,9 @@ export class OfficeScene extends Phaser.Scene {
     retroAudio.confirm();
     setLatestMessage(next ? `Production board next: ${next.label}.` : "Production board complete.");
     this.dialog.show("FRUS BOARD", [
+      `COMPILER MISSION: ${compiler.completed}/${compiler.total} SOP tasks. ${compiler.nextTask}.`,
+      "Research plan at INBOX. Investigate and annotate in the Archive. The east manuscript desk handles selection, both reviews, revision, and DPD submission.",
+      "First review: supervisor, chapter-level. Second review: GE/AGE, volume-level. Revise after both; DPD handoff is not publication approval.",
       `FRUS volume board: ${board.completed}/${board.total} production checks complete.`,
       next
         ? `NEXT ${next.shortLabel}: ${next.gameplayTask}`

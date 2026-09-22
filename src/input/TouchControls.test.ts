@@ -91,6 +91,7 @@ describe("touch controls on publication screens", () => {
   });
   it("leaves title commands clear but restores controls for character creation", () => {
     expect(refresh("TitleScene")).toHaveBeenCalledWith(false);
+    expect(refresh("DanneIntroScene")).toHaveBeenCalledWith(false);
     expect(refresh("CharacterCreateScene")).toHaveBeenCalledWith(true);
     expect(refresh("OfficeScene")).toHaveBeenCalledWith(true);
   });
@@ -113,5 +114,30 @@ describe("touch controls on publication screens", () => {
     gameState.mode = "explore";
     expect(refresh("EndingScene")).toHaveBeenCalledWith(true);
     expect(refresh("BlackVaultLairScene")).toHaveBeenCalledWith(true);
+  });
+});
+
+describe("iPhone pause access", () => {
+  it("puts a 44px menu target below the HUD without sharing the action targets", () => {
+    const controls = Object.create(TouchControls.prototype) as TouchControls;
+    const text = { setOrigin: vi.fn().mockReturnThis(), setDepth: vi.fn().mockReturnThis(), setScrollFactor: vi.fn().mockReturnThis() };
+    Object.assign(controls, { scene: { add: { text: () => text } } });
+    const buttons = Reflect.get(controls, "createButtons").call(controls);
+    Object.assign(controls, { buttons });
+    const menu = buttons.find((button: { key: string }) => button.key === "start");
+    expect(menu.label).toBe("MENU");
+    expect(menu.hitWidth).toBeGreaterThanOrEqual(44);
+    expect(menu.hitHeight).toBeGreaterThanOrEqual(44);
+    expect(menu.y - menu.hitHeight / 2).toBeGreaterThan(176);
+    expect(menu.y + menu.hitHeight / 2).toBeLessThanOrEqual(240);
+    const hit = Reflect.get(controls, "findButtonAt").bind(controls);
+    gameState.mode = "explore";
+    expect(hit(menu.x, menu.y)?.key).toBe("start");
+    expect(hit(174, 216)?.key).toBe("b");
+    expect(hit(225, 205)?.key).toBe("space");
+    for (const mode of ["dialog", "choice", "pause"] as const) {
+      gameState.mode = mode;
+      expect(hit(menu.x, menu.y)).toBeUndefined();
+    }
   });
 });

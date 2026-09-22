@@ -2,6 +2,92 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- DANN-E campaign intro (2026-09-22): new games now go from character creation
+  to eight short story cards before the Office. Original copy covers DANN-E's
+  ego and malevolence across planning, research, selection/annotation, review,
+  clearance, proofs, and publication, with ego-bolt counterplay as the final
+  challenge. Reuses local DANN-E art; original animated bolt accents respect
+  reduced-motion preference. 44px-minimum Back/Next/Skip controls, keyboard
+  navigation, input debounce, no timed reading, no HUD/touch overlay collisions.
+  Scene is transient for save purposes; existing Continue flow is unchanged.
+  Browser QA passed all cards/back/skip/Office on desktop, 375x667/DPR2 and
+  393x852/DPR3 touch simulations, with full-page screenshots inspected and no
+  browser errors. Required game client verified keyboard paging (its direct
+  WebGL screenshot is black; full-page captures are the visual evidence).
+  All 250 test files / 1885 tests and production build pass; existing bundle
+  size warning remains. QA: tools/qa-danne-intro.mjs; /tmp/ruby-danne-intro.
+  Preview: http://127.0.0.1:5202/?scene=DanneIntroScene. Not published.
+
+- iPhone verification (2026-09-22): fixed the pause touch target hidden beneath
+  the HUD; a visible 44x44 MENU target now sits beside A/B in exploration.
+  Dialogs and choices retain their own content/tap space. Added regression
+  coverage and tools/qa-iphone-touch.mjs. Chromium iPhone simulations at
+  375x667/DPR2, 393x852/DPR3, and 430x932/DPR3 pass menus, multitouch movement
+  and Archive attack, release/rotation, simulated landscape safe areas, native
+  name input and touch Begin, and isolated research checkpoint retry/approval.
+  Full-page screenshots inspected; no browser errors. All 249 test files /
+  1882 tests pass; production build passes (existing chunk warning). Tested in
+  isolated current-main copy /tmp/ruby-rule-resume-20260922, preview port 5202.
+  Details/results: docs/mobile/iphone-touch-2026-09-22.md and .json. Physical
+  iPhone Safari, audio interruption and sustained hardware performance remain
+  unverified. Not committed or published.
+
+- Resume verification (2026-09-22): recovered uncommitted September 20 changes
+  into an isolated checkout at /tmp/ruby-rule-resume-20260922, based on current
+  origin/main 44860f9. Original checkout preserved. All 249 test files / 1,881
+  tests and production build pass (existing bundle-size warning). Required
+  gameplay client exercised Office up/right/stop without reported errors;
+  canvas capture was black, while native browser visual inspection confirmed
+  the Office, character, HUD, and book artwork render. Preview: port 5202.
+  No new implementation or publication. Next: full new-game mission playthrough,
+  including checkpoint persistence and northern-exit head visibility.
+
+- Official website art (2026-09-20): added unmodified START I and FRUS series
+  history covers from history.state.gov, excluding flags and the flag-bearing
+  masthead. Typed registry and Boot preload feed Office's north reference shelf;
+  after the introductory route, Published FRUS Books opens an optional exhibit.
+  Sources and rights basis recorded in assets/LICENSES.md. Reference publications
+  are explicitly separate from the fictional game volume; no endorsement implied.
+  Touch layout uses a shorter exhibit and office dialogue above A/B. Verified
+  action-input opening, closure, loaded textures, desktop/mobile screenshots,
+  and no page errors in isolated Chromium. Standard movement client completed;
+  its WebGL capture was black, so page screenshots supplied visual verification.
+  Build and all 1,881 tests passed (249 files). Not committed or published.
+
+- SOP compiler mission (2026-09-20): read the user-supplied August 2026 compiling
+  and review SOP. New runs approve the research plan at INBOX, then perform
+  selection/annotation backup, supervisor first review, GE/AGE second review,
+  post-review revision, front matter clearance, Joint Historian review, and a
+  signed DPD handoff at Archive's east route. Existing physical source and
+  annotation tasks remain prerequisites. No classified records or internal
+  contact/handling details are bundled. DPD handoff is not public release.
+  Numeric sceneProgress flags save each accepted task; advanced legacy saves
+  retain their route without fabricated SOP completion. Mission, Office board,
+  production-board research/review credit, and QA readouts reflect the changes.
+  Traceability: docs/COMPILER_SOP_MISSION.md. Browser fixtures exercised all 10
+  choices, a wrong-answer retry, save/restore at second review, and the real east
+  exit into NetworkScene with no page errors. These were isolated checkpoints,
+  not a new full-game playthrough. Screenshots: /tmp/frus-sop-selection.png,
+  /tmp/frus-sop-second-review.png, /tmp/frus-sop-handoff.png. Standard gameplay
+  client also ran; page screenshots used for visual verification. All 248 test
+  files / 1879 tests pass; production build passes (existing chunk warning).
+  Earlier movement changes preserved. Local preview remains :5196; not published.
+
+- Movement/head visibility (2026-09-20): reproduced the compiler walking into
+  Office north-wall trim with his head hidden by the HUD. Restricted Office
+  feet to its interior (north doors remain within their interaction radii).
+  Aligned character origins to native pixels. Quest HUD now docks at the bottom
+  near northern exits with hysteresis, leaving door thresholds and physics
+  unchanged elsewhere; dialogue restores it to the top. On touch devices the
+  dock reserves 64px for A/B controls. Verified Office northward movement and
+  Office/Archive diagonal movement in isolated Chromium; no page errors.
+  iPhone-sized northern-exit fixture confirmed head and touch buttons visible.
+  Screenshots: /tmp/frus-OfficeScene-north-after.png and
+  /tmp/frus-north-mobile-after.png. Standard gameplay client also exercised
+  up/diagonal/stop (its canvas-only capture is black; page captures verified).
+  Full suite: 246 files / 1862 tests passed. Build passed with existing bundle
+  size warning. Local QA: http://127.0.0.1:5196/. Not published yet.
+
 - Archive playtest follow-up (2026-09-19): corrected the post-Stamp distant
   interaction hint to identify the moving stone block rather than redirecting
   to the already-completed research table. StateChat now says STAMP READY
