@@ -4,7 +4,7 @@ import {
   UI_PACK,
   publicAssetPath
 } from "../assets/registry";
-import { GAME_WIDTH, PALETTE } from "../game/constants";
+import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState, getAdventureHudReadout, getAdventureSubscreenReadout, hasDanneItem, hasProcessItem } from "../game/state";
 import { getVolumeAssemblyReadout } from "../game/state";
 import { getGuideCavernStage, guideCavernActionCue } from "../game/guideCavernFlow";
@@ -17,7 +17,7 @@ import { getString } from "../systems/i18n";
 import { applyIntegerZoom } from "../systems/pixelPerfect";
 import type { VolumeAssemblyReadout } from "../systems/volumeAssembly";
 import { addColorblindModeListener, isColorblindModeEnabled } from "../systems/accessibilitySettings";
-import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText } from "./questBandLayout";
+import { QUEST_BAND_HEIGHT, QUEST_BAND_LAYOUT, clampQuestBandText, questBandOffset } from "./questBandLayout";
 import { guideExitApproachCue, guideQuestBandObjective, officeApproachCue, officeQuestBandObjective } from "./openingQuestBand";
 import { questBandAwaitingDialog, questBandBossCue, questBandBracketCue, questBandCrossingCue, questBandRiskLine, questBandRecoveryCue } from "./questBandCue";
 import { networkCrossingState } from "../game/networkCrossing";
@@ -55,6 +55,7 @@ export class UIScene extends Phaser.Scene {
   private questBandSignature = "";
   private questBandDecisionSignature = "";
   private questBandLastRefresh = 0;
+  private questBandY = 0;
 
   constructor() {
     super("UIScene");
@@ -210,6 +211,15 @@ export class UIScene extends Phaser.Scene {
     this.questBandVerbText.setVisible(visible);
     this.questBandCueText.setVisible(visible);
     if (!visible) return;
+
+    // Update placement every frame, independently of the text refresh throttle.
+    const touchInset = isTouchInputCapable() || this.controls?.isForceVisible ? 64 : 0;
+    this.questBandY = questBandOffset(gameState.player.y, this.questBandY, GAME_HEIGHT, gameState.mode === "explore", touchInset);
+    this.questBandGraphics.setY(this.questBandY);
+    this.questBandText.setY(QUEST_BAND_LAYOUT.objective.y + this.questBandY);
+    this.questBandToolText.setY(QUEST_BAND_LAYOUT.toolLabel.y + this.questBandY);
+    this.questBandVerbText.setY(QUEST_BAND_LAYOUT.actionBadge.y + this.questBandY);
+    this.questBandCueText.setY(QUEST_BAND_LAYOUT.actionCue.y + this.questBandY);
 
     const hud = getAdventureHudReadout();
     const subscreen = getAdventureSubscreenReadout();
@@ -417,6 +427,7 @@ export class UIScene extends Phaser.Scene {
       "WarningScene",
       "TitleScene",
       "CharacterCreateScene",
+      "DanneIntroScene",
       "RenderDebugScene",
       "DanneGallery",
       "SpriteGallery"

@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { getCompilerMissionReadout } from "./game/compilerMission";
 import "./styles/pixel.css";
 import { getAboutSeriesGameplayReadout } from "./game/aboutSeries";
 import { getGuideCounterReadout } from "./game/guideCounterTraining";
@@ -115,6 +116,7 @@ function renderConciseGameToText() {
       aboutSeries: getAboutSeriesGameplayReadout(gameState.sceneProgress),
       hearingReview: gameState.currentScene === "SenateHearingChamberScene" ? readHearingReview(gameState.sceneProgress) : null,
       questCounters: gameState.questCounters,
+      compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       volumeAssembly: {
         piecesEarned: getVolumeAssemblyReadout().earnedCount,
         piecesTotal: getVolumeAssemblyReadout().total,

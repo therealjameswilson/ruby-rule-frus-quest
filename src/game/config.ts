@@ -4,6 +4,7 @@ import { ArchiveScene } from "../scenes/ArchiveScene";
 import { BadEndingScene } from "../scenes/BadEndingScene";
 import { BlackVaultLairScene } from "../scenes/BlackVaultLairScene";
 import { BootScene } from "../scenes/BootScene";
+import { DanneIntroScene } from "../scenes/DanneIntroScene";
 import { CharacterCreateScene } from "../scenes/CharacterCreateScene";
 import { CherryBlossomGardenScene } from "../scenes/CherryBlossomGardenScene";
 import { CodexScene } from "../scenes/CodexScene";
@@ -77,6 +78,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     TitleScene,
     WorldMapScene,
     CharacterCreateScene,
+    DanneIntroScene,
     GuideScene,
     OfficeScene,
     ArchiveScene,

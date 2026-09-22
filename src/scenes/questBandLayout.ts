@@ -1,5 +1,16 @@
+import { ART_PACK_SPRITE_ORIGIN_Y, CHARACTER_FRAME } from "../art/characters";
+
 export const QUEST_BAND_HEIGHT = 24;
 export const PIXEL_FONT_ADVANCE = 6;
+
+// Leave room for a 48px character above its feet. Hysteresis prevents flicker
+// when a walking frame or recoil crosses the edge of the HUD.
+export function questBandOffset(playerY: number, previousOffset: number, gameHeight: number, exploring: boolean, bottomInset = 0) {
+  if (!exploring) return 0;
+  const headY = Math.round(playerY) - Math.round(CHARACTER_FRAME.height * ART_PACK_SPRITE_ORIGIN_Y);
+  const clearance = previousOffset > 0 ? 10 : 0;
+  return headY < QUEST_BAND_HEIGHT + clearance ? gameHeight - QUEST_BAND_HEIGHT - bottomInset : 0;
+}
 
 export const QUEST_BAND_LAYOUT = {
   hearts: {

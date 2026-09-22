@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { compilerCheckpointComplete } from "../game/compilerMission";
+import { runCompilerCheckpoint } from "../systems/compilerCheckpoint";
 import { archiveOptionalObjective } from "../game/archiveOptionalObjective";
 import { ARCHIVE_SECRET_IDS, hasArchiveSecret, recordArchiveSecret } from "../game/archiveSecrets";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
@@ -3488,10 +3490,14 @@ export class ArchiveScene extends Phaser.Scene {
     gameState.sceneProgress.archiveSourceRoomComplete = 1;
     setHeldItem(null);
     this.refreshRoomObjective();
-    setLatestMessage("SOURCE ROOM CLEAR: the east network route is open.");
-    this.toast.show("SOURCE ROOM CLEAR - EXIT EAST", this.player.position, "info");
+    const needsCompilerReview = gameState.sceneProgress.compilerSopVersion === 1
+      && !compilerCheckpointComplete(gameState.sceneProgress, "review_submission");
+    setLatestMessage(needsCompilerReview
+      ? "Research packet ready. Go east for compilation, both reviews, revision, and DPD submission."
+      : "SOURCE ROOM CLEAR: the east network route is open.");
+    this.toast.show(needsCompilerReview ? "PACKET READY - REVIEW EAST" : "SOURCE ROOM CLEAR - EXIT EAST", this.player.position, "info");
     addSnesRewardBurst(this, 222, 120, "citation-stamp", "Network Route", (object) => this.track(object));
-    this.drawGate("east", true, true, undefined, "NETWORK");
+    this.drawGate("east", true, true, undefined, needsCompilerReview ? "REVIEW" : "NETWORK");
     this.syncSourceRoomTerminalStatus();
     this.syncRoomTraversalState();
     this.syncWallState();
@@ -3614,8 +3620,19 @@ export class ArchiveScene extends Phaser.Scene {
     }
 
     if (target === "N1") {
+      if (gameState.sceneProgress.compilerSopVersion === 1
+        && !compilerCheckpointComplete(gameState.sceneProgress, "review_submission")) {
+        this.player.setPosition(PLAY_BOUNDS.right - 18, position.y);
+        this.exitCooldownUntil = this.time.now + 500;
+        runCompilerCheckpoint(this.researchChoice, this.dialog, "review_submission", () => {
+          setObjective("DPD packet ready. Take the east route to Two Networks.");
+          setLatestMessage("Research, compilation, both reviews, revision, and submission complete. Declassification coordination comes next.");
+          this.toast.show("DPD PACKET READY - EAST", this.player.position, "info");
+        });
+        return false;
+      }
       gameState.sceneProgress.archiveSourceRoomExited = 1;
-      setLatestMessage("Verified source packet routed to Two Networks.");
+      setLatestMessage("Manuscript routed to declassification coordination in Two Networks. Compiler access alone does not authorize release.");
       this.roomTransitionLocked = true;
       transitionTo(this, "NetworkScene", { chapterFrom: "A1", chapterTo: "N1" });
       return true;
@@ -3682,6 +3699,11 @@ export class ArchiveScene extends Phaser.Scene {
       }
       if (gameState.sceneProgress.annotationDraftingComplete && nextArchiveResearchReview()) {
         setObjective("REVIEW AT RESEARCH TABLE");
+        return;
+      }
+      if (this.sourceRoomComplete() && gameState.sceneProgress.compilerSopVersion === 1
+        && !compilerCheckpointComplete(gameState.sceneProgress, "review_submission")) {
+        setObjective("EAST: MANUSCRIPT REVIEW");
         return;
       }
       setObjective(archiveSourceRoomObjective({
@@ -3882,7 +3904,8 @@ export class ArchiveScene extends Phaser.Scene {
     if (target === "AS") return "NOTES";
     if (target === "DN1") return "NARA";
     if (this.currentRoomId === "AS" && target === "A1") return "TABLE";
-    if (target === "N1") return "NETWORK";
+    if (target === "N1") return gameState.sceneProgress.compilerSopVersion === 1
+      && !compilerCheckpointComplete(gameState.sceneProgress, "review_submission") ? "REVIEW" : "NETWORK";
     if (target === "O1") return "OFFICE";
     const room = ARCHIVE_ROOMS[target];
     if (room.roomType === "reward") return "REWARD";

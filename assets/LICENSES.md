@@ -1,5 +1,26 @@
 # Asset Provenance
 
+## Official FRUS Reference Covers (2026-09-20)
+
+Downloaded unchanged from the Office of the Historian. These U.S. Department
+of State publication covers are presented as reference books, not as the
+fictional volume compiled in the game. No endorsement is implied. No flag
+image, flag-bearing website masthead, or third-party photograph was imported.
+The original publication seals remain part of the covers.
+
+| Local file (under `public/assets/official-frus/`) | Original image | Publication |
+| --- | --- | --- |
+| `frus1989-92v31.jpg` | https://static.history.state.gov/frus/frus1989-92v31/covers/frus1989-92v31.jpg | https://history.state.gov/historicaldocuments/frus1989-92v31 |
+| `frus-history.png` | https://static.history.state.gov/frus-history/covers/frus-history.png | https://history.state.gov/historicaldocuments/frus-history |
+
+Rights basis: official federal publication cover artwork. The Office's
+[FRUS FAQ](https://history.state.gov/about/faq/what-is-frus) states that FRUS
+information is public domain. This is not a blanket license for all images
+on history.state.gov; unrelated and third-party site imagery is excluded.
+Source files are 400 x 600 pixels; the game uses nearest-neighbor rendering
+for thumbnail/exhibit display, without modifying or claiming these covers
+are native pixel-art sprites.
+
 This ledger records the September 2026 colleague refresh. It does not certify
 older assets or assign a license to the entire repository.
 

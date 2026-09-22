@@ -144,6 +144,7 @@ export class TouchControls {
       activeSceneKey === "TapToStartScene"
       || activeSceneKey === "TitleScene"
       || activeSceneKey === "WarningScene"
+      || activeSceneKey === "DanneIntroScene"
       || activeSceneKey === "RenderDebugScene"
       || activeSceneKey === "DanneGallery"
       || activeSceneKey === "TrueEndingScene"
@@ -189,13 +190,14 @@ export class TouchControls {
       },
       {
         key: "start",
-        label: "START",
-        x: GAME_WIDTH - 32,
-        y: 16,
-        hitWidth: 54,
-        hitHeight: 28,
-        visibleWidth: 42,
-        visibleHeight: 14,
+        // Keep pause out of the opaque quest HUD and give small phones a 44px target.
+        label: "MENU",
+        x: 120,
+        y: GAME_HEIGHT - 24,
+        hitWidth: 44,
+        hitHeight: 44,
+        visibleWidth: 44,
+        visibleHeight: 24,
         kind: "rect"
       },
       {
@@ -217,7 +219,7 @@ export class TouchControls {
       text: this.scene.add
         .text(spec.x, spec.y - 4, spec.label, {
           fontFamily: "monospace",
-          fontSize: spec.key === "space" ? "18px" : spec.key === "b" ? "11px" : "5px",
+          fontSize: spec.key === "space" ? "18px" : spec.key === "b" ? "11px" : spec.key === "start" ? "7px" : "5px",
           color: PALETTE.creamPaper,
           align: "center"
         })
@@ -385,6 +387,8 @@ export class TouchControls {
   }
 
   private buttonAvailable(button: ButtonSpec) {
+    // Dialogs and choices own this space; their text and direct taps stay clear.
+    if (button.key === "start") return gameState.mode === "explore";
     return gameState.currentScene !== "WorldMapScene" || button.key !== "b";
   }
 

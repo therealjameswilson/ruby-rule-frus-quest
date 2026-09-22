@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { OFFICIAL_FRUS_ART } from "../assets/officialFrus";
 import { installArtSharpness } from "../systems/artSharpness";
 import { createStaplerTexture } from "../art/stapler";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
@@ -68,6 +69,9 @@ export class BootScene extends Phaser.Scene {
     this.load.json("dialogue", "assets/data/dialogue.json");
     this.load.json("scenes", "assets/data/scenes.json");
     preloadCharacters(this);
+    for (const asset of OFFICIAL_FRUS_ART) {
+      if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
+    }
     this.load.spritesheet(WEAPON_VFX_ASSET.key, WEAPON_VFX_ASSET.path, {
       frameWidth: WEAPON_VFX_ASSET.frameWidth,
       frameHeight: WEAPON_VFX_ASSET.frameHeight

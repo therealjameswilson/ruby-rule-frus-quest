@@ -48,6 +48,9 @@ try {
   await page.waitForTimeout(300);
   assert.equal(await name(), 'NAME: Ruby');
   await tap(128, 188);
+  await page.waitForFunction(() => window.game.scene.isActive('DanneIntroScene'));
+  await page.waitForTimeout(350);
+  await tap(213, 211);
   await page.waitForFunction(() => window.game.scene.isActive('OfficeScene'));
   await page.waitForTimeout(600);
   assert.equal(await page.locator('#compiler-name-dialog').count(), 0);

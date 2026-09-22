@@ -1,4 +1,5 @@
 import { CHARACTER_FRAME, getCharacterKeyForProcessRole } from "../art/characters";
+import { getCompilerMissionReadout } from "./compilerMission";
 import { getPauseMenuReadout } from "../systems/pauseMenu";
 import { getCodexViewReadout } from "../systems/codexLayout";
 import { getGuideCounterReadout } from "./guideCounterTraining";
@@ -317,6 +318,7 @@ const TRANSIENT_SAVE_SCENES = new Set([
   "BootScene",
   "TapToStartScene",
   "WarningScene",
+  "DanneIntroScene",
   "RenderDebugScene",
   "CodexScene",
   "DanneGallery",
@@ -2802,12 +2804,12 @@ export function getProductionBoardReadout() {
     typeflowOrderComplete: Boolean(gameState.sceneProgress.typeflowOrderComplete),
     typesettingPreparationComplete: Boolean(gameState.sceneProgress.typesettingPreparationComplete),
     typesetterProofComplete: Boolean(gameState.sceneProgress.typesetterProofComplete),
-    manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete),
-    manuscriptReviewStep: gameState.sceneProgress.manuscriptReviewStep ?? 0,
+    manuscriptReviewComplete: Boolean(gameState.sceneProgress.manuscriptReviewComplete || gameState.sceneProgress.compilerSop_revision),
+    manuscriptReviewStep: gameState.sceneProgress.compilerSop_revision === 1 ? 3 : gameState.sceneProgress.manuscriptReviewStep ?? 0,
     clearanceProcedureComplete: Boolean(gameState.sceneProgress.clearanceProcedureComplete),
     eo13526ReviewComplete: Boolean(gameState.sceneProgress.eo13526ReviewComplete),
     recordsAccessComplete: Boolean(gameState.sceneProgress.recordsAccessComplete),
-    researchCharterComplete: Boolean(gameState.sceneProgress.researchCharterComplete),
+    researchCharterComplete: Boolean(gameState.sceneProgress.researchCharterComplete || gameState.sceneProgress.compilerSop_research),
     recordCollectionComplete: Boolean(gameState.sceneProgress.recordCollectionComplete) || archivePacketCollected,
     repositoryCoverageMapComplete: Boolean(gameState.sceneProgress.repositoryCoverageMapComplete),
     selectionDocketComplete: Boolean(gameState.sceneProgress.selectionDocketComplete),
@@ -3005,6 +3007,7 @@ export function renderGameToText() {
       documentWorkflowLog: gameState.documentWorkflowLog,
       volumeMetrics: gameState.volumeMetrics,
       questCounters: gameState.questCounters,
+      compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       dungeons: gameState.dungeons,
       questWorkflow,
       snesAtlas: getSnesAtlasReadout(),

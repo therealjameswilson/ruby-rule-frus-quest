@@ -1,0 +1,56 @@
+[
+  {
+    "device": {
+      "name": "se",
+      "width": 375,
+      "height": 667,
+      "dpr": 2
+    },
+    "checks": [
+      "menu and all tabs",
+      "two-finger move and attack",
+      "release stops",
+      "rotation releases",
+      "simulated landscape safe areas",
+      "native name field and touch begin",
+      "research checkpoint wrong-answer retry and approval"
+    ],
+    "errors": []
+  },
+  {
+    "device": {
+      "name": "standard",
+      "width": 393,
+      "height": 852,
+      "dpr": 3
+    },
+    "checks": [
+      "menu and all tabs",
+      "two-finger move and attack",
+      "release stops",
+      "rotation releases",
+      "simulated landscape safe areas",
+      "native name field and touch begin",
+      "research checkpoint wrong-answer retry and approval"
+    ],
+    "errors": []
+  },
+  {
+    "device": {
+      "name": "large",
+      "width": 430,
+      "height": 932,
+      "dpr": 3
+    },
+    "checks": [
+      "menu and all tabs",
+      "two-finger move and attack",
+      "release stops",
+      "rotation releases",
+      "simulated landscape safe areas",
+      "native name field and touch begin",
+      "research checkpoint wrong-answer retry and approval"
+    ],
+    "errors": []
+  }
+]

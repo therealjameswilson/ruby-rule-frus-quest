@@ -148,6 +148,8 @@ export class Player {
       .sprite(snapPixel(this.logicalX), snapPixel(this.logicalY), textureKey, this.spriteMode === "snesRoleFrame48" ? "idle-0" : undefined)
       .setOrigin(0.5, this.spriteMode === "artPack32x48" ? ART_PACK_SPRITE_ORIGIN_Y : this.spriteMode === "snesRoleFrame48" ? 0.84 : this.spriteMode === "snes16" ? 0.75 : 0.5)
       .setDepth(snapPixel(this.logicalY));
+    // Fractional origins undo position snapping even when the world position is integral.
+    this.sprite.setDisplayOrigin(Math.round(this.sprite.displayOriginX), Math.round(this.sprite.displayOriginY));
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
       this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));
     }
