@@ -58,21 +58,21 @@ export function archiveSourceRoomObjective(input: {
   complete: boolean;
 }) {
   if (input.complete) return "EXIT EAST - NETWORK";
-  if (input.sourceNoteStatus === "inactive") return "PICK UP SOURCE NOTE";
-  if (input.sourceNoteStatus === "carried") return "NOTE TO TABLE";
+  if (input.sourceNoteStatus === "inactive") return "TAKE SOURCE NOTE";
+  if (input.sourceNoteStatus === "carried") return "CITE SOURCE AT TABLE";
   if (input.sourceNoteStatus === "routed") {
     const trail = readSourceNoteTrail(input.provenanceProgress ?? { sourceNoteProvenanceStep: input.provenanceStep });
-    return trail.ready ? "CHECK TRAIL AT TABLE" : `SOURCE CLUES ${trail.found.length}/3`;
+    return trail.ready ? "CHECK FULL CITATION" : ({ repository: "VERIFY REPOSITORY", collection: "VERIFY COLLECTION", folder: "VERIFY FOLDER" } as const)[trail.missing[0].id];
   }
-  if (input.sourceNoteStatus === "verified") return input.standardsReviewed ? "STAMP AT TABLE" : "REVIEW AT TABLE";
-  if (input.wallNeedsStamp) return "STAMP REPO WALL";
+  if (input.sourceNoteStatus === "verified") return input.standardsReviewed ? "FILE VERIFIED SOURCE" : "REVIEW SOURCE NOTE";
+  if (input.wallNeedsStamp) return "STAMP CITATION WALL";
   if (!input.annotationComplete) {
     if (input.annotationProgress) return annotationPacketObjective(input.annotationProgress);
-    if (input.annotationCarried) return "FILE NOTE AT TABLE";
+    if (input.annotationCarried) return "FILE ANNOTATION";
     return `TAKE ${getAnnotationDraftingStation(input.annotationStep).shortLabel}`;
   }
-  if (!input.collectedDocumentIds.has("telegram")) return "PICK UP TELEGRAM";
-  if (!input.collectedDocumentIds.has("cross-reference")) return "PICK UP CROSS-REF";
+  if (!input.collectedDocumentIds.has("telegram")) return "ADD TELEGRAM TO FILE";
+  if (!input.collectedDocumentIds.has("cross-reference")) return "ADD CROSS-REFERENCE";
   return "EXIT EAST - NETWORK";
 }
 

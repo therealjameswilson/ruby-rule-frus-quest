@@ -22,7 +22,7 @@ describe("physical Referral Vault review", () => {
       expect(hint.message).toContain("review batch from the south tray");
       expect(hint.message).toContain("treatment station");
       expect(hint.message).not.toMatch(/north|dispatch|equity/i);
-      expect(referralReviewObjective("treatment", step, false)).toBe("TAKE REVIEW BATCH");
+      expect(referralReviewObjective("treatment", step, false)).toBe("TAKE REVIEW RECORDS");
     }
     expect(referralGuideHint("equity", step, false).message).toContain("north stacks");
   });
@@ -49,16 +49,16 @@ describe("physical Referral Vault review", () => {
     for (const [step, packet] of REFERRAL_EQUITY_PACKETS.entries()) {
       const pickup = referralReviewObjective("equity", step, false);
       const carry = referralReviewObjective("equity", step, true);
-      expect(pickup).toBe("TAKE EQUITY BATCH");
-      expect(carry).toBe("TO DISPATCH STACKS");
+      expect(pickup).toBe("TAKE EQUITY FILES");
+      expect(carry).toBe("TRACE AGENCY EQUITY");
       const retry = routeReferralEquityPacket(step, packet.id, packet.agency === "CIA" ? "DOD" : "CIA");
       expect(referralReviewObjective("equity", retry.nextStep, true)).toBe(carry);
       expect(Math.max(pickup.length, carry.length)).toBeLessThanOrEqual(20);
     }
     for (const [step, docket] of REFERRAL_TREATMENT_DOCKETS.entries()) {
-      expect(referralReviewObjective("treatment", step, false)).toBe("TAKE REVIEW BATCH");
+      expect(referralReviewObjective("treatment", step, false)).toBe("TAKE REVIEW RECORDS");
       const carry = referralReviewObjective("treatment", step, true);
-      expect(carry).toContain(REFERRAL_TREATMENT_LABELS[docket.station]);
+      expect(carry).toBe(["RECORD PERMISSION", "DOCUMENT APPEAL", "MARK EXCISED TEXT"][step]);
       expect(carry.length).toBeLessThanOrEqual(20);
     }
     const handoffs = [
@@ -68,7 +68,7 @@ describe("physical Referral Vault review", () => {
       referralReviewObjective("complete", 3, false, true),
       referralReviewObjective("complete", 3, false, true, true)
     ];
-    expect(handoffs).toEqual(["TAKE DRAFT AT CHAT", "DRAFT TO HUMAN DESK", "EXIT EAST - SLIP", "TAKE CONCURRENCE", "EXIT EAST - EDITOR"]);
+    expect(handoffs).toEqual(["TAKE REFERRAL DRAFT", "VERIFY REFERRAL LIST", "EXIT EAST - SLIP", "FILE CONCURRENCE", "EXIT EAST - EDITOR"]);
     expect(handoffs.every((cue) => cue.length <= 20)).toBe(true);
   });
 

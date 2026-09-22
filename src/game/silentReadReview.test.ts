@@ -102,13 +102,13 @@ describe("physical Silent Read review", () => {
     for (const item of SILENT_READ_REVIEW_ITEMS) {
       expect(silentReadObjective(item, "waiting")).toBe(`TAKE ${item.shortLabel}`);
       expect(silentReadObjective(item, "carried")).toMatch(/^TO /);
-      expect(silentReadObjective(item, "verified")).toMatch(/^STAMP /);
-      expect(silentReadObjective(item, "routed")).toMatch(/^(CHECK |ADD VISIBLE BRACKET)/);
+      expect(silentReadObjective(item, "verified")).toBe("FILE VERIFIED CHECK");
+      expect(silentReadObjective(item, "routed")).toMatch(/^(RESTORE|VERIFY|CHECK|RECONCILE|PREPARE|COLLATE) /);
       for (const status of ["waiting", "carried", "routed", "verified"] as const) {
         expect(silentReadObjective(item, status).length).toBeLessThanOrEqual(20);
       }
     }
-    expect(silentReadObjective(SILENT_READ_REVIEW_ITEMS[0], "routed")).toBe("ADD VISIBLE BRACKET");
+    expect(silentReadObjective(SILENT_READ_REVIEW_ITEMS[0], "routed")).toBe("RESTORE TEXT BRACKET");
     expect(silentReadObjective(SILENT_READ_REVIEW_ITEMS[1], "waiting", false)).toBe("EXIT EAST - PROOF");
     expect(silentReadObjective(null, "stamped")).toBe("EXIT EAST - VAULT");
   });

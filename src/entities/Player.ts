@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { characterGroundOffset } from "../art/characterGrounding";
 import { characterAnimKey, FRAMES } from "../art/character_anims";
 import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -88,6 +89,7 @@ export class Player {
   private readonly characterKey: CharacterKey | null;
   private readonly shadowOffsetY: number;
   private readonly shadowDepthOffset: number;
+  private readonly groundOffsets: number[] = [];
   private walkClock = 0;
   private idleClock = 0;
   private abilityFrameUntil = 0;
@@ -151,6 +153,10 @@ export class Player {
     // Fractional origins undo position snapping even when the world position is integral.
     this.sprite.setDisplayOrigin(Math.round(this.sprite.displayOriginX), Math.round(this.sprite.displayOriginY));
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
+      for (let frame = 0; frame < 12; frame++) {
+        this.groundOffsets[frame] = characterGroundOffset((px, py) =>
+          scene.textures.getPixelAlpha(px, py, this.characterKey!, frame));
+      }
       this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));
     }
     this.actionHitboxVisual = scene.add
@@ -526,7 +532,8 @@ export class Player {
   private syncRenderPosition() {
     const { x: renderX, y: renderY } = snapRenderedPosition({ x: this.logicalX, y: this.logicalY });
     this.updateRoleFrame();
-    setRenderedPosition(this.sprite, renderX, renderY);
+    const groundOffset = this.groundOffsets[Number(this.sprite.frame.name)] ?? 0;
+    setRenderedPosition(this.sprite, renderX, renderY + groundOffset);
     setRenderedPosition(this.shadow, renderX, renderY + this.shadowOffsetY);
     this.shadow.setDepth(renderY - this.shadowDepthOffset);
     this.sprite.setDepth(renderY);

@@ -49,7 +49,7 @@ describe("physical two-network routing", () => {
     for (const [step, packet] of NETWORK_ROUTE_PACKETS.entries()) {
       const pickup = networkRoutingObjective(step, false);
       const carry = networkRoutingObjective(step, true);
-      expect(pickup).toBe(step === 0 ? "TAKE ROUTING BATCH" : `RESUME ${packet.order}/4 AT SORTER`);
+      expect(pickup).toBe(step === 0 ? "SORT RESEARCH FILES" : `RESUME ${packet.order}/4 AT SORTER`);
       expect(carry).toContain(step === 0 ? packet.network.toUpperCase() : packet.marking);
       expect(pickup.length).toBeLessThanOrEqual(20);
       expect(carry.length).toBeLessThanOrEqual(20);
@@ -63,7 +63,7 @@ describe("physical two-network routing", () => {
     for (const [step, packet] of NETWORK_ROUTE_PACKETS.entries()) {
       expect(networkRouteGuidance(step)).toBe(step === 0 ? packet.network : null);
       expect(networkRouteGuidance(step, packet.order)).toBe(packet.network);
-      expect(networkRoutingObjective(step, true, packet.order)).toBe(`${packet.order}/4 TO ${packet.network.toUpperCase()}`);
+      expect(networkRoutingObjective(step, true, packet.order)).toBe(`ROUTE ${packet.order}/4: ${packet.network.toUpperCase()}`);
       if (step > 0) expect(networkRouteGuidance(step, packet.order - 1)).toBeNull();
       expect(packet.routingClue.length).toBeLessThan(130);
     }

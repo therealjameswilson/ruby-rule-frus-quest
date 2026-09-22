@@ -42,5 +42,5 @@ export function fileAnnotationPacket(progress: Progress) {
 
 export function annotationPacketObjective(progress: Progress) {
   const packet = readAnnotationPacket(progress);
-  return packet.ready ? "FILE PACKET AT TABLE" : `NOTES ${packet.gathered.length}/3 - EXPLORE`;
+  return packet.ready ? "FILE ANNOTATION" : `NOTE ${packet.gathered.length}/3: ${packet.missing[0]?.id === "published_provenance" ? "SOURCE" : packet.missing[0]?.id === "contextual_annotation" ? "CONTEXT" : "SELECTION"}`;
 }

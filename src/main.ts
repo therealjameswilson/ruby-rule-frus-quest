@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone } from "./game/researchWorld";
 import { getCompilerMissionReadout } from "./game/compilerMission";
 import "./styles/pixel.css";
 import { getAboutSeriesGameplayReadout } from "./game/aboutSeries";
@@ -117,6 +118,11 @@ function renderConciseGameToText() {
       hearingReview: gameState.currentScene === "SenateHearingChamberScene" ? readHearingReview(gameState.sceneProgress) : null,
       questCounters: gameState.questCounters,
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
+      researchWorld: gameState.currentScene === "ResearchWorldScene" ? {
+        zone: RESEARCH_ZONES[researchZone(gameState.sceneProgress.researchWorldZone)].name,
+        discoveries: discoveryCount(gameState.sceneProgress), total: RESEARCH_LANDMARKS.length,
+        visited: RESEARCH_LANDMARKS.filter(l=>gameState.sceneProgress[`researchVisited_${l.id}`]).map(l=>l.id)
+      } : null,
       volumeAssembly: {
         piecesEarned: getVolumeAssemblyReadout().earnedCount,
         piecesTotal: getVolumeAssemblyReadout().total,

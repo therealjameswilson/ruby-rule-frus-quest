@@ -16,14 +16,14 @@ describe("archive annotation packet", () => {
     }
     expect(fileAnnotationPacket(progress).ok).toBe(true);
     expect(readAnnotationPacket(progress).complete).toBe(false);
-    expect(annotationPacketObjective(progress)).toBe("FILE PACKET AT TABLE");
+    expect(annotationPacketObjective(progress)).toBe("FILE ANNOTATION");
   });
 
   it("cannot farm a note or file an incomplete packet", () => {
     const progress = { annotationGatheredMask: 2 };
     expect(gatherAnnotationNote(progress, "contextual_annotation")).toMatchObject({ ok: false, gatheredMask: 2 });
     expect(fileAnnotationPacket(progress)).toEqual({ ok: false, message: "Find SOURCE + SELECT before filing." });
-    expect(annotationPacketObjective(progress)).toBe("NOTES 1/3 - EXPLORE");
+    expect(annotationPacketObjective(progress)).toBe("NOTE 1/3: SOURCE");
   });
 
   it("preserves all old filed prefixes and carried notes", () => {

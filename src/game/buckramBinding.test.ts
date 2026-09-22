@@ -72,7 +72,7 @@ describe("physical Buckram Gate binding", () => {
     for (const packet of BUCKRAM_BINDING_PACKETS) {
       expect(buckramBindingObjective(packet, "waiting")).toBe(`TAKE ${packet.shortLabel}`);
       expect(buckramBindingObjective(packet, "carried")).toMatch(/^TO /);
-      expect(buckramBindingObjective(packet, "routed")).toMatch(/^SEAL /);
+      expect(buckramBindingObjective(packet, "routed")).toMatch(/^(ASSEMBLE|CHECK|CERTIFY|FILE|VERIFY) /);
       for (const status of ["waiting", "carried", "routed"] as const) {
         expect(buckramBindingObjective(packet, status).length).toBeLessThanOrEqual(20);
       }

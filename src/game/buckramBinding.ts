@@ -121,7 +121,15 @@ export function buckramBindingObjective(
   status: BuckramBindingStatus
 ) {
   if (status === "waiting") return `TAKE ${packet.shortLabel}`;
-  return `${status === "carried" ? "TO" : "SEAL"} ${BINDING_STATION_LABELS[packet.station]}`;
+  if (status === "carried") return `TO ${BINDING_STATION_LABELS[packet.station]}`;
+  const tasks: Record<BuckramBindingStationId, string> = {
+    "front-matter-bench": "ASSEMBLE READER AIDS",
+    "index-desk": "CHECK INDEX / FIXES",
+    "kellogg-press": "CERTIFY THE RECORD",
+    "gpo-handoff": "FILE PRINTER PACKET",
+    "public-release-terminal": "VERIFY RELEASE FILES"
+  };
+  return tasks[packet.station];
 }
 
 export const BUCKRAM_BINDING_CHECK_TOTAL = BUCKRAM_BINDING_PACKETS.reduce(

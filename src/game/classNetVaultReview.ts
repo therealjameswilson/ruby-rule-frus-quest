@@ -110,16 +110,12 @@ export function classNetVaultObjective(step: number, carried: boolean, tokenColl
   if (tokenCollected) return "EXIT EAST - REFERRAL";
   if (step >= CLASSNET_VAULT_DOCKETS.length) return "TAKE CLEARANCE TOKEN";
   const docket = getClassNetVaultDocket(step);
-  const destination: Record<ClassNetVaultStationId, string> = {
-    human_desk: "HUMAN DESK",
-    release_board: "RELEASE BOARD",
-    decision_ledger: "LEDGER"
-  };
-  return carried
-    ? `${docket.order}/3 TO ${destination[docket.station]}`
-    : step === 0
-      ? "TAKE REVIEW BATCH"
-      : `RESUME ${docket.order}/3 AT PED`;
+  const task = {
+    clearance_lane: "VERIFY REVIEW LANE",
+    release_standard: "CHECK RELEASE TERMS",
+    decision_trail: "LOG WITHHELD RECORD"
+  } as const;
+  return carried ? task[docket.id] : "TAKE REVIEW RECORDS";
 }
 
 export function completedClassNetVaultChecks(step: number) {

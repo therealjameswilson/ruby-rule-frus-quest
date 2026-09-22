@@ -223,9 +223,19 @@ export function silentReadObjective(
   const station = STATION_LABELS[item.destination];
   if (status === "carried") return `TO ${station}`;
   if (status === "routed") {
-    return item.id === "mechanical-fix" ? "ADD VISIBLE BRACKET" : `CHECK ${station}`;
+    const tasks: Record<string, string> = {
+      "mechanical-fix": "RESTORE TEXT BRACKET",
+      "public-crossref": "VERIFY PUBLISHED REF",
+      "classified-source": "CHECK SOURCE STATUS",
+      "referral-equity": "VERIFY AGENCY EQUITY",
+      "proof-date": "RECONCILE PROOF DATE",
+      "editorial-ledger": "CHECK EDITORIAL RULE",
+      "printer-copy": "PREPARE PRINTER COPY",
+      "typesetter-proof": "COLLATE PROOF PULL"
+    };
+    return tasks[item.id] ?? `CHECK ${station}`;
   }
-  return `STAMP ${station}`;
+  return "FILE VERIFIED CHECK";
 }
 
 export function editorHint(status: SilentReadReviewStatus | null, repair: "draft" | "proof" | null = null) {

@@ -334,6 +334,9 @@ export class UIScene extends Phaser.Scene {
   private compactActionLine(toolLabel: string) {
     if (gameState.mode === "dialog") return getString("hud.nextLine");
     if (gameState.mode === "choice") return getString("hud.confirm");
+    if (gameState.currentScene === "ResearchWorldScene") {
+      return gameState.nearestInteractable ? `A: ${gameState.nearestInteractable.toUpperCase()}` : "WALK / DISCOVER / TALK";
+    }
     if (gameState.currentScene === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
       return getString("hud.goLeftTalk");
     }
