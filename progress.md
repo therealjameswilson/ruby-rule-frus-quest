@@ -2,6 +2,21 @@ Original prompt: Build a Web-Based NES-Style FRUS Production Game, working title
 
 ## Progress
 
+- Public release verified (2026-09-22): PR #113 merged as
+  d1c363e79a2cbe478fca90598faa5259cf07a1c7; Pages run 35799619481 succeeded.
+  Published overworld, grounded gait, FRUS dungeon objectives, and the separate
+  20-concept DANN-E gallery. Public bundle index-tYp5IuIm.js confirmed.
+  Public root and exact hashes of 23 PNGs plus gallery HTML verified.
+  Public gallery controls passed desktop and phone checks. Public overworld
+  passed all 16 discoveries, DC/rail/Office routes, save, pause, and civilian
+  DANN-E checks on desktop and 375px touch. Initial concurrent asset checking
+  encountered connection resets; an isolated retry passed with no errors.
+  Full local suite: 252 files / 1,896 tests. Physical iPhone Safari not tested.
+  Game: https://therealjameswilson.github.io/ruby-rule-frus-quest/?v=d1c363e
+  Gallery: https://therealjameswilson.github.io/ruby-rule-frus-quest/assets/research-world/danne-variants/?v=d1c363e
+  Release checkout is aligned to merged main. Canonical checkout retains its
+  pre-existing local change history; do not reset it indiscriminately.
+
 - DANN-E movie disguise studies (2026-09-22): generated 20 separate original
   transparent PNG concepts with the built-in image tool, each inspired by a
   different verified Ben Affleck film. These are character studies, not walk
@@ -6946,3 +6961,20 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   direct WebGL canvas capture was black, so the same local build was visually
   inspected in Chrome, where the Office and player rendered correctly before
   and after movement.
+
+
+## 2026-09-22: All 20 outdoor DANN-E disguises integrated
+- All 20 movie-inspired concepts now appear in the outdoor game. Nearby B/X or
+  touch B cycles them; regional travel advances the disguise. Dialogue names
+  the current look, and the selection is saved.
+- Existing PNGs remain unchanged. Alpha bounds anchor feet and normalize visible
+  height to 42px; images load on demand with guarded scene callbacks.
+- Validation: 253 test files / 1,898 tests pass; production build and diff checks
+  pass. Desktop and 375px touch browser checks cover every look, wraparound,
+  saves, dialogue, travel, and absence of browser errors. Full-page screenshots
+  inspected because the skill client's direct WebGL capture was black.
+- Changes saved locally. Publication of this follow-up was blocked by automatic
+  approval review pending explicit confirmation; no push or PR was performed.
+
+- User explicitly authorized publishing again, including all sprite images. All
+  20 PNGs match the production build byte for byte. Publishing this integration.
