@@ -1,6 +1,6 @@
 import Phaser from "phaser";
-import { characterGroundOffset } from "../art/characterGrounding";
-import { characterAnimKey, FRAMES } from "../art/character_anims";
+import { characterGroundOffset, characterPoseHeight, characterPoseCenter, groundedPoseTransform } from "../art/characterGrounding";
+import { characterAnimKey, walkingFrame } from "../art/character_anims";
 import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId } from "../game/constants";
@@ -91,6 +91,8 @@ export class Player {
   private readonly shadowDepthOffset: number;
   private readonly groundOffsets: number[] = [];
   private walkClock = 0;
+  private poseScales: number[] = [];
+  private poseOffsetsX: number[] = [];
   private idleClock = 0;
   private abilityFrameUntil = 0;
   private invulnerableUntil = 0;
@@ -153,9 +155,19 @@ export class Player {
     // Fractional origins undo position snapping even when the world position is integral.
     this.sprite.setDisplayOrigin(Math.round(this.sprite.displayOriginX), Math.round(this.sprite.displayOriginY));
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
+      const heights: number[] = [];
+      const centers: number[] = [];
       for (let frame = 0; frame < 12; frame++) {
-        this.groundOffsets[frame] = characterGroundOffset((px, py) =>
-          scene.textures.getPixelAlpha(px, py, this.characterKey!, frame));
+        const alpha = (px: number, py: number) => scene.textures.getPixelAlpha(px, py, this.characterKey!, frame);
+        heights[frame] = characterPoseHeight(alpha);
+        centers[frame] = characterPoseCenter(alpha);
+        this.groundOffsets[frame] = characterGroundOffset(alpha);
+      }
+      for (let frame = 0; frame < 12; frame++) {
+        const pose = groundedPoseTransform(47 - this.groundOffsets[frame], heights[frame], heights[0]);
+        this.poseScales[frame] = pose.scaleY;
+        this.poseOffsetsX[frame] = 15.5 - centers[frame];
+        this.groundOffsets[frame] = pose.offsetY;
       }
       this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));
     }
@@ -533,7 +545,11 @@ export class Player {
     const { x: renderX, y: renderY } = snapRenderedPosition({ x: this.logicalX, y: this.logicalY });
     this.updateRoleFrame();
     const groundOffset = this.groundOffsets[Number(this.sprite.frame.name)] ?? 0;
-    setRenderedPosition(this.sprite, renderX, renderY + groundOffset);
+    if (this.spriteMode === "artPack32x48") {
+      this.sprite.setScale(1, this.poseScales[Number(this.sprite.frame.name)] ?? 1);
+    }
+    const poseOffsetX = (this.poseOffsetsX[Number(this.sprite.frame.name)] ?? 0) * (this.sprite.flipX ? -1 : 1);
+    setRenderedPosition(this.sprite, renderX + poseOffsetX, renderY + groundOffset);
     setRenderedPosition(this.shadow, renderX, renderY + this.shadowOffsetY);
     this.shadow.setDepth(renderY - this.shadowDepthOffset);
     this.sprite.setDepth(renderY);
@@ -832,13 +848,19 @@ export class Player {
 
   private updateRoleFrame() {
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
+      this.sprite.setFlipX(false);
       const abilityActive = this.combatTime < this.abilityFrameUntil;
       const directionSuffix = this.directionSuffix();
       if (this.isMoving && !abilityActive) {
         // Preserve the stride phase across turns instead of restarting the
-        // two-frame walk on every direction change.
+        // walk on every direction change.
         this.sprite.anims.stop();
-        this.sprite.setFrame(FRAMES.walk[directionSuffix][Math.floor(this.walkClock / 125) % 2]);
+        const frame = walkingFrame(directionSuffix, this.walkClock);
+        // The compiler sheet's second rear step is a narrow side profile.
+        // Mirror the complete rear pose for the opposite footfall instead.
+        const rearStep = this.characterKey === "compiler" && directionSuffix === "up" && frame === 7;
+        this.sprite.setFrame(rearStep ? 6 : frame);
+        this.sprite.setFlipX(rearStep);
         return;
       }
       const suffix = abilityActive

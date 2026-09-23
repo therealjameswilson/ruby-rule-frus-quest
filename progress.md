@@ -6978,3 +6978,24 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 
 - User explicitly authorized publishing again, including all sprite images. All
   20 PNGs match the production build byte for byte. Publishing this integration.
+
+- Published all 20 in-game sprite disguises after explicit user authorization.
+  PR #114 merged as c91e41c7573025354e16835670988052af63775a; GitHub Pages run
+  35800687429 succeeded. Public bundle index-DEQbatEe.js verified. All 20 live
+  PNG hashes match source. Public desktop and 375px touch checks pass for every
+  disguise, wrap, save, dialogue, and travel with no browser errors.
+  Live URL: https://therealjameswilson.github.io/ruby-rule-frus-quest/?v=c91e41c
+
+## 2026-09-22: Smoother grounded walking
+- User request: check main-character movement and make it smoother and more realistic.
+- Added a four-phase walk with passing poses between footfalls, a 360ms full
+  stride at normal speed, and distance-driven phase continuity through turns.
+- Normalize painted pose height and horizontal center at runtime to prevent
+  bobbing and sideways jumps from inconsistent sprite-cell padding. Boots remain
+  grounded. Replaced the compiler rear step that used a narrow side profile with
+  the mirrored complete rear footfall. Source image files remain unchanged.
+- Build and 253 test files / 1,901 tests pass. Changes saved locally; not published.
+- Final browser validation passed on keyboard and 375px touch, including
+  diagonals, wall sliding, no release drift, phone rotation, and no errors.
+  Four-direction gait pose screenshots and gameplay screenshots inspected.
+  Skill client completed; direct WebGL capture is black, full-page captures used.
