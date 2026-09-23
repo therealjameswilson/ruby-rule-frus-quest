@@ -7176,3 +7176,9 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Moved missing-key recovery guidance and interaction to INBOX so her departure cannot block the starter route.
 - Validation: production build and 54 focused regression tests pass; desktop/mobile browser checks cover final page, saved departure, revisit, memo routing, research approval, key and GuideScene entry. Skill smoke check passed (its known black WebGL capture checked; normal browser screenshots inspected).
 - Local change only; not published.
+
+## 2026-09-23 — Visible iPhone movement pane
+- User reported difficulty moving on iPhone and requested a movement pane near A/B. Added an always-visible four-arrow pad at lower left alongside MENU/A/B during exploration.
+- Arrow press starts immediately without a drag; fixed center supports slide-to-turn and neutral center. Existing free drag elsewhere remains usable. Movement pane is excluded from world tap interactions and hidden for dialogue/pause.
+- Validation: production build; 55 input/player tests; real Chromium touch events in phone-sized portrait/landscape for all four directions, release, slide turn, simultaneous B and resize reset. No browser errors. Skill smoke check passed; inspected normal screenshots because the skill WebGL capture is black. Physical iPhone Safari not tested.
+- Saved in both checkouts; not published.
