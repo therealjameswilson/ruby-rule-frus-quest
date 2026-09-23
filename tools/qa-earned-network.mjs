@@ -1,3 +1,4 @@
+import { completeCompilerCheckpoint } from './qa-compiler-checkpoint-helper.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -28,6 +29,8 @@ try{
  assert.equal((await state()).sceneProgress.archiveSourceRoomComplete,1);
  assert.equal((await eastGate()).canOpen,true,'The map must open with the actual completed packet');
  await move(216,142);await move(216,120);await key('ArrowRight',1500);
+ await completeCompilerCheckpoint(page);
+ if((await state()).scene==='ArchiveScene')await key('ArrowRight',1000);
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='NetworkScene');
  await page.waitForTimeout(800);await shot('network');
 

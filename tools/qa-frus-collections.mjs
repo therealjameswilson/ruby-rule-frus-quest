@@ -10,7 +10,7 @@ try{for(const phone of [false,true]){
  await page.goto(base+'?scene=ResearchWorldScene');await page.waitForFunction(()=>window.game?.scene.getScene('ResearchWorldScene')?.player);await page.waitForTimeout(500);
  await page.evaluate(()=>window.game.scene.getScene('ResearchWorldScene').travel(0));await page.waitForTimeout(500);
  const act=async b=>{if(phone){const r=await page.locator('canvas').first().boundingBox();await page.touchscreen.tap(r.x+(b?173:223)*r.width/256,r.y+(b?216:206)*r.height/240);}else await page.keyboard.press(b?'x':'Space');await page.waitForTimeout(120);};
- for(const [id,x,term] of [['nara',64,'Carl Marcy'],['loc',192,'Cordell Hull']]){
+ for(const [id,x,term] of [['nara',64,'Carl Marcy'],['loc',192,'Haig']]){
   await page.evaluate(x=>window.game.scene.getScene('ResearchWorldScene').player.setPosition(x,134),x);await page.waitForTimeout(80);await act(false);
   const pages=await page.evaluate(()=>window.game.scene.getScene('ResearchWorldScene').dialog.pages.join(' '));assert(pages.includes(term));assert(pages.includes('FRUS'));
   await page.screenshot({path:`${out}/${phone?'phone':'desktop'}-${id}.png`});

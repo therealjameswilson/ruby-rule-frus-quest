@@ -27,13 +27,24 @@ try{
  assert(!(await state()).sceneProgress.aboutSeriesFirstFootnoteComplete);
  await press('ArrowUp');await press();await shot('corrected');
  await press();await shot('filed');assert.equal((await state()).sceneProgress.aboutSeriesFirstFootnoteComplete,1);
- assert.equal((await state()).objective,'REVIEW AT TABLE','Filed source trail must cue the remaining review, not a tool swing');
+ assert.equal((await state()).objective,'REVIEW SOURCE NOTE','Filed source trail must cue the remaining review, not a tool swing');
  await press();await shot('standards-decision');
  assert.equal((await state()).choice.options[0].value,'retain');
  assert(!(await state()).sceneProgress.archiveSourceNoteStamped);
  await press();await page.waitForTimeout(600);await shot('stamped');
  assert.equal((await state()).sceneProgress.archiveSourceNoteStamped,1);
  assert((await state()).volumeFragments.includes('Source Note Fragment'));
+ await press();await page.waitForTimeout(450);
+ assert.equal((await state()).latestMessage,'MENU: EQUIP CITATION STAMP');
+ assert(!(await state()).sceneProgress.archiveRepoWallCleared);
+ await shot('equip-guidance');
+ // Equip the earned tool through the visible menu; owning it is not equipping it.
+ await press('m');
+ const tool=await page.evaluate(()=>JSON.parse(window.render_game_to_text()).pauseMenu.controls.find(c=>c.id==='tool-0'));
+ const box=await page.locator('canvas').first().boundingBox();
+ for(let i=0;i<2;i++){await page.mouse.click(box.x+tool.x*box.width/256,box.y+tool.y*box.height/240);await page.waitForTimeout(150);}
+ assert.equal((await state()).pauseMenu.selectedTool,'citation_stamp');await press('Escape');
+ await shot('stamp-equipped');
  const firstSwing=(await state()).playerCombat.weapon.swingId;
  let wallAttempts=0;
  for(;wallAttempts<3&&!(await state()).sceneProgress.archiveRepoWallCleared;wallAttempts++) {

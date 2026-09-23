@@ -7025,3 +7025,52 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   horizontal overflow or page errors. Screenshots inspected; skill client run
   completed, with full-page screenshots used for its black WebGL capture.
 - Saved locally; not published.
+
+- Published collections update on explicit user request. PR #116 merged as
+  1bd4618daa1c812eca1fc8f99b756fc190585222; Pages run 35814717510 succeeded.
+  Public guide HTML and JSON hashes match source. Live desktop and 375px touch
+  tests pass: collection dialogue, B source-guide opening, six FRUS evidence
+  links, journal entries, responsive layout, and no page errors.
+  https://therealjameswilson.github.io/ruby-rule-frus-quest/?v=1bd4618
+
+## 2026-09-23: Fresh campaign playthrough to victory
+- User requested a full playthrough followed by fixes. Started a fresh browser
+  context at the real title; no scene shortcuts or granted progress.
+- Found outside exit stealing the opening memo/inbox interaction. Reduced its
+  reach to the doorway (including shared assistance); the full opening now
+  completes through actual controls. Earned Archive arrival and save/continue.
+- Updated the older opening QA route for the eight-page DANN-E introduction
+  and the two research-plan decisions; corrected a stale source-review label
+  assertion. Further earned stages are running from the opening checkpoint.
+- Citation-wall guidance now says to equip the stamp via MENU when another
+  tool is selected. Confirmed real menu selection, wall clearing, Annotation
+  Stacks, three annotation notes, manuscript review, network routing, clearance,
+  and dispatch with earned saves and real controls.
+- Full unit suite passes: 253 files / 1,901 tests. Production build passes.
+- Separate bounded-fixture regression passes outdoor doorway round trips,
+  all 16 landmarks, rail travel, and save state on desktop and simulated iPhone.
+  This regression is separate from the fresh earned campaign chain.
+- Completed the fresh earned campaign through PUBLISHED CLEAN: all three
+  DANN-E phases defeated, five binding packets complete, final human seal,
+  241 document points, reliability 100, deadline MET. Publication and completion
+  stats survive continue/reload. No fabricated progression or teleports in the
+  campaign chain. Evidence: /tmp/victory-20260923/14-bindery-assembly/.
+- Older qa-bindery-finale targets the legacy individual-desk route; used the
+  existing qa-bindery-assembly for the current earned-record assembly ending.
+- Rechecked wrong-tool guidance before actual menu equip and wall clearing;
+  passed. Updated campaign QA for intro, compiler checkpoints, objective labels,
+  and selecting the earned Red Pencil before the boss battle.
+- Skill client ran after code fixes; WebGL-native image is black in this client,
+  so inspected full-page gameplay, boss, published ending, and record screenshots.
+- Changes are local, not published this turn.
+- Simulated iPhone touch-only bindery assembly, human seal, publication, record
+  navigation, and reload also pass with no console/page errors.
+
+## 2026-09-23: Replace Harriman with Haig
+- Replaced the Library of Congress Harriman entry with Alexander Meigs Haig
+  Papers in the shared collection data and holdings text (dialogue and journal).
+- Verified LOC finding aid resources/4675 and FRUS 1981-1988 III Sources, which
+  cites the 1981 and 1982 Day File for U.S. policy toward the Soviet Union.
+- Updated the research task and official links. Build and desktop/375px touch
+  collection checks pass; no page errors. Refreshed the user's local guide.
+- Saved to canonical checkout. Not published this turn.
