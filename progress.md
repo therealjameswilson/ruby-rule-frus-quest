@@ -7182,3 +7182,8 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Arrow press starts immediately without a drag; fixed center supports slide-to-turn and neutral center. Existing free drag elsewhere remains usable. Movement pane is excluded from world tap interactions and hidden for dialogue/pause.
 - Validation: production build; 55 input/player tests; real Chromium touch events in phone-sized portrait/landscape for all four directions, release, slide turn, simultaneous B and resize reset. No browser errors. Skill smoke check passed; inspected normal screenshots because the skill WebGL capture is black. Physical iPhone Safari not tested.
 - Saved in both checkouts; not published.
+
+## 2026-09-23 — Text-message link preview
+- Added static Open Graph and large-image card metadata to the game entry page, using the existing 1448x1086 ruby FRUS title artwork and absolute public URLs.
+- Added /share/ hero page with artwork, summary and Play link; included it in production asset copying.
+- Verified both pages expose metadata without JavaScript, phone layout, Play link and production build. Native Messages rendering/cache behavior is not directly tested.

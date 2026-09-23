@@ -35,5 +35,7 @@ try {
   await fallbackCopy();
 }
 
+await cp(join(root, "public", "share"), join(root, "dist", "share"), { recursive: true, force: true });
+
 const elapsed = ((performance.now() - started) / 1000).toFixed(2);
 console.log(`[copy-public-assets] synced public/assets -> dist/assets in ${elapsed}s`);
