@@ -98,10 +98,9 @@ const NPC_ENTRIES: readonly CodexEntry[] = [
   {
     id: "npc-junior-compiler",
     category: "NPCs",
-    displayName: "Junior Compiler",
-    artKey: runtimeSpriteKey("junior-compiler"),
-    spriteSheet: true,
-    lore: "A production colleague who checks inbox, cart, and terminal status before issuing the declass key."
+    displayName: "General Editor Kathy",
+    artKey: "general-editor-kathy",
+    lore: "Kathy, the General Editor, assigns the hero a FRUS volume and guides the opening research-plan approval."
   },
   {
     id: "npc-marine-guard",

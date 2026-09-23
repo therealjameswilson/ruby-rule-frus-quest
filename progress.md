@@ -7074,3 +7074,105 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Updated the research task and official links. Build and desktop/375px touch
   collection checks pass; no page errors. Refreshed the user's local guide.
 - Saved to canonical checkout. Not published this turn.
+
+- Published all new changes on explicit user request. PR #117 merged as
+  f99329e221b174d4c7ea2a82ccf1d29c44df3e59; Pages run 35866213867 succeeded.
+  Public JSON matches source. Live bundle index-D08EgrGn.js confirms doorway
+  radius 7, MENU equip guidance, and Haig holdings. Desktop and simulated-iPhone
+  collection/dialogue/guide/journal checks pass with no page errors.
+  https://therealjameswilson.github.io/ruby-rule-frus-quest/?v=f99329e
+
+## 2026-09-23: Style Guide taunt
+- Added the exact line "Changes to the Style Guide!" to dungeon lurker taunts
+  and Executive/Infiltrator dialogue, with two-line combat wrapping.
+- Existing boast/layout tests pass (23 tests); build passes. Saved locally.
+
+## 2026-09-23: Crisper attacking photocopier sprites
+- User confirmed the gray box/CITE enemy. Redrew all seven native 32x32 SVG
+  variants with strong silhouettes, scanner lids, paper outlets, clean label
+  panels, casters and distinct accent details. No bitmap resampling needed.
+- Aligned warning lights to integer pixel corners and the new scanner eyes.
+  Movement, collision bounds, timing and combat rules remain unchanged.
+- Build and 14 existing atlas/movement tests pass. Desktop and 375px/dpr3
+  browser checks confirm 1:1 sprite scale, aligned lights and no page errors.
+  Inspected full-page screenshots after the skill client's black WebGL capture.
+- Saved locally, not published. Screens: /tmp/copier-qa/.
+
+## 2026-09-23: Crisper dungeon room walls
+- Added native-pixel masonry rendering with one-pixel mortar, sharp bevels,
+  opaque shading and restrained dungeon-color insets. Updated shared room
+  frames and packed archive, network, referral and proof-room wall layers.
+- Internal stone dividers use the same treatment; shelves, doorways, collision
+  geometry and room transitions retain existing behavior. Archive torches now
+  use matching crisp sconces instead of opaque old-texture patches.
+- Production build and all 253 test files / 1,902 tests pass. Four dungeon scenes
+  checked at desktop and 375px/dpr3 sizes: integer wall positions, no page errors.
+  Skill client completed; full-page screenshots used for visual inspection.
+- Saved locally, not published. Evidence: /tmp/walls-qa/.
+
+## Ruby-red buckram volume art (2026-09-23)
+
+- Added three original built-in image_gen illustrations: shelf, bound stack, and open reading copy. Prompts saved alongside optimized JPEG delivery assets in public/assets/art-pack/frus_volumes/ruby-buckram/.
+- Office loads the art on entry and displays all three; the left shelf opens a touch-aware exhibit with a full-size gallery link. Official covers stay separate.
+- Added responsive gallery and field-guide navigation. Desktop and 375px/DPR3 browser checks verified images, exhibit, no horizontal overflow, navigation round trip, and no page errors.
+- Production build passed. Skill movement smoke completed; native capture remains black, normal page screenshots inspected successfully. Local changes, not published.
+
+## Steve Randolph Conference Room (2026-09-23)
+
+- Added A4 east of the Hint Alcove, with conference table, chairs, hot radiator, entrance warning, persistent heat warning/countdown, and unlocked west return. Registered in both dungeon graphs and archive return codes.
+- Heat costs 5 reliability (half of one of ten hearts) every 20 seconds of active exploration. Dialogue, menus, transitions, hidden tabs, and other rooms do not accrue heat; each new visit starts a fresh interval. DANN-E pressure disabled inside.
+- HUD now draws half-hearts. Added boundary/pause/reset/route tests. Full suite: 1904 passed with one obsolete source-string assertion; updated it for the additional compass exclusion and all 38 focused tests passed. Production build and diff check passed.
+- Browser checks at desktop and 375px/DPR3 verified doorway entry/exit, exact 19,999/20,000/40,000ms damage, half-heart display, and no damage outside. Full-page screenshots inspected. Skill smoke run completed (native WebGL capture black as before).
+- Saved to authoritative checkout; not published.
+
+## Alex Poster's Office (2026-09-23)
+
+- Added dungeon A5 north of Hint Alcove, with unlocked south return, movie placards, desk, and original Eric Roberts-inspired sprite generated with built-in image_gen. Prompt stored alongside local asset.
+- Alex alternates questions about Best of the Best and Best of the Best 2. A opens Yes/Not yet choices; either reply cancels the current attack and resets patience.
+- Ignoring him for eight active seconds triggers a 900ms gold-line telegraph, targeted 350ms karate lunge, half-heart hit with normal invulnerability, and recovery before the next question. Menus/dialogue/hidden tabs pause the encounter. No unrelated DANN-E pressure inside.
+- Full 255-file / 1909-test suite passed; build and diff check passed. Desktop and 375px/DPR3 browser checks verified doorway entry/exit, answering, film alternation, hit cost, dodge outside invulnerability, and cleanup. Full-page screenshots inspected; skill client completed with its known black native canvas capture.
+- Saved locally to authoritative checkout; not published.
+
+## Alex office sign (2026-09-23)
+
+- Added a gold-framed plaque reading exactly "Lee Retiner Was Here" in Alex Poster's Office. Build and desktop/iPhone-size encounter checks passed; screenshot inspected. Saved locally, not published.
+
+## Kathy mission introduction (2026-09-23)
+
+- Opening title goal now says compile a FRUS volume. First office contact is General Editor Kathy, with a paginated assignment briefing covering research, selection/annotation, review/revision, clearance/publication, and the memo-to-INBOX first task.
+- Updated visible route hints, colleague name, codex description, and localized JR prompts. Legacy internal save keys retained for compatibility. Existing NPC artwork is temporary pending user-provided Kathy photo.
+- Build, 25 focused tests, and desktop/mobile first-conversation completion checks passed. Screenshots inspected; skill smoke completed. Saved locally, not published.
+
+## Kathy photo-based character (2026-09-23)
+
+- Replaced the temporary office colleague with a dedicated GeneralEditorKathy NPC using original built-in image_gen art based on the provided photo: brown bob, red cardigan, white blouse, necklace, and ruby volume. Stable planted feet and scale matched to the room.
+- Office loads the local transparent PNG; codex uses the new art. Legacy quest/save identifiers remain compatible. Reference photo is not shipped. Prompt saved with the asset.
+- Build and 25 focused tests passed; desktop/mobile opening-dialog checks and visual office inspection passed. Skill smoke completed, known black native capture inspected. Saved locally, not published.
+
+## Sweetgreen and James (2026-09-23)
+
+- Added an original code-drawn Sweetgreen storefront and outdoor salad counter to Potomac Green, separate from archival discovery counts. James stands outside using the existing veteran compiler sprite.
+- A conversation warns explicitly not to trust DANN-E, explains his misleading helpful manner, and recommends checking finding aids/notes and talking to Kathy. Warning-heard flag saves after dialogue.
+- Production build and diff check passed. Desktop/mobile browser checks verified storefront/NPC visibility, warning conversation, dialogue completion, and resumed movement. Full-page screenshots inspected; skill smoke completed. Saved locally, not published.
+
+## Reagan Library direct destination (2026-09-23)
+
+- Existing Reagan landmark is now explicitly named in the rail menu as Reagan Library / California. Selecting it arrives at the library entrance; Nixon remains accessible on the same map. Added journal directions.
+- Build and diff check passed; desktop/mobile keyboard rail selection, exact arrival coordinates, and Reagan discovery dialogue verified. Screenshots inspected; skill smoke completed. Saved locally, not published.
+
+## Presidential library research dungeons (2026-09-23)
+
+- All 12 presidential libraries now enter a dedicated, library-specific research dungeon via A; B retains the landmark briefing. South returns to the same library exterior. Saveable per-library assignment and four-stage progress, one-time packet rewards, and journal/read_game_to_text integration added.
+- Four walk-up stations: finding aid, comparison, source note, packet filing. Correct research clears DANN-E misfiled-stack barriers; wrong answers and out-of-order work cannot advance. Early exit remains available; saved packets do not grant publication clearance.
+- Titles/stages verified against https://history.state.gov/historicaldocuments/status-of-the-series on 2026-09-23; individual volume links checked. Reagan Iran-Contra, Bush41 North Africa/Sub-Saharan Africa, Clinton Transnational Commons, Bush43 Road to 9/11, FDR wartime public diplomacy, Truman planned postwar public diplomacy, Eisenhower intelligence, Ford refugees, Carter Iran follow-up, and Nixon Uruguay chapter clearance. JFK/LBJ explicitly background for the later refugee assignment, not invented production volumes. Clinton XIII overview says Being Researched while its individual page says Planned; discrepancy recorded in source manifest.
+- Local assignment JSON and responsive source guide preserve exact titles, status snapshot, source links, and game-authored research tasks without invented holdings. Source guide accessible from dungeon.
+- Browser QA completed all 12 dungeons plus an iPhone-sized Reagan run, verifying A entry, all four station choices, exact one-time reward, return location, and no browser errors. Additional phone checks verified wrong-answer gating, early exit, and source-guide width. Screenshots inspected; skill smoke completed (known native black capture).
+- Full regression testing found old Kathy opening-HUD truncation and stale tests; shortened translated prompts and updated briefing mocks. Production build and diff check passed. All 256 test files / 1913 tests pass.
+- Saved to authoritative checkout; not published.
+
+## 2026-09-23 — Kathy departs for the HAC
+- Added the final briefing line: "Now I need to talk with the HAC. So don't bother me anymore."
+- Closing the briefing hides Kathy and her shadow, removes her interaction and collision, and saves kathyDeparted; return visits keep her absent.
+- Moved missing-key recovery guidance and interaction to INBOX so her departure cannot block the starter route.
+- Validation: production build and 54 focused regression tests pass; desktop/mobile browser checks cover final page, saved departure, revisit, memo routing, research approval, key and GuideScene entry. Skill smoke check passed (its known black WebGL capture checked; normal browser screenshots inspected).
+- Local change only; not published.

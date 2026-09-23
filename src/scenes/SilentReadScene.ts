@@ -1,3 +1,4 @@
+import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
@@ -603,6 +604,7 @@ export class SilentReadScene extends Phaser.Scene {
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    drawCrispInteriorWalls(this, layers.walls, walls.x, walls.y, PALETTE.buckramHighlight, object => this.track(object));
     this.roomCleanups.push(() => {
       ground.destroy();
       walls.destroy();

@@ -4,6 +4,7 @@ import type { Direction } from "../game/constants";
 import type { ChapterTravelData } from "../game/chapterTravel";
 import { beginSnesTransition, completeSnesTransition } from "../game/state";
 import { retroAudio } from "./audio";
+import { drawDungeonStoneBlock } from "./dungeonWallArt";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -250,25 +251,18 @@ function drawDungeonWalls(scene: Phaser.Scene, accent: string) {
   const bottomY = 216;
   for (let x = 8; x <= GAME_WIDTH - 8; x += 16) {
     if (x >= 112 && x <= 144) continue;
-    drawStoneBlock(scene, x, topY, accent);
-    if (x < 112 || x > 144) drawStoneBlock(scene, x, bottomY, accent);
+    drawDungeonStoneBlock(scene, x, topY, accent);
+    if (x < 112 || x > 144) drawDungeonStoneBlock(scene, x, bottomY, accent);
   }
   for (let y = 56; y <= 200; y += 16) {
     if (y >= 104 && y <= 136) continue;
-    drawStoneBlock(scene, 8, y, accent);
-    drawStoneBlock(scene, GAME_WIDTH - 8, y, accent);
+    drawDungeonStoneBlock(scene, 8, y, accent);
+    drawDungeonStoneBlock(scene, GAME_WIDTH - 8, y, accent);
   }
   scene.add.rectangle(128, 220, 30, 8, color(PALETTE.black)).setDepth(43);
   scene.add.rectangle(128, 36, 30, 8, color(PALETTE.black)).setDepth(43);
 }
 
-function drawStoneBlock(scene: Phaser.Scene, x: number, y: number, accent: string) {
-  scene.add.rectangle(x, y, 16, 16, color(PALETTE.black)).setDepth(40);
-  scene.add.rectangle(x - 1, y - 1, 13, 13, color(PALETTE.stoneDark)).setDepth(41);
-  scene.add.rectangle(x - 4, y - 4, 5, 5, color(PALETTE.stoneGray)).setDepth(42);
-  scene.add.rectangle(x + 3, y + 5, 7, 2, color(accent)).setDepth(42);
-  scene.add.rectangle(x - 1, y + 6, 10, 1, color(PALETTE.black)).setDepth(43);
-}
 
 export function addObjectiveText(scene: Phaser.Scene) {
   const text = scene.add.text(8, 224, compactObjectiveText(""), {

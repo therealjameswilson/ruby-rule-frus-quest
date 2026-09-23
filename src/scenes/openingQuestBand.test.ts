@@ -39,7 +39,7 @@ describe("opening HUD objectives", () => {
 
   it("recovers the key on older saves before directing the player south", () => {
     expect(officeQuestBandObjective({ juniorIntroduced: true, memoStatus: 3, hasArchiveKey: false }))
-      .toBe("ASK JR FOR KEY");
+      .toBe("KEY: INBOX");
     expect(officeQuestBandObjective({ juniorIntroduced: true, memoStatus: 3, hasArchiveKey: true }))
       .toBe("ARCHIVE - SOUTH DOOR");
   });

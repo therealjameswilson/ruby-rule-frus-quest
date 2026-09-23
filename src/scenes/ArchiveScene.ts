@@ -1,3 +1,6 @@
+import { AlexPoster, ALEX_TEXTURE, ALEX_ART_PATH } from "../systems/alexPoster";
+import { ConferenceHeat, CONFERENCE_HEAT_DAMAGE, CONFERENCE_HEAT_WARNING } from "../game/conferenceHeat";
+import { drawDungeonStoneBlock, drawDungeonWallTorch } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
 import { compilerCheckpointComplete } from "../game/compilerMission";
 import { runCompilerCheckpoint } from "../systems/compilerCheckpoint";
@@ -95,6 +98,7 @@ import { ChoicePrompt } from "../systems/verification";
 import { saveGameNow } from "../systems/save";
 import {
   ARCHIVE_A1_TILEMAP,
+  ARCHIVE_DUNGEON_TILES,
   archiveA1CollisionRect,
   buildArchiveA1TileLayers
 } from "../game/archiveA1Tilemap";
@@ -113,7 +117,7 @@ function color(hex: string) {
 }
 
 type Direction = "north" | "south" | "west" | "east";
-type ArchiveRoomId = "AS" | "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
+type ArchiveRoomId = "A5" | "A4" | "AS" | "A1" | "A2" | "A3" | "B1" | "B2" | "B3" | "C1" | "C2" | "C3" | "D1" | "D2" | "D3";
 type ArchiveExitTarget = ArchiveRoomId | "N1" | "O1" | "DN1";
 type ArchiveEnemyType = "NO REPO" | "FIREWALL" | "PENDING" | "WAIT" | "HOLD" | "AMBIGUOUS" | "DANN-E QUEUE";
 type ArchiveDanneRoute = "NaraStacksScene" | "EmbassyCableRoomScene" | "BlackVaultLairScene";
@@ -172,6 +176,8 @@ const DOOR_X_MAX = 144;
 const DOOR_Y_MIN = 104;
 const DOOR_Y_MAX = 136;
 const ARCHIVE_RETURN_ROOM_CODES: Record<ArchiveRoomId, number> = {
+  A5: 15,
+  A4: 14,
   AS: 13,
   A1: 1,
   A2: 2,
@@ -229,8 +235,16 @@ const ARCHIVE_ROOMS: Record<ArchiveRoomId, ArchiveRoom> = {
     id: "A3",
     title: "HINT ALCOVE",
     grid: { x: 2, y: 0 },
-    exits: { west: "A2", south: "B3" },
+    exits: { west: "A2", east: "A4", north: "A5", south: "B3" },
     roomType: "hint"
+  },
+  A5: {
+    id: "A5", title: "ALEX POSTER'S OFFICE",
+    grid: { x: 2, y: -1 }, exits: { south: "A3" }, roomType: "normal"
+  },
+  A4: {
+    id: "A4", title: "STEVE RANDOLPH CONFERENCE ROOM",
+    grid: { x: 3, y: 0 }, exits: { west: "A3" }, roomType: "normal"
   },
   B1: {
     id: "B1",
@@ -444,6 +458,9 @@ export class ArchiveScene extends Phaser.Scene {
   private bossReadinessObjects: Phaser.GameObjects.GameObject[] = [];
   private blackVaultDoorObjects: Phaser.GameObjects.GameObject[] = [];
   private readonly researchTable = { x: 128, y: 116, label: "Research Table" };
+  private alexPoster?: AlexPoster;
+  private readonly conferenceHeat = new ConferenceHeat();
+  private heatCountdown?: Phaser.GameObjects.Text;
   private currentRoomId: ArchiveRoomId = "A1";
   private visitedRoomIds = new Set<ArchiveRoomId>();
   private roomObjects: Phaser.GameObjects.GameObject[] = [];
@@ -473,7 +490,13 @@ export class ArchiveScene extends Phaser.Scene {
     super("ArchiveScene");
   }
 
+  preload() {
+    if (!this.textures.exists(ALEX_TEXTURE)) this.load.image(ALEX_TEXTURE, ALEX_ART_PATH);
+  }
+
   create(data?: unknown) {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => { this.alexPoster?.destroy(); this.alexPoster = undefined; });
+
     this.attackBuffer.clear();
     installAttackBufferLifecycle(this.events, this.attackBuffer);
     this.lastRepoWallSwing = 0;
@@ -639,6 +662,11 @@ export class ArchiveScene extends Phaser.Scene {
     this.updateDanneLurker(delta);
     this.updateRepoWallToolHit();
     if (this.checkRoomExit()) return;
+    this.updateConferenceHeat(delta);
+    if (this.alexPoster) {
+      if (input.aJustPressed) { this.answerAlexPoster(); return; }
+      this.alexPoster.update(delta, this.player);
+    }
 
     if (this.currentRoomId === "AS") {
       const contact = !input.aJustPressed && !input.bJustPressed && this.player.combatReadout.weapon.canSwing
@@ -721,7 +749,7 @@ export class ArchiveScene extends Phaser.Scene {
 
   private updateDanneLurker(delta: number, canPressure = true) {
     const result = this.danneLurker.update(this.time.now, delta, this.player.position,
-      canPressure && this.currentRoomId !== "AS" && this.time.now >= this.reviewResumeUntil, this.player.combatReadout);
+      canPressure && this.currentRoomId !== "AS" && this.currentRoomId !== "A4" && this.currentRoomId !== "A5" && this.time.now >= this.reviewResumeUntil, this.player.combatReadout);
     if (result.triggered && takeDanneLurkerHit(this.player, this.danneLurker.position, "contact", "DANN-E deadline pressure disrupted archive verification.")) {
       this.refreshRoomObjective();
       this.reliability.update();
@@ -762,13 +790,15 @@ export class ArchiveScene extends Phaser.Scene {
   private enterRoom(roomId: ArchiveRoomId, spawn: { x: number; y: number }, wipe = true, direction: Direction = "east") {
     this.attackBuffer.clear();
     const applyRoom = () => {
+      this.conferenceHeat.reset();
+      this.heatCountdown = undefined;
       this.currentRoomId = roomId;
       this.visitedRoomIds.add(roomId);
       this.clearRoom();
       this.renderCurrentRoom();
       const safeSpawn = roomId === "AS" ? safeWorkstationPosition(spawn, this.roomSolids) : spawn;
       this.player.setPosition(safeSpawn.x, safeSpawn.y);
-      this.danneLurker.enterRoom(this.time.now, roomId !== "AS");
+      this.danneLurker.enterRoom(this.time.now, roomId !== "AS" && roomId !== "A4" && roomId !== "A5");
       this.syncRoomTraversalState();
       this.updateVisitedMinimap();
       this.exitCooldownUntil = this.time.now + 280;
@@ -795,6 +825,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private clearRoom() {
+    this.alexPoster?.destroy();
+    this.alexPoster = undefined;
     this.clearSourceNoteRouteCue();
     for (const cleanup of this.roomCleanups) cleanup();
     for (const object of this.roomObjects) {
@@ -837,9 +869,9 @@ export class ArchiveScene extends Phaser.Scene {
   private renderCurrentRoom() {
     const room = ARCHIVE_ROOMS[this.currentRoomId];
     this.cameras.main.setBackgroundColor(this.currentRoomId === "A2" || this.currentRoomId === "B2" ? PALETTE.shadowNavy : PALETTE.archiveAmber);
-    this.roomTitleText.setText(`${room.id} ${room.title}`);
+    this.roomTitleText.setText(room.id === "A4" ? "RANDOLPH CONFERENCE" : `${room.id} ${room.title}`);
     addSnesRoomIntroBanner(this, {
-      title: room.id === "AS" ? room.title : `${room.id} ${room.title}`,
+      title: room.id === "A4" ? "RANDOLPH CONFERENCE" : room.id === "AS" ? room.title : `${room.id} ${room.title}`,
       subtitle: "ARCHIVE CAVERN",
       accent: room.id === "AS" ? PALETTE.terminalCyan
         : room.roomType === "reward" || room.roomType === "secret" ? PALETTE.goldStamp : PALETTE.buckramRed,
@@ -847,7 +879,7 @@ export class ArchiveScene extends Phaser.Scene {
     });
     this.drawRoomExits(room);
     const packedTilemapRendered = (room.id === "A1" || room.id === "AS") && this.renderArchiveA1Tilemap();
-    if (!packedTilemapRendered) {
+    if (!packedTilemapRendered && room.id !== "A4" && room.id !== "A5") {
       if (room.id === "AS") this.renderAnnotationStacksFallback();
       else {
         addSnesRoomLayer(this, {
@@ -859,7 +891,7 @@ export class ArchiveScene extends Phaser.Scene {
         this.drawArchiveRoomDetailLayer(room);
       }
     }
-    if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.id !== "B2" && room.roomType !== "secret") {
+    if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.id !== "B2" && room.roomType !== "secret" && room.id !== "A4" && room.id !== "A5") {
       addSnesRoomCompass(this, {
         x: 216,
         y: 62,
@@ -874,6 +906,8 @@ export class ArchiveScene extends Phaser.Scene {
     }
     if (room.id === "AS") this.renderAnnotationStacks();
     else if (room.id === "A1") this.renderSourceRoom();
+    else if (room.id === "A5") this.renderAlexPosterOffice();
+    else if (room.id === "A4") this.renderConferenceRoom();
     else if (room.id === "A2") this.renderOpenNetAnnex();
     else if (room.id === "A3" || room.id === "B3") this.renderHintRoom(room);
     else if (room.id === "B1") this.renderStacksRoom();
@@ -882,8 +916,83 @@ export class ArchiveScene extends Phaser.Scene {
     else if (room.id === "C3" || room.id === "D2") this.renderSecretRoom(room);
     else if (room.id === "D1") this.renderRewardRoom();
     else this.renderBossGateRoom();
+    if (room.id === "A3") {
+      this.track(this.add.text(128, 192, "EAST: HOT CONFERENCE ROOM\nWARNING: -1/2 HEART / 20s", {
+        fontFamily: "monospace", fontSize: "6px", color: "#ffe0a3",
+        backgroundColor: "#491d18", align: "center"
+      }).setOrigin(0.5).setDepth(150));
+    }
     this.refreshRoomObjective();
     this.syncWallState();
+  }
+
+  private renderAlexPosterOffice() {
+    this.track(this.add.rectangle(128, 130, 224, 164, 0x344743).setDepth(1));
+    this.track(this.add.rectangle(66, 100, 65, 22, 0x6c4030).setStrokeStyle(2, 0xd4b47b).setDepth(12));
+    this.roomSolids.push(new Phaser.Geom.Rectangle(33, 89, 65, 22));
+    for (const [x, title] of [[55, "BEST OF\nTHE BEST"], [200, "BEST OF\nTHE BEST 2"]] as const) {
+      this.track(this.add.rectangle(x, 63, 48, 28, 0x211b32).setStrokeStyle(2, 0xd4b47b).setDepth(14));
+      this.track(this.add.text(x, 63, title, { fontFamily: "monospace", fontSize: "5px", color: "#ffdc96", align: "center" }).setOrigin(0.5).setDepth(15));
+    }
+    this.track(this.add.text(128, 184, "ALEX POSTER'S OFFICE\nA: ANSWER  /  SOUTH: EXIT", { fontFamily: "monospace", fontSize: "6px", color: "#fff0cf", align: "center" }).setOrigin(0.5).setDepth(150));
+    this.track(this.add.rectangle(64, 140, 76, 26, 0x241c17)
+      .setStrokeStyle(2, 0xd4b47b).setDepth(14).setName("lee-retiner-sign-frame"));
+    this.track(this.add.text(64, 140, "Lee Retiner Was Here", {
+      fontFamily: "monospace", fontSize: "6px", color: "#ffe3a3",
+      align: "center", wordWrap: { width: 68 }
+    }).setOrigin(0.5).setDepth(15).setName("lee-retiner-sign"));
+    this.alexPoster = new AlexPoster(this);
+    setLatestMessage("Alex asks about Best of the Best and Best of the Best 2. Press A to answer before he loses patience. Dodge his karate lunge, or leave south.");
+  }
+
+  private answerAlexPoster() {
+    const alex = this.alexPoster;
+    if (!alex || this.researchChoice.active) return;
+    this.researchChoice.show(`Have you seen ${alex.encounter.film}?`, [
+      { key: "A", label: "Yes, I've seen it.", value: "yes" },
+      { key: "B", label: "Not yet!", value: "no" }
+    ], option => {
+      alex.answer();
+      setLatestMessage(option.value === "yes" ? "Alex: Excellent! Now, what about the other one?" : "Alex: You have to see it! And what about the other one?");
+      this.toast.show("ANSWERED! KARATE CANCELLED", this.player.position, "info");
+    });
+  }
+
+  private renderConferenceRoom() {
+    this.track(this.add.rectangle(128, 130, 224, 164, 0x9a633c).setDepth(1));
+    const text = (x: number, y: number, value: string, size = "6px") => {
+      const label = this.add.text(x, y, value, { fontFamily: "monospace", fontSize: size,
+        color: "#ffe0a3", align: "center", backgroundColor: "#491d18" }).setOrigin(0.5).setDepth(150);
+      this.track(label); return label;
+    };
+    text(128, 75, "STEVE RANDOLPH\nCONFERENCE ROOM");
+    text(128, 94, "WARNING: EXTREME HEAT", "7px");
+    this.heatCountdown = text(128, 181, "HEAT: -1/2 HEART IN 20s");
+    text(128, 194, "WEST EXIT: COOL DOWN");
+    this.track(this.add.rectangle(133, 133, 94, 40, 0x6c3625).setStrokeStyle(2, 0xd3a16c).setDepth(12));
+    this.roomSolids.push(new Phaser.Geom.Rectangle(86, 113, 94, 40));
+    for (const x of [98, 121, 144, 167]) for (const y of [104, 163]) {
+      this.track(this.add.rectangle(x, y, 13, 10, 0x7a1020).setStrokeStyle(1, 0xe5b777).setDepth(13));
+    }
+    text(133, 132, "FRUS REVIEW\nNO AIR CONDITIONING", "5px");
+    for (const x of [36, 46, 56]) {
+      this.track(this.add.rectangle(x, 156, 6, 25, 0xb45128).setStrokeStyle(1, 0xf6a55b).setDepth(12));
+    }
+    text(46, 178, "HOT!", "5px");
+    setLatestMessage(CONFERENCE_HEAT_WARNING);
+    this.toast.show("HEAT! -1/2 HEART / 20s", { x: 128, y: 90 }, "warn");
+  }
+
+  private updateConferenceHeat(delta: number) {
+    if (this.currentRoomId !== "A4") return;
+    const ticks = this.conferenceHeat.advance(delta, gameState.mode === "explore" && !document.hidden);
+    if (ticks > 0) {
+      adjustReliability(-CONFERENCE_HEAT_DAMAGE * ticks, "Steve Randolph Conference Room: extreme heat");
+      this.reliability.update();
+      this.cameras.main.flash(180, 220, 65, 15, false);
+      this.toast.show("TOO HOT! -1/2 HEART", this.player.position, "warn");
+    }
+    this.heatCountdown?.setText(`HEAT: -1/2 HEART IN ${this.conferenceHeat.secondsRemaining}s`);
   }
 
   private renderSourceRoom() {
@@ -988,6 +1097,16 @@ export class ArchiveScene extends Phaser.Scene {
     for (const cell of layers.collisionCells) {
       const rect = archiveA1CollisionRect(cell);
       this.addSolid(rect.x, rect.y, rect.width, rect.height);
+      // Cover only perimeter stone; interior shelves and every exit retain their
+      // existing artwork and collision geometry.
+      if (cell.tileX === 0 || cell.tileX === ARCHIVE_A1_TILEMAP.columns - 1
+        || cell.tileY === 0 || cell.tileY === ARCHIVE_A1_TILEMAP.rows - 1) {
+        this.track(drawDungeonStoneBlock(this, rect.x + 8, rect.y + 8,
+          stacks ? PALETTE.terminalCyan : PALETTE.goldStamp, 46));
+        if (!stacks && layers.decoration[cell.tileY][cell.tileX] === packedTileGid(ARCHIVE_DUNGEON_TILES.torch)) {
+          this.track(drawDungeonWallTorch(this, rect.x + 8, rect.y + 8));
+        }
+      }
     }
 
     this.roomCleanups.push(() => {
@@ -2531,9 +2650,10 @@ export class ArchiveScene extends Phaser.Scene {
           status: this.enemyStatus(definition)
         };
       });
-    setVisibleThreats(this.currentRoomId === "AS" ? [] : [...activeThreats, this.danneLurker.readout(this.time.now)]);
+    setVisibleThreats(this.currentRoomId === "AS" || this.currentRoomId === "A4" || this.currentRoomId === "A5" ? [] : [...activeThreats, this.danneLurker.readout(this.time.now)]);
     setVisibleEntities([
       `Room ${this.currentRoomId}`,
+      ...(this.alexPoster ? [`Alex Poster: ${this.alexPoster.encounter.phase}`, `Have you seen ${this.alexPoster.encounter.film}?`] : []),
       ...this.interactables.map((item) => item.label),
       ...(this.currentRoomId === "A1" ? [
         "Elena",
@@ -3683,6 +3803,11 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private refreshRoomObjective() {
+    if (this.currentRoomId === "A5") { setObjective("A: ANSWER / SOUTH: EXIT"); return; }
+    if (this.currentRoomId === "A4") {
+      setObjective("HEAT! WEST: COOL DOWN");
+      return;
+    }
     const optionalObjective = archiveOptionalObjective(this.currentRoomId, gameState.sceneProgress);
     if (optionalObjective) {
       setObjective(optionalObjective);
@@ -3901,6 +4026,8 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private gateRouteLabel(target: ArchiveExitTarget) {
+    if (target === "A5") return "ALEX";
+    if (target === "A4") return "HOT ROOM";
     if (target === "AS") return "NOTES";
     if (target === "DN1") return "NARA";
     if (this.currentRoomId === "AS" && target === "A1") return "TABLE";

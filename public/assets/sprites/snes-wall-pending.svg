@@ -1,20 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32" shape-rendering="crispEdges">
-  <rect width="32" height="32" fill="none"/>
-  <rect x="4" y="8" width="25" height="21" fill="#0F0F0F"/>
-  <rect x="3" y="7" width="25" height="19" fill="#304860"/>
-  <rect x="6" y="5" width="20" height="19" fill="#707070"/>
-  <rect x="7" y="6" width="7" height="5" fill="#A8A79E"/>
-  <rect x="16" y="7" width="9" height="5" fill="#A8A79E"/>
-  <rect x="9" y="16" width="7" height="6" fill="#A8A79E"/>
-  <rect x="18" y="15" width="7" height="7" fill="#A8A79E"/>
-  <rect x="6" y="12" width="20" height="3" fill="#B89A5A"/>
-  <rect x="18" y="2" width="9" height="8" fill="#0F0F0F"/>
-  <rect x="17" y="1" width="9" height="8" fill="#E8D8A8"/>
-  <rect x="18" y="3" width="6" height="1" fill="#B82030"/>
-  <rect x="18" y="5" width="5" height="1" fill="#B89A5A"/>
-  <rect x="10" y="10" width="3" height="3" fill="#0F0F0F"/>
-  <rect x="21" y="10" width="3" height="3" fill="#0F0F0F"/>
-  <rect x="12" y="22" width="8" height="2" fill="#0F0F0F"/>
-  <rect x="7" y="26" width="5" height="2" fill="#D6A23A"/>
-  <rect x="18" y="26" width="5" height="2" fill="#D6A23A"/>
+  <!-- Native-resolution copier: scanner lid, status panel, paper outlet. -->
+  <rect x="6" y="28" width="6" height="3" fill="#111B26"/>
+  <rect x="22" y="28" width="5" height="3" fill="#111B26"/>
+  <rect x="7" y="28" width="3" height="1" fill="#768894"/>
+  <rect x="23" y="28" width="2" height="1" fill="#768894"/>
+  <rect x="3" y="8" width="27" height="21" fill="#111B26"/>
+  <rect x="4" y="9" width="24" height="18" fill="#768894"/>
+  <rect x="4" y="9" width="2" height="17" fill="#BECAD0"/>
+  <rect x="26" y="9" width="3" height="18" fill="#344653"/>
+  <rect x="5" y="3" width="21" height="6" fill="#111B26"/>
+  <rect x="6" y="4" width="19" height="3" fill="#BECAD0"/>
+  <rect x="6" y="4" width="19" height="1" fill="#F8F0D8"/>
+  <rect x="7" y="6" width="17" height="1" fill="#768894"/>
+  <rect x="10" y="1" width="13" height="2" fill="#111B26"/>
+  <rect x="11" y="1" width="11" height="1" fill="#F8F0D8"/>
+  <rect x="5" y="8" width="23" height="5" fill="#344653"/>
+  <rect x="5" y="8" width="23" height="1" fill="#BECAD0"/>
+  <rect x="8" y="9" width="5" height="3" fill="#111B26"/>
+  <rect x="19" y="9" width="5" height="3" fill="#111B26"/>
+  <rect x="9" y="10" width="3" height="1" fill="#D6A23A"/>
+  <rect x="20" y="10" width="3" height="1" fill="#D6A23A"/>
+  <rect x="14" y="10" width="3" height="1" fill="#BECAD0"/>
+  <rect x="25" y="10" width="2" height="2" fill="#D6A23A"/>
+  <rect x="3" y="13" width="26" height="9" fill="#111B26"/>
+  <rect x="4" y="13" width="24" height="1" fill="#D6A23A"/>
+  <rect x="4" y="21" width="24" height="1" fill="#344653"/>
+  <rect x="5" y="23" width="21" height="4" fill="#111B26"/>
+  <rect x="8" y="23" width="15" height="3" fill="#F8F0D8"/>
+  <rect x="10" y="24" width="10" height="1" fill="#111B26"/>
+  <rect x="5" y="27" width="21" height="1" fill="#BECAD0"/>
+  <rect x="23" y="1" width="5" height="7" fill="#111B26"/>
+  <rect x="24" y="2" width="3" height="5" fill="#F8F0D8"/>
+  <rect x="25" y="3" width="2" height="1" fill="#768894"/>
 </svg>

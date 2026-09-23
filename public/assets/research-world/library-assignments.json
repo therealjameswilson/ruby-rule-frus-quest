@@ -1,0 +1,151 @@
+{
+  "checked": "2026-09-23",
+  "statusSource": "https://history.state.gov/historicaldocuments/status-of-the-series",
+  "note": "Titles and stages transcribed from Status of the Series. Tasks are original game exercises, not claims about specific holdings, unreleased documents, or official compiler assignments. Kennedy and Johnson stops provide background only. Clinton XIII individual page still says Planned; the requested status overview lists Being Researched, which governs this snapshot.",
+  "assignments": [
+    {
+      "library": "fdr",
+      "volumeId": "frus1917-72PubDipv03",
+      "title": "1917–1972, Volume III, Public Diplomacy, World War II",
+      "status": "Being Researched",
+      "topic": "Wartime public diplomacy",
+      "task": "Map wartime information-policy decisions and intended foreign audiences.",
+      "comparison": "Separate the policy directive from the broadcast or leaflet used to carry it out.",
+      "selection": "policy directive and implementation record",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1917-72PubDipv03"
+    },
+    {
+      "library": "truman",
+      "volumeId": "frus1917-72PubDipv04",
+      "title": "1917–1972, Volume IV, Public Diplomacy, 1945–1952",
+      "status": "Planned",
+      "topic": "Postwar public diplomacy",
+      "task": "Prepare a source survey for the transition from wartime information work to postwar public diplomacy.",
+      "comparison": "Keep a planning inventory distinct from a selected manuscript.",
+      "selection": "source survey with access gaps",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1917-72PubDipv04"
+    },
+    {
+      "library": "eisenhower",
+      "volumeId": "frus1956-60IntelCom",
+      "title": "1956–1960, The Intelligence Community",
+      "status": "Being Researched",
+      "topic": "Intelligence organization",
+      "task": "Trace the division between intelligence assessment, coordination, and presidential authorization.",
+      "comparison": "An assessment is evidence of analysis, not proof that a policy was approved.",
+      "selection": "assessment and authorization trail",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1956-60IntelCom"
+    },
+    {
+      "library": "jfk",
+      "volumeId": "frus1981-88v42",
+      "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
+      "status": "Being Researched",
+      "topic": "Refugee policy precedents",
+      "task": "Survey Kennedy-era refugee-policy precedents as background to the later 1975–1984 assignment.",
+      "comparison": "Mark pre-1975 material as background; do not insert it as an in-period document.",
+      "selection": "dated background lead, outside volume scope",
+      "backgroundOnly": true,
+      "source": "https://history.state.gov/historicaldocuments/frus1981-88v42"
+    },
+    {
+      "library": "lbj",
+      "volumeId": "frus1981-88v42",
+      "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
+      "status": "Being Researched",
+      "topic": "Immigration policy precedents",
+      "task": "Survey Johnson-era immigration-policy precedents for the later refugee and immigration assignment.",
+      "comparison": "Distinguish earlier statutory context from later implementation decisions.",
+      "selection": "background context with an explicit date limit",
+      "backgroundOnly": true,
+      "source": "https://history.state.gov/historicaldocuments/frus1981-88v42"
+    },
+    {
+      "library": "nixon",
+      "volumeId": "frus1969-76ve10",
+      "title": "1969–1976, Volume E–10, Documents on American Republics, 1969–1972",
+      "status": "Being Cleared — Uruguay chapter",
+      "topic": "Uruguay clearance follow-up",
+      "task": "Recheck the Uruguay source trail while that chapter remains in clearance.",
+      "comparison": "Other chapters are published; do not treat Uruguay as already released.",
+      "selection": "Uruguay source trail and unresolved clearance",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1969-76ve10"
+    },
+    {
+      "library": "ford",
+      "volumeId": "frus1981-88v42",
+      "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
+      "status": "Being Researched",
+      "topic": "1975 refugee response",
+      "task": "Investigate the 1975 refugee response within the volume’s cross-administration scope.",
+      "comparison": "Follow decisions across evacuation, admission, and resettlement; retain agency disagreements.",
+      "selection": "decision sequence across agencies",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1981-88v42"
+    },
+    {
+      "library": "carter",
+      "volumeId": "frus1977-80v10",
+      "title": "1977–1980, Volume X, Iran: Revolution, January 1977–November 1979",
+      "status": "Being Cleared",
+      "topic": "Iran revolution follow-up",
+      "task": "Verify the source trail and chronology for policy toward revolutionary Iran.",
+      "comparison": "Stop at November 1979; distinguish unresolved clearance from research availability.",
+      "selection": "dated source note and clearance flag",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1977-80v10"
+    },
+    {
+      "library": "reagan",
+      "volumeId": "frus1981-88v23",
+      "title": "1981–1988, Volume XXIII, Iran-Contra Affair, 1985–1988",
+      "status": "Being Researched",
+      "topic": "Iran-Contra research",
+      "task": "Trace the relationship between Iran initiatives, Contra support, and authorization decisions in 1985–1988.",
+      "comparison": "Compare contemporaneous records with later recollections; do not silently merge conflicting accounts.",
+      "selection": "contemporaneous record plus attributed recollection",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1981-88v23"
+    },
+    {
+      "library": "bush41",
+      "volumeId": "frus1989-92v20",
+      "title": "1989–1992, Volume XX, North Africa; Sub-Saharan Africa",
+      "status": "Being Researched",
+      "topic": "African policy research",
+      "task": "Build a decision chronology for North Africa and Sub-Saharan Africa during 1989–1992.",
+      "comparison": "Keep regional and country-specific decisions connected without substituting Southern Africa or Somalia volumes.",
+      "selection": "in-scope country and regional decision records",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1989-92v20"
+    },
+    {
+      "library": "clinton",
+      "volumeId": "frus1993-00v13",
+      "title": "1993–2000, Volume XIII, Global Issues: Transnational Commons",
+      "status": "Being Researched",
+      "topic": "Transnational commons",
+      "task": "Trace how cross-border environmental and shared-resource issues reached foreign-policy decision makers.",
+      "comparison": "Keep scientific background distinct from diplomatic choices, negotiations, and implementation.",
+      "selection": "scientific context and diplomatic decision trail",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus1993-00v13"
+    },
+    {
+      "library": "bush43",
+      "volumeId": "frus2001-08v07",
+      "title": "2001–2008, Volume VII, Global War on Terror: “Road to 9/11” and Immediate Aftermath, 2001–2003",
+      "status": "Being Researched",
+      "topic": "Road to 9/11 research",
+      "task": "Distinguish pre-attack warning records from post-attack policy decisions within 2001–2003.",
+      "comparison": "Preserve what officials knew at the time; label later hindsight and do not infer declassification.",
+      "selection": "contemporaneous chronology with knowledge limits",
+      "backgroundOnly": false,
+      "source": "https://history.state.gov/historicaldocuments/frus2001-08v07"
+    }
+  ]
+}

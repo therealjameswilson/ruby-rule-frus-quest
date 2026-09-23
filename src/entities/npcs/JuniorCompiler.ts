@@ -8,7 +8,7 @@ const JUNIOR_COMPILER_ASSET = DANNE_RUNTIME_SPRITE_ASSETS.find((asset) => asset.
 export class JuniorCompiler extends DanneNpc {
   constructor(scene: Phaser.Scene, x: number, y: number) {
     unlockCodexEntry("npc-junior-compiler");
-    super(scene, JUNIOR_COMPILER_ASSET, "Junior Compiler", x, y, {
+    super(scene, JUNIOR_COMPILER_ASSET, "General Editor Kathy", x, y, {
       label: "",
       characterKey: "compiler",
       labelY: 22,

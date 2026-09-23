@@ -8,13 +8,13 @@ export const FRUS_QUEST_STAKES =
   "DANN-E hits cost reliability hearts. Unsafe edits also block publication until corrected.";
 
 export const FRUS_QUEST_FIRST_OBJECTIVE =
-  "Compile a reliable FRUS volume. First: get the assignment from JR.";
+  "Compile a reliable FRUS volume. First: get the assignment from Kathy.";
 
 export const FRUS_QUEST_TITLE_PROMPT =
-  "MISSION: PUBLISH A RELIABLE FRUS VOLUME";
+  "MISSION: COMPILE A FRUS VOLUME";
 
 export const FRUS_QUEST_PLAYER_GOAL =
-  "GOAL: PUBLISH ONE RELIABLE FRUS VOLUME";
+  "GOAL: COMPILE A RELIABLE FRUS VOLUME";
 
 export const FRUS_QUEST_PLAYER_LOOP =
   "RESEARCH -> COMPILE -> REVIEW -> REVISE";
@@ -23,4 +23,4 @@ export const FRUS_QUEST_PLAYER_STAKES =
   "HEARTS = RELIABILITY; BAD SHORTCUTS HURT";
 
 export const FRUS_QUEST_FIRST_ACTION =
-  "FIRST: TALK TO THE JUNIOR COMPILER";
+  "FIRST: TALK TO GENERAL EDITOR KATHY";

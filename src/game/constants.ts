@@ -471,8 +471,20 @@ export const FRUS_ROOM_GRAPH: RoomDefinition[] = [
     area: "archive_cavern",
     title: "Hint Alcove",
     grid: { x: 2, y: 0 },
-    exits: { west: "A2", south: "B3" },
+    exits: { west: "A2", east: "A4", north: "A5", south: "B3" },
     roomType: "hint"
+  },
+  {
+    id: "A4",
+    area: "archive_cavern",
+    title: "Steve Randolph Conference Room",
+    grid: { x: 3, y: 0 },
+    exits: { west: "A3" },
+    roomType: "normal"
+  },
+  {
+    id: "A5", area: "archive_cavern", title: "Alex Poster's Office",
+    grid: { x: 2, y: -1 }, exits: { south: "A3" }, roomType: "normal"
   },
   {
     id: "B1",
@@ -653,6 +665,7 @@ export const SCENE_ORDER = [
   "DanneIntroScene",
   "OfficeScene",
   "ResearchWorldScene",
+  "PresidentialLibraryScene",
   "GuideScene",
   "ArchiveScene",
   "CherryBlossomGardenScene",

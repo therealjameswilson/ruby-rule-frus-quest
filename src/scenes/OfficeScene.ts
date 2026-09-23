@@ -1,4 +1,6 @@
 import Phaser from "phaser";
+import { saveGameNow } from "../systems/save";
+import { RUBY_BUCKRAM_ART } from "../assets/rubyBuckram";
 import { OFFICIAL_FRUS_ART } from "../assets/officialFrus";
 import { compilerCheckpointComplete, getCompilerMissionReadout } from "../game/compilerMission";
 import { runCompilerCheckpoint } from "../systems/compilerCheckpoint";
@@ -96,7 +98,7 @@ import {
 import type { Interactable } from "../game/types";
 import { Player } from "../entities/Player";
 import { DanneLurker } from "../entities/enemies/DanneLurker";
-import { JuniorCompiler } from "../entities/npcs/JuniorCompiler";
+import { GeneralEditorKathy, KATHY_TEXTURE, KATHY_ART_PATH } from "../entities/npcs/GeneralEditorKathy";
 import { getInput, isTouchInputCapable, tickInput } from "../input/InputState";
 import { retroAudio } from "../systems/audio";
 import { walkingFeetOverlap } from "../systems/smoothMovement";
@@ -127,7 +129,7 @@ function color(hex: string) {
 
 export class OfficeScene extends Phaser.Scene {
   private player!: Player;
-  private juniorCompiler!: JuniorCompiler;
+  private juniorCompiler!: GeneralEditorKathy;
   private dialog!: DialogBox;
   private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
@@ -141,10 +143,18 @@ export class OfficeScene extends Phaser.Scene {
   private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
+  private kathyFeet?: Phaser.Geom.Rectangle;
   private danneLurker!: DanneLurker;
 
   constructor() {
     super("OfficeScene");
+  }
+
+  preload() {
+    if (!this.textures.exists(KATHY_TEXTURE)) this.load.image(KATHY_TEXTURE, KATHY_ART_PATH);
+    for (const asset of RUBY_BUCKRAM_ART) {
+      if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
+    }
   }
 
   create(data?: unknown) {
@@ -159,12 +169,18 @@ export class OfficeScene extends Phaser.Scene {
     this.postIntroLabels = [];
     this.drawOfficeInterior();
     this.drawOfficialReferenceBooks();
+    RUBY_BUCKRAM_ART.forEach((asset, index) => {
+      const positions = [[65, 56, 58, 24], [187, 58, 22, 22], [215, 58, 22, 22]];
+      const [x, y, width, height] = positions[index];
+      this.add.image(x, y, asset.key).setDisplaySize(width, height)
+        .setDepth(-9).setName(`office-${asset.key}`);
+    });
     this.add.rectangle(40,190,15,24,0xaad579).setStrokeStyle(1,0xf9edc6).setDepth(25);
     this.add.text(42,176,"OUTSIDE",{fontFamily:"monospace",fontSize:"6px",color:"#fff6cf",backgroundColor:"#234c39"}).setOrigin(.5).setDepth(26);
 
     const returnSpawn = arrival ?? this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
-    this.juniorCompiler = new JuniorCompiler(this, 70, 122);
+    this.juniorCompiler = new GeneralEditorKathy(this, 70, 122);
     this.danneLurker = new DanneLurker(this, 218, 78, {
       encounterMode: "foreshadow",
       speechBlocked: () => this.toast.visible || this.prompt.visible || this.dialog.active
@@ -184,20 +200,21 @@ export class OfficeScene extends Phaser.Scene {
     this.prompt = new InteractionPrompt(this);
     this.toast = new FeedbackToast(this);
     const juniorFeet = new Phaser.Geom.Rectangle(this.juniorCompiler.x - 6, this.juniorCompiler.y - 3, 12, 8);
-    this.clearJuniorSpawn(juniorFeet);
+    this.kathyFeet = juniorFeet;
+    if (!gameState.sceneProgress.kathyDeparted) this.clearJuniorSpawn(juniorFeet);
     this.solids = [
       new Phaser.Geom.Rectangle(45, 72, 64, 34),
       new Phaser.Geom.Rectangle(147, 72, 65, 34),
       new Phaser.Geom.Rectangle(43, 138, 65, 32),
       new Phaser.Geom.Rectangle(150, 138, 66, 32),
-      // Block only JR's feet, leaving the aisle and space behind him walkable.
-      juniorFeet
+      // Her empty desk becomes walkable after the briefing.
+      ...(gameState.sceneProgress.kathyDeparted ? [] : [juniorFeet])
     ];
     this.clearUnsafeSpawn();
     this.interactables = [
       {
         id: "junior-compiler",
-        label: "Junior Compiler",
+        label: "General Editor Kathy",
         x: this.juniorCompiler.x,
         y: this.juniorCompiler.y,
         radius: 30,
@@ -259,6 +276,12 @@ export class OfficeScene extends Phaser.Scene {
         onInteract: () => this.openProductionBoard()
       },
       {
+        id: "ruby-buckram-display",
+        label: "Ruby Buckram Gallery",
+        x: 65, y: 70, radius: 14, kind: "document",
+        onInteract: () => this.openRubyBuckramBooks()
+      },
+      {
         id: "official-frus-reference",
         label: "Published FRUS Books",
         x: 124,
@@ -296,7 +319,7 @@ export class OfficeScene extends Phaser.Scene {
       }
     ];
     setVisibleEntities([
-      "Junior Compiler",
+      "General Editor Kathy",
       "Assignment Memo",
       "Production Inbox",
       "Scope and Candidate Selection Desk",
@@ -307,6 +330,7 @@ export class OfficeScene extends Phaser.Scene {
       "Cherry Blossom Garden Door",
       "Senate Hearing Chamber Door"
     ]);
+    if (gameState.sceneProgress.kathyDeparted) this.hideKathy();
     this.createFirstQuestCue();
     this.syncOfficeThreatState();
     if (!gameState.sceneProgress.officeTutorialSeen) {
@@ -419,10 +443,10 @@ export class OfficeScene extends Phaser.Scene {
         const focused: Interactable[] = [];
         if (archive) focused.push({ ...archive, radius: 10 });
         if (memoStatus === 0 && memo) focused.push({ ...memo, radius: 36 });
-        if ((memoStatus === 1 || memoStatus === 2) && inbox) {
+        if (memoStatus >= 1 && inbox) {
           focused.push({
             ...inbox,
-            label: memoStatus === 1 ? "Route Memo" : "Stamp Memo",
+            label: memoStatus === 1 ? "Route Memo" : memoStatus === 2 ? "Stamp Memo" : "Recover Key",
             radius: 54
           });
         }
@@ -502,16 +526,38 @@ export class OfficeScene extends Phaser.Scene {
     }
     setObjective(this.currentOfficeObjective());
     setLatestMessage(firstAssignment
-      ? "Your mission: publish a reliable FRUS volume. As compiler, plan research, select and annotate records, complete two reviews, and revise before DPD submission. First: carry the assignment memo to INBOX for research approval."
+      ? "Kathy, General Editor: Your mission is to compile a FRUS volume. As compiler, plan research, select and annotate records, complete two reviews, and revise before DPD submission. First: carry the assignment memo to INBOX for research approval."
       : "Pick up the memo, carry it to INBOX, then stamp it.");
-    this.toast.show(firstAssignment ? "PUBLISH A FRUS VOLUME" : "PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
+    if (!gameState.sceneProgress.kathyDeparted) this.dialog.show("KATHY - GENERAL EDITOR", [
+      "Your mission is to compile a volume of Foreign Relations of the United States: FRUS.",
+      "Research the archives. Select and annotate the documents that explain the major foreign-policy decisions.",
+      "Complete editorial review, revise, and carry your volume through clearance to publication. DANN-E will try to obstruct each phase.",
+      "Start with your assignment memo. Carry it to INBOX and stamp it to approve your research plan.",
+      "Now I need to talk with the HAC. So don't bother me anymore."
+    ], () => this.departKathy());
+    this.toast.show(firstAssignment ? "COMPILE A FRUS VOLUME" : "PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
+  }
+
+  private hideKathy() {
+    this.juniorCompiler.setVisible(false);
+    this.solids = this.solids.filter(solid => solid !== this.kathyFeet);
+    this.interactables = this.interactables.filter(item => item.id !== "junior-compiler");
+    setVisibleEntities(gameState.visibleEntities.filter(label => label !== "General Editor Kathy"));
+  }
+
+  private departKathy() {
+    gameState.sceneProgress.kathyDeparted = 1;
+    this.hideKathy();
+    this.updateFirstQuestCue();
+    setLatestMessage("Kathy has left to talk with the HAC. Pick up your assignment memo and take it to INBOX.");
+    saveGameNow();
   }
 
   private flashNoTargetHint() {
     retroAudio.blip();
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
-      this.toast.showInteractionHint("TALK TO JR AT WEST DESK", this.player.position, "info");
-      setLatestMessage("Follow the gold arrow to JR at the west desk.");
+      this.toast.showInteractionHint("TALK TO KATHY AT WEST DESK", this.player.position, "info");
+      setLatestMessage("Follow the gold arrow to Kathy at the west desk.");
       return;
     }
     // Float a prominent, long-lived toast above the player instead of briefly
@@ -530,7 +576,7 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   private approachCueFor(target: Interactable) {
-    if (target.id === "junior-compiler") return "JR";
+    if (target.id === "junior-compiler") return "KATHY";
     if (target.id === "starter-memo") return "MEMO";
     if (target.id === "production-inbox") return "INBOX";
     if (target.id === "frus-cart") return "CART";
@@ -629,7 +675,7 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.dialog.show("OFFICE CHECK", "Talk to the Junior Compiler first. They will give you the production-check route.");
+      this.dialog.show("OFFICE CHECK", "Talk to the General Editor Kathy first. They will give you the production-check route.");
       return;
     }
     const progress = gameState.sceneProgress.juniorCompilerFetch ?? 0;
@@ -639,7 +685,7 @@ export class OfficeScene extends Phaser.Scene {
         this.showManuscriptReviewChoice();
         return;
       }
-      this.dialog.show("OFFICE CHECK", "The three production checks are complete. Return to the Junior Compiler.");
+      this.dialog.show("OFFICE CHECK", "The three production checks are complete. Collect your key at INBOX.");
       return;
     }
     if (station !== expected) {
@@ -665,7 +711,7 @@ export class OfficeScene extends Phaser.Scene {
     setObjective(this.currentOfficeObjective());
     this.dialog.show("OFFICE CHECK", [
       messages[station],
-      progress + 1 >= 3 ? "Return to the Junior Compiler for key issuance." : "Continue the production check sequence."
+      progress + 1 >= 3 ? "Collect your key at INBOX." : "Continue the production check sequence."
     ]);
   }
 
@@ -686,7 +732,7 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
+      this.toast.show("TALK TO KATHY AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
@@ -706,7 +752,7 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
+      this.toast.show("TALK TO KATHY AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
@@ -743,6 +789,10 @@ export class OfficeScene extends Phaser.Scene {
       this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
       return;
     }
+    // Recovery for older saves also works after Kathy has left for the HAC.
+    addDanneItem("master-declass-key");
+    setObjective(this.currentOfficeObjective());
+    this.updateFirstQuestCue();
     this.toast.show("ARCHIVE GUIDE OPEN", this.player.position, "info");
   }
 
@@ -750,7 +800,7 @@ export class OfficeScene extends Phaser.Scene {
     if (!gameState.sceneProgress.juniorCompilerIntroduced) {
       retroAudio.warning();
       setObjective(FRUS_QUEST_FIRST_OBJECTIVE);
-      this.toast.show("TALK TO JR AT WEST DESK", this.player.position, "info");
+      this.toast.show("TALK TO KATHY AT WEST DESK", this.player.position, "info");
       return;
     }
     const memoStatus = this.officeStarterMemoStatus();
@@ -762,8 +812,8 @@ export class OfficeScene extends Phaser.Scene {
     }
     if (!hasDanneItem("master-declass-key")) {
       retroAudio.warning();
-      setObjective("Return to JR for the key.");
-      this.toast.show("RETURN TO JR FOR THE KEY", this.player.position, "info");
+      setObjective("Collect the key at INBOX.");
+      this.toast.show("COLLECT KEY AT INBOX", this.player.position, "info");
       return;
     }
     if (gameState.sceneProgress.guideCitationCounterTrained === 1
@@ -1370,6 +1420,30 @@ export class OfficeScene extends Phaser.Scene {
     });
   }
 
+  private openRubyBuckramBooks() {
+    const touch = isTouchInputCapable();
+    const size = touch ? 48 : 66;
+    const y = touch ? 69 : 94;
+    const exhibit = this.add.container(0, 0).setDepth(850).setScrollFactor(0);
+    exhibit.add(this.add.rectangle(128, y + 5, 232, size + 30, 0x071426, 0.99));
+    RUBY_BUCKRAM_ART.forEach((asset, index) => {
+      const x = 52 + index * 76;
+      exhibit.add(this.add.image(x, y, asset.key).setDisplaySize(size, size));
+      exhibit.add(this.add.text(x, y + size / 2 + 3, asset.label, {
+        fontFamily: "monospace", fontSize: "5px", color: PALETTE.goldStamp
+      }).setOrigin(0.5, 0));
+    });
+    const gallery = this.add.text(128, y - size / 2 - 12, "OPEN FULL-SIZE GALLERY", {
+      fontFamily: "monospace", fontSize: "6px", color: PALETTE.creamPaper
+    }).setOrigin(0.5).setPadding(4).setInteractive({ useHandCursor: true });
+    gallery.on("pointerdown", () => window.open("assets/art-pack/frus_volumes/ruby-buckram/index.html", "_blank", "noopener,noreferrer"));
+    exhibit.add(gallery);
+    this.dialog.show("RUBY BUCKRAM", [
+      "Ruby-red cloth, gold-stamped spines, and cream pages: the published record takes its familiar form.",
+      "Original game illustrations. Tap OPEN FULL-SIZE GALLERY to inspect the woven covers, shelf, stack, and reading copy."
+    ], () => exhibit.destroy(true));
+  }
+
   private openOfficialReferenceBooks() {
     const touch = isTouchInputCapable();
     const coverHeight = touch ? 54 : 96;
@@ -1473,7 +1547,7 @@ export class OfficeScene extends Phaser.Scene {
     this.postIntroLabels.push(archiveLabel);
     this.drawOfficeRouteCompass();
     this.setOfficeRouteCompassVisible(Boolean(gameState.sceneProgress.officeTutorialSeen));
-    this.drawDesk(70, 92, "JR");
+    this.drawDesk(70, 92, "KATHY");
     this.drawDesk(186, 92, "SCOPE");
     this.drawDesk(60, 154, "IN");
     this.drawTerminalDesk(195, 154);
@@ -1955,8 +2029,8 @@ export class OfficeScene extends Phaser.Scene {
       fontSize: "5px",
       color: PALETTE.creamPaper
     }).setOrigin(0.5).setDepth(-4);
-    deskLabel.setName(label === "JR" ? "office-primary-label-jr" : `office-post-intro-label-${label.toLowerCase()}`);
-    if (label !== "JR") this.postIntroLabels.push(deskLabel);
+    deskLabel.setName(label === "KATHY" ? "office-primary-label-jr" : `office-post-intro-label-${label.toLowerCase()}`);
+    if (label !== "KATHY") this.postIntroLabels.push(deskLabel);
   }
 
   private drawTerminalDesk(x: number, y: number) {

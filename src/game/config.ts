@@ -16,6 +16,7 @@ import { GuideScene } from "../scenes/GuideScene";
 import { HiddenReadingRoomScene } from "../scenes/HiddenReadingRoomScene";
 import { NaraStacksScene } from "../scenes/NaraStacksScene";
 import { NetworkScene } from "../scenes/NetworkScene";
+import { PresidentialLibraryScene } from "../scenes/PresidentialLibraryScene";
 import { ResearchWorldScene } from "../scenes/ResearchWorldScene";
 import { OfficeScene } from "../scenes/OfficeScene";
 import { ReferralVaultScene } from "../scenes/ReferralVaultScene";
@@ -83,6 +84,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     GuideScene,
     OfficeScene,
     ResearchWorldScene,
+    PresidentialLibraryScene,
     ArchiveScene,
     CherryBlossomGardenScene,
     BlackVaultLairScene,
