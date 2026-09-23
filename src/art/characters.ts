@@ -36,7 +36,25 @@ export const VETERAN_CHARACTERS = {
   records_officer_veteran: "assets/art-pack/ng-plus/native/sprite_source_note_specialist_veteran.png"
 } as const;
 
+export const COMPILER_APPEARANCES = [
+  { key: "compiler", label: "CLASSIC" },
+  { key: "compiler_ada", label: "TEAL CURLS" },
+  { key: "compiler_clara", label: "SILVER BOB" },
+  { key: "compiler_maya", label: "OCHRE BUN" },
+  { key: "compiler_robin", label: "MOSS SCARF" },
+  { key: "compiler_quinn", label: "NAVY VEST" }
+] as const;
+
+export const EXTRA_COMPILERS = {
+  compiler_ada: "assets/characters/compilers/compiler_ada.png",
+  compiler_clara: "assets/characters/compilers/compiler_clara.png",
+  compiler_maya: "assets/characters/compilers/compiler_maya.png",
+  compiler_robin: "assets/characters/compilers/compiler_robin.png",
+  compiler_quinn: "assets/characters/compilers/compiler_quinn.png"
+} as const;
+
 export const CHARACTERS = {
+  ...EXTRA_COMPILERS,
   ...BASE_CHARACTERS,
   ...VETERAN_CHARACTERS
 } as const;
@@ -45,7 +63,8 @@ export type CharacterKey = keyof typeof CHARACTERS;
 
 export const CHARACTER_KEYS = Object.keys(CHARACTERS) as CharacterKey[];
 
-export function getCharacterKeyForProcessRole(roleId: string, veteran = false): CharacterKey {
+export function getCharacterKeyForProcessRole(roleId: string, veteran = false, appearance?: string): CharacterKey {
+  if (roleId === "compiler" && appearance && Object.prototype.hasOwnProperty.call(EXTRA_COMPILERS, appearance)) return appearance as CharacterKey;
   if (veteran) {
     if (roleId === "compiler") return "compiler_veteran";
     if (roleId === "editor") return "editor_veteran";

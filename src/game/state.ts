@@ -2399,7 +2399,7 @@ export function getQuestWorkflowReadout() {
   };
 }
 
-export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLES)[number]) {
+export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLES)[number], compilerAppearance?: string) {
   gameState.playerProfile = {
     displayName,
     roleId: role.id,
@@ -2407,7 +2407,8 @@ export function setPlayerProfile(displayName: string, role: (typeof PROCESS_ROLE
     ability: role.ability,
     remit: role.remit,
     spriteKey: role.spriteKey,
-    snesSpriteKey: role.snesSpriteKey
+    snesSpriteKey: role.snesSpriteKey,
+    ...(compilerAppearance ? { compilerAppearance } : {})
   };
   refreshQuestWorkflowState();
 }
@@ -2988,7 +2989,7 @@ export function clearChoiceState(nextMode: GameMode = "explore") {
 export function renderGameToText() {
   const questWorkflow = getQuestWorkflowReadout();
   const activeRoleFrameSheet = getSnesRoleFrameSheet(gameState.playerProfile.roleId);
-  const activeCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive);
+  const activeCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive, gameState.playerProfile.compilerAppearance);
   return JSON.stringify(
     {
       coordinateSystem: "origin top-left; x increases right; y increases down; logical canvas 256x240",

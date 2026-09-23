@@ -115,7 +115,7 @@ export class Player {
     this.logicalX = resumeSpawn?.player.x ?? x;
     this.logicalY = resumeSpawn?.player.y ?? y;
     this.facing = resumeSpawn?.facing ?? this.facing;
-    const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive);
+    const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive, gameState.playerProfile.compilerAppearance);
     this.characterKey = scene.textures.exists(preferredCharacterKey) ? preferredCharacterKey : null;
     this.roleFrameSheet = this.characterKey ? null : this.getAvailableRoleFrameSheet(scene);
     this.spriteMode = this.characterKey
@@ -865,7 +865,9 @@ export class Player {
         // Mirror the complete rear pose for the opposite footfall instead.
         const rearStep = this.characterKey === "compiler" && directionSuffix === "up" && frame === 7;
         this.sprite.setFrame(rearStep ? 6 : frame);
-        this.sprite.setFlipX(rearStep);
+        const reverseProfile = ((this.characterKey === "compiler_maya" || this.characterKey === "compiler_robin") && frame === 9)
+          || (this.characterKey === "compiler_ada" && frame === 11);
+        this.sprite.setFlipX(rearStep || reverseProfile);
         return;
       }
       const suffix = abilityActive
