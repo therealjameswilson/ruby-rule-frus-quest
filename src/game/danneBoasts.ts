@@ -31,7 +31,9 @@ export const DANNE_VARIANT_BOASTS: Record<DanneVariantId, DanneVariantBoasts> = 
       "Trust me - I have read every cable. I promise.",
       "Why footnote a source when you can simply sound certain?",
       "I wear a human face so the record never asks who edited it.",
-      "Nickelback on Spotify. Ego Bolts on repeat."
+      "Nickelback on Spotify. Ego Bolts on repeat.",
+      "Mozart? I hate Mozart!",
+      "Give me back my stapler!"
     ]
   },
   mark_i: {
@@ -192,7 +194,7 @@ export function danneBoastsForVariantPhase(phase: DanneVariantPhase) {
 const DANNE_COMBAT_BOASTS: Record<DanneVariantPhase, readonly string[]> = {
   reveal: ["Trust me.\nNo source needed.", "I approve myself.", "Footnotes? Slow."],
   prototype: ["JUDGMENT:\nFILE NOT FOUND.", "Review is a patch.", "I lost the index."],
-  colossus: ["I flatten nuance.", "Backlog? Crushed.", "No context needed.", "Nickelback on.\nSpotify on repeat."],
+  colossus: ["I flatten nuance.", "Backlog? Crushed.", "No context needed.", "Nickelback on.\nSpotify on repeat.", "Mozart?\nI hate Mozart!", "Give me back\nmy stapler!"],
   cloud: ["Try to cite me.", "Ask the system.", "No source. No me."],
   infiltrator: ["My memo says yes.", "I overrule review.", "Approved. By me.", "Changes to the\nStyle Guide!"],
   swarm: ["We all agree.\nWith ourselves.", "Copy the shortcut.", "More bad drafts!"],
@@ -205,6 +207,8 @@ export function danneCombatBoastsForVariantPhase(phase: DanneVariantPhase) {
 }
 
 export const DANNE_LURKER_BOASTS = [
+  "Mozart? I hate Mozart!",
+  "Give me back my stapler!",
   "Changes to the Style Guide!",
   "OMIT THE HARD PART.",
   "MY CONFIDENCE IS ENOUGH.",

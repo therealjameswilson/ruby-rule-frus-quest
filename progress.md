@@ -7201,3 +7201,6 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Updated saved playtest scripts for Kathy's departure and the existing vault auto-equip; source-wall replay now asserts the one-interaction route.
 - Validation: 256 files / 1920 tests pass, build and diff check pass. Fresh opening through Archive and earned source-wall/Annotation Stacks/Continue routes pass. Earned final fight clears all three phases, 7 fresh core hits, 0 retries, deadline met, bindery Continue passes. Skill smoke completed; normal screenshots inspected due to known black native capture.
 - Saved locally in both checkouts; not published.
+
+## 2026-09-23 — Mozart and stapler taunts
+- Added "Mozart? I hate Mozart!" and "Give me back my stapler!" to dungeon-lurker rotation and Prime catalog, plus readable two-line Colossus combat variants. Existing five boast tests pass. Saved locally; not published.
