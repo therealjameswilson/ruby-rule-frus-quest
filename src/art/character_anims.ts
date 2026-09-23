@@ -11,6 +11,20 @@ export const FRAMES = {
 
 type DirectionName = keyof typeof FRAMES.idle;
 
+// A passing pose between opposite footfalls prevents the legs from snapping
+// straight from one extended stride to the other. One cycle covers 32.4 ground
+// pixels at normal walking speed; the Player advances this by distance traveled.
+export const WALK_POSE_MS = 90;
+export function walkingFrames(direction: DirectionName) {
+  return [FRAMES.idle[direction], FRAMES.walk[direction][0],
+    FRAMES.idle[direction], FRAMES.walk[direction][1]];
+}
+
+export function walkingFrame(direction: DirectionName, distanceClock: number) {
+  const frames = walkingFrames(direction);
+  return frames[Math.floor(Math.max(0, distanceClock) / WALK_POSE_MS) % frames.length];
+}
+
 export function characterAnimKey(key: CharacterKey, suffix: string) {
   return `${key}-${suffix}`;
 }
@@ -29,7 +43,7 @@ export function registerCharacterAnims(scene: Phaser.Scene) {
     };
     for (const direction of Object.keys(FRAMES.idle) as DirectionName[]) {
       mk(`idle-${direction}`, [FRAMES.idle[direction]], 1, -1);
-      mk(`walk-${direction}`, [...FRAMES.walk[direction]], 8, -1);
+      mk(`walk-${direction}`, walkingFrames(direction), 1000 / WALK_POSE_MS, -1);
     }
     mk("interact", [FRAMES.action.interact], 6, 0);
     mk("reading", [FRAMES.action.reading], 6, 0);

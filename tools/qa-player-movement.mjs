@@ -139,7 +139,7 @@ try {
     assert(samples.some(s => s.vx === 90) && samples.some(s => s.vx === -90), 'Brisk walking speed in both directions');
     for (const direction of ['right', 'left']) {
       const walking = samples.filter(s => s.animation === `walk_${direction}`);
-      assert(new Set(walking.map(s => s.frame)).size === 2, 'Both foot poses must render while walking');
+      assert(new Set(walking.map(s => s.frame)).size === 3, 'Both footfalls and the passing pose must render while walking');
     }
     const label = mobile ? 'touch' : 'keyboard';
     const native = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(i => resolve(i.src))));

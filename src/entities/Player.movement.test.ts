@@ -200,10 +200,10 @@ describe("live player movement", () => {
 
   it("keeps the same walk step when changing direction and resumes idle animation on release", () => {
     const { player } = fixture();
-    const sprite = { anims: { stop: vi.fn() }, setFrame: vi.fn(), play: vi.fn() };
+    const sprite = { anims: { stop: vi.fn() }, setFrame: vi.fn(), setFlipX: vi.fn(), play: vi.fn() };
     Object.assign(player, {
       sprite, spriteMode: "artPack32x48", characterKey: "compiler",
-      isMoving: true, walkClock: 140, facing: "east",
+      isMoving: true, walkClock: 280, facing: "east",
       scene: { time: { now: 0 }, anims: { exists: () => true } }
     });
     const animation = player as unknown as { updateRoleFrame(): void; facing: string; isMoving: boolean };
@@ -211,7 +211,8 @@ describe("live player movement", () => {
     expect(sprite.setFrame).toHaveBeenLastCalledWith(11);
     animation.facing = "north";
     animation.updateRoleFrame();
-    expect(sprite.setFrame).toHaveBeenLastCalledWith(7);
+    expect(sprite.setFrame).toHaveBeenLastCalledWith(6);
+    expect(sprite.setFlipX).toHaveBeenLastCalledWith(true);
     expect(sprite.play).not.toHaveBeenCalled();
     animation.isMoving = false;
     animation.updateRoleFrame();
