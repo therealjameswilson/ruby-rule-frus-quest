@@ -25,7 +25,7 @@ try{
  assert.equal((await state()).sceneProgress.annotationDraftingComplete,1);
  assert((await westLabels()).includes('OFFICE'), 'Filing must restore the Office sign without reloading the room');
  assert(!(await westLabels()).includes('LOCK'));
- assert.equal((await state()).objective,'PICK UP TELEGRAM');
+ assert.equal((await state()).objective,'ADD TELEGRAM TO FILE');
  assert.match((await state()).latestMessage,/Source, context, and selection notes filed together/);
  await context.storageState({path:`${out}/earned-storage.json`});
  assert.deepEqual(errors,[]);console.log('PASS earned annotation packet filed');

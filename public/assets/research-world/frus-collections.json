@@ -1,14 +1,14 @@
 [
   {
     "landmark": "loc",
-    "id": "harriman",
-    "name": "W. Averell Harriman Papers",
+    "id": "haig",
+    "name": "Alexander Meigs Haig Papers",
     "level": "Collection",
-    "description": "Personal papers cited in FRUS on diplomacy and the Cold War.",
-    "citation": "FRUS 1958-1960, XIV, Berlin Crisis, 1958-1959: Sources",
-    "frusUrl": "https://history.state.gov/historicaldocuments/frus1958-60v14/sources",
-    "repositoryUrl": "https://www.loc.gov/item/mm85061911/",
-    "exercise": "Find the collection register, then preserve the box and folder in your notes."
+    "description": "The 1981 and 1982 Day File contains records used by FRUS editors to document U.S. policy toward the Soviet Union.",
+    "citation": "FRUS 1981-1988, III, Soviet Union, January 1981-January 1983: Sources",
+    "frusUrl": "https://history.state.gov/historicaldocuments/frus1981-88v03/sources",
+    "repositoryUrl": "https://findingaids.loc.gov/repositories/19/resources/4675",
+    "exercise": "Find the Department of State series and the 1981-1982 Day File. Preserve the container, folder and document date; check current access with the Library."
   },
   {
     "landmark": "loc",

@@ -1,3 +1,4 @@
+import { completeCompilerCheckpoint } from './qa-compiler-checkpoint-helper.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -26,7 +27,7 @@ else {
 async function press(key = 'Space', wait = 150) { if (mobile)
     await touch(...(key === 'x' ? [174, 216] : key === 'm' ? [224, 16] : [225, 205]));
 else
-    await page.keyboard.press(key, { delay: 45 }); await page.waitForTimeout(wait); }
+    await page.keyboard.press(key, { delay: 45 }); await page.waitForTimeout(wait); await completeCompilerCheckpoint(page); }
 async function direction(key, ms = 85) { if (mobile) {
     const [dx, dy] = { ArrowLeft: [-26, 0], ArrowRight: [26, 0], ArrowUp: [0, -26], ArrowDown: [0, 26] }[key];
     await touch(40, 178, dx, dy, ms);
@@ -70,6 +71,8 @@ try {
         await click(128, 190);
     else
         await press('Enter');
+    await scene('DanneIntroScene');
+    for(let i=0;i<8;i++){await shot(`intro-${i+1}`);if(mobile)await click(121,211);else await press('Enter',250);}
     await scene('OfficeScene');
     async function assertOfficeApproach() {
       await page.waitForFunction(() => {

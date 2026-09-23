@@ -44,7 +44,7 @@ export const DANNE_OUTDOOR_LINES = [
 
 export const RESEARCH_HOLDINGS: Record<string, {text:string;source:string}> = {
   nara: {text:'FRUS sources include Senate Foreign Relations Committee records (RG 46), with Carl Marcy files within the Records of the Chairman.',source:'https://www.archives.gov/dc'},
-  loc: {text:'FRUS uses the Harriman, Kissinger, Leahy and Hull papers in the Manuscript Division.',source:'https://www.loc.gov/research-centers/manuscript/'},
+  loc: {text:'FRUS uses the Haig, Kissinger, Leahy and Hull papers in the Manuscript Division.',source:'https://www.loc.gov/research-centers/manuscript/'},
   'college-park': {text:'Department of State records, including RG 59. Follow the series and file-system guides to the right records.',source:'https://www.archives.gov/research/foreign-policy/state-dept/agency-records'},
   georgetown: {text:'Manuscript collections with finding aids, folder registers and indexes. Consult the Betz Reading Room staff.',source:'https://library.georgetown.edu/special-collections/manuscripts'},
   eisenhower: {text:'Eisenhower presidential papers include the Ann Whitman File and White House Central Files.',source:'https://www.eisenhowerlibrary.gov/sites/default/files/research/subject-guides/pdf/natural-resources-and-environment.pdf'},

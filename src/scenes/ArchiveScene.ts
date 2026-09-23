@@ -2473,7 +2473,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.lastRepoWallSwing = this.player.actionId;
     wall.markHit();
     if (result !== "clear") {
-      const message = result === "review-required" ? "VERIFY SOURCE AT TABLE FIRST" : "USE CITATION STAMP";
+      const message = result === "review-required" ? "VERIFY SOURCE AT TABLE FIRST" : "MENU: EQUIP CITATION STAMP";
       this.toast.show(message, this.player.position, "warn");
       setLatestMessage(message);
       retroAudio.warning();

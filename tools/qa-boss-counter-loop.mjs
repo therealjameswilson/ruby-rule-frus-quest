@@ -27,6 +27,18 @@ try{
  if(mobile)await touch(86,154);else await press('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
  await shot('entry');
+ // Select the earned Red Pencil using the visible tools menu before combat.
+ await press('m');await page.waitForTimeout(150);
+ const pencil=(await state()).pauseMenu.controls.find(control=>control.id==='tool-1');
+ for(let i=0;i<2;i++){
+   if(mobile)await touch(pencil.x,pencil.y);
+   else {const b=await page.locator('canvas').first().boundingBox();await page.mouse.click(b.x+pencil.x*b.width/256,b.y+pencil.y*b.height/240);}
+   await page.waitForTimeout(150);
+ }
+ assert.equal((await state()).pauseMenu.selectedTool,'red_pencil');
+ await press('Escape');await page.waitForTimeout(150);
+ assert.equal((await state()).playerCombat.weapon.tool,'red_pencil');
+
  if(mobile && process.argv.includes('--multitouch')) {
    await move(128,180);
    const before=await state();
