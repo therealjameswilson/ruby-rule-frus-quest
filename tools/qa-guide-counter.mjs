@@ -128,7 +128,9 @@ try {
     await move(100, 122);
     await press();
     await shot('opening-assignment');
-    assert.match((await state()).latestMessage, /publish a reliable FRUS volume/);
+    assert.match((await state()).latestMessage, /compile a FRUS volume/);
+    for (let n=0; n<30 && (await state()).mode==='dialog'; n++) await press();
+    assert.equal((await state()).sceneProgress.kathyDeparted, 1);
     await move(128, 138);
     await press();
     await assertOfficeApproach();
@@ -155,7 +157,7 @@ try {
       const activeIds = await page.evaluate(() => window.game.scene.getScene('OfficeScene').currentInteractables().map(target => target.id));
       assert(!activeIds.includes('starter-memo'), 'Completed memo must not retake interaction focus');
       assert(!activeIds.includes('production-inbox'), 'Stamped inbox must retire its opening-task prompt');
-      assert(activeIds.includes('archive-guide-door') && activeIds.includes('junior-compiler'));
+      assert(activeIds.includes('archive-guide-door') && !activeIds.includes('junior-compiler'));
     }
     await move(128, 200);
     await press();

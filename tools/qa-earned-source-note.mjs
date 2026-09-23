@@ -34,17 +34,10 @@ try{
  await press();await page.waitForTimeout(600);await shot('stamped');
  assert.equal((await state()).sceneProgress.archiveSourceNoteStamped,1);
  assert((await state()).volumeFragments.includes('Source Note Fragment'));
+ // Interact with the verified wall: ready the earned stamp and swing in one action.
  await press();await page.waitForTimeout(450);
- assert.equal((await state()).latestMessage,'MENU: EQUIP CITATION STAMP');
- assert(!(await state()).sceneProgress.archiveRepoWallCleared);
- await shot('equip-guidance');
- // Equip the earned tool through the visible menu; owning it is not equipping it.
- await press('m');
- const tool=await page.evaluate(()=>JSON.parse(window.render_game_to_text()).pauseMenu.controls.find(c=>c.id==='tool-0'));
- const box=await page.locator('canvas').first().boundingBox();
- for(let i=0;i<2;i++){await page.mouse.click(box.x+tool.x*box.width/256,box.y+tool.y*box.height/240);await page.waitForTimeout(150);}
- assert.equal((await state()).pauseMenu.selectedTool,'citation_stamp');await press('Escape');
- await shot('stamp-equipped');
+ assert.equal((await state()).sceneProgress.archiveRepoWallCleared,1);
+ await shot('stamp-readied-wall-cleared');
  const firstSwing=(await state()).playerCombat.weapon.swingId;
  let wallAttempts=0;
  for(;wallAttempts<3&&!(await state()).sceneProgress.archiveRepoWallCleared;wallAttempts++) {

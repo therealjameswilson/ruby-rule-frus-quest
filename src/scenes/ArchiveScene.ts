@@ -11,6 +11,7 @@ import { GAMEPLAY_TILESETS } from "../assets/registry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { ProcessItemId, RoomType } from "../game/constants";
 import {
+  equipProcessItem,
   addInventoryItem,
   addDocumentPoints,
   addProcessItem,
@@ -2572,6 +2573,10 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private startRepoWallSwing(wall: BureaucraticWall) {
+    // A at this verified source wall readies the earned matching tool.
+    if (this.sourceNoteStatus === "stamped" && hasProcessItem("citation_stamp")) {
+      equipProcessItem("citation_stamp");
+    }
     this.player.faceTowards(wall.position);
     const swing = tryEquippedToolSwing(this.player);
     if (swing.reason) this.toast.show(swing.reason, this.player.position, "warn");

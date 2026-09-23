@@ -529,10 +529,9 @@ export class OfficeScene extends Phaser.Scene {
       ? "Kathy, General Editor: Your mission is to compile a FRUS volume. As compiler, plan research, select and annotate records, complete two reviews, and revise before DPD submission. First: carry the assignment memo to INBOX for research approval."
       : "Pick up the memo, carry it to INBOX, then stamp it.");
     if (!gameState.sceneProgress.kathyDeparted) this.dialog.show("KATHY - GENERAL EDITOR", [
-      "Your mission is to compile a volume of Foreign Relations of the United States: FRUS.",
-      "Research the archives. Select and annotate the documents that explain the major foreign-policy decisions.",
-      "Complete editorial review, revise, and carry your volume through clearance to publication. DANN-E will try to obstruct each phase.",
-      "Start with your assignment memo. Carry it to INBOX and stamp it to approve your research plan.",
+      "Compile a FRUS volume: research, select, and annotate.",
+      "Review, revise, clear, publish. DANN-E will obstruct you.",
+      "First: take the memo to INBOX. Stamp your research plan.",
       "Now I need to talk with the HAC. So don't bother me anymore."
     ], () => this.departKathy());
     this.toast.show(firstAssignment ? "COMPILE A FRUS VOLUME" : "PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
