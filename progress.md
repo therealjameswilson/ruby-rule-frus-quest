@@ -7204,3 +7204,10 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 
 ## 2026-09-23 — Mozart and stapler taunts
 - Added "Mozart? I hate Mozart!" and "Give me back my stapler!" to dungeon-lurker rotation and Prime catalog, plus readable two-line Colossus combat variants. Existing five boast tests pass. Saved locally; not published.
+
+## 2026-09-23 — Five additional compiler appearances
+- Added original sprite sets for Teal Curls, Silver Bob, Ochre Bun (female-presenting), Moss Scarf and Navy Vest (gender-ambiguous presentation). Existing Classic remains, giving six choices. Generated via built-in image_gen, prepared as transparent 4x4 32x48 frame sheets with nearest-neighbor sampling. Corrected inconsistent side-facing walking cells at runtime; existing ground alignment retained.
+- Character creation has 44px previous/next touch controls, left/right keyboard selection, numbered style label and tap-preview cycling. Selection is separate from player name and abilities.
+- Optional compilerAppearance profile field persists through saves and Continue; legacy/invalid keys fall back safely, and classic veteran behavior is preserved. Player rendering and debug readout use the selected appearance.
+- Validation: build and diff checks pass; 257 test files / 1924 tests pass. Browser checks verify all five choices, four-direction movement and Continue on desktop; phone touch selection/Continue passes. Choice/gameplay screenshots inspected. Skill smoke completed; standard screenshots used for known black WebGL capture.
+- Saved in both checkouts; not published. Evidence: /tmp/compiler-choice-1.png through -6.png and /tmp/compiler-game-1.png through -6.png.

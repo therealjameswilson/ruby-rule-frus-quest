@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
-import { getCharacterKeyForProcessRole } from "../art/characters";
+import { COMPILER_APPEARANCES, getCharacterKeyForProcessRole } from "../art/characters";
 import { DEFAULT_PROCESS_ROLE as COMPILER_ROLE, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState, setLatestMessage, setPlayerProfile, setSceneState, setVisibleEntities } from "../game/state";
 import { bindPointerDown, getInput, tickInput, isTouchInputCapable } from "../input/InputState";
@@ -19,6 +19,8 @@ function color(hex: string) {
 
 export class CharacterCreateScene extends Phaser.Scene {
   private displayName = "";
+  private appearanceIndex = 0;
+  private appearanceText!: Phaser.GameObjects.Text;
   private nameText!: Phaser.GameObjects.Text;
   private nameBox!: Phaser.GameObjects.Rectangle;
   private beginPrompt!: Phaser.GameObjects.Text;
@@ -36,6 +38,7 @@ export class CharacterCreateScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.nativeNameInput.destroy());
     setSceneState("CharacterCreateScene", "choice", "Name your FRUS Compiler and begin the volume.");
     this.displayName = this.readInitialName();
+    this.appearanceIndex = Math.max(0, COMPILER_APPEARANCES.findIndex(option => option.key === gameState.playerProfile.compilerAppearance));
     this.locked = false;
     this.nameFocused = false;
     retroAudio.startMusic("CharacterCreateScene");
@@ -59,7 +62,18 @@ export class CharacterCreateScene extends Phaser.Scene {
       .setScale(1.25)
       .setOrigin(0.5, 0.9);
     this.sprite.play(characterAnimKey(characterKey, "idle-down"));
-    bindPointerDown(this.sprite, () => this.confirm());
+    bindPointerDown(this.sprite, () => this.cycleAppearance(1));
+    for (const [x, step, label] of [[43, -1, "<"], [213, 1, ">"]] as const) {
+      const button = this.add.rectangle(x, 77, 44, 44, color(PALETTE.black), 0.8)
+        .setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(11)
+        .setName(step < 0 ? "compiler-previous" : "compiler-next");
+      this.add.text(x, 77, label, { fontFamily: "monospace", fontSize: "22px", color: PALETTE.goldStamp })
+        .setOrigin(0.5).setDepth(12);
+      bindPointerDown(button, () => this.cycleAppearance(step));
+    }
+    this.appearanceText = this.add.text(128, 103, "", { fontFamily: "monospace", fontSize: "7px", color: PALETTE.creamPaper })
+      .setOrigin(0.5).setDepth(12).setName("compiler-appearance-label");
+    this.renderAppearance();
 
     this.nameBox = this.add.rectangle(128, 124, 136, 17, color(PALETTE.black), 0.72)
       .setName("character-create-name-box")
@@ -125,6 +139,8 @@ export class CharacterCreateScene extends Phaser.Scene {
       }
       if (input.backspaceJustPressed) this.backspaceName();
       for (const letter of input.typedText) this.handleTypedLetter(letter);
+    } else if (input.leftJustPressed || input.rightJustPressed) {
+      this.cycleAppearance(input.leftJustPressed ? -1 : 1);
     } else if (shouldConfirmCharacterCreateInput(input)) {
       this.confirm();
     }
@@ -191,8 +207,22 @@ export class CharacterCreateScene extends Phaser.Scene {
     setLatestMessage("FRUS Compiler ready.");
   }
 
+  private cycleAppearance(step: number) {
+    if (this.locked || this.nameFocused || this.nativeNameInput.active) return;
+    this.appearanceIndex = (this.appearanceIndex + step + COMPILER_APPEARANCES.length) % COMPILER_APPEARANCES.length;
+    this.renderAppearance();
+    retroAudio.blip();
+  }
+
+  private renderAppearance() {
+    const key = this.compilerCharacterKey();
+    this.sprite.setTexture(key);
+    this.sprite.play(characterAnimKey(key, "idle-down"));
+    this.appearanceText.setText(`${this.appearanceIndex + 1}/${COMPILER_APPEARANCES.length} ${COMPILER_APPEARANCES[this.appearanceIndex].label}`);
+  }
+
   private compilerCharacterKey() {
-    return getCharacterKeyForProcessRole(FRUS_COMPILER_ROLE_ID, gameState.ngPlusActive);
+    return getCharacterKeyForProcessRole(FRUS_COMPILER_ROLE_ID, gameState.ngPlusActive, COMPILER_APPEARANCES[this.appearanceIndex].key);
   }
 
   private confirm() {
@@ -200,7 +230,7 @@ export class CharacterCreateScene extends Phaser.Scene {
     this.locked = true;
     const displayName = normalizeCharacterDisplayName(this.displayName);
     retroAudio.confirm();
-    setPlayerProfile(displayName, COMPILER_ROLE);
+    setPlayerProfile(displayName, COMPILER_ROLE, COMPILER_APPEARANCES[this.appearanceIndex].key);
     transitionTo(this, "DanneIntroScene");
   }
 }

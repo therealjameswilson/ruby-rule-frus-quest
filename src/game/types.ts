@@ -346,6 +346,7 @@ export interface RouteItem {
 }
 
 export interface PlayerProfile {
+  compilerAppearance?: string;
   displayName: string;
   roleId: ProcessRole["id"];
   roleLabel: string;
