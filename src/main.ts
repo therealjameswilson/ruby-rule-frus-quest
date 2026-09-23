@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { DANNE_DISGUISES, disguiseIndex } from "./game/danneDisguises";
 import { discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone } from "./game/researchWorld";
 import { getCompilerMissionReadout } from "./game/compilerMission";
 import "./styles/pixel.css";
@@ -120,6 +121,7 @@ function renderConciseGameToText() {
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       researchWorld: gameState.currentScene === "ResearchWorldScene" ? {
         zone: RESEARCH_ZONES[researchZone(gameState.sceneProgress.researchWorldZone)].name,
+        danneDisguise: DANNE_DISGUISES[disguiseIndex(gameState.sceneProgress.researchDanneDisguise)].movie,
         discoveries: discoveryCount(gameState.sceneProgress), total: RESEARCH_LANDMARKS.length,
         visited: RESEARCH_LANDMARKS.filter(l=>gameState.sceneProgress[`researchVisited_${l.id}`]).map(l=>l.id)
       } : null,

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { DANNE_DISGUISES, disguiseIndex } from '../game/danneDisguises';
 import { Player } from '../entities/Player';
 import { DANNE_OUTDOOR_LINES, discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone, researchHolding, type ResearchLandmark } from '../game/researchWorld';
 import { gameState, setLatestMessage, setNearestInteractable, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from '../game/state';
@@ -23,6 +24,8 @@ export class ResearchWorldScene extends Phaser.Scene {
   private solids: Phaser.Geom.Rectangle[] = [];
   private prompt!: Phaser.GameObjects.Text;
   private travelClose!: Phaser.GameObjects.Container;
+  private disguise = 0;
+  private disguiseLabel!: Phaser.GameObjects.Text;
   private danne!: Phaser.GameObjects.Image;
   private tally!: Phaser.GameObjects.Text;
   private arrival?: {x:number;y:number};
@@ -32,6 +35,8 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.arrival = typeof data.x === 'number' && typeof data.y === 'number' ? {x:data.x,y:data.y} : undefined;
   }
   preload() {
+    this.disguise=disguiseIndex(gameState.sceneProgress.researchDanneDisguise);
+    this.loadDisguise(this.disguise);
     for (const name of ['landmarks','sprites','landscape']) {
       if (!this.textures.exists(`research-${name}`)) this.load.image(`research-${name}`, `assets/research-world/${name}.png`);
     }
@@ -68,11 +73,13 @@ export class ResearchWorldScene extends Phaser.Scene {
         'Check the finding aid yourself. Keep a precise source trail and distinguish access from clearance.'
       ]));
     }
-    this.danne=this.prop(130,143,0,38,48); this.label(130,147,'DANN-E');
+    this.danne=this.add.image(130,143,`danne-disguise-${this.disguise}`).setOrigin(.5,1).setDepth(143);
+    this.disguiseLabel=this.label(130,147,'DANN-E 00/20');
+    this.applyDisguise(this.disguise);
     this.stop('Talk to DANN-E',130,153,18,()=>{
       const visit=gameState.sceneProgress.researchDanneTalks??0;
       gameState.sceneProgress.researchDanneTalks=visit+1;
-      this.dialog.show('DANN-E', [...DANNE_OUTDOOR_LINES[visit%DANNE_OUTDOOR_LINES.length]]);
+      this.dialog.show('DANN-E', [`${DANNE_DISGUISES[this.disguise].movie} disguise. ${DANNE_DISGUISES[this.disguise].title}.`, ...DANNE_OUTDOOR_LINES[visit%DANNE_OUTDOOR_LINES.length]]);
     });
     this.prop(90,213,12,17,15);
     this.stop('Inspect field satchel',90,218,15,()=>this.dialog.show('FIELD NOTES',[
@@ -128,17 +135,41 @@ export class ResearchWorldScene extends Phaser.Scene {
     if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     this.player.update(delta,true,{bounds:{left:7,right:249,top: 60,bottom:230},solids:this.solids});
     const p=this.player.position;
-    const dx=p.x-130,dy=p.y-143;
-    this.danne.setFrame(String(Math.abs(dx)>Math.abs(dy)?(dx<0?2:3):(dy<0?1:0)));
+    this.danne.setFlipX(p.x>130);
     const nearest=this.stops.map(s=>({s,d:Math.hypot(p.x-s.x,p.y-s.y)})).filter(v=>v.d<=v.s.radius).sort((a,b)=>a.d-b.d)[0]?.s;
-    this.prompt.setVisible(Boolean(nearest)).setText(nearest?`A: ${nearest.label}`:'');
+    this.prompt.setVisible(Boolean(nearest)).setText(nearest?.label==='Talk to DANN-E'?'A: TALK  B: NEXT DISGUISE':nearest?`A: ${nearest.label}`:'');
     setNearestInteractable(nearest?.label??null);
+    if(nearest?.label==='Talk to DANN-E'&&input.bJustPressed){this.changeDisguise();return;}
     if(nearest&&(input.aJustPressed||input.confirmJustPressed)){nearest.act();return;}
     const zone=RESEARCH_ZONES[this.zone] as {west?:number;east?:number;north?:number;south?:number};
     if(p.x<=8&&input.dir.x<0&&zone.west!==undefined)this.travel(zone.west,{x:239,y:p.y});
     else if(p.x>=248&&input.dir.x>0&&zone.east!==undefined)this.travel(zone.east,{x:17,y:p.y});
     else if(p.y<=61&&input.dir.y<0&&zone.north!==undefined)this.travel(zone.north,{x:p.x,y:216});
     else if(p.y>=229&&input.dir.y>0&&zone.south!==undefined)this.travel(zone.south,{x:p.x,y: 70});
+  }
+  private loadDisguise(index:number) {
+    const key=`danne-disguise-${index}`;
+    if(!this.textures.exists(key))this.load.image(key,`assets/research-world/danne-variants/${DANNE_DISGUISES[index].id}.png`);
+  }
+  private applyDisguise(index:number) {
+    const key=`danne-disguise-${index}`,texture=this.textures.get(key);
+    const [left,top,right,bottom]=DANNE_DISGUISES[index].bounds;
+    if(!texture.has('body'))texture.add('body',0,left,top,right-left,bottom-top);
+    this.danne.setTexture(key,'body').setScale(42/(bottom-top));
+    this.disguiseLabel.setText(`DANN-E ${String(index+1).padStart(2,'0')}/20`);
+    gameState.sceneProgress.researchDanneDisguise=index;
+  }
+  private changeDisguise() {
+    if(this.load.isLoading())return;
+    const next=disguiseIndex(this.disguise+1),key=`danne-disguise-${next}`;
+    const target=this.danne;
+    const apply=()=>{
+      if(this.danne!==target||!this.sys.isActive()||!this.textures.exists(key))return;
+      this.disguise=next;this.applyDisguise(next);saveGameNow();
+      setLatestMessage(`DANN-E changes into his ${DANNE_DISGUISES[next].movie} disguise. ${next+1}/20. A: talk. B: next disguise.`);
+    };
+    if(this.textures.exists(key)){apply();return;}
+    this.loadDisguise(next);this.load.once('complete',apply);this.load.start();
   }
   private sliceAtlas(key:string) {
     const texture=this.textures.get(key),source=texture.getSourceImage();
@@ -182,6 +213,7 @@ export class ResearchWorldScene extends Phaser.Scene {
   private travel(zone:number,arrival={x:128,y:188}) {
     if(this.leaving)return;
     this.leaving=true;gameState.sceneProgress.researchWorldZone=zone;
+    gameState.sceneProgress.researchDanneDisguise=disguiseIndex(this.disguise+1);
     swallowNextInputFrame();this.scene.restart(arrival);
   }
   private travelMenu() {
