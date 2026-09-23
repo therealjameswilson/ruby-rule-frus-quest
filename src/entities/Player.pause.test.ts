@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Player } from "./Player";
-import { resetGameState } from "../game/state";
+import { gameState, resetGameState } from "../game/state";
 import { CombatClock } from "../systems/combatClock";
 import { WeaponStateController } from "../systems/weaponState";
 
@@ -58,4 +58,16 @@ describe("player combat during overlays", () => {
     expect(player.combatReadout.weapon.phase).toBe("idle");
     expect(player.actionId).toBe(1);
   });
+});
+
+
+it("shows the newly equipped tool at idle without changing an ongoing swing", () => {
+  const { player, time } = fixture();
+  gameState.equippedProcessItem = "red_pencil";
+  expect(player.combatReadout.weapon.tool).toBe("red_pencil");
+  player.startAction("citation_stamp");
+  expect(player.combatReadout.weapon.tool).toBe("citation_stamp");
+  time.now += 1000;
+  expect(player.combatReadout.weapon.tool).toBe("red_pencil");
+  expect(player.combatReadout.weapon.label).toBe("Red Pencil");
 });

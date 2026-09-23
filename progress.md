@@ -7187,3 +7187,17 @@ verified for exact dimensions, transparent corners, and strict palette membershi
 - Added static Open Graph and large-image card metadata to the game entry page, using the existing 1448x1086 ruby FRUS title artwork and absolute public URLs.
 - Added /share/ hero page with artwork, summary and Play link; included it in production asset copying.
 - Verified both pages expose metadata without JavaScript, phone layout, Play link and production build. Native Messages rendering/cache behavior is not directly tested.
+
+## 2026-09-23 — Public release 007b0d3 played to victory
+- Fresh browser save at the published title; completed the earned campaign through Kathy, Guide counter, source/annotation, manuscript review, network routing, clearance, referral, editorial repair/proofs, Black Vault and all five binding packets using normal keyboard/mouse controls. No progress grants or scene teleports.
+- Outcome: PUBLISHED CLEAN, 241 document points, reliability 100, deadline met, zero unresolved equities; seven fresh core hits across all three DANN-E phases, zero retries. Publication and final record survived Continue/reload. No browser errors in completed stages.
+- Updated only temporary playtest automation for Kathy's longer briefing/departure and a stale idle combat-tool assertion: the menu/HUD correctly selected Red Pencil while idle combat readout still named the prior stamp. No game changes needed.
+- Evidence: /tmp/victory-live-007b0d3/14-bindery-assembly/published.png, published-continue.json and result.json; fight result at 13-boss-counter-loop/result.json. Inspected milestone and victory screenshots. Desktop campaign run; not a physical-iPhone full-campaign test or exhaustive optional-sidequest run.
+
+## 2026-09-23 — Fix playthrough errors and simplify friction
+- Fixed idle player combat readout to show the newly equipped tool/label immediately; in-flight and cooldown swings preserve their committed tool. Regression test covers switching during a swing.
+- Verified source-wall A interaction now readies the already-earned Citation Stamp and swings, removing the menu detour while retaining source review, ownership and physical-hit gates.
+- Shortened Kathy's briefing from ten rendered pages to four while preserving mission, production phases, DANN-E warning, memo instructions, HAC sign-off and departure.
+- Updated saved playtest scripts for Kathy's departure and the existing vault auto-equip; source-wall replay now asserts the one-interaction route.
+- Validation: 256 files / 1920 tests pass, build and diff check pass. Fresh opening through Archive and earned source-wall/Annotation Stacks/Continue routes pass. Earned final fight clears all three phases, 7 fresh core hits, 0 retries, deadline met, bindery Continue passes. Skill smoke completed; normal screenshots inspected due to known black native capture.
+- Saved locally in both checkouts; not published.

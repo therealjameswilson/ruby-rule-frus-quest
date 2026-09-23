@@ -13,7 +13,7 @@ import { retroAudio } from "../systems/audio";
 import { applyHitShake } from "../systems/combatFeedback";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 import { frameDeltaSeconds, PLAYER_MOVEMENT_TUNING, resolveFacing, resolveMovementVector, resolveWalkingVelocity, setRenderedPosition, snapRenderedPosition, walkingFeetOverlap } from "../systems/smoothMovement";
-import { buildWeaponHitbox, WEAPON_VFX_ASSET, WeaponStateController, weaponTiming } from "../systems/weaponState";
+import { buildWeaponHitbox, normalizeWeaponTool, WEAPON_VFX_ASSET, WeaponStateController, weaponTiming } from "../systems/weaponState";
 import { CombatClock } from "../systems/combatClock";
 
 interface MoveBounds {
@@ -264,6 +264,11 @@ export class Player {
     const now = this.combatTime;
     const hitbox = this.activeActionHitbox;
     const weapon = this.weaponState.readout(now);
+    // Idle describes the next swing; active/cooldown still describe the committed swing.
+    if (weapon.phase === "idle") {
+      weapon.tool = normalizeWeaponTool(gameState.equippedProcessItem);
+      weapon.label = weaponTiming(weapon.tool).label;
+    }
     return {
       state: this.currentControlState(now),
       actionActive: this.isActionActive,
