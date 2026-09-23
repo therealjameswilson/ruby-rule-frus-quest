@@ -1,12 +1,13 @@
+import { setTouchControl } from "./InputState";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type Phaser from "phaser";
 import { gameState, resetGameState } from "../game/state";
-import { resolveTouchDirection, TouchControls } from "./TouchControls";
+import { FIXED_DPAD, isFixedDpadPoint, resolveTouchDirection, TouchControls } from "./TouchControls";
 
 vi.mock("phaser", () => ({ default: { Math: { Vector2: class {} },
   Input: { Events: { POINTER_DOWN: "pointerdown", POINTER_MOVE: "pointermove", POINTER_UP: "pointerup", POINTER_UP_OUTSIDE: "pointerupoutside" } },
   Scenes: { Events: { SHUTDOWN: "shutdown" } } } }));
-vi.mock("./InputState", () => ({ updateInputCallbacks: vi.fn() }));
+vi.mock("./InputState", () => ({ updateInputCallbacks: vi.fn(), setTouchControl: vi.fn() }));
 vi.mock("../platform/haptics", () => ({}));
 
 beforeEach(() => resetGameState());
@@ -139,5 +140,34 @@ describe("iPhone pause access", () => {
       gameState.mode = mode;
       expect(hit(menu.x, menu.y)).toBeUndefined();
     }
+  });
+});
+
+
+describe("visible directional pad", () => {
+  it.each([
+    [0, -22, "up"], [0, 22, "down"], [-22, 0, "left"], [22, 0, "right"]
+  ])("starts on arrow press without dragging (%s, %s)", (dx, dy, direction) => {
+    resetGameState(); gameState.mode = "explore";
+    const controls = Object.create(TouchControls.prototype) as any;
+    const vector = () => ({ x: 0, y: 0, set(x: number, y: number) { this.x=x; this.y=y; },
+      copy(p: {x: number; y: number}) { this.x=p.x; this.y=p.y; } });
+    Object.assign(controls, { buttons: [], dpadPointerId: null, dpadDirection: null,
+      dpadOrigin: vector(), dpadCurrent: vector(), redraw: vi.fn(), updateDebug: vi.fn() });
+    const point = { x: FIXED_DPAD.x + Number(dx), y: FIXED_DPAD.y + Number(dy) };
+    expect(isFixedDpadPoint(point.x, point.y)).toBe(true);
+    controls.pressAt(7, point, "test");
+    expect(controls.dpadDirection).toBe(direction);
+    expect(setTouchControl).toHaveBeenLastCalledWith(direction, true);
+    controls.moveDpad(7, { x: FIXED_DPAD.x, y: FIXED_DPAD.y }, "test");
+    expect(controls.dpadDirection).toBeNull();
+    expect(setTouchControl).toHaveBeenLastCalledWith(direction, false);
+    controls.releaseDpad();
+    expect(controls.dpadPointerId).toBeNull();
+  });
+  it("keeps the pad separate from MENU and action buttons", () => {
+    expect(isFixedDpadPoint(120, 216)).toBe(false);
+    expect(isFixedDpadPoint(174, 216)).toBe(false);
+    expect(isFixedDpadPoint(225, 205)).toBe(false);
   });
 });

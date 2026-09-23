@@ -58,6 +58,13 @@ function clampToCanvas(point: Phaser.Math.Vector2) {
   return point;
 }
 
+export const FIXED_DPAD = { x: 48, y: 202, radius: 34 };
+
+export function isFixedDpadPoint(x: number, y: number) {
+  return Math.abs(x - FIXED_DPAD.x) <= FIXED_DPAD.radius
+    && Math.abs(y - FIXED_DPAD.y) <= FIXED_DPAD.radius;
+}
+
 const TOUCH_TURN_RATIO = Math.tan(51 * Math.PI / 180);
 
 export function resolveTouchDirection(dx: number, dy: number, previous: CardinalDirection | null): CardinalDirection | null {
@@ -93,7 +100,8 @@ export class TouchControls {
     this.scene = scene;
     this.graphics = scene.add.graphics().setDepth(20000).setScrollFactor(0);
     this.buttons = this.createButtons();
-    updateInputCallbacks({ isTouchControlPoint: (point) => this.enabled && Boolean(this.findButtonAt(point.x, point.y)) });
+    updateInputCallbacks({ isTouchControlPoint: (point) => this.enabled && (Boolean(this.findButtonAt(point.x, point.y))
+      || (gameState.mode === "explore" && isFixedDpadPoint(point.x, point.y))) });
     this.installPointerEvents();
     this.setEnabled(isTouchCapable());
   }
@@ -324,8 +332,13 @@ export class TouchControls {
     }
     if (point.x <= GAME_WIDTH / 3 && this.dpadPointerId === null) {
       this.dpadPointerId = pointerId;
-      this.dpadOrigin.copy(point);
+      if (gameState.mode === "explore" && isFixedDpadPoint(point.x, point.y)) {
+        this.dpadOrigin.set(FIXED_DPAD.x, FIXED_DPAD.y);
+      } else {
+        this.dpadOrigin.copy(point);
+      }
       this.dpadCurrent.copy(point);
+      this.updateDpadDirection();
       this.redraw();
       return true;
     }
@@ -568,7 +581,34 @@ export class TouchControls {
     }
   }
 
+  private drawFixedDpad() {
+    const { x, y, radius } = FIXED_DPAD;
+    const g = this.graphics;
+    g.fillStyle(color(PALETTE.black), 0.72);
+    g.fillRoundedRect(x - radius, y - radius, radius * 2, radius * 2, 6);
+    g.lineStyle(1, color(PALETTE.goldStamp), 0.85);
+    g.strokeRoundedRect(x - radius, y - radius, radius * 2, radius * 2, 6);
+    const arrows = [
+      { direction: "up", dx: 0, dy: -22, angle: -Math.PI / 2 },
+      { direction: "down", dx: 0, dy: 22, angle: Math.PI / 2 },
+      { direction: "left", dx: -22, dy: 0, angle: Math.PI },
+      { direction: "right", dx: 22, dy: 0, angle: 0 }
+    ];
+    for (const arrow of arrows) {
+      const cx = x + arrow.dx, cy = y + arrow.dy;
+      const active = this.dpadDirection === arrow.direction;
+      g.fillStyle(color(active ? PALETTE.terminalCyan : PALETTE.goldStamp), active ? 1 : 0.95);
+      const cos = Math.cos(arrow.angle), sin = Math.sin(arrow.angle);
+      g.fillTriangle(cx + cos * 7, cy + sin * 7,
+        cx - cos * 5 - sin * 6, cy - sin * 5 + cos * 6,
+        cx - cos * 5 + sin * 6, cy - sin * 5 - cos * 6);
+    }
+    g.fillStyle(color(PALETTE.stoneGray), 0.7);
+    g.fillRect(x - 4, y - 4, 8, 8);
+  }
+
   private drawDpad() {
+    if (gameState.mode === "explore") this.drawFixedDpad();
     if (this.dpadPointerId === null) return;
     const maxDistance = 28;
     const dx = Phaser.Math.Clamp(this.dpadCurrent.x - this.dpadOrigin.x, -maxDistance, maxDistance);
