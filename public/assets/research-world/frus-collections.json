@@ -1,0 +1,68 @@
+[
+  {
+    "landmark": "loc",
+    "id": "harriman",
+    "name": "W. Averell Harriman Papers",
+    "level": "Collection",
+    "description": "Personal papers cited in FRUS on diplomacy and the Cold War.",
+    "citation": "FRUS 1958-1960, XIV, Berlin Crisis, 1958-1959: Sources",
+    "frusUrl": "https://history.state.gov/historicaldocuments/frus1958-60v14/sources",
+    "repositoryUrl": "https://www.loc.gov/item/mm85061911/",
+    "exercise": "Find the collection register, then preserve the box and folder in your notes."
+  },
+  {
+    "landmark": "loc",
+    "id": "kissinger",
+    "name": "Henry A. Kissinger Papers, Part I",
+    "level": "Collection",
+    "description": "Chronological, geopolitical, conversation and telephone files used by FRUS editors.",
+    "citation": "FRUS 1969-1976, XVII, China, 1969-1972: Sources",
+    "frusUrl": "https://history.state.gov/historicaldocuments/frus1969-76v17/sources",
+    "repositoryUrl": "https://www.loc.gov/item/mm81075867/",
+    "exercise": "Compare a memorandum of conversation with a telephone record. Check current access with the Library."
+  },
+  {
+    "landmark": "loc",
+    "id": "leahy",
+    "name": "William D. Leahy Papers",
+    "level": "Collection",
+    "description": "The diary is cited in FRUS documentation of early postwar intelligence organization.",
+    "citation": "FRUS 1945-1950, Emergence of the Intelligence Establishment, document 188, note 2",
+    "frusUrl": "https://history.state.gov/historicaldocuments/frus1945-50Intel/d188",
+    "repositoryUrl": "https://findingaids.loc.gov/repositories/19/resources/4341",
+    "exercise": "Trace the diary entries for February 12 and 17, 1947; record the date and page."
+  },
+  {
+    "landmark": "loc",
+    "id": "hull",
+    "name": "Cordell Hull Papers",
+    "level": "Collection",
+    "description": "Hull papers are identified among the sources for the Washington and Quebec conferences.",
+    "citation": "FRUS, Conferences at Washington and Quebec, 1943: Introduction",
+    "frusUrl": "https://history.state.gov/historicaldocuments/frus1943/introduction",
+    "repositoryUrl": "https://findingaids.loc.gov/repositories/19/resources/3769",
+    "exercise": "Keep the personal-paper citation separate from the State Department copy."
+  },
+  {
+    "landmark": "nara",
+    "id": "senate-foreign-relations",
+    "name": "Senate Foreign Relations Committee records",
+    "level": "Committee records within RG 46",
+    "description": "FRUS lists these Senate committee records among its archival sources.",
+    "citation": "FRUS 1969-1976, XLI, Western Europe; NATO, 1969-1972: Sources",
+    "frusUrl": "https://history.state.gov/historicaldocuments/frus1969-76v41/sources",
+    "repositoryUrl": "https://www.archives.gov/legislative/guide/senate/chapter-10.html",
+    "exercise": "Start with RG 46, then identify the committee and series. Consult the Center for Legislative Archives at Archives I."
+  },
+  {
+    "landmark": "nara",
+    "id": "carl-marcy",
+    "name": "Carl Marcy Papers, Box 8",
+    "level": "Files within the committee Records of the Chairman, RG 46",
+    "description": "A FRUS annotation cites a copy of an April 22 letter concerning Spanish base negotiations.",
+    "citation": "FRUS 1969-1976, XLI, document 281, note 6",
+    "frusUrl": "https://history.state.gov/historicaldocuments/frus1969-76v41/d281",
+    "repositoryUrl": "https://www.archives.gov/legislative/guide/senate/chapter-22.html",
+    "exercise": "Follow RG 46 > Senate Foreign Relations Committee > Records of the Chairman > Carl Marcy Papers > Box 8."
+  }
+]

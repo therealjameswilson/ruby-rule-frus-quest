@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FRUS collections · Ruby Rule field guide</title>
+<style>body{margin:0;background:#f6f0db;color:#203d35;font:18px/1.6 system-ui}main{max-width:850px;margin:auto;padding:24px}h1{line-height:1.15}h2{margin-top:48px}article{background:#fffdf5;border:1px solid #bdc9ae;border-radius:12px;padding:20px;margin:18px 0}h3{margin:0}a{color:#165d64;text-underline-offset:3px;overflow-wrap:anywhere}nav{display:flex;gap:20px;flex-wrap:wrap}article a{display:inline-block;padding:10px 0;margin-right:20px}small{display:block;color:#54654f}section{scroll-margin-top:20px}</style>
+<main><nav><a href="../../..">Return to game</a><a href="#loc">Library of Congress</a><a href="#nara">Archives I</a></nav>
+<h1>Collections behind the diplomatic record</h1>
+<p>Explore real collections cited in <em>Foreign Relations of the United States</em>. These entries identify published source trails; the research tasks are game exercises.</p>
+<p>The Library of Congress entries belong to its Manuscript Division. Archives I entries belong to the <a href="https://www.archives.gov/legislative/research">Center for Legislative Archives in Washington, DC</a>. State Department RG 59 records belong at Archives II in this game.</p>
+<p>A FRUS citation does not establish current access or complete release. Use the repository links to check restrictions and request arrangements. The Carl Marcy entry is part of the committee records, not a separate record group.</p>
+<div id="collections" aria-live="polite">Loading collections…</div><small>Source trails checked September 22, 2026.</small></main>
+<script type="module">
+const host=document.querySelector('#collections');
+try{
+ const response=await fetch('./frus-collections.json');if(!response.ok)throw Error('Collection data unavailable');
+ const data=await response.json();host.replaceChildren();
+ const add=(parent,tag,text)=>{const el=document.createElement(tag);el.textContent=text;parent.append(el);return el;};
+ for(const [id,title] of [['loc','Library of Congress'],['nara','Archives I']]){
+  const section=add(host,'section','');section.id=id;add(section,'h2',title);
+  for(const c of data.filter(c=>c.landmark===id)){
+   const article=add(section,'article','');add(article,'h3',c.name);add(article,'small',c.level);
+   add(article,'p',c.description);add(article,'p',c.citation);add(article,'p','Research task: '+c.exercise);
+   for(const [label,url] of [['Read the FRUS evidence',c.frusUrl],['Repository guide',c.repositoryUrl]]){const a=add(article,'a',label);a.href=url;}
+  }
+ }
+ if(location.hash)document.getElementById(location.hash.slice(1))?.scrollIntoView();
+}catch(e){host.textContent='The collection guide could not load. Please reload to try again.';}
+</script></html>

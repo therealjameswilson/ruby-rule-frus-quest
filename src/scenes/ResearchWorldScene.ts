@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { DANNE_DISGUISES, disguiseIndex } from '../game/danneDisguises';
 import { Player } from '../entities/Player';
-import { DANNE_OUTDOOR_LINES, discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone, researchHolding, type ResearchLandmark } from '../game/researchWorld';
+import { DANNE_OUTDOOR_LINES, discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone, researchHolding, researchCollections, collectionPages, type ResearchLandmark } from '../game/researchWorld';
 import { gameState, setLatestMessage, setNearestInteractable, setObjective, setSceneState, setVisibleEntities, setVisibleThreats } from '../game/state';
 import { bindPointerDown, getInput, swallowNextInputFrame, tickInput } from '../input/InputState';
 import { DialogBox } from '../systems/dialog';
@@ -137,9 +137,11 @@ export class ResearchWorldScene extends Phaser.Scene {
     const p=this.player.position;
     this.danne.setFlipX(p.x>130);
     const nearest=this.stops.map(s=>({s,d:Math.hypot(p.x-s.x,p.y-s.y)})).filter(v=>v.d<=v.s.radius).sort((a,b)=>a.d-b.d)[0]?.s;
-    this.prompt.setVisible(Boolean(nearest)).setText(nearest?.label==='Talk to DANN-E'?'A: TALK  B: NEXT DISGUISE':nearest?`A: ${nearest.label}`:'');
+    const collectionStop = RESEARCH_LANDMARKS.find(l=>l.label===nearest?.label && researchCollections(l.id).length);
+    this.prompt.setVisible(Boolean(nearest)).setText(nearest?.label==='Talk to DANN-E'?'A: TALK  B: NEXT DISGUISE':collectionStop?'A: COLLECTIONS  B: SOURCES':nearest?`A: ${nearest.label}`:'');
     setNearestInteractable(nearest?.label??null);
     if(nearest?.label==='Talk to DANN-E'&&input.bJustPressed){this.changeDisguise();return;}
+    if(collectionStop && input.bJustPressed){window.open(`assets/research-world/frus-collections.html#${collectionStop.id}`, '_blank', 'noopener,noreferrer');return;}
     if(nearest&&(input.aJustPressed||input.confirmJustPressed)){nearest.act();return;}
     const zone=RESEARCH_ZONES[this.zone] as {west?:number;east?:number;north?:number;south?:number};
     if(p.x<=8&&input.dir.x<0&&zone.west!==undefined)this.travel(zone.west,{x:239,y:p.y});
@@ -207,7 +209,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.refreshTally();
     saveGameNow();
     setLatestMessage(`${first?'Discovered':'Revisited'}: ${l.name}. ${l.location}. ${l.lesson}`);
-    this.dialog.show(l.label,[`${l.name}\n${l.location}`,`HOLDINGS: ${researchHolding(l.id).text}`,l.lesson,first?'Discovery recorded in your journal. This visit is a research lead, not a cleared document.':'Already in your journal. Explore in any order.']);
+    this.dialog.show(l.label,[`${l.name}\n${l.location}`,`HOLDINGS: ${researchHolding(l.id).text}`,...collectionPages(l.id),l.lesson,first?'Discovery recorded in your journal. This visit is a research lead, not a cleared document.':'Already in your journal. Explore in any order.']);
   }
   private refreshTally(){this.tally.setText(`DISCOVERIES ${discoveryCount(gameState.sceneProgress)}/${RESEARCH_LANDMARKS.length}`);setObjective('EXPLORE THE OUTDOORS');}
   private travel(zone:number,arrival={x:128,y:188}) {
@@ -227,7 +229,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.dialog.show('FIELD JOURNAL',[
       `${found.length}/${RESEARCH_LANDMARKS.length} landmarks discovered. Walk to a building and press A. No required order.`,
       'DC: Potomac Green west, Capital Commons east, Maryland Grove north. Rail links four distant library regions.',
-      ...found.flatMap(l=>[`${l.name}\n${l.location}`,researchHolding(l.id).text]),
+      ...found.flatMap(l=>[`${l.name}\n${l.location}`,researchHolding(l.id).text,...collectionPages(l.id)]),
       'Research lessons are practice prompts. Catalogs and repository staff establish holdings and access. The map compresses real distances.'
     ]);
   }

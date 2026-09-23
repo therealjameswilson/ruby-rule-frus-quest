@@ -1,3 +1,4 @@
+import frusCollections from '../../public/assets/research-world/frus-collections.json';
 export interface ResearchLandmark {
   id: string; label: string; name: string; location: string; zone: number;
   frame: number; x: number; y: number; lesson: string; source: string;
@@ -42,8 +43,8 @@ export const DANNE_OUTDOOR_LINES = [
 ];
 
 export const RESEARCH_HOLDINGS: Record<string, {text:string;source:string}> = {
-  nara: {text:'Congressional and court records, selected agency records, and early military service records.',source:'https://www.archives.gov/dc'},
-  loc: {text:'Manuscript collections: personal papers and other primary sources in paper, microform and digital form.',source:'https://www.loc.gov/research-centers/manuscript/'},
+  nara: {text:'FRUS sources include Senate Foreign Relations Committee records (RG 46), with Carl Marcy files within the Records of the Chairman.',source:'https://www.archives.gov/dc'},
+  loc: {text:'FRUS uses the Harriman, Kissinger, Leahy and Hull papers in the Manuscript Division.',source:'https://www.loc.gov/research-centers/manuscript/'},
   'college-park': {text:'Department of State records, including RG 59. Follow the series and file-system guides to the right records.',source:'https://www.archives.gov/research/foreign-policy/state-dept/agency-records'},
   georgetown: {text:'Manuscript collections with finding aids, folder registers and indexes. Consult the Betz Reading Room staff.',source:'https://library.georgetown.edu/special-collections/manuscripts'},
   eisenhower: {text:'Eisenhower presidential papers include the Ann Whitman File and White House Central Files.',source:'https://www.eisenhowerlibrary.gov/sites/default/files/research/subject-guides/pdf/natural-resources-and-environment.pdf'},
@@ -52,4 +53,13 @@ export const RESEARCH_HOLDINGS: Record<string, {text:string;source:string}> = {
 };
 export function researchHolding(id:string) {
   return RESEARCH_HOLDINGS[id]??{text:'Presidential archival materials and related historical collections. Start with the library research guides and finding aids.',source:'https://www.archives.gov/presidential-libraries/about'};
+}
+
+export function researchCollections(id: string) {
+  return frusCollections.filter(collection => collection.landmark === id);
+}
+export function collectionPages(id: string) {
+  return researchCollections(id).flatMap(c => [
+    `FRUS COLLECTION: ${c.name}`, c.description, `FRUS: ${c.citation}`, `RESEARCH TASK: ${c.exercise}`
+  ]);
 }

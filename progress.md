@@ -6999,3 +6999,29 @@ verified for exact dimensions, transparent corners, and strict palette membershi
   diagonals, wall sliding, no release drift, phone rotation, and no errors.
   Four-direction gait pose screenshots and gameplay screenshots inspected.
   Skill client completed; direct WebGL capture is black, full-page captures used.
+
+- Published on explicit user request: PR #115 merged as
+  64759b4a71a290e5e8812247e7cdbb82e0be4af3. GitHub Pages run 35805902525
+  succeeded. Live bundle index-C6O1pw0-.js includes pose alignment/scaling.
+  Local bundle name differs because local and GitHub Pages base paths differ.
+  Public browser movement checks passed on desktop and 375px touch, including
+  collisions, stopping, diagonals, and rotation with no browser errors.
+  Live screenshot inspected. URL:
+  https://therealjameswilson.github.io/ruby-rule-frus-quest/?v=64759b4
+
+## FRUS collections at Library of Congress and Archives I
+- Added four LOC collections verified against official FRUS sources: Harriman,
+  Kissinger Part I, Leahy, and Hull. Archives I now identifies Senate Foreign
+  Relations Committee records in RG 46 and the nested Carl Marcy Papers, Box 8
+  (FRUS 1969-1976 XLI, document 281, note 6). Marcy is not a separate record group.
+- Landmark dialogues and the saved-discovery journal include collection names,
+  FRUS citations, and research exercises. B beside either landmark opens a
+  responsive source guide with six entries and official FRUS/repository links.
+- Archives I placement checked against the Center for Legislative Archives'
+  Washington DC research page; RG 59 remains at Archives II. Historic FRUS
+  access statements are not represented as current release/access guarantees.
+- Build and five research-world tests pass. Browser checks pass on desktop and
+  375px touch for A dialogue, B guide, six FRUS links, journal entries, and no
+  horizontal overflow or page errors. Screenshots inspected; skill client run
+  completed, with full-page screenshots used for its black WebGL capture.
+- Saved locally; not published.
