@@ -1,3 +1,4 @@
+import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { referralBracketStrike } from "../game/referralBracketPress";
@@ -569,6 +570,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    drawCrispInteriorWalls(this, layers.walls, walls.x, walls.y, PALETTE.goldStamp, object => this.track(object));
     for (const cell of layers.collisionCells) {
       const rect = definition.collisionRect(cell);
       this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));

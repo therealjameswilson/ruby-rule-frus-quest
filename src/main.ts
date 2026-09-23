@@ -1,3 +1,4 @@
+import { libraryResearchReadout } from "./game/libraryResearch";
 import Phaser from "phaser";
 import { DANNE_DISGUISES, disguiseIndex } from "./game/danneDisguises";
 import { discoveryCount, RESEARCH_LANDMARKS, RESEARCH_ZONES, researchZone } from "./game/researchWorld";
@@ -119,6 +120,7 @@ function renderConciseGameToText() {
       hearingReview: gameState.currentScene === "SenateHearingChamberScene" ? readHearingReview(gameState.sceneProgress) : null,
       questCounters: gameState.questCounters,
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
+      libraryResearch: libraryResearchReadout(gameState.sceneProgress),
       researchWorld: gameState.currentScene === "ResearchWorldScene" ? {
         zone: RESEARCH_ZONES[researchZone(gameState.sceneProgress.researchWorldZone)].name,
         danneDisguise: DANNE_DISGUISES[disguiseIndex(gameState.sceneProgress.researchDanneDisguise)].movie,

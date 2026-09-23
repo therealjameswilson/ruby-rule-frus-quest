@@ -23,7 +23,7 @@ describe("Office starter route", () => {
     [{ juniorIntroduced: true, memoStatus: 0, hasArchiveKey: false }, "take_memo", "memo"],
     [{ juniorIntroduced: true, memoStatus: 1, hasArchiveKey: false }, "route_memo", "inbox"],
     [{ juniorIntroduced: true, memoStatus: 2, hasArchiveKey: false }, "stamp_memo", "inbox"],
-    [{ juniorIntroduced: true, memoStatus: 3, hasArchiveKey: false }, "recover_key", "junior"],
+    [{ juniorIntroduced: true, memoStatus: 3, hasArchiveKey: false }, "recover_key", "inbox"],
     [{ juniorIntroduced: true, memoStatus: 3, hasArchiveKey: true }, "enter_archive", "archive"]
   ] as const)("maps %o to %s", (context, expectedStage, expectedTarget) => {
     const stage = getOfficeStarterStage(context);

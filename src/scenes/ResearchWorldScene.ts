@@ -1,3 +1,4 @@
+import { LIBRARY_ASSIGNMENTS, libraryAssignment, libraryStage } from "../game/libraryResearch";
 import Phaser from 'phaser';
 import { DANNE_DISGUISES, disguiseIndex } from '../game/danneDisguises';
 import { Player } from '../entities/Player';
@@ -42,6 +43,10 @@ export class ResearchWorldScene extends Phaser.Scene {
     }
   }
   create() {
+    if (gameState.sceneProgress.libraryReturnX) {
+      this.arrival = {x:gameState.sceneProgress.libraryReturnX,y:gameState.sceneProgress.libraryReturnY};
+      delete gameState.sceneProgress.libraryReturnX; delete gameState.sceneProgress.libraryReturnY;
+    }
     this.zone = researchZone(gameState.sceneProgress.researchWorldZone);
     this.leaving = false; this.stops = []; this.solids = [];
     setSceneState('ResearchWorldScene','explore','EXPLORE THE OUTDOORS');
@@ -58,6 +63,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     const landmarks = RESEARCH_LANDMARKS.filter(l=>l.zone===this.zone);
     for (const landmark of landmarks) this.drawLandmark(landmark);
     if (this.zone === 1) {
+      this.drawSweetgreen();
       this.prop(185,102,10,38,35);
       this.label(185,109,'READING GARDEN');
       this.stop('Rest in the garden',185,121,19,()=>this.dialog.show('GARDEN',[
@@ -117,7 +123,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.travelClose=this.add.container(0,0,[closeBox,closeText]).setDepth(1000).setVisible(false);
     bindPointerDown(closeBox,()=>{this.choice.hide();swallowNextInputFrame();});
     this.prompt=this.add.text(128,191,'',{fontFamily:'monospace',fontSize:'7px',color:'#fff5cf',backgroundColor:'#234c39',padding:{x:3,y:2}}).setOrigin(.5).setDepth(350);
-    setVisibleEntities([zone.name,...landmarks.map(l=>l.name),'DANN-E (civilian disguise)','Rail station','Discovery journal','Return to office / Washington']);
+    setVisibleEntities([zone.name,...landmarks.map(l=>l.name),...(this.zone===1?['Sweetgreen','James at Sweetgreen']:[]),'DANN-E (civilian disguise)','Rail station','Discovery journal','Return to office / Washington']);
     setLatestMessage('Walk freely. Approach a landmark and press A to discover it. Rail travel is free.');
     this.refreshTally(); swallowNextInputFrame();
   }
@@ -138,10 +144,12 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.danne.setFlipX(p.x>130);
     const nearest=this.stops.map(s=>({s,d:Math.hypot(p.x-s.x,p.y-s.y)})).filter(v=>v.d<=v.s.radius).sort((a,b)=>a.d-b.d)[0]?.s;
     const collectionStop = RESEARCH_LANDMARKS.find(l=>l.label===nearest?.label && researchCollections(l.id).length);
-    this.prompt.setVisible(Boolean(nearest)).setText(nearest?.label==='Talk to DANN-E'?'A: TALK  B: NEXT DISGUISE':collectionStop?'A: COLLECTIONS  B: SOURCES':nearest?`A: ${nearest.label}`:'');
+    this.prompt.setVisible(Boolean(nearest)).setText(nearest?.label==='Talk to DANN-E'?'A: TALK  B: NEXT DISGUISE':collectionStop?'A: COLLECTIONS  B: SOURCES':nearest&&RESEARCH_LANDMARKS.some(l=>l.label===nearest.label&&libraryAssignment(l.id))?'A: ENTER LIBRARY  B: ABOUT':nearest?`A: ${nearest.label}`:'');
     setNearestInteractable(nearest?.label??null);
     if(nearest?.label==='Talk to DANN-E'&&input.bJustPressed){this.changeDisguise();return;}
     if(collectionStop && input.bJustPressed){window.open(`assets/research-world/frus-collections.html#${collectionStop.id}`, '_blank', 'noopener,noreferrer');return;}
+    const libraryStop=RESEARCH_LANDMARKS.find(l=>l.label===nearest?.label&&libraryAssignment(l.id));
+    if(libraryStop&&input.bJustPressed){this.discover(libraryStop);return;}
     if(nearest&&(input.aJustPressed||input.confirmJustPressed)){nearest.act();return;}
     const zone=RESEARCH_ZONES[this.zone] as {west?:number;east?:number;north?:number;south?:number};
     if(p.x<=8&&input.dir.x<0&&zone.west!==undefined)this.travel(zone.west,{x:239,y:p.y});
@@ -149,6 +157,36 @@ export class ResearchWorldScene extends Phaser.Scene {
     else if(p.y<=61&&input.dir.y<0&&zone.north!==undefined)this.travel(zone.north,{x:p.x,y:216});
     else if(p.y>=229&&input.dir.y>0&&zone.south!==undefined)this.travel(zone.south,{x:p.x,y: 70});
   }
+  private drawSweetgreen() {
+    // A fictional stop in the compressed Potomac map, separate from archival discoveries.
+    const g = this.add.graphics().setDepth(145).setName('sweetgreen-storefront');
+    g.fillStyle(0xf5eed9).fillRect(38,143,64,31);
+    g.fillStyle(0x255844).fillRect(36,140,68,9);
+    g.fillStyle(0x91c5bc).fillRect(42,152,21,17).fillRect(77,152,21,17);
+    g.fillStyle(0x214438).fillRect(66,150,9,24);
+    g.fillStyle(0xf3d98c).fillRect(72,162,1,2);
+    g.fillStyle(0x385b3c).fillRect(39,170,24,4).fillRect(77,170,24,4);
+    for (const x of [43,50,57,81,88,95]) g.fillStyle(0x7fbc53).fillRect(x,168,4,3);
+    this.add.text(70,141,'sweetgreen',{fontFamily:'monospace',fontSize:'6px',color:'#f7f3d7'}).setOrigin(.5,0).setDepth(146).setName('sweetgreen-sign');
+    this.solids.push(new Phaser.Geom.Rectangle(38,143,64,31));
+    this.add.ellipse(91,192,16,4,0x294536,.3).setDepth(179);
+    this.add.sprite(91,190,'compiler_veteran',0).setOrigin(.5,.9).setDisplaySize(24,36).setDepth(190).setName('james-sweetgreen');
+    this.label(91,194,'JAMES',280,6);
+    // Salad bowl on the outdoor counter.
+    g.fillStyle(0xe6ead6).fillRect(46,180,17,5);
+    g.fillStyle(0x74ad43).fillRect(47,178,15,3);
+    g.fillStyle(0xc96336).fillRect(51,178,3,2).fillRect(58,179,2,2);
+    this.stop('Talk to James',91,199,19,()=>{
+      gameState.sceneProgress.researchJamesWarningHeard=1;
+      setLatestMessage("James at Sweetgreen: Don't trust DANN-E. His helpful act hides an effort to derail your FRUS volume.");
+      this.dialog.show('JAMES AT SWEETGREEN',[
+        "Don't trust DANN-E. He acts mild-mannered out here, but he wants to get in the way of your FRUS volume.",
+        "He'll offer a shortcut, misplace a folder, or send you down the wrong path. Check his advice against the finding aids and your own notes.",
+        "Keep your source trail, talk to Kathy, and keep compiling. Don't let his friendly smile fool you."
+      ],()=>saveGameNow());
+    });
+  }
+
   private loadDisguise(index:number) {
     const key=`danne-disguise-${index}`;
     if(!this.textures.exists(key))this.load.image(key,`assets/research-world/danne-variants/${DANNE_DISGUISES[index].id}.png`);
@@ -201,7 +239,14 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.add.image(l.x,l.y,'research-landmarks',String(l.frame)).setOrigin(.5,1).setDisplaySize(70, 60).setDepth(l.y-10);
     this.label(l.x,l.y+2,l.label);
     this.solids.push(new Phaser.Geom.Rectangle(l.x-27,l.y-33,54,30));
-    this.stop(l.label,l.x,l.y+20,21,()=>this.discover(l));
+    this.stop(l.label,l.x,l.y+20,21,()=>libraryAssignment(l.id)?this.enterLibrary(l):this.discover(l));
+  }
+  private enterLibrary(l:ResearchLandmark) {
+    if(this.leaving)return;
+    this.leaving=true;
+    gameState.sceneProgress[`researchVisited_${l.id}`]=1;
+    gameState.sceneProgress.libraryResearchActive=LIBRARY_ASSIGNMENTS.findIndex(a=>a.library===l.id);
+    saveGameNow();transitionTo(this,'PresidentialLibraryScene');
   }
   private discover(l:ResearchLandmark) {
     const first=!gameState.sceneProgress[`researchVisited_${l.id}`];
@@ -219,17 +264,18 @@ export class ResearchWorldScene extends Phaser.Scene {
     swallowNextInputFrame();this.scene.restart(arrival);
   }
   private travelMenu() {
-    this.choice.show('FREE RESEARCH RAIL\nChoose a library region.',[
+    this.choice.show('FREE RESEARCH RAIL\nChoose a destination.',[
       {key:'A',label:'East: NY / MA / GA'}, {key:'B',label:'Heartland: MO / KS / MI / AR'},
-      {key:'C',label:'Pacific: California'}, {key:'D',label:'Texas: Austin / Bush libraries'}
-    ],option=>this.travel(({A:3,B:4,C:5,D:6} as Record<string,number>)[option.key]),6,()=>{});
+      {key:'C',label:'Reagan Library / California'}, {key:'D',label:'Texas: Austin / Bush libraries'}
+    ],option=>this.travel(({A:3,B:4,C:5,D:6} as Record<string,number>)[option.key], option.key==='C'?{x:192,y:142}:{x:128,y:188}),6,()=>{});
   }
   private journal() {
     const found=RESEARCH_LANDMARKS.filter(l=>gameState.sceneProgress[`researchVisited_${l.id}`]);
     this.dialog.show('FIELD JOURNAL',[
       `${found.length}/${RESEARCH_LANDMARKS.length} landmarks discovered. Walk to a building and press A. No required order.`,
       'DC: Potomac Green west, Capital Commons east, Maryland Grove north. Rail links four distant library regions.',
-      ...found.flatMap(l=>[`${l.name}\n${l.location}`,researchHolding(l.id).text,...collectionPages(l.id)]),
+      'Choose Reagan Library / California at the rail station for direct arrival at the Reagan Library. The Nixon Library is also on the California map.',
+      ...found.flatMap(l=>[`${l.name}\n${l.location}`, ...(libraryAssignment(l.id)?[`Dungeon research packet: ${libraryStage(gameState.sceneProgress,l.id)}/4`]:[]),researchHolding(l.id).text,...collectionPages(l.id)]),
       'Research lessons are practice prompts. Catalogs and repository staff establish holdings and access. The map compresses real distances.'
     ]);
   }

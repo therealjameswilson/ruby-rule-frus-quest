@@ -26,11 +26,11 @@
     "guideSwing": "SWING AS BOLT REACHES YOU",
     "guideRetry": "NO HARM - TRY AGAIN",
     "office": {
-      "talk_jr": "MEET JR - WEST DESK",
+      "talk_jr": "KATHY: WEST",
       "take_memo": "TAKE THE MEMO",
       "route_memo": "MEMO TO WEST INBOX",
       "stamp_memo": "STAMP AT INBOX",
-      "recover_key": "ASK JR FOR KEY",
+      "recover_key": "KEY: INBOX",
       "enter_archive": "ARCHIVE - SOUTH DOOR"
     },
     "guide": {
@@ -58,12 +58,12 @@
     "findGlowing": "FIND A GLOWING DESK OR DOOR",
     "followQuestArrow": "FOLLOW GOLD ARROW",
     "walkOpenGate": "WALK THROUGH OPEN GATE",
-    "goLeftTalk": "TALK TO JR",
+    "goLeftTalk": "TALK TO KATHY",
     "interact": "INTERACT: {label}",
     "nextLine": "NEXT LINE",
     "none": "NONE",
     "readLine": "Read line.",
-    "talkJuniorCompiler": "Talk to the Junior Compiler.",
+    "talkJuniorCompiler": "Talk to the General Editor Kathy.",
     "toolLabel": "TOOL {label}",
     "touchControlsReady": "TOUCH CONTROLS READY",
     "keyboardControlsReady": "KEYBOARD CONTROLS READY",

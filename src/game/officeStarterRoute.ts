@@ -23,20 +23,20 @@ export function getOfficeStarterStage(context: OfficeStarterRouteContext): Offic
 }
 
 const OBJECTIVES: Record<OfficeStarterStage, string> = {
-  talk_jr: "Talk to JR at the west desk.",
+  talk_jr: "Talk to Kathy at the west desk.",
   take_memo: "Pick up the Assignment Memo.",
   route_memo: "Carry the memo to INBOX.",
   stamp_memo: "Stamp the memo at INBOX.",
-  recover_key: "Return to JR for the Master Declass Key.",
+  recover_key: "Collect the Master Declass Key at INBOX.",
   enter_archive: "Enter the Archive Guide through the south door."
 };
 
 const TARGETS: Record<OfficeStarterStage, { id: "junior" | "memo" | "inbox" | "archive"; label: string }> = {
-  talk_jr: { id: "junior", label: "JR" },
+  talk_jr: { id: "junior", label: "KATHY" },
   take_memo: { id: "memo", label: "MEMO" },
   route_memo: { id: "inbox", label: "INBOX" },
   stamp_memo: { id: "inbox", label: "STAMP" },
-  recover_key: { id: "junior", label: "JR" },
+  recover_key: { id: "inbox", label: "KEY" },
   enter_archive: { id: "archive", label: "ARCHIVE" }
 };
 

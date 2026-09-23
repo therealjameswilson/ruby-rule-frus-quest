@@ -118,11 +118,11 @@
     "guideSwing": "GOLPEA AL LLEGAR EL EGO",
     "guideRetry": "SIN DANO - REINTENTA",
     "office": {
-      "talk_jr": "HABLA CON JR - OESTE",
+      "talk_jr": "KATHY: OESTE",
       "take_memo": "TOMA LA NOTA",
       "route_memo": "NOTA A BANDEJA OESTE",
       "stamp_memo": "SELLA EN BANDEJA",
-      "recover_key": "PIDE LA LLAVE A JR",
+      "recover_key": "LLAVE: INBOX",
       "enter_archive": "ARCHIVO - PUERTA SUR"
     },
     "guide": {
@@ -150,7 +150,7 @@
     "findGlowing": "BUSCA UN ESCRITORIO O PUERTA BRILLANTE",
     "followQuestArrow": "SIGUE LA FLECHA DORADA",
     "walkOpenGate": "CRUZA LA PUERTA ABIERTA",
-    "goLeftTalk": "HABLA CON JR",
+    "goLeftTalk": "HABLA CON KATHY",
     "interact": "INTERACTUAR: {label}",
     "nextLine": "SIGUIENTE LÍNEA",
     "none": "NINGUNA",

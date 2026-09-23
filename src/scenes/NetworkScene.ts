@@ -1,3 +1,4 @@
+import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
@@ -534,6 +535,7 @@ export class NetworkScene extends Phaser.Scene {
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    drawCrispInteriorWalls(this, layers.walls, walls.x, walls.y, PALETTE.terminalCyan, object => this.track(object));
     for (const cell of layers.collisionCells) {
       const rect = networkN1CollisionRect(cell);
       this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));
@@ -619,6 +621,7 @@ export class NetworkScene extends Phaser.Scene {
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
+    drawCrispInteriorWalls(this, layers.walls, walls.x, walls.y, PALETTE.terminalCyan, object => this.track(object));
     for (const cell of layers.collisionCells) {
       const rect = networkN2CollisionRect(cell);
       this.roomSolids.push(new Phaser.Geom.Rectangle(rect.x, rect.y, rect.width, rect.height));

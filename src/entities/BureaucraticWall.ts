@@ -73,9 +73,11 @@ export class BureaucraticWall {
       .setName("bureaucratic-wall-crack")
       .setAngle(18)
       .setVisible(false);
-    this.eyeGlowLeft = scene.add.rectangle(-6, -6, 3, 2, color(this.accent), 0)
+    this.eyeGlowLeft = scene.add.rectangle(-7, -6, 3, 1, color(this.accent), 0)
+      .setOrigin(0)
       .setName("bureaucratic-wall-eye-glow");
-    this.eyeGlowRight = scene.add.rectangle(5, -6, 3, 2, color(this.accent), 0)
+    this.eyeGlowRight = scene.add.rectangle(4, -6, 3, 1, color(this.accent), 0)
+      .setOrigin(0)
       .setName("bureaucratic-wall-eye-glow");
     this.pressureArrow = scene.add.triangle(0, -27, 0, -4, 8, 0, 0, 4, color(this.accent), 0)
       .setName("bureaucratic-wall-pressure-arrow")

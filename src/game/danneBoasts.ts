@@ -76,6 +76,7 @@ export const DANNE_VARIANT_BOASTS: Record<DanneVariantId, DanneVariantBoasts> = 
     metaphor: "Authority by memo: top-down directives overruling careful editorial review.",
     lines: [
       "I don't verify the record. I issue a directive about it.",
+      "Changes to the Style Guide!",
       "This briefcase holds one memo overruling your review.",
       "By the authority vested in me by me, it is declassified.",
       "Committees deliberate. Executives decide - and delete.",
@@ -193,7 +194,7 @@ const DANNE_COMBAT_BOASTS: Record<DanneVariantPhase, readonly string[]> = {
   prototype: ["JUDGMENT:\nFILE NOT FOUND.", "Review is a patch.", "I lost the index."],
   colossus: ["I flatten nuance.", "Backlog? Crushed.", "No context needed.", "Nickelback on.\nSpotify on repeat."],
   cloud: ["Try to cite me.", "Ask the system.", "No source. No me."],
-  infiltrator: ["My memo says yes.", "I overrule review.", "Approved. By me."],
+  infiltrator: ["My memo says yes.", "I overrule review.", "Approved. By me.", "Changes to the\nStyle Guide!"],
   swarm: ["We all agree.\nWith ourselves.", "Copy the shortcut.", "More bad drafts!"],
   defeated: ["The record won?", "I object to this.", "Queue not found."],
   ascendant: ["I am the backlog.", "No humans needed.", "Every excuse.\nOne machine."]
@@ -204,6 +205,7 @@ export function danneCombatBoastsForVariantPhase(phase: DanneVariantPhase) {
 }
 
 export const DANNE_LURKER_BOASTS = [
+  "Changes to the Style Guide!",
   "OMIT THE HARD PART.",
   "MY CONFIDENCE IS ENOUGH.",
   "SOURCE NOTES ARE TOO SLOW.",

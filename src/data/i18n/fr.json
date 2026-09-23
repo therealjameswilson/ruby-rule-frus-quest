@@ -118,11 +118,11 @@
     "guideSwing": "FRAPPE A L'ARRIVEE DU TIR",
     "guideRetry": "SANS DEGATS - REESSAIE",
     "office": {
-      "talk_jr": "PARLE A JR - OUEST",
+      "talk_jr": "KATHY: OUEST",
       "take_memo": "PRENDS LA NOTE",
       "route_memo": "NOTE AU BAC OUEST",
       "stamp_memo": "TAMPONNE AU BAC",
-      "recover_key": "DEMANDE LA CLE A JR",
+      "recover_key": "CLE: INBOX",
       "enter_archive": "ARCHIVES - PORTE SUD"
     },
     "guide": {
@@ -150,7 +150,7 @@
     "findGlowing": "TROUVE UN BUREAU OU UNE PORTE LUMINEUSE",
     "followQuestArrow": "SUIVEZ LA FLECHE DOREE",
     "walkOpenGate": "PASSEZ LA PORTE OUVERTE",
-    "goLeftTalk": "PARLE À JR",
+    "goLeftTalk": "PARLE À KATHY",
     "interact": "INTERAGIR : {label}",
     "nextLine": "LIGNE SUIVANTE",
     "none": "AUCUN",

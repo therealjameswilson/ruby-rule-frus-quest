@@ -275,7 +275,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandSignature = signature;
 
     this.questBandGraphics.clear();
-    this.drawQuestBandChrome(subscreen.reliabilityHearts.filled, subscreen.reliabilityHearts.total);
+    this.drawQuestBandChrome(Math.ceil(subscreen.reliabilityHearts.current / 5) / 2, subscreen.reliabilityHearts.total);
     this.drawQuestBandActionBadge();
     this.drawQuestBandToolSlot(Boolean(subscreen.equippedTool ?? hud.equippedItem), weapon.cooldownRatio, weapon.phase);
     this.drawQuestBandVolumeAssembly(volumeAssembly);
@@ -455,11 +455,12 @@ export class UIScene extends Phaser.Scene {
       const row = Math.floor(index / QUEST_BAND_LAYOUT.hearts.columns);
       const x = QUEST_BAND_LAYOUT.hearts.x + column * QUEST_BAND_LAYOUT.hearts.gap;
       const y = QUEST_BAND_LAYOUT.hearts.y + row * QUEST_BAND_LAYOUT.hearts.gap;
-      this.drawQuestHeart(index, x, y, index < filledHearts);
+      this.drawQuestHeart(index, x, y, Math.max(0, Math.min(1, filledHearts - index)));
     }
   }
 
-  private drawQuestHeart(index: number, x: number, y: number, filled: boolean) {
+  private drawQuestHeart(index: number, x: number, y: number, fill: number) {
+    const filled = fill > 0;
     const g = this.questBandGraphics;
     g.fillStyle(color(PALETTE.black), 1);
     g.fillRect(x, y + 1, 6, 5);
@@ -472,6 +473,13 @@ export class UIScene extends Phaser.Scene {
     if (filled) {
       g.fillStyle(color(PALETTE.goldStamp), 1);
       g.fillRect(x + 2, y + 1, 1, 1);
+    }
+    if (fill === 0.5) {
+      g.fillStyle(color(PALETTE.stoneDark), 1);
+      g.fillRect(x + 4, y, 1, 1);
+      g.fillRect(x + 3, y + 1, 3, 3);
+      g.fillRect(x + 3, y + 4, 2, 1);
+      g.fillRect(x + 3, y + 5, 1, 1);
     }
     if (isColorblindModeEnabled()) {
       g.fillStyle(color(PALETTE.creamPaper), filled ? 1 : 0.72);

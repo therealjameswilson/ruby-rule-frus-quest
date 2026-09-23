@@ -135,7 +135,7 @@ describe("ArchiveScene physical annotation flow", () => {
     expect(room).toContain("drawCompactSourceRoomTerminal");
     expect(room).not.toContain("addSnesWorldMap");
     expect(room).not.toContain("addTerminalPanel");
-    expect(archiveSceneSource.includes('if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.id !== "B2" && room.roomType !== "secret")')).toBe(true);
+    expect(archiveSceneSource.includes('if (room.id !== "A1" && room.id !== "AS" && room.id !== "B1" && room.id !== "B2" && room.roomType !== "secret" && room.id !== "A4" && room.id !== "A5")')).toBe(true);
     const sourceRoom = methodSource("renderSourceRoom", "renderArchiveA1Tilemap");
     expect(sourceRoom).not.toContain("drawAnnotationDraftingStations");
     const stacks = methodSource("renderAnnotationStacks()", "enterAnnotationStacks");

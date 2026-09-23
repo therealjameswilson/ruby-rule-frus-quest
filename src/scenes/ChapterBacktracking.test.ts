@@ -68,20 +68,45 @@ describe("live cross-chapter exit handlers", () => {
   });
   it("states the goal on first assignment and preserves practical hints on repeat", () => {
     const scene = Object.assign(new OfficeScene(), {
-      player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn() },
+      player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn() }, dialog: { show: vi.fn() },
       updateFirstQuestCue: vi.fn(), officeStarterMemoStatus: () => 0,
       currentOfficeObjective: () => "TAKE THE MEMO"
     }) as unknown as { talkJuniorCompiler(): void; toast: { show: ReturnType<typeof vi.fn> } };
     const points = gameState.documentPoints;
     const inventory = [...gameState.inventory];
     scene.talkJuniorCompiler();
-    expect(scene.toast.show).toHaveBeenLastCalledWith("PUBLISH A FRUS VOLUME", { x: 64, y: 100 }, "info");
+    expect(scene.toast.show).toHaveBeenLastCalledWith("COMPILE A FRUS VOLUME", { x: 64, y: 100 }, "info");
     expect(gameState.sceneProgress.juniorCompilerIntroduced).toBe(1);
-    expect(gameState.latestMessage).toContain("publish a reliable FRUS volume");
+    expect(gameState.latestMessage).toContain("compile a FRUS volume");
     scene.talkJuniorCompiler();
     expect(scene.toast.show).toHaveBeenLastCalledWith("PICK MEMO -> INBOX -> STAMP", { x: 64, y: 100 }, "info");
     expect(gameState.documentPoints).toBe(points);
     expect(gameState.inventory).toEqual(inventory);
+  });
+  it("keeps Kathy through her HAC sign-off, then removes her body and interaction", () => {
+    const feet = {};
+    const desk = {};
+    const scene = Object.assign(new OfficeScene(), {
+      player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn() }, dialog: { show: vi.fn() },
+      juniorCompiler: { setVisible: vi.fn() }, kathyFeet: feet, solids: [desk, feet],
+      interactables: [{ id: "junior-compiler" }, { id: "starter-memo" }],
+      updateFirstQuestCue: vi.fn(), officeStarterMemoStatus: () => 0,
+      currentOfficeObjective: () => "TAKE THE MEMO"
+    }) as any;
+    gameState.visibleEntities = ["General Editor Kathy", "Assignment Memo"];
+    scene.talkJuniorCompiler();
+    const [, pages, finish] = scene.dialog.show.mock.calls[0];
+    expect(pages.at(-1)).toContain("HAC");
+    expect(pages.at(-1)).toContain("don't bother me anymore");
+    expect(scene.juniorCompiler.setVisible).not.toHaveBeenCalled();
+    expect(gameState.sceneProgress.kathyDeparted).toBeUndefined();
+    finish();
+    expect(gameState.sceneProgress.kathyDeparted).toBe(1);
+    expect(scene.juniorCompiler.setVisible).toHaveBeenCalledWith(false);
+    expect(scene.solids).toEqual([desk]);
+    expect(scene.interactables).toEqual([{ id: "starter-memo" }]);
+    expect(gameState.visibleEntities).toEqual(["Assignment Memo"]);
+    expect(saveGameNow).toHaveBeenCalled();
   });
   it("retires finished Office tasks without hiding the colleague, door or other desks", () => {
     const scene = new OfficeScene() as unknown as {

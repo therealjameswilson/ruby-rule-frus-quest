@@ -61,7 +61,7 @@ describe("opening route feedback", () => {
     const scene = harness();
     expect(scene.currentInteractables().find(target => target.id === "junior-compiler")!.radius).toBe(36);
     scene.flashNoTargetHint();
-    expect(scene.toast.showInteractionHint).toHaveBeenCalledWith("TALK TO JR AT WEST DESK", scene.player.position, "info");
+    expect(scene.toast.showInteractionHint).toHaveBeenCalledWith("TALK TO KATHY AT WEST DESK", scene.player.position, "info");
     expect(gameState.sceneProgress.juniorCompilerIntroduced).not.toBe(1);
     expect(gameState.mode).toBe("explore");
   });
@@ -77,7 +77,7 @@ describe("opening route feedback", () => {
   it.each(["handleStarterMemo", "handleStarterMemoInbox", "handleArchiveGuideDoor"] as const)(
     "%s guides an unbriefed player without opening a dialog", method => {
       const scene = harness(); scene[method]();
-      expect(scene.toast.show).toHaveBeenCalledWith("TALK TO JR AT WEST DESK", scene.player.position, "info");
+      expect(scene.toast.show).toHaveBeenCalledWith("TALK TO KATHY AT WEST DESK", scene.player.position, "info");
       expect(scene.dialog.show).not.toHaveBeenCalled();
       expect(gameState.mode).toBe("explore");
       expect(transitionTo).not.toHaveBeenCalled();
