@@ -83,7 +83,7 @@ export abstract class Enemy {
     if (this.waypoints.length) this.waypoints[0] = { x, y };
 
     const shadowOptions = options.shadow ?? { y: 15, width: 18, height: 6 };
-    const shadow = scene.add.ellipse(0, shadowOptions.y, shadowOptions.width, shadowOptions.height, color(PALETTE.black));
+    const shadow = scene.add.ellipse(0, shadowOptions.y, shadowOptions.width, shadowOptions.height, color(PALETTE.black), 0.35);
     this.sprite = scene.add.sprite(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : options.fallbackTextureKey);
     this.hpBack = scene.add.rectangle(0, -19, 22, 4, color(PALETTE.black), 0.9)
       .setStrokeStyle(1, color(PALETTE.stoneGray))

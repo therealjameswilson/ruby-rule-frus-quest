@@ -39,7 +39,7 @@ export class RedactorDrone extends Enemy {
       waypoints,
       tag: { text: "DRONE", y: 17, color: PALETTE.classNetRed, backgroundColor: PALETTE.black, visible: false },
       cue: { text: "!", y: -27, color: PALETTE.goldStamp, backgroundColor: PALETTE.black },
-      shadow: { y: 12, width: 20, height: 6 },
+      shadow: { y: 8, width: 20, height: 5 },
       speed: 22,
       acceleration: 90,
       waypointTolerance: 3,

@@ -40,7 +40,7 @@ export class CensorshipWraith extends Enemy {
       waypoints,
       tag: { text: "", y: 20, color: PALETTE.creamPaper, backgroundColor: PALETTE.black },
       cue: { text: "!", y: -28, color: PALETTE.goldStamp, backgroundColor: PALETTE.black },
-      shadow: { y: 16, width: 22, height: 7 },
+      shadow: { y: 6, width: 19, height: 5 },
       speed: 15,
       acceleration: 54,
       waypointTolerance: 4,
