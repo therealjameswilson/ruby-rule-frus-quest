@@ -1,3 +1,4 @@
+import { RoomAmbience, ambienceForScene } from "./roomAmbience";
 import { ORIGINAL_SCORE, scoreEventsAtStep, type ScoreTheme } from "./originalScore";
 import { readAudioMix, saveAudioMix, type AudioChannel } from "./audioMix";
 import { setAudioStatus } from "../game/state";
@@ -29,6 +30,8 @@ export interface AudioDebugState {
   pendingSceneKey: string | null;
   musicTimerActive: boolean;
   musicStep: number;
+  ambienceProfile: string | null;
+  ambienceSources: number;
   resumePending: boolean;
   hiddenPaused: boolean;
   firstUnlockMs: number | null;
@@ -59,6 +62,7 @@ class RetroAudio {
   private musicStep = 0;
   private nextMusicTime = 0;
   private scoreVoice: ScoreVoice | null = null;
+  private ambience: RoomAmbience | null = null;
   private currentSceneKey: string | null = null;
   private currentThemeKey: string | null = null;
   private currentTheme: MidiTheme | null = null;
@@ -280,7 +284,7 @@ class RetroAudio {
     this.prepare();
     const { key, theme } = this.resolveTheme(sceneKey);
     if (this.currentThemeKey === key && !options.forceRestart) {
-      setAudioStatus(`original score ${theme.title}`);
+      this.startMusic(sceneKey);
       return;
     }
     if (!this.unlocked || !this.getContext() || this.getContextState() !== "running") {
@@ -336,12 +340,14 @@ class RetroAudio {
     this.pendingSceneKey = null;
     this.resumePending = false;
     if (this.musicTimer !== null && this.currentThemeKey === key && !options.forceRestart) {
+      this.ensureAmbience(context, sceneKey);
       setAudioStatus(`original score ${theme.title}`);
       return;
     }
 
     this.stopMusic();
     this.currentThemeKey = key;
+    this.ensureAmbience(context, sceneKey);
     this.musicStep = 0;
     this.fadeMasterGain(0.85, 0.2);
     this.scoreVoice = new ScoreVoice(context, this.channelOutput(context, "music"));
@@ -361,7 +367,16 @@ class RetroAudio {
     setAudioStatus(`original score ${theme.title}`);
   }
 
+  private ensureAmbience(context: AudioContext, sceneKey: string) {
+    const profile = ambienceForScene(sceneKey);
+    if (this.ambience?.profile === profile) return;
+    this.ambience?.dispose();
+    this.ambience = profile ? new RoomAmbience(context, this.channelOutput(context, "effects"), profile) : null;
+  }
+
   stopMusic() {
+    this.ambience?.dispose();
+    this.ambience = null;
     this.scoreVoice?.dispose();
     this.scoreVoice = null;
     if (this.crossfadeTimer !== null && typeof window !== "undefined") {
@@ -388,6 +403,8 @@ class RetroAudio {
       pendingSceneKey: this.pendingSceneKey,
       musicTimerActive: this.musicTimer !== null,
       musicStep: this.musicStep,
+      ambienceProfile: this.ambience?.profile ?? null,
+      ambienceSources: this.ambience?.activeSourceCount ?? 0,
       resumePending: this.resumePending,
       hiddenPaused: this.hiddenPaused,
       firstUnlockMs: this.firstUnlockMs,
