@@ -1,3 +1,4 @@
+import { readAudioMix, saveAudioMix, type AudioChannel } from "./audioMix";
 import { setAudioStatus } from "../game/state";
 import type { ProcessItemId } from "../game/constants";
 import { addInputGestureListener } from "../input/InputState";
@@ -297,6 +298,9 @@ function nowMs() {
 class RetroAudio {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private musicGain: GainNode | null = null;
+  private effectsGain: GainNode | null = null;
+  private mix = readAudioMix();
   private enabled = true;
   private prepared = false;
   private unlocked = false;
@@ -338,6 +342,31 @@ class RetroAudio {
     setAudioStatus("audio on");
     void this.resumeAfterGesture();
     return this.enabled;
+  }
+
+  getMix() { return { ...this.mix }; }
+
+  setChannelVolume(channel: AudioChannel, value: number) {
+    if (!Number.isFinite(value)) return;
+    this.mix[channel] = Math.max(0, Math.min(1, value));
+    saveAudioMix(this.mix);
+    if (!this.context) return;
+    if (channel === "master") this.fadeMasterGain(this.enabled ? 0.85 : 0.0001, 0.04);
+    else {
+      const gain = channel === "music" ? this.musicGain : this.effectsGain;
+      gain?.gain.setTargetAtTime(this.mix[channel], this.context.currentTime, 0.015);
+    }
+  }
+
+  private channelOutput(context: AudioContext, channel: "music" | "effects") {
+    const property = channel === "music" ? "musicGain" : "effectsGain";
+    if (!this[property]) {
+      const node = context.createGain();
+      node.gain.value = this.mix[channel];
+      node.connect(this.ensureMasterGain(context));
+      this[property] = node;
+    }
+    return this[property]!;
   }
 
   get isEnabled() {
@@ -565,7 +594,7 @@ class RetroAudio {
     this.currentThemeKey = key;
     this.musicStep = 0;
     this.fadeMasterGain(0.85, 0.2);
-    this.scoreVoice = new ScoreVoice(context, this.ensureMasterGain(context));
+    this.scoreVoice = new ScoreVoice(context, this.channelOutput(context, "music"));
     this.nextMusicTime = context.currentTime + 0.025;
     const schedule = () => {
       if (context.state !== "running") return;
@@ -687,7 +716,7 @@ class RetroAudio {
       this.installGestureResume();
       return;
     }
-    const output = this.ensureMasterGain(context);
+    const output = this.channelOutput(context, "effects");
     const osc = context.createOscillator();
     const gain = context.createGain();
     osc.type = wave;
@@ -731,7 +760,7 @@ class RetroAudio {
   private ensureMasterGain(context: AudioContext) {
     if (!this.masterGain) {
       this.masterGain = context.createGain();
-      this.masterGain.gain.setValueAtTime(0.85, context.currentTime);
+      this.masterGain.gain.setValueAtTime(0.85 * this.mix.master, context.currentTime);
       this.masterGain.connect(context.destination);
     }
     return this.masterGain;
@@ -742,7 +771,7 @@ class RetroAudio {
     if (!context || !this.masterGain) return;
     const gain = this.masterGain.gain;
     gain.cancelScheduledValues(context.currentTime);
-    gain.setTargetAtTime(target, context.currentTime, Math.max(0.01, seconds / 4));
+    gain.setTargetAtTime(target * this.mix.master, context.currentTime, Math.max(0.01, seconds / 4));
   }
 
   private installGestureResume() {

@@ -79,6 +79,19 @@ export function computeIntegerCanvasLayout(viewport: PixelViewport) {
     x: center(viewport.x, viewport.width, width), y: center(viewport.y, viewport.height, height) };
 }
 
+/** Fit the high-density surface to the safe viewport without cropping the world. */
+export function computePresentationLayout(viewport: PixelViewport) {
+  const dpr = normalizeDevicePixelRatio(viewport.dpr);
+  const availableWidth = Math.max(1, viewport.width);
+  const availableHeight = Math.max(1, viewport.height);
+  const cssZoom = Math.min(availableWidth / GAME_WIDTH, availableHeight / GAME_HEIGHT);
+  const width = GAME_WIDTH * cssZoom;
+  const height = GAME_HEIGHT * cssZoom;
+  return { dpr, cssZoom, deviceZoom: cssZoom * dpr, width, height,
+    x: viewport.x + (availableWidth - width) / 2,
+    y: viewport.y + (availableHeight - height) / 2 };
+}
+
 function getViewport(): PixelViewport {
   const bodyStyle = window.getComputedStyle(document.body);
   const paddingX = parseFloat(bodyStyle.paddingLeft || "0") + parseFloat(bodyStyle.paddingRight || "0");
@@ -94,7 +107,7 @@ function getViewport(): PixelViewport {
 }
 
 export function configureIntegerGameShellScale() {
-  const layout = computeIntegerCanvasLayout(getViewport());
+  const layout = computePresentationLayout(getViewport());
   const shell = document.getElementById("game-shell");
   if (shell) {
     shell.style.width = `${layout.width}px`;
@@ -146,6 +159,7 @@ export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
   canvas.style.transformOrigin = "0 0";
   canvas.style.transform = `scale(${cssZoom})`;
   canvas.style.margin = "0";
+  canvas.style.imageRendering = "auto";
   // Render at higher density while cameras retain the 256x240 world.
   configureLogicalCameras(game);
   // Refresh pointer mapping after CSS positioning, without resizing the logical world.
