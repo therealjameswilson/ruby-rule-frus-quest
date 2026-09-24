@@ -12,8 +12,8 @@ try {
     if (!mobile) return page.keyboard.down(key);
     const b = await page.locator('canvas').first().boundingBox();
     const point = (x, y) => ({ x: b.x + x * b.width / 256, y: b.y + y * b.height / 240, id: 1 });
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [key === 'x' ? point(174, 216) : point(40, 178)] });
-    if (key !== 'x') await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [key === 'ArrowLeft' ? point(14, 178) : point(40, 204)] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [key === 'x' ? point(174, 216) : point(48, 202)] });
+    if (key !== 'x') await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [key === 'ArrowLeft' ? point(22, 202) : point(48, 228)] });
   }
   async function release(key) {
     if (!mobile) return page.keyboard.up(key);

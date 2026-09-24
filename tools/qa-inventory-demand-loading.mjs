@@ -37,7 +37,7 @@ try {
   await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).mode === 'explore');
   await page.waitForTimeout(700);
   assert.equal(requests.length, 0, 'No menu art is fetched before opening pause');
-  await tap(224, 16);
+  await tap(120, 216);
   await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).mode === 'pause');
   await page.waitForFunction(() => window.game.scene.getScene(JSON.parse(window.render_game_to_text()).scene).children.list
     .some(node => node.name === 'pause-menu' && node.visible));
@@ -65,7 +65,7 @@ try {
     && window.game.textures.exists('danne-item-treaty-fragments'));
   await page.waitForTimeout(200);
   assert.equal((await state()).mode, 'explore', 'Late completion must not reopen pause');
-  await tap(224, 16);
+  await tap(120, 216);
   await shot('loaded');
   assert.equal(requests.length, 4, 'Reopening uses the four cached menu assets');
   for (const key of ['danne-item-ruby-pen', 'danne-item-master-declass-key', 'danne-item-treaty-fragments']) {

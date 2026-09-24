@@ -36,7 +36,7 @@ async function run(mobile) {
   async function direction(key) {
     if(mobile) {
       const [dx,dy] = {ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];
-      await touch(40,178,dx,dy,80);
+      await touch(48, 202,dx,dy,80);
     } else {
       await page.keyboard.down(key); await page.waitForTimeout(80); await page.keyboard.up(key);
     }
@@ -215,7 +215,7 @@ async function run(mobile) {
     assert.equal(s.heldItem,'StateChat Draft Manifest');
     assert.equal(s.visibleThreats.length,0);
     const beforePause={player:s.player,points:s.documentPoints,reliability:s.reliability,swing:s.playerCombat.weapon.swingId};
-    if(mobile) await touch(224,16); else await press('Escape');
+    if(mobile) await touch(120, 216); else await press('Escape');
     await page.waitForTimeout(200);
     assert.equal((await state()).mode,'pause');
     const mapControl=(await state()).pauseMenu.controls.find(control=>control.id==='map');

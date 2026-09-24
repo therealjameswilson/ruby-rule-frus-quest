@@ -33,7 +33,7 @@ try {
   };
   const press = async key => {
     if (!mobile) return page.keyboard.press(key, { delay: 50 });
-    const point = await canvasPoint(...(key === 'Enter' ? [128, 120] : key === 'Escape' ? [224, 16] : key === 'KeyX' ? [174, 216] : [225, 205]));
+    const point = await canvasPoint(...(key === 'Enter' ? [128, 120] : key === 'Escape' ? [120, 216] : key === 'KeyX' ? [174, 216] : [225, 205]));
     await page.touchscreen.tap(point.x, point.y);
   };
   const hold = async (key, ms) => {

@@ -29,7 +29,7 @@ async function touch(x, y, dx = 0, dy = 0, duration = 48) {
 async function direction(key, duration = 80) {
   if (mobile) {
     const [dx, dy] = { ArrowLeft: [-26, 0], ArrowRight: [26, 0], ArrowUp: [0, -26], ArrowDown: [0, 26] }[key];
-    await touch(40, 178, dx, dy, duration);
+    await touch(48, 202, dx, dy, duration);
   } else {
     await page.keyboard.down(key); await page.waitForTimeout(duration); await page.keyboard.up(key);
   }
@@ -40,8 +40,8 @@ async function swingToward(key) {
     const b = await page.locator("canvas").first().boundingBox();
     const point = (x, y, id) => ({ x: b.x + x * b.width / 256, y: b.y + y * b.height / 240, id });
     const [dx, dy] = { ArrowLeft: [-26, 0], ArrowRight: [26, 0], ArrowUp: [0, -26], ArrowDown: [0, 26] }[key];
-    const pad = point(40 + dx, 178 + dy, 1);
-    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point(40, 178, 1)] });
+    const pad = point(48 + dx, 202 + dy, 1);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [point(48, 202, 1)] });
     await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [pad] });
     await page.waitForTimeout(30);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [pad, point(174, 216, 2)] });

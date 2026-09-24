@@ -34,7 +34,7 @@ async function touch(x,y,dx=0,dy=0,ms=50) {
   await page.waitForTimeout(ms);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
 }
 async function direction(key,ms=65) {
-  if(mobile){const [dx,dy]={ArrowUp:[0,-26],ArrowDown:[0,26],ArrowLeft:[-26,0],ArrowRight:[26,0]}[key];await touch(40,178,dx,dy,ms);}
+  if(mobile){const [dx,dy]={ArrowUp:[0,-26],ArrowDown:[0,26],ArrowLeft:[-26,0],ArrowRight:[26,0]}[key];await touch(48, 202,dx,dy,ms);}
   else{await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}
   await page.waitForTimeout(20);
 }

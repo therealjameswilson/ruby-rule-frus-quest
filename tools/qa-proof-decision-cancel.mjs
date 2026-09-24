@@ -51,7 +51,7 @@ try {
       assert.equal(after.documentPoints, before.documentPoints);
       assert.equal(after.playerCombat.weapon.swingId, before.playerCombat.weapon.swingId);
     };
-    await tap(224, 16); await unchanged();
+    await tap(120, 216); await unchanged();
     await tap(225, 205); assert.equal((await state()).mode, 'choice');
     await option(2); await unchanged();
     await tap(225, 205); assert.equal((await state()).mode, 'choice');

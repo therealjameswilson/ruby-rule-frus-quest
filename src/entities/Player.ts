@@ -222,6 +222,10 @@ export class Player {
     return snapRenderedPosition({ x: this.logicalX, y: this.logicalY });
   }
 
+  get movementVelocity(): Position {
+    return { x: this.velocityX, y: this.velocityY };
+  }
+
   get facingDirection() {
     return this.facing;
   }

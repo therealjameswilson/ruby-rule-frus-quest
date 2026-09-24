@@ -1,7 +1,7 @@
 import type { Direction } from "./constants";
 import { GUIDE_COUNTER, type GuideCounterReadout } from "./guideCounterTraining";
 import type { Position } from "./types";
-import { buildWeaponHitbox, WEAPON_TIMINGS } from "../systems/weaponState";
+import { buildWeaponHitbox, WEAPON_TIMINGS, type WeaponToolId } from "../systems/weaponState";
 
 export type GuideCounterCue = "faceNorth" | "faceSouth" | "faceEast" | "faceWest"
   | "stepBack" | "wait" | "swing" | "recover" | "returned";
@@ -24,7 +24,8 @@ export function guideCounterCue(
   lesson: GuideCounterReadout,
   player: Position,
   facing: Direction,
-  canSwing: boolean
+  canSwing: boolean,
+  options: { tool?: WeaponToolId; velocity?: Position } = {}
 ): GuideCounterCue {
   if (lesson.phase === "returned" || lesson.phase === "complete") return "returned";
   const source = lesson.bolt ?? GUIDE_COUNTER.source;
@@ -39,16 +40,18 @@ export function guideCounterCue(
   const aimX = lesson.target.x - GUIDE_COUNTER.source.x;
   const aimY = lesson.target.y - (GUIDE_COUNTER.source.y + 10);
   const length = Math.hypot(aimX, aimY) || 1;
-  const vx = aimX / length * GUIDE_COUNTER.speed;
-  const vy = aimY / length * GUIDE_COUNTER.speed;
-  const hitbox = buildWeaponHitbox(player, facing, "citation_stamp");
-  const timing = WEAPON_TIMINGS.citation_stamp;
+  const tool = options.tool ?? "citation_stamp";
+  const timing = WEAPON_TIMINGS[tool];
+  // Predict in the moving hero's frame, including the slowdown during a swing.
+  const vx = aimX / length * GUIDE_COUNTER.speed - (options.velocity?.x ?? 0) * timing.movementScale;
+  const vy = aimY / length * GUIDE_COUNTER.speed - (options.velocity?.y ?? 0) * timing.movementScale;
+  const hitbox = buildWeaponHitbox(player, facing, tool);
   let entry = timing.windupMs / 1000;
-  let exit = (timing.windupMs + timing.activeMs) / 1000;
-  // Slab intersection: include the bolt's six-pixel radius on both axes.
+  let exit = (timing.windupMs + timing.activeMs - 16) / 1000;
+  // Keep a one-pixel and one-frame margin: rounded readouts must not advertise an edge-only hit.
   for (const [position, speed, min, max] of [
-    [lesson.bolt.x, vx, hitbox.x - 6, hitbox.x + hitbox.width + 6],
-    [lesson.bolt.y, vy, hitbox.y - 6, hitbox.y + hitbox.height + 6]
+    [lesson.bolt.x, vx, hitbox.x - 5, hitbox.x + hitbox.width + 5],
+    [lesson.bolt.y, vy, hitbox.y - 5, hitbox.y + hitbox.height + 5]
   ]) {
     if (Math.abs(speed) < 0.001) {
       if (position < min || position > max) return "wait";

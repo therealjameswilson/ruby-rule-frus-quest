@@ -339,11 +339,13 @@ export class GuideScene extends Phaser.Scene {
     const event = this.counterTraining.update(delta, this.player.position, hitbox);
     const lesson = this.counterTraining.readout();
     const counterFacing = guideCounterFacing(lesson, this.player.position);
-    lesson.cue = guideCounterCue(lesson, this.player.position, counterFacing, combat.weapon.canSwing);
+    const counterTool = combat.weapon.tool === "stapler" ? "stapler" : "citation_stamp";
+    lesson.cue = guideCounterCue(lesson, this.player.position, counterFacing, combat.weapon.canSwing,
+      { tool: counterTool, velocity: this.player.movementVelocity });
     setGuideCounterReadout(lesson);
     this.practiceAim.clear();
     if (lesson.cue === "wait" || lesson.cue === "swing") {
-      const reach = buildWeaponHitbox(this.player.position, counterFacing, "citation_stamp");
+      const reach = buildWeaponHitbox(this.player.position, counterFacing, counterTool);
       this.practiceAim.lineStyle(1, color(lesson.cue === "swing" ? PALETTE.terminalCyan : PALETTE.goldStamp), 0.8)
         .strokeRect(reach.x, reach.y, reach.width, reach.height);
     }

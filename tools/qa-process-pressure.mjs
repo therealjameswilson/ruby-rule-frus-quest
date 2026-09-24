@@ -25,7 +25,7 @@ async function run(name, source, query, check) {
     await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
   }
   async function direction(key,ms) {
-    if(mobile) {const [dx,dy]={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];await touch(40,178,dx,dy,ms);}
+    if(mobile) {const [dx,dy]={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];await touch(48, 202,dx,dy,ms);}
     else {await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}
     await page.waitForTimeout(60);
   }
@@ -65,7 +65,7 @@ try {
     assert.deepEqual(hit.documentCandidates,before.documentCandidates);
     assert.equal(hit.documentPoints,before.documentPoints);
     await direction('ArrowDown',230);
-    if(mobile) await touch(224,16); else await page.keyboard.press('Escape',{delay:45});
+    if(mobile) await touch(120, 216); else await page.keyboard.press('Escape',{delay:45});
     await page.waitForTimeout(200);
     const paused=await shot('paused');assert.equal(paused.mode,'pause');
     await page.waitForTimeout(1300);

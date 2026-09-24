@@ -41,7 +41,7 @@ try {
   const direction = async (key, ms) => {
     if (mobile) {
       const [dx, dy] = { ArrowLeft: [-26, 0], ArrowRight: [26, 0], ArrowUp: [0, -26], ArrowDown: [0, 26] }[key];
-      await touch(40, 178, dx, dy, ms);
+      await touch(48, 202, dx, dy, ms);
     } else {
       await page.keyboard.down(key); await page.waitForTimeout(ms); await page.keyboard.up(key);
     }
@@ -119,7 +119,7 @@ try {
   if (process.argv.includes('--pause-return')) {
     await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).visibleThreats.some(enemy =>
       enemy.telegraph?.kind === 'stamp-windup' && enemy.telegraph.msRemaining > 250));
-    if (mobile) await touch(224, 16); else await page.keyboard.press('Escape', { delay: 50 });
+    if (mobile) await touch(120, 216); else await page.keyboard.press('Escape', { delay: 50 });
     await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).mode === 'pause');
     const paused = await state();
     await page.waitForTimeout(1200);

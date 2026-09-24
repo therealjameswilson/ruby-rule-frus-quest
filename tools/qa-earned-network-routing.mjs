@@ -16,7 +16,7 @@ const key=async(k='Space',ms=50)=>{
   const box=await page.locator('canvas').first().boundingBox();
   const point=(x,y)=>({x:box.x+x*box.width/256,y:box.y+y*box.height/240,id:1});
   const dirs={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]};
-  const origin=dirs[k]?[40,178]:k==='Enter'?[86,154]:k==='x'?[174,216]:[225,205];
+  const origin=dirs[k]?[48, 202]:k==='Enter'?[86,154]:k==='x'?[174,216]:[225,205];
   await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[point(...origin)]});
   if(dirs[k])await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[point(origin[0]+dirs[k][0],origin[1]+dirs[k][1])]});
   await page.waitForTimeout(ms);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});

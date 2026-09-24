@@ -250,11 +250,10 @@ try {
         await direction('ArrowUp', 20);
     }
     for (let attempt = 0; attempt < 8 && !((await state()).sceneProgress.guideCitationCounterTrained); attempt++) {
-        await page.waitForFunction(() => { const s = JSON.parse(window.render_game_to_text()), b = s.guideCounter?.bolt; return b && !b.returned && Math.abs(b.x - s.player.x) < 10 && b.y < s.player.y - 27 && b.y > s.player.y - 43; }, null, { timeout: 12000, polling: 'raf' });
+        await page.waitForFunction(() => JSON.parse(window.render_game_to_text()).guideCounter?.cue === 'swing', null, { timeout: 12000, polling: 'raf' });
         if (mobile) {
-            const start = await point(48, 202, 1), pad = await point(48, 176, 1), button = await point(174, 216, 2);
-            await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] });
-            await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [pad] });
+            const pad = await point(48, 176, 1), button = await point(174, 216, 2);
+            // Press the visible fixed arrow and B together; an artificial drag adds timing latency.
             await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [pad, button] });
             await page.waitForTimeout(45);
             const both = await page.evaluate(() => window.rubyRuleTouchControls);

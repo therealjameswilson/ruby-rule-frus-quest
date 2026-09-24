@@ -30,7 +30,7 @@ try {
   const before = await state();
   assert.equal(before.choice.title, 'OPENNET / CROSS-REFERENCE');
   assert.equal(before.sceneProgress.silentReadCrossReferenceDraft ?? 0, 0);
-  await touch(40,178,26,0); // Floating D-pad moves focus, not the player or a filing action.
+  await touch(48, 202,26,0); // Floating D-pad moves focus, not the player or a filing action.
   assert.equal((await state()).sceneProgress.silentReadCrossReferenceDraft ?? 0, 0);
   await touch(225,205);
   assert.equal((await state()).sceneProgress.silentReadCrossReferenceDraft, 2);
@@ -41,8 +41,8 @@ try {
   assert.equal((await state()).playerCombat.weapon.swingId, before.playerCombat.weapon.swingId);
   await touch(225,205);
   assert.equal((await state()).choice.options[1].value, 'pinned');
-  await touch(40,178,26,0); // Restored focus is the pinned card; next is the third card.
-  await touch(40,178,26,0); // Then the distinct filing command.
+  await touch(48, 202,26,0); // Restored focus is the pinned card; next is the third card.
+  await touch(48, 202,26,0); // Then the distinct filing command.
   await touch(225,205);
   const filed = await state();
   assert.equal(filed.sceneProgress.silentReadReviewStatus, 3);
