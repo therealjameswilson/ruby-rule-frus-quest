@@ -30,6 +30,32 @@ describe("practice counter coaching", () => {
       expect(completed).toBe(true);
     }
   );
+  it.each(["stapler", "citation_stamp"] as const)("predicts a real moving return with %s", tool => {
+    for (const velocity of [{x:0,y:-30},{x:0,y:30},{x:-25,y:0},{x:25,y:0}]) {
+      const player = { x:176, y:164 };
+      const training = new GuideCounterTraining();
+      const weapon = new WeaponStateController();
+      let facing: Direction = "north", returned = false, started = false;
+      for (let now = 0; now < 4000; now += 5) {
+        const current = training.readout();
+        if (current.phase === "incoming") {
+          const movingScale = weapon.movementScale(now);
+          player.x += velocity.x * movingScale * .005;
+          player.y += velocity.y * movingScale * .005;
+          const aim = guideCounterFacing(current, player);
+          if (!started && guideCounterCue(current, player, aim, true, {tool, velocity}) === "swing") {
+            started = weapon.tryStart(tool, now);
+            facing = aim;
+          }
+        }
+        const event = training.update(5, player, weapon.activeHitbox(player, facing, now));
+        if (event === "return") { returned = true; break; }
+      }
+      expect(returned, `${tool} moving ${JSON.stringify(velocity)}`).toBe(true);
+      expect(weapon.swingId).toBe(1);
+    }
+  });
+
   it("names the missing facing input instead of inviting a swing away from the bolt", () => {
     expect(guideCounterCue(lesson(132), { x: 176, y: 174 }, "south", true)).toBe("faceNorth");
     const ready = new GuideCounterTraining().readout();

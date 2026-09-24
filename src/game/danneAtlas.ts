@@ -131,7 +131,7 @@ export const DANNE_RUNTIME_SPRITE_ASSETS = [
   {
     entityId: "redactor-drone",
     key: "danne-runtime-redactor-drone",
-    path: "assets/art-pack/danne-pack/sprites/runtime/runtime_redactor_drone.png",
+    path: "assets/art-pack/danne-pack/sprites/runtime/redactor-drone-v2.png",
     sourceKey: "danne-sprite-redactor-drone",
     cols: 4,
     rows: 4,
@@ -142,7 +142,7 @@ export const DANNE_RUNTIME_SPRITE_ASSETS = [
   {
     entityId: "censorship-wraith",
     key: "danne-runtime-censorship-wraith",
-    path: "assets/art-pack/danne-pack/sprites/runtime/runtime_censorship_wraith.png",
+    path: "assets/art-pack/danne-pack/sprites/runtime/censorship-wraith-v2.png",
     sourceKey: "danne-sprite-censorship-wraith",
     cols: 4,
     rows: 4,

@@ -1,7 +1,9 @@
+import { PANEL_COLORS } from "./presentationPanel";
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import {
   computeToastPlacement,
+  DEFAULT_TOAST_BOUNDS,
   isToastExpired,
   toastAlpha,
   toastAnchorForActor,
@@ -27,7 +29,7 @@ function color(hex: string) {
 
 type ToastTone = "warn" | "info";
 
-// A short, high-contrast 16-bit message panel that floats above the player and
+// A compact, high-contrast message panel that floats above the player and
 // holds long enough to read. Used for transient feedback the bottom HUD hint
 // swallowed before, most importantly the "nothing to interact with" cue when the
 // player presses the primary action away from any target (live audit, 2026-06-15).
@@ -37,20 +39,23 @@ export class FeedbackToast {
   private readonly panel: Phaser.GameObjects.Rectangle;
   private readonly border: Phaser.GameObjects.Rectangle;
   private readonly text: Phaser.GameObjects.Text;
+  private panelHeight = 18;
   private elapsed = 0;
   private active = false;
   private interactionHint = false;
 
   constructor(scene: Phaser.Scene, depth = 1200, private readonly actorBounds?: () => { top: number; bottom: number }) {
     this.scene = scene;
-    this.panel = scene.add.rectangle(0, 0, 80, 16, color(PALETTE.shadowNavy), 0.96).setOrigin(0.5);
+    this.panel = scene.add.rectangle(0, 0, 80, 16, PANEL_COLORS.background, 0.98).setOrigin(0.5);
     this.border = scene.add.rectangle(0, 0, 82, 18).setStrokeStyle(1, color(PALETTE.goldStamp)).setOrigin(0.5);
     this.text = scene.add
       .text(0, 0, "", {
-        fontFamily: "monospace",
+        fontFamily: "Arial",
         fontSize: "8px",
         color: PALETTE.creamPaper,
-        align: "center"
+        align: "center",
+        wordWrap: { width: 200, useAdvancedWrap: true },
+        lineSpacing: 1
       })
       .setOrigin(0.5);
     this.container = scene.add
@@ -69,13 +74,13 @@ export class FeedbackToast {
     this.interactionHint = false;
     this.elapsed = 0;
     this.active = true;
-    const upper = message.toUpperCase();
-    this.text.setText(upper);
-    const width = Math.max(48, this.text.width + 14);
-    this.panel.setSize(width, 16);
-    this.border.setSize(width + 2, 18);
+    this.text.setText(message);
+    const width = Math.max(48, Math.min(216, this.text.width + 16));
+    this.panelHeight = Math.max(18, (this.text.height || 8) + 10);
+    this.panel.setSize(width, this.panelHeight - 1);
+    this.border.setSize(width + 1, this.panelHeight);
     const accent = tone === "warn" ? PALETTE.classNetRed : PALETTE.terminalCyan;
-    this.border.setStrokeStyle(1, color(accent));
+    this.border.setStrokeStyle(.5, color(accent));
     this.text.setColor(tone === "warn" ? PALETTE.creamPaper : PALETTE.terminalCyan);
     this.place(anchor, bounds);
     this.container.setAlpha(1).setVisible(true);
@@ -91,8 +96,11 @@ export class FeedbackToast {
   }
 
   private place(anchor: ToastPlacement, bounds?: ToastAnchorBounds) {
-    const adjusted = this.actorBounds ? toastAnchorForActor(anchor, this.actorBounds(), bounds) : anchor;
-    const placement = computeToastPlacement(adjusted, bounds, FEEDBACK_TOAST_GAP, this.border.displayWidth / 2);
+    const base = bounds ?? DEFAULT_TOAST_BOUNDS;
+    const extra = Math.max(0, this.panelHeight / 2 - 9);
+    const safeBounds = { ...base, top: base.top + extra, bottom: base.bottom - extra };
+    const adjusted = this.actorBounds ? toastAnchorForActor(anchor, this.actorBounds(), safeBounds, this.panelHeight / 2) : anchor;
+    const placement = computeToastPlacement(adjusted, safeBounds, FEEDBACK_TOAST_GAP, this.border.displayWidth / 2);
     this.container.setPosition(snapPixel(placement.x), snapPixel(placement.y));
   }
 

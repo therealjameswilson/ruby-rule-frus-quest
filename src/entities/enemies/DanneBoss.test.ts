@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { DANNE_BOSS_HD } from "../../art/danneBossPresentation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addDanneItem, addProcessItem, gameState, recordStandardsViolation, resetGameState, seedProgressForScene } from "../../game/state";
 import { DANNE_BOSS_RETURN } from "../../game/danneBossCombat";
@@ -67,7 +68,10 @@ class Visual {
   alpha = 1;
   constructor(public x = 0, public y = 0) {}
   setPosition(x: number, y: number) { this.x = x; this.y = y; return this; }
-  setOrigin() { return this; } setScale() { return this; } setDepth() { return this; }
+  scale = 1;
+  animation = "";
+  play(key: string) { this.animation = key; return this; }
+  setOrigin() { return this; } setScale(scale: number) { this.scale = scale; return this; } setDepth() { return this; }
   setVisible(visible: boolean) { this.visible = visible; return this; } setStrokeStyle() { return this; } setScrollFactor() { return this; }
   setText() { return this; } setSize() { return this; } setFillStyle() { return this; }
   setColor() { return this; } setTint() { return this; } setTintFill() { return this; } clearTint() { return this; }
@@ -77,6 +81,7 @@ class Visual {
 }
 
 interface BossInternals {
+  sprite: Visual;
   runIntro(): Promise<void>;
   showPhaseCutscene(key: string, phase: "intro"): Promise<void>;
   attackTelegraph: { markers: Visual[] } | null;
@@ -102,7 +107,7 @@ interface BossInternals {
   retryChoice: { active: boolean; choose(key: string): void };
 }
 
-function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus") {
+function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus", highDetail = false) {
   const scene = {
     time: { now: 0, delayedCall: (_ms: number, callback: () => void) => callback() },
     add: {
@@ -113,7 +118,7 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
       text: (x: number, y: number) => new Visual(x, y),
       container: () => new Visual()
     },
-    anims: { exists: () => false }, textures: { exists: () => false }, tweens: { add: vi.fn() }
+    anims: { exists: () => highDetail }, textures: { exists: (key: string) => highDetail && key === DANNE_BOSS_HD.key }, tweens: { add: vi.fn() }
   };
   let invulnerableUntil = 0;
   const player = {
@@ -144,6 +149,20 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
 
 describe("DANN-E final-review combat", () => {
   beforeEach(() => { vi.clearAllMocks(); resetGameState(); seedProgressForScene("BlackVaultLairScene"); });
+
+  it("changes detailed combat forms and keeps their logical size through swarm spawning", () => {
+    const { boss, internals } = fixture("colossus", true);
+    expect(boss.spriteKey).toBe(DANNE_BOSS_HD.key);
+    expect(internals.sprite.scale * DANNE_BOSS_HD.frameW).toBeCloseTo(32 * 1.15);
+    for (const form of ["colossus", "swarm", "cloud", "ascendant"] as const) {
+      internals.beginPhase(form);
+      expect(internals.sprite.animation).toBe(`${DANNE_BOSS_HD.key}-${form}`);
+      if (form === "swarm") for (const mini of internals.minis) {
+        expect(mini.sprite.scale * DANNE_BOSS_HD.frameW).toBeCloseTo(32 * .52);
+        expect(mini.sprite.animation).toBe(`${DANNE_BOSS_HD.key}-swarm`);
+      }
+    }
+  });
 
   it("soda respects armor and damages only an exposed core", () => {
     const { boss, internals } = fixture();

@@ -80,11 +80,11 @@ async function run(label, mobile) {
       const [dx, dy] = offsets[key];
       await cdp.send("Input.dispatchTouchEvent", {
         type: "touchStart",
-        touchPoints: [await point(40, 178)]
+        touchPoints: [await point(48, 202)]
       });
       await cdp.send("Input.dispatchTouchEvent", {
         type: "touchMove",
-        touchPoints: [await point(40 + dx, 178 + dy)]
+        touchPoints: [await point(48 + dx, 202 + dy)]
       });
       await page.waitForTimeout(milliseconds);
       await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
@@ -333,7 +333,7 @@ async function run(label, mobile) {
           return prompt.visible && prompt.currentText === "STAMP SEAL";
         });
         await checkpoint("crossing-ready-prompt");
-        if (mobile) await tap(224, 16);
+        if (mobile) await tap(120, 216);
         else await page.keyboard.press("Escape");
         await page.waitForTimeout(200);
         assert.notEqual((await state()).mode, "explore");

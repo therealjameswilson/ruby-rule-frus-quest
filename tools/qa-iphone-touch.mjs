@@ -24,7 +24,7 @@ try {
     };
     const tap = async (x, y) => { const p = await point(x, y); await page.touchscreen.tap(p.x, p.y); await page.waitForTimeout(160); };
     const drag = async (dx, dy, ms = 400, attack = false) => {
-      const origin = await point(40, 178), end = await point(40 + dx, 178 + dy);
+      const origin = await point(48, 202), end = await point(48 + dx, 202 + dy);
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [origin] });
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [end] });
       if (attack) await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [end, await point(174, 216, 2)] });
@@ -58,8 +58,8 @@ try {
     await page.waitForTimeout(220);
     assert.deepEqual((await state()).player, stopped, 'Release stops movement');
     // Rotate with a thumb still down. No stale direction may survive the resize.
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [await point(40, 178)] });
-    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [await point(66, 178)] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [await point(48, 202)] });
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [await point(74, 202)] });
     await page.setViewportSize({ width: device.height, height: device.width });
     await page.waitForTimeout(200);
     assert.equal(await page.evaluate(() => window.rubyRuleTouchControls.dpadDirection), null);

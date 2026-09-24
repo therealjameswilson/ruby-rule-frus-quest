@@ -38,10 +38,11 @@ function clamp(value: number, min: number, max: number) {
 export function toastAnchorForActor(
   anchor: ToastPlacement,
   actor: { top: number; bottom: number },
-  bounds: ToastAnchorBounds = DEFAULT_TOAST_BOUNDS
+  bounds: ToastAnchorBounds = DEFAULT_TOAST_BOUNDS,
+  halfHeight = 9
 ): ToastPlacement {
-  const above = Math.floor(actor.top) - 14;
-  const center = above >= bounds.top ? above : Math.ceil(actor.bottom) + 14;
+  const above = Math.floor(actor.top) - halfHeight - 5;
+  const center = above >= bounds.top ? above : Math.ceil(actor.bottom) + halfHeight + 5;
   return { x: anchor.x, y: center + FEEDBACK_TOAST_GAP };
 }
 

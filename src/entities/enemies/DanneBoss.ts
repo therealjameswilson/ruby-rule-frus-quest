@@ -1,3 +1,4 @@
+import { DANNE_BOSS_HD, danneBossFormAnimation } from "../../art/danneBossPresentation";
 import Phaser from "phaser";
 import { SodaCanAttack } from "../../systems/sodaCanAttack";
 import { danneAnimKey } from "../../art/danne_anims";
@@ -114,7 +115,8 @@ function color(hex: string) {
 
 export class DanneBoss {
   readonly label = "DANN-E";
-  readonly spriteKey = DANNE_BOSS_SPRITE_ASSET.key;
+  readonly spriteKey: string;
+  private readonly artDensity: number;
   private readonly scene: Phaser.Scene;
   private readonly player: Player;
   private readonly secretAscendant: boolean;
@@ -190,16 +192,18 @@ export class DanneBoss {
     this.onRetreat = options.onRetreat;
     this.onPhaseChange = options.onPhaseChange;
     this.onPlayerHit = options.onPlayerHit;
-    this.shadow = scene.add.ellipse(BOSS_CENTER.x, BOSS_CENTER.y + 12, 34, 9, color(PALETTE.black), 0.7)
+    this.spriteKey = scene.textures.exists(DANNE_BOSS_HD.key) ? DANNE_BOSS_HD.key : DANNE_BOSS_SPRITE_ASSET.key;
+    this.artDensity = this.spriteKey === DANNE_BOSS_HD.key ? DANNE_BOSS_HD.density : 1;
+    this.shadow = scene.add.ellipse(BOSS_CENTER.x, BOSS_CENTER.y + 12, 30, 7, color(PALETTE.black), 0.35)
       .setDepth(BOSS_CENTER.y - 5);
     this.sprite = scene.add.sprite(BOSS_CENTER.x, BOSS_CENTER.y, this.spriteKey)
       .setOrigin(0.5, 0.82)
-      .setScale(1.15)
+      .setScale(1.15 / this.artDensity)
       .setDepth(BOSS_CENTER.y)
       .setVisible(false);
     this.coreOpening = scene.add.rectangle(BOSS_CENTER.x - 12, BOSS_CENTER.y + 12, 24, 2, color(PALETTE.creamPaper))
       .setOrigin(0, 0.5).setVisible(false);
-    const animKey = danneAnimKey(this.spriteKey, "walk-down");
+    const animKey = this.artDensity > 1 ? danneBossFormAnimation(this.phase) : danneAnimKey(this.spriteKey, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.shortcutChoice = new ChoicePrompt(scene);
     this.retryChoice = new ChoicePrompt(scene, { settleMs: 300 });
@@ -428,6 +432,8 @@ export class DanneBoss {
     this.onPhaseChange(phase);
     writeDanneBossCheckpoint(gameState.sceneProgress, phase, this.hp);
     this.sprite.setVisible(true);
+    const formAnimation = danneBossFormAnimation(phase);
+    if (this.artDensity > 1 && this.scene.anims.exists(formAnimation)) this.sprite.play(formAnimation, true);
     this.clockContainer.setVisible(true);
     this.applyPhaseTint();
     if (phase === "swarm") this.spawnMiniDannes();
@@ -630,6 +636,7 @@ export class DanneBoss {
 
   private applyPhaseTint() {
     this.sprite.clearTint();
+    if (this.artDensity > 1) return;
     if (this.phase === "cloud") this.sprite.setTint(color(PALETTE.terminalCyan));
     if (this.phase === "ascendant") this.sprite.setTint(color(PALETTE.buckramHighlight));
   }
@@ -920,7 +927,7 @@ export class DanneBoss {
       }
       if (bolt.returned) aimReturnedBossBolt(bolt, { x: this.sprite.x, y: this.sprite.y - 12 });
       advanceBossBolt(bolt, deltaMs);
-      bolt.sprite.setPosition(snapPixel(bolt.x), snapPixel(bolt.y));
+      bolt.sprite.setPosition(bolt.x, bolt.y);
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));
       const boltBox = new Phaser.Geom.Rectangle(bolt.sprite.x - 6, bolt.sprite.y - 6, 12, 12);
       // A parry wins over contact on the same frame, just as in earlier rooms.
@@ -978,9 +985,9 @@ export class DanneBoss {
       const mini = this.scene.add.sprite(snapPixel(BOSS_CENTER.x + Math.cos(angle) * 42),
         snapPixel(BOSS_CENTER.y + 14 + Math.sin(angle) * 42 * 0.55), this.spriteKey)
         .setOrigin(0.5, 0.82)
-        .setScale(0.52)
+        .setScale(0.52 / this.artDensity)
         .setDepth(BOSS_CENTER.y + index + 1);
-      const animKey = danneAnimKey(this.spriteKey, "walk-down");
+      const animKey = this.artDensity > 1 ? danneBossFormAnimation(this.phase) : danneAnimKey(this.spriteKey, "walk-down");
       if (this.scene.anims.exists(animKey)) mini.play(animKey);
       this.minis.push({ sprite: mini, id: ++this.nextMiniId, angle, radius: 42,
         speed: index % 2 === 0 ? 1 : -1, lastActionId: -1, stunnedUntil: 0 });
@@ -1000,7 +1007,7 @@ export class DanneBoss {
       if (!stunned) mini.angle += mini.speed * dt * 1.7;
       const x = BOSS_CENTER.x + Math.cos(mini.angle) * mini.radius;
       const y = BOSS_CENTER.y + 14 + Math.sin(mini.angle) * (mini.radius * 0.55);
-      mini.sprite.setPosition(snapPixel(x), snapPixel(y));
+      mini.sprite.setPosition(x, y);
       mini.sprite.setDepth(Math.round(y));
       const body = new Phaser.Geom.Rectangle(mini.sprite.x - 6, mini.sprite.y - 14, 12, 16);
       // Counter the actual active swing before contact, even during the core opening.
@@ -1119,8 +1126,8 @@ export class DanneBoss {
   }
 
   private moveBossTo(x: number, y: number) {
-    this.sprite.setPosition(snapPixel(x), snapPixel(y));
-    this.shadow.setPosition(snapPixel(x), snapPixel(y + 12));
+    this.sprite.setPosition(x, y);
+    this.shadow.setPosition(x, y + 12);
     this.syncDepths();
   }
 

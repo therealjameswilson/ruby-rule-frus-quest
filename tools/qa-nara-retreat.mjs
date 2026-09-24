@@ -20,10 +20,10 @@ try {
     const b = await page.locator("canvas").first().boundingBox();
     const point = (x, y) => ({ x: b.x + x * b.width / 256, y: b.y + y * b.height / 240, id: 1 });
     const action = key === "Space";
-    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [action ? point(225, 205) : point(40, 178)] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [action ? point(225, 205) : point(48, 202)] });
     if (!action) {
       const [dx, dy] = { ArrowDown: [0, 26], ArrowUp: [0, -26], ArrowLeft: [-26, 0], ArrowRight: [26, 0] }[key];
-      await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [point(40 + dx, 178 + dy)] });
+      await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [point(48 + dx, 202 + dy)] });
     }
     await page.waitForTimeout(duration);
     await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });

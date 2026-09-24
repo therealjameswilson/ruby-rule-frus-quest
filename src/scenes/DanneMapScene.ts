@@ -1,3 +1,5 @@
+import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
+import { addVaultEnvironment, VAULT_STONE } from "../systems/vaultEnvironment";
 import Phaser from "phaser";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { SECRET_READING_ROOM_ASSETS } from "../assets/registry";
@@ -180,7 +182,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
-      for (const asset of [DANNE_BOSS_PORTRAIT_ASSET, ...DANNE_VARIANT_ASSETS]) {
+      for (const asset of [VAULT_STONE, DANNE_BOSS_PORTRAIT_ASSET, ...DANNE_VARIANT_ASSETS]) {
         if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
       }
     }
@@ -200,6 +202,11 @@ export abstract class DanneMapScene extends Phaser.Scene {
           frameHeight: asset.frameH
         });
       }
+    }
+    if (this.geometry.sceneKey === "BlackVaultLairScene" && !this.textures.exists(DANNE_BOSS_HD.key)) {
+      this.load.spritesheet(DANNE_BOSS_HD.key, DANNE_BOSS_HD.path, {
+        frameWidth: DANNE_BOSS_HD.frameW, frameHeight: DANNE_BOSS_HD.frameH
+      });
     }
     if (!this.textures.exists(DANNE_BOSS_SPRITE_ASSET.key)) {
       this.load.spritesheet(DANNE_BOSS_SPRITE_ASSET.key, DANNE_BOSS_SPRITE_ASSET.path, {
@@ -539,7 +546,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       addSnesCherryBlossomGardenTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
-      addSnesBlackVaultTileRoom(this, { depth: -18, combatReady: true });
+      if (!addVaultEnvironment(this)) addSnesBlackVaultTileRoom(this, { depth: -18, combatReady: true });
     }
     if (this.geometry.sceneKey === "SenateHearingChamberScene") {
       addSnesSenateHearingChamberTileRoom(this, { depth: -18 });

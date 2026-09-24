@@ -15,8 +15,8 @@ const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 async function point(x,y,id=1){const b=await page.locator('canvas').first().boundingBox();return{x:b.x+x*b.width/256,y:b.y+y*b.height/240,id};}
 async function touch(x,y,dx=0,dy=0,ms=45){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[await point(x,y)]});if(dx||dy)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[await point(x+dx,y+dy)]});await page.waitForTimeout(ms);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
 async function click(x,y){if(mobile)await touch(x,y);else{const p=await point(x,y);await page.mouse.click(p.x,p.y,{delay:45});}await page.waitForTimeout(100);}
-async function press(key='Space'){if(mobile)await touch(...(key==='x'?[174,216]:key==='m'?[224,16]:[225,205]));else await page.keyboard.press(key,{delay:45});await page.waitForTimeout(160);}
-async function direction(key,ms=85){if(mobile){const[dx,dy]={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];await touch(40,178,dx,dy,ms);}else{await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}await page.waitForTimeout(20);}
+async function press(key='Space'){if(mobile)await touch(...(key==='x'?[174,216]:key==='m'?[120, 216]:[225,205]));else await page.keyboard.press(key,{delay:45});await page.waitForTimeout(160);}
+async function direction(key,ms=85){if(mobile){const[dx,dy]={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];await touch(48, 202,dx,dy,ms);}else{await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}await page.waitForTimeout(20);}
 async function move(x,y,destination){
  let stalled=0;
  for(let n=0;n<150;n++){
@@ -50,7 +50,7 @@ async function cancelReview(label){
   assert.deepEqual(after.processStamps,before.processStamps);
   assert.equal(after.playerCombat.weapon.swingId,before.playerCombat.weapon.swingId);
  };
- if(mobile)await click(224,16);else await press('Escape');
+ if(mobile)await click(120, 216);else await press('Escape');
  await unchanged();await act(`${label}-reopened`);
  await choose('C');await unchanged();await act(`${label}-after-back`);
  assert.equal((await state()).mode,'choice');

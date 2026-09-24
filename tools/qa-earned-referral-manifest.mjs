@@ -20,7 +20,7 @@ const key=async(k='Space',ms=50)=>{
  if(mobile){
   const directions={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]};
   if(directions[k]){
-   const [dx,dy]=directions[k];await touch('touchStart',[[40,178]]);await touch('touchMove',[[40+dx,178+dy]]);
+   const [dx,dy]=directions[k];await touch('touchStart',[[48, 202]]);await touch('touchMove',[[48 + dx, 202 + dy]]);
   }else{
    const button=k==='x'?[174,216]:k==='Enter'?[86,154]:[225,205];
    await touch('touchStart',[button]);

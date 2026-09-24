@@ -1,3 +1,4 @@
+import { DANNE_BOSS_HD, DANNE_BOSS_FORM_FRAMES } from "./danneBossPresentation";
 import type Phaser from "phaser";
 import {
   DANNE_BOSS_SPRITE_ASSET,
@@ -58,6 +59,9 @@ export function registerDanneAnims(scene: Phaser.Scene) {
     registerSpriteSheetAnims(scene, asset);
   }
   registerSpriteSheetAnims(scene, DANNE_BOSS_SPRITE_ASSET);
+  for (const [form, frames] of Object.entries(DANNE_BOSS_FORM_FRAMES)) {
+    createAnim(scene, DANNE_BOSS_HD.key, form, frames, 5, -1);
+  }
   for (const asset of DANNE_VFX_ASSETS) {
     const frames = Array.from({ length: asset.cols * asset.rows }, (_value, index) => index);
     createAnim(scene, asset.key, "fly", frames, 10, -1);

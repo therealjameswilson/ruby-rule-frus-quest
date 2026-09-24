@@ -42,7 +42,7 @@ try {
   const action = async () => mobile ? tap(225, 205) : key("Space");
   const pushUp = async () => {
     if (mobile) {
-      await touch([[40,178]], "touchStart"); await touch([[40,152]], "touchMove");
+      await touch([[48, 202]], "touchStart"); await touch([[48, 176]], "touchMove");
       await page.waitForTimeout(600); await touch([], "touchEnd");
     } else await key("ArrowUp",600);
     await page.waitForTimeout(100);
@@ -55,8 +55,8 @@ try {
       const sign = Math.sign(horizontal ? dx : dy);
       const ms = Math.min(180, Math.max(16, Math.max(Math.abs(dx), Math.abs(dy)) * 6));
       if (mobile) {
-        await touch([[40, 178]], "touchStart");
-        await touch([[40 + (horizontal ? sign * 26 : 0), 178 + (horizontal ? 0 : sign * 26)]], "touchMove");
+        await touch([[48, 202]], "touchStart");
+        await touch([[48 + (horizontal ? sign * 26 : 0), 202 + (horizontal ? 0 : sign * 26)]], "touchMove");
         await page.waitForTimeout(ms); await touch([], "touchEnd"); await page.waitForTimeout(80);
       } else await key(horizontal ? sign > 0 ? "ArrowRight" : "ArrowLeft" : sign > 0 ? "ArrowDown" : "ArrowUp", ms);
     }

@@ -53,7 +53,7 @@ try {
       if (!destination && Math.hypot(dx, dy) < 4) return;
       assert.equal(s.mode, "explore");
       const horizontal = Math.abs(dx) > Math.abs(dy), sign = Math.sign(horizontal ? dx : dy);
-      if (mobile) await touch(40, 178, horizontal ? 26 * sign : 0, horizontal ? 0 : 26 * sign, 70);
+      if (mobile) await touch(48, 202, horizontal ? 26 * sign : 0, horizontal ? 0 : 26 * sign, 70);
       else await key(horizontal ? sign > 0 ? "ArrowRight" : "ArrowLeft" : sign > 0 ? "ArrowDown" : "ArrowUp", 70);
       await page.waitForTimeout(25);
     }

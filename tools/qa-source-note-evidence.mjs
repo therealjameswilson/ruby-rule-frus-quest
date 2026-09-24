@@ -84,7 +84,7 @@ try {
       await shot('legacy-continue'); result.legacy = { scene, points: restored.documentPoints, note };
     } else {
       const before = await state();
-      if (mobile) { await tap(224, 16); await tap(176, 34); await tap(128, 210); } else await key('Tab');
+      if (mobile) { await tap(120, 216); await tap(176, 34); await tap(128, 210); } else await key('Tab');
       assert.equal((await state()).scene, 'CodexScene');
       await tap(176, 24); await tap(128, 116);
       let readout = (await state()).codexView;

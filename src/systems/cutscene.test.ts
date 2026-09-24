@@ -17,6 +17,7 @@ class Visual {
   scale = 1;
   constructor(public x = 0, public y = 0, public width = 0, public height = 0) {}
   setDepth() { return this; }
+  setStrokeStyle() { return this; }
   setScrollFactor() { return this; }
   setVisible(value: boolean) { this.visible = value; return this; }
   setText() { return this; }

@@ -1,3 +1,5 @@
+import { presentationPanel, PANEL_COLORS } from "./presentationPanel";
+import { prefersReducedMotion } from "./motionPreferences";
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { clearDialogState, setDialogState, setGameMode, setLatestMessage } from "../game/state";
@@ -42,14 +44,12 @@ function makeController(scene: Phaser.Scene) {
     .setDepth(1600).setScrollFactor(0);
   const bottomBar = scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT + 24, GAME_WIDTH, 48, color(PALETTE.black))
     .setDepth(1600).setScrollFactor(0);
-  // Solid integer-sized insets keep chrome out of the portrait and reading area.
-  const border = scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 32 - dialogueOffset, GAME_WIDTH - 16, 48, color(PALETTE.goldStamp));
-  const fill = scene.add.rectangle(GAME_WIDTH / 2, GAME_HEIGHT - 32 - dialogueOffset, GAME_WIDTH - 18, 46, color(PALETTE.black));
-  const frameContainer = scene.add.container(0, 0, [border, fill]).setDepth(1610).setVisible(false).setScrollFactor(0);
+  const frame = presentationPanel(scene, 8, GAME_HEIGHT - 56 - dialogueOffset, GAME_WIDTH - 16, 48);
+  const frameContainer = scene.add.container(0, 0, frame.objects).setDepth(1610).setVisible(false).setScrollFactor(0);
   const lineText = scene.add.text(52, GAME_HEIGHT - 46 - dialogueOffset, "", {
-    fontFamily: "monospace",
-    fontSize: "8px",
-    color: PALETTE.creamPaper,
+    fontFamily: "Arial",
+    fontSize: "9px",
+    color: PANEL_COLORS.text,
     wordWrap: { width: GAME_WIDTH - 72, useAdvancedWrap: true },
     lineSpacing: 1
   }).setDepth(1611).setVisible(false).setScrollFactor(0);
@@ -75,7 +75,7 @@ export async function enterCutscene(scene: Phaser.Scene) {
   setLatestMessage("Cutscene mode entered.");
   await tweenTo(scene, [controller.topBar, controller.bottomBar], {
     y: (target: Phaser.GameObjects.GameObject) => target === controller.topBar ? 32 : GAME_HEIGHT - 24,
-    duration: 300,
+    duration: prefersReducedMotion() ? 0 : 220,
     ease: "Cubic.easeOut"
   });
 }
@@ -85,7 +85,7 @@ export async function exitCutscene(scene: Phaser.Scene) {
   if (!controller) return;
   await tweenTo(scene, [controller.topBar, controller.bottomBar], {
     y: (target: Phaser.GameObjects.GameObject) => target === controller.topBar ? -24 : GAME_HEIGHT + 24,
-    duration: 260,
+    duration: prefersReducedMotion() ? 0 : 180,
     ease: "Cubic.easeIn"
   });
   controller.textFrame.setVisible(false);
