@@ -1,3 +1,4 @@
+import { presentationPanel, PANEL_COLORS } from "../systems/presentationPanel";
 import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import { addVaultEnvironment, VAULT_STONE } from "../systems/vaultEnvironment";
 import Phaser from "phaser";
@@ -633,30 +634,18 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private drawLocationCard() {
     const container = this.add.container(0, 0).setDepth(1200);
-    const title = this.geometry.displayName === "Cherry Blossom Garden"
-      ? "CHERRY GARDEN"
-      : this.geometry.displayName.toUpperCase();
-    const wideTitle = title.length > 20;
-    const cardWidth = wideTitle ? 214 : 168;
-    const titleFontSize = wideTitle ? "6px" : "8px";
-    const shadow = this.add.rectangle(130, 56, cardWidth, 28, color(PALETTE.black), 0.82);
-    const card = this.add.rectangle(128, 54, cardWidth, 28, color(PALETTE.deepRuby), 0.94)
-      .setStrokeStyle(2, color(PALETTE.goldStamp));
-    const label = this.add.text(128, wideTitle ? 49 : 47, title, {
-      fontFamily: "monospace",
-      fontSize: titleFontSize,
-      color: PALETTE.creamPaper
+    const title = this.geometry.displayName;
+    const label = this.add.text(128, 54, title, {
+      fontFamily: "Arial", fontSize: "11px", color: PANEL_COLORS.text,
+      align: "center", wordWrap: { width: 208, useAdvancedWrap: true }
     }).setOrigin(0.5, 0);
-    const sub = this.add.text(128, 59, "DANN-E EXPANSION ROUTE", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5, 0);
-    container.add([shadow, card, label, sub]);
+    const cardHeight = label.height + 14;
+    const card = presentationPanel(this, 16, 47, 224, cardHeight);
+    container.add([...card.objects, label]);
     this.tweens.add({
       targets: container,
       alpha: 0,
-      delay: 1300,
+      delay: 2000,
       duration: 350,
       onComplete: () => container.destroy()
     });

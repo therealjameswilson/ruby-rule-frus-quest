@@ -1,3 +1,4 @@
+import { presentationPanel } from "./presentationPanel";
 import type { AudioChannel } from "./audioMix";
 import { RENDER_DENSITY } from "./renderDensity";
 import Phaser from "phaser";
@@ -20,7 +21,7 @@ import {
 import type { AdventureSubscreenReadout } from "../game/state";
 import { bindPointerPress, getInput, getPrimaryActionBadge, swallowNextInputFrame, updateInputCallbacks } from "../input/InputState";
 import { retroAudio } from "./audio";
-import { InventoryArtLoader } from "./inventoryArt";
+import { InventoryArtLoader, TOOL_ART_KEY } from "./inventoryArt";
 import { isColorblindModeEnabled, toggleColorblindMode } from "./accessibilitySettings";
 import { openCodex } from "./codexOverlay";
 import { cycleLanguage, getLanguage, getString } from "./i18n";
@@ -33,16 +34,16 @@ import type { PauseDirection, PauseHit, PausePage } from "./pauseMenu";
 function color(hex: string) { return Phaser.Display.Color.HexStringToColor(hex).color; }
 
 function ensureItemThumbnail(scene: Phaser.Scene, asset: DanneItemCatalogEntry) {
-  const key = `${asset.key}-thumb16`;
+  const key = `${asset.key}-thumb72`;
   if (scene.textures.exists(key)) return key;
   if (!scene.textures.exists(asset.key)) return null;
   const source = scene.textures.get(asset.key).getSourceImage() as HTMLImageElement | HTMLCanvasElement;
-  const texture = scene.textures.createCanvas(key, 16, 16);
+  const texture = scene.textures.createCanvas(key, 72, 72);
   if (!texture) return null;
   const context = texture.getContext();
-  context.imageSmoothingEnabled = false;
-  context.drawImage(source, 0, 0, 16, 16);
-  texture.refresh().setFilter(Phaser.Textures.FilterMode.NEAREST);
+  context.imageSmoothingEnabled = true;
+  context.drawImage(source, 0, 0, 72, 72);
+  texture.refresh().setFilter(Phaser.Textures.FilterMode.LINEAR);
   return key;
 }
 
@@ -85,11 +86,10 @@ export class InventoryOverlay {
   constructor(private readonly scene: Phaser.Scene) {
     this.artLoader = new InventoryArtLoader(scene, () => { if (this.active) this.render(); });
     const dim = scene.add.rectangle(128, 120, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.black), 0.75).setScrollFactor(0);
-    const panel = scene.add.rectangle(128, 124, 240, 224, color(PALETTE.black)).setScrollFactor(0);
-    panel.setStrokeStyle(1, color(PALETTE.goldStamp));
+    const panel = presentationPanel(scene, 8, 12, 240, 224);
     this.content = scene.add.container(0, 0).setScrollFactor(0);
     // Pause chrome must cover transient toasts, boss feedback and cutscene bars.
-    this.container = scene.add.container(0, 0, [dim, panel, this.content])
+    this.container = scene.add.container(0, 0, [dim, ...panel.objects, this.content])
       .setName("pause-menu").setDepth(2000).setVisible(false).setScrollFactor(0);
     // One capture surface: hidden pages cannot keep invisible hit targets alive.
     bindPointerPress(dim, { down: (pointer) => this.handlePointer(pointer.x / RENDER_DENSITY, pointer.y / RENDER_DENSITY) });
@@ -208,9 +208,9 @@ export class InventoryOverlay {
 
   private onScenePointer(pointer: Phaser.Input.Pointer) { this.handlePointer(pointer.x / RENDER_DENSITY, pointer.y / RENDER_DENSITY); }
 
-  private text(x: number, y: number, value: string, tint: string = PALETTE.white, center = false, fontSize = 8) {
+  private text(x: number, y: number, value: string, tint: string = PALETTE.white, center = false, fontSize = 9) {
     const text = this.scene.add.text(x, y, value, {
-      fontFamily: "monospace", fontSize: `${fontSize}px`, color: tint, lineSpacing: 3, align: center ? "center" : "left"
+      fontFamily: "Arial", fontSize: `${fontSize}px`, color: tint, lineSpacing: 3, align: center ? "center" : "left"
     }).setName("pause-text").setScrollFactor(0);
     if (center) text.setOrigin(0.5, 0);
     this.content.add(text);
@@ -219,7 +219,7 @@ export class InventoryOverlay {
 
   private box(x: number, y: number, width: number, height: number, fill: string, stroke?: string) {
     const box = this.scene.add.rectangle(x, y, width, height, color(fill)).setScrollFactor(0);
-    if (stroke) box.setStrokeStyle(1, color(stroke));
+    if (stroke) box.setStrokeStyle(.5, color(stroke));
     this.content.add(box);
     return box;
   }
@@ -233,18 +233,41 @@ export class InventoryOverlay {
     return image;
   }
 
+  private toolArt(x: number, y: number, id: ProcessItemId, acquired: boolean) {
+    if (!this.scene.textures.exists(TOOL_ART_KEY)) return false;
+    const texture = this.scene.textures.get(TOOL_ART_KEY);
+    const ids: ProcessItemId[] = ["stapler", "citation_stamp", "red_pencil", "review_folder",
+      "clearance_token", "concurrence_slip", "proof_lens", "buckram_key"];
+    const index = ids.indexOf(id);
+    if (index < 0) return false;
+    if (!texture.has(id)) {
+      const source = texture.getSourceImage() as HTMLImageElement;
+      // The generated proof-lens handle extends slightly past the nominal cell.
+      const left = index === 7 ? Math.round(source.width * 1370 / 1774) : Math.round(index % 4 * source.width / 4);
+      const top = Math.round(Math.floor(index / 4) * source.height / 2);
+      const right = index === 6 ? Math.round(source.width * 1370 / 1774) : Math.round((index % 4 + 1) * source.width / 4);
+      const bottom = Math.round((Math.floor(index / 4) + 1) * source.height / 2);
+      texture.add(id, 0, left, top, right - left, bottom - top);
+    }
+    const image = this.art(x, y, TOOL_ART_KEY, id, acquired ? 1 : .35);
+    if (image) image.setScale(32 / Math.max(image.width, image.height));
+    texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+    return true;
+  }
+
   private control(hit: PauseHit, action: () => void) { this.controls.push({ ...hit, action }); }
 
   private render() {
     this.content.removeAll(true);
     this.controls = [];
     const subscreen = getAdventureSubscreenReadout();
+    this.box(128, 49, 220, .5, "#57606a");
     PAUSE_HEADER.forEach((hit, index) => {
       const selected = index === PAUSE_PAGES.indexOf(this.page);
       const focused = this.focus === "header" && this.headerIndex === index;
-      this.box(hit.x, hit.y, 42, 20, selected ? PALETTE.deepRuby : PALETTE.black,
+      this.box(hit.x, hit.y, 42, 22, selected ? "#293d50" : "#1a2735",
         focused ? PALETTE.white : selected ? PALETTE.goldStamp : PALETTE.stoneGray);
-      this.text(hit.x, hit.y - 4, index === 4 ? "X" : getString(`pause.tabs.${hit.id}`),
+      this.text(hit.x, hit.y - 5, index === 4 ? "X" : getString(`pause.tabs.${hit.id}`),
         selected || focused ? PALETTE.goldStamp : PALETTE.white, true);
       this.control(hit, () => {
         if (index === 4) { this.hide(); return; }
@@ -271,18 +294,18 @@ export class InventoryOverlay {
     tools.forEach((tool, index) => {
       const hit = pauseToolHit(index);
       const focused = index === this.toolIndex && this.focus === "content";
-      this.box(hit.x, hit.y, 44, 44, tool.equipped ? PALETTE.deepRuby : PALETTE.black,
+      this.box(hit.x, hit.y, 44, 44, focused ? "#293d50" : tool.equipped ? "#233342" : "#1a2735",
         focused ? PALETTE.white : tool.equipped ? PALETTE.goldStamp : PALETTE.stoneGray);
       const asset = DANNE_ITEM_CATALOG.find((item) => item.id === tool.id);
       if (asset) {
         const key = ensureItemThumbnail(this.scene, asset);
-        if (key) this.art(hit.x, hit.y - 5, key, undefined, tool.acquired ? 1 : 0.25);
+        if (key) this.art(hit.x, hit.y - 5, key, undefined, tool.acquired ? 1 : 0.25)?.setDisplaySize(24, 24);
         else this.text(hit.x, hit.y - 9, this.artLoader.status === "error" ? "?" : "...", PALETTE.stoneGray, true);
-      } else {
+      } else if (!this.toolArt(hit.x, hit.y - 5, tool.id as ProcessItemId, tool.acquired)) {
         this.art(hit.x, hit.y - 5, tool.id === "stapler" ? "pack-stapler" : SNES_WORKFLOW_TOOL_RELIC_ASSET.key,
           tool.id === "stapler" ? undefined : TOOL_FRAMES[tool.id as ProcessItemId], tool.acquired ? 1 : 0.25);
       }
-      if (tool.equipped) this.text(hit.x + 13, hit.y - 19, "*", PALETTE.goldStamp);
+      if (tool.equipped) this.box(hit.x - 18, hit.y - 17, 3, 3, PALETTE.goldStamp);
       if (isColorblindModeEnabled()) {
         const key: keyof typeof ACCESSIBILITY_OVERLAYS = tool.equipped ? "slot_equipped" : tool.acquired ? "slot_acquired" : "slot_locked";
         this.art(hit.x + 15, hit.y - 15, key);
@@ -522,7 +545,7 @@ export class InventoryOverlay {
       (["master", "music", "effects"] as AudioChannel[]).forEach((channel,index) => {
         const hit = { id: `mix-${channel}`, x: 128, y: 90 + index * 44, width: 224, height: 44 };
         const selected = this.focus === "content" && this.settingsIndex === index;
-        this.box(hit.x,hit.y,216,32,selected ? PALETTE.deepRuby : PALETTE.black, selected ? PALETTE.goldStamp : PALETTE.stoneGray);
+        this.box(hit.x,hit.y,216,32,selected ? "#293d50" : "#1a2735", selected ? PALETTE.goldStamp : PALETTE.stoneGray);
         this.text(128,hit.y-5,`${channel.toUpperCase()}  ${Math.round(mix[channel]*100)}%`,PALETTE.creamPaper,true);
         this.control(hit,()=>{this.settingsIndex=index;this.settingAction(index);});
       });
@@ -538,7 +561,7 @@ export class InventoryOverlay {
     labels.forEach((label, index) => {
       const hit = { id: `setting-${index}`, x: 128, y: 78 + index * 44, width: 224, height: 44 };
       const selected = this.focus === "content" && this.settingsIndex === index;
-      this.box(hit.x, hit.y, 216, 30, selected ? PALETTE.deepRuby : PALETTE.black, selected ? PALETTE.goldStamp : PALETTE.stoneGray);
+      this.box(hit.x, hit.y, 216, 30, selected ? "#293d50" : "#1a2735", selected ? PALETTE.goldStamp : PALETTE.stoneGray);
       this.text(128, hit.y - 4, label, selected ? PALETTE.goldStamp : PALETTE.white, true);
       this.control(hit, () => { this.focus = "content"; this.settingsIndex = index; this.settingAction(index); });
     });

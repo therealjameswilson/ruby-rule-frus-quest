@@ -19,7 +19,7 @@ vi.mock("../input/InputState", () => ({
 }));
 vi.mock("./audio", () => ({ retroAudio: { blip: vi.fn(), confirm: vi.fn(), warning: vi.fn(), isEnabled: false, toggle: vi.fn() } }));
 // Loader lifecycle is covered separately; these tests exercise menu navigation.
-vi.mock("./inventoryArt", () => ({ InventoryArtLoader: class {
+vi.mock("./inventoryArt", () => ({ TOOL_ART_KEY: "frus-tools-v2", InventoryArtLoader: class {
   get status() { return artState.status; }
   load() {}
   destroy() {}

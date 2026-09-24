@@ -43,3 +43,6 @@ No project-wide redistribution license is currently declared in this repository.
 Generation date: 2026-09-04. Prompts and import details are in
 `docs/art/colleague_refresh.md`. Source boards are not served by Vite; only the
 small native runtime exports are loaded. Existing fallback sheets are preserved.
+
+## FRUS inventory tool atlas (2026-09-24)
+- `public/assets/presentation/frus-tools-v2.png`: original AI-generated artwork created for this project with OpenAI image generation. Transparent source retained; runtime-only frame slicing. See adjacent `PROVENANCE.md` for subjects and integration details.
