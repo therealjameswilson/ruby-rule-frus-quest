@@ -1,7 +1,7 @@
 import Phaser from "phaser";
 import { characterGroundOffset, characterPoseHeight, characterPoseCenter, groundedPoseTransform } from "../art/characterGrounding";
 import { characterAnimKey, walkingFrame } from "../art/character_anims";
-import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
+import { heroCharacterKey, characterTextureDensity, ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId } from "../game/constants";
 import { getSnesRoleFrameSheet } from "../game/snesAtlas";
@@ -115,7 +115,9 @@ export class Player {
     this.logicalX = resumeSpawn?.player.x ?? x;
     this.logicalY = resumeSpawn?.player.y ?? y;
     this.facing = resumeSpawn?.facing ?? this.facing;
-    const preferredCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive, gameState.playerProfile.compilerAppearance);
+    const baseCharacterKey = getCharacterKeyForProcessRole(gameState.playerProfile.roleId, gameState.ngPlusActive, gameState.playerProfile.compilerAppearance);
+    const hdCharacterKey = heroCharacterKey(baseCharacterKey);
+    const preferredCharacterKey = scene.textures.exists(hdCharacterKey) ? hdCharacterKey : baseCharacterKey;
     this.characterKey = scene.textures.exists(preferredCharacterKey) ? preferredCharacterKey : null;
     this.roleFrameSheet = this.characterKey ? null : this.getAvailableRoleFrameSheet(scene);
     this.spriteMode = this.characterKey
@@ -158,7 +160,7 @@ export class Player {
       const heights: number[] = [];
       const centers: number[] = [];
       for (let frame = 0; frame < 12; frame++) {
-        const alpha = (px: number, py: number) => scene.textures.getPixelAlpha(px, py, this.characterKey!, frame);
+        const alpha = (px: number, py: number) => scene.textures.getPixelAlpha(px * characterTextureDensity(this.characterKey), py * characterTextureDensity(this.characterKey), this.characterKey!, frame);
         heights[frame] = characterPoseHeight(alpha);
         centers[frame] = characterPoseCenter(alpha);
         this.groundOffsets[frame] = characterGroundOffset(alpha);
@@ -551,7 +553,8 @@ export class Player {
     this.updateRoleFrame();
     const groundOffset = this.groundOffsets[Number(this.sprite.frame.name)] ?? 0;
     if (this.spriteMode === "artPack32x48") {
-      this.sprite.setScale(1, this.poseScales[Number(this.sprite.frame.name)] ?? 1);
+      const density = characterTextureDensity(this.characterKey);
+      this.sprite.setScale(1 / density, (this.poseScales[Number(this.sprite.frame.name)] ?? 1) / density);
     }
     const poseOffsetX = (this.poseOffsetsX[Number(this.sprite.frame.name)] ?? 0) * (this.sprite.flipX ? -1 : 1);
     setRenderedPosition(this.sprite, renderX + poseOffsetX, renderY + groundOffset);
@@ -865,8 +868,8 @@ export class Player {
         // Mirror the complete rear pose for the opposite footfall instead.
         const rearStep = this.characterKey === "compiler" && directionSuffix === "up" && frame === 7;
         this.sprite.setFrame(rearStep ? 6 : frame);
-        const reverseProfile = ((this.characterKey === "compiler_maya" || this.characterKey === "compiler_robin") && frame === 9)
-          || (this.characterKey === "compiler_ada" && frame === 11);
+        const reverseProfile = ((this.characterKey?.startsWith("compiler_maya") || this.characterKey?.startsWith("compiler_robin")) && frame === 9)
+          || (this.characterKey?.startsWith("compiler_ada") && frame === 11);
         this.sprite.setFlipX(rearStep || reverseProfile);
         return;
       }

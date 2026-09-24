@@ -1,3 +1,4 @@
+import { heroCharacterKey, characterTextureDensity } from "../art/characters";
 import Phaser from "phaser";
 import { characterAnimKey } from "../art/character_anims";
 import { COMPILER_APPEARANCES, getCharacterKeyForProcessRole } from "../art/characters";
@@ -217,12 +218,13 @@ export class CharacterCreateScene extends Phaser.Scene {
   private renderAppearance() {
     const key = this.compilerCharacterKey();
     this.sprite.setTexture(key);
+    this.sprite.setScale(1.25 / characterTextureDensity(key));
     this.sprite.play(characterAnimKey(key, "idle-down"));
     this.appearanceText.setText(`${this.appearanceIndex + 1}/${COMPILER_APPEARANCES.length} ${COMPILER_APPEARANCES[this.appearanceIndex].label}`);
   }
 
   private compilerCharacterKey() {
-    return getCharacterKeyForProcessRole(FRUS_COMPILER_ROLE_ID, gameState.ngPlusActive, COMPILER_APPEARANCES[this.appearanceIndex].key);
+    return heroCharacterKey(getCharacterKeyForProcessRole(FRUS_COMPILER_ROLE_ID, gameState.ngPlusActive, COMPILER_APPEARANCES[this.appearanceIndex].key));
   }
 
   private confirm() {
