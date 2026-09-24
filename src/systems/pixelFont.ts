@@ -1,3 +1,4 @@
+import { RENDER_DENSITY } from "./renderDensity";
 import Phaser from "phaser";
 import { PIXEL_FONT_KEY, SMALL_PIXEL_FONT_KEY, SMALL_GLYPHS, pixelFontMetrics } from "./pixelFontMetrics";
 
@@ -306,6 +307,9 @@ export function installPixelTextFactory() {
     text: string | string[],
     style?: TextStyle
   ) {
+    if (RENDER_DENSITY > 1) {
+      return originalText.call(this, x, y, text, { ...style, fontFamily: style?.fontFamily === "monospace" ? "Arial, sans-serif" : style?.fontFamily, resolution: RENDER_DENSITY });
+    }
     const scene = this.scene;
     if (!scene.cache.bitmapFont.has(PIXEL_FONT_KEY)) {
       return originalText.call(this, x, y, text, style);

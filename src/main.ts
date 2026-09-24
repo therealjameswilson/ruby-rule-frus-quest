@@ -1,3 +1,4 @@
+import { installRenderDensity } from "./systems/renderDensity";
 import { libraryResearchReadout } from "./game/libraryResearch";
 import Phaser from "phaser";
 import { DANNE_DISGUISES, disguiseIndex } from "./game/danneDisguises";
@@ -659,6 +660,7 @@ function hideBootLoader() {
 }
 
 const game = new Phaser.Game(gameConfig);
+installRenderDensity(game);
 window.game = game;
 phaserGame = game;
 

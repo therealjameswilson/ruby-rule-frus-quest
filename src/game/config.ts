@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { RENDER_DENSITY } from "../systems/renderDensity";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { ArchiveScene } from "../scenes/ArchiveScene";
 import { BadEndingScene } from "../scenes/BadEndingScene";
@@ -34,8 +35,8 @@ import { WorldMapScene } from "../scenes/WorldMapScene";
 export const gameConfig: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: "game-shell",
-  width: GAME_WIDTH,
-  height: GAME_HEIGHT,
+  width: GAME_WIDTH * RENDER_DENSITY,
+  height: GAME_HEIGHT * RENDER_DENSITY,
   pixelArt: true,
   antialias: false,
   antialiasGL: false,
@@ -66,8 +67,8 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     parent: "game-shell",
     mode: Phaser.Scale.NONE,
     zoom: 1,
-    width: GAME_WIDTH,
-    height: GAME_HEIGHT,
+    width: GAME_WIDTH * RENDER_DENSITY,
+    height: GAME_HEIGHT * RENDER_DENSITY,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     // High-DPR devices can need a fractional CSS zoom that still resolves to a
     // whole-number physical pixel multiple (for example 4 / 3 on DPR 3).

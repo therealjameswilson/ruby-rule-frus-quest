@@ -1,3 +1,4 @@
+import { RENDER_DENSITY } from "../systems/renderDensity";
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { gameState } from "../game/state";
@@ -374,7 +375,7 @@ export class TouchControls {
   }
 
   private pointerPoint(pointer: Phaser.Input.Pointer) {
-    return clampToCanvas(new Phaser.Math.Vector2(Math.round(pointer.x), Math.round(pointer.y)));
+    return clampToCanvas(new Phaser.Math.Vector2(Math.round(pointer.x / RENDER_DENSITY), Math.round(pointer.y / RENDER_DENSITY)));
   }
 
   private domPointerPoint(event: PointerEvent) {

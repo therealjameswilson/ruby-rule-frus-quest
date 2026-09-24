@@ -53,7 +53,26 @@ export const EXTRA_COMPILERS = {
   compiler_quinn: "assets/characters/compilers/compiler_quinn.png"
 } as const;
 
+export const HERO_CHARACTERS = {
+  compiler_hd: "assets/characters/compilers/hd/compiler.png",
+  compiler_ada_hd: "assets/characters/compilers/hd/compiler_ada.png",
+  compiler_clara_hd: "assets/characters/compilers/hd/compiler_clara.png",
+  compiler_maya_hd: "assets/characters/compilers/hd/compiler_maya.png",
+  compiler_robin_hd: "assets/characters/compilers/hd/compiler_robin.png",
+  compiler_quinn_hd: "assets/characters/compilers/hd/compiler_quinn.png"
+} as const;
+
+export function heroCharacterKey(key: CharacterKey): CharacterKey {
+  const candidate = `${key}_hd`;
+  return Object.prototype.hasOwnProperty.call(HERO_CHARACTERS, candidate) ? candidate as CharacterKey : key;
+}
+
+export function characterTextureDensity(key: CharacterKey | null) {
+  return key?.endsWith("_hd") ? 3 : 1;
+}
+
 export const CHARACTERS = {
+  ...HERO_CHARACTERS,
   ...EXTRA_COMPILERS,
   ...BASE_CHARACTERS,
   ...VETERAN_CHARACTERS
@@ -98,8 +117,8 @@ export function getCharacterKeyForProductionColleague(colleagueId: string): Char
 export function preloadCharacters(scene: Phaser.Scene) {
   for (const key of CHARACTER_KEYS) {
     scene.load.spritesheet(key, CHARACTERS[key], {
-      frameWidth: CHARACTER_FRAME.width,
-      frameHeight: CHARACTER_FRAME.height
+      frameWidth: CHARACTER_FRAME.width * characterTextureDensity(key),
+      frameHeight: CHARACTER_FRAME.height * characterTextureDensity(key)
     });
   }
 }

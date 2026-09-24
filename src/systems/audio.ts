@@ -1,6 +1,9 @@
+import { readAudioMix, saveAudioMix, type AudioChannel } from "./audioMix";
 import { setAudioStatus } from "../game/state";
 import type { ProcessItemId } from "../game/constants";
 import { addInputGestureListener } from "../input/InputState";
+
+import { ScoreVoice } from "./scoreVoice";
 
 type Wave = OscillatorType;
 type RuntimeAudioState = AudioContextState | "interrupted" | "unavailable" | "uncreated";
@@ -295,12 +298,17 @@ function nowMs() {
 class RetroAudio {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private musicGain: GainNode | null = null;
+  private effectsGain: GainNode | null = null;
+  private mix = readAudioMix();
   private enabled = true;
   private prepared = false;
   private unlocked = false;
   private musicTimer: number | null = null;
   private crossfadeTimer: number | null = null;
   private musicStep = 0;
+  private nextMusicTime = 0;
+  private scoreVoice: ScoreVoice | null = null;
   private currentSceneKey: string | null = null;
   private currentThemeKey: string | null = null;
   private currentTheme: MidiTheme | null = null;
@@ -327,12 +335,38 @@ class RetroAudio {
     this.enabled = !this.enabled;
     if (!this.enabled) {
       this.stopMusic();
+      this.fadeMasterGain(0.0001, 0.04);
       setAudioStatus("audio muted");
       return this.enabled;
     }
     setAudioStatus("audio on");
     void this.resumeAfterGesture();
     return this.enabled;
+  }
+
+  getMix() { return { ...this.mix }; }
+
+  setChannelVolume(channel: AudioChannel, value: number) {
+    if (!Number.isFinite(value)) return;
+    this.mix[channel] = Math.max(0, Math.min(1, value));
+    saveAudioMix(this.mix);
+    if (!this.context) return;
+    if (channel === "master") this.fadeMasterGain(this.enabled ? 0.85 : 0.0001, 0.04);
+    else {
+      const gain = channel === "music" ? this.musicGain : this.effectsGain;
+      gain?.gain.setTargetAtTime(this.mix[channel], this.context.currentTime, 0.015);
+    }
+  }
+
+  private channelOutput(context: AudioContext, channel: "music" | "effects") {
+    const property = channel === "music" ? "musicGain" : "effectsGain";
+    if (!this[property]) {
+      const node = context.createGain();
+      node.gain.value = this.mix[channel];
+      node.connect(this.ensureMasterGain(context));
+      this[property] = node;
+    }
+    return this[property]!;
   }
 
   get isEnabled() {
@@ -560,12 +594,25 @@ class RetroAudio {
     this.currentThemeKey = key;
     this.musicStep = 0;
     this.fadeMasterGain(0.85, 0.2);
-    this.playMusicStep(theme);
-    this.musicTimer = window.setInterval(() => this.playMusicStep(theme), theme.stepMs);
+    this.scoreVoice = new ScoreVoice(context, this.channelOutput(context, "music"));
+    this.nextMusicTime = context.currentTime + 0.025;
+    const schedule = () => {
+      if (context.state !== "running") return;
+      // Recover from a stalled tab without playing a burst of missed notes.
+      if (this.nextMusicTime < context.currentTime - 0.15) this.nextMusicTime = context.currentTime + 0.025;
+      while (this.nextMusicTime < context.currentTime + 0.12) {
+        this.playMusicStep(theme, this.nextMusicTime);
+        this.nextMusicTime += theme.stepMs / 1000;
+      }
+    };
+    schedule();
+    this.musicTimer = window.setInterval(schedule, 25);
     setAudioStatus(`pd midi ${theme.title}`);
   }
 
   stopMusic() {
+    this.scoreVoice?.dispose();
+    this.scoreVoice = null;
     if (this.crossfadeTimer !== null && typeof window !== "undefined") {
       window.clearTimeout(this.crossfadeTimer);
       this.crossfadeTimer = null;
@@ -634,26 +681,21 @@ class RetroAudio {
     return { key, theme: PUBLIC_DOMAIN_MIDI_THEMES[key] };
   }
 
-  private playMusicStep(theme: MidiTheme) {
+  private playMusicStep(theme: MidiTheme, at: number) {
+    const step = theme.stepMs / 1000;
     const note = theme.notes[this.musicStep % theme.notes.length];
-    if (note !== null) {
-      this.tone(midiToFrequency(note), Math.min(0.16, (theme.stepMs / 1000) * 0.68), theme.gain ?? 0.012, theme.wave ?? "square");
-    }
+    if (note != null) this.scoreVoice?.play(midiToFrequency(note), at, step * 0.85, (theme.gain ?? 0.012) * 2.4, "lead");
     if (theme.counter && this.musicStep % 2 === 1) {
       const counter = theme.counter[this.musicStep % theme.counter.length];
-      if (counter !== null) {
-        window.setTimeout(() => {
-          this.tone(midiToFrequency(counter), Math.min(0.15, (theme.stepMs / 1000) * 0.62), theme.counterGain ?? 0.0045, "triangle");
-        }, Math.max(24, Math.round(theme.stepMs * 0.36)));
-      }
+      if (counter != null) this.scoreVoice?.play(midiToFrequency(counter), at + step * 0.36, step, (theme.counterGain ?? 0.0045) * 2, "counter");
     }
     if (theme.bass && this.musicStep % 4 === 0) {
       const bass = theme.bass[Math.floor(this.musicStep / 4) % theme.bass.length];
-      this.tone(midiToFrequency(bass), Math.min(0.18, (theme.stepMs / 1000) * 0.85), theme.bassGain ?? 0.008, "triangle");
+      this.scoreVoice?.play(midiToFrequency(bass), at, step * 3.2, (theme.bassGain ?? 0.008) * 2, "bass");
     }
     if (theme.pedal && this.musicStep % 8 === 0) {
       const pedal = theme.pedal[Math.floor(this.musicStep / 8) % theme.pedal.length];
-      this.tone(midiToFrequency(pedal), Math.min(0.55, (theme.stepMs / 1000) * 2.7), 0.005, "sawtooth");
+      this.scoreVoice?.play(midiToFrequency(pedal), at, step * 6, 0.009, "pad");
     }
     this.musicStep += 1;
   }
@@ -674,7 +716,7 @@ class RetroAudio {
       this.installGestureResume();
       return;
     }
-    const output = this.ensureMasterGain(context);
+    const output = this.channelOutput(context, "effects");
     const osc = context.createOscillator();
     const gain = context.createGain();
     osc.type = wave;
@@ -684,6 +726,7 @@ class RetroAudio {
     gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
     osc.connect(gain);
     gain.connect(output);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
     osc.start();
     osc.stop(context.currentTime + duration + 0.02);
   }
@@ -717,7 +760,7 @@ class RetroAudio {
   private ensureMasterGain(context: AudioContext) {
     if (!this.masterGain) {
       this.masterGain = context.createGain();
-      this.masterGain.gain.setValueAtTime(0.85, context.currentTime);
+      this.masterGain.gain.setValueAtTime(0.85 * this.mix.master, context.currentTime);
       this.masterGain.connect(context.destination);
     }
     return this.masterGain;
@@ -728,7 +771,7 @@ class RetroAudio {
     if (!context || !this.masterGain) return;
     const gain = this.masterGain.gain;
     gain.cancelScheduledValues(context.currentTime);
-    gain.setTargetAtTime(target, context.currentTime, Math.max(0.01, seconds / 4));
+    gain.setTargetAtTime(target * this.mix.master, context.currentTime, Math.max(0.01, seconds / 4));
   }
 
   private installGestureResume() {

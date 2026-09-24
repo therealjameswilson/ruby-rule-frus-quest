@@ -1,3 +1,5 @@
+import type { AudioChannel } from "./audioMix";
+import { RENDER_DENSITY } from "./renderDensity";
 import Phaser from "phaser";
 import { ACCESSIBILITY_OVERLAYS, FRUS_VOLUMES } from "../assets/registry";
 import { FRUS_ROOM_GRAPH, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -90,7 +92,7 @@ export class InventoryOverlay {
     this.container = scene.add.container(0, 0, [dim, panel, this.content])
       .setName("pause-menu").setDepth(2000).setVisible(false).setScrollFactor(0);
     // One capture surface: hidden pages cannot keep invisible hit targets alive.
-    bindPointerPress(dim, { down: (pointer) => this.handlePointer(pointer.x, pointer.y) });
+    bindPointerPress(dim, { down: (pointer) => this.handlePointer(pointer.x / RENDER_DENSITY, pointer.y / RENDER_DENSITY) });
     updateInputCallbacks({ handlePauseTouch: (point) => this.handlePointer(point.x, point.y) });
     scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.onScenePointer, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -172,7 +174,7 @@ export class InventoryOverlay {
     } else if (this.page === "settings") {
       if (direction === "up" && this.settingsIndex === 0) this.focusHeader();
       else if (direction === "up") this.settingsIndex--;
-      else if (direction === "down") this.settingsIndex = Math.min(3, this.settingsIndex + 1);
+      else if (direction === "down") this.settingsIndex = Math.min(this.detailOpen ? 2 : 3, this.settingsIndex + 1);
     } else if (direction === "up") this.focusHeader();
     else if (direction === "left" || direction === "right") this.cycleContent(direction === "left" ? -1 : 1);
   }
@@ -204,7 +206,7 @@ export class InventoryOverlay {
     return true;
   }
 
-  private onScenePointer(pointer: Phaser.Input.Pointer) { this.handlePointer(pointer.x, pointer.y); }
+  private onScenePointer(pointer: Phaser.Input.Pointer) { this.handlePointer(pointer.x / RENDER_DENSITY, pointer.y / RENDER_DENSITY); }
 
   private text(x: number, y: number, value: string, tint: string = PALETTE.white, center = false, fontSize = 8) {
     const text = this.scene.add.text(x, y, value, {
@@ -515,10 +517,22 @@ export class InventoryOverlay {
   }
 
   private renderSettings() {
+    if (this.detailOpen) {
+      const mix = retroAudio.getMix();
+      (["master", "music", "effects"] as AudioChannel[]).forEach((channel,index) => {
+        const hit = { id: `mix-${channel}`, x: 128, y: 90 + index * 44, width: 224, height: 44 };
+        const selected = this.focus === "content" && this.settingsIndex === index;
+        this.box(hit.x,hit.y,216,32,selected ? PALETTE.deepRuby : PALETTE.black, selected ? PALETTE.goldStamp : PALETTE.stoneGray);
+        this.text(128,hit.y-5,`${channel.toUpperCase()}  ${Math.round(mix[channel]*100)}%`,PALETTE.creamPaper,true);
+        this.control(hit,()=>{this.settingsIndex=index;this.settingAction(index);});
+      });
+      this.text(128,218,"A / TAP: ADJUST    B: BACK",PALETTE.goldStamp,true);
+      return;
+    }
     const labels = [
       `${getString("pause.contrast")} [${isColorblindModeEnabled() ? "+" : " "}]`,
       getString("language.label", { language: getLanguage().toUpperCase() }),
-      `${getString("pause.sound")} [${retroAudio.isEnabled ? "+" : " "}]`,
+      `${getString("pause.sound")} / MIX`,
       getString("pause.codex")
     ];
     labels.forEach((label, index) => {
@@ -531,9 +545,16 @@ export class InventoryOverlay {
   }
 
   private settingAction(index: number) {
+    if (this.detailOpen) {
+      const channel = (["master","music","effects"] as AudioChannel[])[index];
+      const current = retroAudio.getMix()[channel];
+      retroAudio.setChannelVolume(channel, current >= 1 ? 0 : Math.min(1,Math.round(current*4+1)/4));
+      if (!retroAudio.isEnabled && retroAudio.getMix().master > 0) retroAudio.toggle();
+      retroAudio.confirm(); this.render(); return;
+    }
     if (index === 0) toggleColorblindMode();
     if (index === 1) cycleLanguage();
-    if (index === 2) retroAudio.toggle();
+    if (index === 2) { this.detailOpen = true; this.settingsIndex = 0; }
     if (index === 3) { this.hide(); openCodex(this.scene); return; }
     retroAudio.confirm(); this.render();
   }
