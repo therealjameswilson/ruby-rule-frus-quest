@@ -1,9 +1,10 @@
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
-import { createDanneScrollFrame } from "../game/danneUiSlices";
+import { presentationPanel, PANEL_COLORS } from "./presentationPanel";
 import { clearDialogState, setDialogState } from "../game/state";
 import {
   bindPointerPress,
+  getPrimaryActionBadge,
   isTouchInputCapable,
   setTouchControl,
   swallowNextInputFrame,
@@ -19,6 +20,7 @@ export class DialogBox {
   private readonly container: Phaser.GameObjects.Container;
   private readonly speakerText: Phaser.GameObjects.Text;
   private readonly bodyText: Phaser.GameObjects.Text;
+  private readonly advanceText: Phaser.GameObjects.Text;
   private pages: string[] = [];
   private speaker = "";
   private index = 0;
@@ -30,23 +32,26 @@ export class DialogBox {
     this.scene = scene;
     const touch = isTouchInputCapable();
     const fontSize = 8;
-    const frameHeight = 60;
-    const frameY = GAME_HEIGHT - frameHeight - 4 - (touch && options.aboveTouchControls ? 64 : 0);
-    const speakerY = frameY + 10;
-    const bodyY = frameY + 24;
-    const frame = createDanneScrollFrame(scene, 6, frameY, GAME_WIDTH - 12, frameHeight);
-    this.speakerText = scene.add.text(34, speakerY, "", {
-      fontFamily: "monospace",
+    const frameHeight = 64;
+    const frameY = GAME_HEIGHT - frameHeight - 4 - (touch && options.aboveTouchControls !== false ? 64 : 0);
+    const speakerY = frameY + 6;
+    const bodyY = frameY + 25;
+    const frame = presentationPanel(scene, 8, frameY, GAME_WIDTH - 16, frameHeight, true);
+    this.speakerText = scene.add.text(18, speakerY, "", {
+      fontFamily: "Arial",
       fontSize: `${fontSize}px`,
       color: PALETTE.goldStamp
     }).setScrollFactor(0);
-    this.bodyText = scene.add.text(34, bodyY, "", {
-      fontFamily: "monospace",
-      fontSize: `${fontSize}px`,
-      color: PALETTE.creamPaper,
-      wordWrap: { width: 188, useAdvancedWrap: true },
-      lineSpacing: 0
+    this.bodyText = scene.add.text(18, bodyY, "", {
+      fontFamily: "Arial",
+      fontSize: "10px",
+      color: PANEL_COLORS.text,
+      wordWrap: { width: 220, useAdvancedWrap: true },
+      lineSpacing: 1
     }).setScrollFactor(0);
+    this.advanceText = scene.add.text(GAME_WIDTH - 18, frameY + 54, "", {
+      fontFamily: "Arial", fontSize: "6px", color: PANEL_COLORS.muted
+    }).setOrigin(1, 0).setScrollFactor(0);
     bindPointerPress(frame.hitArea, {
       down: () => this.pressAdvance(),
       up: () => this.releaseAdvance(),
@@ -54,7 +59,7 @@ export class DialogBox {
     });
     updateInputCallbacks({ fastForwardDialog: () => this.fastForward() });
     this.container = scene.add
-      .container(0, 0, [...frame.objects, this.speakerText, this.bodyText])
+      .container(0, 0, [...frame.objects, this.speakerText, this.bodyText, this.advanceText])
       .setDepth(900)
       .setVisible(false)
       .setScrollFactor(0);
@@ -98,6 +103,7 @@ export class DialogBox {
     const text = this.pages[this.index] ?? "";
     this.speakerText.setText(dialogHeading(this.speaker, this.index, this.pages.length));
     this.bodyText.setText(text);
+    this.advanceText.setText(isTouchInputCapable() ? "TAP TO CONTINUE" : `${getPrimaryActionBadge()} CONTINUE`);
     retroAudio.blip();
     setDialogState(this.speaker, text);
   }

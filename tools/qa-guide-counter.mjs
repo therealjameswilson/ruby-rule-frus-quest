@@ -25,12 +25,12 @@ else {
     await page.mouse.click(p.x, p.y, { delay: 45 });
 } await page.waitForTimeout(100); }
 async function press(key = 'Space', wait = 150) { if (mobile)
-    await touch(...(key === 'x' ? [174, 216] : key === 'm' ? [224, 16] : [225, 205]));
+    await touch(...(key === 'x' ? [174, 216] : key === 'm' ? [120, 216] : [225, 205]));
 else
     await page.keyboard.press(key, { delay: 45 }); await page.waitForTimeout(wait); await completeCompilerCheckpoint(page); }
 async function direction(key, ms = 85) { if (mobile) {
     const [dx, dy] = { ArrowLeft: [-26, 0], ArrowRight: [26, 0], ArrowUp: [0, -26], ArrowDown: [0, 26] }[key];
-    await touch(40, 178, dx, dy, ms);
+    await touch(48, 202, dx, dy, ms);
 }
 else {
     await page.keyboard.down(key);
@@ -252,7 +252,7 @@ try {
     for (let attempt = 0; attempt < 8 && !((await state()).sceneProgress.guideCitationCounterTrained); attempt++) {
         await page.waitForFunction(() => { const s = JSON.parse(window.render_game_to_text()), b = s.guideCounter?.bolt; return b && !b.returned && Math.abs(b.x - s.player.x) < 10 && b.y < s.player.y - 27 && b.y > s.player.y - 43; }, null, { timeout: 12000, polling: 'raf' });
         if (mobile) {
-            const start = await point(40, 178, 1), pad = await point(40, 152, 1), button = await point(174, 216, 2);
+            const start = await point(48, 202, 1), pad = await point(48, 176, 1), button = await point(174, 216, 2);
             await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [start] });
             await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [pad] });
             await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [pad, button] });
