@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { RENDER_DENSITY, configureLogicalCameras } from "./renderDensity";
 import { GAME_HEIGHT, GAME_WIDTH } from "../game/constants";
 
 export interface IntegerZoomMetrics {
@@ -131,20 +132,13 @@ export function measurePixelScale(
       && Math.abs(physicalPixelsX - target) < 0.001 && Math.abs(physicalPixelsY - target) < 0.001 };
 }
 
-function roundActiveCameras(game: Phaser.Game) {
-  for (const scene of game.scene.getScenes(true)) {
-    for (const camera of scene.cameras.cameras) {
-      camera.roundPixels = true;
-    }
-  }
-}
-
 export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
   const { cssZoom, deviceZoom, dpr } = configureIntegerGameShellScale();
   const canvas = game.canvas;
 
   game.scale.getParentBounds();
-  if (Math.abs(game.scale.zoom - cssZoom) > 0.001) game.scale.setZoom(cssZoom);
+  const displayZoom = cssZoom / RENDER_DENSITY;
+  if (Math.abs(game.scale.zoom - displayZoom) > 0.001) game.scale.setZoom(displayZoom);
   // Keep the painted surface native-sized; fractional CSS widths may be rounded
   // before rasterization. Scale the compositor layer instead of its layout box.
   canvas.style.width = `${GAME_WIDTH}px`;
@@ -152,15 +146,12 @@ export function applyIntegerZoom(game: Phaser.Game): IntegerZoomMetrics {
   canvas.style.transformOrigin = "0 0";
   canvas.style.transform = `scale(${cssZoom})`;
   canvas.style.margin = "0";
-  // Phaser owns the logical drawing buffer and camera viewports. Resizing either
-  // after WebGL initialization clears the buffer and moves the 256x240 camera
-  // into physical-pixel space. CSS nearest-neighbor scaling still maps each
-  // logical pixel to exactly `deviceZoom` physical pixels.
-  roundActiveCameras(game);
+  // Render at higher density while cameras retain the 256x240 world.
+  configureLogicalCameras(game);
   // Refresh pointer mapping after CSS positioning, without resizing the logical world.
   game.scale.updateBounds();
   const rect = canvas.getBoundingClientRect();
-  game.scale.displayScale.set(GAME_WIDTH / rect.width, GAME_HEIGHT / rect.height);
+  game.scale.displayScale.set(GAME_WIDTH * RENDER_DENSITY / rect.width, GAME_HEIGHT * RENDER_DENSITY / rect.height);
 
   return {
     ...measurePixelScale(rect, dpr, deviceZoom, window.visualViewport?.scale ?? 1),

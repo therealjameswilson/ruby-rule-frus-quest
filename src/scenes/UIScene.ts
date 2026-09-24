@@ -158,7 +158,8 @@ export class UIScene extends Phaser.Scene {
     this.questBandText = this.add.text(layout.objective.x, layout.objective.y, "", {
       fontFamily: "monospace",
       fontSize: "8px",
-      color: PALETTE.creamPaper,
+      fontStyle: "bold",
+      color: "#fff1d5",
       fixedWidth: layout.objective.width
     })
       .setDepth(20401)
@@ -284,7 +285,7 @@ export class UIScene extends Phaser.Scene {
     this.questBandCueText.setText(clampQuestBandText(actionLine, QUEST_BAND_LAYOUT.actionCue.maxChars));
     this.questBandCueText.setColor(riskLine || bossCue?.tone === "warn" ? PALETTE.classNetRed : PALETTE.terminalCyan);
     this.questBandToolText.setText(clampQuestBandText(
-      getString("hud.toolLabel", { label: toolLabel }),
+      toolLabel,
       QUEST_BAND_LAYOUT.toolLabel.maxChars
     ));
   }
@@ -441,15 +442,17 @@ export class UIScene extends Phaser.Scene {
 
   private drawQuestBandChrome(filledHearts: number, totalHearts: number) {
     const g = this.questBandGraphics;
-    g.fillStyle(color(PALETTE.black), 0.96);
+    // Quiet navy/ruby panels with a single gold rule; hierarchy comes from
+    // spacing and typography rather than nested one-pixel boxes.
+    g.fillStyle(0x101822, 0.96);
     g.fillRect(0, 0, GAME_WIDTH, QUEST_BAND_HEIGHT);
-    g.fillStyle(color(PALETTE.deepRuby), 0.86);
-    g.fillRect(0, QUEST_BAND_LAYOUT.actionBadge.y - 1, GAME_WIDTH, 9);
-    g.fillStyle(color(PALETTE.goldStamp), 1);
-    g.fillRect(0, 0, GAME_WIDTH, 1);
-    g.fillRect(0, QUEST_BAND_HEIGHT - 1, GAME_WIDTH, 1);
-    g.fillStyle(color(PALETTE.black), 0.72);
-    g.fillRect(0, QUEST_BAND_LAYOUT.actionBadge.y, GAME_WIDTH, 7);
+    g.fillStyle(0x201824, 0.94);
+    g.fillRect(0, 14, GAME_WIDTH, 10);
+    g.fillStyle(0xd5b779, 0.5);
+    g.fillRect(0, QUEST_BAND_HEIGHT - 0.5, GAME_WIDTH, 0.5);
+    g.fillStyle(0xffffff, 0.09);
+    g.fillRect(38, 3, 0.33, 8);
+    g.fillRect(167, 3, 0.33, 8);
     for (let index = 0; index < totalHearts; index += 1) {
       const column = index % QUEST_BAND_LAYOUT.hearts.columns;
       const row = Math.floor(index / QUEST_BAND_LAYOUT.hearts.columns);
@@ -494,20 +497,16 @@ export class UIScene extends Phaser.Scene {
     const clampedTotal = Math.max(1, Math.min(5, readout.total));
     const filled = Math.max(0, Math.min(clampedTotal, readout.earnedCount));
     const { x, y, width, height } = QUEST_BAND_LAYOUT.assembly;
-    g.fillStyle(color(PALETTE.black), 0.9);
-    g.fillRect(x, y, width, height);
-    g.lineStyle(1, color(filled >= clampedTotal ? PALETTE.goldStamp : PALETTE.stoneGray), 0.95);
-    g.strokeRect(x, y, width, height);
     const segmentWidth = 6;
     const segmentGap = 2;
     for (let index = 0; index < clampedTotal; index += 1) {
       const pieceX = x + 2 + index * (segmentWidth + segmentGap);
       const earned = index < filled;
-      g.fillStyle(color(earned ? PALETTE.goldStamp : PALETTE.stoneDark), earned ? 1 : 0.76);
-      g.fillRect(pieceX, y + 2, segmentWidth, 3);
+      g.fillStyle(earned ? 0xd5b779 : 0x48505c, earned ? 1 : 0.75);
+      g.fillRoundedRect(pieceX, y + 2, segmentWidth, 3, 1.3);
       if (earned) {
-        g.fillStyle(color(PALETTE.creamPaper), 1);
-        g.fillRect(pieceX + 1, y + 2, 1, 1);
+        g.fillStyle(0xffefd1, 0.6);
+        g.fillRect(pieceX + 1, y + 2.4, segmentWidth - 2, 0.4);
       }
     }
   }
@@ -515,13 +514,30 @@ export class UIScene extends Phaser.Scene {
   private drawQuestBandToolSlot(acquired: boolean, cooldownRatio = 0, phase: string = "idle") {
     const g = this.questBandGraphics;
     const { x, y, size } = QUEST_BAND_LAYOUT.toolIcon;
-    g.lineStyle(1, color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray), 1);
-    g.fillStyle(color(acquired ? PALETTE.deepRuby : PALETTE.black), 0.95);
-    g.fillRect(x, y, size, size);
-    g.strokeRect(x, y, size, size);
-    g.fillStyle(color(acquired ? PALETTE.goldStamp : PALETTE.stoneGray), 1);
-    g.fillRect(x + 2, y + 2, 6, 2);
-    g.fillRect(x + 4, y + 4, 2, 4);
+    const ink = acquired ? 0xe8c88a : 0x627083;
+    g.fillStyle(0x35404b, 0.8);
+    g.fillRoundedRect(x - 1, y, size + 2, size + 1, 2);
+    g.lineStyle(0.8, ink, 1);
+    g.fillStyle(ink, 1);
+    const tool = gameState.equippedProcessItem;
+    if (tool === "red_pencil") {
+      g.lineStyle(1.8, 0xf28f86, 1);
+      g.lineBetween(x + 3, y + 7, x + 7, y + 2);
+      g.fillTriangle(x + 2, y + 9, x + 3, y + 6, x + 5, y + 8);
+    } else if (tool === "review_folder") {
+      g.fillRoundedRect(x + 1, y + 3, 8, 6, 1);
+      g.fillRect(x + 1, y + 2, 4, 2);
+      g.lineStyle(0.6, 0x35404b, 1);
+      g.lineBetween(x + 3, y + 5, x + 7, y + 5);
+    } else if (tool === "citation_stamp") {
+      g.fillRoundedRect(x + 3, y + 1, 4, 4, 1.5);
+      g.fillRect(x + 4, y + 4, 2, 3);
+      g.fillRoundedRect(x + 1, y + 7, 8, 2, 0.6);
+    } else {
+      g.fillRoundedRect(x + 1, y + 3, 8, 2.4, 1);
+      g.fillRect(x + 7, y + 4, 2, 4);
+      g.fillRoundedRect(x + 1, y + 7, 8, 1.4, 0.6);
+    }
     if (acquired && cooldownRatio > 0) {
       const barHeight = Math.max(1, Math.round(6 * cooldownRatio));
       g.fillStyle(color(PALETTE.black), 0.74);
@@ -538,10 +554,8 @@ export class UIScene extends Phaser.Scene {
     const g = this.questBandGraphics;
     const accent = gameState.nearestInteractable ? PALETTE.goldStamp : PALETTE.terminalCyan;
     const { x, y, width, height } = QUEST_BAND_LAYOUT.actionBadge;
-    g.fillStyle(color(accent), 0.95);
-    g.fillRect(x, y, width, height);
-    g.lineStyle(1, color(PALETTE.goldStamp), 1);
-    g.strokeRect(x, y, width, height);
+    g.fillStyle(color(accent), 0.92);
+    g.fillRoundedRect(x, y, width, height - 1, 2);
   }
 
   private showGamepadToast(message: string) {

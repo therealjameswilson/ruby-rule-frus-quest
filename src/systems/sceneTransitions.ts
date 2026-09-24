@@ -4,6 +4,7 @@ import type { Direction } from "../game/constants";
 import type { ChapterTravelData } from "../game/chapterTravel";
 import { beginSnesTransition, completeSnesTransition } from "../game/state";
 import { retroAudio } from "./audio";
+import { prefersReducedMotion } from "./motionPreferences";
 import { drawDungeonStoneBlock } from "./dungeonWallArt";
 
 function color(hex: string) {
@@ -21,6 +22,10 @@ export function transitionTo(scene: Phaser.Scene, target: string, data?: Chapter
     label: sceneLabel(target),
     onCovered: () => {
       completeSnesTransition();
+      const destination = scene.scene.get(target);
+      destination.events.once(Phaser.Scenes.Events.CREATE, () => {
+        destination.cameras.main.fadeIn(prefersReducedMotion() ? 80 : 220, 17, 14, 24);
+      });
       scene.scene.start(target, data ?? {});
     }
   });
@@ -43,102 +48,52 @@ function sceneLabel(target: string) {
     .toUpperCase();
 }
 
-function transitionOrder(cells: Phaser.GameObjects.Rectangle[], direction?: Direction) {
-  const keyed = cells.map((cell) => ({ cell, x: cell.x, y: cell.y }));
-  if (direction === "east") return keyed.sort((a, b) => b.x - a.x || a.y - b.y).map((item) => item.cell);
-  if (direction === "west") return keyed.sort((a, b) => a.x - b.x || a.y - b.y).map((item) => item.cell);
-  if (direction === "north") return keyed.sort((a, b) => a.y - b.y || a.x - b.x).map((item) => item.cell);
-  if (direction === "south") return keyed.sort((a, b) => b.y - a.y || a.x - b.x).map((item) => item.cell);
-  const centerX = GAME_WIDTH / 2;
-  const centerY = GAME_HEIGHT / 2;
-  return keyed
-    .sort((a, b) => Math.abs(a.x - centerX) + Math.abs(a.y - centerY) - (Math.abs(b.x - centerX) + Math.abs(b.y - centerY)))
-    .map((item) => item.cell);
-}
-
+// Retain the exported name for existing callers and saved campaign tooling.
+// A single directional curtain replaces the old hundreds-of-tiles mosaic.
 export function playRubyMosaicTransition(scene: Phaser.Scene, options: RubyMosaicTransitionOptions) {
-  const overlay = scene.add.container(0, 0).setDepth(5000);
-  const cells: Phaser.GameObjects.Rectangle[] = [];
-  const palette = [PALETTE.black, PALETTE.deepRuby, PALETTE.buckramRed, PALETTE.black];
-  const cellSize = 16;
-  for (let y = 0; y < GAME_HEIGHT; y += cellSize) {
-    for (let x = 0; x < GAME_WIDTH; x += cellSize) {
-      const fill = palette[((x / cellSize) + (y / cellSize)) % palette.length];
-      const cell = scene.add.rectangle(x, y, cellSize, cellSize, color(fill)).setOrigin(0, 0).setVisible(false);
-      cells.push(cell);
-      overlay.add(cell);
-    }
-  }
-
-  const plateShadow = scene.add.rectangle(130, 122, 150, 38, color(PALETTE.black)).setVisible(false);
-  const plate = scene.add.rectangle(128, 119, 150, 38, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setVisible(false);
-  const title = scene.add.text(128, 107, options.label.slice(0, 24), {
-    fontFamily: "monospace",
-    fontSize: "8px",
-    color: PALETTE.creamPaper
-  }).setOrigin(0.5, 0).setVisible(false);
-  const subtitle = scene.add.text(
-    128,
-    123,
-    options.fromRoomId && options.toRoomId ? `${options.fromRoomId} -> ${options.toRoomId}` : "FRUS QUEST ROUTE",
-    {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp
-    }
-  ).setOrigin(0.5, 0).setVisible(false);
-  const stitchA = scene.add.rectangle(75, 134, 58, 2, color(PALETTE.goldStamp)).setVisible(false);
-  const stitchB = scene.add.rectangle(181, 134, 58, 2, color(PALETTE.goldStamp)).setVisible(false);
-  overlay.add([plateShadow, plate, title, subtitle, stitchA, stitchB]);
-
-  const ordered = transitionOrder(cells, options.direction);
-  const showPlate = (visible: boolean) => {
-    plateShadow.setVisible(visible);
-    plate.setVisible(visible);
-    title.setVisible(visible);
-    subtitle.setVisible(visible);
-    stitchA.setVisible(visible);
-    stitchB.setVisible(visible);
+  const reduced = prefersReducedMotion();
+  const overlay = scene.add.container(0, 0).setDepth(5000).setScrollFactor(0);
+  const curtain = scene.add.rectangle(128, 120, GAME_WIDTH + 2, GAME_HEIGHT + 2, 0x110e18);
+  const band = scene.add.rectangle(128, 123, GAME_WIDTH + 2, 64, 0x301722);
+  const rule = scene.add.rectangle(128, 91, 36, 1, 0xd9b66f);
+  const title = scene.add.text(128, 110, options.label, {
+    fontFamily: "monospace", fontSize: "10px", color: "#fff0d4",
+    align: "center", wordWrap: { width: 224 }
+  }).setOrigin(0.5);
+  const subtitle = scene.add.text(128, 142,
+    options.fromRoomId && options.toRoomId ? `${options.fromRoomId}  /  ${options.toRoomId}` : "THE FRUS QUEST",
+    { fontFamily: "monospace", fontSize: "6px", color: "#d9b66f", letterSpacing: 2 }
+  ).setOrigin(0.5);
+  overlay.add([curtain, band, rule, title, subtitle]);
+  const offset = options.direction === "east" ? { x: GAME_WIDTH + 2, y: 0 }
+    : options.direction === "west" ? { x: -GAME_WIDTH - 2, y: 0 }
+    : options.direction === "north" ? { x: 0, y: -GAME_HEIGHT - 2 }
+    : { x: 0, y: GAME_HEIGHT + 2 };
+  if (reduced || !options.direction) overlay.setAlpha(0);
+  else overlay.setPosition(offset.x, offset.y);
+  let cancelled = false;
+  const shutdown = () => { cancelled = true; scene.tweens.killTweensOf(overlay); };
+  scene.events.once(Phaser.Scenes.Events.SHUTDOWN, shutdown);
+  const cleanup = () => {
+    scene.events.off(Phaser.Scenes.Events.SHUTDOWN, shutdown);
+    overlay.destroy();
   };
-  const reveal = () => {
-    showPlate(false);
-    const reversed = [...ordered].reverse();
-    let index = 0;
-    let event: Phaser.Time.TimerEvent;
-    event = scene.time.addEvent({
-      delay: 8,
-      loop: true,
-      callback: () => {
-        for (let i = 0; i < 14 && index < reversed.length; i += 1) {
-          reversed[index].setVisible(false);
-          index += 1;
-        }
-        if (index >= reversed.length) {
-          event.remove(false);
-          overlay.destroy();
-          options.onComplete?.();
-        }
-      }
-    });
-  };
-  let index = 0;
-  let event: Phaser.Time.TimerEvent;
-  event = scene.time.addEvent({
-    delay: 10,
-    loop: true,
-    callback: () => {
-      for (let i = 0; i < 12 && index < ordered.length; i += 1) {
-        ordered[index].setVisible(true);
-        index += 1;
-      }
-      if (index >= ordered.length) {
-        event.remove(false);
-        showPlate(true);
-        scene.time.delayedCall(80, () => {
-          options.onCovered();
-          if (options.revealAfterCovered) scene.time.delayedCall(40, reveal);
+  scene.tweens.add({
+    targets: overlay, x: 0, y: 0, alpha: 1,
+    duration: reduced ? 80 : 180, ease: "Cubic.easeOut",
+    onComplete: () => {
+      scene.time.delayedCall(reduced ? 60 : 160, () => {
+        if (cancelled) return;
+        options.onCovered();
+        if (!options.revealAfterCovered || cancelled) return;
+        scene.tweens.add({
+          targets: overlay, alpha: 0,
+          x: reduced ? 0 : -offset.x * 0.08,
+          y: reduced ? 0 : -offset.y * 0.08,
+          duration: reduced ? 80 : 220, ease: "Sine.easeInOut",
+          onComplete: () => { cleanup(); options.onComplete?.(); }
         });
-      }
+      });
     }
   });
 }

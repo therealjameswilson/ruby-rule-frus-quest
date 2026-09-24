@@ -1,3 +1,5 @@
+// Legacy bitmap compatibility remains available at native rendering density.
+vi.mock("./renderDensity", () => ({ RENDER_DENSITY: 1 }));
 import Phaser from "phaser";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { installPixelTextFactory } from "./pixelFont";

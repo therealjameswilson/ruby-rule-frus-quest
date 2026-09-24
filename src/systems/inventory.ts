@@ -1,3 +1,4 @@
+import { RENDER_DENSITY } from "./renderDensity";
 import Phaser from "phaser";
 import { ACCESSIBILITY_OVERLAYS, FRUS_VOLUMES } from "../assets/registry";
 import { FRUS_ROOM_GRAPH, GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -90,7 +91,7 @@ export class InventoryOverlay {
     this.container = scene.add.container(0, 0, [dim, panel, this.content])
       .setName("pause-menu").setDepth(2000).setVisible(false).setScrollFactor(0);
     // One capture surface: hidden pages cannot keep invisible hit targets alive.
-    bindPointerPress(dim, { down: (pointer) => this.handlePointer(pointer.x, pointer.y) });
+    bindPointerPress(dim, { down: (pointer) => this.handlePointer(pointer.x / RENDER_DENSITY, pointer.y / RENDER_DENSITY) });
     updateInputCallbacks({ handlePauseTouch: (point) => this.handlePointer(point.x, point.y) });
     scene.input.on(Phaser.Input.Events.POINTER_DOWN, this.onScenePointer, this);
     scene.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
@@ -204,7 +205,7 @@ export class InventoryOverlay {
     return true;
   }
 
-  private onScenePointer(pointer: Phaser.Input.Pointer) { this.handlePointer(pointer.x, pointer.y); }
+  private onScenePointer(pointer: Phaser.Input.Pointer) { this.handlePointer(pointer.x / RENDER_DENSITY, pointer.y / RENDER_DENSITY); }
 
   private text(x: number, y: number, value: string, tint: string = PALETTE.white, center = false, fontSize = 8) {
     const text = this.scene.add.text(x, y, value, {

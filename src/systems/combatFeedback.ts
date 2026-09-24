@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { prefersReducedMotion } from "./motionPreferences";
 
 export type HitFeedbackKind =
   | "player-hurt"
@@ -42,7 +43,7 @@ export function resolveHitFeedback(kind: HitFeedbackKind, scale = 1): HitFeedbac
 export function applyHitShake(scene: Phaser.Scene, kind: HitFeedbackKind, scale = 1): HitFeedbackProfile {
   const profile = resolveHitFeedback(kind, scale);
   const camera = scene.cameras?.main;
-  if (camera && profile.intensity > 0 && profile.duration > 0) {
+  if (!prefersReducedMotion() && camera && profile.intensity > 0 && profile.duration > 0) {
     camera.shake(profile.duration, profile.intensity);
   }
   return profile;
