@@ -1,3 +1,4 @@
+import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import { addVaultEnvironment, VAULT_STONE } from "../systems/vaultEnvironment";
 import Phaser from "phaser";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
@@ -201,6 +202,11 @@ export abstract class DanneMapScene extends Phaser.Scene {
           frameHeight: asset.frameH
         });
       }
+    }
+    if (this.geometry.sceneKey === "BlackVaultLairScene" && !this.textures.exists(DANNE_BOSS_HD.key)) {
+      this.load.spritesheet(DANNE_BOSS_HD.key, DANNE_BOSS_HD.path, {
+        frameWidth: DANNE_BOSS_HD.frameW, frameHeight: DANNE_BOSS_HD.frameH
+      });
     }
     if (!this.textures.exists(DANNE_BOSS_SPRITE_ASSET.key)) {
       this.load.spritesheet(DANNE_BOSS_SPRITE_ASSET.key, DANNE_BOSS_SPRITE_ASSET.path, {
