@@ -1,3 +1,4 @@
+import { addArchiveEnvironment, ARCHIVE_PROPS } from "../systems/archiveEnvironment";
 import { presentationPanel, PANEL_COLORS } from "../systems/presentationPanel";
 import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import { addVaultEnvironment, VAULT_STONE } from "../systems/vaultEnvironment";
@@ -174,6 +175,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   preload() {
     if (this.geometry.sceneKey === "NaraStacksScene") {
+      if (!this.textures.exists(ARCHIVE_PROPS.key)) this.load.image(ARCHIVE_PROPS.key, ARCHIVE_PROPS.path);
       const asset = SECRET_READING_ROOM_ASSETS.tilesetNative;
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
     }
@@ -553,7 +555,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       addSnesSenateHearingChamberTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "NaraStacksScene") {
-      addSnesNaraStacksTileRoom(this, { depth: -18 });
+      if (!addArchiveEnvironment(this)) addSnesNaraStacksTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "EmbassyCableRoomScene") {
       addSnesEmbassyCableRoomTileRoom(this, { depth: -18 });

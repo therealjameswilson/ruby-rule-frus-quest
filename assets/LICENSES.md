@@ -46,3 +46,6 @@ small native runtime exports are loaded. Existing fallback sheets are preserved.
 
 ## FRUS inventory tool atlas (2026-09-24)
 - `public/assets/presentation/frus-tools-v2.png`: original AI-generated artwork created for this project with OpenAI image generation. Transparent source retained; runtime-only frame slicing. See adjacent `PROVENANCE.md` for subjects and integration details.
+
+## NARA environment props (2026-09-24)
+- `public/assets/art-pack/archive-environment/props-v2.png`: original AI-generated archive shelving and cartons created for this game with OpenAI image generation. Source RGBA preserved. See adjacent provenance file. Floor, walls and illumination are original canvas code.
