@@ -1,3 +1,4 @@
+vi.mock("./renderDensity", () => ({ RENDER_DENSITY: 1 }));
 import { describe, expect, it, vi } from "vitest";
 import type Phaser from "phaser";
 

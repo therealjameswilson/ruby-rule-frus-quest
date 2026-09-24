@@ -1,3 +1,4 @@
+import { RENDER_DENSITY } from "./renderDensity";
 import Phaser from "phaser";
 
 export const ART_SHARPNESS = 0.10;
@@ -46,7 +47,9 @@ class ArtSharpnessPipeline extends Phaser.Renderer.WebGL.Pipelines.PostFXPipelin
 const installed = new WeakSet<Phaser.Game>();
 
 export function installArtSharpness(game: Phaser.Game) {
-  if (installed.has(game) || game.renderer.type !== Phaser.WEBGL) return;
+  // Dense source art no longer needs a full-screen unsharp pass on every scene.
+  // Keeping it on both world and UI cameras costs substantial fill-rate.
+  if (RENDER_DENSITY > 1 || installed.has(game) || game.renderer.type !== Phaser.WEBGL) return;
   installed.add(game);
   const renderer = game.renderer as Phaser.Renderer.WebGL.WebGLRenderer;
   renderer.pipelines.addPostPipeline(PIPELINE_KEY, ArtSharpnessPipeline);
