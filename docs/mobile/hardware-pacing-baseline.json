@@ -1,0 +1,163 @@
+{
+  "scope": "Local Mac GPU with touch emulation; not physical iPhone or full-campaign certification",
+  "runs": [
+    {
+      "id": "archive-metal-sustained",
+      "gameCommit": "6e475a6",
+      "generatedAt": "2026-09-25T04:25:56.792Z",
+      "url": "http://127.0.0.1:5211/?scene=ArchiveScene",
+      "seconds": 60,
+      "mobile": true,
+      "walk": true,
+      "cpuThrottle": 1,
+      "rendererInfo": {
+        "api": "webgl",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+        "softwareRenderer": false,
+        "backingWidth": 768,
+        "backingHeight": 720,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+      },
+      "summary": {
+        "measuredGameFrames": 3614,
+        "gameFrameP50Ms": 16.700000047683716,
+        "gameFrameP95Ms": 16.90000009536743,
+        "gameFrameP99Ms": 17.90000009536743,
+        "gameFrameMaxMs": 18.5,
+        "gameFramesOver33Ms": 0,
+        "gameFramesOver50Ms": 0,
+        "sampleCount": 225,
+        "gameLoopFps": 60.004677424743576,
+        "maxReportedThreats": 2,
+        "movingSamples": 223,
+        "movementCoverage": 0.9955357142857143,
+        "movementRunValid": true,
+        "gameplayModes": [
+          "explore"
+        ],
+        "avgFps": 60.00308786717551,
+        "minFps": 59.99454046582686,
+        "maxSampledFrameP99Ms": 20,
+        "finalFrameP99Ms": 20,
+        "finalFrameMaxMs": 16.80000000000291,
+        "lastInputLatencyMs": 11.00000009536734,
+        "consoleWarningsOrErrors": 0,
+        "pageErrors": 0
+      }
+    },
+    {
+      "id": "world-metal-sustained",
+      "gameCommit": "0bba6b3",
+      "generatedAt": "2026-09-25T04:28:05.496Z",
+      "url": "http://127.0.0.1:5211/?scene=ResearchWorldScene",
+      "seconds": 60,
+      "mobile": true,
+      "walk": true,
+      "cpuThrottle": 1,
+      "rendererInfo": {
+        "api": "webgl",
+        "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+        "softwareRenderer": false,
+        "backingWidth": 768,
+        "backingHeight": 720,
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+      },
+      "summary": {
+        "measuredGameFrames": 3515,
+        "gameFrameP50Ms": 16.600000143051147,
+        "gameFrameP95Ms": 18.399999856948853,
+        "gameFrameP99Ms": 22.700000047683716,
+        "gameFrameMaxMs": 94.79999995231628,
+        "gameFramesOver33Ms": 34,
+        "gameFramesOver50Ms": 34,
+        "sampleCount": 224,
+        "gameLoopFps": 58.48080496911048,
+        "maxReportedThreats": 0,
+        "movingSamples": 166,
+        "movementCoverage": 0.7443946188340808,
+        "movementRunValid": true,
+        "gameplayModes": [
+          "explore"
+        ],
+        "avgFps": 59.53463756506416,
+        "minFps": 58.319004317569316,
+        "maxSampledFrameP99Ms": 66.79999999999563,
+        "finalFrameP99Ms": 66.79999999999563,
+        "finalFrameMaxMs": 66.79999999999563,
+        "lastInputLatencyMs": 12.900000000000091,
+        "consoleWarningsOrErrors": 0,
+        "pageErrors": 0
+      }
+    }
+  ],
+  "explicitWorldCrossings": {
+    "fixture": "edge approach placement; real keyboard boundary input",
+    "crossings": [
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 1,
+        "nextReady": false,
+        "maxMs": 96.29999995231628,
+        "frames": 13
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 2,
+        "nextReady": false,
+        "maxMs": 82,
+        "frames": 13
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 3,
+        "nextReady": false,
+        "maxMs": 89.79999995231628,
+        "frames": 13
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 4,
+        "nextReady": false,
+        "maxMs": 75.90000009536743,
+        "frames": 13
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 5,
+        "nextReady": false,
+        "maxMs": 84.70000004768372,
+        "frames": 13
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 6,
+        "nextReady": false,
+        "maxMs": 93.20000004768372,
+        "frames": 14
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 7,
+        "nextReady": false,
+        "maxMs": 79.89999985694885,
+        "frames": 14
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 8,
+        "nextReady": false,
+        "maxMs": 81.70000004768372,
+        "frames": 13
+      }
+    ],
+    "errors": []
+  }
+}
