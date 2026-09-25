@@ -1,3 +1,4 @@
+import { worldItemImage } from './worldItemArt';
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { TREATY_FRAGMENT_LABELS } from "../game/danneItemCatalog";
@@ -33,15 +34,21 @@ export class HearingReview {
     const key = SNES_WORKFLOW_TOOL_RELIC_ASSET.key;
     for (const [x, frame] of [[64, "source_note_card"], [192, "proof_pages"]] as const) {
       scene.add.ellipse(x, 125, 20, 4, color(PALETTE.black), 0.45).setDepth(105);
-      this.papers.push(scene.textures.exists(key)
+      this.papers.push(typeof scene.textures.createCanvas === 'function'
+        ? worldItemImage(scene,x,110,frame==='proof_pages'?'proof-page':'source-note').setDisplaySize(18,24).setDepth(110)
+        : scene.textures.exists(key)
         ? scene.add.image(x, 110, key, frame).setDepth(110)
         : scene.add.rectangle(x, 110, 14, 22, color(PALETTE.creamPaper)).setDepth(110));
     }
-    this.carry = scene.textures.exists(key)
+    this.carry = typeof scene.textures.createCanvas === 'function'
+      ? worldItemImage(scene,0,0,'source-note').setDisplaySize(10,12)
+      : scene.textures.exists(key)
       ? scene.add.image(0, 0, key, "source_note_card").setScale(0.5)
       : scene.add.rectangle(0, 0, 8, 12, color(PALETTE.creamPaper));
     this.carry.setName("hearing-carried-exhibit").setVisible(false);
-    this.filed = scene.textures.exists(key)
+    this.filed = typeof scene.textures.createCanvas === 'function'
+      ? worldItemImage(scene,128,137,'proof-page').setDisplaySize(18,24)
+      : scene.textures.exists(key)
       ? scene.add.image(128, 137, key, "proof_pages")
       : scene.add.rectangle(128, 137, 14, 22, color(PALETTE.creamPaper));
     this.filed.setDepth(140).setName("hearing-filed-exhibit").setVisible(false);

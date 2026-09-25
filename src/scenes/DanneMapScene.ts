@@ -1,3 +1,5 @@
+import { addSideRoomArt, preloadSideRoomArt } from '../systems/sideRoomArt';
+import { MARINE_GUARD_ART } from '../art/supportingSprites';
 import { addArchiveEnvironment, ARCHIVE_PROPS } from "../systems/archiveEnvironment";
 import { addSnesRoomIntroBanner } from "../systems/snesPixelArt";
 import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
@@ -174,6 +176,8 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadSideRoomArt(this,this.geometry.sceneKey);
+    if(this.geometry.sceneKey === "EmbassyCableRoomScene" && !this.textures.exists(MARINE_GUARD_ART.key))this.load.image(MARINE_GUARD_ART.key,MARINE_GUARD_ART.path);
     if (this.geometry.sceneKey === "NaraStacksScene") {
       if (!this.textures.exists(ARCHIVE_PROPS.key)) this.load.image(ARCHIVE_PROPS.key, ARCHIVE_PROPS.path);
       const asset = SECRET_READING_ROOM_ASSETS.tilesetNative;
@@ -546,19 +550,19 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   private drawSnesTileRoomLayer() {
     if (this.geometry.sceneKey === "CherryBlossomGardenScene") {
-      addSnesCherryBlossomGardenTileRoom(this, { depth: -18 });
+      if(!addSideRoomArt(this,this.geometry.sceneKey))addSnesCherryBlossomGardenTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "BlackVaultLairScene") {
       if (!addVaultEnvironment(this)) addSnesBlackVaultTileRoom(this, { depth: -18, combatReady: true });
     }
     if (this.geometry.sceneKey === "SenateHearingChamberScene") {
-      addSnesSenateHearingChamberTileRoom(this, { depth: -18 });
+      if(!addSideRoomArt(this,this.geometry.sceneKey))addSnesSenateHearingChamberTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "NaraStacksScene") {
       if (!addArchiveEnvironment(this)) addSnesNaraStacksTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "EmbassyCableRoomScene") {
-      addSnesEmbassyCableRoomTileRoom(this, { depth: -18 });
+      if(!addSideRoomArt(this,this.geometry.sceneKey))addSnesEmbassyCableRoomTileRoom(this, { depth: -18 });
     }
   }
 

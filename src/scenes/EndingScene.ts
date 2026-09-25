@@ -1,3 +1,4 @@
+import { worldItemImage } from '../systems/worldItemArt';
 import { addBinderyPressArt } from "../systems/binderyPressArt";
 import { addBinderyInboxArt } from "../systems/binderyInboxArt";
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
@@ -363,7 +364,7 @@ export class EndingScene extends Phaser.Scene {
     if (detailedDesk) desk.add(detailedDesk);
     else desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
     desk.add(this.add.rectangle(0, 7, 28, 1, color(station.accent)));
-    desk.add(this.add.image(-9, 1, station.texture).setDisplaySize(10, 10));
+    desk.add(worldItemImage(this,-9, 1, station.texture).setDisplaySize(10, 10));
     this.bindingStationLights.set(
       station.id,
       this.add.rectangle(7, 1, 10, 5, color(PALETTE.stoneDark)).setStrokeStyle(1, color(station.accent))
@@ -696,7 +697,7 @@ export class EndingScene extends Phaser.Scene {
         y: placed ? station.y - 18 : BINDERY_INBOX.y - 2,
         routedStation: placed ? station.id : undefined
       };
-      physicalPacket.icon = this.add.image(physicalPacket.x, physicalPacket.y, physicalPacket.texture)
+      physicalPacket.icon = worldItemImage(this,physicalPacket.x, physicalPacket.y, physicalPacket.texture)
         .setDisplaySize(12, 12).setDepth(240).setVisible(false);
       return physicalPacket;
     });
@@ -928,7 +929,7 @@ export class EndingScene extends Phaser.Scene {
       this.applyBindingPacketReward(packet);
       const station = this.bindingStation(packet.station);
       if (this.textures.exists(packet.texture)) {
-        const leaf = this.add.image(station.x, station.y, packet.texture)
+        const leaf = worldItemImage(this,station.x, station.y, packet.texture)
           .setDisplaySize(12, 12).setDepth(250);
         this.tweens.add({ targets: leaf, x: BINDING_PRESS.x, y: BINDING_PRESS.y,
           duration: 480, delay: assembled * 120,

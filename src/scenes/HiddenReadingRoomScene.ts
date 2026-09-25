@@ -34,9 +34,12 @@ import { handleOpenOverlays } from "../systems/overlayInput";
 import { saveGameNow } from "../systems/save";
 import { transitionTo } from "../systems/sceneTransitions";
 
+import { addReadingRoomArt } from "../systems/readingRoomArt";
+import { RESEARCH_PROPS } from "../systems/researchProps";
+import { worldItemImage } from "../systems/worldItemArt";
+
 const ROOM_TOP = 32;
 const TILE_SIZE = SECRET_READING_ROOM_ASSETS.tilesetNative.tileSize;
-const ANIM_KEY = "secret-frus-first-edition-sparkle";
 const COLLECTIBLE_POSITION = { x: 128, y: 126 } as const;
 
 function color(hex: string) {
@@ -93,7 +96,7 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
   private inventory!: InventoryOverlay;
   private readonly interactionAssist = new InteractionAssist();
   private interactables: Interactable[] = [];
-  private collectible?: Phaser.GameObjects.Sprite;
+  private collectible?: Phaser.GameObjects.Image;
   private inputReadyAt = 0;
   private leaving = false;
   private readonly solids = [
@@ -112,6 +115,7 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
   }
 
   preload() {
+    if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
     const { tilesetNative, firstEdition } = SECRET_READING_ROOM_ASSETS;
     if (!this.textures.exists(tilesetNative.key)) {
       this.load.image(tilesetNative.key, tilesetNative.path);
@@ -149,8 +153,8 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
     setVisibleThreats([]);
     retroAudio.startMusic("NaraStacksScene");
     this.drawTileRoom();
+    addReadingRoomArt(this);
     this.drawFurnitureDepth();
-    this.ensureCollectibleAnimation();
     this.drawCollectible();
     this.player = new Player(this, 128, 208);
     if (arrival) this.player.setPosition(arrival.x, arrival.y);
@@ -251,17 +255,6 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
     }).setOrigin(0.5).setDepth(81);
   }
 
-  private ensureCollectibleAnimation() {
-    const asset = SECRET_READING_ROOM_ASSETS.firstEdition;
-    if (!this.textures.exists(asset.key) || this.anims.exists(ANIM_KEY)) return;
-    this.anims.create({
-      key: ANIM_KEY,
-      frames: this.anims.generateFrameNumbers(asset.key, { start: 0, end: asset.frames - 1 }),
-      frameRate: 8,
-      repeat: -1
-    });
-  }
-
   private drawCollectible() {
     if (hiddenFirstEditionFound(gameState) || !this.textures.exists(SECRET_READING_ROOM_ASSETS.firstEdition.key)) {
       this.add.rectangle(COLLECTIBLE_POSITION.x, COLLECTIBLE_POSITION.y, 22, 28, color(PALETTE.deepRuby), 0.5)
@@ -269,9 +262,8 @@ export class HiddenReadingRoomScene extends Phaser.Scene {
         .setDepth(100);
       return;
     }
-    this.collectible = this.add.sprite(COLLECTIBLE_POSITION.x, COLLECTIBLE_POSITION.y, SECRET_READING_ROOM_ASSETS.firstEdition.key, 0)
-      .setDepth(105);
-    this.collectible.play(ANIM_KEY);
+    this.collectible = worldItemImage(this, COLLECTIBLE_POSITION.x, COLLECTIBLE_POSITION.y, "volume-fragment")
+      .setDepth(105).setName("first-edition-detailed-volume");
   }
 
   private drawTitleCard() {

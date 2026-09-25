@@ -1,3 +1,5 @@
+import { preloadPhotocopierArt } from '../systems/photocopierArt';
+import { worldItemImage } from '../systems/worldItemArt';
 import { preloadDetailedNpcs } from '../art/npcSprites';
 import { DEFAULT_PROMPT_BOUNDS } from "../systems/interactionPromptPlacement";
 import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
@@ -492,6 +494,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadPhotocopierArt(this);
     preloadDetailedNpcs(this, ['marcus']);
     if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
     if (!this.textures.exists(ALEX_TEXTURE)) this.load.image(ALEX_TEXTURE, ALEX_ART_PATH);
@@ -1231,7 +1234,7 @@ export class ArchiveScene extends Phaser.Scene {
       "NO FINAL SIGN",
       "HUMAN REVIEW"
     ], PALETTE.openNetGreen));
-    this.track(this.add.image(72, 105, "opennet-terminal").setDepth(108));
+    this.track(worldItemImage(this,72, 105, "opennet-terminal").setDepth(108));
     this.addSolid(48, 88, 48, 40);
     this.addSolid(144, 40, 88, 72);
     this.addSolid(56, 136, 48, 32);
@@ -1272,7 +1275,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.addRoomEnemy("pending-manifest");
     this.addRoomEnemy("wait-timer");
     if (this.referralManifestDelivered && this.agencyTimerResolved) return;
-    this.track(this.add.image(128, 119, "referral-manifest").setDepth(140).setName("archive-unfiled-manifest"));
+    this.track(worldItemImage(this,128, 119, "referral-manifest").setDepth(140).setName("archive-unfiled-manifest"));
     this.interactables.push({
       id: "stacks-manifest",
       label: "Referral tray",
@@ -1290,7 +1293,7 @@ export class ArchiveScene extends Phaser.Scene {
     const specialist = new HistorianNPC(this, "elena", 74, 102);
     specialist.label.setVisible(false);
     this.roomCleanups.push(() => specialist.destroy());
-    this.track(this.add.image(182, 106, "classnet-terminal").setDepth(130));
+    this.track(worldItemImage(this,182, 106, "classnet-terminal").setDepth(130));
     this.drawRubyVolumeStack(128, 173, 3);
     this.drawGoldenRuleGate();
     this.addRoomEnemy("ambiguous-flag");
@@ -1405,7 +1408,7 @@ export class ArchiveScene extends Phaser.Scene {
       return;
     }
 
-    this.track(this.add.image(118, 126, "proof-page").setDepth(86));
+    this.track(worldItemImage(this,118, 126, "proof-page").setDepth(86));
     this.track(this.add.text(148, 118, "1947\n1974", {
       fontFamily: "monospace",
       fontSize: "8px",
@@ -1790,8 +1793,8 @@ export class ArchiveScene extends Phaser.Scene {
     if (!prop) {
       this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y, 68, 24, color(PALETTE.black)).setDepth(70));
       this.track(this.add.rectangle(this.researchTable.x, this.researchTable.y - 1, 64, 20, color(PALETTE.sepiaInk)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(71));
-      this.track(this.add.image(this.researchTable.x - 20, this.researchTable.y - 3, "source-note").setDepth(72));
-      this.track(this.add.image(this.researchTable.x + 17, this.researchTable.y - 4, "citation-stamp").setDepth(72));
+      this.track(worldItemImage(this,this.researchTable.x - 20, this.researchTable.y - 3, "source-note").setDepth(72));
+      this.track(worldItemImage(this,this.researchTable.x + 17, this.researchTable.y - 4, "citation-stamp").setDepth(72));
     }
     this.addSolid(96, 104, 64, 24);
   }
@@ -2749,7 +2752,7 @@ export class ArchiveScene extends Phaser.Scene {
     setHeldItem("Source Note 47");
     setLatestMessage("The source note is missing its archive trail. Bring it to the research table.");
     setObjective("ROUTE: carry Source Note 47 to research table.");
-    this.sourceNoteIcon = this.add.image(this.player.position.x, this.player.position.y - 15, "source-note").setDepth(240);
+    this.sourceNoteIcon = worldItemImage(this,this.player.position.x, this.player.position.y - 15, "source-note").setDepth(240);
     this.sourceNoteLabel = this.add.text(this.player.position.x, this.player.position.y - 1, "SRC NOTE 47", {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -3081,7 +3084,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawRoutedSourceNote() {
-    this.sourceNoteIcon = this.track(this.add.image(this.researchTable.x - 16, this.researchTable.y - 17, "source-note").setDepth(245));
+    this.sourceNoteIcon = this.track(worldItemImage(this,this.researchTable.x - 16, this.researchTable.y - 17, "source-note").setDepth(245));
     this.sourceNoteLabel = this.track(this.add.text(this.researchTable.x, this.researchTable.y - 4, "SRC NOTE 47", {
       fontFamily: "monospace",
       fontSize: "5px",
@@ -3566,7 +3569,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawSourceNoteStampMark() {
-    this.track(this.add.image(this.researchTable.x + 20, this.researchTable.y - 16, "citation-stamp").setDepth(248));
+    this.track(worldItemImage(this,this.researchTable.x + 20, this.researchTable.y - 16, "citation-stamp").setDepth(248));
     this.track(this.add.rectangle(this.researchTable.x + 20, this.researchTable.y - 4, 20, 6, color(PALETTE.goldStamp)).setStrokeStyle(1, color(PALETTE.black)).setDepth(249));
     this.track(this.add.text(this.researchTable.x + 20, this.researchTable.y - 7, "CITED", {
       fontFamily: "monospace",
@@ -4116,7 +4119,7 @@ export class ArchiveScene extends Phaser.Scene {
   private drawWallMap(x: number, y: number, label = "MAP") {
     this.track(this.add.rectangle(x + 2, y + 3, 48, 30, color(PALETTE.black)).setDepth(y - 3));
     if (this.textures.exists(SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.key)) {
-      this.track(this.add.image(x, y, SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.key)
+      this.track(worldItemImage(this,x, y, SNES_ARCHIVE_WALL_MAP_BOARD_ASSET.key)
         .setName(`archive-wall-map-board-${label}`)
         .setDepth(y - 2));
     } else {
@@ -4149,7 +4152,7 @@ export class ArchiveScene extends Phaser.Scene {
       const py = Math.round(y - 8 + room.grid.y * 6);
       const frame = this.wallMapMarkerFrame(room, revealed, visited, current);
       if (markerTextureReady) {
-        this.track(this.add.image(px, py, SNES_ROOM_MAP_MARKER_ASSET.key, frame)
+        this.track(worldItemImage(this,px, py, SNES_ROOM_MAP_MARKER_ASSET.key, frame)
           .setName(`archive-wall-map-marker-${label}-${room.id}-${frame}`)
           .setDepth(y + 2)
           .setAlpha(current || visited ? 1 : 0.82));
@@ -4280,7 +4283,7 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.textures.exists(SNES_ARCHIVE_ROOM_DETAIL_ASSET.key)) {
       const texture = this.textures.get(SNES_ARCHIVE_ROOM_DETAIL_ASSET.key);
       if (texture.has(frame)) {
-        return this.track(this.add.image(px, py, SNES_ARCHIVE_ROOM_DETAIL_ASSET.key, frame)
+        return this.track(worldItemImage(this,px, py, SNES_ARCHIVE_ROOM_DETAIL_ASSET.key, frame)
           .setName(`archive-room-detail-${name}`)
           .setDepth(depth));
       }
@@ -4331,7 +4334,7 @@ export class ArchiveScene extends Phaser.Scene {
   ) {
     if (!this.textures.exists(SNES_ARCHIVE_PROP_ASSET.key)) return null;
     if (!this.textures.get(SNES_ARCHIVE_PROP_ASSET.key).has(frame)) return null;
-    return this.track(this.add.image(Math.round(x), Math.round(y), SNES_ARCHIVE_PROP_ASSET.key, frame)
+    return this.track(worldItemImage(this,Math.round(x), Math.round(y), SNES_ARCHIVE_PROP_ASSET.key, frame)
       .setName(`archive-prop-${name}`)
       .setDepth(depth));
   }

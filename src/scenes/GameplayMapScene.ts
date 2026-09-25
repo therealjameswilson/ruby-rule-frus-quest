@@ -1,3 +1,4 @@
+import { SUPPORTING_SPRITES, supportingSprite, MARINE_GUARD_ART } from "../art/supportingSprites";
 import Phaser from "phaser";
 import { tryEquippedToolSwing } from "../systems/toolSwing";
 import { characterAnimKey } from "../art/character_anims";
@@ -293,6 +294,9 @@ export class GameplayMapScene extends Phaser.Scene {
   }
 
   preload() {
+    for (const art of [SUPPORTING_SPRITES.archivist, SUPPORTING_SPRITES["snes-hac-member"], MARINE_GUARD_ART]) {
+      if (!this.textures.exists(art.key)) this.load.image(art.key, art.path);
+    }
     if (!this.textures.exists(this.mapKey)) {
       this.load.image(this.mapKey, publicAssetPath(GAMEPLAY_MAPS[this.mapKey]));
     }
@@ -1137,10 +1141,26 @@ export class GameplayMapScene extends Phaser.Scene {
         color(PALETTE.black),
         0.3
       ).setDepth(snapPixel(center.y - 2));
-      const sprite = this.add.sprite(snapPixel(center.x), snapPixel(center.y), characterKey)
-        .setOrigin(0.5, ART_PACK_SPRITE_ORIGIN_Y)
-        .setDepth(snapPixel(center.y + 1));
-      sprite.play(characterAnimKey(characterKey, "idle-down"));
+      const feetY = snapPixel(center.y + ART_PACK_FOOT_OFFSET_Y);
+      let sprite: Phaser.GameObjects.Sprite;
+      if (characterKey === "security_officer" && this.textures.exists(MARINE_GUARD_ART.key)) {
+        const texture = this.textures.get(MARINE_GUARD_ART.key);
+        if (!texture.has("idle")) texture.add("idle", 0, 0, 0, 768, 1024);
+        texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+        sprite = this.add.sprite(snapPixel(center.x), feetY, MARINE_GUARD_ART.key, "idle")
+          .setOrigin(400 / 768, 1000 / 1024).setScale(46 / 1024);
+      } else {
+        const id = characterKey === "archivist" ? "archivist" : "snes-hac-member";
+        if (this.textures.exists(SUPPORTING_SPRITES[id].key)) {
+          sprite = supportingSprite(this, id, snapPixel(center.x), feetY).setOrigin(.5, 1)
+            .setScale(40 / SUPPORTING_SPRITES[id].bounds[3]);
+        } else {
+          sprite = this.add.sprite(snapPixel(center.x), snapPixel(center.y), characterKey)
+            .setOrigin(.5, ART_PACK_SPRITE_ORIGIN_Y);
+          sprite.play(characterAnimKey(characterKey, "idle-down"));
+        }
+      }
+      sprite.setDepth(snapPixel(center.y + 1)).setName("map-detailed-npc");
       this.add.rectangle(
         snapPixel(center.x),
         snapPixel(center.y + ART_PACK_LABEL_OFFSET_Y),

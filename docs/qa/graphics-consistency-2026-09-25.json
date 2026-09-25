@@ -1,0 +1,402 @@
+{
+  "date": "2026-09-25",
+  "request": "Match surrounding graphics to the detailed hero",
+  "publication": "Local only; not published",
+  "finalBundle": "index-gEZUPDbC.js",
+  "validation": {
+    "build": "passed",
+    "fullSuiteBeforeFinalReadingRoomAndMapArt": {
+      "files": 272,
+      "tests": 2056,
+      "passed": true
+    },
+    "focusedAfterFinalChanges": {
+      "files": 3,
+      "tests": 34,
+      "passed": true
+    },
+    "visualSceneFixtures": [
+      {
+        "mobile": false,
+        "scene": "OfficeScene",
+        "floor": false,
+        "textures": 225,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "GuideScene",
+        "floor": true,
+        "guide": 40,
+        "textures": 232,
+        "errors": [],
+        "wallsChecked": 44,
+        "copiersChecked": 0,
+        "itemsChecked": 1
+      },
+      {
+        "mobile": false,
+        "scene": "ArchiveScene",
+        "floor": false,
+        "textures": 262,
+        "errors": [],
+        "wallsChecked": 84,
+        "copiersChecked": 1,
+        "itemsChecked": 1
+      },
+      {
+        "mobile": false,
+        "scene": "NetworkScene",
+        "floor": false,
+        "textures": 262,
+        "errors": [],
+        "wallsChecked": 98,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "ReferralVaultScene",
+        "floor": false,
+        "textures": 267,
+        "errors": [],
+        "wallsChecked": 86,
+        "copiersChecked": 2,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "SilentReadScene",
+        "floor": false,
+        "textures": 298,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 7
+      },
+      {
+        "mobile": false,
+        "scene": "ResearchWorldScene",
+        "floor": false,
+        "textures": 219,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "PresidentialLibraryScene",
+        "floor": false,
+        "textures": 230,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "NscLibraryScene",
+        "floor": false,
+        "textures": 216,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "EndingScene",
+        "floor": false,
+        "textures": 249,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 5
+      },
+      {
+        "mobile": false,
+        "scene": "CherryBlossomGardenScene",
+        "floor": false,
+        "textures": 226,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "NaraStacksScene",
+        "floor": false,
+        "textures": 238,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 2
+      },
+      {
+        "mobile": false,
+        "scene": "EmbassyCableRoomScene",
+        "floor": false,
+        "textures": 225,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "SenateHearingChamberScene",
+        "floor": false,
+        "textures": 229,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 4
+      },
+      {
+        "mobile": false,
+        "scene": "HiddenReadingRoomScene",
+        "readingFloor": true,
+        "floor": false,
+        "textures": 209,
+        "errors": [],
+        "wallsChecked": 52,
+        "copiersChecked": 0,
+        "itemsChecked": 1
+      },
+      {
+        "mobile": false,
+        "scene": "BlackVaultLairScene",
+        "floor": false,
+        "textures": 244,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 2
+      },
+      {
+        "mobile": false,
+        "scene": "WorldMapScene",
+        "floor": false,
+        "textures": 218,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "OfficeScene",
+        "floor": false,
+        "textures": 225,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "GuideScene",
+        "floor": true,
+        "guide": 40,
+        "textures": 232,
+        "errors": [],
+        "wallsChecked": 44,
+        "copiersChecked": 0,
+        "itemsChecked": 1
+      },
+      {
+        "mobile": true,
+        "scene": "ArchiveScene",
+        "floor": false,
+        "textures": 260,
+        "errors": [],
+        "wallsChecked": 84,
+        "copiersChecked": 1,
+        "itemsChecked": 1
+      },
+      {
+        "mobile": true,
+        "scene": "NetworkScene",
+        "floor": false,
+        "textures": 262,
+        "errors": [],
+        "wallsChecked": 98,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "ReferralVaultScene",
+        "floor": false,
+        "textures": 267,
+        "errors": [],
+        "wallsChecked": 86,
+        "copiersChecked": 2,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "SilentReadScene",
+        "floor": false,
+        "textures": 299,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 7
+      },
+      {
+        "mobile": true,
+        "scene": "ResearchWorldScene",
+        "floor": false,
+        "textures": 219,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "PresidentialLibraryScene",
+        "floor": false,
+        "textures": 230,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "NscLibraryScene",
+        "floor": false,
+        "textures": 216,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "EndingScene",
+        "floor": false,
+        "textures": 249,
+        "errors": [],
+        "wallsChecked": 42,
+        "copiersChecked": 0,
+        "itemsChecked": 5
+      },
+      {
+        "mobile": true,
+        "scene": "CherryBlossomGardenScene",
+        "floor": false,
+        "textures": 226,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "NaraStacksScene",
+        "floor": false,
+        "textures": 238,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 2
+      },
+      {
+        "mobile": true,
+        "scene": "EmbassyCableRoomScene",
+        "floor": false,
+        "textures": 227,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "SenateHearingChamberScene",
+        "floor": false,
+        "textures": 229,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 4
+      },
+      {
+        "mobile": true,
+        "scene": "HiddenReadingRoomScene",
+        "readingFloor": true,
+        "floor": false,
+        "textures": 209,
+        "errors": [],
+        "wallsChecked": 52,
+        "copiersChecked": 0,
+        "itemsChecked": 1
+      },
+      {
+        "mobile": true,
+        "scene": "BlackVaultLairScene",
+        "floor": false,
+        "textures": 242,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 2
+      },
+      {
+        "mobile": true,
+        "scene": "WorldMapScene",
+        "floor": false,
+        "textures": 218,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": false,
+        "scene": "GameplayMapScene",
+        "readingFloor": false,
+        "floor": false,
+        "textures": 265,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      },
+      {
+        "mobile": true,
+        "scene": "GameplayMapScene",
+        "readingFloor": false,
+        "floor": false,
+        "textures": 265,
+        "errors": [],
+        "wallsChecked": 0,
+        "copiersChecked": 0,
+        "itemsChecked": 0
+      }
+    ],
+    "readingRoomKeyboardInteraction": {
+      "collectedVolume": true,
+      "returnedToStacks": true,
+      "errors": []
+    },
+    "copierDesktopAndPhone": "passed: hit, tint, cracks, clear",
+    "touchGuideIsolated": "passed: fresh opening, counter, rewards, Continue, archive entry"
+  },
+  "limitations": [
+    "Browser scene-entry fixtures are not a fresh full campaign replay.",
+    "Physical iPhone Safari not tested.",
+    "Four upgraded legacy antagonist assets are loaded, but their classes currently have no live main-scene constructors.",
+    "Standard game-skill screenshots remained black in both headed and headless mode. Ordinary Playwright screenshots rendered and were inspected.",
+    "One guide counter run timed out while other browsers were active; isolated rerun passed."
+  ],
+  "art": "Seven original generated PNGs retained in art/supporting-sprites; lossless WebP runtime copies preserve alpha and all visible RGB pixels. Existing original project art reused for room furnishings. Cached high-density canvas art for walls, stationary props and lighting."
+}

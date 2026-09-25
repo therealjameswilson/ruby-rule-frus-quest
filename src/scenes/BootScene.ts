@@ -1,3 +1,4 @@
+import { SUPPORTING_SPRITES } from '../art/supportingSprites';
 import { startWithPlayerArt } from "../systems/playerArtLoading";
 import { installBootProgress } from '../systems/bootProgress';
 import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
@@ -399,7 +400,8 @@ export class BootScene extends Phaser.Scene {
       height: SNES_PUBLISHED_FRUS_PRIZE_ASSET.dimensions.height
     });
     for (const antagonistAsset of SNES_ANTAGONIST_ASSETS) {
-      this.load.svg(antagonistAsset.key, antagonistAsset.path, { width: 32, height: 32 });
+      const art=SUPPORTING_SPRITES[antagonistAsset.key];
+      this.load.image(art.key,art.path);
     }
     for (const wallAsset of SNES_BUREAUCRATIC_WALL_ASSETS) {
       this.load.svg(wallAsset.key, wallAsset.path, { width: 32, height: 32 });

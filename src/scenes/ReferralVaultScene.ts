@@ -1,3 +1,5 @@
+import { preloadPhotocopierArt } from '../systems/photocopierArt';
+import { worldItemImage } from '../systems/worldItemArt';
 import { preloadDetailedNpcs } from '../art/npcSprites';
 import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import { addReferralRoomFloor } from "../systems/referralRoomFloor";
@@ -189,6 +191,7 @@ export class ReferralVaultScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadPhotocopierArt(this);
     preloadDetailedNpcs(this, ['marcus']);
   }
 
@@ -660,7 +663,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     if (!this.textures.exists(SNES_REFERRAL_VAULT_TILE_ASSET.key)) return null;
     const texture = this.textures.get(SNES_REFERRAL_VAULT_TILE_ASSET.key);
     if (!texture.has(frame)) return null;
-    return this.track(this.add.image(Math.round(x), Math.round(y), SNES_REFERRAL_VAULT_TILE_ASSET.key, frame)
+    return this.track(worldItemImage(this,Math.round(x), Math.round(y), SNES_REFERRAL_VAULT_TILE_ASSET.key, frame)
       .setName(`referral-vault-tile-${name}`)
       .setDepth(depth));
   }
@@ -972,8 +975,8 @@ export class ReferralVaultScene extends Phaser.Scene {
       if (!texture.has(REFERRAL_DESK.frame)) texture.add(REFERRAL_DESK.frame, 0,
         REFERRAL_DESK.tileIndex % asset.columns * asset.tileSize,
         Math.floor(REFERRAL_DESK.tileIndex / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
-      container.add(this.add.image(-8, 0, asset.key, REFERRAL_DESK.frame));
-      container.add(this.add.image(8, 0, asset.key, REFERRAL_DESK.frame));
+      container.add(worldItemImage(this,-8, 0, asset.key, REFERRAL_DESK.frame));
+      container.add(worldItemImage(this,8, 0, asset.key, REFERRAL_DESK.frame));
     } else {
       container.add(this.add.rectangle(0, 0, bounds.width, bounds.height, color(PALETTE.black), 0.94));
     }
@@ -987,7 +990,7 @@ export class ReferralVaultScene extends Phaser.Scene {
       addVaultBlocks(this, (object) => this.track(object));
       for (let x = 62; x <= 194; x += 33) {
         this.track(this.add.rectangle(x, 104, 24, 20, color(PALETTE.deepRuby)).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(95));
-        this.track(this.add.image(x, 101, "agency-equity-seal").setScale(1).setDepth(96));
+        this.track(worldItemImage(this,x, 101, "agency-equity-seal").setDepth(96));
       }
     }
     addSnesTreasurePedestal(this, {
@@ -1000,10 +1003,10 @@ export class ReferralVaultScene extends Phaser.Scene {
       depth: 138
     });
     if (!this.concurrenceSlipCollected) {
-      this.concurrenceSlipIcon = this.track(this.add.image(128, 132, "concurrence-slip").setDepth(165).setVisible(false));
+      this.concurrenceSlipIcon = this.track(worldItemImage(this,128, 132, "concurrence-slip").setDepth(165).setVisible(false));
       setObjective(this.referralObjective());
     } else {
-      this.track(this.add.image(128, 132, "concurrence-slip").setTint(color(PALETTE.goldStamp)).setDepth(165).setVisible(false));
+      this.track(worldItemImage(this,128, 132, "concurrence-slip").setTint(color(PALETTE.goldStamp)).setDepth(165).setVisible(false));
       setObjective(this.referralObjective());
     }
   }
@@ -1884,7 +1887,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     const scale = compact ? 0.72 : 1;
     return this.add.container(x, y, [
       this.add.ellipse(1, compact ? 8 : 12, compact ? 24 : 32, 7, color(PALETTE.black), 0.42),
-      this.add.image(0, 0, "referral-manifest").setScale(scale),
+      worldItemImage(this,0, 0, "referral-manifest").setDisplaySize(24 * scale, 24 * scale),
       this.add.rectangle(7, compact ? -5 : -8, compact ? 7 : 9, 4, color(PALETTE.terminalCyan)).setStrokeStyle(1, color(PALETTE.black))
     ]);
   }

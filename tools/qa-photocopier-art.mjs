@@ -14,7 +14,7 @@ try {
    const s=window.game.scene.getScene('ArchiveScene');
    return s.bureaucraticWalls.map(w=>({key:w.stone.texture.key,width:w.stone.displayWidth,height:w.stone.displayHeight,bounds:[w.bounds.width,w.bounds.height],source:w.stone.texture.getSourceImage().width,label:w.container.list.find(c=>c.name==='bureaucratic-wall-label').text}));
   });
-  for(const w of state){assert(w.key.startsWith('photocopier-cabinet-v1-'));assert.equal(w.width,32);assert.equal(w.height,32);assert.equal(w.source,128);assert.deepEqual(w.bounds,[30,34]);assert(w.label.length);}
+  for(const w of state){assert(w.key.startsWith('photocopier-cabinet-v2-'));assert.equal(w.width,32);assert.equal(w.height,32);assert.equal(w.source,128);assert.deepEqual(w.bounds,[30,34]);assert(w.label.length);}
   await page.screenshot({path:`${out}/${mobile?'phone':'desktop'}.png`});
   const hit=await page.evaluate(()=>{const w=window.game.scene.getScene('ArchiveScene').bureaucraticWalls[0];w.markHit();w.update(w.container.scene.time.now,16);return {crack:w.crack.visible,tinted:w.stone.isTinted};});
   assert(hit.crack&&hit.tinted);

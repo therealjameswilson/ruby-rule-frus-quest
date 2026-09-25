@@ -1,3 +1,4 @@
+import { MARINE_GUARD_ART } from '../../art/supportingSprites';
 import Phaser from "phaser";
 import { characterAnimKey } from "../../art/character_anims";
 import {
@@ -22,6 +23,8 @@ export abstract class DanneNpc {
   protected readonly scene: Phaser.Scene;
   protected readonly container: Phaser.GameObjects.Container;
   protected readonly sprite: Phaser.GameObjects.Sprite;
+  private readonly detailedGuard: boolean;
+  private saluteTimer?: Phaser.Time.TimerEvent;
   private readonly characterKey: CharacterKey | null;
   private readonly baseX: number;
   private readonly baseY: number;
@@ -42,7 +45,8 @@ export abstract class DanneNpc {
     // Prefer the crisp 32x48 character spritesheet when available; the DANN-E
     // runtime PNGs are large photographic frames that disintegrate when scaled
     // down to overworld size, so they are only a last-resort fallback.
-    this.characterKey = options.characterKey && scene.textures.exists(options.characterKey)
+    this.detailedGuard=options.characterKey === "security_officer" && scene.textures.exists(MARINE_GUARD_ART.key);
+    this.characterKey = !this.detailedGuard && options.characterKey && scene.textures.exists(options.characterKey)
       ? options.characterKey
       : null;
     // The crisp 32x48 art-pack sprite is drawn at scale 1 with origin (0.5, 0.9),
@@ -53,11 +57,17 @@ export abstract class DanneNpc {
     // DANN-E runtime fallback is a large photographic frame scaled to ~1/14 whose
     // body fills a much taller region, so it needs the lower offsets the callers
     // pass in. Choosing offsets per mode keeps the shadow attached in both cases.
-    const usingArtPack = this.characterKey !== null;
+    const usingArtPack = this.detailedGuard || this.characterKey !== null;
     const shadowOffsetY = usingArtPack ? ART_PACK_FOOT_OFFSET_Y : options.shadowY ?? 12;
     const labelOffsetY = usingArtPack ? ART_PACK_LABEL_OFFSET_Y : options.labelY ?? 17;
     const shadow = scene.add.ellipse(0, shadowOffsetY, 20, 6, color(PALETTE.black));
-    if (this.characterKey) {
+    if(this.detailedGuard) {
+      const texture=scene.textures.get(MARINE_GUARD_ART.key);
+      if(!texture.has('idle'))texture.add('idle',0,0,0,768,1024);
+      if(!texture.has('salute'))texture.add('salute',0,768,0,768,1024);
+      texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
+      this.sprite=scene.add.sprite(0,shadowOffsetY,MARINE_GUARD_ART.key,'idle').setOrigin(400/768,1000/1024).setScale(46/1024).setName('marine-guard-detailed');
+    } else if (this.characterKey) {
       this.sprite = scene.add.sprite(0, 0, this.characterKey).setOrigin(0.5, ART_PACK_SPRITE_ORIGIN_Y).setScale(1);
     } else {
       this.sprite = scene.add
@@ -88,11 +98,18 @@ export abstract class DanneNpc {
   }
 
   update(timeMs: number) {
-    const renderPosition = setRenderedPosition(this.container, this.baseX, this.baseY + Math.sin(timeMs / 620) * 0.45);
+    const renderPosition = setRenderedPosition(this.container, this.baseX, this.baseY + (this.detailedGuard ? 0 : Math.sin(timeMs / 620) * 0.45));
     this.container.setDepth(renderPosition.y);
   }
 
   play(suffix: string, loop = false) {
+    if(this.detailedGuard) {
+      this.saluteTimer?.remove();
+      const salute=suffix==='attack';
+      this.sprite.setFrame(salute?'salute':'idle').setOrigin(salute?384/768:400/768,1000/1024);
+      if(salute)this.saluteTimer=this.scene.time.delayedCall(700,()=>{if(this.sprite.active)this.play('idle-down');});
+      return;
+    }
     if (this.characterKey) {
       this.playCharacterAnim(suffix);
       return;
@@ -108,6 +125,7 @@ export abstract class DanneNpc {
   }
 
   destroy() {
+    this.saluteTimer?.remove();
     this.container.destroy();
   }
 
