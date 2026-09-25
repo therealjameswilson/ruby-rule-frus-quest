@@ -1,7 +1,9 @@
+import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
+import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import Phaser from "phaser";
-import { ALT_ENDING_ASSETS, FRUS_VOLUMES, GAMEPLAY_TILESETS, publicAssetPath } from "../assets/registry";
-import { BINDERY_INBOX, BINDING_PRESS, BINDERY_STATIONS, BINDERY_SOLIDS, BINDERY_TILEMAP, binderyFloor, binderyWalkRoute } from "../game/binderyFurniture";
-import { safeWorkstationPosition, WORKSTATION_DESK } from "../game/workstationGeometry";
+import { ALT_ENDING_ASSETS, FRUS_VOLUMES, publicAssetPath } from "../assets/registry";
+import { BINDERY_INBOX, BINDING_PRESS, BINDERY_STATIONS, BINDERY_SOLIDS, binderyWalkRoute } from "../game/binderyFurniture";
+import { safeWorkstationPosition } from "../game/workstationGeometry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { KELLOGG_CERTIFICATION_PROMPTS } from "../game/kelloggCertification";
 import { GPO_PUBLICATION_PROMPTS } from "../game/gpoPublication";
@@ -152,6 +154,7 @@ export class EndingScene extends Phaser.Scene {
   }
 
   preload() {
+    if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
     if (!this.textures.exists("published-volume-v2")) this.load.image("published-volume-v2", publicAssetPath("presentation/publication/volume-v2.png"));
     for (const [key, path] of Object.entries(ALT_ENDING_ASSETS)) {
       if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
@@ -288,13 +291,7 @@ export class EndingScene extends Phaser.Scene {
 
   private drawGateRoom() {
     this.add.rectangle(128, 136, 224, 160, color(PALETTE.stoneGray)).setDepth(1);
-    const asset = GAMEPLAY_TILESETS.interiorsNative;
-    if (this.textures.exists(asset.key)) {
-      const map = this.make.tilemap({ data: binderyFloor(), tileWidth: asset.tileSize, tileHeight: asset.tileSize });
-      const tiles = map.addTilesetImage(asset.manifestKey, asset.key, asset.tileSize, asset.tileSize, 0, 0, asset.firstGid);
-      if (tiles) map.createLayer(0, tiles, BINDERY_TILEMAP.x, BINDERY_TILEMAP.y)?.setDepth(2).setAlpha(0.25);
-      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => map.destroy());
-    }
+    addEditorialRoomFloor(this, false);
     this.add.rectangle(128, 58, 130, 28, color(PALETTE.black), 0.96)
       .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(140);
     this.add.text(128, 47, "FRUS BINDERY", {
@@ -349,23 +346,19 @@ export class EndingScene extends Phaser.Scene {
   private drawBindingStation(station: BindingStation) {
     this.add.ellipse(station.x, station.y + 9, 32, 4, color(PALETTE.black), 0.3).setDepth(46);
     const desk = this.add.container(station.x, station.y).setDepth(station.y + 8).setName(`bindery-desk-${station.id}`);
-    const asset = GAMEPLAY_TILESETS.interiorsNative;
-    if (this.textures.exists(asset.key)) {
-      const frame = "bindery-desk", texture = this.textures.get(asset.key);
-      if (!texture.has(frame)) texture.add(frame, 0, WORKSTATION_DESK.tileIndex % asset.columns * asset.tileSize,
-        Math.floor(WORKSTATION_DESK.tileIndex / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
-      desk.add([this.add.image(-8, 0, asset.key, frame), this.add.image(8, 0, asset.key, frame)]);
-    } else desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
-    desk.add(this.add.rectangle(0, 0, 32, 16, 0, 0).setStrokeStyle(1, color(station.accent)));
+    const detailedDesk = researchProp(this, "desk", 0, -3, 40);
+    if (detailedDesk) desk.add(detailedDesk);
+    else desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
+    desk.add(this.add.rectangle(0, 7, 28, 1, color(station.accent)));
     desk.add(this.add.image(-9, 1, station.texture).setDisplaySize(10, 10));
     this.bindingStationLights.set(
       station.id,
       this.add.rectangle(7, 1, 10, 5, color(PALETTE.stoneDark)).setStrokeStyle(1, color(station.accent))
     );
     desk.add(this.bindingStationLights.get(station.id)!);
-    desk.add(this.add.text(0, -7, station.shortLabel, {
-      fontFamily: "monospace",
-      fontSize: "5px",
+    desk.add(this.add.text(0, -20, station.shortLabel, {
+      fontFamily: "Arial",
+      fontSize: "6px",
       color: PALETTE.creamPaper, backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0));
   }
