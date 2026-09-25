@@ -161,3 +161,22 @@ compiler choices: 129,024 exact matches, one readback per sheet, no fallbacks.
 Sampling took 1.1–2.6 ms per sheet versus 49.8–58.5 ms with the original reader
 in this local run. This measures the sampling operation, not total startup time.
 The sampler preserves frame cuts/trimming and retains the old reader as fallback.
+
+## Current earned boss on Metal
+
+The earned-save touch replay now accepts `FRUS_QA_CHANNEL=chrome` and
+`FRUS_QA_ANGLE=metal`. Add `--frame-pacing --no-captures` to measure active
+combat without screenshot readbacks. The observer excludes dialogue, pause,
+choice and phase-transition intervals; automation polling overhead remains.
+
+On the d852ad8 game build, all three phases completed in seven attack cycles,
+with seven fresh melee hits, no retries, and the deadline met. Continue preserved
+the earned bindery state. Colossus/Swarm/Cloud recorded 765/451/1,351 active
+frames respectively. Their p99 intervals were 22.7/20.6/22.4 ms; maximums were
+27.6/25.9/27.6 ms, with no intervals above 33.4 ms. No browser errors occurred.
+Compact results are in `hardware-pacing-baseline.json`; full evidence is in
+`/tmp/boss-metal-pacing-clean/`. A separate captured run supplied visual review
+in `/tmp/boss-metal-pacing/` and also completed without retries.
+
+This is a scripted replay from an earned checkpoint that reads live bolt timing,
+not an unaided human playthrough, fresh full campaign, or physical iPhone test.

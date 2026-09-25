@@ -8,7 +8,9 @@ const cpuThrottle=Number(process.env.FRUS_QA_CPU_THROTTLE ?? 1);
 assert(Number.isFinite(cpuThrottle) && cpuThrottle>=1, 'CPU throttle must be at least one');
 const out=process.env.FRUS_QA_OUT??`/tmp/frus-boss-rhythm-${baseline?'before':'after'}-${mobile?'touch':'desktop'}`;
 await mkdir(out,{recursive:true});
-const browser=await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_EXECUTABLE});
+const browser=await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_EXECUTABLE,
+ ...(process.env.FRUS_QA_CHANNEL?{channel:process.env.FRUS_QA_CHANNEL}:{}),
+ ...(process.env.FRUS_QA_ANGLE?{args:[`--use-angle=${process.env.FRUS_QA_ANGLE}`]}:{})});
 const context=await browser.newContext({storageState:JSON.parse(await readFile(storagePath,'utf8')),
   reducedMotion:process.argv.includes('--reduced-motion')?'reduce':'no-preference',
   viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
@@ -27,12 +29,28 @@ async function touch(x,y,dx=0,dy=0,ms=55){await cdp.send('Input.dispatchTouchEve
 async function press(key='Space'){if(mobile)await touch(...(key==='x'?[174,216]:key==='m'?[120, 216]:key==='Escape'?[224,34]:[225,205]));else await page.keyboard.press(key,{delay:55});}
 async function direction(key,ms=70){if(mobile){const [dx,dy]={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];await touch(48, 202,dx,dy,ms);}else{await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}await page.waitForTimeout(20);}
 async function move(x,y){for(let i=0;i<50;i++){const s=await state(),dx=x-s.player.x,dy=y-s.player.y;if(s.mode!=='explore'||Math.hypot(dx,dy)<4)return;await direction(Math.abs(dx)>Math.abs(dy)?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.max(16,Math.min(180,Math.max(Math.abs(dx),Math.abs(dy))*6)));}throw Error('Movement stalled');}
-async function shot(label){const s=await state();const img=await page.evaluate(()=>new Promise(resolve=>window.game.renderer.snapshot(i=>resolve(i.src))));await writeFile(`${out}/${label}-native.png`,Buffer.from(img.split(',')[1],'base64'));await page.screenshot({path:`${out}/${label}.png`});await writeFile(`${out}/${label}.json`,JSON.stringify(s,null,2));const entry={label,scene:s.scene,p:s.player,rel:s.reliability,phase:boss(s)?.enemyState,hp:boss(s)?.hp,returns:boss(s)?.bossCombat.boltsReturned,window:boss(s)?.bossCombat.counterWindowMs};log.push(entry);console.log(JSON.stringify(entry));return s;}
+async function shot(label){const s=await state();if(!process.argv.includes('--no-captures')){const img=await page.evaluate(()=>new Promise(resolve=>window.game.renderer.snapshot(i=>resolve(i.src))));await writeFile(`${out}/${label}-native.png`,Buffer.from(img.split(',')[1],'base64'));await page.screenshot({path:`${out}/${label}.png`});}await writeFile(`${out}/${label}.json`,JSON.stringify(s,null,2));const entry={label,scene:s.scene,p:s.player,rel:s.reliability,phase:boss(s)?.enemyState,hp:boss(s)?.hp,returns:boss(s)?.bossCombat.boltsReturned,window:boss(s)?.bossCombat.counterWindowMs};log.push(entry);console.log(JSON.stringify(entry));return s;}
 try{
  await page.goto(`${process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/'}?text=full`);await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
  if(mobile)await touch(86,154);else await press('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
  await shot('entry');
+ if(process.argv.includes('--frame-pacing')) await page.evaluate(()=>{
+   window.bossFrameSamples={};let previous=performance.now(),previousPhase=null;
+   const gl=window.game.renderer.gl,debug=gl?.getExtension('WEBGL_debug_renderer_info');
+   window.bossRenderer=debug?gl.getParameter(debug.UNMASKED_RENDERER_WEBGL):'unknown';
+   window.game.events.on('step',()=>{
+     const now=performance.now(),delta=now-previous;previous=now;
+     const scene=window.game.scene.getScene('BlackVaultLairScene');
+     if(!scene.scene.isActive()){previousPhase=null;return;}
+     const boss=scene.danneBoss;
+     if(!boss||boss.phaseDialogueActive||boss.inputLocked||boss.phaseTransitioning||scene.inventory.active||boss.combatPausedAt!==null){previousPhase=null;return;}
+     const phase=boss.currentPhase;
+     if(!['colossus','swarm','cloud'].includes(phase)){previousPhase=null;return;}
+     if(previousPhase!==phase){previousPhase=phase;return;}
+     (window.bossFrameSamples[phase]??=[]).push(delta);
+   });
+ });
  // The vault readies the earned Red Pencil; no menu detour is required.
  assert.equal((await state()).playerCombat.weapon.tool,'red_pencil');
 
@@ -440,6 +458,18 @@ try{
   const completion={cycles,retries,freshCoreHits,tightApproaches,phases:[...phases],seconds:(Date.now()-started)/1000,deadlineMissed:Boolean(end.sceneProgress.statutoryDeadlineMissed)};
   log.push({label:'fight-summary',...completion});
   await context.storageState({path:`${out}/earned-bindery-storage.json`});
+  if(process.argv.includes('--frame-pacing')) {
+    const pacing=await page.evaluate(()=>({renderer:window.bossRenderer,phases:window.bossFrameSamples}));
+    pacing.capturesEnabled=!process.argv.includes('--no-captures');
+    pacing.scope='Active phase windows exclude pauses, choices and phase dialogue; automation polling overhead remains.';
+    pacing.summary=Object.fromEntries(Object.entries(pacing.phases).map(([phase,frames])=>{
+      const sorted=[...frames].sort((a,b)=>a-b);
+      return [phase,{frames:frames.length,p99Ms:sorted[Math.ceil(sorted.length*.99)-1],maxMs:sorted.at(-1),over33Ms:frames.filter(ms=>ms>33.4).length}];
+    }));
+    for(const phase of ['colossus','swarm','cloud'])assert(pacing.summary[phase]?.frames>100,`Missing active ${phase} frame coverage`);
+    await writeFile(`${out}/frame-pacing.json`,JSON.stringify(pacing,null,2));
+    console.log('frame pacing',JSON.stringify(pacing.summary));
+  }
   await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
   if(mobile)await touch(86,154);else await press('Enter');
   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='EndingScene');await page.waitForTimeout(1300);
