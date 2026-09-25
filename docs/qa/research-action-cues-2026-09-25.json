@@ -1,0 +1,33 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTests": {
+    "files": 4,
+    "passed": 22
+  },
+  "webkitPhoneRoute": {
+    "library": "reagan",
+    "rooms": 3,
+    "cuesVerified": [
+      "WEST: READ THE GUIDE",
+      "EAST: VERIFY SOURCE",
+      "ENTER NEXT ROOM",
+      "RETURN TO LIBRARY"
+    ],
+    "wrongAnswerRecovered": true,
+    "saved": true,
+    "returned": true,
+    "errors": []
+  },
+  "screenshots": [
+    "/tmp/research-action-cues/phone-room0.png",
+    "/tmp/research-action-cues/phone-room1.png",
+    "/tmp/research-action-cues/phone-room2.png"
+  ],
+  "limitations": [
+    "Position fixtures; not unaided navigation",
+    "Simulated WebKit; no physical iPhone",
+    "Skill WebGL screenshot black; regular browser screenshot inspected"
+  ],
+  "published": false
+}

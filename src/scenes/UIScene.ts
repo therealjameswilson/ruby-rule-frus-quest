@@ -1,3 +1,4 @@
+import { libraryApproachCue } from "./libraryApproachCue";
 import Phaser from "phaser";
 import {
   ACCESSIBILITY_OVERLAYS,
@@ -247,7 +248,8 @@ export class UIScene extends Phaser.Scene {
     const recoveryCue = questBandRecoveryCue(gameState.mode, gameState.reliability,
       gameState.sceneProgress.danneRecoverablePressure ?? 0, Boolean(weapon.tool),
       gameState.nearestInteractable, getSecondaryActionBadge());
-    const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable)
+    const approachCue = libraryApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable, gameState.sceneProgress, getPrimaryActionBadge())
+      ?? officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable)
       ?? guideExitApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable,
         gameState.volumeFragments.includes("Front Matter Fragment"))
       ?? (activeSceneKey === "NetworkScene" ? questBandCrossingCue(gameState.mode, gameState.nearestInteractable,

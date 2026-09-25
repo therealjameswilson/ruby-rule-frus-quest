@@ -8038,3 +8038,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Real Chromium touch QA passed simultaneous movement/attack, Menu, blur, rotation, controller handoff, narrow/short layout and title centering. WebKit phone route passed all three Reagan NSC rooms, touch choice selection, wrong-answer recovery, return and save/reload with no page errors.
 - A concurrent Chromium route timed out taking a screenshot; subsequent isolated WebKit route passed. Skill snapshot was black; inspected regular Chromium balanced portrait and WebKit choice screenshots. Evidence: docs/qa/portrait-composition-2026-09-25.json, /tmp/portrait-balanced, /tmp/portrait-balanced-webkit.
 - Local only; no physical phone claim. Broad quality goal remains active.
+
+## 2026-09-25 — accurate research interaction cues
+- Previous goal turn was progress: balanced portrait composition and verified shifted touch targets. This pass inspected action prompts and found the generic USE STAPLE fallback in research rooms with no combat-tool action.
+- Added room-specific research HUD cues. NSC rooms direct west to the guide, east to verification after reading, north through a filed room, and back to the library after the final room. Reachable desks and doors show the actual A/keyboard action badge. Locked-door approach points to verification.
+- Main presidential-library research rooms now direct players to NW finding aid, NE comparison, SE source note, SW filing, then south exit. Existing dialogs/choices/combat cues outside these rooms are unaffected. Guide-read state is saved per library and room; it guides navigation only and does not add a gate.
+- Build and 22 focused tests across four files passed. WebKit 390x844 route verified the real HUD cue transitions through three Reagan rooms, wrong-answer recovery, return and save/reload; no page errors. Position fixtures used.
+- Skill client state/movement check completed; its black WebGL snapshot inspected, normal browser room screenshot inspected instead. Evidence: docs/qa/research-action-cues-2026-09-25.json and /tmp/research-action-cues. Local only, broad game quality goal remains active.

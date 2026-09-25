@@ -21,10 +21,12 @@ try{
   assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dossier.library),d.library);
   for(let room=0;room<3;room++){
    await page.waitForFunction(r=>window.game.scene.getScene('NscLibraryScene').room===r,room);await page.waitForTimeout(250);
+   await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='WEST: READ THE GUIDE');
    const floors=await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').children.list.filter(o=>o.name==='nsc-reading-room-floor').map(o=>({key:o.texture.key,width:o.displayWidth,height:o.displayHeight,depth:o.depth})));
    assert.deepEqual(floors,[{key:`nsc-reading-floor-${room}-v1`,width:256,height:208,depth:2}]);
    if(d.library==='reagan')await page.screenshot({path:`${out}/${mobile?'phone':'desktop'}-room${room}.png`});
    await position(62,145);await act();assert(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dialog.active));await drain();
+   await position(128,180);await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='EAST: VERIFY SOURCE');
    // Wrong answers must not advance, then the real control selects the correct row.
    for(const wrong of (room===0?[true,false]:[false])){
     await position(194,145);await act();await page.waitForFunction(()=>window.game.scene.getScene('NscLibraryScene').choice.active);
@@ -35,7 +37,7 @@ try{
     const progress=await page.evaluate(id=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')).state.sceneProgress['nscResearch_'+id]??0,d.library);
     assert.equal(progress,wrong?0:room+1);
    }
-   await position(128,86);await act();
+   await position(128,86);await page.waitForFunction(r=>window.game.scene.getScene('UIScene').questBandCueText.text===(r===2?'RETURN TO LIBRARY':'ENTER NEXT ROOM'),room);await act();
   }
   await page.waitForFunction(()=>window.game.scene.isActive('PresidentialLibraryScene'));
   const finished=await page.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));assert.equal(finished.state.sceneProgress['nscResearch_'+d.library],3);assert.equal(finished.state.documentPoints,saved.state.documentPoints+6);
