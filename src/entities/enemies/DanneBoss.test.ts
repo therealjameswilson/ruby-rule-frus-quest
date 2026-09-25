@@ -73,7 +73,9 @@ class Visual {
   play(key: string) { this.animation = key; return this; }
   setOrigin() { return this; } setScale(scale: number) { this.scale = scale; return this; } setDepth() { return this; }
   setVisible(visible: boolean) { this.visible = visible; return this; } setStrokeStyle() { return this; } setScrollFactor() { return this; }
-  setText() { return this; } setSize() { return this; } setFillStyle() { return this; }
+  text = ""; width = 0; height = 0;
+  setText(text: string) { this.text = text; return this; }
+  setSize(width: number, height: number) { this.width = width; this.height = height; return this; } setFillStyle() { return this; }
   setColor() { return this; } setTint() { return this; } setTintFill() { return this; } clearTint() { return this; }
   setAlpha(alpha: number) { this.alpha = alpha; return this; } setAngle() { return this; }
   fillStyle() { return this; } fillRect() { return this; }
@@ -87,6 +89,9 @@ interface BossInternals {
   attackTelegraph: { markers: Visual[] } | null;
   hp: number;
   coreOpening: Visual;
+  coreOpeningFrame: Visual;
+  coreOpeningLabel: Visual;
+  syncCoreOpening(time: number): void;
   takeReturnedBolt(time: number): void;
   statutoryYear: number;
   updateStatutoryClock(deltaMs: number): void;
@@ -585,6 +590,23 @@ describe("DANN-E final-review combat", () => {
     boss.update(6100, 16, true);
     expect(boss.readout().bossCombat.counterWindowMs).toBe(DANNE_BOSS_RETURN.stunMs);
     expect(boss.readout().telegraph).toBeNull();
+  });
+
+  it("shows a readable core countdown and removes every marker when armor returns", () => {
+    const { internals, boss, scene } = fixture();
+    internals.takeReturnedBolt(1000);
+    expect(internals.coreOpeningFrame.visible).toBe(true);
+    expect(internals.coreOpeningLabel.text).toBe("CORE OPEN");
+    expect(internals.coreOpening.y).toBeGreaterThan(53);
+    expect(internals.coreOpening.width).toBe(54);
+    internals.syncCoreOpening(2600);
+    expect(internals.coreOpeningLabel.text).toBe("CLOSING");
+    expect(internals.coreOpening.width).toBe(11);
+    scene.time.now = 3000;
+    boss.update(3000,16,true);
+    expect(internals.coreOpening.visible).toBe(false);
+    expect(internals.coreOpeningFrame.visible).toBe(false);
+    expect(internals.coreOpeningLabel.visible).toBe(false);
   });
 
   it("keeps a returned-bolt counter window usable after a slow rendering frame", () => {

@@ -343,8 +343,27 @@ try{
       await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).objective==='PENCIL THE CORE'
         && window.game.scene.getScene('UIScene').questBandText.text==='PENCIL THE CORE',{},{timeout:1000});
       await shot('core-open-guidance');
+      if(process.argv.includes('--core-marker')) {
+        const marker=await page.evaluate(()=>{
+          const b=window.game.scene.getScene('BlackVaultLairScene').danneBoss;
+          return {visible:b.coreOpeningFrame.visible,label:b.coreOpeningLabel.text,
+            top:b.coreOpeningFrame.getBounds().top,bottom:b.coreOpeningFrame.getBounds().bottom};
+        });
+        assert(marker.visible);assert.equal(marker.label,'CORE OPEN');
+        assert(marker.top>53,'Core cue must clear the fixed HUD');
+        assert(marker.bottom<156,'Core cue must clear Soda and movement controls');
+      }
       await press('m');await page.waitForTimeout(100);const paused=await state(),pb=boss(paused);await shot('core-open-paused');await page.waitForTimeout(1800);assert.deepEqual(boss(await state()).bossCombat,pb.bossCombat);await press('Escape');await page.waitForTimeout(80);
       assert.equal((await state()).playerCombat.weapon.swingId,paused.playerCombat.weapon.swingId);
+      if(process.argv.includes('--core-marker')) {
+        await page.waitForFunction(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.coreOpeningLabel.text==='CLOSING',{},{timeout:5000});
+        await page.waitForFunction(()=>!window.game.scene.getScene('BlackVaultLairScene').danneBoss.coreOpening.visible,{},{timeout:3000});
+        assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.coreOpeningFrame.visible),false);
+        assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.coreOpeningLabel.visible),false);
+        await shot('core-closed');
+        log.push({label:'core-marker-summary',mobile,earnedReturn:true,clearOfHud:true,pauseFrozen:true,closingCue:true,hiddenWhenArmored:true});
+        break;
+      }
     }
     // Stop at pencil reach instead of walking into the boss sprite.
     await move(128,face==='ArrowUp'?145:face==='ArrowDown'?142:130);await direction(face,25);
@@ -390,6 +409,7 @@ try{
       }
     }
   }
+  if(!process.argv.includes('--core-marker')) {
   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='EndingScene',{},{timeout:6000});await page.waitForTimeout(1200);
   const end=await shot('bindery-entry');assert.equal(end.sceneProgress.blackVaultBossCleared,1);assert.equal(end.sceneProgress.danneBadEnding||0,0);
   assert.equal(end.sceneProgress.blackVaultCombatDamage,0);assert(end.reliability>0);assert.equal(end.documentPoints,spam.documentPoints);
@@ -407,6 +427,7 @@ try{
   assert.equal(resumed.documentPoints,end.documentPoints);assert.deepEqual(resumed.inventory,end.inventory);
   assert.deepEqual(resumed.completionStats.danneVariantsDefeated,end.completionStats.danneVariantsDefeated);
   console.log('earned fight complete',JSON.stringify(completion));
+  }
  }
  }
  assert.deepEqual(errors,[]);

@@ -133,6 +133,8 @@ export class DanneBoss {
   private readonly sprite: Phaser.GameObjects.Sprite;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly coreOpening: Phaser.GameObjects.Rectangle;
+  private readonly coreOpeningFrame: Phaser.GameObjects.Rectangle;
+  private readonly coreOpeningLabel: Phaser.GameObjects.Text;
   private readonly clockContainer: Phaser.GameObjects.Container;
   private readonly clockFill: Phaser.GameObjects.Rectangle;
   private readonly clockText: Phaser.GameObjects.Text;
@@ -202,8 +204,13 @@ export class DanneBoss {
       .setScale(1.15 / this.artDensity)
       .setDepth(BOSS_CENTER.y)
       .setVisible(false);
-    this.coreOpening = scene.add.rectangle(BOSS_CENTER.x - 12, BOSS_CENTER.y + 12, 24, 2, color(PALETTE.creamPaper))
-      .setOrigin(0, 0.5).setVisible(false);
+    this.coreOpeningFrame = scene.add.rectangle(128, 64, 62, 18, 0x142730, 0.96)
+      .setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(1502).setVisible(false);
+    this.coreOpeningLabel = scene.add.text(128, 61, "CORE OPEN", {
+      fontFamily: "Arial", fontSize: "7px", color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(1504).setVisible(false);
+    this.coreOpening = scene.add.rectangle(101, 69, 54, 3, color(PALETTE.terminalCyan))
+      .setOrigin(0, 0.5).setDepth(1503).setVisible(false);
     const animKey = this.artDensity > 1 ? danneBossFormAnimation(this.phase) : danneAnimKey(this.spriteKey, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.shortcutChoice = new ChoicePrompt(scene);
@@ -397,6 +404,8 @@ export class DanneBoss {
     this.sprite.destroy();
     this.shadow.destroy();
     this.coreOpening.destroy();
+    this.coreOpeningFrame.destroy();
+    this.coreOpeningLabel.destroy();
     this.clockContainer.destroy();
     this.clearBolts();
     this.clearMinis();
@@ -466,7 +475,7 @@ export class DanneBoss {
     this.nextTeleportAt = this.scene.time.now;
     this.damageGraceUntil = this.scene.time.now + DANNE_BOSS_ENTRY_GRACE_MS;
     this.counterStunnedUntil = 0;
-    this.coreOpening.setVisible(false);
+    this.setCoreOpeningVisible(false);
     this.combatFeedback = null;
   }
 
@@ -480,7 +489,7 @@ export class DanneBoss {
     hideBossHud();
     this.sprite.setVisible(false);
     this.shadow.setVisible(false);
-    this.coreOpening.setVisible(false);
+    this.setCoreOpeningVisible(false);
     this.clockContainer.setVisible(false);
     this.clearAttackTelegraph();
     this.clearBolts();
@@ -720,13 +729,26 @@ export class DanneBoss {
     return !this.defeated && !this.phaseTransitioning && !this.inputLocked && this.isAttackPhase(this.phase) && timeMs < this.counterStunnedUntil;
   }
 
+  private setCoreOpeningVisible(visible: boolean) {
+    this.coreOpening.setVisible(visible);
+    this.coreOpeningFrame.setVisible(visible);
+    this.coreOpeningLabel.setVisible(visible);
+  }
+
   private syncCoreOpening(timeMs: number) {
     const open = this.coreOpenAt(timeMs);
-    this.coreOpening.setVisible(open);
+    this.setCoreOpeningVisible(open);
     if (!open) return;
     const remaining = Math.min(1, (this.counterStunnedUntil - timeMs) / DANNE_BOSS_RETURN.stunMs);
-    this.coreOpening.setPosition(snapPixel(this.sprite.x - 12), snapPixel(this.sprite.y + 12))
-      .setSize(Math.max(1, Math.round(24 * remaining)), 2).setDepth(Math.round(this.sprite.y + 15));
+    // Above the boss rather than under its feet, where the approaching hero
+    // obscured the old two-pixel bar. Keep the marker below the fixed HUD.
+    const x = snapPixel(Phaser.Math.Clamp(this.sprite.x, 34, 222));
+    const y = snapPixel(Math.max(64, this.sprite.y - 62));
+    this.coreOpeningFrame.setPosition(x, y);
+    this.coreOpeningLabel.setPosition(x, y - 3).setText(remaining <= 0.25 ? "CLOSING" : "CORE OPEN");
+    this.coreOpening.setPosition(x - 27, y + 5)
+      .setSize(Math.max(1, Math.round(54 * remaining)), 3)
+      .setFillStyle(color(remaining <= 0.25 ? PALETTE.goldStamp : PALETTE.terminalCyan));
   }
 
   private resolvePhaseHp() {
@@ -827,7 +849,7 @@ export class DanneBoss {
     this.clearAttackTelegraph();
     this.clearBolts();
     this.combatFeedback = null;
-    this.coreOpening.setVisible(false);
+    this.setCoreOpeningVisible(false);
     this.clockContainer.setVisible(false);
     hideBossHud();
     const options: ChoiceOption[] = [
@@ -1061,7 +1083,7 @@ export class DanneBoss {
     this.clearBolts();
     this.clearMinis();
     this.combatFeedback = null;
-    this.coreOpening.setVisible(false);
+    this.setCoreOpeningVisible(false);
     this.clockContainer.setVisible(false);
     hideBossHud();
     setObjective("REVIEW INTERRUPTED");
