@@ -70,6 +70,19 @@ await page.mouse.click(64, 64);
 await page.waitForTimeout(warmupMs);
 await page.evaluate(() => window.rubyRuleResetPerformanceMetrics?.());
 await page.waitForTimeout(100);
+// Observe actual game steps: the diagnostic HUD's separate RAF and coarse
+// percentile buckets are not a substitute for game-loop frame pacing.
+await page.evaluate(() => {
+  window.__profileSteps = [];
+  let previous;
+  const observe = () => {
+    const now = performance.now();
+    if (previous !== undefined) window.__profileSteps.push(now - previous);
+    previous = now;
+  };
+  window.game.events.on('step', observe);
+  window.__stopProfileSteps = () => window.game.events.off('step', observe);
+});
 
 const startedAt = Date.now();
 const samples = [];
@@ -82,9 +95,9 @@ while (Date.now() - startedAt < seconds * 1000) {
       const right = leg % 2 === 0;
       if (mobile) {
         const box = await page.locator('canvas').first().boundingBox();
-        const point = x => ({ x: box.x + x * box.width / 256, y: box.y + 178 * box.height / 240, id: 1 });
-        if (previousLeg < 0) await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(40)] });
-        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(right ? 66 : 14)] });
+        const point = x => ({ x: box.x + x * box.width / 256, y: box.y + 202 * box.height / 240, id: 1 });
+        if (previousLeg < 0) await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(48)] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(right ? 74 : 22)] });
       } else {
         if (walkingKey) await page.keyboard.up(walkingKey);
         walkingKey = right ? 'ArrowRight' : 'ArrowLeft';
@@ -106,6 +119,13 @@ if (walk && mobile) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd
 if (walkingKey) await page.keyboard.up(walkingKey);
 
 const finalMetrics = await page.evaluate(() => window.rubyRuleMobileMetrics);
+const gameFrameIntervals = await page.evaluate(() => {
+  window.__stopProfileSteps();
+  return window.__profileSteps;
+});
+const sortedIntervals = [...gameFrameIntervals].sort((a, b) => a - b);
+const percentile = p => sortedIntervals.length
+  ? sortedIntervals[Math.max(0, Math.ceil(sortedIntervals.length * p) - 1)] : null;
 if (screenshotPath) {
   await fs.mkdir(path.dirname(screenshotPath), { recursive: true });
   await page.screenshot({ path: screenshotPath, fullPage: true });
@@ -120,6 +140,9 @@ const frameP99Values = samples
 const latencyValues = samples
   .map((sample) => sample.metrics?.lastInputLatencyMs)
   .filter((value) => Number.isFinite(value));
+const movingSamples = samples.filter((sample, index) => index > 0 && sample.gameplay?.player && samples[index - 1].gameplay?.player
+  && (sample.gameplay.player.x !== samples[index - 1].gameplay.player.x || sample.gameplay.player.y !== samples[index - 1].gameplay.player.y)).length;
+const movementCoverage = samples.length > 1 ? movingSamples / (samples.length - 1) : 0;
 
 const report = {
   url,
@@ -130,12 +153,20 @@ const report = {
   cpuThrottle,
   generatedAt: new Date().toISOString(),
   summary: {
+    measuredGameFrames: gameFrameIntervals.length,
+    gameFrameP50Ms: percentile(.5),
+    gameFrameP95Ms: percentile(.95),
+    gameFrameP99Ms: percentile(.99),
+    gameFrameMaxMs: sortedIntervals.at(-1) ?? null,
+    gameFramesOver33Ms: gameFrameIntervals.filter(ms => ms > 33.4).length,
+    gameFramesOver50Ms: gameFrameIntervals.filter(ms => ms > 50).length,
     sampleCount: samples.length,
     gameLoopFps: samples.length > 1 && Number.isFinite(samples.at(-1).gameplay?.gameFrame) && Number.isFinite(samples[0].gameplay?.gameFrame)
       ? (samples.at(-1).gameplay.gameFrame - samples[0].gameplay.gameFrame) * 1000 / (samples.at(-1).elapsedMs - samples[0].elapsedMs) : null,
     maxReportedThreats: Math.max(0, ...samples.map(sample => sample.gameplay?.threats ?? 0)),
-    movingSamples: samples.filter((sample, index) => index > 0 && sample.gameplay?.player && samples[index - 1].gameplay?.player
-      && (sample.gameplay.player.x !== samples[index - 1].gameplay.player.x || sample.gameplay.player.y !== samples[index - 1].gameplay.player.y)).length,
+    movingSamples,
+    movementCoverage,
+    movementRunValid: walk ? movementCoverage >= .5 : null,
     gameplayModes: [...new Set(samples.map(sample => sample.gameplay?.mode))],
     avgFps: average(fpsValues),
     minFps: fpsValues.length ? Math.min(...fpsValues) : 0,
@@ -149,6 +180,7 @@ const report = {
   finalMetrics,
   consoleMessages,
   pageErrors,
+  gameFrameIntervals,
   samples
 };
 
