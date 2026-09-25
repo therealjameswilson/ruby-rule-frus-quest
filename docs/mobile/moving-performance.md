@@ -153,3 +153,11 @@ the hero near each edge, then uses actual keyboard input to cross; it is not
 a complete navigation playthrough. Before/after compact results are retained
 in `hardware-pacing-baseline.json`. First-time character measurement and
 physical iPhone performance are not covered by this crossing improvement.
+
+The first measurement now reads each sprite sheet into a single pixel buffer,
+lazily, instead of doing a canvas readback per sampled pixel. A browser comparison
+checked 18,432 samples per sheet across the classic compiler and all six HD
+compiler choices: 129,024 exact matches, one readback per sheet, no fallbacks.
+Sampling took 1.1–2.6 ms per sheet versus 49.8–58.5 ms with the original reader
+in this local run. This measures the sampling operation, not total startup time.
+The sampler preserves frame cuts/trimming and retains the old reader as fallback.

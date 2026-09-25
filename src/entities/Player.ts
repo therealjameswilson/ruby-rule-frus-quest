@@ -1,5 +1,6 @@
 import Phaser from "phaser";
 import { cachedCharacterPoses } from "../art/characterGrounding";
+import { characterAlphaSampler } from "../art/characterPixels";
 import { characterAnimKey, walkingFrame, WALK_POSE_MS } from "../art/character_anims";
 import { heroCharacterKey, characterTextureDensity, ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -159,8 +160,9 @@ export class Player {
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
       const key = this.characterKey;
       const density = characterTextureDensity(key);
-      const poses = cachedCharacterPoses(scene.textures.get(key), (frame, x, y) =>
-        scene.textures.getPixelAlpha(x * density, y * density, key, frame));
+      const texture = scene.textures.get(key);
+      const poses = cachedCharacterPoses(texture, characterAlphaSampler(texture, density, (frame, x, y) =>
+        scene.textures.getPixelAlpha(x * density, y * density, key, frame)));
       for (let frame = 0; frame < poses.length; frame++) {
         const pose = poses[frame];
         this.poseScales[frame] = pose.scaleY;
