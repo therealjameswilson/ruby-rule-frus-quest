@@ -1,0 +1,108 @@
+{
+  "contacts": [
+    {
+      "duration": 0.075,
+      "rms": 0.002755992902191632,
+      "position": {
+        "x": 112,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.08502083333333334,
+      "rms": 0.0017036936849173393,
+      "position": {
+        "x": 95,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.08502083333333334,
+      "rms": 0.0017036936849173393,
+      "position": {
+        "x": 79,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.075,
+      "rms": 0.002755992902191632,
+      "position": {
+        "x": 63,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.075,
+      "rms": 0.002755992902191632,
+      "position": {
+        "x": 46,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.075,
+      "rms": 0.002755992902191632,
+      "position": {
+        "x": 64,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.08502083333333334,
+      "rms": 0.0017036936849173393,
+      "position": {
+        "x": 78,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.08502083333333334,
+      "rms": 0.0017036936849173393,
+      "position": {
+        "x": 96,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.075,
+      "rms": 0.002755992902191632,
+      "position": {
+        "x": 111,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.075,
+      "rms": 0.002755992902191632,
+      "position": {
+        "x": 129,
+        "y": 183
+      }
+    },
+    {
+      "duration": 0.075,
+      "rms": 0.0031559473114628487,
+      "position": {
+        "x": 136,
+        "y": 199
+      }
+    }
+  ],
+  "woodContacts": 4,
+  "pauseSilent": true,
+  "releaseSilent": true,
+  "exitReached": true,
+  "errors": [],
+  "limitations": [
+    "Synthesized buffer routing checked; human listening and physical hardware unverified"
+  ],
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTests": 56,
+  "screenshotsInspected": [
+    "/tmp/library-footsteps/oak-aisle.png"
+  ],
+  "standardSkill": "Completed; black WebGL capture inspected; normal screenshot used",
+  "publication": "local only"
+}
