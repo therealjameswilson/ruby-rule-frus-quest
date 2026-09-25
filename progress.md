@@ -7972,3 +7972,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Added qa-webkit-first-swing: from an earned Archive entry save, actual touch Continue and B attack for classic and Clara. All six phase observations (windup/active/cooldown) showed correct row and attack texture, base body hidden during attack; idle restored body and hid attack art. Zero page errors.
 - Inspected WebKit phone retry, Clara attack, and after-attack screenshots. No runtime changes needed. Evidence docs/qa/webkit-compiler-loading-2026-09-25.json.
 - Desktop WebKit phone emulation is not physical iPhone Safari. Broader quality goal remains active; local only.
+
+## Correct high-density camera shake — 2026-09-25
+- Investigated boss health clipping under main HUD from campaign screenshot. Still-camera HUD was spaced correctly. Phaser Shake multiplies offsets by viewport size and zoom, then Camera matrix translates at zoom again: at render density3, previous feedback had 9x intended logical displacement.
+- Added densityAdjustedShake using actual viewport width and zoom, preserving original logical intensity at densities1–4. Added 2px boss health HUD clearance. All combat callers share corrected applyHitShake.
+- Build + 69 focused feedback/boss tests passed. Actual rendered boss-hit camera translation stayed within1.28px horizontal/1.2px vertical in desktop and phone fixtures; label/bar stayed below26px main HUD boundary. Reduced motion produced no shake.
+- Earned touch boss replay passed all3forms,7cycles,7freshcorehits,1retry,69.249s,deadline met; pause and binderyContinue passed; zero page errors. Do not describe as a no-retry win.
+- Inspected phone HUD and live core-open screenshot. Skill smoke passed with black capture inspected; normal screenshots provided visual evidence. Evidence docs/qa/boss-hit-feedback-2026-09-25.json. Local only; broad quality goal remains active.

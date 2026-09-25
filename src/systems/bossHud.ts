@@ -74,7 +74,7 @@ class BossHudController {
         : undefined;
       if (phaseGlyph) this.phaseGlyphs.push(phaseGlyph);
     }
-    this.container = scene.add.container(0, 0, [
+    this.container = scene.add.container(0, 2, [
       bg,
       this.frame,
       this.fill,
@@ -86,6 +86,7 @@ class BossHudController {
       ...this.phaseGems,
       ...this.phaseGlyphs
     ])
+      .setName("boss-health-hud")
       .setDepth(1550)
       .setScrollFactor(0);
     this.removeColorblindModeListener = addColorblindModeListener(() => this.setHp(this.currentHp, this.currentPhase));
