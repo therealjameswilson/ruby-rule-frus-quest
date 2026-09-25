@@ -1,0 +1,73 @@
+{
+  "runtimeCommit": "2dc09da12a909accc19fdf53cd16694c9af038dc",
+  "baseUrl": "http://127.0.0.1:5211/",
+  "bundleSha256": {
+    "index-DIApLkJ5.js": "1fdc282e01c65daf05309ecab31a9981a6d53289a3dc9f33243fcfaa9c33dd3b"
+  },
+  "freshOpening": true,
+  "stagesPassed": [
+    "01-guide",
+    "02-earned-source-note",
+    "03-earned-annotation",
+    "04-file-annotation",
+    "05-earned-network",
+    "06-earned-network-routing",
+    "07-earned-clearance",
+    "08-earned-referral-dispatch",
+    "09-earned-referral-manifest",
+    "10-earned-editor",
+    "11-earned-proof",
+    "12-earned-production",
+    "13-boss-counter-loop",
+    "14-bindery-assembly"
+  ],
+  "stageCount": 14,
+  "predecessorEarnedSavesOnly": true,
+  "boss": {
+    "label": "fight-summary",
+    "cycles": 7,
+    "retries": 0,
+    "freshCoreHits": 7,
+    "tightApproaches": 0,
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "seconds": 54.505,
+    "deadlineMissed": false
+  },
+  "bindery": {
+    "mobile": false,
+    "cpuThrottle": 1,
+    "startPoints": 201,
+    "finalPoints": 241,
+    "completedPackets": 5,
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "errors": []
+  },
+  "publishedContinueVerified": true,
+  "browserErrors": [],
+  "screenshotsInspected": [
+    "01-guide/opening-office.png",
+    "03-earned-annotation/parked-screen.png",
+    "07-earned-clearance/review-complete-screen.png",
+    "11-earned-proof/release-screen.png",
+    "13-boss-counter-loop/core-open-guidance-native.png",
+    "14-bindery-assembly/published-continue-native.png"
+  ],
+  "limitations": [
+    "Automated state-aware keyboard replay; not unaided human play",
+    "Not physical iPhone/controller validation",
+    "Optional areas not exhaustively covered",
+    "No human audio listening review",
+    "Local in-game publication only; no website deployment"
+  ]
+}
