@@ -63,8 +63,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       const desk=researchProp(this,'desk',s.x,s.y,46);
       if(desk)desk.setDepth(12).setName(`library-desk-${i}`);
       else this.add.rectangle(s.x,s.y,47,22,0x5d392c).setStrokeStyle(2,0xad8c5d).setDepth(12);
-      this.add.text(s.x,s.y+15,s.label,{fontFamily:'Arial',fontSize:'6px',color:'#ffe0a3'}).setOrigin(.5).setDepth(160);
-      this.marks.push(this.add.text(s.x,s.y-18,'',{fontFamily:'monospace',fontSize:'6px',color:'#81e9c9'}).setOrigin(.5).setDepth(160));
+      this.marks.push(this.add.text(s.x,s.y-18,'',{fontFamily:'Arial',fontSize:'6px',color:'#81e9c9',backgroundColor:'#192630'}).setOrigin(.5).setDepth(160));
       this.solids.push(new Phaser.Geom.Rectangle(s.x-23,s.y-11,46,22));
     });
     // DANN-E's misfiled stacks close cross-aisles until each research check is filed.
@@ -120,7 +119,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   private refresh() {
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
     this.stageText.setText(`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
-    this.marks.forEach((m,i)=>m.setText(i<stage?'FILED':i===stage?'NEXT':'LOCKED'));
+    this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`));
     this.barriers.forEach((b,i)=>b.setVisible(stage<i+1));
     setObjective(stage===4?'PACKET FILED; SOUTH: EXIT':STATIONS[stage].label);
   }
