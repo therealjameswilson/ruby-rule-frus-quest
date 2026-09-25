@@ -1,10 +1,10 @@
 import Phaser from "phaser";
 import { characterAnimKey } from "../../art/character_anims";
-import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_LABEL_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForNpcId } from "../../art/characters";
+import { ART_PACK_FOOT_OFFSET_Y, ART_PACK_LABEL_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForNpcId, heroCharacterKey, characterTextureDensity } from "../../art/characters";
 import { CHARACTERS, PALETTE } from "../../game/constants";
 import type { CharacterId } from "../../game/types";
 import { getSnesNpcTextureKey } from "../../game/snesAtlas";
-import { setPixelPosition, snapPixel } from "../../systems/pixelPerfect";
+import { snapPixel } from "../../systems/pixelPerfect";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -20,7 +20,9 @@ export class HistorianNPC {
   constructor(scene: Phaser.Scene, id: CharacterId, x: number, y: number) {
     const character = CHARACTERS[id];
     this.id = id;
-    const artPackTexture = getCharacterKeyForNpcId(id);
+    const baseTexture = getCharacterKeyForNpcId(id);
+    const detailedTexture = heroCharacterKey(baseTexture);
+    const artPackTexture = scene.textures.exists(detailedTexture) ? detailedTexture : baseTexture;
     const usesArtPackTexture = scene.textures.exists(artPackTexture);
     const snesTexture = getSnesNpcTextureKey(id);
     const usesSnesTexture = !usesArtPackTexture && scene.textures.exists(snesTexture);
@@ -34,6 +36,7 @@ export class HistorianNPC {
       .setOrigin(0.5, usesArtPackTexture ? ART_PACK_SPRITE_ORIGIN_Y : 0.5)
       .setDepth(snapPixel(y));
     if (usesArtPackTexture) {
+      this.sprite.setScale(1 / characterTextureDensity(artPackTexture));
       const animKey = characterAnimKey(artPackTexture, "idle-down");
       if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     }
@@ -46,21 +49,7 @@ export class HistorianNPC {
       })
       .setOrigin(0.5, 0)
       .setDepth(snapPixel(y + 1));
-    const delay = id.charCodeAt(0) * 45;
-    scene.tweens.add({
-      targets: [this.sprite, this.label],
-      y: "-=1",
-      duration: 520,
-      delay,
-      yoyo: true,
-      repeat: -1,
-      ease: "Stepped",
-      onUpdate: () => {
-        setPixelPosition(this.sprite, this.sprite.x, this.sprite.y);
-        setPixelPosition(this.label, this.label.x, this.label.y);
-        setPixelPosition(this.shadow, this.shadow.x, this.shadow.y);
-      }
-    });
+    // Idle poses keep feet planted; moving the whole sprite detached it from its shadow.
   }
 
   get x() {
