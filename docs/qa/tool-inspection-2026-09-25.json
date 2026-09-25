@@ -1,0 +1,73 @@
+{
+  "date": "2026-09-25",
+  "baseCommit": "e0201f9",
+  "bundle": "index-BDtSD0N2.js",
+  "change": "Activating an already equipped FRUS tool opens its large illustration, FRUS meaning and complete existing pickup description. Equipping a different tool still takes one activation. Footer exposes the inspect action; Back returns to the tool grid.",
+  "unitTestsPassed": 22,
+  "build": "passed with existing bundle-size warning",
+  "browser": {
+    "scope": "Earned boss-entry save, actual menu input and all eight tool descriptions, desktop/portrait/landscape; no movement or progress injection.",
+    "results": [
+      {
+        "name": "desktop",
+        "inspected": [
+          "citation_stamp",
+          "red_pencil",
+          "review_folder",
+          "clearance_token",
+          "concurrence_slip",
+          "proof_lens",
+          "buckram_key",
+          "stapler"
+        ],
+        "errors": []
+      },
+      {
+        "name": "phone",
+        "inspected": [
+          "citation_stamp",
+          "red_pencil",
+          "review_folder",
+          "clearance_token",
+          "concurrence_slip",
+          "proof_lens",
+          "buckram_key",
+          "stapler"
+        ],
+        "errors": []
+      },
+      {
+        "name": "landscape",
+        "inspected": [
+          "citation_stamp",
+          "red_pencil",
+          "review_folder",
+          "clearance_token",
+          "concurrence_slip",
+          "proof_lens",
+          "buckram_key",
+          "stapler"
+        ],
+        "errors": []
+      }
+    ]
+  },
+  "checks": [
+    "All 24 tool/layout combinations preserve full descriptions and text within panel",
+    "Description does not overlap Back button",
+    "Actual pointer/touch equip-inspect-back-close sequence",
+    "Pause retained on Back",
+    "Closing preserves document points and hero position and does not increment swing ID"
+  ],
+  "screenshotsInspected": [
+    "/tmp/tool-inspection/desktop-citation_stamp.png",
+    "/tmp/tool-inspection/phone-proof_lens.png",
+    "/tmp/tool-inspection/landscape-review_folder.png"
+  ],
+  "limitations": [
+    "Simulated mobile Chromium; physical iPhone unverified",
+    "Standard skill client headless/headed screenshots black; regular Playwright screenshots render correctly",
+    "Overall console-quality objective remains active",
+    "Local only; not published"
+  ]
+}

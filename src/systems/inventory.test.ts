@@ -70,6 +70,24 @@ beforeEach(() => {
 });
 
 describe("pause inventory interaction", () => {
+  it("inspects an equipped FRUS tool and returns to its grid without changing game progress", () => {
+    gameState.inventory.push("Citation Stamp");
+    gameState.equippedProcessItem = "citation_stamp";
+    const { overlay, key, texts } = harness(); overlay.toggle();
+    const points = gameState.documentPoints;
+    key("aJustPressed");
+    expect(getPauseMenuReadout()?.detailOpen).toBe(true);
+    expect(texts).toContain("PROVENANCE VERIFIED");
+    expect(texts.join(" ").replace(/\s+/g, " ")).toContain("human review.");
+    expect(gameState.mode).toBe("pause");
+    overlay.back();
+    expect(getPauseMenuReadout()?.detailOpen).toBe(false);
+    expect(gameState.equippedProcessItem).toBe("citation_stamp");
+    expect(gameState.documentPoints).toBe(points);
+    overlay.hide();
+    expect(gameState.mode).toBe("explore");
+  });
+
   it.each(["loading", "error"])("keeps core tools navigable when optional art is %s", (status) => {
     artState.status = status;
     gameState.inventory.push("Citation Stamp", "Review Folder");
@@ -165,7 +183,8 @@ describe("pause inventory interaction", () => {
     callbacks.handlePauseTouch(hit);
     expect(gameState.equippedProcessItem).toBe("citation_stamp");
     tap("tool-2"); expect(gameState.equippedProcessItem).toBe("review_folder");
-    expect(texts.at(-1)).toBe("EQUIPPED"); overlay.hide();
+    expect(texts.at(-1)).toContain("EQUIPPED");
+    expect(texts.at(-1)).toContain("TO VIEW"); overlay.hide();
   });
 
   it("does not grant or equip locked items", () => {

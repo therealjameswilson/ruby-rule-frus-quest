@@ -235,7 +235,7 @@ export class InventoryOverlay {
     return image;
   }
 
-  private toolArt(x: number, y: number, id: ProcessItemId, acquired: boolean) {
+  private toolArt(x: number, y: number, id: ProcessItemId, acquired: boolean, size = 32) {
     if (!this.scene.textures.exists(TOOL_ART_KEY)) return false;
     const texture = this.scene.textures.get(TOOL_ART_KEY);
     const ids: ProcessItemId[] = ["stapler", "citation_stamp", "red_pencil", "review_folder",
@@ -252,7 +252,7 @@ export class InventoryOverlay {
       texture.add(id, 0, left, top, right - left, bottom - top);
     }
     const image = this.art(x, y, TOOL_ART_KEY, id, acquired ? 1 : .35);
-    if (image) image.setScale(32 / Math.max(image.width, image.height));
+    if (image) image.setScale(size / Math.max(image.width, image.height));
     texture.setFilter(Phaser.Textures.FilterMode.LINEAR);
     return true;
   }
@@ -322,7 +322,9 @@ export class InventoryOverlay {
     if (selected) {
       this.text(128, 207, selected.displayName.toUpperCase(), PALETTE.goldStamp, true);
       const readyKey = DANNE_ITEM_CATALOG.some(item => item.id === selected.id) && selected.id !== "ruby-pen" ? "pause.inspect" : "pause.ready";
-      const status = this.message || getString(selected.equipped ? "pause.equipped" : selected.acquired ? readyKey : "pause.missing", { action: getPrimaryActionBadge() });
+      const status = this.message || (selected.equipped
+        ? `${getString("pause.equipped")} · ${getString("pause.inspect", { action: getPrimaryActionBadge() })}`
+        : getString(selected.acquired ? readyKey : "pause.missing", { action: getPrimaryActionBadge() }));
       this.text(128, 219, status, PALETTE.white, true);
     }
   }
@@ -334,9 +336,11 @@ export class InventoryOverlay {
     if (DANNE_ITEM_CATALOG.some((asset) => asset.id === tool.id)) {
       if (tool.id === "ruby-pen") equipDanneItem(tool.id);
       this.detailOpen = true;
+    } else if (tool.equipped) {
+      this.detailOpen = true;
     } else {
       equipProcessItem(tool.id as ProcessItemId);
-      this.message = getString("pause.equipped");
+      this.message = `${getString("pause.equipped")} · ${getString("pause.inspect", { action: getPrimaryActionBadge() })}`;
       setLatestMessage(`${tool.displayName} equipped.`);
     }
     retroAudio.confirm(); this.render();
@@ -344,7 +348,22 @@ export class InventoryOverlay {
 
   private renderToolDetail(tool: MenuTool) {
     const item = getDanneItemReadout().find((entry) => entry.id === tool.id);
-    if (!item) return;
+    if (!item) {
+      const process = getProcessItemReadout().find(entry => entry.id === tool.id);
+      if (!process) return;
+      this.text(128, 63, process.displayName.toUpperCase(), PALETTE.goldStamp, true);
+      this.text(128, 78, getString("pause.equipped"), PALETTE.stoneGray, true);
+      if (!this.toolArt(128, 112, process.id, true, 56)) {
+        const fallback = this.art(128, 112, process.id === "stapler" ? "pack-stapler" : SNES_WORKFLOW_TOOL_RELIC_ASSET.key,
+          process.id === "stapler" ? undefined : TOOL_FRAMES[process.id]);
+        if (fallback) fallback.setScale(48 / Math.max(fallback.width, fallback.height));
+        else this.text(128, 110, TOOL_LABELS[process.id], PALETTE.goldStamp, true);
+      }
+      this.text(128, 151, process.frusMeaning.toUpperCase(), PALETTE.terminalCyan, true);
+      this.text(20, 164, pauseTextPages(process.pickupDialog.slice(1).join(" "), 36, 3)[0]);
+      this.renderDetailBack();
+      return;
+    }
     this.text(128, 63, item.displayName.toUpperCase(), PALETTE.goldStamp, true);
     const image = this.art(128, 112, item.key);
     if (image) image.setScale(Math.min(64 / image.width, 64 / image.height));
@@ -357,6 +376,10 @@ export class InventoryOverlay {
     const status = item.id === "treaty-fragments" ? `${item.count} / ${item.total}` : item.equipped ? getString("pause.equipped") : item.tier.toUpperCase();
     this.text(128, 151, status, PALETTE.terminalCyan, true);
     this.text(20, 164, pauseTextPages(item.description, 36, 3)[0]);
+    this.renderDetailBack();
+  }
+
+  private renderDetailBack() {
     this.box(128, 211, 64, 18, PALETTE.deepRuby, PALETTE.goldStamp);
     this.text(128, 207, getString("pause.back"), PALETTE.goldStamp, true);
     this.control({ id: "back", x: 128, y: 206, width: 80, height: 44 }, () => this.back());
