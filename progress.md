@@ -8030,3 +8030,11 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Updated review-packet QA to use the visible dock; desktop and 390x844 touch passed pickup, filing audio, pause/resume, reduced motion and save/reload. NSC QA also supports the dock.
 - Skill client run completed; black WebGL capture inspected, regular browser portrait/narrow/landscape/combat captures inspected as visual evidence. QA report: docs/qa/portrait-touch-dock-2026-09-25.json.
 - Local only. Physical iPhone, physical controller and broad presentation/audio quality audit remain open; overall goal remains active.
+
+## 2026-09-25 — balanced portrait composition
+- Previous goal turn classified as progress: implemented and committed the separate touch dock. New screenshots exposed bottom-heavy placement with excessive unused space above the room.
+- Centered the game plus control dock as one combined surface when the dock is visible. Canvas dimensions and world scale stay unchanged. Hiding the dock restores ordinary canvas centering. Eligibility uses the original unshifted fit, preventing resize oscillation; pointer bounds refresh immediately on visibility changes.
+- Build and 44 focused layout/input tests passed, including asymmetric safe areas, fractional DPR, short-screen fallback, title/controller centering and threshold stability.
+- Real Chromium touch QA passed simultaneous movement/attack, Menu, blur, rotation, controller handoff, narrow/short layout and title centering. WebKit phone route passed all three Reagan NSC rooms, touch choice selection, wrong-answer recovery, return and save/reload with no page errors.
+- A concurrent Chromium route timed out taking a screenshot; subsequent isolated WebKit route passed. Skill snapshot was black; inspected regular Chromium balanced portrait and WebKit choice screenshots. Evidence: docs/qa/portrait-composition-2026-09-25.json, /tmp/portrait-balanced, /tmp/portrait-balanced-webkit.
+- Local only; no physical phone claim. Broad quality goal remains active.

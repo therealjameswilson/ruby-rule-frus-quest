@@ -1,3 +1,4 @@
+import { applyIntegerZoom } from "../systems/pixelPerfect";
 import { PortraitTouchDock } from "./PortraitTouchDock";
 import { RENDER_DENSITY } from "../systems/renderDensity";
 import Phaser from "phaser";
@@ -482,6 +483,7 @@ export class TouchControls {
   private redraw() {
     const wasDocked = this.portraitDock?.active;
     this.portraitDock?.update(this.enabled, gameState.mode, gameState.currentScene !== "WorldMapScene", gameState.playerCombat.weapon.cooldownRatio);
+    if (wasDocked !== this.portraitDock?.active) applyIntegerZoom(this.scene.game);
     if (!wasDocked && this.portraitDock?.active) {
       this.releaseDpad();
       for (const button of this.buttons) if (button.pointerId !== null) this.releaseButton(button);

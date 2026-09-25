@@ -45,6 +45,7 @@ export class PortraitTouchDock {
     const active = enabled && document.documentElement.dataset.portraitDock === 'true';
     if (this.active !== active || this.mode !== mode) this.release();
     this.active = active; this.mode = mode;
+    document.documentElement.dataset.portraitDockVisible = String(active);
     const signature = `${active}:${mode}:${secondaryAvailable}`;
     if (signature !== this.signature) {
       this.signature = signature; this.element.hidden = !active;
@@ -106,6 +107,7 @@ export class PortraitTouchDock {
 
   destroy() {
     this.release(); this.element.remove();
+    delete document.documentElement.dataset.portraitDockVisible;
     window.removeEventListener('blur', this.release); window.removeEventListener('resize', this.release);
     window.removeEventListener('orientationchange', this.release); document.removeEventListener('visibilitychange', this.visibility);
   }
