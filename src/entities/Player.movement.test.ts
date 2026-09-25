@@ -1,3 +1,4 @@
+import { retroAudio } from "../systems/audio";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { Player } from "./Player";
 import { resetGameState } from "../game/state";
@@ -18,7 +19,7 @@ function fixture() {
     walkClock: 0, idleClock: 0, abilityFrameUntil: 0, invulnerableUntil: 0, hurtUntil: 0,
     scene: { time: { now: 0 } }, combatClock: new CombatClock(),
     weaponState: { update: vi.fn(), movementScale: () => 1, phase: "idle" },
-    sprite: { setAngle: vi.fn(), setScale: vi.fn(), clearTint: vi.fn(), setFlipX: vi.fn() },
+    sprite: { setActive: vi.fn(), setAngle: vi.fn(), setScale: vi.fn(), clearTint: vi.fn(), setFlipX: vi.fn() },
     shadow: { setScale: vi.fn() },
     collidesAt: vi.fn((_x: number, _y: number) => false), syncRenderPosition: vi.fn()
   };
@@ -27,7 +28,7 @@ function fixture() {
   return { player, internals, coords };
 }
 
-beforeEach(() => { resetGameState(); input.dir = { x: 0, y: 0 }; });
+beforeEach(() => { vi.restoreAllMocks(); resetGameState(); input.dir = { x: 0, y: 0 }; });
 
 describe("live player movement", () => {
   it.each([30, 60, 120])("stops at an NPC's feet and can immediately walk away at %s FPS", fps => {
@@ -290,5 +291,26 @@ describe("live player movement", () => {
     player.update(1000 / fps, true);
     expect(coords.logicalY).toBe(99);
     expect(player.animationState).toBe("idle_right");
+  });
+});
+
+
+describe("foot contact audio", () => {
+  it("follows traveled strides and stays silent when stopped, paused or blocked", () => {
+    const step=vi.spyOn(retroAudio,"footstep").mockImplementation(()=>{});
+    const {player,internals}=fixture();
+    input.dir={x:1,y:0};
+    for(let i=0;i<24;i++)player.update(1000/60,true);
+    expect(step).toHaveBeenCalledTimes(2);
+    expect(step.mock.calls.map(call=>call[1])).toEqual([true,false]);
+    input.dir={x:0,y:0};
+    for(let i=0;i<24;i++)player.update(1000/60,true);
+    expect(step).toHaveBeenCalledTimes(2);
+    input.dir={x:1,y:0};
+    player.update(1000,false);
+    expect(step).toHaveBeenCalledTimes(2);
+    internals.collidesAt.mockReturnValue(true);
+    for(let i=0;i<24;i++)player.update(1000/60,true);
+    expect(step).toHaveBeenCalledTimes(2);
   });
 });

@@ -1,3 +1,4 @@
+import { footstepSurface, playFootstep } from "./footsteps";
 import { RoomAmbience, ambienceForScene } from "./roomAmbience";
 import { ORIGINAL_SCORE, scoreEventsAtStep, type ScoreTheme } from "./originalScore";
 import { readAudioMix, saveAudioMix, type AudioChannel } from "./audioMix";
@@ -462,6 +463,12 @@ class RetroAudio {
     notes.forEach((note, index) => {
       window.setTimeout(() => this.tone(note, duration, gain, wave), index * (duration + gap) * 1000);
     });
+  }
+
+  footstep(scene: string, right: boolean) {
+    if (!this.enabled || !this.unlocked || !this.context || this.context.state !== "running") return;
+    if (this.mix.effects === 0 || this.mix.master === 0) return;
+    playFootstep(this.context, this.channelOutput(this.context, "effects"), footstepSurface(scene), right);
   }
 
   private tone(frequency: number, duration: number, gainValue: number, wave: Wave = "square") {

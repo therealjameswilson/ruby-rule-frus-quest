@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import { characterGroundOffset, characterPoseHeight, characterPoseCenter, groundedPoseTransform } from "../art/characterGrounding";
-import { characterAnimKey, walkingFrame } from "../art/character_anims";
+import { characterAnimKey, walkingFrame, WALK_POSE_MS } from "../art/character_anims";
 import { heroCharacterKey, characterTextureDensity, ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId } from "../game/constants";
@@ -444,9 +444,12 @@ export class Player {
     }
     const moving = Math.abs(this.logicalX - startX) > 0.001 || Math.abs(this.logicalY - startY) > 0.001;
     if (moving) {
+      const previousContact = Math.floor(this.walkClock / (2 * WALK_POSE_MS));
       // Keep the stride tied to ground covered, including slow tool footwork.
       this.walkClock += Math.hypot(this.logicalX - startX, this.logicalY - startY)
         / PLAYER_MOVEMENT_TUNING.speed * 1000;
+      const contact = Math.floor(this.walkClock / (2 * WALK_POSE_MS));
+      if (contact !== previousContact) retroAudio.footstep(this.scene.sys?.settings.key ?? "", contact % 2 === 1);
       this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && this.facing === "west");
     } else {
       this.walkClock = 0;
