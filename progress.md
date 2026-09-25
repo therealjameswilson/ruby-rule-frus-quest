@@ -7859,3 +7859,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - New qa-office-inbox-door uses the previously earned memo checkpoint, then real keyboard and phone touch inputs to route/stamp, answer opening decisions and walk outside. Both passed with zero errors. Initial harness omitted ?text=full and later omitted required compiler choices; corrected those harness issues before passing.
 - Inspected desktop/phone inbox screenshots and fresh opening native capture. Required skill smoke terminal, its black capture inspected; ordinary screenshots supplied visual evidence. All QA sessions terminal. docs/qa/office-inbox-door-2026-09-25.json.
 - Next: resume the campaign from this newly earned Archive checkpoint; no victory claim yet. Office interaction plaque remains visually large relative to the compact Archive cues and merits presentation work. Local only.
+
+## 2026-09-25 — Earned campaign victory on 804a105
+- Previous turn fixed the opening doorway/inbox conflict and earned a fresh Archive checkpoint. This turn continued that unchanged checkpoint through all13 remaining stages using qa-campaign.py 0. Process48716 terminal exit0. No runtime edits or rebuild during QA.
+- Source note, annotation, filing, network, network routing, clearance, referral dispatch/manifest, editor, proof, production, boss and bindery all passed. Inspected source-note, annotation, clearance and published-ending screenshots.
+- Boss:7cycles,0retries,7fresh core hits,56.111s,deadline met. Bindery:5packets,Sam certification,published,points201→241,Continue preserved. Zero reported browser errors. Evidence docs/qa/campaign-804a105-2026-09-25.json and /tmp/frus-campaign-804a105.
+- Automated state-aware keyboard inputs, earned saves; not unaided human play, physical iPhone/controller or human audio listening. Local in-game publication only. Broader caliber goal incomplete.
+- Visual next action from actual captures: clearance stations still flat panels; Office cues large beside compact Archive cues. Improve these toward detailed environment art rather than repeating completed NSC verification.
