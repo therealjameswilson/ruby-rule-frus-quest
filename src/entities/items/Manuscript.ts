@@ -1,3 +1,4 @@
+import { worldItemImage } from '../../systems/worldItemArt';
 import Phaser from "phaser";
 import { PALETTE } from "../../game/constants";
 import { snapPixel } from "../../systems/pixelPerfect";
@@ -20,7 +21,7 @@ export class Manuscript {
     this.label = label;
     this.x = x;
     this.y = y;
-    const image = scene.add.image(0, 0, DOCUMENT_TEXTURES[id] ?? "manuscript");
+    const image = worldItemImage(scene,0,0,DOCUMENT_TEXTURES[id] ?? "manuscript");
     const text = scene.add
       .text(0, 15, label.toUpperCase(), {
         fontFamily: "monospace",

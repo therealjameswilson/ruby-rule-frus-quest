@@ -1,3 +1,5 @@
+import { preloadPhotocopierArt } from '../systems/photocopierArt';
+import { worldItemImage } from '../systems/worldItemArt';
 import { preloadDetailedNpcs } from '../art/npcSprites';
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
 import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
@@ -265,6 +267,7 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadPhotocopierArt(this);
     preloadDetailedNpcs(this, ['priya']);
     if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
   }
@@ -792,7 +795,7 @@ export class SilentReadScene extends Phaser.Scene {
       const item = SILENT_READ_REVIEW_ITEMS.find((candidate) => candidate.id === lane.itemId);
       this.track(this.add.rectangle(lane.x, 111, 42, 48, color(PALETTE.black), 0.92)
         .setStrokeStyle(1, color(lane.accent)).setDepth(140));
-      this.track(this.add.image(lane.x, 104, item?.texture ?? "review-folder").setDepth(141));
+      this.track(worldItemImage(this,lane.x, 104, item?.texture ?? "review-folder").setDepth(141));
       this.track(this.add.text(lane.x, 116, lane.label, {
         fontFamily: "monospace",
         fontSize: "5px",
@@ -824,12 +827,12 @@ export class SilentReadScene extends Phaser.Scene {
         const frame = "proof-desk", texture = this.textures.get(asset.key);
         if (!texture.has(frame)) texture.add(frame, 0, WORKSTATION_DESK.tileIndex % asset.columns * asset.tileSize,
           Math.floor(WORKSTATION_DESK.tileIndex / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
-        desk.add([this.add.image(-8, 0, asset.key, frame), this.add.image(8, 0, asset.key, frame)]);
+        desk.add([worldItemImage(this,-8, 0, asset.key, frame), worldItemImage(this,8, 0, asset.key, frame)]);
       } else {
         desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
       }
       desk.add(this.add.rectangle(0, 0, detailedDesk ? 40 : 32, detailedDesk ? 23 : 16, 0, 0).setStrokeStyle(0.6, color(station.accent), 0.75));
-      desk.add(this.add.image(-9, 1, station.texture).setDisplaySize(10, 10));
+      desk.add(worldItemImage(this,-9, 1, station.texture).setDisplaySize(10, 10));
       if (!detailedDesk) desk.add(this.add.rectangle(7, 2, 10, 6, color(PALETTE.creamPaper)));
       const labelY = detailedDesk ? (station.y < 130 ? -22 : 14) : -7;
       const text = this.add.text(0, labelY, STATION_TAGS[station.id], {
@@ -912,7 +915,7 @@ export class SilentReadScene extends Phaser.Scene {
         y: placed ? station.y - 3 : this.outbox.y - 10,
         routedStation: placed ? station.id : undefined
       };
-      physicalFlag.icon = this.add.image(physicalFlag.x, physicalFlag.y, flag.texture)
+      physicalFlag.icon = worldItemImage(this,physicalFlag.x, physicalFlag.y, flag.texture)
         .setDisplaySize(12, 12).setDepth(placed ? station.y + 9 : 240).setVisible(false);
       return physicalFlag;
     });

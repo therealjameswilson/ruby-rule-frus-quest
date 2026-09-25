@@ -1,3 +1,4 @@
+import { worldItemImage } from './worldItemArt';
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { DANNE_SCENE_GEOMETRY, type DanneSceneInteractionAction } from "../game/danneSceneCollisions";
@@ -25,7 +26,9 @@ export class NaraStackRecords {
     const fragment = definitions.find((item) => item.action === "treaty-fragment-nara")!;
     scene.add.rectangle(note.x, note.y, 20, 18, color(PALETTE.black))
       .setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(note.y - 3).setName("nara-stack-note-station");
-    const paper = (x: number, y: number) => scene.textures.exists(key)
+    const paper = (x: number, y: number) => typeof scene.textures.createCanvas === 'function'
+      ? worldItemImage(scene,x,y,'source-note').setDisplaySize(12,16)
+      : scene.textures.exists(key)
       ? scene.add.image(x, y, key, "source_note_card").setScale(0.5)
       : scene.add.rectangle(x, y, 8, 12, color(PALETTE.creamPaper));
     paper(note.x, note.y).setDepth(note.y - 2).setName("nara-stack-note-paper");

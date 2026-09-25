@@ -1,3 +1,8 @@
+import { dungeonGateTexture } from '../systems/dungeonGateArt';
+import { worldItemImage } from '../systems/worldItemArt';
+import { addGuideCavernArt } from '../systems/guideCavernArt';
+import { SUPPORTING_SPRITES, supportingSprite } from '../art/supportingSprites';
+import { DANNE_BOSS_HD, danneBossFormAnimation } from '../art/danneBossPresentation';
 import Phaser from "phaser";
 import { SodaCanAttack } from "../systems/sodaCanAttack";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
@@ -86,6 +91,7 @@ export class GuideScene extends Phaser.Scene {
   private counterTraining = new GuideCounterTraining();
   private soda?: SodaCanAttack;
   private readonly attackBuffer = new AttackBuffer();
+  private gateArt?: Phaser.GameObjects.Image;
   private gateGlow!: Phaser.GameObjects.Rectangle;
   private gateLabel!: Phaser.GameObjects.Text;
   private readonly interactionAssist = new InteractionAssist();
@@ -97,6 +103,11 @@ export class GuideScene extends Phaser.Scene {
 
   constructor() {
     super("GuideScene");
+  }
+
+  preload() {
+    const art=SUPPORTING_SPRITES.archivist;
+    if(!this.textures.exists(art.key))this.load.image(art.key,art.path);
   }
 
   create() {
@@ -121,25 +132,28 @@ export class GuideScene extends Phaser.Scene {
       this.drawArchiveLamp(86, 88);
       this.drawArchiveLamp(204, 80);
     }
+    addGuideCavernArt(this);
     const colleagueTexture = getCharacterKeyForNpcId("archive-colleague");
     this.add.ellipse(128, 106, 14, 4, color(PALETTE.black), 0.3).setDepth(103);
-    const colleague = this.add
-      .sprite(128, 104, colleagueTexture)
-      .setOrigin(0.5, 0.9)
-      .setDepth(104);
-    colleague.play(characterAnimKey(colleagueTexture, "idle-down"));
-    this.stampIcon = this.add.image(96, 132, "citation-stamp").setDepth(120);
-    this.fragmentIcon = this.add.image(160, 132, "volume-fragment").setDepth(120);
+    if(this.textures.exists(SUPPORTING_SPRITES.archivist.key)) {
+      supportingSprite(this,'archivist',128,106).setOrigin(.5,1).setDepth(104).setName('archive-guide-detailed');
+    } else {
+      const colleague=this.add.sprite(128,104,colleagueTexture).setOrigin(.5,.9).setDepth(104);
+      colleague.play(characterAnimKey(colleagueTexture,'idle-down'));
+    }
+    this.stampIcon = worldItemImage(this,96, 132, "citation-stamp").setDepth(120);
+    this.fragmentIcon = worldItemImage(this,160, 132, "volume-fragment").setDepth(120);
     this.egoSealGlow = this.add.rectangle(176, 112, 24, 36, color(PALETTE.classNetRed), 0.18)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
       .setDepth(122)
       .setVisible(false);
-    const projectionKey = this.textures.exists(DANNE_BOSS_SPRITE_ASSET.key) ? DANNE_BOSS_SPRITE_ASSET.key : "citation-stamp";
+    const projectionKey = this.textures.exists(DANNE_BOSS_HD.key) ? DANNE_BOSS_HD.key : this.textures.exists(DANNE_BOSS_SPRITE_ASSET.key) ? DANNE_BOSS_SPRITE_ASSET.key : "citation-stamp";
     this.egoSeal = this.add.sprite(176, 124, projectionKey, 0)
       .setOrigin(0.5, 0.82)
       .setDepth(123)
       .setVisible(false);
-    const projectionAnim = danneAnimKey(projectionKey, "walk-down");
+    if(projectionKey===DANNE_BOSS_HD.key)this.egoSeal.setDisplaySize(32,48);
+    const projectionAnim = projectionKey===DANNE_BOSS_HD.key ? danneBossFormAnimation("colossus") : danneAnimKey(projectionKey, "walk-down");
     if (this.anims.exists(projectionAnim)) this.egoSeal.play(projectionAnim);
     const boltKey = this.textures.exists(GUIDE_EGO_BOLT_ASSET.key) ? GUIDE_EGO_BOLT_ASSET.key : "citation-stamp";
     this.practiceBolt = this.add.sprite(176, 112, boltKey, 0)
@@ -189,7 +203,7 @@ export class GuideScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(810);
     this.prompt = new InteractionPrompt(this);
-    this.toast = new FeedbackToast(this);
+    this.toast = new FeedbackToast(this,1200,()=>this.player.sprite.getBounds());
 
     this.syncStagePresentation();
     setLatestMessage(`Archive route ready for ${gameState.playerProfile.displayName}: ${guideCavernActionCue(openingStage).toLowerCase()}.`);
@@ -425,7 +439,7 @@ export class GuideScene extends Phaser.Scene {
     addVolumeFragment("Front Matter Fragment");
     addDocumentPoints(10, "front matter fragment secured");
     retroAudio.stamp();
-    const reward = this.add.image(160, 132, "volume-fragment")
+    const reward = worldItemImage(this,160, 132, "volume-fragment")
       .setName("front-matter-reveal").setDepth(125);
     this.tweens.add({
       targets: reward, y: 114, duration: 240,
@@ -489,6 +503,10 @@ export class GuideScene extends Phaser.Scene {
       this.practiceBolt.setVisible(false);
       this.practiceAim.clear();
       setGuideCounterReadout(null);
+    }
+    if(this.gateArt) {
+      const key=dungeonGateTexture(this,this.hasFragment?'open':'locked',PALETTE.goldStamp);
+      if(key)this.gateArt.setTexture(key).setDisplaySize(54,22);
     }
     this.gateGlow.setFillStyle(color(this.hasFragment ? PALETTE.openNetGreen : PALETTE.classNetRed));
     this.gateLabel
@@ -605,7 +623,7 @@ export class GuideScene extends Phaser.Scene {
     if (!this.textures.exists(SNES_GUIDE_CAVERN_TILE_ASSET.key)) return null;
     const texture = this.textures.get(SNES_GUIDE_CAVERN_TILE_ASSET.key);
     if (!texture.has(frame)) return null;
-    return this.add.image(Math.round(x), Math.round(y), SNES_GUIDE_CAVERN_TILE_ASSET.key, frame)
+    return worldItemImage(this,Math.round(x), Math.round(y), SNES_GUIDE_CAVERN_TILE_ASSET.key, frame)
       .setName(`guide-cavern-tile-${name}`)
       .setDepth(depth);
   }
@@ -628,8 +646,10 @@ export class GuideScene extends Phaser.Scene {
   }
 
   private drawVerificationGate() {
-    this.gateGlow = this.add.rectangle(128, 198, 54, 24, color(PALETTE.classNetRed)).setDepth(55);
-    this.add.rectangle(128, 198, 54, 24, color(PALETTE.black), 0.45).setStrokeStyle(2, color(PALETTE.goldStamp)).setDepth(56);
+    this.gateGlow = this.add.rectangle(128, 210, 50, 1.2, color(PALETTE.classNetRed)).setDepth(55);
+    const key=dungeonGateTexture(this,'locked',PALETTE.goldStamp);
+    if(key)this.gateArt=this.add.image(128,198,key).setDisplaySize(54,22).setDepth(56);
+
     this.gateLabel = this.add.text(128, 198, "LOCKED", {
       fontFamily: "monospace",
       fontSize: "7px",

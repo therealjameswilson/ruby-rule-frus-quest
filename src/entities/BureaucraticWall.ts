@@ -3,7 +3,7 @@ import { PALETTE } from "../game/constants";
 import { SNES_BUREAUCRATIC_WALL_ASSETS } from "../game/snesAtlas";
 import type { Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
-import { photocopierTexture } from "../systems/photocopierArt";
+import { PHOTOCOPIER_ART, photocopierTexture } from "../systems/photocopierArt";
 import { prefersReducedMotion } from "../systems/motionPreferences";
 import { wallFollowFactor } from "../systems/wallMotion";
 
@@ -79,10 +79,11 @@ export class BureaucraticWall {
       .setName("bureaucratic-wall-crack")
       .setAngle(18)
       .setVisible(false);
-    this.eyeGlowLeft = scene.add.rectangle(-7, -6, 3, 1, color(this.accent), 0)
+    const painted=scene.textures.exists(PHOTOCOPIER_ART.key);
+    this.eyeGlowLeft = scene.add.rectangle(painted?-3.75:-7, painted?-5.55:-6, painted?1.65:3, painted?.6:1, color(this.accent), 0)
       .setOrigin(0)
       .setName("bureaucratic-wall-eye-glow");
-    this.eyeGlowRight = scene.add.rectangle(4, -6, 3, 1, color(this.accent), 0)
+    this.eyeGlowRight = scene.add.rectangle(painted?.6:4, painted?-5.55:-6, painted?1.65:3, painted?.6:1, color(this.accent), 0)
       .setOrigin(0)
       .setName("bureaucratic-wall-eye-glow");
     this.pressureArrow = scene.add.triangle(0, -27, 0, -4, 8, 0, 0, 4, color(this.accent), 0)

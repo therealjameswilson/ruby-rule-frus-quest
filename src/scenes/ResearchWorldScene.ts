@@ -1,3 +1,4 @@
+import { addSaladBowlArt } from '../systems/saladBowlArt';
 import { OutdoorAtmosphere } from "../systems/outdoorAtmosphere";
 import { nscDungeon, nscStage } from '../game/nscResearch';
 import { presentationPanel, PANEL_COLORS } from "../systems/presentationPanel";
@@ -193,14 +194,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.label(104,194,'JAMES',280,7).setName('sweetgreen-james-label');
     // Salad bowl on the outdoor counter.
     g.fillStyle(0x173e2c,.24).fillEllipse(55,186,20,4);
-    g.fillStyle(0xd3d8c4).fillEllipse(55,182,18,8);
-    g.fillStyle(0xf5f0de).fillEllipse(55,180,20,6);
-    g.fillStyle(0x3b7535).fillEllipse(55,180,16,4);
-    for (const [x,y] of [[50,179],[54,178],[58,179],[52,181],[57,181]]) {
-      g.fillStyle(0x86b84d).fillEllipse(x,y,4,2.5);
-    }
-    g.fillStyle(0xc95936).fillCircle(52,179,1.1).fillCircle(58,180,1);
-    g.fillStyle(0xe8cd7b).fillCircle(55,181,.7).fillCircle(59,179,.7);
+    addSaladBowlArt(this);
     this.label(70,131,'ORDER SALAD',280,7).setName('sweetgreen-order-label');
     this.stop('Order a salad',64,183,16,()=>this.orderSalad());
     this.stop('Talk to James',91,199,19,()=>{

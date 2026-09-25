@@ -578,7 +578,7 @@ export const SNES_ANTAGONIST_ASSETS = [
   {
     id: "hac_member",
     key: "snes-hac-member",
-    path: "assets/sprites/snes-hac-member.svg",
+    path: "assets/presentation/consistency/hac-v2.webp",
     kind: "roaming-antagonist-sprite",
     displayName: "HAC Member",
     behavior: "roams the Office Hub causing short focus distractions",
@@ -588,7 +588,7 @@ export const SNES_ANTAGONIST_ASSETS = [
   {
     id: "federal_shutdown",
     key: "snes-federal-shutdown",
-    path: "assets/sprites/snes-federal-shutdown.svg",
+    path: "assets/presentation/consistency/shutdown-v2.webp",
     kind: "roaming-antagonist-sprite",
     displayName: "Federal Government Shutdown",
     behavior: "roams the Office Hub posting short stop-work closure notices",
@@ -598,7 +598,7 @@ export const SNES_ANTAGONIST_ASSETS = [
   {
     id: "frus_bees",
     key: "snes-frus-bees",
-    path: "assets/sprites/snes-frus-bees.svg",
+    path: "assets/presentation/consistency/bees-v2.webp",
     kind: "roaming-antagonist-sprite",
     displayName: "Bees",
     behavior: "swarm through the Office Hub and interrupt concentration if the player gets too close",
@@ -608,7 +608,7 @@ export const SNES_ANTAGONIST_ASSETS = [
   {
     id: "navy_hill_mice",
     key: "snes-navy-hill-mice",
-    path: "assets/sprites/snes-navy-hill-mice.svg",
+    path: "assets/presentation/consistency/mice-v2.webp",
     kind: "roaming-antagonist-sprite",
     displayName: "Navy Hill Mice",
     behavior: "scurry around the Navy Hill landmark and scatter source notes if the player gets too close",

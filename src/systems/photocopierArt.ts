@@ -1,12 +1,25 @@
 import type Phaser from 'phaser';
 
+export const PHOTOCOPIER_ART={key:'photocopier-painted-v2',path:'assets/presentation/consistency/photocopier-v2.webp'};
+export function preloadPhotocopierArt(scene: Phaser.Scene) {
+  if(!scene.textures.exists(PHOTOCOPIER_ART.key))scene.load.image(PHOTOCOPIER_ART.key,PHOTOCOPIER_ART.path);
+}
+
 /** Original four-times-density copier cabinet, cached per status color. */
 export function photocopierTexture(scene: Phaser.Scene, accent: string): string | null {
-  const key = `photocopier-cabinet-v1-${accent}`;
+  const painted=scene.textures.exists(PHOTOCOPIER_ART.key);
+  const key = `photocopier-cabinet-${painted?'v2':'v1'}-${accent}`;
   if (scene.textures.exists(key)) return key;
   const texture = scene.textures.createCanvas(key, 128, 128);
   if (!texture) return null;
   const c = texture.getContext(); c.scale(4, 4);
+  if(painted) {
+    const source=scene.textures.get(PHOTOCOPIER_ART.key).getSourceImage() as HTMLImageElement;
+    c.drawImage(source,213,129,887,967,2,0,28,31);
+    // Existing gameplay labels sit on the dark front panel; colored inset lamps remain live.
+    c.fillStyle=accent;c.fillRect(12.25,10.45,1.65,.6);c.fillRect(16.6,10.45,1.65,.6);
+    texture.refresh();return key;
+  }
   const rect = (x: number, y: number, w: number, h: number, fill: string | CanvasGradient) => {
     c.fillStyle = fill; c.fillRect(x, y, w, h);
   };

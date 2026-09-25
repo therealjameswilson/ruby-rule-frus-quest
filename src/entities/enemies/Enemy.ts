@@ -1,3 +1,4 @@
+import { SUPPORTING_SPRITES, supportingSprite } from '../../art/supportingSprites';
 import Phaser from "phaser";
 import { ACCESSIBILITY_OVERLAYS } from "../../assets/registry";
 import { PALETTE } from "../../game/constants";
@@ -84,7 +85,9 @@ export abstract class Enemy {
 
     const shadowOptions = options.shadow ?? { y: 15, width: 18, height: 6 };
     const shadow = scene.add.ellipse(0, shadowOptions.y, shadowOptions.width, shadowOptions.height, color(PALETTE.black), 0.35);
-    this.sprite = scene.add.sprite(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : options.fallbackTextureKey);
+    this.sprite = this.spriteKey in SUPPORTING_SPRITES && scene.textures.exists(this.spriteKey)
+      ? supportingSprite(scene,this.spriteKey as keyof typeof SUPPORTING_SPRITES,0,shadowOptions.y).setOrigin(.5,1)
+      : scene.add.sprite(0,0,scene.textures.exists(this.spriteKey)?this.spriteKey:options.fallbackTextureKey);
     this.hpBack = scene.add.rectangle(0, -19, 22, 4, color(PALETTE.black), 0.9)
       .setStrokeStyle(1, color(PALETTE.stoneGray))
       .setVisible(false);

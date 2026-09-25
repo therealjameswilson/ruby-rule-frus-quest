@@ -1,3 +1,4 @@
+import { worldItemImage } from './worldItemArt';
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
@@ -20,7 +21,9 @@ export class BlackVaultObjects {
       const frame = target.action === "boss-trigger" ? "terminal"
         : target.action === "reliability-cache" ? "frus_volume" : "source_note_card";
       const shadow = scene.add.ellipse(0, 1, 14, 4, color(PALETTE.black), 0.65);
-      const relic = scene.textures.exists(key) && scene.textures.get(key).has(frame)
+      const relic = typeof scene.textures.createCanvas === 'function' && frame!=='terminal'
+        ? worldItemImage(scene,0,0,frame==='frus_volume'?'volume-fragment':'source-note').setDisplaySize(12,16).setOrigin(.5,1)
+        : scene.textures.exists(key) && scene.textures.get(key).has(frame)
         ? scene.add.image(0, 0, key, frame).setScale(0.5).setOrigin(0.5, 1)
         : scene.add.rectangle(0, -8, 8, 14, color(PALETTE.creamPaper))
           .setStrokeStyle(1, color(target.accent));

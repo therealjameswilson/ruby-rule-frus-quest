@@ -1,3 +1,5 @@
+import { preloadPhotocopierArt } from '../systems/photocopierArt';
+import { worldItemImage } from '../systems/worldItemArt';
 import { preloadDetailedNpcs } from '../art/npcSprites';
 import { reviewPacketArt, reviewInboxArt } from "../systems/reviewPacketArt";
 import { prefersReducedMotion } from "../systems/motionPreferences";
@@ -196,6 +198,7 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadPhotocopierArt(this);
     preloadDetailedNpcs(this, ['marcus']);
     preloadClearanceStationArt(this);
   }
@@ -717,7 +720,7 @@ export class NetworkScene extends Phaser.Scene {
     if (!this.textures.exists(SNES_NETWORK_TILE_ASSET.key)) return null;
     const texture = this.textures.get(SNES_NETWORK_TILE_ASSET.key);
     if (!texture.has(frame)) return null;
-    return this.track(this.add.image(Math.round(x), Math.round(y), SNES_NETWORK_TILE_ASSET.key, frame)
+    return this.track(worldItemImage(this,Math.round(x), Math.round(y), SNES_NETWORK_TILE_ASSET.key, frame)
       .setName(`network-tile-${name}`)
       .setDepth(depth));
   }
@@ -823,7 +826,7 @@ export class NetworkScene extends Phaser.Scene {
     }
     gate.add(this.add.rectangle(0, 0, 20, 20, color(PALETTE.black)).setStrokeStyle(1, color(PALETTE.goldStamp)));
     if (this.textures.exists("citation-stamp")) {
-      gate.add(this.add.image(0, 0, "citation-stamp").setDisplaySize(16, 16));
+      gate.add(worldItemImage(this,0, 0, "citation-stamp").setDisplaySize(16, 16));
     } else {
       gate.add(this.add.rectangle(0, -3, 4, 8, color(PALETTE.goldStamp)));
       gate.add(this.add.rectangle(0, 3, 12, 4, color(PALETTE.goldStamp)));
@@ -944,16 +947,9 @@ export class NetworkScene extends Phaser.Scene {
     const packet = NETWORK_ROUTE_PACKETS.find((candidate) => candidate.id === packetId)
       ?? NETWORK_ROUTE_PACKETS[0];
     const accent = packet.network === "OpenNet" ? PALETTE.openNetGreen : PALETTE.classNetRed;
-    const width = compact ? 21 : 30;
-    const height = compact ? 13 : 19;
-    return this.add.container(x, y, [
-      this.add.ellipse(1, Math.round(height / 2), width + 4, 7, color(PALETTE.black), 0.4),
-      this.add.rectangle(0, 0, width, height, color(PALETTE.creamPaper))
-        .setStrokeStyle(1, color(accent)),
-      this.add.rectangle(-Math.round(width / 2) + 3, 0, 3, height - 3, color(accent)),
-      this.add.rectangle(0, -Math.round(height / 2) + 3, compact ? 9 : 13, 4, color(PALETTE.archiveAmber))
-        .setStrokeStyle(1, color(PALETTE.sepiaInk))
-    ]);
+    const art=reviewPacketArt(this,accent,compact);
+    if(art)art.setDisplaySize(compact?21:30,compact?15.75:22.5);
+    return this.add.container(x,y,art?[art]:[]);
   }
 
   private routingCarriedPacket() {

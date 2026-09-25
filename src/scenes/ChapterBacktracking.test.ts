@@ -68,18 +68,20 @@ describe("live cross-chapter exit handlers", () => {
   });
   it("states the goal on first assignment and preserves practical hints on repeat", () => {
     const scene = Object.assign(new OfficeScene(), {
-      player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn() }, dialog: { show: vi.fn() },
+      player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn(), hide: vi.fn() }, dialog: { show: vi.fn() },
       updateFirstQuestCue: vi.fn(), officeStarterMemoStatus: () => 0,
       currentOfficeObjective: () => "TAKE THE MEMO"
-    }) as unknown as { talkJuniorCompiler(): void; toast: { show: ReturnType<typeof vi.fn> } };
+    }) as unknown as { talkJuniorCompiler(): void; toast: { show: ReturnType<typeof vi.fn>; hide: ReturnType<typeof vi.fn> } };
     const points = gameState.documentPoints;
     const inventory = [...gameState.inventory];
     scene.talkJuniorCompiler();
-    expect(scene.toast.show).toHaveBeenLastCalledWith("COMPILE A FRUS VOLUME", { x: 64, y: 100 }, "info");
+    expect(scene.toast.hide).toHaveBeenCalledOnce();
+    expect(scene.toast.show).not.toHaveBeenCalled();
     expect(gameState.sceneProgress.juniorCompilerIntroduced).toBe(1);
     expect(gameState.latestMessage).toContain("compile a FRUS volume");
     scene.talkJuniorCompiler();
-    expect(scene.toast.show).toHaveBeenLastCalledWith("PICK MEMO -> INBOX -> STAMP", { x: 64, y: 100 }, "info");
+    expect(scene.toast.hide).toHaveBeenCalledTimes(2);
+    expect(gameState.latestMessage).toContain("Pick up the memo");
     expect(gameState.documentPoints).toBe(points);
     expect(gameState.inventory).toEqual(inventory);
   });
@@ -87,7 +89,7 @@ describe("live cross-chapter exit handlers", () => {
     const feet = {};
     const desk = {};
     const scene = Object.assign(new OfficeScene(), {
-      player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn() }, dialog: { show: vi.fn() },
+      player: { position: { x: 64, y: 100 } }, toast: { show: vi.fn(), hide: vi.fn() }, dialog: { show: vi.fn() },
       juniorCompiler: { setVisible: vi.fn() }, kathyFeet: feet, solids: [desk, feet],
       interactables: [{ id: "junior-compiler" }, { id: "starter-memo" }],
       updateFirstQuestCue: vi.fn(), officeStarterMemoStatus: () => 0,
