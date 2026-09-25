@@ -1,4 +1,5 @@
 import { addBinderyPressArt } from "../systems/binderyPressArt";
+import { addBinderyInboxArt } from "../systems/binderyInboxArt";
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
 import { addEditorialRoomWalls } from "../systems/editorialRoomWalls";
 import { buildEditorE1TileLayers } from "../game/editorE1Tilemap";
@@ -335,12 +336,14 @@ export class EndingScene extends Phaser.Scene {
       color: PALETTE.classNetRed, backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(156);
 
-    this.add.rectangle(BINDERY_INBOX.x, BINDERY_INBOX.y, 32, 12, color(PALETTE.black), 0.96)
-      .setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(200);
-    this.add.text(BINDERY_INBOX.x, BINDERY_INBOX.y + 11, "BINDERY INBOX", {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.terminalCyan
+    if (!addBinderyInboxArt(this, BINDERY_INBOX.x, BINDERY_INBOX.y)) {
+      this.add.rectangle(BINDERY_INBOX.x, BINDERY_INBOX.y, 32, 12, color(PALETTE.black), 0.96)
+        .setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(200);
+    }
+    this.add.text(BINDERY_INBOX.x, BINDERY_INBOX.y - 17, "INBOX", {
+      fontFamily: "Arial",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan, backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(146).setName("bindery-inbox-label");
     if (!this.published) {
       this.add.rectangle(BINDERY_RETURN.x, BINDERY_RETURN.y, 20, 24, color(PALETTE.black))
@@ -690,7 +693,7 @@ export class EndingScene extends Phaser.Scene {
         checkCount: packet.checkIds.length,
         status,
         x: placed ? station.x : BINDERY_INBOX.x,
-        y: placed ? station.y - 18 : BINDERY_INBOX.y - 13,
+        y: placed ? station.y - 18 : BINDERY_INBOX.y - 2,
         routedStation: placed ? station.id : undefined
       };
       physicalPacket.icon = this.add.image(physicalPacket.x, physicalPacket.y, physicalPacket.texture)
