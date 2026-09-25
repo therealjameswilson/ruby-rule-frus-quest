@@ -1,0 +1,201 @@
+{
+  "runtimeCommit": "577f00e",
+  "engine": "Playwright WebKit",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "touch": true
+  },
+  "loading": {
+    "engine": "webkit",
+    "freshTitleAttackRequests": 0,
+    "totalBytesDeferredFromBoot": 11485993,
+    "results": [
+      {
+        "appearance": "compiler",
+        "mobile": true,
+        "requests": [
+          "compiler-attack-v1.png"
+        ],
+        "pose": {
+          "key": "compiler-attack-v1",
+          "frames": 12
+        },
+        "active": {
+          "visible": true,
+          "frame": 4
+        },
+        "retry": false,
+        "errors": []
+      },
+      {
+        "appearance": "compiler_ada",
+        "mobile": true,
+        "requests": [
+          "ada-attack-v1.png",
+          "ada-attack-v1.png",
+          "ada-attack-v1.png",
+          "ada-attack-v1.png"
+        ],
+        "pose": {
+          "key": "ada-attack-v1",
+          "frames": 12
+        },
+        "active": {
+          "visible": true,
+          "frame": 4
+        },
+        "retry": true,
+        "errors": []
+      },
+      {
+        "appearance": "compiler_clara",
+        "mobile": true,
+        "requests": [
+          "clara-attack-v1.png",
+          "clara-attack-v1.png",
+          "clara-attack-v1.png",
+          "clara-attack-v1.png"
+        ],
+        "pose": {
+          "key": "clara-attack-v1",
+          "frames": 12
+        },
+        "active": {
+          "visible": true,
+          "frame": 4
+        },
+        "retry": true,
+        "errors": []
+      },
+      {
+        "appearance": "compiler_maya",
+        "mobile": true,
+        "requests": [
+          "maya-attack-v1.png"
+        ],
+        "pose": {
+          "key": "maya-attack-v1",
+          "frames": 12
+        },
+        "active": {
+          "visible": true,
+          "frame": 4
+        },
+        "retry": false,
+        "errors": []
+      },
+      {
+        "appearance": "compiler_robin",
+        "mobile": true,
+        "requests": [
+          "robin-attack-v1.png"
+        ],
+        "pose": {
+          "key": "robin-attack-v1",
+          "frames": 12
+        },
+        "active": {
+          "visible": true,
+          "frame": 4
+        },
+        "retry": false,
+        "errors": []
+      },
+      {
+        "appearance": "compiler_quinn",
+        "mobile": true,
+        "requests": [
+          "quinn-attack-v1.png"
+        ],
+        "pose": {
+          "key": "quinn-attack-v1",
+          "frames": 12
+        },
+        "active": {
+          "visible": true,
+          "frame": 4
+        },
+        "retry": false,
+        "errors": []
+      }
+    ]
+  },
+  "realTouchSwings": [
+    {
+      "appearance": "compiler",
+      "phases": [
+        {
+          "phase": "windup",
+          "frame": 3,
+          "visible": true,
+          "baseVisible": false,
+          "key": "compiler-attack-v1"
+        },
+        {
+          "phase": "active",
+          "frame": 7,
+          "visible": true,
+          "baseVisible": false,
+          "key": "compiler-attack-v1"
+        },
+        {
+          "phase": "cooldown",
+          "frame": 11,
+          "visible": true,
+          "baseVisible": false,
+          "key": "compiler-attack-v1"
+        }
+      ],
+      "idle": {
+        "phase": "idle",
+        "attack": false,
+        "body": true
+      },
+      "errors": []
+    },
+    {
+      "appearance": "compiler_clara",
+      "phases": [
+        {
+          "phase": "windup",
+          "frame": 3,
+          "visible": true,
+          "baseVisible": false,
+          "key": "clara-attack-v1"
+        },
+        {
+          "phase": "active",
+          "frame": 7,
+          "visible": true,
+          "baseVisible": false,
+          "key": "clara-attack-v1"
+        },
+        {
+          "phase": "cooldown",
+          "frame": 11,
+          "visible": true,
+          "baseVisible": false,
+          "key": "clara-attack-v1"
+        }
+      ],
+      "idle": {
+        "phase": "idle",
+        "attack": false,
+        "body": true
+      },
+      "errors": []
+    }
+  ],
+  "screenshotsInspected": [
+    "/tmp/player-art-webkit/compiler_clara-attack.png",
+    "/tmp/player-art-webkit/phone-retry.png",
+    "/tmp/webkit-first-swing/compiler_clara-after.png"
+  ],
+  "limitations": [
+    "Desktop WebKit with phone emulation, not physical iPhone Safari",
+    "Roster saves change appearance for coverage; attack-art roster uses a direct action fixture",
+    "First-swing cases use real touchscreen B input from an earned Archive checkpoint",
+    "Local only; not published"
+  ]
+}

@@ -7966,3 +7966,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - First prompt clearance attempt moved cue above hero but crowded north LOCK plaque. Final cue uses compact PUSH/TAKE beside hero, preserving full action in HUD. Eight desktop/phone approach fixtures verify no hero overlap; final screenshots inspected.
 - Build and 21 focused cart/packet tests passed. Earned keyboard and touch replays completed parking, all three notes and return, before final prompt-only shortening/placement; final eight-position visual checks passed. Skill smoke passed with black capture inspected; ordinary screenshots supplied visual evidence.
 - Evidence docs/qa/annotation-cart-layout-2026-09-25.json; reusable tools/qa-annotation-cart-layout.mjs requires FRUS_QA_STORAGE from earned Annotation Stacks entry. Local only, broad quality goal active.
+
+## WebKit compiler loading and first touch attack — 2026-09-25
+- Extended qa-player-art-loading with WebKit/phone options and both regular Ada and custom-frame Clara download-failure cases. All six compiler sheets passed: zero attack requests before title/Continue, selected sheet only after Continue, 12 frames, attack art visible, HUD restored; touch retry preserved save and recovered both failed sheets.
+- Added qa-webkit-first-swing: from an earned Archive entry save, actual touch Continue and B attack for classic and Clara. All six phase observations (windup/active/cooldown) showed correct row and attack texture, base body hidden during attack; idle restored body and hid attack art. Zero page errors.
+- Inspected WebKit phone retry, Clara attack, and after-attack screenshots. No runtime changes needed. Evidence docs/qa/webkit-compiler-loading-2026-09-25.json.
+- Desktop WebKit phone emulation is not physical iPhone Safari. Broader quality goal remains active; local only.
