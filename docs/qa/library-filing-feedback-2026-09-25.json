@@ -1,0 +1,66 @@
+{
+  "date": "2026-09-25",
+  "scope": "Presidential library filing feedback",
+  "desktop": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "visibleFiledPapers": true,
+    "nonBlockingIntermediateFiling": true,
+    "filingSound": true,
+    "lockedStationRedirect": true,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "phone": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "visibleFiledPapers": true,
+    "nonBlockingIntermediateFiling": true,
+    "filingSound": true,
+    "lockedStationRedirect": true,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "restore": {
+    "savedStage": 2,
+    "visible": [
+      true,
+      true,
+      false,
+      false
+    ],
+    "reloads": 2,
+    "errors": [],
+    "limitation": "Saved-state fixture for presentation restoration; earned progression verified separately"
+  },
+  "focusedTestsPassed": 27,
+  "screenshotsInspected": [
+    "/tmp/library-filing-feedback/desktop-packet-filed.png",
+    "/tmp/library-filing-feedback/phone-packet-filed.png",
+    "/tmp/library-receipt-restore/restored.png"
+  ],
+  "limitations": [
+    "Simulated controller and phone, not physical hardware",
+    "Filing audio trigger verified, not human listening",
+    "Standard skill capture black; ordinary Playwright screenshots inspected",
+    "Local only, not published"
+  ]
+}

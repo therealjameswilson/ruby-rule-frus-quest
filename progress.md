@@ -8127,3 +8127,15 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Previous turn made progress with four original library furniture sprites. Found future stations still offered unavailable actions in the HUD. They now point to the current corner; local prompt names the prerequisite. Current label is gold, saved labels muted green and locked labels gray; words preserve color-independent meaning. Removed hardcoded A prefix from NSC entrance label.
 - Build+10 research/cue tests passed. Expanded earned controller outing deliberately visits locked file station before finding aid, verifies direction, opens order explanation without progressing, then completes all4 stages and returns. Desktop and phone passed including save/reward/menu/disconnect/handoff.
 - Inspected locked-station screenshots at desktop and phone sizes; skill black capture inspected. Evidence docs/qa/library-order-guidance-2026-09-25.json. Local only, physical hardware unverified, broad goal remains active.
+
+## 2026-09-25 — presidential-library NSC request confirmation
+- Confirmed the requested feature already exists in this working checkout: 11 library-specific NSC wings, three stages each, official source links and saved rewards. No duplicate dungeons added.
+- Reopened Nixon, Reagan and Clinton official inventories and verified the Pacheco Box765 lead, Soviet Bloc folder listing/access distinctions, and DeShazer Rwanda case2006-0192-F.
+- Fresh production Reagan desktop and390x844phone route checks passed all3 stages, wrong-answer recovery, saving, return/re-entry, receipt restoration and duplicate-reward protection; zero page errors. All4 NSC unit tests passed. Inspected both choice screenshots in /tmp/nsc-current-check.
+- No runtime edits in this confirmation; existing uncommitted library filing-feedback changes left intact. Not published; physical iPhone untested.
+
+## 2026-09-25 — physical library filing feedback
+- Prior turn verified the existing NSC request and source leads. Finished pending library feedback: each successful step leaves a filed paper on its station and plays paper filing/stamp audio. First3 successes return immediately to walking with an actor-aware next-step toast; final packet retains confirmation.
+- Earned desktop+phone controller route passed all4stations, receipts, audio trigger, nonblocking intermediate progression, wrong-answer recovery, reward/save/return and input handoff. Session88975 terminal0 recovered.
+- Fresh partial-save restoration passed twice with exactly2 receipts. Initial fixture failed because the running scene overwrote localStorage; fixed by seeding a fresh browser context rather than changing runtime.
+-27 focused tests passed; desktop/phone completion and phone restoration captures inspected. Standard skill capture remains black and was inspected separately. Evidence docs/qa/library-filing-feedback-2026-09-25.json. Human listening and physical hardware unverified; local only. Broad console-quality goal remains incomplete.

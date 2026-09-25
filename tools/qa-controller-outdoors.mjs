@@ -31,7 +31,11 @@ try{for(const mobile of [false,true]){
   if(station===1){await move(128,118);await move(202,118);}
   if(station===2){await move(128,118);await move(128,186);await move(202,186);}
   if(station===3)await move(48,186);
-  await button(0);assert.equal((await state()).mode,'choice');if(station%2)await button(13);await button(0);await drain();assert.equal((await state()).sceneProgress.libraryResearch_reagan,station+1);
+  await button(0);assert.equal((await state()).mode,'choice');if(station%2)await button(13);await button(0);
+  assert.equal(await p.evaluate(()=>JSON.parse(window.render_game_to_text()).audioStatus),'paper filing and stamp');
+  if(station<3){assert.equal((await state()).mode,'explore','Intermediate filing must not block walking');const clear=await p.evaluate(()=>{const s=window.game.scene.getScene('PresidentialLibraryScene'),a=s.toast.container.getBounds(),b=s.player.sprite.getBounds();return !s.toast.visible||a.bottom<b.top||a.top>b.bottom;});assert(clear,'Filing feedback must not cover the hero');}
+  await drain();assert.equal((await state()).sceneProgress.libraryResearch_reagan,station+1);
+  const receipts=await p.evaluate(()=>window.game.scene.getScene('PresidentialLibraryScene').receipts.map(r=>r.visible));assert.deepEqual(receipts,[0,1,2,3].map(i=>i<=station));
  }
  assert.equal((await state()).documentPoints,pointsBefore+8);
  await p.waitForFunction(()=>{const ui=window.game.scene.getScene('UIScene');return ui.questBandCueText.text==='REVIEW SAVED STEP'&&ui.questBandText.text==='PACKET FILED';});
@@ -51,5 +55,5 @@ try{for(const mobile of [false,true]){
 
  await p.waitForTimeout(100);assert((await state()).player.x>stopped.x+3,'Input handoff moves hero');
  const released=(await state()).player;await p.waitForTimeout(180);assert.deepEqual((await state()).player,released,'Release stops handoff movement');
- await p.screenshot({path:`${out}/${mobile?'phone':'desktop'}.png`});assert.deepEqual(errors,[]);await writeFile(`${out}/${mobile?'phone':'desktop'}.json`,JSON.stringify({controllerSalad:true,controllerRail:true,libraryStations:4,lockedStationRedirect:true,wrongAnswerRecovered:true,libraryReward:8,libraryReturn:true,savedPacket:true,startMenu:true,disconnectStops:true,handoff:true,releaseStops:true,naturalControllerMovement:true,errors},null,2));console.log('PASS',mobile?'phone':'desktop');await p.close();
+ await p.screenshot({path:`${out}/${mobile?'phone':'desktop'}.png`});assert.deepEqual(errors,[]);await writeFile(`${out}/${mobile?'phone':'desktop'}.json`,JSON.stringify({controllerSalad:true,controllerRail:true,libraryStations:4,visibleFiledPapers:true,nonBlockingIntermediateFiling:true,filingSound:true,lockedStationRedirect:true,wrongAnswerRecovered:true,libraryReward:8,libraryReturn:true,savedPacket:true,startMenu:true,disconnectStops:true,handoff:true,releaseStops:true,naturalControllerMovement:true,errors},null,2));console.log('PASS',mobile?'phone':'desktop');await p.close();
 }}finally{await browser.close();}

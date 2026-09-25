@@ -1,3 +1,5 @@
+import { filedResearchPaper } from '../systems/filedResearchPaper';
+import { FeedbackToast } from '../systems/feedbackToast';
 import { addMisfiledStack } from '../systems/misfiledStacks';
 import { preloadLibraryStationArt, libraryStationArt } from '../systems/libraryStationArt';
 import { addEditorialRoomFloor } from '../systems/editorialRoomFloor';
@@ -33,6 +35,8 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   private prompt!: Phaser.GameObjects.Text;
   private stageText!: Phaser.GameObjects.Text;
   private marks: Phaser.GameObjects.Text[] = [];
+  private receipts: Phaser.GameObjects.Container[] = [];
+  private toast!: FeedbackToast;
   private barriers: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle)[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
   private leaving = false;
@@ -44,7 +48,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.assignment = LIBRARY_ASSIGNMENTS[Number.isInteger(index) ? index : -1] ?? libraryAssignment('reagan')!;
     const id = this.assignment.library;
     const library = RESEARCH_LANDMARKS.find(l=>l.id===id)!;
-    this.leaving=false;this.marks=[];this.barriers=[];this.solids=[];
+    this.leaving=false;this.marks=[];this.receipts=[];this.barriers=[];this.solids=[];
     setSceneState('PresidentialLibraryScene','explore','RESEARCH THE VOLUME');
     setRoomTraversalState({currentRoomId:`library-${id}`,roomTitle:library.name,roomType:'puzzle',visitedRoomIds:[`library-${id}`],revealedRoomIds:[`library-${id}`],exits:{south:'ResearchWorldScene'},lockedExits:{},requiredItems:{}});
     setVisibleThreats([]);
@@ -64,6 +68,8 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       if(desk)desk.setDepth(12).setName(`library-desk-${i}`);
       else this.add.rectangle(s.x,s.y,47,22,0x5d392c).setStrokeStyle(2,0xad8c5d).setDepth(12);
       this.marks.push(this.add.text(s.x,s.y-18,'',{fontFamily:'Arial',fontSize:'6px',color:'#81e9c9',backgroundColor:'#192630'}).setOrigin(.5).setDepth(50));
+      this.receipts.push(filedResearchPaper(this,s.x+(i===2?-9:8),s.y-(i===3?8:2))
+        .setScale(.65).setDepth(14).setName(`library-filed-paper-${i}`));
       this.solids.push(new Phaser.Geom.Rectangle(s.x-23,s.y-11,46,22));
     });
     // DANN-E's misfiled stacks close cross-aisles until each research check is filed.
@@ -77,6 +83,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       .on('pointerdown',()=>window.open(`assets/research-world/library-research.html#${id}`,'_blank','noopener,noreferrer'));
     if(nscDungeon(id))this.add.text(128,88,'NSC WING ↑',{fontFamily:'Arial',fontSize:'7px',color:'#b9eee5',backgroundColor:'#17232d'}).setOrigin(.5).setDepth(50);
     this.player=new Player(this,128,183);
+    this.toast=new FeedbackToast(this,1200,()=>this.player.sprite.getBounds());
     this.dialog=new DialogBox(this,{aboveTouchControls:true});
     this.choice=new ChoicePrompt(this,{settleMs:160});
     this.inventory=new InventoryOverlay(this);
@@ -98,6 +105,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   update(_:number,delta:number) {
     tickInput();const input=getInput();if(this.leaving)return;
+    if(gameState.mode==='explore')this.toast.update(delta,this.player.position);
     if(this.dialog.active){this.player.update(delta,false);this.prompt.setVisible(false);if(input.aJustPressed||input.bJustPressed)this.dialog.advance();return;}
     if(this.choice.active){this.player.update(delta,false);this.prompt.setVisible(false);this.choice.updateInput();return;}
     if(handleOpenOverlays(this.inventory)){this.player.update(delta,false);this.prompt.setVisible(false);return;}
@@ -122,6 +130,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
       .setColor(i===stage?'#fff3bf':i<stage?'#a7bfb4':'#a5afbd')
       .setBackgroundColor(i===stage?'#49371d':'#192630'));
+    this.receipts.forEach((paper,i)=>paper.setVisible(i<stage));
     this.barriers.forEach((b,i)=>b.setVisible(stage<i+1));
     setObjective(stage===4?'PACKET FILED':STATIONS[stage].label);
   }
@@ -140,8 +149,9 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       if(!fileLibraryStage(gameState.sceneProgress,a.library,station,option.value==='correct')){this.dialog.show('CHECK THE RECORD','That shortcut loses the source trail or overstates the evidence. Return to this station and try again.');return;}
       const complete=libraryStage(gameState.sceneProgress,a.library)===4;
       if(complete)addDocumentPoints(8,`${a.library}: research packet filed for ${a.title}`);
-      this.refresh();saveGameNow();retroAudio.confirm();
-      this.dialog.show(complete?'PACKET FILED':'SOURCE CHECK FILED',complete?'Research packet saved. This is progress toward the volume, not publication clearance. Return outside through the south door.':'The research trail is saved. Continue to the next numbered station.');
+      this.refresh();saveGameNow();retroAudio.fileDocket();
+      if(complete)this.dialog.show('PACKET FILED','Research packet saved. This is progress toward the volume, not publication clearance. Return outside through the south door.');
+      else this.toast.show(`FILED · NEXT: ${STATIONS[station+1].name}`,this.player.position,'info');
     },6,()=>{});
   }
   private exit() {
