@@ -1,9 +1,10 @@
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
-const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
+const {chromium,webkit}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
 const base=process.env.FRUS_QA_URL??'http://127.0.0.1:5211/';const out=process.env.FRUS_QA_OUT??'/tmp/nsc-dungeons';await mkdir(out,{recursive:true});
 const data=JSON.parse(await readFile('public/assets/research-world/nsc-holdings.json'));const assignments=JSON.parse(await readFile('public/assets/research-world/library-assignments.json')).assignments;
-const browser=await chromium.launch({args:['--disable-audio-output']});
+const engine=process.env.FRUS_QA_ENGINE==='webkit'?webkit:chromium;
+const browser=await engine.launch({args:engine===chromium?['--disable-audio-output']:[]});
 try{
  const seed=await browser.newPage();await seed.goto(new URL('?scene=PresidentialLibraryScene',base).href);await seed.waitForFunction(()=>localStorage.getItem('rubyRuleFrusQuestSave'));const template=await seed.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));await seed.close();
  for(const mobile of process.env.FRUS_QA_PHONE_ONLY?[true]:[false,true])for(const d of data.dungeons.filter(d=>!process.env.FRUS_QA_LIBRARIES||process.env.FRUS_QA_LIBRARIES.split(',').includes(d.library))){
