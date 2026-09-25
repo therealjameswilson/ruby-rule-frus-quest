@@ -1,3 +1,7 @@
+import { RESEARCH_PROPS, researchProp } from '../systems/researchProps';
+import { addEditorialRoomFloor } from '../systems/editorialRoomFloor';
+import { addEditorialRoomWalls } from '../systems/editorialRoomWalls';
+import { buildEditorE1TileLayers } from '../game/editorE1Tilemap';
 import { nscDungeon } from '../game/nscResearch';
 import Phaser from 'phaser';
 import { Player } from '../entities/Player';
@@ -33,6 +37,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   private leaving = false;
   private assignment = LIBRARY_ASSIGNMENTS[8];
   constructor() { super('PresidentialLibraryScene'); }
+  preload() { if(!this.textures.exists(RESEARCH_PROPS.key))this.load.image(RESEARCH_PROPS.key,RESEARCH_PROPS.path); }
   create() {
     const index = gameState.sceneProgress.libraryResearchActive;
     this.assignment = LIBRARY_ASSIGNMENTS[Number.isInteger(index) ? index : -1] ?? libraryAssignment('reagan')!;
@@ -45,24 +50,29 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     setVisibleEntities([library.name, this.assignment.title, ...STATIONS.map(s=>s.name),...(nscDungeon(id)?['North-center: NSC research wing']:[]),'DANN-E misfiled-record barriers','South: return to library grounds']);
     drawRoomFrame(this, library.label, '#d6a23a', {showLegacyHud:false});
     this.cameras.main.setBackgroundColor('#29343e');
-    for(let y=56;y<211;y+=16) for(let x=24;x<240;x+=16) this.add.rectangle(x,y,15,15,(x+y)%32?0x35424b:0x3d4a53).setDepth(-5);
+    addEditorialRoomFloor(this,false);
+    const walls=buildEditorE1TileLayers().walls.map(row=>[...row]);
+    for(const row of walls){row[0]=walls[0][0];row[row.length-1]=walls[0][0];}
+    for(const x of [7,8])walls[walls.length-1][x]=-1;
+    addEditorialRoomWalls(this,walls,0,32);
     this.add.text(128,49,library.label,{fontFamily:'monospace',fontSize:'7px',color:'#ffe0a3'}).setOrigin(.5).setDepth(160);
     this.add.text(128,61,this.assignment.topic,{fontFamily:'monospace',fontSize:'6px',color:'#f6efdb'}).setOrigin(.5).setDepth(160);
     this.stageText=this.add.text(128,73,'',{fontFamily:'monospace',fontSize:'6px',color:'#75e4db'}).setOrigin(.5).setDepth(160);
     STATIONS.forEach((s,i)=>{
-      this.add.rectangle(s.x,s.y,47,22,0x5d392c).setStrokeStyle(2,0xad8c5d).setDepth(12);
-      for(let k=0;k<5;k++) this.add.rectangle(s.x-16+k*8,s.y-2,5,12,i===3?0x951b36:0xe5d8b6).setDepth(13);
-      this.add.text(s.x,s.y+15,s.label,{fontFamily:'monospace',fontSize:'5px',color:'#ffe0a3'}).setOrigin(.5).setDepth(160);
+      const desk=researchProp(this,'desk',s.x,s.y,46);
+      if(desk)desk.setDepth(12).setName(`library-desk-${i}`);
+      else this.add.rectangle(s.x,s.y,47,22,0x5d392c).setStrokeStyle(2,0xad8c5d).setDepth(12);
+      this.add.text(s.x,s.y+15,s.label,{fontFamily:'Arial',fontSize:'6px',color:'#ffe0a3'}).setOrigin(.5).setDepth(160);
       this.marks.push(this.add.text(s.x,s.y-18,'',{fontFamily:'monospace',fontSize:'6px',color:'#81e9c9'}).setOrigin(.5).setDepth(160));
       this.solids.push(new Phaser.Geom.Rectangle(s.x-23,s.y-11,46,22));
     });
     // DANN-E's misfiled stacks close cross-aisles until each research check is filed.
     this.barriers.push(this.add.rectangle(128,104,28,20,0x922b3b).setStrokeStyle(2,0xf1c56d).setDepth(20));
     this.barriers.push(this.add.rectangle(193,134,54,8,0x922b3b).setStrokeStyle(1,0xf1c56d).setDepth(20));
-    this.add.text(128,126,'DANN-E: "SKIP THE SOURCES!"',{fontFamily:'monospace',fontSize:'5px',color:'#ffbd99'}).setOrigin(.5).setDepth(160);
+    this.add.text(128,126,'DANN-E: "SKIP THE SOURCES!"',{fontFamily:'Arial',fontSize:'6px',color:'#ffbd99'}).setOrigin(.5).setDepth(160);
     this.add.text(128,197,'SOUTH: RETURN OUTSIDE',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3'}).setOrigin(.5).setDepth(160);
     this.add.rectangle(128,215,30,12,0x71aa7f).setDepth(45);
-    this.add.text(128,150,'SOURCES',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3',backgroundColor:'#17232d'})
+    this.add.text(224,60,'SOURCES',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3',backgroundColor:'#17232d'})
       .setOrigin(.5,.5).setPadding(5).setDepth(350).setInteractive({useHandCursor:true})
       .on('pointerdown',()=>window.open(`assets/research-world/library-research.html#${id}`,'_blank','noopener,noreferrer'));
     if(nscDungeon(id))this.add.text(128,88,'NSC WING ↑',{fontFamily:'Arial',fontSize:'7px',color:'#b9eee5',backgroundColor:'#17232d'}).setOrigin(.5).setDepth(350);
