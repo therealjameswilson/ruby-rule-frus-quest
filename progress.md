@@ -8170,3 +8170,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Added original subdued wood sole-contact synthesis and positional library routing: center runner/desk rugs carpet, open aisles wood, daylight threshold stone. Classification uses planted foot offset. Samples remain cached per audio context/surface.
 -56 focused tests passed: all five surfaces finite, quiet, silent sample edges at3sample rates; material positions and movement/audio regressions. Build passed. Natural browser movement produced carpet/wood/stone buffers at expected positions, four wood contacts, paused/released silence and successful outside exit; zero errors.
 - Inspected oak-aisle gameplay screenshot and standard skill black capture. Evidence docs/qa/library-footsteps-2026-09-25.json. Human listening and physical hardware remain unverified; local only, broad console-quality goal active.
+
+## 2026-09-25 — fresh campaign audit after visual and audio integration
+- Prior turn made progress with material-aware footsteps. Revalidated combined runtime9646252 with the full suite and a fresh14-stage campaign through publication; no runtime edits or rebuilds during replay.
+-271 test files /2050tests passed. Campaign opening, source-note repair, annotation/cart, network routing, clearance chronology, referrals/treatment, editor, proof and production all passed using predecessor-earned saves only.
+- Boss:7cycles,0retries,7fresh core hits, all3forms,43.561s measured fight, no missed deadline. Bindery:5packets,201→241points, human certification recorded, published state restored through Continue. Orchestrator session45362 terminated0.
+- Inspected nine relevant screenshots from opening to published cover. Exact bundle SHA and results saved in docs/qa/campaign-9646252-2026-09-25.json. No website publishing performed.
+- This advances integration evidence but does not prove the broad console-quality goal: physical hardware, human listening/unaided-play assessment and overall presentation/performance remain wider gates. Goal active.

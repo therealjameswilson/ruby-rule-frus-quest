@@ -1,0 +1,80 @@
+{
+  "runtimeCommit": "9646252da7e4e9563d40e01bb9d3d729f284d57f",
+  "baseUrl": "http://127.0.0.1:5211/",
+  "bundleSha256": {
+    "index-CGTCkhC-.js": "d6f88261240a7d49b3ff005ba6813a2495eb56e635ae56a4b186f3167870c70e"
+  },
+  "fullSuite": {
+    "files": 271,
+    "tests": 2050,
+    "passed": true
+  },
+  "freshOpening": true,
+  "predecessorEarnedSavesOnly": true,
+  "stageCount": 14,
+  "stagesPassed": [
+    "01-guide",
+    "02-earned-source-note",
+    "03-earned-annotation",
+    "04-file-annotation",
+    "05-earned-network",
+    "06-earned-network-routing",
+    "07-earned-clearance",
+    "08-earned-referral-dispatch",
+    "09-earned-referral-manifest",
+    "10-earned-editor",
+    "11-earned-proof",
+    "12-earned-production",
+    "13-boss-counter-loop",
+    "14-bindery-assembly"
+  ],
+  "boss": {
+    "label": "fight-summary",
+    "cycles": 7,
+    "retries": 0,
+    "freshCoreHits": 7,
+    "tightApproaches": 0,
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "seconds": 43.561,
+    "deadlineMissed": false
+  },
+  "bindery": {
+    "mobile": false,
+    "cpuThrottle": 1,
+    "startPoints": 201,
+    "finalPoints": 241,
+    "completedPackets": 5,
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "errors": []
+  },
+  "publishedContinueVerified": true,
+  "screenshotsInspected": [
+    "01-guide/opening-office.png",
+    "02-earned-source-note/rejected-screen.png",
+    "03-earned-annotation/parked-screen.png",
+    "06-earned-network-routing/routing-complete-screen.png",
+    "07-earned-clearance/review-complete-screen.png",
+    "09-earned-referral-manifest/treatment-rejected-screen.png",
+    "11-earned-proof/release-screen.png",
+    "13-boss-counter-loop/core-open-guidance-native.png",
+    "14-bindery-assembly/published-continue-native.png"
+  ],
+  "limitations": [
+    "Automated state-aware desktop keyboard replay, not unaided human play",
+    "Physical iPhone and controller not validated",
+    "Optional routes not exhaustively covered by this campaign run",
+    "Human audio listening review remains open",
+    "In-game publication does not mean website deployment"
+  ]
+}
