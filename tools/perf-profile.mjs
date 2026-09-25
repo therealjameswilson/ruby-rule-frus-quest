@@ -44,6 +44,7 @@ const channel = getArg("channel", "");
 const angle = getArg("angle", "");
 const mobile = process.argv.includes("--mobile");
 const walk = process.argv.includes("--walk");
+const profileGraphics = process.argv.includes("--graphics");
 const reducedMotion = process.argv.includes("--reduced-motion");
 const cpuThrottle = Math.max(1, numberArg("cpu-throttle", 1));
 
@@ -72,6 +73,11 @@ page.on("pageerror", (error) => pageErrors.push(error.message));
 
 await page.goto(url, { waitUntil: "networkidle" });
 await page.waitForFunction(() => Boolean(window.rubyRuleMobileMetrics), null, { timeout: 15000 });
+const requestedScene = new URL(url).searchParams.get("scene");
+if (requestedScene) await page.waitForFunction(key => {
+  const scene = window.game?.scene.getScene(key);
+  return window.game?.scene.isActive(key) && scene?.player && scene.load?.isLoading() === false;
+}, requestedScene, {timeout: 60000});
 await page.mouse.click(64, 64);
 await page.waitForTimeout(warmupMs);
 const rendererInfo = await page.evaluate(() => {
@@ -102,6 +108,23 @@ await page.evaluate(() => {
   window.__stopProfileSteps = () => window.game.events.off('step', observe);
 });
 
+if (profileGraphics) await page.evaluate(() => {
+  window.__graphicsCosts = [];
+  const visit = (object, scene, path) => {
+    if (object.type === 'Graphics' && typeof object.renderWebGL === 'function') {
+      const cost = {scene, path, name: object.name, depth: object.depth, calls: 0, totalMs: 0, maxMs: 0, commands: object.commandBuffer?.length ?? 0};
+      window.__graphicsCosts.push(cost);
+      const render = object.renderWebGL;
+      object.renderWebGL = function(...args) {
+        const start = performance.now();
+        try { return render.apply(this,args); }
+        finally { const elapsed = performance.now()-start;cost.calls++;cost.totalMs+=elapsed;cost.maxMs=Math.max(cost.maxMs,elapsed); }
+      };
+    }
+    object.list?.forEach((child,index)=>visit(child,scene,path+'.'+index));
+  };
+  for (const scene of window.game.scene.getScenes(true)) scene.children.list.forEach((object,index)=>visit(object,scene.sys.settings.key,String(index)));
+});
 const startedAt = Date.now();
 if (cpuProfilePath) {
   await cdp.send('Profiler.enable');
@@ -208,6 +231,7 @@ const report = {
     consoleWarningsOrErrors: consoleMessages.length,
     pageErrors: pageErrors.length
   },
+  graphicsCosts: profileGraphics ? await page.evaluate(() => window.__graphicsCosts.sort((a,b)=>b.totalMs-a.totalMs)) : undefined,
   finalMetrics,
   consoleMessages,
   pageErrors,

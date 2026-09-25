@@ -11,7 +11,9 @@ it("refreshes a changed action on the next frame but throttles unchanged meters"
   const objective = text(), action = text(), clear = vi.fn();
   const scene = Object.assign(new UIScene(), {
     scene: { isActive: () => false },
-    questBandGraphics: { setVisible: vi.fn(), setY: vi.fn(), clear },
+    questBandImage: {setVisible:vi.fn(),setY:vi.fn()},
+    questBandTexture: {key:"test-hud",getContext:()=>({clearRect:vi.fn()})},
+    questBandGraphics: { setVisible: vi.fn(), setY: vi.fn(), setScale:vi.fn(), generateTexture:vi.fn(), clear },
     questBandText: objective, questBandCueText: action,
     questBandToolText: text(), questBandVerbText: text(),
     drawQuestBandChrome: vi.fn(), drawQuestBandActionBadge: vi.fn(),
