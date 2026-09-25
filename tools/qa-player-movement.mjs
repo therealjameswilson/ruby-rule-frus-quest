@@ -1,3 +1,4 @@
+import { touchPad } from "./touch-pad-fixture.mjs";
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
@@ -14,14 +15,14 @@ try {
     const page = await context.newPage(), cdp = await context.newCDPSession(page), errors = [];
     page.on('pageerror', e => errors.push(String(e)));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-    await page.goto(`${process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/'}?scene=OfficeScene&text=full`);
+    await page.goto(`${process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5211/'}?scene=OfficeScene&text=full`);
     await page.waitForFunction(() => window.render_game_to_text && JSON.parse(window.render_game_to_text()).scene === 'OfficeScene');
     await page.waitForTimeout(1500);
     const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
     async function direction(x, y, ms) {
       if (mobile) {
         const b = await page.locator('canvas').first().boundingBox();
-        const p = (dx, dy) => ({ x: b.x + (40 + dx) * b.width / 256, y: b.y + (178 + dy) * b.height / 240, id: 1 });
+        const p = (dx, dy) => ({ x: b.x + (touchPad.x + dx) * b.width / 256, y: b.y + (touchPad.y + dy) * b.height / 240, id: 1 });
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p(0, 0)] });
         await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [p(x * 26, y * 26)] });
         await page.waitForTimeout(ms);
@@ -102,8 +103,8 @@ try {
     await direction(-1, -1, 250);
     if (mobile) {
       const box = await page.locator('canvas').first().boundingBox();
-      const point = (dx, dy) => ({ x: box.x + (40 + dx) * box.width / 256,
-        y: box.y + (178 + dy) * box.height / 240, id: 3 });
+      const point = (dx, dy) => ({ x: box.x + (touchPad.x + dx) * box.width / 256,
+        y: box.y + (touchPad.y + dy) * box.height / 240, id: 3 });
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(0, 0)] });
       for (const [dx, dy, expected] of [[20, 0, 'right'], [20, 21, 'right'], [21, 20, 'right'],
         [20, 26, 'down'], [21, 20, 'down'], [26, 20, 'right'], [-20, 0, 'left'], [0, 0, null]]) {
@@ -118,9 +119,9 @@ try {
       assert.deepEqual((await state()).player, stopped, 'Returning thumb to center stops immediately');
       if (process.argv.includes('--rotate')) {
         const box = await page.locator('canvas').first().boundingBox();
-        const point = x => ({ x: box.x + x * box.width / 256, y: box.y + 178 * box.height / 240, id: 4 });
-        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(40)] });
-        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(66)] });
+        const point = x => ({ x: box.x + x * box.width / 256, y: box.y + touchPad.y * box.height / 240, id: 4 });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point(touchPad.x)] });
+        await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [point(touchPad.x + 26)] });
         await page.waitForTimeout(80);
         await page.setViewportSize(landscape ? { width: 375, height: 667 } : { width: 667, height: 375 });
         await page.waitForTimeout(250);

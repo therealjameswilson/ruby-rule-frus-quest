@@ -1,0 +1,186 @@
+{
+  "checked": "2026-09-25",
+  "runtimeCommit": "38f550a",
+  "scope": "Chromium desktop and simulated phone; no physical device claim",
+  "pad": {
+    "x": 48,
+    "y": 202,
+    "radius": 34
+  },
+  "release": [
+    {
+      "input": "keyboard",
+      "before": {
+        "x": 128,
+        "y": 196
+      },
+      "released": {
+        "x": 131,
+        "y": 196
+      },
+      "settled": {
+        "x": 131,
+        "y": 196
+      },
+      "drift": 0,
+      "errors": []
+    },
+    {
+      "input": "touch",
+      "before": {
+        "x": 128,
+        "y": 196
+      },
+      "released": {
+        "x": 134,
+        "y": 196
+      },
+      "settled": {
+        "x": 134,
+        "y": 196
+      },
+      "drift": 0,
+      "errors": []
+    }
+  ],
+  "portraitToLandscape": [
+    {
+      "input": "keyboard",
+      "viewport": {
+        "width": 1024,
+        "height": 960
+      },
+      "finalViewport": {
+        "width": 1024,
+        "height": 960
+      },
+      "rotationChecked": false,
+      "start": {
+        "x": 128,
+        "y": 196
+      },
+      "right": {
+        "x": 156,
+        "y": 196
+      },
+      "left": {
+        "x": 124,
+        "y": 196
+      },
+      "wall": {
+        "x": 114,
+        "y": 155
+      },
+      "end": {
+        "x": 112,
+        "y": 130
+      },
+      "frames": 237,
+      "errors": []
+    },
+    {
+      "input": "touch",
+      "viewport": {
+        "width": 375,
+        "height": 667
+      },
+      "finalViewport": {
+        "width": 667,
+        "height": 375
+      },
+      "rotationChecked": true,
+      "start": {
+        "x": 128,
+        "y": 196
+      },
+      "right": {
+        "x": 162,
+        "y": 196
+      },
+      "left": {
+        "x": 129,
+        "y": 196
+      },
+      "wall": {
+        "x": 114,
+        "y": 156
+      },
+      "end": {
+        "x": 125,
+        "y": 150
+      },
+      "frames": 449,
+      "errors": []
+    }
+  ],
+  "landscapeToPortrait": [
+    {
+      "input": "keyboard",
+      "viewport": {
+        "width": 1024,
+        "height": 960
+      },
+      "finalViewport": {
+        "width": 1024,
+        "height": 960
+      },
+      "rotationChecked": false,
+      "start": {
+        "x": 128,
+        "y": 196
+      },
+      "right": {
+        "x": 161,
+        "y": 196
+      },
+      "left": {
+        "x": 126,
+        "y": 196
+      },
+      "wall": {
+        "x": 114,
+        "y": 156
+      },
+      "end": {
+        "x": 114,
+        "y": 131
+      },
+      "frames": 218,
+      "errors": []
+    },
+    {
+      "input": "touch",
+      "viewport": {
+        "width": 667,
+        "height": 375
+      },
+      "finalViewport": {
+        "width": 375,
+        "height": 667
+      },
+      "rotationChecked": true,
+      "start": {
+        "x": 128,
+        "y": 196
+      },
+      "right": {
+        "x": 161,
+        "y": 196
+      },
+      "left": {
+        "x": 123,
+        "y": 196
+      },
+      "wall": {
+        "x": 114,
+        "y": 157
+      },
+      "end": {
+        "x": 149,
+        "y": 133
+      },
+      "frames": 512,
+      "errors": []
+    }
+  ]
+}
