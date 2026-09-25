@@ -209,6 +209,7 @@ let gamepadConnected = false;
 let lastGamepadLabel: string | null = null;
 let lastGamepadEvent = "idle";
 let swallowNextFrame = false;
+const suppressedGamepadButtons = new Set<number>();
 let suppressEscEdgesUntilRelease = false;
 let nativeTextEntryActive = false;
 
@@ -297,6 +298,7 @@ function readGamepadSnapshot(): GamepadSnapshot {
   const pads = getConnectedGamepads();
   const pad = pads[0];
   if (!pad) {
+    suppressedGamepadButtons.clear();
     return {
       connected: false,
       index: null,
@@ -306,8 +308,11 @@ function readGamepadSnapshot(): GamepadSnapshot {
     };
   }
   const buttons = new Set<number>();
+  for (const index of suppressedGamepadButtons) {
+    if (!pad.buttons[index]?.pressed) suppressedGamepadButtons.delete(index);
+  }
   pad.buttons.forEach((button, index) => {
-    if (button?.pressed) buttons.add(index);
+    if (button?.pressed && !suppressedGamepadButtons.has(index)) buttons.add(index);
   });
   let direction: CardinalDirection | null = null;
   if (buttons.has(14)) direction = "left";
@@ -732,6 +737,12 @@ export function swallowNextInputFrame() {
   // (cleared by the Escape keyup listener). Read the held state before resetInput
   // clears it. resetInput() also clears swallowNextFrame, so arm it afterwards.
   const escHeld = isKeyboardDown("Escape");
+  // Polling still sees held controller buttons after reset. Preserve their
+  // release barrier so closing a dialog cannot reopen it on the next tick.
+  const pad = getConnectedGamepads()[0];
+  pad?.buttons.forEach((button, index) => {
+    if (button.pressed) suppressedGamepadButtons.add(index);
+  });
   resetInput();
   swallowNextFrame = true;
   if (escHeld) suppressEscEdgesUntilRelease = true;

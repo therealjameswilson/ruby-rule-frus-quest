@@ -63,6 +63,13 @@ describe("handleOpenOverlays", () => {
     expect(inventory.active).toBe(true);
   });
 
+  it("closes the inventory with the Menu key", () => {
+    const inventory=makeInventory(true);
+    pressKeyForTests("KeyM");tickInput();
+    expect(handleOpenOverlays(inventory)).toBe(true);
+    expect(inventory.active).toBe(false);
+  });
+
   it("closes the inventory on Escape and swallows the still-held edge", () => {
     const inventory = makeInventory(true);
     const reliability = makeReliability(false);
