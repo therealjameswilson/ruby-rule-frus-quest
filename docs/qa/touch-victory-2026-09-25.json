@@ -1,0 +1,40 @@
+{
+  "runtime": "2838a42",
+  "scope": "Earned simulated Chromium phone boss and bindery, continued from /tmp/production-touch-current/earned-storage.json. Boss automation reads live combat state; not an unaided human test, physical Safari, or a fresh complete touch campaign.",
+  "boss": {
+    "label": "fight-summary",
+    "cycles": 9,
+    "retries": 1,
+    "freshCoreHits": 7,
+    "tightApproaches": 2,
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "seconds": 82.949,
+    "deadlineMissed": false,
+    "twoFingerMovementAndSwing": true,
+    "checkpointReload": true,
+    "errors": [],
+    "evidence": "/tmp/boss-touch-current"
+  },
+  "ending": {
+    "mobile": true,
+    "cpuThrottle": 1,
+    "startPoints": 201,
+    "finalPoints": 241,
+    "completedPackets": 5,
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "errors": [],
+    "publicationReload": true,
+    "evidence": "/tmp/bindery-touch-current"
+  }
+}
