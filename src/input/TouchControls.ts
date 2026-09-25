@@ -545,8 +545,10 @@ export class TouchControls {
       this.graphics.lineStyle(2, color(pressed ? PALETTE.terminalCyan : PALETTE.goldStamp), alpha);
       this.graphics.fillStyle(color(PALETTE.black), alpha);
       if (button.kind === "circle") {
-        this.graphics.fillCircle(button.x, button.y, Math.round(Math.min(width, height) / 2));
-        this.graphics.strokeCircle(button.x, button.y, Math.round(Math.min(width, height) / 2));
+        // Explicit tessellation avoids hundreds of arc vertices per button per frame.
+        const diameter = Math.round(Math.min(width, height) / 2) * 2;
+        this.graphics.fillEllipse(button.x, button.y, diameter, diameter, 64);
+        this.graphics.strokeEllipse(button.x, button.y, diameter, diameter, 64);
       } else {
         this.graphics.fillRect(Math.round(button.x - width / 2), Math.round(button.y - height / 2), width, height);
         this.graphics.strokeRect(Math.round(button.x - width / 2), Math.round(button.y - height / 2), width, height);
@@ -617,9 +619,9 @@ export class TouchControls {
     const currentX = Math.round(this.dpadOrigin.x + dx);
     const currentY = Math.round(this.dpadOrigin.y + dy);
     this.graphics.lineStyle(1, color(PALETTE.goldStamp), 0.42);
-    this.graphics.strokeCircle(this.dpadOrigin.x, this.dpadOrigin.y, 22);
+    this.graphics.strokeEllipse(this.dpadOrigin.x, this.dpadOrigin.y, 44, 44, 64);
     this.graphics.fillStyle(color(PALETTE.terminalCyan), 0.68);
-    this.graphics.fillCircle(currentX, currentY, 6);
+    this.graphics.fillEllipse(currentX, currentY, 12, 12, 32);
     if (!this.dpadDirection) return;
     this.graphics.lineStyle(2, color(PALETTE.terminalCyan), 0.72);
     this.graphics.beginPath();

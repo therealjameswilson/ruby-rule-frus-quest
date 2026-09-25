@@ -39,6 +39,7 @@ const seconds = numberArg("seconds", 60);
 const warmupMs = numberArg("warmup-ms", 1000);
 const outPath = getArg("out", "tools/perf_profile_report.json");
 const screenshotPath = getArg("screenshot", "");
+const cpuProfilePath = getArg("cpu-profile", "");
 const mobile = process.argv.includes("--mobile");
 const walk = process.argv.includes("--walk");
 const cpuThrottle = Math.max(1, numberArg("cpu-throttle", 1));
@@ -85,6 +86,10 @@ await page.evaluate(() => {
 });
 
 const startedAt = Date.now();
+if (cpuProfilePath) {
+  await cdp.send('Profiler.enable');
+  await cdp.send('Profiler.start');
+}
 const samples = [];
 let walkingKey = null;
 let previousLeg = -1;
@@ -117,6 +122,11 @@ while (Date.now() - startedAt < seconds * 1000) {
 }
 if (walk && mobile) await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
 if (walkingKey) await page.keyboard.up(walkingKey);
+if (cpuProfilePath) {
+  const { profile } = await cdp.send('Profiler.stop');
+  await fs.mkdir(path.dirname(cpuProfilePath), { recursive: true });
+  await fs.writeFile(cpuProfilePath, JSON.stringify(profile));
+}
 
 const finalMetrics = await page.evaluate(() => window.rubyRuleMobileMetrics);
 const gameFrameIntervals = await page.evaluate(() => {
