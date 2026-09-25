@@ -35,6 +35,16 @@ try{
  if(mobile)await touch(86,154);else await press('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
  await shot('entry');
+ if(process.argv.includes('--hud-cache'))await page.evaluate(()=>{
+   const ui=window.game.scene.getScene('UIScene'),render=ui.questBandGraphics.generateTexture;
+   window.hudCacheAudit={refreshes:0,signatures:[],invalid:[]};
+   ui.questBandGraphics.generateTexture=function(...args){
+     const result=render.apply(this,args),audit=window.hudCacheAudit;
+     audit.refreshes++;if(!audit.signatures.includes(ui.questBandSignature))audit.signatures.push(ui.questBandSignature);
+     if(ui.questBandGraphics.visible||ui.questBandTexture.width!==768)audit.invalid.push('HUD cache geometry or visibility');
+     return result;
+   };
+ });
  if(process.argv.includes('--attack-art'))await page.evaluate(()=>{
    window.attackArtAudit={samples:0,invalid:[],phases:{},images:{}};
    const scene=window.game.scene.getScene('BlackVaultLairScene');
@@ -502,6 +512,11 @@ try{
     }
     delete audit.images;await writeFile(`${out}/attack-art.json`,JSON.stringify(audit,null,2));
     console.log('attack art',JSON.stringify(audit));
+  }
+  if(process.argv.includes('--hud-cache')){
+    const audit=await page.evaluate(()=>window.hudCacheAudit);
+    assert(audit.refreshes>20);assert(audit.signatures.some(s=>s.includes('|active|')));assert(audit.signatures.some(s=>s.includes('|cooldown|')));assert.deepEqual(audit.invalid,[]);
+    await writeFile(`${out}/hud-cache.json`,JSON.stringify(audit,null,2));
   }
   await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
   if(mobile)await touch(86,154);else await press('Enter');

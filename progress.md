@@ -7916,3 +7916,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Final build and full267files/2007tests passed. Updated refresh-test mock for new image/texture. Live qa-cached-hud verifies painted texture, zero idle rebuilds, combat cooldown rebuilds and scene restart repopulation. Initial attack check used safe Office; corrected to Archive fixture.
 - After20s4xCPU touch run:1214frames,60.025game FPS,p99=18.8ms,max25ms,0frames>33ms,0errors. Quest graphics0render calls; before profile had16longframes, but movement coverage differed(0.662→1), so no universal stutter-elimination claim. Inspected phone HUD and performance screenshot. Skill smoke terminal/black inspected.
 - docs/qa/cached-hud-performance-2026-09-25.json. All processes terminal (46317,87619,75492,80427,14607,44520,44743,78763,55666,5157). Local only; physical device and broader visual/audio appraisal remain.
+
+## 2026-09-25 — Cached HUD through earned touch victory
+- Previous turn implemented/measured HUD caching. Added --hud-cache audit to boss harness and replayed earned Black Vault checkpoint via touch through all3phases. No runtime changes this turn.
+- Fight:7cycles,0retries,7fresh core hits,50.293s,deadline met. Cached HUD166refreshes/104distinct signatures,active and cooldown represented,0invalid. Attack art598samples acrosscolossus89/swarm224/cloud285,0invalid. Pause counter window and reload into bindery passed.
+- Continued same earned save into touch bindery:5packets,Samcertification,published,201→241points,Continue preserved,0errors. Inspected core guidance, cloud attack and published native screenshots.
+- Evidence docs/qa/cached-hud-touch-victory-2026-09-25.json; raw /tmp/cached-hud-touch-boss and /tmp/cached-hud-touch-bindery. Processes32897/86848terminal. Automated state-aware fixture-start touch route, not physical iPhone or unaided full playthrough. Local only.
