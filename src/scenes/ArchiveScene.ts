@@ -568,7 +568,7 @@ export class ArchiveScene extends Phaser.Scene {
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(810);
     this.interactionPrompt = new InteractionPrompt(this, 950);
-    this.toast = new FeedbackToast(this);
+    this.toast = new FeedbackToast(this, 1200, () => this.player.sprite.getBounds());
     this.player = new Player(this, 128, 184);
     this.danneLurker = new DanneLurker(this, 214, 74, {
       speechBlocked: () => this.toast.visible || this.interactionPrompt.visible || this.dialog.active
@@ -586,7 +586,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.visitedRoomIds = new Set(visitedRooms);
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
     if (!restoredPlayer && this.sourceNoteStatus === "inactive") {
-      this.toast.show("FIND SN47 -> RESEARCH TABLE", this.player.position, "info");
+      this.toast.show("Find Source Note 47\nBring it to the research table", this.player.position, "info");
       setLatestMessage("Archive A1: find Source Note 47 and verify it at the research table.");
     } else if (!restoredPlayer) {
       this.toast.show(gameState.objective, this.player.position, "info");
