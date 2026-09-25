@@ -7902,3 +7902,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Previous turn added outdoor atmosphere. Its final phone screenshot showed Order Salad under movement pad. Moved order sign above storefront and James name to the clear gap right of pad. Improved existing code-drawn food marker into a shaded bowl with leaves/ingredients. Action positions unchanged.
 - Build and extended qa-sweetgreen-salad passed: label bounds/visibility; three salad orders, both cancellation mechanisms, James payment and save on keyboard+touch,0errors. Uses counter position fixture, then actual inputs. Inspected phone world screenshot. Required skill smoke terminal; black capture inspected. All QA terminal.
 - Evidence docs/qa/sweetgreen-signage-2026-09-25.json. Local only. Broader goal still needs sustained presentation/performance and physical-device/listening review.
+
+## 2026-09-25 — Full regression and outdoor stress baseline
+- Prior turn fixed Sweetgreen signage. Full suite on ac2b491:267files/2007tests passed. No runtime edits this turn.
+- Chrome153 Metal AppleM3,375x667/DPR3,touch walking,4xCPU,20s:1163frames,p99=22ms,max168.4ms,9over33.4ms,8over50ms,0warnings/errors. Movement coverage1. Inspected screenshot.
+- Added --reduced-motion profiling flag and report field. Reduced-motion run with CPU profiler:1177frames,p99=20.8ms,max248.4ms,8over33.4ms,7over50ms,0errors. Profile overhead means not controlled A/B; persistence rules out assuming new atmosphere alone causes spikes.
+- Profile top CPU samples include Earcut triangulation; texture-upload stacks include quest-band text/setColor refresh and outdoor interaction text. Quest band already signature-caches refresh, so do not blindly claim every-frame text redraw. Next: object-level graphics render timing, then cache genuinely static expensive geometry if evidence supports it.
+- docs/qa/full-regression-performance-2026-09-25.json; raw /tmp/outdoor-current-performance.json,/tmp/outdoor-reduced-performance.json,/tmp/outdoor-reduced.cpuprofile. All processes terminal (40213,4839,62256). No performance-fix claim. Physical hardware still unverified; local only.

@@ -1,0 +1,87 @@
+{
+  "date": "2026-09-25",
+  "runtimeCommit": "ac2b491",
+  "fullSuite": {
+    "files": 267,
+    "tests": 2007,
+    "passed": true
+  },
+  "renderer": {
+    "api": "webgl",
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+    "softwareRenderer": false,
+    "backingWidth": 768,
+    "backingHeight": 720,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+  },
+  "stress": {
+    "seconds": 20,
+    "cpuThrottle": 4,
+    "mobileViewport": true,
+    "touchMovement": true,
+    "normal": {
+      "measuredGameFrames": 1163,
+      "gameFrameP50Ms": 16.699999809265137,
+      "gameFrameP95Ms": 18.59999990463257,
+      "gameFrameP99Ms": 22,
+      "gameFrameMaxMs": 168.39999985694885,
+      "gameFramesOver33Ms": 9,
+      "gameFramesOver50Ms": 8,
+      "sampleCount": 69,
+      "gameLoopFps": 60.008526966531655,
+      "maxReportedThreats": 0,
+      "movingSamples": 68,
+      "movementCoverage": 1,
+      "movementRunValid": true,
+      "gameplayModes": [
+        "explore"
+      ],
+      "avgFps": 59.40524376005162,
+      "minFps": 33.229568627874876,
+      "maxSampledFrameP99Ms": 183.40000000000055,
+      "finalFrameP99Ms": 20,
+      "finalFrameMaxMs": 16.80000000000291,
+      "lastInputLatencyMs": 0.19999995231592038,
+      "consoleWarningsOrErrors": 0,
+      "pageErrors": 0
+    },
+    "reducedMotion": {
+      "measuredGameFrames": 1177,
+      "gameFrameP50Ms": 16.700000047683716,
+      "gameFrameP95Ms": 18.5,
+      "gameFrameP99Ms": 20.799999952316284,
+      "gameFrameMaxMs": 248.40000009536743,
+      "gameFramesOver33Ms": 8,
+      "gameFramesOver50Ms": 7,
+      "sampleCount": 72,
+      "gameLoopFps": 60.020024239869315,
+      "maxReportedThreats": 0,
+      "movingSamples": 71,
+      "movementCoverage": 1,
+      "movementRunValid": true,
+      "gameplayModes": [
+        "explore"
+      ],
+      "avgFps": 59.5665239591558,
+      "minFps": 40.85222698598482,
+      "maxSampledFrameP99Ms": 233.4000000000001,
+      "finalFrameP99Ms": 20,
+      "finalFrameMaxMs": 16.80000000000291,
+      "lastInputLatencyMs": 4.89999990463275,
+      "consoleWarningsOrErrors": 0,
+      "pageErrors": 0
+    },
+    "cpuProfile": "/tmp/outdoor-reduced.cpuprofile"
+  },
+  "findings": [
+    "Both runs contain long frames despite average FPS near60.",
+    "Spikes persist with reduced motion; no attribution to outdoor atmosphere established.",
+    "CPU sample stacks include Earcut triangulation and text texture uploads from quest band refresh. Object-level measurement is needed before optimization."
+  ],
+  "limitations": [
+    "Reduced-motion run includes CPU profiler overhead; timings are not a controlled A/B result.",
+    "CPU-throttled Chrome on Apple M3, not physical iPhone.",
+    "No runtime change in this turn.",
+    "Local only."
+  ]
+}

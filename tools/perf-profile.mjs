@@ -44,6 +44,7 @@ const channel = getArg("channel", "");
 const angle = getArg("angle", "");
 const mobile = process.argv.includes("--mobile");
 const walk = process.argv.includes("--walk");
+const reducedMotion = process.argv.includes("--reduced-motion");
 const cpuThrottle = Math.max(1, numberArg("cpu-throttle", 1));
 
 const { chromium } = await loadPlaywright();
@@ -56,6 +57,7 @@ const page = await browser.newPage({
   hasTouch: mobile,
   isMobile: mobile
 });
+if (reducedMotion) await page.emulateMedia({ reducedMotion: "reduce" });
 const cdp = await page.context().newCDPSession(page);
 await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuThrottle });
 
@@ -176,6 +178,7 @@ const report = {
   mobile,
   walk,
   cpuThrottle,
+  reducedMotion,
   browserChannel: channel || 'bundled-chromium',
   requestedAngle: angle || null,
   rendererInfo,
