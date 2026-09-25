@@ -37,6 +37,7 @@ try{
  // Interact with the verified wall: ready the earned stamp and swing in one action.
  await press();await page.waitForTimeout(450);
  assert.equal((await state()).sceneProgress.archiveRepoWallCleared,1);
+ assert(await page.evaluate(()=>window.game.scene.getScene('ArchiveScene').gateArt.get('north').some(o=>o.name==='snes-gate-detailed-frame'&&o.texture.key.includes('-open-'))), 'Earned north route must visibly open immediately');
  await shot('stamp-readied-wall-cleared');
  const firstSwing=(await state()).playerCombat.weapon.swingId;
  let wallAttempts=0;
@@ -47,7 +48,9 @@ try{
  assert.equal((await state()).sceneProgress.archiveRepoWallCleared,1);
  await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='NORTH: ANNOTATION STACKS');
  await shot('route-open');await press();await page.waitForTimeout(700);
- await move(72,154);await move(72,76);await move(128,76);await press();
+ await move(72,154);await move(72,68);await move(128,68);
+ await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).nearestInteractable==='ENTER NOTE STACKS');
+ await shot('annotation-threshold');await press();
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).roomTraversal.currentRoomId==='AS');
  await page.waitForTimeout(1000);await shot('annotation-entry');
  await page.reload();

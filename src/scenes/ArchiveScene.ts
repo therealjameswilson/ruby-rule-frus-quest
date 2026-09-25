@@ -2187,6 +2187,7 @@ export class ArchiveScene extends Phaser.Scene {
     this.clearReadyWallCue(definition.id);
     if (definition.id === "repo-wall") {
       gameState.sceneProgress.archiveRepoWallCleared = 1;
+      this.drawGate("north", true, true, undefined, "NOTES", "AS");
       this.drawNaraStacksGateSeal();
       this.showArchiveKeyRewardCue();
     }
