@@ -8092,3 +8092,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Previous goal turn made progress through smooth score retirement. Checked dev JSON warnings: actual Office start passed with zero page errors/HTTP failures, so no unnecessary loading change.
 - Found BureaucraticWall hit tween competing with per-frame position and pulling toward spawn x. Replaced it with bounded 180ms visual recoil around current position, driven by gameplay delta; collision bounds and path remain unaffected. Reduced-motion suppresses recoil.
 - Build and 27 wall movement/hit tests passed. Browser fixture compares hit versus untouched roaming wall: render offset at most2px, identical logical movement/bounds, settles to0, pause retains recoil, reduced-motion0; no errors. Inspected actual impact screenshot; skill capture black inspected. Evidence docs/qa/copier-recoil-2026-09-25.json. Local only; broad goal remains active.
+
+## 2026-09-25 — unobstructed outdoor interaction view
+- Previous goal turn made progress with anchored photocopier recoil. Outdoor visual audit found a duplicate action banner covering characters despite the HUD carrying the same instruction.
+- Removed world-space banner; scene now supplies one contextual HUD cue. Preserved talk/disguise, collections/sources, and added explicit library enter/about guidance to the HUD.
+- Updated outdoor browser QA to use real portrait A/B controls (initial B selector was wrong in the QA; corrected to data-control=b). Final desktop/portrait/landscape runs passed James dialogue, disguise change, rail open/close, all7 regions, collection/library cues and zero errors. Build+23 focused tests passed.
+- Inspected before/after desktop and portrait captures; standard skill capture black inspected. Evidence docs/qa/outdoor-unified-cues-2026-09-25.json. Local only, broad quality goal remains incomplete.

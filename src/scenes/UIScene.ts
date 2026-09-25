@@ -1,3 +1,4 @@
+import type { ResearchWorldScene } from "./ResearchWorldScene";
 import { libraryApproachCue } from "./libraryApproachCue";
 import Phaser from "phaser";
 import {
@@ -358,9 +359,7 @@ export class UIScene extends Phaser.Scene {
     if (gameState.mode === "dialog") return getString("hud.nextLine");
     if (gameState.mode === "choice") return getString("hud.confirm");
     if (gameState.currentScene === "ResearchWorldScene") {
-      if(["ARCHIVES I", "LIBRARY OF CONGRESS"].includes(gameState.nearestInteractable ?? "")) return "A: COLLECTIONS  B: SOURCES";
-      if(gameState.nearestInteractable === "Talk to DANN-E") return "A: TALK  B: NEXT DISGUISE";
-      return gameState.nearestInteractable ? `A: ${gameState.nearestInteractable.toUpperCase()}` : "WALK / DISCOVER / TALK";
+      return (this.scene.get('ResearchWorldScene') as ResearchWorldScene).actionCue;
     }
     if (gameState.currentScene === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
       return getString("hud.goLeftTalk");

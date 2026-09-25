@@ -1,0 +1,64 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTestsPassed": 23,
+  "browserRuns": [
+    {
+      "name": "desktop",
+      "prompt": {
+        "duplicateBanner": false,
+        "text": "A: TALK B: NEXT DISGUISE"
+      },
+      "errors": [],
+      "checks": [
+        "James dialogue",
+        "DANN-E change disguise",
+        "rail open and close",
+        "seven region title layouts"
+      ]
+    },
+    {
+      "name": "phone",
+      "prompt": {
+        "duplicateBanner": false,
+        "text": "A: TALK B: NEXT DISGUISE"
+      },
+      "errors": [],
+      "checks": [
+        "James dialogue",
+        "DANN-E change disguise",
+        "rail open and close",
+        "seven region title layouts"
+      ]
+    },
+    {
+      "name": "landscape",
+      "prompt": {
+        "duplicateBanner": false,
+        "text": "A: TALK B: NEXT DISGUISE"
+      },
+      "errors": [],
+      "checks": [
+        "James dialogue",
+        "DANN-E change disguise",
+        "rail open and close",
+        "seven region title layouts"
+      ]
+    }
+  ],
+  "extraAssertions": [
+    "Collection source secondary cue",
+    "Presidential library enter/about cue",
+    "No world action banner"
+  ],
+  "screenshotsInspected": [
+    "/tmp/outdoor-unified-cues-final/desktop-danne.png",
+    "/tmp/outdoor-unified-cues-final/phone-danne.png"
+  ],
+  "skillCapture": "Black WebGL capture inspected; normal browser captures inspected",
+  "limitations": [
+    "Fixture positions used for interaction tests",
+    "Simulated phone, not physical hardware",
+    "Local changes not published"
+  ]
+}

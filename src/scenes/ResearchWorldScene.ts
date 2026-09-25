@@ -27,7 +27,6 @@ export class ResearchWorldScene extends Phaser.Scene {
   private leaving = false;
   private stops: Stop[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
-  private prompt!: Phaser.GameObjects.Text;
   private travelClose!: Phaser.GameObjects.Container;
   private disguise = 0;
   private disguiseLabel!: Phaser.GameObjects.Text;
@@ -135,7 +134,6 @@ export class ResearchWorldScene extends Phaser.Scene {
     const closeText=this.add.text(232,36,'CLOSE',{fontFamily:'Arial',fontSize:'7px',color:'#fff6cf'}).setOrigin(.5);
     this.travelClose=this.add.container(0,0,[closeBox,closeText]).setDepth(1000).setVisible(false);
     bindPointerDown(closeBox,()=>{this.choice.hide();swallowNextInputFrame();});
-    this.prompt=this.add.text(128,166,'',{fontFamily:'Arial',fontSize:'8px',color:PANEL_COLORS.text,backgroundColor:'#101925',padding:{x:6,y:4},wordWrap:{width:218,useAdvancedWrap:true},align:'center'}).setOrigin(.5,1).setDepth(350).setName('research-action-prompt');
     setVisibleEntities([zone.name,...landmarks.map(l=>l.name),...(this.zone===1?['Sweetgreen','James at Sweetgreen']:[]),'DANN-E (civilian disguise)','Rail station','Discovery journal','Return to office / Washington']);
     setLatestMessage('Walk freely. Approach a landmark and press A to discover it. Rail travel is free.');
     this.refreshTally(); swallowNextInputFrame();
@@ -146,10 +144,10 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.travelClose.setVisible(this.choice.active);
     if(this.dialog.active) {
       if(input.aJustPressed||input.confirmJustPressed||input.bJustPressed||input.cancelJustPressed)this.dialog.advance();
-      this.player.update(delta,false);this.prompt.setVisible(false);return;
+      this.player.update(delta,false);return;
     }
-    if(this.choice.active) {this.choice.updateInput();this.player.update(delta,false);this.prompt.setVisible(false);return;}
-    if(handleOpenOverlays(this.inventory,undefined,true)) {this.player.update(delta,false);this.prompt.setVisible(false);return;}
+    if(this.choice.active) {this.choice.updateInput();this.player.update(delta,false);return;}
+    if(handleOpenOverlays(this.inventory,undefined,true)) {this.player.update(delta,false);return;}
     if(input.pauseJustPressed||input.menuJustPressed||input.startJustPressed){this.inventory.toggle();return;}
     if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     this.atmosphere.update(delta);
@@ -161,7 +159,6 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.danne.setFlipX(p.x>130);
     const nearest=this.stops.map(s=>({s,d:Math.hypot(p.x-s.x,p.y-s.y)})).filter(v=>v.d<=v.s.radius).sort((a,b)=>a.d-b.d)[0]?.s;
     const collectionStop = RESEARCH_LANDMARKS.find(l=>l.label===nearest?.label && researchCollections(l.id).length);
-    this.prompt.setVisible(Boolean(nearest)).setText(nearest?.label==='Talk to DANN-E'?'A: TALK  B: NEXT DISGUISE':collectionStop?'A: COLLECTIONS  B: SOURCES':nearest&&RESEARCH_LANDMARKS.some(l=>l.label===nearest.label&&libraryAssignment(l.id))?'A: ENTER LIBRARY  B: ABOUT':nearest?`A: ${nearest.label}`:'');
     setNearestInteractable(nearest?.label??null);
     if(nearest?.label==='Talk to DANN-E'&&input.bJustPressed){this.changeDisguise();return;}
     if(collectionStop && input.bJustPressed){window.open(`assets/research-world/frus-collections.html#${collectionStop.id}`, '_blank', 'noopener,noreferrer');return;}
@@ -262,6 +259,15 @@ export class ResearchWorldScene extends Phaser.Scene {
     };
     if(this.textures.exists(key)){apply();return;}
     this.loadDisguise(next);this.load.once('complete',apply);this.load.start();
+  }
+  /** One HUD-owned cue keeps interaction text off characters and scenery. */
+  get actionCue() {
+    const nearest = gameState.nearestInteractable;
+    if (nearest === 'Talk to DANN-E') return 'A: TALK  B: NEXT DISGUISE';
+    const landmark = RESEARCH_LANDMARKS.find(l => l.label === nearest);
+    if (landmark && researchCollections(landmark.id).length) return 'A: COLLECTIONS  B: SOURCES';
+    if (landmark && libraryAssignment(landmark.id)) return 'A: ENTER LIBRARY  B: ABOUT';
+    return nearest ? `A: ${nearest.toUpperCase()}` : 'WALK / DISCOVER / TALK';
   }
   private sliceAtlas(key:string) {
     const texture=this.textures.get(key),source=texture.getSourceImage();
