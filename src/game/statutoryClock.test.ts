@@ -42,11 +42,11 @@ describe("statutory FRUS clock", () => {
     expect(advanced).toBe(STATUTORY_START_YEAR + STATUTORY_COMPLETION_PRESSURE_YEARS);
   });
 
-  it("leaves at least eighty active seconds for desktop and touch standard fights", () => {
+  it("leaves two and a half active minutes to learn and retry the standard fight", () => {
     const bossStartYear = statutoryCompletionFloor(0.18);
     const activeWindowMs = (STATUTORY_DEADLINE_YEARS - bossStartYear) * STATUTORY_BOSS_MS_PER_YEAR;
 
-    expect(activeWindowMs).toBeGreaterThanOrEqual(80_000);
+    expect(activeWindowMs).toBeGreaterThanOrEqual(150_000);
   });
 
   it("marks the clock at risk near year 29 while unresolved FRUS gates remain", () => {

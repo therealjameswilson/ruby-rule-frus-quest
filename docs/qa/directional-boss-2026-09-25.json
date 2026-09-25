@@ -1,0 +1,67 @@
+{
+  "date": "2026-09-25",
+  "scope": "Earned vault save, simulated phone multitouch, state-aware combat automation. Not unaided human play or physical Safari.",
+  "runtimeBase": "ad20328",
+  "change": "Standard boss clock: 18000 ms/year instead of 10000; no timer rewind or clearing of recorded misses.",
+  "tests": "Eight statutory-clock tests; build; required skill smoke.",
+  "runs": [
+    {
+      "label": "before",
+      "summary": {
+        "label": "fight-summary",
+        "cycles": 9,
+        "retries": 2,
+        "freshCoreHits": 6,
+        "tightApproaches": 5,
+        "phases": [
+          "colossus",
+          "swarm",
+          "cloud"
+        ],
+        "seconds": 117.394,
+        "deadlineMissed": true
+      },
+      "attackArt": {
+        "samples": 561,
+        "invalid": [],
+        "phases": {
+          "colossus": 81,
+          "swarm": 194,
+          "cloud": 286
+        }
+      },
+      "clockTenths": 300,
+      "errors": [],
+      "evidencePath": "/tmp/directional-boss-touch"
+    },
+    {
+      "label": "after",
+      "summary": {
+        "label": "fight-summary",
+        "cycles": 7,
+        "retries": 1,
+        "freshCoreHits": 6,
+        "tightApproaches": 1,
+        "phases": [
+          "colossus",
+          "swarm",
+          "cloud"
+        ],
+        "seconds": 74.449,
+        "deadlineMissed": false
+      },
+      "attackArt": {
+        "samples": 595,
+        "invalid": [],
+        "phases": {
+          "colossus": 94,
+          "swarm": 215,
+          "cloud": 286
+        }
+      },
+      "clockTenths": 252,
+      "errors": [],
+      "evidencePath": "/tmp/directional-boss-fair-clock"
+    }
+  ]
+}

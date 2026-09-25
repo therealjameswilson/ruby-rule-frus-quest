@@ -35,6 +35,24 @@ try{
  if(mobile)await touch(86,154);else await press('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
  await shot('entry');
+ if(process.argv.includes('--attack-art'))await page.evaluate(()=>{
+   window.attackArtAudit={samples:0,invalid:[],phases:{},images:{}};
+   const scene=window.game.scene.getScene('BlackVaultLairScene');
+   scene.events.on('postupdate',()=>{
+     const hero=scene.player,pose=hero?.attackPoseSprite;
+     if(!pose||hero.combatReadout.weapon.phase!=='active')return;
+     const audit=window.attackArtAudit,phase=scene.danneBoss?.currentPhase;
+     if(!['colossus','swarm','cloud'].includes(phase))return;
+     const expected=4+['south','north','west','east'].indexOf(hero.facing);
+     audit.samples++;audit.phases[phase]=(audit.phases[phase]||0)+1;
+     if(!pose.visible||hero.sprite.visible||Number(pose.frame.name)!==expected||Math.abs(pose.y-hero.position.y-4)>.51||pose.alpha!==hero.sprite.alpha)
+       audit.invalid.push({phase,frame:pose.frame.name,expected,visible:pose.visible,baseVisible:hero.sprite.visible,foot:pose.y,ground:hero.position.y+4});
+     if(!audit.images[phase]){
+       audit.images[phase]='pending';
+       window.game.renderer.snapshot(image=>{audit.images[phase]=image.src;});
+     }
+   });
+ });
  if(process.argv.includes('--frame-pacing')) await page.evaluate(()=>{
    window.bossFrameSamples={};let previous=performance.now(),previousPhase=null;
    const gl=window.game.renderer.gl,debug=gl?.getExtension('WEBGL_debug_renderer_info');
@@ -457,6 +475,7 @@ try{
   if(process.argv.includes('--phase-resume'))assert(reloadedPhase,'Must actually reload a damaged Cloud phase');
   const completion={cycles,retries,freshCoreHits,tightApproaches,phases:[...phases],seconds:(Date.now()-started)/1000,deadlineMissed:Boolean(end.sceneProgress.statutoryDeadlineMissed)};
   log.push({label:'fight-summary',...completion});
+  if(process.argv.includes('--require-on-time'))assert.equal(completion.deadlineMissed,false,'Earned route must beat the statutory clock');
   await context.storageState({path:`${out}/earned-bindery-storage.json`});
   if(process.argv.includes('--frame-pacing')) {
     const pacing=await page.evaluate(()=>({renderer:window.bossRenderer,phases:window.bossFrameSamples}));
@@ -469,6 +488,17 @@ try{
     for(const phase of ['colossus','swarm','cloud'])assert(pacing.summary[phase]?.frames>100,`Missing active ${phase} frame coverage`);
     await writeFile(`${out}/frame-pacing.json`,JSON.stringify(pacing,null,2));
     console.log('frame pacing',JSON.stringify(pacing.summary));
+  }
+  if(process.argv.includes('--attack-art')){
+    const audit=await page.evaluate(()=>window.attackArtAudit);
+    assert(audit.samples>0);assert.deepEqual(audit.invalid,[]);
+    for(const phase of ['colossus','swarm','cloud']){
+      assert(audit.phases[phase]>0,`No active attack art in ${phase}`);
+      assert(audit.images[phase]?.startsWith('data:image/'),`Missing ${phase} attack capture`);
+      await writeFile(`${out}/attack-${phase}.png`,Buffer.from(audit.images[phase].split(',')[1],'base64'));
+    }
+    delete audit.images;await writeFile(`${out}/attack-art.json`,JSON.stringify(audit,null,2));
+    console.log('attack art',JSON.stringify(audit));
   }
   await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
   if(mobile)await touch(86,154);else await press('Enter');
