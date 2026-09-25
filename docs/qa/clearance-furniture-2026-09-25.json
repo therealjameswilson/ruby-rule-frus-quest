@@ -1,0 +1,181 @@
+{
+  "date": "2026-09-25",
+  "assets": [
+    {
+      "file": "equity-ledger-v1.webp",
+      "bytes": 24700,
+      "size": [
+        464,
+        232
+      ],
+      "alphaRange": [
+        0,
+        254
+      ]
+    },
+    {
+      "file": "human-review-v1.webp",
+      "bytes": 22090,
+      "size": [
+        464,
+        232
+      ],
+      "alphaRange": [
+        0,
+        254
+      ]
+    },
+    {
+      "file": "release-standard-v1.webp",
+      "bytes": 25736,
+      "size": [
+        464,
+        232
+      ],
+      "alphaRange": [
+        0,
+        254
+      ]
+    }
+  ],
+  "totalRuntimeBytes": 72526,
+  "layouts": [
+    {
+      "mobile": false,
+      "stations": [
+        {
+          "name": "classnet-station-release_board",
+          "depth": 95,
+          "y": 83,
+          "desk": [
+            {
+              "texture": "clearance-release-standard-v1",
+              "width": 58,
+              "height": 29,
+              "top": 60.5,
+              "bottom": 89.5
+            }
+          ],
+          "plaqueBottom": 103,
+          "labels": [
+            "RELEASE"
+          ]
+        },
+        {
+          "name": "classnet-station-human_desk",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "clearance-human-review-v1",
+              "width": 58,
+              "height": 29,
+              "top": 151.5,
+              "bottom": 180.5
+            }
+          ],
+          "plaqueBottom": 146,
+          "labels": [
+            "HUMAN"
+          ]
+        },
+        {
+          "name": "classnet-station-decision_ledger",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "clearance-equity-ledger-v1",
+              "width": 58,
+              "height": 29,
+              "top": 151.5,
+              "bottom": 180.5
+            }
+          ],
+          "plaqueBottom": 146,
+          "labels": [
+            "LEDGER"
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "stations": [
+        {
+          "name": "classnet-station-release_board",
+          "depth": 95,
+          "y": 83,
+          "desk": [
+            {
+              "texture": "clearance-release-standard-v1",
+              "width": 58,
+              "height": 29,
+              "top": 60.5,
+              "bottom": 89.5
+            }
+          ],
+          "plaqueBottom": 103,
+          "labels": [
+            "RELEASE"
+          ]
+        },
+        {
+          "name": "classnet-station-human_desk",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "clearance-human-review-v1",
+              "width": 58,
+              "height": 29,
+              "top": 151.5,
+              "bottom": 180.5
+            }
+          ],
+          "plaqueBottom": 146,
+          "labels": [
+            "HUMAN"
+          ]
+        },
+        {
+          "name": "classnet-station-decision_ledger",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "clearance-equity-ledger-v1",
+              "width": 58,
+              "height": 29,
+              "top": 151.5,
+              "bottom": 180.5
+            }
+          ],
+          "plaqueBottom": 146,
+          "labels": [
+            "LEDGER"
+          ]
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "earnedRoute": {
+    "passed": true,
+    "wrongDeskCorrection": true,
+    "missingEntryRejection": true,
+    "chronologyRepair": true,
+    "token": true,
+    "referralReload": true,
+    "evidence": "/tmp/clearance-new-furniture-route",
+    "beforeFinalPlaqueOnlyRefinement": true
+  },
+  "build": "passed",
+  "focusedTests": 31,
+  "limitations": [
+    "Phone viewport simulation, not physical iPhone",
+    "State-aware earned checkpoint replay, not unaided human play",
+    "Local only; not published"
+  ]
+}
