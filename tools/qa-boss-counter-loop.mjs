@@ -204,8 +204,10 @@ try{
      soda.onHit=flavor=>{window.qaSodaHits.push(flavor);onHit(flavor);};
      const b=soda.button,r=b.getBounds(),hit=b.input.hitArea;
      return {x:b.x,y:b.y,left:r.left+hit.x,top:r.top+hit.y,
-       right:r.left+hit.x+hit.width,bottom:r.top+hit.y+hit.height,flavor:soda.flavor,alpha:b.alpha,labelAlpha:soda.label.alpha};
+       right:r.left+hit.x+hit.width,bottom:r.top+hit.y+hit.height,flavor:soda.flavor,alpha:b.alpha,labelAlpha:soda.label.alpha,visualWidth:b.width,icon:soda.controlArt?.texture.key,iconVisible:soda.controlArt?.visible};
    });
+   assert.equal(control.visualWidth,24,'Compact visual must preserve its larger touch target');
+   assert.equal(control.right-control.left,44);assert(control.icon?.startsWith('soda-can-'));assert(control.iconVisible);
    if(mobile&&!controller){
      assert(control.bottom<194,'Soda target must end above the entire Menu target');
      assert(control.left>82 && control.right<150,'Soda target must clear D-pad and B');
@@ -234,6 +236,7 @@ try{
    const pausedFlavor=await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor);
    await page.waitForTimeout(200);
    assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.button.visible),false);
+   assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.controlArt.visible),false);
    await shot('menu-separated');
    if(controller)await page.evaluate(()=>window.qaSodaPad.buttons[5].pressed=true);
    else if(!mobile)await page.keyboard.press('v');
