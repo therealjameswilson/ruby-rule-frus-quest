@@ -1,3 +1,4 @@
+import { addResearchRoomFloor } from "../systems/researchRoomFloor";
 import { AlexPoster, ALEX_TEXTURE, ALEX_ART_PATH } from "../systems/alexPoster";
 import { ConferenceHeat, CONFERENCE_HEAT_DAMAGE, CONFERENCE_HEAT_WARNING } from "../game/conferenceHeat";
 import { drawDungeonStoneBlock, drawDungeonWallTorch } from "../systems/dungeonWallArt";
@@ -1091,6 +1092,8 @@ export class ArchiveScene extends Phaser.Scene {
 
     const layers = stacks ? buildAnnotationStackLayers() : buildArchiveA1TileLayers();
     ground.putTilesAt(layers.ground, 0, 0, false).setDepth(-16);
+    const floor = addResearchRoomFloor(this, stacks);
+    if (floor) this.track(floor);
     walls.putTilesAt(layers.walls, 0, 0, true)
       .setCollisionByExclusion([-1])
       .setDepth(44);
