@@ -597,8 +597,11 @@ export class Player {
     this.attackPoseSprite.setVisible(frame !== null);
     if (frame === null) return;
     const pose = this.attackPoseSheet.poses[frame];
-    const height = 44;
-    this.attackPoseSprite.setFrame(frame).setOrigin(pose.center / 256, pose.bottom / 512)
+    const height = this.attackPoseSheet.height ?? 44;
+    const flip = this.attackPoseSheet.flipFrames?.includes(frame) ?? false;
+    this.attackPoseSprite.setFrame(frame).setFlipX(flip);
+    const originX = pose.center / this.attackPoseSprite.frame.realWidth;
+    this.attackPoseSprite.setOrigin(flip ? 1 - originX : originX, pose.bottom / this.attackPoseSprite.frame.realHeight)
       .setScale(height / (pose.bottom - pose.top + 1)).setPosition(x, y + 4)
       .setDepth(y).setAlpha(this.sprite.alpha);
     if (this.sprite.isTinted) this.attackPoseSprite.setTint(this.sprite.tintTopLeft);
@@ -728,8 +731,9 @@ export class Player {
     const hand = this.facing === 'west' ? {x:-12,y:-27} : this.facing === 'east' ? {x:11,y:-27}
       : this.facing === 'north' ? {x:10,y:-30} : {x:-5,y:-24};
     const hasAttackPose = Boolean(this.attackPoseSprite);
-    const toolX = hasAttackPose ? this.logicalX + hand.x : centerX;
-    const toolY = hasAttackPose ? this.logicalY + hand.y : centerY - 18;
+    const bodyScale = (this.attackPoseSheet?.height ?? 44) / 44;
+    const toolX = hasAttackPose ? this.logicalX + hand.x * bodyScale : centerX;
+    const toolY = hasAttackPose ? this.logicalY + 4 + (hand.y - 4) * bodyScale : centerY - 18;
     if (hasDetailedArt && this.weaponSweepSprite) this.weaponSweepSprite.setY(centerY - 18);
     this.weaponVfxSprite
       ?.setVisible(true)

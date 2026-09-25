@@ -20,11 +20,12 @@ try {
     const timer=setTimeout(()=>{s.events.off('postupdate',capture);reject(Error('Phase timeout: '+phase));},3000);
     function capture(){if(h.combatReadout.weapon.phase!==phase)return;
      clearTimeout(timer);s.events.off('postupdate',capture);h.setCombatPaused(true);s.scene.pause();const a=h.attackPoseSprite;
-     resolve({phase,frame:Number(a.frame.name),visible:a.visible,base:h.sprite.visible,foot:a.y,expectedFoot:h.position.y+4});
+     const pose=h.attackPoseSheet.poses[Number(a.frame.name)];
+     resolve({phase,flip:a.flipX,footX:a.x+((a.flipX?a.frame.realWidth-pose.center:pose.center)-a.displayOriginX)*a.scaleX,expectedX:h.position.x,frame:Number(a.frame.name),visible:a.visible,base:h.sprite.visible,foot:a.y,expectedFoot:h.position.y+4,bodyHeight:(h.attackPoseSheet.poses[Number(a.frame.name)].bottom-h.attackPoseSheet.poses[Number(a.frame.name)].top+1)*a.scaleY});
     }
     s.events.on('postupdate',capture);if(start){h.startAction('stapler');capture();}else {s.scene.resume();}
    }),{phase,start:row===0});
-   assert.equal(state.frame,row*4+column);assert(state.visible);assert.equal(state.base,false);assert.equal(state.foot,state.expectedFoot);
+   assert.equal(state.frame,row*4+column);assert.equal(state.flip,process.env.FRUS_QA_MIRRORED_FRAME!==undefined&&state.frame===Number(process.env.FRUS_QA_MIRRORED_FRAME));assert(Math.abs(state.footX-state.expectedX)<.001);assert(state.visible);assert.equal(state.base,false);assert.equal(state.foot,state.expectedFoot);assert(Math.abs(state.bodyHeight-Number(process.env.FRUS_QA_HEIGHT??44))<.001);
    await p.screenshot({path:`${out}/${facing}-${phase}.png`});log.push(state);
   }
   await p.evaluate(()=>{const s=window.game.scene.getScene('NscLibraryScene');s.scene.resume();});await p.waitForTimeout(700);
