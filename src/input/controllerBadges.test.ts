@@ -31,13 +31,13 @@ it("keeps touch labels after a controller disconnects on a phone", () => {
 });
 
 
-it.each([0,1,9])("requires held controller button %s to release after an overlay closes", index => {
+it.each([0,1,5,9])("requires held controller button %s to release after an overlay closes", index => {
   const pad={connected:true,index:0,id:"QA controller",axes:[0,0],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};
   vi.stubGlobal("window",{});
   vi.stubGlobal("navigator",{maxTouchPoints:0,getGamepads:()=>[pad]});
   resetInput();tickInput();
   pad.buttons[index].pressed=true;tickInput();
-  const edge=()=>index===0?getInput().aJustPressed:index===1?getInput().bJustPressed:getInput().startJustPressed;
+  const edge=()=>index===0?getInput().aJustPressed:index===1?getInput().bJustPressed:index===5?getInput().throwItemJustPressed:getInput().startJustPressed;
   expect(edge()).toBe(true);
   swallowNextInputFrame();tickInput();tickInput();tickInput();
   expect(edge()).toBe(false);

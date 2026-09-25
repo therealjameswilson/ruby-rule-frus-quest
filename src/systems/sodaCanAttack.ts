@@ -1,6 +1,6 @@
 import Phaser from "phaser";
 import type { Position } from "../game/types";
-import { bindPointerPress } from "../input/InputState";
+import { bindPointerPress, getInput, getGamepadDebugState, isTouchInputCapable } from "../input/InputState";
 import { retroAudio } from "./audio";
 
 export const SODA_FLAVORS = [
@@ -54,6 +54,7 @@ export class SodaCanAttack {
     this.button.setVisible(enabled);
     this.label.setVisible(enabled);
     if (!enabled) { this.pending = false; this.can.setVisible(false); return; }
+    if (getInput().throwItemJustPressed && this.cooldown === 0 && !this.flight) this.pending = true;
     this.cooldown = Math.max(0, this.cooldown - Math.max(0, Math.min(50, delta)));
     if (this.pending && !this.flight && this.cooldown === 0) {
       this.flight = { ...this.origin(), remaining: 1800, flavor: this.flavor };
@@ -63,7 +64,8 @@ export class SodaCanAttack {
       retroAudio.blip();
     }
     this.pending = false;
-    this.label.setText(this.cooldown > 0 || this.flight ? "FIZZ..." : `SODA\n${SODA_FLAVORS[this.flavor].name}`);
+    const command = getGamepadDebugState().connected ? "RB: SODA" : isTouchInputCapable() ? "SODA" : "V: SODA";
+    this.label.setText(this.cooldown > 0 || this.flight ? "FIZZ..." : `${command}\n${SODA_FLAVORS[this.flavor].name}`);
     this.button.setAlpha(this.cooldown > 0 || this.flight ? 0.5 : 1);
     if (!this.flight) return;
     const next = advanceSodaCan(this.flight, this.target(), delta);

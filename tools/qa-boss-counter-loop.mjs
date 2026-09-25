@@ -11,6 +11,11 @@ await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_EXECUTABLE});
 const context=await browser.newContext({storageState:JSON.parse(await readFile(storagePath,'utf8')),
   viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
+const controller=process.argv.includes('--soda-controller');
+if(controller)await context.addInitScript(()=>{
+  window.qaSodaPad={connected:true,index:0,id:'QA standard controller',mapping:'standard',axes:[0,0],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};
+  Object.defineProperty(navigator,'getGamepads',{value:()=>[window.qaSodaPad]});
+});
 const page=await context.newPage(),cdp=await context.newCDPSession(page),errors=[],log=[];
 await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpuThrottle});
 page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
@@ -150,6 +155,9 @@ try{
  if(process.argv.includes('--soda-controls')) {
    const control=await page.evaluate(()=>{
      const soda=window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda;
+     window.qaSodaHits=[];
+     const onHit=soda.onHit;
+     soda.onHit=flavor=>{window.qaSodaHits.push(flavor);onHit(flavor);};
      const b=soda.button,r=b.getBounds(),hit=b.input.hitArea;
      return {x:b.x,y:b.y,left:r.left+hit.x,top:r.top+hit.y,
        right:r.left+hit.x+hit.width,bottom:r.top+hit.y+hit.height,flavor:soda.flavor};
@@ -157,24 +165,36 @@ try{
    assert(control.bottom<194,'Soda target must end above the entire Menu target');
    assert(control.left>82 && control.right<150,'Soda target must clear D-pad and B');
    const swing=(await state()).playerCombat.weapon.swingId;
-   if(mobile)await touch(control.x,control.y);
-   else {const p=await point(control.x,control.y);await page.mouse.click(p.x,p.y);}
+   if(controller)await page.evaluate(()=>window.qaSodaPad.buttons[5].pressed=true);
+   else if(mobile)await touch(control.x,control.y);
+   else await page.keyboard.press('v');
    await page.waitForFunction(prior=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor!==prior,control.flavor);
    assert.equal((await state()).mode,'explore','Soda must not open Menu');
    assert.equal((await state()).playerCombat.weapon.swingId,swing,'Soda must not trigger B');
+   if(controller){
+     await page.waitForTimeout(1400);
+     assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor),(control.flavor+1)%3,'Held shoulder throws once');
+     await page.evaluate(()=>window.qaSodaPad.buttons[5].pressed=false);
+   }
    await shot('soda-thrown');
-   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).latestMessage.includes('soda'),{},{timeout:4000});
+   await page.waitForFunction(()=>window.qaSodaHits.length===1,{},{timeout:4000});
    if(mobile)await touch(120,196);else await press('m');
    await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).mode==='pause');
    const pausedFlavor=await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor);
    await page.waitForTimeout(200);
    assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.button.visible),false);
    await shot('menu-separated');
+   if(controller)await page.evaluate(()=>window.qaSodaPad.buttons[5].pressed=true);
+   else if(!mobile)await page.keyboard.press('v');
+   await page.waitForTimeout(150);
    await press('Escape');
    await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).mode==='explore');
    assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor),pausedFlavor,'Menu must not queue a throw');
+   await page.waitForTimeout(150);
+   assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor),pausedFlavor,'Paused throw input must not carry into combat');
+   if(controller)await page.evaluate(()=>window.qaSodaPad.buttons[5].pressed=false);
    await shot('controls-ready');
-   log.push({label:'soda-controls-summary',mobile,distinctTargets:true,throws:true,pause:true});
+   log.push({label:'soda-controls-summary',mobile,controller,distinctTargets:true,throws:true,pause:true});
  } else if(process.argv.includes('--clock-resume')) {
    const elapsed = await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.statutoryYear);
    assert(elapsed>21.6,'The live clock must have advanced before testing reload');

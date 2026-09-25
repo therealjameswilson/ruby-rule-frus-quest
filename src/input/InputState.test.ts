@@ -65,6 +65,17 @@ describe("InputState keyboard edges", () => {
     expect(getInput().bJustPressed).toBe(true);
   });
 
+  it("latches a short V throw without triggering interaction or pencil", () => {
+    tapActionForTests("KeyV"); tickInput();
+    expect(getInput().throwItemJustPressed).toBe(true);
+    expect(getInput().aJustPressed).toBe(false);
+    expect(getInput().bJustPressed).toBe(false);
+    tickInput();
+    expect(getInput().throwItemJustPressed).toBe(false);
+    tapActionForTests("KeyV"); tickInput();
+    expect(getInput().throwItemJustPressed).toBe(true);
+  });
+
   it("samples a between-frame direction tap once without a forced hold", () => {
     let now = 1000;
     setNowProviderForTests(() => now);

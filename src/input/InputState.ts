@@ -42,6 +42,8 @@ export interface InputState {
   startJustPressed: boolean;
   select: boolean;
   selectJustPressed: boolean;
+  throwItem: boolean;
+  throwItemJustPressed: boolean;
   ability: boolean;
   abilityJustPressed: boolean;
   menu: boolean;
@@ -121,6 +123,8 @@ const emptyState: InputState = {
   startJustPressed: false,
   select: false,
   selectJustPressed: false,
+  throwItem: false,
+  throwItemJustPressed: false,
   ability: false,
   abilityJustPressed: false,
   menu: false,
@@ -176,6 +180,7 @@ const ACTION_LATCH_CODES = new Set<string>([
   "KeyZ",
   "KeyX",
   "KeyB",
+  "KeyV",
   "ShiftLeft",
   "ShiftRight",
   "Escape",
@@ -599,6 +604,7 @@ export function tickInput() {
   const cancel = isActionActive("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
   const start = isActionActive("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
   const select = isActionActive("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
+  const throwItem = isActionActive("KeyV") || isGamepadButtonDown([5], gamepadSnapshot);
   const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2], gamepadSnapshot);
   const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
   const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
@@ -654,6 +660,8 @@ export function tickInput() {
     startJustPressed: pendingActionPresses.has("Enter") || pendingTouchPresses.has("start") || justPressed(start, previousState.start),
     select,
     selectJustPressed: pendingActionPresses.has("Tab") || pendingTouchPresses.has("select") || justPressed(select, previousState.select),
+    throwItem,
+    throwItemJustPressed: pendingActionPresses.has("KeyV") || justPressed(throwItem, previousState.throwItem),
     ability,
     abilityJustPressed: justPressed(ability, previousState.ability),
     menu,

@@ -26,7 +26,7 @@ npm install
 npm run dev
 ```
 
-Open the Vite URL and play with keyboard controls.
+Open the Vite URL and play with keyboard controls. During the DANN-E boss fight, press **V** or the controller **right shoulder (RB/R1/R)** to throw a soda. The separate on-screen SODA button supports touch and mouse. Each press throws once; the action is unavailable in menus and cutscenes.
 
 ## Build
 
