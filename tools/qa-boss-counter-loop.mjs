@@ -10,6 +10,7 @@ const out=process.env.FRUS_QA_OUT??`/tmp/frus-boss-rhythm-${baseline?'before':'a
 await mkdir(out,{recursive:true});
 const browser=await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_EXECUTABLE});
 const context=await browser.newContext({storageState:JSON.parse(await readFile(storagePath,'utf8')),
+  reducedMotion:process.argv.includes('--reduced-motion')?'reduce':'no-preference',
   viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
 const controller=process.argv.includes('--soda-controller');
 if(controller)await context.addInitScript(()=>{
@@ -61,6 +62,8 @@ try{
  await move(128,144);await press();
  if(process.argv.includes('--boast-skip')) {
    async function assertBossPortrait() {
+     await page.waitForFunction(()=>window.game.scene.getScene('BlackVaultLairScene').children.list.some(o=>o.name==='boss-boast-stage'&&o.alpha>=0.99));
+     assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.clockContainer.visible),false,'Combat clock stays out of phase presentation');
      const keys=await page.evaluate(()=>{
        const result=[];
        function visit(nodes) {
@@ -73,10 +76,12 @@ try{
        visit(window.game.scene.getScene('BlackVaultLairScene').children.list);
        return result;
      });
+     assert(keys.includes('danne-boss-combat-hd'),'Phase introduction must use detailed combat artwork');
+     if(process.argv.includes('--reduced-motion'))assert.equal(await page.evaluate(()=>{const stage=window.game.scene.getScene('BlackVaultLairScene').children.list.find(o=>o.name==='boss-boast-stage');return stage.list.find(o=>o.anims)?.anims.isPlaying;}),false,'Reduced motion keeps presentation actor still');
      assert(keys.includes('pack-danne-boss-portrait'),'DANN-E must speak with the robot portrait');
      assert(!keys.includes('danne-portrait-archivist'),'An ally must not appear to speak the boss boast');
    }
-   await page.waitForFunction(()=>{
+   if(!process.argv.includes('--reduced-motion'))await page.waitForFunction(()=>{
      const s=JSON.parse(window.render_game_to_text());
      const ui=window.game.scene.getScene('UIScene');
      return s.mode==='dialog' && !s.dialog && ui.questBandText.text===''
@@ -105,6 +110,7 @@ try{
    await press();
    await page.waitForFunction(()=>!window.game.scene.getScene('BlackVaultLairScene').danneBoss.phaseDialogueActive);
    assert.equal((await state()).playerCombat.weapon.swingId,intro.playerCombat.weapon.swingId);
+   assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').children.list.some(o=>o.name==='boss-boast-stage')),false,'Introduction stage must be destroyed on return to combat');
  }
  await page.waitForFunction(()=>{const s=JSON.parse(window.render_game_to_text());return s.mode==='explore'&&s.visibleThreats.some(t=>t.enemyState==='colossus');});
  if(process.argv.includes('--spacing')) {

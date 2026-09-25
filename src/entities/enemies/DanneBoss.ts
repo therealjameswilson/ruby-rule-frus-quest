@@ -1,3 +1,5 @@
+import { bossBoastPresentation } from "../../systems/bossBoastPresentation";
+import { prefersReducedMotion } from "../../systems/motionPreferences";
 import { frameDeltaSeconds } from "../../systems/smoothMovement";
 import { DANNE_BOSS_HD, danneBossFormAnimation } from "../../art/danneBossPresentation";
 import Phaser from "phaser";
@@ -1117,8 +1119,11 @@ export class DanneBoss {
     overrideLine?: string
   ) {
     this.boastVisible = true;
+    const clockWasVisible = this.clockContainer.visible;
+    this.clockContainer.setVisible(false);
     const touch = isTouchInputCapable();
-    const still = this.scene.textures.exists(variantKey)
+    const stage = bossBoastPresentation(this.scene, boastPhase, touch);
+    const still = !stage && this.scene.textures.exists(variantKey)
       ? this.scene.add.image(GAME_WIDTH / 2, touch ? 78 : 86, variantKey).setDepth(1620).setScrollFactor(0)
       : null;
     if (still) {
@@ -1126,10 +1131,11 @@ export class DanneBoss {
       const scale = Math.min(118 / Math.max(1, source.width ?? 1024), (touch ? 72 : 88) / Math.max(1, source.height ?? 1024));
       still.setScale(scale).setAlpha(0);
     }
+    stage?.setAlpha(0);
     try {
       await enterCutscene(this.scene);
       if (this.disposed) return;
-      if (still) this.scene.tweens.add({ targets: still, alpha: 1, duration: 150 });
+      if (stage || still) this.scene.tweens.add({ targets: stage ?? still, alpha: 1, duration: prefersReducedMotion() ? 0 : 150 });
       retroAudio.danneBoast();
       const line = overrideLine ?? danneBoastForPhase(boastPhase, this.boastIndex);
       this.boastIndex += 1;
@@ -1152,6 +1158,8 @@ export class DanneBoss {
     } finally {
       this.boastVisible = false;
       still?.destroy();
+      stage?.destroy(true);
+      if (!this.disposed) this.clockContainer.setVisible(clockWasVisible && this.isActive);
     }
   }
 
