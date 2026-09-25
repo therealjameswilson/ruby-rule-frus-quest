@@ -12,7 +12,7 @@ const gateLabels = () => page.evaluate(() => window.game.scene.getScene('Network
  .filter(object => typeof object.text === 'string').map(object => object.text));
 const westGate = async () => (await state()).roomGraph.find(room => room.id === 'N2').lockedExitState.west;
 const key=async(k='Space',ms=50)=>{await page.keyboard.down(k);await page.waitForTimeout(ms);await page.keyboard.up(k);await page.waitForTimeout(150);};
-const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
+const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));await page.screenshot({path:`${out}/${name}-screen.png`});};
 async function move(x,y){for(let i=0;i<100;i++){const p=(await state()).player,dx=x-p.x,dy=y-p.y;if(Math.abs(dx)<3&&Math.abs(dy)<3)return;const h=Math.abs(dx)>=3;await key(h?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.min(100,Math.max(20,Math.abs(h?dx:dy)/72*1000)));}throw Error(`Cannot walk to ${x},${y}`);}
 try{
  await page.goto(new URL('?text=full',process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/').href);
@@ -30,10 +30,14 @@ try{
  await shot('return-locked');
  await move(80,150);await key();await shot('human-filed');assert.equal((await state()).sceneProgress.classNetVaultReviewStep,1);
  if(process.argv.includes('--wrong-desk')){
-  const before=await state();await key();
+  const before=await state();
+  // Observe the genuine action synchronously so an independent ego-bolt hit
+  // during browser screenshots cannot be mistaken for a filing penalty.
+  await page.evaluate(()=>{const scene=window.game.scene.getScene('NetworkScene'),route=scene.routeVaultDocket;scene.routeVaultDocket=function(...args){const before=JSON.parse(window.render_game_to_text()).reliability;const result=route.apply(this,args);window.qaFilingPenalty=before-JSON.parse(window.render_game_to_text()).reliability;scene.routeVaultDocket=route;return result;};});
+  await key();
   assert.equal((await state()).sceneProgress.classNetVaultReviewStep,1);
   assert.equal((await state()).sceneProgress.classNetVaultDocketCarried,before.sceneProgress.classNetVaultDocketCarried);
-  assert.equal((await state()).reliability,before.reliability-2);
+  assert.equal(await page.evaluate(()=>window.qaFilingPenalty),2);
   assert.equal(await page.evaluate(()=>window.game.scene.getScene('NetworkScene').toast.text.text),'USE RELEASE STANDARD BOARD');
   await shot('wrong-desk-correction');
  }

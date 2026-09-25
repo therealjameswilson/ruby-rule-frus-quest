@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTests": 49,
+  "browserChecks": [
+    {
+      "mobile": false,
+      "carry": {
+        "dx": 8,
+        "width": 15,
+        "height": 11.25,
+        "top": 109.375,
+        "heroTop": 89,
+        "worldGone": true
+      },
+      "filesWithoutDelay": true,
+      "pauseFreezes": true,
+      "resumeCompletes": true,
+      "reducedMotionImmediate": true,
+      "reloadPreservesProgress": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "carry": {
+        "dx": 8,
+        "width": 15,
+        "height": 11.25,
+        "top": 109.375,
+        "heroTop": 89,
+        "worldGone": true
+      },
+      "filesWithoutDelay": true,
+      "pauseFreezes": true,
+      "resumeCompletes": true,
+      "reducedMotionImmediate": true,
+      "reloadPreservesProgress": true,
+      "errors": []
+    }
+  ],
+  "pickupToastDoesNotOverlapHero": true,
+  "earnedClearanceRoute": {
+    "passed": true,
+    "wrongDeskPenalty": 2,
+    "chronologyRepair": true,
+    "clearanceToken": true,
+    "referralArrivalReload": true,
+    "evidence": "/tmp/review-packet-earned-route-final",
+    "beforeFinalToastPlacementFix": true
+  },
+  "limitations": [
+    "State-aware earned checkpoint replay; not unaided human play",
+    "Position fixtures for focused animation tests",
+    "Phone viewport simulation, not physical iPhone",
+    "Local only; not published"
+  ]
+}
