@@ -1,3 +1,4 @@
+import { preloadDetailedNpcs } from '../art/npcSprites';
 import { reviewPacketArt, reviewInboxArt } from "../systems/reviewPacketArt";
 import { prefersReducedMotion } from "../systems/motionPreferences";
 import { researchProp } from "../systems/researchProps";
@@ -195,6 +196,7 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadDetailedNpcs(this, ['marcus']);
     preloadClearanceStationArt(this);
   }
 

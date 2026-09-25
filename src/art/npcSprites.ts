@@ -11,6 +11,9 @@ export function detailedNpcSprite(id: string) {
   return id === 'priya' || id === 'marcus' ? DETAILED_NPCS[id] : undefined;
 }
 
-export function preloadDetailedNpcs(scene: Phaser.Scene) {
-  for (const art of Object.values(DETAILED_NPCS)) scene.load.image(art.key, art.path);
+export function preloadDetailedNpcs(scene: Phaser.Scene, ids: readonly (keyof typeof DETAILED_NPCS)[]) {
+  for (const id of ids) {
+    const art = DETAILED_NPCS[id];
+    if (!scene.textures.exists(art.key)) scene.load.image(art.key, art.path);
+  }
 }

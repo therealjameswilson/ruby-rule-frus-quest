@@ -1,3 +1,4 @@
+import { preloadDetailedNpcs } from '../art/npcSprites';
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
 import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import { addEditorialRoomWalls } from "../systems/editorialRoomWalls";
@@ -264,6 +265,7 @@ export class SilentReadScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadDetailedNpcs(this, ['priya']);
     if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
   }
 

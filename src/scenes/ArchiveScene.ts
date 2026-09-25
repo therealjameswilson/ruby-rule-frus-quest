@@ -1,3 +1,4 @@
+import { preloadDetailedNpcs } from '../art/npcSprites';
 import { DEFAULT_PROMPT_BOUNDS } from "../systems/interactionPromptPlacement";
 import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import { addResearchRoomFloor } from "../systems/researchRoomFloor";
@@ -491,6 +492,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   preload() {
+    preloadDetailedNpcs(this, ['marcus']);
     if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
     if (!this.textures.exists(ALEX_TEXTURE)) this.load.image(ALEX_TEXTURE, ALEX_ART_PATH);
   }

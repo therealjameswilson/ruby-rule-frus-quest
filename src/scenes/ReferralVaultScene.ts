@@ -1,3 +1,4 @@
+import { preloadDetailedNpcs } from '../art/npcSprites';
 import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import { addReferralRoomFloor } from "../systems/referralRoomFloor";
 import { addDispatchShelfArt } from "../systems/dispatchShelfArt";
@@ -185,6 +186,10 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   constructor() {
     super("ReferralVaultScene");
+  }
+
+  preload() {
+    preloadDetailedNpcs(this, ['marcus']);
   }
 
   create(data?: unknown) {

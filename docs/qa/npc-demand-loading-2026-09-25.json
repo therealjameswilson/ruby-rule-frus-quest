@@ -1,0 +1,86 @@
+{
+  "engine": "chromium",
+  "titleNpcRequests": 0,
+  "titleBytes": 10371641,
+  "beforeBytes": 13096959,
+  "savedBytes": 2725318,
+  "results": [
+    {
+      "scene": "ArchiveScene",
+      "npc": "marcus",
+      "requested": [
+        "marcus-v1.png"
+      ],
+      "actor": {
+        "key": "npc-marcus-detailed-v1",
+        "width": 32,
+        "height": 48,
+        "visible": true
+      },
+      "reusedOnRestart": true,
+      "errors": []
+    },
+    {
+      "scene": "NetworkScene",
+      "npc": "marcus",
+      "requested": [
+        "marcus-v1.png"
+      ],
+      "actor": {
+        "key": "npc-marcus-detailed-v1",
+        "width": 32,
+        "height": 48,
+        "visible": true
+      },
+      "reusedOnRestart": true,
+      "errors": []
+    },
+    {
+      "scene": "ReferralVaultScene",
+      "npc": "marcus",
+      "requested": [
+        "marcus-v1.png"
+      ],
+      "actor": {
+        "key": "npc-marcus-detailed-v1",
+        "width": 32,
+        "height": 48,
+        "visible": true
+      },
+      "reusedOnRestart": true,
+      "errors": []
+    },
+    {
+      "scene": "SilentReadScene",
+      "npc": "priya",
+      "requested": [
+        "priya-v1.png"
+      ],
+      "actor": {
+        "key": "npc-priya-detailed-v1",
+        "width": 32,
+        "height": 48,
+        "visible": true
+      },
+      "reusedOnRestart": true,
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Local transfer sizes; not a network-speed benchmark",
+    "Archive hint-room fixture used",
+    "Simulated browser; not physical iPhone"
+  ],
+  "date": "2026-09-25",
+  "build": "passed",
+  "unitTests": {
+    "files": 270,
+    "passed": 2036
+  },
+  "published": false,
+  "screenshots": [
+    "/tmp/npc-demand-loading/ArchiveScene.png",
+    "/tmp/npc-demand-loading/SilentReadScene.png"
+  ],
+  "skillCapture": "WebGL snapshot black; normal browser screenshots inspected"
+}
