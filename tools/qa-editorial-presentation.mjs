@@ -1,0 +1,18 @@
+import assert from 'node:assert/strict';
+import {mkdir,readFile,writeFile} from 'node:fs/promises';
+const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
+const campaign=process.env.FRUS_CAMPAIGN_OUT;
+assert(campaign,'Provide earned campaign saves');
+const base=process.env.FRUS_QA_URL??'http://127.0.0.1:5211/';
+const out=process.env.FRUS_QA_OUT??'/tmp/editorial-presentation';await mkdir(out,{recursive:true});
+const browser=await chromium.launch({args:['--disable-audio-output']});const results=[];
+try{for(const mobile of [false,true])for(const [name,stage,room]of [['editor','09-earned-referral-manifest','E1'],['proof','10-earned-editor','S1'],['production','11-earned-proof','S1']]){
+ const storage=JSON.parse(await readFile(`${campaign}/${stage}/earned-storage.json`));for(const origin of storage.origins)origin.origin=new URL(base).origin;
+ const page=await browser.newPage({storageState:storage,viewport:mobile?{width:390,height:844}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile});const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ await page.goto(new URL('?text=full',base).href);await page.waitForFunction(()=>window.game?.scene.isActive('TapToStartScene'));
+ if(mobile){const r=await page.locator('canvas').first().boundingBox();await page.touchscreen.tap(r.x+86*r.width/256,r.y+154*r.height/240);}else await page.keyboard.press('Enter');
+ await page.waitForFunction(()=>window.game?.scene.isActive('SilentReadScene'));await page.waitForTimeout(1500);
+ const info=await page.evaluate(()=>{const scene=window.game.scene.getScene('SilentReadScene');const desks=scene.children.list.filter(o=>o.name?.startsWith('proof-desk-'));return {room:scene.currentRoomId,floor:scene.children.getByName('editorial-carpet-floor')?.texture.key,desks:desks.length,detailed:desks.filter(d=>d.list.some(o=>o.texture?.key==='research-props-v1')).length};});
+ assert.equal(info.room,room);assert(info.floor);assert(info.desks>0);assert.equal(info.detailed,info.desks);assert.deepEqual(errors,[]);
+ await page.screenshot({path:`${out}/${name}-${mobile?'phone':'desktop'}.png`});results.push({name,mobile,...info,errors});console.log(JSON.stringify(results.at(-1)));await page.close();
+}}finally{await browser.close();await writeFile(`${out}/results.json`,JSON.stringify(results,null,2));}

@@ -1,3 +1,5 @@
+import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
+import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
@@ -261,6 +263,10 @@ export class SilentReadScene extends Phaser.Scene {
     super("SilentReadScene");
   }
 
+  preload() {
+    if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
+  }
+
   create(data?: unknown) {
     this.attackBuffer.clear();
     installAttackBufferLifecycle(this.events, this.attackBuffer);
@@ -495,6 +501,8 @@ export class SilentReadScene extends Phaser.Scene {
     if (!packedTilemapRendered) {
       addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "proof", track: (object) => this.track(object) });
     }
+    const editorialFloor = addEditorialRoomFloor(this, room.id === "S1");
+    if (editorialFloor) this.track(editorialFloor);
     this.drawRoomDoors();
     if (!packedTilemapRendered) {
       addSnesRoomCompass(this, {
@@ -806,7 +814,10 @@ export class SilentReadScene extends Phaser.Scene {
       this.track(this.add.ellipse(station.x, station.y + 9, 32, 4, color(PALETTE.black), 0.3).setDepth(46));
       const desk = this.track(this.add.container(station.x, station.y).setDepth(station.y + 8).setName(`proof-desk-${station.id}`));
       const asset = GAMEPLAY_TILESETS.interiorsNative;
-      if (this.textures.exists(asset.key)) {
+      const detailedDesk = researchProp(this, "desk", 0, 0, 40);
+      if (detailedDesk) {
+        desk.add(detailedDesk);
+      } else if (this.textures.exists(asset.key)) {
         const frame = "proof-desk", texture = this.textures.get(asset.key);
         if (!texture.has(frame)) texture.add(frame, 0, WORKSTATION_DESK.tileIndex % asset.columns * asset.tileSize,
           Math.floor(WORKSTATION_DESK.tileIndex / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
@@ -814,14 +825,15 @@ export class SilentReadScene extends Phaser.Scene {
       } else {
         desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
       }
-      desk.add(this.add.rectangle(0, 0, 32, 16, 0, 0).setStrokeStyle(1, color(station.accent)));
+      desk.add(this.add.rectangle(0, 0, detailedDesk ? 40 : 32, detailedDesk ? 23 : 16, 0, 0).setStrokeStyle(0.6, color(station.accent), 0.75));
       desk.add(this.add.image(-9, 1, station.texture).setDisplaySize(10, 10));
-      desk.add(this.add.rectangle(7, 2, 10, 6, color(PALETTE.creamPaper)));
-      const text = this.add.text(0, -7, STATION_TAGS[station.id], {
-        fontFamily: "monospace", fontSize: "5px", color: PALETTE.creamPaper, backgroundColor: PALETTE.black
+      if (!detailedDesk) desk.add(this.add.rectangle(7, 2, 10, 6, color(PALETTE.creamPaper)));
+      const labelY = detailedDesk ? (station.y < 130 ? -22 : 14) : -7;
+      const text = this.add.text(0, labelY, STATION_TAGS[station.id], {
+        fontFamily: "Arial", fontSize: "7px", color: PALETTE.creamPaper, backgroundColor: PALETTE.black
       }).setOrigin(0.5, 0);
       desk.add(text);
-      this.stationLabels.push({ text, x: station.x, y: station.y - 7 });
+      this.stationLabels.push({ text, x: station.x, y: station.y + labelY });
     }
   }
 
