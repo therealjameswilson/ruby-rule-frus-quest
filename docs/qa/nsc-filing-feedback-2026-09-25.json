@@ -1,0 +1,28 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTests": {
+    "uniqueTests": 25,
+    "files": 4
+  },
+  "webkitPhone": {
+    "library": "reagan",
+    "rooms": 3,
+    "filingAudioStatusVerified": true,
+    "nonblockingIntermediateSuccess": true,
+    "toastClearOfHero": true,
+    "filedReceiptRestoredAfterReloadAndReentry": true,
+    "completedDeskPrompt": "CHECK SAVED FILE",
+    "errors": []
+  },
+  "screenshots": [
+    "/tmp/nsc-filing-final/filed-desk-visible.png",
+    "/tmp/nsc-filing-final/phone-filed-room0.png"
+  ],
+  "limitations": [
+    "Position fixtures; simulated WebKit touch",
+    "Filing cue invocation verified; no new human listening check",
+    "Skill WebGL snapshot black; normal browser screenshots inspected"
+  ],
+  "published": false
+}

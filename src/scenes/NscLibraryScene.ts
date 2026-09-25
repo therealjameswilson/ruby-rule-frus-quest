@@ -1,3 +1,5 @@
+import { filedResearchPaper } from '../systems/filedResearchPaper';
+import { FeedbackToast } from '../systems/feedbackToast';
 import { RESEARCH_PROPS, researchProp } from '../systems/researchProps';
 import Phaser from 'phaser';
 import { Player } from '../entities/Player';
@@ -21,6 +23,8 @@ export class NscLibraryScene extends Phaser.Scene {
   private dialog!:DialogBox;
   private choice!:ChoicePrompt;
   private inventory!:InventoryOverlay;
+  private filedPaper!: Phaser.GameObjects.Container;
+  private toast!: FeedbackToast;
   private doorLights!:Phaser.GameObjects.Graphics;
   private gate!:Phaser.GameObjects.Text;
   private dossier=nscDungeon('reagan')!;
@@ -62,18 +66,21 @@ export class NscLibraryScene extends Phaser.Scene {
       if(desk)desk.setDepth(40);else this.add.rectangle(x,y,48,25,0x523c31).setStrokeStyle(1,0xb79a68).setDepth(40);
       this.label(x,y-20,label,7);this.solids.push(new Phaser.Geom.Rectangle(x-24,y-13,48,26));
     }
+    this.filedPaper=filedResearchPaper(this,194,120);
     this.label(128,207,this.room?'SOUTH: PREVIOUS ROOM':'SOUTH: LIBRARY LOBBY',6);
     this.add.text(62,75,'SOURCES ↗',{fontFamily:'Arial',fontSize:'6px',color:'#243c40'}).setOrigin(.5).setDepth(50).setInteractive(new Phaser.Geom.Rectangle(-5,-6,54,22),Phaser.Geom.Rectangle.Contains).on('pointerdown',()=>window.open(`assets/research-world/nsc-research.html#${id}`,'_blank','noopener,noreferrer'));
     this.player=new Player(this,128,190);
+    this.toast=new FeedbackToast(this,1200,()=>this.player.sprite.getBounds());
     this.dialog=new DialogBox(this,{aboveTouchControls:true});this.choice=new ChoicePrompt(this,{settleMs:160});this.inventory=new InventoryOverlay(this);
     this.refresh();retroAudio.startMusic('ArchiveScene');swallowNextInputFrame();
     setLatestMessage(`${this.dossier.collection}. ${this.dossier.handle}. Official source: ${this.dossier.source}`);
     saveGameNow();
   }
   private label(x:number,y:number,text:string,size:number){return this.add.text(x,y,text,{fontFamily:'Arial',fontSize:`${size}px`,color:'#f4dfac',backgroundColor:'#192630',align:'center',wordWrap:{width:206}}).setOrigin(.5).setDepth(50);}
-  private refresh(){const done=nscStage(gameState.sceneProgress,this.dossier.library)>this.room;this.gate.setText(done?(this.room===2?'FILED · RETURN ↑':'FILED · CONTINUE ↑'):'VERIFY FILE TO OPEN');this.doorLights.clear();for(const x of [109,147]){this.doorLights.fillStyle(0x172227).fillRoundedRect(x-2,39,4,10,1);this.doorLights.fillStyle(done?0x8ed7ae:0xd5a755).fillRoundedRect(x-1,41,2,6,.5);}setObjective(done?'SOURCE FILED':'GUIDE → VERIFY');}
+  private refresh(){const done=nscStage(gameState.sceneProgress,this.dossier.library)>this.room;this.filedPaper.setVisible(done);this.gate.setText(done?(this.room===2?'FILED · RETURN ↑':'FILED · CONTINUE ↑'):'VERIFY FILE TO OPEN');this.doorLights.clear();for(const x of [109,147]){this.doorLights.fillStyle(0x172227).fillRoundedRect(x-2,39,4,10,1);this.doorLights.fillStyle(done?0x8ed7ae:0xd5a755).fillRoundedRect(x-1,41,2,6,.5);}setObjective(done?'SOURCE FILED':'GUIDE → VERIFY');}
   update(_:number,delta:number){
     tickInput();const input=getInput();if(this.leaving)return;
+    if(gameState.mode==='explore')this.toast.update(delta,this.player.position);
     if(this.dialog.active){this.player.update(delta,false);if(input.aJustPressed||input.bJustPressed)this.dialog.advance();return;}
     if(this.choice.active){this.player.update(delta,false);this.choice.updateInput();return;}
     if(handleOpenOverlays(this.inventory)){this.player.update(delta,false);return;}
@@ -97,7 +104,9 @@ export class NscLibraryScene extends Phaser.Scene {
     this.choice.show(task.question,[{key:'A',label:correctFirst?task.correct:task.wrong,value:correctFirst?'correct':'wrong'},{key:'B',label:correctFirst?task.wrong:task.correct,value:correctFirst?'wrong':'correct'}],option=>{
       if(!fileNscStage(gameState.sceneProgress,id,this.room,option.value==='correct')){this.dialog.show('DANN-E’S MISFILE','That loses the provenance or overstates the evidence. The west guide can help; try again.');return;}
       if(nscStage(gameState.sceneProgress,id)===3)addDocumentPoints(6,`${id}: NSC source trail verified`);
-      this.refresh();saveGameNow();retroAudio.confirm();this.dialog.show('SOURCE TRAIL SAVED',this.room===2?'NSC research lead filed for human review. Return north to the library lobby.':'The next chamber is open to the north.');
+      this.refresh();saveGameNow();retroAudio.fileDocket();
+      if(this.room===2)this.dialog.show('SOURCE TRAIL SAVED','NSC research lead filed for human review. Return north to the library lobby.');
+      else this.toast.show('SOURCE FILED · NORTH DOOR OPEN',this.player.position,'info');
     },6,()=>{});
   }
   private go(room:number){

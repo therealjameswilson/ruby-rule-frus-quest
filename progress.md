@@ -8045,3 +8045,11 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Main presidential-library research rooms now direct players to NW finding aid, NE comparison, SE source note, SW filing, then south exit. Existing dialogs/choices/combat cues outside these rooms are unaffected. Guide-read state is saved per library and room; it guides navigation only and does not add a gate.
 - Build and 22 focused tests across four files passed. WebKit 390x844 route verified the real HUD cue transitions through three Reagan rooms, wrong-answer recovery, return and save/reload; no page errors. Position fixtures used.
 - Skill client state/movement check completed; its black WebGL snapshot inspected, normal browser room screenshot inspected instead. Evidence: docs/qa/research-action-cues-2026-09-25.json and /tmp/research-action-cues. Local only, broad game quality goal remains active.
+
+## 2026-09-25 — physical NSC filing feedback
+- Previous goal turn was progress: accurate research approach cues. This pass improved the payoff and flow after a correct source check.
+- Added a high-density paper receipt with green FILED imprint on the verification desk. Receipt visibility derives from saved room progress and survives reload/re-entry. Existing paper filing/stamp foley replaces the generic confirmation cue.
+- First and second room success now uses actor-safe, nonblocking feedback; movement remains available. Final-room dialog retains the human-review/access qualification. No reward/gate changes. Completed desk cue now correctly says CHECK SAVED FILE.
+- Final build passed; 25 unique focused tests across research progression, cues and toast placement/lifecycle passed. WebKit 390x844 three-room route passed wrong-answer recovery, actual filing audio status, no intermediate modal, unobscured hero, return/save/reload and visible receipt after re-entry with zero page errors.
+- Inspected /tmp/nsc-filing-final/filed-desk-visible.png showing the readable stamp after moving away. Skill run completed; black WebGL snapshot inspected and normal browser evidence used. Report: docs/qa/nsc-filing-feedback-2026-09-25.json.
+- Local only. Broader presentation, gameplay, audio and physical-device validation goal remains active.

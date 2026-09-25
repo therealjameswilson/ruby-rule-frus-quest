@@ -33,17 +33,25 @@ try{
     const row=wrong?1:room===1?1:0;
     const point=await page.evaluate(i=>{const r=window.game.scene.getScene('NscLibraryScene').choice.rows[i].getBounds();return {x:r.centerX,y:r.centerY};},row);
     if(room===1&&!wrong)await page.screenshot({path:`${out}/${d.library}-${mobile?'phone':'desktop'}-choice.png`});
-    await tap(point.x,point.y);await page.waitForTimeout(200);await drain();
+    await tap(point.x,point.y);await page.waitForTimeout(200);if(!wrong)assert.equal(await page.evaluate(()=>JSON.parse(window.render_game_to_text()).audioStatus),'paper filing and stamp');await drain();
     const progress=await page.evaluate(id=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')).state.sceneProgress['nscResearch_'+id]??0,d.library);
     assert.equal(progress,wrong?0:room+1);
+    assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').filedPaper.visible),!wrong);
+    if(!wrong&&room<2){
+     assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dialog.active),false,'Intermediate filing must not block play');
+     await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='CHECK SAVED FILE');
+     const clear=await page.evaluate(()=>{const s=window.game.scene.getScene('NscLibraryScene'),a=s.toast.container.getBounds(),b=s.player.sprite.getBounds();return !s.toast.visible||a.bottom<b.top||a.top>b.bottom;});assert(clear,'Completion feedback must not cover the hero');
+     if(d.library==='reagan')await page.screenshot({path:`${out}/${mobile?'phone':'desktop'}-filed-room${room}.png`});
+    }
    }
-   await position(128,86);await page.waitForFunction(r=>window.game.scene.getScene('UIScene').questBandCueText.text===(r===2?'RETURN TO LIBRARY':'ENTER NEXT ROOM'),room);await act();
+   await position(128,86);await page.waitForFunction(r=>window.game.scene.getScene('UIScene').questBandCueText.text===(r===2?'RETURN TO LIBRARY':'ENTER NEXT ROOM'),room);if(d.library==='reagan'&&room===0)await page.screenshot({path:`${out}/filed-desk-visible.png`});await act();
   }
   await page.waitForFunction(()=>window.game.scene.isActive('PresidentialLibraryScene'));
   const finished=await page.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));assert.equal(finished.state.sceneProgress['nscResearch_'+d.library],3);assert.equal(finished.state.documentPoints,saved.state.documentPoints+6);
   // Reload from the saved lobby and enter the completed wing without earning twice.
   await page.reload();await page.waitForFunction(()=>window.game.scene.isActive('TapToStartScene'));if(mobile)await tap(86,154);else await page.keyboard.press('Enter');await page.waitForFunction(()=>window.game.scene.isActive('PresidentialLibraryScene'));
   assert.equal(await page.evaluate(id=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')).state.sceneProgress['nscResearch_'+id],d.library),3);
+  await position(128,86,'PresidentialLibraryScene');await act();await page.waitForFunction(()=>window.game.scene.isActive('NscLibraryScene'));assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').filedPaper.visible),true,'Filed receipt must restore after re-entry');
   assert.deepEqual(errors,[]);console.log(JSON.stringify({library:d.library,mobile,rooms:3,wrongAnswerRecovered:true,saved:true,returned:true,errors}));await page.close();
  }
  const doc=await browser.newPage();await doc.goto(new URL('assets/research-world/nsc-research.html',base).href);await doc.waitForFunction(()=>document.querySelectorAll('article').length===11);assert.equal(await doc.locator('article a').count(),11);await doc.close();

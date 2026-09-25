@@ -12,6 +12,7 @@ describe('research room action cues',()=>{
   expect(cue('North door')).toEqual({text:'EAST: VERIFY SOURCE',badge:'!'});
  });
  it('points through completed rooms and back to the lobby',()=>{
+  expect(cue('Source check',{nscResearch_reagan:1})).toEqual({text:'CHECK SAVED FILE',badge:'A'});
   expect(cue(null,{nscResearch_reagan:1})).toEqual({text:'NORTH: NEXT ROOM',badge:'!'});
   expect(cue('North door',{nscResearch_reagan:1})).toEqual({text:'ENTER NEXT ROOM',badge:'A'});
   expect(cue('North door',{nscResearch_reagan:3,nscRoom_reagan:2})).toEqual({text:'RETURN TO LIBRARY',badge:'A'});
