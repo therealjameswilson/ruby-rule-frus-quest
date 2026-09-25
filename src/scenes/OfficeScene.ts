@@ -391,7 +391,8 @@ export class OfficeScene extends Phaser.Scene {
     });
     this.updateDanneLurker(delta, Boolean(gameState.sceneProgress.juniorCompilerIntroduced));
     const activeInteractables: Interactable[] = [...this.currentInteractables(), {
-      id: "research-world-door", label: "Outside: Research World", x: 42, y: 190, radius: 16, kind: "door",
+      // Keep the entrance local to its threshold so it cannot steal inbox actions.
+      id: "research-world-door", label: "Outside: Research World", x: 42, y: 190, radius: 8, kind: "door",
       onInteract: () => { gameState.sceneProgress.researchWorldZone = 1; transitionTo(this,"ResearchWorldScene"); }
     }];
     const nearest = nearestInteractable(this.player.position, activeInteractables);

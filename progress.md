@@ -7846,3 +7846,16 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Prior4ddb4d8 improvedgateplates. Recheckedsource/screenshot: oldroomintro used34px tall ornamentedbox withdarkredtitle onblack, plus initialsourceinstructiontoast overcenter. Replacedsharedintro with24pxnavy strip at y48,cream8pxtitle,mutedeyebrow andsingleaccentline. Keptbrief900mshold; fade250ms,zero-durationfade forOSreducedmotion. Removedverticalslide. Removedonlyredundantinitialinactive-source-note toast; HUDobjective/highlightandlatestmessage/postpickupguidance remain.
 - Buildpassed. Browserchecksnormal/reducedmotion×desktop/390x844 allpassed:geometry,textfit,noopeningtoast,objectivepreserved,automaticdismissal,0errors. Existingarchivefixture verifiedA3conversationandA1pickupviakeyboardandtouch. Phoneintroimageinspected. Requiredskillsmoke /tmp/room-intro-smoke terminal;blackcaptureinspected,nativecaptureused. Evidence docs/qa/room-introductions-2026-09-25.json.
 - Localonly,notpublished. Broadgoalactive: remainingroom/propconsistency,fullcampaign/devicefeel,loadingweight,audiolisteningandcontrollerassessment remain.
+
+## 2026-09-25 — Current NSC request checked
+- Existing eleven NSC wings already implement the requested presidential-library dungeons; no duplicate feature added. Reopened official Reagan finding aid, Nixon NSC inventory and Carter FRUS document 53 online.
+- Fresh WebKit simulated-phone Reagan run completed all three chambers, wrong-answer recovery, save/reload and return with zero page errors. Inspected /tmp/nsc-latest-request/reagan-phone-choice.png. Eight focused library/NSC tests passed. Local only.
+- Separate inherited campaign process 67272 ended with a timeout in qa-guide-counter.mjs:140 after opening-memo, before the first stage completed. This is not a victory result; diagnose game versus harness before resuming broader campaign work. No campaign process remains running.
+
+## 2026-09-25 — Fix opening inbox versus outside doorway
+- Prior turn reverified completed NSC content; broader goal made no presentation progress. Diagnosed terminal campaign failure from its native screenshot and source: the outside door stole focus from the west inbox.
+- Reduced doorway base radius16 to8 (effective14) so the inbox is usable from its south approach while direct doorway approach remains available.
+- Build passed. Fresh qa-guide-counter --office-cues completed opening, workflow decisions, Guide counter, reward, Continue and Archive entry with zero errors. Evidence /tmp/inbox-fixed-opening/results.json.
+- New qa-office-inbox-door uses the previously earned memo checkpoint, then real keyboard and phone touch inputs to route/stamp, answer opening decisions and walk outside. Both passed with zero errors. Initial harness omitted ?text=full and later omitted required compiler choices; corrected those harness issues before passing.
+- Inspected desktop/phone inbox screenshots and fresh opening native capture. Required skill smoke terminal, its black capture inspected; ordinary screenshots supplied visual evidence. All QA sessions terminal. docs/qa/office-inbox-door-2026-09-25.json.
+- Next: resume the campaign from this newly earned Archive checkpoint; no victory claim yet. Office interaction plaque remains visually large relative to the compact Archive cues and merits presentation work. Local only.
