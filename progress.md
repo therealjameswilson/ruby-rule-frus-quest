@@ -7505,3 +7505,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Historian compiler advisers use the existing detailed compiler artwork when available, preserving 32x48 logical size and existing role mapping. Other advisers retain their own artwork. Removed whole-body bobbing so historian feet remain planted over their shadows.
 - Build and 21 Archive annotation-flow tests passed. New qa-historian-presentation.mjs verified desktop and simulated-phone detailed texture, dimensions, planted position over 1300ms and zero page errors. Inspected both ordinary screenshots; required skill smoke completed in /tmp/historian-skill. No physical-device or full-campaign claim.
 - Local only; NSC feature and later presentation changes remain unpublished.
+
+## 2026-09-24 — Detailed archive research table
+- Previous turn 0c6c63d made concrete progress on adviser artwork and planted idle. Current checkout revalidated; no pending processes.
+- Replaced the source-room research table's coarse atlas image with the existing detailed research desk, including paper, ruby volume and brass detail. Width68 and front edge128 align with unchanged64x24 collision footprint; existing fallback and room cleanup retained.
+- Build and21annotation-flow tests passed. Desktop and simulated-phone QA verified texture, dimensions, exact solid footprint, and actual keyboard collision stopping at y131 after fixture placement below desk; zero page errors. Ordinary screenshots inspected after opening toast expired. Required skill smoke completed; its native screenshot remained black, ordinary screenshots supplied visual evidence. No full campaign or physical phone claim.
+- Local only. Overall quality goal remains active: other archive props/gates are still coarse, HUD overlap remains visible, and phone boss pacing, hardware/controller and audio listening remain unverified.

@@ -1768,7 +1768,10 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   private drawResearchTable() {
-    const prop = this.drawArchivePropFrame(
+    // Align the detailed desk's front edge with the existing collision footprint.
+    const detailedDesk = researchProp(this, "desk", this.researchTable.x, 109, 68);
+    if (detailedDesk) this.track(detailedDesk.setName("archive-prop-research-table").setDepth(72));
+    const prop = detailedDesk ?? this.drawArchivePropFrame(
       "research_table",
       this.researchTable.x,
       this.researchTable.y - 3,
