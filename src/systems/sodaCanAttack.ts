@@ -27,6 +27,7 @@ export class SodaCanAttack {
   private disposed = false;
   private cooldown = 0;
   private flavor = 0;
+  private controlOpacity = 1;
   private flight: { x: number; y: number; remaining: number; flavor: number } | null = null;
   private readonly button: Phaser.GameObjects.Rectangle;
   private readonly label: Phaser.GameObjects.Text;
@@ -42,7 +43,12 @@ export class SodaCanAttack {
     bindPointerPress(this.button, { down: () => {
       if (this.button.visible && this.cooldown === 0 && !this.flight) this.pending = true;
     } });
-    this.button.setInteractive(new Phaser.Geom.Rectangle(0, (SODA_CONTROL.height - SODA_CONTROL.touchHeight) / 2, SODA_CONTROL.width, SODA_CONTROL.touchHeight), Phaser.Geom.Rectangle.Contains);
+    // bindPointerPress already enabled input. Phaser's second setInteractive
+    // call preserves that original shape, so replace the active hit area.
+    const input = this.button.input!;
+    input.hitArea = new Phaser.Geom.Rectangle(0, (SODA_CONTROL.height - SODA_CONTROL.touchHeight) / 2, SODA_CONTROL.width, SODA_CONTROL.touchHeight);
+    input.hitAreaCallback = Phaser.Geom.Rectangle.Contains;
+    input.customHitArea = true;
     const body = scene.add.rectangle(0, 0, 6, 9, SODA_FLAVORS[0].color).setStrokeStyle(1, 0x101820);
     const lid = scene.add.rectangle(0, -4, 4, 1, 0xe1e6df);
     const stripe = scene.add.rectangle(0, 0, 4, 2, 0xe1e6df);
@@ -64,9 +70,22 @@ export class SodaCanAttack {
       retroAudio.blip();
     }
     this.pending = false;
-    const command = getGamepadDebugState().connected ? "RB: SODA" : isTouchInputCapable() ? "SODA" : "V: SODA";
+    const controller = getGamepadDebugState().connected;
+    const touch = isTouchInputCapable() && !controller;
+    const x = touch ? SODA_CONTROL.x : 224;
+    const y = touch ? SODA_CONTROL.y : 214;
+    this.button.setPosition(x, y);
+    this.label.setPosition(x, y);
+    const hero = this.origin();
+    const overlapsHero = Math.abs(hero.x - x) < SODA_CONTROL.width / 2 + 16
+      && hero.y + 9 > y - SODA_CONTROL.height / 2
+      && hero.y - 40 < y + SODA_CONTROL.height / 2;
+    const targetOpacity = overlapsHero ? 0.22 : 1;
+    this.controlOpacity += (targetOpacity - this.controlOpacity) * (1 - Math.exp(-Math.max(0, Math.min(50, delta)) / 70));
+    const command = controller ? "RB: SODA" : touch ? "SODA" : "V: SODA";
     this.label.setText(this.cooldown > 0 || this.flight ? "FIZZ..." : `${command}\n${SODA_FLAVORS[this.flavor].name}`);
-    this.button.setAlpha(this.cooldown > 0 || this.flight ? 0.5 : 1);
+    this.button.setAlpha(this.controlOpacity * (this.cooldown > 0 || this.flight ? 0.5 : 1));
+    this.label.setAlpha(this.controlOpacity);
     if (!this.flight) return;
     const next = advanceSodaCan(this.flight, this.target(), delta);
     Object.assign(this.flight, { x: next.x, y: next.y, remaining: this.flight.remaining - Math.max(0, Math.min(50, delta)) });

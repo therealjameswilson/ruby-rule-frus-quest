@@ -153,6 +153,8 @@ try{
    assert.equal(after.playerCombat.weapon.swingId,before.playerCombat.weapon.swingId);
  }
  if(process.argv.includes('--soda-controls')) {
+   await move(128,180);
+   await page.waitForTimeout(250);
    const control=await page.evaluate(()=>{
      const soda=window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda;
      window.qaSodaHits=[];
@@ -160,13 +162,20 @@ try{
      soda.onHit=flavor=>{window.qaSodaHits.push(flavor);onHit(flavor);};
      const b=soda.button,r=b.getBounds(),hit=b.input.hitArea;
      return {x:b.x,y:b.y,left:r.left+hit.x,top:r.top+hit.y,
-       right:r.left+hit.x+hit.width,bottom:r.top+hit.y+hit.height,flavor:soda.flavor};
+       right:r.left+hit.x+hit.width,bottom:r.top+hit.y+hit.height,flavor:soda.flavor,alpha:b.alpha,labelAlpha:soda.label.alpha};
    });
-   assert(control.bottom<194,'Soda target must end above the entire Menu target');
-   assert(control.left>82 && control.right<150,'Soda target must clear D-pad and B');
+   if(mobile&&!controller){
+     assert(control.bottom<194,'Soda target must end above the entire Menu target');
+     assert(control.left>82 && control.right<150,'Soda target must clear D-pad and B');
+     assert(control.alpha<0.4 && control.labelAlpha<0.4,'Overlapping phone control must reveal the hero');
+     assert.equal(control.bottom-control.top,44,'Fading must retain full touch target');
+   } else {
+     assert(control.left>=200 && control.top>=190,'Keyboard/controller prompt stays out of central combat aisle');
+   }
+   await shot('hero-clear-of-controls');
    const swing=(await state()).playerCombat.weapon.swingId;
    if(controller)await page.evaluate(()=>window.qaSodaPad.buttons[5].pressed=true);
-   else if(mobile)await touch(control.x,control.y);
+   else if(mobile)await touch(control.x,control.y-19);
    else await page.keyboard.press('v');
    await page.waitForFunction(prior=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor!==prior,control.flavor);
    assert.equal((await state()).mode,'explore','Soda must not open Menu');
@@ -194,6 +203,11 @@ try{
    assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor),pausedFlavor,'Paused throw input must not carry into combat');
    if(controller)await page.evaluate(()=>window.qaSodaPad.buttons[5].pressed=false);
    await shot('controls-ready');
+   if(mobile&&!controller) {
+     await move(128,130);
+     await page.waitForFunction(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.label.alpha>0.9,{},{timeout:3000});
+     await shot('control-restored');
+   }
    log.push({label:'soda-controls-summary',mobile,controller,distinctTargets:true,throws:true,pause:true});
  } else if(process.argv.includes('--clock-resume')) {
    const elapsed = await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.statutoryYear);
