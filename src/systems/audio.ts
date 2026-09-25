@@ -34,6 +34,7 @@ export interface AudioDebugState {
   musicStep: number;
   ambienceProfile: string | null;
   ambienceSources: number;
+  ambienceRiverPresence: number;
   resumePending: boolean;
   hiddenPaused: boolean;
   firstUnlockMs: number | null;
@@ -371,9 +372,16 @@ class RetroAudio {
     setAudioStatus(`original score ${theme.title}`);
   }
 
+  setOutdoorListener(position: {y:number}) {
+    if (this.currentSceneKey === 'ResearchWorldScene') this.ambience?.setRiverPosition(position);
+  }
+
   private ensureAmbience(context: AudioContext, sceneKey: string) {
     const profile = ambienceForScene(sceneKey);
-    if (this.ambience?.profile === profile) return;
+    if (this.ambience?.profile === profile) {
+      if (sceneKey !== 'ResearchWorldScene') this.ambience?.setRiverPosition(null);
+      return;
+    }
     this.ambience?.dispose();
     this.ambience = profile ? new RoomAmbience(context, this.channelOutput(context, "effects"), profile) : null;
   }
@@ -409,6 +417,7 @@ class RetroAudio {
       musicStep: this.musicStep,
       ambienceProfile: this.ambience?.profile ?? null,
       ambienceSources: this.ambience?.activeSourceCount ?? 0,
+      ambienceRiverPresence: this.ambience?.riverPresence ?? 0,
       resumePending: this.resumePending,
       hiddenPaused: this.hiddenPaused,
       firstUnlockMs: this.firstUnlockMs,

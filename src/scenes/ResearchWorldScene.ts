@@ -157,6 +157,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     const heroBounds=this.player.sprite.getBounds();
     for(const label of this.worldLabels) label.setVisible(!Phaser.Geom.Intersects.RectangleToRectangle(heroBounds,label.getBounds()));
     const p=this.player.position;
+    retroAudio.setOutdoorListener(p);
     this.danne.setFlipX(p.x>130);
     const nearest=this.stops.map(s=>({s,d:Math.hypot(p.x-s.x,p.y-s.y)})).filter(v=>v.d<=v.s.radius).sort((a,b)=>a.d-b.d)[0]?.s;
     const collectionStop = RESEARCH_LANDMARKS.find(l=>l.label===nearest?.label && researchCollections(l.id).length);

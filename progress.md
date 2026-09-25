@@ -7946,3 +7946,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Full regression passed: 267 files/2007 tests before final HUD-only refinement. Final build and six-roster browser suite passed, including 12 attack frames each, active attack, no unselected sheet requests, failed-request touch retry, save preservation, and HUD restoration. Fresh character selection to intro to Office verified Ada-only request.
 - First failure harness aborted once; Phaser automatically retried successfully. Corrected harness sustained the outage until the explicit retry screen, then restored requests.
 - Inspected final retry and desktop/phone attack screenshots. Skill smoke completed with black capture; normal screenshots supplied visual evidence. See docs/qa/selected-compiler-loading-2026-09-25.json. Local only; no physical-device or startup-time claim.
+
+## River ambience — 2026-09-25
+- Added a quiet original stereo water wash to outdoor room tone. Smooth distance falloff reaches full presence at river/bridge y220 and zero by y168, with 250ms smoothing. Listener updates follow actual hero position. Effects mute and existing room-tone disposal apply. Other outdoor scene resets river presence.
+- Fresh build and 17 focused audio tests passed. Browser fixture at bridge followed by real northward movement verified 1→0 presence, effects mute, hidden cleanup, visible resume, and garden reset. Four continuous sources near/far; no source churn while moving.
+- Reduced river level from .015 to .012 after the first render exceeded .03 room-tone peak target. Final combined raw room-tone peak .028034; RMS .007720 at river vs .005170 in gardens. Disposal leaves zero active sources and a silent tail.
+- Browser lifecycle harness initially controlled a duplicate development-module instance after HMR; switched to the exact loaded audio module URL. Final run passed with zero page errors. Phone bridge screenshot inspected; skill smoke uses production preview.
+- Evidence: docs/qa/river-ambience-2026-09-25.json. No physical-device or human listening approval; local only. Overall console-caliber goal remains active.

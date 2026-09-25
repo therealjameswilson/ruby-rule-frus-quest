@@ -9,6 +9,13 @@ export function ambienceForScene(scene: string): AmbienceProfile | null {
   return null;
 }
 
+/** River banks occupy the bottom of the outdoor map, with a bridge at y220. */
+export function riverPresence(position: {y:number} | null) {
+  if (!position || !Number.isFinite(position.y)) return 0;
+  const proximity = Math.max(0, Math.min(1, 1 - Math.abs(position.y - 220) / 52));
+  return proximity * proximity * (3 - 2 * proximity);
+}
+
 const SETTINGS = {
   office: { low:620, high:95, level:.012, hum:60, humLevel:.0012, breath:.07 },
   archive: { low:900, high:130, level:.013, hum:120, humLevel:.0008, breath:.045 },
@@ -55,6 +62,8 @@ export class RoomAmbience {
   private readonly sources: AudioScheduledSourceNode[]=[];
   private readonly gain: GainNode;
   private disposed=false;
+  private riverGain: GainNode | null = null;
+  private riverLevel = 0;
   constructor(private readonly context: BaseAudioContext, output: AudioNode, readonly profile: AmbienceProfile) {
     const config=SETTINGS[profile],at=context.currentTime;
     this.gain=context.createGain();this.gain.gain.setValueAtTime(0,at);
@@ -75,8 +84,24 @@ export class RoomAmbience {
     if(profile==='outdoors') {
       const birds=context.createBufferSource();birds.buffer=birdBuffer(context);birds.loop=true;
       birds.connect(this.gain);this.nodes.push(birds);this.sources.push(birds);
+      // A higher, broad stereo wash contrasts with the low wind bed. Both are original noise.
+      const water=context.createBufferSource();water.buffer=noiseBuffer(context);water.loop=true;
+      const bank=context.createBiquadFilter();bank.type='highpass';bank.frequency.value=650;bank.Q.value=.5;
+      const softness=context.createBiquadFilter();softness.type='lowpass';softness.frequency.value=4200;softness.Q.value=.5;
+      this.riverGain=context.createGain();this.riverGain.gain.value=0;
+      water.connect(bank);bank.connect(softness);softness.connect(this.riverGain);this.riverGain.connect(this.gain);
+      this.nodes.push(water,bank,softness,this.riverGain);this.sources.push(water);
     }
     for(const source of this.sources)source.start(at);
+  }
+  get riverPresence(){return this.disposed ? 0 : this.riverLevel;}
+  setRiverPosition(position: {y:number} | null) {
+    if (this.disposed || !this.riverGain) return;
+    const level=riverPresence(position);
+    if (Math.abs(level-this.riverLevel)<.002) return;
+    this.riverLevel=level;
+    // Smooth travel and scene-entry jumps; update only when the listener moves appreciably.
+    this.riverGain.gain.setTargetAtTime(level*.012,this.context.currentTime,.25);
   }
   get activeSourceCount(){return this.disposed?0:this.sources.length;}
   dispose() {
