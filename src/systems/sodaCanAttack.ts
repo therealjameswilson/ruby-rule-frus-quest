@@ -9,6 +9,9 @@ export const SODA_FLAVORS = [
   { name: "GRAPEFRUIT", color: 0xf29a70 }
 ] as const;
 export const SODA_COOLDOWN_MS = 900;
+// The full touch target ends at y190, above MENU's y194..238 target.
+// Keep it to the right of the D-pad and left of the face buttons.
+export const SODA_CONTROL = { x: 120, y: 168, width: 44, height: 24, touchHeight: 44 } as const;
 
 export function advanceSodaCan(position: Position, target: Position, delta: number) {
   const distance = Math.hypot(target.x - position.x, target.y - position.y);
@@ -31,15 +34,15 @@ export class SodaCanAttack {
 
   constructor(private readonly scene: Phaser.Scene, private readonly origin: () => Position,
     private readonly target: () => Position, private readonly onHit: (flavor: string) => void) {
-    this.button = scene.add.rectangle(112, 224, 46, 24, 0x152b2d)
+    this.button = scene.add.rectangle(SODA_CONTROL.x, SODA_CONTROL.y, SODA_CONTROL.width, SODA_CONTROL.height, 0x152b2d)
       .setStrokeStyle(1, 0xd6a23a).setDepth(1600).setScrollFactor(0).setVisible(false);
-    this.label = scene.add.text(112, 224, "SODA", { fontFamily: "monospace", fontSize: "6px", color: "#ffffff", align: "center" })
+    this.label = scene.add.text(SODA_CONTROL.x, SODA_CONTROL.y, "SODA", { fontFamily: "Arial", fontSize: "7px", color: "#ffffff", align: "center" })
       .setOrigin(0.5).setDepth(1601).setScrollFactor(0).setVisible(false);
     this.button.setName("soda-throw-button");
     bindPointerPress(this.button, { down: () => {
       if (this.button.visible && this.cooldown === 0 && !this.flight) this.pending = true;
     } });
-    this.button.setInteractive(new Phaser.Geom.Rectangle(0, -10, 46, 44), Phaser.Geom.Rectangle.Contains);
+    this.button.setInteractive(new Phaser.Geom.Rectangle(0, (SODA_CONTROL.height - SODA_CONTROL.touchHeight) / 2, SODA_CONTROL.width, SODA_CONTROL.touchHeight), Phaser.Geom.Rectangle.Contains);
     const body = scene.add.rectangle(0, 0, 6, 9, SODA_FLAVORS[0].color).setStrokeStyle(1, 0x101820);
     const lid = scene.add.rectangle(0, -4, 4, 1, 0xe1e6df);
     const stripe = scene.add.rectangle(0, 0, 4, 2, 0xe1e6df);

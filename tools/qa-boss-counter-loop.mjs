@@ -147,7 +147,35 @@ try{
    assert.equal(after.documentPoints,before.documentPoints);
    assert.equal(after.playerCombat.weapon.swingId,before.playerCombat.weapon.swingId);
  }
- if(process.argv.includes('--clock-resume')) {
+ if(process.argv.includes('--soda-controls')) {
+   const control=await page.evaluate(()=>{
+     const soda=window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda;
+     const b=soda.button,r=b.getBounds(),hit=b.input.hitArea;
+     return {x:b.x,y:b.y,left:r.left+hit.x,top:r.top+hit.y,
+       right:r.left+hit.x+hit.width,bottom:r.top+hit.y+hit.height,flavor:soda.flavor};
+   });
+   assert(control.bottom<194,'Soda target must end above the entire Menu target');
+   assert(control.left>82 && control.right<150,'Soda target must clear D-pad and B');
+   const swing=(await state()).playerCombat.weapon.swingId;
+   if(mobile)await touch(control.x,control.y);
+   else {const p=await point(control.x,control.y);await page.mouse.click(p.x,p.y);}
+   await page.waitForFunction(prior=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor!==prior,control.flavor);
+   assert.equal((await state()).mode,'explore','Soda must not open Menu');
+   assert.equal((await state()).playerCombat.weapon.swingId,swing,'Soda must not trigger B');
+   await shot('soda-thrown');
+   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).latestMessage.includes('soda'),{},{timeout:4000});
+   if(mobile)await touch(120,196);else await press('m');
+   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).mode==='pause');
+   const pausedFlavor=await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor);
+   await page.waitForTimeout(200);
+   assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.button.visible),false);
+   await shot('menu-separated');
+   await press('Escape');
+   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).mode==='explore');
+   assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.soda.flavor),pausedFlavor,'Menu must not queue a throw');
+   await shot('controls-ready');
+   log.push({label:'soda-controls-summary',mobile,distinctTargets:true,throws:true,pause:true});
+ } else if(process.argv.includes('--clock-resume')) {
    const elapsed = await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').danneBoss.statutoryYear);
    assert(elapsed>21.6,'The live clock must have advanced before testing reload');
    await page.reload();
@@ -196,7 +224,16 @@ try{
         // Respect the prompt's 300ms input guard; count confirmed restarts,
         // not repeated taps on the same newly opened prompt.
         await page.waitForTimeout(350);
-        const interrupted=await shot(`retry-${retries+1}`);await press();
+        const interrupted=await shot(`retry-${retries+1}`);
+        // Movement bursts can reach the menu as fresh navigation after the
+        // settle guard. Choose the labeled Retry row, not an assumed highlight.
+        if (mobile) {
+          const row=await page.evaluate(()=>{
+            const r=window.game.scene.getScene('BlackVaultLairScene').danneBoss.retryChoice.rows[0].getBounds();
+            return {x:r.centerX,y:r.centerY};
+          });
+          await touch(row.x,row.y);
+        } else await page.keyboard.press('a');
         await page.waitForFunction(()=>{
           const s=JSON.parse(window.render_game_to_text());
           const restored=s.visibleThreats.find(t=>t.bossCombat);
