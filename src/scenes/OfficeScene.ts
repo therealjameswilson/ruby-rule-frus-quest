@@ -1,3 +1,4 @@
+import { addOfficeExteriorDoor } from "../systems/officeExteriorDoor";
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
 import { researchProp, RESEARCH_PROPS } from "../systems/researchProps";
 import Phaser from "phaser";
@@ -178,8 +179,8 @@ export class OfficeScene extends Phaser.Scene {
       this.add.image(x, y, asset.key).setDisplaySize(width, height)
         .setDepth(-9).setName(`office-${asset.key}`);
     });
-    this.add.rectangle(40,190,15,24,0xaad579).setStrokeStyle(1,0xf9edc6).setDepth(25);
-    this.add.text(42,176,"OUTSIDE",{fontFamily:"monospace",fontSize:"6px",color:"#fff6cf",backgroundColor:"#234c39"}).setOrigin(.5).setDepth(26);
+    addOfficeExteriorDoor(this);
+    this.add.text(40,176,"OUTSIDE",{fontFamily:"monospace",fontSize:"6px",color:"#fff6cf",backgroundColor:"#234c39"}).setOrigin(.5).setDepth(26);
 
     const returnSpawn = arrival ?? this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
@@ -390,7 +391,7 @@ export class OfficeScene extends Phaser.Scene {
     });
     this.updateDanneLurker(delta, Boolean(gameState.sceneProgress.juniorCompilerIntroduced));
     const activeInteractables: Interactable[] = [...this.currentInteractables(), {
-      id: "research-world-door", label: "Outside: Research World", x: 42, y: 190, radius: 7, kind: "door",
+      id: "research-world-door", label: "Outside: Research World", x: 42, y: 190, radius: 16, kind: "door",
       onInteract: () => { gameState.sceneProgress.researchWorldZone = 1; transitionTo(this,"ResearchWorldScene"); }
     }];
     const nearest = nearestInteractable(this.player.position, activeInteractables);
