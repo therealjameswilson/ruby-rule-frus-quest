@@ -7922,3 +7922,15 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Fight:7cycles,0retries,7fresh core hits,50.293s,deadline met. Cached HUD166refreshes/104distinct signatures,active and cooldown represented,0invalid. Attack art598samples acrosscolossus89/swarm224/cloud285,0invalid. Pause counter window and reload into bindery passed.
 - Continued same earned save into touch bindery:5packets,Samcertification,published,201→241points,Continue preserved,0errors. Inspected core guidance, cloud attack and published native screenshots.
 - Evidence docs/qa/cached-hud-touch-victory-2026-09-25.json; raw /tmp/cached-hud-touch-boss and /tmp/cached-hud-touch-bindery. Processes32897/86848terminal. Automated state-aware fixture-start touch route, not physical iPhone or unaided full playthrough. Local only.
+
+## NSC library request verification — 2026-09-25
+- Confirmed existing implementation provides 11 NSC-era presidential-library wings with three chambers each, linked holdings guides, independent saved progress, and six completion points.
+- Rechecked Nixon's official online inventory (Box 765, Pacheco correspondence) and availability of the Eisenhower and Reagan finding aids.
+- Fresh focused progression tests: 4 passed. Fresh simulated-phone browser runs completed Nixon and Reagan wings, including wrong-answer recovery, three chambers, reward, return, and saved completion; no page errors. Inspected phone screenshots under /tmp/nsc-current-verification.
+- These are position-fixture browser checks, not physical iPhone validation or an unaided full campaign. Local only; no deployment performed. Existing unrelated vaultEnvironment.ts artwork change preserved.
+
+## Final vault fissure art — 2026-09-25
+- Replaced evenly spaced lava bars with irregular basalt plates and branching molten seams in the existing baked room texture. Collision footprints unchanged.
+- Inspected desktop and phone saved-entry screenshots; zero page errors. Skill capture was black, so ordinary browser screenshots provided visual evidence.
+- Fresh focused final-route and vault-object tests: 2 files, 15 passed. Evidence: docs/qa/vault-fissures-2026-09-25.json. Local only.
+- Overall presentation goal remains active; this visual pass does not establish console-level quality or physical-device performance.

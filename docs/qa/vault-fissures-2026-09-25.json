@@ -1,0 +1,24 @@
+{
+  "change": "Replace shelf-like lava bars with basalt plates and branching molten seams",
+  "texture": "vault-environment-v3",
+  "rendering": "Baked static texture; unchanged collision footprints",
+  "visualChecks": {
+    "desktop": "/tmp/vault-fissures/desktop.png",
+    "phone": "/tmp/vault-fissures/phone.png",
+    "inspected": true,
+    "pageErrors": []
+  },
+  "focusedTests": {
+    "files": 2,
+    "passed": 15
+  },
+  "skillSmoke": {
+    "path": "/tmp/vault-fissure-skill/shot-0.png",
+    "capture": "Black capture; ordinary browser screenshots used for visual verification"
+  },
+  "limitations": [
+    "Saved-entry visual check, not a new boss victory",
+    "Simulated phone viewport, not physical iPhone",
+    "Local only; not published"
+  ]
+}
