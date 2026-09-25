@@ -45,3 +45,14 @@ the outcome honest; it does not establish that the learning budget is fair.
 Next: check phase-boast readability and first-attempt guidance, then evaluate
 deadline pressure with players rather than tuning solely around automation.
 Local only; no real-iPhone certification or whole-game fun/completion claim.
+
+
+## September 24 rendering-stall fairness
+
+The boss clock now caps each charged frame at the same 50 ms used by hero
+movement. A five-second render stall therefore charges one 50 ms movement
+step, not five seconds of deadline time. Existing dialogue/menu suspension,
+saved elapsed time and missed-deadline records remain unchanged. This does
+not enlarge the normal 85-second active-play allowance or establish that its
+learning budget is fair; physical-device and human pacing evaluation remains
+outstanding.

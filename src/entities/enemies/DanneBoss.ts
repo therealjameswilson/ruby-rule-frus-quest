@@ -1,3 +1,4 @@
+import { frameDeltaSeconds } from "../../systems/smoothMovement";
 import { DANNE_BOSS_HD, danneBossFormAnimation } from "../../art/danneBossPresentation";
 import Phaser from "phaser";
 import { SodaCanAttack } from "../../systems/sodaCanAttack";
@@ -774,7 +775,7 @@ export class DanneBoss {
     const readiness = this.combatClockReadiness();
     this.statutoryYear = advanceStatutoryClock(
       this.statutoryYear,
-      deltaMs,
+      frameDeltaSeconds(deltaMs) * 1000,
       this.cooldown(this.quickFight ? STATUTORY_QUICK_BOSS_MS_PER_YEAR : STATUTORY_BOSS_MS_PER_YEAR),
       readiness
     );

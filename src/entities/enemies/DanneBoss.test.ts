@@ -190,6 +190,19 @@ describe("DANN-E final-review combat", () => {
     expect(internals.hp).toBe(134);
   });
 
+  it("charges only a movement-sized time step after a rendering stall", () => {
+    const { internals }=fixture();
+    internals.statutoryYear=25;
+    internals.updateStatutoryClock(50);
+    const normal=internals.statutoryYear;
+    internals.statutoryYear=25;
+    internals.updateStatutoryClock(5000);
+    expect(internals.statutoryYear).toBeCloseTo(normal,10);
+    internals.statutoryYear=25;
+    internals.updateStatutoryClock(-100);
+    expect(internals.statutoryYear).toBe(25);
+  });
+
   it("restores elapsed deadline time when the boss is recreated from saved state", () => {
     gameState.sceneProgress.statutoryClockTenths = 278;
     const { internals } = fixture();
