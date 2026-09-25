@@ -137,3 +137,19 @@ alignment and desktop movement also passed. Native and viewport screenshots
 were inspected. Evidence: `/private/tmp/frus-rotation-after/`,
 `/private/tmp/frus-rotation-portrait-after/`, and `/private/tmp/frus-landscape-inventory/`.
 These viewport-resize simulations are not physical Safari rotation tests.
+
+## Cached hero alignment at region crossings
+
+The September 25 crossing trace found 61–67 ms inside scene creation, mostly
+individual alpha-pixel reads used to align the hero's twelve poses. The player
+now reuses immutable measurements keyed by the loaded texture object. Removing
+and replacing a texture gets new measurements; weak keys do not retain it.
+
+Eight explicit crossings previously had maximum intervals of 76–96 ms. With
+the cache, the verification run measured 17.4–22.7 ms maxima and 2.1–3.0 ms
+scene creation. It performed zero new alpha-pixel reads and preserved every
+pose transform. New DANN-E disguises still loaded normally. The test places
+the hero near each edge, then uses actual keyboard input to cross; it is not
+a complete navigation playthrough. Before/after compact results are retained
+in `hardware-pacing-baseline.json`. First-time character measurement and
+physical iPhone performance are not covered by this crossing improvement.

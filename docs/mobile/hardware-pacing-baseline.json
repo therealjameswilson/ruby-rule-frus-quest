@@ -159,5 +159,182 @@
       }
     ],
     "errors": []
+  },
+  "poseCacheCrossings": {
+    "fixture": "edge approach placement; real keyboard boundary input",
+    "crossings": [
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 1,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 20.40000009536743,
+        "frames": 12
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 2,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 18,
+        "frames": 12
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 3,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 22.700000047683716,
+        "frames": 12
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 4,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 17.600000143051147,
+        "frames": 13
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 5,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 19.600000143051147,
+        "frames": 12
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 6,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 17.40000009536743,
+        "frames": 12
+      },
+      {
+        "from": 1,
+        "to": 0,
+        "disguise": 7,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 18.299999952316284,
+        "frames": 12
+      },
+      {
+        "from": 0,
+        "to": 1,
+        "disguise": 8,
+        "nextReady": false,
+        "sameGrounding": true,
+        "maxMs": 18.40000009536743,
+        "frames": 12
+      }
+    ],
+    "costs": [
+      {
+        "phase": "shutdown",
+        "ms": 1.2000000476837158
+      },
+      {
+        "phase": "preload",
+        "ms": 0.10000014305114746
+      },
+      {
+        "phase": "create",
+        "ms": 3
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.5
+      },
+      {
+        "phase": "preload",
+        "ms": 0
+      },
+      {
+        "phase": "create",
+        "ms": 2.5999999046325684
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.7000000476837158
+      },
+      {
+        "phase": "preload",
+        "ms": 0
+      },
+      {
+        "phase": "create",
+        "ms": 2.200000047683716
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.39999985694885254
+      },
+      {
+        "phase": "preload",
+        "ms": 0
+      },
+      {
+        "phase": "create",
+        "ms": 2.299999952316284
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.5999999046325684
+      },
+      {
+        "phase": "preload",
+        "ms": 0.10000014305114746
+      },
+      {
+        "phase": "create",
+        "ms": 2.4000000953674316
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.40000009536743164
+      },
+      {
+        "phase": "preload",
+        "ms": 0.10000014305114746
+      },
+      {
+        "phase": "create",
+        "ms": 2.3999998569488525
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.5
+      },
+      {
+        "phase": "preload",
+        "ms": 0
+      },
+      {
+        "phase": "create",
+        "ms": 2.0999999046325684
+      },
+      {
+        "phase": "shutdown",
+        "ms": 0.39999985694885254
+      },
+      {
+        "phase": "preload",
+        "ms": 0
+      },
+      {
+        "phase": "create",
+        "ms": 2.3999998569488525
+      }
+    ],
+    "pixelReads": 0,
+    "errors": []
   }
 }

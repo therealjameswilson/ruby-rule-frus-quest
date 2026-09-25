@@ -1,5 +1,24 @@
 import { CHARACTER_FRAME } from "./characters";
 
+type GroundedPose = { scaleY: number; offsetY: number; offsetX: number };
+// Texture identity prevents a removed/reloaded sheet from inheriting stale data.
+// Weak keys also let the measurements go when the texture is released.
+const poseCache = new WeakMap<object, readonly GroundedPose[]>();
+
+export function cachedCharacterPoses(texture: object, alphaAt: (frame: number, x: number, y: number) => number | null) {
+  const cached = poseCache.get(texture);
+  if (cached) return cached;
+  const measurements = Array.from({ length: 12 }, (_, frame) => {
+    const alpha = (x: number, y: number) => alphaAt(frame, x, y);
+    return { bottom: 47 - characterGroundOffset(alpha), height: characterPoseHeight(alpha), center: characterPoseCenter(alpha) };
+  });
+  const poses = measurements.map(pose => Object.freeze({
+    ...groundedPoseTransform(pose.bottom, pose.height, measurements[0].height), offsetX: 15.5 - pose.center
+  }));
+  poseCache.set(texture, Object.freeze(poses));
+  return poses;
+}
+
 // Sheets leave different amounts of transparent padding below each pose.
 // Anchor the lowest opaque boot pixel to the same ground line in every frame.
 export function characterGroundOffset(alphaAt: (x: number, y: number) => number | null) {

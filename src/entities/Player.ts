@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { characterGroundOffset, characterPoseHeight, characterPoseCenter, groundedPoseTransform } from "../art/characterGrounding";
+import { cachedCharacterPoses } from "../art/characterGrounding";
 import { characterAnimKey, walkingFrame, WALK_POSE_MS } from "../art/character_anims";
 import { heroCharacterKey, characterTextureDensity, ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -157,18 +157,14 @@ export class Player {
     // Fractional origins undo position snapping even when the world position is integral.
     this.sprite.setDisplayOrigin(Math.round(this.sprite.displayOriginX), Math.round(this.sprite.displayOriginY));
     if (this.spriteMode === "artPack32x48" && this.characterKey) {
-      const heights: number[] = [];
-      const centers: number[] = [];
-      for (let frame = 0; frame < 12; frame++) {
-        const alpha = (px: number, py: number) => scene.textures.getPixelAlpha(px * characterTextureDensity(this.characterKey), py * characterTextureDensity(this.characterKey), this.characterKey!, frame);
-        heights[frame] = characterPoseHeight(alpha);
-        centers[frame] = characterPoseCenter(alpha);
-        this.groundOffsets[frame] = characterGroundOffset(alpha);
-      }
-      for (let frame = 0; frame < 12; frame++) {
-        const pose = groundedPoseTransform(47 - this.groundOffsets[frame], heights[frame], heights[0]);
+      const key = this.characterKey;
+      const density = characterTextureDensity(key);
+      const poses = cachedCharacterPoses(scene.textures.get(key), (frame, x, y) =>
+        scene.textures.getPixelAlpha(x * density, y * density, key, frame));
+      for (let frame = 0; frame < poses.length; frame++) {
+        const pose = poses[frame];
         this.poseScales[frame] = pose.scaleY;
-        this.poseOffsetsX[frame] = 15.5 - centers[frame];
+        this.poseOffsetsX[frame] = pose.offsetX;
         this.groundOffsets[frame] = pose.offsetY;
       }
       this.sprite.play(characterAnimKey(this.characterKey, "idle-down"));

@@ -1,5 +1,23 @@
 import { describe, expect, it } from "vitest";
-import { characterGroundOffset, characterPoseCenter, groundedPoseTransform } from "./characterGrounding";
+import { cachedCharacterPoses, characterGroundOffset, characterPoseCenter, groundedPoseTransform } from "./characterGrounding";
+
+it('reuses pose measurements across rooms without reading sprite pixels again', () => {
+  const texture = {};
+  let reads = 0;
+  const alpha = (_frame: number, x: number, y: number) => {
+    reads++;
+    return x >= 10 && x <= 20 && y >= 2 && y <= 45 ? 255 : 0;
+  };
+  const first = cachedCharacterPoses(texture, alpha);
+  expect(first).toHaveLength(12);
+  expect(first[0]).toEqual({ scaleY: 1, offsetY: 2, offsetX: .5 });
+  const initialReads = reads;
+  expect(initialReads).toBeGreaterThan(0);
+  expect(cachedCharacterPoses(texture, alpha)).toBe(first);
+  expect(reads).toBe(initialReads);
+  expect(cachedCharacterPoses({}, alpha)).not.toBe(first);
+  expect(reads).toBeGreaterThan(initialReads);
+});
 
 describe("character boot grounding", () => {
   it.each([47, 45, 44, 38, 37])("keeps boots at the ground line with last painted row %s", bottom => {
