@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from '../systems/motionPreferences';
 import { filedResearchPaper } from '../systems/filedResearchPaper';
 import { FeedbackToast } from '../systems/feedbackToast';
 import { addMisfiledStack } from '../systems/misfiledStacks';
@@ -38,6 +39,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   private receipts: Phaser.GameObjects.Container[] = [];
   private toast!: FeedbackToast;
   private barriers: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle)[] = [];
+  private clearing: { sprite: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle; x: number; y: number; elapsed: number }[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
   private leaving = false;
   private assignment = LIBRARY_ASSIGNMENTS[8];
@@ -48,7 +50,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.assignment = LIBRARY_ASSIGNMENTS[Number.isInteger(index) ? index : -1] ?? libraryAssignment('reagan')!;
     const id = this.assignment.library;
     const library = RESEARCH_LANDMARKS.find(l=>l.id===id)!;
-    this.leaving=false;this.marks=[];this.receipts=[];this.barriers=[];this.solids=[];
+    this.leaving=false;this.marks=[];this.receipts=[];this.barriers=[];this.clearing=[];this.solids=[];
     setSceneState('PresidentialLibraryScene','explore','RESEARCH THE VOLUME');
     setRoomTraversalState({currentRoomId:`library-${id}`,roomTitle:library.name,roomType:'puzzle',visitedRoomIds:[`library-${id}`],revealedRoomIds:[`library-${id}`],exits:{south:'ResearchWorldScene'},lockedExits:{},requiredItems:{}});
     setVisibleThreats([]);
@@ -105,7 +107,17 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   update(_:number,delta:number) {
     tickInput();const input=getInput();if(this.leaving)return;
-    if(gameState.mode==='explore')this.toast.update(delta,this.player.position);
+    if(gameState.mode==='explore') {
+      this.toast.update(delta,this.player.position);
+      this.clearing=this.clearing.filter(clear=>{
+        clear.elapsed+=delta;
+        const t=prefersReducedMotion()?1:Math.min(1,clear.elapsed/240);
+        const ease=1-(1-t)*(1-t);
+        clear.sprite.setPosition(clear.x-8*ease,clear.y-2*ease).setAlpha(1-t);
+        if(t===1){clear.sprite.setVisible(false);return false;}
+        return true;
+      });
+    }
     if(this.dialog.active){this.player.update(delta,false);this.prompt.setVisible(false);if(input.aJustPressed||input.bJustPressed)this.dialog.advance();return;}
     if(this.choice.active){this.player.update(delta,false);this.prompt.setVisible(false);this.choice.updateInput();return;}
     if(handleOpenOverlays(this.inventory)){this.player.update(delta,false);this.prompt.setVisible(false);return;}
@@ -124,14 +136,19 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.prompt.setVisible(Boolean(nearest)).setText(nearest?(nearest.i<stage?'SAVED — REVIEW':nearest.i>stage?`FIRST: ${STATIONS[stage].name}`:nearest.s.name):'');setNearestInteractable(nearest?.s.name??null);
     if(nearest&&input.aJustPressed)this.research(nearest.i);
   }
-  private refresh() {
+  private refresh(animateClearing=false) {
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
     this.stageText.setText(`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
     this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
       .setColor(i===stage?'#fff3bf':i<stage?'#a7bfb4':'#a5afbd')
       .setBackgroundColor(i===stage?'#49371d':'#192630'));
     this.receipts.forEach((paper,i)=>paper.setVisible(i<stage));
-    this.barriers.forEach((b,i)=>b.setVisible(stage<i+1));
+    this.barriers.forEach((b,i)=>{
+      const blocked=stage<i+1;
+      if(!blocked&&b.visible&&animateClearing&&!prefersReducedMotion()) {
+        if(!this.clearing.some(c=>c.sprite===b))this.clearing.push({sprite:b,x:b.x,y:b.y,elapsed:0});
+      } else if(!this.clearing.some(c=>c.sprite===b))b.setVisible(blocked);
+    });
     setObjective(stage===4?'PACKET FILED':STATIONS[stage].label);
   }
   private research(station:number) {
@@ -149,7 +166,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       if(!fileLibraryStage(gameState.sceneProgress,a.library,station,option.value==='correct')){this.dialog.show('CHECK THE RECORD','That shortcut loses the source trail or overstates the evidence. Return to this station and try again.');return;}
       const complete=libraryStage(gameState.sceneProgress,a.library)===4;
       if(complete)addDocumentPoints(8,`${a.library}: research packet filed for ${a.title}`);
-      this.refresh();saveGameNow();retroAudio.fileDocket();
+      this.refresh(true);saveGameNow();retroAudio.fileDocket();
       if(complete)this.dialog.show('PACKET FILED','Research packet saved. This is progress toward the volume, not publication clearance. Return outside through the south door.');
       else this.toast.show(`FILED · NEXT: ${STATIONS[station+1].name}`,this.player.position,'info');
     },6,()=>{});
