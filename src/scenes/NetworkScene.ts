@@ -1,3 +1,4 @@
+import { addNetworkRoomFloor } from "../systems/networkRoomFloor";
 import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
@@ -457,6 +458,8 @@ export class NetworkScene extends Phaser.Scene {
       addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "network", track: (object) => this.track(object) });
       this.drawNetworkTileField(room.id);
     }
+    const detailedFloor = addNetworkRoomFloor(this, room.id === "N1");
+    if (detailedFloor) this.track(detailedFloor);
     this.drawRoomDoors();
     if (room.id === "N1") this.renderNetworkSplit(packedTilemapRendered);
     else this.renderClassNetVault(packedTilemapRendered);
