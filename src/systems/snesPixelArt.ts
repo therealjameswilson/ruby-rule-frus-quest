@@ -1,3 +1,4 @@
+import { dungeonGateTexture } from "./dungeonGateArt";
 import Phaser from "phaser";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -293,6 +294,21 @@ export function addSnesGate(scene: Phaser.Scene, options: SnesGateOptions) {
   const label = options.lockLabel ?? "LOCK";
   const exitLabel = options.exitLabel ?? "";
   const glyphFrame = gateGlyphFrame(options, locked);
+
+  const detailedGate = dungeonGateTexture(scene, locked ? "locked" : options.hasExit ? "open" : "sealed", accent);
+  if (detailedGate) {
+    const horizontal = options.direction === "north" || options.direction === "south";
+    const x = horizontal ? 128 : options.direction === "west" ? 8 : 248;
+    const y = horizontal ? options.direction === "north" ? 36 : 220 : 120;
+    const angle = options.direction === "north" ? 0 : options.direction === "south" ? 180 : options.direction === "west" ? -90 : 90;
+    keepTagged(scene.add.image(x, y, detailedGate).setDisplaySize(40, 16).setAngle(angle).setDepth(depth + 5), "snes-gate-detailed-frame", track);
+    addGateGlyph(scene, x, y, options.direction, glyphFrame, track, depth + 7);
+    const labelX = horizontal ? 128 : options.direction === "west" ? 22 : 234;
+    const labelY = horizontal ? options.direction === "north" ? 48 : 208 : 120;
+    if (locked) addGateSeal(scene, labelX, labelY, label, track, depth + 8);
+    else if (options.hasExit && exitLabel) addGateRoutePlaque(scene, labelX, labelY, exitLabel, accent, track, depth + 8);
+    return;
+  }
 
   if (options.direction === "north" || options.direction === "south") {
     const y = options.direction === "north" ? 36 : 220;
