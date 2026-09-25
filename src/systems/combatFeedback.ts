@@ -1,4 +1,6 @@
 import type Phaser from "phaser";
+import { triggerControllerFeedback, stopControllerFeedback } from "../platform/controllerFeedback";
+const feedbackScenes = new WeakSet<Phaser.Scene>();
 import { GAME_WIDTH } from "../game/constants";
 import { prefersReducedMotion } from "./motionPreferences";
 
@@ -51,6 +53,16 @@ export function densityAdjustedShake(intensity: number, viewportWidth: number, z
  */
 export function applyHitShake(scene: Phaser.Scene, kind: HitFeedbackKind, scale = 1): HitFeedbackProfile {
   const profile = resolveHitFeedback(kind, scale);
+  if (scene.events && !feedbackScenes.has(scene)) {
+    feedbackScenes.add(scene);
+    scene.events.on("pause", stopControllerFeedback);
+    scene.events.once("shutdown", () => {
+      stopControllerFeedback();
+      scene.events.off("pause", stopControllerFeedback);
+      feedbackScenes.delete(scene);
+    });
+  }
+  triggerControllerFeedback(kind, scale);
   const camera = scene.cameras?.main;
   if (!prefersReducedMotion() && camera && profile.intensity > 0 && profile.duration > 0) {
     camera.shake(profile.duration, densityAdjustedShake(profile.intensity, camera.width, camera.zoom));

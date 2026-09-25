@@ -209,6 +209,8 @@ const activePointerIds = new Set<number>();
 const inputGestureCallbacks = new Set<InputGestureCallback>();
 const gamepadConnectionCallbacks = new Set<GamepadConnectionCallback>();
 let lastDirection: CardinalDirection = "down";
+let lastInputKind: InputGestureKind | null = null;
+export function getLastInputKind() { return lastInputKind; }
 let initialized = false;
 let callbacks: InputCallbacks = {};
 let gamepadConnected = false;
@@ -367,7 +369,7 @@ function installGamepadListeners() {
 }
 
 function notifyGamepadGestureIfNeeded(snapshot: GamepadSnapshot) {
-  if (anyGamepadButtonPressed(snapshot)) {
+  if (anyGamepadButtonPressed(snapshot) || snapshot.direction) {
     notifyInputGesture("gamepad");
   }
 }
@@ -410,6 +412,7 @@ function preventGameKeyDefault(event: KeyboardEvent) {
 }
 
 function notifyInputGesture(kind: InputGestureKind) {
+  lastInputKind = kind;
   for (const callback of [...inputGestureCallbacks]) callback(kind);
 }
 

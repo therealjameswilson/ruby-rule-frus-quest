@@ -1,3 +1,4 @@
+import { isControllerVibrationEnabled, setControllerVibrationEnabled, stopControllerFeedback } from "../platform/controllerFeedback";
 import { presentationPanel } from "./presentationPanel";
 import type { AudioChannel } from "./audioMix";
 import { RENDER_DENSITY } from "./renderDensity";
@@ -108,6 +109,7 @@ export class InventoryOverlay {
     if (this.active) { this.hide(); return; }
     this.previousMode = gameState.mode;
     setGameMode("pause");
+    stopControllerFeedback();
     const tools = this.tools();
     this.toolIndex = Math.max(0, tools.findIndex((item) => item.equipped));
     this.areaIndex = Math.max(0, getAdventureSubscreenReadout().dungeons.findIndex((dungeon) => dungeon.active));
@@ -174,7 +176,7 @@ export class InventoryOverlay {
     } else if (this.page === "settings") {
       if (direction === "up" && this.settingsIndex === 0) this.focusHeader();
       else if (direction === "up") this.settingsIndex--;
-      else if (direction === "down") this.settingsIndex = Math.min(this.detailOpen ? 2 : 3, this.settingsIndex + 1);
+      else if (direction === "down") this.settingsIndex = Math.min(this.detailOpen ? 2 : 4, this.settingsIndex + 1);
     } else if (direction === "up") this.focusHeader();
     else if (direction === "left" || direction === "right") this.cycleContent(direction === "left" ? -1 : 1);
   }
@@ -556,10 +558,11 @@ export class InventoryOverlay {
       `${getString("pause.contrast")} [${isColorblindModeEnabled() ? "+" : " "}]`,
       getString("language.label", { language: getLanguage().toUpperCase() }),
       `${getString("pause.sound")} / MIX`,
-      getString("pause.codex")
+      getString("pause.codex"),
+      `CONTROLLER VIBRATION [${isControllerVibrationEnabled() ? "+" : " "}]`
     ];
     labels.forEach((label, index) => {
-      const hit = { id: `setting-${index}`, x: 128, y: 78 + index * 44, width: 224, height: 44 };
+      const hit = { id: `setting-${index}`, x: 128, y: 70 + index * 35, width: 224, height: 35 };
       const selected = this.focus === "content" && this.settingsIndex === index;
       this.box(hit.x, hit.y, 216, 30, selected ? "#293d50" : "#1a2735", selected ? PALETTE.goldStamp : PALETTE.stoneGray);
       this.text(128, hit.y - 4, label, selected ? PALETTE.goldStamp : PALETTE.white, true);
@@ -579,6 +582,7 @@ export class InventoryOverlay {
     if (index === 1) cycleLanguage();
     if (index === 2) { this.detailOpen = true; this.settingsIndex = 0; }
     if (index === 3) { this.hide(); openCodex(this.scene); return; }
+    if (index === 4) setControllerVibrationEnabled(!isControllerVibrationEnabled());
     retroAudio.confirm(); this.render();
   }
 }

@@ -17,7 +17,7 @@ vi.mock("../input/InputState", () => ({
   bindPointerPress: vi.fn(), getInput: () => input, getPrimaryActionBadge: () => "A", swallowNextInputFrame: swallowed,
   updateInputCallbacks: (next: typeof callbacks) => Object.assign(callbacks, next)
 }));
-vi.mock("./audio", () => ({ retroAudio: { blip: vi.fn(), confirm: vi.fn(), warning: vi.fn(), isEnabled: false, toggle: vi.fn() } }));
+vi.mock("./audio", () => ({ retroAudio: { blip: vi.fn(), confirm: vi.fn(), warning: vi.fn(), isEnabled: false, toggle: vi.fn(), getMix: () => ({ master: 1, music: 1, effects: 1 }) } }));
 // Loader lifecycle is covered separately; these tests exercise menu navigation.
 vi.mock("./inventoryArt", () => ({ TOOL_ART_KEY: "frus-tools-v2", InventoryArtLoader: class {
   get status() { return artState.status; }
