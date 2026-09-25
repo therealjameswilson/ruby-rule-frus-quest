@@ -1,3 +1,4 @@
+import { startWithPlayerArt } from "../systems/playerArtLoading";
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { setSceneState } from "../game/state";
@@ -164,7 +165,7 @@ export class TapToStartScene extends Phaser.Scene {
     const sceneKey = loadSavedGame();
     this.cameras.main.fadeOut(120, 0, 0, 0);
     this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, () => {
-      this.scene.start(sceneKey ?? "TitleScene");
+      startWithPlayerArt(this, sceneKey ?? "TitleScene");
     });
   }
 }

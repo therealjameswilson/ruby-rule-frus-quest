@@ -1,3 +1,4 @@
+import { startWithPlayerArt } from "./playerArtLoading";
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction } from "../game/constants";
@@ -26,7 +27,7 @@ export function transitionTo(scene: Phaser.Scene, target: string, data?: Chapter
       destination.events.once(Phaser.Scenes.Events.CREATE, () => {
         destination.cameras.main.fadeIn(prefersReducedMotion() ? 80 : 220, 17, 14, 24);
       });
-      scene.scene.start(target, data ?? {});
+      startWithPlayerArt(scene, target, data ?? {});
     }
   });
 }

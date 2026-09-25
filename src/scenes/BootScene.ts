@@ -1,3 +1,4 @@
+import { startWithPlayerArt } from "../systems/playerArtLoading";
 import { installBootProgress } from '../systems/bootProgress';
 import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import Phaser from "phaser";
@@ -132,7 +133,7 @@ export class BootScene extends Phaser.Scene {
       this.applyRoleFromQuery();
       seedProgressForScene(startScene);
     }
-    this.scene.start(startScene);
+    startWithPlayerArt(this, startScene);
   }
 
   private getStartScene() {

@@ -5,6 +5,7 @@ import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
 import { ArchiveScene } from "../scenes/ArchiveScene";
 import { BadEndingScene } from "../scenes/BadEndingScene";
 import { BlackVaultLairScene } from "../scenes/BlackVaultLairScene";
+import { PlayerArtLoadScene } from "../scenes/PlayerArtLoadScene";
 import { BootScene } from "../scenes/BootScene";
 import { DanneIntroScene } from "../scenes/DanneIntroScene";
 import { CharacterCreateScene } from "../scenes/CharacterCreateScene";
@@ -77,6 +78,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
   },
   scene: [
     BootScene,
+    PlayerArtLoadScene,
     WarningScene,
     TapToStartScene,
     TitleScene,

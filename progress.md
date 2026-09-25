@@ -7939,3 +7939,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - DanneMapScene now uses the shared compact room introduction: 176x24 at y48, 900ms hold/250ms fade; reduced motion skips the fade. Replaces the wider 224px card and 2s hold, exposing more of the room on entry.
 - Fresh build passed. Four browser cases (desktop/phone x normal/reduced motion) verified title fit, banner placement, dismissal and zero page errors. Desktop and phone screenshots inspected. Skill smoke exited successfully but captured black; ordinary browser screenshots used.
 - Evidence: docs/qa/campaign-arrival-cards-2026-09-25.json. Local only. Overall presentation goal remains active.
+
+## Selected compiler artwork loading — 2026-09-25
+- Removed all six large attack sheets from Boot. New/continued/direct-entry gameplay passes through a recoverable PlayerArtLoadScene only when the selected compiler sheet is absent. Character previews remain available before combat downloads. Other five attack sheets are not requested. Total deferred before title: 11,485,993 bytes; no image-resolution change.
+- Loader reports progress, allows keyboard/controller/touch retry, preserves the saved campaign location, hides HUD during loading and restores prior HUD visibility afterward. Custom atlas frame setup retained.
+- Full regression passed: 267 files/2007 tests before final HUD-only refinement. Final build and six-roster browser suite passed, including 12 attack frames each, active attack, no unselected sheet requests, failed-request touch retry, save preservation, and HUD restoration. Fresh character selection to intro to Office verified Ada-only request.
+- First failure harness aborted once; Phaser automatically retried successfully. Corrected harness sustained the outage until the explicit retry screen, then restored requests.
+- Inspected final retry and desktop/phone attack screenshots. Skill smoke completed with black capture; normal screenshots supplied visual evidence. See docs/qa/selected-compiler-loading-2026-09-25.json. Local only; no physical-device or startup-time claim.

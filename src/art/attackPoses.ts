@@ -103,8 +103,8 @@ export const ATTACK_POSE_SHEETS: Record<string, AttackPoseSheet> = {
     {top:32,bottom:423,center:137.0}
   ]}
 };
-export function preloadAttackPoses(scene: Phaser.Scene) {
-  for(const sheet of Object.values(ATTACK_POSE_SHEETS)) {
+export function preloadAttackPoses(scene: Phaser.Scene, sheets = Object.values(ATTACK_POSE_SHEETS)) {
+  for(const sheet of sheets) {
     if (scene.textures.exists(sheet.key)) continue;
     if (sheet.rowEdges || sheet.columnEdges) {
       const edges = sheet.rowEdges ?? [0,512,1024,1536];
