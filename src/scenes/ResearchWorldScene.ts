@@ -261,13 +261,13 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.loadDisguise(next);this.load.once('complete',apply);this.load.start();
   }
   /** One HUD-owned cue keeps interaction text off characters and scenery. */
-  get actionCue() {
+  actionCue(secondaryBadge: string) {
     const nearest = gameState.nearestInteractable;
-    if (nearest === 'Talk to DANN-E') return 'A: TALK  B: NEXT DISGUISE';
+    if (nearest === 'Talk to DANN-E') return `TALK / ${secondaryBadge}: NEXT DISGUISE`;
     const landmark = RESEARCH_LANDMARKS.find(l => l.label === nearest);
-    if (landmark && researchCollections(landmark.id).length) return 'A: COLLECTIONS  B: SOURCES';
-    if (landmark && libraryAssignment(landmark.id)) return 'A: ENTER LIBRARY  B: ABOUT';
-    return nearest ? `A: ${nearest.toUpperCase()}` : 'WALK / DISCOVER / TALK';
+    if (landmark && researchCollections(landmark.id).length) return `COLLECTIONS / ${secondaryBadge}: SOURCES`;
+    if (landmark && libraryAssignment(landmark.id)) return `ENTER LIBRARY / ${secondaryBadge}: ABOUT`;
+    return nearest ? nearest.toUpperCase() : 'WALK / DISCOVER / TALK';
   }
   private sliceAtlas(key:string) {
     const texture=this.textures.get(key),source=texture.getSourceImage();

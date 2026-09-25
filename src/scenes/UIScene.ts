@@ -359,7 +359,7 @@ export class UIScene extends Phaser.Scene {
     if (gameState.mode === "dialog") return getString("hud.nextLine");
     if (gameState.mode === "choice") return getString("hud.confirm");
     if (gameState.currentScene === "ResearchWorldScene") {
-      return (this.scene.get('ResearchWorldScene') as ResearchWorldScene).actionCue;
+      return (this.scene.get('ResearchWorldScene') as ResearchWorldScene).actionCue(getSecondaryActionBadge());
     }
     if (gameState.currentScene === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
       return getString("hud.goLeftTalk");

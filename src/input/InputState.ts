@@ -541,12 +541,18 @@ export function isTouchInputCapable() {
   return typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 }
 
+function useConsoleActionLabels() {
+  // A connected pad or touchscreen must not override an active keyboard.
+  if (lastInputKind === "keyboard") return false;
+  return isTouchInputCapable() || gamepadConnected;
+}
+
 export function getPrimaryActionBadge() {
-  return isTouchInputCapable() || gamepadConnected ? "A" : "Z";
+  return useConsoleActionLabels() ? "A" : "Z";
 }
 
 export function getSecondaryActionBadge() {
-  return isTouchInputCapable() || gamepadConnected ? "B" : "X";
+  return useConsoleActionLabels() ? "B" : "X";
 }
 
 export function tickInput() {

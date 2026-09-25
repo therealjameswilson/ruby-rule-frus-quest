@@ -1,0 +1,54 @@
+{
+  "results": [
+    {
+      "mobile": false,
+      "connected": {
+        "badge": "A",
+        "cue": "TALK / B: NEXT DISGUISE"
+      },
+      "keyboard": {
+        "badge": "Z",
+        "cue": "TALK / X: NEXT DISGUISE"
+      },
+      "controller": {
+        "badge": "A",
+        "cue": "TALK / B: NEXT DISGUISE"
+      },
+      "disconnected": {
+        "badge": "Z",
+        "cue": "TALK / X: NEXT DISGUISE"
+      },
+      "touchHandoff": false,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "connected": {
+        "badge": "A",
+        "cue": "TALK / B: NEXT DISGUISE"
+      },
+      "keyboard": {
+        "badge": "Z",
+        "cue": "TALK / X: NEXT DISGUISE"
+      },
+      "controller": {
+        "badge": "A",
+        "cue": "TALK / B: NEXT DISGUISE"
+      },
+      "disconnected": {
+        "badge": "A",
+        "cue": "TALK / B: NEXT DISGUISE"
+      },
+      "touchHandoff": true,
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Simulated standard controller and phone; not physical hardware"
+  ],
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTestsPassed": 53,
+  "visuals": "Standard skill black capture inspected; desktop and phone normal screenshots inspected",
+  "published": false
+}
