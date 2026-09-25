@@ -43,6 +43,19 @@ try{
  }
  await move(108,132);await move(108,112);await key('ArrowRight',750);await shot('parked');
  assert.equal((await state()).sceneProgress.annotationCartParked,1);
+ if(process.argv.includes('--cart-art')) {
+  await page.waitForFunction(()=>!window.game.scene.getScene('ArchiveScene').toast.visible);
+  const art=await page.evaluate(()=>{
+   const s=window.game.scene.getScene('ArchiveScene'),context=s.children.getByName('archive-annotation-station-contextual_annotation');
+   const cart=s.children.getByName('annotation-context-cart').getBounds(),label=context.getByName('annotation-station-label').getBounds();
+   return {contextDesks:context.list.filter(o=>o.name==='annotation-station-desk').length,
+    totalDesks:s.children.list.filter(o=>o.name?.startsWith('archive-annotation-station-')).flatMap(o=>o.list??[]).filter(o=>o.name==='annotation-station-desk').length,
+    cartBottom:cart.bottom,labelTop:label.top,visible:context.visible,
+    prompt:s.children.getByName('interaction-prompt').getBounds(),hero:s.player.sprite.getBounds()};
+  });
+  assert.equal(art.contextDesks,0);assert.equal(art.totalDesks,2);assert(art.visible);assert(art.labelTop>art.cartBottom);assert(art.prompt.x+art.prompt.width<art.hero.x || art.prompt.x>art.hero.x+art.hero.width || art.prompt.y+art.prompt.height<art.hero.y);
+  await page.screenshot({path:`${out}/parked-art.png`});await writeFile(`${out}/cart-art.json`,JSON.stringify(art,null,2));
+ }
  await key('Space');await shot('context');
  await move(112,112);await move(112,80);await move(48,80);await key('Space');await shot('source');
  await move(208,80);await key('Space');await shot('selectivity');

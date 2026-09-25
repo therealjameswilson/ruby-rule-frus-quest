@@ -7960,3 +7960,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Bindery: 5 packets, Sam certification, published, 201→241 points, completed save survived Continue. No reported browser errors. Inspected opening, parked-cart, proof, core-open and published-continue screenshots.
 - Next concrete visual defect: parked annotation cart overlaps the desk artwork (03-earned-annotation/parked-screen.png). Keep collision/workflow geometry grounded while correcting prop art placement.
 - Evidence: docs/qa/campaign-a316292-2026-09-25.json. State-aware automated keyboard campaign; not unaided play, physical-device testing, optional-area completeness, human audio listening, or deployment. Broad quality goal remains active.
+
+## Annotation cart presentation — 2026-09-25
+- Fixed full-campaign visual defect: contextual annotation marker drew a desk in the cart parking bay. Context now uses the cart itself, with label below its wheels; Source and Select retain their desks. No cart/interaction geometry changed.
+- First prompt clearance attempt moved cue above hero but crowded north LOCK plaque. Final cue uses compact PUSH/TAKE beside hero, preserving full action in HUD. Eight desktop/phone approach fixtures verify no hero overlap; final screenshots inspected.
+- Build and 21 focused cart/packet tests passed. Earned keyboard and touch replays completed parking, all three notes and return, before final prompt-only shortening/placement; final eight-position visual checks passed. Skill smoke passed with black capture inspected; ordinary screenshots supplied visual evidence.
+- Evidence docs/qa/annotation-cart-layout-2026-09-25.json; reusable tools/qa-annotation-cart-layout.mjs requires FRUS_QA_STORAGE from earned Annotation Stacks entry. Local only, broad quality goal active.

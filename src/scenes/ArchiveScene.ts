@@ -1,3 +1,4 @@
+import { DEFAULT_PROMPT_BOUNDS } from "../systems/interactionPromptPlacement";
 import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import { addResearchRoomFloor } from "../systems/researchRoomFloor";
 import { AlexPoster, ALEX_TEXTURE, ALEX_ART_PATH } from "../systems/alexPoster";
@@ -677,8 +678,15 @@ export class ArchiveScene extends Phaser.Scene {
       const target = this.sourceNoteActionHint();
       const near = target && this.isNearSourceNoteActionTarget(target) ? target : null;
       setNearestInteractable(near ? this.sourceNotePromptText(near) : null);
-      this.interactionPrompt.update(delta, this.toast.visible ? null : near, undefined,
-        near ? { text: this.sourceNotePromptText(near) } : undefined);
+      const cartTarget = near?.id === "annotation-return-cart" || near?.id === "annotation-station-contextual_annotation";
+      const heroBounds = cartTarget ? this.player.sprite.getBounds() : null;
+      const promptBounds = heroBounds && near
+        ? this.player.position.x <= near.x
+          ? { ...DEFAULT_PROMPT_BOUNDS, left: heroBounds.right + 24 }
+          : { ...DEFAULT_PROMPT_BOUNDS, right: heroBounds.left - 24 }
+        : undefined;
+      this.interactionPrompt.update(delta, this.toast.visible ? null : near, promptBounds,
+        near ? { text: cartTarget ? (near.id === "annotation-return-cart" ? "PUSH" : "TAKE") : this.sourceNotePromptText(near) } : undefined);
       this.hintText.setText("");
       this.refreshRoomObjective();
       this.toast.update(delta, this.player.position);
@@ -1855,7 +1863,7 @@ export class ArchiveScene extends Phaser.Scene {
         fontFamily: "monospace",
         fontSize: "4px",
         color: PALETTE.black
-      }).setOrigin(0.5, 0);
+      }).setOrigin(0.5, 0).setName("annotation-station-label");
       const symbol = this.drawAnnotationStationSymbol(station.id, accentColor);
       const state = this.add.text(2, 3, "", {
         fontFamily: "monospace",
@@ -1864,7 +1872,19 @@ export class ArchiveScene extends Phaser.Scene {
       }).setOrigin(0.5, 0);
       const arrow = this.add.triangle(0, -19, 0, 7, 8, 7, 4, 0, color(PALETTE.goldStamp), 0.96)
         .setStrokeStyle(1, color(PALETTE.black));
-      const detailedDesk = researchProp(this,"desk",0,0,40);
+      const contextCart = station.id === "contextual_annotation";
+      const detailedDesk = contextCart ? null : researchProp(this,"desk",0,0,40);
+      detailedDesk?.setName("annotation-station-desk");
+      if (contextCart) {
+        // The cart holds this note. Keep its parking bay free of duplicate furniture.
+        shadow.setVisible(false);card.setVisible(false);accent.setVisible(false);
+        for (const part of symbol) part.setVisible(false);
+        ring.setSize(26,18);
+        label.setPosition(0,18).setFontFamily("Arial").setFontSize(7).setColor(PALETTE.creamPaper)
+          .setBackgroundColor("#101925").setPadding(3,1,3,1);
+        state.setPosition(0,30).setFontSize(5);
+        arrow.setY(-27);
+      }
       if (detailedDesk) {
         shadow.setVisible(false);card.setVisible(false);
         for (const part of symbol) part.setVisible(false);
