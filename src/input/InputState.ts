@@ -1,3 +1,4 @@
+import { cardinalStick } from "./cardinalStick";
 import Phaser from "phaser";
 
 type AxisValue = -1 | 0 | 1;
@@ -288,16 +289,6 @@ function getConnectedGamepads() {
   return Array.from(navigator.getGamepads()).filter((pad): pad is Gamepad => Boolean(pad?.connected));
 }
 
-function snapStickToCardinal(x: number, y: number): CardinalDirection | null {
-  const magnitude = Math.hypot(x, y);
-  if (magnitude < 0.35) return null;
-  const absX = Math.abs(x);
-  const absY = Math.abs(y);
-  const dominance = 1.35;
-  if (absX > absY * dominance) return x < 0 ? "left" : "right";
-  if (absY > absX * dominance) return y < 0 ? "up" : "down";
-  return lastDirection;
-}
 
 function readGamepadSnapshot(): GamepadSnapshot {
   const pads = getConnectedGamepads();
@@ -324,7 +315,7 @@ function readGamepadSnapshot(): GamepadSnapshot {
   else if (buttons.has(15)) direction = "right";
   else if (buttons.has(12)) direction = "up";
   else if (buttons.has(13)) direction = "down";
-  else direction = snapStickToCardinal(pad.axes[0] ?? 0, pad.axes[1] ?? 0);
+  else direction = cardinalStick(pad.axes[0] ?? 0, pad.axes[1] ?? 0, lastDirection);
   return {
     connected: true,
     index: pad.index,
