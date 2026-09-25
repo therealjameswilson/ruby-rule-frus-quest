@@ -3,7 +3,7 @@ export type AmbienceProfile = 'office' | 'archive' | 'outdoors' | 'equipment' | 
 export function ambienceForScene(scene: string): AmbienceProfile | null {
   if (['CherryBlossomGardenScene','ResearchWorldScene'].includes(scene)) return 'outdoors';
   if (['OfficeScene','SenateHearingChamberScene','historian_office','foggy_bottom','west_wing','frus_floor','capitol_hill'].includes(scene)) return 'office';
-  if (['GuideScene','ArchiveScene','NaraStacksScene','SilentReadScene','PresidentialLibraryScene','nara_stacks'].includes(scene)) return 'archive';
+  if (['GuideScene','ArchiveScene','NaraStacksScene','SilentReadScene','PresidentialLibraryScene','NscLibraryScene','nara_stacks'].includes(scene)) return 'archive';
   if (['NetworkScene','EmbassyCableRoomScene','embassy'].includes(scene)) return 'equipment';
   if (['ReferralVaultScene','BlackVaultLairScene','black_vault','DanneBoss'].includes(scene)) return 'vault';
   return null;

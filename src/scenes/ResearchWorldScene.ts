@@ -1,3 +1,4 @@
+import { nscDungeon, nscStage } from '../game/nscResearch';
 import { presentationPanel, PANEL_COLORS } from "../systems/presentationPanel";
 import { LIBRARY_ASSIGNMENTS, libraryAssignment, libraryStage } from "../game/libraryResearch";
 import Phaser from 'phaser';
@@ -316,7 +317,7 @@ export class ResearchWorldScene extends Phaser.Scene {
       `${found.length}/${RESEARCH_LANDMARKS.length} landmarks discovered. Walk to a building and press A. No required order.`,
       'DC: Potomac Green west, Capital Commons east, Maryland Grove north. Rail links four distant library regions.',
       'Choose Reagan Library / California at the rail station for direct arrival at the Reagan Library. The Nixon Library is also on the California map.',
-      ...found.flatMap(l=>[`${l.name}\n${l.location}`, ...(libraryAssignment(l.id)?[`Dungeon research packet: ${libraryStage(gameState.sceneProgress,l.id)}/4`]:[]),researchHolding(l.id).text,...collectionPages(l.id)]),
+      ...found.flatMap(l=>[`${l.name}\n${l.location}`, ...(libraryAssignment(l.id)?[`Dungeon research packet: ${libraryStage(gameState.sceneProgress,l.id)}/4`]:[]),...(nscDungeon(l.id)?[`NSC wing: ${nscStage(gameState.sceneProgress,l.id)}/3 checks filed`]:[]),researchHolding(l.id).text,...collectionPages(l.id)]),
       'Research lessons are practice prompts. Catalogs and repository staff establish holdings and access. The map compresses real distances.'
     ]);
   }

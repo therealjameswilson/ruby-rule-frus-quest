@@ -666,6 +666,7 @@ export const SCENE_ORDER = [
   "OfficeScene",
   "ResearchWorldScene",
   "PresidentialLibraryScene",
+  "NscLibraryScene",
   "GuideScene",
   "ArchiveScene",
   "CherryBlossomGardenScene",

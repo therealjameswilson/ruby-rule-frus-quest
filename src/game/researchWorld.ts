@@ -1,3 +1,4 @@
+import { nscDungeon } from './nscResearch';
 import frusCollections from '../../public/assets/research-world/frus-collections.json';
 export interface ResearchLandmark {
   id: string; label: string; name: string; location: string; zone: number;
@@ -52,6 +53,8 @@ export const RESEARCH_HOLDINGS: Record<string, {text:string;source:string}> = {
   reagan: {text:'National Security Decision Directives: digitized copies include both fully and partially declassified records.',source:'https://www.reaganlibrary.gov/archives/topic-guide/national-security-decision-directives'}
 };
 export function researchHolding(id:string) {
+  const nsc=nscDungeon(id);
+  if(nsc)return {text:`${nsc.collection}. ${nsc.handle}. Enter the library's north-center NSC wing to investigate.`,source:nsc.source};
   return RESEARCH_HOLDINGS[id]??{text:'Presidential archival materials and related historical collections. Start with the library research guides and finding aids.',source:'https://www.archives.gov/presidential-libraries/about'};
 }
 

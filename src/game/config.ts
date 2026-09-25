@@ -1,3 +1,4 @@
+import { NscLibraryScene } from "../scenes/NscLibraryScene";
 import Phaser from "phaser";
 import { RENDER_DENSITY } from "../systems/renderDensity";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "./constants";
@@ -86,6 +87,7 @@ export const gameConfig: Phaser.Types.Core.GameConfig = {
     OfficeScene,
     ResearchWorldScene,
     PresidentialLibraryScene,
+    NscLibraryScene,
     ArchiveScene,
     CherryBlossomGardenScene,
     BlackVaultLairScene,

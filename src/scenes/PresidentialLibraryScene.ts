@@ -1,3 +1,4 @@
+import { nscDungeon } from '../game/nscResearch';
 import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { gameState, addDocumentPoints, setSceneState, setObjective, setLatestMessage, setNearestInteractable, setVisibleEntities, setVisibleThreats, setRoomTraversalState } from '../game/state';
@@ -41,7 +42,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     setSceneState('PresidentialLibraryScene','explore','RESEARCH THE VOLUME');
     setRoomTraversalState({currentRoomId:`library-${id}`,roomTitle:library.name,roomType:'puzzle',visitedRoomIds:[`library-${id}`],revealedRoomIds:[`library-${id}`],exits:{south:'ResearchWorldScene'},lockedExits:{},requiredItems:{}});
     setVisibleThreats([]);
-    setVisibleEntities([library.name, this.assignment.title, ...STATIONS.map(s=>s.name),'DANN-E misfiled-record barriers','South: return to library grounds']);
+    setVisibleEntities([library.name, this.assignment.title, ...STATIONS.map(s=>s.name),...(nscDungeon(id)?['North-center: NSC research wing']:[]),'DANN-E misfiled-record barriers','South: return to library grounds']);
     drawRoomFrame(this, library.label, '#d6a23a', {showLegacyHud:false});
     this.cameras.main.setBackgroundColor('#29343e');
     for(let y=56;y<211;y+=16) for(let x=24;x<240;x+=16) this.add.rectangle(x,y,15,15,(x+y)%32?0x35424b:0x3d4a53).setDepth(-5);
@@ -64,6 +65,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.add.text(128,150,'SOURCES',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3',backgroundColor:'#17232d'})
       .setOrigin(.5,.5).setPadding(5).setDepth(350).setInteractive({useHandCursor:true})
       .on('pointerdown',()=>window.open(`assets/research-world/library-research.html#${id}`,'_blank','noopener,noreferrer'));
+    if(nscDungeon(id))this.add.text(128,88,'NSC WING ↑',{fontFamily:'Arial',fontSize:'7px',color:'#b9eee5',backgroundColor:'#17232d'}).setOrigin(.5).setDepth(350);
     this.player=new Player(this,128,183);
     this.dialog=new DialogBox(this,{aboveTouchControls:true});
     this.choice=new ChoicePrompt(this,{settleMs:160});
@@ -78,7 +80,8 @@ export class PresidentialLibraryScene extends Phaser.Scene {
         `Official list: ${this.assignment.status}. Checked ${LIBRARY_STATUS_CHECKED}.`,
         this.assignment.task,
         this.assignment.backgroundOnly ? 'Background assignment: no matching Kennedy/Johnson production volume is listed. Keep these earlier leads outside the later manuscript date range.' : 'This dungeon is a game research exercise based on the listed volume, not a claim about specific archival files or unreleased contents.',
-        'Find the aid, compare records, write a source note, then file the packet. The south exit stays open.'
+        'Find the aid, compare records, write a source note, then file the packet. The south exit stays open.',
+        ...(nscDungeon(id)?['The north-center NSC WING leads to three extra chambers based on actual online holdings. Your FRUS assignment stays separate.']:[])
       ],()=>saveGameNow());
     }
     saveGameNow();
@@ -95,6 +98,10 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.player.update(delta,true,{bounds:{left:19,right:237,top:82,bottom:218},solids:[...this.solids,...gates]});
     const p=this.player.position;
     if(p.y>=212&&p.x>=111&&p.x<=145&&(input.dir.y>0||input.aJustPressed)){this.exit();return;}
+    if(nscDungeon(this.assignment.library)&&Math.hypot(p.x-128,p.y-86)<18){
+      this.prompt.setVisible(true).setText('A: ENTER NSC WING');setNearestInteractable('NSC research wing');
+      if(input.aJustPressed){this.leaving=true;saveGameNow();transitionTo(this,'NscLibraryScene');}return;
+    }
     const nearest=STATIONS.map((s,i)=>({s,i,d:Math.hypot(p.x-s.x,p.y-(s.y+23))})).filter(o=>o.d<25).sort((a,b)=>a.d-b.d)[0];
     this.prompt.setVisible(Boolean(nearest)).setText(nearest?`A: ${nearest.s.name}`:'');setNearestInteractable(nearest?.s.name??null);
     if(nearest&&input.aJustPressed)this.research(nearest.i);
