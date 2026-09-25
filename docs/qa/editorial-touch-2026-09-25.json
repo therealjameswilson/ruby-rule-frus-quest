@@ -1,0 +1,83 @@
+{
+  "runtime": "5fda59a",
+  "scope": "Continuous earned simulated-Chromium touch sequence from the preceding referral manifest checkpoint. Not physical iPhone Safari and not a fresh full campaign.",
+  "initialSave": "/tmp/referral-manifest-cached-gesture/earned-storage.json",
+  "errors": [],
+  "stages": [
+    {
+      "stage": "editor",
+      "path": "/tmp/editor-touch-current",
+      "passed": true,
+      "scene": "SilentReadScene",
+      "room": "S1",
+      "inventory": [
+        "Stapler Sword",
+        "Master Declass Key",
+        "Citation Stamp",
+        "FRUS Fragment: Front Matter",
+        "Source Note 47",
+        "Source Note 47 Citation Stamp",
+        "FRUS Fragment: Source Note",
+        "Telegram",
+        "Cross-Ref",
+        "Clearance Token",
+        "Concurrence Slip",
+        "Review Folder",
+        "AI Annotation Review Log",
+        "Red Pencil"
+      ],
+      "documentPoints": 126
+    },
+    {
+      "stage": "proof",
+      "path": "/tmp/proof-touch-current",
+      "passed": true,
+      "scene": "SilentReadScene",
+      "room": "S1",
+      "inventory": [
+        "Stapler Sword",
+        "Master Declass Key",
+        "Citation Stamp",
+        "FRUS Fragment: Front Matter",
+        "Source Note 47",
+        "Source Note 47 Citation Stamp",
+        "FRUS Fragment: Source Note",
+        "Telegram",
+        "Cross-Ref",
+        "Clearance Token",
+        "Concurrence Slip",
+        "Review Folder",
+        "AI Annotation Review Log",
+        "Red Pencil",
+        "Proof Lens"
+      ],
+      "documentPoints": 157
+    },
+    {
+      "stage": "production",
+      "path": "/tmp/production-touch-current",
+      "passed": true,
+      "scene": "BlackVaultLairScene",
+      "room": "DV1",
+      "inventory": [
+        "Stapler Sword",
+        "Master Declass Key",
+        "Citation Stamp",
+        "FRUS Fragment: Front Matter",
+        "Source Note 47",
+        "Source Note 47 Citation Stamp",
+        "FRUS Fragment: Source Note",
+        "Telegram",
+        "Cross-Ref",
+        "Clearance Token",
+        "Concurrence Slip",
+        "Review Folder",
+        "AI Annotation Review Log",
+        "Red Pencil",
+        "Proof Lens",
+        "Buckram Key"
+      ],
+      "documentPoints": 201
+    }
+  ]
+}
