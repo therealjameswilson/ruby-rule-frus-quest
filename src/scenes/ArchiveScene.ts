@@ -1669,31 +1669,38 @@ export class ArchiveScene extends Phaser.Scene {
   private drawCompactSourceRoomTerminal() {
     const x = 208;
     const y = 69;
-    this.track(this.add.ellipse(x + 1, y + 13, 38, 7, color(PALETTE.black), 0.42).setDepth(83));
-    this.track(this.add.rectangle(x, y, 38, 30, color(PALETTE.black), 0.96)
+    // One world-depth object prevents actors from being sandwiched between screen layers.
+    const terminal = this.track(this.add.container(0, 0).setDepth(y + 15)
+      .setName("archive-source-room-statechat"));
+    const addPart = <T extends Phaser.GameObjects.GameObject>(part: T): T => {
+      terminal.add(part);
+      return part;
+    };
+    addPart(this.add.ellipse(x + 1, y + 13, 38, 7, color(PALETTE.black), 0.42).setDepth(83));
+    addPart(this.add.rectangle(x, y, 38, 30, color(PALETTE.black), 0.96)
       .setStrokeStyle(2, color(PALETTE.terminalCyan))
       .setName("archive-source-room-statechat-frame")
       .setDepth(84));
-    this.track(this.add.rectangle(x, y - 2, 28, 13, color(PALETTE.shadowNavy), 1)
+    addPart(this.add.rectangle(x, y - 2, 28, 13, color(PALETTE.shadowNavy), 1)
       .setStrokeStyle(1, color(PALETTE.stoneGray))
       .setName("archive-source-room-statechat-screen")
       .setDepth(85));
-    this.sourceRoomTerminalLamp = this.track(this.add.rectangle(x - 13, y + 10, 4, 4, color(PALETTE.classNetRed), 1)
+    this.sourceRoomTerminalLamp = addPart(this.add.rectangle(x - 13, y + 10, 4, 4, color(PALETTE.classNetRed), 1)
       .setName("archive-source-room-statechat-lamp")
       .setDepth(86));
-    this.track(this.add.text(x, y - 17, "STATECHAT", {
+    addPart(this.add.text(x, y - 17, "STATECHAT", {
       fontFamily: "monospace",
       fontSize: "5px",
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0).setDepth(87));
-    this.sourceRoomTerminalStatus = this.track(this.add.text(x, y - 8, "", {
+    this.sourceRoomTerminalStatus = addPart(this.add.text(x, y - 8, "", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.creamPaper,
       align: "center"
     }).setOrigin(0.5, 0).setDepth(87));
-    this.track(this.add.rectangle(x + 5, y + 10, 14, 2, color(PALETTE.goldStamp), 0.82).setDepth(86));
+    addPart(this.add.rectangle(x + 5, y + 10, 14, 2, color(PALETTE.goldStamp), 0.82).setDepth(86));
     this.interactables.push({
       id: "source-room-statechat",
       label: "StateChat flag terminal",
