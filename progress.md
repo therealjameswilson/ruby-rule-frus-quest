@@ -7953,3 +7953,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Reduced river level from .015 to .012 after the first render exceeded .03 room-tone peak target. Final combined raw room-tone peak .028034; RMS .007720 at river vs .005170 in gardens. Disposal leaves zero active sources and a silent tail.
 - Browser lifecycle harness initially controlled a duplicate development-module instance after HMR; switched to the exact loaded audio module URL. Final run passed with zero page errors. Phone bridge screenshot inspected; skill smoke uses production preview.
 - Evidence: docs/qa/river-ambience-2026-09-25.json. No physical-device or human listening approval; local only. Overall console-caliber goal remains active.
+
+## Fresh full campaign replay — a316292 — 2026-09-25
+- Ran qa-campaign.py from a fresh opening on unchanged production preview port5211. All 14 stages passed using only each predecessor earned save. Process96670 terminal exit0; no runtime edits/rebuild during this replay.
+- Boss: 7 cycles, 0 retries, 7 fresh core hits, all three forms, 43.702s, deadline met. Pause preserved counter window; Continue returned to bindery.
+- Bindery: 5 packets, Sam certification, published, 201→241 points, completed save survived Continue. No reported browser errors. Inspected opening, parked-cart, proof, core-open and published-continue screenshots.
+- Next concrete visual defect: parked annotation cart overlaps the desk artwork (03-earned-annotation/parked-screen.png). Keep collision/workflow geometry grounded while correcting prop art placement.
+- Evidence: docs/qa/campaign-a316292-2026-09-25.json. State-aware automated keyboard campaign; not unaided play, physical-device testing, optional-area completeness, human audio listening, or deployment. Broad quality goal remains active.
