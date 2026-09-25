@@ -6,6 +6,7 @@ import { setAudioStatus } from "../game/state";
 import type { ProcessItemId } from "../game/constants";
 import { addInputGestureListener } from "../input/InputState";
 
+import { playToolFoley } from "./toolFoley";
 import { ScoreVoice } from "./scoreVoice";
 
 type Wave = OscillatorType;
@@ -56,6 +57,8 @@ function nowMs() {
 class RetroAudio {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private outputNode: DynamicsCompressorNode | null = null;
+  private foley = new Set<() => void>();
   private musicGain: GainNode | null = null;
   private effectsGain: GainNode | null = null;
   private effects = new Map<OscillatorNode, GainNode>();
@@ -189,43 +192,25 @@ class RetroAudio {
   }
 
   toolWindup(tool: ProcessItemId) {
-    if (tool === "stapler") {
-      setAudioStatus("stapler click");
-      this.sequence([180, 720], 0.025, 0.01, 0.035, "square");
-      return;
-    }
-    if (tool === "red_pencil") {
-      setAudioStatus("red pencil windup");
-      this.sequence([440, 554], 0.035, 0.018, 0.026, "triangle");
-      return;
-    }
-    if (tool === "review_folder") {
-      setAudioStatus("review folder windup");
-      this.sequence([196, 247, 294], 0.045, 0.02, 0.032, "square");
-      return;
-    }
-    setAudioStatus("citation stamp windup");
-    this.sequence([330, 392], 0.04, 0.018, 0.032, "square");
+    setAudioStatus(`${tool.replace(/_/g, ' ')} windup`);
+    this.toolSound(tool, false);
   }
 
   toolHit(tool: ProcessItemId) {
-    if (tool === "stapler") {
-      setAudioStatus("stapler clack");
-      this.sequence([900, 160, 110], 0.025, 0.01, 0.05, "square");
-      return;
+    setAudioStatus(`${tool.replace(/_/g, ' ')} impact`);
+    this.toolSound(tool, true);
+  }
+
+  private toolSound(tool: ProcessItemId, hit: boolean) {
+    if (!this.enabled || typeof window === 'undefined' || pageHidden() || this.mix.effects === 0 || this.mix.master === 0) return;
+    const context = this.getContext();
+    if (!context) return;
+    if (!this.unlocked || context.state !== 'running') {
+      this.resumePending = true; this.installGestureResume(); return;
     }
-    if (tool === "red_pencil") {
-      setAudioStatus("red pencil hit");
-      this.sequence([880, 660, 988], 0.035, 0.022, 0.04, "triangle");
-      return;
-    }
-    if (tool === "review_folder") {
-      setAudioStatus("review folder hit");
-      this.sequence([294, 392, 523], 0.05, 0.03, 0.045, "square");
-      return;
-    }
-    setAudioStatus("citation stamp hit");
-    this.sequence([392, 523, 784], 0.045, 0.03, 0.045, "square");
+    let cancel: () => void;
+    cancel = playToolFoley(context, this.channelOutput(context, 'effects'), tool, hit, () => this.foley.delete(cancel));
+    this.foley.add(cancel);
   }
 
   transition() {
@@ -518,6 +503,8 @@ class RetroAudio {
   }
 
   private stopEffects() {
+    for (const cancel of this.foley) cancel();
+    this.foley.clear();
     const at = this.context?.currentTime ?? 0;
     for (const [osc, gain] of this.effects) {
       gain.gain.cancelScheduledValues(at);
@@ -557,7 +544,12 @@ class RetroAudio {
     if (!this.masterGain) {
       this.masterGain = context.createGain();
       this.masterGain.gain.setValueAtTime(0.85 * this.mix.master, context.currentTime);
-      this.masterGain.connect(context.destination);
+      // Raise the deliberately quiet synthesis mix while controlling stacked effects.
+      const level = context.createGain(); level.gain.value = 4;
+      this.outputNode = context.createDynamicsCompressor();
+      this.outputNode.threshold.value = -8; this.outputNode.knee.value = 6;
+      this.outputNode.ratio.value = 12; this.outputNode.attack.value = .003; this.outputNode.release.value = .18;
+      this.masterGain.connect(level); level.connect(this.outputNode); this.outputNode.connect(context.destination);
     }
     return this.masterGain;
   }

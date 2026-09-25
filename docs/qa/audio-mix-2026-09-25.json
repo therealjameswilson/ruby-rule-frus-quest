@@ -1,0 +1,97 @@
+{
+  "date": "2026-09-25",
+  "scope": "Real Web Audio output through a muted diagnostic branch in Chromium. Six seconds per sample. Digital measurements, not human listening approval.",
+  "before": {
+    "scope": "Six-second synthesized combat stimulus. Digital levels only; not listening approval.",
+    "results": [
+      {
+        "mode": "music",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.0572727769613266,
+        "rms": 0.009522218659373619,
+        "peakDb": -24.841035178403136,
+        "rmsDb": -40.425237000248316,
+        "clipped": 0
+      },
+      {
+        "mode": "effects",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.04921867325901985,
+        "rms": 0.0041461335006976775,
+        "peakDb": -26.157401946777497,
+        "rmsDb": -47.64713436475199,
+        "clipped": 0
+      },
+      {
+        "mode": "combat",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.06878124177455902,
+        "rms": 0.0104072876710754,
+        "peakDb": -23.25059975406304,
+        "rmsDb": -39.653248816070324,
+        "clipped": 0
+      }
+    ],
+    "errors": []
+  },
+  "after": {
+    "scope": "Six-second synthesized combat stimulus. Digital levels only; not listening approval.",
+    "results": [
+      {
+        "mode": "music",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.3323826789855957,
+        "rms": 0.0551927072427432,
+        "peakDb": -9.567232322125337,
+        "rmsDb": -25.16236605899239,
+        "clipped": 0
+      },
+      {
+        "mode": "effects",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.2723906934261322,
+        "rms": 0.023560660785614668,
+        "peakDb": -11.296154694562578,
+        "rmsDb": -32.556250668596974,
+        "clipped": 0
+      },
+      {
+        "mode": "combat",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.40414807200431824,
+        "rms": 0.059968789149777296,
+        "peakDb": -7.869189773403269,
+        "rmsDb": -24.44149440122642,
+        "clipped": 0
+      },
+      {
+        "mode": "stress",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.7805511951446533,
+        "rms": 0.09061458915733381,
+        "peakDb": -2.151972139291543,
+        "rmsDb": -20.85603748565937,
+        "clipped": 0
+      }
+    ],
+    "cancellation": {
+      "before": 2,
+      "after": 0,
+      "whileMuted": 0,
+      "settled": 0
+    },
+    "errors": []
+  },
+  "recordings": {
+    "before": "/tmp/audio-mix-before",
+    "after": "/tmp/audio-mix-after"
+  },
+  "lifecycle": "Three hidden/visible cycles passed; context suspension, music timer and ambience cleanup verified."
+}

@@ -53,8 +53,8 @@ describe('effect sequences on the audio clock', () => {
     runtime.enabled=true;runtime.unlocked=true;runtime.context=context;
     vi.spyOn(runtime,'getContext').mockReturnValue(context);vi.spyOn(runtime,'channelOutput').mockReturnValue({});
     vi.spyOn(runtime,'stopMusic').mockImplementation(()=>{});vi.spyOn(runtime,'fadeMasterGain').mockImplementation(()=>{});
-    audio.toolHit('stapler');
-    expect(starts).toEqual([10,10.035,10.07]);expect(timeout).not.toHaveBeenCalled();expect(runtime.effects.size).toBe(3);
+    audio.confirm();
+    expect(starts).toEqual([10,10.105,10.21]);expect(timeout).not.toHaveBeenCalled();expect(runtime.effects.size).toBe(3);
     context.currentTime=10.01;audio.toggle();
     for(const stop of stops)expect(stop).toHaveBeenLastCalledWith(10.025);
     for(const gain of gains)expect(gain.cancelScheduledValues).toHaveBeenCalledWith(10.01);
