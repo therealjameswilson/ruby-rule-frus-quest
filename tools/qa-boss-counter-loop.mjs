@@ -65,6 +65,21 @@ try{
      return result;
    };
  });
+ if(process.argv.includes('--damage-trail'))await page.evaluate(()=>{
+   window.damageTrailAudit={samples:0,phases:{},invalid:[]};
+   window.game.events.on('poststep',()=>{
+     const scene=window.game.scene.getScene('BlackVaultLairScene');
+     if(!scene.scene.isActive())return;
+     const hud=scene.children.getByName('boss-health-hud'),boss=scene.danneBoss;
+     const trail=hud?.list.find(o=>o.name==='boss-damage-trail');
+     const handlers=scene.events.listeners('update').filter(f=>f.name==='updateDamageTrail');
+     const audit=window.damageTrailAudit;
+     if(handlers.length>1)audit.invalid.push('Duplicate trail update handlers');
+     if(!trail?.visible)return;
+     audit.samples++;audit.phases[boss.currentPhase]=(audit.phases[boss.currentPhase]??0)+1;
+     if(trail.width<Math.round(148*boss.hp/boss.maxHp)||trail.width>148)audit.invalid.push('Trail outside health bounds');
+   });
+ });
  if(process.argv.includes('--attack-art'))await page.evaluate(()=>{
    window.attackArtAudit={samples:0,invalid:[],phases:{},images:{}};
    const scene=window.game.scene.getScene('BlackVaultLairScene');
@@ -544,6 +559,13 @@ try{
     assert(audit.refreshes>20);assert(audit.signatures.some(s=>s.includes('|active|')));assert(audit.signatures.some(s=>s.includes('|cooldown|')));assert.deepEqual(audit.invalid,[]);
     await writeFile(`${out}/hud-cache.json`,JSON.stringify(audit,null,2));
   }
+ if(process.argv.includes('--damage-trail')){
+    const audit=await page.evaluate(()=>window.damageTrailAudit);
+    assert(audit.samples>0);assert.deepEqual(audit.invalid,[]);
+    assert.deepEqual(Object.keys(audit.phases).sort(),['cloud','colossus','swarm']);
+    assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').events.listeners('update').filter(f=>f.name==='updateDamageTrail').length),0);
+    await writeFile(`${out}/damage-trail.json`,JSON.stringify(audit,null,2));
+  }
   await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
   if(mobile)await touch(86,154);else await press('Enter');
   await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='EndingScene');await page.waitForTimeout(1300);
@@ -554,6 +576,6 @@ try{
   }
  }
  }
- assert.deepEqual(errors,[]);
+  assert.deepEqual(errors,[]);
 }catch(e){await shot('failure').catch(()=>{});throw e;}
 finally{if(cpuProfileStarted){const {profile}=await cdp.send('Profiler.stop');await writeFile(`${out}/cpu-profile.json`,JSON.stringify(profile));}await writeFile(`${out}/result.json`,JSON.stringify({cpuThrottle,mobile,tallPhone,errors,log},null,2));await browser.close();}
