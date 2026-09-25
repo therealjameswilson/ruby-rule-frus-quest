@@ -24,6 +24,9 @@ export function libraryApproachCue(scene: string | null, mode: string, nearest: 
     'FINDING AID': 'READ FINDING AID', 'COMPARE RECORDS': 'COMPARE RECORDS',
     'SOURCE NOTE': 'WRITE SOURCE NOTE', 'FILE PACKET': 'FILE RESEARCH PACKET'
   };
-  if (nearest && actions[nearest]) return action(actions[nearest]);
+  if (nearest && actions[nearest]) {
+    const station = Object.keys(actions).indexOf(nearest);
+    return action(station < libraryStage(progress, library) ? 'REVIEW SAVED STEP' : actions[nearest]);
+  }
   return direction(['NW: FINDING AID', 'NE: COMPARE RECORDS', 'SE: SOURCE NOTE', 'SW: FILE PACKET', 'SOUTH: RETURN OUTSIDE'][libraryStage(progress, library)]);
 }

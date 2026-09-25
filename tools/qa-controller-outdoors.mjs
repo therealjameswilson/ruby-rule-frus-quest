@@ -18,10 +18,35 @@ try{for(const mobile of [false,true]){
  await move(128,210);await button(0);assert.equal((await state()).mode,'choice');await button(1);assert.equal((await state()).mode,'explore');
  await button(0);await button(13);await button(13);await button(0);await p.waitForTimeout(600);
  assert.equal(await p.evaluate(()=>window.game.scene.getScene('ResearchWorldScene').zone),5,'Controller reaches Reagan region through rail');
+ // Enter Reagan from the rail arrival and earn its entire research packet.
+ await button(0);await p.waitForFunction(()=>window.game.scene.isActive('PresidentialLibraryScene'));
+ const drain=async()=>{for(let i=0;i<60&&(await state()).mode==='dialog';i++)await button(0);assert.equal((await state()).mode,'explore');};
+ await drain();const pointsBefore=(await state()).documentPoints;
+ await move(128,130);await move(48,130);await move(48,118);
+ await button(0);assert.equal((await state()).mode,'choice');await button(13);await button(0);await drain();assert.equal((await state()).sceneProgress.libraryResearch_reagan??0,0,'Wrong answer must not file a station');
+ for(let station=0;station<4;station++){
+  if(station===1){await move(128,118);await move(202,118);}
+  if(station===2){await move(128,118);await move(128,186);await move(202,186);}
+  if(station===3)await move(48,186);
+  await button(0);assert.equal((await state()).mode,'choice');if(station%2)await button(13);await button(0);await drain();assert.equal((await state()).sceneProgress.libraryResearch_reagan,station+1);
+ }
+ assert.equal((await state()).documentPoints,pointsBefore+8);
+ await p.waitForFunction(()=>{const ui=window.game.scene.getScene('UIScene');return ui.questBandCueText.text==='REVIEW SAVED STEP'&&ui.questBandText.text==='PACKET FILED';});
+ await p.screenshot({path:`${out}/${mobile?'phone':'desktop'}-packet-filed.png`});
+ await move(128,186);await move(128,200);await button(13,240);await p.waitForFunction(()=>window.game.scene.isActive('ResearchWorldScene'));await p.waitForTimeout(350);
+ assert.equal((await state()).sceneProgress.libraryResearch_reagan,4);const saved=await p.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));assert.equal(saved.state.sceneProgress.libraryResearch_reagan,4);
  await button(9);assert((await state()).pauseMenu,'Start opens menu');await button(9);assert.equal((await state()).pauseMenu,null);
  // Disconnect while a direction is held; stale controller input must not persist.
  await p.evaluate(()=>window.qaPad.buttons[14].pressed=true);await p.waitForTimeout(150);await p.evaluate(()=>window.qaPad.connected=false);await p.waitForTimeout(150);const stopped=(await state()).player;await p.waitForTimeout(200);assert.deepEqual((await state()).player,stopped);
- if(mobile){assert.equal(await p.evaluate(()=>window.game.scene.getScene('UIScene').controls.buttons[0].text.visible),true);const r=await p.locator('canvas').first().boundingBox();const cdp=await p.context().newCDPSession(p);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:r.x+70*r.width/256,y:r.y+204*r.height/240,id:1}]});await p.waitForTimeout(160);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}else{await p.keyboard.down('ArrowRight');await p.waitForTimeout(160);await p.keyboard.up('ArrowRight');}
+ if(mobile){
+  const dock=p.locator('#portrait-touch-dock');await dock.waitFor({state:'visible'});
+  const pad=await dock.locator('[data-control=pad]').boundingBox();assert(pad);
+  const cdp=await p.context().newCDPSession(p);
+  await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:pad.x+pad.width*.85,y:pad.y+pad.height*.5,id:1}]});
+  await p.waitForTimeout(160);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+ }else{await p.keyboard.down('ArrowRight');await p.waitForTimeout(160);await p.keyboard.up('ArrowRight');}
+
  await p.waitForTimeout(100);assert((await state()).player.x>stopped.x+3,'Input handoff moves hero');
- await p.screenshot({path:`${out}/${mobile?'phone':'desktop'}.png`});assert.deepEqual(errors,[]);await writeFile(`${out}/${mobile?'phone':'desktop'}.json`,JSON.stringify({controllerSalad:true,controllerRail:true,startMenu:true,disconnectStops:true,handoff:true,errors},null,2));console.log('PASS',mobile?'phone':'desktop');await p.close();
+ const released=(await state()).player;await p.waitForTimeout(180);assert.deepEqual((await state()).player,released,'Release stops handoff movement');
+ await p.screenshot({path:`${out}/${mobile?'phone':'desktop'}.png`});assert.deepEqual(errors,[]);await writeFile(`${out}/${mobile?'phone':'desktop'}.json`,JSON.stringify({controllerSalad:true,controllerRail:true,libraryStations:4,wrongAnswerRecovered:true,libraryReward:8,libraryReturn:true,savedPacket:true,startMenu:true,disconnectStops:true,handoff:true,releaseStops:true,naturalControllerMovement:true,errors},null,2));console.log('PASS',mobile?'phone':'desktop');await p.close();
 }}finally{await browser.close();}

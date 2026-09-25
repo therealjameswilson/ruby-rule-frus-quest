@@ -24,6 +24,12 @@ describe('research room action cues',()=>{
   }
   expect(libraryApproachCue('PresidentialLibraryScene','explore','SOURCE NOTE',base,'Z')).toEqual({text:'WRITE SOURCE NOTE',badge:'Z'});
  });
+ it('distinguishes saved research from the next task',()=>{
+  const saved={...base,libraryResearch_reagan:1};
+  expect(libraryApproachCue('PresidentialLibraryScene','explore','FINDING AID',saved,'Z')?.text).toBe('REVIEW SAVED STEP');
+  expect(libraryApproachCue('PresidentialLibraryScene','explore','COMPARE RECORDS',saved,'Z')?.text).toBe('COMPARE RECORDS');
+  expect(libraryApproachCue('PresidentialLibraryScene','explore','FILE PACKET',{...base,libraryResearch_reagan:4},'Z')?.text).toBe('REVIEW SAVED STEP');
+ });
  it('does not override dialogue, choices, pause or unrelated scenes',()=>{
   for(const mode of ['dialog','choice','pause'])expect(libraryApproachCue('NscLibraryScene',mode,null,base,'A')).toBeNull();
   expect(libraryApproachCue('BlackVaultLairScene','explore',null,base,'A')).toBeNull();

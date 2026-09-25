@@ -8110,3 +8110,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Action badges now respect active keyboard use even on touch hardware or with a pad attached. Outdoor primary action uses the existing badge once; secondary action receives the current X/B label, separated by a slash.
 - Build+53 input/HUD tests passed. Browser checks on desktop and phone confirm keyboard X and controller B really change disguise while labels switch Z/X↔A/B, disconnect fallback works, and phone touch restores A/B. No errors. Standard skill black capture inspected; final phone and desktop captures inspected.
 - Evidence docs/qa/input-action-labels-2026-09-25.json. Simulated controller/phone only; local changes, not published. Broad goal remains incomplete.
+
+## 2026-09-25 — earned controller research outing
+- Previous turn made progress matching action labels to active controls. Updated controller-outdoors QA to use actual portrait DOM pad on disconnect, then expanded it through natural Reagan library movement, wrong-answer recovery, all4 stations,8-point reward, saved packet and return. No player-position or earned-state injection.
+- Found completed station still advertised filing and completion objective clipped. HUD now offers REVIEW SAVED STEP, heading is PACKET FILED, and in-room cue says SAVED — REVIEW.
+- Build and9 research/cue tests passed. Final desktop and phone controller routes both passed salad cancellation/order, train, earned library packet, menu, disconnect-stop, keyboard/touch handoff and release-stop with no errors. Inspected final desktop/phone completion captures; standard skill black capture inspected.
+- Evidence docs/qa/controller-research-outing-2026-09-25.json. Simulated Gamepad API/phone only; physical controller/iPhone unverified. Local changes; broad goal remains active.

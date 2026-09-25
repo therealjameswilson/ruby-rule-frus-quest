@@ -113,7 +113,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       if(input.aJustPressed){this.leaving=true;saveGameNow();transitionTo(this,'NscLibraryScene');}return;
     }
     const nearest=STATIONS.map((s,i)=>({s,i,d:Math.hypot(p.x-s.x,p.y-(s.y+23))})).filter(o=>o.d<25).sort((a,b)=>a.d-b.d)[0];
-    this.prompt.setVisible(Boolean(nearest)).setText(nearest?`A: ${nearest.s.name}`:'');setNearestInteractable(nearest?.s.name??null);
+    this.prompt.setVisible(Boolean(nearest)).setText(nearest?(nearest.i<stage?'SAVED — REVIEW':nearest.s.name):'');setNearestInteractable(nearest?.s.name??null);
     if(nearest&&input.aJustPressed)this.research(nearest.i);
   }
   private refresh() {
@@ -121,7 +121,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.stageText.setText(`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
     this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`));
     this.barriers.forEach((b,i)=>b.setVisible(stage<i+1));
-    setObjective(stage===4?'PACKET FILED; SOUTH: EXIT':STATIONS[stage].label);
+    setObjective(stage===4?'PACKET FILED':STATIONS[stage].label);
   }
   private research(station:number) {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
