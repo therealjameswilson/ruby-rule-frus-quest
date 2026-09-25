@@ -1,6 +1,8 @@
 import Phaser from "phaser";
+import { createCombatToolTextures } from "./combatTools";
 
 export function createStaplerTexture(scene: Phaser.Scene) {
+  createCombatToolTextures(scene);
   if (scene.textures.exists("pack-stapler")) return;
   const art = scene.add.graphics();
   art.fillStyle(0x101820).fillRect(2, 3, 12, 10);

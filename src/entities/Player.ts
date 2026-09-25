@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { COMBAT_TOOL_ART, COMBAT_SWEEP_KEY } from "../art/combatTools";
 import { cachedCharacterPoses } from "../art/characterGrounding";
 import { characterAlphaSampler } from "../art/characterPixels";
 import { characterAnimKey, walkingFrame, WALK_POSE_MS } from "../art/character_anims";
@@ -82,6 +83,7 @@ export class Player {
   private readonly actionTrail: Phaser.GameObjects.Rectangle;
   private readonly actionEdge: Phaser.GameObjects.Rectangle;
   private readonly actionStamp: Phaser.GameObjects.Rectangle;
+  private readonly weaponSweepSprite?: Phaser.GameObjects.Image;
   private readonly weaponVfxSprite?: Phaser.GameObjects.Sprite;
   private readonly idleParts: IdlePart[] = [];
   private readonly walkParts: WalkPart[] = [];
@@ -204,6 +206,9 @@ export class Player {
         .setAlpha(0.76)
         .setDepth(901)
         .setVisible(false);
+    }
+    if (scene.textures.exists(COMBAT_SWEEP_KEY)) {
+      this.weaponSweepSprite = scene.add.image(0, 0, COMBAT_SWEEP_KEY).setVisible(false);
     }
     this.createIdleCue(scene);
     addProcessItem("stapler");
@@ -599,6 +604,7 @@ export class Player {
   }
 
   private hideActionEffect() {
+    this.weaponSweepSprite?.setVisible(false);
     this.actionTrail.setVisible(false);
     this.actionEdge.setVisible(false);
     this.actionStamp.setVisible(false);
@@ -684,12 +690,21 @@ export class Player {
       this.weaponVfxSprite?.setVisible(false);
       return;
     }
+    const detailedArt = COMBAT_TOOL_ART[readout.tool];
+    const hasDetailedArt = this.scene.textures.exists(detailedArt.key);
+    if (hasDetailedArt && this.weaponSweepSprite) {
+      this.actionTrail.setVisible(false); this.actionEdge.setVisible(false); this.actionStamp.setVisible(false);
+      this.weaponSweepSprite.setVisible(true).setPosition(centerX, centerY)
+        .setDisplaySize(horizontal ? hitbox.width + 8 : hitbox.height + 8, horizontal ? hitbox.height + 8 : hitbox.width + 8)
+        .setAngle(this.facing === "west" ? 90 : this.facing === "east" ? -90 : this.facing === "north" ? 180 : 0)
+        .setAlpha(alpha).setDepth(depth);
+    } else this.weaponSweepSprite?.setVisible(false);
     this.weaponVfxSprite
       ?.setVisible(true)
-      .setTexture(readout.tool === "stapler" ? "pack-stapler" : WEAPON_VFX_ASSET.key)
-      .setFrame(timing.vfxFrame)
+      .setTexture(hasDetailedArt ? detailedArt.key : readout.tool === "stapler" ? "pack-stapler" : WEAPON_VFX_ASSET.key)
+      .setFrame(hasDetailedArt ? 0 : timing.vfxFrame)
       .setAlpha(Math.min(0.9, alpha + 0.1))
-      .setScale(readout.tool === "stapler" ? 1 : readout.tool === "review_folder" ? 0.1 : readout.tool === "red_pencil" ? 0.082 : 0.075)
+      .setScale(hasDetailedArt ? detailedArt.size / 96 : readout.tool === "stapler" ? 1 : readout.tool === "review_folder" ? 0.1 : readout.tool === "red_pencil" ? 0.082 : 0.075)
       .setAngle(this.facing === "west" ? -90 : this.facing === "east" ? 90 : this.facing === "north" ? 180 : 0)
       .setDepth(depth + 3)
       .setPosition(centerX, centerY);
