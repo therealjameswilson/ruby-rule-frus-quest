@@ -7,6 +7,9 @@ export class ScoreVoice {
   private readonly wet: GainNode;
   private readonly compressor: DynamicsCompressorNode;
   private readonly noise: AudioBuffer;
+  private readonly output: GainNode;
+  private readonly sources = new Set<AudioScheduledSourceNode>();
+  private disposed = false;
 
   constructor(private readonly context: AudioContext, output: AudioNode) {
     this.noise = context.createBuffer(1, Math.floor(context.sampleRate * .12), context.sampleRate);
@@ -24,7 +27,9 @@ export class ScoreVoice {
     this.compressor.attack.value = 0.012;
     this.compressor.release.value = 0.25;
     this.input.connect(this.compressor);
-    this.compressor.connect(output);
+    this.output = context.createGain();
+    this.compressor.connect(this.output);
+    this.output.connect(output);
     this.room = context.createConvolver();
     const impulse = context.createBuffer(2, Math.floor(context.sampleRate * 1.1), context.sampleRate);
     // Deterministic decorrelated stereo reflections; no downloaded samples.
@@ -45,6 +50,7 @@ export class ScoreVoice {
   }
 
   play(frequency: number, at: number, duration: number, volume: number, part: ScorePart) {
+    if (this.disposed) return;
     const context = this.context;
     const envelope = context.createGain();
     envelope.gain.value = 0;
@@ -74,7 +80,9 @@ export class ScoreVoice {
       level.gain.value = strength;
       oscillator.connect(level);
       level.connect(envelope);
+      this.sources.add(oscillator);
       oscillator.onended = () => {
+        this.sources.delete(oscillator);
         oscillator.disconnect(); level.disconnect();
         if (--remaining === 0) { envelope.disconnect(); filter.disconnect(); pan.disconnect(); }
       };
@@ -85,6 +93,7 @@ export class ScoreVoice {
 
   /** Soft hand-drum and brushed shaker, synthesized without sample downloads. */
   pulse(beat: number, at: number, step: number) {
+    if (this.disposed) return;
     const context = this.context;
     const envelope = context.createGain();
     envelope.gain.value = 0;
@@ -96,20 +105,40 @@ export class ScoreVoice {
       envelope.gain.setValueAtTime(0, at);
       envelope.gain.linearRampToValueAtTime(.035, at + .003);
       envelope.gain.exponentialRampToValueAtTime(.0001, at + .18);
+      this.sources.add(drum);
       drum.connect(envelope); drum.start(at); drum.stop(at + .2);
-      drum.onended = () => { drum.disconnect(); envelope.disconnect(); };
+      drum.onended = () => { this.sources.delete(drum); drum.disconnect(); envelope.disconnect(); };
     } else {
       const brush = context.createBufferSource(), filter = context.createBiquadFilter();
       brush.buffer = this.noise; filter.type = 'highpass'; filter.frequency.value = 4200;
       envelope.gain.setValueAtTime(0, at);
       envelope.gain.linearRampToValueAtTime(.005, at + .003);
       envelope.gain.exponentialRampToValueAtTime(.0001, at + Math.min(.08, step / 2));
+      this.sources.add(brush);
       brush.connect(filter); filter.connect(envelope); brush.start(at); brush.stop(at + .1);
-      brush.onended = () => { brush.disconnect(); filter.disconnect(); envelope.disconnect(); };
+      brush.onended = () => { this.sources.delete(brush); brush.disconnect(); filter.disconnect(); envelope.disconnect(); };
     }
   }
 
+  get activeSourceCount() { return this.sources.size; }
+
   dispose() {
-    this.input.disconnect(); this.room.disconnect(); this.wet.disconnect(); this.compressor.disconnect();
+    if (this.disposed) return;
+    this.disposed = true;
+    const at = this.context.currentTime;
+    this.output.gain.cancelScheduledValues(at);
+    this.output.gain.setValueAtTime(this.output.gain.value, at);
+    this.output.gain.linearRampToValueAtTime(0, at + .06);
+    for (const source of this.sources) source.stop(at + .065);
+    // A silent audio-clock sentinel also covers the reverb-only tail. Unlike a
+    // JS timer it cannot disconnect the graph before a suspended context resumes.
+    const cleanup = this.context.createConstantSource();
+    cleanup.offset.value = 0;
+    cleanup.connect(this.output);
+    cleanup.onended = () => {
+      cleanup.disconnect(); this.input.disconnect(); this.room.disconnect();
+      this.wet.disconnect(); this.compressor.disconnect(); this.output.disconnect();
+    };
+    cleanup.start(at); cleanup.stop(at + .08);
   }
 }

@@ -1,0 +1,44 @@
+{
+  "date": "2026-09-25",
+  "scope": "Existing presidential-library NSC dungeon request verification",
+  "libraries": [
+    "truman",
+    "eisenhower",
+    "jfk",
+    "lbj",
+    "nixon",
+    "ford",
+    "carter",
+    "reagan",
+    "bush41",
+    "clinton",
+    "bush43"
+  ],
+  "officialSourceLinksReopened": 11,
+  "desktopRoutesPassed": 11,
+  "phoneRoutesPassed": 11,
+  "roomsPerRoute": 3,
+  "checks": [
+    "collection selection",
+    "wrong-answer recovery",
+    "source verification",
+    "filing receipt",
+    "return to lobby",
+    "save/reload",
+    "no duplicate reward",
+    "source guide links"
+  ],
+  "pageErrors": [],
+  "unitTestsPassed": 4,
+  "keyboardLobbyRoutePassed": true,
+  "screenshotsInspected": [
+    "/tmp/nsc-request-final/jfk-desktop-choice.png",
+    "/tmp/nsc-request-final/eisenhower-phone-choice.png"
+  ],
+  "limitations": [
+    "Position fixtures used for full route checks; separate keyboard lobby route used natural movement",
+    "Simulated phone, not physical iPhone",
+    "No runtime changes required",
+    "Local verification; not published"
+  ]
+}

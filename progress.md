@@ -8076,3 +8076,14 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Boss: 7 cycles, 0 retries, 7 fresh core hits, colossus/swarm/cloud, 54.505 seconds, no missed deadline. Bindery: five packets, points201→241, human certification published, Continue/reload preserved publication. Browser error assertions passed. No progression fix was needed.
 - Inspected opening Office, parked annotation cart, clearance room, proof release panel, boss core-open and published Continue screenshots. Evidence docs/qa/campaign-2dc09da-2026-09-25.json includes production bundle hash; raw results /tmp/frus-campaign-2dc09da.
 - Automated state-aware keyboard campaign; not unaided play, optional-area completeness, physical-device/controller testing, human audio review or website deployment. Broad console-quality goal remains active.
+
+## 2026-09-25 — all-library NSC request verification
+- Existing 11 three-room NSC wings meet the request. Reopened all 11 official source URLs. No duplicate implementation or runtime changes needed.
+- All 11 desktop and all 11 simulated-phone routes passed: three rooms, wrong-answer recovery, filing, return, save/reload and reward protection; no page errors. Four unit tests and separate natural keyboard lobby/guide/return route passed.
+- Inspected JFK desktop and Eisenhower phone captures. Evidence: docs/qa/nsc-request-all-libraries-2026-09-25.json. Local verification only, not published; physical iPhone untested.
+
+## 2026-09-25 — smooth score retirement
+- Previous turn made verification progress: all 22 desktop/phone NSC routes passed. Returned to unfinished audio implementation.
+- ScoreVoice now uses a 60ms output fade, cancels queued oscillators and percussion, rejects new notes after disposal, and disconnects on the audio clock. Idempotent cleanup handles suspended contexts and reverb-only tails.
+- Build and 15 focused audio tests passed. Actual OfflineAudioContext renders cover normal, early and reverb-only disposal; tail peaks zero, all sources retired. Live theme handoff and mute passed; suspended retirement resumes and cleans up. Mobile WebKit passed three hide/resume cycles without errors.
+- Skill capture inspected (black WebGL output); normal WebKit screenshot inspected. Evidence docs/qa/score-release-2026-09-25.json. No human listening or physical-device validation. Local only. Broader goal remains incomplete.
