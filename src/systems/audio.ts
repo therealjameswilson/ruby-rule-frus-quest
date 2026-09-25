@@ -45,6 +45,10 @@ function midiToFrequency(note: number) {
   return 440 * 2 ** ((note - 69) / 12);
 }
 
+function pageHidden() {
+  return typeof document !== "undefined" && document.hidden;
+}
+
 function nowMs() {
   return typeof performance === "undefined" ? Date.now() : performance.now();
 }
@@ -129,7 +133,7 @@ class RetroAudio {
   }
 
   async unlock() {
-    if (!this.enabled || typeof window === "undefined") return false;
+    if (!this.enabled || typeof window === "undefined" || pageHidden()) return false;
     this.prepare();
     const startedAt = nowMs();
     const context = this.getContext();
@@ -139,6 +143,8 @@ class RetroAudio {
     }
 
     await this.resumeContext(context);
+    if (pageHidden()) { this.handleHidden(); return false; }
+    if (!this.enabled) return false;
     if (context.state !== "running") {
       this.resumePending = true;
       this.installGestureResume();
@@ -313,6 +319,12 @@ class RetroAudio {
     if (!this.enabled) {
       this.currentThemeKey = key;
       this.pendingSceneKey = null;
+      return;
+    }
+    if (pageHidden()) {
+      this.pendingSceneKey = sceneKey;
+      this.hiddenPaused = true;
+      this.handleHidden();
       return;
     }
     if (this.crossfadeTimer !== null) {
@@ -594,10 +606,13 @@ class RetroAudio {
 
   private async handleVisible() {
     this.lastVisibilityEvent = "visible";
-    if (!this.enabled || !this.hiddenPaused) return;
+    if (!this.enabled || !this.hiddenPaused || pageHidden()) return;
     const context = this.getContext();
     if (!context) return;
     await this.resumeContext(context);
+    // Visibility can change while the browser is resolving resume().
+    if (pageHidden()) { this.handleHidden(); return; }
+    if (!this.enabled) return;
     if (context.state === "running") {
       this.unlocked = true;
       this.resumePending = false;
@@ -614,6 +629,7 @@ class RetroAudio {
     const state = this.getContextState();
     const previous = this.lastContextState;
     this.lastContextState = state;
+    if (state === "running" && pageHidden()) { this.handleHidden(); return; }
     if (state === "interrupted") {
       this.lastInterruptionEvent = "interrupted";
       this.stopMusic();
