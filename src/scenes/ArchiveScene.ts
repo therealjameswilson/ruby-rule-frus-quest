@@ -4,6 +4,7 @@ import { AlexPoster, ALEX_TEXTURE, ALEX_ART_PATH } from "../systems/alexPoster";
 import { ConferenceHeat, CONFERENCE_HEAT_DAMAGE, CONFERENCE_HEAT_WARNING } from "../game/conferenceHeat";
 import { drawDungeonStoneBlock, drawDungeonWallTorch } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
+import { addArchiveTerminalArt } from "../systems/archiveTerminalArt";
 import { compilerCheckpointComplete } from "../game/compilerMission";
 import { runCompilerCheckpoint } from "../systems/compilerCheckpoint";
 import { archiveOptionalObjective } from "../game/archiveOptionalObjective";
@@ -1677,11 +1678,12 @@ export class ArchiveScene extends Phaser.Scene {
       return part;
     };
     addPart(this.add.ellipse(x + 1, y + 13, 38, 7, color(PALETTE.black), 0.42).setDepth(83));
-    addPart(this.add.rectangle(x, y, 38, 30, color(PALETTE.black), 0.96)
+    const cabinet = addArchiveTerminalArt(this, x, y);
+    addPart(cabinet ?? this.add.rectangle(x, y, 38, 30, color(PALETTE.black), 0.96)
       .setStrokeStyle(2, color(PALETTE.terminalCyan))
       .setName("archive-source-room-statechat-frame")
       .setDepth(84));
-    addPart(this.add.rectangle(x, y - 2, 28, 13, color(PALETTE.shadowNavy), 1)
+    addPart(this.add.rectangle(x, y - 2, 28, 13, color(PALETTE.shadowNavy), cabinet ? 0.45 : 1)
       .setStrokeStyle(1, color(PALETTE.stoneGray))
       .setName("archive-source-room-statechat-screen")
       .setDepth(85));
@@ -1700,7 +1702,7 @@ export class ArchiveScene extends Phaser.Scene {
       color: PALETTE.creamPaper,
       align: "center"
     }).setOrigin(0.5, 0).setDepth(87));
-    addPart(this.add.rectangle(x + 5, y + 10, 14, 2, color(PALETTE.goldStamp), 0.82).setDepth(86));
+    addPart(this.add.rectangle(x + 5, y + 12, 12, 1, color(PALETTE.creamPaper), 0.82).setDepth(86));
     this.interactables.push({
       id: "source-room-statechat",
       label: "StateChat flag terminal",
