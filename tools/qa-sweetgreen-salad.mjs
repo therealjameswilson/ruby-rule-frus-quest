@@ -5,6 +5,10 @@ try { for(const touch of [false,true]) {
 const p=await browser.newPage({viewport:touch?{width:390,height:844}:{width:1280,height:720},hasTouch:touch,isMobile:touch});const errors=[];p.on('pageerror',e=>errors.push(String(e)));
 await p.goto(new URL('?scene=ResearchWorldScene&text=full',process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5173/').href);await p.waitForFunction(()=>window.game?.scene.isActive('ResearchWorldScene'));await p.waitForTimeout(500);
 const state=()=>p.evaluate(()=>JSON.parse(window.render_game_to_text()));
+const labels=await p.evaluate(()=>{const s=window.game.scene.getScene('ResearchWorldScene');return ['sweetgreen-order-label','sweetgreen-james-label'].map(name=>{const o=s.children.getByName(name),r=o.getBounds();return {name,visible:o.visible,left:r.left,bottom:r.bottom};});});
+assert(labels.every(l=>l.visible));assert(labels[0].bottom<145,'Ordering sign stays above the storefront');assert(labels[1].left>82,'James name clears the movement pad');
+await p.screenshot({path:`/tmp/salad-${touch?'phone':'desktop'}-world.png`});
+
 const tap=async(x,y)=>{const r=await p.locator('canvas').first().boundingBox();await p.touchscreen.tap(r.x+x*r.width/256,r.y+y*r.height/240);};
 const act=async()=>{if(touch)await tap(225,205);else await p.keyboard.press('Space');await p.waitForTimeout(300);};
 await p.evaluate(()=>window.game.scene.getScene('ResearchWorldScene').player.setPosition(64,183));await p.waitForTimeout(200);

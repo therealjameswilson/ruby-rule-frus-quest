@@ -7897,3 +7897,8 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Atmosphere advances only during exploration, clamps long frame deltas, pauses under overlays and respects live OS reduced-motion preference.
 - Build passed. Desktop/390x844phone runtime checks passed animation, pause, reduced motion and resumption with one graphics object and0errors. Initial phone keyboard menu tap was not registered; final harness uses real touch menu/close and keyboard delay on desktop. No runtime input change needed.
 - Inspected desktop and phone captures. Required skill smoke terminal; black capture inspected, ordinary screenshots supplied evidence. All sessions terminal. Evidence docs/qa/outdoor-atmosphere-2026-09-25.json. Local only; console-caliber goal incomplete.
+
+## 2026-09-25 — Sweetgreen discovery on phone
+- Previous turn added outdoor atmosphere. Its final phone screenshot showed Order Salad under movement pad. Moved order sign above storefront and James name to the clear gap right of pad. Improved existing code-drawn food marker into a shaded bowl with leaves/ingredients. Action positions unchanged.
+- Build and extended qa-sweetgreen-salad passed: label bounds/visibility; three salad orders, both cancellation mechanisms, James payment and save on keyboard+touch,0errors. Uses counter position fixture, then actual inputs. Inspected phone world screenshot. Required skill smoke terminal; black capture inspected. All QA terminal.
+- Evidence docs/qa/sweetgreen-signage-2026-09-25.json. Local only. Broader goal still needs sustained presentation/performance and physical-device/listening review.

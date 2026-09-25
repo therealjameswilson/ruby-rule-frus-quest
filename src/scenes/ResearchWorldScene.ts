@@ -192,12 +192,18 @@ export class ResearchWorldScene extends Phaser.Scene {
       if(!texture.has('body'))texture.add('body',0,250,20,540,1490);
       this.add.image(91,192,'research-james-v2','body').setOrigin(.5,1).setScale(42/1490).setDepth(192).setName('james-sweetgreen');
     } else this.add.sprite(91,190,'compiler_veteran',0).setOrigin(.5,.9).setDisplaySize(24,36).setDepth(190).setName('james-sweetgreen');
-    this.label(91,194,'JAMES',280,7);
+    this.label(104,194,'JAMES',280,7).setName('sweetgreen-james-label');
     // Salad bowl on the outdoor counter.
-    g.fillStyle(0xe6ead6).fillRect(46,180,17,5);
-    g.fillStyle(0x74ad43).fillRect(47,178,15,3);
-    g.fillStyle(0xc96336).fillRect(51,178,3,2).fillRect(58,179,2,2);
-    this.label(55,186,'ORDER SALAD',280,7);
+    g.fillStyle(0x173e2c,.24).fillEllipse(55,186,20,4);
+    g.fillStyle(0xd3d8c4).fillEllipse(55,182,18,8);
+    g.fillStyle(0xf5f0de).fillEllipse(55,180,20,6);
+    g.fillStyle(0x3b7535).fillEllipse(55,180,16,4);
+    for (const [x,y] of [[50,179],[54,178],[58,179],[52,181],[57,181]]) {
+      g.fillStyle(0x86b84d).fillEllipse(x,y,4,2.5);
+    }
+    g.fillStyle(0xc95936).fillCircle(52,179,1.1).fillCircle(58,180,1);
+    g.fillStyle(0xe8cd7b).fillCircle(55,181,.7).fillCircle(59,179,.7);
+    this.label(70,131,'ORDER SALAD',280,7).setName('sweetgreen-order-label');
     this.stop('Order a salad',64,183,16,()=>this.orderSalad());
     this.stop('Talk to James',91,199,19,()=>{
       gameState.sceneProgress.researchJamesWarningHeard=1;
