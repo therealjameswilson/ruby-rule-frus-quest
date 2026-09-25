@@ -2,7 +2,7 @@ import { filedResearchPaper } from '../systems/filedResearchPaper';
 import { FeedbackToast } from '../systems/feedbackToast';
 import { addMisfiledStack } from '../systems/misfiledStacks';
 import { preloadLibraryStationArt, libraryStationArt } from '../systems/libraryStationArt';
-import { addEditorialRoomFloor } from '../systems/editorialRoomFloor';
+import { addLibraryRoomFloor } from '../systems/libraryRoomFloor';
 import { addEditorialRoomWalls } from '../systems/editorialRoomWalls';
 import { buildEditorE1TileLayers } from '../game/editorE1Tilemap';
 import { nscDungeon } from '../game/nscResearch';
@@ -55,7 +55,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     setVisibleEntities([library.name, this.assignment.title, ...STATIONS.map(s=>s.name),...(nscDungeon(id)?['North-center: NSC research wing']:[]),'DANN-E misfiled-record barriers','South: return to library grounds']);
     drawRoomFrame(this, library.label, '#d6a23a', {showLegacyHud:false});
     this.cameras.main.setBackgroundColor('#29343e');
-    addEditorialRoomFloor(this,false);
+    addLibraryRoomFloor(this);
     const walls=buildEditorE1TileLayers().walls.map(row=>[...row]);
     for(const row of walls){row[0]=walls[0][0];row[row.length-1]=walls[0][0];}
     for(const x of [7,8])walls[walls.length-1][x]=-1;

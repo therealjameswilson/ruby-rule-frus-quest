@@ -8139,3 +8139,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Earned desktop+phone controller route passed all4stations, receipts, audio trigger, nonblocking intermediate progression, wrong-answer recovery, reward/save/return and input handoff. Session88975 terminal0 recovered.
 - Fresh partial-save restoration passed twice with exactly2 receipts. Initial fixture failed because the running scene overwrote localStorage; fixed by seeding a fresh browser context rather than changing runtime.
 -27 focused tests passed; desktop/phone completion and phone restoration captures inspected. Standard skill capture remains black and was inspected separately. Evidence docs/qa/library-filing-feedback-2026-09-25.json. Human listening and physical hardware unverified; local only. Broad console-quality goal remains incomplete.
+
+## 2026-09-25 — dedicated presidential-library reading-room materials
+- Previous goal turn made progress with tangible, nonblocking filing feedback. Visual inspection still showed a flat editorial carpet beneath the new furniture.
+- Replaced it in library scenes with original cached oak-board artwork, four woven desk rugs, a continuous center runner, warm reading-light gradients and short furniture contact shadows. Existing logical room, station positions and collision geometry retained.
+- Production build passed (existing large JS chunk warning). Cache inspection confirms one1024x832texture displayed256x208 atdepth2, reused by identity on scene restart. Standard skill ran; black capture inspected, regular desktop completion and phone restored-state screenshots inspected.
+- Partial-save restore check passed twice. Full earned controller route verification in progress at this log entry; results follow. Not published; broad console-quality goal incomplete.
+- Final desktop and phone earned routes both passed with no page errors, including four stations, wrong-answer recovery, receipt/save/reward/return, menu, controller disconnect and input handoff. Phone completion screenshot inspected. Evidence docs/qa/library-room-floor-2026-09-25.json.
