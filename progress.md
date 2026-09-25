@@ -8177,3 +8177,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Boss:7cycles,0retries,7fresh core hits, all3forms,43.561s measured fight, no missed deadline. Bindery:5packets,201→241points, human certification recorded, published state restored through Continue. Orchestrator session45362 terminated0.
 - Inspected nine relevant screenshots from opening to published cover. Exact bundle SHA and results saved in docs/qa/campaign-9646252-2026-09-25.json. No website publishing performed.
 - This advances integration evidence but does not prove the broad console-quality goal: physical hardware, human listening/unaided-play assessment and overall presentation/performance remain wider gates. Goal active.
+
+## 2026-09-25 — keep clearance station plaques behind the approaching hero
+- Previous goal turn established a fresh14-stage campaign and2050-test pass. Its review-complete capture exposed the LEDGER plaque drawing across the compiler's torso. Plaques inherited the desk container's depth186 despite being placed atworldy140.
+- Split station plaques into independently tracked world containers at their actual y-depth, retaining positions, text, lamps and live status updates. Furniture keeps its existing depth/collision.
+- Build passed. Desktop and phone fixture reproduces actual overlap and verifies hero depth150>plaque140. All3 distinct desks and labels preserved. Earned clearance route passed rejection/repair/reward/referral/reload with no errors; green completed indicators and hero layering visually inspected.
+- Evidence docs/qa/clearance-plaque-layering-2026-09-25.json. Standard skill capture black inspected separately. Local only; broad console-quality goal remains active.
