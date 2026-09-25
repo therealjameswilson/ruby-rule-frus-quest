@@ -58,6 +58,7 @@ class RetroAudio {
   private masterGain: GainNode | null = null;
   private musicGain: GainNode | null = null;
   private effectsGain: GainNode | null = null;
+  private effects = new Map<OscillatorNode, GainNode>();
   private mix = readAudioMix();
   private enabled = true;
   private prepared = false;
@@ -93,6 +94,7 @@ class RetroAudio {
   toggle() {
     this.enabled = !this.enabled;
     if (!this.enabled) {
+      this.stopEffects();
       this.stopMusic();
       this.fadeMasterGain(0.0001, 0.04);
       setAudioStatus("audio muted");
@@ -109,6 +111,7 @@ class RetroAudio {
     if (!Number.isFinite(value)) return;
     this.mix[channel] = Math.max(0, Math.min(1, value));
     saveAudioMix(this.mix);
+    if ((channel === "master" || channel === "effects") && this.mix[channel] === 0) this.stopEffects();
     if (!this.context) return;
     if (channel === "master") this.fadeMasterGain(this.enabled ? 0.85 : 0.0001, 0.04);
     else {
@@ -474,9 +477,11 @@ class RetroAudio {
   }
 
   private sequence(notes: number[], duration: number, gap: number, gain: number, wave: Wave = "square") {
-    if (typeof window === "undefined") return;
+    if (!this.enabled || typeof window === "undefined" || pageHidden()) return;
+    const at = this.getContext()?.currentTime;
+    if (at === undefined) return;
     notes.forEach((note, index) => {
-      window.setTimeout(() => this.tone(note, duration, gain, wave), index * (duration + gap) * 1000);
+      this.tone(note, duration, gain, wave, at + index * (duration + gap));
     });
   }
 
@@ -486,8 +491,8 @@ class RetroAudio {
     playFootstep(this.context, this.channelOutput(this.context, "effects"), footstepSurface(scene), right);
   }
 
-  private tone(frequency: number, duration: number, gainValue: number, wave: Wave = "square") {
-    if (!this.enabled || typeof window === "undefined") return;
+  private tone(frequency: number, duration: number, gainValue: number, wave: Wave = "square", scheduledAt?: number) {
+    if (!this.enabled || typeof window === "undefined" || pageHidden() || this.mix.effects === 0 || this.mix.master === 0) return;
     const context = this.getContext();
     if (!context) return;
     if (!this.unlocked || context.state !== "running") {
@@ -496,18 +501,30 @@ class RetroAudio {
       return;
     }
     const output = this.channelOutput(context, "effects");
+    const at = Math.max(context.currentTime, scheduledAt ?? context.currentTime);
     const osc = context.createOscillator();
     const gain = context.createGain();
     osc.type = wave;
     osc.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.0001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(gainValue, context.currentTime + 0.006);
-    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(gainValue, at + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
     osc.connect(gain);
     gain.connect(output);
-    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
-    osc.start();
-    osc.stop(context.currentTime + duration + 0.02);
+    this.effects.set(osc, gain);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); this.effects.delete(osc); };
+    osc.start(at);
+    osc.stop(at + duration + 0.02);
+  }
+
+  private stopEffects() {
+    const at = this.context?.currentTime ?? 0;
+    for (const [osc, gain] of this.effects) {
+      gain.gain.cancelScheduledValues(at);
+      gain.gain.setTargetAtTime(0.0001, at, 0.003);
+      osc.stop(at + 0.015);
+    }
+    this.effects.clear();
   }
 
   private prewarmWithSilentBuffer(context: AudioContext) {
@@ -596,6 +613,7 @@ class RetroAudio {
 
   private handleHidden() {
     this.lastVisibilityEvent = "hidden";
+    this.stopEffects();
     this.hiddenPaused = this.musicTimer !== null || this.hiddenPaused;
     this.stopMusic();
     if (this.context?.state === "running") {
@@ -634,6 +652,7 @@ class RetroAudio {
     this.lastContextState = state;
     if (state === "running" && pageHidden()) { this.handleHidden(); return; }
     if (state === "interrupted") {
+      this.stopEffects();
       this.lastInterruptionEvent = "interrupted";
       this.stopMusic();
       this.resumePending = true;
