@@ -1,3 +1,5 @@
+import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
+import { researchProp, RESEARCH_PROPS } from "../systems/researchProps";
 import Phaser from "phaser";
 import { saveGameNow } from "../systems/save";
 import { RUBY_BUCKRAM_ART } from "../assets/rubyBuckram";
@@ -151,6 +153,7 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   preload() {
+    if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
     if (!this.textures.exists(KATHY_TEXTURE)) this.load.image(KATHY_TEXTURE, KATHY_ART_PATH);
     for (const asset of RUBY_BUCKRAM_ART) {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
@@ -1518,9 +1521,29 @@ export class OfficeScene extends Phaser.Scene {
 
   private drawOfficeInterior() {
     if (this.textures.exists(SNES_OFFICE_ROOM_BACKGROUND_ASSET.key)) {
+      addEditorialRoomFloor(this, false)?.setDepth(-20);
+      // Preserve the authored upper shelving; furniture now has independent art.
       this.add.image(128, 132, SNES_OFFICE_ROOM_BACKGROUND_ASSET.key)
+        .setCrop(0, 0, 208, 36)
         .setName("office-compiler-room-background")
-        .setDepth(-20);
+        .setDepth(-19);
+      for (const desk of [
+        { x: 77, bottom: 106, label: "KATHY" },
+        { x: 179.5, bottom: 106, label: "SCOPE" },
+        { x: 75.5, bottom: 170, label: "INBOX" },
+        { x: 183, bottom: 170, label: "MANUSCRIPT" }
+      ]) {
+        const width = 64;
+        const height = width * 492 / 880;
+        researchProp(this, "desk", desk.x, desk.bottom - height / 2, width)
+          ?.setDepth(desk.bottom).setName(`office-detailed-desk-${desk.label.toLowerCase()}`);
+        const label = this.add.text(desk.x, desk.bottom - height - 7, desk.label, {
+          fontFamily: "Arial", fontSize: "6px", color: PALETTE.creamPaper,
+          backgroundColor: PALETTE.shadowNavy, padding: { x: 2, y: 1 }
+        }).setOrigin(.5).setDepth(50)
+          .setName(desk.label === "KATHY" ? "office-primary-label-jr" : `office-post-intro-label-${desk.label.toLowerCase()}`);
+        if (desk.label !== "KATHY") this.postIntroLabels.push(label);
+      }
       this.drawStarterMemo(OFFICE_STARTER_MEMO.x, OFFICE_STARTER_MEMO.y);
       return;
     }
