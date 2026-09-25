@@ -63,11 +63,18 @@ describe("handleOpenOverlays", () => {
     expect(inventory.active).toBe(true);
   });
 
-  it("closes the inventory with the Menu key", () => {
+  it("closes the inventory with the Menu key when the scene delegates toggling", () => {
+    const inventory=makeInventory(true);
+    pressKeyForTests("KeyM");tickInput();
+    expect(handleOpenOverlays(inventory,undefined,true)).toBe(true);
+    expect(inventory.active).toBe(false);
+  });
+
+  it("does not double-toggle a menu already opened by the scene", () => {
     const inventory=makeInventory(true);
     pressKeyForTests("KeyM");tickInput();
     expect(handleOpenOverlays(inventory)).toBe(true);
-    expect(inventory.active).toBe(false);
+    expect(inventory.active).toBe(true);
   });
 
   it("closes the inventory on Escape and swallows the still-held edge", () => {

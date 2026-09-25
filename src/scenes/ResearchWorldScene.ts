@@ -145,7 +145,7 @@ export class ResearchWorldScene extends Phaser.Scene {
       this.player.update(delta,false);this.prompt.setVisible(false);return;
     }
     if(this.choice.active) {this.choice.updateInput();this.player.update(delta,false);this.prompt.setVisible(false);return;}
-    if(handleOpenOverlays(this.inventory)) {this.player.update(delta,false);this.prompt.setVisible(false);return;}
+    if(handleOpenOverlays(this.inventory,undefined,true)) {this.player.update(delta,false);this.prompt.setVisible(false);return;}
     if(input.pauseJustPressed||input.menuJustPressed||input.startJustPressed){this.inventory.toggle();return;}
     if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     this.player.update(delta,true,{bounds:{left:7,right:249,top: 60,bottom:230},solids:this.solids});
