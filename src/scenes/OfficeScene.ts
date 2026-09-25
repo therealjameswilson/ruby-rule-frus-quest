@@ -202,7 +202,7 @@ export class OfficeScene extends Phaser.Scene {
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
     this.prompt = new InteractionPrompt(this, 950, 947, { compact: true });
-    this.toast = new FeedbackToast(this);
+    this.toast = new FeedbackToast(this, 1200, () => this.player.sprite.getBounds());
     const juniorFeet = new Phaser.Geom.Rectangle(this.juniorCompiler.x - 6, this.juniorCompiler.y - 3, 12, 8);
     this.kathyFeet = juniorFeet;
     if (!gameState.sceneProgress.kathyDeparted) this.clearJuniorSpawn(juniorFeet);
@@ -534,13 +534,13 @@ export class OfficeScene extends Phaser.Scene {
     setLatestMessage(firstAssignment
       ? "Kathy, General Editor: Your mission is to compile a FRUS volume. As compiler, plan research, select and annotate records, complete two reviews, and revise before DPD submission. First: carry the assignment memo to INBOX for research approval."
       : "Pick up the memo, carry it to INBOX, then stamp it.");
+    this.toast.hide();
     if (!gameState.sceneProgress.kathyDeparted) this.dialog.show("KATHY - GENERAL EDITOR", [
       "Compile a FRUS volume: research, select, and annotate.",
       "Review, revise, clear, publish. DANN-E will obstruct you.",
       "First: take the memo to INBOX. Stamp your research plan.",
       "Now I need to talk with the HAC. So don't bother me anymore."
     ], () => this.departKathy());
-    this.toast.show(firstAssignment ? "COMPILE A FRUS VOLUME" : "PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
   }
 
   private hideKathy() {
