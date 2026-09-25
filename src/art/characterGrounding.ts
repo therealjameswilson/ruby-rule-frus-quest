@@ -8,7 +8,7 @@ const poseCache = new WeakMap<object, readonly GroundedPose[]>();
 export function cachedCharacterPoses(texture: object, alphaAt: (frame: number, x: number, y: number) => number | null) {
   const cached = poseCache.get(texture);
   if (cached) return cached;
-  const measurements = Array.from({ length: 12 }, (_, frame) => {
+  const measurements = Array.from({ length: 15 }, (_, frame) => {
     const alpha = (x: number, y: number) => alphaAt(frame, x, y);
     return { bottom: 47 - characterGroundOffset(alpha), height: characterPoseHeight(alpha), center: characterPoseCenter(alpha) };
   });

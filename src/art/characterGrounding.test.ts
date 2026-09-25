@@ -9,7 +9,7 @@ it('reuses pose measurements across rooms without reading sprite pixels again', 
     return x >= 10 && x <= 20 && y >= 2 && y <= 45 ? 255 : 0;
   };
   const first = cachedCharacterPoses(texture, alpha);
-  expect(first).toHaveLength(12);
+  expect(first).toHaveLength(15);
   expect(first[0]).toEqual({ scaleY: 1, offsetY: 2, offsetX: .5 });
   const initialReads = reads;
   expect(initialReads).toBeGreaterThan(0);
@@ -42,3 +42,8 @@ it("measures off-center artwork so pose changes do not lurch sideways", () => {
   expect(characterPoseCenter((x, y) => x >= 14 && x <= 30 && y > 2 ? 255 : 0)).toBe(22);
   expect(characterPoseCenter((x, y) => x >= 6 && x <= 24 && y > 2 ? 255 : 0)).toBe(15);
 });
+
+ it('grounds interaction, reading and approval frames as well as walking', () => {
+ const poses=cachedCharacterPoses({}, (frame,x,y)=>x>=10&&x<=20&&y>=2&&y<=(frame>=12?38:45)?255:0);
+ for (const frame of [12,13,14]) expect(poses[frame].offsetY+(38-43)*poses[frame].scaleY).toBeCloseTo(4);
+ });

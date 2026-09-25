@@ -1,8 +1,9 @@
 import Phaser from "phaser";
+import { ATTACK_POSE_KEY, ATTACK_POSES, attackPoseFrame } from "../art/attackPoses";
 import { COMBAT_TOOL_ART, COMBAT_SWEEP_KEY } from "../art/combatTools";
 import { cachedCharacterPoses } from "../art/characterGrounding";
 import { characterAlphaSampler } from "../art/characterPixels";
-import { characterAnimKey, walkingFrame, WALK_POSE_MS } from "../art/character_anims";
+import { characterAnimKey, walkingFrame, WALK_POSE_MS, FRAMES } from "../art/character_anims";
 import { heroCharacterKey, characterTextureDensity, ART_PACK_FOOT_OFFSET_Y, ART_PACK_SPRITE_ORIGIN_Y, getCharacterKeyForProcessRole, type CharacterKey } from "../art/characters";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, ProcessItemId } from "../game/constants";
@@ -83,6 +84,7 @@ export class Player {
   private readonly actionTrail: Phaser.GameObjects.Rectangle;
   private readonly actionEdge: Phaser.GameObjects.Rectangle;
   private readonly actionStamp: Phaser.GameObjects.Rectangle;
+  private readonly attackPoseSprite?: Phaser.GameObjects.Sprite;
   private readonly weaponSweepSprite?: Phaser.GameObjects.Image;
   private readonly weaponVfxSprite?: Phaser.GameObjects.Sprite;
   private readonly idleParts: IdlePart[] = [];
@@ -209,6 +211,9 @@ export class Player {
     }
     if (scene.textures.exists(COMBAT_SWEEP_KEY)) {
       this.weaponSweepSprite = scene.add.image(0, 0, COMBAT_SWEEP_KEY).setVisible(false);
+    }
+    if (this.characterKey === 'compiler_hd' && scene.textures.exists(ATTACK_POSE_KEY)) {
+      this.attackPoseSprite = scene.add.sprite(0, 0, ATTACK_POSE_KEY, 0).setVisible(false);
     }
     this.createIdleCue(scene);
     addProcessItem("stapler");
@@ -576,8 +581,25 @@ export class Player {
     this.syncWalkCycleCue(renderX, renderY);
     this.syncActionHitbox();
     this.syncInvulnerabilityBlink();
+    this.syncAttackPose(renderX, renderY);
     setPlayerAnimationState(this.animationState);
     setPlayerCombat(this.combatReadout);
+  }
+
+  private syncAttackPose(x: number, y: number) {
+    if (!this.attackPoseSprite) return;
+    const weapon = this.weaponState.readout(this.combatTime);
+    const frame = attackPoseFrame(this.facing, weapon, weaponTiming(weapon.tool));
+    this.sprite.setVisible(frame === null);
+    this.attackPoseSprite.setVisible(frame !== null);
+    if (frame === null) return;
+    const pose = ATTACK_POSES[frame];
+    const height = 44;
+    this.attackPoseSprite.setFrame(frame).setOrigin(pose.center / 256, pose.bottom / 512)
+      .setScale(height / (pose.bottom - pose.top + 1)).setPosition(x, y + 4)
+      .setDepth(y).setAlpha(this.sprite.alpha);
+    if (this.sprite.isTinted) this.attackPoseSprite.setTint(this.sprite.tintTopLeft);
+    else this.attackPoseSprite.clearTint();
   }
 
   private currentControlState(now = this.combatTime): PlayerControlState {
@@ -699,15 +721,22 @@ export class Player {
         .setAngle(this.facing === "west" ? 90 : this.facing === "east" ? -90 : this.facing === "north" ? 180 : 0)
         .setAlpha(alpha).setDepth(depth);
     } else this.weaponSweepSprite?.setVisible(false);
+    // Tool overlays live at hand height; the hitbox remains on the ground plane.
+    const hand = this.facing === 'west' ? {x:-12,y:-27} : this.facing === 'east' ? {x:11,y:-27}
+      : this.facing === 'north' ? {x:10,y:-30} : {x:-5,y:-24};
+    const hasAttackPose = Boolean(this.attackPoseSprite);
+    const toolX = hasAttackPose ? this.logicalX + hand.x : centerX;
+    const toolY = hasAttackPose ? this.logicalY + hand.y : centerY - 18;
+    if (hasDetailedArt && this.weaponSweepSprite) this.weaponSweepSprite.setY(centerY - 18);
     this.weaponVfxSprite
       ?.setVisible(true)
       .setTexture(hasDetailedArt ? detailedArt.key : readout.tool === "stapler" ? "pack-stapler" : WEAPON_VFX_ASSET.key)
       .setFrame(hasDetailedArt ? 0 : timing.vfxFrame)
       .setAlpha(Math.min(0.9, alpha + 0.1))
-      .setScale(hasDetailedArt ? detailedArt.size / 96 : readout.tool === "stapler" ? 1 : readout.tool === "review_folder" ? 0.1 : readout.tool === "red_pencil" ? 0.082 : 0.075)
+      .setScale(hasDetailedArt ? detailedArt.size * (hasAttackPose ? .75 : 1) / 96 : readout.tool === "stapler" ? 1 : readout.tool === "review_folder" ? 0.1 : readout.tool === "red_pencil" ? 0.082 : 0.075)
       .setAngle(this.facing === "west" ? -90 : this.facing === "east" ? 90 : this.facing === "north" ? 180 : 0)
       .setDepth(depth + 3)
-      .setPosition(centerX, centerY);
+      .setPosition(toolX, toolY);
   }
 
   private syncInvulnerabilityBlink() {
@@ -880,6 +909,13 @@ export class Player {
       this.sprite.setFlipX(false);
       const abilityActive = this.combatTime < this.abilityFrameUntil;
       const directionSuffix = this.directionSuffix();
+      const weapon = this.weaponState.readout(this.combatTime);
+      const combatFrame = attackPoseFrame(this.facing, weapon, weaponTiming(weapon.tool));
+      if (combatFrame !== null) {
+        this.sprite.anims.stop();
+        this.sprite.setFrame(this.facing === 'south' && weapon.phase === 'active' ? FRAMES.action.interact : FRAMES.idle[directionSuffix]);
+        return;
+      }
       if (this.isMoving && !abilityActive) {
         // Preserve the stride phase across turns instead of restarting the
         // walk on every direction change.

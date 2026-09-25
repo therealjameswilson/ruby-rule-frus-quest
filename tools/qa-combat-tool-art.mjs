@@ -17,16 +17,17 @@ try {
    const timer=setTimeout(()=>{s.events.off('postupdate',capture);reject(Error('Active frame not reached'));},3000);
    function capture(){if(hero.combatReadout.weapon.phase!=='active')return;
     clearTimeout(timer);s.events.off('postupdate',capture);s.scene.pause();
-    const v=hero.weaponVfxSprite;
-    resolve({tool,facing,key:v.texture.key,width:v.displayWidth,height:v.displayHeight,visible:v.visible,angle:v.angle,hitbox:hero.activeActionHitbox,sweep:hero.weaponSweepSprite.visible,oldBlocks:[hero.actionTrail,hero.actionEdge,hero.actionStamp].some(o=>o.visible),phase:hero.combatReadout.weapon.phase});
+    const v=hero.weaponVfxSprite,a=hero.attackPoseSprite;
+    resolve({pose:{key:a.texture.key,frame:Number(a.frame.name),visible:a.visible,baseVisible:hero.sprite.visible,footY:a.y,groundY:hero.position.y+4},tool,facing,key:v.texture.key,width:v.displayWidth,height:v.displayHeight,visible:v.visible,angle:v.angle,hitbox:hero.activeActionHitbox,sweep:hero.weaponSweepSprite.visible,oldBlocks:[hero.actionTrail,hero.actionEdge,hero.actionStamp].some(o=>o.visible),phase:hero.combatReadout.weapon.phase});
    }
    s.events.on('postupdate',capture);hero.startAction(tool);
   }),{tool,facing});
-  assert.equal(state.key,key);assert.equal(state.width,size);assert.equal(state.height,size);assert(state.visible);assert(state.hitbox);assert.equal(state.phase,'active');assert(state.sweep);assert.equal(state.oldBlocks,false);
+  assert.equal(state.key,key);assert.equal(state.width,size*.75);assert.equal(state.height,size*.75);assert(state.visible);assert(state.hitbox);assert.equal(state.phase,'active');assert.equal(state.pose.key,'compiler-attack-v1');assert.equal(state.pose.frame,4+['south','north','west','east'].indexOf(facing));assert(state.pose.visible);assert.equal(state.pose.baseVisible,false);assert.equal(state.pose.footY,state.pose.groundY);assert(state.sweep);assert.equal(state.oldBlocks,false);
   await p.screenshot({path:`${out}/${tool}-${facing}.png`});results.push(state);
   await p.evaluate(()=>window.game.scene.resume('NscLibraryScene'));await p.waitForTimeout(800);
   assert.equal(await p.evaluate(()=>window.game.scene.getScene('NscLibraryScene').player.weaponVfxSprite.visible),false);
   assert.equal(await p.evaluate(()=>window.game.scene.getScene('NscLibraryScene').player.weaponSweepSprite.visible),false);
+  assert.deepEqual(await p.evaluate(()=>{const h=window.game.scene.getScene('NscLibraryScene').player;return {base:h.sprite.visible,attack:h.attackPoseSprite.visible};}),{base:true,attack:false});
  }
  assert.deepEqual(errors,[]);await writeFile(`${out}/result.json`,JSON.stringify({fixture:true,results,errors},null,2));console.log(JSON.stringify({passed:results.length,errors}));
 }finally{await browser.close();}

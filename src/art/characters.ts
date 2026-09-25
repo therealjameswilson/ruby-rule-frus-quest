@@ -1,4 +1,5 @@
 import type Phaser from "phaser";
+import { preloadAttackPoses } from './attackPoses';
 import { preloadDetailedNpcs } from './npcSprites';
 
 export const CHARACTER_FRAME = { width: 32, height: 48 } as const;
@@ -117,6 +118,7 @@ export function getCharacterKeyForProductionColleague(colleagueId: string): Char
 
 export function preloadCharacters(scene: Phaser.Scene) {
   preloadDetailedNpcs(scene);
+  preloadAttackPoses(scene);
   for (const key of CHARACTER_KEYS) {
     scene.load.spritesheet(key, CHARACTERS[key], {
       frameWidth: CHARACTER_FRAME.width * characterTextureDensity(key),

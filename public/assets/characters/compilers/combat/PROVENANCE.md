@@ -1,0 +1,11 @@
+# Classic compiler attack poses
+
+Generated with the built-in image generation tool on 2026-09-25. Original output copied unchanged, including alpha, to `compiler-attack-v1.png`.
+
+Reference: `../hd/compiler.png`. Source output: `exec-9efa1f95-dd80-4b38-8c97-6b98eed96811.png`.
+
+Layout: 1024 × 1536, four columns (south, north, west, east), three rows (windup, strike, recovery). Alpha bounds and foot centers are measured in `src/art/attackPoses.ts`; no raster resampling or background replacement applied. Applies to the classic compiler only.
+
+## Generation prompt
+
+Use case: stylized-concept. Asset type: transparent game character attack sprite sheet. Use the supplied image solely as character and illustration-style reference: the same adult male FRUS compiler, tousled brown hair, dark rim glasses, navy blazer, white shirt, burgundy tie, charcoal trousers, brown shoes. Create a NEW clean 1024x1536 RGBA transparent-background sheet, EXACTLY 4 equal columns and 3 equal rows, 12 full-body sprites total, each isolated inside a 256x512 cell. No grid lines, labels, captions, scenery, cast floor shadows, or tools. Every character fits entirely inside its own cell with generous transparent padding; matching body height about 400 pixels and planted boot baseline at cell y=468. Camera and scale identical in all cells. Column 1 faces DOWN toward viewer, column 2 faces UP away from viewer (back of head and blazer, no face), column 3 faces LEFT full profile, column 4 faces RIGHT full profile. All rows obey these directions. Row 1: anticipation/windup, steady planted feet, working right forearm pulled slightly back, empty gripping hand. Row 2: controlled tool strike, right arm extended in that column's facing direction, slight grounded torso lean, both boots remain on ground; empty gripping hand will hold an independently rendered tool. Row 3: follow-through/recovery with right arm halfway returning, relaxed shoulders, grounded stance. No jumping. Keep anatomy, face, outfit, scale and lighting consistent across all twelve frames. Polished original painterly 2D adventure-game illustration with crisp contours and subtle material shading, matching reference. Actual transparent alpha, not black or checkerboard backdrop.
