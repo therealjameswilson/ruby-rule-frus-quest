@@ -56,11 +56,11 @@ export class NscLibraryScene extends Phaser.Scene {
     this.add.text(220,61,'SOURCES',{fontFamily:'Arial',fontSize:'6px',color:'#b9eee5',backgroundColor:'#17232d'}).setOrigin(.5).setPadding(4).setDepth(350).setInteractive({useHandCursor:true}).on('pointerdown',()=>window.open(`assets/research-world/nsc-research.html#${id}`,'_blank','noopener,noreferrer'));
     this.player=new Player(this,128,190);
     this.dialog=new DialogBox(this,{aboveTouchControls:true});this.choice=new ChoicePrompt(this,{settleMs:160});this.inventory=new InventoryOverlay(this);
-    this.prompt=this.label(128,157,'',7);this.refresh();retroAudio.startMusic('ArchiveScene');swallowNextInputFrame();
+    this.prompt=this.label(128,157,'',7).setDepth(350);this.refresh();retroAudio.startMusic('ArchiveScene');swallowNextInputFrame();
     setLatestMessage(`${this.dossier.collection}. ${this.dossier.handle}. Official source: ${this.dossier.source}`);
     saveGameNow();
   }
-  private label(x:number,y:number,text:string,size:number){return this.add.text(x,y,text,{fontFamily:'Arial',fontSize:`${size}px`,color:'#f4dfac',backgroundColor:'#192630',align:'center',wordWrap:{width:206}}).setOrigin(.5).setDepth(350);}
+  private label(x:number,y:number,text:string,size:number){return this.add.text(x,y,text,{fontFamily:'Arial',fontSize:`${size}px`,color:'#f4dfac',backgroundColor:'#192630',align:'center',wordWrap:{width:206}}).setOrigin(.5).setDepth(50);}
   private refresh(){const done=nscStage(gameState.sceneProgress,this.dossier.library)>this.room;this.gate.setText(done?(this.room===2?'NORTH: FILED / RETURN':'NORTH: NEXT CHAMBER'):'NORTH: SOURCE CHECK REQUIRED');setObjective(done?'SOURCE CHECK FILED':'READ WEST GUIDE; CHECK EAST FILE');}
   update(_:number,delta:number){
     tickInput();const input=getInput();if(this.leaving)return;

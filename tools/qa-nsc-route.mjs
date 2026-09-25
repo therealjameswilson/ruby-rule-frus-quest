@@ -19,6 +19,9 @@ try{
  for(let i=0;i<40;i++){if(!await p.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dialog.active))break;await p.keyboard.press('Space');await p.waitForTimeout(150);}
  // South return remains available before solving anything.
  await move('ArrowRight',()=>window.game.scene.getScene('NscLibraryScene').player.position.x>=125);
+ await move('ArrowUp',()=>window.game.scene.getScene('NscLibraryScene').player.position.y<=86);
+ await p.screenshot({path:'/tmp/nsc-route/wing-north-signage.png'});
+ const layers=await p.evaluate(()=>{const s=window.game.scene.getScene('NscLibraryScene');return {hero:s.player.sprite.depth,sign:s.gate.depth,prompt:s.prompt.depth};});assert(layers.sign<layers.hero&&layers.prompt>layers.hero);
  await p.keyboard.down('ArrowDown');await p.waitForFunction(()=>window.game.scene.isActive('PresidentialLibraryScene'));await p.keyboard.up('ArrowDown');
  assert.deepEqual(errors,[]);console.log(JSON.stringify({walkedFromLobby:true,readGuide:true,unsolvedReturn:true,errors}));await p.close();
 }finally{await browser.close();}

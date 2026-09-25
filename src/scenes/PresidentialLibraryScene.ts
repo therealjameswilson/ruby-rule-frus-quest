@@ -56,26 +56,26 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     for(const row of walls){row[0]=walls[0][0];row[row.length-1]=walls[0][0];}
     for(const x of [7,8])walls[walls.length-1][x]=-1;
     addEditorialRoomWalls(this,walls,0,32);
-    this.add.text(128,49,library.label,{fontFamily:'monospace',fontSize:'7px',color:'#ffe0a3'}).setOrigin(.5).setDepth(160);
-    this.add.text(128,61,this.assignment.topic,{fontFamily:'monospace',fontSize:'6px',color:'#f6efdb'}).setOrigin(.5).setDepth(160);
-    this.stageText=this.add.text(128,73,'',{fontFamily:'monospace',fontSize:'6px',color:'#75e4db'}).setOrigin(.5).setDepth(160);
+    this.add.text(128,49,library.label,{fontFamily:'monospace',fontSize:'7px',color:'#ffe0a3'}).setOrigin(.5).setDepth(50);
+    this.add.text(128,61,this.assignment.topic,{fontFamily:'monospace',fontSize:'6px',color:'#f6efdb'}).setOrigin(.5).setDepth(50);
+    this.stageText=this.add.text(128,73,'',{fontFamily:'monospace',fontSize:'6px',color:'#75e4db'}).setOrigin(.5).setDepth(50);
     STATIONS.forEach((s,i)=>{
       const desk=researchProp(this,'desk',s.x,s.y,46);
       if(desk)desk.setDepth(12).setName(`library-desk-${i}`);
       else this.add.rectangle(s.x,s.y,47,22,0x5d392c).setStrokeStyle(2,0xad8c5d).setDepth(12);
-      this.marks.push(this.add.text(s.x,s.y-18,'',{fontFamily:'Arial',fontSize:'6px',color:'#81e9c9',backgroundColor:'#192630'}).setOrigin(.5).setDepth(160));
+      this.marks.push(this.add.text(s.x,s.y-18,'',{fontFamily:'Arial',fontSize:'6px',color:'#81e9c9',backgroundColor:'#192630'}).setOrigin(.5).setDepth(50));
       this.solids.push(new Phaser.Geom.Rectangle(s.x-23,s.y-11,46,22));
     });
     // DANN-E's misfiled stacks close cross-aisles until each research check is filed.
     this.barriers.push(addMisfiledStack(this,128,104,28,20));
     this.barriers.push(addMisfiledStack(this,193,134,54,8));
-    this.add.text(128,126,'DANN-E: "SKIP THE SOURCES!"',{fontFamily:'Arial',fontSize:'6px',color:'#ffbd99'}).setOrigin(.5).setDepth(160);
-    this.add.text(128,197,'SOUTH: RETURN OUTSIDE',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3'}).setOrigin(.5).setDepth(160);
+    this.add.text(128,126,'DANN-E: "SKIP THE SOURCES!"',{fontFamily:'Arial',fontSize:'6px',color:'#ffbd99'}).setOrigin(.5).setDepth(50);
+    this.add.text(128,197,'SOUTH: RETURN OUTSIDE',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3'}).setOrigin(.5).setDepth(50);
     this.add.rectangle(128,215,30,12,0x71aa7f).setDepth(45);
     this.add.text(224,60,'SOURCES',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3',backgroundColor:'#17232d'})
       .setOrigin(.5,.5).setPadding(5).setDepth(350).setInteractive({useHandCursor:true})
       .on('pointerdown',()=>window.open(`assets/research-world/library-research.html#${id}`,'_blank','noopener,noreferrer'));
-    if(nscDungeon(id))this.add.text(128,88,'NSC WING ↑',{fontFamily:'Arial',fontSize:'7px',color:'#b9eee5',backgroundColor:'#17232d'}).setOrigin(.5).setDepth(350);
+    if(nscDungeon(id))this.add.text(128,88,'NSC WING ↑',{fontFamily:'Arial',fontSize:'7px',color:'#b9eee5',backgroundColor:'#17232d'}).setOrigin(.5).setDepth(50);
     this.player=new Player(this,128,183);
     this.dialog=new DialogBox(this,{aboveTouchControls:true});
     this.choice=new ChoicePrompt(this,{settleMs:160});
