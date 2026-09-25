@@ -26,7 +26,16 @@ export function characterAlphaSampler(
     // Match Phaser's frame trim and source cut coordinates exactly.
     const px = x * density - frame.x + frame.cutX;
     const py = y * density - frame.y + frame.cutY;
-    if (px < frame.cutX || px >= frame.cutX + frame.cutWidth || py < frame.cutY || py >= frame.cutY + frame.cutHeight) return null;
-    return sheet.data[(py * sheet.width + px) * 4 + 3];
+    // Every logical pixel covers a density-by-density block. A single corner
+    // sample misses thin soles or hair edges in high-resolution artwork.
+    const left = Math.max(px, frame.cutX), top = Math.max(py, frame.cutY);
+    const right = Math.min(px + density, frame.cutX + frame.cutWidth);
+    const bottom = Math.min(py + density, frame.cutY + frame.cutHeight);
+    if (left >= right || top >= bottom) return null;
+    let alpha = 0;
+    for (let yy = top; yy < bottom; yy++) for (let xx = left; xx < right; xx++) {
+      alpha = Math.max(alpha, sheet.data[(yy * sheet.width + xx) * 4 + 3]);
+    }
+    return alpha;
   };
 }

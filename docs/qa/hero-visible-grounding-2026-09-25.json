@@ -1,0 +1,674 @@
+{
+  "date": "2026-09-25",
+  "scope": "Visible hero grounding across six compiler appearances",
+  "build": "passed",
+  "focusedTests": 77,
+  "appearances": 6,
+  "poses": 90,
+  "maxSoleShadowDistance": 1,
+  "browserRuns": [
+    {
+      "appearance": "compiler",
+      "measurements": {
+        "key": "compiler_hd",
+        "frames": [
+          {
+            "frame": 0,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 1,
+            "sole": 4.333333333333334,
+            "shadow": 5,
+            "gap": 0.6666666666666661
+          },
+          {
+            "frame": 2,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 3,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 4,
+            "sole": 4.682170542635658,
+            "shadow": 5,
+            "gap": 0.31782945736434165
+          },
+          {
+            "frame": 5,
+            "sole": 4.682170542635658,
+            "shadow": 5,
+            "gap": 0.31782945736434165
+          },
+          {
+            "frame": 6,
+            "sole": 4.682170542635658,
+            "shadow": 5,
+            "gap": 0.31782945736434165
+          },
+          {
+            "frame": 7,
+            "sole": 4.682170542635658,
+            "shadow": 5,
+            "gap": 0.31782945736434165
+          },
+          {
+            "frame": 8,
+            "sole": 4.624113475177305,
+            "shadow": 5,
+            "gap": 0.375886524822695
+          },
+          {
+            "frame": 9,
+            "sole": 4.624113475177305,
+            "shadow": 5,
+            "gap": 0.375886524822695
+          },
+          {
+            "frame": 10,
+            "sole": 4.624113475177305,
+            "shadow": 5,
+            "gap": 0.375886524822695
+          },
+          {
+            "frame": 11,
+            "sole": 4.624113475177305,
+            "shadow": 5,
+            "gap": 0.375886524822695
+          },
+          {
+            "frame": 12,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 13,
+            "sole": 4.682170542635659,
+            "shadow": 5,
+            "gap": 0.31782945736434076
+          },
+          {
+            "frame": 14,
+            "sole": 4.682170542635659,
+            "shadow": 5,
+            "gap": 0.31782945736434076
+          }
+        ]
+      },
+      "start": {
+        "x": 128,
+        "y": 183
+      },
+      "stop": {
+        "x": 128,
+        "y": 183
+      },
+      "releaseStops": true,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_ada",
+      "measurements": {
+        "key": "compiler_ada_hd",
+        "frames": [
+          {
+            "frame": 0,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 1,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 2,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 3,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 4,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 5,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 6,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 7,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 8,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 9,
+            "sole": 4.341463414634147,
+            "shadow": 5,
+            "gap": 0.6585365853658534
+          },
+          {
+            "frame": 10,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 11,
+            "sole": 4.341463414634147,
+            "shadow": 5,
+            "gap": 0.6585365853658534
+          },
+          {
+            "frame": 12,
+            "sole": 4.682926829268292,
+            "shadow": 5,
+            "gap": 0.3170731707317076
+          },
+          {
+            "frame": 13,
+            "sole": 4.682926829268292,
+            "shadow": 5,
+            "gap": 0.3170731707317076
+          },
+          {
+            "frame": 14,
+            "sole": 4.682926829268292,
+            "shadow": 5,
+            "gap": 0.3170731707317076
+          }
+        ]
+      },
+      "start": {
+        "x": 128,
+        "y": 183
+      },
+      "stop": {
+        "x": 128,
+        "y": 183
+      },
+      "releaseStops": true,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_clara",
+      "measurements": {
+        "key": "compiler_clara_hd",
+        "frames": [
+          {
+            "frame": 0,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 1,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 2,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 3,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 4,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 5,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 6,
+            "sole": 4.682926829268293,
+            "shadow": 5,
+            "gap": 0.3170731707317067
+          },
+          {
+            "frame": 7,
+            "sole": 4.682926829268293,
+            "shadow": 5,
+            "gap": 0.3170731707317067
+          },
+          {
+            "frame": 8,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 9,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 10,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 11,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 12,
+            "sole": 4.682926829268292,
+            "shadow": 5,
+            "gap": 0.3170731707317076
+          },
+          {
+            "frame": 13,
+            "sole": 4.341463414634147,
+            "shadow": 5,
+            "gap": 0.6585365853658534
+          },
+          {
+            "frame": 14,
+            "sole": 4.341463414634147,
+            "shadow": 5,
+            "gap": 0.6585365853658534
+          }
+        ]
+      },
+      "start": {
+        "x": 128,
+        "y": 183
+      },
+      "stop": {
+        "x": 128,
+        "y": 183
+      },
+      "releaseStops": true,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_maya",
+      "measurements": {
+        "key": "compiler_maya_hd",
+        "frames": [
+          {
+            "frame": 0,
+            "sole": 4.333333333333334,
+            "shadow": 5,
+            "gap": 0.6666666666666661
+          },
+          {
+            "frame": 1,
+            "sole": 4.333333333333334,
+            "shadow": 5,
+            "gap": 0.6666666666666661
+          },
+          {
+            "frame": 2,
+            "sole": 4.333333333333334,
+            "shadow": 5,
+            "gap": 0.6666666666666661
+          },
+          {
+            "frame": 3,
+            "sole": 4.333333333333334,
+            "shadow": 5,
+            "gap": 0.6666666666666661
+          },
+          {
+            "frame": 4,
+            "sole": 4.317460317460317,
+            "shadow": 5,
+            "gap": 0.6825396825396828
+          },
+          {
+            "frame": 5,
+            "sole": 4.317460317460317,
+            "shadow": 5,
+            "gap": 0.6825396825396828
+          },
+          {
+            "frame": 6,
+            "sole": 4.666666666666667,
+            "shadow": 5,
+            "gap": 0.33333333333333304
+          },
+          {
+            "frame": 7,
+            "sole": 4.666666666666667,
+            "shadow": 5,
+            "gap": 0.33333333333333304
+          },
+          {
+            "frame": 8,
+            "sole": 4.3418803418803416,
+            "shadow": 5,
+            "gap": 0.6581196581196584
+          },
+          {
+            "frame": 9,
+            "sole": 4.3418803418803416,
+            "shadow": 5,
+            "gap": 0.6581196581196584
+          },
+          {
+            "frame": 10,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 11,
+            "sole": 4.3418803418803416,
+            "shadow": 5,
+            "gap": 0.6581196581196584
+          },
+          {
+            "frame": 12,
+            "sole": 4.666666666666667,
+            "shadow": 5,
+            "gap": 0.33333333333333304
+          },
+          {
+            "frame": 13,
+            "sole": 4.666666666666667,
+            "shadow": 5,
+            "gap": 0.33333333333333304
+          },
+          {
+            "frame": 14,
+            "sole": 4.666666666666667,
+            "shadow": 5,
+            "gap": 0.33333333333333304
+          }
+        ]
+      },
+      "start": {
+        "x": 128,
+        "y": 183
+      },
+      "stop": {
+        "x": 128,
+        "y": 183
+      },
+      "releaseStops": true,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_robin",
+      "measurements": {
+        "key": "compiler_robin_hd",
+        "frames": [
+          {
+            "frame": 0,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 1,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 2,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 3,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 4,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 5,
+            "sole": 4.682926829268293,
+            "shadow": 5,
+            "gap": 0.3170731707317067
+          },
+          {
+            "frame": 6,
+            "sole": 4.682926829268293,
+            "shadow": 5,
+            "gap": 0.3170731707317067
+          },
+          {
+            "frame": 7,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 8,
+            "sole": 4.341463414634147,
+            "shadow": 5,
+            "gap": 0.6585365853658534
+          },
+          {
+            "frame": 9,
+            "sole": 4.341463414634147,
+            "shadow": 5,
+            "gap": 0.6585365853658534
+          },
+          {
+            "frame": 10,
+            "sole": 4.341463414634147,
+            "shadow": 5,
+            "gap": 0.6585365853658534
+          },
+          {
+            "frame": 11,
+            "sole": 4.341463414634147,
+            "shadow": 5,
+            "gap": 0.6585365853658534
+          },
+          {
+            "frame": 12,
+            "sole": 4.682926829268292,
+            "shadow": 5,
+            "gap": 0.3170731707317076
+          },
+          {
+            "frame": 13,
+            "sole": 4.682926829268292,
+            "shadow": 5,
+            "gap": 0.3170731707317076
+          },
+          {
+            "frame": 14,
+            "sole": 4.682926829268292,
+            "shadow": 5,
+            "gap": 0.3170731707317076
+          }
+        ]
+      },
+      "start": {
+        "x": 128,
+        "y": 183
+      },
+      "stop": {
+        "x": 128,
+        "y": 183
+      },
+      "releaseStops": true,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_quinn",
+      "measurements": {
+        "key": "compiler_quinn_hd",
+        "frames": [
+          {
+            "frame": 0,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 1,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 2,
+            "sole": 4.650406504065041,
+            "shadow": 5,
+            "gap": 0.34959349593495936
+          },
+          {
+            "frame": 3,
+            "sole": 4.666666666666666,
+            "shadow": 5,
+            "gap": 0.3333333333333339
+          },
+          {
+            "frame": 4,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 5,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 6,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 7,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 8,
+            "sole": 4.3418803418803416,
+            "shadow": 5,
+            "gap": 0.6581196581196584
+          },
+          {
+            "frame": 9,
+            "sole": 4.333333333333333,
+            "shadow": 5,
+            "gap": 0.666666666666667
+          },
+          {
+            "frame": 10,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 11,
+            "sole": 4.3418803418803416,
+            "shadow": 5,
+            "gap": 0.6581196581196584
+          },
+          {
+            "frame": 12,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 13,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          },
+          {
+            "frame": 14,
+            "sole": 4,
+            "shadow": 5,
+            "gap": 1
+          }
+        ]
+      },
+      "start": {
+        "x": 128,
+        "y": 183
+      },
+      "stop": {
+        "x": 128,
+        "y": 183
+      },
+      "releaseStops": true,
+      "errors": []
+    }
+  ],
+  "screenshotsInspected": [
+    "/tmp/hero-visible-grounding/compiler.png",
+    "/tmp/hero-visible-grounding/compiler_ada.png",
+    "/tmp/hero-visible-grounding/compiler_clara.png",
+    "/tmp/hero-visible-grounding/compiler_maya.png",
+    "/tmp/hero-visible-grounding/compiler_robin.png",
+    "/tmp/hero-visible-grounding/compiler_quinn.png"
+  ],
+  "limitations": [
+    "Saved profile fixtures used to select appearances",
+    "Directional movement exercised with keyboard",
+    "Standard skill capture black; ordinary browser screenshots inspected",
+    "No physical iPhone or controller verification",
+    "Local only; not published"
+  ]
+}

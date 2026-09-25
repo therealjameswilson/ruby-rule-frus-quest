@@ -8158,3 +8158,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - NSC north doors are visibly closed before verification and open after filing. South return doors stay open. Existing text cues and traversal behavior retained.
 - Build passed. Reagan desktop and phone3-chamber routes passed wrong-answer recovery, filing/save/reward, return and completed re-entry without errors. Separate natural keyboard walk through daylight exit passed; partial library save restoration passed twice. Inspected closed/open desktop door, phone open-door, and restored phone lobby screenshots. Standard skill black WebGL capture inspected separately.
 - Evidence docs/qa/research-doorways-2026-09-25.json. No publication or physical hardware verification. Broad console-quality goal remains incomplete.
+
+## 2026-09-25 — ground visible soles rather than transparent sprite fringes
+- Previous goal turn improved library/NSC entrances. Recent room captures suggested floating feet. Measured actual HD alpha bounds: nearly transparent pixels extended below visible soles; geometry treated all alpha>0 as opaque.
+- Grounding now ignores alpha<32 fringe for body/sole/center measurements. An all-pose check then exposed one-corner HD sampling missing thin shoe details; sampler now takes maximum alpha over each logical pixel's full density block, clipped to the frame. Measurements remain cached by texture identity.
+-77 focused tests passed including fringe and thin-sole regression cases, movement, pause and knockback; build passed. Browser checked all6 compiler appearances x15poses: visible sole/shadow-center distance<=1 logical pixel. Actual movement in4directions and release-stop passed for every appearance, zero errors. All6 final screenshots inspected plus standard skill black capture.
+- Evidence docs/qa/hero-visible-grounding-2026-09-25.json. Local only; physical-device feel remains unverified and broad console-quality goal remains incomplete.

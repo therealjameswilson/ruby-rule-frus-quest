@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cachedCharacterPoses, characterGroundOffset, characterPoseCenter, groundedPoseTransform } from "./characterGrounding";
+import { cachedCharacterPoses, characterGroundOffset, characterPoseCenter, characterPoseHeight, groundedPoseTransform } from "./characterGrounding";
 
 it('reuses pose measurements across rooms without reading sprite pixels again', () => {
   const texture = {};
@@ -47,3 +47,18 @@ it("measures off-center artwork so pose changes do not lurch sideways", () => {
  const poses=cachedCharacterPoses({}, (frame,x,y)=>x>=10&&x<=20&&y>=2&&y<=(frame>=12?38:45)?255:0);
  for (const frame of [12,13,14]) expect(poses[frame].offsetY+(38-43)*poses[frame].scaleY).toBeCloseTo(4);
  });
+
+it('ignores faint fringe pixels beneath boots and around the body', () => {
+  const alpha = (x: number, y: number) => x >= 10 && x <= 20 && y >= 3 && y <= 44 ? 255 : 12;
+  expect(characterGroundOffset(alpha)).toBe(3);
+  expect(characterPoseHeight(alpha)).toBe(42);
+  expect(characterPoseCenter(alpha)).toBe(15);
+  const poses = cachedCharacterPoses({}, (_frame, x, y) => alpha(x, y));
+  expect(poses[0].offsetY + (44 - 43) * poses[0].scaleY).toBeCloseTo(4);
+});
+
+it('uses neutral bounds for a frame containing only invisible fringe', () => {
+  expect(characterGroundOffset(() => 12)).toBe(0);
+  expect(characterPoseHeight(() => 12)).toBe(48);
+  expect(characterPoseCenter(() => 12)).toBe(16);
+});

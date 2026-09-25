@@ -33,3 +33,15 @@ it('falls back without retrying an unavailable pixel context for every sample', 
   expect(createElement).toHaveBeenCalledTimes(1);
   expect(fallback).toHaveBeenLastCalledWith(1, 4, 5);
 });
+
+it('includes a thin shoe tip between HD sample corners without reading adjacent frames', () => {
+  const data = new Uint8ClampedArray(6 * 3 * 4);
+  data[(2 * 6 + 2) * 4 + 3] = 180;
+  data[(2 * 6 + 3) * 4 + 3] = 255;
+  vi.stubGlobal('document', { createElement: () => ({ getContext: () => ({ drawImage: vi.fn(), getImageData: () => ({width: 6, height: 3, data}) }) }) });
+  const source = { width: 6, height: 3, image: {} };
+  const texture = { get: () => ({ source, x: 0, y: 0, cutX: 0, cutY: 0, cutWidth: 3, cutHeight: 3 }) };
+  const sample = characterAlphaSampler(texture as unknown as Phaser.Textures.Texture, 3, () => -1);
+  expect(sample(0, 0, 0)).toBe(180);
+  expect(sample(0, 1, 0)).toBeNull();
+});
