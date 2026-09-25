@@ -7866,3 +7866,10 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Boss:7cycles,0retries,7fresh core hits,56.111s,deadline met. Bindery:5packets,Sam certification,published,points201→241,Continue preserved. Zero reported browser errors. Evidence docs/qa/campaign-804a105-2026-09-25.json and /tmp/frus-campaign-804a105.
 - Automated state-aware keyboard inputs, earned saves; not unaided human play, physical iPhone/controller or human audio listening. Local in-game publication only. Broader caliber goal incomplete.
 - Visual next action from actual captures: clearance stations still flat panels; Office cues large beside compact Archive cues. Improve these toward detailed environment art rather than repeating completed NSC verification.
+
+## 2026-09-25 — Furnished clearance stations
+- Prior turn made progress by completing the earned campaign replay. This turn addressed flat clearance panels seen in its actual screenshots.
+- Human, Release and Ledger stations now use original detailed research desks with books, compact navy/cream plaques and smaller progress lamps. Depth follows station position for world occlusion. Existing action positions and progression unchanged.
+- Added NetworkScene preload for research props: first visual QA caught missing art when resuming directly into Network without Archive texture cache. Fixed before final verification. Harness width assertion corrected for floating-point precision.
+- Final build passed. Earned clearance replay passed rejection, repair, token, referral and reload. New qa-clearance-station-art verifies all3 desks/labels at desktop and390x844phone with0errors. Inspected final token and phone captures. Skill smoke final terminal; black capture inspected, ordinary screenshots supplied evidence. All sessions terminal.
+- Evidence docs/qa/clearance-station-art-2026-09-25.json. No new full campaign replay after this visual change. Phone test is layout/touch-start, not physical-device gameplay. Local only.

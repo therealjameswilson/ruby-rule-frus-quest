@@ -1,3 +1,4 @@
+import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import { addNetworkRoomFloor } from "../systems/networkRoomFloor";
 import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
@@ -187,6 +188,10 @@ export class NetworkScene extends Phaser.Scene {
 
   constructor() {
     super("NetworkScene");
+  }
+
+  preload() {
+    if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
   }
 
   create(data?: unknown) {
@@ -1270,21 +1275,22 @@ export class NetworkScene extends Phaser.Scene {
             : PALETTE.classNetRed;
       const container = this.track(this.add.container(position.x, position.y)
         .setName(`classnet-station-${docket.station}`)
-        .setDepth(154));
-      container.add(this.add.ellipse(0, 10, 54, 10, color(PALETTE.black), 0.48));
-      const frame = this.add.rectangle(0, 0, 56, 25, color(PALETTE.black), 0.92)
-        .setStrokeStyle(2, color(accent));
+        .setDepth(position.y + 12));
+      const desk = researchProp(this, "desk", 0, -8, 58);
+      if (desk) container.add(desk.setName("classnet-research-desk"));
+      const frame = this.add.rectangle(0, 14, 52, 15, 0x17262c, 0.98)
+        .setStrokeStyle(1, color(accent));
       this.vaultStationFrames.set(docket.station, frame);
       container.add(frame);
-      container.add(this.add.text(0, -9, this.classNetStationShortLabel(docket.station), {
+      container.add(this.add.text(0, 7, this.classNetStationShortLabel(docket.station), {
         fontFamily: "monospace",
-        fontSize: "8px",
-        color: accent,
+        fontSize: "6px",
+        color: PALETTE.creamPaper,
         align: "center"
       }).setOrigin(0.5, 0));
       const lamps: Phaser.GameObjects.Rectangle[] = [];
       for (let lamp = 0; lamp < docket.checkIds.length; lamp += 1) {
-        const indicator = this.add.rectangle(-10 + lamp * 10, 5, 6, 5, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
+        const indicator = this.add.rectangle(-10 + lamp * 10, 18, 4, 3, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
           .setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray));
         lamps.push(indicator);
         container.add(indicator);
@@ -1571,7 +1577,7 @@ export class NetworkScene extends Phaser.Scene {
           : docket.station === "release_board"
             ? PALETTE.goldStamp
             : PALETTE.classNetRed;
-      frame.setStrokeStyle(2, color(accent));
+      frame.setStrokeStyle(1, color(accent));
       for (const lamp of this.vaultStationLamps.get(docket.station) ?? []) {
         lamp.setFillStyle(color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark));
         lamp.setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray));
