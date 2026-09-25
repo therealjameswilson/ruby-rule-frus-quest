@@ -1,3 +1,4 @@
+import { addArchiveTerminalArt } from "../../systems/archiveTerminalArt";
 import Phaser from "phaser";
 import { PALETTE } from "../../game/constants";
 
@@ -15,7 +16,19 @@ export class Terminal {
     this.y = y;
     const border = label === "OpenNet" ? PALETTE.openNetGreen : label === "ClassNet" ? PALETTE.classNetRed : PALETTE.terminalCyan;
     const texture = label === "OpenNet" ? "opennet-terminal" : label === "ClassNet" ? "classnet-terminal" : "terminal-panel";
-    const screen = scene.add.image(0, 0, texture);
+    const cabinet = addArchiveTerminalArt(scene, 0, -3)?.setName("terminal-detailed-cabinet");
+    const parts: Phaser.GameObjects.GameObject[] = [];
+    if (cabinet) {
+      parts.push(cabinet);
+      parts.push(scene.add.rectangle(0, -5, 28, 14, color(label === "ClassNet" ? PALETTE.deepRuby : PALETTE.shadowNavy), .65)
+        .setName("terminal-screen-glass"));
+      parts.push(scene.add.text(0, -5, label === "OpenNet" ? "PUBLIC COPIES" : label === "ClassNet" ? "PROTECTED" : "TEXT ONLY", {
+        fontFamily: "Arial", fontSize: "4.5px", color: PALETTE.creamPaper
+      }).setOrigin(.5).setName("terminal-screen-status"));
+      parts.push(scene.add.rectangle(-14, 7, 2, 2, color(border)).setName("terminal-status-lamp"));
+    } else {
+      parts.push(scene.add.image(0, 0, texture));
+    }
     const plate = scene.add.rectangle(0, 17, 34, 8, color(PALETTE.black)).setStrokeStyle(1, color(border));
     const displayLabel = label === "OpenNet" ? "OPEN" : label === "ClassNet" ? "CLASS" : "CHAT";
     const text = scene.add
@@ -25,6 +38,6 @@ export class Terminal {
         color: label === "ClassNet" ? PALETTE.classNetRed : label === "OpenNet" ? PALETTE.openNetGreen : PALETTE.terminalCyan
       })
       .setOrigin(0.5);
-    this.container = scene.add.container(x, y, [screen, plate, text]).setDepth(y);
+    this.container = scene.add.container(x, y, [...parts, plate, text]).setDepth(y).setName(`terminal-${label.toLowerCase()}`);
   }
 }
