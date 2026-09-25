@@ -52,3 +52,6 @@ small native runtime exports are loaded. Existing fallback sheets are preserved.
 
 ## Outdoor storefront and James (2026-09-24)
 - `public/assets/research-world/presentation/{sweetgreen,james}-v2.png`: original AI-generated artwork for the game using OpenAI image generation; original RGBA preserved. See adjacent `PROVENANCE.md`.
+
+## Research station and cart atlas (2026-09-24)
+- `public/assets/art-pack/research-props/props-v1.png`: original OpenAI-generated walnut research tray and wheeled archival cart, source RGBA preserved. Adjacent `PROVENANCE.md` includes the full prompt and frame details.

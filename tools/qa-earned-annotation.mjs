@@ -28,7 +28,9 @@ try{
  await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ArchiveScene');await page.waitForTimeout(1500);
  assert.equal((await state()).roomTraversal.currentRoomId,'AS');await shot('arrival');
- await key('ArrowUp',2000);await shot('cart-north');
+ // Advance until the cart reaches its stop; rendered frame rate varies under browser QA.
+ for(let attempt=0;attempt<6&&(await state()).sceneProgress.annotationCartY!==112;attempt++)await key('ArrowUp',1000);
+ await shot('cart-north');
  assert.equal((await state()).sceneProgress.annotationCartY,112);
  if(process.argv.includes('--reload-cart')){
   const cart=(await state()).sceneProgress;await page.reload();

@@ -1,3 +1,4 @@
+import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import { addResearchRoomFloor } from "../systems/researchRoomFloor";
 import { AlexPoster, ALEX_TEXTURE, ALEX_ART_PATH } from "../systems/alexPoster";
 import { ConferenceHeat, CONFERENCE_HEAT_DAMAGE, CONFERENCE_HEAT_WARNING } from "../game/conferenceHeat";
@@ -493,6 +494,7 @@ export class ArchiveScene extends Phaser.Scene {
   }
 
   preload() {
+    if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
     if (!this.textures.exists(ALEX_TEXTURE)) this.load.image(ALEX_TEXTURE, ALEX_ART_PATH);
   }
 
@@ -1161,6 +1163,12 @@ export class ArchiveScene extends Phaser.Scene {
       this.add.rectangle(3, -4, 3, 1, color(PALETTE.goldStamp)),
       this.add.rectangle(11, -9, 3, 8, color(PALETTE.stoneGray))
     ];
+    const detailedCart = researchProp(this,"cart",0,-3,25);
+    if (detailedCart) {
+      for (const part of parts) part.destroy();
+      parts.length=0;
+      parts.push(this.add.ellipse(0,9,27,7,color(PALETTE.black),.25),detailedCart);
+    }
     this.annotationCartVisual = this.track(this.add.container(position.x, position.y, parts)
       .setName("annotation-context-cart").setDepth(position.y + 8));
     this.annotationCartPressureFill = this.add.rectangle(-6, 0, 1, 1, color(PALETTE.goldStamp)).setOrigin(0, 0);
@@ -1854,8 +1862,17 @@ export class ArchiveScene extends Phaser.Scene {
       }).setOrigin(0.5, 0);
       const arrow = this.add.triangle(0, -19, 0, 7, 8, 7, 4, 0, color(PALETTE.goldStamp), 0.96)
         .setStrokeStyle(1, color(PALETTE.black));
+      const detailedDesk = researchProp(this,"desk",0,0,40);
+      if (detailedDesk) {
+        shadow.setVisible(false);card.setVisible(false);
+        for (const part of symbol) part.setVisible(false);
+        label.setPosition(0,13).setFontFamily("Arial").setFontSize(7).setColor(PALETTE.creamPaper)
+          .setBackgroundColor("#101925").setPadding(3,1,3,1);
+        accent.setPosition(-18,0).setSize(1,13);
+      }
       const container = this.track(this.add.container(position.x, position.y, [
         shadow,
+        ...(detailedDesk?[detailedDesk]:[]),
         ring,
         card,
         accent,
