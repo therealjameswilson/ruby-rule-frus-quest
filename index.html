@@ -37,8 +37,9 @@
     <div id="boot-loader" role="status" aria-live="polite">
       <div id="boot-loader-title">RUBY RULE</div>
       <div id="boot-loader-sub">THE FRUS QUEST</div>
-      <div id="boot-loader-bar"><span></span></div>
+      <div id="boot-loader-bar" role="progressbar" aria-label="Loading game assets" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div>
       <div id="boot-loader-text">LOADING ARCHIVE…</div>
+      <button id="boot-loader-retry" type="button" hidden>TRY AGAIN</button>
     </div>
     <script type="module" src="/src/main.ts"></script>
   </body>

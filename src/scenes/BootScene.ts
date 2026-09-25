@@ -1,3 +1,4 @@
+import { installBootProgress } from '../systems/bootProgress';
 import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import Phaser from "phaser";
 import { OFFICIAL_FRUS_ART } from "../assets/officialFrus";
@@ -61,11 +62,13 @@ function color(hex: string) {
 }
 
 export class BootScene extends Phaser.Scene {
+  private loadingFailed = () => false;
   constructor() {
     super("BootScene");
   }
 
   preload() {
+    this.loadingFailed = installBootProgress(this);
     this.load.json("items", "assets/data/items.json");
     this.load.json("dialogue", "assets/data/dialogue.json");
     this.load.json("scenes", "assets/data/scenes.json");
@@ -93,6 +96,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
+    if (this.loadingFailed()) return;
     this.cameras.main.roundPixels = true;
     setSceneState("BootScene", "boot", "Loading original pixel assets.");
     retroAudio.prepare();
