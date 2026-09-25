@@ -19,6 +19,30 @@ export function attackPoseFrame(direction: Direction, weapon: WeaponReadout, tim
     : weapon.phase === 'cooldown' && weapon.cooldownMsRemaining > timing.cooldownMs - 90 ? 2 : -1;
   return row < 0 ? null : row * 4 + COLUMN[direction];
 }
+export type AttackPoseSheet = {
+  key: string;
+  path: string;
+  poses: readonly {top:number;bottom:number;center:number}[];
+};
+export const ATTACK_POSE_SHEETS: Record<string, AttackPoseSheet> = {
+  compiler_hd: {key:ATTACK_POSE_KEY,path:ATTACK_POSE_PATH,poses:ATTACK_POSES},
+  compiler_maya_hd: {key:'maya-attack-v1',path:'assets/characters/compilers/combat/maya-attack-v1.png',poses:[
+    {top:85,bottom:487,center:134.5},
+    {top:85,bottom:480,center:131.5},
+    {top:92,bottom:487,center:118.0},
+    {top:91,bottom:487,center:137.5},
+    {top:53,bottom:453,center:133.5},
+    {top:54,bottom:448,center:135.0},
+    {top:60,bottom:454,center:132.0},
+    {top:60,bottom:454,center:124.0},
+    {top:25,bottom:423,center:134.0},
+    {top:25,bottom:418,center:135.0},
+    {top:32,bottom:423,center:118.0},
+    {top:32,bottom:423,center:137.0}
+  ]}
+};
 export function preloadAttackPoses(scene: Phaser.Scene) {
-  if (!scene.textures.exists(ATTACK_POSE_KEY)) scene.load.spritesheet(ATTACK_POSE_KEY, ATTACK_POSE_PATH, {frameWidth:256,frameHeight:512});
+  for(const sheet of Object.values(ATTACK_POSE_SHEETS)) {
+    if (!scene.textures.exists(sheet.key)) scene.load.spritesheet(sheet.key, sheet.path, {frameWidth:256,frameHeight:512});
+  }
 }

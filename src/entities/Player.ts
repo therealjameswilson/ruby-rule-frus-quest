@@ -1,5 +1,5 @@
 import Phaser from "phaser";
-import { ATTACK_POSE_KEY, ATTACK_POSES, attackPoseFrame } from "../art/attackPoses";
+import { ATTACK_POSE_SHEETS, attackPoseFrame, type AttackPoseSheet } from "../art/attackPoses";
 import { COMBAT_TOOL_ART, COMBAT_SWEEP_KEY } from "../art/combatTools";
 import { cachedCharacterPoses } from "../art/characterGrounding";
 import { characterAlphaSampler } from "../art/characterPixels";
@@ -85,6 +85,7 @@ export class Player {
   private readonly actionEdge: Phaser.GameObjects.Rectangle;
   private readonly actionStamp: Phaser.GameObjects.Rectangle;
   private readonly attackPoseSprite?: Phaser.GameObjects.Sprite;
+  private readonly attackPoseSheet?: AttackPoseSheet;
   private readonly weaponSweepSprite?: Phaser.GameObjects.Image;
   private readonly weaponVfxSprite?: Phaser.GameObjects.Sprite;
   private readonly idleParts: IdlePart[] = [];
@@ -212,8 +213,10 @@ export class Player {
     if (scene.textures.exists(COMBAT_SWEEP_KEY)) {
       this.weaponSweepSprite = scene.add.image(0, 0, COMBAT_SWEEP_KEY).setVisible(false);
     }
-    if (this.characterKey === 'compiler_hd' && scene.textures.exists(ATTACK_POSE_KEY)) {
-      this.attackPoseSprite = scene.add.sprite(0, 0, ATTACK_POSE_KEY, 0).setVisible(false);
+    const attackSheet = this.characterKey ? ATTACK_POSE_SHEETS[this.characterKey] : undefined;
+    if (attackSheet && scene.textures.exists(attackSheet.key)) {
+      this.attackPoseSheet = attackSheet;
+      this.attackPoseSprite = scene.add.sprite(0, 0, attackSheet.key, 0).setVisible(false);
     }
     this.createIdleCue(scene);
     addProcessItem("stapler");
@@ -587,13 +590,13 @@ export class Player {
   }
 
   private syncAttackPose(x: number, y: number) {
-    if (!this.attackPoseSprite) return;
+    if (!this.attackPoseSprite || !this.attackPoseSheet) return;
     const weapon = this.weaponState.readout(this.combatTime);
     const frame = attackPoseFrame(this.facing, weapon, weaponTiming(weapon.tool));
     this.sprite.setVisible(frame === null);
     this.attackPoseSprite.setVisible(frame !== null);
     if (frame === null) return;
-    const pose = ATTACK_POSES[frame];
+    const pose = this.attackPoseSheet.poses[frame];
     const height = 44;
     this.attackPoseSprite.setFrame(frame).setOrigin(pose.center / 256, pose.bottom / 512)
       .setScale(height / (pose.bottom - pose.top + 1)).setPosition(x, y + 4)

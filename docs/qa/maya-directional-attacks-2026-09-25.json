@@ -1,0 +1,30 @@
+{
+  "date": "2026-09-25",
+  "appearance": "compiler_maya",
+  "asset": "public/assets/characters/compilers/combat/maya-attack-v1.png",
+  "build": "passed",
+  "phaseUnitTests": 2,
+  "toolFacingFixtures": 16,
+  "phonePhaseFixtures": 12,
+  "pageErrors": [],
+  "verified": [
+    "correct saved appearance loaded",
+    "facing-specific frames",
+    "planted foot anchor",
+    "base hidden during attack",
+    "base restored after recovery",
+    "tool and sweep cleanup"
+  ],
+  "screenshots": [
+    "/tmp/maya-combat/stapler-west.png",
+    "/tmp/maya-combat/stapler-north.png",
+    "/tmp/maya-combat/stapler-south.png",
+    "/tmp/maya-phases/east-cooldown.png"
+  ],
+  "limitations": [
+    "Art fixtures use action and position setup, not a full campaign",
+    "Not physical phone validation",
+    "Four alternate compilers still lack directional attack artwork",
+    "Local only"
+  ]
+}

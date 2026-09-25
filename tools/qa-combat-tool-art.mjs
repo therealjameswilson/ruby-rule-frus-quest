@@ -9,6 +9,12 @@ try {
  p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
  await p.goto(new URL('?scene=NscLibraryScene&text=full',process.env.FRUS_QA_URL??'http://127.0.0.1:5211/').href);
  await p.waitForFunction(()=>window.game?.scene.isActive('NscLibraryScene'));await p.waitForTimeout(500);
+ if(process.env.FRUS_QA_APPEARANCE){
+  await p.addInitScript(appearance=>{const save=JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave'));if(save){save.state.playerProfile.compilerAppearance=appearance;localStorage.setItem('rubyRuleFrusQuestSave',JSON.stringify(save));}},process.env.FRUS_QA_APPEARANCE);
+  await p.goto('http://127.0.0.1:5211/?text=full');await p.waitForFunction(()=>window.game?.scene.isActive('TapToStartScene'));await p.keyboard.press('Enter');await p.waitForFunction(()=>window.game?.scene.isActive('NscLibraryScene'));await p.waitForTimeout(400);
+  assert.equal(await p.evaluate(()=>window.game.scene.getScene('NscLibraryScene').player.characterKey),process.env.FRUS_QA_APPEARANCE+'_hd');
+ }
+
  for(const [tool,key,size] of [['stapler','combat-stapler-detail',16],['citation_stamp','combat-stamp-detail',18],['red_pencil','combat-pencil-detail',20],['review_folder','combat-folder-detail',22]])for(const facing of ['south','west','north','east']){
   // Isolated art fixture: start an actual weapon action, capture its active frame, then resume cooldown.
   const state=await p.evaluate(({tool,facing})=>new Promise((resolve,reject)=>{
@@ -22,7 +28,7 @@ try {
    }
    s.events.on('postupdate',capture);hero.startAction(tool);
   }),{tool,facing});
-  assert.equal(state.key,key);assert.equal(state.width,size*.75);assert.equal(state.height,size*.75);assert(state.visible);assert(state.hitbox);assert.equal(state.phase,'active');assert.equal(state.pose.key,'compiler-attack-v1');assert.equal(state.pose.frame,4+['south','north','west','east'].indexOf(facing));assert(state.pose.visible);assert.equal(state.pose.baseVisible,false);assert.equal(state.pose.footY,state.pose.groundY);assert(state.sweep);assert.equal(state.oldBlocks,false);
+  assert.equal(state.key,key);assert.equal(state.width,size*.75);assert.equal(state.height,size*.75);assert(state.visible);assert(state.hitbox);assert.equal(state.phase,'active');assert.equal(state.pose.key,process.env.FRUS_QA_POSE_KEY??'compiler-attack-v1');assert.equal(state.pose.frame,4+['south','north','west','east'].indexOf(facing));assert(state.pose.visible);assert.equal(state.pose.baseVisible,false);assert.equal(state.pose.footY,state.pose.groundY);assert(state.sweep);assert.equal(state.oldBlocks,false);
   await p.screenshot({path:`${out}/${tool}-${facing}.png`});results.push(state);
   await p.evaluate(()=>window.game.scene.resume('NscLibraryScene'));await p.waitForTimeout(800);
   assert.equal(await p.evaluate(()=>window.game.scene.getScene('NscLibraryScene').player.weaponVfxSprite.visible),false);
