@@ -1,0 +1,654 @@
+{
+  "date": "2026-09-25",
+  "newSheets": [
+    "ada",
+    "clara",
+    "robin",
+    "quinn"
+  ],
+  "newPoses": 48,
+  "normalCompilerAppearancesWithDirectionalAttacks": 6,
+  "build": "passed",
+  "unitTests": 12,
+  "classicRegressionPhases": 12,
+  "appearances": [
+    {
+      "appearance": "ada",
+      "normalHeight": 42,
+      "toolChecks": 16,
+      "phonePhaseChecks": 12,
+      "errors": [],
+      "toolEvidence": "/tmp/ada-height-combat/result.json",
+      "phaseEvidence": "/tmp/ada-height-phases/result.json",
+      "phaseSamples": [
+        {
+          "phase": "windup",
+          "frame": 0,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "frame": 4,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "frame": 8,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "frame": 1,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "frame": 5,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "frame": 9,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "frame": 2,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "frame": 6,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "frame": 10,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "frame": 3,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "frame": 7,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "frame": 11,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        }
+      ]
+    },
+    {
+      "appearance": "clara",
+      "normalHeight": 42,
+      "toolChecks": 16,
+      "phonePhaseChecks": 12,
+      "errors": [],
+      "toolEvidence": "/tmp/clara-height-combat/result.json",
+      "phaseEvidence": "/tmp/clara-final-phases/result.json",
+      "phaseSamples": [
+        {
+          "phase": "windup",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 0,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 4,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 8,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "flip": true,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 1,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 5,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 9,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 2,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 6,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 10,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 3,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 7,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "flip": false,
+          "footX": 128,
+          "expectedX": 128,
+          "frame": 11,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        }
+      ]
+    },
+    {
+      "appearance": "robin",
+      "normalHeight": 42,
+      "toolChecks": 16,
+      "phonePhaseChecks": 12,
+      "errors": [],
+      "toolEvidence": "/tmp/robin-height-combat/result.json",
+      "phaseEvidence": "/tmp/robin-height-phases/result.json",
+      "phaseSamples": [
+        {
+          "phase": "windup",
+          "frame": 0,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "frame": 4,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "frame": 8,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "frame": 1,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "frame": 5,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "frame": 9,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "frame": 2,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "frame": 6,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "frame": 10,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "windup",
+          "frame": 3,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "active",
+          "frame": 7,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        },
+        {
+          "phase": "cooldown",
+          "frame": 11,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 42
+        }
+      ]
+    },
+    {
+      "appearance": "quinn",
+      "normalHeight": 41,
+      "toolChecks": 16,
+      "phonePhaseChecks": 12,
+      "errors": [],
+      "toolEvidence": "/tmp/quinn-height-combat/result.json",
+      "phaseEvidence": "/tmp/quinn-height-phases/result.json",
+      "phaseSamples": [
+        {
+          "phase": "windup",
+          "frame": 0,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "active",
+          "frame": 4,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "cooldown",
+          "frame": 8,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "windup",
+          "frame": 1,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "active",
+          "frame": 5,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "cooldown",
+          "frame": 9,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "windup",
+          "frame": 2,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "active",
+          "frame": 6,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "cooldown",
+          "frame": 10,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "windup",
+          "frame": 3,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "active",
+          "frame": 7,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        },
+        {
+          "phase": "cooldown",
+          "frame": 11,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 41
+        }
+      ]
+    },
+    {
+      "appearance": "maya",
+      "normalHeight": 40,
+      "toolChecks": 16,
+      "phonePhaseChecks": 12,
+      "errors": [],
+      "toolEvidence": "/tmp/maya-height-combat/result.json",
+      "phaseEvidence": "/tmp/maya-height-phases/result.json",
+      "phaseSamples": [
+        {
+          "phase": "windup",
+          "frame": 0,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "active",
+          "frame": 4,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "cooldown",
+          "frame": 8,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "windup",
+          "frame": 1,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "active",
+          "frame": 5,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "cooldown",
+          "frame": 9,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "windup",
+          "frame": 2,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "active",
+          "frame": 6,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "cooldown",
+          "frame": 10,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "windup",
+          "frame": 3,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "active",
+          "frame": 7,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        },
+        {
+          "phase": "cooldown",
+          "frame": 11,
+          "visible": true,
+          "base": false,
+          "foot": 176,
+          "expectedFoot": 176,
+          "bodyHeight": 40
+        }
+      ]
+    }
+  ],
+  "claraWindupMirrored": true,
+  "sourceFilesPreservedUnchanged": true,
+  "limitations": [
+    "Fixture action and position setup, not an unaided full campaign",
+    "Phone-sized browser rendering, not physical iPhone Safari",
+    "Local build only; not published"
+  ]
+}

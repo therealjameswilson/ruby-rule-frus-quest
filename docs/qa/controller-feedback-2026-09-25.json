@@ -1,0 +1,39 @@
+{
+  "date": "2026-09-25",
+  "browserChecks": [
+    {
+      "mobile": false,
+      "analogOwnership": true,
+      "damagePulse": true,
+      "pauseStops": true,
+      "optOutSaved": true,
+      "reEnabled": true,
+      "keyboardHandoff": true,
+      "blurStops": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "analogOwnership": true,
+      "damagePulse": true,
+      "pauseStops": true,
+      "optOutSaved": true,
+      "reEnabled": true,
+      "keyboardHandoff": true,
+      "blurStops": true,
+      "errors": []
+    }
+  ],
+  "finalFocusRecovery": true,
+  "build": "passed",
+  "fullSuiteBeforeFinalFocusGuard": {
+    "files": 269,
+    "tests": 2022
+  },
+  "finalFocusedTests": 71,
+  "limitations": [
+    "Simulated Gamepad API; no physical controller feel validation",
+    "Controlled damage fixture; not an unaided campaign",
+    "Local only; not published"
+  ]
+}

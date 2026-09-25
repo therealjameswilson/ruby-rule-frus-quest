@@ -2,7 +2,9 @@ import Phaser from "phaser";
 import { FRUS_VOLUMES, publicAssetPath } from "../assets/registry";
 import { DANNE_ITEM_CATALOG } from "../game/danneItemCatalog";
 
+export const TOOL_ART_KEY = "frus-tools-v2";
 export const INVENTORY_ART = [
+  { key: TOOL_ART_KEY, path: publicAssetPath("presentation/frus-tools-v2.png") },
   ...DANNE_ITEM_CATALOG.map(({ key, path }) => ({ key, path })),
   { key: "ui_row_six", path: publicAssetPath(FRUS_VOLUMES.ui_row_six) }
 ];

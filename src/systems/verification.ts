@@ -28,11 +28,13 @@ export class ChoicePrompt {
   private onChoose?: ChoiceCallback;
   private onCancel?: () => void;
   private readonly settleMs: number;
+  private readonly cancelOnBack: boolean;
   private readyAt = 0;
   private inputArmed = true;
 
-  constructor(scene: Phaser.Scene, options: { settleMs?: number } = {}) {
+  constructor(scene: Phaser.Scene, options: { settleMs?: number; cancelOnBack?: boolean } = {}) {
     this.scene = scene;
+    this.cancelOnBack = options.cancelOnBack ?? false;
     this.settleMs = Math.max(0, options.settleMs ?? 0);
     const dim = scene.add.rectangle(128, 120, 256, 240, color(PALETTE.black), 0.65);
     this.box = scene.add.rectangle(128, 120, 238, 156, color(PALETTE.black), 0.98);
@@ -103,14 +105,17 @@ export class ChoicePrompt {
     if (!this.active) return;
     const input = getInput();
     if (!this.inputArmed) {
-      // A combat press must be released before it can become a menu choice.
-      const pressed = input.a || input.b || input.aJustPressed || input.bJustPressed
+      // Combat buttons and movement must return to neutral before becoming
+      // menu input. A held D-pad must not select retreat when combat ends.
+      const pressed = input.up || input.down || input.left || input.right
+        || input.navDownJustPressed || input.navUpJustPressed
+        || input.a || input.b || input.aJustPressed || input.bJustPressed
         || input.confirmJustPressed || input.cancelJustPressed || input.choiceAJustPressed
         || input.choiceBJustPressed || input.choiceCJustPressed || input.choiceDJustPressed;
       if (this.scene.time.now >= this.readyAt && !pressed) this.inputArmed = true;
       return;
     }
-    if (this.onCancel && (input.pauseJustPressed || input.menuJustPressed)) {
+    if (this.onCancel && (input.pauseJustPressed || input.menuJustPressed || (this.cancelOnBack && (input.bJustPressed || input.cancelJustPressed)))) {
       const cancel = this.onCancel;
       this.hide();
       swallowNextInputFrame();

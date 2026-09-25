@@ -9,6 +9,7 @@ vi.mock("phaser", () => ({ default: { Math: { Vector2: class {} },
   Scenes: { Events: { SHUTDOWN: "shutdown" } } } }));
 vi.mock("./InputState", () => ({ updateInputCallbacks: vi.fn(), setTouchControl: vi.fn() }));
 vi.mock("../platform/haptics", () => ({}));
+vi.mock("./PortraitTouchDock", () => ({ PortraitTouchDock: class { active = false; update() {} release() {} destroy() {} } }));
 
 beforeEach(() => resetGameState());
 

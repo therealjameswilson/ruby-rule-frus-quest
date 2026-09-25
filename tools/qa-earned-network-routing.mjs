@@ -42,7 +42,8 @@ try{
  assert.equal((await state()).sceneProgress.networkRoutingCarried,1);
  await move(96,140);await key();await shot('public-filed');
  assert.equal((await state()).sceneProgress.networkRoutingStep,1);
- await move(96,124);await key('ArrowRight',100);
+ // Approach above the OpenNet packet-filing radius so the seal owns the cue.
+ await move(96,108);await key('ArrowRight',100);
  await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='STAMP THE SEAL');
  assert.equal(await page.evaluate(()=>window.game.scene.getScene('UIScene').questBandVerbText.text),mobile?'B':'X');
  await shot('crossing-ready');

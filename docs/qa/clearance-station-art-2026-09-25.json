@@ -1,0 +1,119 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "visualChecks": [
+    {
+      "mobile": false,
+      "stations": [
+        {
+          "name": "classnet-station-release_board",
+          "depth": 95,
+          "y": 83,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "labels": [
+            "RELEASE"
+          ]
+        },
+        {
+          "name": "classnet-station-human_desk",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "labels": [
+            "HUMAN"
+          ]
+        },
+        {
+          "name": "classnet-station-decision_ledger",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "labels": [
+            "LEDGER"
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "stations": [
+        {
+          "name": "classnet-station-release_board",
+          "depth": 95,
+          "y": 83,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "labels": [
+            "RELEASE"
+          ]
+        },
+        {
+          "name": "classnet-station-human_desk",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "labels": [
+            "HUMAN"
+          ]
+        },
+        {
+          "name": "classnet-station-decision_ledger",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "labels": [
+            "LEDGER"
+          ]
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "earnedClearance": {
+    "passed": true,
+    "artifact": "/tmp/clearance-desks-earned-final",
+    "checks": [
+      "review batch",
+      "missing-entry rejection",
+      "chronology repair",
+      "Clearance Token",
+      "referral arrival",
+      "reload"
+    ]
+  },
+  "limitations": [
+    "Phone viewport and touch start only; earned clearance uses keyboard.",
+    "No physical iPhone check.",
+    "Local only."
+  ]
+}

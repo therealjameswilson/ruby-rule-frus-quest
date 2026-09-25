@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { retroAudio } from "../../systems/audio";
 import { DANNE_BOSS_HD } from "../../art/danneBossPresentation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addDanneItem, addProcessItem, gameState, recordStandardsViolation, resetGameState, seedProgressForScene } from "../../game/state";
@@ -41,7 +42,7 @@ vi.mock("phaser", () => {
 vi.mock("../Player", () => ({ Player: class {} }));
 vi.mock("../../systems/audio", () => ({ retroAudio: {
   blip: vi.fn(), confirm: vi.fn(), warning: vi.fn(), bossHit: vi.fn(), bossDefeat: vi.fn(),
-  dannePhaseTransition: vi.fn(), danneBoast: vi.fn(), egoBoltFire: vi.fn(), toolHit: vi.fn()
+  dannePhaseTransition: vi.fn(), danneBoast: vi.fn(), egoBoltFire: vi.fn(), egoBoltReturn: vi.fn(), toolHit: vi.fn()
 } }));
 vi.mock("../../systems/bossHud", () => ({ hideBossHud: vi.fn(), setBossHp: vi.fn(), showBossHud: vi.fn() }));
 vi.mock("../../systems/combatFeedback", () => ({ applyHitShake: vi.fn() }));
@@ -71,9 +72,12 @@ class Visual {
   scale = 1;
   animation = "";
   play(key: string) { this.animation = key; return this; }
+  setName() { return this; }
   setOrigin() { return this; } setScale(scale: number) { this.scale = scale; return this; } setDepth() { return this; }
   setVisible(visible: boolean) { this.visible = visible; return this; } setStrokeStyle() { return this; } setScrollFactor() { return this; }
-  setText() { return this; } setSize() { return this; } setFillStyle() { return this; }
+  text = ""; width = 0; height = 0;
+  setText(text: string) { this.text = text; return this; }
+  setSize(width: number, height: number) { this.width = width; this.height = height; return this; } setFillStyle() { return this; }
   setColor() { return this; } setTint() { return this; } setTintFill() { return this; } clearTint() { return this; }
   setAlpha(alpha: number) { this.alpha = alpha; return this; } setAngle() { return this; }
   fillStyle() { return this; } fillRect() { return this; }
@@ -87,6 +91,9 @@ interface BossInternals {
   attackTelegraph: { markers: Visual[] } | null;
   hp: number;
   coreOpening: Visual;
+  coreOpeningFrame: Visual;
+  coreOpeningLabel: Visual;
+  syncCoreOpening(time: number): void;
   takeReturnedBolt(time: number): void;
   statutoryYear: number;
   updateStatutoryClock(deltaMs: number): void;
@@ -102,8 +109,11 @@ interface BossInternals {
   updateAttackPattern(time: number): void;
   offerShortcut(reason: string): void;
   clockContainer: Visual;
+  clockStatusText: Visual;
+  syncStatutoryClockUi(): void;
+  defeated: boolean;
   shortcutChoice: { active: boolean; choose(key: string): void };
-  bolts: Array<Position & { vx: number; vy: number; expiresAt: number; sprite: Visual; returned: boolean }>;
+  bolts: Array<Position & { vx: number; vy: number; expiresAt: number; sprite: Visual; trail: { destroy(): void }; returned: boolean }>;
   retryChoice: { active: boolean; choose(key: string): void };
 }
 
@@ -114,6 +124,7 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
       graphics: () => new Visual(),
       sprite: (x: number, y: number) => new Visual(x, y),
       ellipse: (x: number, y: number) => new Visual(x, y),
+      triangle: (x: number, y: number) => new Visual(x, y),
       rectangle: (x: number, y: number) => new Visual(x, y),
       text: (x: number, y: number) => new Visual(x, y),
       container: () => new Visual()
@@ -188,6 +199,19 @@ describe("DANN-E final-review combat", () => {
     expect(internals.hp).toBe(134);
     internals.checkPlayerActionHit(2000);
     expect(internals.hp).toBe(134);
+  });
+
+  it("charges only a movement-sized time step after a rendering stall", () => {
+    const { internals }=fixture();
+    internals.statutoryYear=25;
+    internals.updateStatutoryClock(50);
+    const normal=internals.statutoryYear;
+    internals.statutoryYear=25;
+    internals.updateStatutoryClock(5000);
+    expect(internals.statutoryYear).toBeCloseTo(normal,10);
+    internals.statutoryYear=25;
+    internals.updateStatutoryClock(-100);
+    expect(internals.statutoryYear).toBe(25);
   });
 
   it("restores elapsed deadline time when the boss is recreated from saved state", () => {
@@ -500,11 +524,13 @@ describe("DANN-E final-review combat", () => {
     internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
     internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
     const sprites = internals.bolts.map((bolt) => bolt.sprite);
+    const trails = internals.bolts.map(bolt => vi.spyOn(bolt.trail, "destroy"));
     internals.updateBolts(1000, 16);
     expect(gameState.reliability).toBe(90);
     expect(gameState.sceneProgress.blackVaultCombatDamage).toBe(10);
     expect(internals.bolts).toHaveLength(0);
     expect(sprites.every((sprite) => !sprite.active)).toBe(true);
+    expect(trails.every(trail => trail.mock.calls.length === 1)).toBe(true);
     expect(player.takeHit).toHaveBeenCalledTimes(1);
   });
 
@@ -525,6 +551,7 @@ describe("DANN-E final-review combat", () => {
     expect(gameState.reliability).toBe(100);
     expect(player.takeHit).not.toHaveBeenCalled();
     expect(internals.bolts[0].returned).toBe(true);
+    expect(retroAudio.egoBoltReturn).toHaveBeenCalledExactlyOnceWith(tool);
     expect(boss.readout().bossCombat.boltsReturned).toBe(1);
     player.activeActionHitbox = null;
     internals.updateBolts(1050, 50);
@@ -572,6 +599,43 @@ describe("DANN-E final-review combat", () => {
     boss.update(6100, 16, true);
     expect(boss.readout().bossCombat.counterWindowMs).toBe(DANNE_BOSS_RETURN.stunMs);
     expect(boss.readout().telegraph).toBeNull();
+  });
+
+  it("shows a readable core countdown and removes every marker when armor returns", () => {
+    const { internals, boss, scene } = fixture();
+    internals.takeReturnedBolt(1000);
+    expect(internals.coreOpeningFrame.visible).toBe(true);
+    expect(internals.coreOpeningLabel.text).toBe("CORE OPEN");
+    expect(internals.coreOpening.y).toBeGreaterThan(53);
+    expect(internals.coreOpening.width).toBe(54);
+    internals.syncCoreOpening(2600);
+    expect(internals.coreOpeningLabel.text).toBe("CLOSING");
+    expect(internals.coreOpening.width).toBe(11);
+    scene.time.now = 3000;
+    boss.update(3000,16,true);
+    expect(internals.coreOpening.visible).toBe(false);
+    expect(internals.coreOpeningFrame.visible).toBe(false);
+    expect(internals.coreOpeningLabel.visible).toBe(false);
+  });
+
+  it("keeps a returned-bolt counter window usable after a slow rendering frame", () => {
+    const {boss,internals,scene}=fixture("cloud");
+    internals.takeReturnedBolt(1000);
+    scene.time.now=2000;
+    boss.update(2000,1000,true);
+    expect(boss.readout().bossCombat.counterWindowMs).toBe(DANNE_BOSS_RETURN.stunMs-50);
+    expect(boss.readout().bossCombat.coreOpen).toBe(true);
+  });
+
+  it("preserves a projectile's travel lifetime across a rendering stall", () => {
+    const {boss,internals,scene}=fixture();
+    internals.fireBolt({x:60,y:100},{x:60,y:200},50);
+    const expiry=internals.bolts[0].expiresAt;
+    scene.time.now=4000;
+    boss.update(4000,3000,true);
+    expect(internals.bolts).toHaveLength(1);
+    expect(internals.bolts[0].expiresAt).toBe(expiry+2950);
+    expect(internals.bolts[0].y).toBeCloseTo(92.5);
   });
 
   it("reports bounded HUD feedback, preserves it through pause, then clears it during play", () => {
@@ -737,6 +801,26 @@ describe("DANN-E final-review combat", () => {
     expect(markers.every(marker => marker.alpha >= 0.85 && marker.active)).toBe(true);
     internals.updateAttackTelegraph(1800);
     expect(markers.every(marker => !marker.active)).toBe(true);
+  });
+
+  it("avoids repeated clock texture refreshes while preserving warning and victory colors", () => {
+    const { internals } = fixture();
+    internals.statutoryYear = 20;
+    internals.syncStatutoryClockUi();
+    const recolor = vi.spyOn(internals.clockStatusText, "setColor");
+    for (let frame = 0; frame < 120; frame++) internals.syncStatutoryClockUi();
+    expect(recolor).not.toHaveBeenCalled();
+    internals.statutoryYear = 30;
+    internals.syncStatutoryClockUi();
+    expect(recolor).toHaveBeenCalledTimes(1);
+    const warning = recolor.mock.calls[0];
+    internals.syncStatutoryClockUi();
+    expect(recolor).toHaveBeenCalledTimes(1);
+    internals.defeated = true;
+    internals.syncStatutoryClockUi();
+    expect(recolor).toHaveBeenCalledTimes(2);
+    expect(recolor.mock.calls[1]).not.toEqual(warning);
+    expect(internals.clockStatusText.text).toBe("DANN-E CLEARED");
   });
 
   it("keeps the clock out of the shortcut choice and restores it on rejection", () => {

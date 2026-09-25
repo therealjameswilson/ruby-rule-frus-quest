@@ -1,5 +1,41 @@
 # Moving Gameplay Performance
 
+## Current profiler (September 25, 2026)
+
+Reports now include the WebGL renderer, software-renderer detection, drawing
+buffer dimensions, browser channel, and requested ANGLE backend. The bundled
+headless Chromium used in the recent September 25 runs selected SwiftShader.
+Those results measure software rendering, not iPhone GPU performance.
+
+The profiler records actual Phaser step intervals and full-run nearest-rank
+p50/p95/p99, maximum interval, and counts over 33.4 and 50 ms. These are separate
+from the older HUD's coarse rolling histogram. `movementRunValid` requires
+movement in at least half the adjacent samples. The touch gesture uses the
+current fixed-pad center (48, 202); earlier runs with the old y=178 coordinates
+must be checked for movement coverage before treating them as moving tests.
+
+On a Mac with Chrome installed, request Metal explicitly and inspect the
+reported renderer to confirm acceleration:
+
+```sh
+npm run perf:profile -- --url 'http://127.0.0.1:5211/?scene=ArchiveScene' --mobile --walk --channel chrome --angle metal --seconds 60 --out /tmp/frus-metal-performance.json
+```
+
+For JavaScript attribution, add `--cpu-profile /tmp/frus.cpuprofile`.
+Profiling can affect timing; compare like-for-like runs. Desktop GPU results
+still do not certify physical iPhone, thermal behavior, or the full campaign.
+
+The current ArchiveScene run on Apple M3 Metal (Chrome 153, phone viewport,
+DPR 3, no CPU throttle) measured 60 seconds: 3,614 game frames, 60.00 FPS,
+p95 16.9 ms, p99 17.9 ms, maximum 18.5 ms, and zero intervals above 33.4 ms.
+Movement occurred in 223 of 224 adjacent samples with two threats active.
+There were no browser errors or warnings. Evidence:
+`/tmp/archive-metal-sustained.json` and `/tmp/archive-metal-sustained.png`.
+This isolates a major test-environment difference from the recent SwiftShader
+runs; it does not establish that a game-code change improved frame rate.
+
+## Earlier measurements
+
 Measured locally on 2026-09-13 with Chromium headless, a 375x667 CSS viewport,
 DPR 3, touch emulation, and 4x CPU throttling. Each run measured 20 seconds
 after warmup. This is a desktop proxy, not certification of real iPhone or
@@ -101,3 +137,46 @@ alignment and desktop movement also passed. Native and viewport screenshots
 were inspected. Evidence: `/private/tmp/frus-rotation-after/`,
 `/private/tmp/frus-rotation-portrait-after/`, and `/private/tmp/frus-landscape-inventory/`.
 These viewport-resize simulations are not physical Safari rotation tests.
+
+## Cached hero alignment at region crossings
+
+The September 25 crossing trace found 61–67 ms inside scene creation, mostly
+individual alpha-pixel reads used to align the hero's twelve poses. The player
+now reuses immutable measurements keyed by the loaded texture object. Removing
+and replacing a texture gets new measurements; weak keys do not retain it.
+
+Eight explicit crossings previously had maximum intervals of 76–96 ms. With
+the cache, the verification run measured 17.4–22.7 ms maxima and 2.1–3.0 ms
+scene creation. It performed zero new alpha-pixel reads and preserved every
+pose transform. New DANN-E disguises still loaded normally. The test places
+the hero near each edge, then uses actual keyboard input to cross; it is not
+a complete navigation playthrough. Before/after compact results are retained
+in `hardware-pacing-baseline.json`. First-time character measurement and
+physical iPhone performance are not covered by this crossing improvement.
+
+The first measurement now reads each sprite sheet into a single pixel buffer,
+lazily, instead of doing a canvas readback per sampled pixel. A browser comparison
+checked 18,432 samples per sheet across the classic compiler and all six HD
+compiler choices: 129,024 exact matches, one readback per sheet, no fallbacks.
+Sampling took 1.1–2.6 ms per sheet versus 49.8–58.5 ms with the original reader
+in this local run. This measures the sampling operation, not total startup time.
+The sampler preserves frame cuts/trimming and retains the old reader as fallback.
+
+## Current earned boss on Metal
+
+The earned-save touch replay now accepts `FRUS_QA_CHANNEL=chrome` and
+`FRUS_QA_ANGLE=metal`. Add `--frame-pacing --no-captures` to measure active
+combat without screenshot readbacks. The observer excludes dialogue, pause,
+choice and phase-transition intervals; automation polling overhead remains.
+
+On the d852ad8 game build, all three phases completed in seven attack cycles,
+with seven fresh melee hits, no retries, and the deadline met. Continue preserved
+the earned bindery state. Colossus/Swarm/Cloud recorded 765/451/1,351 active
+frames respectively. Their p99 intervals were 22.7/20.6/22.4 ms; maximums were
+27.6/25.9/27.6 ms, with no intervals above 33.4 ms. No browser errors occurred.
+Compact results are in `hardware-pacing-baseline.json`; full evidence is in
+`/tmp/boss-metal-pacing-clean/`. A separate captured run supplied visual review
+in `/tmp/boss-metal-pacing/` and also completed without retries.
+
+This is a scripted replay from an earned checkpoint that reads live bolt timing,
+not an unaided human playthrough, fresh full campaign, or physical iPhone test.

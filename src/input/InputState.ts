@@ -1,3 +1,4 @@
+import { cardinalStick } from "./cardinalStick";
 import Phaser from "phaser";
 
 type AxisValue = -1 | 0 | 1;
@@ -42,6 +43,8 @@ export interface InputState {
   startJustPressed: boolean;
   select: boolean;
   selectJustPressed: boolean;
+  throwItem: boolean;
+  throwItemJustPressed: boolean;
   ability: boolean;
   abilityJustPressed: boolean;
   menu: boolean;
@@ -121,6 +124,8 @@ const emptyState: InputState = {
   startJustPressed: false,
   select: false,
   selectJustPressed: false,
+  throwItem: false,
+  throwItemJustPressed: false,
   ability: false,
   abilityJustPressed: false,
   menu: false,
@@ -176,6 +181,8 @@ const ACTION_LATCH_CODES = new Set<string>([
   "KeyZ",
   "KeyX",
   "KeyB",
+  "KeyV",
+  "KeyM",
   "ShiftLeft",
   "ShiftRight",
   "Escape",
@@ -203,12 +210,15 @@ const activePointerIds = new Set<number>();
 const inputGestureCallbacks = new Set<InputGestureCallback>();
 const gamepadConnectionCallbacks = new Set<GamepadConnectionCallback>();
 let lastDirection: CardinalDirection = "down";
+let lastInputKind: InputGestureKind | null = null;
+export function getLastInputKind() { return lastInputKind; }
 let initialized = false;
 let callbacks: InputCallbacks = {};
 let gamepadConnected = false;
 let lastGamepadLabel: string | null = null;
 let lastGamepadEvent = "idle";
 let swallowNextFrame = false;
+const suppressedGamepadButtons = new Set<number>();
 let suppressEscEdgesUntilRelease = false;
 let nativeTextEntryActive = false;
 
@@ -282,21 +292,12 @@ function getConnectedGamepads() {
   return Array.from(navigator.getGamepads()).filter((pad): pad is Gamepad => Boolean(pad?.connected));
 }
 
-function snapStickToCardinal(x: number, y: number): CardinalDirection | null {
-  const magnitude = Math.hypot(x, y);
-  if (magnitude < 0.35) return null;
-  const absX = Math.abs(x);
-  const absY = Math.abs(y);
-  const dominance = 1.35;
-  if (absX > absY * dominance) return x < 0 ? "left" : "right";
-  if (absY > absX * dominance) return y < 0 ? "up" : "down";
-  return lastDirection;
-}
 
 function readGamepadSnapshot(): GamepadSnapshot {
   const pads = getConnectedGamepads();
   const pad = pads[0];
   if (!pad) {
+    suppressedGamepadButtons.clear();
     return {
       connected: false,
       index: null,
@@ -306,15 +307,18 @@ function readGamepadSnapshot(): GamepadSnapshot {
     };
   }
   const buttons = new Set<number>();
+  for (const index of suppressedGamepadButtons) {
+    if (!pad.buttons[index]?.pressed) suppressedGamepadButtons.delete(index);
+  }
   pad.buttons.forEach((button, index) => {
-    if (button?.pressed) buttons.add(index);
+    if (button?.pressed && !suppressedGamepadButtons.has(index)) buttons.add(index);
   });
   let direction: CardinalDirection | null = null;
   if (buttons.has(14)) direction = "left";
   else if (buttons.has(15)) direction = "right";
   else if (buttons.has(12)) direction = "up";
   else if (buttons.has(13)) direction = "down";
-  else direction = snapStickToCardinal(pad.axes[0] ?? 0, pad.axes[1] ?? 0);
+  else direction = cardinalStick(pad.axes[0] ?? 0, pad.axes[1] ?? 0, lastDirection);
   return {
     connected: true,
     index: pad.index,
@@ -366,7 +370,7 @@ function installGamepadListeners() {
 }
 
 function notifyGamepadGestureIfNeeded(snapshot: GamepadSnapshot) {
-  if (anyGamepadButtonPressed(snapshot)) {
+  if (anyGamepadButtonPressed(snapshot) || snapshot.direction) {
     notifyInputGesture("gamepad");
   }
 }
@@ -409,6 +413,7 @@ function preventGameKeyDefault(event: KeyboardEvent) {
 }
 
 function notifyInputGesture(kind: InputGestureKind) {
+  lastInputKind = kind;
   for (const callback of [...inputGestureCallbacks]) callback(kind);
 }
 
@@ -536,12 +541,18 @@ export function isTouchInputCapable() {
   return typeof window !== "undefined" && ("ontouchstart" in window || navigator.maxTouchPoints > 0);
 }
 
+function useConsoleActionLabels() {
+  // A connected pad or touchscreen must not override an active keyboard.
+  if (lastInputKind === "keyboard") return false;
+  return isTouchInputCapable() || gamepadConnected;
+}
+
 export function getPrimaryActionBadge() {
-  return isTouchInputCapable() || gamepadConnected ? "A" : "Z";
+  return useConsoleActionLabels() ? "A" : "Z";
 }
 
 export function getSecondaryActionBadge() {
-  return isTouchInputCapable() || gamepadConnected ? "B" : "X";
+  return useConsoleActionLabels() ? "B" : "X";
 }
 
 export function tickInput() {
@@ -594,8 +605,9 @@ export function tickInput() {
   const cancel = isActionActive("Escape") || isTouchDown("b") || isGamepadButtonDown([1], gamepadSnapshot);
   const start = isActionActive("Enter") || isTouchDown("start") || isGamepadButtonDown([9], gamepadSnapshot);
   const select = isActionActive("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
+  const throwItem = isActionActive("KeyV") || isGamepadButtonDown([5], gamepadSnapshot);
   const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2], gamepadSnapshot);
-  const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
+  const menu = isActionActive("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
   const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
   const sound = isKeyboardDown("KeyN") || isTouchDown("n");
   const fullscreen = isKeyboardDown("KeyF");
@@ -649,10 +661,12 @@ export function tickInput() {
     startJustPressed: pendingActionPresses.has("Enter") || pendingTouchPresses.has("start") || justPressed(start, previousState.start),
     select,
     selectJustPressed: pendingActionPresses.has("Tab") || pendingTouchPresses.has("select") || justPressed(select, previousState.select),
+    throwItem,
+    throwItemJustPressed: pendingActionPresses.has("KeyV") || justPressed(throwItem, previousState.throwItem),
     ability,
     abilityJustPressed: justPressed(ability, previousState.ability),
     menu,
-    menuJustPressed: justPressed(menu, previousState.menu),
+    menuJustPressed: pendingActionPresses.has("KeyM") || pendingTouchPresses.has("start") || pendingTouchPresses.has("m") || justPressed(menu, previousState.menu),
     reliability,
     reliabilityJustPressed: justPressed(reliability, previousState.reliability),
     sound,
@@ -732,6 +746,12 @@ export function swallowNextInputFrame() {
   // (cleared by the Escape keyup listener). Read the held state before resetInput
   // clears it. resetInput() also clears swallowNextFrame, so arm it afterwards.
   const escHeld = isKeyboardDown("Escape");
+  // Polling still sees held controller buttons after reset. Preserve their
+  // release barrier so closing a dialog cannot reopen it on the next tick.
+  const pad = getConnectedGamepads()[0];
+  pad?.buttons.forEach((button, index) => {
+    if (button.pressed) suppressedGamepadButtons.add(index);
+  });
   resetInput();
   swallowNextFrame = true;
   if (escHeld) suppressEscEdgesUntilRelease = true;

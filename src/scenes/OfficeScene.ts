@@ -1,3 +1,6 @@
+import { addOfficeExteriorDoor } from "../systems/officeExteriorDoor";
+import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
+import { researchProp, RESEARCH_PROPS } from "../systems/researchProps";
 import Phaser from "phaser";
 import { saveGameNow } from "../systems/save";
 import { RUBY_BUCKRAM_ART } from "../assets/rubyBuckram";
@@ -151,6 +154,7 @@ export class OfficeScene extends Phaser.Scene {
   }
 
   preload() {
+    if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
     if (!this.textures.exists(KATHY_TEXTURE)) this.load.image(KATHY_TEXTURE, KATHY_ART_PATH);
     for (const asset of RUBY_BUCKRAM_ART) {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
@@ -175,8 +179,8 @@ export class OfficeScene extends Phaser.Scene {
       this.add.image(x, y, asset.key).setDisplaySize(width, height)
         .setDepth(-9).setName(`office-${asset.key}`);
     });
-    this.add.rectangle(40,190,15,24,0xaad579).setStrokeStyle(1,0xf9edc6).setDepth(25);
-    this.add.text(42,176,"OUTSIDE",{fontFamily:"monospace",fontSize:"6px",color:"#fff6cf",backgroundColor:"#234c39"}).setOrigin(.5).setDepth(26);
+    addOfficeExteriorDoor(this);
+    this.add.text(40,176,"OUTSIDE",{fontFamily:"monospace",fontSize:"6px",color:"#fff6cf",backgroundColor:"#234c39"}).setOrigin(.5).setDepth(26);
 
     const returnSpawn = arrival ?? this.consumeOfficeReturnSpawn();
     this.player = new Player(this, returnSpawn?.x ?? 128, returnSpawn?.y ?? 196);
@@ -197,8 +201,8 @@ export class OfficeScene extends Phaser.Scene {
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
-    this.prompt = new InteractionPrompt(this);
-    this.toast = new FeedbackToast(this);
+    this.prompt = new InteractionPrompt(this, 950, 947, { compact: true });
+    this.toast = new FeedbackToast(this, 1200, () => this.player.sprite.getBounds());
     const juniorFeet = new Phaser.Geom.Rectangle(this.juniorCompiler.x - 6, this.juniorCompiler.y - 3, 12, 8);
     this.kathyFeet = juniorFeet;
     if (!gameState.sceneProgress.kathyDeparted) this.clearJuniorSpawn(juniorFeet);
@@ -387,7 +391,8 @@ export class OfficeScene extends Phaser.Scene {
     });
     this.updateDanneLurker(delta, Boolean(gameState.sceneProgress.juniorCompilerIntroduced));
     const activeInteractables: Interactable[] = [...this.currentInteractables(), {
-      id: "research-world-door", label: "Outside: Research World", x: 42, y: 190, radius: 7, kind: "door",
+      // Keep the entrance local to its threshold so it cannot steal inbox actions.
+      id: "research-world-door", label: "Outside: Research World", x: 42, y: 190, radius: 8, kind: "door",
       onInteract: () => { gameState.sceneProgress.researchWorldZone = 1; transitionTo(this,"ResearchWorldScene"); }
     }];
     const nearest = nearestInteractable(this.player.position, activeInteractables);
@@ -406,6 +411,7 @@ export class OfficeScene extends Phaser.Scene {
       promptTarget,
       undefined,
       lockedDoorPrompt ? { text: "CHECK ARCHIVE LOCK" }
+        : nearest?.id === "production-inbox" ? { text: nearest.label.toUpperCase() }
         : nearest ? undefined : hintTarget && approachCue ? { badge: "!", text: approachCue } : undefined
     );
     this.toast.update(delta, this.player.position);
@@ -528,13 +534,13 @@ export class OfficeScene extends Phaser.Scene {
     setLatestMessage(firstAssignment
       ? "Kathy, General Editor: Your mission is to compile a FRUS volume. As compiler, plan research, select and annotate records, complete two reviews, and revise before DPD submission. First: carry the assignment memo to INBOX for research approval."
       : "Pick up the memo, carry it to INBOX, then stamp it.");
+    this.toast.hide();
     if (!gameState.sceneProgress.kathyDeparted) this.dialog.show("KATHY - GENERAL EDITOR", [
       "Compile a FRUS volume: research, select, and annotate.",
       "Review, revise, clear, publish. DANN-E will obstruct you.",
       "First: take the memo to INBOX. Stamp your research plan.",
       "Now I need to talk with the HAC. So don't bother me anymore."
     ], () => this.departKathy());
-    this.toast.show(firstAssignment ? "COMPILE A FRUS VOLUME" : "PICK MEMO -> INBOX -> STAMP", this.player.position, "info");
   }
 
   private hideKathy() {
@@ -1518,9 +1524,29 @@ export class OfficeScene extends Phaser.Scene {
 
   private drawOfficeInterior() {
     if (this.textures.exists(SNES_OFFICE_ROOM_BACKGROUND_ASSET.key)) {
+      addEditorialRoomFloor(this, false)?.setDepth(-20);
+      // Preserve the authored upper shelving; furniture now has independent art.
       this.add.image(128, 132, SNES_OFFICE_ROOM_BACKGROUND_ASSET.key)
+        .setCrop(0, 0, 208, 36)
         .setName("office-compiler-room-background")
-        .setDepth(-20);
+        .setDepth(-19);
+      for (const desk of [
+        { x: 77, bottom: 106, label: "KATHY" },
+        { x: 179.5, bottom: 106, label: "SCOPE" },
+        { x: 75.5, bottom: 170, label: "INBOX" },
+        { x: 183, bottom: 170, label: "MANUSCRIPT" }
+      ]) {
+        const width = 64;
+        const height = width * 492 / 880;
+        researchProp(this, "desk", desk.x, desk.bottom - height / 2, width)
+          ?.setDepth(desk.bottom).setName(`office-detailed-desk-${desk.label.toLowerCase()}`);
+        const label = this.add.text(desk.x, desk.bottom - height - 7, desk.label, {
+          fontFamily: "Arial", fontSize: "6px", color: PALETTE.creamPaper,
+          backgroundColor: PALETTE.shadowNavy, padding: { x: 2, y: 1 }
+        }).setOrigin(.5).setDepth(50)
+          .setName(desk.label === "KATHY" ? "office-primary-label-jr" : `office-post-intro-label-${desk.label.toLowerCase()}`);
+        if (desk.label !== "KATHY") this.postIntroLabels.push(label);
+      }
       this.drawStarterMemo(OFFICE_STARTER_MEMO.x, OFFICE_STARTER_MEMO.y);
       return;
     }

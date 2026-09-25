@@ -1,0 +1,64 @@
+{
+  "change": "DanneMapScene uses shared compact arrival banner",
+  "build": "passed",
+  "browserChecks": [
+    {
+      "mobile": false,
+      "reduced": false,
+      "bannerY": 48,
+      "panelHeight": 24,
+      "title": "BLACK VAULT LAIR",
+      "titleWidth": 74,
+      "panelWidth": 176,
+      "objective": "NORTH TO DANN-E",
+      "dismissed": true,
+      "errors": []
+    },
+    {
+      "mobile": false,
+      "reduced": true,
+      "bannerY": 48,
+      "panelHeight": 24,
+      "title": "BLACK VAULT LAIR",
+      "titleWidth": 74,
+      "panelWidth": 176,
+      "objective": "NORTH TO DANN-E",
+      "dismissed": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "reduced": false,
+      "bannerY": 48,
+      "panelHeight": 24,
+      "title": "BLACK VAULT LAIR",
+      "titleWidth": 74,
+      "panelWidth": 176,
+      "objective": "NORTH TO DANN-E",
+      "dismissed": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "reduced": true,
+      "bannerY": 48,
+      "panelHeight": 24,
+      "title": "BLACK VAULT LAIR",
+      "titleWidth": 74,
+      "panelWidth": 176,
+      "objective": "NORTH TO DANN-E",
+      "dismissed": true,
+      "errors": []
+    }
+  ],
+  "screenshotsInspected": [
+    "/tmp/vault-room-intro/desktop-normal.png",
+    "/tmp/vault-room-intro/phone-normal.png"
+  ],
+  "skillSmoke": "Exited successfully; black canvas capture inspected; ordinary browser screenshots used",
+  "limitations": [
+    "Direct-scene fixture",
+    "Not physical device QA",
+    "Local only"
+  ]
+}

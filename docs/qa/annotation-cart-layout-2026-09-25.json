@@ -1,0 +1,176 @@
+{
+  "build": "passed",
+  "focusedTests": {
+    "files": 2,
+    "passed": 21
+  },
+  "earnedReplays": {
+    "keyboard": "passed cart parking, three notes and return",
+    "touch": "passed cart parking, three notes and return",
+    "note": "Before final prompt-only shortening and horizontal placement"
+  },
+  "finalApproachChecks": [
+    {
+      "mobile": false,
+      "side": "west",
+      "visible": true,
+      "prompt": {
+        "type": 5,
+        "x": 146.5,
+        "y": 64.5,
+        "width": 41,
+        "height": 19.5
+      },
+      "hero": {
+        "type": 5,
+        "x": 111,
+        "y": 69,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "mobile": false,
+      "side": "east",
+      "visible": true,
+      "prompt": {
+        "type": 5,
+        "x": 106.5,
+        "y": 64.5,
+        "width": 41,
+        "height": 19.5
+      },
+      "hero": {
+        "type": 5,
+        "x": 151,
+        "y": 69,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "mobile": false,
+      "side": "north",
+      "visible": true,
+      "prompt": {
+        "type": 5,
+        "x": 166.5,
+        "y": 64.5,
+        "width": 41,
+        "height": 19.5
+      },
+      "hero": {
+        "type": 5,
+        "x": 131,
+        "y": 57,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "mobile": false,
+      "side": "south",
+      "visible": true,
+      "prompt": {
+        "type": 5,
+        "x": 166.5,
+        "y": 64.5,
+        "width": 41,
+        "height": 19.5
+      },
+      "hero": {
+        "type": 5,
+        "x": 131,
+        "y": 92,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "mobile": true,
+      "side": "west",
+      "visible": true,
+      "prompt": {
+        "type": 5,
+        "x": 146.5,
+        "y": 64.5,
+        "width": 41,
+        "height": 19.5
+      },
+      "hero": {
+        "type": 5,
+        "x": 111,
+        "y": 69,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "mobile": true,
+      "side": "east",
+      "visible": true,
+      "prompt": {
+        "type": 5,
+        "x": 106.5,
+        "y": 64.5,
+        "width": 41,
+        "height": 19.5
+      },
+      "hero": {
+        "type": 5,
+        "x": 151,
+        "y": 69,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "mobile": true,
+      "side": "north",
+      "visible": true,
+      "prompt": {
+        "type": 5,
+        "x": 166.5,
+        "y": 64.5,
+        "width": 41,
+        "height": 19.5
+      },
+      "hero": {
+        "type": 5,
+        "x": 131,
+        "y": 57,
+        "width": 32,
+        "height": 48
+      }
+    },
+    {
+      "mobile": true,
+      "side": "south",
+      "visible": true,
+      "prompt": {
+        "type": 5,
+        "x": 166.5,
+        "y": 64.5,
+        "width": 41,
+        "height": 19.5
+      },
+      "hero": {
+        "type": 5,
+        "x": 131,
+        "y": 92,
+        "width": 32,
+        "height": 48
+      }
+    }
+  ],
+  "screenshotsInspected": [
+    "/tmp/cart-sides/desktop-west.png",
+    "/tmp/cart-sides/phone-east.png"
+  ],
+  "skillSmoke": "Passed; black capture inspected; ordinary browser screenshots used",
+  "limitations": [
+    "Approach checks use position fixtures",
+    "Physical iPhone unverified",
+    "Local only; not published"
+  ]
+}

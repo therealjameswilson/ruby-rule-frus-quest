@@ -1,0 +1,133 @@
+{
+  "date": "2026-09-25",
+  "baseCommit": "863b40a",
+  "bundle": "index-4tzUlnF0.js",
+  "change": "Distinct original counter cue: tool-specific impact plus a soft 880-to-1320 Hz rising sine fifth. Ordinary tool impacts remain unchanged.",
+  "testsPassed": 75,
+  "build": "passed with existing bundle-size warning",
+  "mix": {
+    "scope": "Return cue across three tools, solo and with boss score. Digital levels only; not listening approval.",
+    "results": [
+      {
+        "mode": "return-solo",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.5102366209030151,
+        "rms": 0.025298119333610487,
+        "peakDb": -5.844567485071622,
+        "rmsDb": -31.938235262960845,
+        "clipped": 0
+      },
+      {
+        "mode": "return",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.5797549486160278,
+        "rms": 0.06076138045805114,
+        "peakDb": -4.735110713309234,
+        "rmsDb": -24.32744735632207,
+        "clipped": 0
+      }
+    ],
+    "cancellation": {
+      "before": 5,
+      "after": 0,
+      "whileMuted": 0,
+      "beforeTones": 2,
+      "afterTones": 0,
+      "mutedTones": 0,
+      "settled": 0,
+      "settledTones": 0
+    },
+    "errors": []
+  },
+  "integration": {
+    "scope": "Saved phase and position fixtures; keyboard swing returns a bolt spawned within its live hitbox. Tests direction, texture preservation, reduced motion, and disposal; not a natural playthrough.",
+    "results": [
+      {
+        "mode": "desktop",
+        "incoming": {
+          "angle": 36.430858120162384,
+          "expectedAngle": 36.43085812016236,
+          "visible": true,
+          "depth": 167,
+          "spriteDepth": 168
+        },
+        "returned": {
+          "audioStatus": "ego bolt returned",
+          "returned": true,
+          "tintFill": false,
+          "visible": true,
+          "color": 6740191
+        },
+        "cleanup": {
+          "clear": 0,
+          "expiry": 0,
+          "outside": 0
+        },
+        "errors": []
+      },
+      {
+        "mode": "phone",
+        "incoming": {
+          "angle": 36.430858120162384,
+          "expectedAngle": 36.43085812016236,
+          "visible": true,
+          "depth": 167,
+          "spriteDepth": 168
+        },
+        "returned": {
+          "audioStatus": "ego bolt returned",
+          "returned": true,
+          "tintFill": false,
+          "visible": true,
+          "color": 6740191
+        },
+        "cleanup": {
+          "clear": 0,
+          "expiry": 0,
+          "outside": 0
+        },
+        "errors": []
+      },
+      {
+        "mode": "reduced",
+        "incoming": {
+          "angle": 36.430858120162384,
+          "expectedAngle": 36.43085812016236,
+          "visible": false,
+          "depth": 167,
+          "spriteDepth": 168
+        },
+        "returned": {
+          "audioStatus": "ego bolt returned",
+          "returned": true,
+          "tintFill": false,
+          "visible": false,
+          "color": 6740191
+        },
+        "cleanup": {
+          "clear": 0,
+          "expiry": 0,
+          "outside": 0
+        },
+        "errors": []
+      }
+    ]
+  },
+  "audioArtifacts": [
+    "/tmp/boss-return-audio-final/return-solo.wav",
+    "/tmp/boss-return-audio-final/return.wav"
+  ],
+  "visualChecks": [
+    "Phone returned-projectile snapshot inspected after audio change",
+    "Standard skill movement run completed; headed/headless WebGL captures black and inspected"
+  ],
+  "limitations": [
+    "Digital capture verifies signal, mix headroom and mute/cleanup, not human listening approval.",
+    "Integration uses saved phase and position fixtures plus a real keyboard swing, on desktop and simulated phone.",
+    "Physical-device audio output unverified.",
+    "Overall console-quality goal remains active.",
+    "Local only; not published."
+  ]
+}

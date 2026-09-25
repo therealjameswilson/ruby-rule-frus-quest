@@ -1,0 +1,61 @@
+{
+  "renders": [
+    {
+      "mode": "normal",
+      "early": false,
+      "releaseAt": 1,
+      "peak": 0.1259503960609436,
+      "tailPeak": 0,
+      "pre": 0.04227475232346184,
+      "start": 0.03680911565891769,
+      "end": 0.007446450079017585,
+      "sourcesAtDispose": 7,
+      "sourcesAfterRender": 0
+    },
+    {
+      "mode": "early",
+      "early": true,
+      "releaseAt": 0.04,
+      "peak": 0.01800224930047989,
+      "tailPeak": 0,
+      "pre": null,
+      "start": null,
+      "end": null,
+      "sourcesAtDispose": 8,
+      "sourcesAfterRender": 0
+    },
+    {
+      "mode": "reverb",
+      "early": false,
+      "releaseAt": 1,
+      "peak": 0.0707990825176239,
+      "tailPeak": 0,
+      "pre": 7.3737003144565706e-06,
+      "start": 4.21415796689046e-06,
+      "end": 3.375142678126466e-07,
+      "sourcesAtDispose": 0,
+      "sourcesAfterRender": 0
+    }
+  ],
+  "transition": {
+    "oldSources": 0,
+    "newMusic": true,
+    "newTheme": "openNetRouting"
+  },
+  "suspended": {
+    "before": 3,
+    "after": 0
+  },
+  "muteStops": true,
+  "errors": [],
+  "limitations": [
+    "Automated waveform/lifecycle analysis; not human listening"
+  ],
+  "date": "2026-09-25",
+  "build": "passed",
+  "unitTestsPassed": 15,
+  "mobileWebKitVisibilityCyclesPassed": 3,
+  "skillCapture": "Black WebGL capture inspected; normal WebKit screenshot inspected instead",
+  "normalScreenshot": "/tmp/score-release/visibility-phone.png",
+  "published": false
+}

@@ -1,3 +1,4 @@
+vi.mock("./publicationBackdrop", () => ({ publicationBackdrop: () => null }));
 import type Phaser from "phaser";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { gameState, getCompletionStatsReadout, getStatutoryClockStateReadout, resetGameState } from "../game/state";

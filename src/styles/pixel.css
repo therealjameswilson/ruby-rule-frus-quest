@@ -310,10 +310,10 @@ canvas {
 
 #boot-loader-bar span {
   display: block;
-  width: 40%;
+  width: 0;
   height: 100%;
   background: #d6a23a;
-  animation: boot-loader-scan 1.1s ease-in-out infinite;
+  transition: width 180ms ease;
 }
 
 #boot-loader-text {
@@ -323,15 +323,20 @@ canvas {
   color: #68c0c0;
 }
 
-@keyframes boot-loader-scan {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(250%); }
+#boot-loader-text { max-width: 280px; line-height: 1.6; padding: 0 18px; }
+#boot-loader[data-state="error"] #boot-loader-text { font-size: 12px; letter-spacing: .3px; }
+#boot-loader-retry {
+  min-width: 128px; min-height: 44px; margin-top: 12px;
+  border: 1px solid #d6a23a; border-radius: 6px;
+  background: #d6a23a; color: #26111a; font: 700 12px ui-monospace, monospace;
+  cursor: pointer;
 }
+#boot-loader-retry[hidden] { display: none; }
+#boot-loader-retry:focus-visible { outline: 3px solid #68c0c0; outline-offset: 4px; }
 
 @media (prefers-reduced-motion: reduce) {
   #boot-loader-bar span {
-    animation: none;
-    width: 100%;
+    transition: none;
   }
   #boot-loader {
     transition: none;
@@ -348,3 +353,54 @@ canvas {
       max(8px, env(safe-area-inset-left));
   }
 }
+
+/* On tall portrait screens the controls occupy the space below the room. */
+#portrait-touch-dock {
+  position: fixed;
+  z-index: 100;
+  left: var(--ruby-game-center);
+  top: calc(var(--ruby-game-bottom) + 12px);
+  width: min(var(--ruby-game-width), 420px);
+  height: 168px;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+  border: 1px solid #796943;
+  border-radius: 22px;
+  background: linear-gradient(145deg, #202e39, #111a23);
+  box-shadow: inset 0 1px #43505b, 0 6px 18px #0008;
+  touch-action: none;
+  user-select: none;
+}
+#portrait-touch-dock[hidden] { display: none; }
+#portrait-touch-dock button {
+  position: absolute;
+  color: #f2d995;
+  background: linear-gradient(#32414d, #1b2631);
+  border: 2px solid #bba16b;
+  box-shadow: 0 4px 0 #080f16;
+  border-radius: 50%;
+  width: 64px; height: 64px;
+  font: bold 25px Arial, sans-serif;
+  touch-action: none;
+}
+#portrait-touch-dock button[data-control="space"] { right: 16px; top: 15px; }
+#portrait-touch-dock button[data-control="b"] { right: 87px; top: 65px; }
+#portrait-touch-dock button[data-control="b"]::after {
+  content: ''; position: absolute; height: 3px; left: 10%; bottom: -9px;
+  width: calc(var(--cooldown, 0%) * .8); background: #69c2c6; border-radius: 2px;
+}
+#portrait-touch-dock button[data-control="start"] {
+  right: 16px; top: 112px; width: 64px; height: 44px;
+  border-radius: 10px; font-size: 11px; border-width: 1px;
+}
+#portrait-touch-dock button.pressed { transform: translateY(3px); box-shadow: 0 1px 0 #080f16; color: #9cf4ed; border-color: #82d9d7; }
+#portrait-touch-dock button:disabled { opacity: .3; }
+.portrait-dpad { position: absolute; left: 12px; top: 17px; width: 128px; height: 128px; border: 1px solid #647077; border-radius: 24px; background: #101923; box-shadow: inset 0 2px 9px #000a; }
+.portrait-dpad span { position: absolute; color: #c8ad70; font: 24px Arial,sans-serif; width: 40px; height: 40px; display: grid; place-items: center; }
+.portrait-dpad [data-direction="up"] { left: 44px; top: 0; }
+.portrait-dpad [data-direction="down"] { left: 44px; bottom: 0; }
+.portrait-dpad [data-direction="left"] { left: 0; top: 44px; }
+.portrait-dpad [data-direction="right"] { right: 0; top: 44px; }
+.portrait-dpad .portrait-dpad-center { left: 45px; top: 45px; width: 38px; height: 38px; border-radius: 50%; background: radial-gradient(circle at 40% 30%,#56616a,#263440); box-shadow: 0 2px 4px #0009; }
+.portrait-dpad[data-direction="up"] [data-direction="up"], .portrait-dpad[data-direction="down"] [data-direction="down"], .portrait-dpad[data-direction="left"] [data-direction="left"], .portrait-dpad[data-direction="right"] [data-direction="right"] { color: #99f0eb; }
+.portrait-dpad.disabled { opacity: .3; }

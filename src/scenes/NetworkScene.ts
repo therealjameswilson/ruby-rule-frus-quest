@@ -1,3 +1,9 @@
+import { preloadDetailedNpcs } from '../art/npcSprites';
+import { reviewPacketArt, reviewInboxArt } from "../systems/reviewPacketArt";
+import { prefersReducedMotion } from "../systems/motionPreferences";
+import { researchProp } from "../systems/researchProps";
+import { clearanceStationArt, preloadClearanceStationArt } from "../systems/clearanceStationArt";
+import { addNetworkRoomFloor } from "../systems/networkRoomFloor";
 import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
 import Phaser from "phaser";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
@@ -161,6 +167,7 @@ export class NetworkScene extends Phaser.Scene {
   private classNetReviewComplete = false;
   private vaultDocketWorldIcon?: Phaser.GameObjects.Container;
   private vaultDocketHeldIcon?: Phaser.GameObjects.Container;
+  private vaultFilingFlights: Array<{ icon: Phaser.GameObjects.Container; elapsed: number; from: { x: number; y: number }; to: { x: number; y: number } }> = [];
   private vaultStationFrames = new Map<ClassNetVaultStationId, Phaser.GameObjects.Rectangle>();
   private vaultStationLamps = new Map<ClassNetVaultStationId, Phaser.GameObjects.Rectangle[]>();
   private clearanceTokenCollected = false;
@@ -188,7 +195,16 @@ export class NetworkScene extends Phaser.Scene {
     super("NetworkScene");
   }
 
+  preload() {
+    preloadDetailedNpcs(this, ['marcus']);
+    preloadClearanceStationArt(this);
+  }
+
   create(data?: unknown) {
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      for (const flight of this.vaultFilingFlights) if (flight.icon.active) flight.icon.destroy();
+      this.vaultFilingFlights = [];
+    });
     this.attackBuffer.clear();
     installAttackBufferLifecycle(this.events, this.attackBuffer);
     const arrival = readChapterArrival(data, "NetworkScene", gameState.currentScene);
@@ -228,7 +244,7 @@ export class NetworkScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
-    this.toast = new FeedbackToast(this);
+    this.toast = new FeedbackToast(this, 1200, () => this.player.sprite.getBounds());
     this.ledgerChoice = new WithholdingChronologyBoard(this);
     this.danneLurker = new DanneLurker(this, 46, 66, {
       boltBlocked: (x, y) => this.roomSolids.some(rect => rect.contains(x, y)),
@@ -338,6 +354,7 @@ export class NetworkScene extends Phaser.Scene {
       this.updateDanneLurker(delta, false);
       return;
     }
+    this.updateVaultFilingFlights(delta);
     this.player.update(delta, true, { bounds: NETWORK_PLAY_BOUNDS, solids: this.roomSolids });
     if (input.bJustPressed) this.attackBuffer.press(this.time.now);
     if (this.attackBuffer.consume(this.time.now, this.player.combatReadout.weapon.canSwing && this.player.combatReadout.state !== "hurt")) {
@@ -432,6 +449,8 @@ export class NetworkScene extends Phaser.Scene {
     this.vaultDocketWorldIcon = undefined;
     if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
     this.vaultDocketHeldIcon = undefined;
+    for (const flight of this.vaultFilingFlights) flight.icon.destroy();
+    this.vaultFilingFlights = [];
     this.vaultStationFrames.clear();
     this.vaultStationLamps.clear();
     this.routingPacketWorldIcon = undefined;
@@ -457,6 +476,8 @@ export class NetworkScene extends Phaser.Scene {
       addSnesRoomLayer(this, { roomId: room.id, roomType: room.roomType, theme: "network", track: (object) => this.track(object) });
       this.drawNetworkTileField(room.id);
     }
+    const detailedFloor = addNetworkRoomFloor(this, room.id === "N1");
+    if (detailedFloor) this.track(detailedFloor);
     this.drawRoomDoors();
     if (room.id === "N1") this.renderNetworkSplit(packedTilemapRendered);
     else this.renderClassNetVault(packedTilemapRendered);
@@ -1210,12 +1231,9 @@ export class NetworkScene extends Phaser.Scene {
       }
     }
     this.drawClassNetStations();
-    this.vaultInbox = this.track(this.add.container(128, 132, [
-      this.add.ellipse(0, 7, 40, 8, color(PALETTE.black), 0.35),
-      this.add.rectangle(0, 0, 36, 14, color(PALETTE.stoneDark)).setStrokeStyle(1, color(PALETTE.stoneGray)),
-      this.add.rectangle(0, -4, 30, 2, color(PALETTE.creamPaper)),
-      this.add.rectangle(0, 5, 34, 3, color(PALETTE.sepiaInk))
-    ]).setName("network-review-inbox").setDepth(134));
+    const inboxArt = reviewInboxArt(this);
+    this.vaultInbox = this.track(this.add.container(128, 132, inboxArt ? [inboxArt] : [])
+      .setName("network-review-inbox").setDepth(134));
     const reward = this.vaultReward = this.track(this.add.container(0, 0)
       .setName("network-clearance-reward").setDepth(138));
     addSnesTreasurePedestal(this, {
@@ -1267,24 +1285,35 @@ export class NetworkScene extends Phaser.Scene {
             : PALETTE.classNetRed;
       const container = this.track(this.add.container(position.x, position.y)
         .setName(`classnet-station-${docket.station}`)
-        .setDepth(154));
-      container.add(this.add.ellipse(0, 10, 54, 10, color(PALETTE.black), 0.48));
-      const frame = this.add.rectangle(0, 0, 56, 25, color(PALETTE.black), 0.92)
-        .setStrokeStyle(2, color(accent));
+        .setDepth(position.y + 12));
+      const desk = clearanceStationArt(this, docket.station) ?? researchProp(this, "desk", 0, -8, 58);
+      if (desk) container.add(desk.setName("classnet-research-desk"));
+      // South stations keep their labels above the desks and mobile controls.
+      const plaqueY = docket.station === "release_board" ? 14 : -34;
+      // Plaques live above the furniture in world space. Their own depth lets
+      // a compiler approaching from below pass in front instead of being masked.
+      const plaque = this.track(this.add.container(position.x, position.y + plaqueY)
+        .setName(`classnet-plaque-${docket.station}`).setDepth(position.y + plaqueY));
+      const frame = this.add.rectangle(0, 0, 46, 12, 0x292820, 0.98)
+        .setName("classnet-station-plaque")
+        .setStrokeStyle(0.5, color(accent));
       this.vaultStationFrames.set(docket.station, frame);
-      container.add(frame);
-      container.add(this.add.text(0, -9, this.classNetStationShortLabel(docket.station), {
+      plaque.add(frame);
+      for (const x of [-21, 21]) {
+        plaque.add(this.add.circle(x, 0, 0.6, 0xc4ae78));
+      }
+      plaque.add(this.add.text(0, -6, this.classNetStationShortLabel(docket.station), {
         fontFamily: "monospace",
-        fontSize: "8px",
-        color: accent,
+        fontSize: "6px",
+        color: PALETTE.creamPaper,
         align: "center"
       }).setOrigin(0.5, 0));
       const lamps: Phaser.GameObjects.Rectangle[] = [];
       for (let lamp = 0; lamp < docket.checkIds.length; lamp += 1) {
-        const indicator = this.add.rectangle(-10 + lamp * 10, 5, 6, 5, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
+        const indicator = this.add.rectangle(-8 + lamp * 8, 3, 3, 2, color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark))
           .setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray));
         lamps.push(indicator);
-        container.add(indicator);
+        plaque.add(indicator);
       }
       this.vaultStationLamps.set(docket.station, lamps);
     }
@@ -1442,7 +1471,7 @@ export class NetworkScene extends Phaser.Scene {
   private pickUpVaultDocket() {
     const docket = getClassNetVaultDocket(this.classNetReviewStep);
     this.carryVaultDocket(docket);
-    retroAudio.confirm();
+    retroAudio.paperPickup();
     this.toast.show("REVIEW BATCH", this.player.position, "info");
     setLatestMessage(`${docket.contentsLabel}. File at ${docket.stationLabel}; the next docket will stay with you.`);
     setObjective(this.classNetVaultObjective());
@@ -1497,6 +1526,7 @@ export class NetworkScene extends Phaser.Scene {
       return;
     }
 
+    this.animateVaultFiling(docket.id, station);
     gameState.sceneProgress.classNetVaultDocketCarried = 0;
     setHeldItem(null);
     if (this.vaultDocketHeldIcon?.active) this.vaultDocketHeldIcon.destroy();
@@ -1507,7 +1537,6 @@ export class NetworkScene extends Phaser.Scene {
     this.syncLegacyClassNetProgress(result.nextStep);
     this.awardClassNetDocketPoints(result.docket.id);
     this.syncClassNetStationFrames();
-    retroAudio.stamp();
     setLatestMessage(result.message);
     if (result.complete) {
       gameState.sceneProgress.classNetVaultReviewComplete = 1;
@@ -1568,7 +1597,7 @@ export class NetworkScene extends Phaser.Scene {
           : docket.station === "release_board"
             ? PALETTE.goldStamp
             : PALETTE.classNetRed;
-      frame.setStrokeStyle(2, color(accent));
+      frame.setStrokeStyle(0.5, color(accent));
       for (const lamp of this.vaultStationLamps.get(docket.station) ?? []) {
         lamp.setFillStyle(color(filed ? PALETTE.openNetGreen : PALETTE.stoneDark));
         lamp.setStrokeStyle(1, color(filed ? PALETTE.creamPaper : PALETTE.stoneGray));
@@ -1608,6 +1637,7 @@ export class NetworkScene extends Phaser.Scene {
       docketId,
       true
     ).setName(`classnet-carried-docket-${docketId}`).setDepth(280);
+    this.updateVaultDocketIcon();
   }
 
   private createVaultDocketIcon(
@@ -1623,24 +1653,41 @@ export class NetworkScene extends Phaser.Scene {
       : docket.station === "release_board"
         ? PALETTE.goldStamp
         : PALETTE.classNetRed;
-    const width = compact ? 22 : 32;
-    const height = compact ? 14 : 20;
-    return this.add.container(x, y, [
-      this.add.ellipse(1, Math.round(height / 2), width + 4, 7, color(PALETTE.black), 0.42),
-      this.add.rectangle(0, 0, width, height, color(PALETTE.creamPaper))
-        .setStrokeStyle(1, color(accent)),
-      this.add.rectangle(-Math.round(width / 2) + 4, 0, 4, height - 3, color(PALETTE.deepRuby)),
-      this.add.rectangle(-5, -Math.round(height / 2), compact ? 9 : 13, 4, color(accent))
-        .setStrokeStyle(1, color(PALETTE.black)),
-      ...docket.checkIds.map((_, index) => this.add.rectangle(-7 + index * 7, compact ? 3 : 4, 4, 2, color(accent)))
-    ]);
+    const art = reviewPacketArt(this, accent, compact);
+    return this.add.container(x, y, art ? [art] : []);
   }
 
   private updateVaultDocketIcon() {
     if (!this.vaultDocketHeldIcon?.active) return;
+    const side = this.player.facingDirection === "west" ? -8 : 8;
     this.vaultDocketHeldIcon
-      .setPosition(Math.round(this.player.position.x), Math.round(this.player.position.y - 17))
+      .setPosition(this.player.position.x + side, this.player.position.y - 17)
       .setDepth(Math.round(this.player.position.y) + 5);
+  }
+
+  private animateVaultFiling(id: ClassNetVaultDocketId, station: ClassNetVaultStationId) {
+    if (prefersReducedMotion()) { retroAudio.fileDocket(); return; }
+    const held = this.vaultDocketHeldIcon;
+    const from = { x: held?.x ?? this.player.position.x, y: held?.y ?? this.player.position.y - 17 };
+    const position = this.classNetStationPosition(station);
+    const icon = this.createVaultDocketIcon(from.x, from.y, id, true)
+      .setName("classnet-filing-packet").setDepth(280);
+    this.vaultFilingFlights.push({ icon, from, to: { x: position.x, y: position.y - 5 }, elapsed: 0 });
+  }
+
+  private updateVaultFilingFlights(delta: number) {
+    this.vaultFilingFlights = this.vaultFilingFlights.filter(flight => {
+      if (!flight.icon.active) return false;
+      flight.elapsed += Math.max(0, Math.min(delta, 50));
+      const t = prefersReducedMotion() ? 1 : Math.min(1, flight.elapsed / 240);
+      const eased = 1 - Math.pow(1 - t, 3);
+      flight.icon.setPosition(
+        Phaser.Math.Linear(flight.from.x, flight.to.x, eased),
+        Phaser.Math.Linear(flight.from.y, flight.to.y, eased) - Math.sin(t * Math.PI) * 5
+      ).setScale(1 - t * .2).setAlpha(t < .65 ? 1 : (1 - t) / .35);
+      if (t < 1) return true;
+      flight.icon.destroy(); retroAudio.fileDocket(); return false;
+    });
   }
 
   private collectClearanceToken() {

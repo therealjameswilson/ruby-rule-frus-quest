@@ -80,16 +80,20 @@ export function computeIntegerCanvasLayout(viewport: PixelViewport) {
 }
 
 /** Fit the high-density surface to the safe viewport without cropping the world. */
-export function computePresentationLayout(viewport: PixelViewport) {
+export function computePresentationLayout(viewport: PixelViewport, dockVisible = false) {
   const dpr = normalizeDevicePixelRatio(viewport.dpr);
   const availableWidth = Math.max(1, viewport.width);
   const availableHeight = Math.max(1, viewport.height);
   const cssZoom = Math.min(availableWidth / GAME_WIDTH, availableHeight / GAME_HEIGHT);
   const width = GAME_WIDTH * cssZoom;
   const height = GAME_HEIGHT * cssZoom;
-  return { dpr, cssZoom, deviceZoom: cssZoom * dpr, width, height,
+  // Keep the eligibility threshold independent of the shifted canvas to avoid
+  // layout oscillation. Center the game and 12px gap + 168px dock as one unit.
+  const portraitDockEligible = availableHeight > availableWidth && (availableHeight - height) / 2 >= 184;
+  const controlsHeight = dockVisible && portraitDockEligible ? 180 : 0;
+  return { dpr, cssZoom, deviceZoom: cssZoom * dpr, width, height, portraitDockEligible,
     x: viewport.x + (availableWidth - width) / 2,
-    y: viewport.y + (availableHeight - height) / 2 };
+    y: viewport.y + (availableHeight - height - controlsHeight) / 2 };
 }
 
 function getViewport(): PixelViewport {
@@ -107,7 +111,13 @@ function getViewport(): PixelViewport {
 }
 
 export function configureIntegerGameShellScale() {
-  const layout = computePresentationLayout(getViewport());
+  const viewport = getViewport();
+  const root = document.documentElement;
+  const layout = computePresentationLayout(viewport, root.dataset.portraitDockVisible === "true");
+  root.dataset.portraitDock = String(layout.portraitDockEligible);
+  root.style.setProperty("--ruby-game-bottom", `${layout.y + layout.height}px`);
+  root.style.setProperty("--ruby-game-center", `${layout.x + layout.width / 2}px`);
+  root.style.setProperty("--ruby-game-width", `${layout.width}px`);
   const shell = document.getElementById("game-shell");
   if (shell) {
     shell.style.width = `${layout.width}px`;

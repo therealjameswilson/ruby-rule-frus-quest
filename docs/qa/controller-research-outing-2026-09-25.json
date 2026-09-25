@@ -1,0 +1,49 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTestsPassed": 9,
+  "desktop": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "phone": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "completionCues": [
+    "PACKET FILED",
+    "REVIEW SAVED STEP"
+  ],
+  "screenshotsInspected": [
+    "/tmp/controller-research-final/desktop-packet-filed.png",
+    "/tmp/controller-research-final/phone-packet-filed.png"
+  ],
+  "limitations": [
+    "Controller input simulated through standard browser Gamepad API; no physical controller",
+    "Real route movement and choices; no injected position or earned progression",
+    "Phone layout simulated; not physical iPhone",
+    "Local changes; not published"
+  ]
+}

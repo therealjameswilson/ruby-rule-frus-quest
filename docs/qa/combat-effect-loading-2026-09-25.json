@@ -1,0 +1,79 @@
+{
+  "titleBytes": 5541856,
+  "titleRequestsExcluded": [
+    "19_vfx_ego_bolt_strip.webp",
+    "effects_stamps.png",
+    "20_ui_scroll_corners.webp"
+  ],
+  "galleryScrollPreserved": true,
+  "results": [
+    {
+      "failedAsset": "19_vfx_ego_bolt_strip.webp",
+      "retry": true,
+      "savedProgressPreserved": true,
+      "art": {
+        "ego": 8,
+        "stamp": 20,
+        "animation": true
+      },
+      "fetched": [
+        "19_vfx_ego_bolt_strip.webp",
+        "effects_stamps.png",
+        "19_vfx_ego_bolt_strip.webp",
+        "19_vfx_ego_bolt_strip.webp",
+        "19_vfx_ego_bolt_strip.webp"
+      ],
+      "errors": []
+    },
+    {
+      "failedAsset": "effects_stamps.png",
+      "retry": true,
+      "savedProgressPreserved": true,
+      "art": {
+        "ego": 8,
+        "stamp": 20,
+        "animation": true
+      },
+      "fetched": [
+        "19_vfx_ego_bolt_strip.webp",
+        "effects_stamps.png",
+        "effects_stamps.png",
+        "effects_stamps.png",
+        "effects_stamps.png"
+      ],
+      "errors": []
+    }
+  ],
+  "date": "2026-09-25",
+  "previousTitleBytes": 10371641,
+  "originalBaselineBytes": 13096959,
+  "build": "passed",
+  "fullSuiteBeforeFinalUiVisibilityFix": {
+    "files": 271,
+    "tests": 2042
+  },
+  "finalFocusedTests": 22,
+  "touchCombat": {
+    "multitouchAndDeadzone": true,
+    "menuToggle": true,
+    "blurStops": true,
+    "rotationStops": true,
+    "controllerHandoff": true,
+    "smallScreenFallback": true,
+    "realAttackWhileMoving": true,
+    "titleHidden": true,
+    "errors": [],
+    "limitations": [
+      "Simulated Chromium touch; no physical iPhone",
+      "Player position fixture used for clear movement corridor"
+    ]
+  },
+  "loadingDockHidden": true,
+  "gameplayDockRestored": true,
+  "published": false,
+  "limitations": [
+    "Local encoded resource sizes, not physical-device load timings",
+    "Simulated Chromium touch",
+    "Skill WebGL snapshot black; normal retry screenshot inspected"
+  ]
+}

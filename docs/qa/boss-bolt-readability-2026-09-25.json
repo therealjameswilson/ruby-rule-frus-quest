@@ -1,0 +1,118 @@
+{
+  "date": "2026-09-25",
+  "baseCommit": "b1a30cc",
+  "bundle": "index-MMZ_5PmK.js",
+  "change": "Original tapered direction tail under each Ego bolt. Warm incoming tail and cyan returned tail; returned paper now uses texture-preserving tint instead of solid tint fill. Reduced-motion bolts omit tails.",
+  "focusedTests": 71,
+  "build": "passed with existing bundle-size warning",
+  "fixtureChecks": {
+    "scope": "Saved phase and position fixtures; keyboard swing returns a bolt spawned within its live hitbox. Tests direction, texture preservation, reduced motion, and disposal; not a natural playthrough.",
+    "results": [
+      {
+        "mode": "desktop",
+        "incoming": {
+          "angle": 36.430858120162384,
+          "expectedAngle": 36.43085812016236,
+          "visible": true,
+          "depth": 167,
+          "spriteDepth": 168
+        },
+        "returned": {
+          "returned": true,
+          "tintFill": false,
+          "visible": true,
+          "color": 6740191
+        },
+        "cleanup": {
+          "clear": 0,
+          "expiry": 0,
+          "outside": 0
+        },
+        "errors": []
+      },
+      {
+        "mode": "phone",
+        "incoming": {
+          "angle": 36.430858120162384,
+          "expectedAngle": 36.43085812016236,
+          "visible": true,
+          "depth": 167,
+          "spriteDepth": 168
+        },
+        "returned": {
+          "returned": true,
+          "tintFill": false,
+          "visible": true,
+          "color": 6740191
+        },
+        "cleanup": {
+          "clear": 0,
+          "expiry": 0,
+          "outside": 0
+        },
+        "errors": []
+      },
+      {
+        "mode": "reduced",
+        "incoming": {
+          "angle": 36.430858120162384,
+          "expectedAngle": 36.43085812016236,
+          "visible": false,
+          "depth": 167,
+          "spriteDepth": 168
+        },
+        "returned": {
+          "returned": true,
+          "tintFill": false,
+          "visible": false,
+          "color": 6740191
+        },
+        "cleanup": {
+          "clear": 0,
+          "expiry": 0,
+          "outside": 0
+        },
+        "errors": []
+      }
+    ]
+  },
+  "earnedTouchFight": [
+    {
+      "label": "fight-summary",
+      "cycles": 8,
+      "retries": 1,
+      "freshCoreHits": 6,
+      "tightApproaches": 1,
+      "phases": [
+        "colossus",
+        "swarm",
+        "cloud"
+      ],
+      "seconds": 68.004,
+      "deadlineMissed": false
+    }
+  ],
+  "projectileAudit": {
+    "samples": 1132,
+    "phases": {
+      "colossus": 156,
+      "swarm": 154,
+      "cloud": 822
+    },
+    "invalid": []
+  },
+  "errors": [],
+  "visualChecks": [
+    "Phone incoming and returned captures",
+    "Reduced-motion returned capture",
+    "Swarm and Cloud combat captures; Cloud snapshot shows initial overlapping launch, not later spread separation",
+    "Standard client headless and headed captures black with valid movement state; regular renderer snapshots displayed and inspected"
+  ],
+  "limitations": [
+    "Fixture checks inject projectile spawn locations and use a real keyboard swing.",
+    "Full fight uses state-aware automated phone touch controls; not unaided human play.",
+    "Physical iPhone unverified.",
+    "Overall console-quality objective remains active.",
+    "Local only; not published."
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "date": "2026-09-25",
+  "engine": "Playwright WebKit 26.4 on macOS",
+  "unitTests": {
+    "files": 2,
+    "passed": 8
+  },
+  "keyboardRoute": {
+    "enteredFromLobby": true,
+    "readGuide": true,
+    "unsolvedReturn": true,
+    "errors": []
+  },
+  "phoneViewport": {
+    "width": 390,
+    "height": 844,
+    "library": "reagan",
+    "rooms": 3,
+    "wrongAnswerRecovered": true,
+    "saved": true,
+    "returned": true,
+    "errors": [],
+    "positionFixtures": true
+  },
+  "limitations": [
+    "Not physical iPhone Safari validation",
+    "Not an unaided campaign playthrough",
+    "Local build only; not published"
+  ],
+  "presentation": {
+    "allLibraryTitlesFit": 11,
+    "sourceLinkTouchOpened": true,
+    "northSignOverlapsHero": false,
+    "screenshots": [
+      "/tmp/nsc-plaques-route/wing-north-signage.png",
+      "/tmp/nsc-plaques-phone/final-layout.png"
+    ],
+    "build": "passed",
+    "pageErrors": []
+  }
+}

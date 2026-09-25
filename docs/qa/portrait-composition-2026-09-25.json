@@ -1,0 +1,35 @@
+{
+  "multitouchAndDeadzone": true,
+  "menuToggle": true,
+  "blurStops": true,
+  "rotationStops": true,
+  "controllerHandoff": true,
+  "smallScreenFallback": true,
+  "realAttackWhileMoving": true,
+  "titleHidden": true,
+  "errors": [],
+  "limitations": [
+    "Simulated Chromium touch; no physical iPhone",
+    "Player position fixture used for clear movement corridor"
+  ],
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTests": {
+    "files": 2,
+    "passed": 44
+  },
+  "composition": "Game and 180px control region centered together without changing canvas size; hidden dock restores canvas centering",
+  "webkitRoute": {
+    "library": "reagan",
+    "rooms": 3,
+    "wrongAnswerRecovered": true,
+    "saved": true,
+    "returned": true,
+    "errors": []
+  },
+  "captureLimitations": [
+    "Concurrent Chromium NSC run timed out on screenshot; separate WebKit route passed",
+    "Skill WebGL snapshot black; normal Chromium and WebKit screenshots inspected"
+  ],
+  "published": false
+}

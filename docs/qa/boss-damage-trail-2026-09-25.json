@@ -1,0 +1,107 @@
+{
+  "date": "2026-09-25",
+  "baseCommit": "ccb7be9",
+  "bundle": "index-BFMf6hFS.js",
+  "change": "Boss HP immediately updates; a gold trail holds recent damage for 180ms then catches up. Pause freezes it, phase changes reset it, reduced motion removes it, high contrast uses cream.",
+  "focusedTests": 63,
+  "build": "passed with existing bundle-size warning",
+  "fixtureChecks": {
+    "scope": "Saved checkpoint and position fixtures; damage invokes real returned-bolt handler. Pause/resume uses keyboard. Not a natural fight playthrough.",
+    "results": [
+      {
+        "mode": "desktop",
+        "hit": {
+          "beforeHp": 180,
+          "width": 148,
+          "visible": true,
+          "hp": 152
+        },
+        "paused": true,
+        "phaseReset": true,
+        "errors": []
+      },
+      {
+        "mode": "phone",
+        "hit": {
+          "beforeHp": 180,
+          "width": 148,
+          "visible": true,
+          "hp": 152
+        },
+        "paused": true,
+        "phaseReset": true,
+        "errors": []
+      },
+      {
+        "mode": "reduced",
+        "hit": {
+          "beforeHp": 180,
+          "width": 125,
+          "visible": false,
+          "hp": 152
+        },
+        "paused": false,
+        "phaseReset": true,
+        "errors": []
+      }
+    ]
+  },
+  "earnedTouchFight": [
+    {
+      "label": "fight-summary",
+      "cycles": 7,
+      "retries": 0,
+      "freshCoreHits": 7,
+      "tightApproaches": 0,
+      "phases": [
+        "colossus",
+        "swarm",
+        "cloud"
+      ],
+      "seconds": 60.492,
+      "deadlineMissed": false
+    }
+  ],
+  "trailAudit": {
+    "samples": 322,
+    "phases": {
+      "colossus": 94,
+      "swarm": 96,
+      "cloud": 132
+    },
+    "invalid": []
+  },
+  "errors": [],
+  "harnessCorrection": "First full fight reached bindery but audit failed after reload cleared its window data. Moved audit before reload; fresh run passed.",
+  "visualChecks": [
+    "Desktop hit capture inspected",
+    "Phone hit capture inspected",
+    "Reduced-motion hit capture inspected",
+    "Standard skill captures black in headed and headless modes; regular Phaser snapshots rendered and were inspected.",
+    "High-contrast cream trail and HP pattern inspected"
+  ],
+  "limitations": [
+    "Simulated phone and state-aware automated fight, not physical iPhone or unaided human play.",
+    "Focused pause/reduced-motion cases use saved checkpoint, position, and real damage-handler invocation fixtures.",
+    "Local only; no publication.",
+    "Overall console-quality objective remains active."
+  ],
+  "highContrast": {
+    "scope": "Saved checkpoint and position fixtures; damage invokes real returned-bolt handler. Pause/resume uses keyboard. Not a natural fight playthrough.",
+    "results": [
+      {
+        "mode": "contrast",
+        "hit": {
+          "beforeHp": 180,
+          "width": 148,
+          "visible": true,
+          "hp": 152,
+          "color": 15259816
+        },
+        "paused": true,
+        "phaseReset": true,
+        "errors": []
+      }
+    ]
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-25",
+  "problem": "Outside doorway stole interaction focus from the opening mission inbox.",
+  "change": "Reduced outside doorway base interaction radius from 16 to 8 logical pixels; effective reach is 14 with existing door padding.",
+  "build": "passed",
+  "freshKeyboardOpening": {
+    "passed": true,
+    "route": "Opening, assignment, memo routing/stamping, compiler decisions, Guide counter, reward, Continue, Archive entry",
+    "artifact": "/tmp/inbox-fixed-opening/results.json",
+    "errors": []
+  },
+  "focusedChecks": [
+    {
+      "mobile": false,
+      "memoRouted": true,
+      "memoStamped": true,
+      "walkedOutside": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "memoRouted": true,
+      "memoStamped": true,
+      "walkedOutside": true,
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Focused test starts from the earned memo checkpoint; uses real keyboard/touch movement and interaction thereafter.",
+    "Simulated phone, not physical iPhone.",
+    "No new full campaign victory result.",
+    "Local only."
+  ]
+}

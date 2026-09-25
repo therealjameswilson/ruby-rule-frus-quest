@@ -1,8 +1,10 @@
 import Phaser from "phaser";
 import { ACCESSIBILITY_OVERLAYS } from "../assets/registry";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
-import { setLatestMessage } from "../game/state";
+import { gameState, setLatestMessage } from "../game/state";
 import { addColorblindModeListener, isColorblindModeEnabled } from "./accessibilitySettings";
+import { BossDamageTrail } from "./bossDamageTrail";
+import { prefersReducedMotion } from "./motionPreferences";
 
 function color(hex: string) {
   return Phaser.Display.Color.HexStringToColor(hex).color;
@@ -13,6 +15,8 @@ class BossHudController {
   private readonly container: Phaser.GameObjects.Container;
   private readonly frame: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle;
   private readonly fill: Phaser.GameObjects.Rectangle;
+  private readonly damageFill: Phaser.GameObjects.Rectangle;
+  private readonly damageTrail: BossDamageTrail;
   private readonly fillPattern?: Phaser.GameObjects.TileSprite;
   private readonly glow: Phaser.GameObjects.Rectangle;
   private readonly criticalIcon?: Phaser.GameObjects.Image;
@@ -29,10 +33,13 @@ class BossHudController {
     this.scene = scene;
     this.maxHp = Math.max(1, maxHp);
     this.currentHp = this.maxHp;
+    this.damageTrail = new BossDamageTrail(this.maxHp);
     this.phaseCount = Math.max(1, Math.min(4, phaseCount));
     const bg = scene.add.rectangle(GAME_WIDTH / 2, 31, 238, 14, color(PALETTE.black), 0.98).setScrollFactor(0);
     this.frame = scene.add.rectangle(120, 31, 150, 8, color(PALETTE.deepRuby))
       .setStrokeStyle(1, color(PALETTE.stoneGray)).setScrollFactor(0);
+    this.damageFill = scene.add.rectangle(46, 31, 148, 6, color(PALETTE.goldStamp))
+      .setName("boss-damage-trail").setOrigin(0, 0.5).setScrollFactor(0).setVisible(false);
     this.fill = scene.add.rectangle(46, 31, 1, 6, color(PALETTE.buckramHighlight), 0.92)
       .setOrigin(0, 0.5)
       .setScrollFactor(0);
@@ -74,9 +81,10 @@ class BossHudController {
         : undefined;
       if (phaseGlyph) this.phaseGlyphs.push(phaseGlyph);
     }
-    this.container = scene.add.container(0, 0, [
+    this.container = scene.add.container(0, 2, [
       bg,
       this.frame,
+      this.damageFill,
       this.fill,
       ...(this.fillPattern ? [this.fillPattern] : []),
       this.glow,
@@ -86,24 +94,37 @@ class BossHudController {
       ...this.phaseGems,
       ...this.phaseGlyphs
     ])
+      .setName("boss-health-hud")
       .setDepth(1550)
       .setScrollFactor(0);
     this.removeColorblindModeListener = addColorblindModeListener(() => this.setHp(this.currentHp, this.currentPhase));
     this.setHp(this.maxHp, 0);
+    scene.events.on(Phaser.Scenes.Events.UPDATE, this.updateDamageTrail, this);
   }
 
   destroy() {
+    this.scene.events.off(Phaser.Scenes.Events.UPDATE, this.updateDamageTrail, this);
     this.removeColorblindModeListener();
     this.container.destroy();
   }
 
+  private updateDamageTrail(_time: number, delta: number) {
+    if (gameState.mode !== "explore") return;
+    this.damageTrail.advance(delta, this.maxHp, prefersReducedMotion());
+    this.damageFill.setSize(Math.max(1, Math.round(148 * this.damageTrail.value / this.maxHp)), 6)
+      .setVisible(this.damageTrail.value > this.currentHp);
+  }
+
   setHp(currentHp: number, currentPhase: number) {
     const hp = Phaser.Math.Clamp(currentHp, 0, this.maxHp);
+    this.damageTrail.set(hp, currentPhase !== this.currentPhase);
     this.currentHp = hp;
     this.currentPhase = currentPhase;
     const ratio = hp / this.maxHp;
     const fillWidth = Math.max(1, Math.round(148 * ratio));
     const highContrast = isColorblindModeEnabled();
+    this.damageFill.setFillStyle(color(highContrast ? PALETTE.creamPaper : PALETTE.goldStamp));
+    this.updateDamageTrail(0, 0);
     this.fill.setSize(fillWidth, 6).setVisible(hp > 0);
     this.fillPattern?.setSize(fillWidth, 6).setVisible(highContrast && hp > 0);
     const critical = ratio < 0.25;

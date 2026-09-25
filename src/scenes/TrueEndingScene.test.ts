@@ -31,7 +31,7 @@ describe("TrueEndingScene reward continuity", () => {
     const scene = new TrueEndingScene();
     scene.create();
     expect(options().certificate?.checklist).toHaveLength(9);
-    expect(options().textureKeys).toHaveLength(3);
+    expect(options().textureKeys[0]).toBe("published-volume-v2");
     expect(options().certificate?.complete).toBe(false);
     expect(gameState.objective).toBe("CERTIFICATION STILL OPEN");
     scene.update();

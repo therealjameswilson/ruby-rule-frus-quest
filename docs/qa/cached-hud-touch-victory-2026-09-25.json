@@ -1,0 +1,55 @@
+{
+  "date": "2026-09-25",
+  "runtimeCommit": "2a6aa54",
+  "fight": {
+    "label": "fight-summary",
+    "cycles": 7,
+    "retries": 0,
+    "freshCoreHits": 7,
+    "tightApproaches": 0,
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "seconds": 50.293,
+    "deadlineMissed": false
+  },
+  "hud": {
+    "refreshes": 166,
+    "distinctSignatures": 104,
+    "invalid": []
+  },
+  "attackArt": {
+    "samples": 598,
+    "invalid": [],
+    "phases": {
+      "colossus": 89,
+      "swarm": 224,
+      "cloud": 285
+    }
+  },
+  "ending": {
+    "mobile": true,
+    "cpuThrottle": 1,
+    "startPoints": 201,
+    "finalPoints": 241,
+    "completedPackets": 5,
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "errors": []
+  },
+  "errors": [],
+  "limitations": [
+    "Automated state-aware touch input in simulated phone viewport.",
+    "Starts from an earlier earned Black Vault checkpoint, not a new full campaign.",
+    "No physical iPhone validation.",
+    "Local in-game publication, not a website deployment."
+  ]
+}

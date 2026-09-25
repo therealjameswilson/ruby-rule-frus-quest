@@ -1,3 +1,5 @@
+import type { ResearchWorldScene } from "./ResearchWorldScene";
+import { libraryApproachCue } from "./libraryApproachCue";
 import Phaser from "phaser";
 import {
   ACCESSIBILITY_OVERLAYS,
@@ -46,6 +48,8 @@ export class UIScene extends Phaser.Scene {
   private gamepadToastTween?: Phaser.Tweens.Tween;
   private removeGamepadListener?: () => void;
   private pixelCameraSignature = "";
+  private questBandImage!: Phaser.GameObjects.Image;
+  private questBandTexture!: Phaser.Textures.CanvasTexture;
   private questBandGraphics!: Phaser.GameObjects.Graphics;
   private questBandText!: Phaser.GameObjects.Text;
   private questBandToolText!: Phaser.GameObjects.Text;
@@ -101,6 +105,10 @@ export class UIScene extends Phaser.Scene {
   }
 
   update() {
+    if (!this.sys.settings.visible) {
+      this.controls.setEnabled(false);
+      return;
+    }
     this.syncPixelCameras();
     if (this.scene.isActive("CodexScene")) {
       this.controls.refreshForScene(null);
@@ -150,7 +158,16 @@ export class UIScene extends Phaser.Scene {
   }
 
   private createQuestBand() {
+    this.questBandSignature = "";
+    this.questBandDecisionSignature = "";
+    this.questBandLastRefresh = 0;
     const layout = QUEST_BAND_LAYOUT;
+    const key = "quest-band-cache";
+    if (this.textures.exists(key)) this.textures.remove(key);
+    this.questBandTexture = this.textures.createCanvas(key, GAME_WIDTH * 3, (QUEST_BAND_HEIGHT + 2) * 3)!;
+    this.questBandImage = this.add.image(0, 0, key).setOrigin(0)
+      .setDisplaySize(GAME_WIDTH, QUEST_BAND_HEIGHT + 2).setDepth(20400).setScrollFactor(0).setVisible(false);
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => this.textures.remove(key));
     this.questBandGraphics = this.add.graphics()
       .setDepth(20400)
       .setScrollFactor(0)
@@ -206,7 +223,7 @@ export class UIScene extends Phaser.Scene {
 
   private refreshQuestBand(now: number, activeSceneKey: string | null) {
     const visible = this.shouldShowQuestBand(activeSceneKey);
-    this.questBandGraphics.setVisible(visible);
+    this.questBandImage.setVisible(visible);
     this.questBandText.setVisible(visible);
     this.questBandToolText.setVisible(visible);
     this.questBandVerbText.setVisible(visible);
@@ -216,7 +233,7 @@ export class UIScene extends Phaser.Scene {
     // Update placement every frame, independently of the text refresh throttle.
     const touchInset = isTouchInputCapable() || this.controls?.isForceVisible ? 64 : 0;
     this.questBandY = questBandOffset(gameState.player.y, this.questBandY, GAME_HEIGHT, gameState.mode === "explore", touchInset);
-    this.questBandGraphics.setY(this.questBandY);
+    this.questBandImage.setY(this.questBandY);
     this.questBandText.setY(QUEST_BAND_LAYOUT.objective.y + this.questBandY);
     this.questBandToolText.setY(QUEST_BAND_LAYOUT.toolLabel.y + this.questBandY);
     this.questBandVerbText.setY(QUEST_BAND_LAYOUT.actionBadge.y + this.questBandY);
@@ -236,7 +253,8 @@ export class UIScene extends Phaser.Scene {
     const recoveryCue = questBandRecoveryCue(gameState.mode, gameState.reliability,
       gameState.sceneProgress.danneRecoverablePressure ?? 0, Boolean(weapon.tool),
       gameState.nearestInteractable, getSecondaryActionBadge());
-    const approachCue = officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable)
+    const approachCue = libraryApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable, gameState.sceneProgress, getPrimaryActionBadge())
+      ?? officeApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable)
       ?? guideExitApproachCue(activeSceneKey, gameState.mode, gameState.nearestInteractable,
         gameState.volumeFragments.includes("Front Matter Fragment"))
       ?? (activeSceneKey === "NetworkScene" ? questBandCrossingCue(gameState.mode, gameState.nearestInteractable,
@@ -280,6 +298,11 @@ export class UIScene extends Phaser.Scene {
     this.drawQuestBandActionBadge();
     this.drawQuestBandToolSlot(Boolean(subscreen.equippedTool ?? hud.equippedItem), weapon.cooldownRatio, weapon.phase);
     this.drawQuestBandVolumeAssembly(volumeAssembly);
+    // Rasterize only on signature changes; avoid per-frame polygon triangulation.
+    this.questBandTexture.getContext().clearRect(0, 0, GAME_WIDTH * 3, (QUEST_BAND_HEIGHT + 2) * 3);
+    this.questBandGraphics.setScale(3);
+    this.questBandGraphics.generateTexture(this.questBandTexture.key, GAME_WIDTH * 3, (QUEST_BAND_HEIGHT + 2) * 3);
+    this.questBandGraphics.setScale(1);
     this.questBandText.setText(clampQuestBandText(objectiveLine, QUEST_BAND_LAYOUT.objective.maxChars));
     this.questBandVerbText.setText(actionBadge);
     this.questBandCueText.setText(clampQuestBandText(actionLine, QUEST_BAND_LAYOUT.actionCue.maxChars));
@@ -336,9 +359,7 @@ export class UIScene extends Phaser.Scene {
     if (gameState.mode === "dialog") return getString("hud.nextLine");
     if (gameState.mode === "choice") return getString("hud.confirm");
     if (gameState.currentScene === "ResearchWorldScene") {
-      if(["ARCHIVES I", "LIBRARY OF CONGRESS"].includes(gameState.nearestInteractable ?? "")) return "A: COLLECTIONS  B: SOURCES";
-      if(gameState.nearestInteractable === "Talk to DANN-E") return "A: TALK  B: NEXT DISGUISE";
-      return gameState.nearestInteractable ? `A: ${gameState.nearestInteractable.toUpperCase()}` : "WALK / DISCOVER / TALK";
+      return (this.scene.get('ResearchWorldScene') as ResearchWorldScene).actionCue(getSecondaryActionBadge());
     }
     if (gameState.currentScene === "OfficeScene" && !gameState.sceneProgress.juniorCompilerIntroduced) {
       return getString("hud.goLeftTalk");

@@ -1,0 +1,137 @@
+{
+  "freshTitleAttackRequests": 0,
+  "totalBytesDeferredFromBoot": 11485993,
+  "results": [
+    {
+      "appearance": "compiler",
+      "mobile": false,
+      "requests": [
+        "compiler-attack-v1.png"
+      ],
+      "pose": {
+        "key": "compiler-attack-v1",
+        "frames": 12
+      },
+      "active": {
+        "visible": true,
+        "frame": 4
+      },
+      "retry": false,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_ada",
+      "mobile": true,
+      "requests": [
+        "ada-attack-v1.png",
+        "ada-attack-v1.png",
+        "ada-attack-v1.png",
+        "ada-attack-v1.png"
+      ],
+      "pose": {
+        "key": "ada-attack-v1",
+        "frames": 12
+      },
+      "active": {
+        "visible": true,
+        "frame": 4
+      },
+      "retry": true,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_clara",
+      "mobile": false,
+      "requests": [
+        "clara-attack-v1.png"
+      ],
+      "pose": {
+        "key": "clara-attack-v1",
+        "frames": 12
+      },
+      "active": {
+        "visible": true,
+        "frame": 4
+      },
+      "retry": false,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_maya",
+      "mobile": false,
+      "requests": [
+        "maya-attack-v1.png"
+      ],
+      "pose": {
+        "key": "maya-attack-v1",
+        "frames": 12
+      },
+      "active": {
+        "visible": true,
+        "frame": 4
+      },
+      "retry": false,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_robin",
+      "mobile": false,
+      "requests": [
+        "robin-attack-v1.png"
+      ],
+      "pose": {
+        "key": "robin-attack-v1",
+        "frames": 12
+      },
+      "active": {
+        "visible": true,
+        "frame": 4
+      },
+      "retry": false,
+      "errors": []
+    },
+    {
+      "appearance": "compiler_quinn",
+      "mobile": false,
+      "requests": [
+        "quinn-attack-v1.png"
+      ],
+      "pose": {
+        "key": "quinn-attack-v1",
+        "frames": 12
+      },
+      "active": {
+        "visible": true,
+        "frame": 4
+      },
+      "retry": false,
+      "errors": []
+    }
+  ],
+  "build": "passed",
+  "regression": {
+    "files": 267,
+    "tests": 2007,
+    "note": "Before final HUD-only refinement; final browser suite verified HUD hide/restore"
+  },
+  "newCharacterEntry": {
+    "selected": "compiler_ada",
+    "attackRequests": [
+      "ada-attack-v1.png"
+    ],
+    "officeEntered": true,
+    "pageErrors": []
+  },
+  "screenshotsInspected": [
+    "/tmp/player-art-loading/phone-retry.png",
+    "/tmp/player-art-loading/compiler_ada-attack.png",
+    "/tmp/player-art-loading/compiler_quinn-attack.png"
+  ],
+  "skillSmoke": "Completed; black capture inspected; ordinary screenshots used",
+  "limitations": [
+    "Fixture saves and browser automation",
+    "Not physical iPhone QA",
+    "No network-speed timing claim",
+    "Local only; not published"
+  ]
+}

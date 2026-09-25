@@ -1,3 +1,4 @@
+import { publicationBackdrop } from "./publicationBackdrop";
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import type { CompletionStatsReadout } from "../game/state";
@@ -71,7 +72,7 @@ export class PublicationSummary {
 
   private text(x: number, y: number, value: string, size = 8, tint: string = PALETTE.creamPaper, origin = 0.5) {
     const text = this.scene.add.text(x, y, value, {
-      fontFamily: "monospace", fontSize: `${size}px`, color: tint
+      fontFamily: "Arial", fontSize: `${size}px`, color: tint
     }).setOrigin(origin, 0.5);
     this.content.add(text);
     return text;
@@ -82,13 +83,15 @@ export class PublicationSummary {
     this.buttons = [];
     this.content.setData("page", this.page).setName("publication-summary");
     this.content.add(this.scene.add.rectangle(128, 120, GAME_WIDTH, GAME_HEIGHT, color(PALETTE.deepRuby)));
+    const backdrop = publicationBackdrop(this.scene);
+    if (backdrop) this.content.add(backdrop);
     if (this.page === "volume") this.drawVolume();
     else if (this.page === "certificate") this.drawCertificate();
     else this.drawRecord();
 
     [this.nextPage().toUpperCase(), "TITLE"].forEach((label, index) => {
       const x = index === 0 ? 67 : 189;
-      const button = this.scene.add.rectangle(x, 216, 110, 44, color(PALETTE.black))
+      const button = this.scene.add.rectangle(x, 216, 110, 44, 0x1a2b38)
         .setName(`publication-${label.toLowerCase()}`);
       this.content.add(button);
       bindPointerDown(button, () => this.activate(index));
@@ -112,7 +115,7 @@ export class PublicationSummary {
     const key = this.options.textureKeys.find((candidate) => this.scene.textures.exists(candidate));
     if (key) {
       const cover = this.scene.add.image(128, 100, key).setName("published-frus-volume-hero");
-      cover.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
+      cover.texture.setFilter(key === "published-volume-v2" ? Phaser.Textures.FilterMode.LINEAR : Phaser.Textures.FilterMode.NEAREST);
       // The canonical completed-volume art is native 128x128. Only legacy art needs fitting.
       const scale = Math.min(1, 128 / cover.width, 128 / cover.height);
       cover.setScale(scale);

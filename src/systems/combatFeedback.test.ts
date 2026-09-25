@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { HIT_FEEDBACK, resolveHitFeedback, type HitFeedbackKind } from "./combatFeedback";
+import { HIT_FEEDBACK, resolveHitFeedback, densityAdjustedShake, type HitFeedbackKind } from "./combatFeedback";
 
 const ALL_KINDS = Object.keys(HIT_FEEDBACK) as HitFeedbackKind[];
 
@@ -46,5 +46,19 @@ describe("combat feedback profiles", () => {
       duration: HIT_FEEDBACK["player-hurt"].duration,
       intensity: HIT_FEEDBACK["player-hurt"].intensity
     });
+  });
+});
+
+
+describe("camera shake at high render density", () => {
+  it.each([1, 2, 3, 4])("preserves logical displacement at density %s", density => {
+    const intensity = densityAdjustedShake(.006, 256 * density, density);
+    // Phaser offset * camera transform / output density.
+    const logicalPeak = intensity * (256 * density) * density * density / density;
+    expect(logicalPeak).toBeCloseTo(256 * .006);
+  });
+  it("keeps standard camera strength and tolerates unavailable dimensions", () => {
+    expect(densityAdjustedShake(.005, 256, 1)).toBe(.005);
+    expect(densityAdjustedShake(.005, NaN, 0)).toBe(.005);
   });
 });

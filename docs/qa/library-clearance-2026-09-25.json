@@ -1,0 +1,97 @@
+{
+  "date": "2026-09-25",
+  "scope": "Library aisle clearance feedback",
+  "build": "passed",
+  "unitTests": 10,
+  "animationChecks": [
+    {
+      "reduced": false,
+      "initial": {
+        "visible": true,
+        "count": 1,
+        "progress": 1
+      },
+      "mid": {
+        "x": 123.55555555555556,
+        "alpha": 0.6666666666666667
+      },
+      "paused": {
+        "x": 123.55555555555556,
+        "alpha": 0.6666666666666667
+      },
+      "final": {
+        "visible": false,
+        "count": 0
+      },
+      "otherBarrierVisible": true,
+      "errors": []
+    },
+    {
+      "reduced": true,
+      "initial": {
+        "visible": false,
+        "count": 0,
+        "progress": 1
+      },
+      "mid": {
+        "x": 128,
+        "alpha": 1
+      },
+      "paused": {
+        "x": 128,
+        "alpha": 1
+      },
+      "final": {
+        "visible": false,
+        "count": 0
+      },
+      "otherBarrierVisible": true,
+      "errors": []
+    }
+  ],
+  "desktop": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "visibleFiledPapers": true,
+    "nonBlockingIntermediateFiling": true,
+    "filingSound": true,
+    "lockedStationRedirect": true,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "phone": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "visibleFiledPapers": true,
+    "nonBlockingIntermediateFiling": true,
+    "filingSound": true,
+    "lockedStationRedirect": true,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "limitations": [
+    "Deterministic animation check invokes actual scene choice directly and advances scene delta",
+    "Earned controller route uses normal movement and input",
+    "Simulated phone and controller; physical hardware unverified",
+    "Standard skill WebGL screenshot black; ordinary screenshots inspected",
+    "Local only; not published"
+  ]
+}

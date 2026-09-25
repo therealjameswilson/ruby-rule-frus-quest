@@ -1,4 +1,7 @@
 import type Phaser from "phaser";
+import { triggerControllerFeedback, stopControllerFeedback } from "../platform/controllerFeedback";
+const feedbackScenes = new WeakSet<Phaser.Scene>();
+import { GAME_WIDTH } from "../game/constants";
 import { prefersReducedMotion } from "./motionPreferences";
 
 export type HitFeedbackKind =
@@ -36,15 +39,33 @@ export function resolveHitFeedback(kind: HitFeedbackKind, scale = 1): HitFeedbac
   };
 }
 
+/** Phaser scales its shake offset by viewport width and zoom, then transforms it again.
+ * Cancel the render-density amplification so the intended logical displacement stays fixed. */
+export function densityAdjustedShake(intensity: number, viewportWidth: number, zoom: number) {
+  const density = Number.isFinite(viewportWidth) && viewportWidth > 0 ? viewportWidth / GAME_WIDTH : 1;
+  const cameraZoom = Number.isFinite(zoom) && zoom > 0 ? zoom : 1;
+  return intensity / (density * cameraZoom);
+}
+
 /**
  * Apply an ALTTP-style impact flinch to the scene's main camera. Safe to call
  * from any scene; no-ops if the camera is unavailable (e.g. during teardown).
  */
 export function applyHitShake(scene: Phaser.Scene, kind: HitFeedbackKind, scale = 1): HitFeedbackProfile {
   const profile = resolveHitFeedback(kind, scale);
+  if (scene.events && !feedbackScenes.has(scene)) {
+    feedbackScenes.add(scene);
+    scene.events.on("pause", stopControllerFeedback);
+    scene.events.once("shutdown", () => {
+      stopControllerFeedback();
+      scene.events.off("pause", stopControllerFeedback);
+      feedbackScenes.delete(scene);
+    });
+  }
+  triggerControllerFeedback(kind, scale);
   const camera = scene.cameras?.main;
   if (!prefersReducedMotion() && camera && profile.intensity > 0 && profile.duration > 0) {
-    camera.shake(profile.duration, profile.intensity);
+    camera.shake(profile.duration, densityAdjustedShake(profile.intensity, camera.width, camera.zoom));
   }
   return profile;
 }

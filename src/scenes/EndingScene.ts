@@ -1,7 +1,13 @@
+import { addBinderyPressArt } from "../systems/binderyPressArt";
+import { addBinderyInboxArt } from "../systems/binderyInboxArt";
+import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
+import { addEditorialRoomWalls } from "../systems/editorialRoomWalls";
+import { buildEditorE1TileLayers } from "../game/editorE1Tilemap";
+import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import Phaser from "phaser";
-import { ALT_ENDING_ASSETS, FRUS_VOLUMES, GAMEPLAY_TILESETS, publicAssetPath } from "../assets/registry";
-import { BINDERY_INBOX, BINDING_PRESS, BINDERY_STATIONS, BINDERY_SOLIDS, BINDERY_TILEMAP, binderyFloor, binderyWalkRoute } from "../game/binderyFurniture";
-import { safeWorkstationPosition, WORKSTATION_DESK } from "../game/workstationGeometry";
+import { ALT_ENDING_ASSETS, FRUS_VOLUMES, publicAssetPath } from "../assets/registry";
+import { BINDERY_INBOX, BINDING_PRESS, BINDERY_STATIONS, BINDERY_SOLIDS, binderyWalkRoute } from "../game/binderyFurniture";
+import { safeWorkstationPosition } from "../game/workstationGeometry";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
 import { KELLOGG_CERTIFICATION_PROMPTS } from "../game/kelloggCertification";
 import { GPO_PUBLICATION_PROMPTS } from "../game/gpoPublication";
@@ -152,6 +158,8 @@ export class EndingScene extends Phaser.Scene {
   }
 
   preload() {
+    if (!this.textures.exists(RESEARCH_PROPS.key)) this.load.image(RESEARCH_PROPS.key, RESEARCH_PROPS.path);
+    if (!this.textures.exists("published-volume-v2")) this.load.image("published-volume-v2", publicAssetPath("presentation/publication/volume-v2.png"));
     for (const [key, path] of Object.entries(ALT_ENDING_ASSETS)) {
       if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
     }
@@ -287,13 +295,17 @@ export class EndingScene extends Phaser.Scene {
 
   private drawGateRoom() {
     this.add.rectangle(128, 136, 224, 160, color(PALETTE.stoneGray)).setDepth(1);
-    const asset = GAMEPLAY_TILESETS.interiorsNative;
-    if (this.textures.exists(asset.key)) {
-      const map = this.make.tilemap({ data: binderyFloor(), tileWidth: asset.tileSize, tileHeight: asset.tileSize });
-      const tiles = map.addTilesetImage(asset.manifestKey, asset.key, asset.tileSize, asset.tileSize, 0, 0, asset.firstGid);
-      if (tiles) map.createLayer(0, tiles, BINDERY_TILEMAP.x, BINDERY_TILEMAP.y)?.setDepth(2).setAlpha(0.25);
-      this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => map.destroy());
+    addEditorialRoomFloor(this, false);
+    const walls = buildEditorE1TileLayers().walls.map(row => [...row]);
+    // Continuous joinery around the bindery, with the actual vault exit clear.
+    const wallTile = walls[0][0];
+    for (const row of walls) {
+      row[0] = wallTile;
+      row[row.length - 1] = wallTile;
     }
+    walls[10][0] = -1;
+    for (const x of [7, 8]) walls[walls.length - 1][x] = -1;
+    addEditorialRoomWalls(this, walls, 0, 32);
     this.add.rectangle(128, 58, 130, 28, color(PALETTE.black), 0.96)
       .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(140);
     this.add.text(128, 47, "FRUS BINDERY", {
@@ -313,26 +325,25 @@ export class EndingScene extends Phaser.Scene {
 
     for (const station of BINDING_STATIONS) this.drawBindingStation(station);
 
-    this.bindingPressFrame = this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y, 48, 16, color(PALETTE.black), 0.96)
-      .setStrokeStyle(2, color(PALETTE.classNetRed)).setDepth(156);
+    const pressArt = addBinderyPressArt(this, BINDING_PRESS.x, BINDING_PRESS.y);
+    this.bindingPressFrame = this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y, 48, 16,
+      color(PALETTE.black), pressArt ? 0 : 0.96)
+      .setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(156);
     this.add.ellipse(128, 158, 48, 4, color(PALETTE.black), 0.3).setDepth(46);
-    this.add.image(112, 148, "buckram-key").setDisplaySize(10, 10).setDepth(156);
-    this.add.image(144, 148, "citation-stamp").setDisplaySize(10, 10).setDepth(156);
-    this.add.rectangle(128, 144, 12, 18, color(PALETTE.deepRuby))
-      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(156);
-    this.add.rectangle(124, 144, 2, 14, color(PALETTE.buckramHighlight)).setDepth(156);
-    this.bindingPressLabel = this.add.text(BINDING_PRESS.x, BINDING_PRESS.y - 17, "LOCKED PRESS", {
+    this.bindingPressLabel = this.add.text(BINDING_PRESS.x, BINDING_PRESS.y - 33, "LOCKED PRESS", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.classNetRed, backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(156);
 
-    this.add.rectangle(BINDERY_INBOX.x, BINDERY_INBOX.y, 32, 12, color(PALETTE.black), 0.96)
-      .setStrokeStyle(2, color(PALETTE.terminalCyan)).setDepth(200);
-    this.add.text(BINDERY_INBOX.x, BINDERY_INBOX.y + 11, "BINDERY INBOX", {
-      fontFamily: "monospace",
-      fontSize: "8px",
-      color: PALETTE.terminalCyan
+    if (!addBinderyInboxArt(this, BINDERY_INBOX.x, BINDERY_INBOX.y)) {
+      this.add.rectangle(BINDERY_INBOX.x, BINDERY_INBOX.y, 32, 12, color(PALETTE.black), 0.96)
+        .setStrokeStyle(1, color(PALETTE.terminalCyan)).setDepth(200);
+    }
+    this.add.text(BINDERY_INBOX.x, BINDERY_INBOX.y - 17, "INBOX", {
+      fontFamily: "Arial",
+      fontSize: "6px",
+      color: PALETTE.terminalCyan, backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(146).setName("bindery-inbox-label");
     if (!this.published) {
       this.add.rectangle(BINDERY_RETURN.x, BINDERY_RETURN.y, 20, 24, color(PALETTE.black))
@@ -348,23 +359,19 @@ export class EndingScene extends Phaser.Scene {
   private drawBindingStation(station: BindingStation) {
     this.add.ellipse(station.x, station.y + 9, 32, 4, color(PALETTE.black), 0.3).setDepth(46);
     const desk = this.add.container(station.x, station.y).setDepth(station.y + 8).setName(`bindery-desk-${station.id}`);
-    const asset = GAMEPLAY_TILESETS.interiorsNative;
-    if (this.textures.exists(asset.key)) {
-      const frame = "bindery-desk", texture = this.textures.get(asset.key);
-      if (!texture.has(frame)) texture.add(frame, 0, WORKSTATION_DESK.tileIndex % asset.columns * asset.tileSize,
-        Math.floor(WORKSTATION_DESK.tileIndex / asset.columns) * asset.tileSize, asset.tileSize, asset.tileSize);
-      desk.add([this.add.image(-8, 0, asset.key, frame), this.add.image(8, 0, asset.key, frame)]);
-    } else desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
-    desk.add(this.add.rectangle(0, 0, 32, 16, 0, 0).setStrokeStyle(1, color(station.accent)));
+    const detailedDesk = researchProp(this, "desk", 0, -3, 40);
+    if (detailedDesk) desk.add(detailedDesk);
+    else desk.add(this.add.rectangle(0, 0, 32, 16, color(PALETTE.deepRuby)));
+    desk.add(this.add.rectangle(0, 7, 28, 1, color(station.accent)));
     desk.add(this.add.image(-9, 1, station.texture).setDisplaySize(10, 10));
     this.bindingStationLights.set(
       station.id,
       this.add.rectangle(7, 1, 10, 5, color(PALETTE.stoneDark)).setStrokeStyle(1, color(station.accent))
     );
     desk.add(this.bindingStationLights.get(station.id)!);
-    desk.add(this.add.text(0, -7, station.shortLabel, {
-      fontFamily: "monospace",
-      fontSize: "5px",
+    desk.add(this.add.text(0, -20, station.shortLabel, {
+      fontFamily: "Arial",
+      fontSize: "6px",
       color: PALETTE.creamPaper, backgroundColor: PALETTE.black
     }).setOrigin(0.5, 0));
   }
@@ -686,7 +693,7 @@ export class EndingScene extends Phaser.Scene {
         checkCount: packet.checkIds.length,
         status,
         x: placed ? station.x : BINDERY_INBOX.x,
-        y: placed ? station.y - 18 : BINDERY_INBOX.y - 13,
+        y: placed ? station.y - 18 : BINDERY_INBOX.y - 2,
         routedStation: placed ? station.id : undefined
       };
       physicalPacket.icon = this.add.image(physicalPacket.x, physicalPacket.y, physicalPacket.texture)
@@ -751,7 +758,7 @@ export class EndingScene extends Phaser.Scene {
     const ready = completed === BUCKRAM_BINDING_TOTAL
       && getFinalGateReadiness().ready
       && hasProcessItem("buckram_key");
-    this.bindingPressFrame?.setStrokeStyle(2, color(ready ? PALETTE.goldStamp : PALETTE.classNetRed));
+    this.bindingPressFrame?.setStrokeStyle(1, color(ready ? PALETTE.goldStamp : PALETTE.classNetRed));
     this.bindingPressLabel
       ?.setText(ready ? "PUBLISH READY" : "LOCKED PRESS")
       .setColor(ready ? PALETTE.goldStamp : PALETTE.classNetRed);
@@ -1167,6 +1174,7 @@ export class EndingScene extends Phaser.Scene {
       volumesCompleted: gameState.volumesCompleted,
       textureKeys: [
         ...(appealed ? ["volume_contested_redacted"] : []),
+        "published-volume-v2",
         VOLUME_ASSEMBLY_ASSETS.completedHero.key,
         SNES_PUBLISHED_FRUS_PRIZE_ASSET.key,
         FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE

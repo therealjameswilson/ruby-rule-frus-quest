@@ -48,6 +48,33 @@ describe("InputState keyboard edges", () => {
     expect(getInput().aJustPressed).toBe(true);
   });
 
+  it("preserves fast menu taps between frames and rearms a second tap without repeating a hold", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    tapActionForTests("KeyM"); tickInput();
+    expect(getInput().menuJustPressed).toBe(true);
+    now += 16; tickInput();
+    expect(getInput().menuJustPressed).toBe(false);
+    now += 16; tapActionForTests("KeyM"); tickInput();
+    expect(getInput().menuJustPressed).toBe(true);
+    now += 16; tickInput();
+    expect(getInput().menuJustPressed).toBe(false);
+    now += TAP_ACTION_HOLD_MS + 1; tickInput();
+    expect(getInput().menu).toBe(false);
+  });
+
+  it("rearms quick touch menu taps without repeating a held button", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    setTouchControl("start", true); setTouchControl("start", false); tickInput();
+    expect(getInput().menuJustPressed).toBe(true);
+    now += 16; tickInput(); expect(getInput().menuJustPressed).toBe(false);
+    setTouchControl("start", true); tickInput(); expect(getInput().menuJustPressed).toBe(true);
+    now += 16; tickInput(); expect(getInput().menuJustPressed).toBe(false);
+    setTouchControl("start", false); now += TAP_ACTION_HOLD_MS + 1; tickInput();
+    expect(getInput().menu).toBe(false);
+  });
+
   it("maps Z to A and X/B to the secondary action", () => {
     setKeyboardDownForTests(["KeyZ"]);
     tickInput();
@@ -63,6 +90,17 @@ describe("InputState keyboard edges", () => {
     setKeyboardDownForTests(["KeyB"]);
     tickInput();
     expect(getInput().bJustPressed).toBe(true);
+  });
+
+  it("latches a short V throw without triggering interaction or pencil", () => {
+    tapActionForTests("KeyV"); tickInput();
+    expect(getInput().throwItemJustPressed).toBe(true);
+    expect(getInput().aJustPressed).toBe(false);
+    expect(getInput().bJustPressed).toBe(false);
+    tickInput();
+    expect(getInput().throwItemJustPressed).toBe(false);
+    tapActionForTests("KeyV"); tickInput();
+    expect(getInput().throwItemJustPressed).toBe(true);
   });
 
   it("samples a between-frame direction tap once without a forced hold", () => {

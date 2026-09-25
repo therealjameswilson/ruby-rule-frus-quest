@@ -1,3 +1,4 @@
+import { DANNE_BOSS_HD, danneBossFormAnimation } from "../../art/danneBossPresentation";
 import Phaser from "phaser";
 import { danneAnimKey } from "../../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
@@ -69,6 +70,7 @@ function vectorToward(from: Position, to: Position, speed: number) {
 }
 
 export class DanneLurker extends Enemy {
+  private cueColor?: string;
   private nextPressureAt = 0;
   private pressureUntil = 0;
   private nextEgoBoltAt = 0;
@@ -99,14 +101,16 @@ export class DanneLurker extends Enemy {
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneLurkerOptions) {
     unlockCodexEntry("enemy-danne-boss");
     const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
+    const detailed = scene.textures.exists(DANNE_BOSS_HD.key);
     super(scene, x, y, {
       label: options.label ?? "DANN-E",
-      spriteKey: DANNE_BOSS_SPRITE_ASSET.key,
+      spriteKey: detailed ? DANNE_BOSS_HD.key : DANNE_BOSS_SPRITE_ASSET.key,
       fallbackTextureKey: "snes-wall-danne-queue",
       waypoints: options.waypoints,
       tag: { text: "DANN-E", y: 17, color: PALETTE.goldStamp, backgroundColor: PALETTE.black, visible: false },
       cue: { text: "30YR", y: -24, color: PALETTE.classNetRed, backgroundColor: PALETTE.black },
-      shadow: { y: 13, width: 21, height: 6 },
+      // HD colossus soles end at atlas rows 185–186: (186 - 192 * .82) * .18 ≈ 5.1.
+      shadow: detailed ? { y: 5.1, width: 18, height: 4 } : { y: 13, width: 21, height: 6 },
       speed: 16 * difficulty.speedMultiplier,
       acceleration: 58 * difficulty.speedMultiplier,
       waypointTolerance: 4
@@ -115,8 +119,8 @@ export class DanneLurker extends Enemy {
     this.speechBlocked = options.speechBlocked ?? (() => false);
     this.boltBlocked = options.boltBlocked ?? (() => false);
     this.homePosition = { x, y };
-    this.sprite.setOrigin(0.5, 0.82).setScale(0.72);
-    const animKey = danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
+    this.sprite.setOrigin(0.5, 0.82).setScale(0.72 / (detailed ? DANNE_BOSS_HD.density : 1));
+    const animKey = detailed ? danneBossFormAnimation("colossus") : danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.speechBack = scene.add.rectangle(0, 0, COMBAT_SPEECH_WIDTH, this.speechHeight, this.color(PALETTE.black), 0.96)
       .setOrigin(0).setStrokeStyle(1, this.color(PALETTE.goldStamp));
@@ -208,8 +212,12 @@ export class DanneLurker extends Enemy {
     }
 
     const active = timeMs < this.pressureUntil;
+    const cueColor = stunned ? PALETTE.terminalCyan : PALETTE.classNetRed;
+    if (cueColor !== this.cueColor) {
+      this.cue.setColor(cueColor);
+      this.cueColor = cueColor;
+    }
     this.cue.setText(stunned ? "STUN" : "30YR")
-      .setColor(stunned ? PALETTE.terminalCyan : PALETTE.classNetRed)
       .setVisible(active || (stunned && (timeMs >= this.boastUntil || this.speechBlocked())));
     if (stunned) this.sprite.setTint(this.color(Math.floor(timeMs / 120) % 2 === 0 ? PALETTE.creamPaper : PALETTE.terminalCyan));
     else if (this.egoBoltTelegraph && Math.floor(timeMs / 100) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));

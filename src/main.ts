@@ -647,7 +647,7 @@ function hasActivePlayableScene() {
 
 function hideBootLoader() {
   const loader = document.getElementById("boot-loader");
-  if (!loader || loader.hidden) return;
+  if (!loader || loader.hidden || loader.dataset.state === "error") return;
   if (!hasActivePlayableScene()) return;
   if (bootLoaderPoll !== undefined) {
     window.clearInterval(bootLoaderPoll);
@@ -676,7 +676,7 @@ game.events.once(Phaser.Core.Events.READY, () => {
   // Direct ?scene= deep links can create the target scene before READY fires,
   // which means the CREATE listener above may miss the event and leave the DOM
   // loader covering the playable canvas. Hide it after the first ready paint as
-  // a safety net while keeping the 8s failure fallback below.
+  // a safety net for completed asset loading.
   window.requestAnimationFrame(() => window.requestAnimationFrame(hideBootLoader));
   window.setTimeout(hideBootLoader, 1200);
 });

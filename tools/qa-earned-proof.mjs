@@ -33,7 +33,7 @@ const key=async(k='Space',ms=50)=>{
 const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));if(mobile)await page.screenshot({path:`${out}/${name}-phone.png`});};
 async function move(x,y){const tolerance=mobile?5:3;for(let i=0;i<100;i++){const p=(await state()).player,dx=x-p.x,dy=y-p.y;if(Math.abs(dx)<tolerance&&Math.abs(dy)<tolerance)return;const h=Math.abs(dx)>=tolerance;await key(h?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.min(100,Math.max(mobile?50:20,Math.abs(h?dx:dy)/72*1000)));}throw Error(`Cannot walk to ${x},${y}`);}
 try {
- await page.goto('http://127.0.0.1:5195/?text=full');
+ await page.goto(new URL('?text=full',process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5211/').href);
  await page.waitForFunction(()=>window.render_game_to_text&&JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');await key('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='SilentReadScene');await page.waitForTimeout(1000);
  assert.equal((await state()).roomTraversal.currentRoomId,'S1');await shot('arrival');
@@ -75,4 +75,4 @@ try {
  assert.equal((await state()).sceneProgress.silentReadReviewStep,5);
  assert((await state()).inventory.includes('Proof Lens'));await shot('lens-reloaded');
  assert.deepEqual(errors,[]);console.log(`PASS ${mobile?'touch-only':'keyboard'} earned Proof Lens, rejected drafts, and saved production handoff`);
-} finally {await shot('last');await browser.close();}
+} finally {try{await shot('last');}catch(error){console.error('Final screenshot unavailable:',error.message);}await browser.close();}

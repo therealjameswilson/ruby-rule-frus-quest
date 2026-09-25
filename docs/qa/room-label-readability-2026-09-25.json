@@ -1,0 +1,130 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "clearance": [
+    {
+      "mobile": false,
+      "stations": [
+        {
+          "name": "classnet-station-release_board",
+          "depth": 95,
+          "y": 83,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "plaqueBottom": 104.5,
+          "labels": [
+            "RELEASE"
+          ]
+        },
+        {
+          "name": "classnet-station-human_desk",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "plaqueBottom": 147.5,
+          "labels": [
+            "HUMAN"
+          ]
+        },
+        {
+          "name": "classnet-station-decision_ledger",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "plaqueBottom": 147.5,
+          "labels": [
+            "LEDGER"
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "stations": [
+        {
+          "name": "classnet-station-release_board",
+          "depth": 95,
+          "y": 83,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "plaqueBottom": 104.5,
+          "labels": [
+            "RELEASE"
+          ]
+        },
+        {
+          "name": "classnet-station-human_desk",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "plaqueBottom": 147.5,
+          "labels": [
+            "HUMAN"
+          ]
+        },
+        {
+          "name": "classnet-station-decision_ledger",
+          "depth": 186,
+          "y": 174,
+          "desk": [
+            {
+              "texture": "research-props-v1",
+              "width": 57.99999999999999
+            }
+          ],
+          "plaqueBottom": 147.5,
+          "labels": [
+            "LEDGER"
+          ]
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "office": [
+    {
+      "mobile": false,
+      "memoRouted": true,
+      "memoStamped": true,
+      "walkedOutside": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "memoRouted": true,
+      "memoStamped": true,
+      "walkedOutside": true,
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Simulated phone, not physical iPhone.",
+    "Office replay starts at an earned memo checkpoint.",
+    "Clearance checks are visual bounds and save loading; prior earned clearance replay remains separate.",
+    "Local only."
+  ]
+}

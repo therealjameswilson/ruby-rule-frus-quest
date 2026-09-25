@@ -1,0 +1,70 @@
+{
+  "date": "2026-09-25",
+  "performance": {
+    "seconds": 20,
+    "walk": true,
+    "rendererInfo": {
+      "api": "webgl",
+      "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+      "softwareRenderer": false,
+      "backingWidth": 768,
+      "backingHeight": 720,
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+    },
+    "summary": {
+      "measuredGameFrames": 1206,
+      "gameFrameP50Ms": 16.699999809265137,
+      "gameFrameP95Ms": 16.899999856948853,
+      "gameFrameP99Ms": 17,
+      "gameFrameMaxMs": 17.600000143051147,
+      "gameFramesOver33Ms": 0,
+      "gameFramesOver50Ms": 0,
+      "sampleCount": 79,
+      "gameLoopFps": 60.029208843229085,
+      "maxReportedThreats": 2,
+      "movingSamples": 78,
+      "movementCoverage": 1,
+      "movementRunValid": true,
+      "gameplayModes": [
+        "explore"
+      ],
+      "avgFps": 60.00198331506424,
+      "minFps": 59.94036024336874,
+      "maxSampledFrameP99Ms": 20,
+      "finalFrameP99Ms": 20,
+      "finalFrameMaxMs": 16.80000000000291,
+      "lastInputLatencyMs": 9.99999995231633,
+      "consoleWarningsOrErrors": 0,
+      "pageErrors": 0
+    }
+  },
+  "startup": [
+    {
+      "engine": "chromium",
+      "mobile": false,
+      "partial": 41,
+      "completed": 100,
+      "failureKeptCovered": true,
+      "retryRecovered": true,
+      "savePreserved": true,
+      "errors": []
+    },
+    {
+      "engine": "webkit",
+      "mobile": true,
+      "partial": 39,
+      "completed": 100,
+      "failureKeptCovered": true,
+      "retryRecovered": true,
+      "savePreserved": true,
+      "errors": []
+    }
+  ],
+  "build": "passed",
+  "limitations": [
+    "Performance is a20-second local ArchiveScene movement sample on Mac M3, not physical iPhone or campaign-wide proof",
+    "Progress measures completed assets, not downloaded bytes",
+    "Retry tests simulate an asset outage; initial JavaScript failure is outside this check",
+    "Local only; not published"
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "change": "Normalize camera shake for render density and give boss health HUD two logical pixels of extra clearance",
+  "build": "passed",
+  "focusedTests": {
+    "files": 2,
+    "passed": 69
+  },
+  "renderedShake": [
+    {
+      "mobile": false,
+      "samples": [
+        {
+          "x": -0.28800080219904584,
+          "y": -0.08562842011451721,
+          "labelTop": 29.914371579885483,
+          "barTop": 28.914371579885483
+        },
+        {
+          "x": 0.13299238681793213,
+          "y": 0.7010525067647299,
+          "labelTop": 30.70105250676473,
+          "barTop": 29.70105250676473
+        },
+        {
+          "x": 0.816317637761434,
+          "y": 0.9294153849283854,
+          "labelTop": 30.929415384928387,
+          "barTop": 29.929415384928387
+        },
+        {
+          "x": -1.2654894193013508,
+          "y": -1.0806761582692463,
+          "labelTop": 28.919323841730755,
+          "barTop": 27.919323841730755
+        },
+        {
+          "x": -0.6569904486338297,
+          "y": 0.07689890762170155,
+          "labelTop": 30.0768989076217,
+          "barTop": 29.0768989076217
+        },
+        {
+          "x": 0.1972408095995585,
+          "y": -0.9203218619028727,
+          "labelTop": 29.079678138097126,
+          "barTop": 28.079678138097126
+        }
+      ],
+      "reducedMotionNoShake": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "samples": [
+        {
+          "x": -0.262895405292511,
+          "y": -0.43871645132700604,
+          "labelTop": 29.561283548672993,
+          "barTop": 28.561283548672993
+        },
+        {
+          "x": 1.0545055866241455,
+          "y": 0.7846636772155762,
+          "labelTop": 30.784663677215576,
+          "barTop": 29.784663677215576
+        },
+        {
+          "x": 0.5084618727366129,
+          "y": 0.61009681224823,
+          "labelTop": 30.61009681224823,
+          "barTop": 29.61009681224823
+        },
+        {
+          "x": 0.844832976659139,
+          "y": 0.5389837423960367,
+          "labelTop": 30.538983742396038,
+          "barTop": 29.538983742396038
+        },
+        {
+          "x": -0.1686531106630961,
+          "y": -0.9319268862406412,
+          "labelTop": 29.068073113759358,
+          "barTop": 28.068073113759358
+        },
+        {
+          "x": -1.081817388534546,
+          "y": -0.5685228109359741,
+          "labelTop": 29.431477189064026,
+          "barTop": 28.431477189064026
+        }
+      ],
+      "reducedMotionNoShake": true,
+      "errors": []
+    }
+  ],
+  "earnedTouchFight": {
+    "label": "fight-summary",
+    "cycles": 7,
+    "retries": 1,
+    "freshCoreHits": 7,
+    "tightApproaches": 0,
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "seconds": 69.249,
+    "deadlineMissed": false
+  },
+  "fightErrors": [],
+  "binderyContinue": true,
+  "screenshotsInspected": [
+    "/tmp/boss-hud-shake/phone-hud.png",
+    "/tmp/boss-density-touch/core-open-guidance-native.png"
+  ],
+  "skillSmoke": "Passed; black capture inspected; ordinary screenshots used",
+  "limitations": [
+    "Controlled hit-feedback measurement fixture",
+    "Fight uses automated touch input from earned vault save; one retry",
+    "Not physical iPhone or controller validation",
+    "Local only"
+  ]
+}

@@ -128,6 +128,7 @@ try {
     await move(100, 122);
     await press();
     await shot('opening-assignment');
+    if(process.argv.includes('--briefing-clear'))assert.equal(await page.evaluate(()=>window.game.scene.getScene('OfficeScene').toast.visible),false,'Mission dialogue must not have a duplicate banner across the actors');
     assert.match((await state()).latestMessage, /compile a FRUS volume/);
     for (let n=0; n<30 && (await state()).mode==='dialog'; n++) await press();
     assert.equal((await state()).sceneProgress.kathyDeparted, 1);
@@ -135,6 +136,10 @@ try {
     await press();
     await assertOfficeApproach();
     await shot('opening-memo');
+    if(process.argv.includes('--briefing-clear')){
+      const placement=await page.evaluate(()=>{const s=window.game.scene.getScene('OfficeScene'),a=s.toast.container.getBounds(),b=s.player.sprite.getBounds();return {visible:s.toast.visible,clear:a.bottom<b.top||a.top>b.bottom};});
+      assert(placement.visible);assert(placement.clear,'Memo feedback must clear the visible hero');
+    }
     await move(128, 185);
     await move(60, 185);
     await page.waitForFunction(()=>{

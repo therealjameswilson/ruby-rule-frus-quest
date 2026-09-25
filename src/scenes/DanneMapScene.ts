@@ -1,3 +1,5 @@
+import { addArchiveEnvironment, ARCHIVE_PROPS } from "../systems/archiveEnvironment";
+import { addSnesRoomIntroBanner } from "../systems/snesPixelArt";
 import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import { addVaultEnvironment, VAULT_STONE } from "../systems/vaultEnvironment";
 import Phaser from "phaser";
@@ -173,6 +175,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
 
   preload() {
     if (this.geometry.sceneKey === "NaraStacksScene") {
+      if (!this.textures.exists(ARCHIVE_PROPS.key)) this.load.image(ARCHIVE_PROPS.key, ARCHIVE_PROPS.path);
       const asset = SECRET_READING_ROOM_ASSETS.tilesetNative;
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
     }
@@ -360,7 +363,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       && !input.pauseJustPressed && !this.inventory.active && !this.reliability.active
       && !bossDecisionActive && !isCutsceneActive(this);
     if (!canAct) this.attackBuffer.clear();
-    this.player.setCombatPaused(!canAct || frozen);
+    this.player.setCombatPaused(!canAct || frozen, delta);
     if (!canAct) this.vaultObjects?.update(null, false, Boolean(this.danneBoss?.isActive));
     if (!frozen) {
       this.updateDanneEntities(this.time.now, delta, canAct);
@@ -552,7 +555,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       addSnesSenateHearingChamberTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "NaraStacksScene") {
-      addSnesNaraStacksTileRoom(this, { depth: -18 });
+      if (!addArchiveEnvironment(this)) addSnesNaraStacksTileRoom(this, { depth: -18 });
     }
     if (this.geometry.sceneKey === "EmbassyCableRoomScene") {
       addSnesEmbassyCableRoomTileRoom(this, { depth: -18 });
@@ -632,33 +635,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private drawLocationCard() {
-    const container = this.add.container(0, 0).setDepth(1200);
-    const title = this.geometry.displayName === "Cherry Blossom Garden"
-      ? "CHERRY GARDEN"
-      : this.geometry.displayName.toUpperCase();
-    const wideTitle = title.length > 20;
-    const cardWidth = wideTitle ? 214 : 168;
-    const titleFontSize = wideTitle ? "6px" : "8px";
-    const shadow = this.add.rectangle(130, 56, cardWidth, 28, color(PALETTE.black), 0.82);
-    const card = this.add.rectangle(128, 54, cardWidth, 28, color(PALETTE.deepRuby), 0.94)
-      .setStrokeStyle(2, color(PALETTE.goldStamp));
-    const label = this.add.text(128, wideTitle ? 49 : 47, title, {
-      fontFamily: "monospace",
-      fontSize: titleFontSize,
-      color: PALETTE.creamPaper
-    }).setOrigin(0.5, 0);
-    const sub = this.add.text(128, 59, "DANN-E EXPANSION ROUTE", {
-      fontFamily: "monospace",
-      fontSize: "6px",
-      color: PALETTE.goldStamp
-    }).setOrigin(0.5, 0);
-    container.add([shadow, card, label, sub]);
-    this.tweens.add({
-      targets: container,
-      alpha: 0,
-      delay: 1300,
-      duration: 350,
-      onComplete: () => container.destroy()
+    addSnesRoomIntroBanner(this, {
+      title: this.geometry.displayName,
+      subtitle: this.scene.key === "BlackVaultLairScene" ? "FINAL REVIEW" : "DANN-E’S CAMPAIGN",
+      depth: 1200
     });
   }
 

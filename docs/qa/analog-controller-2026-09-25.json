@@ -1,0 +1,45 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "unitTests": 42,
+  "analog": {
+    "north": {
+      "x": 128,
+      "y": 183
+    },
+    "southeast": {
+      "x": 143,
+      "y": 183
+    },
+    "southwest": {
+      "x": 127,
+      "y": 183
+    },
+    "deadzoneStops": true,
+    "menuStopsHero": true,
+    "errors": []
+  },
+  "outdoors": [
+    {
+      "controllerSalad": true,
+      "controllerRail": true,
+      "startMenu": true,
+      "disconnectStops": true,
+      "handoff": true,
+      "errors": []
+    },
+    {
+      "controllerSalad": true,
+      "controllerRail": true,
+      "startMenu": true,
+      "disconnectStops": true,
+      "handoff": true,
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Browser Gamepad API fixture; no physical controller or Bluetooth validation.",
+    "Outdoor route starts from scene fixture, then uses normal controller inputs.",
+    "Local only."
+  ]
+}

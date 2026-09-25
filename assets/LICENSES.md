@@ -43,3 +43,18 @@ No project-wide redistribution license is currently declared in this repository.
 Generation date: 2026-09-04. Prompts and import details are in
 `docs/art/colleague_refresh.md`. Source boards are not served by Vite; only the
 small native runtime exports are loaded. Existing fallback sheets are preserved.
+
+## FRUS inventory tool atlas (2026-09-24)
+- `public/assets/presentation/frus-tools-v2.png`: original AI-generated artwork created for this project with OpenAI image generation. Transparent source retained; runtime-only frame slicing. See adjacent `PROVENANCE.md` for subjects and integration details.
+
+## NARA environment props (2026-09-24)
+- `public/assets/art-pack/archive-environment/props-v2.png`: original AI-generated archive shelving and cartons created for this game with OpenAI image generation. Source RGBA preserved. See adjacent provenance file. Floor, walls and illumination are original canvas code.
+
+## Outdoor storefront and James (2026-09-24)
+- `public/assets/research-world/presentation/{sweetgreen,james}-v2.png`: original AI-generated artwork for the game using OpenAI image generation; original RGBA preserved. See adjacent `PROVENANCE.md`.
+
+## Research station and cart atlas (2026-09-24)
+- `public/assets/art-pack/research-props/props-v1.png`: original OpenAI-generated walnut research tray and wheeled archival cart, source RGBA preserved. Adjacent `PROVENANCE.md` includes the full prompt and frame details.
+
+## Detailed publication reward (2026-09-24)
+- `public/assets/presentation/publication/volume-v2.png`: original OpenAI-generated ruby buckram volume; source RGBA retained. Full generation/edit prompts in adjacent `PROVENANCE.md`. Backdrop is original canvas code.

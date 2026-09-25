@@ -1,0 +1,172 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "fullSuite": {
+    "files": 267,
+    "tests": 2007,
+    "passed": true
+  },
+  "runtimeChecks": {
+    "idleCached": true,
+    "attackRefreshes": true,
+    "restartRepaints": true,
+    "errors": []
+  },
+  "renderer": {
+    "api": "webgl",
+    "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M3, Unspecified Version)",
+    "softwareRenderer": false,
+    "backingWidth": 768,
+    "backingHeight": 720,
+    "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36"
+  },
+  "stress": {
+    "seconds": 20,
+    "cpuThrottle": 4,
+    "mobile": true,
+    "before": {
+      "measuredGameFrames": 1157,
+      "gameFrameP50Ms": 16.699999809265137,
+      "gameFrameP95Ms": 18.5,
+      "gameFrameP99Ms": 75,
+      "gameFrameMaxMs": 114.5,
+      "gameFramesOver33Ms": 16,
+      "gameFramesOver50Ms": 16,
+      "sampleCount": 72,
+      "gameLoopFps": 57.56897078285656,
+      "maxReportedThreats": 0,
+      "movingSamples": 47,
+      "movementCoverage": 0.6619718309859155,
+      "movementRunValid": true,
+      "gameplayModes": [
+        "explore"
+      ],
+      "avgFps": 59.324505220900896,
+      "minFps": 58.28295378654977,
+      "maxSampledFrameP99Ms": 100,
+      "finalFrameP99Ms": 100,
+      "finalFrameMaxMs": 100,
+      "lastInputLatencyMs": 6.800000000000182,
+      "consoleWarningsOrErrors": 0,
+      "pageErrors": 0
+    },
+    "after": {
+      "measuredGameFrames": 1214,
+      "gameFrameP50Ms": 16.699999809265137,
+      "gameFrameP95Ms": 18.299999952316284,
+      "gameFrameP99Ms": 18.799999952316284,
+      "gameFrameMaxMs": 25,
+      "gameFramesOver33Ms": 0,
+      "gameFramesOver50Ms": 0,
+      "sampleCount": 75,
+      "gameLoopFps": 60.025220680958384,
+      "maxReportedThreats": 0,
+      "movingSamples": 74,
+      "movementCoverage": 1,
+      "movementRunValid": true,
+      "gameplayModes": [
+        "explore"
+      ],
+      "avgFps": 60.003601201698764,
+      "minFps": 59.99482805629543,
+      "maxSampledFrameP99Ms": 20,
+      "finalFrameP99Ms": 20,
+      "finalFrameMaxMs": 16.80000000000291,
+      "lastInputLatencyMs": 10.200000047683716,
+      "consoleWarningsOrErrors": 0,
+      "pageErrors": 0
+    },
+    "beforeGraphics": [
+      {
+        "scene": "UIScene",
+        "path": "5",
+        "name": "",
+        "depth": 20400,
+        "calls": 1166,
+        "totalMs": 2514.6000020504,
+        "maxMs": 5.299999952316284,
+        "commands": 943
+      },
+      {
+        "scene": "UIScene",
+        "path": "0",
+        "name": "",
+        "depth": 20000,
+        "calls": 1166,
+        "totalMs": 653.2999987602234,
+        "maxMs": 3.200000047683716,
+        "commands": 1055
+      },
+      {
+        "scene": "ResearchWorldScene",
+        "path": "11",
+        "name": "",
+        "depth": 145,
+        "calls": 189,
+        "totalMs": 54.29999899864197,
+        "maxMs": 1.5,
+        "commands": 989
+      },
+      {
+        "scene": "ResearchWorldScene",
+        "path": "1",
+        "name": "outdoor-atmosphere",
+        "depth": -19,
+        "calls": 189,
+        "totalMs": 20.300000429153442,
+        "maxMs": 1.0999999046325684,
+        "commands": 768
+      }
+    ],
+    "afterGraphics": [
+      {
+        "scene": "UIScene",
+        "path": "0",
+        "name": "",
+        "depth": 20000,
+        "calls": 1222,
+        "totalMs": 632.4999990463257,
+        "maxMs": 1.5999999046325684,
+        "commands": 1055
+      },
+      {
+        "scene": "ResearchWorldScene",
+        "path": "11",
+        "name": "",
+        "depth": 145,
+        "calls": 1222,
+        "totalMs": 365.8000023365021,
+        "maxMs": 1.7999999523162842,
+        "commands": 989
+      },
+      {
+        "scene": "ResearchWorldScene",
+        "path": "1",
+        "name": "outdoor-atmosphere",
+        "depth": -19,
+        "calls": 1222,
+        "totalMs": 99.59999966621399,
+        "maxMs": 1,
+        "commands": 768
+      },
+      {
+        "scene": "UIScene",
+        "path": "6",
+        "name": "",
+        "depth": 20400,
+        "calls": 0,
+        "totalMs": 0,
+        "maxMs": 0,
+        "commands": 943
+      }
+    ]
+  },
+  "limitations": [
+    "Browser measurements include object instrumentation.",
+    "Walking coverage differs between runs; these are not identical frame-by-frame paths.",
+    "Cached HUD geometry eliminated per-frame triangulation; do not attribute every baseline spike solely to it.",
+    "Previous performance baseline began before target scene ready; profiler now waits for scene player and loader completion.",
+    "Not physical iPhone or console hardware.",
+    "Local only."
+  ]
+}

@@ -1,0 +1,129 @@
+{
+  "checked": "2026-09-25",
+  "openingRuntimeCommit": "1c8c477",
+  "remainingRuntimeCommit": "df5ee34",
+  "evidenceDirectory": "/tmp/frus-campaign-current-1c8c477",
+  "scope": "Fresh desktop Chromium campaign, chained predecessor-earned saves and real input actions. Failed source-note stage resumed after a visual gate fix and QA approach/assertion corrections. Automated decisions and live-state combat timing; not an unaided human or physical device playthrough.",
+  "stages": [
+    {
+      "stage": "01-guide",
+      "passEvidence": [
+        "PASS desktop fresh opening, harmless miss, pause, return, reward, Continue, Archive"
+      ]
+    },
+    {
+      "stage": "02-earned-source-note",
+      "passEvidence": [
+        "PASS earned source trail, standards decision, stamp, tool-cleared wall, Annotation Stacks entry and reload"
+      ]
+    },
+    {
+      "stage": "03-earned-annotation",
+      "passEvidence": [
+        "PASS earned cart parking, three annotation notes, return to source room"
+      ]
+    },
+    {
+      "stage": "04-file-annotation",
+      "passEvidence": [
+        "PASS earned annotation packet filed"
+      ]
+    },
+    {
+      "stage": "05-earned-network",
+      "passEvidence": [
+        "PASS earned supporting documents and east network route"
+      ]
+    },
+    {
+      "stage": "06-earned-network-routing",
+      "passEvidence": [
+        "PASS four earned routing deliveries, Citation Stamp crossing and ClassNet Vault arrival"
+      ]
+    },
+    {
+      "stage": "07-earned-clearance",
+      "passEvidence": [
+        "PASS earned review batch, missing-entry rejection, chronology repair, Clearance Token, referral arrival and reload"
+      ]
+    },
+    {
+      "stage": "08-earned-referral-dispatch",
+      "passEvidence": [
+        "PASS earned equity routing, dispatch evidence, shelf shortcut and return"
+      ]
+    },
+    {
+      "stage": "09-earned-referral-manifest",
+      "passEvidence": [
+        "PASS keyboard earned manifest correction, treatment, Concurrence Slip and proofing arrival"
+      ]
+    },
+    {
+      "stage": "10-earned-editor",
+      "passEvidence": [
+        "PASS keyboard earned bracket repair, Red Pencil, and proof room arrival"
+      ]
+    },
+    {
+      "stage": "11-earned-proof",
+      "passEvidence": [
+        "PASS keyboard earned Proof Lens, rejected drafts, and saved production handoff"
+      ]
+    },
+    {
+      "stage": "12-earned-production",
+      "passEvidence": [
+        "PASS earned Buckram Key and final vault arrival"
+      ]
+    },
+    {
+      "stage": "13-boss-counter-loop",
+      "passEvidence": [
+        "earned fight complete {\"cycles\":7,\"retries\":0,\"freshCoreHits\":7,\"tightApproaches\":0,\"phases\":[\"colossus\",\"swarm\",\"cloud\"],\"seconds\":50.925,\"deadlineMissed\":false}"
+      ]
+    },
+    {
+      "stage": "14-bindery-assembly",
+      "passEvidence": [
+        "{\"mobile\":false,\"finalPoints\":241,\"certification\":\"published\",\"errors\":[]}"
+      ]
+    }
+  ],
+  "combat": {
+    "cycles": 7,
+    "retries": 0,
+    "freshCoreHits": 7,
+    "tightApproaches": 0,
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "seconds": 50.925,
+    "deadlineMissed": false
+  },
+  "publication": {
+    "mobile": false,
+    "cpuThrottle": 1,
+    "startPoints": 201,
+    "finalPoints": 241,
+    "completedPackets": 5,
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "errors": []
+  },
+  "continueVerified": true,
+  "remainingQualityGaps": [
+    "Network and referral room visual consistency",
+    "Audio listening and mix review",
+    "Physical iPhone Safari and controller playtests",
+    "Full touch campaign"
+  ]
+}

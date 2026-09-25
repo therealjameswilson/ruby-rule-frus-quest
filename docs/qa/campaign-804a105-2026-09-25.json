@@ -1,0 +1,116 @@
+{
+  "date": "2026-09-25",
+  "runtimeCommit": "804a105",
+  "opening": {
+    "evidence": "/tmp/inbox-fixed-opening/results.json",
+    "passed": true,
+    "note": "Fresh opening earned after doorway fix in the previous turn; its Archive checkpoint was copied unchanged as chain input."
+  },
+  "stages": [
+    {
+      "stage": "02-earned-source-note",
+      "log": "/tmp/frus-campaign-804a105/02-earned-source-note/run.log",
+      "passed": true
+    },
+    {
+      "stage": "03-earned-annotation",
+      "log": "/tmp/frus-campaign-804a105/03-earned-annotation/run.log",
+      "passed": true
+    },
+    {
+      "stage": "04-file-annotation",
+      "log": "/tmp/frus-campaign-804a105/04-file-annotation/run.log",
+      "passed": true
+    },
+    {
+      "stage": "05-earned-network",
+      "log": "/tmp/frus-campaign-804a105/05-earned-network/run.log",
+      "passed": true
+    },
+    {
+      "stage": "06-earned-network-routing",
+      "log": "/tmp/frus-campaign-804a105/06-earned-network-routing/run.log",
+      "passed": true
+    },
+    {
+      "stage": "07-earned-clearance",
+      "log": "/tmp/frus-campaign-804a105/07-earned-clearance/run.log",
+      "passed": true
+    },
+    {
+      "stage": "08-earned-referral-dispatch",
+      "log": "/tmp/frus-campaign-804a105/08-earned-referral-dispatch/run.log",
+      "passed": true
+    },
+    {
+      "stage": "09-earned-referral-manifest",
+      "log": "/tmp/frus-campaign-804a105/09-earned-referral-manifest/run.log",
+      "passed": true
+    },
+    {
+      "stage": "10-earned-editor",
+      "log": "/tmp/frus-campaign-804a105/10-earned-editor/run.log",
+      "passed": true
+    },
+    {
+      "stage": "11-earned-proof",
+      "log": "/tmp/frus-campaign-804a105/11-earned-proof/run.log",
+      "passed": true
+    },
+    {
+      "stage": "12-earned-production",
+      "log": "/tmp/frus-campaign-804a105/12-earned-production/run.log",
+      "passed": true
+    },
+    {
+      "stage": "13-boss-counter-loop",
+      "log": "/tmp/frus-campaign-804a105/13-boss-counter-loop/run.log",
+      "passed": true
+    },
+    {
+      "stage": "14-bindery-assembly",
+      "log": "/tmp/frus-campaign-804a105/14-bindery-assembly/run.log",
+      "passed": true
+    }
+  ],
+  "boss": {
+    "label": "fight-summary",
+    "cycles": 7,
+    "retries": 0,
+    "freshCoreHits": 7,
+    "tightApproaches": 0,
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "seconds": 56.111,
+    "deadlineMissed": false
+  },
+  "ending": {
+    "mobile": false,
+    "cpuThrottle": 1,
+    "startPoints": 201,
+    "finalPoints": 241,
+    "completedPackets": 5,
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "errors": []
+  },
+  "limitations": [
+    "Automated state-aware Chromium keyboard play; not unaided human play.",
+    "Each stage continues the preceding earned save; no new campaign or progression flags substituted.",
+    "Not physical iPhone, gamepad or human audio listening validation.",
+    "Local build only; in-game publication does not mean website deployment."
+  ],
+  "nextPresentationWork": [
+    "Replace flat clearance station panels with detailed interactive props.",
+    "Bring Office interaction cues into line with compact Archive cues."
+  ]
+}

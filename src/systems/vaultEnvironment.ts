@@ -2,7 +2,7 @@ import Phaser from "phaser";
 import { DANNE_SCENE_GEOMETRY } from "../game/danneSceneCollisions";
 
 export const VAULT_STONE = { key: "vault-slate-v2", path: "assets/art-pack/danne-pack/environments/vault-slate-v2.png" };
-const ROOM_KEY = "vault-environment-v2";
+const ROOM_KEY = "vault-environment-v3";
 
 /** Bake static materials once. Every raised obstacle uses the gameplay collider footprint. */
 export function addVaultEnvironment(scene: Phaser.Scene) {
@@ -47,12 +47,35 @@ export function addVaultEnvironment(scene: Phaser.Scene) {
         // Recessed channels have an unbroken lip precisely on the collision boundary.
         bevel(x, y, w, h, "#74584b", "#261821");
         rect(x + 2, y + 2, w - 4, h - 4, "#100d17");
-        const glow = c.createLinearGradient(x + 2, y, x + w - 2, y);
-        glow.addColorStop(0, "#3c1724"); glow.addColorStop(.5, "#ab4639"); glow.addColorStop(1, "#291321");
-        c.fillStyle = glow; c.fillRect(x + 5, y + 4, w - 10, h - 8);
-        for (let dy = 8; dy < h - 6; dy += 11) {
-          line(x + 7, y + dy, x + w - 8, y + dy + 3, "#ec9b66", .7);
-          bevel(x + 2, y + dy + 4, w - 4, 3, "#4b4549", "#171923");
+        const center = x + w / 2;
+        const crack: Array<[number, number]> = [];
+        for (let i = 0; i <= 8; i++) crack.push([center + Math.sin(i * 2.3 + x) * 4, y + 4 + i * (h - 8) / 8]);
+        // Irregular basalt plates expose a bright, branching seam, not shelf-like rungs.
+        for (let i = 0; i < 8; i++) {
+          const [cx, cy] = crack[i], [nx, ny] = crack[i + 1];
+          for (const side of [-1, 1]) {
+            const edge = side < 0 ? x + 2 : x + w - 2;
+            const fill = c.createLinearGradient(edge, cy, cx, cy);
+            fill.addColorStop(0, i % 2 ? "#41424c" : "#303641");
+            fill.addColorStop(1, "#171723");
+            c.fillStyle = fill; c.beginPath();c.moveTo(edge, cy);
+            c.lineTo(cx + side * (5 + i % 3), cy + 1);
+            c.lineTo(nx + side * (4 + (i + 1) % 3), ny - 1);
+            c.lineTo(edge, ny);c.closePath();c.fill();
+            line(edge, cy + .5, cx + side * 6, cy + 1, "#786158", .55);
+            line(cx + side * 6, cy + 1, nx + side * 5, ny - 1, "#a34e37", .65);
+          }
+        }
+        const trace = (width: number, stroke: string) => {
+          c.beginPath(); c.moveTo(...crack[0]);
+          for (const point of crack.slice(1)) c.lineTo(...point);
+          c.lineWidth = width;c.lineJoin = "round";c.strokeStyle = stroke;c.stroke();
+        };
+        trace(7, "#692632");trace(3.4, "#d46a3d");trace(.9, "#ffcc80");
+        for (let i = 1; i < 8; i += 2) {
+          const [cx, cy] = crack[i], side = i % 4 === 1 ? -1 : 1;
+          line(cx, cy, cx + side * 7, cy + 4, "#b85b3b", 1);
+          line(cx + side * 7, cy + 4, cx + side * 9, cy + 9, "#6f3031", .6);
         }
       } else if (r.label.includes("altar")) {
         bevel(x, y, w, h, "#7a7271", "#221c2d");

@@ -1,9 +1,13 @@
+import { playPaperFoley, type PaperAction } from "./paperFoley";
+import { footstepSurface, playFootstep } from "./footsteps";
+import { RoomAmbience, ambienceForScene } from "./roomAmbience";
 import { ORIGINAL_SCORE, scoreEventsAtStep, type ScoreTheme } from "./originalScore";
 import { readAudioMix, saveAudioMix, type AudioChannel } from "./audioMix";
 import { setAudioStatus } from "../game/state";
 import type { ProcessItemId } from "../game/constants";
 import { addInputGestureListener } from "../input/InputState";
 
+import { playToolFoley } from "./toolFoley";
 import { ScoreVoice } from "./scoreVoice";
 
 type Wave = OscillatorType;
@@ -29,6 +33,9 @@ export interface AudioDebugState {
   pendingSceneKey: string | null;
   musicTimerActive: boolean;
   musicStep: number;
+  ambienceProfile: string | null;
+  ambienceSources: number;
+  ambienceRiverPresence: number;
   resumePending: boolean;
   hiddenPaused: boolean;
   firstUnlockMs: number | null;
@@ -41,6 +48,10 @@ function midiToFrequency(note: number) {
   return 440 * 2 ** ((note - 69) / 12);
 }
 
+function pageHidden() {
+  return typeof document !== "undefined" && document.hidden;
+}
+
 function nowMs() {
   return typeof performance === "undefined" ? Date.now() : performance.now();
 }
@@ -48,8 +59,11 @@ function nowMs() {
 class RetroAudio {
   private context: AudioContext | null = null;
   private masterGain: GainNode | null = null;
+  private outputNode: DynamicsCompressorNode | null = null;
+  private foley = new Set<() => void>();
   private musicGain: GainNode | null = null;
   private effectsGain: GainNode | null = null;
+  private effects = new Map<OscillatorNode, GainNode>();
   private mix = readAudioMix();
   private enabled = true;
   private prepared = false;
@@ -59,6 +73,7 @@ class RetroAudio {
   private musicStep = 0;
   private nextMusicTime = 0;
   private scoreVoice: ScoreVoice | null = null;
+  private ambience: RoomAmbience | null = null;
   private currentSceneKey: string | null = null;
   private currentThemeKey: string | null = null;
   private currentTheme: MidiTheme | null = null;
@@ -84,6 +99,7 @@ class RetroAudio {
   toggle() {
     this.enabled = !this.enabled;
     if (!this.enabled) {
+      this.stopEffects();
       this.stopMusic();
       this.fadeMasterGain(0.0001, 0.04);
       setAudioStatus("audio muted");
@@ -100,6 +116,7 @@ class RetroAudio {
     if (!Number.isFinite(value)) return;
     this.mix[channel] = Math.max(0, Math.min(1, value));
     saveAudioMix(this.mix);
+    if ((channel === "master" || channel === "effects") && this.mix[channel] === 0) this.stopEffects();
     if (!this.context) return;
     if (channel === "master") this.fadeMasterGain(this.enabled ? 0.85 : 0.0001, 0.04);
     else {
@@ -124,7 +141,7 @@ class RetroAudio {
   }
 
   async unlock() {
-    if (!this.enabled || typeof window === "undefined") return false;
+    if (!this.enabled || typeof window === "undefined" || pageHidden()) return false;
     this.prepare();
     const startedAt = nowMs();
     const context = this.getContext();
@@ -134,6 +151,8 @@ class RetroAudio {
     }
 
     await this.resumeContext(context);
+    if (pageHidden()) { this.handleHidden(); return false; }
+    if (!this.enabled) return false;
     if (context.state !== "running") {
       this.resumePending = true;
       this.installGestureResume();
@@ -174,44 +193,48 @@ class RetroAudio {
     this.sequence([392, 523, 659, 1046], 0.07, 0.06, 0.045);
   }
 
+  paperPickup() {
+    setAudioStatus("paper packet pickup");
+    this.paperSound('pickup');
+  }
+
+  fileDocket() {
+    setAudioStatus("paper filing and stamp");
+    this.paperSound('file');
+  }
+
+  private paperSound(action: PaperAction) {
+    if (!this.enabled || typeof window === 'undefined' || pageHidden() || this.mix.effects === 0 || this.mix.master === 0) return;
+    const context = this.getContext();
+    if (!context) return;
+    if (!this.unlocked || context.state !== 'running') {
+      this.resumePending = true; this.installGestureResume(); return;
+    }
+    let cancel: () => void;
+    cancel = playPaperFoley(context, this.channelOutput(context, 'effects'), action, () => this.foley.delete(cancel));
+    this.foley.add(cancel);
+  }
+
   toolWindup(tool: ProcessItemId) {
-    if (tool === "stapler") {
-      setAudioStatus("stapler click");
-      this.sequence([180, 720], 0.025, 0.01, 0.035, "square");
-      return;
-    }
-    if (tool === "red_pencil") {
-      setAudioStatus("red pencil windup");
-      this.sequence([440, 554], 0.035, 0.018, 0.026, "triangle");
-      return;
-    }
-    if (tool === "review_folder") {
-      setAudioStatus("review folder windup");
-      this.sequence([196, 247, 294], 0.045, 0.02, 0.032, "square");
-      return;
-    }
-    setAudioStatus("citation stamp windup");
-    this.sequence([330, 392], 0.04, 0.018, 0.032, "square");
+    setAudioStatus(`${tool.replace(/_/g, ' ')} windup`);
+    this.toolSound(tool, false);
   }
 
   toolHit(tool: ProcessItemId) {
-    if (tool === "stapler") {
-      setAudioStatus("stapler clack");
-      this.sequence([900, 160, 110], 0.025, 0.01, 0.05, "square");
-      return;
+    setAudioStatus(`${tool.replace(/_/g, ' ')} impact`);
+    this.toolSound(tool, true);
+  }
+
+  private toolSound(tool: ProcessItemId, hit: boolean) {
+    if (!this.enabled || typeof window === 'undefined' || pageHidden() || this.mix.effects === 0 || this.mix.master === 0) return;
+    const context = this.getContext();
+    if (!context) return;
+    if (!this.unlocked || context.state !== 'running') {
+      this.resumePending = true; this.installGestureResume(); return;
     }
-    if (tool === "red_pencil") {
-      setAudioStatus("red pencil hit");
-      this.sequence([880, 660, 988], 0.035, 0.022, 0.04, "triangle");
-      return;
-    }
-    if (tool === "review_folder") {
-      setAudioStatus("review folder hit");
-      this.sequence([294, 392, 523], 0.05, 0.03, 0.045, "square");
-      return;
-    }
-    setAudioStatus("citation stamp hit");
-    this.sequence([392, 523, 784], 0.045, 0.03, 0.045, "square");
+    let cancel: () => void;
+    cancel = playToolFoley(context, this.channelOutput(context, 'effects'), tool, hit, () => this.foley.delete(cancel));
+    this.foley.add(cancel);
   }
 
   transition() {
@@ -227,6 +250,14 @@ class RetroAudio {
   egoBoltFire() {
     setAudioStatus("ego bolt fire");
     this.sequence([740, 370, 555], 0.035, 0.012, 0.035, "square");
+  }
+
+  egoBoltReturn(tool: ProcessItemId) {
+    this.toolSound(tool, true);
+    setAudioStatus("ego bolt returned");
+    // A soft rising fifth over the physical impact distinguishes a counter
+    // from an ordinary swing or the descending enemy-fire cue.
+    this.sequence([880, 1320], 0.065, 0.012, 0.026, "sine");
   }
 
   playerHurt(heavy = false) {
@@ -280,7 +311,7 @@ class RetroAudio {
     this.prepare();
     const { key, theme } = this.resolveTheme(sceneKey);
     if (this.currentThemeKey === key && !options.forceRestart) {
-      setAudioStatus(`original score ${theme.title}`);
+      this.startMusic(sceneKey);
       return;
     }
     if (!this.unlocked || !this.getContext() || this.getContextState() !== "running") {
@@ -310,6 +341,13 @@ class RetroAudio {
       this.pendingSceneKey = null;
       return;
     }
+    if (pageHidden()) {
+      this.pendingSceneKey = sceneKey;
+      this.hiddenPaused = true;
+      this.handleHidden();
+      return;
+    }
+    const canceledCrossfade = this.crossfadeTimer !== null;
     if (this.crossfadeTimer !== null) {
       window.clearTimeout(this.crossfadeTimer);
       this.crossfadeTimer = null;
@@ -336,12 +374,16 @@ class RetroAudio {
     this.pendingSceneKey = null;
     this.resumePending = false;
     if (this.musicTimer !== null && this.currentThemeKey === key && !options.forceRestart) {
+      this.ensureAmbience(context, sceneKey);
+      // A canceled outgoing fade must not leave the surviving theme silent.
+      if (canceledCrossfade) this.fadeMusicGain(this.mix.music, 0.18);
       setAudioStatus(`original score ${theme.title}`);
       return;
     }
 
     this.stopMusic();
     this.currentThemeKey = key;
+    this.ensureAmbience(context, sceneKey);
     this.musicStep = 0;
     this.fadeMasterGain(0.85, 0.2);
     this.scoreVoice = new ScoreVoice(context, this.channelOutput(context, "music"));
@@ -361,7 +403,23 @@ class RetroAudio {
     setAudioStatus(`original score ${theme.title}`);
   }
 
+  setOutdoorListener(position: {y:number}) {
+    if (this.currentSceneKey === 'ResearchWorldScene') this.ambience?.setRiverPosition(position);
+  }
+
+  private ensureAmbience(context: AudioContext, sceneKey: string) {
+    const profile = ambienceForScene(sceneKey);
+    if (this.ambience?.profile === profile) {
+      if (sceneKey !== 'ResearchWorldScene') this.ambience?.setRiverPosition(null);
+      return;
+    }
+    this.ambience?.dispose();
+    this.ambience = profile ? new RoomAmbience(context, this.channelOutput(context, "effects"), profile) : null;
+  }
+
   stopMusic() {
+    this.ambience?.dispose();
+    this.ambience = null;
     this.scoreVoice?.dispose();
     this.scoreVoice = null;
     if (this.crossfadeTimer !== null && typeof window !== "undefined") {
@@ -388,6 +446,9 @@ class RetroAudio {
       pendingSceneKey: this.pendingSceneKey,
       musicTimerActive: this.musicTimer !== null,
       musicStep: this.musicStep,
+      ambienceProfile: this.ambience?.profile ?? null,
+      ambienceSources: this.ambience?.activeSourceCount ?? 0,
+      ambienceRiverPresence: this.ambience?.riverPresence ?? 0,
       resumePending: this.resumePending,
       hiddenPaused: this.hiddenPaused,
       firstUnlockMs: this.firstUnlockMs,
@@ -404,6 +465,7 @@ class RetroAudio {
       CharacterCreateScene: "title",
       OfficeScene: "officeHub",
       CherryBlossomGardenScene: "cherryGarden",
+      ResearchWorldScene: "cherryGarden",
       SenateHearingChamberScene: "senate",
       GuideScene: "archiveDungeon",
       ArchiveScene: "archiveDungeon",
@@ -441,14 +503,22 @@ class RetroAudio {
   }
 
   private sequence(notes: number[], duration: number, gap: number, gain: number, wave: Wave = "square") {
-    if (typeof window === "undefined") return;
+    if (!this.enabled || typeof window === "undefined" || pageHidden()) return;
+    const at = this.getContext()?.currentTime;
+    if (at === undefined) return;
     notes.forEach((note, index) => {
-      window.setTimeout(() => this.tone(note, duration, gain, wave), index * (duration + gap) * 1000);
+      this.tone(note, duration, gain, wave, at + index * (duration + gap));
     });
   }
 
-  private tone(frequency: number, duration: number, gainValue: number, wave: Wave = "square") {
-    if (!this.enabled || typeof window === "undefined") return;
+  footstep(scene: string, right: boolean, position?: {x:number; y:number}) {
+    if (!this.enabled || !this.unlocked || !this.context || this.context.state !== "running") return;
+    if (this.mix.effects === 0 || this.mix.master === 0) return;
+    playFootstep(this.context, this.channelOutput(this.context, "effects"), footstepSurface(scene, position), right);
+  }
+
+  private tone(frequency: number, duration: number, gainValue: number, wave: Wave = "square", scheduledAt?: number) {
+    if (!this.enabled || typeof window === "undefined" || pageHidden() || this.mix.effects === 0 || this.mix.master === 0) return;
     const context = this.getContext();
     if (!context) return;
     if (!this.unlocked || context.state !== "running") {
@@ -457,18 +527,32 @@ class RetroAudio {
       return;
     }
     const output = this.channelOutput(context, "effects");
+    const at = Math.max(context.currentTime, scheduledAt ?? context.currentTime);
     const osc = context.createOscillator();
     const gain = context.createGain();
     osc.type = wave;
     osc.frequency.value = frequency;
-    gain.gain.setValueAtTime(0.0001, context.currentTime);
-    gain.gain.exponentialRampToValueAtTime(gainValue, context.currentTime + 0.006);
-    gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + duration);
+    gain.gain.setValueAtTime(0.0001, at);
+    gain.gain.exponentialRampToValueAtTime(gainValue, at + 0.006);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + duration);
     osc.connect(gain);
     gain.connect(output);
-    osc.onended = () => { osc.disconnect(); gain.disconnect(); };
-    osc.start();
-    osc.stop(context.currentTime + duration + 0.02);
+    this.effects.set(osc, gain);
+    osc.onended = () => { osc.disconnect(); gain.disconnect(); this.effects.delete(osc); };
+    osc.start(at);
+    osc.stop(at + duration + 0.02);
+  }
+
+  private stopEffects() {
+    for (const cancel of this.foley) cancel();
+    this.foley.clear();
+    const at = this.context?.currentTime ?? 0;
+    for (const [osc, gain] of this.effects) {
+      gain.gain.cancelScheduledValues(at);
+      gain.gain.setTargetAtTime(0.0001, at, 0.003);
+      osc.stop(at + 0.015);
+    }
+    this.effects.clear();
   }
 
   private prewarmWithSilentBuffer(context: AudioContext) {
@@ -501,7 +585,12 @@ class RetroAudio {
     if (!this.masterGain) {
       this.masterGain = context.createGain();
       this.masterGain.gain.setValueAtTime(0.85 * this.mix.master, context.currentTime);
-      this.masterGain.connect(context.destination);
+      // Raise the deliberately quiet synthesis mix while controlling stacked effects.
+      const level = context.createGain(); level.gain.value = 4;
+      this.outputNode = context.createDynamicsCompressor();
+      this.outputNode.threshold.value = -8; this.outputNode.knee.value = 6;
+      this.outputNode.ratio.value = 12; this.outputNode.attack.value = .003; this.outputNode.release.value = .18;
+      this.masterGain.connect(level); level.connect(this.outputNode); this.outputNode.connect(context.destination);
     }
     return this.masterGain;
   }
@@ -557,6 +646,7 @@ class RetroAudio {
 
   private handleHidden() {
     this.lastVisibilityEvent = "hidden";
+    this.stopEffects();
     this.hiddenPaused = this.musicTimer !== null || this.hiddenPaused;
     this.stopMusic();
     if (this.context?.state === "running") {
@@ -570,10 +660,13 @@ class RetroAudio {
 
   private async handleVisible() {
     this.lastVisibilityEvent = "visible";
-    if (!this.enabled || !this.hiddenPaused) return;
+    if (!this.enabled || !this.hiddenPaused || pageHidden()) return;
     const context = this.getContext();
     if (!context) return;
     await this.resumeContext(context);
+    // Visibility can change while the browser is resolving resume().
+    if (pageHidden()) { this.handleHidden(); return; }
+    if (!this.enabled) return;
     if (context.state === "running") {
       this.unlocked = true;
       this.resumePending = false;
@@ -590,7 +683,9 @@ class RetroAudio {
     const state = this.getContextState();
     const previous = this.lastContextState;
     this.lastContextState = state;
+    if (state === "running" && pageHidden()) { this.handleHidden(); return; }
     if (state === "interrupted") {
+      this.stopEffects();
       this.lastInterruptionEvent = "interrupted";
       this.stopMusic();
       this.resumePending = true;

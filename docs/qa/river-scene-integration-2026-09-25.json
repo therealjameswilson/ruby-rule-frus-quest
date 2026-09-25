@@ -1,0 +1,160 @@
+{
+  "results": [
+    {
+      "engine": "chromium",
+      "started": {
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "ResearchWorldScene",
+        "currentThemeKey": "cherryGarden",
+        "currentThemeTitle": "Across the Capital",
+        "currentThemeSource": "Original Ruby Rule composition; locally synthesized instruments",
+        "currentThemeStem": "original:outside",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 2,
+        "ambienceProfile": "outdoors",
+        "ambienceSources": 4,
+        "ambienceRiverPresence": 0.3299954483386436,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 2.3000001907348633,
+        "lastFirstSampleMs": 2.3000001907348633,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      "near": 1,
+      "far": 0,
+      "regionRestart": true,
+      "resumed": 1,
+      "officeProfile": "office",
+      "errors": []
+    },
+    {
+      "engine": "webkit",
+      "started": {
+        "enabled": true,
+        "prepared": true,
+        "unlocked": true,
+        "contextState": "running",
+        "currentSceneKey": "ResearchWorldScene",
+        "currentThemeKey": "cherryGarden",
+        "currentThemeTitle": "Across the Capital",
+        "currentThemeSource": "Original Ruby Rule composition; locally synthesized instruments",
+        "currentThemeStem": "original:outside",
+        "pendingSceneKey": null,
+        "musicTimerActive": true,
+        "musicStep": 1,
+        "ambienceProfile": "outdoors",
+        "ambienceSources": 4,
+        "ambienceRiverPresence": 0.3299954483386436,
+        "resumePending": false,
+        "hiddenPaused": false,
+        "firstUnlockMs": 41,
+        "lastFirstSampleMs": 41,
+        "lastVisibilityEvent": null,
+        "lastInterruptionEvent": null
+      },
+      "near": 1,
+      "far": 0,
+      "regionRestart": true,
+      "resumed": 1,
+      "officeProfile": "office",
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Simulated phone; no physical iPhone or human listening",
+    "WebKit validated scene/lifecycle state only; its headless audio clock did not advance on this host",
+    "Position fixtures at bridge and office; real movement and office action",
+    "No manual audio scene selection"
+  ],
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTestsPassed": 18,
+  "waveformAndMute": {
+    "rendered": {
+      "reports": [
+        {
+          "y": 128,
+          "peak": 0.02124875783920288,
+          "rms": 0.005170163962946374,
+          "presence": 0,
+          "sources": 4
+        },
+        {
+          "y": 194,
+          "peak": 0.023736653849482536,
+          "rms": 0.0060310618262082736,
+          "presence": 0.5,
+          "sources": 4
+        },
+        {
+          "y": 220,
+          "peak": 0.028033679351210594,
+          "rms": 0.007719572300711697,
+          "presence": 1,
+          "sources": 4
+        }
+      ],
+      "disposedSources": 0,
+      "disposedPresence": 0,
+      "tailPeak": 0
+    },
+    "near": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "ResearchWorldScene",
+      "currentThemeKey": "cherryGarden",
+      "currentThemeTitle": "Across the Capital",
+      "currentThemeSource": "Original Ruby Rule composition; locally synthesized instruments",
+      "currentThemeStem": "original:outside",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 1,
+      "ambienceProfile": "outdoors",
+      "ambienceSources": 4,
+      "ambienceRiverPresence": 1,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 0.09999990463256836,
+      "lastFirstSampleMs": 0.09999990463256836,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "far": {
+      "enabled": true,
+      "prepared": true,
+      "unlocked": true,
+      "contextState": "running",
+      "currentSceneKey": "ResearchWorldScene",
+      "currentThemeKey": "cherryGarden",
+      "currentThemeTitle": "Across the Capital",
+      "currentThemeSource": "Original Ruby Rule composition; locally synthesized instruments",
+      "currentThemeStem": "original:outside",
+      "pendingSceneKey": null,
+      "musicTimerActive": true,
+      "musicStep": 5,
+      "ambienceProfile": "outdoors",
+      "ambienceSources": 4,
+      "ambienceRiverPresence": 0,
+      "resumePending": false,
+      "hiddenPaused": false,
+      "firstUnlockMs": 0.09999990463256836,
+      "lastFirstSampleMs": 0.09999990463256836,
+      "lastVisibilityEvent": null,
+      "lastInterruptionEvent": null
+    },
+    "muted": true,
+    "hiddenCleanup": true,
+    "resumed": true,
+    "gardenReset": true,
+    "errors": []
+  },
+  "skillCapture": "Black WebGL capture inspected; regular WebKit bridge capture inspected",
+  "published": false
+}

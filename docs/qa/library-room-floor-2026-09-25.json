@@ -1,0 +1,78 @@
+{
+  "date": "2026-09-25",
+  "scope": "Dedicated library reading room floor",
+  "build": "passed",
+  "desktop": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "visibleFiledPapers": true,
+    "nonBlockingIntermediateFiling": true,
+    "filingSound": true,
+    "lockedStationRedirect": true,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "phone": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "visibleFiledPapers": true,
+    "nonBlockingIntermediateFiling": true,
+    "filingSound": true,
+    "lockedStationRedirect": true,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "restoration": {
+    "savedStage": 2,
+    "visible": [
+      true,
+      true,
+      false,
+      false
+    ],
+    "reloads": 2,
+    "errors": [],
+    "limitation": "Saved-state fixture for presentation restoration; earned progression verified separately"
+  },
+  "texture": {
+    "size": [
+      1024,
+      832
+    ],
+    "display": [
+      256,
+      208
+    ],
+    "depth": 2,
+    "count": 1,
+    "reusedAfterRestart": true
+  },
+  "screenshots": [
+    "/tmp/library-floor-outing/desktop-packet-filed.png",
+    "/tmp/library-floor-outing/phone-packet-filed.png",
+    "/tmp/library-floor-restore/restored.png"
+  ],
+  "limitations": [
+    "Standard client WebGL capture black; regular screenshots inspected",
+    "Simulated phone and controller only",
+    "Local only; not published"
+  ]
+}

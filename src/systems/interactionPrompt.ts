@@ -28,8 +28,10 @@ export class InteractionPrompt {
   private readonly labelText: Phaser.GameObjects.Text;
   private readonly ring: Phaser.GameObjects.Graphics;
   private currentText: string | null = null;
+  private readonly compact: boolean;
 
-  constructor(scene: Phaser.Scene, depth = 950, highlightDepth = depth - 3) {
+  constructor(scene: Phaser.Scene, depth = 950, highlightDepth = depth - 3, options: {compact?: boolean} = {}) {
+    this.compact = options.compact ?? false;
     this.ring = scene.add.graphics().setName("interaction-target-brackets")
       .setDepth(highlightDepth).setVisible(false);
     this.ring.fillStyle(color(PALETTE.goldStamp), 1);
@@ -40,7 +42,7 @@ export class InteractionPrompt {
     for (const x of [-10, 9]) {
       for (const y of [-10, 6]) this.ring.fillRect(x, y, 1, 4);
     }
-    this.panel = scene.add.rectangle(0, 0, 60, 13, color(PALETTE.shadowNavy), 0.96).setOrigin(0.5);
+    this.panel = scene.add.rectangle(0, 0, 60, 13, this.compact ? 0x15242c : color(PALETTE.shadowNavy), 0.96).setOrigin(0.5);
     this.border = scene.add
       .rectangle(0, 0, 62, 15)
       .setStrokeStyle(1, color(PALETTE.goldStamp))
@@ -81,7 +83,7 @@ export class InteractionPrompt {
       return;
     }
 
-    const text = display?.text ?? `${placement.verb} ${placement.label}`;
+    const text = display?.text ?? (this.compact ? placement.verb : `${placement.verb} ${placement.label}`);
     if (text !== this.currentText) {
       this.currentText = text;
       const fitted = fitPromptText(text, (candidate) => {

@@ -1,3 +1,6 @@
+import { startWithPlayerArt } from "../systems/playerArtLoading";
+import { installBootProgress } from '../systems/bootProgress';
+import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import Phaser from "phaser";
 import { OFFICIAL_FRUS_ART } from "../assets/officialFrus";
 import { installArtSharpness } from "../systems/artSharpness";
@@ -52,7 +55,6 @@ import {
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { ensurePixelBitmapFont, installPixelTextFactory } from "../systems/pixelFont";
-import { WEAPON_VFX_ASSET } from "../systems/weaponState";
 import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 
 function color(hex: string) {
@@ -60,11 +62,13 @@ function color(hex: string) {
 }
 
 export class BootScene extends Phaser.Scene {
+  private loadingFailed = () => false;
   constructor() {
     super("BootScene");
   }
 
   preload() {
+    this.loadingFailed = installBootProgress(this);
     this.load.json("items", "assets/data/items.json");
     this.load.json("dialogue", "assets/data/dialogue.json");
     this.load.json("scenes", "assets/data/scenes.json");
@@ -72,10 +76,6 @@ export class BootScene extends Phaser.Scene {
     for (const asset of OFFICIAL_FRUS_ART) {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
     }
-    this.load.spritesheet(WEAPON_VFX_ASSET.key, WEAPON_VFX_ASSET.path, {
-      frameWidth: WEAPON_VFX_ASSET.frameWidth,
-      frameHeight: WEAPON_VFX_ASSET.frameHeight
-    });
     this.load.image(VOLUME_ASSEMBLY_ASSETS.hudBar.key, VOLUME_ASSEMBLY_ASSETS.hudBar.path);
     this.load.image(VOLUME_ASSEMBLY_ASSETS.completedHero.key, VOLUME_ASSEMBLY_ASSETS.completedHero.path);
     this.load.image(SNES_OFFICE_ROOM_BACKGROUND_ASSET.key, SNES_OFFICE_ROOM_BACKGROUND_ASSET.path);
@@ -92,6 +92,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   create() {
+    if (this.loadingFailed()) return;
     this.cameras.main.roundPixels = true;
     setSceneState("BootScene", "boot", "Loading original pixel assets.");
     retroAudio.prepare();
@@ -127,7 +128,7 @@ export class BootScene extends Phaser.Scene {
       this.applyRoleFromQuery();
       seedProgressForScene(startScene);
     }
-    this.scene.start(startScene);
+    startWithPlayerArt(this, startScene);
   }
 
   private getStartScene() {
@@ -152,16 +153,13 @@ export class BootScene extends Phaser.Scene {
     for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
       this.load.image(asset.key, asset.path);
     }
+    this.load.spritesheet(DANNE_BOSS_HD.key, DANNE_BOSS_HD.path, {
+      frameWidth: DANNE_BOSS_HD.frameW, frameHeight: DANNE_BOSS_HD.frameH
+    });
     this.load.spritesheet(DANNE_BOSS_SPRITE_ASSET.key, DANNE_BOSS_SPRITE_ASSET.path, {
       frameWidth: DANNE_BOSS_SPRITE_ASSET.frameW,
       frameHeight: DANNE_BOSS_SPRITE_ASSET.frameH
     });
-    for (const asset of DANNE_VFX_ASSETS) {
-      this.load.spritesheet(asset.key, asset.path, {
-        frameWidth: asset.frameW,
-        frameHeight: asset.frameH
-      });
-    }
   }
 
   private preloadGameplayTilesets() {

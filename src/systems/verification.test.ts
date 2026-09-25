@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ChoicePrompt } from "./verification";
 import { bindPointerDown, swallowNextInputFrame } from "../input/InputState";
 
-const controls = vi.hoisted(() => ({ a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false, navDownJustPressed: false, navUpJustPressed: false, choiceAJustPressed: false }));
+const controls = vi.hoisted(() => ({ up: false, down: false, left: false, right: false, a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false, navDownJustPressed: false, navUpJustPressed: false, choiceAJustPressed: false }));
 vi.mock("../input/InputState", () => ({ getInput: () => controls, bindPointerDown: vi.fn(), swallowNextInputFrame: vi.fn() }));
 vi.mock("./audio", () => ({ retroAudio: { confirm: vi.fn() } }));
 vi.mock("../game/state", () => ({ clearChoiceState: vi.fn(), setChoiceState: vi.fn(), setLatestMessage: vi.fn() }));
@@ -23,14 +23,14 @@ class Visual {
   destroy() {}
 }
 
-function fixture(settleMs = 300, onCancel?: () => void) {
+function fixture(settleMs = 300, onCancel?: () => void, cancelOnBack = false) {
   const clock = { now: 1000 };
   const scene = {
     time: clock,
     events: { emit: vi.fn() },
     add: { rectangle: () => new Visual(), text: () => new Visual(), container: () => new Visual() }
   } as unknown as Phaser.Scene;
-  const prompt = new ChoicePrompt(scene, { settleMs });
+  const prompt = new ChoicePrompt(scene, { settleMs, cancelOnBack });
   const callback = vi.fn();
   const show = () => prompt.show("Review interrupted.", [
     { key: "A", label: "Retry", value: "retry" },
@@ -43,7 +43,7 @@ function fixture(settleMs = 300, onCancel?: () => void) {
 describe("choice transition input guard", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    Object.assign(controls, { a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false, navDownJustPressed: false, navUpJustPressed: false, choiceAJustPressed: false });
+    Object.assign(controls, { up: false, down: false, left: false, right: false, a: false, b: false, aJustPressed: false, bJustPressed: false, cancelJustPressed: false, pauseJustPressed: false, menuJustPressed: false, navDownJustPressed: false, navUpJustPressed: false, choiceAJustPressed: false });
   });
 
   it.each(["navDownJustPressed", "navUpJustPressed"] as const)("selects with %s and confirms the highlighted answer", key => {
@@ -84,6 +84,16 @@ describe("choice transition input guard", () => {
     expect(swallowNextInputFrame).toHaveBeenCalledOnce();
   });
 
+  it.each(["bJustPressed", "cancelJustPressed"] as const)("supports outdoor Back cancellation through %s", key => {
+    const cancel = vi.fn();
+    const { prompt, callback } = fixture(0, cancel, true);
+    controls[key] = true;
+    prompt.updateInput();
+    expect(prompt.active).toBe(false);
+    expect(callback).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
   it("still submits a deliberate B face-button answer in a cancellable review", () => {
     const cancel = vi.fn();
     const { prompt, callback } = fixture(0, cancel);
@@ -120,6 +130,20 @@ describe("choice transition input guard", () => {
     controls.b = controls.bJustPressed = false;
     prompt.updateInput();
     controls.a = controls.aJustPressed = true;
+    prompt.updateInput();
+    expect(callback).toHaveBeenCalledWith(expect.objectContaining({ value: "retry" }));
+  });
+
+  it.each(["up", "down", "left", "right"] as const)("waits for held %s movement to release before arming retry", direction => {
+    controls[direction] = true;
+    const { prompt, callback, clock } = fixture();
+    clock.now += 400;
+    prompt.updateInput();
+    controls.navDownJustPressed = true;
+    prompt.updateInput();
+    controls[direction] = controls.navDownJustPressed = false;
+    prompt.updateInput();
+    controls.aJustPressed = true;
     prompt.updateInput();
     expect(callback).toHaveBeenCalledWith(expect.objectContaining({ value: "retry" }));
   });

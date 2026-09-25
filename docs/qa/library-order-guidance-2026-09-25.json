@@ -1,0 +1,46 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "focusedTestsPassed": 10,
+  "desktop": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "lockedStationRedirect": true,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "phone": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "lockedStationRedirect": true,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "visualsInspected": [
+    "desktop-locked-guidance.png",
+    "phone-locked-guidance.png"
+  ],
+  "skillCapture": "Black WebGL capture inspected; ordinary desktop/phone captures inspected",
+  "limitations": [
+    "Simulated phone/controller; no physical hardware",
+    "Local changes, not published"
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "keyboard": {
+    "orders": 3,
+    "cancel": true,
+    "saved": true,
+    "errors": []
+  },
+  "touch": {
+    "orders": 3,
+    "cancel": true,
+    "saved": true,
+    "errors": []
+  },
+  "labelChecks": {
+    "orderAboveStorefront": true,
+    "jamesClearsDpad": true
+  },
+  "screenshots": [
+    "/tmp/salad-phone-world.png",
+    "/tmp/salad-desktop-world.png"
+  ],
+  "limitations": [
+    "Ordering test positions hero at counter; actual interaction uses keyboard/touch.",
+    "Simulated phone, not physical iPhone.",
+    "Local only."
+  ]
+}

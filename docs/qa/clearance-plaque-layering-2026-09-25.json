@@ -1,0 +1,153 @@
+{
+  "date": "2026-09-25",
+  "scope": "Clearance workstation plaques respect hero depth",
+  "build": "passed",
+  "desktop": {
+    "mobile": false,
+    "stations": [
+      {
+        "name": "classnet-station-release_board",
+        "depth": 95,
+        "y": 83,
+        "desk": [
+          {
+            "texture": "clearance-release-standard-v1",
+            "width": 58,
+            "height": 29,
+            "top": 60.5,
+            "bottom": 89.5
+          }
+        ],
+        "plaqueDepth": 97,
+        "plaqueBottom": 103,
+        "labels": [
+          "RELEASE"
+        ]
+      },
+      {
+        "name": "classnet-station-human_desk",
+        "depth": 186,
+        "y": 174,
+        "desk": [
+          {
+            "texture": "clearance-human-review-v1",
+            "width": 58,
+            "height": 29,
+            "top": 151.5,
+            "bottom": 180.5
+          }
+        ],
+        "plaqueDepth": 140,
+        "plaqueBottom": 146,
+        "labels": [
+          "HUMAN"
+        ]
+      },
+      {
+        "name": "classnet-station-decision_ledger",
+        "depth": 186,
+        "y": 174,
+        "desk": [
+          {
+            "texture": "clearance-equity-ledger-v1",
+            "width": 58,
+            "height": 29,
+            "top": 151.5,
+            "bottom": 180.5
+          }
+        ],
+        "plaqueDepth": 140,
+        "plaqueBottom": 146,
+        "labels": [
+          "LEDGER"
+        ]
+      }
+    ],
+    "layering": {
+      "hero": 150,
+      "plaque": 140,
+      "overlap": true
+    },
+    "errors": []
+  },
+  "phone": {
+    "mobile": true,
+    "stations": [
+      {
+        "name": "classnet-station-release_board",
+        "depth": 95,
+        "y": 83,
+        "desk": [
+          {
+            "texture": "clearance-release-standard-v1",
+            "width": 58,
+            "height": 29,
+            "top": 60.5,
+            "bottom": 89.5
+          }
+        ],
+        "plaqueDepth": 97,
+        "plaqueBottom": 103,
+        "labels": [
+          "RELEASE"
+        ]
+      },
+      {
+        "name": "classnet-station-human_desk",
+        "depth": 186,
+        "y": 174,
+        "desk": [
+          {
+            "texture": "clearance-human-review-v1",
+            "width": 58,
+            "height": 29,
+            "top": 151.5,
+            "bottom": 180.5
+          }
+        ],
+        "plaqueDepth": 140,
+        "plaqueBottom": 146,
+        "labels": [
+          "HUMAN"
+        ]
+      },
+      {
+        "name": "classnet-station-decision_ledger",
+        "depth": 186,
+        "y": 174,
+        "desk": [
+          {
+            "texture": "clearance-equity-ledger-v1",
+            "width": 58,
+            "height": 29,
+            "top": 151.5,
+            "bottom": 180.5
+          }
+        ],
+        "plaqueDepth": 140,
+        "plaqueBottom": 146,
+        "labels": [
+          "LEDGER"
+        ]
+      }
+    ],
+    "layering": {
+      "hero": 150,
+      "plaque": 140,
+      "overlap": true
+    },
+    "errors": []
+  },
+  "earnedWorkflow": "Passed review, missing-entry rejection, chronology repair, Clearance Token, referral arrival and reload",
+  "screenshotsInspected": [
+    "/tmp/clearance-plaque-layering/desktop.png",
+    "/tmp/clearance-plaque-layering/phone.png",
+    "/tmp/clearance-plaque-route/review-complete-screen.png"
+  ],
+  "limitations": [
+    "Position fixture used to reproduce overlap; workflow uses natural movement from an earned save",
+    "Simulated phone, not physical iPhone",
+    "Standard skill screenshot black; ordinary screenshots inspected",
+    "Local only; not published"
+  ]
+}

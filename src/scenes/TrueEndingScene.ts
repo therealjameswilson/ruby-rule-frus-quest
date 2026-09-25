@@ -33,6 +33,10 @@ export class TrueEndingScene extends Phaser.Scene {
     super("TrueEndingScene");
   }
 
+  preload() {
+    if (!this.textures.exists("published-volume-v2")) this.load.image("published-volume-v2", "assets/presentation/publication/volume-v2.png");
+  }
+
   create() {
     this.leaving = false;
     this.readyAt = this.time.now + 350;
@@ -74,6 +78,7 @@ export class TrueEndingScene extends Phaser.Scene {
       volumesCompleted: gameState.volumesCompleted,
       certificate,
       textureKeys: [
+        "published-volume-v2",
         VOLUME_ASSEMBLY_ASSETS.completedHero.key,
         SNES_PUBLISHED_FRUS_PRIZE_ASSET.key,
         FALLBACK_VOLUME_TEXTURE

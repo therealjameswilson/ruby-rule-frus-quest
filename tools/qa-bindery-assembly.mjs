@@ -26,6 +26,11 @@ try {
   page.on("console", message => { if (message.type() === "error") errors.push(message.text()); });
   const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
   const touch = async (points, type) => {
+    // Release immediately: querying layout here prolonged every directional hold.
+    if (!points.length) {
+      await cdp.send("Input.dispatchTouchEvent", { type, touchPoints: [] });
+      return;
+    }
     const box = await page.locator("canvas").first().boundingBox();
     await cdp.send("Input.dispatchTouchEvent", { type, touchPoints: points.map(([x, y, id = 1]) => ({
       x: box.x + x * box.width / 256, y: box.y + y * box.height / 240, id
@@ -51,6 +56,7 @@ try {
     for (let tries = 0; tries < 65; tries += 1) {
       const p = (await state()).player, dx = x - p.x, dy = y - p.y;
       if (Math.hypot(dx, dy) < 5) return;
+      if (process.env.FRUS_QA_TRACE_MOVEMENT) console.log(JSON.stringify({target:{x,y},tries,player:p,mode:(await state()).mode}));
       const horizontal = Math.abs(dx) > Math.abs(dy);
       const sign = Math.sign(horizontal ? dx : dy);
       const ms = Math.min(180, Math.max(16, Math.max(Math.abs(dx), Math.abs(dy)) * 6));

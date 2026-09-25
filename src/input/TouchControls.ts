@@ -1,3 +1,5 @@
+import { applyIntegerZoom } from "../systems/pixelPerfect";
+import { PortraitTouchDock } from "./PortraitTouchDock";
 import { RENDER_DENSITY } from "../systems/renderDensity";
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -30,6 +32,7 @@ type TouchDebugWindow = Window & {
     dpadPointerId: number | null;
     dpadDirection: CardinalDirection | null;
     gamepadSuppressed: boolean;
+    portraitDocked: boolean;
     overlayAlpha: number;
     pressedButtons: TouchControlKey[];
     weaponPhase: string;
@@ -83,6 +86,7 @@ export class TouchControls {
   private readonly scene: Phaser.Scene;
   private readonly graphics: Phaser.GameObjects.Graphics;
   private readonly buttons: ButtonState[];
+  private readonly portraitDock: PortraitTouchDock;
   private enabled = false;
   private forceVisible = false;
   private dpadPointerId: number | null = null;
@@ -101,7 +105,8 @@ export class TouchControls {
     this.scene = scene;
     this.graphics = scene.add.graphics().setDepth(20000).setScrollFactor(0);
     this.buttons = this.createButtons();
-    updateInputCallbacks({ isTouchControlPoint: (point) => this.enabled && (Boolean(this.findButtonAt(point.x, point.y))
+    this.portraitDock = new PortraitTouchDock(resolveTouchDirection);
+    updateInputCallbacks({ isTouchControlPoint: (point) => this.enabled && !this.portraitDock.active && (Boolean(this.findButtonAt(point.x, point.y))
       || (gameState.mode === "explore" && isFixedDpadPoint(point.x, point.y))) });
     this.installPointerEvents();
     this.setEnabled(isTouchCapable());
@@ -169,6 +174,7 @@ export class TouchControls {
     this.releaseAll();
     this.overlayFade?.stop();
     this.removePointerEvents();
+    this.portraitDock?.destroy();
     this.graphics.destroy();
     for (const button of this.buttons) button.text.destroy();
   }
@@ -331,6 +337,7 @@ export class TouchControls {
       this.updateDebug();
       return false;
     }
+    if (this.portraitDock?.active) return false;
     if (point.x <= GAME_WIDTH / 3 && this.dpadPointerId === null) {
       this.dpadPointerId = pointerId;
       if (gameState.mode === "explore" && isFixedDpadPoint(point.x, point.y)) {
@@ -393,7 +400,7 @@ export class TouchControls {
   }
 
   private findButtonAt(x: number, y: number) {
-    if (gameState.mode === "pause") return undefined;
+    if (gameState.mode === "pause" || this.portraitDock?.active) return undefined;
     return this.buttons.find((button) =>
       this.buttonAvailable(button) && Math.abs(x - button.x) <= button.hitWidth / 2
       && Math.abs(y - button.y) <= button.hitHeight / 2
@@ -426,6 +433,7 @@ export class TouchControls {
   }
 
   private releaseAll() {
+    this.portraitDock?.release();
     this.releaseDialog();
     this.releaseDpad();
     for (const button of this.buttons) this.releaseButton(button);
@@ -473,10 +481,17 @@ export class TouchControls {
   }
 
   private redraw() {
+    const wasDocked = this.portraitDock?.active;
+    this.portraitDock?.update(this.enabled, gameState.mode, gameState.currentScene !== "WorldMapScene", gameState.playerCombat.weapon.cooldownRatio);
+    if (wasDocked !== this.portraitDock?.active) applyIntegerZoom(this.scene.game);
+    if (!wasDocked && this.portraitDock?.active) {
+      this.releaseDpad();
+      for (const button of this.buttons) if (button.pointerId !== null) this.releaseButton(button);
+    }
     this.graphics.clear();
     this.graphics.setAlpha(this.overlayAlpha);
     this.updateDebug();
-    if (!this.enabled) {
+    if (!this.enabled || this.portraitDock?.active) {
       for (const button of this.buttons) button.text.setVisible(false);
       return;
     }
@@ -496,6 +511,7 @@ export class TouchControls {
       dpadPointerId: this.dpadPointerId,
       dpadDirection: this.dpadDirection,
       gamepadSuppressed: this.gamepadSuppressed,
+      portraitDocked: this.portraitDock?.active ?? false,
       overlayAlpha: Number(this.overlayAlpha.toFixed(2)),
       pressedButtons: this.buttons.filter((button) => button.pointerId !== null).map((button) => button.key),
       weaponPhase: gameState.playerCombat.weapon.phase,
@@ -545,8 +561,10 @@ export class TouchControls {
       this.graphics.lineStyle(2, color(pressed ? PALETTE.terminalCyan : PALETTE.goldStamp), alpha);
       this.graphics.fillStyle(color(PALETTE.black), alpha);
       if (button.kind === "circle") {
-        this.graphics.fillCircle(button.x, button.y, Math.round(Math.min(width, height) / 2));
-        this.graphics.strokeCircle(button.x, button.y, Math.round(Math.min(width, height) / 2));
+        // Explicit tessellation avoids hundreds of arc vertices per button per frame.
+        const diameter = Math.round(Math.min(width, height) / 2) * 2;
+        this.graphics.fillEllipse(button.x, button.y, diameter, diameter, 64);
+        this.graphics.strokeEllipse(button.x, button.y, diameter, diameter, 64);
       } else {
         this.graphics.fillRect(Math.round(button.x - width / 2), Math.round(button.y - height / 2), width, height);
         this.graphics.strokeRect(Math.round(button.x - width / 2), Math.round(button.y - height / 2), width, height);
@@ -617,9 +635,9 @@ export class TouchControls {
     const currentX = Math.round(this.dpadOrigin.x + dx);
     const currentY = Math.round(this.dpadOrigin.y + dy);
     this.graphics.lineStyle(1, color(PALETTE.goldStamp), 0.42);
-    this.graphics.strokeCircle(this.dpadOrigin.x, this.dpadOrigin.y, 22);
+    this.graphics.strokeEllipse(this.dpadOrigin.x, this.dpadOrigin.y, 44, 44, 64);
     this.graphics.fillStyle(color(PALETTE.terminalCyan), 0.68);
-    this.graphics.fillCircle(currentX, currentY, 6);
+    this.graphics.fillEllipse(currentX, currentY, 12, 12, 32);
     if (!this.dpadDirection) return;
     this.graphics.lineStyle(2, color(PALETTE.terminalCyan), 0.72);
     this.graphics.beginPath();

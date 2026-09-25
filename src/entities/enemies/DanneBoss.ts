@@ -1,3 +1,7 @@
+import { bossBoltTrail } from "../../systems/bossBoltTrail";
+import { bossBoastPresentation } from "../../systems/bossBoastPresentation";
+import { prefersReducedMotion } from "../../systems/motionPreferences";
+import { frameDeltaSeconds } from "../../systems/smoothMovement";
 import { DANNE_BOSS_HD, danneBossFormAnimation } from "../../art/danneBossPresentation";
 import Phaser from "phaser";
 import { SodaCanAttack } from "../../systems/sodaCanAttack";
@@ -68,6 +72,7 @@ import { readDanneBossCheckpoint, writeDanneBossCheckpoint } from "../../game/da
 export type DanneBossPhase = "intro" | "colossus" | "swarm" | "cloud" | "ascendant" | "defeated";
 
 interface EgoBolt extends BossBoltMotion {
+  trail: ReturnType<typeof bossBoltTrail>;
   sprite: Phaser.GameObjects.Sprite;
   expiresAt: number;
   returned: boolean;
@@ -132,10 +137,13 @@ export class DanneBoss {
   private readonly sprite: Phaser.GameObjects.Sprite;
   private readonly shadow: Phaser.GameObjects.Ellipse;
   private readonly coreOpening: Phaser.GameObjects.Rectangle;
+  private readonly coreOpeningFrame: Phaser.GameObjects.Rectangle;
+  private readonly coreOpeningLabel: Phaser.GameObjects.Text;
   private readonly clockContainer: Phaser.GameObjects.Container;
   private readonly clockFill: Phaser.GameObjects.Rectangle;
   private readonly clockText: Phaser.GameObjects.Text;
   private readonly clockStatusText: Phaser.GameObjects.Text;
+  private clockStatusColor?: string;
   private readonly shortcutChoice: ChoicePrompt;
   private readonly retryChoice: ChoicePrompt;
   private combatFeedback: { text: string; tone: "info" | "warn"; msRemaining: number } | null = null;
@@ -201,8 +209,13 @@ export class DanneBoss {
       .setScale(1.15 / this.artDensity)
       .setDepth(BOSS_CENTER.y)
       .setVisible(false);
-    this.coreOpening = scene.add.rectangle(BOSS_CENTER.x - 12, BOSS_CENTER.y + 12, 24, 2, color(PALETTE.creamPaper))
-      .setOrigin(0, 0.5).setVisible(false);
+    this.coreOpeningFrame = scene.add.rectangle(128, 64, 62, 18, 0x142730, 0.96)
+      .setStrokeStyle(1, color(PALETTE.creamPaper)).setDepth(1502).setVisible(false);
+    this.coreOpeningLabel = scene.add.text(128, 61, "CORE OPEN", {
+      fontFamily: "Arial", fontSize: "7px", color: PALETTE.creamPaper
+    }).setOrigin(0.5).setDepth(1504).setVisible(false);
+    this.coreOpening = scene.add.rectangle(101, 69, 54, 3, color(PALETTE.terminalCyan))
+      .setOrigin(0, 0.5).setDepth(1503).setVisible(false);
     const animKey = this.artDensity > 1 ? danneBossFormAnimation(this.phase) : danneAnimKey(this.spriteKey, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.shortcutChoice = new ChoicePrompt(scene);
@@ -315,6 +328,9 @@ export class DanneBoss {
       if (this.combatPausedAt === null) this.combatPausedAt = timeMs;
       return;
     }
+    // Projectiles and the hero simulate at most 50 ms per frame. Preserve the
+    // same usable time in attack deadlines; a paused interval is shifted below.
+    if (this.combatPausedAt === null) this.shiftCombatTimers(Math.max(0, deltaMs - 50));
     this.resumeCombatTimers(timeMs);
     if (this.combatFeedback) {
       this.combatFeedback.msRemaining = Math.max(0, this.combatFeedback.msRemaining - deltaMs);
@@ -393,6 +409,8 @@ export class DanneBoss {
     this.sprite.destroy();
     this.shadow.destroy();
     this.coreOpening.destroy();
+    this.coreOpeningFrame.destroy();
+    this.coreOpeningLabel.destroy();
     this.clockContainer.destroy();
     this.clearBolts();
     this.clearMinis();
@@ -462,7 +480,7 @@ export class DanneBoss {
     this.nextTeleportAt = this.scene.time.now;
     this.damageGraceUntil = this.scene.time.now + DANNE_BOSS_ENTRY_GRACE_MS;
     this.counterStunnedUntil = 0;
-    this.coreOpening.setVisible(false);
+    this.setCoreOpeningVisible(false);
     this.combatFeedback = null;
   }
 
@@ -476,7 +494,7 @@ export class DanneBoss {
     hideBossHud();
     this.sprite.setVisible(false);
     this.shadow.setVisible(false);
-    this.coreOpening.setVisible(false);
+    this.setCoreOpeningVisible(false);
     this.clockContainer.setVisible(false);
     this.clearAttackTelegraph();
     this.clearBolts();
@@ -645,6 +663,10 @@ export class DanneBoss {
     if (this.combatPausedAt === null) return;
     const pausedMs = Math.max(0, timeMs - this.combatPausedAt);
     this.combatPausedAt = null;
+    this.shiftCombatTimers(pausedMs);
+  }
+
+  private shiftCombatTimers(pausedMs: number) {
     this.nextBoltAt += pausedMs;
     this.nextTeleportAt += pausedMs;
     this.nextPlayerHitAt += pausedMs;
@@ -712,13 +734,26 @@ export class DanneBoss {
     return !this.defeated && !this.phaseTransitioning && !this.inputLocked && this.isAttackPhase(this.phase) && timeMs < this.counterStunnedUntil;
   }
 
+  private setCoreOpeningVisible(visible: boolean) {
+    this.coreOpening.setVisible(visible);
+    this.coreOpeningFrame.setVisible(visible);
+    this.coreOpeningLabel.setVisible(visible);
+  }
+
   private syncCoreOpening(timeMs: number) {
     const open = this.coreOpenAt(timeMs);
-    this.coreOpening.setVisible(open);
+    this.setCoreOpeningVisible(open);
     if (!open) return;
     const remaining = Math.min(1, (this.counterStunnedUntil - timeMs) / DANNE_BOSS_RETURN.stunMs);
-    this.coreOpening.setPosition(snapPixel(this.sprite.x - 12), snapPixel(this.sprite.y + 12))
-      .setSize(Math.max(1, Math.round(24 * remaining)), 2).setDepth(Math.round(this.sprite.y + 15));
+    // Above the boss rather than under its feet, where the approaching hero
+    // obscured the old two-pixel bar. Keep the marker below the fixed HUD.
+    const x = snapPixel(Phaser.Math.Clamp(this.sprite.x, 34, 222));
+    const y = snapPixel(Math.max(64, this.sprite.y - 62));
+    this.coreOpeningFrame.setPosition(x, y);
+    this.coreOpeningLabel.setPosition(x, y - 3).setText(remaining <= 0.25 ? "CLOSING" : "CORE OPEN");
+    this.coreOpening.setPosition(x - 27, y + 5)
+      .setSize(Math.max(1, Math.round(54 * remaining)), 3)
+      .setFillStyle(color(remaining <= 0.25 ? PALETTE.goldStamp : PALETTE.terminalCyan));
   }
 
   private resolvePhaseHp() {
@@ -774,7 +809,7 @@ export class DanneBoss {
     const readiness = this.combatClockReadiness();
     this.statutoryYear = advanceStatutoryClock(
       this.statutoryYear,
-      deltaMs,
+      frameDeltaSeconds(deltaMs) * 1000,
       this.cooldown(this.quickFight ? STATUTORY_QUICK_BOSS_MS_PER_YEAR : STATUTORY_BOSS_MS_PER_YEAR),
       readiness
     );
@@ -809,8 +844,13 @@ export class DanneBoss {
         ? "DANN-E CLEARED"
         : climax.recordReady
           ? "RECORD READY"
-          : `${climax.recordMissingSummary.length} CHECKS OPEN`)
-      .setColor(this.defeated ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp);
+          : `${climax.recordMissingSummary.length} CHECKS OPEN`);
+    const statusColor = this.defeated ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp;
+    // Phaser refreshes the text texture even when setColor receives the same value.
+    if (statusColor !== this.clockStatusColor) {
+      this.clockStatusText.setColor(statusColor);
+      this.clockStatusColor = statusColor;
+    }
   }
 
   private offerShortcut(reason: string) {
@@ -819,7 +859,7 @@ export class DanneBoss {
     this.clearAttackTelegraph();
     this.clearBolts();
     this.combatFeedback = null;
-    this.coreOpening.setVisible(false);
+    this.setCoreOpeningVisible(false);
     this.clockContainer.setVisible(false);
     hideBossHud();
     const options: ChoiceOption[] = [
@@ -897,7 +937,10 @@ export class DanneBoss {
     const animKey = danneAnimKey(EGO_BOLT.key, "fly");
     if (this.scene.anims.exists(animKey)) bolt.play(animKey);
     bolt.setAngle(Math.round(Phaser.Math.RadToDeg(Math.atan2(vy, vx))));
+    const trail = bossBoltTrail(this.scene);
+    trail.update(motion.x, motion.y, vx, vy);
     this.bolts.push({
+      trail,
       sprite: bolt,
       ...motion,
       expiresAt: this.scene.time.now + 2000,
@@ -921,6 +964,7 @@ export class DanneBoss {
     for (let index = this.bolts.length - 1; index >= 0; index -= 1) {
       const bolt = this.bolts[index];
       if (timeMs >= bolt.expiresAt) {
+        bolt.trail.destroy();
         bolt.sprite.destroy();
         this.bolts.splice(index, 1);
         continue;
@@ -929,6 +973,7 @@ export class DanneBoss {
       advanceBossBolt(bolt, deltaMs);
       bolt.sprite.setPosition(bolt.x, bolt.y);
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));
+      bolt.trail.update(bolt.x, bolt.y, bolt.vx, bolt.vy);
       const boltBox = new Phaser.Geom.Rectangle(bolt.sprite.x - 6, bolt.sprite.y - 6, 12, 12);
       // A parry wins over contact on the same frame, just as in earlier rooms.
       if (!bolt.returned && swing && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, swing)) {
@@ -936,21 +981,25 @@ export class DanneBoss {
         bolt.expiresAt = timeMs + DANNE_BOSS_RETURN.lifetimeMs;
         this.boltsReturned += 1;
         aimReturnedBossBolt(bolt, { x: this.sprite.x, y: this.sprite.y - 12 });
-        bolt.sprite.setTintFill(color(PALETTE.terminalCyan));
+        bolt.sprite.setTint(color(PALETTE.terminalCyan));
+        bolt.trail.returned();
+        bolt.trail.update(bolt.x, bolt.y, bolt.vx, bolt.vy);
         bolt.sprite.setAngle(Math.round(Phaser.Math.RadToDeg(Math.atan2(bolt.vy, bolt.vx))));
         setLatestMessage("EGO RETURNED!");
-        retroAudio.toolHit(tool);
+        retroAudio.egoBoltReturn(tool);
       }
       if (bolt.returned && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, this.bossBody())) {
         this.takeReturnedBolt(timeMs);
         return;
       }
       if (!bolt.returned && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
+        bolt.trail.destroy();
         bolt.sprite.destroy();
         this.bolts.splice(index, 1);
         this.hitPlayer(bolt, "ego_bolt", timeMs);
         if (this.retryChoice.active) return;
       } else if (bolt.x < -20 || bolt.x > GAME_WIDTH + 20 || bolt.y < 20 || bolt.y > GAME_HEIGHT + 20) {
+        bolt.trail.destroy();
         bolt.sprite.destroy();
         this.bolts.splice(index, 1);
       }
@@ -1053,7 +1102,7 @@ export class DanneBoss {
     this.clearBolts();
     this.clearMinis();
     this.combatFeedback = null;
-    this.coreOpening.setVisible(false);
+    this.setCoreOpeningVisible(false);
     this.clockContainer.setVisible(false);
     hideBossHud();
     setObjective("REVIEW INTERRUPTED");
@@ -1073,7 +1122,10 @@ export class DanneBoss {
   }
 
   private clearBolts() {
-    for (const bolt of this.bolts.splice(0)) bolt.sprite.destroy();
+    for (const bolt of this.bolts.splice(0)) {
+      bolt.trail.destroy();
+      bolt.sprite.destroy();
+    }
   }
 
   private clearMinis() {
@@ -1087,8 +1139,11 @@ export class DanneBoss {
     overrideLine?: string
   ) {
     this.boastVisible = true;
+    const clockWasVisible = this.clockContainer.visible;
+    this.clockContainer.setVisible(false);
     const touch = isTouchInputCapable();
-    const still = this.scene.textures.exists(variantKey)
+    const stage = bossBoastPresentation(this.scene, boastPhase, touch);
+    const still = !stage && this.scene.textures.exists(variantKey)
       ? this.scene.add.image(GAME_WIDTH / 2, touch ? 78 : 86, variantKey).setDepth(1620).setScrollFactor(0)
       : null;
     if (still) {
@@ -1096,10 +1151,11 @@ export class DanneBoss {
       const scale = Math.min(118 / Math.max(1, source.width ?? 1024), (touch ? 72 : 88) / Math.max(1, source.height ?? 1024));
       still.setScale(scale).setAlpha(0);
     }
+    stage?.setAlpha(0);
     try {
       await enterCutscene(this.scene);
       if (this.disposed) return;
-      if (still) this.scene.tweens.add({ targets: still, alpha: 1, duration: 150 });
+      if (stage || still) this.scene.tweens.add({ targets: stage ?? still, alpha: 1, duration: prefersReducedMotion() ? 0 : 150 });
       retroAudio.danneBoast();
       const line = overrideLine ?? danneBoastForPhase(boastPhase, this.boastIndex);
       this.boastIndex += 1;
@@ -1122,6 +1178,8 @@ export class DanneBoss {
     } finally {
       this.boastVisible = false;
       still?.destroy();
+      stage?.destroy(true);
+      if (!this.disposed) this.clockContainer.setVisible(clockWasVisible && this.isActive);
     }
   }
 

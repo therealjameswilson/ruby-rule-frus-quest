@@ -1,0 +1,102 @@
+{
+  "first": {
+    "logical": {
+      "x": 151.8457471260616,
+      "y": 145
+    },
+    "control": {
+      "x": 151.8457471260616,
+      "y": 145
+    },
+    "visualOffset": 2,
+    "remaining": 160,
+    "bounds": {
+      "x": 136.8457471260616,
+      "y": 128
+    },
+    "controlBounds": {
+      "x": 136.8457471260616,
+      "y": 128
+    }
+  },
+  "samples": [
+    {
+      "offset": 1,
+      "logicalDelta": 0
+    },
+    {
+      "offset": -2,
+      "logicalDelta": 0
+    },
+    {
+      "offset": -1,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 0,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 1,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 0,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 0,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 0,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 0,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 0,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 0,
+      "logicalDelta": 0
+    },
+    {
+      "offset": 0,
+      "logicalDelta": 0
+    }
+  ],
+  "reduced": {
+    "logical": {
+      "x": 145.48420631197934,
+      "y": 145
+    },
+    "control": {
+      "x": 145.48420631197934,
+      "y": 145
+    },
+    "visualOffset": 0,
+    "remaining": 160,
+    "bounds": {
+      "x": 130.48420631197934,
+      "y": 128
+    },
+    "controlBounds": {
+      "x": 130.48420631197934,
+      "y": 128
+    }
+  },
+  "pauseHeld": true,
+  "errors": [],
+  "limitations": [
+    "Fixture positions; not an unaided combat playthrough"
+  ],
+  "build": "passed",
+  "focusedTestsPassed": 27,
+  "date": "2026-09-25",
+  "skillCapture": "Black WebGL capture inspected; normal browser impact capture inspected",
+  "published": false
+}

@@ -1,0 +1,58 @@
+import assert from 'node:assert/strict';
+import {readFile,mkdir} from 'node:fs/promises';
+const {chromium,webkit}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
+const base=process.env.FRUS_QA_URL??'http://127.0.0.1:5211/';const out=process.env.FRUS_QA_OUT??'/tmp/nsc-dungeons';await mkdir(out,{recursive:true});
+const data=JSON.parse(await readFile('public/assets/research-world/nsc-holdings.json'));const assignments=JSON.parse(await readFile('public/assets/research-world/library-assignments.json')).assignments;
+const engine=process.env.FRUS_QA_ENGINE==='webkit'?webkit:chromium;
+const browser=await engine.launch({args:engine===chromium?['--disable-audio-output']:[]});
+try{
+ const seed=await browser.newPage();await seed.goto(new URL('?scene=PresidentialLibraryScene',base).href);await seed.waitForFunction(()=>localStorage.getItem('rubyRuleFrusQuestSave'));const template=await seed.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));await seed.close();
+ for(const mobile of process.env.FRUS_QA_PHONE_ONLY?[true]:[false,true])for(const d of data.dungeons.filter(d=>!process.env.FRUS_QA_LIBRARIES||process.env.FRUS_QA_LIBRARIES.split(',').includes(d.library))){
+  const saved=structuredClone(template);saved.state.currentScene='PresidentialLibraryScene';saved.state.sceneProgress={libraryResearchActive:assignments.findIndex(a=>a.library===d.library),['libraryBriefed_'+d.library]:1};saved.state.mode='explore';saved.state.activeDialog=null;saved.state.currentChoice=null;
+  const page=await browser.newPage({viewport:mobile?{width:390,height:844}:{width:1024,height:960},isMobile:mobile,hasTouch:mobile,storageState:{cookies:[],origins:[{origin:new URL(base).origin,localStorage:[{name:'rubyRuleFrusQuestSave',value:JSON.stringify(saved)}]}]}});
+  const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+  const tap=async(x,y)=>{const r=await page.locator('canvas').first().boundingBox();if(mobile)await page.touchscreen.tap(r.x+x*r.width/256,r.y+y*r.height/240);else await page.mouse.click(r.x+x*r.width/256,r.y+y*r.height/240);};
+  const act=async()=>{if(mobile){const dock=page.locator('#portrait-touch-dock [data-control=space]');if(await dock.isVisible()){const r=await dock.boundingBox();await page.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);}else await tap(225,205);}else await page.keyboard.press('Space');await page.waitForTimeout(190);};
+  const drain=async()=>{for(let i=0;i<30;i++){if(!await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dialog?.active))return;await act();}throw Error('Dialogue did not close');};
+  const position=async(x,y,scene='NscLibraryScene')=>{await page.evaluate(({x,y,scene})=>window.game.scene.getScene(scene).player.setPosition(x,y),{x,y,scene});await page.waitForTimeout(100);};
+  await page.goto(new URL('?text=full',base).href);await page.waitForFunction(()=>window.game?.scene.isActive('TapToStartScene'));if(mobile)await tap(86,154);else await page.keyboard.press('Enter');
+  await page.waitForFunction(()=>window.game?.scene.isActive('PresidentialLibraryScene'));await page.waitForTimeout(350);
+  await position(128,86,'PresidentialLibraryScene');await act();await page.waitForFunction(()=>window.game.scene.isActive('NscLibraryScene'));
+  assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dossier.library),d.library);
+  for(let room=0;room<3;room++){
+   await page.waitForFunction(r=>window.game.scene.getScene('NscLibraryScene').room===r,room);await page.waitForTimeout(250);
+   await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='WEST: READ THE GUIDE');
+   const floors=await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').children.list.filter(o=>o.name==='nsc-reading-room-floor').map(o=>({key:o.texture.key,width:o.displayWidth,height:o.displayHeight,depth:o.depth})));
+   assert.deepEqual(floors,[{key:`nsc-reading-floor-${room}-v1`,width:256,height:208,depth:2}]);
+   if(d.library==='reagan')await page.screenshot({path:`${out}/${mobile?'phone':'desktop'}-room${room}.png`});
+   await position(62,145);await act();assert(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dialog.active));await drain();
+   await position(128,180);await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='EAST: VERIFY SOURCE');
+   // Wrong answers must not advance, then the real control selects the correct row.
+   for(const wrong of (room===0?[true,false]:[false])){
+    await position(194,145);await act();await page.waitForFunction(()=>window.game.scene.getScene('NscLibraryScene').choice.active);
+    const row=wrong?1:room===1?1:0;
+    const point=await page.evaluate(i=>{const r=window.game.scene.getScene('NscLibraryScene').choice.rows[i].getBounds();return {x:r.centerX,y:r.centerY};},row);
+    if(room===1&&!wrong)await page.screenshot({path:`${out}/${d.library}-${mobile?'phone':'desktop'}-choice.png`});
+    await tap(point.x,point.y);await page.waitForTimeout(200);if(!wrong)assert.equal(await page.evaluate(()=>JSON.parse(window.render_game_to_text()).audioStatus),'paper filing and stamp');await drain();
+    const progress=await page.evaluate(id=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')).state.sceneProgress['nscResearch_'+id]??0,d.library);
+    assert.equal(progress,wrong?0:room+1);
+    assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').filedPaper.visible),!wrong);
+    if(!wrong&&room<2){
+     assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dialog.active),false,'Intermediate filing must not block play');
+     await page.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='CHECK SAVED FILE');
+     const clear=await page.evaluate(()=>{const s=window.game.scene.getScene('NscLibraryScene'),a=s.toast.container.getBounds(),b=s.player.sprite.getBounds();return !s.toast.visible||a.bottom<b.top||a.top>b.bottom;});assert(clear,'Completion feedback must not cover the hero');
+     if(d.library==='reagan')await page.screenshot({path:`${out}/${mobile?'phone':'desktop'}-filed-room${room}.png`});
+    }
+   }
+   await position(128,86);await page.waitForFunction(r=>window.game.scene.getScene('UIScene').questBandCueText.text===(r===2?'RETURN TO LIBRARY':'ENTER NEXT ROOM'),room);if(d.library==='reagan'&&room===0)await page.screenshot({path:`${out}/filed-desk-visible.png`});await act();
+  }
+  await page.waitForFunction(()=>window.game.scene.isActive('PresidentialLibraryScene'));
+  const finished=await page.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));assert.equal(finished.state.sceneProgress['nscResearch_'+d.library],3);assert.equal(finished.state.documentPoints,saved.state.documentPoints+6);
+  // Reload from the saved lobby and enter the completed wing without earning twice.
+  await page.reload();await page.waitForFunction(()=>window.game.scene.isActive('TapToStartScene'));if(mobile)await tap(86,154);else await page.keyboard.press('Enter');await page.waitForFunction(()=>window.game.scene.isActive('PresidentialLibraryScene'));
+  assert.equal(await page.evaluate(id=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')).state.sceneProgress['nscResearch_'+id],d.library),3);
+  await position(128,86,'PresidentialLibraryScene');await act();await page.waitForFunction(()=>window.game.scene.isActive('NscLibraryScene'));assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').filedPaper.visible),true,'Filed receipt must restore after re-entry');
+  assert.deepEqual(errors,[]);console.log(JSON.stringify({library:d.library,mobile,rooms:3,wrongAnswerRecovered:true,saved:true,returned:true,errors}));await page.close();
+ }
+ const doc=await browser.newPage();await doc.goto(new URL('assets/research-world/nsc-research.html',base).href);await doc.waitForFunction(()=>document.querySelectorAll('article').length===11);assert.equal(await doc.locator('article a').count(),11);await doc.close();
+}finally{await browser.close();}

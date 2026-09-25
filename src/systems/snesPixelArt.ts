@@ -1,3 +1,7 @@
+import { prefersReducedMotion } from './motionPreferences';
+import { gateCaptionTexture } from './gateCaptionArt';
+import { dungeonGateTexture } from "./dungeonGateArt";
+import { rewardDisplayTexture } from './rewardDisplayArt';
 import Phaser from "phaser";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -294,6 +298,21 @@ export function addSnesGate(scene: Phaser.Scene, options: SnesGateOptions) {
   const exitLabel = options.exitLabel ?? "";
   const glyphFrame = gateGlyphFrame(options, locked);
 
+  const detailedGate = dungeonGateTexture(scene, locked ? "locked" : options.hasExit ? "open" : "sealed", accent);
+  if (detailedGate) {
+    const horizontal = options.direction === "north" || options.direction === "south";
+    const x = horizontal ? 128 : options.direction === "west" ? 8 : 248;
+    const y = horizontal ? options.direction === "north" ? 36 : 220 : 120;
+    const angle = options.direction === "north" ? 0 : options.direction === "south" ? 180 : options.direction === "west" ? -90 : 90;
+    keepTagged(scene.add.image(x, y, detailedGate).setDisplaySize(40, 16).setAngle(angle).setDepth(depth + 5), "snes-gate-detailed-frame", track);
+    addGateGlyph(scene, x, y, options.direction, glyphFrame, track, depth + 7);
+    const labelX = horizontal ? 128 : options.direction === "west" ? 22 : 234;
+    const labelY = horizontal ? options.direction === "north" ? 48 : 208 : 120;
+    if (locked) addGateSeal(scene, labelX, labelY, label, track, depth + 8);
+    else if (options.hasExit && exitLabel) addGateRoutePlaque(scene, labelX, labelY, exitLabel, accent, track, depth + 8);
+    return;
+  }
+
   if (options.direction === "north" || options.direction === "south") {
     const y = options.direction === "north" ? 36 : 220;
     const trimY = options.direction === "north" ? 42 : 214;
@@ -389,8 +408,13 @@ function addGateCaption(scene: Phaser.Scene, x: number, y: number, label: string
   // Leave the side gate glyphs visible; keep both text and frame on whole pixels.
   const centerX = Math.round(Math.max(18 + width / 2, Math.min(GAME_WIDTH - 18 - width / 2, x)));
   text.setPosition(Math.round(centerX - text.width / 2), Math.round(y - text.height / 2));
-  keepTagged(scene.add.rectangle(centerX, y, width, 12, color(PALETTE.black), locked ? 0.96 : 0.9)
-    .setStrokeStyle(1, color(accent)).setDepth(depth), locked ? "snes-gate-lock-seal" : "snes-gate-route-plaque", track);
+  const plate = gateCaptionTexture(scene, width, locked);
+  keepTagged(scene.add.rectangle(centerX, y, width, 12, color(PALETTE.black), plate ? 0 : locked ? 0.96 : 0.9)
+    .setStrokeStyle(plate ? 0 : 1, color(accent)).setDepth(depth), locked ? "snes-gate-lock-seal" : "snes-gate-route-plaque", track);
+  if (plate) {
+    keepTagged(scene.add.image(centerX, y, plate).setDisplaySize(width,12).setDepth(depth), "snes-gate-caption-art", track);
+    text.setColor(locked ? "#ffe0cd" : "#f4e4b9");
+  }
   keepTagged(text, locked ? "snes-gate-lock-label" : "snes-gate-route-label", track);
 }
 
@@ -400,14 +424,19 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
   const accent = options.accent ?? PALETTE.goldStamp;
   const label = options.label.slice(0, 16).toUpperCase();
   const pickupArt: Array<Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle> = [];
-  keepTagged(scene.add.ellipse(options.x, options.y + 18, 62, 16, color(PALETTE.black), 0.72).setDepth(depth - 4), "snes-treasure-shadow", track);
-  keepTagged(scene.add.rectangle(options.x, options.y + 12, 56, 18, color(PALETTE.deepRuby), 1).setStrokeStyle(2, color(accent)).setDepth(depth - 3), "snes-treasure-plinth", track);
-  keepTagged(scene.add.rectangle(options.x, options.y + 2, 40, 18, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth - 2), "snes-treasure-case", track);
-  keepTagged(scene.add.rectangle(options.x, options.y - 11, 28, 5, color(accent), 1).setDepth(depth - 1), "snes-treasure-lid", track);
+  keepTagged(scene.add.ellipse(options.x, options.y + 18, 62, 12, color(PALETTE.black), 0.35).setDepth(depth - 4), "snes-treasure-shadow", track);
+  const displayTexture = rewardDisplayTexture(scene, 'pedestal', accent);
+  if (displayTexture) {
+    keepTagged(scene.add.image(options.x, options.y + 4, displayTexture).setDisplaySize(64,44).setDepth(depth - 2), 'snes-treasure-case', track);
+  } else {
+    keepTagged(scene.add.rectangle(options.x, options.y + 12, 56, 18, color(PALETTE.deepRuby), 1).setStrokeStyle(2, color(accent)).setDepth(depth - 3), "snes-treasure-plinth", track);
+    keepTagged(scene.add.rectangle(options.x, options.y + 2, 40, 18, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth - 2), "snes-treasure-case", track);
+    keepTagged(scene.add.rectangle(options.x, options.y - 11, 28, 5, color(accent), 1).setDepth(depth - 1), "snes-treasure-lid", track);
+  }
   keepTagged(scene.add.rectangle(options.x, options.y + 21, 72, 9, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth + 2), "snes-treasure-label-frame", track);
   const caption = keepTagged(scene.add.text(options.x, options.y + 17, label, {
-    fontFamily: "monospace",
-    fontSize: "5px",
+    fontFamily: "Arial",
+    fontSize: "6px",
     color: options.collected ? PALETTE.stoneLight : accent,
     align: "center"
   }).setOrigin(0.5, 0).setDepth(depth + 3), "snes-treasure-label", track);
@@ -432,13 +461,14 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
 
 export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, textureKey: string, label: string, track?: TrackFn, holdMs = 0) {
   const container = keepTagged(scene.add.container(x, y).setDepth(900), "snes-reward-burst", track);
-  container.add(scene.add.ellipse(0, 4, 58, 18, color(PALETTE.black), 0.68));
-  container.add(scene.add.rectangle(0, -8, 46, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp)));
+  const displayTexture = rewardDisplayTexture(scene, 'reward', PALETTE.goldStamp);
+  if (displayTexture) container.add(scene.add.image(0,-5,displayTexture).setDisplaySize(72,44).setName('detailed-reward-panel'));
+  else container.add(scene.add.rectangle(0, -8, 46, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp)));
   if (scene.textures.exists(textureKey)) container.add(scene.add.image(0, -10, textureKey));
   else container.add(scene.add.rectangle(0, -10, 18, 18, color(PALETTE.goldStamp)));
   container.add(scene.add.text(0, 10, label.slice(0, 18).toUpperCase(), {
-    fontFamily: "monospace",
-    fontSize: "5px",
+    fontFamily: "Arial",
+    fontSize: "6px",
     color: PALETTE.goldStamp,
     align: "center"
   }).setOrigin(0.5, 0));
@@ -596,30 +626,21 @@ export function addSnesRoomIntroBanner(scene: Phaser.Scene, options: SnesRoomInt
   const accent = options.accent ?? PALETTE.goldStamp;
   const title = options.title.replace(/\s+/g, " ").trim().toUpperCase().slice(0, 30);
   const subtitle = (options.subtitle ?? "FRUS PRODUCTION ROOM").replace(/\s+/g, " ").trim().toUpperCase().slice(0, 28);
-  const container = keepTagged(scene.add.container(128, 68).setDepth(depth), "snes-room-intro-banner", track);
-  container.add(tag(scene.add.rectangle(0, 0, 154, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(accent)), "snes-room-intro-panel"));
-  container.add(tag(scene.add.rectangle(0, -16, 124, 3, color(accent), 1), "snes-room-intro-top-rule"));
-  container.add(tag(scene.add.rectangle(0, 16, 124, 3, color(PALETTE.deepRuby), 1), "snes-room-intro-bottom-rule"));
-  container.add(tag(scene.add.rectangle(-68, 0, 5, 18, color(accent), 1), "snes-room-intro-side-rule"));
-  container.add(tag(scene.add.rectangle(68, 0, 5, 18, color(accent), 1), "snes-room-intro-side-rule"));
-  container.add(tag(scene.add.text(0, -11, title, {
-    fontFamily: "monospace",
-    fontSize: "7px",
-    color: accent,
-    align: "center"
+  const container = keepTagged(scene.add.container(128, 48).setDepth(depth), "snes-room-intro-banner", track);
+  container.add(tag(scene.add.rectangle(0, 0, 176, 24, 0x17262c, 0.96)
+    .setStrokeStyle(1, 0x9d8b63), "snes-room-intro-panel"));
+  container.add(tag(scene.add.rectangle(-83, 0, 2, 16, color(accent), 1), "snes-room-intro-side-rule"));
+  container.add(tag(scene.add.text(0, 0, title, {
+    fontFamily: "monospace", fontSize: "8px", color: "#fff0d4", align: "center"
   }).setOrigin(0.5, 0), "snes-room-intro-title"));
-  container.add(tag(scene.add.text(0, 3, subtitle, {
-    fontFamily: "monospace",
-    fontSize: "5px",
-    color: PALETTE.creamPaper,
-    align: "center"
+  container.add(tag(scene.add.text(0, -8, subtitle, {
+    fontFamily: "monospace", fontSize: "5px", color: "#a8c3c6", align: "center"
   }).setOrigin(0.5, 0), "snes-room-intro-subtitle"));
   scene.tweens.add({
     targets: container,
-    y: 58,
     alpha: 0,
-    delay: 720,
-    duration: 420,
+    delay: 900,
+    duration: prefersReducedMotion() ? 0 : 250,
     ease: "Cubic.easeIn",
     onComplete: () => {
       if (container.active) container.destroy();

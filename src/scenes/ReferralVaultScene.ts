@@ -1,4 +1,7 @@
+import { preloadDetailedNpcs } from '../art/npcSprites';
 import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
+import { addReferralRoomFloor } from "../systems/referralRoomFloor";
+import { addDispatchShelfArt } from "../systems/dispatchShelfArt";
 import Phaser from "phaser";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { referralBracketStrike } from "../game/referralBracketPress";
@@ -183,6 +186,10 @@ export class ReferralVaultScene extends Phaser.Scene {
 
   constructor() {
     super("ReferralVaultScene");
+  }
+
+  preload() {
+    preloadDetailedNpcs(this, ['marcus']);
   }
 
   create(data?: unknown) {
@@ -458,6 +465,8 @@ export class ReferralVaultScene extends Phaser.Scene {
         this.drawReferralVaultTileField(room.id);
       }
     }
+    const detailedFloor = addReferralRoomFloor(this, room.id);
+    if (detailedFloor) this.track(detailedFloor);
     this.drawRoomDoors();
     if (!packedTilemapRendered && room.id !== "R3") {
       addSnesRoomCompass(this, {
@@ -747,6 +756,8 @@ export class ReferralVaultScene extends Phaser.Scene {
   private renderDispatchStacks() {
     const found = dispatchCopyFound(gameState.sceneProgress);
     const open = dispatchAisleOpen(gameState.sceneProgress);
+    const shelves = addDispatchShelfArt(this, open);
+    if (shelves) this.track(shelves);
     const { receipt, crank, index } = DISPATCH_STACKS;
     this.track(this.add.ellipse(receipt.x, receipt.y + 12, 24, 4, color(PALETTE.black), 0.3).setDepth(46));
     this.track(this.createManifestIcon(receipt.x, receipt.y, false).setAlpha(found ? 0.4 : 1).setDepth(70));

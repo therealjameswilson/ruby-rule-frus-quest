@@ -1,0 +1,163 @@
+{
+  "checked": "2026-09-24",
+  "note": "Collection names and research leads are based on official online holdings guides or published FRUS source notes. Rooms and puzzles are fictional training exercises. A finding-aid lead is not a retrieved document, an online listing is not full release, and these side quests do not change the scope or status of a FRUS volume.",
+  "excluded": {
+    "fdr": "No NSC wing: the NSC was established in 1947, after Roosevelt’s presidency."
+  },
+  "dungeons": [
+    {
+      "library": "truman",
+      "title": "Truman NSC Registry",
+      "collection": "National Security Council Files, 1947–1953",
+      "handle": "NSC staff files and President’s Secretary’s Files",
+      "source": "https://www.trumanlibrary.gov/library/truman-papers",
+      "sourceLabel": "Library holdings guide",
+      "accent": "#b99154",
+      "challenge": {
+        "question": "The Truman guide notes overlapping documents in these two file groups. How do you log them?",
+        "correct": "Keep both archival locations and compare the copies.",
+        "wrong": "Merge them into one invented collection."
+      }
+    },
+    {
+      "library": "eisenhower",
+      "title": "Ann Whitman Vault",
+      "collection": "Papers as President, 1953–61 (Ann Whitman File), NSC Series",
+      "handle": "NSC meeting records in the Ann Whitman File",
+      "source": "https://www.eisenhowerlibrary.gov/research/finding-aids/eisenhower-dwight-d-3",
+      "sourceLabel": "Library finding aid",
+      "accent": "#6c9d9b",
+      "challenge": {
+        "question": "You need the presidential NSC series. Which request preserves the hierarchy?",
+        "correct": "Ann Whitman File → NSC Series; verify the meeting and folder.",
+        "wrong": "Any Eisenhower file with national security in its title."
+      }
+    },
+    {
+      "library": "jfk",
+      "title": "Crisis Correspondence Vault",
+      "collection": "National Security Files: USSR, Khrushchev Correspondence, Cuba",
+      "handle": "Boxes 184–190; folder dates 11/22/62–12/14/62",
+      "source": "https://www.jfklibrary.org/learn/about-jfk/life-of-john-f-kennedy/fast-facts-john-f-kennedy/kennedy-khrushchev-correspondence-during-cuban-missile-crisis",
+      "sourceLabel": "Library document guide",
+      "accent": "#8a87b8",
+      "challenge": {
+        "question": "For late-1962 correspondence, the library gives this box range and folder date span. What belongs in your lead?",
+        "correct": "The published box range and exact folder dates; verify the specific container.",
+        "wrong": "A guessed single box number within the range."
+      }
+    },
+    {
+      "library": "lbj",
+      "title": "Berlin Country Files",
+      "collection": "National Security File, Europe and USSR Country Files",
+      "handle": "National Archives Identifier 580807; Germany and Berlin folders",
+      "source": "https://www.archives.gov/research/foreign-policy/cold-war/berlin-wall-1962-1987/finding-aid.html",
+      "sourceLabel": "NARA research guide",
+      "accent": "#b99154",
+      "challenge": {
+        "question": "NARA lists Germany and Berlin folders within this series. How do you request them?",
+        "correct": "Keep series NAID 580807 and verify each folder and date.",
+        "wrong": "Call every Germany folder a Berlin decision memorandum."
+      }
+    },
+    {
+      "library": "nixon",
+      "title": "Heads of State Vault",
+      "collection": "National Security Council Files: Presidential Correspondence",
+      "handle": "Box 765: URUGUAY Pres Pacheco Corres. [September 1970]",
+      "source": "https://www.nixonlibrary.gov/finding-aids/national-security-council-files",
+      "sourceLabel": "Library folder inventory",
+      "accent": "#6c9d9b",
+      "challenge": {
+        "question": "DANN-E has moved the Uruguay correspondence lead into a general country pile. Restore its citation.",
+        "correct": "NSC Files, Presidential Correspondence, Box 765, Pacheco correspondence, September 1970.",
+        "wrong": "NSC Files, unknown box; all Uruguay papers have the same provenance."
+      }
+    },
+    {
+      "library": "ford",
+      "title": "West Wing Vault",
+      "collection": "National Security Adviser, Kissinger-Scowcroft West Wing Office Files, 1969–1977",
+      "handle": "High-level diplomacy spanning Nixon and Ford",
+      "source": "https://www.fordlibrarymuseum.gov/digital-research-room/finding-aids/national-security-adviser-kissinger-scowcroft-west-wing-office",
+      "sourceLabel": "Library finding aid",
+      "accent": "#8a87b8",
+      "challenge": {
+        "question": "Why can this Ford Library collection include Nixon-era records?",
+        "correct": "These working files remained available and became part of the Ford papers.",
+        "wrong": "Every document held at Ford must have been created after August 1974."
+      }
+    },
+    {
+      "library": "carter",
+      "title": "Brzezinski Country Vault",
+      "collection": "National Security Affairs, Brzezinski Material, Country File",
+      "handle": "Box 14, Cuba, 7–8/79; FRUS 1977–1980 XXIII, document 53",
+      "source": "https://history.state.gov/historicaldocuments/frus1977-80v23/d53",
+      "sourceLabel": "Published FRUS source note",
+      "accent": "#b99154",
+      "challenge": {
+        "question": "The published source note calls this an uninitialed copy. What should your notes preserve?",
+        "correct": "Box 14, folder Cuba 7–8/79, and the uninitialed-copy qualification.",
+        "wrong": "Describe it as a signed original because it appears in FRUS."
+      }
+    },
+    {
+      "library": "reagan",
+      "title": "Executive Secretariat Vault",
+      "collection": "Executive Secretariat, NSC: Country File: Records, 1981–1985",
+      "handle": "Soviet Bloc Economic & Financial Situation Updates",
+      "source": "https://www.reaganlibrary.gov/public/finding_aids_pdfs/219339.pdf",
+      "sourceLabel": "Library finding aid, pages 38–41",
+      "accent": "#6c9d9b",
+      "challenge": {
+        "question": "The inventory separates OPEN from OPEN / DIGITIZED. How do you plan retrieval?",
+        "correct": "Record the status for each dated folder; open does not guarantee an online scan.",
+        "wrong": "Treat every open folder as fully digitized."
+      }
+    },
+    {
+      "library": "bush41",
+      "title": "Scowcroft Policy Vault",
+      "collection": "National Security Council records and staff files",
+      "handle": "Brent Scowcroft, Robert Gates and defense-policy staff records",
+      "source": "https://history.state.gov/historicaldocuments/frus1989-92v31/sources",
+      "sourceLabel": "Published FRUS sources guide",
+      "accent": "#8a87b8",
+      "challenge": {
+        "question": "The FRUS sources guide identifies several NSC offices. How do you compare their evidence?",
+        "correct": "Keep adviser, deputy and staff provenance distinct while tracing the same issue.",
+        "wrong": "Attribute every NSC staff paper to President Bush."
+      }
+    },
+    {
+      "library": "clinton",
+      "title": "African Affairs Vault",
+      "collection": "MacArthur DeShazer and Rwanda, 1993–1994",
+      "handle": "FOIA 2006-0192-F; NSC Director of African Affairs records on Rwanda",
+      "source": "https://clinton.presidentiallibraries.us/items/show/36639",
+      "sourceLabel": "Library collection finding aid",
+      "accent": "#b99154",
+      "challenge": {
+        "question": "What date and office scope belongs in this research lead?",
+        "correct": "MacArthur DeShazer, NSC African Affairs, Rwanda, 1993–1994.",
+        "wrong": "All Clinton-era Africa policy, 1993–2001, fully represented."
+      }
+    },
+    {
+      "library": "bush43",
+      "title": "NSC Records Access Vault",
+      "collection": "NSC RAMS packages: Millennium Challenge Account",
+      "handle": "FOIA 2015-0261-F; records dated 11/25/2001–11/25/2002",
+      "source": "https://www.archives.gov/files/foia/pra-notifications/pdf/rn-lpgwb-2024-037.pdf",
+      "sourceLabel": "NARA release proposal, January 23, 2024, page 11",
+      "accent": "#6c9d9b",
+      "challenge": {
+        "question": "NARA lists case 2015-0261-F in a proposed release. What is safe to record?",
+        "correct": "Keep the case and dates; a proposed release is not proof of current access.",
+        "wrong": "The case number proves every NSC record is open."
+      }
+    }
+  ]
+}
