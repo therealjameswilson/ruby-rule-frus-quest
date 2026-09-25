@@ -98,7 +98,8 @@ export class RoomAmbience {
   setRiverPosition(position: {y:number} | null) {
     if (this.disposed || !this.riverGain) return;
     const level=riverPresence(position);
-    if (Math.abs(level-this.riverLevel)<.002) return;
+    // Throttle tiny motion changes, but always reach fully dry/wet endpoints.
+    if (level === this.riverLevel || (level > 0 && level < 1 && Math.abs(level-this.riverLevel)<.002)) return;
     this.riverLevel=level;
     // Smooth travel and scene-entry jumps; update only when the listener moves appreciably.
     this.riverGain.gain.setTargetAtTime(level*.012,this.context.currentTime,.25);

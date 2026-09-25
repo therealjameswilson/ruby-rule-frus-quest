@@ -60,7 +60,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.leaving = false; this.stops = []; this.solids = []; this.worldLabels = [];
     setSceneState('ResearchWorldScene','explore','EXPLORE THE OUTDOORS');
     setVisibleThreats([]); setNearestInteractable(null);
-    retroAudio.startMusic('CherryBlossomGardenScene');
+    retroAudio.startMusic('ResearchWorldScene');
     this.cameras.main.setBackgroundColor('#b7d879');
     for (const key of ['research-landmarks','research-sprites']) this.sliceAtlas(key);
     this.add.image(128,137,'research-landscape').setDisplaySize(256,206).setDepth(-20);

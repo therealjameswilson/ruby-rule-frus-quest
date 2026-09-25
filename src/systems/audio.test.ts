@@ -13,6 +13,10 @@ beforeEach(async () => {
 afterEach(() => vi.unstubAllGlobals());
 
 describe("muted music requests", () => {
+  it("keeps the outdoor scene identity while sharing the garden score", () => {
+    audio.startMusic("ResearchWorldScene");
+    expect(audio.getDebugState()).toMatchObject({ currentSceneKey: "ResearchWorldScene", currentThemeKey: "cherryGarden" });
+  });
   it("remembers the latest room without creating audio or scheduling music", () => {
     audio.startMusic("OfficeScene");
     audio.startMusic("GuideScene");

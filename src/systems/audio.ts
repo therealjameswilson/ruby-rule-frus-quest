@@ -457,6 +457,7 @@ class RetroAudio {
       CharacterCreateScene: "title",
       OfficeScene: "officeHub",
       CherryBlossomGardenScene: "cherryGarden",
+      ResearchWorldScene: "cherryGarden",
       SenateHearingChamberScene: "senate",
       GuideScene: "archiveDungeon",
       ArchiveScene: "archiveDungeon",
