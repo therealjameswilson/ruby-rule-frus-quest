@@ -1,5 +1,7 @@
 import { addBinderyPressArt } from "../systems/binderyPressArt";
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
+import { addEditorialRoomWalls } from "../systems/editorialRoomWalls";
+import { buildEditorE1TileLayers } from "../game/editorE1Tilemap";
 import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import Phaser from "phaser";
 import { ALT_ENDING_ASSETS, FRUS_VOLUMES, publicAssetPath } from "../assets/registry";
@@ -293,6 +295,16 @@ export class EndingScene extends Phaser.Scene {
   private drawGateRoom() {
     this.add.rectangle(128, 136, 224, 160, color(PALETTE.stoneGray)).setDepth(1);
     addEditorialRoomFloor(this, false);
+    const walls = buildEditorE1TileLayers().walls.map(row => [...row]);
+    // Continuous joinery around the bindery, with the actual vault exit clear.
+    const wallTile = walls[0][0];
+    for (const row of walls) {
+      row[0] = wallTile;
+      row[row.length - 1] = wallTile;
+    }
+    walls[10][0] = -1;
+    for (const x of [7, 8]) walls[walls.length - 1][x] = -1;
+    addEditorialRoomWalls(this, walls, 0, 32);
     this.add.rectangle(128, 58, 130, 28, color(PALETTE.black), 0.96)
       .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(140);
     this.add.text(128, 47, "FRUS BINDERY", {
