@@ -252,6 +252,14 @@ class RetroAudio {
     this.sequence([740, 370, 555], 0.035, 0.012, 0.035, "square");
   }
 
+  egoBoltReturn(tool: ProcessItemId) {
+    this.toolSound(tool, true);
+    setAudioStatus("ego bolt returned");
+    // A soft rising fifth over the physical impact distinguishes a counter
+    // from an ordinary swing or the descending enemy-fire cue.
+    this.sequence([880, 1320], 0.065, 0.012, 0.026, "sine");
+  }
+
   playerHurt(heavy = false) {
     setAudioStatus(heavy ? "player hurt (heavy)" : "player hurt");
     if (heavy) {

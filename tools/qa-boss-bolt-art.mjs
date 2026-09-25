@@ -34,10 +34,10 @@ try{
     boss.fireBolt({x:box.centerX,y:box.centerY+10},{x:128,y:192},60);boss.updateBolts(scene.time.now,0);
     window.game.renderer.snapshot(image=>{
       const bolt=boss.bolts[0],tail=scene.children.getByName('boss-ego-direction-tail');
-      resolve({returned:bolt.returned,tintFill:bolt.sprite.tintFill,visible:tail.visible,color:tail.fillColor,image:image.src});
+      resolve({audioStatus:JSON.parse(window.render_game_to_text()).audioStatus,returned:bolt.returned,tintFill:bolt.sprite.tintFill,visible:tail.visible,color:tail.fillColor,image:image.src});
     });
   }));
-  assert(returned.returned);assert.equal(returned.tintFill,false);assert.equal(returned.visible,mode!=='reduced');assert.equal(returned.color,0x66d8df);
+  assert(returned.returned);assert.equal(returned.audioStatus,"ego bolt returned");assert.equal(returned.tintFill,false);assert.equal(returned.visible,mode!=='reduced');assert.equal(returned.color,0x66d8df);
   await writeFile(`${out}/${mode}-returned.png`,Buffer.from(returned.image.split(',')[1],'base64'));delete returned.image;
   const cleanup=await page.evaluate(()=>{
     const scene=window.game.scene.getScene('BlackVaultLairScene'),boss=scene.danneBoss;

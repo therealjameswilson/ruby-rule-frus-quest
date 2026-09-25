@@ -1,4 +1,5 @@
 import Phaser from "phaser";
+import { retroAudio } from "../../systems/audio";
 import { DANNE_BOSS_HD } from "../../art/danneBossPresentation";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { addDanneItem, addProcessItem, gameState, recordStandardsViolation, resetGameState, seedProgressForScene } from "../../game/state";
@@ -41,7 +42,7 @@ vi.mock("phaser", () => {
 vi.mock("../Player", () => ({ Player: class {} }));
 vi.mock("../../systems/audio", () => ({ retroAudio: {
   blip: vi.fn(), confirm: vi.fn(), warning: vi.fn(), bossHit: vi.fn(), bossDefeat: vi.fn(),
-  dannePhaseTransition: vi.fn(), danneBoast: vi.fn(), egoBoltFire: vi.fn(), toolHit: vi.fn()
+  dannePhaseTransition: vi.fn(), danneBoast: vi.fn(), egoBoltFire: vi.fn(), egoBoltReturn: vi.fn(), toolHit: vi.fn()
 } }));
 vi.mock("../../systems/bossHud", () => ({ hideBossHud: vi.fn(), setBossHp: vi.fn(), showBossHud: vi.fn() }));
 vi.mock("../../systems/combatFeedback", () => ({ applyHitShake: vi.fn() }));
@@ -550,6 +551,7 @@ describe("DANN-E final-review combat", () => {
     expect(gameState.reliability).toBe(100);
     expect(player.takeHit).not.toHaveBeenCalled();
     expect(internals.bolts[0].returned).toBe(true);
+    expect(retroAudio.egoBoltReturn).toHaveBeenCalledExactlyOnceWith(tool);
     expect(boss.readout().bossCombat.boltsReturned).toBe(1);
     player.activeActionHitbox = null;
     internals.updateBolts(1050, 50);

@@ -15,10 +15,10 @@ try {
   for(const scene of window.game.scene.getScenes(true))scene.scene.pause();
   await retroAudio.unlock();
  });
- for(const mode of (process.argv.includes('--paper-only')?['paper']:['music','effects','combat',...(process.argv.includes('--stress')?['stress']:[])])){
+ for(const mode of (process.argv.includes('--return-only')?['return-solo','return']:process.argv.includes('--paper-only')?['paper']:['music','effects','combat',...(process.argv.includes('--stress')?['stress']:[])])){
   const result=await p.evaluate(async mode=>{
    const audio=window.qaAudio;audio.stopEffects();audio.stopMusic();
-   audio.setChannelVolume('master',1);audio.setChannelVolume('music',mode==='effects'?0:mode==='stress'?1:.8);audio.setChannelVolume('effects',mode==='music'?0:1);
+   audio.setChannelVolume('master',1);audio.setChannelVolume('music',mode==='effects'||mode==='return-solo'?0:mode==='stress'?1:.8);audio.setChannelVolume('effects',mode==='music'?0:1);
    audio.startMusic(mode==='paper'?'NetworkScene':'DanneBoss',{forceRestart:true});await new Promise(r=>setTimeout(r,400));
    const ctx=audio.context,chunks=[];const processor=ctx.createScriptProcessor(4096,2,2),silent=ctx.createGain();silent.gain.value=0;
    // A muted diagnostic branch captures master output; it does not feed audio back into the mix.
@@ -26,6 +26,7 @@ try {
    processor.onaudioprocess=e=>chunks.push([e.inputBuffer.getChannelData(0).slice(),e.inputBuffer.getChannelData(1).slice()]);
    let interval=null,n=0;const pending=[];
    if(mode!=='music')interval=setInterval(()=>{
+    if(mode.startsWith('return')){audio.egoBoltReturn(['red_pencil','citation_stamp','review_folder'][n++%3]);return;}
     if(mode==='paper'){audio.paperPickup();pending.push(setTimeout(()=>audio.fileDocket(),240));return;}
     audio.toolWindup('red_pencil');pending.push(setTimeout(()=>audio.toolHit('red_pencil'),140));
     pending.push(setTimeout(()=>audio.egoBoltFire(),350));
@@ -51,7 +52,8 @@ try {
   await writeFile(`${out}/${mode}.wav`,Buffer.from(result.audio,'base64'));delete result.audio;
   assert(result.seconds>5);assert(result.peak>0);assert.equal(result.clipped,0);results.push(result);console.log(JSON.stringify(result));
  }
- const cancellation=await p.evaluate(async()=>{const a=window.qaAudio;a.stopEffects();a.toolWindup('review_folder');a.toolHit('stapler');a.paperPickup();a.fileDocket();const before=a.foley.size;a.setChannelVolume('effects',0);const after=a.foley.size;a.toolHit('red_pencil');a.paperPickup();a.fileDocket();const whileMuted=a.foley.size;await new Promise(r=>setTimeout(r,250));return {before,after,whileMuted,settled:a.foley.size};});
+ const cancellation=await p.evaluate(async()=>{const a=window.qaAudio;a.stopEffects();a.egoBoltReturn('red_pencil');a.toolWindup('review_folder');a.toolHit('stapler');a.paperPickup();a.fileDocket();const before=a.foley.size,beforeTones=a.effects.size;a.setChannelVolume('effects',0);const after=a.foley.size,afterTones=a.effects.size;a.egoBoltReturn('red_pencil');a.toolHit('red_pencil');a.paperPickup();a.fileDocket();const whileMuted=a.foley.size,mutedTones=a.effects.size;await new Promise(r=>setTimeout(r,250));return {before,after,whileMuted,beforeTones,afterTones,mutedTones,settled:a.foley.size,settledTones:a.effects.size};});
+ assert(cancellation.beforeTones>=2);assert.equal(cancellation.afterTones,0);assert.equal(cancellation.mutedTones,0);assert.equal(cancellation.settledTones,0);
  assert(cancellation.before>=2);assert.equal(cancellation.after,0);assert.equal(cancellation.whileMuted,0);assert.equal(cancellation.settled,0);
- assert.deepEqual(errors,[]);await writeFile(`${out}/result.json`,JSON.stringify({scope:process.argv.includes('--paper-only')?'Six-second paper handling with network score. Digital levels only; not listening approval.':'Six-second synthesized combat stimulus. Digital levels only; not listening approval.',results,cancellation,errors},null,2));
+ assert.deepEqual(errors,[]);await writeFile(`${out}/result.json`,JSON.stringify({scope:process.argv.includes('--return-only')?'Return cue across three tools, solo and with boss score. Digital levels only; not listening approval.':process.argv.includes('--paper-only')?'Six-second paper handling with network score. Digital levels only; not listening approval.':'Six-second synthesized combat stimulus. Digital levels only; not listening approval.',results,cancellation,errors},null,2));
 }finally{await browser.close();}

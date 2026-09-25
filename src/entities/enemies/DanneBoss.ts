@@ -986,7 +986,7 @@ export class DanneBoss {
         bolt.trail.update(bolt.x, bolt.y, bolt.vx, bolt.vy);
         bolt.sprite.setAngle(Math.round(Phaser.Math.RadToDeg(Math.atan2(bolt.vy, bolt.vx))));
         setLatestMessage("EGO RETURNED!");
-        retroAudio.toolHit(tool);
+        retroAudio.egoBoltReturn(tool);
       }
       if (bolt.returned && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, this.bossBody())) {
         this.takeReturnedBolt(timeMs);
