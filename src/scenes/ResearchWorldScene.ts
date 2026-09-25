@@ -1,3 +1,4 @@
+import { presentationPanel, PANEL_COLORS } from "../systems/presentationPanel";
 import { LIBRARY_ASSIGNMENTS, libraryAssignment, libraryStage } from "../game/libraryResearch";
 import Phaser from 'phaser';
 import { DANNE_DISGUISES, disguiseIndex } from '../game/danneDisguises';
@@ -29,6 +30,7 @@ export class ResearchWorldScene extends Phaser.Scene {
   private disguiseLabel!: Phaser.GameObjects.Text;
   private danne!: Phaser.GameObjects.Image;
   private tally!: Phaser.GameObjects.Text;
+  private worldLabels: Phaser.GameObjects.Text[] = [];
   private arrival?: {x:number;y:number};
   constructor() { super('ResearchWorldScene'); }
 
@@ -38,6 +40,11 @@ export class ResearchWorldScene extends Phaser.Scene {
   preload() {
     this.disguise=disguiseIndex(gameState.sceneProgress.researchDanneDisguise);
     this.loadDisguise(this.disguise);
+    if (researchZone(gameState.sceneProgress.researchWorldZone) === 1) {
+      for (const name of ['sweetgreen','james']) {
+        if (!this.textures.exists(`research-${name}-v2`)) this.load.image(`research-${name}-v2`, `assets/research-world/presentation/${name}-v2.png`);
+      }
+    }
     for (const name of ['landmarks','sprites','landscape']) {
       if (!this.textures.exists(`research-${name}`)) this.load.image(`research-${name}`, `assets/research-world/${name}.png`);
     }
@@ -48,7 +55,7 @@ export class ResearchWorldScene extends Phaser.Scene {
       delete gameState.sceneProgress.libraryReturnX; delete gameState.sceneProgress.libraryReturnY;
     }
     this.zone = researchZone(gameState.sceneProgress.researchWorldZone);
-    this.leaving = false; this.stops = []; this.solids = [];
+    this.leaving = false; this.stops = []; this.solids = []; this.worldLabels = [];
     setSceneState('ResearchWorldScene','explore','EXPLORE THE OUTDOORS');
     setVisibleThreats([]); setNearestInteractable(null);
     retroAudio.startMusic('CherryBlossomGardenScene');
@@ -105,10 +112,11 @@ export class ResearchWorldScene extends Phaser.Scene {
       transitionTo(this,'OfficeScene');
     });
     const zone=RESEARCH_ZONES[this.zone];
-    this.add.rectangle(128,47,256,34,0xf6edca).setDepth(300);
-    this.label(128,33,zone.name,300,8);
-    this.label(128,46,zone.hint,300,6);
-    this.tally=this.label(128,58,'',300,6);
+    const regionPanel = presentationPanel(this,8,32,240,26);
+    for (const object of regionPanel.objects) (object as Phaser.GameObjects.Rectangle).setDepth(300);
+    this.add.text(16,35,zone.name,{fontFamily:'Arial',fontSize:'8px',color:PANEL_COLORS.text}).setDepth(301).setName('research-region-title');
+    this.add.text(16,47,zone.hint,{fontFamily:'Arial',fontSize:'6.5px',color:PANEL_COLORS.muted}).setDepth(301);
+    this.tally=this.add.text(240,36,'',{fontFamily:'Arial',fontSize:'6px',color:'#d4b66d'}).setOrigin(1,0).setDepth(301);
     const directions=zone as {west?:number;east?:number;north?:number;south?:number};
     if(directions.west!==undefined)this.label(8,132,'<',300,9);
     if(directions.east!==undefined)this.label(248,132,'>',300,9);
@@ -122,7 +130,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     const closeText=this.add.text(232,22,'X',{fontFamily:'monospace',fontSize:'12px',color:'#fff6cf'}).setOrigin(.5);
     this.travelClose=this.add.container(0,0,[closeBox,closeText]).setDepth(1000).setVisible(false);
     bindPointerDown(closeBox,()=>{this.choice.hide();swallowNextInputFrame();});
-    this.prompt=this.add.text(128,191,'',{fontFamily:'monospace',fontSize:'7px',color:'#fff5cf',backgroundColor:'#234c39',padding:{x:3,y:2}}).setOrigin(.5).setDepth(350);
+    this.prompt=this.add.text(128,166,'',{fontFamily:'Arial',fontSize:'8px',color:PANEL_COLORS.text,backgroundColor:'#101925',padding:{x:6,y:4},wordWrap:{width:218,useAdvancedWrap:true},align:'center'}).setOrigin(.5,1).setDepth(350).setName('research-action-prompt');
     setVisibleEntities([zone.name,...landmarks.map(l=>l.name),...(this.zone===1?['Sweetgreen','James at Sweetgreen']:[]),'DANN-E (civilian disguise)','Rail station','Discovery journal','Return to office / Washington']);
     setLatestMessage('Walk freely. Approach a landmark and press A to discover it. Rail travel is free.');
     this.refreshTally(); swallowNextInputFrame();
@@ -140,6 +148,8 @@ export class ResearchWorldScene extends Phaser.Scene {
     if(input.pauseJustPressed||input.menuJustPressed||input.startJustPressed){this.inventory.toggle();return;}
     if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     this.player.update(delta,true,{bounds:{left:7,right:249,top: 60,bottom:230},solids:this.solids});
+    const heroBounds=this.player.sprite.getBounds();
+    for(const label of this.worldLabels) label.setVisible(!Phaser.Geom.Intersects.RectangleToRectangle(heroBounds,label.getBounds()));
     const p=this.player.position;
     this.danne.setFlipX(p.x>130);
     const nearest=this.stops.map(s=>({s,d:Math.hypot(p.x-s.x,p.y-s.y)})).filter(v=>v.d<=v.s.radius).sort((a,b)=>a.d-b.d)[0]?.s;
@@ -159,32 +169,61 @@ export class ResearchWorldScene extends Phaser.Scene {
   }
   private drawSweetgreen() {
     // A fictional stop in the compressed Potomac map, separate from archival discoveries.
-    const g = this.add.graphics().setDepth(145).setName('sweetgreen-storefront');
-    g.fillStyle(0xf5eed9).fillRect(38,143,64,31);
-    g.fillStyle(0x255844).fillRect(36,140,68,9);
-    g.fillStyle(0x91c5bc).fillRect(42,152,21,17).fillRect(77,152,21,17);
-    g.fillStyle(0x214438).fillRect(66,150,9,24);
-    g.fillStyle(0xf3d98c).fillRect(72,162,1,2);
-    g.fillStyle(0x385b3c).fillRect(39,170,24,4).fillRect(77,170,24,4);
-    for (const x of [43,50,57,81,88,95]) g.fillStyle(0x7fbc53).fillRect(x,168,4,3);
-    this.add.text(70,141,'sweetgreen',{fontFamily:'monospace',fontSize:'6px',color:'#f7f3d7'}).setOrigin(.5,0).setDepth(146).setName('sweetgreen-sign');
+    const g = this.add.graphics().setDepth(145);
+    if (this.textures.exists('research-sweetgreen-v2')) {
+      const texture=this.textures.get('research-sweetgreen-v2');
+      if(!texture.has('building'))texture.add('building',0,50,83,1677,670);
+      this.add.image(70,174,'research-sweetgreen-v2','building').setOrigin(.5,1).setDisplaySize(64,31).setDepth(174).setName('sweetgreen-storefront');
+    } else {
+      g.fillStyle(0xf5eed9).fillRect(38,143,64,31);
+      g.fillStyle(0x255844).fillRect(38,143,64,8);
+      this.add.text(70,143,'sweetgreen',{fontFamily:'Arial',fontSize:'6px',color:'#f7f3d7'}).setOrigin(.5,0).setDepth(146);
+    }
     this.solids.push(new Phaser.Geom.Rectangle(38,143,64,31));
-    this.add.ellipse(91,192,16,4,0x294536,.3).setDepth(179);
-    this.add.sprite(91,190,'compiler_veteran',0).setOrigin(.5,.9).setDisplaySize(24,36).setDepth(190).setName('james-sweetgreen');
-    this.label(91,194,'JAMES',280,6);
+    this.add.ellipse(91,192,13,3,0x294536,.25).setDepth(179);
+    if (this.textures.exists('research-james-v2')) {
+      const texture=this.textures.get('research-james-v2');
+      if(!texture.has('body'))texture.add('body',0,250,20,540,1490);
+      this.add.image(91,192,'research-james-v2','body').setOrigin(.5,1).setScale(42/1490).setDepth(192).setName('james-sweetgreen');
+    } else this.add.sprite(91,190,'compiler_veteran',0).setOrigin(.5,.9).setDisplaySize(24,36).setDepth(190).setName('james-sweetgreen');
+    this.label(91,194,'JAMES',280,7);
     // Salad bowl on the outdoor counter.
     g.fillStyle(0xe6ead6).fillRect(46,180,17,5);
     g.fillStyle(0x74ad43).fillRect(47,178,15,3);
     g.fillStyle(0xc96336).fillRect(51,178,3,2).fillRect(58,179,2,2);
+    this.label(55,186,'ORDER SALAD',280,7);
+    this.stop('Order a salad',64,183,16,()=>this.orderSalad());
     this.stop('Talk to James',91,199,19,()=>{
       gameState.sceneProgress.researchJamesWarningHeard=1;
       setLatestMessage("James at Sweetgreen: Don't trust DANN-E. His helpful act hides an effort to derail your FRUS volume.");
       this.dialog.show('JAMES AT SWEETGREEN',[
         "Don't trust DANN-E. He acts mild-mannered out here, but he wants to get in the way of your FRUS volume.",
         "He'll offer a shortcut, misplace a folder, or send you down the wrong path. Check his advice against the finding aids and your own notes.",
-        "Keep your source trail, talk to Kathy, and keep compiling. Don't let his friendly smile fool you."
+        "Keep your source trail, talk to Kathy, and keep compiling. Don't let his friendly smile fool you.",
+        "Order a salad at the counter. Lunch is on me!"
       ],()=>saveGameNow());
     });
+  }
+
+  private orderSalad() {
+    const salads = ['Garden greens', 'Chicken salad', 'Harvest bowl'];
+    this.choice.show('SWEETGREEN\nChoose your salad. James is paying.', [
+      ...salads.map((label,index)=>({key:(["A","B","C"] as const)[index],label})),
+      {key:'D',label:'Maybe later'}
+    ], option => {
+      const index=option.key.charCodeAt(0)-65;
+      if(index<0 || index>=salads.length) return;
+      gameState.sceneProgress.sweetgreenSaladsOrdered=(gameState.sceneProgress.sweetgreenSaladsOrdered??0)+1;
+      gameState.sceneProgress.sweetgreenLastSalad=index+1;
+      gameState.sceneProgress.sweetgreenPaidByJames=1;
+      retroAudio.confirm();
+      setLatestMessage(`${salads[index]} ordered. James paid for your salad.`);
+      saveGameNow();
+      this.dialog.show('JAMES — LUNCH IS ON ME',[
+        `Your ${salads[index].toLowerCase()} is ready. James picks up the tab.`,
+        'Enjoy your lunch! Then back to compiling that FRUS volume. And remember: do not trust DANN-E.'
+      ]);
+    },8,()=>{});
   }
 
   private loadDisguise(index:number) {
@@ -230,14 +269,15 @@ export class ResearchWorldScene extends Phaser.Scene {
     return this.add.image(x,y,'research-sprites',String(frame)).setOrigin(.5,1).setDisplaySize(w,h).setDepth(y);
   }
   private label(x:number,y:number,text:string,depth=280,size=6) {
-    const label=this.add.text(x,y,text,{fontFamily:'monospace',fontSize:`${size}px`,color:'#173e36',backgroundColor:'#f8edc9',padding:{x:2,y:1}}).setOrigin(.5,0).setDepth(depth);
-    this.add.rectangle(x,y,label.width,label.height,0xf8edc9).setOrigin(.5,0).setDepth(depth-.1);
+    const label=this.add.text(x,y,text,{fontFamily:'Arial',fontSize:`${Math.max(7,size)}px`,color:'#f5efdd',backgroundColor:'#19392f',padding:{x:3,y:2}}).setOrigin(.5,0).setDepth(depth);
+    // Text owns its backing so changing a name or count cannot leave a stale panel.
+    this.worldLabels.push(label);
     return label;
   }
   private stop(label:string,x:number,y:number,radius:number,act:()=>void){this.stops.push({label,x,y,radius,act});}
   private drawLandmark(l:ResearchLandmark) {
     this.add.image(l.x,l.y,'research-landmarks',String(l.frame)).setOrigin(.5,1).setDisplaySize(70, 60).setDepth(l.y-10);
-    this.label(l.x,l.y+2,l.label);
+    this.label(l.x,l.y>150?154:l.y+2,l.label);
     this.solids.push(new Phaser.Geom.Rectangle(l.x-27,l.y-33,54,30));
     this.stop(l.label,l.x,l.y+20,21,()=>libraryAssignment(l.id)?this.enterLibrary(l):this.discover(l));
   }

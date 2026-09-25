@@ -49,3 +49,6 @@ small native runtime exports are loaded. Existing fallback sheets are preserved.
 
 ## NARA environment props (2026-09-24)
 - `public/assets/art-pack/archive-environment/props-v2.png`: original AI-generated archive shelving and cartons created for this game with OpenAI image generation. Source RGBA preserved. See adjacent provenance file. Floor, walls and illumination are original canvas code.
+
+## Outdoor storefront and James (2026-09-24)
+- `public/assets/research-world/presentation/{sweetgreen,james}-v2.png`: original AI-generated artwork for the game using OpenAI image generation; original RGBA preserved. See adjacent `PROVENANCE.md`.
