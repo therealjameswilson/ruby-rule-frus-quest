@@ -20,6 +20,8 @@ try{
   assert.equal(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dossier.library),d.library);
   for(let room=0;room<3;room++){
    await page.waitForFunction(r=>window.game.scene.getScene('NscLibraryScene').room===r,room);await page.waitForTimeout(250);
+   const floors=await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').children.list.filter(o=>o.name==='nsc-reading-room-floor').map(o=>({key:o.texture.key,width:o.displayWidth,height:o.displayHeight,depth:o.depth})));
+   assert.deepEqual(floors,[{key:`nsc-reading-floor-${room}-v1`,width:256,height:208,depth:2}]);
    if(d.library==='reagan')await page.screenshot({path:`${out}/${mobile?'phone':'desktop'}-room${room}.png`});
    await position(62,145);await act();assert(await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dialog.active));await drain();
    // Wrong answers must not advance, then the real control selects the correct row.

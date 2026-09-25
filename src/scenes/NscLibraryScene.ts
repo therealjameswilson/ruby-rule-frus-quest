@@ -12,7 +12,7 @@ import { handleOpenOverlays } from '../systems/overlayInput';
 import { saveGameNow } from '../systems/save';
 import { transitionTo, drawRoomFrame } from '../systems/sceneTransitions';
 import { retroAudio } from '../systems/audio';
-import { addEditorialRoomFloor } from '../systems/editorialRoomFloor';
+import { addNscRoomFloor } from '../systems/nscRoomFloor';
 import { addEditorialRoomWalls } from '../systems/editorialRoomWalls';
 import { buildEditorE1TileLayers } from '../game/editorE1Tilemap';
 const ROOMS=['CATALOG HALL','SOURCE TRAIL','ACCESS REVIEW'];
@@ -38,7 +38,7 @@ export class NscLibraryScene extends Phaser.Scene {
     setRoomTraversalState({currentRoomId:`nsc-${id}-${this.room}`,roomTitle:`${this.dossier.title}: ${ROOMS[this.room]}`,roomType:'puzzle',visitedRoomIds:Array.from({length:this.room+1},(_,i)=>`nsc-${id}-${i}`),revealedRoomIds:[`nsc-${id}-${this.room}`],exits:{south:this.room?'Previous chamber':'PresidentialLibraryScene',north:this.room<2?'Next chamber':'PresidentialLibraryScene'},lockedExits:{},requiredItems:{}});
     setVisibleThreats([]);setVisibleEntities([this.dossier.collection,this.dossier.handle,'West desk: read holding guide','East desk: check source trail','South: back; north: continue after filing']);
     drawRoomFrame(this,'NSC RESEARCH',this.dossier.accent,{showLegacyHud:false});
-    addEditorialRoomFloor(this,this.room!==1);
+    addNscRoomFloor(this,this.room);
     // Open the north and south central cells for the chamber route.
     const walls=buildEditorE1TileLayers().walls.map(row=>[...row]);
     for(const row of walls){row[0]=walls[0][0];row[row.length-1]=walls[0][0];}
