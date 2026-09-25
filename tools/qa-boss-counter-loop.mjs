@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 const storagePath = process.env.FRUS_QA_STORAGE;
 if (!storagePath) throw new Error('FRUS_QA_STORAGE must name an earned Black Vault entry storage file.');
-const mobile=process.argv.includes('--mobile'), baseline=process.argv.includes('--baseline');
+const tallPhone=process.argv.includes('--tall-phone');
+const mobile=process.argv.includes('--mobile')||tallPhone, baseline=process.argv.includes('--baseline');
 const cpuThrottle=Number(process.env.FRUS_QA_CPU_THROTTLE ?? 1);
 assert(Number.isFinite(cpuThrottle) && cpuThrottle>=1, 'CPU throttle must be at least one');
 const out=process.env.FRUS_QA_OUT??`/tmp/frus-boss-rhythm-${baseline?'before':'after'}-${mobile?'touch':'desktop'}`;
@@ -13,7 +14,7 @@ const browser=await chromium.launch({headless:true, executablePath:process.env.C
  ...(process.env.FRUS_QA_ANGLE?{args:[`--use-angle=${process.env.FRUS_QA_ANGLE}`]}:{})});
 const context=await browser.newContext({storageState:JSON.parse(await readFile(storagePath,'utf8')),
   reducedMotion:process.argv.includes('--reduced-motion')?'reduce':'no-preference',
-  viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
+  viewport:mobile?(tallPhone?{width:390,height:844}:{width:375,height:667}):{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
 const controller=process.argv.includes('--soda-controller');
 if(controller)await context.addInitScript(()=>{
   window.qaSodaPad={connected:true,index:0,id:'QA standard controller',mapping:'standard',axes:[0,0],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};
@@ -26,8 +27,25 @@ const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const boss=s=>s.visibleThreats.find(t=>t.bossCombat);
 async function point(x,y){const b=await page.locator('canvas').first().boundingBox();return{x:b.x+x*b.width/256,y:b.y+y*b.height/240,id:1};}
 async function touch(x,y,dx=0,dy=0,ms=55){await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[await point(x,y)]});if(dx||dy)await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[await point(x+dx,y+dy)]});await page.waitForTimeout(ms);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
-async function press(key='Space'){if(mobile)await touch(...(key==='x'?[174,216]:key==='m'?[120, 216]:key==='Escape'?[224,34]:[225,205]));else await page.keyboard.press(key,{delay:55});}
-async function direction(key,ms=70){if(mobile){const [dx,dy]={ArrowLeft:[-26,0],ArrowRight:[26,0],ArrowUp:[0,-26],ArrowDown:[0,26]}[key];await touch(48, 202,dx,dy,ms);}else{await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}await page.waitForTimeout(20);}
+async function controlPoint(control, fallback) {
+ const target=page.locator(`#portrait-touch-dock [data-control="${control}"]`);
+ if(mobile&&await target.isVisible()){const b=await target.boundingBox();return{x:b.x+b.width/2,y:b.y+b.height/2,id:1};}
+ return point(...fallback);
+}
+async function padPoints(key) {
+ const target=page.locator('#portrait-touch-dock [data-control=pad]');
+ const [dx,dy]={ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[key];
+ if(await target.isVisible()){const b=await target.boundingBox(),origin={x:b.x+b.width/2,y:b.y+b.height/2,id:1};return[origin,{...origin,x:origin.x+dx*b.width*.35,y:origin.y+dy*b.height*.35}];}
+ return [await point(48,202),await point(48+dx*26,202+dy*26)];
+}
+async function press(key='Space'){
+ if(mobile){const p=key==='Escape'?await point(224,34):await controlPoint(key==='x'?'b':key==='m'?'start':'space',key==='x'?[174,216]:key==='m'?[120,216]:[225,205]);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[p]});await page.waitForTimeout(55);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
+ else await page.keyboard.press(key,{delay:55});
+}
+async function direction(key,ms=70){
+ if(mobile){const [origin,moved]=await padPoints(key);await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[origin]});await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[moved]});await page.waitForTimeout(ms);await cdp.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});}
+ else{await page.keyboard.down(key);await page.waitForTimeout(ms);await page.keyboard.up(key);}await page.waitForTimeout(20);
+}
 async function move(x,y){for(let i=0;i<50;i++){const s=await state(),dx=x-s.player.x,dy=y-s.player.y;if(s.mode!=='explore'||Math.hypot(dx,dy)<4)return;await direction(Math.abs(dx)>Math.abs(dy)?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.max(16,Math.min(180,Math.max(Math.abs(dx),Math.abs(dy))*6)));}throw Error('Movement stalled');}
 async function shot(label){const s=await state();if(!process.argv.includes('--no-captures')){const img=await page.evaluate(()=>new Promise(resolve=>window.game.renderer.snapshot(i=>resolve(i.src))));await writeFile(`${out}/${label}-native.png`,Buffer.from(img.split(',')[1],'base64'));await page.screenshot({path:`${out}/${label}.png`});}await writeFile(`${out}/${label}.json`,JSON.stringify(s,null,2));const entry={label,scene:s.scene,p:s.player,rel:s.reliability,phase:boss(s)?.enemyState,hp:boss(s)?.hp,returns:boss(s)?.bossCombat.boltsReturned,window:boss(s)?.bossCombat.counterWindowMs};log.push(entry);console.log(JSON.stringify(entry));return s;}
 try{
@@ -85,15 +103,20 @@ try{
  if(mobile && process.argv.includes('--multitouch')) {
    await move(128,180);
    const before=await state();
-   const origin=await point(48, 202),moved=await point(48, 176),swing={...await point(174,216),id:2};
+   const [origin,moved]=await padPoints('ArrowUp'),swing={...await controlPoint('b',[174,216]),id:2};
    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[origin]});
    await cdp.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[moved]});
    await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[moved,swing]});
    await page.waitForTimeout(100);
    const active=await state();
    const controls=await page.evaluate(()=>window.rubyRuleTouchControls);
-   assert(controls.dpadPointerId!==null&&controls.dpadDirection!==null,'Movement pointer must remain captured');
-   assert(controls.pressedButtons.includes('b'),'Second pointer must hold the tool button');
+   if(controls.portraitDocked){
+     assert.equal(await page.locator('#portrait-touch-dock [data-control=pad]').getAttribute('data-direction'),'up');
+     assert(await page.locator('#portrait-touch-dock [data-control=b]').evaluate(el=>el.classList.contains('pressed')));
+   }else{
+     assert(controls.dpadPointerId!==null&&controls.dpadDirection!==null,'Movement pointer must remain captured');
+     assert(controls.pressedButtons.includes('b'),'Second pointer must hold the tool button');
+   }
    assert(active.player.y<before.player.y,'Walking continues while a second finger swings');
    assert(active.playerCombat.weapon.swingId>before.playerCombat.weapon.swingId,'The simultaneous tool press must actually swing');
    await shot('two-finger-swing');
@@ -104,6 +127,7 @@ try{
    await page.waitForTimeout(100);
    const released=await page.evaluate(()=>window.rubyRuleTouchControls);
    assert.equal(released.dpadPointerId,null);assert.deepEqual(released.pressedButtons,[]);
+   if(released.portraitDocked){assert.equal(await page.locator('#portrait-touch-dock [data-control=pad]').getAttribute('data-direction'),'');assert.equal(await page.locator('#portrait-touch-dock .pressed').count(),0);}
  }
  await move(128,144);await press();
  if(process.argv.includes('--boast-skip')) {
@@ -170,7 +194,7 @@ try{
  await page.waitForTimeout(2400);
  if(process.argv.includes('--retry-guard')) {
    await move(128,130);
-   if(mobile)await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[await point(174,216)]});
+   if(mobile)await cdp.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[await controlPoint('b',[174,216])]});
    else await page.keyboard.down('x');
    await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).visibleThreats.some(t=>t.bossCombat?.retryAvailable),{},{timeout:90000});
    await page.waitForTimeout(500);
@@ -530,4 +554,4 @@ try{
  }
  assert.deepEqual(errors,[]);
 }catch(e){await shot('failure').catch(()=>{});throw e;}
-finally{await writeFile(`${out}/result.json`,JSON.stringify({cpuThrottle,errors,log},null,2));await browser.close();}
+finally{await writeFile(`${out}/result.json`,JSON.stringify({cpuThrottle,mobile,tallPhone,errors,log},null,2));await browser.close();}

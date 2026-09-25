@@ -1,0 +1,44 @@
+{
+  "date": "2026-09-25",
+  "runtimeCommit": "61f3d350dd306f37006bd195e7d37f374efc983f",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3
+  },
+  "controls": "Portrait DOM movement pad and A/B/Menu; CDP touch events, no keyboard combat",
+  "checks": [
+    "Two simultaneous movement/attack touches",
+    "Releasing attack preserves held movement",
+    "Releasing all touches clears pad and pressed buttons",
+    "Counter-window pause/resume",
+    "All three boss forms",
+    "Earned bindery entry and Continue restoration"
+  ],
+  "fight": {
+    "label": "fight-summary",
+    "cycles": 7,
+    "retries": 0,
+    "freshCoreHits": 7,
+    "tightApproaches": 1,
+    "phases": [
+      "colossus",
+      "swarm",
+      "cloud"
+    ],
+    "seconds": 54.845,
+    "deadlineMissed": false
+  },
+  "errors": [],
+  "screenshotsInspected": [
+    "/tmp/tall-phone-boss/two-finger-swing.png",
+    "/tmp/tall-phone-boss/core-open-paused.png",
+    "/tmp/tall-phone-boss/bindery-continued.png"
+  ],
+  "limitations": [
+    "Simulated mobile Chromium; physical iPhone Safari unverified",
+    "State-aware automated combat, not unaided human play",
+    "No new runtime changes in this audit",
+    "Local only; not published"
+  ]
+}
