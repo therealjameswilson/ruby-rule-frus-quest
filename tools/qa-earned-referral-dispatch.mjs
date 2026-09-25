@@ -26,14 +26,22 @@ const key=async(k='Space',ms=50)=>{
  await page.waitForTimeout(150);
 };
 const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
-async function move(x,y){
+async function move(x,y,interaction){
  const tolerance=mobile?5:3;
+ let lastDistance=Infinity;
+ console.log(`Walking to ${interaction??`${x},${y}`}`);
  for(let i=0;i<100;i++){
-  const p=(await state()).player,dx=x-p.x,dy=y-p.y;
+  const current=await state();
+  if(interaction&&current.nearestInteractable===interaction)return;
+  const p=current.player,dx=x-p.x,dy=y-p.y;
   if(Math.abs(dx)<tolerance&&Math.abs(dy)<tolerance)return;
-  const h=Math.abs(dx)>=tolerance;
+  const distance=Math.hypot(dx,dy);
+  // Try the other needed axis when furniture or knockback defeats the first approach.
+  const stalled=distance>=lastDistance-.5;
+  const h=Math.abs(dx)>=tolerance && !(stalled&&Math.abs(dy)>=tolerance);
+  lastDistance=distance;
   await key(h?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',
-   Math.min(180,Math.max(16,Math.abs(h?dx:dy)*6)));
+   Math.min(100,Math.max(mobile?50:20,Math.abs(h?dx:dy)/72*1000)));
  }
  throw Error(`Cannot walk to ${x},${y}`);
 }
@@ -47,7 +55,7 @@ try{
 
  assert.equal((await state()).roomTraversal.currentRoomId,'R1');await shot('arrival');
  await move(32,174);await move(96,174);await key();assert.equal((await state()).sceneProgress.referralEquityPacketCarried,1);
- await move(80,148);await key();assert.equal((await state()).sceneProgress.referralEquityRouteStep,1);
+ await move(80,148,'CIA equity desk');await key();assert.equal((await state()).sceneProgress.referralEquityRouteStep,1);
  if(process.argv.includes('--wrong-desk')){
   const before=await state();await key();
   assert.equal((await state()).sceneProgress.referralEquityRouteStep,1);
@@ -56,9 +64,9 @@ try{
   assert.match(await page.evaluate(()=>window.game.scene.getScene('ReferralVaultScene').toast.text.text),/^ROUTE TO /);
   await shot('wrong-agency-correction');
  }
- await move(128,156);await key();assert.equal((await state()).sceneProgress.referralEquityRouteStep,2);
- await move(176,148);await key();assert.equal((await state()).sceneProgress.referralEquityRouteComplete,1);await shot('routed');
- await key();await shot('manifest');assert.equal((await state()).sceneProgress.referralManifestCarried,1);
+ await move(128,156,'DOD equity desk');await key();assert.equal((await state()).sceneProgress.referralEquityRouteStep,2);
+ await move(176,148,'NSC equity desk');await key();assert.equal((await state()).sceneProgress.referralEquityRouteComplete,1);await shot('routed');
+ await move(178,140,'StateChat draft manifest');await key();await shot('manifest');assert.equal((await state()).sceneProgress.referralManifestCarried,1);
  await move(216,148);await move(216,78);await move(128,78);await key('ArrowUp',800);
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).roomTraversal.currentRoomId==='R3');await page.waitForTimeout(700);await shot('dispatch-arrival');
  await move(48,192);await key();await shot('index');
