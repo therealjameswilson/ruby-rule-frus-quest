@@ -28,3 +28,14 @@ describe("muted music requests", () => {
     expect(audio.getDebugState()).toMatchObject({ currentSceneKey: "NetworkScene", currentThemeKey: "openNetRouting" });
   });
 });
+
+describe('interrupted music transitions',()=>{
+  it.each([0,.37,1])('restores music volume %s when returning to the still-playing theme',(volume)=>{
+    const clearTimeout=vi.fn();vi.stubGlobal('window',{clearTimeout,AudioContext:class{}});
+    const runtime=audio as unknown as {enabled:boolean;unlocked:boolean;prepared:boolean;stateListenerInstalled:boolean;context:object;currentThemeKey:string;musicTimer:number;crossfadeTimer:number;mix:{music:number};fadeMusicGain:(value:number,seconds:number)=>void;ensureAmbience:()=>void};
+    runtime.enabled=true;runtime.unlocked=true;runtime.prepared=true;runtime.stateListenerInstalled=true;runtime.context={state:'running'};runtime.currentThemeKey='archiveDungeon';runtime.musicTimer=12;runtime.crossfadeTimer=34;runtime.mix.music=volume;
+    const fade=vi.spyOn(runtime,'fadeMusicGain').mockImplementation(()=>{});vi.spyOn(runtime,'ensureAmbience').mockImplementation(()=>{});
+    audio.startMusic('ArchiveScene');
+    expect(clearTimeout).toHaveBeenCalledWith(34);expect(fade).toHaveBeenCalledWith(volume,.18);expect(audio.getDebugState().musicTimerActive).toBe(true);
+  });
+});

@@ -327,6 +327,7 @@ class RetroAudio {
       this.handleHidden();
       return;
     }
+    const canceledCrossfade = this.crossfadeTimer !== null;
     if (this.crossfadeTimer !== null) {
       window.clearTimeout(this.crossfadeTimer);
       this.crossfadeTimer = null;
@@ -354,6 +355,8 @@ class RetroAudio {
     this.resumePending = false;
     if (this.musicTimer !== null && this.currentThemeKey === key && !options.forceRestart) {
       this.ensureAmbience(context, sceneKey);
+      // A canceled outgoing fade must not leave the surviving theme silent.
+      if (canceledCrossfade) this.fadeMusicGain(this.mix.music, 0.18);
       setAudioStatus(`original score ${theme.title}`);
       return;
     }
