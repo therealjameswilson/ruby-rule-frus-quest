@@ -18,7 +18,7 @@ function fixture() {
     cornerNudgePixels: 4, facing: "south", movementOptions: {},
     walkClock: 0, idleClock: 0, abilityFrameUntil: 0, invulnerableUntil: 0, hurtUntil: 0,
     scene: { time: { now: 0 } }, combatClock: new CombatClock(),
-    weaponState: { update: vi.fn(), movementScale: () => 1, phase: "idle" },
+    weaponState: { update: vi.fn(), movementScale: () => 1, phase: "idle", readout: () => ({phase:"idle", tool:"stapler"}) },
     sprite: { setActive: vi.fn(), setAngle: vi.fn(), setScale: vi.fn(), clearTint: vi.fn(), setFlipX: vi.fn() },
     shadow: { setScale: vi.fn() },
     collidesAt: vi.fn((_x: number, _y: number) => false), syncRenderPosition: vi.fn()

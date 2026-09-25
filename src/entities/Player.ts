@@ -461,7 +461,7 @@ export class Player {
       this.walkClock += Math.hypot(this.logicalX - startX, this.logicalY - startY)
         / PLAYER_MOVEMENT_TUNING.speed * 1000;
       const contact = Math.floor(this.walkClock / (2 * WALK_POSE_MS));
-      if (contact !== previousContact) retroAudio.footstep(this.scene.sys?.settings.key ?? "", contact % 2 === 1);
+      if (contact !== previousContact) retroAudio.footstep(this.scene.sys?.settings.key ?? "", contact % 2 === 1, {x:this.logicalX, y:this.logicalY});
       this.sprite.setFlipX(this.spriteMode !== "snesRoleFrame48" && this.spriteMode !== "artPack32x48" && this.facing === "west");
     } else {
       this.walkClock = 0;

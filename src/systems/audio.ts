@@ -470,10 +470,10 @@ class RetroAudio {
     });
   }
 
-  footstep(scene: string, right: boolean) {
+  footstep(scene: string, right: boolean, position?: {x:number; y:number}) {
     if (!this.enabled || !this.unlocked || !this.context || this.context.state !== "running") return;
     if (this.mix.effects === 0 || this.mix.master === 0) return;
-    playFootstep(this.context, this.channelOutput(this.context, "effects"), footstepSurface(scene), right);
+    playFootstep(this.context, this.channelOutput(this.context, "effects"), footstepSurface(scene, position), right);
   }
 
   private tone(frequency: number, duration: number, gainValue: number, wave: Wave = "square", scheduledAt?: number) {

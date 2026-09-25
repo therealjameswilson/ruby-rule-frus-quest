@@ -1,0 +1,28 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "unitTests": 46,
+  "runtime": {
+    "gravelSeconds": [
+      0.105,
+      0.105
+    ],
+    "grassSeconds": [
+      0.09,
+      0.09
+    ],
+    "bridgeToPathSeconds": [
+      0.075,
+      0.105
+    ],
+    "alternatingFeet": true,
+    "idleSilent": true,
+    "errors": []
+  },
+  "limitations": [
+    "Terrain cases use position fixtures followed by real movement input.",
+    "Verified audio buffer scheduling and sample bounds; no human listening approval.",
+    "Not physical iPhone sound validation.",
+    "Local only."
+  ]
+}
