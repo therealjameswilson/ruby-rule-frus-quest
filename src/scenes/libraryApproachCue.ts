@@ -24,9 +24,12 @@ export function libraryApproachCue(scene: string | null, mode: string, nearest: 
     'FINDING AID': 'READ FINDING AID', 'COMPARE RECORDS': 'COMPARE RECORDS',
     'SOURCE NOTE': 'WRITE SOURCE NOTE', 'FILE PACKET': 'FILE RESEARCH PACKET'
   };
+  const stage = libraryStage(progress, library);
+  const next = ['NW: FINDING AID', 'NE: COMPARE RECORDS', 'SE: SOURCE NOTE', 'SW: FILE PACKET', 'SOUTH: RETURN OUTSIDE'][stage];
   if (nearest && actions[nearest]) {
     const station = Object.keys(actions).indexOf(nearest);
-    return action(station < libraryStage(progress, library) ? 'REVIEW SAVED STEP' : actions[nearest]);
+    if (station > stage) return direction(next);
+    return action(station < stage ? 'REVIEW SAVED STEP' : actions[nearest]);
   }
-  return direction(['NW: FINDING AID', 'NE: COMPARE RECORDS', 'SE: SOURCE NOTE', 'SW: FILE PACKET', 'SOUTH: RETURN OUTSIDE'][libraryStage(progress, library)]);
+  return direction(next);
 }

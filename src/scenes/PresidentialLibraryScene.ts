@@ -109,17 +109,19 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     const p=this.player.position;
     if(p.y>=212&&p.x>=111&&p.x<=145&&(input.dir.y>0||input.aJustPressed)){this.exit();return;}
     if(nscDungeon(this.assignment.library)&&Math.hypot(p.x-128,p.y-86)<18){
-      this.prompt.setVisible(true).setText('A: ENTER NSC WING');setNearestInteractable('NSC research wing');
+      this.prompt.setVisible(true).setText('ENTER NSC WING');setNearestInteractable('NSC research wing');
       if(input.aJustPressed){this.leaving=true;saveGameNow();transitionTo(this,'NscLibraryScene');}return;
     }
     const nearest=STATIONS.map((s,i)=>({s,i,d:Math.hypot(p.x-s.x,p.y-(s.y+23))})).filter(o=>o.d<25).sort((a,b)=>a.d-b.d)[0];
-    this.prompt.setVisible(Boolean(nearest)).setText(nearest?(nearest.i<stage?'SAVED — REVIEW':nearest.s.name):'');setNearestInteractable(nearest?.s.name??null);
+    this.prompt.setVisible(Boolean(nearest)).setText(nearest?(nearest.i<stage?'SAVED — REVIEW':nearest.i>stage?`FIRST: ${STATIONS[stage].name}`:nearest.s.name):'');setNearestInteractable(nearest?.s.name??null);
     if(nearest&&input.aJustPressed)this.research(nearest.i);
   }
   private refresh() {
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
     this.stageText.setText(`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
-    this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`));
+    this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
+      .setColor(i===stage?'#fff3bf':i<stage?'#a7bfb4':'#a5afbd')
+      .setBackgroundColor(i===stage?'#49371d':'#192630'));
     this.barriers.forEach((b,i)=>b.setVisible(stage<i+1));
     setObjective(stage===4?'PACKET FILED':STATIONS[stage].label);
   }

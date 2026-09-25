@@ -22,6 +22,9 @@ try{for(const mobile of [false,true]){
  await button(0);await p.waitForFunction(()=>window.game.scene.isActive('PresidentialLibraryScene'));
  const drain=async()=>{for(let i=0;i<60&&(await state()).mode==='dialog';i++)await button(0);assert.equal((await state()).mode,'explore');};
  await drain();const pointsBefore=(await state()).documentPoints;
+ await move(48,186);await p.waitForFunction(()=>window.game.scene.getScene('UIScene').questBandCueText.text==='NW: FINDING AID');
+ await p.screenshot({path:`${out}/${mobile?'phone':'desktop'}-locked-guidance.png`});await button(0);await drain();assert.equal((await state()).sceneProgress.libraryResearch_reagan??0,0);
+ await move(128,186);
  await move(128,130);await move(48,130);await move(48,118);
  await button(0);assert.equal((await state()).mode,'choice');await button(13);await button(0);await drain();assert.equal((await state()).sceneProgress.libraryResearch_reagan??0,0,'Wrong answer must not file a station');
  for(let station=0;station<4;station++){
@@ -48,5 +51,5 @@ try{for(const mobile of [false,true]){
 
  await p.waitForTimeout(100);assert((await state()).player.x>stopped.x+3,'Input handoff moves hero');
  const released=(await state()).player;await p.waitForTimeout(180);assert.deepEqual((await state()).player,released,'Release stops handoff movement');
- await p.screenshot({path:`${out}/${mobile?'phone':'desktop'}.png`});assert.deepEqual(errors,[]);await writeFile(`${out}/${mobile?'phone':'desktop'}.json`,JSON.stringify({controllerSalad:true,controllerRail:true,libraryStations:4,wrongAnswerRecovered:true,libraryReward:8,libraryReturn:true,savedPacket:true,startMenu:true,disconnectStops:true,handoff:true,releaseStops:true,naturalControllerMovement:true,errors},null,2));console.log('PASS',mobile?'phone':'desktop');await p.close();
+ await p.screenshot({path:`${out}/${mobile?'phone':'desktop'}.png`});assert.deepEqual(errors,[]);await writeFile(`${out}/${mobile?'phone':'desktop'}.json`,JSON.stringify({controllerSalad:true,controllerRail:true,libraryStations:4,lockedStationRedirect:true,wrongAnswerRecovered:true,libraryReward:8,libraryReturn:true,savedPacket:true,startMenu:true,disconnectStops:true,handoff:true,releaseStops:true,naturalControllerMovement:true,errors},null,2));console.log('PASS',mobile?'phone':'desktop');await p.close();
 }}finally{await browser.close();}

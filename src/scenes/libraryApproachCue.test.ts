@@ -22,7 +22,12 @@ describe('research room action cues',()=>{
   for(const [stage,text] of ['NW: FINDING AID','NE: COMPARE RECORDS','SE: SOURCE NOTE','SW: FILE PACKET','SOUTH: RETURN OUTSIDE'].entries()) {
    expect(libraryApproachCue('PresidentialLibraryScene','explore',null,{...base,libraryResearch_reagan:stage},'Z')).toEqual({text,badge:'!'});
   }
-  expect(libraryApproachCue('PresidentialLibraryScene','explore','SOURCE NOTE',base,'Z')).toEqual({text:'WRITE SOURCE NOTE',badge:'Z'});
+  expect(libraryApproachCue('PresidentialLibraryScene','explore','SOURCE NOTE',base,'Z')).toEqual({text:'NW: FINDING AID',badge:'!'});
+ });
+ it('redirects future stations to the current research corner',()=>{
+  for(const [stage,text] of ['NW: FINDING AID','NE: COMPARE RECORDS','SE: SOURCE NOTE'].entries()){
+   expect(libraryApproachCue('PresidentialLibraryScene','explore','FILE PACKET',{...base,libraryResearch_reagan:stage},'A')).toEqual({text,badge:'!'});
+  }
  });
  it('distinguishes saved research from the next task',()=>{
   const saved={...base,libraryResearch_reagan:1};
