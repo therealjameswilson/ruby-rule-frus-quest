@@ -7891,3 +7891,9 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 -46sample/movement tests pass, including silent edges, finite bounded samples, terrain mapping and stationary/blocked silence. Old artPack animation fixture lacked weaponState.readout from earlier combat changes; fixed its idle mock. Build passed.
 - Extended live qa-footsteps confirms .105s gravel, .09s grass and .075s stone then .105s path when walking off bridge; alternating playback rates, idle silence and0errors. Uses position fixtures then actual keyboard movement. Inspected landscape source and final world screenshot. Required skill smoke terminal; black capture inspected. All QA terminal.
 - Evidence docs/qa/terrain-footsteps-2026-09-25.json. Audio verification is scheduling/sample bounds, not human listening. Physical device sound still unverified; local only.
+
+## 2026-09-25 — Quiet garden and river motion
+- Previous turn added terrain-aware footsteps. Current ResearchWorld background had no environmental motion; added original code-drawn river highlights and sparse edge petals behind world props, keeping central bridge/path clear. One scene-owned graphics object; no new asset requests or timers.
+- Atmosphere advances only during exploration, clamps long frame deltas, pauses under overlays and respects live OS reduced-motion preference.
+- Build passed. Desktop/390x844phone runtime checks passed animation, pause, reduced motion and resumption with one graphics object and0errors. Initial phone keyboard menu tap was not registered; final harness uses real touch menu/close and keyboard delay on desktop. No runtime input change needed.
+- Inspected desktop and phone captures. Required skill smoke terminal; black capture inspected, ordinary screenshots supplied evidence. All sessions terminal. Evidence docs/qa/outdoor-atmosphere-2026-09-25.json. Local only; console-caliber goal incomplete.

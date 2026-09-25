@@ -1,0 +1,29 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "checks": [
+    {
+      "mobile": false,
+      "animated": true,
+      "paused": true,
+      "reducedMotionRespected": true,
+      "resumed": true,
+      "oneGraphicsObject": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "animated": true,
+      "paused": true,
+      "reducedMotionRespected": true,
+      "resumed": true,
+      "oneGraphicsObject": true,
+      "errors": []
+    }
+  ],
+  "limitations": [
+    "Phone viewport uses touch menu open/close; no physical iPhone verification.",
+    "Screenshots and clock checks validate placement/lifecycle, not human animation appraisal.",
+    "Local only."
+  ]
+}

@@ -1,3 +1,4 @@
+import { OutdoorAtmosphere } from "../systems/outdoorAtmosphere";
 import { nscDungeon, nscStage } from '../game/nscResearch';
 import { presentationPanel, PANEL_COLORS } from "../systems/presentationPanel";
 import { LIBRARY_ASSIGNMENTS, libraryAssignment, libraryStage } from "../game/libraryResearch";
@@ -22,6 +23,7 @@ export class ResearchWorldScene extends Phaser.Scene {
   private choice!: ChoicePrompt;
   private inventory!: InventoryOverlay;
   private zone = 1;
+  private atmosphere!: OutdoorAtmosphere;
   private leaving = false;
   private stops: Stop[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
@@ -63,6 +65,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#b7d879');
     for (const key of ['research-landmarks','research-sprites']) this.sliceAtlas(key);
     this.add.image(128,137,'research-landscape').setDisplaySize(256,206).setDepth(-20);
+    this.atmosphere = new OutdoorAtmosphere(this);
     // The paths remain walkable; only the footprint of each building is solid.
     for (const [x,y,frame] of [[19,74,5],[239,75,4],[17,189,6],[239,189,7],[27,119,8],[229,119,8]]) {
       this.prop(x,y,frame,30,34);
@@ -149,6 +152,7 @@ export class ResearchWorldScene extends Phaser.Scene {
     if(handleOpenOverlays(this.inventory,undefined,true)) {this.player.update(delta,false);this.prompt.setVisible(false);return;}
     if(input.pauseJustPressed||input.menuJustPressed||input.startJustPressed){this.inventory.toggle();return;}
     if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
+    this.atmosphere.update(delta);
     this.player.update(delta,true,{bounds:{left:7,right:249,top: 60,bottom:230},solids:this.solids});
     const heroBounds=this.player.sprite.getBounds();
     for(const label of this.worldLabels) label.setVisible(!Phaser.Geom.Intersects.RectangleToRectangle(heroBounds,label.getBounds()));
