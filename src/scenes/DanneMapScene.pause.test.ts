@@ -30,7 +30,7 @@ describe("map pause input ordering", () => {
     input[button] = true;
     scene.update(1000, 16);
     expect(enemies).toHaveBeenCalledExactlyOnceWith(1000, 16, false);
-    expect(player.setCombatPaused).toHaveBeenCalledWith(true);
+    expect(player.setCombatPaused).toHaveBeenCalledWith(true, expect.any(Number));
     expect(inventory.toggle).toHaveBeenCalledOnce();
     expect(inventory.active).toBe(true);
     input[button] = false;

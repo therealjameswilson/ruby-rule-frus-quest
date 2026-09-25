@@ -16,6 +16,21 @@ describe("combat-only pause clock", () => {
     expect(clock.now(15100)).toBe(2600);
   });
 
+  it("discounts a stalled frame once even when scene and player both prepare input", () => {
+    const clock=new CombatClock();
+    clock.accountFrame(1000,16);
+    expect(clock.now(1000)).toBe(1000);
+    clock.accountFrame(1500,500);
+    clock.accountFrame(1500,500);
+    expect(clock.now(1500)).toBe(1050);
+    clock.setPaused(true,1500);
+    clock.accountFrame(6500,5000);
+    clock.setPaused(false,6500);
+    expect(clock.now(6500)).toBe(1050);
+    clock.accountFrame(6516,16);
+    expect(clock.now(6516)).toBe(1066);
+  });
+
   it.each([30, 100, 260])("holds the weapon window at %i ms without adding a swing", (elapsed) => {
     const clock = new CombatClock(), weapon = new WeaponStateController();
     weapon.tryStart("red_pencil", clock.now(1000));

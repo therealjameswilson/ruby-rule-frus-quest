@@ -587,6 +587,26 @@ describe("DANN-E final-review combat", () => {
     expect(boss.readout().telegraph).toBeNull();
   });
 
+  it("keeps a returned-bolt counter window usable after a slow rendering frame", () => {
+    const {boss,internals,scene}=fixture("cloud");
+    internals.takeReturnedBolt(1000);
+    scene.time.now=2000;
+    boss.update(2000,1000,true);
+    expect(boss.readout().bossCombat.counterWindowMs).toBe(DANNE_BOSS_RETURN.stunMs-50);
+    expect(boss.readout().bossCombat.coreOpen).toBe(true);
+  });
+
+  it("preserves a projectile's travel lifetime across a rendering stall", () => {
+    const {boss,internals,scene}=fixture();
+    internals.fireBolt({x:60,y:100},{x:60,y:200},50);
+    const expiry=internals.bolts[0].expiresAt;
+    scene.time.now=4000;
+    boss.update(4000,3000,true);
+    expect(internals.bolts).toHaveLength(1);
+    expect(internals.bolts[0].expiresAt).toBe(expiry+2950);
+    expect(internals.bolts[0].y).toBeCloseTo(92.5);
+  });
+
   it("reports bounded HUD feedback, preserves it through pause, then clears it during play", () => {
     const { boss, internals, scene } = fixture();
     internals.hitPlayer({ x: 128, y: 100 }, "ego_bolt", 1000);

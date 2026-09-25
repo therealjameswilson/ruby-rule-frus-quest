@@ -105,8 +105,11 @@ export class ChoicePrompt {
     if (!this.active) return;
     const input = getInput();
     if (!this.inputArmed) {
-      // A combat press must be released before it can become a menu choice.
-      const pressed = input.a || input.b || input.aJustPressed || input.bJustPressed
+      // Combat buttons and movement must return to neutral before becoming
+      // menu input. A held D-pad must not select retreat when combat ends.
+      const pressed = input.up || input.down || input.left || input.right
+        || input.navDownJustPressed || input.navUpJustPressed
+        || input.a || input.b || input.aJustPressed || input.bJustPressed
         || input.confirmJustPressed || input.cancelJustPressed || input.choiceAJustPressed
         || input.choiceBJustPressed || input.choiceCJustPressed || input.choiceDJustPressed;
       if (this.scene.time.now >= this.readyAt && !pressed) this.inputArmed = true;

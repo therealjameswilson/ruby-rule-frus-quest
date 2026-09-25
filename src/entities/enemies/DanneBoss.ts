@@ -316,6 +316,9 @@ export class DanneBoss {
       if (this.combatPausedAt === null) this.combatPausedAt = timeMs;
       return;
     }
+    // Projectiles and the hero simulate at most 50 ms per frame. Preserve the
+    // same usable time in attack deadlines; a paused interval is shifted below.
+    if (this.combatPausedAt === null) this.shiftCombatTimers(Math.max(0, deltaMs - 50));
     this.resumeCombatTimers(timeMs);
     if (this.combatFeedback) {
       this.combatFeedback.msRemaining = Math.max(0, this.combatFeedback.msRemaining - deltaMs);
@@ -646,6 +649,10 @@ export class DanneBoss {
     if (this.combatPausedAt === null) return;
     const pausedMs = Math.max(0, timeMs - this.combatPausedAt);
     this.combatPausedAt = null;
+    this.shiftCombatTimers(pausedMs);
+  }
+
+  private shiftCombatTimers(pausedMs: number) {
     this.nextBoltAt += pausedMs;
     this.nextTeleportAt += pausedMs;
     this.nextPlayerHitAt += pausedMs;

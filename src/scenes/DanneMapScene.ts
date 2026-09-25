@@ -363,7 +363,7 @@ export abstract class DanneMapScene extends Phaser.Scene {
       && !input.pauseJustPressed && !this.inventory.active && !this.reliability.active
       && !bossDecisionActive && !isCutsceneActive(this);
     if (!canAct) this.attackBuffer.clear();
-    this.player.setCombatPaused(!canAct || frozen);
+    this.player.setCombatPaused(!canAct || frozen, delta);
     if (!canAct) this.vaultObjects?.update(null, false, Boolean(this.danneBoss?.isActive));
     if (!frozen) {
       this.updateDanneEntities(this.time.now, delta, canAct);

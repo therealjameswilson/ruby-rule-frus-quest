@@ -262,7 +262,8 @@ export class Player {
     return this.combatClock.now(this.scene.time.now);
   }
 
-  setCombatPaused(paused: boolean) {
+  setCombatPaused(paused: boolean, deltaMs?: number) {
+    if (!paused && deltaMs !== undefined) this.combatClock.accountFrame(this.scene.time.now, deltaMs);
     if (this.combatClock.setPaused(paused, this.scene.time.now)) this.sprite.setActive(!paused);
   }
 
@@ -366,7 +367,7 @@ export class Player {
   }
 
   update(deltaMs: number, canMove: boolean, options: PlayerMoveOptions = {}) {
-    this.setCombatPaused(!canMove);
+    this.setCombatPaused(!canMove, deltaMs);
     if (canMove) this.idleClock += deltaMs;
     const now = this.combatTime;
     this.weaponState.update(now);

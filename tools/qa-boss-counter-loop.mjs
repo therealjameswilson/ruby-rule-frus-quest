@@ -199,7 +199,8 @@ try{
         const interrupted=await shot(`retry-${retries+1}`);await press();
         await page.waitForFunction(()=>{
           const s=JSON.parse(window.render_game_to_text());
-          return s.reliability>0&&!s.visibleThreats.some(t=>t.bossCombat?.retryAvailable);
+          const restored=s.visibleThreats.find(t=>t.bossCombat);
+          return s.reliability>0&&restored&&!restored.bossCombat.retryAvailable;
         },{},{timeout:2000});
         retries++;
         assert.equal(boss(await state()).hp,boss(interrupted).hp,'Retry must retain damage earned in this phase');
