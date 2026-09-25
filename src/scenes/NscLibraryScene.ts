@@ -1,3 +1,4 @@
+import { researchDoorway } from '../systems/researchDoorway';
 import { filedResearchPaper } from '../systems/filedResearchPaper';
 import { FeedbackToast } from '../systems/feedbackToast';
 import { RESEARCH_PROPS, researchProp } from '../systems/researchProps';
@@ -26,6 +27,7 @@ export class NscLibraryScene extends Phaser.Scene {
   private filedPaper!: Phaser.GameObjects.Container;
   private toast!: FeedbackToast;
   private doorLights!:Phaser.GameObjects.Graphics;
+  private northDoor?: Phaser.GameObjects.Image | null;
   private gate!:Phaser.GameObjects.Text;
   private dossier=nscDungeon('reagan')!;
   private room=0;
@@ -48,6 +50,8 @@ export class NscLibraryScene extends Phaser.Scene {
     for(const row of walls){row[0]=walls[0][0];row[row.length-1]=walls[0][0];}
     for(const y of [0,walls.length-1])for(const x of [7,8])walls[y][x]=-1;
     addEditorialRoomWalls(this,walls,0,32);
+    this.northDoor=researchDoorway(this,128,66,'closed');
+    researchDoorway(this,128,222,'wing');
     // Physical plaques flank the doorway so the compiler never covers the briefing.
     const plaques=this.add.graphics().setDepth(45).setName('nsc-wall-plaques');
     for(const x of [20,152]){
@@ -77,7 +81,7 @@ export class NscLibraryScene extends Phaser.Scene {
     saveGameNow();
   }
   private label(x:number,y:number,text:string,size:number){return this.add.text(x,y,text,{fontFamily:'Arial',fontSize:`${size}px`,color:'#f4dfac',backgroundColor:'#192630',align:'center',wordWrap:{width:206}}).setOrigin(.5).setDepth(50);}
-  private refresh(){const done=nscStage(gameState.sceneProgress,this.dossier.library)>this.room;this.filedPaper.setVisible(done);this.gate.setText(done?(this.room===2?'FILED · RETURN ↑':'FILED · CONTINUE ↑'):'VERIFY FILE TO OPEN');this.doorLights.clear();for(const x of [109,147]){this.doorLights.fillStyle(0x172227).fillRoundedRect(x-2,39,4,10,1);this.doorLights.fillStyle(done?0x8ed7ae:0xd5a755).fillRoundedRect(x-1,41,2,6,.5);}setObjective(done?'SOURCE FILED':'GUIDE → VERIFY');}
+  private refresh(){const done=nscStage(gameState.sceneProgress,this.dossier.library)>this.room;this.filedPaper.setVisible(done);if(done&&this.northDoor){researchDoorway(this,128,66,'wing');this.northDoor.destroy();this.northDoor=null;}this.gate.setText(done?(this.room===2?'FILED · RETURN ↑':'FILED · CONTINUE ↑'):'VERIFY FILE TO OPEN');this.doorLights.clear();for(const x of [109,147]){this.doorLights.fillStyle(0x172227).fillRoundedRect(x-2,39,4,10,1);this.doorLights.fillStyle(done?0x8ed7ae:0xd5a755).fillRoundedRect(x-1,41,2,6,.5);}setObjective(done?'SOURCE FILED':'GUIDE → VERIFY');}
   update(_:number,delta:number){
     tickInput();const input=getInput();if(this.leaving)return;
     if(gameState.mode==='explore')this.toast.update(delta,this.player.position);

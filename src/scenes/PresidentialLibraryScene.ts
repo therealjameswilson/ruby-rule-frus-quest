@@ -1,3 +1,4 @@
+import { researchDoorway } from '../systems/researchDoorway';
 import { prefersReducedMotion } from '../systems/motionPreferences';
 import { filedResearchPaper } from '../systems/filedResearchPaper';
 import { FeedbackToast } from '../systems/feedbackToast';
@@ -79,10 +80,11 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.barriers.push(addMisfiledStack(this,193,134,54,8));
     this.add.text(128,126,'DANN-E: "SKIP THE SOURCES!"',{fontFamily:'Arial',fontSize:'6px',color:'#ffbd99'}).setOrigin(.5).setDepth(50);
     this.add.text(128,197,'SOUTH: RETURN OUTSIDE',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3'}).setOrigin(.5).setDepth(50);
-    this.add.rectangle(128,215,30,12,0x71aa7f).setDepth(45);
+    researchDoorway(this,128,216,'outside');
     this.add.text(224,60,'SOURCES',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3',backgroundColor:'#17232d'})
       .setOrigin(.5,.5).setPadding(5).setDepth(350).setInteractive({useHandCursor:true})
       .on('pointerdown',()=>window.open(`assets/research-world/library-research.html#${id}`,'_blank','noopener,noreferrer'));
+    if(nscDungeon(id))researchDoorway(this,128,88,'wing')?.setDisplaySize(40,22);
     if(nscDungeon(id))this.add.text(128,88,'NSC WING ↑',{fontFamily:'Arial',fontSize:'7px',color:'#b9eee5',backgroundColor:'#17232d'}).setOrigin(.5).setDepth(50);
     this.player=new Player(this,128,183);
     this.toast=new FeedbackToast(this,1200,()=>this.player.sprite.getBounds());

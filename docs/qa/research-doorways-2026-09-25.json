@@ -1,0 +1,27 @@
+{
+  "date": "2026-09-25",
+  "scope": "Readable research doorways",
+  "build": "passed",
+  "desktopNscRooms": 3,
+  "phoneNscRooms": 3,
+  "checks": [
+    "Wrong-answer recovery",
+    "Closed north door before filing; open doorway after filing",
+    "Room transitions, saved progress, lobby return and re-entry",
+    "Natural keyboard movement through daylight exit",
+    "Partial library save restoration twice"
+  ],
+  "pageErrors": [],
+  "screenshotsInspected": [
+    "/tmp/research-doorways-restore/restored.png",
+    "/tmp/research-doorways-nsc/desktop-room0.png",
+    "/tmp/research-doorways-nsc/desktop-filed-room0.png",
+    "/tmp/research-doorways-nsc/phone-filed-room0.png"
+  ],
+  "limitations": [
+    "NSC route uses position fixtures and actual interaction controls",
+    "Phone simulation only",
+    "Standard skill capture black; ordinary browser screenshots inspected",
+    "Local only; not published"
+  ]
+}
