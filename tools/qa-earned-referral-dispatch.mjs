@@ -11,9 +11,11 @@ const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
 const cdp=mobile?await context.newCDPSession(page):null;
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
+let touchBox;
 const touch=async(type,points)=>{
- const box=await page.locator('canvas').first().boundingBox();
- await cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points.map(([x,y])=>({x:box.x+x*box.width/256,y:box.y+y*box.height/240,id:1}))});
+ // Layout reads during a held gesture delay touchEnd and extend movement.
+ if(type==='touchStart')touchBox=await page.locator('canvas').first().boundingBox();
+ await cdp.send('Input.dispatchTouchEvent',{type,touchPoints:points.map(([x,y])=>({x:touchBox.x+x*touchBox.width/256,y:touchBox.y+y*touchBox.height/240,id:1}))});
 };
 const key=async(k='Space',ms=50)=>{
  if(mobile){

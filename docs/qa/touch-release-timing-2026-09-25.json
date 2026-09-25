@@ -1,0 +1,70 @@
+{
+  "scope": "Diagnostic room/position fixtures in simulated Chromium iPhone; not physical Safari. Compares layout reads during held gestures against once-per-gesture coordinates.",
+  "runtime": "e518af6",
+  "results": [
+    {
+      "cachedCoordinates": false,
+      "intendedHoldMs": 50,
+      "releaseCallMs": 148,
+      "heldDirection": "left",
+      "heldX": 135,
+      "releasedX": 122,
+      "releasedDirection": null
+    },
+    {
+      "cachedCoordinates": false,
+      "intendedHoldMs": 100,
+      "releaseCallMs": 146,
+      "heldDirection": "left",
+      "heldX": 132,
+      "releasedX": 118,
+      "releasedDirection": null
+    },
+    {
+      "cachedCoordinates": false,
+      "intendedHoldMs": 200,
+      "releaseCallMs": 119,
+      "heldDirection": "left",
+      "heldX": 121,
+      "releasedX": 111,
+      "releasedDirection": null
+    },
+    {
+      "cachedCoordinates": true,
+      "intendedHoldMs": 50,
+      "releaseCallMs": 48,
+      "heldDirection": "left",
+      "heldX": 135,
+      "releasedX": 131,
+      "releasedDirection": null
+    },
+    {
+      "cachedCoordinates": true,
+      "intendedHoldMs": 100,
+      "releaseCallMs": 51,
+      "heldDirection": "left",
+      "heldX": 132,
+      "releasedX": 128,
+      "releasedDirection": null
+    },
+    {
+      "cachedCoordinates": true,
+      "intendedHoldMs": 200,
+      "releaseCallMs": 49,
+      "heldDirection": "left",
+      "heldX": 122,
+      "releasedX": 117,
+      "releasedDirection": null
+    }
+  ],
+  "errors": [],
+  "earnedDispatch": {
+    "path": "/tmp/referral-touch-cached-gesture",
+    "passed": true
+  },
+  "earnedManifest": {
+    "path": "/tmp/referral-manifest-cached-gesture",
+    "passed": true,
+    "scope": "Touch-only manifest correction, rejected treatment drafts, physical press, Concurrence Slip and SilentReadScene arrival using the preceding earned dispatch save."
+  }
+}
