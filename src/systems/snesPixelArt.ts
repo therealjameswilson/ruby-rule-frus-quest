@@ -1,4 +1,5 @@
 import { dungeonGateTexture } from "./dungeonGateArt";
+import { rewardDisplayTexture } from './rewardDisplayArt';
 import Phaser from "phaser";
 import { GAME_WIDTH, PALETTE } from "../game/constants";
 import type { Direction, RoomType } from "../game/constants";
@@ -416,14 +417,19 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
   const accent = options.accent ?? PALETTE.goldStamp;
   const label = options.label.slice(0, 16).toUpperCase();
   const pickupArt: Array<Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle> = [];
-  keepTagged(scene.add.ellipse(options.x, options.y + 18, 62, 16, color(PALETTE.black), 0.72).setDepth(depth - 4), "snes-treasure-shadow", track);
-  keepTagged(scene.add.rectangle(options.x, options.y + 12, 56, 18, color(PALETTE.deepRuby), 1).setStrokeStyle(2, color(accent)).setDepth(depth - 3), "snes-treasure-plinth", track);
-  keepTagged(scene.add.rectangle(options.x, options.y + 2, 40, 18, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth - 2), "snes-treasure-case", track);
-  keepTagged(scene.add.rectangle(options.x, options.y - 11, 28, 5, color(accent), 1).setDepth(depth - 1), "snes-treasure-lid", track);
+  keepTagged(scene.add.ellipse(options.x, options.y + 18, 62, 12, color(PALETTE.black), 0.35).setDepth(depth - 4), "snes-treasure-shadow", track);
+  const displayTexture = rewardDisplayTexture(scene, 'pedestal', accent);
+  if (displayTexture) {
+    keepTagged(scene.add.image(options.x, options.y + 4, displayTexture).setDisplaySize(64,44).setDepth(depth - 2), 'snes-treasure-case', track);
+  } else {
+    keepTagged(scene.add.rectangle(options.x, options.y + 12, 56, 18, color(PALETTE.deepRuby), 1).setStrokeStyle(2, color(accent)).setDepth(depth - 3), "snes-treasure-plinth", track);
+    keepTagged(scene.add.rectangle(options.x, options.y + 2, 40, 18, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth - 2), "snes-treasure-case", track);
+    keepTagged(scene.add.rectangle(options.x, options.y - 11, 28, 5, color(accent), 1).setDepth(depth - 1), "snes-treasure-lid", track);
+  }
   keepTagged(scene.add.rectangle(options.x, options.y + 21, 72, 9, color(PALETTE.black), 0.95).setStrokeStyle(1, color(accent)).setDepth(depth + 2), "snes-treasure-label-frame", track);
   const caption = keepTagged(scene.add.text(options.x, options.y + 17, label, {
-    fontFamily: "monospace",
-    fontSize: "5px",
+    fontFamily: "Arial",
+    fontSize: "6px",
     color: options.collected ? PALETTE.stoneLight : accent,
     align: "center"
   }).setOrigin(0.5, 0).setDepth(depth + 3), "snes-treasure-label", track);
@@ -448,13 +454,14 @@ export function addSnesTreasurePedestal(scene: Phaser.Scene, options: SnesTreasu
 
 export function addSnesRewardBurst(scene: Phaser.Scene, x: number, y: number, textureKey: string, label: string, track?: TrackFn, holdMs = 0) {
   const container = keepTagged(scene.add.container(x, y).setDepth(900), "snes-reward-burst", track);
-  container.add(scene.add.ellipse(0, 4, 58, 18, color(PALETTE.black), 0.68));
-  container.add(scene.add.rectangle(0, -8, 46, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp)));
+  const displayTexture = rewardDisplayTexture(scene, 'reward', PALETTE.goldStamp);
+  if (displayTexture) container.add(scene.add.image(0,-5,displayTexture).setDisplaySize(72,44).setName('detailed-reward-panel'));
+  else container.add(scene.add.rectangle(0, -8, 46, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(PALETTE.goldStamp)));
   if (scene.textures.exists(textureKey)) container.add(scene.add.image(0, -10, textureKey));
   else container.add(scene.add.rectangle(0, -10, 18, 18, color(PALETTE.goldStamp)));
   container.add(scene.add.text(0, 10, label.slice(0, 18).toUpperCase(), {
-    fontFamily: "monospace",
-    fontSize: "5px",
+    fontFamily: "Arial",
+    fontSize: "6px",
     color: PALETTE.goldStamp,
     align: "center"
   }).setOrigin(0.5, 0));
