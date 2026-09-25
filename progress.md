@@ -7633,3 +7633,14 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - AddedoriginalcachedCanvasarchiveTerminalArt cabinet152x120display38x30: shadedcase,recessedglass,vents,keyboarddeck/brassplate. ArchivecompactStateChatterminalusesitwithfallback;dynamicstatusscreen/lamp remain,screenfillallowsglassshading. Label,target26radius andatomicdepth84container unchanged;StateChatremains textscreenonly. Replacedoldgoldbarwithkeyboardspacebar.
 - Productionbuildpassed. Existingqa-terminal-depth.mjs passeddesktop/phone:7partsownedbyonecontainer,behind/frontorderingcorrect,interactiontargetretained,0errors. Inspectedphonebehind/desktopfrontordinaryscreenshots. Requiredskill /tmp/terminal-art-skillpassed(nativeblackopened). Allprocessesterminal;localonly.
 - Overallgoalactive/incomplete. Archivewalls/gates/photocopierstillcoarserthancharacters/furniture; broaderartandactualaudioexperience remainopen. No newphysicaldevice/listening/fullcampaign claim.
+
+## 2026-09-25 — NSC request verification
+- Confirmed existing eleven presidential-library NSC wings fulfill the requested feature; no duplicate rooms or unrelated art changes introduced.
+- Reopened official Truman and Eisenhower holdings pages and confirmed the collection relationships used by their puzzles.
+- Eight library/NSC progression tests passed. Normal-keyboard lobby entry, guide reading and unsolved return passed without position mutation; Reagan's three-chamber simulated-phone fixture passed wrong-answer recovery, saved progress, reward and return/reload with no page errors. Inspected current desktop wing and phone choice screenshots. Local only, not published.
+
+## 2026-09-25 — Detailed attacking photocopier
+- Previous user-directed verification completed NSC route evidence; no running QA remained. Resumed broader presentation goal with a visible asset mismatch: the flat native-resolution photocopier against detailed furniture and characters.
+- Added original cached 128px Canvas cabinet displayed at 32px, with shaded metal, scanner glass/feeder, aligned status lights, output rollers, paper and caster details. Built-in wall variants use their existing accent; custom texture keys retain original art. Collider, movement, label, glow, hit tint, crack and clear behavior unchanged.
+- Build passed (existing bundle-size warning). New qa-photocopier-art.mjs verified desktop and simulated phone 32px display, 128px source, 30x34 bounds, labels, hit tint/crack and clear with zero errors. Inspected desktop and phone hit captures. Required skill smoke /tmp/photocopier-skill passed; native screenshot remains black, ordinary captures provide visual evidence.
+- Local only. Full console-caliber objective remains incomplete; gates still visibly flat, actual hardware/audio listening and latest full campaign remain unverified. All processes terminal.

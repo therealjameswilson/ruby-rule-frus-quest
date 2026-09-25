@@ -3,6 +3,7 @@ import { PALETTE } from "../game/constants";
 import { SNES_BUREAUCRATIC_WALL_ASSETS } from "../game/snesAtlas";
 import type { Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
+import { photocopierTexture } from "../systems/photocopierArt";
 import { wallFollowFactor } from "../systems/wallMotion";
 
 function color(hex: string) {
@@ -58,7 +59,10 @@ export class BureaucraticWall {
       .setName("bureaucratic-wall-threat-halo")
       .setStrokeStyle(1, color(this.accent), 0.32)
       .setAlpha(0.18);
-    this.stone = scene.add.image(0, 0, scene.textures.exists(this.spriteKey) ? this.spriteKey : "bureaucratic-wall")
+    const detailedTexture = SNES_BUREAUCRATIC_WALL_ASSETS.some(asset => asset.key === this.spriteKey)
+      ? photocopierTexture(scene, this.accent) : null;
+    this.stone = scene.add.image(0, 0, detailedTexture ?? (scene.textures.exists(this.spriteKey) ? this.spriteKey : "bureaucratic-wall"))
+      .setDisplaySize(32, 32)
       .setName("bureaucratic-wall-stone-sprite");
     const labelText = scene.add
       .text(0, 1, behaviorCode(label, this.behavior), {
