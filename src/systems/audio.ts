@@ -1,3 +1,4 @@
+import { playPaperFoley, type PaperAction } from "./paperFoley";
 import { footstepSurface, playFootstep } from "./footsteps";
 import { RoomAmbience, ambienceForScene } from "./roomAmbience";
 import { ORIGINAL_SCORE, scoreEventsAtStep, type ScoreTheme } from "./originalScore";
@@ -190,6 +191,28 @@ class RetroAudio {
   stamp() {
     setAudioStatus("process stamp chime");
     this.sequence([392, 523, 659, 1046], 0.07, 0.06, 0.045);
+  }
+
+  paperPickup() {
+    setAudioStatus("paper packet pickup");
+    this.paperSound('pickup');
+  }
+
+  fileDocket() {
+    setAudioStatus("paper filing and stamp");
+    this.paperSound('file');
+  }
+
+  private paperSound(action: PaperAction) {
+    if (!this.enabled || typeof window === 'undefined' || pageHidden() || this.mix.effects === 0 || this.mix.master === 0) return;
+    const context = this.getContext();
+    if (!context) return;
+    if (!this.unlocked || context.state !== 'running') {
+      this.resumePending = true; this.installGestureResume(); return;
+    }
+    let cancel: () => void;
+    cancel = playPaperFoley(context, this.channelOutput(context, 'effects'), action, () => this.foley.delete(cancel));
+    this.foley.add(cancel);
   }
 
   toolWindup(tool: ProcessItemId) {

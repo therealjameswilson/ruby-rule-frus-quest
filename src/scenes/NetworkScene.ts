@@ -1465,7 +1465,7 @@ export class NetworkScene extends Phaser.Scene {
   private pickUpVaultDocket() {
     const docket = getClassNetVaultDocket(this.classNetReviewStep);
     this.carryVaultDocket(docket);
-    retroAudio.confirm();
+    retroAudio.paperPickup();
     this.toast.show("REVIEW BATCH", this.player.position, "info");
     setLatestMessage(`${docket.contentsLabel}. File at ${docket.stationLabel}; the next docket will stay with you.`);
     setObjective(this.classNetVaultObjective());
@@ -1660,7 +1660,7 @@ export class NetworkScene extends Phaser.Scene {
   }
 
   private animateVaultFiling(id: ClassNetVaultDocketId, station: ClassNetVaultStationId) {
-    if (prefersReducedMotion()) { retroAudio.stamp(); return; }
+    if (prefersReducedMotion()) { retroAudio.fileDocket(); return; }
     const held = this.vaultDocketHeldIcon;
     const from = { x: held?.x ?? this.player.position.x, y: held?.y ?? this.player.position.y - 17 };
     const position = this.classNetStationPosition(station);
@@ -1680,7 +1680,7 @@ export class NetworkScene extends Phaser.Scene {
         Phaser.Math.Linear(flight.from.y, flight.to.y, eased) - Math.sin(t * Math.PI) * 5
       ).setScale(1 - t * .2).setAlpha(t < .65 ? 1 : (1 - t) / .35);
       if (t < 1) return true;
-      flight.icon.destroy(); retroAudio.stamp(); return false;
+      flight.icon.destroy(); retroAudio.fileDocket(); return false;
     });
   }
 

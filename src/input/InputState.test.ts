@@ -48,6 +48,21 @@ describe("InputState keyboard edges", () => {
     expect(getInput().aJustPressed).toBe(true);
   });
 
+  it("preserves fast menu taps between frames and rearms a second tap without repeating a hold", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    tapActionForTests("KeyM"); tickInput();
+    expect(getInput().menuJustPressed).toBe(true);
+    now += 16; tickInput();
+    expect(getInput().menuJustPressed).toBe(false);
+    now += 16; tapActionForTests("KeyM"); tickInput();
+    expect(getInput().menuJustPressed).toBe(true);
+    now += 16; tickInput();
+    expect(getInput().menuJustPressed).toBe(false);
+    now += TAP_ACTION_HOLD_MS + 1; tickInput();
+    expect(getInput().menu).toBe(false);
+  });
+
   it("maps Z to A and X/B to the secondary action", () => {
     setKeyboardDownForTests(["KeyZ"]);
     tickInput();

@@ -182,6 +182,7 @@ const ACTION_LATCH_CODES = new Set<string>([
   "KeyX",
   "KeyB",
   "KeyV",
+  "KeyM",
   "ShiftLeft",
   "ShiftRight",
   "Escape",
@@ -600,7 +601,7 @@ export function tickInput() {
   const select = isActionActive("Tab") || isTouchDown("select") || isGamepadButtonDown([8], gamepadSnapshot);
   const throwItem = isActionActive("KeyV") || isGamepadButtonDown([5], gamepadSnapshot);
   const ability = isKeyboardDown("KeyE") || isTouchDown("e") || isGamepadButtonDown([2], gamepadSnapshot);
-  const menu = isKeyboardDown("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
+  const menu = isActionActive("KeyM") || isTouchDown("m", "start") || isGamepadButtonDown([9], gamepadSnapshot);
   const reliability = isKeyboardDown("KeyR") || isTouchDown("r");
   const sound = isKeyboardDown("KeyN") || isTouchDown("n");
   const fullscreen = isKeyboardDown("KeyF");
@@ -659,7 +660,7 @@ export function tickInput() {
     ability,
     abilityJustPressed: justPressed(ability, previousState.ability),
     menu,
-    menuJustPressed: justPressed(menu, previousState.menu),
+    menuJustPressed: pendingActionPresses.has("KeyM") || justPressed(menu, previousState.menu),
     reliability,
     reliabilityJustPressed: justPressed(reliability, previousState.reliability),
     sound,

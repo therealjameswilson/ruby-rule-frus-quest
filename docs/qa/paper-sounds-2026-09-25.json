@@ -1,0 +1,113 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "fullSuite": {
+    "files": 269,
+    "tests": 2023
+  },
+  "offline": {
+    "scope": "Offline synthesis levels and source cleanup, not human listening approval",
+    "result": [
+      {
+        "action": "pickup",
+        "peak": 0.09213073551654816,
+        "rms": 0.005806479863923069,
+        "tail": 0,
+        "clipped": 0,
+        "ended": 1
+      },
+      {
+        "action": "file",
+        "peak": 0.2184181958436966,
+        "rms": 0.010736249731745471,
+        "tail": 0,
+        "clipped": 0,
+        "ended": 1
+      },
+      {
+        "action": "stress",
+        "peak": 0.9205929040908813,
+        "rms": 0.048792543106050884,
+        "tail": 0,
+        "clipped": 0,
+        "ended": 8
+      },
+      {
+        "action": "cancel",
+        "peak": 0.0525069385766983,
+        "rms": 0.002222317018342502,
+        "tail": 0,
+        "clipped": 0,
+        "ended": 1
+      }
+    ],
+    "errors": []
+  },
+  "liveMix": {
+    "scope": "Six-second paper handling with network score. Digital levels only; not listening approval.",
+    "results": [
+      {
+        "mode": "paper",
+        "seconds": 5.973333333333334,
+        "sampleRate": 48000,
+        "peak": 0.3224629759788513,
+        "rms": 0.05672621183938984,
+        "peakDb": -9.830402845450688,
+        "rmsDb": -24.924324350627543,
+        "clipped": 0
+      }
+    ],
+    "cancellation": {
+      "before": 4,
+      "after": 0,
+      "whileMuted": 0,
+      "settled": 0
+    },
+    "errors": []
+  },
+  "gameplay": [
+    {
+      "mobile": false,
+      "carry": {
+        "dx": 8,
+        "width": 15,
+        "height": 11.25,
+        "top": 109.375,
+        "heroTop": 89,
+        "worldGone": true
+      },
+      "paperCuesVerified": true,
+      "filesWithoutDelay": true,
+      "pauseFreezes": true,
+      "resumeCompletes": true,
+      "reducedMotionImmediate": true,
+      "reloadPreservesProgress": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "carry": {
+        "dx": 8,
+        "width": 15,
+        "height": 11.25,
+        "top": 109.375,
+        "heroTop": 89,
+        "worldGone": true
+      },
+      "paperCuesVerified": true,
+      "filesWithoutDelay": true,
+      "pauseFreezes": true,
+      "resumeCompletes": true,
+      "reducedMotionImmediate": true,
+      "reloadPreservesProgress": true,
+      "errors": []
+    }
+  ],
+  "fastMenuTapRegression": "passed",
+  "limitations": [
+    "Digital sound levels and lifecycle verified, not human listening approval",
+    "Phone viewport and touch simulation, not physical iPhone",
+    "Controlled positions for interaction checks",
+    "Local build only; not published"
+  ]
+}
