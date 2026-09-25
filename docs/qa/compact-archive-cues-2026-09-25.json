@@ -1,0 +1,34 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "unitTests": 18,
+  "checks": [
+    {
+      "mobile": false,
+      "text": "TAKE NOTE",
+      "width": 63,
+      "visible": true,
+      "target": "Source Note 47",
+      "status": "inactive",
+      "pickupSucceeded": true,
+      "npcTalkSucceeded": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "text": "TAKE NOTE",
+      "width": 63,
+      "visible": true,
+      "target": "Source Note 47",
+      "status": "inactive",
+      "pickupSucceeded": true,
+      "npcTalkSucceeded": true,
+      "errors": []
+    }
+  ],
+  "limits": [
+    "Room and player positions set by fixture; actions use keyboard or touch",
+    "Not a full campaign or physical-device test",
+    "Local only"
+  ]
+}

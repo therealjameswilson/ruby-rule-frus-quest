@@ -562,7 +562,7 @@ export class ArchiveScene extends Phaser.Scene {
       color: PALETTE.terminalCyan,
       backgroundColor: PALETTE.black
     }).setOrigin(0.5).setDepth(810);
-    this.interactionPrompt = new InteractionPrompt(this, 950);
+    this.interactionPrompt = new InteractionPrompt(this, 950, 947, {compact:true});
     this.toast = new FeedbackToast(this, 1200, () => this.player.sprite.getBounds());
     this.player = new Player(this, 128, 184);
     this.danneLurker = new DanneLurker(this, 214, 74, {
@@ -724,7 +724,7 @@ export class ArchiveScene extends Phaser.Scene {
       ? `A: ${toolCue}${nearest.label.toUpperCase()}` : "");
     const promptTarget = suppressPrompt ? null : nearest ?? hintTarget;
     this.interactionPrompt.update(delta, promptTarget, undefined,
-      nearest?.id === "source-note" ? { text: "TAKE SOURCE NOTE" }
+      nearest?.id === "source-note" ? { text: "TAKE NOTE" }
         : nearest ? undefined
           : hintTarget ? { badge: "!", text: "STEP CLOSER" } : undefined);
     this.toast.update(delta, this.player.position);
