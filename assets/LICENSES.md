@@ -55,3 +55,6 @@ small native runtime exports are loaded. Existing fallback sheets are preserved.
 
 ## Research station and cart atlas (2026-09-24)
 - `public/assets/art-pack/research-props/props-v1.png`: original OpenAI-generated walnut research tray and wheeled archival cart, source RGBA preserved. Adjacent `PROVENANCE.md` includes the full prompt and frame details.
+
+## Detailed publication reward (2026-09-24)
+- `public/assets/presentation/publication/volume-v2.png`: original OpenAI-generated ruby buckram volume; source RGBA retained. Full generation/edit prompts in adjacent `PROVENANCE.md`. Backdrop is original canvas code.

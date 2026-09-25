@@ -152,6 +152,7 @@ export class EndingScene extends Phaser.Scene {
   }
 
   preload() {
+    if (!this.textures.exists("published-volume-v2")) this.load.image("published-volume-v2", publicAssetPath("presentation/publication/volume-v2.png"));
     for (const [key, path] of Object.entries(ALT_ENDING_ASSETS)) {
       if (!this.textures.exists(key)) this.load.image(key, publicAssetPath(path));
     }
@@ -1167,6 +1168,7 @@ export class EndingScene extends Phaser.Scene {
       volumesCompleted: gameState.volumesCompleted,
       textureKeys: [
         ...(appealed ? ["volume_contested_redacted"] : []),
+        "published-volume-v2",
         VOLUME_ASSEMBLY_ASSETS.completedHero.key,
         SNES_PUBLISHED_FRUS_PRIZE_ASSET.key,
         FALLBACK_PUBLISHED_FRUS_REWARD_TEXTURE
