@@ -1,0 +1,16 @@
+# Detailed historian colleagues, version 1
+
+Generated with the built-in image_gen tool on 2026-09-25. Original PNGs copied unchanged; 1024×1536 RGBA with actual alpha transparency. No borrowed game artwork or photographic identities. Style reference: the project's original `compilers/hd/compiler.png`. Identity/clothing references: original `sprite_general_editor.png` and `sprite_declassification_coordinator.png`.
+
+- Priya: exec-473bfa69-31c2-402c-9c76-ed11a7cc0fa5.png → priya-v1.png
+- Marcus: exec-03d44329-46aa-4da2-b412-220bc76da665.png → marcus-v1.png
+
+Runtime displays a 32×48 logical canvas, preserving aspect ratio. Alpha≥128 measured figure bounds: Priya (309,51)–(770,1447), Marcus (258,67)–(771,1467). Center and sole metadata align the existing NPC anchor, shadow and label. The original sprites remain as fallbacks. These are stationary NPC poses, not new walking animations.
+
+## Priya prompt
+
+Create ONE original game-ready full-body NPC sprite on a truly transparent background, no scene or ground shadow. Reference 1 is STYLE ONLY: match the finely illustrated shaded 2.5D adult proportions and slightly elevated adventure-game camera of its navy-jacket hero. Reference 2 is IDENTITY/CLOTHING ONLY: preserve this editor's dark wavy hair swept into a loose bun, warm medium-brown skin, plum-purple blazer, cream blouse with small burgundy neck scarf, dark charcoal trousers and black flats. She is Priya, an adult professional historian/editor, composed attentive expression, hands naturally relaxed, feet planted, subtle front three-quarter facing toward viewer's right. Single whole figure, centered in a portrait 2:3 canvas, head near 7% height, shoe soles near 94% height, generous transparent side space, no crop. Delicate clean contours, clear face, elegant tailored clothing with soft directional lighting from upper left. Do not use coarse pixel art, exaggerated anime proportions, thick outlines, photographic cutouts, labels, text, logos, props, extra people or extra poses. Polished original console adventure character artwork. Output transparent PNG.
+
+## Marcus prompt
+
+Create ONE original game-ready full-body NPC sprite on a genuinely transparent background (alpha zero outside figure), no scene, no floor, no glow, no ground shadow. Reference 1 is STYLE ONLY: match its finely illustrated shaded 2.5D adult proportions and slightly elevated adventure-game camera. Reference 2 is IDENTITY/CLOTHING ONLY: preserve Marcus, an adult Black male declassification coordinator with close-cropped dark hair, dark rectangular glasses, light blue open suit jacket, white collared shirt, muted gold tie, charcoal trousers and polished dark shoes. Friendly composed scholarly professional, small natural smile. Single whole figure standing with feet planted and relaxed arms, subtle front three-quarter facing toward viewer's right. Centered portrait 2:3 canvas, head near 7% height, shoe soles near 94% height, transparent side space, no crop. Crisp delicate contours, natural adult head/body ratio, recognizable face, tailored folds, soft lighting from upper left. Same polished original illustrated console adventure style as reference 1. No coarse pixel art, anime exaggeration, thick outline, photographic cutout, text, labels, logos, props, extra people, sprite sheet, or extra poses. Transparent PNG.
