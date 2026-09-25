@@ -1,5 +1,5 @@
 import { addArchiveEnvironment, ARCHIVE_PROPS } from "../systems/archiveEnvironment";
-import { presentationPanel, PANEL_COLORS } from "../systems/presentationPanel";
+import { addSnesRoomIntroBanner } from "../systems/snesPixelArt";
 import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import { addVaultEnvironment, VAULT_STONE } from "../systems/vaultEnvironment";
 import Phaser from "phaser";
@@ -635,21 +635,10 @@ export abstract class DanneMapScene extends Phaser.Scene {
   }
 
   private drawLocationCard() {
-    const container = this.add.container(0, 0).setDepth(1200);
-    const title = this.geometry.displayName;
-    const label = this.add.text(128, 54, title, {
-      fontFamily: "Arial", fontSize: "11px", color: PANEL_COLORS.text,
-      align: "center", wordWrap: { width: 208, useAdvancedWrap: true }
-    }).setOrigin(0.5, 0);
-    const cardHeight = label.height + 14;
-    const card = presentationPanel(this, 16, 47, 224, cardHeight);
-    container.add([...card.objects, label]);
-    this.tweens.add({
-      targets: container,
-      alpha: 0,
-      delay: 2000,
-      duration: 350,
-      onComplete: () => container.destroy()
+    addSnesRoomIntroBanner(this, {
+      title: this.geometry.displayName,
+      subtitle: this.scene.key === "BlackVaultLairScene" ? "FINAL REVIEW" : "DANN-E’S CAMPAIGN",
+      depth: 1200
     });
   }
 

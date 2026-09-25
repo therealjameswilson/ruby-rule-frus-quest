@@ -7934,3 +7934,8 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Inspected desktop and phone saved-entry screenshots; zero page errors. Skill capture was black, so ordinary browser screenshots provided visual evidence.
 - Fresh focused final-route and vault-object tests: 2 files, 15 passed. Evidence: docs/qa/vault-fissures-2026-09-25.json. Local only.
 - Overall presentation goal remains active; this visual pass does not establish console-level quality or physical-device performance.
+
+## Campaign arrival cards — 2026-09-25
+- DanneMapScene now uses the shared compact room introduction: 176x24 at y48, 900ms hold/250ms fade; reduced motion skips the fade. Replaces the wider 224px card and 2s hold, exposing more of the room on entry.
+- Fresh build passed. Four browser cases (desktop/phone x normal/reduced motion) verified title fit, banner placement, dismissal and zero page errors. Desktop and phone screenshots inspected. Skill smoke exited successfully but captured black; ordinary browser screenshots used.
+- Evidence: docs/qa/campaign-arrival-cards-2026-09-25.json. Local only. Overall presentation goal remains active.
