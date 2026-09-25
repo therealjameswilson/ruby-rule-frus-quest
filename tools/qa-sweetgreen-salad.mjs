@@ -8,6 +8,13 @@ const state=()=>p.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const tap=async(x,y)=>{const r=await p.locator('canvas').first().boundingBox();await p.touchscreen.tap(r.x+x*r.width/256,r.y+y*r.height/240);};
 const act=async()=>{if(touch)await tap(225,205);else await p.keyboard.press('Space');await p.waitForTimeout(300);};
 await p.evaluate(()=>window.game.scene.getScene('ResearchWorldScene').player.setPosition(64,183));await p.waitForTimeout(200);
+// Back and the visible close button cancel without placing an order.
+for(const method of ['back','close']) {
+ await act();assert.equal((await state()).mode,'choice');
+ if(method==='back'){if(touch)await tap(174,216);else await p.keyboard.press('Escape');}
+ else {if(touch)await tap(232,36);else {const r=await p.locator('canvas').first().boundingBox();await p.mouse.click(r.x+232*r.width/256,r.y+36*r.height/240);}}
+ await p.waitForTimeout(300);assert.equal((await state()).mode,'explore');assert.equal((await state()).sceneProgress.sweetgreenSaladsOrdered,undefined);
+}
 for(const index of [3,0,1,2]){
 await act();assert.equal((await state()).mode,'choice');
 await p.screenshot({path:`/tmp/salad-${touch?'phone':'desktop'}-menu.png`});

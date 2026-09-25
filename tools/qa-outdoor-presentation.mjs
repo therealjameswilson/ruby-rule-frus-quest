@@ -21,7 +21,7 @@ try{for(const [name,width,height,touch] of [['desktop',1280,720,false],['phone',
  await p.waitForFunction(before=>window.game.scene.getScene('ResearchWorldScene').disguise!==before,before);
  const prompt=await p.evaluate(()=>{const s=window.game.scene.getScene('ResearchWorldScene');const r=s.prompt.getBounds();return {bounds:{x:r.x,right:r.right,bottom:r.bottom},text:s.prompt.text};});
  assert(prompt.bounds.bottom<=166.1);assert(prompt.bounds.x>=5&&prompt.bounds.right<=251);assert(prompt.text.includes('NEXT DISGUISE'));
- await position(128,210);await act();assert.equal((await state()).mode,'choice');await tap(232,22);assert.equal((await state()).mode,'explore');
+ await position(128,210);await act();assert.equal((await state()).mode,'choice');await tap(232,36);assert.equal((await state()).mode,'explore');
  for(let zone=0;zone<7;zone++){
   await p.evaluate(zone=>window.game.scene.getScene('ResearchWorldScene').travel(zone),zone);
   await p.waitForFunction(zone=>window.game.scene.getScene('ResearchWorldScene').zone===zone&&window.game.scene.isActive('ResearchWorldScene'),zone);await p.waitForTimeout(250);

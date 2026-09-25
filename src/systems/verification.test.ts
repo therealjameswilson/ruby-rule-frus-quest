@@ -23,14 +23,14 @@ class Visual {
   destroy() {}
 }
 
-function fixture(settleMs = 300, onCancel?: () => void) {
+function fixture(settleMs = 300, onCancel?: () => void, cancelOnBack = false) {
   const clock = { now: 1000 };
   const scene = {
     time: clock,
     events: { emit: vi.fn() },
     add: { rectangle: () => new Visual(), text: () => new Visual(), container: () => new Visual() }
   } as unknown as Phaser.Scene;
-  const prompt = new ChoicePrompt(scene, { settleMs });
+  const prompt = new ChoicePrompt(scene, { settleMs, cancelOnBack });
   const callback = vi.fn();
   const show = () => prompt.show("Review interrupted.", [
     { key: "A", label: "Retry", value: "retry" },
@@ -82,6 +82,16 @@ describe("choice transition input guard", () => {
     expect(callback).not.toHaveBeenCalled();
     expect(cancel).toHaveBeenCalledOnce();
     expect(swallowNextInputFrame).toHaveBeenCalledOnce();
+  });
+
+  it.each(["bJustPressed", "cancelJustPressed"] as const)("supports outdoor Back cancellation through %s", key => {
+    const cancel = vi.fn();
+    const { prompt, callback } = fixture(0, cancel, true);
+    controls[key] = true;
+    prompt.updateInput();
+    expect(prompt.active).toBe(false);
+    expect(callback).not.toHaveBeenCalled();
+    expect(cancel).toHaveBeenCalledOnce();
   });
 
   it("still submits a deliberate B face-button answer in a cancellable review", () => {

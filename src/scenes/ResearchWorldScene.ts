@@ -124,10 +124,11 @@ export class ResearchWorldScene extends Phaser.Scene {
     if(directions.south!==undefined)this.label(128,232,'v',300,9);
     this.player=new Player(this,this.arrival?.x??128,this.arrival?.y??188);
     this.dialog=new DialogBox(this,{aboveTouchControls:true});
-    this.choice=new ChoicePrompt(this,{settleMs:200});
+    this.choice=new ChoicePrompt(this,{settleMs:200,cancelOnBack:true});
     this.inventory=new InventoryOverlay(this);
-    const closeBox=this.add.rectangle(232,22,44,44,0x234c39).setStrokeStyle(1,0xf8edc9);
-    const closeText=this.add.text(232,22,'X',{fontFamily:'monospace',fontSize:'12px',color:'#fff6cf'}).setOrigin(.5);
+    // Keep the close control below the HUD and above the choice panel.
+    const closeBox=this.add.rectangle(232,36,32,24,0x101925).setStrokeStyle(1,0xd4b66d);
+    const closeText=this.add.text(232,36,'CLOSE',{fontFamily:'Arial',fontSize:'7px',color:'#fff6cf'}).setOrigin(.5);
     this.travelClose=this.add.container(0,0,[closeBox,closeText]).setDepth(1000).setVisible(false);
     bindPointerDown(closeBox,()=>{this.choice.hide();swallowNextInputFrame();});
     this.prompt=this.add.text(128,166,'',{fontFamily:'Arial',fontSize:'8px',color:PANEL_COLORS.text,backgroundColor:'#101925',padding:{x:6,y:4},wordWrap:{width:218,useAdvancedWrap:true},align:'center'}).setOrigin(.5,1).setDepth(350).setName('research-action-prompt');
