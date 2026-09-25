@@ -1,3 +1,4 @@
+import { PortraitTouchDock } from "./PortraitTouchDock";
 import { RENDER_DENSITY } from "../systems/renderDensity";
 import Phaser from "phaser";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../game/constants";
@@ -30,6 +31,7 @@ type TouchDebugWindow = Window & {
     dpadPointerId: number | null;
     dpadDirection: CardinalDirection | null;
     gamepadSuppressed: boolean;
+    portraitDocked: boolean;
     overlayAlpha: number;
     pressedButtons: TouchControlKey[];
     weaponPhase: string;
@@ -83,6 +85,7 @@ export class TouchControls {
   private readonly scene: Phaser.Scene;
   private readonly graphics: Phaser.GameObjects.Graphics;
   private readonly buttons: ButtonState[];
+  private readonly portraitDock: PortraitTouchDock;
   private enabled = false;
   private forceVisible = false;
   private dpadPointerId: number | null = null;
@@ -101,7 +104,8 @@ export class TouchControls {
     this.scene = scene;
     this.graphics = scene.add.graphics().setDepth(20000).setScrollFactor(0);
     this.buttons = this.createButtons();
-    updateInputCallbacks({ isTouchControlPoint: (point) => this.enabled && (Boolean(this.findButtonAt(point.x, point.y))
+    this.portraitDock = new PortraitTouchDock(resolveTouchDirection);
+    updateInputCallbacks({ isTouchControlPoint: (point) => this.enabled && !this.portraitDock.active && (Boolean(this.findButtonAt(point.x, point.y))
       || (gameState.mode === "explore" && isFixedDpadPoint(point.x, point.y))) });
     this.installPointerEvents();
     this.setEnabled(isTouchCapable());
@@ -169,6 +173,7 @@ export class TouchControls {
     this.releaseAll();
     this.overlayFade?.stop();
     this.removePointerEvents();
+    this.portraitDock?.destroy();
     this.graphics.destroy();
     for (const button of this.buttons) button.text.destroy();
   }
@@ -331,6 +336,7 @@ export class TouchControls {
       this.updateDebug();
       return false;
     }
+    if (this.portraitDock?.active) return false;
     if (point.x <= GAME_WIDTH / 3 && this.dpadPointerId === null) {
       this.dpadPointerId = pointerId;
       if (gameState.mode === "explore" && isFixedDpadPoint(point.x, point.y)) {
@@ -393,7 +399,7 @@ export class TouchControls {
   }
 
   private findButtonAt(x: number, y: number) {
-    if (gameState.mode === "pause") return undefined;
+    if (gameState.mode === "pause" || this.portraitDock?.active) return undefined;
     return this.buttons.find((button) =>
       this.buttonAvailable(button) && Math.abs(x - button.x) <= button.hitWidth / 2
       && Math.abs(y - button.y) <= button.hitHeight / 2
@@ -426,6 +432,7 @@ export class TouchControls {
   }
 
   private releaseAll() {
+    this.portraitDock?.release();
     this.releaseDialog();
     this.releaseDpad();
     for (const button of this.buttons) this.releaseButton(button);
@@ -473,10 +480,16 @@ export class TouchControls {
   }
 
   private redraw() {
+    const wasDocked = this.portraitDock?.active;
+    this.portraitDock?.update(this.enabled, gameState.mode, gameState.currentScene !== "WorldMapScene", gameState.playerCombat.weapon.cooldownRatio);
+    if (!wasDocked && this.portraitDock?.active) {
+      this.releaseDpad();
+      for (const button of this.buttons) if (button.pointerId !== null) this.releaseButton(button);
+    }
     this.graphics.clear();
     this.graphics.setAlpha(this.overlayAlpha);
     this.updateDebug();
-    if (!this.enabled) {
+    if (!this.enabled || this.portraitDock?.active) {
       for (const button of this.buttons) button.text.setVisible(false);
       return;
     }
@@ -496,6 +509,7 @@ export class TouchControls {
       dpadPointerId: this.dpadPointerId,
       dpadDirection: this.dpadDirection,
       gamepadSuppressed: this.gamepadSuppressed,
+      portraitDocked: this.portraitDock?.active ?? false,
       overlayAlpha: Number(this.overlayAlpha.toFixed(2)),
       pressedButtons: this.buttons.filter((button) => button.pointerId !== null).map((button) => button.key),
       weaponPhase: gameState.playerCombat.weapon.phase,

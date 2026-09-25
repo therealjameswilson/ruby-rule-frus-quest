@@ -63,6 +63,18 @@ describe("InputState keyboard edges", () => {
     expect(getInput().menu).toBe(false);
   });
 
+  it("rearms quick touch menu taps without repeating a held button", () => {
+    let now = 1000;
+    setNowProviderForTests(() => now);
+    setTouchControl("start", true); setTouchControl("start", false); tickInput();
+    expect(getInput().menuJustPressed).toBe(true);
+    now += 16; tickInput(); expect(getInput().menuJustPressed).toBe(false);
+    setTouchControl("start", true); tickInput(); expect(getInput().menuJustPressed).toBe(true);
+    now += 16; tickInput(); expect(getInput().menuJustPressed).toBe(false);
+    setTouchControl("start", false); now += TAP_ACTION_HOLD_MS + 1; tickInput();
+    expect(getInput().menu).toBe(false);
+  });
+
   it("maps Z to A and X/B to the secondary action", () => {
     setKeyboardDownForTests(["KeyZ"]);
     tickInput();

@@ -107,7 +107,13 @@ function getViewport(): PixelViewport {
 }
 
 export function configureIntegerGameShellScale() {
-  const layout = computePresentationLayout(getViewport());
+  const viewport = getViewport();
+  const layout = computePresentationLayout(viewport);
+  const root = document.documentElement;
+  root.dataset.portraitDock = String(viewport.height > viewport.width && viewport.y + viewport.height - (layout.y + layout.height) >= 184);
+  root.style.setProperty("--ruby-game-bottom", `${layout.y + layout.height}px`);
+  root.style.setProperty("--ruby-game-center", `${layout.x + layout.width / 2}px`);
+  root.style.setProperty("--ruby-game-width", `${layout.width}px`);
   const shell = document.getElementById("game-shell");
   if (shell) {
     shell.style.width = `${layout.width}px`;

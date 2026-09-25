@@ -12,7 +12,7 @@ try{
   const page=await browser.newPage({viewport:mobile?{width:390,height:844}:{width:1024,height:960},isMobile:mobile,hasTouch:mobile,storageState:{cookies:[],origins:[{origin:new URL(base).origin,localStorage:[{name:'rubyRuleFrusQuestSave',value:JSON.stringify(saved)}]}]}});
   const errors=[];page.on('pageerror',e=>errors.push(String(e)));
   const tap=async(x,y)=>{const r=await page.locator('canvas').first().boundingBox();if(mobile)await page.touchscreen.tap(r.x+x*r.width/256,r.y+y*r.height/240);else await page.mouse.click(r.x+x*r.width/256,r.y+y*r.height/240);};
-  const act=async()=>{if(mobile)await tap(225,205);else await page.keyboard.press('Space');await page.waitForTimeout(190);};
+  const act=async()=>{if(mobile){const dock=page.locator('#portrait-touch-dock [data-control=space]');if(await dock.isVisible()){const r=await dock.boundingBox();await page.touchscreen.tap(r.x+r.width/2,r.y+r.height/2);}else await tap(225,205);}else await page.keyboard.press('Space');await page.waitForTimeout(190);};
   const drain=async()=>{for(let i=0;i<30;i++){if(!await page.evaluate(()=>window.game.scene.getScene('NscLibraryScene').dialog?.active))return;await act();}throw Error('Dialogue did not close');};
   const position=async(x,y,scene='NscLibraryScene')=>{await page.evaluate(({x,y,scene})=>window.game.scene.getScene(scene).player.setPosition(x,y),{x,y,scene});await page.waitForTimeout(100);};
   await page.goto(new URL('?text=full',base).href);await page.waitForFunction(()=>window.game?.scene.isActive('TapToStartScene'));if(mobile)await tap(86,154);else await page.keyboard.press('Enter');

@@ -8012,3 +8012,21 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - Final build and full suite passed: 269 files / 2023 tests. Offline rendered pickup peak .0921, filing .2184, eight simultaneous filings .9206; no clipped samples, exact completion callbacks, silent tails and idempotent cancel passed. Six-second live Network score plus paper cues peak -9.83 dBFS, RMS -24.92 dBFS, zero clips; muting clears four active tool/paper cues and blocks new ones. WAVs in /tmp/paper-foley and /tmp/paper-live-mix/paper.wav. Digital measurements only; no human listening approval.
 - Final desktop/390x844 touch fixture confirms real pickup and filing methods request the new sounds, immediate progression, pause freezing/resume, reduced-motion immediate filing, save/reload, zero page errors. Observe sound status inside the genuine scene method because a later enemy cue legitimately overwrites the global last-audio status (an initial assertion caught ego bolt fire). /tmp/paper-gameplay-verified.
 - Final required skill /tmp/paper-foley-skill-final finished; black capture inspected and native phone filed screenshot inspected. Temporary Vite5212 audio server was stopped; production preview5211 stays live. Evidence docs/qa/paper-sounds-2026-09-25.json. Local only; broader goal remains active.
+
+## 2026-09-25 — NSC library request verification
+- Confirmed existing 11 library-specific, three-room NSC research wings and lobby entry points; retained the existing implementation rather than duplicate routes.
+- Reopened all 11 official holdings/source URLs. Coverage runs Truman through George W. Bush; FDR intentionally has no NSC wing.
+- Updated NSC browser QA to use the portrait A button when the separate control dock is visible, with canvas fallback.
+- Four focused NSC unit tests passed. Nixon, Reagan and Clinton desktop routes passed; Nixon and Reagan simulated-phone routes passed, including wrong-answer recovery, rewards, return travel and save/reload. Clinton phone rerun pending after Playwright locator.tap timed out; direct coordinate touchscreen input used for rerun.
+- Skill client smoke passed scene state and movement; its WebGL screenshot was black. Inspected normal browser screenshots of Reagan room and phone source choice instead. No runtime change or publication in this verification pass.
+- Clinton simulated-phone rerun passed all three rooms, wrong-answer recovery, save/reload and lobby return with no page errors. Evidence: /tmp/nsc-request-clinton-recheck and /tmp/nsc-request-verified. Physical iPhone untested.
+
+## 2026-09-25 — portrait touch dock
+- Previous goal turn: progress via current NSC route verification and adapting its QA to the dock. Continued the unfinished portrait controls toward the broader game-quality goal.
+- Tall portrait screens with 184px clear space below the canvas now show a separate 168px control dock: fixed directional pad, 64px A/B buttons, 44px-high Menu, pressed feedback and tool cooldown. Original canvas scale and layout retained; landscape/short portrait uses existing overlays.
+- Removed invisible canvas movement/button hit regions when docked. Mode changes, blur, visibility, resize, orientation, shutdown and controller suppression release held dock input. Menu quick taps rearm between frames; held Menu does not repeat.
+- Finished Menu target sizing/placement to avoid overlap at 320px width and immediate release on controller takeover. Full build and 269 test files / 2,024 tests passed.
+- tools/qa-portrait-dock.mjs passed actual touch multitouch/deadzone, Menu, focus loss, rotation, controller handoff, short-screen fallback, narrow layout and hidden title controls. Earned boss-entry fixture confirmed a real pencil swing while moving and continued movement after B release.
+- Updated review-packet QA to use the visible dock; desktop and 390x844 touch passed pickup, filing audio, pause/resume, reduced motion and save/reload. NSC QA also supports the dock.
+- Skill client run completed; black WebGL capture inspected, regular browser portrait/narrow/landscape/combat captures inspected as visual evidence. QA report: docs/qa/portrait-touch-dock-2026-09-25.json.
+- Local only. Physical iPhone, physical controller and broad presentation/audio quality audit remain open; overall goal remains active.

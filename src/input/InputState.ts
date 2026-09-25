@@ -660,7 +660,7 @@ export function tickInput() {
     ability,
     abilityJustPressed: justPressed(ability, previousState.ability),
     menu,
-    menuJustPressed: pendingActionPresses.has("KeyM") || justPressed(menu, previousState.menu),
+    menuJustPressed: pendingActionPresses.has("KeyM") || pendingTouchPresses.has("start") || pendingTouchPresses.has("m") || justPressed(menu, previousState.menu),
     reliability,
     reliabilityJustPressed: justPressed(reliability, previousState.reliability),
     sound,
