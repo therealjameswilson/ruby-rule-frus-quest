@@ -1,6 +1,6 @@
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
 import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
-import { drawCrispInteriorWalls } from "../systems/dungeonWallArt";
+import { addEditorialRoomWalls } from "../systems/editorialRoomWalls";
 import Phaser from "phaser";
 import { readChapterArrival, requestsDoorExit } from "../game/chapterTravel";
 import { GAMEPLAY_TILESETS } from "../assets/registry";
@@ -612,7 +612,8 @@ export class SilentReadScene extends Phaser.Scene {
       ])
       .setDepth(44);
     decoration.putTilesAt(layers.decoration, 0, 0, false).setDepth(45);
-    drawCrispInteriorWalls(this, layers.walls, walls.x, walls.y, PALETTE.buckramHighlight, object => this.track(object));
+    const wallArt = addEditorialRoomWalls(this, layers.walls, walls.x, walls.y);
+    if (wallArt) this.track(wallArt);
     this.roomCleanups.push(() => {
       ground.destroy();
       walls.destroy();
