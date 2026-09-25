@@ -201,7 +201,7 @@ export class OfficeScene extends Phaser.Scene {
     this.inventory = new InventoryOverlay(this);
     this.reliability = new ReliabilityHud(this);
     this.reliability.setSummaryVisible(false);
-    this.prompt = new InteractionPrompt(this);
+    this.prompt = new InteractionPrompt(this, 950, 947, { compact: true });
     this.toast = new FeedbackToast(this);
     const juniorFeet = new Phaser.Geom.Rectangle(this.juniorCompiler.x - 6, this.juniorCompiler.y - 3, 12, 8);
     this.kathyFeet = juniorFeet;
@@ -411,6 +411,7 @@ export class OfficeScene extends Phaser.Scene {
       promptTarget,
       undefined,
       lockedDoorPrompt ? { text: "CHECK ARCHIVE LOCK" }
+        : nearest?.id === "production-inbox" ? { text: nearest.label.toUpperCase() }
         : nearest ? undefined : hintTarget && approachCue ? { badge: "!", text: approachCue } : undefined
     );
     this.toast.update(delta, this.player.position);
