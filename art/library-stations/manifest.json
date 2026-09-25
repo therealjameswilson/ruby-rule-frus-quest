@@ -1,0 +1,58 @@
+{
+  "finding-aid": {
+    "source": "exec-54419db5-8588-4299-9af0-532b31a0a064.png",
+    "size": [
+      512,
+      256
+    ],
+    "bounds": [
+      11,
+      7,
+      505,
+      244
+    ],
+    "bytes": 26868
+  },
+  "comparison": {
+    "source": "exec-194e3b32-b2d0-46b9-bb3b-c0d7a0f2ae94.png",
+    "size": [
+      512,
+      256
+    ],
+    "bounds": [
+      11,
+      12,
+      501,
+      253
+    ],
+    "bytes": 32902
+  },
+  "source-note": {
+    "source": "exec-b1b8d44d-95a3-458f-9984-9f06e5a66f22.png",
+    "size": [
+      512,
+      256
+    ],
+    "bounds": [
+      37,
+      22,
+      475,
+      229
+    ],
+    "bytes": 29482
+  },
+  "filing": {
+    "source": "exec-19e51bd0-7dc7-46a4-96ae-8c558b8d6b71.png",
+    "size": [
+      512,
+      256
+    ],
+    "bounds": [
+      53,
+      19,
+      459,
+      240
+    ],
+    "bytes": 23276
+  }
+}

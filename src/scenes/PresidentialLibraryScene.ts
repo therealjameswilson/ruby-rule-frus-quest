@@ -1,5 +1,5 @@
 import { addMisfiledStack } from '../systems/misfiledStacks';
-import { RESEARCH_PROPS, researchProp } from '../systems/researchProps';
+import { preloadLibraryStationArt, libraryStationArt } from '../systems/libraryStationArt';
 import { addEditorialRoomFloor } from '../systems/editorialRoomFloor';
 import { addEditorialRoomWalls } from '../systems/editorialRoomWalls';
 import { buildEditorE1TileLayers } from '../game/editorE1Tilemap';
@@ -38,7 +38,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   private leaving = false;
   private assignment = LIBRARY_ASSIGNMENTS[8];
   constructor() { super('PresidentialLibraryScene'); }
-  preload() { if(!this.textures.exists(RESEARCH_PROPS.key))this.load.image(RESEARCH_PROPS.key,RESEARCH_PROPS.path); }
+  preload() { preloadLibraryStationArt(this); }
   create() {
     const index = gameState.sceneProgress.libraryResearchActive;
     this.assignment = LIBRARY_ASSIGNMENTS[Number.isInteger(index) ? index : -1] ?? libraryAssignment('reagan')!;
@@ -60,7 +60,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.add.text(128,61,this.assignment.topic,{fontFamily:'monospace',fontSize:'6px',color:'#f6efdb'}).setOrigin(.5).setDepth(50);
     this.stageText=this.add.text(128,73,'',{fontFamily:'monospace',fontSize:'6px',color:'#75e4db'}).setOrigin(.5).setDepth(50);
     STATIONS.forEach((s,i)=>{
-      const desk=researchProp(this,'desk',s.x,s.y,46);
+      const desk=libraryStationArt(this,i,s.x,s.y);
       if(desk)desk.setDepth(12).setName(`library-desk-${i}`);
       else this.add.rectangle(s.x,s.y,47,22,0x5d392c).setStrokeStyle(2,0xad8c5d).setDepth(12);
       this.marks.push(this.add.text(s.x,s.y-18,'',{fontFamily:'Arial',fontSize:'6px',color:'#81e9c9',backgroundColor:'#192630'}).setOrigin(.5).setDepth(50));

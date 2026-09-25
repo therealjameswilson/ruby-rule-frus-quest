@@ -1,0 +1,84 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "assetBytes": 112528,
+  "assetChecks": [
+    {
+      "failed": false,
+      "art": [
+        {
+          "key": "library-station-finding-aid-v1",
+          "width": 46,
+          "bottom": 106
+        },
+        {
+          "key": "library-station-comparison-v1",
+          "width": 46,
+          "bottom": 106
+        },
+        {
+          "key": "library-station-source-note-v1",
+          "width": 46,
+          "bottom": 174
+        },
+        {
+          "key": "library-station-filing-v1",
+          "width": 46,
+          "bottom": 174
+        }
+      ],
+      "requests": 4,
+      "errors": []
+    },
+    {
+      "failed": true,
+      "art": [
+        null,
+        null,
+        null,
+        null
+      ],
+      "requests": 12,
+      "errors": []
+    }
+  ],
+  "controllerDesktop": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "controllerPhone": {
+    "controllerSalad": true,
+    "controllerRail": true,
+    "libraryStations": 4,
+    "wrongAnswerRecovered": true,
+    "libraryReward": 8,
+    "libraryReturn": true,
+    "savedPacket": true,
+    "startMenu": true,
+    "disconnectStops": true,
+    "handoff": true,
+    "releaseStops": true,
+    "naturalControllerMovement": true,
+    "errors": []
+  },
+  "screenshotsInspected": [
+    "/tmp/library-station-art/four-stations.png",
+    "/tmp/library-art-controller/phone-packet-filed.png"
+  ],
+  "skillCapture": "Black WebGL screenshot inspected; ordinary browser captures inspected",
+  "limitations": [
+    "Simulated controller and phone; no physical-device test",
+    "Local artwork update; not published"
+  ]
+}
