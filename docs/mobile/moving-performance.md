@@ -1,5 +1,41 @@
 # Moving Gameplay Performance
 
+## Current profiler (September 25, 2026)
+
+Reports now include the WebGL renderer, software-renderer detection, drawing
+buffer dimensions, browser channel, and requested ANGLE backend. The bundled
+headless Chromium used in the recent September 25 runs selected SwiftShader.
+Those results measure software rendering, not iPhone GPU performance.
+
+The profiler records actual Phaser step intervals and full-run nearest-rank
+p50/p95/p99, maximum interval, and counts over 33.4 and 50 ms. These are separate
+from the older HUD's coarse rolling histogram. `movementRunValid` requires
+movement in at least half the adjacent samples. The touch gesture uses the
+current fixed-pad center (48, 202); earlier runs with the old y=178 coordinates
+must be checked for movement coverage before treating them as moving tests.
+
+On a Mac with Chrome installed, request Metal explicitly and inspect the
+reported renderer to confirm acceleration:
+
+```sh
+npm run perf:profile -- --url 'http://127.0.0.1:5211/?scene=ArchiveScene' --mobile --walk --channel chrome --angle metal --seconds 60 --out /tmp/frus-metal-performance.json
+```
+
+For JavaScript attribution, add `--cpu-profile /tmp/frus.cpuprofile`.
+Profiling can affect timing; compare like-for-like runs. Desktop GPU results
+still do not certify physical iPhone, thermal behavior, or the full campaign.
+
+The current ArchiveScene run on Apple M3 Metal (Chrome 153, phone viewport,
+DPR 3, no CPU throttle) measured 60 seconds: 3,614 game frames, 60.00 FPS,
+p95 16.9 ms, p99 17.9 ms, maximum 18.5 ms, and zero intervals above 33.4 ms.
+Movement occurred in 223 of 224 adjacent samples with two threats active.
+There were no browser errors or warnings. Evidence:
+`/tmp/archive-metal-sustained.json` and `/tmp/archive-metal-sustained.png`.
+This isolates a major test-environment difference from the recent SwiftShader
+runs; it does not establish that a game-code change improved frame rate.
+
+## Earlier measurements
+
 Measured locally on 2026-09-13 with Chromium headless, a 375x667 CSS viewport,
 DPR 3, touch emulation, and 4x CPU throttling. Each run measured 20 seconds
 after warmup. This is a desktop proxy, not certification of real iPhone or

@@ -40,12 +40,15 @@ const warmupMs = numberArg("warmup-ms", 1000);
 const outPath = getArg("out", "tools/perf_profile_report.json");
 const screenshotPath = getArg("screenshot", "");
 const cpuProfilePath = getArg("cpu-profile", "");
+const channel = getArg("channel", "");
+const angle = getArg("angle", "");
 const mobile = process.argv.includes("--mobile");
 const walk = process.argv.includes("--walk");
 const cpuThrottle = Math.max(1, numberArg("cpu-throttle", 1));
 
 const { chromium } = await loadPlaywright();
-const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE });
+const browser = await chromium.launch({ executablePath: process.env.CHROMIUM_EXECUTABLE,
+  ...(channel ? { channel } : {}), ...(angle ? { args: [`--use-angle=${angle}`] } : {}) });
 try {
 const page = await browser.newPage({
   viewport: mobile ? { width: 375, height: 667 } : { width: 1280, height: 720 },
@@ -69,6 +72,18 @@ await page.goto(url, { waitUntil: "networkidle" });
 await page.waitForFunction(() => Boolean(window.rubyRuleMobileMetrics), null, { timeout: 15000 });
 await page.mouse.click(64, 64);
 await page.waitForTimeout(warmupMs);
+const rendererInfo = await page.evaluate(() => {
+  const gl = window.game?.renderer?.gl;
+  if (!gl) return { api: 'canvas', userAgent: navigator.userAgent };
+  const debug = gl.getExtension('WEBGL_debug_renderer_info');
+  const renderer = debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+  return {
+    api: 'webgl', renderer,
+    softwareRenderer: /swiftshader|llvmpipe|software rasterizer/i.test(renderer),
+    backingWidth: gl.drawingBufferWidth, backingHeight: gl.drawingBufferHeight,
+    userAgent: navigator.userAgent
+  };
+});
 await page.evaluate(() => window.rubyRuleResetPerformanceMetrics?.());
 await page.waitForTimeout(100);
 // Observe actual game steps: the diagnostic HUD's separate RAF and coarse
@@ -161,6 +176,9 @@ const report = {
   mobile,
   walk,
   cpuThrottle,
+  browserChannel: channel || 'bundled-chromium',
+  requestedAngle: angle || null,
+  rendererInfo,
   generatedAt: new Date().toISOString(),
   summary: {
     measuredGameFrames: gameFrameIntervals.length,
