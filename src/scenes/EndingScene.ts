@@ -1,3 +1,4 @@
+import { addBinderyPressArt } from "../systems/binderyPressArt";
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
 import { RESEARCH_PROPS, researchProp } from "../systems/researchProps";
 import Phaser from "phaser";
@@ -311,15 +312,12 @@ export class EndingScene extends Phaser.Scene {
 
     for (const station of BINDING_STATIONS) this.drawBindingStation(station);
 
-    this.bindingPressFrame = this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y, 48, 16, color(PALETTE.black), 0.96)
-      .setStrokeStyle(2, color(PALETTE.classNetRed)).setDepth(156);
+    const pressArt = addBinderyPressArt(this, BINDING_PRESS.x, BINDING_PRESS.y);
+    this.bindingPressFrame = this.add.rectangle(BINDING_PRESS.x, BINDING_PRESS.y, 48, 16,
+      color(PALETTE.black), pressArt ? 0 : 0.96)
+      .setStrokeStyle(1, color(PALETTE.classNetRed)).setDepth(156);
     this.add.ellipse(128, 158, 48, 4, color(PALETTE.black), 0.3).setDepth(46);
-    this.add.image(112, 148, "buckram-key").setDisplaySize(10, 10).setDepth(156);
-    this.add.image(144, 148, "citation-stamp").setDisplaySize(10, 10).setDepth(156);
-    this.add.rectangle(128, 144, 12, 18, color(PALETTE.deepRuby))
-      .setStrokeStyle(1, color(PALETTE.goldStamp)).setDepth(156);
-    this.add.rectangle(124, 144, 2, 14, color(PALETTE.buckramHighlight)).setDepth(156);
-    this.bindingPressLabel = this.add.text(BINDING_PRESS.x, BINDING_PRESS.y - 17, "LOCKED PRESS", {
+    this.bindingPressLabel = this.add.text(BINDING_PRESS.x, BINDING_PRESS.y - 33, "LOCKED PRESS", {
       fontFamily: "monospace",
       fontSize: "6px",
       color: PALETTE.classNetRed, backgroundColor: PALETTE.black
@@ -745,7 +743,7 @@ export class EndingScene extends Phaser.Scene {
     const ready = completed === BUCKRAM_BINDING_TOTAL
       && getFinalGateReadiness().ready
       && hasProcessItem("buckram_key");
-    this.bindingPressFrame?.setStrokeStyle(2, color(ready ? PALETTE.goldStamp : PALETTE.classNetRed));
+    this.bindingPressFrame?.setStrokeStyle(1, color(ready ? PALETTE.goldStamp : PALETTE.classNetRed));
     this.bindingPressLabel
       ?.setText(ready ? "PUBLISH READY" : "LOCKED PRESS")
       .setColor(ready ? PALETTE.goldStamp : PALETTE.classNetRed);
