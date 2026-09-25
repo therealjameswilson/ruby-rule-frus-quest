@@ -1,0 +1,70 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "unitTests": 9,
+  "checks": [
+    {
+      "mobile": false,
+      "labels": [
+        {
+          "text": "STAMP",
+          "left": 118,
+          "right": 139
+        },
+        {
+          "text": "CONCURRENCE",
+          "left": 104,
+          "right": 152
+        },
+        {
+          "text": "OFFICE",
+          "left": 21,
+          "right": 43
+        },
+        {
+          "text": "PACKET",
+          "left": 211,
+          "right": 235
+        }
+      ],
+      "art": 4,
+      "redrawStable": true,
+      "westExitWorked": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "labels": [
+        {
+          "text": "STAMP",
+          "left": 118,
+          "right": 139
+        },
+        {
+          "text": "CONCURRENCE",
+          "left": 104,
+          "right": 152
+        },
+        {
+          "text": "OFFICE",
+          "left": 21,
+          "right": 43
+        },
+        {
+          "text": "PACKET",
+          "left": 211,
+          "right": 235
+        }
+      ],
+      "art": 4,
+      "redrawStable": true,
+      "westExitWorked": true,
+      "errors": []
+    }
+  ],
+  "limits": [
+    "Visual lock/unlock and spawn fixtures; not an earned unlock playthrough",
+    "Phone-sized rendering; west movement uses keyboard in both viewports",
+    "Local only; not published"
+  ]
+}

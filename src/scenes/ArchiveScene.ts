@@ -3911,7 +3911,7 @@ export class ArchiveScene extends Phaser.Scene {
           : undefined;
       const lockLabel = room.id === "B1" && direction !== "north" && !this.agencyTimerResolved ? "WAIT"
         : room.id === "A1" && direction === "east" && !this.sourceRoomComplete()
-        ? "PACK"
+        ? "PACKET"
         : undefined;
       this.drawGate(direction, hasExit, hasExit ? this.exitIsOpen(room, direction) : false, room.requiredItems?.[direction], routeLabel, target, lockLabel);
     });
@@ -3962,7 +3962,7 @@ export class ArchiveScene extends Phaser.Scene {
       hasExit,
       unlocked,
       accent: unlocked ? PALETTE.goldStamp : PALETTE.stoneGray,
-      lockLabel: lockLabelOverride ?? (requiredItem ? requiredItem.split("_")[0].slice(0, 4).toUpperCase() : "LOCK"),
+      lockLabel: lockLabelOverride ?? (requiredItem ? requiredItem === "citation_stamp" ? "STAMP" : requiredItem === "concurrence_slip" ? "CONCURRENCE" : requiredItem.split("_")[0].toUpperCase() : "LOCK"),
       exitLabel,
       track: (object) => { art.push(object); return this.track(object); },
       depth: 61

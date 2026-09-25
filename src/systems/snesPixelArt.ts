@@ -1,3 +1,4 @@
+import { gateCaptionTexture } from './gateCaptionArt';
 import { dungeonGateTexture } from "./dungeonGateArt";
 import { rewardDisplayTexture } from './rewardDisplayArt';
 import Phaser from "phaser";
@@ -406,8 +407,13 @@ function addGateCaption(scene: Phaser.Scene, x: number, y: number, label: string
   // Leave the side gate glyphs visible; keep both text and frame on whole pixels.
   const centerX = Math.round(Math.max(18 + width / 2, Math.min(GAME_WIDTH - 18 - width / 2, x)));
   text.setPosition(Math.round(centerX - text.width / 2), Math.round(y - text.height / 2));
-  keepTagged(scene.add.rectangle(centerX, y, width, 12, color(PALETTE.black), locked ? 0.96 : 0.9)
-    .setStrokeStyle(1, color(accent)).setDepth(depth), locked ? "snes-gate-lock-seal" : "snes-gate-route-plaque", track);
+  const plate = gateCaptionTexture(scene, width, locked);
+  keepTagged(scene.add.rectangle(centerX, y, width, 12, color(PALETTE.black), plate ? 0 : locked ? 0.96 : 0.9)
+    .setStrokeStyle(plate ? 0 : 1, color(accent)).setDepth(depth), locked ? "snes-gate-lock-seal" : "snes-gate-route-plaque", track);
+  if (plate) {
+    keepTagged(scene.add.image(centerX, y, plate).setDisplaySize(width,12).setDepth(depth), "snes-gate-caption-art", track);
+    text.setColor(locked ? "#ffe0cd" : "#f4e4b9");
+  }
   keepTagged(text, locked ? "snes-gate-lock-label" : "snes-gate-route-label", track);
 }
 
