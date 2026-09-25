@@ -82,7 +82,6 @@ import { handleOpenOverlays } from "../systems/overlayInput";
 import { addObjectiveText, addTerminalPanel, drawRoomFrame, drawTiledFloor, transitionArchiveRoom, transitionTo } from "../systems/sceneTransitions";
 import { addSnesGate, addSnesMapTablet, addSnesRewardBurst, addSnesRoomCompass, addSnesRoomIntroBanner, addSnesRoomLayer, addSnesTreasurePedestal } from "../systems/snesPixelArt";
 import {
-  SNES_ARCHIVE_COMPASS_RELIC_ASSET,
   SNES_ARCHIVE_PROP_ASSET,
   SNES_ARCHIVE_ROOM_DETAIL_ASSET,
   SNES_ARCHIVE_WALL_MAP_BOARD_ASSET,
@@ -473,10 +472,6 @@ export class ArchiveScene extends Phaser.Scene {
   private roomSolids: Phaser.Geom.Rectangle[] = [];
   private activeEnemyDefs = new Map<string, ArchiveEnemyDefinition>();
   private activeEnemyWalls = new Map<string, BureaucraticWall>();
-  private mapCells = new Map<ArchiveRoomId, Phaser.GameObjects.Rectangle>();
-  private mapLabels = new Map<ArchiveRoomId, Phaser.GameObjects.Text>();
-  private mapMarkers = new Map<ArchiveRoomId, Phaser.GameObjects.Text>();
-  private archiveCompassRelicLabel?: Phaser.GameObjects.Text;
   private roomTransitionLocked = false;
   private readonly attackBuffer = new AttackBuffer();
   private exitCooldownUntil = 0;
@@ -546,7 +541,6 @@ export class ArchiveScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor(PALETTE.archiveAmber);
     drawTiledFloor(this, "archive-tiles");
     drawRoomFrame(this, "ARCHIVE CAVERN", PALETTE.goldStamp, { showLegacyHud: false });
-    this.drawVisitedMinimap();
     this.roomTitleText = this.add.text(128, 33, "", {
       fontFamily: "monospace",
       fontSize: "6px",
@@ -804,7 +798,6 @@ export class ArchiveScene extends Phaser.Scene {
       this.player.setPosition(safeSpawn.x, safeSpawn.y);
       this.danneLurker.enterRoom(this.time.now, roomId !== "AS" && roomId !== "A4" && roomId !== "A5");
       this.syncRoomTraversalState();
-      this.updateVisitedMinimap();
       this.exitCooldownUntil = this.time.now + 280;
     };
 
@@ -1532,7 +1525,6 @@ export class ArchiveScene extends Phaser.Scene {
     if (this.revealedSecretIds.has(roomId) || !recordArchiveSecret(gameState.sceneProgress, roomId, "revealed")) {
       setLatestMessage(`${roomId} secret route already mapped.`);
       this.dialog.show("SECRET", "That hidden route is already marked on the archive map.");
-      this.updateVisitedMinimap();
       this.syncRoomTraversalState();
       return;
     }
@@ -1545,7 +1537,6 @@ export class ArchiveScene extends Phaser.Scene {
     retroAudio.confirm();
     this.showSecretRevealCue(roomId);
     this.dialog.show("SECRET", message);
-    this.updateVisitedMinimap();
     this.syncRoomTraversalState();
     saveGameNow();
   }
@@ -3896,82 +3887,6 @@ export class ArchiveScene extends Phaser.Scene {
       lockedExits,
       requiredItems: room.requiredItems
     });
-  }
-
-  private drawVisitedMinimap() {
-    this.add.rectangle(26, 16, 42, 27, color(PALETTE.black)).setDepth(878);
-    this.drawArchiveCompassRelic(58, 16);
-    for (const room of Object.values(ARCHIVE_ROOMS)) {
-      const x = 14 + room.grid.x * 12;
-      const y = 8 + room.grid.y * 6;
-      const cell = this.add.rectangle(x, y, 8, 5, color(PALETTE.black))
-        .setStrokeStyle(1, color(PALETTE.stoneLight))
-        .setDepth(879)
-        .setName("archive-minimap-cell");
-      const label = this.add.text(x, y - 3, "", {
-        fontFamily: "monospace",
-        fontSize: "4px",
-        color: PALETTE.black
-      }).setOrigin(0.5, 0).setDepth(880).setName("archive-minimap-label");
-      const marker = this.add.text(x, y - 1, "", {
-        fontFamily: "monospace",
-        fontSize: "4px",
-        color: PALETTE.goldStamp
-      }).setOrigin(0.5, 0.5).setDepth(881).setName("archive-minimap-marker");
-      this.mapCells.set(room.id, cell);
-      this.mapLabels.set(room.id, label);
-      this.mapMarkers.set(room.id, marker);
-    }
-  }
-
-  private drawArchiveCompassRelic(x: number, y: number) {
-    this.add.rectangle(x, y, 23, 25, color(PALETTE.black), 0.92)
-      .setName("archive-compass-relic-panel")
-      .setStrokeStyle(1, color(PALETTE.goldStamp), 0.9)
-      .setDepth(878);
-    if (this.textures.exists(SNES_ARCHIVE_COMPASS_RELIC_ASSET.key)) {
-      this.add.image(x, y - 2, SNES_ARCHIVE_COMPASS_RELIC_ASSET.key)
-        .setName("archive-compass-relic")
-        .setDepth(880);
-    } else {
-      this.add.rectangle(x, y - 2, 18, 18, color(PALETTE.terminalCyan), 0.86)
-        .setName("archive-compass-relic-fallback")
-        .setStrokeStyle(1, color(PALETTE.goldStamp))
-        .setDepth(880);
-    }
-    this.archiveCompassRelicLabel = this.add.text(x, y + 8, "MAP", {
-      fontFamily: "monospace",
-      fontSize: "4px",
-      color: PALETTE.goldStamp,
-      backgroundColor: PALETTE.black
-    }).setName("archive-compass-relic-label").setOrigin(0.5, 0).setDepth(881);
-  }
-
-  private updateVisitedMinimap() {
-    const dungeonMapRevealed = gameState.dungeons.archive_cavern?.mapRevealed ?? false;
-    this.archiveCompassRelicLabel?.setText(dungeonMapRevealed ? "MAP" : "???")
-      .setColor(dungeonMapRevealed ? PALETTE.goldStamp : PALETTE.stoneGray);
-    for (const room of Object.values(ARCHIVE_ROOMS)) {
-      const visited = this.visitedRoomIds.has(room.id);
-      const revealed = room.roomType !== "secret" || this.revealedSecretIds.has(room.id) || visited || dungeonMapRevealed;
-      const current = room.id === this.currentRoomId;
-      this.mapCells.get(room.id)?.setFillStyle(color(current ? PALETTE.goldStamp : visited ? PALETTE.stoneLight : revealed ? PALETTE.stoneDark : PALETTE.black));
-      this.mapLabels.get(room.id)?.setText(visited ? room.id : revealed && room.roomType === "secret" ? "?" : "").setColor(current ? PALETTE.black : PALETTE.shadowNavy);
-      const marker = this.minimapMarkerForRoom(room, revealed, visited, current);
-      this.mapMarkers.get(room.id)
-        ?.setText(marker.text)
-        .setColor(marker.color)
-        .setVisible(Boolean(marker.text));
-    }
-  }
-
-  private minimapMarkerForRoom(room: ArchiveRoom, revealed: boolean, visited: boolean, current: boolean) {
-    if (!revealed) return { text: "", color: PALETTE.black };
-    const colorHex = current ? PALETTE.black : PALETTE.goldStamp;
-    if (room.roomType === "secret") return { text: visited ? "S" : "?", color: current ? PALETTE.black : PALETTE.terminalCyan };
-    if (room.roomType === "reward") return { text: "R", color: colorHex };
-    if (room.roomType === "boss") return { text: "B", color: current ? PALETTE.black : PALETTE.classNetRed };
-    return { text: "", color: PALETTE.black };
   }
 
   private drawRoomExits(room: ArchiveRoom) {
