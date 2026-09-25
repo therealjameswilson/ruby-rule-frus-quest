@@ -1,3 +1,4 @@
+import { DANNE_BOSS_HD } from "../../art/danneBossPresentation";
 import type Phaser from "phaser";
 import { EventEmitter } from "node:events";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -19,7 +20,9 @@ const { Visual, patrolStep } = vi.hoisted(() => {
     width = 0;
     height = 0;
     setOrigin() { return this; }
-    setScale() { return this; }
+    scale = 1;
+    animation = "";
+    setScale(scale: number) { this.scale = scale; return this; }
     setDepth() { return this; }
     setAngle() { return this; }
     setStrokeStyle() { return this; }
@@ -32,7 +35,7 @@ const { Visual, patrolStep } = vi.hoisted(() => {
     setText(text: string) { this.text = text; return this; }
     setName(name: string) { this.name = name; return this; }
     setSize(width: number, height: number) { this.width = width; this.height = height; return this; }
-    play() { return this; }
+    play(animation: string) { this.animation = animation; return this; }
     add() { return this; }
     setVisible(visible: boolean) { this.visible = visible; return this; }
     setPosition(x: number, y: number) { this.x = x; this.y = y; return this; }
@@ -75,7 +78,7 @@ vi.mock("./Enemy", () => ({
     velocityX = 0;
     velocityY = 0;
     spriteKey = "danne-boss-combat";
-    constructor(public scene: Phaser.Scene, public currentX: number, public currentY: number) {}
+    constructor(public scene: Phaser.Scene, public currentX: number, public currentY: number, options: { spriteKey: string }) { this.spriteKey = options.spriteKey; }
     get position() { return { x: this.currentX, y: this.currentY }; }
     moveTowardWaypoint() { patrolStep(); }
     bodyBounds() { return { x: this.currentX - 9, y: this.currentY - 14, width: 18, height: 20 }; }
@@ -87,7 +90,7 @@ vi.mock("./Enemy", () => ({
 }));
 
 function createEncounter(encounterMode?: "combat" | "foreshadow", speechBlocked?: () => boolean,
-  boltBlocked?: (x: number, y: number) => boolean) {
+  boltBlocked?: (x: number, y: number) => boolean, detailed = false) {
   const sprites: InstanceType<typeof Visual>[] = [];
   const panels: InstanceType<typeof Visual>[] = [];
   const scene = {
@@ -104,7 +107,8 @@ function createEncounter(encounterMode?: "combat" | "foreshadow", speechBlocked?
       }
     },
     tweens: { add: vi.fn() },
-    anims: { exists: () => false }
+    textures: { exists: (key: string) => detailed && key === DANNE_BOSS_HD.key },
+    anims: { exists: () => detailed }
   };
   const lurker = new DanneLurker(scene as unknown as Phaser.Scene, 50, 50, { waypoints: [], encounterMode, speechBlocked, boltBlocked });
   const update = (now: number, delta: number, player = { x: 50, y: 50 }, enabled = true, combat?: PlayerCombatReadout) => {
@@ -115,6 +119,16 @@ function createEncounter(encounterMode?: "combat" | "foreshadow", speechBlocked?
   };
   return { lurker, sprites, update, scene, speech: panels[0] };
 }
+
+it("uses detailed lurker art at the same logical size and preserves collision bounds", () => {
+  const { lurker } = createEncounter("combat", undefined, undefined, true);
+  const actor = (lurker as unknown as { sprite: { scale: number; animation: string } }).sprite;
+  expect(lurker.readout(0).spriteKey).toBe(DANNE_BOSS_HD.key);
+  expect(actor.scale * DANNE_BOSS_HD.frameW).toBeCloseTo(32 * 0.72);
+  expect(actor.scale * DANNE_BOSS_HD.frameH).toBeCloseTo(48 * 0.72);
+  expect(actor.animation).toBe(`${DANNE_BOSS_HD.key}-colossus`);
+  expect(lurker.bodyBounds()).toEqual({ x: 41, y: 36, width: 18, height: 20 });
+});
 
 describe("DANN-E speech priority", () => {
   beforeEach(() => vi.clearAllMocks());

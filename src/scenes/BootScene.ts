@@ -1,3 +1,4 @@
+import { DANNE_BOSS_HD } from "../art/danneBossPresentation";
 import Phaser from "phaser";
 import { OFFICIAL_FRUS_ART } from "../assets/officialFrus";
 import { installArtSharpness } from "../systems/artSharpness";
@@ -152,6 +153,9 @@ export class BootScene extends Phaser.Scene {
     for (const asset of DANNE_RUNTIME_SPRITE_ASSETS) {
       this.load.image(asset.key, asset.path);
     }
+    this.load.spritesheet(DANNE_BOSS_HD.key, DANNE_BOSS_HD.path, {
+      frameWidth: DANNE_BOSS_HD.frameW, frameHeight: DANNE_BOSS_HD.frameH
+    });
     this.load.spritesheet(DANNE_BOSS_SPRITE_ASSET.key, DANNE_BOSS_SPRITE_ASSET.path, {
       frameWidth: DANNE_BOSS_SPRITE_ASSET.frameW,
       frameHeight: DANNE_BOSS_SPRITE_ASSET.frameH

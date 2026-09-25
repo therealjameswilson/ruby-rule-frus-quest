@@ -1,3 +1,4 @@
+import { DANNE_BOSS_HD, danneBossFormAnimation } from "../../art/danneBossPresentation";
 import Phaser from "phaser";
 import { danneAnimKey } from "../../art/danne_anims";
 import { GAME_HEIGHT, GAME_WIDTH, PALETTE } from "../../game/constants";
@@ -99,9 +100,10 @@ export class DanneLurker extends Enemy {
   constructor(scene: Phaser.Scene, x: number, y: number, options: DanneLurkerOptions) {
     unlockCodexEntry("enemy-danne-boss");
     const difficulty = getDanneDifficultyProfile(gameState.danneDifficultyTier);
+    const detailed = scene.textures.exists(DANNE_BOSS_HD.key);
     super(scene, x, y, {
       label: options.label ?? "DANN-E",
-      spriteKey: DANNE_BOSS_SPRITE_ASSET.key,
+      spriteKey: detailed ? DANNE_BOSS_HD.key : DANNE_BOSS_SPRITE_ASSET.key,
       fallbackTextureKey: "snes-wall-danne-queue",
       waypoints: options.waypoints,
       tag: { text: "DANN-E", y: 17, color: PALETTE.goldStamp, backgroundColor: PALETTE.black, visible: false },
@@ -115,8 +117,8 @@ export class DanneLurker extends Enemy {
     this.speechBlocked = options.speechBlocked ?? (() => false);
     this.boltBlocked = options.boltBlocked ?? (() => false);
     this.homePosition = { x, y };
-    this.sprite.setOrigin(0.5, 0.82).setScale(0.72);
-    const animKey = danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
+    this.sprite.setOrigin(0.5, 0.82).setScale(0.72 / (detailed ? DANNE_BOSS_HD.density : 1));
+    const animKey = detailed ? danneBossFormAnimation("colossus") : danneAnimKey(DANNE_BOSS_SPRITE_ASSET.key, "walk-down");
     if (scene.anims.exists(animKey)) this.sprite.play(animKey);
     this.speechBack = scene.add.rectangle(0, 0, COMBAT_SPEECH_WIDTH, this.speechHeight, this.color(PALETTE.black), 0.96)
       .setOrigin(0).setStrokeStyle(1, this.color(PALETTE.goldStamp));
