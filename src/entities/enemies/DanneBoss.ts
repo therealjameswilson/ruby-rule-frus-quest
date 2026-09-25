@@ -141,6 +141,7 @@ export class DanneBoss {
   private readonly clockFill: Phaser.GameObjects.Rectangle;
   private readonly clockText: Phaser.GameObjects.Text;
   private readonly clockStatusText: Phaser.GameObjects.Text;
+  private clockStatusColor?: string;
   private readonly shortcutChoice: ChoicePrompt;
   private readonly retryChoice: ChoicePrompt;
   private combatFeedback: { text: string; tone: "info" | "warn"; msRemaining: number } | null = null;
@@ -841,8 +842,13 @@ export class DanneBoss {
         ? "DANN-E CLEARED"
         : climax.recordReady
           ? "RECORD READY"
-          : `${climax.recordMissingSummary.length} CHECKS OPEN`)
-      .setColor(this.defeated ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp);
+          : `${climax.recordMissingSummary.length} CHECKS OPEN`);
+    const statusColor = this.defeated ? PALETTE.openNetGreen : urgent ? PALETTE.classNetRed : PALETTE.goldStamp;
+    // Phaser refreshes the text texture even when setColor receives the same value.
+    if (statusColor !== this.clockStatusColor) {
+      this.clockStatusText.setColor(statusColor);
+      this.clockStatusColor = statusColor;
+    }
   }
 
   private offerShortcut(reason: string) {

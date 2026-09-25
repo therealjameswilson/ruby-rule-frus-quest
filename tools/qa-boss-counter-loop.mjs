@@ -23,6 +23,7 @@ if(controller)await context.addInitScript(()=>{
 const page=await context.newPage(),cdp=await context.newCDPSession(page),errors=[],log=[];
 await cdp.send('Emulation.setCPUThrottlingRate',{rate:cpuThrottle});
 page.on('pageerror',e=>errors.push(String(e)));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+let cpuProfileStarted=false;
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 const boss=s=>s.visibleThreats.find(t=>t.bossCombat);
 async function point(x,y){const b=await page.locator('canvas').first().boundingBox();return{x:b.x+x*b.width/256,y:b.y+y*b.height/240,id:1};}
@@ -53,6 +54,7 @@ try{
  if(mobile)await touch(86,154);else await press('Enter');
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='BlackVaultLairScene');await page.waitForTimeout(1600);
  await shot('entry');
+ if(process.argv.includes('--cpu-profile')){await cdp.send('Profiler.enable');await cdp.send('Profiler.start');cpuProfileStarted=true;}
  if(process.argv.includes('--hud-cache'))await page.evaluate(()=>{
    const ui=window.game.scene.getScene('UIScene'),render=ui.questBandGraphics.generateTexture;
    window.hudCacheAudit={refreshes:0,signatures:[],invalid:[]};
@@ -554,4 +556,4 @@ try{
  }
  assert.deepEqual(errors,[]);
 }catch(e){await shot('failure').catch(()=>{});throw e;}
-finally{await writeFile(`${out}/result.json`,JSON.stringify({cpuThrottle,mobile,tallPhone,errors,log},null,2));await browser.close();}
+finally{if(cpuProfileStarted){const {profile}=await cdp.send('Profiler.stop');await writeFile(`${out}/cpu-profile.json`,JSON.stringify(profile));}await writeFile(`${out}/result.json`,JSON.stringify({cpuThrottle,mobile,tallPhone,errors,log},null,2));await browser.close();}

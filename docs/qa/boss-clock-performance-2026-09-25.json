@@ -1,0 +1,206 @@
+{
+  "date": "2026-09-25",
+  "runtimeBase": "61f3d35",
+  "bundle": "index-cNO6E9cQ.js",
+  "change": "Cache boss clock status color; Phaser setColor refreshed its texture every frame even when unchanged.",
+  "profileEvidence": {
+    "file": "/tmp/tall-phone-boss-profile/cpu-profile.json",
+    "fullStateExportSelfMs": 3819,
+    "clockColorTextureUploadSamples": 301,
+    "scope": "4x slowed full automated fight, with debug serialization and software rendering; not a normal-play frame-rate claim."
+  },
+  "before": [
+    {
+      "phase": "colossus",
+      "debugReads": false,
+      "summary": {
+        "frames": 480,
+        "p99Ms": 19.399999856948853,
+        "maxMs": 20.899999856948853,
+        "over33Ms": 0
+      }
+    },
+    {
+      "phase": "colossus",
+      "debugReads": true,
+      "summary": {
+        "frames": 480,
+        "p99Ms": 20.700000047683716,
+        "maxMs": 26.600000143051147,
+        "over33Ms": 0
+      }
+    },
+    {
+      "phase": "swarm",
+      "debugReads": false,
+      "summary": {
+        "frames": 480,
+        "p99Ms": 18.899999856948853,
+        "maxMs": 19.200000047683716,
+        "over33Ms": 0
+      }
+    },
+    {
+      "phase": "swarm",
+      "debugReads": true,
+      "summary": {
+        "frames": 480,
+        "p99Ms": 21.100000143051147,
+        "maxMs": 25.299999952316284,
+        "over33Ms": 0
+      }
+    },
+    {
+      "phase": "cloud",
+      "debugReads": false,
+      "summary": {
+        "frames": 481,
+        "p99Ms": 18.700000047683716,
+        "maxMs": 22.100000143051147,
+        "over33Ms": 0
+      }
+    },
+    {
+      "phase": "cloud",
+      "debugReads": true,
+      "summary": {
+        "frames": 481,
+        "p99Ms": 22,
+        "maxMs": 26.100000143051147,
+        "over33Ms": 0
+      }
+    }
+  ],
+  "after": [
+    {
+      "phase": "colossus",
+      "debugReads": false,
+      "summary": {
+        "frames": 481,
+        "p99Ms": 18.600000143051147,
+        "maxMs": 19.200000047683716,
+        "over33Ms": 0
+      },
+      "recolors": 0,
+      "protocolReads": 0
+    },
+    {
+      "phase": "colossus",
+      "debugReads": true,
+      "summary": {
+        "frames": 425,
+        "p99Ms": 39.200000047683716,
+        "maxMs": 99.5,
+        "over33Ms": 10
+      },
+      "recolors": 0,
+      "protocolReads": 0
+    },
+    {
+      "phase": "colossus",
+      "debugReads": "protocol",
+      "summary": {
+        "frames": 442,
+        "p99Ms": 51.59999990463257,
+        "maxMs": 53.700000047683716,
+        "over33Ms": 31
+      },
+      "recolors": 0,
+      "protocolReads": 31
+    },
+    {
+      "phase": "swarm",
+      "debugReads": false,
+      "summary": {
+        "frames": 481,
+        "p99Ms": 18.700000047683716,
+        "maxMs": 21.90000009536743,
+        "over33Ms": 0
+      },
+      "recolors": 0,
+      "protocolReads": 0
+    },
+    {
+      "phase": "swarm",
+      "debugReads": true,
+      "summary": {
+        "frames": 480,
+        "p99Ms": 20,
+        "maxMs": 27,
+        "over33Ms": 0
+      },
+      "recolors": 0,
+      "protocolReads": 0
+    },
+    {
+      "phase": "swarm",
+      "debugReads": "protocol",
+      "summary": {
+        "frames": 441,
+        "p99Ms": 51.10000014305115,
+        "maxMs": 54.80000019073486,
+        "over33Ms": 31
+      },
+      "recolors": 0,
+      "protocolReads": 31
+    },
+    {
+      "phase": "cloud",
+      "debugReads": false,
+      "summary": {
+        "frames": 480,
+        "p99Ms": 18.600000143051147,
+        "maxMs": 19.799999952316284,
+        "over33Ms": 0
+      },
+      "recolors": 0,
+      "protocolReads": 0
+    },
+    {
+      "phase": "cloud",
+      "debugReads": true,
+      "summary": {
+        "frames": 422,
+        "p99Ms": 40.700000047683716,
+        "maxMs": 53.90000009536743,
+        "over33Ms": 10
+      },
+      "recolors": 0,
+      "protocolReads": 0
+    },
+    {
+      "phase": "cloud",
+      "debugReads": "protocol",
+      "summary": {
+        "frames": 424,
+        "p99Ms": 57,
+        "maxMs": 69.30000019073486,
+        "over33Ms": 32
+      },
+      "recolors": 0,
+      "protocolReads": 31
+    }
+  ],
+  "sampleScope": "Saved phase and position fixtures; stationary hero, active boss. Eight seconds per sample with no protocol polling or screenshots. Local debug variant parses full state every 200ms; protocol variant additionally transfers the resulting object to Playwright, then waits 200ms. Software renderer and 4x CPU slowdown; not physical-device performance or a victory playtest.",
+  "tests": {
+    "focusedPassed": 67,
+    "buildPassed": true
+  },
+  "observations": [
+    "Quiet sample clock recolors are zero in all three phases; warning and victory changes covered by unit test.",
+    "Protocol snapshot transfer produces 51-57ms p99 frames; do not use full-debug polling for pure rendering benchmarks.",
+    "Short before/after timings are subject to variance; the demonstrated improvement is removal of redundant texture uploads."
+  ],
+  "limitations": [
+    "Eight-second stationary-player samples with saved phase and position fixtures, not full-fight timing.",
+    "SwiftShader software renderer, 390x844 DPR3, 4x CPU slowdown.",
+    "Physical iPhone and console-class hardware not verified.",
+    "Overall console-quality goal remains active.",
+    "Not published."
+  ],
+  "visualChecks": {
+    "standardSkill": "Both headless and headed WebGL captures black; text state confirms movement.",
+    "regularPlaywright": "Colossus and Cloud phone captures inspected after change; clock status rendered correctly.",
+    "priorAttackArt": "Colossus, Swarm and Cloud inspected from /tmp/tall-phone-boss-performance."
+  }
+}

@@ -107,6 +107,9 @@ interface BossInternals {
   updateAttackPattern(time: number): void;
   offerShortcut(reason: string): void;
   clockContainer: Visual;
+  clockStatusText: Visual;
+  syncStatutoryClockUi(): void;
+  defeated: boolean;
   shortcutChoice: { active: boolean; choose(key: string): void };
   bolts: Array<Position & { vx: number; vy: number; expiresAt: number; sprite: Visual; returned: boolean }>;
   retryChoice: { active: boolean; choose(key: string): void };
@@ -792,6 +795,26 @@ describe("DANN-E final-review combat", () => {
     expect(markers.every(marker => marker.alpha >= 0.85 && marker.active)).toBe(true);
     internals.updateAttackTelegraph(1800);
     expect(markers.every(marker => !marker.active)).toBe(true);
+  });
+
+  it("avoids repeated clock texture refreshes while preserving warning and victory colors", () => {
+    const { internals } = fixture();
+    internals.statutoryYear = 20;
+    internals.syncStatutoryClockUi();
+    const recolor = vi.spyOn(internals.clockStatusText, "setColor");
+    for (let frame = 0; frame < 120; frame++) internals.syncStatutoryClockUi();
+    expect(recolor).not.toHaveBeenCalled();
+    internals.statutoryYear = 30;
+    internals.syncStatutoryClockUi();
+    expect(recolor).toHaveBeenCalledTimes(1);
+    const warning = recolor.mock.calls[0];
+    internals.syncStatutoryClockUi();
+    expect(recolor).toHaveBeenCalledTimes(1);
+    internals.defeated = true;
+    internals.syncStatutoryClockUi();
+    expect(recolor).toHaveBeenCalledTimes(2);
+    expect(recolor.mock.calls[1]).not.toEqual(warning);
+    expect(internals.clockStatusText.text).toBe("DANN-E CLEARED");
   });
 
   it("keeps the clock out of the shortcut choice and restores it on rejection", () => {
