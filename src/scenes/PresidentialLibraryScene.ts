@@ -1,3 +1,4 @@
+import { addMisfiledStack } from '../systems/misfiledStacks';
 import { RESEARCH_PROPS, researchProp } from '../systems/researchProps';
 import { addEditorialRoomFloor } from '../systems/editorialRoomFloor';
 import { addEditorialRoomWalls } from '../systems/editorialRoomWalls';
@@ -32,7 +33,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   private prompt!: Phaser.GameObjects.Text;
   private stageText!: Phaser.GameObjects.Text;
   private marks: Phaser.GameObjects.Text[] = [];
-  private barriers: Phaser.GameObjects.Rectangle[] = [];
+  private barriers: (Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle)[] = [];
   private solids: Phaser.Geom.Rectangle[] = [];
   private leaving = false;
   private assignment = LIBRARY_ASSIGNMENTS[8];
@@ -67,8 +68,8 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       this.solids.push(new Phaser.Geom.Rectangle(s.x-23,s.y-11,46,22));
     });
     // DANN-E's misfiled stacks close cross-aisles until each research check is filed.
-    this.barriers.push(this.add.rectangle(128,104,28,20,0x922b3b).setStrokeStyle(2,0xf1c56d).setDepth(20));
-    this.barriers.push(this.add.rectangle(193,134,54,8,0x922b3b).setStrokeStyle(1,0xf1c56d).setDepth(20));
+    this.barriers.push(addMisfiledStack(this,128,104,28,20));
+    this.barriers.push(addMisfiledStack(this,193,134,54,8));
     this.add.text(128,126,'DANN-E: "SKIP THE SOURCES!"',{fontFamily:'Arial',fontSize:'6px',color:'#ffbd99'}).setOrigin(.5).setDepth(160);
     this.add.text(128,197,'SOUTH: RETURN OUTSIDE',{fontFamily:'monospace',fontSize:'6px',color:'#ffe0a3'}).setOrigin(.5).setDepth(160);
     this.add.rectangle(128,215,30,12,0x71aa7f).setDepth(45);
