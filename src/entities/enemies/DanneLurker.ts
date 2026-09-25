@@ -108,7 +108,8 @@ export class DanneLurker extends Enemy {
       waypoints: options.waypoints,
       tag: { text: "DANN-E", y: 17, color: PALETTE.goldStamp, backgroundColor: PALETTE.black, visible: false },
       cue: { text: "30YR", y: -24, color: PALETTE.classNetRed, backgroundColor: PALETTE.black },
-      shadow: { y: 13, width: 21, height: 6 },
+      // HD colossus soles end at atlas rows 185–186: (186 - 192 * .82) * .18 ≈ 5.1.
+      shadow: detailed ? { y: 5.1, width: 18, height: 4 } : { y: 13, width: 21, height: 6 },
       speed: 16 * difficulty.speedMultiplier,
       acceleration: 58 * difficulty.speedMultiplier,
       waypointTolerance: 4
