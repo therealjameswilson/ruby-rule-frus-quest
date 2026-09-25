@@ -8087,3 +8087,8 @@ User goal: make the game play, feel, sound, and look like a Nintendo Switch 2 ga
 - ScoreVoice now uses a 60ms output fade, cancels queued oscillators and percussion, rejects new notes after disposal, and disconnects on the audio clock. Idempotent cleanup handles suspended contexts and reverb-only tails.
 - Build and 15 focused audio tests passed. Actual OfflineAudioContext renders cover normal, early and reverb-only disposal; tail peaks zero, all sources retired. Live theme handoff and mute passed; suspended retirement resumes and cleans up. Mobile WebKit passed three hide/resume cycles without errors.
 - Skill capture inspected (black WebGL output); normal WebKit screenshot inspected. Evidence docs/qa/score-release-2026-09-25.json. No human listening or physical-device validation. Local only. Broader goal remains incomplete.
+
+## 2026-09-25 — photocopier hit recoil
+- Previous goal turn made progress through smooth score retirement. Checked dev JSON warnings: actual Office start passed with zero page errors/HTTP failures, so no unnecessary loading change.
+- Found BureaucraticWall hit tween competing with per-frame position and pulling toward spawn x. Replaced it with bounded 180ms visual recoil around current position, driven by gameplay delta; collision bounds and path remain unaffected. Reduced-motion suppresses recoil.
+- Build and 27 wall movement/hit tests passed. Browser fixture compares hit versus untouched roaming wall: render offset at most2px, identical logical movement/bounds, settles to0, pause retains recoil, reduced-motion0; no errors. Inspected actual impact screenshot; skill capture black inspected. Evidence docs/qa/copier-recoil-2026-09-25.json. Local only; broad goal remains active.

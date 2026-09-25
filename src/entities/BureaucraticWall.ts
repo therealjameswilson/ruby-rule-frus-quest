@@ -4,6 +4,7 @@ import { SNES_BUREAUCRATIC_WALL_ASSETS } from "../game/snesAtlas";
 import type { Position } from "../game/types";
 import { setPixelPosition, snapPixel } from "../systems/pixelPerfect";
 import { photocopierTexture } from "../systems/photocopierArt";
+import { prefersReducedMotion } from "../systems/motionPreferences";
 import { wallFollowFactor } from "../systems/wallMotion";
 
 function color(hex: string) {
@@ -41,6 +42,7 @@ export class BureaucraticWall {
   private wanderTarget: Position;
   private retargetAt = 0;
   private lastBurstAt = 0;
+  private hitRecoilMs = 0;
 
   constructor(scene: Phaser.Scene, id: string, label: string, x: number, y: number, options: BureaucraticWallOptions = {}) {
     this.id = id;
@@ -156,7 +158,12 @@ export class BureaucraticWall {
     this.currentX = Phaser.Math.Linear(this.currentX, desiredX, follow);
     this.currentY = Phaser.Math.Linear(this.currentY, desiredY, follow);
     const bob = Math.sin((timeMs + this.wobbleOffset) / (this.behavior === "freeze" ? 90 : 180)) * (this.behavior === "freeze" ? 0.7 : 1.3);
-    const renderX = snapPixel(this.currentX);
+    // Recoil belongs to the rendered pose, never the collision position. A
+    // separate position tween fought this update and pulled roaming walls home.
+    this.hitRecoilMs = Math.max(0, this.hitRecoilMs - Math.max(0, Math.min(deltaMs, 50)));
+    const recoil = prefersReducedMotion() ? 0
+      : Math.sin((180 - this.hitRecoilMs) * Math.PI / 45) * 2 * this.hitRecoilMs / 180;
+    const renderX = snapPixel(this.currentX + recoil);
     const renderY = snapPixel(this.currentY + bob);
     setPixelPosition(this.container, renderX, renderY);
     this.container.setDepth(renderY);
@@ -174,14 +181,7 @@ export class BureaucraticWall {
       this.spawnImpactFlash(false);
       this.spawnStoneChipBurst(false);
     }
-    this.container.scene.tweens.add({
-      targets: this.container,
-      x: this.x + 2,
-      duration: 45,
-      yoyo: true,
-      repeat: 3,
-      ease: "Stepped"
-    });
+    this.hitRecoilMs = 180;
   }
 
   clear() {
