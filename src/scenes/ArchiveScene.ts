@@ -581,7 +581,6 @@ export class ArchiveScene extends Phaser.Scene {
     this.visitedRoomIds = new Set(visitedRooms);
     this.enterRoom(restoredRoomId ?? "A1", restoredPlayer ?? { x: 128, y: 184 }, false);
     if (!restoredPlayer && this.sourceNoteStatus === "inactive") {
-      this.toast.show("Find Source Note 47\nBring it to the research table", this.player.position, "info");
       setLatestMessage("Archive A1: find Source Note 47 and verify it at the research table.");
     } else if (!restoredPlayer) {
       this.toast.show(gameState.objective, this.player.position, "info");

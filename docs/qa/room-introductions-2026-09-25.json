@@ -1,0 +1,86 @@
+{
+  "date": "2026-09-25",
+  "build": "passed",
+  "introChecks": [
+    {
+      "mobile": false,
+      "reduced": false,
+      "bannerY": 48,
+      "panelHeight": 24,
+      "title": "A1 SOURCE ROOM",
+      "titleWidth": 74,
+      "panelWidth": 176,
+      "toast": false,
+      "objective": "TAKE SOURCE NOTE",
+      "dismissed": true,
+      "errors": []
+    },
+    {
+      "mobile": false,
+      "reduced": true,
+      "bannerY": 48,
+      "panelHeight": 24,
+      "title": "A1 SOURCE ROOM",
+      "titleWidth": 74,
+      "panelWidth": 176,
+      "toast": false,
+      "objective": "TAKE SOURCE NOTE",
+      "dismissed": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "reduced": false,
+      "bannerY": 48,
+      "panelHeight": 24,
+      "title": "A1 SOURCE ROOM",
+      "titleWidth": 74,
+      "panelWidth": 176,
+      "toast": false,
+      "objective": "TAKE SOURCE NOTE",
+      "dismissed": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "reduced": true,
+      "bannerY": 48,
+      "panelHeight": 24,
+      "title": "A1 SOURCE ROOM",
+      "titleWidth": 74,
+      "panelWidth": 176,
+      "toast": false,
+      "objective": "TAKE SOURCE NOTE",
+      "dismissed": true,
+      "errors": []
+    }
+  ],
+  "interactionChecks": [
+    {
+      "mobile": false,
+      "text": "TAKE NOTE",
+      "width": 63,
+      "visible": true,
+      "target": "Source Note 47",
+      "status": "inactive",
+      "pickupSucceeded": true,
+      "npcTalkSucceeded": true,
+      "errors": []
+    },
+    {
+      "mobile": true,
+      "text": "TAKE NOTE",
+      "width": 63,
+      "visible": true,
+      "target": "Source Note 47",
+      "status": "inactive",
+      "pickupSucceeded": true,
+      "npcTalkSucceeded": true,
+      "errors": []
+    }
+  ],
+  "limits": [
+    "Browser viewports and fixture interaction setup, not physical-device or full-campaign validation",
+    "Local only; not published"
+  ]
+}

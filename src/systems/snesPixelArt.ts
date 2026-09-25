@@ -1,3 +1,4 @@
+import { prefersReducedMotion } from './motionPreferences';
 import { gateCaptionTexture } from './gateCaptionArt';
 import { dungeonGateTexture } from "./dungeonGateArt";
 import { rewardDisplayTexture } from './rewardDisplayArt';
@@ -625,30 +626,21 @@ export function addSnesRoomIntroBanner(scene: Phaser.Scene, options: SnesRoomInt
   const accent = options.accent ?? PALETTE.goldStamp;
   const title = options.title.replace(/\s+/g, " ").trim().toUpperCase().slice(0, 30);
   const subtitle = (options.subtitle ?? "FRUS PRODUCTION ROOM").replace(/\s+/g, " ").trim().toUpperCase().slice(0, 28);
-  const container = keepTagged(scene.add.container(128, 68).setDepth(depth), "snes-room-intro-banner", track);
-  container.add(tag(scene.add.rectangle(0, 0, 154, 28, color(PALETTE.black), 0.92).setStrokeStyle(2, color(accent)), "snes-room-intro-panel"));
-  container.add(tag(scene.add.rectangle(0, -16, 124, 3, color(accent), 1), "snes-room-intro-top-rule"));
-  container.add(tag(scene.add.rectangle(0, 16, 124, 3, color(PALETTE.deepRuby), 1), "snes-room-intro-bottom-rule"));
-  container.add(tag(scene.add.rectangle(-68, 0, 5, 18, color(accent), 1), "snes-room-intro-side-rule"));
-  container.add(tag(scene.add.rectangle(68, 0, 5, 18, color(accent), 1), "snes-room-intro-side-rule"));
-  container.add(tag(scene.add.text(0, -11, title, {
-    fontFamily: "monospace",
-    fontSize: "7px",
-    color: accent,
-    align: "center"
+  const container = keepTagged(scene.add.container(128, 48).setDepth(depth), "snes-room-intro-banner", track);
+  container.add(tag(scene.add.rectangle(0, 0, 176, 24, 0x17262c, 0.96)
+    .setStrokeStyle(1, 0x9d8b63), "snes-room-intro-panel"));
+  container.add(tag(scene.add.rectangle(-83, 0, 2, 16, color(accent), 1), "snes-room-intro-side-rule"));
+  container.add(tag(scene.add.text(0, 0, title, {
+    fontFamily: "monospace", fontSize: "8px", color: "#fff0d4", align: "center"
   }).setOrigin(0.5, 0), "snes-room-intro-title"));
-  container.add(tag(scene.add.text(0, 3, subtitle, {
-    fontFamily: "monospace",
-    fontSize: "5px",
-    color: PALETTE.creamPaper,
-    align: "center"
+  container.add(tag(scene.add.text(0, -8, subtitle, {
+    fontFamily: "monospace", fontSize: "5px", color: "#a8c3c6", align: "center"
   }).setOrigin(0.5, 0), "snes-room-intro-subtitle"));
   scene.tweens.add({
     targets: container,
-    y: 58,
     alpha: 0,
-    delay: 720,
-    duration: 420,
+    delay: 900,
+    duration: prefersReducedMotion() ? 0 : 250,
     ease: "Cubic.easeIn",
     onComplete: () => {
       if (container.active) container.destroy();
