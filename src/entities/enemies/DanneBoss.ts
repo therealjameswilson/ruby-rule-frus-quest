@@ -1,3 +1,4 @@
+import { bossBoltTrail } from "../../systems/bossBoltTrail";
 import { bossBoastPresentation } from "../../systems/bossBoastPresentation";
 import { prefersReducedMotion } from "../../systems/motionPreferences";
 import { frameDeltaSeconds } from "../../systems/smoothMovement";
@@ -71,6 +72,7 @@ import { readDanneBossCheckpoint, writeDanneBossCheckpoint } from "../../game/da
 export type DanneBossPhase = "intro" | "colossus" | "swarm" | "cloud" | "ascendant" | "defeated";
 
 interface EgoBolt extends BossBoltMotion {
+  trail: ReturnType<typeof bossBoltTrail>;
   sprite: Phaser.GameObjects.Sprite;
   expiresAt: number;
   returned: boolean;
@@ -935,7 +937,10 @@ export class DanneBoss {
     const animKey = danneAnimKey(EGO_BOLT.key, "fly");
     if (this.scene.anims.exists(animKey)) bolt.play(animKey);
     bolt.setAngle(Math.round(Phaser.Math.RadToDeg(Math.atan2(vy, vx))));
+    const trail = bossBoltTrail(this.scene);
+    trail.update(motion.x, motion.y, vx, vy);
     this.bolts.push({
+      trail,
       sprite: bolt,
       ...motion,
       expiresAt: this.scene.time.now + 2000,
@@ -959,6 +964,7 @@ export class DanneBoss {
     for (let index = this.bolts.length - 1; index >= 0; index -= 1) {
       const bolt = this.bolts[index];
       if (timeMs >= bolt.expiresAt) {
+        bolt.trail.destroy();
         bolt.sprite.destroy();
         this.bolts.splice(index, 1);
         continue;
@@ -967,6 +973,7 @@ export class DanneBoss {
       advanceBossBolt(bolt, deltaMs);
       bolt.sprite.setPosition(bolt.x, bolt.y);
       bolt.sprite.setDepth(Math.round(bolt.sprite.y + 6));
+      bolt.trail.update(bolt.x, bolt.y, bolt.vx, bolt.vy);
       const boltBox = new Phaser.Geom.Rectangle(bolt.sprite.x - 6, bolt.sprite.y - 6, 12, 12);
       // A parry wins over contact on the same frame, just as in earlier rooms.
       if (!bolt.returned && swing && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, swing)) {
@@ -974,7 +981,9 @@ export class DanneBoss {
         bolt.expiresAt = timeMs + DANNE_BOSS_RETURN.lifetimeMs;
         this.boltsReturned += 1;
         aimReturnedBossBolt(bolt, { x: this.sprite.x, y: this.sprite.y - 12 });
-        bolt.sprite.setTintFill(color(PALETTE.terminalCyan));
+        bolt.sprite.setTint(color(PALETTE.terminalCyan));
+        bolt.trail.returned();
+        bolt.trail.update(bolt.x, bolt.y, bolt.vx, bolt.vy);
         bolt.sprite.setAngle(Math.round(Phaser.Math.RadToDeg(Math.atan2(bolt.vy, bolt.vx))));
         setLatestMessage("EGO RETURNED!");
         retroAudio.toolHit(tool);
@@ -984,11 +993,13 @@ export class DanneBoss {
         return;
       }
       if (!bolt.returned && Phaser.Geom.Intersects.RectangleToRectangle(boltBox, footBox)) {
+        bolt.trail.destroy();
         bolt.sprite.destroy();
         this.bolts.splice(index, 1);
         this.hitPlayer(bolt, "ego_bolt", timeMs);
         if (this.retryChoice.active) return;
       } else if (bolt.x < -20 || bolt.x > GAME_WIDTH + 20 || bolt.y < 20 || bolt.y > GAME_HEIGHT + 20) {
+        bolt.trail.destroy();
         bolt.sprite.destroy();
         this.bolts.splice(index, 1);
       }
@@ -1111,7 +1122,10 @@ export class DanneBoss {
   }
 
   private clearBolts() {
-    for (const bolt of this.bolts.splice(0)) bolt.sprite.destroy();
+    for (const bolt of this.bolts.splice(0)) {
+      bolt.trail.destroy();
+      bolt.sprite.destroy();
+    }
   }
 
   private clearMinis() {

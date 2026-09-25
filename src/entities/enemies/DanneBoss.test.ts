@@ -71,6 +71,7 @@ class Visual {
   scale = 1;
   animation = "";
   play(key: string) { this.animation = key; return this; }
+  setName() { return this; }
   setOrigin() { return this; } setScale(scale: number) { this.scale = scale; return this; } setDepth() { return this; }
   setVisible(visible: boolean) { this.visible = visible; return this; } setStrokeStyle() { return this; } setScrollFactor() { return this; }
   text = ""; width = 0; height = 0;
@@ -111,7 +112,7 @@ interface BossInternals {
   syncStatutoryClockUi(): void;
   defeated: boolean;
   shortcutChoice: { active: boolean; choose(key: string): void };
-  bolts: Array<Position & { vx: number; vy: number; expiresAt: number; sprite: Visual; returned: boolean }>;
+  bolts: Array<Position & { vx: number; vy: number; expiresAt: number; sprite: Visual; trail: { destroy(): void }; returned: boolean }>;
   retryChoice: { active: boolean; choose(key: string): void };
 }
 
@@ -122,6 +123,7 @@ function fixture(phase: "colossus" | "swarm" | "cloud" | "ascendant" = "colossus
       graphics: () => new Visual(),
       sprite: (x: number, y: number) => new Visual(x, y),
       ellipse: (x: number, y: number) => new Visual(x, y),
+      triangle: (x: number, y: number) => new Visual(x, y),
       rectangle: (x: number, y: number) => new Visual(x, y),
       text: (x: number, y: number) => new Visual(x, y),
       container: () => new Visual()
@@ -521,11 +523,13 @@ describe("DANN-E final-review combat", () => {
     internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
     internals.fireBolt({ x: 128, y: 150 }, player.position, 50);
     const sprites = internals.bolts.map((bolt) => bolt.sprite);
+    const trails = internals.bolts.map(bolt => vi.spyOn(bolt.trail, "destroy"));
     internals.updateBolts(1000, 16);
     expect(gameState.reliability).toBe(90);
     expect(gameState.sceneProgress.blackVaultCombatDamage).toBe(10);
     expect(internals.bolts).toHaveLength(0);
     expect(sprites.every((sprite) => !sprite.active)).toBe(true);
+    expect(trails.every(trail => trail.mock.calls.length === 1)).toBe(true);
     expect(player.takeHit).toHaveBeenCalledTimes(1);
   });
 

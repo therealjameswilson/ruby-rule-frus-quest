@@ -65,6 +65,20 @@ try{
      return result;
    };
  });
+ if(process.argv.includes('--bolt-art'))await page.evaluate(()=>{
+   window.boltArtAudit={samples:0,phases:{},invalid:[],images:{}};
+   window.game.events.on('poststep',()=>{
+     const scene=window.game.scene.getScene('BlackVaultLairScene');if(!scene.scene.isActive())return;
+     const boss=scene.danneBoss;if(!boss)return;
+     const tails=scene.children.list.filter(o=>o.name==='boss-ego-direction-tail'),audit=window.boltArtAudit;
+     if(tails.length!==boss.bolts.length)audit.invalid.push('Orphan or missing directional tail');
+     if(!boss.bolts.length)return;
+     audit.samples++;audit.phases[boss.currentPhase]=(audit.phases[boss.currentPhase]??0)+1;
+     for(const bolt of boss.bolts)if(bolt.returned&&bolt.sprite.tintFill)audit.invalid.push('Paper detail lost on return');
+     const label=boss.bolts.some(b=>b.returned)?'returned':boss.bolts.length>=3?boss.currentPhase:null;
+     if(label&&!audit.images[label]){audit.images[label]='pending';window.game.renderer.snapshot(image=>{audit.images[label]=image.src;});}
+   });
+ });
  if(process.argv.includes('--damage-trail'))await page.evaluate(()=>{
    window.damageTrailAudit={samples:0,phases:{},invalid:[]};
    window.game.events.on('poststep',()=>{
@@ -565,6 +579,12 @@ try{
     assert.deepEqual(Object.keys(audit.phases).sort(),['cloud','colossus','swarm']);
     assert.equal(await page.evaluate(()=>window.game.scene.getScene('BlackVaultLairScene').events.listeners('update').filter(f=>f.name==='updateDamageTrail').length),0);
     await writeFile(`${out}/damage-trail.json`,JSON.stringify(audit,null,2));
+  }
+  if(process.argv.includes('--bolt-art')){
+    const audit=await page.evaluate(()=>window.boltArtAudit);
+    assert(audit.samples>0);assert.deepEqual(audit.invalid,[]);assert.deepEqual(Object.keys(audit.phases).sort(),['cloud','colossus','swarm']);
+    for(const [label,data] of Object.entries(audit.images)){assert(data.startsWith('data:'));await writeFile(`${out}/bolts-${label}.png`,Buffer.from(data.split(',')[1],'base64'));}
+    delete audit.images;await writeFile(`${out}/bolt-art.json`,JSON.stringify(audit,null,2));
   }
   await page.reload();await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='TapToStartScene');
   if(mobile)await touch(86,154);else await press('Enter');
