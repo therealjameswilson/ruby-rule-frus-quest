@@ -219,7 +219,7 @@ export const DANNE_UI_ASSETS = [
   {
     id: "scroll-corners",
     key: "danne-ui-scroll-corners",
-    path: "assets/art-pack/danne-pack/ui/20_ui_scroll_corners.png",
+    path: "assets/art-pack/danne-pack/ui/20_ui_scroll_corners.webp",
     useCase: "Dialog scroll corner and edge chrome"
   },
   DANNE_LETTERBOX_ASSET
@@ -229,7 +229,7 @@ export const DANNE_VFX_ASSETS = [
   {
     id: "ego-bolt",
     key: "danne-vfx-ego-bolt",
-    path: "assets/art-pack/danne-pack/vfx/19_vfx_ego_bolt_strip.png",
+    path: "assets/art-pack/danne-pack/vfx/19_vfx_ego_bolt_strip.webp",
     cols: 4,
     rows: 2,
     frameW: 384,
