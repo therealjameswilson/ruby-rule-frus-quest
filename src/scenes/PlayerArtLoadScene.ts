@@ -1,6 +1,7 @@
+import { registerDanneAnims } from '../art/danne_anims';
 import Phaser from 'phaser';
 import { preloadAttackPoses } from '../art/attackPoses';
-import { selectedAttackSheet } from '../systems/playerArtLoading';
+import { selectedAttackSheet, preloadCombatEffects, gameplayArtReady } from '../systems/playerArtLoading';
 import { getInput, tickInput, swallowNextInputFrame } from '../input/InputState';
 
 /** A recoverable loading boundary. Never changes the saved campaign location. */
@@ -36,10 +37,11 @@ export class PlayerArtLoadScene extends Phaser.Scene {
     });
     const sheet = selectedAttackSheet();
     if (sheet) preloadAttackPoses(this, [sheet]);
+    preloadCombatEffects(this);
   }
   create() {
-    const sheet = selectedAttackSheet();
-    if (!this.failed && (!sheet || this.textures.exists(sheet.key))) {
+    if (!this.failed && gameplayArtReady(this)) {
+      registerDanneAnims(this);
       this.scene.start(this.destination.target, this.destination.data);
       return;
     }

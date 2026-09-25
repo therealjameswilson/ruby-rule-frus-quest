@@ -104,6 +104,10 @@ export class UIScene extends Phaser.Scene {
   }
 
   update() {
+    if (!this.sys.settings.visible) {
+      this.controls.setEnabled(false);
+      return;
+    }
     this.syncPixelCameras();
     if (this.scene.isActive("CodexScene")) {
       this.controls.refreshForScene(null);

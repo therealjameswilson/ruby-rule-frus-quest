@@ -340,14 +340,13 @@ export const DANNE_BOSS_PORTRAIT_ASSET = {
   displayName: "DANN-E"
 } as const;
 
-// Map paintings are loaded by their room or the gallery, not before the title.
+// Only the warning screen is shared with startup. Legacy scroll chrome is gallery-only.
 export const DANNE_SHARED_IMAGE_ASSETS = [
-  DANNE_WARNING_SCREEN_ASSET,
-  ...DANNE_UI_ASSETS.filter(asset => asset.id === "scroll-corners")
+  DANNE_WARNING_SCREEN_ASSET
 ] as const;
 
 export const DANNE_CODEX_IMAGE_ASSETS = [...DANNE_PORTRAIT_ASSETS, ...DANNE_VARIANT_ASSETS, ...DANNE_ITEM_ASSETS] as const;
-export const DANNE_IMAGE_ASSETS = [DANNE_BOSS_PORTRAIT_ASSET, DANNE_BOSS_HUD_ASSET, DANNE_LETTERBOX_ASSET, ...DANNE_SHARED_IMAGE_ASSETS, ...DANNE_MAP_ASSETS, ...DANNE_CODEX_IMAGE_ASSETS] as const;
+export const DANNE_IMAGE_ASSETS = [DANNE_BOSS_PORTRAIT_ASSET, ...DANNE_UI_ASSETS, ...DANNE_SHARED_IMAGE_ASSETS, ...DANNE_MAP_ASSETS, ...DANNE_CODEX_IMAGE_ASSETS] as const;
 
 export const DANNE_GALLERY_ASSETS = [
   { category: "PORTRAIT", ...DANNE_BOSS_PORTRAIT_ASSET },

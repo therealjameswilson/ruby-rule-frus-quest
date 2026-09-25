@@ -55,7 +55,6 @@ import {
 import { resetGameState, seedProgressForScene, setPlayerProfile, setSceneState } from "../game/state";
 import { retroAudio } from "../systems/audio";
 import { ensurePixelBitmapFont, installPixelTextFactory } from "../systems/pixelFont";
-import { WEAPON_VFX_ASSET } from "../systems/weaponState";
 import { VOLUME_ASSEMBLY_ASSETS } from "../systems/volumeAssembly";
 
 function color(hex: string) {
@@ -77,10 +76,6 @@ export class BootScene extends Phaser.Scene {
     for (const asset of OFFICIAL_FRUS_ART) {
       if (!this.textures.exists(asset.key)) this.load.image(asset.key, asset.path);
     }
-    this.load.spritesheet(WEAPON_VFX_ASSET.key, WEAPON_VFX_ASSET.path, {
-      frameWidth: WEAPON_VFX_ASSET.frameWidth,
-      frameHeight: WEAPON_VFX_ASSET.frameHeight
-    });
     this.load.image(VOLUME_ASSEMBLY_ASSETS.hudBar.key, VOLUME_ASSEMBLY_ASSETS.hudBar.path);
     this.load.image(VOLUME_ASSEMBLY_ASSETS.completedHero.key, VOLUME_ASSEMBLY_ASSETS.completedHero.path);
     this.load.image(SNES_OFFICE_ROOM_BACKGROUND_ASSET.key, SNES_OFFICE_ROOM_BACKGROUND_ASSET.path);
@@ -165,12 +160,6 @@ export class BootScene extends Phaser.Scene {
       frameWidth: DANNE_BOSS_SPRITE_ASSET.frameW,
       frameHeight: DANNE_BOSS_SPRITE_ASSET.frameH
     });
-    for (const asset of DANNE_VFX_ASSETS) {
-      this.load.spritesheet(asset.key, asset.path, {
-        frameWidth: asset.frameW,
-        frameHeight: asset.frameH
-      });
-    }
   }
 
   private preloadGameplayTilesets() {
