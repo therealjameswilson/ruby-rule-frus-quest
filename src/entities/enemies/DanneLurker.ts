@@ -70,6 +70,7 @@ function vectorToward(from: Position, to: Position, speed: number) {
 }
 
 export class DanneLurker extends Enemy {
+  private cueColor?: string;
   private nextPressureAt = 0;
   private pressureUntil = 0;
   private nextEgoBoltAt = 0;
@@ -211,8 +212,12 @@ export class DanneLurker extends Enemy {
     }
 
     const active = timeMs < this.pressureUntil;
+    const cueColor = stunned ? PALETTE.terminalCyan : PALETTE.classNetRed;
+    if (cueColor !== this.cueColor) {
+      this.cue.setColor(cueColor);
+      this.cueColor = cueColor;
+    }
     this.cue.setText(stunned ? "STUN" : "30YR")
-      .setColor(stunned ? PALETTE.terminalCyan : PALETTE.classNetRed)
       .setVisible(active || (stunned && (timeMs >= this.boastUntil || this.speechBlocked())));
     if (stunned) this.sprite.setTint(this.color(Math.floor(timeMs / 120) % 2 === 0 ? PALETTE.creamPaper : PALETTE.terminalCyan));
     else if (this.egoBoltTelegraph && Math.floor(timeMs / 100) % 2 === 0) this.sprite.setTint(this.color(PALETTE.classNetRed));

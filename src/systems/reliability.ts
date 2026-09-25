@@ -61,6 +61,7 @@ export class ReliabilityHud {
     id: string;
     box: Phaser.GameObjects.Rectangle;
     label: Phaser.GameObjects.Text;
+    presentation?: string;
   }> = [];
   private readonly details: Phaser.GameObjects.Container;
   private readonly detailsText: Phaser.GameObjects.Text;
@@ -124,6 +125,9 @@ export class ReliabilityHud {
       const item = readout.find((candidate) => candidate.id === slot.id);
       const acquired = Boolean(item?.acquired);
       const equipped = Boolean(item?.equipped);
+      const presentation = `${acquired}:${equipped}`;
+      if (slot.presentation === presentation) continue;
+      slot.presentation = presentation;
       slot.box.setFillStyle(color(equipped ? PALETTE.goldStamp : acquired ? PALETTE.deepRuby : PALETTE.black));
       slot.box.setStrokeStyle(1, color(equipped ? PALETTE.white : acquired ? PALETTE.goldStamp : PALETTE.stoneGray));
       slot.label.setColor(equipped ? PALETTE.black : acquired ? PALETTE.goldStamp : PALETTE.stoneGray);
