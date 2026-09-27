@@ -1,6 +1,9 @@
 import { AREA_REGISTRY } from "./constants";
 
 const RESUME_LOCATIONS: Readonly<Record<string, string>> = {
+  ResearchWorldScene: "RESEARCH GROUNDS",
+  PresidentialLibraryScene: "PRESIDENTIAL LIBRARY",
+  NscLibraryScene: "NSC RESEARCH WING",
   OfficeScene: "NAVY HILL OFFICE",
   GuideScene: "TRAINING GARDEN",
   SilentReadScene: "EDITORIAL & PROOFING",
