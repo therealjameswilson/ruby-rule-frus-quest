@@ -101,7 +101,8 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     setLatestMessage(`${this.assignment.topic}. ${this.assignment.task}`);
     if (!gameState.sceneProgress[`libraryBriefed_v2_${id}`]) {
       gameState.sceneProgress[`libraryBriefed_v2_${id}`]=1;
-      this.dialog.show('ARCHIVAL RESEARCH',[
+      if(id==='reagan')this.toast.show('START: FINDING AID · NORTHWEST',this.player.position,'info');
+      else this.dialog.show('ARCHIVAL RESEARCH',[
         this.assignment.topic,
         this.assignment.task,
         'Explore this optional source trail. The holdings here do not define your volume’s topic or date range.',
@@ -127,7 +128,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     }
     if(this.dialog.active){this.player.update(delta,false);this.prompt.setVisible(false);if(input.aJustPressed||input.bJustPressed)this.dialog.advance();return;}
     if(this.choice.active){this.player.update(delta,false);this.prompt.setVisible(false);this.choice.updateInput();return;}
-    if(handleOpenOverlays(this.inventory)){this.player.update(delta,false);this.prompt.setVisible(false);return;}
+    if(handleOpenOverlays(this.inventory,undefined,true)){this.player.update(delta,false);this.prompt.setVisible(false);return;}
     if(input.menuJustPressed||input.pauseJustPressed){this.inventory.toggle();return;}
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
     const gates = [new Phaser.Geom.Rectangle(114,94,28,20),new Phaser.Geom.Rectangle(166,130,54,8)].filter((_,i)=>stage<i+1);
@@ -169,7 +170,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       this.choice.showLibraryPacket(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(fileLibraryStage(gameState.sceneProgress,a.library,3,true))addDocumentPoints(8,`${a.library}: research packet filed: ${a.topic}`);
         this.refresh(true);saveGameNow();
-        this.dialog.show('PACKET FILED','Research in progress, filed for supervisor review. Your public-source note, comparison, and request trail are attached. Private-record and State research remain open.',()=>this.offerManuscriptReturn());
+        this.dialog.show('PACKET FILED','Research packet filed for supervisor review. Unfinished research stays in the log.',()=>this.offerManuscriptReturn());
       },()=>{if(stage===4)this.offerManuscriptReturn();});return;
     }
     if(station<stage&&!repair){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':STATIONS[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
@@ -177,22 +178,19 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     if(requestCatalog(a.library)&&station===0){
       this.choice.showLibraryRequest(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,0,true))return;
-        this.refresh(true);saveGameNow();
-        this.dialog.show(requestCatalog(a.library)?.accessState?'RESEARCH LOG FILED':'REQUEST FILED',requestCatalog(a.library)?.accessState?'Release metadata saved. Individual document examination and evidence gaps remain open. Next: compare evidence at the second desk.':'Exact archival lead saved. Retrieval and withdrawal checks remain pending. Next: compare evidence at the second desk.');
+        this.researchReceipt(requestCatalog(a.library)?.accessState?'Release metadata saved. Individual document examination and evidence gaps remain open.':'Exact archival lead saved. Retrieval and withdrawal checks remain pending.', 'FILED · NEXT: COMPARE');
       },()=>{},a.library);return;
     }
     if(a.library==='reagan'&&station===1){
       this.choice.showLibraryComparison(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,1,true))return;
-        this.refresh(true);saveGameNow();
-        this.dialog.show('COMPARISON FILED','Public positions attributed; folder lead retained. Private meeting records and State reporting remain pending. Carry these limits into your source note.');
+        this.researchReceipt('Public positions attributed; folder lead retained. Private meeting records and State reporting remain pending. Carry these limits into your source note.', 'FILED · NEXT: SOURCE NOTE');
       },()=>{});return;
     }
     if(a.library==='reagan'&&station===2){
       this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,2,true))return;
-        this.refresh(true);saveGameNow();
-        this.dialog.show('WORKING NOTE FILED','Public remarks cited to their published source. Unexamined holdings and pending requests remain in your research log. Next: send the packet for human review.');
+        this.researchReceipt('Public remarks cited to their published source. Unexamined holdings and pending requests remain in your research log.', 'NOTE FILED · NEXT: FILE PACKET');
       },()=>{});return;
     }
     const questions=[
@@ -213,6 +211,9 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       else if(detail)this.dialog.show('RESEARCH NOTE FILED',detail.receipt);
       else this.toast.show(`FILED · NEXT: ${STATIONS[station+1].name}`,this.player.position,'info');
     },6,()=>{});
+  }
+  private researchReceipt(message:string, cue:string) {
+    this.refresh(true);setLatestMessage(message);this.toast.show(cue,this.player.position,'info');saveGameNow();
   }
   private offerManuscriptReturn() {
     if (!gameState.sceneProgress.compilerLibraryReturn) return;

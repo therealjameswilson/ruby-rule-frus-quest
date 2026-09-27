@@ -88,7 +88,7 @@ export class NscLibraryScene extends Phaser.Scene {
     if(gameState.mode==='explore')this.toast.update(delta,this.player.position);
     if(this.dialog.active){this.player.update(delta,false);if(input.aJustPressed||input.bJustPressed)this.dialog.advance();return;}
     if(this.choice.active){this.player.update(delta,false);this.choice.updateInput();return;}
-    if(handleOpenOverlays(this.inventory)){this.player.update(delta,false);return;}
+    if(handleOpenOverlays(this.inventory,undefined,true)){this.player.update(delta,false);return;}
     if(input.menuJustPressed||input.pauseJustPressed){this.inventory.toggle();return;}
     if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     this.player.update(delta,true,{bounds:{left:22,right:234,top:84,bottom:220},solids:this.solids});

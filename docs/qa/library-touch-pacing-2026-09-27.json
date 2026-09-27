@@ -1,0 +1,256 @@
+[
+  {
+    "name": "portrait",
+    "touchActions": 83,
+    "dialogTaps": 2,
+    "elapsedSeconds": 40.032,
+    "trajectory": [
+      {
+        "axis": "x",
+        "target": 86,
+        "position": {
+          "x": 83,
+          "y": 183
+        }
+      },
+      {
+        "axis": "y",
+        "target": 118,
+        "position": {
+          "x": 83,
+          "y": 124
+        }
+      },
+      {
+        "axis": "x",
+        "target": 48,
+        "position": {
+          "x": 44,
+          "y": 124
+        }
+      },
+      {
+        "axis": "x",
+        "target": 202,
+        "position": {
+          "x": 196,
+          "y": 124
+        }
+      },
+      {
+        "axis": "x",
+        "target": 152,
+        "position": {
+          "x": 157,
+          "y": 124
+        }
+      },
+      {
+        "axis": "y",
+        "target": 186,
+        "position": {
+          "x": 157,
+          "y": 183
+        }
+      },
+      {
+        "axis": "x",
+        "target": 202,
+        "position": {
+          "x": 200,
+          "y": 183
+        }
+      },
+      {
+        "axis": "x",
+        "target": 48,
+        "position": {
+          "x": 45,
+          "y": 183
+        }
+      },
+      {
+        "axis": "x",
+        "target": 86,
+        "position": {
+          "x": 87,
+          "y": 183
+        }
+      },
+      {
+        "axis": "y",
+        "target": 118,
+        "position": {
+          "x": 87,
+          "y": 123
+        }
+      },
+      {
+        "axis": "x",
+        "target": 128,
+        "position": {
+          "x": 127,
+          "y": 123
+        }
+      },
+      {
+        "axis": "y",
+        "target": 88,
+        "position": {
+          "x": 127,
+          "y": 84
+        }
+      },
+      {
+        "axis": "x",
+        "target": 128,
+        "position": {
+          "x": 128,
+          "y": 183
+        }
+      }
+    ],
+    "allFourDesksEarned": true,
+    "keyboardEvents": 0,
+    "positionWrites": 0,
+    "pauseStationary": true,
+    "nscPauseReturned": true,
+    "cancelReleased": true,
+    "resumedPosition": {
+      "x": 44,
+      "y": 124
+    },
+    "exitScene": [
+      "ResearchWorldScene",
+      "UIScene"
+    ],
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "touchActions": 85,
+    "dialogTaps": 2,
+    "elapsedSeconds": 43.028,
+    "trajectory": [
+      {
+        "axis": "x",
+        "target": 86,
+        "position": {
+          "x": 82,
+          "y": 183
+        }
+      },
+      {
+        "axis": "y",
+        "target": 118,
+        "position": {
+          "x": 82,
+          "y": 121
+        }
+      },
+      {
+        "axis": "x",
+        "target": 48,
+        "position": {
+          "x": 43,
+          "y": 121
+        }
+      },
+      {
+        "axis": "x",
+        "target": 202,
+        "position": {
+          "x": 199,
+          "y": 121
+        }
+      },
+      {
+        "axis": "x",
+        "target": 152,
+        "position": {
+          "x": 150,
+          "y": 121
+        }
+      },
+      {
+        "axis": "y",
+        "target": 186,
+        "position": {
+          "x": 150,
+          "y": 181
+        }
+      },
+      {
+        "axis": "x",
+        "target": 202,
+        "position": {
+          "x": 207,
+          "y": 181
+        }
+      },
+      {
+        "axis": "x",
+        "target": 48,
+        "position": {
+          "x": 45,
+          "y": 181
+        }
+      },
+      {
+        "axis": "x",
+        "target": 86,
+        "position": {
+          "x": 84,
+          "y": 181
+        }
+      },
+      {
+        "axis": "y",
+        "target": 118,
+        "position": {
+          "x": 84,
+          "y": 122
+        }
+      },
+      {
+        "axis": "x",
+        "target": 128,
+        "position": {
+          "x": 123,
+          "y": 122
+        }
+      },
+      {
+        "axis": "y",
+        "target": 88,
+        "position": {
+          "x": 123,
+          "y": 82
+        }
+      },
+      {
+        "axis": "x",
+        "target": 128,
+        "position": {
+          "x": 128,
+          "y": 183
+        }
+      }
+    ],
+    "allFourDesksEarned": true,
+    "keyboardEvents": 0,
+    "positionWrites": 0,
+    "pauseStationary": true,
+    "nscPauseReturned": true,
+    "cancelReleased": true,
+    "resumedPosition": {
+      "x": 43,
+      "y": 121
+    },
+    "exitScene": [
+      "ResearchWorldScene",
+      "UIScene"
+    ],
+    "errors": []
+  }
+]
