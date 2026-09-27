@@ -89,7 +89,8 @@ export function computePresentationLayout(viewport: PixelViewport, dockVisible =
   const height = GAME_HEIGHT * cssZoom;
   // Keep the eligibility threshold independent of the shifted canvas to avoid
   // layout oscillation. Center the game and 12px gap + 168px dock as one unit.
-  const portraitDockEligible = availableHeight > availableWidth && (availableHeight - height) / 2 >= 184;
+  // The dock uses the total spare height, not just the lower half of it.
+  const portraitDockEligible = availableHeight > availableWidth && availableHeight - height >= 184;
   const controlsHeight = dockVisible && portraitDockEligible ? 180 : 0;
   return { dpr, cssZoom, deviceZoom: cssZoom * dpr, width, height, portraitDockEligible,
     x: viewport.x + (availableWidth - width) / 2,

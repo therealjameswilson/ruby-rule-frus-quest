@@ -355,7 +355,7 @@ canvas {
   }
 }
 
-/* On tall portrait screens the controls occupy the space below the room. */
+/* When portrait space permits, controls sit below the room. */
 #portrait-touch-dock {
   position: fixed;
   z-index: 100;

@@ -1,3 +1,4 @@
+import { pressPortraitControl } from './portrait-input-fixture.mjs';
 const { chromium } = await import(process.env.PLAYWRIGHT_MODULE ?? 'playwright');
 import { mkdir, writeFile } from 'node:fs/promises';
 import assert from 'node:assert/strict';
@@ -20,6 +21,7 @@ const tap=async(x,y)=>{
  await page.waitForTimeout(150);
 };
 const key=async(k='Space',ms=50)=>{
+ if(mobile&&await pressPortraitControl(page,cdp,k,ms)){await page.waitForTimeout(150);return;}
  if(mobile){
   const box=await page.locator('canvas').first().boundingBox();
   const point=(x,y)=>({x:box.x+x*box.width/256,y:box.y+y*box.height/240,id:1});
