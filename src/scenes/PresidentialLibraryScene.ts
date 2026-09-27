@@ -1,5 +1,7 @@
+import { libraryPacketReadout } from '../game/libraryPacket';
+import { evaluateComparison } from '../game/libraryComparison';
 import { evaluateSourceNote } from '../game/librarySourceNote';
-import { requestCatalog } from '../game/libraryRequest';
+import { requestCatalog, evaluateLibraryRequest } from '../game/libraryRequest';
 import { activeDossier } from "../game/activeCompilation";
 import { researchDoorway } from '../systems/researchDoorway';
 import { prefersReducedMotion } from '../systems/motionPreferences';
@@ -142,8 +144,10 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   private refresh(animateClearing=false) {
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
-    this.stageText.setText(`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
-    this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
+    const packet=this.assignment.library==='reagan'?libraryPacketReadout(gameState.sceneProgress):null;
+    this.stageText.setText(stage===4&&packet&&!packet.filed?'REVISIT PACKET · PROGRESS KEPT':`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
+    const revisit=packet?[...packet.parts.map(p=>!p.ready),!packet.filed]:[];
+    this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage&&revisit[i]?'REVISIT':i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
       .setColor(i===stage?'#fff3bf':i<stage?'#a7bfb4':'#a5afbd')
       .setBackgroundColor(i===stage?'#49371d':'#192630'));
     this.receipts.forEach((paper,i)=>paper.setVisible(i<stage));
@@ -153,32 +157,40 @@ export class PresidentialLibraryScene extends Phaser.Scene {
         if(!this.clearing.some(c=>c.sprite===b))this.clearing.push({sprite:b,x:b.x,y:b.y,elapsed:0});
       } else if(!this.clearing.some(c=>c.sprite===b))b.setVisible(blocked);
     });
-    setObjective(stage===4?'PACKET FILED':STATIONS[stage].label);
+    setObjective(stage===4?(packet&&!packet.filed?'REVIEW RESEARCH PACKET':'PACKET FILED'):STATIONS[stage].label);
   }
   private research(station:number) {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
     if(a.library==='reagan'&&station===2&&station<stage&&evaluateSourceNote(gameState.sceneProgress).ok){
       this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>{},()=>{},()=>{},true);return;
     }
-    if(station<stage){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':STATIONS[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
-    if(station!==stage){this.dialog.show('RESEARCH ORDER',`First complete ${STATIONS[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}
+    const repair=a.library==='reagan'&&station<stage&&[!evaluateLibraryRequest(gameState.sceneProgress).ok,!evaluateComparison(gameState.sceneProgress).ok,!evaluateSourceNote(gameState.sceneProgress).ok,false][station];
+    if(a.library==='reagan'&&station===3&&stage>=3){
+      this.choice.showLibraryPacket(gameState.sceneProgress,()=>saveGameNow(),()=>{
+        if(fileLibraryStage(gameState.sceneProgress,a.library,3,true))addDocumentPoints(8,`${a.library}: research packet filed: ${a.topic}`);
+        this.refresh(true);saveGameNow();
+        this.dialog.show('PACKET FILED','Research in progress, filed for supervisor review. Your public-source note, comparison, and request trail are attached. Private-record and State research remain open.',()=>this.offerManuscriptReturn());
+      },()=>{if(stage===4)this.offerManuscriptReturn();});return;
+    }
+    if(station<stage&&!repair){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':STATIONS[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
+    if(station!==stage&&!repair){this.dialog.show('RESEARCH ORDER',`First complete ${STATIONS[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}
     if(requestCatalog(a.library)&&station===0){
       this.choice.showLibraryRequest(gameState.sceneProgress,()=>saveGameNow(),()=>{
-        if(!fileLibraryStage(gameState.sceneProgress,a.library,0,true))return;
+        if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,0,true))return;
         this.refresh(true);saveGameNow();
         this.dialog.show(requestCatalog(a.library)?.accessState?'RESEARCH LOG FILED':'REQUEST FILED',requestCatalog(a.library)?.accessState?'Release metadata saved. Individual document examination and evidence gaps remain open. Next: compare evidence at the second desk.':'Exact archival lead saved. Retrieval and withdrawal checks remain pending. Next: compare evidence at the second desk.');
       },()=>{},a.library);return;
     }
     if(a.library==='reagan'&&station===1){
       this.choice.showLibraryComparison(gameState.sceneProgress,()=>saveGameNow(),()=>{
-        if(!fileLibraryStage(gameState.sceneProgress,a.library,1,true))return;
+        if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,1,true))return;
         this.refresh(true);saveGameNow();
         this.dialog.show('COMPARISON FILED','Public positions attributed; folder lead retained. Private meeting records and State reporting remain pending. Carry these limits into your source note.');
       },()=>{});return;
     }
     if(a.library==='reagan'&&station===2){
       this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>saveGameNow(),()=>{
-        if(!fileLibraryStage(gameState.sceneProgress,a.library,2,true))return;
+        if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,2,true))return;
         this.refresh(true);saveGameNow();
         this.dialog.show('WORKING NOTE FILED','Public remarks cited to their published source. Unexamined holdings and pending requests remain in your research log. Next: send the packet for human review.');
       },()=>{});return;

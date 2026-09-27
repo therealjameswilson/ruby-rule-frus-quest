@@ -1,3 +1,4 @@
+import { libraryPacketReadout } from './game/libraryPacket';
 import { sourceNoteReadout } from './game/librarySourceNote';
 import { comparisonReadout } from './game/libraryComparison';
 import { REQUEST_CATALOGS, libraryRequestReadout } from './game/libraryRequest';
@@ -125,6 +126,7 @@ function renderConciseGameToText() {
       questCounters: gameState.questCounters,
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       libraryResearch: libraryResearchReadout(gameState.sceneProgress),
+      libraryPacket: libraryPacketReadout(gameState.sceneProgress),
       librarySourceNote: sourceNoteReadout(gameState.sceneProgress),
       libraryComparison: comparisonReadout(gameState.sceneProgress),
       libraryRequest: libraryRequestReadout(gameState.sceneProgress),
