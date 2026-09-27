@@ -1,0 +1,247 @@
+{
+  "combat": {
+    "cpuThrottle": 1,
+    "mobile": true,
+    "tallPhone": false,
+    "errors": [],
+    "log": [
+      {
+        "label": "entry",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 202
+        },
+        "rel": 98
+      },
+      {
+        "label": "two-finger-swing",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 166
+        },
+        "rel": 98
+      },
+      {
+        "label": "boast-arrival",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 144
+        },
+        "rel": 98,
+        "phase": "intro",
+        "hp": 1,
+        "returns": 0,
+        "window": 0
+      },
+      {
+        "label": "intro-boast",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 144
+        },
+        "rel": 98,
+        "phase": "intro",
+        "hp": 1,
+        "returns": 0,
+        "window": 0
+      },
+      {
+        "label": "colossus-boast",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 144
+        },
+        "rel": 98,
+        "phase": "colossus",
+        "hp": 180,
+        "returns": 0,
+        "window": 0
+      },
+      {
+        "label": "core-approach",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 128
+        },
+        "rel": 88,
+        "phase": "colossus",
+        "hp": 180,
+        "returns": 0,
+        "window": 0
+      },
+      {
+        "label": "opening-strikes",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 152
+        },
+        "rel": 78,
+        "phase": "colossus",
+        "hp": 180,
+        "returns": 0,
+        "window": 0
+      },
+      {
+        "label": "phase-colossus",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 152
+        },
+        "rel": 78,
+        "phase": "colossus",
+        "hp": 180,
+        "returns": 0,
+        "window": 0
+      },
+      {
+        "label": "core-open-guidance",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 169
+        },
+        "rel": 78,
+        "phase": "colossus",
+        "hp": 152,
+        "returns": 1,
+        "window": 1966.6000000000004
+      },
+      {
+        "label": "core-open-paused",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 169
+        },
+        "rel": 78,
+        "phase": "colossus",
+        "hp": 152,
+        "returns": 1,
+        "window": 1716.6000000000004
+      },
+      {
+        "label": "phase-swarm",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 128,
+          "y": 138
+        },
+        "rel": 68,
+        "phase": "swarm",
+        "hp": 180,
+        "returns": 3,
+        "window": 0
+      },
+      {
+        "label": "retry-1",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 136,
+          "y": 187
+        },
+        "rel": 0,
+        "phase": "swarm",
+        "hp": 96,
+        "returns": 5,
+        "window": 0
+      },
+      {
+        "label": "phase-cloud",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 125,
+          "y": 141
+        },
+        "rel": 18,
+        "phase": "cloud",
+        "hp": 180,
+        "returns": 11,
+        "window": 0
+      },
+      {
+        "label": "retry-2",
+        "scene": "BlackVaultLairScene",
+        "p": {
+          "x": 139,
+          "y": 150
+        },
+        "rel": 0,
+        "phase": "cloud",
+        "hp": 180,
+        "returns": 11,
+        "window": 0
+      },
+      {
+        "label": "bindery-entry",
+        "scene": "EndingScene",
+        "p": {
+          "x": 80,
+          "y": 214
+        },
+        "rel": 98
+      },
+      {
+        "label": "fight-summary",
+        "cycles": 9,
+        "retries": 2,
+        "freshCoreHits": 6,
+        "tightApproaches": 2,
+        "phases": [
+          "colossus",
+          "swarm",
+          "cloud"
+        ],
+        "seconds": 89.096,
+        "deadlineMissed": false
+      },
+      {
+        "label": "bindery-continued",
+        "scene": "EndingScene",
+        "p": {
+          "x": 80,
+          "y": 214
+        },
+        "rel": 98
+      }
+    ]
+  },
+  "publication": {
+    "mobile": true,
+    "cpuThrottle": 1,
+    "startPoints": 201,
+    "finalPoints": 241,
+    "completedPackets": 5,
+    "certification": {
+      "status": "published",
+      "nearestGate": true,
+      "checklistComplete": true,
+      "certifiedBy": "Sam",
+      "requiredItem": "Buckram Key",
+      "message": "PUBLISHED FRUS COVER - HUMAN CERTIFICATION RECORDED"
+    },
+    "errors": []
+  },
+  "clock": {
+    "deadlineMissed": false,
+    "sourceBasis": "FRUS statute mandates publication of volumes 30 years after the events they document.",
+    "sourceUrl": "https://history.state.gov/historicaldocuments/frus1989-92v31/abouttheseries",
+    "elapsedYears": 28.5,
+    "deadlineYears": 30,
+    "yearsRemaining": 1.5,
+    "completionRatio": 1,
+    "progressRatio": 0.95,
+    "status": "published",
+    "label": "Published within the 30-year mandate",
+    "missingSummary": [],
+    "shortcutOffered": false,
+    "shortcutViolation": null
+  }
+}

@@ -19,6 +19,7 @@ try {
     viewport: mobile ? { width: 375, height: 667 } : { width: 1024, height: 960 },
     hasTouch: mobile, isMobile: mobile, deviceScaleFactor: mobile ? 3 : 1 });
   const page = await context.newPage();
+  if(mobile)for(const device of [page.keyboard,page.mouse])for(const method of ['press','down','up','click','move','type'])if(typeof device[method]==='function')device[method]=()=>{throw Error(`Non-touch input: ${method}`);};
   const cdp = await context.newCDPSession(page);
   await cdp.send("Emulation.setCPUThrottlingRate", { rate: cpuThrottle });
   const errors = [];
@@ -71,8 +72,6 @@ try {
   const shot = async name => {
     const current = await state();
     await writeFile(`${out}/${name}.json`, JSON.stringify(current, null, 2));
-    const src = await page.evaluate(() => new Promise(resolve => window.game.renderer.snapshot(image => resolve(image.src))));
-    await writeFile(`${out}/${name}-native.png`, Buffer.from(src.split(",")[1], "base64"));
     await page.screenshot({ path: `${out}/${name}.png` });
     assert.equal(await page.locator("#game-shell canvas:not(#pixel-proof-overlay)").count(), 1);
     return current;
