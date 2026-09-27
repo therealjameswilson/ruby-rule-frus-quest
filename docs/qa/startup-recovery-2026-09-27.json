@@ -1,0 +1,488 @@
+{
+  "scope": "Local Chromium phone viewport; 3 concurrent pages, 2 starts each. Not network-throttled or physical Safari.",
+  "fresh": [
+    {
+      "worker": 1,
+      "round": 0,
+      "ready": true,
+      "elapsedMs": 892,
+      "scene": [
+        "WarningScene"
+      ]
+    },
+    {
+      "worker": 0,
+      "round": 0,
+      "ready": true,
+      "elapsedMs": 988,
+      "scene": [
+        "WarningScene"
+      ]
+    },
+    {
+      "worker": 2,
+      "round": 0,
+      "ready": true,
+      "elapsedMs": 1096,
+      "scene": [
+        "WarningScene"
+      ]
+    },
+    {
+      "worker": 2,
+      "round": 1,
+      "ready": true,
+      "elapsedMs": 604,
+      "scene": [
+        "WarningScene"
+      ]
+    },
+    {
+      "worker": 1,
+      "round": 1,
+      "ready": true,
+      "elapsedMs": 927,
+      "scene": [
+        "WarningScene"
+      ]
+    },
+    {
+      "worker": 0,
+      "round": 1,
+      "ready": true,
+      "elapsedMs": 925,
+      "scene": [
+        "WarningScene"
+      ]
+    }
+  ],
+  "saved": [
+    {
+      "worker": 0,
+      "round": 0,
+      "ready": true,
+      "elapsedMs": 912,
+      "visibility": "visible",
+      "scenes": [
+        "TapToStartScene"
+      ],
+      "loader": "<div id=\"boot-loader\" role=\"status\" aria-live=\"polite\" data-state=\"loading\" class=\"is-hiding\">\n      <div id=\"boot-loader-title\">RUBY RULE</div>\n      <div id=\"boot-loader-sub\">THE FRUS QUEST</div>\n      <div id=\"boot-loader-bar\" role=\"progressbar\" aria-label=\"Loading game assets\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"100\"><span style=\"width: 100%;\"></span></div>\n      <div id=\"boot-loader-text\">Preparing your adventure\u2026</div>\n      <button id=\"boot-loader-retry\" type=\"button\" hidden=\"\">TRY AGAIN</button>\n    </div>",
+      "resources": [
+        {
+          "name": "http://127.0.0.1:5219/assets/art-pack/volume-assembly/volume_assembly_hud_bar.png",
+          "ms": 95.69999998807907,
+          "bytes": 545
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/bees-v2.webp",
+          "ms": 94.6000000089407,
+          "bytes": 1002152
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/maps/office-hub-map.svg",
+          "ms": 94.29999999701977,
+          "bytes": 672
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/shutdown-v2.webp",
+          "ms": 92.1000000089407,
+          "bytes": 986658
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/official-frus/frus-history.png",
+          "ms": 91.3999999910593,
+          "bytes": 115146
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/opennet-terminal.svg",
+          "ms": 90.90000000596046,
+          "bytes": 979
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/classnet-terminal.svg",
+          "ms": 90.79999999701977,
+          "bytes": 1038
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-declass-reviewer.svg",
+          "ms": 90.70000000298023,
+          "bytes": 659
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/maps/frus-snes-atlas.svg",
+          "ms": 90.70000000298023,
+          "bytes": 1833
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/player-editor.svg",
+          "ms": 90.5,
+          "bytes": 588
+        }
+      ],
+      "resourceCount": 144,
+      "totalBytes": 8953171,
+      "errors": [],
+      "failures": []
+    },
+    {
+      "worker": 2,
+      "round": 0,
+      "ready": true,
+      "elapsedMs": 1004,
+      "visibility": "visible",
+      "scenes": [
+        "TapToStartScene"
+      ],
+      "loader": "<div id=\"boot-loader\" role=\"status\" aria-live=\"polite\" data-state=\"loading\" class=\"is-hiding\">\n      <div id=\"boot-loader-title\">RUBY RULE</div>\n      <div id=\"boot-loader-sub\">THE FRUS QUEST</div>\n      <div id=\"boot-loader-bar\" role=\"progressbar\" aria-label=\"Loading game assets\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"100\"><span style=\"width: 100%;\"></span></div>\n      <div id=\"boot-loader-text\">Preparing your adventure\u2026</div>\n      <button id=\"boot-loader-retry\" type=\"button\" hidden=\"\">TRY AGAIN</button>\n    </div>",
+      "resources": [
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/bees-v2.webp",
+          "ms": 112.59999999403954,
+          "bytes": 1002152
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/shutdown-v2.webp",
+          "ms": 107.79999999701977,
+          "bytes": 986658
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-source-note-specialist.svg",
+          "ms": 95.70000000298023,
+          "bytes": 664
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/maps/archive-cavern-map.svg",
+          "ms": 95.40000000596046,
+          "bytes": 822
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-declass-reviewer.svg",
+          "ms": 94.8999999910593,
+          "bytes": 659
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/maps/buckram-gate-map.svg",
+          "ms": 91.3999999910593,
+          "bytes": 628
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/official-frus/frus-history.png",
+          "ms": 91.09999999403954,
+          "bytes": 115146
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-workflow-tools.svg",
+          "ms": 90.59999999403954,
+          "bytes": 773
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/opennet-terminal.svg",
+          "ms": 89.79999999701977,
+          "bytes": 979
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/official-frus/frus1989-92v31.jpg",
+          "ms": 89.5,
+          "bytes": 37433
+        }
+      ],
+      "resourceCount": 144,
+      "totalBytes": 8953171,
+      "errors": [],
+      "failures": []
+    },
+    {
+      "worker": 1,
+      "round": 0,
+      "ready": true,
+      "elapsedMs": 1107,
+      "visibility": "visible",
+      "scenes": [
+        "TapToStartScene"
+      ],
+      "loader": "<div id=\"boot-loader\" role=\"status\" aria-live=\"polite\" data-state=\"loading\" class=\"is-hiding\">\n      <div id=\"boot-loader-title\">RUBY RULE</div>\n      <div id=\"boot-loader-sub\">THE FRUS QUEST</div>\n      <div id=\"boot-loader-bar\" role=\"progressbar\" aria-label=\"Loading game assets\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"100\"><span style=\"width: 100%;\"></span></div>\n      <div id=\"boot-loader-text\">Preparing your adventure\u2026</div>\n      <button id=\"boot-loader-retry\" type=\"button\" hidden=\"\">TRY AGAIN</button>\n    </div>",
+      "resources": [
+        {
+          "name": "http://127.0.0.1:5219/assets/official-frus/frus-history.png",
+          "ms": 100.40000000596046,
+          "bytes": 115146
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/bees-v2.webp",
+          "ms": 96.90000000596046,
+          "bytes": 1002152
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/art-pack/volume-assembly/volume_assembly_hud_bar.png",
+          "ms": 96.80000001192093,
+          "bytes": 545
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-editor.svg",
+          "ms": 95.40000000596046,
+          "bytes": 655
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-compiler.svg",
+          "ms": 95.20000000298023,
+          "bytes": 656
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/opennet-terminal.svg",
+          "ms": 91.8999999910593,
+          "bytes": 979
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/player-compiler.svg",
+          "ms": 91.5,
+          "bytes": 604
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/player-proofreader.svg",
+          "ms": 91.40000000596046,
+          "bytes": 565
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/maps/editor-labyrinth-map.svg",
+          "ms": 91.20000000298023,
+          "bytes": 653
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/cross-reference.svg",
+          "ms": 90.29999999701977,
+          "bytes": 1161
+        }
+      ],
+      "resourceCount": 144,
+      "totalBytes": 8953171,
+      "errors": [],
+      "failures": []
+    },
+    {
+      "worker": 1,
+      "round": 1,
+      "ready": true,
+      "elapsedMs": 630,
+      "visibility": "visible",
+      "scenes": [
+        "TapToStartScene"
+      ],
+      "loader": "<div id=\"boot-loader\" role=\"status\" aria-live=\"polite\" data-state=\"loading\" class=\"is-hiding\">\n      <div id=\"boot-loader-title\">RUBY RULE</div>\n      <div id=\"boot-loader-sub\">THE FRUS QUEST</div>\n      <div id=\"boot-loader-bar\" role=\"progressbar\" aria-label=\"Loading game assets\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"100\"><span style=\"width: 100%;\"></span></div>\n      <div id=\"boot-loader-text\">Preparing your adventure\u2026</div>\n      <button id=\"boot-loader-retry\" type=\"button\" hidden=\"\">TRY AGAIN</button>\n    </div>",
+      "resources": [
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/shutdown-v2.webp",
+          "ms": 91.90000000596046,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-editor.svg",
+          "ms": 89.09999999403954,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/art-pack/rooms/office_compiler_room_208x192.png",
+          "ms": 81.29999999701977,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/archive-colleague.svg",
+          "ms": 79.5,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/sam.svg",
+          "ms": 79.29999999701977,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-source-note-specialist.svg",
+          "ms": 78,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/art-pack/volume-assembly/volume_assembly_hud_bar.png",
+          "ms": 77,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/player-compiler.svg",
+          "ms": 76.20000000298023,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-declass-reviewer.svg",
+          "ms": 76.20000000298023,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/official-frus/frus-history.png",
+          "ms": 75.09999999403954,
+          "bytes": 300
+        }
+      ],
+      "resourceCount": 144,
+      "totalBytes": 43200,
+      "errors": [],
+      "failures": []
+    },
+    {
+      "worker": 0,
+      "round": 1,
+      "ready": true,
+      "elapsedMs": 917,
+      "visibility": "visible",
+      "scenes": [
+        "TapToStartScene"
+      ],
+      "loader": "<div id=\"boot-loader\" role=\"status\" aria-live=\"polite\" data-state=\"loading\" class=\"is-hiding\">\n      <div id=\"boot-loader-title\">RUBY RULE</div>\n      <div id=\"boot-loader-sub\">THE FRUS QUEST</div>\n      <div id=\"boot-loader-bar\" role=\"progressbar\" aria-label=\"Loading game assets\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"100\"><span style=\"width: 100%;\"></span></div>\n      <div id=\"boot-loader-text\">Preparing your adventure\u2026</div>\n      <button id=\"boot-loader-retry\" type=\"button\" hidden=\"\">TRY AGAIN</button>\n    </div>",
+      "resources": [
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-wall-pending.svg",
+          "ms": 77.5,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/source-note.svg",
+          "ms": 77.09999999403954,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/telegram.svg",
+          "ms": 75.40000000596046,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/art-pack/volume-assembly/volume_assembly_hud_bar.png",
+          "ms": 73.80000001192093,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/player-declass-reviewer.svg",
+          "ms": 73.29999999701977,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/review-folder.svg",
+          "ms": 72.30000001192093,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/hac-v2.webp",
+          "ms": 72.20000000298023,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/citation-stamp.svg",
+          "ms": 72,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/volume-fragment.svg",
+          "ms": 72,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/red-pencil.svg",
+          "ms": 71.70000000298023,
+          "bytes": 300
+        }
+      ],
+      "resourceCount": 144,
+      "totalBytes": 43200,
+      "errors": [],
+      "failures": []
+    },
+    {
+      "worker": 2,
+      "round": 1,
+      "ready": true,
+      "elapsedMs": 920,
+      "visibility": "visible",
+      "scenes": [
+        "TapToStartScene"
+      ],
+      "loader": "<div id=\"boot-loader\" role=\"status\" aria-live=\"polite\" data-state=\"loading\" class=\"is-hiding\">\n      <div id=\"boot-loader-title\">RUBY RULE</div>\n      <div id=\"boot-loader-sub\">THE FRUS QUEST</div>\n      <div id=\"boot-loader-bar\" role=\"progressbar\" aria-label=\"Loading game assets\" aria-valuemin=\"0\" aria-valuemax=\"100\" aria-valuenow=\"100\"><span style=\"width: 100%;\"></span></div>\n      <div id=\"boot-loader-text\">Preparing your adventure\u2026</div>\n      <button id=\"boot-loader-retry\" type=\"button\" hidden=\"\">TRY AGAIN</button>\n    </div>",
+      "resources": [
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/bees-v2.webp",
+          "ms": 91.59999999403954,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/presentation/consistency/shutdown-v2.webp",
+          "ms": 91.30000001192093,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/official-frus/frus1989-92v31.jpg",
+          "ms": 85.90000000596046,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/frus-prize-cover.svg",
+          "ms": 85.40000000596046,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/art-pack/danne-pack/sprites/runtime/danne-boss-forms-v2.png",
+          "ms": 80.40000000596046,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/citation-stamp.svg",
+          "ms": 80.20000000298023,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/archive-colleague.svg",
+          "ms": 79,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/player-editor.svg",
+          "ms": 77.80000001192093,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-player-source-note-specialist.svg",
+          "ms": 77.20000000298023,
+          "bytes": 300
+        },
+        {
+          "name": "http://127.0.0.1:5219/assets/sprites/snes-archive-tiles.svg",
+          "ms": 76.8999999910593,
+          "bytes": 300
+        }
+      ],
+      "resourceCount": 144,
+      "totalBytes": 43200,
+      "errors": [],
+      "failures": []
+    }
+  ],
+  "faultInjection": [
+    {
+      "mode": "stall",
+      "recovered": true,
+      "saveUnchanged": true,
+      "errors": []
+    },
+    {
+      "mode": "error",
+      "recovered": true,
+      "saveUnchanged": true,
+      "errors": []
+    }
+  ],
+  "tests": {
+    "files": 279,
+    "tests": 2094,
+    "build": "passed"
+  },
+  "limits": [
+    "Intermittent earlier startup timeout not reproduced; no root-cause fix claimed.",
+    "Fresh initial run included aborts from navigation away during UI loading; subsequent runner scopes failures by navigation.",
+    "Initial JavaScript module-loading failure is outside BootScene recovery.",
+    "Headed standard skill canvas capture remains black; normal compositor recovery screenshots inspected."
+  ]
+}
