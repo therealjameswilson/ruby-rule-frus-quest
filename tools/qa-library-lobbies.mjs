@@ -1,3 +1,4 @@
+import {completeLibraryComparison} from './library-comparison-actions.mjs';
 import {completeLibraryRequest} from './library-request-actions.mjs';
 import assert from 'node:assert/strict';
 import {readFile,mkdir} from 'node:fs/promises';
@@ -18,10 +19,7 @@ try{
    for(let step=0;step<2;step++){
     await p.evaluate(i=>window.game.scene.getScene('PresidentialLibraryScene').player.setPosition(i?202:48,118),step);await p.waitForTimeout(200);
     await p.locator('#portrait-touch-dock [data-control="space"]').tap();await p.waitForFunction(()=>window.game.scene.getScene('PresidentialLibraryScene').choice.active);await p.waitForTimeout(200);
-    if(step===0)await completeLibraryRequest(p);else{
-    const point=await p.evaluate(i=>{const box=window.game.scene.getScene('PresidentialLibraryScene').choice.rows[i].getBounds();return {x:box.centerX,y:box.centerY};},step);
-    const liveCanvas=await p.locator("canvas").first().boundingBox();await p.touchscreen.tap(liveCanvas.x+point.x*liveCanvas.width/256,liveCanvas.y+point.y*liveCanvas.height/240);await p.waitForTimeout(200);
-    }
+    if(step===0)await completeLibraryRequest(p);else await completeLibraryComparison(p);
     for(let n=0;n<20;n++){if(!await p.evaluate(()=>window.game.scene.getScene('PresidentialLibraryScene').dialog.active))break;await p.locator('#portrait-touch-dock [data-control="space"]').tap();await p.waitForTimeout(150);}
     await p.waitForTimeout(350);assert.deepEqual(await p.evaluate(()=>window.game.scene.getScene('PresidentialLibraryScene').barriers.map(b=>b.visible)),step?[false,false]:[false,true]);
    }

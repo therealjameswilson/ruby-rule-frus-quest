@@ -165,6 +165,13 @@ export class PresidentialLibraryScene extends Phaser.Scene {
         this.dialog.show(requestCatalog(a.library)?.accessState?'RESEARCH LOG FILED':'REQUEST FILED',requestCatalog(a.library)?.accessState?'Release metadata saved. Individual document examination and evidence gaps remain open. Next: compare evidence at the second desk.':'Exact archival lead saved. Retrieval and withdrawal checks remain pending. Next: compare evidence at the second desk.');
       },()=>{},a.library);return;
     }
+    if(a.library==='reagan'&&station===1){
+      this.choice.showLibraryComparison(gameState.sceneProgress,()=>saveGameNow(),()=>{
+        if(!fileLibraryStage(gameState.sceneProgress,a.library,1,true))return;
+        this.refresh(true);saveGameNow();
+        this.dialog.show('COMPARISON FILED','Public positions attributed; folder lead retained. Private meeting records and State reporting remain pending. Carry these limits into your source note.');
+      },()=>{});return;
+    }
     const questions=[
       {q:a.task, good:`Log the finding-aid lead, dates, access limits, and request trail.`,bad:'Treat the catalog title as a retrieved document.'},
       {q:a.comparison,good:`Keep ${a.selection}.`,bad:'Use DANN-E’s summary and discard conflicting evidence.'},

@@ -1,3 +1,4 @@
+import { LibraryComparisonDesk } from './libraryComparisonDesk';
 import { LibraryRequestDesk } from './libraryRequestDesk';
 import { ManuscriptRevisionDesk } from "./manuscriptRevisionDesk";
 import { ChapterAssemblyDesk } from "./chapterAssemblyDesk";
@@ -20,7 +21,7 @@ function color(hex: string) {
 
 export class ChoicePrompt {
   private readonly scene: Phaser.Scene;
-  private manuscriptDesk?: ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk | LibraryRequestDesk;
+  private manuscriptDesk?: ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk | LibraryRequestDesk | LibraryComparisonDesk;
   private readonly container: Phaser.GameObjects.Container;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly sourceText: Phaser.GameObjects.Text;
@@ -137,6 +138,12 @@ export class ChoicePrompt {
     this.hide();this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.manuscriptDesk = new LibraryRequestDesk(progress,onSave,
       () => {this.hide();onSubmit();}, () => {this.hide();onCancel();},library);
+  }
+
+  showLibraryComparison(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void) {
+    this.hide(); this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
+    this.manuscriptDesk = new LibraryComparisonDesk(progress, onSave,
+      () => { this.hide(); onSubmit(); }, () => { this.hide(); onCancel(); });
   }
 
   updateInput() {

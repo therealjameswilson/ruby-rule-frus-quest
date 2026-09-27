@@ -1,3 +1,4 @@
+import { comparisonReadout } from './game/libraryComparison';
 import { REQUEST_CATALOGS, libraryRequestReadout } from './game/libraryRequest';
 import { installRenderDensity } from "./systems/renderDensity";
 import { libraryResearchReadout } from "./game/libraryResearch";
@@ -123,6 +124,7 @@ function renderConciseGameToText() {
       questCounters: gameState.questCounters,
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       libraryResearch: libraryResearchReadout(gameState.sceneProgress),
+      libraryComparison: comparisonReadout(gameState.sceneProgress),
       libraryRequest: libraryRequestReadout(gameState.sceneProgress),
       libraryRequests: Object.fromEntries(Object.keys(REQUEST_CATALOGS).map(id=>[id,libraryRequestReadout(gameState.sceneProgress,id)])),
       researchWorld: gameState.currentScene === "ResearchWorldScene" ? {
