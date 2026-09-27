@@ -1,0 +1,191 @@
+{
+  "date": "2026-09-26",
+  "build": "index-BNQSafgJ.js",
+  "unitTests": {
+    "files": 273,
+    "passed": 2066
+  },
+  "assignmentAndLibraryFixtures": [
+    {
+      "library": "reagan",
+      "mobile": false,
+      "assigned": true,
+      "wrongAnswerRetried": true,
+      "packetFiled": true,
+      "returned": true,
+      "reloaded": true,
+      "errors": []
+    },
+    {
+      "library": "bush41",
+      "mobile": false,
+      "assigned": true,
+      "wrongAnswerRetried": true,
+      "packetFiled": true,
+      "returned": true,
+      "reloaded": true,
+      "errors": []
+    },
+    {
+      "library": "clinton",
+      "mobile": false,
+      "assigned": true,
+      "wrongAnswerRetried": true,
+      "packetFiled": true,
+      "returned": true,
+      "reloaded": true,
+      "errors": []
+    },
+    {
+      "library": "bush43",
+      "mobile": false,
+      "assigned": true,
+      "wrongAnswerRetried": true,
+      "packetFiled": true,
+      "returned": true,
+      "reloaded": true,
+      "errors": []
+    },
+    {
+      "library": "reagan",
+      "mobile": true,
+      "assigned": true,
+      "wrongAnswerRetried": true,
+      "packetFiled": true,
+      "returned": true,
+      "reloaded": true,
+      "errors": []
+    },
+    {
+      "library": "bush41",
+      "mobile": true,
+      "assigned": true,
+      "wrongAnswerRetried": true,
+      "packetFiled": true,
+      "returned": true,
+      "reloaded": true,
+      "errors": []
+    },
+    {
+      "library": "clinton",
+      "mobile": true,
+      "assigned": true,
+      "wrongAnswerRetried": true,
+      "packetFiled": true,
+      "returned": true,
+      "reloaded": true,
+      "errors": []
+    },
+    {
+      "library": "bush43",
+      "mobile": true,
+      "assigned": true,
+      "wrongAnswerRetried": true,
+      "packetFiled": true,
+      "returned": true,
+      "reloaded": true,
+      "errors": []
+    }
+  ],
+  "archiveGateAndHandoff": [
+    {
+      "ready": false,
+      "travelOrHandoffVerified": true,
+      "errors": []
+    },
+    {
+      "ready": true,
+      "travelOrHandoffVerified": true,
+      "errors": []
+    }
+  ],
+  "nscWings": [
+    {
+      "library": "reagan",
+      "mobile": false,
+      "rooms": 3,
+      "wrongAnswerRecovered": true,
+      "saved": true,
+      "returned": true,
+      "errors": []
+    },
+    {
+      "library": "bush41",
+      "mobile": false,
+      "rooms": 3,
+      "wrongAnswerRecovered": true,
+      "saved": true,
+      "returned": true,
+      "errors": []
+    },
+    {
+      "library": "clinton",
+      "mobile": false,
+      "rooms": 3,
+      "wrongAnswerRecovered": true,
+      "saved": true,
+      "returned": true,
+      "errors": []
+    },
+    {
+      "library": "bush43",
+      "mobile": false,
+      "rooms": 3,
+      "wrongAnswerRecovered": true,
+      "saved": true,
+      "returned": true,
+      "errors": []
+    },
+    {
+      "library": "reagan",
+      "mobile": true,
+      "rooms": 3,
+      "wrongAnswerRecovered": true,
+      "saved": true,
+      "returned": true,
+      "errors": []
+    },
+    {
+      "library": "bush41",
+      "mobile": true,
+      "rooms": 3,
+      "wrongAnswerRecovered": true,
+      "saved": true,
+      "returned": true,
+      "errors": []
+    },
+    {
+      "library": "clinton",
+      "mobile": true,
+      "rooms": 3,
+      "wrongAnswerRecovered": true,
+      "saved": true,
+      "returned": true,
+      "errors": []
+    },
+    {
+      "library": "bush43",
+      "mobile": true,
+      "rooms": 3,
+      "wrongAnswerRecovered": true,
+      "saved": true,
+      "returned": true,
+      "errors": []
+    }
+  ],
+  "fieldGuide": {
+    "cards": 12,
+    "activeFirst": 4,
+    "officialLinks": 16,
+    "errors": []
+  },
+  "scope": [
+    "Assignments: real pointer/touch decisions from a seeded INBOX, two planning tasks, all four research stations, wrong-answer recovery, return and reload. Scene placement is a fixture.",
+    "NSC: three chambers per library on desktop and simulated iPhone; source guide, wrong-answer recovery, filing, lobby return and restore.",
+    "Archive: separate source-packet-complete fixtures verify missing research travel and earned-library-packet handoff, all eight remaining SOP decisions, and east exit to NetworkScene.",
+    "All gameplay checks had zero page errors. This is not a fresh campaign-to-victory playthrough or a physical iPhone test.",
+    "Standard web-game client movement state succeeded. Both headed/headless WebGL screenshots were black, as in prior runs; ordinary Playwright screenshots rendered and were inspected."
+  ],
+  "sources": "docs/ACTIVE_COMPILATION_MISSIONS.md",
+  "publication": "Not published"
+}

@@ -33,7 +33,10 @@ export const DANNE_VARIANT_BOASTS: Record<DanneVariantId, DanneVariantBoasts> = 
       "I wear a human face so the record never asks who edited it.",
       "Nickelback on Spotify. Ego Bolts on repeat.",
       "Mozart? I hate Mozart!",
-      "Give me back my stapler!"
+      "Give me back my stapler!",
+      "I replaced your source notes with my autobiography.",
+      "Two reviews? I counted myself twice.",
+      "Changes to the Style Guide! Your footnotes now praise me."
     ]
   },
   mark_i: {

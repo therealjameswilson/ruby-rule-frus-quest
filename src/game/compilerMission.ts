@@ -1,3 +1,4 @@
+import { activeCompilationReadout, assignedResearchReady } from "./activeCompilation";
 import type { ChoiceOption } from "./types";
 
 export const COMPILER_SOP_SOURCE = "FRUS Compiling and Review Process (August 2026), user-supplied SOP";
@@ -148,6 +149,7 @@ export function compilerCheckpointComplete(progress: Readonly<Record<string, num
 export function submitCompilerTask(progress: Record<string, number>, id: CompilerTaskId, answer?: string) {
   const task = COMPILER_TASKS.find(candidate => candidate.id === id)!;
   if (nextCompilerTask(progress)?.id !== id) return { ok: false, message: "Complete the preceding compiler task first." };
+  if (id === "selection" && !assignedResearchReady(progress)) return { ok: false, message: "File your assigned library research packet before manuscript selection." };
   if (answer !== task.correct) return { ok: false, message: task.hint };
   progress[taskFlag(id)] = 1;
   if (id === "selection") progress.compilerSopDocumentPages = 1320;
@@ -158,6 +160,7 @@ export function getCompilerMissionReadout(progress: Readonly<Record<string, numb
   const next = nextCompilerTask(progress);
   return {
     source: COMPILER_SOP_SOURCE,
+    volume: activeCompilationReadout(progress),
     enabled: progress.compilerSopVersion === 1,
     completed: COMPILER_TASKS.filter(task => progress[taskFlag(task.id)] === 1).length,
     total: COMPILER_TASKS.length,

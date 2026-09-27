@@ -1,3 +1,5 @@
+import { assignedDossier, assignedResearchReady } from "../game/activeCompilation";
+import { LIBRARY_ASSIGNMENTS } from "../game/libraryResearch";
 import { preloadPhotocopierArt } from '../systems/photocopierArt';
 import { worldItemImage } from '../systems/worldItemArt';
 import { preloadDetailedNpcs } from '../art/npcSprites';
@@ -965,6 +967,12 @@ export class ArchiveScene extends Phaser.Scene {
       alex.answer();
       setLatestMessage(option.value === "yes" ? "Alex: Excellent! Now, what about the other one?" : "Alex: You have to see it! And what about the other one?");
       this.toast.show("ANSWERED! KARATE CANCELLED", this.player.position, "info");
+      const dossier = assignedDossier(gameState.sceneProgress);
+      if (dossier && !gameState.sceneProgress.compilerAlexConsulted) {
+        gameState.sceneProgress.compilerAlexConsulted = 1;
+        saveGameNow();
+        this.dialog.show("ALEX POSTER", ["Best of the Best 2. Essential viewing. Now, your chapter...", dossier.comparison, "Keep the overlap questions for your fellow compilers. A conversation here does not replace either manuscript review."]);
+      }
     });
   }
 
@@ -984,7 +992,11 @@ export class ArchiveScene extends Phaser.Scene {
     for (const x of [98, 121, 144, 167]) for (const y of [104, 163]) {
       this.track(this.add.rectangle(x, y, 13, 10, 0x7a1020).setStrokeStyle(1, 0xe5b777).setDepth(13));
     }
-    text(133, 132, "FRUS REVIEW\nNO AIR CONDITIONING", "5px");
+    text(133, 132, "COVERAGE MEETING\nA: READ NOTES", "5px");
+    this.interactables.push({id:"conference-coverage-notes",label:"Coverage meeting notes",x:133,y:161,radius:28,kind:"document",onInteract:()=>{
+      const dossier=assignedDossier(gameState.sceneProgress);
+      this.dialog.show("RANDOLPH MEETING NOTES", [dossier?.title ?? "Coordinate scope and source coverage with fellow compilers.", "Check chronology, major decisions, agency perspectives and missing records. A thin folder is a research question, not proof that nothing happened.", "Carry these questions back to the manuscript desk. First review and GE/AGE second review remain separate."]);
+    }});
     for (const x of [36, 46, 56]) {
       this.track(this.add.rectangle(x, 156, 6, 25, 0xb45128).setStrokeStyle(1, 0xf6a55b).setDepth(12));
     }
@@ -3797,6 +3809,20 @@ export class ArchiveScene extends Phaser.Scene {
         && !compilerCheckpointComplete(gameState.sceneProgress, "review_submission")) {
         this.player.setPosition(PLAY_BOUNDS.right - 18, position.y);
         this.exitCooldownUntil = this.time.now + 500;
+        const dossier = assignedDossier(gameState.sceneProgress);
+        if (dossier && !assignedResearchReady(gameState.sceneProgress)) {
+          this.researchChoice.show("YOUR RESEARCH PACKET IS MISSING\n" + dossier.short, [
+            {key:"A", label:"Take the research rail to the library", value:"travel"},
+            {key:"B", label:"Stay here; I will return with the packet", value:"stay"}
+          ], option => {
+            if (option.value !== "travel") return;
+            gameState.sceneProgress.libraryResearchActive = LIBRARY_ASSIGNMENTS.findIndex(a => a.library === dossier.library);
+            gameState.sceneProgress.compilerLibraryReturn = 1;
+            saveGameNow();
+            transitionTo(this, "PresidentialLibraryScene");
+          }, 6, () => {});
+          return false;
+        }
         runCompilerCheckpoint(this.researchChoice, this.dialog, "review_submission", () => {
           setObjective("DPD packet ready. Take the east route to Two Networks.");
           setLatestMessage("Research, compilation, both reviews, revision, and submission complete. Declassification coordination comes next.");

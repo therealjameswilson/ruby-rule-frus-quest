@@ -19,11 +19,11 @@ describe('NSC holdings dungeons',()=>{
  });
  it('keeps exact citation leads and avoids a clearance claim',()=>{
   expect(nscDungeon('nixon')?.handle).toContain('Box 765');expect(nscDungeon('carter')?.handle).toContain('Box 14');
-  for(const d of NSC_DUNGEONS)expect(nscQuestion(d.library,2).correct).toContain('lead');
+  for(const d of NSC_DUNGEONS)expect(nscQuestion(d.library,2).correct).not.toMatch(/ready for publication|fully cleared/);
  });
  it('restores the wing, chamber and independent NSC progress',()=>{
   setSceneState('NscLibraryScene','explore','SOURCE TRAIL');
-  gameState.sceneProgress.libraryResearchActive=8;gameState.sceneProgress.nscRoom_reagan=1;gameState.sceneProgress.nscResearch_reagan=1;
+  gameState.sceneProgress.libraryResearchActive=8;gameState.sceneProgress.nscRoom_reagan=1;gameState.sceneProgress.nscResearch_v2_reagan=1;
   const save=createGameSaveData();expect(restoreGameSaveData(save)).toBe('NscLibraryScene');
   expect(gameState.sceneProgress.nscRoom_reagan).toBe(1);expect(nscStage(gameState.sceneProgress,'reagan')).toBe(1);
  });

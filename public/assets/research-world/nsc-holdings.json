@@ -1,5 +1,5 @@
 {
-  "checked": "2026-09-24",
+  "checked": "2026-09-26",
   "note": "Collection names and research leads are based on official online holdings guides or published FRUS source notes. Rooms and puzzles are fictional training exercises. A finding-aid lead is not a retrieved document, an online listing is not full release, and these side quests do not change the scope or status of a FRUS volume.",
   "excluded": {
     "fdr": "No NSC wing: the NSC was established in 1947, after Roosevelt’s presidency."
@@ -105,58 +105,58 @@
     },
     {
       "library": "reagan",
-      "title": "Executive Secretariat Vault",
-      "collection": "Executive Secretariat, NSC: Country File: Records, 1981–1985",
-      "handle": "Soviet Bloc Economic & Financial Situation Updates",
-      "source": "https://www.reaganlibrary.gov/public/finding_aids_pdfs/219339.pdf",
-      "sourceLabel": "Library finding aid, pages 38–41",
+      "title": "Thatcher Visit Vault",
+      "collection": "Executive Secretariat, NSC: VIP Visits: Records, 1981–1985",
+      "handle": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+      "source": "https://www.reaganlibrary.gov/sites/default/files/finding_aids_pdfs/219646.pdf",
+      "sourceLabel": "Reagan Library finding aid, pages 13–14",
       "accent": "#6c9d9b",
       "challenge": {
-        "question": "The inventory separates OPEN from OPEN / DIGITIZED. How do you plan retrieval?",
-        "correct": "Record the status for each dated folder; open does not guarantee an online scan.",
-        "wrong": "Treat every open folder as fully digitized."
+        "question": "The finding aid says OPEN, without DIGITIZED. Prepare the research visit.",
+        "correct": "Verify retrieval with the archivist; log any withdrawals.",
+        "wrong": "Report that every page has been read online."
       }
     },
     {
       "library": "bush41",
-      "title": "Scowcroft Policy Vault",
-      "collection": "National Security Council records and staff files",
-      "handle": "Brent Scowcroft, Robert Gates and defense-policy staff records",
-      "source": "https://history.state.gov/historicaldocuments/frus1989-92v31/sources",
-      "sourceLabel": "Published FRUS sources guide",
+      "title": "Rice Policy Vault",
+      "collection": "Records of the National Security Council: Condoleezza Rice 1989–1990 Subject Files",
+      "handle": "FOIA 2010-0156-F; CF00715-001, Arms Control [1]; NAID 470424829",
+      "source": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files",
+      "sourceLabel": "Bush 41 Library finding aid and container list",
       "accent": "#8a87b8",
       "challenge": {
-        "question": "The FRUS sources guide identifies several NSC offices. How do you compare their evidence?",
-        "correct": "Keep adviser, deputy and staff provenance distinct while tracing the same issue.",
-        "wrong": "Attribute every NSC staff paper to President Bush."
+        "question": "The folder concerns arms control. Where does it fit?",
+        "correct": "Coordinate the arms-control overlap; select for Soviet policy.",
+        "wrong": "Put every arms-control record in this volume."
       }
     },
     {
       "library": "clinton",
-      "title": "African Affairs Vault",
-      "collection": "MacArthur DeShazer and Rwanda, 1993–1994",
-      "handle": "FOIA 2006-0192-F; NSC Director of African Affairs records on Rwanda",
-      "source": "https://clinton.presidentiallibraries.us/items/show/36639",
-      "sourceLabel": "Library collection finding aid",
+      "title": "Yeltsin Contact Vault",
+      "collection": "Clinton Presidential Records: NSC Cable, Email, and Records Management System",
+      "handle": "MDR 2015-0782-M-2; Clinton Digital Library item 57569; April 21, 1996–December 31, 1999",
+      "source": "https://clinton.presidentiallibraries.us/items/show/57569",
+      "sourceLabel": "Clinton Digital Library item 57569",
       "accent": "#b99154",
       "challenge": {
-        "question": "What date and office scope belongs in this research lead?",
-        "correct": "MacArthur DeShazer, NSC African Affairs, Rwanda, 1993–1994.",
-        "wrong": "All Clinton-era Africa policy, 1993–2001, fully represented."
+        "question": "Sort the conversation records for the chapter.",
+        "correct": "Use conversation date; retain memcon/telcon identity.",
+        "wrong": "Sort by upload date and merge both record types."
       }
     },
     {
       "library": "bush43",
-      "title": "NSC Records Access Vault",
-      "collection": "NSC RAMS packages: Millennium Challenge Account",
-      "handle": "FOIA 2015-0261-F; records dated 11/25/2001–11/25/2002",
-      "source": "https://www.archives.gov/files/foia/pra-notifications/pdf/rn-lpgwb-2024-037.pdf",
-      "sourceLabel": "NARA release proposal, January 23, 2024, page 11",
+      "title": "EP-3 Records Vault",
+      "collection": "George W. Bush Presidential Electronic Records: NSC EP-3 collision records",
+      "handle": "FOIA 2017-0023-F; ARMS; March 15–April 30, 2001; 215 assets",
+      "source": "https://www.georgewbushlibrary.gov/media/7324",
+      "sourceLabel": "Bush 43 Library finding aid, November 17, 2025, pages 1–2",
       "accent": "#6c9d9b",
       "challenge": {
-        "question": "NARA lists case 2015-0261-F in a proposed release. What is safe to record?",
-        "correct": "Keep the case and dates; a proposed release is not proof of current access.",
-        "wrong": "The case number proves every NSC record is open."
+        "question": "The set includes drafts and press guidance. Select responsibly.",
+        "correct": "Trace revisions and seek the underlying policy instruction.",
+        "wrong": "Treat every draft statement as a final presidential decision."
       }
     }
   ]

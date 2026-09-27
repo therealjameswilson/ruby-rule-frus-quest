@@ -1,0 +1,183 @@
+{
+  "checked": "2026-09-26",
+  "statusSource": "https://history.state.gov/historicaldocuments/status-of-the-series",
+  "note": "Official holdings and active volume titles; puzzle decisions and research packets are game scenarios, not retrieved documents or official compiler assignments.",
+  "dossiers": [
+    {
+      "library": "reagan",
+      "short": "Reagan: Western Europe",
+      "volumeId": "frus1981-88v08",
+      "title": "1981–1988, Volume VIII, Western Europe, 1985–1988",
+      "topic": "Thatcher visit and allied consultation",
+      "collection": "Executive Secretariat, NSC: VIP Visits: Records, 1981–1985",
+      "handle": "RAC Box 6; United Kingdom: Prime Minister Thatcher Official Visit, 02/20/1985 (1)(2)",
+      "source": "https://www.reaganlibrary.gov/sites/default/files/finding_aids_pdfs/219646.pdf",
+      "sourceLabel": "Reagan Library finding aid, pages 13–14",
+      "access": "OPEN; the inventory does not mark this folder DIGITIZED. Withdrawals may remain.",
+      "task": "Follow the February 1985 Thatcher visit into the wider Western Europe decision record.",
+      "comparison": "Separate a visit folder from a verified account of what the leaders decided.",
+      "selection": "visit lead plus a request for decision records and State reporting",
+      "questions": [
+        {
+          "question": "DANN-E put a 1984 folder on the 1985–1988 cart. Which lead fits?",
+          "correct": "RAC Box 6: Thatcher visit, 02/20/1985 (1)(2).",
+          "wrong": "Use the December 1984 folder as an in-period document.",
+          "receipt": "Request slip: RAC Box 6, February 20, 1985 visit; 1984 material stays background."
+        },
+        {
+          "question": "The finding aid says OPEN, without DIGITIZED. Prepare the research visit.",
+          "correct": "Verify retrieval with the archivist; log any withdrawals.",
+          "wrong": "Report that every page has been read online.",
+          "receipt": "Access log: open folder lead; scans and document contents still to be checked."
+        },
+        {
+          "question": "A visit folder is not a decision. Build the source trail.",
+          "correct": "Keep its exact locator; seek a memcon and State follow-up.",
+          "wrong": "Write that Thatcher approved the proposal; the folder proves it.",
+          "receipt": "Source sheet: exact folder locator; document date, authorship and decision evidence pending retrieval."
+        },
+        {
+          "question": "Send the Western Europe packet to your supervisor.",
+          "correct": "File the lead, scope note and outstanding document requests.",
+          "wrong": "Declare the entire 1985–1988 chapter complete.",
+          "receipt": "Research packet: Thatcher visit lead; State/NSC comparison and later-period coverage remain open."
+        }
+      ],
+      "status": "Being Researched",
+      "checked": "2026-09-26",
+      "volumeSource": "https://history.state.gov/historicaldocuments/frus1981-88v08"
+    },
+    {
+      "library": "bush41",
+      "short": "Bush 41: Soviet policy",
+      "volumeId": "frus1989-92v04",
+      "title": "1989–1992, Volume IV, Soviet Union, Russia, and Post-Soviet States: Policy",
+      "topic": "NSC policy formation and source coverage",
+      "collection": "Records of the National Security Council: Condoleezza Rice 1989–1990 Subject Files",
+      "handle": "FOIA 2010-0156-F; CF00715-001, Arms Control [1]; NAID 470424829",
+      "source": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files",
+      "sourceLabel": "Bush 41 Library finding aid and container list",
+      "access": "Arms Control [1] is listed On Site. A catalog entry is not a reviewed document.",
+      "task": "Use Rice’s NSC staff files to trace policy formation; coordinate the arms-control overlap.",
+      "comparison": "Keep staff advice distinct from a presidential decision and from high-level meeting records.",
+      "selection": "staff-file lead with separate decision and agency follow-up requests",
+      "questions": [
+        {
+          "question": "DANN-E removed the container label. Restore the Rice file request.",
+          "correct": "CF00715-001, Arms Control [1]; NAID 470424829.",
+          "wrong": "Any Bush presidential box; Rice wrote all of them.",
+          "receipt": "Request slip: Rice Subject Files, CF00715-001; on-site retrieval lead."
+        },
+        {
+          "question": "The folder concerns arms control. Where does it fit?",
+          "correct": "Coordinate the arms-control overlap; select for Soviet policy.",
+          "wrong": "Put every arms-control record in this volume.",
+          "receipt": "Scope note: coordinate related volumes; do not duplicate their remit."
+        },
+        {
+          "question": "DANN-E calls a staff paper “the President’s order.” Repair the note.",
+          "correct": "Verify author, recipient, date and approval evidence.",
+          "wrong": "Attribute it to Bush because it is in his library.",
+          "receipt": "Source sheet: NSC staff provenance retained; presidential approval not inferred."
+        },
+        {
+          "question": "This lead covers 1989–1990. File the research report.",
+          "correct": "Log the lead and gaps through 1992; seek State evidence.",
+          "wrong": "Mark all Soviet policy research for 1989–1992 complete.",
+          "receipt": "Research packet: Rice lead, State comparison, 1991–1992 coverage gaps."
+        }
+      ],
+      "status": "Being Researched",
+      "checked": "2026-09-26",
+      "volumeSource": "https://history.state.gov/historicaldocuments/frus1989-92v04"
+    },
+    {
+      "library": "clinton",
+      "short": "Clinton: Russia contacts",
+      "volumeId": "frus1993-00v18",
+      "title": "1993–2000, Volume XVIII, Russia: High-Level Contacts",
+      "topic": "Clinton–Yeltsin memcons and telcons",
+      "collection": "Clinton Presidential Records: NSC Cable, Email, and Records Management System",
+      "handle": "MDR 2015-0782-M-2; Clinton Digital Library item 57569; April 21, 1996–December 31, 1999",
+      "source": "https://clinton.presidentiallibraries.us/items/show/57569",
+      "sourceLabel": "Clinton Digital Library item 57569",
+      "access": "A declassified MDR set, not a FOIA request; individual documents still need examination.",
+      "task": "Build a high-level contacts chronology from Clinton–Yeltsin memcons and telcons.",
+      "comparison": "Keep conversation dates distinct from preparation dates and preserve each record’s form.",
+      "selection": "dated memcon/telcon leads with a gap register for the rest of 1993–2000",
+      "questions": [
+        {
+          "question": "DANN-E labeled this set “FOIA, all eight years.” Correct the request.",
+          "correct": "MDR 2015-0782-M-2; April 1996–December 1999.",
+          "wrong": "FOIA 57569; complete 1993–2000 correspondence.",
+          "receipt": "Request slip: MDR 2015-0782-M-2, digital item 57569; limited date span."
+        },
+        {
+          "question": "Sort the conversation records for the chapter.",
+          "correct": "Use conversation date; retain memcon/telcon identity.",
+          "wrong": "Sort by upload date and merge both record types.",
+          "receipt": "Chronology rule: event date first; drafting dates and record types retained separately."
+        },
+        {
+          "question": "Prepare annotation backup for a quotation.",
+          "correct": "Verify the scan; log document/page and mark the passage.",
+          "wrong": "Quote the catalog description as the leaders’ words.",
+          "receipt": "Annotation backup: only checked document passages may support quotations; retain the MDR identifier."
+        },
+        {
+          "question": "The set ends in 1999. What goes to first review?",
+          "correct": "Candidate chronology plus gaps for 1993–1996 and 2000.",
+          "wrong": "A claim that this set completes all 1993–2000 contacts.",
+          "receipt": "Research packet: candidates and date gaps; compare related policy files."
+        }
+      ],
+      "status": "Being Researched",
+      "checked": "2026-09-26",
+      "volumeSource": "https://history.state.gov/historicaldocuments/frus1993-00v18"
+    },
+    {
+      "library": "bush43",
+      "short": "Bush 43: China",
+      "volumeId": "frus2001-08v43",
+      "title": "2001–2008, Volume XLIII, China, 2001–2004",
+      "topic": "April 2001 EP-3 incident",
+      "collection": "George W. Bush Presidential Electronic Records: NSC EP-3 collision records",
+      "handle": "FOIA 2017-0023-F; ARMS; March 15–April 30, 2001; 215 assets",
+      "source": "https://www.georgewbushlibrary.gov/media/7324",
+      "sourceLabel": "Bush 43 Library finding aid, November 17, 2025, pages 1–2",
+      "access": "177 assets released in full; 22 withheld in part; 16 withheld in full. Some classified records are unprocessed.",
+      "task": "Trace the EP-3 response without substituting public messaging for the decision record.",
+      "comparison": "Distinguish press guidance, draft statements, bulletins and email from final policy instructions.",
+      "selection": "NSC electronic-record leads, a document-type register and explicit access gaps",
+      "questions": [
+        {
+          "question": "DANN-E offers “the complete China archive.” Identify the actual set.",
+          "correct": "FOIA 2017-0023-F: EP-3 records, March–April 2001.",
+          "wrong": "All China policy records for 2001–2004.",
+          "receipt": "Request slip: EP-3 FOIA 2017-0023-F; ARMS source system retained."
+        },
+        {
+          "question": "The set includes drafts and press guidance. Select responsibly.",
+          "correct": "Trace revisions and seek the underlying policy instruction.",
+          "wrong": "Treat every draft statement as a final presidential decision.",
+          "receipt": "Comparison note: drafts and public lines are not proof of final authorization."
+        },
+        {
+          "question": "The inventory lists 215 assets. Record the access gap.",
+          "correct": "177 full, 22 partial, 16 withheld; log unprocessed records.",
+          "wrong": "All 215 fully released; no remaining gaps.",
+          "receipt": "Access register: full/partial/withheld distinguished; unprocessed material remains a gap."
+        },
+        {
+          "question": "Prepare the China chapter research packet.",
+          "correct": "File EP-3 leads; flag gaps and the remaining 2001–2004 scope.",
+          "wrong": "Call the incident file a complete, cleared China manuscript.",
+          "receipt": "Research packet: incident trail, withholding log, wider-period research still required."
+        }
+      ],
+      "status": "Being Researched",
+      "checked": "2026-09-26",
+      "volumeSource": "https://history.state.gov/historicaldocuments/frus2001-08v43"
+    }
+  ]
+}

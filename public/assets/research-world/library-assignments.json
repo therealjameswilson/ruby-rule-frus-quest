@@ -1,7 +1,7 @@
 {
-  "checked": "2026-09-23",
+  "checked": "2026-09-26",
   "statusSource": "https://history.state.gov/historicaldocuments/status-of-the-series",
-  "note": "Titles and stages transcribed from Status of the Series. Tasks are original game exercises, not claims about specific holdings, unreleased documents, or official compiler assignments. Kennedy and Johnson stops provide background only. Clinton XIII individual page still says Planned; the requested status overview lists Being Researched, which governs this snapshot.",
+  "note": "Active missions focus on four volumes listed Being Researched on September 26, 2026. Earlier libraries remain optional background stops. Holdings-based decisions are game scenarios; no unpublished document contents or official assignments are asserted.",
   "assignments": [
     {
       "library": "fdr",
@@ -12,7 +12,7 @@
       "task": "Map wartime information-policy decisions and intended foreign audiences.",
       "comparison": "Separate the policy directive from the broadcast or leaflet used to carry it out.",
       "selection": "policy directive and implementation record",
-      "backgroundOnly": false,
+      "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1917-72PubDipv03"
     },
     {
@@ -24,7 +24,7 @@
       "task": "Prepare a source survey for the transition from wartime information work to postwar public diplomacy.",
       "comparison": "Keep a planning inventory distinct from a selected manuscript.",
       "selection": "source survey with access gaps",
-      "backgroundOnly": false,
+      "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1917-72PubDipv04"
     },
     {
@@ -36,7 +36,7 @@
       "task": "Trace the division between intelligence assessment, coordination, and presidential authorization.",
       "comparison": "An assessment is evidence of analysis, not proof that a policy was approved.",
       "selection": "assessment and authorization trail",
-      "backgroundOnly": false,
+      "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1956-60IntelCom"
     },
     {
@@ -72,7 +72,7 @@
       "task": "Recheck the Uruguay source trail while that chapter remains in clearance.",
       "comparison": "Other chapters are published; do not treat Uruguay as already released.",
       "selection": "Uruguay source trail and unresolved clearance",
-      "backgroundOnly": false,
+      "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1969-76ve10"
     },
     {
@@ -84,7 +84,7 @@
       "task": "Investigate the 1975 refugee response within the volume’s cross-administration scope.",
       "comparison": "Follow decisions across evacuation, admission, and resettlement; retain agency disagreements.",
       "selection": "decision sequence across agencies",
-      "backgroundOnly": false,
+      "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1981-88v42"
     },
     {
@@ -96,56 +96,56 @@
       "task": "Verify the source trail and chronology for policy toward revolutionary Iran.",
       "comparison": "Stop at November 1979; distinguish unresolved clearance from research availability.",
       "selection": "dated source note and clearance flag",
-      "backgroundOnly": false,
+      "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1977-80v10"
     },
     {
       "library": "reagan",
-      "volumeId": "frus1981-88v23",
-      "title": "1981–1988, Volume XXIII, Iran-Contra Affair, 1985–1988",
+      "volumeId": "frus1981-88v08",
+      "title": "1981–1988, Volume VIII, Western Europe, 1985–1988",
       "status": "Being Researched",
-      "topic": "Iran-Contra research",
-      "task": "Trace the relationship between Iran initiatives, Contra support, and authorization decisions in 1985–1988.",
-      "comparison": "Compare contemporaneous records with later recollections; do not silently merge conflicting accounts.",
-      "selection": "contemporaneous record plus attributed recollection",
+      "topic": "Thatcher visit and allied consultation",
+      "task": "Follow the February 1985 Thatcher visit into the wider Western Europe decision record.",
+      "comparison": "Separate a visit folder from a verified account of what the leaders decided.",
+      "selection": "visit lead plus a request for decision records and State reporting",
       "backgroundOnly": false,
-      "source": "https://history.state.gov/historicaldocuments/frus1981-88v23"
+      "source": "https://history.state.gov/historicaldocuments/frus1981-88v08"
     },
     {
       "library": "bush41",
-      "volumeId": "frus1989-92v20",
-      "title": "1989–1992, Volume XX, North Africa; Sub-Saharan Africa",
+      "volumeId": "frus1989-92v04",
+      "title": "1989–1992, Volume IV, Soviet Union, Russia, and Post-Soviet States: Policy",
       "status": "Being Researched",
-      "topic": "African policy research",
-      "task": "Build a decision chronology for North Africa and Sub-Saharan Africa during 1989–1992.",
-      "comparison": "Keep regional and country-specific decisions connected without substituting Southern Africa or Somalia volumes.",
-      "selection": "in-scope country and regional decision records",
+      "topic": "NSC policy formation and source coverage",
+      "task": "Use Rice’s NSC staff files to trace policy formation; coordinate the arms-control overlap.",
+      "comparison": "Keep staff advice distinct from a presidential decision and from high-level meeting records.",
+      "selection": "staff-file lead with separate decision and agency follow-up requests",
       "backgroundOnly": false,
-      "source": "https://history.state.gov/historicaldocuments/frus1989-92v20"
+      "source": "https://history.state.gov/historicaldocuments/frus1989-92v04"
     },
     {
       "library": "clinton",
-      "volumeId": "frus1993-00v13",
-      "title": "1993–2000, Volume XIII, Global Issues: Transnational Commons",
+      "volumeId": "frus1993-00v18",
+      "title": "1993–2000, Volume XVIII, Russia: High-Level Contacts",
       "status": "Being Researched",
-      "topic": "Transnational commons",
-      "task": "Trace how cross-border environmental and shared-resource issues reached foreign-policy decision makers.",
-      "comparison": "Keep scientific background distinct from diplomatic choices, negotiations, and implementation.",
-      "selection": "scientific context and diplomatic decision trail",
+      "topic": "Clinton–Yeltsin memcons and telcons",
+      "task": "Build a high-level contacts chronology from Clinton–Yeltsin memcons and telcons.",
+      "comparison": "Keep conversation dates distinct from preparation dates and preserve each record’s form.",
+      "selection": "dated memcon/telcon leads with a gap register for the rest of 1993–2000",
       "backgroundOnly": false,
-      "source": "https://history.state.gov/historicaldocuments/frus1993-00v13"
+      "source": "https://history.state.gov/historicaldocuments/frus1993-00v18"
     },
     {
       "library": "bush43",
-      "volumeId": "frus2001-08v07",
-      "title": "2001–2008, Volume VII, Global War on Terror: “Road to 9/11” and Immediate Aftermath, 2001–2003",
+      "volumeId": "frus2001-08v43",
+      "title": "2001–2008, Volume XLIII, China, 2001–2004",
       "status": "Being Researched",
-      "topic": "Road to 9/11 research",
-      "task": "Distinguish pre-attack warning records from post-attack policy decisions within 2001–2003.",
-      "comparison": "Preserve what officials knew at the time; label later hindsight and do not infer declassification.",
-      "selection": "contemporaneous chronology with knowledge limits",
+      "topic": "April 2001 EP-3 incident",
+      "task": "Trace the EP-3 response without substituting public messaging for the decision record.",
+      "comparison": "Distinguish press guidance, draft statements, bulletins and email from final policy instructions.",
+      "selection": "NSC electronic-record leads, a document-type register and explicit access gaps",
       "backgroundOnly": false,
-      "source": "https://history.state.gov/historicaldocuments/frus2001-08v07"
+      "source": "https://history.state.gov/historicaldocuments/frus2001-08v43"
     }
   ]
 }

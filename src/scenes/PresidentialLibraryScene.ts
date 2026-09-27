@@ -1,3 +1,4 @@
+import { activeDossier, assignedDossier } from "../game/activeCompilation";
 import { researchDoorway } from '../systems/researchDoorway';
 import { prefersReducedMotion } from '../systems/motionPreferences';
 import { filedResearchPaper } from '../systems/filedResearchPaper';
@@ -94,15 +95,15 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.prompt=this.add.text(128,184,'',{fontFamily:'monospace',fontSize:'6px',color:'#fff4c9',backgroundColor:'#17232d'}).setOrigin(.5).setDepth(350);
     retroAudio.startMusic('ArchiveScene');this.refresh();swallowNextInputFrame();
     setLatestMessage(`${this.assignment.title}. Status: ${this.assignment.status}. ${this.assignment.task}`);
-    if (!gameState.sceneProgress[`libraryBriefed_${id}`]) {
-      gameState.sceneProgress[`libraryBriefed_${id}`]=1;
+    if (!gameState.sceneProgress[`libraryBriefed_v2_${id}`]) {
+      gameState.sceneProgress[`libraryBriefed_v2_${id}`]=1;
       this.dialog.show('RESEARCH ASSIGNMENT',[
         this.assignment.title,
         `Official list: ${this.assignment.status}. Checked ${LIBRARY_STATUS_CHECKED}.`,
         this.assignment.task,
-        this.assignment.backgroundOnly ? 'Background assignment: no matching Kennedy/Johnson production volume is listed. Keep these earlier leads outside the later manuscript date range.' : 'This dungeon is a game research exercise based on the listed volume, not a claim about specific archival files or unreleased contents.',
+        this.assignment.backgroundOnly ? 'Optional background stop. Your active assignments concern Reagan through George W. Bush; keep earlier evidence within its proper date and topic limits.' : 'The desk has a holdings lead for your volume. Read its limits before DANN-E misfiles it.',
         'Find the aid, compare records, write a source note, then file the packet. The south exit stays open.',
-        ...(nscDungeon(id)?['The north-center NSC WING leads to three extra chambers based on actual online holdings. Your FRUS assignment stays separate.']:[])
+        ...(nscDungeon(id)?['The north-center NSC WING holds the same source trail. Its guide can help with your research packet.']:[])
       ],()=>saveGameNow());
     }
     saveGameNow();
@@ -155,7 +156,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   private research(station:number) {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
-    if(station<stage){this.dialog.show('FILED',`This step is saved. ${stage===4?'Your packet is complete. Return south.':`Next: ${STATIONS[stage].name}.`}`);return;}
+    if(station<stage){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':STATIONS[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
     if(station!==stage){this.dialog.show('RESEARCH ORDER',`First complete ${STATIONS[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}
     const questions=[
       {q:a.task, good:`Log the finding-aid lead, dates, access limits, and request trail.`,bad:'Treat the catalog title as a retrieved document.'},
@@ -163,14 +164,24 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       {q:'How should the source note document this research?',good:'Record repository, collection, box/folder, document date and access limits; leave unknowns unresolved.',bad:'Invent a plausible box and folder to finish quickly.'},
       {q:`Official stage: ${a.status}. What can this packet establish?`,good:a.backgroundOnly?'Background leads only; preserve the later volume date boundary.':a.status.startsWith('Planned')?'A planning source survey; manuscript research is not claimed complete.':a.status.startsWith('Being Cleared')?'A clearance follow-up packet, not permission to publish.':'A research packet for human review, not a cleared manuscript.',bad:'The entire FRUS volume is cleared and ready to publish.'}
     ];
-    const task=questions[station];const goodKey=station%2?'B':'A';
+    const dossier=activeDossier(a.library);
+    const detail=dossier?.questions[station];
+    const task=detail?{q:detail.question,good:detail.correct,bad:detail.wrong}:questions[station];const goodKey=station%2?'B':'A';
     this.choice.show(task.q,[{key:'A',label:goodKey==='A'?task.good:task.bad,value:goodKey==='A'?'correct':'wrong'},{key:'B',label:goodKey==='B'?task.good:task.bad,value:goodKey==='B'?'correct':'wrong'}],option=>{
       if(!fileLibraryStage(gameState.sceneProgress,a.library,station,option.value==='correct')){this.dialog.show('CHECK THE RECORD','That shortcut loses the source trail or overstates the evidence. Return to this station and try again.');return;}
       const complete=libraryStage(gameState.sceneProgress,a.library)===4;
       if(complete)addDocumentPoints(8,`${a.library}: research packet filed for ${a.title}`);
       this.refresh(true);saveGameNow();retroAudio.fileDocket();
-      if(complete)this.dialog.show('PACKET FILED','Research packet saved. This is progress toward the volume, not publication clearance. Return outside through the south door.');
+      if(complete)this.dialog.show('PACKET FILED',detail?.receipt ?? 'Research packet saved for human review.',()=>this.offerManuscriptReturn());
+      else if(detail)this.dialog.show('RESEARCH NOTE FILED',detail.receipt);
       else this.toast.show(`FILED · NEXT: ${STATIONS[station+1].name}`,this.player.position,'info');
+    },6,()=>{});
+  }
+  private offerManuscriptReturn() {
+    if (!gameState.sceneProgress.compilerLibraryReturn || assignedDossier(gameState.sceneProgress)?.library !== this.assignment.library) return;
+    this.choice.show("RESEARCH PACKET READY", [{key:'A',label:'Return to the Archive manuscript desk',value:'return'},{key:'B',label:'Explore the NSC wing or grounds',value:'stay'}], option => {
+      if(option.value!=='return')return;
+      this.leaving=true;gameState.sceneProgress.compilerLibraryReturn=0;saveGameNow();transitionTo(this,'ArchiveScene');
     },6,()=>{});
   }
   private exit() {
