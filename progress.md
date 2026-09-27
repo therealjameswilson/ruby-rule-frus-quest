@@ -8252,3 +8252,7 @@ Validation: production compilation/build passed; 273 test files / 2,066 tests pa
 ## Generic compiler remit — 2026-09-27
 
 Removed remaining specific-volume framing from library briefings, field guide cards, runtime research readouts, opening toast, and research-packet prompts. Optional archival examples retain real collection names and dates, but no longer designate the hero’s volume, chapter topic, or production status. Bibliographic metadata remains in source JSON for provenance, not displayed as the player’s assignment. Build passes; 2,066 tests passed before the final older-library copy cleanup. Final phone browser smoke checked 12 guide cards and the library briefing with no page errors; screenshots inspected. Standard skill client still captures black despite valid state; normal browser captures render correctly. Not published.
+
+## Email assignment and release — 2026-09-27
+
+Kathy explicitly tells the compiler to check email for the volume assignment, without naming administrations, titles or date ranges. Preserved the HAC departure and general research approval flow. Publishing this with the preceding fixed-assignment removal and generic library briefings. Full suite: 273 files / 2,066 tests passed; Pages production build passed.

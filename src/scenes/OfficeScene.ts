@@ -532,12 +532,12 @@ export class OfficeScene extends Phaser.Scene {
     }
     setObjective(this.currentOfficeObjective());
     setLatestMessage(firstAssignment
-      ? "Kathy, General Editor: Your mission is to compile a FRUS volume. As compiler, plan research, select and annotate records, complete two reviews, and revise before DPD submission. First: carry the assignment memo to INBOX for research approval."
+      ? "Kathy, General Editor: Your mission is to compile a FRUS volume. As compiler, plan research, select and annotate records, complete two reviews, and revise before DPD submission. Check your email for your volume assignment, then take the memo to INBOX for research approval."
       : "Pick up the memo, carry it to INBOX, then stamp it.");
     this.toast.hide();
     if (!gameState.sceneProgress.kathyDeparted) this.dialog.show("KATHY - GENERAL EDITOR", [
       "Compile a FRUS volume: research, select, and annotate.",
-      "Your file is at INBOX: Reagan, Bush 41, Clinton or Bush 43.",
+      "Check your email for your volume assignment.",
       "Two reviews, then revision. DANN-E will want to skip both.",
       "First: take the memo to INBOX. Stamp your research plan.",
       "Now I need to talk with the HAC. So don't bother me anymore."
@@ -771,7 +771,7 @@ export class OfficeScene extends Phaser.Scene {
     if (memoStatus === 1) {
       this.setOfficeStarterMemoStatus(2);
       setHeldItem(null);
-      setLatestMessage("Kathy left your compilation memo at INBOX. Bring it back to agree the scope and research plan.");
+      setLatestMessage("Your assignment email is at INBOX. Agree the scope and research plan, then stamp the memo.");
       setObjective("Stamp the memo at INBOX.");
       retroAudio.confirm();
       this.toast.show("RESEARCH PLAN", this.player.position, "info");
