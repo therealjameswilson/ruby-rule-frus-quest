@@ -1,5 +1,5 @@
 import { libraryPacketReadout } from '../game/libraryPacket';
-import { evaluateComparison } from '../game/libraryComparison';
+import { comparisonCatalog, evaluateComparison } from '../game/libraryComparison';
 import { evaluateSourceNote } from '../game/librarySourceNote';
 import { requestCatalog, evaluateLibraryRequest } from '../game/libraryRequest';
 import { activeDossier } from "../game/activeCompilation";
@@ -148,6 +148,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     const packet=this.assignment.library==='reagan'?libraryPacketReadout(gameState.sceneProgress):null;
     this.stageText.setText(stage===4&&packet&&!packet.filed?'REVISIT PACKET · PROGRESS KEPT':`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
     const revisit=packet?[...packet.parts.map(p=>!p.ready),!packet.filed]:[];
+    if(comparisonCatalog(this.assignment.library))revisit[1]=!evaluateComparison(gameState.sceneProgress,this.assignment.library).ok;
     this.marks.forEach((m,i)=>m.setText(`${STATIONS[i].label} · ${i<stage&&revisit[i]?'REVISIT':i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
       .setColor(i===stage?'#fff3bf':i<stage?'#a7bfb4':'#a5afbd')
       .setBackgroundColor(i===stage?'#49371d':'#192630'));
@@ -162,13 +163,14 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   private research(station:number) {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
-    if(a.library==='reagan'&&station===1&&station<stage&&evaluateComparison(gameState.sceneProgress).ok){
-      this.choice.showLibraryComparison(gameState.sceneProgress,()=>{},()=>{},()=>{},true);return;
+    if(comparisonCatalog(a.library)&&station===1&&station<stage&&evaluateComparison(gameState.sceneProgress,a.library).ok){
+      this.choice.showLibraryComparison(gameState.sceneProgress,()=>{},()=>{},()=>{},true,a.library);return;
     }
     if(a.library==='reagan'&&station===2&&station<stage&&evaluateSourceNote(gameState.sceneProgress).ok){
       this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>{},()=>{},()=>{},true);return;
     }
-    const repair=a.library==='reagan'&&station<stage&&[!evaluateLibraryRequest(gameState.sceneProgress).ok,!evaluateComparison(gameState.sceneProgress).ok,!evaluateSourceNote(gameState.sceneProgress).ok,false][station];
+    const comparisonRepair=Boolean(comparisonCatalog(a.library))&&station===1&&station<stage&&!evaluateComparison(gameState.sceneProgress,a.library).ok;
+    const repair=comparisonRepair||a.library==='reagan'&&station<stage&&[!evaluateLibraryRequest(gameState.sceneProgress).ok,!evaluateComparison(gameState.sceneProgress).ok,!evaluateSourceNote(gameState.sceneProgress).ok,false][station];
     if(a.library==='reagan'&&station===3&&stage>=3){
       this.choice.showLibraryPacket(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(fileLibraryStage(gameState.sceneProgress,a.library,3,true))addDocumentPoints(8,`${a.library}: research packet filed: ${a.topic}`);
@@ -184,11 +186,11 @@ export class PresidentialLibraryScene extends Phaser.Scene {
         this.researchReceipt(requestCatalog(a.library)?.accessState?'Release metadata saved. Individual document examination and evidence gaps remain open.':'Exact archival lead saved. Retrieval and withdrawal checks remain pending.', 'FILED · NEXT: COMPARE');
       },()=>{},a.library);return;
     }
-    if(a.library==='reagan'&&station===1){
+    if(comparisonCatalog(a.library)&&station===1){
       this.choice.showLibraryComparison(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,1,true))return;
-        this.researchReceipt('Public positions attributed; folder lead retained. Private meeting records and State reporting remain pending. Carry these limits into your source note.', 'FILED · NEXT: SOURCE NOTE');
-      },()=>{});return;
+        this.researchReceipt(comparisonCatalog(a.library)!.receipt, 'FILED · NEXT: SOURCE NOTE');
+      },()=>{},false,a.library);return;
     }
     if(a.library==='reagan'&&station===2){
       this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>saveGameNow(),()=>{

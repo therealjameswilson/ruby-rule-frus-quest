@@ -129,6 +129,7 @@ function renderConciseGameToText() {
       libraryPacket: libraryPacketReadout(gameState.sceneProgress),
       librarySourceNote: sourceNoteReadout(gameState.sceneProgress),
       libraryComparison: comparisonReadout(gameState.sceneProgress),
+      libraryComparisons: {reagan:comparisonReadout(gameState.sceneProgress),bush41:comparisonReadout(gameState.sceneProgress,'bush41')},
       libraryRequest: libraryRequestReadout(gameState.sceneProgress),
       libraryRequests: Object.fromEntries(Object.keys(REQUEST_CATALOGS).map(id=>[id,libraryRequestReadout(gameState.sceneProgress,id)])),
       researchWorld: gameState.currentScene === "ResearchWorldScene" ? {

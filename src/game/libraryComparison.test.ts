@@ -36,3 +36,17 @@ it('rejects invalid card/lane input and an incomplete persisted draft', () => {
   expect(evaluateComparison(restored)).toMatchObject({ ok: false, card: 1 });
   expect(restored.libraryResearch_v2_reagan).toBe(1);
 });
+
+it('keeps Bush41 inventory findings separate from Reagan public evidence', () => {
+  const progress: Record<string,number> = {};
+  for(const [id,lane] of [[1,1],[2,2],[3,1],[4,3]])classifyComparisonCard(progress,id,lane,'bush41');
+  toggleComparisonFollowup(progress,1,'bush41');
+  expect(evaluateComparison(progress,'bush41').ok).toBe(false);
+  toggleComparisonFollowup(progress,2,'bush41');
+  expect(evaluateComparison(progress,'bush41').ok).toBe(true);
+  expect(evaluateComparison(progress).ok).toBe(false);
+  expect(comparisonReadout(progress).cards.every(c=>c.lane===0)).toBe(true);
+  classifyComparisonCard(progress,3,2,'bush41');
+  expect(evaluateComparison(progress,'bush41')).toMatchObject({ok:false,card:3});
+  expect(evaluateComparison(progress,'unknown').ok).toBe(false);
+});

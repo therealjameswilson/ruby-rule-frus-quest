@@ -1,13 +1,14 @@
 import '../styles/manuscript-desk.css';
 import '../styles/chapter-assembly.css';
 import '../styles/library-comparison.css';
-import { COMPARISON_CARDS, COMPARISON_LANES, COMPARISON_FOLLOWUPS, comparisonReadout, classifyComparisonCard, toggleComparisonFollowup, evaluateComparison } from '../game/libraryComparison';
+import { comparisonCatalog, comparisonReadout, classifyComparisonCard, toggleComparisonFollowup, evaluateComparison } from '../game/libraryComparison';
 import { setChoiceState } from '../game/state';
 import type { InputState } from '../input/InputState';
 import { DeskControls } from './deskControls';
 import { retroAudio } from './audio';
 
 export class LibraryComparisonDesk {
+  private get catalog() { return comparisonCatalog(this.library)!; }
   private root = document.createElement('dialog');
   private controls?: DeskControls;
   private body: HTMLElement;
@@ -15,7 +16,7 @@ export class LibraryComparisonDesk {
   private submit: HTMLButtonElement;
   private leave: HTMLButtonElement;
   get active() { return this.controls?.active ?? false; }
-  constructor(private progress: Record<string, number>, private onSave: () => void, onSubmit: () => void, onCancel: () => void, private reviewOnly = false) {
+  constructor(private progress: Record<string, number>, private onSave: () => void, onSubmit: () => void, onCancel: () => void, private reviewOnly = false, private library = 'reagan') {
     this.root.className = 'manuscript-desk chapter-desk library-comparison';
     this.root.setAttribute('aria-labelledby', 'comparison-title');
     this.root.innerHTML = `<section class="manuscript-panel"><header class="manuscript-heading"><div><p class="manuscript-eyebrow">THE READING ROOM <span>02 / COMPARE EVIDENCE</span></p><h1 id="comparison-title">What does each source establish?</h1><p>Thatcher’s February 1985 visit · Sort the evidence, then preserve the open work.</p></div><button class="manuscript-close" data-focus-key="leave">Save &amp; leave</button></header><div class="manuscript-body assembly-body"></div><footer class="manuscript-footer"><p data-status role="status">DANN-E: “A cordial press appearance. Every private difference settled!”</p><button class="manuscript-submit" data-focus-key="submit">File comparison →</button><small>Optional source trail · Arrows / D-pad to move · A / Enter to act · B / Esc to save and leave</small></footer></section>`;
@@ -24,15 +25,17 @@ export class LibraryComparisonDesk {
     this.submit = this.root.querySelector('.manuscript-submit')!;
     this.leave = this.root.querySelector('.manuscript-close')!;
     this.leave.addEventListener('click', onCancel);
+    this.root.querySelector('.manuscript-heading p:last-child')!.textContent = this.catalog.subtitle;
+    this.status.textContent = this.catalog.taunt;
     if (reviewOnly) {
       this.root.querySelector('h1')!.textContent = 'Your filed evidence comparison.';
       this.root.querySelector('.manuscript-heading p:last-child')!.textContent = 'Review the source distinctions and the research still outstanding.';
       this.submit.textContent = 'Return to room'; this.leave.textContent = 'Close';
-      this.status.textContent = 'Comparison saved. Private-record and State/embassy research remain open.';
+      this.status.textContent = this.catalog.receipt;
     }
     this.submit.addEventListener('click', () => {
       if (this.reviewOnly) { onCancel(); return; }
-      const result = evaluateComparison(this.progress);
+      const result = evaluateComparison(this.progress,this.library);
       this.status.textContent = result.message;
       this.status.dataset.error = String(!result.ok);
       if (result.ok) { this.onSave(); retroAudio.fileDocket(); onSubmit(); }
@@ -53,12 +56,12 @@ export class LibraryComparisonDesk {
   }
   private render(focus?: string) {
     this.body.replaceChildren();
-    const state = comparisonReadout(this.progress);
+    const state = comparisonReadout(this.progress,this.library);
     const brief = document.createElement('p'); brief.className = 'assembly-brief';
-    brief.textContent = 'Source summaries below are paraphrases. Public remarks establish what was said publicly; a finding aid supplies a lead. Neither substitutes for examining private records.';
+    brief.textContent = this.catalog.brief;
     this.body.append(brief);
     const grid = document.createElement('div'); grid.className = 'comparison-cards';
-    for (const card of COMPARISON_CARDS) {
+    for (const card of this.catalog.cards) {
       const article = document.createElement('article'); article.dataset.card = String(card.id); article.dataset.readable = '';
       const provenance = document.createElement('small'); provenance.textContent = card.provenance;
       const title = document.createElement('h2'); title.textContent = card.title;
@@ -73,13 +76,13 @@ export class LibraryComparisonDesk {
       const group = document.createElement('div'); group.className = 'comparison-sort'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', `Classify ${card.title}`);
       if (this.reviewOnly) {
         const filed = document.createElement('p'); filed.className = 'comparison-filed';
-        filed.textContent = `Filed as: ${COMPARISON_LANES.find(l => l.id === lane)?.label ?? 'Unclassified'}`;
+        filed.textContent = `Filed as: ${this.catalog.lanes.find(l => l.id === lane)?.label ?? 'Unclassified'}`;
         const limit = document.createElement('p'); limit.textContent = card.feedback;
         group.append(filed, limit);
       }
-      for (const target of this.reviewOnly ? [] : COMPARISON_LANES) {
+      for (const target of this.reviewOnly ? [] : this.catalog.lanes) {
         const key = `card-${card.id}-lane-${target.id}`;
-        const button = this.button(target.label, key, () => { classifyComparisonCard(this.progress, card.id, target.id); this.changed(key); });
+        const button = this.button(target.label, key, () => { classifyComparisonCard(this.progress, card.id, target.id,this.library); this.changed(key); });
         button.dataset.lane = String(target.id); button.setAttribute('aria-pressed', String(lane === target.id)); group.append(button);
       }
       article.append(group); grid.append(article);
@@ -87,20 +90,20 @@ export class LibraryComparisonDesk {
     this.body.append(grid);
     const table = document.createElement('section'); table.className = 'comparison-table';
     const h = document.createElement('h2'); h.textContent = 'Your comparison table'; table.append(h);
-    for (const lane of COMPARISON_LANES) {
+    for (const lane of this.catalog.lanes) {
       const row = document.createElement('p');
       const label = document.createElement('strong'); label.textContent = `${lane.label}: `;
-      row.append(label, COMPARISON_CARDS.filter(c => state.cards.find(s => s.id === c.id)?.lane === lane.id).map(c => c.title).join(' · ') || 'No evidence placed'); table.append(row);
+      row.append(label, this.catalog.cards.filter(c => state.cards.find(s => s.id === c.id)?.lane === lane.id).map(c => c.title).join(' · ') || 'No evidence placed'); table.append(row);
     }
     const heading = document.createElement('h3'); heading.textContent = 'Carry the missing evidence forward'; table.append(heading);
-    for (const task of COMPARISON_FOLLOWUPS) {
+    for (const task of this.catalog.followups) {
       const key = `followup-${task.id}`, selected = state.followups.includes(task.id);
       if (this.reviewOnly) {
         const item = document.createElement('p'); item.dataset.readable = '';
         const label = document.createElement('strong'); label.textContent = `Pending: ${task.label}. `;
         item.append(label, task.detail); table.append(item); continue;
       }
-      const button = this.button(`${selected ? '✓ ' : ''}${task.label}`, key, () => { toggleComparisonFollowup(this.progress, task.id); this.changed(key); });
+      const button = this.button(`${selected ? '✓ ' : ''}${task.label}`, key, () => { toggleComparisonFollowup(this.progress, task.id,this.library); this.changed(key); });
       button.dataset.followup = String(task.id); button.setAttribute('aria-pressed', String(selected));
       const detail = document.createElement('small'); detail.textContent = task.detail; button.append(detail); table.append(button);
     }

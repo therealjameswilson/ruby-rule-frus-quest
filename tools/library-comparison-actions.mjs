@@ -1,6 +1,7 @@
 /** Complete the visible comparison without writing progression flags. */
 export async function completeLibraryComparison(page) {
-  for (const [id,lane] of [[1,1],[2,2],[3,2],[4,3]]) {
+  const bush41=(await page.locator('.library-comparison [data-card="1"] h2').innerText())==='Arms Control [1]';
+  for (const [id,lane] of [[1,1],[2,2],[3,bush41?1:2],[4,3]]) {
     await page.locator(`.library-comparison [data-card="${id}"] [data-lane="${lane}"]`).click();
   }
   for (const id of [1,2]) {
