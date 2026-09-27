@@ -109,6 +109,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   update(_:number,delta:number) {
     tickInput();const input=getInput();if(this.leaving)return;
+    if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     if(gameState.mode==='explore') {
       this.toast.update(delta,this.player.position);
       this.clearing=this.clearing.filter(clear=>{
@@ -124,7 +125,6 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     if(this.choice.active){this.player.update(delta,false);this.prompt.setVisible(false);this.choice.updateInput();return;}
     if(handleOpenOverlays(this.inventory)){this.player.update(delta,false);this.prompt.setVisible(false);return;}
     if(input.menuJustPressed||input.pauseJustPressed){this.inventory.toggle();return;}
-    if(input.fullscreenJustPressed)this.scale.toggleFullscreen();
     const stage=libraryStage(gameState.sceneProgress,this.assignment.library);
     const gates = [new Phaser.Geom.Rectangle(114,94,28,20),new Phaser.Geom.Rectangle(166,130,54,8)].filter((_,i)=>stage<i+1);
     this.player.update(delta,true,{bounds:{left:19,right:237,top:82,bottom:218},solids:[...this.solids,...gates]});
@@ -157,6 +157,13 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
     if(station<stage){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':STATIONS[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
     if(station!==stage){this.dialog.show('RESEARCH ORDER',`First complete ${STATIONS[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}
+    if(a.library==='reagan'&&station===0){
+      this.choice.showLibraryRequest(gameState.sceneProgress,()=>saveGameNow(),()=>{
+        if(!fileLibraryStage(gameState.sceneProgress,a.library,0,true))return;
+        this.refresh(true);saveGameNow();
+        this.dialog.show('REQUEST FILED','RAC Box 6 lead saved. Retrieval and withdrawal checks remain pending. Next: compare access claims at the second desk.');
+      },()=>{});return;
+    }
     const questions=[
       {q:a.task, good:`Log the finding-aid lead, dates, access limits, and request trail.`,bad:'Treat the catalog title as a retrieved document.'},
       {q:a.comparison,good:`Keep ${a.selection}.`,bad:'Use DANN-E’s summary and discard conflicting evidence.'},

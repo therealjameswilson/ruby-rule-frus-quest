@@ -1,3 +1,4 @@
+import {completeLibraryRequest} from './library-request-actions.mjs';
 import {completeChapterDesk} from './chapter-desk-actions.mjs';
 import {completeRevisionDesk} from './revision-desk-actions.mjs';
 // Select the researched workflow answers through controls, never by changing flags.
@@ -10,6 +11,7 @@ export async function completeCompilerCheckpoint(page) {
  for(let n=0;n<100;n++){
   current=await state();
   if(current.mode==='dialog'){await page.keyboard.press('Space',{delay:45});await page.waitForTimeout(160);continue;}
+  if(await page.locator('.library-request').count()){await completeLibraryRequest(page);continue;}
   if(await page.locator('.revision-desk').count()){await completeRevisionDesk(page);continue;}
   if(await page.locator('.chapter-desk').count()){await completeChapterDesk(page);continue;}
   if(await nativeDesk()){

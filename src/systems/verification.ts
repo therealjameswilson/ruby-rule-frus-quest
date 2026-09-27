@@ -1,3 +1,4 @@
+import { LibraryRequestDesk } from './libraryRequestDesk';
 import { ManuscriptRevisionDesk } from "./manuscriptRevisionDesk";
 import { ChapterAssemblyDesk } from "./chapterAssemblyDesk";
 import { ManuscriptDesk } from "./manuscriptDesk";
@@ -19,7 +20,7 @@ function color(hex: string) {
 
 export class ChoicePrompt {
   private readonly scene: Phaser.Scene;
-  private manuscriptDesk?: ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk;
+  private manuscriptDesk?: ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk | LibraryRequestDesk;
   private readonly container: Phaser.GameObjects.Container;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly sourceText: Phaser.GameObjects.Text;
@@ -130,6 +131,12 @@ export class ChoicePrompt {
     this.manuscriptDesk = new ManuscriptRevisionDesk(progress, onSave,
       () => { this.hide(); onSubmit(); },
       () => { this.hide(); onCancel(); });
+  }
+
+  showLibraryRequest(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void) {
+    this.hide();this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
+    this.manuscriptDesk = new LibraryRequestDesk(progress,onSave,
+      () => {this.hide();onSubmit();}, () => {this.hide();onCancel();});
   }
 
   updateInput() {

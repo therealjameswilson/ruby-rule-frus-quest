@@ -1,3 +1,4 @@
+import { libraryRequestReadout } from './game/libraryRequest';
 import { installRenderDensity } from "./systems/renderDensity";
 import { libraryResearchReadout } from "./game/libraryResearch";
 import Phaser from "phaser";
@@ -122,6 +123,7 @@ function renderConciseGameToText() {
       questCounters: gameState.questCounters,
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       libraryResearch: libraryResearchReadout(gameState.sceneProgress),
+      libraryRequest: libraryRequestReadout(gameState.sceneProgress),
       researchWorld: gameState.currentScene === "ResearchWorldScene" ? {
         zone: RESEARCH_ZONES[researchZone(gameState.sceneProgress.researchWorldZone)].name,
         danneDisguise: DANNE_DISGUISES[disguiseIndex(gameState.sceneProgress.researchDanneDisguise)].movie,
