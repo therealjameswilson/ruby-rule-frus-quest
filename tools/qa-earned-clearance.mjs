@@ -48,11 +48,20 @@ try{
  assert(!(await state()).sceneProgress.classNetVaultReviewComplete);
  await key('ArrowRight');await key('ArrowRight');await shot('chronology-corrected');
  await key('ArrowDown');await key();await page.waitForTimeout(600);await shot('review-complete');
+ if(process.argv.includes('--reward-art')){
+  const art=await page.evaluate(()=>{const icon=window.game.scene.getScene('NetworkScene').clearanceTokenIcon;return {texture:icon.texture.key,width:icon.displayWidth,height:icon.displayHeight,sourceWidth:icon.texture.getSourceImage().width};});
+  assert.equal(art.texture,'world-item-detail-v2-clearance-token');assert.equal(art.width,24);assert.equal(art.height,24);assert.equal(art.sourceWidth,144);
+  await writeFile(`${out}/reward-art.json`,JSON.stringify(art,null,2));
+ }
  assert.equal(await westGate(),undefined,'Finished review should remove the return restriction');
  assert((await gateLabels()).includes('SPLIT'),'Return sign should refresh without re-entering the room');
  assert(!(await gateLabels()).includes('FILE'));
  assert.equal((await state()).sceneProgress.classNetVaultReviewComplete,1);
  await move(164,132);await key();await shot('token');
+ if(process.argv.includes('--reward-art')){
+  const burst=await page.evaluate(()=>window.game.scene.getScene('NetworkScene').children.list.filter(o=>o.name==='snes-reward-burst').some(o=>o.list?.some(child=>child.texture?.key==='world-item-detail-v2-clearance-token')));
+  assert(burst,'Pickup celebration must use the detailed icon too');
+ }
  assert((await state()).inventory.includes('Clearance Token'));
  await move(216,132);await move(216,120);await key('ArrowRight',1200);
  await page.waitForFunction(()=>JSON.parse(window.render_game_to_text()).scene==='ReferralVaultScene');

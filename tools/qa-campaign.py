@@ -11,13 +11,14 @@ names=['earned-source-note','earned-annotation','file-annotation','earned-networ
 base.mkdir(parents=True,exist_ok=True)
 opening=base/'01-guide';opening.mkdir(exist_ok=True)
 env=dict(os.environ,FRUS_QA_URL=url,PLAYWRIGHT_MODULE=playwright,FRUS_QA_OUT=str(opening))
-if len(sys.argv)<2:
+initial_save=os.environ.get('FRUS_QA_STORAGE')
+if len(sys.argv)<2 and not initial_save:
  print('START fresh opening',flush=True)
  with (opening/'run.log').open('w') as log:
   result=subprocess.run(['node',str(root/'tools/qa-guide-counter.mjs')],cwd=root,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=900)
  print((opening/'run.log').read_text()[-2600:],flush=True)
  if result.returncode:sys.exit(result.returncode)
-prev=opening/'earned-storage.json'
+prev=Path(initial_save) if initial_save else opening/'earned-storage.json'
 start=int(sys.argv[1]) if len(sys.argv)>1 else 0
 for idx,name in enumerate(names):
  out=base/f'{idx+2:02d}-{name}'
