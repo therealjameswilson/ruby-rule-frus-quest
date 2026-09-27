@@ -9,6 +9,7 @@ const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE
  viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+if(mobile)for(const device of [page.keyboard,page.mouse])for(const method of ['press','down','up','click','move','type'])if(typeof device[method]==='function')device[method]=()=>{throw Error(`Non-touch input: ${method}`);};
 const cdp=mobile?await context.newCDPSession(page):null;
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 let touchBox;
@@ -27,7 +28,7 @@ const key=async(k='Space',ms=50)=>{
  }else{await page.keyboard.down(k);await page.waitForTimeout(ms);await page.keyboard.up(k);}
  await page.waitForTimeout(150);
 };
-const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
+const shot=async name=>{await page.screenshot({path:`${out}/${name}.png`});await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
 async function move(x,y,interaction){
  const tolerance=mobile?5:3;
  let lastDistance=Infinity;
