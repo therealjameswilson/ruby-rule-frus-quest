@@ -11,7 +11,7 @@ export const nscGuideReadKey = (id: string, room: number) => `${activeDossier(id
 export function activeCompilationReadout(progress: Readonly<Record<string, number>>) {
   return { assigned: null, title: null, statusChecked: manifest.checked,
     researchReady: true, packets: ACTIVE_COMPILATION.map(a => ({
-      library: a.library, volumeId: a.volumeId, stage: progress[libraryProgressKey(a.library)] ?? 0,
+      library: a.library, topic: a.topic, stage: progress[libraryProgressKey(a.library)] ?? 0,
       receipts: a.questions.filter((_, i) => i < (progress[libraryProgressKey(a.library)] ?? 0)).map(q => q.receipt)
     })) };
 }

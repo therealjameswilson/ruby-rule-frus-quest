@@ -1,7 +1,7 @@
 {
   "checked": "2026-09-26",
   "statusSource": "https://history.state.gov/historicaldocuments/status-of-the-series",
-  "note": "Active missions focus on four volumes listed Being Researched on September 26, 2026. Earlier libraries remain optional background stops. Holdings-based decisions are game scenarios; no unpublished document contents or official assignments are asserted.",
+  "note": "Optional archival research examples. These holdings do not assign the compiler a specific FRUS volume, topic, or date range. Source metadata is retained for provenance; no retrieved document contents are invented.",
   "assignments": [
     {
       "library": "fdr",
@@ -45,9 +45,9 @@
       "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
       "status": "Being Researched",
       "topic": "Refugee policy precedents",
-      "task": "Survey Kennedy-era refugee-policy precedents as background to the later 1975–1984 assignment.",
-      "comparison": "Mark pre-1975 material as background; do not insert it as an in-period document.",
-      "selection": "dated background lead, outside volume scope",
+      "task": "Survey Kennedy-era refugee-policy records and preserve their original dates.",
+      "comparison": "Explain how an earlier precedent relates to a later decision without confusing their dates.",
+      "selection": "dated lead with its research relevance explained",
       "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1981-88v42"
     },
@@ -57,7 +57,7 @@
       "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
       "status": "Being Researched",
       "topic": "Immigration policy precedents",
-      "task": "Survey Johnson-era immigration-policy precedents for the later refugee and immigration assignment.",
+      "task": "Survey Johnson-era immigration-policy records and trace their policy context.",
       "comparison": "Distinguish earlier statutory context from later implementation decisions.",
       "selection": "background context with an explicit date limit",
       "backgroundOnly": true,
@@ -68,9 +68,9 @@
       "volumeId": "frus1969-76ve10",
       "title": "1969–1976, Volume E–10, Documents on American Republics, 1969–1972",
       "status": "Being Cleared — Uruguay chapter",
-      "topic": "Uruguay clearance follow-up",
-      "task": "Recheck the Uruguay source trail while that chapter remains in clearance.",
-      "comparison": "Other chapters are published; do not treat Uruguay as already released.",
+      "topic": "Uruguay source trail",
+      "task": "Trace the Uruguay records and distinguish access from clearance.",
+      "comparison": "A related published record does not establish that another record has been released.",
       "selection": "Uruguay source trail and unresolved clearance",
       "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1969-76ve10"
@@ -81,7 +81,7 @@
       "title": "1981–1988, Volume XLII, Refugees and Immigration, 1975–1984",
       "status": "Being Researched",
       "topic": "1975 refugee response",
-      "task": "Investigate the 1975 refugee response within the volume’s cross-administration scope.",
+      "task": "Investigate the 1975 refugee response across administrations.",
       "comparison": "Follow decisions across evacuation, admission, and resettlement; retain agency disagreements.",
       "selection": "decision sequence across agencies",
       "backgroundOnly": true,
@@ -94,7 +94,7 @@
       "status": "Being Cleared",
       "topic": "Iran revolution follow-up",
       "task": "Verify the source trail and chronology for policy toward revolutionary Iran.",
-      "comparison": "Stop at November 1979; distinguish unresolved clearance from research availability.",
+      "comparison": "Preserve the records’ dates; distinguish unresolved clearance from research availability.",
       "selection": "dated source note and clearance flag",
       "backgroundOnly": true,
       "source": "https://history.state.gov/historicaldocuments/frus1977-80v10"

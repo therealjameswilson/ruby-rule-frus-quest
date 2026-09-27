@@ -1,7 +1,7 @@
 {
   "checked": "2026-09-26",
   "statusSource": "https://history.state.gov/historicaldocuments/status-of-the-series",
-  "note": "Official holdings and active volume titles; puzzle decisions and research packets are game scenarios, not retrieved documents or official compiler assignments.",
+  "note": "Optional archival research examples. These holdings do not assign the compiler a specific FRUS volume, topic, or date range. Source metadata is retained for provenance; no retrieved document contents are invented.",
   "dossiers": [
     {
       "library": "reagan",
@@ -19,7 +19,7 @@
       "selection": "visit lead plus a request for decision records and State reporting",
       "questions": [
         {
-          "question": "DANN-E put a 1984 folder on the 1985–1988 cart. Which lead fits?",
+          "question": "Find the February 1985 Thatcher visit. Which folder fits?",
           "correct": "RAC Box 6: Thatcher visit, 02/20/1985 (1)(2).",
           "wrong": "Use the December 1984 folder as an in-period document.",
           "receipt": "Request slip: RAC Box 6, February 20, 1985 visit; 1984 material stays background."
@@ -37,9 +37,9 @@
           "receipt": "Source sheet: exact folder locator; document date, authorship and decision evidence pending retrieval."
         },
         {
-          "question": "Send the Western Europe packet to your supervisor.",
+          "question": "Send this archival research packet to your supervisor.",
           "correct": "File the lead, scope note and outstanding document requests.",
-          "wrong": "Declare the entire 1985–1988 chapter complete.",
+          "wrong": "Declare the entire chapter complete from one folder.",
           "receipt": "Research packet: Thatcher visit lead; State/NSC comparison and later-period coverage remain open."
         }
       ],
@@ -70,7 +70,7 @@
         },
         {
           "question": "The folder concerns arms control. Where does it fit?",
-          "correct": "Coordinate the arms-control overlap; select for Soviet policy.",
+          "correct": "Coordinate overlapping coverage before selecting records.",
           "wrong": "Put every arms-control record in this volume.",
           "receipt": "Scope note: coordinate related volumes; do not duplicate their remit."
         },
@@ -82,9 +82,9 @@
         },
         {
           "question": "This lead covers 1989–1990. File the research report.",
-          "correct": "Log the lead and gaps through 1992; seek State evidence.",
-          "wrong": "Mark all Soviet policy research for 1989–1992 complete.",
-          "receipt": "Research packet: Rice lead, State comparison, 1991–1992 coverage gaps."
+          "correct": "Log the date limits and gaps; seek State evidence.",
+          "wrong": "Mark the whole research plan complete from one file.",
+          "receipt": "Research packet: Rice lead, State comparison, and coverage questions."
         }
       ],
       "status": "Being Researched",
@@ -113,7 +113,7 @@
           "receipt": "Request slip: MDR 2015-0782-M-2, digital item 57569; limited date span."
         },
         {
-          "question": "Sort the conversation records for the chapter.",
+          "question": "Sort these conversation records into a chronology.",
           "correct": "Use conversation date; retain memcon/telcon identity.",
           "wrong": "Sort by upload date and merge both record types.",
           "receipt": "Chronology rule: event date first; drafting dates and record types retained separately."
@@ -125,8 +125,8 @@
           "receipt": "Annotation backup: only checked document passages may support quotations; retain the MDR identifier."
         },
         {
-          "question": "The set ends in 1999. What goes to first review?",
-          "correct": "Candidate chronology plus gaps for 1993–1996 and 2000.",
+          "question": "This set covers only part of the record. What goes to review?",
+          "correct": "Candidate chronology, date limits, and unresolved gaps.",
           "wrong": "A claim that this set completes all 1993–2000 contacts.",
           "receipt": "Research packet: candidates and date gaps; compare related policy files."
         }
@@ -169,8 +169,8 @@
           "receipt": "Access register: full/partial/withheld distinguished; unprocessed material remains a gap."
         },
         {
-          "question": "Prepare the China chapter research packet.",
-          "correct": "File EP-3 leads; flag gaps and the remaining 2001–2004 scope.",
+          "question": "Prepare the EP-3 archival research packet.",
+          "correct": "File EP-3 leads; flag gaps and further research needs.",
           "wrong": "Call the incident file a complete, cleared China manuscript.",
           "receipt": "Research packet: incident trail, withholding log, wider-period research still required."
         }

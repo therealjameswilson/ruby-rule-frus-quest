@@ -127,7 +127,7 @@
       "accent": "#8a87b8",
       "challenge": {
         "question": "The folder concerns arms control. Where does it fit?",
-        "correct": "Coordinate the arms-control overlap; select for Soviet policy.",
+        "correct": "Coordinate overlapping coverage before selecting records.",
         "wrong": "Put every arms-control record in this volume."
       }
     },
@@ -140,7 +140,7 @@
       "sourceLabel": "Clinton Digital Library item 57569",
       "accent": "#b99154",
       "challenge": {
-        "question": "Sort the conversation records for the chapter.",
+        "question": "Sort these conversation records into a chronology.",
         "correct": "Use conversation date; retain memcon/telcon identity.",
         "wrong": "Sort by upload date and merge both record types."
       }

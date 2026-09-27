@@ -13,7 +13,7 @@ import Phaser from 'phaser';
 import { Player } from '../entities/Player';
 import { gameState, addDocumentPoints, setSceneState, setObjective, setLatestMessage, setNearestInteractable, setVisibleEntities, setVisibleThreats, setRoomTraversalState } from '../game/state';
 import { RESEARCH_LANDMARKS } from '../game/researchWorld';
-import { LIBRARY_ASSIGNMENTS, LIBRARY_STATUS_CHECKED, libraryAssignment, libraryStage, fileLibraryStage } from '../game/libraryResearch';
+import { LIBRARY_ASSIGNMENTS, libraryAssignment, libraryStage, fileLibraryStage } from '../game/libraryResearch';
 import { getInput, tickInput, swallowNextInputFrame } from '../input/InputState';
 import { DialogBox } from '../systems/dialog';
 import { ChoicePrompt } from '../systems/verification';
@@ -56,7 +56,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     setSceneState('PresidentialLibraryScene','explore','RESEARCH THE VOLUME');
     setRoomTraversalState({currentRoomId:`library-${id}`,roomTitle:library.name,roomType:'puzzle',visitedRoomIds:[`library-${id}`],revealedRoomIds:[`library-${id}`],exits:{south:'ResearchWorldScene'},lockedExits:{},requiredItems:{}});
     setVisibleThreats([]);
-    setVisibleEntities([library.name, this.assignment.title, ...STATIONS.map(s=>s.name),...(nscDungeon(id)?['North-center: NSC research wing']:[]),'DANN-E misfiled-record barriers','South: return to library grounds']);
+    setVisibleEntities([library.name, this.assignment.topic, ...STATIONS.map(s=>s.name),...(nscDungeon(id)?['North-center: NSC research wing']:[]),'DANN-E misfiled-record barriers','South: return to library grounds']);
     drawRoomFrame(this, library.label, '#d6a23a', {showLegacyHud:false});
     this.cameras.main.setBackgroundColor('#29343e');
     addLibraryRoomFloor(this);
@@ -94,14 +94,13 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.inventory=new InventoryOverlay(this);
     this.prompt=this.add.text(128,184,'',{fontFamily:'monospace',fontSize:'6px',color:'#fff4c9',backgroundColor:'#17232d'}).setOrigin(.5).setDepth(350);
     retroAudio.startMusic('ArchiveScene');this.refresh();swallowNextInputFrame();
-    setLatestMessage(`${this.assignment.title}. Status: ${this.assignment.status}. ${this.assignment.task}`);
+    setLatestMessage(`${this.assignment.topic}. ${this.assignment.task}`);
     if (!gameState.sceneProgress[`libraryBriefed_v2_${id}`]) {
       gameState.sceneProgress[`libraryBriefed_v2_${id}`]=1;
-      this.dialog.show('RESEARCH ASSIGNMENT',[
-        this.assignment.title,
-        `Official list: ${this.assignment.status}. Checked ${LIBRARY_STATUS_CHECKED}.`,
+      this.dialog.show('ARCHIVAL RESEARCH',[
+        this.assignment.topic,
         this.assignment.task,
-        this.assignment.backgroundOnly ? 'Optional background stop. Your active assignments concern Reagan through George W. Bush; keep earlier evidence within its proper date and topic limits.' : 'The desk has a holdings lead for your volume. Read its limits before DANN-E misfiles it.',
+        'Explore this optional source trail. The holdings here do not define your volume’s topic or date range.',
         'Find the aid, compare records, write a source note, then file the packet. The south exit stays open.',
         ...(nscDungeon(id)?['The north-center NSC WING holds the same source trail. Its guide can help with your research packet.']:[])
       ],()=>saveGameNow());
@@ -162,7 +161,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       {q:a.task, good:`Log the finding-aid lead, dates, access limits, and request trail.`,bad:'Treat the catalog title as a retrieved document.'},
       {q:a.comparison,good:`Keep ${a.selection}.`,bad:'Use DANN-E’s summary and discard conflicting evidence.'},
       {q:'How should the source note document this research?',good:'Record repository, collection, box/folder, document date and access limits; leave unknowns unresolved.',bad:'Invent a plausible box and folder to finish quickly.'},
-      {q:`Official stage: ${a.status}. What can this packet establish?`,good:a.backgroundOnly?'Background leads only; preserve the later volume date boundary.':a.status.startsWith('Planned')?'A planning source survey; manuscript research is not claimed complete.':a.status.startsWith('Being Cleared')?'A clearance follow-up packet, not permission to publish.':'A research packet for human review, not a cleared manuscript.',bad:'The entire FRUS volume is cleared and ready to publish.'}
+      {q:'What can this research packet establish?',good:'A cited research lead with access limits, ready for human review.',bad:'The entire FRUS volume is cleared and ready to publish.'}
     ];
     const dossier=activeDossier(a.library);
     const detail=dossier?.questions[station];
@@ -170,7 +169,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.choice.show(task.q,[{key:'A',label:goodKey==='A'?task.good:task.bad,value:goodKey==='A'?'correct':'wrong'},{key:'B',label:goodKey==='B'?task.good:task.bad,value:goodKey==='B'?'correct':'wrong'}],option=>{
       if(!fileLibraryStage(gameState.sceneProgress,a.library,station,option.value==='correct')){this.dialog.show('CHECK THE RECORD','That shortcut loses the source trail or overstates the evidence. Return to this station and try again.');return;}
       const complete=libraryStage(gameState.sceneProgress,a.library)===4;
-      if(complete)addDocumentPoints(8,`${a.library}: research packet filed for ${a.title}`);
+      if(complete)addDocumentPoints(8,`${a.library}: research packet filed: ${a.topic}`);
       this.refresh(true);saveGameNow();retroAudio.fileDocket();
       if(complete)this.dialog.show('PACKET FILED',detail?.receipt ?? 'Research packet saved for human review.',()=>this.offerManuscriptReturn());
       else if(detail)this.dialog.show('RESEARCH NOTE FILED',detail.receipt);

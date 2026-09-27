@@ -751,7 +751,7 @@ export class OfficeScene extends Phaser.Scene {
     setLatestMessage("Assignment: compile a FRUS volume. Carry the memo to INBOX to agree the scope and get the research plan approved.");
     setObjective("Carry the memo to INBOX.");
     retroAudio.confirm();
-    this.toast.show("FRUS: LATE COLD WAR", this.player.position, "info");
+    this.toast.show("COMPILE A FRUS VOLUME", this.player.position, "info");
   }
 
   private handleStarterMemoInbox() {

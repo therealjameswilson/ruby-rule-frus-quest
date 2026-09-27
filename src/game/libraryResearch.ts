@@ -15,5 +15,5 @@ export function fileLibraryStage(progress: Record<string, number>, id: string, s
   return true;
 }
 export function libraryResearchReadout(progress: Record<string, number>) {
-  return LIBRARY_ASSIGNMENTS.map(a => ({ library:a.library, volume:a.title, status:a.status, backgroundOnly:a.backgroundOnly, completed:libraryStage(progress,a.library), total:4 }));
+  return LIBRARY_ASSIGNMENTS.map(a => ({ library:a.library, topic:a.topic, optional:true, completed:libraryStage(progress,a.library), total:4 }));
 }
