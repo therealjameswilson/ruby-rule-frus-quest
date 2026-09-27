@@ -8476,3 +8476,11 @@ Previous turn was progress: c95c51a assembled Clinton packets. Revalidated Bush4
 Shared desk provides per-library saved drafts, validated filing, immutable completed review and legacy repair. Helper recognizes Bush43’s distinct classification. Build and 282 files / 2,108 tests pass. Browser checks pass desktop/portrait/landscape: error feedback, draft save/reload, follow-ups, filing/reload, read-only review, no page errors; desktop simulated controller/fullscreen passed. Inspected desktop/phone screenshots. Standard headed skill client reaches explore/moves to x134 with black canvas capture limitation. Desk tests position hero, not full campaign/hardware movement.
 
 Local only; goal active. Next assemble Bush43’s accurate research log and packet, then assess the complete research excursion and audiovisual/play feel.
+
+## Bush43 research-log assembly — 2026-09-27
+
+Previous turn was progress: 84253b4 added processing/evidence comparison. Revalidated station 3 remained binary. Added assembled research log preserving FOIA/ARMS provenance, record scope versus inventory maintenance date, full/partial/withheld processing totals, and separate unprocessed material. Rejects invented asset citation and claims of complete examination/disclosure. Pending asset inspection, withholding checks and related-record/comparative research persist. Reuses official metadata verified in prior comparison; no document contents invented.
+
+Per-library keys preserve notes; filed logs reopen read-only and legacy gaps can be repaired without stage credit. Build and 282 files / 2,109 tests pass. Browser checks pass desktop/portrait/landscape through wrong fields, missing tasks, draft/filed reload and unchanged review. No page errors. Inspected desktop draft/phone filed-log screenshots. Standard headed client reaches explore/moves to x137 with known black canvas capture limitation. Desk tests position the hero rather than proving full-campaign/hardware movement. Evidence: docs/qa/bush43-research-log-2026-09-27.{md,json}.
+
+Local only; goal active. Next assemble Bush43’s packet, then assess whole-excursion pacing and original audiovisual/play-feel quality.

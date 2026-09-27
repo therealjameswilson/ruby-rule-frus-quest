@@ -10,7 +10,7 @@ import { DeskControls } from './deskControls';
 import { retroAudio } from './audio';
 
 export class LibrarySourceNoteDesk {
-  private get isLog() { return ['bush41','clinton'].includes(this.library); }
+  private get isLog() { return ['bush41','clinton','bush43'].includes(this.library); }
   private root = document.createElement('dialog');
   private controls?: DeskControls;
   private body: HTMLElement;
@@ -78,7 +78,7 @@ export class LibrarySourceNoteDesk {
     if (!this.reviewOnly) this.body.append(editor);
     const log = document.createElement('section'); log.className = 'source-note-log';
     const logTitle = document.createElement('h2'); logTitle.textContent = 'Keep the unfinished research'; log.append(logTitle);
-    for (const [item, label] of [['lead', this.library==='clinton' ? 'Carry the MDR identifier and release coverage, marked unexamined' : this.isLog ? 'Carry both exact file-unit leads, marked unexamined' : 'Carry the exact folder lead, marked unexamined'], ['followups', this.isLog ? 'Carry pending examination and State comparison' : 'Carry both pending requests: meeting record and State/embassy reporting']] as const) {
+    for (const [item, label] of [['lead', this.library==='bush43' ? 'Carry the release breakdown and unprocessed-record caveat' : this.library==='clinton' ? 'Carry the MDR identifier and release coverage, marked unexamined' : this.isLog ? 'Carry both exact file-unit leads, marked unexamined' : 'Carry the exact folder lead, marked unexamined'], ['followups', this.library==='bush43' ? 'Carry examination, access inquiries, and comparative research' : this.isLog ? 'Carry pending examination and State comparison' : 'Carry both pending requests: meeting record and State/embassy reporting']] as const) {
       const b = this.button(`${note[item] ? '✓ ' : ''}${label}`, item, () => { toggleSourceNoteLog(this.progress, item,this.library); this.changed(item); });
       b.dataset.log = item; b.setAttribute('aria-pressed', String(note[item])); log.append(b);
     }

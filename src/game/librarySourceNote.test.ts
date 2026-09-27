@@ -71,3 +71,18 @@ it('preserves Clinton MDR provenance and separates catalog availability from con
  chooseSourceNoteField(p,'date',1,'clinton');chooseSourceNoteField(p,'scope',2,'clinton');
  expect(evaluateSourceNote(p,'clinton')).toMatchObject({ok:false,field:'scope'});
 });
+
+it('preserves Bush43 withholding totals separately from unprocessed material',()=>{
+ const p:Record<string,number>={};
+ for(const field of ['kind','date','locator','scope'] as const)chooseSourceNoteField(p,field,1,'bush43');
+ toggleSourceNoteLog(p,'lead','bush43');toggleSourceNoteLog(p,'followups','bush43');
+ expect(evaluateSourceNote(p,'bush43').ok).toBe(true);
+ const note=sourceNoteReadout(p,'bush43');
+ expect(note.citation).toContain('2017-0023-F');expect(note.citation).toContain('ARMS');
+ expect(note.qualification).toContain('177 released in full, 22 withheld in part, 16 withheld in full');
+ expect(note.qualification).toContain('remain unprocessed');expect(note.researchLog).toHaveLength(3);
+ expect(evaluateSourceNote(p,'clinton').ok).toBe(false);expect(evaluateSourceNote(p).ok).toBe(false);
+ chooseSourceNoteField(p,'date',2,'bush43');expect(evaluateSourceNote(p,'bush43')).toMatchObject({ok:false,field:'date'});
+ chooseSourceNoteField(p,'date',1,'bush43');chooseSourceNoteField(p,'scope',2,'bush43');
+ expect(evaluateSourceNote(p,'bush43')).toMatchObject({ok:false,field:'scope'});
+});
