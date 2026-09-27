@@ -9,6 +9,7 @@ const context=await browser.newContext({storageState:process.env.FRUS_QA_STORAGE
  viewport:mobile?{width:375,height:667}:{width:1024,height:960},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(String(e)));
 page.on('console',message=>{if(message.type()==='error')errors.push(message.text());});
+if(mobile)for(const device of [page.keyboard,page.mouse])for(const method of ['press','down','up','click','move','type'])if(typeof device[method]==='function')device[method]=()=>{throw Error(`Non-touch input: ${method}`);};
 const cdp=mobile?await context.newCDPSession(page):null;
 const state=()=>page.evaluate(()=>JSON.parse(window.render_game_to_text()));
 let box;
@@ -28,7 +29,7 @@ const key=async(k='Space',ms=50)=>{
  await page.waitForTimeout(150);
 };
 const tap=async(x,y)=>{await touch('touchStart',[[x,y]]);await page.waitForTimeout(50);await touch('touchEnd',[]);await page.waitForTimeout(150);};
-const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
+const shot=async name=>{await page.screenshot({path:`${out}/${name}.png`});await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
 async function move(x,y){const tolerance=mobile?5:3;for(let i=0;i<100;i++){const p=(await state()).player,dx=x-p.x,dy=y-p.y;if(Math.abs(dx)<tolerance&&Math.abs(dy)<tolerance)return;const h=Math.abs(dx)>=tolerance;await key(h?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.min(180,Math.max(16,Math.abs(h?dx:dy)*6)));}throw Error(`Cannot walk to ${x},${y}`);}
 try {
  await page.goto(new URL('?text=full',process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5211/').href);
