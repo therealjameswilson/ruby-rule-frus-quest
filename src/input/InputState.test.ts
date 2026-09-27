@@ -48,6 +48,15 @@ describe("InputState keyboard edges", () => {
     expect(getInput().aJustPressed).toBe(true);
   });
 
+  it("preserves quick fullscreen taps without repeating a held key", () => {
+    let now=1000;setNowProviderForTests(()=>now);
+    tapActionForTests("KeyF");tickInput();expect(getInput().fullscreenJustPressed).toBe(true);
+    tickInput();expect(getInput().fullscreenJustPressed).toBe(false);
+    now+=16;tapActionForTests("KeyF");tickInput();expect(getInput().fullscreenJustPressed).toBe(true);
+    resetInput();pressKeyForTests("KeyF");tickInput();expect(getInput().fullscreenJustPressed).toBe(true);
+    now+=16;tickInput();expect(getInput().fullscreenJustPressed).toBe(false);
+  });
+
   it("preserves fast menu taps between frames and rearms a second tap without repeating a hold", () => {
     let now = 1000;
     setNowProviderForTests(() => now);

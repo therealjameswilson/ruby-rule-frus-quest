@@ -1,3 +1,4 @@
+import {completeChapterDesk} from './chapter-desk-actions.mjs';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
 const {chromium}=await import(process.env.PLAYWRIGHT_MODULE??'playwright');
@@ -39,7 +40,8 @@ try {
    await pressPad(13);await pressPad(13);assert(await p.locator('.manuscript-submit').evaluate(e=>e===document.activeElement));await pressPad(0);
   }else{await p.screenshot({path:`${out}/${name}-ready.png`});await click('.manuscript-submit');}
   await p.waitForSelector('.manuscript-desk',{state:'detached'});assert.equal((await state()).compilerMission.completed,3);
-  for(const value of ['packet','retain','second','revise','clear','joint','handoff']){
+  await drain();await completeChapterDesk(p,touch);assert.equal((await state()).compilerMission.completed,4);
+  for(const value of ['retain','second','revise','clear','joint','handoff']){
    await drain();await p.waitForFunction(()=>window.game.scene.getScene('ArchiveScene').researchChoice.active);await p.waitForTimeout(220);
    const point=await p.evaluate(value=>{const choice=window.game.scene.getScene('ArchiveScene').researchChoice;const i=choice.options.findIndex(o=>o.value===value);if(i<0)throw Error('Missing '+value);const r=choice.rows[i].getBounds();return{x:r.centerX,y:r.centerY};},value);await canvasTap(point.x,point.y);await p.waitForTimeout(100);
   }

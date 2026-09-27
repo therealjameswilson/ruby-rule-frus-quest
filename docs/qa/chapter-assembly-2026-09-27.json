@@ -1,0 +1,91 @@
+{
+  "date": "2026-09-27",
+  "scope": "Chapter assembly exercise and integration with selection/review flow; scene fixtures, not a complete new-game campaign",
+  "unitSuite": {
+    "files": 275,
+    "testsPassed": 2076
+  },
+  "focusedFinalChecks": {
+    "files": 3,
+    "testsPassed": 50
+  },
+  "build": "passed",
+  "chapterCases": [
+    {
+      "name": "desktop",
+      "touch": false,
+      "chronologyRetry": true,
+      "sourceAndPassageRetry": true,
+      "reloadedEachStage": true,
+      "missingPartsRejected": true,
+      "firstReviewReached": true,
+      "controller": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "touch": true,
+      "chronologyRetry": true,
+      "sourceAndPassageRetry": true,
+      "reloadedEachStage": true,
+      "missingPartsRejected": true,
+      "firstReviewReached": true,
+      "controller": false,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "touch": true,
+      "chronologyRetry": true,
+      "sourceAndPassageRetry": true,
+      "reloadedEachStage": true,
+      "missingPartsRejected": true,
+      "firstReviewReached": true,
+      "controller": false,
+      "errors": []
+    }
+  ],
+  "combinedSelectionAndReviewCases": [
+    {
+      "name": "desktop",
+      "touch": false,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": true,
+      "handoff": true,
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "touch": true,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": false,
+      "handoff": true,
+      "errors": []
+    },
+    {
+      "name": "landscape",
+      "touch": true,
+      "invalidSelectionsRejected": true,
+      "draftRestored": true,
+      "keyboardAndController": false,
+      "handoff": true,
+      "errors": []
+    }
+  ],
+  "additionalChecks": [
+    "Chapter modal fullscreen and dynamic focus",
+    "Keyboard and simulated gamepad selection/highlighting",
+    "Cancellation and scene cleanup restore touch settings",
+    "Previous manuscript desk short-screen/controller/fullscreen lifecycle",
+    "Between-frame F taps latched without repeated held-key activation"
+  ],
+  "limitations": [
+    "Illustrative exhibits, not actual archival documents or assigned volumes",
+    "Physical iPhone Safari and physical controller unverified",
+    "No full-campaign victory or complete educational/visual/audio audit",
+    "Skill-client canvas screenshots remain black; ordinary compositor screenshots were inspected"
+  ],
+  "published": false
+}
