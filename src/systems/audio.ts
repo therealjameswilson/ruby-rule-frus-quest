@@ -33,6 +33,8 @@ export interface AudioDebugState {
   pendingSceneKey: string | null;
   musicTimerActive: boolean;
   musicStep: number;
+  readingMixActive: boolean;
+  musicGainValue: number | null;
   ambienceProfile: string | null;
   ambienceSources: number;
   ambienceRiverPresence: number;
@@ -62,6 +64,7 @@ class RetroAudio {
   private outputNode: DynamicsCompressorNode | null = null;
   private foley = new Set<() => void>();
   private musicGain: GainNode | null = null;
+  private readingMixHolds = new Set<symbol>();
   private effectsGain: GainNode | null = null;
   private effects = new Map<OscillatorNode, GainNode>();
   private mix = readAudioMix();
@@ -112,6 +115,21 @@ class RetroAudio {
 
   getMix() { return { ...this.mix }; }
 
+  /** Temporary score attenuation for document work; never changes saved preferences. */
+  holdReadingMix() {
+    const token = Symbol('reading');
+    this.readingMixHolds.add(token);
+    this.fadeMusicGain(this.mix.music, 0.24);
+    return () => {
+      if (!this.readingMixHolds.delete(token)) return;
+      this.fadeMusicGain(this.mix.music, 0.32);
+    };
+  }
+
+  private musicLevel(value: number) {
+    return value * (this.readingMixHolds.size ? 0.45 : 1);
+  }
+
   setChannelVolume(channel: AudioChannel, value: number) {
     if (!Number.isFinite(value)) return;
     this.mix[channel] = Math.max(0, Math.min(1, value));
@@ -119,17 +137,15 @@ class RetroAudio {
     if ((channel === "master" || channel === "effects") && this.mix[channel] === 0) this.stopEffects();
     if (!this.context) return;
     if (channel === "master") this.fadeMasterGain(this.enabled ? 0.85 : 0.0001, 0.04);
-    else {
-      const gain = channel === "music" ? this.musicGain : this.effectsGain;
-      gain?.gain.setTargetAtTime(this.mix[channel], this.context.currentTime, 0.015);
-    }
+    else if (channel === "music") this.fadeMusicGain(this.mix.music, 0.06);
+    else this.effectsGain?.gain.setTargetAtTime(this.mix.effects, this.context.currentTime, 0.015);
   }
 
   private channelOutput(context: AudioContext, channel: "music" | "effects") {
     const property = channel === "music" ? "musicGain" : "effectsGain";
     if (!this[property]) {
       const node = context.createGain();
-      node.gain.value = this.mix[channel];
+      node.gain.value = channel === "music" ? this.musicLevel(this.mix.music) : this.mix.effects;
       node.connect(this.ensureMasterGain(context));
       this[property] = node;
     }
@@ -446,6 +462,8 @@ class RetroAudio {
       pendingSceneKey: this.pendingSceneKey,
       musicTimerActive: this.musicTimer !== null,
       musicStep: this.musicStep,
+      readingMixActive: this.readingMixHolds.size > 0,
+      musicGainValue: this.musicGain?.gain.value ?? null,
       ambienceProfile: this.ambience?.profile ?? null,
       ambienceSources: this.ambience?.activeSourceCount ?? 0,
       ambienceRiverPresence: this.ambience?.riverPresence ?? 0,
@@ -599,7 +617,7 @@ class RetroAudio {
     const context = this.context;
     if (!context || !this.musicGain) return;
     this.musicGain.gain.cancelScheduledValues(context.currentTime);
-    this.musicGain.gain.setTargetAtTime(target, context.currentTime, Math.max(.01, seconds / 4));
+    this.musicGain.gain.setTargetAtTime(this.musicLevel(target), context.currentTime, Math.max(.01, seconds / 4));
   }
 
   private fadeMasterGain(target: number, seconds: number) {

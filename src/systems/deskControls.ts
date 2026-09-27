@@ -1,3 +1,4 @@
+import {retroAudio} from './audio';
 import type {InputState} from '../input/InputState';
 import {swallowNextInputFrame} from '../input/InputState';
 
@@ -6,6 +7,7 @@ export class DeskControls {
   private focusIndex=0;
   private armed=false;
   private closed=false;
+  private releaseReadingMix?:()=>void;
   private readonly oldFocus=document.activeElement;
   private readonly touchStyles:Array<[HTMLElement,string]>=[];
   private readonly bound=new WeakSet<HTMLButtonElement>();
@@ -32,6 +34,7 @@ export class DeskControls {
     this.root.addEventListener('cancel',event=>{event.preventDefault();this.onCancel();});
     for(const element of [document.body,document.documentElement]){this.touchStyles.push([element,element.style.touchAction]);element.style.touchAction='pan-y';}
     document.body.append(this.root);this.root.showModal();
+    this.releaseReadingMix=retroAudio.holdReadingMix();
     document.addEventListener('fullscreenchange',this.fullscreenChanged);
     this.buttons[0]?.focus({preventScroll:true});swallowNextInputFrame();
   }
@@ -68,7 +71,7 @@ export class DeskControls {
   }
   close(){
     if(this.closed)return;this.closed=true;document.removeEventListener('fullscreenchange',this.fullscreenChanged);
-    this.root.close();this.root.remove();for(const [element,value] of this.touchStyles)element.style.touchAction=value;
+    this.releaseReadingMix?.();this.root.close();this.root.remove();for(const [element,value] of this.touchStyles)element.style.touchAction=value;
     if(this.oldFocus instanceof HTMLElement&&this.oldFocus.isConnected)this.oldFocus.focus({preventScroll:true});swallowNextInputFrame();
   }
 }
