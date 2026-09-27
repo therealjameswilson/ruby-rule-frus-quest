@@ -50,7 +50,7 @@ export class LibrarySourceNoteDesk {
     b.dataset.focusKey = key; b.addEventListener('click', action); return b;
   }
   private changed(focus: string) {
-    this.onSave(); retroAudio.paperPickup();
+    this.onSave(); retroAudio.annotatePaper();
     this.status.textContent = 'Draft saved. Read the assembled note below before you file it.';
     this.status.dataset.error = 'false'; this.render(focus);
   }

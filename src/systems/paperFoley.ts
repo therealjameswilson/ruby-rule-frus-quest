@@ -1,4 +1,4 @@
-export type PaperAction = 'pickup' | 'file';
+export type PaperAction = 'pickup' | 'file' | 'mark' | 'turn';
 const noises = new WeakMap<BaseAudioContext, AudioBuffer>();
 
 function paperNoise(context: BaseAudioContext) {
@@ -20,7 +20,11 @@ export function playPaperFoley(context: BaseAudioContext, output: AudioNode, act
   const now = context.currentTime;
   const nodes: AudioNode[] = [], envelopes: GainNode[] = [];
   const voices: Array<{ source: AudioScheduledSourceNode; at: number; duration: number }> = [];
-  const layers = action === 'pickup'
+  const layers = action === 'mark'
+    ? [{ delay: 0, duration: .045, gain: .016, hz: 1700, endHz: 1000, attack: .004 }]
+    : action === 'turn'
+    ? [{ delay: 0, duration: .085, gain: .026, hz: 2200, endHz: 1300, attack: .014 }]
+    : action === 'pickup'
     ? [{ delay: 0, duration: .12, gain: .05, hz: 2600, endHz: 1400, attack: .018 },
        { delay: .055, duration: .10, gain: .035, hz: 3500, endHz: 1900, attack: .012 }]
     : [{ delay: 0, duration: .09, gain: .045, hz: 2100, endHz: 1200, attack: .012 },

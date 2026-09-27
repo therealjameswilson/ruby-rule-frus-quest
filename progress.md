@@ -8500,3 +8500,11 @@ Previous turn was progress: 16ed067 completed Bush43 packet assembly. Revalidate
 Expanded touch-route QA across all four libraries in portrait and landscape, initialized with a library-only saved fixture and then driven with touch holds/taps. No route-time position/progression writes or keyboard/mouse actions. All eight pass: four earned desks, +8 points, stationary reading/pause, cancel release, saved position recovery, NSC pause/return and outside exit. No page errors. Only two final-receipt dialogue taps per route. Build and 282 files / 2,110 tests pass. Inspected arrival compositor screenshots across libraries/orientations. Standard headed skill client inspected; black canvas capture limitation persists. Evidence: docs/qa/library-excursions-2026-09-27.{md,json}.
 
 Local only; goal remains active. This proves emulated library excursions, not a fresh campaign, physical iPhone/controller feel or subjective sound quality. Next shift to whole-game audiovisual/presentation and pacing assessment rather than adding more desk forms.
+
+## Research-desk sound feedback — 2026-09-27
+
+Previous turn was progress: 9a48b98 smoothed library arrivals and verified eight touch excursions. Shifted to audiovisual feedback: current desks played pickup rustle on nearly every selection. Added original mark and page-turn foley using the existing synthesis/cleanup/mute engine. Annotation fields and comparison/follow-up choices use quiet marks; request entry selection/packet tabs use page turns; attachment and filing retain distinct rustle/stamp. Existing reading-mix lifecycle remains.
+
+Build and full 282-file / 2,110-test suite pass. New audio QA renders actual foley: ascending mark/turn/pickup/file RMS, zero clipping including eight simultaneous marks, all voices ended. Live desk route verifies cue routing through all four desks, four filing cues, restored reading mix, zero leftover foley and mute cancellation/blocking. No page errors. Inspected compositor screenshot and standard headed skill artifacts; black canvas capture limitation persists. Evidence docs/qa/desk-foley-2026-09-27.{md,json}, four-cue preview WAV. Dry waveform measurements are not subjective listening approval.
+
+Local only; goal active. Next assess whole-game transitions/presentation and soundtrack balance; physical hardware and subjective sound remain unverified.

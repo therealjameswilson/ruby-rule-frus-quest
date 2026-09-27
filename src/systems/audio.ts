@@ -214,6 +214,16 @@ class RetroAudio {
     this.paperSound('pickup');
   }
 
+  annotatePaper() {
+    setAudioStatus('quiet annotation mark');
+    this.paperSound('mark');
+  }
+
+  turnPaper() {
+    setAudioStatus('paper page turn');
+    this.paperSound('turn');
+  }
+
   fileDocket() {
     setAudioStatus("paper filing and stamp");
     this.paperSound('file');

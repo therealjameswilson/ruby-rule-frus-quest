@@ -19,7 +19,7 @@ export class LibraryRequestDesk {
   this.render();this.controls=new DeskControls(this.root,()=>[...this.body.querySelectorAll<HTMLButtonElement>('button'),this.submit,this.leave],onCancel);
  }
  private button(label:string,key:string,action:()=>void){const b=document.createElement('button');b.type='button';b.textContent=label;b.dataset.focusKey=key;b.dataset.readable='';b.addEventListener('click',action);return b;}
- private changed(key:string){this.onSave();retroAudio.paperPickup();this.status.textContent='Draft saved. Catalog metadata is preserved; individual documents remain to be examined.';this.status.dataset.error='false';this.render(key);}
+ private changed(key:string){this.onSave();if(key.startsWith('entry-'))retroAudio.turnPaper();else if(key==='attach'||key==='release')retroAudio.paperPickup();else retroAudio.annotatePaper();this.status.textContent='Draft saved. Catalog metadata is preserved; individual documents remain to be examined.';this.status.dataset.error='false';this.render(key);}
  private render(focus?:string){
   const catalog=requestCatalog(this.library)!;const s=libraryRequestReadout(this.progress,this.library);this.body.replaceChildren();
   const catalogPanel=document.createElement('section');catalogPanel.className='request-catalog';const title=document.createElement('h2');title.textContent=catalog.collection;catalogPanel.append(title);

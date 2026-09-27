@@ -50,7 +50,7 @@ export class LibraryComparisonDesk {
     button.addEventListener('click', action); return button;
   }
   private changed(focus: string) {
-    this.onSave(); retroAudio.paperPickup();
+    this.onSave(); retroAudio.annotatePaper();
     this.status.textContent = 'Comparison draft saved. File it when every claim has a place and both follow-ups are carried forward.';
     this.status.dataset.error = 'false'; this.render(focus);
   }

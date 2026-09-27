@@ -1,0 +1,78 @@
+{
+  "scope": "Original foley waveform levels, actual desk routing, reading mix lifecycle and effects mute; not subjective listening approval.",
+  "rendered": [
+    {
+      "action": "mark",
+      "peak": 0.008737534284591675,
+      "rms": 0.0002549231422552547,
+      "clipped": 0,
+      "ended": 1
+    },
+    {
+      "action": "turn",
+      "peak": 0.014555513858795166,
+      "rms": 0.000667845676768789,
+      "clipped": 0,
+      "ended": 1
+    },
+    {
+      "action": "pickup",
+      "peak": 0.034079696983098984,
+      "rms": 0.0018609174260614495,
+      "clipped": 0,
+      "ended": 1
+    },
+    {
+      "action": "file",
+      "peak": 0.045898132026195526,
+      "rms": 0.0023441137410756675,
+      "clipped": 0,
+      "ended": 1
+    },
+    {
+      "action": "rapid-marks",
+      "peak": 0.0699002742767334,
+      "rms": 0.0020393851414158386,
+      "clipped": 0,
+      "ended": 8
+    }
+  ],
+  "live": {
+    "cues": [
+      "turnPaper",
+      "paperPickup",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "fileDocket",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "fileDocket",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "annotatePaper",
+      "fileDocket",
+      "paperPickup",
+      "turnPaper",
+      "paperPickup",
+      "turnPaper",
+      "paperPickup",
+      "fileDocket"
+    ],
+    "reading": false,
+    "remaining": 0
+  },
+  "cancellation": {
+    "before": 2,
+    "after": 0,
+    "settled": 0
+  },
+  "errors": []
+}

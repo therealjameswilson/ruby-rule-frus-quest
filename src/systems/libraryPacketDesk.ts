@@ -48,7 +48,7 @@ export class LibraryPacketDesk {
     const grid = document.createElement('div'); grid.className = 'library-packet-grid';
     const tabs = document.createElement('nav'); tabs.setAttribute('aria-label', 'Inspect packet parts');
     for (const part of packet.parts) {
-      const b = this.button(`${part.id}. ${part.label}`, `part-${part.id}`, () => { this.selected = part.id; this.render(`part-${part.id}`); });
+      const b = this.button(`${part.id}. ${part.label}`, `part-${part.id}`, () => { if(this.selected!==part.id)retroAudio.turnPaper(); this.selected = part.id; this.render(`part-${part.id}`); });
       b.dataset.part = String(part.id); b.setAttribute('aria-pressed', String(this.selected === part.id));
       const badge = document.createElement('small'); badge.textContent = !part.ready ? `Revisit desk ${part.station + 1}` : part.attached ? 'Attached' : 'Ready to attach'; b.append(badge); tabs.append(b);
     }
