@@ -62,3 +62,16 @@ it('keeps Clinton release provenance and coverage separate from historical concl
  expect(evaluateComparison(p,'clinton')).toMatchObject({ok:false,card:3});
  const restored=JSON.parse(JSON.stringify(p));expect(comparisonReadout(restored,'clinton').cards[2].lane).toBe(1);
 });
+
+it('keeps Bush43 processed withholding distinct from unprocessed research',()=>{
+ const p:Record<string,number>={};
+ for(const [id,lane] of [[1,1],[2,2],[3,3],[4,3]])classifyComparisonCard(p,id,lane,'bush43');
+ toggleComparisonFollowup(p,1,'bush43');toggleComparisonFollowup(p,2,'bush43');
+ expect(evaluateComparison(p,'bush43').ok).toBe(true);
+ expect(evaluateComparison(p,'clinton').ok).toBe(false);expect(evaluateComparison(p).ok).toBe(false);
+ classifyComparisonCard(p,3,2,'bush43');
+ expect(evaluateComparison(p,'bush43')).toMatchObject({ok:false,card:3});
+ expect(evaluateComparison(p,'bush43').message).toContain('Unprocessed material is separate');
+ classifyComparisonCard(p,3,3,'bush43');toggleComparisonFollowup(p,2,'bush43');
+ expect(evaluateComparison(p,'bush43').ok).toBe(false);
+});

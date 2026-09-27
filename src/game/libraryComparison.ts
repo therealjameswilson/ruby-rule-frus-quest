@@ -70,9 +70,29 @@ const clinton: ComparisonCatalog = {
   missing:'Carry both tasks forward: individual conversation review and research into gaps and other perspectives.',
   receipt:'Release provenance and coverage saved. Individual conversations, redactions, and cross-repository comparison remain to be examined.'
 };
+const bush43Source=requestCatalog('bush43')!.source;
+const bush43: ComparisonCatalog = {
+  subtitle:'EP-3 records · Keep processing, release, and evidence distinct.',
+  brief:'This inventory reports a partial release. Classify what the inventory establishes, then keep document examination and unresolved access in the research plan.',
+  taunt:'DANN-E: “215 processed! That means 215 complete records. Close the file!”',
+  lanes:[{id:1,label:'Request provenance'},{id:2,label:'Release accounting'},{id:3,label:'Unresolved research'}],
+  cards:[
+    {id:1,title:'The request and its scope',provenance:'FOIA inventory · page 1',text:'FOIA 2017-0023-F concerns NSC records on the EP-3 collision, dated March 15–April 30, 2001.',citation:'George W. Bush Presidential Library, inventory 2017-0023-F, Scope and Content.',source:bush43Source,lane:1,feedback:'The identifier and requested span define the search context. They are not a policy conclusion or proof that every relevant record is present.'},
+    {id:2,title:'What happened to the 215 assets?',provenance:'ARMS processing totals · page 2',text:'The inventory reports 177 released in full, 22 withheld in part, and 16 withheld in full: 215 processed assets altogether.',citation:'Inventory 2017-0023-F, George W. Bush Electronic Records, ARMS.',source:bush43Source,lane:2,feedback:'Processed does not mean released in full. Preserve all three categories rather than counting withheld assets as fully available evidence.'},
+    {id:3,title:'The release still has an open edge',provenance:'Scope and Content caveat · page 1',text:'Some related classified records are not yet processed. The inventory directs researchers to an archivist for related materials.',citation:'Inventory 2017-0023-F, Scope and Content; modified November 17, 2025.',source:bush43Source,lane:3,feedback:'This caveat identifies unfinished access research. Unprocessed material is separate from the 16 processed assets withheld in full; do not merge those categories.'},
+    {id:4,title:'Which accounts and gaps matter?',provenance:'Compiler’s question · assets unexamined',text:'What can the released records establish, what is obscured by withholding, and how does the evidence compare with other contemporaneous reporting?',citation:'Individual assets and their withholding markings have not been examined at this desk.',source:null,lane:3,feedback:'The totals cannot answer a historical question. Examine each available asset, preserve gaps, and seek other perspectives.'}
+  ],
+  followups:[
+    {id:1,label:'Examine released assets and their withholding markings',detail:'Track individual dates, authors, record types, and redactions. Do not infer the contents of withheld material.'},
+    {id:2,label:'Ask about unprocessed and related records; compare other reporting',detail:'Keep that access inquiry open while seeking State and embassy evidence and testing the emerging account.'}
+  ],
+  missing:'Carry both tasks forward: examine released assets and investigate unprocessed or related records.',
+  receipt:'Processing categories preserved. Individual examination, access inquiries and cross-repository comparison remain open.'
+};
 export function comparisonCatalog(library='reagan'): ComparisonCatalog | undefined {
   if(library==='bush41')return bush41;
   if(library==='clinton')return clinton;
+  if(library==='bush43')return bush43;
   if(library!=='reagan')return undefined;
   return {subtitle:'Thatcher’s February 1985 visit · Sort the evidence, then preserve the open work.',brief:'Source summaries below are paraphrases. Public remarks establish what was said publicly; a finding aid supplies a lead. Neither substitutes for examining private records.',taunt:'DANN-E: “A cordial press appearance. Every private difference settled!”',lanes:COMPARISON_LANES,cards:COMPARISON_CARDS,followups:COMPARISON_FOLLOWUPS,missing:'Carry both requests forward: the private meeting record and State/embassy reporting.',receipt:'Comparison filed: attributed public positions, a folder lead, and an open question. Private-record and cross-repository work remain pending.'};
 }

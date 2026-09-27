@@ -8468,3 +8468,11 @@ Previous turn was progress: 603a2d6 added the saved Clinton research log. Revali
 Per-library keys isolate packets; filed review is read-only. Legacy completed saves repair missing artifacts without duplicate credit. Build and all 282 files / 2,107 tests pass. Browser checks pass desktop/portrait/landscape/legacy: missing evidence, attachment removal/re-addition, draft/filed reload, review, +8 fresh/+0 legacy, no overflow/page errors; desktop Archive return passed. Inspected desktop packet and phone pending-work screenshots. Standard headed client reaches explore/moves to x138 with known black canvas capture limitation. Desk tests position the hero and do not prove full campaign/hardware movement. Evidence: docs/qa/clinton-packet-2026-09-27.{md,json}.
 
 Local only; goal active. Next extend Bush43’s remaining steps and assess the full research excursion’s audiovisual pacing and touch/controller feel.
+
+## Bush43 processing comparison — 2026-09-27
+
+Previous turn was progress: c95c51a assembled Clinton packets. Revalidated Bush43 comparison remained binary. Added four inventory-grounded cards separating request provenance, 215 processed assets with full/partial/withheld categories, unprocessed related material, and an unanswered historical question. Official FOIA inventory 2017-0023-F inspected live; metadata/source recorded in docs/qa/bush43-comparison-2026-09-27.md. No private record contents invented. Pending tasks retain individual examination and related-record/comparative research.
+
+Shared desk provides per-library saved drafts, validated filing, immutable completed review and legacy repair. Helper recognizes Bush43’s distinct classification. Build and 282 files / 2,108 tests pass. Browser checks pass desktop/portrait/landscape: error feedback, draft save/reload, follow-ups, filing/reload, read-only review, no page errors; desktop simulated controller/fullscreen passed. Inspected desktop/phone screenshots. Standard headed skill client reaches explore/moves to x134 with black canvas capture limitation. Desk tests position hero, not full campaign/hardware movement.
+
+Local only; goal active. Next assemble Bush43’s accurate research log and packet, then assess the complete research excursion and audiovisual/play feel.
