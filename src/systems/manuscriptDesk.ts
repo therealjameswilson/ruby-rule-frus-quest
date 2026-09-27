@@ -21,6 +21,14 @@ export class ManuscriptDesk {
   private closed = false;
   private readonly touchStyles: Array<[HTMLElement, string]> = [];
   get active() { return !this.closed; }
+  private readonly fullscreenChanged = () => {
+    if (this.closed) return;
+    // A newly fullscreen canvas is promoted above an existing modal in the
+    // browser top layer. Re-enter the modal layer so the reading desk is visible.
+    const focused=this.focusIndex;
+    this.root.close();this.root.showModal();
+    this.buttons[focused]?.focus({preventScroll:true});
+  };
 
   constructor(private progress: Record<string,number>, private onSave:()=>void, private onSubmit:()=>void, private onCancel:()=>void) {
     this.root.className='manuscript-desk';
@@ -70,6 +78,7 @@ export class ManuscriptDesk {
       this.touchStyles.push([element,element.style.touchAction]);element.style.touchAction='pan-y';
     }
     document.body.append(this.root);this.root.showModal();
+    document.addEventListener("fullscreenchange",this.fullscreenChanged);
     this.refresh();this.buttons[0].focus({preventScroll:true});swallowNextInputFrame();
   }
   private moveFocus(step:number, readPacket=true) {
@@ -108,5 +117,5 @@ export class ManuscriptDesk {
     else if(input.navUpJustPressed||input.navLeftJustPressed)this.moveFocus(-1,input.navUpJustPressed);
     else if(input.aJustPressed||input.confirmJustPressed)this.buttons[this.focusIndex].click();
   }
-  close(){if(this.closed)return;this.closed=true;this.root.close();this.root.remove();for(const [element,value] of this.touchStyles)element.style.touchAction=value;if(this.oldFocus instanceof HTMLElement&&this.oldFocus.isConnected)this.oldFocus.focus({preventScroll:true});swallowNextInputFrame();}
+  close(){if(this.closed)return;this.closed=true;document.removeEventListener("fullscreenchange",this.fullscreenChanged);this.root.close();this.root.remove();for(const [element,value] of this.touchStyles)element.style.touchAction=value;if(this.oldFocus instanceof HTMLElement&&this.oldFocus.isConnected)this.oldFocus.focus({preventScroll:true});swallowNextInputFrame();}
 }

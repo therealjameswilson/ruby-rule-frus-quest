@@ -36,6 +36,7 @@ try {
   await p.keyboard.press('f');await p.waitForTimeout(700);
   assert(await p.evaluate(()=>Boolean(document.fullscreenElement)), 'Fullscreen entered');
   assert(await p.locator('.manuscript-submit').evaluate(e=>{const r=e.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)===e||e.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}), 'Desk remains above fullscreen canvas');
+  assert(await p.locator('[data-packet=routine]').evaluate(e=>e===document.activeElement),'Fullscreen preserves the selected control');
   await p.screenshot({path:out+'/fullscreen.png'});
   await p.keyboard.press('Escape');await p.waitForTimeout(200);
   assert.equal(await p.locator('.manuscript-desk').count(),0);assert.equal(await p.evaluate(()=>document.body.style.touchAction),'');

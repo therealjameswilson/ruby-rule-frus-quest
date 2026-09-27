@@ -42,7 +42,8 @@
     "Fullscreen desk remains above canvas",
     "Escape closes desk and restores touch styles",
     "Scene shutdown removes modal and restores touch styles",
-    "Old completed selection saves report their earned 1320 pages"
+    "Old completed selection saves report their earned 1320 pages",
+    "Fullscreen re-entry preserves visibility and previously focused packet; corrected compositor screenshot inspected"
   ],
   "visualInspection": [
     "Desktop selection desk",
