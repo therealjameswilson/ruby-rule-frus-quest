@@ -102,7 +102,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     setLatestMessage(`${this.assignment.topic}. ${this.assignment.task}`);
     if (!gameState.sceneProgress[`libraryBriefed_v2_${id}`]) {
       gameState.sceneProgress[`libraryBriefed_v2_${id}`]=1;
-      if(id==='reagan')this.toast.show('START: FINDING AID · NORTHWEST',this.player.position,'info');
+      if(requestCatalog(id))this.toast.show('START: FINDING AID · NORTHWEST',this.player.position,'info');
       else this.dialog.show('ARCHIVAL RESEARCH',[
         this.assignment.topic,
         this.assignment.task,

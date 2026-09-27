@@ -8492,3 +8492,11 @@ Previous turn was progress: 7fcab37 added Bush43 logs. Revalidated final desk re
 Build and all 282 files / 2,110 tests pass. Browser suite passes desktop/portrait/landscape/legacy completed save: missing evidence, attachment removal/re-add, draft/filed reload, read-only review, +8 fresh/+0 legacy, no overflow/page errors and desktop Archive return. Inspected desktop/phone pending-work screenshots. Standard headed client reaches explore/moves to x140; known black canvas capture persists. Desk tests position hero, not full-campaign/hardware movement. Evidence: docs/qa/bush43-packet-2026-09-27.{md,json}.
 
 Local only; goal active. All four current library routes now have saved comparison and note/log artifacts plus assembled packets. Next assess their complete excursion pacing and touch/controller route together, then improve full-game audiovisual/play feel. Physical hardware and subjective sound remain unverified.
+
+## Four-library touch excursions — 2026-09-27
+
+Previous turn was progress: 16ed067 completed Bush43 packet assembly. Revalidated all routes and found Bush41/Clinton/Bush43 still had redundant multi-page arrival briefings despite native desk explanations. Those four catalog-supported rooms now share a nonblocking northwest cue; other library introductions remain unchanged. Full task context remains in latestMessage and desk content.
+
+Expanded touch-route QA across all four libraries in portrait and landscape, initialized with a library-only saved fixture and then driven with touch holds/taps. No route-time position/progression writes or keyboard/mouse actions. All eight pass: four earned desks, +8 points, stationary reading/pause, cancel release, saved position recovery, NSC pause/return and outside exit. No page errors. Only two final-receipt dialogue taps per route. Build and 282 files / 2,110 tests pass. Inspected arrival compositor screenshots across libraries/orientations. Standard headed skill client inspected; black canvas capture limitation persists. Evidence: docs/qa/library-excursions-2026-09-27.{md,json}.
+
+Local only; goal remains active. This proves emulated library excursions, not a fresh campaign, physical iPhone/controller feel or subjective sound quality. Next shift to whole-game audiovisual/presentation and pacing assessment rather than adding more desk forms.
