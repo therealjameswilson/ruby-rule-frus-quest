@@ -15,6 +15,33 @@ page.on('pageerror', e => errors.push(String(e)));
 page.on('console', m => { if (m.type() === 'error')
     errors.push(m.text()); });
 const state = () => page.evaluate(() => JSON.parse(window.render_game_to_text()));
+// Fail loudly if a mobile route silently falls back to keyboard or mouse input.
+if (mobile) for (const device of [page.keyboard, page.mouse]) {
+    for (const key of ['press','down','up','type','insertText','click','dblclick','move','wheel']) {
+        if (typeof device[key] === 'function') device[key] = () => { throw Error(`Non-touch input in mobile route: ${key}`); };
+    }
+}
+async function completeOpeningCheckpoint() {
+    if (!mobile) return completeCompilerCheckpoint(page);
+    const answers = [['The working group has a subseries plan.', 'route'], ['Prepare your research plan', 'approve']];
+    const initial = await state();
+    if (!answers.some(([prefix]) => initial.choice?.title.startsWith(prefix))) return;
+    for (let n = 0; n < 40; n++) {
+        const current = await state();
+        if (current.mode === 'dialog') { await touch(225,205); await page.waitForTimeout(180); continue; }
+        const answer = answers.find(([prefix]) => current.choice?.title.startsWith(prefix));
+        if (!answer) return;
+        const index = current.choice.options.findIndex(option => option.value === answer[1]);
+        assert(index >= 0, 'Opening decision must offer the researched answer');
+        const bounds = await page.evaluate(index => {
+            const row = window.game.scene.getScene('OfficeScene').choice.rows[index].getBounds();
+            return { x: row.centerX, y: row.centerY };
+        }, index);
+        await click(bounds.x, bounds.y); await page.waitForTimeout(180);
+    }
+    throw Error('Touch opening checkpoint did not finish');
+}
+
 async function point(x, y, id = 1) { const b = await page.locator('canvas').first().boundingBox(); return { x: b.x + x * b.width / 256, y: b.y + y * b.height / 240, id }; }
 async function touch(x, y, dx = 0, dy = 0, ms = 45) { await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [await point(x, y)] }); if (dx || dy)
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [await point(x + dx, y + dy)] }); await page.waitForTimeout(ms); await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); }
@@ -27,7 +54,7 @@ else {
 async function press(key = 'Space', wait = 150) { if (mobile)
     await touch(...(key === 'x' ? [174, 216] : key === 'm' ? [120, 216] : [225, 205]));
 else
-    await page.keyboard.press(key, { delay: 45 }); await page.waitForTimeout(wait); await completeCompilerCheckpoint(page); }
+    await page.keyboard.press(key, { delay: 45 }); await page.waitForTimeout(wait); await completeOpeningCheckpoint(); }
 async function direction(key, ms = 85) { if (mobile) {
     const [dx, dy] = { ArrowLeft: [-26, 0], ArrowRight: [26, 0], ArrowUp: [0, -26], ArrowDown: [0, 26] }[key];
     await touch(48, 202, dx, dy, ms);
@@ -312,6 +339,10 @@ try {
     await move(128, 170);
     await press();
     await scene('ArchiveScene');
+    await page.waitForFunction(() => {
+        const ui = window.game.scene.getScene('UIScene');
+        return ui.questBandImage.visible && (!window.matchMedia('(pointer: coarse)').matches || window.rubyRuleTouchControls.enabled);
+    });
     await shot('09-archive-entry');
     assert.equal((await state()).guideCounter, null);
     assert.deepEqual(errors, []);

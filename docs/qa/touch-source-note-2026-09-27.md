@@ -1,0 +1,7 @@
+# Earned source-note route on touch
+
+Continued the save produced by the fresh touch-only opening at /tmp/frus-fresh-touch-opening-0927/earned-storage.json. A 390 x 844 touch-capable browser used the portrait control dock for movement, navigation and confirmation. Test now supports mobile input and configurable origin, blocks keyboard/mouse calls in mobile mode, and captures compositor screenshots. No player positions, progression, inventory or answers were injected into game state.
+
+Passed pickup and routing of Source Note 47; physically visiting collection, repository and folder stations; rejection of an unsupported presidential-readership claim; removal and filing; separate human review; stamp readiness and visible gate opening; walking into Annotation Stacks; reload/Continue into that room and restored movement. End state: AS, 43 points. No page/console errors. Inspected the rejection panel and restored annotation-room screenshots; portrait controls and readable task feedback are visible.
+
+This is an authored fictional training record, not evidence that a real historical document has been examined. The educational check is preserving missing metadata and rejecting an unsupported claim before human review. Runtime source files were unchanged in this turn; the updated QA script passed syntax and live browser execution. No broader test repeat was needed. Physical iPhone Safari, novice comprehension and full campaign completion remain unverified.

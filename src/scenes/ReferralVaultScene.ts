@@ -226,7 +226,7 @@ export class ReferralVaultScene extends Phaser.Scene {
     this.reliability.setSummaryVisible(false);
     this.objectiveText = addObjectiveText(this);
     this.interactionPrompt = new InteractionPrompt(this, 950);
-    this.toast = new FeedbackToast(this);
+    this.toast = new FeedbackToast(this, 1200, () => this.player.sprite.getBounds());
     this.manifestBoard = new ReferralManifestBoard(this);
     this.treatmentBoard = new ReferralTreatmentBoard(this);
     this.danneLurker = new DanneLurker(this, 214, 70, {

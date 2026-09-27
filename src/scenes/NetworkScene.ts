@@ -780,10 +780,6 @@ export class NetworkScene extends Phaser.Scene {
     this.roomCleanups.push(() => marcus.destroy());
     this.track(new Terminal(this, 60, 124, "OpenNet").container);
     this.track(new Terminal(this, 196, 124, "ClassNet").container);
-    for (const [x, text] of [[60, "PUBLIC COPIES"], [196, "PROTECTED REVIEW"]] as const) {
-      this.track(this.add.text(x, 150, text, { fontFamily: "monospace", fontSize: "4px",
-        color: PALETTE.creamPaper, backgroundColor: PALETTE.black }).setOrigin(0.5, 0).setDepth(124));
-    }
     this.drawRoutingSorter();
     if (!this.routingComplete) {
       this.updateRoutingRouteText();

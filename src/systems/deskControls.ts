@@ -29,6 +29,16 @@ export class DeskControls {
       if(event.key==='Enter'||event.key===' '){this.buttons[this.focusIndex]?.click();return;}
       this.moveFocus(event.key==='ArrowUp'||event.key==='ArrowLeft'||(event.key==='Tab'&&event.shiftKey)?-1:1,event.key==='ArrowUp'||event.key==='ArrowDown');
     });
+    // A movement gesture can open this modal before its touchend. Accept a
+    // pointer click only if that gesture started inside the desk; keyboard and
+    // controller/programmatic activation retain their zero-detail clicks.
+    let pointerClickReady=false;
+    this.root.addEventListener('pointerdown',()=>{pointerClickReady=true;},{capture:true});
+    this.root.addEventListener('pointercancel',()=>{pointerClickReady=false;},{capture:true});
+    this.root.addEventListener('click',event=>{
+      if(event.detail>0&&!pointerClickReady){event.preventDefault();event.stopImmediatePropagation();}
+      pointerClickReady=false;
+    },{capture:true});
     this.root.addEventListener('pointerdown',event=>event.stopPropagation());
     this.root.addEventListener('click',event=>event.stopPropagation());
     this.root.addEventListener('cancel',event=>{event.preventDefault();this.onCancel();});

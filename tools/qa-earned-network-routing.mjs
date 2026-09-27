@@ -23,7 +23,7 @@ const key=async(k='Space',ms=50)=>{
  }else{await page.keyboard.down(k);await page.waitForTimeout(ms);await page.keyboard.up(k);}
  await page.waitForTimeout(150);
 };
-const shot=async name=>{const data=await page.evaluate(()=>new Promise(r=>window.game.renderer.snapshot(i=>r(i.src))));await writeFile(`${out}/${name}.png`,Buffer.from(data.split(',')[1],'base64'));await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));if(mobile)await page.screenshot({path:`${out}/${name}-phone.png`});};
+const shot=async name=>{await page.screenshot({path:`${out}/${name}.png`});await writeFile(`${out}/${name}.json`,JSON.stringify(await state(),null,2));};
 async function move(x,y){const tolerance=mobile?5:3;for(let i=0;i<100;i++){const p=(await state()).player,dx=x-p.x,dy=y-p.y;if(Math.abs(dx)<tolerance&&Math.abs(dy)<tolerance)return;const h=Math.abs(dx)>=tolerance;await key(h?dx>0?'ArrowRight':'ArrowLeft':dy>0?'ArrowDown':'ArrowUp',Math.min(100,Math.max(mobile?50:20,Math.abs(h?dx:dy)/72*1000)));}throw Error(`Cannot walk to ${x},${y}`);}
 try{
  await page.goto(new URL('?text=full',process.env.FRUS_QA_URL ?? 'http://127.0.0.1:5195/').href);
@@ -79,5 +79,6 @@ try{
  await shot('vault-restored');
 
  await context.storageState({path:`${out}/earned-storage.json`});
+ await writeFile(`${out}/result.json`,JSON.stringify({mobile,packetsRouted:true,wrongRouteRejected:process.argv.includes('--wrong-route'),crossingOpened:true,vaultEntered:true,reloaded:true,errors},null,2));
  assert.deepEqual(errors,[]);console.log('PASS four earned routing deliveries, Citation Stamp crossing and ClassNet Vault arrival');
 }finally{await shot('last');await browser.close();}

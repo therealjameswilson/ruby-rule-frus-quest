@@ -155,7 +155,8 @@ export class TouchControls {
 
   refreshForScene(activeSceneKey: string | null) {
     const hiddenScene =
-      activeSceneKey === "TapToStartScene"
+      activeSceneKey === null
+      || activeSceneKey === "TapToStartScene"
       || activeSceneKey === "TitleScene"
       || activeSceneKey === "CharacterCreateScene"
       || activeSceneKey === "WarningScene"

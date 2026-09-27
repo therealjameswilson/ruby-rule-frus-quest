@@ -8516,3 +8516,47 @@ Previous turn verified the requested Kathy email dialogue in the actual public b
 Build and all 282 files / 2110 tests passed. Six phone-sized browser cases confirm contextual labels, text bounds, nonoverlap, arrival-fade completion and no page errors. Card hold used only for inspection; tests then resume real destination transitions. Inspected NSC compositor screenshot. Standard client moves to x143 in Office explore; known black canvas screenshot limitation persists. Evidence: docs/qa/travel-presentation-2026-09-27.{md,json}.
 
 Local only, goal active. Broader audiovisual quality, full fresh-campaign pacing, and physical iPhone/controller feel still require evidence.
+
+## Travel input and HUD cleanup — 2026-09-27
+
+Previous turn was progress: PR130 merged as 8512c1d, Pages run36341775550 succeeded, live Pages-base bundle hash matched and desktop/phone-sized startup/movement passed. Fast-forwarded current worktree to that release.
+
+Presentation inspection exposed departing-room HUD and controls over travel cards. UIScene now hides gameplay chrome while transition state is active, restoring it on arrival. Fixed null-scene touch visibility so the existing Codex suppression path also works. Build and 282 files /2111 tests pass. Six touch-capable phone browser transitions pass hidden/restored control+HUD assertions, title bounds and destination arrival. Inspected clean NSC transition screenshot. Headed standard client moves to x146; known black canvas capture persists. Documentation appended to travel-presentation QA.
+
+New change local only; goal remains active. Next return to fresh opening-to-research play and assess whether mission guidance and earned progression are clear without relying on fixture starts. Broad presentation, subjective sound and physical device feel remain unproven.
+
+## Fresh touch opening through research — 2026-09-27
+
+Previous turn was progress: e64afb3 fixed travel chrome. Revalidated clean tracked files and exercised a completely fresh campaign start to Archive entry. Found mobile QA secretly used keyboard input for concept/research-plan decisions. Replaced those with rendered-row taps and receipt taps, with keyboard/mouse methods guarded to throw. Corrected touch-only run passed: Kathy mission/departure, memo, both approvals, Guide miss/pause/wrong-button/counter/reward, saved Continue, Archive entry. No runtime state injection or browser errors; final20points/FrontMatterFragment. Inspected briefing and Archive screenshots.
+
+One arrival capture lacked HUD; a short touch recheck from the genuinely earned Guide save verified HUD and controls restored on Archive arrival. Added explicit restore wait to main QA. Evidence docs/qa/fresh-touch-opening-2026-09-27.{md,json}. No runtime change this turn; test script executed and syntax checked. Local only, goal active. Next continue from this earned Archive save through evidence work, evaluating friction rather than assuming fixtures prove full flow. Physical hardware, novice comprehension, broad audiovisual quality still unproven.
+
+## Earned source-note route on touch — 2026-09-27
+
+Previous turn was progress: 2af3a87 established the fresh touch opening. Continued that exact earned Archive save, expanded qa-earned-source-note.mjs with configurable URL, mobile viewport, native portrait-dock/canvas touch, guards against keyboard/mouse fallback, and compositor screenshots. All research and movement earned by input, no runtime progression/position changes.
+
+Passed clue visits, unsupported readership rejection/correction, filing, separate human review, ready/stamp gate opening, walking into Annotation Stacks, saved Continue and resumed movement. End AS/43points, zero errors. Inspected rejection and restored-room screenshots. Evidence docs/qa/touch-source-note-2026-09-27.{md,json}; output /tmp/frus-touch-source-note-0927/earned-storage.json is the next earned save. Runtime unchanged this turn; browser execution and JS syntax passed. Local only, goal active. Next assess annotation and chapter work from this save; full current campaign, physical hardware and novice learning remain unproven.
+
+## Earned annotation and filing on touch — 2026-09-27
+
+Previous turn was progress: e195a76 established source-note-to-AS evidence. Continued that earned save through cart push/intermediate-save reload/parking, all notes and source-room return. Fixed QA measuring hidden prompt during toast handoff: wait for visibility; measured3.5px horizontal hero clearance and5.5px cart/label clearance. Original screenshot showed clear prompt; mixed native/compositor recheck image was black, so annotation shot helper now uses compositor only.
+
+Extended filing QA to touch, configurable origin and input guards. Its old waypoint ran into a colleague; routed through open aisle88,84 then88,154. Filing passed source-map coverage choice, annotation completion and immediate Office sign restoration. End51points/ADD TELEGRAM TO FILE, zero errors. Inspected review screenshot. Gameplay runtime unchanged. Evidence docs/qa/touch-annotation-2026-09-27.{md,json}; next earned save /tmp/frus-touch-file-annotation-recheck-0927/earned-storage.json. Local only, goal active. Next continue supporting documents, manuscript selection/chapter assembly from this save; physical hardware, broad audiovisual quality and novice comprehension unproven.
+
+## Earned manuscript touch route and ghost-click fix — 2026-09-27
+
+Previous turn was progress: ea18731 verified annotation filing. Continued the exact earned save into manuscript work. Updated earned-network QA to touch/native controls/configurable URL/input guards and shortened waypoint bursts. Extended compiler helper to tap visible compiler choices and chapter/revision controls.
+
+Found real bug: held movement gesture opening native desk selected first packet before intentional input. Reproduced1320-page entry twice. DeskControls now rejects pointer clicks without preceding in-desk pointerdown and clears on cancel; zero-detail keyboard/controller activation preserved. Fixed earned route confirms1100 initial pages, missing decision/over-budget rejection, corrected1320 pages and saved reopened draft, then earns all10compiler checkpoints, chapter/revision/DPD handoff and Network entry. Zeroerrors.
+
+Build and282files/2111tests pass. Existing desktop/portrait/landscape desk regressions pass including simulated controller/reload/handoff. Inspected portrait/landscape compositor screenshots. Standard headed client reaches Office explorex143; black canvas capture limitation persists. Evidence docs/qa/earned-manuscript-touch-2026-09-27.{md,json}; next earned save /tmp/frus-touch-manuscript-fixed-0927/earned-storage.json. Local only; goal active. Next continue earned network/declassification flow and assess comprehension/pacing; physical hardware and broad audiovisual quality remain unproven.
+
+## Earned network/clearance and terminal readability — 2026-09-27
+
+Previous turn was progress: e131d96 fixed native-desk carried-touch selection. Continued its earned Network save through all deliveries, wrong-route rejection, stamp crossing, vault and reload. Extended clearance QA to native portrait touch/input guards and completed review, wrong-desk correction, missing withholding entry rejection, chronology repair, token, referral R1, no duplicate reload rewards and resumed movement. No browser errors/state injection. Nextsave /tmp/frus-touch-clearance-0927/earned-storage.json.
+
+Screenshots showed crowded redundant terminal labels. Consolidated public/protected screen status to two lines, full network names into centered larger plates; removed extra floor captions. Build and282files/2111tests pass. Desktop/phone bounds QA confirms text containment, compositor screenshots inspected. Standard headed client reaches Network explorex144 with known black canvas capture. Evidence docs/qa/touch-network-clearance-2026-09-27.{md,json}. Local only, goal active. Next continue referrals from earned save; overall feel, physical hardware and novice understanding remain unproven.
+
+## Referral touch verification and publication — 2026-09-27
+
+Continued earned touch progress through dispatch, corrected manifest, saved treatment draft, withholding treatment, bracket press and Concurrence Slip into SilentReadScene. Fixed feedback banners obscuring the hero by supplying sprite bounds; six non-overlap assertions passed, no browser errors. Added touch guards and compositor capture to referral QA; corrected stale objective expectation. Build and 282 files / 2111 tests passed. Evidence docs/qa/touch-referrals-2026-09-27.{md,json}. Next earned save: /tmp/frus-touch-referral-manifest-recheck-0927/earned-storage.json. Standard client movement passed; its black screenshot remains a capture limitation. Full current victory and physical hardware remain unverified. User now requests publishing all accumulated changes.

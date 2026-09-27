@@ -1,0 +1,332 @@
+{
+  "scope": "Fresh touch-only opening through earned Archive entry; no save fixture or runtime progression writes. Separate arrival recheck resumes the earned Guide save.",
+  "errors": [],
+  "steps": [
+    {
+      "label": "opening-warning",
+      "elapsedMs": 1476,
+      "scene": "WarningScene",
+      "mode": "title",
+      "objective": "Fictional DANN-E warning before title.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "opening-compiler",
+      "elapsedMs": 5659,
+      "scene": "CharacterCreateScene",
+      "mode": "choice",
+      "objective": "Name your FRUS Compiler and begin the volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "intro-1",
+      "elapsedMs": 7139,
+      "scene": "DanneIntroScene",
+      "mode": "title",
+      "objective": "Meet DANN-E before starting your volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "intro-2",
+      "elapsedMs": 7546,
+      "scene": "DanneIntroScene",
+      "mode": "title",
+      "objective": "Meet DANN-E before starting your volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "intro-3",
+      "elapsedMs": 8002,
+      "scene": "DanneIntroScene",
+      "mode": "title",
+      "objective": "Meet DANN-E before starting your volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "intro-4",
+      "elapsedMs": 8480,
+      "scene": "DanneIntroScene",
+      "mode": "title",
+      "objective": "Meet DANN-E before starting your volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "intro-5",
+      "elapsedMs": 8873,
+      "scene": "DanneIntroScene",
+      "mode": "title",
+      "objective": "Meet DANN-E before starting your volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "intro-6",
+      "elapsedMs": 9333,
+      "scene": "DanneIntroScene",
+      "mode": "title",
+      "objective": "Meet DANN-E before starting your volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "intro-7",
+      "elapsedMs": 9795,
+      "scene": "DanneIntroScene",
+      "mode": "title",
+      "objective": "Meet DANN-E before starting your volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "intro-8",
+      "elapsedMs": 10180,
+      "scene": "DanneIntroScene",
+      "mode": "title",
+      "objective": "Meet DANN-E before starting your volume.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "opening-office",
+      "elapsedMs": 11745,
+      "scene": "OfficeScene",
+      "mode": "explore",
+      "objective": "Talk to Kathy at the west desk.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "opening-assignment",
+      "elapsedMs": 19014,
+      "scene": "OfficeScene",
+      "mode": "dialog",
+      "objective": "Pick up the Assignment Memo.",
+      "points": 0,
+      "kathyDeparted": null,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "opening-memo",
+      "elapsedMs": 25356,
+      "scene": "OfficeScene",
+      "mode": "explore",
+      "objective": "Carry the memo to INBOX.",
+      "points": 0,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "opening-memo-filed",
+      "elapsedMs": 31111,
+      "scene": "OfficeScene",
+      "mode": "explore",
+      "objective": "Stamp the memo at INBOX.",
+      "points": 0,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "opening-door-unlocked",
+      "elapsedMs": 36278,
+      "scene": "OfficeScene",
+      "mode": "explore",
+      "objective": "Enter the Archive Guide through the south door.",
+      "points": 5,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "00-south-east-wall",
+      "elapsedMs": 47214,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: take the glowing Citation Stamp.",
+      "points": 5,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "00-north-west-wall",
+      "elapsedMs": 54758,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: take the glowing Citation Stamp.",
+      "points": 5,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "01-stamp-earned",
+      "elapsedMs": 61076,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "01-auto-face-ego-bolt",
+      "elapsedMs": 62302,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "02-live-bolt",
+      "elapsedMs": 62756,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "03-harmless-miss",
+      "elapsedMs": 64136,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "04-aim-warning",
+      "elapsedMs": 64852,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "05-paused-bolt",
+      "elapsedMs": 68712,
+      "scene": "GuideScene",
+      "mode": "pause",
+      "objective": "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "05-use-swing-button",
+      "elapsedMs": 70270,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "06-coached-counter",
+      "elapsedMs": 73939,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: return DANN-E's practice bolt with the Citation Stamp.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": null,
+      "fragments": []
+    },
+    {
+      "label": "07-fragment-revealed",
+      "elapsedMs": 75307,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: interact with the Front Matter to collect it.",
+      "points": 10,
+      "kathyDeparted": 1,
+      "guideCounterTrained": 1,
+      "fragments": []
+    },
+    {
+      "label": "07-front-matter-collected",
+      "elapsedMs": 79762,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: walk south through the open gate.",
+      "points": 20,
+      "kathyDeparted": 1,
+      "guideCounterTrained": 1,
+      "fragments": [
+        "Front Matter Fragment"
+      ]
+    },
+    {
+      "label": "08-continued-gate",
+      "elapsedMs": 82764,
+      "scene": "GuideScene",
+      "mode": "explore",
+      "objective": "Archive Cavern: walk south through the open gate.",
+      "points": 20,
+      "kathyDeparted": 1,
+      "guideCounterTrained": 1,
+      "fragments": [
+        "Front Matter Fragment"
+      ]
+    },
+    {
+      "label": "09-archive-entry",
+      "elapsedMs": 85614,
+      "scene": "ArchiveScene",
+      "mode": "explore",
+      "objective": "TAKE SOURCE NOTE",
+      "points": 20,
+      "kathyDeparted": 1,
+      "guideCounterTrained": 1,
+      "fragments": [
+        "Front Matter Fragment"
+      ]
+    }
+  ],
+  "arrivalRecheck": "HUD and touch controls restored after Guide-to-Archive transition"
+}

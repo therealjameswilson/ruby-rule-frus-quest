@@ -1,0 +1,172 @@
+{
+  "network": {
+    "scene": "NetworkScene",
+    "room": "N2",
+    "routingComplete": 1,
+    "stampCrossingOpen": 1,
+    "wrongRouteCheck": true,
+    "reloadMovementCheck": true
+  },
+  "clearance": {
+    "mobile": true,
+    "reviewFiled": true,
+    "missingEntryRejected": true,
+    "chronologyRepaired": true,
+    "tokenEarned": true,
+    "referralEntered": true,
+    "reloadedWithoutDuplicateReward": true,
+    "errors": []
+  },
+  "referral": {
+    "scene": "ReferralVaultScene",
+    "room": "R1",
+    "points": 81,
+    "reviewComplete": 1
+  },
+  "terminalLayout": [
+    {
+      "name": "desktop",
+      "bounds": [
+        {
+          "id": "opennet",
+          "plate": {
+            "type": 5,
+            "x": 38,
+            "y": 138.5,
+            "width": 44,
+            "height": 11
+          },
+          "label": {
+            "type": 5,
+            "x": 45,
+            "y": 140.72900390625,
+            "width": 30,
+            "height": 6.5419921875
+          },
+          "text": "OPENNET",
+          "screen": {
+            "type": 5,
+            "x": 51,
+            "y": 114.12646484375,
+            "width": 18,
+            "height": 9.7470703125
+          },
+          "status": "PUBLIC\nCOPIES",
+          "glass": {
+            "type": 5,
+            "x": 46,
+            "y": 112,
+            "width": 28,
+            "height": 14
+          }
+        },
+        {
+          "id": "classnet",
+          "plate": {
+            "type": 5,
+            "x": 174,
+            "y": 138.5,
+            "width": 44,
+            "height": 11
+          },
+          "label": {
+            "type": 5,
+            "x": 179.5,
+            "y": 140.72900390625,
+            "width": 33,
+            "height": 6.5419921875
+          },
+          "text": "CLASSNET",
+          "screen": {
+            "type": 5,
+            "x": 182,
+            "y": 114.12646484375,
+            "width": 28,
+            "height": 9.7470703125
+          },
+          "status": "PROTECTED\nREVIEW",
+          "glass": {
+            "type": 5,
+            "x": 182,
+            "y": 112,
+            "width": 28,
+            "height": 14
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "name": "phone",
+      "bounds": [
+        {
+          "id": "opennet",
+          "plate": {
+            "type": 5,
+            "x": 38,
+            "y": 138.5,
+            "width": 44,
+            "height": 11
+          },
+          "label": {
+            "type": 5,
+            "x": 45,
+            "y": 140.72900390625,
+            "width": 30,
+            "height": 6.5419921875
+          },
+          "text": "OPENNET",
+          "screen": {
+            "type": 5,
+            "x": 51,
+            "y": 114.12646484375,
+            "width": 18,
+            "height": 9.7470703125
+          },
+          "status": "PUBLIC\nCOPIES",
+          "glass": {
+            "type": 5,
+            "x": 46,
+            "y": 112,
+            "width": 28,
+            "height": 14
+          }
+        },
+        {
+          "id": "classnet",
+          "plate": {
+            "type": 5,
+            "x": 174,
+            "y": 138.5,
+            "width": 44,
+            "height": 11
+          },
+          "label": {
+            "type": 5,
+            "x": 179.5,
+            "y": 140.72900390625,
+            "width": 33,
+            "height": 6.5419921875
+          },
+          "text": "CLASSNET",
+          "screen": {
+            "type": 5,
+            "x": 182,
+            "y": 114.12646484375,
+            "width": 28,
+            "height": 9.7470703125
+          },
+          "status": "PROTECTED\nREVIEW",
+          "glass": {
+            "type": 5,
+            "x": 182,
+            "y": 112,
+            "width": 28,
+            "height": 14
+          }
+        }
+      ],
+      "errors": []
+    }
+  ]
+}
