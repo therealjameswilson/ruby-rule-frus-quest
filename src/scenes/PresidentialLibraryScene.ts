@@ -1,4 +1,4 @@
-import { activeDossier, assignedDossier } from "../game/activeCompilation";
+import { activeDossier } from "../game/activeCompilation";
 import { researchDoorway } from '../systems/researchDoorway';
 import { prefersReducedMotion } from '../systems/motionPreferences';
 import { filedResearchPaper } from '../systems/filedResearchPaper';
@@ -178,7 +178,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     },6,()=>{});
   }
   private offerManuscriptReturn() {
-    if (!gameState.sceneProgress.compilerLibraryReturn || assignedDossier(gameState.sceneProgress)?.library !== this.assignment.library) return;
+    if (!gameState.sceneProgress.compilerLibraryReturn) return;
     this.choice.show("RESEARCH PACKET READY", [{key:'A',label:'Return to the Archive manuscript desk',value:'return'},{key:'B',label:'Explore the NSC wing or grounds',value:'stay'}], option => {
       if(option.value!=='return')return;
       this.leaving=true;gameState.sceneProgress.compilerLibraryReturn=0;saveGameNow();transitionTo(this,'ArchiveScene');

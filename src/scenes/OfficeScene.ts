@@ -1,4 +1,3 @@
-import { ACTIVE_COMPILATION, assignedDossier, assignCompilerVolume } from "../game/activeCompilation";
 import { addOfficeExteriorDoor } from "../systems/officeExteriorDoor";
 import { addEditorialRoomFloor } from "../systems/editorialRoomFloor";
 import { researchProp, RESEARCH_PROPS } from "../systems/researchProps";
@@ -749,7 +748,7 @@ export class OfficeScene extends Phaser.Scene {
     }
     this.setOfficeStarterMemoStatus(1);
     setHeldItem("Assignment Memo");
-    setLatestMessage("Assignment: select a Reagan, Bush 41, Clinton or Bush 43 volume at INBOX. Carry the plan there for approval.");
+    setLatestMessage("Assignment: compile a FRUS volume. Carry the memo to INBOX to agree the scope and get the research plan approved.");
     setObjective("Carry the memo to INBOX.");
     retroAudio.confirm();
     this.toast.show("FRUS: LATE COLD WAR", this.player.position, "info");
@@ -772,20 +771,13 @@ export class OfficeScene extends Phaser.Scene {
     if (memoStatus === 1) {
       this.setOfficeStarterMemoStatus(2);
       setHeldItem(null);
-      setLatestMessage("Kathy left four volume assignments at INBOX: Reagan, Bush 41, Clinton and Bush 43. Stamp to choose your remit.");
+      setLatestMessage("Kathy left your compilation memo at INBOX. Bring it back to agree the scope and research plan.");
       setObjective("Stamp the memo at INBOX.");
       retroAudio.confirm();
-      this.toast.show("CHOOSE YOUR VOLUME", this.player.position, "info");
+      this.toast.show("RESEARCH PLAN", this.player.position, "info");
       return;
     }
     if (memoStatus === 2) {
-      if (!assignedDossier(gameState.sceneProgress) && gameState.sceneProgress.compilerSop_plan !== 1) {
-        this.choice.show("KATHY’S ASSIGNMENT DESK\nChoose a volume to compile.", ACTIVE_COMPILATION.map((d, i) => ({key: (["A", "B", "C", "D"] as const)[i], label: d.short, value: d.library})), option => {
-          if (assignCompilerVolume(gameState.sceneProgress, option.value ?? "")) saveGameNow();
-          this.handleStarterMemoInbox();
-        }, 6, () => {});
-        return;
-      }
       gameState.sceneProgress.compilerSopVersion = 1;
       if (!compilerCheckpointComplete(gameState.sceneProgress, "research_plan")) {
         runCompilerCheckpoint(this.choice, this.dialog, "research_plan", () => this.handleStarterMemoInbox());

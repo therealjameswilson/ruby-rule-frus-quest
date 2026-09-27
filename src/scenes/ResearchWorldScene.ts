@@ -1,4 +1,3 @@
-import { ACTIVE_COMPILATION, assignedDossier } from "../game/activeCompilation";
 import { addSaladBowlArt } from '../systems/saladBowlArt';
 import { OutdoorAtmosphere } from "../systems/outdoorAtmosphere";
 import { nscDungeon, nscStage } from '../game/nscResearch';
@@ -328,8 +327,6 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.dialog.show('FIELD JOURNAL',[
       `${found.length}/${RESEARCH_LANDMARKS.length} landmarks discovered. Walk to a building and press A. No required order.`,
       'DC: Potomac Green west, Capital Commons east, Maryland Grove north. Rail links four distant library regions.',
-      ...(assignedDossier(gameState.sceneProgress)?[`Kathy’s assignment: ${assignedDossier(gameState.sceneProgress)!.title}`]:[]),
-      ...ACTIVE_COMPILATION.map(d=>`${d.short}: ${d.topic}. Library packet ${libraryStage(gameState.sceneProgress,d.library)}/4.`),
       ...found.flatMap(l=>[`${l.name}\n${l.location}`, ...(libraryAssignment(l.id)?[`Dungeon research packet: ${libraryStage(gameState.sceneProgress,l.id)}/4`]:[]),...(nscDungeon(l.id)?[`NSC wing: ${nscStage(gameState.sceneProgress,l.id)}/3 checks filed`]:[]),researchHolding(l.id).text,...collectionPages(l.id)]),
       'Research lessons are practice prompts. Catalogs and repository staff establish holdings and access. The map compresses real distances.'
     ]);
