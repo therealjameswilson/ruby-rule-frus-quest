@@ -1,0 +1,43 @@
+{
+  "annotation": {
+    "mobile": true,
+    "cartParked": true,
+    "cartReloaded": true,
+    "notesCollected": true,
+    "returned": true,
+    "errors": []
+  },
+  "cartArt": {
+    "contextDesks": 0,
+    "totalDesks": 2,
+    "cartBottom": 124.5,
+    "labelTop": 130,
+    "visible": true,
+    "prompt": {
+      "type": 5,
+      "x": 151.5,
+      "y": 64.5,
+      "width": 41,
+      "height": 19.5
+    },
+    "hero": {
+      "type": 5,
+      "x": 116,
+      "y": 73,
+      "width": 32,
+      "height": 48
+    }
+  },
+  "filing": {
+    "mobile": true,
+    "annotationFiled": true,
+    "officeReturnRestored": true,
+    "errors": []
+  },
+  "end": {
+    "scene": "ArchiveScene",
+    "objective": "ADD TELEGRAM TO FILE",
+    "documentPoints": 51,
+    "latestMessage": "Source, context, and selection notes filed together. The manuscript can move toward human review once the room packet is complete."
+  }
+}
