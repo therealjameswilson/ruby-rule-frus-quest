@@ -35,7 +35,7 @@ const STATIONS = [
 ] as const;
 
 export class PresidentialLibraryScene extends Phaser.Scene {
-  private get stations() { return this.assignment?.library==='bush41' ? STATIONS.map((s,i)=>i===2?{...s,name:'RESEARCH LOG',label:'3 RESEARCH LOG'}:s) : STATIONS; }
+  private get stations() { return ['bush41','clinton'].includes(this.assignment?.library) ? STATIONS.map((s,i)=>i===2?{...s,name:'RESEARCH LOG',label:'3 RESEARCH LOG'}:s) : STATIONS; }
   private player!: Player;
   private dialog!: DialogBox;
   private choice!: ChoicePrompt;
@@ -150,7 +150,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     this.stageText.setText(stage===4&&packet&&!packet.filed?'REVISIT PACKET · PROGRESS KEPT':`${this.assignment.backgroundOnly?'BACKGROUND':'RESEARCH'} PACKET ${stage}/4`);
     const revisit=packet?[...packet.parts.map(p=>!p.ready),!packet.filed]:[];
     if(comparisonCatalog(this.assignment.library))revisit[1]=!evaluateComparison(gameState.sceneProgress,this.assignment.library).ok;
-    if(this.assignment.library==='bush41')revisit[2]=!evaluateSourceNote(gameState.sceneProgress,'bush41').ok;
+    if(['bush41','clinton'].includes(this.assignment.library))revisit[2]=!evaluateSourceNote(gameState.sceneProgress,this.assignment.library).ok;
     this.marks.forEach((m,i)=>m.setText(`${this.stations[i].label} · ${i<stage&&revisit[i]?'REVISIT':i<stage?'FILED':i===stage?'NEXT':'LOCKED'}`)
       .setColor(i===stage?'#fff3bf':i<stage?'#a7bfb4':'#a5afbd')
       .setBackgroundColor(i===stage?'#49371d':'#192630'));
@@ -168,11 +168,11 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     if(comparisonCatalog(a.library)&&station===1&&station<stage&&evaluateComparison(gameState.sceneProgress,a.library).ok){
       this.choice.showLibraryComparison(gameState.sceneProgress,()=>{},()=>{},()=>{},true,a.library);return;
     }
-    if(['reagan','bush41'].includes(a.library)&&station===2&&station<stage&&evaluateSourceNote(gameState.sceneProgress,a.library).ok){
+    if(['reagan','bush41','clinton'].includes(a.library)&&station===2&&station<stage&&evaluateSourceNote(gameState.sceneProgress,a.library).ok){
       this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>{},()=>{},()=>{},true,a.library);return;
     }
     const comparisonRepair=Boolean(comparisonCatalog(a.library))&&station===1&&station<stage&&!evaluateComparison(gameState.sceneProgress,a.library).ok;
-    const noteRepair=['reagan','bush41'].includes(a.library)&&station===2&&station<stage&&!evaluateSourceNote(gameState.sceneProgress,a.library).ok;
+    const noteRepair=['reagan','bush41','clinton'].includes(a.library)&&station===2&&station<stage&&!evaluateSourceNote(gameState.sceneProgress,a.library).ok;
     const repair=noteRepair||comparisonRepair||['reagan','bush41'].includes(a.library)&&station<stage&&[!evaluateLibraryRequest(gameState.sceneProgress,a.library).ok,!evaluateComparison(gameState.sceneProgress,a.library).ok,!evaluateSourceNote(gameState.sceneProgress,a.library).ok,false][station];
     if(['reagan','bush41'].includes(a.library)&&station===3&&stage>=3){
       this.choice.showLibraryPacket(gameState.sceneProgress,()=>saveGameNow(),()=>{
@@ -192,10 +192,10 @@ export class PresidentialLibraryScene extends Phaser.Scene {
     if(comparisonCatalog(a.library)&&station===1){
       this.choice.showLibraryComparison(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,1,true))return;
-        this.researchReceipt(comparisonCatalog(a.library)!.receipt, a.library==='bush41'?'FILED · NEXT: RESEARCH LOG':'FILED · NEXT: SOURCE NOTE');
+        this.researchReceipt(comparisonCatalog(a.library)!.receipt, ['bush41','clinton'].includes(a.library)?'FILED · NEXT: RESEARCH LOG':'FILED · NEXT: SOURCE NOTE');
       },()=>{},false,a.library);return;
     }
-    if(['reagan','bush41'].includes(a.library)&&station===2){
+    if(['reagan','bush41','clinton'].includes(a.library)&&station===2){
       this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(!repair&&!fileLibraryStage(gameState.sceneProgress,a.library,2,true))return;
         this.researchReceipt(evaluateSourceNote(gameState.sceneProgress,a.library).message, 'SAVED · NEXT: FILE PACKET');

@@ -55,3 +55,19 @@ it('preserves Bush41 inventory leads without inventing document dates or content
  expect(evaluateSourceNote(p,'bush41')).toMatchObject({ok:false,field:'date'});
  expect(evaluateSourceNote(p,'unknown').ok).toBe(false);
 });
+
+it('preserves Clinton MDR provenance and separates catalog availability from conversation dates',()=>{
+ const p:Record<string,number>={};
+ for(const field of ['kind','date','locator','scope'] as const)chooseSourceNoteField(p,field,1,'clinton');
+ toggleSourceNoteLog(p,'lead','clinton');toggleSourceNoteLog(p,'followups','clinton');
+ expect(evaluateSourceNote(p,'clinton').ok).toBe(true);
+ const note=sourceNoteReadout(p,'clinton');
+ expect(note.citation).toContain('2015-0782-M-2');expect(note.citation).toContain('57569');
+ expect(note.heading).toContain('catalog available July 13, 2018');
+ expect(note.qualification).toContain('have not yet been examined');
+ expect(note.researchLog[0]).toContain('Unexamined release');expect(note.researchLog).toHaveLength(3);
+ expect(evaluateSourceNote(p,'bush41').ok).toBe(false);expect(evaluateSourceNote(p).ok).toBe(false);
+ chooseSourceNoteField(p,'date',2,'clinton');expect(evaluateSourceNote(p,'clinton')).toMatchObject({ok:false,field:'date'});
+ chooseSourceNoteField(p,'date',1,'clinton');chooseSourceNoteField(p,'scope',2,'clinton');
+ expect(evaluateSourceNote(p,'clinton')).toMatchObject({ok:false,field:'scope'});
+});

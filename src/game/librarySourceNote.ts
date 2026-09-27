@@ -27,7 +27,13 @@ export const BUSH41_LOG_FIELDS: readonly {id:SourceNoteField;title:string;help:s
  {id:'locator',title:'Preserve both file-unit identifiers',help:'Similar titles do not make the file units interchangeable.',choices:[{value:2,label:'Merge them as one reviewed folder',text:'Arms Control: combined reviewed folder'},{value:1,label:'Retain CF00715-001 and CF00715-002 separately',text:`George H. W. Bush Presidential Library inventory: ${requestLocator(1,'bush41')}; ${requestLocator(2,'bush41')}.`}],feedback:'Keep both local IDs and NAIDs. These are separate file-unit leads, not a verified citation to a document you read.'},
  {id:'scope',title:'Describe what remains unknown',help:'Availability metadata cannot answer a policy question.',choices:[{value:1,label:'Contents, positions and disagreements remain unverified',text:'On-site availability is recorded. Document contents, recommendations, disagreements, and withdrawals remain unverified.'},{value:2,label:'Certify that Rice and State agreed',text:'Rice and State agreed on the policy.'}],feedback:'No examined document establishes agreement. Keep the question open until the records can be compared.'}
 ];
-export const sourceNoteFields=(library='reagan')=>library==='bush41'?BUSH41_LOG_FIELDS:SOURCE_NOTE_FIELDS;
+export const CLINTON_LOG_FIELDS: typeof BUSH41_LOG_FIELDS = [
+ {id:'kind',title:'Identify the release process',help:'Retain the catalog’s MDR provenance without implying that every conversation has been examined.',choices:[{value:1,label:'MDR 2015-0782-M-2 catalog entry',text:'Research log for MDR 2015-0782-M-2'},{value:2,label:'FOIA release with all conversations reviewed',text:'Fully reviewed FOIA release'}],feedback:'The catalog identifies an MDR, not a FOIA request. Reading its description is not document-level review.'},
+ {id:'date',title:'Separate conversation coverage from availability',help:'The release lists a conversation span and a different Date Available field.',choices:[{value:2,label:'Date every conversation July 13, 2018',text:'Conversations dated July 13, 2018'},{value:1,label:'Keep 1996–1999 coverage; record 2018 as availability',text:'listed conversations April 21, 1996–December 31, 1999; catalog available July 13, 2018; individual dates pending examination'}],feedback:'July 13, 2018 is the catalog availability date. It is not the date of each conversation or necessarily of each declassification decision.'},
+ {id:'locator',title:'Cite the catalog you used',help:'An individual document citation will need its own identifying details after examination.',choices:[{value:2,label:'Invent a document number to finish the citation',text:'Document 1, complete Clinton–Yeltsin record'},{value:1,label:'Preserve item 57569 and the MDR identifier',text:'Clinton Digital Library, item 57569, Declassified Documents Concerning Russian President Boris Yeltsin; MDR 2015-0782-M-2; Clinton Presidential Records: NSC Cable, Email, and Records Management System.'}],feedback:'Keep item 57569 and MDR 2015-0782-M-2. No individual document number or citation has been established here.'},
+ {id:'scope',title:'Keep completeness unresolved',help:'A declassified release can still require redaction checks, gap research, and comparison.',choices:[{value:1,label:'Individual contents, omissions and other perspectives remain open',text:'Scans are available; individual conversations, redactions, omissions and cross-repository comparisons have not yet been examined.'},{value:2,label:'Certify a complete account of the relationship',text:'The release provides a complete account; further research is unnecessary.'}],feedback:'The catalog cannot certify a complete account. Preserve document examination, redaction checks, and research beyond this release.'}
+];
+export const sourceNoteFields=(library='reagan')=>library==='bush41'?BUSH41_LOG_FIELDS:library==='clinton'?CLINTON_LOG_FIELDS:SOURCE_NOTE_FIELDS;
 const key = (field: string,library='reagan') => `librarySourceNote_${library}_${field}`;
 export function chooseSourceNoteField(progress: Record<string, number>, field: SourceNoteField, value: number,library='reagan') {
   const spec = sourceNoteFields(library).find(f => f.id === field);
@@ -38,30 +44,30 @@ export function toggleSourceNoteLog(progress: Record<string, number>, item: 'lea
   progress[key(item,library)] = progress[key(item,library)] === 1 ? 0 : 1;
 }
 export function sourceNoteReadout(progress: Record<string, number>,library='reagan') {
-  const specs=sourceNoteFields(library),isLog=library==='bush41';
+  const specs=sourceNoteFields(library),isLog=['bush41','clinton'].includes(library);
   const fields = Object.fromEntries(specs.map(f => [f.id, progress[key(f.id,library)] ?? 0])) as Record<SourceNoteField, number>;
   const text = (field: SourceNoteField, fallback: string) => specs.find(f => f.id === field)!.choices.find(c => c.value === fields[field])?.text ?? fallback;
   const lead = progress[key('lead',library)] === 1, followups = progress[key('followups',library)] === 1;
   return {
     fields,
     heading: `${text('kind', '[Source type pending]')}, ${text('date', '[Date information pending]')}.`,
-    citation: text('locator', isLog?'[Attach the inventory and exact file-unit leads.]':'[Attach the source used for the public remarks.]'),
+    citation: text('locator', isLog?'[Attach the repository description and exact identifiers.]':'[Attach the source used for the public remarks.]'),
     qualification: text('scope', '[Record what this source can and cannot establish.]'),
-    sourceUrl: isLog?(fields.locator===1?requestCatalog('bush41')!.source:null):(fields.locator === 1 ? COMPARISON_SOURCE : fields.locator === 2 ? REQUEST_SOURCE : null),
+    sourceUrl: isLog?(fields.locator===1?requestCatalog(library)!.source:null):(fields.locator === 1 ? COMPARISON_SOURCE : fields.locator === 2 ? REQUEST_SOURCE : null),
     lead, followups,
     researchLog: [
-      ...(lead ? [isLog?`Unexamined leads: ${requestLocator(1,'bush41')}; ${requestLocator(2,'bush41')}. The inventory lists On Site; retrieval and individual record inspection remain pending.`:`Unexamined lead: Reagan Library, ${REQUEST_COLLECTION}; ${requestLocator(2)}. The finding aid lists OPEN; retrieval, contents, and withdrawals remain to be checked.`] : []),
-      ...(followups ? (isLog?comparisonCatalog('bush41')!.followups:COMPARISON_FOLLOWUPS).map(f => `Pending: ${f.label}.`) : [])
+      ...(lead ? [library==='clinton'?`Unexamined release: ${requestLocator(1,'clinton')}. Scans are available; individual contents, dates and redactions remain to be examined.`:isLog?`Unexamined leads: ${requestLocator(1,'bush41')}; ${requestLocator(2,'bush41')}. The inventory lists On Site; retrieval and individual record inspection remain pending.`:`Unexamined lead: Reagan Library, ${REQUEST_COLLECTION}; ${requestLocator(2)}. The finding aid lists OPEN; retrieval, contents, and withdrawals remain to be checked.`] : []),
+      ...(followups ? (isLog?comparisonCatalog(library)!.followups:COMPARISON_FOLLOWUPS).map(f => `Pending: ${f.label}.`) : [])
     ]
   };
 }
 export function evaluateSourceNote(progress: Record<string, number>,library='reagan') {
-  if(!['reagan','bush41'].includes(library))return {ok:false,message:'No research-note task exists for this repository.',field:null};
+  if(!['reagan','bush41','clinton'].includes(library))return {ok:false,message:'No research-note task exists for this repository.',field:null};
   const note = sourceNoteReadout(progress,library);
   for (const field of sourceNoteFields(library)) {
     if (!note.fields[field.id]) return { ok: false, message: `Complete “${field.title}” before filing.`, field: field.id };
     if (note.fields[field.id] !== 1) return { ok: false, message: field.feedback, field: field.id };
   }
-  if (!note.lead || !note.followups) return { ok: false, message: library==='bush41'?'Keep both unexamined leads and both pending tasks in the research log.':'Keep the folder lead and both pending document requests in the separate research log.', field: null };
-  return { ok: true, message: library==='bush41'?'Research log filed. No document source note is claimed; retrieval, examination, and comparison remain pending.':'Working note filed with its actual source. The separate research log preserves unexamined holdings and pending requests for human review.', field: null };
+  if (!note.lead || !note.followups) return { ok: false, message: library==='clinton'?'Keep the release identifier and both pending research tasks in the log.':library==='bush41'?'Keep both unexamined leads and both pending tasks in the research log.':'Keep the folder lead and both pending document requests in the separate research log.', field: null };
+  return { ok: true, message: library==='clinton'?'Research log filed. Individual conversations, redactions, and gap research remain pending.':library==='bush41'?'Research log filed. No document source note is claimed; retrieval, examination, and comparison remain pending.':'Working note filed with its actual source. The separate research log preserves unexamined holdings and pending requests for human review.', field: null };
 }

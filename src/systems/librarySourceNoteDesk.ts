@@ -10,7 +10,7 @@ import { DeskControls } from './deskControls';
 import { retroAudio } from './audio';
 
 export class LibrarySourceNoteDesk {
-  private get isLog() { return this.library === 'bush41'; }
+  private get isLog() { return ['bush41','clinton'].includes(this.library); }
   private root = document.createElement('dialog');
   private controls?: DeskControls;
   private body: HTMLElement;
@@ -34,7 +34,7 @@ export class LibrarySourceNoteDesk {
       this.submit.textContent = 'File research log →';
       this.status.textContent = 'DANN-E: “Just write that you read it. Who will know?”';
     }
-    if (reviewOnly) { this.root.querySelector('h1')!.textContent = this.isLog ? 'Your filed research log.' : 'Your filed working note.'; this.submit.textContent = 'Return to room'; this.leave.textContent = 'Close'; this.status.textContent = 'Filed for human review. Unfinished research stays in the separate log.'; }
+    if (reviewOnly) { this.root.querySelector('h1')!.textContent = this.isLog ? 'Your filed research log.' : 'Your filed working note.'; this.submit.textContent = 'Return to room'; this.leave.textContent = 'Close'; this.status.textContent = 'Filed for human review. Unfinished research remains listed below.'; }
     this.submit.addEventListener('click', () => {
       if (this.reviewOnly) { onCancel(); return; }
       const result = evaluateSourceNote(this.progress,this.library);
@@ -58,10 +58,10 @@ export class LibrarySourceNoteDesk {
     const note = sourceNoteReadout(this.progress,this.library); this.body.replaceChildren();
     const evidence = document.createElement('section'); evidence.className = 'source-note-evidence'; evidence.dataset.readable = '';
     const h = document.createElement('h2'); h.textContent = 'The source on your desk';
-    const title = document.createElement('p'); title.textContent = this.isLog ? requestCatalog('bush41')!.collection : SOURCE_NOTE_TITLE;
-    const metadata = document.createElement('p'); metadata.textContent = this.isLog ? 'George H. W. Bush Library · Inventory metadata · Individual records unexamined' : 'February 20, 1985 · Ronald Reagan Presidential Library · Online Public Papers transcript';
-    const reminder = document.createElement('p'); reminder.textContent = this.isLog ? 'The collection title and availability field do not establish document dates, contents, or policy conclusions.' : 'You compared attributed public remarks. The RAC Box 6 folder was a finding-aid lead; no private meeting record was examined.';
-    const link = this.button(this.isLog ? 'Inspect official inventory ↗' : 'Inspect official transcript ↗', 'source', () => window.open(this.isLog ? requestCatalog('bush41')!.source : COMPARISON_SOURCE, '_blank', 'noopener,noreferrer'));
+    const title = document.createElement('p'); title.textContent = this.isLog ? requestCatalog(this.library)!.collection : SOURCE_NOTE_TITLE;
+    const metadata = document.createElement('p'); metadata.textContent = this.isLog ? `${requestCatalog(this.library)!.library} · Catalog metadata · Individual records unexamined` : 'February 20, 1985 · Ronald Reagan Presidential Library · Online Public Papers transcript';
+    const reminder = document.createElement('p'); reminder.textContent = this.isLog ? 'Catalog dates and availability do not establish individual document contents or a complete historical account.' : 'You compared attributed public remarks. The RAC Box 6 folder was a finding-aid lead; no private meeting record was examined.';
+    const link = this.button(this.isLog ? 'Inspect official inventory ↗' : 'Inspect official transcript ↗', 'source', () => window.open(this.isLog ? requestCatalog(this.library)!.source : COMPARISON_SOURCE, '_blank', 'noopener,noreferrer'));
     evidence.append(h, title, metadata, reminder, link); this.body.append(evidence);
     const editor = document.createElement('div'); editor.className = 'source-note-fields';
     for (const field of sourceNoteFields(this.library)) {
@@ -78,7 +78,7 @@ export class LibrarySourceNoteDesk {
     if (!this.reviewOnly) this.body.append(editor);
     const log = document.createElement('section'); log.className = 'source-note-log';
     const logTitle = document.createElement('h2'); logTitle.textContent = 'Keep the unfinished research'; log.append(logTitle);
-    for (const [item, label] of [['lead', this.isLog ? 'Carry both exact file-unit leads, marked unexamined' : 'Carry the exact folder lead, marked unexamined'], ['followups', this.isLog ? 'Carry pending examination and State comparison' : 'Carry both pending requests: meeting record and State/embassy reporting']] as const) {
+    for (const [item, label] of [['lead', this.library==='clinton' ? 'Carry the MDR identifier and release coverage, marked unexamined' : this.isLog ? 'Carry both exact file-unit leads, marked unexamined' : 'Carry the exact folder lead, marked unexamined'], ['followups', this.isLog ? 'Carry pending examination and State comparison' : 'Carry both pending requests: meeting record and State/embassy reporting']] as const) {
       const b = this.button(`${note[item] ? '✓ ' : ''}${label}`, item, () => { toggleSourceNoteLog(this.progress, item,this.library); this.changed(item); });
       b.dataset.log = item; b.setAttribute('aria-pressed', String(note[item])); log.append(b);
     }
@@ -93,7 +93,7 @@ export class LibrarySourceNoteDesk {
     for (const text of note.researchLog.length ? note.researchLog : ['No pending research attached yet.']) { const li = document.createElement('li'); li.textContent = text; list.append(li); }
     const inspect = this.button(this.reviewOnly ? 'Review this note' : 'Read this draft', 'preview', () => { preview.scrollIntoView({ block: 'start', behavior: 'instant' }); this.status.textContent = this.reviewOnly ? 'This record is filed for human review. Outstanding research remains listed.' : 'Check the source, date information and limits. Filing preserves work for human review; it does not clear a chapter for publication.'; });
     preview.append(eyebrow, heading, citation, qualification, logLabel, list, inspect); this.body.append(preview);
-    setChoiceState(this.reviewOnly ? 'FILED LIBRARY SOURCE NOTE' : 'BUILD LIBRARY SOURCE NOTE', [{ key: 'A', label: this.reviewOnly ? 'Read filed working note' : 'Assemble a traceable working note', value: 'work' }, { key: 'B', label: this.reviewOnly ? 'Return to room' : 'Save note and leave', value: 'leave' }]);
+    setChoiceState(this.isLog ? (this.reviewOnly ? 'FILED LIBRARY RESEARCH LOG' : 'BUILD LIBRARY RESEARCH LOG') : this.reviewOnly ? 'FILED LIBRARY SOURCE NOTE' : 'BUILD LIBRARY SOURCE NOTE', [{ key: 'A', label: this.reviewOnly ? 'Read filed working note' : 'Assemble a traceable working note', value: 'work' }, { key: 'B', label: this.reviewOnly ? 'Return to room' : 'Save note and leave', value: 'leave' }]);
     this.controls?.refresh(focus);
   }
   updateInput(input: InputState) { this.controls?.updateInput(input); }

@@ -8452,3 +8452,11 @@ Previous turn was progress: 7477756 completed saved Bush41 packet assembly. Reva
 Existing shared desk supplies saved drafts, validation, filed read-only review and missing-comparison repair; per-library keys/readout isolate Clinton state. Build and all 282 files / 2,105 tests pass. Browser checks pass desktop/portrait/landscape including wrong/missing classification, follow-ups, draft/filed reload, immutable review and no page errors. Desktop controller/fullscreen checked. Inspected desktop/portrait screenshots. Standard headed skill client reaches explore and moves to x138, with its known black canvas capture limitation. Desk positioning is used, not a movement or full-campaign test.
 
 Local only; goal active. Next replace remaining Clinton research-log/packet questions, extend Bush43, and resume whole-game audiovisual/play-feel assessment.
+
+## Clinton research-log assembly — 2026-09-27
+
+Previous turn was progress: afb5d26 added Clinton release comparison. Revalidated station 3 remained binary. Added a persistent log distinguishing MDR provenance from FOIA, conversation span from catalog availability date, actual catalog locator from invented document citations, and available scans from completed examination. Explicit pending work carries individual conversations/redactions and gap/comparative research forward. Uses the previously verified official catalog metadata; no private contents invented. Room/quest labels identify RESEARCH LOG.
+
+Library-specific state preserves prior notes. Completed log reopens read-only; legacy missing logs can be repaired without stage credit. Build and all 282 files / 2,106 tests pass. Browser checks pass desktop, portrait and landscape: preceding earned desks, all wrong fields, missing follow-ups, draft reload, preview, filing/reload and unchanged review. No page errors. Inspected desktop draft and phone filed-log screenshots. Standard headed client reaches explore/moves to x137 but retains its black canvas capture limitation. Tests position the hero at desks; physical movement/full campaign are not covered. Evidence: docs/qa/clinton-research-log-2026-09-27.{md,json}.
+
+Local only; goal active. Next assemble the Clinton packet, extend Bush43 work, then assess whole-adventure audiovisual/play feel.
