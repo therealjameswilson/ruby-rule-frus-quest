@@ -29,6 +29,8 @@ export function runCompilerCheckpoint(choice: ChoicePrompt, dialog: DialogBox, c
       choice.showManuscriptDesk(gameState.sceneProgress, saveGameNow, () => submit("decision"), cancel);
     } else if (task.id === "backup") {
       choice.showChapterDesk(gameState.sceneProgress, saveGameNow, () => submit("packet"), cancel);
+    } else if (task.id === "revision") {
+      choice.showRevisionDesk(gameState.sceneProgress, saveGameNow, () => submit("revise"), cancel);
     } else {
       choice.show(`${task.question}\n\n${task.context}`, [...task.options], option => submit(option.value), 8, cancel);
     }

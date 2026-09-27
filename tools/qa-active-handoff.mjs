@@ -1,3 +1,4 @@
+import {completeRevisionDesk} from './revision-desk-actions.mjs';
 import {completeChapterDesk} from './chapter-desk-actions.mjs';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -19,7 +20,7 @@ try{
   {
    await p.waitForSelector('.manuscript-desk');await p.locator('[data-packet=decision]').click();await p.locator('.manuscript-submit').click();
    await drain();await completeChapterDesk(p);
-   for(const value of ['retain','second','revise','clear','joint','handoff']){await drain();if(value==='second')await p.screenshot({path:out+'/second-review.png'});await choose(value);await drain();}
+   for(const value of ['retain','second','revise','clear','joint','handoff']){await drain();if(value==='second')await p.screenshot({path:out+'/second-review.png'});if(value==='revise')await completeRevisionDesk(p);else await choose(value);await drain();}
    const done=await p.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));assert.equal(done.state.sceneProgress.compilerSop_submission,1);assert(!done.state.sceneProgress.finalGatePublished);await p.screenshot({path:out+'/dpd-ready.png'});
    await p.evaluate(()=>window.game.scene.getScene('ArchiveScene').player.setPosition(248,120));await p.keyboard.down('ArrowRight');await p.waitForFunction(()=>window.game.scene.isActive('NetworkScene'));await p.keyboard.up('ArrowRight');
   }

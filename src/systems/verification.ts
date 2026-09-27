@@ -1,3 +1,4 @@
+import { ManuscriptRevisionDesk } from "./manuscriptRevisionDesk";
 import { ChapterAssemblyDesk } from "./chapterAssemblyDesk";
 import { ManuscriptDesk } from "./manuscriptDesk";
 import Phaser from "phaser";
@@ -18,7 +19,7 @@ function color(hex: string) {
 
 export class ChoicePrompt {
   private readonly scene: Phaser.Scene;
-  private manuscriptDesk?: ManuscriptDesk | ChapterAssemblyDesk;
+  private manuscriptDesk?: ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk;
   private readonly container: Phaser.GameObjects.Container;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly sourceText: Phaser.GameObjects.Text;
@@ -119,6 +120,14 @@ export class ChoicePrompt {
     this.hide();
     this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.manuscriptDesk = new ChapterAssemblyDesk(progress, onSave,
+      () => { this.hide(); onSubmit(); },
+      () => { this.hide(); onCancel(); });
+  }
+
+  showRevisionDesk(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void) {
+    this.hide();
+    this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
+    this.manuscriptDesk = new ManuscriptRevisionDesk(progress, onSave,
       () => { this.hide(); onSubmit(); },
       () => { this.hide(); onCancel(); });
   }

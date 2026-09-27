@@ -1,3 +1,4 @@
+import {completeRevisionDesk} from './revision-desk-actions.mjs';
 import {completeChapterDesk} from './chapter-desk-actions.mjs';
 import assert from 'node:assert/strict';
 import {mkdir,writeFile} from 'node:fs/promises';
@@ -43,6 +44,7 @@ try {
   await drain();await completeChapterDesk(p,touch);assert.equal((await state()).compilerMission.completed,4);
   for(const value of ['retain','second','revise','clear','joint','handoff']){
    await drain();await p.waitForFunction(()=>window.game.scene.getScene('ArchiveScene').researchChoice.active);await p.waitForTimeout(220);
+   if(value==='revise'){await completeRevisionDesk(p,touch);continue;}
    const point=await p.evaluate(value=>{const choice=window.game.scene.getScene('ArchiveScene').researchChoice;const i=choice.options.findIndex(o=>o.value===value);if(i<0)throw Error('Missing '+value);const r=choice.rows[i].getBounds();return{x:r.centerX,y:r.centerY};},value);await canvasTap(point.x,point.y);await p.waitForTimeout(100);
   }
   await drain();assert.equal((await state()).compilerMission.dpdSubmitted,true);assert.deepEqual(errors,[]);results.push({name,touch,invalidSelectionsRejected:true,draftRestored:true,keyboardAndController:name==='desktop',handoff:true,errors});await p.close();

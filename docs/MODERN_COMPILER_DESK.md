@@ -1,6 +1,6 @@
 # Interactive compiler desk
 
-The game’s broader goal is a modern console-quality adventure that teaches FRUS production through play. The current changes replace the manuscript-selection and chapter-assembly quizzes. It does not claim to finish the campaign-wide overhaul.
+The game’s broader goal is a modern console-quality adventure that teaches FRUS production through play. The current changes replace the manuscript-selection, chapter-assembly, and manuscript-revision quizzes. It does not claim to finish the campaign-wide overhaul.
 
 The Archive east manuscript desk now opens a native-resolution reading surface over the existing logical game canvas. Players place two illustrative research packets into a working manuscript. The page budget reacts immediately; keeping only routine material fails even though it fits. The decision packet retains policy instructions, dissent, and implementation evidence. Unselected material stays in the source file rather than being destroyed. No particular FRUS title, administration, or date range is assigned to the player.
 
@@ -23,3 +23,11 @@ The annotation quotes a shortfall described in the implementation report. The pl
 Numeric sceneProgress fields retain the arrangement, annotation link, highlight and packet attachments across save/reload. Neither editing the draft nor advancing inside the desk grants the SOP checkpoint. Only the final valid packet can complete the existing backup task. Old completed tasks remain complete without fabricating work on these new illustrative exhibits.
 
 `DeskControls` now supplies both desks' modal lifecycle and input behavior. `tools/qa-chapter-desk.mjs` covers earned interactions, error feedback, stage-by-stage reload and arrival at first review. `tools/qa-chapter-desk-lifecycle.mjs` checks fullscreen, dynamic keyboard/controller focus, cancellation and scene cleanup. Fullscreen checks should run separately from the headed skill client. A discovered between-frame F-key tap loss is fixed in the existing input latch and covered by an input regression test.
+
+## Evidence-led revision
+
+Both existing ordered reviews must be complete before the revision desk opens. The player opens a supervisor's coverage-gap comment and a General Editor's unsupported-claim comment on footnote 2. This is a second illustrative annotation, not a reversal of the correctly supported footnote 1 from chapter assembly. A routing slip, follow-up report, and file cover provide distinct evidence: only the follow-up report's substantive passage establishes that the resource shortfall continued.
+
+The player highlights the relevant passage, reviews the proposed correction alongside the retained original, explicitly applies it to a revision copy, and attaches backup 2. Choosing another source or passage invalidates the applied correction. The original and review comments remain available. Draft changes save without granting revision credit; final filing rechecks both reviews, both comments, source, passage, applied correction, and numbered backup. It then resumes the existing front-matter clearance task, without granting DPD submission or publication.
+
+First and second review routing still use the prior choice encounters. Their richer presentation remains open alongside the broader campaign work. These invented exhibits do not name the compiler's assigned volume or claim to reproduce real archival documents. Keyboard/touch/controller and modal lifecycle use the common DeskControls system. `tools/qa-revision-desk.mjs` covers wrong evidence, draft reload, source-change invalidation, original preservation, and arrival at front-matter review. The combined manuscript route earns this desk through `tools/revision-desk-actions.mjs`.
