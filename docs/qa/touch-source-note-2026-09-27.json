@@ -1,0 +1,146 @@
+{
+  "mobile": true,
+  "earnedSourceTrail": true,
+  "correctedMistake": true,
+  "reviewed": true,
+  "gateOpened": true,
+  "annotationEntered": true,
+  "reloaded": true,
+  "errors": [],
+  "inputSave": "/tmp/frus-fresh-touch-opening-0927/earned-storage.json",
+  "scope": "Continues the touch-earned fresh opening; no player, inventory or progression writes.",
+  "checkpoints": [
+    {
+      "name": "arrival",
+      "room": "A1",
+      "mode": "explore",
+      "objective": "TAKE SOURCE NOTE",
+      "message": "Archive A1: find Source Note 47 and verify it at the research table.",
+      "points": 20,
+      "player": {
+        "x": 128,
+        "y": 184
+      }
+    },
+    {
+      "name": "routed",
+      "room": "A1",
+      "mode": "explore",
+      "objective": "VERIFY REPOSITORY",
+      "message": "Find the archive, collection, and folder clues. Explore in any order, then check the trail here.",
+      "points": 22,
+      "player": {
+        "x": 128,
+        "y": 157
+      }
+    },
+    {
+      "name": "collection",
+      "room": "A1",
+      "mode": "explore",
+      "objective": "VERIFY REPOSITORY",
+      "message": "Collection Register: Office Files of the Policy Planning Staff. Clue recorded; check it at the research table.",
+      "points": 22,
+      "player": {
+        "x": 75,
+        "y": 157
+      }
+    },
+    {
+      "name": "repository",
+      "room": "A1",
+      "mode": "explore",
+      "objective": "VERIFY FOLDER",
+      "message": "-2 reliability: DANN-E ego bolt disrupted archive verification.",
+      "points": 22,
+      "player": {
+        "x": 67,
+        "y": 98
+      }
+    },
+    {
+      "name": "folder",
+      "room": "A1",
+      "mode": "explore",
+      "objective": "CHECK FULL CITATION",
+      "message": "Folder Tab: Alliance Consultation. Clue recorded; check it at the research table.",
+      "points": 22,
+      "player": {
+        "x": 182,
+        "y": 157
+      }
+    },
+    {
+      "name": "rejected",
+      "room": "A1",
+      "mode": "choice",
+      "objective": "CHECK FULL CITATION",
+      "message": "The training packet does not establish presidential readership. Remove the unsupported claim before filing.",
+      "points": 22,
+      "player": {
+        "x": 127,
+        "y": 157
+      }
+    },
+    {
+      "name": "filed",
+      "room": "A1",
+      "mode": "explore",
+      "objective": "REVIEW SOURCE NOTE",
+      "message": "Source trail filed; unknown metadata remains explicit in the field guide. Interact with the table to review the cable before stamping.",
+      "points": 28,
+      "player": {
+        "x": 127,
+        "y": 157
+      }
+    },
+    {
+      "name": "standards-decision",
+      "room": "A1",
+      "mode": "choice",
+      "objective": "REVIEW SOURCE NOTE",
+      "message": "Source trail filed; unknown metadata remains explicit in the field guide. Interact with the table to review the cable before stamping.",
+      "points": 28,
+      "player": {
+        "x": 127,
+        "y": 157
+      }
+    },
+    {
+      "name": "stamped",
+      "room": "A1",
+      "mode": "explore",
+      "objective": "STAMP CITATION WALL",
+      "message": "VERIFIED BY HUMAN REVIEW",
+      "points": 40,
+      "player": {
+        "x": 127,
+        "y": 157
+      }
+    },
+    {
+      "name": "route-open",
+      "room": "A1",
+      "mode": "explore",
+      "objective": "ANNOTATION STACKS OPEN",
+      "message": "NO REPO cleared with citation stamp after source-table verification.",
+      "points": 43,
+      "player": {
+        "x": 127,
+        "y": 157
+      }
+    },
+    {
+      "name": "annotation-restored",
+      "room": "AS",
+      "mode": "explore",
+      "objective": "PARK CONTEXT CART",
+      "message": "DANN-E boasts: LET THE QUEUE DECIDE.",
+      "points": 43,
+      "player": {
+        "x": 128,
+        "y": 185
+      }
+    }
+  ]
+}
