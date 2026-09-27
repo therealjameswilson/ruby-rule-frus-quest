@@ -14,3 +14,4 @@
 @media(max-width:700px){.request-entries{grid-template-columns:1fr}.library-request .request-catalog,.library-request .request-slip{padding:16px}}
 .library-request .assembly-body{display:block}
 .library-request .manuscript-body .request-source-link{width:auto;margin-bottom:18px;background:transparent;color:#9ddace;border:0;text-decoration:underline;padding:8px 0}
+.request-entries:has(>button:only-child){grid-template-columns:1fr}

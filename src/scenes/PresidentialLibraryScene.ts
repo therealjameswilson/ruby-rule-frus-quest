@@ -162,7 +162,7 @@ export class PresidentialLibraryScene extends Phaser.Scene {
       this.choice.showLibraryRequest(gameState.sceneProgress,()=>saveGameNow(),()=>{
         if(!fileLibraryStage(gameState.sceneProgress,a.library,0,true))return;
         this.refresh(true);saveGameNow();
-        this.dialog.show('REQUEST FILED','Exact archival lead saved. Retrieval and withdrawal checks remain pending. Next: compare evidence at the second desk.');
+        this.dialog.show(requestCatalog(a.library)?.accessState?'RESEARCH LOG FILED':'REQUEST FILED',requestCatalog(a.library)?.accessState?'Release metadata saved. Individual document examination and evidence gaps remain open. Next: compare evidence at the second desk.':'Exact archival lead saved. Retrieval and withdrawal checks remain pending. Next: compare evidence at the second desk.');
       },()=>{},a.library);return;
     }
     const questions=[
