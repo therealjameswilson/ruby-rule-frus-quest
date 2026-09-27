@@ -39,3 +39,19 @@ it('persists drafts without awarding a stage and refuses unsupported field value
   expect(JSON.stringify(restored)).toBe(json);
   expect(restored.libraryResearch_v2_reagan).toBe(2);
 });
+
+it('preserves Bush41 inventory leads without inventing document dates or contents', () => {
+ const p: Record<string,number> = {};
+ for(const field of ['kind','date','locator','scope'] as const)chooseSourceNoteField(p,field,1,'bush41');
+ expect(evaluateSourceNote(p,'bush41').ok).toBe(false);
+ toggleSourceNoteLog(p,'lead','bush41');toggleSourceNoteLog(p,'followups','bush41');
+ expect(evaluateSourceNote(p,'bush41').ok).toBe(true);
+ const note=sourceNoteReadout(p,'bush41');
+ expect(note.heading).toContain('individual document dates pending');
+ expect(note.citation).toContain('CF00715-001');expect(note.citation).toContain('CF00715-002');
+ expect(note.qualification).toContain('unverified');expect(note.researchLog).toHaveLength(3);
+ expect(evaluateSourceNote(p).ok).toBe(false);
+ chooseSourceNoteField(p,'date',2,'bush41');
+ expect(evaluateSourceNote(p,'bush41')).toMatchObject({ok:false,field:'date'});
+ expect(evaluateSourceNote(p,'unknown').ok).toBe(false);
+});

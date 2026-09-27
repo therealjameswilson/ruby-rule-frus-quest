@@ -148,10 +148,10 @@ export class ChoicePrompt {
       () => { this.hide(); onSubmit(); }, () => { this.hide(); onCancel(); }, reviewOnly, library);
   }
 
-  showLibrarySourceNote(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void, reviewOnly=false) {
+  showLibrarySourceNote(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void, reviewOnly=false, library='reagan') {
     this.hide(); this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.manuscriptDesk = new LibrarySourceNoteDesk(progress, onSave,
-      () => { this.hide(); onSubmit(); }, () => { this.hide(); onCancel(); }, reviewOnly);
+      () => { this.hide(); onSubmit(); }, () => { this.hide(); onCancel(); }, reviewOnly, library);
   }
 
   showLibraryPacket(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void) {

@@ -128,6 +128,7 @@ function renderConciseGameToText() {
       libraryResearch: libraryResearchReadout(gameState.sceneProgress),
       libraryPacket: libraryPacketReadout(gameState.sceneProgress),
       librarySourceNote: sourceNoteReadout(gameState.sceneProgress),
+      librarySourceNotes: {reagan:sourceNoteReadout(gameState.sceneProgress),bush41:sourceNoteReadout(gameState.sceneProgress,'bush41')},
       libraryComparison: comparisonReadout(gameState.sceneProgress),
       libraryComparisons: {reagan:comparisonReadout(gameState.sceneProgress),bush41:comparisonReadout(gameState.sceneProgress,'bush41')},
       libraryRequest: libraryRequestReadout(gameState.sceneProgress),

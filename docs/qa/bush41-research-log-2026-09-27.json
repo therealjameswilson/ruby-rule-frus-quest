@@ -1,0 +1,77 @@
+[
+  {
+    "name": "desktop",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research-log entry for unexamined Rice subject files, collection titled 1989–1990 Subject Files; individual document dates pending.",
+      "citation": "George H. W. Bush Presidential Library inventory: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830.",
+      "qualification": "On-site availability is recorded. Document contents, recommendations, disagreements, and withdrawals remain unverified.",
+      "sourceUrl": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined leads: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830. The inventory lists On Site; retrieval and individual record inspection remain pending.",
+        "Pending: Request both file units and examine individual records.",
+        "Pending: Compare the resulting evidence with State reporting."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research-log entry for unexamined Rice subject files, collection titled 1989–1990 Subject Files; individual document dates pending.",
+      "citation": "George H. W. Bush Presidential Library inventory: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830.",
+      "qualification": "On-site availability is recorded. Document contents, recommendations, disagreements, and withdrawals remain unverified.",
+      "sourceUrl": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined leads: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830. The inventory lists On Site; retrieval and individual record inspection remain pending.",
+        "Pending: Request both file units and examine individual records.",
+        "Pending: Compare the resulting evidence with State reporting."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "stage": 3,
+    "note": {
+      "fields": {
+        "kind": 1,
+        "date": 1,
+        "locator": 1,
+        "scope": 1
+      },
+      "heading": "Research-log entry for unexamined Rice subject files, collection titled 1989–1990 Subject Files; individual document dates pending.",
+      "citation": "George H. W. Bush Presidential Library inventory: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830.",
+      "qualification": "On-site availability is recorded. Document contents, recommendations, disagreements, and withdrawals remain unverified.",
+      "sourceUrl": "https://www.bush41library.gov/digital-research-room/finding-aid/foia/records-condoleezza-rice-files",
+      "lead": true,
+      "followups": true,
+      "researchLog": [
+        "Unexamined leads: Condoleezza Rice 1989–1990 Subject Files; CF00715-001, Arms Control [1]; NAID 470424829; Condoleezza Rice 1989–1990 Subject Files; CF00715-002, Arms Control [2]; NAID 470424830. The inventory lists On Site; retrieval and individual record inspection remain pending.",
+        "Pending: Request both file units and examine individual records.",
+        "Pending: Compare the resulting evidence with State reporting."
+      ]
+    },
+    "reviewPreserved": true,
+    "errors": []
+  }
+]
