@@ -1,3 +1,4 @@
+import { activeDossier, nscGuideReadKey } from "../game/activeCompilation";
 import { researchDoorway } from '../systems/researchDoorway';
 import { filedResearchPaper } from '../systems/filedResearchPaper';
 import { FeedbackToast } from '../systems/feedbackToast';
@@ -98,7 +99,7 @@ export class NscLibraryScene extends Phaser.Scene {
     if(p.y>=213&&Math.abs(p.x-128)<18&&(input.dir.y>0||input.aJustPressed)){this.go(this.room-1);return;}
     if(nearGate&&input.aJustPressed){if(nscStage(gameState.sceneProgress,this.dossier.library)>this.room)this.go(this.room+1);else this.dialog.show('MISFILED STACK','DANN-E has blocked the next chamber. Read the west guide, then verify the file at the east desk.');return;}
     if(input.bJustPressed&&nearWest)window.open(`assets/research-world/nsc-research.html#${this.dossier.library}`,'_blank','noopener,noreferrer');
-    if(input.aJustPressed&&nearWest){gameState.sceneProgress[`nscGuideRead_${this.dossier.library}_${this.room}`]=1;saveGameNow();this.dialog.show('HOLDING GUIDE',[this.dossier.collection,this.dossier.handle,this.dossier.challenge.correct,`Source: ${this.dossier.sourceLabel}. Use SOURCES for the official link.`,'A collection lead is not a retrieved or cleared document. Preserve unknowns for the archivist.']);}
+    if(input.aJustPressed&&nearWest){gameState.sceneProgress[nscGuideReadKey(this.dossier.library,this.room)]=1;saveGameNow();this.dialog.show('HOLDING GUIDE',[this.dossier.collection,this.dossier.handle,...(activeDossier(this.dossier.library)?[activeDossier(this.dossier.library)!.access]:[this.dossier.challenge.correct]),`Source: ${this.dossier.sourceLabel}. Use SOURCES for the official link.`,'A collection lead is not a retrieved or cleared document. Preserve unknowns for the archivist.']);}
     if(input.aJustPressed&&nearEast)this.check();
   }
   private check(){

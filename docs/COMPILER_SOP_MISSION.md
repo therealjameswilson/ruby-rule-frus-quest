@@ -61,3 +61,7 @@ does not award publication, clearance, final certification, or an ending.
 - Reload partway through a checkpoint; completed tasks must remain complete.
 - Finish handoff and leave east. Two Networks must still require clearance.
 - Load a pre-SOP advanced save; its route must remain available.
+
+## Active-volume revision, September 26, 2026
+
+The same ten SOP decisions now carry a selected Reagan, Bush 41, Clinton or Bush 43 remit. New assigned runs must file that volume's four-station library research packet before manuscript selection. Library/NSC sources and the limits of this update are documented in [ACTIVE_COMPILATION_MISSIONS.md](ACTIVE_COMPILATION_MISSIONS.md). Earlier libraries remain optional background stops. Review order and DPD/publication separation are unchanged.

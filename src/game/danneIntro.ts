@@ -8,12 +8,12 @@ export const DANNE_INTRO = [
   {
     phase: "1. PLAN THE VOLUME",
     boast: '"YOUR TOPIC IS NOW: ME."',
-    lines: ["Set the scope. Map the decisions.", "DANN-E would make every chapter", "a monument to his own genius.", "Keep the mission focused."]
+    lines: ["Kathy assigns the volume’s scope.", "DANN-E would make every chapter", "a monument to his own genius.", "Keep the mission focused."]
   },
   {
     phase: "2. RESEARCH THE RECORD",
     boast: '"GOOD LUCK FINDING THAT FILE!"',
-    lines: ["Search the archives. Trace sources.", "DANN-E lurks among the stacks,", "hurling ego bolts and blocking", "your route to the evidence.", "Verify every source note."]
+    lines: ["Request files. Log dates and gaps.", "DANN-E lurks among the stacks,", "hurling ego bolts and blocking", "your route to the evidence.", "Verify every source note."]
   },
   {
     phase: "3. SELECT AND ANNOTATE",
@@ -23,7 +23,7 @@ export const DANNE_INTRO = [
   {
     phase: "4. REVIEW AND REVISE",
     boast: '"I APPROVE MYSELF. NEXT!"',
-    lines: ["Complete both human reviews.", "DANN-E demands instant approval", "and treats corrections as insults.", "Listen to reviewers. Revise.", "His ego is not an authority."]
+    lines: ["First: supervisor. Then GE/AGE.", "DANN-E demands instant approval", "and treats corrections as insults.", "After both reviews, revise.", "His ego is not an authority."]
   },
   {
     phase: "5. DECLASSIFY AND CLEAR",

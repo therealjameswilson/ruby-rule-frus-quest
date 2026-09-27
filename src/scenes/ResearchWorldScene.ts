@@ -1,3 +1,4 @@
+import { ACTIVE_COMPILATION, assignedDossier } from "../game/activeCompilation";
 import { addSaladBowlArt } from '../systems/saladBowlArt';
 import { OutdoorAtmosphere } from "../systems/outdoorAtmosphere";
 import { nscDungeon, nscStage } from '../game/nscResearch';
@@ -318,8 +319,8 @@ export class ResearchWorldScene extends Phaser.Scene {
   }
   private travelMenu() {
     this.choice.show('FREE RESEARCH RAIL\nChoose a destination.',[
-      {key:'A',label:'East: NY / MA / GA'}, {key:'B',label:'Heartland: MO / KS / MI / AR'},
-      {key:'C',label:'Reagan Library / California'}, {key:'D',label:'Texas: Austin / Bush libraries'}
+      {key:'A',label:'Background: NY / MA / GA'}, {key:'B',label:'Clinton / Arkansas'},
+      {key:'C',label:'Reagan Library / California'}, {key:'D',label:'Bush 41 and Bush 43 / Texas'}
     ],option=>this.travel(({A:3,B:4,C:5,D:6} as Record<string,number>)[option.key], option.key==='C'?{x:192,y:142}:{x:128,y:188}),6,()=>{});
   }
   private journal() {
@@ -327,7 +328,8 @@ export class ResearchWorldScene extends Phaser.Scene {
     this.dialog.show('FIELD JOURNAL',[
       `${found.length}/${RESEARCH_LANDMARKS.length} landmarks discovered. Walk to a building and press A. No required order.`,
       'DC: Potomac Green west, Capital Commons east, Maryland Grove north. Rail links four distant library regions.',
-      'Choose Reagan Library / California at the rail station for direct arrival at the Reagan Library. The Nixon Library is also on the California map.',
+      ...(assignedDossier(gameState.sceneProgress)?[`Kathy’s assignment: ${assignedDossier(gameState.sceneProgress)!.title}`]:[]),
+      ...ACTIVE_COMPILATION.map(d=>`${d.short}: ${d.topic}. Library packet ${libraryStage(gameState.sceneProgress,d.library)}/4.`),
       ...found.flatMap(l=>[`${l.name}\n${l.location}`, ...(libraryAssignment(l.id)?[`Dungeon research packet: ${libraryStage(gameState.sceneProgress,l.id)}/4`]:[]),...(nscDungeon(l.id)?[`NSC wing: ${nscStage(gameState.sceneProgress,l.id)}/3 checks filed`]:[]),researchHolding(l.id).text,...collectionPages(l.id)]),
       'Research lessons are practice prompts. Catalogs and repository staff establish holdings and access. The map compresses real distances.'
     ]);

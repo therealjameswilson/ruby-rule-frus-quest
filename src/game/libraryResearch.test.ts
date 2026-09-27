@@ -19,13 +19,13 @@ describe('presidential library research dungeons',()=>{
     expect(fileLibraryStage(p,'fake',0,true)).toBe(false);
   });
   it('distinguishes background stops from contemporary volume research',()=>{
-    expect(LIBRARY_ASSIGNMENTS.filter(a=>a.backgroundOnly).map(a=>a.library)).toEqual(['jfk','lbj']);
+    expect(LIBRARY_ASSIGNMENTS.filter(a=>a.backgroundOnly).map(a=>a.library)).toEqual(['fdr','truman','eisenhower','jfk','lbj','nixon','ford','carter']);
     expect(LIBRARY_ASSIGNMENTS.find(a=>a.library==='truman')?.status).toBe('Planned');
     expect(LIBRARY_ASSIGNMENTS.find(a=>a.library==='nixon')?.status).toContain('Uruguay');
   });
   it('restores the library scene, assignment and partial progress',()=>{
     setSceneState('PresidentialLibraryScene','explore','SOURCE NOTE');
-    gameState.sceneProgress.libraryResearchActive=8;gameState.sceneProgress.libraryResearch_reagan=2;
+    gameState.sceneProgress.libraryResearchActive=8;gameState.sceneProgress.libraryResearch_v2_reagan=2;
     const save=createGameSaveData();
     expect(restoreGameSaveData(save)).toBe('PresidentialLibraryScene');
     expect(gameState.sceneProgress.libraryResearchActive).toBe(8);

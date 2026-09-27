@@ -39,3 +39,20 @@ it("round-trips SOP progress through the real game save without granting publica
   expect(getCompilerMissionReadout(gameState.sceneProgress).enabled).toBe(true);
   expect(gameState.finalGateCertification?.status).not.toBe("published");
 });
+
+it("keeps the selected volume visible through compilation and both reviews", () => {
+  gameState.sceneProgress = {compilerSopVersion:1,compilerVolumeAssignment:3,compilerSop_plan:1,compilerSop_research:1,libraryResearch_v2_clinton:4};
+  const showChoice=vi.fn<ChoicePrompt['show']>();const showDialog=vi.fn<DialogBox['show']>();const done=vi.fn();
+  runCompilerCheckpoint({show:showChoice} as unknown as ChoicePrompt,{show:showDialog} as unknown as DialogBox,'review_submission',done);
+  for(const task of COMPILER_TASKS.slice(2)){
+    expect(showDialog.mock.lastCall![0]).toBe('MANUSCRIPT DESK');
+    if(task.id==='selection'||task.id==='second_review')expect(showDialog.mock.lastCall![1]).toContain('1993–2000, Volume XVIII, Russia: High-Level Contacts');
+    showDialog.mock.lastCall![2]?.();
+    expect(showChoice.mock.lastCall![0]).toContain(task.question);
+    showChoice.mock.lastCall![2](task.options.find(o=>o.value===task.correct)!);
+    showDialog.mock.lastCall![2]?.();
+  }
+  expect(done).toHaveBeenCalledExactlyOnceWith();
+  expect(gameState.sceneProgress.compilerSop_submission).toBe(1);
+  expect(gameState.sceneProgress.finalGatePublished).toBeUndefined();
+});

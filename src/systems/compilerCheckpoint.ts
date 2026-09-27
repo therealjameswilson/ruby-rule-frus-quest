@@ -1,3 +1,4 @@
+import { compilerDossierContext } from "../game/activeCompilation";
 import { compilerCheckpointComplete, nextCompilerTask, submitCompilerTask, type CompilerCheckpoint } from "../game/compilerMission";
 import { gameState, setLatestMessage, setObjective } from "../game/state";
 import type { ChoicePrompt } from "./verification";
@@ -13,7 +14,7 @@ export function runCompilerCheckpoint(choice: ChoicePrompt, dialog: DialogBox, c
     const task = nextCompilerTask(gameState.sceneProgress);
     if (!task) return;
     setObjective(task.objective);
-    choice.show(`${task.question}\n\n${task.context}`, [...task.options], option => {
+    const ask = () => choice.show(`${task.question}\n\n${task.context}`, [...task.options], option => {
       const result = submitCompilerTask(gameState.sceneProgress, task.id, option.value);
       setLatestMessage(result.message);
       // An incorrect training decision is feedback, not an actual alteration
@@ -24,6 +25,8 @@ export function runCompilerCheckpoint(choice: ChoicePrompt, dialog: DialogBox, c
       setLatestMessage("Compiler checkpoint paused. Completed decisions are saved; return here to continue.");
       setObjective(checkpoint === "research_plan" ? "Return to INBOX for research approval." : "Return to the east manuscript desk.");
     });
+    const context = compilerDossierContext(gameState.sceneProgress, task.id);
+    if (context.length) dialog.show("MANUSCRIPT DESK", context, ask); else ask();
   };
   showNext();
 }
