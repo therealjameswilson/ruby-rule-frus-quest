@@ -1242,7 +1242,7 @@ export class SilentReadScene extends Phaser.Scene {
     this.toast.show(message, this.player.position, "info", PROOF_PLAY_BOUNDS);
     setObjective(this.reviewObjective());
     this.savePhysicalReviewProgress(flag);
-    retroAudio.confirm();
+    retroAudio.fileDocket();
     this.updatePhysicalVerification();
   }
 

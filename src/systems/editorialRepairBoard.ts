@@ -79,7 +79,7 @@ export class EditorialRepairBoard {
     if (!this.repaired && !this.proof) {
       this.repaired = true;
       this.onChange?.();
-      retroAudio.stamp();
+      retroAudio.annotatePaper();
     }
     this.refresh();
   }

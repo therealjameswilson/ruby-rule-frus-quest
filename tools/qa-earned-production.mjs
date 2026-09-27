@@ -58,6 +58,7 @@ try {
  assert(!(await state()).inventory.includes('Buckram Key'));
  await key('ArrowRight');await key();await key('ArrowRight');await key('ArrowRight');await key();
  await key('ArrowRight');await key('ArrowRight');await key();await shot('proof-filed');
+ assert.equal((await state()).audioStatus,'paper filing and stamp');
  assert(!(await state()).inventory.includes('Buckram Key'));
  await key();await page.waitForTimeout(500);await shot('key-earned');
  assert((await state()).inventory.includes('Buckram Key'));

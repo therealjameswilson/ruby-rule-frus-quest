@@ -44,6 +44,7 @@ try{
  await key('ArrowDown');await key();await shot('invisible-rejected');
  assert(!(await state()).inventory.includes('Red Pencil'));
  await key('ArrowUp');await key();await shot('bracket-added');
+ assert.equal((await state()).audioStatus,'quiet annotation mark');
  if(process.argv.includes('--reload-bracket')){
   const drafted=await state();
   assert.equal(drafted.sceneProgress.silentReadBracketDraft,1);
@@ -59,6 +60,7 @@ try{
   await key();await shot('bracket-reloaded');
  }
  await key();await page.waitForTimeout(300);await shot('draft-filed');
+ assert.equal((await state()).audioStatus,'paper filing and stamp');
  assert(!(await state()).inventory.includes('Red Pencil'));
  await key();await page.waitForTimeout(100);await shot('pencil-earned');
  assert((await state()).inventory.includes('Red Pencil'));

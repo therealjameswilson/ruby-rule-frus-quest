@@ -95,7 +95,7 @@ export class ProofComparisonBoard {
     this.repairs = next;
     if (changed) {
       this.onChange?.(next);
-      retroAudio.stamp();
+      retroAudio.annotatePaper();
     } else retroAudio.blip();
     this.refresh();
     if (!changed) this.feedback.setText("MATCHES ORIGINAL");

@@ -1,3 +1,4 @@
+import { pressPortraitControl } from './portrait-input-fixture.mjs';
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import assert from "node:assert/strict";
 
@@ -45,8 +46,9 @@ try {
     await page.keyboard.down(name); await page.waitForTimeout(ms);
     await page.keyboard.up(name); await page.waitForTimeout(100);
   };
-  const action = async () => mobile ? tap(225, 205) : key("Space");
+  const action = async () => { if(mobile&&await pressPortraitControl(page,cdp,"Space",65)){await page.waitForTimeout(130);return;} return mobile ? tap(225,205) : key("Space"); };
   const pushUp = async () => {
+    if(mobile&&await pressPortraitControl(page,cdp,"ArrowUp",600)){await page.waitForTimeout(100);return;}
     if (mobile) {
       await touch([[48, 202]], "touchStart"); await touch([[48, 176]], "touchMove");
       await page.waitForTimeout(600); await touch([], "touchEnd");
@@ -61,6 +63,7 @@ try {
       const horizontal = Math.abs(dx) > Math.abs(dy);
       const sign = Math.sign(horizontal ? dx : dy);
       const ms = Math.min(180, Math.max(16, Math.max(Math.abs(dx), Math.abs(dy)) * 6));
+      if(mobile&&await pressPortraitControl(page,cdp,horizontal?sign>0?"ArrowRight":"ArrowLeft":sign>0?"ArrowDown":"ArrowUp",ms)){await page.waitForTimeout(80);continue;}
       if (mobile) {
         await touch([[48, 202]], "touchStart");
         await touch([[48 + (horizontal ? sign * 26 : 0), 202 + (horizontal ? 0 : sign * 26)]], "touchMove");
