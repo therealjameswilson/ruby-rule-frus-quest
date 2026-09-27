@@ -8516,3 +8516,11 @@ Previous turn verified the requested Kathy email dialogue in the actual public b
 Build and all 282 files / 2110 tests passed. Six phone-sized browser cases confirm contextual labels, text bounds, nonoverlap, arrival-fade completion and no page errors. Card hold used only for inspection; tests then resume real destination transitions. Inspected NSC compositor screenshot. Standard client moves to x143 in Office explore; known black canvas screenshot limitation persists. Evidence: docs/qa/travel-presentation-2026-09-27.{md,json}.
 
 Local only, goal active. Broader audiovisual quality, full fresh-campaign pacing, and physical iPhone/controller feel still require evidence.
+
+## Travel input and HUD cleanup — 2026-09-27
+
+Previous turn was progress: PR130 merged as 8512c1d, Pages run36341775550 succeeded, live Pages-base bundle hash matched and desktop/phone-sized startup/movement passed. Fast-forwarded current worktree to that release.
+
+Presentation inspection exposed departing-room HUD and controls over travel cards. UIScene now hides gameplay chrome while transition state is active, restoring it on arrival. Fixed null-scene touch visibility so the existing Codex suppression path also works. Build and 282 files /2111 tests pass. Six touch-capable phone browser transitions pass hidden/restored control+HUD assertions, title bounds and destination arrival. Inspected clean NSC transition screenshot. Headed standard client moves to x146; known black canvas capture persists. Documentation appended to travel-presentation QA.
+
+New change local only; goal remains active. Next return to fresh opening-to-research play and assess whether mission guidance and earned progression are clear without relying on fixture starts. Broad presentation, subjective sound and physical device feel remain unproven.

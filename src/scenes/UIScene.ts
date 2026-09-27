@@ -110,7 +110,7 @@ export class UIScene extends Phaser.Scene {
       return;
     }
     this.syncPixelCameras();
-    if (this.scene.isActive("CodexScene")) {
+    if (gameState.snesTransition.active || this.scene.isActive("CodexScene")) {
       this.controls.refreshForScene(null);
       this.refreshQuestBand(this.time.now, null);
       return;

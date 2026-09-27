@@ -64,7 +64,7 @@ describe("floating pad direction stability", () => {
   });
 });
 
-function refresh(scene: string) {
+function refresh(scene: string | null) {
   const enabled = vi.fn();
   const controls = Object.create(TouchControls.prototype) as TouchControls;
   Object.assign(controls, {
@@ -92,6 +92,7 @@ describe("touch controls on publication screens", () => {
     expect(hit.call(controls, 174, 216)?.key).toBe("b");
   });
   it("leaves title and direct-touch gallery clear but restores controls for gameplay", () => {
+    expect(refresh(null)).toHaveBeenCalledWith(false);
     expect(refresh("TitleScene")).toHaveBeenCalledWith(false);
     expect(refresh("CharacterCreateScene")).toHaveBeenCalledWith(false);
     expect(refresh("DanneIntroScene")).toHaveBeenCalledWith(false);

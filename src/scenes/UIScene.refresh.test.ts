@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { UIScene } from "./UIScene";
-import { resetGameState, setSceneState, setPlayerPosition } from "../game/state";
+import { resetGameState, setSceneState, setPlayerPosition, beginSnesTransition, completeSnesTransition } from "../game/state";
 
 vi.mock("phaser", () => ({ default: { Scene: class {}, GameObjects: { Sprite: class {} } } }));
 
@@ -35,4 +35,24 @@ it("refreshes a changed action on the next frame but throttles unchanged meters"
   setSceneState("BlackVaultLairScene", "explore", "RETURN THE BOLT");
   scene.refreshQuestBand(1048, "BlackVaultLairScene");
   expect(objective.setText).toHaveBeenLastCalledWith("RETURN THE BOLT");
+});
+
+// A destination curtain must not retain the departing room's action prompt or
+// accept a Codex shortcut. Once travel ends, normal scene controls return.
+it("suppresses gameplay chrome during travel and restores it afterward", () => {
+  const refreshForScene = vi.fn(), refreshQuestBand = vi.fn();
+  const scene = Object.assign(new UIScene(), {
+    sys: { settings: { visible: true } }, time: { now: 100 },
+    scene: { isActive: () => false, bringToTop: vi.fn() },
+    controls: { refreshForScene }, refreshQuestBand,
+    syncPixelCameras: vi.fn(), activeGameplaySceneKey: () => "OfficeScene"
+  }) as unknown as UIScene;
+  beginSnesTransition({fromScene:"OfficeScene",toScene:"ArchiveScene",label:"ARCHIVE"});
+  scene.update();
+  expect(refreshForScene).toHaveBeenLastCalledWith(null);
+  expect(refreshQuestBand).toHaveBeenLastCalledWith(100, null);
+  completeSnesTransition();
+  scene.update();
+  expect(refreshForScene).toHaveBeenLastCalledWith("OfficeScene");
+  expect(refreshQuestBand).toHaveBeenLastCalledWith(100, "OfficeScene");
 });
