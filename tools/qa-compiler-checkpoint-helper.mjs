@@ -1,3 +1,4 @@
+import {completeLibrarySourceNote} from './library-source-note-actions.mjs';
 import {completeLibraryComparison} from './library-comparison-actions.mjs';
 import {completeLibraryRequest} from './library-request-actions.mjs';
 import {completeChapterDesk} from './chapter-desk-actions.mjs';
@@ -12,6 +13,7 @@ export async function completeCompilerCheckpoint(page) {
  for(let n=0;n<100;n++){
   current=await state();
   if(current.mode==='dialog'){await page.keyboard.press('Space',{delay:45});await page.waitForTimeout(160);continue;}
+  if(await page.locator('.library-source-note').count()){await completeLibrarySourceNote(page);continue;}
   if(await page.locator('.library-comparison').count()){await completeLibraryComparison(page);continue;}
   if(await page.locator('.library-request').count()){await completeLibraryRequest(page);continue;}
   if(await page.locator('.revision-desk').count()){await completeRevisionDesk(page);continue;}

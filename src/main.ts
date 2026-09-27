@@ -1,3 +1,4 @@
+import { sourceNoteReadout } from './game/librarySourceNote';
 import { comparisonReadout } from './game/libraryComparison';
 import { REQUEST_CATALOGS, libraryRequestReadout } from './game/libraryRequest';
 import { installRenderDensity } from "./systems/renderDensity";
@@ -124,6 +125,7 @@ function renderConciseGameToText() {
       questCounters: gameState.questCounters,
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       libraryResearch: libraryResearchReadout(gameState.sceneProgress),
+      librarySourceNote: sourceNoteReadout(gameState.sceneProgress),
       libraryComparison: comparisonReadout(gameState.sceneProgress),
       libraryRequest: libraryRequestReadout(gameState.sceneProgress),
       libraryRequests: Object.fromEntries(Object.keys(REQUEST_CATALOGS).map(id=>[id,libraryRequestReadout(gameState.sceneProgress,id)])),

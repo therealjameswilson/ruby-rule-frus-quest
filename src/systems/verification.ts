@@ -1,3 +1,4 @@
+import { LibrarySourceNoteDesk } from './librarySourceNoteDesk';
 import { LibraryComparisonDesk } from './libraryComparisonDesk';
 import { LibraryRequestDesk } from './libraryRequestDesk';
 import { ManuscriptRevisionDesk } from "./manuscriptRevisionDesk";
@@ -21,7 +22,7 @@ function color(hex: string) {
 
 export class ChoicePrompt {
   private readonly scene: Phaser.Scene;
-  private manuscriptDesk?: ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk | LibraryRequestDesk | LibraryComparisonDesk;
+  private manuscriptDesk?: ManuscriptDesk | ChapterAssemblyDesk | ManuscriptRevisionDesk | LibraryRequestDesk | LibraryComparisonDesk | LibrarySourceNoteDesk;
   private readonly container: Phaser.GameObjects.Container;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly sourceText: Phaser.GameObjects.Text;
@@ -144,6 +145,12 @@ export class ChoicePrompt {
     this.hide(); this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.manuscriptDesk = new LibraryComparisonDesk(progress, onSave,
       () => { this.hide(); onSubmit(); }, () => { this.hide(); onCancel(); });
+  }
+
+  showLibrarySourceNote(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void, reviewOnly=false) {
+    this.hide(); this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
+    this.manuscriptDesk = new LibrarySourceNoteDesk(progress, onSave,
+      () => { this.hide(); onSubmit(); }, () => { this.hide(); onCancel(); }, reviewOnly);
   }
 
   updateInput() {

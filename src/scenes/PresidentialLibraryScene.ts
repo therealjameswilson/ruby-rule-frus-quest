@@ -1,3 +1,4 @@
+import { evaluateSourceNote } from '../game/librarySourceNote';
 import { requestCatalog } from '../game/libraryRequest';
 import { activeDossier } from "../game/activeCompilation";
 import { researchDoorway } from '../systems/researchDoorway';
@@ -156,6 +157,9 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   private research(station:number) {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
+    if(a.library==='reagan'&&station===2&&station<stage&&evaluateSourceNote(gameState.sceneProgress).ok){
+      this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>{},()=>{},()=>{},true);return;
+    }
     if(station<stage){this.dialog.show('FILED',activeDossier(a.library)?.questions[station].receipt ?? `This step is saved. Next: ${stage===4?'return south':STATIONS[stage].name}.`,()=>{if(stage===4)this.offerManuscriptReturn();});return;}
     if(station!==stage){this.dialog.show('RESEARCH ORDER',`First complete ${STATIONS[stage].name}. DANN-E cannot replace a source trail with a shortcut.`);return;}
     if(requestCatalog(a.library)&&station===0){
@@ -170,6 +174,13 @@ export class PresidentialLibraryScene extends Phaser.Scene {
         if(!fileLibraryStage(gameState.sceneProgress,a.library,1,true))return;
         this.refresh(true);saveGameNow();
         this.dialog.show('COMPARISON FILED','Public positions attributed; folder lead retained. Private meeting records and State reporting remain pending. Carry these limits into your source note.');
+      },()=>{});return;
+    }
+    if(a.library==='reagan'&&station===2){
+      this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>saveGameNow(),()=>{
+        if(!fileLibraryStage(gameState.sceneProgress,a.library,2,true))return;
+        this.refresh(true);saveGameNow();
+        this.dialog.show('WORKING NOTE FILED','Public remarks cited to their published source. Unexamined holdings and pending requests remain in your research log. Next: send the packet for human review.');
       },()=>{});return;
     }
     const questions=[
