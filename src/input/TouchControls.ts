@@ -157,6 +157,7 @@ export class TouchControls {
     const hiddenScene =
       activeSceneKey === "TapToStartScene"
       || activeSceneKey === "TitleScene"
+      || activeSceneKey === "CharacterCreateScene"
       || activeSceneKey === "WarningScene"
       || activeSceneKey === "DanneIntroScene"
       || activeSceneKey === "RenderDebugScene"

@@ -91,10 +91,10 @@ describe("touch controls on publication screens", () => {
     gameState.currentScene = "GameplayMapScene";
     expect(hit.call(controls, 174, 216)?.key).toBe("b");
   });
-  it("leaves title commands clear but restores controls for character creation", () => {
+  it("leaves title and direct-touch gallery clear but restores controls for gameplay", () => {
     expect(refresh("TitleScene")).toHaveBeenCalledWith(false);
+    expect(refresh("CharacterCreateScene")).toHaveBeenCalledWith(false);
     expect(refresh("DanneIntroScene")).toHaveBeenCalledWith(false);
-    expect(refresh("CharacterCreateScene")).toHaveBeenCalledWith(true);
     expect(refresh("OfficeScene")).toHaveBeenCalledWith(true);
   });
   it("does not let invisible action buttons steal pause menu taps", () => {
