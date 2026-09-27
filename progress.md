@@ -8444,3 +8444,11 @@ Previous turn was progress: def4b21 added accurate Bush41 research logs. Revalid
 Build and full 282-file / 2,104-test suite pass. Bush41 browser suite passes desktop, portrait, landscape, legacy completed save: missing artifacts, attachment removal/re-add, draft/filed reload, read-only revisit, +8 fresh/+0 legacy, no overflow/page errors, Archive return on desktop. Reagan desktop packet regression also passes including return. Inspected desktop comparison and portrait open-work screenshots. Standard headed skill client reaches explore but black canvas capture persists and this run does not prove movement. Desk tests position the hero and are not a full-campaign playthrough. Evidence: docs/qa/bush41-packet-2026-09-27.md/json and Reagan regression JSON.
 
 Local only; goal active. Next extend meaningful research to Clinton/Bush43 and evaluate whole-game pacing, original audiovisual presentation, and physical-device feel.
+
+## Clinton release comparison — 2026-09-27
+
+Previous turn was progress: 7477756 completed saved Bush41 packet assembly. Revalidated Clinton station 2 still had a binary question. Added a catalog-driven comparison task with four cards: MDR provenance, listed conversation span, separate availability date, and an unanswered historical question. Official item 57569 inspected live; details in docs/qa/clinton-comparison-2026-09-27.md. The task does not invent conversation contents or treat declassification as complete coverage. Both individual examination and gap/cross-repository research remain explicit pending work.
+
+Existing shared desk supplies saved drafts, validation, filed read-only review and missing-comparison repair; per-library keys/readout isolate Clinton state. Build and all 282 files / 2,105 tests pass. Browser checks pass desktop/portrait/landscape including wrong/missing classification, follow-ups, draft/filed reload, immutable review and no page errors. Desktop controller/fullscreen checked. Inspected desktop/portrait screenshots. Standard headed skill client reaches explore and moves to x138, with its known black canvas capture limitation. Desk positioning is used, not a movement or full-campaign test.
+
+Local only; goal active. Next replace remaining Clinton research-log/packet questions, extend Bush43, and resume whole-game audiovisual/play-feel assessment.

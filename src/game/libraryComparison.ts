@@ -51,8 +51,28 @@ const bush41: ComparisonCatalog = {
   missing:'Carry both tasks forward: examine the requested files and compare their evidence with State reporting.',
   receipt:'Research comparison saved: separate folder leads and availability metadata, with document examination and cross-repository comparison still pending.'
 };
+const clintonSource=requestCatalog('clinton')!.source;
+const clinton: ComparisonCatalog = {
+  subtitle:'Clinton–Yeltsin release · Separate provenance, coverage, and open questions.',
+  brief:'The catalog describes an available release. Its metadata is useful, but the individual conversations still need to be read and compared.',
+  taunt:'DANN-E: “Declassified! That means complete. Research finished!”',
+  lanes:[{id:1,label:'Release provenance'},{id:2,label:'Dates and coverage'},{id:3,label:'Unresolved question'}],
+  cards:[
+    {id:1,title:'How this release reached the catalog',provenance:'Clinton Digital Library · item 57569',text:'Identifier 2015-0782-M-2 belongs to a Mandatory Declassification Review. The catalog distinguishes these scans from a FOIA request.',citation:'Item 57569, Identifier and Description fields.',source:clintonSource,lane:1,feedback:'MDR identifies the release process. It is not a statement about the policy discussed or proof of complete disclosure.'},
+    {id:2,title:'The listed conversation span',provenance:'Catalog Description field',text:'The entry describes Clinton–Yeltsin memcons and telcons spanning April 21, 1996 through December 31, 1999.',citation:'Item 57569, Description field; release-level date coverage.',source:clintonSource,lane:2,feedback:'This is release-level coverage. Examine the individual records for their dates; the span does not prove every conversation survives or appears here.'},
+    {id:3,title:'When the catalog made it available',provenance:'Catalog Date Available field',text:'The catalog gives July 13, 2018 as the date available.',citation:'Item 57569, Date Available field.',source:clintonSource,lane:2,feedback:'Availability is not the date of a conversation or necessarily the date of each declassification decision. Keep those dates distinct.'},
+    {id:4,title:'Does this release settle the account?',provenance:'Compiler’s question · no individual record examined',text:'Which positions, disagreements, redactions, or missing exchanges become visible when the conversations are examined alongside other records?',citation:'Individual examination and cross-repository comparison remain pending.',source:null,lane:3,feedback:'Catalog metadata cannot settle this question. An available release still needs document-level examination and comparison.'}
+  ],
+  followups:[
+    {id:1,label:'Examine each conversation and record its date and limits',detail:'Track memcon versus telcon, participants, source details, and any redactions; do not substitute the catalog availability date.'},
+    {id:2,label:'Check gaps and compare with other contemporaneous records',detail:'Seek State and embassy reporting and relevant records outside the listed span. Preserve disagreements and unanswered questions.'}
+  ],
+  missing:'Carry both tasks forward: individual conversation review and research into gaps and other perspectives.',
+  receipt:'Release provenance and coverage saved. Individual conversations, redactions, and cross-repository comparison remain to be examined.'
+};
 export function comparisonCatalog(library='reagan'): ComparisonCatalog | undefined {
   if(library==='bush41')return bush41;
+  if(library==='clinton')return clinton;
   if(library!=='reagan')return undefined;
   return {subtitle:'Thatcher’s February 1985 visit · Sort the evidence, then preserve the open work.',brief:'Source summaries below are paraphrases. Public remarks establish what was said publicly; a finding aid supplies a lead. Neither substitutes for examining private records.',taunt:'DANN-E: “A cordial press appearance. Every private difference settled!”',lanes:COMPARISON_LANES,cards:COMPARISON_CARDS,followups:COMPARISON_FOLLOWUPS,missing:'Carry both requests forward: the private meeting record and State/embassy reporting.',receipt:'Comparison filed: attributed public positions, a folder lead, and an open question. Private-record and cross-repository work remain pending.'};
 }
