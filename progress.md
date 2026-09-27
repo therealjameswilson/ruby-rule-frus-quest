@@ -8484,3 +8484,11 @@ Previous turn was progress: 84253b4 added processing/evidence comparison. Revali
 Per-library keys preserve notes; filed logs reopen read-only and legacy gaps can be repaired without stage credit. Build and 282 files / 2,109 tests pass. Browser checks pass desktop/portrait/landscape through wrong fields, missing tasks, draft/filed reload and unchanged review. No page errors. Inspected desktop draft/phone filed-log screenshots. Standard headed client reaches explore/moves to x137 with known black canvas capture limitation. Desk tests position the hero rather than proving full-campaign/hardware movement. Evidence: docs/qa/bush43-research-log-2026-09-27.{md,json}.
 
 Local only; goal active. Next assemble Bush43’s packet, then assess whole-excursion pacing and original audiovisual/play-feel quality.
+
+## Bush43 packet assembly — 2026-09-27
+
+Previous turn was progress: 7fcab37 added Bush43 logs. Revalidated final desk remained binary. Added actual saved packet assembly for release record, comparison and research log. Required release accounting and explicit attachments preserve processing totals, individual-examination limits and separate unprocessed/related-record inquiries. Source link identifies the FOIA inventory. Per-library keys isolate packets; filed view is read-only. Legacy completed saves can repair missing artifacts without duplicate credit.
+
+Build and all 282 files / 2,110 tests pass. Browser suite passes desktop/portrait/landscape/legacy completed save: missing evidence, attachment removal/re-add, draft/filed reload, read-only review, +8 fresh/+0 legacy, no overflow/page errors and desktop Archive return. Inspected desktop/phone pending-work screenshots. Standard headed client reaches explore/moves to x140; known black canvas capture persists. Desk tests position hero, not full-campaign/hardware movement. Evidence: docs/qa/bush43-packet-2026-09-27.{md,json}.
+
+Local only; goal active. All four current library routes now have saved comparison and note/log artifacts plus assembled packets. Next assess their complete excursion pacing and touch/controller route together, then improve full-game audiovisual/play feel. Physical hardware and subjective sound remain unverified.

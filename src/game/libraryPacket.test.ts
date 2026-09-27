@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { selectRequestEntry, attachRequestLocator, setRequestAccess, toggleRequestFollowup, setRequestProvenance } from './libraryRequest';
+import { selectRequestEntry, attachRequestLocator, setRequestAccess, toggleRequestFollowup, setRequestProvenance, logRequestRelease } from './libraryRequest';
 import { classifyComparisonCard, toggleComparisonFollowup } from './libraryComparison';
 import { chooseSourceNoteField, toggleSourceNoteLog } from './librarySourceNote';
 import { libraryPacketReadout, togglePacketPart, evaluateLibraryPacket, fileLibraryPacket } from './libraryPacket';
@@ -73,4 +73,24 @@ it('requires Clinton MDR provenance and preserves examination gaps in the filed 
  expect(libraryPacketReadout(p).filed).toBe(false);expect(libraryPacketReadout(p,'bush41').filed).toBe(false);
  const saved=JSON.stringify(p);togglePacketPart(p,1,'clinton');expect(fileLibraryPacket(p,'clinton')).toBe(false);
  expect(JSON.stringify(p)).toBe(saved);expect(p.libraryResearch_v2_clinton).toBe(3);
+});
+
+
+it('requires Bush43 release accounting and preserves unprocessed work after filing',()=>{
+ const p:Record<string,number>={libraryResearch_v2_bush43:3};
+ selectRequestEntry(p,1,'bush43');attachRequestLocator(p,'bush43');setRequestAccess(p,1,'bush43');setRequestProvenance(p,1,'bush43');
+ toggleRequestFollowup(p,'retrieval','bush43');toggleRequestFollowup(p,'withdrawals','bush43');
+ for(const [id,lane] of [[1,1],[2,2],[3,3],[4,3]])classifyComparisonCard(p,id,lane,'bush43');
+ toggleComparisonFollowup(p,1,'bush43');toggleComparisonFollowup(p,2,'bush43');
+ for(const field of ['kind','date','locator','scope'] as const)chooseSourceNoteField(p,field,1,'bush43');
+ toggleSourceNoteLog(p,'lead','bush43');toggleSourceNoteLog(p,'followups','bush43');
+ expect(evaluateLibraryPacket(p,'bush43').ok).toBe(false);
+ logRequestRelease(p,'bush43');for(const id of [1,2,3])togglePacketPart(p,id,'bush43');
+ expect(fileLibraryPacket(p,'bush43')).toBe(true);
+ const packet=libraryPacketReadout(p,'bush43');expect(packet.parts[0].label).toBe('Release record');
+ expect(packet.parts[0].contents.join(' ')).toContain('177 released in full, 22 withheld in part, 16 withheld in full');
+ expect(packet.openWork.join(' ')).toContain('unprocessed');expect(packet.parts[2].label).toBe('Research log');
+ expect(libraryPacketReadout(p,'clinton').filed).toBe(false);
+ const saved=JSON.stringify(p);togglePacketPart(p,1,'bush43');expect(fileLibraryPacket(p,'bush43')).toBe(false);
+ expect(JSON.stringify(p)).toBe(saved);expect(p.libraryResearch_v2_bush43).toBe(3);
 });

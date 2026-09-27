@@ -1,0 +1,318 @@
+[
+  {
+    "name": "desktop",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": true,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Release record",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "George W. Bush Library · George W. Bush Presidential Electronic Records: NSC EP-3 collision records",
+            "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001",
+            "Partial FOIA release. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets remain unexamined.",
+            "Preserve FOIA provenance and keep withholding, unprocessed-record inquiries and comparative research open."
+          ],
+          "sources": [
+            {
+              "label": "Official FOIA inventory",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "The request and its scope: Request provenance.\nFOIA 2017-0023-F concerns NSC records on the EP-3 collision, dated March 15–April 30, 2001.\nFOIA inventory · page 1.",
+            "What happened to the 215 assets?: Release accounting.\nThe inventory reports 177 released in full, 22 withheld in part, and 16 withheld in full: 215 processed assets altogether.\nARMS processing totals · page 2.",
+            "The release still has an open edge: Unresolved research.\nSome related classified records are not yet processed. The inventory directs researchers to an archivist for related materials.\nScope and Content caveat · page 1.",
+            "Which accounts and gaps matter?: Unresolved research.\nWhat can the released records establish, what is obscured by withholding, and how does the evidence compare with other contemporaneous reporting?\nCompiler’s question · assets unexamined."
+          ],
+          "sources": [
+            {
+              "label": "Official FOIA inventory",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research log for FOIA 2017-0023-F, requested scope March 15–April 30, 2001; inventory modified November 17, 2025; individual asset dates pending examination.",
+            "Source: George W. Bush Presidential Library, inventory for FOIA 2017-0023-F, pages 1–2; George W. Bush Presidential Electronic Records, ARMS.",
+            "215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain unexamined."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined release: George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain to be examined.",
+        "Pending: Examine released assets and their withholding markings.",
+        "Pending: Ask about unprocessed and related records; compare other reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "phone",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Release record",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "George W. Bush Library · George W. Bush Presidential Electronic Records: NSC EP-3 collision records",
+            "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001",
+            "Partial FOIA release. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets remain unexamined.",
+            "Preserve FOIA provenance and keep withholding, unprocessed-record inquiries and comparative research open."
+          ],
+          "sources": [
+            {
+              "label": "Official FOIA inventory",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "The request and its scope: Request provenance.\nFOIA 2017-0023-F concerns NSC records on the EP-3 collision, dated March 15–April 30, 2001.\nFOIA inventory · page 1.",
+            "What happened to the 215 assets?: Release accounting.\nThe inventory reports 177 released in full, 22 withheld in part, and 16 withheld in full: 215 processed assets altogether.\nARMS processing totals · page 2.",
+            "The release still has an open edge: Unresolved research.\nSome related classified records are not yet processed. The inventory directs researchers to an archivist for related materials.\nScope and Content caveat · page 1.",
+            "Which accounts and gaps matter?: Unresolved research.\nWhat can the released records establish, what is obscured by withholding, and how does the evidence compare with other contemporaneous reporting?\nCompiler’s question · assets unexamined."
+          ],
+          "sources": [
+            {
+              "label": "Official FOIA inventory",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research log for FOIA 2017-0023-F, requested scope March 15–April 30, 2001; inventory modified November 17, 2025; individual asset dates pending examination.",
+            "Source: George W. Bush Presidential Library, inventory for FOIA 2017-0023-F, pages 1–2; George W. Bush Presidential Electronic Records, ARMS.",
+            "215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain unexamined."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined release: George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain to be examined.",
+        "Pending: Examine released assets and their withholding markings.",
+        "Pending: Ask about unprocessed and related records; compare other reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "landscape",
+    "legacy": false,
+    "stage": 4,
+    "reward": 8,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Release record",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "George W. Bush Library · George W. Bush Presidential Electronic Records: NSC EP-3 collision records",
+            "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001",
+            "Partial FOIA release. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets remain unexamined.",
+            "Preserve FOIA provenance and keep withholding, unprocessed-record inquiries and comparative research open."
+          ],
+          "sources": [
+            {
+              "label": "Official FOIA inventory",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "The request and its scope: Request provenance.\nFOIA 2017-0023-F concerns NSC records on the EP-3 collision, dated March 15–April 30, 2001.\nFOIA inventory · page 1.",
+            "What happened to the 215 assets?: Release accounting.\nThe inventory reports 177 released in full, 22 withheld in part, and 16 withheld in full: 215 processed assets altogether.\nARMS processing totals · page 2.",
+            "The release still has an open edge: Unresolved research.\nSome related classified records are not yet processed. The inventory directs researchers to an archivist for related materials.\nScope and Content caveat · page 1.",
+            "Which accounts and gaps matter?: Unresolved research.\nWhat can the released records establish, what is obscured by withholding, and how does the evidence compare with other contemporaneous reporting?\nCompiler’s question · assets unexamined."
+          ],
+          "sources": [
+            {
+              "label": "Official FOIA inventory",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research log for FOIA 2017-0023-F, requested scope March 15–April 30, 2001; inventory modified November 17, 2025; individual asset dates pending examination.",
+            "Source: George W. Bush Presidential Library, inventory for FOIA 2017-0023-F, pages 1–2; George W. Bush Presidential Electronic Records, ARMS.",
+            "215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain unexamined."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined release: George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain to be examined.",
+        "Pending: Examine released assets and their withholding markings.",
+        "Pending: Ask about unprocessed and related records; compare other reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  },
+  {
+    "name": "legacy-completed",
+    "legacy": true,
+    "stage": 4,
+    "reward": 0,
+    "returned": false,
+    "packet": {
+      "filed": true,
+      "parts": [
+        {
+          "id": 1,
+          "label": "Release record",
+          "station": 0,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "George W. Bush Library · George W. Bush Presidential Electronic Records: NSC EP-3 collision records",
+            "George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001",
+            "Partial FOIA release. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets remain unexamined.",
+            "Preserve FOIA provenance and keep withholding, unprocessed-record inquiries and comparative research open."
+          ],
+          "sources": [
+            {
+              "label": "Official FOIA inventory",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        },
+        {
+          "id": 2,
+          "label": "Evidence comparison",
+          "station": 1,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "The request and its scope: Request provenance.\nFOIA 2017-0023-F concerns NSC records on the EP-3 collision, dated March 15–April 30, 2001.\nFOIA inventory · page 1.",
+            "What happened to the 215 assets?: Release accounting.\nThe inventory reports 177 released in full, 22 withheld in part, and 16 withheld in full: 215 processed assets altogether.\nARMS processing totals · page 2.",
+            "The release still has an open edge: Unresolved research.\nSome related classified records are not yet processed. The inventory directs researchers to an archivist for related materials.\nScope and Content caveat · page 1.",
+            "Which accounts and gaps matter?: Unresolved research.\nWhat can the released records establish, what is obscured by withholding, and how does the evidence compare with other contemporaneous reporting?\nCompiler’s question · assets unexamined."
+          ],
+          "sources": [
+            {
+              "label": "Official FOIA inventory",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        },
+        {
+          "id": 3,
+          "label": "Research log",
+          "station": 2,
+          "ready": true,
+          "problem": null,
+          "attached": true,
+          "contents": [
+            "Research log for FOIA 2017-0023-F, requested scope March 15–April 30, 2001; inventory modified November 17, 2025; individual asset dates pending examination.",
+            "Source: George W. Bush Presidential Library, inventory for FOIA 2017-0023-F, pages 1–2; George W. Bush Presidential Electronic Records, ARMS.",
+            "215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain unexamined."
+          ],
+          "sources": [
+            {
+              "label": "Cited source",
+              "url": "https://www.georgewbushlibrary.gov/media/7324"
+            }
+          ]
+        }
+      ],
+      "openWork": [
+        "Unexamined release: George W. Bush Presidential Electronic Records; FOIA 2017-0023-F; ARMS; March 15–April 30, 2001. 215 processed assets: 177 released in full, 22 withheld in part, 16 withheld in full. Some related classified records remain unprocessed. Individual assets and markings remain to be examined.",
+        "Pending: Examine released assets and their withholding markings.",
+        "Pending: Ask about unprocessed and related records; compare other reporting."
+      ],
+      "purpose": "Research in progress · for supervisor review",
+      "limit": "This packet preserves a source trail and unresolved questions. It is not a completed chapter or a cleared volume."
+    },
+    "errors": []
+  }
+]
