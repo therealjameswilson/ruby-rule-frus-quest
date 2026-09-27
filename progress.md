@@ -8460,3 +8460,11 @@ Previous turn was progress: afb5d26 added Clinton release comparison. Revalidate
 Library-specific state preserves prior notes. Completed log reopens read-only; legacy missing logs can be repaired without stage credit. Build and all 282 files / 2,106 tests pass. Browser checks pass desktop, portrait and landscape: preceding earned desks, all wrong fields, missing follow-ups, draft reload, preview, filing/reload and unchanged review. No page errors. Inspected desktop draft and phone filed-log screenshots. Standard headed client reaches explore/moves to x137 but retains its black canvas capture limitation. Tests position the hero at desks; physical movement/full campaign are not covered. Evidence: docs/qa/clinton-research-log-2026-09-27.{md,json}.
 
 Local only; goal active. Next assemble the Clinton packet, extend Bush43 work, then assess whole-adventure audiovisual/play feel.
+
+## Clinton packet assembly — 2026-09-27
+
+Previous turn was progress: 603a2d6 added the saved Clinton research log. Revalidated final station still binary. Extended packet assembly to Clinton with its actual saved release record, comparison and log. All artifacts must validate and be explicitly attached. Output preserves MDR provenance, date coverage/availability distinctions, and unexamined conversations/redactions/gaps. Source links identify the release catalog. No completed historical account or volume is claimed.
+
+Per-library keys isolate packets; filed review is read-only. Legacy completed saves repair missing artifacts without duplicate credit. Build and all 282 files / 2,107 tests pass. Browser checks pass desktop/portrait/landscape/legacy: missing evidence, attachment removal/re-addition, draft/filed reload, review, +8 fresh/+0 legacy, no overflow/page errors; desktop Archive return passed. Inspected desktop packet and phone pending-work screenshots. Standard headed client reaches explore/moves to x138 with known black canvas capture limitation. Desk tests position the hero and do not prove full campaign/hardware movement. Evidence: docs/qa/clinton-packet-2026-09-27.{md,json}.
+
+Local only; goal active. Next extend Bush43’s remaining steps and assess the full research excursion’s audiovisual pacing and touch/controller feel.

@@ -127,7 +127,7 @@ function renderConciseGameToText() {
       compilerMission: getCompilerMissionReadout(gameState.sceneProgress),
       libraryResearch: libraryResearchReadout(gameState.sceneProgress),
       libraryPacket: libraryPacketReadout(gameState.sceneProgress),
-      libraryPackets: {reagan:libraryPacketReadout(gameState.sceneProgress),bush41:libraryPacketReadout(gameState.sceneProgress,'bush41')},
+      libraryPackets: {reagan:libraryPacketReadout(gameState.sceneProgress),bush41:libraryPacketReadout(gameState.sceneProgress,'bush41'),clinton:libraryPacketReadout(gameState.sceneProgress,'clinton')},
       librarySourceNote: sourceNoteReadout(gameState.sceneProgress),
       librarySourceNotes: {reagan:sourceNoteReadout(gameState.sceneProgress),bush41:sourceNoteReadout(gameState.sceneProgress,'bush41'),clinton:sourceNoteReadout(gameState.sceneProgress,'clinton')},
       libraryComparison: comparisonReadout(gameState.sceneProgress),

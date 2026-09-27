@@ -1,5 +1,5 @@
 import { expect, it } from 'vitest';
-import { selectRequestEntry, attachRequestLocator, setRequestAccess, toggleRequestFollowup } from './libraryRequest';
+import { selectRequestEntry, attachRequestLocator, setRequestAccess, toggleRequestFollowup, setRequestProvenance } from './libraryRequest';
 import { classifyComparisonCard, toggleComparisonFollowup } from './libraryComparison';
 import { chooseSourceNoteField, toggleSourceNoteLog } from './librarySourceNote';
 import { libraryPacketReadout, togglePacketPart, evaluateLibraryPacket, fileLibraryPacket } from './libraryPacket';
@@ -53,4 +53,24 @@ it('files Bush41 work independently and preserves unexamined holdings after fili
  expect(libraryPacketReadout(p).filed).toBe(false);expect(evaluateLibraryPacket(p).ok).toBe(false);
  const saved=JSON.stringify(p);togglePacketPart(p,1,'bush41');expect(fileLibraryPacket(p,'bush41')).toBe(false);
  expect(JSON.stringify(p)).toBe(saved);expect(p.libraryResearch_v2_bush41).toBe(3);
+});
+
+
+it('requires Clinton MDR provenance and preserves examination gaps in the filed packet',()=>{
+ const p:Record<string,number>={libraryResearch_v2_clinton:3};
+ selectRequestEntry(p,1,'clinton');attachRequestLocator(p,'clinton');setRequestAccess(p,1,'clinton');
+ toggleRequestFollowup(p,'retrieval','clinton');toggleRequestFollowup(p,'withdrawals','clinton');
+ for(const [id,lane] of [[1,1],[2,2],[3,2],[4,3]])classifyComparisonCard(p,id,lane,'clinton');
+ toggleComparisonFollowup(p,1,'clinton');toggleComparisonFollowup(p,2,'clinton');
+ for(const field of ['kind','date','locator','scope'] as const)chooseSourceNoteField(p,field,1,'clinton');
+ toggleSourceNoteLog(p,'lead','clinton');toggleSourceNoteLog(p,'followups','clinton');
+ expect(evaluateLibraryPacket(p,'clinton').ok).toBe(false);
+ setRequestProvenance(p,1,'clinton');for(const id of [1,2,3])togglePacketPart(p,id,'clinton');
+ expect(fileLibraryPacket(p,'clinton')).toBe(true);
+ const packet=libraryPacketReadout(p,'clinton');expect(packet.parts[0].label).toBe('Release record');
+ expect(packet.parts[0].contents.join(' ')).toContain('Individual conversations');
+ expect(packet.parts[2].label).toBe('Research log');expect(packet.openWork[0]).toContain('Unexamined release');
+ expect(libraryPacketReadout(p).filed).toBe(false);expect(libraryPacketReadout(p,'bush41').filed).toBe(false);
+ const saved=JSON.stringify(p);togglePacketPart(p,1,'clinton');expect(fileLibraryPacket(p,'clinton')).toBe(false);
+ expect(JSON.stringify(p)).toBe(saved);expect(p.libraryResearch_v2_clinton).toBe(3);
 });
