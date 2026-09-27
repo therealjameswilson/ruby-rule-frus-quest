@@ -16,7 +16,8 @@ try{
   await p.goto(base+'?text=full');await p.waitForFunction(()=>window.game?.scene.isActive('TapToStartScene'));await tap(86,154);await p.waitForFunction(()=>window.game.scene.isActive('ArchiveScene'));await drain();await p.waitForTimeout(700);
   await p.evaluate(()=>window.game.scene.getScene('ArchiveScene').player.setPosition(248,120));await p.keyboard.down('ArrowRight');await p.waitForTimeout(150);await p.keyboard.up('ArrowRight');await p.waitForTimeout(200);
   {
-   for(const value of ['decision','packet','retain','second','revise','clear','joint','handoff']){await drain();if(value==='second')await p.screenshot({path:out+'/second-review.png'});await choose(value);await drain();}
+   await p.waitForSelector('.manuscript-desk');await p.locator('[data-packet=decision]').click();await p.locator('.manuscript-submit').click();
+   for(const value of ['packet','retain','second','revise','clear','joint','handoff']){await drain();if(value==='second')await p.screenshot({path:out+'/second-review.png'});await choose(value);await drain();}
    const done=await p.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));assert.equal(done.state.sceneProgress.compilerSop_submission,1);assert(!done.state.sceneProgress.finalGatePublished);await p.screenshot({path:out+'/dpd-ready.png'});
    await p.evaluate(()=>window.game.scene.getScene('ArchiveScene').player.setPosition(248,120));await p.keyboard.down('ArrowRight');await p.waitForFunction(()=>window.game.scene.isActive('NetworkScene'));await p.keyboard.up('ArrowRight');
   }

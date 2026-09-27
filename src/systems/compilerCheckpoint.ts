@@ -13,18 +13,23 @@ export function runCompilerCheckpoint(choice: ChoicePrompt, dialog: DialogBox, c
     const task = nextCompilerTask(gameState.sceneProgress);
     if (!task) return;
     setObjective(task.objective);
-    const ask = () => choice.show(`${task.question}\n\n${task.context}`, [...task.options], option => {
-      const result = submitCompilerTask(gameState.sceneProgress, task.id, option.value);
+    const submit = (answer: string | undefined) => {
+      const result = submitCompilerTask(gameState.sceneProgress, task.id, answer);
       setLatestMessage(result.message);
       // An incorrect training decision is feedback, not an actual alteration
       // to a historical document, and therefore does not invent a violation.
       if (result.ok) saveGameNow();
       dialog.show(result.ok ? task.phase.toUpperCase() : "RECHECK THE PACKET", result.message, showNext);
-    }, 8, () => {
+    };
+    const cancel = () => {
       setLatestMessage("Compiler checkpoint paused. Completed decisions are saved; return here to continue.");
       setObjective(checkpoint === "research_plan" ? "Return to INBOX for research approval." : "Return to the east manuscript desk.");
-    });
-    ask();
+    };
+    if (task.id === "selection") {
+      choice.showManuscriptDesk(gameState.sceneProgress, saveGameNow, () => submit("decision"), cancel);
+    } else {
+      choice.show(`${task.question}\n\n${task.context}`, [...task.options], option => submit(option.value), 8, cancel);
+    }
   };
   showNext();
 }

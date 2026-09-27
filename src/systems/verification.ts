@@ -1,3 +1,4 @@
+import { ManuscriptDesk } from "./manuscriptDesk";
 import Phaser from "phaser";
 import { PALETTE } from "../game/constants";
 import { clearChoiceState, setChoiceState, setLatestMessage } from "../game/state";
@@ -16,6 +17,7 @@ function color(hex: string) {
 
 export class ChoicePrompt {
   private readonly scene: Phaser.Scene;
+  private manuscriptDesk?: ManuscriptDesk;
   private readonly container: Phaser.GameObjects.Container;
   private readonly titleText: Phaser.GameObjects.Text;
   private readonly sourceText: Phaser.GameObjects.Text;
@@ -34,6 +36,7 @@ export class ChoicePrompt {
 
   constructor(scene: Phaser.Scene, options: { settleMs?: number; cancelOnBack?: boolean } = {}) {
     this.scene = scene;
+    scene.events.once("shutdown", () => { this.manuscriptDesk?.close(); this.manuscriptDesk = undefined; });
     this.cancelOnBack = options.cancelOnBack ?? false;
     this.settleMs = Math.max(0, options.settleMs ?? 0);
     const dim = scene.add.rectangle(128, 120, 256, 240, color(PALETTE.black), 0.65);
@@ -56,10 +59,12 @@ export class ChoicePrompt {
   }
 
   get active() {
-    return this.container.visible;
+    return this.container.visible || Boolean(this.manuscriptDesk?.active);
   }
 
   show(title: string, options: ChoiceOption[], onChoose: ChoiceCallback, contextFontSize: 6 | 8 = 6, onCancel?: () => void) {
+    this.manuscriptDesk?.close();
+    this.manuscriptDesk = undefined;
     this.readyAt = this.scene.time.now + this.settleMs;
     this.inputArmed = this.settleMs === 0;
     this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
@@ -101,9 +106,18 @@ export class ChoicePrompt {
     setChoiceState(title, options);
   }
 
+  showManuscriptDesk(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void) {
+    this.hide();
+    this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
+    this.manuscriptDesk = new ManuscriptDesk(progress, onSave,
+      () => { this.hide(); onSubmit(); },
+      () => { this.hide(); onCancel(); });
+  }
+
   updateInput() {
     if (!this.active) return;
     const input = getInput();
+    if (this.manuscriptDesk?.active) { this.manuscriptDesk.updateInput(input); return; }
     if (!this.inputArmed) {
       // Combat buttons and movement must return to neutral before becoming
       // menu input. A held D-pad must not select retreat when combat ends.
@@ -135,6 +149,8 @@ export class ChoicePrompt {
   }
 
   hide() {
+    this.manuscriptDesk?.close();
+    this.manuscriptDesk = undefined;
     this.container.setVisible(false);
     clearChoiceState();
   }

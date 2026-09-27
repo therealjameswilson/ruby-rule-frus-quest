@@ -1,3 +1,4 @@
+import { manuscriptSelectionReadout } from "./manuscriptSelection";
 import { activeCompilationReadout } from "./activeCompilation";
 import type { ChoiceOption } from "./types";
 
@@ -160,6 +161,7 @@ export function getCompilerMissionReadout(progress: Readonly<Record<string, numb
   return {
     source: COMPILER_SOP_SOURCE,
     volume: activeCompilationReadout(progress),
+    selectionDesk: manuscriptSelectionReadout(progress),
     enabled: progress.compilerSopVersion === 1,
     completed: COMPILER_TASKS.filter(task => progress[taskFlag(task.id)] === 1).length,
     total: COMPILER_TASKS.length,
