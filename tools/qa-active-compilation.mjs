@@ -11,7 +11,7 @@ try{
  const seed=await browser.newPage();await seed.goto(base+'?scene=PresidentialLibraryScene&text=full');await seed.waitForFunction(()=>localStorage.getItem('rubyRuleFrusQuestSave'));const template=await seed.evaluate(()=>JSON.parse(localStorage.getItem('rubyRuleFrusQuestSave')));await seed.close();
  for(const mobile of [false,true])for(const [index,d] of dossiers.entries()){
   const saved=structuredClone(template);saved.state.currentScene='OfficeScene';saved.state.mode='explore';saved.state.activeDialog=null;saved.state.currentChoice=null;
-  saved.state.sceneProgress={officeStarterMemoStatus:2,juniorCompilerIntroduced:1,kathyDeparted:1};
+  saved.state.sceneProgress={officeStarterMemoStatus:2,juniorCompilerIntroduced:1,kathyDeparted:1,compilerVolumeAssignment:index+1};
   const p=await browser.newPage({viewport:mobile?{width:390,height:844}:{width:1024,height:960},isMobile:mobile,hasTouch:mobile,storageState:{cookies:[],origins:[{origin:new URL(base).origin,localStorage:[{name:'rubyRuleFrusQuestSave',value:JSON.stringify(saved)}]}]}});
   const errors=[];p.on('pageerror',e=>errors.push(String(e)));
   const tap=async(x,y)=>{const b=await p.locator('canvas').first().boundingBox();const xx=b.x+x*b.width/256,yy=b.y+y*b.height/240;if(mobile)await p.touchscreen.tap(xx,yy);else await p.mouse.click(xx,yy);};
@@ -22,7 +22,7 @@ try{
   const place=async(scene,x,y)=>{await p.evaluate(({scene,x,y})=>window.game.scene.getScene(scene).player.setPosition(x,y),{scene,x,y});await p.waitForTimeout(120);};
   await p.goto(base+'?text=full');await p.waitForFunction(()=>window.game?.scene.isActive('TapToStartScene'));await tap(86,154);await p.waitForFunction(()=>window.game.scene.isActive('OfficeScene'));
   await p.evaluate(()=>window.game.scene.getScene('OfficeScene').handleStarterMemoInbox());
-  await p.screenshot({path:`${out}/${d.library}-${mobile?'phone':'desktop'}-assignment.png`});await choose('OfficeScene','choice',index);
+  await p.screenshot({path:`${out}/${d.library}-${mobile?'phone':'desktop'}-assignment.png`});assert(!(await p.evaluate(()=>JSON.parse(window.render_game_to_text()))).choice.title.includes("ASSIGNMENT DESK"));
   for(const row of [1,0]){await drain('OfficeScene');await choose('OfficeScene','choice',row);await drain('OfficeScene');}
   assert.equal((await progress()).compilerVolumeAssignment,index+1);assert.equal((await progress()).compilerSop_research,1);
   // Seed only the library destination; earn every new research receipt through controls.
@@ -39,7 +39,7 @@ try{
   await choose('PresidentialLibraryScene','choice',0);await p.waitForFunction(()=>window.game.scene.isActive('ArchiveScene'));
   const final=await progress();assert.equal(final.compilerLibraryReturn,0);assert.equal(final.compilerSop_submission,undefined);
   await p.reload();await p.waitForFunction(()=>window.game.scene.isActive('TapToStartScene'));await tap(86,154);await p.waitForFunction(()=>window.game.scene.isActive('ArchiveScene'));assert.equal((await progress())[`libraryResearch_v2_${d.library}`],4);
-  assert.deepEqual(errors,[]);results.push({library:d.library,mobile,assigned:true,wrongAnswerRetried:true,packetFiled:true,returned:true,reloaded:true,errors});await p.close();
+  assert.deepEqual(errors,[]);results.push({library:d.library,mobile,legacyAssignmentIgnored:true,wrongAnswerRetried:true,packetFiled:true,returned:true,reloaded:true,errors});await p.close();
  }
  await writeFile(`${out}/result.json`,JSON.stringify(results,null,2));console.log(JSON.stringify(results));
 }finally{await browser.close();}

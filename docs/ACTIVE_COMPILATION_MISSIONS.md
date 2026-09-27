@@ -1,3 +1,5 @@
+> September 27 update: the four fixed compiler assignments, volume-selection screen, volume-specific manuscript dialogue, and required-library gate have been removed. The holdings below remain optional library research examples. Existing assignment flags no longer constrain play. Earlier QA below describes the original implementation.
+
 # Active compilation missions — September 26, 2026
 
 The player-facing story remains an archival adventure. Kathy assigns a volume, DANN-E misfiles evidence and proposes shortcuts, Alex asks about his films, and Randolph's conference room is still too hot.
