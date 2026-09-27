@@ -1,0 +1,593 @@
+{
+  "scope": "Seeded library-room presentation checks at 390x844 in Chromium touch emulation. Reagan first two research steps earned by touch; not a full-library campaign or physical iPhone test.",
+  "results": [
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "fdr",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "truman",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "eisenhower",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "jfk",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "lbj",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "nixon",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "ford",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "carter",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "reagan",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": true,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "bush41",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "clinton",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    },
+    {
+      "labels": [
+        {
+          "text": "1 FINDING AID \u00b7 NEXT",
+          "left": 16.5,
+          "right": 79.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "2 COMPARE \u00b7 LOCKED",
+          "left": 169.5,
+          "right": 234.5,
+          "bottom": 80.2490234375
+        },
+        {
+          "text": "3 SOURCE NOTE \u00b7 LOCKED",
+          "left": 162,
+          "right": 242,
+          "bottom": 148.2490234375
+        },
+        {
+          "text": "4 FILE PACKET \u00b7 LOCKED",
+          "left": 11.5,
+          "right": 84.5,
+          "bottom": 148.2490234375
+        }
+      ],
+      "stacks": [
+        {
+          "key": "misfiled-folders-28x20",
+          "width": 28,
+          "height": 20,
+          "visible": true
+        },
+        {
+          "key": "misfiled-folders-54x8",
+          "width": 54,
+          "height": 8,
+          "visible": true
+        }
+      ],
+      "id": "bush43",
+      "desks": 4,
+      "floor": true,
+      "walls": true,
+      "sourceClear": true,
+      "barriersCleared": false,
+      "errors": []
+    }
+  ]
+}
