@@ -8508,3 +8508,11 @@ Previous turn was progress: 9a48b98 smoothed library arrivals and verified eight
 Build and full 282-file / 2,110-test suite pass. New audio QA renders actual foley: ascending mark/turn/pickup/file RMS, zero clipping including eight simultaneous marks, all voices ended. Live desk route verifies cue routing through all four desks, four filing cues, restored reading mix, zero leftover foley and mute cancellation/blocking. No page errors. Inspected compositor screenshot and standard headed skill artifacts; black canvas capture limitation persists. Evidence docs/qa/desk-foley-2026-09-27.{md,json}, four-cue preview WAV. Dry waveform measurements are not subjective listening approval.
 
 Local only; goal active. Next assess whole-game transitions/presentation and soundtrack balance; physical hardware and subjective sound remain unverified.
+
+## Contextual travel cards — 2026-09-27
+
+Previous turn verified the requested Kathy email dialogue in the actual public bundle; no experimental branch publication occurred. Continued the broad goal by replacing internal scene-name travel labels with selected-library/NSC/outdoor destination names and concise FRUS workflow captions. Volume assignment remains unspecified. Kept travel timing and reduced-motion behavior.
+
+Build and all 282 files / 2110 tests passed. Six phone-sized browser cases confirm contextual labels, text bounds, nonoverlap, arrival-fade completion and no page errors. Card hold used only for inspection; tests then resume real destination transitions. Inspected NSC compositor screenshot. Standard client moves to x143 in Office explore; known black canvas screenshot limitation persists. Evidence: docs/qa/travel-presentation-2026-09-27.{md,json}.
+
+Local only, goal active. Broader audiovisual quality, full fresh-campaign pacing, and physical iPhone/controller feel still require evidence.
