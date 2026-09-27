@@ -162,6 +162,9 @@ export class PresidentialLibraryScene extends Phaser.Scene {
   }
   private research(station:number) {
     const a=this.assignment,stage=libraryStage(gameState.sceneProgress,a.library);
+    if(a.library==='reagan'&&station===1&&station<stage&&evaluateComparison(gameState.sceneProgress).ok){
+      this.choice.showLibraryComparison(gameState.sceneProgress,()=>{},()=>{},()=>{},true);return;
+    }
     if(a.library==='reagan'&&station===2&&station<stage&&evaluateSourceNote(gameState.sceneProgress).ok){
       this.choice.showLibrarySourceNote(gameState.sceneProgress,()=>{},()=>{},()=>{},true);return;
     }

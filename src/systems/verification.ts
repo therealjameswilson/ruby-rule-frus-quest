@@ -142,10 +142,10 @@ export class ChoicePrompt {
       () => {this.hide();onSubmit();}, () => {this.hide();onCancel();},library);
   }
 
-  showLibraryComparison(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void) {
+  showLibraryComparison(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void, reviewOnly=false) {
     this.hide(); this.scene.events.emit(CHOICE_PROMPT_OPEN_EVENT);
     this.manuscriptDesk = new LibraryComparisonDesk(progress, onSave,
-      () => { this.hide(); onSubmit(); }, () => { this.hide(); onCancel(); });
+      () => { this.hide(); onSubmit(); }, () => { this.hide(); onCancel(); }, reviewOnly);
   }
 
   showLibrarySourceNote(progress: Record<string,number>, onSave:()=>void, onSubmit:()=>void, onCancel:()=>void, reviewOnly=false) {

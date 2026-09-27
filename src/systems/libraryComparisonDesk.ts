@@ -15,7 +15,7 @@ export class LibraryComparisonDesk {
   private submit: HTMLButtonElement;
   private leave: HTMLButtonElement;
   get active() { return this.controls?.active ?? false; }
-  constructor(private progress: Record<string, number>, private onSave: () => void, onSubmit: () => void, onCancel: () => void) {
+  constructor(private progress: Record<string, number>, private onSave: () => void, onSubmit: () => void, onCancel: () => void, private reviewOnly = false) {
     this.root.className = 'manuscript-desk chapter-desk library-comparison';
     this.root.setAttribute('aria-labelledby', 'comparison-title');
     this.root.innerHTML = `<section class="manuscript-panel"><header class="manuscript-heading"><div><p class="manuscript-eyebrow">THE READING ROOM <span>02 / COMPARE EVIDENCE</span></p><h1 id="comparison-title">What does each source establish?</h1><p>Thatcher’s February 1985 visit · Sort the evidence, then preserve the open work.</p></div><button class="manuscript-close" data-focus-key="leave">Save &amp; leave</button></header><div class="manuscript-body assembly-body"></div><footer class="manuscript-footer"><p data-status role="status">DANN-E: “A cordial press appearance. Every private difference settled!”</p><button class="manuscript-submit" data-focus-key="submit">File comparison →</button><small>Optional source trail · Arrows / D-pad to move · A / Enter to act · B / Esc to save and leave</small></footer></section>`;
@@ -24,7 +24,14 @@ export class LibraryComparisonDesk {
     this.submit = this.root.querySelector('.manuscript-submit')!;
     this.leave = this.root.querySelector('.manuscript-close')!;
     this.leave.addEventListener('click', onCancel);
+    if (reviewOnly) {
+      this.root.querySelector('h1')!.textContent = 'Your filed evidence comparison.';
+      this.root.querySelector('.manuscript-heading p:last-child')!.textContent = 'Review the source distinctions and the research still outstanding.';
+      this.submit.textContent = 'Return to room'; this.leave.textContent = 'Close';
+      this.status.textContent = 'Comparison saved. Private-record and State/embassy research remain open.';
+    }
     this.submit.addEventListener('click', () => {
+      if (this.reviewOnly) { onCancel(); return; }
       const result = evaluateComparison(this.progress);
       this.status.textContent = result.message;
       this.status.dataset.error = String(!result.ok);
@@ -64,7 +71,13 @@ export class LibraryComparisonDesk {
       }
       const lane = state.cards.find(c => c.id === card.id)!.lane;
       const group = document.createElement('div'); group.className = 'comparison-sort'; group.setAttribute('role', 'group'); group.setAttribute('aria-label', `Classify ${card.title}`);
-      for (const target of COMPARISON_LANES) {
+      if (this.reviewOnly) {
+        const filed = document.createElement('p'); filed.className = 'comparison-filed';
+        filed.textContent = `Filed as: ${COMPARISON_LANES.find(l => l.id === lane)?.label ?? 'Unclassified'}`;
+        const limit = document.createElement('p'); limit.textContent = card.feedback;
+        group.append(filed, limit);
+      }
+      for (const target of this.reviewOnly ? [] : COMPARISON_LANES) {
         const key = `card-${card.id}-lane-${target.id}`;
         const button = this.button(target.label, key, () => { classifyComparisonCard(this.progress, card.id, target.id); this.changed(key); });
         button.dataset.lane = String(target.id); button.setAttribute('aria-pressed', String(lane === target.id)); group.append(button);
@@ -82,12 +95,17 @@ export class LibraryComparisonDesk {
     const heading = document.createElement('h3'); heading.textContent = 'Carry the missing evidence forward'; table.append(heading);
     for (const task of COMPARISON_FOLLOWUPS) {
       const key = `followup-${task.id}`, selected = state.followups.includes(task.id);
+      if (this.reviewOnly) {
+        const item = document.createElement('p'); item.dataset.readable = '';
+        const label = document.createElement('strong'); label.textContent = `Pending: ${task.label}. `;
+        item.append(label, task.detail); table.append(item); continue;
+      }
       const button = this.button(`${selected ? '✓ ' : ''}${task.label}`, key, () => { toggleComparisonFollowup(this.progress, task.id); this.changed(key); });
       button.dataset.followup = String(task.id); button.setAttribute('aria-pressed', String(selected));
       const detail = document.createElement('small'); detail.textContent = task.detail; button.append(detail); table.append(button);
     }
     this.body.append(table);
-    setChoiceState('COMPARE LIBRARY EVIDENCE', [{ key: 'A', label: 'Sort evidence and carry forward requests', value: 'work' }, { key: 'B', label: 'Save comparison and leave', value: 'leave' }]);
+    setChoiceState(this.reviewOnly ? 'REVIEW FILED COMPARISON' : 'COMPARE LIBRARY EVIDENCE', [{ key: 'A', label: this.reviewOnly ? 'Read saved evidence and open research' : 'Sort evidence and carry forward requests', value: 'work' }, { key: 'B', label: this.reviewOnly ? 'Close comparison' : 'Save comparison and leave', value: 'leave' }]);
     this.controls?.refresh(focus);
   }
   updateInput(input: InputState) { this.controls?.updateInput(input); }

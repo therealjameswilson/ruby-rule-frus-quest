@@ -58,6 +58,16 @@ try {
   await load();assert.equal(await stage(),2);
   assert.deepEqual((await state()).libraryComparison.cards.map(c=>c.lane),[1,2,2,3]);
   assert.deepEqual(await page.evaluate(()=>window.game.scene.getScene('PresidentialLibraryScene').barriers.map(b=>b.visible)),[false,false]);
+  const filedState=(await state()).libraryComparison, points=(await state()).documentPoints;
+  await open(202);await page.waitForSelector('.library-comparison');
+  assert.equal(await page.locator('.library-comparison h1').innerText(),'Your filed evidence comparison.');
+  assert.equal(await page.locator('.library-comparison [data-lane], .library-comparison [data-followup]').count(),0);
+  assert.equal(await page.locator('.comparison-filed').count(),4);
+  assert((await page.locator('.comparison-table').innerText()).includes('Pending: Locate and examine'));
+  await page.screenshot({path:out+'/'+name+'-filed-review.png'});
+  await click('.manuscript-submit');await page.waitForSelector('.library-comparison',{state:'detached'});
+  assert.equal(await stage(),2);assert.equal((await state()).documentPoints,points);
+  assert.deepEqual((await state()).libraryComparison,filedState);
   assert.deepEqual(errors,[]);results.push({name,stage:await stage(),comparison:(await state()).libraryComparison,errors});await page.close();
  }
 } catch(error) {
